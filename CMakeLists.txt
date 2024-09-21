@@ -46,4 +46,4 @@ add_subdirectory("vendor/ddc/" "ddc") # SYSTEM)
 ###############################################################################################
 # Our project code
 
-# TODO
+add_subdirectory(src)
