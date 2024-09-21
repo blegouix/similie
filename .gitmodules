@@ -1,0 +1,6 @@
+[submodule "vendor/ddc"]
+	path = vendor/ddc
+	url = git@github.com:CExA-project/ddc.git
+[submodule "vendor/googletest"]
+	path = vendor/googletest
+	url = git@github.com:google/googletest.git
