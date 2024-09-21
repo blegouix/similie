@@ -1,7 +1,7 @@
 # SimiLie
 Simulation in Lie groups
 
-This is a C++ performance-portable project, supporting CPU & GPU. For simplicity sake and performance purpose (avoid access to adjacency matrix, efficient parallelization & memory access), only mesh structured as a cartesian product of 1D mesh is supported. No adaptative mesh refinement. Main focus are modularity, versatility and performance.
+This is a C++ performance-portable project, supporting CPU & GPU. For simplicity sake and performance purpose (avoid access to adjacency matrix, efficient parallelization & memory access), only mesh structured as a cartesian product of 1D meshes is supported. No adaptative mesh refinement. Main focus are modularity, versatility and performance.
 
 **Absolute WIP, there is no guarantee for proper working**
 
@@ -19,7 +19,7 @@ DONE:
 
 TODO:
 - Initial setup (dependencies, basic test, project structure).
-- Mesher (note: only geometries which are cartesian product of 1D mesh are supported).
+- Simple mesher.
 - Class to describe a tensor (& tensor field ?).
 - Differential forms & fields of differential forms.
 - Basic useful differential forms (not involving derivatives): tetrads, metric.
