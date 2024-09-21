@@ -8,6 +8,6 @@
 
 TEST(Tensor, Init)
 {
-	Tensor tensor;
-	printf("end of test");
+    Tensor tensor;
+    printf("end of test");
 }

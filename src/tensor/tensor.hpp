@@ -4,7 +4,8 @@
 
 #include <ddc/ddc.hpp>
 
-class Tensor {
+class Tensor
+{
 public:
     explicit Tensor();
 };

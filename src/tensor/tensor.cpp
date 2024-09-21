@@ -4,6 +4,7 @@
 
 #include "tensor.hpp"
 
-Tensor::Tensor() {
+Tensor::Tensor()
+{
     printf("Tensor created");
 }
