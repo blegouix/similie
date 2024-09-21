@@ -16,9 +16,9 @@ This is a C++ performance-portable project, supporting CPU & GPU. For simplicity
 
 DONE:
 - Create repository.
+- Initial setup (dependencies, basic test, project structure).
 
 TODO:
-- Initial setup (dependencies, basic test, project structure).
 - Simple mesher.
 - Class to describe a tensor (& tensor field ?).
 - Differential forms & fields of differential forms.
