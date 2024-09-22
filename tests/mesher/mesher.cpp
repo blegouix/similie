@@ -25,6 +25,7 @@ struct DDimX : MesherX::discrete_dimension_type
 
 TEST(Mesher, 1D)
 {
-    MesherX mesher(0., 1., static_cast<std::size_t>(1000));
+    MesherX mesher;
+    ddc::DiscreteDomain<DDimX> dom_x = mesher.template mesh<DDimX, BSplinesX>(0., 1., 10);
     printf("end of test");
 }
