@@ -20,9 +20,9 @@ DONE:
 - Create repository.
 - Initial setup (dependencies, basic test, project structure).
 - Simple mesher.
+- Class to describe a tensor.
 
 TODO:
-- Class to describe a tensor (& tensor field ?).
 - Differential forms & fields of differential forms.
 - Basic useful differential forms (not involving derivatives): tetrads, metric.
 - More advanced tools: discrete Hodge star, exterior derivative, codifferential operator, covariant derivative.
