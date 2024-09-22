@@ -13,12 +13,18 @@ struct X
     static constexpr bool PERIODIC = false;
 };
 
-struct BSplinesX : ddc::UniformBSplines<X, s_degree_x>
+using MesherX = Mesher<X, s_degree_x>;
+
+struct BSplinesX : MesherX::bsplines_type
+{
+};
+
+struct DDimX : MesherX::discrete_dimension_type
 {
 };
 
 TEST(Mesher, Init)
 {
-    Mesher<BSplinesX> mesher();
+    MesherX mesher();
     printf("end of test");
 }
