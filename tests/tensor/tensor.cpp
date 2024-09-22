@@ -6,8 +6,29 @@
 
 #include "tensor.hpp"
 
-SIL_TENSOR_INDEX(Mu, 3)
-SIL_TENSOR_INDEX(Nu, 4)
+struct T
+{
+};
+
+struct X
+{
+};
+
+struct Y
+{
+};
+
+struct Z
+{
+};
+
+struct Mu : sil::tensor::TensorIndex<X, Y, Z>
+{
+};
+
+struct Nu : sil::tensor::TensorIndex<T, X, Y, Z>
+{
+};
 
 TEST(Tensor, Init)
 {

@@ -8,20 +8,17 @@ namespace sil {
 
 namespace tensor {
 
+template <class... CDim>
 struct TensorIndex
 {
-    static const std::size_t s_dim_size;
+    static constexpr std::size_t dim_size()
+    {
+        return sizeof...(CDim);
+    }
 };
 
-#define SIL_TENSOR_INDEX(NAME, DIM_SIZE)                                                           \
-    struct NAME : sil::tensor::TensorIndex                                                         \
-    {                                                                                              \
-        static const std::size_t s_dim_size;                                                       \
-    };                                                                                             \
-    std::size_t const NAME::s_dim_size = DIM_SIZE;
-
-
-template <std::derived_from<TensorIndex>... Index>
+// template <std::derived_from<TensorIndex>... Index>
+template <class... Index>
 class TensorDomain
 {
 private:
@@ -33,15 +30,15 @@ public:
     ddc::DiscreteDomain<Index...> operator()();
 };
 
-template <std::derived_from<TensorIndex>... Index>
+template <class... Index>
 TensorDomain<Index...>::TensorDomain()
     : m_tensor_dom(
             ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(0)...),
-            ddc::DiscreteVector<Index...>(ddc::DiscreteVector<Index>(Index::s_dim_size)...))
+            ddc::DiscreteVector<Index...>(ddc::DiscreteVector<Index>(Index::dim_size())...))
 {
 }
 
-template <std::derived_from<TensorIndex>... Index>
+template <class... Index>
 ddc::DiscreteDomain<Index...> TensorDomain<Index...>::operator()()
 {
     return m_tensor_dom;
