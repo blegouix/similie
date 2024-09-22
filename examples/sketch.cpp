@@ -13,7 +13,7 @@ struct X
     static constexpr bool PERIODIC = false;
 };
 
-using MesherX = Mesher<X, s_degree_x>;
+using MesherX = Mesher1D<X, s_degree_x>;
 
 struct BSplinesX : MesherX::bsplines_type
 {

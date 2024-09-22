@@ -48,4 +48,4 @@ add_subdirectory("vendor/ddc/" "ddc") # SYSTEM)
 
 add_subdirectory(src)
 add_subdirectory(tests)
-add_subdirectory(examples)
+# add_subdirectory(examples)
