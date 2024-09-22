@@ -1,21 +1,22 @@
 // SPDX-License-Identifier: GPL-3.0
 
 #include <ddc/ddc.hpp>
-#include <ddc/kernels/splines.hpp>
+
+#include <gtest/gtest.h>
 
 #include "mesher.hpp"
-#include "tensor.hpp"
 
-static constexpr std::size_t s_degree = 3;                                               
+// 2D test
+static constexpr std::size_t s_degree = 3;
 
-struct X                                                                                 
-{   
-    static constexpr bool PERIODIC = false;                                              
-};                                                                                       
+struct X
+{
+    static constexpr bool PERIODIC = false;
+};
 
 struct Y
 {
-    static constexpr bool PERIODIC = false;                                              
+    static constexpr bool PERIODIC = false;
 };
 
 using MesherXY = sil::mesher::Mesher<s_degree, X, Y>;
@@ -25,8 +26,8 @@ struct BSplinesX : MesherXY::template bsplines_type<X>
 };
 
 struct DDimX : MesherXY::template discrete_dimension_type<X>
-{   
-};  
+{
+};
 
 struct BSplinesY : MesherXY::template bsplines_type<Y>
 {
@@ -37,13 +38,8 @@ struct DDimY : MesherXY::template discrete_dimension_type<Y>
 };
 
 
-int main(int argc, char** argv)
+TEST(Mesher, 2D)
 {
-    Kokkos::ScopeGuard const kokkos_scope(argc, argv);
-    ddc::ScopeGuard const ddc_scope(argc, argv);
-
-    printf("start example\n");
-
     MesherXY mesher;
     std::array<double, 2> lower_bounds({0., 0.});
     std::array<double, 2> upper_bounds({1., 1.});

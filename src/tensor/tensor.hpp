@@ -4,6 +4,10 @@
 
 #include <ddc/ddc.hpp>
 
+namespace sil {
+
+namespace tensor {
+
 class Tensor
 {
 public:
@@ -14,3 +18,7 @@ Tensor::Tensor()
 {
     printf("Tensor created");
 }
+
+} // namespace tensor
+
+} // namespace sil

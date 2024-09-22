@@ -8,6 +8,6 @@
 
 TEST(Tensor, Init)
 {
-    Tensor tensor;
+    sil::tensor::Tensor tensor;
     printf("end of test");
 }
