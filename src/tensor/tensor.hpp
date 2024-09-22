@@ -9,3 +9,8 @@ class Tensor
 public:
     explicit Tensor();
 };
+
+Tensor::Tensor()
+{
+    printf("Tensor created");
+}
