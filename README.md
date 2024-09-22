@@ -19,9 +19,9 @@ Relies on [DDC](https://github.com/CExA-project/ddc).
 DONE:
 - Create repository.
 - Initial setup (dependencies, basic test, project structure).
-
-TODO:
 - Simple mesher.
+- 
+TODO:
 - Class to describe a tensor (& tensor field ?).
 - Differential forms & fields of differential forms.
 - Basic useful differential forms (not involving derivatives): tetrads, metric.
