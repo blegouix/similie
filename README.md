@@ -20,7 +20,7 @@ DONE:
 - Create repository.
 - Initial setup (dependencies, basic test, project structure).
 - Simple mesher.
-- 
+
 TODO:
 - Class to describe a tensor (& tensor field ?).
 - Differential forms & fields of differential forms.
