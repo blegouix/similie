@@ -6,18 +6,8 @@
 
 #include "tensor.hpp"
 
-struct Mu : sil::tensor::TensorIndex
-{
-    static const std::size_t s_dim_size;
-};
-std::size_t const Mu::s_dim_size = 3;
-
-struct Nu : sil::tensor::TensorIndex
-{
-    static const std::size_t s_dim_size;
-};
-std::size_t const Nu::s_dim_size = 4;
-
+SIL_TENSOR_INDEX(Mu, 3)
+SIL_TENSOR_INDEX(Nu, 4)
 
 TEST(Tensor, Init)
 {

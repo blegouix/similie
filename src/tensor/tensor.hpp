@@ -13,6 +13,14 @@ struct TensorIndex
     static const std::size_t s_dim_size;
 };
 
+#define SIL_TENSOR_INDEX(NAME, DIM_SIZE)                                                           \
+    struct NAME : sil::tensor::TensorIndex                                                         \
+    {                                                                                              \
+        static const std::size_t s_dim_size;                                                       \
+    };                                                                                             \
+    std::size_t const NAME::s_dim_size = DIM_SIZE;
+
+
 template <std::derived_from<TensorIndex>... Index>
 class TensorDomain
 {
