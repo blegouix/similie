@@ -13,11 +13,15 @@ public:
 
     using bsplines_type = ddc::UniformBSplines<X, D>;
 
+private:
     using greville_points_type
             = ddc::GrevilleInterpolationPoints<bsplines_type, BoundCond, BoundCond>;
 
+public:
     using discrete_dimension_type =
             typename greville_points_type::interpolation_discrete_dimension_type;
 
-    explicit Mesher();
+    explicit Mesher(double x_start, double x_end, std::size_t nb_x_points);
+
+    ddc::DiscreteDomain<discrete_dimension_type> get_domain();
 };
