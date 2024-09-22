@@ -11,6 +11,8 @@ namespace tensor {
 template <class... CDim>
 struct TensorIndex
 {
+    using type_seq_dimensions = ddc::detail::TypeSeq<CDim...>;
+
     static constexpr std::size_t dim_size()
     {
         return sizeof...(CDim);
@@ -28,6 +30,9 @@ public:
     explicit TensorDomain();
 
     ddc::DiscreteDomain<Index...> operator()();
+
+    template <class... CDim>
+    ddc::DiscreteElement<Index...> get();
 };
 
 template <class... Index>
@@ -42,6 +47,14 @@ template <class... Index>
 ddc::DiscreteDomain<Index...> TensorDomain<Index...>::operator()()
 {
     return m_tensor_dom;
+}
+
+template <class... Index>
+template <class... CDim>
+ddc::DiscreteElement<Index...> TensorDomain<Index...>::get()
+{
+    return ddc::DiscreteElement<Index...>(
+            ddc::DiscreteElement<Index>(ddc::type_seq_rank_v<CDim, Index::type_seq_dimensions>)...);
 }
 
 } // namespace tensor
