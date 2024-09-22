@@ -8,15 +8,35 @@ namespace sil {
 
 namespace tensor {
 
-class Tensor
+struct TensorIndex
 {
-public:
-    explicit Tensor();
+    static const std::size_t s_dim_size;
 };
 
-Tensor::Tensor()
+template <std::derived_from<TensorIndex>... Index>
+class TensorDomain
 {
-    printf("Tensor created");
+private:
+    ddc::DiscreteDomain<Index...> const m_tensor_dom;
+
+public:
+    explicit TensorDomain();
+
+    ddc::DiscreteDomain<Index...> operator()();
+};
+
+template <std::derived_from<TensorIndex>... Index>
+TensorDomain<Index...>::TensorDomain()
+    : m_tensor_dom(
+            ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(0)...),
+            ddc::DiscreteVector<Index...>(ddc::DiscreteVector<Index>(Index::s_dim_size)...))
+{
+}
+
+template <std::derived_from<TensorIndex>... Index>
+ddc::DiscreteDomain<Index...> TensorDomain<Index...>::operator()()
+{
+    return m_tensor_dom;
 }
 
 } // namespace tensor
