@@ -12,7 +12,7 @@ template <std::size_t D, class X>
 class Mesher1D
 {
 public:
-    static constexpr ddc::BoundCond BoundCond = ddc::BoundCond::PERIODIC;
+    static constexpr ddc::BoundCond BoundCond = ddc::BoundCond::GREVILLE;
 
     using bsplines_type = ddc::UniformBSplines<X, D>;
 
@@ -51,7 +51,7 @@ template <std::size_t D, class... X>
 class Mesher
 {
 public:
-    static constexpr ddc::BoundCond BoundCond = ddc::BoundCond::PERIODIC;
+    static constexpr ddc::BoundCond BoundCond = ddc::BoundCond::GREVILLE;
 
     template <class T>
     using bsplines_type = ddc::UniformBSplines<T, D>;

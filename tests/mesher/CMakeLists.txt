@@ -2,7 +2,7 @@
 
 include(GoogleTest)
 
-add_executable(unit_tests_mesher mesher.cpp ../main.cpp)
+add_executable(unit_tests_mesher mesher1d.cpp mesher2d.cpp ../main.cpp)
 
 target_link_libraries(unit_tests_mesher 
     PUBLIC
