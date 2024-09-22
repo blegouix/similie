@@ -33,7 +33,10 @@ public:
     template <
             std::derived_from<discrete_dimension_type> DDim,
             std::derived_from<bsplines_type> BSplines>
-    ddc::DiscreteDomain<DDim> mesh(double x_start, double x_end, std::size_t nb_x_points);
+    ddc::DiscreteDomain<DDim> mesh(
+            ddc::Coordinate<CDim> lower_boundary,
+            ddc::Coordinate<CDim> upper_boundary,
+            ddc::DiscreteVector<DDim> nb_cells);
 };
 
 template <std::size_t D, class CDim>
@@ -41,12 +44,11 @@ template <
         std::derived_from<typename Mesher1D<D, CDim>::discrete_dimension_type> DDim,
         std::derived_from<typename Mesher1D<D, CDim>::bsplines_type> BSplines>
 ddc::DiscreteDomain<DDim> Mesher1D<D, CDim>::mesh(
-        double x_start,
-        double x_end,
-        std::size_t nb_x_points)
+        ddc::Coordinate<CDim> lower_boundary,
+        ddc::Coordinate<CDim> upper_boundary,
+        ddc::DiscreteVector<DDim> nb_cells)
 {
-    ddc::init_discrete_space<
-            BSplines>(ddc::Coordinate<CDim>(x_start), ddc::Coordinate<CDim>(x_end), nb_x_points);
+    ddc::init_discrete_space<BSplines>(lower_boundary, upper_boundary, nb_cells);
     ddc::init_discrete_space<DDim>(greville_points_type<BSplines>::template get_sampling<DDim>());
     return greville_points_type<BSplines>::template get_domain<DDim>();
 }
@@ -75,17 +77,17 @@ public:
 
     template <class TypeSeqDDim, class TypeSeqBSplines>
     ddc::detail::convert_type_seq_to_discrete_domain_t<TypeSeqDDim> mesh(
-            std::array<double, sizeof...(CDim)> lower_boundaries,
-            std::array<double, sizeof...(CDim)> upper_boundaries,
-            std::array<std::size_t, sizeof...(CDim)> nb_cells);
+            ddc::Coordinate<CDim...> lower_boundaries,
+            ddc::Coordinate<CDim...> upper_boundaries,
+            ddc::detail::convert_type_seq_to_discrete_domain_t<TypeSeqDDim>::mlength_type nb_cells);
 };
 
 template <std::size_t D, class... CDim>
 template <class TypeSeqDDim, class TypeSeqBSplines>
 ddc::detail::convert_type_seq_to_discrete_domain_t<TypeSeqDDim> Mesher<D, CDim...>::mesh(
-        std::array<double, sizeof...(CDim)> lower_boundaries,
-        std::array<double, sizeof...(CDim)> upper_boundaries,
-        std::array<std::size_t, sizeof...(CDim)> nb_cells)
+        ddc::Coordinate<CDim...> lower_boundaries,
+        ddc::Coordinate<CDim...> upper_boundaries,
+        ddc::detail::convert_type_seq_to_discrete_domain_t<TypeSeqDDim>::mlength_type nb_cells)
 {
     std::tuple<detail::Mesher1D<D, CDim>...> meshers;
     std::tuple<ddc::DiscreteDomain<ddc::type_seq_element_t<
@@ -102,9 +104,11 @@ ddc::detail::convert_type_seq_to_discrete_domain_t<TypeSeqDDim> Mesher<D, CDim..
                         ddc::type_seq_element_t<
                                 ddc::type_seq_rank_v<CDim, ddc::detail::TypeSeq<CDim...>>,
                                 TypeSeqBSplines>>(
-                        lower_boundaries[ddc::type_seq_rank_v<CDim, ddc::detail::TypeSeq<CDim...>>],
-                        upper_boundaries[ddc::type_seq_rank_v<CDim, ddc::detail::TypeSeq<CDim...>>],
-                        nb_cells[ddc::type_seq_rank_v<CDim, ddc::detail::TypeSeq<CDim...>>])),
+                        ddc::select<CDim>(lower_boundaries),
+                        ddc::select<CDim>(upper_boundaries),
+                        ddc::select<ddc::type_seq_element_t<
+                                ddc::type_seq_rank_v<CDim, ddc::detail::TypeSeq<CDim...>>,
+                                TypeSeqDDim>>(nb_cells))),
      ...);
 
     return ddc::detail::convert_type_seq_to_discrete_domain_t<TypeSeqDDim>(

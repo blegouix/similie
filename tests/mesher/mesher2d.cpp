@@ -6,7 +6,6 @@
 
 #include "mesher.hpp"
 
-// 2D test
 static constexpr std::size_t s_degree = 3;
 
 struct X
@@ -41,14 +40,18 @@ struct DDimY : MesherXY::template discrete_dimension_type<Y>
 TEST(Mesher, 2D)
 {
     MesherXY mesher;
-    std::array<double, 2> lower_bounds({0., 0.});
-    std::array<double, 2> upper_bounds({1., 1.});
-    std::array<std::size_t, 2> nb_cells({10, 10});
+    ddc::Coordinate<X, Y> lower_bounds(0., 0.);
+    ddc::Coordinate<X, Y> upper_bounds(1., 1.);
+    ddc::DiscreteVector<DDimX, DDimY> nb_cells(10, 10);
     ddc::DiscreteDomain<DDimX, DDimY> mesh_xy = mesher.template mesh<
             ddc::detail::TypeSeq<DDimX, DDimY>,
             ddc::detail::TypeSeq<BSplinesX, BSplinesY>>(lower_bounds, upper_bounds, nb_cells);
 
-    std::cout << ddc::coordinate(mesh_xy.front()) << "\n";
-    std::cout << ddc::coordinate(mesh_xy.back()) << "\n";
-    std::cout << mesh_xy.extents() << "\n";
+    EXPECT_TRUE(
+            (mesh_xy
+             == ddc::DiscreteDomain<DDimX, DDimY>(
+                     ddc::DiscreteElement<DDimX, DDimY>(0, 0),
+                     ddc::DiscreteVector<DDimX, DDimY>(13, 13))));
+    EXPECT_TRUE((ddc::coordinate(mesh_xy.front()) == ddc::Coordinate<X, Y>(0., 0.)));
+    EXPECT_TRUE((ddc::coordinate(mesh_xy.back()) == ddc::Coordinate<X, Y>(1., 1.)));
 }
