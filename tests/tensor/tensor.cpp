@@ -6,10 +6,6 @@
 
 #include "tensor.hpp"
 
-struct T
-{
-};
-
 struct X
 {
 };
@@ -22,26 +18,31 @@ struct Z
 {
 };
 
-struct Mu : sil::tensor::TensorIndex<X, Y, Z>
+struct Mu : sil::tensor::TensorIndex<Y, Z>
 {
 };
 
-struct Nu : sil::tensor::TensorIndex<T, X, Y, Z>
+struct Nu : sil::tensor::TensorIndex<X, Y, Z>
 {
 };
 
-TEST(Tensor, Init)
+TEST(Tensor, 2x3)
 {
-    sil::tensor::TensorDomain<Mu, Nu> tensor_dom;
-    ddc::Chunk tensor_alloc(tensor_dom(), ddc::HostAllocator<double>());
+    sil::tensor::TensorHandler<Mu, Nu> tensor_handler;
+    ddc::DiscreteDomain<Mu, Nu> tensor_dom = tensor_handler.get_domain();
+    ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
     ddc::ChunkSpan tensor = tensor_alloc.span_view();
-    tensor(tensor_dom().front()) = 1;
 
-    for (int i = 0; i < 3; ++i) {
-        for (int j = 0; j < 4; ++j) {
-            printf("%f ", tensor(ddc::DiscreteElement<Mu, Nu>(i, j)));
+    for (int i = 0; i < 2; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            tensor(ddc::DiscreteElement<Mu, Nu>(i, j)) = i * 3 + j;
         }
-        printf("\n");
     }
-    printf("end of test");
+
+    EXPECT_TRUE((tensor(tensor_handler.get_element<Y, X>()) == 0.));
+    EXPECT_TRUE((tensor(tensor_handler.get_element<Y, Y>()) == 1.));
+    EXPECT_TRUE((tensor(tensor_handler.get_element<Y, Z>()) == 2.));
+    EXPECT_TRUE((tensor(tensor_handler.get_element<Z, X>()) == 3.));
+    EXPECT_TRUE((tensor(tensor_handler.get_element<Z, Y>()) == 4.));
+    EXPECT_TRUE((tensor(tensor_handler.get_element<Z, Z>()) == 5.));
 }

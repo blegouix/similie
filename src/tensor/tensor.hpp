@@ -19,42 +19,48 @@ struct TensorIndex
     }
 };
 
-// template <std::derived_from<TensorIndex>... Index>
-template <class... Index>
-class TensorDomain
+// Check that Index derives from TensorIndex despite the templating
+template <class Index>
+concept TensorIndexConcept = requires(Index index)
+{
+    []<class... T>(TensorIndex<T...>&) {}(index);
+};
+
+template <TensorIndexConcept... Index>
+class TensorHandler
 {
 private:
     ddc::DiscreteDomain<Index...> const m_tensor_dom;
 
 public:
-    explicit TensorDomain();
+    explicit TensorHandler();
 
-    ddc::DiscreteDomain<Index...> operator()();
+    ddc::DiscreteDomain<Index...> get_domain();
 
     template <class... CDim>
-    ddc::DiscreteElement<Index...> get();
+    ddc::DiscreteElement<Index...> get_element();
 };
 
-template <class... Index>
-TensorDomain<Index...>::TensorDomain()
+template <TensorIndexConcept... Index>
+TensorHandler<Index...>::TensorHandler()
     : m_tensor_dom(
             ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(0)...),
             ddc::DiscreteVector<Index...>(ddc::DiscreteVector<Index>(Index::dim_size())...))
 {
 }
 
-template <class... Index>
-ddc::DiscreteDomain<Index...> TensorDomain<Index...>::operator()()
+template <TensorIndexConcept... Index>
+ddc::DiscreteDomain<Index...> TensorHandler<Index...>::get_domain()
 {
     return m_tensor_dom;
 }
 
-template <class... Index>
+template <TensorIndexConcept... Index>
 template <class... CDim>
-ddc::DiscreteElement<Index...> TensorDomain<Index...>::get()
+ddc::DiscreteElement<Index...> TensorHandler<Index...>::get_element()
 {
-    return ddc::DiscreteElement<Index...>(
-            ddc::DiscreteElement<Index>(ddc::type_seq_rank_v<CDim, Index::type_seq_dimensions>)...);
+    return ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(
+            ddc::type_seq_rank_v<CDim, typename Index::type_seq_dimensions>)...);
 }
 
 } // namespace tensor
