@@ -44,11 +44,11 @@ TEST(Mesher, 2D)
     std::array<double, 2> lower_bounds({0., 0.});
     std::array<double, 2> upper_bounds({1., 1.});
     std::array<std::size_t, 2> nb_cells({10, 10});
-    ddc::DiscreteDomain<DDimX, DDimY> dom_xy = mesher.template mesh<
+    ddc::DiscreteDomain<DDimX, DDimY> mesh_xy = mesher.template mesh<
             ddc::detail::TypeSeq<DDimX, DDimY>,
             ddc::detail::TypeSeq<BSplinesX, BSplinesY>>(lower_bounds, upper_bounds, nb_cells);
 
-    std::cout << ddc::coordinate(dom_xy.front()) << "\n";
-    std::cout << ddc::coordinate(dom_xy.back()) << "\n";
-    std::cout << dom_xy.extents() << "\n";
+    std::cout << ddc::coordinate(mesh_xy.front()) << "\n";
+    std::cout << ddc::coordinate(mesh_xy.back()) << "\n";
+    std::cout << mesh_xy.extents() << "\n";
 }

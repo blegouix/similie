@@ -91,9 +91,9 @@ ddc::detail::convert_type_seq_to_discrete_domain_t<TypeSeqDDim> Mesher<D, CDim..
     std::tuple<ddc::DiscreteDomain<ddc::type_seq_element_t<
             ddc::type_seq_rank_v<CDim, ddc::detail::TypeSeq<CDim...>>,
             TypeSeqDDim>>...>
-            doms;
+            meshs;
 
-    ((std ::get<ddc::type_seq_rank_v<CDim, ddc::detail::TypeSeq<CDim...>>>(doms)
+    ((std ::get<ddc::type_seq_rank_v<CDim, ddc::detail::TypeSeq<CDim...>>>(meshs)
       = std ::get<ddc::type_seq_rank_v<CDim, ddc::detail::TypeSeq<CDim...>>>(meshers)
                 .template mesh<
                         ddc::type_seq_element_t<
@@ -108,7 +108,7 @@ ddc::detail::convert_type_seq_to_discrete_domain_t<TypeSeqDDim> Mesher<D, CDim..
      ...);
 
     return ddc::detail::convert_type_seq_to_discrete_domain_t<TypeSeqDDim>(
-            std::get<ddc::type_seq_rank_v<CDim, ddc::detail::TypeSeq<CDim...>>>(doms)...);
+            std::get<ddc::type_seq_rank_v<CDim, ddc::detail::TypeSeq<CDim...>>>(meshs)...);
 }
 
 } // namespace mesher

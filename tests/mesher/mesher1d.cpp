@@ -27,5 +27,5 @@ struct DDimX : MesherX::discrete_dimension_type
 TEST(Mesher, 1D)
 {
     MesherX mesher;
-    ddc::DiscreteDomain<DDimX> dom_x = mesher.template mesh<DDimX, BSplinesX>(0., 1., 10);
+    ddc::DiscreteDomain<DDimX> mesh_x = mesher.template mesh<DDimX, BSplinesX>(0., 1., 10);
 }
