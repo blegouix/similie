@@ -8,7 +8,7 @@ namespace sil {
 
 namespace tensor {
 
-// struct representing an index mu in a tensor Tmunu.
+// struct representing an index mu or nu in a tensor Tmunu.
 template <class... CDim>
 struct TensorNaturalIndex
 {
@@ -33,7 +33,7 @@ concept TensorNaturalIndexConcept = requires(Index index)
     []<class... T>(TensorNaturalIndex<T...>&) {}(index);
 };
 
-// helpers to compute a layout stride
+// Helpers to compute the strides of a right layout
 namespace detail
 {
     template <std::size_t max_rank, class OTensorNaturalIndex, class... TensorNaturalIndex>
@@ -62,9 +62,9 @@ namespace detail
 
 } // namespace detail
 
-// struct representing an abstract unique index sweeping on all possible combination of natural indexes, taking in account the structure (full, symmetric...) of the tensor.
+// struct representing an abstract unique index sweeping on all possible combination of natural indexes, for a full tensor (dense with no particular structure).
 template <TensorNaturalIndexConcept... TensorNaturalIndex>
-struct TensorIndex
+struct FullTensorIndex
 {
     using type_seq_natural_tensor_indexes = ddc::detail::TypeSeq<TensorNaturalIndex...>;
 
@@ -76,8 +76,7 @@ struct TensorIndex
     template <class... CDim>
     static constexpr std::size_t id()
     {
-        // static_assert same size CDim and TensorNaturalIndex
-        // Stride = sum_n (prod_(j = 0 -> n-1) Size(j))*NaturalIndex(n)
+        static_assert(sizeof...(TensorNaturalIndex) == sizeof...(CDim));
         return ((detail::stride<TensorNaturalIndex, TensorNaturalIndex...>()
                  * TensorNaturalIndex::template id<ddc::type_seq_element_t<
                          ddc::type_seq_rank_v<
@@ -88,15 +87,7 @@ struct TensorIndex
     }
 };
 
-// Check that Index derives from TensorIndex despite the templating
-template <class Index>
-concept TensorIndexConcept = requires(Index index)
-{
-    []<class T>(TensorIndex<T>&) {}(index);
-};
-
-// TensorHandler defined from unique index
-// template <TensorIndexConcept Index> TODO
+// TensorHandler class, allows to build a domain which represents the tensor and access elements.
 template <class... Index>
 class TensorHandler
 {

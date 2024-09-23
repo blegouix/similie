@@ -26,7 +26,7 @@ struct Nu : sil::tensor::TensorNaturalIndex<X, Y, Z>
 {
 };
 
-struct Sigma : sil::tensor::TensorIndex<Mu, Nu>
+struct Sigma : sil::tensor::FullTensorIndex<Mu, Nu>
 {
 };
 
