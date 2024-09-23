@@ -30,7 +30,6 @@ struct Sigma : sil::tensor::TensorIndex<Mu, Nu>
 {
 };
 
-/*
 TEST(Tensor, NaturalIndexing)
 {
     sil::tensor::TensorHandler<Mu, Nu> tensor_handler;
@@ -44,14 +43,13 @@ TEST(Tensor, NaturalIndexing)
         }
     }
 
-    EXPECT_TRUE((tensor(tensor_handler.get_element<Y, X>()) == 0.));
-    EXPECT_TRUE((tensor(tensor_handler.get_element<Y, Y>()) == 1.));
-    EXPECT_TRUE((tensor(tensor_handler.get_element<Y, Z>()) == 2.));
-    EXPECT_TRUE((tensor(tensor_handler.get_element<Z, X>()) == 3.));
-    EXPECT_TRUE((tensor(tensor_handler.get_element<Z, Y>()) == 4.));
-    EXPECT_TRUE((tensor(tensor_handler.get_element<Z, Z>()) == 5.));
+    EXPECT_EQ(tensor(tensor_handler.get_element<Y, X>()), 0.);
+    EXPECT_EQ(tensor(tensor_handler.get_element<Y, Y>()), 1.);
+    EXPECT_EQ(tensor(tensor_handler.get_element<Y, Z>()), 2.);
+    EXPECT_EQ(tensor(tensor_handler.get_element<Z, X>()), 3.);
+    EXPECT_EQ(tensor(tensor_handler.get_element<Z, Y>()), 4.);
+    EXPECT_EQ(tensor(tensor_handler.get_element<Z, Z>()), 5.);
 }
-*/
 
 TEST(Tensor, NonNaturalIndexing)
 {
