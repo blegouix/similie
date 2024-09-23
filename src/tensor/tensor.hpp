@@ -20,7 +20,7 @@ struct TensorNaturalIndex
     }
 
     template <class ODim>
-    static constexpr std::size_t get_index()
+    static constexpr std::size_t id()
     {
         return ddc::type_seq_rank_v<ODim, type_seq_dimensions>;
     }
@@ -74,12 +74,12 @@ struct TensorIndex
     }
 
     template <class... CDim>
-    static constexpr std::size_t get_index()
+    static constexpr std::size_t id()
     {
         // static_assert same size CDim and TensorNaturalIndex
         // Stride = sum_n (prod_(j = 0 -> n-1) Size(j))*NaturalIndex(n)
         return ((detail::stride<TensorNaturalIndex, TensorNaturalIndex...>()
-                 * TensorNaturalIndex::template get_index<ddc::type_seq_element_t<
+                 * TensorNaturalIndex::template id<ddc::type_seq_element_t<
                          ddc::type_seq_rank_v<
                                  TensorNaturalIndex,
                                  ddc::detail::TypeSeq<TensorNaturalIndex...>>,
@@ -170,7 +170,7 @@ template <TensorIndexConcept Index>
 template <class... CDim>
 ddc::DiscreteElement<Index> TensorHandler<Index>::get_element()
 {
-    return ddc::DiscreteElement<Index>(Index::template get_index<CDim...>());
+    return ddc::DiscreteElement<Index>(Index::template id<CDim...>());
 }
 } // namespace tensor
 
