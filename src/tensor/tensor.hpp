@@ -4,6 +4,8 @@
 
 #include <ddc/ddc.hpp>
 
+#include <boost/math/special_functions/binomial.hpp>
+
 namespace sil {
 
 namespace tensor {
@@ -102,13 +104,29 @@ struct SymmetricTensorIndex
     static constexpr std::size_t id()
     {
         static_assert(sizeof...(TensorNaturalIndex) == sizeof...(CDim));
-        return ((detail::stride<TensorNaturalIndex, TensorNaturalIndex...>()
-                 * TensorNaturalIndex::template id<ddc::type_seq_element_t<
-                         ddc::type_seq_rank_v<
-                                 TensorNaturalIndex,
-                                 ddc::detail::TypeSeq<TensorNaturalIndex...>>,
-                         ddc::detail::TypeSeq<CDim...>>>())
-                + ...);
+        std::array<int, sizeof...(TensorNaturalIndex)> sorted_ids {
+                TensorNaturalIndex::template id<ddc::type_seq_element_t<
+                        ddc::type_seq_rank_v<
+                                TensorNaturalIndex,
+                                ddc::detail::TypeSeq<TensorNaturalIndex...>>,
+                        ddc::detail::TypeSeq<CDim...>>>()...};
+        std::sort(sorted_ids.begin(), sorted_ids.end());
+        std::size_t tmp = ((boost::math::binomial_coefficient<double>(
+                                    sorted_ids[ddc::type_seq_rank_v<
+                                            TensorNaturalIndex,
+                                            ddc::detail::TypeSeq<TensorNaturalIndex...>>]
+                                            + sizeof...(TensorNaturalIndex)
+                                            - ddc::type_seq_rank_v<
+                                                    TensorNaturalIndex,
+                                                    ddc::detail::TypeSeq<TensorNaturalIndex...>>,
+                                    sizeof...(TensorNaturalIndex)
+                                            - ddc::type_seq_rank_v<
+                                                    TensorNaturalIndex,
+                                                    ddc::detail::TypeSeq<TensorNaturalIndex...>>)
+                            + ...))
+                          - 2;
+        printf("%i\n", tmp);
+        return tmp;
     }
 };
 
