@@ -35,7 +35,7 @@ concept TensorNaturalIndexConcept = requires(Index index)
     []<class... T>(TensorNaturalIndex<T...>&) {}(index);
 };
 
-// Helpers to compute the strides of a right layout
+// Helpers to compute the strides of a right layout. This is necessary to support non-squared full tensors.
 namespace detail
 {
     template <std::size_t max_rank, class OTensorNaturalIndex, class... TensorNaturalIndex>
@@ -89,7 +89,7 @@ struct FullTensorIndex
     }
 };
 
-// struct representing an abstract unique index sweeping on all possible combination of natural indexes, for a full tensor (dense with no particular structure).
+// struct representing an abstract unique index sweeping on all possible combination of natural indexes, for a summetric tensor.
 template <TensorNaturalIndexConcept... TensorNaturalIndex>
 struct SymmetricTensorIndex
 {
@@ -111,32 +111,30 @@ struct SymmetricTensorIndex
                                 ddc::detail::TypeSeq<TensorNaturalIndex...>>,
                         ddc::detail::TypeSeq<CDim...>>>()...};
         std::sort(sorted_ids.begin(), sorted_ids.end());
-        std::size_t tmp
-                = ((boost::math::binomial_coefficient<double>(
-                            TensorNaturalIndex::dim_size() + sizeof...(TensorNaturalIndex)
-                                    - ddc::type_seq_rank_v<
-                                            TensorNaturalIndex,
-                                            ddc::detail::TypeSeq<TensorNaturalIndex...>> - 1,
-                            sizeof...(TensorNaturalIndex)
-                                    - ddc::type_seq_rank_v<
-                                            TensorNaturalIndex,
-                                            ddc::detail::TypeSeq<TensorNaturalIndex...>>)
-                    - boost::math::binomial_coefficient<double>(
-                            TensorNaturalIndex::dim_size()
-                                    - sorted_ids[ddc::type_seq_rank_v<
-                                            TensorNaturalIndex,
-                                            ddc::detail::TypeSeq<TensorNaturalIndex...>>]
-                                    + sizeof...(TensorNaturalIndex)
-                                    - ddc::type_seq_rank_v<
-                                            TensorNaturalIndex,
-                                            ddc::detail::TypeSeq<TensorNaturalIndex...>> - 1,
-                            sizeof...(TensorNaturalIndex)
-                                    - ddc::type_seq_rank_v<
-                                            TensorNaturalIndex,
-                                            ddc::detail::TypeSeq<TensorNaturalIndex...>>))
-                   + ...);
-        printf("%i\n", tmp);
-        return tmp;
+        return boost::math::binomial_coefficient<double>(
+                       std::min({TensorNaturalIndex::dim_size()...}) + sizeof...(TensorNaturalIndex)
+                               - 1,
+                       sizeof...(TensorNaturalIndex))
+               - ((sorted_ids[ddc::type_seq_rank_v<
+                           TensorNaturalIndex,
+                           ddc::detail::TypeSeq<TensorNaturalIndex...>>]
+                                   == TensorNaturalIndex::dim_size() - 1
+                           ? 0
+                           : boost::math::binomial_coefficient<double>(
+                                   TensorNaturalIndex::dim_size()
+                                           - sorted_ids[ddc::type_seq_rank_v<
+                                                   TensorNaturalIndex,
+                                                   ddc::detail::TypeSeq<TensorNaturalIndex...>>]
+                                           + sizeof...(TensorNaturalIndex)
+                                           - ddc::type_seq_rank_v<
+                                                   TensorNaturalIndex,
+                                                   ddc::detail::TypeSeq<TensorNaturalIndex...>> - 2,
+                                   sizeof...(TensorNaturalIndex)
+                                           - ddc::type_seq_rank_v<
+                                                   TensorNaturalIndex,
+                                                   ddc::detail::TypeSeq<TensorNaturalIndex...>>))
+                  + ...)
+               - 1;
     }
 };
 

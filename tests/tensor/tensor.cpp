@@ -89,15 +89,6 @@ TEST(Tensor, SymmetricTensorIndexing)
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
     ddc::ChunkSpan tensor = tensor_alloc.span_view();
 
-    /*
-    for (int i = 0; i < 3; ++i) {
-        for (int j = 0; j < 3 - i; ++j) {
-            tensor(ddc::DiscreteElement<Sigma>(6 - (3 - i) * (3 - i + 1) / 2 + j))
-                    = 6 - (3 - i) * (3 - i + 1) / 2 + j;
-            std::cout << 6 - (3 - i) * (3 - i + 1) / 2 + j;
-        }
-    }
-*/
     for (int i = 0; i < 6; ++i) {
         tensor(ddc::DiscreteElement<Sigma>(i)) = i;
     }
