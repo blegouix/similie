@@ -87,15 +87,15 @@ struct FullTensorIndex
     }
 };
 
-// TensorHandler class, allows to build a domain which represents the tensor and access elements.
+// TensorAccessor class, allows to build a domain which represents the tensor and access elements.
 template <class... Index>
-class TensorHandler
+class TensorAccessor
 {
 private:
     ddc::DiscreteDomain<Index...> const m_tensor_dom;
 
 public:
-    explicit TensorHandler();
+    explicit TensorAccessor();
 
     ddc::DiscreteDomain<Index...> get_domain();
 
@@ -107,7 +107,7 @@ public:
 };
 
 template <class... Index>
-TensorHandler<Index...>::TensorHandler()
+TensorAccessor<Index...>::TensorAccessor()
     : m_tensor_dom(
             ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(0)...),
             ddc::DiscreteVector<Index...>(ddc::DiscreteVector<Index>(Index::dim_size())...))
@@ -115,7 +115,7 @@ TensorHandler<Index...>::TensorHandler()
 }
 
 template <class... Index>
-ddc::DiscreteDomain<Index...> TensorHandler<Index...>::get_domain()
+ddc::DiscreteDomain<Index...> TensorAccessor<Index...>::get_domain()
 {
     return m_tensor_dom;
 }
@@ -123,7 +123,7 @@ ddc::DiscreteDomain<Index...> TensorHandler<Index...>::get_domain()
 template <class... Index>
 template <class... CDim>
 requires(!TensorNaturalIndexConcept<Index> && ...)
-        ddc::DiscreteElement<Index...> TensorHandler<Index...>::get_element()
+        ddc::DiscreteElement<Index...> TensorAccessor<Index...>::get_element()
 {
     return ddc::DiscreteElement<Index...>(
             ddc::DiscreteElement<Index>(Index::template id<CDim...>())...);
@@ -132,7 +132,7 @@ requires(!TensorNaturalIndexConcept<Index> && ...)
 template <class... Index>
 template <class... CDim>
 requires(TensorNaturalIndexConcept<Index>&&...)
-        ddc::DiscreteElement<Index...> TensorHandler<Index...>::get_element()
+        ddc::DiscreteElement<Index...> TensorAccessor<Index...>::get_element()
 {
     return ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(
             Index::template id<ddc::type_seq_element_t<
