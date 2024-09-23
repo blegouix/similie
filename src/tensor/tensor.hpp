@@ -40,9 +40,8 @@ namespace detail
     static constexpr std::size_t stride_factor()
     {
         if constexpr (
-                ddc::type_seq_rank_v<
-                        OTensorNaturalIndex,
-                        ddc::detail::TypeSeq<TensorNaturalIndex...>> <= max_rank) {
+                ddc::type_seq_rank_v < OTensorNaturalIndex,
+                ddc::detail::TypeSeq < TensorNaturalIndex... >>> max_rank) {
             return OTensorNaturalIndex::dim_size();
         } else {
             return 1;
@@ -55,7 +54,7 @@ namespace detail
         return (stride_factor<
                         ddc::type_seq_rank_v<
                                 OTensorNaturalIndex,
-                                ddc::detail::TypeSeq<TensorNaturalIndex...>> - 1,
+                                ddc::detail::TypeSeq<TensorNaturalIndex...>>,
                         TensorNaturalIndex,
                         TensorNaturalIndex...>()
                 * ...);
