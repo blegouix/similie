@@ -66,7 +66,32 @@ namespace detail
 template <TensorNaturalIndexConcept... TensorNaturalIndex>
 struct FullTensorIndex
 {
-    using type_seq_natural_tensor_indexes = ddc::detail::TypeSeq<TensorNaturalIndex...>;
+    using type_seq_tensor_natural_indexes = ddc::detail::TypeSeq<TensorNaturalIndex...>;
+
+    static constexpr std::size_t dim_size()
+    {
+        return (TensorNaturalIndex::dim_size() * ...);
+    }
+
+    template <class... CDim>
+    static constexpr std::size_t id()
+    {
+        static_assert(sizeof...(TensorNaturalIndex) == sizeof...(CDim));
+        return ((detail::stride<TensorNaturalIndex, TensorNaturalIndex...>()
+                 * TensorNaturalIndex::template id<ddc::type_seq_element_t<
+                         ddc::type_seq_rank_v<
+                                 TensorNaturalIndex,
+                                 ddc::detail::TypeSeq<TensorNaturalIndex...>>,
+                         ddc::detail::TypeSeq<CDim...>>>())
+                + ...);
+    }
+};
+
+// struct representing an abstract unique index sweeping on all possible combination of natural indexes, for a full tensor (dense with no particular structure).
+template <TensorNaturalIndexConcept... TensorNaturalIndex>
+struct SymmetricTensorIndex
+{
+    using type_seq_tensor_natural_indexes = ddc::detail::TypeSeq<TensorNaturalIndex...>;
 
     static constexpr std::size_t dim_size()
     {
