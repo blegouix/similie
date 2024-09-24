@@ -219,9 +219,22 @@ namespace detail
         }
     };
 
+    template <class CDimTypeSeq, class RanksIndexSeq>
+    struct TypeSeqDimsAtRanks;
+
+    template <class CDimTypeSeq, std::size_t... Rank>
+    struct TypeSeqDimsAtRanks<CDimTypeSeq, std::integer_sequence<std::size_t, Rank...>>
+    {
+        using type = ddc::detail::TypeSeq<ddc::type_seq_element_t<Rank, CDimTypeSeq>...>;
+    };
+
+    template <class CDimTypeSeq, class RanksIndexSeq>
+    using type_seq_dims_at_ranks_t = TypeSeqDimsAtRanks<CDimTypeSeq, RanksIndexSeq>::type;
+    /*
     template <class CDimTypeSeq, std::size_t... Rank>
     using type_seq_dims_at_ranks
             = ddc::detail::TypeSeq<ddc::type_seq_element_t<Rank, CDimTypeSeq>...>;
+*/
 
     template <class Index, class>
     struct IdFromTypeSeqDims;
@@ -239,12 +252,13 @@ namespace detail
     static constexpr std::size_t recursive_id()
     {
         std::size_t rank_before_index = RankBeforeIndex<Index, IndexesTypeSeq>::run(0);
+        std::size_t const index_rank = Index::rank();
         return IdFromTypeSeqDims<
                 Index,
-                typename type_seq_dims_at_ranks<
+                typename type_seq_dims_at_ranks_t<
                         ddc::detail::TypeSeq<CDim...>,
                         rank_before_index
-                                + std::make_integer_sequence<std::size_t, Index::rank()>>>::run();
+                                + std::make_integer_sequence<std::size_t, index_rank>>>::run();
     }
 
 } // namespace detail
