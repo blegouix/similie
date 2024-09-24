@@ -202,19 +202,19 @@ requires(!TensorNaturalIndexConcept<Index> && ...)
 
 namespace detail
 {
-    template <class Index, class IndexesTypeSeq>
+    template <class Index, class...>
     struct RankBeforeIndex;
 
-    template <class Index, class IndexesTypeSeq>
-    struct RankBeforeIndex<Index, ddc::detail::TypeSeq<HeadIndex, Index_...>>
+    template <class Index, class IndexHead, class... IndexTail>
+    struct RankBeforeIndex<Index, ddc::detail::TypeSeq<IndexHead, IndexTail...>>
     {
-        static constexpr run(std::size_t rank_before_index)
+        static constexpr std::size_t run(std::size_t rank_before_index)
         {
-            if constexpr (std::is_same_v<HeadIndex, Index>) {
+            if constexpr (std::is_same_v<IndexHead, Index>) {
                 return rank_before_index;
             } else {
-                return RankBeforeIndex<Index, ddc::detail::TypeSeq<Index_...>>::run(
-                        rank_before_index + HeadIndex::rank());
+                return RankBeforeIndex<Index, ddc::detail::TypeSeq<IndexTail...>>::run(
+                        rank_before_index + IndexHead::rank());
             }
         }
     };
@@ -223,10 +223,10 @@ namespace detail
     using type_seq_dims_at_ranks
             = ddc::detail::TypeSeq<ddc::type_seq_element_t<Rank, CDimTypeSeq>...>;
 
-    template <class Index, class CDimTypeSeq>
+    template <class Index, class>
     struct IdFromTypeSeqDims;
 
-    template <class Index, class CDimTypeSeq>
+    template <class Index, class... CDim>
     struct IdFromTypeSeqDims<Index, ddc::detail::TypeSeq<CDim...>>
     {
         static constexpr std::size_t run()
@@ -235,20 +235,7 @@ namespace detail
         }
     };
 
-    template <class CDim>
-    static constexpr std::size_t id_from_type_seq_dim()
-    {
-        static_assert(rank() == sizeof...(CDim));
-        return ((detail::stride<TensorNaturalIndex, TensorNaturalIndex...>()
-                 * TensorNaturalIndex::template id<ddc::type_seq_element_t<
-                         ddc::type_seq_rank_v<
-                                 TensorNaturalIndex,
-                                 ddc::detail::TypeSeq<TensorNaturalIndex...>>,
-                         ddc::detail::TypeSeq<CDim...>>>())
-                + ...);
-    }
-
-    template <class Index, class IndexesTypeSeq, class CDim...>
+    template <class Index, class IndexesTypeSeq, class... CDim>
     static constexpr std::size_t recursive_id()
     {
         std::size_t rank_before_index = RankBeforeIndex<Index, IndexesTypeSeq>::run(0);
@@ -257,7 +244,7 @@ namespace detail
                 typename type_seq_dims_at_ranks<
                         ddc::detail::TypeSeq<CDim...>,
                         rank_before_index
-                                + std::make_index_sequence<std::size_t, Index::rank()>>>::run();
+                                + std::make_integer_sequence<std::size_t, Index::rank()>>>::run();
     }
 
 } // namespace detail
