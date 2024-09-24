@@ -218,10 +218,15 @@ private:
 public:
     explicit TensorAccessor();
 
-    ddc::DiscreteDomain<Index...> get_domain();
+    ddc::DiscreteDomain<Index...> domain();
 
     template <class... CDim>
-    ddc::DiscreteElement<Index...> get_element();
+    ddc::DiscreteElement<Index...> element();
+
+    template <class T, class Domain, class MemorySpace, class... DDim>
+    T operator()(
+            ddc::ChunkSpan<T, Domain, std::experimental::layout_right, MemorySpace> tensor_field,
+            ddc::DiscreteElement<DDim...> elem);
 };
 
 template <class... Index>
@@ -233,17 +238,26 @@ TensorAccessor<Index...>::TensorAccessor()
 }
 
 template <class... Index>
-ddc::DiscreteDomain<Index...> TensorAccessor<Index...>::get_domain()
+ddc::DiscreteDomain<Index...> TensorAccessor<Index...>::domain()
 {
     return m_tensor_dom;
 }
 
 template <class... Index>
 template <class... CDim>
-ddc::DiscreteElement<Index...> TensorAccessor<Index...>::get_element()
+ddc::DiscreteElement<Index...> TensorAccessor<Index...>::element()
 {
     return ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(
             detail::id<Index, ddc::detail::TypeSeq<Index...>, CDim...>())...);
+}
+
+template <class... Index>
+template <class T, class Domain, class MemorySpace, class... DDim>
+T TensorAccessor<Index...>::operator()(
+        ddc::ChunkSpan<T, Domain, std::experimental::layout_right, MemorySpace> tensor_field,
+        ddc::DiscreteElement<DDim...> elem)
+{
+    return tensor_field(ddc::DiscreteElement<DDim...>(elem));
 }
 } // namespace tensor
 
