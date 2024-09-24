@@ -153,7 +153,6 @@ TEST(Tensor, PartiallySymmetricTensorIndexing3x2x2)
     }
 
     EXPECT_EQ(tensor(tensor_accessor.get_element<X, Y, Y>()), 0.);
-    /*
     EXPECT_EQ(tensor(tensor_accessor.get_element<X, Y, Z>()), 1.);
     EXPECT_EQ(tensor(tensor_accessor.get_element<X, Z, Y>()), 1.);
     EXPECT_EQ(tensor(tensor_accessor.get_element<X, Z, Z>()), 2.);
@@ -165,5 +164,4 @@ TEST(Tensor, PartiallySymmetricTensorIndexing3x2x2)
     EXPECT_EQ(tensor(tensor_accessor.get_element<Z, Y, Z>()), 7.);
     EXPECT_EQ(tensor(tensor_accessor.get_element<Z, Z, Y>()), 7.);
     EXPECT_EQ(tensor(tensor_accessor.get_element<Z, Z, Z>()), 8.);
-*/
 }

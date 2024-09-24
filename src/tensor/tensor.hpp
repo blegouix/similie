@@ -42,32 +42,106 @@ concept TensorNaturalIndexConcept = requires(Index index)
     []<class... T>(TensorNaturalIndex<T...>&) {}(index);
 };
 
-// Helpers to compute the strides of a right layout. This is necessary to support non-squared full tensors.
 namespace detail
 {
-    template <std::size_t max_rank, class OTensorNaturalIndex, class... TensorNaturalIndex>
-    static constexpr std::size_t stride_factor()
+    template <class Index, class...>
+    struct RankBeforeIndex;
+
+    template <class Index, class IndexHead, class... IndexTail>
+    struct RankBeforeIndex<Index, ddc::detail::TypeSeq<IndexHead, IndexTail...>>
     {
-        if constexpr (
-                ddc::type_seq_rank_v < OTensorNaturalIndex,
-                ddc::detail::TypeSeq < TensorNaturalIndex... >>> max_rank) {
-            return OTensorNaturalIndex::dim_size();
-        } else {
-            return 1;
+        static constexpr std::size_t run(std::size_t rank_before_index)
+        {
+            if constexpr (std::is_same_v<IndexHead, Index>) {
+                return rank_before_index;
+            } else {
+                return RankBeforeIndex<Index, ddc::detail::TypeSeq<IndexTail...>>::run(
+                        rank_before_index + IndexHead::rank());
+            }
         }
+    };
+
+    template <std::size_t Offset, class IndexSeq>
+    struct OffsetIndexSeq;
+
+    template <std::size_t Offset, std::size_t... Is>
+    struct OffsetIndexSeq<Offset, std::integer_sequence<std::size_t, Is...>>
+    {
+        using type = std::integer_sequence<std::size_t, Offset + Is...>;
+    };
+
+    template <std::size_t Offset, class IndexSeq>
+    using offset_index_seq_t = OffsetIndexSeq<Offset, IndexSeq>::type;
+
+    template <class CDimTypeSeq, class RanksIndexSeq>
+    struct TypeSeqDimsAtRanks;
+
+    template <class CDimTypeSeq, std::size_t... Rank>
+    struct TypeSeqDimsAtRanks<CDimTypeSeq, std::integer_sequence<std::size_t, Rank...>>
+    {
+        using type = ddc::detail::TypeSeq<ddc::type_seq_element_t<Rank, CDimTypeSeq>...>;
+    };
+
+    template <class CDimTypeSeq, class RanksIndexSeq>
+    using type_seq_dims_at_ranks_t = TypeSeqDimsAtRanks<CDimTypeSeq, RanksIndexSeq>::type;
+
+    /*
+    template <class CDimTypeSeq, std::size_t... Rank>
+    using type_seq_dims_at_ranks
+            = ddc::detail::TypeSeq<ddc::type_seq_element_t<Rank, CDimTypeSeq>...>;
+*/
+
+    template <class Index, class TypeSeqDims>
+    struct IdFromTypeSeqDims;
+
+    template <class Index, class... CDim>
+    struct IdFromTypeSeqDims<Index, ddc::detail::TypeSeq<CDim...>>
+    {
+        static constexpr std::size_t run()
+        {
+            return Index::template id<CDim...>();
+        }
+    };
+
+    template <class Index, class IndexesTypeSeq, class... CDim>
+    static constexpr std::size_t recursive_id()
+    {
+        return IdFromTypeSeqDims<
+                Index,
+                type_seq_dims_at_ranks_t<
+                        ddc::detail::TypeSeq<CDim...>,
+                        offset_index_seq_t<
+                                RankBeforeIndex<Index, IndexesTypeSeq>::run(0),
+                                std::make_integer_sequence<std::size_t, Index::rank()>>>>::run();
     }
 
-    template <class OTensorNaturalIndex, class... TensorNaturalIndex>
-    static constexpr std::size_t stride()
-    {
-        return (stride_factor<
-                        ddc::type_seq_rank_v<
-                                OTensorNaturalIndex,
-                                ddc::detail::TypeSeq<TensorNaturalIndex...>>,
-                        TensorNaturalIndex,
-                        TensorNaturalIndex...>()
-                * ...);
+} // namespace detail
+
+// Helpers to compute the strides of a right layout. This is necessary to support non-squared full tensors.
+namespace detail {
+template <std::size_t max_rank, class OTensorNaturalIndex, class... TensorNaturalIndex>
+static constexpr std::size_t stride_factor()
+{
+    if constexpr (
+            ddc::type_seq_rank_v < OTensorNaturalIndex,
+            ddc::detail::TypeSeq < TensorNaturalIndex... >>> max_rank) {
+        return OTensorNaturalIndex::dim_size();
+    } else {
+        return 1;
     }
+}
+
+template <class OTensorNaturalIndex, class... TensorNaturalIndex>
+static constexpr std::size_t stride()
+{
+    return (stride_factor<
+                    ddc::type_seq_rank_v<
+                            OTensorNaturalIndex,
+                            ddc::detail::TypeSeq<TensorNaturalIndex...>>,
+                    TensorNaturalIndex,
+                    TensorNaturalIndex...>()
+            * ...);
+}
 
 } // namespace detail
 
@@ -93,11 +167,10 @@ struct FullTensorIndex
     {
         //static_assert(rank() == sizeof...(CDim));
         return ((detail::stride<TensorNaturalIndex, TensorNaturalIndex...>()
-                 * TensorNaturalIndex::template id<ddc::type_seq_element_t<
-                         ddc::type_seq_rank_v<
-                                 TensorNaturalIndex,
-                                 ddc::detail::TypeSeq<TensorNaturalIndex...>>,
-                         ddc::detail::TypeSeq<CDim...>>>())
+                 * detail::recursive_id<
+                         TensorNaturalIndex,
+                         ddc::detail::TypeSeq<TensorNaturalIndex...>,
+                         CDim...>())
                 + ...);
     }
 };
@@ -190,79 +263,6 @@ ddc::DiscreteDomain<Index...> TensorAccessor<Index...>::get_domain()
 {
     return m_tensor_dom;
 }
-
-namespace detail {
-template <class Index, class...>
-struct RankBeforeIndex;
-
-template <class Index, class IndexHead, class... IndexTail>
-struct RankBeforeIndex<Index, ddc::detail::TypeSeq<IndexHead, IndexTail...>>
-{
-    static constexpr std::size_t run(std::size_t rank_before_index)
-    {
-        if constexpr (std::is_same_v<IndexHead, Index>) {
-            return rank_before_index;
-        } else {
-            return RankBeforeIndex<Index, ddc::detail::TypeSeq<IndexTail...>>::run(
-                    rank_before_index + IndexHead::rank());
-        }
-    }
-};
-
-template <std::size_t Offset, class IndexSeq>
-struct OffsetIndexSeq;
-
-template <std::size_t Offset, std::size_t... Is>
-struct OffsetIndexSeq<Offset, std::integer_sequence<std::size_t, Is...>>
-{
-    using type = std::integer_sequence<std::size_t, Offset + Is...>;
-};
-
-template <std::size_t Offset, class IndexSeq>
-using offset_index_seq_t = OffsetIndexSeq<Offset, IndexSeq>::type;
-
-template <class CDimTypeSeq, class RanksIndexSeq>
-struct TypeSeqDimsAtRanks;
-
-template <class CDimTypeSeq, std::size_t... Rank>
-struct TypeSeqDimsAtRanks<CDimTypeSeq, std::integer_sequence<std::size_t, Rank...>>
-{
-    using type = ddc::detail::TypeSeq<ddc::type_seq_element_t<Rank, CDimTypeSeq>...>;
-};
-
-template <class CDimTypeSeq, class RanksIndexSeq>
-using type_seq_dims_at_ranks_t = TypeSeqDimsAtRanks<CDimTypeSeq, RanksIndexSeq>::type;
-/*
-    template <class CDimTypeSeq, std::size_t... Rank>
-    using type_seq_dims_at_ranks
-            = ddc::detail::TypeSeq<ddc::type_seq_element_t<Rank, CDimTypeSeq>...>;
-*/
-
-template <class Index, class TypeSeqDims>
-struct IdFromTypeSeqDims;
-
-template <class Index, class... CDim>
-struct IdFromTypeSeqDims<Index, ddc::detail::TypeSeq<CDim...>>
-{
-    static constexpr std::size_t run()
-    {
-        return Index::template id<CDim...>();
-    }
-};
-
-template <class Index, class IndexesTypeSeq, class... CDim>
-static constexpr std::size_t recursive_id()
-{
-    return IdFromTypeSeqDims<
-            Index,
-            type_seq_dims_at_ranks_t<
-                    ddc::detail::TypeSeq<CDim...>,
-                    offset_index_seq_t<
-                            RankBeforeIndex<Index, IndexesTypeSeq>::run(0),
-                            std::make_integer_sequence<std::size_t, Index::rank()>>>>::run();
-}
-
-} // namespace detail
 
 template <class... Index>
 template <class... CDim>
