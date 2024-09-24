@@ -33,85 +33,77 @@ struct TensorNaturalIndex
     }
 };
 
-// Check that Index derives from TensorNaturalIndex despite the templating
-template <class Index>
-concept TensorNaturalIndexConcept = requires(Index index)
+// Helpers to build the id() function which computes the ids of subindexes of an index.
+namespace detail {
+// For Tmunu and index=nu, returns 1
+template <class Index, class...>
+struct NbDimsBeforeIndex;
+
+template <class Index, class IndexHead, class... IndexTail>
+struct NbDimsBeforeIndex<Index, ddc::detail::TypeSeq<IndexHead, IndexTail...>>
 {
-    []<class... T>(TensorNaturalIndex<T...>&) {}(index);
+    static constexpr std::size_t run(std::size_t nb_dims_before_index)
+    {
+        if constexpr (std::is_same_v<IndexHead, Index>) {
+            return nb_dims_before_index;
+        } else {
+            return NbDimsBeforeIndex<Index, ddc::detail::TypeSeq<IndexTail...>>::run(
+                    nb_dims_before_index + IndexHead::rank());
+        }
+    }
 };
 
-// Helpers to build the id() function which computes the ids of subindexes of an index.
-namespace detail
+// Offset and index sequence
+template <std::size_t Offset, class IndexSeq>
+struct OffsetIndexSeq;
+
+template <std::size_t Offset, std::size_t... Is>
+struct OffsetIndexSeq<Offset, std::integer_sequence<std::size_t, Is...>>
 {
-    // For Tmunu and index=nu, returns 1
-    template <class Index, class...>
-    struct NbDimsBeforeIndex;
+    using type = std::integer_sequence<std::size_t, Offset + Is...>;
+};
 
-    template <class Index, class IndexHead, class... IndexTail>
-    struct NbDimsBeforeIndex<Index, ddc::detail::TypeSeq<IndexHead, IndexTail...>>
+template <std::size_t Offset, class IndexSeq>
+using offset_index_seq_t = OffsetIndexSeq<Offset, IndexSeq>::type;
+
+// Returns dimensions from integers (ie. for Tmunu, <1> gives nu)
+template <class CDimTypeSeq, class IndexSeq>
+struct TypeSeqDimsAtInts;
+
+template <class CDimTypeSeq, std::size_t... Is>
+struct TypeSeqDimsAtInts<CDimTypeSeq, std::integer_sequence<std::size_t, Is...>>
+{
+    using type = ddc::detail::TypeSeq<ddc::type_seq_element_t<Is, CDimTypeSeq>...>;
+};
+
+template <class CDimTypeSeq, class IndexSeq>
+using type_seq_dims_at_ints_t = TypeSeqDimsAtInts<CDimTypeSeq, IndexSeq>::type;
+
+// Returns Index::id but from a type seq (in place of a variadic template CDim...)
+template <class Index, class TypeSeqDims>
+struct IdFromTypeSeqDims;
+
+template <class Index, class... CDim>
+struct IdFromTypeSeqDims<Index, ddc::detail::TypeSeq<CDim...>>
+{
+    static constexpr std::size_t run()
     {
-        static constexpr std::size_t run(std::size_t nb_dims_before_index)
-        {
-            if constexpr (std::is_same_v<IndexHead, Index>) {
-                return nb_dims_before_index;
-            } else {
-                return NbDimsBeforeIndex<Index, ddc::detail::TypeSeq<IndexTail...>>::run(
-                        nb_dims_before_index + IndexHead::rank());
-            }
-        }
-    };
-
-    // Offset and index sequence
-    template <std::size_t Offset, class IndexSeq>
-    struct OffsetIndexSeq;
-
-    template <std::size_t Offset, std::size_t... Is>
-    struct OffsetIndexSeq<Offset, std::integer_sequence<std::size_t, Is...>>
-    {
-        using type = std::integer_sequence<std::size_t, Offset + Is...>;
-    };
-
-    template <std::size_t Offset, class IndexSeq>
-    using offset_index_seq_t = OffsetIndexSeq<Offset, IndexSeq>::type;
-
-    // Returns dimensions from integers (ie. for Tmunu, <1> gives nu)
-    template <class CDimTypeSeq, class IndexSeq>
-    struct TypeSeqDimsAtInts;
-
-    template <class CDimTypeSeq, std::size_t... Is>
-    struct TypeSeqDimsAtInts<CDimTypeSeq, std::integer_sequence<std::size_t, Is...>>
-    {
-        using type = ddc::detail::TypeSeq<ddc::type_seq_element_t<Is, CDimTypeSeq>...>;
-    };
-
-    template <class CDimTypeSeq, class IndexSeq>
-    using type_seq_dims_at_ints_t = TypeSeqDimsAtInts<CDimTypeSeq, IndexSeq>::type;
-
-    // Returns Index::id but from a type seq (in place of a variadic template CDim...)
-    template <class Index, class TypeSeqDims>
-    struct IdFromTypeSeqDims;
-
-    template <class Index, class... CDim>
-    struct IdFromTypeSeqDims<Index, ddc::detail::TypeSeq<CDim...>>
-    {
-        static constexpr std::size_t run()
-        {
-            return Index::template id<CDim...>();
-        }
-    };
-
-    // Returns Index::id for the subindex Index of the IndexesTypeSeq
-    template <class Index, class IndexesTypeSeq, class... CDim>
-    static constexpr std::size_t id()
-    {
-        return IdFromTypeSeqDims<
-                Index,
-                type_seq_dims_at_ints_t<
-                        ddc::detail::TypeSeq<CDim...>,
-                        offset_index_seq_t<
-                                NbDimsBeforeIndex<Index, IndexesTypeSeq>::run(0),
-                                std::make_integer_sequence<std::size_t, Index::rank()>>>>::run();
+        return Index::template id<CDim...>();
     }
+};
+
+// Returns Index::id for the subindex Index of the IndexesTypeSeq
+template <class Index, class IndexesTypeSeq, class... CDim>
+static constexpr std::size_t id()
+{
+    return IdFromTypeSeqDims<
+            Index,
+            type_seq_dims_at_ints_t<
+                    ddc::detail::TypeSeq<CDim...>,
+                    offset_index_seq_t<
+                            NbDimsBeforeIndex<Index, IndexesTypeSeq>::run(0),
+                            std::make_integer_sequence<std::size_t, Index::rank()>>>>::run();
+}
 
 } // namespace detail
 
@@ -144,7 +136,6 @@ static constexpr std::size_t stride()
 } // namespace detail
 
 // struct representing an abstract unique index sweeping on all possible combination of natural indexes, for a full tensor (dense with no particular structure).
-// template <TensorNaturalIndexConcept... TensorNaturalIndex>
 template <class... TensorIndex>
 struct FullTensorIndex
 {
@@ -169,7 +160,6 @@ struct FullTensorIndex
 };
 
 // struct representing an abstract unique index sweeping on all possible combination of natural indexes, for a summetric tensor.
-// template <TensorNaturalIndexConcept... TensorNaturalIndex>
 template <class... TensorIndex>
 struct SymmetricTensorIndex
 {
