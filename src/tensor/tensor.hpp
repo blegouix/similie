@@ -223,10 +223,20 @@ public:
     template <class... CDim>
     ddc::DiscreteElement<Index...> element();
 
+    // getter
     template <class T, class Domain, class MemorySpace, class... DDim>
     T operator()(
             ddc::ChunkSpan<T, Domain, std::experimental::layout_right, MemorySpace> tensor_field,
             ddc::DiscreteElement<DDim...> elem);
+
+    // TODO operator[] ?
+
+    // setter
+    template <class T, class Domain, class MemorySpace, class... DDim>
+    void set(
+            ddc::ChunkSpan<T, Domain, std::experimental::layout_right, MemorySpace> tensor_field,
+            ddc::DiscreteElement<DDim...> elem,
+            T value);
 };
 
 template <class... Index>
@@ -257,8 +267,19 @@ T TensorAccessor<Index...>::operator()(
         ddc::ChunkSpan<T, Domain, std::experimental::layout_right, MemorySpace> tensor_field,
         ddc::DiscreteElement<DDim...> elem)
 {
-    return tensor_field(ddc::DiscreteElement<DDim...>(elem));
+    return tensor_field(elem);
 }
+
+template <class... Index>
+template <class T, class Domain, class MemorySpace, class... DDim>
+void TensorAccessor<Index...>::set(
+        ddc::ChunkSpan<T, Domain, std::experimental::layout_right, MemorySpace> tensor_field,
+        ddc::DiscreteElement<DDim...> elem,
+        T value)
+{
+    tensor_field(elem) = value;
+}
+
 } // namespace tensor
 
 } // namespace sil

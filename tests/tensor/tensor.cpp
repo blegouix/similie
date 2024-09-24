@@ -47,11 +47,20 @@ TEST(Tensor, NaturalIndexing)
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
     ddc::ChunkSpan tensor = tensor_alloc.span_view();
 
+    /*
     for (int i = 0; i < 2; ++i) {
         for (int j = 0; j < 3; ++j) {
             tensor(ddc::DiscreteElement<Alpha, Nu>(i, j)) = i * 3 + j;
         }
     }
+    */
+
+    tensor_accessor.set(tensor, tensor_accessor.element<Y, X>(), 0.);
+    tensor_accessor.set(tensor, tensor_accessor.element<Y, Y>(), 1.);
+    tensor_accessor.set(tensor, tensor_accessor.element<Y, Z>(), 2.);
+    tensor_accessor.set(tensor, tensor_accessor.element<Z, X>(), 3.);
+    tensor_accessor.set(tensor, tensor_accessor.element<Z, Y>(), 4.);
+    tensor_accessor.set(tensor, tensor_accessor.element<Z, Z>(), 5.);
 
     EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Y, X>()), 0.);
     EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Y, Y>()), 1.);
@@ -72,11 +81,20 @@ TEST(Tensor, FullTensorIndexing)
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
     ddc::ChunkSpan tensor = tensor_alloc.span_view();
 
+    /*
     for (int i = 0; i < 2; ++i) {
         for (int j = 0; j < 3; ++j) {
             tensor(ddc::DiscreteElement<Rho>(i * 3 + j)) = i * 3 + j;
         }
     }
+    */
+
+    tensor_accessor.set(tensor, tensor_accessor.element<Y, X>(), 0.);
+    tensor_accessor.set(tensor, tensor_accessor.element<Y, Y>(), 1.);
+    tensor_accessor.set(tensor, tensor_accessor.element<Y, Z>(), 2.);
+    tensor_accessor.set(tensor, tensor_accessor.element<Z, X>(), 3.);
+    tensor_accessor.set(tensor, tensor_accessor.element<Z, Y>(), 4.);
+    tensor_accessor.set(tensor, tensor_accessor.element<Z, Z>(), 5.);
 
     EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Y, X>()), 0.);
     EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Y, Y>()), 1.);
@@ -97,9 +115,18 @@ TEST(Tensor, SymmetricTensorIndexing3x3)
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
     ddc::ChunkSpan tensor = tensor_alloc.span_view();
 
+    /*
     for (int i = 0; i < 6; ++i) {
         tensor(ddc::DiscreteElement<Sigma>(i)) = i;
     }
+    */
+
+    tensor_accessor.set(tensor, tensor_accessor.element<X, X>(), 0.);
+    tensor_accessor.set(tensor, tensor_accessor.element<X, Y>(), 1.);
+    tensor_accessor.set(tensor, tensor_accessor.element<X, Z>(), 2.);
+    tensor_accessor.set(tensor, tensor_accessor.element<Y, Y>(), 3.);
+    tensor_accessor.set(tensor, tensor_accessor.element<Y, Z>(), 4.);
+    tensor_accessor.set(tensor, tensor_accessor.element<Z, Z>(), 5.);
 
     EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<X, X>()), 0.);
     EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<X, Y>()), 1.);
@@ -123,9 +150,16 @@ TEST(Tensor, SymmetricTensorIndexing2x2x2)
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
     ddc::ChunkSpan tensor = tensor_alloc.span_view();
 
+    /*
     for (int i = 0; i < 4; ++i) {
         tensor(ddc::DiscreteElement<Tau>(i)) = i;
     }
+    */
+
+    tensor_accessor.set(tensor, tensor_accessor.element<Y, Y, Y>(), 0.);
+    tensor_accessor.set(tensor, tensor_accessor.element<Y, Y, Z>(), 1.);
+    tensor_accessor.set(tensor, tensor_accessor.element<Y, Z, Z>(), 2.);
+    tensor_accessor.set(tensor, tensor_accessor.element<Z, Z, Z>(), 3.);
 
     EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Y, Y, Y>()), 0.);
     EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Y, Y, Z>()), 1.);
@@ -148,9 +182,21 @@ TEST(Tensor, PartiallySymmetricTensorIndexing3x2x2)
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
     ddc::ChunkSpan tensor = tensor_alloc.span_view();
 
+    /*
     for (int i = 0; i < 9; ++i) {
         tensor(ddc::DiscreteElement<Upsilon>(i)) = i;
     }
+    */
+
+    tensor_accessor.set(tensor, tensor_accessor.element<X, Y, Y>(), 0.);
+    tensor_accessor.set(tensor, tensor_accessor.element<X, Y, Z>(), 1.);
+    tensor_accessor.set(tensor, tensor_accessor.element<X, Z, Z>(), 2.);
+    tensor_accessor.set(tensor, tensor_accessor.element<Y, Y, Y>(), 3.);
+    tensor_accessor.set(tensor, tensor_accessor.element<Y, Y, Z>(), 4.);
+    tensor_accessor.set(tensor, tensor_accessor.element<Y, Z, Z>(), 5.);
+    tensor_accessor.set(tensor, tensor_accessor.element<Z, Y, Y>(), 6.);
+    tensor_accessor.set(tensor, tensor_accessor.element<Z, Y, Z>(), 7.);
+    tensor_accessor.set(tensor, tensor_accessor.element<Z, Z, Z>(), 8.);
 
     EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<X, Y, Y>()), 0.);
     EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<X, Y, Z>()), 1.);
