@@ -136,3 +136,34 @@ TEST(Tensor, SymmetricTensorIndexing2x2x2)
     EXPECT_EQ(tensor(tensor_accessor.get_element<Z, Z, Y>()), 2.);
     EXPECT_EQ(tensor(tensor_accessor.get_element<Z, Z, Z>()), 3.);
 }
+
+struct Upsilon : sil::tensor::FullTensorIndex<Mu, sil::tensor::SymmetricTensorIndex<Alpha, Beta>>
+{
+};
+
+TEST(Tensor, PartiallySymmetricTensorIndexing3x2x2)
+{
+    sil::tensor::TensorAccessor<Upsilon> tensor_accessor;
+    ddc::DiscreteDomain<Upsilon> tensor_dom = tensor_accessor.get_domain();
+    ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
+    ddc::ChunkSpan tensor = tensor_alloc.span_view();
+
+    for (int i = 0; i < 9; ++i) {
+        tensor(ddc::DiscreteElement<Upsilon>(i)) = i;
+    }
+
+    EXPECT_EQ(tensor(tensor_accessor.get_element<X, Y, Y>()), 0.);
+    /*
+    EXPECT_EQ(tensor(tensor_accessor.get_element<X, Y, Z>()), 1.);
+    EXPECT_EQ(tensor(tensor_accessor.get_element<X, Z, Y>()), 1.);
+    EXPECT_EQ(tensor(tensor_accessor.get_element<X, Z, Z>()), 2.);
+    EXPECT_EQ(tensor(tensor_accessor.get_element<Y, Y, Y>()), 3.);
+    EXPECT_EQ(tensor(tensor_accessor.get_element<Y, Y, Z>()), 4.);
+    EXPECT_EQ(tensor(tensor_accessor.get_element<Y, Z, Y>()), 4.);
+    EXPECT_EQ(tensor(tensor_accessor.get_element<Y, Z, Z>()), 5.);
+    EXPECT_EQ(tensor(tensor_accessor.get_element<Z, Y, Y>()), 6.);
+    EXPECT_EQ(tensor(tensor_accessor.get_element<Z, Y, Z>()), 7.);
+    EXPECT_EQ(tensor(tensor_accessor.get_element<Z, Z, Y>()), 7.);
+    EXPECT_EQ(tensor(tensor_accessor.get_element<Z, Z, Z>()), 8.);
+*/
+}
