@@ -20,11 +20,19 @@ struct Z
 {
 };
 
-struct Lambda : sil::tensor::TensorNaturalIndex<X, Y, Z>
+struct Alpha : sil::tensor::TensorNaturalIndex<Y, Z>
 {
 };
 
-struct Mu : sil::tensor::TensorNaturalIndex<Y, Z>
+struct Beta : sil::tensor::TensorNaturalIndex<Y, Z>
+{
+};
+
+struct Gamma : sil::tensor::TensorNaturalIndex<Y, Z>
+{
+};
+
+struct Mu : sil::tensor::TensorNaturalIndex<X, Y, Z>
 {
 };
 
@@ -34,14 +42,14 @@ struct Nu : sil::tensor::TensorNaturalIndex<X, Y, Z>
 
 TEST(Tensor, NaturalIndexing)
 {
-    sil::tensor::TensorAccessor<Mu, Nu> tensor_accessor;
-    ddc::DiscreteDomain<Mu, Nu> tensor_dom = tensor_accessor.get_domain();
+    sil::tensor::TensorAccessor<Alpha, Nu> tensor_accessor;
+    ddc::DiscreteDomain<Alpha, Nu> tensor_dom = tensor_accessor.get_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
     ddc::ChunkSpan tensor = tensor_alloc.span_view();
 
     for (int i = 0; i < 2; ++i) {
         for (int j = 0; j < 3; ++j) {
-            tensor(ddc::DiscreteElement<Mu, Nu>(i, j)) = i * 3 + j;
+            tensor(ddc::DiscreteElement<Alpha, Nu>(i, j)) = i * 3 + j;
         }
     }
 
@@ -53,7 +61,7 @@ TEST(Tensor, NaturalIndexing)
     EXPECT_EQ(tensor(tensor_accessor.get_element<Z, Z>()), 5.);
 }
 
-struct Rho : sil::tensor::FullTensorIndex<Mu, Nu>
+struct Rho : sil::tensor::FullTensorIndex<Alpha, Nu>
 {
 };
 
@@ -78,7 +86,7 @@ TEST(Tensor, FullTensorIndexing)
     EXPECT_EQ(tensor(tensor_accessor.get_element<Z, Z>()), 5.);
 }
 
-struct Sigma : sil::tensor::SymmetricTensorIndex<Lambda, Nu>
+struct Sigma : sil::tensor::SymmetricTensorIndex<Mu, Nu>
 {
 };
 
