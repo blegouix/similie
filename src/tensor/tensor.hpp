@@ -171,10 +171,10 @@ public:
     ddc::DiscreteDomain<Index...> get_domain();
 
     template <class... CDim>
-    requires(!TensorNaturalIndexConcept<Index> && ...) ddc::DiscreteElement<Index...> get_element();
+    requires(TensorNaturalIndexConcept<Index>&&...) ddc::DiscreteElement<Index...> get_element();
 
     template <class... CDim>
-    requires(TensorNaturalIndexConcept<Index>&&...) ddc::DiscreteElement<Index...> get_element();
+    requires(!TensorNaturalIndexConcept<Index> || ...) ddc::DiscreteElement<Index...> get_element();
 };
 
 template <class... Index>
@@ -277,7 +277,7 @@ requires(TensorNaturalIndexConcept<Index>&&...)
 
 template <class... Index>
 template <class... CDim>
-requires(!TensorNaturalIndexConcept<Index> && ...)
+requires(!TensorNaturalIndexConcept<Index> || ...)
         ddc::DiscreteElement<Index...> TensorAccessor<Index...>::get_element()
 {
     return ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(
