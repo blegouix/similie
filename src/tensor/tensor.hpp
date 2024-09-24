@@ -180,8 +180,9 @@ struct SymmetricTensorIndex
 
     static constexpr std::size_t dim_size()
     {
-        // TODO FIX
-        return (TensorIndex::dim_size() * ...);
+        return boost::math::binomial_coefficient<double>(
+                std::min({TensorIndex::dim_size()...}) + sizeof...(TensorIndex) - 1,
+                sizeof...(TensorIndex));
     }
 
     template <class... CDim>
@@ -230,10 +231,7 @@ public:
     ddc::DiscreteDomain<Index...> get_domain();
 
     template <class... CDim>
-    requires(TensorNaturalIndexConcept<Index>&&...) ddc::DiscreteElement<Index...> get_element();
-
-    template <class... CDim>
-    requires(!TensorNaturalIndexConcept<Index> || ...) ddc::DiscreteElement<Index...> get_element();
+    ddc::DiscreteElement<Index...> get_element();
 };
 
 template <class... Index>
@@ -252,19 +250,7 @@ ddc::DiscreteDomain<Index...> TensorAccessor<Index...>::get_domain()
 
 template <class... Index>
 template <class... CDim>
-requires(TensorNaturalIndexConcept<Index>&&...)
-        ddc::DiscreteElement<Index...> TensorAccessor<Index...>::get_element()
-{
-    return ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(
-            Index::template id<ddc::type_seq_element_t<
-                    ddc::type_seq_rank_v<Index, ddc::detail::TypeSeq<Index...>>,
-                    ddc::detail::TypeSeq<CDim...>>>())...);
-}
-
-template <class... Index>
-template <class... CDim>
-requires(!TensorNaturalIndexConcept<Index> || ...)
-        ddc::DiscreteElement<Index...> TensorAccessor<Index...>::get_element()
+ddc::DiscreteElement<Index...> TensorAccessor<Index...>::get_element()
 {
     return ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(
             detail::id<Index, ddc::detail::TypeSeq<Index...>, CDim...>())...);
