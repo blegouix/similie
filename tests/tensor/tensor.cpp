@@ -90,7 +90,7 @@ struct Sigma : sil::tensor::SymmetricTensorIndex<Mu, Nu>
 {
 };
 
-TEST(Tensor, SymmetricTensorIndexing)
+TEST(Tensor, SymmetricTensorIndexing3x3)
 {
     sil::tensor::TensorAccessor<Sigma> tensor_accessor;
     ddc::DiscreteDomain<Sigma> tensor_dom = tensor_accessor.get_domain();
@@ -110,4 +110,29 @@ TEST(Tensor, SymmetricTensorIndexing)
     EXPECT_EQ(tensor(tensor_accessor.get_element<Z, X>()), 2.);
     EXPECT_EQ(tensor(tensor_accessor.get_element<Z, Y>()), 4.);
     EXPECT_EQ(tensor(tensor_accessor.get_element<Z, Z>()), 5.);
+}
+
+struct Tau : sil::tensor::SymmetricTensorIndex<Alpha, Beta, Gamma>
+{
+};
+
+TEST(Tensor, SymmetricTensorIndexing2x2x2)
+{
+    sil::tensor::TensorAccessor<Tau> tensor_accessor;
+    ddc::DiscreteDomain<Tau> tensor_dom = tensor_accessor.get_domain();
+    ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
+    ddc::ChunkSpan tensor = tensor_alloc.span_view();
+
+    for (int i = 0; i < 4; ++i) {
+        tensor(ddc::DiscreteElement<Tau>(i)) = i;
+    }
+
+    EXPECT_EQ(tensor(tensor_accessor.get_element<Y, Y, Y>()), 0.);
+    EXPECT_EQ(tensor(tensor_accessor.get_element<Y, Y, Z>()), 1.);
+    EXPECT_EQ(tensor(tensor_accessor.get_element<Y, Z, Y>()), 1.);
+    EXPECT_EQ(tensor(tensor_accessor.get_element<Y, Z, Z>()), 2.);
+    EXPECT_EQ(tensor(tensor_accessor.get_element<Z, Y, Y>()), 1.);
+    EXPECT_EQ(tensor(tensor_accessor.get_element<Z, Y, Z>()), 2.);
+    EXPECT_EQ(tensor(tensor_accessor.get_element<Z, Z, Y>()), 2.);
+    EXPECT_EQ(tensor(tensor_accessor.get_element<Z, Z, Z>()), 3.);
 }
