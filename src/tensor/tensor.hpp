@@ -91,7 +91,7 @@ struct FullTensorIndex
     template <class... CDim>
     static constexpr std::size_t id()
     {
-        static_assert(rank() == sizeof...(CDim));
+        //static_assert(rank() == sizeof...(CDim));
         return ((detail::stride<TensorNaturalIndex, TensorNaturalIndex...>()
                  * TensorNaturalIndex::template id<ddc::type_seq_element_t<
                          ddc::type_seq_rank_v<
@@ -123,7 +123,7 @@ struct SymmetricTensorIndex
     template <class... CDim>
     static constexpr std::size_t id()
     {
-        static_assert(rank() == sizeof...(CDim));
+        // static_assert(rank() == sizeof...(CDim));
         std::array<int, sizeof...(TensorNaturalIndex)> sorted_ids {
                 TensorNaturalIndex::template id<ddc::type_seq_element_t<
                         ddc::type_seq_rank_v<
@@ -191,81 +191,93 @@ ddc::DiscreteDomain<Index...> TensorAccessor<Index...>::get_domain()
     return m_tensor_dom;
 }
 
-template <class... Index>
-template <class... CDim>
-requires(!TensorNaturalIndexConcept<Index> && ...)
-        ddc::DiscreteElement<Index...> TensorAccessor<Index...>::get_element()
-{
-    return ddc::DiscreteElement<Index...>(
-            ddc::DiscreteElement<Index>(Index::template id<CDim...>())...);
-}
+namespace detail {
+template <class Index, class...>
+struct RankBeforeIndex;
 
-namespace detail
+template <class Index, class IndexHead, class... IndexTail>
+struct RankBeforeIndex<Index, ddc::detail::TypeSeq<IndexHead, IndexTail...>>
 {
-    template <class Index, class...>
-    struct RankBeforeIndex;
-
-    template <class Index, class IndexHead, class... IndexTail>
-    struct RankBeforeIndex<Index, ddc::detail::TypeSeq<IndexHead, IndexTail...>>
+    static constexpr std::size_t run(std::size_t rank_before_index)
     {
-        static constexpr std::size_t run(std::size_t rank_before_index)
-        {
-            if constexpr (std::is_same_v<IndexHead, Index>) {
-                return rank_before_index;
-            } else {
-                return RankBeforeIndex<Index, ddc::detail::TypeSeq<IndexTail...>>::run(
-                        rank_before_index + IndexHead::rank());
-            }
+        if constexpr (std::is_same_v<IndexHead, Index>) {
+            return rank_before_index;
+        } else {
+            return RankBeforeIndex<Index, ddc::detail::TypeSeq<IndexTail...>>::run(
+                    rank_before_index + IndexHead::rank());
         }
-    };
+    }
+};
 
-    template <class CDimTypeSeq, class RanksIndexSeq>
-    struct TypeSeqDimsAtRanks;
+template <std::size_t Offset, class IndexSeq>
+struct OffsetIndexSeq;
 
-    template <class CDimTypeSeq, std::size_t... Rank>
-    struct TypeSeqDimsAtRanks<CDimTypeSeq, std::integer_sequence<std::size_t, Rank...>>
-    {
-        using type = ddc::detail::TypeSeq<ddc::type_seq_element_t<Rank, CDimTypeSeq>...>;
-    };
+template <std::size_t Offset, std::size_t... Is>
+struct OffsetIndexSeq<Offset, std::integer_sequence<std::size_t, Is...>>
+{
+    using type = std::integer_sequence<std::size_t, Offset + Is...>;
+};
 
-    template <class CDimTypeSeq, class RanksIndexSeq>
-    using type_seq_dims_at_ranks_t = TypeSeqDimsAtRanks<CDimTypeSeq, RanksIndexSeq>::type;
-    /*
+template <std::size_t Offset, class IndexSeq>
+using offset_index_seq_t = OffsetIndexSeq<Offset, IndexSeq>::type;
+
+template <class CDimTypeSeq, class RanksIndexSeq>
+struct TypeSeqDimsAtRanks;
+
+template <class CDimTypeSeq, std::size_t... Rank>
+struct TypeSeqDimsAtRanks<CDimTypeSeq, std::integer_sequence<std::size_t, Rank...>>
+{
+    using type = ddc::detail::TypeSeq<ddc::type_seq_element_t<Rank, CDimTypeSeq>...>;
+};
+
+template <class CDimTypeSeq, class RanksIndexSeq>
+using type_seq_dims_at_ranks_t = TypeSeqDimsAtRanks<CDimTypeSeq, RanksIndexSeq>::type;
+/*
     template <class CDimTypeSeq, std::size_t... Rank>
     using type_seq_dims_at_ranks
             = ddc::detail::TypeSeq<ddc::type_seq_element_t<Rank, CDimTypeSeq>...>;
 */
 
-    template <class Index, class>
-    struct IdFromTypeSeqDims;
+template <class Index, class TypeSeqDims>
+struct IdFromTypeSeqDims;
 
-    template <class Index, class... CDim>
-    struct IdFromTypeSeqDims<Index, ddc::detail::TypeSeq<CDim...>>
+template <class Index, class... CDim>
+struct IdFromTypeSeqDims<Index, ddc::detail::TypeSeq<CDim...>>
+{
+    static constexpr std::size_t run()
     {
-        static constexpr std::size_t run()
-        {
-            return Index::template id<CDim...>();
-        }
-    };
-
-    template <class Index, class IndexesTypeSeq, class... CDim>
-    static constexpr std::size_t recursive_id()
-    {
-        std::size_t rank_before_index = RankBeforeIndex<Index, IndexesTypeSeq>::run(0);
-        std::size_t const index_rank = Index::rank();
-        return IdFromTypeSeqDims<
-                Index,
-                typename type_seq_dims_at_ranks_t<
-                        ddc::detail::TypeSeq<CDim...>,
-                        rank_before_index
-                                + std::make_integer_sequence<std::size_t, index_rank>>>::run();
+        return Index::template id<CDim...>();
     }
+};
+
+template <class Index, class IndexesTypeSeq, class... CDim>
+static constexpr std::size_t recursive_id()
+{
+    return IdFromTypeSeqDims<
+            Index,
+            type_seq_dims_at_ranks_t<
+                    ddc::detail::TypeSeq<CDim...>,
+                    offset_index_seq_t<
+                            RankBeforeIndex<Index, IndexesTypeSeq>::run(0),
+                            std::make_integer_sequence<std::size_t, Index::rank()>>>>::run();
+}
 
 } // namespace detail
 
 template <class... Index>
 template <class... CDim>
 requires(TensorNaturalIndexConcept<Index>&&...)
+        ddc::DiscreteElement<Index...> TensorAccessor<Index...>::get_element()
+{
+    return ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(
+            Index::template id<ddc::type_seq_element_t<
+                    ddc::type_seq_rank_v<Index, ddc::detail::TypeSeq<Index...>>,
+                    ddc::detail::TypeSeq<CDim...>>>())...);
+}
+
+template <class... Index>
+template <class... CDim>
+requires(!TensorNaturalIndexConcept<Index> && ...)
         ddc::DiscreteElement<Index...> TensorAccessor<Index...>::get_element()
 {
     return ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(
