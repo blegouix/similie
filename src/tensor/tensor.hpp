@@ -14,6 +14,8 @@ namespace tensor {
 template <class... CDim>
 struct TensorNaturalIndex
 {
+    using index_type = TensorNaturalIndex<>;
+
     using type_seq_dimensions = ddc::detail::TypeSeq<CDim...>;
 
     static constexpr std::size_t rank()
@@ -139,6 +141,8 @@ static constexpr std::size_t stride()
 template <class... TensorIndex>
 struct FullTensorIndex
 {
+    using index_type = FullTensorIndex<>;
+
     static constexpr std::size_t rank()
     {
         return (TensorIndex::rank() + ...);
@@ -163,6 +167,8 @@ struct FullTensorIndex
 template <class... TensorIndex>
 struct SymmetricTensorIndex
 {
+    using index_type = SymmetricTensorIndex<>;
+
     static constexpr std::size_t rank()
     {
         return (TensorIndex::rank() + ...);
@@ -172,6 +178,57 @@ struct SymmetricTensorIndex
     {
         return boost::math::binomial_coefficient<double>(
                 std::min({TensorIndex::dim_size()...}) + sizeof...(TensorIndex) - 1,
+                sizeof...(TensorIndex));
+    }
+
+    template <class... CDim>
+    static constexpr std::size_t id()
+    {
+        // static_assert(rank() == sizeof...(CDim));
+        std::array<int, sizeof...(TensorIndex)> sorted_ids {
+                detail::id<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>, CDim...>()...};
+        std::sort(sorted_ids.begin(), sorted_ids.end());
+        return boost::math::binomial_coefficient<double>(
+                       std::min({TensorIndex::dim_size()...}) + sizeof...(TensorIndex) - 1,
+                       sizeof...(TensorIndex))
+               - ((sorted_ids[ddc::type_seq_rank_v<
+                           TensorIndex,
+                           ddc::detail::TypeSeq<TensorIndex...>>]
+                                   == TensorIndex::dim_size() - 1
+                           ? 0
+                           : boost::math::binomial_coefficient<double>(
+                                   TensorIndex::dim_size()
+                                           - sorted_ids[ddc::type_seq_rank_v<
+                                                   TensorIndex,
+                                                   ddc::detail::TypeSeq<TensorIndex...>>]
+                                           + sizeof...(TensorIndex)
+                                           - ddc::type_seq_rank_v<
+                                                   TensorIndex,
+                                                   ddc::detail::TypeSeq<TensorIndex...>> - 2,
+                                   sizeof...(TensorIndex)
+                                           - ddc::type_seq_rank_v<
+                                                   TensorIndex,
+                                                   ddc::detail::TypeSeq<TensorIndex...>>))
+                  + ...)
+               - 1;
+    }
+};
+
+// struct representing an abstract unique index sweeping on all possible combination of natural indexes, for an antisummetric tensor.
+template <class... TensorIndex>
+struct AntisymmetricTensorIndex
+{
+    using index_type = SymmetricTensorIndex<>;
+
+    static constexpr std::size_t rank()
+    {
+        return (TensorIndex::rank() + ...);
+    }
+
+    static constexpr std::size_t dim_size()
+    {
+        return boost::math::binomial_coefficient<double>(
+                std::min({TensorIndex::dim_size()...}) + sizeof...(TensorIndex) - 2,
                 sizeof...(TensorIndex));
     }
 
@@ -261,13 +318,62 @@ ddc::DiscreteElement<Index...> TensorAccessor<Index...>::element()
             detail::id<Index, ddc::detail::TypeSeq<Index...>, CDim...>())...);
 }
 
+// Helpers to handle antisymmetry (eventual multiplication with -1) or non-stored zeros
+namespace detail {
+template <
+        class TensorField,
+        class Element,
+        class IndexHeadsTypeSeq,
+        class IndexInterest,
+        class... IndexTail>
+struct Access;
+
+template <class TensorField, class Element, class... IndexHead, class IndexInterest>
+struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInterest>
+{
+    static constexpr auto run(TensorField tensor_field, Element elem)
+    {
+        if constexpr (std::is_same_v<
+                              typename IndexInterest::index_type,
+                              AntisymmetricTensorIndex<>>) {
+            return -tensor_field(elem);
+        } else {
+            return tensor_field(elem);
+        }
+    }
+};
+
+template <
+        class TensorField,
+        class Element,
+        class... IndexHead,
+        class IndexInterest,
+        class... IndexTail>
+struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInterest, IndexTail...>
+{
+    static constexpr auto run(TensorField tensor_field, Element elem)
+    {
+        return Access<
+                TensorField,
+                Element,
+                ddc::detail::TypeSeq<IndexHead..., IndexInterest>,
+                IndexTail...>::run(tensor_field, elem);
+    }
+};
+
+} // namespace detail
+
 template <class... Index>
 template <class T, class Domain, class MemorySpace, class... DDim>
 T TensorAccessor<Index...>::operator()(
         ddc::ChunkSpan<T, Domain, std::experimental::layout_right, MemorySpace> tensor_field,
         ddc::DiscreteElement<DDim...> elem)
 {
-    return tensor_field(elem);
+    return detail::Access<
+            ddc::ChunkSpan<T, Domain, std::experimental::layout_right, MemorySpace>,
+            ddc::DiscreteElement<DDim...>,
+            ddc::detail::TypeSeq<>,
+            Index...>::run(tensor_field, elem);
 }
 
 template <class... Index>

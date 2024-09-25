@@ -171,20 +171,54 @@ TEST(Tensor, SymmetricTensorIndexing2x2x2)
     EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Z, Z, Z>()), 3.);
 }
 
-struct Upsilon : sil::tensor::FullTensorIndex<Mu, sil::tensor::SymmetricTensorIndex<Alpha, Beta>>
+struct Upsilon : sil::tensor::AntisymmetricTensorIndex<Mu, Nu>
 {
 };
 
-TEST(Tensor, PartiallySymmetricTensorIndexing3x2x2)
+TEST(Tensor, AntisymmetricTensorIndexing3x3)
 {
     sil::tensor::TensorAccessor<Upsilon> tensor_accessor;
     ddc::DiscreteDomain<Upsilon> tensor_dom = tensor_accessor.domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
     ddc::ChunkSpan tensor = tensor_alloc.span_view();
 
+    for (int i = 0; i < 3; ++i) {
+        tensor(ddc::DiscreteElement<Upsilon>(i)) = i + 1;
+    }
+
+    /*
+    tensor_accessor.set(tensor, tensor_accessor.element<X, Y>(), 1.);
+    tensor_accessor.set(tensor, tensor_accessor.element<X, Z>(), 2.);
+    tensor_accessor.set(tensor, tensor_accessor.element<Y, Z>(), 3.);
+    */
+
+    //EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<X, X>()), 0.);
+    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<X, Y>()), 1.);
+    /*
+    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<X, Z>()), 2.);
+    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Y, X>()), -1.);
+    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Y, Y>()), 0.);
+    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Y, Z>()), 3.);
+    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Z, X>()), -2.);
+    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Z, Y>()), -3.);
+    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Z, Z>()), 0.);
+*/
+}
+
+struct Phi : sil::tensor::FullTensorIndex<Mu, sil::tensor::SymmetricTensorIndex<Alpha, Beta>>
+{
+};
+
+TEST(Tensor, PartiallySymmetricTensorIndexing3x2x2)
+{
+    sil::tensor::TensorAccessor<Phi> tensor_accessor;
+    ddc::DiscreteDomain<Phi> tensor_dom = tensor_accessor.domain();
+    ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
+    ddc::ChunkSpan tensor = tensor_alloc.span_view();
+
     /*
     for (int i = 0; i < 9; ++i) {
-        tensor(ddc::DiscreteElement<Upsilon>(i)) = i;
+        tensor(ddc::DiscreteElement<Phi>(i)) = i;
     }
     */
 
