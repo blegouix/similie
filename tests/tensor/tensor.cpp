@@ -189,7 +189,7 @@ TEST(Tensor, AntisymmetricTensorIndexing3x3)
             tensor(tensor_alloc.data_handle(), tensor_dom);
 
     for (int i = 1; i < 4; ++i) {
-        tensor.set(static_cast<double>(i), ddc::DiscreteElement<Upsilon>(i));
+        tensor(ddc::DiscreteElement<Upsilon>(i)) = i;
     }
 
     /*

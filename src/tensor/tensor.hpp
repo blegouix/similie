@@ -429,16 +429,15 @@ template <class TensorField, class Element, class... IndexHead, class IndexInter
 struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInterest>
 {
     template <class Element2>
-    static constexpr TensorField::reference run(TensorField tensor_field, Element2 const& elem)
+    static constexpr TensorField::element_type run(TensorField tensor_field, Element2 const& elem)
     {
         if constexpr (detail::is_tensor_index_v<IndexInterest>) {
             if constexpr (std::is_same_v<
                                   typename IndexInterest::index_type,
                                   AntisymmetricTensorIndex<>>) {
-                std::cout << elem.template uid<IndexInterest>();
                 return tensor_field(
-                        replace_access_id_with_mem_id<IndexInterest, IndexHead..., IndexInterest>(
-                                elem));
+
+                        elem);
                 /*
                 if constexpr (ddc::DiscreteElement<IndexInterest>(elem).uid() == 0) {
                     return 0.;
@@ -469,13 +468,12 @@ template <
 struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInterest, IndexTail...>
 {
     template <class Element2>
-    static constexpr TensorField::reference run(TensorField tensor_field, Element2 const& elem)
+    static constexpr TensorField::element_type run(TensorField tensor_field, Element2 const& elem)
     {
         if constexpr (detail::is_tensor_index_v<IndexInterest>) {
             if constexpr (std::is_same_v<
                                   typename IndexInterest::index_type,
                                   AntisymmetricTensorIndex<>>) {
-                std::cout << elem.template uid<IndexInterest>();
                 return Access<
                         TensorField,
                         Element,
@@ -545,7 +543,7 @@ public:
             operator();
 
     template <class... DElems>
-    KOKKOS_FUNCTION constexpr reference get(DElems const&... delems) const noexcept
+    KOKKOS_FUNCTION constexpr ElementType get(DElems const&... delems) const noexcept
     {
         return detail::Access<
                 Tensor<ElementType,
@@ -584,17 +582,17 @@ public:
     }
 
     template <class... DElems>
-    KOKKOS_FUNCTION constexpr void set(ElementType value, DElems const&... delems) const noexcept
+    KOKKOS_FUNCTION constexpr reference operator()(DElems const&... delems) const noexcept
     {
-        detail::Access<
-                Tensor<ElementType,
-                       ddc::DiscreteDomain<DDim...>,
-                       std::experimental::layout_right,
-                       MemorySpace>,
-                ddc::DiscreteElement<DDim...>,
-                ddc::detail::TypeSeq<>,
-                DDim...>::run(*this, ddc::DiscreteElement(delems...))
-                = value;
+        return ddc::ChunkSpan<
+                ElementType,
+                ddc::DiscreteDomain<DDim...>,
+                LayoutStridedPolicy,
+                MemorySpace>::
+        operator()(ddc::DiscreteElement<DDim...>(
+                (detail::is_tensor_index_v<DDim>
+                         ? DDim::access_id_to_mem_id(ddc::DiscreteElement<DDim>(delems...).uid())
+                         : ddc::DiscreteElement<DDim>(delems).uid())...));
     }
 };
 
