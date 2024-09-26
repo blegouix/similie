@@ -45,7 +45,12 @@ TEST(Tensor, NaturalIndexing)
     sil::tensor::TensorAccessor<Alpha, Nu> tensor_accessor;
     ddc::DiscreteDomain<Alpha, Nu> tensor_dom = tensor_accessor.domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
-    ddc::ChunkSpan tensor = tensor_alloc.span_view();
+    sil::tensor::Tensor<
+            double,
+            ddc::DiscreteDomain<Alpha, Nu>,
+            std::experimental::layout_right,
+            Kokkos::DefaultHostExecutionSpace::memory_space>
+            tensor(tensor_alloc);
 
     /*
     for (int i = 0; i < 2; ++i) {
@@ -55,12 +60,32 @@ TEST(Tensor, NaturalIndexing)
     }
     */
 
+    // TODO FIX
+    /*
+    tensor(tensor_accessor.element<Y, X>()) = 0.;
+    tensor(tensor_accessor.element<Y, Y>()) = 1.;
+    tensor(tensor_accessor.element<Y, Z>()) = 2.;
+    tensor(tensor_accessor.element<Z, X>()) = 3.;
+    tensor(tensor_accessor.element<Z, Y>()) = 4.;
+    tensor(tensor_accessor.element<Z, Z>()) = 5.;
+    */
+
     tensor_accessor.set(tensor, tensor_accessor.element<Y, X>(), 0.);
     tensor_accessor.set(tensor, tensor_accessor.element<Y, Y>(), 1.);
     tensor_accessor.set(tensor, tensor_accessor.element<Y, Z>(), 2.);
     tensor_accessor.set(tensor, tensor_accessor.element<Z, X>(), 3.);
     tensor_accessor.set(tensor, tensor_accessor.element<Z, Y>(), 4.);
     tensor_accessor.set(tensor, tensor_accessor.element<Z, Z>(), 5.);
+
+    // TODO FIX
+    /*
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, X>()), 0.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, Y>()), 1.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, Z>()), 2.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, X>()), 3.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Y>()), 4.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Z>()), 5.);
+    */
 
     EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Y, X>()), 0.);
     EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Y, Y>()), 1.);
@@ -79,7 +104,12 @@ TEST(Tensor, FullTensorIndexing)
     sil::tensor::TensorAccessor<Rho> tensor_accessor;
     ddc::DiscreteDomain<Rho> tensor_dom = tensor_accessor.domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
-    ddc::ChunkSpan tensor = tensor_alloc.span_view();
+    sil::tensor::Tensor<
+            double,
+            ddc::DiscreteDomain<Rho>,
+            std::experimental::layout_right,
+            Kokkos::DefaultHostExecutionSpace::memory_space>
+            tensor(tensor_alloc);
 
     /*
     for (int i = 0; i < 2; ++i) {
@@ -89,19 +119,19 @@ TEST(Tensor, FullTensorIndexing)
     }
     */
 
-    tensor_accessor.set(tensor, tensor_accessor.element<Y, X>(), 0.);
-    tensor_accessor.set(tensor, tensor_accessor.element<Y, Y>(), 1.);
-    tensor_accessor.set(tensor, tensor_accessor.element<Y, Z>(), 2.);
-    tensor_accessor.set(tensor, tensor_accessor.element<Z, X>(), 3.);
-    tensor_accessor.set(tensor, tensor_accessor.element<Z, Y>(), 4.);
-    tensor_accessor.set(tensor, tensor_accessor.element<Z, Z>(), 5.);
+    tensor(tensor_accessor.element<Y, X>()) = 0.;
+    tensor(tensor_accessor.element<Y, Y>()) = 1.;
+    tensor(tensor_accessor.element<Y, Z>()) = 2.;
+    tensor(tensor_accessor.element<Z, X>()) = 3.;
+    tensor(tensor_accessor.element<Z, Y>()) = 4.;
+    tensor(tensor_accessor.element<Z, Z>()) = 5.;
 
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Y, X>()), 0.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Y, Y>()), 1.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Y, Z>()), 2.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Z, X>()), 3.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Z, Y>()), 4.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Z, Z>()), 5.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, X>()), 0.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, Y>()), 1.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, Z>()), 2.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, X>()), 3.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Y>()), 4.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Z>()), 5.);
 }
 
 struct Sigma : sil::tensor::SymmetricTensorIndex<Mu, Nu>
@@ -113,7 +143,13 @@ TEST(Tensor, SymmetricTensorIndexing3x3)
     sil::tensor::TensorAccessor<Sigma> tensor_accessor;
     ddc::DiscreteDomain<Sigma> tensor_dom = tensor_accessor.domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
-    ddc::ChunkSpan tensor = tensor_alloc.span_view();
+    sil::tensor::Tensor<
+            double,
+            ddc::DiscreteDomain<Sigma>,
+            std::experimental::layout_right,
+            Kokkos::DefaultHostExecutionSpace::memory_space>
+            tensor(tensor_alloc);
+
 
     /*
     for (int i = 0; i < 6; ++i) {
@@ -121,22 +157,22 @@ TEST(Tensor, SymmetricTensorIndexing3x3)
     }
     */
 
-    tensor_accessor.set(tensor, tensor_accessor.element<X, X>(), 0.);
-    tensor_accessor.set(tensor, tensor_accessor.element<X, Y>(), 1.);
-    tensor_accessor.set(tensor, tensor_accessor.element<X, Z>(), 2.);
-    tensor_accessor.set(tensor, tensor_accessor.element<Y, Y>(), 3.);
-    tensor_accessor.set(tensor, tensor_accessor.element<Y, Z>(), 4.);
-    tensor_accessor.set(tensor, tensor_accessor.element<Z, Z>(), 5.);
+    tensor(tensor_accessor.element<X, X>()) = 0.;
+    tensor(tensor_accessor.element<X, Y>()) = 1.;
+    tensor(tensor_accessor.element<X, Z>()) = 2.;
+    tensor(tensor_accessor.element<Y, Y>()) = 3.;
+    tensor(tensor_accessor.element<Y, Z>()) = 4.;
+    tensor(tensor_accessor.element<Z, Z>()) = 5.;
 
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<X, X>()), 0.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<X, Y>()), 1.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<X, Z>()), 2.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Y, X>()), 1.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Y, Y>()), 3.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Y, Z>()), 4.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Z, X>()), 2.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Z, Y>()), 4.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Z, Z>()), 5.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<X, X>()), 0.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<X, Y>()), 1.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<X, Z>()), 2.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, X>()), 1.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, Y>()), 3.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, Z>()), 4.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, X>()), 2.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Y>()), 4.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Z>()), 5.);
 }
 
 struct Tau : sil::tensor::SymmetricTensorIndex<Alpha, Beta, Gamma>
@@ -148,7 +184,12 @@ TEST(Tensor, SymmetricTensorIndexing2x2x2)
     sil::tensor::TensorAccessor<Tau> tensor_accessor;
     ddc::DiscreteDomain<Tau> tensor_dom = tensor_accessor.domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
-    ddc::ChunkSpan tensor = tensor_alloc.span_view();
+    sil::tensor::Tensor<
+            double,
+            ddc::DiscreteDomain<Tau>,
+            std::experimental::layout_right,
+            Kokkos::DefaultHostExecutionSpace::memory_space>
+            tensor(tensor_alloc);
 
     /*
     for (int i = 0; i < 4; ++i) {
@@ -156,19 +197,20 @@ TEST(Tensor, SymmetricTensorIndexing2x2x2)
     }
     */
 
-    tensor_accessor.set(tensor, tensor_accessor.element<Y, Y, Y>(), 0.);
-    tensor_accessor.set(tensor, tensor_accessor.element<Y, Y, Z>(), 1.);
-    tensor_accessor.set(tensor, tensor_accessor.element<Y, Z, Z>(), 2.);
-    tensor_accessor.set(tensor, tensor_accessor.element<Z, Z, Z>(), 3.);
+    tensor(tensor_accessor.element<Y, Y, Y>()) = 0.;
+    tensor(tensor_accessor.element<Y, Y, Z>()) = 1.;
+    tensor(tensor_accessor.element<Y, Z, Z>()) = 2.;
+    tensor(tensor_accessor.element<Z, Z, Z>()) = 3.;
 
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Y, Y, Y>()), 0.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Y, Y, Z>()), 1.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Y, Z, Y>()), 1.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Y, Z, Z>()), 2.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Z, Y, Y>()), 1.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Z, Y, Z>()), 2.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Z, Z, Y>()), 2.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Z, Z, Z>()), 3.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, Y, Y>()), 0.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, Y, Y>()), 0.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, Y, Z>()), 1.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, Z, Y>()), 1.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, Z, Z>()), 2.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Y, Y>()), 1.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Y, Z>()), 2.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Z, Y>()), 2.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Z, Z>()), 3.);
 }
 
 struct Upsilon : sil::tensor::AntisymmetricTensorIndex<Mu, Nu>
@@ -185,13 +227,17 @@ TEST(Tensor, AntisymmetricTensorIndexing3x3)
             ddc::DiscreteDomain<Upsilon>,
             std::experimental::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
-            tensor(tensor_alloc.data_handle(), tensor_dom);
+            tensor(tensor_alloc);
 
+    /*
     for (int i = 1; i < 4; ++i) {
         tensor(ddc::DiscreteElement<Upsilon>(i)) = i;
     }
+    */
 
-    // TODO use set
+    tensor(tensor_accessor.element<X, Y>()) = 1.;
+    tensor(tensor_accessor.element<X, Z>()) = 2.;
+    tensor(tensor_accessor.element<Y, Z>()) = 3.;
 
     EXPECT_EQ(tensor.get(tensor_accessor.element<X, X>()), 0.);
     EXPECT_EQ(tensor.get(tensor_accessor.element<X, Y>()), 1.);
@@ -213,7 +259,12 @@ TEST(Tensor, PartiallySymmetricTensorIndexing3x2x2)
     sil::tensor::TensorAccessor<Phi> tensor_accessor;
     ddc::DiscreteDomain<Phi> tensor_dom = tensor_accessor.domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
-    ddc::ChunkSpan tensor = tensor_alloc.span_view();
+    sil::tensor::Tensor<
+            double,
+            ddc::DiscreteDomain<Phi>,
+            std::experimental::layout_right,
+            Kokkos::DefaultHostExecutionSpace::memory_space>
+            tensor(tensor_alloc);
 
     /*
     for (int i = 0; i < 9; ++i) {
@@ -221,26 +272,26 @@ TEST(Tensor, PartiallySymmetricTensorIndexing3x2x2)
     }
     */
 
-    tensor_accessor.set(tensor, tensor_accessor.element<X, Y, Y>(), 0.);
-    tensor_accessor.set(tensor, tensor_accessor.element<X, Y, Z>(), 1.);
-    tensor_accessor.set(tensor, tensor_accessor.element<X, Z, Z>(), 2.);
-    tensor_accessor.set(tensor, tensor_accessor.element<Y, Y, Y>(), 3.);
-    tensor_accessor.set(tensor, tensor_accessor.element<Y, Y, Z>(), 4.);
-    tensor_accessor.set(tensor, tensor_accessor.element<Y, Z, Z>(), 5.);
-    tensor_accessor.set(tensor, tensor_accessor.element<Z, Y, Y>(), 6.);
-    tensor_accessor.set(tensor, tensor_accessor.element<Z, Y, Z>(), 7.);
-    tensor_accessor.set(tensor, tensor_accessor.element<Z, Z, Z>(), 8.);
+    tensor(tensor_accessor.element<X, Y, Y>()) = 0.;
+    tensor(tensor_accessor.element<X, Y, Z>()) = 1.;
+    tensor(tensor_accessor.element<X, Z, Z>()) = 2.;
+    tensor(tensor_accessor.element<Y, Y, Y>()) = 3.;
+    tensor(tensor_accessor.element<Y, Y, Z>()) = 4.;
+    tensor(tensor_accessor.element<Y, Z, Z>()) = 5.;
+    tensor(tensor_accessor.element<Z, Y, Y>()) = 6.;
+    tensor(tensor_accessor.element<Z, Y, Z>()) = 7.;
+    tensor(tensor_accessor.element<Z, Z, Z>()) = 8.;
 
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<X, Y, Y>()), 0.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<X, Y, Z>()), 1.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<X, Z, Y>()), 1.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<X, Z, Z>()), 2.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Y, Y, Y>()), 3.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Y, Y, Z>()), 4.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Y, Z, Y>()), 4.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Y, Z, Z>()), 5.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Z, Y, Y>()), 6.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Z, Y, Z>()), 7.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Z, Z, Y>()), 7.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Z, Z, Z>()), 8.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<X, Y, Y>()), 0.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<X, Y, Z>()), 1.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<X, Z, Y>()), 1.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<X, Z, Z>()), 2.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, Y, Y>()), 3.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, Y, Z>()), 4.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, Z, Y>()), 4.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, Z, Z>()), 5.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Y, Y>()), 6.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Y, Z>()), 7.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Z, Y>()), 7.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Z, Z>()), 8.);
 }
