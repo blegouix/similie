@@ -180,7 +180,6 @@ TEST(Tensor, AntisymmetricTensorIndexing3x3)
     sil::tensor::TensorAccessor<Upsilon> tensor_accessor;
     ddc::DiscreteDomain<Upsilon> tensor_dom = tensor_accessor.domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
-    // ddc::ChunkSpan tensor = tensor_alloc.span_view();
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<Upsilon>,
@@ -191,6 +190,8 @@ TEST(Tensor, AntisymmetricTensorIndexing3x3)
     for (int i = 1; i < 4; ++i) {
         tensor(ddc::DiscreteElement<Upsilon>(i)) = i;
     }
+
+    // TODO use set
 
     EXPECT_EQ(tensor.get(tensor_accessor.element<X, X>()), 0.);
     EXPECT_EQ(tensor.get(tensor_accessor.element<X, Y>()), 1.);

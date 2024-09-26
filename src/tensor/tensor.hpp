@@ -101,7 +101,6 @@ struct IdFromTypeSeqDims<Index, ddc::detail::TypeSeq<CDim...>>
 {
     static constexpr std::size_t run()
     {
-        // return Index::template id<CDim...>();
         return Index::template access_id<CDim...>();
     }
 };
@@ -318,7 +317,6 @@ public:
     template <class... CDim>
     static constexpr std::size_t access_id()
     {
-        // std::cout << permutation_parity<CDim...>();
         if constexpr (are_all_same<CDim...>) {
             return 0;
         } else if (!permutation_parity<CDim...>()) {
@@ -449,7 +447,6 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
             if constexpr (std::is_same_v<
                                   typename IndexInterest::index_type,
                                   AntisymmetricTensorIndex<>>) {
-                // return tensor_field(elem);
                 if (ddc::DiscreteElement<IndexInterest>(elem).uid() == 0) {
                     return 0.;
                 } else if (
@@ -483,13 +480,6 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
             if constexpr (std::is_same_v<
                                   typename IndexInterest::index_type,
                                   AntisymmetricTensorIndex<>>) {
-                /*
-                return Access<
-                        TensorField,
-                        Element,
-                        ddc::detail::TypeSeq<IndexHead..., IndexInterest>,
-                        IndexTail...>::run(tensor_field, elem);
-*/
                 if (ddc::DiscreteElement<IndexInterest>(elem).uid() == 0) {
                     return 0.;
                 } else if (
@@ -564,32 +554,6 @@ public:
                 ddc::DiscreteElement<DDim...>,
                 ddc::detail::TypeSeq<>,
                 DDim...>::run(*this, ddc::DiscreteElement(delems...));
-        /*
-        if constexpr (false) {
-            return ddc::ChunkSpan<
-                    ElementType,
-                    ddc::DiscreteDomain<DDim...>,
-                    LayoutStridedPolicy,
-                    MemorySpace>::
-            operator()(ddc::DiscreteElement<DDim...>((
-                    detail::is_tensor_index_v<DDim>
-                            ? DDim::access_id_to_mem_id(ddc::DiscreteElement<DDim>(delems...).uid())
-                            : ddc::DiscreteElement<DDim>(delems).uid())...));
-            ;
-        } else {
-            return 1.;
-        }
-*/
-        /*
-        return TensorAccessor<DDim...>(ddc::ChunkSpan<
-                ElementType,
-                ddc::DiscreteDomain<DDim...>,
-                LayoutStridedPolicy,
-                MemorySpace>::
-        operator()(ddc::DiscreteElement<DDim...>(
-                (detail::is_tensor_index_v<DDim> ? DDim::access_id_to_mem_id(ddc::DiscreteElement<DDim>(delems...).uid())
-                                                 : ddc::DiscreteElement<DDim>(delems...).uid())...), delems...);
-*/
     }
 
     template <class... DElems>
@@ -613,13 +577,6 @@ T TensorAccessor<Index...>::operator()(
         ddc::ChunkSpan<T, Domain, std::experimental::layout_right, MemorySpace> tensor_field,
         ddc::DiscreteElement<DDim...> elem)
 {
-    /*
-    return detail::Access<
-            ddc::ChunkSpan<T, Domain, std::experimental::layout_right, MemorySpace>,
-            ddc::DiscreteElement<DDim...>,
-            ddc::detail::TypeSeq<>,
-            Index...>::run(tensor_field, elem);
-*/
     return tensor_field(elem);
 }
 
