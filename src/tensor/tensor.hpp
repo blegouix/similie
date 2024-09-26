@@ -582,6 +582,20 @@ public:
                                                  : ddc::DiscreteElement<DDim>(delems...).uid())...), delems...);
 */
     }
+
+    template <class... DElems>
+    KOKKOS_FUNCTION constexpr void set(ElementType value, DElems const&... delems) const noexcept
+    {
+        detail::Access<
+                Tensor<ElementType,
+                       ddc::DiscreteDomain<DDim...>,
+                       std::experimental::layout_right,
+                       MemorySpace>,
+                ddc::DiscreteElement<DDim...>,
+                ddc::detail::TypeSeq<>,
+                DDim...>::run(*this, ddc::DiscreteElement(delems...))
+                = value;
+    }
 };
 
 template <class... Index>
