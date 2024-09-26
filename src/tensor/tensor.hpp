@@ -35,7 +35,7 @@ struct TensorNaturalIndex
     }
 
     template <class ODim>
-    static constexpr std::size_t process_id()
+    static constexpr std::size_t access_id()
     {
         return id<ODim>();
     }
@@ -97,7 +97,7 @@ struct IdFromTypeSeqDims<Index, ddc::detail::TypeSeq<CDim...>>
     static constexpr std::size_t run()
     {
         // return Index::template id<CDim...>();
-        return Index::template process_id<CDim...>();
+        return Index::template access_id<CDim...>();
     }
 };
 
@@ -170,7 +170,7 @@ struct FullTensorIndex
     }
 
     template <class... CDim>
-    static constexpr std::size_t process_id()
+    static constexpr std::size_t access_id()
     {
         return id<CDim...>();
     }
@@ -227,7 +227,7 @@ struct SymmetricTensorIndex
     }
 
     template <class... CDim>
-    static constexpr std::size_t process_id()
+    static constexpr std::size_t access_id()
     {
         return id<CDim...>();
     }
@@ -290,7 +290,7 @@ private:
 
 public:
     template <class... CDim>
-    static constexpr std::size_t process_id()
+    static constexpr std::size_t access_id()
     {
         if constexpr (are_all_same<CDim...>) {
             return 0;
@@ -436,22 +436,73 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
     }
 };
 
+template <class DDim>
+struct IsTensorIndex
+{
+    using type = std::false_type;
+};
+
+template <class... SubIndex>
+struct IsTensorIndex<TensorNaturalIndex<SubIndex...>>
+{
+    using type = std::true_type;
+};
+
+template <class... SubIndex>
+struct IsTensorIndex<FullTensorIndex<SubIndex...>>
+{
+    using type = std::true_type;
+};
+
+template <class... SubIndex>
+struct IsTensorIndex<SymmetricTensorIndex<SubIndex...>>
+{
+    using type = std::true_type;
+};
+
+template <class... SubIndex>
+struct IsTensorIndex<AntisymmetricTensorIndex<SubIndex...>>
+{
+    using type = std::true_type;
+};
+
+template <class DDim>
+static bool is_tensor_index_v = IsTensorIndex<DDim>::type::value;
+
 } // namespace detail
 
 template <class ElementType, class SupportType, class LayoutStridedPolicy, class MemorySpace>
-class Tensor : public ddc::ChunkSpan<ElementType, SupportType, LayoutStridedPolicy, MemorySpace>
+class Tensor
+{
+};
+
+template <class ElementType, class... DDim, class LayoutStridedPolicy, class MemorySpace>
+class Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>
+    : public ddc::
+              ChunkSpan<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>
 {
 public:
-    using ddc::ChunkSpan<ElementType, SupportType, LayoutStridedPolicy, MemorySpace>::ChunkSpan;
-    using ddc::ChunkSpan<ElementType, SupportType, LayoutStridedPolicy, MemorySpace>::reference;
+    using ddc::
+            ChunkSpan<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>::
+                    ChunkSpan;
+    using ddc::
+            ChunkSpan<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>::
+                    reference;
 
     template <class... DElems>
     KOKKOS_FUNCTION constexpr typename ddc::
-            ChunkSpan<ElementType, SupportType, LayoutStridedPolicy, MemorySpace>::reference
-            operator()(DElems const&... delems) const noexcept
+            ChunkSpan<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>::
+                    reference
+                    operator()(DElems const&... delems) const noexcept
     {
-        return ddc::ChunkSpan<ElementType, SupportType, LayoutStridedPolicy, MemorySpace>::
-        operator()(delems...);
+        return ddc::ChunkSpan<
+                ElementType,
+                ddc::DiscreteDomain<DDim...>,
+                LayoutStridedPolicy,
+                MemorySpace>::
+        operator()(
+                (detail::is_tensor_index_v<DDim> ? ddc::DiscreteElement<DDim>(delems...)
+                                                 : ddc::DiscreteElement<DDim>(delems...))...);
     }
 };
 
