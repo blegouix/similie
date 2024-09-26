@@ -39,6 +39,11 @@ struct TensorNaturalIndex
     {
         return id<ODim>();
     }
+
+    static constexpr std::size_t access_id_to_mem_id(std::size_t id)
+    {
+        return id;
+    }
 };
 
 // Helpers to build the id() function which computes the ids of subindexes of an index.
@@ -174,6 +179,11 @@ struct FullTensorIndex
     {
         return id<CDim...>();
     }
+
+    static constexpr std::size_t access_id_to_mem_id(std::size_t id)
+    {
+        return id;
+    }
 };
 
 // struct representing an abstract unique index sweeping on all possible combination of natural indexes, for a summetric tensor.
@@ -230,6 +240,11 @@ struct SymmetricTensorIndex
     static constexpr std::size_t access_id()
     {
         return id<CDim...>();
+    }
+
+    static constexpr std::size_t access_id_to_mem_id(std::size_t id)
+    {
+        return id;
     }
 };
 
@@ -297,6 +312,12 @@ public:
         } else {
             return id<CDim...>() + 1;
         }
+    }
+
+    static constexpr std::size_t access_id_to_mem_id(std::size_t id)
+    {
+        assert(id != 0 && "There is no mem_id associated to access_id=0");
+        return (id - 1) % dim_size();
     }
 };
 
@@ -439,7 +460,7 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
 template <class DDim>
 struct IsTensorIndex
 {
-    using type = std::false_type;
+    using type = std::true_type; // TODO FIX
 };
 
 template <class... SubIndex>
@@ -500,9 +521,21 @@ public:
                 ddc::DiscreteDomain<DDim...>,
                 LayoutStridedPolicy,
                 MemorySpace>::
-        operator()(
-                (detail::is_tensor_index_v<DDim> ? ddc::DiscreteElement<DDim>(delems...)
-                                                 : ddc::DiscreteElement<DDim>(delems...))...);
+        operator()(ddc::DiscreteElement<DDim...>(
+                (detail::is_tensor_index_v<DDim>
+                         ? DDim::access_id_to_mem_id(ddc::DiscreteElement<DDim>(delems...).uid())
+                         : ddc::DiscreteElement<DDim>(delems).uid())...));
+        ;
+        /*
+        return TensorAccessor<DDim...>(ddc::ChunkSpan<
+                ElementType,
+                ddc::DiscreteDomain<DDim...>,
+                LayoutStridedPolicy,
+                MemorySpace>::
+        operator()(ddc::DiscreteElement<DDim...>(
+                (detail::is_tensor_index_v<DDim> ? DDim::access_id_to_mem_id(ddc::DiscreteElement<DDim>(delems...).uid())
+                                                 : ddc::DiscreteElement<DDim>(delems...).uid())...), delems...);
+*/
     }
 };
 
