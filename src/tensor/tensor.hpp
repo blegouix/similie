@@ -29,7 +29,7 @@ struct TensorNaturalIndex
     }
 
     template <class ODim>
-    static constexpr std::size_t id()
+    static constexpr std::size_t mem_id()
     {
         return ddc::type_seq_rank_v<ODim, type_seq_dimensions>;
     }
@@ -37,16 +37,16 @@ struct TensorNaturalIndex
     template <class ODim>
     static constexpr std::size_t access_id()
     {
-        return id<ODim>();
+        return mem_id<ODim>();
     }
 
-    static constexpr std::size_t access_id_to_mem_id(std::size_t id)
+    static constexpr std::size_t access_id_to_mem_id(std::size_t access_id)
     {
-        return id;
+        return access_id;
     }
 };
 
-// Helpers to build the id() function which computes the ids of subindexes of an index.
+// Helpers to build the access_id() function which computes the ids of subindexes of an index.
 namespace detail {
 // For Tmunu and index=nu, returns 1
 template <class Index, class...>
@@ -92,7 +92,7 @@ struct TypeSeqDimsAtInts<CDimTypeSeq, std::integer_sequence<std::size_t, Is...>>
 template <class CDimTypeSeq, class IndexSeq>
 using type_seq_dims_at_ints_t = TypeSeqDimsAtInts<CDimTypeSeq, IndexSeq>::type;
 
-// Returns Index::id but from a type seq (in place of a variadic template CDim...)
+// Returns Index::access_id but from a type seq (in place of a variadic template CDim...)
 template <class Index, class TypeSeqDims>
 struct IdFromTypeSeqDims;
 
@@ -105,9 +105,9 @@ struct IdFromTypeSeqDims<Index, ddc::detail::TypeSeq<CDim...>>
     }
 };
 
-// Returns Index::id for the subindex Index of the IndexesTypeSeq
+// Returns Index::access_id for the subindex Index of the IndexesTypeSeq
 template <class Index, class IndexesTypeSeq, class... CDim>
-static constexpr std::size_t id()
+static constexpr std::size_t access_id()
 {
     return IdFromTypeSeqDims<
             Index,
@@ -165,23 +165,23 @@ struct FullTensorIndex
     }
 
     template <class... CDim>
-    static constexpr std::size_t id()
+    static constexpr std::size_t mem_id()
     {
         //static_assert(rank() == sizeof...(CDim));
         return ((detail::stride<TensorIndex, TensorIndex...>()
-                 * detail::id<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>, CDim...>())
+                 * detail::access_id<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>, CDim...>())
                 + ...);
     }
 
     template <class... CDim>
     static constexpr std::size_t access_id()
     {
-        return id<CDim...>();
+        return mem_id<CDim...>();
     }
 
-    static constexpr std::size_t access_id_to_mem_id(std::size_t id)
+    static constexpr std::size_t access_id_to_mem_id(std::size_t access_id)
     {
-        return id;
+        return access_id;
     }
 };
 
@@ -204,11 +204,11 @@ struct SymmetricTensorIndex
     }
 
     template <class... CDim>
-    static constexpr std::size_t id()
+    static constexpr std::size_t mem_id()
     {
         // static_assert(rank() == sizeof...(CDim));
         std::array<int, sizeof...(TensorIndex)> sorted_ids {
-                detail::id<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>, CDim...>()...};
+                detail::access_id<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>, CDim...>()...};
         std::sort(sorted_ids.begin(), sorted_ids.end());
         return boost::math::binomial_coefficient<double>(
                        std::min({TensorIndex::dim_size()...}) + sizeof...(TensorIndex) - 1,
@@ -238,12 +238,12 @@ struct SymmetricTensorIndex
     template <class... CDim>
     static constexpr std::size_t access_id()
     {
-        return id<CDim...>();
+        return mem_id<CDim...>();
     }
 
-    static constexpr std::size_t access_id_to_mem_id(std::size_t id)
+    static constexpr std::size_t access_id_to_mem_id(std::size_t access_id)
     {
-        return id;
+        return access_id;
     }
 };
 
@@ -265,11 +265,11 @@ struct AntisymmetricTensorIndex
     }
 
     template <class... CDim>
-    static constexpr std::size_t id()
+    static constexpr std::size_t mem_id()
     {
         // static_assert(rank() == sizeof...(CDim));
         std::array<int, sizeof...(TensorIndex)> sorted_ids {
-                detail::id<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>, CDim...>()...};
+                detail::access_id<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>, CDim...>()...};
         std::sort(sorted_ids.begin(), sorted_ids.end());
         return boost::math::binomial_coefficient<
                        double>(std::min({TensorIndex::dim_size()...}), sizeof...(TensorIndex))
@@ -304,7 +304,7 @@ private:
     static constexpr bool permutation_parity()
     {
         std::array<int, sizeof...(TensorIndex)> ids {
-                detail::id<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>, CDim...>()...};
+                detail::access_id<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>, CDim...>()...};
         bool cnt = false;
         for (int i = 0; i < sizeof...(CDim); i++)
             for (int j = i + 1; j < sizeof...(CDim); j++)
@@ -320,16 +320,16 @@ public:
         if constexpr (are_all_same<CDim...>) {
             return 0;
         } else if (!permutation_parity<CDim...>()) {
-            return 1 + id<CDim...>();
+            return 1 + mem_id<CDim...>();
         } else {
-            return 1 + dim_size() + id<CDim...>();
+            return 1 + dim_size() + mem_id<CDim...>();
         }
     }
 
-    static constexpr std::size_t access_id_to_mem_id(std::size_t id)
+    static constexpr std::size_t access_id_to_mem_id(std::size_t access_id)
     {
-        assert(id != 0 && "There is no mem_id associated to access_id=0");
-        return (id - 1) % dim_size();
+        assert(access_id != 0 && "There is no mem_id associated to access_id=0");
+        return (access_id - 1) % dim_size();
     }
 };
 
@@ -383,7 +383,7 @@ template <class... CDim>
 ddc::DiscreteElement<Index...> TensorAccessor<Index...>::element()
 {
     return ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(
-            detail::id<Index, ddc::detail::TypeSeq<Index...>, CDim...>())...);
+            detail::access_id<Index, ddc::detail::TypeSeq<Index...>, CDim...>())...);
 }
 
 // Helpers to handle antisymmetry (eventual multiplication with -1) or non-stored zeros
