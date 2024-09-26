@@ -192,15 +192,6 @@ TEST(Tensor, AntisymmetricTensorIndexing3x3)
         tensor(ddc::DiscreteElement<Upsilon>(i)) = i;
     }
 
-    /*
-    tensor_accessor.set(tensor, tensor_accessor.element<X, Y>(), 1.);
-    tensor_accessor.set(tensor, tensor_accessor.element<X, Z>(), 2.);
-    tensor_accessor.set(tensor, tensor_accessor.element<Y, Z>(), 3.);
-    */
-
-    std::cout << "\n";
-    // std::cout << tensor_accessor.element<Y, Z>().uid();
-
     EXPECT_EQ(tensor.get(tensor_accessor.element<X, X>()), 0.);
     EXPECT_EQ(tensor.get(tensor_accessor.element<X, Y>()), 1.);
     EXPECT_EQ(tensor.get(tensor_accessor.element<X, Z>()), 2.);
