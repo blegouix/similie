@@ -436,7 +436,6 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
                                   typename IndexInterest::index_type,
                                   AntisymmetricTensorIndex<>>) {
                 // return tensor_field(elem);
-                std::cout << IndexInterest::dim_size();
                 if (ddc::DiscreteElement<IndexInterest>(elem).uid() == 0) {
                     return 0.;
                 } else if (
