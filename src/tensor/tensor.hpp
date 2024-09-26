@@ -429,27 +429,23 @@ template <class TensorField, class Element, class... IndexHead, class IndexInter
 struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInterest>
 {
     template <class Element2>
-    static constexpr TensorField::element_type run(TensorField tensor_field, Element2 const& elem)
+    static TensorField::element_type run(TensorField tensor_field, Element2 const& elem)
     {
         if constexpr (detail::is_tensor_index_v<IndexInterest>) {
             if constexpr (std::is_same_v<
                                   typename IndexInterest::index_type,
                                   AntisymmetricTensorIndex<>>) {
-                return tensor_field(
-
-                        elem);
-                /*
-                if constexpr (ddc::DiscreteElement<IndexInterest>(elem).uid() == 0) {
+                // return tensor_field(elem);
+                std::cout << IndexInterest::dim_size();
+                if (ddc::DiscreteElement<IndexInterest>(elem).uid() == 0) {
                     return 0.;
-                } else if (ddc::DiscreteElement<IndexInterest>(elem).uid() <= IndexInterest::dim_size() + 1) {
+                } else if (
+                        ddc::DiscreteElement<IndexInterest>(elem).uid()
+                        <= IndexInterest::dim_size()) {
                     return tensor_field(elem);
                 } else {
-                    return -tensor_field(replace_access_id_with_mem_id<
-                                         IndexInterest,
-                                         IndexHead...,
-                                         IndexInterest>(elem));
+                    return -tensor_field(elem);
                 }
-*/
             } else {
                 return tensor_field(elem);
             }
@@ -468,21 +464,24 @@ template <
 struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInterest, IndexTail...>
 {
     template <class Element2>
-    static constexpr TensorField::element_type run(TensorField tensor_field, Element2 const& elem)
+    static TensorField::element_type run(TensorField tensor_field, Element2 const& elem)
     {
         if constexpr (detail::is_tensor_index_v<IndexInterest>) {
             if constexpr (std::is_same_v<
                                   typename IndexInterest::index_type,
                                   AntisymmetricTensorIndex<>>) {
+                /*
                 return Access<
                         TensorField,
                         Element,
                         ddc::detail::TypeSeq<IndexHead..., IndexInterest>,
                         IndexTail...>::run(tensor_field, elem);
-                /*
-                if constexpr (ddc::DiscreteElement<IndexInterest>(elem).uid() == 0) {
+*/
+                if (ddc::DiscreteElement<IndexInterest>(elem).uid() == 0) {
                     return 0.;
-                } else if (ddc::DiscreteElement<IndexInterest>(elem).uid() <= IndexInterest::dim_size() + 1) {
+                } else if (
+                        ddc::DiscreteElement<IndexInterest>(elem).uid()
+                        <= IndexInterest::dim_size()) {
                     return Access<
                             TensorField,
                             Element,
@@ -500,7 +499,6 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
                                         IndexHead...,
                                         IndexInterest>(elem));
                 }
-*/
             } else {
                 return Access<
                         TensorField,
@@ -543,7 +541,7 @@ public:
             operator();
 
     template <class... DElems>
-    KOKKOS_FUNCTION constexpr ElementType get(DElems const&... delems) const noexcept
+    KOKKOS_FUNCTION ElementType get(DElems const&... delems) const noexcept
     {
         return detail::Access<
                 Tensor<ElementType,
