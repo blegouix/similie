@@ -303,14 +303,33 @@ private:
     template <class Head, class... Tail>
     inline static constexpr bool are_all_same = (std::is_same_v<Head, Tail> && ...);
 
+    template <class... CDim>
+    static constexpr bool permutation_parity()
+    {
+        std::array<int, sizeof...(TensorIndex)> ids {
+                detail::id<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>, CDim...>()...};
+        bool cnt = false;
+        for (int i = 0; i < sizeof...(CDim); i++)
+            for (int j = i + 1; j < sizeof...(CDim); j++)
+                if (ids[i] > ids[j])
+                    cnt = !cnt;
+        return cnt;
+    }
+
 public:
     template <class... CDim>
     static constexpr std::size_t access_id()
     {
+        std::cout << permutation_parity<CDim...>();
         if constexpr (are_all_same<CDim...>) {
+            std::cout << 0 << " ";
             return 0;
+        } else if (!permutation_parity<CDim...>()) {
+            std::cout << 1 + id<CDim...>() << " ";
+            return 1 + id<CDim...>();
         } else {
-            return id<CDim...>() + 1;
+            std::cout << 1 + dim_size() + id<CDim...>() << " ";
+            return 1 + dim_size() + id<CDim...>();
         }
     }
 
