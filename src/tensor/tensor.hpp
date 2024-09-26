@@ -33,6 +33,12 @@ struct TensorNaturalIndex
     {
         return ddc::type_seq_rank_v<ODim, type_seq_dimensions>;
     }
+
+    template <class ODim>
+    static constexpr std::size_t process_id()
+    {
+        return id<ODim>();
+    }
 };
 
 // Helpers to build the id() function which computes the ids of subindexes of an index.
@@ -90,7 +96,8 @@ struct IdFromTypeSeqDims<Index, ddc::detail::TypeSeq<CDim...>>
 {
     static constexpr std::size_t run()
     {
-        return Index::template id<CDim...>();
+        // return Index::template id<CDim...>();
+        return Index::template process_id<CDim...>();
     }
 };
 
@@ -161,6 +168,12 @@ struct FullTensorIndex
                  * detail::id<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>, CDim...>())
                 + ...);
     }
+
+    template <class... CDim>
+    static constexpr std::size_t process_id()
+    {
+        return id<CDim...>();
+    }
 };
 
 // struct representing an abstract unique index sweeping on all possible combination of natural indexes, for a summetric tensor.
@@ -212,13 +225,19 @@ struct SymmetricTensorIndex
                   + ...)
                - 1;
     }
+
+    template <class... CDim>
+    static constexpr std::size_t process_id()
+    {
+        return id<CDim...>();
+    }
 };
 
 // struct representing an abstract unique index sweeping on all possible combination of natural indexes, for an antisummetric tensor.
 template <class... TensorIndex>
 struct AntisymmetricTensorIndex
 {
-    using index_type = SymmetricTensorIndex<>;
+    using index_type = AntisymmetricTensorIndex<>;
 
     static constexpr std::size_t rank()
     {
@@ -261,7 +280,23 @@ struct AntisymmetricTensorIndex
                                                    TensorIndex,
                                                    ddc::detail::TypeSeq<TensorIndex...>>))
                   + ...)
-               - 1;
+               - 2;
+    }
+
+
+private:
+    template <class Head, class... Tail>
+    inline static constexpr bool are_all_same = (std::is_same_v<Head, Tail> && ...);
+
+public:
+    template <class... CDim>
+    static constexpr std::size_t process_id()
+    {
+        if constexpr (are_all_same<CDim...>) {
+            return 0;
+        } else {
+            return id<CDim...>() + 1;
+        }
     }
 };
 
@@ -331,12 +366,24 @@ struct Access;
 template <class TensorField, class Element, class... IndexHead, class IndexInterest>
 struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInterest>
 {
-    static constexpr auto run(TensorField tensor_field, Element elem)
+    static constexpr TensorField::element_type run(TensorField tensor_field, Element elem)
     {
         if constexpr (std::is_same_v<
                               typename IndexInterest::index_type,
                               AntisymmetricTensorIndex<>>) {
-            return -tensor_field(elem);
+            std::cout << detail::
+                            id<IndexInterest, ddc::detail::TypeSeq<IndexHead..., IndexInterest>>();
+            if constexpr (
+                    detail::id<IndexInterest, ddc::detail::TypeSeq<IndexHead..., IndexInterest>>()
+                    > sizeof...(IndexHead) + 1) {
+                return -tensor_field(elem);
+            } else if (
+                    detail::id<IndexInterest, ddc::detail::TypeSeq<IndexHead..., IndexInterest>>()
+                    == sizeof...(IndexHead) + 1) {
+                return 0;
+            } else {
+                return tensor_field(elem);
+            }
         } else {
             return tensor_field(elem);
         }
@@ -351,17 +398,62 @@ template <
         class... IndexTail>
 struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInterest, IndexTail...>
 {
-    static constexpr auto run(TensorField tensor_field, Element elem)
+    static constexpr TensorField::element_type run(TensorField tensor_field, Element elem)
     {
-        return Access<
-                TensorField,
-                Element,
-                ddc::detail::TypeSeq<IndexHead..., IndexInterest>,
-                IndexTail...>::run(tensor_field, elem);
+        if constexpr (std::is_same_v<
+                              typename IndexInterest::index_type,
+                              AntisymmetricTensorIndex<>>) {
+            if constexpr (
+                    detail::id<
+                            IndexInterest,
+                            ddc::detail::TypeSeq<IndexHead..., IndexInterest, IndexTail...>>()
+                    > sizeof...(IndexHead) + 1) {
+                return -Access<
+                        TensorField,
+                        Element,
+                        ddc::detail::TypeSeq<IndexHead..., IndexInterest>,
+                        IndexTail...>::run(tensor_field, elem);
+            } else if (
+                    detail::id<
+                            IndexInterest,
+                            ddc::detail::TypeSeq<IndexHead..., IndexInterest, IndexTail...>>()
+                    == sizeof...(IndexHead) + 1) {
+                return 0;
+            } else {
+                return Access<
+                        TensorField,
+                        Element,
+                        ddc::detail::TypeSeq<IndexHead..., IndexInterest>,
+                        IndexTail...>::run(tensor_field, elem);
+            }
+        } else {
+            return Access<
+                    TensorField,
+                    Element,
+                    ddc::detail::TypeSeq<IndexHead..., IndexInterest>,
+                    IndexTail...>::run(tensor_field, elem);
+        }
     }
 };
 
 } // namespace detail
+
+template <class ElementType, class SupportType, class LayoutStridedPolicy, class MemorySpace>
+class Tensor : public ddc::ChunkSpan<ElementType, SupportType, LayoutStridedPolicy, MemorySpace>
+{
+public:
+    using ddc::ChunkSpan<ElementType, SupportType, LayoutStridedPolicy, MemorySpace>::ChunkSpan;
+    using ddc::ChunkSpan<ElementType, SupportType, LayoutStridedPolicy, MemorySpace>::reference;
+
+    template <class... DElems>
+    KOKKOS_FUNCTION constexpr typename ddc::
+            ChunkSpan<ElementType, SupportType, LayoutStridedPolicy, MemorySpace>::reference
+            operator()(DElems const&... delems) const noexcept
+    {
+        return ddc::ChunkSpan<ElementType, SupportType, LayoutStridedPolicy, MemorySpace>::
+        operator()(delems...);
+    }
+};
 
 template <class... Index>
 template <class T, class Domain, class MemorySpace, class... DDim>
@@ -369,11 +461,14 @@ T TensorAccessor<Index...>::operator()(
         ddc::ChunkSpan<T, Domain, std::experimental::layout_right, MemorySpace> tensor_field,
         ddc::DiscreteElement<DDim...> elem)
 {
+    /*
     return detail::Access<
             ddc::ChunkSpan<T, Domain, std::experimental::layout_right, MemorySpace>,
             ddc::DiscreteElement<DDim...>,
             ddc::detail::TypeSeq<>,
             Index...>::run(tensor_field, elem);
+*/
+    return tensor_field(elem);
 }
 
 template <class... Index>
