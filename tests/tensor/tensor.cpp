@@ -188,18 +188,18 @@ TEST(Tensor, DiagonalTensorIndexing)
     EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Z>()), 3.);
 }
 
-struct Sigma : sil::tensor::SymmetricTensorIndex<Mu, Nu>
+struct SymIndex : sil::tensor::SymmetricTensorIndex<Mu, Nu>
 {
 };
 
 TEST(Tensor, SymmetricTensorIndexing3x3)
 {
-    sil::tensor::TensorAccessor<Sigma> tensor_accessor;
-    ddc::DiscreteDomain<Sigma> tensor_dom = tensor_accessor.mem_domain();
+    sil::tensor::TensorAccessor<SymIndex> tensor_accessor;
+    ddc::DiscreteDomain<SymIndex> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
-            ddc::DiscreteDomain<Sigma>,
+            ddc::DiscreteDomain<SymIndex>,
             std::experimental::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor(tensor_alloc);
@@ -207,7 +207,7 @@ TEST(Tensor, SymmetricTensorIndexing3x3)
 
     /*
     for (int i = 0; i < 6; ++i) {
-        tensor(ddc::DiscreteElement<Sigma>(i)) = i;
+        tensor(ddc::DiscreteElement<SymIndex>(i)) = i;
     }
     */
 
@@ -229,25 +229,25 @@ TEST(Tensor, SymmetricTensorIndexing3x3)
     EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Z>()), 5.);
 }
 
-struct Tau : sil::tensor::SymmetricTensorIndex<Alpha, Beta, Gamma>
+struct SymIndex3x3x3 : sil::tensor::SymmetricTensorIndex<Alpha, Beta, Gamma>
 {
 };
 
 TEST(Tensor, SymmetricTensorIndexing3x3x3)
 {
-    sil::tensor::TensorAccessor<Tau> tensor_accessor;
-    ddc::DiscreteDomain<Tau> tensor_dom = tensor_accessor.mem_domain();
+    sil::tensor::TensorAccessor<SymIndex3x3x3> tensor_accessor;
+    ddc::DiscreteDomain<SymIndex3x3x3> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
-            ddc::DiscreteDomain<Tau>,
+            ddc::DiscreteDomain<SymIndex3x3x3>,
             std::experimental::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor(tensor_alloc);
 
     /*
     for (int i = 0; i < 10; ++i) {
-        tensor(ddc::DiscreteElement<Tau>(i)) = i;
+        tensor(ddc::DiscreteElement<SymIndex3x3x3>(i)) = i;
     }
     */
 
@@ -291,25 +291,25 @@ TEST(Tensor, SymmetricTensorIndexing3x3x3)
     EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Z, Z>()), 9.);
 }
 
-struct Upsilon : sil::tensor::AntisymmetricTensorIndex<Mu, Nu>
+struct AntisymIndex : sil::tensor::AntisymmetricTensorIndex<Mu, Nu>
 {
 };
 
 TEST(Tensor, AntisymmetricTensorIndexing3x3)
 {
-    sil::tensor::TensorAccessor<Upsilon> tensor_accessor;
-    ddc::DiscreteDomain<Upsilon> tensor_dom = tensor_accessor.mem_domain();
+    sil::tensor::TensorAccessor<AntisymIndex> tensor_accessor;
+    ddc::DiscreteDomain<AntisymIndex> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
-            ddc::DiscreteDomain<Upsilon>,
+            ddc::DiscreteDomain<AntisymIndex>,
             std::experimental::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor(tensor_alloc);
 
     /*
     for (int i = 1; i < 4; ++i) {
-        tensor(ddc::DiscreteElement<Upsilon>(i)) = i;
+        tensor(ddc::DiscreteElement<AntisymIndex>(i)) = i;
     }
     */
 
@@ -328,25 +328,26 @@ TEST(Tensor, AntisymmetricTensorIndexing3x3)
     EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Z>()), 0.);
 }
 
-struct Phi : sil::tensor::FullTensorIndex<Mu, sil::tensor::SymmetricTensorIndex<Alpha, Beta>>
+struct PartiallySymIndex
+    : sil::tensor::FullTensorIndex<Mu, sil::tensor::SymmetricTensorIndex<Alpha, Beta>>
 {
 };
 
 TEST(Tensor, PartiallySymmetricTensorIndexing3x3x3)
 {
-    sil::tensor::TensorAccessor<Phi> tensor_accessor;
-    ddc::DiscreteDomain<Phi> tensor_dom = tensor_accessor.mem_domain();
+    sil::tensor::TensorAccessor<PartiallySymIndex> tensor_accessor;
+    ddc::DiscreteDomain<PartiallySymIndex> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
-            ddc::DiscreteDomain<Phi>,
+            ddc::DiscreteDomain<PartiallySymIndex>,
             std::experimental::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor(tensor_alloc);
 
     /*
     for (int i = 0; i < 18; ++i) {
-        tensor(ddc::DiscreteElement<Phi>(i)) = i;
+        tensor(ddc::DiscreteElement<PartiallySymIndex>(i)) = i;
     }
     */
 
