@@ -21,7 +21,17 @@ struct DiagonalTensorIndex
 
     static constexpr std::size_t dim_size()
     {
-        return std::min({TensorIndex::dim_size()...});
+        return (TensorIndex::dim_size() * ...);
+    }
+
+    static constexpr std::size_t mem_dim_size()
+    {
+        return std::min({TensorIndex::mem_dim_size()...});
+    }
+
+    static constexpr std::size_t access_dim_size()
+    {
+        return 1 + mem_dim_size();
     }
 
 private:

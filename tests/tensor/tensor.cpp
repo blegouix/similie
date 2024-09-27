@@ -43,7 +43,7 @@ struct Nu : sil::tensor::TensorNaturalIndex<X, Y, Z>
 TEST(Tensor, NaturalIndexing)
 {
     sil::tensor::TensorAccessor<Alpha, Nu> tensor_accessor;
-    ddc::DiscreteDomain<Alpha, Nu> tensor_dom = tensor_accessor.domain();
+    ddc::DiscreteDomain<Alpha, Nu> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
@@ -82,7 +82,7 @@ struct Rho : sil::tensor::FullTensorIndex<Alpha, Nu>
 TEST(Tensor, FullTensorIndexing)
 {
     sil::tensor::TensorAccessor<Rho> tensor_accessor;
-    ddc::DiscreteDomain<Rho> tensor_dom = tensor_accessor.domain();
+    ddc::DiscreteDomain<Rho> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
@@ -121,7 +121,7 @@ struct IdIndex : sil::tensor::IdentityTensorIndex<Mu, Nu>
 TEST(Tensor, IdentityTensorIndexing)
 {
     sil::tensor::TensorAccessor<IdIndex> tensor_accessor;
-    ddc::DiscreteDomain<IdIndex> tensor_dom = tensor_accessor.domain();
+    ddc::DiscreteDomain<IdIndex> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
@@ -148,7 +148,7 @@ struct DiagIndex : sil::tensor::DiagonalTensorIndex<Mu, Nu>
 TEST(Tensor, DiagonalTensorIndexing)
 {
     sil::tensor::TensorAccessor<DiagIndex> tensor_accessor;
-    ddc::DiscreteDomain<DiagIndex> tensor_dom = tensor_accessor.domain();
+    ddc::DiscreteDomain<DiagIndex> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
@@ -185,7 +185,7 @@ struct Sigma : sil::tensor::SymmetricTensorIndex<Mu, Nu>
 TEST(Tensor, SymmetricTensorIndexing3x3)
 {
     sil::tensor::TensorAccessor<Sigma> tensor_accessor;
-    ddc::DiscreteDomain<Sigma> tensor_dom = tensor_accessor.domain();
+    ddc::DiscreteDomain<Sigma> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
@@ -226,7 +226,7 @@ struct Tau : sil::tensor::SymmetricTensorIndex<Alpha, Beta, Gamma>
 TEST(Tensor, SymmetricTensorIndexing2x2x2)
 {
     sil::tensor::TensorAccessor<Tau> tensor_accessor;
-    ddc::DiscreteDomain<Tau> tensor_dom = tensor_accessor.domain();
+    ddc::DiscreteDomain<Tau> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
@@ -264,7 +264,7 @@ struct Upsilon : sil::tensor::AntisymmetricTensorIndex<Mu, Nu>
 TEST(Tensor, AntisymmetricTensorIndexing3x3)
 {
     sil::tensor::TensorAccessor<Upsilon> tensor_accessor;
-    ddc::DiscreteDomain<Upsilon> tensor_dom = tensor_accessor.domain();
+    ddc::DiscreteDomain<Upsilon> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
@@ -301,7 +301,7 @@ struct Phi : sil::tensor::FullTensorIndex<Mu, sil::tensor::SymmetricTensorIndex<
 TEST(Tensor, PartiallySymmetricTensorIndexing3x2x2)
 {
     sil::tensor::TensorAccessor<Phi> tensor_accessor;
-    ddc::DiscreteDomain<Phi> tensor_dom = tensor_accessor.domain();
+    ddc::DiscreteDomain<Phi> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,

@@ -21,7 +21,17 @@ struct IdentityTensorIndex
 
     static constexpr std::size_t dim_size()
     {
-        return std::min({TensorIndex::dim_size()...});
+        return (TensorIndex::dim_size() * ...);
+    }
+
+    static constexpr std::size_t mem_dim_size()
+    {
+        return 0;
+    }
+
+    static constexpr std::size_t access_dim_size()
+    {
+        return 2;
     }
 
 private:

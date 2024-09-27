@@ -18,7 +18,7 @@ static constexpr std::size_t stride_factor()
     if constexpr (
             ddc::type_seq_rank_v < OTensorNaturalIndex,
             ddc::detail::TypeSeq < TensorNaturalIndex... >>> max_rank) {
-        return OTensorNaturalIndex::dim_size();
+        return OTensorNaturalIndex::mem_dim_size();
     } else {
         return 1;
     }
@@ -50,6 +50,16 @@ struct FullTensorIndex
     static constexpr std::size_t dim_size()
     {
         return (TensorIndex::dim_size() * ...);
+    }
+
+    static constexpr std::size_t mem_dim_size()
+    {
+        return (TensorIndex::mem_dim_size() * ...);
+    }
+
+    static constexpr std::size_t access_dim_size()
+    {
+        return (TensorIndex::access_dim_size() * ...);
     }
 
     template <class... CDim>

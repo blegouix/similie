@@ -23,8 +23,18 @@ struct AntisymmetricTensorIndex
 
     static constexpr std::size_t dim_size()
     {
+        return (TensorIndex::dim_size() * ...);
+    }
+
+    static constexpr std::size_t mem_dim_size()
+    {
         return boost::math::binomial_coefficient<
-                double>(std::min({TensorIndex::dim_size()...}), sizeof...(TensorIndex));
+                double>(std::min({TensorIndex::mem_dim_size()...}), sizeof...(TensorIndex));
+    }
+
+    static constexpr std::size_t access_dim_size()
+    {
+        return mem_dim_size() + 1;
     }
 
     template <class... CDim>
@@ -35,17 +45,17 @@ struct AntisymmetricTensorIndex
                 detail::access_id<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>, CDim...>()...};
         std::sort(sorted_ids.begin(), sorted_ids.end());
         return boost::math::binomial_coefficient<
-                       double>(std::min({TensorIndex::dim_size()...}), sizeof...(TensorIndex))
+                       double>(std::min({TensorIndex::mem_dim_size()...}), sizeof...(TensorIndex))
                - ((sorted_ids[ddc::type_seq_rank_v<
                            TensorIndex,
                            ddc::detail::TypeSeq<TensorIndex...>>]
-                                   == TensorIndex::dim_size() - sizeof...(TensorIndex)
+                                   == TensorIndex::mem_dim_size() - sizeof...(TensorIndex)
                                               + ddc::type_seq_rank_v<
                                                       TensorIndex,
                                                       ddc::detail::TypeSeq<TensorIndex...>>
                            ? 0
                            : boost::math::binomial_coefficient<double>(
-                                   TensorIndex::dim_size()
+                                   TensorIndex::mem_dim_size()
                                            - sorted_ids[ddc::type_seq_rank_v<
                                                    TensorIndex,
                                                    ddc::detail::TypeSeq<TensorIndex...>>]
@@ -85,14 +95,14 @@ public:
         } else if (!permutation_parity<CDim...>()) {
             return 1 + mem_id<CDim...>();
         } else {
-            return 1 + dim_size() + mem_id<CDim...>();
+            return access_dim_size() + mem_id<CDim...>();
         }
     }
 
     static constexpr std::size_t access_id_to_mem_id(std::size_t access_id)
     {
         assert(access_id != 0 && "There is no mem_id associated to access_id=0");
-        return (access_id - 1) % dim_size();
+        return (access_id - 1) % mem_dim_size();
     }
 
     template <class Tensor, class Elem>
@@ -103,7 +113,7 @@ public:
     {
         if (elem.uid() == 0) {
             return 0.;
-        } else if (elem.uid() <= dim_size()) {
+        } else if (elem.uid() < access_dim_size()) {
             return access(tensor, elem);
         } else {
             return -access(tensor, elem);

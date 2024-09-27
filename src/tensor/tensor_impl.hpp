@@ -24,6 +24,16 @@ struct TensorNaturalIndex
         return sizeof...(CDim);
     }
 
+    static constexpr std::size_t mem_dim_size()
+    {
+        return dim_size();
+    }
+
+    static constexpr std::size_t access_dim_size()
+    {
+        return dim_size();
+    }
+
     template <class ODim>
     static constexpr std::size_t mem_id()
     {
@@ -129,35 +139,41 @@ static constexpr std::size_t access_id()
 template <class... Index>
 class TensorAccessor
 {
-private:
-    ddc::DiscreteDomain<Index...> const m_tensor_dom;
-
 public:
     explicit TensorAccessor();
 
-    ddc::DiscreteDomain<Index...> domain();
+    static constexpr ddc::DiscreteDomain<Index...> mem_domain();
+
+    static constexpr ddc::DiscreteDomain<Index...> access_domain();
 
     template <class... CDim>
-    ddc::DiscreteElement<Index...> element();
+    static constexpr ddc::DiscreteElement<Index...> element();
 };
 
 template <class... Index>
 TensorAccessor<Index...>::TensorAccessor()
-    : m_tensor_dom(
-            ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(0)...),
-            ddc::DiscreteVector<Index...>(ddc::DiscreteVector<Index>(Index::dim_size())...))
 {
 }
 
 template <class... Index>
-ddc::DiscreteDomain<Index...> TensorAccessor<Index...>::domain()
+constexpr ddc::DiscreteDomain<Index...> TensorAccessor<Index...>::mem_domain()
 {
-    return m_tensor_dom;
+    return ddc::DiscreteDomain<Index...>(
+            ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(0)...),
+            ddc::DiscreteVector<Index...>(ddc::DiscreteVector<Index>(Index::mem_dim_size())...));
+}
+
+template <class... Index>
+constexpr ddc::DiscreteDomain<Index...> TensorAccessor<Index...>::access_domain()
+{
+    return ddc::DiscreteDomain<Index...>(
+            ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(0)...),
+            ddc::DiscreteVector<Index...>(ddc::DiscreteVector<Index>(Index::access_dim_size())...));
 }
 
 template <class... Index>
 template <class... CDim>
-ddc::DiscreteElement<Index...> TensorAccessor<Index...>::element()
+constexpr ddc::DiscreteElement<Index...> TensorAccessor<Index...>::element()
 {
     return ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(
             detail::access_id<Index, ddc::detail::TypeSeq<Index...>, CDim...>())...);
