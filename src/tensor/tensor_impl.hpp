@@ -139,21 +139,6 @@ public:
 
     template <class... CDim>
     ddc::DiscreteElement<Index...> element();
-
-    // getter
-    template <class T, class Domain, class MemorySpace, class... DDim>
-    T operator()(
-            ddc::ChunkSpan<T, Domain, std::experimental::layout_right, MemorySpace> tensor_field,
-            ddc::DiscreteElement<DDim...> elem);
-
-    // TODO operator[] ?
-
-    // setter
-    template <class T, class Domain, class MemorySpace, class... DDim>
-    void set(
-            ddc::ChunkSpan<T, Domain, std::experimental::layout_right, MemorySpace> tensor_field,
-            ddc::DiscreteElement<DDim...> elem,
-            T value);
 };
 
 template <class... Index>
@@ -178,7 +163,7 @@ ddc::DiscreteElement<Index...> TensorAccessor<Index...>::element()
             detail::access_id<Index, ddc::detail::TypeSeq<Index...>, CDim...>())...);
 }
 
-// Helpers to handle antisymmetry (eventual multiplication with -1) or non-stored zeros
+// Helpers to handle memory access and processing for particular tensor structures (ie. eventual multiplication with -1 for antisymmetry or non-stored zeros)
 namespace detail {
 template <class DDim>
 struct IsTensorIndex
@@ -219,10 +204,10 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
     {
         if constexpr (detail::is_tensor_index_v<IndexInterest>) {
             return IndexInterest::template process_access<TensorField, Elem>(
-                    [](TensorField tensor_field_, ddc::DiscreteElement<IndexInterest> elem_)
+                    [](TensorField tensor_field_, Elem elem_)
                             -> TensorField::element_type { return tensor_field_(elem_); },
                     tensor_field,
-                    ddc::DiscreteElement<IndexInterest>(elem));
+                    elem);
         } else {
             return tensor_field(elem);
         }
@@ -243,7 +228,7 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
         if constexpr (detail::is_tensor_index_v<IndexInterest>) {
             return IndexInterest::template process_access<TensorField, Elem>(
                     [](TensorField tensor_field_,
-                       ddc::DiscreteElement<IndexInterest> elem_) -> TensorField::element_type {
+                       Elem elem_) -> TensorField::element_type {
                         return Access<
                                 TensorField,
                                 Element,
@@ -251,7 +236,7 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
                                 IndexTail...>::run(tensor_field_, elem_);
                     },
                     tensor_field,
-                    ddc::DiscreteElement<IndexInterest>(elem));
+                    elem);
         } else {
             return Access<
                     TensorField,
@@ -286,6 +271,8 @@ public:
             ChunkSpan<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>::
             operator();
 
+    // TODO operator[] ?
+
     template <class... DElems>
     KOKKOS_FUNCTION ElementType get(DElems const&... delems) const noexcept
     {
@@ -310,28 +297,9 @@ public:
         operator()(ddc::DiscreteElement<DDim...>(
                 (detail::is_tensor_index_v<DDim>
                          ? DDim::access_id_to_mem_id(ddc::DiscreteElement<DDim>(delems...).uid())
-                         : ddc::DiscreteElement<DDim>(delems).uid())...));
+                         : ddc::DiscreteElement<DDim>(delems...).uid())...));
     }
 };
-
-template <class... Index>
-template <class T, class Domain, class MemorySpace, class... DDim>
-T TensorAccessor<Index...>::operator()(
-        ddc::ChunkSpan<T, Domain, std::experimental::layout_right, MemorySpace> tensor_field,
-        ddc::DiscreteElement<DDim...> elem)
-{
-    return tensor_field(elem);
-}
-
-template <class... Index>
-template <class T, class Domain, class MemorySpace, class... DDim>
-void TensorAccessor<Index...>::set(
-        ddc::ChunkSpan<T, Domain, std::experimental::layout_right, MemorySpace> tensor_field,
-        ddc::DiscreteElement<DDim...> elem,
-        T value)
-{
-    tensor_field(elem) = value;
-}
 
 } // namespace tensor
 

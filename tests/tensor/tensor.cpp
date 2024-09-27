@@ -60,39 +60,19 @@ TEST(Tensor, NaturalIndexing)
     }
     */
 
-    // TODO FIX
-    /*
     tensor(tensor_accessor.element<Y, X>()) = 0.;
     tensor(tensor_accessor.element<Y, Y>()) = 1.;
     tensor(tensor_accessor.element<Y, Z>()) = 2.;
     tensor(tensor_accessor.element<Z, X>()) = 3.;
     tensor(tensor_accessor.element<Z, Y>()) = 4.;
     tensor(tensor_accessor.element<Z, Z>()) = 5.;
-    */
 
-    tensor_accessor.set(tensor, tensor_accessor.element<Y, X>(), 0.);
-    tensor_accessor.set(tensor, tensor_accessor.element<Y, Y>(), 1.);
-    tensor_accessor.set(tensor, tensor_accessor.element<Y, Z>(), 2.);
-    tensor_accessor.set(tensor, tensor_accessor.element<Z, X>(), 3.);
-    tensor_accessor.set(tensor, tensor_accessor.element<Z, Y>(), 4.);
-    tensor_accessor.set(tensor, tensor_accessor.element<Z, Z>(), 5.);
-
-    // TODO FIX
-    /*
     EXPECT_EQ(tensor.get(tensor_accessor.element<Y, X>()), 0.);
     EXPECT_EQ(tensor.get(tensor_accessor.element<Y, Y>()), 1.);
     EXPECT_EQ(tensor.get(tensor_accessor.element<Y, Z>()), 2.);
     EXPECT_EQ(tensor.get(tensor_accessor.element<Z, X>()), 3.);
     EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Y>()), 4.);
     EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Z>()), 5.);
-    */
-
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Y, X>()), 0.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Y, Y>()), 1.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Y, Z>()), 2.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Z, X>()), 3.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Z, Y>()), 4.);
-    EXPECT_EQ(tensor_accessor(tensor, tensor_accessor.element<Z, Z>()), 5.);
 }
 
 struct Rho : sil::tensor::FullTensorIndex<Alpha, Nu>
