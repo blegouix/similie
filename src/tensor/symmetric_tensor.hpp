@@ -21,21 +21,21 @@ struct SymmetricTensorIndex
         return (TensorIndex::rank() + ...);
     }
 
-    static constexpr std::size_t dim_size()
+    static constexpr std::size_t size()
     {
-        return (TensorIndex::dim_size() * ...);
+        return (TensorIndex::size() * ...);
     }
 
-    static constexpr std::size_t mem_dim_size()
+    static constexpr std::size_t mem_size()
     {
         return boost::math::binomial_coefficient<double>(
-                std::min({TensorIndex::mem_dim_size()...}) + sizeof...(TensorIndex) - 1,
+                std::min({TensorIndex::mem_size()...}) + sizeof...(TensorIndex) - 1,
                 sizeof...(TensorIndex));
     }
 
-    static constexpr std::size_t access_dim_size()
+    static constexpr std::size_t access_size()
     {
-        return mem_dim_size();
+        return mem_size();
     }
 
     template <class... CDim>
@@ -46,15 +46,15 @@ struct SymmetricTensorIndex
                 detail::access_id<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>, CDim...>()...};
         std::sort(sorted_ids.begin(), sorted_ids.end());
         return boost::math::binomial_coefficient<double>(
-                       std::min({TensorIndex::mem_dim_size()...}) + sizeof...(TensorIndex) - 1,
+                       std::min({TensorIndex::mem_size()...}) + sizeof...(TensorIndex) - 1,
                        sizeof...(TensorIndex))
                - ((sorted_ids[ddc::type_seq_rank_v<
                            TensorIndex,
                            ddc::detail::TypeSeq<TensorIndex...>>]
-                                   == TensorIndex::mem_dim_size() - 1
+                                   == TensorIndex::mem_size() - 1
                            ? 0
                            : boost::math::binomial_coefficient<double>(
-                                   TensorIndex::mem_dim_size()
+                                   TensorIndex::mem_size()
                                            - sorted_ids[ddc::type_seq_rank_v<
                                                    TensorIndex,
                                                    ddc::detail::TypeSeq<TensorIndex...>>]

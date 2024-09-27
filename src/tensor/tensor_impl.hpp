@@ -19,19 +19,19 @@ struct TensorNaturalIndex
         return 1;
     }
 
-    static constexpr std::size_t dim_size()
+    static constexpr std::size_t size()
     {
         return sizeof...(CDim);
     }
 
-    static constexpr std::size_t mem_dim_size()
+    static constexpr std::size_t mem_size()
     {
-        return dim_size();
+        return size();
     }
 
-    static constexpr std::size_t access_dim_size()
+    static constexpr std::size_t access_size()
     {
-        return dim_size();
+        return size();
     }
 
     template <class ODim>
@@ -160,7 +160,7 @@ constexpr ddc::DiscreteDomain<Index...> TensorAccessor<Index...>::mem_domain()
 {
     return ddc::DiscreteDomain<Index...>(
             ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(0)...),
-            ddc::DiscreteVector<Index...>(ddc::DiscreteVector<Index>(Index::mem_dim_size())...));
+            ddc::DiscreteVector<Index...>(ddc::DiscreteVector<Index>(Index::mem_size())...));
 }
 
 template <class... Index>
@@ -168,7 +168,7 @@ constexpr ddc::DiscreteDomain<Index...> TensorAccessor<Index...>::access_domain(
 {
     return ddc::DiscreteDomain<Index...>(
             ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(0)...),
-            ddc::DiscreteVector<Index...>(ddc::DiscreteVector<Index>(Index::access_dim_size())...));
+            ddc::DiscreteVector<Index...>(ddc::DiscreteVector<Index>(Index::access_size())...));
 }
 
 template <class... Index>

@@ -19,17 +19,17 @@ struct IdentityTensorIndex
         return (TensorIndex::rank() + ...);
     }
 
-    static constexpr std::size_t dim_size()
+    static constexpr std::size_t size()
     {
-        return (TensorIndex::dim_size() * ...);
+        return (TensorIndex::size() * ...);
     }
 
-    static constexpr std::size_t mem_dim_size()
+    static constexpr std::size_t mem_size()
     {
         return 0;
     }
 
-    static constexpr std::size_t access_dim_size()
+    static constexpr std::size_t access_size()
     {
         return 2;
     }
