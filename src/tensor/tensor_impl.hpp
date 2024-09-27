@@ -204,8 +204,9 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
     {
         if constexpr (detail::is_tensor_index_v<IndexInterest>) {
             return IndexInterest::template process_access<TensorField, Elem>(
-                    [](TensorField tensor_field_, Elem elem_)
-                            -> TensorField::element_type { return tensor_field_(elem_); },
+                    [](TensorField tensor_field_, Elem elem_) -> TensorField::element_type {
+                        return tensor_field_(elem_);
+                    },
                     tensor_field,
                     elem);
         } else {
@@ -227,8 +228,7 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
     {
         if constexpr (detail::is_tensor_index_v<IndexInterest>) {
             return IndexInterest::template process_access<TensorField, Elem>(
-                    [](TensorField tensor_field_,
-                       Elem elem_) -> TensorField::element_type {
+                    [](TensorField tensor_field_, Elem elem_) -> TensorField::element_type {
                         return Access<
                                 TensorField,
                                 Element,

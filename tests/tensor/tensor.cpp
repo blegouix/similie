@@ -114,6 +114,43 @@ TEST(Tensor, FullTensorIndexing)
     EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Z>()), 5.);
 }
 
+struct DiagIndex : sil::tensor::DiagonalTensorIndex<Mu, Nu>
+{
+};
+
+TEST(Tensor, DiagonalTensorIndexing)
+{
+    sil::tensor::TensorAccessor<DiagIndex> tensor_accessor;
+    ddc::DiscreteDomain<DiagIndex> tensor_dom = tensor_accessor.domain();
+    ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor<
+            double,
+            ddc::DiscreteDomain<DiagIndex>,
+            std::experimental::layout_right,
+            Kokkos::DefaultHostExecutionSpace::memory_space>
+            tensor(tensor_alloc);
+
+    /*
+    for (int i = 1; i < 4; ++i) {
+            tensor(ddc::DiscreteElement<DiagIndex>(i)) = i;
+    }
+    */
+
+    tensor(tensor_accessor.element<X, X>()) = 1.;
+    tensor(tensor_accessor.element<Y, Y>()) = 2.;
+    tensor(tensor_accessor.element<Z, Z>()) = 3.;
+
+    EXPECT_EQ(tensor.get(tensor_accessor.element<X, X>()), 1.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<X, Y>()), 0.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<X, Z>()), 0.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, X>()), 0.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, Y>()), 2.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, Z>()), 0.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, X>()), 0.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Y>()), 0.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Z>()), 3.);
+}
+
 struct Sigma : sil::tensor::SymmetricTensorIndex<Mu, Nu>
 {
 };
