@@ -5,5 +5,6 @@
 #include "antisymmetric_tensor.hpp"
 #include "diagonal_tensor.hpp"
 #include "full_tensor.hpp"
+#include "identity_tensor.hpp"
 #include "symmetric_tensor.hpp"
 #include "tensor_impl.hpp"

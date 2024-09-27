@@ -10,9 +10,9 @@ namespace sil {
 
 namespace tensor {
 
-// struct representing and index for a diagonal tensor (only diagonal is stored).
+// struct representing an identity tensor (no storage).
 template <class... TensorIndex>
-struct DiagonalTensorIndex
+struct IdentityTensorIndex
 {
     static constexpr std::size_t rank()
     {
@@ -33,11 +33,8 @@ public:
     static constexpr std::size_t mem_id()
     {
         // static_assert(rank() == sizeof...(CDim));
-        static_assert(are_all_same<CDim...>);
-        return std::min({detail::access_id<
-                TensorIndex,
-                ddc::detail::TypeSeq<TensorIndex...>,
-                CDim...>()...});
+        assert(false);
+        return 0;
     }
 
     template <class... CDim>
@@ -46,14 +43,14 @@ public:
         if constexpr (!are_all_same<CDim...>) {
             return 0;
         } else {
-            return 1 + mem_id<CDim...>();
+            return 1;
         }
     }
 
     static constexpr std::size_t access_id_to_mem_id(std::size_t access_id)
     {
-        assert(access_id != 0 && "There is no mem_id associated to access_id=0");
-        return access_id - 1;
+        assert(false && "There is no mem_id");
+        return 0;
     }
 
     template <class Tensor, class Elem>
@@ -65,14 +62,14 @@ public:
         if (elem.uid() == 0) {
             return 0.;
         } else {
-            return access(tensor, elem);
+            return 1;
         }
     }
 };
 
 namespace detail {
 template <class... SubIndex>
-struct IsTensorIndex<DiagonalTensorIndex<SubIndex...>>
+struct IsTensorIndex<IdentityTensorIndex<SubIndex...>>
 {
     using type = std::true_type;
 };
