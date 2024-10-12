@@ -8,8 +8,9 @@
 
 using TableauSeq
         = sil::young_tableau::YoungTableauSeq<std::index_sequence<1, 3>, std::index_sequence<2, 4>>;
+// = sil::young_tableau::YoungTableauSeq<std::index_sequence<1, 3>, std::index_sequence<2>>;
 
 TEST(YoungTableau, Init)
 {
-    sil::young_tableau::YoungTableau<TableauSeq> young_tableau;
+    sil::young_tableau::YoungTableau<4, TableauSeq> young_tableau;
 }

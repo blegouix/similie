@@ -2,12 +2,30 @@
 
 #pragma once
 
+#include <fstream>
+
 namespace sil {
 
 namespace young_tableau {
 
+namespace detail {
+
+template <class T, T... Args>
+constexpr T sum(std::integer_sequence<T, Args...> = {})
+{
+    return (Args + ...);
+}
+
+} // namespace detail
+
 template <class... Row>
-class YoungTableauSeq;
+class YoungTableauSeq
+{
+public:
+    using shape = std::index_sequence<Row::size()...>;
+
+    static constexpr std::size_t rank = detail::sum(shape());
+};
 
 namespace detail {
 
@@ -52,7 +70,6 @@ struct PrintYoungTableauSeq<
     {
         os += std::to_string(HeadRowHeadElement) + " ";
         if constexpr (sizeof...(TailRow) == 0 && sizeof...(HeadRowTailElement) == 0) {
-            os += "\n";
         } else if constexpr (sizeof...(HeadRowTailElement) == 0) {
             os += "\n";
             os = PrintYoungTableauSeq<YoungTableauSeq<TailRow...>>::run(os);
@@ -68,19 +85,30 @@ struct PrintYoungTableauSeq<
 } // namespace detail
 
 template <class TableauSeq>
-std::string print_young_tableau_seq(std::string os)
+std::string print_young_tableau_seq()
 {
-    return detail::PrintYoungTableauSeq<TableauSeq>::run(os);
+    return detail::PrintYoungTableauSeq<TableauSeq>::run("");
 }
 
-template <class TableauSeq>
+template <std::size_t Dimension, class TableauSeq>
 class YoungTableau
 {
+    using tableau_seq = TableauSeq;
+    using shape = TableauSeq::shape;
+
+    static constexpr std::size_t s_d = Dimension;
+    static constexpr std::size_t s_r = TableauSeq::rank;
+
 public:
     YoungTableau()
     {
-        std::string str = print_young_tableau_seq<TableauSeq>("");
-        std::cout << str;
+        std::cout << "\033[1;31mThe representations dictionnary does not contain any "
+                     "representation for the Young tableau:\033[0m\n"
+                  << print_young_tableau_seq<TableauSeq>()
+                  << "\n\033[1;31min dimension " + std::to_string(s_d)
+                             + ". Please compile with BUILD_COMPUTE_REPRESENTATION=ON and "
+                               "rerun.\033[0m\n";
+        std::cout << std::to_string(s_r);
     }
 };
 
