@@ -16,6 +16,28 @@ constexpr T sum(std::integer_sequence<T, Args...> = {})
     return (Args + ...);
 }
 
+template <class Mu, class Shape>
+struct ConjugateIterator;
+
+template <std::size_t... MuRowSize, std::size_t HeadRowSize, std::size_t... TailRowSize>
+struct ConjugateIterator<
+        std::index_sequence<MuRowSize...>,
+        std::index_sequence<HeadRowSize, TailRowSize...>>
+{
+    using type = typename std::conditional_t<
+            sizeof...(TailRowSize) == 0,
+            std::index_sequence<MuRowSize..., 0>,
+            typename ConjugateIterator<
+                    std::index_sequence<MuRowSize...>,
+                    std::index_sequence<TailRowSize...>>::type>;
+};
+
+template <std::size_t... MuRowSize>
+struct ConjugateIterator<std::index_sequence<MuRowSize...>, std::index_sequence<>>
+{
+    using type = std::index_sequence<MuRowSize...>;
+};
+
 } // namespace detail
 
 template <class... Row>
@@ -25,7 +47,25 @@ public:
     using shape = std::index_sequence<Row::size()...>;
 
     static constexpr std::size_t rank = detail::sum(shape());
+
+    using conjugate = detail::ConjugateIterator<std::index_sequence<shape::size()>, shape>::type;
+
+    // using mu = YoungTableauSeq<std::index_sequence<shape::size()>>;
 };
+
+/*
+def __conjugate(nu):
+    l = len(nu) shape::size()
+    mu = [l] YoungTableauSeq<std::index_sequence<shape::size()>>
+    if l >= 1:
+        for i in range(1, nu[0]):
+            mu.append(0)
+            j = 0
+            while j < len(nu) and nu[j] > i:
+                mu[i] = mu[i] + 1
+                j = j + 1
+    return mu
+*/
 
 namespace detail {
 
@@ -109,6 +149,7 @@ public:
                              + ". Please compile with BUILD_COMPUTE_REPRESENTATION=ON and "
                                "rerun.\033[0m\n";
         std::cout << std::to_string(s_r);
+        std::cout << std::to_string(tableau_seq::conjugate::size());
     }
 };
 
