@@ -235,6 +235,168 @@ struct DualHelper<YoungTableauSeq<>>
 template <class Tableau>
 using dual_t = DualHelper<Tableau>::type;
 
+// Compute hooks
+template <class TableauHooks, class Tableau, class Shape, std::size_t I, std::size_t J>
+struct Hooks;
+
+template <
+        class TableauHooks,
+        std::size_t HeadElemOfHeadRow,
+        std::size_t... TailElemOfHeadRow,
+        class... TailRow,
+        std::size_t HeadRowSize,
+        std::size_t... TailRowSize,
+        std::size_t I,
+        std::size_t J>
+struct Hooks<
+        TableauHooks,
+        YoungTableauSeq<std::index_sequence<HeadElemOfHeadRow, TailElemOfHeadRow...>, TailRow...>,
+        std::index_sequence<HeadRowSize, TailRowSize...>,
+        I,
+        J>
+{
+    using type = std::conditional_t<
+            sizeof...(TailRow) == 0 && sizeof...(TailElemOfHeadRow),
+            add_cell_to_tableau_t<TableauHooks, I, HeadRowSize - J>,
+            std::conditional_t<
+                    sizeof...(TailElemOfHeadRow) == 0,
+                    typename Hooks<
+                            add_cell_to_tableau_t<TableauHooks, I, HeadRowSize - J>,
+                            YoungTableauSeq<TailRow...>,
+                            std::index_sequence<TailRowSize...>,
+                            I + 1,
+                            0>::type,
+                    typename Hooks<
+                            add_cell_to_tableau_t<TableauHooks, I, HeadRowSize - J>,
+                            YoungTableauSeq<std::index_sequence<TailElemOfHeadRow...>, TailRow...>,
+                            std::index_sequence<HeadRowSize, TailRowSize...>,
+                            I,
+                            J + 1>::type>>;
+};
+
+template <class TableauHooks, class... TailRow, class Shape, std::size_t I, std::size_t J>
+struct Hooks<TableauHooks, YoungTableauSeq<std::index_sequence<>, TailRow...>, Shape, I, J>
+{
+    using type = YoungTableauSeq<>;
+};
+
+template <class TableauHooks, class Shape, std::size_t I, std::size_t J>
+struct Hooks<TableauHooks, YoungTableauSeq<>, Shape, I, J>
+{
+    using type = TableauHooks;
+};
+
+template <class Tableau>
+struct HooksHelper;
+
+template <class... Row>
+struct HooksHelper<YoungTableauSeq<Row...>>
+{
+    using type
+            = Hooks<YoungTableauSeq<std::conditional_t<true, std::index_sequence<>, Row>...>,
+                    YoungTableauSeq<Row...>,
+                    typename YoungTableauSeq<Row...>::shape,
+                    0,
+                    0>::type;
+};
+
+template <>
+struct HooksHelper<YoungTableauSeq<>>
+{
+    using type = YoungTableauSeq<>;
+};
+
+template <class Tableau>
+using hooks_t = HooksHelper<Tableau>::type;
+
+// Helper to sum the partial contributions of hooks to get hook lengths (= hooks+hooks_of_dual^T-1) 
+template <class TableauHooks, class Tableau1, class Tableau2, std::size_t I>
+struct HookLengths;
+
+template <
+        class TableauHooks,
+        std::size_t HeadElemOfHeadRow1,
+        std::size_t... TailElemOfHeadRow1,
+        class... TailRow1,
+        std::size_t HeadElemOfHeadRow2,
+        std::size_t... TailElemOfHeadRow2,
+        class... TailRow2,
+        std::size_t I>
+struct HookLengths<
+        TableauHooks,
+        YoungTableauSeq<
+                std::index_sequence<HeadElemOfHeadRow1, TailElemOfHeadRow1...>,
+                TailRow1...>,
+        YoungTableauSeq<
+                std::index_sequence<HeadElemOfHeadRow2, TailElemOfHeadRow2...>,
+                TailRow2...>,
+        I>
+{
+    using type = std::conditional_t<
+            sizeof...(TailRow1) == 0 && sizeof...(TailElemOfHeadRow1),
+            add_cell_to_tableau_t<TableauHooks, I, HeadElemOfHeadRow1 + HeadElemOfHeadRow2 - 1>,
+            std::conditional_t<
+                    sizeof...(TailElemOfHeadRow1) == 0,
+                    typename HookLengths<
+                            add_cell_to_tableau_t<
+                                    TableauHooks,
+                                    I,
+                                    HeadElemOfHeadRow1 + HeadElemOfHeadRow2 - 1>,
+                            YoungTableauSeq<TailRow1...>,
+                            YoungTableauSeq<TailRow2...>,
+                            I + 1>::type,
+                    typename HookLengths<
+                            add_cell_to_tableau_t<
+                                    TableauHooks,
+                                    I,
+                                    HeadElemOfHeadRow1 + HeadElemOfHeadRow2 - 1>,
+                            YoungTableauSeq<
+                                    std::index_sequence<TailElemOfHeadRow1...>,
+                                    TailRow1...>,
+                            YoungTableauSeq<
+                                    std::index_sequence<TailElemOfHeadRow2...>,
+                                    TailRow2...>,
+                            I>::type>>;
+};
+
+template <class TableauHooks, class... TailRow1, class... TailRow2, std::size_t I>
+struct HookLengths<
+        TableauHooks,
+        YoungTableauSeq<std::index_sequence<>, TailRow1...>,
+        YoungTableauSeq<std::index_sequence<>, TailRow2...>,
+        I>
+{
+    using type = YoungTableauSeq<>;
+};
+
+template <class TableauHooks, std::size_t I>
+struct HookLengths<TableauHooks, YoungTableauSeq<>, YoungTableauSeq<>, I>
+{
+    using type = TableauHooks;
+};
+
+template <class Tableau1, class Tableau2>
+struct HookLengthsHelper;
+
+template <class... Row1, class Tableau2>
+struct HookLengthsHelper<YoungTableauSeq<Row1...>, Tableau2>
+{
+    using type
+            = HookLengths<YoungTableauSeq<std::conditional_t<true, std::index_sequence<>, Row1>...>,
+                    YoungTableauSeq<Row1...>,
+                    Tableau2,
+                    0>::type;
+};
+
+template <>
+struct HookLengthsHelper<YoungTableauSeq<>, YoungTableauSeq<>>
+{
+    using type = YoungTableauSeq<>;
+};
+
+template <class Tableau1, class Tableau2>
+using hook_lengths_t = HookLengthsHelper<Tableau1, Tableau2>::type;
+
 // Print Young tableau in a string
 template <class TableauSeq>
 struct PrintYoungTableauSeq;
@@ -288,9 +450,10 @@ private:
     static constexpr std::size_t s_d = Dimension;
     static constexpr std::size_t s_r = TableauSeq::rank;
 
-    using dual = YoungTableau<s_d, detail::dual_t<tableau_seq>>;
-
 public:
+    using dual = YoungTableau<s_d, detail::dual_t<tableau_seq>>;
+    using hook_lengths = detail::hook_lengths_t<detail::hooks_t<tableau_seq>, detail::dual_t<detail::hooks_t<detail::dual_t<tableau_seq>>>>;
+
     YoungTableau()
     {
         std::cout << "\033[1;31mThe representations dictionnary does not contain any "
@@ -299,7 +462,9 @@ public:
                   << "\n\033[1;31min dimension " + std::to_string(s_d)
                              + ". Please compile with BUILD_COMPUTE_REPRESENTATION=ON and "
                                "rerun.\033[0m\n";
-        std::cout << "-----\n" << dual::print();
+        std::cout << "-----\n" << dual::print() << "\n";
+        std::cout << "-----\n"
+                  << YoungTableau<s_d, hook_lengths>::print() << "\n";
     }
 
     static std::string print()
