@@ -7,8 +7,8 @@
 #include "young_tableau.hpp"
 
 using TableauSeq
-        = sil::young_tableau::YoungTableauSeq<std::index_sequence<1, 3>, std::index_sequence<2, 4>>;
-// = sil::young_tableau::YoungTableauSeq<std::index_sequence<1, 3>, std::index_sequence<2>>;
+        // = sil::young_tableau::YoungTableauSeq<std::index_sequence<1, 3>, std::index_sequence<2, 4>>;
+        = sil::young_tableau::YoungTableauSeq<std::index_sequence<1, 3, 4>, std::index_sequence<2>>;
 
 TEST(YoungTableau, Init)
 {

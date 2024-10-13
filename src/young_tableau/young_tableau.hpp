@@ -16,28 +16,6 @@ constexpr T sum(std::integer_sequence<T, Args...> = {})
     return (Args + ...);
 }
 
-template <class Mu, class Shape>
-struct ConjugateIterator;
-
-template <std::size_t... MuRowSize, std::size_t HeadRowSize, std::size_t... TailRowSize>
-struct ConjugateIterator<
-        std::index_sequence<MuRowSize...>,
-        std::index_sequence<HeadRowSize, TailRowSize...>>
-{
-    using type = typename std::conditional_t<
-            sizeof...(TailRowSize) == 0,
-            std::index_sequence<MuRowSize..., 0>,
-            typename ConjugateIterator<
-                    std::index_sequence<MuRowSize...>,
-                    std::index_sequence<TailRowSize...>>::type>;
-};
-
-template <std::size_t... MuRowSize>
-struct ConjugateIterator<std::index_sequence<MuRowSize...>, std::index_sequence<>>
-{
-    using type = std::index_sequence<MuRowSize...>;
-};
-
 } // namespace detail
 
 template <class... Row>
@@ -47,25 +25,7 @@ public:
     using shape = std::index_sequence<Row::size()...>;
 
     static constexpr std::size_t rank = detail::sum(shape());
-
-    using conjugate = detail::ConjugateIterator<std::index_sequence<shape::size()>, shape>::type;
-
-    // using mu = YoungTableauSeq<std::index_sequence<shape::size()>>;
 };
-
-/*
-def __conjugate(nu):
-    l = len(nu) shape::size()
-    mu = [l] YoungTableauSeq<std::index_sequence<shape::size()>>
-    if l >= 1:
-        for i in range(1, nu[0]):
-            mu.append(0)
-            j = 0
-            while j < len(nu) and nu[j] > i:
-                mu[i] = mu[i] + 1
-                j = j + 1
-    return mu
-*/
 
 namespace detail {
 
@@ -76,8 +36,16 @@ struct ExtractRow;
 template <std::size_t I, std::size_t Id, class HeadRow, class... TailRow>
 struct ExtractRow<I, Id, YoungTableauSeq<HeadRow, TailRow...>>
 {
-    using type = std::
-            conditional_t<I == Id, HeadRow, ExtractRow<I, Id + 1, YoungTableauSeq<TailRow...>>>;
+    using type = std::conditional_t<
+            I == Id,
+            HeadRow,
+            typename ExtractRow<I, Id + 1, YoungTableauSeq<TailRow...>>::type>;
+};
+
+template <std::size_t I, std::size_t Id>
+struct ExtractRow<I, Id, YoungTableauSeq<>>
+{
+    using type = std::index_sequence<>;
 };
 
 template <std::size_t I, class TableauSeq>
@@ -93,12 +61,181 @@ struct ExtractElem<J, Id, std::index_sequence<HeadElem, TailElem...>>
     using type = std::conditional_t<
             J == Id,
             std::index_sequence<HeadElem>,
-            ExtractElem<J, Id + 1, std::index_sequence<TailElem...>>>;
+            typename ExtractElem<J, Id + 1, std::index_sequence<TailElem...>>::type>;
 };
 
 template <std::size_t J, class Row>
 using extract_elem_t = ExtractElem<J, 0, Row>::type;
 
+// Override the row of YoungTableauSeq at index I with RowToSet
+template <
+        std::size_t I,
+        std::size_t Id,
+        class RowToSet,
+        class HeadTableauSeq,
+        class InterestTableauSeq,
+        class TailTableauSeq>
+struct OverrideRow;
+
+template <
+        std::size_t I,
+        std::size_t Id,
+        class RowToSet,
+        class... HeadRow,
+        class InterestRow,
+        class HeadOfTailRow,
+        class... TailOfTailRow>
+struct OverrideRow<
+        I,
+        Id,
+        RowToSet,
+        YoungTableauSeq<HeadRow...>,
+        YoungTableauSeq<InterestRow>,
+        YoungTableauSeq<HeadOfTailRow, TailOfTailRow...>>
+{
+    using type = std::conditional_t<
+            I == Id,
+            YoungTableauSeq<HeadRow..., RowToSet, HeadOfTailRow, TailOfTailRow...>,
+            typename OverrideRow<
+                    I,
+                    Id + 1,
+                    RowToSet,
+                    YoungTableauSeq<HeadRow..., InterestRow>,
+                    YoungTableauSeq<HeadOfTailRow>,
+                    YoungTableauSeq<TailOfTailRow...>>::type>;
+};
+
+template <std::size_t I, std::size_t Id, class RowToSet, class... HeadRow, class InterestRow>
+struct OverrideRow<
+        I,
+        Id,
+        RowToSet,
+        YoungTableauSeq<HeadRow...>,
+        YoungTableauSeq<InterestRow>,
+        YoungTableauSeq<>>
+{
+    using type = YoungTableauSeq<HeadRow..., RowToSet>;
+};
+
+template <std::size_t I, class RowToSet, class TableauSeq>
+struct OverrideRowHelper;
+
+template <std::size_t I, class RowToSet, class InterestRow, class... TailRow>
+struct OverrideRowHelper<I, RowToSet, YoungTableauSeq<InterestRow, TailRow...>>
+{
+    using type = OverrideRow<
+            I,
+            0,
+            RowToSet,
+            YoungTableauSeq<>,
+            YoungTableauSeq<InterestRow>,
+            YoungTableauSeq<TailRow...>>::type;
+};
+
+template <std::size_t I, class RowToSet, class TableauSeq>
+using override_row_t = OverrideRowHelper<I, RowToSet, TableauSeq>::type;
+
+// Add cell with value Value at the end of a row
+template <class Row, std::size_t Value>
+struct AddCellToRow;
+
+template <std::size_t... Elem, std::size_t Value>
+struct AddCellToRow<std::index_sequence<Elem...>, Value>
+{
+    using type = std::index_sequence<Elem..., Value>;
+};
+
+template <class Row, std::size_t Value>
+using add_cell_to_row_t = AddCellToRow<Row, Value>::type;
+
+// Add cell with value Value at the end of the row at index I
+template <class Tableau, std::size_t I, std::size_t Value>
+struct AddCellToTableau;
+
+template <class... Row, std::size_t I, std::size_t Value>
+struct AddCellToTableau<YoungTableauSeq<Row...>, I, Value>
+{
+    using type = detail::override_row_t<
+            I,
+            add_cell_to_row_t<extract_row_t<I, YoungTableauSeq<Row...>>, Value>,
+            YoungTableauSeq<Row...>>;
+};
+
+template <class Tableau, std::size_t I, std::size_t Value>
+using add_cell_to_tableau_t = AddCellToTableau<Tableau, I, Value>::type;
+
+// Compute dual of YoungTableauSeq
+template <class TableauDual, class Tableau, std::size_t I, std::size_t J>
+struct Dual;
+
+template <
+        class TableauDual,
+        std::size_t HeadElemOfHeadRow,
+        std::size_t... TailElemOfHeadRow,
+        class... TailRow,
+        std::size_t I,
+        std::size_t J>
+struct Dual<
+        TableauDual,
+        YoungTableauSeq<std::index_sequence<HeadElemOfHeadRow, TailElemOfHeadRow...>, TailRow...>,
+        I,
+        J>
+{
+    using type = std::conditional_t<
+            sizeof...(TailRow) == 0 && sizeof...(TailElemOfHeadRow),
+            add_cell_to_tableau_t<TableauDual, J, HeadElemOfHeadRow>,
+            std::conditional_t<
+                    sizeof...(TailElemOfHeadRow) == 0,
+                    typename Dual<
+                            add_cell_to_tableau_t<TableauDual, J, HeadElemOfHeadRow>,
+                            YoungTableauSeq<TailRow...>,
+                            I + 1,
+                            0>::type,
+                    typename Dual<
+                            add_cell_to_tableau_t<TableauDual, J, HeadElemOfHeadRow>,
+                            YoungTableauSeq<std::index_sequence<TailElemOfHeadRow...>, TailRow...>,
+                            I,
+                            J + 1>::type>>;
+};
+
+template <class TableauDual, class... TailRow, std::size_t I, std::size_t J>
+struct Dual<TableauDual, YoungTableauSeq<std::index_sequence<>, TailRow...>, I, J>
+{
+    using type = YoungTableauSeq<>;
+};
+
+template <class TableauDual, std::size_t I, std::size_t J>
+struct Dual<TableauDual, YoungTableauSeq<>, I, J>
+{
+    using type = TableauDual;
+};
+
+template <class Tableau>
+struct DualHelper;
+
+template <std::size_t... ElemOfHeadRow, class... TailRow>
+struct DualHelper<YoungTableauSeq<std::index_sequence<ElemOfHeadRow...>, TailRow...>>
+{
+    using type
+            = Dual<YoungTableauSeq<std::conditional_t<
+                           ElemOfHeadRow == -1,
+                           std::index_sequence<>,
+                           std::index_sequence<>>...>,
+                   YoungTableauSeq<std::index_sequence<ElemOfHeadRow...>, TailRow...>,
+                   0,
+                   0>::type;
+};
+
+template <>
+struct DualHelper<YoungTableauSeq<>>
+{
+    using type = YoungTableauSeq<>;
+};
+
+template <class Tableau>
+using dual_t = DualHelper<Tableau>::type;
+
+// Print Young tableau in a string
 template <class TableauSeq>
 struct PrintYoungTableauSeq;
 
@@ -122,6 +259,15 @@ struct PrintYoungTableauSeq<
     }
 };
 
+template <>
+struct PrintYoungTableauSeq<YoungTableauSeq<>>
+{
+    static std::string run(std::string os)
+    {
+        return os;
+    }
+};
+
 } // namespace detail
 
 template <class TableauSeq>
@@ -134,22 +280,31 @@ template <std::size_t Dimension, class TableauSeq>
 class YoungTableau
 {
     using tableau_seq = TableauSeq;
-    using shape = TableauSeq::shape;
 
+public:
+    using shape = typename TableauSeq::shape;
+
+private:
     static constexpr std::size_t s_d = Dimension;
     static constexpr std::size_t s_r = TableauSeq::rank;
+
+    using dual = YoungTableau<s_d, detail::dual_t<tableau_seq>>;
 
 public:
     YoungTableau()
     {
         std::cout << "\033[1;31mThe representations dictionnary does not contain any "
                      "representation for the Young tableau:\033[0m\n"
-                  << print_young_tableau_seq<TableauSeq>()
+                  << print()
                   << "\n\033[1;31min dimension " + std::to_string(s_d)
                              + ". Please compile with BUILD_COMPUTE_REPRESENTATION=ON and "
                                "rerun.\033[0m\n";
-        std::cout << std::to_string(s_r);
-        std::cout << std::to_string(tableau_seq::conjugate::size());
+        std::cout << "-----\n" << dual::print();
+    }
+
+    static std::string print()
+    {
+        return print_young_tableau_seq<tableau_seq>();
     }
 };
 
