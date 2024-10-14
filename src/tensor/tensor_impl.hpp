@@ -140,7 +140,7 @@ template <class... Index>
 class TensorAccessor
 {
 public:
-    explicit TensorAccessor();
+    explicit constexpr TensorAccessor();
 
     static constexpr ddc::DiscreteDomain<Index...> mem_domain();
 
@@ -151,7 +151,7 @@ public:
 };
 
 template <class... Index>
-TensorAccessor<Index...>::TensorAccessor()
+constexpr TensorAccessor<Index...>::TensorAccessor()
 {
 }
 
@@ -269,6 +269,26 @@ template <class ElementType, class SupportType, class LayoutStridedPolicy, class
 class Tensor
 {
 };
+
+} // namespace tensor
+
+} // namespace sil
+
+namespace ddc {
+
+template <class ElementType, class SupportType, class LayoutStridedPolicy, class MemorySpace>
+inline constexpr bool enable_chunk<
+        sil::tensor::Tensor<ElementType, SupportType, LayoutStridedPolicy, MemorySpace>> = true;
+
+template <class ElementType, class SupportType, class LayoutStridedPolicy, class MemorySpace>
+inline constexpr bool enable_borrowed_chunk<
+        sil::tensor::Tensor<ElementType, SupportType, LayoutStridedPolicy, MemorySpace>> = true;
+
+} // namespace ddc
+
+namespace sil {
+
+namespace tensor {
 
 template <class ElementType, class... DDim, class LayoutStridedPolicy, class MemorySpace>
 class Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>

@@ -4,6 +4,8 @@
 
 #include <fstream>
 
+#include "tensor.hpp"
+
 namespace sil {
 
 namespace young_tableau {
@@ -453,6 +455,50 @@ struct IrrepDim<Dimension, YoungTableauSeq<>, I, J>
     }
 };
 
+// Type of index used by projectors
+template <std::size_t I>
+struct X
+{
+};
+
+template <class Ids>
+struct NaturalIndex;
+
+template <std::size_t... Id>
+struct NaturalIndex<std::index_sequence<Id...>>
+{
+    using type = sil::tensor::TensorNaturalIndex<X<Id>...>;
+};
+
+template <class NaturalIndex, class RankIds>
+struct ProjectorIndex;
+
+template <class NaturalIndex, std::size_t... RankId>
+struct ProjectorIndex<NaturalIndex, std::index_sequence<RankId...>>
+{
+    using type = sil::tensor::FullTensorIndex<
+            std::conditional_t<RankId == -1, NaturalIndex, NaturalIndex>...>;
+};
+
+template <std::size_t Dimension, std::size_t Rank>
+using projector_index_t = ProjectorIndex<
+        typename NaturalIndex<std::make_index_sequence<Dimension>>::type,
+        std::make_index_sequence<2 * Rank>>::type;
+
+// Lambda to fill identity or transpose projectors
+template <std::size_t Dimension, std::size_t Rank, std::size_t N>
+auto tr_lambda(std::array<std::size_t, N> idx_to_permute)
+{
+    auto lambda_to_return
+            = [](sil::tensor::Tensor<
+                         double,
+                         ddc::DiscreteDomain<detail::projector_index_t<Dimension, Rank>>,
+                         std::experimental::layout_right,
+                         Kokkos::DefaultHostExecutionSpace::memory_space> t,
+                 std::array<std::size_t, N> idx) { t[idx] = 1; };
+    return lambda_to_return;
+}
+
 // Print Young tableau in a string
 template <class TableauSeq>
 struct PrintYoungTableauSeq;
@@ -524,6 +570,7 @@ public:
                   << "\n\033[1;31min dimension " + std::to_string(s_d)
                              + ". Please compile with BUILD_COMPUTE_REPRESENTATION=ON and "
                                "rerun.\033[0m\n";
+        projector();
     }
 
     static consteval std::size_t dimension()
@@ -539,6 +586,25 @@ public:
     static consteval std::size_t irrep_dim()
     {
         return s_irrep_dim;
+    }
+
+    static void projector()
+    {
+        sil::tensor::TensorAccessor<detail::projector_index_t<s_d, s_r>> tensor_accessor;
+        ddc::DiscreteDomain<detail::projector_index_t<s_d, s_r>> tensor_dom
+                = tensor_accessor.mem_domain();
+
+        ddc::Chunk id_tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
+        sil::tensor::Tensor<
+                double,
+                ddc::DiscreteDomain<detail::projector_index_t<s_d, s_r>>,
+                std::experimental::layout_right,
+                Kokkos::DefaultHostExecutionSpace::memory_space>
+                id_tensor(id_tensor_alloc);
+        ddc::parallel_fill(id_tensor, 0);
+
+        std::cout << id_tensor.extents();
+        std::cout << id_tensor(0);
     }
 
     static std::string print()
