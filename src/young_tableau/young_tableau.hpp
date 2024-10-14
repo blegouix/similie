@@ -491,32 +491,38 @@ using projector_index_t = ProjectorIndex<
         std::make_index_sequence<2 * Rank>>::type;
 
 // Lambda to fill identity or transpose projectors
-template <class ProjectorIds, std::size_t Dimension, std::size_t Rank>
-struct TrLambda;
+/*
+template <std::size_t Shift, class QueryNaturalId, class... NaturalId>
+using shift_natural_id = ddc::detail::TypeSeqElement<ddc::detail::type_seq_rank_v<QueryNaturalId, NaturalId...>+Shift, NaturalId...>;
+*/
 
-template <class... NaturalId, std::size_t Dimension, std::size_t Rank>
-struct TrLambda<sil::tensor::FullTensorIndex<NaturalId...>, Dimension, Rank>
+template <std::size_t Dimension, std::size_t Rank, class... NaturalId>
+std::function<
+        void(sil::tensor::Tensor<
+                     double,
+                     ddc::DiscreteDomain<NaturalId...>,
+                     std::experimental::layout_right,
+                     Kokkos::DefaultHostExecutionSpace::memory_space>,
+             ddc::DiscreteElement<NaturalId...>)>
+tr_lambda(std::array<std::size_t, Rank> idx_to_permute)
 {
-    template <std::size_t N>
-    std::function<
-            void(sil::tensor::Tensor<
-                         double,
-                         ddc::DiscreteDomain<NaturalId...>,
-                         std::experimental::layout_right,
-                         Kokkos::DefaultHostExecutionSpace::memory_space>,
-                 ddc::DiscreteElement<NaturalId...>)>
-    static run(std::array<std::size_t, N> idx_to_permute)
-    {
-        return [](sil::tensor::Tensor<
-                          double,
-                          ddc::DiscreteDomain<NaturalId...>,
-                          std::experimental::layout_right,
-                          Kokkos::DefaultHostExecutionSpace::memory_space> t,
-                  ddc::DiscreteElement<NaturalId...> elem) {
+    return [=](sil::tensor::Tensor<
+                       double,
+                       ddc::DiscreteDomain<NaturalId...>,
+                       std::experimental::layout_right,
+                       Kokkos::DefaultHostExecutionSpace::memory_space> t,
+               ddc::DiscreteElement<NaturalId...> elem) {
+        std::array<std::size_t, sizeof...(NaturalId)> elem_array = ddc::detail::array(elem);
+        bool has_to_be_one = true;
+        for (std::size_t i = 0; i < Rank; ++i) {
+            has_to_be_one
+                    = has_to_be_one && (elem_array[i] == elem_array[idx_to_permute[i] + Rank]);
+        }
+        if (has_to_be_one) {
             t(elem) = 1;
-        };
-    }
-};
+        }
+    };
+}
 
 // Print Young tableau in a string
 template <class TableauSeq>
@@ -626,14 +632,14 @@ public:
                     Kokkos::DefaultHostExecutionSpace::memory_space>
                     id_tensor(id_tensor_alloc);
             ddc::parallel_fill(id_tensor, 0);
-            std::array<std::size_t, s_d> idx_to_permute;
-            for (int i = 0; i < s_d; ++i) {
+            std::array<std::size_t, s_r> idx_to_permute;
+            for (std::size_t i = 0; i < s_r; ++i) {
                 idx_to_permute[i] = i;
             }
-            id_tensor.fill_using_lambda(detail::TrLambda<sil::tensor::FullTensorIndex<NaturalIndex...>, s_d, s_r>::run(idx_to_permute));
+            id_tensor.fill_using_lambda(
+                    detail::tr_lambda<s_d, s_r, NaturalIndex...>(idx_to_permute));
 
             std::cout << id_tensor.extents();
-            // std::cout << id_tensor(0);
         }
     };
 

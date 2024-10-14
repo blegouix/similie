@@ -336,7 +336,13 @@ public:
                          : ddc::DiscreteElement<DDim>(delems...).uid())...));
     }
 
-    void fill_using_lambda(std::function<void(Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>, ddc::DiscreteElement<DDim...>)> lambda_func) {
+    void fill_using_lambda(std::function<
+                           void(Tensor<ElementType,
+                                       ddc::DiscreteDomain<DDim...>,
+                                       LayoutStridedPolicy,
+                                       MemorySpace>,
+                                ddc::DiscreteElement<DDim...>)> lambda_func)
+    {
         ddc::for_each(this->domain(), [&](ddc::DiscreteElement<DDim...> elem) {
             lambda_func(*this, elem);
         });
