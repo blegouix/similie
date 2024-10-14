@@ -512,6 +512,10 @@ public:
             detail::hooks_t<tableau_seq>,
             detail::dual_t<detail::hooks_t<detail::dual_t<tableau_seq>>>>;
 
+private:
+    static constexpr std::size_t s_irrep_dim = detail::IrrepDim<s_d, hook_lengths, 0, 0>::run(1);
+
+public:
     YoungTableau()
     {
         std::cout << "\033[1;31mThe representations dictionnary does not contain any "
@@ -522,9 +526,19 @@ public:
                                "rerun.\033[0m\n";
     }
 
+    static consteval std::size_t dimension()
+    {
+        return s_d;
+    }
+
+    static consteval std::size_t rank()
+    {
+        return s_r;
+    }
+
     static consteval std::size_t irrep_dim()
     {
-        return detail::IrrepDim<s_d, hook_lengths, 0, 0>::run(1);
+        return s_irrep_dim;
     }
 
     static std::string print()
