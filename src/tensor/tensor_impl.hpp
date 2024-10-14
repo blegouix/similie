@@ -335,6 +335,12 @@ public:
                          ? DDim::access_id_to_mem_id(ddc::DiscreteElement<DDim>(delems...).uid())
                          : ddc::DiscreteElement<DDim>(delems...).uid())...));
     }
+
+    void fill_using_lambda(std::function<void(Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>, ddc::DiscreteElement<DDim...>)> lambda_func) {
+        ddc::for_each(this->domain(), [&](ddc::DiscreteElement<DDim...> elem) {
+            lambda_func(*this, elem);
+        });
+    }
 };
 
 } // namespace tensor
