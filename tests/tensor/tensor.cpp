@@ -556,7 +556,7 @@ TEST(TensorProd, DoubleContractionRank3xRank3)
             ddc::DiscreteDomain<Alpha, Delta>,
             std::experimental::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
-            prod_tensor = sil::tensor::TensorProdImpl<Beta, Gamma>::run(tensor1, tensor2);
+            prod_tensor = sil::tensor::tensor_prod<Beta, Gamma>::run(tensor1, tensor2);
     sil::tensor::TensorAccessor<Alpha, Delta> prod_tensor_accessor = prod_tensor.accessor();
 
     EXPECT_EQ(prod_tensor.get(prod_tensor_accessor.element<X, X>()), 612.);
