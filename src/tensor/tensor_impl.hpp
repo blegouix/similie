@@ -309,6 +309,11 @@ public:
 
     // TODO operator[] ?
 
+    static constexpr TensorAccessor<DDim...> accessor()
+    {
+        return TensorAccessor<DDim...>();
+    }
+
     template <class... DElems>
     KOKKOS_FUNCTION ElementType get(DElems const&... delems) const noexcept
     {
@@ -346,6 +351,58 @@ public:
         ddc::for_each(this->domain(), [&](ddc::DiscreteElement<DDim...> elem) {
             lambda_func(*this, elem);
         });
+    }
+};
+
+template <class... ContractDDim>
+struct TensorProdImpl
+{
+    template <
+            class ElementType,
+            class HeadDDim1,
+            class TailDDim2,
+            class LayoutStridedPolicy,
+            class MemorySpace>
+    static Tensor<
+            ElementType,
+            ddc::DiscreteDomain<HeadDDim1, TailDDim2>,
+            LayoutStridedPolicy,
+            MemorySpace>
+    run(Tensor<ElementType,
+               ddc::DiscreteDomain<HeadDDim1, ContractDDim...>,
+               LayoutStridedPolicy,
+               MemorySpace> tensor1,
+        Tensor<ElementType,
+               ddc::DiscreteDomain<ContractDDim..., TailDDim2>,
+               LayoutStridedPolicy,
+               MemorySpace> tensor2)
+    {
+        sil::tensor::TensorAccessor<HeadDDim1, TailDDim2> prod_tensor_accessor;
+        ddc::DiscreteDomain<HeadDDim1, TailDDim2> prod_tensor_dom
+                = prod_tensor_accessor.mem_domain();
+
+        ddc::Chunk prod_tensor_alloc(prod_tensor_dom, ddc::HostAllocator<double>());
+        sil::tensor::Tensor<
+                ElementType,
+                ddc::DiscreteDomain<HeadDDim1, TailDDim2>,
+                std::experimental::layout_right,
+                Kokkos::DefaultHostExecutionSpace::memory_space>
+                prod_tensor(prod_tensor_alloc);
+        ddc::for_each(
+                ddc::DiscreteDomain<HeadDDim1, TailDDim2>(
+                        tensor1.template domain<HeadDDim1>(),
+                        tensor2.template domain<TailDDim2>()),
+                [&](ddc::DiscreteElement<HeadDDim1, TailDDim2> elem) {
+                    prod_tensor(elem) = ddc::transform_reduce(
+                            tensor1.template domain<ContractDDim...>(),
+                            0.,
+                            ddc::reducer::sum<ElementType>(),
+                            [&](ddc::DiscreteElement<ContractDDim...> contract_elem) {
+                                return tensor1(ddc::select<HeadDDim1>(elem), contract_elem)
+                                       * tensor2(ddc::select<TailDDim2>(elem), contract_elem);
+                            });
+                });
+        return prod_tensor;
     }
 };
 
