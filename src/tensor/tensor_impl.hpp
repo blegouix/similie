@@ -352,7 +352,52 @@ public:
             lambda_func(*this, elem);
         });
     }
+
+    Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>& operator+=(
+            const Tensor<
+                    ElementType,
+                    ddc::DiscreteDomain<DDim...>,
+                    LayoutStridedPolicy,
+                    MemorySpace>& tensor)
+    {
+        ddc::for_each(this->domain(), [&](ddc::DiscreteElement<DDim...> elem) {
+            (*this)(elem) += tensor(elem);
+        });
+        return *this;
+    }
+
+    Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>& operator*=(
+            const ElementType scalar)
+    {
+        ddc::for_each(this->domain(), [&](ddc::DiscreteElement<DDim...> elem) {
+            (*this)(elem) *= scalar;
+        });
+        return *this;
+    }
 };
+
+template <
+        class... DDim,
+        class ElementType,
+        class LayoutStridedPolicy,
+        class MemorySpace,
+        class... TensorType>
+Tensor<ElementType,
+       ddc::DiscreteDomain<DDim...>,
+       std::experimental::layout_right,
+       Kokkos::DefaultHostExecutionSpace::memory_space>
+tensor_sum(
+        Tensor<ElementType,
+               ddc::DiscreteDomain<DDim...>,
+               std::experimental::layout_right,
+               Kokkos::DefaultHostExecutionSpace::memory_space> sum_tensor,
+        TensorType... tensor)
+{
+    ddc::for_each(sum_tensor.domain(), [&](ddc::DiscreteElement<DDim...> elem) {
+        sum_tensor(elem) = (tensor(elem) + ...);
+    });
+    return sum_tensor;
+}
 
 template <class HeadDDim1TypeSeq, class ContractDDimTypeSeq, class TailDDim2TypeSeq>
 struct TensorProd;
@@ -439,6 +484,8 @@ tensor_prod(
                     ddc::detail::TypeSeq<ProdDDim...>,
                     ddc::detail::TypeSeq<DDim1...>>>::run(prod_tensor, tensor1, tensor2);
 }
+
+
 
 } // namespace tensor
 

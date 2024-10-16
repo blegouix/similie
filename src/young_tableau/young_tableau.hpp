@@ -631,10 +631,7 @@ public:
                 std::experimental::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space> sym)
         {
-            sil::tensor::TensorAccessor<Id...> tr_accessor;
-            ddc::DiscreteDomain<Id...> tr_dom = tr_accessor.mem_domain();
-
-            ddc::Chunk tr_alloc(tr_dom, ddc::HostAllocator<double>());
+            ddc::Chunk tr_alloc(sym.domain(), ddc::HostAllocator<double>());
             sil::tensor::Tensor<
                     double,
                     ddc::DiscreteDomain<Id...>,
@@ -647,7 +644,11 @@ public:
                 idx_to_permute[i] = i;
             } // TODO use permutation
             tr.fill_using_lambda(detail::tr_lambda<s_d, s_r, Id...>(idx_to_permute));
-            // TODO tensor sum sym = sym+tr/len(row_permutations)
+
+            // sym = sym + tr/n_permutations
+            tr *= 1. / 6;
+            sym += tr;
+
             return sym;
         }
     };
