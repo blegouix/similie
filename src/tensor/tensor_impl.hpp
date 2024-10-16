@@ -366,29 +366,22 @@ struct TensorProd<
     template <class ElementType, class LayoutStridedPolicy, class MemorySpace>
     static Tensor<
             ElementType,
-            ddc::cartesian_prod_t<ddc::DiscreteDomain<HeadDDim1..., TailDDim2...>>,
+            ddc::DiscreteDomain<HeadDDim1..., TailDDim2...>,
             LayoutStridedPolicy,
             MemorySpace>
     run(Tensor<ElementType,
-               ddc::cartesian_prod_t<ddc::DiscreteDomain<HeadDDim1..., ContractDDim...>>,
+               ddc::DiscreteDomain<HeadDDim1..., TailDDim2...>,
+               std::experimental::layout_right,
+               Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
+        Tensor<ElementType,
+               ddc::DiscreteDomain<HeadDDim1..., ContractDDim...>,
                LayoutStridedPolicy,
                MemorySpace> tensor1,
         Tensor<ElementType,
-               ddc::cartesian_prod_t<ddc::DiscreteDomain<ContractDDim..., TailDDim2...>>,
+               ddc::DiscreteDomain<ContractDDim..., TailDDim2...>,
                LayoutStridedPolicy,
                MemorySpace> tensor2)
     {
-        sil::tensor::TensorAccessor<HeadDDim1..., TailDDim2...> prod_tensor_accessor;
-        ddc::DiscreteDomain<HeadDDim1..., TailDDim2...> prod_tensor_dom
-                = prod_tensor_accessor.mem_domain();
-
-        ddc::Chunk prod_tensor_alloc(prod_tensor_dom, ddc::HostAllocator<double>());
-        sil::tensor::Tensor<
-                ElementType,
-                ddc::DiscreteDomain<HeadDDim1..., TailDDim2...>,
-                std::experimental::layout_right,
-                Kokkos::DefaultHostExecutionSpace::memory_space>
-                prod_tensor(prod_tensor_alloc);
         ddc::for_each(
                 ddc::DiscreteDomain<HeadDDim1..., TailDDim2...>(
                         tensor1.template domain<HeadDDim1...>(),
@@ -411,12 +404,17 @@ template <class... ContractDDim>
 struct tensor_prod
 {
     template <
+            class... ProdDDim,
             class... DDim1,
             class... DDim2,
             class ElementType,
             class LayoutStridedPolicy,
             class MemorySpace>
     static auto run(
+            Tensor<ElementType,
+                   ddc::DiscreteDomain<ProdDDim...>,
+                   std::experimental::layout_right,
+                   Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
             Tensor<ElementType, ddc::DiscreteDomain<DDim1...>, LayoutStridedPolicy, MemorySpace>
                     tensor1,
             Tensor<ElementType, ddc::DiscreteDomain<DDim2...>, LayoutStridedPolicy, MemorySpace>
@@ -429,7 +427,7 @@ struct tensor_prod
                 ddc::detail::TypeSeq<ContractDDim...>,
                 ddc::type_seq_remove_t<
                         ddc::detail::TypeSeq<DDim2...>,
-                        ddc::detail::TypeSeq<ContractDDim...>>>::run(tensor1, tensor2);
+                        ddc::detail::TypeSeq<ContractDDim...>>>::run(prod_tensor, tensor1, tensor2);
     }
 };
 
