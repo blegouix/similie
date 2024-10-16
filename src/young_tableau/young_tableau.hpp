@@ -3,6 +3,7 @@
 #pragma once
 
 #include <fstream>
+#include <boost/math/special_functions/factorials.hpp>
 
 #include <ddc/ddc.hpp>
 
@@ -634,45 +635,37 @@ public:
         return s_irrep_dim;
     }
 
-    template <class RowPermutation>
-    struct FillSymmetrizer;
-
-    template <std::size_t... ElemOfHeadRowPermutation>
-    struct FillSymmetrizer<std::index_sequence<ElemOfHeadRowPermutation...>>
-    {
-        template <class... Id>
-        static sil::tensor::Tensor<
-                double,
-                ddc::DiscreteDomain<Id...>,
-                std::experimental::layout_right,
-                Kokkos::DefaultHostExecutionSpace::memory_space>
-        run(sil::tensor::Tensor<
-                double,
-                ddc::DiscreteDomain<Id...>,
-                std::experimental::layout_right,
-                Kokkos::DefaultHostExecutionSpace::memory_space> sym)
-        {
-            ddc::Chunk tr_alloc(sym.domain(), ddc::HostAllocator<double>());
+    template <class... Id>
+    static sil::tensor::Tensor<
+            double,
+            ddc::DiscreteDomain<Id...>,
+            std::experimental::layout_right,
+            Kokkos::DefaultHostExecutionSpace::memory_space>
+    fill_symmetrizer(
             sil::tensor::Tensor<
                     double,
                     ddc::DiscreteDomain<Id...>,
                     std::experimental::layout_right,
-                    Kokkos::DefaultHostExecutionSpace::memory_space>
-                    tr(tr_alloc);
-            ddc::parallel_fill(tr, 0);
-            std::array<std::size_t, s_r> idx_to_permute;
-            for (std::size_t i = 0; i < s_r; ++i) {
-                idx_to_permute[i] = i;
-            } // TODO use permutation
-            tr.fill_using_lambda(detail::tr_lambda<s_d, s_r, Id...>(idx_to_permute));
+                    Kokkos::DefaultHostExecutionSpace::memory_space> sym,
+            std::array<std::size_t, s_r> idx_to_permute)
+    {
+        ddc::Chunk tr_alloc(sym.domain(), ddc::HostAllocator<double>());
+        sil::tensor::Tensor<
+                double,
+                ddc::DiscreteDomain<Id...>,
+                std::experimental::layout_right,
+                Kokkos::DefaultHostExecutionSpace::memory_space>
+                tr(tr_alloc);
+        ddc::parallel_fill(tr, 0);
+        tr.fill_using_lambda(detail::tr_lambda<s_d, s_r, Id...>(idx_to_permute));
 
-            // sym = sym + tr/n_permutations
-            tr *= 1. / 6;
-            sym += tr;
+        // sym = sym + tr/n_permutations
+        tr *= 1. / boost::math::factorial<double>(s_r);
+        sym += tr;
 
-            return sym;
-        }
-    };
+        return sym;
+    }
+
     template <class PartialTableauSeq>
     struct ProjectorRowContribution;
 
@@ -693,7 +686,7 @@ public:
                 Kokkos::DefaultHostExecutionSpace::memory_space> proj)
         {
             if constexpr (sizeof...(ElemOfHeadRow) >= 2) {
-                // Allocate & build a symmetric projector
+                // Allocate & build a symmetric projector for the row
                 sil::tensor::TensorAccessor<detail::symmetrizer_index_t<Id, Id...>...> sym_accessor;
                 ddc::DiscreteDomain<detail::symmetrizer_index_t<Id, Id...>...> sym_dom
                         = sym_accessor.mem_domain();
@@ -706,10 +699,18 @@ public:
                         Kokkos::DefaultHostExecutionSpace::memory_space>
                         sym(sym_alloc);
                 ddc::parallel_fill(sym, 0);
-                FillSymmetrizer<std::index_sequence<ElemOfHeadRow...>>::run(
-                        sym); // TODO do it for every permutation of ElemOfHeadRow...
+                std::array<std::size_t, s_r> idx_to_permute;
+                for (std::size_t i = 0; i < s_r; ++i) {
+                    idx_to_permute[i] = i;
+                }
+                do {
+                    fill_symmetrizer(
+                            sym,
+                            idx_to_permute); // TODO do it for every permutation of ElemOfHeadRow...
+                } while (std::next_permutation(idx_to_permute.begin(), idx_to_permute.end()));
 
-                // Extract the symmetric part of the projector (requires an intermediate prod tensor)
+
+                // Extract the symmetric part (for the row) of the projector (requires an intermediate prod tensor)
                 ddc::Chunk prod_alloc(
                         sil::tensor::tensor_prod_domain_t<
                                 ddc::DiscreteDomain<detail::symmetrizer_index_t<Id, Id...>...>,
