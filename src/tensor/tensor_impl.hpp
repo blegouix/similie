@@ -400,36 +400,45 @@ struct TensorProd<
     }
 };
 
-template <class... ContractDDim>
-struct tensor_prod
+template <
+        class... ProdDDim,
+        class... DDim1,
+        class... DDim2,
+        class ElementType,
+        class LayoutStridedPolicy,
+        class MemorySpace>
+Tensor<ElementType,
+       ddc::DiscreteDomain<ProdDDim...>,
+       std::experimental::layout_right,
+       Kokkos::DefaultHostExecutionSpace::memory_space>
+tensor_prod(
+        Tensor<ElementType,
+               ddc::DiscreteDomain<ProdDDim...>,
+               std::experimental::layout_right,
+               Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
+        Tensor<ElementType, ddc::DiscreteDomain<DDim1...>, LayoutStridedPolicy, MemorySpace>
+                tensor1,
+        Tensor<ElementType, ddc::DiscreteDomain<DDim2...>, LayoutStridedPolicy, MemorySpace>
+                tensor2)
 {
-    template <
-            class... ProdDDim,
-            class... DDim1,
-            class... DDim2,
-            class ElementType,
-            class LayoutStridedPolicy,
-            class MemorySpace>
-    static auto run(
-            Tensor<ElementType,
-                   ddc::DiscreteDomain<ProdDDim...>,
-                   std::experimental::layout_right,
-                   Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
-            Tensor<ElementType, ddc::DiscreteDomain<DDim1...>, LayoutStridedPolicy, MemorySpace>
-                    tensor1,
-            Tensor<ElementType, ddc::DiscreteDomain<DDim2...>, LayoutStridedPolicy, MemorySpace>
-                    tensor2)
-    {
-        return TensorProd<
-                ddc::type_seq_remove_t<
-                        ddc::detail::TypeSeq<DDim1...>,
-                        ddc::detail::TypeSeq<ContractDDim...>>,
-                ddc::detail::TypeSeq<ContractDDim...>,
-                ddc::type_seq_remove_t<
-                        ddc::detail::TypeSeq<DDim2...>,
-                        ddc::detail::TypeSeq<ContractDDim...>>>::run(prod_tensor, tensor1, tensor2);
-    }
-};
+    static_assert(std::is_same_v<
+                  ddc::type_seq_remove_t<
+                          ddc::detail::TypeSeq<DDim1...>,
+                          ddc::detail::TypeSeq<ProdDDim...>>,
+                  ddc::type_seq_remove_t<
+                          ddc::detail::TypeSeq<DDim2...>,
+                          ddc::detail::TypeSeq<ProdDDim...>>>);
+    return TensorProd<
+            ddc::type_seq_remove_t<
+                    ddc::detail::TypeSeq<ProdDDim...>,
+                    ddc::detail::TypeSeq<DDim2...>>,
+            ddc::type_seq_remove_t<
+                    ddc::detail::TypeSeq<DDim1...>,
+                    ddc::detail::TypeSeq<ProdDDim...>>,
+            ddc::type_seq_remove_t<
+                    ddc::detail::TypeSeq<ProdDDim...>,
+                    ddc::detail::TypeSeq<DDim1...>>>::run(prod_tensor, tensor1, tensor2);
+}
 
 } // namespace tensor
 
