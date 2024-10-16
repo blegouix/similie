@@ -613,6 +613,87 @@ public:
         return s_irrep_dim;
     }
 
+    template <class RowPermutation>
+    struct FillSymmetrizer;
+
+    template <std::size_t... ElemOfHeadRowPermutation>
+    struct FillSymmetrizer<std::index_sequence<ElemOfHeadRowPermutation...>>
+    {
+        template <class... Id>
+        static sil::tensor::Tensor<
+                double,
+                ddc::DiscreteDomain<Id...>,
+                std::experimental::layout_right,
+                Kokkos::DefaultHostExecutionSpace::memory_space>
+        run(sil::tensor::Tensor<
+                double,
+                ddc::DiscreteDomain<Id...>,
+                std::experimental::layout_right,
+                Kokkos::DefaultHostExecutionSpace::memory_space> sym)
+        {
+            sil::tensor::TensorAccessor<Id...> tr_accessor;
+            ddc::DiscreteDomain<Id...> tr_dom = tr_accessor.mem_domain();
+
+            ddc::Chunk tr_alloc(tr_dom, ddc::HostAllocator<double>());
+            sil::tensor::Tensor<
+                    double,
+                    ddc::DiscreteDomain<Id...>,
+                    std::experimental::layout_right,
+                    Kokkos::DefaultHostExecutionSpace::memory_space>
+                    tr(tr_alloc);
+            ddc::parallel_fill(tr, 0);
+            std::array<std::size_t, s_r> idx_to_permute;
+            for (std::size_t i = 0; i < s_r; ++i) {
+                idx_to_permute[i] = i;
+            } // TODO use permutation
+            tr.fill_using_lambda(detail::tr_lambda<s_d, s_r, Id...>(idx_to_permute));
+            // TODO tensor sum sym = sym+tr/len(row_permutations)
+            return sym;
+        }
+    };
+    template <class PartialTableauSeq>
+    struct ProjectorRowContribution;
+
+    template <std::size_t... ElemOfHeadRow, class... TailRow>
+    struct ProjectorRowContribution<
+            YoungTableauSeq<std::index_sequence<ElemOfHeadRow...>, TailRow...>>
+    {
+        template <class... Id>
+        static sil::tensor::Tensor<
+                double,
+                ddc::DiscreteDomain<Id...>,
+                std::experimental::layout_right,
+                Kokkos::DefaultHostExecutionSpace::memory_space>
+        run(sil::tensor::Tensor<
+                double,
+                ddc::DiscreteDomain<Id...>,
+                std::experimental::layout_right,
+                Kokkos::DefaultHostExecutionSpace::memory_space> proj)
+        {
+            if constexpr (sizeof...(ElemOfHeadRow) >= 2) {
+                sil::tensor::TensorAccessor<Id...> sym_accessor;
+                ddc::DiscreteDomain<Id...> sym_dom = sym_accessor.mem_domain();
+
+                ddc::Chunk sym_alloc(sym_dom, ddc::HostAllocator<double>());
+                sil::tensor::Tensor<
+                        double,
+                        ddc::DiscreteDomain<Id...>,
+                        std::experimental::layout_right,
+                        Kokkos::DefaultHostExecutionSpace::memory_space>
+                        sym(sym_alloc);
+                ddc::parallel_fill(sym, 0);
+                FillSymmetrizer<std::index_sequence<ElemOfHeadRow...>>::run(
+                        sym); // TODO do it for every permutation of ElemOfHeadRow...
+                // tensor_prod(, sym, proj); // TODO clarify indexing it's a rank-4 contraction of two rank-8 tensors
+            }
+            if constexpr (sizeof...(TailRow) == 0) {
+                return proj;
+            } else {
+                return ProjectorRowContribution<YoungTableauSeq<TailRow...>>::run(proj);
+            }
+        }
+    };
+
     template <class ProjectorIndex>
     struct Projector;
 
@@ -621,25 +702,25 @@ public:
     {
         static void run()
         {
-            sil::tensor::TensorAccessor<NaturalIndex...> tensor_accessor;
-            ddc::DiscreteDomain<NaturalIndex...> tensor_dom = tensor_accessor.mem_domain();
+            sil::tensor::TensorAccessor<NaturalIndex...> proj_accessor;
+            ddc::DiscreteDomain<NaturalIndex...> proj_dom = proj_accessor.mem_domain();
 
-            ddc::Chunk id_tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
+            ddc::Chunk proj_alloc(proj_dom, ddc::HostAllocator<double>());
             sil::tensor::Tensor<
                     double,
                     ddc::DiscreteDomain<NaturalIndex...>,
                     std::experimental::layout_right,
                     Kokkos::DefaultHostExecutionSpace::memory_space>
-                    id_tensor(id_tensor_alloc);
-            ddc::parallel_fill(id_tensor, 0);
+                    proj(proj_alloc);
+            ddc::parallel_fill(proj, 0);
             std::array<std::size_t, s_r> idx_to_permute;
             for (std::size_t i = 0; i < s_r; ++i) {
                 idx_to_permute[i] = i;
             }
-            id_tensor.fill_using_lambda(
-                    detail::tr_lambda<s_d, s_r, NaturalIndex...>(idx_to_permute));
+            proj.fill_using_lambda(detail::tr_lambda<s_d, s_r, NaturalIndex...>(idx_to_permute));
 
-            std::cout << id_tensor.extents();
+            ProjectorRowContribution<tableau_seq>::run(proj);
+            std::cout << proj.extents();
         }
     };
 
