@@ -459,7 +459,7 @@ struct IrrepDim<Dimension, YoungTableauSeq<>, I, J>
 
 // Type of index used by projectors
 template <std::size_t I>
-struct X
+struct ProjX
 {
 };
 
@@ -470,7 +470,7 @@ template <std::size_t... Id>
 struct NaturalIndex<std::index_sequence<Id...>>
 {
     template <std::size_t RankId>
-    struct type : sil::tensor::TensorNaturalIndex<X<Id>...>
+    struct type : sil::tensor::TensorNaturalIndex<ProjX<Id>...>
     {
     };
 };
@@ -489,6 +489,27 @@ template <std::size_t Dimension, std::size_t Rank>
 using projector_index_t = ProjectorIndex<
         NaturalIndex<std::make_index_sequence<Dimension>>,
         std::make_index_sequence<2 * Rank>>::type;
+
+// Type of index used by symmetrizers or symmetrized tensors
+template <class Parent>
+struct declare_deriv : Parent
+{
+};
+
+template <class OId, class... Id>
+using symmetrizer_index_t = std::conditional_t<
+        (ddc::type_seq_rank_v<OId, ddc::detail::TypeSeq<Id...>> < (sizeof...(Id) / 2)),
+        declare_deriv<OId>,
+        ddc::type_seq_element_t<
+                static_cast<std::size_t>(
+                        std::
+                                max(static_cast<std::ptrdiff_t>(0),
+                                    static_cast<std::ptrdiff_t>(
+                                            ddc::type_seq_rank_v<
+                                                    OId,
+                                                    ddc::detail::TypeSeq<
+                                                            Id...>> - (sizeof...(Id) / 2)))),
+                ddc::detail::TypeSeq<Id...>>>;
 
 // Lambda to fill identity or transpose projectors
 /*
@@ -672,20 +693,40 @@ public:
                 Kokkos::DefaultHostExecutionSpace::memory_space> proj)
         {
             if constexpr (sizeof...(ElemOfHeadRow) >= 2) {
-                sil::tensor::TensorAccessor<Id...> sym_accessor;
-                ddc::DiscreteDomain<Id...> sym_dom = sym_accessor.mem_domain();
+                // Allocate & build a symmetric projector
+                sil::tensor::TensorAccessor<detail::symmetrizer_index_t<Id, Id...>...> sym_accessor;
+                ddc::DiscreteDomain<detail::symmetrizer_index_t<Id, Id...>...> sym_dom
+                        = sym_accessor.mem_domain();
 
                 ddc::Chunk sym_alloc(sym_dom, ddc::HostAllocator<double>());
                 sil::tensor::Tensor<
                         double,
-                        ddc::DiscreteDomain<Id...>,
+                        ddc::DiscreteDomain<detail::symmetrizer_index_t<Id, Id...>...>,
                         std::experimental::layout_right,
                         Kokkos::DefaultHostExecutionSpace::memory_space>
                         sym(sym_alloc);
                 ddc::parallel_fill(sym, 0);
                 FillSymmetrizer<std::index_sequence<ElemOfHeadRow...>>::run(
                         sym); // TODO do it for every permutation of ElemOfHeadRow...
-                // tensor_prod(, sym, proj); // TODO clarify indexing it's a rank-4 contraction of two rank-8 tensors
+
+                // Extract the symmetric part of the projector (requires an intermediate prod tensor)
+                ddc::Chunk prod_alloc(
+                        sil::tensor::tensor_prod_domain_t<
+                                ddc::DiscreteDomain<detail::symmetrizer_index_t<Id, Id...>...>,
+                                ddc::DiscreteDomain<Id...>>(proj.domain(), sym.domain()),
+                        ddc::HostAllocator<double>());
+                sil::tensor::Tensor<
+                        double,
+                        sil::tensor::tensor_prod_domain_t<
+                                ddc::DiscreteDomain<detail::symmetrizer_index_t<Id, Id...>...>,
+                                ddc::DiscreteDomain<Id...>>,
+                        std::experimental::layout_right,
+                        Kokkos::DefaultHostExecutionSpace::memory_space>
+                        prod(prod_alloc);
+                sil::tensor::tensor_prod(prod, sym, proj);
+                Kokkos::deep_copy(
+                        proj.allocation_kokkos_view(),
+                        prod.allocation_kokkos_view()); // We use Kokkos::deep_copy in place of ddc::parallel_deepcopy to avoid type verification of the type dimensions
             }
             if constexpr (sizeof...(TailRow) == 0) {
                 return proj;
@@ -706,6 +747,7 @@ public:
             sil::tensor::TensorAccessor<NaturalIndex...> proj_accessor;
             ddc::DiscreteDomain<NaturalIndex...> proj_dom = proj_accessor.mem_domain();
 
+            // Allocate a projector and fill it as an identity tensor
             ddc::Chunk proj_alloc(proj_dom, ddc::HostAllocator<double>());
             sil::tensor::Tensor<
                     double,
@@ -720,6 +762,7 @@ public:
             }
             proj.fill_using_lambda(detail::tr_lambda<s_d, s_r, NaturalIndex...>(idx_to_permute));
 
+            // Build the projector
             ProjectorRowContribution<tableau_seq>::run(proj);
             std::cout << proj.extents();
         }

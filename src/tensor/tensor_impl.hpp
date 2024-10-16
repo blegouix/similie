@@ -376,6 +376,7 @@ public:
     }
 };
 
+// Sum of tensors
 template <
         class... DDim,
         class ElementType,
@@ -399,6 +400,24 @@ tensor_sum(
     return sum_tensor;
 }
 
+// Domain of a tensor result of product between two tensors
+template <class Dom1, class Dom2>
+struct TensorProdDomain;
+
+template <class... DDim1, class... DDim2>
+struct TensorProdDomain<ddc::DiscreteDomain<DDim1...>, ddc::DiscreteDomain<DDim2...>>
+{
+    using type = ddc::detail::convert_type_seq_to_discrete_domain_t<ddc::type_seq_merge_t<
+            ddc::type_seq_remove_t<ddc::detail::TypeSeq<DDim1...>, ddc::detail::TypeSeq<DDim2...>>,
+            ddc::type_seq_remove_t<
+                    ddc::detail::TypeSeq<DDim2...>,
+                    ddc::detail::TypeSeq<DDim1...>>>>;
+};
+
+template <class Dom1, class Dom2>
+using tensor_prod_domain_t = TensorProdDomain<Dom1, Dom2>::type;
+
+// Product between two tensors
 template <class HeadDDim1TypeSeq, class ContractDDimTypeSeq, class TailDDim2TypeSeq>
 struct TensorProd;
 
@@ -428,9 +447,7 @@ struct TensorProd<
                MemorySpace> tensor2)
     {
         ddc::for_each(
-                ddc::DiscreteDomain<HeadDDim1..., TailDDim2...>(
-                        tensor1.template domain<HeadDDim1...>(),
-                        tensor2.template domain<TailDDim2...>()),
+                prod_tensor.domain(),
                 [&](ddc::DiscreteElement<HeadDDim1..., TailDDim2...> elem) {
                     prod_tensor(elem) = ddc::transform_reduce(
                             tensor1.template domain<ContractDDim...>(),
@@ -484,8 +501,6 @@ tensor_prod(
                     ddc::detail::TypeSeq<ProdDDim...>,
                     ddc::detail::TypeSeq<DDim1...>>>::run(prod_tensor, tensor1, tensor2);
 }
-
-
 
 } // namespace tensor
 
