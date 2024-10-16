@@ -3,9 +3,10 @@
 #pragma once
 
 #include <fstream>
-#include <boost/math/special_functions/factorials.hpp>
 
 #include <ddc/ddc.hpp>
+
+#include <boost/math/special_functions/factorials.hpp>
 
 #include "tensor.hpp"
 
@@ -666,6 +667,39 @@ public:
         return sym;
     }
 
+    /*
+     Compute all permutations on a subset of indexes in idx_to_permute, keep the
+     rest of the indexes where they are.
+     */
+    template <std::size_t Nt, std::size_t Ns>
+    static std::vector<std::array<std::size_t, Nt>> permutations_subset(
+            std::array<std::size_t, Nt> t,
+            std::array<std::size_t, Ns> subset_values)
+    {
+        std::array<std::size_t, Ns> subset_indexes;
+        std::array<std::size_t, Ns> elements_to_permute;
+        int j = 0;
+        for (std::size_t i = 0; i < t.size(); ++i) {
+            if (std::find(subset_values.begin(), subset_values.end(), t[i])
+                != std::end(subset_values)) {
+                subset_indexes[j] = i;
+                elements_to_permute[j++] = t[i];
+            }
+        }
+
+        std::vector<std::array<std::size_t, Nt>> result;
+        do {
+            std::array<std::size_t, Nt> tmp = t;
+            for (std::size_t i = 0; i < Ns; ++i) {
+                tmp[subset_indexes[i]] = elements_to_permute[i];
+            }
+            result.push_back(tmp);
+        } while (std::next_permutation(elements_to_permute.begin(), elements_to_permute.end()));
+
+        return result;
+    }
+
+    // Compute projector
     template <class PartialTableauSeq>
     struct ProjectorRowContribution;
 
@@ -703,12 +737,11 @@ public:
                 for (std::size_t i = 0; i < s_r; ++i) {
                     idx_to_permute[i] = i;
                 }
-                do {
-                    fill_symmetrizer(
-                            sym,
-                            idx_to_permute); // TODO do it for every permutation of ElemOfHeadRow...
-                } while (std::next_permutation(idx_to_permute.begin(), idx_to_permute.end()));
-
+                std::array<std::size_t, sizeof...(ElemOfHeadRow)> row_values {ElemOfHeadRow...};
+                auto idx_permutations = permutations_subset(idx_to_permute, row_values);
+                for (int i = 0; i < idx_permutations.size(); ++i) {
+                    fill_symmetrizer(sym, idx_permutations[i]);
+                }
 
                 // Extract the symmetric part (for the row) of the projector (requires an intermediate prod tensor)
                 ddc::Chunk prod_alloc(
