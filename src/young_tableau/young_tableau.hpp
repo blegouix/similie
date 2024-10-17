@@ -591,9 +591,8 @@ std::string print_young_tableau_seq()
 template <std::size_t Dimension, class TableauSeq>
 class YoungTableau
 {
-    using tableau_seq = TableauSeq;
-
 public:
+    using tableau_seq = TableauSeq;
     using shape = typename TableauSeq::shape;
 
 private:
@@ -636,6 +635,23 @@ public:
         return s_irrep_dim;
     }
 
+    /*
+     Given a permutation of the digits 0..N, 
+     returns its parity (or sign): +1 for even parity; -1 for odd.
+     */
+    template <std::size_t Nt>
+    static int permutation_parity(std::array<std::size_t, Nt> lst)
+    {
+        int parity = 1;
+        for (int i = 0; i < lst.size() - 1; ++i) {
+            parity *= -1;
+            std::size_t mn
+                    = std::distance(lst.begin(), std::min_element(lst.begin() + i, lst.end()));
+            std::swap(lst[i], lst[mn]);
+        }
+        return parity;
+    }
+
     template <class... Id>
     static sil::tensor::Tensor<
             double,
@@ -648,7 +664,8 @@ public:
                     ddc::DiscreteDomain<Id...>,
                     std::experimental::layout_right,
                     Kokkos::DefaultHostExecutionSpace::memory_space> sym,
-            std::array<std::size_t, s_r> idx_to_permute)
+            std::array<std::size_t, s_r> idx_to_permute,
+            const bool antisym)
     {
         ddc::Chunk tr_alloc(sym.domain(), ddc::HostAllocator<double>());
         sil::tensor::Tensor<
@@ -661,7 +678,8 @@ public:
         tr.fill_using_lambda(detail::tr_lambda<s_d, s_r, Id...>(idx_to_permute));
 
         // sym = sym + tr/n_permutations
-        tr *= 1. / boost::math::factorial<double>(s_r);
+        tr *= (antisym ? permutation_parity(idx_to_permute) : 1.)
+              / boost::math::factorial<double>(s_r);
         sym += tr;
 
         return sym;
@@ -700,12 +718,13 @@ public:
     }
 
     // Compute projector
-    template <class PartialTableauSeq>
+    template <class PartialTableauSeq, bool AntiSym = 0>
     struct ProjectorRowContribution;
 
-    template <std::size_t... ElemOfHeadRow, class... TailRow>
+    template <std::size_t... ElemOfHeadRow, class... TailRow, bool AntiSym>
     struct ProjectorRowContribution<
-            YoungTableauSeq<std::index_sequence<ElemOfHeadRow...>, TailRow...>>
+            YoungTableauSeq<std::index_sequence<ElemOfHeadRow...>, TailRow...>,
+            AntiSym>
     {
         template <class... Id>
         static sil::tensor::Tensor<
@@ -740,7 +759,7 @@ public:
                 std::array<std::size_t, sizeof...(ElemOfHeadRow)> row_values {ElemOfHeadRow...};
                 auto idx_permutations = permutations_subset(idx_to_permute, row_values);
                 for (int i = 0; i < idx_permutations.size(); ++i) {
-                    fill_symmetrizer(sym, idx_permutations[i]);
+                    fill_symmetrizer(sym, idx_permutations[i], AntiSym);
                 }
 
                 // Extract the symmetric part (for the row) of the projector (requires an intermediate prod tensor)
@@ -798,6 +817,7 @@ public:
 
             // Build the projector
             ProjectorRowContribution<tableau_seq>::run(proj);
+            ProjectorRowContribution<typename dual::tableau_seq, 1>::run(proj);
             std::cout << proj.extents();
         }
     };
