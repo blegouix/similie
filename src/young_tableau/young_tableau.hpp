@@ -711,7 +711,7 @@ struct Projector<
 
 template <std::size_t Dimension, class TableauSeq>
 template <class... Id>
-static auto YoungTableau<Dimension, TableauSeq>::projector()
+auto YoungTableau<Dimension, TableauSeq>::projector()
 {
     static_assert(sizeof...(Id) == s_r);
     sil::tensor::TensorAccessor<detail::declare_deriv<Id>..., Id...> proj_accessor;
