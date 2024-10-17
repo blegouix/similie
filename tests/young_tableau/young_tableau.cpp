@@ -577,7 +577,7 @@ TEST(YoungTableau, 1_3l2)
     // TODO understand better the symmetry of rank-3 mixed tensor and test it.
 }
 
-TEST(YoungTableau, IrrepDim1l3_2l4)
+TEST(YoungTableau, 1l3_2l4)
 {
     sil::young_tableau::YoungTableau<
             3,
