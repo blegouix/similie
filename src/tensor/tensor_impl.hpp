@@ -305,6 +305,9 @@ namespace sil {
 
 namespace tensor {
 
+/**
+ * Tensor class
+ */
 template <class ElementType, class... DDim, class LayoutStridedPolicy, class MemorySpace>
 class Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>
     : public ddc::
@@ -441,7 +444,7 @@ tensor_prod_domain(Tensor1 tensor1, Tensor2 tensor2)
             typename Tensor2::discrete_domain_type>(tensor1.domain(), tensor2.domain());
 }
 
-// Product between two tensors
+// Product between two tensors. Only natural indexing supported atm.
 template <class HeadDDim1TypeSeq, class ContractDDimTypeSeq, class TailDDim2TypeSeq>
 struct TensorProd;
 

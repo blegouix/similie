@@ -299,7 +299,7 @@ struct HooksHelper<YoungTableauSeq<>>
 template <class Tableau>
 using hooks_t = HooksHelper<Tableau>::type;
 
-// Helper to sum the partial contributions of hooks to get hook lengths (= hooks+hooks_of_dual^T-1)
+// Sum the partial contributions of hooks to get hook lengths (= hooks+hooks_of_dual^T-1)
 template <class TableauHookLengths, class Tableau1, class Tableau2, std::size_t I>
 struct HookLengths;
 
@@ -509,6 +509,7 @@ public:
 
 namespace detail {
 
+// Build index for symmetrizer (such that sym*proj is properly defined)
 template <class OId, class... Id>
 using symmetrizer_index_t = std::conditional_t<
         (ddc::type_seq_rank_v<OId, ddc::detail::TypeSeq<Id...>> < (sizeof...(Id) / 2)),
@@ -701,7 +702,7 @@ struct Projector<
             sil::tensor::tensor_prod(prod, sym, proj);
             Kokkos::deep_copy(
                     proj.allocation_kokkos_view(),
-                    prod.allocation_kokkos_view()); // We use Kokkos::deep_copy in place of ddc::parallel_deepcopy to avoid type verification of the type dimensions
+                    prod.allocation_kokkos_view()); // We rely on Kokkos::deep_copy in place of ddc::parallel_deepcopy to avoid type verification of the type dimensions
         }
         if constexpr (sizeof...(TailRow) == 0) {
             return proj;
