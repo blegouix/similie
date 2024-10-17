@@ -596,192 +596,205 @@ public:
         return s_irrep_dim;
     }
 
-    /*
-     Given a permutation of the digits 0..N, 
-     returns its parity (or sign): +1 for even parity; -1 for odd.
-     */
-    template <std::size_t Nt>
-    static int permutation_parity(std::array<std::size_t, Nt> lst)
-    {
-        int parity = 1;
-        for (int i = 0; i < lst.size() - 1; ++i) {
-            parity *= -1;
-            std::size_t mn
-                    = std::distance(lst.begin(), std::min_element(lst.begin() + i, lst.end()));
-            std::swap(lst[i], lst[mn]);
-        }
-        return parity;
-    }
-
-    template <class... Id>
-    static sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<Id...>,
-            std::experimental::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-    fill_symmetrizer(
-            sil::tensor::Tensor<
-                    double,
-                    ddc::DiscreteDomain<Id...>,
-                    std::experimental::layout_right,
-                    Kokkos::DefaultHostExecutionSpace::memory_space> sym,
-            std::array<std::size_t, s_r> idx_to_permute,
-            const bool antisym)
-    {
-        ddc::Chunk tr_alloc(sym.domain(), ddc::HostAllocator<double>());
-        sil::tensor::Tensor<
-                double,
-                ddc::DiscreteDomain<Id...>,
-                std::experimental::layout_right,
-                Kokkos::DefaultHostExecutionSpace::memory_space>
-                tr(tr_alloc);
-        ddc::parallel_fill(tr, 0);
-        tr.fill_using_lambda(detail::tr_lambda<s_d, s_r, Id...>(idx_to_permute));
-
-        // sym = sym + tr/n_permutations
-        tr *= (antisym ? permutation_parity(idx_to_permute) : 1.)
-              / boost::math::factorial<double>(s_r);
-        sym += tr;
-
-        return sym;
-    }
-
-    /*
-     Compute all permutations on a subset of indexes in idx_to_permute, keep the
-     rest of the indexes where they are.
-     */
-    template <std::size_t Nt, std::size_t Ns>
-    static std::vector<std::array<std::size_t, Nt>> permutations_subset(
-            std::array<std::size_t, Nt> t,
-            std::array<std::size_t, Ns> subset_values)
-    {
-        std::array<std::size_t, Ns> subset_indexes;
-        std::array<std::size_t, Ns> elements_to_permute;
-        int j = 0;
-        for (std::size_t i = 0; i < t.size(); ++i) {
-            if (std::find(subset_values.begin(), subset_values.end(), t[i])
-                != std::end(subset_values)) {
-                subset_indexes[j] = i;
-                elements_to_permute[j++] = t[i];
-            }
-        }
-
-        std::vector<std::array<std::size_t, Nt>> result;
-        do {
-            std::array<std::size_t, Nt> tmp = t;
-            for (std::size_t i = 0; i < Ns; ++i) {
-                tmp[subset_indexes[i]] = elements_to_permute[i];
-            }
-            result.push_back(tmp);
-        } while (std::next_permutation(elements_to_permute.begin(), elements_to_permute.end()));
-
-        return result;
-    }
-
-    // Compute projector
-    template <class PartialTableauSeq, bool AntiSym = 0>
-    struct Projector;
-
-    template <std::size_t... ElemOfHeadRow, class... TailRow, bool AntiSym>
-    struct Projector<YoungTableauSeq<std::index_sequence<ElemOfHeadRow...>, TailRow...>, AntiSym>
-    {
-        template <class... Id>
-        static sil::tensor::Tensor<
-                double,
-                ddc::DiscreteDomain<Id...>,
-                std::experimental::layout_right,
-                Kokkos::DefaultHostExecutionSpace::memory_space>
-        run(sil::tensor::Tensor<
-                double,
-                ddc::DiscreteDomain<Id...>,
-                std::experimental::layout_right,
-                Kokkos::DefaultHostExecutionSpace::memory_space> proj)
-        {
-            if constexpr (sizeof...(ElemOfHeadRow) >= 2) {
-                // Allocate & build a symmetric projector for the row
-                sil::tensor::TensorAccessor<detail::symmetrizer_index_t<Id, Id...>...> sym_accessor;
-                ddc::DiscreteDomain<detail::symmetrizer_index_t<Id, Id...>...> sym_dom
-                        = sym_accessor.mem_domain();
-
-                ddc::Chunk sym_alloc(sym_dom, ddc::HostAllocator<double>());
-                sil::tensor::Tensor<
-                        double,
-                        ddc::DiscreteDomain<detail::symmetrizer_index_t<Id, Id...>...>,
-                        std::experimental::layout_right,
-                        Kokkos::DefaultHostExecutionSpace::memory_space>
-                        sym(sym_alloc);
-                ddc::parallel_fill(sym, 0);
-                std::array<std::size_t, s_r> idx_to_permute;
-                for (std::size_t i = 0; i < s_r; ++i) {
-                    idx_to_permute[i] = i;
-                }
-                std::array<std::size_t, sizeof...(ElemOfHeadRow)> row_values {ElemOfHeadRow...};
-                auto idx_permutations = permutations_subset(idx_to_permute, row_values);
-                for (int i = 0; i < idx_permutations.size(); ++i) {
-                    fill_symmetrizer(sym, idx_permutations[i], AntiSym);
-                }
-
-                // Extract the symmetric part (for the row) of the projector (requires an intermediate prod tensor)
-                ddc::Chunk prod_alloc(tensor_prod_domain(sym, proj), ddc::HostAllocator<double>());
-                sil::tensor::Tensor<
-                        double,
-                        sil::tensor::tensor_prod_domain_t<
-                                ddc::DiscreteDomain<detail::symmetrizer_index_t<Id, Id...>...>,
-                                ddc::DiscreteDomain<Id...>>,
-                        std::experimental::layout_right,
-                        Kokkos::DefaultHostExecutionSpace::memory_space>
-                        prod(prod_alloc);
-                sil::tensor::tensor_prod(prod, sym, proj);
-                Kokkos::deep_copy(
-                        proj.allocation_kokkos_view(),
-                        prod.allocation_kokkos_view()); // We use Kokkos::deep_copy in place of ddc::parallel_deepcopy to avoid type verification of the type dimensions
-            }
-            if constexpr (sizeof...(TailRow) == 0) {
-                return proj;
-            } else {
-                return Projector<YoungTableauSeq<TailRow...>>::run(proj);
-            }
-        }
-    };
-
     template <class... Id>
     using projector_domain = ddc::DiscreteDomain<detail::declare_deriv<Id>..., Id...>;
 
     template <class... Id>
-    static auto projector()
-    {
-        static_assert(sizeof...(Id) == s_r);
-        sil::tensor::TensorAccessor<detail::declare_deriv<Id>..., Id...> proj_accessor;
-        ddc::DiscreteDomain<detail::declare_deriv<Id>..., Id...> proj_dom
-                = proj_accessor.mem_domain();
-
-        // Allocate a projector and fill it as an identity tensor
-        ddc::Chunk proj_alloc(proj_dom, ddc::HostAllocator<double>());
-        sil::tensor::Tensor<
-                double,
-                ddc::DiscreteDomain<detail::declare_deriv<Id>..., Id...>,
-                std::experimental::layout_right,
-                Kokkos::DefaultHostExecutionSpace::memory_space>
-                proj(proj_alloc);
-        ddc::parallel_fill(proj, 0);
-        std::array<std::size_t, s_r> idx_to_permute;
-        for (std::size_t i = 0; i < s_r; ++i) {
-            idx_to_permute[i] = i;
-        }
-        proj.fill_using_lambda(
-                detail::tr_lambda<s_d, s_r, detail::declare_deriv<Id>..., Id...>(idx_to_permute));
-
-        // Build the projector
-        Projector<tableau_seq>::run(proj);
-        Projector<typename dual::tableau_seq, 1>::run(proj);
-        return std::make_tuple(std::move(proj_alloc), proj);
-    }
+    auto projector();
 
     static std::string print()
     {
         return print_young_tableau_seq<tableau_seq>();
     }
 };
+
+namespace detail {
+
+/*
+     Given a permutation of the digits 0..N, 
+     returns its parity (or sign): +1 for even parity; -1 for odd.
+     */
+template <std::size_t Nt>
+static int permutation_parity(std::array<std::size_t, Nt> lst)
+{
+    int parity = 1;
+    for (int i = 0; i < lst.size() - 1; ++i) {
+        parity *= -1;
+        std::size_t mn = std::distance(lst.begin(), std::min_element(lst.begin() + i, lst.end()));
+        std::swap(lst[i], lst[mn]);
+    }
+    return parity;
+}
+
+template <std::size_t Dimension, bool AntiSym, class... Id>
+static sil::tensor::Tensor<
+        double,
+        ddc::DiscreteDomain<Id...>,
+        std::experimental::layout_right,
+        Kokkos::DefaultHostExecutionSpace::memory_space>
+fill_symmetrizer(
+        sil::tensor::Tensor<
+                double,
+                ddc::DiscreteDomain<Id...>,
+                std::experimental::layout_right,
+                Kokkos::DefaultHostExecutionSpace::memory_space> sym,
+        std::array<std::size_t, sizeof...(Id) / 2> idx_to_permute)
+{
+    ddc::Chunk tr_alloc(sym.domain(), ddc::HostAllocator<double>());
+    sil::tensor::Tensor<
+            double,
+            ddc::DiscreteDomain<Id...>,
+            std::experimental::layout_right,
+            Kokkos::DefaultHostExecutionSpace::memory_space>
+            tr(tr_alloc);
+    ddc::parallel_fill(tr, 0);
+    tr.fill_using_lambda(detail::tr_lambda<Dimension, sizeof...(Id) / 2, Id...>(idx_to_permute));
+
+    if constexpr (!AntiSym) {
+        tr *= 1. / boost::math::factorial<double>(sizeof...(Id) / 2);
+    } else {
+        tr *= permutation_parity(idx_to_permute) / boost::math::factorial<double>(sizeof...(Id));
+    }
+    sym += tr;
+
+    return sym;
+}
+
+/*
+     Compute all permutations on a subset of indexes in idx_to_permute, keep the
+     rest of the indexes where they are.
+     */
+template <std::size_t Nt, std::size_t Ns>
+static std::vector<std::array<std::size_t, Nt>> permutations_subset(
+        std::array<std::size_t, Nt> t,
+        std::array<std::size_t, Ns> subset_values)
+{
+    std::array<std::size_t, Ns> subset_indexes;
+    std::array<std::size_t, Ns> elements_to_permute;
+    int j = 0;
+    for (std::size_t i = 0; i < t.size(); ++i) {
+        if (std::find(subset_values.begin(), subset_values.end(), t[i])
+            != std::end(subset_values)) {
+            subset_indexes[j] = i;
+            elements_to_permute[j++] = t[i];
+        }
+    }
+
+    std::vector<std::array<std::size_t, Nt>> result;
+    do {
+        std::array<std::size_t, Nt> tmp = t;
+        for (std::size_t i = 0; i < Ns; ++i) {
+            tmp[subset_indexes[i]] = elements_to_permute[i];
+        }
+        result.push_back(tmp);
+    } while (std::next_permutation(elements_to_permute.begin(), elements_to_permute.end()));
+
+    return result;
+}
+
+// Compute projector
+template <class PartialTableauSeq, std::size_t Dimension, bool AntiSym = 0>
+struct Projector;
+
+template <std::size_t... ElemOfHeadRow, class... TailRow, std::size_t Dimension, bool AntiSym>
+struct Projector<
+        YoungTableauSeq<std::index_sequence<ElemOfHeadRow...>, TailRow...>,
+        Dimension,
+        AntiSym>
+{
+    template <class... Id>
+    static sil::tensor::Tensor<
+            double,
+            ddc::DiscreteDomain<Id...>,
+            std::experimental::layout_right,
+            Kokkos::DefaultHostExecutionSpace::memory_space>
+    run(sil::tensor::Tensor<
+            double,
+            ddc::DiscreteDomain<Id...>,
+            std::experimental::layout_right,
+            Kokkos::DefaultHostExecutionSpace::memory_space> proj)
+    {
+        if constexpr (sizeof...(ElemOfHeadRow) >= 2) {
+            // Allocate & build a symmetric projector for the row
+            sil::tensor::TensorAccessor<detail::symmetrizer_index_t<Id, Id...>...> sym_accessor;
+            ddc::DiscreteDomain<detail::symmetrizer_index_t<Id, Id...>...> sym_dom
+                    = sym_accessor.mem_domain();
+
+            ddc::Chunk sym_alloc(sym_dom, ddc::HostAllocator<double>());
+            sil::tensor::Tensor<
+                    double,
+                    ddc::DiscreteDomain<detail::symmetrizer_index_t<Id, Id...>...>,
+                    std::experimental::layout_right,
+                    Kokkos::DefaultHostExecutionSpace::memory_space>
+                    sym(sym_alloc);
+            ddc::parallel_fill(sym, 0);
+            std::array<std::size_t, sizeof...(Id) / 2> idx_to_permute;
+            for (std::size_t i = 0; i < sizeof...(Id) / 2; ++i) {
+                idx_to_permute[i] = i;
+            }
+            std::array<std::size_t, sizeof...(ElemOfHeadRow)> row_values {ElemOfHeadRow...};
+            auto idx_permutations = detail::permutations_subset(idx_to_permute, row_values);
+            for (int i = 0; i < idx_permutations.size(); ++i) {
+                fill_symmetrizer<
+                        Dimension,
+                        AntiSym,
+                        detail::symmetrizer_index_t<Id, Id...>...>(sym, idx_permutations[i]);
+            }
+
+            // Extract the symmetric part (for the row) of the projector (requires an intermediate prod tensor)
+            ddc::Chunk prod_alloc(tensor_prod_domain(sym, proj), ddc::HostAllocator<double>());
+            sil::tensor::Tensor<
+                    double,
+                    sil::tensor::tensor_prod_domain_t<
+                            ddc::DiscreteDomain<detail::symmetrizer_index_t<Id, Id...>...>,
+                            ddc::DiscreteDomain<Id...>>,
+                    std::experimental::layout_right,
+                    Kokkos::DefaultHostExecutionSpace::memory_space>
+                    prod(prod_alloc);
+            sil::tensor::tensor_prod(prod, sym, proj);
+            Kokkos::deep_copy(
+                    proj.allocation_kokkos_view(),
+                    prod.allocation_kokkos_view()); // We use Kokkos::deep_copy in place of ddc::parallel_deepcopy to avoid type verification of the type dimensions
+        }
+        if constexpr (sizeof...(TailRow) == 0) {
+            return proj;
+        } else {
+            return Projector<YoungTableauSeq<TailRow...>, Dimension, AntiSym>::run(proj);
+        }
+    }
+};
+
+} // namespace detail
+
+template <std::size_t Dimension, class TableauSeq>
+template <class... Id>
+auto YoungTableau<Dimension, TableauSeq>::projector()
+{
+    static_assert(sizeof...(Id) == s_r);
+    sil::tensor::TensorAccessor<detail::declare_deriv<Id>..., Id...> proj_accessor;
+    ddc::DiscreteDomain<detail::declare_deriv<Id>..., Id...> proj_dom = proj_accessor.mem_domain();
+
+    // Allocate a projector and fill it as an identity tensor
+    ddc::Chunk proj_alloc(proj_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor<
+            double,
+            ddc::DiscreteDomain<detail::declare_deriv<Id>..., Id...>,
+            std::experimental::layout_right,
+            Kokkos::DefaultHostExecutionSpace::memory_space>
+            proj(proj_alloc);
+    ddc::parallel_fill(proj, 0);
+    std::array<std::size_t, s_r> idx_to_permute;
+    for (std::size_t i = 0; i < s_r; ++i) {
+        idx_to_permute[i] = i;
+    }
+    proj.fill_using_lambda(
+            detail::tr_lambda<s_d, s_r, detail::declare_deriv<Id>..., Id...>(idx_to_permute));
+
+    // Build the projector
+    detail::Projector<tableau_seq, Dimension>::run(proj);
+    detail::Projector<typename dual::tableau_seq, Dimension, 1>::run(proj);
+    return std::make_tuple(std::move(proj_alloc), proj);
+}
 
 } // namespace young_tableau
 
