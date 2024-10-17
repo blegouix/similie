@@ -562,9 +562,12 @@ static int permutation_parity(std::array<std::size_t, Nt> lst)
 {
     int parity = 1;
     for (int i = 0; i < lst.size() - 1; ++i) {
-        parity *= -1;
-        std::size_t mn = std::distance(lst.begin(), std::min_element(lst.begin() + i, lst.end()));
-        std::swap(lst[i], lst[mn]);
+        if (lst[i] != i) {
+            parity *= -1;
+            std::size_t mn
+                    = std::distance(lst.begin(), std::min_element(lst.begin() + i, lst.end()));
+            std::swap(lst[i], lst[mn]);
+        }
     }
     return parity;
 }
@@ -596,7 +599,8 @@ fill_symmetrizer(
     if constexpr (!AntiSym) {
         tr *= 1. / boost::math::factorial<double>(sizeof...(Id) / 2);
     } else {
-        tr *= permutation_parity(idx_to_permute) / boost::math::factorial<double>(sizeof...(Id));
+        tr *= permutation_parity(idx_to_permute)
+              / boost::math::factorial<double>(sizeof...(Id) / 2);
     }
     sym += tr;
 
@@ -616,7 +620,7 @@ static std::vector<std::array<std::size_t, Nt>> permutations_subset(
     std::array<std::size_t, Ns> elements_to_permute;
     int j = 0;
     for (std::size_t i = 0; i < t.size(); ++i) {
-        if (std::find(subset_values.begin(), subset_values.end(), t[i])
+        if (std::find(subset_values.begin(), subset_values.end(), t[i] + 1)
             != std::end(subset_values)) {
             subset_indexes[j] = i;
             elements_to_permute[j++] = t[i];
