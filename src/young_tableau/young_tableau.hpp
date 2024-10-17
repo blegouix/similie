@@ -57,22 +57,6 @@ struct ExtractRow<I, Id, YoungTableauSeq<>>
 template <std::size_t I, class TableauSeq>
 using extract_row_t = ExtractRow<I, 0, TableauSeq>::type;
 
-// Extract Elem from a row of YoungTableauSeq at index J
-template <std::size_t J, std::size_t Id, class Row>
-struct ExtractElem;
-
-template <std::size_t J, std::size_t Id, std::size_t HeadElem, std::size_t... TailElem>
-struct ExtractElem<J, Id, std::index_sequence<HeadElem, TailElem...>>
-{
-    using type = std::conditional_t<
-            J == Id,
-            std::index_sequence<HeadElem>,
-            typename ExtractElem<J, Id + 1, std::index_sequence<TailElem...>>::type>;
-};
-
-template <std::size_t J, class Row>
-using extract_elem_t = ExtractElem<J, 0, Row>::type;
-
 // Override the row of YoungTableauSeq at index I with RowToSet
 template <
         std::size_t I,
@@ -509,46 +493,7 @@ tr_lambda(std::array<std::size_t, Rank> idx_to_permute)
     };
 }
 
-// Print Young tableau in a string
-template <class TableauSeq>
-struct PrintYoungTableauSeq;
-
-template <std::size_t HeadRowHeadElement, std::size_t... HeadRowTailElement, class... TailRow>
-struct PrintYoungTableauSeq<
-        YoungTableauSeq<std::index_sequence<HeadRowHeadElement, HeadRowTailElement...>, TailRow...>>
-{
-    static std::string run(std::string os)
-    {
-        os += std::to_string(HeadRowHeadElement) + " ";
-        if constexpr (sizeof...(TailRow) == 0 && sizeof...(HeadRowTailElement) == 0) {
-        } else if constexpr (sizeof...(HeadRowTailElement) == 0) {
-            os += "\n";
-            os = PrintYoungTableauSeq<YoungTableauSeq<TailRow...>>::run(os);
-        } else {
-            os = PrintYoungTableauSeq<
-                    YoungTableauSeq<std::index_sequence<HeadRowTailElement...>, TailRow...>>::
-                    run(os);
-        }
-        return os;
-    }
-};
-
-template <>
-struct PrintYoungTableauSeq<YoungTableauSeq<>>
-{
-    static std::string run(std::string os)
-    {
-        return os;
-    }
-};
-
 } // namespace detail
-
-template <class TableauSeq>
-std::string print_young_tableau_seq()
-{
-    return detail::PrintYoungTableauSeq<TableauSeq>::run("");
-}
 
 template <std::size_t Dimension, class TableauSeq>
 class YoungTableau
@@ -575,7 +520,7 @@ public:
     {
         std::cout << "\033[1;31mThe representations dictionnary does not contain any "
                      "representation for the Young tableau:\033[0m\n"
-                  << print()
+                  << *this 
                   << "\n\033[1;31min dimension " + std::to_string(s_d)
                              + ". Please compile with BUILD_COMPUTE_REPRESENTATION=ON and "
                                "rerun.\033[0m\n";
@@ -601,19 +546,14 @@ public:
 
     template <class... Id>
     auto projector();
-
-    static std::string print()
-    {
-        return print_young_tableau_seq<tableau_seq>();
-    }
 };
 
 namespace detail {
 
 /*
-     Given a permutation of the digits 0..N, 
-     returns its parity (or sign): +1 for even parity; -1 for odd.
-     */
+ Given a permutation of the digits 0..N, 
+ returns its parity (or sign): +1 for even parity; -1 for odd.
+ */
 template <std::size_t Nt>
 static int permutation_parity(std::array<std::size_t, Nt> lst)
 {
@@ -648,7 +588,7 @@ fill_symmetrizer(
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tr(tr_alloc);
     ddc::parallel_fill(tr, 0);
-    tr.fill_using_lambda(detail::tr_lambda<Dimension, sizeof...(Id) / 2, Id...>(idx_to_permute));
+    tr.fill_using_lambda(tr_lambda<Dimension, sizeof...(Id) / 2, Id...>(idx_to_permute));
 
     if constexpr (!AntiSym) {
         tr *= 1. / boost::math::factorial<double>(sizeof...(Id) / 2);
@@ -661,9 +601,9 @@ fill_symmetrizer(
 }
 
 /*
-     Compute all permutations on a subset of indexes in idx_to_permute, keep the
-     rest of the indexes where they are.
-     */
+ Compute all permutations on a subset of indexes in idx_to_permute, keep the
+ rest of the indexes where they are.
+ */
 template <std::size_t Nt, std::size_t Ns>
 static std::vector<std::array<std::size_t, Nt>> permutations_subset(
         std::array<std::size_t, Nt> t,
@@ -716,14 +656,14 @@ struct Projector<
     {
         if constexpr (sizeof...(ElemOfHeadRow) >= 2) {
             // Allocate & build a symmetric projector for the row
-            sil::tensor::TensorAccessor<detail::symmetrizer_index_t<Id, Id...>...> sym_accessor;
-            ddc::DiscreteDomain<detail::symmetrizer_index_t<Id, Id...>...> sym_dom
+            sil::tensor::TensorAccessor<symmetrizer_index_t<Id, Id...>...> sym_accessor;
+            ddc::DiscreteDomain<symmetrizer_index_t<Id, Id...>...> sym_dom
                     = sym_accessor.mem_domain();
 
             ddc::Chunk sym_alloc(sym_dom, ddc::HostAllocator<double>());
             sil::tensor::Tensor<
                     double,
-                    ddc::DiscreteDomain<detail::symmetrizer_index_t<Id, Id...>...>,
+                    ddc::DiscreteDomain<symmetrizer_index_t<Id, Id...>...>,
                     std::experimental::layout_right,
                     Kokkos::DefaultHostExecutionSpace::memory_space>
                     sym(sym_alloc);
@@ -738,7 +678,7 @@ struct Projector<
                 fill_symmetrizer<
                         Dimension,
                         AntiSym,
-                        detail::symmetrizer_index_t<Id, Id...>...>(sym, idx_permutations[i]);
+                        symmetrizer_index_t<Id, Id...>...>(sym, idx_permutations[i]);
             }
 
             // Extract the symmetric part (for the row) of the projector (requires an intermediate prod tensor)
@@ -746,7 +686,7 @@ struct Projector<
             sil::tensor::Tensor<
                     double,
                     sil::tensor::tensor_prod_domain_t<
-                            ddc::DiscreteDomain<detail::symmetrizer_index_t<Id, Id...>...>,
+                            ddc::DiscreteDomain<symmetrizer_index_t<Id, Id...>...>,
                             ddc::DiscreteDomain<Id...>>,
                     std::experimental::layout_right,
                     Kokkos::DefaultHostExecutionSpace::memory_space>
@@ -794,6 +734,51 @@ auto YoungTableau<Dimension, TableauSeq>::projector()
     detail::Projector<tableau_seq, Dimension>::run(proj);
     detail::Projector<typename dual::tableau_seq, Dimension, 1>::run(proj);
     return std::make_tuple(std::move(proj_alloc), proj);
+}
+
+namespace detail {
+
+// Print Young tableau in a string
+template <class TableauSeq>
+struct PrintYoungTableauSeq;
+
+template <std::size_t HeadRowHeadElement, std::size_t... HeadRowTailElement, class... TailRow>
+struct PrintYoungTableauSeq<
+        YoungTableauSeq<std::index_sequence<HeadRowHeadElement, HeadRowTailElement...>, TailRow...>>
+{
+    static std::string run(std::string str)
+    {
+        str += std::to_string(HeadRowHeadElement) + " ";
+        if constexpr (sizeof...(TailRow) == 0 && sizeof...(HeadRowTailElement) == 0) {
+        } else if constexpr (sizeof...(HeadRowTailElement) == 0) {
+            str += "\n";
+            str = PrintYoungTableauSeq<YoungTableauSeq<TailRow...>>::run(str);
+        } else {
+            str = PrintYoungTableauSeq<
+                    YoungTableauSeq<std::index_sequence<HeadRowTailElement...>, TailRow...>>::
+                    run(str);
+        }
+        return str;
+    }
+};
+
+template <>
+struct PrintYoungTableauSeq<YoungTableauSeq<>>
+{
+    static std::string run(std::string str)
+    {
+        return str;
+    }
+};
+
+} // namespace detail
+
+template <std::size_t Dimension, class TableauSeq>
+std::ostream& operator<<(std::ostream& os, YoungTableau<Dimension, TableauSeq> const& tableau)
+{
+    std::string str = "";
+    os << detail::PrintYoungTableauSeq<TableauSeq>::run(str);
+    return os;
 }
 
 } // namespace young_tableau

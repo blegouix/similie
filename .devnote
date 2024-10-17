@@ -1,6 +1,22 @@
 ----- This file contains personal notes to keep track of ideas, TODO or previous chunks of code which has been removed but could be useful in different context -----
 ----- Not supposed to be read by anyone other than me -----
 
+// Extract Elem from a row of YoungTableauSeq at index J
+template <std::size_t J, std::size_t Id, class Row>
+struct ExtractElem;
+
+template <std::size_t J, std::size_t Id, std::size_t HeadElem, std::size_t... TailElem>
+struct ExtractElem<J, Id, std::index_sequence<HeadElem, TailElem...>>
+{
+    using type = std::conditional_t<
+            J == Id, 
+            std::index_sequence<HeadElem>,
+            typename ExtractElem<J, Id + 1, std::index_sequence<TailElem...>>::type>;
+};
+
+template <std::size_t J, class Row>
+using extract_elem_t = ExtractElem<J, 0, Row>::type;
+
 // Type of index used by projectors
 template <std::size_t I>
 struct ProjX
