@@ -617,7 +617,6 @@ public:
                   << "\n\033[1;31min dimension " + std::to_string(s_d)
                              + ". Please compile with BUILD_COMPUTE_REPRESENTATION=ON and "
                                "rerun.\033[0m\n";
-        projector();
     }
 
     static consteval std::size_t dimension()
@@ -795,7 +794,7 @@ public:
     template <class... NaturalIndex>
     struct Projector<sil::tensor::FullTensorIndex<NaturalIndex...>>
     {
-        static void run()
+        static auto run()
         {
             sil::tensor::TensorAccessor<NaturalIndex...> proj_accessor;
             ddc::DiscreteDomain<NaturalIndex...> proj_dom = proj_accessor.mem_domain();
@@ -818,13 +817,13 @@ public:
             // Build the projector
             ProjectorRowContribution<tableau_seq>::run(proj);
             ProjectorRowContribution<typename dual::tableau_seq, 1>::run(proj);
-            std::cout << proj.extents();
+            return std::make_tuple(std::move(proj_alloc), proj);
         }
     };
 
-    static void projector()
+    static auto projector()
     {
-        Projector<detail::projector_index_t<s_d, s_r>>::run();
+        return Projector<detail::projector_index_t<s_d, s_r>>::run();
     }
 
     static std::string print()
