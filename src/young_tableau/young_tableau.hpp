@@ -449,6 +449,66 @@ struct declare_deriv : Parent
 {
 };
 
+} // namespace detail
+
+/**
+ * YoungTableau class
+ */
+template <std::size_t Dimension, class TableauSeq>
+class YoungTableau
+{
+public:
+    using tableau_seq = TableauSeq;
+    using shape = typename TableauSeq::shape;
+
+private:
+    static constexpr std::size_t s_d = Dimension;
+    static constexpr std::size_t s_r = TableauSeq::rank;
+
+public:
+    using dual = YoungTableau<s_d, detail::dual_t<tableau_seq>>;
+    using hook_lengths = detail::hook_lengths_t<
+            detail::hooks_t<tableau_seq>,
+            detail::dual_t<detail::hooks_t<detail::dual_t<tableau_seq>>>>;
+
+private:
+    static constexpr std::size_t s_irrep_dim = detail::IrrepDim<s_d, hook_lengths, 0, 0>::run(1);
+
+public:
+    YoungTableau()
+    {
+        std::cout << "\033[1;31mThe representations dictionnary does not contain any "
+                     "representation for the Young tableau:\033[0m\n"
+                  << *this
+                  << "\n\033[1;31min dimension " + std::to_string(s_d)
+                             + ". Please compile with BUILD_COMPUTE_REPRESENTATION=ON and "
+                               "rerun.\033[0m\n";
+    }
+
+    static consteval std::size_t dimension()
+    {
+        return s_d;
+    }
+
+    static consteval std::size_t rank()
+    {
+        return s_r;
+    }
+
+    static consteval std::size_t irrep_dim()
+    {
+        return s_irrep_dim;
+    }
+
+    template <class... Id>
+    using projector_domain = ddc::DiscreteDomain<detail::declare_deriv<Id>..., Id...>;
+
+    template <class... Id>
+    static auto projector();
+};
+
+namespace detail {
+
 template <class OId, class... Id>
 using symmetrizer_index_t = std::conditional_t<
         (ddc::type_seq_rank_v<OId, ddc::detail::TypeSeq<Id...>> < (sizeof...(Id) / 2)),
@@ -492,63 +552,6 @@ tr_lambda(std::array<std::size_t, Rank> idx_to_permute)
         }
     };
 }
-
-} // namespace detail
-
-template <std::size_t Dimension, class TableauSeq>
-class YoungTableau
-{
-public:
-    using tableau_seq = TableauSeq;
-    using shape = typename TableauSeq::shape;
-
-private:
-    static constexpr std::size_t s_d = Dimension;
-    static constexpr std::size_t s_r = TableauSeq::rank;
-
-public:
-    using dual = YoungTableau<s_d, detail::dual_t<tableau_seq>>;
-    using hook_lengths = detail::hook_lengths_t<
-            detail::hooks_t<tableau_seq>,
-            detail::dual_t<detail::hooks_t<detail::dual_t<tableau_seq>>>>;
-
-private:
-    static constexpr std::size_t s_irrep_dim = detail::IrrepDim<s_d, hook_lengths, 0, 0>::run(1);
-
-public:
-    YoungTableau()
-    {
-        std::cout << "\033[1;31mThe representations dictionnary does not contain any "
-                     "representation for the Young tableau:\033[0m\n"
-                  << *this 
-                  << "\n\033[1;31min dimension " + std::to_string(s_d)
-                             + ". Please compile with BUILD_COMPUTE_REPRESENTATION=ON and "
-                               "rerun.\033[0m\n";
-    }
-
-    static consteval std::size_t dimension()
-    {
-        return s_d;
-    }
-
-    static consteval std::size_t rank()
-    {
-        return s_r;
-    }
-
-    static consteval std::size_t irrep_dim()
-    {
-        return s_irrep_dim;
-    }
-
-    template <class... Id>
-    using projector_domain = ddc::DiscreteDomain<detail::declare_deriv<Id>..., Id...>;
-
-    template <class... Id>
-    auto projector();
-};
-
-namespace detail {
 
 /*
  Given a permutation of the digits 0..N, 
@@ -708,7 +711,7 @@ struct Projector<
 
 template <std::size_t Dimension, class TableauSeq>
 template <class... Id>
-auto YoungTableau<Dimension, TableauSeq>::projector()
+static auto YoungTableau<Dimension, TableauSeq>::projector()
 {
     static_assert(sizeof...(Id) == s_r);
     sil::tensor::TensorAccessor<detail::declare_deriv<Id>..., Id...> proj_accessor;
