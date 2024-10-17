@@ -417,6 +417,15 @@ struct TensorProdDomain<ddc::DiscreteDomain<DDim1...>, ddc::DiscreteDomain<DDim2
 template <class Dom1, class Dom2>
 using tensor_prod_domain_t = TensorProdDomain<Dom1, Dom2>::type;
 
+template <class Tensor1, class Tensor2>
+tensor_prod_domain_t<typename Tensor1::discrete_domain_type, typename Tensor2::discrete_domain_type>
+tensor_prod_domain(Tensor1 tensor1, Tensor2 tensor2)
+{
+    return sil::tensor::tensor_prod_domain_t<
+            typename Tensor1::discrete_domain_type,
+            typename Tensor2::discrete_domain_type>(tensor1.domain(), tensor2.domain());
+}
+
 // Product between two tensors
 template <class HeadDDim1TypeSeq, class ContractDDimTypeSeq, class TailDDim2TypeSeq>
 struct TensorProd;

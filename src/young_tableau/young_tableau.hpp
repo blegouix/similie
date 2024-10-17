@@ -460,6 +460,7 @@ struct IrrepDim<Dimension, YoungTableauSeq<>, I, J>
 };
 
 // Type of index used by projectors
+/*
 template <std::size_t I>
 struct ProjX
 {
@@ -491,12 +492,19 @@ template <std::size_t Dimension, std::size_t Rank>
 using projector_index_t = ProjectorIndex<
         NaturalIndex<std::make_index_sequence<Dimension>>,
         std::make_index_sequence<2 * Rank>>::type;
+*/
 
 // Type of index used by symmetrizers or symmetrized tensors
 template <class Parent>
 struct declare_deriv : Parent
 {
 };
+
+template <class OId, class... Id>
+using projector_index_t = std::conditional_t<
+        (ddc::type_seq_rank_v<OId, ddc::detail::TypeSeq<Id...>> < (sizeof...(Id) / 2)),
+        declare_deriv<OId>,
+        OId>;
 
 template <class OId, class... Id>
 using symmetrizer_index_t = std::conditional_t<
@@ -762,11 +770,7 @@ public:
                 }
 
                 // Extract the symmetric part (for the row) of the projector (requires an intermediate prod tensor)
-                ddc::Chunk prod_alloc(
-                        sil::tensor::tensor_prod_domain_t<
-                                ddc::DiscreteDomain<detail::symmetrizer_index_t<Id, Id...>...>,
-                                ddc::DiscreteDomain<Id...>>(proj.domain(), sym.domain()),
-                        ddc::HostAllocator<double>());
+                ddc::Chunk prod_alloc(tensor_prod_domain(sym, proj), ddc::HostAllocator<double>());
                 sil::tensor::Tensor<
                         double,
                         sil::tensor::tensor_prod_domain_t<
@@ -821,9 +825,14 @@ public:
         }
     };
 
+    template <class... Id>
+    using projector_domain = ddc::DiscreteDomain<detail::declare_deriv<Id>..., Id...>;
+
+    template <class... Id>
     static auto projector()
     {
-        return Projector<detail::projector_index_t<s_d, s_r>>::run();
+        static_assert(sizeof...(Id) == s_r);
+        return Projector<sil::tensor::FullTensorIndex<detail::declare_deriv<Id>..., Id...>>::run();
     }
 
     static std::string print()
