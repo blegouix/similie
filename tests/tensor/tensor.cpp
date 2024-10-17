@@ -677,3 +677,46 @@ TEST(TensorProd, DoubleContractionRank3xRank3)
     EXPECT_EQ(prod_tensor.get(prod_tensor_accessor.element<Z, Y>()), 2754.);
     EXPECT_EQ(prod_tensor.get(prod_tensor_accessor.element<Z, Z>()), 2952.);
 }
+
+TEST(TensorPrint, Rank3xRank3)
+{
+    sil::tensor::TensorAccessor<Alpha, Beta, Gamma> tensor_accessor;
+    ddc::DiscreteDomain<Alpha, Beta, Gamma> tensor_dom = tensor_accessor.mem_domain();
+    ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor<
+            double,
+            ddc::DiscreteDomain<Alpha, Beta, Gamma>,
+            std::experimental::layout_right,
+            Kokkos::DefaultHostExecutionSpace::memory_space>
+            tensor(tensor_alloc);
+
+    tensor(tensor_accessor.element<X, X, X>()) = 0.;
+    tensor(tensor_accessor.element<X, X, Y>()) = 1.;
+    tensor(tensor_accessor.element<X, X, Z>()) = 2.;
+    tensor(tensor_accessor.element<X, Y, X>()) = 3.;
+    tensor(tensor_accessor.element<X, Y, Y>()) = 4.;
+    tensor(tensor_accessor.element<X, Y, Z>()) = 5.;
+    tensor(tensor_accessor.element<X, Z, X>()) = 6.;
+    tensor(tensor_accessor.element<X, Z, Y>()) = 7.;
+    tensor(tensor_accessor.element<X, Z, Z>()) = 8.;
+    tensor(tensor_accessor.element<Y, X, X>()) = 9.;
+    tensor(tensor_accessor.element<Y, X, Y>()) = 10.;
+    tensor(tensor_accessor.element<Y, X, Z>()) = 11.;
+    tensor(tensor_accessor.element<Y, Y, X>()) = 12.;
+    tensor(tensor_accessor.element<Y, Y, Y>()) = 13.;
+    tensor(tensor_accessor.element<Y, Y, Z>()) = 14.;
+    tensor(tensor_accessor.element<Y, Z, X>()) = 15.;
+    tensor(tensor_accessor.element<Y, Z, Y>()) = 16.;
+    tensor(tensor_accessor.element<Y, Z, Z>()) = 17.;
+    tensor(tensor_accessor.element<Z, X, X>()) = 18.;
+    tensor(tensor_accessor.element<Z, X, Y>()) = 19.;
+    tensor(tensor_accessor.element<Z, X, Z>()) = 20.;
+    tensor(tensor_accessor.element<Z, Y, X>()) = 21.;
+    tensor(tensor_accessor.element<Z, Y, Y>()) = 22.;
+    tensor(tensor_accessor.element<Z, Y, Z>()) = 23.;
+    tensor(tensor_accessor.element<Z, Z, X>()) = 24.;
+    tensor(tensor_accessor.element<Z, Z, Y>()) = 25.;
+    tensor(tensor_accessor.element<Z, Z, Z>()) = 26.;
+
+    std::cout << tensor;
+}
