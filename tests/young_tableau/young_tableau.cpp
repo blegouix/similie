@@ -31,7 +31,7 @@ struct Nu : sil::tensor::TensorNaturalIndex<T, X, Y, Z>
 {
 };
 
-TEST(YoungTableau, IrrepDim1_2)
+TEST(YoungTableau, 1_2)
 {
     sil::young_tableau::
             YoungTableau<4, sil::young_tableau::YoungTableauSeq<std::index_sequence<1, 2>>>
@@ -82,10 +82,18 @@ TEST(YoungTableau, IrrepDim1_2)
 
     sil::tensor::tensor_prod(prod, proj, tensor);
 
-    std::cout << prod;
+    sil::tensor::tensor_accessor_for_domain_t<sil::tensor::tensor_prod_domain_t<
+                    typename decltype(young_tableau)::projector_domain<Mu, Nu>,
+                    ddc::DiscreteDomain<Mu, Nu>>> tensor_accessor_prod;
+    EXPECT_EQ(prod.get(tensor_accessor_prod.element<T, X>()), prod.get(tensor_accessor_prod.element<X, T>()));
+    EXPECT_EQ(prod.get(tensor_accessor_prod.element<T, Y>()), prod.get(tensor_accessor_prod.element<Y, T>()));
+    EXPECT_EQ(prod.get(tensor_accessor_prod.element<T, Z>()), prod.get(tensor_accessor_prod.element<Z, T>()));
+    EXPECT_EQ(prod.get(tensor_accessor_prod.element<X, Y>()), prod.get(tensor_accessor_prod.element<Y, X>()));
+    EXPECT_EQ(prod.get(tensor_accessor_prod.element<X, Z>()), prod.get(tensor_accessor_prod.element<Z, X>()));
+    EXPECT_EQ(prod.get(tensor_accessor_prod.element<Y, Z>()), prod.get(tensor_accessor_prod.element<Z, Y>()));
 }
 
-TEST(YoungTableau, IrrepDim1l2)
+TEST(YoungTableau, 1l2)
 {
     sil::young_tableau::YoungTableau<
             4,
@@ -137,7 +145,19 @@ TEST(YoungTableau, IrrepDim1l2)
 
     sil::tensor::tensor_prod(prod, proj, tensor);
 
-    std::cout << prod;
+    sil::tensor::tensor_accessor_for_domain_t<sil::tensor::tensor_prod_domain_t<
+                    typename decltype(young_tableau)::projector_domain<Mu, Nu>,
+                    ddc::DiscreteDomain<Mu, Nu>>> tensor_accessor_prod;
+    EXPECT_EQ(prod.get(tensor_accessor_prod.element<T, T>()), 0.);
+    EXPECT_EQ(prod.get(tensor_accessor_prod.element<T, X>()), -prod.get(tensor_accessor_prod.element<X, T>()));
+    EXPECT_EQ(prod.get(tensor_accessor_prod.element<T, Y>()), -prod.get(tensor_accessor_prod.element<Y, T>()));
+    EXPECT_EQ(prod.get(tensor_accessor_prod.element<T, Z>()), -prod.get(tensor_accessor_prod.element<Z, T>()));
+    EXPECT_EQ(prod.get(tensor_accessor_prod.element<X, X>()), 0.);
+    EXPECT_EQ(prod.get(tensor_accessor_prod.element<X, Y>()), -prod.get(tensor_accessor_prod.element<Y, X>()));
+    EXPECT_EQ(prod.get(tensor_accessor_prod.element<X, Z>()), -prod.get(tensor_accessor_prod.element<Z, X>()));
+    EXPECT_EQ(prod.get(tensor_accessor_prod.element<Y, Y>()), 0.);
+    EXPECT_EQ(prod.get(tensor_accessor_prod.element<Y, Z>()), -prod.get(tensor_accessor_prod.element<Z, Y>()));
+    EXPECT_EQ(prod.get(tensor_accessor_prod.element<Z, Z>()), 0.);
 }
 
 TEST(YoungTableau, IrrepDim1_2_3)

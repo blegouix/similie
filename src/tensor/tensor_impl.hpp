@@ -150,6 +150,21 @@ public:
     static constexpr ddc::DiscreteElement<Index...> element();
 };
 
+namespace detail {
+
+template <class Dom>
+struct TensorAccessorForDomain;
+
+template <class... Index>
+struct TensorAccessorForDomain<ddc::DiscreteDomain<Index...>> {
+    using type = TensorAccessor<Index...>; 
+};
+
+} // namespace detail
+
+template <class Dom>
+using tensor_accessor_for_domain_t = detail::TensorAccessorForDomain<Dom>::type;
+
 template <class... Index>
 constexpr TensorAccessor<Index...>::TensorAccessor()
 {
