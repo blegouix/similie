@@ -140,7 +140,7 @@ template <class... Index>
 class TensorAccessor
 {
 public:
-    explicit TensorAccessor();
+    explicit constexpr TensorAccessor();
 
     static constexpr ddc::DiscreteDomain<Index...> mem_domain();
 
@@ -150,8 +150,23 @@ public:
     static constexpr ddc::DiscreteElement<Index...> element();
 };
 
+namespace detail {
+
+template <class Dom>
+struct TensorAccessorForDomain;
+
 template <class... Index>
-TensorAccessor<Index...>::TensorAccessor()
+struct TensorAccessorForDomain<ddc::DiscreteDomain<Index...>> {
+    using type = TensorAccessor<Index...>; 
+};
+
+} // namespace detail
+
+template <class Dom>
+using tensor_accessor_for_domain_t = detail::TensorAccessorForDomain<Dom>::type;
+
+template <class... Index>
+constexpr TensorAccessor<Index...>::TensorAccessor()
 {
 }
 
@@ -270,6 +285,29 @@ class Tensor
 {
 };
 
+} // namespace tensor
+
+} // namespace sil
+
+namespace ddc {
+
+template <class ElementType, class SupportType, class LayoutStridedPolicy, class MemorySpace>
+inline constexpr bool enable_chunk<
+        sil::tensor::Tensor<ElementType, SupportType, LayoutStridedPolicy, MemorySpace>> = true;
+
+template <class ElementType, class SupportType, class LayoutStridedPolicy, class MemorySpace>
+inline constexpr bool enable_borrowed_chunk<
+        sil::tensor::Tensor<ElementType, SupportType, LayoutStridedPolicy, MemorySpace>> = true;
+
+} // namespace ddc
+
+namespace sil {
+
+namespace tensor {
+
+/**
+ * Tensor class
+ */
 template <class ElementType, class... DDim, class LayoutStridedPolicy, class MemorySpace>
 class Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>
     : public ddc::
@@ -288,6 +326,11 @@ public:
             operator();
 
     // TODO operator[] ?
+
+    static constexpr TensorAccessor<DDim...> accessor()
+    {
+        return TensorAccessor<DDim...>();
+    }
 
     template <class... DElems>
     KOKKOS_FUNCTION ElementType get(DElems const&... delems) const noexcept
@@ -315,7 +358,264 @@ public:
                          ? DDim::access_id_to_mem_id(ddc::DiscreteElement<DDim>(delems...).uid())
                          : ddc::DiscreteElement<DDim>(delems...).uid())...));
     }
+
+    void fill_using_lambda(std::function<
+                           void(Tensor<ElementType,
+                                       ddc::DiscreteDomain<DDim...>,
+                                       LayoutStridedPolicy,
+                                       MemorySpace>,
+                                ddc::DiscreteElement<DDim...>)> lambda_func)
+    {
+        ddc::for_each(this->domain(), [&](ddc::DiscreteElement<DDim...> elem) {
+            lambda_func(*this, elem);
+        });
+    }
+
+    Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>& operator+=(
+            const Tensor<
+                    ElementType,
+                    ddc::DiscreteDomain<DDim...>,
+                    LayoutStridedPolicy,
+                    MemorySpace>& tensor)
+    {
+        ddc::for_each(this->domain(), [&](ddc::DiscreteElement<DDim...> elem) {
+            (*this)(elem) += tensor(elem);
+        });
+        return *this;
+    }
+
+    Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>& operator*=(
+            const ElementType scalar)
+    {
+        ddc::for_each(this->domain(), [&](ddc::DiscreteElement<DDim...> elem) {
+            (*this)(elem) *= scalar;
+        });
+        return *this;
+    }
 };
+
+// Sum of tensors
+template <
+        class... DDim,
+        class ElementType,
+        class LayoutStridedPolicy,
+        class MemorySpace,
+        class... TensorType>
+Tensor<ElementType,
+       ddc::DiscreteDomain<DDim...>,
+       std::experimental::layout_right,
+       Kokkos::DefaultHostExecutionSpace::memory_space>
+tensor_sum(
+        Tensor<ElementType,
+               ddc::DiscreteDomain<DDim...>,
+               std::experimental::layout_right,
+               Kokkos::DefaultHostExecutionSpace::memory_space> sum_tensor,
+        TensorType... tensor)
+{
+    ddc::for_each(sum_tensor.domain(), [&](ddc::DiscreteElement<DDim...> elem) {
+        sum_tensor(elem) = (tensor(elem) + ...);
+    });
+    return sum_tensor;
+}
+
+// Domain of a tensor result of product between two tensors
+template <class Dom1, class Dom2>
+struct TensorProdDomain;
+
+template <class... DDim1, class... DDim2>
+struct TensorProdDomain<ddc::DiscreteDomain<DDim1...>, ddc::DiscreteDomain<DDim2...>>
+{
+    using type = ddc::detail::convert_type_seq_to_discrete_domain_t<ddc::type_seq_merge_t<
+            ddc::type_seq_remove_t<ddc::detail::TypeSeq<DDim1...>, ddc::detail::TypeSeq<DDim2...>>,
+            ddc::type_seq_remove_t<
+                    ddc::detail::TypeSeq<DDim2...>,
+                    ddc::detail::TypeSeq<DDim1...>>>>;
+};
+
+template <class Dom1, class Dom2>
+using tensor_prod_domain_t = TensorProdDomain<Dom1, Dom2>::type;
+
+template <class Tensor1, class Tensor2>
+tensor_prod_domain_t<typename Tensor1::discrete_domain_type, typename Tensor2::discrete_domain_type>
+tensor_prod_domain(Tensor1 tensor1, Tensor2 tensor2)
+{
+    return sil::tensor::tensor_prod_domain_t<
+            typename Tensor1::discrete_domain_type,
+            typename Tensor2::discrete_domain_type>(tensor1.domain(), tensor2.domain());
+}
+
+// Product between two tensors. Only natural indexing supported atm.
+template <class HeadDDim1TypeSeq, class ContractDDimTypeSeq, class TailDDim2TypeSeq>
+struct TensorProd;
+
+template <class... HeadDDim1, class... ContractDDim, class... TailDDim2>
+struct TensorProd<
+        ddc::detail::TypeSeq<HeadDDim1...>,
+        ddc::detail::TypeSeq<ContractDDim...>,
+        ddc::detail::TypeSeq<TailDDim2...>>
+{
+    template <class ElementType, class LayoutStridedPolicy, class MemorySpace>
+    static Tensor<
+            ElementType,
+            ddc::DiscreteDomain<HeadDDim1..., TailDDim2...>,
+            LayoutStridedPolicy,
+            MemorySpace>
+    run(Tensor<ElementType,
+               ddc::DiscreteDomain<HeadDDim1..., TailDDim2...>,
+               std::experimental::layout_right,
+               Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
+        Tensor<ElementType,
+               ddc::DiscreteDomain<HeadDDim1..., ContractDDim...>,
+               LayoutStridedPolicy,
+               MemorySpace> tensor1,
+        Tensor<ElementType,
+               ddc::DiscreteDomain<ContractDDim..., TailDDim2...>,
+               LayoutStridedPolicy,
+               MemorySpace> tensor2)
+    {
+        ddc::for_each(
+                prod_tensor.domain(),
+                [&](ddc::DiscreteElement<HeadDDim1..., TailDDim2...> elem) {
+                    prod_tensor(elem) = ddc::transform_reduce(
+                            tensor1.template domain<ContractDDim...>(),
+                            0.,
+                            ddc::reducer::sum<ElementType>(),
+                            [&](ddc::DiscreteElement<ContractDDim...> contract_elem) {
+                                return tensor1(ddc::select<HeadDDim1...>(elem), contract_elem)
+                                       * tensor2(ddc::select<TailDDim2...>(elem), contract_elem);
+                            });
+                });
+        return prod_tensor;
+    }
+};
+
+template <
+        class... ProdDDim,
+        class... DDim1,
+        class... DDim2,
+        class ElementType,
+        class LayoutStridedPolicy,
+        class MemorySpace>
+Tensor<ElementType,
+       ddc::DiscreteDomain<ProdDDim...>,
+       std::experimental::layout_right,
+       Kokkos::DefaultHostExecutionSpace::memory_space>
+tensor_prod(
+        Tensor<ElementType,
+               ddc::DiscreteDomain<ProdDDim...>,
+               std::experimental::layout_right,
+               Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
+        Tensor<ElementType, ddc::DiscreteDomain<DDim1...>, LayoutStridedPolicy, MemorySpace>
+                tensor1,
+        Tensor<ElementType, ddc::DiscreteDomain<DDim2...>, LayoutStridedPolicy, MemorySpace>
+                tensor2)
+{
+    static_assert(std::is_same_v<
+                  ddc::type_seq_remove_t<
+                          ddc::detail::TypeSeq<DDim1...>,
+                          ddc::detail::TypeSeq<ProdDDim...>>,
+                  ddc::type_seq_remove_t<
+                          ddc::detail::TypeSeq<DDim2...>,
+                          ddc::detail::TypeSeq<ProdDDim...>>>);
+    return TensorProd<
+            ddc::type_seq_remove_t<
+                    ddc::detail::TypeSeq<ProdDDim...>,
+                    ddc::detail::TypeSeq<DDim2...>>,
+            ddc::type_seq_remove_t<
+                    ddc::detail::TypeSeq<DDim1...>,
+                    ddc::detail::TypeSeq<ProdDDim...>>,
+            ddc::type_seq_remove_t<
+                    ddc::detail::TypeSeq<ProdDDim...>,
+                    ddc::detail::TypeSeq<DDim1...>>>::run(prod_tensor, tensor1, tensor2);
+}
+
+
+namespace detail {
+
+template <class HeadDom, class InterestDom, class TailDom>
+struct PrintTensor;
+
+template <class... HeadDDim, class InterestDDim, class HeadOfTailDDim, class... TailOfTailDDim>
+struct PrintTensor<
+        ddc::DiscreteDomain<HeadDDim...>,
+        ddc::DiscreteDomain<InterestDDim>,
+        ddc::DiscreteDomain<HeadOfTailDDim, TailOfTailDDim...>>
+{
+    template <class ElementType, class LayoutStridedPolicy, class MemorySpace>
+    static std::string run(
+            std::string& str,
+            Tensor<ElementType,
+                   ddc::DiscreteDomain<
+                           HeadDDim...,
+                           InterestDDim,
+                           HeadOfTailDDim,
+                           TailOfTailDDim...>,
+                   LayoutStridedPolicy,
+                   MemorySpace> const& tensor,
+            ddc::DiscreteElement<HeadDDim...> i)
+    {
+        str += "[";
+        for (ddc::DiscreteElement<InterestDDim> elem :
+             ddc::DiscreteDomain<InterestDDim>(tensor.domain())) {
+            str = PrintTensor<
+                    ddc::DiscreteDomain<HeadDDim..., InterestDDim>,
+                    ddc::DiscreteDomain<HeadOfTailDDim>,
+                    ddc::DiscreteDomain<TailOfTailDDim...>>::
+                    run(str, tensor, ddc::DiscreteElement<HeadDDim..., InterestDDim>(i, elem));
+        }
+        str += "]\n";
+        return str;
+    }
+};
+
+template <class... HeadDDim, class InterestDDim>
+struct PrintTensor<
+        ddc::DiscreteDomain<HeadDDim...>,
+        ddc::DiscreteDomain<InterestDDim>,
+        ddc::DiscreteDomain<>>
+{
+    template <class ElementType, class LayoutStridedPolicy, class MemorySpace>
+    static std::string run(
+            std::string& str,
+            Tensor<ElementType,
+                   ddc::DiscreteDomain<HeadDDim..., InterestDDim>,
+                   LayoutStridedPolicy,
+                   MemorySpace> const& tensor,
+            ddc::DiscreteElement<HeadDDim...> i)
+    {
+        for (ddc::DiscreteElement<InterestDDim> elem :
+             ddc::DiscreteDomain<InterestDDim>(tensor.domain())) {
+            str = str + " "
+                  + std::to_string(
+                          tensor(ddc::DiscreteElement<HeadDDim..., InterestDDim>(i, elem)));
+        }
+        str += "\n";
+        return str;
+    }
+};
+
+} // namespace detail
+
+template <
+        class ElementType,
+        class HeadDDim,
+        class... TailDDim,
+        class LayoutStridedPolicy,
+        class MemorySpace>
+std::ostream& operator<<(
+        std::ostream& os,
+        Tensor<ElementType,
+               ddc::DiscreteDomain<HeadDDim, TailDDim...>,
+               LayoutStridedPolicy,
+               MemorySpace> const& tensor)
+{
+    std::string str = "";
+    os << detail::PrintTensor<
+            ddc::DiscreteDomain<>,
+            ddc::DiscreteDomain<HeadDDim>,
+            ddc::DiscreteDomain<TailDDim...>>::run(str, tensor, ddc::DiscreteElement<>());
+    return os;
+}
 
 } // namespace tensor
 
