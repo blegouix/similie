@@ -459,52 +459,11 @@ struct IrrepDim<Dimension, YoungTableauSeq<>, I, J>
     }
 };
 
-// Type of index used by projectors
-/*
-template <std::size_t I>
-struct ProjX
-{
-};
-
-template <class Ids>
-struct NaturalIndex;
-
-template <std::size_t... Id>
-struct NaturalIndex<std::index_sequence<Id...>>
-{
-    template <std::size_t RankId>
-    struct type : sil::tensor::TensorNaturalIndex<ProjX<Id>...>
-    {
-    };
-};
-
-template <class NaturalIds, class RankIds>
-struct ProjectorIndex;
-
-template <std::size_t... Id, std::size_t... RankId>
-struct ProjectorIndex<NaturalIndex<std::index_sequence<Id...>>, std::index_sequence<RankId...>>
-{
-    using type = sil::tensor::FullTensorIndex<
-            typename NaturalIndex<std::index_sequence<Id...>>::template type<RankId>...>;
-};
-
-template <std::size_t Dimension, std::size_t Rank>
-using projector_index_t = ProjectorIndex<
-        NaturalIndex<std::make_index_sequence<Dimension>>,
-        std::make_index_sequence<2 * Rank>>::type;
-*/
-
-// Type of index used by symmetrizers or symmetrized tensors
+// Type of index used by projectors or symmetrizers
 template <class Parent>
 struct declare_deriv : Parent
 {
 };
-
-template <class OId, class... Id>
-using projector_index_t = std::conditional_t<
-        (ddc::type_seq_rank_v<OId, ddc::detail::TypeSeq<Id...>> < (sizeof...(Id) / 2)),
-        declare_deriv<OId>,
-        OId>;
 
 template <class OId, class... Id>
 using symmetrizer_index_t = std::conditional_t<
@@ -522,11 +481,6 @@ using symmetrizer_index_t = std::conditional_t<
                 ddc::detail::TypeSeq<Id...>>>;
 
 // Lambda to fill identity or transpose projectors
-/*
-template <std::size_t Shift, class QueryNaturalId, class... NaturalId>
-using shift_natural_id = ddc::detail::TypeSeqElement<ddc::detail::type_seq_rank_v<QueryNaturalId, NaturalId...>+Shift, NaturalId...>;
-*/
-
 template <std::size_t Dimension, std::size_t Rank, class... NaturalId>
 std::function<
         void(sil::tensor::Tensor<
@@ -726,12 +680,10 @@ public:
 
     // Compute projector
     template <class PartialTableauSeq, bool AntiSym = 0>
-    struct ProjectorRowContribution;
+    struct Projector;
 
     template <std::size_t... ElemOfHeadRow, class... TailRow, bool AntiSym>
-    struct ProjectorRowContribution<
-            YoungTableauSeq<std::index_sequence<ElemOfHeadRow...>, TailRow...>,
-            AntiSym>
+    struct Projector<YoungTableauSeq<std::index_sequence<ElemOfHeadRow...>, TailRow...>, AntiSym>
     {
         template <class... Id>
         static sil::tensor::Tensor<
@@ -787,41 +739,8 @@ public:
             if constexpr (sizeof...(TailRow) == 0) {
                 return proj;
             } else {
-                return ProjectorRowContribution<YoungTableauSeq<TailRow...>>::run(proj);
+                return Projector<YoungTableauSeq<TailRow...>>::run(proj);
             }
-        }
-    };
-
-    template <class ProjectorIndex>
-    struct Projector;
-
-    template <class... NaturalIndex>
-    struct Projector<sil::tensor::FullTensorIndex<NaturalIndex...>>
-    {
-        static auto run()
-        {
-            sil::tensor::TensorAccessor<NaturalIndex...> proj_accessor;
-            ddc::DiscreteDomain<NaturalIndex...> proj_dom = proj_accessor.mem_domain();
-
-            // Allocate a projector and fill it as an identity tensor
-            ddc::Chunk proj_alloc(proj_dom, ddc::HostAllocator<double>());
-            sil::tensor::Tensor<
-                    double,
-                    ddc::DiscreteDomain<NaturalIndex...>,
-                    std::experimental::layout_right,
-                    Kokkos::DefaultHostExecutionSpace::memory_space>
-                    proj(proj_alloc);
-            ddc::parallel_fill(proj, 0);
-            std::array<std::size_t, s_r> idx_to_permute;
-            for (std::size_t i = 0; i < s_r; ++i) {
-                idx_to_permute[i] = i;
-            }
-            proj.fill_using_lambda(detail::tr_lambda<s_d, s_r, NaturalIndex...>(idx_to_permute));
-
-            // Build the projector
-            ProjectorRowContribution<tableau_seq>::run(proj);
-            ProjectorRowContribution<typename dual::tableau_seq, 1>::run(proj);
-            return std::make_tuple(std::move(proj_alloc), proj);
         }
     };
 
@@ -832,7 +751,30 @@ public:
     static auto projector()
     {
         static_assert(sizeof...(Id) == s_r);
-        return Projector<sil::tensor::FullTensorIndex<detail::declare_deriv<Id>..., Id...>>::run();
+        sil::tensor::TensorAccessor<detail::declare_deriv<Id>..., Id...> proj_accessor;
+        ddc::DiscreteDomain<detail::declare_deriv<Id>..., Id...> proj_dom
+                = proj_accessor.mem_domain();
+
+        // Allocate a projector and fill it as an identity tensor
+        ddc::Chunk proj_alloc(proj_dom, ddc::HostAllocator<double>());
+        sil::tensor::Tensor<
+                double,
+                ddc::DiscreteDomain<detail::declare_deriv<Id>..., Id...>,
+                std::experimental::layout_right,
+                Kokkos::DefaultHostExecutionSpace::memory_space>
+                proj(proj_alloc);
+        ddc::parallel_fill(proj, 0);
+        std::array<std::size_t, s_r> idx_to_permute;
+        for (std::size_t i = 0; i < s_r; ++i) {
+            idx_to_permute[i] = i;
+        }
+        proj.fill_using_lambda(
+                detail::tr_lambda<s_d, s_r, detail::declare_deriv<Id>..., Id...>(idx_to_permute));
+
+        // Build the projector
+        Projector<tableau_seq>::run(proj);
+        Projector<typename dual::tableau_seq, 1>::run(proj);
+        return std::make_tuple(std::move(proj_alloc), proj);
     }
 
     static std::string print()

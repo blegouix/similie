@@ -1,0 +1,36 @@
+----- This file contains personal notes to keep track of ideas, TODO or previous chunks of code which has been removed but could be useful in different context -----
+----- Not supposed to be read by anyone other than me -----
+
+// Type of index used by projectors
+template <std::size_t I>
+struct ProjX
+{
+};
+
+template <class Ids>
+struct NaturalIndex;
+
+template <std::size_t... Id>
+struct NaturalIndex<std::index_sequence<Id...>>
+{
+    template <std::size_t RankId>
+    struct type : sil::tensor::TensorNaturalIndex<ProjX<Id>...>
+    {
+    };
+};
+
+template <class NaturalIds, class RankIds>
+struct ProjectorIndex;
+
+template <std::size_t... Id, std::size_t... RankId>
+struct ProjectorIndex<NaturalIndex<std::index_sequence<Id...>>, std::index_sequence<RankId...>>
+{
+    using type = sil::tensor::FullTensorIndex<
+            typename NaturalIndex<std::index_sequence<Id...>>::template type<RankId>...>;
+};
+
+template <std::size_t Dimension, std::size_t Rank>
+using projector_index_t = ProjectorIndex<
+        NaturalIndex<std::make_index_sequence<Dimension>>,
+        std::make_index_sequence<2 * Rank>>::type;
+
