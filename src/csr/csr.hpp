@@ -152,7 +152,7 @@ tensor_prod(
 }
 
 /*
- Csr-vector multiplication 
+ Csr-dense multiplication 
  */
 template <class HeadTensorIndex, class... TailTensorIndex>
 sil::tensor::Tensor<
@@ -179,7 +179,7 @@ tensor_prod(
         std::size_t const j_begin = csr.coalesc_idx()[i];
         std::size_t const j_end = csr.coalesc_idx()[i + 1];
         Kokkos::parallel_reduce(
-                "dense_vector_multiplication",
+                "csr_dense_multiplication",
                 Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(j_begin, j_end),
                 [&](const int j, double& lsum) {
                     double const dense_value = dense(
@@ -195,7 +195,7 @@ tensor_prod(
 
 
 
-// Convert CSR to dense matrix
+// Convert Csr to dense tensor
 template <class HeadId, class... TailId>
 sil::tensor::Tensor<
         double,
