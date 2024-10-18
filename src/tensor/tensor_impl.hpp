@@ -157,8 +157,9 @@ template <class Dom>
 struct TensorAccessorForDomain;
 
 template <class... Index>
-struct TensorAccessorForDomain<ddc::DiscreteDomain<Index...>> {
-    using type = TensorAccessor<Index...>; 
+struct TensorAccessorForDomain<ddc::DiscreteDomain<Index...>>
+{
+    using type = TensorAccessor<Index...>;
 };
 
 } // namespace detail
@@ -326,8 +327,6 @@ public:
             ChunkSpan<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>::
             operator();
 
-    // TODO operator[] ?
-
     static constexpr TensorAccessor<DDim...> accessor()
     {
         return TensorAccessor<DDim...>();
@@ -360,12 +359,26 @@ public:
                          : ddc::DiscreteElement<DDim>(delems...).uid())...));
     }
 
-    void fill_using_lambda(std::function<
-                           void(Tensor<ElementType,
-                                       ddc::DiscreteDomain<DDim...>,
-                                       LayoutStridedPolicy,
-                                       MemorySpace>,
-                                ddc::DiscreteElement<DDim...>)> lambda_func)
+    template <class DElem>
+    KOKKOS_FUNCTION constexpr auto operator[](DElem const& slice_spec) const noexcept
+    {
+        return ddc::ChunkSpan<
+                ElementType,
+                ddc::DiscreteDomain<DDim...>,
+                LayoutStridedPolicy,
+                MemorySpace>::
+        operator[](ddc::DiscreteElement<DDim...>(
+                (detail::is_tensor_index_v<DDim>
+                         ? DDim::access_id_to_mem_id(ddc::DiscreteElement<DDim>(slice_spec).uid())
+                         : ddc::DiscreteElement<DDim>(slice_spec).uid())...));
+    }
+
+    void apply_lambda(std::function<
+                      void(Tensor<ElementType,
+                                  ddc::DiscreteDomain<DDim...>,
+                                  LayoutStridedPolicy,
+                                  MemorySpace>,
+                           ddc::DiscreteElement<DDim...>)> lambda_func)
     {
         ddc::for_each(this->domain(), [&](ddc::DiscreteElement<DDim...> elem) {
             lambda_func(*this, elem);
