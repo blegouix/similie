@@ -157,8 +157,9 @@ template <class Dom>
 struct TensorAccessorForDomain;
 
 template <class... Index>
-struct TensorAccessorForDomain<ddc::DiscreteDomain<Index...>> {
-    using type = TensorAccessor<Index...>; 
+struct TensorAccessorForDomain<ddc::DiscreteDomain<Index...>>
+{
+    using type = TensorAccessor<Index...>;
 };
 
 } // namespace detail
@@ -314,6 +315,10 @@ class Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, Mem
     : public ddc::
               ChunkSpan<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>
 {
+protected:
+    using base_type = ddc::
+            ChunkSpan<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>;
+
 public:
     using ddc::
             ChunkSpan<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>::
@@ -326,7 +331,14 @@ public:
             ChunkSpan<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>::
             operator();
 
-    // TODO operator[] ?
+    KOKKOS_FUNCTION constexpr explicit Tensor(ddc::ChunkSpan<
+                                              ElementType,
+                                              ddc::DiscreteDomain<DDim...>,
+                                              LayoutStridedPolicy,
+                                              MemorySpace> other) noexcept
+        : base_type(other)
+    {
+    }
 
     static constexpr TensorAccessor<DDim...> accessor()
     {
@@ -360,12 +372,34 @@ public:
                          : ddc::DiscreteElement<DDim>(delems...).uid())...));
     }
 
-    void fill_using_lambda(std::function<
-                           void(Tensor<ElementType,
-                                       ddc::DiscreteDomain<DDim...>,
-                                       LayoutStridedPolicy,
-                                       MemorySpace>,
-                                ddc::DiscreteElement<DDim...>)> lambda_func)
+    template <class... ODDim>
+    KOKKOS_FUNCTION constexpr auto operator[](
+            ddc::DiscreteElement<ODDim...> const& slice_spec) const noexcept
+    {
+        return Tensor<
+                ElementType,
+                ddc::detail::convert_type_seq_to_discrete_domain_t<ddc::type_seq_remove_t<
+                        ddc::detail::TypeSeq<DDim...>,
+                        ddc::detail::TypeSeq<ODDim...>>>,
+                LayoutStridedPolicy,
+                MemorySpace>(ddc::ChunkSpan<
+                             ElementType,
+                             ddc::DiscreteDomain<DDim...>,
+                             LayoutStridedPolicy,
+                             MemorySpace>::
+                             operator[](ddc::DiscreteElement<ODDim...>((
+                                     detail::is_tensor_index_v<ODDim>
+                                             ? ODDim::access_id_to_mem_id(
+                                                     ddc::DiscreteElement<ODDim>(slice_spec).uid())
+                                             : ddc::DiscreteElement<ODDim>(slice_spec).uid())...)));
+    }
+
+    void apply_lambda(std::function<
+                      void(Tensor<ElementType,
+                                  ddc::DiscreteDomain<DDim...>,
+                                  LayoutStridedPolicy,
+                                  MemorySpace>,
+                           ddc::DiscreteElement<DDim...>)> lambda_func)
     {
         ddc::for_each(this->domain(), [&](ddc::DiscreteElement<DDim...> elem) {
             lambda_func(*this, elem);

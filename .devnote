@@ -50,3 +50,6 @@ using projector_index_t = ProjectorIndex<
         NaturalIndex<std::make_index_sequence<Dimension>>,
         std::make_index_sequence<2 * Rank>>::type;
 
+----- TODO -----
+
+- apply_lambda probably useless (can be written with ddc::for_each)
