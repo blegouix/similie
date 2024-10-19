@@ -41,14 +41,16 @@ private:
 
 public:
     template <class... CDim>
-    static constexpr std::size_t mem_id()
+    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id()
     {
         // static_assert(rank() == sizeof...(CDim));
         static_assert(are_all_same<CDim...>);
-        return std::min({detail::access_id<
-                TensorIndex,
-                ddc::detail::TypeSeq<TensorIndex...>,
-                CDim...>()...});
+        return std::pair<std::vector<double>, std::vector<std::size_t>>(
+                std::vector<double> {},
+                std::vector<std::size_t> {std::min({detail::access_id<
+                        TensorIndex,
+                        ddc::detail::TypeSeq<TensorIndex...>,
+                        CDim...>()...})});
     }
 
     template <class... CDim>
@@ -61,10 +63,13 @@ public:
         }
     }
 
-    static constexpr std::size_t access_id_to_mem_id(std::size_t access_id)
+    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> access_id_to_mem_id(
+            std::size_t access_id)
     {
         assert(access_id != 0 && "There is no mem_id associated to access_id=0");
-        return access_id - 1;
+        std::pair<std::vector<double>, std::vector<std::size_t>>(
+                std::vector<double> {},
+                std::vector<std::size_t> {access_id - 1});
     }
 
     template <class Tensor, class Elem>

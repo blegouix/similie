@@ -41,11 +41,13 @@ private:
 
 public:
     template <class... CDim>
-    static constexpr std::size_t mem_id()
+    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id()
     {
         // static_assert(rank() == sizeof...(CDim));
         assert(false);
-        return 0;
+        return std::pair<
+                std::vector<double>,
+                std::vector<std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {});
     }
 
     template <class... CDim>
@@ -58,10 +60,13 @@ public:
         }
     }
 
-    static constexpr std::size_t access_id_to_mem_id(std::size_t access_id)
+    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> access_id_to_mem_id(
+            std::size_t access_id)
     {
         assert(false && "There is no mem_id");
-        return 0;
+        return std::pair<
+                std::vector<double>,
+                std::vector<std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {});
     }
 
     template <class Tensor, class Elem>

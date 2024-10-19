@@ -693,6 +693,7 @@ TEST(YoungTableau, 1l3_2l4)
             prod(prod_alloc);
 
     sil::tensor::tensor_prod(prod, proj, tensor);
+    std::cout << proj;
 
     sil::tensor::tensor_accessor_for_domain_t<sil::tensor::tensor_prod_domain_t<
             typename decltype(young_tableau)::projector_domain<Alpha, Beta, Gamma, Delta>,
