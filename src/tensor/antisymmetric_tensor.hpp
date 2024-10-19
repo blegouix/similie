@@ -47,7 +47,7 @@ struct AntisymmetricTensorIndex
         std::sort(sorted_ids.begin(), sorted_ids.end());
         return std::pair<std::vector<double>, std::vector<std::size_t>>(
                 std::vector<double> {},
-                std::vector<std::size_t> {
+                std::vector<std::size_t> {static_cast<std::size_t>(
                         boost::math::binomial_coefficient<double>(
                                 std::min({TensorIndex::mem_size()...}),
                                 sizeof...(TensorIndex))
@@ -70,7 +70,7 @@ struct AntisymmetricTensorIndex
                                                             TensorIndex,
                                                             ddc::detail::TypeSeq<TensorIndex...>>))
                            + ...)
-                        - 1});
+                        - 1)});
     }
 
 
@@ -98,9 +98,9 @@ public:
         if constexpr (are_all_same<CDim...>) {
             return 0;
         } else if (!permutation_parity<CDim...>()) {
-            return 1 + mem_id<CDim...>();
+            return 1 + std::get<1>(mem_id<CDim...>())[0];
         } else {
-            return access_size() + mem_id<CDim...>();
+            return access_size() + std::get<1>(mem_id<CDim...>())[0];
         }
     }
 
@@ -113,15 +113,15 @@ public:
                 std::vector<std::size_t> {(access_id - 1) % mem_size()});
     }
 
-    template <class Tensor, class Elem>
+    template <class Tensor, class Elem, class Id>
     static constexpr Tensor::element_type process_access(
             std::function<typename Tensor::element_type(Tensor, Elem)> access,
             Tensor tensor,
             Elem elem)
     {
-        if (elem.uid() == 0) {
+        if (elem.template uid<Id>() == 0) {
             return 0.;
-        } else if (elem.uid() < access_size()) {
+        } else if (elem.template uid<Id>() < access_size()) {
             return access(tensor, elem);
         } else {
             return -access(tensor, elem);

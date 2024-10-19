@@ -81,7 +81,7 @@ struct FullTensorIndex
     template <class... CDim>
     static constexpr std::size_t access_id()
     {
-        return mem_id<CDim...>();
+        return std::get<1>(mem_id<CDim...>())[0];
     }
 
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> access_id_to_mem_id(
@@ -93,7 +93,7 @@ struct FullTensorIndex
                         std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {access_id});
     }
 
-    template <class Tensor, class Elem>
+    template <class Tensor, class Elem, class Id>
     static constexpr Tensor::element_type process_access(
             std::function<typename Tensor::element_type(Tensor, Elem)> access,
             Tensor tensor,

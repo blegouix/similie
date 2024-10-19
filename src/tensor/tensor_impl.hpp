@@ -58,7 +58,7 @@ struct TensorNaturalIndex
                         std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {access_id});
     }
 
-    template <class Tensor, class Elem>
+    template <class Tensor, class Elem, class Id>
     static constexpr Tensor::element_type process_access(
             std::function<typename Tensor::element_type(Tensor, Elem)> access,
             Tensor tensor,
@@ -242,7 +242,7 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
     static TensorField::element_type run(TensorField tensor_field, Elem const& elem)
     {
         if constexpr (detail::is_tensor_index_v<IndexInterest>) {
-            return IndexInterest::template process_access<TensorField, Elem>(
+            return IndexInterest::template process_access<TensorField, Elem, IndexInterest>(
                     [](TensorField tensor_field_, Elem elem_) -> TensorField::element_type {
                         std::pair<std::vector<double>, std::vector<std::size_t>> mem_id
                                 = IndexInterest::access_id_to_mem_id(
@@ -250,15 +250,20 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
 
                         double tensor_field_value;
                         if (std::get<0>(mem_id).size() == 0) {
-                            tensor_field_value = tensor_field_(
-                                    ddc::DiscreteElement<IndexInterest>(std::get<1>(mem_id)[0]));
+                            tensor_field_value
+                                    = tensor_field_
+                                              .mem(ddc::DiscreteElement<IndexHead...>(elem_),
+                                                   ddc::DiscreteElement<IndexInterest>(
+                                                           std::get<1>(mem_id)[0]));
                         } else {
                             tensor_field_value = 0.;
                             for (std::size_t i = 0; i < std::get<0>(mem_id).size(); ++i) {
                                 tensor_field_value
                                         += std::get<0>(mem_id)[i]
-                                           * tensor_field_(ddc::DiscreteElement<IndexInterest>(
-                                                   std::get<1>(mem_id)[i]));
+                                           * tensor_field_
+                                                     .mem(ddc::DiscreteElement<IndexHead...>(elem_),
+                                                          ddc::DiscreteElement<IndexInterest>(
+                                                                  std::get<1>(mem_id)[i]));
                             }
                         }
 
@@ -284,8 +289,9 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
     static TensorField::element_type run(TensorField tensor_field, Elem const& elem)
     {
         if constexpr (detail::is_tensor_index_v<IndexInterest>) {
-            return IndexInterest::template process_access<TensorField, Elem>(
+            return IndexInterest::template process_access<TensorField, Elem, IndexInterest>(
                     [](TensorField tensor_field_, Elem elem_) -> TensorField::element_type {
+                        // TODO probably too simple
                         return Access<
                                 TensorField,
                                 Element,
@@ -351,8 +357,6 @@ public:
             ChunkSpan<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>::
             operator();
 
-    // TODO operator[] ?
-
     static constexpr TensorAccessor<DDim...> accessor()
     {
         return TensorAccessor<DDim...>();
@@ -372,34 +376,29 @@ public:
     }
 
     template <class... DElems>
-    KOKKOS_FUNCTION constexpr reference operator()(ElementType value, DElems const&... delems) const noexcept
+    KOKKOS_FUNCTION constexpr reference mem(DElems const&... delems) const noexcept
     {
         return ddc::ChunkSpan<
                 ElementType,
                 ddc::DiscreteDomain<DDim...>,
                 LayoutStridedPolicy,
-                MemorySpace>::
-        operator()((detail::is_tensor_index_v<DDim>
-                         ? std::get<1>(DDim::access_id_to_mem_id(ddc::DiscreteElement<DDim>(delems...).uid()))[0]
-                         : ddc::DiscreteElement<DDim>(delems...).uid())...);
+                MemorySpace>::operator()(delems...);
     }
 
-/*
     template <class... DElems>
     KOKKOS_FUNCTION constexpr reference operator()(DElems const&... delems) const noexcept
     {
+        // TODO static_assert unique mem_id
         return ddc::ChunkSpan<
                 ElementType,
                 ddc::DiscreteDomain<DDim...>,
                 LayoutStridedPolicy,
                 MemorySpace>::
-        operator()(ddc::DiscreteElement<DDim...>(delems...));
-
-                (detail::is_tensor_index_v<DDim>
-                         ? DDim::access_id_to_mem_id(ddc::DiscreteElement<DDim>(delems...).uid())
-                         : ddc::DiscreteElement<DDim>(delems...).uid())...));
+        operator()(ddc::DiscreteElement<DDim>(
+                detail::is_tensor_index_v<DDim> ? std::get<1>(
+                        DDim::access_id_to_mem_id(ddc::DiscreteElement<DDim>(delems...).uid()))[0]
+                                                : ddc::DiscreteElement<DDim>(delems...).uid())...);
     }
-*/
 
     void fill_using_lambda(std::function<
                            void(Tensor<ElementType,

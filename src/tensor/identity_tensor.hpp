@@ -69,13 +69,13 @@ public:
                 std::vector<std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {});
     }
 
-    template <class Tensor, class Elem>
+    template <class Tensor, class Elem, class Id>
     static constexpr Tensor::element_type process_access(
             std::function<typename Tensor::element_type(Tensor, Elem)> access,
             Tensor tensor,
             Elem elem)
     {
-        if (elem.uid() == 0) {
+        if (elem.template uid<Id>() == 0) {
             return 0.;
         } else {
             return 1;
