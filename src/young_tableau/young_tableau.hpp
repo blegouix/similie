@@ -474,16 +474,6 @@ private:
     static constexpr std::size_t s_irrep_dim = detail::IrrepDim<s_d, hook_lengths, 0, 0>::run(1);
 
 public:
-    YoungTableau()
-    {
-        std::cout << "\033[1;31mThe representations dictionnary does not contain any "
-                     "representation for the Young tableau:\033[0m\n"
-                  << *this
-                  << "\n\033[1;31min dimension " + std::to_string(s_d)
-                             + ". Please compile with BUILD_COMPUTE_REPRESENTATION=ON and "
-                               "rerun.\033[0m\n";
-    }
-
     static consteval std::size_t dimension()
     {
         return s_d;
@@ -504,6 +494,15 @@ public:
 
     template <class... Id>
     static auto projector();
+
+    void print_representation_absent() {
+        std::cout << "\033[1;31mThe representations dictionnary does not contain any "
+                     "representation for the Young tableau:\033[0m\n"
+                  << *this
+                  << "\n\033[1;31min dimension " + std::to_string(s_d)
+                             + ". Please compile with BUILD_COMPUTE_REPRESENTATION=ON and "
+                               "rerun.\033[0m\n";
+    }
 };
 
 namespace detail {

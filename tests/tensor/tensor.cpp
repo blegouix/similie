@@ -278,7 +278,20 @@ TEST(Tensor, SymmetricTensorIndexing4x4)
     EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Z>()), 9.);
 }
 
+/*
 struct SymIndex3x3x3 : sil::tensor::SymmetricTensorIndex<Alpha, Beta, Gamma>
+{
+};
+*/
+
+struct SymIndex3x3x3
+    : sil::tensor::YoungTableauTensorIndex<
+              sil::young_tableau::YoungTableau<
+                      3,
+                      sil::young_tableau::YoungTableauSeq<std::index_sequence<1, 2, 3>>>,
+              Alpha,
+              Beta,
+              Gamma>
 {
 };
 
@@ -293,6 +306,7 @@ TEST(Tensor, SymmetricTensorIndexing3x3x3)
             std::experimental::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor(tensor_alloc);
+    SymIndex3x3x3::young_tableau().print_representation_absent();
 
     /*
     for (int i = 0; i < 10; ++i) {
