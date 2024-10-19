@@ -3,8 +3,6 @@
 
 #pragma once
 
-#include <fstream>
-
 #include <ddc/ddc.hpp>
 
 #include <boost/math/special_functions/factorials.hpp>
@@ -596,7 +594,7 @@ fill_symmetrizer(
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tr(tr_alloc);
     ddc::parallel_fill(tr, 0);
-    tr.fill_using_lambda(tr_lambda<Dimension, sizeof...(Id) / 2, Id...>(idx_to_permute));
+    tr.apply_lambda(tr_lambda<Dimension, sizeof...(Id) / 2, Id...>(idx_to_permute));
 
     if constexpr (!AntiSym) {
         tr *= 1. / boost::math::factorial<double>(sizeof...(Id) / 2);
@@ -736,7 +734,7 @@ auto YoungTableau<Dimension, TableauSeq>::projector()
     for (std::size_t i = 0; i < s_r; ++i) {
         idx_to_permute[i] = i;
     }
-    proj.fill_using_lambda(
+    proj.apply_lambda(
             detail::tr_lambda<s_d, s_r, detail::declare_deriv<Id>..., Id...>(idx_to_permute));
 
     // Build the projector
