@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <fstream>
+
 #include <ddc/ddc.hpp>
 
 #include "tensor_impl.hpp"
@@ -109,6 +111,24 @@ public:
                 new_coalesc_idx,
                 new_idx,
                 new_values);
+    }
+
+    void write(const std::string& filename)
+    {
+        std::ofstream file(filename, std::ios::out | std::ios::binary);
+        if (!file) {
+            std::cerr << "Error opening file: " << filename << std::endl;
+            return;
+        }
+        file
+                .write(reinterpret_cast<const char*>(m_values.data()),
+                       m_values.size() * sizeof(double));
+        file.close();
+        if (!file.good()) {
+            std::cerr << "Error occurred while writing to file: " << filename << std::endl;
+        } else {
+            std::cout << "File written successfully: " << filename << std::endl;
+        }
     }
 };
 

@@ -608,7 +608,7 @@ struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::FullTensorIndex<Id...>
         sil::tensor::Tensor<
                 double,
                 sil::tensor::tensor_prod_domain_t<
-                        typename YoungTableau::projector_domain<Id...>,
+                        typename YoungTableau::template projector_domain<Id...>,
                         ddc::DiscreteDomain<Id...>>,
                 std::experimental::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space>
@@ -725,6 +725,18 @@ constexpr YoungTableau<Dimension, TableauSeq>::YoungTableau()
     auto [u, v]
             = detail::OrthonormalBasisSubspaceEigenvalueOne<detail::dummy_index_t<s_d, s_r>>::run(
                     *this);
+
+    u.write("testfile");
+    constexpr char test_raw[] = {
+#embed "/home/cart3sianbear/SimiLie/build/tests/tensor/testfile"
+    };
+
+    std::vector<double>
+            test(reinterpret_cast<const double*>(test_raw),
+                 reinterpret_cast<const double*>(test_raw) + u.values().size());
+    for (std::size_t i = 0; i < u.values().size(); ++i) {
+        std::cout << u.values()[i] << " " << test[i] << "\n";
+    }
 }
 
 namespace detail {

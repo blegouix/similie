@@ -42,7 +42,7 @@ struct AntisymmetricTensorIndex
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id()
     {
         // static_assert(rank() == sizeof...(CDim));
-        std::array<int, sizeof...(TensorIndex)> sorted_ids {
+        std::array<std::size_t, sizeof...(TensorIndex)> sorted_ids {
                 detail::access_id<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>, CDim...>()...};
         std::sort(sorted_ids.begin(), sorted_ids.end());
         return std::pair<std::vector<double>, std::vector<std::size_t>>(
@@ -81,7 +81,7 @@ private:
     template <class... CDim>
     static constexpr bool permutation_parity()
     {
-        std::array<int, sizeof...(TensorIndex)> ids {
+        std::array<std::size_t, sizeof...(TensorIndex)> ids {
                 detail::access_id<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>, CDim...>()...};
         bool cnt = false;
         for (int i = 0; i < sizeof...(CDim); i++)
