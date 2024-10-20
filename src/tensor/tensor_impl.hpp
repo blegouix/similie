@@ -327,6 +327,7 @@ struct LambdaMemElem<InterestDim>
 {
     static ddc::DiscreteElement<InterestDim> run(ddc::DiscreteElement<InterestDim> elem)
     {
+        // TODO static_assert unique mem_id
         return ddc::DiscreteElement<InterestDim>(std::get<1>(InterestDim::access_id_to_mem_id(
                 ddc::DiscreteElement<InterestDim>(elem).uid()))[0]);
     }

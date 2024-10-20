@@ -5,7 +5,6 @@
 
 #include <ddc/ddc.hpp>
 
-#include "csr.hpp"
 #include "tensor.hpp"
 #include "young_tableau.hpp"
 

@@ -7,6 +7,7 @@
 
 #include <boost/math/special_functions/factorials.hpp>
 
+#include "csr.hpp"
 #include "tensor_impl.hpp"
 
 namespace sil {
