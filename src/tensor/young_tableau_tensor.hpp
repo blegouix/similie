@@ -74,7 +74,11 @@ public:
             Tensor tensor,
             Elem elem)
     {
-        return access(tensor, elem);
+        if (elem.template uid<Id>() == 0) {
+            return 0.;
+        } else {
+            return access(tensor, elem);
+        }
     }
 };
 
