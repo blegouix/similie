@@ -693,11 +693,7 @@ private:
     static constexpr std::size_t s_irrep_dim = detail::IrrepDim<s_d, hook_lengths, 0, 0>::run(1);
 
 public:
-    constexpr YoungTableau()
-    {
-        auto [u, v] = detail::OrthonormalBasisSubspaceEigenvalueOne<
-                detail::dummy_index_t<s_d, s_r>>::run(*this);
-    }
+    constexpr YoungTableau();
 
     static consteval std::size_t dimension()
     {
@@ -720,16 +716,16 @@ public:
     template <class... Id>
     static auto projector();
 
-    void print_representation_absent()
-    {
-        std::cout << "\033[1;31mThe representations dictionnary does not contain any "
-                     "representation for the Young tableau:\033[0m\n"
-                  << *this
-                  << "\n\033[1;31min dimension " + std::to_string(s_d)
-                             + ". Please compile with BUILD_COMPUTE_REPRESENTATION=ON and "
-                               "rerun.\033[0m\n";
-    }
+    void print_representation_absent(); // TODO REMOVE
 };
+
+template <std::size_t Dimension, class TableauSeq>
+constexpr YoungTableau<Dimension, TableauSeq>::YoungTableau()
+{
+    auto [u, v]
+            = detail::OrthonormalBasisSubspaceEigenvalueOne<detail::dummy_index_t<s_d, s_r>>::run(
+                    *this);
+}
 
 namespace detail {
 
@@ -966,6 +962,17 @@ auto YoungTableau<Dimension, TableauSeq>::projector()
     detail::Projector<tableau_seq, Dimension>::run(proj);
     detail::Projector<typename dual::tableau_seq, Dimension, 1>::run(proj);
     return std::make_tuple(std::move(proj_alloc), proj);
+}
+
+template <std::size_t Dimension, class TableauSeq>
+void YoungTableau<Dimension, TableauSeq>::print_representation_absent()
+{
+    std::cout << "\033[1;31mThe representations dictionnary does not contain any "
+                 "representation for the Young tableau:\033[0m\n"
+              << *this
+              << "\n\033[1;31min dimension " + std::to_string(s_d)
+                         + ". Please compile with BUILD_COMPUTE_REPRESENTATION=ON and "
+                           "rerun.\033[0m\n";
 }
 
 namespace detail {
