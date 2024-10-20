@@ -306,8 +306,7 @@ TEST(Tensor, SymmetricTensorIndexing3x3x3)
             std::experimental::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor(tensor_alloc);
-    SymIndex3x3x3::young_tableau().print_representation_absent();
-    auto [u, v] = sil::tensor::OrthonormalBasisSubspaceEigenvalueOne<Alpha, Beta, Gamma>::run(SymIndex3x3x3::young_tableau()); 
+    // SymIndex3x3x3::young_tableau().print_representation_absent();
 
     /*
     for (int i = 0; i < 10; ++i) {
