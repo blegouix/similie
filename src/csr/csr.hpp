@@ -86,26 +86,26 @@ public:
     {
         const std::size_t id_begin = m_coalesc_idx[id.uid()];
         const std::size_t id_end = m_coalesc_idx[id.uid() + 1];
-        std::vector<std::size_t> new_coalesc_idx {
-                0,
-                id_end - id_begin};
+        std::vector<std::size_t> new_coalesc_idx {0, id_end - id_begin};
         std::array<std::vector<std::size_t>, sizeof...(TailTensorIndex)> new_idx;
-        ((new_idx[ddc::type_seq_rank_v<TailTensorIndex, ddc::detail::TypeSeq<TailTensorIndex...>>] = 
-                  std::vector<std::size_t>(m_idx[ddc::type_seq_rank_v<
-                               TailTensorIndex,
-                               ddc::detail::TypeSeq<TailTensorIndex...>>]
-                                 .begin() + id_begin,
-                 m_idx[ddc::type_seq_rank_v<
-                               TailTensorIndex,
-                               ddc::detail::TypeSeq<TailTensorIndex...>>]
-                                 .begin() + id_begin + id_end)),
+        ((new_idx[ddc::type_seq_rank_v<TailTensorIndex, ddc::detail::TypeSeq<TailTensorIndex...>>]
+          = std::vector<std::size_t>(
+                  m_idx[ddc::type_seq_rank_v<
+                                TailTensorIndex,
+                                ddc::detail::TypeSeq<TailTensorIndex...>>]
+                                  .begin()
+                          + id_begin,
+                  m_idx[ddc::type_seq_rank_v<
+                                TailTensorIndex,
+                                ddc::detail::TypeSeq<TailTensorIndex...>>]
+                                  .begin()
+                          + id_begin + id_end)),
          ...);
-        std::vector<double> new_values(
-                m_values.begin() + id_begin,
-                m_values.begin() + id_begin + id_end);
+        std::vector<double>
+                new_values(m_values.begin() + id_begin, m_values.begin() + id_begin + id_end);
 
         return Csr<HeadTensorIndex, TailTensorIndex...>(
-                ddc::DiscreteDomain<HeadTensorIndex,TailTensorIndex...>(m_domain),
+                ddc::DiscreteDomain<HeadTensorIndex, TailTensorIndex...>(m_domain),
                 new_coalesc_idx,
                 new_idx,
                 new_values);

@@ -80,11 +80,14 @@ public:
 };
 
 namespace detail {
+
 template <class YoungTableau, class... SubIndex>
 struct IsTensorIndex<YoungTableauTensorIndex<YoungTableau, SubIndex...>>
 {
     using type = std::true_type;
 };
+
+} // namespace detail
 
 } // namespace tensor
 

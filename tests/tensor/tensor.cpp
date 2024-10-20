@@ -278,20 +278,7 @@ TEST(Tensor, SymmetricTensorIndexing4x4)
     EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Z>()), 9.);
 }
 
-/*
 struct SymIndex3x3x3 : sil::tensor::SymmetricTensorIndex<Alpha, Beta, Gamma>
-{
-};
-*/
-
-struct SymIndex3x3x3
-    : sil::tensor::YoungTableauTensorIndex<
-              sil::young_tableau::YoungTableau<
-                      3,
-                      sil::young_tableau::YoungTableauSeq<std::index_sequence<1, 2, 3>>>,
-              Alpha,
-              Beta,
-              Gamma>
 {
 };
 
@@ -306,7 +293,6 @@ TEST(Tensor, SymmetricTensorIndexing3x3x3)
             std::experimental::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor(tensor_alloc);
-    // SymIndex3x3x3::young_tableau().print_representation_absent();
 
     /*
     for (int i = 0; i < 10; ++i) {
@@ -485,6 +471,78 @@ TEST(Tensor, PartiallySymmetricTensorIndexing4x3x3)
     EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Z, X>()), 20.);
     EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Z, Y>()), 22.);
     EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Z, Z>()), 23.);
+}
+
+struct YoungTableauIndex
+    : sil::tensor::YoungTableauTensorIndex<
+              sil::young_tableau::YoungTableau<
+                      3,
+                      sil::young_tableau::YoungTableauSeq<std::index_sequence<1, 2, 3>>>,
+              Alpha,
+              Beta,
+              Gamma>
+{
+};
+
+TEST(Tensor, YoungTableauIndexing)
+{
+    sil::tensor::TensorAccessor<YoungTableauIndex> tensor_accessor;
+    ddc::DiscreteDomain<YoungTableauIndex> tensor_dom = tensor_accessor.mem_domain();
+    ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor<
+            double,
+            ddc::DiscreteDomain<YoungTableauIndex>,
+            std::experimental::layout_right,
+            Kokkos::DefaultHostExecutionSpace::memory_space>
+            tensor(tensor_alloc);
+    // SymIndex3x3x3::young_tableau().print_representation_absent();
+
+    /*
+    for (int i = 0; i < 10; ++i) {
+        tensor(ddc::DiscreteElement<SymIndex3x3x3>(i)) = i;
+    }
+    */
+
+    /*
+    tensor(tensor_accessor.element<X, X, X>()) = 0.;
+    tensor(tensor_accessor.element<X, X, Y>()) = 1.;
+    tensor(tensor_accessor.element<X, X, Z>()) = 2.;
+    tensor(tensor_accessor.element<X, Y, Y>()) = 3.;
+    tensor(tensor_accessor.element<X, Y, Z>()) = 4.;
+    tensor(tensor_accessor.element<X, Z, Z>()) = 5.;
+    tensor(tensor_accessor.element<Y, Y, Y>()) = 6.;
+    tensor(tensor_accessor.element<Y, Y, Z>()) = 7.;
+    tensor(tensor_accessor.element<Y, Z, Z>()) = 8.;
+    tensor(tensor_accessor.element<Z, Z, Z>()) = 9.;
+
+    EXPECT_EQ(tensor.get(tensor_accessor.element<X, X, X>()), 0.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<X, X, Y>()), 1.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<X, X, Z>()), 2.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<X, Y, X>()), 1.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<X, Y, Y>()), 3.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<X, Y, Z>()), 4.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<X, Z, X>()), 2.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<X, Z, Y>()), 4.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<X, Z, Z>()), 5.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, X, X>()), 1.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, X, Y>()), 3.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, X, Z>()), 4.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, Y, X>()), 3.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, Y, Y>()), 6.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, Y, Z>()), 7.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, Z, X>()), 4.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, Z, Y>()), 7.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, Z, Z>()), 8.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, X, X>()), 2.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, X, Y>()), 4.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, X, Z>()), 5.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Y, X>()), 4.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Y, Y>()), 7.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Y, Z>()), 8.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Z, X>()), 5.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Z, Y>()), 8.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Z, Z>()), 9.);
+*/
 }
 
 TEST(TensorProd, SimpleContractionRank3xRank2)
