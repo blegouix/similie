@@ -40,49 +40,57 @@ struct SymmetricTensorIndex
     }
 
     template <class... CDim>
-    static constexpr std::size_t mem_id()
+    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id()
     {
         // static_assert(rank() == sizeof...(CDim));
         std::array<int, sizeof...(TensorIndex)> sorted_ids {
                 detail::access_id<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>, CDim...>()...};
         std::sort(sorted_ids.begin(), sorted_ids.end());
-        return boost::math::binomial_coefficient<double>(
-                       std::min({TensorIndex::mem_size()...}) + sizeof...(TensorIndex) - 1,
-                       sizeof...(TensorIndex))
-               - ((sorted_ids[ddc::type_seq_rank_v<
-                           TensorIndex,
-                           ddc::detail::TypeSeq<TensorIndex...>>]
-                                   == TensorIndex::mem_size() - 1
-                           ? 0
-                           : boost::math::binomial_coefficient<double>(
-                                   TensorIndex::mem_size()
-                                           - sorted_ids[ddc::type_seq_rank_v<
-                                                   TensorIndex,
-                                                   ddc::detail::TypeSeq<TensorIndex...>>]
-                                           + sizeof...(TensorIndex)
-                                           - ddc::type_seq_rank_v<
-                                                   TensorIndex,
-                                                   ddc::detail::TypeSeq<TensorIndex...>> - 2,
-                                   sizeof...(TensorIndex)
-                                           - ddc::type_seq_rank_v<
-                                                   TensorIndex,
-                                                   ddc::detail::TypeSeq<TensorIndex...>>))
-                  + ...)
-               - 1;
+        return std::pair<std::vector<double>, std::vector<std::size_t>>(
+                std::vector<double> {},
+                std::vector<std::size_t> {static_cast<std::size_t>(
+                        boost::math::binomial_coefficient<double>(
+                                std::min({TensorIndex::mem_size()...}) + sizeof...(TensorIndex) - 1,
+                                sizeof...(TensorIndex))
+                        - ((sorted_ids[ddc::type_seq_rank_v<
+                                    TensorIndex,
+                                    ddc::detail::TypeSeq<TensorIndex...>>]
+                                            == TensorIndex::mem_size() - 1
+                                    ? 0
+                                    : boost::math::binomial_coefficient<double>(
+                                            TensorIndex::mem_size()
+                                                    - sorted_ids[ddc::type_seq_rank_v<
+                                                            TensorIndex,
+                                                            ddc::detail::TypeSeq<TensorIndex...>>]
+                                                    + sizeof...(TensorIndex)
+                                                    - ddc::type_seq_rank_v<
+                                                            TensorIndex,
+                                                            ddc::detail::TypeSeq<
+                                                                    TensorIndex...>> - 2,
+                                            sizeof...(TensorIndex)
+                                                    - ddc::type_seq_rank_v<
+                                                            TensorIndex,
+                                                            ddc::detail::TypeSeq<TensorIndex...>>))
+                           + ...)
+                        - 1)});
     }
 
     template <class... CDim>
     static constexpr std::size_t access_id()
     {
-        return mem_id<CDim...>();
+        return std::get<1>(mem_id<CDim...>())[0];
     }
 
-    static constexpr std::size_t access_id_to_mem_id(std::size_t access_id)
+    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> access_id_to_mem_id(
+            std::size_t access_id)
     {
-        return access_id;
+        return std::pair<
+                std::vector<double>,
+                std::vector<
+                        std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {access_id});
     }
 
-    template <class Tensor, class Elem>
+    template <class Tensor, class Elem, class Id>
     static constexpr Tensor::element_type process_access(
             std::function<typename Tensor::element_type(Tensor, Elem)> access,
             Tensor tensor,
