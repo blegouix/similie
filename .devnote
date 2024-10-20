@@ -53,3 +53,4 @@ using projector_index_t = ProjectorIndex<
 ----- TODO -----
 
 - apply_lambda probably useless (can be written with ddc::for_each)
+- IsTensorIndex::value has to be set to false

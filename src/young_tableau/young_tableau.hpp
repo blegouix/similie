@@ -495,7 +495,8 @@ public:
     template <class... Id>
     static auto projector();
 
-    void print_representation_absent() {
+    void print_representation_absent()
+    {
         std::cout << "\033[1;31mThe representations dictionnary does not contain any "
                      "representation for the Young tableau:\033[0m\n"
                   << *this

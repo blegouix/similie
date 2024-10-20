@@ -202,8 +202,9 @@ constexpr ddc::DiscreteElement<Index...> TensorAccessor<Index...>::element()
             detail::access_id<Index, ddc::detail::TypeSeq<Index...>, CDim...>())...);
 }
 
-// Helpers to handle memory access and processing for particular tensor structures (ie. eventual multiplication with -1 for antisymmetry or non-stored zeros)
 namespace detail {
+
+// Helpers to handle memory access and processing for particular tensor structures (ie. eventual multiplication with -1 for antisymmetry or non-stored zeros)
 template <class DDim>
 struct IsTensorIndex
 {
@@ -310,6 +311,27 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
     }
 };
 
+// Functor for memory element access (if defined)
+template <typename InterestDim>
+struct LambdaMemElem
+{
+    static ddc::DiscreteElement<InterestDim> run(ddc::DiscreteElement<InterestDim> elem)
+    {
+        return elem;
+    }
+};
+
+template <typename InterestDim>
+requires detail::is_tensor_index_v<InterestDim>
+struct LambdaMemElem<InterestDim>
+{
+    static ddc::DiscreteElement<InterestDim> run(ddc::DiscreteElement<InterestDim> elem)
+    {
+        return ddc::DiscreteElement<InterestDim>(std::get<1>(InterestDim::access_id_to_mem_id(
+                ddc::DiscreteElement<InterestDim>(elem).uid()))[0]);
+    }
+};
+
 } // namespace detail
 
 template <class ElementType, class SupportType, class LayoutStridedPolicy, class MemorySpace>
@@ -407,10 +429,8 @@ public:
                 ddc::DiscreteDomain<DDim...>,
                 LayoutStridedPolicy,
                 MemorySpace>::
-        operator()(ddc::DiscreteElement<DDim>(
-                detail::is_tensor_index_v<DDim> ? std::get<1>(
-                        DDim::access_id_to_mem_id(ddc::DiscreteElement<DDim>(delems...).uid()))[0]
-                                                : ddc::DiscreteElement<DDim>(delems...).uid())...);
+        operator()(ddc::DiscreteElement<DDim...>(
+                detail::LambdaMemElem<DDim>::run(ddc::DiscreteElement<DDim>(delems...))...));
     }
 
     template <class... ODDim>
@@ -424,17 +444,13 @@ public:
                         ddc::detail::TypeSeq<DDim...>,
                         ddc::detail::TypeSeq<ODDim...>>>,
                 LayoutStridedPolicy,
-                MemorySpace>(
-                ddc::ChunkSpan<
-                        ElementType,
-                        ddc::DiscreteDomain<DDim...>,
-                        LayoutStridedPolicy,
-                        MemorySpace>::
-                operator[](ddc::DiscreteElement<ODDim...>(
-                        (detail::is_tensor_index_v<ODDim>
-                                 ? std::get<1>(ODDim::access_id_to_mem_id(
-                                         ddc::DiscreteElement<ODDim>(slice_spec).uid()))[0]
-                                 : ddc::DiscreteElement<ODDim>(slice_spec).uid())...)));
+                MemorySpace>(ddc::ChunkSpan<
+                             ElementType,
+                             ddc::DiscreteDomain<DDim...>,
+                             LayoutStridedPolicy,
+                             MemorySpace>::
+                             operator[](ddc::DiscreteElement<ODDim...>(
+                                     detail::LambdaMemElem<ODDim>::run(slice_spec)...)));
     }
 
     void apply_lambda(std::function<

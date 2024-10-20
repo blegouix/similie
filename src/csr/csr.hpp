@@ -5,7 +5,7 @@
 
 #include <ddc/ddc.hpp>
 
-#include "tensor.hpp"
+#include "tensor_impl.hpp"
 
 namespace sil {
 
@@ -39,6 +39,11 @@ public:
         , m_idx(idx)
         , m_values(values)
     {
+    }
+
+    ddc::DiscreteDomain<HeadTensorIndex, TailTensorIndex...> domain()
+    {
+        return m_domain;
     }
 
     std::vector<std::size_t> coalesc_idx()
@@ -77,33 +82,30 @@ public:
     }
 
     // Returns a slice orthogonal to first index
-    template <class Id>
-    Csr<sil::tensor::TensorNaturalIndex<Id>, TailTensorIndex...> get() const
+    Csr<HeadTensorIndex, TailTensorIndex...> get(ddc::DiscreteElement<HeadTensorIndex> id) const
     {
+        const std::size_t id_begin = m_coalesc_idx[id.uid()];
+        const std::size_t id_end = m_coalesc_idx[id.uid() + 1];
         std::vector<std::size_t> new_coalesc_idx {
                 0,
-                m_coalesc_idx[HeadTensorIndex::template access_id<Id>() + 1]
-                        - m_coalesc_idx[HeadTensorIndex::template access_id<Id>()]};
+                id_end - id_begin};
         std::array<std::vector<std::size_t>, sizeof...(TailTensorIndex)> new_idx;
-        (new_idx[ddc::type_seq_rank_v<TailTensorIndex, ddc::detail::TypeSeq<TailTensorIndex...>>](
+        ((new_idx[ddc::type_seq_rank_v<TailTensorIndex, ddc::detail::TypeSeq<TailTensorIndex...>>] = 
+                  std::vector<std::size_t>(m_idx[ddc::type_seq_rank_v<
+                               TailTensorIndex,
+                               ddc::detail::TypeSeq<TailTensorIndex...>>]
+                                 .begin() + id_begin,
                  m_idx[ddc::type_seq_rank_v<
                                TailTensorIndex,
                                ddc::detail::TypeSeq<TailTensorIndex...>>]
-                                 .begin()
-                         + new_coalesc_idx[HeadTensorIndex::template access_id<Id>()],
-                 m_idx[ddc::type_seq_rank_v<
-                               TailTensorIndex,
-                               ddc::detail::TypeSeq<TailTensorIndex...>>]
-                                 .begin()
-                         + m_coalesc_idx[HeadTensorIndex::template access_id<Id>() + 1]),
+                                 .begin() + id_begin + id_end)),
          ...);
         std::vector<double> new_values(
-                m_values.begin() + m_coalesc_idx[HeadTensorIndex::template access_id<Id>()],
-                m_values.begin() + m_coalesc_idx[HeadTensorIndex::template access_id<Id>() + 1]);
+                m_values.begin() + id_begin,
+                m_values.begin() + id_begin + id_end);
 
-        return Csr<sil::tensor::TensorNaturalIndex<Id>, TailTensorIndex...>(
-                ddc::DiscreteDomain<sil::tensor::TensorNaturalIndex<Id>, TailTensorIndex...>(
-                        m_domain),
+        return Csr<HeadTensorIndex, TailTensorIndex...>(
+                ddc::DiscreteDomain<HeadTensorIndex,TailTensorIndex...>(m_domain),
                 new_coalesc_idx,
                 new_idx,
                 new_values);
