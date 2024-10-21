@@ -667,6 +667,41 @@ struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::FullTensorIndex<Id...>
     }
 };
 
+// Load binary files and build u and v static constexpr Csr at compile-time
+template <std::size_t N, int I>
+consteval std::array<double, N> bit_cast_char_array_to_double_vector(
+        std::string irrep_tag,
+        std::array<double, N> vec)
+{
+    constexpr static const char raw[] = {
+#embed IRREPS_DICT_PATH
+    };
+
+    if constexpr (I == N) {
+        return vec;
+    } else {
+        std::array<char, sizeof(double) / sizeof(char)> chars = {};
+        for (std::size_t j = 0; j < sizeof(double) / sizeof(char); ++j) {
+            chars[j] = raw[sizeof(double) / sizeof(char) * I + j];
+        }
+
+        vec[I] = std::bit_cast<double>(
+                chars); // We rely on std::bit_cast because std::reinterprest_cast is not constexpr
+        return bit_cast_char_array_to_double_vector<N, I + 1>(irrep_tag, vec);
+    }
+}
+
+template <std::size_t N, int I>
+consteval std::array<double, N> bit_cast_char_array_to_double_vector(std::string irrep_tag)
+{
+    constexpr static const char raw[] = {
+#embed IRREPS_DICT_PATH
+    };
+
+    std::array<double, sizeof(raw) / sizeof(double)> vec {};
+    return bit_cast_char_array_to_double_vector<sizeof(raw) / sizeof(double), 0>(irrep_tag, vec);
+}
+
 } // namespace detail
 
 /**
@@ -692,8 +727,24 @@ public:
 private:
     static constexpr std::size_t s_irrep_dim = detail::IrrepDim<s_d, hook_lengths, 0, 0>::run(1);
 
+    static consteval auto build_u_values(std::string irrep_tag)
+    {
+        constexpr static char raw[] = {
+#embed IRREPS_DICT_PATH
+        };
+
+        return detail::bit_cast_char_array_to_double_vector<sizeof(raw) / sizeof(double), 0>("");
+    }
+
+    static constexpr std::array s_u_values = build_u_values("");
+
 public:
-    constexpr YoungTableau();
+    YoungTableau()
+    {
+        auto [u, v] = detail::OrthonormalBasisSubspaceEigenvalueOne<
+                detail::dummy_index_t<s_d, s_r>>::run(*this);
+        u.write(IRREPS_DICT_PATH);
+    }
 
     static consteval std::size_t dimension()
     {
@@ -717,27 +768,14 @@ public:
     static auto projector();
 
     void print_representation_absent(); // TODO REMOVE
-};
 
-template <std::size_t Dimension, class TableauSeq>
-constexpr YoungTableau<Dimension, TableauSeq>::YoungTableau()
-{
-    auto [u, v]
-            = detail::OrthonormalBasisSubspaceEigenvalueOne<detail::dummy_index_t<s_d, s_r>>::run(
-                    *this);
-
-    u.write("testfile");
-    constexpr char test_raw[] = {
-#embed "/home/cart3sianbear/SimiLie/build/tests/tensor/testfile"
-    };
-
-    std::vector<double>
-            test(reinterpret_cast<const double*>(test_raw),
-                 reinterpret_cast<const double*>(test_raw) + u.values().size());
-    for (std::size_t i = 0; i < u.values().size(); ++i) {
-        std::cout << u.values()[i] << " " << test[i] << "\n";
+    void print_u() const
+    {
+        for (std::size_t i = 0; i < s_u_values.size(); ++i) {
+            std::cout << s_u_values[i] << "\n";
+        }
     }
-}
+};
 
 namespace detail {
 

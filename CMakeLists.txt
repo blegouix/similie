@@ -14,6 +14,12 @@ option(DDC_BUILD_DOCUMENTATION    "Build DDC documentation/website" OFF)
 option(DDC_BUILD_EXAMPLES         "Build DDC examples" OFF)
 option(DDC_BUILD_TESTS            "Build DDC tests if BUILD_TESTING is enabled" OFF)
 
+# Custom variables
+if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/irreps_dict.bin)
+    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/irreps_dict.bin "")
+endif()
+add_compile_definitions("IRREPS_DICT_PATH=\"${CMAKE_CURRENT_BINARY_DIR}/irreps_dict.bin\"")
+
 # Our dependencies
 
 ## Use CTest for running tests

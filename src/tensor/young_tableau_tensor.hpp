@@ -16,13 +16,7 @@ namespace tensor {
 template <class YoungTableau, class... TensorIndex>
 struct YoungTableauTensorIndex
 {
-    static constexpr YoungTableau s_young_tableau = YoungTableau();
-
-public:
-    static constexpr YoungTableau young_tableau()
-    {
-        return s_young_tableau;
-    }
+    using young_tableau =  YoungTableau;
 
     static constexpr std::size_t rank()
     {
