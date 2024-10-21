@@ -113,13 +113,14 @@ public:
                 new_values);
     }
 
-    void write(const std::string& filename)
+    void write(const std::string& filename, std::string irrep_tag)
     {
         std::ofstream file(filename, std::ios::out | std::ios::binary);
         if (!file) {
             std::cerr << "Error opening file: " << filename << std::endl;
             return;
         }
+        file << irrep_tag << "\n";
         file
                 .write(reinterpret_cast<const char*>(m_values.data()),
                        m_values.size() * sizeof(double));
