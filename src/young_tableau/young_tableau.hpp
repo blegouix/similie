@@ -825,7 +825,7 @@ public:
         auto [u, v] = detail::OrthonormalBasisSubspaceEigenvalueOne<
                 detail::dummy_index_t<s_d, s_r>>::run(*this);
 
-        std::ofstream file(IRREPS_DICT_PATH, std::ios::out | std::ios::binary);
+        std::ofstream file(IRREPS_DICT_PATH, std::ios::app | std::ios::binary);
         if (!file) {
             std::cerr << "Error opening file: " << IRREPS_DICT_PATH << std::endl;
             return;

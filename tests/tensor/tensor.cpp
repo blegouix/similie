@@ -484,6 +484,18 @@ struct YoungTableauIndex
 {
 };
 
+struct YoungTableauIndex2
+    : sil::tensor::YoungTableauTensorIndex<
+              sil::young_tableau::YoungTableau<
+                      4,
+                      sil::young_tableau::
+                              YoungTableauSeq<std::index_sequence<1, 2>, std::index_sequence<3>>>,
+              Alpha,
+              Beta,
+              Gamma>
+{
+};
+
 TEST(Tensor, YoungTableauIndexing)
 {
     sil::tensor::TensorAccessor<YoungTableauIndex> tensor_accessor;
@@ -499,6 +511,10 @@ TEST(Tensor, YoungTableauIndexing)
             YoungTableau<3, sil::young_tableau::YoungTableauSeq<std::index_sequence<1, 2, 3>>>
                     young_tableau {};
     young_tableau.print_u();
+    sil::young_tableau::YoungTableau<
+            3,
+            sil::young_tableau::YoungTableauSeq<std::index_sequence<1, 2>, std::index_sequence<3>>>
+            young_tableau2 {};
     // SymIndex3x3x3::young_tableau().print_representation_absent();
 
     /*

@@ -16,7 +16,7 @@ namespace tensor {
 template <class YoungTableau, class... TensorIndex>
 struct YoungTableauTensorIndex
 {
-    using young_tableau =  YoungTableau;
+    using young_tableau = YoungTableau;
 
     static constexpr std::size_t rank()
     {
