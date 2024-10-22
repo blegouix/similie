@@ -4,3 +4,6 @@
 [submodule "vendor/googletest"]
 	path = vendor/googletest
 	url = git@github.com:google/googletest.git
+[submodule "vendor/constexpr-to-string"]
+	path = vendor/constexpr-to-string
+	url = git@github.com:tcsullivan/constexpr-to-string.git

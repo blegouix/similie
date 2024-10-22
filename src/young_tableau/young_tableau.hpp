@@ -8,6 +8,8 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/math/special_functions/factorials.hpp>
 
+#include "../../vendor/constexpr-to-string/to_string.hpp"
+
 #include "csr.hpp"
 #include "csr_dynamic.hpp"
 #include "tensor_impl.hpp"
@@ -782,7 +784,9 @@ public:
 private:
     static constexpr std::size_t s_irrep_dim = detail::IrrepDim<s_d, hook_lengths, 0, 0>::run(1);
 
-    static constexpr std::string_view s_tag = "tag";
+    static constexpr std::string irrep_tag();
+
+    static constexpr std::string s_tag = irrep_tag();
 
     static consteval auto load_irrep();
 
@@ -1131,6 +1135,120 @@ consteval auto YoungTableau<Dimension, TableauSeq>::load_irrep()
                 std::array<std::array<std::size_t, 0>, 0> {},
                 std::array<double, 0> {});
     }
+}
+
+namespace detail {
+
+// Produce irrep_tag as a string (std::string features are limited at compile-time that's why we manipulate char arrays)
+template <class Row>
+struct YoungTableauRowToArray;
+
+template <std::size_t... RowElement>
+struct YoungTableauRowToArray<std::index_sequence<RowElement...>>
+{
+    static constexpr auto run()
+    {
+        static constexpr std::array row = {RowElement...};
+        return row;
+    }
+};
+
+template <class TableauSeq>
+struct YoungTableauToArray;
+
+template <class... Row>
+struct YoungTableauToArray<YoungTableauSeq<Row...>>
+{
+    static constexpr auto run()
+    {
+        static constexpr std::tuple tableau = {YoungTableauRowToArray<Row>::run()...};
+        return tableau;
+    }
+};
+
+template <bool RowDelimiter>
+struct RowToString
+{
+    template <std::size_t N>
+    static constexpr std::array<char, 2 * N - !RowDelimiter> run(
+            const std::array<std::size_t, N>& array)
+    {
+        std::array<char, 2 * N - !RowDelimiter> buf = {};
+
+        std::size_t current_pos = 0;
+        for (std::size_t i = 0; i < N; ++i) {
+            char temp[20];
+            auto [ptr, ec] = std::to_chars(temp, temp + sizeof(temp), array[i]);
+            if (ec != std::errc()) {
+                throw std::runtime_error("Failed to convert number to string");
+            }
+
+            for (char* p = temp; p < ptr; ++p) {
+                buf[current_pos++] = *p;
+            }
+
+            if (i < N - 1) {
+                buf[current_pos++] = '_';
+            }
+        }
+
+        if constexpr (RowDelimiter) {
+            buf[2 * N - 1] = 'l';
+        }
+
+        return buf;
+    }
+};
+
+template <std::size_t... sizes>
+constexpr auto concatenate(const std::array<char, sizes>&... arrays)
+{
+    std::array<char, (sizes + ...)> result;
+    std::size_t index {};
+
+    ((std::copy_n(arrays.begin(), sizes, result.begin() + index), index += sizes), ...);
+
+    return result;
+}
+
+template <class RowIdx>
+struct ArrayToString;
+
+template <std::size_t... RowId>
+struct ArrayToString<std::index_sequence<RowId...>>
+{
+    template <class Tuple>
+    static constexpr auto run(Tuple const tableau)
+    {
+        return concatenate(
+                RowToString<RowId != sizeof...(RowId) - 1>::run(std::get<RowId>(tableau))...);
+    }
+};
+
+template <std::size_t size>
+constexpr auto add_dimension(const std::array<char, size>& array, std::size_t d)
+{
+    std::array<char, size + 2> result;
+    char temp[1];
+    std::to_chars(temp, temp + 1, d);
+    std::copy_n(array.begin(), size, result.begin());
+    result[size] = 'd';
+    result[size + 1] = temp[0];
+
+    return result;
+}
+
+} // namespace detail
+
+template <std::size_t Dimension, class TableauSeq>
+constexpr std::string YoungTableau<Dimension, TableauSeq>::irrep_tag()
+{
+    static constexpr std::tuple tableau = detail::YoungTableauToArray<tableau_seq>::run();
+    constexpr auto row_str_wo_dimension
+            = detail::ArrayToString<std::make_index_sequence<tableau_seq::shape::size()>>::run(
+                    tableau);
+    constexpr auto row_str = detail::add_dimension(row_str_wo_dimension, s_d);
+    return std::string(row_str.begin(), row_str.end());
 }
 
 namespace detail {
