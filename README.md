@@ -7,6 +7,8 @@ Relies on [DDC](https://github.com/CExA-project/ddc).
 
 **Absolute WIP, there is no guarantee for proper working.**
 
+**Relies on the #embed directive from C23. As it is not yet in C++ (even in C++26), the only supported compiler seems to be Clang 19.**
+
 ## Development plan
 
 1. Short term (month): simulate electromagnetism on manifold.
