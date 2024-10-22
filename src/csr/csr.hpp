@@ -124,6 +124,7 @@ public:
         file
                 .write(reinterpret_cast<const char*>(m_values.data()),
                        m_values.size() * sizeof(double));
+        file << "\n\n";
         file.close();
         if (!file.good()) {
             std::cerr << "Error occurred while writing to file: " << filename << std::endl;

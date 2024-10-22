@@ -669,72 +669,56 @@ struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::FullTensorIndex<Id...>
 };
 
 // Load binary files and build u and v static constexpr Csr at compile-time
-constexpr std::string extract_line_at_tag(std::string const str, std::string const irrep_tag)
+consteval std::string_view load_irrep_as_string(std::string_view const irrep_tag)
 {
+    constexpr static char raw[] = {
+#embed IRREPS_DICT_PATH
+    };
+
+    constexpr static std::string_view str(raw, sizeof(raw));
+
     size_t tagPos = str.find(irrep_tag);
 
     if (tagPos != std::string::npos) {
-        size_t endOfTagLine = str.find('\n', tagPos);
-
+        std::size_t endOfTagLine = str.find('\n', tagPos);
         if (endOfTagLine != std::string::npos) {
-            size_t nextLineStart = endOfTagLine + 1;
-            size_t nextLineEnd = str.find('\n', nextLineStart);
+            std::size_t nextLineStart = endOfTagLine + 1;
+            std::size_t nextLineEnd = str.find('\n', nextLineStart);
 
-            if (nextLineEnd != std::string::npos) {
-                return str.substr(nextLineStart, nextLineEnd - nextLineStart);
-            } else {
-                return str.substr(nextLineStart);
-            }
+            return std::string_view(str.data() + nextLineStart, nextLineEnd - nextLineStart);
         }
     }
 
     return "";
 }
 
-template <std::size_t N, int I>
+template <std::size_t N, std::size_t I = 0>
 consteval std::array<double, N> bit_cast_char_array_to_double_vector(
-        std::string const irrep_tag,
-        std::array<double, N> vec)
+        std::array<double, N> vec,
+        std::string_view const str,
+        std::string_view const irrep_tag)
 {
-    constexpr static const char raw[] = {
-#embed IRREPS_DICT_PATH
-    };
-
-    constexpr static std::string str(raw);
-
-    std::string line = extract_line_at_tag(str, irrep_tag);
-
     if constexpr (I == N) {
         return vec;
     } else {
         std::array<char, sizeof(double) / sizeof(char)> chars = {};
         for (std::size_t j = 0; j < sizeof(double) / sizeof(char); ++j) {
-            chars[j] = line.at(sizeof(double) / sizeof(char) * I + j);
+            chars[j] = str[sizeof(double) / sizeof(char) * I + j];
         }
 
         vec[I] = std::bit_cast<double>(
                 chars); // We rely on std::bit_cast because std::reinterprest_cast is not constexpr
-        return bit_cast_char_array_to_double_vector<N, I + 1>(irrep_tag, vec);
+        return bit_cast_char_array_to_double_vector<N, I + 1>(vec, str, irrep_tag);
     }
 }
 
-template <std::size_t N, int I>
-consteval std::array<double, N> bit_cast_char_array_to_double_vector(std::string irrep_tag)
+template <std::size_t N, std::size_t I = 0>
+consteval std::array<double, N> bit_cast_char_array_to_double_vector(
+        std::string_view const str,
+        std::string_view const irrep_tag)
 {
-    constexpr static const char raw[] = {
-#embed IRREPS_DICT_PATH
-    };
-
-    constexpr static std::string str(raw);
-
-    std::string line = extract_line_at_tag(str, irrep_tag);
-
-    const char* irrep_raw = line.data();
-
-    std::array<double, (sizeof(line) - 1) / sizeof(double)> vec {};
-    return bit_cast_char_array_to_double_vector<
-            (sizeof(line) - 1) / sizeof(double),
-            0>(irrep_tag, vec);
+    std::array<double, N> vec {};
+    return bit_cast_char_array_to_double_vector<N>(vec, str, irrep_tag);
 }
 
 } // namespace detail
@@ -762,28 +746,29 @@ public:
 private:
     static constexpr std::size_t s_irrep_dim = detail::IrrepDim<s_d, hook_lengths, 0, 0>::run(1);
 
-    static consteval auto build_u_values(std::string irrep_tag)
+    static constexpr std::string_view s_tag = "tag";
+
+    static consteval auto build_u_values()
     {
-        constexpr static char raw[] = {
-#embed IRREPS_DICT_PATH
-        };
+        static constexpr std::string_view str(detail::load_irrep_as_string(s_tag));
 
-        constexpr static std::string str(raw);
-
-        std::string line = detail::extract_line_at_tag(str, irrep_tag);
-
-        return detail::bit_cast_char_array_to_double_vector<(sizeof(line) - 1) / sizeof(double), 0>(
-                irrep_tag);
+        if constexpr (str.size() != 0) {
+            return detail::bit_cast_char_array_to_double_vector<
+                    str.size() / sizeof(double),
+                    0>(str, s_tag);
+        } else {
+            return std::array<double, 0> {};
+        }
     }
 
-    static constexpr std::array s_u_values = build_u_values("tago");
+    static constexpr std::array s_u_values = build_u_values();
 
 public:
     YoungTableau()
     {
         auto [u, v] = detail::OrthonormalBasisSubspaceEigenvalueOne<
                 detail::dummy_index_t<s_d, s_r>>::run(*this);
-        u.write(IRREPS_DICT_PATH, "tago");
+        u.write(IRREPS_DICT_PATH, "tag");
     }
 
     static consteval std::size_t dimension()
