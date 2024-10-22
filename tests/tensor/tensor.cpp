@@ -513,7 +513,10 @@ TEST(Tensor, YoungTableauIndexing)
     young_tableau.print_u();
     sil::young_tableau::YoungTableau<
             3,
-            sil::young_tableau::YoungTableauSeq<std::index_sequence<1, 2>, std::index_sequence<3>>>
+            sil::young_tableau::YoungTableauSeq<
+                    std::index_sequence<1>,
+                    std::index_sequence<2>,
+                    std::index_sequence<3>>>
             young_tableau2 {};
     // SymIndex3x3x3::young_tableau().print_representation_absent();
 
