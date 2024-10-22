@@ -484,18 +484,6 @@ struct YoungTableauIndex
 {
 };
 
-struct YoungTableauIndex2
-    : sil::tensor::YoungTableauTensorIndex<
-              sil::young_tableau::YoungTableau<
-                      4,
-                      sil::young_tableau::
-                              YoungTableauSeq<std::index_sequence<1, 2>, std::index_sequence<3>>>,
-              Alpha,
-              Beta,
-              Gamma>
-{
-};
-
 TEST(Tensor, YoungTableauIndexing)
 {
     sil::tensor::TensorAccessor<YoungTableauIndex> tensor_accessor;
