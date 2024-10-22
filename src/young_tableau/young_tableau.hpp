@@ -9,6 +9,7 @@
 #include <boost/math/special_functions/factorials.hpp>
 
 #include "csr.hpp"
+#include "csr_dynamic.hpp"
 #include "tensor_impl.hpp"
 
 namespace sil {
@@ -494,7 +495,7 @@ orthogonalize(
         sil::tensor::
                 Tensor<ElementType, ddc::DiscreteDomain<Id...>, LayoutStridedPolicy, MemorySpace>
                         tensor,
-        sil::csr::Csr<BasisId, Id...> basis,
+        sil::csr::CsrDynamic<BasisId, Id...> basis,
         std::size_t max_basis_id)
 {
     ddc::Chunk eigentensor_alloc(
@@ -555,7 +556,7 @@ std::vector<bool> index_hamming_weight_code(std::size_t index, std::size_t lengt
     return bits;
 }
 
-// Dummy tag used by OrthonormalBasisSubspaceEigenvalueOne (coalescent dimension of the Csr storage)
+// Dummy tag used by OrthonormalBasisSubspaceEigenvalueOne (coalescent dimension of the CsrDynamic storage)
 struct BasisId
 {
 };
@@ -589,8 +590,8 @@ template <class... Id>
 struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::FullTensorIndex<Id...>>
 {
     template <class YoungTableau>
-    static std::pair<sil::csr::Csr<BasisId, Id...>, sil::csr::Csr<BasisId, Id...>> run(
-            YoungTableau tableau)
+    static std::pair<sil::csr::CsrDynamic<BasisId, Id...>, sil::csr::CsrDynamic<BasisId, Id...>>
+    run(YoungTableau tableau)
     {
         auto [proj_alloc, proj] = tableau.template projector<Id...>();
 
@@ -620,8 +621,8 @@ struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::FullTensorIndex<Id...>
                         ddc::DiscreteElement<BasisId>(0),
                         ddc::DiscreteVector<BasisId>(tableau.irrep_dim())),
                 candidate_dom);
-        sil::csr::Csr<BasisId, Id...> u(basis_dom);
-        sil::csr::Csr<BasisId, Id...> v(basis_dom);
+        sil::csr::CsrDynamic<BasisId, Id...> u(basis_dom);
+        sil::csr::CsrDynamic<BasisId, Id...> v(basis_dom);
         std::size_t n_irreps = 0;
         std::size_t index = 0;
         while (n_irreps < tableau.irrep_dim()) {
@@ -664,11 +665,13 @@ struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::FullTensorIndex<Id...>
                 n_irreps++;
             }
         }
-        return std::pair<sil::csr::Csr<BasisId, Id...>, sil::csr::Csr<BasisId, Id...>>(u, v);
+        return std::pair<
+                sil::csr::CsrDynamic<BasisId, Id...>,
+                sil::csr::CsrDynamic<BasisId, Id...>>(u, v);
     }
 };
 
-// Load binary files and build u and v static constexpr Csr at compile-time
+// Load binary files and build u and v static constexpr CsrDynamic at compile-time
 template <std::size_t Line>
 consteval std::string_view load_irrep_line_for_tag(std::string_view const irrep_tag)
 {
