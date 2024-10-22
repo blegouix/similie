@@ -742,6 +742,21 @@ consteval std::array<T, N> bit_cast_array(
     return bit_cast_array<T, N>(vec, str, irrep_tag);
 }
 
+template <class T, std::size_t N, class Ids>
+struct BitCastArrayOfArrays;
+
+template <class T, std::size_t N, std::size_t... I>
+struct BitCastArrayOfArrays<T, N, std::index_sequence<I...>>
+{
+    static consteval std::array<std::array<T, N>, sizeof...(I)> run(
+            std::array<std::string_view, sizeof...(I)> const str,
+            std::string_view const irrep_tag)
+    {
+        return std::array<std::array<T, N>, sizeof...(I)> {
+                bit_cast_array<T, N>(str[I], irrep_tag)...};
+    }
+};
+
 } // namespace detail
 
 /**
@@ -769,25 +784,9 @@ private:
 
     static constexpr std::string_view s_tag = "tag";
 
-    static consteval auto build_u_values()
-    {
-        static constexpr std::string_view str_coalesc_idx(
-                detail::load_irrep_line_for_tag<0>(s_tag));
-        static constexpr std::array<std::string_view, s_r> str_idx(
-                detail::LoadIrrepIdxForTag<std::make_index_sequence<s_r>>::run(s_tag));
-        static constexpr std::string_view str_values(
-                detail::load_irrep_line_for_tag<s_r + 2>(s_tag));
+    static consteval auto load_irrep();
 
-        if constexpr (str_values.size() != 0) {
-            static constexpr std::array array_values = detail::
-                    bit_cast_array<double, str_values.size() / sizeof(double)>(str_values, s_tag);
-            return array_values;
-        } else {
-            return std::array<double, 0> {};
-        }
-    }
-
-    static constexpr std::array s_u_values = build_u_values();
+    static constexpr auto s_u = load_irrep();
 
 public:
     YoungTableau()
@@ -822,8 +821,8 @@ public:
 
     void print_u() const
     {
-        for (std::size_t i = 0; i < s_u_values.size(); ++i) {
-            std::cout << s_u_values[i] << "\n";
+        for (std::size_t i = 0; i < std::get<2>(s_u).size(); ++i) {
+            std::cout << std::get<2>(s_u)[i] << "\n";
         }
     }
 };
@@ -1074,6 +1073,32 @@ void YoungTableau<Dimension, TableauSeq>::print_representation_absent()
               << "\n\033[1;31min dimension " + std::to_string(s_d)
                          + ". Please compile with BUILD_COMPUTE_REPRESENTATION=ON and "
                            "rerun.\033[0m\n";
+}
+template <std::size_t Dimension, class TableauSeq>
+consteval auto YoungTableau<Dimension, TableauSeq>::load_irrep()
+{
+    static constexpr std::string_view str_coalesc_idx(detail::load_irrep_line_for_tag<0>(s_tag));
+    static constexpr std::array<std::string_view, s_r> str_idx(
+            detail::LoadIrrepIdxForTag<std::make_index_sequence<s_r>>::run(s_tag));
+    static constexpr std::string_view str_values(detail::load_irrep_line_for_tag<s_r + 2>(s_tag));
+
+    if constexpr (str_values.size() != 0) {
+        static constexpr std::array coalesc_idx = detail::bit_cast_array<
+                std::size_t,
+                str_coalesc_idx.size() / sizeof(std::size_t)>(str_coalesc_idx, s_tag);
+        static constexpr std::array idx = detail::BitCastArrayOfArrays<
+                double,
+                str_idx[0].size() / sizeof(std::size_t),
+                std::make_index_sequence<s_r>>::run(str_idx, s_tag);
+        static constexpr std::array values = detail::
+                bit_cast_array<double, str_values.size() / sizeof(double)>(str_values, s_tag);
+        return std::make_tuple(coalesc_idx, idx, values);
+    } else {
+        return std::make_tuple(
+                std::array<std::size_t, 0> {},
+                std::array<std::array<std::size_t, 0>, 0> {},
+                std::array<double, 0> {});
+    }
 }
 
 namespace detail {
