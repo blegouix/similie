@@ -427,6 +427,84 @@ struct IrrepDim<
     }
 };
 
+// Type of index used by projectors or symmetrizers
+template <class Parent>
+struct declare_deriv : Parent
+{
+};
+
+} // namespace detail
+
+/**
+ * YoungTableau class
+ */
+template <std::size_t Dimension, class TableauSeq>
+class YoungTableau
+{
+public:
+    using tableau_seq = TableauSeq;
+    using shape = typename TableauSeq::shape;
+
+private:
+    static constexpr std::size_t s_d = Dimension;
+    static constexpr std::size_t s_r = TableauSeq::rank;
+
+public:
+    using dual = YoungTableau<s_d, detail::dual_t<tableau_seq>>;
+    using hook_lengths = detail::hook_lengths_t<
+            detail::hooks_t<tableau_seq>,
+            detail::dual_t<detail::hooks_t<detail::dual_t<tableau_seq>>>>;
+
+private:
+    static constexpr std::size_t s_irrep_dim = detail::IrrepDim<s_d, hook_lengths, 0, 0>::run(1);
+
+    static constexpr std::string generate_tag();
+
+    static constexpr std::string s_tag = generate_tag();
+
+    static consteval auto load_irrep();
+
+    static constexpr auto s_irrep = load_irrep();
+
+public:
+    YoungTableau();
+
+    static constexpr std::size_t dimension()
+    {
+        return s_d;
+    }
+
+    static constexpr std::size_t rank()
+    {
+        return s_r;
+    }
+
+    static constexpr std::size_t irrep_dim()
+    {
+        return s_irrep_dim;
+    }
+
+    static constexpr std::string tag()
+    {
+        return s_tag;
+    }
+
+    template <class... Id>
+    using projector_domain = ddc::DiscreteDomain<detail::declare_deriv<Id>..., Id...>;
+
+    template <class... Id>
+    static auto projector();
+
+    void print_u() const
+    {
+        for (std::size_t i = 0; i < std::get<2>(std::get<0>(s_irrep)).size(); ++i) {
+            std::cout << std::get<2>(std::get<0>(s_irrep))[i] << "\n";
+        }
+    }
+};
+
+namespace detail {
+
 template <std::size_t Dimension, class... TailRow, std::size_t I, std::size_t J>
 struct IrrepDim<Dimension, YoungTableauSeq<std::index_sequence<>, TailRow...>, I, J>
 {
@@ -443,12 +521,6 @@ struct IrrepDim<Dimension, YoungTableauSeq<>, I, J>
     {
         return prod;
     }
-};
-
-// Type of index used by projectors or symmetrizers
-template <class Parent>
-struct declare_deriv : Parent
-{
 };
 
 // Type of index used by sil::tensor::OrthonormalBasisSubspaceEigenvalueOne
@@ -629,6 +701,7 @@ struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::FullTensorIndex<Id...>
             index++;
             std::vector<bool> hamming_weight_code
                     = index_hamming_weight_code(index, (Id::size() * ...));
+
             ddc::parallel_for_each(candidate.domain(), [&](ddc::DiscreteElement<Id...> elem) {
                 candidate(elem) = hamming_weight_code[(
                         (sil::tensor::detail::stride<Id, Id...>() * elem.template uid<Id>())
@@ -646,7 +719,9 @@ struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::FullTensorIndex<Id...>
                         candidate.domain(),
                         false,
                         ddc::reducer::lor<bool>(),
-                        [&](ddc::DiscreteElement<Id...> elem) { return candidate(elem) > 0.25; })) {
+                        [&](ddc::DiscreteElement<Id...> elem) {
+                            return candidate(elem) > 1e-12;
+                        })) {
                 ddc::Chunk
                         norm_squared_alloc(ddc::DiscreteDomain<> {}, ddc::HostAllocator<double>());
                 sil::tensor::Tensor<
@@ -663,6 +738,10 @@ struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::FullTensorIndex<Id...>
                 u.push_back(candidate);
                 v.push_back(candidate);
                 n_irreps++;
+                std::cout << n_irreps << "/" << tableau.irrep_dim()
+                          << " eigentensors found associated to the eigenvalue 1 for the Young "
+                             "projector labelized "
+                          << tableau.tag() << "\n";
             }
         }
         return std::pair<
@@ -673,118 +752,58 @@ struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::FullTensorIndex<Id...>
 
 } // namespace detail
 
-/**
- * YoungTableau class
- */
 template <std::size_t Dimension, class TableauSeq>
-class YoungTableau
+YoungTableau<Dimension, TableauSeq>::YoungTableau()
 {
-public:
-    using tableau_seq = TableauSeq;
-    using shape = typename TableauSeq::shape;
-
-private:
-    static constexpr std::size_t s_d = Dimension;
-    static constexpr std::size_t s_r = TableauSeq::rank;
-
-public:
-    using dual = YoungTableau<s_d, detail::dual_t<tableau_seq>>;
-    using hook_lengths = detail::hook_lengths_t<
-            detail::hooks_t<tableau_seq>,
-            detail::dual_t<detail::hooks_t<detail::dual_t<tableau_seq>>>>;
-
-private:
-    static constexpr std::size_t s_irrep_dim = detail::IrrepDim<s_d, hook_lengths, 0, 0>::run(1);
-
-    static constexpr std::string irrep_tag();
-
-    static constexpr std::string s_tag = irrep_tag();
-
-    static consteval auto load_irrep();
-
-    static constexpr auto s_irrep = load_irrep();
-
-public:
-    YoungTableau()
+    // Check if the irrep is available in the dictionnary
     {
-        // Check if the irrep is available in the dictionnary
-        {
-            std::ifstream file(IRREPS_DICT_PATH, std::ios::out | std::ios::binary);
-            std::string line;
-            while (!file.eof()) {
-                getline(file, line);
-                if (line == s_tag) {
-                    file.close();
-                    if (std::get<2>(std::get<0>(s_irrep)).size() == 0) {
-                        std::cout << "\033[1;31mIrrep " << s_tag << " in dimension " << s_d
-                                  << " required and found in dictionnary " << IRREPS_DICT_PATH
-                                  << " but the executable has been compiled without it. Please "
-                                     "recompile.\033[0m"
-                                  << std::endl;
-                    }
-                    return;
+        std::ifstream file(IRREPS_DICT_PATH, std::ios::out | std::ios::binary);
+        std::string line;
+        while (!file.eof()) {
+            getline(file, line);
+            if (line == s_tag) {
+                file.close();
+                if (std::get<2>(std::get<0>(s_irrep)).size() == 0) {
+                    std::cout << "\033[1;31mIrrep " << s_tag << " in dimension " << s_d
+                              << " required and found in dictionnary " << IRREPS_DICT_PATH
+                              << " but the executable has been compiled without it. Please "
+                                 "recompile.\033[0m"
+                              << std::endl;
                 }
+                return;
             }
         }
-
-        // If the current irrep is not found in the dictionnary, compute and dump it
-        std::cout << "\033[1;31mIrrep " << s_tag << " corresponding to the Young Tableau:\033[0m\n"
-                  << *this << "\n\033[1;31m in dimension " << s_d
-                  << " required but not found in dictionnary " << IRREPS_DICT_PATH
-                  << ". It will be computed, and you will have to recompile once it is done.\033[0m"
-                  << std::endl;
-
-        auto [u, v] = detail::OrthonormalBasisSubspaceEigenvalueOne<
-                detail::dummy_index_t<s_d, s_r>>::run(*this);
-
-        std::ofstream file(IRREPS_DICT_PATH, std::ios::app | std::ios::binary);
-        if (!file) {
-            std::cerr << "Error opening file: " << IRREPS_DICT_PATH << std::endl;
-            return;
-        }
-        file << "\n" << s_tag << "\n";
-        u.write(file);
-        v.write(file);
-        file << "\n";
-        file.close();
-        if (!file.good()) {
-            std::cerr << "Error occurred while writing to file " << IRREPS_DICT_PATH
-                      << " while adding irrep " << s_tag << std::endl;
-        } else {
-            std::cout << "\033[1;32mIrrep " << s_tag << " added to the dictionnary "
-                      << IRREPS_DICT_PATH << ".\033[0m \033[1;31mPlease recompile.\033[0m"
-                      << std::endl;
-        }
     }
 
-    static consteval std::size_t dimension()
-    {
-        return s_d;
+    // If the current irrep is not found in the dictionnary, compute and dump it
+    std::cout << "\033[1;31mIrrep " << s_tag << " corresponding to the Young Tableau:\033[0m\n"
+              << *this << "\n\033[1;31m in dimension " << s_d
+              << " required but not found in dictionnary " << IRREPS_DICT_PATH
+              << ". It will be computed, and you will have to recompile once it is done.\033[0m"
+              << std::endl;
+
+    auto [u, v]
+            = detail::OrthonormalBasisSubspaceEigenvalueOne<detail::dummy_index_t<s_d, s_r>>::run(
+                    *this);
+
+    std::ofstream file(IRREPS_DICT_PATH, std::ios::app | std::ios::binary);
+    if (!file) {
+        std::cerr << "Error opening file: " << IRREPS_DICT_PATH << std::endl;
+        return;
     }
-
-    static consteval std::size_t rank()
-    {
-        return s_r;
+    file << "\n" << s_tag << "\n";
+    u.write(file);
+    v.write(file);
+    file << "\n";
+    file.close();
+    if (!file.good()) {
+        std::cerr << "Error occurred while writing to file " << IRREPS_DICT_PATH
+                  << " while adding irrep " << s_tag << std::endl;
+    } else {
+        std::cout << "\033[1;32mIrrep " << s_tag << " added to the dictionnary " << IRREPS_DICT_PATH
+                  << ".\033[0m \033[1;31mPlease recompile.\033[0m" << std::endl;
     }
-
-    static consteval std::size_t irrep_dim()
-    {
-        return s_irrep_dim;
-    }
-
-    template <class... Id>
-    using projector_domain = ddc::DiscreteDomain<detail::declare_deriv<Id>..., Id...>;
-
-    template <class... Id>
-    static auto projector();
-
-    void print_u() const
-    {
-        for (std::size_t i = 0; i < std::get<2>(std::get<0>(s_irrep)).size(); ++i) {
-            std::cout << std::get<2>(std::get<0>(s_irrep))[i] << "\n";
-        }
-    }
-};
+}
 
 namespace detail {
 
@@ -1027,7 +1046,7 @@ auto YoungTableau<Dimension, TableauSeq>::projector()
 namespace detail {
 
 template <std::size_t Line>
-consteval std::string_view load_irrep_line_for_tag(std::string_view const irrep_tag)
+consteval std::string_view load_irrep_line_for_tag(std::string_view const tag)
 {
     constexpr static char raw[] = {
 #embed IRREPS_DICT_PATH
@@ -1035,7 +1054,7 @@ consteval std::string_view load_irrep_line_for_tag(std::string_view const irrep_
 
     constexpr static std::string_view str(raw, sizeof(raw));
 
-    size_t tagPos = str.find(irrep_tag);
+    size_t tagPos = str.find(tag);
 
     if (tagPos != std::string::npos) {
         std::size_t endOfTagLine = str.find('\n', tagPos);
@@ -1059,11 +1078,10 @@ struct LoadIrrepIdxForTag;
 template <std::size_t... I, std::size_t Offset>
 struct LoadIrrepIdxForTag<std::index_sequence<I...>, Offset>
 {
-    static consteval std::array<std::string_view, sizeof...(I)> run(
-            std::string_view const irrep_tag)
+    static consteval std::array<std::string_view, sizeof...(I)> run(std::string_view const tag)
     {
         return std::array<std::string_view, sizeof...(I)> {
-                load_irrep_line_for_tag<I + Offset>(irrep_tag)...};
+                load_irrep_line_for_tag<I + Offset>(tag)...};
     }
 };
 
@@ -1071,7 +1089,7 @@ template <class T, std::size_t N, std::size_t I = 0>
 consteval std::array<T, N> bit_cast_array(
         std::array<T, N> vec,
         std::string_view const str,
-        std::string_view const irrep_tag)
+        std::string_view const tag)
 {
     if constexpr (I == N) {
         return vec;
@@ -1083,17 +1101,15 @@ consteval std::array<T, N> bit_cast_array(
 
         vec[I] = std::bit_cast<double>(
                 chars); // We rely on std::bit_cast because std::reinterprest_cast is not constexpr
-        return bit_cast_array<T, N, I + 1>(vec, str, irrep_tag);
+        return bit_cast_array<T, N, I + 1>(vec, str, tag);
     }
 }
 
 template <class T, std::size_t N, std::size_t I = 0>
-consteval std::array<T, N> bit_cast_array(
-        std::string_view const str,
-        std::string_view const irrep_tag)
+consteval std::array<T, N> bit_cast_array(std::string_view const str, std::string_view const tag)
 {
     std::array<T, N> vec {};
-    return bit_cast_array<T, N>(vec, str, irrep_tag);
+    return bit_cast_array<T, N>(vec, str, tag);
 }
 
 template <class T, std::size_t N, class Ids>
@@ -1104,10 +1120,9 @@ struct BitCastArrayOfArrays<T, N, std::index_sequence<I...>>
 {
     static consteval std::array<std::array<T, N>, sizeof...(I)> run(
             std::array<std::string_view, sizeof...(I)> const str,
-            std::string_view const irrep_tag)
+            std::string_view const tag)
     {
-        return std::array<std::array<T, N>, sizeof...(I)> {
-                bit_cast_array<T, N>(str[I], irrep_tag)...};
+        return std::array<std::array<T, N>, sizeof...(I)> {bit_cast_array<T, N>(str[I], tag)...};
     }
 };
 
@@ -1164,7 +1179,7 @@ consteval auto YoungTableau<Dimension, TableauSeq>::load_irrep()
 
 namespace detail {
 
-// Produce irrep_tag as a string (std::string features are limited at compile-time that's why we manipulate char arrays)
+// Produce tag as a string (std::string features are limited at compile-time that's why we manipulate char arrays)
 template <class Row>
 struct YoungTableauRowToArray;
 
@@ -1266,7 +1281,7 @@ constexpr auto add_dimension(const std::array<char, size>& array, std::size_t d)
 } // namespace detail
 
 template <std::size_t Dimension, class TableauSeq>
-constexpr std::string YoungTableau<Dimension, TableauSeq>::irrep_tag()
+constexpr std::string YoungTableau<Dimension, TableauSeq>::generate_tag()
 {
     static constexpr std::tuple tableau = detail::YoungTableauToArray<tableau_seq>::run();
     constexpr auto row_str_wo_dimension
