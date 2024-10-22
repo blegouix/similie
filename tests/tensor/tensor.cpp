@@ -495,6 +495,17 @@ TEST(Tensor, YoungTableauIndexing)
             std::experimental::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor(tensor_alloc);
+    sil::young_tableau::
+            YoungTableau<3, sil::young_tableau::YoungTableauSeq<std::index_sequence<1, 2, 3>>>
+                    young_tableau {};
+    young_tableau.print_u();
+    sil::young_tableau::YoungTableau<
+            3,
+            sil::young_tableau::YoungTableauSeq<
+                    std::index_sequence<1>,
+                    std::index_sequence<2>,
+                    std::index_sequence<3>>>
+            young_tableau2 {};
     // SymIndex3x3x3::young_tableau().print_representation_absent();
 
     /*

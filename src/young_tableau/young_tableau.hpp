@@ -5,9 +5,11 @@
 
 #include <ddc/ddc.hpp>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/math/special_functions/factorials.hpp>
 
 #include "csr.hpp"
+#include "csr_dynamic.hpp"
 #include "tensor_impl.hpp"
 
 namespace sil {
@@ -425,6 +427,84 @@ struct IrrepDim<
     }
 };
 
+// Type of index used by projectors or symmetrizers
+template <class Parent>
+struct declare_deriv : Parent
+{
+};
+
+} // namespace detail
+
+/**
+ * YoungTableau class
+ */
+template <std::size_t Dimension, class TableauSeq>
+class YoungTableau
+{
+public:
+    using tableau_seq = TableauSeq;
+    using shape = typename TableauSeq::shape;
+
+private:
+    static constexpr std::size_t s_d = Dimension;
+    static constexpr std::size_t s_r = TableauSeq::rank;
+
+public:
+    using dual = YoungTableau<s_d, detail::dual_t<tableau_seq>>;
+    using hook_lengths = detail::hook_lengths_t<
+            detail::hooks_t<tableau_seq>,
+            detail::dual_t<detail::hooks_t<detail::dual_t<tableau_seq>>>>;
+
+private:
+    static constexpr std::size_t s_irrep_dim = detail::IrrepDim<s_d, hook_lengths, 0, 0>::run(1);
+
+    static constexpr std::string generate_tag();
+
+    static constexpr std::string s_tag = generate_tag();
+
+    static consteval auto load_irrep();
+
+    static constexpr auto s_irrep = load_irrep();
+
+public:
+    YoungTableau();
+
+    static constexpr std::size_t dimension()
+    {
+        return s_d;
+    }
+
+    static constexpr std::size_t rank()
+    {
+        return s_r;
+    }
+
+    static constexpr std::size_t irrep_dim()
+    {
+        return s_irrep_dim;
+    }
+
+    static constexpr std::string tag()
+    {
+        return s_tag;
+    }
+
+    template <class... Id>
+    using projector_domain = ddc::DiscreteDomain<detail::declare_deriv<Id>..., Id...>;
+
+    template <class... Id>
+    static auto projector();
+
+    void print_u() const
+    {
+        for (std::size_t i = 0; i < std::get<2>(std::get<0>(s_irrep)).size(); ++i) {
+            std::cout << std::get<2>(std::get<0>(s_irrep))[i] << "\n";
+        }
+    }
+};
+
+namespace detail {
+
 template <std::size_t Dimension, class... TailRow, std::size_t I, std::size_t J>
 struct IrrepDim<Dimension, YoungTableauSeq<std::index_sequence<>, TailRow...>, I, J>
 {
@@ -441,12 +521,6 @@ struct IrrepDim<Dimension, YoungTableauSeq<>, I, J>
     {
         return prod;
     }
-};
-
-// Type of index used by projectors or symmetrizers
-template <class Parent>
-struct declare_deriv : Parent
-{
 };
 
 // Type of index used by sil::tensor::OrthonormalBasisSubspaceEigenvalueOne
@@ -493,7 +567,7 @@ orthogonalize(
         sil::tensor::
                 Tensor<ElementType, ddc::DiscreteDomain<Id...>, LayoutStridedPolicy, MemorySpace>
                         tensor,
-        sil::csr::Csr<BasisId, Id...> basis,
+        sil::csr::CsrDynamic<BasisId, Id...> basis,
         std::size_t max_basis_id)
 {
     ddc::Chunk eigentensor_alloc(
@@ -554,7 +628,7 @@ std::vector<bool> index_hamming_weight_code(std::size_t index, std::size_t lengt
     return bits;
 }
 
-// Dummy tag used by OrthonormalBasisSubspaceEigenvalueOne (coalescent dimension of the Csr storage)
+// Dummy tag used by OrthonormalBasisSubspaceEigenvalueOne (coalescent dimension of the CsrDynamic storage)
 struct BasisId
 {
 };
@@ -588,8 +662,8 @@ template <class... Id>
 struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::FullTensorIndex<Id...>>
 {
     template <class YoungTableau>
-    static std::pair<sil::csr::Csr<BasisId, Id...>, sil::csr::Csr<BasisId, Id...>> run(
-            YoungTableau tableau)
+    static std::pair<sil::csr::CsrDynamic<BasisId, Id...>, sil::csr::CsrDynamic<BasisId, Id...>>
+    run(YoungTableau tableau)
     {
         auto [proj_alloc, proj] = tableau.template projector<Id...>();
 
@@ -608,7 +682,7 @@ struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::FullTensorIndex<Id...>
         sil::tensor::Tensor<
                 double,
                 sil::tensor::tensor_prod_domain_t<
-                        typename YoungTableau::projector_domain<Id...>,
+                        typename YoungTableau::template projector_domain<Id...>,
                         ddc::DiscreteDomain<Id...>>,
                 std::experimental::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space>
@@ -619,14 +693,15 @@ struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::FullTensorIndex<Id...>
                         ddc::DiscreteElement<BasisId>(0),
                         ddc::DiscreteVector<BasisId>(tableau.irrep_dim())),
                 candidate_dom);
-        sil::csr::Csr<BasisId, Id...> u(basis_dom);
-        sil::csr::Csr<BasisId, Id...> v(basis_dom);
+        sil::csr::CsrDynamic<BasisId, Id...> u(basis_dom);
+        sil::csr::CsrDynamic<BasisId, Id...> v(basis_dom);
         std::size_t n_irreps = 0;
         std::size_t index = 0;
         while (n_irreps < tableau.irrep_dim()) {
             index++;
             std::vector<bool> hamming_weight_code
                     = index_hamming_weight_code(index, (Id::size() * ...));
+
             ddc::parallel_for_each(candidate.domain(), [&](ddc::DiscreteElement<Id...> elem) {
                 candidate(elem) = hamming_weight_code[(
                         (sil::tensor::detail::stride<Id, Id...>() * elem.template uid<Id>())
@@ -644,7 +719,9 @@ struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::FullTensorIndex<Id...>
                         candidate.domain(),
                         false,
                         ddc::reducer::lor<bool>(),
-                        [&](ddc::DiscreteElement<Id...> elem) { return candidate(elem) > 0.25; })) {
+                        [&](ddc::DiscreteElement<Id...> elem) {
+                            return candidate(elem) > 1e-12;
+                        })) {
                 ddc::Chunk
                         norm_squared_alloc(ddc::DiscreteDomain<> {}, ddc::HostAllocator<double>());
                 sil::tensor::Tensor<
@@ -661,70 +738,71 @@ struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::FullTensorIndex<Id...>
                 u.push_back(candidate);
                 v.push_back(candidate);
                 n_irreps++;
+                std::cout << n_irreps << "/" << tableau.irrep_dim()
+                          << " eigentensors found associated to the eigenvalue 1 for the Young "
+                             "projector labelized "
+                          << tableau.tag() << "\n";
             }
         }
-        return std::pair<sil::csr::Csr<BasisId, Id...>, sil::csr::Csr<BasisId, Id...>>(u, v);
+        return std::pair<
+                sil::csr::CsrDynamic<BasisId, Id...>,
+                sil::csr::CsrDynamic<BasisId, Id...>>(u, v);
     }
 };
 
 } // namespace detail
 
-/**
- * YoungTableau class
- */
 template <std::size_t Dimension, class TableauSeq>
-class YoungTableau
+YoungTableau<Dimension, TableauSeq>::YoungTableau()
 {
-public:
-    using tableau_seq = TableauSeq;
-    using shape = typename TableauSeq::shape;
-
-private:
-    static constexpr std::size_t s_d = Dimension;
-    static constexpr std::size_t s_r = TableauSeq::rank;
-
-public:
-    using dual = YoungTableau<s_d, detail::dual_t<tableau_seq>>;
-    using hook_lengths = detail::hook_lengths_t<
-            detail::hooks_t<tableau_seq>,
-            detail::dual_t<detail::hooks_t<detail::dual_t<tableau_seq>>>>;
-
-private:
-    static constexpr std::size_t s_irrep_dim = detail::IrrepDim<s_d, hook_lengths, 0, 0>::run(1);
-
-public:
-    constexpr YoungTableau();
-
-    static consteval std::size_t dimension()
+    // Check if the irrep is available in the dictionnary
     {
-        return s_d;
+        std::ifstream file(IRREPS_DICT_PATH, std::ios::out | std::ios::binary);
+        std::string line;
+        while (!file.eof()) {
+            getline(file, line);
+            if (line == s_tag) {
+                file.close();
+                if (std::get<2>(std::get<0>(s_irrep)).size() == 0) {
+                    std::cout << "\033[1;31mIrrep " << s_tag << " in dimension " << s_d
+                              << " required and found in dictionnary " << IRREPS_DICT_PATH
+                              << " but the executable has been compiled without it. Please "
+                                 "recompile.\033[0m"
+                              << std::endl;
+                }
+                return;
+            }
+        }
     }
 
-    static consteval std::size_t rank()
-    {
-        return s_r;
-    }
+    // If the current irrep is not found in the dictionnary, compute and dump it
+    std::cout << "\033[1;31mIrrep " << s_tag << " corresponding to the Young Tableau:\033[0m\n"
+              << *this << "\n\033[1;31m in dimension " << s_d
+              << " required but not found in dictionnary " << IRREPS_DICT_PATH
+              << ". It will be computed, and you will have to recompile once it is done.\033[0m"
+              << std::endl;
 
-    static consteval std::size_t irrep_dim()
-    {
-        return s_irrep_dim;
-    }
-
-    template <class... Id>
-    using projector_domain = ddc::DiscreteDomain<detail::declare_deriv<Id>..., Id...>;
-
-    template <class... Id>
-    static auto projector();
-
-    void print_representation_absent(); // TODO REMOVE
-};
-
-template <std::size_t Dimension, class TableauSeq>
-constexpr YoungTableau<Dimension, TableauSeq>::YoungTableau()
-{
     auto [u, v]
             = detail::OrthonormalBasisSubspaceEigenvalueOne<detail::dummy_index_t<s_d, s_r>>::run(
                     *this);
+
+    std::ofstream file(IRREPS_DICT_PATH, std::ios::app | std::ios::binary);
+    if (!file) {
+        std::cerr << "Error opening file: " << IRREPS_DICT_PATH << std::endl;
+        return;
+    }
+    file << "\n" << s_tag << "\n";
+    u.write(file);
+    v.write(file);
+    file << "\n";
+    file.close();
+    if (!file.good()) {
+        std::cerr << "Error occurred while writing to file " << IRREPS_DICT_PATH
+                  << " while adding irrep " << s_tag << std::endl;
+    } else {
+        std::cout << "\033[1;32mIrrep " << s_tag << " added to the dictionnary " << IRREPS_DICT_PATH
+                  << ".\033[0m \033[1;31mPlease recompile.\033[0m" << std::endl;
+    }
 }
 
 namespace detail {
@@ -964,15 +1042,253 @@ auto YoungTableau<Dimension, TableauSeq>::projector()
     return std::make_tuple(std::move(proj_alloc), proj);
 }
 
-template <std::size_t Dimension, class TableauSeq>
-void YoungTableau<Dimension, TableauSeq>::print_representation_absent()
+// Load binary files and build u and v static constexpr Csr at compile-time
+namespace detail {
+
+template <std::size_t Line>
+consteval std::string_view load_irrep_line_for_tag(std::string_view const tag)
 {
-    std::cout << "\033[1;31mThe representations dictionnary does not contain any "
-                 "representation for the Young tableau:\033[0m\n"
-              << *this
-              << "\n\033[1;31min dimension " + std::to_string(s_d)
-                         + ". Please compile with BUILD_COMPUTE_REPRESENTATION=ON and "
-                           "rerun.\033[0m\n";
+    constexpr static char raw[] = {
+#embed IRREPS_DICT_PATH
+    };
+
+    constexpr static std::string_view str(raw, sizeof(raw));
+
+    size_t tagPos = str.find(tag);
+
+    if (tagPos != std::string::npos) {
+        std::size_t endOfTagLine = str.find('\n', tagPos);
+        if (endOfTagLine != std::string::npos) {
+            std::size_t nextLineStart = endOfTagLine + 1;
+            for (std::size_t i = 0; i < Line; ++i) {
+                nextLineStart = str.find('\n', nextLineStart) + 1;
+            }
+            std::size_t nextLineEnd = str.find('\n', nextLineStart);
+
+            return std::string_view(str.data() + nextLineStart, nextLineEnd - nextLineStart);
+        }
+    }
+
+    return "";
+}
+
+template <class Ids, std::size_t Offset>
+struct LoadIrrepIdxForTag;
+
+template <std::size_t... I, std::size_t Offset>
+struct LoadIrrepIdxForTag<std::index_sequence<I...>, Offset>
+{
+    static consteval std::array<std::string_view, sizeof...(I)> run(std::string_view const tag)
+    {
+        return std::array<std::string_view, sizeof...(I)> {
+                load_irrep_line_for_tag<I + Offset>(tag)...};
+    }
+};
+
+template <class T, std::size_t N, std::size_t I = 0>
+consteval std::array<T, N> bit_cast_array(
+        std::array<T, N> vec,
+        std::string_view const str,
+        std::string_view const tag)
+{
+    if constexpr (I == N) {
+        return vec;
+    } else {
+        std::array<char, sizeof(double) / sizeof(char)> chars = {};
+        for (std::size_t j = 0; j < sizeof(double) / sizeof(char); ++j) {
+            chars[j] = str[sizeof(double) / sizeof(char) * I + j];
+        }
+
+        vec[I] = std::bit_cast<double>(
+                chars); // We rely on std::bit_cast because std::reinterprest_cast is not constexpr
+        return bit_cast_array<T, N, I + 1>(vec, str, tag);
+    }
+}
+
+template <class T, std::size_t N, std::size_t I = 0>
+consteval std::array<T, N> bit_cast_array(std::string_view const str, std::string_view const tag)
+{
+    std::array<T, N> vec {};
+    return bit_cast_array<T, N>(vec, str, tag);
+}
+
+template <class T, std::size_t N, class Ids>
+struct BitCastArrayOfArrays;
+
+template <class T, std::size_t N, std::size_t... I>
+struct BitCastArrayOfArrays<T, N, std::index_sequence<I...>>
+{
+    static consteval std::array<std::array<T, N>, sizeof...(I)> run(
+            std::array<std::string_view, sizeof...(I)> const str,
+            std::string_view const tag)
+    {
+        return std::array<std::array<T, N>, sizeof...(I)> {bit_cast_array<T, N>(str[I], tag)...};
+    }
+};
+
+} // namespace detail
+
+template <std::size_t Dimension, class TableauSeq>
+consteval auto YoungTableau<Dimension, TableauSeq>::load_irrep()
+{
+    static constexpr std::string_view str_u_coalesc_idx(detail::load_irrep_line_for_tag<0>(s_tag));
+    static constexpr std::array<std::string_view, s_r> str_u_idx(
+            detail::LoadIrrepIdxForTag<std::make_index_sequence<s_r>, 1>::run(s_tag));
+    static constexpr std::string_view str_u_values(detail::load_irrep_line_for_tag<s_r + 2>(s_tag));
+    static constexpr std::string_view str_v_coalesc_idx(
+            detail::load_irrep_line_for_tag<s_r + 3>(s_tag));
+    static constexpr std::array<std::string_view, s_r> str_v_idx(
+            detail::LoadIrrepIdxForTag<std::make_index_sequence<s_r>, s_r + 4>::run(s_tag));
+    static constexpr std::string_view str_v_values(
+            detail::load_irrep_line_for_tag<2 * s_r + 3>(s_tag));
+
+    if constexpr (str_u_values.size() != 0) {
+        static constexpr std::array u_coalesc_idx = detail::bit_cast_array<
+                std::size_t,
+                str_u_coalesc_idx.size() / sizeof(std::size_t)>(str_u_coalesc_idx, s_tag);
+        static constexpr std::array u_idx = detail::BitCastArrayOfArrays<
+                double,
+                str_u_idx[0].size() / sizeof(std::size_t),
+                std::make_index_sequence<s_r>>::run(str_u_idx, s_tag);
+        static constexpr std::array u_values = detail::
+                bit_cast_array<double, str_u_values.size() / sizeof(double)>(str_u_values, s_tag);
+        static constexpr std::array v_coalesc_idx = detail::bit_cast_array<
+                std::size_t,
+                str_v_coalesc_idx.size() / sizeof(std::size_t)>(str_v_coalesc_idx, s_tag);
+        static constexpr std::array v_idx = detail::BitCastArrayOfArrays<
+                double,
+                str_v_idx[0].size() / sizeof(std::size_t),
+                std::make_index_sequence<s_r>>::run(str_v_idx, s_tag);
+        static constexpr std::array v_values = detail::
+                bit_cast_array<double, str_v_values.size() / sizeof(double)>(str_v_values, s_tag);
+        return std::make_pair(
+                std::make_tuple(u_coalesc_idx, u_idx, u_values),
+                std::make_tuple(v_coalesc_idx, v_idx, v_values));
+    } else {
+        return std::make_pair(
+                std::make_tuple(
+                        std::array<std::size_t, 0> {},
+                        std::array<std::array<std::size_t, 0>, 0> {},
+                        std::array<double, 0> {}),
+                std::make_tuple(
+                        std::array<std::size_t, 0> {},
+                        std::array<std::array<std::size_t, 0>, 0> {},
+                        std::array<double, 0> {}));
+    }
+}
+
+namespace detail {
+
+// Produce tag as a string (std::string features are limited at compile-time that's why we manipulate char arrays)
+template <class Row>
+struct YoungTableauRowToArray;
+
+template <std::size_t... RowElement>
+struct YoungTableauRowToArray<std::index_sequence<RowElement...>>
+{
+    static constexpr auto run()
+    {
+        static constexpr std::array row = {RowElement...};
+        return row;
+    }
+};
+
+template <class TableauSeq>
+struct YoungTableauToArray;
+
+template <class... Row>
+struct YoungTableauToArray<YoungTableauSeq<Row...>>
+{
+    static constexpr auto run()
+    {
+        static constexpr std::tuple tableau = {YoungTableauRowToArray<Row>::run()...};
+        return tableau;
+    }
+};
+
+template <bool RowDelimiter>
+struct RowToString
+{
+    template <std::size_t N>
+    static constexpr std::array<char, 2 * N - !RowDelimiter> run(
+            const std::array<std::size_t, N>& array)
+    {
+        std::array<char, 2 * N - !RowDelimiter> buf = {};
+
+        std::size_t current_pos = 0;
+        for (std::size_t i = 0; i < N; ++i) {
+            char temp[20];
+            auto [ptr, ec] = std::to_chars(temp, temp + sizeof(temp), array[i]);
+            if (ec != std::errc()) {
+                throw std::runtime_error("Failed to convert number to string");
+            }
+
+            for (char* p = temp; p < ptr; ++p) {
+                buf[current_pos++] = *p;
+            }
+
+            if (i < N - 1) {
+                buf[current_pos++] = '_';
+            }
+        }
+
+        if constexpr (RowDelimiter) {
+            buf[2 * N - 1] = 'l';
+        }
+
+        return buf;
+    }
+};
+
+template <std::size_t... sizes>
+constexpr auto concatenate(const std::array<char, sizes>&... arrays)
+{
+    std::array<char, (sizes + ...)> result;
+    std::size_t index {};
+
+    ((std::copy_n(arrays.begin(), sizes, result.begin() + index), index += sizes), ...);
+
+    return result;
+}
+
+template <class RowIdx>
+struct ArrayToString;
+
+template <std::size_t... RowId>
+struct ArrayToString<std::index_sequence<RowId...>>
+{
+    template <class Tuple>
+    static constexpr auto run(Tuple const tableau)
+    {
+        return concatenate(
+                RowToString<RowId != sizeof...(RowId) - 1>::run(std::get<RowId>(tableau))...);
+    }
+};
+
+template <std::size_t size>
+constexpr auto add_dimension(const std::array<char, size>& array, std::size_t d)
+{
+    std::array<char, size + 2> result;
+    char temp[1];
+    std::to_chars(temp, temp + 1, d);
+    std::copy_n(array.begin(), size, result.begin());
+    result[size] = 'd';
+    result[size + 1] = temp[0];
+
+    return result;
+}
+
+} // namespace detail
+
+template <std::size_t Dimension, class TableauSeq>
+constexpr std::string YoungTableau<Dimension, TableauSeq>::generate_tag()
+{
+    static constexpr std::tuple tableau = detail::YoungTableauToArray<tableau_seq>::run();
+    constexpr auto row_str_wo_dimension
+            = detail::ArrayToString<std::make_index_sequence<tableau_seq::shape::size()>>::run(
+                    tableau);
+    constexpr auto row_str = detail::add_dimension(row_str_wo_dimension, s_d);
+    return std::string(row_str.begin(), row_str.end());
 }
 
 namespace detail {
