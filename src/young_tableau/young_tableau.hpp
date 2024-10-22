@@ -791,9 +791,53 @@ private:
 public:
     YoungTableau()
     {
+        // Check if the irrep is available in the dictionnary
+        {
+            std::ifstream file(IRREPS_DICT_PATH, std::ios::out | std::ios::binary);
+            std::string line;
+            while (!file.eof()) {
+                getline(file, line);
+                if (line == s_tag) {
+                    file.close();
+                    if (std::get<2>(s_u).size() == 0) {
+                        std::cout << "\033[1;31mIrrep " << s_tag << " in dimension " << s_d
+                                  << " required and found in dictionnary " << IRREPS_DICT_PATH
+                                  << " but the executable has been compiled without it. Please "
+                                     "recompile.\033[0m"
+                                  << std::endl;
+                    }
+                    return;
+                }
+            }
+        }
+
+        // If the current irrep is not found in the dictionnary, compute and dump it
+        std::cout << "\033[1;31mIrrep " << s_tag << " corresponding to the Young Tableau:\033[0m\n"
+                  << *this << "\n\033[1;31m in dimension " << s_d
+                  << " required but not found in dictionnary " << IRREPS_DICT_PATH
+                  << ". It will be computed, and you will have to recompile once it is done.\033[0m"
+                  << std::endl;
+
         auto [u, v] = detail::OrthonormalBasisSubspaceEigenvalueOne<
                 detail::dummy_index_t<s_d, s_r>>::run(*this);
-        u.write(IRREPS_DICT_PATH, "tag");
+
+        std::ofstream file(IRREPS_DICT_PATH, std::ios::out | std::ios::binary);
+        if (!file) {
+            std::cerr << "Error opening file: " << IRREPS_DICT_PATH << std::endl;
+            return;
+        }
+        file << "\n" << s_tag << "\n";
+        u.write(file);
+        file << "\n";
+        file.close();
+        if (!file.good()) {
+            std::cerr << "Error occurred while writing to file " << IRREPS_DICT_PATH
+                      << " while adding irrep " << s_tag << std::endl;
+        } else {
+            std::cout << "\033[1;32mIrrep " << s_tag << " added to the dictionnary "
+                      << IRREPS_DICT_PATH << ".\033[0m \033[1;31mPlease recompile.\033[0m"
+                      << std::endl;
+        }
     }
 
     static consteval std::size_t dimension()
@@ -816,8 +860,6 @@ public:
 
     template <class... Id>
     static auto projector();
-
-    void print_representation_absent(); // TODO REMOVE
 
     void print_u() const
     {
@@ -1064,16 +1106,6 @@ auto YoungTableau<Dimension, TableauSeq>::projector()
     return std::make_tuple(std::move(proj_alloc), proj);
 }
 
-template <std::size_t Dimension, class TableauSeq>
-void YoungTableau<Dimension, TableauSeq>::print_representation_absent()
-{
-    std::cout << "\033[1;31mThe representations dictionnary does not contain any "
-                 "representation for the Young tableau:\033[0m\n"
-              << *this
-              << "\n\033[1;31min dimension " + std::to_string(s_d)
-                         + ". Please compile with BUILD_COMPUTE_REPRESENTATION=ON and "
-                           "rerun.\033[0m\n";
-}
 template <std::size_t Dimension, class TableauSeq>
 consteval auto YoungTableau<Dimension, TableauSeq>::load_irrep()
 {

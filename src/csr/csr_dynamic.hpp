@@ -115,14 +115,8 @@ public:
                 new_values);
     }
 
-    void write(const std::string& filename, std::string irrep_tag)
+    void write(std::ofstream& file)
     {
-        std::ofstream file(filename, std::ios::out | std::ios::binary);
-        if (!file) {
-            std::cerr << "Error opening file: " << filename << std::endl;
-            return;
-        }
-        file << irrep_tag << "\n";
         file
                 .write(reinterpret_cast<const char*>(coalesc_idx().data()),
                        coalesc_idx().size() * sizeof(std::size_t));
@@ -136,13 +130,7 @@ public:
         file
                 .write(reinterpret_cast<const char*>(values().data()),
                        m_values.size() * sizeof(double));
-        file << "\n\n";
-        file.close();
-        if (!file.good()) {
-            std::cerr << "Error occurred while writing to file: " << filename << std::endl;
-        } else {
-            std::cout << "File written successfully: " << filename << std::endl;
-        }
+        file << "\n";
     }
 };
 
