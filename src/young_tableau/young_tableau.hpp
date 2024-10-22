@@ -669,7 +669,8 @@ struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::FullTensorIndex<Id...>
 };
 
 // Load binary files and build u and v static constexpr Csr at compile-time
-consteval std::string_view load_irrep_as_string(std::string_view const irrep_tag)
+template <std::size_t Line>
+consteval std::string_view load_irrep_line_for_tag(std::string_view const irrep_tag)
 {
     constexpr static char raw[] = {
 #embed IRREPS_DICT_PATH
@@ -683,6 +684,9 @@ consteval std::string_view load_irrep_as_string(std::string_view const irrep_tag
         std::size_t endOfTagLine = str.find('\n', tagPos);
         if (endOfTagLine != std::string::npos) {
             std::size_t nextLineStart = endOfTagLine + 1;
+            for (std::size_t i = 0; i < Line; ++i) {
+                nextLineStart = str.find('\n', nextLineStart) + 1;
+            }
             std::size_t nextLineEnd = str.find('\n', nextLineStart);
 
             return std::string_view(str.data() + nextLineStart, nextLineEnd - nextLineStart);
@@ -692,9 +696,23 @@ consteval std::string_view load_irrep_as_string(std::string_view const irrep_tag
     return "";
 }
 
-template <std::size_t N, std::size_t I = 0>
-consteval std::array<double, N> bit_cast_char_array_to_double_vector(
-        std::array<double, N> vec,
+template <class Ids>
+struct LoadIrrepIdxForTag;
+
+template <std::size_t... I>
+struct LoadIrrepIdxForTag<std::index_sequence<I...>>
+{
+    static consteval std::array<std::string_view, sizeof...(I)> run(
+            std::string_view const irrep_tag)
+    {
+        return std::array<std::string_view, sizeof...(I)> {
+                load_irrep_line_for_tag<I + 1>(irrep_tag)...};
+    }
+};
+
+template <class T, std::size_t N, std::size_t I = 0>
+consteval std::array<T, N> bit_cast_array(
+        std::array<T, N> vec,
         std::string_view const str,
         std::string_view const irrep_tag)
 {
@@ -708,17 +726,17 @@ consteval std::array<double, N> bit_cast_char_array_to_double_vector(
 
         vec[I] = std::bit_cast<double>(
                 chars); // We rely on std::bit_cast because std::reinterprest_cast is not constexpr
-        return bit_cast_char_array_to_double_vector<N, I + 1>(vec, str, irrep_tag);
+        return bit_cast_array<T, N, I + 1>(vec, str, irrep_tag);
     }
 }
 
-template <std::size_t N, std::size_t I = 0>
-consteval std::array<double, N> bit_cast_char_array_to_double_vector(
+template <class T, std::size_t N, std::size_t I = 0>
+consteval std::array<T, N> bit_cast_array(
         std::string_view const str,
         std::string_view const irrep_tag)
 {
-    std::array<double, N> vec {};
-    return bit_cast_char_array_to_double_vector<N>(vec, str, irrep_tag);
+    std::array<T, N> vec {};
+    return bit_cast_array<T, N>(vec, str, irrep_tag);
 }
 
 } // namespace detail
@@ -750,12 +768,17 @@ private:
 
     static consteval auto build_u_values()
     {
-        static constexpr std::string_view str(detail::load_irrep_as_string(s_tag));
+        static constexpr std::string_view str_coalesc_idx(
+                detail::load_irrep_line_for_tag<0>(s_tag));
+        static constexpr std::array<std::string_view, s_r> str_idx(
+                detail::LoadIrrepIdxForTag<std::make_index_sequence<s_r>>::run(s_tag));
+        static constexpr std::string_view str_values(
+                detail::load_irrep_line_for_tag<s_r + 2>(s_tag));
 
-        if constexpr (str.size() != 0) {
-            return detail::bit_cast_char_array_to_double_vector<
-                    str.size() / sizeof(double),
-                    0>(str, s_tag);
+        if constexpr (str_values.size() != 0) {
+            static constexpr std::array array_values = detail::
+                    bit_cast_array<double, str_values.size() / sizeof(double)>(str_values, s_tag);
+            return array_values;
         } else {
             return std::array<double, 0> {};
         }
