@@ -8,8 +8,6 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/math/special_functions/factorials.hpp>
 
-#include "../../vendor/constexpr-to-string/to_string.hpp"
-
 #include "csr.hpp"
 #include "csr_dynamic.hpp"
 #include "tensor_impl.hpp"
