@@ -37,6 +37,25 @@ static constexpr std::size_t stride()
             * ...);
 }
 
+template <class OTensorNaturalIndex, class... TensorNaturalIndex>
+static constexpr std::size_t next_stride()
+{
+    if constexpr (
+            ddc::type_seq_rank_v<
+                    OTensorNaturalIndex,
+                    ddc::detail::TypeSeq<TensorNaturalIndex...>> == 0) {
+        return std::numeric_limits<std::size_t>::max();
+    } else {
+        return (stride_factor<
+                        ddc::type_seq_rank_v<
+                                OTensorNaturalIndex,
+                                ddc::detail::TypeSeq<TensorNaturalIndex...>> - 1,
+                        TensorNaturalIndex,
+                        TensorNaturalIndex...>()
+                * ...);
+    }
+}
+
 } // namespace detail
 
 // struct representing an abstract unique index sweeping on all possible combination of natural indexes, for a full tensor (dense with no particular structure).

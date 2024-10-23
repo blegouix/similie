@@ -44,10 +44,11 @@ private:
     std::array<double, N> m_values;
 
 public:
-    constexpr Csr(ddc::DiscreteDomain<HeadTensorIndex, TailTensorIndex...> domain,
-        std::array<std::size_t, HeadTensorIndex::mem_size() + 1> coalesc_idx,
-        std::array<std::array<std::size_t, N>, sizeof...(TailTensorIndex)> idx,
-        std::array<double, N> values)
+    constexpr Csr(
+            ddc::DiscreteDomain<HeadTensorIndex, TailTensorIndex...> domain,
+            std::array<std::size_t, HeadTensorIndex::mem_size() + 1> coalesc_idx,
+            std::array<std::array<std::size_t, N>, sizeof...(TailTensorIndex)> idx,
+            std::array<double, N> values)
         : m_domain(domain)
         , m_coalesc_idx(coalesc_idx)
         , m_idx(idx)

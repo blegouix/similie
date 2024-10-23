@@ -49,16 +49,18 @@ struct YoungTableauTensorIndex
                 YoungTableauTensorIndex<YoungTableau, TensorIndex...>,
                 TensorIndex...>(ddc::DiscreteDomain<TensorIndex...>(
                 ddc::DiscreteElement<TensorIndex...>(ddc::DiscreteElement<TensorIndex>(0)...),
-                ddc::DiscreteVector<TensorIndex...>(ddc::DiscreteVector<TensorIndex>(TensorIndex::size())...)));
+                ddc::DiscreteVector<TensorIndex...>(
+                        ddc::DiscreteVector<TensorIndex>(TensorIndex::size())...)));
         for (std::size_t j = 0; j < v.values().size(); ++j) {
-            if (((v.idx()[ddc::type_seq_rank_v<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>>][j]
-                 == TensorIndex::template access_id<ddc::type_seq_element_t<
-                         ddc::type_seq_rank_v<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>>,
-                         ddc::detail::TypeSeq<CDim...>>>()) && ...)) {
+            if (((v.idx()[ddc::type_seq_rank_v<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>>]
+                         [j]
+                  == TensorIndex::template access_id<ddc::type_seq_element_t<
+                          ddc::type_seq_rank_v<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>>,
+                          ddc::detail::TypeSeq<CDim...>>>())
+                 && ...)) {
                 std::get<0>(result).push_back(v.values()[j]);
                 std::size_t k = 0;
-                while (k < v.coalesc_idx().size() - 1
-                       && v.coalesc_idx()[k + 1] < j) {
+                while (k < v.coalesc_idx().size() - 1 && v.coalesc_idx()[k + 1] <= j) {
                     k++;
                 }
                 std::get<1>(result).push_back(k);
@@ -83,15 +85,17 @@ struct YoungTableauTensorIndex
                 YoungTableauTensorIndex<YoungTableau, TensorIndex...>,
                 TensorIndex...>(ddc::DiscreteDomain<TensorIndex...>(
                 ddc::DiscreteElement<TensorIndex...>(ddc::DiscreteElement<TensorIndex>(0)...),
-                ddc::DiscreteVector<TensorIndex...>(ddc::DiscreteVector<TensorIndex>(TensorIndex::size())...)));
+                ddc::DiscreteVector<TensorIndex...>(
+                        ddc::DiscreteVector<TensorIndex>(TensorIndex::size())...)));
         for (std::size_t j = 0; j < v.values().size(); ++j) {
-            if (((v.idx()[ddc::type_seq_rank_v<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>>][j]
-                 == access_id / detail::stride<TensorIndex, TensorIndex...>())
-                && ...)) {
+            if (((v.idx()[ddc::type_seq_rank_v<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>>]
+                         [j]
+                  == ((access_id % detail::next_stride<TensorIndex, TensorIndex...>())
+                      / detail::stride<TensorIndex, TensorIndex...>()))
+                 && ...)) {
                 std::get<0>(result).push_back(v.values()[j]);
                 std::size_t k = 0;
-                while (k < v.coalesc_idx().size() - 1
-                       && v.coalesc_idx()[k + 1] < j) {
+                while (k < v.coalesc_idx().size() - 1 && v.coalesc_idx()[k + 1] <= j) {
                     k++;
                 }
                 std::get<1>(result).push_back(k);
