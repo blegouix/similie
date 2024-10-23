@@ -9,4 +9,5 @@
 #include "identity_tensor.hpp"
 #include "symmetric_tensor.hpp"
 #include "tensor_impl.hpp"
+#include "tensor_prod.hpp"
 #include "young_tableau_tensor.hpp"
