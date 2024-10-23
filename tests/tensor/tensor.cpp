@@ -536,6 +536,38 @@ TEST(Tensor, YoungTableauIndexing)
 
     sil::tensor::compress(tensor, natural);
 
+    std::cout << tensor_accessor.element<X, X, X>();    
+    std::cout << tensor_accessor.element<X, X, Y>();
+    std::cout << tensor_accessor.element<X, X, Z>();
+    std::cout << tensor_accessor.element<X, Y, X>();
+    EXPECT_EQ(tensor.get(tensor_accessor.element<X, X, X>()), 0.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<X, X, Y>()), 1.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<X, X, Z>()), 2.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<X, Y, X>()), 1.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<X, Y, Y>()), 3.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<X, Y, Z>()), 4.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<X, Z, X>()), 2.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<X, Z, Y>()), 4.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<X, Z, Z>()), 5.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, X, X>()), 1.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, X, Y>()), 3.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, X, Z>()), 4.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, Y, X>()), 3.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, Y, Y>()), 6.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, Y, Z>()), 7.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, Z, X>()), 4.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, Z, Y>()), 7.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, Z, Z>()), 8.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, X, X>()), 2.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, X, Y>()), 4.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, X, Z>()), 5.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Y, X>()), 4.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Y, Y>()), 7.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Y, Z>()), 8.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Z, X>()), 5.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Z, Y>()), 8.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Z, Z>()), 9.);
+
     ddc::Chunk uncompressed_alloc(natural_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,

@@ -5,6 +5,8 @@
 
 #include <ddc/ddc.hpp>
 
+#include "csr.hpp"
+#include "full_tensor.hpp"
 #include "tensor.hpp"
 #include "young_tableau.hpp"
 
@@ -35,44 +37,76 @@ struct YoungTableauTensorIndex
 
     static constexpr std::size_t access_size()
     {
-        return mem_size() + 1;
+        return size();
     }
 
     template <class... CDim>
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id()
     {
         // static_assert(rank() == sizeof...(CDim));
-        return std::pair<
-                std::vector<double>,
-                std::vector<std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {0});
+        std::pair<std::vector<double>, std::vector<std::size_t>> result {};
+        constexpr sil::csr::Csr v = young_tableau::template v<
+                YoungTableauTensorIndex<YoungTableau, TensorIndex...>,
+                TensorIndex...>(ddc::DiscreteDomain<TensorIndex...>(
+                ddc::DiscreteElement<TensorIndex...>(ddc::DiscreteElement<TensorIndex>(0)...),
+                ddc::DiscreteVector<TensorIndex...>(ddc::DiscreteVector<TensorIndex>(TensorIndex::size())...)));
+        for (std::size_t j = 0; j < v.values().size(); ++j) {
+            if (((v.idx()[ddc::type_seq_rank_v<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>>][j]
+                 == TensorIndex::template access_id<ddc::type_seq_element_t<
+                         ddc::type_seq_rank_v<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>>,
+                         ddc::detail::TypeSeq<CDim...>>>()) && ...)) {
+                std::get<0>(result).push_back(v.values()[j]);
+                std::size_t k = 0;
+                while (k < v.coalesc_idx().size() - 1
+                       && v.coalesc_idx()[k + 1] < j) {
+                    k++;
+                }
+                std::get<1>(result).push_back(k);
+            }
+        }
+        return result;
     }
 
     template <class... CDim>
     static constexpr std::size_t access_id()
     {
-        return std::get<1>(mem_id<CDim...>())[0];
+        return ((detail::stride<TensorIndex, TensorIndex...>()
+                 * detail::access_id<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>, CDim...>())
+                + ...);
     }
 
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> access_id_to_mem_id(
             std::size_t access_id)
     {
-        return std::pair<
-                std::vector<double>,
-                std::vector<
-                        std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {access_id});
+        std::pair<std::vector<double>, std::vector<std::size_t>> result {};
+        constexpr sil::csr::Csr v = young_tableau::template v<
+                YoungTableauTensorIndex<YoungTableau, TensorIndex...>,
+                TensorIndex...>(ddc::DiscreteDomain<TensorIndex...>(
+                ddc::DiscreteElement<TensorIndex...>(ddc::DiscreteElement<TensorIndex>(0)...),
+                ddc::DiscreteVector<TensorIndex...>(ddc::DiscreteVector<TensorIndex>(TensorIndex::size())...)));
+        for (std::size_t j = 0; j < v.values().size(); ++j) {
+            if (((v.idx()[ddc::type_seq_rank_v<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>>][j]
+                 == access_id / detail::stride<TensorIndex, TensorIndex...>())
+                && ...)) {
+                std::get<0>(result).push_back(v.values()[j]);
+                std::size_t k = 0;
+                while (k < v.coalesc_idx().size() - 1
+                       && v.coalesc_idx()[k + 1] < j) {
+                    k++;
+                }
+                std::get<1>(result).push_back(k);
+            }
+        }
+        return result;
     }
 
     template <class Tensor, class Elem, class Id>
     static constexpr Tensor::element_type process_access(
             std::function<typename Tensor::element_type(Tensor, Elem)> access,
             Tensor tensor,
-            Elem elem)
+            Elem const elem)
     {
-        if (elem.template uid<Id>() == 0) {
-            return 0.;
-        } else {
-            return access(tensor, elem);
-        }
+        return access(tensor, elem);
     }
 };
 

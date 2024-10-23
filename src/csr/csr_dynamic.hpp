@@ -49,17 +49,17 @@ public:
         return m_domain;
     }
 
-    std::vector<std::size_t> coalesc_idx()
+    constexpr std::vector<std::size_t> coalesc_idx() const
     {
         return m_coalesc_idx;
     }
 
-    std::array<std::vector<std::size_t>, sizeof...(TailTensorIndex)> idx()
+    constexpr std::array<std::vector<std::size_t>, sizeof...(TailTensorIndex)> idx() const
     {
         return m_idx;
     }
 
-    std::vector<double> values()
+    constexpr std::vector<double> values() const
     {
         return m_values;
     }

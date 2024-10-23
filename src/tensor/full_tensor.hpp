@@ -69,19 +69,15 @@ struct FullTensorIndex
         //static_assert(rank() == sizeof...(CDim));
         return std::pair<std::vector<double>, std::vector<std::size_t>>(
                 std::vector<double> {},
-                std::vector<std::size_t> {
-                        ((detail::stride<TensorIndex, TensorIndex...>()
-                          * detail::access_id<
-                                  TensorIndex,
-                                  ddc::detail::TypeSeq<TensorIndex...>,
-                                  CDim...>())
-                         + ...)});
+                std::vector<std::size_t> {access_id<CDim...>()});
     }
 
     template <class... CDim>
     static constexpr std::size_t access_id()
     {
-        return std::get<1>(mem_id<CDim...>())[0];
+        return ((detail::stride<TensorIndex, TensorIndex...>()
+                 * detail::access_id<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>, CDim...>())
+                + ...);
     }
 
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> access_id_to_mem_id(

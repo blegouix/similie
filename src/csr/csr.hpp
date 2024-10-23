@@ -44,7 +44,7 @@ private:
     std::array<double, N> m_values;
 
 public:
-    Csr(ddc::DiscreteDomain<HeadTensorIndex, TailTensorIndex...> domain,
+    constexpr Csr(ddc::DiscreteDomain<HeadTensorIndex, TailTensorIndex...> domain,
         std::array<std::size_t, HeadTensorIndex::mem_size() + 1> coalesc_idx,
         std::array<std::array<std::size_t, N>, sizeof...(TailTensorIndex)> idx,
         std::array<double, N> values)
@@ -71,17 +71,17 @@ public:
         return m_domain;
     }
 
-    std::array<std::size_t, HeadTensorIndex::mem_size() + 1> coalesc_idx()
+    constexpr std::array<std::size_t, HeadTensorIndex::mem_size() + 1> coalesc_idx() const
     {
         return m_coalesc_idx;
     }
 
-    std::array<std::array<std::size_t, N>, sizeof...(TailTensorIndex)> idx()
+    constexpr std::array<std::array<std::size_t, N>, sizeof...(TailTensorIndex)> idx() const
     {
         return m_idx;
     }
 
-    std::array<double, N> values()
+    constexpr std::array<double, N> values() const
     {
         return m_values;
     }
@@ -112,7 +112,7 @@ tensor_prod(
     ddc::parallel_fill(prod, 0.);
     for (std::size_t i = 0; i < csr.coalesc_idx().size() - 1;
          ++i) { // TODO base on iterator ? Kokkosify ?
-        double const dense_value = dense(ddc::DiscreteElement<HeadTensorIndex>(i));
+        double const dense_value = dense.mem(ddc::DiscreteElement<HeadTensorIndex>(i));
         std::size_t const j_begin = csr.coalesc_idx()[i];
         std::size_t const j_end = csr.coalesc_idx()[i + 1];
         Kokkos::parallel_for(
@@ -165,7 +165,7 @@ tensor_prod(
                                     ddc::detail::TypeSeq<TailTensorIndex...>>][j]...));
                     lsum += dense_value * csr.values()[j];
                 },
-                prod(ddc::DiscreteElement<HeadTensorIndex>(i)));
+                prod.mem(ddc::DiscreteElement<HeadTensorIndex>(i)));
     }
     return prod;
 }
