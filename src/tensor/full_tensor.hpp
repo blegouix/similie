@@ -5,58 +5,12 @@
 
 #include <ddc/ddc.hpp>
 
+#include "stride.hpp"
 #include "tensor.hpp"
 
 namespace sil {
 
 namespace tensor {
-
-// Helpers to compute the strides of a right layout. This is necessary to support non-squared full tensors.
-namespace detail {
-template <std::size_t max_rank, class OTensorNaturalIndex, class... TensorNaturalIndex>
-static constexpr std::size_t stride_factor()
-{
-    if constexpr (
-            ddc::type_seq_rank_v < OTensorNaturalIndex,
-            ddc::detail::TypeSeq < TensorNaturalIndex... >>> max_rank) {
-        return OTensorNaturalIndex::mem_size();
-    } else {
-        return 1;
-    }
-}
-
-template <class OTensorNaturalIndex, class... TensorNaturalIndex>
-static constexpr std::size_t stride()
-{
-    return (stride_factor<
-                    ddc::type_seq_rank_v<
-                            OTensorNaturalIndex,
-                            ddc::detail::TypeSeq<TensorNaturalIndex...>>,
-                    TensorNaturalIndex,
-                    TensorNaturalIndex...>()
-            * ...);
-}
-
-template <class OTensorNaturalIndex, class... TensorNaturalIndex>
-static constexpr std::size_t next_stride()
-{
-    if constexpr (
-            ddc::type_seq_rank_v<
-                    OTensorNaturalIndex,
-                    ddc::detail::TypeSeq<TensorNaturalIndex...>> == 0) {
-        return std::numeric_limits<std::size_t>::max();
-    } else {
-        return (stride_factor<
-                        ddc::type_seq_rank_v<
-                                OTensorNaturalIndex,
-                                ddc::detail::TypeSeq<TensorNaturalIndex...>> - 1,
-                        TensorNaturalIndex,
-                        TensorNaturalIndex...>()
-                * ...);
-    }
-}
-
-} // namespace detail
 
 // struct representing an abstract unique index sweeping on all possible combination of natural indexes, for a full tensor (dense with no particular structure).
 template <class... TensorIndex>
@@ -94,7 +48,7 @@ struct FullTensorIndex
     template <class... CDim>
     static constexpr std::size_t access_id()
     {
-        return ((detail::stride<TensorIndex, TensorIndex...>()
+        return ((sil::misc::detail::stride<TensorIndex, TensorIndex...>()
                  * detail::access_id<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>, CDim...>())
                 + ...);
     }

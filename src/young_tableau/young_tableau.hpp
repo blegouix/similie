@@ -10,6 +10,7 @@
 
 #include "csr.hpp"
 #include "csr_dynamic.hpp"
+#include "stride.hpp"
 #include "tensor_impl.hpp"
 
 namespace sil {
@@ -712,8 +713,7 @@ struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::FullTensorIndex<Id...>
 
             ddc::parallel_for_each(candidate.domain(), [&](ddc::DiscreteElement<Id...> elem) {
                 candidate(elem) = hamming_weight_code[(
-                        (sil::tensor::detail::stride<Id, Id...>() * elem.template uid<Id>())
-                        + ...)];
+                        (sil::misc::detail::stride<Id, Id...>() * elem.template uid<Id>()) + ...)];
             });
 
             sil::tensor::tensor_prod(prod, proj, candidate);

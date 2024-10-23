@@ -3,5 +3,6 @@
 
 add_subdirectory(csr)
 add_subdirectory(mesher)
+add_subdirectory(misc)
 add_subdirectory(tensor)
 add_subdirectory(young_tableau)

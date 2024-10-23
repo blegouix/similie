@@ -72,7 +72,7 @@ struct YoungTableauTensorIndex
     template <class... CDim>
     static constexpr std::size_t access_id()
     {
-        return ((detail::stride<TensorIndex, TensorIndex...>()
+        return ((sil::misc::detail::stride<TensorIndex, TensorIndex...>()
                  * detail::access_id<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>, CDim...>())
                 + ...);
     }
@@ -90,8 +90,8 @@ struct YoungTableauTensorIndex
         for (std::size_t j = 0; j < v.values().size(); ++j) {
             if (((v.idx()[ddc::type_seq_rank_v<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>>]
                          [j]
-                  == ((access_id % detail::next_stride<TensorIndex, TensorIndex...>())
-                      / detail::stride<TensorIndex, TensorIndex...>()))
+                  == ((access_id % sil::misc::detail::next_stride<TensorIndex, TensorIndex...>())
+                      / sil::misc::detail::stride<TensorIndex, TensorIndex...>()))
                  && ...)) {
                 std::get<0>(result).push_back(v.values()[j]);
                 std::size_t k = 0;
