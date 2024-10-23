@@ -86,6 +86,55 @@ struct IsTensorIndex<YoungTableauTensorIndex<YoungTableau, SubIndex...>>
 
 } // namespace detail
 
+// Compress & uncompress (multiply by young_tableau.u or young_tableau.v
+template <class YoungTableauIndex, class... Id>
+sil::tensor::Tensor<
+        double,
+        ddc::DiscreteDomain<YoungTableauIndex>,
+        std::experimental::layout_right,
+        Kokkos::DefaultHostExecutionSpace::memory_space>
+compress(
+        sil::tensor::Tensor<
+                double,
+                ddc::DiscreteDomain<YoungTableauIndex>,
+                std::experimental::layout_right,
+                Kokkos::DefaultHostExecutionSpace::memory_space> compressed,
+        sil::tensor::Tensor<
+                double,
+                ddc::DiscreteDomain<Id...>,
+                std::experimental::layout_right,
+                Kokkos::DefaultHostExecutionSpace::memory_space> tensor)
+{
+    typename YoungTableauIndex::young_tableau young_tableau;
+    sil::csr::Csr u = young_tableau.template u<YoungTableauIndex, Id...>(tensor.domain());
+
+    return sil::csr::tensor_prod(compressed, u, tensor);
+}
+
+template <class YoungTableauIndex, class... Id>
+sil::tensor::Tensor<
+        double,
+        ddc::DiscreteDomain<Id...>,
+        std::experimental::layout_right,
+        Kokkos::DefaultHostExecutionSpace::memory_space>
+uncompress(
+        sil::tensor::Tensor<
+                double,
+                ddc::DiscreteDomain<Id...>,
+                std::experimental::layout_right,
+                Kokkos::DefaultHostExecutionSpace::memory_space> uncompressed,
+        sil::tensor::Tensor<
+                double,
+                ddc::DiscreteDomain<YoungTableauIndex>,
+                std::experimental::layout_right,
+                Kokkos::DefaultHostExecutionSpace::memory_space> tensor)
+{
+    typename YoungTableauIndex::young_tableau young_tableau;
+    sil::csr::Csr v = young_tableau.template v<YoungTableauIndex, Id...>(uncompressed.domain());
+
+    return sil::csr::tensor_prod(uncompressed, tensor, v);
+}
+
 } // namespace tensor
 
 } // namespace sil

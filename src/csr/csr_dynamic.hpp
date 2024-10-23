@@ -120,17 +120,17 @@ public:
         file
                 .write(reinterpret_cast<const char*>(coalesc_idx().data()),
                        coalesc_idx().size() * sizeof(std::size_t));
-        file << "\n";
+        file << "break\n";
         for (std::size_t i = 0; i < sizeof...(TailTensorIndex); ++i) {
             file
                     .write(reinterpret_cast<const char*>(idx()[i].data()),
                            idx()[i].size() * sizeof(std::size_t));
-            file << "\n";
+            file << "break\n";
         }
         file
                 .write(reinterpret_cast<const char*>(values().data()),
                        m_values.size() * sizeof(double));
-        file << "\n";
+        file << "break\n";
     }
 };
 

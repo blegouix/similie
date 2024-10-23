@@ -39,13 +39,13 @@ class Csr
 {
 private:
     ddc::DiscreteDomain<HeadTensorIndex, TailTensorIndex...> m_domain;
-    std::array<std::size_t, HeadTensorIndex::size() + 1> m_coalesc_idx;
+    std::array<std::size_t, HeadTensorIndex::mem_size() + 1> m_coalesc_idx;
     std::array<std::array<std::size_t, N>, sizeof...(TailTensorIndex)> m_idx;
     std::array<double, N> m_values;
 
 public:
     Csr(ddc::DiscreteDomain<HeadTensorIndex, TailTensorIndex...> domain,
-        std::array<std::size_t, HeadTensorIndex::size() + 1> coalesc_idx,
+        std::array<std::size_t, HeadTensorIndex::mem_size() + 1> coalesc_idx,
         std::array<std::array<std::size_t, N>, sizeof...(TailTensorIndex)> idx,
         std::array<double, N> values)
         : m_domain(domain)
@@ -59,7 +59,7 @@ public:
     {
         std::
                 copy_n(csr_dyn.coalesc_idx().begin(),
-                       HeadTensorIndex::size() + 1,
+                       HeadTensorIndex::mem_size() + 1,
                        m_coalesc_idx.begin());
         detail::ArrayOfVectorsToArrayOfArrays<
                 std::make_index_sequence<sizeof...(TailTensorIndex)>>::run(m_idx, csr_dyn.idx());
@@ -71,7 +71,7 @@ public:
         return m_domain;
     }
 
-    std::array<std::size_t, HeadTensorIndex::size() + 1> coalesc_idx()
+    std::array<std::size_t, HeadTensorIndex::mem_size() + 1> coalesc_idx()
     {
         return m_coalesc_idx;
     }
