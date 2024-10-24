@@ -181,6 +181,40 @@ TEST(Tensor, IdentityTensorIndexing)
     EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Z>()), 1.);
 }
 
+struct LorentzianSignIndex : sil::tensor::LorentzianSignTensorIndex<2, Mu, Nu>
+{
+};
+
+TEST(Tensor, LorentzianSignTensorIndexing)
+{
+    sil::tensor::TensorAccessor<LorentzianSignIndex> tensor_accessor;
+    ddc::DiscreteDomain<LorentzianSignIndex> tensor_dom = tensor_accessor.mem_domain();
+    ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor<
+            double,
+            ddc::DiscreteDomain<LorentzianSignIndex>,
+            std::experimental::layout_right,
+            Kokkos::DefaultHostExecutionSpace::memory_space>
+            tensor(tensor_alloc);
+
+    EXPECT_EQ(tensor.get(tensor_accessor.element<T, T>()), -1.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<T, X>()), 0.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<T, Y>()), 0.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<T, Z>()), 0.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<X, T>()), 0.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<X, X>()), -1.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<X, Y>()), 0.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<X, Z>()), 0.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, T>()), 0.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, X>()), 0.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, Y>()), 1.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Y, Z>()), 0.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, T>()), 0.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, X>()), 0.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Y>()), 0.);
+    EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Z>()), 1.);
+}
+
 struct DiagIndex : sil::tensor::DiagonalTensorIndex<Mu, Nu>
 {
 };
