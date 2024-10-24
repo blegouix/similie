@@ -12,67 +12,6 @@ namespace sil {
 namespace tensor {
 
 namespace detail {
-/*
-// Domain of a tensor result of product between two tensors
-template <class Dom1, class Dom2>
-struct NaturalTensorProdDomain;
-
-template <class... DDim1, class... DDim2>
-struct NaturalTensorProdDomain<ddc::DiscreteDomain<DDim1...>, ddc::DiscreteDomain<DDim2...>>
-{
-    using type = ddc::detail::convert_type_seq_to_discrete_domain_t<ddc::type_seq_merge_t<
-            ddc::type_seq_remove_t<ddc::detail::TypeSeq<DDim1...>, ddc::detail::TypeSeq<DDim2...>>,
-            ddc::type_seq_remove_t<
-                    ddc::detail::TypeSeq<DDim2...>,
-                    ddc::detail::TypeSeq<DDim1...>>>>;
-};
-
-} // namespace detail
-
-template <class Dom1, class Dom2>
-using natural_tensor_prod_domain_t = detail::NaturalTensorProdDomain<Dom1, Dom2>::type;
-
-template <class Tensor1, class Tensor2>
-natural_tensor_prod_domain_t<
-        typename Tensor1::discrete_domain_type,
-        typename Tensor2::discrete_domain_type>
-natural_tensor_prod_domain(Tensor1 tensor1, Tensor2 tensor2)
-{
-    return natural_tensor_prod_domain_t<
-            typename Tensor1::discrete_domain_type,
-            typename Tensor2::discrete_domain_type>(tensor1.domain(), tensor2.domain());
-}
-
-// Domain of a tensor result of product between two tensors
-template <class T>
-struct DomainFromSubindexes;
-
-template <class... Subindex>
-struct DomainFromSubindexes<ddc::DiscreteDomain<DDim1...>, ddc::DiscreteDomain<DDim2...>>
-{
-    using type = ddc::detail::convert_type_seq_to_discrete_domain_t<ddc::type_seq_merge_t<
-            ddc::type_seq_remove_t<ddc::detail::TypeSeq<DDim1...>, ddc::detail::TypeSeq<DDim2...>>,
-            ddc::type_seq_remove_t<
-                    ddc::detail::TypeSeq<DDim2...>,
-                    ddc::detail::TypeSeq<DDim1...>>>>;
-};
-
-} // namespace detail
-
-template <class Dom1, class Dom2>
-using natural_tensor_prod_domain_t = detail::NaturalTensorProdDomain<Dom1, Dom2>::type;
-
-template <class Tensor1, class Tensor2>
-natural_tensor_prod_domain_t<
-        typename Tensor1::discrete_domain_type,
-        typename Tensor2::discrete_domain_type>
-natural_tensor_prod_domain(Tensor1 tensor1, Tensor2 tensor2)
-{
-    return natural_tensor_prod_domain_t<
-            typename Tensor1::discrete_domain_type,
-            typename Tensor2::discrete_domain_type>(tensor1.domain(), tensor2.domain());
-}
-*/
 
 template <class Index>
 struct SubindexesDomain;
