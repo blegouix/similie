@@ -1059,7 +1059,6 @@ template <class BasisId, class... Id>
 constexpr sil::csr::Csr<YoungTableau<Dimension, TableauSeq>::n_nonzeros_in_irrep(), BasisId, Id...>
 YoungTableau<Dimension, TableauSeq>::u(ddc::DiscreteDomain<Id...> restricted_domain)
 {
-    // static_assert(n_nonzeros_in_irrep() != 0);
     if constexpr (n_nonzeros_in_irrep() != 0) {
         ddc::DiscreteDomain<BasisId, Id...>
                 domain(ddc::DiscreteDomain<BasisId>(
@@ -1092,7 +1091,6 @@ template <class BasisId, class... Id>
 constexpr sil::csr::Csr<YoungTableau<Dimension, TableauSeq>::n_nonzeros_in_irrep(), BasisId, Id...>
 YoungTableau<Dimension, TableauSeq>::v(ddc::DiscreteDomain<Id...> restricted_domain)
 {
-    // static_assert(n_nonzeros_in_irrep() != 0);
     if constexpr (n_nonzeros_in_irrep() != 0) {
         ddc::DiscreteDomain<BasisId, Id...>
                 domain(ddc::DiscreteDomain<BasisId>(
