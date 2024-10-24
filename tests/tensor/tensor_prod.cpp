@@ -355,20 +355,15 @@ TEST(TensorProd, DoubleContractionYoungIndexedxNaturalIndex)
             Kokkos::DefaultHostExecutionSpace::memory_space>
             prod_tensor(prod_tensor_alloc);
 
-    // sil::tensor::tensor_prod(prod_tensor, tensor1, tensor2);
-    sil::tensor::detail::TensorProd<
-            typename YoungTableauIndex::young_tableau,
-            ddc::detail::TypeSeq<Alpha>,
-            ddc::detail::TypeSeq<Beta, Gamma>,
-            ddc::detail::TypeSeq<Delta>>::run(prod_tensor, tensor1, tensor2);
+    sil::tensor::tensor_prod(prod_tensor, tensor1, tensor2);
 
-    EXPECT_EQ(prod_tensor.get(prod_tensor_accessor.element<X, X>()), 612.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor_accessor.element<X, Y>()), 648.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor_accessor.element<X, Z>()), 684.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor_accessor.element<Y, X>()), 1584.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor_accessor.element<Y, Y>()), 1701.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor_accessor.element<Y, Z>()), 1818.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor_accessor.element<Z, X>()), 2556.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor_accessor.element<Z, Y>()), 2754.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor_accessor.element<Z, Z>()), 2952.);
+    EXPECT_DOUBLE_EQ(prod_tensor.get(prod_tensor_accessor.element<X, X>()), 360.);
+    EXPECT_DOUBLE_EQ(prod_tensor.get(prod_tensor_accessor.element<X, Y>()), 382.);
+    EXPECT_DOUBLE_EQ(prod_tensor.get(prod_tensor_accessor.element<X, Z>()), 404.);
+    EXPECT_DOUBLE_EQ(prod_tensor.get(prod_tensor_accessor.element<Y, X>()), 648.);
+    EXPECT_DOUBLE_EQ(prod_tensor.get(prod_tensor_accessor.element<Y, Y>()), 691.);
+    EXPECT_DOUBLE_EQ(prod_tensor.get(prod_tensor_accessor.element<Y, Z>()), 734.);
+    EXPECT_DOUBLE_EQ(prod_tensor.get(prod_tensor_accessor.element<Z, X>()), 756.);
+    EXPECT_DOUBLE_EQ(prod_tensor.get(prod_tensor_accessor.element<Z, Y>()), 808.);
+    EXPECT_DOUBLE_EQ(prod_tensor.get(prod_tensor_accessor.element<Z, Z>()), 860.);
 }
