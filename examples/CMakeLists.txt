@@ -9,3 +9,11 @@ target_link_libraries(sketch
         sil::mesher
         sil::tensor
 )
+
+add_executable(riemann_contraction riemann_contraction.cpp)
+
+target_link_libraries(riemann_contraction
+    PUBLIC
+        DDC::DDC
+        sil::tensor
+)

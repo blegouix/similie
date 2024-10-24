@@ -751,7 +751,7 @@ struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::FullTensorIndex<Id...>
                 std::cout << n_irreps << "/" << tableau.irrep_dim()
                           << " eigentensors found associated to the eigenvalue 1 for the Young "
                              "projector labelized "
-                          << tableau.tag() << "\n";
+                          << tableau.tag() << std::endl;
             }
         }
         return std::pair<
@@ -787,7 +787,7 @@ YoungTableau<Dimension, TableauSeq>::YoungTableau()
 
     // If the current irrep is not found in the dictionnary, compute and dump it
     std::cout << "\033[1;31mIrrep " << s_tag << " corresponding to the Young Tableau:\033[0m\n"
-              << *this << "\n\033[1;31m in dimension " << s_d
+              << *this << "\n\033[1;31min dimension " << s_d
               << " required but not found in dictionnary " << IRREPS_DICT_PATH
               << ". It will be computed, and you will have to recompile once it is done.\033[0m"
               << std::endl;
