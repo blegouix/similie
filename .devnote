@@ -1,6 +1,8 @@
 ----- This file contains personal notes to keep track of ideas, TODO or previous chunks of code which has been removed but could be useful in different context -----
 ----- Not supposed to be read by anyone other than me -----
 
+cmake -DCMAKE_CXX_COMPILER=clang++-19 -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-Wfatal-errors" ..
+
 // Extract Elem from a row of YoungTableauSeq at index J
 template <std::size_t J, std::size_t Id, class Row>
 struct ExtractElem;

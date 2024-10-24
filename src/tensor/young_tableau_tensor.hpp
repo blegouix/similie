@@ -6,7 +6,7 @@
 #include <ddc/ddc.hpp>
 
 #include "csr.hpp"
-#include "full_tensor.hpp"
+#include "stride.hpp"
 #include "tensor.hpp"
 #include "young_tableau.hpp"
 

@@ -600,8 +600,10 @@ orthogonalize(
                 std::experimental::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 scalar_prod(scalar_prod_alloc);
-        sil::tensor::
-                tensor_prod(scalar_prod, tensor, eigentensor[ddc::DiscreteElement<BasisId>(0)]);
+        sil::tensor::natural_tensor_prod(
+                scalar_prod,
+                tensor,
+                eigentensor[ddc::DiscreteElement<BasisId>(0)]);
         ddc::Chunk norm_squared_alloc(ddc::DiscreteDomain<> {}, ddc::HostAllocator<double>());
         sil::tensor::Tensor<
                 double,
@@ -609,7 +611,7 @@ orthogonalize(
                 std::experimental::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 norm_squared(norm_squared_alloc);
-        sil::tensor::tensor_prod(norm_squared, eigentensor, eigentensor);
+        sil::tensor::natural_tensor_prod(norm_squared, eigentensor, eigentensor);
 
         eigentensor *= -1. * scalar_prod(ddc::DiscreteElement<>())
                        / norm_squared(ddc::DiscreteElement<>());
@@ -686,11 +688,11 @@ struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::FullTensorIndex<Id...>
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 candidate(candidate_alloc);
         ddc::Chunk prod_alloc(
-                sil::tensor::tensor_prod_domain(proj, candidate),
+                sil::tensor::natural_tensor_prod_domain(proj, candidate),
                 ddc::HostAllocator<double>());
         sil::tensor::Tensor<
                 double,
-                sil::tensor::tensor_prod_domain_t<
+                sil::tensor::natural_tensor_prod_domain_t<
                         typename YoungTableau::template projector_domain<Id...>,
                         ddc::DiscreteDomain<Id...>>,
                 std::experimental::layout_right,
@@ -716,7 +718,7 @@ struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::FullTensorIndex<Id...>
                         (sil::misc::detail::stride<Id, Id...>() * elem.template uid<Id>()) + ...)];
             });
 
-            sil::tensor::tensor_prod(prod, proj, candidate);
+            sil::tensor::natural_tensor_prod(prod, proj, candidate);
             Kokkos::deep_copy(
                     candidate.allocation_kokkos_view(),
                     prod.allocation_kokkos_view()); // We rely on Kokkos::deep_copy in place of ddc::parallel_deepcopy to avoid type verification of the type dimensions
@@ -738,7 +740,7 @@ struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::FullTensorIndex<Id...>
                         std::experimental::layout_right,
                         Kokkos::DefaultHostExecutionSpace::memory_space>
                         norm_squared(norm_squared_alloc);
-                sil::tensor::tensor_prod(norm_squared, candidate, candidate);
+                sil::tensor::natural_tensor_prod(norm_squared, candidate, candidate);
                 ddc::parallel_for_each(candidate.domain(), [&](ddc::DiscreteElement<Id...> elem) {
                     candidate(elem) /= Kokkos::sqrt(norm_squared(ddc::DiscreteElement<>()));
                 });
@@ -996,16 +998,17 @@ struct Projector<
             }
 
             // Extract the symmetric part (for the row) of the projector (requires an intermediate prod tensor)
-            ddc::Chunk prod_alloc(tensor_prod_domain(sym, proj), ddc::HostAllocator<double>());
+            ddc::Chunk
+                    prod_alloc(natural_tensor_prod_domain(sym, proj), ddc::HostAllocator<double>());
             sil::tensor::Tensor<
                     double,
-                    sil::tensor::tensor_prod_domain_t<
+                    sil::tensor::natural_tensor_prod_domain_t<
                             ddc::DiscreteDomain<symmetrizer_index_t<Id, Id...>...>,
                             ddc::DiscreteDomain<Id...>>,
                     std::experimental::layout_right,
                     Kokkos::DefaultHostExecutionSpace::memory_space>
                     prod(prod_alloc);
-            sil::tensor::tensor_prod(prod, sym, proj);
+            sil::tensor::natural_tensor_prod(prod, sym, proj);
             Kokkos::deep_copy(
                     proj.allocation_kokkos_view(),
                     prod.allocation_kokkos_view()); // We rely on Kokkos::deep_copy in place of ddc::parallel_deepcopy to avoid type verification of the type dimensions
@@ -1056,18 +1059,32 @@ template <class BasisId, class... Id>
 constexpr sil::csr::Csr<YoungTableau<Dimension, TableauSeq>::n_nonzeros_in_irrep(), BasisId, Id...>
 YoungTableau<Dimension, TableauSeq>::u(ddc::DiscreteDomain<Id...> restricted_domain)
 {
-    static_assert(n_nonzeros_in_irrep() != 0);
-    ddc::DiscreteDomain<BasisId, Id...>
-            domain(ddc::DiscreteDomain<BasisId>(
-                           ddc::DiscreteElement<BasisId>(0),
-                           ddc::DiscreteVector<BasisId>(n_nonzeros_in_irrep())),
-                   restricted_domain);
+    // static_assert(n_nonzeros_in_irrep() != 0);
+    if constexpr (n_nonzeros_in_irrep() != 0) {
+        ddc::DiscreteDomain<BasisId, Id...>
+                domain(ddc::DiscreteDomain<BasisId>(
+                               ddc::DiscreteElement<BasisId>(0),
+                               ddc::DiscreteVector<BasisId>(n_nonzeros_in_irrep())),
+                       restricted_domain);
 
-    return sil::csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...>(
-            domain,
-            std::get<0>(std::get<0>(s_irrep)),
-            std::get<1>(std::get<0>(s_irrep)),
-            std::get<2>(std::get<0>(s_irrep)));
+        return sil::csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...>(
+                domain,
+                std::get<0>(std::get<0>(s_irrep)),
+                std::get<1>(std::get<0>(s_irrep)),
+                std::get<2>(std::get<0>(s_irrep)));
+    } else {
+        ddc::DiscreteDomain<BasisId, Id...>
+                domain(ddc::DiscreteDomain<BasisId>(
+                               ddc::DiscreteElement<BasisId>(0),
+                               ddc::DiscreteVector<BasisId>(0)),
+                       restricted_domain);
+
+        return sil::csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...>(
+                domain,
+                std::array<std::size_t, BasisId::mem_size() + 1> {},
+                std::get<1>(std::get<0>(s_irrep)),
+                std::get<2>(std::get<0>(s_irrep)));
+    }
 }
 
 template <std::size_t Dimension, class TableauSeq>
@@ -1075,18 +1092,32 @@ template <class BasisId, class... Id>
 constexpr sil::csr::Csr<YoungTableau<Dimension, TableauSeq>::n_nonzeros_in_irrep(), BasisId, Id...>
 YoungTableau<Dimension, TableauSeq>::v(ddc::DiscreteDomain<Id...> restricted_domain)
 {
-    static_assert(n_nonzeros_in_irrep() != 0);
-    ddc::DiscreteDomain<BasisId, Id...>
-            domain(ddc::DiscreteDomain<BasisId>(
-                           ddc::DiscreteElement<BasisId>(0),
-                           ddc::DiscreteVector<BasisId>(n_nonzeros_in_irrep())),
-                   restricted_domain);
+    // static_assert(n_nonzeros_in_irrep() != 0);
+    if constexpr (n_nonzeros_in_irrep() != 0) {
+        ddc::DiscreteDomain<BasisId, Id...>
+                domain(ddc::DiscreteDomain<BasisId>(
+                               ddc::DiscreteElement<BasisId>(0),
+                               ddc::DiscreteVector<BasisId>(n_nonzeros_in_irrep())),
+                       restricted_domain);
 
-    return sil::csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...>(
-            domain,
-            std::get<0>(std::get<1>(s_irrep)),
-            std::get<1>(std::get<1>(s_irrep)),
-            std::get<2>(std::get<1>(s_irrep)));
+        return sil::csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...>(
+                domain,
+                std::get<0>(std::get<1>(s_irrep)),
+                std::get<1>(std::get<1>(s_irrep)),
+                std::get<2>(std::get<1>(s_irrep)));
+    } else {
+        ddc::DiscreteDomain<BasisId, Id...>
+                domain(ddc::DiscreteDomain<BasisId>(
+                               ddc::DiscreteElement<BasisId>(0),
+                               ddc::DiscreteVector<BasisId>(0)),
+                       restricted_domain);
+
+        return sil::csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...>(
+                domain,
+                std::array<std::size_t, BasisId::mem_size() + 1> {},
+                std::get<1>(std::get<1>(s_irrep)),
+                std::get<2>(std::get<1>(s_irrep)));
+    }
 }
 
 // Load binary files and build u and v static constexpr Csr at compile-time
@@ -1214,12 +1245,12 @@ consteval auto YoungTableau<Dimension, TableauSeq>::load_irrep()
     } else {
         return std::make_pair(
                 std::make_tuple(
-                        std::array<std::size_t, 0> {},
-                        std::array<std::array<std::size_t, 0>, 0> {},
+                        std::array<std::size_t, 1> {0},
+                        std::array<std::array<std::size_t, 0>, s_r> {},
                         std::array<double, 0> {}),
                 std::make_tuple(
-                        std::array<std::size_t, 0> {},
-                        std::array<std::array<std::size_t, 0>, 0> {},
+                        std::array<std::size_t, 1> {0},
+                        std::array<std::array<std::size_t, 0>, s_r> {},
                         std::array<double, 0> {}));
     }
 }

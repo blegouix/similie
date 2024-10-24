@@ -6,7 +6,7 @@
 #include <gtest/gtest.h>
 
 #include "tensor.hpp"
-#include "young_tableau.hpp"
+// #include "young_tableau.hpp"
 
 struct X
 {
@@ -85,19 +85,19 @@ TEST(YoungTableau, 1_2)
 
     auto [proj_alloc, proj] = young_tableau.projector<Mu, Nu>();
 
-    ddc::Chunk prod_alloc(tensor_prod_domain(proj, tensor), ddc::HostAllocator<double>());
+    ddc::Chunk prod_alloc(natural_tensor_prod_domain(proj, tensor), ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
-            sil::tensor::tensor_prod_domain_t<
+            sil::tensor::natural_tensor_prod_domain_t<
                     typename decltype(young_tableau)::projector_domain<Mu, Nu>,
                     ddc::DiscreteDomain<Mu, Nu>>,
             std::experimental::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             prod(prod_alloc);
 
-    sil::tensor::tensor_prod(prod, proj, tensor);
+    sil::tensor::natural_tensor_prod(prod, proj, tensor);
 
-    sil::tensor::tensor_accessor_for_domain_t<sil::tensor::tensor_prod_domain_t<
+    sil::tensor::tensor_accessor_for_domain_t<sil::tensor::natural_tensor_prod_domain_t<
             typename decltype(young_tableau)::projector_domain<Mu, Nu>,
             ddc::DiscreteDomain<Mu, Nu>>>
             tensor_accessor_prod;
@@ -159,19 +159,19 @@ TEST(YoungTableau, 1l2)
 
     auto [proj_alloc, proj] = young_tableau.projector<Mu, Nu>();
 
-    ddc::Chunk prod_alloc(tensor_prod_domain(proj, tensor), ddc::HostAllocator<double>());
+    ddc::Chunk prod_alloc(natural_tensor_prod_domain(proj, tensor), ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
-            sil::tensor::tensor_prod_domain_t<
+            sil::tensor::natural_tensor_prod_domain_t<
                     typename decltype(young_tableau)::projector_domain<Mu, Nu>,
                     ddc::DiscreteDomain<Mu, Nu>>,
             std::experimental::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             prod(prod_alloc);
 
-    sil::tensor::tensor_prod(prod, proj, tensor);
+    sil::tensor::natural_tensor_prod(prod, proj, tensor);
 
-    sil::tensor::tensor_accessor_for_domain_t<sil::tensor::tensor_prod_domain_t<
+    sil::tensor::tensor_accessor_for_domain_t<sil::tensor::natural_tensor_prod_domain_t<
             typename decltype(young_tableau)::projector_domain<Mu, Nu>,
             ddc::DiscreteDomain<Mu, Nu>>>
             tensor_accessor_prod;
@@ -247,19 +247,19 @@ TEST(YoungTableau, 1_2_3)
 
     auto [proj_alloc, proj] = young_tableau.projector<Alpha, Beta, Gamma>();
 
-    ddc::Chunk prod_alloc(tensor_prod_domain(proj, tensor), ddc::HostAllocator<double>());
+    ddc::Chunk prod_alloc(natural_tensor_prod_domain(proj, tensor), ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
-            sil::tensor::tensor_prod_domain_t<
+            sil::tensor::natural_tensor_prod_domain_t<
                     typename decltype(young_tableau)::projector_domain<Alpha, Beta, Gamma>,
                     ddc::DiscreteDomain<Alpha, Beta, Gamma>>,
             std::experimental::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             prod(prod_alloc);
 
-    sil::tensor::tensor_prod(prod, proj, tensor);
+    sil::tensor::natural_tensor_prod(prod, proj, tensor);
 
-    sil::tensor::tensor_accessor_for_domain_t<sil::tensor::tensor_prod_domain_t<
+    sil::tensor::tensor_accessor_for_domain_t<sil::tensor::natural_tensor_prod_domain_t<
             typename decltype(young_tableau)::projector_domain<Alpha, Beta, Gamma>,
             ddc::DiscreteDomain<Alpha, Beta, Gamma>>>
             tensor_accessor_prod;
@@ -364,19 +364,19 @@ TEST(YoungTableau, 1l2l3)
 
     auto [proj_alloc, proj] = young_tableau.projector<Alpha, Beta, Gamma>();
 
-    ddc::Chunk prod_alloc(tensor_prod_domain(proj, tensor), ddc::HostAllocator<double>());
+    ddc::Chunk prod_alloc(natural_tensor_prod_domain(proj, tensor), ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
-            sil::tensor::tensor_prod_domain_t<
+            sil::tensor::natural_tensor_prod_domain_t<
                     typename decltype(young_tableau)::projector_domain<Alpha, Beta, Gamma>,
                     ddc::DiscreteDomain<Alpha, Beta, Gamma>>,
             std::experimental::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             prod(prod_alloc);
 
-    sil::tensor::tensor_prod(prod, proj, tensor);
+    sil::tensor::natural_tensor_prod(prod, proj, tensor);
 
-    sil::tensor::tensor_accessor_for_domain_t<sil::tensor::tensor_prod_domain_t<
+    sil::tensor::tensor_accessor_for_domain_t<sil::tensor::natural_tensor_prod_domain_t<
             typename decltype(young_tableau)::projector_domain<Alpha, Beta, Gamma>,
             ddc::DiscreteDomain<Alpha, Beta, Gamma>>>
             tensor_accessor_prod;
@@ -483,19 +483,19 @@ TEST(YoungTableau, 1_2l3)
 
     auto [proj_alloc, proj] = young_tableau.projector<Alpha, Beta, Gamma>();
 
-    ddc::Chunk prod_alloc(tensor_prod_domain(proj, tensor), ddc::HostAllocator<double>());
+    ddc::Chunk prod_alloc(natural_tensor_prod_domain(proj, tensor), ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
-            sil::tensor::tensor_prod_domain_t<
+            sil::tensor::natural_tensor_prod_domain_t<
                     typename decltype(young_tableau)::projector_domain<Alpha, Beta, Gamma>,
                     ddc::DiscreteDomain<Alpha, Beta, Gamma>>,
             std::experimental::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             prod(prod_alloc);
 
-    sil::tensor::tensor_prod(prod, proj, tensor);
+    sil::tensor::natural_tensor_prod(prod, proj, tensor);
 
-    sil::tensor::tensor_accessor_for_domain_t<sil::tensor::tensor_prod_domain_t<
+    sil::tensor::tensor_accessor_for_domain_t<sil::tensor::natural_tensor_prod_domain_t<
             typename decltype(young_tableau)::projector_domain<Alpha, Beta, Gamma>,
             ddc::DiscreteDomain<Alpha, Beta, Gamma>>>
             tensor_accessor_prod;
@@ -555,19 +555,19 @@ TEST(YoungTableau, 1_3l2)
 
     auto [proj_alloc, proj] = young_tableau.projector<Alpha, Beta, Gamma>();
 
-    ddc::Chunk prod_alloc(tensor_prod_domain(proj, tensor), ddc::HostAllocator<double>());
+    ddc::Chunk prod_alloc(natural_tensor_prod_domain(proj, tensor), ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
-            sil::tensor::tensor_prod_domain_t<
+            sil::tensor::natural_tensor_prod_domain_t<
                     typename decltype(young_tableau)::projector_domain<Alpha, Beta, Gamma>,
                     ddc::DiscreteDomain<Alpha, Beta, Gamma>>,
             std::experimental::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             prod(prod_alloc);
 
-    sil::tensor::tensor_prod(prod, proj, tensor);
+    sil::tensor::natural_tensor_prod(prod, proj, tensor);
 
-    sil::tensor::tensor_accessor_for_domain_t<sil::tensor::tensor_prod_domain_t<
+    sil::tensor::tensor_accessor_for_domain_t<sil::tensor::natural_tensor_prod_domain_t<
             typename decltype(young_tableau)::projector_domain<Alpha, Beta, Gamma>,
             ddc::DiscreteDomain<Alpha, Beta, Gamma>>>
             tensor_accessor_prod;
@@ -682,19 +682,19 @@ TEST(YoungTableau, 1l3_2l4)
 
     auto [proj_alloc, proj] = young_tableau.projector<Alpha, Beta, Gamma, Delta>();
 
-    ddc::Chunk prod_alloc(tensor_prod_domain(proj, tensor), ddc::HostAllocator<double>());
+    ddc::Chunk prod_alloc(natural_tensor_prod_domain(proj, tensor), ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
-            sil::tensor::tensor_prod_domain_t<
+            sil::tensor::natural_tensor_prod_domain_t<
                     typename decltype(young_tableau)::projector_domain<Alpha, Beta, Gamma, Delta>,
                     ddc::DiscreteDomain<Alpha, Beta, Gamma, Delta>>,
             std::experimental::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             prod(prod_alloc);
 
-    sil::tensor::tensor_prod(prod, proj, tensor);
+    sil::tensor::natural_tensor_prod(prod, proj, tensor);
 
-    sil::tensor::tensor_accessor_for_domain_t<sil::tensor::tensor_prod_domain_t<
+    sil::tensor::tensor_accessor_for_domain_t<sil::tensor::natural_tensor_prod_domain_t<
             typename decltype(young_tableau)::projector_domain<Alpha, Beta, Gamma, Delta>,
             ddc::DiscreteDomain<Alpha, Beta, Gamma, Delta>>>
             tensor_accessor_prod;
