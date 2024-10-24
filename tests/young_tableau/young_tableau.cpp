@@ -6,7 +6,7 @@
 #include <gtest/gtest.h>
 
 #include "tensor.hpp"
-// #include "young_tableau.hpp"
+#include "young_tableau.hpp"
 
 struct X
 {
