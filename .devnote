@@ -1,6 +1,8 @@
 ----- This file contains personal notes to keep track of ideas, TODO or previous chunks of code which has been removed but could be useful in different context -----
 ----- Not supposed to be read by anyone other than me -----
 
+cmake -DCMAKE_CXX_COMPILER=clang++-19 -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-Wfatal-errors" ..
+
 // Extract Elem from a row of YoungTableauSeq at index J
 template <std::size_t J, std::size_t Id, class Row>
 struct ExtractElem;
@@ -56,3 +58,4 @@ using projector_index_t = ProjectorIndex<
 - IsTensorIndex::value has to be set to false
 - rename mem_id
 - sil::tensor::detail::Access implementation is not properly implemented
+- specialize tensor_prod using concepts (ie. redirect to natural_tensor_prod if NaturalTensorIndex)

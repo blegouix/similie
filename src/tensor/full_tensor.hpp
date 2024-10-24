@@ -16,6 +16,16 @@ namespace tensor {
 template <class... TensorIndex>
 struct FullTensorIndex
 {
+    using subindexes_domain_t = ddc::DiscreteDomain<TensorIndex...>;
+
+    static constexpr subindexes_domain_t subindexes_domain()
+    {
+        return ddc::DiscreteDomain<TensorIndex...>(
+                ddc::DiscreteElement<TensorIndex...>(ddc::DiscreteElement<TensorIndex>(0)...),
+                ddc::DiscreteVector<TensorIndex...>(
+                        ddc::DiscreteVector<TensorIndex>(TensorIndex::size())...));
+    }
+
     static constexpr std::size_t rank()
     {
         return (TensorIndex::rank() + ...);

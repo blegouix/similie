@@ -5,42 +5,50 @@
 
 #include <ddc/ddc.hpp>
 
+#include "young_tableau_tensor.hpp"
+
 namespace sil {
 
 namespace tensor {
 
-// Domain of a tensor result of product between two tensors
-template <class Dom1, class Dom2>
-struct TensorProdDomain;
+namespace detail {
 
-template <class... DDim1, class... DDim2>
-struct TensorProdDomain<ddc::DiscreteDomain<DDim1...>, ddc::DiscreteDomain<DDim2...>>
+template <class Index>
+struct SubindexesDomain;
+
+template <template <class...> class T, class... SubIndex>
+struct SubindexesDomain<T<SubIndex...>>
 {
-    using type = ddc::detail::convert_type_seq_to_discrete_domain_t<ddc::type_seq_merge_t<
-            ddc::type_seq_remove_t<ddc::detail::TypeSeq<DDim1...>, ddc::detail::TypeSeq<DDim2...>>,
-            ddc::type_seq_remove_t<
-                    ddc::detail::TypeSeq<DDim2...>,
-                    ddc::detail::TypeSeq<DDim1...>>>>;
+    using type = ddc::DiscreteDomain<SubIndex...>;
+
+    static constexpr type run()
+    {
+        return ddc::DiscreteDomain<SubIndex...>(
+                ddc::DiscreteElement<SubIndex...>(ddc::DiscreteElement<SubIndex>(0)...),
+                ddc::DiscreteVector<SubIndex...>(
+                        ddc::DiscreteVector<SubIndex>(SubIndex::size())...));
+    }
 };
 
-template <class Dom1, class Dom2>
-using tensor_prod_domain_t = TensorProdDomain<Dom1, Dom2>::type;
+} // namespace detail
 
-template <class Tensor1, class Tensor2>
-tensor_prod_domain_t<typename Tensor1::discrete_domain_type, typename Tensor2::discrete_domain_type>
-tensor_prod_domain(Tensor1 tensor1, Tensor2 tensor2)
+template <class T>
+using subindexes_domain_t = detail::SubindexesDomain<T>::type;
+
+template <class T>
+static constexpr subindexes_domain_t<T> subindexes_domain()
 {
-    return sil::tensor::tensor_prod_domain_t<
-            typename Tensor1::discrete_domain_type,
-            typename Tensor2::discrete_domain_type>(tensor1.domain(), tensor2.domain());
-}
+    return detail::SubindexesDomain<T>::run();
+};
 
-// Product between two tensors. Only natural indexing supported atm.
-template <class HeadDDim1TypeSeq, class ContractDDimTypeSeq, class TailDDim2TypeSeq>
+namespace detail {
+
+template <class Index1, class HeadDDim1TypeSeq, class ContractDDimTypeSeq, class TailDDim2TypeSeq>
 struct TensorProd;
 
-template <class... HeadDDim1, class... ContractDDim, class... TailDDim2>
+template <class Index1, class... HeadDDim1, class... ContractDDim, class... TailDDim2>
 struct TensorProd<
+        Index1,
         ddc::detail::TypeSeq<HeadDDim1...>,
         ddc::detail::TypeSeq<ContractDDim...>,
         ddc::detail::TypeSeq<TailDDim2...>>
@@ -55,34 +63,37 @@ struct TensorProd<
                ddc::DiscreteDomain<HeadDDim1..., TailDDim2...>,
                std::experimental::layout_right,
                Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
-        Tensor<ElementType,
-               ddc::DiscreteDomain<HeadDDim1..., ContractDDim...>,
-               LayoutStridedPolicy,
-               MemorySpace> tensor1,
+        Tensor<ElementType, ddc::DiscreteDomain<Index1>, LayoutStridedPolicy, MemorySpace> tensor1,
         Tensor<ElementType,
                ddc::DiscreteDomain<ContractDDim..., TailDDim2...>,
                LayoutStridedPolicy,
                MemorySpace> tensor2)
     {
-        ddc::for_each(
-                prod_tensor.domain(),
-                [&](ddc::DiscreteElement<HeadDDim1..., TailDDim2...> elem) {
-                    prod_tensor(elem) = ddc::transform_reduce(
-                            tensor1.template domain<ContractDDim...>(),
-                            0.,
-                            ddc::reducer::sum<ElementType>(),
-                            [&](ddc::DiscreteElement<ContractDDim...> contract_elem) {
-                                return tensor1(ddc::select<HeadDDim1...>(elem), contract_elem)
-                                       * tensor2(ddc::select<TailDDim2...>(elem), contract_elem);
-                            });
-                });
-        return prod_tensor;
+        /*
+    typename YoungTableauTensorIndex<DDim1...>::young_tableau young_tableau;
+    sil::csr::Csr u = young_tableau.template u<YoungTableauIndex, DDim2...>(tensor2.domain());
+*/
+        ddc::Chunk uncompressed_tensor1_alloc(
+                Index1::subindexes_domain(),
+                ddc::HostAllocator<double>());
+        sil::tensor::Tensor<
+                double,
+                typename Index1::subindexes_domain_t,
+                std::experimental::layout_right,
+                Kokkos::DefaultHostExecutionSpace::memory_space>
+                uncompressed_tensor1(uncompressed_tensor1_alloc);
+
+        sil::tensor::uncompress(uncompressed_tensor1, tensor1);
+
+        return natural_tensor_prod(prod_tensor, uncompressed_tensor1, tensor2);
     }
 };
 
+} // namespace detail
+
 template <
         class... ProdDDim,
-        class... DDim1,
+        class Index1,
         class... DDim2,
         class ElementType,
         class LayoutStridedPolicy,
@@ -96,28 +107,29 @@ tensor_prod(
                ddc::DiscreteDomain<ProdDDim...>,
                std::experimental::layout_right,
                Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
-        Tensor<ElementType, ddc::DiscreteDomain<DDim1...>, LayoutStridedPolicy, MemorySpace>
-                tensor1,
+        Tensor<ElementType, ddc::DiscreteDomain<Index1>, LayoutStridedPolicy, MemorySpace> tensor1,
         Tensor<ElementType, ddc::DiscreteDomain<DDim2...>, LayoutStridedPolicy, MemorySpace>
                 tensor2)
 {
     static_assert(std::is_same_v<
                   ddc::type_seq_remove_t<
-                          ddc::detail::TypeSeq<DDim1...>,
+                          ddc::to_type_seq_t<typename Index1::subindexes_domain_t>,
                           ddc::detail::TypeSeq<ProdDDim...>>,
                   ddc::type_seq_remove_t<
                           ddc::detail::TypeSeq<DDim2...>,
                           ddc::detail::TypeSeq<ProdDDim...>>>);
-    return TensorProd<
+    return detail::TensorProd<
+            Index1,
             ddc::type_seq_remove_t<
                     ddc::detail::TypeSeq<ProdDDim...>,
                     ddc::detail::TypeSeq<DDim2...>>,
             ddc::type_seq_remove_t<
-                    ddc::detail::TypeSeq<DDim1...>,
+                    ddc::to_type_seq_t<typename Index1::subindexes_domain_t>,
                     ddc::detail::TypeSeq<ProdDDim...>>,
             ddc::type_seq_remove_t<
                     ddc::detail::TypeSeq<ProdDDim...>,
-                    ddc::detail::TypeSeq<DDim1...>>>::run(prod_tensor, tensor1, tensor2);
+                    ddc::to_type_seq_t<typename Index1::subindexes_domain_t>>>::
+            run(prod_tensor, tensor1, tensor2);
 }
 
 } // namespace tensor

@@ -6,7 +6,7 @@
 #include <ddc/ddc.hpp>
 
 #include "csr.hpp"
-#include "full_tensor.hpp"
+#include "stride.hpp"
 #include "tensor.hpp"
 #include "young_tableau.hpp"
 
@@ -19,6 +19,16 @@ template <class YoungTableau, class... TensorIndex>
 struct YoungTableauTensorIndex
 {
     using young_tableau = YoungTableau;
+
+    using subindexes_domain_t = ddc::DiscreteDomain<TensorIndex...>;
+
+    static constexpr subindexes_domain_t subindexes_domain()
+    {
+        return ddc::DiscreteDomain<TensorIndex...>(
+                ddc::DiscreteElement<TensorIndex...>(ddc::DiscreteElement<TensorIndex>(0)...),
+                ddc::DiscreteVector<TensorIndex...>(
+                        ddc::DiscreteVector<TensorIndex>(TensorIndex::size())...));
+    }
 
     static constexpr std::size_t rank()
     {
