@@ -4,10 +4,12 @@
 #pragma once
 
 #include "antisymmetric_tensor.hpp"
+#include "character.hpp"
 #include "diagonal_tensor.hpp"
 #include "full_tensor.hpp"
 #include "identity_tensor.hpp"
 #include "lorentzian_sign_tensor.hpp"
+#include "metric_tensor.hpp"
 #include "symmetric_tensor.hpp"
 #include "tensor_impl.hpp"
 #include "tensor_prod.hpp"

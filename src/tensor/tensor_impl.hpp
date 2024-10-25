@@ -489,6 +489,63 @@ public:
     }
 };
 
+// Relabelize index without altering allocation
+namespace detail {
+template <class TensorType, class OldIndex, class NewIndex>
+struct RelabelizeIndexOf;
+
+template <
+        class OldIndex,
+        class NewIndex,
+        class ElementType,
+        class Dom,
+        class LayoutStridedPolicy,
+        class MemorySpace>
+struct RelabelizeIndexOf<
+        Tensor<ElementType, Dom, LayoutStridedPolicy, MemorySpace>,
+        OldIndex,
+        NewIndex>
+{
+    using type = Tensor<
+            ElementType,
+            ddc::replace_dim_of_t<Dom, OldIndex, NewIndex>,
+            LayoutStridedPolicy,
+            MemorySpace>;
+};
+
+} // namespace detail
+
+template <class TensorType, class OldIndex, class NewIndex>
+using relabelize_index_of_t = detail::RelabelizeIndexOf<TensorType, OldIndex, NewIndex>::type;
+
+template <
+        class OldIndex,
+        class NewIndex,
+        class ElementType,
+        class Dom,
+        class LayoutStridedPolicy,
+        class MemorySpace>
+Tensor<ElementType,
+       ddc::replace_dim_of_t<Dom, OldIndex, NewIndex>,
+       LayoutStridedPolicy,
+       MemorySpace>
+relabelize_index_of(Tensor<ElementType, Dom, LayoutStridedPolicy, MemorySpace> old_tensor)
+{
+    return Tensor<
+            ElementType,
+            ddc::replace_dim_of_t<Dom, OldIndex, NewIndex>,
+            LayoutStridedPolicy,
+            MemorySpace>(
+            old_tensor.data_handle(),
+            ddc::replace_dim_of<OldIndex, NewIndex>(
+                    old_tensor.domain(),
+                    ddc::DiscreteDomain<NewIndex>(
+                            ddc::DiscreteElement<NewIndex>(
+                                    old_tensor.domain().front().template uid<OldIndex>()),
+                            ddc::DiscreteVector<NewIndex>(static_cast<std::size_t>(
+                                    old_tensor.domain().template extent<OldIndex>())))));
+}
+
 // Sum of tensors
 template <
         class... DDim,
