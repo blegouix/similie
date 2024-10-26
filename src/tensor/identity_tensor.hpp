@@ -15,6 +15,8 @@ namespace tensor {
 template <class... TensorIndex>
 struct IdentityTensorIndex
 {
+    static constexpr bool is_natural_tensor_index = false;
+
     using subindexes_domain_t = ddc::DiscreteDomain<TensorIndex...>;
 
     static constexpr subindexes_domain_t subindexes_domain()
@@ -47,23 +49,24 @@ struct IdentityTensorIndex
 
 private:
     template <class Head, class... Tail>
-    inline static constexpr bool are_all_same = (std::is_same_v<Head, Tail> && ...);
+    inline static constexpr bool are_all_same(Head head, Tail... tail)
+    {
+        return ((head == tail) && ...);
+    }
 
 public:
-    template <class... CDim>
-    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id()
+    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id(
+            ddc::DiscreteElement<TensorIndex...> elem)
     {
-        // static_assert(rank() == sizeof...(CDim));
         assert(false);
         return std::pair<
                 std::vector<double>,
                 std::vector<std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {});
     }
 
-    template <class... CDim>
-    static constexpr std::size_t access_id()
+    static constexpr std::size_t access_id(ddc::DiscreteElement<TensorIndex...> const elem)
     {
-        if constexpr (!are_all_same<CDim...>) {
+        if constexpr (!are_all_same(elem.template uid<TensorIndex>()...)) {
             return 0;
         } else {
             return 1;

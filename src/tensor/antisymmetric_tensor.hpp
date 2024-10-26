@@ -17,6 +17,8 @@ namespace tensor {
 template <class... TensorIndex>
 struct AntisymmetricTensorIndex
 {
+    static constexpr bool is_natural_tensor_index = false;
+
     using subindexes_domain_t = ddc::DiscreteDomain<TensorIndex...>;
 
     static constexpr subindexes_domain_t subindexes_domain()
@@ -48,12 +50,12 @@ struct AntisymmetricTensorIndex
         return mem_size() + 1;
     }
 
-    template <class... CDim>
-    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id()
+    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id(
+            ddc::DiscreteElement<TensorIndex...> elem)
     {
         // static_assert(rank() == sizeof...(CDim));
         std::array<std::size_t, sizeof...(TensorIndex)> sorted_ids {
-                detail::access_id<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>, CDim...>()...};
+                TensorIndex::access_id(ddc::DiscreteElement<TensorIndex>(elem))...};
         std::sort(sorted_ids.begin(), sorted_ids.end());
         return std::pair<std::vector<double>, std::vector<std::size_t>>(
                 std::vector<double> {},
@@ -83,34 +85,30 @@ struct AntisymmetricTensorIndex
                         - 1)});
     }
 
-
 private:
-    template <class Head, class... Tail>
-    inline static constexpr bool are_all_same = (std::is_same_v<Head, Tail> && ...);
-
-    template <class... CDim>
-    static constexpr bool permutation_parity()
+    static constexpr bool permutation_parity(std::array<std::size_t, sizeof...(TensorIndex)> ids)
     {
-        std::array<std::size_t, sizeof...(TensorIndex)> ids {
-                detail::access_id<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>, CDim...>()...};
         bool cnt = false;
-        for (int i = 0; i < sizeof...(CDim); i++)
-            for (int j = i + 1; j < sizeof...(CDim); j++)
+        for (int i = 0; i < sizeof...(TensorIndex); i++)
+            for (int j = i + 1; j < sizeof...(TensorIndex); j++)
                 if (ids[i] > ids[j])
                     cnt = !cnt;
         return cnt;
     }
 
 public:
-    template <class... CDim>
-    static constexpr std::size_t access_id()
+    static constexpr std::size_t access_id(ddc::DiscreteElement<TensorIndex...> elem)
     {
-        if constexpr (are_all_same<CDim...>) {
+        std::array<std::size_t, sizeof...(TensorIndex)> ids {
+                elem.template uid<TensorIndex>()...}; // better with std::initialize_list ?
+        if constexpr (std::all_of(ids.begin(), ids.end(), [&](const std::size_t id) {
+                          return id == *ids.begin();
+                      })) {
             return 0;
-        } else if (!permutation_parity<CDim...>()) {
-            return 1 + std::get<1>(mem_id<CDim...>())[0];
+        } else if (!permutation_parity(ids)) {
+            return 1 + std::get<1>(mem_id(elem))[0];
         } else {
-            return access_size() + std::get<1>(mem_id<CDim...>())[0];
+            return access_size() + std::get<1>(mem_id(elem))[0];
         }
     }
 

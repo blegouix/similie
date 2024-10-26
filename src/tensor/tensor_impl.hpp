@@ -13,6 +13,8 @@ namespace tensor {
 template <class... CDim>
 struct TensorNaturalIndex
 {
+    static constexpr bool is_natural_tensor_index = true;
+
     using type_seq_dimensions = ddc::detail::TypeSeq<CDim...>;
 
     static constexpr std::size_t rank()
@@ -43,10 +45,18 @@ struct TensorNaturalIndex
                 std::vector<std::size_t> {ddc::type_seq_rank_v<ODim, type_seq_dimensions>});
     }
 
-    template <class ODim>
-    static constexpr std::size_t access_id()
+    template <class Elem>
+    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id(Elem elem)
     {
-        return std::get<1>(mem_id<ODim>())[0];
+        return std::pair<std::vector<double>, std::vector<std::size_t>>(
+                std::vector<double> {},
+                std::vector<std::size_t> {elem.uid()});
+    }
+
+    template <class Elem>
+    static constexpr std::size_t access_id(Elem elem)
+    {
+        return std::get<1>(mem_id(elem))[0];
     }
 
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> access_id_to_mem_id(
@@ -68,7 +78,7 @@ struct TensorNaturalIndex
     }
 };
 
-// Helpers to build the access_id() function which computes the ids of subindexes of an index.
+// Helpers to build the access_id() function which computes the ids of subindexes of an index. This cumbersome logic is necessary because subindexes do not necesseraly have the same rank.
 namespace detail {
 // For Tmunu and index=nu, returns 1
 template <class Index, class...>
@@ -115,15 +125,29 @@ template <class CDimTypeSeq, class IndexSeq>
 using type_seq_dims_at_ints_t = TypeSeqDimsAtInts<CDimTypeSeq, IndexSeq>::type;
 
 // Returns Index::access_id but from a type seq (in place of a variadic template CDim...)
-template <class Index, class TypeSeqDims>
+template <class Index, class SubindexesDomain, class TypeSeqDims>
 struct IdFromTypeSeqDims;
 
-template <class Index, class... CDim>
-struct IdFromTypeSeqDims<Index, ddc::detail::TypeSeq<CDim...>>
+template <class Index, class... Subindex, class... CDim>
+struct IdFromTypeSeqDims<Index, ddc::DiscreteDomain<Subindex...>, ddc::detail::TypeSeq<CDim...>>
 {
     static constexpr std::size_t run()
     {
-        return Index::template access_id<CDim...>();
+        static_assert(sizeof...(Subindex) == sizeof...(CDim));
+        if constexpr (Index::is_natural_tensor_index) {
+            return Index::access_id(ddc::DiscreteElement<Index>(
+                    ddc::type_seq_rank_v<CDim, typename Index::type_seq_dimensions>...));
+        } else {
+            return Index::access_id(
+                    ddc::DiscreteElement<Subindex...>(ddc::DiscreteElement<Subindex>(
+                            ddc::type_seq_rank_v<
+                                    typename ddc::type_seq_element_t<
+                                            ddc::type_seq_rank_v<
+                                                    Subindex,
+                                                    ddc::detail::TypeSeq<Subindex...>>,
+                                            ddc::detail::TypeSeq<CDim...>>,
+                                    typename Subindex::type_seq_dimensions>)...));
+        }
     }
 };
 
@@ -131,13 +155,25 @@ struct IdFromTypeSeqDims<Index, ddc::detail::TypeSeq<CDim...>>
 template <class Index, class IndexesTypeSeq, class... CDim>
 static constexpr std::size_t access_id()
 {
-    return IdFromTypeSeqDims<
-            Index,
-            type_seq_dims_at_ints_t<
-                    ddc::detail::TypeSeq<CDim...>,
-                    offset_index_seq_t<
-                            NbDimsBeforeIndex<Index, IndexesTypeSeq>::run(0),
-                            std::make_integer_sequence<std::size_t, Index::rank()>>>>::run();
+    if constexpr (Index::is_natural_tensor_index) {
+        return IdFromTypeSeqDims<
+                Index,
+                ddc::DiscreteDomain<Index>,
+                type_seq_dims_at_ints_t<
+                        ddc::detail::TypeSeq<CDim...>,
+                        offset_index_seq_t<
+                                NbDimsBeforeIndex<Index, IndexesTypeSeq>::run(0),
+                                std::make_integer_sequence<std::size_t, Index::rank()>>>>::run();
+    } else {
+        return IdFromTypeSeqDims<
+                Index,
+                typename Index::subindexes_domain_t,
+                type_seq_dims_at_ints_t<
+                        ddc::detail::TypeSeq<CDim...>,
+                        offset_index_seq_t<
+                                NbDimsBeforeIndex<Index, IndexesTypeSeq>::run(0),
+                                std::make_integer_sequence<std::size_t, Index::rank()>>>>::run();
+    }
 }
 
 } // namespace detail
