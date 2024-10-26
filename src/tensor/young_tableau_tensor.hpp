@@ -18,6 +18,8 @@ namespace tensor {
 template <class YoungTableau, class... TensorIndex>
 struct YoungTableauTensorIndex
 {
+    static constexpr bool is_natural_tensor_index = false;
+
     using young_tableau = YoungTableau;
 
     using subindexes_domain_t = ddc::DiscreteDomain<TensorIndex...>;
@@ -50,10 +52,9 @@ struct YoungTableauTensorIndex
         return size();
     }
 
-    template <class... CDim>
-    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id()
+    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id(
+            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
-        // static_assert(rank() == sizeof...(CDim));
         std::pair<std::vector<double>, std::vector<std::size_t>> result {};
         constexpr sil::csr::Csr v = young_tableau::template v<
                 YoungTableauTensorIndex<YoungTableau, TensorIndex...>,
@@ -64,9 +65,7 @@ struct YoungTableauTensorIndex
         for (std::size_t j = 0; j < v.values().size(); ++j) {
             if (((v.idx()[ddc::type_seq_rank_v<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>>]
                          [j]
-                  == TensorIndex::template access_id<ddc::type_seq_element_t<
-                          ddc::type_seq_rank_v<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>>,
-                          ddc::detail::TypeSeq<CDim...>>>())
+                  == TensorIndex::access_id(ids))
                  && ...)) {
                 std::get<0>(result).push_back(v.values()[j]);
                 std::size_t k = 0;
@@ -79,11 +78,11 @@ struct YoungTableauTensorIndex
         return result;
     }
 
-    template <class... CDim>
-    static constexpr std::size_t access_id()
+    static constexpr std::size_t access_id(
+            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
         return ((sil::misc::detail::stride<TensorIndex, TensorIndex...>()
-                 * detail::access_id<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>, CDim...>())
+                 * ids[ddc::type_seq_rank_v<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>>])
                 + ...);
     }
 

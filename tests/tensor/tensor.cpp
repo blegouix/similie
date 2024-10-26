@@ -421,19 +421,18 @@ TEST(Tensor, AntisymmetricTensorIndexing4x4)
     EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Z>()), 0.);
 }
 
-struct PartiallySymIndex
-    : sil::tensor::FullTensorIndex<Mu, sil::tensor::SymmetricTensorIndex<Alpha, Beta>>
+struct SymIndex3x3 : sil::tensor::SymmetricTensorIndex<Alpha, Beta>
 {
 };
 
 TEST(Tensor, PartiallySymmetricTensorIndexing4x3x3)
 {
-    sil::tensor::TensorAccessor<PartiallySymIndex> tensor_accessor;
-    ddc::DiscreteDomain<PartiallySymIndex> tensor_dom = tensor_accessor.mem_domain();
+    sil::tensor::TensorAccessor<Mu, SymIndex3x3> tensor_accessor;
+    ddc::DiscreteDomain<Mu, SymIndex3x3> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
-            ddc::DiscreteDomain<PartiallySymIndex>,
+            ddc::DiscreteDomain<Mu, SymIndex3x3>,
             std::experimental::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor(tensor_alloc);

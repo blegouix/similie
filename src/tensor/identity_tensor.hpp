@@ -15,6 +15,8 @@ namespace tensor {
 template <class... TensorIndex>
 struct IdentityTensorIndex
 {
+    static constexpr bool is_natural_tensor_index = false;
+
     using subindexes_domain_t = ddc::DiscreteDomain<TensorIndex...>;
 
     static constexpr subindexes_domain_t subindexes_domain()
@@ -46,24 +48,32 @@ struct IdentityTensorIndex
     }
 
 private:
-    template <class Head, class... Tail>
-    inline static constexpr bool are_all_same = (std::is_same_v<Head, Tail> && ...);
+    static constexpr bool are_all_same(std::array<std::size_t, sizeof...(TensorIndex)> const ids)
+    {
+        for (std::size_t i = 1; i < ids.size(); ++i) {
+            if (ids[i] != ids[0]) {
+                return false;
+            }
+        }
+        return true;
+    }
 
 public:
-    template <class... CDim>
-    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id()
+    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id(
+            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
-        // static_assert(rank() == sizeof...(CDim));
         assert(false);
         return std::pair<
                 std::vector<double>,
                 std::vector<std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {});
     }
 
-    template <class... CDim>
-    static constexpr std::size_t access_id()
+    static constexpr std::size_t access_id(
+            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
-        if constexpr (!are_all_same<CDim...>) {
+        if (std::all_of(ids.begin(), ids.end(), [&](const std::size_t id) {
+                return id == *ids.begin();
+            })) {
             return 0;
         } else {
             return 1;

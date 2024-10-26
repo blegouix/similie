@@ -17,6 +17,8 @@ namespace tensor {
 template <class... TensorIndex>
 struct SymmetricTensorIndex
 {
+    static constexpr bool is_natural_tensor_index = false;
+
     using subindexes_domain_t = ddc::DiscreteDomain<TensorIndex...>;
 
     static constexpr subindexes_domain_t subindexes_domain()
@@ -49,12 +51,10 @@ struct SymmetricTensorIndex
         return mem_size();
     }
 
-    template <class... CDim>
-    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id()
+    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id(
+            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
-        // static_assert(rank() == sizeof...(CDim));
-        std::array<std::size_t, sizeof...(TensorIndex)> sorted_ids {
-                detail::access_id<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>, CDim...>()...};
+        std::array<std::size_t, sizeof...(TensorIndex)> sorted_ids(ids);
         std::sort(sorted_ids.begin(), sorted_ids.end());
         return std::pair<std::vector<double>, std::vector<std::size_t>>(
                 std::vector<double> {},
@@ -85,10 +85,10 @@ struct SymmetricTensorIndex
                         - 1)});
     }
 
-    template <class... CDim>
-    static constexpr std::size_t access_id()
+    static constexpr std::size_t access_id(
+            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
-        return std::get<1>(mem_id<CDim...>())[0];
+        return std::get<1>(mem_id(ids))[0];
     }
 
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> access_id_to_mem_id(
