@@ -15,6 +15,8 @@ namespace tensor {
 template <std::size_t q, class... TensorIndex>
 struct LorentzianSignTensorIndex
 {
+    static constexpr bool is_natural_tensor_index = false;
+
     using subindexes_domain_t = ddc::DiscreteDomain<TensorIndex...>;
 
     static constexpr subindexes_domain_t subindexes_domain()
@@ -50,30 +52,24 @@ private:
     inline static constexpr bool are_all_same = (std::is_same_v<Head, Tail> && ...);
 
 public:
-    template <class... CDim>
-    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id()
+    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id(
+            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
-        // static_assert(rank() == sizeof...(CDim));
         assert(false);
         return std::pair<
                 std::vector<double>,
                 std::vector<std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {});
     }
 
-    template <class... CDim>
-    static constexpr std::size_t access_id()
+    static constexpr std::size_t access_id(
+            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
-        if constexpr (!are_all_same<CDim...>) {
+        if (!std::all_of(ids.begin(), ids.end(), [&](const std::size_t id) {
+                return id == *ids.begin();
+            })) {
             return 0;
         } else {
-            if constexpr (((ddc::type_seq_rank_v<
-                                    ddc::type_seq_element_t<
-                                            ddc::type_seq_rank_v<
-                                                    TensorIndex,
-                                                    ddc::detail::TypeSeq<TensorIndex...>>,
-                                            ddc::detail::TypeSeq<CDim...>>,
-                                    typename TensorIndex::type_seq_dimensions> < q)
-                           || ...)) {
+            if (ids[0] < q) {
                 return 1;
             } else {
                 return 2;

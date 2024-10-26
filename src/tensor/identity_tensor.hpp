@@ -71,7 +71,7 @@ public:
     static constexpr std::size_t access_id(
             std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
-        if (std::all_of(ids.begin(), ids.end(), [&](const std::size_t id) {
+        if (!std::all_of(ids.begin(), ids.end(), [&](const std::size_t id) {
                 return id == *ids.begin();
             })) {
             return 0;

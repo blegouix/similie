@@ -94,7 +94,7 @@ int main(int argc, char** argv)
         tensor.mem(ddc::DiscreteElement<RiemannTensorIndex>(i)) = 1.;
     }
 
-    // sil::tensor::inplace_apply_metric<MetricIndex, MuLow, Mu>(metric, tensor);
+    sil::tensor::inplace_apply_metric<MetricIndex, MuLow, Mu>(metric, tensor);
 
     ddc::DiscreteDomain<> dom;
     ddc::Chunk scalar_alloc(dom, ddc::HostAllocator<double>());

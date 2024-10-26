@@ -150,7 +150,7 @@ struct IdFromTypeSeqDims<Index, ddc::DiscreteDomain<Subindex...>, ddc::detail::T
 
 // Returns Index::access_id for the subindex Index of the IndexesTypeSeq
 template <class Index, class IndexesTypeSeq, class... CDim>
-static constexpr std::size_t access_id() // TODO pass consteval. This is not compile-time atm :/
+static constexpr std::size_t access_id() // TODO consteval. This is not compile-time atm :/
 {
     if constexpr (Index::is_natural_tensor_index) {
         return IdFromTypeSeqDims<
@@ -173,6 +173,41 @@ static constexpr std::size_t access_id() // TODO pass consteval. This is not com
     }
 }
 
+template <class Index, class SubindexesDomain>
+struct IdFromElem;
+
+template <class Index, class... Subindex>
+struct IdFromElem<Index, ddc::DiscreteDomain<Subindex...>>
+{
+    static constexpr std::size_t run(ddc::DiscreteElement<Subindex...> natural_elem)
+    {
+        if constexpr (Index::is_natural_tensor_index) {
+            return Index::access_id(
+                    natural_elem.template uid<Index>());
+        } else {
+            return Index::access_id(std::array<
+                                    std::size_t,
+                                    sizeof...(Subindex)> {natural_elem.template uid<Subindex>()...});
+        }
+    }
+};
+
+template <class Index, class IndexesTypeSeq, class... NaturalIndex>
+static constexpr std::size_t access_id(ddc::DiscreteElement<NaturalIndex...> natural_elem) // TODO consteval. This is not compile-time atm :/
+{
+    if constexpr (Index::is_natural_tensor_index) {
+        return IdFromElem<
+                Index,
+                ddc::DiscreteDomain<Index>
+                >::run(natural_elem);
+    } else {
+        return IdFromElem<
+                Index,
+                typename Index::subindexes_domain_t
+                >::run(natural_elem);
+    }
+}
+
 } // namespace detail
 
 // TensorAccessor class, allows to build a domain which represents the tensor and access elements.
@@ -182,12 +217,17 @@ class TensorAccessor
 public:
     explicit constexpr TensorAccessor();
 
+    static constexpr ddc::DiscreteDomain<Index...> natural_domain();
+
     static constexpr ddc::DiscreteDomain<Index...> mem_domain();
 
     static constexpr ddc::DiscreteDomain<Index...> access_domain();
 
     template <class... CDim>
     static constexpr ddc::DiscreteElement<Index...> element();
+    
+    template <class... NaturalIndex>
+    static constexpr ddc::DiscreteElement<Index...> element(ddc::DiscreteElement<NaturalIndex...> natural_elem);
 };
 
 namespace detail {
@@ -212,6 +252,13 @@ constexpr TensorAccessor<Index...>::TensorAccessor()
 }
 
 template <class... Index>
+constexpr ddc::DiscreteDomain<Index...> TensorAccessor<Index...>::natural_domain()
+{
+    return ddc::DiscreteDomain<Index...>(Index::
+            subindexes_domain()...);
+}
+
+template <class... Index>
 constexpr ddc::DiscreteDomain<Index...> TensorAccessor<Index...>::mem_domain()
 {
     return ddc::DiscreteDomain<Index...>(
@@ -233,6 +280,14 @@ constexpr ddc::DiscreteElement<Index...> TensorAccessor<Index...>::element()
 {
     return ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(
             detail::access_id<Index, ddc::detail::TypeSeq<Index...>, CDim...>())...);
+}
+
+template <class... Index>
+template <class... NaturalIndex>
+constexpr ddc::DiscreteElement<Index...> TensorAccessor<Index...>::element(ddc::DiscreteElement<NaturalIndex...> natural_elem)
+{
+    return ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(
+            detail::access_id<Index, ddc::detail::TypeSeq<Index...>>(natural_elem))...);
 }
 
 namespace detail {

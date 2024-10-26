@@ -41,6 +41,7 @@ static constexpr subindexes_domain_t<T> subindexes_domain()
     return detail::SubindexesDomain<T>::run();
 };
 
+// Young-dense product
 namespace detail {
 
 template <class Index1, class HeadDDim1TypeSeq, class ContractDDimTypeSeq, class TailDDim2TypeSeq>
@@ -132,6 +133,7 @@ tensor_prod(
             run(prod_tensor, tensor1, tensor2);
 }
 
+// Young-young product
 namespace detail {
 
 template <
@@ -207,6 +209,104 @@ Tensor<ElementType,
        std::experimental::layout_right,
        Kokkos::DefaultHostExecutionSpace::memory_space>
 tensor_prod2(
+        Tensor<ElementType,
+               ddc::DiscreteDomain<ProdDDim...>,
+               std::experimental::layout_right,
+               Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
+        Tensor<ElementType, ddc::DiscreteDomain<Index1>, LayoutStridedPolicy, MemorySpace> tensor1,
+        Tensor<ElementType, ddc::DiscreteDomain<Index2>, LayoutStridedPolicy, MemorySpace> tensor2)
+{
+    static_assert(std::is_same_v<
+                  ddc::type_seq_remove_t<
+                          ddc::to_type_seq_t<typename Index1::subindexes_domain_t>,
+                          ddc::detail::TypeSeq<ProdDDim...>>,
+                  ddc::type_seq_remove_t<
+                          ddc::to_type_seq_t<typename Index2::subindexes_domain_t>,
+                          ddc::detail::TypeSeq<ProdDDim...>>>);
+    return detail::TensorProd2<
+            Index1,
+            Index2,
+            ddc::type_seq_remove_t<
+                    ddc::detail::TypeSeq<ProdDDim...>,
+                    ddc::to_type_seq_t<typename Index2::subindexes_domain_t>>,
+            ddc::type_seq_remove_t<
+                    ddc::to_type_seq_t<typename Index1::subindexes_domain_t>,
+                    ddc::detail::TypeSeq<ProdDDim...>>,
+            ddc::type_seq_remove_t<
+                    ddc::detail::TypeSeq<ProdDDim...>,
+                    ddc::to_type_seq_t<typename Index1::subindexes_domain_t>>>::
+            run(prod_tensor, tensor1, tensor2);
+}
+
+// Any-any product
+namespace detail {
+
+template <
+        class Index1,
+        class Index2,
+        class HeadDDim1TypeSeq,
+        class ContractDDimTypeSeq,
+        class TailDDim2TypeSeq>
+struct TensorProd3;
+
+template <class Index1, class Index2, class... HeadDDim1, class... ContractDDim, class... TailDDim2>
+struct TensorProd3<
+        Index1,
+        Index2,
+        ddc::detail::TypeSeq<HeadDDim1...>,
+        ddc::detail::TypeSeq<ContractDDim...>,
+        ddc::detail::TypeSeq<TailDDim2...>>
+{
+    template <class ElementType, class LayoutStridedPolicy, class MemorySpace>
+    static Tensor<
+            ElementType,
+            ddc::DiscreteDomain<HeadDDim1..., TailDDim2...>,
+            LayoutStridedPolicy,
+            MemorySpace>
+    run(Tensor<ElementType,
+               ddc::DiscreteDomain<HeadDDim1..., TailDDim2...>,
+               std::experimental::layout_right,
+               Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
+        Tensor<ElementType, ddc::DiscreteDomain<Index1>, LayoutStridedPolicy, MemorySpace> tensor1,
+        Tensor<ElementType, ddc::DiscreteDomain<Index2>, LayoutStridedPolicy, MemorySpace> tensor2)
+    {
+        /*
+    typename YoungTableauTensorIndex<DDim1...>::young_tableau young_tableau;
+    sil::csr::Csr u = young_tableau.template u<YoungTableauIndex, DDim2...>(tensor2.domain());
+*/
+        sil::tensor::TensorAccessor<ContractDDim...> contract_accessor;
+        ddc::DiscreteDomain<ContractDDim...> contract_dom = contract_accessor.natural_domain(); 
+
+        ddc::for_each(
+                prod_tensor.domain(),
+                [&](ddc::DiscreteElement<HeadDDim1..., TailDDim2...> elem) {
+                    prod_tensor(elem) = ddc::transform_reduce(
+                            contract_dom,
+                            0.,
+                            ddc::reducer::sum<ElementType>(),
+                            [&](ddc::DiscreteElement<ContractDDim...> contract_elem) {
+                                return tensor1.get(ddc::select<HeadDDim1...>(elem), contract_accessor.element(contract_elem))
+                                       * tensor2.get(ddc::select<TailDDim2...>(elem), contract_elem);
+                            });
+                });
+        return prod_tensor;
+    }
+};
+
+} // namespace detail
+
+template <
+        class... ProdDDim,
+        class Index1,
+        class Index2,
+        class ElementType,
+        class LayoutStridedPolicy,
+        class MemorySpace>
+Tensor<ElementType,
+       ddc::DiscreteDomain<ProdDDim...>,
+       std::experimental::layout_right,
+       Kokkos::DefaultHostExecutionSpace::memory_space>
+tensor_prod3(
         Tensor<ElementType,
                ddc::DiscreteDomain<ProdDDim...>,
                std::experimental::layout_right,
