@@ -182,29 +182,23 @@ struct IdFromElem<Index, ddc::DiscreteDomain<Subindex...>>
     static constexpr std::size_t run(ddc::DiscreteElement<Subindex...> natural_elem)
     {
         if constexpr (Index::is_natural_tensor_index) {
-            return Index::access_id(
-                    natural_elem.template uid<Index>());
+            return Index::access_id(natural_elem.template uid<Index>());
         } else {
-            return Index::access_id(std::array<
-                                    std::size_t,
-                                    sizeof...(Subindex)> {natural_elem.template uid<Subindex>()...});
+            return Index::access_id(std::array<std::size_t, sizeof...(Subindex)> {
+                    natural_elem.template uid<Subindex>()...});
         }
     }
 };
 
 template <class Index, class IndexesTypeSeq, class... NaturalIndex>
-static constexpr std::size_t access_id(ddc::DiscreteElement<NaturalIndex...> natural_elem) // TODO consteval. This is not compile-time atm :/
+static constexpr std::size_t access_id(
+        ddc::DiscreteElement<NaturalIndex...>
+                natural_elem) // TODO consteval. This is not compile-time atm :/
 {
     if constexpr (Index::is_natural_tensor_index) {
-        return IdFromElem<
-                Index,
-                ddc::DiscreteDomain<Index>
-                >::run(natural_elem);
+        return IdFromElem<Index, ddc::DiscreteDomain<Index>>::run(natural_elem);
     } else {
-        return IdFromElem<
-                Index,
-                typename Index::subindexes_domain_t
-                >::run(natural_elem);
+        return IdFromElem<Index, typename Index::subindexes_domain_t>::run(natural_elem);
     }
 }
 
@@ -225,9 +219,10 @@ public:
 
     template <class... CDim>
     static constexpr ddc::DiscreteElement<Index...> element();
-    
+
     template <class... NaturalIndex>
-    static constexpr ddc::DiscreteElement<Index...> element(ddc::DiscreteElement<NaturalIndex...> natural_elem);
+    static constexpr ddc::DiscreteElement<Index...> element(
+            ddc::DiscreteElement<NaturalIndex...> natural_elem);
 };
 
 namespace detail {
@@ -254,8 +249,7 @@ constexpr TensorAccessor<Index...>::TensorAccessor()
 template <class... Index>
 constexpr ddc::DiscreteDomain<Index...> TensorAccessor<Index...>::natural_domain()
 {
-    return ddc::DiscreteDomain<Index...>(Index::
-            subindexes_domain()...);
+    return ddc::DiscreteDomain<Index...>(Index::subindexes_domain()...);
 }
 
 template <class... Index>
@@ -284,7 +278,8 @@ constexpr ddc::DiscreteElement<Index...> TensorAccessor<Index...>::element()
 
 template <class... Index>
 template <class... NaturalIndex>
-constexpr ddc::DiscreteElement<Index...> TensorAccessor<Index...>::element(ddc::DiscreteElement<NaturalIndex...> natural_elem)
+constexpr ddc::DiscreteElement<Index...> TensorAccessor<Index...>::element(
+        ddc::DiscreteElement<NaturalIndex...> natural_elem)
 {
     return ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(
             detail::access_id<Index, ddc::detail::TypeSeq<Index...>>(natural_elem))...);
@@ -579,6 +574,36 @@ public:
 
 // Relabelize index without altering allocation
 namespace detail {
+template <class IndexToRelabelize, class OldIndex, class NewIndex>
+struct RelabelizeIndex;
+
+template <
+        template <class...>
+        class IndexToRelabelizeType,
+        class OldIndex,
+        class NewIndex,
+        class... Arg>
+struct RelabelizeIndex<IndexToRelabelizeType<Arg...>, OldIndex, NewIndex>
+{
+    using type = std::conditional_t<
+            IndexToRelabelizeType<Arg...>::is_natural_index,
+            std::conditional_t<
+                    std::is_same_v<IndexToRelabelizeType<Arg...>, OldIndex>,
+                    NewIndex,
+                    IndexToRelabelizeType<Arg...>>,
+            IndexToRelabelizeType<
+                    std::conditional_t<std::is_same_v<Arg, OldIndex>, NewIndex, Arg>...>>;
+};
+
+template <class Dom, class OldIndex, class NewIndex>
+struct RelabelizeIndexInDomain;
+
+template <class... DDim, class OldIndex, class NewIndex>
+struct RelabelizeIndexInDomain<ddc::DiscreteDomain<DDim...>, OldIndex, NewIndex>
+{
+    using type = ddc::DiscreteDomain<RelabelizeIndex<DDim, OldIndex, NewIndex>...>;
+};
+
 template <class TensorType, class OldIndex, class NewIndex>
 struct RelabelizeIndexOf;
 
@@ -596,7 +621,7 @@ struct RelabelizeIndexOf<
 {
     using type = Tensor<
             ElementType,
-            ddc::replace_dim_of_t<Dom, OldIndex, NewIndex>,
+            RelabelizeIndexInDomain<Dom, OldIndex, NewIndex>,
             LayoutStridedPolicy,
             MemorySpace>;
 };

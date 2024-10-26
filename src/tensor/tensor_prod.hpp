@@ -275,7 +275,7 @@ struct TensorProd3<
     sil::csr::Csr u = young_tableau.template u<YoungTableauIndex, DDim2...>(tensor2.domain());
 */
         sil::tensor::TensorAccessor<ContractDDim...> contract_accessor;
-        ddc::DiscreteDomain<ContractDDim...> contract_dom = contract_accessor.natural_domain(); 
+        ddc::DiscreteDomain<ContractDDim...> contract_dom = contract_accessor.natural_domain();
 
         ddc::for_each(
                 prod_tensor.domain(),
@@ -285,8 +285,12 @@ struct TensorProd3<
                             0.,
                             ddc::reducer::sum<ElementType>(),
                             [&](ddc::DiscreteElement<ContractDDim...> contract_elem) {
-                                return tensor1.get(ddc::select<HeadDDim1...>(elem), contract_accessor.element(contract_elem))
-                                       * tensor2.get(ddc::select<TailDDim2...>(elem), contract_elem);
+                                return tensor1
+                                               .get(ddc::select<HeadDDim1...>(elem),
+                                                    contract_accessor.element(contract_elem))
+                                       * tensor2
+                                                 .get(ddc::select<TailDDim2...>(elem),
+                                                      contract_elem);
                             });
                 });
         return prod_tensor;
