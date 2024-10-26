@@ -49,17 +49,18 @@ struct FullTensorIndex
     }
 
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id(
-            ddc::DiscreteElement<TensorIndex...> elem)
+            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
         return std::pair<std::vector<double>, std::vector<std::size_t>>(
                 std::vector<double> {},
-                std::vector<std::size_t> {access_id(elem)});
+                std::vector<std::size_t> {access_id(ids)});
     }
 
-    static constexpr std::size_t access_id(ddc::DiscreteElement<TensorIndex...> elem)
+    static constexpr std::size_t access_id(
+            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
         return ((sil::misc::detail::stride<TensorIndex, TensorIndex...>()
-                 * elem.template uid<TensorIndex>())
+                 * ids[ddc::type_seq_rank_v<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>>])
                 + ...);
     }
 

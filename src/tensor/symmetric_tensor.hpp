@@ -52,10 +52,9 @@ struct SymmetricTensorIndex
     }
 
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id(
-            ddc::DiscreteElement<TensorIndex...> elem)
+            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
-        std::array<std::size_t, sizeof...(TensorIndex)> sorted_ids {
-                TensorIndex::access_id(ddc::DiscreteElement<TensorIndex>(elem))...};
+        std::array<std::size_t, sizeof...(TensorIndex)> sorted_ids(ids);
         std::sort(sorted_ids.begin(), sorted_ids.end());
         return std::pair<std::vector<double>, std::vector<std::size_t>>(
                 std::vector<double> {},
@@ -86,9 +85,10 @@ struct SymmetricTensorIndex
                         - 1)});
     }
 
-    static constexpr std::size_t access_id(ddc::DiscreteElement<TensorIndex...> elem)
+    static constexpr std::size_t access_id(
+            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
-        return std::get<1>(mem_id(elem))[0];
+        return std::get<1>(mem_id(ids))[0];
     }
 
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> access_id_to_mem_id(

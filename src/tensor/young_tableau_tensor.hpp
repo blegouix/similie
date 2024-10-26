@@ -53,7 +53,7 @@ struct YoungTableauTensorIndex
     }
 
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id(
-            ddc::DiscreteElement<TensorIndex...> elem)
+            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
         std::pair<std::vector<double>, std::vector<std::size_t>> result {};
         constexpr sil::csr::Csr v = young_tableau::template v<
@@ -65,7 +65,7 @@ struct YoungTableauTensorIndex
         for (std::size_t j = 0; j < v.values().size(); ++j) {
             if (((v.idx()[ddc::type_seq_rank_v<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>>]
                          [j]
-                  == TensorIndex::access_id(ddc::DiscreteElement<TensorIndex>(elem)))
+                  == TensorIndex::access_id(ids))
                  && ...)) {
                 std::get<0>(result).push_back(v.values()[j]);
                 std::size_t k = 0;
@@ -78,10 +78,11 @@ struct YoungTableauTensorIndex
         return result;
     }
 
-    static constexpr std::size_t access_id(ddc::DiscreteElement<TensorIndex...> elem)
+    static constexpr std::size_t access_id(
+            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
         return ((sil::misc::detail::stride<TensorIndex, TensorIndex...>()
-                 * elem.template uid<TensorIndex>())
+                 * ids[ddc::type_seq_rank_v<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>>])
                 + ...);
     }
 

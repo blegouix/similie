@@ -48,11 +48,9 @@ struct DiagonalTensorIndex
     }
 
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id(
-            ddc::DiscreteElement<TensorIndex...> elem)
+            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
-        std::array<std::size_t, sizeof...(TensorIndex)> ids {
-                elem.template uid<TensorIndex>()...}; // better with std::initialize_list ?
-        static_assert(std::all_of(ids.begin(), ids.end(), [&](const std::size_t id) {
+        assert(std::all_of(ids.begin(), ids.end(), [&](const std::size_t id) {
             return id == *ids.begin();
         }));
         return std::pair<
@@ -61,16 +59,15 @@ struct DiagonalTensorIndex
                         std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {ids[0]});
     }
 
-    static constexpr std::size_t access_id(ddc::DiscreteElement<TensorIndex...> elem)
+    static constexpr std::size_t access_id(
+            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
-        std::array<std::size_t, sizeof...(TensorIndex)> ids {
-                elem.template uid<TensorIndex>()...}; // better with std::initialize_list ?
-        if constexpr (!std::all_of(ids.begin(), ids.end(), [&](const std::size_t id) {
-                          return id == *ids.begin();
-                      })) {
+        if (!std::all_of(ids.begin(), ids.end(), [&](const std::size_t id) {
+                return id == *ids.begin();
+            })) {
             return 0;
         } else {
-            return 1 + std::get<1>(mem_id(elem))[0];
+            return 1 + std::get<1>(mem_id(ids))[0];
         }
     }
 

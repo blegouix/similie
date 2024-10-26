@@ -45,18 +45,17 @@ struct TensorNaturalIndex
                 std::vector<std::size_t> {ddc::type_seq_rank_v<ODim, type_seq_dimensions>});
     }
 
-    template <class Elem>
-    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id(Elem elem)
+    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id(
+            std::size_t const id)
     {
-        return std::pair<std::vector<double>, std::vector<std::size_t>>(
-                std::vector<double> {},
-                std::vector<std::size_t> {elem.uid()});
+        return std::pair<
+                std::vector<double>,
+                std::vector<std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {id});
     }
 
-    template <class Elem>
-    static constexpr std::size_t access_id(Elem elem)
+    static constexpr std::size_t access_id(std::size_t const id)
     {
-        return std::get<1>(mem_id(elem))[0];
+        return id;
     }
 
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> access_id_to_mem_id(
@@ -135,25 +134,23 @@ struct IdFromTypeSeqDims<Index, ddc::DiscreteDomain<Subindex...>, ddc::detail::T
     {
         static_assert(sizeof...(Subindex) == sizeof...(CDim));
         if constexpr (Index::is_natural_tensor_index) {
-            return Index::access_id(ddc::DiscreteElement<Index>(
-                    ddc::type_seq_rank_v<CDim, typename Index::type_seq_dimensions>...));
-        } else {
             return Index::access_id(
-                    ddc::DiscreteElement<Subindex...>(ddc::DiscreteElement<Subindex>(
-                            ddc::type_seq_rank_v<
-                                    typename ddc::type_seq_element_t<
-                                            ddc::type_seq_rank_v<
-                                                    Subindex,
-                                                    ddc::detail::TypeSeq<Subindex...>>,
-                                            ddc::detail::TypeSeq<CDim...>>,
-                                    typename Subindex::type_seq_dimensions>)...));
+                    ddc::type_seq_rank_v<CDim, typename Index::type_seq_dimensions>...);
+        } else {
+            return Index::access_id(std::array<
+                                    std::size_t,
+                                    sizeof...(Subindex)> {ddc::type_seq_rank_v<
+                    typename ddc::type_seq_element_t<
+                            ddc::type_seq_rank_v<Subindex, ddc::detail::TypeSeq<Subindex...>>,
+                            ddc::detail::TypeSeq<CDim...>>,
+                    typename Subindex::type_seq_dimensions>...});
         }
     }
 };
 
 // Returns Index::access_id for the subindex Index of the IndexesTypeSeq
 template <class Index, class IndexesTypeSeq, class... CDim>
-static constexpr std::size_t access_id()
+static constexpr std::size_t access_id() // TODO pass consteval. This is not compile-time atm :/
 {
     if constexpr (Index::is_natural_tensor_index) {
         return IdFromTypeSeqDims<

@@ -51,11 +51,9 @@ struct AntisymmetricTensorIndex
     }
 
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id(
-            ddc::DiscreteElement<TensorIndex...> elem)
+            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
-        // static_assert(rank() == sizeof...(CDim));
-        std::array<std::size_t, sizeof...(TensorIndex)> sorted_ids {
-                TensorIndex::access_id(ddc::DiscreteElement<TensorIndex>(elem))...};
+        std::array<std::size_t, sizeof...(TensorIndex)> sorted_ids(ids);
         std::sort(sorted_ids.begin(), sorted_ids.end());
         return std::pair<std::vector<double>, std::vector<std::size_t>>(
                 std::vector<double> {},
@@ -97,18 +95,17 @@ private:
     }
 
 public:
-    static constexpr std::size_t access_id(ddc::DiscreteElement<TensorIndex...> elem)
+    static constexpr std::size_t access_id(
+            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
-        std::array<std::size_t, sizeof...(TensorIndex)> ids {
-                elem.template uid<TensorIndex>()...}; // better with std::initialize_list ?
-        if constexpr (std::all_of(ids.begin(), ids.end(), [&](const std::size_t id) {
-                          return id == *ids.begin();
-                      })) {
+        if (std::all_of(ids.begin(), ids.end(), [&](const std::size_t id) {
+                return id == *ids.begin();
+            })) {
             return 0;
         } else if (!permutation_parity(ids)) {
-            return 1 + std::get<1>(mem_id(elem))[0];
+            return 1 + std::get<1>(mem_id(ids))[0];
         } else {
-            return access_size() + std::get<1>(mem_id(elem))[0];
+            return access_size() + std::get<1>(mem_id(ids))[0];
         }
     }
 

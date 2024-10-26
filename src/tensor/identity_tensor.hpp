@@ -48,15 +48,19 @@ struct IdentityTensorIndex
     }
 
 private:
-    template <class Head, class... Tail>
-    inline static constexpr bool are_all_same(Head head, Tail... tail)
+    static constexpr bool are_all_same(std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
-        return ((head == tail) && ...);
+        for (std::size_t i = 1; i < ids.size(); ++i) {
+            if (ids[i] != ids[0]) {
+                return false;
+            }
+        }
+        return true;
     }
 
 public:
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id(
-            ddc::DiscreteElement<TensorIndex...> elem)
+            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
         assert(false);
         return std::pair<
@@ -64,9 +68,12 @@ public:
                 std::vector<std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {});
     }
 
-    static constexpr std::size_t access_id(ddc::DiscreteElement<TensorIndex...> const elem)
+    static constexpr std::size_t access_id(
+            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
-        if constexpr (!are_all_same(elem.template uid<TensorIndex>()...)) {
+        if (std::all_of(ids.begin(), ids.end(), [&](const std::size_t id) {
+                return id == *ids.begin();
+            })) {
             return 0;
         } else {
             return 1;
