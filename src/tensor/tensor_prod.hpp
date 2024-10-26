@@ -238,7 +238,7 @@ tensor_prod2(
             run(prod_tensor, tensor1, tensor2);
 }
 
-// Any-any product
+// Any-any product (do not support fields atm)
 namespace detail {
 
 template <
@@ -300,19 +300,19 @@ struct TensorProd3<
 } // namespace detail
 
 template <
-        class... ProdDDim,
+        class ProdIndex,
         class Index1,
         class Index2,
         class ElementType,
         class LayoutStridedPolicy,
         class MemorySpace>
 Tensor<ElementType,
-       ddc::DiscreteDomain<ProdDDim...>,
+       ddc::DiscreteDomain<ProdIndex>,
        std::experimental::layout_right,
        Kokkos::DefaultHostExecutionSpace::memory_space>
 tensor_prod3(
         Tensor<ElementType,
-               ddc::DiscreteDomain<ProdDDim...>,
+               ddc::DiscreteDomain<ProdIndex>,
                std::experimental::layout_right,
                Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
         Tensor<ElementType, ddc::DiscreteDomain<Index1>, LayoutStridedPolicy, MemorySpace> tensor1,
@@ -321,21 +321,21 @@ tensor_prod3(
     static_assert(std::is_same_v<
                   ddc::type_seq_remove_t<
                           ddc::to_type_seq_t<typename Index1::subindexes_domain_t>,
-                          ddc::detail::TypeSeq<ProdDDim...>>,
+                          ddc::to_type_seq_t<typename ProdIndex::subindexes_domain_t>>,
                   ddc::type_seq_remove_t<
                           ddc::to_type_seq_t<typename Index2::subindexes_domain_t>,
-                          ddc::detail::TypeSeq<ProdDDim...>>>);
-    return detail::TensorProd2<
+                          ddc::to_type_seq_t<typename ProdIndex::subindexes_domain_t>>>);
+    return detail::TensorProd3<
             Index1,
             Index2,
             ddc::type_seq_remove_t<
-                    ddc::detail::TypeSeq<ProdDDim...>,
+                    ddc::to_type_seq_t<typename ProdIndex::subindexes_domain_t>,
                     ddc::to_type_seq_t<typename Index2::subindexes_domain_t>>,
             ddc::type_seq_remove_t<
                     ddc::to_type_seq_t<typename Index1::subindexes_domain_t>,
-                    ddc::detail::TypeSeq<ProdDDim...>>,
+                    ddc::to_type_seq_t<typename ProdIndex::subindexes_domain_t>>,
             ddc::type_seq_remove_t<
-                    ddc::detail::TypeSeq<ProdDDim...>,
+                    ddc::to_type_seq_t<typename ProdIndex::subindexes_domain_t>,
                     ddc::to_type_seq_t<typename Index1::subindexes_domain_t>>>::
             run(prod_tensor, tensor1, tensor2);
 }

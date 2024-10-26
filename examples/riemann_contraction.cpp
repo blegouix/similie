@@ -6,10 +6,14 @@
 #include "tensor.hpp"
 
 //struct MetricIndex : sil::tensor::MetricTensorIndex<sil::tensor::LorentzianSignTensorIndex, sil::tensor::detail::DummyIndex1, sil::tensor::detail::DummyIndex1, 2>
+/*
 struct MetricIndex
     : sil::tensor::IdentityTensorIndex<sil::tensor::MetricIndex1, sil::tensor::MetricIndex2>
 {
 };
+*/
+using MetricIndex
+    = sil::tensor::IdentityTensorIndex<sil::tensor::MetricIndex1, sil::tensor::MetricIndex2>;
 
 struct T
 {
@@ -45,6 +49,7 @@ struct Sigma : sil::tensor::TensorContravariantNaturalIndex<T, X, Y, Z>
 
 using MuLow = typename sil::tensor::Lower<Mu>;
 
+/*
 struct RiemannTensorIndex
     : sil::tensor::YoungTableauTensorIndex<
               sil::young_tableau::YoungTableau<
@@ -58,6 +63,18 @@ struct RiemannTensorIndex
               Sigma>
 {
 };
+*/
+using RiemannTensorIndex
+    = sil::tensor::YoungTableauTensorIndex<
+              sil::young_tableau::YoungTableau<
+                      4,
+                      sil::young_tableau::YoungTableauSeq<
+                              std::index_sequence<1, 3>,
+                              std::index_sequence<2, 4>>>,
+              Mu,
+              Nu,
+              Rho,
+              Sigma>;
 
 int main(int argc, char** argv)
 {
