@@ -238,10 +238,11 @@ tensor_prod2(
             run(prod_tensor, tensor1, tensor2);
 }
 
-// Any-any product (do not support fields atm)
+// Any-any product into Young (do not support fields atm)
 namespace detail {
 
 template <
+        class ProdIndex,
         class Index1,
         class Index2,
         class HeadDDim1TypeSeq,
@@ -249,8 +250,15 @@ template <
         class TailDDim2TypeSeq>
 struct TensorProd3;
 
-template <class Index1, class Index2, class... HeadDDim1, class... ContractDDim, class... TailDDim2>
+template <
+        class ProdIndex,
+        class Index1,
+        class Index2,
+        class... HeadDDim1,
+        class... ContractDDim,
+        class... TailDDim2>
 struct TensorProd3<
+        ProdIndex,
         Index1,
         Index2,
         ddc::detail::TypeSeq<HeadDDim1...>,
@@ -258,13 +266,9 @@ struct TensorProd3<
         ddc::detail::TypeSeq<TailDDim2...>>
 {
     template <class ElementType, class LayoutStridedPolicy, class MemorySpace>
-    static Tensor<
-            ElementType,
-            ddc::DiscreteDomain<HeadDDim1..., TailDDim2...>,
-            LayoutStridedPolicy,
-            MemorySpace>
+    static Tensor<ElementType, ddc::DiscreteDomain<ProdIndex>, LayoutStridedPolicy, MemorySpace>
     run(Tensor<ElementType,
-               ddc::DiscreteDomain<HeadDDim1..., TailDDim2...>,
+               ddc::DiscreteDomain<ProdIndex>,
                std::experimental::layout_right,
                Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
         Tensor<ElementType, ddc::DiscreteDomain<Index1>, LayoutStridedPolicy, MemorySpace> tensor1,
@@ -274,25 +278,38 @@ struct TensorProd3<
     typename YoungTableauTensorIndex<DDim1...>::young_tableau young_tableau;
     sil::csr::Csr u = young_tableau.template u<YoungTableauIndex, DDim2...>(tensor2.domain());
 */
+        ddc::Chunk uncompressed_prod_alloc(
+                ProdIndex::subindexes_domain(),
+                ddc::HostAllocator<double>());
+        sil::tensor::Tensor<
+                double,
+                typename ProdIndex::subindexes_domain_t,
+                std::experimental::layout_right,
+                Kokkos::DefaultHostExecutionSpace::memory_space>
+                uncompressed_prod(uncompressed_prod_alloc);
+
         sil::tensor::TensorAccessor<ContractDDim...> contract_accessor;
         ddc::DiscreteDomain<ContractDDim...> contract_dom = contract_accessor.natural_domain();
 
         ddc::for_each(
-                prod_tensor.domain(),
-                [&](ddc::DiscreteElement<HeadDDim1..., TailDDim2...> elem) {
-                    prod_tensor(elem) = ddc::transform_reduce(
+                uncompressed_prod.domain(),
+                [&](ProdIndex::subindexes_domain_t::discrete_element_type elem) {
+                    uncompressed_prod(elem) = ddc::transform_reduce(
                             contract_dom,
                             0.,
                             ddc::reducer::sum<ElementType>(),
                             [&](ddc::DiscreteElement<ContractDDim...> contract_elem) {
-                                return tensor1
-                                               .get(ddc::select<HeadDDim1...>(elem),
-                                                    contract_accessor.element(contract_elem))
-                                       * tensor2
-                                                 .get(ddc::select<TailDDim2...>(elem),
-                                                      contract_elem);
+                                return tensor1.get(tensor1.accessor().element(
+                                               ddc::DiscreteElement<HeadDDim1..., ContractDDim...>(
+                                                       ddc::select<HeadDDim1...>(elem),
+                                                       contract_accessor.element(contract_elem))))
+                                       * tensor2.get(tensor2.accessor().element(
+                                               ddc::DiscreteElement<ContractDDim..., TailDDim2...>(
+                                                       contract_elem,
+                                                       ddc::select<TailDDim2...>(elem))));
                             });
                 });
+        sil::tensor::compress(prod_tensor, uncompressed_prod);
         return prod_tensor;
     }
 };
@@ -326,6 +343,7 @@ tensor_prod3(
                           ddc::to_type_seq_t<typename Index2::subindexes_domain_t>,
                           ddc::to_type_seq_t<typename ProdIndex::subindexes_domain_t>>>);
     return detail::TensorProd3<
+            ProdIndex,
             Index1,
             Index2,
             ddc::type_seq_remove_t<

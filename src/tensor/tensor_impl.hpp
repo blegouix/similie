@@ -246,10 +246,23 @@ constexpr TensorAccessor<Index...>::TensorAccessor()
 {
 }
 
+namespace detail {
+template <class Index>
+constexpr ddc::DiscreteDomain<Index> natural_domain()
+{
+    if constexpr (Index::is_natural_tensor_index) {
+        return ddc::DiscreteDomain<
+                Index>(ddc::DiscreteElement<Index>(0), ddc::DiscreteVector<Index>(Index::size()));
+    } else {
+        return Index::subindexes_domain();
+    }
+}
+} // namespace detail
+
 template <class... Index>
 constexpr ddc::DiscreteDomain<Index...> TensorAccessor<Index...>::natural_domain()
 {
-    return ddc::DiscreteDomain<Index...>(Index::subindexes_domain()...);
+    return ddc::DiscreteDomain<Index...>(detail::natural_domain<Index>()...);
 }
 
 template <class... Index>

@@ -31,9 +31,7 @@ struct Z
 {
 };
 
-struct Mu : sil::tensor::TensorContravariantNaturalIndex<T, X, Y, Z>
-{
-};
+using Mu = sil::tensor::TensorContravariantNaturalIndex<T, X, Y, Z>;
 
 struct Nu : sil::tensor::TensorContravariantNaturalIndex<T, X, Y, Z>
 {
@@ -47,7 +45,7 @@ struct Sigma : sil::tensor::TensorContravariantNaturalIndex<T, X, Y, Z>
 {
 };
 
-using MuLow = typename sil::tensor::Lower<Mu>;
+using MuLow = sil::tensor::lower<Mu>;
 
 /*
 struct RiemannTensorIndex
