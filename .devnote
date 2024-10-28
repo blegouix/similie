@@ -61,3 +61,4 @@ using projector_index_t = ProjectorIndex<
 - specialize tensor_prod using concepts (ie. redirect to natural_tensor_prod if NaturalTensorIndex)
 - Partial CTAD works for function. Check if it can simplify some implementations
 - subindexes_domain_t -> natural_domain_t ?
+- indexes -> indices

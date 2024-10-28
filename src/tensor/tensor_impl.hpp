@@ -305,8 +305,9 @@ template <class... NaturalIndex>
 constexpr ddc::DiscreteElement<Index...> TensorAccessor<Index...>::element(
         ddc::DiscreteElement<NaturalIndex...> natural_elem)
 {
-    return ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(
-            detail::access_id<Index, ddc::detail::TypeSeq<Index...>>(natural_elem))...);
+    return ddc::DiscreteElement<Index...>(
+            ddc::DiscreteElement<Index>(detail::access_id<Index, ddc::detail::TypeSeq<Index...>>(
+                    typename natural_domain_t::discrete_element_type(natural_elem)))...);
 }
 
 namespace detail {
@@ -646,55 +647,6 @@ struct RelabelizeIndexOfType<
 template <class TensorType, class OldIndex, class NewIndex>
 using relabelize_index_of_t = detail::RelabelizeIndexOfType<TensorType, OldIndex, NewIndex>::type;
 
-namespace detail {
-
-/*
-template <
-        class IndexType,
-        class OldIndex,
-        class NewIndex,
-        class ElementType,
-        class Dom,
-        class LayoutStridedPolicy,
-        class MemorySpace>
-struct RelabelizeIndexOf;
-
-template <
-        template <class...>
-        class IndexType,
-        class... Args,
-        class OldIndex,
-        class NewIndex,
-        class ElementType,
-        class Dom,
-        class LayoutStridedPolicy,
-        class MemorySpace>
-struct RelabelizeIndexOf<IndexType<Args...>, OldIndex, NewIndex, ElementType, Dom, LayoutStridedPolicy, MemorySpace> {
-Tensor<ElementType,
-       detail::RelabelizeIndexInDomain<Dom, OldIndex, NewIndex>,
-       LayoutStridedPolicy,
-       MemorySpace>
-RelabelizeIndexOf(Tensor<ElementType, Dom, LayoutStridedPolicy, MemorySpace> old_tensor)
-{
-    return Tensor<
-            ElementType,
-            detail::RelabelizeIndexInDomain<Dom, OldIndex, NewIndex>,
-            LayoutStridedPolicy,
-            MemorySpace>(
-            old_tensor.data_handle(),
-            ddc::replace_dim_of<OldIndex, NewIndex>(
-                    old_tensor.domain(),
-                    ddc::DiscreteDomain<NewIndex>(
-                            ddc::DiscreteElement<NewIndex>(
-                                    old_tensor.domain().front().template uid<OldIndex>()),
-                            ddc::DiscreteVector<NewIndex>(static_cast<std::size_t>(
-                                    old_tensor.domain().template extent<OldIndex>())))));
-}
-}
-*/
-
-}
-
 template <
         class OldIndex,
         class NewIndex,
@@ -702,21 +654,18 @@ template <
         class... DDim,
         class LayoutStridedPolicy,
         class MemorySpace>
-Tensor<ElementType,
-       typename detail::RelabelizeIndexInDomain<ddc::DiscreteDomain<DDim...>, OldIndex, NewIndex>::
-               type,
-       LayoutStridedPolicy,
-       MemorySpace>
+relabelize_index_of_t<
+        Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>,
+        OldIndex,
+        NewIndex>
 relabelize_index_of(
         Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>
                 old_tensor)
 {
-    return Tensor<
-            ElementType,
-            typename detail::
-                    RelabelizeIndexInDomain<ddc::DiscreteDomain<DDim...>, OldIndex, NewIndex>::type,
-            LayoutStridedPolicy,
-            MemorySpace>(
+    return relabelize_index_of_t<
+            Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>,
+            OldIndex,
+            NewIndex>(
             old_tensor.data_handle(),
             typename detail::RelabelizeIndexInDomain<
                     ddc::DiscreteDomain<DDim...>,
@@ -731,6 +680,102 @@ relabelize_index_of(
                                     typename detail::RelabelizeIndex<DDim, OldIndex, NewIndex>::
                                             type>(static_cast<std::size_t>(
                                     old_tensor.template extent<DDim>())))...));
+}
+
+namespace detail {
+
+template <class Dom, class OldIndexes, class NewIndexes, std::size_t I = 0>
+struct RelabelizeIndexesInDomain
+{
+    using type = std::conditional_t
+                 < I<ddc::type_seq_size_v<OldIndexes>,
+                     RelabelizeIndexesInDomain<
+                             typename RelabelizeIndexInDomain<
+                                     Dom,
+                                     ddc::type_seq_element_t<I, OldIndexes>,
+                                     ddc::type_seq_element_t<I, NewIndexes>>::type,
+                             OldIndexes,
+                             NewIndexes,
+                             I + 1>,
+                     Dom>;
+};
+
+template <class TensorType, class OldIndex, class NewIndex>
+struct RelabelizeIndexesOfType;
+
+template <
+        class OldIndexes,
+        class NewIndexes,
+        class ElementType,
+        class Dom,
+        class LayoutStridedPolicy,
+        class MemorySpace>
+struct RelabelizeIndexesOfType<
+        Tensor<ElementType, Dom, LayoutStridedPolicy, MemorySpace>,
+        OldIndexes,
+        NewIndexes>
+{
+    using type = Tensor<
+            ElementType,
+            typename RelabelizeIndexesInDomain<Dom, OldIndexes, NewIndexes>::type,
+            LayoutStridedPolicy,
+            MemorySpace>;
+};
+
+} // namespace detail
+
+template <class TensorType, class OldIndexes, class NewIndexes>
+using relabelize_indexes_of_t
+        = detail::RelabelizeIndexesOfType<TensorType, OldIndexes, NewIndexes>::type;
+
+template <
+        class OldIndexes,
+        class NewIndexes,
+        std::size_t I,
+        class ElementType,
+        class... DDim,
+        class LayoutStridedPolicy,
+        class MemorySpace>
+relabelize_indexes_of_t<
+        Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>,
+        OldIndexes,
+        NewIndexes>
+relabelize_indexes_of(
+        Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>
+                old_tensor)
+{
+    if constexpr (I != ddc::type_seq_size_v<OldIndexes>) {
+        return relabelize_indexes_of<OldIndexes, NewIndexes, I + 1>(
+                relabelize_indexes_of_t<
+                        Tensor<ElementType,
+                               ddc::DiscreteDomain<DDim...>,
+                               LayoutStridedPolicy,
+                               MemorySpace>,
+                        OldIndexes,
+                        NewIndexes>(
+                        old_tensor.data_handle(),
+                        typename detail::RelabelizeIndexesInDomain<
+                                ddc::DiscreteDomain<DDim...>,
+                                OldIndexes,
+                                NewIndexes>::
+                                type(ddc::DiscreteDomain<typename detail::RelabelizeIndex<
+                                             DDim,
+                                             ddc::type_seq_element_t<I, OldIndexes>,
+                                             ddc::type_seq_element_t<I, NewIndexes>>::type>(
+                                        ddc::DiscreteElement<typename detail::RelabelizeIndex<
+                                                DDim,
+                                                ddc::type_seq_element_t<I, OldIndexes>,
+                                                ddc::type_seq_element_t<I, NewIndexes>>::type>(
+                                                old_tensor.domain().front().template uid<DDim>()),
+                                        ddc::DiscreteVector<typename detail::RelabelizeIndex<
+                                                DDim,
+                                                ddc::type_seq_element_t<I, OldIndexes>,
+                                                ddc::type_seq_element_t<I, NewIndexes>>::type>(
+                                                static_cast<std::size_t>(
+                                                        old_tensor.template extent<DDim>())))...)));
+    } else {
+        return old_tensor;
+    }
 }
 
 // Sum of tensors

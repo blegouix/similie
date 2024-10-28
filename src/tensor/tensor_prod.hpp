@@ -5,6 +5,7 @@
 
 #include <ddc/ddc.hpp>
 
+#include "character.hpp"
 #include "young_tableau_tensor.hpp"
 
 namespace sil {
@@ -218,24 +219,33 @@ tensor_prod2(
 {
     static_assert(std::is_same_v<
                   ddc::type_seq_remove_t<
-                          ddc::to_type_seq_t<typename Index1::subindexes_domain_t>,
-                          ddc::detail::TypeSeq<ProdDDim...>>,
+                          uncharacterize<ddc::to_type_seq_t<typename Index1::subindexes_domain_t>>,
+                          uncharacterize<ddc::detail::TypeSeq<ProdDDim...>>>,
                   ddc::type_seq_remove_t<
-                          ddc::to_type_seq_t<typename Index2::subindexes_domain_t>,
-                          ddc::detail::TypeSeq<ProdDDim...>>>);
-    return detail::TensorProd2<
+                          uncharacterize<ddc::to_type_seq_t<typename Index2::subindexes_domain_t>>,
+                          uncharacterize<ddc::detail::TypeSeq<ProdDDim...>>>>);
+    static_assert(std::is_same_v<
+                  ddc::type_seq_remove_t<
+                          ddc::to_type_seq_t<typename Index1::subindexes_domain_t>,
+                          ddc::to_type_seq_t<typename Index2::subindexes_domain_t>>,
+                  ddc::detail::
+                          TypeSeq<>>); // tensor1 and tensor2 should not have any subindex in common because their characters are different
+    detail::TensorProd2<
             Index1,
             Index2,
             ddc::type_seq_remove_t<
-                    ddc::detail::TypeSeq<ProdDDim...>,
-                    ddc::to_type_seq_t<typename Index2::subindexes_domain_t>>,
+                    uncharacterize<ddc::detail::TypeSeq<ProdDDim...>>,
+                    uncharacterize<ddc::to_type_seq_t<typename Index2::subindexes_domain_t>>>,
             ddc::type_seq_remove_t<
-                    ddc::to_type_seq_t<typename Index1::subindexes_domain_t>,
-                    ddc::detail::TypeSeq<ProdDDim...>>,
+                    uncharacterize<ddc::to_type_seq_t<typename Index1::subindexes_domain_t>>,
+                    uncharacterize<ddc::detail::TypeSeq<ProdDDim...>>>,
             ddc::type_seq_remove_t<
-                    ddc::detail::TypeSeq<ProdDDim...>,
-                    ddc::to_type_seq_t<typename Index1::subindexes_domain_t>>>::
-            run(prod_tensor, tensor1, tensor2);
+                    uncharacterize<ddc::detail::TypeSeq<ProdDDim...>>,
+                    uncharacterize<ddc::to_type_seq_t<typename Index1::subindexes_domain_t>>>>::
+            run(uncharacterize_tensor(prod_tensor),
+                uncharacterize_tensor(tensor1),
+                uncharacterize_tensor(tensor2));
+    return prod_tensor;
 }
 
 // Any-any product into Young (do not support fields atm)
