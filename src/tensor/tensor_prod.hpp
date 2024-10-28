@@ -299,30 +299,6 @@ struct TensorProd3<
                             0.,
                             ddc::reducer::sum<ElementType>(),
                             [&](ddc::DiscreteElement<ContractDDim...> contract_elem) {
-                                /*
-                                std::cout << ddc::DiscreteElement<HeadDDim1..., ContractDDim...>(
-                                        ddc::select<HeadDDim1...>(elem),
-                                        contract_accessor.element(contract_elem));
-                                std::cout << tensor1.accessor().element(
-                                        ddc::DiscreteElement<HeadDDim1..., ContractDDim...>(
-                                                ddc::select<HeadDDim1...>(elem),
-                                                contract_accessor.element(contract_elem)));
-                                std::cout << "\n";
-                                std::cout << contract_elem;
-                                std::cout << ddc::DiscreteElement<ContractDDim..., TailDDim2...>(
-                                        contract_elem,
-                                        ddc::select<TailDDim2...>(elem));
-                                std::cout << "\n";
-                                std::cout << tensor2.accessor().element(
-                                        ddc::DiscreteElement<ContractDDim..., TailDDim2...>(
-                                                contract_elem,
-                                                ddc::select<TailDDim2...>(elem)));
-                                std::cout << "\n";
-*/
-                                std::cout << tensor2.get(tensor2.accessor().element(
-                                        ddc::DiscreteElement<ContractDDim..., TailDDim2...>(
-                                                contract_elem,
-                                                ddc::select<TailDDim2...>(elem))));
                                 return tensor1.get(tensor1.accessor().element(
                                                ddc::DiscreteElement<HeadDDim1..., ContractDDim...>(
                                                        ddc::select<HeadDDim1...>(elem),

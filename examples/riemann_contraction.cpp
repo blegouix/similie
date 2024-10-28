@@ -6,12 +6,6 @@
 #include "tensor.hpp"
 
 //struct MetricIndex : sil::tensor::MetricTensorIndex<sil::tensor::LorentzianSignTensorIndex, sil::tensor::detail::DummyIndex1, sil::tensor::detail::DummyIndex1, 2>
-/*
-struct MetricIndex
-    : sil::tensor::IdentityTensorIndex<sil::tensor::MetricIndex1, sil::tensor::MetricIndex2>
-{
-};
-*/
 using MetricIndex
     = sil::tensor::IdentityTensorIndex<sil::tensor::MetricIndex1, sil::tensor::MetricIndex2>;
 
@@ -53,22 +47,10 @@ using RhoUp = sil::tensor::TensorContravariantNaturalIndex<Rho>;
 using SigmaUp = sil::tensor::TensorContravariantNaturalIndex<Sigma>;
 
 using MuLow = sil::tensor::lower<MuUp>;
+using NuLow = sil::tensor::lower<NuUp>;
+using RhoLow = sil::tensor::lower<RhoUp>;
+using SigmaLow = sil::tensor::lower<SigmaUp>;
 
-/*
-struct RiemannTensorIndex
-    : sil::tensor::YoungTableauTensorIndex<
-              sil::young_tableau::YoungTableau<
-                      4,
-                      sil::young_tableau::YoungTableauSeq<
-                              std::index_sequence<1, 3>,
-                              std::index_sequence<2, 4>>>,
-              Mu,
-              NuUp,
-              RhoUp,
-              SigmaUp>
-{
-};
-*/
 using RiemannTensorIndex
     = sil::tensor::YoungTableauTensorIndex<
               sil::young_tableau::YoungTableau<
@@ -98,9 +80,6 @@ int main(int argc, char** argv)
             Kokkos::DefaultHostExecutionSpace::memory_space>
             metric(metric_alloc);
 
-    //sil::tensor::Tensor metric_mu = sil::tensor::relabelize_metric<MetricIndex, MuLow, Mu>(metric);
-    // std::cout << metric_mu;
-
     ddc::DiscreteDomain<RiemannTensorIndex> tensor_dom(
             ddc::DiscreteElement<RiemannTensorIndex>(0),
             ddc::DiscreteVector<RiemannTensorIndex>(20));
@@ -116,7 +95,11 @@ int main(int argc, char** argv)
         tensor.mem(ddc::DiscreteElement<RiemannTensorIndex>(i)) = 1.;
     }
 
-    sil::tensor::inplace_apply_metric<MetricIndex, MuLow, MuUp>(metric, tensor);
+    // TODO single-line
+    auto tensor2 = sil::tensor::inplace_apply_metric<MetricIndex, MuLow, MuUp>(metric, tensor);
+    auto tensor3 = sil::tensor::inplace_apply_metric<MetricIndex, NuLow, NuUp>(metric, tensor2);
+    auto tensor4 = sil::tensor::inplace_apply_metric<MetricIndex, RhoLow, RhoUp>(metric, tensor3);
+    auto tensor5 = sil::tensor::inplace_apply_metric<MetricIndex, SigmaLow, SigmaUp>(metric, tensor4);
 
     ddc::DiscreteDomain<> dom;
     ddc::Chunk scalar_alloc(dom, ddc::HostAllocator<double>());
@@ -127,5 +110,6 @@ int main(int argc, char** argv)
             Kokkos::DefaultHostExecutionSpace::memory_space>
             scalar(scalar_alloc);
 
-    sil::tensor::tensor_prod2(scalar, tensor, tensor);
+    sil::tensor::tensor_prod2(scalar, tensor5, tensor);
+    std::cout << scalar(ddc::DiscreteElement<>()) << "\n";
 }
