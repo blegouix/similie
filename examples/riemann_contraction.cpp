@@ -31,21 +31,28 @@ struct Z
 {
 };
 
-using Mu = sil::tensor::TensorContravariantNaturalIndex<T, X, Y, Z>;
-
-struct Nu : sil::tensor::TensorContravariantNaturalIndex<T, X, Y, Z>
+struct Mu : sil::tensor::TensorNaturalIndex<T, X, Y, Z>
 {
 };
 
-struct Rho : sil::tensor::TensorContravariantNaturalIndex<T, X, Y, Z>
+struct Nu : sil::tensor::TensorNaturalIndex<T, X, Y, Z>
 {
 };
 
-struct Sigma : sil::tensor::TensorContravariantNaturalIndex<T, X, Y, Z>
+struct Rho : sil::tensor::TensorNaturalIndex<T, X, Y, Z>
 {
 };
 
-using MuLow = sil::tensor::lower<Mu>;
+struct Sigma : sil::tensor::TensorNaturalIndex<T, X, Y, Z>
+{
+};
+
+using MuUp = sil::tensor::TensorContravariantNaturalIndex<Mu>;
+using NuUp = sil::tensor::TensorContravariantNaturalIndex<Nu>;
+using RhoUp = sil::tensor::TensorContravariantNaturalIndex<Rho>;
+using SigmaUp = sil::tensor::TensorContravariantNaturalIndex<Sigma>;
+
+using MuLow = sil::tensor::lower<MuUp>;
 
 /*
 struct RiemannTensorIndex
@@ -56,9 +63,9 @@ struct RiemannTensorIndex
                               std::index_sequence<1, 3>,
                               std::index_sequence<2, 4>>>,
               Mu,
-              Nu,
-              Rho,
-              Sigma>
+              NuUp,
+              RhoUp,
+              SigmaUp>
 {
 };
 */
@@ -69,10 +76,10 @@ using RiemannTensorIndex
                       sil::young_tableau::YoungTableauSeq<
                               std::index_sequence<1, 3>,
                               std::index_sequence<2, 4>>>,
-              Mu,
-              Nu,
-              Rho,
-              Sigma>;
+              MuUp,
+              NuUp,
+              RhoUp,
+              SigmaUp>;
 
 int main(int argc, char** argv)
 {
@@ -109,7 +116,7 @@ int main(int argc, char** argv)
         tensor.mem(ddc::DiscreteElement<RiemannTensorIndex>(i)) = 1.;
     }
 
-    sil::tensor::inplace_apply_metric<MetricIndex, MuLow, Mu>(metric, tensor);
+    sil::tensor::inplace_apply_metric<MetricIndex, MuLow, MuUp>(metric, tensor);
 
     ddc::DiscreteDomain<> dom;
     ddc::Chunk scalar_alloc(dom, ddc::HostAllocator<double>());
