@@ -299,6 +299,7 @@ struct TensorProd3<
                             0.,
                             ddc::reducer::sum<ElementType>(),
                             [&](ddc::DiscreteElement<ContractDDim...> contract_elem) {
+                                /*
                                 std::cout << ddc::DiscreteElement<HeadDDim1..., ContractDDim...>(
                                         ddc::select<HeadDDim1...>(elem),
                                         contract_accessor.element(contract_elem));
@@ -316,12 +317,12 @@ struct TensorProd3<
                                         ddc::DiscreteElement<ContractDDim..., TailDDim2...>(
                                                 contract_elem,
                                                 ddc::select<TailDDim2...>(elem)));
+                                std::cout << "\n";
+*/
                                 std::cout << tensor2.get(tensor2.accessor().element(
                                         ddc::DiscreteElement<ContractDDim..., TailDDim2...>(
                                                 contract_elem,
                                                 ddc::select<TailDDim2...>(elem))));
-                                std::cout << "\n";
-                                throw(0);
                                 return tensor1.get(tensor1.accessor().element(
                                                ddc::DiscreteElement<HeadDDim1..., ContractDDim...>(
                                                        ddc::select<HeadDDim1...>(elem),

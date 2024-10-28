@@ -65,7 +65,7 @@ public:
         assert(false);
         return std::pair<
                 std::vector<double>,
-                std::vector<std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {});
+                std::vector<std::size_t>>(std::vector<double> {1.}, std::vector<std::size_t> {});
     }
 
     static constexpr std::size_t access_id(
@@ -86,7 +86,7 @@ public:
         assert(false && "There is no mem_id");
         return std::pair<
                 std::vector<double>,
-                std::vector<std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {});
+                std::vector<std::size_t>>(std::vector<double> {1.}, std::vector<std::size_t> {});
     }
 
     template <class Tensor, class Elem, class Id>

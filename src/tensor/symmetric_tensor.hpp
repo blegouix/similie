@@ -57,7 +57,7 @@ struct SymmetricTensorIndex
         std::array<std::size_t, sizeof...(TensorIndex)> sorted_ids(ids);
         std::sort(sorted_ids.begin(), sorted_ids.end());
         return std::pair<std::vector<double>, std::vector<std::size_t>>(
-                std::vector<double> {},
+                std::vector<double> {1.},
                 std::vector<std::size_t> {static_cast<std::size_t>(
                         boost::math::binomial_coefficient<double>(
                                 std::min({TensorIndex::mem_size()...}) + sizeof...(TensorIndex) - 1,
@@ -94,10 +94,9 @@ struct SymmetricTensorIndex
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> access_id_to_mem_id(
             std::size_t access_id)
     {
-        return std::pair<
-                std::vector<double>,
-                std::vector<
-                        std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {access_id});
+        return std::pair<std::vector<double>, std::vector<std::size_t>>(
+                std::vector<double> {1.},
+                std::vector<std::size_t> {access_id});
     }
 
     template <class Tensor, class Elem, class Id>

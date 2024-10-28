@@ -56,7 +56,7 @@ struct DiagonalTensorIndex
         return std::pair<
                 std::vector<double>,
                 std::vector<
-                        std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {ids[0]});
+                        std::size_t>>(std::vector<double> {1.}, std::vector<std::size_t> {ids[0]});
     }
 
     static constexpr std::size_t access_id(
@@ -76,7 +76,7 @@ struct DiagonalTensorIndex
     {
         assert(access_id != 0 && "There is no mem_id associated to access_id=0");
         return std::pair<std::vector<double>, std::vector<std::size_t>>(
-                std::vector<double> {},
+                std::vector<double> {1.},
                 std::vector<std::size_t> {access_id - 1});
     }
 

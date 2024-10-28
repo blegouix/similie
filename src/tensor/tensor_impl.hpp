@@ -48,7 +48,7 @@ struct TensorNaturalIndex
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id()
     {
         return std::pair<std::vector<double>, std::vector<std::size_t>>(
-                std::vector<double> {},
+                std::vector<double> {1.},
                 std::vector<std::size_t> {ddc::type_seq_rank_v<ODim, type_seq_dimensions>});
     }
 
@@ -57,7 +57,7 @@ struct TensorNaturalIndex
     {
         return std::pair<
                 std::vector<double>,
-                std::vector<std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {id});
+                std::vector<std::size_t>>(std::vector<double> {1.}, std::vector<std::size_t> {id});
     }
 
     static constexpr std::size_t access_id(std::size_t const id)
@@ -68,10 +68,9 @@ struct TensorNaturalIndex
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> access_id_to_mem_id(
             std::size_t access_id)
     {
-        return std::pair<
-                std::vector<double>,
-                std::vector<
-                        std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {access_id});
+        return std::pair<std::vector<double>, std::vector<std::size_t>>(
+                std::vector<double> {1.},
+                std::vector<std::size_t> {access_id});
     }
 
     template <class Tensor, class Elem, class Id>
@@ -357,23 +356,14 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
                                 = IndexInterest::access_id_to_mem_id(
                                         elem_.template uid<IndexInterest>());
 
-                        double tensor_field_value;
-                        if (std::get<0>(mem_id).size() == 0) {
+                        double tensor_field_value = 0;
+                        for (std::size_t i = 0; i < std::get<0>(mem_id).size(); ++i) {
                             tensor_field_value
-                                    = tensor_field_
-                                              .mem(ddc::DiscreteElement<IndexHead...>(elem_),
-                                                   ddc::DiscreteElement<IndexInterest>(
-                                                           std::get<1>(mem_id)[0]));
-                        } else {
-                            tensor_field_value = 0.;
-                            for (std::size_t i = 0; i < std::get<0>(mem_id).size(); ++i) {
-                                tensor_field_value
-                                        += std::get<0>(mem_id)[i]
-                                           * tensor_field_
-                                                     .mem(ddc::DiscreteElement<IndexHead...>(elem_),
-                                                          ddc::DiscreteElement<IndexInterest>(
-                                                                  std::get<1>(mem_id)[i]));
-                            }
+                                    += std::get<0>(mem_id)[i]
+                                       * tensor_field_
+                                                 .mem(ddc::DiscreteElement<IndexHead...>(elem_),
+                                                      ddc::DiscreteElement<IndexInterest>(
+                                                              std::get<1>(mem_id)[i]));
                         }
 
                         return tensor_field_value;

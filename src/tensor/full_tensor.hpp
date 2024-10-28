@@ -52,7 +52,7 @@ struct FullTensorIndex
             std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
         return std::pair<std::vector<double>, std::vector<std::size_t>>(
-                std::vector<double> {},
+                std::vector<double> {1.},
                 std::vector<std::size_t> {access_id(ids)});
     }
 
@@ -67,10 +67,9 @@ struct FullTensorIndex
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> access_id_to_mem_id(
             std::size_t access_id)
     {
-        return std::pair<
-                std::vector<double>,
-                std::vector<
-                        std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {access_id});
+        return std::pair<std::vector<double>, std::vector<std::size_t>>(
+                std::vector<double> {1.},
+                std::vector<std::size_t> {access_id});
     }
 
     template <class Tensor, class Elem, class Id>
