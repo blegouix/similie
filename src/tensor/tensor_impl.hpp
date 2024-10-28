@@ -17,6 +17,13 @@ struct TensorNaturalIndex
 
     using type_seq_dimensions = ddc::detail::TypeSeq<CDim...>;
 
+    using subindexes_domain_t = ddc::DiscreteDomain<>;
+
+    static constexpr subindexes_domain_t subindexes_domain()
+    {
+        return ddc::DiscreteDomain<>();
+    }
+
     static constexpr std::size_t rank()
     {
         return 1;
@@ -211,7 +218,12 @@ class TensorAccessor
 public:
     explicit constexpr TensorAccessor();
 
-    static constexpr ddc::DiscreteDomain<Index...> natural_domain();
+    using natural_domain_t = ddc::cartesian_prod_t<std::conditional_t<
+            Index::is_natural_tensor_index,
+            ddc::DiscreteDomain<Index>,
+            typename Index::subindexes_domain_t>...>;
+
+    static constexpr natural_domain_t natural_domain();
 
     static constexpr ddc::DiscreteDomain<Index...> mem_domain();
 
@@ -248,10 +260,10 @@ constexpr TensorAccessor<Index...>::TensorAccessor()
 
 namespace detail {
 template <class Index>
-constexpr ddc::DiscreteDomain<Index> natural_domain()
+constexpr auto natural_domain()
 {
     if constexpr (Index::is_natural_tensor_index) {
-        return ddc::DiscreteDomain<
+        return typename ddc::DiscreteDomain<
                 Index>(ddc::DiscreteElement<Index>(0), ddc::DiscreteVector<Index>(Index::size()));
     } else {
         return Index::subindexes_domain();
@@ -260,9 +272,9 @@ constexpr ddc::DiscreteDomain<Index> natural_domain()
 } // namespace detail
 
 template <class... Index>
-constexpr ddc::DiscreteDomain<Index...> TensorAccessor<Index...>::natural_domain()
+constexpr TensorAccessor<Index...>::natural_domain_t TensorAccessor<Index...>::natural_domain()
 {
-    return ddc::DiscreteDomain<Index...>(detail::natural_domain<Index>()...);
+    return natural_domain_t(detail::natural_domain<Index>()...);
 }
 
 template <class... Index>
