@@ -64,3 +64,4 @@ using projector_index_t = ProjectorIndex<
 - indexes -> indices
 - static_assert sizeof...(OldIndexes)==sizeof...(NewIndexes) in RelabelizeIndexes
 - Primary-specialization is given by not writing <>. Maybe it can simplify some implementation
+- static_asserts everywhere, ie in InplaceApplyMetric

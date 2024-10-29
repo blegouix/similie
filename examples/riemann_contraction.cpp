@@ -95,11 +95,13 @@ int main(int argc, char** argv)
         tensor.mem(ddc::DiscreteElement<RiemannTensorIndex>(i)) = 1.;
     }
 
-    // TODO single-line
-    auto tensor2 = sil::tensor::inplace_apply_metric<MetricIndex, MuLow, MuUp>(metric, tensor);
-    auto tensor3 = sil::tensor::inplace_apply_metric<MetricIndex, NuLow, NuUp>(metric, tensor2);
-    auto tensor4 = sil::tensor::inplace_apply_metric<MetricIndex, RhoLow, RhoUp>(metric, tensor3);
-    auto tensor5 = sil::tensor::inplace_apply_metric<MetricIndex, SigmaLow, SigmaUp>(metric, tensor4);
+    ddc::Chunk tensor_low_alloc = ddc::create_mirror_and_copy(tensor);
+
+    auto tensor_low = sil::tensor::inplace_apply_metrics<MetricIndex, ddc::detail::TypeSeq<MuLow, NuLow, RhoLow, SigmaLow>, ddc::detail::TypeSeq<MuUp, NuUp, RhoUp, SigmaUp>>(metric, sil::tensor::Tensor<
+            double,
+            ddc::DiscreteDomain<RiemannTensorIndex>,
+            std::experimental::layout_right,
+            Kokkos::DefaultHostExecutionSpace::memory_space>(tensor_low_alloc));
 
     ddc::DiscreteDomain<> dom;
     ddc::Chunk scalar_alloc(dom, ddc::HostAllocator<double>());
@@ -110,6 +112,6 @@ int main(int argc, char** argv)
             Kokkos::DefaultHostExecutionSpace::memory_space>
             scalar(scalar_alloc);
 
-    sil::tensor::tensor_prod2(scalar, tensor5, tensor);
+    sil::tensor::tensor_prod2(scalar, tensor_low, tensor);
     std::cout << scalar(ddc::DiscreteElement<>()) << "\n";
 }
