@@ -185,7 +185,8 @@ struct IdFromElem;
 template <class Index, class... Subindex>
 struct IdFromElem<Index, ddc::DiscreteDomain<Subindex...>>
 {
-    static constexpr std::size_t run(ddc::DiscreteElement<Subindex...> natural_elem)
+    template <class Elem>
+    static constexpr std::size_t run(Elem natural_elem)
     {
         if constexpr (Index::is_natural_tensor_index) {
             return Index::access_id(natural_elem.template uid<Index>());
