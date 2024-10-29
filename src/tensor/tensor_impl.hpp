@@ -993,22 +993,15 @@ struct PrintTensor<
         ddc::DiscreteDomain<InterestDDim>,
         ddc::DiscreteDomain<HeadOfTailDDim, TailOfTailDDim...>>
 {
-    template <class ElementType, class LayoutStridedPolicy, class MemorySpace>
+    template <class TensorType>
     static std::string run(
             std::string& str,
-            Tensor<ElementType,
-                   ddc::DiscreteDomain<
-                           HeadDDim...,
-                           InterestDDim,
-                           HeadOfTailDDim,
-                           TailOfTailDDim...>,
-                   LayoutStridedPolicy,
-                   MemorySpace> const& tensor,
+            TensorType const& tensor,
             ddc::DiscreteElement<HeadDDim...> i)
     {
         str += "[";
         for (ddc::DiscreteElement<InterestDDim> elem :
-             ddc::DiscreteDomain<InterestDDim>(tensor.domain())) {
+             ddc::DiscreteDomain<InterestDDim>(tensor.accessor().natural_domain())) {
             str = PrintTensor<
                     ddc::DiscreteDomain<HeadDDim..., InterestDDim>,
                     ddc::DiscreteDomain<HeadOfTailDDim>,
@@ -1026,20 +1019,17 @@ struct PrintTensor<
         ddc::DiscreteDomain<InterestDDim>,
         ddc::DiscreteDomain<>>
 {
-    template <class ElementType, class LayoutStridedPolicy, class MemorySpace>
+    template <class TensorType>
     static std::string run(
             std::string& str,
-            Tensor<ElementType,
-                   ddc::DiscreteDomain<HeadDDim..., InterestDDim>,
-                   LayoutStridedPolicy,
-                   MemorySpace> const& tensor,
+            TensorType const& tensor,
             ddc::DiscreteElement<HeadDDim...> i)
     {
         for (ddc::DiscreteElement<InterestDDim> elem :
-             ddc::DiscreteDomain<InterestDDim>(tensor.domain())) {
+             ddc::DiscreteDomain<InterestDDim>(tensor.accessor().natural_domain())) {
             str = str + " "
-                  + std::to_string(
-                          tensor(ddc::DiscreteElement<HeadDDim..., InterestDDim>(i, elem)));
+                  + std::to_string(tensor.get(tensor.accessor().element(
+                          ddc::DiscreteElement<HeadDDim..., InterestDDim>(i, elem))));
         }
         str += "\n";
         return str;
@@ -1048,24 +1038,25 @@ struct PrintTensor<
 
 } // namespace detail
 
-template <
-        class ElementType,
-        class HeadDDim,
-        class... TailDDim,
-        class LayoutStridedPolicy,
-        class MemorySpace>
+template <class ElementType, class... DDim, class LayoutStridedPolicy, class MemorySpace>
 std::ostream& operator<<(
         std::ostream& os,
-        Tensor<ElementType,
-               ddc::DiscreteDomain<HeadDDim, TailDDim...>,
-               LayoutStridedPolicy,
-               MemorySpace> const& tensor)
+        Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace> const&
+                tensor)
 {
     std::string str = "";
     os << detail::PrintTensor<
             ddc::DiscreteDomain<>,
-            ddc::DiscreteDomain<HeadDDim>,
-            ddc::DiscreteDomain<TailDDim...>>::run(str, tensor, ddc::DiscreteElement<>());
+            ddc::DiscreteDomain<ddc::type_seq_element_t<
+                    0,
+                    ddc::to_type_seq_t<typename TensorAccessor<DDim...>::natural_domain_t>>>,
+            ddc::detail::convert_type_seq_to_discrete_domain_t<ddc::type_seq_remove_t<
+                    ddc::to_type_seq_t<typename TensorAccessor<DDim...>::natural_domain_t>,
+                    ddc::detail::TypeSeq<ddc::type_seq_element_t<
+                            0,
+                            ddc::to_type_seq_t<
+                                    typename TensorAccessor<DDim...>::natural_domain_t>>>>>>::
+                    run(str, tensor, ddc::DiscreteElement<>());
     return os;
 }
 
