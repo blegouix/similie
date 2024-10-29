@@ -224,15 +224,21 @@ tensor_prod2(
                   ddc::type_seq_remove_t<
                           uncharacterize<ddc::to_type_seq_t<typename Index2::subindexes_domain_t>>,
                           uncharacterize<ddc::detail::TypeSeq<ProdDDim...>>>>);
-    static_assert(std::is_same_v<
-                  ddc::type_seq_remove_t<
-                          ddc::to_type_seq_t<typename Index1::subindexes_domain_t>,
-                          ddc::to_type_seq_t<typename Index2::subindexes_domain_t>>,
-                  ddc::detail::
-                          TypeSeq<>>); // tensor1 and tensor2 should not have any subindex in common because their characters are different
+    static_assert(
+            std::is_same_v < ddc::type_seq_remove_t<
+                    ddc::to_type_seq_t<typename Index1::subindexes_domain_t>,
+                    ddc::to_type_seq_t<typename Index2::subindexes_domain_t>>,
+            ddc::to_type_seq_t<
+                    typename Index1::
+                            subindexes_domain_t>> && std::is_same_v < ddc::type_seq_remove_t<
+                    ddc::to_type_seq_t<typename Index2::subindexes_domain_t>,
+                    ddc::to_type_seq_t<typename Index1::subindexes_domain_t>>,
+            ddc::to_type_seq_t<
+                    typename Index2::
+                            subindexes_domain_t>>); // tensor1 and tensor2 should not have any subindex in common because their characters are different
     detail::TensorProd2<
-            Index1,
-            Index2,
+            uncharacterize<Index1>,
+            uncharacterize<Index2>,
             ddc::type_seq_remove_t<
                     uncharacterize<ddc::detail::TypeSeq<ProdDDim...>>,
                     uncharacterize<ddc::to_type_seq_t<typename Index2::subindexes_domain_t>>>,

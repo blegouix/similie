@@ -492,9 +492,11 @@ public:
     {
     }
 
-    static constexpr TensorAccessor<DDim...> accessor()
+    using accessor_t = TensorAccessor<DDim...>;
+
+    static constexpr accessor_t accessor()
     {
-        return TensorAccessor<DDim...>();
+        return accessor_t();
     }
 
     template <class... DElems>
@@ -683,20 +685,89 @@ relabelize_index_of(
 }
 
 namespace detail {
+template <class IndexToRelabelize, class OldIndexes, class NewIndexes, std::size_t I = 0>
+struct RelabelizeIndexes;
 
-template <class Dom, class OldIndexes, class NewIndexes, std::size_t I = 0>
-struct RelabelizeIndexesInDomain
+template <template <class...> class IndexToRelabelizeType, class... Arg, std::size_t I>
+struct RelabelizeIndexes<
+        IndexToRelabelizeType<Arg...>,
+        ddc::detail::TypeSeq<>,
+        ddc::detail::TypeSeq<>,
+        I>
 {
+    using type = IndexToRelabelizeType<Arg...>;
+};
+
+template <
+        template <class...>
+        class IndexToRelabelizeType,
+        class HeadOldIndexes,
+        class... TailOldIndexes,
+        class HeadNewIndexes,
+        class... TailNewIndexes,
+        class... Arg,
+        std::size_t I>
+struct RelabelizeIndexes<
+        IndexToRelabelizeType<Arg...>,
+        ddc::detail::TypeSeq<HeadOldIndexes, TailOldIndexes...>,
+        ddc::detail::TypeSeq<HeadNewIndexes, TailNewIndexes...>,
+        I>
+{
+private:
+    using OldIndexes = ddc::detail::TypeSeq<HeadOldIndexes, TailOldIndexes...>;
+    using NewIndexes = ddc::detail::TypeSeq<HeadNewIndexes, TailNewIndexes...>;
+
+public:
     using type = std::conditional_t
                  < I<ddc::type_seq_size_v<OldIndexes>,
-                     RelabelizeIndexesInDomain<
+                     typename RelabelizeIndexes<
+                             typename RelabelizeIndexes<
+                                     IndexToRelabelizeType<Arg...>,
+                                     ddc::type_seq_element_t<I, OldIndexes>,
+                                     ddc::type_seq_element_t<I, NewIndexes>>::type,
+                             OldIndexes,
+                             NewIndexes,
+                             I + 1>::type,
+                     IndexToRelabelizeType<Arg...>>;
+};
+
+template <class Dom, class OldIndexes, class NewIndexes, std::size_t I = 0>
+struct RelabelizeIndexesInDomain;
+
+template <class Dom, std::size_t I>
+struct RelabelizeIndexesInDomain<Dom, ddc::detail::TypeSeq<>, ddc::detail::TypeSeq<>, I>
+{
+    using type = Dom;
+};
+
+template <
+        class Dom,
+        class HeadOldIndexes,
+        class... TailOldIndexes,
+        class HeadNewIndexes,
+        class... TailNewIndexes,
+        std::size_t I>
+struct RelabelizeIndexesInDomain<
+        Dom,
+        ddc::detail::TypeSeq<HeadOldIndexes, TailOldIndexes...>,
+        ddc::detail::TypeSeq<HeadNewIndexes, TailNewIndexes...>,
+        I>
+{
+private:
+    using OldIndexes = ddc::detail::TypeSeq<HeadOldIndexes, TailOldIndexes...>;
+    using NewIndexes = ddc::detail::TypeSeq<HeadNewIndexes, TailNewIndexes...>;
+
+public:
+    using type = std::conditional_t
+                 < I<ddc::type_seq_size_v<OldIndexes>,
+                     typename RelabelizeIndexesInDomain<
                              typename RelabelizeIndexInDomain<
                                      Dom,
                                      ddc::type_seq_element_t<I, OldIndexes>,
                                      ddc::type_seq_element_t<I, NewIndexes>>::type,
                              OldIndexes,
                              NewIndexes,
-                             I + 1>,
+                             I + 1>::type,
                      Dom>;
 };
 

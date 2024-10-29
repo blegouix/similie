@@ -62,3 +62,5 @@ using projector_index_t = ProjectorIndex<
 - Partial CTAD works for function. Check if it can simplify some implementations
 - subindexes_domain_t -> natural_domain_t ?
 - indexes -> indices
+- static_assert sizeof...(OldIndexes)==sizeof...(NewIndexes) in RelabelizeIndexes
+- Primary-specialization is given by not writing <>. Maybe it can simplify some implementation
