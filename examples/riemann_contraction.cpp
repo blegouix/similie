@@ -5,9 +5,8 @@
 
 #include "tensor.hpp"
 
-//struct MetricIndex : sil::tensor::MetricTensorIndex<sil::tensor::LorentzianSignTensorIndex, sil::tensor::detail::DummyIndex1, sil::tensor::detail::DummyIndex1, 2>
 using MetricIndex
-    = sil::tensor::IdentityTensorIndex<sil::tensor::MetricIndex1, sil::tensor::MetricIndex2>;
+    = sil::tensor::LorentzianSignTensorIndex<std::integral_constant<std::size_t, 1>, sil::tensor::MetricIndex1, sil::tensor::MetricIndex2>;
 
 struct T
 {

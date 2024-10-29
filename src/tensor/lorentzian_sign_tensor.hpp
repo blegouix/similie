@@ -12,7 +12,7 @@ namespace sil {
 namespace tensor {
 
 // struct representing an identity tensor (no storage).
-template <std::size_t q, class... TensorIndex>
+template <class Q, class... TensorIndex>
 struct LorentzianSignTensorIndex
 {
     static constexpr bool is_natural_tensor_index = false;
@@ -69,7 +69,7 @@ public:
             })) {
             return 0;
         } else {
-            if (ids[0] < q) {
+            if (ids[0] < Q::value) {
                 return 1;
             } else {
                 return 2;
@@ -103,8 +103,8 @@ public:
 };
 
 namespace detail {
-template <std::size_t q, class... SubIndex>
-struct IsTensorIndex<LorentzianSignTensorIndex<q, SubIndex...>>
+template <class Q, class... SubIndex>
+struct IsTensorIndex<LorentzianSignTensorIndex<Q, SubIndex...>>
 {
     using type = std::true_type;
 };

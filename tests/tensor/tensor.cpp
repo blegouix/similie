@@ -181,7 +181,8 @@ TEST(Tensor, IdentityTensorIndexing)
     EXPECT_EQ(tensor.get(tensor_accessor.element<Z, Z>()), 1.);
 }
 
-struct LorentzianSignIndex : sil::tensor::LorentzianSignTensorIndex<2, Mu, Nu>
+struct LorentzianSignIndex
+    : sil::tensor::LorentzianSignTensorIndex<std::integral_constant<std::size_t, 2>, Mu, Nu>
 {
 };
 
