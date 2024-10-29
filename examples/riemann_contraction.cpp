@@ -95,14 +95,12 @@ int main(int argc, char** argv)
     }
 
     ddc::Chunk tensor_low_alloc = ddc::create_mirror_and_copy(tensor);
-    std::cout << tensor;
 
     auto tensor_low = sil::tensor::inplace_apply_metrics<MetricIndex, ddc::detail::TypeSeq<MuLow, NuLow, RhoLow, SigmaLow>, ddc::detail::TypeSeq<MuUp, NuUp, RhoUp, SigmaUp>>(metric, sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<RiemannTensorIndex>,
             std::experimental::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>(tensor_low_alloc));
-    std::cout << tensor_low;
 
     ddc::DiscreteDomain<> dom;
     ddc::Chunk scalar_alloc(dom, ddc::HostAllocator<double>());

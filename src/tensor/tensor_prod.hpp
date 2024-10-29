@@ -190,6 +190,7 @@ struct TensorProd2<
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 uncompressed_tensor2(uncompressed_tensor2_alloc);
 
+        sil::tensor::uncompress(uncompressed_tensor1, tensor1);
         sil::tensor::uncompress(uncompressed_tensor2, tensor2);
 
         return natural_tensor_prod(prod_tensor, uncompressed_tensor1, uncompressed_tensor2);
