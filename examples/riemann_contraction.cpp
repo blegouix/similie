@@ -90,8 +90,89 @@ int main(int argc, char** argv)
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor(tensor_alloc);
 
+    ddc::DiscreteDomain<MuUp, NuUp, RhoUp, SigmaUp> natural_tensor_dom(
+            ddc::DiscreteElement<MuUp, NuUp, RhoUp, SigmaUp>(0, 0, 0, 0),
+            ddc::DiscreteVector<MuUp, NuUp, RhoUp, SigmaUp>(4, 4, 4, 4));
+    ddc::Chunk natural_tensor_alloc(natural_tensor_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor<
+            double,
+            ddc::DiscreteDomain<MuUp, NuUp, RhoUp, SigmaUp>,
+            std::experimental::layout_right,
+            Kokkos::DefaultHostExecutionSpace::memory_space>
+            natural_tensor(natural_tensor_alloc);
+    ddc::parallel_fill(natural_tensor, 0.);
+    natural_tensor(natural_tensor.accessor().element<T,X,T,X>()) = -.25;
+    natural_tensor(natural_tensor.accessor().element<T,X,X,T>()) = .25;
+    natural_tensor(natural_tensor.accessor().element<T,Y,T,Y>()) = -1.;
+    natural_tensor(natural_tensor.accessor().element<T,Y,X,Y>()) = .5;
+    natural_tensor(natural_tensor.accessor().element<T,Y,Y,T>()) = 1.;
+    natural_tensor(natural_tensor.accessor().element<T,Y,Y,X>()) = -.5;
+    natural_tensor(natural_tensor.accessor().element<T,Z,T,Z>()) = -1.;
+    natural_tensor(natural_tensor.accessor().element<T,Z,X,Z>()) = .5;
+    natural_tensor(natural_tensor.accessor().element<T,Z,Z,T>()) = 1.;
+    natural_tensor(natural_tensor.accessor().element<T,Z,Z,X>()) = -.5;
+
+    natural_tensor(natural_tensor.accessor().element<X,T,T,X>()) = .25;
+    natural_tensor(natural_tensor.accessor().element<X,T,X,T>()) = -.25;
+    natural_tensor(natural_tensor.accessor().element<X,Y,T,Y>()) = -1.5;
+    natural_tensor(natural_tensor.accessor().element<X,Y,X,Y>()) = 1.;
+    natural_tensor(natural_tensor.accessor().element<X,Y,Y,T>()) = 1.5;
+    natural_tensor(natural_tensor.accessor().element<X,Y,Y,X>()) = -1.;
+    natural_tensor(natural_tensor.accessor().element<X,Z,T,Z>()) = -1.5;
+    natural_tensor(natural_tensor.accessor().element<X,Z,X,Z>()) = 1.;
+    natural_tensor(natural_tensor.accessor().element<X,Z,Z,T>()) = 1.5;
+    natural_tensor(natural_tensor.accessor().element<X,Z,Z,X>()) = -1.;
+
+    natural_tensor(natural_tensor.accessor().element<Y,T,T,Y>()) = 1.;
+    natural_tensor(natural_tensor.accessor().element<Y,T,X,Y>()) = -1.5;
+    natural_tensor(natural_tensor.accessor().element<Y,T,Y,T>()) = -1.0;
+    natural_tensor(natural_tensor.accessor().element<Y,T,Y,X>()) = 1.5;
+    natural_tensor(natural_tensor.accessor().element<Y,X,T,Y>()) = -1.5;
+    natural_tensor(natural_tensor.accessor().element<Y,X,X,Y>()) = 2.;
+    natural_tensor(natural_tensor.accessor().element<Y,X,Y,T>()) = 1.5;
+    natural_tensor(natural_tensor.accessor().element<Y,X,Y,X>()) = -2.;
+
+    natural_tensor(natural_tensor.accessor().element<Z,T,T,Z>()) = 1.;
+    natural_tensor(natural_tensor.accessor().element<Z,T,X,Z>()) = -1.5;
+    natural_tensor(natural_tensor.accessor().element<Z,T,Z,T>()) = -1.0;
+    natural_tensor(natural_tensor.accessor().element<Z,T,Z,X>()) = 1.5;
+    natural_tensor(natural_tensor.accessor().element<Z,X,T,Z>()) = -1.5;
+    natural_tensor(natural_tensor.accessor().element<Z,X,X,Z>()) = 2.;
+    natural_tensor(natural_tensor.accessor().element<Z,X,Z,T>()) = 1.5;
+    natural_tensor(natural_tensor.accessor().element<Z,X,Z,X>()) = -2.;
+    std::cout << natural_tensor;
+
+    sil::tensor::compress(tensor, natural_tensor);
+/*
+[[[[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+ [[0, -0.25, 0, 0], [0.25, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], 
+[[0, 0, -1.0, 0], [0, 0, 0.5, 0], [1.0, -0.5, 0, 0], [0, 0, 0, 0]],
+ [[0, 0, 0, -1.0], [0, 0, 0, 0.5], [0, 0, 0, 1.22464679914735e-16], [1.0, -0.5, -1.22464679914735e-16, 0]]],
+
+ [[[0, 0.25, 0, 0], [-0.25, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+ [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+ [[0, 0, -1.5, 0], [0, 0, 1.0, 0], [1.5, -1.0, 0, 0], [0, 0, 0, 0]],
+ [[0, 0, 0, -1.5], [0, 0, 0, 1.0], [0, 0, 0, 1.22464679914735e-16], [1.5, -1.0, -1.22464679914735e-16, 0]]],
+
+ [[[0, 0, 1.0, 0], [0, 0, -1.5, 0], [-1.0, 1.5, 0, 0], [0, 0, 0, 0]],
+ [[0, 0, -1.5, 0], [0, 0, 2.0, 0], [1.5, -2.0, 0, 0], [0, 0, 0, 0]],
+ [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+ [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 3.74939945665464e-33], [0, 0, -3.74939945665464e-33, 0]]],
+
+ [[[0, 0, 0, 1.0], [0, 0, 0, -1.5], [0, 0, 0, 0], [-1.0, 1.5, 0, 0]],
+ [[0, 0, 0, -1.5], [0, 0, 0, 2.0], [0, 0, 0, 0], [1.5, -2.0, 0, 0]],
+ [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 3.74939945665464e-33], [0, 0, -3.74939945665464e-33, 0]],
+ [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]]]
+*/
+
+/*
     for (std::size_t i = 0; i < 20; ++i) {
         tensor.mem(ddc::DiscreteElement<RiemannTensorIndex>(i)) = 1.;
+    }
+*/
+    std::cout << tensor;
+    for (std::size_t i = 0; i < 20; ++i) {
+        std::cout << tensor.mem(ddc::DiscreteElement<RiemannTensorIndex>(i)) << "\n";
     }
 
     ddc::Chunk tensor_low_alloc = ddc::create_mirror_and_copy(tensor);
