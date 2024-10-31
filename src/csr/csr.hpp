@@ -171,6 +171,24 @@ tensor_prod(
     return prod;
 }
 
+template <std::size_t N, class... TensorIndex>
+std::ostream& operator<<(std::ostream& os, Csr<N, TensorIndex...> const& csr)
+{
+    os << "----------\n";
+    for (std::size_t i = 0; i < csr.coalesc_idx().size(); ++i) {
+        os << csr.coalesc_idx()[i] << " ";
+    }
+    os << "\n";
+    for (std::size_t i = 0; i < N; ++i) {
+        for (std::size_t j = 0; j < sizeof...(TensorIndex) - 1; ++j) {
+            os << csr.idx()[j][i] << " ";
+        }
+        os << csr.values()[i];
+        os << "\n";
+    }
+    return os;
+}
+
 } // namespace csr
 
 } // namespace sil

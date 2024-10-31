@@ -729,9 +729,7 @@ struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::FullTensorIndex<Id...>
                         candidate.domain(),
                         false,
                         ddc::reducer::lor<bool>(),
-                        [&](ddc::DiscreteElement<Id...> elem) {
-                            return candidate(elem) > 1e-12;
-                        })) {
+                        [&](ddc::DiscreteElement<Id...> elem) { return candidate(elem) > 1e-6; })) {
                 ddc::Chunk
                         norm_squared_alloc(ddc::DiscreteDomain<> {}, ddc::HostAllocator<double>());
                 sil::tensor::Tensor<
