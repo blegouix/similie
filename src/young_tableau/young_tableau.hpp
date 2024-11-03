@@ -6,7 +6,6 @@
 #include <ddc/ddc.hpp>
 
 #include <boost/algorithm/string.hpp>
-#include <boost/math/special_functions/factorials.hpp>
 
 #include "csr.hpp"
 #include "csr_dynamic.hpp"
@@ -903,11 +902,8 @@ fill_symmetrizer(
     ddc::parallel_fill(tr, 0);
     tr.apply_lambda(tr_lambda<Dimension, sizeof...(Id) / 2, Id...>(idx_to_permute));
 
-    if constexpr (!AntiSym) {
-        tr *= 1. / boost::math::factorial<double>(sizeof...(Id) / 2);
-    } else {
-        tr *= permutation_parity(idx_to_permute)
-              / boost::math::factorial<double>(sizeof...(Id) / 2);
+    if constexpr (AntiSym) {
+        tr *= static_cast<double>(permutation_parity(idx_to_permute));
     }
     sym += tr;
 
@@ -947,7 +943,7 @@ static std::vector<std::array<std::size_t, Nt>> permutations_subset(
 }
 
 // Compute projector
-template <class PartialTableauSeq, std::size_t Dimension, bool AntiSym = 0>
+template <class PartialTableauSeq, std::size_t Dimension, bool AntiSym = false>
 struct Projector;
 
 template <std::size_t... ElemOfHeadRow, class... TailRow, std::size_t Dimension, bool AntiSym>
@@ -987,8 +983,8 @@ struct Projector<
                 idx_to_permute[i] = i;
             }
             std::array<std::size_t, sizeof...(ElemOfHeadRow)> row_values {ElemOfHeadRow...};
-            auto idx_permutations = detail::permutations_subset(idx_to_permute, row_values);
-            for (int i = 0; i < idx_permutations.size(); ++i) {
+            auto idx_permutations = detail::permutations_subset(idx_to_permute, row_values); // TODO check https://indico.cern.ch/event/814040/contributions/3452485/attachments/1860434/3057354/psr_alcock.pdf page 6, it may be incomplete
+            for (std::size_t i = 0; i < idx_permutations.size(); ++i) {
                 fill_symmetrizer<
                         Dimension,
                         AntiSym,
@@ -1046,8 +1042,8 @@ auto YoungTableau<Dimension, TableauSeq>::projector()
             detail::tr_lambda<s_d, s_r, detail::declare_deriv<Id>..., Id...>(idx_to_permute));
 
     // Build the projector
-    detail::Projector<tableau_seq, Dimension>::run(proj);
-    detail::Projector<typename dual::tableau_seq, Dimension, 1>::run(proj);
+    detail::Projector<tableau_seq, s_d>::run(proj);
+    detail::Projector<typename dual::tableau_seq, s_d, true>::run(proj);
     return std::make_tuple(std::move(proj_alloc), proj);
 }
 
