@@ -65,3 +65,6 @@ using projector_index_t = ProjectorIndex<
 - static_assert sizeof...(OldIndexes)==sizeof...(NewIndexes) in RelabelizeIndexes
 - Primary-specialization is given by not writing <>. Maybe it can simplify some implementation
 - static_asserts everywhere, ie in InplaceApplyMetric
+- natural_tensor_prod_domain() should take domains and not tensors (and renames natural_prod_domain)
+- relabelize_indexes_of should be renamed relabelize_indexes_in_tensor or use concepts
+- tests for relabelize_indexes and relabelize_metric
