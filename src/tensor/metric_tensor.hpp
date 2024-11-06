@@ -5,7 +5,7 @@
 
 #include <ddc/ddc.hpp>
 
-#include "symmetric_tensor.hpp"
+#include "character.hpp"
 
 namespace sil {
 
@@ -311,6 +311,31 @@ metric_prod_t<MetricIndex, Indexes1, Indexes2> fill_metric_prod(
     return detail::MetricProd<Indexes1, Indexes2>::run(metric_prod, metric, metric_prod_);
 }
 
+namespace detail {
+
+// Type of index used by projectors or symmetrizers
+template <class Index>
+struct prime : Index
+{
+};
+
+template <class Indexes>
+struct Primes;
+
+template <class... Index>
+struct Primes<ddc::detail::TypeSeq<TensorContravariantNaturalIndex<Index>...>>
+{
+    using type = ddc::detail::TypeSeq<TensorContravariantNaturalIndex<prime<Index>>...>;
+};
+
+template <class... Index>
+struct Primes<ddc::detail::TypeSeq<TensorCovariantNaturalIndex<Index>...>>
+{
+    using type = ddc::detail::TypeSeq<TensorCovariantNaturalIndex<prime<Index>>...>;
+};
+
+} // namespace detail
+
 // Apply metrics inplace (like g_mu_muprime*T^muprime^nu)
 template <class MetricIndex, class Indexes1, class Indexes2, class MetricType, class TensorType>
 relabelize_indexes_of_t<TensorType, Indexes2, Indexes1>
@@ -330,16 +355,16 @@ inplace_apply_metrics( // TODO avoid metricS by using concepts
 
     fill_metric_prod<MetricIndex, Indexes1, Indexes2>(metric_prod, metric);
 
-    ddc::Chunk result_alloc = ddc::create_mirror(tensor);
-    sil::tensor::Tensor<
-            double,
-            typename TensorType::discrete_domain_type,
-            std::experimental::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            result(result_alloc);
-    // tensor_prod3(result, metric_prod, tensor);
+    ddc::Chunk result_alloc(
+            relabelize_indexes_in_domain<Indexes2, Indexes1>(tensor.domain()),
+            ddc::HostAllocator<double>());
+    relabelize_indexes_of_t<TensorType, Indexes2, Indexes1> result(result_alloc);
+    tensor_prod3(
+            result,
+            relabelize_indexes_of<Indexes2, typename detail::Primes<Indexes1>::type>(metric_prod),
+            relabelize_indexes_of<Indexes2, typename detail::Primes<Indexes2>::type>(tensor));
 
-    return relabelize_indexes_of<Indexes2, Indexes1>(result);
+    return result;
 }
 
 } // namespace tensor

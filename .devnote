@@ -68,3 +68,4 @@ using projector_index_t = ProjectorIndex<
 - natural_tensor_prod_domain() should take domains and not tensors (and renames natural_prod_domain)
 - relabelize_indexes_of should be renamed relabelize_indexes_in_tensor or use concepts
 - tests for relabelize_indexes and relabelize_metric
+- standardize prime and second indexes
