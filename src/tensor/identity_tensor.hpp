@@ -15,6 +15,8 @@ namespace tensor {
 template <class... TensorIndex>
 struct IdentityTensorIndex
 {
+    static constexpr bool is_natural_tensor_index = false;
+
     using subindexes_domain_t = ddc::DiscreteDomain<TensorIndex...>;
 
     static constexpr subindexes_domain_t subindexes_domain()
@@ -45,25 +47,21 @@ struct IdentityTensorIndex
         return 2;
     }
 
-private:
-    template <class Head, class... Tail>
-    inline static constexpr bool are_all_same = (std::is_same_v<Head, Tail> && ...);
-
-public:
-    template <class... CDim>
-    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id()
+    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id(
+            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
-        // static_assert(rank() == sizeof...(CDim));
         assert(false);
         return std::pair<
                 std::vector<double>,
-                std::vector<std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {});
+                std::vector<std::size_t>>(std::vector<double> {1.}, std::vector<std::size_t> {});
     }
 
-    template <class... CDim>
-    static constexpr std::size_t access_id()
+    static constexpr std::size_t access_id(
+            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
-        if constexpr (!are_all_same<CDim...>) {
+        if (!std::all_of(ids.begin(), ids.end(), [&](const std::size_t id) {
+                return id == *ids.begin();
+            })) {
             return 0;
         } else {
             return 1;
@@ -73,7 +71,7 @@ public:
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> access_id_to_mem_id(
             std::size_t access_id)
     {
-        assert(false && "There is no mem_id");
+        assert(access_id != 0 && "There is no mem_id associated to access_id=0");
         return std::pair<
                 std::vector<double>,
                 std::vector<std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {});
@@ -88,7 +86,7 @@ public:
         if (elem.template uid<Id>() == 0) {
             return 0.;
         } else {
-            return 1;
+            return access(tensor, elem);
         }
     }
 };

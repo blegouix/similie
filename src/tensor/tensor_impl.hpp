@@ -13,7 +13,16 @@ namespace tensor {
 template <class... CDim>
 struct TensorNaturalIndex
 {
+    static constexpr bool is_natural_tensor_index = true;
+
     using type_seq_dimensions = ddc::detail::TypeSeq<CDim...>;
+
+    using subindexes_domain_t = ddc::DiscreteDomain<>;
+
+    static constexpr subindexes_domain_t subindexes_domain()
+    {
+        return ddc::DiscreteDomain<>();
+    }
 
     static constexpr std::size_t rank()
     {
@@ -39,23 +48,29 @@ struct TensorNaturalIndex
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id()
     {
         return std::pair<std::vector<double>, std::vector<std::size_t>>(
-                std::vector<double> {},
+                std::vector<double> {1.},
                 std::vector<std::size_t> {ddc::type_seq_rank_v<ODim, type_seq_dimensions>});
     }
 
-    template <class ODim>
-    static constexpr std::size_t access_id()
+    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id(
+            std::size_t const id)
     {
-        return std::get<1>(mem_id<ODim>())[0];
+        return std::pair<
+                std::vector<double>,
+                std::vector<std::size_t>>(std::vector<double> {1.}, std::vector<std::size_t> {id});
+    }
+
+    static constexpr std::size_t access_id(std::size_t const id)
+    {
+        return id;
     }
 
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> access_id_to_mem_id(
             std::size_t access_id)
     {
-        return std::pair<
-                std::vector<double>,
-                std::vector<
-                        std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {access_id});
+        return std::pair<std::vector<double>, std::vector<std::size_t>>(
+                std::vector<double> {1.},
+                std::vector<std::size_t> {access_id});
     }
 
     template <class Tensor, class Elem, class Id>
@@ -68,7 +83,7 @@ struct TensorNaturalIndex
     }
 };
 
-// Helpers to build the access_id() function which computes the ids of subindexes of an index.
+// Helpers to build the access_id() function which computes the ids of subindexes of an index. This cumbersome logic is necessary because subindexes do not necessarily have the same rank.
 namespace detail {
 // For Tmunu and index=nu, returns 1
 template <class Index, class...>
@@ -115,29 +130,83 @@ template <class CDimTypeSeq, class IndexSeq>
 using type_seq_dims_at_ints_t = TypeSeqDimsAtInts<CDimTypeSeq, IndexSeq>::type;
 
 // Returns Index::access_id but from a type seq (in place of a variadic template CDim...)
-template <class Index, class TypeSeqDims>
+template <class Index, class SubindexesDomain, class TypeSeqDims>
 struct IdFromTypeSeqDims;
 
-template <class Index, class... CDim>
-struct IdFromTypeSeqDims<Index, ddc::detail::TypeSeq<CDim...>>
+template <class Index, class... Subindex, class... CDim>
+struct IdFromTypeSeqDims<Index, ddc::DiscreteDomain<Subindex...>, ddc::detail::TypeSeq<CDim...>>
 {
     static constexpr std::size_t run()
     {
-        return Index::template access_id<CDim...>();
+        static_assert(sizeof...(Subindex) == sizeof...(CDim));
+        if constexpr (Index::is_natural_tensor_index) {
+            return Index::access_id(
+                    ddc::type_seq_rank_v<CDim, typename Index::type_seq_dimensions>...);
+        } else {
+            return Index::access_id(std::array<
+                                    std::size_t,
+                                    sizeof...(Subindex)> {ddc::type_seq_rank_v<
+                    typename ddc::type_seq_element_t<
+                            ddc::type_seq_rank_v<Subindex, ddc::detail::TypeSeq<Subindex...>>,
+                            ddc::detail::TypeSeq<CDim...>>,
+                    typename Subindex::type_seq_dimensions>...});
+        }
     }
 };
 
 // Returns Index::access_id for the subindex Index of the IndexesTypeSeq
 template <class Index, class IndexesTypeSeq, class... CDim>
-static constexpr std::size_t access_id()
+static constexpr std::size_t access_id() // TODO consteval. This is not compile-time atm :/
 {
-    return IdFromTypeSeqDims<
-            Index,
-            type_seq_dims_at_ints_t<
-                    ddc::detail::TypeSeq<CDim...>,
-                    offset_index_seq_t<
-                            NbDimsBeforeIndex<Index, IndexesTypeSeq>::run(0),
-                            std::make_integer_sequence<std::size_t, Index::rank()>>>>::run();
+    if constexpr (Index::is_natural_tensor_index) {
+        return IdFromTypeSeqDims<
+                Index,
+                ddc::DiscreteDomain<Index>,
+                type_seq_dims_at_ints_t<
+                        ddc::detail::TypeSeq<CDim...>,
+                        offset_index_seq_t<
+                                NbDimsBeforeIndex<Index, IndexesTypeSeq>::run(0),
+                                std::make_integer_sequence<std::size_t, Index::rank()>>>>::run();
+    } else {
+        return IdFromTypeSeqDims<
+                Index,
+                typename Index::subindexes_domain_t,
+                type_seq_dims_at_ints_t<
+                        ddc::detail::TypeSeq<CDim...>,
+                        offset_index_seq_t<
+                                NbDimsBeforeIndex<Index, IndexesTypeSeq>::run(0),
+                                std::make_integer_sequence<std::size_t, Index::rank()>>>>::run();
+    }
+}
+
+template <class Index, class SubindexesDomain>
+struct IdFromElem;
+
+template <class Index, class... Subindex>
+struct IdFromElem<Index, ddc::DiscreteDomain<Subindex...>>
+{
+    template <class Elem>
+    static constexpr std::size_t run(Elem natural_elem)
+    {
+        if constexpr (Index::is_natural_tensor_index) {
+            return Index::access_id(natural_elem.template uid<Index>());
+        } else {
+            return Index::access_id(std::array<std::size_t, sizeof...(Subindex)> {
+                    natural_elem.template uid<Subindex>()...});
+        }
+    }
+};
+
+template <class Index, class IndexesTypeSeq, class... NaturalIndex>
+static constexpr std::size_t access_id(
+        ddc::DiscreteElement<NaturalIndex...>
+                natural_elem) // TODO consteval. This is not compile-time atm :/
+{
+    if constexpr (Index::is_natural_tensor_index) {
+        return IdFromElem<Index, ddc::DiscreteDomain<Index>>::run(natural_elem);
+    } else {
+        return IdFromElem<Index, typename Index::subindexes_domain_t>::run(natural_elem);
+    }
 }
 
 } // namespace detail
@@ -149,12 +218,23 @@ class TensorAccessor
 public:
     explicit constexpr TensorAccessor();
 
+    using natural_domain_t = ddc::cartesian_prod_t<std::conditional_t<
+            Index::is_natural_tensor_index,
+            ddc::DiscreteDomain<Index>,
+            typename Index::subindexes_domain_t>...>;
+
+    static constexpr natural_domain_t natural_domain();
+
     static constexpr ddc::DiscreteDomain<Index...> mem_domain();
 
     static constexpr ddc::DiscreteDomain<Index...> access_domain();
 
     template <class... CDim>
     static constexpr ddc::DiscreteElement<Index...> element();
+
+    template <class... NaturalIndex>
+    static constexpr ddc::DiscreteElement<Index...> element(
+            ddc::DiscreteElement<NaturalIndex...> natural_elem);
 };
 
 namespace detail {
@@ -176,6 +256,25 @@ using tensor_accessor_for_domain_t = detail::TensorAccessorForDomain<Dom>::type;
 template <class... Index>
 constexpr TensorAccessor<Index...>::TensorAccessor()
 {
+}
+
+namespace detail {
+template <class Index>
+constexpr auto natural_domain()
+{
+    if constexpr (Index::is_natural_tensor_index) {
+        return typename ddc::DiscreteDomain<
+                Index>(ddc::DiscreteElement<Index>(0), ddc::DiscreteVector<Index>(Index::size()));
+    } else {
+        return Index::subindexes_domain();
+    }
+}
+} // namespace detail
+
+template <class... Index>
+constexpr TensorAccessor<Index...>::natural_domain_t TensorAccessor<Index...>::natural_domain()
+{
+    return natural_domain_t(detail::natural_domain<Index>()...);
 }
 
 template <class... Index>
@@ -200,6 +299,16 @@ constexpr ddc::DiscreteElement<Index...> TensorAccessor<Index...>::element()
 {
     return ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(
             detail::access_id<Index, ddc::detail::TypeSeq<Index...>, CDim...>())...);
+}
+
+template <class... Index>
+template <class... NaturalIndex>
+constexpr ddc::DiscreteElement<Index...> TensorAccessor<Index...>::element(
+        ddc::DiscreteElement<NaturalIndex...> natural_elem)
+{
+    return ddc::DiscreteElement<Index...>(
+            ddc::DiscreteElement<Index>(detail::access_id<Index, ddc::detail::TypeSeq<Index...>>(
+                    typename natural_domain_t::discrete_element_type(natural_elem)))...);
 }
 
 namespace detail {
@@ -236,48 +345,6 @@ template <
         class... IndexTail>
 struct Access;
 
-template <class TensorField, class Element, class... IndexHead, class IndexInterest>
-struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInterest>
-{
-    template <class Elem>
-    static TensorField::element_type run(TensorField tensor_field, Elem const& elem)
-    {
-        if constexpr (detail::is_tensor_index_v<IndexInterest>) {
-            return IndexInterest::template process_access<TensorField, Elem, IndexInterest>(
-                    [](TensorField tensor_field_, Elem elem_) -> TensorField::element_type {
-                        std::pair<std::vector<double>, std::vector<std::size_t>> mem_id
-                                = IndexInterest::access_id_to_mem_id(
-                                        elem_.template uid<IndexInterest>());
-
-                        double tensor_field_value;
-                        if (std::get<0>(mem_id).size() == 0) {
-                            tensor_field_value
-                                    = tensor_field_
-                                              .mem(ddc::DiscreteElement<IndexHead...>(elem_),
-                                                   ddc::DiscreteElement<IndexInterest>(
-                                                           std::get<1>(mem_id)[0]));
-                        } else {
-                            tensor_field_value = 0.;
-                            for (std::size_t i = 0; i < std::get<0>(mem_id).size(); ++i) {
-                                tensor_field_value
-                                        += std::get<0>(mem_id)[i]
-                                           * tensor_field_
-                                                     .mem(ddc::DiscreteElement<IndexHead...>(elem_),
-                                                          ddc::DiscreteElement<IndexInterest>(
-                                                                  std::get<1>(mem_id)[i]));
-                            }
-                        }
-
-                        return tensor_field_value;
-                    },
-                    tensor_field,
-                    elem);
-        } else {
-            return tensor_field(elem);
-        }
-    }
-};
-
 template <
         class TensorField,
         class Element,
@@ -289,24 +356,61 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
     template <class Elem>
     static TensorField::element_type run(TensorField tensor_field, Elem const& elem)
     {
-        if constexpr (detail::is_tensor_index_v<IndexInterest>) {
-            return IndexInterest::template process_access<TensorField, Elem, IndexInterest>(
-                    [](TensorField tensor_field_, Elem elem_) -> TensorField::element_type {
-                        // TODO probably too simple
-                        return Access<
-                                TensorField,
-                                Element,
-                                ddc::detail::TypeSeq<IndexHead..., IndexInterest>,
-                                IndexTail...>::run(tensor_field_, elem_);
-                    },
-                    tensor_field,
-                    elem);
+        /*
+         ----- Important warning -----
+         The general case is not correctly handled here. It would be difficult to do so.
+         It means you can get silent bug (with wrong result) if you try to use exotic ordering
+         of dimensions/indexes. Ie., a YoungTableauTensorIndex has to be the last of the list.
+         */
+        if constexpr (sizeof...(IndexTail) > 0) {
+            if constexpr (detail::is_tensor_index_v<IndexInterest>) {
+                return IndexInterest::template process_access<TensorField, Elem, IndexInterest>(
+                        [](TensorField tensor_field_, Elem elem_) -> TensorField::element_type {
+                            return Access<
+                                    TensorField,
+                                    Element,
+                                    ddc::detail::TypeSeq<IndexHead..., IndexInterest>,
+                                    IndexTail...>::run(tensor_field_, elem_);
+                        },
+                        tensor_field,
+                        elem);
+            } else {
+                return Access<
+                        TensorField,
+                        Element,
+                        ddc::detail::TypeSeq<IndexHead..., IndexInterest>,
+                        IndexTail...>::run(tensor_field, elem);
+            }
         } else {
-            return Access<
-                    TensorField,
-                    Element,
-                    ddc::detail::TypeSeq<IndexHead..., IndexInterest>,
-                    IndexTail...>::run(tensor_field, elem);
+            if constexpr (detail::is_tensor_index_v<IndexInterest>) {
+                return IndexInterest::template process_access<TensorField, Elem, IndexInterest>(
+                        [](TensorField tensor_field_, Elem elem_) -> TensorField::element_type {
+                            std::pair<std::vector<double>, std::vector<std::size_t>> mem_id
+                                    = IndexInterest::access_id_to_mem_id(
+                                            elem_.template uid<IndexInterest>());
+
+                            double tensor_field_value = 0;
+                            if (std::get<0>(mem_id).size() > 0) {
+                                for (std::size_t i = 0; i < std::get<0>(mem_id).size(); ++i) {
+                                    tensor_field_value
+                                            += std::get<0>(mem_id)[i]
+                                               * tensor_field_
+                                                         .mem(ddc::DiscreteElement<IndexHead...>(
+                                                                      elem_),
+                                                              ddc::DiscreteElement<IndexInterest>(
+                                                                      std::get<1>(mem_id)[i]));
+                                }
+                            } else {
+                                tensor_field_value = 1.;
+                            }
+
+                            return tensor_field_value;
+                        },
+                        tensor_field,
+                        elem);
+            } else {
+                return tensor_field(elem);
+            }
         }
     }
 };
@@ -393,9 +497,11 @@ public:
     {
     }
 
-    static constexpr TensorAccessor<DDim...> accessor()
+    using accessor_t = TensorAccessor<DDim...>;
+
+    static constexpr accessor_t accessor()
     {
-        return TensorAccessor<DDim...>();
+        return accessor_t();
     }
 
     template <class... DElems>
@@ -488,6 +594,314 @@ public:
         return *this;
     }
 };
+
+// Relabelize index without altering allocation
+namespace detail {
+template <class IndexToRelabelize, class OldIndex, class NewIndex>
+struct RelabelizeIndex
+{
+    using type = std::
+            conditional_t<std::is_same_v<IndexToRelabelize, OldIndex>, NewIndex, IndexToRelabelize>;
+};
+
+template <
+        template <class...>
+        class IndexToRelabelizeType,
+        class OldIndex,
+        class NewIndex,
+        class... Arg>
+struct RelabelizeIndex<IndexToRelabelizeType<Arg...>, OldIndex, NewIndex>
+{
+    using type = std::conditional_t<
+            IndexToRelabelizeType<Arg...>::is_natural_tensor_index,
+            std::conditional_t<
+                    std::is_same_v<IndexToRelabelizeType<Arg...>, OldIndex>,
+                    NewIndex,
+                    IndexToRelabelizeType<Arg...>>,
+            IndexToRelabelizeType<
+                    std::conditional_t<std::is_same_v<Arg, OldIndex>, NewIndex, Arg>...>>;
+};
+
+template <class Dom, class OldIndex, class NewIndex>
+struct RelabelizeIndexInDomainType;
+
+template <class... DDim, class OldIndex, class NewIndex>
+struct RelabelizeIndexInDomainType<ddc::DiscreteDomain<DDim...>, OldIndex, NewIndex>
+{
+    using type = ddc::DiscreteDomain<typename RelabelizeIndex<DDim, OldIndex, NewIndex>::type...>;
+};
+
+} // namespace detail
+
+template <class Dom, class OldIndex, class NewIndex>
+using relabelize_index_in_domain_t
+        = detail::RelabelizeIndexInDomainType<Dom, OldIndex, NewIndex>::type;
+
+namespace detail {
+template <class TensorType, class OldIndex, class NewIndex>
+struct RelabelizeIndexOfType;
+
+template <
+        class OldIndex,
+        class NewIndex,
+        class ElementType,
+        class Dom,
+        class LayoutStridedPolicy,
+        class MemorySpace>
+struct RelabelizeIndexOfType<
+        Tensor<ElementType, Dom, LayoutStridedPolicy, MemorySpace>,
+        OldIndex,
+        NewIndex>
+{
+    using type = Tensor<
+            ElementType,
+            typename RelabelizeIndexInDomainType<Dom, OldIndex, NewIndex>::type,
+            LayoutStridedPolicy,
+            MemorySpace>;
+};
+
+} // namespace detail
+
+// TODO relabelize_index_in_domain ?
+
+template <class TensorType, class OldIndex, class NewIndex>
+using relabelize_index_of_t = detail::RelabelizeIndexOfType<TensorType, OldIndex, NewIndex>::type;
+
+template <
+        class OldIndex,
+        class NewIndex,
+        class ElementType,
+        class... DDim,
+        class LayoutStridedPolicy,
+        class MemorySpace>
+relabelize_index_of_t<
+        Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>,
+        OldIndex,
+        NewIndex>
+relabelize_index_of(
+        Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>
+                old_tensor)
+{
+    return relabelize_index_of_t<
+            Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>,
+            OldIndex,
+            NewIndex>(
+            old_tensor.data_handle(),
+            typename detail::RelabelizeIndexInDomainType<
+                    ddc::DiscreteDomain<DDim...>,
+                    OldIndex,
+                    NewIndex>::
+                    type(ddc::DiscreteDomain<
+                            typename detail::RelabelizeIndex<DDim, OldIndex, NewIndex>::type>(
+                            ddc::DiscreteElement<
+                                    typename detail::RelabelizeIndex<DDim, OldIndex, NewIndex>::
+                                            type>(old_tensor.domain().front().template uid<DDim>()),
+                            ddc::DiscreteVector<
+                                    typename detail::RelabelizeIndex<DDim, OldIndex, NewIndex>::
+                                            type>(static_cast<std::size_t>(
+                                    old_tensor.template extent<DDim>())))...));
+}
+
+namespace detail {
+template <class IndexToRelabelize, class OldIndexes, class NewIndexes>
+struct RelabelizeIndexes;
+
+template <template <class...> class IndexToRelabelizeType, class... Arg>
+struct RelabelizeIndexes<
+        IndexToRelabelizeType<Arg...>,
+        ddc::detail::TypeSeq<>,
+        ddc::detail::TypeSeq<>>
+{
+    using type = IndexToRelabelizeType<Arg...>;
+};
+
+template <
+        template <class...>
+        class IndexToRelabelizeType,
+        class HeadOldIndex,
+        class... TailOldIndex,
+        class HeadNewIndex,
+        class... TailNewIndex,
+        class... Arg>
+struct RelabelizeIndexes<
+        IndexToRelabelizeType<Arg...>,
+        ddc::detail::TypeSeq<HeadOldIndex, TailOldIndex...>,
+        ddc::detail::TypeSeq<HeadNewIndex, TailNewIndex...>>
+{
+    using type = std::conditional_t<
+            (sizeof...(TailOldIndex) > 0),
+            typename RelabelizeIndexes<
+                    typename RelabelizeIndex<
+                            IndexToRelabelizeType<Arg...>,
+                            HeadOldIndex,
+                            HeadNewIndex>::type,
+                    ddc::detail::TypeSeq<TailOldIndex...>,
+                    ddc::detail::TypeSeq<TailNewIndex...>>::type,
+            typename RelabelizeIndex<IndexToRelabelizeType<Arg...>, HeadOldIndex, HeadNewIndex>::
+                    type>;
+};
+
+template <class Dom, class OldIndexes, class NewIndexes>
+struct RelabelizeIndexesInDomainType;
+
+template <class Dom>
+struct RelabelizeIndexesInDomainType<Dom, ddc::detail::TypeSeq<>, ddc::detail::TypeSeq<>>
+{
+    using type = Dom;
+};
+
+template <
+        class Dom,
+        class HeadOldIndex,
+        class... TailOldIndex,
+        class HeadNewIndex,
+        class... TailNewIndex>
+struct RelabelizeIndexesInDomainType<
+        Dom,
+        ddc::detail::TypeSeq<HeadOldIndex, TailOldIndex...>,
+        ddc::detail::TypeSeq<HeadNewIndex, TailNewIndex...>>
+{
+    using type = typename RelabelizeIndexesInDomainType<
+            relabelize_index_in_domain_t<Dom, HeadOldIndex, HeadNewIndex>,
+            ddc::detail::TypeSeq<TailOldIndex...>,
+            ddc::detail::TypeSeq<TailNewIndex...>>::type;
+};
+
+} // namespace detail
+
+template <class Dom, class OldIndexes, class NewIndexes>
+using relabelize_indexes_in_domain_t =
+        typename detail::RelabelizeIndexesInDomainType<Dom, OldIndexes, NewIndexes>::type;
+
+namespace detail {
+
+template <class OldIndexes, class NewIndexes, std::size_t I>
+struct RelabelizeIndexesInDomain
+{
+    template <class... DDim>
+    static auto run(ddc::DiscreteDomain<DDim...> dom)
+    {
+        if constexpr (I != ddc::type_seq_size_v<OldIndexes>) {
+            return RelabelizeIndexesInDomain<OldIndexes, NewIndexes, I + 1>::run(
+                    relabelize_index_in_domain_t<
+                            ddc::DiscreteDomain<DDim...>,
+                            ddc::type_seq_element_t<I, OldIndexes>,
+                            ddc::type_seq_element_t<I, NewIndexes>>(
+                            ddc::DiscreteDomain<typename detail::RelabelizeIndex<
+                                    DDim,
+                                    ddc::type_seq_element_t<I, OldIndexes>,
+                                    ddc::type_seq_element_t<I, NewIndexes>>::type>(
+                                    ddc::DiscreteElement<typename detail::RelabelizeIndex<
+                                            DDim,
+                                            ddc::type_seq_element_t<I, OldIndexes>,
+                                            ddc::type_seq_element_t<I, NewIndexes>>::type>(
+                                            dom.front().template uid<DDim>()),
+                                    ddc::DiscreteVector<typename detail::RelabelizeIndex<
+                                            DDim,
+                                            ddc::type_seq_element_t<I, OldIndexes>,
+                                            ddc::type_seq_element_t<I, NewIndexes>>::type>(
+                                            static_cast<std::size_t>(
+                                                    dom.template extent<DDim>())))...));
+        } else {
+            return dom;
+        }
+    }
+};
+
+} // namespace detail
+
+template <class OldIndexes, class NewIndexes, class Dom>
+relabelize_indexes_in_domain_t<Dom, OldIndexes, NewIndexes> relabelize_indexes_in_domain(Dom dom)
+{
+    return detail::RelabelizeIndexesInDomain<OldIndexes, NewIndexes, 0>::run(dom);
+}
+
+namespace detail {
+
+template <class TensorType, class OldIndex, class NewIndex>
+struct RelabelizeIndexesOfType;
+
+template <
+        class OldIndexes,
+        class NewIndexes,
+        class ElementType,
+        class Dom,
+        class LayoutStridedPolicy,
+        class MemorySpace>
+struct RelabelizeIndexesOfType<
+        Tensor<ElementType, Dom, LayoutStridedPolicy, MemorySpace>,
+        OldIndexes,
+        NewIndexes>
+{
+    using type = Tensor<
+            ElementType,
+            typename RelabelizeIndexesInDomainType<Dom, OldIndexes, NewIndexes>::type,
+            LayoutStridedPolicy,
+            MemorySpace>;
+};
+
+template <
+        class OldIndexes,
+        class NewIndexes,
+        std::size_t I,
+        class ElementType,
+        class... DDim,
+        class LayoutStridedPolicy,
+        class MemorySpace>
+auto RelabelizeIndexesOf(
+        Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>
+                old_tensor)
+{
+    if constexpr (I != ddc::type_seq_size_v<OldIndexes>) {
+        return RelabelizeIndexesOf<
+                ddc::type_seq_replace_t<
+                        OldIndexes,
+                        ddc::detail::TypeSeq<ddc::type_seq_element_t<I, OldIndexes>>,
+                        ddc::detail::TypeSeq<ddc::type_seq_element_t<I, NewIndexes>>>,
+                NewIndexes,
+                I + 1>(relabelize_index_of_t<
+                       Tensor<ElementType,
+                              ddc::DiscreteDomain<DDim...>,
+                              LayoutStridedPolicy,
+                              MemorySpace>,
+                       ddc::type_seq_element_t<I, OldIndexes>,
+                       ddc::type_seq_element_t<I, NewIndexes>>(
+                old_tensor.data_handle(),
+                typename detail::RelabelizeIndexInDomainType<
+                        ddc::DiscreteDomain<DDim...>,
+                        ddc::type_seq_element_t<I, OldIndexes>,
+                        ddc::type_seq_element_t<I, NewIndexes>>::
+                        type(ddc::DiscreteDomain<typename detail::RelabelizeIndex<
+                                     DDim,
+                                     ddc::type_seq_element_t<I, OldIndexes>,
+                                     ddc::type_seq_element_t<I, NewIndexes>>::type>(
+                                ddc::DiscreteElement<typename detail::RelabelizeIndex<
+                                        DDim,
+                                        ddc::type_seq_element_t<I, OldIndexes>,
+                                        ddc::type_seq_element_t<I, NewIndexes>>::type>(
+                                        old_tensor.domain().front().template uid<DDim>()),
+                                ddc::DiscreteVector<typename detail::RelabelizeIndex<
+                                        DDim,
+                                        ddc::type_seq_element_t<I, OldIndexes>,
+                                        ddc::type_seq_element_t<I, NewIndexes>>::type>(
+                                        static_cast<std::size_t>(
+                                                old_tensor.template extent<DDim>())))...)));
+    } else {
+        return old_tensor;
+    }
+}
+
+} // namespace detail
+
+template <class TensorType, class OldIndexes, class NewIndexes>
+using relabelize_indexes_of_t
+        = detail::RelabelizeIndexesOfType<TensorType, OldIndexes, NewIndexes>::type;
+
+template <class OldIndexes, class NewIndexes, class Tensor>
+relabelize_indexes_of_t<Tensor, OldIndexes, NewIndexes> relabelize_indexes_of(Tensor tensor)
+{
+    return detail::RelabelizeIndexesOf<OldIndexes, NewIndexes, 0>(tensor);
+}
 
 // Sum of tensors
 template <
@@ -645,22 +1059,15 @@ struct PrintTensor<
         ddc::DiscreteDomain<InterestDDim>,
         ddc::DiscreteDomain<HeadOfTailDDim, TailOfTailDDim...>>
 {
-    template <class ElementType, class LayoutStridedPolicy, class MemorySpace>
+    template <class TensorType>
     static std::string run(
             std::string& str,
-            Tensor<ElementType,
-                   ddc::DiscreteDomain<
-                           HeadDDim...,
-                           InterestDDim,
-                           HeadOfTailDDim,
-                           TailOfTailDDim...>,
-                   LayoutStridedPolicy,
-                   MemorySpace> const& tensor,
+            TensorType const& tensor,
             ddc::DiscreteElement<HeadDDim...> i)
     {
         str += "[";
         for (ddc::DiscreteElement<InterestDDim> elem :
-             ddc::DiscreteDomain<InterestDDim>(tensor.domain())) {
+             ddc::DiscreteDomain<InterestDDim>(tensor.accessor().natural_domain())) {
             str = PrintTensor<
                     ddc::DiscreteDomain<HeadDDim..., InterestDDim>,
                     ddc::DiscreteDomain<HeadOfTailDDim>,
@@ -678,20 +1085,17 @@ struct PrintTensor<
         ddc::DiscreteDomain<InterestDDim>,
         ddc::DiscreteDomain<>>
 {
-    template <class ElementType, class LayoutStridedPolicy, class MemorySpace>
+    template <class TensorType>
     static std::string run(
             std::string& str,
-            Tensor<ElementType,
-                   ddc::DiscreteDomain<HeadDDim..., InterestDDim>,
-                   LayoutStridedPolicy,
-                   MemorySpace> const& tensor,
+            TensorType const& tensor,
             ddc::DiscreteElement<HeadDDim...> i)
     {
         for (ddc::DiscreteElement<InterestDDim> elem :
-             ddc::DiscreteDomain<InterestDDim>(tensor.domain())) {
+             ddc::DiscreteDomain<InterestDDim>(tensor.accessor().natural_domain())) {
             str = str + " "
-                  + std::to_string(
-                          tensor(ddc::DiscreteElement<HeadDDim..., InterestDDim>(i, elem)));
+                  + std::to_string(tensor.get(tensor.accessor().element(
+                          ddc::DiscreteElement<HeadDDim..., InterestDDim>(i, elem))));
         }
         str += "\n";
         return str;
@@ -700,24 +1104,25 @@ struct PrintTensor<
 
 } // namespace detail
 
-template <
-        class ElementType,
-        class HeadDDim,
-        class... TailDDim,
-        class LayoutStridedPolicy,
-        class MemorySpace>
+template <class ElementType, class... DDim, class LayoutStridedPolicy, class MemorySpace>
 std::ostream& operator<<(
         std::ostream& os,
-        Tensor<ElementType,
-               ddc::DiscreteDomain<HeadDDim, TailDDim...>,
-               LayoutStridedPolicy,
-               MemorySpace> const& tensor)
+        Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace> const&
+                tensor)
 {
     std::string str = "";
     os << detail::PrintTensor<
             ddc::DiscreteDomain<>,
-            ddc::DiscreteDomain<HeadDDim>,
-            ddc::DiscreteDomain<TailDDim...>>::run(str, tensor, ddc::DiscreteElement<>());
+            ddc::DiscreteDomain<ddc::type_seq_element_t<
+                    0,
+                    ddc::to_type_seq_t<typename TensorAccessor<DDim...>::natural_domain_t>>>,
+            ddc::detail::convert_type_seq_to_discrete_domain_t<ddc::type_seq_remove_t<
+                    ddc::to_type_seq_t<typename TensorAccessor<DDim...>::natural_domain_t>,
+                    ddc::detail::TypeSeq<ddc::type_seq_element_t<
+                            0,
+                            ddc::to_type_seq_t<
+                                    typename TensorAccessor<DDim...>::natural_domain_t>>>>>>::
+                    run(str, tensor, ddc::DiscreteElement<>());
     return os;
 }
 

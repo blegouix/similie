@@ -16,6 +16,8 @@ namespace tensor {
 template <class... TensorIndex>
 struct FullTensorIndex
 {
+    static constexpr bool is_natural_tensor_index = false;
+
     using subindexes_domain_t = ddc::DiscreteDomain<TensorIndex...>;
 
     static constexpr subindexes_domain_t subindexes_domain()
@@ -46,30 +48,28 @@ struct FullTensorIndex
         return (TensorIndex::access_size() * ...);
     }
 
-    template <class... CDim>
-    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id()
+    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id(
+            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
-        //static_assert(rank() == sizeof...(CDim));
         return std::pair<std::vector<double>, std::vector<std::size_t>>(
-                std::vector<double> {},
-                std::vector<std::size_t> {access_id<CDim...>()});
+                std::vector<double> {1.},
+                std::vector<std::size_t> {access_id(ids)});
     }
 
-    template <class... CDim>
-    static constexpr std::size_t access_id()
+    static constexpr std::size_t access_id(
+            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
         return ((sil::misc::detail::stride<TensorIndex, TensorIndex...>()
-                 * detail::access_id<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>, CDim...>())
+                 * ids[ddc::type_seq_rank_v<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>>])
                 + ...);
     }
 
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> access_id_to_mem_id(
             std::size_t access_id)
     {
-        return std::pair<
-                std::vector<double>,
-                std::vector<
-                        std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {access_id});
+        return std::pair<std::vector<double>, std::vector<std::size_t>>(
+                std::vector<double> {1.},
+                std::vector<std::size_t> {access_id});
     }
 
     template <class Tensor, class Elem, class Id>

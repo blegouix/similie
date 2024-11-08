@@ -11,9 +11,9 @@ namespace sil {
 
 namespace tensor {
 
-// struct representing and index for a diagonal tensor (only diagonal is stored).
-template <class... TensorIndex>
-struct DiagonalTensorIndex
+// struct representing an identity tensor (no storage).
+template <class Q, class... TensorIndex>
+struct LorentzianSignTensorIndex
 {
     static constexpr bool is_natural_tensor_index = false;
 
@@ -39,24 +39,21 @@ struct DiagonalTensorIndex
 
     static constexpr std::size_t mem_size()
     {
-        return std::min({TensorIndex::mem_size()...});
+        return 0;
     }
 
     static constexpr std::size_t access_size()
     {
-        return 1 + mem_size();
+        return 3;
     }
 
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id(
             std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
-        assert(std::all_of(ids.begin(), ids.end(), [&](const std::size_t id) {
-            return id == *ids.begin();
-        }));
+        assert(false);
         return std::pair<
                 std::vector<double>,
-                std::vector<
-                        std::size_t>>(std::vector<double> {1.}, std::vector<std::size_t> {ids[0]});
+                std::vector<std::size_t>>(std::vector<double> {1.}, std::vector<std::size_t> {});
     }
 
     static constexpr std::size_t access_id(
@@ -67,7 +64,11 @@ struct DiagonalTensorIndex
             })) {
             return 0;
         } else {
-            return 1 + std::get<1>(mem_id(ids))[0];
+            if (ids[0] < Q::value) {
+                return 1;
+            } else {
+                return 2;
+            }
         }
     }
 
@@ -75,9 +76,9 @@ struct DiagonalTensorIndex
             std::size_t access_id)
     {
         assert(access_id != 0 && "There is no mem_id associated to access_id=0");
-        return std::pair<std::vector<double>, std::vector<std::size_t>>(
-                std::vector<double> {1.},
-                std::vector<std::size_t> {access_id - 1});
+        return std::pair<
+                std::vector<double>,
+                std::vector<std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {});
     }
 
     template <class Tensor, class Elem, class Id>
@@ -88,6 +89,8 @@ struct DiagonalTensorIndex
     {
         if (elem.template uid<Id>() == 0) {
             return 0.;
+        } else if (elem.template uid<Id>() == 1) {
+            return -access(tensor, elem);
         } else {
             return access(tensor, elem);
         }
@@ -95,8 +98,8 @@ struct DiagonalTensorIndex
 };
 
 namespace detail {
-template <class... SubIndex>
-struct IsTensorIndex<DiagonalTensorIndex<SubIndex...>>
+template <class Q, class... SubIndex>
+struct IsTensorIndex<LorentzianSignTensorIndex<Q, SubIndex...>>
 {
     using type = std::true_type;
 };
