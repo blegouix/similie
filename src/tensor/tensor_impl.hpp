@@ -552,18 +552,6 @@ public:
                                      detail::LambdaMemElem<ODDim>::run(slice_spec)...)));
     }
 
-    void apply_lambda(std::function<
-                      void(Tensor<ElementType,
-                                  ddc::DiscreteDomain<DDim...>,
-                                  LayoutStridedPolicy,
-                                  MemorySpace>,
-                           ddc::DiscreteElement<DDim...>)> lambda_func)
-    {
-        ddc::for_each(this->domain(), [&](ddc::DiscreteElement<DDim...> elem) {
-            lambda_func(*this, elem);
-        });
-    }
-
     Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>& operator+=(
             const Tensor<
                     ElementType,

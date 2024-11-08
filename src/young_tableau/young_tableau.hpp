@@ -830,23 +830,29 @@ using symmetrizer_index_t = std::conditional_t<
                                                             Id...>> - (sizeof...(Id) / 2)))),
                 ddc::detail::TypeSeq<Id...>>>;
 
-// Lambda to fill identity or transpose projectors
+// Functor to fill identity or transpose projectors
 template <std::size_t Dimension, std::size_t Rank, class... NaturalId>
-std::function<
-        void(sil::tensor::Tensor<
-                     double,
-                     ddc::DiscreteDomain<NaturalId...>,
-                     Kokkos::layout_right,
-                     Kokkos::DefaultHostExecutionSpace::memory_space>,
-             ddc::DiscreteElement<NaturalId...>)>
-tr_lambda(std::array<std::size_t, Rank> idx_to_permute)
+class TrFunctor
 {
-    return [=](sil::tensor::Tensor<
-                       double,
-                       ddc::DiscreteDomain<NaturalId...>,
-                       Kokkos::layout_right,
-                       Kokkos::DefaultHostExecutionSpace::memory_space> t,
-               ddc::DiscreteElement<NaturalId...> elem) {
+private:
+    using TensorType = sil::tensor::Tensor<
+            double,
+            ddc::DiscreteDomain<NaturalId...>,
+            Kokkos::layout_right,
+            Kokkos::DefaultHostExecutionSpace::memory_space>;
+
+    TensorType t;
+    std::array<std::size_t, Rank> idx_to_permute;
+
+public:
+    TrFunctor(TensorType t_, std::array<std::size_t, Rank> idx_to_permute_)
+        : t(t_)
+        , idx_to_permute(idx_to_permute_)
+    {
+    }
+
+    void operator()(ddc::DiscreteElement<NaturalId...> elem) const
+    {
         std::array<std::size_t, sizeof...(NaturalId)> elem_array = ddc::detail::array(elem);
         bool has_to_be_one = true;
         for (std::size_t i = 0; i < Rank; ++i) {
@@ -856,8 +862,9 @@ tr_lambda(std::array<std::size_t, Rank> idx_to_permute)
         if (has_to_be_one) {
             t(elem) = 1;
         }
-    };
-}
+    }
+};
+
 
 /*
  Given a permutation of the digits 0..N, 
@@ -900,7 +907,7 @@ fill_symmetrizer(
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tr(tr_alloc);
     ddc::parallel_fill(tr, 0);
-    tr.apply_lambda(tr_lambda<Dimension, sizeof...(Id) / 2, Id...>(idx_to_permute));
+    ddc::for_each(tr.domain(), TrFunctor<Dimension, sizeof...(Id) / 2, Id...>(tr, idx_to_permute));
 
     if constexpr (AntiSym) {
         tr *= static_cast<double>(permutation_parity(idx_to_permute));
@@ -1040,8 +1047,9 @@ auto YoungTableau<Dimension, TableauSeq>::projector()
     for (std::size_t i = 0; i < s_r; ++i) {
         idx_to_permute[i] = i;
     }
-    proj.apply_lambda(
-            detail::tr_lambda<s_d, s_r, detail::declare_deriv<Id>..., Id...>(idx_to_permute));
+    ddc::for_each(
+            proj.domain(),
+            detail::TrFunctor<s_d, s_r, detail::declare_deriv<Id>..., Id...>(proj, idx_to_permute));
 
     // Build the projector
     detail::Projector<tableau_seq, s_d>::run(proj);
