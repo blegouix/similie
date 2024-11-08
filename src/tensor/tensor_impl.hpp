@@ -359,7 +359,7 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
         /*
          ----- Important warning -----
          The general case is not correctly handled here. It would be difficult to do so.
-         It means you can get silent bug (with and result) if you try to use exotic ordering
+         It means you can get silent bug (with wrong result) if you try to use exotic ordering
          of dimensions/indexes. Ie., a YoungTableauTensorIndex has to be the last of the list.
          */
         if constexpr (sizeof...(IndexTail) > 0) {
