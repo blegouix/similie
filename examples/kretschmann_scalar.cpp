@@ -34,7 +34,7 @@ struct Z
 {
 };
 
-// Declare natural indexes taking values in {T, X, Y, Z}
+// Declare natural indices taking values in {T, X, Y, Z}
 struct Mu : sil::tensor::TensorNaturalIndex<T, X, Y, Z>
 {
 };
@@ -101,7 +101,7 @@ int main(int argc, char** argv)
             Kokkos::DefaultHostExecutionSpace::memory_space>
             riemann_up(riemann_up_alloc);
 
-    // Young-tableau-indexed tensors cannot be filled directly (because the 20 independant components do not appear explicitely in the 4^4 Riemann tensor. The explicit components of the Riemann tensor are linear combinations of the 20 independant components). We thus need to allocate a naturally-indexes 4^4 tensor to be filled.
+    // Young-tableau-indexed tensors cannot be filled directly (because the 20 independant components do not appear explicitely in the 4^4 Riemann tensor. The explicit components of the Riemann tensor are linear combinations of the 20 independant components). We thus need to allocate a naturally-indexed 4^4 tensor to be filled.
     ddc::DiscreteDomain<MuUp, NuUp, RhoUp, SigmaUp> natural_tensor_dom(
             ddc::DiscreteElement<MuUp, NuUp, RhoUp, SigmaUp>(0, 0, 0, 0),
             ddc::DiscreteVector<MuUp, NuUp, RhoUp, SigmaUp>(4, 4, 4, 4));
@@ -114,7 +114,7 @@ int main(int argc, char** argv)
             natural_tensor(natural_tensor_alloc);
     ddc::parallel_fill(natural_tensor, 0.);
 
-    // We fill the naturally-indexes tensor with the pre-computed values of the explicit Riemann tensor components on the horizon in the Lemaitre coordinate system (cf. the python script)
+    // We fill the naturally-indexed tensor with the pre-computed values of the explicit Riemann tensor components on the horizon in the Lemaitre coordinate system (cf. the python script)
     natural_tensor(natural_tensor.accessor().element<T, X, T, X>()) = -1.;
     natural_tensor(natural_tensor.accessor().element<T, X, X, T>()) = 1.;
     natural_tensor(natural_tensor.accessor().element<T, Y, T, Y>()) = .5;

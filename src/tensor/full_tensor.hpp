@@ -12,15 +12,15 @@ namespace sil {
 
 namespace tensor {
 
-// struct representing an abstract unique index sweeping on all possible combination of natural indexes, for a full tensor (dense with no particular structure).
+// struct representing an abstract unique index sweeping on all possible combination of natural indices, for a full tensor (dense with no particular structure).
 template <class... TensorIndex>
 struct FullTensorIndex
 {
     static constexpr bool is_natural_tensor_index = false;
 
-    using subindexes_domain_t = ddc::DiscreteDomain<TensorIndex...>;
+    using subindices_domain_t = ddc::DiscreteDomain<TensorIndex...>;
 
-    static constexpr subindexes_domain_t subindexes_domain()
+    static constexpr subindices_domain_t subindices_domain()
     {
         return ddc::DiscreteDomain<TensorIndex...>(
                 ddc::DiscreteElement<TensorIndex...>(ddc::DiscreteElement<TensorIndex>(0)...),

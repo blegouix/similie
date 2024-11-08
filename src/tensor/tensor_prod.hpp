@@ -15,10 +15,10 @@ namespace tensor {
 namespace detail {
 
 template <class Index>
-struct SubindexesDomain;
+struct SubindicesDomain;
 
 template <template <class...> class T, class... SubIndex>
-struct SubindexesDomain<T<SubIndex...>>
+struct SubindicesDomain<T<SubIndex...>>
 {
     using type = ddc::DiscreteDomain<SubIndex...>;
 
@@ -34,12 +34,12 @@ struct SubindexesDomain<T<SubIndex...>>
 } // namespace detail
 
 template <class T>
-using subindexes_domain_t = detail::SubindexesDomain<T>::type;
+using subindices_domain_t = detail::SubindicesDomain<T>::type;
 
 template <class T>
-static constexpr subindexes_domain_t<T> subindexes_domain()
+static constexpr subindices_domain_t<T> subindices_domain()
 {
-    return detail::SubindexesDomain<T>::run();
+    return detail::SubindicesDomain<T>::run();
 };
 
 // Young-dense product
@@ -76,11 +76,11 @@ struct TensorProd<
     sil::csr::Csr u = young_tableau.template u<YoungTableauIndex, DDim2...>(tensor2.domain());
 */
         ddc::Chunk uncompressed_tensor1_alloc(
-                Index1::subindexes_domain(),
+                Index1::subindices_domain(),
                 ddc::HostAllocator<double>());
         sil::tensor::Tensor<
                 double,
-                typename Index1::subindexes_domain_t,
+                typename Index1::subindices_domain_t,
                 Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 uncompressed_tensor1(uncompressed_tensor1_alloc);
@@ -115,7 +115,7 @@ tensor_prod(
 {
     static_assert(std::is_same_v<
                   ddc::type_seq_remove_t<
-                          ddc::to_type_seq_t<typename Index1::subindexes_domain_t>,
+                          ddc::to_type_seq_t<typename Index1::subindices_domain_t>,
                           ddc::detail::TypeSeq<ProdDDim...>>,
                   ddc::type_seq_remove_t<
                           ddc::detail::TypeSeq<DDim2...>,
@@ -126,11 +126,11 @@ tensor_prod(
                     ddc::detail::TypeSeq<ProdDDim...>,
                     ddc::detail::TypeSeq<DDim2...>>,
             ddc::type_seq_remove_t<
-                    ddc::to_type_seq_t<typename Index1::subindexes_domain_t>,
+                    ddc::to_type_seq_t<typename Index1::subindices_domain_t>,
                     ddc::detail::TypeSeq<ProdDDim...>>,
             ddc::type_seq_remove_t<
                     ddc::detail::TypeSeq<ProdDDim...>,
-                    ddc::to_type_seq_t<typename Index1::subindexes_domain_t>>>::
+                    ddc::to_type_seq_t<typename Index1::subindices_domain_t>>>::
             run(prod_tensor, tensor1, tensor2);
 }
 
@@ -171,21 +171,21 @@ struct TensorProd2<
     sil::csr::Csr u = young_tableau.template u<YoungTableauIndex, DDim2...>(tensor2.domain());
 */
         ddc::Chunk uncompressed_tensor1_alloc(
-                Index1::subindexes_domain(),
+                Index1::subindices_domain(),
                 ddc::HostAllocator<double>());
         sil::tensor::Tensor<
                 double,
-                typename Index1::subindexes_domain_t,
+                typename Index1::subindices_domain_t,
                 Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 uncompressed_tensor1(uncompressed_tensor1_alloc);
 
         ddc::Chunk uncompressed_tensor2_alloc(
-                Index2::subindexes_domain(),
+                Index2::subindices_domain(),
                 ddc::HostAllocator<double>());
         sil::tensor::Tensor<
                 double,
-                typename Index2::subindexes_domain_t,
+                typename Index2::subindices_domain_t,
                 Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 uncompressed_tensor2(uncompressed_tensor2_alloc);
@@ -220,35 +220,35 @@ tensor_prod2(
 {
     static_assert(std::is_same_v<
                   ddc::type_seq_remove_t<
-                          uncharacterize<ddc::to_type_seq_t<typename Index1::subindexes_domain_t>>,
+                          uncharacterize<ddc::to_type_seq_t<typename Index1::subindices_domain_t>>,
                           uncharacterize<ddc::detail::TypeSeq<ProdDDim...>>>,
                   ddc::type_seq_remove_t<
-                          uncharacterize<ddc::to_type_seq_t<typename Index2::subindexes_domain_t>>,
+                          uncharacterize<ddc::to_type_seq_t<typename Index2::subindices_domain_t>>,
                           uncharacterize<ddc::detail::TypeSeq<ProdDDim...>>>>);
     static_assert(
             std::is_same_v < ddc::type_seq_remove_t<
-                    ddc::to_type_seq_t<typename Index1::subindexes_domain_t>,
-                    ddc::to_type_seq_t<typename Index2::subindexes_domain_t>>,
+                    ddc::to_type_seq_t<typename Index1::subindices_domain_t>,
+                    ddc::to_type_seq_t<typename Index2::subindices_domain_t>>,
             ddc::to_type_seq_t<
                     typename Index1::
-                            subindexes_domain_t>> && std::is_same_v < ddc::type_seq_remove_t<
-                    ddc::to_type_seq_t<typename Index2::subindexes_domain_t>,
-                    ddc::to_type_seq_t<typename Index1::subindexes_domain_t>>,
+                            subindices_domain_t>> && std::is_same_v < ddc::type_seq_remove_t<
+                    ddc::to_type_seq_t<typename Index2::subindices_domain_t>,
+                    ddc::to_type_seq_t<typename Index1::subindices_domain_t>>,
             ddc::to_type_seq_t<
                     typename Index2::
-                            subindexes_domain_t>>); // tensor1 and tensor2 should not have any subindex in common because their characters are different
+                            subindices_domain_t>>); // tensor1 and tensor2 should not have any subindex in common because their characters are different
     detail::TensorProd2<
             uncharacterize<Index1>,
             uncharacterize<Index2>,
             ddc::type_seq_remove_t<
                     uncharacterize<ddc::detail::TypeSeq<ProdDDim...>>,
-                    uncharacterize<ddc::to_type_seq_t<typename Index2::subindexes_domain_t>>>,
+                    uncharacterize<ddc::to_type_seq_t<typename Index2::subindices_domain_t>>>,
             ddc::type_seq_remove_t<
-                    uncharacterize<ddc::to_type_seq_t<typename Index1::subindexes_domain_t>>,
+                    uncharacterize<ddc::to_type_seq_t<typename Index1::subindices_domain_t>>,
                     uncharacterize<ddc::detail::TypeSeq<ProdDDim...>>>,
             ddc::type_seq_remove_t<
                     uncharacterize<ddc::detail::TypeSeq<ProdDDim...>>,
-                    uncharacterize<ddc::to_type_seq_t<typename Index1::subindexes_domain_t>>>>::
+                    uncharacterize<ddc::to_type_seq_t<typename Index1::subindices_domain_t>>>>::
             run(uncharacterize_tensor(prod_tensor),
                 uncharacterize_tensor(tensor1),
                 uncharacterize_tensor(tensor2));
@@ -259,9 +259,9 @@ tensor_prod2(
 namespace detail {
 
 template <
-        class ProdIndexes,
-        class Indexes1,
-        class Indexes2,
+        class ProdIndices,
+        class Indices1,
+        class Indices2,
         class HeadDDim1TypeSeq,
         class ContractDDimTypeSeq,
         class TailDDim2TypeSeq>
@@ -298,11 +298,11 @@ struct TensorProd3<
     sil::csr::Csr u = young_tableau.template u<YoungTableauIndex, DDim2...>(tensor2.domain());
 */
         ddc::Chunk uncompressed_prod_alloc(
-                ddc::DiscreteDomain(ProdIndex::subindexes_domain()...),
+                ddc::DiscreteDomain(ProdIndex::subindices_domain()...),
                 ddc::HostAllocator<double>());
         sil::tensor::Tensor<
                 double,
-                ddc::cartesian_prod_t<typename ProdIndex::subindexes_domain_t...>,
+                ddc::cartesian_prod_t<typename ProdIndex::subindices_domain_t...>,
                 Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 uncompressed_prod(uncompressed_prod_alloc);
@@ -313,7 +313,7 @@ struct TensorProd3<
         ddc::for_each(
                 uncompressed_prod.domain(),
                 [&](ddc::cartesian_prod_t<
-                        typename ProdIndex::subindexes_domain_t...>::discrete_element_type elem) {
+                        typename ProdIndex::subindices_domain_t...>::discrete_element_type elem) {
                     uncompressed_prod(elem) = ddc::transform_reduce(
                             contract_dom,
                             0.,
@@ -360,26 +360,26 @@ tensor_prod3(
     static_assert(std::is_same_v<
                   ddc::type_seq_remove_t<
                           uncharacterize<ddc::to_type_seq_t<
-                                  ddc::cartesian_prod_t<typename Index1::subindexes_domain_t...>>>,
+                                  ddc::cartesian_prod_t<typename Index1::subindices_domain_t...>>>,
                           uncharacterize<ddc::to_type_seq_t<ddc::cartesian_prod_t<
-                                  typename ProdIndex::subindexes_domain_t...>>>>,
+                                  typename ProdIndex::subindices_domain_t...>>>>,
                   ddc::type_seq_remove_t<
                           uncharacterize<ddc::to_type_seq_t<
-                                  ddc::cartesian_prod_t<typename Index2::subindexes_domain_t...>>>,
+                                  ddc::cartesian_prod_t<typename Index2::subindices_domain_t...>>>,
                           uncharacterize<ddc::to_type_seq_t<ddc::cartesian_prod_t<
-                                  typename ProdIndex::subindexes_domain_t...>>>>>);
+                                  typename ProdIndex::subindices_domain_t...>>>>>);
     static_assert(
             std::is_same_v < ddc::type_seq_remove_t<
-                    ddc::to_type_seq_t<ddc::cartesian_prod_t<typename Index1::subindexes_domain_t...>>,
-                    ddc::to_type_seq_t<ddc::cartesian_prod_t<typename Index2::subindexes_domain_t...>>>,
+                    ddc::to_type_seq_t<ddc::cartesian_prod_t<typename Index1::subindices_domain_t...>>,
+                    ddc::to_type_seq_t<ddc::cartesian_prod_t<typename Index2::subindices_domain_t...>>>,
             ddc::to_type_seq_t<
                     ddc::cartesian_prod_t<typename Index1::
-                            subindexes_domain_t...>>> && std::is_same_v < ddc::type_seq_remove_t<
-                    ddc::to_type_seq_t<ddc::cartesian_prod_t<typename Index2::subindexes_domain_t...>>,
-                    ddc::to_type_seq_t<ddc::cartesian_prod_t<typename Index1::subindexes_domain_t...>>>,
+                            subindices_domain_t...>>> && std::is_same_v < ddc::type_seq_remove_t<
+                    ddc::to_type_seq_t<ddc::cartesian_prod_t<typename Index2::subindices_domain_t...>>,
+                    ddc::to_type_seq_t<ddc::cartesian_prod_t<typename Index1::subindices_domain_t...>>>,
             ddc::to_type_seq_t<
                     ddc::cartesian_prod_t<typename Index2::
-                            subindexes_domain_t...>>>); // tensor1 and tensor2 should not have any subindex in common because their characters are different
+                            subindices_domain_t...>>>); // tensor1 and tensor2 should not have any subindex in common because their characters are different
 
     detail::TensorProd3<
             uncharacterize<ddc::detail::TypeSeq<ProdIndex...>>,
@@ -387,19 +387,19 @@ tensor_prod3(
             uncharacterize<ddc::detail::TypeSeq<Index2...>>,
             ddc::type_seq_remove_t<
                     uncharacterize<ddc::to_type_seq_t<
-                            ddc::cartesian_prod_t<typename ProdIndex::subindexes_domain_t...>>>,
+                            ddc::cartesian_prod_t<typename ProdIndex::subindices_domain_t...>>>,
                     uncharacterize<ddc::to_type_seq_t<
-                            ddc::cartesian_prod_t<typename Index2::subindexes_domain_t...>>>>,
+                            ddc::cartesian_prod_t<typename Index2::subindices_domain_t...>>>>,
             ddc::type_seq_remove_t<
                     uncharacterize<ddc::to_type_seq_t<
-                            ddc::cartesian_prod_t<typename Index1::subindexes_domain_t...>>>,
+                            ddc::cartesian_prod_t<typename Index1::subindices_domain_t...>>>,
                     uncharacterize<ddc::to_type_seq_t<
-                            ddc::cartesian_prod_t<typename ProdIndex::subindexes_domain_t...>>>>,
+                            ddc::cartesian_prod_t<typename ProdIndex::subindices_domain_t...>>>>,
             ddc::type_seq_remove_t<
                     uncharacterize<ddc::to_type_seq_t<
-                            ddc::cartesian_prod_t<typename ProdIndex::subindexes_domain_t...>>>,
+                            ddc::cartesian_prod_t<typename ProdIndex::subindices_domain_t...>>>,
                     uncharacterize<ddc::to_type_seq_t<
-                            ddc::cartesian_prod_t<typename Index1::subindexes_domain_t...>>>>>::
+                            ddc::cartesian_prod_t<typename Index1::subindices_domain_t...>>>>>::
             run(uncharacterize_tensor(prod_tensor),
                 uncharacterize_tensor(tensor1),
                 uncharacterize_tensor(tensor2));
