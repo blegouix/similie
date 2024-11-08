@@ -918,21 +918,21 @@ fill_symmetrizer(
 }
 
 /*
- Compute all permutations on a subset of indexes in idx_to_permute, keep the
- rest of the indexes where they are.
+ Compute all permutations on a subset of indices in idx_to_permute, keep the
+ rest of the indices where they are.
  */
 template <std::size_t Nt, std::size_t Ns>
 static std::vector<std::array<std::size_t, Nt>> permutations_subset(
         std::array<std::size_t, Nt> t,
         std::array<std::size_t, Ns> subset_values)
 {
-    std::array<std::size_t, Ns> subset_indexes;
+    std::array<std::size_t, Ns> subset_indices;
     std::array<std::size_t, Ns> elements_to_permute;
     int j = 0;
     for (std::size_t i = 0; i < t.size(); ++i) {
         if (std::find(subset_values.begin(), subset_values.end(), t[i] + 1)
             != std::end(subset_values)) {
-            subset_indexes[j] = i;
+            subset_indices[j] = i;
             elements_to_permute[j++] = t[i];
         }
     }
@@ -941,7 +941,7 @@ static std::vector<std::array<std::size_t, Nt>> permutations_subset(
     do {
         std::array<std::size_t, Nt> tmp = t;
         for (std::size_t i = 0; i < Ns; ++i) {
-            tmp[subset_indexes[i]] = elements_to_permute[i];
+            tmp[subset_indices[i]] = elements_to_permute[i];
         }
         result.push_back(tmp);
     } while (std::next_permutation(elements_to_permute.begin(), elements_to_permute.end()));

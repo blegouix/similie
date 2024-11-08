@@ -17,9 +17,9 @@ struct IdentityTensorIndex
 {
     static constexpr bool is_natural_tensor_index = false;
 
-    using subindexes_domain_t = ddc::DiscreteDomain<TensorIndex...>;
+    using subindices_domain_t = ddc::DiscreteDomain<TensorIndex...>;
 
-    static constexpr subindexes_domain_t subindexes_domain()
+    static constexpr subindices_domain_t subindices_domain()
     {
         return ddc::DiscreteDomain<TensorIndex...>(
                 ddc::DiscreteElement<TensorIndex...>(ddc::DiscreteElement<TensorIndex>(0)...),

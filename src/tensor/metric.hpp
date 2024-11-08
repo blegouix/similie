@@ -11,7 +11,7 @@ namespace sil {
 
 namespace tensor {
 
-// Abstract indexes used to characterize a generic metric
+// Abstract indices used to characterize a generic metric
 struct MetricIndex1
 {
 };
@@ -22,7 +22,7 @@ struct MetricIndex2
 
 // Relabelize metric
 template <class Dom, class Index1, class Index2>
-using relabelize_metric_in_domain_t = relabelize_indexes_in_domain_t<
+using relabelize_metric_in_domain_t = relabelize_indices_in_domain_t<
         Dom,
         ddc::detail::TypeSeq<MetricIndex1, MetricIndex2>,
         ddc::detail::TypeSeq<Index1, Index2>>;
@@ -30,7 +30,7 @@ using relabelize_metric_in_domain_t = relabelize_indexes_in_domain_t<
 template <class Index1, class Index2, class Dom>
 relabelize_metric_in_domain_t<Dom, Index1, Index2> relabelize_metric_in_domain(Dom metric_dom)
 {
-    return relabelize_indexes_in_domain<
+    return relabelize_indices_in_domain<
             ddc::detail::TypeSeq<MetricIndex1, MetricIndex2>,
             ddc::detail::TypeSeq<Index1, Index2>>(metric_dom);
 }
@@ -38,7 +38,7 @@ relabelize_metric_in_domain_t<Dom, Index1, Index2> relabelize_metric_in_domain(D
 // Compute domain for a tensor product of metrics (ie. g_mu_muprime*g_nu_nuprime*...)
 namespace detail {
 
-template <class MetricIndex, class Indexes1, class Indexes2>
+template <class MetricIndex, class Indices1, class Indices2>
 struct MetricProdDomainType;
 
 template <class MetricIndex, class... Index1, class... Index2>
@@ -57,14 +57,14 @@ struct MetricProdDomainType<
 
 } // namespace detail
 
-template <class MetricIndex, class Indexes1, class Indexes2>
+template <class MetricIndex, class Indices1, class Indices2>
 using metric_prod_domain_t =
-        typename detail::MetricProdDomainType<MetricIndex, Indexes1, Indexes2>::type;
+        typename detail::MetricProdDomainType<MetricIndex, Indices1, Indices2>::type;
 
 namespace detail {
 
 // Compute tensor product of metrics (ie. g_mu_muprime*g_nu_nuprime*...)
-template <class MetricIndex, class Indexes1, class Indexes2>
+template <class MetricIndex, class Indices1, class Indices2>
 struct MetricProdType;
 
 template <class MetricIndex, class... Index1, class... Index2>
@@ -82,12 +82,12 @@ struct MetricProdType<MetricIndex, ddc::detail::TypeSeq<Index1...>, ddc::detail:
 
 } // namespace detail
 
-template <class MetricIndex, class Indexes1, class Indexes2>
-using metric_prod_t = typename detail::MetricProdType<MetricIndex, Indexes1, Indexes2>::type;
+template <class MetricIndex, class Indices1, class Indices2>
+using metric_prod_t = typename detail::MetricProdType<MetricIndex, Indices1, Indices2>::type;
 
 namespace detail {
 
-template <class Indexes1, class Indexes2>
+template <class Indices1, class Indices2>
 struct FillMetricProd;
 
 template <>
@@ -149,9 +149,9 @@ struct FillMetricProd<
 };
 } // namespace detail
 
-template <class MetricIndex, class Indexes1, class Indexes2, class MetricType>
-metric_prod_t<MetricIndex, Indexes1, Indexes2> fill_metric_prod(
-        metric_prod_t<MetricIndex, Indexes1, Indexes2> metric_prod,
+template <class MetricIndex, class Indices1, class Indices2, class MetricType>
+metric_prod_t<MetricIndex, Indices1, Indices2> fill_metric_prod(
+        metric_prod_t<MetricIndex, Indices1, Indices2> metric_prod,
         MetricType metric)
 {
     ddc::DiscreteDomain<> dom_;
@@ -163,7 +163,7 @@ metric_prod_t<MetricIndex, Indexes1, Indexes2> fill_metric_prod(
             Kokkos::DefaultHostExecutionSpace::memory_space>
             metric_prod_(metric_prod_alloc_);
 
-    return detail::FillMetricProd<Indexes1, Indexes2>::run(metric_prod, metric, metric_prod_);
+    return detail::FillMetricProd<Indices1, Indices2>::run(metric_prod, metric, metric_prod_);
 }
 
 namespace detail {
@@ -174,7 +174,7 @@ struct prime : Index
 {
 };
 
-template <class Indexes>
+template <class Indices>
 struct Primes;
 
 template <class... Index>
@@ -192,37 +192,37 @@ struct Primes<ddc::detail::TypeSeq<TensorCovariantNaturalIndex<Index>...>>
 } // namespace detail
 
 // Apply metrics inplace (like g_mu_muprime*T^muprime^nu)
-template <class MetricIndex, class Indexes1, class Indexes2, class MetricType, class TensorType>
-relabelize_indexes_of_t<TensorType, Indexes2, Indexes1>
+template <class MetricIndex, class Indices1, class Indices2, class MetricType, class TensorType>
+relabelize_indices_of_t<TensorType, Indices2, Indices1>
 inplace_apply_metrics( // TODO avoid metricS by using concepts
         TensorType tensor,
         MetricType metric)
 {
-    sil::tensor::tensor_accessor_for_domain_t<metric_prod_domain_t<MetricIndex, Indexes1, Indexes2>>
+    sil::tensor::tensor_accessor_for_domain_t<metric_prod_domain_t<MetricIndex, Indices1, Indices2>>
             metric_prod_accessor;
     ddc::Chunk metric_prod_alloc(metric_prod_accessor.mem_domain(), ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
-            metric_prod_domain_t<MetricIndex, Indexes1, Indexes2>,
+            metric_prod_domain_t<MetricIndex, Indices1, Indices2>,
             Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             metric_prod(metric_prod_alloc);
 
-    fill_metric_prod<MetricIndex, Indexes1, Indexes2>(metric_prod, metric);
+    fill_metric_prod<MetricIndex, Indices1, Indices2>(metric_prod, metric);
 
     ddc::Chunk result_alloc(
-            relabelize_indexes_in_domain<Indexes2, Indexes1>(tensor.domain()),
+            relabelize_indices_in_domain<Indices2, Indices1>(tensor.domain()),
             ddc::HostAllocator<double>());
-    relabelize_indexes_of_t<TensorType, Indexes2, Indexes1> result(result_alloc);
+    relabelize_indices_of_t<TensorType, Indices2, Indices1> result(result_alloc);
     tensor_prod3(
             result,
-            relabelize_indexes_of<Indexes2, typename detail::Primes<Indexes1>::type>(metric_prod),
-            relabelize_indexes_of<Indexes2, typename detail::Primes<Indexes2>::type>(tensor));
+            relabelize_indices_of<Indices2, typename detail::Primes<Indices1>::type>(metric_prod),
+            relabelize_indices_of<Indices2, typename detail::Primes<Indices2>::type>(tensor));
     Kokkos::deep_copy(
             tensor.allocation_kokkos_view(),
             result.allocation_kokkos_view()); // We rely on Kokkos::deep_copy in place of ddc::parallel_deepcopy to avoid type verification of the type dimensions
 
-    return relabelize_indexes_of<Indexes2, Indexes1>(tensor);
+    return relabelize_indices_of<Indices2, Indices1>(tensor);
 }
 
 } // namespace tensor
