@@ -358,37 +358,16 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
     {
         if constexpr (sizeof...(IndexTail) > 0) {
             if constexpr (detail::is_tensor_index_v<IndexInterest>) {
-                // Tensor product
                 return IndexInterest::template process_access<TensorField, Elem, IndexInterest>(
-                               [](TensorField tensor_field_,
-                                  Elem elem_) -> TensorField::element_type {
-                                   std::pair<std::vector<double>, std::vector<std::size_t>> mem_id
-                                           = IndexInterest::access_id_to_mem_id(
-                                                   elem_.template uid<IndexInterest>());
-
-                                   double tensor_field_value = 0;
-                                   for (std::size_t i = 0; i < std::get<0>(mem_id).size(); ++i) {
-                                       tensor_field_value
-                                               += std::get<0>(mem_id)[i]
-                                                  * tensor_field_
-                                                            .mem(ddc::DiscreteElement<IndexHead...>(
-                                                                         elem_),
-                                                                 ddc::DiscreteElement<
-                                                                         IndexInterest>(
-                                                                         std::get<1>(mem_id)[i]),
-                                                                 ddc::DiscreteElement<IndexTail...>(
-                                                                         elem_));
-                                   }
-
-                                   return tensor_field_value;
-                               },
-                               tensor_field,
-                               elem)
-                       * Access<
-                               TensorField,
-                               Element,
-                               ddc::detail::TypeSeq<IndexHead..., IndexInterest>,
-                               IndexTail...>::run(tensor_field, elem);
+                        [](TensorField tensor_field_, Elem elem_) -> TensorField::element_type {
+                            return Access<
+                                    TensorField,
+                                    Element,
+                                    ddc::detail::TypeSeq<IndexHead..., IndexInterest>,
+                                    IndexTail...>::run(tensor_field_, elem_);
+                        },
+                        tensor_field,
+                        elem);
             } else {
                 return Access<
                         TensorField,
@@ -405,13 +384,18 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
                                             elem_.template uid<IndexInterest>());
 
                             double tensor_field_value = 0;
-                            for (std::size_t i = 0; i < std::get<0>(mem_id).size(); ++i) {
-                                tensor_field_value
-                                        += std::get<0>(mem_id)[i]
-                                           * tensor_field_
-                                                     .mem(ddc::DiscreteElement<IndexHead...>(elem_),
-                                                          ddc::DiscreteElement<IndexInterest>(
-                                                                  std::get<1>(mem_id)[i]));
+                            if (std::get<0>(mem_id).size() > 0) {
+                                for (std::size_t i = 0; i < std::get<0>(mem_id).size(); ++i) {
+                                    tensor_field_value
+                                            += std::get<0>(mem_id)[i]
+                                               * tensor_field_
+                                                         .mem(ddc::DiscreteElement<IndexHead...>(
+                                                                      elem_),
+                                                              ddc::DiscreteElement<IndexInterest>(
+                                                                      std::get<1>(mem_id)[i]));
+                                }
+                            } else {
+                                tensor_field_value = 1.;
                             }
 
                             return tensor_field_value;

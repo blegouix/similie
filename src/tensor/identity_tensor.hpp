@@ -83,10 +83,9 @@ public:
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> access_id_to_mem_id(
             std::size_t access_id)
     {
-        assert(false && "There is no mem_id");
         return std::pair<
                 std::vector<double>,
-                std::vector<std::size_t>>(std::vector<double> {1.}, std::vector<std::size_t> {});
+                std::vector<std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {});
     }
 
     template <class Tensor, class Elem, class Id>
@@ -98,7 +97,7 @@ public:
         if (elem.template uid<Id>() == 0) {
             return 0.;
         } else {
-            return 1;
+            return access(tensor, elem);
         }
     }
 };
