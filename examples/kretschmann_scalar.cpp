@@ -63,8 +63,8 @@ using NuLow = sil::tensor::lower<NuUp>;
 using RhoLow = sil::tensor::lower<RhoUp>;
 using SigmaLow = sil::tensor::lower<SigmaUp>;
 
-// Declare a unique index for Riemann tensor, satisfying Riemann symmetries (cf. https://birdtracks.eu/ section 10.5)
-using RiemannTensorIndex = sil::tensor::YoungTableauTensorIndex<
+// Declare a unique index for fully-contravariant Riemann tensor, satisfying Riemann symmetries (cf. https://birdtracks.eu/ section 10.5)
+using RiemannUpTensorIndex = sil::tensor::YoungTableauTensorIndex<
         sil::young_tableau::YoungTableau<
                 4,
                 sil::young_tableau::
@@ -91,15 +91,15 @@ int main(int argc, char** argv)
             metric(metric_alloc);
 
     // Allocate and instantiate a fully-contravariant Riemann tensor. The size of the allocation is 20 because the Riemann tensor has 20 independant components.
-    sil::tensor::TensorAccessor<RiemannTensorIndex> riemann_accessor;
-    ddc::DiscreteDomain<RiemannTensorIndex> riemann_dom = riemann_accessor.mem_domain();
-    ddc::Chunk riemann_alloc(riemann_dom, ddc::HostAllocator<double>());
+    sil::tensor::TensorAccessor<RiemannUpTensorIndex> riemann_up_accessor;
+    ddc::DiscreteDomain<RiemannUpTensorIndex> riemann_up_dom = riemann_up_accessor.mem_domain();
+    ddc::Chunk riemann_up_alloc(riemann_up_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
-            ddc::DiscreteDomain<RiemannTensorIndex>,
+            ddc::DiscreteDomain<RiemannUpTensorIndex>,
             std::experimental::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
-            riemann(riemann_alloc);
+            riemann_up(riemann_up_alloc);
 
     // Young-tableau-indexed tensors cannot be filled directly (because the 20 independant components do not appear explicitely in the 4^4 Riemann tensor. The explicit components of the Riemann tensor are linear combinations of the 20 independant components). We thus need to allocate a naturally-indexes 4^4 tensor to be filled.
     ddc::DiscreteDomain<MuUp, NuUp, RhoUp, SigmaUp> natural_tensor_dom(
@@ -144,23 +144,23 @@ int main(int argc, char** argv)
     natural_tensor(natural_tensor.accessor().element<Z, Y, Z, Y>()) = 1.;
 
     // We "compress" the 256 components of the naturally-indexed tensor into the 20 independent components of the Young-tableau-indexed Riemann tensor.
-    sil::tensor::compress(riemann, natural_tensor);
+    sil::tensor::compress(riemann_up, natural_tensor);
 
     /*
     for (std::size_t i = 0; i < 20; ++i) {
-        std::cout << riemann.mem(ddc::DiscreteElement<RiemannTensorIndex>(i)) << "\n";
+        std::cout << riemann_up.mem(ddc::DiscreteElement<RiemannTensorIndex>(i)) << "\n";
     }
     */
 
-    // We allocate and compute the covariant counterpart of the Riemann tensor which is needed for the computation of the Kretschmann scalar.
-    ddc::Chunk riemann_low_alloc = ddc::create_mirror_and_copy(riemann);
+    // We allocate and compute the covariant counterpart of the Riemann tensor which is needed for the computation of the Kretschmann scalar. Actually, in this particular case (Minkowski metric and even-rank tensor), contravariant and covariant Riemann tensors have the same components, but we perform the computation like if it was not the case.
+    ddc::Chunk riemann_low_alloc = ddc::create_mirror_and_copy(riemann_up);
     auto riemann_low = sil::tensor::inplace_apply_metrics<
             MetricIndex,
             ddc::detail::TypeSeq<MuLow, NuLow, RhoLow, SigmaLow>,
             ddc::detail::TypeSeq<MuUp, NuUp, RhoUp, SigmaUp>>(
             sil::tensor::Tensor<
                     double,
-                    ddc::DiscreteDomain<RiemannTensorIndex>,
+                    ddc::DiscreteDomain<RiemannUpTensorIndex>,
                     std::experimental::layout_right,
                     Kokkos::DefaultHostExecutionSpace::memory_space>(riemann_low_alloc),
             metric);
@@ -174,6 +174,6 @@ int main(int argc, char** argv)
             std::experimental::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             scalar(scalar_alloc);
-    sil::tensor::tensor_prod2(scalar, riemann_low, riemann);
+    sil::tensor::tensor_prod2(scalar, riemann_low, riemann_up);
     std::cout << "Kreschmann scalar = " << scalar(ddc::DiscreteElement<>()) << "\n";
 }
