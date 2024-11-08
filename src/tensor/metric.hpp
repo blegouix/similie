@@ -88,10 +88,10 @@ using metric_prod_t = typename detail::MetricProdType<MetricIndex, Indexes1, Ind
 namespace detail {
 
 template <class Indexes1, class Indexes2>
-struct MetricProd;
+struct FillMetricProd;
 
 template <>
-struct MetricProd<ddc::detail::TypeSeq<>, ddc::detail::TypeSeq<>>
+struct FillMetricProd<ddc::detail::TypeSeq<>, ddc::detail::TypeSeq<>>
 {
     template <class MetricType, class MetricProdType, class MetricProdType_>
     static MetricProdType run(
@@ -108,7 +108,7 @@ struct MetricProd<ddc::detail::TypeSeq<>, ddc::detail::TypeSeq<>>
 };
 
 template <class HeadIndex1, class... TailIndex1, class HeadIndex2, class... TailIndex2>
-struct MetricProd<
+struct FillMetricProd<
         ddc::detail::TypeSeq<HeadIndex1, TailIndex1...>,
         ddc::detail::TypeSeq<HeadIndex2, TailIndex2...>>
 {
@@ -142,7 +142,7 @@ struct MetricProd<
 
         // TODO tensorial prod ? atm supports only Identity or Lorentzian metrics (new_metric_prod is empty)
 
-        return MetricProd<
+        return FillMetricProd<
                 ddc::detail::TypeSeq<TailIndex1...>,
                 ddc::detail::TypeSeq<TailIndex2...>>::run(metric_prod, metric, new_metric_prod_);
     }
@@ -163,7 +163,7 @@ metric_prod_t<MetricIndex, Indexes1, Indexes2> fill_metric_prod(
             Kokkos::DefaultHostExecutionSpace::memory_space>
             metric_prod_(metric_prod_alloc_);
 
-    return detail::MetricProd<Indexes1, Indexes2>::run(metric_prod, metric, metric_prod_);
+    return detail::FillMetricProd<Indexes1, Indexes2>::run(metric_prod, metric, metric_prod_);
 }
 
 namespace detail {
