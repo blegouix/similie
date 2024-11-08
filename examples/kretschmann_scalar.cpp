@@ -114,7 +114,7 @@ int main(int argc, char** argv)
             natural_tensor(natural_tensor_alloc);
     ddc::parallel_fill(natural_tensor, 0.);
 
-    // We fill the naturally-indices tensor with the pre-computed values of the explicit Riemann tensor components on the horizon in the Lemaitre coordinate system (cf. the python script)
+    // We fill the naturally-indexed tensor with the pre-computed values of the explicit Riemann tensor components on the horizon in the Lemaitre coordinate system (cf. the python script)
     natural_tensor(natural_tensor.accessor().element<T, X, T, X>()) = -1.;
     natural_tensor(natural_tensor.accessor().element<T, X, X, T>()) = 1.;
     natural_tensor(natural_tensor.accessor().element<T, Y, T, Y>()) = .5;
