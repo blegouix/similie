@@ -83,7 +83,7 @@ struct TensorNaturalIndex
     }
 };
 
-// Helpers to build the access_id() function which computes the ids of subindexes of an index. This cumbersome logic is necessary because subindexes do not necesseraly have the same rank.
+// Helpers to build the access_id() function which computes the ids of subindexes of an index. This cumbersome logic is necessary because subindexes do not necessarily have the same rank.
 namespace detail {
 // For Tmunu and index=nu, returns 1
 template <class Index, class...>
