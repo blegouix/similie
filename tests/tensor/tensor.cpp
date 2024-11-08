@@ -57,7 +57,7 @@ TEST(Tensor, NaturalIndexing)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<Alpha, Nu>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor(tensor_alloc);
 
@@ -108,7 +108,7 @@ TEST(Tensor, FullTensorIndexing)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<FullIndex>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor(tensor_alloc);
 
@@ -159,7 +159,7 @@ TEST(Tensor, IdentityTensorIndexing)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<IdIndex>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor(tensor_alloc);
 
@@ -194,7 +194,7 @@ TEST(Tensor, LorentzianSignTensorIndexing)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<LorentzianSignIndex>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor(tensor_alloc);
 
@@ -228,7 +228,7 @@ TEST(Tensor, DiagonalTensorIndexing)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<DiagIndex>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor(tensor_alloc);
 
@@ -273,7 +273,7 @@ TEST(Tensor, SymmetricTensorIndexing4x4)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<SymIndex>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor(tensor_alloc);
 
@@ -325,7 +325,7 @@ TEST(Tensor, SymmetricTensorIndexing3x3x3)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<SymIndex3x3x3>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor(tensor_alloc);
 
@@ -387,7 +387,7 @@ TEST(Tensor, AntisymmetricTensorIndexing4x4)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<AntisymIndex>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor(tensor_alloc);
 
@@ -434,7 +434,7 @@ TEST(Tensor, PartiallySymmetricTensorIndexing4x3x3)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<Mu, SymIndex3x3>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor(tensor_alloc);
 
@@ -526,7 +526,7 @@ TEST(Tensor, YoungTableauIndexing)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<Alpha, Beta, Gamma>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             natural(natural_alloc);
 
@@ -564,7 +564,7 @@ TEST(Tensor, YoungTableauIndexing)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<YoungTableauIndex>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor(tensor_alloc);
 
@@ -602,7 +602,7 @@ TEST(Tensor, YoungTableauIndexing)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<Alpha, Beta, Gamma>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             uncompressed(uncompressed_alloc);
 
@@ -645,7 +645,7 @@ TEST(TensorPrint, Rank3xRank3)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<Alpha, Beta, Gamma>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor(tensor_alloc);
 

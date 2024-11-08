@@ -584,7 +584,7 @@ orthogonalize(
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<BasisId, Id...>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             eigentensor(eigentensor_alloc);
     for (ddc::DiscreteElement<BasisId> elem : ddc::DiscreteDomain<BasisId>(
@@ -596,7 +596,7 @@ orthogonalize(
         sil::tensor::Tensor<
                 double,
                 ddc::DiscreteDomain<>,
-                std::experimental::layout_right,
+                Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 scalar_prod(scalar_prod_alloc);
         sil::tensor::natural_tensor_prod(
@@ -607,7 +607,7 @@ orthogonalize(
         sil::tensor::Tensor<
                 double,
                 ddc::DiscreteDomain<>,
-                std::experimental::layout_right,
+                Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 norm_squared(norm_squared_alloc);
         sil::tensor::natural_tensor_prod(norm_squared, eigentensor, eigentensor);
@@ -683,7 +683,7 @@ struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::FullTensorIndex<Id...>
         sil::tensor::Tensor<
                 double,
                 ddc::DiscreteDomain<Id...>,
-                std::experimental::layout_right,
+                Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 candidate(candidate_alloc);
         ddc::Chunk prod_alloc(
@@ -694,7 +694,7 @@ struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::FullTensorIndex<Id...>
                 sil::tensor::natural_tensor_prod_domain_t<
                         typename YoungTableau::template projector_domain<Id...>,
                         ddc::DiscreteDomain<Id...>>,
-                std::experimental::layout_right,
+                Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 prod(prod_alloc);
 
@@ -734,7 +734,7 @@ struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::FullTensorIndex<Id...>
                 sil::tensor::Tensor<
                         double,
                         ddc::DiscreteDomain<>,
-                        std::experimental::layout_right,
+                        Kokkos::layout_right,
                         Kokkos::DefaultHostExecutionSpace::memory_space>
                         norm_squared(norm_squared_alloc);
                 sil::tensor::natural_tensor_prod(norm_squared, candidate, candidate);
@@ -836,7 +836,7 @@ std::function<
         void(sil::tensor::Tensor<
                      double,
                      ddc::DiscreteDomain<NaturalId...>,
-                     std::experimental::layout_right,
+                     Kokkos::layout_right,
                      Kokkos::DefaultHostExecutionSpace::memory_space>,
              ddc::DiscreteElement<NaturalId...>)>
 tr_lambda(std::array<std::size_t, Rank> idx_to_permute)
@@ -844,7 +844,7 @@ tr_lambda(std::array<std::size_t, Rank> idx_to_permute)
     return [=](sil::tensor::Tensor<
                        double,
                        ddc::DiscreteDomain<NaturalId...>,
-                       std::experimental::layout_right,
+                       Kokkos::layout_right,
                        Kokkos::DefaultHostExecutionSpace::memory_space> t,
                ddc::DiscreteElement<NaturalId...> elem) {
         std::array<std::size_t, sizeof...(NaturalId)> elem_array = ddc::detail::array(elem);
@@ -882,13 +882,13 @@ template <std::size_t Dimension, bool AntiSym, class... Id>
 static sil::tensor::Tensor<
         double,
         ddc::DiscreteDomain<Id...>,
-        std::experimental::layout_right,
+        Kokkos::layout_right,
         Kokkos::DefaultHostExecutionSpace::memory_space>
 fill_symmetrizer(
         sil::tensor::Tensor<
                 double,
                 ddc::DiscreteDomain<Id...>,
-                std::experimental::layout_right,
+                Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space> sym,
         std::array<std::size_t, sizeof...(Id) / 2> idx_to_permute)
 {
@@ -896,7 +896,7 @@ fill_symmetrizer(
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<Id...>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tr(tr_alloc);
     ddc::parallel_fill(tr, 0);
@@ -956,12 +956,12 @@ struct Projector<
     static sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<Id...>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
     run(sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<Id...>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space> proj)
     {
         if constexpr (sizeof...(ElemOfHeadRow) >= 2) {
@@ -974,7 +974,7 @@ struct Projector<
             sil::tensor::Tensor<
                     double,
                     ddc::DiscreteDomain<symmetrizer_index_t<Id, Id...>...>,
-                    std::experimental::layout_right,
+                    Kokkos::layout_right,
                     Kokkos::DefaultHostExecutionSpace::memory_space>
                     sym(sym_alloc);
             ddc::parallel_fill(sym, 0);
@@ -983,7 +983,9 @@ struct Projector<
                 idx_to_permute[i] = i;
             }
             std::array<std::size_t, sizeof...(ElemOfHeadRow)> row_values {ElemOfHeadRow...};
-            auto idx_permutations = detail::permutations_subset(idx_to_permute, row_values); // TODO check https://indico.cern.ch/event/814040/contributions/3452485/attachments/1860434/3057354/psr_alcock.pdf page 6, it may be incomplete
+            auto idx_permutations = detail::permutations_subset(
+                    idx_to_permute,
+                    row_values); // TODO check https://indico.cern.ch/event/814040/contributions/3452485/attachments/1860434/3057354/psr_alcock.pdf page 6, it may be incomplete
             for (std::size_t i = 0; i < idx_permutations.size(); ++i) {
                 fill_symmetrizer<
                         Dimension,
@@ -999,7 +1001,7 @@ struct Projector<
                     sil::tensor::natural_tensor_prod_domain_t<
                             ddc::DiscreteDomain<symmetrizer_index_t<Id, Id...>...>,
                             ddc::DiscreteDomain<Id...>>,
-                    std::experimental::layout_right,
+                    Kokkos::layout_right,
                     Kokkos::DefaultHostExecutionSpace::memory_space>
                     prod(prod_alloc);
             sil::tensor::natural_tensor_prod(prod, sym, proj);
@@ -1030,7 +1032,7 @@ auto YoungTableau<Dimension, TableauSeq>::projector()
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<detail::declare_deriv<Id>..., Id...>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             proj(proj_alloc);
     ddc::parallel_fill(proj, 0);

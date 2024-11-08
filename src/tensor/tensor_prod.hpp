@@ -63,7 +63,7 @@ struct TensorProd<
             MemorySpace>
     run(Tensor<ElementType,
                ddc::DiscreteDomain<HeadDDim1..., TailDDim2...>,
-               std::experimental::layout_right,
+               Kokkos::layout_right,
                Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
         Tensor<ElementType, ddc::DiscreteDomain<Index1>, LayoutStridedPolicy, MemorySpace> tensor1,
         Tensor<ElementType,
@@ -81,7 +81,7 @@ struct TensorProd<
         sil::tensor::Tensor<
                 double,
                 typename Index1::subindexes_domain_t,
-                std::experimental::layout_right,
+                Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 uncompressed_tensor1(uncompressed_tensor1_alloc);
 
@@ -102,12 +102,12 @@ template <
         class MemorySpace>
 Tensor<ElementType,
        ddc::DiscreteDomain<ProdDDim...>,
-       std::experimental::layout_right,
+       Kokkos::layout_right,
        Kokkos::DefaultHostExecutionSpace::memory_space>
 tensor_prod(
         Tensor<ElementType,
                ddc::DiscreteDomain<ProdDDim...>,
-               std::experimental::layout_right,
+               Kokkos::layout_right,
                Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
         Tensor<ElementType, ddc::DiscreteDomain<Index1>, LayoutStridedPolicy, MemorySpace> tensor1,
         Tensor<ElementType, ddc::DiscreteDomain<DDim2...>, LayoutStridedPolicy, MemorySpace>
@@ -161,7 +161,7 @@ struct TensorProd2<
             MemorySpace>
     run(Tensor<ElementType,
                ddc::DiscreteDomain<HeadDDim1..., TailDDim2...>,
-               std::experimental::layout_right,
+               Kokkos::layout_right,
                Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
         Tensor<ElementType, ddc::DiscreteDomain<Index1>, LayoutStridedPolicy, MemorySpace> tensor1,
         Tensor<ElementType, ddc::DiscreteDomain<Index2>, LayoutStridedPolicy, MemorySpace> tensor2)
@@ -176,7 +176,7 @@ struct TensorProd2<
         sil::tensor::Tensor<
                 double,
                 typename Index1::subindexes_domain_t,
-                std::experimental::layout_right,
+                Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 uncompressed_tensor1(uncompressed_tensor1_alloc);
 
@@ -186,7 +186,7 @@ struct TensorProd2<
         sil::tensor::Tensor<
                 double,
                 typename Index2::subindexes_domain_t,
-                std::experimental::layout_right,
+                Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 uncompressed_tensor2(uncompressed_tensor2_alloc);
 
@@ -208,12 +208,12 @@ template <
         class MemorySpace>
 Tensor<ElementType,
        ddc::DiscreteDomain<ProdDDim...>,
-       std::experimental::layout_right,
+       Kokkos::layout_right,
        Kokkos::DefaultHostExecutionSpace::memory_space>
 tensor_prod2(
         Tensor<ElementType,
                ddc::DiscreteDomain<ProdDDim...>,
-               std::experimental::layout_right,
+               Kokkos::layout_right,
                Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
         Tensor<ElementType, ddc::DiscreteDomain<Index1>, LayoutStridedPolicy, MemorySpace> tensor1,
         Tensor<ElementType, ddc::DiscreteDomain<Index2>, LayoutStridedPolicy, MemorySpace> tensor2)
@@ -286,7 +286,7 @@ struct TensorProd3<
     static Tensor<ElementType, ddc::DiscreteDomain<ProdIndex...>, LayoutStridedPolicy, MemorySpace>
     run(Tensor<ElementType,
                ddc::DiscreteDomain<ProdIndex...>,
-               std::experimental::layout_right,
+               Kokkos::layout_right,
                Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
         Tensor<ElementType, ddc::DiscreteDomain<Index1...>, LayoutStridedPolicy, MemorySpace>
                 tensor1,
@@ -303,7 +303,7 @@ struct TensorProd3<
         sil::tensor::Tensor<
                 double,
                 ddc::cartesian_prod_t<typename ProdIndex::subindexes_domain_t...>,
-                std::experimental::layout_right,
+                Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 uncompressed_prod(uncompressed_prod_alloc);
 
@@ -345,12 +345,12 @@ template <
         class MemorySpace>
 Tensor<ElementType,
        ddc::DiscreteDomain<ProdIndex...>,
-       std::experimental::layout_right,
+       Kokkos::layout_right,
        Kokkos::DefaultHostExecutionSpace::memory_space>
 tensor_prod3(
         Tensor<ElementType,
                ddc::DiscreteDomain<ProdIndex...>,
-               std::experimental::layout_right,
+               Kokkos::layout_right,
                Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
         Tensor<ElementType, ddc::DiscreteDomain<Index1...>, LayoutStridedPolicy, MemorySpace>
                 tensor1,

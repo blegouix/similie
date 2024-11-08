@@ -138,18 +138,18 @@ template <class YoungTableauIndex, class... Id>
 sil::tensor::Tensor<
         double,
         ddc::DiscreteDomain<YoungTableauIndex>,
-        std::experimental::layout_right,
+        Kokkos::layout_right,
         Kokkos::DefaultHostExecutionSpace::memory_space>
 compress(
         sil::tensor::Tensor<
                 double,
                 ddc::DiscreteDomain<YoungTableauIndex>,
-                std::experimental::layout_right,
+                Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space> compressed,
         sil::tensor::Tensor<
                 double,
                 ddc::DiscreteDomain<Id...>,
-                std::experimental::layout_right,
+                Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space> tensor)
 {
     typename YoungTableauIndex::young_tableau young_tableau;
@@ -162,18 +162,18 @@ template <class YoungTableauIndex, class... Id>
 sil::tensor::Tensor<
         double,
         ddc::DiscreteDomain<Id...>,
-        std::experimental::layout_right,
+        Kokkos::layout_right,
         Kokkos::DefaultHostExecutionSpace::memory_space>
 uncompress(
         sil::tensor::Tensor<
                 double,
                 ddc::DiscreteDomain<Id...>,
-                std::experimental::layout_right,
+                Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space> uncompressed,
         sil::tensor::Tensor<
                 double,
                 ddc::DiscreteDomain<YoungTableauIndex>,
-                std::experimental::layout_right,
+                Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space> tensor)
 {
     typename YoungTableauIndex::young_tableau young_tableau;

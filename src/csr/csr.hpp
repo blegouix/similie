@@ -95,18 +95,18 @@ template <std::size_t N, class HeadTensorIndex, class... TailTensorIndex>
 sil::tensor::Tensor<
         double,
         ddc::DiscreteDomain<TailTensorIndex...>,
-        std::experimental::layout_right,
+        Kokkos::layout_right,
         Kokkos::DefaultHostExecutionSpace::memory_space>
 tensor_prod(
         sil::tensor::Tensor<
                 double,
                 ddc::DiscreteDomain<TailTensorIndex...>,
-                std::experimental::layout_right,
+                Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space> prod,
         sil::tensor::Tensor<
                 double,
                 ddc::DiscreteDomain<HeadTensorIndex>,
-                std::experimental::layout_right,
+                Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space> dense,
         Csr<N, HeadTensorIndex, TailTensorIndex...> csr)
 {
@@ -136,19 +136,19 @@ template <std::size_t N, class HeadTensorIndex, class... TailTensorIndex>
 sil::tensor::Tensor<
         double,
         ddc::DiscreteDomain<HeadTensorIndex>,
-        std::experimental::layout_right,
+        Kokkos::layout_right,
         Kokkos::DefaultHostExecutionSpace::memory_space>
 tensor_prod(
         sil::tensor::Tensor<
                 double,
                 ddc::DiscreteDomain<HeadTensorIndex>,
-                std::experimental::layout_right,
+                Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space> prod,
         Csr<N, HeadTensorIndex, TailTensorIndex...> csr,
         sil::tensor::Tensor<
                 double,
                 ddc::DiscreteDomain<TailTensorIndex...>,
-                std::experimental::layout_right,
+                Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space> dense)
 {
     ddc::parallel_fill(prod, 0.);

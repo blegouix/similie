@@ -502,7 +502,7 @@ public:
         return detail::Access<
                 Tensor<ElementType,
                        ddc::DiscreteDomain<DDim...>,
-                       std::experimental::layout_right,
+                       Kokkos::layout_right,
                        MemorySpace>,
                 ddc::DiscreteElement<DDim...>,
                 ddc::detail::TypeSeq<>,
@@ -904,12 +904,12 @@ template <
         class... TensorType>
 Tensor<ElementType,
        ddc::DiscreteDomain<DDim...>,
-       std::experimental::layout_right,
+       Kokkos::layout_right,
        Kokkos::DefaultHostExecutionSpace::memory_space>
 tensor_sum(
         Tensor<ElementType,
                ddc::DiscreteDomain<DDim...>,
-               std::experimental::layout_right,
+               Kokkos::layout_right,
                Kokkos::DefaultHostExecutionSpace::memory_space> sum_tensor,
         TensorType... tensor)
 {
@@ -971,7 +971,7 @@ struct NaturalTensorProd<
             MemorySpace>
     run(Tensor<ElementType,
                ddc::DiscreteDomain<HeadDDim1..., TailDDim2...>,
-               std::experimental::layout_right,
+               Kokkos::layout_right,
                Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
         Tensor<ElementType,
                ddc::DiscreteDomain<HeadDDim1..., ContractDDim...>,
@@ -1009,12 +1009,12 @@ template <
         class MemorySpace>
 Tensor<ElementType,
        ddc::DiscreteDomain<ProdDDim...>,
-       std::experimental::layout_right,
+       Kokkos::layout_right,
        Kokkos::DefaultHostExecutionSpace::memory_space>
 natural_tensor_prod(
         Tensor<ElementType,
                ddc::DiscreteDomain<ProdDDim...>,
-               std::experimental::layout_right,
+               Kokkos::layout_right,
                Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
         Tensor<ElementType, ddc::DiscreteDomain<DDim1...>, LayoutStridedPolicy, MemorySpace>
                 tensor1,

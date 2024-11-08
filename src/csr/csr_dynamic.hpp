@@ -67,7 +67,7 @@ public:
     void push_back(sil::tensor::Tensor<
                    double,
                    ddc::DiscreteDomain<TailTensorIndex...>,
-                   std::experimental::layout_right,
+                   Kokkos::layout_right,
                    Kokkos::DefaultHostExecutionSpace::memory_space> dense)
     {
         m_coalesc_idx.push_back(m_coalesc_idx.back());
@@ -139,13 +139,13 @@ template <class HeadId, class... TailId>
 sil::tensor::Tensor<
         double,
         ddc::DiscreteDomain<HeadId, TailId...>,
-        std::experimental::layout_right,
+        Kokkos::layout_right,
         Kokkos::DefaultHostExecutionSpace::memory_space>
 csr2dense(
         sil::tensor::Tensor<
                 double,
                 ddc::DiscreteDomain<HeadId, TailId...>,
-                std::experimental::layout_right,
+                Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space> dense,
         CsrDynamic<HeadId, TailId...> csr)
 {

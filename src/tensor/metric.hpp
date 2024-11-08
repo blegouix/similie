@@ -76,7 +76,7 @@ struct MetricProdType<MetricIndex, ddc::detail::TypeSeq<Index1...>, ddc::detail:
                     MetricIndex,
                     ddc::detail::TypeSeq<Index1...>,
                     ddc::detail::TypeSeq<Index2...>>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>;
 };
 
@@ -136,7 +136,7 @@ struct FillMetricProd<
                                 typename MetricType::discrete_domain_type,
                                 HeadIndex1,
                                 HeadIndex2>>,
-                std::experimental::layout_right,
+                Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 new_metric_prod_(new_metric_prod_alloc_);
 
@@ -159,7 +159,7 @@ metric_prod_t<MetricIndex, Indexes1, Indexes2> fill_metric_prod(
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             metric_prod_(metric_prod_alloc_);
 
@@ -204,7 +204,7 @@ inplace_apply_metrics( // TODO avoid metricS by using concepts
     sil::tensor::Tensor<
             double,
             metric_prod_domain_t<MetricIndex, Indexes1, Indexes2>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             metric_prod(metric_prod_alloc);
 

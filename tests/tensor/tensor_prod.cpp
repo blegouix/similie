@@ -45,7 +45,7 @@ TEST(TensorProd, SimpleContractionRank3xRank2)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<Alpha, Beta, Gamma>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor1(tensor1_alloc);
 
@@ -84,7 +84,7 @@ TEST(TensorProd, SimpleContractionRank3xRank2)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<Gamma, Delta>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor2(tensor2_alloc);
 
@@ -105,7 +105,7 @@ TEST(TensorProd, SimpleContractionRank3xRank2)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<Alpha, Beta, Delta>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             prod_tensor(prod_tensor_alloc);
 
@@ -148,7 +148,7 @@ TEST(TensorProd, DoubleContractionRank3xRank3)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<Alpha, Beta, Gamma>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor1(tensor1_alloc);
 
@@ -187,7 +187,7 @@ TEST(TensorProd, DoubleContractionRank3xRank3)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<Beta, Gamma, Delta>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor2(tensor2_alloc);
 
@@ -226,7 +226,7 @@ TEST(TensorProd, DoubleContractionRank3xRank3)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<Alpha, Delta>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             prod_tensor(prod_tensor_alloc);
 
@@ -262,7 +262,7 @@ TEST(TensorProd, DoubleContractionYoungIndexedxNaturalIndex)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<Alpha, Beta, Gamma>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             natural(natural_alloc);
 
@@ -300,7 +300,7 @@ TEST(TensorProd, DoubleContractionYoungIndexedxNaturalIndex)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<YoungTableauIndex>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor1(tensor1_alloc);
 
@@ -312,7 +312,7 @@ TEST(TensorProd, DoubleContractionYoungIndexedxNaturalIndex)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<Beta, Gamma, Delta>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor2(tensor2_alloc);
 
@@ -351,7 +351,7 @@ TEST(TensorProd, DoubleContractionYoungIndexedxNaturalIndex)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<Alpha, Delta>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             prod_tensor(prod_tensor_alloc);
 

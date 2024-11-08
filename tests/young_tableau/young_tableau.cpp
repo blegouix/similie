@@ -62,7 +62,7 @@ TEST(YoungTableau, 1_2)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<Mu, Nu>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor(tensor_alloc);
 
@@ -91,7 +91,7 @@ TEST(YoungTableau, 1_2)
             sil::tensor::natural_tensor_prod_domain_t<
                     typename decltype(young_tableau)::projector_domain<Mu, Nu>,
                     ddc::DiscreteDomain<Mu, Nu>>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             prod(prod_alloc);
 
@@ -136,7 +136,7 @@ TEST(YoungTableau, 1l2)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<Mu, Nu>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor(tensor_alloc);
 
@@ -165,7 +165,7 @@ TEST(YoungTableau, 1l2)
             sil::tensor::natural_tensor_prod_domain_t<
                     typename decltype(young_tableau)::projector_domain<Mu, Nu>,
                     ddc::DiscreteDomain<Mu, Nu>>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             prod(prod_alloc);
 
@@ -213,7 +213,7 @@ TEST(YoungTableau, 1_2_3)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<Alpha, Beta, Gamma>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor(tensor_alloc);
 
@@ -253,7 +253,7 @@ TEST(YoungTableau, 1_2_3)
             sil::tensor::natural_tensor_prod_domain_t<
                     typename decltype(young_tableau)::projector_domain<Alpha, Beta, Gamma>,
                     ddc::DiscreteDomain<Alpha, Beta, Gamma>>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             prod(prod_alloc);
 
@@ -330,7 +330,7 @@ TEST(YoungTableau, 1l2l3)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<Alpha, Beta, Gamma>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor(tensor_alloc);
 
@@ -370,7 +370,7 @@ TEST(YoungTableau, 1l2l3)
             sil::tensor::natural_tensor_prod_domain_t<
                     typename decltype(young_tableau)::projector_domain<Alpha, Beta, Gamma>,
                     ddc::DiscreteDomain<Alpha, Beta, Gamma>>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             prod(prod_alloc);
 
@@ -449,7 +449,7 @@ TEST(YoungTableau, 1_2l3)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<Alpha, Beta, Gamma>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor(tensor_alloc);
 
@@ -489,7 +489,7 @@ TEST(YoungTableau, 1_2l3)
             sil::tensor::natural_tensor_prod_domain_t<
                     typename decltype(young_tableau)::projector_domain<Alpha, Beta, Gamma>,
                     ddc::DiscreteDomain<Alpha, Beta, Gamma>>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             prod(prod_alloc);
 
@@ -521,7 +521,7 @@ TEST(YoungTableau, 1_3l2)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<Alpha, Beta, Gamma>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor(tensor_alloc);
 
@@ -561,7 +561,7 @@ TEST(YoungTableau, 1_3l2)
             sil::tensor::natural_tensor_prod_domain_t<
                     typename decltype(young_tableau)::projector_domain<Alpha, Beta, Gamma>,
                     ddc::DiscreteDomain<Alpha, Beta, Gamma>>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             prod(prod_alloc);
 
@@ -594,7 +594,7 @@ TEST(YoungTableau, 1l3_2l4)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<Alpha, Beta, Gamma, Delta>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor(tensor_alloc);
 
@@ -688,7 +688,7 @@ TEST(YoungTableau, 1l3_2l4)
             sil::tensor::natural_tensor_prod_domain_t<
                     typename decltype(young_tableau)::projector_domain<Alpha, Beta, Gamma, Delta>,
                     ddc::DiscreteDomain<Alpha, Beta, Gamma, Delta>>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             prod(prod_alloc);
 

@@ -86,7 +86,7 @@ int main(int argc, char** argv)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<MetricIndex>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             metric(metric_alloc);
 
@@ -97,7 +97,7 @@ int main(int argc, char** argv)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<RiemannUpTensorIndex>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             riemann_up(riemann_up_alloc);
 
@@ -109,7 +109,7 @@ int main(int argc, char** argv)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<MuUp, NuUp, RhoUp, SigmaUp>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             natural_tensor(natural_tensor_alloc);
     ddc::parallel_fill(natural_tensor, 0.);
@@ -161,7 +161,7 @@ int main(int argc, char** argv)
             sil::tensor::Tensor<
                     double,
                     ddc::DiscreteDomain<RiemannUpTensorIndex>,
-                    std::experimental::layout_right,
+                    Kokkos::layout_right,
                     Kokkos::DefaultHostExecutionSpace::memory_space>(riemann_low_alloc),
             metric);
 
@@ -171,7 +171,7 @@ int main(int argc, char** argv)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             scalar(scalar_alloc);
     sil::tensor::tensor_prod2(scalar, riemann_low, riemann_up);

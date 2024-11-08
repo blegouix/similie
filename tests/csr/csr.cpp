@@ -42,7 +42,7 @@ TEST(CsrDynamic, Csr2Dense)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<Alpha, Beta, Gamma>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor(tensor_alloc);
 
@@ -67,7 +67,7 @@ TEST(CsrDynamic, Csr2Dense)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<Alpha, Beta, Gamma>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             dense_tensor(dense_tensor_alloc);
     sil::csr::csr2dense(dense_tensor, csr);
@@ -109,7 +109,7 @@ TEST(Csr, CsrDenseProducts)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<Alpha, Beta, Gamma>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor(tensor_alloc);
 
@@ -138,7 +138,7 @@ TEST(Csr, CsrDenseProducts)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<Beta, Gamma>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             right_tensor(right_tensor_alloc);
     ddc::parallel_fill(right_tensor, 1.);
@@ -149,7 +149,7 @@ TEST(Csr, CsrDenseProducts)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<Alpha>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             right_prod(right_prod_alloc);
 
@@ -165,7 +165,7 @@ TEST(Csr, CsrDenseProducts)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<Alpha>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             left_vector(left_vector_alloc);
     ddc::parallel_fill(left_vector, 1.);
@@ -176,7 +176,7 @@ TEST(Csr, CsrDenseProducts)
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<Beta, Gamma>,
-            std::experimental::layout_right,
+            Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             left_prod(left_prod_alloc);
 
