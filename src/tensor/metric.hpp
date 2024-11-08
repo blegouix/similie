@@ -140,7 +140,7 @@ struct MetricProd<
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 new_metric_prod_(new_metric_prod_alloc_);
 
-        // TODO tensorial prod ? atm supports only Lorentzian metrics (new_metric_prod is empty)
+        // TODO tensorial prod ? atm supports only Identity or Lorentzian metrics (new_metric_prod is empty)
 
         return MetricProd<
                 ddc::detail::TypeSeq<TailIndex1...>,
