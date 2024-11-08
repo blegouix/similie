@@ -69,4 +69,4 @@ using projector_index_t = ProjectorIndex<
 - tests for relabelize_indexes and relabelize_metric
 - standardize prime and second indexes
 - Tensor***Index probably better than ***TensorIndex
-- methods like mem_domain or access_domain in TensorAccessor could be aliases in Tensor
+- methods like mem_domain or access_domain in TensorAccessor could be aliases in Tensor. Also get<Dims...>() in Tensor
