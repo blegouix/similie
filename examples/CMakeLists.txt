@@ -10,9 +10,9 @@ target_link_libraries(sketch
         sil::tensor
 )
 
-add_executable(riemann_contraction riemann_contraction.cpp)
+add_executable(kretschmann_scalar kretschmann_scalar.cpp)
 
-target_link_libraries(riemann_contraction
+target_link_libraries(kretschmann_scalar
     PUBLIC
         DDC::DDC
         sil::tensor
