@@ -687,7 +687,7 @@ struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::FullTensorIndex<Id...>
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 candidate(candidate_alloc);
         ddc::Chunk prod_alloc(
-                sil::tensor::natural_tensor_prod_domain(proj, candidate),
+                sil::tensor::natural_tensor_prod_domain(proj.domain(), candidate.domain()),
                 ddc::HostAllocator<double>());
         sil::tensor::Tensor<
                 double,
@@ -1001,8 +1001,9 @@ struct Projector<
             }
 
             // Extract the symmetric part (for the row) of the projector (requires an intermediate prod tensor)
-            ddc::Chunk
-                    prod_alloc(natural_tensor_prod_domain(sym, proj), ddc::HostAllocator<double>());
+            ddc::Chunk prod_alloc(
+                    natural_tensor_prod_domain(sym.domain(), proj.domain()),
+                    ddc::HostAllocator<double>());
             sil::tensor::Tensor<
                     double,
                     sil::tensor::natural_tensor_prod_domain_t<

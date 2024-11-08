@@ -928,15 +928,10 @@ struct NaturalTensorProdDomain<ddc::DiscreteDomain<DDim1...>, ddc::DiscreteDomai
 template <class Dom1, class Dom2>
 using natural_tensor_prod_domain_t = detail::NaturalTensorProdDomain<Dom1, Dom2>::type;
 
-template <class Tensor1, class Tensor2>
-natural_tensor_prod_domain_t<
-        typename Tensor1::discrete_domain_type,
-        typename Tensor2::discrete_domain_type>
-natural_tensor_prod_domain(Tensor1 tensor1, Tensor2 tensor2)
+template <class Dom1, class Dom2>
+natural_tensor_prod_domain_t<Dom1, Dom2> natural_tensor_prod_domain(Dom1 dom1, Dom2 dom2)
 {
-    return natural_tensor_prod_domain_t<
-            typename Tensor1::discrete_domain_type,
-            typename Tensor2::discrete_domain_type>(tensor1.domain(), tensor2.domain());
+    return natural_tensor_prod_domain_t<Dom1, Dom2>(dom1, dom2);
 }
 
 namespace detail {

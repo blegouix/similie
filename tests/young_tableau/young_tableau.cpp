@@ -85,7 +85,9 @@ TEST(YoungTableau, 1_2)
 
     auto [proj_alloc, proj] = young_tableau.projector<Mu, Nu>();
 
-    ddc::Chunk prod_alloc(natural_tensor_prod_domain(proj, tensor), ddc::HostAllocator<double>());
+    ddc::Chunk prod_alloc(
+            natural_tensor_prod_domain(proj.domain(), tensor.domain()),
+            ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
             sil::tensor::natural_tensor_prod_domain_t<
@@ -159,7 +161,9 @@ TEST(YoungTableau, 1l2)
 
     auto [proj_alloc, proj] = young_tableau.projector<Mu, Nu>();
 
-    ddc::Chunk prod_alloc(natural_tensor_prod_domain(proj, tensor), ddc::HostAllocator<double>());
+    ddc::Chunk prod_alloc(
+            natural_tensor_prod_domain(proj.domain(), tensor.domain()),
+            ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
             sil::tensor::natural_tensor_prod_domain_t<
@@ -247,7 +251,9 @@ TEST(YoungTableau, 1_2_3)
 
     auto [proj_alloc, proj] = young_tableau.projector<Alpha, Beta, Gamma>();
 
-    ddc::Chunk prod_alloc(natural_tensor_prod_domain(proj, tensor), ddc::HostAllocator<double>());
+    ddc::Chunk prod_alloc(
+            natural_tensor_prod_domain(proj.domain(), tensor.domain()),
+            ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
             sil::tensor::natural_tensor_prod_domain_t<
@@ -364,7 +370,9 @@ TEST(YoungTableau, 1l2l3)
 
     auto [proj_alloc, proj] = young_tableau.projector<Alpha, Beta, Gamma>();
 
-    ddc::Chunk prod_alloc(natural_tensor_prod_domain(proj, tensor), ddc::HostAllocator<double>());
+    ddc::Chunk prod_alloc(
+            natural_tensor_prod_domain(proj.domain(), tensor.domain()),
+            ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
             sil::tensor::natural_tensor_prod_domain_t<
@@ -483,7 +491,9 @@ TEST(YoungTableau, 1_2l3)
 
     auto [proj_alloc, proj] = young_tableau.projector<Alpha, Beta, Gamma>();
 
-    ddc::Chunk prod_alloc(natural_tensor_prod_domain(proj, tensor), ddc::HostAllocator<double>());
+    ddc::Chunk prod_alloc(
+            natural_tensor_prod_domain(proj.domain(), tensor.domain()),
+            ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
             sil::tensor::natural_tensor_prod_domain_t<
@@ -555,7 +565,9 @@ TEST(YoungTableau, 1_3l2)
 
     auto [proj_alloc, proj] = young_tableau.projector<Alpha, Beta, Gamma>();
 
-    ddc::Chunk prod_alloc(natural_tensor_prod_domain(proj, tensor), ddc::HostAllocator<double>());
+    ddc::Chunk prod_alloc(
+            natural_tensor_prod_domain(proj.domain(), tensor.domain()),
+            ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
             sil::tensor::natural_tensor_prod_domain_t<
@@ -682,7 +694,9 @@ TEST(YoungTableau, 1l3_2l4)
 
     auto [proj_alloc, proj] = young_tableau.projector<Alpha, Beta, Gamma, Delta>();
 
-    ddc::Chunk prod_alloc(natural_tensor_prod_domain(proj, tensor), ddc::HostAllocator<double>());
+    ddc::Chunk prod_alloc(
+            natural_tensor_prod_domain(proj.domain(), tensor.domain()),
+            ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
             sil::tensor::natural_tensor_prod_domain_t<
