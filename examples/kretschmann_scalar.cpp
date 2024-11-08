@@ -101,7 +101,7 @@ int main(int argc, char** argv)
             Kokkos::DefaultHostExecutionSpace::memory_space>
             riemann_up(riemann_up_alloc);
 
-    // Young-tableau-indexed tensors cannot be filled directly (because the 20 independant components do not appear explicitely in the 4^4 Riemann tensor. The explicit components of the Riemann tensor are linear combinations of the 20 independant components). We thus need to allocate a naturally-indices 4^4 tensor to be filled.
+    // Young-tableau-indexed tensors cannot be filled directly (because the 20 independant components do not appear explicitely in the 4^4 Riemann tensor. The explicit components of the Riemann tensor are linear combinations of the 20 independant components). We thus need to allocate a naturally-indexed 4^4 tensor to be filled.
     ddc::DiscreteDomain<MuUp, NuUp, RhoUp, SigmaUp> natural_tensor_dom(
             ddc::DiscreteElement<MuUp, NuUp, RhoUp, SigmaUp>(0, 0, 0, 0),
             ddc::DiscreteVector<MuUp, NuUp, RhoUp, SigmaUp>(4, 4, 4, 4));
