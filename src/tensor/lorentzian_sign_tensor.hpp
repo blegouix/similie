@@ -47,11 +47,6 @@ struct LorentzianSignTensorIndex
         return 3;
     }
 
-private:
-    template <class Head, class... Tail>
-    inline static constexpr bool are_all_same = (std::is_same_v<Head, Tail> && ...);
-
-public:
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id(
             std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
@@ -80,6 +75,7 @@ public:
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> access_id_to_mem_id(
             std::size_t access_id)
     {
+        assert(access_id != 0 && "There is no mem_id associated to access_id=0");
         return std::pair<
                 std::vector<double>,
                 std::vector<std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {});

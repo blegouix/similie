@@ -47,18 +47,6 @@ struct IdentityTensorIndex
         return 2;
     }
 
-private:
-    static constexpr bool are_all_same(std::array<std::size_t, sizeof...(TensorIndex)> const ids)
-    {
-        for (std::size_t i = 1; i < ids.size(); ++i) {
-            if (ids[i] != ids[0]) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-public:
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id(
             std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
@@ -83,6 +71,7 @@ public:
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> access_id_to_mem_id(
             std::size_t access_id)
     {
+        assert(access_id != 0 && "There is no mem_id associated to access_id=0");
         return std::pair<
                 std::vector<double>,
                 std::vector<std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {});
