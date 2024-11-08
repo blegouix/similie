@@ -639,7 +639,7 @@ std::vector<bool> index_hamming_weight_code(std::size_t index, std::size_t lengt
 }
 
 // Dummy tag used by OrthonormalBasisSubspaceEigenvalueOne (coalescent dimension of the CsrDynamic storage)
-struct BasisId
+struct BasisId : sil::tensor::TensorNaturalIndex<>
 {
 };
 

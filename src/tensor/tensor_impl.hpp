@@ -496,6 +496,36 @@ public:
         return accessor_t();
     }
 
+    using natural_domain_t = accessor_t::natural_domain_t;
+
+    static constexpr natural_domain_t natural_domain()
+    {
+        return accessor_t::natural_domain();
+    }
+
+    static constexpr ddc::DiscreteDomain<DDim...> mem_domain()
+    {
+        return accessor_t::mem_domain();
+    }
+
+    static constexpr ddc::DiscreteDomain<DDim...> access_domain()
+    {
+        return accessor_t::access_domain();
+    }
+
+    template <class... CDim>
+    static constexpr ddc::DiscreteElement<DDim...> access_element()
+    {
+        return accessor_t::template element<CDim...>();
+    }
+
+    template <class... NaturalIndex>
+    static constexpr ddc::DiscreteElement<DDim...> access_element(
+            ddc::DiscreteElement<NaturalIndex...> natural_elem)
+    {
+        return accessor_t::element(natural_elem);
+    }
+
     template <class... DElems>
     KOKKOS_FUNCTION ElementType get(DElems const&... delems) const noexcept
     {
@@ -1042,7 +1072,7 @@ struct PrintTensor<
     {
         str += "[";
         for (ddc::DiscreteElement<InterestDDim> elem :
-             ddc::DiscreteDomain<InterestDDim>(tensor.accessor().natural_domain())) {
+             ddc::DiscreteDomain<InterestDDim>(tensor.natural_domain())) {
             str = PrintTensor<
                     ddc::DiscreteDomain<HeadDDim..., InterestDDim>,
                     ddc::DiscreteDomain<HeadOfTailDDim>,
@@ -1067,9 +1097,9 @@ struct PrintTensor<
             ddc::DiscreteElement<HeadDDim...> i)
     {
         for (ddc::DiscreteElement<InterestDDim> elem :
-             ddc::DiscreteDomain<InterestDDim>(tensor.accessor().natural_domain())) {
+             ddc::DiscreteDomain<InterestDDim>(tensor.natural_domain())) {
             str = str + " "
-                  + std::to_string(tensor.get(tensor.accessor().element(
+                  + std::to_string(tensor.get(tensor.access_element(
                           ddc::DiscreteElement<HeadDDim..., InterestDDim>(i, elem))));
         }
         str += "\n";
