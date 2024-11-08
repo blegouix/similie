@@ -81,9 +81,9 @@ public:
             std::size_t access_id)
     {
         assert(false && "There is no mem_id");
-        return std::pair<
-                std::vector<double>,
-                std::vector<std::size_t>>(std::vector<double> {1.}, std::vector<std::size_t> {});
+        return std::pair<std::vector<double>, std::vector<std::size_t>>(
+                std::vector<double> {1.},
+                std::vector<std::size_t> {access_id});
     }
 
     template <class Tensor, class Elem, class Id>

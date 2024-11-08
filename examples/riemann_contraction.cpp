@@ -152,10 +152,8 @@ int main(int argc, char** argv)
     }
     */
 
-
     // We allocate and compute the covariant counterpart of the Riemann tensor which is needed for the computation of the Kretschmann scalar.
     ddc::Chunk riemann_low_alloc = ddc::create_mirror_and_copy(riemann);
-    /*
     auto riemann_low = sil::tensor::inplace_apply_metrics<
             MetricIndex,
             ddc::detail::TypeSeq<MuLow, NuLow, RhoLow, SigmaLow>,
@@ -166,10 +164,6 @@ int main(int argc, char** argv)
                     std::experimental::layout_right,
                     Kokkos::DefaultHostExecutionSpace::memory_space>(riemann_low_alloc),
             metric);
-    */
-    auto riemann_low = sil::tensor::relabelize_indexes_of<
-            ddc::detail::TypeSeq<MuUp, NuUp, RhoUp, SigmaUp>,
-            ddc::detail::TypeSeq<MuLow, NuLow, RhoLow, SigmaLow>>(riemann);
 
     // We allocate the Kretschmann scalar (a single double) and perform the tensor product between covariant an contravariant Riemann tensors.
     ddc::DiscreteDomain<> dom;
