@@ -13,7 +13,7 @@ namespace sil {
 
 namespace tensor {
 
-// struct representing an abstract unique index sweeping on all possible combination of natural indices, for an antisummetric tensor.
+// struct representing an abstract unique index sweeping on all possible combination of natural indices, for an antisymmetric tensor.
 template <class... TensorIndex>
 struct AntisymmetricTensorIndex
 {
