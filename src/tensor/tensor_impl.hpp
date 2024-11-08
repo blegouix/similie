@@ -329,14 +329,6 @@ struct IsTensorIndex<TensorNaturalIndex<SubIndex...>>
 template <class DDim>
 static constexpr bool is_tensor_index_v = IsTensorIndex<DDim>::type::value;
 
-template <class DDimInterest, class... DDim>
-ddc::DiscreteElement<DDim...> replace_access_id_with_mem_id(ddc::DiscreteElement<DDim...> elem)
-{
-    return ddc::DiscreteElement<DDim...>(
-            (std::is_same_v<DDimInterest, DDim> && detail::is_tensor_index_v<DDim>
-                     ? DDim::access_id_to_mem_id(ddc::DiscreteElement<DDim>(elem).uid())
-                     : ddc::DiscreteElement<DDim>(elem).uid())...);
-}
 template <
         class TensorField,
         class Element,
