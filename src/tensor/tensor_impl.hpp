@@ -440,6 +440,8 @@ class Tensor
 
 } // namespace sil
 
+// @cond
+
 namespace ddc {
 
 template <class ElementType, class SupportType, class LayoutStridedPolicy, class MemorySpace>
@@ -452,13 +454,13 @@ inline constexpr bool enable_borrowed_chunk<
 
 } // namespace ddc
 
+// @endcond
+
 namespace sil {
 
 namespace tensor {
 
-/**
- * Tensor class
- */
+// Tensor class
 template <class ElementType, class... DDim, class LayoutStridedPolicy, class MemorySpace>
 class Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>
     : public ddc::
