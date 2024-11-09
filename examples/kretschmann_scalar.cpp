@@ -115,33 +115,33 @@ int main(int argc, char** argv)
     ddc::parallel_fill(natural_tensor, 0.);
 
     // We fill the naturally-indexed tensor with the pre-computed values of the explicit Riemann tensor components on the horizon in the Lemaitre coordinate system (cf. the python script)
-    natural_tensor(natural_tensor.accessor().access_element<T, X, T, X>()) = -1.;
-    natural_tensor(natural_tensor.accessor().access_element<T, X, X, T>()) = 1.;
-    natural_tensor(natural_tensor.accessor().access_element<T, Y, T, Y>()) = .5;
-    natural_tensor(natural_tensor.accessor().access_element<T, Y, Y, T>()) = -.5;
-    natural_tensor(natural_tensor.accessor().access_element<T, Z, T, Z>()) = .5;
-    natural_tensor(natural_tensor.accessor().access_element<T, Z, Z, T>()) = -.5;
+    natural_tensor(natural_tensor.access_element<T, X, T, X>()) = -1.;
+    natural_tensor(natural_tensor.access_element<T, X, X, T>()) = 1.;
+    natural_tensor(natural_tensor.access_element<T, Y, T, Y>()) = .5;
+    natural_tensor(natural_tensor.access_element<T, Y, Y, T>()) = -.5;
+    natural_tensor(natural_tensor.access_element<T, Z, T, Z>()) = .5;
+    natural_tensor(natural_tensor.access_element<T, Z, Z, T>()) = -.5;
 
-    natural_tensor(natural_tensor.accessor().access_element<X, T, T, X>()) = 1.;
-    natural_tensor(natural_tensor.accessor().access_element<X, T, X, T>()) = -1.;
-    natural_tensor(natural_tensor.accessor().access_element<X, Y, X, Y>()) = -.5;
-    natural_tensor(natural_tensor.accessor().access_element<X, Y, Y, X>()) = .5;
-    natural_tensor(natural_tensor.accessor().access_element<X, Z, X, Z>()) = -.5;
-    natural_tensor(natural_tensor.accessor().access_element<X, Z, Z, X>()) = .5;
+    natural_tensor(natural_tensor.access_element<X, T, T, X>()) = 1.;
+    natural_tensor(natural_tensor.access_element<X, T, X, T>()) = -1.;
+    natural_tensor(natural_tensor.access_element<X, Y, X, Y>()) = -.5;
+    natural_tensor(natural_tensor.access_element<X, Y, Y, X>()) = .5;
+    natural_tensor(natural_tensor.access_element<X, Z, X, Z>()) = -.5;
+    natural_tensor(natural_tensor.access_element<X, Z, Z, X>()) = .5;
 
-    natural_tensor(natural_tensor.accessor().access_element<Y, T, T, Y>()) = -.5;
-    natural_tensor(natural_tensor.accessor().access_element<Y, T, Y, T>()) = .5;
-    natural_tensor(natural_tensor.accessor().access_element<Y, X, X, Y>()) = .5;
-    natural_tensor(natural_tensor.accessor().access_element<Y, X, Y, X>()) = -.5;
-    natural_tensor(natural_tensor.accessor().access_element<Y, Z, Y, Z>()) = 1.;
-    natural_tensor(natural_tensor.accessor().access_element<Y, Z, Z, Y>()) = -1.;
+    natural_tensor(natural_tensor.access_element<Y, T, T, Y>()) = -.5;
+    natural_tensor(natural_tensor.access_element<Y, T, Y, T>()) = .5;
+    natural_tensor(natural_tensor.access_element<Y, X, X, Y>()) = .5;
+    natural_tensor(natural_tensor.access_element<Y, X, Y, X>()) = -.5;
+    natural_tensor(natural_tensor.access_element<Y, Z, Y, Z>()) = 1.;
+    natural_tensor(natural_tensor.access_element<Y, Z, Z, Y>()) = -1.;
 
-    natural_tensor(natural_tensor.accessor().access_element<Z, T, T, Z>()) = -.5;
-    natural_tensor(natural_tensor.accessor().access_element<Z, T, Z, T>()) = .5;
-    natural_tensor(natural_tensor.accessor().access_element<Z, X, X, Z>()) = .5;
-    natural_tensor(natural_tensor.accessor().access_element<Z, X, Z, X>()) = -.5;
-    natural_tensor(natural_tensor.accessor().access_element<Z, Y, Y, Z>()) = -1.;
-    natural_tensor(natural_tensor.accessor().access_element<Z, Y, Z, Y>()) = 1.;
+    natural_tensor(natural_tensor.access_element<Z, T, T, Z>()) = -.5;
+    natural_tensor(natural_tensor.access_element<Z, T, Z, T>()) = .5;
+    natural_tensor(natural_tensor.access_element<Z, X, X, Z>()) = .5;
+    natural_tensor(natural_tensor.access_element<Z, X, Z, X>()) = -.5;
+    natural_tensor(natural_tensor.access_element<Z, Y, Y, Z>()) = -1.;
+    natural_tensor(natural_tensor.access_element<Z, Y, Z, Y>()) = 1.;
 
     // We "compress" the 256 components of the naturally-indexed tensor into the 20 independent components of the Young-tableau-indexed Riemann tensor.
     sil::tensor::compress(riemann_up, natural_tensor);
