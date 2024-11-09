@@ -230,10 +230,10 @@ public:
     static constexpr ddc::DiscreteDomain<Index...> access_domain();
 
     template <class... CDim>
-    static constexpr ddc::DiscreteElement<Index...> element();
+    static constexpr ddc::DiscreteElement<Index...> access_element();
 
     template <class... NaturalIndex>
-    static constexpr ddc::DiscreteElement<Index...> element(
+    static constexpr ddc::DiscreteElement<Index...> access_element(
             ddc::DiscreteElement<NaturalIndex...> natural_elem);
 };
 
@@ -295,7 +295,7 @@ constexpr ddc::DiscreteDomain<Index...> TensorAccessor<Index...>::access_domain(
 
 template <class... Index>
 template <class... CDim>
-constexpr ddc::DiscreteElement<Index...> TensorAccessor<Index...>::element()
+constexpr ddc::DiscreteElement<Index...> TensorAccessor<Index...>::access_element()
 {
     return ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(
             detail::access_id<Index, ddc::detail::TypeSeq<Index...>, CDim...>())...);
@@ -303,7 +303,7 @@ constexpr ddc::DiscreteElement<Index...> TensorAccessor<Index...>::element()
 
 template <class... Index>
 template <class... NaturalIndex>
-constexpr ddc::DiscreteElement<Index...> TensorAccessor<Index...>::element(
+constexpr ddc::DiscreteElement<Index...> TensorAccessor<Index...>::access_element(
         ddc::DiscreteElement<NaturalIndex...> natural_elem)
 {
     return ddc::DiscreteElement<Index...>(
@@ -516,14 +516,14 @@ public:
     template <class... CDim>
     static constexpr ddc::DiscreteElement<DDim...> access_element()
     {
-        return accessor_t::template element<CDim...>();
+        return accessor_t::template access_element<CDim...>();
     }
 
     template <class... NaturalIndex>
     static constexpr ddc::DiscreteElement<DDim...> access_element(
             ddc::DiscreteElement<NaturalIndex...> natural_elem)
     {
-        return accessor_t::element(natural_elem);
+        return accessor_t::access_element(natural_elem);
     }
 
     template <class... DElems>
