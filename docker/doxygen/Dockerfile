@@ -31,6 +31,7 @@ RUN chmod +x /bin/bash_run \
     libfftw3-dev \
     liblapacke-dev \
     libpdi-dev \
+    libboost-all-dev \
     ghostscript \
     git \
     graphviz \
