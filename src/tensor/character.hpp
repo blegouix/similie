@@ -75,10 +75,10 @@ struct Upper<TensorCovariantNaturalIndex<NaturalIndex>>
 
 } // namespace detail
 
-namespace detail {
-
 template <class Index>
 using upper = detail::Upper<Index>::type;
+
+namespace detail {
 
 template <class Index>
 struct Uncharacterize;
