@@ -243,7 +243,7 @@ TEST(TensorProd, DoubleContractionRank3xRank3)
     EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Z, Z>()), 2952.);
 }
 
-using YoungTableauIndex = sil::tensor::YoungTableauTensorIndex<
+using YoungTableauIndex = sil::tensor::TensorYoungTableauIndex<
         sil::young_tableau::
                 YoungTableau<3, sil::young_tableau::YoungTableauSeq<std::index_sequence<1, 2, 3>>>,
         Alpha,

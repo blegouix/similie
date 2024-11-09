@@ -73,7 +73,7 @@ struct TensorProd<
                MemorySpace> tensor2)
     {
         /*
-    typename YoungTableauTensorIndex<DDim1...>::young_tableau young_tableau;
+    typename TensorYoungTableauIndex<DDim1...>::young_tableau young_tableau;
     sil::csr::Csr u = young_tableau.template u<YoungTableauIndex, DDim2...>(tensor2.domain());
 */
         ddc::Chunk uncompressed_tensor1_alloc(
@@ -96,7 +96,7 @@ struct TensorProd<
 
 template <
         class... ProdDDim,
-        misc::Specialization<YoungTableauTensorIndex> Index1,
+        misc::Specialization<TensorYoungTableauIndex> Index1,
         class... DDim2,
         class ElementType,
         class LayoutStridedPolicy,
@@ -169,7 +169,7 @@ struct TensorProd2<
         Tensor<ElementType, ddc::DiscreteDomain<Index2>, LayoutStridedPolicy, MemorySpace> tensor2)
     {
         /*
-    typename YoungTableauTensorIndex<DDim1...>::young_tableau young_tableau;
+    typename TensorYoungTableauIndex<DDim1...>::young_tableau young_tableau;
     sil::csr::Csr u = young_tableau.template u<YoungTableauIndex, DDim2...>(tensor2.domain());
 */
         ddc::Chunk uncompressed_tensor1_alloc(
@@ -203,8 +203,8 @@ struct TensorProd2<
 
 template <
         class... ProdDDim,
-        misc::Specialization<YoungTableauTensorIndex> Index1,
-        misc::Specialization<YoungTableauTensorIndex> Index2,
+        misc::Specialization<TensorYoungTableauIndex> Index1,
+        misc::Specialization<TensorYoungTableauIndex> Index2,
         class ElementType,
         class LayoutStridedPolicy,
         class MemorySpace>
@@ -296,7 +296,7 @@ struct TensorProd3<
                 tensor2)
     {
         /*
-    typename YoungTableauTensorIndex<DDim1...>::young_tableau young_tableau;
+    typename TensorYoungTableauIndex<DDim1...>::young_tableau young_tableau;
     sil::csr::Csr u = young_tableau.template u<YoungTableauIndex, DDim2...>(tensor2.domain());
 */
         ddc::Chunk uncompressed_prod_alloc(

@@ -96,11 +96,11 @@ TEST(Tensor, NaturalIndexing)
     EXPECT_EQ(tensor.get(tensor.access_element<Z, Z>()), 11.);
 }
 
-struct FullIndex : sil::tensor::FullTensorIndex<Alpha, Nu>
+struct FullIndex : sil::tensor::TensorFullIndex<Alpha, Nu>
 {
 };
 
-TEST(Tensor, FullTensorIndexing)
+TEST(Tensor, TensorFullIndexing)
 {
     sil::tensor::TensorAccessor<FullIndex> tensor_accessor;
     ddc::DiscreteDomain<FullIndex> tensor_dom = tensor_accessor.mem_domain();
@@ -147,11 +147,11 @@ TEST(Tensor, FullTensorIndexing)
     EXPECT_EQ(tensor.get(tensor.access_element<Z, Z>()), 11.);
 }
 
-struct IdIndex : sil::tensor::IdentityTensorIndex<Mu, Nu>
+struct IdIndex : sil::tensor::TensorIdentityIndex<Mu, Nu>
 {
 };
 
-TEST(Tensor, IdentityTensorIndexing)
+TEST(Tensor, TensorIdentityIndexing)
 {
     sil::tensor::TensorAccessor<IdIndex> tensor_accessor;
     ddc::DiscreteDomain<IdIndex> tensor_dom = tensor_accessor.mem_domain();
@@ -182,11 +182,11 @@ TEST(Tensor, IdentityTensorIndexing)
 }
 
 struct LorentzianSignIndex
-    : sil::tensor::LorentzianSignTensorIndex<std::integral_constant<std::size_t, 2>, Mu, Nu>
+    : sil::tensor::TensorLorentzianSignIndex<std::integral_constant<std::size_t, 2>, Mu, Nu>
 {
 };
 
-TEST(Tensor, LorentzianSignTensorIndexing)
+TEST(Tensor, TensorLorentzianSignIndexing)
 {
     sil::tensor::TensorAccessor<LorentzianSignIndex> tensor_accessor;
     ddc::DiscreteDomain<LorentzianSignIndex> tensor_dom = tensor_accessor.mem_domain();
@@ -216,11 +216,11 @@ TEST(Tensor, LorentzianSignTensorIndexing)
     EXPECT_EQ(tensor.get(tensor.access_element<Z, Z>()), 1.);
 }
 
-struct DiagIndex : sil::tensor::DiagonalTensorIndex<Mu, Nu>
+struct DiagIndex : sil::tensor::TensorDiagonalIndex<Mu, Nu>
 {
 };
 
-TEST(Tensor, DiagonalTensorIndexing)
+TEST(Tensor, TensorDiagonalIndexing)
 {
     sil::tensor::TensorAccessor<DiagIndex> tensor_accessor;
     ddc::DiscreteDomain<DiagIndex> tensor_dom = tensor_accessor.mem_domain();
@@ -261,11 +261,11 @@ TEST(Tensor, DiagonalTensorIndexing)
     EXPECT_EQ(tensor.get(tensor.access_element<Z, Z>()), 4.);
 }
 
-struct SymIndex : sil::tensor::SymmetricTensorIndex<Mu, Nu>
+struct SymIndex : sil::tensor::TensorSymmetricIndex<Mu, Nu>
 {
 };
 
-TEST(Tensor, SymmetricTensorIndexing4x4)
+TEST(Tensor, TensorSymmetricIndexing4x4)
 {
     sil::tensor::TensorAccessor<SymIndex> tensor_accessor;
     ddc::DiscreteDomain<SymIndex> tensor_dom = tensor_accessor.mem_domain();
@@ -313,11 +313,11 @@ TEST(Tensor, SymmetricTensorIndexing4x4)
     EXPECT_EQ(tensor.get(tensor.access_element<Z, Z>()), 9.);
 }
 
-struct SymIndex3x3x3 : sil::tensor::SymmetricTensorIndex<Alpha, Beta, Gamma>
+struct SymIndex3x3x3 : sil::tensor::TensorSymmetricIndex<Alpha, Beta, Gamma>
 {
 };
 
-TEST(Tensor, SymmetricTensorIndexing3x3x3)
+TEST(Tensor, TensorSymmetricIndexing3x3x3)
 {
     sil::tensor::TensorAccessor<SymIndex3x3x3> tensor_accessor;
     ddc::DiscreteDomain<SymIndex3x3x3> tensor_dom = tensor_accessor.mem_domain();
@@ -375,11 +375,11 @@ TEST(Tensor, SymmetricTensorIndexing3x3x3)
     EXPECT_EQ(tensor.get(tensor.access_element<Z, Z, Z>()), 9.);
 }
 
-struct AntisymIndex : sil::tensor::AntisymmetricTensorIndex<Mu, Nu>
+struct AntisymIndex : sil::tensor::TensorAntisymmetricIndex<Mu, Nu>
 {
 };
 
-TEST(Tensor, AntisymmetricTensorIndexing4x4)
+TEST(Tensor, TensorAntisymmetricIndexing4x4)
 {
     sil::tensor::TensorAccessor<AntisymIndex> tensor_accessor;
     ddc::DiscreteDomain<AntisymIndex> tensor_dom = tensor_accessor.mem_domain();
@@ -422,11 +422,11 @@ TEST(Tensor, AntisymmetricTensorIndexing4x4)
     EXPECT_EQ(tensor.get(tensor.access_element<Z, Z>()), 0.);
 }
 
-struct SymIndex3x3 : sil::tensor::SymmetricTensorIndex<Alpha, Beta>
+struct SymIndex3x3 : sil::tensor::TensorSymmetricIndex<Alpha, Beta>
 {
 };
 
-TEST(Tensor, PartiallySymmetricTensorIndexing4x3x3)
+TEST(Tensor, PartiallyTensorSymmetricIndexing4x3x3)
 {
     sil::tensor::TensorAccessor<Mu, SymIndex3x3> tensor_accessor;
     ddc::DiscreteDomain<Mu, SymIndex3x3> tensor_dom = tensor_accessor.mem_domain();
@@ -508,7 +508,7 @@ TEST(Tensor, PartiallySymmetricTensorIndexing4x3x3)
 }
 
 struct YoungTableauIndex
-    : sil::tensor::YoungTableauTensorIndex<
+    : sil::tensor::TensorYoungTableauIndex<
               sil::young_tableau::YoungTableau<
                       3,
                       sil::young_tableau::YoungTableauSeq<std::index_sequence<1, 2, 3>>>,

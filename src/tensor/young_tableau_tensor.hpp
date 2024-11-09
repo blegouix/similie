@@ -16,7 +16,7 @@ namespace tensor {
 
 // struct representing an abstract unique index sweeping on all possible combination of natural indices, for a summetric tensor.
 template <class YoungTableau, class... TensorIndex>
-struct YoungTableauTensorIndex
+struct TensorYoungTableauIndex
 {
     static constexpr bool is_natural_tensor_index = false;
 
@@ -57,7 +57,7 @@ struct YoungTableauTensorIndex
     {
         std::pair<std::vector<double>, std::vector<std::size_t>> result {};
         constexpr sil::csr::Csr v = young_tableau::template v<
-                YoungTableauTensorIndex<YoungTableau, TensorIndex...>,
+                TensorYoungTableauIndex<YoungTableau, TensorIndex...>,
                 TensorIndex...>(ddc::DiscreteDomain<TensorIndex...>(
                 ddc::DiscreteElement<TensorIndex...>(ddc::DiscreteElement<TensorIndex>(0)...),
                 ddc::DiscreteVector<TensorIndex...>(
@@ -91,7 +91,7 @@ struct YoungTableauTensorIndex
     {
         std::pair<std::vector<double>, std::vector<std::size_t>> result {};
         constexpr sil::csr::Csr v = young_tableau::template v<
-                YoungTableauTensorIndex<YoungTableau, TensorIndex...>,
+                TensorYoungTableauIndex<YoungTableau, TensorIndex...>,
                 TensorIndex...>(ddc::DiscreteDomain<TensorIndex...>(
                 ddc::DiscreteElement<TensorIndex...>(ddc::DiscreteElement<TensorIndex>(0)...),
                 ddc::DiscreteVector<TensorIndex...>(
@@ -126,7 +126,7 @@ struct YoungTableauTensorIndex
 namespace detail {
 
 template <class YoungTableau, class... SubIndex>
-struct IsTensorIndex<YoungTableauTensorIndex<YoungTableau, SubIndex...>>
+struct IsTensorIndex<TensorYoungTableauIndex<YoungTableau, SubIndex...>>
 {
     using type = std::true_type;
 };

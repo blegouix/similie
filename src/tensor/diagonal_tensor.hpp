@@ -13,7 +13,7 @@ namespace tensor {
 
 // struct representing and index for a diagonal tensor (only diagonal is stored).
 template <class... TensorIndex>
-struct DiagonalTensorIndex
+struct TensorDiagonalIndex
 {
     static constexpr bool is_natural_tensor_index = false;
 
@@ -96,7 +96,7 @@ struct DiagonalTensorIndex
 
 namespace detail {
 template <class... SubIndex>
-struct IsTensorIndex<DiagonalTensorIndex<SubIndex...>>
+struct IsTensorIndex<TensorDiagonalIndex<SubIndex...>>
 {
     using type = std::true_type;
 };
