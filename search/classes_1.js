@@ -1,7 +1,5 @@
 var searchData=
 [
-  ['contravariant_0',['Contravariant',['../namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Contravariant',1,'sil::tensor']]],
-  ['covariant_1',['Covariant',['../namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Covariant',1,'sil::tensor']]],
-  ['csr_2',['Csr',['../classsil_1_1csr_1_1Csr.html',1,'sil::csr']]],
-  ['csrdynamic_3',['CsrDynamic',['../classsil_1_1csr_1_1CsrDynamic.html',1,'sil::csr']]]
+  ['is_5fspecialization_5fof_0',['is_specialization_of',['../structsil_1_1misc_1_1is__specialization__of.html',1,'sil::misc']]],
+  ['is_5fspecialization_5fof_3c_20t_2c_20t_3c_20us_2e_2e_2e_20_3e_20_3e_1',['is_specialization_of&lt; T, T&lt; Us... &gt; &gt;',['../structsil_1_1misc_1_1is__specialization__of_3_01T_00_01T_3_01Us_8_8_8_01_4_01_4.html',1,'sil::misc']]]
 ];

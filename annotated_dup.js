@@ -13,22 +13,22 @@ var annotated_dup =
         [ "is_specialization_of< T, T< Us... > >", "structsil_1_1misc_1_1is__specialization__of_3_01T_00_01T_3_01Us_8_8_8_01_4_01_4.html", null ]
       ] ],
       [ "tensor", "namespacesil_1_1tensor.html", [
-        [ "AntisymmetricTensorIndex", "structsil_1_1tensor_1_1AntisymmetricTensorIndex.html", "structsil_1_1tensor_1_1AntisymmetricTensorIndex" ],
         [ "Contravariant", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Contravariant", null ],
         [ "Covariant", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Covariant", null ],
-        [ "DiagonalTensorIndex", "structsil_1_1tensor_1_1DiagonalTensorIndex.html", "structsil_1_1tensor_1_1DiagonalTensorIndex" ],
-        [ "FullTensorIndex", "structsil_1_1tensor_1_1FullTensorIndex.html", "structsil_1_1tensor_1_1FullTensorIndex" ],
-        [ "IdentityTensorIndex", "structsil_1_1tensor_1_1IdentityTensorIndex.html", "structsil_1_1tensor_1_1IdentityTensorIndex" ],
-        [ "LorentzianSignTensorIndex", "structsil_1_1tensor_1_1LorentzianSignTensorIndex.html", "structsil_1_1tensor_1_1LorentzianSignTensorIndex" ],
         [ "MetricIndex1", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1MetricIndex1", null ],
         [ "MetricIndex2", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1MetricIndex2", null ],
-        [ "SymmetricTensorIndex", "structsil_1_1tensor_1_1SymmetricTensorIndex.html", "structsil_1_1tensor_1_1SymmetricTensorIndex" ],
         [ "Tensor", "namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor", null ],
         [ "TensorAccessor", "classsil_1_1tensor_1_1TensorAccessor.html", "classsil_1_1tensor_1_1TensorAccessor" ],
+        [ "TensorAntisymmetricIndex", "structsil_1_1tensor_1_1TensorAntisymmetricIndex.html", "structsil_1_1tensor_1_1TensorAntisymmetricIndex" ],
         [ "TensorContravariantNaturalIndex", "structsil_1_1tensor_1_1TensorContravariantNaturalIndex.html", "structsil_1_1tensor_1_1TensorContravariantNaturalIndex" ],
         [ "TensorCovariantNaturalIndex", "structsil_1_1tensor_1_1TensorCovariantNaturalIndex.html", "structsil_1_1tensor_1_1TensorCovariantNaturalIndex" ],
+        [ "TensorDiagonalIndex", "structsil_1_1tensor_1_1TensorDiagonalIndex.html", "structsil_1_1tensor_1_1TensorDiagonalIndex" ],
+        [ "TensorFullIndex", "structsil_1_1tensor_1_1TensorFullIndex.html", "structsil_1_1tensor_1_1TensorFullIndex" ],
+        [ "TensorIdentityIndex", "structsil_1_1tensor_1_1TensorIdentityIndex.html", "structsil_1_1tensor_1_1TensorIdentityIndex" ],
+        [ "TensorLorentzianSignIndex", "structsil_1_1tensor_1_1TensorLorentzianSignIndex.html", "structsil_1_1tensor_1_1TensorLorentzianSignIndex" ],
         [ "TensorNaturalIndex", "structsil_1_1tensor_1_1TensorNaturalIndex.html", "structsil_1_1tensor_1_1TensorNaturalIndex" ],
-        [ "YoungTableauTensorIndex", "structsil_1_1tensor_1_1YoungTableauTensorIndex.html", "structsil_1_1tensor_1_1YoungTableauTensorIndex" ]
+        [ "TensorSymmetricIndex", "structsil_1_1tensor_1_1TensorSymmetricIndex.html", "structsil_1_1tensor_1_1TensorSymmetricIndex" ],
+        [ "TensorYoungTableauIndex", "structsil_1_1tensor_1_1TensorYoungTableauIndex.html", "structsil_1_1tensor_1_1TensorYoungTableauIndex" ]
       ] ],
       [ "young_tableau", "namespacesil_1_1young__tableau.html", [
         [ "YoungTableau", "classsil_1_1young__tableau_1_1YoungTableau.html", "classsil_1_1young__tableau_1_1YoungTableau" ],

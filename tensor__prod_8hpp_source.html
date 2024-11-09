@@ -202,7 +202,7 @@ $(document).ready(function(){initNavTree('tensor__prod_8hpp_source.html',''); in
 <div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>               MemorySpace&gt; tensor2)</div>
 <div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>    {</div>
 <div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>        <span class="comment">/*</span></div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span><span class="comment">    typename YoungTableauTensorIndex&lt;DDim1...&gt;::young_tableau young_tableau;</span></div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span><span class="comment">    typename TensorYoungTableauIndex&lt;DDim1...&gt;::young_tableau young_tableau;</span></div>
 <div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span><span class="comment">    sil::csr::Csr u = young_tableau.template u&lt;YoungTableauIndex, DDim2...&gt;(tensor2.domain());</span></div>
 <div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span><span class="comment">*/</span></div>
 <div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>        ddc::Chunk uncompressed_tensor1_alloc(</div>
@@ -225,7 +225,7 @@ $(document).ready(function(){initNavTree('tensor__prod_8hpp_source.html',''); in
 <div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span> </div>
 <div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span><span class="keyword">template</span> &lt;</div>
 <div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>        <span class="keyword">class</span>... ProdDDim,</div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>        misc::Specialization&lt;YoungTableauTensorIndex&gt; Index1,</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>        misc::Specialization&lt;TensorYoungTableauIndex&gt; Index1,</div>
 <div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>        <span class="keyword">class</span>... DDim2,</div>
 <div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>        <span class="keyword">class </span>ElementType,</div>
 <div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>        <span class="keyword">class </span>LayoutStridedPolicy,</div>
@@ -300,7 +300,7 @@ $(document).ready(function(){initNavTree('tensor__prod_8hpp_source.html',''); in
 <div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>        Tensor&lt;ElementType, ddc::DiscreteDomain&lt;Index2&gt;, LayoutStridedPolicy, MemorySpace&gt; tensor2)</div>
 <div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span>    {</div>
 <div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>        <span class="comment">/*</span></div>
-<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span><span class="comment">    typename YoungTableauTensorIndex&lt;DDim1...&gt;::young_tableau young_tableau;</span></div>
+<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span><span class="comment">    typename TensorYoungTableauIndex&lt;DDim1...&gt;::young_tableau young_tableau;</span></div>
 <div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span><span class="comment">    sil::csr::Csr u = young_tableau.template u&lt;YoungTableauIndex, DDim2...&gt;(tensor2.domain());</span></div>
 <div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span><span class="comment">*/</span></div>
 <div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>        ddc::Chunk uncompressed_tensor1_alloc(</div>
@@ -334,8 +334,8 @@ $(document).ready(function(){initNavTree('tensor__prod_8hpp_source.html',''); in
 <div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span> </div>
 <div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span><span class="keyword">template</span> &lt;</div>
 <div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span>        <span class="keyword">class</span>... ProdDDim,</div>
-<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>        misc::Specialization&lt;YoungTableauTensorIndex&gt; Index1,</div>
-<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span>        misc::Specialization&lt;YoungTableauTensorIndex&gt; Index2,</div>
+<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>        misc::Specialization&lt;TensorYoungTableauIndex&gt; Index1,</div>
+<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span>        misc::Specialization&lt;TensorYoungTableauIndex&gt; Index2,</div>
 <div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span>        <span class="keyword">class </span>ElementType,</div>
 <div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>        <span class="keyword">class </span>LayoutStridedPolicy,</div>
 <div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>        <span class="keyword">class </span>MemorySpace&gt;</div>
@@ -429,7 +429,7 @@ $(document).ready(function(){initNavTree('tensor__prod_8hpp_source.html',''); in
 <div class="line"><a id="l00296" name="l00296"></a><span class="lineno">  296</span>                tensor2)</div>
 <div class="line"><a id="l00297" name="l00297"></a><span class="lineno">  297</span>    {</div>
 <div class="line"><a id="l00298" name="l00298"></a><span class="lineno">  298</span>        <span class="comment">/*</span></div>
-<div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span><span class="comment">    typename YoungTableauTensorIndex&lt;DDim1...&gt;::young_tableau young_tableau;</span></div>
+<div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span><span class="comment">    typename TensorYoungTableauIndex&lt;DDim1...&gt;::young_tableau young_tableau;</span></div>
 <div class="line"><a id="l00300" name="l00300"></a><span class="lineno">  300</span><span class="comment">    sil::csr::Csr u = young_tableau.template u&lt;YoungTableauIndex, DDim2...&gt;(tensor2.domain());</span></div>
 <div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span><span class="comment">*/</span></div>
 <div class="line"><a id="l00302" name="l00302"></a><span class="lineno">  302</span>        ddc::Chunk uncompressed_prod_alloc(</div>

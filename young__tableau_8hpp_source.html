@@ -694,7 +694,7 @@ $(document).ready(function(){initNavTree('young__tableau_8hpp_source.html',''); 
 <div class="line"><a id="l00555" name="l00555"></a><span class="lineno">  555</span><span class="keyword">template</span> &lt;std::size_t... Id, std::size_t... RankId&gt;</div>
 <div class="line"><a id="l00556" name="l00556"></a><span class="lineno">  556</span><span class="keyword">struct </span>DummyIndex&lt;std::index_sequence&lt;Id...&gt;, std::index_sequence&lt;RankId...&gt;&gt;</div>
 <div class="line"><a id="l00557" name="l00557"></a><span class="lineno">  557</span>{</div>
-<div class="line"><a id="l00558" name="l00558"></a><span class="lineno">  558</span>    <span class="keyword">using </span>type = <a class="code hl_struct" href="structsil_1_1tensor_1_1FullTensorIndex.html">sil::tensor::FullTensorIndex</a>&lt;</div>
+<div class="line"><a id="l00558" name="l00558"></a><span class="lineno">  558</span>    <span class="keyword">using </span>type = <a class="code hl_struct" href="structsil_1_1tensor_1_1TensorFullIndex.html">sil::tensor::TensorFullIndex</a>&lt;</div>
 <div class="line"><a id="l00559" name="l00559"></a><span class="lineno">  559</span>            <span class="keyword">typename</span> NaturalIndex&lt;std::index_sequence&lt;Id...&gt;&gt;::template type&lt;RankId&gt;...&gt;;</div>
 <div class="line"><a id="l00560" name="l00560"></a><span class="lineno">  560</span>};</div>
 <div class="line"><a id="l00561" name="l00561"></a><span class="lineno">  561</span> </div>
@@ -809,7 +809,7 @@ $(document).ready(function(){initNavTree('young__tableau_8hpp_source.html',''); 
 <div class="line"><a id="l00669" name="l00669"></a><span class="lineno">  669</span><span class="keyword">struct </span>OrthonormalBasisSubspaceEigenvalueOne;</div>
 <div class="line"><a id="l00670" name="l00670"></a><span class="lineno">  670</span> </div>
 <div class="line"><a id="l00671" name="l00671"></a><span class="lineno">  671</span><span class="keyword">template</span> &lt;<span class="keyword">class</span>... Id&gt;</div>
-<div class="line"><a id="l00672" name="l00672"></a><span class="lineno">  672</span><span class="keyword">struct </span>OrthonormalBasisSubspaceEigenvalueOne&lt;<a class="code hl_namespace" href="namespacesil.html">sil</a>::tensor::FullTensorIndex&lt;Id...&gt;&gt;</div>
+<div class="line"><a id="l00672" name="l00672"></a><span class="lineno">  672</span><span class="keyword">struct </span>OrthonormalBasisSubspaceEigenvalueOne&lt;<a class="code hl_namespace" href="namespacesil.html">sil</a>::tensor::TensorFullIndex&lt;Id...&gt;&gt;</div>
 <div class="line"><a id="l00673" name="l00673"></a><span class="lineno">  673</span>{</div>
 <div class="line"><a id="l00674" name="l00674"></a><span class="lineno">  674</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> YoungTableau&gt;</div>
 <div class="line"><a id="l00675" name="l00675"></a><span class="lineno">  675</span>    <span class="keyword">static</span> std::pair&lt;<a class="code hl_class" href="classsil_1_1csr_1_1CsrDynamic.html">sil::csr::CsrDynamic</a>&lt;BasisId, Id...&gt;, <a class="code hl_class" href="classsil_1_1csr_1_1CsrDynamic.html">sil::csr::CsrDynamic</a>&lt;BasisId, Id...&gt;&gt;</div>
@@ -1595,7 +1595,7 @@ $(document).ready(function(){initNavTree('young__tableau_8hpp_source.html',''); 
 <div class="ttc" id="anamespacesil_1_1tensor_html_classsil_1_1tensor_1_1Tensor"><div class="ttname"><a href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">sil::tensor::Tensor</a></div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00435">tensor_impl.hpp:436</a></div></div>
 <div class="ttc" id="anamespacesil_1_1young__tableau_html_a175aed110e9d3c17c8c12896d5230fa7"><div class="ttname"><a href="namespacesil_1_1young__tableau.html#a175aed110e9d3c17c8c12896d5230fa7">sil::young_tableau::operator&lt;&lt;</a></div><div class="ttdeci">std::ostream &amp; operator&lt;&lt;(std::ostream &amp;os, YoungTableau&lt; Dimension, TableauSeq &gt; const &amp;tableau)</div><div class="ttdef"><b>Definition</b> <a href="young__tableau_8hpp_source.html#l01413">young_tableau.hpp:1413</a></div></div>
 <div class="ttc" id="anamespacesil_html"><div class="ttname"><a href="namespacesil.html">sil</a></div><div class="ttdef"><b>Definition</b> <a href="csr_8hpp_source.html#l00013">csr.hpp:13</a></div></div>
-<div class="ttc" id="astructsil_1_1tensor_1_1FullTensorIndex_html"><div class="ttname"><a href="structsil_1_1tensor_1_1FullTensorIndex.html">sil::tensor::FullTensorIndex</a></div><div class="ttdef"><b>Definition</b> <a href="full__tensor_8hpp_source.html#l00017">full_tensor.hpp:18</a></div></div>
+<div class="ttc" id="astructsil_1_1tensor_1_1TensorFullIndex_html"><div class="ttname"><a href="structsil_1_1tensor_1_1TensorFullIndex.html">sil::tensor::TensorFullIndex</a></div><div class="ttdef"><b>Definition</b> <a href="full__tensor_8hpp_source.html#l00017">full_tensor.hpp:18</a></div></div>
 <div class="ttc" id="astructsil_1_1tensor_1_1TensorNaturalIndex_html"><div class="ttname"><a href="structsil_1_1tensor_1_1TensorNaturalIndex.html">sil::tensor::TensorNaturalIndex</a></div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00014">tensor_impl.hpp:15</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
