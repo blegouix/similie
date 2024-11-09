@@ -1,6 +1,5 @@
-# Copyright (C) The DDC development team, see COPYRIGHT.md file
-#
-# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2024 Baptiste Legouix
+# SPDX-License-Identifier: GPL-3.0
 
 name: pages
 on:
