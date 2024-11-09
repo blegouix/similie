@@ -214,7 +214,7 @@ inplace_apply_metrics( // TODO avoid metricS by using concepts
             relabelize_indices_in_domain<Indices2, Indices1>(tensor.domain()),
             ddc::HostAllocator<double>());
     relabelize_indices_of_t<TensorType, Indices2, Indices1> result(result_alloc);
-    tensor_prod3(
+    tensor_prod(
             result,
             relabelize_indices_of<Indices2, typename detail::Primes<Indices1>::type>(metric_prod),
             relabelize_indices_of<Indices2, typename detail::Primes<Indices2>::type>(tensor));
