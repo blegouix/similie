@@ -13,7 +13,7 @@ namespace tensor {
 
 // struct representing an identity tensor (no storage).
 template <class... TensorIndex>
-struct IdentityTensorIndex
+struct TensorIdentityIndex
 {
     static constexpr bool is_natural_tensor_index = false;
 
@@ -93,7 +93,7 @@ struct IdentityTensorIndex
 
 namespace detail {
 template <class... SubIndex>
-struct IsTensorIndex<IdentityTensorIndex<SubIndex...>>
+struct IsTensorIndex<TensorIdentityIndex<SubIndex...>>
 {
     using type = std::true_type;
 };

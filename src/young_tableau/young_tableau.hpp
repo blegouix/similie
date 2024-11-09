@@ -555,7 +555,7 @@ struct DummyIndex;
 template <std::size_t... Id, std::size_t... RankId>
 struct DummyIndex<std::index_sequence<Id...>, std::index_sequence<RankId...>>
 {
-    using type = sil::tensor::FullTensorIndex<
+    using type = sil::tensor::TensorFullIndex<
             typename NaturalIndex<std::index_sequence<Id...>>::template type<RankId>...>;
 };
 
@@ -669,7 +669,7 @@ template <class Ids>
 struct OrthonormalBasisSubspaceEigenvalueOne;
 
 template <class... Id>
-struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::FullTensorIndex<Id...>>
+struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::TensorFullIndex<Id...>>
 {
     template <class YoungTableau>
     static std::pair<sil::csr::CsrDynamic<BasisId, Id...>, sil::csr::CsrDynamic<BasisId, Id...>>

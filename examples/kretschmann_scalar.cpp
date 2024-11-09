@@ -12,7 +12,7 @@
  */
 
 // Declare the Minkowski metric as a Lorentzian signature (-, +, +, +)
-using MetricIndex = sil::tensor::LorentzianSignTensorIndex<
+using MetricIndex = sil::tensor::TensorLorentzianSignIndex<
         std::integral_constant<std::size_t, 1>,
         sil::tensor::MetricIndex1,
         sil::tensor::MetricIndex2>;
@@ -64,7 +64,7 @@ using RhoLow = sil::tensor::lower<RhoUp>;
 using SigmaLow = sil::tensor::lower<SigmaUp>;
 
 // Declare a unique index for fully-contravariant Riemann tensor, satisfying Riemann symmetries (cf. https://birdtracks.eu/ section 10.5)
-using RiemannUpTensorIndex = sil::tensor::YoungTableauTensorIndex<
+using RiemannUpTensorIndex = sil::tensor::TensorYoungTableauIndex<
         sil::young_tableau::YoungTableau<
                 4,
                 sil::young_tableau::

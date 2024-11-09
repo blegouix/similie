@@ -15,7 +15,7 @@ namespace tensor {
 
 // struct representing an abstract unique index sweeping on all possible combination of natural indices, for an antisymmetric tensor.
 template <class... TensorIndex>
-struct AntisymmetricTensorIndex
+struct TensorAntisymmetricIndex
 {
     static constexpr bool is_natural_tensor_index = false;
 
@@ -136,7 +136,7 @@ public:
 
 namespace detail {
 template <class... SubIndex>
-struct IsTensorIndex<AntisymmetricTensorIndex<SubIndex...>>
+struct IsTensorIndex<TensorAntisymmetricIndex<SubIndex...>>
 {
     using type = std::true_type;
 };

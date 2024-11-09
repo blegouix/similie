@@ -14,7 +14,7 @@ namespace tensor {
 
 // struct representing an abstract unique index sweeping on all possible combination of natural indices, for a full tensor (dense with no particular structure).
 template <class... TensorIndex>
-struct FullTensorIndex
+struct TensorFullIndex
 {
     static constexpr bool is_natural_tensor_index = false;
 
@@ -84,7 +84,7 @@ struct FullTensorIndex
 
 namespace detail {
 template <class... SubIndex>
-struct IsTensorIndex<FullTensorIndex<SubIndex...>>
+struct IsTensorIndex<TensorFullIndex<SubIndex...>>
 {
     using type = std::true_type;
 };
