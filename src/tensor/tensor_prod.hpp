@@ -6,6 +6,7 @@
 #include <ddc/ddc.hpp>
 
 #include "character.hpp"
+#include "specialization.hpp"
 #include "young_tableau_tensor.hpp"
 
 namespace sil {
@@ -95,7 +96,7 @@ struct TensorProd<
 
 template <
         class... ProdDDim,
-        class Index1,
+        misc::Specialization<YoungTableauTensorIndex> Index1,
         class... DDim2,
         class ElementType,
         class LayoutStridedPolicy,
@@ -202,8 +203,8 @@ struct TensorProd2<
 
 template <
         class... ProdDDim,
-        class Index1,
-        class Index2,
+        misc::Specialization<YoungTableauTensorIndex> Index1,
+        misc::Specialization<YoungTableauTensorIndex> Index2,
         class ElementType,
         class LayoutStridedPolicy,
         class MemorySpace>
