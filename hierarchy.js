@@ -6,6 +6,9 @@ var hierarchy =
     [ "sil::csr::Csr< N, HeadTensorIndex, TailTensorIndex >", "classsil_1_1csr_1_1Csr.html", null ],
     [ "sil::csr::CsrDynamic< HeadTensorIndex, TailTensorIndex >", "classsil_1_1csr_1_1CsrDynamic.html", null ],
     [ "sil::tensor::DiagonalTensorIndex< TensorIndex >", "structsil_1_1tensor_1_1DiagonalTensorIndex.html", null ],
+    [ "std::false_type", null, [
+      [ "sil::misc::is_specialization_of< T, U >", "structsil_1_1misc_1_1is__specialization__of.html", null ]
+    ] ],
     [ "sil::tensor::FullTensorIndex< TensorIndex >", "structsil_1_1tensor_1_1FullTensorIndex.html", null ],
     [ "sil::tensor::IdentityTensorIndex< TensorIndex >", "structsil_1_1tensor_1_1IdentityTensorIndex.html", null ],
     [ "sil::tensor::LorentzianSignTensorIndex< Q, TensorIndex >", "structsil_1_1tensor_1_1LorentzianSignTensorIndex.html", null ],
@@ -18,6 +21,9 @@ var hierarchy =
     [ "sil::tensor::TensorNaturalIndex< CDim >", "structsil_1_1tensor_1_1TensorNaturalIndex.html", null ],
     [ "sil::tensor::TensorNaturalIndex< Dummy< Id >... >", "structsil_1_1tensor_1_1TensorNaturalIndex.html", null ],
     [ "sil::tensor::TensorNaturalIndex<>", "structsil_1_1tensor_1_1TensorNaturalIndex.html", null ],
+    [ "std::true_type", null, [
+      [ "sil::misc::is_specialization_of< T, T< Us... > >", "structsil_1_1misc_1_1is__specialization__of_3_01T_00_01T_3_01Us_8_8_8_01_4_01_4.html", null ]
+    ] ],
     [ "detail::TensorNaturalIndexFromTypeSeqDim::type", null, [
       [ "sil::tensor::TensorContravariantNaturalIndex< NaturalIndex >", "structsil_1_1tensor_1_1TensorContravariantNaturalIndex.html", null ],
       [ "sil::tensor::TensorCovariantNaturalIndex< NaturalIndex >", "structsil_1_1tensor_1_1TensorCovariantNaturalIndex.html", null ]

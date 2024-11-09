@@ -29,8 +29,8 @@ var namespacesil_1_1tensor =
     [ "fill_metric_prod", "namespacesil_1_1tensor.html#a8f626d1ccec595d2eb4ebe2b64876bec", null ],
     [ "inplace_apply_metrics", "namespacesil_1_1tensor.html#ae169356d7c01672fca1e81ef3e12d916", null ],
     [ "tensor_prod", "namespacesil_1_1tensor.html#ab4f3792878f8b9ff69a73f9b53eafc1b", null ],
-    [ "tensor_prod2", "namespacesil_1_1tensor.html#a29e84f7fc69c3f64e109dc6c7425287f", null ],
-    [ "tensor_prod3", "namespacesil_1_1tensor.html#afc4bb5c9bc21bf568138a961eb839e87", null ],
+    [ "tensor_prod", "namespacesil_1_1tensor.html#ab1850d31897a1dd43622b0e25d1a1b28", null ],
+    [ "tensor_prod", "namespacesil_1_1tensor.html#aeed7d1392312d816d7f844ca599639f6", null ],
     [ "compress", "namespacesil_1_1tensor.html#aea1eb1144aec1ce97157fb6f7e99b683", null ],
     [ "uncompress", "namespacesil_1_1tensor.html#aa78322a48d54bbd4195b42b44be4032f", null ]
 ];

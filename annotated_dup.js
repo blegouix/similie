@@ -8,6 +8,10 @@ var annotated_dup =
       [ "mesher", "namespacesil_1_1mesher.html", [
         [ "Mesher", "classsil_1_1mesher_1_1Mesher.html", "classsil_1_1mesher_1_1Mesher" ]
       ] ],
+      [ "misc", "namespacesil_1_1misc.html", [
+        [ "is_specialization_of", "structsil_1_1misc_1_1is__specialization__of.html", null ],
+        [ "is_specialization_of< T, T< Us... > >", "structsil_1_1misc_1_1is__specialization__of_3_01T_00_01T_3_01Us_8_8_8_01_4_01_4.html", null ]
+      ] ],
       [ "tensor", "namespacesil_1_1tensor.html", [
         [ "AntisymmetricTensorIndex", "structsil_1_1tensor_1_1AntisymmetricTensorIndex.html", "structsil_1_1tensor_1_1AntisymmetricTensorIndex" ],
         [ "Contravariant", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Contravariant", null ],

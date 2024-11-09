@@ -34,6 +34,7 @@ var NAVTREE =
         [ "Typedefs", "namespacemembers_type.html", null ]
       ] ]
     ] ],
+    [ "Concepts", "concepts.html", "concepts" ],
     [ "Classes", "annotated.html", [
       [ "Class List", "annotated.html", "annotated_dup" ],
       [ "Class Index", "classes.html", null ],
