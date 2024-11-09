@@ -3,8 +3,6 @@
 
 #pragma once
 
-#include <concepts>
-
 #include <ddc/ddc.hpp>
 #include <ddc/kernels/splines.hpp>
 

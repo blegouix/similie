@@ -6,6 +6,7 @@
 #include <ddc/ddc.hpp>
 
 #include "character.hpp"
+#include "specialization.hpp"
 #include "young_tableau_tensor.hpp"
 
 namespace sil {
@@ -95,7 +96,7 @@ struct TensorProd<
 
 template <
         class... ProdDDim,
-        class Index1,
+        misc::Specialization<YoungTableauTensorIndex> Index1,
         class... DDim2,
         class ElementType,
         class LayoutStridedPolicy,
@@ -120,6 +121,7 @@ tensor_prod(
                   ddc::type_seq_remove_t<
                           ddc::detail::TypeSeq<DDim2...>,
                           ddc::detail::TypeSeq<ProdDDim...>>>);
+    std::cout << "test";
     return detail::TensorProd<
             Index1,
             ddc::type_seq_remove_t<
@@ -201,8 +203,8 @@ struct TensorProd2<
 
 template <
         class... ProdDDim,
-        class Index1,
-        class Index2,
+        misc::Specialization<YoungTableauTensorIndex> Index1,
+        misc::Specialization<YoungTableauTensorIndex> Index2,
         class ElementType,
         class LayoutStridedPolicy,
         class MemorySpace>
@@ -210,7 +212,7 @@ Tensor<ElementType,
        ddc::DiscreteDomain<ProdDDim...>,
        Kokkos::layout_right,
        Kokkos::DefaultHostExecutionSpace::memory_space>
-tensor_prod2(
+tensor_prod(
         Tensor<ElementType,
                ddc::DiscreteDomain<ProdDDim...>,
                Kokkos::layout_right,
@@ -338,7 +340,7 @@ struct TensorProd3<
 } // namespace detail
 
 template <
-        class... ProdIndex, // TODO Align convention with tensor_prod2
+        class... ProdIndex, // TODO Align convention with tensor_prod
         class... Index1,
         class... Index2,
         class ElementType,
@@ -348,7 +350,7 @@ Tensor<ElementType,
        ddc::DiscreteDomain<ProdIndex...>,
        Kokkos::layout_right,
        Kokkos::DefaultHostExecutionSpace::memory_space>
-tensor_prod3(
+tensor_prod(
         Tensor<ElementType,
                ddc::DiscreteDomain<ProdIndex...>,
                Kokkos::layout_right,

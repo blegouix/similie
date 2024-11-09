@@ -174,6 +174,6 @@ int main(int argc, char** argv)
             Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             scalar(scalar_alloc);
-    sil::tensor::tensor_prod2(scalar, riemann_low, riemann_up);
+    sil::tensor::tensor_prod(scalar, riemann_low, riemann_up);
     std::cout << "Kreschmann scalar = " << scalar(ddc::DiscreteElement<>()) << "\n";
 }
