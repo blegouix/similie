@@ -65,4 +65,4 @@ using projector_index_t = ProjectorIndex<
 - Primary-specialization is given by not writing <>. Maybe it can simplify some implementation
 - tests for relabelize_indexes and relabelize_metric
 - standardize prime and second indexes
-- methods like mem_domain or access_domain in TensorAccessor could be aliases in Tensor. Also get<Dims...>() in Tensor
+- Unify TensorAccessor::access_element() functions. Also get<Dims...>() in Tensor ?
