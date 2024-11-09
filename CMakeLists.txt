@@ -1,12 +1,15 @@
 # SPDX-FileCopyrightText: 2024 Baptiste Legouix
 # SPDX-License-Identifier: GPL-3.0
 
-cmake_minimum_required(VERSION 3.20)
-project(SimiLie C CXX)
+cmake_minimum_required(VERSION 3.22)
+project(SimiLie VERSION 0.0.0 LANGUAGES CXX)
 
 set_property(GLOBAL PROPERTY GLOBAL_DEPENDS_NO_CYCLES ON)
 
 set(CMAKE_CXX_STANDARD 23 CACHE INTERNAL "The C++ standard whose features are requested to build this project.")
+
+# List of options
+option(SIMILIE_BUILD_DOCUMENTATION "Build DDC documentation/website" ON)
 
 # Set default DDC options when included
 option(DDC_BUILD_BENCHMARKS       "Build DDC benchmarks." OFF)
@@ -20,7 +23,7 @@ if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/irreps_dict.bin)
 endif()
 add_compile_definitions("IRREPS_DICT_PATH=\"${CMAKE_CURRENT_BINARY_DIR}/irreps_dict.bin\"")
 
-# Our dependencies
+# Dependencies
 
 ## Use CTest for running tests
 include(CTest)
@@ -46,6 +49,10 @@ endif()
 ## Use the discrete domain computation library (ddc) from `vendor/`
 add_subdirectory("vendor/ddc/" "ddc") # SYSTEM)
 
+## Doxygen
+if("${SIMILIE_BUILD_DOCUMENTATION}")
+    find_package(Doxygen 1.8.13 REQUIRED OPTIONAL_COMPONENTS dot)
+endif()
 
 ###############################################################################################
 #                              Build libraries and executables
@@ -55,3 +62,6 @@ add_subdirectory("vendor/ddc/" "ddc") # SYSTEM)
 add_subdirectory(src)
 add_subdirectory(tests)
 add_subdirectory(examples)
+if("${SIMILIE_BUILD_DOCUMENTATION}")
+    add_subdirectory(docs/)
+endif()
