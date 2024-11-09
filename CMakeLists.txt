@@ -9,7 +9,7 @@ set_property(GLOBAL PROPERTY GLOBAL_DEPENDS_NO_CYCLES ON)
 set(CMAKE_CXX_STANDARD 23 CACHE INTERNAL "The C++ standard whose features are requested to build this project.")
 
 # List of options
-option(SIMILIE_BUILD_DOCUMENTATION "Build DDC documentation/website" ON)
+option(SIMILIE_BUILD_DOCUMENTATION "Build DDC documentation/website" OFF)
 
 # Set default DDC options when included
 option(DDC_BUILD_BENCHMARKS       "Build DDC benchmarks." OFF)
