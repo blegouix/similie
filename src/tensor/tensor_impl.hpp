@@ -230,10 +230,10 @@ public:
     static constexpr ddc::DiscreteDomain<Index...> access_domain();
 
     template <class... CDim>
-    static constexpr ddc::DiscreteElement<Index...> element();
+    static constexpr ddc::DiscreteElement<Index...> access_element();
 
     template <class... NaturalIndex>
-    static constexpr ddc::DiscreteElement<Index...> element(
+    static constexpr ddc::DiscreteElement<Index...> access_element(
             ddc::DiscreteElement<NaturalIndex...> natural_elem);
 };
 
@@ -295,7 +295,7 @@ constexpr ddc::DiscreteDomain<Index...> TensorAccessor<Index...>::access_domain(
 
 template <class... Index>
 template <class... CDim>
-constexpr ddc::DiscreteElement<Index...> TensorAccessor<Index...>::element()
+constexpr ddc::DiscreteElement<Index...> TensorAccessor<Index...>::access_element()
 {
     return ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(
             detail::access_id<Index, ddc::detail::TypeSeq<Index...>, CDim...>())...);
@@ -303,7 +303,7 @@ constexpr ddc::DiscreteElement<Index...> TensorAccessor<Index...>::element()
 
 template <class... Index>
 template <class... NaturalIndex>
-constexpr ddc::DiscreteElement<Index...> TensorAccessor<Index...>::element(
+constexpr ddc::DiscreteElement<Index...> TensorAccessor<Index...>::access_element(
         ddc::DiscreteElement<NaturalIndex...> natural_elem)
 {
     return ddc::DiscreteElement<Index...>(
@@ -494,6 +494,36 @@ public:
     static constexpr accessor_t accessor()
     {
         return accessor_t();
+    }
+
+    using natural_domain_t = accessor_t::natural_domain_t;
+
+    static constexpr natural_domain_t natural_domain()
+    {
+        return accessor_t::natural_domain();
+    }
+
+    static constexpr ddc::DiscreteDomain<DDim...> mem_domain()
+    {
+        return accessor_t::mem_domain();
+    }
+
+    static constexpr ddc::DiscreteDomain<DDim...> access_domain()
+    {
+        return accessor_t::access_domain();
+    }
+
+    template <class... CDim>
+    static constexpr ddc::DiscreteElement<DDim...> access_element()
+    {
+        return accessor_t::template access_element<CDim...>();
+    }
+
+    template <class... NaturalIndex>
+    static constexpr ddc::DiscreteElement<DDim...> access_element(
+            ddc::DiscreteElement<NaturalIndex...> natural_elem)
+    {
+        return accessor_t::access_element(natural_elem);
     }
 
     template <class... DElems>
@@ -1042,7 +1072,7 @@ struct PrintTensor<
     {
         str += "[";
         for (ddc::DiscreteElement<InterestDDim> elem :
-             ddc::DiscreteDomain<InterestDDim>(tensor.accessor().natural_domain())) {
+             ddc::DiscreteDomain<InterestDDim>(tensor.natural_domain())) {
             str = PrintTensor<
                     ddc::DiscreteDomain<HeadDDim..., InterestDDim>,
                     ddc::DiscreteDomain<HeadOfTailDDim>,
@@ -1067,9 +1097,9 @@ struct PrintTensor<
             ddc::DiscreteElement<HeadDDim...> i)
     {
         for (ddc::DiscreteElement<InterestDDim> elem :
-             ddc::DiscreteDomain<InterestDDim>(tensor.accessor().natural_domain())) {
+             ddc::DiscreteDomain<InterestDDim>(tensor.natural_domain())) {
             str = str + " "
-                  + std::to_string(tensor.get(tensor.accessor().element(
+                  + std::to_string(tensor.get(tensor.access_element(
                           ddc::DiscreteElement<HeadDDim..., InterestDDim>(i, elem))));
         }
         str += "\n";
