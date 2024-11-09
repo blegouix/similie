@@ -17,7 +17,7 @@ jobs:
     - name: Identify repository
       id: identify_repo
       run: |
-        echo "in_base_repo=${{ (github.event_name == 'push' && github.repository == 'blegouix/SimiLie') || github.event.pull_request.head.repo.full_name == 'blegouix/SimiLie' }}" >> "$GITHUB_OUTPUT"
+        echo "in_base_repo=${{ (github.event_name == 'push' && github.repository == 'blegouix/similie') || github.event.pull_request.head.repo.full_name == 'blegouix/similie' }}" >> "$GITHUB_OUTPUT"
 
   docker-build:
     needs: id_repo
@@ -38,22 +38,22 @@ jobs:
       run: |
         DOCKER_BUILDKIT=1 docker build \
           --build-arg BUILDKIT_INLINE_CACHE=1 \
-          --cache-from ghcr.io/blegouix/SimiLie/doxygen \
-          -t ghcr.io/blegouix/SimiLie/doxygen \
-          -t ghcr.io/blegouix/SimiLie/doxygen:${GITHUB_SHA:0:7} \
+          --cache-from ghcr.io/blegouix/similie/doxygen \
+          -t ghcr.io/blegouix/similie/doxygen \
+          -t ghcr.io/blegouix/similie/doxygen:${GITHUB_SHA:0:7} \
           docker/doxygen
     - name: Publish image for current SHA
       if: needs.id_repo.outputs.in_base_repo == 'true'
       run: |
-        docker push ghcr.io/blegouix/SimiLie/doxygen:${GITHUB_SHA:0:7}
+        docker push ghcr.io/blegouix/similie/doxygen:${GITHUB_SHA:0:7}
     - name: Publish latest (default) image
       if: github.event_name == 'push' && github.ref_name == 'main' && needs.id_repo.outputs.in_base_repo == 'true'
       run: |
-        docker push ghcr.io/blegouix/SimiLie/doxygen
+        docker push ghcr.io/blegouix/similie/doxygen
     - name: Create image tarball
       if: needs.id_repo.outputs.in_base_repo == 'false'
       run: |
-        docker save ghcr.io/blegouix/SimiLie/doxygen:${GITHUB_SHA:0:7} > doxygen.tar
+        docker save ghcr.io/blegouix/similie/doxygen:${GITHUB_SHA:0:7} > doxygen.tar
     - name: Generate docker artifact from image
       if: needs.id_repo.outputs.in_base_repo == 'false'
       uses: actions/upload-artifact@v4
@@ -107,7 +107,7 @@ jobs:
         EOF
         mkdir docs_out
         chmod a+rwx docs_out
-        docker run -v ${PWD}:/src ghcr.io/blegouix/SimiLie/doxygen:${GITHUB_SHA:0:7} bash /src/run.sh
+        docker run -v ${PWD}:/src ghcr.io/blegouix/similie/doxygen:${GITHUB_SHA:0:7} bash /src/run.sh
     - name: Check for relevant documentation errors
       run: |
         # Get files which have changed in this merge request
@@ -163,7 +163,7 @@ jobs:
         EOF
         mkdir docs_out
         chmod a+rwx docs_out
-        docker run -v ${PWD}:/src ghcr.io/blegouix/SimiLie/doxygen:${GITHUB_SHA:0:7} bash /src/run.sh
+        docker run -v ${PWD}:/src ghcr.io/blegouix/similie/doxygen:${GITHUB_SHA:0:7} bash /src/run.sh
         head -n 10 docs_out/doxygen.log
     - name: Publish site
       if: ${{ github.event_name == 'push' && github.ref_name == 'main' && needs.id_repo.outputs.in_base_repo == 'true' }}
