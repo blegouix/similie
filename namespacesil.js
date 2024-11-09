@@ -1,0 +1,8 @@
+var namespacesil =
+[
+    [ "csr", "namespacesil_1_1csr.html", "namespacesil_1_1csr" ],
+    [ "mesher", "namespacesil_1_1mesher.html", "namespacesil_1_1mesher" ],
+    [ "misc", "namespacesil_1_1misc.html", null ],
+    [ "tensor", "namespacesil_1_1tensor.html", "namespacesil_1_1tensor" ],
+    [ "young_tableau", "namespacesil_1_1young__tableau.html", "namespacesil_1_1young__tableau" ]
+];

@@ -1,0 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2024 Baptiste Legouix
+ * SPDX-License-Identifier: GPL-3.0
+ */
+
+/* Allow the column with long return type to break in function list */
+.memTemplItemLeft {
+    white-space: unset !important;
+}
