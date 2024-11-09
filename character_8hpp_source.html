@@ -212,22 +212,22 @@ $(document).ready(function(){initNavTree('character_8hpp_source.html',''); initR
 <div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span> </div>
 <div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>} <span class="comment">// namespace detail</span></div>
 <div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span> </div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span><span class="keyword">namespace </span>detail {</div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span> </div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Index&gt;</div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span><span class="keyword">using </span>upper = detail::Upper&lt;Index&gt;::type;</div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Index&gt;</div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#ae9078934a0f5e29909bfd063eeee7d3c">   79</a></span><span class="keyword">using </span><a class="code hl_typedef" href="namespacesil_1_1tensor.html#ae9078934a0f5e29909bfd063eeee7d3c">upper</a> = detail::Upper&lt;Index&gt;::type;</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span> </div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span><span class="keyword">namespace </span>detail {</div>
 <div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span> </div>
 <div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Index&gt;</div>
 <div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span><span class="keyword">struct </span>Uncharacterize;</div>
 <div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span> </div>
 <div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> NaturalIndex&gt;</div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span><span class="keyword">struct </span>Uncharacterize&lt;TensorCovariantNaturalIndex&lt;NaturalIndex&gt;&gt;</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span><span class="keyword">struct </span>Uncharacterize&lt;<a class="code hl_struct" href="structsil_1_1tensor_1_1TensorCovariantNaturalIndex.html">TensorCovariantNaturalIndex</a>&lt;NaturalIndex&gt;&gt;</div>
 <div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>{</div>
 <div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>    <span class="keyword">using </span>type = NaturalIndex;</div>
 <div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>};</div>
 <div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span> </div>
 <div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> NaturalIndex&gt;</div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span><span class="keyword">struct </span>Uncharacterize&lt;TensorContravariantNaturalIndex&lt;NaturalIndex&gt;&gt;</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span><span class="keyword">struct </span>Uncharacterize&lt;<a class="code hl_struct" href="structsil_1_1tensor_1_1TensorContravariantNaturalIndex.html">TensorContravariantNaturalIndex</a>&lt;NaturalIndex&gt;&gt;</div>
 <div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>{</div>
 <div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>    <span class="keyword">using </span>type = NaturalIndex;</div>
 <div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>};</div>
@@ -278,6 +278,7 @@ $(document).ready(function(){initNavTree('character_8hpp_source.html',''); initR
 <div class="ttc" id="anamespacesil_1_1tensor_html_a1e054223bfa913f0bc231631e71d337b"><div class="ttname"><a href="namespacesil_1_1tensor.html#a1e054223bfa913f0bc231631e71d337b">sil::tensor::uncharacterize_tensor</a></div><div class="ttdeci">uncharacterize_tensor_t&lt; TensorType &gt; uncharacterize_tensor(TensorType tensor)</div><div class="ttdef"><b>Definition</b> <a href="character_8hpp_source.html#l00127">character.hpp:127</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_a526c640816bba0dbabb7341a7ca82836"><div class="ttname"><a href="namespacesil_1_1tensor.html#a526c640816bba0dbabb7341a7ca82836">sil::tensor::lower</a></div><div class="ttdeci">detail::Lower&lt; Index &gt;::type lower</div><div class="ttdef"><b>Definition</b> <a href="character_8hpp_source.html#l00063">character.hpp:63</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_a73fd1f7d374ac218e2f00fbc8c76eb31"><div class="ttname"><a href="namespacesil_1_1tensor.html#a73fd1f7d374ac218e2f00fbc8c76eb31">sil::tensor::uncharacterize_tensor_t</a></div><div class="ttdeci">relabelize_indices_of_t&lt; TensorType, ddc::to_type_seq_t&lt; typename TensorType::accessor_t::natural_domain_t &gt;, uncharacterize&lt; ddc::to_type_seq_t&lt; typename TensorType::accessor_t::natural_domain_t &gt; &gt; &gt; uncharacterize_tensor_t</div><div class="ttdef"><b>Definition</b> <a href="character_8hpp_source.html#l00121">character.hpp:124</a></div></div>
+<div class="ttc" id="anamespacesil_1_1tensor_html_ae9078934a0f5e29909bfd063eeee7d3c"><div class="ttname"><a href="namespacesil_1_1tensor.html#ae9078934a0f5e29909bfd063eeee7d3c">sil::tensor::upper</a></div><div class="ttdeci">detail::Upper&lt; Index &gt;::type upper</div><div class="ttdef"><b>Definition</b> <a href="character_8hpp_source.html#l00079">character.hpp:79</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_structsil_1_1tensor_1_1Contravariant"><div class="ttname"><a href="namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Contravariant">sil::tensor::Contravariant</a></div><div class="ttdef"><b>Definition</b> <a href="character_8hpp_source.html#l00016">character.hpp:17</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_structsil_1_1tensor_1_1Covariant"><div class="ttname"><a href="namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Covariant">sil::tensor::Covariant</a></div><div class="ttdef"><b>Definition</b> <a href="character_8hpp_source.html#l00012">character.hpp:13</a></div></div>
 <div class="ttc" id="anamespacesil_html"><div class="ttname"><a href="namespacesil.html">sil</a></div><div class="ttdef"><b>Definition</b> <a href="csr_8hpp_source.html#l00013">csr.hpp:13</a></div></div>
