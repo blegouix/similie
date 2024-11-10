@@ -95,7 +95,7 @@ struct TensorProd<
 } // namespace detail
 
 template <
-        class... ProdDDim,
+        TensorNatIndex... ProdDDim,
         misc::Specialization<TensorYoungTableauIndex> Index1,
         class... DDim2,
         class ElementType,
@@ -202,7 +202,7 @@ struct TensorProd2<
 } // namespace detail
 
 template <
-        class... ProdDDim,
+        TensorNatIndex... ProdDDim,
         misc::Specialization<TensorYoungTableauIndex> Index1,
         misc::Specialization<TensorYoungTableauIndex> Index2,
         class ElementType,

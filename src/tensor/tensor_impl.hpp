@@ -14,7 +14,7 @@ template <class... CDim>
 struct TensorNaturalIndex
 {
     static constexpr bool is_tensor_index = true;
-    static constexpr bool is_natural_tensor_index = true;
+    static constexpr bool is_tensor_natural_index = true;
 
     using type_seq_dimensions = ddc::detail::TypeSeq<CDim...>;
 
@@ -90,12 +90,10 @@ concept TensorIndex = requires
     DDim::is_tensor_index;
 };
 
-/*
 template <class DDim>
-concept TensorNaturalIndex = requires {
-    DDim::is_natural_tensor_index == true;
+concept TensorNatIndex = requires {
+    DDim::is_tensor_natural_index;
 };
-*/
 
 // Helpers to build the access_id() function which computes the ids of subindices of an index. This cumbersome logic is necessary because subindices do not necessarily have the same rank.
 namespace detail
@@ -154,7 +152,7 @@ namespace detail
         static constexpr std::size_t run()
         {
             static_assert(sizeof...(Subindex) == sizeof...(CDim));
-            if constexpr (Index::is_natural_tensor_index) {
+            if constexpr (TensorNatIndex<Index>) {
                 return Index::access_id(
                         ddc::type_seq_rank_v<CDim, typename Index::type_seq_dimensions>...);
             } else {
@@ -173,7 +171,7 @@ namespace detail
     template <class Index, class IndicesTypeSeq, class... CDim>
     static constexpr std::size_t access_id() // TODO consteval. This is not compile-time atm :/
     {
-        if constexpr (Index::is_natural_tensor_index) {
+        if constexpr (TensorNatIndex<Index>) {
             return IdFromTypeSeqDims<
                     Index,
                     ddc::DiscreteDomain<Index>,
@@ -205,7 +203,7 @@ namespace detail
         template <class Elem>
         static constexpr std::size_t run(Elem natural_elem)
         {
-            if constexpr (Index::is_natural_tensor_index) {
+            if constexpr (TensorNatIndex<Index>) {
                 return Index::access_id(natural_elem.template uid<Index>());
             } else {
                 return Index::access_id(std::array<std::size_t, sizeof...(Subindex)> {
@@ -219,7 +217,7 @@ namespace detail
             ddc::DiscreteElement<NaturalIndex...>
                     natural_elem) // TODO consteval. This is not compile-time atm :/
     {
-        if constexpr (Index::is_natural_tensor_index) {
+        if constexpr (TensorNatIndex<Index>) {
             return IdFromElem<Index, ddc::DiscreteDomain<Index>>::run(natural_elem);
         } else {
             return IdFromElem<Index, typename Index::subindices_domain_t>::run(natural_elem);
@@ -236,7 +234,7 @@ public:
     explicit constexpr TensorAccessor();
 
     using natural_domain_t = ddc::cartesian_prod_t<std::conditional_t<
-            Index::is_natural_tensor_index,
+            TensorNatIndex<Index>,
             ddc::DiscreteDomain<Index>,
             typename Index::subindices_domain_t>...>;
 
@@ -279,7 +277,7 @@ namespace detail {
 template <class Index>
 constexpr auto natural_domain()
 {
-    if constexpr (Index::is_natural_tensor_index) {
+    if constexpr (TensorNatIndex<Index>) {
         return typename ddc::DiscreteDomain<
                 Index>(ddc::DiscreteElement<Index>(0), ddc::DiscreteVector<Index>(Index::size()));
     } else {
@@ -626,7 +624,7 @@ template <
 struct RelabelizeIndex<IndexToRelabelizeType<Arg...>, OldIndex, NewIndex>
 {
     using type = std::conditional_t<
-            IndexToRelabelizeType<Arg...>::is_natural_tensor_index,
+            TensorNatIndex<IndexToRelabelizeType<Arg...>>,
             std::conditional_t<
                     std::is_same_v<IndexToRelabelizeType<Arg...>, OldIndex>,
                     NewIndex,

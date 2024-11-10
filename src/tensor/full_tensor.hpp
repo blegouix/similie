@@ -17,7 +17,6 @@ template <class... TensorIndex>
 struct TensorFullIndex
 {
     static constexpr bool is_tensor_index = true;
-    static constexpr bool is_natural_tensor_index = false;
 
     using subindices_domain_t = ddc::DiscreteDomain<TensorIndex...>;
 
