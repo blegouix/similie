@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['discrete_5fdimension_5ftype_0',['discrete_dimension_type',['../classsil_1_1mesher_1_1Mesher.html#a2c782c36150ade73c887534725240a1d',1,'sil::mesher::Mesher']]],
-  ['dual_1',['dual',['../classsil_1_1young__tableau_1_1YoungTableau.html#a27a28d6ed216c2ae534a6ac605833d92',1,'sil::young_tableau::YoungTableau']]]
+  ['character_0',['character',['../structsil_1_1tensor_1_1TensorCovariantNaturalIndex.html#a63541c3d50f01ac9e256ea8c9f089df2',1,'sil::tensor::TensorCovariantNaturalIndex::character'],['../structsil_1_1tensor_1_1TensorContravariantNaturalIndex.html#ae8388a802e13a5ace13053a873ddc45f',1,'sil::tensor::TensorContravariantNaturalIndex::character']]]
 ];

@@ -1,4 +1,6 @@
 var searchData=
 [
-  ['young_5ftableau_0',['young_tableau',['../structsil_1_1tensor_1_1TensorYoungTableauIndex.html#aed5c525a24e6b67e9b50e9de3565d166',1,'sil::tensor::TensorYoungTableauIndex']]]
+  ['uncharacterize_0',['uncharacterize',['../namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8',1,'sil::tensor']]],
+  ['uncharacterize_5ftensor_5ft_1',['uncharacterize_tensor_t',['../namespacesil_1_1tensor.html#a73fd1f7d374ac218e2f00fbc8c76eb31',1,'sil::tensor']]],
+  ['upper_2',['upper',['../namespacesil_1_1tensor.html#ae9078934a0f5e29909bfd063eeee7d3c',1,'sil::tensor']]]
 ];

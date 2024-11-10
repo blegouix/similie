@@ -1,5 +1,8 @@
 var hierarchy =
 [
+    [ "ddc:: ChunkSpan", null, [
+      [ "sil::tensor::Tensor< ElementType, ddc::DiscreteDomain< DDim... >, LayoutStridedPolicy, MemorySpace >", "classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html", null ]
+    ] ],
     [ "sil::tensor::Contravariant", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Contravariant", null ],
     [ "sil::tensor::Covariant", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Covariant", null ],
     [ "sil::csr::Csr< N, HeadTensorIndex, TailTensorIndex >", "classsil_1_1csr_1_1Csr.html", null ],

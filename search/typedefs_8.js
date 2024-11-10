@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['relabelize_5fmetric_5fin_5fdomain_5ft_0',['relabelize_metric_in_domain_t',['../namespacesil_1_1tensor.html#add1582dd8c1b1d296a2a90f5a41fc90e',1,'sil::tensor']]]
+  ['projector_5fdomain_0',['projector_domain',['../classsil_1_1young__tableau_1_1YoungTableau.html#a1d701199c0f708c2bd51309c55c15463',1,'sil::young_tableau::YoungTableau']]]
 ];
