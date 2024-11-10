@@ -63,5 +63,4 @@ using projector_index_t = ProjectorIndex<
 - static_asserts everywhere, ie in InplaceApplyMetric
 - Primary-specialization is given by not writing <>. Maybe it can simplify some implementation
 - tests for relabelize_indexes and relabelize_metric
-- standardize prime and second indexes
 - Unify TensorAccessor::access_element() functions. Also get<Dims...>() in Tensor ?
