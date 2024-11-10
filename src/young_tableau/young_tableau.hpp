@@ -599,10 +599,8 @@ orthogonalize(
                 Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 scalar_prod(scalar_prod_alloc);
-        sil::tensor::natural_tensor_prod(
-                scalar_prod,
-                tensor,
-                eigentensor[ddc::DiscreteElement<BasisId>(0)]);
+        sil::tensor::
+                tensor_prod(scalar_prod, tensor, eigentensor[ddc::DiscreteElement<BasisId>(0)]);
         ddc::Chunk norm_squared_alloc(ddc::DiscreteDomain<> {}, ddc::HostAllocator<double>());
         sil::tensor::Tensor<
                 double,
@@ -610,7 +608,7 @@ orthogonalize(
                 Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 norm_squared(norm_squared_alloc);
-        sil::tensor::natural_tensor_prod(norm_squared, eigentensor, eigentensor);
+        sil::tensor::tensor_prod(norm_squared, eigentensor, eigentensor);
 
         eigentensor *= -1. * scalar_prod(ddc::DiscreteElement<>())
                        / norm_squared(ddc::DiscreteElement<>());
@@ -665,11 +663,11 @@ struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::TensorFullIndex<Id...>
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 candidate(candidate_alloc);
         ddc::Chunk prod_alloc(
-                sil::tensor::natural_tensor_prod_domain(proj.domain(), candidate.domain()),
+                sil::tensor::tensor_prod_domain(proj.domain(), candidate.domain()),
                 ddc::HostAllocator<double>());
         sil::tensor::Tensor<
                 double,
-                sil::tensor::natural_tensor_prod_domain_t<
+                sil::tensor::tensor_prod_domain_t<
                         typename YoungTableau::template projector_domain<Id...>,
                         ddc::DiscreteDomain<Id...>>,
                 Kokkos::layout_right,
@@ -695,7 +693,7 @@ struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::TensorFullIndex<Id...>
                         (sil::misc::detail::stride<Id, Id...>() * elem.template uid<Id>()) + ...)];
             });
 
-            sil::tensor::natural_tensor_prod(prod, proj, candidate);
+            sil::tensor::tensor_prod(prod, proj, candidate);
             Kokkos::deep_copy(
                     candidate.allocation_kokkos_view(),
                     prod.allocation_kokkos_view()); // We rely on Kokkos::deep_copy in place of ddc::parallel_deepcopy to avoid type verification of the type dimensions
@@ -715,7 +713,7 @@ struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::TensorFullIndex<Id...>
                         Kokkos::layout_right,
                         Kokkos::DefaultHostExecutionSpace::memory_space>
                         norm_squared(norm_squared_alloc);
-                sil::tensor::natural_tensor_prod(norm_squared, candidate, candidate);
+                sil::tensor::tensor_prod(norm_squared, candidate, candidate);
                 ddc::parallel_for_each(candidate.domain(), [&](ddc::DiscreteElement<Id...> elem) {
                     candidate(elem) /= Kokkos::sqrt(norm_squared(ddc::DiscreteElement<>()));
                 });
@@ -980,17 +978,17 @@ struct Projector<
 
             // Extract the symmetric part (for the row) of the projector (requires an intermediate prod tensor)
             ddc::Chunk prod_alloc(
-                    natural_tensor_prod_domain(sym.domain(), proj.domain()),
+                    tensor_prod_domain(sym.domain(), proj.domain()),
                     ddc::HostAllocator<double>());
             sil::tensor::Tensor<
                     double,
-                    sil::tensor::natural_tensor_prod_domain_t<
+                    sil::tensor::tensor_prod_domain_t<
                             ddc::DiscreteDomain<symmetrizer_index_t<Id, Id...>...>,
                             ddc::DiscreteDomain<Id...>>,
                     Kokkos::layout_right,
                     Kokkos::DefaultHostExecutionSpace::memory_space>
                     prod(prod_alloc);
-            sil::tensor::natural_tensor_prod(prod, sym, proj);
+            sil::tensor::tensor_prod(prod, sym, proj);
             Kokkos::deep_copy(
                     proj.allocation_kokkos_view(),
                     prod.allocation_kokkos_view()); // We rely on Kokkos::deep_copy in place of ddc::parallel_deepcopy to avoid type verification of the type dimensions

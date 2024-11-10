@@ -91,7 +91,8 @@ concept TensorIndex = requires
 };
 
 template <class DDim>
-concept TensorNatIndex = requires {
+concept TensorNatIndex = requires
+{
     DDim::is_tensor_natural_index;
 };
 
@@ -957,12 +958,12 @@ struct NaturalTensorProdDomain<ddc::DiscreteDomain<DDim1...>, ddc::DiscreteDomai
 } // namespace detail
 
 template <class Dom1, class Dom2>
-using natural_tensor_prod_domain_t = detail::NaturalTensorProdDomain<Dom1, Dom2>::type;
+using tensor_prod_domain_t = detail::NaturalTensorProdDomain<Dom1, Dom2>::type;
 
 template <class Dom1, class Dom2>
-natural_tensor_prod_domain_t<Dom1, Dom2> natural_tensor_prod_domain(Dom1 dom1, Dom2 dom2)
+tensor_prod_domain_t<Dom1, Dom2> tensor_prod_domain(Dom1 dom1, Dom2 dom2)
 {
-    return natural_tensor_prod_domain_t<Dom1, Dom2>(dom1, dom2);
+    return tensor_prod_domain_t<Dom1, Dom2>(dom1, dom2);
 }
 
 namespace detail {
@@ -1016,8 +1017,8 @@ struct NaturalTensorProd<
 
 template <
         class... ProdDDim,
-        class... DDim1,
-        class... DDim2,
+        TensorNatIndex... DDim1,
+        TensorNatIndex... DDim2,
         class ElementType,
         class LayoutStridedPolicy,
         class MemorySpace>
@@ -1025,7 +1026,7 @@ Tensor<ElementType,
        ddc::DiscreteDomain<ProdDDim...>,
        Kokkos::layout_right,
        Kokkos::DefaultHostExecutionSpace::memory_space>
-natural_tensor_prod(
+tensor_prod(
         Tensor<ElementType,
                ddc::DiscreteDomain<ProdDDim...>,
                Kokkos::layout_right,

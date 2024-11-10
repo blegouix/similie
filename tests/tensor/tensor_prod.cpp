@@ -109,7 +109,7 @@ TEST(TensorProd, SimpleContractionRank3xRank2)
             Kokkos::DefaultHostExecutionSpace::memory_space>
             prod_tensor(prod_tensor_alloc);
 
-    sil::tensor::natural_tensor_prod(prod_tensor, tensor1, tensor2);
+    sil::tensor::tensor_prod(prod_tensor, tensor1, tensor2);
 
     EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, X, X>()), 15.);
     EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, X, Y>()), 18.);
@@ -230,7 +230,7 @@ TEST(TensorProd, DoubleContractionRank3xRank3)
             Kokkos::DefaultHostExecutionSpace::memory_space>
             prod_tensor(prod_tensor_alloc);
 
-    sil::tensor::natural_tensor_prod(prod_tensor, tensor1, tensor2);
+    sil::tensor::tensor_prod(prod_tensor, tensor1, tensor2);
 
     EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, X>()), 612.);
     EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, Y>()), 648.);

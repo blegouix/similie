@@ -88,7 +88,7 @@ struct TensorProd<
 
         sil::tensor::uncompress(uncompressed_tensor1, tensor1);
 
-        return natural_tensor_prod(prod_tensor, uncompressed_tensor1, tensor2);
+        return tensor_prod(prod_tensor, uncompressed_tensor1, tensor2);
     }
 };
 
@@ -195,7 +195,7 @@ struct TensorProd2<
         sil::tensor::uncompress(uncompressed_tensor1, tensor1);
         sil::tensor::uncompress(uncompressed_tensor2, tensor2);
 
-        return natural_tensor_prod(prod_tensor, uncompressed_tensor1, uncompressed_tensor2);
+        return tensor_prod(prod_tensor, uncompressed_tensor1, uncompressed_tensor2);
     }
 };
 
