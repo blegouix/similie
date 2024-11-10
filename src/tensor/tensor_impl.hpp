@@ -961,12 +961,12 @@ struct NaturalTensorProdDomain<ddc::DiscreteDomain<DDim1...>, ddc::DiscreteDomai
 } // namespace detail
 
 template <class Dom1, class Dom2>
-using tensor_prod_domain_t = detail::NaturalTensorProdDomain<Dom1, Dom2>::type;
+using natural_tensor_prod_domain_t = detail::NaturalTensorProdDomain<Dom1, Dom2>::type;
 
 template <class Dom1, class Dom2>
-tensor_prod_domain_t<Dom1, Dom2> tensor_prod_domain(Dom1 dom1, Dom2 dom2)
+natural_tensor_prod_domain_t<Dom1, Dom2> natural_tensor_prod_domain(Dom1 dom1, Dom2 dom2)
 {
-    return tensor_prod_domain_t<Dom1, Dom2>(dom1, dom2);
+    return natural_tensor_prod_domain_t<Dom1, Dom2>(dom1, dom2);
 }
 
 namespace detail {
@@ -1019,7 +1019,7 @@ struct NaturalTensorProd<
 } // namespace detail
 
 template <
-        class... ProdDDim,
+        TensorNatIndex... ProdDDim,
         TensorNatIndex... DDim1,
         TensorNatIndex... DDim2,
         class ElementType,

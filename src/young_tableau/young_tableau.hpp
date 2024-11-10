@@ -663,11 +663,11 @@ struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::TensorFullIndex<Id...>
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 candidate(candidate_alloc);
         ddc::Chunk prod_alloc(
-                sil::tensor::tensor_prod_domain(proj.domain(), candidate.domain()),
+                sil::tensor::natural_tensor_prod_domain(proj.domain(), candidate.domain()),
                 ddc::HostAllocator<double>());
         sil::tensor::Tensor<
                 double,
-                sil::tensor::tensor_prod_domain_t<
+                sil::tensor::natural_tensor_prod_domain_t<
                         typename YoungTableau::template projector_domain<Id...>,
                         ddc::DiscreteDomain<Id...>>,
                 Kokkos::layout_right,
@@ -978,11 +978,11 @@ struct Projector<
 
             // Extract the symmetric part (for the row) of the projector (requires an intermediate prod tensor)
             ddc::Chunk prod_alloc(
-                    tensor_prod_domain(sym.domain(), proj.domain()),
+                    natural_tensor_prod_domain(sym.domain(), proj.domain()),
                     ddc::HostAllocator<double>());
             sil::tensor::Tensor<
                     double,
-                    sil::tensor::tensor_prod_domain_t<
+                    sil::tensor::natural_tensor_prod_domain_t<
                             ddc::DiscreteDomain<symmetrizer_index_t<Id, Id...>...>,
                             ddc::DiscreteDomain<Id...>>,
                     Kokkos::layout_right,
