@@ -90,7 +90,7 @@ jobs:
           cmake \
               -DSIMILIE_BUILD_DOCUMENTATION=ON \
               -DCMAKE_CXX_STANDARD=23 \
-              -DDOXYGEN_EXTRACT_ALL=NO \
+              -DDOXYGEN_EXTRACT_ALL=YES \
               -DDOXYGEN_WARN_IF_UNDOCUMENTED=YES \
               -DDOXYGEN_WARN_IF_DOC_ERROR=YES \
               -DDOXYGEN_WARN_IF_INCOMPLETE_DOC=YES \
