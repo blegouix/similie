@@ -14,7 +14,7 @@ namespace sil {
 namespace csr {
 
 // Only natural indexing supported
-template <class HeadTensorIndex, class... TailTensorIndex>
+template <tensor::TensorIndex HeadTensorIndex, tensor::TensorNatIndex... TailTensorIndex>
 class CsrDynamic
 {
 private:
@@ -135,7 +135,7 @@ public:
 };
 
 // Convert Csr to dense tensor
-template <class HeadId, class... TailId>
+template <tensor::TensorIndex HeadId, tensor::TensorNatIndex... TailId>
 sil::tensor::Tensor<
         double,
         ddc::DiscreteDomain<HeadId, TailId...>,

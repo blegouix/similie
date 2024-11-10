@@ -34,7 +34,10 @@ struct ArrayOfVectorsToArrayOfArrays<std::index_sequence<I...>>
 } // namespace detail
 
 // Only natural indexing supported
-template <std::size_t N, class HeadTensorIndex, class... TailTensorIndex>
+template <
+        std::size_t N,
+        tensor::TensorIndex HeadTensorIndex,
+        tensor::TensorNatIndex... TailTensorIndex>
 class Csr
 {
 private:
@@ -91,7 +94,10 @@ public:
 /*
  Vector-Csr multiplication 
  */
-template <std::size_t N, class HeadTensorIndex, class... TailTensorIndex>
+template <
+        std::size_t N,
+        tensor::TensorIndex HeadTensorIndex,
+        tensor::TensorNatIndex... TailTensorIndex>
 sil::tensor::Tensor<
         double,
         ddc::DiscreteDomain<TailTensorIndex...>,
@@ -132,7 +138,10 @@ tensor_prod(
 /*
  Csr-dense multiplication 
  */
-template <std::size_t N, class HeadTensorIndex, class... TailTensorIndex>
+template <
+        std::size_t N,
+        tensor::TensorIndex HeadTensorIndex,
+        tensor::TensorNatIndex... TailTensorIndex>
 sil::tensor::Tensor<
         double,
         ddc::DiscreteDomain<HeadTensorIndex>,

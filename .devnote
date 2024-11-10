@@ -59,8 +59,6 @@ using projector_index_t = ProjectorIndex<
 
 - sil::tensor::detail::Access implementation is not complete 
 - Partial CTAD works for function. Check if it can simplify some implementations
-- static_assert sizeof...(OldIndexes)==sizeof...(NewIndexes) in RelabelizeIndexes
-- static_asserts everywhere, ie in InplaceApplyMetric
 - Primary-specialization is given by not writing <>. Maybe it can simplify some implementation
 - tests for relabelize_indexes and relabelize_metric
 - Unify TensorAccessor::access_element() functions. Also get<Dims...>() in Tensor ?
