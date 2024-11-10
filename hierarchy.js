@@ -11,8 +11,8 @@ var hierarchy =
       [ "sil::misc::is_specialization_of< T, U >", "structsil_1_1misc_1_1is__specialization__of.html", null ]
     ] ],
     [ "sil::mesher::Mesher< D, CDim >", "classsil_1_1mesher_1_1Mesher.html", null ],
-    [ "sil::tensor::MetricIndex1", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1MetricIndex1", null ],
-    [ "sil::tensor::MetricIndex2", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1MetricIndex2", null ],
+    [ "sil::tensor::MetricIndex1", "structsil_1_1tensor_1_1MetricIndex1.html", null ],
+    [ "sil::tensor::MetricIndex2", "structsil_1_1tensor_1_1MetricIndex2.html", null ],
     [ "sil::tensor::Tensor< ElementType, SupportType, LayoutStridedPolicy, MemorySpace >", "namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor", null ],
     [ "sil::tensor::TensorAccessor< Index >", "classsil_1_1tensor_1_1TensorAccessor.html", null ],
     [ "sil::tensor::TensorAntisymmetricIndex< TensorIndex >", "structsil_1_1tensor_1_1TensorAntisymmetricIndex.html", null ],

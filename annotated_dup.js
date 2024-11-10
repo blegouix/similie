@@ -15,8 +15,8 @@ var annotated_dup =
       [ "tensor", "namespacesil_1_1tensor.html", [
         [ "Contravariant", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Contravariant", null ],
         [ "Covariant", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Covariant", null ],
-        [ "MetricIndex1", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1MetricIndex1", null ],
-        [ "MetricIndex2", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1MetricIndex2", null ],
+        [ "MetricIndex1", "structsil_1_1tensor_1_1MetricIndex1.html", null ],
+        [ "MetricIndex2", "structsil_1_1tensor_1_1MetricIndex2.html", null ],
         [ "Tensor", "namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor", null ],
         [ "Tensor< ElementType, ddc::DiscreteDomain< DDim... >, LayoutStridedPolicy, MemorySpace >", "classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html", "classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c" ],
         [ "TensorAccessor", "classsil_1_1tensor_1_1TensorAccessor.html", "classsil_1_1tensor_1_1TensorAccessor" ],
