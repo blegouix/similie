@@ -9,6 +9,8 @@
 
 #include "csr.hpp"
 #include "csr_dynamic.hpp"
+#include "prime.hpp"
+#include "specialization.hpp"
 #include "stride.hpp"
 #include "tensor_impl.hpp"
 
@@ -427,18 +429,12 @@ struct IrrepDim<
     }
 };
 
-// Type of index used by projectors or symmetrizers
-template <class Parent>
-struct declare_deriv : Parent
-{
-};
-
 } // namespace detail
 
 /**
  * YoungTableau class
  */
-template <std::size_t Dimension, class TableauSeq>
+template <std::size_t Dimension, misc::Specialization<YoungTableauSeq> TableauSeq>
 class YoungTableau
 {
 public:
@@ -497,7 +493,7 @@ private:
 
 public:
     template <class... Id>
-    using projector_domain = ddc::DiscreteDomain<detail::declare_deriv<Id>..., Id...>;
+    using projector_domain = ddc::DiscreteDomain<tensor::prime<Id>..., Id...>;
 
     template <class... Id>
     static auto projector();
@@ -544,7 +540,7 @@ template <std::size_t... Id>
 struct NaturalIndex<std::index_sequence<Id...>>
 {
     template <std::size_t RankId>
-    struct type : sil::tensor::TensorNaturalIndex<Dummy<Id>...>
+    struct type : tensor::TensorNaturalIndex<Dummy<Id>...>
     {
     };
 };
@@ -555,7 +551,7 @@ struct DummyIndex;
 template <std::size_t... Id, std::size_t... RankId>
 struct DummyIndex<std::index_sequence<Id...>, std::index_sequence<RankId...>>
 {
-    using type = sil::tensor::TensorFullIndex<
+    using type = tensor::TensorFullIndex<
             typename NaturalIndex<std::index_sequence<Id...>>::template type<RankId>...>;
 };
 
@@ -570,18 +566,17 @@ template <
         class LayoutStridedPolicy,
         class MemorySpace,
         class BasisId>
-sil::tensor::Tensor<ElementType, ddc::DiscreteDomain<Id...>, LayoutStridedPolicy, MemorySpace>
+tensor::Tensor<ElementType, ddc::DiscreteDomain<Id...>, LayoutStridedPolicy, MemorySpace>
 orthogonalize(
-        sil::tensor::
-                Tensor<ElementType, ddc::DiscreteDomain<Id...>, LayoutStridedPolicy, MemorySpace>
-                        tensor,
+        tensor::Tensor<ElementType, ddc::DiscreteDomain<Id...>, LayoutStridedPolicy, MemorySpace>
+                tensor,
         sil::csr::CsrDynamic<BasisId, Id...> basis,
         std::size_t max_basis_id)
 {
     ddc::Chunk eigentensor_alloc(
             ddc::DiscreteDomain<BasisId, Id...>(basis.domain()),
             ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
+    tensor::Tensor<
             double,
             ddc::DiscreteDomain<BasisId, Id...>,
             Kokkos::layout_right,
@@ -593,22 +588,21 @@ orthogonalize(
         sil::csr::csr2dense(eigentensor, basis.get(elem));
 
         ddc::Chunk scalar_prod_alloc(ddc::DiscreteDomain<> {}, ddc::HostAllocator<double>());
-        sil::tensor::Tensor<
+        tensor::Tensor<
                 double,
                 ddc::DiscreteDomain<>,
                 Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 scalar_prod(scalar_prod_alloc);
-        sil::tensor::
-                tensor_prod(scalar_prod, tensor, eigentensor[ddc::DiscreteElement<BasisId>(0)]);
+        tensor::tensor_prod(scalar_prod, tensor, eigentensor[ddc::DiscreteElement<BasisId>(0)]);
         ddc::Chunk norm_squared_alloc(ddc::DiscreteDomain<> {}, ddc::HostAllocator<double>());
-        sil::tensor::Tensor<
+        tensor::Tensor<
                 double,
                 ddc::DiscreteDomain<>,
                 Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 norm_squared(norm_squared_alloc);
-        sil::tensor::tensor_prod(norm_squared, eigentensor, eigentensor);
+        tensor::tensor_prod(norm_squared, eigentensor, eigentensor);
 
         eigentensor *= -1. * scalar_prod(ddc::DiscreteElement<>())
                        / norm_squared(ddc::DiscreteElement<>());
@@ -637,7 +631,7 @@ std::vector<bool> index_hamming_weight_code(std::size_t index, std::size_t lengt
 }
 
 // Dummy tag used by OrthonormalBasisSubspaceEigenvalueOne (coalescent dimension of the CsrDynamic storage)
-struct BasisId : sil::tensor::TensorNaturalIndex<>
+struct BasisId : tensor::TensorNaturalIndex<>
 {
 };
 
@@ -645,7 +639,7 @@ template <class Ids>
 struct OrthonormalBasisSubspaceEigenvalueOne;
 
 template <class... Id>
-struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::TensorFullIndex<Id...>>
+struct OrthonormalBasisSubspaceEigenvalueOne<tensor::TensorFullIndex<Id...>>
 {
     template <class YoungTableau>
     static std::pair<sil::csr::CsrDynamic<BasisId, Id...>, sil::csr::CsrDynamic<BasisId, Id...>>
@@ -653,21 +647,21 @@ struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::TensorFullIndex<Id...>
     {
         auto [proj_alloc, proj] = tableau.template projector<Id...>();
 
-        sil::tensor::TensorAccessor<Id...> candidate_accessor;
+        tensor::TensorAccessor<Id...> candidate_accessor;
         ddc::DiscreteDomain<Id...> candidate_dom = candidate_accessor.mem_domain();
         ddc::Chunk candidate_alloc(candidate_dom, ddc::HostAllocator<double>());
-        sil::tensor::Tensor<
+        tensor::Tensor<
                 double,
                 ddc::DiscreteDomain<Id...>,
                 Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 candidate(candidate_alloc);
         ddc::Chunk prod_alloc(
-                sil::tensor::natural_tensor_prod_domain(proj.domain(), candidate.domain()),
+                tensor::natural_tensor_prod_domain(proj.domain(), candidate.domain()),
                 ddc::HostAllocator<double>());
-        sil::tensor::Tensor<
+        tensor::Tensor<
                 double,
-                sil::tensor::natural_tensor_prod_domain_t<
+                tensor::natural_tensor_prod_domain_t<
                         typename YoungTableau::template projector_domain<Id...>,
                         ddc::DiscreteDomain<Id...>>,
                 Kokkos::layout_right,
@@ -693,7 +687,7 @@ struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::TensorFullIndex<Id...>
                         (sil::misc::detail::stride<Id, Id...>() * elem.template uid<Id>()) + ...)];
             });
 
-            sil::tensor::tensor_prod(prod, proj, candidate);
+            tensor::tensor_prod(prod, proj, candidate);
             Kokkos::deep_copy(
                     candidate.allocation_kokkos_view(),
                     prod.allocation_kokkos_view()); // We rely on Kokkos::deep_copy in place of ddc::parallel_deepcopy to avoid type verification of the type dimensions
@@ -707,13 +701,13 @@ struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::TensorFullIndex<Id...>
                         [&](ddc::DiscreteElement<Id...> elem) { return candidate(elem) > 1e-6; })) {
                 ddc::Chunk
                         norm_squared_alloc(ddc::DiscreteDomain<> {}, ddc::HostAllocator<double>());
-                sil::tensor::Tensor<
+                tensor::Tensor<
                         double,
                         ddc::DiscreteDomain<>,
                         Kokkos::layout_right,
                         Kokkos::DefaultHostExecutionSpace::memory_space>
                         norm_squared(norm_squared_alloc);
-                sil::tensor::tensor_prod(norm_squared, candidate, candidate);
+                tensor::tensor_prod(norm_squared, candidate, candidate);
                 ddc::parallel_for_each(candidate.domain(), [&](ddc::DiscreteElement<Id...> elem) {
                     candidate(elem) /= Kokkos::sqrt(norm_squared(ddc::DiscreteElement<>()));
                 });
@@ -735,7 +729,7 @@ struct OrthonormalBasisSubspaceEigenvalueOne<sil::tensor::TensorFullIndex<Id...>
 
 } // namespace detail
 
-template <std::size_t Dimension, class TableauSeq>
+template <std::size_t Dimension, misc::Specialization<YoungTableauSeq> TableauSeq>
 YoungTableau<Dimension, TableauSeq>::YoungTableau()
 {
     // Check if the irrep is available in the dictionnary
@@ -794,7 +788,7 @@ namespace detail {
 template <class OId, class... Id>
 using symmetrizer_index_t = std::conditional_t<
         (ddc::type_seq_rank_v<OId, ddc::detail::TypeSeq<Id...>> < (sizeof...(Id) / 2)),
-        declare_deriv<OId>,
+        tensor::prime<OId>,
         ddc::type_seq_element_t<
                 static_cast<std::size_t>(
                         std::
@@ -809,7 +803,7 @@ template <std::size_t Dimension, std::size_t Rank, class... NaturalId>
 class TrFunctor
 {
 private:
-    using TensorType = sil::tensor::Tensor<
+    using TensorType = tensor::Tensor<
             double,
             ddc::DiscreteDomain<NaturalId...>,
             Kokkos::layout_right,
@@ -860,13 +854,13 @@ static int permutation_parity(std::array<std::size_t, Nt> lst)
 }
 
 template <std::size_t Dimension, bool AntiSym, class... Id>
-static sil::tensor::Tensor<
+static tensor::Tensor<
         double,
         ddc::DiscreteDomain<Id...>,
         Kokkos::layout_right,
         Kokkos::DefaultHostExecutionSpace::memory_space>
 fill_symmetrizer(
-        sil::tensor::Tensor<
+        tensor::Tensor<
                 double,
                 ddc::DiscreteDomain<Id...>,
                 Kokkos::layout_right,
@@ -874,7 +868,7 @@ fill_symmetrizer(
         std::array<std::size_t, sizeof...(Id) / 2> idx_to_permute)
 {
     ddc::Chunk tr_alloc(sym.domain(), ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
+    tensor::Tensor<
             double,
             ddc::DiscreteDomain<Id...>,
             Kokkos::layout_right,
@@ -934,12 +928,12 @@ struct Projector<
         AntiSym>
 {
     template <class... Id>
-    static sil::tensor::Tensor<
+    static tensor::Tensor<
             double,
             ddc::DiscreteDomain<Id...>,
             Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
-    run(sil::tensor::Tensor<
+    run(tensor::Tensor<
             double,
             ddc::DiscreteDomain<Id...>,
             Kokkos::layout_right,
@@ -947,12 +941,12 @@ struct Projector<
     {
         if constexpr (sizeof...(ElemOfHeadRow) >= 2) {
             // Allocate & build a symmetric projector for the row
-            sil::tensor::TensorAccessor<symmetrizer_index_t<Id, Id...>...> sym_accessor;
+            tensor::TensorAccessor<symmetrizer_index_t<Id, Id...>...> sym_accessor;
             ddc::DiscreteDomain<symmetrizer_index_t<Id, Id...>...> sym_dom
                     = sym_accessor.mem_domain();
 
             ddc::Chunk sym_alloc(sym_dom, ddc::HostAllocator<double>());
-            sil::tensor::Tensor<
+            tensor::Tensor<
                     double,
                     ddc::DiscreteDomain<symmetrizer_index_t<Id, Id...>...>,
                     Kokkos::layout_right,
@@ -978,15 +972,15 @@ struct Projector<
             ddc::Chunk prod_alloc(
                     natural_tensor_prod_domain(sym.domain(), proj.domain()),
                     ddc::HostAllocator<double>());
-            sil::tensor::Tensor<
+            tensor::Tensor<
                     double,
-                    sil::tensor::natural_tensor_prod_domain_t<
+                    tensor::natural_tensor_prod_domain_t<
                             ddc::DiscreteDomain<symmetrizer_index_t<Id, Id...>...>,
                             ddc::DiscreteDomain<Id...>>,
                     Kokkos::layout_right,
                     Kokkos::DefaultHostExecutionSpace::memory_space>
                     prod(prod_alloc);
-            sil::tensor::tensor_prod(prod, sym, proj);
+            tensor::tensor_prod(prod, sym, proj);
             Kokkos::deep_copy(
                     proj.allocation_kokkos_view(),
                     prod.allocation_kokkos_view()); // We rely on Kokkos::deep_copy in place of ddc::parallel_deepcopy to avoid type verification of the type dimensions
@@ -1001,19 +995,19 @@ struct Projector<
 
 } // namespace detail
 
-template <std::size_t Dimension, class TableauSeq>
+template <std::size_t Dimension, misc::Specialization<YoungTableauSeq> TableauSeq>
 template <class... Id>
 auto YoungTableau<Dimension, TableauSeq>::projector()
 {
     static_assert(sizeof...(Id) == s_r);
-    sil::tensor::TensorAccessor<detail::declare_deriv<Id>..., Id...> proj_accessor;
-    ddc::DiscreteDomain<detail::declare_deriv<Id>..., Id...> proj_dom = proj_accessor.mem_domain();
+    tensor::TensorAccessor<tensor::prime<Id>..., Id...> proj_accessor;
+    ddc::DiscreteDomain<tensor::prime<Id>..., Id...> proj_dom = proj_accessor.mem_domain();
 
     // Allocate a projector and fill it as an identity tensor
     ddc::Chunk proj_alloc(proj_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
+    tensor::Tensor<
             double,
-            ddc::DiscreteDomain<detail::declare_deriv<Id>..., Id...>,
+            ddc::DiscreteDomain<tensor::prime<Id>..., Id...>,
             Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             proj(proj_alloc);
@@ -1024,7 +1018,7 @@ auto YoungTableau<Dimension, TableauSeq>::projector()
     }
     ddc::for_each(
             proj.domain(),
-            detail::TrFunctor<s_d, s_r, detail::declare_deriv<Id>..., Id...>(proj, idx_to_permute));
+            detail::TrFunctor<s_d, s_r, tensor::prime<Id>..., Id...>(proj, idx_to_permute));
 
     // Build the projector
     detail::Projector<tableau_seq, s_d>::run(proj);
@@ -1033,7 +1027,7 @@ auto YoungTableau<Dimension, TableauSeq>::projector()
 }
 
 // Access to u and v Csr, allowing to ie. compress or uncompress a tensor with internal symmetries
-template <std::size_t Dimension, class TableauSeq>
+template <std::size_t Dimension, misc::Specialization<YoungTableauSeq> TableauSeq>
 template <class BasisId, class... Id>
 constexpr sil::csr::Csr<YoungTableau<Dimension, TableauSeq>::n_nonzeros_in_irrep(), BasisId, Id...>
 YoungTableau<Dimension, TableauSeq>::u(ddc::DiscreteDomain<Id...> restricted_domain)
@@ -1065,7 +1059,7 @@ YoungTableau<Dimension, TableauSeq>::u(ddc::DiscreteDomain<Id...> restricted_dom
     }
 }
 
-template <std::size_t Dimension, class TableauSeq>
+template <std::size_t Dimension, misc::Specialization<YoungTableauSeq> TableauSeq>
 template <class BasisId, class... Id>
 constexpr sil::csr::Csr<YoungTableau<Dimension, TableauSeq>::n_nonzeros_in_irrep(), BasisId, Id...>
 YoungTableau<Dimension, TableauSeq>::v(ddc::DiscreteDomain<Id...> restricted_domain)
@@ -1183,7 +1177,7 @@ struct BitCastArrayOfArrays<T, N, std::index_sequence<I...>>
 
 } // namespace detail
 
-template <std::size_t Dimension, class TableauSeq>
+template <std::size_t Dimension, misc::Specialization<YoungTableauSeq> TableauSeq>
 consteval auto YoungTableau<Dimension, TableauSeq>::load_irrep()
 {
     static constexpr std::string_view str_u_coalesc_idx(detail::load_irrep_line_for_tag<0>(s_tag));
@@ -1335,7 +1329,7 @@ constexpr auto add_dimension(const std::array<char, size>& array, std::size_t d)
 
 } // namespace detail
 
-template <std::size_t Dimension, class TableauSeq>
+template <std::size_t Dimension, misc::Specialization<YoungTableauSeq> TableauSeq>
 constexpr std::string YoungTableau<Dimension, TableauSeq>::generate_tag()
 {
     static constexpr std::tuple tableau = detail::YoungTableauToArray<tableau_seq>::run();
@@ -1383,7 +1377,7 @@ struct PrintYoungTableauSeq<YoungTableauSeq<>>
 
 } // namespace detail
 
-template <std::size_t Dimension, class TableauSeq>
+template <std::size_t Dimension, misc::Specialization<YoungTableauSeq> TableauSeq>
 std::ostream& operator<<(std::ostream& os, YoungTableau<Dimension, TableauSeq> const& tableau)
 {
     std::string str = "";
