@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2024 Baptiste Legouix
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 #pragma once
 
@@ -40,15 +40,15 @@ template <class OTensorNaturalIndex, class... TensorNaturalIndex>
 static constexpr std::size_t next_stride()
 {
     if constexpr (
-            ddc::type_seq_rank_v<
-                    OTensorNaturalIndex,
-                    ddc::detail::TypeSeq<TensorNaturalIndex...>> == 0) {
+            ddc::type_seq_rank_v<OTensorNaturalIndex, ddc::detail::TypeSeq<TensorNaturalIndex...>>
+            == 0) {
         return std::numeric_limits<std::size_t>::max();
     } else {
         return (stride_factor<
                         ddc::type_seq_rank_v<
                                 OTensorNaturalIndex,
-                                ddc::detail::TypeSeq<TensorNaturalIndex...>> - 1,
+                                ddc::detail::TypeSeq<TensorNaturalIndex...>>
+                                - 1,
                         TensorNaturalIndex,
                         TensorNaturalIndex...>()
                 * ...);

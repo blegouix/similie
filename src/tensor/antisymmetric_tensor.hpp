@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2024 Baptiste Legouix
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 #pragma once
 
@@ -70,15 +70,16 @@ struct TensorAntisymmetricIndex
                                                                ddc::detail::TypeSeq<TensorIndex...>>
                                     ? 0
                                     : boost::math::binomial_coefficient<double>(
-                                            TensorIndex::mem_size()
-                                                    - sorted_ids[ddc::type_seq_rank_v<
-                                                            TensorIndex,
-                                                            ddc::detail::TypeSeq<TensorIndex...>>]
-                                                    - 1,
-                                            sizeof...(TensorIndex)
-                                                    - ddc::type_seq_rank_v<
-                                                            TensorIndex,
-                                                            ddc::detail::TypeSeq<TensorIndex...>>))
+                                              TensorIndex::mem_size()
+                                                      - sorted_ids[ddc::type_seq_rank_v<
+                                                              TensorIndex,
+                                                              ddc::detail::TypeSeq<TensorIndex...>>]
+                                                      - 1,
+                                              sizeof...(TensorIndex)
+                                                      - ddc::type_seq_rank_v<
+                                                              TensorIndex,
+                                                              ddc::detail::TypeSeq<
+                                                                      TensorIndex...>>))
                            + ...)
                         - 1)});
     }

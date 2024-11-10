@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2024 Baptiste Legouix
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 #pragma once
 
@@ -228,17 +228,18 @@ tensor_prod(
                           uncharacterize<ddc::to_type_seq_t<typename Index2::subindices_domain_t>>,
                           uncharacterize<ddc::detail::TypeSeq<ProdDDim...>>>>);
     static_assert(
-            std::is_same_v < ddc::type_seq_remove_t<
-                    ddc::to_type_seq_t<typename Index1::subindices_domain_t>,
-                    ddc::to_type_seq_t<typename Index2::subindices_domain_t>>,
-            ddc::to_type_seq_t<
-                    typename Index1::
-                            subindices_domain_t>> && std::is_same_v < ddc::type_seq_remove_t<
-                    ddc::to_type_seq_t<typename Index2::subindices_domain_t>,
-                    ddc::to_type_seq_t<typename Index1::subindices_domain_t>>,
-            ddc::to_type_seq_t<
-                    typename Index2::
-                            subindices_domain_t>>); // tensor1 and tensor2 should not have any subindex in common because their characters are different
+            std::is_same_v<
+                    ddc::type_seq_remove_t<
+                            ddc::to_type_seq_t<typename Index1::subindices_domain_t>,
+                            ddc::to_type_seq_t<typename Index2::subindices_domain_t>>,
+                    ddc::to_type_seq_t<typename Index1::subindices_domain_t>>
+            && std::is_same_v<
+                    ddc::type_seq_remove_t<
+                            ddc::to_type_seq_t<typename Index2::subindices_domain_t>,
+                            ddc::to_type_seq_t<typename Index1::subindices_domain_t>>,
+                    ddc::to_type_seq_t<
+                            typename Index2::
+                                    subindices_domain_t>>); // tensor1 and tensor2 should not have any subindex in common because their characters are different
     detail::TensorProd2<
             uncharacterize<Index1>,
             uncharacterize<Index2>,
@@ -372,17 +373,23 @@ tensor_prod(
                           uncharacterize<ddc::to_type_seq_t<ddc::cartesian_prod_t<
                                   typename ProdIndex::subindices_domain_t...>>>>>);
     static_assert(
-            std::is_same_v < ddc::type_seq_remove_t<
-                    ddc::to_type_seq_t<ddc::cartesian_prod_t<typename Index1::subindices_domain_t...>>,
-                    ddc::to_type_seq_t<ddc::cartesian_prod_t<typename Index2::subindices_domain_t...>>>,
-            ddc::to_type_seq_t<
-                    ddc::cartesian_prod_t<typename Index1::
-                            subindices_domain_t...>>> && std::is_same_v < ddc::type_seq_remove_t<
-                    ddc::to_type_seq_t<ddc::cartesian_prod_t<typename Index2::subindices_domain_t...>>,
-                    ddc::to_type_seq_t<ddc::cartesian_prod_t<typename Index1::subindices_domain_t...>>>,
-            ddc::to_type_seq_t<
-                    ddc::cartesian_prod_t<typename Index2::
-                            subindices_domain_t...>>>); // tensor1 and tensor2 should not have any subindex in common because their characters are different
+            std::is_same_v<
+                    ddc::type_seq_remove_t<
+                            ddc::to_type_seq_t<
+                                    ddc::cartesian_prod_t<typename Index1::subindices_domain_t...>>,
+                            ddc::to_type_seq_t<ddc::cartesian_prod_t<
+                                    typename Index2::subindices_domain_t...>>>,
+                    ddc::to_type_seq_t<
+                            ddc::cartesian_prod_t<typename Index1::subindices_domain_t...>>>
+            && std::is_same_v<
+                    ddc::type_seq_remove_t<
+                            ddc::to_type_seq_t<
+                                    ddc::cartesian_prod_t<typename Index2::subindices_domain_t...>>,
+                            ddc::to_type_seq_t<ddc::cartesian_prod_t<
+                                    typename Index1::subindices_domain_t...>>>,
+                    ddc::to_type_seq_t<ddc::cartesian_prod_t<
+                            typename Index2::
+                                    subindices_domain_t...>>>); // tensor1 and tensor2 should not have any subindex in common because their characters are different
 
     detail::TensorProd3<
             uncharacterize<ddc::detail::TypeSeq<ProdIndex...>>,

@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2024 Baptiste Legouix
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 #pragma once
 
@@ -85,22 +85,14 @@ struct TensorNaturalIndex
 };
 
 template <class DDim>
-concept TensorIndex = requires
-{
-    {
-        DDim::is_tensor_index
-        } -> std::convertible_to<bool>;
-}
-&&DDim::is_tensor_index;
+concept TensorIndex = requires {
+    { DDim::is_tensor_index } -> std::convertible_to<bool>;
+} && DDim::is_tensor_index;
 
 template <class DDim>
-concept TensorNatIndex = requires
-{
-    {
-        DDim::is_tensor_natural_index
-        } -> std::convertible_to<bool>;
-}
-&&DDim::is_tensor_natural_index;
+concept TensorNatIndex = requires {
+    { DDim::is_tensor_natural_index } -> std::convertible_to<bool>;
+} && DDim::is_tensor_natural_index;
 
 // Helpers to build the access_id() function which computes the ids of subindices of an index. This cumbersome logic is necessary because subindices do not necessarily have the same rank.
 namespace detail {
@@ -449,11 +441,13 @@ namespace ddc {
 
 template <class ElementType, class SupportType, class LayoutStridedPolicy, class MemorySpace>
 inline constexpr bool enable_chunk<
-        sil::tensor::Tensor<ElementType, SupportType, LayoutStridedPolicy, MemorySpace>> = true;
+        sil::tensor::Tensor<ElementType, SupportType, LayoutStridedPolicy, MemorySpace>>
+        = true;
 
 template <class ElementType, class SupportType, class LayoutStridedPolicy, class MemorySpace>
 inline constexpr bool enable_borrowed_chunk<
-        sil::tensor::Tensor<ElementType, SupportType, LayoutStridedPolicy, MemorySpace>> = true;
+        sil::tensor::Tensor<ElementType, SupportType, LayoutStridedPolicy, MemorySpace>>
+        = true;
 
 } // namespace ddc
 

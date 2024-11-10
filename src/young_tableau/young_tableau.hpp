@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2024 Baptiste Legouix
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 #pragma once
 
@@ -800,10 +800,8 @@ using symmetrizer_index_t = std::conditional_t<
                         std::
                                 max(static_cast<std::ptrdiff_t>(0),
                                     static_cast<std::ptrdiff_t>(
-                                            ddc::type_seq_rank_v<
-                                                    OId,
-                                                    ddc::detail::TypeSeq<
-                                                            Id...>> - (sizeof...(Id) / 2)))),
+                                            ddc::type_seq_rank_v<OId, ddc::detail::TypeSeq<Id...>>
+                                            - (sizeof...(Id) / 2)))),
                 ddc::detail::TypeSeq<Id...>>>;
 
 // Functor to fill identity or transpose projectors
