@@ -11,8 +11,6 @@ var hierarchy =
       [ "sil::misc::is_specialization_of< T, U >", "structsil_1_1misc_1_1is__specialization__of.html", null ]
     ] ],
     [ "sil::mesher::Mesher< D, CDim >", "classsil_1_1mesher_1_1Mesher.html", null ],
-    [ "sil::tensor::MetricIndex1", "structsil_1_1tensor_1_1MetricIndex1.html", null ],
-    [ "sil::tensor::MetricIndex2", "structsil_1_1tensor_1_1MetricIndex2.html", null ],
     [ "sil::tensor::Tensor< ElementType, SupportType, LayoutStridedPolicy, MemorySpace >", "namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor", null ],
     [ "sil::tensor::TensorAccessor< Index >", "classsil_1_1tensor_1_1TensorAccessor.html", null ],
     [ "sil::tensor::TensorAntisymmetricIndex< TensorIndex >", "structsil_1_1tensor_1_1TensorAntisymmetricIndex.html", null ],
@@ -22,7 +20,10 @@ var hierarchy =
     [ "sil::tensor::TensorLorentzianSignIndex< Q, TensorIndex >", "structsil_1_1tensor_1_1TensorLorentzianSignIndex.html", null ],
     [ "sil::tensor::TensorNaturalIndex< CDim >", "structsil_1_1tensor_1_1TensorNaturalIndex.html", null ],
     [ "sil::tensor::TensorNaturalIndex< Dummy< Id >... >", "structsil_1_1tensor_1_1TensorNaturalIndex.html", null ],
-    [ "sil::tensor::TensorNaturalIndex<>", "structsil_1_1tensor_1_1TensorNaturalIndex.html", null ],
+    [ "sil::tensor::TensorNaturalIndex<>", "structsil_1_1tensor_1_1TensorNaturalIndex.html", [
+      [ "sil::tensor::MetricIndex1", "structsil_1_1tensor_1_1MetricIndex1.html", null ],
+      [ "sil::tensor::MetricIndex2", "structsil_1_1tensor_1_1MetricIndex2.html", null ]
+    ] ],
     [ "sil::tensor::TensorSymmetricIndex< TensorIndex >", "structsil_1_1tensor_1_1TensorSymmetricIndex.html", null ],
     [ "sil::tensor::TensorYoungTableauIndex< YoungTableau, TensorIndex >", "structsil_1_1tensor_1_1TensorYoungTableauIndex.html", null ],
     [ "std::true_type", null, [
