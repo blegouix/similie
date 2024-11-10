@@ -427,9 +427,7 @@ struct LambdaMemElem<InterestDim>
 } // namespace detail
 
 template <class ElementType, class SupportType, class LayoutStridedPolicy, class MemorySpace>
-class Tensor
-{
-};
+class Tensor;
 
 } // namespace tensor
 
