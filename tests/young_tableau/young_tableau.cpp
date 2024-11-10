@@ -97,7 +97,7 @@ TEST(YoungTableau, 1_2)
             Kokkos::DefaultHostExecutionSpace::memory_space>
             prod(prod_alloc);
 
-    sil::tensor::natural_tensor_prod(prod, proj, tensor);
+    sil::tensor::tensor_prod(prod, proj, tensor);
 
     sil::tensor::tensor_accessor_for_domain_t<sil::tensor::natural_tensor_prod_domain_t<
             typename decltype(young_tableau)::projector_domain<Mu, Nu>,
@@ -173,7 +173,7 @@ TEST(YoungTableau, 1l2)
             Kokkos::DefaultHostExecutionSpace::memory_space>
             prod(prod_alloc);
 
-    sil::tensor::natural_tensor_prod(prod, proj, tensor);
+    sil::tensor::tensor_prod(prod, proj, tensor);
 
     sil::tensor::tensor_accessor_for_domain_t<sil::tensor::natural_tensor_prod_domain_t<
             typename decltype(young_tableau)::projector_domain<Mu, Nu>,
@@ -263,7 +263,7 @@ TEST(YoungTableau, 1_2_3)
             Kokkos::DefaultHostExecutionSpace::memory_space>
             prod(prod_alloc);
 
-    sil::tensor::natural_tensor_prod(prod, proj, tensor);
+    sil::tensor::tensor_prod(prod, proj, tensor);
 
     sil::tensor::tensor_accessor_for_domain_t<sil::tensor::natural_tensor_prod_domain_t<
             typename decltype(young_tableau)::projector_domain<Alpha, Beta, Gamma>,
@@ -382,7 +382,7 @@ TEST(YoungTableau, 1l2l3)
             Kokkos::DefaultHostExecutionSpace::memory_space>
             prod(prod_alloc);
 
-    sil::tensor::natural_tensor_prod(prod, proj, tensor);
+    sil::tensor::tensor_prod(prod, proj, tensor);
 
     sil::tensor::tensor_accessor_for_domain_t<sil::tensor::natural_tensor_prod_domain_t<
             typename decltype(young_tableau)::projector_domain<Alpha, Beta, Gamma>,
@@ -503,7 +503,7 @@ TEST(YoungTableau, 1_2l3)
             Kokkos::DefaultHostExecutionSpace::memory_space>
             prod(prod_alloc);
 
-    sil::tensor::natural_tensor_prod(prod, proj, tensor);
+    sil::tensor::tensor_prod(prod, proj, tensor);
 
     sil::tensor::tensor_accessor_for_domain_t<sil::tensor::natural_tensor_prod_domain_t<
             typename decltype(young_tableau)::projector_domain<Alpha, Beta, Gamma>,
@@ -577,7 +577,7 @@ TEST(YoungTableau, 1_3l2)
             Kokkos::DefaultHostExecutionSpace::memory_space>
             prod(prod_alloc);
 
-    sil::tensor::natural_tensor_prod(prod, proj, tensor);
+    sil::tensor::tensor_prod(prod, proj, tensor);
 
     sil::tensor::tensor_accessor_for_domain_t<sil::tensor::natural_tensor_prod_domain_t<
             typename decltype(young_tableau)::projector_domain<Alpha, Beta, Gamma>,
@@ -706,7 +706,7 @@ TEST(YoungTableau, 1l3_2l4)
             Kokkos::DefaultHostExecutionSpace::memory_space>
             prod(prod_alloc);
 
-    sil::tensor::natural_tensor_prod(prod, proj, tensor);
+    sil::tensor::tensor_prod(prod, proj, tensor);
 
     sil::tensor::tensor_accessor_for_domain_t<sil::tensor::natural_tensor_prod_domain_t<
             typename decltype(young_tableau)::projector_domain<Alpha, Beta, Gamma, Delta>,

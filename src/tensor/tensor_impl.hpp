@@ -13,7 +13,8 @@ namespace tensor {
 template <class... CDim>
 struct TensorNaturalIndex
 {
-    static constexpr bool is_natural_tensor_index = true;
+    static constexpr bool is_tensor_index = true;
+    static constexpr bool is_tensor_natural_index = true;
 
     using type_seq_dimensions = ddc::detail::TypeSeq<CDim...>;
 
@@ -83,6 +84,24 @@ struct TensorNaturalIndex
     }
 };
 
+template <class DDim>
+concept TensorIndex = requires
+{
+    {
+        DDim::is_tensor_index
+        } -> std::convertible_to<bool>;
+}
+&&DDim::is_tensor_index;
+
+template <class DDim>
+concept TensorNatIndex = requires
+{
+    {
+        DDim::is_tensor_natural_index
+        } -> std::convertible_to<bool>;
+}
+&&DDim::is_tensor_natural_index;
+
 // Helpers to build the access_id() function which computes the ids of subindices of an index. This cumbersome logic is necessary because subindices do not necessarily have the same rank.
 namespace detail {
 // For Tmunu and index=nu, returns 1
@@ -139,7 +158,7 @@ struct IdFromTypeSeqDims<Index, ddc::DiscreteDomain<Subindex...>, ddc::detail::T
     static constexpr std::size_t run()
     {
         static_assert(sizeof...(Subindex) == sizeof...(CDim));
-        if constexpr (Index::is_natural_tensor_index) {
+        if constexpr (TensorNatIndex<Index>) {
             return Index::access_id(
                     ddc::type_seq_rank_v<CDim, typename Index::type_seq_dimensions>...);
         } else {
@@ -158,7 +177,7 @@ struct IdFromTypeSeqDims<Index, ddc::DiscreteDomain<Subindex...>, ddc::detail::T
 template <class Index, class IndicesTypeSeq, class... CDim>
 static constexpr std::size_t access_id() // TODO consteval. This is not compile-time atm :/
 {
-    if constexpr (Index::is_natural_tensor_index) {
+    if constexpr (TensorNatIndex<Index>) {
         return IdFromTypeSeqDims<
                 Index,
                 ddc::DiscreteDomain<Index>,
@@ -188,7 +207,7 @@ struct IdFromElem<Index, ddc::DiscreteDomain<Subindex...>>
     template <class Elem>
     static constexpr std::size_t run(Elem natural_elem)
     {
-        if constexpr (Index::is_natural_tensor_index) {
+        if constexpr (TensorNatIndex<Index>) {
             return Index::access_id(natural_elem.template uid<Index>());
         } else {
             return Index::access_id(std::array<std::size_t, sizeof...(Subindex)> {
@@ -202,7 +221,7 @@ static constexpr std::size_t access_id(
         ddc::DiscreteElement<NaturalIndex...>
                 natural_elem) // TODO consteval. This is not compile-time atm :/
 {
-    if constexpr (Index::is_natural_tensor_index) {
+    if constexpr (TensorNatIndex<Index>) {
         return IdFromElem<Index, ddc::DiscreteDomain<Index>>::run(natural_elem);
     } else {
         return IdFromElem<Index, typename Index::subindices_domain_t>::run(natural_elem);
@@ -219,7 +238,7 @@ public:
     explicit constexpr TensorAccessor();
 
     using natural_domain_t = ddc::cartesian_prod_t<std::conditional_t<
-            Index::is_natural_tensor_index,
+            TensorNatIndex<Index>,
             ddc::DiscreteDomain<Index>,
             typename Index::subindices_domain_t>...>;
 
@@ -262,7 +281,7 @@ namespace detail {
 template <class Index>
 constexpr auto natural_domain()
 {
-    if constexpr (Index::is_natural_tensor_index) {
+    if constexpr (TensorNatIndex<Index>) {
         return typename ddc::DiscreteDomain<
                 Index>(ddc::DiscreteElement<Index>(0), ddc::DiscreteVector<Index>(Index::size()));
     } else {
@@ -314,21 +333,6 @@ constexpr ddc::DiscreteElement<Index...> TensorAccessor<Index...>::access_elemen
 namespace detail {
 
 // Helpers to handle memory access and processing for particular tensor structures (ie. eventual multiplication with -1 for antisymmetry or non-stored zeros)
-template <class DDim>
-struct IsTensorIndex
-{
-    using type = std::true_type; // TODO FIX
-};
-
-template <class... SubIndex>
-struct IsTensorIndex<TensorNaturalIndex<SubIndex...>>
-{
-    using type = std::true_type;
-};
-
-template <class DDim>
-static constexpr bool is_tensor_index_v = IsTensorIndex<DDim>::type::value;
-
 template <
         class TensorField,
         class Element,
@@ -355,7 +359,7 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
          of dimensions/indices. Ie., a TensorYoungTableauIndex has to be the last of the list.
          */
         if constexpr (sizeof...(IndexTail) > 0) {
-            if constexpr (detail::is_tensor_index_v<IndexInterest>) {
+            if constexpr (TensorIndex<IndexInterest>) {
                 return IndexInterest::template process_access<TensorField, Elem, IndexInterest>(
                         [](TensorField tensor_field_, Elem elem_) -> TensorField::element_type {
                             return Access<
@@ -374,7 +378,7 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
                         IndexTail...>::run(tensor_field, elem);
             }
         } else {
-            if constexpr (detail::is_tensor_index_v<IndexInterest>) {
+            if constexpr (TensorIndex<IndexInterest>) {
                 return IndexInterest::template process_access<TensorField, Elem, IndexInterest>(
                         [](TensorField tensor_field_, Elem elem_) -> TensorField::element_type {
                             std::pair<std::vector<double>, std::vector<std::size_t>> mem_id
@@ -417,8 +421,7 @@ struct LambdaMemElem
     }
 };
 
-template <typename InterestDim>
-requires detail::is_tensor_index_v<InterestDim>
+template <TensorIndex InterestDim>
 struct LambdaMemElem<InterestDim>
 {
     static ddc::DiscreteElement<InterestDim> run(ddc::DiscreteElement<InterestDim> elem)
@@ -460,7 +463,7 @@ namespace sil {
 
 namespace tensor {
 
-// Tensor class
+/// Tensor class
 template <class ElementType, class... DDim, class LayoutStridedPolicy, class MemorySpace>
 class Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>
     : public ddc::
@@ -625,7 +628,7 @@ template <
 struct RelabelizeIndex<IndexToRelabelizeType<Arg...>, OldIndex, NewIndex>
 {
     using type = std::conditional_t<
-            IndexToRelabelizeType<Arg...>::is_natural_tensor_index,
+            TensorNatIndex<IndexToRelabelizeType<Arg...>>,
             std::conditional_t<
                     std::is_same_v<IndexToRelabelizeType<Arg...>, OldIndex>,
                     NewIndex,
@@ -1016,9 +1019,9 @@ struct NaturalTensorProd<
 } // namespace detail
 
 template <
-        class... ProdDDim,
-        class... DDim1,
-        class... DDim2,
+        TensorNatIndex... ProdDDim,
+        TensorNatIndex... DDim1,
+        TensorNatIndex... DDim2,
         class ElementType,
         class LayoutStridedPolicy,
         class MemorySpace>
@@ -1026,7 +1029,7 @@ Tensor<ElementType,
        ddc::DiscreteDomain<ProdDDim...>,
        Kokkos::layout_right,
        Kokkos::DefaultHostExecutionSpace::memory_space>
-natural_tensor_prod(
+tensor_prod(
         Tensor<ElementType,
                ddc::DiscreteDomain<ProdDDim...>,
                Kokkos::layout_right,

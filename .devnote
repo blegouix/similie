@@ -57,7 +57,6 @@ using projector_index_t = ProjectorIndex<
 - IsTensorIndex::value has to be set to false
 - rename mem_id
 - sil::tensor::detail::Access implementation is not complete 
-- specialize tensor_prod using concepts (ie. redirect to natural_tensor_prod if NaturalTensorIndex)
 - relabelize_indexes_of should be renamed relabelize_indexes_in_tensor or use concepts
 - Partial CTAD works for function. Check if it can simplify some implementations
 - static_assert sizeof...(OldIndexes)==sizeof...(NewIndexes) in RelabelizeIndexes

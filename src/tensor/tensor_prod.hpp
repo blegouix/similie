@@ -88,14 +88,14 @@ struct TensorProd<
 
         sil::tensor::uncompress(uncompressed_tensor1, tensor1);
 
-        return natural_tensor_prod(prod_tensor, uncompressed_tensor1, tensor2);
+        return tensor_prod(prod_tensor, uncompressed_tensor1, tensor2);
     }
 };
 
 } // namespace detail
 
 template <
-        class... ProdDDim,
+        TensorNatIndex... ProdDDim,
         misc::Specialization<TensorYoungTableauIndex> Index1,
         class... DDim2,
         class ElementType,
@@ -195,14 +195,14 @@ struct TensorProd2<
         sil::tensor::uncompress(uncompressed_tensor1, tensor1);
         sil::tensor::uncompress(uncompressed_tensor2, tensor2);
 
-        return natural_tensor_prod(prod_tensor, uncompressed_tensor1, uncompressed_tensor2);
+        return tensor_prod(prod_tensor, uncompressed_tensor1, uncompressed_tensor2);
     }
 };
 
 } // namespace detail
 
 template <
-        class... ProdDDim,
+        TensorNatIndex... ProdDDim,
         misc::Specialization<TensorYoungTableauIndex> Index1,
         misc::Specialization<TensorYoungTableauIndex> Index2,
         class ElementType,

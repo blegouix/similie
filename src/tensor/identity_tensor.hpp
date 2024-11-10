@@ -15,7 +15,7 @@ namespace tensor {
 template <class... TensorIndex>
 struct TensorIdentityIndex
 {
-    static constexpr bool is_natural_tensor_index = false;
+    static constexpr bool is_tensor_index = true;
 
     using subindices_domain_t = ddc::DiscreteDomain<TensorIndex...>;
 
@@ -90,15 +90,6 @@ struct TensorIdentityIndex
         }
     }
 };
-
-namespace detail {
-template <class... SubIndex>
-struct IsTensorIndex<TensorIdentityIndex<SubIndex...>>
-{
-    using type = std::true_type;
-};
-
-} // namespace detail
 
 } // namespace tensor
 

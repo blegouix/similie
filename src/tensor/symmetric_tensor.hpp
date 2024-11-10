@@ -17,7 +17,7 @@ namespace tensor {
 template <class... TensorIndex>
 struct TensorSymmetricIndex
 {
-    static constexpr bool is_natural_tensor_index = false;
+    static constexpr bool is_tensor_index = true;
 
     using subindices_domain_t = ddc::DiscreteDomain<TensorIndex...>;
 
@@ -108,15 +108,6 @@ struct TensorSymmetricIndex
         return access(tensor, elem);
     }
 };
-
-namespace detail {
-template <class... SubIndex>
-struct IsTensorIndex<TensorSymmetricIndex<SubIndex...>>
-{
-    using type = std::true_type;
-};
-
-} // namespace detail
 
 } // namespace tensor
 

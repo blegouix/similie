@@ -18,7 +18,7 @@ namespace tensor {
 template <class YoungTableau, class... TensorIndex>
 struct TensorYoungTableauIndex
 {
-    static constexpr bool is_natural_tensor_index = false;
+    static constexpr bool is_tensor_index = true;
 
     using young_tableau = YoungTableau;
 
@@ -122,16 +122,6 @@ struct TensorYoungTableauIndex
         return access(tensor, elem);
     }
 };
-
-namespace detail {
-
-template <class YoungTableau, class... SubIndex>
-struct IsTensorIndex<TensorYoungTableauIndex<YoungTableau, SubIndex...>>
-{
-    using type = std::true_type;
-};
-
-} // namespace detail
 
 // Compress & uncompress (multiply by young_tableau.u or young_tableau.v
 template <class YoungTableauIndex, class... Id>
