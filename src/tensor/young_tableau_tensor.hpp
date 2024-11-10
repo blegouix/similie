@@ -56,7 +56,7 @@ struct TensorYoungTableauIndex
             std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
         std::pair<std::vector<double>, std::vector<std::size_t>> result {};
-        constexpr sil::csr::Csr v = young_tableau::template v<
+        constexpr csr::Csr v = young_tableau::template v<
                 TensorYoungTableauIndex<YoungTableau, TensorIndex...>,
                 TensorIndex...>(ddc::DiscreteDomain<TensorIndex...>(
                 ddc::DiscreteElement<TensorIndex...>(ddc::DiscreteElement<TensorIndex>(0)...),
@@ -81,7 +81,7 @@ struct TensorYoungTableauIndex
     static constexpr std::size_t access_id(
             std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
-        return ((sil::misc::detail::stride<TensorIndex, TensorIndex...>()
+        return ((misc::detail::stride<TensorIndex, TensorIndex...>()
                  * ids[ddc::type_seq_rank_v<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>>])
                 + ...);
     }
@@ -90,7 +90,7 @@ struct TensorYoungTableauIndex
     access_id_to_mem_lin_comb(std::size_t access_id)
     {
         std::pair<std::vector<double>, std::vector<std::size_t>> result {};
-        constexpr sil::csr::Csr v = young_tableau::template v<
+        constexpr csr::Csr v = young_tableau::template v<
                 TensorYoungTableauIndex<YoungTableau, TensorIndex...>,
                 TensorIndex...>(ddc::DiscreteDomain<TensorIndex...>(
                 ddc::DiscreteElement<TensorIndex...>(ddc::DiscreteElement<TensorIndex>(0)...),
@@ -99,8 +99,8 @@ struct TensorYoungTableauIndex
         for (std::size_t j = 0; j < v.values().size(); ++j) {
             if (((v.idx()[ddc::type_seq_rank_v<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>>]
                          [j]
-                  == ((access_id % sil::misc::detail::next_stride<TensorIndex, TensorIndex...>())
-                      / sil::misc::detail::stride<TensorIndex, TensorIndex...>()))
+                  == ((access_id % misc::detail::next_stride<TensorIndex, TensorIndex...>())
+                      / misc::detail::stride<TensorIndex, TensorIndex...>()))
                  && ...)) {
                 std::get<0>(result).push_back(v.values()[j]);
                 std::size_t k = 0;
@@ -125,51 +125,51 @@ struct TensorYoungTableauIndex
 
 // Compress & uncompress (multiply by young_tableau.u or young_tableau.v
 template <class YoungTableauIndex, class... Id>
-sil::tensor::Tensor<
+tensor::Tensor<
         double,
         ddc::DiscreteDomain<YoungTableauIndex>,
         Kokkos::layout_right,
         Kokkos::DefaultHostExecutionSpace::memory_space>
 compress(
-        sil::tensor::Tensor<
+        tensor::Tensor<
                 double,
                 ddc::DiscreteDomain<YoungTableauIndex>,
                 Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space> compressed,
-        sil::tensor::Tensor<
+        tensor::Tensor<
                 double,
                 ddc::DiscreteDomain<Id...>,
                 Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space> tensor)
 {
     typename YoungTableauIndex::young_tableau young_tableau;
-    sil::csr::Csr u = young_tableau.template u<YoungTableauIndex, Id...>(tensor.domain());
+    csr::Csr u = young_tableau.template u<YoungTableauIndex, Id...>(tensor.domain());
 
-    return sil::csr::tensor_prod(compressed, u, tensor);
+    return csr::tensor_prod(compressed, u, tensor);
 }
 
 template <class YoungTableauIndex, class... Id>
-sil::tensor::Tensor<
+tensor::Tensor<
         double,
         ddc::DiscreteDomain<Id...>,
         Kokkos::layout_right,
         Kokkos::DefaultHostExecutionSpace::memory_space>
 uncompress(
-        sil::tensor::Tensor<
+        tensor::Tensor<
                 double,
                 ddc::DiscreteDomain<Id...>,
                 Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space> uncompressed,
-        sil::tensor::Tensor<
+        tensor::Tensor<
                 double,
                 ddc::DiscreteDomain<YoungTableauIndex>,
                 Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space> tensor)
 {
     typename YoungTableauIndex::young_tableau young_tableau;
-    sil::csr::Csr v = young_tableau.template v<YoungTableauIndex, Id...>(uncompressed.domain());
+    csr::Csr v = young_tableau.template v<YoungTableauIndex, Id...>(uncompressed.domain());
 
-    return sil::csr::tensor_prod(uncompressed, tensor, v);
+    return csr::tensor_prod(uncompressed, tensor, v);
 }
 
 } // namespace tensor

@@ -78,7 +78,7 @@ struct MetricProdType;
 template <class MetricIndex, class... Index1, class... Index2>
 struct MetricProdType<MetricIndex, ddc::detail::TypeSeq<Index1...>, ddc::detail::TypeSeq<Index2...>>
 {
-    using type = sil::tensor::Tensor<
+    using type = tensor::Tensor<
             double,
             metric_prod_domain_t<
                     MetricIndex,
@@ -139,7 +139,7 @@ struct FillMetricProd<
                         metric_prod_.domain(),
                         relabelize_metric_in_domain<HeadIndex1, HeadIndex2>(metric.domain()));
         ddc::Chunk new_metric_prod_alloc_(new_metric_prod_dom_, ddc::HostAllocator<double>());
-        sil::tensor::Tensor<
+        tensor::Tensor<
                 double,
                 ddc::cartesian_prod_t<
                         typename MetricProdType_::discrete_domain_type,
@@ -171,7 +171,7 @@ metric_prod_t<MetricIndex, Indices1, Indices2> fill_metric_prod(
 {
     ddc::DiscreteDomain<> dom_;
     ddc::Chunk metric_prod_alloc_(dom_, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
+    tensor::Tensor<
             double,
             ddc::DiscreteDomain<>,
             Kokkos::layout_right,
@@ -192,10 +192,10 @@ relabelize_indices_of_t<TensorType, Indices2, Indices1> inplace_apply_metric(
         TensorType tensor,
         MetricType metric)
 {
-    sil::tensor::tensor_accessor_for_domain_t<metric_prod_domain_t<MetricIndex, Indices1, Indices2>>
+    tensor::tensor_accessor_for_domain_t<metric_prod_domain_t<MetricIndex, Indices1, Indices2>>
             metric_prod_accessor;
     ddc::Chunk metric_prod_alloc(metric_prod_accessor.mem_domain(), ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
+    tensor::Tensor<
             double,
             metric_prod_domain_t<MetricIndex, Indices1, Indices2>,
             Kokkos::layout_right,

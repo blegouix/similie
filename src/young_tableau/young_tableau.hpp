@@ -499,11 +499,11 @@ public:
     static auto projector();
 
     template <class BasisId, class... Id>
-    static constexpr sil::csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...> u(
+    static constexpr csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...> u(
             ddc::DiscreteDomain<Id...> restricted_domain);
 
     template <class BasisId, class... Id>
-    static constexpr sil::csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...> v(
+    static constexpr csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...> v(
             ddc::DiscreteDomain<Id...> restricted_domain);
 };
 
@@ -527,7 +527,7 @@ struct IrrepDim<Dimension, YoungTableauSeq<>, I, J>
     }
 };
 
-// Type of index used by sil::tensor::OrthonormalBasisSubspaceEigenvalueOne
+// Type of index used by tensor::OrthonormalBasisSubspaceEigenvalueOne
 template <std::size_t I>
 struct Dummy
 {
@@ -570,7 +570,7 @@ tensor::Tensor<ElementType, ddc::DiscreteDomain<Id...>, LayoutStridedPolicy, Mem
 orthogonalize(
         tensor::Tensor<ElementType, ddc::DiscreteDomain<Id...>, LayoutStridedPolicy, MemorySpace>
                 tensor,
-        sil::csr::CsrDynamic<BasisId, Id...> basis,
+        csr::CsrDynamic<BasisId, Id...> basis,
         std::size_t max_basis_id)
 {
     ddc::Chunk eigentensor_alloc(
@@ -585,7 +585,7 @@ orthogonalize(
     for (ddc::DiscreteElement<BasisId> elem : ddc::DiscreteDomain<BasisId>(
                  ddc::DiscreteElement<BasisId>(0),
                  ddc::DiscreteVector<BasisId>(max_basis_id))) {
-        sil::csr::csr2dense(eigentensor, basis.get(elem));
+        csr::csr2dense(eigentensor, basis.get(elem));
 
         ddc::Chunk scalar_prod_alloc(ddc::DiscreteDomain<> {}, ddc::HostAllocator<double>());
         tensor::Tensor<
@@ -642,8 +642,8 @@ template <class... Id>
 struct OrthonormalBasisSubspaceEigenvalueOne<tensor::TensorFullIndex<Id...>>
 {
     template <class YoungTableau>
-    static std::pair<sil::csr::CsrDynamic<BasisId, Id...>, sil::csr::CsrDynamic<BasisId, Id...>>
-    run(YoungTableau tableau)
+    static std::pair<csr::CsrDynamic<BasisId, Id...>, csr::CsrDynamic<BasisId, Id...>> run(
+            YoungTableau tableau)
     {
         auto [proj_alloc, proj] = tableau.template projector<Id...>();
 
@@ -673,8 +673,8 @@ struct OrthonormalBasisSubspaceEigenvalueOne<tensor::TensorFullIndex<Id...>>
                         ddc::DiscreteElement<BasisId>(0),
                         ddc::DiscreteVector<BasisId>(tableau.irrep_dim())),
                 candidate_dom);
-        sil::csr::CsrDynamic<BasisId, Id...> u(basis_dom);
-        sil::csr::CsrDynamic<BasisId, Id...> v(basis_dom);
+        csr::CsrDynamic<BasisId, Id...> u(basis_dom);
+        csr::CsrDynamic<BasisId, Id...> v(basis_dom);
         std::size_t n_irreps = 0;
         std::size_t index = 0;
         while (n_irreps < tableau.irrep_dim()) {
@@ -684,7 +684,7 @@ struct OrthonormalBasisSubspaceEigenvalueOne<tensor::TensorFullIndex<Id...>>
 
             ddc::parallel_for_each(candidate.domain(), [&](ddc::DiscreteElement<Id...> elem) {
                 candidate(elem) = hamming_weight_code[(
-                        (sil::misc::detail::stride<Id, Id...>() * elem.template uid<Id>()) + ...)];
+                        (misc::detail::stride<Id, Id...>() * elem.template uid<Id>()) + ...)];
             });
 
             tensor::tensor_prod(prod, proj, candidate);
@@ -721,9 +721,7 @@ struct OrthonormalBasisSubspaceEigenvalueOne<tensor::TensorFullIndex<Id...>>
                           << tableau.tag() << std::endl;
             }
         }
-        return std::pair<
-                sil::csr::CsrDynamic<BasisId, Id...>,
-                sil::csr::CsrDynamic<BasisId, Id...>>(u, v);
+        return std::pair<csr::CsrDynamic<BasisId, Id...>, csr::CsrDynamic<BasisId, Id...>>(u, v);
     }
 };
 
@@ -1029,7 +1027,7 @@ auto YoungTableau<Dimension, TableauSeq>::projector()
 // Access to u and v Csr, allowing to ie. compress or uncompress a tensor with internal symmetries
 template <std::size_t Dimension, misc::Specialization<YoungTableauSeq> TableauSeq>
 template <class BasisId, class... Id>
-constexpr sil::csr::Csr<YoungTableau<Dimension, TableauSeq>::n_nonzeros_in_irrep(), BasisId, Id...>
+constexpr csr::Csr<YoungTableau<Dimension, TableauSeq>::n_nonzeros_in_irrep(), BasisId, Id...>
 YoungTableau<Dimension, TableauSeq>::u(ddc::DiscreteDomain<Id...> restricted_domain)
 {
     if constexpr (n_nonzeros_in_irrep() != 0) {
@@ -1039,7 +1037,7 @@ YoungTableau<Dimension, TableauSeq>::u(ddc::DiscreteDomain<Id...> restricted_dom
                                ddc::DiscreteVector<BasisId>(n_nonzeros_in_irrep())),
                        restricted_domain);
 
-        return sil::csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...>(
+        return csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...>(
                 domain,
                 std::get<0>(std::get<0>(s_irrep)),
                 std::get<1>(std::get<0>(s_irrep)),
@@ -1051,7 +1049,7 @@ YoungTableau<Dimension, TableauSeq>::u(ddc::DiscreteDomain<Id...> restricted_dom
                                ddc::DiscreteVector<BasisId>(0)),
                        restricted_domain);
 
-        return sil::csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...>(
+        return csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...>(
                 domain,
                 std::array<std::size_t, BasisId::mem_size() + 1> {},
                 std::get<1>(std::get<0>(s_irrep)),
@@ -1061,7 +1059,7 @@ YoungTableau<Dimension, TableauSeq>::u(ddc::DiscreteDomain<Id...> restricted_dom
 
 template <std::size_t Dimension, misc::Specialization<YoungTableauSeq> TableauSeq>
 template <class BasisId, class... Id>
-constexpr sil::csr::Csr<YoungTableau<Dimension, TableauSeq>::n_nonzeros_in_irrep(), BasisId, Id...>
+constexpr csr::Csr<YoungTableau<Dimension, TableauSeq>::n_nonzeros_in_irrep(), BasisId, Id...>
 YoungTableau<Dimension, TableauSeq>::v(ddc::DiscreteDomain<Id...> restricted_domain)
 {
     if constexpr (n_nonzeros_in_irrep() != 0) {
@@ -1071,7 +1069,7 @@ YoungTableau<Dimension, TableauSeq>::v(ddc::DiscreteDomain<Id...> restricted_dom
                                ddc::DiscreteVector<BasisId>(n_nonzeros_in_irrep())),
                        restricted_domain);
 
-        return sil::csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...>(
+        return csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...>(
                 domain,
                 std::get<0>(std::get<1>(s_irrep)),
                 std::get<1>(std::get<1>(s_irrep)),
@@ -1083,7 +1081,7 @@ YoungTableau<Dimension, TableauSeq>::v(ddc::DiscreteDomain<Id...> restricted_dom
                                ddc::DiscreteVector<BasisId>(0)),
                        restricted_domain);
 
-        return sil::csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...>(
+        return csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...>(
                 domain,
                 std::array<std::size_t, BasisId::mem_size() + 1> {},
                 std::get<1>(std::get<1>(s_irrep)),

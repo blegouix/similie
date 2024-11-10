@@ -74,19 +74,19 @@ struct TensorProd<
     {
         /*
     typename TensorYoungTableauIndex<DDim1...>::young_tableau young_tableau;
-    sil::csr::Csr u = young_tableau.template u<YoungTableauIndex, DDim2...>(tensor2.domain());
+    csr::Csr u = young_tableau.template u<YoungTableauIndex, DDim2...>(tensor2.domain());
 */
         ddc::Chunk uncompressed_tensor1_alloc(
                 Index1::subindices_domain(),
                 ddc::HostAllocator<double>());
-        sil::tensor::Tensor<
+        tensor::Tensor<
                 double,
                 typename Index1::subindices_domain_t,
                 Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 uncompressed_tensor1(uncompressed_tensor1_alloc);
 
-        sil::tensor::uncompress(uncompressed_tensor1, tensor1);
+        tensor::uncompress(uncompressed_tensor1, tensor1);
 
         return tensor_prod(prod_tensor, uncompressed_tensor1, tensor2);
     }
@@ -170,12 +170,12 @@ struct TensorProd2<
     {
         /*
     typename TensorYoungTableauIndex<DDim1...>::young_tableau young_tableau;
-    sil::csr::Csr u = young_tableau.template u<YoungTableauIndex, DDim2...>(tensor2.domain());
+    csr::Csr u = young_tableau.template u<YoungTableauIndex, DDim2...>(tensor2.domain());
 */
         ddc::Chunk uncompressed_tensor1_alloc(
                 Index1::subindices_domain(),
                 ddc::HostAllocator<double>());
-        sil::tensor::Tensor<
+        tensor::Tensor<
                 double,
                 typename Index1::subindices_domain_t,
                 Kokkos::layout_right,
@@ -185,15 +185,15 @@ struct TensorProd2<
         ddc::Chunk uncompressed_tensor2_alloc(
                 Index2::subindices_domain(),
                 ddc::HostAllocator<double>());
-        sil::tensor::Tensor<
+        tensor::Tensor<
                 double,
                 typename Index2::subindices_domain_t,
                 Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 uncompressed_tensor2(uncompressed_tensor2_alloc);
 
-        sil::tensor::uncompress(uncompressed_tensor1, tensor1);
-        sil::tensor::uncompress(uncompressed_tensor2, tensor2);
+        tensor::uncompress(uncompressed_tensor1, tensor1);
+        tensor::uncompress(uncompressed_tensor2, tensor2);
 
         return tensor_prod(prod_tensor, uncompressed_tensor1, uncompressed_tensor2);
     }
@@ -298,19 +298,19 @@ struct TensorProd3<
     {
         /*
     typename TensorYoungTableauIndex<DDim1...>::young_tableau young_tableau;
-    sil::csr::Csr u = young_tableau.template u<YoungTableauIndex, DDim2...>(tensor2.domain());
+    csr::Csr u = young_tableau.template u<YoungTableauIndex, DDim2...>(tensor2.domain());
 */
         ddc::Chunk uncompressed_prod_alloc(
                 ddc::DiscreteDomain(ProdDDim::subindices_domain()...),
                 ddc::HostAllocator<double>());
-        sil::tensor::Tensor<
+        tensor::Tensor<
                 double,
                 ddc::cartesian_prod_t<typename ProdDDim::subindices_domain_t...>,
                 Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 uncompressed_prod(uncompressed_prod_alloc);
 
-        sil::tensor::TensorAccessor<ContractDDim...> contract_accessor;
+        tensor::TensorAccessor<ContractDDim...> contract_accessor;
         ddc::DiscreteDomain<ContractDDim...> contract_dom = contract_accessor.natural_domain();
 
         ddc::for_each(
@@ -333,7 +333,7 @@ struct TensorProd3<
                                                        ddc::select<TailDDim2...>(elem))));
                             });
                 });
-        sil::tensor::compress(prod_tensor, uncompressed_prod);
+        tensor::compress(prod_tensor, uncompressed_prod);
         return prod_tensor;
     }
 };

@@ -59,7 +59,7 @@ struct TensorFullIndex
     static constexpr std::size_t access_id(
             std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
-        return ((sil::misc::detail::stride<TensorIndex, TensorIndex...>()
+        return ((misc::detail::stride<TensorIndex, TensorIndex...>()
                  * ids[ddc::type_seq_rank_v<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>>])
                 + ...);
     }
