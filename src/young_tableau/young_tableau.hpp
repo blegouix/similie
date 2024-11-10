@@ -492,17 +492,17 @@ private:
     }
 
 public:
-    template <class... Id>
+    template <tensor::TensorNatIndex... Id>
     using projector_domain = ddc::DiscreteDomain<tensor::prime<Id>..., Id...>;
 
-    template <class... Id>
+    template <tensor::TensorNatIndex... Id>
     static auto projector();
 
-    template <class BasisId, class... Id>
+    template <tensor::TensorNatIndex BasisId, tensor::TensorNatIndex... Id>
     static constexpr csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...> u(
             ddc::DiscreteDomain<Id...> restricted_domain);
 
-    template <class BasisId, class... Id>
+    template <tensor::TensorNatIndex BasisId, tensor::TensorNatIndex... Id>
     static constexpr csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...> v(
             ddc::DiscreteDomain<Id...> restricted_domain);
 };
@@ -994,7 +994,7 @@ struct Projector<
 } // namespace detail
 
 template <std::size_t Dimension, misc::Specialization<YoungTableauSeq> TableauSeq>
-template <class... Id>
+template <tensor::TensorNatIndex... Id>
 auto YoungTableau<Dimension, TableauSeq>::projector()
 {
     static_assert(sizeof...(Id) == s_r);
@@ -1026,7 +1026,7 @@ auto YoungTableau<Dimension, TableauSeq>::projector()
 
 // Access to u and v Csr, allowing to ie. compress or uncompress a tensor with internal symmetries
 template <std::size_t Dimension, misc::Specialization<YoungTableauSeq> TableauSeq>
-template <class BasisId, class... Id>
+template <tensor::TensorNatIndex BasisId, tensor::TensorNatIndex... Id>
 constexpr csr::Csr<YoungTableau<Dimension, TableauSeq>::n_nonzeros_in_irrep(), BasisId, Id...>
 YoungTableau<Dimension, TableauSeq>::u(ddc::DiscreteDomain<Id...> restricted_domain)
 {
@@ -1058,7 +1058,7 @@ YoungTableau<Dimension, TableauSeq>::u(ddc::DiscreteDomain<Id...> restricted_dom
 }
 
 template <std::size_t Dimension, misc::Specialization<YoungTableauSeq> TableauSeq>
-template <class BasisId, class... Id>
+template <tensor::TensorNatIndex BasisId, tensor::TensorNatIndex... Id>
 constexpr csr::Csr<YoungTableau<Dimension, TableauSeq>::n_nonzeros_in_irrep(), BasisId, Id...>
 YoungTableau<Dimension, TableauSeq>::v(ddc::DiscreteDomain<Id...> restricted_domain)
 {
