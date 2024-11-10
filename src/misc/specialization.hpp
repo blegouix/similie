@@ -22,6 +22,9 @@ struct is_specialization_of<T, T<Us...>> : std::true_type
 template <typename U, template <typename...> class T>
 concept Specialization = is_specialization_of<T, U>::value;
 
+template <typename U, template <typename...> class T>
+concept NotSpecialization = !is_specialization_of<T, U>::value;
+
 } // namespace misc
 
 } // namespace sil
