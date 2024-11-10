@@ -229,9 +229,12 @@ Functions</h2></td></tr>
 <tr class="memitem:a8f626d1ccec595d2eb4ebe2b64876bec" id="r_a8f626d1ccec595d2eb4ebe2b64876bec"><td class="memTemplParams" colspan="2">template&lt;class MetricIndex , class Indices1 , class Indices2 , class MetricType &gt; </td></tr>
 <tr class="memitem:a8f626d1ccec595d2eb4ebe2b64876bec"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacesil_1_1tensor.html#a41f4be7c7a2a1bb72fd945b2822876a3">metric_prod_t</a>&lt; MetricIndex, Indices1, Indices2 &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a8f626d1ccec595d2eb4ebe2b64876bec">fill_metric_prod</a> (<a class="el" href="namespacesil_1_1tensor.html#a41f4be7c7a2a1bb72fd945b2822876a3">metric_prod_t</a>&lt; MetricIndex, Indices1, Indices2 &gt; metric_prod, MetricType metric)</td></tr>
 <tr class="separator:a8f626d1ccec595d2eb4ebe2b64876bec"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae169356d7c01672fca1e81ef3e12d916" id="r_ae169356d7c01672fca1e81ef3e12d916"><td class="memTemplParams" colspan="2">template&lt;class MetricIndex , class Indices1 , class Indices2 , class MetricType , class TensorType &gt; </td></tr>
-<tr class="memitem:ae169356d7c01672fca1e81ef3e12d916"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacesil_1_1tensor.html#a18bb38e8250062242859a699221b5be5">relabelize_indices_of_t</a>&lt; TensorType, Indices2, Indices1 &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#ae169356d7c01672fca1e81ef3e12d916">inplace_apply_metrics</a> (TensorType tensor, MetricType metric)</td></tr>
-<tr class="separator:ae169356d7c01672fca1e81ef3e12d916"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad527c1765d2d397c351b1204194799ad" id="r_ad527c1765d2d397c351b1204194799ad"><td class="memTemplParams" colspan="2">template&lt;TensorIndex MetricIndex, misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices1, misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices2, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a> &gt; MetricType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a> &gt; TensorType&gt; </td></tr>
+<tr class="memitem:ad527c1765d2d397c351b1204194799ad"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacesil_1_1tensor.html#a18bb38e8250062242859a699221b5be5">relabelize_indices_of_t</a>&lt; TensorType, Indices2, Indices1 &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#ad527c1765d2d397c351b1204194799ad">inplace_apply_metric</a> (TensorType tensor, MetricType metric)</td></tr>
+<tr class="separator:ad527c1765d2d397c351b1204194799ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a18ce952b4a0a9040897ac2f16d4249b4" id="r_a18ce952b4a0a9040897ac2f16d4249b4"><td class="memTemplParams" colspan="2">template&lt;TensorIndex MetricIndex, TensorIndex Index1, TensorIndex Index2, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a> &gt; MetricType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a> &gt; TensorType&gt; </td></tr>
+<tr class="memitem:a18ce952b4a0a9040897ac2f16d4249b4"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacesil_1_1tensor.html#a18bb38e8250062242859a699221b5be5">relabelize_indices_of_t</a>&lt; TensorType, Index1, Index2 &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a18ce952b4a0a9040897ac2f16d4249b4">inplace_apply_metric</a> (TensorType tensor, MetricType metric)</td></tr>
+<tr class="separator:a18ce952b4a0a9040897ac2f16d4249b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:add390e552dbb809298417732a99fd132" id="r_add390e552dbb809298417732a99fd132"><td class="memTemplParams" colspan="2">template&lt;TensorIndex OldIndex, TensorIndex NewIndex, class ElementType , class... DDim, class LayoutStridedPolicy , class MemorySpace &gt; </td></tr>
 <tr class="memitem:add390e552dbb809298417732a99fd132"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacesil_1_1tensor.html#ac1e0e01a20d7a11534af89234ed817e8">relabelize_index_of_t</a>&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a>&lt; ElementType, ddc::DiscreteDomain&lt; DDim... &gt;, LayoutStridedPolicy, MemorySpace &gt;, OldIndex, NewIndex &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#add390e552dbb809298417732a99fd132">relabelize_index_of</a> (<a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a>&lt; ElementType, ddc::DiscreteDomain&lt; DDim... &gt;, LayoutStridedPolicy, MemorySpace &gt; old_tensor)</td></tr>
 <tr class="separator:add390e552dbb809298417732a99fd132"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -673,16 +676,16 @@ template&lt;class MetricIndex , class Indices1 , class Indices2 , class MetricTy
 
 </div>
 </div>
-<a id="ae169356d7c01672fca1e81ef3e12d916" name="ae169356d7c01672fca1e81ef3e12d916"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae169356d7c01672fca1e81ef3e12d916">&#9670;&#160;</a></span>inplace_apply_metrics()</h2>
+<a id="ad527c1765d2d397c351b1204194799ad" name="ad527c1765d2d397c351b1204194799ad"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad527c1765d2d397c351b1204194799ad">&#9670;&#160;</a></span>inplace_apply_metric() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class MetricIndex , class Indices1 , class Indices2 , class MetricType , class TensorType &gt; </div>
+template&lt;TensorIndex MetricIndex, misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices1, misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices2, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a> &gt; MetricType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a> &gt; TensorType&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespacesil_1_1tensor.html#a18bb38e8250062242859a699221b5be5">relabelize_indices_of_t</a>&lt; TensorType, Indices2, Indices1 &gt; sil::tensor::inplace_apply_metrics </td>
+          <td class="memname"><a class="el" href="namespacesil_1_1tensor.html#a18bb38e8250062242859a699221b5be5">relabelize_indices_of_t</a>&lt; TensorType, Indices2, Indices1 &gt; sil::tensor::inplace_apply_metric </td>
           <td>(</td>
           <td class="paramtype">TensorType&#160;</td>
           <td class="paramname"><em>tensor</em>, </td>
@@ -701,7 +704,39 @@ template&lt;class MetricIndex , class Indices1 , class Indices2 , class MetricTy
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00199">199</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00203">203</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a18ce952b4a0a9040897ac2f16d4249b4" name="a18ce952b4a0a9040897ac2f16d4249b4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a18ce952b4a0a9040897ac2f16d4249b4">&#9670;&#160;</a></span>inplace_apply_metric() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;TensorIndex MetricIndex, TensorIndex Index1, TensorIndex Index2, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a> &gt; MetricType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a> &gt; TensorType&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacesil_1_1tensor.html#a18bb38e8250062242859a699221b5be5">relabelize_indices_of_t</a>&lt; TensorType, Index1, Index2 &gt; sil::tensor::inplace_apply_metric </td>
+          <td>(</td>
+          <td class="paramtype">TensorType&#160;</td>
+          <td class="paramname"><em>tensor</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">MetricType&#160;</td>
+          <td class="paramname"><em>metric</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00240">240</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
 
 </div>
 </div>
