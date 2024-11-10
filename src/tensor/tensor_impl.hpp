@@ -87,143 +87,146 @@ struct TensorNaturalIndex
 template <class DDim>
 concept TensorIndex = requires
 {
-    DDim::is_tensor_index;
-};
+    {
+        DDim::is_tensor_index
+        } -> std::convertible_to<bool>;
+}
+&&DDim::is_tensor_index;
 
 template <class DDim>
 concept TensorNatIndex = requires
 {
-    DDim::is_tensor_natural_index;
-};
+    {
+        DDim::is_tensor_natural_index
+        } -> std::convertible_to<bool>;
+}
+&&DDim::is_tensor_natural_index;
 
 // Helpers to build the access_id() function which computes the ids of subindices of an index. This cumbersome logic is necessary because subindices do not necessarily have the same rank.
-namespace detail
+namespace detail {
+// For Tmunu and index=nu, returns 1
+template <class Index, class...>
+struct NbDimsBeforeIndex;
+
+template <class Index, class IndexHead, class... IndexTail>
+struct NbDimsBeforeIndex<Index, ddc::detail::TypeSeq<IndexHead, IndexTail...>>
 {
-    // For Tmunu and index=nu, returns 1
-    template <class Index, class...>
-    struct NbDimsBeforeIndex;
-
-    template <class Index, class IndexHead, class... IndexTail>
-    struct NbDimsBeforeIndex<Index, ddc::detail::TypeSeq<IndexHead, IndexTail...>>
+    static constexpr std::size_t run(std::size_t nb_dims_before_index)
     {
-        static constexpr std::size_t run(std::size_t nb_dims_before_index)
-        {
-            if constexpr (std::is_same_v<IndexHead, Index>) {
-                return nb_dims_before_index;
-            } else {
-                return NbDimsBeforeIndex<Index, ddc::detail::TypeSeq<IndexTail...>>::run(
-                        nb_dims_before_index + IndexHead::rank());
-            }
-        }
-    };
-
-    // Offset and index sequence
-    template <std::size_t Offset, class IndexSeq>
-    struct OffsetIndexSeq;
-
-    template <std::size_t Offset, std::size_t... Is>
-    struct OffsetIndexSeq<Offset, std::integer_sequence<std::size_t, Is...>>
-    {
-        using type = std::integer_sequence<std::size_t, Offset + Is...>;
-    };
-
-    template <std::size_t Offset, class IndexSeq>
-    using offset_index_seq_t = OffsetIndexSeq<Offset, IndexSeq>::type;
-
-    // Returns dimensions from integers (ie. for Tmunu, <1> gives nu)
-    template <class CDimTypeSeq, class IndexSeq>
-    struct TypeSeqDimsAtInts;
-
-    template <class CDimTypeSeq, std::size_t... Is>
-    struct TypeSeqDimsAtInts<CDimTypeSeq, std::integer_sequence<std::size_t, Is...>>
-    {
-        using type = ddc::detail::TypeSeq<ddc::type_seq_element_t<Is, CDimTypeSeq>...>;
-    };
-
-    template <class CDimTypeSeq, class IndexSeq>
-    using type_seq_dims_at_ints_t = TypeSeqDimsAtInts<CDimTypeSeq, IndexSeq>::type;
-
-    // Returns Index::access_id but from a type seq (in place of a variadic template CDim...)
-    template <class Index, class SubindicesDomain, class TypeSeqDims>
-    struct IdFromTypeSeqDims;
-
-    template <class Index, class... Subindex, class... CDim>
-    struct IdFromTypeSeqDims<Index, ddc::DiscreteDomain<Subindex...>, ddc::detail::TypeSeq<CDim...>>
-    {
-        static constexpr std::size_t run()
-        {
-            static_assert(sizeof...(Subindex) == sizeof...(CDim));
-            if constexpr (TensorNatIndex<Index>) {
-                return Index::access_id(
-                        ddc::type_seq_rank_v<CDim, typename Index::type_seq_dimensions>...);
-            } else {
-                return Index::access_id(std::array<
-                                        std::size_t,
-                                        sizeof...(Subindex)> {ddc::type_seq_rank_v<
-                        typename ddc::type_seq_element_t<
-                                ddc::type_seq_rank_v<Subindex, ddc::detail::TypeSeq<Subindex...>>,
-                                ddc::detail::TypeSeq<CDim...>>,
-                        typename Subindex::type_seq_dimensions>...});
-            }
-        }
-    };
-
-    // Returns Index::access_id for the subindex Index of the IndicesTypeSeq
-    template <class Index, class IndicesTypeSeq, class... CDim>
-    static constexpr std::size_t access_id() // TODO consteval. This is not compile-time atm :/
-    {
-        if constexpr (TensorNatIndex<Index>) {
-            return IdFromTypeSeqDims<
-                    Index,
-                    ddc::DiscreteDomain<Index>,
-                    type_seq_dims_at_ints_t<
-                            ddc::detail::TypeSeq<CDim...>,
-                            offset_index_seq_t<
-                                    NbDimsBeforeIndex<Index, IndicesTypeSeq>::run(0),
-                                    std::make_integer_sequence<std::size_t, Index::rank()>>>>::
-                    run();
+        if constexpr (std::is_same_v<IndexHead, Index>) {
+            return nb_dims_before_index;
         } else {
-            return IdFromTypeSeqDims<
-                    Index,
-                    typename Index::subindices_domain_t,
-                    type_seq_dims_at_ints_t<
-                            ddc::detail::TypeSeq<CDim...>,
-                            offset_index_seq_t<
-                                    NbDimsBeforeIndex<Index, IndicesTypeSeq>::run(0),
-                                    std::make_integer_sequence<std::size_t, Index::rank()>>>>::
-                    run();
+            return NbDimsBeforeIndex<Index, ddc::detail::TypeSeq<IndexTail...>>::run(
+                    nb_dims_before_index + IndexHead::rank());
         }
     }
+};
 
-    template <class Index, class SubindicesDomain>
-    struct IdFromElem;
+// Offset and index sequence
+template <std::size_t Offset, class IndexSeq>
+struct OffsetIndexSeq;
 
-    template <class Index, class... Subindex>
-    struct IdFromElem<Index, ddc::DiscreteDomain<Subindex...>>
+template <std::size_t Offset, std::size_t... Is>
+struct OffsetIndexSeq<Offset, std::integer_sequence<std::size_t, Is...>>
+{
+    using type = std::integer_sequence<std::size_t, Offset + Is...>;
+};
+
+template <std::size_t Offset, class IndexSeq>
+using offset_index_seq_t = OffsetIndexSeq<Offset, IndexSeq>::type;
+
+// Returns dimensions from integers (ie. for Tmunu, <1> gives nu)
+template <class CDimTypeSeq, class IndexSeq>
+struct TypeSeqDimsAtInts;
+
+template <class CDimTypeSeq, std::size_t... Is>
+struct TypeSeqDimsAtInts<CDimTypeSeq, std::integer_sequence<std::size_t, Is...>>
+{
+    using type = ddc::detail::TypeSeq<ddc::type_seq_element_t<Is, CDimTypeSeq>...>;
+};
+
+template <class CDimTypeSeq, class IndexSeq>
+using type_seq_dims_at_ints_t = TypeSeqDimsAtInts<CDimTypeSeq, IndexSeq>::type;
+
+// Returns Index::access_id but from a type seq (in place of a variadic template CDim...)
+template <class Index, class SubindicesDomain, class TypeSeqDims>
+struct IdFromTypeSeqDims;
+
+template <class Index, class... Subindex, class... CDim>
+struct IdFromTypeSeqDims<Index, ddc::DiscreteDomain<Subindex...>, ddc::detail::TypeSeq<CDim...>>
+{
+    static constexpr std::size_t run()
     {
-        template <class Elem>
-        static constexpr std::size_t run(Elem natural_elem)
-        {
-            if constexpr (TensorNatIndex<Index>) {
-                return Index::access_id(natural_elem.template uid<Index>());
-            } else {
-                return Index::access_id(std::array<std::size_t, sizeof...(Subindex)> {
-                        natural_elem.template uid<Subindex>()...});
-            }
-        }
-    };
-
-    template <class Index, class IndicesTypeSeq, class... NaturalIndex>
-    static constexpr std::size_t access_id(
-            ddc::DiscreteElement<NaturalIndex...>
-                    natural_elem) // TODO consteval. This is not compile-time atm :/
-    {
+        static_assert(sizeof...(Subindex) == sizeof...(CDim));
         if constexpr (TensorNatIndex<Index>) {
-            return IdFromElem<Index, ddc::DiscreteDomain<Index>>::run(natural_elem);
+            return Index::access_id(
+                    ddc::type_seq_rank_v<CDim, typename Index::type_seq_dimensions>...);
         } else {
-            return IdFromElem<Index, typename Index::subindices_domain_t>::run(natural_elem);
+            return Index::access_id(std::array<
+                                    std::size_t,
+                                    sizeof...(Subindex)> {ddc::type_seq_rank_v<
+                    typename ddc::type_seq_element_t<
+                            ddc::type_seq_rank_v<Subindex, ddc::detail::TypeSeq<Subindex...>>,
+                            ddc::detail::TypeSeq<CDim...>>,
+                    typename Subindex::type_seq_dimensions>...});
         }
     }
+};
+
+// Returns Index::access_id for the subindex Index of the IndicesTypeSeq
+template <class Index, class IndicesTypeSeq, class... CDim>
+static constexpr std::size_t access_id() // TODO consteval. This is not compile-time atm :/
+{
+    if constexpr (TensorNatIndex<Index>) {
+        return IdFromTypeSeqDims<
+                Index,
+                ddc::DiscreteDomain<Index>,
+                type_seq_dims_at_ints_t<
+                        ddc::detail::TypeSeq<CDim...>,
+                        offset_index_seq_t<
+                                NbDimsBeforeIndex<Index, IndicesTypeSeq>::run(0),
+                                std::make_integer_sequence<std::size_t, Index::rank()>>>>::run();
+    } else {
+        return IdFromTypeSeqDims<
+                Index,
+                typename Index::subindices_domain_t,
+                type_seq_dims_at_ints_t<
+                        ddc::detail::TypeSeq<CDim...>,
+                        offset_index_seq_t<
+                                NbDimsBeforeIndex<Index, IndicesTypeSeq>::run(0),
+                                std::make_integer_sequence<std::size_t, Index::rank()>>>>::run();
+    }
+}
+
+template <class Index, class SubindicesDomain>
+struct IdFromElem;
+
+template <class Index, class... Subindex>
+struct IdFromElem<Index, ddc::DiscreteDomain<Subindex...>>
+{
+    template <class Elem>
+    static constexpr std::size_t run(Elem natural_elem)
+    {
+        if constexpr (TensorNatIndex<Index>) {
+            return Index::access_id(natural_elem.template uid<Index>());
+        } else {
+            return Index::access_id(std::array<std::size_t, sizeof...(Subindex)> {
+                    natural_elem.template uid<Subindex>()...});
+        }
+    }
+};
+
+template <class Index, class IndicesTypeSeq, class... NaturalIndex>
+static constexpr std::size_t access_id(
+        ddc::DiscreteElement<NaturalIndex...>
+                natural_elem) // TODO consteval. This is not compile-time atm :/
+{
+    if constexpr (TensorNatIndex<Index>) {
+        return IdFromElem<Index, ddc::DiscreteDomain<Index>>::run(natural_elem);
+    } else {
+        return IdFromElem<Index, typename Index::subindices_domain_t>::run(natural_elem);
+    }
+}
 
 } // namespace detail
 
