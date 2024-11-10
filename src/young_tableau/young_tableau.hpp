@@ -643,28 +643,6 @@ struct BasisId : sil::tensor::TensorNaturalIndex<>
 {
 };
 
-} // namespace detail
-
-} // namespace young_tableau
-
-namespace tensor {
-
-namespace detail {
-
-template <>
-struct IsTensorIndex<sil::young_tableau::detail::BasisId>
-{
-    using type = std::false_type; // TODO REMOVE
-};
-
-} // namespace detail
-
-} // namespace tensor
-
-namespace young_tableau {
-
-namespace detail {
-
 template <class Ids>
 struct OrthonormalBasisSubspaceEigenvalueOne;
 

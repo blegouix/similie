@@ -66,3 +66,4 @@ using projector_index_t = ProjectorIndex<
 - tests for relabelize_indexes and relabelize_metric
 - standardize prime and second indexes
 - Unify TensorAccessor::access_element() functions. Also get<Dims...>() in Tensor ?
+- is_natural_tensor_index -> is_tensor_natural_index
