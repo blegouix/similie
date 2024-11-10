@@ -2,7 +2,7 @@ var searchData=
 [
   ['character_0',['character',['../structsil_1_1tensor_1_1TensorCovariantNaturalIndex.html#a63541c3d50f01ac9e256ea8c9f089df2',1,'sil::tensor::TensorCovariantNaturalIndex::character'],['../structsil_1_1tensor_1_1TensorContravariantNaturalIndex.html#ae8388a802e13a5ace13053a873ddc45f',1,'sil::tensor::TensorContravariantNaturalIndex::character']]],
   ['coalesc_5fidx_1',['coalesc_idx',['../classsil_1_1csr_1_1Csr.html#a50973b1c3c3eeab6ea8dda4c9c2913c2',1,'sil::csr::Csr::coalesc_idx()'],['../classsil_1_1csr_1_1CsrDynamic.html#a487dd1e67d748e001636fd6d1ae8499c',1,'sil::csr::CsrDynamic::coalesc_idx()']]],
-  ['compress_2',['compress',['../namespacesil_1_1tensor.html#aea1eb1144aec1ce97157fb6f7e99b683',1,'sil::tensor']]],
+  ['compress_2',['compress',['../namespacesil_1_1tensor.html#afc46d5ce3910fb5ced652d618294726c',1,'sil::tensor']]],
   ['contravariant_3',['Contravariant',['../namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Contravariant',1,'sil::tensor']]],
   ['covariant_4',['Covariant',['../namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Covariant',1,'sil::tensor']]],
   ['csr_5',['csr',['../classsil_1_1csr_1_1Csr.html',1,'sil::csr::Csr&lt; N, HeadTensorIndex, TailTensorIndex &gt;'],['../classsil_1_1csr_1_1Csr.html#aea563e9021e6f953c60ae4fb94adbd5e',1,'sil::csr::Csr::Csr(ddc::DiscreteDomain&lt; HeadTensorIndex, TailTensorIndex... &gt; domain, std::array&lt; std::size_t, HeadTensorIndex::mem_size()+1 &gt; coalesc_idx, std::array&lt; std::array&lt; std::size_t, N &gt;, sizeof...(TailTensorIndex)&gt; idx, std::array&lt; double, N &gt; values)'],['../classsil_1_1csr_1_1Csr.html#a9442098c2b73fe1a2d9ba6151f6f23da',1,'sil::csr::Csr::Csr(CsrDynamic&lt; HeadTensorIndex, TailTensorIndex... &gt; csr_dyn)']]],

@@ -135,16 +135,16 @@ Classes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a28bba2cd919d48fc70bdb9ed8092b8b3" id="r_a28bba2cd919d48fc70bdb9ed8092b8b3"><td class="memTemplParams" colspan="2">template&lt;std::size_t N, class HeadTensorIndex , class... TailTensorIndex&gt; </td></tr>
+<tr class="memitem:a28bba2cd919d48fc70bdb9ed8092b8b3" id="r_a28bba2cd919d48fc70bdb9ed8092b8b3"><td class="memTemplParams" colspan="2">template&lt;std::size_t N, tensor::TensorIndex HeadTensorIndex, tensor::TensorNatIndex... TailTensorIndex&gt; </td></tr>
 <tr class="memitem:a28bba2cd919d48fc70bdb9ed8092b8b3"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">sil::tensor::Tensor</a>&lt; double, ddc::DiscreteDomain&lt; TailTensorIndex... &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1csr.html#a28bba2cd919d48fc70bdb9ed8092b8b3">tensor_prod</a> (<a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">sil::tensor::Tensor</a>&lt; double, ddc::DiscreteDomain&lt; TailTensorIndex... &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt; prod, <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">sil::tensor::Tensor</a>&lt; double, ddc::DiscreteDomain&lt; HeadTensorIndex &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt; dense, <a class="el" href="classsil_1_1csr_1_1Csr.html">Csr</a>&lt; N, HeadTensorIndex, TailTensorIndex... &gt; csr)</td></tr>
 <tr class="separator:a28bba2cd919d48fc70bdb9ed8092b8b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac2931bedf744b2b8532dc78a561e5d50" id="r_ac2931bedf744b2b8532dc78a561e5d50"><td class="memTemplParams" colspan="2">template&lt;std::size_t N, class HeadTensorIndex , class... TailTensorIndex&gt; </td></tr>
+<tr class="memitem:ac2931bedf744b2b8532dc78a561e5d50" id="r_ac2931bedf744b2b8532dc78a561e5d50"><td class="memTemplParams" colspan="2">template&lt;std::size_t N, tensor::TensorIndex HeadTensorIndex, tensor::TensorNatIndex... TailTensorIndex&gt; </td></tr>
 <tr class="memitem:ac2931bedf744b2b8532dc78a561e5d50"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">sil::tensor::Tensor</a>&lt; double, ddc::DiscreteDomain&lt; HeadTensorIndex &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1csr.html#ac2931bedf744b2b8532dc78a561e5d50">tensor_prod</a> (<a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">sil::tensor::Tensor</a>&lt; double, ddc::DiscreteDomain&lt; HeadTensorIndex &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt; prod, <a class="el" href="classsil_1_1csr_1_1Csr.html">Csr</a>&lt; N, HeadTensorIndex, TailTensorIndex... &gt; csr, <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">sil::tensor::Tensor</a>&lt; double, ddc::DiscreteDomain&lt; TailTensorIndex... &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt; dense)</td></tr>
 <tr class="separator:ac2931bedf744b2b8532dc78a561e5d50"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac09df9011d1db18630182a3e1047a5c7" id="r_ac09df9011d1db18630182a3e1047a5c7"><td class="memTemplParams" colspan="2">template&lt;std::size_t N, class... TensorIndex&gt; </td></tr>
 <tr class="memitem:ac09df9011d1db18630182a3e1047a5c7"><td class="memTemplItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1csr.html#ac09df9011d1db18630182a3e1047a5c7">operator&lt;&lt;</a> (std::ostream &amp;os, <a class="el" href="classsil_1_1csr_1_1Csr.html">Csr</a>&lt; N, TensorIndex... &gt; const &amp;csr)</td></tr>
 <tr class="separator:ac09df9011d1db18630182a3e1047a5c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3f5f36039ae48aba704ad8a7311be496" id="r_a3f5f36039ae48aba704ad8a7311be496"><td class="memTemplParams" colspan="2">template&lt;class HeadId , class... TailId&gt; </td></tr>
+<tr class="memitem:a3f5f36039ae48aba704ad8a7311be496" id="r_a3f5f36039ae48aba704ad8a7311be496"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorIndex HeadId, tensor::TensorNatIndex... TailId&gt; </td></tr>
 <tr class="memitem:a3f5f36039ae48aba704ad8a7311be496"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">sil::tensor::Tensor</a>&lt; double, ddc::DiscreteDomain&lt; HeadId, TailId... &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1csr.html#a3f5f36039ae48aba704ad8a7311be496">csr2dense</a> (<a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">sil::tensor::Tensor</a>&lt; double, ddc::DiscreteDomain&lt; HeadId, TailId... &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt; dense, <a class="el" href="classsil_1_1csr_1_1CsrDynamic.html">CsrDynamic</a>&lt; HeadId, TailId... &gt; csr)</td></tr>
 <tr class="separator:a3f5f36039ae48aba704ad8a7311be496"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a05e8868bc08795c94b3d5abe8fe9d1a8" id="r_a05e8868bc08795c94b3d5abe8fe9d1a8"><td class="memTemplParams" colspan="2">template&lt;class... TensorIndex&gt; </td></tr>
@@ -158,7 +158,7 @@ Functions</h2></td></tr>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;std::size_t N, class HeadTensorIndex , class... TailTensorIndex&gt; </div>
+template&lt;std::size_t N, tensor::TensorIndex HeadTensorIndex, tensor::TensorNatIndex... TailTensorIndex&gt; </div>
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">sil::tensor::Tensor</a>&lt; double, ddc::DiscreteDomain&lt; TailTensorIndex... &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt; sil::csr::tensor_prod </td>
@@ -186,7 +186,7 @@ template&lt;std::size_t N, class HeadTensorIndex , class... TailTensorIndex&gt; 
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="csr_8hpp_source.html#l00100">100</a> of file <a class="el" href="csr_8hpp_source.html">csr.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="csr_8hpp_source.html#l00106">106</a> of file <a class="el" href="csr_8hpp_source.html">csr.hpp</a>.</p>
 
 </div>
 </div>
@@ -196,7 +196,7 @@ template&lt;std::size_t N, class HeadTensorIndex , class... TailTensorIndex&gt; 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;std::size_t N, class HeadTensorIndex , class... TailTensorIndex&gt; </div>
+template&lt;std::size_t N, tensor::TensorIndex HeadTensorIndex, tensor::TensorNatIndex... TailTensorIndex&gt; </div>
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">sil::tensor::Tensor</a>&lt; double, ddc::DiscreteDomain&lt; HeadTensorIndex &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt; sil::csr::tensor_prod </td>
@@ -224,7 +224,7 @@ template&lt;std::size_t N, class HeadTensorIndex , class... TailTensorIndex&gt; 
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="csr_8hpp_source.html#l00141">141</a> of file <a class="el" href="csr_8hpp_source.html">csr.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="csr_8hpp_source.html#l00150">150</a> of file <a class="el" href="csr_8hpp_source.html">csr.hpp</a>.</p>
 
 </div>
 </div>
@@ -256,7 +256,7 @@ template&lt;std::size_t N, class... TensorIndex&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="csr_8hpp_source.html#l00175">175</a> of file <a class="el" href="csr_8hpp_source.html">csr.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="csr_8hpp_source.html#l00184">184</a> of file <a class="el" href="csr_8hpp_source.html">csr.hpp</a>.</p>
 
 </div>
 </div>
@@ -266,7 +266,7 @@ template&lt;std::size_t N, class... TensorIndex&gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class HeadId , class... TailId&gt; </div>
+template&lt;tensor::TensorIndex HeadId, tensor::TensorNatIndex... TailId&gt; </div>
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">sil::tensor::Tensor</a>&lt; double, ddc::DiscreteDomain&lt; HeadId, TailId... &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt; sil::csr::csr2dense </td>

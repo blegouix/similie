@@ -52,6 +52,6 @@ var namespacesil_1_1tensor =
     [ "tensor_prod", "namespacesil_1_1tensor.html#ab4f3792878f8b9ff69a73f9b53eafc1b", null ],
     [ "tensor_prod", "namespacesil_1_1tensor.html#ab1850d31897a1dd43622b0e25d1a1b28", null ],
     [ "tensor_prod", "namespacesil_1_1tensor.html#a7e4359fdab0cd544d99ed58a60beaac4", null ],
-    [ "compress", "namespacesil_1_1tensor.html#aea1eb1144aec1ce97157fb6f7e99b683", null ],
-    [ "uncompress", "namespacesil_1_1tensor.html#aa78322a48d54bbd4195b42b44be4032f", null ]
+    [ "compress", "namespacesil_1_1tensor.html#afc46d5ce3910fb5ced652d618294726c", null ],
+    [ "uncompress", "namespacesil_1_1tensor.html#afc897fb906eb5efe172d443f520b5c13", null ]
 ];
