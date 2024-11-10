@@ -13,18 +13,19 @@ namespace sil {
 namespace tensor {
 
 // Abstract indices used to characterize a generic metric
-struct MetricIndex1
+struct MetricIndex1 : TensorNaturalIndex<>
 {
-    static constexpr bool is_tensor_index = true;
 };
 
-struct MetricIndex2
+struct MetricIndex2 : TensorNaturalIndex<>
 {
-    static constexpr bool is_tensor_index = true;
 };
 
 // Relabelize metric
-template <class Dom, class Index1, class Index2>
+template <
+        misc::Specialization<ddc::DiscreteDomain> Dom,
+        TensorNatIndex Index1,
+        TensorNatIndex Index2>
 using relabelize_metric_in_domain_t = relabelize_indices_in_domain_t<
         Dom,
         ddc::detail::TypeSeq<MetricIndex1, MetricIndex2>,
@@ -50,6 +51,7 @@ struct MetricProdDomainType<
         ddc::detail::TypeSeq<Index1...>,
         ddc::detail::TypeSeq<Index2...>>
 {
+    static_assert(sizeof...(Index1) == sizeof...(Index2));
     using type = ddc::cartesian_prod_t<relabelize_metric_in_domain_t<
             ddc::DiscreteDomain<MetricIndex>,
             Index1,
@@ -60,7 +62,10 @@ struct MetricProdDomainType<
 
 } // namespace detail
 
-template <class MetricIndex, class Indices1, class Indices2>
+template <
+        TensorIndex MetricIndex,
+        misc::Specialization<ddc::detail::TypeSeq> Indices1,
+        misc::Specialization<ddc::detail::TypeSeq> Indices2>
 using metric_prod_domain_t =
         typename detail::MetricProdDomainType<MetricIndex, Indices1, Indices2>::type;
 
@@ -85,7 +90,10 @@ struct MetricProdType<MetricIndex, ddc::detail::TypeSeq<Index1...>, ddc::detail:
 
 } // namespace detail
 
-template <class MetricIndex, class Indices1, class Indices2>
+template <
+        TensorIndex MetricIndex,
+        misc::Specialization<ddc::detail::TypeSeq> Indices1,
+        misc::Specialization<ddc::detail::TypeSeq> Indices2>
 using metric_prod_t = typename detail::MetricProdType<MetricIndex, Indices1, Indices2>::type;
 
 namespace detail {
@@ -152,7 +160,11 @@ struct FillMetricProd<
 };
 } // namespace detail
 
-template <class MetricIndex, class Indices1, class Indices2, class MetricType>
+template <
+        TensorIndex MetricIndex,
+        misc::Specialization<ddc::detail::TypeSeq> Indices1,
+        misc::Specialization<ddc::detail::TypeSeq> Indices2,
+        misc::Specialization<Tensor> MetricType>
 metric_prod_t<MetricIndex, Indices1, Indices2> fill_metric_prod(
         metric_prod_t<MetricIndex, Indices1, Indices2> metric_prod,
         MetricType metric)

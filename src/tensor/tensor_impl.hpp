@@ -421,9 +421,12 @@ struct LambdaMemElem<InterestDim>
 {
     static ddc::DiscreteElement<InterestDim> run(ddc::DiscreteElement<InterestDim> elem)
     {
-        // TODO static_assert unique mem_lin_comb
-        return ddc::DiscreteElement<InterestDim>(std::get<1>(InterestDim::access_id_to_mem_lin_comb(
-                ddc::DiscreteElement<InterestDim>(elem).uid()))[0]);
+        std::pair<std::vector<double>, std::vector<std::size_t>> mem_lin_comb
+                = InterestDim::access_id_to_mem_lin_comb(
+                        ddc::DiscreteElement<InterestDim>(elem).uid());
+        assert(std::get<0>(mem_lin_comb).size() == 1
+               && "mem_elem is not defined because mem_lin_comb contains several ids");
+        return ddc::DiscreteElement<InterestDim>(std::get<1>(mem_lin_comb)[0]);
     }
 };
 
@@ -552,7 +555,6 @@ public:
     template <class... DElems>
     KOKKOS_FUNCTION constexpr reference operator()(DElems const&... delems) const noexcept
     {
-        // TODO static_assert unique mem_lin_comb
         return ddc::ChunkSpan<
                 ElementType,
                 ddc::DiscreteDomain<DDim...>,
@@ -566,7 +568,6 @@ public:
     KOKKOS_FUNCTION constexpr auto operator[](
             ddc::DiscreteElement<ODDim...> const& slice_spec) const noexcept
     {
-        // TODO static_assert unique mem_lin_comb
         return Tensor<
                 ElementType,
                 ddc::detail::convert_type_seq_to_discrete_domain_t<ddc::type_seq_remove_t<
@@ -607,7 +608,7 @@ public:
 
 // Relabelize index without altering allocation
 namespace detail {
-template <class IndexToRelabelize, class OldIndex, class NewIndex>
+template <TensorIndex IndexToRelabelize, TensorNatIndex OldIndex, TensorNatIndex NewIndex>
 struct RelabelizeIndex
 {
     using type = std::
@@ -738,6 +739,7 @@ struct RelabelizeIndices<
         ddc::detail::TypeSeq<HeadOldIndex, TailOldIndex...>,
         ddc::detail::TypeSeq<HeadNewIndex, TailNewIndex...>>
 {
+    static_assert(sizeof...(TailOldIndex) == sizeof...(TailNewIndex));
     using type = std::conditional_t<
             (sizeof...(TailOldIndex) > 0),
             typename RelabelizeIndices<
@@ -771,6 +773,7 @@ struct RelabelizeIndicesInDomainType<
         ddc::detail::TypeSeq<HeadOldIndex, TailOldIndex...>,
         ddc::detail::TypeSeq<HeadNewIndex, TailNewIndex...>>
 {
+    static_assert(sizeof...(TailOldIndex) == sizeof...(TailNewIndex));
     using type = typename RelabelizeIndicesInDomainType<
             relabelize_index_in_domain_t<Dom, HeadOldIndex, HeadNewIndex>,
             ddc::detail::TypeSeq<TailOldIndex...>,
@@ -823,6 +826,7 @@ struct RelabelizeIndicesInDomain
 template <class OldIndices, class NewIndices, misc::Specialization<ddc::DiscreteDomain> Dom>
 relabelize_indices_in_domain_t<Dom, OldIndices, NewIndices> relabelize_indices_in_domain(Dom dom)
 {
+    static_assert(ddc::type_seq_size_v<OldIndices> == ddc::type_seq_size_v<NewIndices>);
     return detail::RelabelizeIndicesInDomain<OldIndices, NewIndices, 0>::run(dom);
 }
 
@@ -843,6 +847,7 @@ struct RelabelizeIndicesOfType<
         OldIndices,
         NewIndices>
 {
+    static_assert(ddc::type_seq_size_v<OldIndices> == ddc::type_seq_size_v<NewIndices>);
     using type = Tensor<
             ElementType,
             typename RelabelizeIndicesInDomainType<Dom, OldIndices, NewIndices>::type,
@@ -862,6 +867,7 @@ auto RelabelizeIndicesOf(
         Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>
                 old_tensor)
 {
+    static_assert(ddc::type_seq_size_v<OldIndices> == ddc::type_seq_size_v<NewIndices>);
     if constexpr (I != ddc::type_seq_size_v<OldIndices>) {
         return RelabelizeIndicesOf<
                 ddc::type_seq_replace_t<
@@ -903,13 +909,20 @@ auto RelabelizeIndicesOf(
 
 } // namespace detail
 
-template <misc::Specialization<Tensor> TensorType, class OldIndices, class NewIndices>
+template <
+        misc::Specialization<Tensor> TensorType,
+        misc::Specialization<ddc::detail::TypeSeq> OldIndices,
+        misc::Specialization<ddc::detail::TypeSeq> NewIndices>
 using relabelize_indices_of_t
         = detail::RelabelizeIndicesOfType<TensorType, OldIndices, NewIndices>::type;
 
-template <class OldIndices, class NewIndices, misc::Specialization<Tensor> Tensor>
+template <
+        misc::Specialization<ddc::detail::TypeSeq> OldIndices,
+        misc::Specialization<ddc::detail::TypeSeq> NewIndices,
+        misc::Specialization<Tensor> Tensor>
 relabelize_indices_of_t<Tensor, OldIndices, NewIndices> relabelize_indices_of(Tensor tensor)
 {
+    static_assert(ddc::type_seq_size_v<OldIndices> == ddc::type_seq_size_v<NewIndices>);
     return detail::RelabelizeIndicesOf<OldIndices, NewIndices, 0>(tensor);
 }
 
@@ -919,7 +932,7 @@ template <
         class ElementType,
         class LayoutStridedPolicy,
         class MemorySpace,
-        class... TensorType>
+        misc::Specialization<Tensor>... TensorType>
 Tensor<ElementType,
        ddc::DiscreteDomain<DDim...>,
        Kokkos::layout_right,
@@ -955,10 +968,14 @@ struct NaturalTensorProdDomain<ddc::DiscreteDomain<DDim1...>, ddc::DiscreteDomai
 
 } // namespace detail
 
-template <class Dom1, class Dom2>
+template <
+        misc::Specialization<ddc::DiscreteDomain> Dom1,
+        misc::Specialization<ddc::DiscreteDomain> Dom2>
 using natural_tensor_prod_domain_t = detail::NaturalTensorProdDomain<Dom1, Dom2>::type;
 
-template <class Dom1, class Dom2>
+template <
+        misc::Specialization<ddc::DiscreteDomain> Dom1,
+        misc::Specialization<ddc::DiscreteDomain> Dom2>
 natural_tensor_prod_domain_t<Dom1, Dom2> natural_tensor_prod_domain(Dom1 dom1, Dom2 dom2)
 {
     return natural_tensor_prod_domain_t<Dom1, Dom2>(dom1, dom2);
