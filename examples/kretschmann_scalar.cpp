@@ -154,7 +154,7 @@ int main(int argc, char** argv)
 
     // We allocate and compute the covariant counterpart of the Riemann tensor which is needed for the computation of the Kretschmann scalar. Actually, in this particular case (Minkowski metric and even-rank tensor), contravariant and covariant Riemann tensors have the same components, but we perform the computation like if it was not the case.
     ddc::Chunk riemann_low_alloc = ddc::create_mirror_and_copy(riemann_up);
-    auto riemann_low = sil::tensor::inplace_apply_metrics<
+    auto riemann_low = sil::tensor::inplace_apply_metric<
             MetricIndex,
             ddc::detail::TypeSeq<MuLow, NuLow, RhoLow, SigmaLow>,
             ddc::detail::TypeSeq<MuUp, NuUp, RhoUp, SigmaUp>>(

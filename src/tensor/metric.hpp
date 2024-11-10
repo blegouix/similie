@@ -194,9 +194,13 @@ struct Primes<ddc::detail::TypeSeq<TensorCovariantNaturalIndex<Index>...>>
 } // namespace detail
 
 // Apply metrics inplace (like g_mu_muprime*T^muprime^nu)
-template <class MetricIndex, class Indices1, class Indices2, class MetricType, class TensorType>
-relabelize_indices_of_t<TensorType, Indices2, Indices1>
-inplace_apply_metrics( // TODO avoid metricS by using concepts
+template <
+        TensorIndex MetricIndex,
+        misc::Specialization<ddc::detail::TypeSeq> Indices1,
+        misc::Specialization<ddc::detail::TypeSeq> Indices2,
+        misc::Specialization<Tensor> MetricType,
+        misc::Specialization<Tensor> TensorType>
+relabelize_indices_of_t<TensorType, Indices2, Indices1> inplace_apply_metric(
         TensorType tensor,
         MetricType metric)
 {
@@ -225,6 +229,21 @@ inplace_apply_metrics( // TODO avoid metricS by using concepts
             result.allocation_kokkos_view()); // We rely on Kokkos::deep_copy in place of ddc::parallel_deepcopy to avoid type verification of the type dimensions
 
     return relabelize_indices_of<Indices2, Indices1>(tensor);
+}
+
+template <
+        TensorIndex MetricIndex,
+        TensorIndex Index1,
+        TensorIndex Index2,
+        misc::Specialization<Tensor> MetricType,
+        misc::Specialization<Tensor> TensorType>
+relabelize_indices_of_t<TensorType, Index1, Index2> inplace_apply_metric(
+        TensorType tensor,
+        MetricType metric)
+{
+    return inplace_apply_metric<
+            ddc::detail::TypeSeq<Index1>,
+            ddc::detail::TypeSeq<Index2>>(tensor, metric);
 }
 
 } // namespace tensor
