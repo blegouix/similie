@@ -9,6 +9,13 @@
 
 static constexpr std::size_t s_degree = 3;
 
+// Declare a metric
+// using MetricIndex = sil::tensor::TensorSymmetricIndex<
+using MetricIndex = sil::tensor::TensorDiagonalIndex<
+        sil::tensor::MetricIndex1,
+        sil::tensor::MetricIndex2>;
+
+// Labelize the dimensions of space
 struct X
 {
     static constexpr bool PERIODIC = false;
@@ -37,6 +44,18 @@ struct DDimY : MesherXY::template discrete_dimension_type<Y>
 {
 };
 
+// Declare natural indices taking values in {X, Y}
+struct Mu : sil::tensor::TensorNaturalIndex<X, Y>
+{
+};
+
+struct Nu : sil::tensor::TensorNaturalIndex<X, Y>
+{
+};
+
+// Declare upper (contravariant) indices
+using MuUp = sil::tensor::TensorContravariantNaturalIndex<Mu>;
+using NuUp = sil::tensor::TensorContravariantNaturalIndex<Nu>;
 
 int main(int argc, char** argv)
 {
@@ -56,4 +75,15 @@ int main(int argc, char** argv)
     std::cout << ddc::coordinate(mesh_xy.front()) << "\n";
     std::cout << ddc::coordinate(mesh_xy.back()) << "\n";
     std::cout << mesh_xy.extents() << "\n";
+
+    // Allocate and instantiate a metric tensor field.
+    sil::tensor::TensorAccessor<MetricIndex> metric_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, MetricIndex> metric_dom(mesh_xy, metric_accessor.mem_domain());
+    ddc::Chunk metric_alloc(metric_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor<
+            double,
+            ddc::DiscreteDomain<DDimX, DDimY, MetricIndex>,
+            Kokkos::layout_right,
+            Kokkos::DefaultHostExecutionSpace::memory_space>
+            metric(metric_alloc);
 }

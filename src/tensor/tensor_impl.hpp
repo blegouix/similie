@@ -222,31 +222,47 @@ static constexpr std::size_t access_id(
     }
 }
 
+/*
+template <class Index>
+struct NaturalDomainType {
+    using type = ddc::DiscreteDomain<Index>;
+};
+
+template <class Index> requires (TensorIndex<Index> && !TensorNatIndex<Index>)
+struct NaturalDomainType<Index> {
+    using type = typename Index::subindices_domain_t;
+};
+*/
+
 } // namespace detail
 
 // TensorAccessor class, allows to build a domain which represents the tensor and access elements.
-template <class... Index>
+template <TensorIndex... Index>
 class TensorAccessor
 {
 public:
     explicit constexpr TensorAccessor();
 
-    using natural_domain_t = ddc::cartesian_prod_t<std::conditional_t<
+    using discrete_domain_type = ddc::DiscreteDomain<Index...>;
+
+    using discrete_element_type = ddc::DiscreteElement<Index...>;
+
+    using natural_domain_t = ddc::cartesian_prod_t<std::conditional_t< // TODO natural_domain_type
             TensorNatIndex<Index>,
             ddc::DiscreteDomain<Index>,
             typename Index::subindices_domain_t>...>;
 
     static constexpr natural_domain_t natural_domain();
 
-    static constexpr ddc::DiscreteDomain<Index...> mem_domain();
+    static constexpr discrete_domain_type mem_domain();
 
-    static constexpr ddc::DiscreteDomain<Index...> access_domain();
+    static constexpr discrete_domain_type access_domain();
 
     template <class... CDim>
-    static constexpr ddc::DiscreteElement<Index...> access_element();
+    static constexpr discrete_element_type access_element();
 
     template <class... NaturalIndex>
-    static constexpr ddc::DiscreteElement<Index...> access_element(
+    static constexpr discrete_element_type access_element(
             ddc::DiscreteElement<NaturalIndex...> natural_elem);
 };
 
@@ -266,7 +282,7 @@ struct TensorAccessorForDomain<ddc::DiscreteDomain<Index...>>
 template <misc::Specialization<ddc::DiscreteDomain> Dom>
 using tensor_accessor_for_domain_t = detail::TensorAccessorForDomain<Dom>::type;
 
-template <class... Index>
+template <TensorIndex... Index>
 constexpr TensorAccessor<Index...>::TensorAccessor()
 {
 }
@@ -284,39 +300,39 @@ constexpr auto natural_domain()
 }
 } // namespace detail
 
-template <class... Index>
+template <TensorIndex... Index>
 constexpr TensorAccessor<Index...>::natural_domain_t TensorAccessor<Index...>::natural_domain()
 {
     return natural_domain_t(detail::natural_domain<Index>()...);
 }
 
-template <class... Index>
-constexpr ddc::DiscreteDomain<Index...> TensorAccessor<Index...>::mem_domain()
+template <TensorIndex... Index>
+constexpr TensorAccessor<Index...>::discrete_domain_type TensorAccessor<Index...>::mem_domain()
 {
     return ddc::DiscreteDomain<Index...>(
             ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(0)...),
             ddc::DiscreteVector<Index...>(ddc::DiscreteVector<Index>(Index::mem_size())...));
 }
 
-template <class... Index>
-constexpr ddc::DiscreteDomain<Index...> TensorAccessor<Index...>::access_domain()
+template <TensorIndex... Index>
+constexpr TensorAccessor<Index...>::discrete_domain_type TensorAccessor<Index...>::access_domain()
 {
     return ddc::DiscreteDomain<Index...>(
             ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(0)...),
             ddc::DiscreteVector<Index...>(ddc::DiscreteVector<Index>(Index::access_size())...));
 }
 
-template <class... Index>
+template <TensorIndex... Index>
 template <class... CDim>
-constexpr ddc::DiscreteElement<Index...> TensorAccessor<Index...>::access_element()
+constexpr TensorAccessor<Index...>::discrete_element_type TensorAccessor<Index...>::access_element()
 {
     return ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(
             detail::access_id<Index, ddc::detail::TypeSeq<Index...>, CDim...>())...);
 }
 
-template <class... Index>
+template <TensorIndex... Index>
 template <class... NaturalIndex>
-constexpr ddc::DiscreteElement<Index...> TensorAccessor<Index...>::access_element(
+constexpr TensorAccessor<Index...>::discrete_element_type TensorAccessor<Index...>::access_element(
         ddc::DiscreteElement<NaturalIndex...> natural_elem)
 {
     return ddc::DiscreteElement<Index...>(
@@ -478,7 +494,16 @@ public:
     using reference = ddc::
             ChunkSpan<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>::
                     reference;
+    using discrete_domain_type = ddc::
+            ChunkSpan<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>::
+                    discrete_domain_type;
+    using discrete_element_type = ddc::
+            ChunkSpan<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>::
+                    discrete_element_type;
 
+    using ddc::
+            ChunkSpan<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>::
+                    domain;
     using ddc::
             ChunkSpan<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>::
             operator();
@@ -492,41 +517,64 @@ public:
     {
     }
 
-    using accessor_t = TensorAccessor<DDim...>;
+    using accessor_t = tensor_accessor_for_domain_t<ddc::cartesian_prod_t<std::conditional_t<
+            TensorIndex<DDim>,
+            ddc::DiscreteDomain<DDim>,
+            ddc::DiscreteDomain<>>...>>;
 
     static constexpr accessor_t accessor()
     {
         return accessor_t();
     }
 
-    using natural_domain_t = accessor_t::natural_domain_t;
+    using indices_domain_t = accessor_t::discrete_domain_type;
 
-    static constexpr natural_domain_t natural_domain()
+    using non_indices_domain_t
+            = ddc::detail::convert_type_seq_to_discrete_domain_t<ddc::type_seq_remove_t<
+                    ddc::to_type_seq_t<discrete_domain_type>,
+                    ddc::to_type_seq_t<indices_domain_t>>>;
+
+    KOKKOS_FUNCTION constexpr indices_domain_t indices_domain() const noexcept
     {
-        return accessor_t::natural_domain();
+        return indices_domain_t(domain());
     }
 
-    static constexpr ddc::DiscreteDomain<DDim...> mem_domain()
+    KOKKOS_FUNCTION constexpr non_indices_domain_t non_indices_domain() const noexcept
     {
-        return accessor_t::mem_domain();
+        return non_indices_domain_t(domain());
     }
 
-    static constexpr ddc::DiscreteDomain<DDim...> access_domain()
+    using natural_domain_t
+            = ddc::cartesian_prod_t<non_indices_domain_t, typename accessor_t::natural_domain_t>;
+
+    KOKKOS_FUNCTION constexpr natural_domain_t natural_domain() const noexcept
     {
-        return accessor_t::access_domain();
+        return natural_domain_t(non_indices_domain(), accessor_t::natural_domain());
     }
 
-    template <class... CDim>
-    static constexpr ddc::DiscreteElement<DDim...> access_element()
+    KOKKOS_FUNCTION constexpr discrete_domain_type mem_domain() const noexcept
     {
-        return accessor_t::template access_element<CDim...>();
+        return discrete_domain_type(non_indices_domain(), accessor_t::mem_domain());
     }
 
-    template <class... NaturalIndex>
-    static constexpr ddc::DiscreteElement<DDim...> access_element(
-            ddc::DiscreteElement<NaturalIndex...> natural_elem)
+    KOKKOS_FUNCTION constexpr discrete_domain_type access_domain() const noexcept
     {
-        return accessor_t::access_element(natural_elem);
+        return discrete_domain_type(non_indices_domain(), accessor_t::access_domain());
+    }
+
+    template <class... CDim, class... Elem>
+    KOKKOS_FUNCTION constexpr discrete_element_type access_element(Elem... elem) const noexcept
+    {
+        return discrete_element_type(elem..., accessor_t::template access_element<CDim...>());
+    }
+
+    template <TensorNatIndex... NaturalIndex, class... Elem>
+        requires(!TensorIndex<Elem> && ...)
+    KOKKOS_FUNCTION constexpr discrete_element_type access_element(
+            ddc::DiscreteElement<NaturalIndex...> natural_elem,
+            Elem... elem) const noexcept
+    {
+        return discrete_element_type(accessor_t::access_element(natural_elem), elem...);
     }
 
     template <class... DElems>
