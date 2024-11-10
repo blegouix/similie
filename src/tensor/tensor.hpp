@@ -10,6 +10,7 @@
 #include "identity_tensor.hpp"
 #include "lorentzian_sign_tensor.hpp"
 #include "metric.hpp"
+#include "prime.hpp"
 #include "symmetric_tensor.hpp"
 #include "tensor_impl.hpp"
 #include "tensor_prod.hpp"

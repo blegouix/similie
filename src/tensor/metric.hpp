@@ -6,6 +6,7 @@
 #include <ddc/ddc.hpp>
 
 #include "character.hpp"
+#include "prime.hpp"
 
 namespace sil {
 
@@ -168,31 +169,6 @@ metric_prod_t<MetricIndex, Indices1, Indices2> fill_metric_prod(
     return detail::FillMetricProd<Indices1, Indices2>::run(metric_prod, metric, metric_prod_);
 }
 
-namespace detail {
-
-// Type of index used by projectors or symmetrizers
-template <class Index>
-struct prime : Index
-{
-};
-
-template <class Indices>
-struct Primes;
-
-template <class... Index>
-struct Primes<ddc::detail::TypeSeq<TensorContravariantNaturalIndex<Index>...>>
-{
-    using type = ddc::detail::TypeSeq<TensorContravariantNaturalIndex<prime<Index>>...>;
-};
-
-template <class... Index>
-struct Primes<ddc::detail::TypeSeq<TensorCovariantNaturalIndex<Index>...>>
-{
-    using type = ddc::detail::TypeSeq<TensorCovariantNaturalIndex<prime<Index>>...>;
-};
-
-} // namespace detail
-
 // Apply metrics inplace (like g_mu_muprime*T^muprime^nu)
 template <
         TensorIndex MetricIndex,
@@ -222,8 +198,8 @@ relabelize_indices_of_t<TensorType, Indices2, Indices1> inplace_apply_metric(
     relabelize_indices_of_t<TensorType, Indices2, Indices1> result(result_alloc);
     tensor_prod(
             result,
-            relabelize_indices_of<Indices2, typename detail::Primes<Indices1>::type>(metric_prod),
-            relabelize_indices_of<Indices2, typename detail::Primes<Indices2>::type>(tensor));
+            relabelize_indices_of<Indices2, primes<Indices1>>(metric_prod),
+            relabelize_indices_of<Indices2, primes<Indices2>>(tensor));
     Kokkos::deep_copy(
             tensor.allocation_kokkos_view(),
             result.allocation_kokkos_view()); // We rely on Kokkos::deep_copy in place of ddc::parallel_deepcopy to avoid type verification of the type dimensions
