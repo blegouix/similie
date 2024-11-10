@@ -52,7 +52,7 @@ struct TensorYoungTableauIndex
         return size();
     }
 
-    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id(
+    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_lin_comb(
             std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
         std::pair<std::vector<double>, std::vector<std::size_t>> result {};
@@ -86,8 +86,8 @@ struct TensorYoungTableauIndex
                 + ...);
     }
 
-    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> access_id_to_mem_id(
-            std::size_t access_id)
+    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>>
+    access_id_to_mem_lin_comb(std::size_t access_id)
     {
         std::pair<std::vector<double>, std::vector<std::size_t>> result {};
         constexpr sil::csr::Csr v = young_tableau::template v<

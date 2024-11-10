@@ -48,14 +48,14 @@ struct TensorNaturalIndex
     }
 
     template <class ODim>
-    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id()
+    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_lin_comb()
     {
         return std::pair<std::vector<double>, std::vector<std::size_t>>(
                 std::vector<double> {1.},
                 std::vector<std::size_t> {ddc::type_seq_rank_v<ODim, type_seq_dimensions>});
     }
 
-    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id(
+    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_lin_comb(
             std::size_t const id)
     {
         return std::pair<
@@ -68,8 +68,8 @@ struct TensorNaturalIndex
         return id;
     }
 
-    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> access_id_to_mem_id(
-            std::size_t access_id)
+    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>>
+    access_id_to_mem_lin_comb(std::size_t access_id)
     {
         return std::pair<std::vector<double>, std::vector<std::size_t>>(
                 std::vector<double> {1.},
@@ -375,20 +375,21 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
             if constexpr (TensorIndex<IndexInterest>) {
                 return IndexInterest::template process_access<TensorField, Elem, IndexInterest>(
                         [](TensorField tensor_field_, Elem elem_) -> TensorField::element_type {
-                            std::pair<std::vector<double>, std::vector<std::size_t>> mem_id
-                                    = IndexInterest::access_id_to_mem_id(
+                            std::pair<std::vector<double>, std::vector<std::size_t>> mem_lin_comb
+                                    = IndexInterest::access_id_to_mem_lin_comb(
                                             elem_.template uid<IndexInterest>());
 
                             double tensor_field_value = 0;
-                            if (std::get<0>(mem_id).size() > 0) {
-                                for (std::size_t i = 0; i < std::get<0>(mem_id).size(); ++i) {
+                            if (std::get<0>(mem_lin_comb).size() > 0) {
+                                for (std::size_t i = 0; i < std::get<0>(mem_lin_comb).size(); ++i) {
                                     tensor_field_value
-                                            += std::get<0>(mem_id)[i]
+                                            += std::get<0>(mem_lin_comb)[i]
                                                * tensor_field_
                                                          .mem(ddc::DiscreteElement<IndexHead...>(
                                                                       elem_),
                                                               ddc::DiscreteElement<IndexInterest>(
-                                                                      std::get<1>(mem_id)[i]));
+                                                                      std::get<1>(
+                                                                              mem_lin_comb)[i]));
                                 }
                             } else {
                                 tensor_field_value = 1.;
@@ -420,8 +421,8 @@ struct LambdaMemElem<InterestDim>
 {
     static ddc::DiscreteElement<InterestDim> run(ddc::DiscreteElement<InterestDim> elem)
     {
-        // TODO static_assert unique mem_id
-        return ddc::DiscreteElement<InterestDim>(std::get<1>(InterestDim::access_id_to_mem_id(
+        // TODO static_assert unique mem_lin_comb
+        return ddc::DiscreteElement<InterestDim>(std::get<1>(InterestDim::access_id_to_mem_lin_comb(
                 ddc::DiscreteElement<InterestDim>(elem).uid()))[0]);
     }
 };
@@ -551,7 +552,7 @@ public:
     template <class... DElems>
     KOKKOS_FUNCTION constexpr reference operator()(DElems const&... delems) const noexcept
     {
-        // TODO static_assert unique mem_id
+        // TODO static_assert unique mem_lin_comb
         return ddc::ChunkSpan<
                 ElementType,
                 ddc::DiscreteDomain<DDim...>,
@@ -565,7 +566,7 @@ public:
     KOKKOS_FUNCTION constexpr auto operator[](
             ddc::DiscreteElement<ODDim...> const& slice_spec) const noexcept
     {
-        // TODO static_assert unique mem_id
+        // TODO static_assert unique mem_lin_comb
         return Tensor<
                 ElementType,
                 ddc::detail::convert_type_seq_to_discrete_domain_t<ddc::type_seq_remove_t<

@@ -47,7 +47,7 @@ struct TensorDiagonalIndex
         return 1 + mem_size();
     }
 
-    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id(
+    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_lin_comb(
             std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
         assert(std::all_of(ids.begin(), ids.end(), [&](const std::size_t id) {
@@ -67,14 +67,14 @@ struct TensorDiagonalIndex
             })) {
             return 0;
         } else {
-            return 1 + std::get<1>(mem_id(ids))[0];
+            return 1 + std::get<1>(mem_lin_comb(ids))[0];
         }
     }
 
-    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> access_id_to_mem_id(
-            std::size_t access_id)
+    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>>
+    access_id_to_mem_lin_comb(std::size_t access_id)
     {
-        assert(access_id != 0 && "There is no mem_id associated to access_id=0");
+        assert(access_id != 0 && "There is no mem_lin_comb associated to access_id=0");
         return std::pair<std::vector<double>, std::vector<std::size_t>>(
                 std::vector<double> {1.},
                 std::vector<std::size_t> {access_id - 1});

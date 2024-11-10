@@ -51,7 +51,7 @@ struct TensorSymmetricIndex
         return mem_size();
     }
 
-    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id(
+    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_lin_comb(
             std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
         std::array<std::size_t, sizeof...(TensorIndex)> sorted_ids(ids);
@@ -89,11 +89,11 @@ struct TensorSymmetricIndex
     static constexpr std::size_t access_id(
             std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
-        return std::get<1>(mem_id(ids))[0];
+        return std::get<1>(mem_lin_comb(ids))[0];
     }
 
-    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> access_id_to_mem_id(
-            std::size_t access_id)
+    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>>
+    access_id_to_mem_lin_comb(std::size_t access_id)
     {
         return std::pair<std::vector<double>, std::vector<std::size_t>>(
                 std::vector<double> {1.},

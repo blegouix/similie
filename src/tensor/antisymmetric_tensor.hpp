@@ -50,7 +50,7 @@ struct TensorAntisymmetricIndex
         return mem_size() + 1;
     }
 
-    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_id(
+    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_lin_comb(
             std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
         std::array<std::size_t, sizeof...(TensorIndex)> sorted_ids(ids);
@@ -104,16 +104,16 @@ public:
             })) {
             return 0;
         } else if (!permutation_parity(ids)) {
-            return 1 + std::get<1>(mem_id(ids))[0];
+            return 1 + std::get<1>(mem_lin_comb(ids))[0];
         } else {
-            return access_size() + std::get<1>(mem_id(ids))[0];
+            return access_size() + std::get<1>(mem_lin_comb(ids))[0];
         }
     }
 
-    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> access_id_to_mem_id(
-            std::size_t access_id)
+    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>>
+    access_id_to_mem_lin_comb(std::size_t access_id)
     {
-        assert(access_id != 0 && "There is no mem_id associated to access_id=0");
+        assert(access_id != 0 && "There is no mem_lin_comb associated to access_id=0");
         return std::pair<std::vector<double>, std::vector<std::size_t>>(
                 std::vector<double> {1.},
                 std::vector<std::size_t> {(access_id - 1) % mem_size()});
