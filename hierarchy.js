@@ -33,5 +33,8 @@ var hierarchy =
       [ "sil::tensor::TensorCovariantNaturalIndex< NaturalIndex >", "structsil_1_1tensor_1_1TensorCovariantNaturalIndex.html", null ]
     ] ],
     [ "sil::young_tableau::YoungTableau< Dimension, TableauSeq >", "classsil_1_1young__tableau_1_1YoungTableau.html", null ],
-    [ "sil::young_tableau::YoungTableauSeq< Row >", "classsil_1_1young__tableau_1_1YoungTableauSeq.html", null ]
+    [ "sil::young_tableau::YoungTableauSeq< Row >", "classsil_1_1young__tableau_1_1YoungTableauSeq.html", null ],
+    [ "sil::tensor::Index", null, [
+      [ "sil::tensor::prime< Index, I >", "structsil_1_1tensor_1_1prime.html", null ]
+    ] ]
 ];

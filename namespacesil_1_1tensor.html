@@ -138,6 +138,8 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1tensor_1_1MetricIndex2.html">MetricIndex2</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1tensor_1_1prime.html">prime</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:classsil_1_1tensor_1_1Tensor" id="r_classsil_1_1tensor_1_1Tensor"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a></td></tr>
 <tr class="separator:classsil_1_1tensor_1_1Tensor"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html">Tensor&lt; ElementType, ddc::DiscreteDomain&lt; DDim... &gt;, LayoutStridedPolicy, MemorySpace &gt;</a></td></tr>
@@ -196,6 +198,15 @@ Typedefs</h2></td></tr>
 <tr class="memitem:a41f4be7c7a2a1bb72fd945b2822876a3" id="r_a41f4be7c7a2a1bb72fd945b2822876a3"><td class="memTemplParams" colspan="2">template&lt;class MetricIndex , class Indices1 , class Indices2 &gt; </td></tr>
 <tr class="memitem:a41f4be7c7a2a1bb72fd945b2822876a3"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a41f4be7c7a2a1bb72fd945b2822876a3">metric_prod_t</a> = typename detail::MetricProdType&lt; MetricIndex, Indices1, Indices2 &gt;::type</td></tr>
 <tr class="separator:a41f4be7c7a2a1bb72fd945b2822876a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a49798c9ff92aad88c6c1d6ac9e3c7ddb" id="r_a49798c9ff92aad88c6c1d6ac9e3c7ddb"><td class="memTemplParams" colspan="2">template&lt;TensorNatIndex Index&gt; </td></tr>
+<tr class="memitem:a49798c9ff92aad88c6c1d6ac9e3c7ddb"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a49798c9ff92aad88c6c1d6ac9e3c7ddb">second</a> = <a class="el" href="structsil_1_1tensor_1_1prime.html">prime</a>&lt; Index, 2 &gt;</td></tr>
+<tr class="separator:a49798c9ff92aad88c6c1d6ac9e3c7ddb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa6f1b27f2ca0ebfd55a3c528d61d77f5" id="r_aa6f1b27f2ca0ebfd55a3c528d61d77f5"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices, std::size_t I = 1&gt; </td></tr>
+<tr class="memitem:aa6f1b27f2ca0ebfd55a3c528d61d77f5"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#aa6f1b27f2ca0ebfd55a3c528d61d77f5">primes</a> = detail::Primes&lt; Indices, I &gt;::type</td></tr>
+<tr class="separator:aa6f1b27f2ca0ebfd55a3c528d61d77f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7c5e09352a7702e900a2319aefede1b2" id="r_a7c5e09352a7702e900a2319aefede1b2"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices&gt; </td></tr>
+<tr class="memitem:a7c5e09352a7702e900a2319aefede1b2"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a7c5e09352a7702e900a2319aefede1b2">seconds</a> = <a class="el" href="namespacesil_1_1tensor.html#aa6f1b27f2ca0ebfd55a3c528d61d77f5">primes</a>&lt; Indices, 2 &gt;</td></tr>
+<tr class="separator:a7c5e09352a7702e900a2319aefede1b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6adfee8fa46a7b0d4cb1739e1b305317" id="r_a6adfee8fa46a7b0d4cb1739e1b305317"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom&gt; </td></tr>
 <tr class="memitem:a6adfee8fa46a7b0d4cb1739e1b305317"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a6adfee8fa46a7b0d4cb1739e1b305317">tensor_accessor_for_domain_t</a> = detail::TensorAccessorForDomain&lt; Dom &gt;::type</td></tr>
 <tr class="separator:a6adfee8fa46a7b0d4cb1739e1b305317"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -433,7 +444,7 @@ template&lt;class Dom , class Index1 , class Index2 &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00027">27</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00028">28</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
 
 </div>
 </div>
@@ -451,7 +462,7 @@ template&lt;class MetricIndex , class Indices1 , class Indices2 &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00063">63</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00064">64</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
 
 </div>
 </div>
@@ -469,7 +480,61 @@ template&lt;class MetricIndex , class Indices1 , class Indices2 &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00088">88</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00089">89</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a49798c9ff92aad88c6c1d6ac9e3c7ddb" name="a49798c9ff92aad88c6c1d6ac9e3c7ddb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a49798c9ff92aad88c6c1d6ac9e3c7ddb">&#9670;&#160;</a></span>second</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;TensorNatIndex Index&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="namespacesil_1_1tensor.html#a49798c9ff92aad88c6c1d6ac9e3c7ddb">sil::tensor::second</a> = typedef <a class="el" href="structsil_1_1tensor_1_1prime.html">prime</a>&lt;Index, 2&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="prime_8hpp_source.html#l00021">21</a> of file <a class="el" href="prime_8hpp_source.html">prime.hpp</a>.</p>
+
+</div>
+</div>
+<a id="aa6f1b27f2ca0ebfd55a3c528d61d77f5" name="aa6f1b27f2ca0ebfd55a3c528d61d77f5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa6f1b27f2ca0ebfd55a3c528d61d77f5">&#9670;&#160;</a></span>primes</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices, std::size_t I = 1&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="namespacesil_1_1tensor.html#aa6f1b27f2ca0ebfd55a3c528d61d77f5">sil::tensor::primes</a> = typedef detail::Primes&lt;Indices, I&gt;::type</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="prime_8hpp_source.html#l00049">49</a> of file <a class="el" href="prime_8hpp_source.html">prime.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a7c5e09352a7702e900a2319aefede1b2" name="a7c5e09352a7702e900a2319aefede1b2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7c5e09352a7702e900a2319aefede1b2">&#9670;&#160;</a></span>seconds</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="namespacesil_1_1tensor.html#a7c5e09352a7702e900a2319aefede1b2">sil::tensor::seconds</a> = typedef <a class="el" href="namespacesil_1_1tensor.html#aa6f1b27f2ca0ebfd55a3c528d61d77f5">primes</a>&lt;Indices, 2&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="prime_8hpp_source.html#l00052">52</a> of file <a class="el" href="prime_8hpp_source.html">prime.hpp</a>.</p>
 
 </div>
 </div>
@@ -640,7 +705,7 @@ template&lt;class Index1 , class Index2 , class Dom &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00033">33</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00034">34</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
 
 </div>
 </div>
@@ -672,7 +737,7 @@ template&lt;class MetricIndex , class Indices1 , class Indices2 , class MetricTy
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00155">155</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00156">156</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
 
 </div>
 </div>
@@ -704,7 +769,7 @@ template&lt;TensorIndex MetricIndex, misc::Specialization&lt; ddc::detail::TypeS
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00203">203</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00179">179</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
 
 </div>
 </div>
@@ -736,7 +801,7 @@ template&lt;TensorIndex MetricIndex, TensorIndex Index1, TensorIndex Index2, mis
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00240">240</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00216">216</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
 
 </div>
 </div>
