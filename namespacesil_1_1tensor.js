@@ -16,6 +16,8 @@ var namespacesil_1_1tensor =
     [ "TensorNaturalIndex", "structsil_1_1tensor_1_1TensorNaturalIndex.html", "structsil_1_1tensor_1_1TensorNaturalIndex" ],
     [ "TensorSymmetricIndex", "structsil_1_1tensor_1_1TensorSymmetricIndex.html", "structsil_1_1tensor_1_1TensorSymmetricIndex" ],
     [ "TensorYoungTableauIndex", "structsil_1_1tensor_1_1TensorYoungTableauIndex.html", "structsil_1_1tensor_1_1TensorYoungTableauIndex" ],
+    [ "TensorIndex", "conceptsil_1_1tensor_1_1TensorIndex.html", null ],
+    [ "TensorNatIndex", "conceptsil_1_1tensor_1_1TensorNatIndex.html", null ],
     [ "lower", "namespacesil_1_1tensor.html#a526c640816bba0dbabb7341a7ca82836", null ],
     [ "upper", "namespacesil_1_1tensor.html#ae9078934a0f5e29909bfd063eeee7d3c", null ],
     [ "uncharacterize", "namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8", null ],
