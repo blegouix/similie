@@ -226,7 +226,7 @@ $(document).ready(function(){initNavTree('tensor__prod_8hpp_source.html',''); in
 <div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span><span class="keyword">template</span> &lt;</div>
 <div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>        TensorNatIndex... ProdDDim,</div>
 <div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>        misc::Specialization&lt;TensorYoungTableauIndex&gt; Index1,</div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>        <span class="keyword">class</span>... DDim2,</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>        TensorNatIndex... DDim2,</div>
 <div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>        <span class="keyword">class </span>ElementType,</div>
 <div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>        <span class="keyword">class </span>LayoutStridedPolicy,</div>
 <div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>        <span class="keyword">class </span>MemorySpace&gt;</div>
@@ -404,14 +404,14 @@ $(document).ready(function(){initNavTree('tensor__prod_8hpp_source.html',''); in
 <div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span><span class="keyword">struct </span>TensorProd3;</div>
 <div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span> </div>
 <div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span><span class="keyword">template</span> &lt;</div>
-<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span>        <span class="keyword">class</span>... ProdIndex,</div>
+<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span>        <span class="keyword">class</span>... ProdDDim,</div>
 <div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>        <span class="keyword">class</span>... Index1,</div>
 <div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span>        <span class="keyword">class</span>... Index2,</div>
 <div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span>        <span class="keyword">class</span>... HeadDDim1,</div>
 <div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span>        <span class="keyword">class</span>... ContractDDim,</div>
 <div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span>        <span class="keyword">class</span>... TailDDim2&gt;</div>
 <div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span><span class="keyword">struct </span>TensorProd3&lt;</div>
-<div class="line"><a id="l00281" name="l00281"></a><span class="lineno">  281</span>        ddc::detail::TypeSeq&lt;ProdIndex...&gt;,</div>
+<div class="line"><a id="l00281" name="l00281"></a><span class="lineno">  281</span>        ddc::detail::TypeSeq&lt;ProdDDim...&gt;,</div>
 <div class="line"><a id="l00282" name="l00282"></a><span class="lineno">  282</span>        ddc::detail::TypeSeq&lt;Index1...&gt;,</div>
 <div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span>        ddc::detail::TypeSeq&lt;Index2...&gt;,</div>
 <div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span>        ddc::detail::TypeSeq&lt;HeadDDim1...&gt;,</div>
@@ -419,9 +419,9 @@ $(document).ready(function(){initNavTree('tensor__prod_8hpp_source.html',''); in
 <div class="line"><a id="l00286" name="l00286"></a><span class="lineno">  286</span>        ddc::detail::TypeSeq&lt;TailDDim2...&gt;&gt;</div>
 <div class="line"><a id="l00287" name="l00287"></a><span class="lineno">  287</span>{</div>
 <div class="line"><a id="l00288" name="l00288"></a><span class="lineno">  288</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> ElementType, <span class="keyword">class</span> LayoutStr<span class="keywordtype">id</span>edPolicy, <span class="keyword">class</span> MemorySpace&gt;</div>
-<div class="line"><a id="l00289" name="l00289"></a><span class="lineno">  289</span>    <span class="keyword">static</span> Tensor&lt;ElementType, ddc::DiscreteDomain&lt;ProdIndex...&gt;, LayoutStridedPolicy, MemorySpace&gt;</div>
+<div class="line"><a id="l00289" name="l00289"></a><span class="lineno">  289</span>    <span class="keyword">static</span> Tensor&lt;ElementType, ddc::DiscreteDomain&lt;ProdDDim...&gt;, LayoutStridedPolicy, MemorySpace&gt;</div>
 <div class="line"><a id="l00290" name="l00290"></a><span class="lineno">  290</span>    run(Tensor&lt;ElementType,</div>
-<div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span>               ddc::DiscreteDomain&lt;ProdIndex...&gt;,</div>
+<div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span>               ddc::DiscreteDomain&lt;ProdDDim...&gt;,</div>
 <div class="line"><a id="l00292" name="l00292"></a><span class="lineno">  292</span>               Kokkos::layout_right,</div>
 <div class="line"><a id="l00293" name="l00293"></a><span class="lineno">  293</span>               Kokkos::DefaultHostExecutionSpace::memory_space&gt; prod_tensor,</div>
 <div class="line"><a id="l00294" name="l00294"></a><span class="lineno">  294</span>        Tensor&lt;ElementType, ddc::DiscreteDomain&lt;Index1...&gt;, LayoutStridedPolicy, MemorySpace&gt;</div>
@@ -434,11 +434,11 @@ $(document).ready(function(){initNavTree('tensor__prod_8hpp_source.html',''); in
 <div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span><span class="comment">    sil::csr::Csr u = young_tableau.template u&lt;YoungTableauIndex, DDim2...&gt;(tensor2.domain());</span></div>
 <div class="line"><a id="l00302" name="l00302"></a><span class="lineno">  302</span><span class="comment">*/</span></div>
 <div class="line"><a id="l00303" name="l00303"></a><span class="lineno">  303</span>        ddc::Chunk uncompressed_prod_alloc(</div>
-<div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span>                ddc::DiscreteDomain(ProdIndex::subindices_domain()...),</div>
+<div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span>                ddc::DiscreteDomain(ProdDDim::subindices_domain()...),</div>
 <div class="line"><a id="l00305" name="l00305"></a><span class="lineno">  305</span>                ddc::HostAllocator&lt;double&gt;());</div>
 <div class="line"><a id="l00306" name="l00306"></a><span class="lineno">  306</span>        <a class="code hl_class" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">sil::tensor::Tensor</a>&lt;</div>
 <div class="line"><a id="l00307" name="l00307"></a><span class="lineno">  307</span>                double,</div>
-<div class="line"><a id="l00308" name="l00308"></a><span class="lineno">  308</span>                ddc::cartesian_prod_t&lt;<span class="keyword">typename</span> ProdIndex::subindices_domain_t...&gt;,</div>
+<div class="line"><a id="l00308" name="l00308"></a><span class="lineno">  308</span>                ddc::cartesian_prod_t&lt;<span class="keyword">typename</span> ProdDDim::subindices_domain_t...&gt;,</div>
 <div class="line"><a id="l00309" name="l00309"></a><span class="lineno">  309</span>                Kokkos::layout_right,</div>
 <div class="line"><a id="l00310" name="l00310"></a><span class="lineno">  310</span>                Kokkos::DefaultHostExecutionSpace::memory_space&gt;</div>
 <div class="line"><a id="l00311" name="l00311"></a><span class="lineno">  311</span>                uncompressed_prod(uncompressed_prod_alloc);</div>
@@ -449,7 +449,7 @@ $(document).ready(function(){initNavTree('tensor__prod_8hpp_source.html',''); in
 <div class="line"><a id="l00316" name="l00316"></a><span class="lineno">  316</span>        ddc::for_each(</div>
 <div class="line"><a id="l00317" name="l00317"></a><span class="lineno">  317</span>                uncompressed_prod.domain(),</div>
 <div class="line"><a id="l00318" name="l00318"></a><span class="lineno">  318</span>                [&amp;](ddc::cartesian_prod_t&lt;</div>
-<div class="line"><a id="l00319" name="l00319"></a><span class="lineno">  319</span>                        <span class="keyword">typename</span> ProdIndex::subindices_domain_t...&gt;::discrete_element_type elem) {</div>
+<div class="line"><a id="l00319" name="l00319"></a><span class="lineno">  319</span>                        <span class="keyword">typename</span> ProdDDim::subindices_domain_t...&gt;::discrete_element_type elem) {</div>
 <div class="line"><a id="l00320" name="l00320"></a><span class="lineno">  320</span>                    uncompressed_prod(elem) = ddc::transform_reduce(</div>
 <div class="line"><a id="l00321" name="l00321"></a><span class="lineno">  321</span>                            contract_dom,</div>
 <div class="line"><a id="l00322" name="l00322"></a><span class="lineno">  322</span>                            0.,</div>
@@ -474,85 +474,86 @@ $(document).ready(function(){initNavTree('tensor__prod_8hpp_source.html',''); in
 <div class="line"><a id="l00341" name="l00341"></a><span class="lineno">  341</span>} <span class="comment">// namespace detail</span></div>
 <div class="line"><a id="l00342" name="l00342"></a><span class="lineno">  342</span> </div>
 <div class="line"><a id="l00343" name="l00343"></a><span class="lineno">  343</span><span class="keyword">template</span> &lt;</div>
-<div class="line"><a id="l00344" name="l00344"></a><span class="lineno">  344</span>        <span class="keyword">class</span>... ProdIndex, <span class="comment">// TODO Align convention with tensor_prod</span></div>
-<div class="line"><a id="l00345" name="l00345"></a><span class="lineno">  345</span>        <span class="keyword">class</span>... Index1,</div>
-<div class="line"><a id="l00346" name="l00346"></a><span class="lineno">  346</span>        <span class="keyword">class</span>... Index2,</div>
-<div class="line"><a id="l00347" name="l00347"></a><span class="lineno">  347</span>        <span class="keyword">class </span>ElementType,</div>
-<div class="line"><a id="l00348" name="l00348"></a><span class="lineno">  348</span>        <span class="keyword">class </span>LayoutStridedPolicy,</div>
-<div class="line"><a id="l00349" name="l00349"></a><span class="lineno">  349</span>        <span class="keyword">class </span>MemorySpace&gt;</div>
-<div class="line"><a id="l00350" name="l00350"></a><span class="lineno">  350</span>Tensor&lt;ElementType,</div>
-<div class="line"><a id="l00351" name="l00351"></a><span class="lineno">  351</span>       ddc::DiscreteDomain&lt;ProdIndex...&gt;,</div>
-<div class="line"><a id="l00352" name="l00352"></a><span class="lineno">  352</span>       Kokkos::layout_right,</div>
-<div class="line"><a id="l00353" name="l00353"></a><span class="lineno">  353</span>       Kokkos::DefaultHostExecutionSpace::memory_space&gt;</div>
-<div class="foldopen" id="foldopen00354" data-start="{" data-end="}">
-<div class="line"><a id="l00354" name="l00354"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#aeed7d1392312d816d7f844ca599639f6">  354</a></span>tensor_prod(</div>
-<div class="line"><a id="l00355" name="l00355"></a><span class="lineno">  355</span>        <a class="code hl_class" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a>&lt;ElementType,</div>
-<div class="line"><a id="l00356" name="l00356"></a><span class="lineno">  356</span>               ddc::DiscreteDomain&lt;ProdIndex...&gt;,</div>
-<div class="line"><a id="l00357" name="l00357"></a><span class="lineno">  357</span>               Kokkos::layout_right,</div>
-<div class="line"><a id="l00358" name="l00358"></a><span class="lineno">  358</span>               Kokkos::DefaultHostExecutionSpace::memory_space&gt; prod_tensor,</div>
-<div class="line"><a id="l00359" name="l00359"></a><span class="lineno">  359</span>        <a class="code hl_class" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a>&lt;ElementType, ddc::DiscreteDomain&lt;Index1...&gt;, LayoutStridedPolicy, MemorySpace&gt;</div>
-<div class="line"><a id="l00360" name="l00360"></a><span class="lineno">  360</span>                tensor1,</div>
-<div class="line"><a id="l00361" name="l00361"></a><span class="lineno">  361</span>        <a class="code hl_class" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a>&lt;ElementType, ddc::DiscreteDomain&lt;Index2...&gt;, LayoutStridedPolicy, MemorySpace&gt;</div>
-<div class="line"><a id="l00362" name="l00362"></a><span class="lineno">  362</span>                tensor2)</div>
-<div class="line"><a id="l00363" name="l00363"></a><span class="lineno">  363</span>{</div>
-<div class="line"><a id="l00364" name="l00364"></a><span class="lineno">  364</span>    <span class="keyword">static_assert</span>(std::is_same_v&lt;</div>
-<div class="line"><a id="l00365" name="l00365"></a><span class="lineno">  365</span>                  ddc::type_seq_remove_t&lt;</div>
-<div class="line"><a id="l00366" name="l00366"></a><span class="lineno">  366</span>                          <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt;ddc::to_type_seq_t&lt;</div>
-<div class="line"><a id="l00367" name="l00367"></a><span class="lineno">  367</span>                                  ddc::cartesian_prod_t&lt;<span class="keyword">typename</span> Index1::subindices_domain_t...&gt;&gt;&gt;,</div>
-<div class="line"><a id="l00368" name="l00368"></a><span class="lineno">  368</span>                          <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt;ddc::to_type_seq_t&lt;ddc::cartesian_prod_t&lt;</div>
-<div class="line"><a id="l00369" name="l00369"></a><span class="lineno">  369</span>                                  <span class="keyword">typename</span> ProdIndex::subindices_domain_t...&gt;&gt;&gt;&gt;,</div>
-<div class="line"><a id="l00370" name="l00370"></a><span class="lineno">  370</span>                  ddc::type_seq_remove_t&lt;</div>
-<div class="line"><a id="l00371" name="l00371"></a><span class="lineno">  371</span>                          <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt;ddc::to_type_seq_t&lt;</div>
-<div class="line"><a id="l00372" name="l00372"></a><span class="lineno">  372</span>                                  ddc::cartesian_prod_t&lt;<span class="keyword">typename</span> Index2::subindices_domain_t...&gt;&gt;&gt;,</div>
-<div class="line"><a id="l00373" name="l00373"></a><span class="lineno">  373</span>                          <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt;ddc::to_type_seq_t&lt;ddc::cartesian_prod_t&lt;</div>
-<div class="line"><a id="l00374" name="l00374"></a><span class="lineno">  374</span>                                  <span class="keyword">typename</span> ProdIndex::subindices_domain_t...&gt;&gt;&gt;&gt;&gt;);</div>
-<div class="line"><a id="l00375" name="l00375"></a><span class="lineno">  375</span>    <span class="keyword">static_assert</span>(</div>
-<div class="line"><a id="l00376" name="l00376"></a><span class="lineno">  376</span>            std::is_same_v&lt;</div>
-<div class="line"><a id="l00377" name="l00377"></a><span class="lineno">  377</span>                    ddc::type_seq_remove_t&lt;</div>
-<div class="line"><a id="l00378" name="l00378"></a><span class="lineno">  378</span>                            ddc::to_type_seq_t&lt;</div>
-<div class="line"><a id="l00379" name="l00379"></a><span class="lineno">  379</span>                                    ddc::cartesian_prod_t&lt;<span class="keyword">typename</span> Index1::subindices_domain_t...&gt;&gt;,</div>
-<div class="line"><a id="l00380" name="l00380"></a><span class="lineno">  380</span>                            ddc::to_type_seq_t&lt;ddc::cartesian_prod_t&lt;</div>
-<div class="line"><a id="l00381" name="l00381"></a><span class="lineno">  381</span>                                    <span class="keyword">typename</span> Index2::subindices_domain_t...&gt;&gt;&gt;,</div>
-<div class="line"><a id="l00382" name="l00382"></a><span class="lineno">  382</span>                    ddc::to_type_seq_t&lt;</div>
-<div class="line"><a id="l00383" name="l00383"></a><span class="lineno">  383</span>                            ddc::cartesian_prod_t&lt;<span class="keyword">typename</span> Index1::subindices_domain_t...&gt;&gt;&gt;</div>
-<div class="line"><a id="l00384" name="l00384"></a><span class="lineno">  384</span>            &amp;&amp; std::is_same_v&lt;</div>
-<div class="line"><a id="l00385" name="l00385"></a><span class="lineno">  385</span>                    ddc::type_seq_remove_t&lt;</div>
-<div class="line"><a id="l00386" name="l00386"></a><span class="lineno">  386</span>                            ddc::to_type_seq_t&lt;</div>
-<div class="line"><a id="l00387" name="l00387"></a><span class="lineno">  387</span>                                    ddc::cartesian_prod_t&lt;<span class="keyword">typename</span> Index2::subindices_domain_t...&gt;&gt;,</div>
-<div class="line"><a id="l00388" name="l00388"></a><span class="lineno">  388</span>                            ddc::to_type_seq_t&lt;ddc::cartesian_prod_t&lt;</div>
-<div class="line"><a id="l00389" name="l00389"></a><span class="lineno">  389</span>                                    <span class="keyword">typename</span> Index1::subindices_domain_t...&gt;&gt;&gt;,</div>
-<div class="line"><a id="l00390" name="l00390"></a><span class="lineno">  390</span>                    ddc::to_type_seq_t&lt;ddc::cartesian_prod_t&lt;</div>
-<div class="line"><a id="l00391" name="l00391"></a><span class="lineno">  391</span>                            <span class="keyword">typename</span> Index2::</div>
-<div class="line"><a id="l00392" name="l00392"></a><span class="lineno">  392</span>                                    subindices_domain_t...&gt;&gt;&gt;); <span class="comment">// tensor1 and tensor2 should not have any subindex in common because their characters are different</span></div>
-<div class="line"><a id="l00393" name="l00393"></a><span class="lineno">  393</span> </div>
-<div class="line"><a id="l00394" name="l00394"></a><span class="lineno">  394</span>    detail::TensorProd3&lt;</div>
-<div class="line"><a id="l00395" name="l00395"></a><span class="lineno">  395</span>            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt;ddc::detail::TypeSeq&lt;ProdIndex...&gt;&gt;,</div>
-<div class="line"><a id="l00396" name="l00396"></a><span class="lineno">  396</span>            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt;ddc::detail::TypeSeq&lt;Index1...&gt;&gt;,</div>
-<div class="line"><a id="l00397" name="l00397"></a><span class="lineno">  397</span>            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt;ddc::detail::TypeSeq&lt;Index2...&gt;&gt;,</div>
-<div class="line"><a id="l00398" name="l00398"></a><span class="lineno">  398</span>            ddc::type_seq_remove_t&lt;</div>
-<div class="line"><a id="l00399" name="l00399"></a><span class="lineno">  399</span>                    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt;ddc::to_type_seq_t&lt;</div>
-<div class="line"><a id="l00400" name="l00400"></a><span class="lineno">  400</span>                            ddc::cartesian_prod_t&lt;<span class="keyword">typename</span> ProdIndex::subindices_domain_t...&gt;&gt;&gt;,</div>
-<div class="line"><a id="l00401" name="l00401"></a><span class="lineno">  401</span>                    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt;ddc::to_type_seq_t&lt;</div>
-<div class="line"><a id="l00402" name="l00402"></a><span class="lineno">  402</span>                            ddc::cartesian_prod_t&lt;<span class="keyword">typename</span> Index2::subindices_domain_t...&gt;&gt;&gt;&gt;,</div>
-<div class="line"><a id="l00403" name="l00403"></a><span class="lineno">  403</span>            ddc::type_seq_remove_t&lt;</div>
-<div class="line"><a id="l00404" name="l00404"></a><span class="lineno">  404</span>                    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt;ddc::to_type_seq_t&lt;</div>
-<div class="line"><a id="l00405" name="l00405"></a><span class="lineno">  405</span>                            ddc::cartesian_prod_t&lt;<span class="keyword">typename</span> Index1::subindices_domain_t...&gt;&gt;&gt;,</div>
-<div class="line"><a id="l00406" name="l00406"></a><span class="lineno">  406</span>                    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt;ddc::to_type_seq_t&lt;</div>
-<div class="line"><a id="l00407" name="l00407"></a><span class="lineno">  407</span>                            ddc::cartesian_prod_t&lt;<span class="keyword">typename</span> ProdIndex::subindices_domain_t...&gt;&gt;&gt;&gt;,</div>
-<div class="line"><a id="l00408" name="l00408"></a><span class="lineno">  408</span>            ddc::type_seq_remove_t&lt;</div>
-<div class="line"><a id="l00409" name="l00409"></a><span class="lineno">  409</span>                    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt;ddc::to_type_seq_t&lt;</div>
-<div class="line"><a id="l00410" name="l00410"></a><span class="lineno">  410</span>                            ddc::cartesian_prod_t&lt;<span class="keyword">typename</span> ProdIndex::subindices_domain_t...&gt;&gt;&gt;,</div>
-<div class="line"><a id="l00411" name="l00411"></a><span class="lineno">  411</span>                    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt;ddc::to_type_seq_t&lt;</div>
-<div class="line"><a id="l00412" name="l00412"></a><span class="lineno">  412</span>                            ddc::cartesian_prod_t&lt;<span class="keyword">typename</span> Index1::subindices_domain_t...&gt;&gt;&gt;&gt;&gt;::</div>
-<div class="line"><a id="l00413" name="l00413"></a><span class="lineno">  413</span>            run(<a class="code hl_function" href="namespacesil_1_1tensor.html#a1e054223bfa913f0bc231631e71d337b">uncharacterize_tensor</a>(prod_tensor),</div>
-<div class="line"><a id="l00414" name="l00414"></a><span class="lineno">  414</span>                <a class="code hl_function" href="namespacesil_1_1tensor.html#a1e054223bfa913f0bc231631e71d337b">uncharacterize_tensor</a>(tensor1),</div>
-<div class="line"><a id="l00415" name="l00415"></a><span class="lineno">  415</span>                <a class="code hl_function" href="namespacesil_1_1tensor.html#a1e054223bfa913f0bc231631e71d337b">uncharacterize_tensor</a>(tensor2));</div>
-<div class="line"><a id="l00416" name="l00416"></a><span class="lineno">  416</span>    <span class="keywordflow">return</span> prod_tensor;</div>
-<div class="line"><a id="l00417" name="l00417"></a><span class="lineno">  417</span>}</div>
+<div class="line"><a id="l00344" name="l00344"></a><span class="lineno">  344</span>        misc::Specialization&lt;TensorYoungTableauIndex&gt;</div>
+<div class="line"><a id="l00345" name="l00345"></a><span class="lineno">  345</span>                ProdDDim, <span class="comment">// TODO Align convention with tensor_prod</span></div>
+<div class="line"><a id="l00346" name="l00346"></a><span class="lineno">  346</span>        <span class="keyword">class</span>... Index1,</div>
+<div class="line"><a id="l00347" name="l00347"></a><span class="lineno">  347</span>        <span class="keyword">class</span>... Index2,</div>
+<div class="line"><a id="l00348" name="l00348"></a><span class="lineno">  348</span>        <span class="keyword">class </span>ElementType,</div>
+<div class="line"><a id="l00349" name="l00349"></a><span class="lineno">  349</span>        <span class="keyword">class </span>LayoutStridedPolicy,</div>
+<div class="line"><a id="l00350" name="l00350"></a><span class="lineno">  350</span>        <span class="keyword">class </span>MemorySpace&gt;</div>
+<div class="line"><a id="l00351" name="l00351"></a><span class="lineno">  351</span>Tensor&lt;ElementType,</div>
+<div class="line"><a id="l00352" name="l00352"></a><span class="lineno">  352</span>       ddc::DiscreteDomain&lt;ProdDDim&gt;,</div>
+<div class="line"><a id="l00353" name="l00353"></a><span class="lineno">  353</span>       Kokkos::layout_right,</div>
+<div class="line"><a id="l00354" name="l00354"></a><span class="lineno">  354</span>       Kokkos::DefaultHostExecutionSpace::memory_space&gt;</div>
+<div class="foldopen" id="foldopen00355" data-start="{" data-end="}">
+<div class="line"><a id="l00355" name="l00355"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#a7e4359fdab0cd544d99ed58a60beaac4">  355</a></span>tensor_prod(</div>
+<div class="line"><a id="l00356" name="l00356"></a><span class="lineno">  356</span>        <a class="code hl_class" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a>&lt;ElementType,</div>
+<div class="line"><a id="l00357" name="l00357"></a><span class="lineno">  357</span>               ddc::DiscreteDomain&lt;ProdDDim&gt;,</div>
+<div class="line"><a id="l00358" name="l00358"></a><span class="lineno">  358</span>               Kokkos::layout_right,</div>
+<div class="line"><a id="l00359" name="l00359"></a><span class="lineno">  359</span>               Kokkos::DefaultHostExecutionSpace::memory_space&gt; prod_tensor,</div>
+<div class="line"><a id="l00360" name="l00360"></a><span class="lineno">  360</span>        <a class="code hl_class" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a>&lt;ElementType, ddc::DiscreteDomain&lt;Index1...&gt;, LayoutStridedPolicy, MemorySpace&gt;</div>
+<div class="line"><a id="l00361" name="l00361"></a><span class="lineno">  361</span>                tensor1,</div>
+<div class="line"><a id="l00362" name="l00362"></a><span class="lineno">  362</span>        <a class="code hl_class" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a>&lt;ElementType, ddc::DiscreteDomain&lt;Index2...&gt;, LayoutStridedPolicy, MemorySpace&gt;</div>
+<div class="line"><a id="l00363" name="l00363"></a><span class="lineno">  363</span>                tensor2)</div>
+<div class="line"><a id="l00364" name="l00364"></a><span class="lineno">  364</span>{</div>
+<div class="line"><a id="l00365" name="l00365"></a><span class="lineno">  365</span>    <span class="keyword">static_assert</span>(std::is_same_v&lt;</div>
+<div class="line"><a id="l00366" name="l00366"></a><span class="lineno">  366</span>                  ddc::type_seq_remove_t&lt;</div>
+<div class="line"><a id="l00367" name="l00367"></a><span class="lineno">  367</span>                          <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt;ddc::to_type_seq_t&lt;</div>
+<div class="line"><a id="l00368" name="l00368"></a><span class="lineno">  368</span>                                  ddc::cartesian_prod_t&lt;<span class="keyword">typename</span> Index1::subindices_domain_t...&gt;&gt;&gt;,</div>
+<div class="line"><a id="l00369" name="l00369"></a><span class="lineno">  369</span>                          <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt;ddc::to_type_seq_t&lt;</div>
+<div class="line"><a id="l00370" name="l00370"></a><span class="lineno">  370</span>                                  ddc::cartesian_prod_t&lt;typename ProdDDim::subindices_domain_t&gt;&gt;&gt;&gt;,</div>
+<div class="line"><a id="l00371" name="l00371"></a><span class="lineno">  371</span>                  ddc::type_seq_remove_t&lt;</div>
+<div class="line"><a id="l00372" name="l00372"></a><span class="lineno">  372</span>                          <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt;ddc::to_type_seq_t&lt;</div>
+<div class="line"><a id="l00373" name="l00373"></a><span class="lineno">  373</span>                                  ddc::cartesian_prod_t&lt;<span class="keyword">typename</span> Index2::subindices_domain_t...&gt;&gt;&gt;,</div>
+<div class="line"><a id="l00374" name="l00374"></a><span class="lineno">  374</span>                          <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt;ddc::to_type_seq_t&lt;ddc::cartesian_prod_t&lt;</div>
+<div class="line"><a id="l00375" name="l00375"></a><span class="lineno">  375</span>                                  <span class="keyword">typename</span> ProdDDim::subindices_domain_t&gt;&gt;&gt;&gt;&gt;);</div>
+<div class="line"><a id="l00376" name="l00376"></a><span class="lineno">  376</span>    <span class="keyword">static_assert</span>(</div>
+<div class="line"><a id="l00377" name="l00377"></a><span class="lineno">  377</span>            std::is_same_v&lt;</div>
+<div class="line"><a id="l00378" name="l00378"></a><span class="lineno">  378</span>                    ddc::type_seq_remove_t&lt;</div>
+<div class="line"><a id="l00379" name="l00379"></a><span class="lineno">  379</span>                            ddc::to_type_seq_t&lt;</div>
+<div class="line"><a id="l00380" name="l00380"></a><span class="lineno">  380</span>                                    ddc::cartesian_prod_t&lt;<span class="keyword">typename</span> Index1::subindices_domain_t...&gt;&gt;,</div>
+<div class="line"><a id="l00381" name="l00381"></a><span class="lineno">  381</span>                            ddc::to_type_seq_t&lt;ddc::cartesian_prod_t&lt;</div>
+<div class="line"><a id="l00382" name="l00382"></a><span class="lineno">  382</span>                                    <span class="keyword">typename</span> Index2::subindices_domain_t...&gt;&gt;&gt;,</div>
+<div class="line"><a id="l00383" name="l00383"></a><span class="lineno">  383</span>                    ddc::to_type_seq_t&lt;</div>
+<div class="line"><a id="l00384" name="l00384"></a><span class="lineno">  384</span>                            ddc::cartesian_prod_t&lt;<span class="keyword">typename</span> Index1::subindices_domain_t...&gt;&gt;&gt;</div>
+<div class="line"><a id="l00385" name="l00385"></a><span class="lineno">  385</span>            &amp;&amp; std::is_same_v&lt;</div>
+<div class="line"><a id="l00386" name="l00386"></a><span class="lineno">  386</span>                    ddc::type_seq_remove_t&lt;</div>
+<div class="line"><a id="l00387" name="l00387"></a><span class="lineno">  387</span>                            ddc::to_type_seq_t&lt;</div>
+<div class="line"><a id="l00388" name="l00388"></a><span class="lineno">  388</span>                                    ddc::cartesian_prod_t&lt;<span class="keyword">typename</span> Index2::subindices_domain_t...&gt;&gt;,</div>
+<div class="line"><a id="l00389" name="l00389"></a><span class="lineno">  389</span>                            ddc::to_type_seq_t&lt;ddc::cartesian_prod_t&lt;</div>
+<div class="line"><a id="l00390" name="l00390"></a><span class="lineno">  390</span>                                    <span class="keyword">typename</span> Index1::subindices_domain_t...&gt;&gt;&gt;,</div>
+<div class="line"><a id="l00391" name="l00391"></a><span class="lineno">  391</span>                    ddc::to_type_seq_t&lt;ddc::cartesian_prod_t&lt;</div>
+<div class="line"><a id="l00392" name="l00392"></a><span class="lineno">  392</span>                            <span class="keyword">typename</span> Index2::</div>
+<div class="line"><a id="l00393" name="l00393"></a><span class="lineno">  393</span>                                    subindices_domain_t...&gt;&gt;&gt;); <span class="comment">// tensor1 and tensor2 should not have any subindex in common because their characters are different</span></div>
+<div class="line"><a id="l00394" name="l00394"></a><span class="lineno">  394</span> </div>
+<div class="line"><a id="l00395" name="l00395"></a><span class="lineno">  395</span>    detail::TensorProd3&lt;</div>
+<div class="line"><a id="l00396" name="l00396"></a><span class="lineno">  396</span>            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize&lt;ddc::detail::TypeSeq&lt;ProdDDim&gt;</a>&gt;,</div>
+<div class="line"><a id="l00397" name="l00397"></a><span class="lineno">  397</span>            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt;ddc::detail::TypeSeq&lt;Index1...&gt;&gt;,</div>
+<div class="line"><a id="l00398" name="l00398"></a><span class="lineno">  398</span>            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt;ddc::detail::TypeSeq&lt;Index2...&gt;&gt;,</div>
+<div class="line"><a id="l00399" name="l00399"></a><span class="lineno">  399</span>            ddc::type_seq_remove_t&lt;</div>
+<div class="line"><a id="l00400" name="l00400"></a><span class="lineno">  400</span>                    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt;ddc::to_type_seq_t&lt;</div>
+<div class="line"><a id="l00401" name="l00401"></a><span class="lineno">  401</span>                            ddc::cartesian_prod_t&lt;typename ProdDDim::subindices_domain_t&gt;&gt;&gt;,</div>
+<div class="line"><a id="l00402" name="l00402"></a><span class="lineno">  402</span>                    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt;ddc::to_type_seq_t&lt;</div>
+<div class="line"><a id="l00403" name="l00403"></a><span class="lineno">  403</span>                            ddc::cartesian_prod_t&lt;<span class="keyword">typename</span> Index2::subindices_domain_t...&gt;&gt;&gt;&gt;,</div>
+<div class="line"><a id="l00404" name="l00404"></a><span class="lineno">  404</span>            ddc::type_seq_remove_t&lt;</div>
+<div class="line"><a id="l00405" name="l00405"></a><span class="lineno">  405</span>                    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt;ddc::to_type_seq_t&lt;</div>
+<div class="line"><a id="l00406" name="l00406"></a><span class="lineno">  406</span>                            ddc::cartesian_prod_t&lt;<span class="keyword">typename</span> Index1::subindices_domain_t...&gt;&gt;&gt;,</div>
+<div class="line"><a id="l00407" name="l00407"></a><span class="lineno">  407</span>                    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt;ddc::to_type_seq_t&lt;</div>
+<div class="line"><a id="l00408" name="l00408"></a><span class="lineno">  408</span>                            ddc::cartesian_prod_t&lt;typename ProdDDim::subindices_domain_t&gt;&gt;&gt;&gt;,</div>
+<div class="line"><a id="l00409" name="l00409"></a><span class="lineno">  409</span>            ddc::type_seq_remove_t&lt;</div>
+<div class="line"><a id="l00410" name="l00410"></a><span class="lineno">  410</span>                    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt;ddc::to_type_seq_t&lt;</div>
+<div class="line"><a id="l00411" name="l00411"></a><span class="lineno">  411</span>                            ddc::cartesian_prod_t&lt;typename ProdDDim::subindices_domain_t&gt;&gt;&gt;,</div>
+<div class="line"><a id="l00412" name="l00412"></a><span class="lineno">  412</span>                    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt;ddc::to_type_seq_t&lt;</div>
+<div class="line"><a id="l00413" name="l00413"></a><span class="lineno">  413</span>                            ddc::cartesian_prod_t&lt;<span class="keyword">typename</span> Index1::subindices_domain_t...&gt;&gt;&gt;&gt;&gt;::</div>
+<div class="line"><a id="l00414" name="l00414"></a><span class="lineno">  414</span>            run(<a class="code hl_function" href="namespacesil_1_1tensor.html#a1e054223bfa913f0bc231631e71d337b">uncharacterize_tensor</a>(prod_tensor),</div>
+<div class="line"><a id="l00415" name="l00415"></a><span class="lineno">  415</span>                <a class="code hl_function" href="namespacesil_1_1tensor.html#a1e054223bfa913f0bc231631e71d337b">uncharacterize_tensor</a>(tensor1),</div>
+<div class="line"><a id="l00416" name="l00416"></a><span class="lineno">  416</span>                <a class="code hl_function" href="namespacesil_1_1tensor.html#a1e054223bfa913f0bc231631e71d337b">uncharacterize_tensor</a>(tensor2));</div>
+<div class="line"><a id="l00417" name="l00417"></a><span class="lineno">  417</span>    <span class="keywordflow">return</span> prod_tensor;</div>
+<div class="line"><a id="l00418" name="l00418"></a><span class="lineno">  418</span>}</div>
 </div>
-<div class="line"><a id="l00418" name="l00418"></a><span class="lineno">  418</span>} <span class="comment">// namespace tensor</span></div>
-<div class="line"><a id="l00419" name="l00419"></a><span class="lineno">  419</span> </div>
-<div class="line"><a id="l00420" name="l00420"></a><span class="lineno">  420</span>} <span class="comment">// namespace sil</span></div>
+<div class="line"><a id="l00419" name="l00419"></a><span class="lineno">  419</span>} <span class="comment">// namespace tensor</span></div>
+<div class="line"><a id="l00420" name="l00420"></a><span class="lineno">  420</span> </div>
+<div class="line"><a id="l00421" name="l00421"></a><span class="lineno">  421</span>} <span class="comment">// namespace sil</span></div>
 <div class="ttc" id="aclasssil_1_1tensor_1_1TensorAccessor_html"><div class="ttname"><a href="classsil_1_1tensor_1_1TensorAccessor.html">sil::tensor::TensorAccessor</a></div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00227">tensor_impl.hpp:228</a></div></div>
 <div class="ttc" id="aclasssil_1_1tensor_1_1TensorAccessor_html_a21349ea156d0e1b7b31b3ecf014a1448"><div class="ttname"><a href="classsil_1_1tensor_1_1TensorAccessor.html#a21349ea156d0e1b7b31b3ecf014a1448">sil::tensor::TensorAccessor::natural_domain</a></div><div class="ttdeci">static constexpr natural_domain_t natural_domain()</div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00286">tensor_impl.hpp:286</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_a1a4318eb5f036a7aaceac344b6b948c8"><div class="ttname"><a href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">sil::tensor::uncharacterize</a></div><div class="ttdeci">detail::Uncharacterize&lt; Index &gt;::type uncharacterize</div><div class="ttdef"><b>Definition</b> <a href="character_8hpp_source.html#l00117">character.hpp:117</a></div></div>

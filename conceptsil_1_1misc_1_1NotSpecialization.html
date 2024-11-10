@@ -10,7 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>SimiLie: Concepts</title>
+<title>SimiLie: sil::misc::NotSpecialization Concept Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -93,7 +93,7 @@ $(function() {
 </div>
 <script type="text/javascript">
 /* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
-$(document).ready(function(){initNavTree('concepts.html',''); initResizable(); });
+$(document).ready(function(){initNavTree('conceptsil_1_1misc_1_1NotSpecialization.html',''); initResizable(); });
 /* @license-end */
 </script>
 <div id="doc-content">
@@ -119,21 +119,20 @@ $(document).ready(function(){initNavTree('concepts.html',''); initResizable(); }
 </div>
 
 <div class="header">
-  <div class="headertitle"><div class="title">Concepts</div></div>
+  <div class="headertitle"><div class="title">sil::misc::NotSpecialization Concept Reference</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock">Here is a list of all concepts with brief descriptions:</div><div class="directory">
-<div class="levels">[detail level <span onclick="javascript:toggleLevel(1);">1</span><span onclick="javascript:toggleLevel(2);">2</span><span onclick="javascript:toggleLevel(3);">3</span>]</div><table class="directory">
-<tr id="row_0_" class="even"><td class="entry"><span style="width:0px;display:inline-block;">&#160;</span><span id="arr_0_" class="arrow" onclick="toggleFolder('0_')">&#9660;</span><span class="icona"><span class="icon">N</span></span><a class="el" href="namespacesil.html" target="_self">sil</a></td><td class="desc"></td></tr>
-<tr id="row_0_0_" class="odd"><td class="entry"><span style="width:16px;display:inline-block;">&#160;</span><span id="arr_0_0_" class="arrow" onclick="toggleFolder('0_0_')">&#9660;</span><span class="icona"><span class="icon">N</span></span><a class="el" href="namespacesil_1_1misc.html" target="_self">misc</a></td><td class="desc"></td></tr>
-<tr id="row_0_0_0_" class="even"><td class="entry"><span style="width:48px;display:inline-block;">&#160;</span><span class="icona"><span class="icon">R</span></span><a class="el" href="conceptsil_1_1misc_1_1Specialization.html" target="_self">Specialization</a></td><td class="desc"></td></tr>
-<tr id="row_0_0_1_" class="odd"><td class="entry"><span style="width:48px;display:inline-block;">&#160;</span><span class="icona"><span class="icon">R</span></span><a class="el" href="conceptsil_1_1misc_1_1NotSpecialization.html" target="_self">NotSpecialization</a></td><td class="desc"></td></tr>
-<tr id="row_0_1_" class="even"><td class="entry"><span style="width:16px;display:inline-block;">&#160;</span><span id="arr_0_1_" class="arrow" onclick="toggleFolder('0_1_')">&#9660;</span><span class="icona"><span class="icon">N</span></span><a class="el" href="namespacesil_1_1tensor.html" target="_self">tensor</a></td><td class="desc"></td></tr>
-<tr id="row_0_1_0_" class="odd"><td class="entry"><span style="width:48px;display:inline-block;">&#160;</span><span class="icona"><span class="icon">R</span></span><a class="el" href="conceptsil_1_1tensor_1_1TensorIndex.html" target="_self">TensorIndex</a></td><td class="desc"></td></tr>
-<tr id="row_0_1_1_" class="even"><td class="entry"><span style="width:48px;display:inline-block;">&#160;</span><span class="icona"><span class="icon">R</span></span><a class="el" href="conceptsil_1_1tensor_1_1TensorNatIndex.html" target="_self">TensorNatIndex</a></td><td class="desc"></td></tr>
-</table>
-</div><!-- directory -->
-</div><!-- contents -->
+
+<p><code>#include &lt;<a class="el" href="specialization_8hpp_source.html">specialization.hpp</a>&gt;</code></p>
+<h2 class="groupheader">Concept definition</h2>
+<div class="fragment"><div class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> U, <span class="keyword">template</span>&lt; <span class="keyword">typename</span>... &gt; <span class="keyword">class </span>T&gt;</div>
+<div class="line">concept <a class="code hl_namespace" href="namespacesil.html">sil</a>::<a class="code hl_concept" href="conceptsil_1_1misc_1_1NotSpecialization.html">misc::NotSpecialization</a> =  !is_specialization_of&lt;T, U&gt;::value</div>
+<div class="ttc" id="aconceptsil_1_1misc_1_1NotSpecialization_html"><div class="ttname"><a href="conceptsil_1_1misc_1_1NotSpecialization.html">sil::misc::NotSpecialization</a></div><div class="ttdef"><b>Definition</b> <a href="specialization_8hpp_source.html#l00026">specialization.hpp:26</a></div></div>
+<div class="ttc" id="anamespacesil_html"><div class="ttname"><a href="namespacesil.html">sil</a></div><div class="ttdef"><b>Definition</b> <a href="csr_8hpp_source.html#l00013">csr.hpp:13</a></div></div>
+</div><!-- fragment --><a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock">
+<p class="definition">Definition at line <a class="el" href="specialization_8hpp_source.html#l00026">26</a> of file <a class="el" href="specialization_8hpp_source.html">specialization.hpp</a>.</p>
+</div></div><!-- contents -->
 </div><!-- doc-content -->
 <!--
 SPDX-FileCopyrightText: 2024 Baptiste Legouix
@@ -143,6 +142,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
+    <li class="navelem"><a class="el" href="namespacesil.html">sil</a></li><li class="navelem"><a class="el" href="namespacesil_1_1misc.html">misc</a></li><li class="navelem"><a class="el" href="conceptsil_1_1misc_1_1NotSpecialization.html">NotSpecialization</a></li>
     <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
   </ul>
 </div>
