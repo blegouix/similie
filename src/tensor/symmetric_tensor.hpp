@@ -68,19 +68,20 @@ struct TensorSymmetricIndex
                                             == TensorIndex::mem_size() - 1
                                     ? 0
                                     : boost::math::binomial_coefficient<double>(
-                                            TensorIndex::mem_size()
-                                                    - sorted_ids[ddc::type_seq_rank_v<
-                                                            TensorIndex,
-                                                            ddc::detail::TypeSeq<TensorIndex...>>]
-                                                    + sizeof...(TensorIndex)
-                                                    - ddc::type_seq_rank_v<
-                                                            TensorIndex,
-                                                            ddc::detail::TypeSeq<
-                                                                    TensorIndex...>> - 2,
-                                            sizeof...(TensorIndex)
-                                                    - ddc::type_seq_rank_v<
-                                                            TensorIndex,
-                                                            ddc::detail::TypeSeq<TensorIndex...>>))
+                                              TensorIndex::mem_size()
+                                                      - sorted_ids[ddc::type_seq_rank_v<
+                                                              TensorIndex,
+                                                              ddc::detail::TypeSeq<TensorIndex...>>]
+                                                      + sizeof...(TensorIndex)
+                                                      - ddc::type_seq_rank_v<
+                                                              TensorIndex,
+                                                              ddc::detail::TypeSeq<TensorIndex...>>
+                                                      - 2,
+                                              sizeof...(TensorIndex)
+                                                      - ddc::type_seq_rank_v<
+                                                              TensorIndex,
+                                                              ddc::detail::TypeSeq<
+                                                                      TensorIndex...>>))
                            + ...)
                         - 1)});
     }
