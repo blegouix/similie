@@ -5,6 +5,8 @@
 
 #include <ddc/ddc.hpp>
 
+#include "specialization.hpp"
+
 namespace sil {
 
 namespace tensor {
@@ -31,14 +33,14 @@ struct TensorNaturalIndexFromTypeSeqDim<ddc::detail::TypeSeq<CDim...>>
 } // namespace detail
 
 // struct representing an index mu or nu in a tensor Tmunu.
-template <class NaturalIndex>
+template <TensorNatIndex NaturalIndex>
 struct TensorCovariantNaturalIndex
     : detail::TensorNaturalIndexFromTypeSeqDim<typename NaturalIndex::type_seq_dimensions>::type
 {
     using character = Covariant;
 };
 
-template <class NaturalIndex>
+template <TensorNatIndex NaturalIndex>
 struct TensorContravariantNaturalIndex
     : detail::TensorNaturalIndexFromTypeSeqDim<typename NaturalIndex::type_seq_dimensions>::type
 {
@@ -59,7 +61,7 @@ struct Lower<TensorContravariantNaturalIndex<NaturalIndex>>
 
 } // namespace detail
 
-template <class Index>
+template <TensorNatIndex Index>
 using lower = detail::Lower<Index>::type;
 
 namespace detail {
@@ -75,7 +77,7 @@ struct Upper<TensorCovariantNaturalIndex<NaturalIndex>>
 
 } // namespace detail
 
-template <class Index>
+template <TensorNatIndex Index>
 using upper = detail::Upper<Index>::type;
 
 namespace detail {
@@ -117,13 +119,13 @@ template <class Index>
 using uncharacterize = detail::Uncharacterize<Index>::type;
 
 // uncharacterize a tensor
-template <class TensorType>
+template <misc::Specialization<Tensor> TensorType>
 using uncharacterize_tensor_t = relabelize_indices_of_t<
         TensorType,
         ddc::to_type_seq_t<typename TensorType::accessor_t::natural_domain_t>,
         uncharacterize<ddc::to_type_seq_t<typename TensorType::accessor_t::natural_domain_t>>>;
 
-template <class TensorType>
+template <misc::Specialization<Tensor> TensorType>
 uncharacterize_tensor_t<TensorType> uncharacterize_tensor(TensorType tensor)
 {
     return relabelize_indices_of<

@@ -14,10 +14,12 @@ namespace tensor {
 // Abstract indices used to characterize a generic metric
 struct MetricIndex1
 {
+    static constexpr bool is_tensor_index = true;
 };
 
 struct MetricIndex2
 {
+    static constexpr bool is_tensor_index = true;
 };
 
 // Relabelize metric

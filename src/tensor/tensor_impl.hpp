@@ -5,6 +5,8 @@
 
 #include <ddc/ddc.hpp>
 
+#include "specialization.hpp"
+
 namespace sil {
 
 namespace tensor {
@@ -261,7 +263,7 @@ struct TensorAccessorForDomain<ddc::DiscreteDomain<Index...>>
 
 } // namespace detail
 
-template <class Dom>
+template <misc::Specialization<ddc::DiscreteDomain> Dom>
 using tensor_accessor_for_domain_t = detail::TensorAccessorForDomain<Dom>::type;
 
 template <class... Index>
@@ -640,7 +642,7 @@ struct RelabelizeIndexInDomainType<ddc::DiscreteDomain<DDim...>, OldIndex, NewIn
 
 } // namespace detail
 
-template <class Dom, class OldIndex, class NewIndex>
+template <misc::Specialization<ddc::DiscreteDomain> Dom, TensorIndex OldIndex, TensorIndex NewIndex>
 using relabelize_index_in_domain_t
         = detail::RelabelizeIndexInDomainType<Dom, OldIndex, NewIndex>::type;
 
@@ -671,12 +673,12 @@ struct RelabelizeIndexOfType<
 
 // TODO relabelize_index_in_domain ?
 
-template <class TensorType, class OldIndex, class NewIndex>
+template <misc::Specialization<Tensor> TensorType, TensorIndex OldIndex, TensorIndex NewIndex>
 using relabelize_index_of_t = detail::RelabelizeIndexOfType<TensorType, OldIndex, NewIndex>::type;
 
 template <
-        class OldIndex,
-        class NewIndex,
+        TensorIndex OldIndex,
+        TensorIndex NewIndex,
         class ElementType,
         class... DDim,
         class LayoutStridedPolicy,
@@ -776,7 +778,7 @@ struct RelabelizeIndicesInDomainType<
 
 } // namespace detail
 
-template <class Dom, class OldIndices, class NewIndices>
+template <misc::Specialization<ddc::DiscreteDomain> Dom, class OldIndices, class NewIndices>
 using relabelize_indices_in_domain_t =
         typename detail::RelabelizeIndicesInDomainType<Dom, OldIndices, NewIndices>::type;
 
@@ -817,7 +819,7 @@ struct RelabelizeIndicesInDomain
 
 } // namespace detail
 
-template <class OldIndices, class NewIndices, class Dom>
+template <class OldIndices, class NewIndices, misc::Specialization<ddc::DiscreteDomain> Dom>
 relabelize_indices_in_domain_t<Dom, OldIndices, NewIndices> relabelize_indices_in_domain(Dom dom)
 {
     return detail::RelabelizeIndicesInDomain<OldIndices, NewIndices, 0>::run(dom);
@@ -900,11 +902,11 @@ auto RelabelizeIndicesOf(
 
 } // namespace detail
 
-template <class TensorType, class OldIndices, class NewIndices>
+template <misc::Specialization<Tensor> TensorType, class OldIndices, class NewIndices>
 using relabelize_indices_of_t
         = detail::RelabelizeIndicesOfType<TensorType, OldIndices, NewIndices>::type;
 
-template <class OldIndices, class NewIndices, class Tensor>
+template <class OldIndices, class NewIndices, misc::Specialization<Tensor> Tensor>
 relabelize_indices_of_t<Tensor, OldIndices, NewIndices> relabelize_indices_of(Tensor tensor)
 {
     return detail::RelabelizeIndicesOf<OldIndices, NewIndices, 0>(tensor);
