@@ -1,0 +1,30 @@
+# SPDX-FileCopyrightText: 2024 Baptiste Legouix
+# SPDX-License-Identifier: GPL-3.0
+
+name: test
+on:
+  push: { branches: [ main ] }
+  pull_request:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref == github.ref_protected && github.run_id || github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: DoozyX/clang-format-lint-action@v0.18
+      with:
+        source: 'benchmarks/ examples/ include/ddc/ install_test/ tests/'
+        exclude: ''
+        extensions: 'hpp,cpp'
+        clangFormatVersion: 18
+    - name: Prefer 'if defined' over 'ifdef'
+      run: if grep -R "ifdef" benchmarks/ examples/ include/ddc/ install_test/ tests/; then exit 1; fi
+    - name: Find modifications of Kokkos reserved macros
+      run: if grep -RE "(define|undef) KOKKOS_" benchmarks/ examples/ include/ddc/ install_test/ tests/; then exit 1; fi
+    - name: Find trailing whitespaces
+      run: find . -not -path './vendor/*' -type f \( -name '*.[c|h]pp' -o -name 'CMakeLists.txt' -o -name '*.cmake' -o -name '*.md' -o -name '*.py' \) -exec ./bin/trailing_spaces --Werror '{}' '+'
+    - name: REUSE Compliance Check
+      if: always()
+      uses: fsfe/reuse-action@v4
