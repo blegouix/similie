@@ -589,7 +589,7 @@ public:
                 accessor_t::access_element(
                         typename accessor_t::natural_domain_t::discrete_element_type(elem...)),
                 typename non_indices_domain_t::discrete_element_type(elem...));
-    } 
+    }
 
     template <class... DElems>
     KOKKOS_FUNCTION constexpr reference mem(DElems const&... delems) const noexcept
@@ -635,17 +635,17 @@ public:
     template <class... DElems>
     KOKKOS_FUNCTION ElementType get(DElems const&... delems) const noexcept
     {
-        if constexpr (sizeof...(DDim)==0) {
-           return operator()(delems...); 
+        if constexpr (sizeof...(DDim) == 0) {
+            return operator()(delems...);
         } else {
-        return detail::Access<
-                Tensor<ElementType,
-                       ddc::DiscreteDomain<DDim...>,
-                       Kokkos::layout_right,
-                       MemorySpace>,
-                ddc::DiscreteElement<DDim...>,
-                ddc::detail::TypeSeq<>,
-                DDim...>::run(*this, ddc::DiscreteElement<DDim...>(delems...));
+            return detail::Access<
+                    Tensor<ElementType,
+                           ddc::DiscreteDomain<DDim...>,
+                           Kokkos::layout_right,
+                           MemorySpace>,
+                    ddc::DiscreteElement<DDim...>,
+                    ddc::detail::TypeSeq<>,
+                    DDim...>::run(*this, ddc::DiscreteElement<DDim...>(delems...));
         }
     }
 

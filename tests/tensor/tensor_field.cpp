@@ -174,5 +174,30 @@ TEST(TensorField, ChristoffelLike)
     });
     auto christoffel_2nd
             = sil::tensor::inplace_apply_metric<MetricIndex, KLow, KUp>(christoffel_1st, metric);
-    // std::cout << christoffel_2nd;
+    ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
+        EXPECT_EQ(
+                christoffel_2nd.get(elem, christoffel_2nd.accessor().access_element<X, X, X>()),
+                1.);
+        EXPECT_EQ(
+                christoffel_2nd.get(elem, christoffel_2nd.accessor().access_element<X, X, Y>()),
+                2.);
+        EXPECT_EQ(
+                christoffel_2nd.get(elem, christoffel_2nd.accessor().access_element<X, Y, X>()),
+                2.);
+        EXPECT_EQ(
+                christoffel_2nd.get(elem, christoffel_2nd.accessor().access_element<X, Y, Y>()),
+                3.);
+        EXPECT_EQ(
+                christoffel_2nd.get(elem, christoffel_2nd.accessor().access_element<Y, X, X>()),
+                8.);
+        EXPECT_EQ(
+                christoffel_2nd.get(elem, christoffel_2nd.accessor().access_element<Y, X, Y>()),
+                10.);
+        EXPECT_EQ(
+                christoffel_2nd.get(elem, christoffel_2nd.accessor().access_element<Y, Y, X>()),
+                10.);
+        EXPECT_EQ(
+                christoffel_2nd.get(elem, christoffel_2nd.accessor().access_element<Y, Y, Y>()),
+                12.);
+    });
 }
