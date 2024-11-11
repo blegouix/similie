@@ -173,7 +173,7 @@ TEST(TensorField, ChristoffelLike)
                 6.);
     });
     auto christoffel_2nd
-            = sil::tensor::inplace_apply_metric<MetricIndex, KLow, KUp>(christoffel_1st, metric);
+            = sil::tensor::inplace_apply_metric<MetricIndex, KLow>(christoffel_1st, metric);
     ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
         EXPECT_EQ(
                 christoffel_2nd.get(elem, christoffel_2nd.accessor().access_element<X, X, X>()),

@@ -21,7 +21,7 @@ struct Contravariant
 
 namespace detail {
 
-template <class NaturalIndex>
+template <class NaturalIndices>
 struct TensorNaturalIndexFromTypeSeqDim;
 
 template <class... CDim>
@@ -53,32 +53,56 @@ namespace detail {
 template <class Index>
 struct Lower;
 
-template <class NaturalIndex>
+template <TensorNatIndex NaturalIndex>
+struct Lower<TensorCovariantNaturalIndex<NaturalIndex>>
+{
+    using type = TensorCovariantNaturalIndex<NaturalIndex>;
+};
+
+template <TensorNatIndex NaturalIndex>
 struct Lower<TensorContravariantNaturalIndex<NaturalIndex>>
 {
     using type = TensorCovariantNaturalIndex<NaturalIndex>;
 };
 
+template <TensorNatIndex... NaturalIndex>
+struct Lower<ddc::detail::TypeSeq<NaturalIndex...>>
+{
+    using type = ddc::detail::TypeSeq<typename Lower<NaturalIndex>::type...>;
+};
+
 } // namespace detail
 
-template <TensorNatIndex Index>
-using lower = detail::Lower<Index>::type;
+template <class T>
+using lower = detail::Lower<T>::type;
 
 namespace detail {
 
 template <class Index>
 struct Upper;
 
-template <class NaturalIndex>
+template <TensorNatIndex NaturalIndex>
 struct Upper<TensorCovariantNaturalIndex<NaturalIndex>>
 {
     using type = TensorContravariantNaturalIndex<NaturalIndex>;
 };
 
+template <TensorNatIndex NaturalIndex>
+struct Upper<TensorContravariantNaturalIndex<NaturalIndex>>
+{
+    using type = TensorContravariantNaturalIndex<NaturalIndex>;
+};
+
+template <TensorNatIndex... NaturalIndex>
+struct Upper<ddc::detail::TypeSeq<NaturalIndex...>>
+{
+    using type = ddc::detail::TypeSeq<typename Upper<NaturalIndex>::type...>;
+};
+
 } // namespace detail
 
-template <TensorNatIndex Index>
-using upper = detail::Upper<Index>::type;
+template <class T>
+using upper = detail::Upper<T>::type;
 
 namespace detail {
 

@@ -259,21 +259,27 @@ fill_metric_prod(
 // Apply metrics inplace (like g_mu_muprime*T^muprime^nu)
 template <
         TensorIndex MetricIndex,
-        misc::Specialization<ddc::detail::TypeSeq> Indices1,
-        misc::Specialization<ddc::detail::TypeSeq> Indices2,
+        TensorNatIndex... Index1,
         misc::Specialization<Tensor> MetricType,
         misc::Specialization<Tensor> TensorType>
-relabelize_indices_of_t<TensorType, Indices2, Indices1> inplace_apply_metric(
-        TensorType tensor,
-        MetricType metric)
+relabelize_indices_of_t<
+        TensorType,
+        upper<ddc::detail::TypeSeq<Index1...>>,
+        ddc::detail::TypeSeq<Index1...>>
+inplace_apply_metric(TensorType tensor, MetricType metric)
 {
-    tensor::tensor_accessor_for_domain_t<
-            metric_prod_domain_t<MetricIndex, Indices1, primes<Indices1>>>
+    tensor::tensor_accessor_for_domain_t<metric_prod_domain_t<
+            MetricIndex,
+            ddc::detail::TypeSeq<Index1...>,
+            primes<ddc::detail::TypeSeq<Index1...>>>>
             metric_prod_accessor;
     ddc::Chunk metric_prod_alloc(
             ddc::cartesian_prod_t<
                     typename TensorType::non_indices_domain_t,
-                    metric_prod_domain_t<MetricIndex, Indices1, primes<Indices1>>>(
+                    metric_prod_domain_t<
+                            MetricIndex,
+                            ddc::detail::TypeSeq<Index1...>,
+                            primes<ddc::detail::TypeSeq<Index1...>>>>(
                     tensor.non_indices_domain(),
                     metric_prod_accessor.mem_domain()),
             ddc::HostAllocator<double>());
@@ -281,44 +287,44 @@ relabelize_indices_of_t<TensorType, Indices2, Indices1> inplace_apply_metric(
             double,
             ddc::cartesian_prod_t<
                     typename TensorType::non_indices_domain_t,
-                    metric_prod_domain_t<MetricIndex, Indices1, primes<Indices1>>>,
+                    metric_prod_domain_t<
+                            MetricIndex,
+                            ddc::detail::TypeSeq<Index1...>,
+                            primes<ddc::detail::TypeSeq<Index1...>>>>,
             Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             metric_prod(metric_prod_alloc);
 
-    fill_metric_prod<MetricIndex, Indices1, primes<Indices1>>(metric_prod, metric);
+    fill_metric_prod<
+            MetricIndex,
+            ddc::detail::TypeSeq<Index1...>,
+            primes<ddc::detail::TypeSeq<Index1...>>>(metric_prod, metric);
 
     ddc::Chunk result_alloc(
-            relabelize_indices_in_domain<Indices2, Indices1>(tensor.domain()),
+            relabelize_indices_in_domain<
+                    upper<ddc::detail::TypeSeq<Index1...>>,
+                    ddc::detail::TypeSeq<Index1...>>(tensor.domain()),
             ddc::HostAllocator<double>());
-    relabelize_indices_of_t<TensorType, Indices2, Indices1> result(result_alloc);
+    relabelize_indices_of_t<
+            TensorType,
+            upper<ddc::detail::TypeSeq<Index1...>>,
+            ddc::detail::TypeSeq<Index1...>>
+            result(result_alloc);
     ddc::for_each(tensor.non_indices_domain(), [&](auto elem) {
         tensor_prod(
                 result[elem],
                 metric_prod[elem],
-                relabelize_indices_of<Indices2, primes<Indices2>>(tensor)[elem]);
+                relabelize_indices_of<
+                        upper<ddc::detail::TypeSeq<Index1...>>,
+                        primes<upper<ddc::detail::TypeSeq<Index1...>>>>(tensor)[elem]);
     });
     Kokkos::deep_copy(
             tensor.allocation_kokkos_view(),
             result.allocation_kokkos_view()); // We rely on Kokkos::deep_copy in place of ddc::parallel_deepcopy to avoid type verification of the type dimensions
 
-    return relabelize_indices_of<Indices2, Indices1>(tensor);
-}
-
-template <
-        TensorIndex MetricIndex,
-        TensorIndex Index1,
-        TensorIndex Index2,
-        misc::Specialization<Tensor> MetricType,
-        misc::Specialization<Tensor> TensorType>
-relabelize_index_of_t<TensorType, Index2, Index1> inplace_apply_metric(
-        TensorType tensor,
-        MetricType metric)
-{
-    return inplace_apply_metric<
-            MetricIndex,
-            ddc::detail::TypeSeq<Index1>,
-            ddc::detail::TypeSeq<Index2>>(tensor, metric);
+    return relabelize_indices_of<
+            upper<ddc::detail::TypeSeq<Index1...>>,
+            ddc::detail::TypeSeq<Index1...>>(tensor);
 }
 
 } // namespace tensor
