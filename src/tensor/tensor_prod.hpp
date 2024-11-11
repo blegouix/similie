@@ -131,19 +131,17 @@ tensor_prod(
         Tensor<ElementType, ddc::DiscreteDomain<Index2...>, LayoutStridedPolicy, MemorySpace>
                 tensor2)
 {
-    /* TODO restore
     static_assert(std::is_same_v<
                   ddc::type_seq_remove_t<
                           uncharacterize<ddc::to_type_seq_t<
-                                  ddc::cartesian_prod_t<typename Index1::subindices_domain_t...>>>,
-                          uncharacterize<ddc::to_type_seq_t<ddc::cartesian_prod_t<
-                                  typename ProdDDim::subindices_domain_t...>>>>,
+                                  ddc::cartesian_prod_t<natural_domain_t<Index1>...>>>,
+                          uncharacterize<ddc::to_type_seq_t<
+                                  ddc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>>,
                   ddc::type_seq_remove_t<
                           uncharacterize<ddc::to_type_seq_t<
-                                  ddc::cartesian_prod_t<typename Index2::subindices_domain_t...>>>,
-                          uncharacterize<ddc::to_type_seq_t<ddc::cartesian_prod_t<
-                                  typename ProdDDim::subindices_domain_t...>>>>>);
-    */
+                                  ddc::cartesian_prod_t<natural_domain_t<Index2>...>>>,
+                          uncharacterize<ddc::to_type_seq_t<
+                                  ddc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>>>);
     static_assert(
             std::is_same_v<
                     ddc::type_seq_remove_t<
@@ -169,19 +167,19 @@ tensor_prod(
             uncharacterize<ddc::detail::TypeSeq<Index2...>>,
             ddc::type_seq_remove_t<
                     uncharacterize<ddc::to_type_seq_t<
-                            ddc::cartesian_prod_t<typename ProdDDim::subindices_domain_t...>>>,
+                            ddc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>,
                     uncharacterize<ddc::to_type_seq_t<
-                            ddc::cartesian_prod_t<typename Index2::subindices_domain_t...>>>>,
+                            ddc::cartesian_prod_t<natural_domain_t<Index2>...>>>>,
+            ddc::type_seq_remove_t<
+                    uncharacterize<
+                            ddc::to_type_seq_t<ddc::cartesian_prod_t<natural_domain_t<Index1>...>>>,
+                    uncharacterize<ddc::to_type_seq_t<
+                            ddc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>>,
             ddc::type_seq_remove_t<
                     uncharacterize<ddc::to_type_seq_t<
-                            ddc::cartesian_prod_t<typename Index1::subindices_domain_t...>>>,
+                            ddc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>,
                     uncharacterize<ddc::to_type_seq_t<
-                            ddc::cartesian_prod_t<typename ProdDDim::subindices_domain_t...>>>>,
-            ddc::type_seq_remove_t<
-                    uncharacterize<ddc::to_type_seq_t<
-                            ddc::cartesian_prod_t<typename ProdDDim::subindices_domain_t...>>>,
-                    uncharacterize<ddc::to_type_seq_t<
-                            ddc::cartesian_prod_t<typename Index1::subindices_domain_t...>>>>>::
+                            ddc::cartesian_prod_t<natural_domain_t<Index1>...>>>>>::
             run(uncharacterize_tensor(prod_tensor),
                 uncharacterize_tensor(tensor1),
                 uncharacterize_tensor(tensor2));

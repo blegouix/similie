@@ -63,3 +63,4 @@ using projector_index_t = ProjectorIndex<
 - tests for relabelize_indexes and relabelize_metric
 - Unify TensorAccessor::access_element() functions. Also get<Dims...>() in Tensor ?
 - inplace_apply_metric should not take both lower and upper indices as template arguments and metric should rely on prime
+- rely on natural_domain_t in tensor_prod ?

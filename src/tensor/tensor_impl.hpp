@@ -96,6 +96,30 @@ concept TensorNatIndex = requires {
     { DDim::is_tensor_natural_index } -> std::convertible_to<bool>;
 } && DDim::is_tensor_natural_index;
 
+// natural_domain_t is obtained using concept and specialization
+namespace detail {
+
+template <class Index>
+struct NaturalDomainType;
+
+template <class Index>
+    requires(TensorIndex<Index> && !TensorNatIndex<Index>)
+struct NaturalDomainType<Index>
+{
+    using type = typename Index::subindices_domain_t;
+};
+
+template <TensorNatIndex Index>
+struct NaturalDomainType<Index>
+{
+    using type = ddc::DiscreteDomain<Index>;
+};
+
+} // namespace detail
+
+template <TensorIndex Index>
+using natural_domain_t = typename detail::NaturalDomainType<Index>::type;
+
 // Helpers to build the access_id() function which computes the ids of subindices of an index. This cumbersome logic is necessary because subindices do not necessarily have the same rank.
 namespace detail {
 // For Tmunu and index=nu, returns 1
