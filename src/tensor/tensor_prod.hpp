@@ -117,6 +117,12 @@ template <
         class ElementType,
         class LayoutStridedPolicy,
         class MemorySpace>
+    requires(
+            ((!TensorNatIndex<ProdDDim> || ...) || (!TensorNatIndex<Index2> || ...)
+             || (!TensorNatIndex<Index1> || ...))
+            && (!misc::Specialization<ProdDDim, TensorYoungTableauIndex> && ...)
+            && (!misc::Specialization<Index1, TensorYoungTableauIndex> && ...)
+            && (!misc::Specialization<Index2, TensorYoungTableauIndex> && ...))
 Tensor<ElementType,
        ddc::DiscreteDomain<ProdDDim...>,
        Kokkos::layout_right,
@@ -190,10 +196,10 @@ tensor_prod(
 namespace detail {
 
 template <class Index1, class HeadDDim1TypeSeq, class ContractDDimTypeSeq, class TailDDim2TypeSeq>
-struct TensorProd;
+struct TensorProdNatYoungNat;
 
 template <class Index1, class... HeadDDim1, class... ContractDDim, class... TailDDim2>
-struct TensorProd<
+struct TensorProdNatYoungNat<
         Index1,
         ddc::detail::TypeSeq<HeadDDim1...>,
         ddc::detail::TypeSeq<ContractDDim...>,
@@ -264,7 +270,7 @@ tensor_prod(
                   ddc::type_seq_remove_t<
                           ddc::detail::TypeSeq<DDim2...>,
                           ddc::detail::TypeSeq<ProdDDim...>>>);
-    return detail::TensorProd<
+    return detail::TensorProdNatYoungNat<
             Index1,
             ddc::type_seq_remove_t<
                     ddc::detail::TypeSeq<ProdDDim...>,
@@ -287,10 +293,10 @@ template <
         class HeadDDim1TypeSeq,
         class ContractDDimTypeSeq,
         class TailDDim2TypeSeq>
-struct TensorProd2;
+struct TensorProdNatYoungYoung;
 
 template <class Index1, class Index2, class... HeadDDim1, class... ContractDDim, class... TailDDim2>
-struct TensorProd2<
+struct TensorProdNatYoungYoung<
         Index1,
         Index2,
         ddc::detail::TypeSeq<HeadDDim1...>,
@@ -382,7 +388,7 @@ tensor_prod(
                     ddc::to_type_seq_t<
                             typename Index2::
                                     subindices_domain_t>>); // tensor1 and tensor2 should not have any subindex in common because their characters are different
-    detail::TensorProd2<
+    detail::TensorProdNatYoungYoung<
             uncharacterize<Index1>,
             uncharacterize<Index2>,
             ddc::type_seq_remove_t<
@@ -400,7 +406,7 @@ tensor_prod(
     return prod_tensor;
 }
 
-// Any-any product into Young (do not support fields atm)
+// Any-any product into Young
 namespace detail {
 
 template <
@@ -410,7 +416,7 @@ template <
         class HeadDDim1TypeSeq,
         class ContractDDimTypeSeq,
         class TailDDim2TypeSeq>
-struct TensorProd3;
+struct TensorProdYoungAnyAny;
 
 template <
         class... ProdDDim,
@@ -419,7 +425,7 @@ template <
         class... HeadDDim1,
         class... ContractDDim,
         class... TailDDim2>
-struct TensorProd3<
+struct TensorProdYoungAnyAny<
         ddc::detail::TypeSeq<ProdDDim...>,
         ddc::detail::TypeSeq<Index1...>,
         ddc::detail::TypeSeq<Index2...>,
@@ -483,8 +489,7 @@ struct TensorProd3<
 } // namespace detail
 
 template <
-        misc::Specialization<TensorYoungTableauIndex>
-                ProdDDim, // TODO Align convention with tensor_prod
+        misc::Specialization<TensorYoungTableauIndex> ProdDDim,
         class... Index1,
         class... Index2,
         class ElementType,
@@ -534,7 +539,7 @@ tensor_prod(
                             typename Index2::
                                     subindices_domain_t...>>>); // tensor1 and tensor2 should not have any subindex in common because their characters are different
 
-    detail::TensorProd3<
+    detail::TensorProdYoungAnyAny<
             uncharacterize<ddc::detail::TypeSeq<ProdDDim>>,
             uncharacterize<ddc::detail::TypeSeq<Index1...>>,
             uncharacterize<ddc::detail::TypeSeq<Index2...>>,

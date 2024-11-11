@@ -215,12 +215,14 @@ struct FillMetricProd<
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 new_metric_prod_(new_metric_prod_alloc_);
 
-        ddc::for_each(new_metric_prod_.non_indices_domain(), [&](auto elem) {
-            tensor_prod(
-                    new_metric_prod_[elem],
-                    metric_prod_[elem],
-                    relabelize_metric<HeadIndex1, HeadIndex2>(metric)[elem]);
-        });
+        if (new_metric_prod_dom_.size() != 0) {
+            ddc::for_each(new_metric_prod_.non_indices_domain(), [&](auto elem) {
+                tensor_prod(
+                        new_metric_prod_[elem],
+                        metric_prod_[elem],
+                        relabelize_metric<HeadIndex1, HeadIndex2>(metric)[elem]);
+            });
+        }
 
 
         return FillMetricProd<
