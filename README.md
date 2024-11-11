@@ -10,7 +10,7 @@ SimiLie (aka. Simulation in Lie groups) is a performance-portable (CPU & GPU) C+
 
 **Absolute WIP, there is no guarantee for proper working.**
 
-**Relies on the `#embed` directive from C23. As it is not yet in C++ (even in C++26), the only supported compiler at the moment seems to be Clang 19. Kokkos backends other than `Serial` are not yet supported.**
+**Relies on the [#embed](https://en.cppreference.com/w/c/preprocessor/embed) directive from C23. As it is not yet in C++ (even in C++26), the only supported compiler at the moment seems to be [Clang 19](https://github.com/llvm/llvm-project/releases). [Kokkos](https://github.com/kokkos/kokkos) backends other than `Serial` are not yet supported.**
 
 ## Development plan
 
