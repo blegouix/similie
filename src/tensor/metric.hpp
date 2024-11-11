@@ -13,13 +13,38 @@ namespace sil {
 namespace tensor {
 
 // Abstract indices used to characterize a generic metric
-struct MetricIndex1 : TensorNaturalIndex<>
+
+template <class... CDim>
+struct MetricIndex1 : TensorNaturalIndex<CDim...>
 {
 };
 
-struct MetricIndex2 : TensorNaturalIndex<>
+template <class... CDim>
+struct MetricIndex2 : TensorNaturalIndex<CDim...>
 {
 };
+
+namespace detail {
+
+template <class TypeSeqCDim>
+struct ConvertTypeSeqToMetricIndex1;
+
+template <class... CDim>
+struct ConvertTypeSeqToMetricIndex1<ddc::detail::TypeSeq<CDim...>>
+{
+    using type = MetricIndex1<CDim...>;
+};
+
+template <class TypeSeqCDim>
+struct ConvertTypeSeqToMetricIndex2;
+
+template <class... CDim>
+struct ConvertTypeSeqToMetricIndex2<ddc::detail::TypeSeq<CDim...>>
+{
+    using type = MetricIndex2<CDim...>;
+};
+
+} // namespace detail
 
 // Relabelize metric
 template <
@@ -28,28 +53,44 @@ template <
         TensorNatIndex Index2>
 using relabelize_metric_in_domain_t = relabelize_indices_in_domain_t<
         Dom,
-        ddc::detail::TypeSeq<MetricIndex1, MetricIndex2>,
+        ddc::detail::TypeSeq<
+                typename detail::ConvertTypeSeqToMetricIndex1<
+                        typename Index1::type_seq_dimensions>::type,
+                typename detail::ConvertTypeSeqToMetricIndex2<
+                        typename Index2::type_seq_dimensions>::type>,
         ddc::detail::TypeSeq<Index1, Index2>>;
 
 template <TensorNatIndex Index1, TensorNatIndex Index2, class Dom>
 relabelize_metric_in_domain_t<Dom, Index1, Index2> relabelize_metric_in_domain(Dom metric_dom)
 {
     return relabelize_indices_in_domain<
-            ddc::detail::TypeSeq<MetricIndex1, MetricIndex2>,
+            ddc::detail::TypeSeq<
+                    typename detail::ConvertTypeSeqToMetricIndex1<
+                            typename Index1::type_seq_dimensions>::type,
+                    typename detail::ConvertTypeSeqToMetricIndex2<
+                            typename Index2::type_seq_dimensions>::type>,
             ddc::detail::TypeSeq<Index1, Index2>>(metric_dom);
 }
 
 template <misc::Specialization<Tensor> TensorType, TensorNatIndex Index1, TensorNatIndex Index2>
 using relabelize_metric_t = relabelize_indices_of_t<
         TensorType,
-        ddc::detail::TypeSeq<MetricIndex1, MetricIndex2>,
+        ddc::detail::TypeSeq<
+                typename detail::ConvertTypeSeqToMetricIndex1<
+                        typename Index1::type_seq_dimensions>::type,
+                typename detail::ConvertTypeSeqToMetricIndex2<
+                        typename Index2::type_seq_dimensions>::type>,
         ddc::detail::TypeSeq<Index1, Index2>>;
 
 template <TensorNatIndex Index1, TensorNatIndex Index2, misc::Specialization<Tensor> TensorType>
 relabelize_metric_t<TensorType, Index1, Index2> relabelize_metric(TensorType tensor)
 {
     return relabelize_indices_of<
-            ddc::detail::TypeSeq<MetricIndex1, MetricIndex2>,
+            ddc::detail::TypeSeq<
+                    typename detail::ConvertTypeSeqToMetricIndex1<
+                            typename Index1::type_seq_dimensions>::type,
+                    typename detail::ConvertTypeSeqToMetricIndex2<
+                            typename Index2::type_seq_dimensions>::type>,
             ddc::detail::TypeSeq<Index1, Index2>>(tensor);
 }
 

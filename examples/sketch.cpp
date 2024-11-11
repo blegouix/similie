@@ -9,11 +9,6 @@
 
 static constexpr std::size_t s_degree = 3;
 
-// Declare a metric
-// using MetricIndex = sil::tensor::TensorSymmetricIndex<
-using MetricIndex
-        = sil::tensor::TensorDiagonalIndex<sil::tensor::MetricIndex1, sil::tensor::MetricIndex2>;
-
 // Labelize the dimensions of space
 struct X
 {
@@ -24,6 +19,11 @@ struct Y
 {
     static constexpr bool PERIODIC = false;
 };
+
+// Declare a metric
+// using MetricIndex = sil::tensor::TensorSymmetricIndex<
+using MetricIndex = sil::tensor::
+        TensorDiagonalIndex<sil::tensor::MetricIndex1<X, Y>, sil::tensor::MetricIndex2<X, Y>>;
 
 using MesherXY = sil::mesher::Mesher<s_degree, X, Y>;
 

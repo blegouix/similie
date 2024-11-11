@@ -11,12 +11,6 @@
  * On the particular event {tau: 1/3, rho: 1, theta: math.pi/2, phi: 0}, the metric is Minkowski metric.
  */
 
-// Declare the Minkowski metric as a Lorentzian signature (-, +, +, +)
-using MetricIndex = sil::tensor::TensorLorentzianSignIndex<
-        std::integral_constant<std::size_t, 1>,
-        sil::tensor::MetricIndex1,
-        sil::tensor::MetricIndex2>;
-
 // Labelize the dimensions of space-time
 struct T
 {
@@ -33,6 +27,12 @@ struct Y
 struct Z
 {
 };
+
+// Declare the Minkowski metric as a Lorentzian signature (-, +, +, +)
+using MetricIndex = sil::tensor::TensorLorentzianSignIndex<
+        std::integral_constant<std::size_t, 1>,
+        sil::tensor::MetricIndex1<T, X, Y, Z>,
+        sil::tensor::MetricIndex2<T, X, Y, Z>>;
 
 // Declare natural indices taking values in {T, X, Y, Z}
 struct Mu : sil::tensor::TensorNaturalIndex<T, X, Y, Z>
