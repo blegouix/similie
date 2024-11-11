@@ -222,18 +222,6 @@ static constexpr std::size_t access_id(
     }
 }
 
-/*
-template <class Index>
-struct NaturalDomainType {
-    using type = ddc::DiscreteDomain<Index>;
-};
-
-template <class Index> requires (TensorIndex<Index> && !TensorNatIndex<Index>)
-struct NaturalDomainType<Index> {
-    using type = typename Index::subindices_domain_t;
-};
-*/
-
 } // namespace detail
 
 // TensorAccessor class, allows to build a domain which represents the tensor and access elements.
@@ -562,19 +550,20 @@ public:
         return discrete_domain_type(non_indices_domain(), accessor_t::access_domain());
     }
 
-    template <class... CDim, class... Elem>
-    KOKKOS_FUNCTION constexpr discrete_element_type access_element(Elem... elem) const noexcept
+    template <class... CDim>
+    KOKKOS_FUNCTION constexpr discrete_element_type access_element()
+            const noexcept // TODO merge this with the one below
     {
-        return discrete_element_type(elem..., accessor_t::template access_element<CDim...>());
+        return discrete_element_type(accessor_t::template access_element<CDim...>());
     }
 
-    template <TensorNatIndex... NaturalIndex, class... Elem>
-        requires(!TensorIndex<Elem> && ...)
-    KOKKOS_FUNCTION constexpr discrete_element_type access_element(
-            ddc::DiscreteElement<NaturalIndex...> natural_elem,
-            Elem... elem) const noexcept
+    template <class... Elem>
+    KOKKOS_FUNCTION constexpr discrete_element_type access_element(Elem... elem) const noexcept
     {
-        return discrete_element_type(accessor_t::access_element(natural_elem), elem...);
+        return discrete_element_type(
+                accessor_t::access_element(
+                        typename accessor_t::natural_domain_t::discrete_element_type(elem...)),
+                typename non_indices_domain_t::discrete_element_type(elem...));
     }
 
     template <class... DElems>
@@ -656,7 +645,7 @@ public:
 
 // Relabelize index without altering allocation
 namespace detail {
-template <TensorIndex IndexToRelabelize, TensorNatIndex OldIndex, TensorNatIndex NewIndex>
+template <class IndexToRelabelize, TensorNatIndex OldIndex, TensorNatIndex NewIndex>
 struct RelabelizeIndex
 {
     using type = std::
@@ -1174,24 +1163,20 @@ struct PrintTensor<
 
 } // namespace detail
 
-template <class ElementType, class... DDim, class LayoutStridedPolicy, class MemorySpace>
-std::ostream& operator<<(
-        std::ostream& os,
-        Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace> const&
-                tensor)
+template <misc::Specialization<Tensor> TensorType>
+std::ostream& operator<<(std::ostream& os, TensorType const& tensor)
 {
     std::string str = "";
     os << detail::PrintTensor<
             ddc::DiscreteDomain<>,
             ddc::DiscreteDomain<ddc::type_seq_element_t<
                     0,
-                    ddc::to_type_seq_t<typename TensorAccessor<DDim...>::natural_domain_t>>>,
+                    ddc::to_type_seq_t<typename TensorType::natural_domain_t>>>,
             ddc::detail::convert_type_seq_to_discrete_domain_t<ddc::type_seq_remove_t<
-                    ddc::to_type_seq_t<typename TensorAccessor<DDim...>::natural_domain_t>,
+                    ddc::to_type_seq_t<typename TensorType::natural_domain_t>,
                     ddc::detail::TypeSeq<ddc::type_seq_element_t<
                             0,
-                            ddc::to_type_seq_t<
-                                    typename TensorAccessor<DDim...>::natural_domain_t>>>>>>::
+                            ddc::to_type_seq_t<typename TensorType::natural_domain_t>>>>>>::
                     run(str, tensor, ddc::DiscreteElement<>());
     return os;
 }

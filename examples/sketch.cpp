@@ -11,9 +11,8 @@ static constexpr std::size_t s_degree = 3;
 
 // Declare a metric
 // using MetricIndex = sil::tensor::TensorSymmetricIndex<
-using MetricIndex = sil::tensor::TensorDiagonalIndex<
-        sil::tensor::MetricIndex1,
-        sil::tensor::MetricIndex2>;
+using MetricIndex
+        = sil::tensor::TensorDiagonalIndex<sil::tensor::MetricIndex1, sil::tensor::MetricIndex2>;
 
 // Labelize the dimensions of space
 struct X
@@ -78,7 +77,8 @@ int main(int argc, char** argv)
 
     // Allocate and instantiate a metric tensor field.
     sil::tensor::TensorAccessor<MetricIndex> metric_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, MetricIndex> metric_dom(mesh_xy, metric_accessor.mem_domain());
+    ddc::DiscreteDomain<DDimX, DDimY, MetricIndex>
+            metric_dom(mesh_xy, metric_accessor.mem_domain());
     ddc::Chunk metric_alloc(metric_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
@@ -86,4 +86,6 @@ int main(int argc, char** argv)
             Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             metric(metric_alloc);
+    auto gmunu = sil::tensor::relabelize_metric<MuUp, NuUp>(metric);
+    std::cout << gmunu;
 }

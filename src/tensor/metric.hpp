@@ -31,12 +31,26 @@ using relabelize_metric_in_domain_t = relabelize_indices_in_domain_t<
         ddc::detail::TypeSeq<MetricIndex1, MetricIndex2>,
         ddc::detail::TypeSeq<Index1, Index2>>;
 
-template <class Index1, class Index2, class Dom>
+template <TensorNatIndex Index1, TensorNatIndex Index2, class Dom>
 relabelize_metric_in_domain_t<Dom, Index1, Index2> relabelize_metric_in_domain(Dom metric_dom)
 {
     return relabelize_indices_in_domain<
             ddc::detail::TypeSeq<MetricIndex1, MetricIndex2>,
             ddc::detail::TypeSeq<Index1, Index2>>(metric_dom);
+}
+
+template <misc::Specialization<Tensor> TensorType, TensorNatIndex Index1, TensorNatIndex Index2>
+using relabelize_metric_t = relabelize_indices_of_t<
+        TensorType,
+        ddc::detail::TypeSeq<MetricIndex1, MetricIndex2>,
+        ddc::detail::TypeSeq<Index1, Index2>>;
+
+template <TensorNatIndex Index1, TensorNatIndex Index2, misc::Specialization<Tensor> TensorType>
+relabelize_metric_t<TensorType, Index1, Index2> relabelize_metric(TensorType tensor)
+{
+    return relabelize_indices_of<
+            ddc::detail::TypeSeq<MetricIndex1, MetricIndex2>,
+            ddc::detail::TypeSeq<Index1, Index2>>(tensor);
 }
 
 // Compute domain for a tensor product of metrics (ie. g_mu_muprime*g_nu_nuprime*...)

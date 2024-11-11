@@ -121,7 +121,6 @@ tensor_prod(
                   ddc::type_seq_remove_t<
                           ddc::detail::TypeSeq<DDim2...>,
                           ddc::detail::TypeSeq<ProdDDim...>>>);
-    std::cout << "test";
     return detail::TensorProd<
             Index1,
             ddc::type_seq_remove_t<
