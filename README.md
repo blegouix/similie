@@ -4,39 +4,30 @@ SPDX-License-Identifier: GPL-3.0-or-later
 -->
 
 # SimiLie
-Simulation in Lie groups.
-
 Documentation [here](https://blegouix.github.io/SimiLie/).
 
-This is a C++ performance-portable project, supporting CPU & GPU. For simplicity sake and performance purpose (avoid access to adjacency matrix, efficient parallelization & memory access), only mesh structured as a cartesian product of 1D meshes is supported. No adaptative mesh refinement. Main focuses are modularity, versatility and performance.
-
-Relies on [DDC](https://github.com/CExA-project/ddc).
+SimiLie (aka. Simulation in Lie groups) is a performance-portable (CPU & GPU) C++ library aiming to extent the capabilities of [DDC](https://github.com/CExA-project/ddc) to offer a complete toolkit able to address any physical problem from eventually-relativistic classical field theory (in particular: solid & fluid mechanics, electromagnetism and gravitation, or coupling between those).
 
 **Absolute WIP, there is no guarantee for proper working.**
 
-**Relies on the #embed directive from C23. As it is not yet in C++ (even in C++26), the only supported compiler seems to be Clang 19.**
+**Relies on the #embed directive from C23. As it is not yet in C++ (even in C++26), the only supported compiler at the moment seems to be Clang 19. Kokkos backends other than Serial are not yet available.**
 
 ## Development plan
 
-1. Short term (month): simulate electromagnetism on manifold.
+1. Short term: simulate electromagnetism on manifold.
 2. Mid term (months): simulate geometrodynamics.
-3. Long term: generalize to all kinds of *classical* gauge theories and put Lie groups at the center of the construction.
+3. Long term: generalize to all kinds of *classical* gauge theories and put Lie groups and Clifford algebra at the center of the construction.
 4. Extra-long term (years): quantization.
 
 ## Initial roadmap
 
 DONE:
-- Create repository.
-- Initial setup (dependencies, basic test, project structure).
 - Simple mesher.
-- Tensors.
+- Tensors (any dimension, rank and structure), tensor fields, covariant/contravariant indices, metric.
 
 TODO:
-- Differential forms & fields of differential forms.
-- Basic useful differential forms (not involving derivatives): tetrads, metric.
-- More advanced tools: discrete Hodge star, exterior derivative, codifferential operator, covariant derivative.
-- More advanced useful differential forms: connections, Riemann, Ricci.
-- Integration, inner product.
+- Differential forms (simplices, chains). Integration, inner product.
+- Differential tools: boundary operator, discrete Hodge star, exterior derivative...
 - Weak formulation, finite element method applied to electrostatic problem on manifold.
 - Generalization to electromagnetism.
 - ...
