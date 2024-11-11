@@ -21,9 +21,8 @@ struct Y
 };
 
 // Declare a metric
-// using MetricIndex = sil::tensor::TensorSymmetricIndex<
 using MetricIndex = sil::tensor::
-        TensorDiagonalIndex<sil::tensor::MetricIndex1<X, Y>, sil::tensor::MetricIndex2<X, Y>>;
+        TensorSymmetricIndex<sil::tensor::MetricIndex1<X, Y>, sil::tensor::MetricIndex2<X, Y>>;
 
 using MesherXY = sil::mesher::Mesher<s_degree, X, Y>;
 
@@ -71,10 +70,6 @@ int main(int argc, char** argv)
             ddc::detail::TypeSeq<DDimX, DDimY>,
             ddc::detail::TypeSeq<BSplinesX, BSplinesY>>(lower_bounds, upper_bounds, nb_cells);
 
-    std::cout << ddc::coordinate(mesh_xy.front()) << "\n";
-    std::cout << ddc::coordinate(mesh_xy.back()) << "\n";
-    std::cout << mesh_xy.extents() << "\n";
-
     // Allocate and instantiate a metric tensor field.
     sil::tensor::TensorAccessor<MetricIndex> metric_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, MetricIndex>
@@ -87,5 +82,10 @@ int main(int argc, char** argv)
             Kokkos::DefaultHostExecutionSpace::memory_space>
             metric(metric_alloc);
     auto gmunu = sil::tensor::relabelize_metric<MuUp, NuUp>(metric);
+    ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
+        gmunu(elem, gmunu.accessor().access_element<X, X>()) = 1.;
+        gmunu(elem, gmunu.accessor().access_element<X, Y>()) = 2.;
+        gmunu(elem, gmunu.accessor().access_element<Y, Y>()) = 3.;
+    });
     std::cout << gmunu;
 }
