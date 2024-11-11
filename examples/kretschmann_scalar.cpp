@@ -11,12 +11,6 @@
  * On the particular event {tau: 1/3, rho: 1, theta: math.pi/2, phi: 0}, the metric is Minkowski metric.
  */
 
-// Declare the Minkowski metric as a Lorentzian signature (-, +, +, +)
-using MetricIndex = sil::tensor::TensorLorentzianSignIndex<
-        std::integral_constant<std::size_t, 1>,
-        sil::tensor::MetricIndex1,
-        sil::tensor::MetricIndex2>;
-
 // Labelize the dimensions of space-time
 struct T
 {
@@ -33,6 +27,12 @@ struct Y
 struct Z
 {
 };
+
+// Declare the Minkowski metric as a Lorentzian signature (-, +, +, +)
+using MetricIndex = sil::tensor::TensorLorentzianSignIndex<
+        std::integral_constant<std::size_t, 1>,
+        sil::tensor::MetricIndex1<T, X, Y, Z>,
+        sil::tensor::MetricIndex2<T, X, Y, Z>>;
 
 // Declare natural indices taking values in {T, X, Y, Z}
 struct Mu : sil::tensor::TensorNaturalIndex<T, X, Y, Z>
@@ -154,16 +154,14 @@ int main(int argc, char** argv)
 
     // We allocate and compute the covariant counterpart of the Riemann tensor which is needed for the computation of the Kretschmann scalar. Actually, in this particular case (Minkowski metric and even-rank tensor), contravariant and covariant Riemann tensors have the same components, but we perform the computation like if it was not the case.
     ddc::Chunk riemann_low_alloc = ddc::create_mirror_and_copy(riemann_up);
-    auto riemann_low = sil::tensor::inplace_apply_metric<
-            MetricIndex,
-            ddc::detail::TypeSeq<MuLow, NuLow, RhoLow, SigmaLow>,
-            ddc::detail::TypeSeq<MuUp, NuUp, RhoUp, SigmaUp>>(
-            sil::tensor::Tensor<
-                    double,
-                    ddc::DiscreteDomain<RiemannUpTensorIndex>,
-                    Kokkos::layout_right,
-                    Kokkos::DefaultHostExecutionSpace::memory_space>(riemann_low_alloc),
-            metric);
+    auto riemann_low
+            = sil::tensor::inplace_apply_metric<MetricIndex, MuLow, NuLow, RhoLow, SigmaLow>(
+                    sil::tensor::Tensor<
+                            double,
+                            ddc::DiscreteDomain<RiemannUpTensorIndex>,
+                            Kokkos::layout_right,
+                            Kokkos::DefaultHostExecutionSpace::memory_space>(riemann_low_alloc),
+                    metric);
 
     // We allocate the Kretschmann scalar (a single double) and perform the tensor product between covariant an contravariant Riemann tensors.
     ddc::DiscreteDomain<> dom;

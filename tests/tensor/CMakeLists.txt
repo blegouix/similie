@@ -24,3 +24,14 @@ target_link_libraries(unit_tests_tensor_prod
 )
 
 gtest_discover_tests(unit_tests_tensor_prod DISCOVERY_MODE PRE_TEST)
+
+add_executable(unit_tests_tensor_field tensor_field.cpp ../main.cpp)
+
+target_link_libraries(unit_tests_tensor_field
+    PUBLIC
+        GTest::gtest
+        DDC::DDC
+        sil::tensor
+)
+
+gtest_discover_tests(unit_tests_tensor_field DISCOVERY_MODE PRE_TEST)
