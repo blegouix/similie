@@ -1,5 +1,5 @@
-<map id="sil::tensor::MetricIndex1" name="sil::tensor::MetricIndex1">
-<area shape="rect" id="Node000001" title=" " alt="" coords="12,348,183,413"/>
+<map id="sil::tensor::MetricIndex1&lt; CDim &gt;" name="sil::tensor::MetricIndex1&lt; CDim &gt;">
+<area shape="rect" id="Node000001" title=" " alt="" coords="12,348,183,428"/>
 <area shape="rect" id="Node000002" href="$structsil_1_1tensor_1_1TensorNaturalIndex.html" title=" " alt="" coords="5,5,189,300"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="100,314,100,348,95,348,95,314"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="100,313,100,348,95,348,95,313"/>
 </map>

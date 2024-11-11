@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['natural_5fdomain_5ft_0',['natural_domain_t',['../classsil_1_1tensor_1_1TensorAccessor.html#ac27c9d73da76ab157fb91d8a1fa3dc09',1,'sil::tensor::TensorAccessor::natural_domain_t'],['../classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html#a671bc539a32e2ad8a78dd2673b973269',1,'sil::tensor::Tensor&lt; ElementType, ddc::DiscreteDomain&lt; DDim... &gt;, LayoutStridedPolicy, MemorySpace &gt;::natural_domain_t']]],
-  ['natural_5ftensor_5fprod_5fdomain_5ft_1',['natural_tensor_prod_domain_t',['../namespacesil_1_1tensor.html#a6326c250e7c522bdc2c916bf7cdaf370',1,'sil::tensor']]]
+  ['metric_5fprod_5fdomain_5ft_0',['metric_prod_domain_t',['../namespacesil_1_1tensor.html#a4e5368f425f7bbbab77cd8edaff01b87',1,'sil::tensor']]],
+  ['metric_5fprod_5ft_1',['metric_prod_t',['../namespacesil_1_1tensor.html#ac78669c4a01fe2ec3b4a8a48d0c94e2a',1,'sil::tensor']]]
 ];

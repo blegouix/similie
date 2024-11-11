@@ -4,5 +4,6 @@ var searchData=
   ['relabelize_5findex_5fof_1',['relabelize_index_of',['../namespacesil_1_1tensor.html#add390e552dbb809298417732a99fd132',1,'sil::tensor']]],
   ['relabelize_5findices_5fin_5fdomain_2',['relabelize_indices_in_domain',['../namespacesil_1_1tensor.html#aa89f6ee83c61eecf70ddd76307895747',1,'sil::tensor']]],
   ['relabelize_5findices_5fof_3',['relabelize_indices_of',['../namespacesil_1_1tensor.html#aca53f2d15ecbed2537c526e29e308947',1,'sil::tensor']]],
-  ['relabelize_5fmetric_5fin_5fdomain_4',['relabelize_metric_in_domain',['../namespacesil_1_1tensor.html#a98595b60ec04ec0975ec9096bb8e9f50',1,'sil::tensor']]]
+  ['relabelize_5fmetric_4',['relabelize_metric',['../namespacesil_1_1tensor.html#a6ee78e45a231d3e25c4e5c508fb602e2',1,'sil::tensor']]],
+  ['relabelize_5fmetric_5fin_5fdomain_5',['relabelize_metric_in_domain',['../namespacesil_1_1tensor.html#a98595b60ec04ec0975ec9096bb8e9f50',1,'sil::tensor']]]
 ];

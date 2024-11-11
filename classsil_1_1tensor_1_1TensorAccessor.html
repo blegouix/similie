@@ -140,6 +140,10 @@ Collaboration diagram for sil::tensor::TensorAccessor&lt; Index &gt;:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
+<tr class="memitem:ac22e3651581825e3dab2abaf646ae0b1" id="r_ac22e3651581825e3dab2abaf646ae0b1"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html#ac22e3651581825e3dab2abaf646ae0b1">discrete_domain_type</a> = ddc::DiscreteDomain&lt; Index... &gt;</td></tr>
+<tr class="separator:ac22e3651581825e3dab2abaf646ae0b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae5035debe677acbd8776587ada8f2582" id="r_ae5035debe677acbd8776587ada8f2582"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html#ae5035debe677acbd8776587ada8f2582">discrete_element_type</a> = ddc::DiscreteElement&lt; Index... &gt;</td></tr>
+<tr class="separator:ae5035debe677acbd8776587ada8f2582"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac27c9d73da76ab157fb91d8a1fa3dc09" id="r_ac27c9d73da76ab157fb91d8a1fa3dc09"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html#ac27c9d73da76ab157fb91d8a1fa3dc09">natural_domain_t</a> = ddc::cartesian_prod_t&lt; std::conditional_t&lt; TensorNatIndex&lt; Index &gt;, ddc::DiscreteDomain&lt; Index &gt;, typename Index::subindices_domain_t &gt;... &gt;</td></tr>
 <tr class="separator:ac27c9d73da76ab157fb91d8a1fa3dc09"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -152,29 +156,65 @@ Public Member Functions</h2></td></tr>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a21349ea156d0e1b7b31b3ecf014a1448" id="r_a21349ea156d0e1b7b31b3ecf014a1448"><td class="memItemLeft" align="right" valign="top">static constexpr <a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html#ac27c9d73da76ab157fb91d8a1fa3dc09">natural_domain_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html#a21349ea156d0e1b7b31b3ecf014a1448">natural_domain</a> ()</td></tr>
 <tr class="separator:a21349ea156d0e1b7b31b3ecf014a1448"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a93321eb10d260d34e38803e432083008" id="r_a93321eb10d260d34e38803e432083008"><td class="memItemLeft" align="right" valign="top">static constexpr ddc::DiscreteDomain&lt; Index... &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html#a93321eb10d260d34e38803e432083008">mem_domain</a> ()</td></tr>
-<tr class="separator:a93321eb10d260d34e38803e432083008"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab366036419bd2ce9c676b52fba9d43aa" id="r_ab366036419bd2ce9c676b52fba9d43aa"><td class="memItemLeft" align="right" valign="top">static constexpr ddc::DiscreteDomain&lt; Index... &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html#ab366036419bd2ce9c676b52fba9d43aa">access_domain</a> ()</td></tr>
-<tr class="separator:ab366036419bd2ce9c676b52fba9d43aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a95fe59cf5f20f30524d9e77c5bbe9e0b" id="r_a95fe59cf5f20f30524d9e77c5bbe9e0b"><td class="memTemplParams" colspan="2">template&lt;class... CDim&gt; </td></tr>
-<tr class="memitem:a95fe59cf5f20f30524d9e77c5bbe9e0b"><td class="memTemplItemLeft" align="right" valign="top">static constexpr ddc::DiscreteElement&lt; Index... &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html#a95fe59cf5f20f30524d9e77c5bbe9e0b">access_element</a> ()</td></tr>
-<tr class="separator:a95fe59cf5f20f30524d9e77c5bbe9e0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a436ff0b34279b78e0b9a8a699cfdb4fa" id="r_a436ff0b34279b78e0b9a8a699cfdb4fa"><td class="memTemplParams" colspan="2">template&lt;class... NaturalIndex&gt; </td></tr>
-<tr class="memitem:a436ff0b34279b78e0b9a8a699cfdb4fa"><td class="memTemplItemLeft" align="right" valign="top">static constexpr ddc::DiscreteElement&lt; Index... &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html#a436ff0b34279b78e0b9a8a699cfdb4fa">access_element</a> (ddc::DiscreteElement&lt; NaturalIndex... &gt; natural_elem)</td></tr>
-<tr class="separator:a436ff0b34279b78e0b9a8a699cfdb4fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad27d736797aecc9ee2e21d82b628648e" id="r_ad27d736797aecc9ee2e21d82b628648e"><td class="memItemLeft" align="right" valign="top">static constexpr <a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html#ac22e3651581825e3dab2abaf646ae0b1">discrete_domain_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html#ad27d736797aecc9ee2e21d82b628648e">mem_domain</a> ()</td></tr>
+<tr class="separator:ad27d736797aecc9ee2e21d82b628648e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac1bc10ea9e7712b31880d1f31cd39390" id="r_ac1bc10ea9e7712b31880d1f31cd39390"><td class="memItemLeft" align="right" valign="top">static constexpr <a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html#ac22e3651581825e3dab2abaf646ae0b1">discrete_domain_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html#ac1bc10ea9e7712b31880d1f31cd39390">access_domain</a> ()</td></tr>
+<tr class="separator:ac1bc10ea9e7712b31880d1f31cd39390"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9af4e4c26dda3b0e63048eac9c8f07e2" id="r_a9af4e4c26dda3b0e63048eac9c8f07e2"><td class="memTemplParams" colspan="2">template&lt;class... CDim&gt; </td></tr>
+<tr class="memitem:a9af4e4c26dda3b0e63048eac9c8f07e2"><td class="memTemplItemLeft" align="right" valign="top">static constexpr <a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html#ae5035debe677acbd8776587ada8f2582">discrete_element_type</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html#a9af4e4c26dda3b0e63048eac9c8f07e2">access_element</a> ()</td></tr>
+<tr class="separator:a9af4e4c26dda3b0e63048eac9c8f07e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a481cd1003746158fb026467e539bf1a5" id="r_a481cd1003746158fb026467e539bf1a5"><td class="memTemplParams" colspan="2">template&lt;class... NaturalIndex&gt; </td></tr>
+<tr class="memitem:a481cd1003746158fb026467e539bf1a5"><td class="memTemplItemLeft" align="right" valign="top">static constexpr <a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html#ae5035debe677acbd8776587ada8f2582">discrete_element_type</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html#a481cd1003746158fb026467e539bf1a5">access_element</a> (ddc::DiscreteElement&lt; NaturalIndex... &gt; natural_elem)</td></tr>
+<tr class="separator:a481cd1003746158fb026467e539bf1a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><div class="compoundTemplParams">template&lt;class... Index&gt;<br />
+<div class="textblock"><div class="compoundTemplParams">template&lt;TensorIndex... Index&gt;<br />
 class sil::tensor::TensorAccessor&lt; Index &gt;</div>
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00229">229</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00253">253</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
+<a id="ac22e3651581825e3dab2abaf646ae0b1" name="ac22e3651581825e3dab2abaf646ae0b1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac22e3651581825e3dab2abaf646ae0b1">&#9670;&#160;</a></span>discrete_domain_type</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;TensorIndex... Index&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html">sil::tensor::TensorAccessor</a>&lt; Index &gt;::discrete_domain_type =  ddc::DiscreteDomain&lt;Index...&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00258">258</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+
+</div>
+</div>
+<a id="ae5035debe677acbd8776587ada8f2582" name="ae5035debe677acbd8776587ada8f2582"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae5035debe677acbd8776587ada8f2582">&#9670;&#160;</a></span>discrete_element_type</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;TensorIndex... Index&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html">sil::tensor::TensorAccessor</a>&lt; Index &gt;::discrete_element_type =  ddc::DiscreteElement&lt;Index...&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00260">260</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+
+</div>
+</div>
 <a id="ac27c9d73da76ab157fb91d8a1fa3dc09" name="ac27c9d73da76ab157fb91d8a1fa3dc09"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ac27c9d73da76ab157fb91d8a1fa3dc09">&#9670;&#160;</a></span>natural_domain_t</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class... Index&gt; </div>
+template&lt;TensorIndex... Index&gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">using <a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html">sil::tensor::TensorAccessor</a>&lt; Index &gt;::natural_domain_t =  ddc::cartesian_prod_t&lt;std::conditional_t&lt; TensorNatIndex&lt;Index&gt;, ddc::DiscreteDomain&lt;Index&gt;, typename Index::subindices_domain_t&gt;...&gt;</td>
@@ -182,7 +222,7 @@ template&lt;class... Index&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00234">234</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00262">262</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -193,7 +233,7 @@ template&lt;class... Index&gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class... Index&gt; </div>
+template&lt;TensorIndex... Index&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -212,7 +252,7 @@ template&lt;class... Index&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00270">270</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00298">298</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -223,7 +263,7 @@ template&lt;class... Index&gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class... Index&gt; </div>
+template&lt;TensorIndex... Index&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -242,23 +282,23 @@ template&lt;class... Index&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00288">288</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00316">316</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a93321eb10d260d34e38803e432083008" name="a93321eb10d260d34e38803e432083008"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a93321eb10d260d34e38803e432083008">&#9670;&#160;</a></span>mem_domain()</h2>
+<a id="ad27d736797aecc9ee2e21d82b628648e" name="ad27d736797aecc9ee2e21d82b628648e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad27d736797aecc9ee2e21d82b628648e">&#9670;&#160;</a></span>mem_domain()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class... Index&gt; </div>
+template&lt;TensorIndex... Index&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">constexpr ddc::DiscreteDomain&lt; Index... &gt; <a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html">sil::tensor::TensorAccessor</a>&lt; Index &gt;::mem_domain </td>
+          <td class="memname">constexpr <a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html">TensorAccessor</a>&lt; Index... &gt;<a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html#ac22e3651581825e3dab2abaf646ae0b1">::discrete_domain_type</a> <a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html">sil::tensor::TensorAccessor</a>&lt; Index &gt;::mem_domain </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -271,23 +311,23 @@ template&lt;class... Index&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00294">294</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00322">322</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
-<a id="ab366036419bd2ce9c676b52fba9d43aa" name="ab366036419bd2ce9c676b52fba9d43aa"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab366036419bd2ce9c676b52fba9d43aa">&#9670;&#160;</a></span>access_domain()</h2>
+<a id="ac1bc10ea9e7712b31880d1f31cd39390" name="ac1bc10ea9e7712b31880d1f31cd39390"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac1bc10ea9e7712b31880d1f31cd39390">&#9670;&#160;</a></span>access_domain()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class... Index&gt; </div>
+template&lt;TensorIndex... Index&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">constexpr ddc::DiscreteDomain&lt; Index... &gt; <a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html">sil::tensor::TensorAccessor</a>&lt; Index &gt;::access_domain </td>
+          <td class="memname">constexpr <a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html">TensorAccessor</a>&lt; Index... &gt;<a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html#ac22e3651581825e3dab2abaf646ae0b1">::discrete_domain_type</a> <a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html">sil::tensor::TensorAccessor</a>&lt; Index &gt;::access_domain </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -300,17 +340,17 @@ template&lt;class... Index&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00302">302</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00330">330</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a95fe59cf5f20f30524d9e77c5bbe9e0b" name="a95fe59cf5f20f30524d9e77c5bbe9e0b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a95fe59cf5f20f30524d9e77c5bbe9e0b">&#9670;&#160;</a></span>access_element() <span class="overload">[1/2]</span></h2>
+<a id="a9af4e4c26dda3b0e63048eac9c8f07e2" name="a9af4e4c26dda3b0e63048eac9c8f07e2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9af4e4c26dda3b0e63048eac9c8f07e2">&#9670;&#160;</a></span>access_element() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class... Index&gt; </div>
+template&lt;TensorIndex... Index&gt; </div>
 <div class="memtemplate">
 template&lt;class... CDim&gt; </div>
 <table class="mlabels">
@@ -318,7 +358,7 @@ template&lt;class... CDim&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">constexpr ddc::DiscreteElement&lt; Index... &gt; <a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html">sil::tensor::TensorAccessor</a>&lt; Index &gt;::access_element </td>
+          <td class="memname">constexpr <a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html">TensorAccessor</a>&lt; Index... &gt;<a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html#ae5035debe677acbd8776587ada8f2582">::discrete_element_type</a> <a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html">sil::tensor::TensorAccessor</a>&lt; Index &gt;::access_element </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -331,17 +371,17 @@ template&lt;class... CDim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00311">311</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00339">339</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a436ff0b34279b78e0b9a8a699cfdb4fa" name="a436ff0b34279b78e0b9a8a699cfdb4fa"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a436ff0b34279b78e0b9a8a699cfdb4fa">&#9670;&#160;</a></span>access_element() <span class="overload">[2/2]</span></h2>
+<a id="a481cd1003746158fb026467e539bf1a5" name="a481cd1003746158fb026467e539bf1a5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a481cd1003746158fb026467e539bf1a5">&#9670;&#160;</a></span>access_element() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class... Index&gt; </div>
+template&lt;TensorIndex... Index&gt; </div>
 <div class="memtemplate">
 template&lt;class... NaturalIndex&gt; </div>
 <table class="mlabels">
@@ -349,7 +389,7 @@ template&lt;class... NaturalIndex&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">constexpr ddc::DiscreteElement&lt; Index... &gt; <a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html">sil::tensor::TensorAccessor</a>&lt; Index &gt;::access_element </td>
+          <td class="memname">constexpr <a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html">TensorAccessor</a>&lt; Index... &gt;<a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html#ae5035debe677acbd8776587ada8f2582">::discrete_element_type</a> <a class="el" href="classsil_1_1tensor_1_1TensorAccessor.html">sil::tensor::TensorAccessor</a>&lt; Index &gt;::access_element </td>
           <td>(</td>
           <td class="paramtype">ddc::DiscreteElement&lt; NaturalIndex... &gt;&#160;</td>
           <td class="paramname"><em>natural_elem</em></td><td>)</td>
@@ -363,7 +403,7 @@ template&lt;class... NaturalIndex&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00319">319</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00347">347</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>

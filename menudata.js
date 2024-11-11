@@ -85,4 +85,16 @@ var menudata={children:[
 {text:"w",url:"functions_func.html#index_w"},
 {text:"y",url:"functions_func.html#index_y"}]},
 {text:"Variables",url:"functions_vars.html"},
-{text:"Typedefs",url:"functions_type.html"}]}]}]}
+{text:"Typedefs",url:"functions_type.html",children:[
+{text:"a",url:"functions_type.html#index_a"},
+{text:"b",url:"functions_type.html#index_b"},
+{text:"c",url:"functions_type.html#index_c"},
+{text:"d",url:"functions_type.html#index_d"},
+{text:"h",url:"functions_type.html#index_h"},
+{text:"i",url:"functions_type.html#index_i"},
+{text:"n",url:"functions_type.html#index_n"},
+{text:"p",url:"functions_type.html#index_p"},
+{text:"r",url:"functions_type.html#index_r"},
+{text:"s",url:"functions_type.html#index_s"},
+{text:"t",url:"functions_type.html#index_t"},
+{text:"y",url:"functions_type.html#index_y"}]}]}]}]}
