@@ -576,7 +576,7 @@ public:
                        MemorySpace>,
                 ddc::DiscreteElement<DDim...>,
                 ddc::detail::TypeSeq<>,
-                DDim...>::run(*this, ddc::DiscreteElement(delems...));
+                DDim...>::run(*this, ddc::DiscreteElement<DDim...>(delems...));
     }
 
     template <class... DElems>
