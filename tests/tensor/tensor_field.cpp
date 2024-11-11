@@ -172,6 +172,7 @@ TEST(TensorField, ChristoffelLike)
                 christoffel_1st.get(elem, christoffel_1st.accessor().access_element<Y, Y, Y>()),
                 6.);
     });
-    auto christoffel_2nd = sil::tensor::inplace_apply_metric<MetricIndex, KLow, KUp>(christoffel_1st, metric);
+    auto christoffel_2nd
+            = sil::tensor::inplace_apply_metric<MetricIndex, KLow, KUp>(christoffel_1st, metric);
     std::cout << christoffel_2nd;
 }
