@@ -215,7 +215,6 @@ struct FillMetricProd<
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 new_metric_prod_(new_metric_prod_alloc_);
 
-        // tensor_prod(new_metric_prod_, metric_prod_, relabelize_metric<HeadIndex1, HeadIndex2>(metric));
         ddc::for_each(new_metric_prod_.non_indices_domain(), [&](auto elem) {
             tensor_prod(
                     new_metric_prod_[elem],
@@ -223,8 +222,6 @@ struct FillMetricProd<
                     relabelize_metric<HeadIndex1, HeadIndex2>(metric)[elem]);
         });
 
-
-        // TODO tensorial prod ? atm supports only Identity or Lorentzian metrics (new_metric_prod is empty)
 
         return FillMetricProd<
                 ddc::detail::TypeSeq<TailIndex1...>,
@@ -252,6 +249,7 @@ fill_metric_prod(
             Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             metric_prod_(metric_prod_alloc_);
+    ddc::parallel_fill(metric_prod_, 1.);
 
     return detail::FillMetricProd<Indices1, Indices2>::run(metric_prod, metric, metric_prod_);
 }
@@ -287,7 +285,6 @@ relabelize_indices_of_t<TensorType, Indices2, Indices1> inplace_apply_metric(
             metric_prod(metric_prod_alloc);
 
     fill_metric_prod<MetricIndex, Indices1, primes<Indices1>>(metric_prod, metric);
-    std::cout << metric_prod;
 
     ddc::Chunk result_alloc(
             relabelize_indices_in_domain<Indices2, Indices1>(tensor.domain()),
