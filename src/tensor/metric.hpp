@@ -280,11 +280,12 @@ template <
         TensorIndex Index2,
         misc::Specialization<Tensor> MetricType,
         misc::Specialization<Tensor> TensorType>
-relabelize_indices_of_t<TensorType, Index1, Index2> inplace_apply_metric(
+relabelize_index_of_t<TensorType, Index2, Index1> inplace_apply_metric(
         TensorType tensor,
         MetricType metric)
 {
     return inplace_apply_metric<
+            MetricIndex,
             ddc::detail::TypeSeq<Index1>,
             ddc::detail::TypeSeq<Index2>>(tensor, metric);
 }

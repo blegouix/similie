@@ -62,3 +62,4 @@ using projector_index_t = ProjectorIndex<
 - Primary-specialization is given by not writing <>. Maybe it can simplify some implementation
 - tests for relabelize_indexes and relabelize_metric
 - Unify TensorAccessor::access_element() functions. Also get<Dims...>() in Tensor ?
+- inplace_apply_metric should not take both lower and upper indices as template arguments

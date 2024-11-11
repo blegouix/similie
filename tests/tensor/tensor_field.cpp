@@ -121,11 +121,10 @@ TEST(TensorField, ChristoffelLike)
             Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             metric(metric_alloc);
-    auto g_i_j = sil::tensor::relabelize_metric<ILow, JLow>(metric);
     ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
-        g_i_j(elem, g_i_j.accessor().access_element<X, X>()) = 1.;
-        g_i_j(elem, g_i_j.accessor().access_element<X, Y>()) = 0.;
-        g_i_j(elem, g_i_j.accessor().access_element<Y, Y>()) = 2.;
+        metric(elem, metric.accessor().access_element<X, X>()) = 1.;
+        metric(elem, metric.accessor().access_element<X, Y>()) = 0.;
+        metric(elem, metric.accessor().access_element<Y, Y>()) = 2.;
     });
 
     sil::tensor::TensorAccessor<KUp, sil::tensor::TensorSymmetricIndex<ILow, JLow>>
@@ -173,4 +172,6 @@ TEST(TensorField, ChristoffelLike)
                 christoffel_1st.get(elem, christoffel_1st.accessor().access_element<Y, Y, Y>()),
                 6.);
     });
+    auto christoffel_2nd = sil::tensor::inplace_apply_metric<MetricIndex, KLow, KUp>(christoffel_1st, metric);
+    std::cout << christoffel_2nd;
 }
