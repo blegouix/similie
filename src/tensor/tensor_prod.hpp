@@ -85,10 +85,10 @@ struct TensorProdAnyAnyAny<
         ddc::DiscreteDomain<ContractDDim...> contract_dom = contract_accessor.natural_domain();
 
         ddc::for_each(
-                prod_tensor.domain(),
-                [&](ddc::cartesian_prod_t<
-                        typename ProdDDim::subindices_domain_t...>::discrete_element_type elem) {
-                    prod_tensor(elem) = ddc::transform_reduce(
+                prod_tensor.natural_domain(), // TODO iterate on access_domain, not natural_domain
+                [&](ddc::cartesian_prod_t<natural_domain_t<ProdDDim>...>::discrete_element_type
+                            elem) {
+                    prod_tensor(prod_tensor.access_element(elem)) = ddc::transform_reduce(
                             contract_dom,
                             0.,
                             ddc::reducer::sum<ElementType>(),
