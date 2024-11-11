@@ -195,24 +195,34 @@ struct FillMetricProd<
         ddc::cartesian_prod_t<
                 typename MetricProdType_::discrete_domain_type,
                 relabelize_metric_in_domain_t<
-                        typename MetricType::discrete_domain_type,
+                        typename MetricType::indices_domain_t,
                         HeadIndex1,
                         HeadIndex2>>
                 new_metric_prod_dom_(
                         metric_prod_.domain(),
-                        relabelize_metric_in_domain<HeadIndex1, HeadIndex2>(metric.domain()));
+                        relabelize_metric_in_domain<HeadIndex1, HeadIndex2>(
+                                metric.indices_domain()));
         ddc::Chunk new_metric_prod_alloc_(new_metric_prod_dom_, ddc::HostAllocator<double>());
         tensor::Tensor<
                 double,
                 ddc::cartesian_prod_t<
                         typename MetricProdType_::discrete_domain_type,
                         relabelize_metric_in_domain_t<
-                                typename MetricType::discrete_domain_type,
+                                typename MetricType::indices_domain_t,
                                 HeadIndex1,
                                 HeadIndex2>>,
                 Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 new_metric_prod_(new_metric_prod_alloc_);
+
+        // tensor_prod(new_metric_prod_, metric_prod_, relabelize_metric<HeadIndex1, HeadIndex2>(metric));
+        ddc::for_each(new_metric_prod_.non_indices_domain(), [&](auto elem) {
+            tensor_prod(
+                    new_metric_prod_[elem],
+                    metric_prod_[elem],
+                    relabelize_metric<HeadIndex1, HeadIndex2>(metric)[elem]);
+        });
+
 
         // TODO tensorial prod ? atm supports only Identity or Lorentzian metrics (new_metric_prod is empty)
 
@@ -234,11 +244,11 @@ fill_metric_prod(
                 metric_prod,
         MetricType metric)
 {
-    ddc::DiscreteDomain<> dom_;
+    typename MetricType::non_indices_domain_t dom_(metric.domain());
     ddc::Chunk metric_prod_alloc_(dom_, ddc::HostAllocator<double>());
     tensor::Tensor<
             double,
-            ddc::DiscreteDomain<>,
+            typename MetricType::non_indices_domain_t,
             Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             metric_prod_(metric_prod_alloc_);
@@ -257,12 +267,13 @@ relabelize_indices_of_t<TensorType, Indices2, Indices1> inplace_apply_metric(
         TensorType tensor,
         MetricType metric)
 {
-    tensor::tensor_accessor_for_domain_t<metric_prod_domain_t<MetricIndex, Indices1, Indices2>>
+    tensor::tensor_accessor_for_domain_t<
+            metric_prod_domain_t<MetricIndex, Indices1, primes<Indices1>>>
             metric_prod_accessor;
     ddc::Chunk metric_prod_alloc(
             ddc::cartesian_prod_t<
                     typename TensorType::non_indices_domain_t,
-                    metric_prod_domain_t<MetricIndex, Indices1, Indices2>>(
+                    metric_prod_domain_t<MetricIndex, Indices1, primes<Indices1>>>(
                     tensor.non_indices_domain(),
                     metric_prod_accessor.mem_domain()),
             ddc::HostAllocator<double>());
@@ -270,12 +281,13 @@ relabelize_indices_of_t<TensorType, Indices2, Indices1> inplace_apply_metric(
             double,
             ddc::cartesian_prod_t<
                     typename TensorType::non_indices_domain_t,
-                    metric_prod_domain_t<MetricIndex, Indices1, Indices2>>,
+                    metric_prod_domain_t<MetricIndex, Indices1, primes<Indices1>>>,
             Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             metric_prod(metric_prod_alloc);
 
-    fill_metric_prod<MetricIndex, Indices1, Indices2>(metric_prod, metric);
+    fill_metric_prod<MetricIndex, Indices1, primes<Indices1>>(metric_prod, metric);
+    std::cout << metric_prod;
 
     ddc::Chunk result_alloc(
             relabelize_indices_in_domain<Indices2, Indices1>(tensor.domain()),
@@ -284,7 +296,7 @@ relabelize_indices_of_t<TensorType, Indices2, Indices1> inplace_apply_metric(
     ddc::for_each(tensor.non_indices_domain(), [&](auto elem) {
         tensor_prod(
                 result[elem],
-                relabelize_indices_of<Indices2, primes<Indices1>>(metric_prod)[elem],
+                metric_prod[elem],
                 relabelize_indices_of<Indices2, primes<Indices2>>(tensor)[elem]);
     });
     Kokkos::deep_copy(
