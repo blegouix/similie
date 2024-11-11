@@ -282,13 +282,10 @@ relabelize_indices_of_t<TensorType, Indices2, Indices1> inplace_apply_metric(
             ddc::HostAllocator<double>());
     relabelize_indices_of_t<TensorType, Indices2, Indices1> result(result_alloc);
     ddc::for_each(tensor.non_indices_domain(), [&](auto elem) {
-        std::cout << result[elem];
-/*
         tensor_prod(
                 result[elem],
                 relabelize_indices_of<Indices2, primes<Indices1>>(metric_prod)[elem],
                 relabelize_indices_of<Indices2, primes<Indices2>>(tensor)[elem]);
-*/
     });
     Kokkos::deep_copy(
             tensor.allocation_kokkos_view(),

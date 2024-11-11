@@ -43,6 +43,151 @@ static constexpr subindices_domain_t<T> subindices_domain()
     return detail::SubindicesDomain<T>::run();
 };
 
+// Any-any product into Any (general case not optimized)
+namespace detail {
+
+template <
+        class ProdIndices,
+        class Indices1,
+        class Indices2,
+        class HeadDDim1TypeSeq,
+        class ContractDDimTypeSeq,
+        class TailDDim2TypeSeq>
+struct TensorProdAnyAnyAny;
+
+template <
+        class... ProdDDim,
+        class... Index1,
+        class... Index2,
+        class... HeadDDim1,
+        class... ContractDDim,
+        class... TailDDim2>
+struct TensorProdAnyAnyAny<
+        ddc::detail::TypeSeq<ProdDDim...>,
+        ddc::detail::TypeSeq<Index1...>,
+        ddc::detail::TypeSeq<Index2...>,
+        ddc::detail::TypeSeq<HeadDDim1...>,
+        ddc::detail::TypeSeq<ContractDDim...>,
+        ddc::detail::TypeSeq<TailDDim2...>>
+{
+    template <class ElementType, class LayoutStridedPolicy, class MemorySpace>
+    static Tensor<ElementType, ddc::DiscreteDomain<ProdDDim...>, LayoutStridedPolicy, MemorySpace>
+    run(Tensor<ElementType,
+               ddc::DiscreteDomain<ProdDDim...>,
+               Kokkos::layout_right,
+               Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
+        Tensor<ElementType, ddc::DiscreteDomain<Index1...>, LayoutStridedPolicy, MemorySpace>
+                tensor1,
+        Tensor<ElementType, ddc::DiscreteDomain<Index2...>, LayoutStridedPolicy, MemorySpace>
+                tensor2)
+    {
+        tensor::TensorAccessor<ContractDDim...> contract_accessor;
+        ddc::DiscreteDomain<ContractDDim...> contract_dom = contract_accessor.natural_domain();
+
+        ddc::for_each(
+                prod_tensor.domain(),
+                [&](ddc::cartesian_prod_t<
+                        typename ProdDDim::subindices_domain_t...>::discrete_element_type elem) {
+                    prod_tensor(elem) = ddc::transform_reduce(
+                            contract_dom,
+                            0.,
+                            ddc::reducer::sum<ElementType>(),
+                            [&](ddc::DiscreteElement<ContractDDim...> contract_elem) {
+                                return tensor1.get(tensor1.access_element(
+                                               ddc::DiscreteElement<HeadDDim1..., ContractDDim...>(
+                                                       ddc::select<HeadDDim1...>(elem),
+                                                       contract_accessor.access_element(
+                                                               contract_elem))))
+                                       * tensor2.get(tensor2.access_element(
+                                               ddc::DiscreteElement<ContractDDim..., TailDDim2...>(
+                                                       contract_elem,
+                                                       ddc::select<TailDDim2...>(elem))));
+                            });
+                });
+        return prod_tensor;
+    }
+};
+
+} // namespace detail
+
+template <
+        class... ProdDDim,
+        class... Index1,
+        class... Index2,
+        class ElementType,
+        class LayoutStridedPolicy,
+        class MemorySpace>
+Tensor<ElementType,
+       ddc::DiscreteDomain<ProdDDim...>,
+       Kokkos::layout_right,
+       Kokkos::DefaultHostExecutionSpace::memory_space>
+tensor_prod(
+        Tensor<ElementType,
+               ddc::DiscreteDomain<ProdDDim...>,
+               Kokkos::layout_right,
+               Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
+        Tensor<ElementType, ddc::DiscreteDomain<Index1...>, LayoutStridedPolicy, MemorySpace>
+                tensor1,
+        Tensor<ElementType, ddc::DiscreteDomain<Index2...>, LayoutStridedPolicy, MemorySpace>
+                tensor2)
+{
+    /* TODO restore
+    static_assert(std::is_same_v<
+                  ddc::type_seq_remove_t<
+                          uncharacterize<ddc::to_type_seq_t<
+                                  ddc::cartesian_prod_t<typename Index1::subindices_domain_t...>>>,
+                          uncharacterize<ddc::to_type_seq_t<ddc::cartesian_prod_t<
+                                  typename ProdDDim::subindices_domain_t...>>>>,
+                  ddc::type_seq_remove_t<
+                          uncharacterize<ddc::to_type_seq_t<
+                                  ddc::cartesian_prod_t<typename Index2::subindices_domain_t...>>>,
+                          uncharacterize<ddc::to_type_seq_t<ddc::cartesian_prod_t<
+                                  typename ProdDDim::subindices_domain_t...>>>>>);
+    */
+    static_assert(
+            std::is_same_v<
+                    ddc::type_seq_remove_t<
+                            ddc::to_type_seq_t<
+                                    ddc::cartesian_prod_t<typename Index1::subindices_domain_t...>>,
+                            ddc::to_type_seq_t<ddc::cartesian_prod_t<
+                                    typename Index2::subindices_domain_t...>>>,
+                    ddc::to_type_seq_t<
+                            ddc::cartesian_prod_t<typename Index1::subindices_domain_t...>>>
+            && std::is_same_v<
+                    ddc::type_seq_remove_t<
+                            ddc::to_type_seq_t<
+                                    ddc::cartesian_prod_t<typename Index2::subindices_domain_t...>>,
+                            ddc::to_type_seq_t<ddc::cartesian_prod_t<
+                                    typename Index1::subindices_domain_t...>>>,
+                    ddc::to_type_seq_t<ddc::cartesian_prod_t<
+                            typename Index2::
+                                    subindices_domain_t...>>>); // tensor1 and tensor2 should not have any subindex in common because their characters are different
+
+    detail::TensorProdAnyAnyAny<
+            uncharacterize<ddc::detail::TypeSeq<ProdDDim...>>,
+            uncharacterize<ddc::detail::TypeSeq<Index1...>>,
+            uncharacterize<ddc::detail::TypeSeq<Index2...>>,
+            ddc::type_seq_remove_t<
+                    uncharacterize<ddc::to_type_seq_t<
+                            ddc::cartesian_prod_t<typename ProdDDim::subindices_domain_t...>>>,
+                    uncharacterize<ddc::to_type_seq_t<
+                            ddc::cartesian_prod_t<typename Index2::subindices_domain_t...>>>>,
+            ddc::type_seq_remove_t<
+                    uncharacterize<ddc::to_type_seq_t<
+                            ddc::cartesian_prod_t<typename Index1::subindices_domain_t...>>>,
+                    uncharacterize<ddc::to_type_seq_t<
+                            ddc::cartesian_prod_t<typename ProdDDim::subindices_domain_t...>>>>,
+            ddc::type_seq_remove_t<
+                    uncharacterize<ddc::to_type_seq_t<
+                            ddc::cartesian_prod_t<typename ProdDDim::subindices_domain_t...>>>,
+                    uncharacterize<ddc::to_type_seq_t<
+                            ddc::cartesian_prod_t<typename Index1::subindices_domain_t...>>>>>::
+            run(uncharacterize_tensor(prod_tensor),
+                uncharacterize_tensor(tensor1),
+                uncharacterize_tensor(tensor2));
+    return prod_tensor;
+}
+
 // Young-dense product
 namespace detail {
 

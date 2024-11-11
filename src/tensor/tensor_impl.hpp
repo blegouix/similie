@@ -411,23 +411,24 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
 };
 
 // Functor for memory element access (if defined)
-template <typename InterestDim>
+template <class InterestDim>
 struct LambdaMemElem
 {
-    static ddc::DiscreteElement<InterestDim> run(ddc::DiscreteElement<InterestDim> elem)
+    template <class Elem>
+    static ddc::DiscreteElement<InterestDim> run(Elem elem)
     {
-        return elem;
+        return ddc::DiscreteElement<InterestDim>(elem);
     }
 };
 
 template <TensorIndex InterestDim>
 struct LambdaMemElem<InterestDim>
 {
-    static ddc::DiscreteElement<InterestDim> run(ddc::DiscreteElement<InterestDim> elem)
+    template <class Elem>
+    static ddc::DiscreteElement<InterestDim> run(Elem elem)
     {
         std::pair<std::vector<double>, std::vector<std::size_t>> mem_lin_comb
-                = InterestDim::access_id_to_mem_lin_comb(
-                        ddc::DiscreteElement<InterestDim>(elem).uid());
+                = InterestDim::access_id_to_mem_lin_comb(elem.template uid<InterestDim>());
         assert(std::get<0>(mem_lin_comb).size() == 1
                && "mem_elem is not defined because mem_lin_comb contains several ids");
         return ddc::DiscreteElement<InterestDim>(std::get<1>(mem_lin_comb)[0]);
