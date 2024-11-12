@@ -9,6 +9,10 @@
 
 #include "tensor.hpp"
 
+struct T
+{
+};
+
 struct X
 {
 };
@@ -18,10 +22,6 @@ struct Y
 };
 
 struct Z
-{
-};
-
-struct T
 {
 };
 
