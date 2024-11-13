@@ -193,7 +193,7 @@ struct IdFromTypeSeqDims<Index, ddc::DiscreteDomain<Subindex...>, ddc::detail::T
 
 // Returns Index::access_id for the subindex Index of the IndicesTypeSeq
 template <class Index, class IndicesTypeSeq, class... CDim>
-static constexpr std::size_t access_id() // TODO consteval. This is not compile-time atm :/
+static consteval std::size_t access_id()
 {
     if constexpr (TensorNatIndex<Index>) {
         return IdFromTypeSeqDims<
@@ -235,9 +235,7 @@ struct IdFromElem<Index, ddc::DiscreteDomain<Subindex...>>
 };
 
 template <class Index, class IndicesTypeSeq, class... NaturalIndex>
-static constexpr std::size_t access_id(
-        ddc::DiscreteElement<NaturalIndex...>
-                natural_elem) // TODO consteval. This is not compile-time atm :/
+static constexpr std::size_t access_id(ddc::DiscreteElement<NaturalIndex...> natural_elem)
 {
     if constexpr (TensorNatIndex<Index>) {
         return IdFromElem<Index, ddc::DiscreteDomain<Index>>::run(natural_elem);
@@ -271,7 +269,7 @@ public:
     static constexpr discrete_domain_type access_domain();
 
     template <class... CDim>
-    static constexpr discrete_element_type access_element();
+    static consteval discrete_element_type access_element();
 
     template <class... NaturalIndex>
     static constexpr discrete_element_type access_element(
@@ -336,7 +334,7 @@ constexpr TensorAccessor<Index...>::discrete_domain_type TensorAccessor<Index...
 
 template <TensorIndex... Index>
 template <class... CDim>
-constexpr TensorAccessor<Index...>::discrete_element_type TensorAccessor<Index...>::access_element()
+consteval TensorAccessor<Index...>::discrete_element_type TensorAccessor<Index...>::access_element()
 {
     return ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(
             detail::access_id<Index, ddc::detail::TypeSeq<Index...>, CDim...>())...);
@@ -578,7 +576,7 @@ public:
     }
 
     template <class... CDim>
-    KOKKOS_FUNCTION constexpr discrete_element_type access_element()
+    KOKKOS_FUNCTION consteval discrete_element_type access_element()
             const noexcept // TODO merge this with the one below
     {
         return discrete_element_type(accessor_t::template access_element<CDim...>());
