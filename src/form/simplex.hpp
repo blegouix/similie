@@ -44,12 +44,12 @@ public:
         return sizeof...(Edge);
     }
 
-    KOKKOS_FUNCTION base_type discrete_element() noexcept
+    KOKKOS_FUNCTION base_type discrete_element() noexcept // TODO base_type& ?
     {
         return base_type {this->template uid<Tag>()...};
     }
 
-    KOKKOS_FUNCTION const base_type discrete_element() const noexcept
+    KOKKOS_FUNCTION const base_type discrete_element() const noexcept // TODO base_type& ?
     {
         return base_type {this->template uid<Tag>()...};
     }
@@ -69,6 +69,13 @@ public:
         return Simplex(
                 discrete_element() + discrete_vector(),
                 ddc::DiscreteVector<Edge...> {-m_vect.template get<Edge>()...});
+    }
+
+    template <misc::Specialization<Simplex> SimplexType>
+    KOKKOS_FUNCTION bool operator==(SimplexType simplex)
+    {
+        return (discrete_element() == simplex.discrete_element()
+                && discrete_vector() == simplex.discrete_vector()); // TODO real formula for simplex
     }
 };
 

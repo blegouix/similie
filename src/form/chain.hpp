@@ -110,6 +110,11 @@ public:
         return *this;
     }
 
+    KOKKOS_FUNCTION auto remove(std::size_t i) const
+    {
+        return *this;
+    }
+
     KOKKOS_FUNCTION void check() const
     {
 #ifdef NDEBUG
@@ -120,6 +125,24 @@ public:
     KOKKOS_FUNCTION auto optimize() const
     {
         // TODO remove simplices which are opposite
+        std::size_t i = 0;
+        apply([&](auto& simplex) {
+            std::size_t j = 0;
+            std::size_t k = std::numeric_limits<std::size_t>::quiet_NaN();
+            apply([&](auto simplex_) {
+                if (simplex == -simplex_) {
+                    k = j;
+                }
+                ++j;
+            });
+            if (k != std::numeric_limits<std::size_t>::quiet_NaN()) {
+                remove(k);
+                std::cout << i << " " << k;
+            }
+            ++i; // TODO else
+
+            std::cout << "\n";
+        });
         check();
         return this;
     }

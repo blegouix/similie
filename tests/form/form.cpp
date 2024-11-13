@@ -69,5 +69,7 @@ TEST(Chain, Test)
                       sil::form::
                               Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
                                       ddc::DiscreteVector<DDimX, DDimY> {1, 1}));
-    std::cout << chain;
+    std::cout << chain << "\n";
+    chain.optimize();
+    std::cout << chain << "\n";
 }
