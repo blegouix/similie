@@ -8,6 +8,7 @@
 #include "are_all_same.hpp"
 #include "simplex.hpp"
 #include "specialization.hpp"
+#include "tuple_helpers.hpp"
 
 namespace sil {
 
@@ -122,29 +123,45 @@ public:
 #endif
     }
 
-    KOKKOS_FUNCTION auto optimize() const
+private:
+    // Helper to help the CTAD in optimize()
+    template <misc::Specialization<Simplex>... T>
+    auto make_chain(std::tuple<T...> t) const
     {
-        // TODO remove simplices which are opposite
-        std::size_t i = 0;
-        apply([&](auto& simplex) {
+        return Chain<T...>(t);
+    }
+
+public:
+    template <std::size_t I = 0>
+    KOKKOS_FUNCTION auto optimize(auto chain) const
+    {
+        if constexpr (I < chain.extent()) {
             std::size_t j = 0;
             std::size_t k = std::numeric_limits<std::size_t>::quiet_NaN();
-            apply([&](auto simplex_) {
-                if (simplex == -simplex_) {
+            chain.apply([&](auto simplex_) {
+                if (std::get<I>(chain.m_simplices) == -simplex_) {
                     k = j;
                 }
                 ++j;
             });
             if (k != std::numeric_limits<std::size_t>::quiet_NaN()) {
-                remove(k);
-                std::cout << i << " " << k;
+                // TODO fix
+                // return optimize<I>(make_chain(misc::remove(misc::remove(chain.m_simplices, k), I)));
+                return optimize<I + 1>(chain);
+            } else {
+                return optimize<I + 1>(chain);
             }
-            ++i; // TODO else
+        } else {
+            return chain;
+        }
+    }
 
-            std::cout << "\n";
-        });
-        check();
-        return this;
+    template <std::size_t I = 0>
+    KOKKOS_FUNCTION auto optimize() const
+    {
+        auto chain = optimize(*this);
+        chain.check();
+        return chain;
     }
 
     KOKKOS_FUNCTION auto operator-()
