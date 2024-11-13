@@ -5,8 +5,7 @@
 
 #include <ddc/ddc.hpp>
 
-#include <boost/math/special_functions/binomial.hpp>
-
+#include "binomial_coefficient.hpp"
 #include "tensor_impl.hpp"
 
 namespace sil {
@@ -41,8 +40,9 @@ struct TensorAntisymmetricIndex
 
     static constexpr std::size_t mem_size()
     {
-        return boost::math::binomial_coefficient<
-                double>(std::min({TensorIndex::mem_size()...}), sizeof...(TensorIndex));
+        return misc::binomial_coefficient(
+                std::min({TensorIndex::mem_size()...}),
+                sizeof...(TensorIndex));
     }
 
     static constexpr std::size_t access_size()
@@ -58,7 +58,7 @@ struct TensorAntisymmetricIndex
         return std::pair<std::vector<double>, std::vector<std::size_t>>(
                 std::vector<double> {1.},
                 std::vector<std::size_t> {static_cast<std::size_t>(
-                        boost::math::binomial_coefficient<double>(
+                        misc::binomial_coefficient(
                                 std::min({TensorIndex::mem_size()...}),
                                 sizeof...(TensorIndex))
                         - ((sorted_ids[ddc::type_seq_rank_v<
@@ -69,7 +69,7 @@ struct TensorAntisymmetricIndex
                                                                TensorIndex,
                                                                ddc::detail::TypeSeq<TensorIndex...>>
                                     ? 0
-                                    : boost::math::binomial_coefficient<double>(
+                                    : misc::binomial_coefficient(
                                               TensorIndex::mem_size()
                                                       - sorted_ids[ddc::type_seq_rank_v<
                                                               TensorIndex,
