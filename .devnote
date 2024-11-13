@@ -4,57 +4,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 ----- This file contains personal notes to keep track of ideas, TODO or previous chunks of code which has been removed but could be useful in different context -----
 ----- Not supposed to be read by anyone other than me -----
 
-cmake -DCMAKE_CXX_COMPILER=clang++-19 -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-Wfatal-errors" ..
-
-// Extract Elem from a row of YoungTableauSeq at index J
-template <std::size_t J, std::size_t Id, class Row>
-struct ExtractElem;
-
-template <std::size_t J, std::size_t Id, std::size_t HeadElem, std::size_t... TailElem>
-struct ExtractElem<J, Id, std::index_sequence<HeadElem, TailElem...>>
-{
-    using type = std::conditional_t<
-            J == Id, 
-            std::index_sequence<HeadElem>,
-            typename ExtractElem<J, Id + 1, std::index_sequence<TailElem...>>::type>;
-};
-
-template <std::size_t J, class Row>
-using extract_elem_t = ExtractElem<J, 0, Row>::type;
-
-// Type of index used by projectors
-template <std::size_t I>
-struct ProjX
-{
-};
-
-template <class Ids>
-struct NaturalIndex;
-
-template <std::size_t... Id>
-struct NaturalIndex<std::index_sequence<Id...>>
-{
-    template <std::size_t RankId>
-    struct type : sil::tensor::TensorNaturalIndex<ProjX<Id>...>
-    {
-    };
-};
-
-template <class NaturalIds, class RankIds>
-struct ProjectorIndex;
-
-template <std::size_t... Id, std::size_t... RankId>
-struct ProjectorIndex<NaturalIndex<std::index_sequence<Id...>>, std::index_sequence<RankId...>>
-{
-    using type = sil::tensor::FullTensorIndex<
-            typename NaturalIndex<std::index_sequence<Id...>>::template type<RankId>...>;
-};
-
-template <std::size_t Dimension, std::size_t Rank>
-using projector_index_t = ProjectorIndex<
-        NaturalIndex<std::make_index_sequence<Dimension>>,
-        std::make_index_sequence<2 * Rank>>::type;
-
 ----- TODO -----
 
 - sil::tensor::detail::Access implementation is not complete 
@@ -62,3 +11,118 @@ using projector_index_t = ProjectorIndex<
 - Primary-specialization is given by not writing <>. Maybe it can simplify some implementation
 - tests for relabelize_indexes and relabelize_metric
 - Unify TensorAccessor::access_element() functions. Also get<Dims...>() in Tensor ?
+- Consider creating a misc enum for {-1 1} and use it in simplices/chains
+
+----- CMAKE BASIC COMMAND -----
+
+cmake -DCMAKE_CXX_COMPILER=clang++-19 -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-Wfatal-errors" ..
+
+----- SubTuple -----
+
+template <class OutSeq, class InSeq, std::size_t I1, std::size_t I2, std::size_t I = 0>
+struct SubIndexSeq;
+
+template <std::size_t... Out, std::size_t... In, std::size_t I1, std::size_t I2, std::size_t I>
+    requires I >= sizeof
+...(In) struct SubIndexSeq<std::index_sequence<Out...>, std::index_sequence<In...>, I1, I2, I>
+{
+    static_assert(I2 <= sizeof...(In));
+    static_assert(I1 <= I2);
+    using type = std::index_sequence<Out...>;
+};
+
+template <std::size_t... Out, std::size_t... In, std::size_t I1, std::size_t I2, std::size_t I>
+    requires I
+             < sizeof...(In) struct SubIndexSeq<std::tuple<Out...>, std::tuple<In...>, I1, I2, I> {
+                     static_assert(I2 <= sizeof...(In));
+static_assert(I1 <= I2);
+using type = SubIndexSeq<
+        std::conditional_t<
+                (I >= I1 && I < I2),
+                std::index_sequence<Out..., I>,
+                std::index_sequence<OutT...>>,
+        std::index_sequence<In...>,
+        I1,
+        I2,
+        I + 1>;
+}; // namespace detail
+
+template <std::size_t I1, std::size_t I2, std::size_t I>
+struct SubIndexSeq<std::tuple<>, std::tuple<>, I1, I2, I>
+{
+    using type = std::index_sequence<>;
+};
+
+template <class OutTuple, class InTuple, class Seq, std::size_t I = 0>
+struct SubTupleType;
+
+template <class... OutT, class... InT, std::size_t... Is, std::size_t I>
+    requires I >= sizeof
+...(InT) struct SubTupleType<std::tuple<OutT...>, std::tuple<InT...>, std::index_sequence, I>
+{
+    using type = std::tuple<OutT...>;
+};
+
+template <class... OutT, class... InT, std::size_t... Is, std::size_t I>
+    requires I < sizeof...(InT) struct SubTupleType<
+                     std::tuple<OutT...>,
+                     std::tuple<InT...>,
+                     std::index_sequence,
+                     I> {
+                     using type = SubTupleType<
+                             std::conditional_t<
+                                     (Is == I || ...),
+                                     std::tuple<
+                                             OutT...,
+                                             ddc::type_seq_element_t<
+                                                     I,
+                                                     ddc::detail::TypeSeq<InT...>>>,
+                                     std::tuple<OutT...>>,
+                             std::tuple<InT...>,
+                             std::index_sequence<Is...>,
+                             I + 1>;
+
+template <class InTuple, std::size_t I1, std::size_t I2>
+using subtuple_t = typename detail::SubTupleType<
+        std::tuple<>,
+        InTuple,
+        typename SubIndexSeq<
+                std::index_sequence<>,
+                std::make_index_sequence<InTuple::size()>,
+                I1,
+                I2>::type>::type;
+
+template <class... Tout, class... Tin>
+auto subtuple_(std::tuple<Tout...>& tout, const std::tuple<Tin...>& tin, std::index_sequence<>)
+{
+    return t;
+}
+
+template <std::size_t I, std::size_t TailI..., class... Tout, class... Tin>
+auto subtuple_(
+        std::tuple<Tout...>& tout,
+        const std::tuple<Tin...>& tin,
+        std::index_sequence<I, TailI...>)
+{
+    return subtuple_(
+            std::tuple_cat(
+                    tout,
+                    std::tuple<ddc::type_seq_element_t<I, ddc::detail::TypeSeq<Tin...>>> {
+                            std::get<I>(tin)}),
+            tin,
+            std::index_sequence<TailI...>);
+}
+
+template <std::size_t I1, std::size_t I2, typename... T>
+subtuple_t<std::tuple<T...>, I1, I2> subtuple(const std::tuple<T...>& t)
+{
+    std::tuple<> tout {};
+    return subtuple_(
+            tout,
+            t,
+            SubIndexSeq<
+                    std::index_sequence<>,
+                    std::make_index_sequence<InTuple::size()>,
+                    I1,
+                    I2>());
+}

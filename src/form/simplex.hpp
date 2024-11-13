@@ -21,9 +21,11 @@ class Simplex<ddc::DiscreteVector<Edge...>, Tag...> : public ddc::DiscreteElemen
 protected:
     using base_type = ddc::DiscreteElement<Tag...>;
 
-private:
+public:
+    using elem_type = base_type;
     using vect_type = ddc::DiscreteVector<Edge...>;
 
+private:
     vect_type m_vect;
 
 public:
@@ -47,7 +49,17 @@ public:
         return base_type {this->template uid<Tag>()...};
     }
 
-    KOKKOS_FUNCTION vect_type discrete_vector() noexcept
+    KOKKOS_FUNCTION const base_type discrete_element() const noexcept
+    {
+        return base_type {this->template uid<Tag>()...};
+    }
+
+    KOKKOS_FUNCTION vect_type& discrete_vector() noexcept
+    {
+        return m_vect;
+    }
+
+    KOKKOS_FUNCTION vect_type const& discrete_vector() const noexcept
     {
         return m_vect;
     }
@@ -55,7 +67,7 @@ public:
     KOKKOS_FUNCTION Simplex<ddc::DiscreteVector<Edge...>, Tag...> operator-()
     {
         return Simplex(
-                discrete_element(),
+                discrete_element() + discrete_vector(),
                 ddc::DiscreteVector<Edge...> {-m_vect.template get<Edge>()...});
     }
 };
@@ -64,6 +76,17 @@ public:
 template <class... Tag, class... Edge>
 Simplex(ddc::DiscreteElement<Tag...>,
         ddc::DiscreteVector<Edge...>) -> Simplex<ddc::DiscreteVector<Edge...>, Tag...>;
+
+template <class Vect, class... Tag>
+std::ostream& operator<<(std::ostream& out, Simplex<Vect, Tag...> const& simplex)
+{
+    out << "(";
+    out << simplex.discrete_element();
+    out << " -> ";
+    out << simplex.discrete_vector();
+    out << ")";
+    return out;
+}
 
 } // namespace form
 

@@ -7,7 +7,7 @@
 
 #include <gtest/gtest.h>
 
-#include "simplex.hpp"
+#include "form.hpp"
 
 struct T
 {
@@ -47,4 +47,27 @@ TEST(Simplex, Test)
     sil::form::Simplex simplex(elem, ddc::DiscreteVector<DDimX, DDimY> {1, -1});
     std::cout << simplex.dimension() << "\n";
     std::cout << (-simplex).discrete_vector() << "\n";
+}
+
+TEST(Chain, Test)
+{
+    sil::form::Chain chain
+            = sil::form::Chain(
+                      sil::form::
+                              Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
+                                      ddc::DiscreteVector<DDimX, DDimY> {1, 1}))
+              + sil::form::
+                      Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
+                              ddc::DiscreteVector<DDimX, DDimY> {1, -1})
+              + sil::form::
+                      Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 1, 0, 0},
+                              ddc::DiscreteVector<DDimX, DDimY> {1, -1})
+              - sil::form::
+                      Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
+                              ddc::DiscreteVector<DDimX, DDimY> {1, 1})
+              - sil::form::Chain(
+                      sil::form::
+                              Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
+                                      ddc::DiscreteVector<DDimX, DDimY> {1, 1}));
+    std::cout << chain;
 }

@@ -3,4 +3,5 @@
 
 #pragma once
 
+#include "chain.hpp"
 #include "simplex.hpp"
