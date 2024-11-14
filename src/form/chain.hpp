@@ -105,6 +105,18 @@ public:
         return *this + (-t);
     }
 
+    template <class T>
+    KOKKOS_FUNCTION auto operator*(T t)
+    {
+        if (t == 1) {
+            return *this;
+        } else if (t == -1) {
+            return -*this;
+        } else {
+            assert(false && "chain must be multiplied  by 1 or -1");
+        }
+    }
+
     KOKKOS_FUNCTION bool operator==(Chain<SimplexType> simplices)
     {
         for (auto i = simplices.begin(); i < simplices.end(); ++i) {

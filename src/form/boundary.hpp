@@ -30,14 +30,12 @@ using boundary_t = typename detail::BoundaryType<SimplexType>::type;
 
 namespace detail {
 
-/*
- Compute all permutations on a subset of indices in idx_to_permute, keep the
- rest of the indices where they are.
- */
+
 template <class SimplexType>
 KOKKOS_FUNCTION constexpr Chain<boundary_t<SimplexType>> permutations_subset(
         typename SimplexType::elem_type elem,
-        typename SimplexType::vect_type vect)
+        typename SimplexType::vect_type vect,
+        bool negative = false)
 {
     auto array = ddc::detail::array(vect);
     Chain<boundary_t<SimplexType>> chain;
@@ -50,7 +48,7 @@ KOKKOS_FUNCTION constexpr Chain<boundary_t<SimplexType>> permutations_subset(
         *id = 0;
         typename SimplexType::vect_type vect_;
         ddc::detail::array(vect_) = array_;
-        chain.push_back(boundary_t<SimplexType>(elem, vect_));
+        chain.push_back(boundary_t<SimplexType>(elem, vect_, (negative + i) % 2));
         j = id + 1;
     }
     return chain;
@@ -62,11 +60,14 @@ template <class SimplexType>
 KOKKOS_FUNCTION Chain<boundary_t<SimplexType>> boundary(SimplexType simplex)
 {
     return Chain<boundary_t<SimplexType>>(
-            detail::permutations_subset<
-                    SimplexType>(simplex.discrete_element(), simplex.discrete_vector())
-            - detail::permutations_subset<SimplexType>(
-                    simplex.discrete_element() + simplex.discrete_vector(),
-                    -simplex.discrete_vector()));
+                   detail::permutations_subset<SimplexType>(
+                           simplex.discrete_element(),
+                           simplex.discrete_vector(),
+                           SimplexType::dimension() % 2)
+                   + detail::permutations_subset<SimplexType>(
+                           simplex.discrete_element() + simplex.discrete_vector(),
+                           -simplex.discrete_vector()))
+           * (SimplexType::dimension() % 2 ? 1 : -1);
 }
 
 } // namespace form

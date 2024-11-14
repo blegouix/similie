@@ -59,11 +59,15 @@ private:
         static constexpr base_type run_elem(base_type elem, vect_type)
         {
             return elem;
-        };
+        }
         static constexpr vect_type run_vect(base_type, vect_type vect)
         {
             return vect;
-        };
+        }
+        static constexpr bool run_negative(vect_type vect, bool negative)
+        {
+            return negative;
+        }
     };
 
 
@@ -85,6 +89,12 @@ private:
             }
             return Reorient<TailTag...>::run_vect(elem, vect);
         }
+
+        static constexpr bool run_negative(vect_type vect, bool negative)
+        {
+            return Reorient<TailTag...>::
+                    run_negative(vect, (vect.template get<HeadTag>() == -1) != negative);
+        }
     };
 
 public:
@@ -95,7 +105,7 @@ public:
             bool negative = false) noexcept
         : base_type(Reorient<Tag...>::run_elem(elem, add_null_dimensions(vect)))
         , m_vect(Reorient<Tag...>::run_vect(elem, add_null_dimensions(vect)))
-        , m_negative(negative)
+        , m_negative(Reorient<Tag...>::run_negative(add_null_dimensions(vect), negative))
     {
         assert(((m_vect.template get<Tag>() == 0 || m_vect.template get<Tag>() == 1) && ...)
                && "simplex vector must contain only -1, 0 or 1");
@@ -109,7 +119,7 @@ public:
             bool negative = false) noexcept
         : base_type(Reorient<Tag...>::run_elem(elem, add_null_dimensions(vect)))
         , m_vect(Reorient<Tag...>::run_vect(elem, add_null_dimensions(vect)))
-        , m_negative(negative)
+        , m_negative(Reorient<Tag...>::run_negative(add_null_dimensions(vect), negative))
     {
         assert(((m_vect.template get<Tag>() == 0 || m_vect.template get<Tag>() == 1) && ...)
                && "simplex vector must contain only -1, 0 or 1");
@@ -175,9 +185,8 @@ template <std::size_t K, class... Tag>
 std::ostream& operator<<(std::ostream& out, Simplex<K, Tag...> const& simplex)
 {
     out << " ";
-    out << (simplex.negative() ? "- " : "+ ");
     out << simplex.discrete_element();
-    out << " -> ";
+    out << (simplex.negative() ? " <- " : " -> ");
     out << simplex.discrete_element() + simplex.discrete_vector();
     out << " ";
     return out;
