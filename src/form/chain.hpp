@@ -8,179 +8,148 @@
 #include "are_all_same.hpp"
 #include "simplex.hpp"
 #include "specialization.hpp"
-#include "tuple_helpers.hpp"
 
 namespace sil {
 
 namespace form {
 
 /// Chain class
-template <misc::Specialization<Simplex>... SimplexType>
-    requires(misc::are_all_equal(SimplexType::dimension()...))
+template <class SimplexType>
 class Chain
 {
-    template <misc::Specialization<Simplex>... T>
-        requires(misc::are_all_equal(T::dimension()...))
+    template <class T>
     friend class Chain;
 
+public:
+    using simplex_type = SimplexType;
+
 private:
-    static constexpr std::size_t m_dimension
-            = ddc::type_seq_element_t<0, ddc::detail::TypeSeq<SimplexType...>>::dimension();
-    std::tuple<SimplexType...> m_simplices;
+    static constexpr std::size_t s_k = SimplexType::dimension();
+    std::vector<SimplexType> m_simplices;
 
 public:
-    KOKKOS_FUNCTION constexpr explicit Chain(SimplexType... simplex) noexcept
-        : m_simplices {simplex...}
+    template <class... T>
+        requires misc::are_all_same<T...>
+    KOKKOS_FUNCTION constexpr explicit Chain(T... simplex) noexcept : m_simplices {simplex...}
     {
+        assert(check() == 0 && "there are duplicate simplices in the chain");
     }
 
-    KOKKOS_FUNCTION constexpr explicit Chain(std::tuple<SimplexType...> simplices) noexcept
+    KOKKOS_FUNCTION constexpr explicit Chain(std::vector<SimplexType> simplices) noexcept
         : m_simplices(simplices)
     {
     }
 
     static KOKKOS_FUNCTION constexpr std::size_t dimension() noexcept
     {
-        return m_dimension;
+        return s_k;
     }
 
-    static KOKKOS_FUNCTION constexpr std::size_t extent() noexcept
+    KOKKOS_FUNCTION std::vector<SimplexType>& simplices() noexcept
     {
-        return sizeof...(SimplexType);
+        return m_simplices;
     }
 
-    template <std::size_t I>
-    KOKKOS_FUNCTION auto& get() noexcept
+    KOKKOS_FUNCTION std::vector<SimplexType> const& simplices() const noexcept
     {
-        return std::get<I>(m_simplices);
+        return m_simplices;
     }
 
-    template <std::size_t I>
-    KOKKOS_FUNCTION auto const& get() const noexcept
+    KOKKOS_FUNCTION std::size_t extent() noexcept
     {
-        return std::get<I>(m_simplices);
+        return m_simplices.size();
     }
 
-    KOKKOS_FUNCTION auto& front() noexcept
+    KOKKOS_FUNCTION std::size_t const extent() const noexcept
     {
-        return get<0>();
+        return m_simplices.size();
     }
 
-    KOKKOS_FUNCTION auto const& front() const noexcept
+    KOKKOS_FUNCTION SimplexType& operator[](std::size_t const i) noexcept
     {
-        return get<0>();
+        return m_simplices[i];
     }
 
-    KOKKOS_FUNCTION auto& back() noexcept
+    KOKKOS_FUNCTION SimplexType const& operator[](std::size_t const i) const noexcept
     {
-        return get<extent() - 1>();
+        return m_simplices[i];
     }
 
-    KOKKOS_FUNCTION auto const& back() const noexcept
+    KOKKOS_FUNCTION SimplexType& front() noexcept
     {
-        return get<extent() - 1>();
+        return m_simplices[0];
     }
 
-    template <std::size_t I = 0>
-        requires(I < extent())
-    Chain<SimplexType...> apply(auto f)
+    KOKKOS_FUNCTION SimplexType const& front() const noexcept
     {
-        f(get<I>());
-        return apply<I + 1>(f);
+        return m_simplices[0];
     }
 
-    template <std::size_t I = 0>
-        requires(I >= extent())
-    Chain<SimplexType...> apply(auto f)
+    KOKKOS_FUNCTION SimplexType& back() noexcept
     {
-        return *this;
+        return m_simplices[extent() - 1];
     }
 
-    template <std::size_t I = 0>
-        requires(I < extent())
-    Chain<SimplexType...> apply(auto f) const
+    KOKKOS_FUNCTION SimplexType const& back() const noexcept
     {
-        f(get<I>());
-        return apply<I + 1>(f);
+        return m_simplices[extent() - 1];
     }
 
-    template <std::size_t I = 0>
-        requires(I >= extent())
-    Chain<SimplexType...> apply(auto f) const
-    {
-        return *this;
-    }
-
-    KOKKOS_FUNCTION auto remove(std::size_t i) const
-    {
-        return *this;
-    }
-
-    KOKKOS_FUNCTION void check() const
+    KOKKOS_FUNCTION int check()
     {
 #ifdef NDEBUG
-// TODO assert simplices unique
+        for (auto i = m_simplices.begin(); i < m_simplices.end(); ++i) {
+            for (auto j = i + 1; k == i && j < m_simplices.end(); ++j) {
+                if (*i == *j) {
+                    return -1;
+                }
+            }
+        }
 #endif
+        return 0;
     }
 
-private:
-    // Helper to help the CTAD in optimize()
-    template <misc::Specialization<Simplex>... T>
-    auto make_chain(std::tuple<T...> t) const
+    KOKKOS_FUNCTION void optimize()
     {
-        return Chain<T...>(t);
-    }
-
-public:
-    template <std::size_t I = 0>
-    KOKKOS_FUNCTION auto optimize(auto chain) const
-    {
-        if constexpr (I < chain.extent()) {
-            std::size_t j = 0;
-            std::size_t k = std::numeric_limits<std::size_t>::quiet_NaN();
-            chain.apply([&](auto simplex_) {
-                if (std::get<I>(chain.m_simplices) == -simplex_) {
+        for (auto i = m_simplices.begin(); i < m_simplices.end(); ++i) {
+            auto k = i;
+            for (auto j = i + 1; k == i && j < m_simplices.end(); ++j) {
+                if (*i == -*j) {
                     k = j;
                 }
-                ++j;
-            });
-            if (k != std::numeric_limits<std::size_t>::quiet_NaN()) {
-                // TODO fix
-                // return optimize<I>(make_chain(misc::remove(misc::remove(chain.m_simplices, k), I)));
-                return optimize<I + 1>(chain);
-            } else {
-                return optimize<I + 1>(chain);
             }
-        } else {
-            return chain;
+            if (k != i) {
+                m_simplices.erase(k);
+                m_simplices.erase(i--);
+            }
         }
+        assert(check() == 0 && "there are duplicate simplices in the chain");
     }
 
-    template <std::size_t I = 0>
-    KOKKOS_FUNCTION auto optimize() const
+    KOKKOS_FUNCTION Chain<SimplexType> operator-()
     {
-        auto chain = optimize(*this);
-        chain.check();
-        return chain;
+        std::vector<SimplexType> simplices = m_simplices;
+        for (SimplexType& simplex : simplices) {
+            simplex = -simplex;
+        }
+        return Chain<SimplexType>(simplices);
     }
 
-    KOKKOS_FUNCTION auto operator-()
+    KOKKOS_FUNCTION Chain<SimplexType> operator+(SimplexType simplex)
     {
-        return apply([](auto& simplex) { simplex = -simplex; });
+        std::vector<SimplexType> simplices = m_simplices;
+        simplices.push_back(simplex);
+        return Chain<SimplexType>(simplices);
     }
 
-    template <misc::Specialization<Simplex> SimplexToAdd>
-    KOKKOS_FUNCTION Chain<SimplexType..., SimplexToAdd> operator+(SimplexToAdd simplex)
+    KOKKOS_FUNCTION Chain<SimplexType> operator+(Chain<SimplexType> simplices_to_add)
     {
-        return Chain<SimplexType..., SimplexToAdd>(
-                std::tuple_cat(m_simplices, std::tuple<SimplexToAdd> {simplex}));
-    }
-
-    template <misc::Specialization<Simplex>... SimplexToAdd>
-    KOKKOS_FUNCTION auto operator+(Chain<SimplexToAdd...> chain)
-    {
-        return Chain<SimplexType..., SimplexToAdd...>(
-                std::tuple_cat(m_simplices, chain.m_simplices));
+        std::vector<SimplexType> simplices = m_simplices;
+        simplices
+                .insert(simplices.end(),
+                        simplices_to_add.m_simplices.begin(),
+                        simplices_to_add.m_simplices.end());
+        return Chain<SimplexType>(simplices);
     }
 
     template <class T>
@@ -188,17 +157,28 @@ public:
     {
         return *this + (-t);
     }
+
+    KOKKOS_FUNCTION bool operator==(Chain<SimplexType> simplices)
+    {
+        for (auto i = simplices.m_simplices.begin(); i < simplices.m_simplices.end(); ++i) {
+            if (*i != m_simplices[std::distance(simplices.m_simplices.begin(), i)]) {
+                return false;
+            }
+        }
+        return true;
+    }
 };
 
-// Deduction guide
-template <misc::Specialization<Simplex>... SimplexType>
-Chain(std::tuple<SimplexType...>) -> Chain<SimplexType...>;
+template <class... T>
+Chain(T...) -> Chain<ddc::type_seq_element_t<0, ddc::detail::TypeSeq<T...>>>;
 
 template <misc::Specialization<Chain> ChainType>
 std::ostream& operator<<(std::ostream& out, ChainType const& chain)
 {
-    out << "[ ";
-    chain.apply([&](auto simplex) { out << simplex << " "; });
+    out << "[\n";
+    for (typename ChainType::simplex_type const& simplex : chain.simplices()) {
+        out << " " << simplex << "\n";
+    }
     out << "]";
     return out;
 }
