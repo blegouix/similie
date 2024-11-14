@@ -299,3 +299,60 @@ TEST(Boundary, 3Simplex)
                                                   DDimZ> {0, 1, 1, 1},
                                           ddc::DiscreteVector<DDimX, DDimY> {-1, -1})));
 }
+
+TEST(Boundary, Chain)
+{
+    sil::form::Chain chain = sil::form::
+            Chain(sil::form::
+                          Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
+                                  ddc::DiscreteVector<DDimX, DDimY> {1, 1}),
+                  sil::form::
+                          Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 1, 0, 0},
+                                  ddc::DiscreteVector<DDimX, DDimY> {1, 1}));
+    std::cout << boundary_chain;
+    EXPECT_TRUE(
+            boundary_chain
+            == sil::form::
+                    Chain(sil::form::
+                                  Simplex(ddc::DiscreteElement<
+                                                  DDimT,
+                                                  DDimX,
+                                                  DDimY,
+                                                  DDimZ> {0, 0, 1, 0},
+                                          ddc::DiscreteVector<DDimY> {-1}),
+                          sil::form::
+                                  Simplex(ddc::DiscreteElement<
+                                                  DDimT,
+                                                  DDimX,
+                                                  DDimY,
+                                                  DDimZ> {0, 0, 0, 0},
+                                          ddc::DiscreteVector<DDimX> {1}),
+                          sil::form::
+                                  Simplex(ddc::DiscreteElement<
+                                                  DDimT,
+                                                  DDimX,
+                                                  DDimY,
+                                                  DDimZ> {0, 1, 1, 0},
+                                          ddc::DiscreteVector<DDimX> {-1}),
+                          sil::form::
+                                  Simplex(ddc::DiscreteElement<
+                                                  DDimT,
+                                                  DDimX,
+                                                  DDimY,
+                                                  DDimZ> {0, 1, 0, 0},
+                                          ddc::DiscreteVector<DDimX> {1}),
+                          sil::form::
+                                  Simplex(ddc::DiscreteElement<
+                                                  DDimT,
+                                                  DDimX,
+                                                  DDimY,
+                                                  DDimZ> {0, 2, 0, 0},
+                                          ddc::DiscreteVector<DDimY> {1}),
+                          sil::form::
+                                  Simplex(ddc::DiscreteElement<
+                                                  DDimT,
+                                                  DDimX,
+                                                  DDimY,
+                                                  DDimZ> {0, 2, 1, 0},
+                                          ddc::DiscreteVector<DDimX> {-1})));
+}

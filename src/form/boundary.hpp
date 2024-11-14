@@ -70,6 +70,20 @@ KOKKOS_FUNCTION Chain<boundary_t<SimplexType>> boundary(SimplexType simplex)
            * (SimplexType::dimension() % 2 ? 1 : -1);
 }
 
+template <class SimplexType>
+KOKKOS_FUNCTION Chain<boundary_t<SimplexType>> boundary(Chain<SimplexType> chain)
+{
+    Chain<boundary_t<SimplexType>> boundary_chain;
+    for (auto& simplex : chain) {
+        Chain<boundary_t<SimplexType>> boundary_simplex = boundary(simplex);
+        for (auto& simplex_ : boundary_simplex) {
+            boundary_chain.push_back(simplex_);
+        }
+    }
+    boundary_chain.optimize();
+    return boundary_chain;
+}
+
 } // namespace form
 
 } // namespace sil
