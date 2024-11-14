@@ -50,21 +50,55 @@ private:
         return vect_type(add_eventually_null_dimensions_<Tag, T...>(vect)...);
     }
 
+    template <class... T>
+    struct Reorient;
+
+    template <>
+    struct Reorient<>
+    {
+        static constexpr base_type run_elem(base_type elem, vect_type)
+        {
+            return elem;
+        };
+        static constexpr vect_type run_vect(base_type, vect_type vect)
+        {
+            return vect;
+        };
+    };
+
+
+    template <class HeadTag, class... TailTag>
+    struct Reorient<HeadTag, TailTag...>
+    {
+        static constexpr base_type run_elem(base_type elem, vect_type vect)
+        {
+            if (vect.template get<HeadTag>() == -1) {
+                elem.template uid<HeadTag>()--;
+            }
+            return Reorient<TailTag...>::run_elem(elem, vect);
+        }
+
+        static constexpr vect_type run_vect(base_type elem, vect_type vect)
+        {
+            if (vect.template get<HeadTag>() == -1) {
+                vect.template get<HeadTag>() = 1;
+            }
+            return Reorient<TailTag...>::run_vect(elem, vect);
+        }
+    };
+
 public:
     template <misc::Specialization<ddc::DiscreteVector> T>
     KOKKOS_FUNCTION constexpr explicit Simplex(
             elem_type elem,
             T vect,
             bool negative = false) noexcept
-        : base_type(elem)
-        , m_vect(add_null_dimensions(vect))
+        : base_type(Reorient<Tag...>::run_elem(elem, add_null_dimensions(vect)))
+        , m_vect(Reorient<Tag...>::run_vect(elem, add_null_dimensions(vect)))
         , m_negative(negative)
     {
-        assert(((m_vect.template get<Tag>() == -1 || m_vect.template get<Tag>() == 0
-                 || m_vect.template get<Tag>() == 1)
-                && ...)
-               && "simplex vector must contains only -1, 0 or 1"); // TODO only 0 and 1 actually
-        // TODO reorient the simplex to remove every -1 in m_vect;
+        assert(((m_vect.template get<Tag>() == 0 || m_vect.template get<Tag>() == 1) && ...)
+               && "simplex vector must contain only -1, 0 or 1");
     }
 
     template <misc::Specialization<ddc::DiscreteVector> T>
@@ -73,15 +107,12 @@ public:
             elem_type elem,
             T vect,
             bool negative = false) noexcept
-        : base_type(elem)
-        , m_vect(add_null_dimensions(vect))
+        : base_type(Reorient<Tag...>::run_elem(elem, add_null_dimensions(vect)))
+        , m_vect(Reorient<Tag...>::run_vect(elem, add_null_dimensions(vect)))
         , m_negative(negative)
     {
-        assert(((m_vect.template get<Tag>() == -1 || m_vect.template get<Tag>() == 0
-                 || m_vect.template get<Tag>() == 1)
-                && ...)
-               && "simplex vector must contains only -1, 0 or 1"); // TODO only 0 and 1 actually
-        // TODO reorient the simplex to remove every -1 in m_vect;
+        assert(((m_vect.template get<Tag>() == 0 || m_vect.template get<Tag>() == 1) && ...)
+               && "simplex vector must contain only -1, 0 or 1");
     }
 
     static KOKKOS_FUNCTION constexpr std::size_t dimension() noexcept

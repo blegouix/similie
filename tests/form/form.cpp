@@ -70,15 +70,15 @@ TEST(Chain, Optimization)
                                                   DDimT,
                                                   DDimX,
                                                   DDimY,
-                                                  DDimZ> {0, 1, 1, 0},
-                                          ddc::DiscreteVector<DDimX, DDimY> {1, -1}),
+                                                  DDimZ> {0, 1, 0, 0},
+                                          ddc::DiscreteVector<DDimX, DDimY> {1, 1}),
                           sil::form::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
                                                   DDimY,
-                                                  DDimZ> {0, 0, 1, 0},
-                                          ddc::DiscreteVector<DDimX, DDimY> {1, -1}),
+                                                  DDimZ> {0, 0, 0, 0},
+                                          ddc::DiscreteVector<DDimX, DDimY> {1, 1}),
                           sil::form::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
