@@ -67,7 +67,7 @@ KOKKOS_FUNCTION Chain<boundary_t<SimplexType>> boundary(SimplexType simplex)
                    + detail::permutations_subset<SimplexType>(
                            simplex.discrete_element() + simplex.discrete_vector(),
                            -simplex.discrete_vector()))
-           * (SimplexType::dimension() % 2 ? 1 : -1);
+           * (SimplexType::dimension() % 2 ? 1 : -1) * (simplex.negative() ? -1 : 1);
 }
 
 template <class SimplexType>

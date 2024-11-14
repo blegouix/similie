@@ -309,7 +309,7 @@ TEST(Boundary, Chain)
                   sil::form::
                           Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 1, 0, 0},
                                   ddc::DiscreteVector<DDimX, DDimY> {1, 1}));
-    std::cout << boundary_chain;
+    sil::form::Chain boundary_chain = sil::form::boundary(chain);
     EXPECT_TRUE(
             boundary_chain
             == sil::form::
@@ -355,4 +355,37 @@ TEST(Boundary, Chain)
                                                   DDimY,
                                                   DDimZ> {0, 2, 1, 0},
                                           ddc::DiscreteVector<DDimX> {-1})));
+}
+
+TEST(Boundary, PoincarreLemma2)
+{
+    sil::form::Simplex simplex = sil::form::
+            Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
+                    ddc::DiscreteVector<DDimX, DDimY> {1, 1});
+    sil::form::Chain boundary_chain = sil::form::boundary(simplex);
+    sil::form::Chain boundary_chain2 = sil::form::boundary(boundary_chain);
+    auto empty_chain = sil::form::Chain<sil::form::Simplex<0, DDimT, DDimX, DDimY, DDimZ>> {};
+    EXPECT_TRUE(boundary_chain2 == empty_chain);
+}
+
+TEST(Boundary, PoincarreLemma3)
+{
+    sil::form::Simplex simplex = sil::form::
+            Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
+                    ddc::DiscreteVector<DDimX, DDimY, DDimZ> {1, 1, 1});
+    sil::form::Chain boundary_chain = sil::form::boundary(simplex);
+    sil::form::Chain boundary_chain2 = sil::form::boundary(boundary_chain);
+    auto empty_chain = sil::form::Chain<sil::form::Simplex<1, DDimT, DDimX, DDimY, DDimZ>> {};
+    EXPECT_TRUE(boundary_chain2 == empty_chain);
+}
+
+TEST(Boundary, PoincarreLemma4)
+{
+    sil::form::Simplex simplex = sil::form::
+            Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
+                    ddc::DiscreteVector<DDimT, DDimX, DDimY, DDimZ> {1, 1, 1, 1});
+    sil::form::Chain boundary_chain = sil::form::boundary(simplex);
+    sil::form::Chain boundary_chain2 = sil::form::boundary(boundary_chain);
+    auto empty_chain = sil::form::Chain<sil::form::Simplex<2, DDimT, DDimX, DDimY, DDimZ>> {};
+    EXPECT_TRUE(boundary_chain2 == empty_chain);
 }
