@@ -395,16 +395,14 @@ TEST(Cochain, Test)
     sil::form::Chain
             chain(sil::form::
                           Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 1, 0, 0},
-                                  ddc::DiscreteVector<DDimX, DDimY> {1, 1},
-                                  true),
+                                  ddc::DiscreteVector<DDimX, DDimY> {1, 1}),
                   sil::form::
                           Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
-                                  ddc::DiscreteVector<DDimX, DDimY> {1, 1},
-                                  true),
+                                  ddc::DiscreteVector<DDimX, DDimY> {1, 1}),
                   sil::form::
                           Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 1},
                                   ddc::DiscreteVector<DDimX, DDimY> {1, 1},
                                   true));
-    sil::form::Cochain cochain(chain, 1., 2., 3.);
-    std::cout << cochain;
+    sil::form::Cochain cochain(chain, 0., 1., 2.);
+    EXPECT_EQ(cochain(), -1.);
 }
