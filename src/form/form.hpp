@@ -3,5 +3,6 @@
 
 #pragma once
 
+#include "boundary.hpp"
 #include "chain.hpp"
 #include "simplex.hpp"

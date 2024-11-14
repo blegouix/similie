@@ -88,3 +88,12 @@ TEST(Chain, Optimization)
                                           ddc::DiscreteVector<DDimX, DDimY> {1, 1},
                                           true)));
 }
+
+TEST(Boundary, 2Simplex)
+{
+    sil::form::Simplex
+            simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 1, 0},
+                    ddc::DiscreteVector<DDimX, DDimY> {1, 1});
+    sil::form::Chain chain = sil::form::boundary(simplex);
+    std::cout << chain;
+}

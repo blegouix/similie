@@ -14,17 +14,19 @@ namespace sil {
 namespace form {
 
 /// Chain class
-template <class SimplexType>
-class Chain : std::vector<SimplexType>
+template <class SimplexType, class Allocator = std::allocator<SimplexType>>
+class Chain : public std::vector<SimplexType, Allocator>
 {
 public:
     using simplex_type = SimplexType;
-    using base_type = std::vector<SimplexType>;
+    using base_type = std::vector<SimplexType, Allocator>;
 
 private:
     static constexpr std::size_t s_k = SimplexType::dimension();
 
 public:
+    KOKKOS_FUNCTION constexpr explicit Chain() noexcept : base_type {} {}
+
     template <class... T>
         requires misc::are_all_same<T...>
     KOKKOS_FUNCTION constexpr explicit Chain(T... simplex) noexcept : base_type {simplex...}
