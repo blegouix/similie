@@ -39,7 +39,7 @@ KOKKOS_FUNCTION constexpr Chain<boundary_t<SimplexType>> permutations_subset(
 {
     auto array = ddc::detail::array(vect);
     Chain<boundary_t<SimplexType>> chain;
-    auto id_dist = 0;
+    auto id_dist = -1;
     for (std::size_t i = 0; i < SimplexType::dimension(); ++i) {
         auto array_ = array;
         auto j = array_.begin() + id_dist + 1;
