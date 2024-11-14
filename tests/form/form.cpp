@@ -389,3 +389,22 @@ TEST(Boundary, PoincarreLemma4)
     auto empty_chain = sil::form::Chain<sil::form::Simplex<2, DDimT, DDimX, DDimY, DDimZ>> {};
     EXPECT_TRUE(boundary_chain2 == empty_chain);
 }
+
+TEST(Cochain, Test)
+{
+    sil::form::Chain
+            chain(sil::form::
+                          Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 1, 0, 0},
+                                  ddc::DiscreteVector<DDimX, DDimY> {1, 1},
+                                  true),
+                  sil::form::
+                          Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
+                                  ddc::DiscreteVector<DDimX, DDimY> {1, 1},
+                                  true),
+                  sil::form::
+                          Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 1},
+                                  ddc::DiscreteVector<DDimX, DDimY> {1, 1},
+                                  true));
+    sil::form::Cochain cochain(chain, 1., 2., 3.);
+    std::cout << cochain;
+}

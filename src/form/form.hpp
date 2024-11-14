@@ -5,4 +5,5 @@
 
 #include "boundary.hpp"
 #include "chain.hpp"
+#include "cochain.hpp"
 #include "simplex.hpp"
