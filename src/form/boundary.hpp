@@ -23,13 +23,18 @@ struct BoundaryType<Simplex<K, Tag...>>
     using type = Simplex<K - 1, Tag...>;
 };
 
+template <class SimplexType>
+struct BoundaryType<Chain<SimplexType>>
+{
+    using type = Chain<typename BoundaryType<SimplexType>::type>;
+};
+
 } // namespace detail
 
-template <class SimplexType>
-using boundary_t = typename detail::BoundaryType<SimplexType>::type;
+template <class T>
+using boundary_t = typename detail::BoundaryType<T>::type;
 
 namespace detail {
-
 
 template <class SimplexType>
 KOKKOS_FUNCTION constexpr Chain<boundary_t<SimplexType>> permutations_subset(

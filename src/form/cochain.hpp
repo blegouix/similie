@@ -21,8 +21,11 @@ template <
 class Cochain : public std::vector<ElementType, Allocator>
 {
 public:
+    using simplex_type = typename ChainType::simplex_type;
     using chain_type = ChainType;
     using element_type = ElementType;
+    using elem_type = ChainType::elem_type;
+    using vect_type = ChainType::vect_type;
     using base_type = std::vector<ElementType, Allocator>;
 
 private:
@@ -30,17 +33,29 @@ private:
 
 public:
     KOKKOS_FUNCTION constexpr explicit Cochain(ChainType& chain) noexcept
-        : base_type {}
+        : base_type(ChainType::size())
         , m_chain(chain)
     {
     }
 
     template <class... T>
-        requires misc::are_all_same<T...>
+        requires(sizeof...(T) > 0)
+    KOKKOS_FUNCTION constexpr explicit Cochain(ChainType&& chain, T... value) noexcept
+        : base_type {value...}
+        , m_chain(std::move(chain))
+    {
+        assert(sizeof...(T) == chain.size()
+               && "cochain constructor must get as much values as the chain contains simplices");
+    }
+
+    template <class... T>
+        requires(sizeof...(T) > 0)
     KOKKOS_FUNCTION constexpr explicit Cochain(ChainType& chain, T... value) noexcept
         : base_type {value...}
         , m_chain(chain)
     {
+        assert(sizeof...(T) == chain.size()
+               && "cochain constructor must get as much values as the chain contains simplices");
     }
 
     KOKKOS_FUNCTION constexpr explicit Cochain(
@@ -49,16 +64,12 @@ public:
         : base_type(simplices)
         , m_chain(chain)
     {
+        static_assert(simplices.size() == chain.size());
     }
 
     static KOKKOS_FUNCTION constexpr std::size_t dimension() noexcept
     {
         return ChainType::dimension();
-    }
-
-    KOKKOS_FUNCTION ChainType& chain() noexcept
-    {
-        return m_chain;
     }
 
     KOKKOS_FUNCTION ChainType const& chain() const noexcept
