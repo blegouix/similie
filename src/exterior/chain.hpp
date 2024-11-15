@@ -11,7 +11,7 @@
 
 namespace sil {
 
-namespace form {
+namespace exterior {
 
 /// Chain class
 template <class SimplexType, class Allocator = std::allocator<SimplexType>>
@@ -144,6 +144,6 @@ std::ostream& operator<<(std::ostream& out, ChainType const& chain)
     return out;
 }
 
-} // namespace form
+} // namespace exterior
 
 } // namespace sil

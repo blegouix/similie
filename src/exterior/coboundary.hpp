@@ -7,11 +7,12 @@
 
 #include "are_all_same.hpp"
 #include "cochain.hpp"
+#include "cosimplex.hpp"
 #include "specialization.hpp"
 
 namespace sil {
 
-namespace form {
+namespace exterior {
 
 namespace detail {
 
@@ -21,7 +22,7 @@ struct CoboundaryType;
 template <std::size_t K, class... Tag, class ElementType, class Allocator>
 struct CoboundaryType<Cochain<Chain<Simplex<K, Tag...>>, ElementType, Allocator>>
 {
-    using type = Cochain<Chain<Simplex<K + 1, Tag...>>, ElementType, Allocator>;
+    using type = Cosimplex<Simplex<K + 1, Tag...>, ElementType>;
 };
 
 } // namespace detail
@@ -37,8 +38,7 @@ struct ComputeSimplex;
 template <std::size_t K, class... Tag>
 struct ComputeSimplex<Chain<Simplex<K, Tag...>>>
 {
-    static typename Chain<Simplex<K + 1, Tag...>>::simplex_type run(
-            Chain<Simplex<K, Tag...>> const& chain)
+    static Simplex<K + 1, Tag...> run(Chain<Simplex<K, Tag...>> const& chain)
     {
         ddc::DiscreteVector<Tag...> vect {
                 0 * ddc::type_seq_rank_v<Tag, ddc::detail::TypeSeq<Tag...>>...};
@@ -77,11 +77,10 @@ KOKKOS_FUNCTION coboundary_t<CochainType> coboundary(CochainType cochain)
            && "only cochain over the boundary of a single simplex is supported");
 
     return coboundary_t<CochainType>(
-            sil::form::Chain {
-                    detail::ComputeSimplex<typename CochainType::chain_type>::run(cochain.chain())},
+            detail::ComputeSimplex<typename CochainType::chain_type>::run(cochain.chain()),
             cochain.integrate());
 }
 
-} // namespace form
+} // namespace exterior
 
 } // namespace sil

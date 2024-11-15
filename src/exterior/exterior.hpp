@@ -7,4 +7,5 @@
 #include "chain.hpp"
 #include "coboundary.hpp"
 #include "cochain.hpp"
+#include "cosimplex.hpp"
 #include "simplex.hpp"

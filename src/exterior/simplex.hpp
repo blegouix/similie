@@ -9,7 +9,7 @@
 
 namespace sil {
 
-namespace form {
+namespace exterior {
 
 /// Simplex class
 template <std::size_t K, class... Tag>
@@ -192,6 +192,6 @@ std::ostream& operator<<(std::ostream& out, Simplex<K, Tag...> const& simplex)
     return out;
 }
 
-} // namespace form
+} // namespace exterior
 
 } // namespace sil

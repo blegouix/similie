@@ -11,7 +11,7 @@
 
 namespace sil {
 
-namespace form {
+namespace exterior {
 
 /// Cochain class
 template <class SimplexType, class ElementType = double>
@@ -65,6 +65,6 @@ template <
 using Form = Cosimplex<SimplexType, ElementType>;
 */
 
-} // namespace form
+} // namespace exterior
 
 } // namespace sil

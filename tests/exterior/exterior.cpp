@@ -7,7 +7,7 @@
 
 #include <gtest/gtest.h>
 
-#include "form.hpp"
+#include "exterior.hpp"
 
 struct T
 {
@@ -43,29 +43,29 @@ struct DDimZ : ddc::UniformPointSampling<Z>
 
 TEST(Chain, Optimization)
 {
-    sil::form::Chain chain
-            = sil::form::Chain(
-                      sil::form::
+    sil::exterior::Chain chain
+            = sil::exterior::Chain(
+                      sil::exterior::
                               Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
                                       ddc::DiscreteVector<DDimX, DDimY> {1, 1}))
-              + sil::form::
+              + sil::exterior::
                       Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 1, 1, 0},
                               ddc::DiscreteVector<DDimX, DDimY> {1, -1})
-              + sil::form::
+              + sil::exterior::
                       Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 1, 0},
                               ddc::DiscreteVector<DDimX, DDimY> {1, -1})
-              - sil::form::
+              - sil::exterior::
                       Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
                               ddc::DiscreteVector<DDimX, DDimY> {1, 1})
-              - sil::form::Chain(
-                      sil::form::
+              - sil::exterior::Chain(
+                      sil::exterior::
                               Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 1},
                                       ddc::DiscreteVector<DDimX, DDimY> {1, 1}));
     chain.optimize();
     EXPECT_TRUE(
             chain
-            == sil::form::
-                    Chain(sil::form::
+            == sil::exterior::
+                    Chain(sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
@@ -73,7 +73,7 @@ TEST(Chain, Optimization)
                                                   DDimZ> {0, 1, 0, 0},
                                           ddc::DiscreteVector<DDimX, DDimY> {1, 1},
                                           true),
-                          sil::form::
+                          sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
@@ -81,7 +81,7 @@ TEST(Chain, Optimization)
                                                   DDimZ> {0, 0, 0, 0},
                                           ddc::DiscreteVector<DDimX, DDimY> {1, 1},
                                           true),
-                          sil::form::
+                          sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
@@ -93,14 +93,14 @@ TEST(Chain, Optimization)
 
 TEST(Boundary, 1Simplex)
 {
-    sil::form::Simplex
+    sil::exterior::Simplex
             simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
                     ddc::DiscreteVector<DDimX> {1});
-    sil::form::Chain chain = sil::form::boundary(simplex);
+    sil::exterior::Chain chain = sil::exterior::boundary(simplex);
     EXPECT_TRUE(
             chain
-            == sil::form::
-                    Chain(sil::form::
+            == sil::exterior::
+                    Chain(sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
@@ -108,7 +108,7 @@ TEST(Boundary, 1Simplex)
                                                   DDimZ> {0, 0, 0, 0},
                                           ddc::DiscreteVector<> {},
                                           true),
-                          sil::form::
+                          sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
@@ -119,35 +119,35 @@ TEST(Boundary, 1Simplex)
 
 TEST(Boundary, 2Simplex)
 {
-    sil::form::Simplex
+    sil::exterior::Simplex
             simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
                     ddc::DiscreteVector<DDimT, DDimX> {1, 1});
-    sil::form::Chain chain = sil::form::boundary(simplex);
+    sil::exterior::Chain chain = sil::exterior::boundary(simplex);
     EXPECT_TRUE(
             chain
-            == sil::form::
-                    Chain(sil::form::
+            == sil::exterior::
+                    Chain(sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
                                                   DDimY,
                                                   DDimZ> {0, 1, 0, 0},
                                           ddc::DiscreteVector<DDimX> {-1}),
-                          sil::form::
+                          sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
                                                   DDimY,
                                                   DDimZ> {0, 0, 0, 0},
                                           ddc::DiscreteVector<DDimT> {1}),
-                          sil::form::
+                          sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
                                                   DDimY,
                                                   DDimZ> {1, 0, 0, 0},
                                           ddc::DiscreteVector<DDimX> {1}),
-                          sil::form::
+                          sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
@@ -155,35 +155,35 @@ TEST(Boundary, 2Simplex)
                                                   DDimZ> {1, 1, 0, 0},
                                           ddc::DiscreteVector<DDimT> {-1})));
 
-    sil::form::Simplex simplex2(
+    sil::exterior::Simplex simplex2(
             ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
             ddc::DiscreteVector<DDimX, DDimZ> {1, 1});
-    sil::form::Chain chain2 = sil::form::boundary(simplex2);
+    sil::exterior::Chain chain2 = sil::exterior::boundary(simplex2);
     EXPECT_TRUE(
             chain2
-            == sil::form::
-                    Chain(sil::form::
+            == sil::exterior::
+                    Chain(sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
                                                   DDimY,
                                                   DDimZ> {0, 0, 0, 1},
                                           ddc::DiscreteVector<DDimZ> {-1}),
-                          sil::form::
+                          sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
                                                   DDimY,
                                                   DDimZ> {0, 0, 0, 0},
                                           ddc::DiscreteVector<DDimX> {1}),
-                          sil::form::
+                          sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
                                                   DDimY,
                                                   DDimZ> {0, 1, 0, 0},
                                           ddc::DiscreteVector<DDimZ> {1}),
-                          sil::form::
+                          sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
@@ -194,14 +194,14 @@ TEST(Boundary, 2Simplex)
 
 TEST(Boundary, 3Simplex)
 {
-    sil::form::Simplex
+    sil::exterior::Simplex
             simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
                     ddc::DiscreteVector<DDimT, DDimY, DDimZ> {1, 1, 1});
-    sil::form::Chain chain = sil::form::boundary(simplex);
+    sil::exterior::Chain chain = sil::exterior::boundary(simplex);
     EXPECT_TRUE(
             chain
-            == sil::form::
-                    Chain(sil::form::
+            == sil::exterior::
+                    Chain(sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
@@ -209,14 +209,14 @@ TEST(Boundary, 3Simplex)
                                                   DDimZ> {0, 0, 0, 0},
                                           ddc::DiscreteVector<DDimY, DDimZ> {1, 1},
                                           true),
-                          sil::form::
+                          sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
                                                   DDimY,
                                                   DDimZ> {0, 0, 0, 0},
                                           ddc::DiscreteVector<DDimT, DDimZ> {1, 1}),
-                          sil::form::
+                          sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
@@ -224,14 +224,14 @@ TEST(Boundary, 3Simplex)
                                                   DDimZ> {0, 0, 0, 0},
                                           ddc::DiscreteVector<DDimT, DDimY> {1, 1},
                                           true),
-                          sil::form::
+                          sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
                                                   DDimY,
                                                   DDimZ> {1, 0, 1, 1},
                                           ddc::DiscreteVector<DDimY, DDimZ> {-1, -1}),
-                          sil::form::
+                          sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
@@ -239,21 +239,21 @@ TEST(Boundary, 3Simplex)
                                                   DDimZ> {1, 0, 1, 1},
                                           ddc::DiscreteVector<DDimT, DDimZ> {-1, -1},
                                           true),
-                          sil::form::
+                          sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
                                                   DDimY,
                                                   DDimZ> {1, 0, 1, 1},
                                           ddc::DiscreteVector<DDimT, DDimY> {-1, -1})));
-    sil::form::Simplex simplex2(
+    sil::exterior::Simplex simplex2(
             ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
             ddc::DiscreteVector<DDimX, DDimY, DDimZ> {1, 1, 1});
-    sil::form::Chain chain2 = sil::form::boundary(simplex2);
+    sil::exterior::Chain chain2 = sil::exterior::boundary(simplex2);
     EXPECT_TRUE(
             chain2
-            == sil::form::
-                    Chain(sil::form::
+            == sil::exterior::
+                    Chain(sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
@@ -261,14 +261,14 @@ TEST(Boundary, 3Simplex)
                                                   DDimZ> {0, 0, 0, 0},
                                           ddc::DiscreteVector<DDimY, DDimZ> {1, 1},
                                           true),
-                          sil::form::
+                          sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
                                                   DDimY,
                                                   DDimZ> {0, 0, 0, 0},
                                           ddc::DiscreteVector<DDimX, DDimZ> {1, 1}),
-                          sil::form::
+                          sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
@@ -276,14 +276,14 @@ TEST(Boundary, 3Simplex)
                                                   DDimZ> {0, 0, 0, 0},
                                           ddc::DiscreteVector<DDimX, DDimY> {1, 1},
                                           true),
-                          sil::form::
+                          sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
                                                   DDimY,
                                                   DDimZ> {0, 1, 1, 1},
                                           ddc::DiscreteVector<DDimY, DDimZ> {-1, -1}),
-                          sil::form::
+                          sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
@@ -291,7 +291,7 @@ TEST(Boundary, 3Simplex)
                                                   DDimZ> {0, 1, 1, 1},
                                           ddc::DiscreteVector<DDimX, DDimZ> {-1, -1},
                                           true),
-                          sil::form::
+                          sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
@@ -302,53 +302,53 @@ TEST(Boundary, 3Simplex)
 
 TEST(Boundary, Chain)
 {
-    sil::form::Chain chain = sil::form::
-            Chain(sil::form::
+    sil::exterior::Chain chain = sil::exterior::
+            Chain(sil::exterior::
                           Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
                                   ddc::DiscreteVector<DDimX, DDimY> {1, 1}),
-                  sil::form::
+                  sil::exterior::
                           Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 1, 0, 0},
                                   ddc::DiscreteVector<DDimX, DDimY> {1, 1}));
-    sil::form::Chain boundary_chain = sil::form::boundary(chain);
+    sil::exterior::Chain boundary_chain = sil::exterior::boundary(chain);
     EXPECT_TRUE(
             boundary_chain
-            == sil::form::
-                    Chain(sil::form::
+            == sil::exterior::
+                    Chain(sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
                                                   DDimY,
                                                   DDimZ> {0, 0, 1, 0},
                                           ddc::DiscreteVector<DDimY> {-1}),
-                          sil::form::
+                          sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
                                                   DDimY,
                                                   DDimZ> {0, 0, 0, 0},
                                           ddc::DiscreteVector<DDimX> {1}),
-                          sil::form::
+                          sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
                                                   DDimY,
                                                   DDimZ> {0, 1, 1, 0},
                                           ddc::DiscreteVector<DDimX> {-1}),
-                          sil::form::
+                          sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
                                                   DDimY,
                                                   DDimZ> {0, 1, 0, 0},
                                           ddc::DiscreteVector<DDimX> {1}),
-                          sil::form::
+                          sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
                                                   DDimY,
                                                   DDimZ> {0, 2, 0, 0},
                                           ddc::DiscreteVector<DDimY> {1}),
-                          sil::form::
+                          sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
@@ -359,61 +359,64 @@ TEST(Boundary, Chain)
 
 TEST(Boundary, PoincarreLemma2)
 {
-    sil::form::Simplex simplex = sil::form::
+    sil::exterior::Simplex simplex = sil::exterior::
             Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
                     ddc::DiscreteVector<DDimX, DDimY> {1, 1});
-    sil::form::Chain boundary_chain = sil::form::boundary(simplex);
-    sil::form::Chain boundary_chain2 = sil::form::boundary(boundary_chain);
-    auto empty_chain = sil::form::Chain<sil::form::Simplex<0, DDimT, DDimX, DDimY, DDimZ>> {};
+    sil::exterior::Chain boundary_chain = sil::exterior::boundary(simplex);
+    sil::exterior::Chain boundary_chain2 = sil::exterior::boundary(boundary_chain);
+    auto empty_chain
+            = sil::exterior::Chain<sil::exterior::Simplex<0, DDimT, DDimX, DDimY, DDimZ>> {};
     EXPECT_TRUE(boundary_chain2 == empty_chain);
 }
 
 TEST(Boundary, PoincarreLemma3)
 {
-    sil::form::Simplex simplex = sil::form::
+    sil::exterior::Simplex simplex = sil::exterior::
             Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
                     ddc::DiscreteVector<DDimX, DDimY, DDimZ> {1, 1, 1});
-    sil::form::Chain boundary_chain = sil::form::boundary(simplex);
-    sil::form::Chain boundary_chain2 = sil::form::boundary(boundary_chain);
-    auto empty_chain = sil::form::Chain<sil::form::Simplex<1, DDimT, DDimX, DDimY, DDimZ>> {};
+    sil::exterior::Chain boundary_chain = sil::exterior::boundary(simplex);
+    sil::exterior::Chain boundary_chain2 = sil::exterior::boundary(boundary_chain);
+    auto empty_chain
+            = sil::exterior::Chain<sil::exterior::Simplex<1, DDimT, DDimX, DDimY, DDimZ>> {};
     EXPECT_TRUE(boundary_chain2 == empty_chain);
 }
 
 TEST(Boundary, PoincarreLemma4)
 {
-    sil::form::Simplex simplex = sil::form::
+    sil::exterior::Simplex simplex = sil::exterior::
             Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
                     ddc::DiscreteVector<DDimT, DDimX, DDimY, DDimZ> {1, 1, 1, 1});
-    sil::form::Chain boundary_chain = sil::form::boundary(simplex);
-    sil::form::Chain boundary_chain2 = sil::form::boundary(boundary_chain);
-    auto empty_chain = sil::form::Chain<sil::form::Simplex<2, DDimT, DDimX, DDimY, DDimZ>> {};
+    sil::exterior::Chain boundary_chain = sil::exterior::boundary(simplex);
+    sil::exterior::Chain boundary_chain2 = sil::exterior::boundary(boundary_chain);
+    auto empty_chain
+            = sil::exterior::Chain<sil::exterior::Simplex<2, DDimT, DDimX, DDimY, DDimZ>> {};
     EXPECT_TRUE(boundary_chain2 == empty_chain);
 }
 
 TEST(Cochain, Test)
 {
-    sil::form::Chain
-            chain(sil::form::
+    sil::exterior::Chain
+            chain(sil::exterior::
                           Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 1, 0, 0},
                                   ddc::DiscreteVector<DDimX, DDimY> {1, 1}),
-                  sil::form::
+                  sil::exterior::
                           Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
                                   ddc::DiscreteVector<DDimX, DDimY> {1, 1}),
-                  sil::form::
+                  sil::exterior::
                           Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 1},
                                   ddc::DiscreteVector<DDimX, DDimY> {1, 1},
                                   true));
-    sil::form::Cochain cochain(chain, 0., 1., 2.);
+    sil::exterior::Cochain cochain(chain, 0., 1., 2.);
     EXPECT_EQ(cochain.integrate(), -1.);
 }
 
 TEST(Coboundary, Test)
 {
-    sil::form::Simplex
+    sil::exterior::Simplex
             simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 1, 0, 0},
                     ddc::DiscreteVector<DDimX, DDimY> {1, 1});
-    sil::form::Chain simplex_boundary = boundary(simplex);
-    sil::form::Cochain cochain_boundary(simplex_boundary, 5., 8., 3., 2.);
-    sil::form::Cochain cochain = sil::form::coboundary(cochain_boundary);
-    EXPECT_EQ(cochain[0], 4.);
+    sil::exterior::Chain simplex_boundary = boundary(simplex);
+    sil::exterior::Cochain cochain_boundary(simplex_boundary, 5., 8., 3., 2.);
+    sil::exterior::Cosimplex cosimplex = sil::exterior::coboundary(cochain_boundary);
+    EXPECT_EQ(cosimplex(), 4.);
 }

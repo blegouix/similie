@@ -10,7 +10,7 @@
 
 namespace sil {
 
-namespace form {
+namespace exterior {
 
 namespace detail {
 
@@ -89,6 +89,6 @@ KOKKOS_FUNCTION Chain<boundary_t<SimplexType>> boundary(Chain<SimplexType> chain
     return boundary_chain;
 }
 
-} // namespace form
+} // namespace exterior
 
 } // namespace sil

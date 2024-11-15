@@ -11,7 +11,7 @@
 
 namespace sil {
 
-namespace form {
+namespace exterior {
 
 /// Cochain class
 template <
@@ -120,6 +120,6 @@ template <
         class Allocator = std::allocator<ElementType>>
 using Form = Cochain<ChainType, ElementType, Allocator>;
 
-} // namespace form
+} // namespace exterior
 
 } // namespace sil
