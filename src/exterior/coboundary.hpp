@@ -49,7 +49,7 @@ struct ComputeSimplex<Chain<Simplex<K, Tag...>>>
         }
         return Simplex(
                 std::integral_constant<std::size_t, K + 1> {},
-                chain[0].discrete_element(), // TODO
+                chain[0].discrete_element(), // This is an assumption on the structure of the chain, which is satisfied if it has been produced using boundary()
                 vect);
     }
 };
@@ -57,19 +57,10 @@ struct ComputeSimplex<Chain<Simplex<K, Tag...>>>
 } // namespace detail
 
 template <misc::Specialization<Cochain> CochainType>
-KOKKOS_FUNCTION coboundary_t<CochainType> coboundary(CochainType cochain)
+KOKKOS_FUNCTION coboundary_t<CochainType> coboundary(
+        CochainType
+                cochain) // Warning: only cochain.chain() produced using boundary() are supported
 {
-    /*
-    assert(std::
-                   all_of(chain.begin(),
-                          chain.end(),
-                          [&](const CochainType::simplex_type simplex) {
-                             std::cout << simplex.discrete_element();
-                              return simplex.discrete_element()
-                                     == chain.begin()->discrete_element();
-                          })
-           && "only cochain over the boundary of a single simplex is supported");
-    */
     assert(cochain.size() == 2 * (cochain.dimension() + 1)
            && "only cochain over the boundary of a single simplex is supported");
 
