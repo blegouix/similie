@@ -52,7 +52,7 @@ TEST(Chain, Optimization)
                       Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 1, 1, 0},
                               ddc::DiscreteVector<DDimX, DDimY> {1, -1})
               + sil::exterior::
-                      Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 1, 0},
+                      Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {1, 0, 1, 0},
                               ddc::DiscreteVector<DDimX, DDimY> {1, -1})
               - sil::exterior::
                       Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
@@ -78,7 +78,7 @@ TEST(Chain, Optimization)
                                                   DDimT,
                                                   DDimX,
                                                   DDimY,
-                                                  DDimZ> {0, 0, 0, 0},
+                                                  DDimZ> {1, 0, 0, 0},
                                           ddc::DiscreteVector<DDimX, DDimY> {1, 1},
                                           true),
                           sil::exterior::
