@@ -8,4 +8,5 @@
 #include "coboundary.hpp"
 #include "cochain.hpp"
 #include "cosimplex.hpp"
+#include "form.hpp"
 #include "simplex.hpp"

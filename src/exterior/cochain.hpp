@@ -114,12 +114,6 @@ std::ostream& operator<<(std::ostream& out, CochainType const& cochain)
     return out;
 }
 
-template <
-        misc::Specialization<Chain> ChainType,
-        class ElementType = double,
-        class Allocator = std::allocator<ElementType>>
-using Form = Cochain<ChainType, ElementType, Allocator>;
-
 } // namespace exterior
 
 } // namespace sil

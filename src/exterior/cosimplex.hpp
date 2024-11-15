@@ -57,14 +57,6 @@ std::ostream& operator<<(std::ostream& out, CosimplexType const& cosimplex)
     return out;
 }
 
-/*
-template <
-        misc::NotSpecialization<Chain> SimplexType,
-        class ElementType = double,
-        class=void>
-using Form = Cosimplex<SimplexType, ElementType>;
-*/
-
 } // namespace exterior
 
 } // namespace sil

@@ -393,6 +393,17 @@ TEST(Boundary, PoincarreLemma4)
     EXPECT_TRUE(boundary_chain2 == empty_chain);
 }
 
+TEST(Form, Alias)
+{
+    sil::exterior::Chain chain(
+            sil::exterior::
+                    Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 1, 0, 0},
+                            ddc::DiscreteVector<DDimX, DDimY> {1, 1}));
+    // Unfortunately CTAD cannot deduce template arguments
+    sil::exterior::Form<typename decltype(chain)::simplex_type> cosimplex(chain[0], 0.);
+    sil::exterior::Form<decltype(chain)> cochain(chain, 0.);
+}
+
 TEST(Cochain, Test)
 {
     sil::exterior::Chain
