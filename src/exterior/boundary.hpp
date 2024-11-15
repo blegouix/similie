@@ -37,7 +37,7 @@ using boundary_t = typename detail::BoundaryType<T>::type;
 namespace detail {
 
 template <class SimplexType>
-KOKKOS_FUNCTION constexpr Chain<boundary_t<SimplexType>> permutations_subset(
+KOKKOS_FUNCTION constexpr Chain<boundary_t<SimplexType>> generate_half_subchain(
         typename SimplexType::elem_type elem,
         typename SimplexType::vect_type vect,
         bool negative = false)
@@ -65,11 +65,11 @@ template <class SimplexType>
 KOKKOS_FUNCTION Chain<boundary_t<SimplexType>> boundary(SimplexType simplex)
 {
     return Chain<boundary_t<SimplexType>>(
-                   detail::permutations_subset<SimplexType>(
+                   detail::generate_half_subchain<SimplexType>(
                            simplex.discrete_element(),
                            simplex.discrete_vector(),
                            SimplexType::dimension() % 2)
-                   + detail::permutations_subset<SimplexType>(
+                   + detail::generate_half_subchain<SimplexType>(
                            simplex.discrete_element() + simplex.discrete_vector(),
                            -simplex.discrete_vector()))
            * (SimplexType::dimension() % 2 ? 1 : -1) * (simplex.negative() ? -1 : 1);
