@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['metric_5fprod_5fdomain_5ft_0',['metric_prod_domain_t',['../namespacesil_1_1tensor.html#a4e5368f425f7bbbab77cd8edaff01b87',1,'sil::tensor']]],
-  ['metric_5fprod_5ft_1',['metric_prod_t',['../namespacesil_1_1tensor.html#ac78669c4a01fe2ec3b4a8a48d0c94e2a',1,'sil::tensor']]]
+  ['indices_5fdomain_5ft_0',['indices_domain_t',['../classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html#af0827abcc0f70a6aac80d7eb4e3c213d',1,'sil::tensor::Tensor&lt; ElementType, ddc::DiscreteDomain&lt; DDim... &gt;, LayoutStridedPolicy, MemorySpace &gt;']]]
 ];

@@ -1,5 +1,8 @@
 var searchData=
 [
-  ['dimension_0',['dimension',['../classsil_1_1young__tableau_1_1YoungTableau.html#a3c925170a764bd17630701a7b15d5e8a',1,'sil::young_tableau::YoungTableau']]],
-  ['domain_1',['domain',['../classsil_1_1csr_1_1Csr.html#acb8b632c585d2858e03c487e204df473',1,'sil::csr::Csr::domain()'],['../classsil_1_1csr_1_1CsrDynamic.html#a93929456578d9c57d1e47ebe92793374',1,'sil::csr::CsrDynamic::domain()']]]
+  ['derivative_0',['derivative',['../namespacesil_1_1exterior.html#a1e0b23c1cb1f605a8b401e4defb7e706',1,'sil::exterior']]],
+  ['dimension_1',['dimension',['../classsil_1_1exterior_1_1Chain.html#a3023ae1a3d6a7ca71f4f5aced7dcc980',1,'sil::exterior::Chain::dimension()'],['../classsil_1_1exterior_1_1Cochain.html#a1e991260813c0d49c046e257652debe3',1,'sil::exterior::Cochain::dimension()'],['../classsil_1_1exterior_1_1Cosimplex.html#a0aa6aabcbac5cb6444e7a5bf4238e0d9',1,'sil::exterior::Cosimplex::dimension()'],['../classsil_1_1exterior_1_1Simplex.html#ab8d40a137256a7d05ed399b0f505da5a',1,'sil::exterior::Simplex::dimension()'],['../classsil_1_1young__tableau_1_1YoungTableau.html#a3c925170a764bd17630701a7b15d5e8a',1,'sil::young_tableau::YoungTableau::dimension()']]],
+  ['discrete_5felement_2',['discrete_element',['../classsil_1_1exterior_1_1Simplex.html#a5e856054cececc885df32b8ebfe104b8',1,'sil::exterior::Simplex::discrete_element() noexcept'],['../classsil_1_1exterior_1_1Simplex.html#abae9ed80d38c6423046fdcce31c615e5',1,'sil::exterior::Simplex::discrete_element() const noexcept']]],
+  ['discrete_5fvector_3',['discrete_vector',['../classsil_1_1exterior_1_1Simplex.html#a525a26e052ee162c2711418bb82366fd',1,'sil::exterior::Simplex::discrete_vector() noexcept'],['../classsil_1_1exterior_1_1Simplex.html#a5498dd8537206217ae156a00cc6175cf',1,'sil::exterior::Simplex::discrete_vector() const noexcept']]],
+  ['domain_4',['domain',['../classsil_1_1csr_1_1Csr.html#acb8b632c585d2858e03c487e204df473',1,'sil::csr::Csr::domain()'],['../classsil_1_1csr_1_1CsrDynamic.html#a93929456578d9c57d1e47ebe92793374',1,'sil::csr::CsrDynamic::domain()']]]
 ];

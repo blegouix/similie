@@ -5,6 +5,14 @@ var annotated_dup =
         [ "Csr", "classsil_1_1csr_1_1Csr.html", "classsil_1_1csr_1_1Csr" ],
         [ "CsrDynamic", "classsil_1_1csr_1_1CsrDynamic.html", "classsil_1_1csr_1_1CsrDynamic" ]
       ] ],
+      [ "exterior", "namespacesil_1_1exterior.html", [
+        [ "Chain", "classsil_1_1exterior_1_1Chain.html", "classsil_1_1exterior_1_1Chain" ],
+        [ "Cochain", "classsil_1_1exterior_1_1Cochain.html", "classsil_1_1exterior_1_1Cochain" ],
+        [ "Cosimplex", "classsil_1_1exterior_1_1Cosimplex.html", "classsil_1_1exterior_1_1Cosimplex" ],
+        [ "FormWrapper", "namespacesil_1_1exterior.html#structsil_1_1exterior_1_1FormWrapper", null ],
+        [ "FormWrapper< T, ElementType, Allocator >", "namespacesil_1_1exterior.html#structsil_1_1exterior_1_1FormWrapper_3_01T_00_01ElementType_00_01Allocator_01_4", "namespacesil_1_1exterior_structsil_1_1exterior_1_1FormWrapper_3_01T_00_01ElementType_00_01Allocator_01_4_dup" ],
+        [ "Simplex", "classsil_1_1exterior_1_1Simplex.html", "classsil_1_1exterior_1_1Simplex" ]
+      ] ],
       [ "mesher", "namespacesil_1_1mesher.html", [
         [ "Mesher", "classsil_1_1mesher_1_1Mesher.html", "classsil_1_1mesher_1_1Mesher" ]
       ] ],

@@ -122,7 +122,8 @@ $(document).ready(function(){initNavTree('namespacesil_1_1misc.html',''); initRe
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
 <a href="#concepts">Concepts</a> &#124;
-<a href="#func-members">Functions</a>  </div>
+<a href="#func-members">Functions</a> &#124;
+<a href="#var-members">Variables</a>  </div>
   <div class="headertitle"><div class="title">sil::misc Namespace Reference</div></div>
 </div><!--header-->
 <div class="contents">
@@ -143,10 +144,59 @@ Concepts</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:a9be032ba1e7bb2c1c931d858a2ab90f2" id="r_a9be032ba1e7bb2c1c931d858a2ab90f2"><td class="memTemplParams" colspan="2">template&lt;class Head , class... Tail&gt; </td></tr>
+<tr class="memitem:a9be032ba1e7bb2c1c931d858a2ab90f2"><td class="memTemplItemLeft" align="right" valign="top">constexpr bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1misc.html#a9be032ba1e7bb2c1c931d858a2ab90f2">are_all_equal</a> (Head head, Tail... tail)</td></tr>
+<tr class="separator:a9be032ba1e7bb2c1c931d858a2ab90f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aea35c72a0b5289f6bef175d41e5001d1" id="r_aea35c72a0b5289f6bef175d41e5001d1"><td class="memItemLeft" align="right" valign="top">constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesil_1_1misc.html#aea35c72a0b5289f6bef175d41e5001d1">binomial_coefficient</a> (std::size_t n, std::size_t k) noexcept</td></tr>
 <tr class="separator:aea35c72a0b5289f6bef175d41e5001d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
+Variables</h2></td></tr>
+<tr class="memitem:a094c71e44717da55afa244de80ca4b2c" id="r_a094c71e44717da55afa244de80ca4b2c"><td class="memTemplParams" colspan="2">template&lt;class Head , class... Tail&gt; </td></tr>
+<tr class="memitem:a094c71e44717da55afa244de80ca4b2c"><td class="memTemplItemLeft" align="right" valign="top">constexpr bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1misc.html#a094c71e44717da55afa244de80ca4b2c">are_all_same</a> = (std::is_same_v&lt;Head, Tail&gt; &amp;&amp; ...)</td></tr>
+<tr class="separator:a094c71e44717da55afa244de80ca4b2c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
+<a id="a9be032ba1e7bb2c1c931d858a2ab90f2" name="a9be032ba1e7bb2c1c931d858a2ab90f2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9be032ba1e7bb2c1c931d858a2ab90f2">&#9670;&#160;</a></span>are_all_equal()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Head , class... Tail&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr bool sil::misc::are_all_equal </td>
+          <td>(</td>
+          <td class="paramtype">Head&#160;</td>
+          <td class="paramname"><em>head</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Tail...&#160;</td>
+          <td class="paramname"><em>tail</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="are__all__same_8hpp_source.html#l00014">14</a> of file <a class="el" href="are__all__same_8hpp_source.html">are_all_same.hpp</a>.</p>
+
+</div>
+</div>
 <a id="aea35c72a0b5289f6bef175d41e5001d1" name="aea35c72a0b5289f6bef175d41e5001d1"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aea35c72a0b5289f6bef175d41e5001d1">&#9670;&#160;</a></span>binomial_coefficient()</h2>
 
@@ -182,6 +232,33 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p class="definition">Definition at line <a class="el" href="binomial__coefficient_8hpp_source.html#l00013">13</a> of file <a class="el" href="binomial__coefficient_8hpp_source.html">binomial_coefficient.hpp</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">Variable Documentation</h2>
+<a id="a094c71e44717da55afa244de80ca4b2c" name="a094c71e44717da55afa244de80ca4b2c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a094c71e44717da55afa244de80ca4b2c">&#9670;&#160;</a></span>are_all_same</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Head , class... Tail&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr bool sil::misc::are_all_same = (std::is_same_v&lt;Head, Tail&gt; &amp;&amp; ...)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="are__all__same_8hpp_source.html#l00011">11</a> of file <a class="el" href="are__all__same_8hpp_source.html">are_all_same.hpp</a>.</p>
 
 </div>
 </div>

@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['primes_0',['primes',['../namespacesil_1_1tensor.html#aa6f1b27f2ca0ebfd55a3c528d61d77f5',1,'sil::tensor']]],
-  ['projector_5fdomain_1',['projector_domain',['../classsil_1_1young__tableau_1_1YoungTableau.html#aa9c3c8b9a0c3724fcb91b323dfc294a7',1,'sil::young_tableau::YoungTableau']]]
+  ['metric_5fprod_5fdomain_5ft_0',['metric_prod_domain_t',['../namespacesil_1_1tensor.html#a4e5368f425f7bbbab77cd8edaff01b87',1,'sil::tensor']]],
+  ['metric_5fprod_5ft_1',['metric_prod_t',['../namespacesil_1_1tensor.html#ac78669c4a01fe2ec3b4a8a48d0c94e2a',1,'sil::tensor']]]
 ];

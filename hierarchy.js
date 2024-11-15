@@ -4,12 +4,18 @@ var hierarchy =
       [ "sil::tensor::Tensor< ElementType, ddc::DiscreteDomain< DDim... >, LayoutStridedPolicy, MemorySpace >", "classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html", null ]
     ] ],
     [ "sil::tensor::Contravariant", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Contravariant", null ],
+    [ "sil::exterior::Cosimplex< SimplexType, ElementType >", "classsil_1_1exterior_1_1Cosimplex.html", null ],
     [ "sil::tensor::Covariant", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Covariant", null ],
     [ "sil::csr::Csr< N, HeadTensorIndex, TailTensorIndex >", "classsil_1_1csr_1_1Csr.html", null ],
     [ "sil::csr::CsrDynamic< HeadTensorIndex, TailTensorIndex >", "classsil_1_1csr_1_1CsrDynamic.html", null ],
+    [ "ddc::DiscreteElement", null, [
+      [ "sil::exterior::Simplex< K, Tag >", "classsil_1_1exterior_1_1Simplex.html", null ]
+    ] ],
     [ "std::false_type", null, [
       [ "sil::misc::is_specialization_of< T, U >", "structsil_1_1misc_1_1is__specialization__of.html", null ]
     ] ],
+    [ "sil::exterior::FormWrapper< T, ElementType, Allocator >", "namespacesil_1_1exterior.html#structsil_1_1exterior_1_1FormWrapper", null ],
+    [ "sil::exterior::FormWrapper< T, ElementType, Allocator >", "namespacesil_1_1exterior.html#structsil_1_1exterior_1_1FormWrapper_3_01T_00_01ElementType_00_01Allocator_01_4", null ],
     [ "sil::mesher::Mesher< D, CDim >", "classsil_1_1mesher_1_1Mesher.html", null ],
     [ "sil::tensor::Tensor< ElementType, SupportType, LayoutStridedPolicy, MemorySpace >", "namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor", null ],
     [ "sil::tensor::TensorAccessor< Index >", "classsil_1_1tensor_1_1TensorAccessor.html", null ],
@@ -33,6 +39,10 @@ var hierarchy =
     [ "detail::TensorNaturalIndexFromTypeSeqDim::type", null, [
       [ "sil::tensor::TensorContravariantNaturalIndex< NaturalIndex >", "structsil_1_1tensor_1_1TensorContravariantNaturalIndex.html", null ],
       [ "sil::tensor::TensorCovariantNaturalIndex< NaturalIndex >", "structsil_1_1tensor_1_1TensorCovariantNaturalIndex.html", null ]
+    ] ],
+    [ "std::vector< T >", null, [
+      [ "sil::exterior::Chain< SimplexType, Allocator >", "classsil_1_1exterior_1_1Chain.html", null ],
+      [ "sil::exterior::Cochain< ChainType, ElementType, Allocator >", "classsil_1_1exterior_1_1Cochain.html", null ]
     ] ],
     [ "sil::young_tableau::YoungTableau< Dimension, TableauSeq >", "classsil_1_1young__tableau_1_1YoungTableau.html", null ],
     [ "sil::young_tableau::YoungTableauSeq< Row >", "classsil_1_1young__tableau_1_1YoungTableauSeq.html", null ],

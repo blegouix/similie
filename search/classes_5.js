@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['youngtableau_0',['YoungTableau',['../classsil_1_1young__tableau_1_1YoungTableau.html',1,'sil::young_tableau']]],
-  ['youngtableauseq_1',['YoungTableauSeq',['../classsil_1_1young__tableau_1_1YoungTableauSeq.html',1,'sil::young_tableau']]]
+  ['simplex_0',['Simplex',['../classsil_1_1exterior_1_1Simplex.html',1,'sil::exterior']]]
 ];
