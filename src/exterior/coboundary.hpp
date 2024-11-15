@@ -72,6 +72,11 @@ KOKKOS_FUNCTION coboundary_t<CochainType> coboundary(
             cochain.integrate());
 }
 
+KOKKOS_FUNCTION auto derivative(auto& cochain)
+{
+    return coboundary(cochain);
+}
+
 } // namespace exterior
 
 } // namespace sil
