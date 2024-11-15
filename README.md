@@ -24,10 +24,10 @@ SimiLie (aka. Simulation in Lie groups) is a performance-portable (CPU & GPU) C+
 DONE:
 - Simple mesher.
 - Tensors (any dimension, rank and structure), tensor fields, covariant/contravariant indices, metric.
+- Differential forms: (co)simplices, (co)chains, (co)boundary operator.
 
 TODO:
-- Differential forms (simplices, chains). Integration, inner product.
-- Differential tools: boundary operator, discrete Hodge star, exterior derivative...
+- More advanced differential tools: musical operators, discrete Hodge star, inner product...
 - Weak formulation, finite element method applied to electrostatic problem on manifold.
 - Generalization to electromagnetism.
 - ...
