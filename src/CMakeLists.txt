@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_subdirectory(csr)
+add_subdirectory(exterior)
 add_subdirectory(mesher)
 add_subdirectory(misc)
 add_subdirectory(tensor)
