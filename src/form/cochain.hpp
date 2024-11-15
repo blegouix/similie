@@ -38,18 +38,14 @@ public:
     {
     }
 
-    template <class... T>
-        requires(sizeof...(T) > 0)
-    KOKKOS_FUNCTION constexpr explicit Cochain(ChainType&& chain, T... value) noexcept
-        : base_type {value...}
+    KOKKOS_FUNCTION constexpr explicit Cochain(ChainType&& chain) noexcept
+        : base_type(ChainType::size())
         , m_chain(std::move(chain))
     {
-        assert(sizeof...(T) == chain.size()
-               && "cochain constructor must get as much values as the chain contains simplices");
     }
 
     template <class... T>
-        requires(sizeof...(T) > 0)
+        requires(sizeof...(T) >= 1)
     KOKKOS_FUNCTION constexpr explicit Cochain(ChainType& chain, T... value) noexcept
         : base_type {value...}
         , m_chain(chain)
@@ -58,13 +54,23 @@ public:
                && "cochain constructor must get as much values as the chain contains simplices");
     }
 
+    template <class... T>
+        requires(sizeof...(T) >= 1)
+    KOKKOS_FUNCTION constexpr explicit Cochain(ChainType&& chain, T... value) noexcept
+        : base_type {value...}
+        , m_chain(std::move(chain))
+    {
+        assert(sizeof...(T) == chain.size()
+               && "cochain constructor must get as much values as the chain contains simplices");
+    }
+
     KOKKOS_FUNCTION constexpr explicit Cochain(
             ChainType& chain,
-            std::vector<ElementType> simplices) noexcept
-        : base_type(simplices)
+            std::vector<ElementType>& values) noexcept
+        : base_type(values)
         , m_chain(chain)
     {
-        static_assert(simplices.size() == chain.size());
+        static_assert(values.size() == chain.size());
     }
 
     static KOKKOS_FUNCTION constexpr std::size_t dimension() noexcept
@@ -77,21 +83,21 @@ public:
         return m_chain;
     }
 
-    KOKKOS_FUNCTION auto const simplex_it(auto it) const noexcept
+    KOKKOS_FUNCTION auto const chain_it(auto it) const noexcept
     {
         return m_chain.begin() + std::distance(this->begin(), it);
     }
 
-    KOKKOS_FUNCTION auto simplex_it(auto it) noexcept
+    KOKKOS_FUNCTION auto chain_it(auto it) noexcept
     {
         return m_chain.begin() + std::distance(this->begin(), it);
     }
 
-    KOKKOS_FUNCTION element_type operator()()
+    KOKKOS_FUNCTION element_type integrate()
     {
         element_type out = 0;
         for (auto i = this->begin(); i < this->end(); ++i) {
-            out += (simplex_it(i)->negative() ? -1 : 1) * *i;
+            out += (chain_it(i)->negative() ? -1 : 1) * *i;
         }
         return out;
     }
@@ -102,7 +108,7 @@ std::ostream& operator<<(std::ostream& out, CochainType const& cochain)
 {
     out << "[\n";
     for (auto i = cochain.begin(); i < cochain.end(); ++i) {
-        out << " " << *cochain.simplex_it(i) << ": " << *i << "\n";
+        out << " " << *cochain.chain_it(i) << ": " << *i << "\n";
     }
     out << "]";
     return out;

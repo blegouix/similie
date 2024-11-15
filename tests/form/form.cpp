@@ -404,7 +404,7 @@ TEST(Cochain, Test)
                                   ddc::DiscreteVector<DDimX, DDimY> {1, 1},
                                   true));
     sil::form::Cochain cochain(chain, 0., 1., 2.);
-    EXPECT_EQ(cochain(), -1.);
+    EXPECT_EQ(cochain.integrate(), -1.);
 }
 
 TEST(Coboundary, Test)
@@ -415,6 +415,5 @@ TEST(Coboundary, Test)
     sil::form::Chain simplex_boundary = boundary(simplex);
     sil::form::Cochain cochain_boundary(simplex_boundary, 5., 8., 3., 2.);
     sil::form::Cochain cochain = sil::form::coboundary(cochain_boundary);
-    std::cout << cochain();
     EXPECT_EQ(cochain[0], 4.);
 }

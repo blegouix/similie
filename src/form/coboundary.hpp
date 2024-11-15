@@ -59,9 +59,6 @@ struct ComputeSimplex<Chain<Simplex<K, Tag...>>>
 template <misc::Specialization<Cochain> CochainType>
 KOKKOS_FUNCTION coboundary_t<CochainType> coboundary(CochainType cochain)
 {
-    typename CochainType::chain_type const& chain = cochain.chain();
-    assert(chain.size() == 2 * (chain.dimension() + 1)
-           && "only cochain over the boundary of a single simplex is supported");
     /*
     assert(std::
                    all_of(chain.begin(),
@@ -73,12 +70,16 @@ KOKKOS_FUNCTION coboundary_t<CochainType> coboundary(CochainType cochain)
                           })
            && "only cochain over the boundary of a single simplex is supported");
     */
-    assert(boundary(chain) == boundary_t<typename CochainType::chain_type> {}
+    assert(cochain.size() == 2 * (cochain.dimension() + 1)
            && "only cochain over the boundary of a single simplex is supported");
 
-    Simplex simplex = detail::ComputeSimplex<typename CochainType::chain_type>::run(chain);
-    sil::form::Chain out_chain {simplex};
-    return coboundary_t<CochainType>(std::move(out_chain), cochain());
+    assert(boundary(cochain.chain()) == boundary_t<typename CochainType::chain_type> {}
+           && "only cochain over the boundary of a single simplex is supported");
+
+    return coboundary_t<CochainType>(
+            sil::form::Chain {
+                    detail::ComputeSimplex<typename CochainType::chain_type>::run(cochain.chain())},
+            cochain.integrate());
 }
 
 } // namespace form
