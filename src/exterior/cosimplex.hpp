@@ -39,12 +39,22 @@ public:
         return SimplexType::dimension();
     }
 
-    KOKKOS_FUNCTION SimplexType simplex() const noexcept
+    KOKKOS_FUNCTION SimplexType simplex() noexcept
     {
         return m_simplex;
     }
 
-    KOKKOS_FUNCTION element_type operator()()
+    KOKKOS_FUNCTION SimplexType const simplex() const noexcept
+    {
+        return m_simplex;
+    }
+
+    KOKKOS_FUNCTION element_type operator()() noexcept
+    {
+        return m_value;
+    }
+
+    KOKKOS_FUNCTION element_type const operator()() const noexcept
     {
         return m_value;
     }
