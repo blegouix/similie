@@ -49,7 +49,6 @@ public:
 
     KOKKOS_FUNCTION int check()
     {
-#ifdef NDEBUG
         for (auto i = this->begin(); i < this->end(); ++i) {
             for (auto j = i + 1; k == i && j < this->end(); ++j) {
                 if (*i == *j) {
@@ -57,7 +56,6 @@ public:
                 }
             }
         }
-#endif
         return 0;
     }
 
