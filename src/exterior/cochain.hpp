@@ -93,7 +93,16 @@ public:
         return m_chain.begin() + std::distance(this->begin(), it);
     }
 
-    KOKKOS_FUNCTION element_type integrate()
+    KOKKOS_FUNCTION element_type integrate() noexcept
+    {
+        element_type out = 0;
+        for (auto i = this->begin(); i < this->end(); ++i) {
+            out += (chain_it(i)->negative() ? -1 : 1) * *i;
+        }
+        return out;
+    }
+
+    KOKKOS_FUNCTION element_type const integrate() const noexcept
     {
         element_type out = 0;
         for (auto i = this->begin(); i < this->end(); ++i) {
