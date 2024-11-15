@@ -165,6 +165,18 @@ public:
         return Simplex<s_k, Tag...>(discrete_element(), discrete_vector(), !negative());
     }
 
+    template <class T>
+    KOKKOS_FUNCTION auto operator*(T t)
+    {
+        if (t == 1) {
+            return *this;
+        } else if (t == -1) {
+            return -*this;
+        } else {
+            assert(false && "simplex must be multiplied  by 1 or -1");
+        }
+    }
+
     KOKKOS_FUNCTION bool operator==(Simplex<s_k, Tag...> simplex)
     {
         return (discrete_element() == simplex.discrete_element()
