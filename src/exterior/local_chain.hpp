@@ -15,6 +15,16 @@ namespace exterior {
 
 namespace detail {
 
+template <class SimplexType>
+std::vector<typename SimplexType::vect_type> extract_vects(std::vector<SimplexType> simplices)
+{
+    std::vector<typename SimplexType::vect_type> vects;
+    for (auto& simplex : simplices) {
+        vects.push_back(simplex.discrete_vector());
+    }
+    return vects;
+}
+
 template <class Vect>
 struct NullVect;
 
@@ -62,19 +72,8 @@ public:
                && "negative simplices are not supported in LocalChain");
     }
 
-private:
-    vects_type extract_vects(std::vector<simplex_type> simplices)
-    {
-        vects_type vects;
-        for (auto& simplex : simplices) {
-            vects.push_back(simplex.discrete_vector());
-        }
-        return vects;
-    }
-
-public:
     KOKKOS_FUNCTION constexpr explicit LocalChain(std::vector<SimplexType> simplices) noexcept
-        : m_vects(extract_vects(simplices))
+        : m_vects(detail::extract_vects(simplices))
     {
         assert(check() == 0 && "there are duplicate simplices in the chain");
         std::function<bool()> check_common_elem = [&]() {
