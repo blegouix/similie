@@ -101,7 +101,7 @@ public:
 
     KOKKOS_FUNCTION int check()
     {
-        for (auto i = this->begin(); i < this->end(); ++i) {
+        for (auto i = this->begin(); i < this->end() - 1; ++i) {
             for (auto j = i + 1; j < this->end(); ++j) {
                 if (*i == *j) {
                     return -1;
@@ -115,7 +115,7 @@ public:
     /*
     KOKKOS_FUNCTION void optimize()
     {
-        for (auto i = this->begin(); i < this->end(); ++i) {
+        for (auto i = this->begin(); i < this->end() - 1; ++i) {
             auto k = i;
             for (auto j = i + 1; k == i && j < this->end(); ++j) {
                 if (*i == -*j) {
