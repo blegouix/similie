@@ -113,6 +113,8 @@ public:
         }
         assert(false && "vector not found in the local chain");
     }
+};
+
 } // namespace exterior
 
 } // namespace sil
