@@ -1,6 +1,7 @@
 var hierarchy =
 [
     [ "ddc:: ChunkSpan", null, [
+      [ "sil::exterior::StructuredCochain< CochainType, ddc::DiscreteDomain< DDim... >, LayoutStridedPolicy, MemorySpace >", "classsil_1_1exterior_1_1StructuredCochain_3_01CochainType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_d401157446c1454971eb45b27f073d40.html", null ],
       [ "sil::tensor::Tensor< ElementType, ddc::DiscreteDomain< DDim... >, LayoutStridedPolicy, MemorySpace >", "classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html", null ]
     ] ],
     [ "sil::exterior::Chain< SimplexType, Allocator >", "classsil_1_1exterior_1_1Chain.html", null ],
@@ -18,7 +19,9 @@ var hierarchy =
     ] ],
     [ "sil::exterior::FormWrapper< T, ElementType, Allocator >", "namespacesil_1_1exterior.html#structsil_1_1exterior_1_1FormWrapper", null ],
     [ "sil::exterior::FormWrapper< T, ElementType, Allocator >", "namespacesil_1_1exterior.html#structsil_1_1exterior_1_1FormWrapper_3_01T_00_01ElementType_00_01Allocator_01_4", null ],
+    [ "sil::exterior::LocalChain< SimplexType, Allocator >", "classsil_1_1exterior_1_1LocalChain.html", null ],
     [ "sil::mesher::Mesher< D, CDim >", "classsil_1_1mesher_1_1Mesher.html", null ],
+    [ "sil::exterior::StructuredCochain< CochainType, SupportType, LayoutStridedPolicy, MemorySpace >", "namespacesil_1_1exterior.html#classsil_1_1exterior_1_1StructuredCochain", null ],
     [ "sil::tensor::Tensor< ElementType, SupportType, LayoutStridedPolicy, MemorySpace >", "namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor", null ],
     [ "sil::tensor::TensorAccessor< Index >", "classsil_1_1tensor_1_1TensorAccessor.html", null ],
     [ "sil::tensor::TensorAntisymmetricIndex< TensorIndex >", "structsil_1_1tensor_1_1TensorAntisymmetricIndex.html", null ],
