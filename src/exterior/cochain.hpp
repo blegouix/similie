@@ -53,18 +53,6 @@ public:
                && "cochain constructor must get as much values as the chain contains simplices");
     }
 
-    /*
-    template <class... T>
-        requires(sizeof...(T) >= 1)
-    KOKKOS_FUNCTION constexpr explicit Cochain(ChainType&& chain, T... value) noexcept
-        : m_chain(std::move(chain))
-        , m_values {value...}
-    {
-        assert(sizeof...(T) == chain.size()
-               && "cochain constructor must get as much values as the chain contains simplices");
-    }
-*/
-
     KOKKOS_FUNCTION constexpr explicit Cochain(
             ChainType& chain,
             std::vector<ElementType>& values) noexcept
