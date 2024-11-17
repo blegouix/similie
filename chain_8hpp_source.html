@@ -185,7 +185,7 @@ $(document).ready(function(){initNavTree('chain_8hpp_source.html',''); initResiz
 <div class="foldopen" id="foldopen00050" data-start="{" data-end="}">
 <div class="line"><a id="l00050" name="l00050"></a><span class="lineno"><a class="line" href="classsil_1_1exterior_1_1Chain.html#a3bc33b0866e31ea74a0a4c5e8d21402b">   50</a></span>    KOKKOS_FUNCTION <span class="keywordtype">int</span> <a class="code hl_function" href="classsil_1_1exterior_1_1Chain.html#a3bc33b0866e31ea74a0a4c5e8d21402b">check</a>()</div>
 <div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>    {</div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>        <span class="keywordflow">for</span> (<span class="keyword">auto</span> i = this-&gt;begin(); i &lt; this-&gt;end(); ++i) {</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>        <span class="keywordflow">for</span> (<span class="keyword">auto</span> i = this-&gt;begin(); i &lt; this-&gt;end() - 1; ++i) {</div>
 <div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>            <span class="keywordflow">for</span> (<span class="keyword">auto</span> j = i + 1; j &lt; this-&gt;end(); ++j) {</div>
 <div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>                <span class="keywordflow">if</span> (*i == *j) {</div>
 <div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>                    <span class="keywordflow">return</span> -1;</div>
@@ -199,7 +199,7 @@ $(document).ready(function(){initNavTree('chain_8hpp_source.html',''); initResiz
 <div class="foldopen" id="foldopen00062" data-start="{" data-end="}">
 <div class="line"><a id="l00062" name="l00062"></a><span class="lineno"><a class="line" href="classsil_1_1exterior_1_1Chain.html#ad5b2a8d2f21b9d59ad0d01dc77cccb96">   62</a></span>    KOKKOS_FUNCTION <span class="keywordtype">void</span> <a class="code hl_function" href="classsil_1_1exterior_1_1Chain.html#ad5b2a8d2f21b9d59ad0d01dc77cccb96">optimize</a>()</div>
 <div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    {</div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>        <span class="keywordflow">for</span> (<span class="keyword">auto</span> i = this-&gt;begin(); i &lt; this-&gt;end(); ++i) {</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>        <span class="keywordflow">for</span> (<span class="keyword">auto</span> i = this-&gt;begin(); i &lt; this-&gt;end() - 1; ++i) {</div>
 <div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>            <span class="keyword">auto</span> k = i;</div>
 <div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>            <span class="keywordflow">for</span> (<span class="keyword">auto</span> j = i + 1; k == i &amp;&amp; j &lt; this-&gt;end(); ++j) {</div>
 <div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>                <span class="keywordflow">if</span> (*i == -*j) {</div>
