@@ -497,7 +497,8 @@ TEST(StructuredCochain, Test)
                                   ddc::DiscreteVector<DDimX> {1}),
                   sil::exterior::
                           Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
-                                  ddc::DiscreteVector<DDimY> {1})), 0.));
+                                  ddc::DiscreteVector<DDimY> {1})), 1., 2.));
+    std::cout << structured_cochain(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0});
     /*
     sil::exterior::LocalChain
             chain(sil::exterior::

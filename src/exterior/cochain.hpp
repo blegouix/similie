@@ -32,11 +32,16 @@ public:
     using values_type = std::vector<ElementType, Allocator>;
 
 private:
-    ChainType const& m_chain;
+    // ChainType const& m_chain;
+    ChainType m_chain;
     values_type m_values;
 
 public:
-    using std::vector<ElementType, Allocator>::vector;
+    KOKKOS_FUNCTION constexpr explicit Cochain(ChainType chain) noexcept
+        : m_chain(chain)
+        , m_values(ChainType::size())
+    {
+    }
 
     KOKKOS_FUNCTION constexpr explicit Cochain(ChainType& chain) noexcept
         : m_chain(chain)
@@ -52,7 +57,7 @@ public:
 
     template <class... T>
         requires(sizeof...(T) >= 1)
-    KOKKOS_FUNCTION constexpr explicit Cochain(ChainType& chain, T... value) noexcept
+    KOKKOS_FUNCTION constexpr explicit Cochain(ChainType chain, T... value) noexcept
         : m_chain(chain)
         , m_values {value...}
     {
@@ -60,6 +65,7 @@ public:
                && "cochain constructor must get as much values as the chain contains simplices");
     }
 
+    /*
     template <class... T>
         requires(sizeof...(T) >= 1)
     KOKKOS_FUNCTION constexpr explicit Cochain(ChainType&& chain, T... value) noexcept
@@ -69,6 +75,7 @@ public:
         assert(sizeof...(T) == chain.size()
                && "cochain constructor must get as much values as the chain contains simplices");
     }
+*/
 
     KOKKOS_FUNCTION constexpr explicit Cochain(
             ChainType& chain,
@@ -78,18 +85,6 @@ public:
     {
         static_assert(values.size() == chain.size());
     }
-
-    KOKKOS_FUNCTION constexpr explicit Cochain(Cochain const& other)
-        : base_type(other)
-        , m_chain(other.chain()) {
-
-          };
-
-    //KOKKOS_DEFAULTED_FUNCTION constexpr Cochain(Cochain const& other) = default;
-
-    KOKKOS_DEFAULTED_FUNCTION constexpr Cochain& operator=(Cochain const& other) = default;
-
-    KOKKOS_DEFAULTED_FUNCTION constexpr Cochain& operator=(Cochain&& other) = default;
 
     static KOKKOS_FUNCTION constexpr std::size_t dimension() noexcept
     {
