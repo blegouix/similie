@@ -187,8 +187,7 @@ std::ostream& operator<<(std::ostream& out, CochainType const& cochain)
         if constexpr (misc::Specialization<typename CochainType::chain_type, Chain>) {
             out << " " << *cochain.chain_it(i) << " : " << *i << "\n";
         } else if (misc::Specialization<typename CochainType::chain_type, LocalChain>) {
-            out << " " << cochain.chain().discrete_element() << " -> "
-                << cochain.chain().discrete_element() + *cochain.chain_it(i) << " : " << *i << "\n";
+            out << " -> " << *cochain.chain_it(i) << " : " << *i << "\n";
         }
     }
 

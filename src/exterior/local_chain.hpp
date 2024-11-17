@@ -13,6 +13,24 @@ namespace sil {
 
 namespace exterior {
 
+namespace detail {
+
+template <class Vect>
+struct NullVect;
+
+template <class... Tag>
+struct NullVect<ddc::DiscreteVector<Tag...>>
+{
+    static constexpr ddc::DiscreteVector<Tag...> run()
+    {
+        return ddc::DiscreteVector<Tag...> {
+                0 * ddc::type_seq_rank_v<Tag, ddc::detail::TypeSeq<Tag...>>...};
+    }
+};
+
+} // namespace detail
+
+
 /// LocalChain class
 template <class SimplexType, class Allocator = std::allocator<typename SimplexType::vect_type>>
 class LocalChain
@@ -25,7 +43,6 @@ public:
 
 private:
     static constexpr std::size_t s_k = SimplexType::dimension();
-    elem_type m_elem;
     vects_type m_vects;
 
 public:
@@ -33,11 +50,10 @@ public:
 
     // TODO Reorganize discrete vectors in all constructors ?
 
-    template <class... T>
+    template <misc::NotSpecialization<ddc::DiscreteVector>... T>
         requires misc::are_all_same<T...>
     KOKKOS_FUNCTION constexpr explicit LocalChain(T... simplex) noexcept
-        : m_elem {std::array<elem_type, sizeof...(T)> {simplex.discrete_element()...}[0]}
-        , m_vects {simplex.discrete_vector()...}
+        : m_vects {simplex.discrete_vector()...}
     {
         assert(check() == 0 && "there are duplicate simplices in the chain");
         assert(misc::are_all_equal(simplex.discrete_element()...)
@@ -58,8 +74,7 @@ private:
 
 public:
     KOKKOS_FUNCTION constexpr explicit LocalChain(std::vector<SimplexType> simplices) noexcept
-        : m_elem {simplices[0].discrete_element()}
-        , m_vects(extract_vects(simplices))
+        : m_vects(extract_vects(simplices))
     {
         assert(check() == 0 && "there are duplicate simplices in the chain");
         std::function<bool()> check_common_elem = [&]() {
@@ -78,20 +93,17 @@ public:
                && "LocalChain must contain simplices with same origin (if not, use Chain)");
     }
 
-    template <class... T>
-        requires misc::are_all_same<T...>
-    KOKKOS_FUNCTION constexpr explicit LocalChain(elem_type elem, T... vect) noexcept
-        : m_elem {elem}
-        , m_vects {vect...}
+private:
+public:
+    template <misc::Specialization<ddc::DiscreteVector>... T>
+    KOKKOS_FUNCTION constexpr explicit LocalChain(T... vect) noexcept
+        : m_vects {(detail::NullVect<vect_type>::run() + vect)...}
     {
         assert(check() == 0 && "there are duplicate simplices in the chain");
     }
 
-    KOKKOS_FUNCTION constexpr explicit LocalChain(
-            elem_type elem,
-            std::vector<vect_type> vects) noexcept
-        : m_elem {elem}
-        , m_vects(vects)
+    KOKKOS_FUNCTION constexpr explicit LocalChain(std::vector<vect_type> vects) noexcept
+        : m_vects(vects)
     {
         assert(check() == 0 && "there are duplicate simplices in the chain");
     }
@@ -109,16 +121,6 @@ public:
     KOKKOS_FUNCTION std::size_t const size() const noexcept
     {
         return m_vects.size();
-    }
-
-    KOKKOS_FUNCTION elem_type discrete_element()
-    {
-        return m_elem;
-    }
-
-    KOKKOS_FUNCTION elem_type const discrete_element() const
-    {
-        return m_elem;
     }
 
     static KOKKOS_FUNCTION constexpr bool negative()
@@ -194,14 +196,14 @@ public:
     {
         vects_type vects(m_vects);
         vects.push_back(simplex.discrete_vector());
-        return LocalChain<SimplexType>(this->discrete_element(), vects);
+        return LocalChain<SimplexType>(vects);
     }
 
     KOKKOS_FUNCTION LocalChain<SimplexType> operator+(LocalChain<SimplexType> simplices_to_add)
     {
         vects_type vects(m_vects);
         vects.insert(vects.end(), simplices_to_add.begin(), simplices_to_add.end());
-        return LocalChain<SimplexType>(this->discrete_element(), vects);
+        return LocalChain<SimplexType>(vects);
     }
 
     LocalChain<SimplexType> operator-(LocalChain<SimplexType>) = delete;
@@ -220,7 +222,6 @@ public:
 
     KOKKOS_FUNCTION bool operator==(LocalChain<SimplexType> simplices)
     {
-        assert(discrete_element() == simplices.discrete_element());
         for (auto i = simplices.begin(); i < simplices.end(); ++i) {
             if (*i != m_vects[std::distance(simplices.begin(), i)]) {
                 return false;
@@ -230,7 +231,7 @@ public:
     }
 };
 
-template <class... T>
+template <misc::NotSpecialization<ddc::DiscreteVector>... T>
 LocalChain(T...) -> LocalChain<ddc::type_seq_element_t<0, ddc::detail::TypeSeq<T...>>>;
 
 template <misc::Specialization<LocalChain> ChainType>
@@ -238,7 +239,7 @@ std::ostream& operator<<(std::ostream& out, ChainType const& chain)
 {
     out << "[\n";
     for (typename ChainType::vect_type const& vect : chain) {
-        out << " " << chain.discrete_element() << " -> " << chain.discrete_element() + vect << "\n";
+        out << " -> " << chain.discrete_element() + vect << "\n";
     }
     out << "]";
     return out;
