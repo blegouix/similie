@@ -9,4 +9,5 @@
 #include "cochain.hpp"
 #include "cosimplex.hpp"
 #include "form.hpp"
+#include "local_chain.hpp"
 #include "simplex.hpp"

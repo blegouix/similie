@@ -13,6 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 - Unify TensorAccessor::access_element() functions. Also get<Dims...>() in Tensor ?
 - Consider creating a misc enum for {-1 1} and use it in simplices/chains
 - The using at the beginning of Tensor should rely on base_type
+- check and optimize should go until end-1
 
 ----- CMAKE BASIC COMMAND -----
 

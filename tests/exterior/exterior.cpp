@@ -432,3 +432,38 @@ TEST(Coboundary, Test)
     EXPECT_EQ(cosimplex.simplex(), simplex);
     EXPECT_EQ(cosimplex(), 4.);
 }
+
+TEST(LocalChain, Test)
+{
+    sil::exterior::LocalChain
+            chain(sil::exterior::
+                          Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
+                                  ddc::DiscreteVector<DDimX> {1}),
+                  sil::exterior::
+                          Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
+                                  ddc::DiscreteVector<DDimY> {1}));
+    chain = chain
+            + sil::exterior::
+                    Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
+                            ddc::DiscreteVector<DDimT> {1});
+    chain = chain
+            + sil::exterior::LocalChain(
+                    sil::exterior::
+                            Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
+                                    ddc::DiscreteVector<DDimZ> {1}));
+    EXPECT_TRUE(
+            chain
+            == sil::exterior::LocalChain(
+                    sil::exterior::
+                            Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
+                                    ddc::DiscreteVector<DDimX> {1}),
+                    sil::exterior::
+                            Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
+                                    ddc::DiscreteVector<DDimY> {1}),
+                    sil::exterior::
+                            Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
+                                    ddc::DiscreteVector<DDimT> {1}),
+                    sil::exterior::
+                            Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
+                                    ddc::DiscreteVector<DDimZ> {1})));
+}
