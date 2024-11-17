@@ -39,19 +39,7 @@ private:
 public:
     KOKKOS_FUNCTION constexpr explicit Cochain(ChainType chain) noexcept
         : m_chain(chain)
-        , m_values(ChainType::size())
-    {
-    }
-
-    KOKKOS_FUNCTION constexpr explicit Cochain(ChainType& chain) noexcept
-        : m_chain(chain)
-        , m_values(ChainType::size())
-    {
-    }
-
-    KOKKOS_FUNCTION constexpr explicit Cochain(ChainType&& chain) noexcept
-        : m_chain(std::move(chain))
-        , m_values(ChainType::size())
+        , m_values(chain.size())
     {
     }
 
@@ -83,7 +71,8 @@ public:
         : m_chain(chain)
         , m_values(values)
     {
-        static_assert(values.size() == chain.size());
+        assert(values.size() == chain.size()
+               && "cochain constructor must get as much values as the chain contains simplices");
     }
 
     static KOKKOS_FUNCTION constexpr std::size_t dimension() noexcept
@@ -111,9 +100,19 @@ public:
         return m_values;
     }
 
+    KOKKOS_FUNCTION auto begin()
+    {
+        return m_values.begin();
+    }
+
     KOKKOS_FUNCTION auto begin() const
     {
         return m_values.begin();
+    }
+
+    KOKKOS_FUNCTION auto end()
+    {
+        return m_values.end();
     }
 
     KOKKOS_FUNCTION auto end() const

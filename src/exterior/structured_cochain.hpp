@@ -86,7 +86,7 @@ public:
     using cochain_type = CochainType;
     using simplex_type = typename CochainType::simplex_type;
     using chain_type = CochainType::chain_type;
-    using scalar_element_type = CochainType::element_type;
+    using scalar_type = CochainType::element_type;
     using elem_type = CochainType::elem_type;
     using vect_type = CochainType::vect_type;
 
@@ -97,6 +97,21 @@ public:
                                                          MemorySpace> other) noexcept
         : base_type(other)
     {
+    }
+
+    KOKKOS_FUNCTION scalar_type& operator()(elem_type elem, vect_type vect) noexcept
+    {
+        cochain_type& cochain = ddc::ChunkSpan<
+                CochainType,
+                ddc::DiscreteDomain<DDim...>,
+                LayoutStridedPolicy,
+                MemorySpace>::operator()(elem);
+        for (auto i = cochain.begin(); i < cochain.end(); ++i) {
+            if (*cochain.chain_it(i) == vect) {
+                return *i;
+            }
+        }
+        assert(false && "vector not found in the local chain");
     }
 
     /*
