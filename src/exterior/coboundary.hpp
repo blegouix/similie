@@ -9,6 +9,7 @@
 #include "cochain.hpp"
 #include "cosimplex.hpp"
 #include "specialization.hpp"
+#include "structured_cochain.hpp"
 
 namespace sil {
 
@@ -16,7 +17,7 @@ namespace exterior {
 
 namespace detail {
 
-template <class CochainType>
+template <class T>
 struct CoboundaryType;
 
 template <std::size_t K, class... Tag, class ElementType, class Allocator>
@@ -25,10 +26,20 @@ struct CoboundaryType<Cochain<Chain<Simplex<K, Tag...>>, ElementType, Allocator>
     using type = Cosimplex<Simplex<K + 1, Tag...>, ElementType>;
 };
 
+template <std::size_t K, class... Tag, class ElementType, class Allocator, class... Args>
+struct CoboundaryType<
+        StructuredCochain<Cochain<LocalChain<Simplex<K, Tag...>>, ElementType, Allocator>, Args...>>
+{
+    using type = StructuredCochain<
+            Cochain<LocalChain<Simplex<K + 1, Tag...>>, ElementType, Allocator>,
+            Args...>;
+};
+
 } // namespace detail
 
-template <misc::Specialization<Cochain> CochainType>
-using coboundary_t = typename detail::CoboundaryType<CochainType>::type;
+template <class T>
+    requires(misc::Specialization<T, Cochain> || misc::Specialization<T, StructuredCochain>)
+using coboundary_t = typename detail::CoboundaryType<T>::type;
 
 namespace detail {
 
@@ -72,9 +83,41 @@ KOKKOS_FUNCTION coboundary_t<CochainType> coboundary(
             cochain.integrate());
 }
 
-KOKKOS_FUNCTION auto derivative(auto& cochain)
+template <misc::Specialization<StructuredCochain> StructuredCochainType>
+KOKKOS_FUNCTION coboundary_t<StructuredCochainType> coboundary(
+        coboundary_t<StructuredCochainType> structured_coboundary,
+        StructuredCochainType structured_cochain)
+{
+    ddc::parallel_for_each(
+            Kokkos::DefaultHostExecutionSpace(),
+            structured_coboundary.domain(),
+            [&](auto elem) {
+                auto& cochain = structured_coboundary(elem);
+                for (auto i = cochain.begin(); i < cochain.end(); ++i) {
+                    sil::exterior::Chain simplex_boundary = boundary(
+                            sil::exterior::Simplex(elem, *cochain.chain_it(i))); // TODO simplify
+                    std::vector<double> values(simplex_boundary.size());
+                    for (auto j = simplex_boundary.begin(); j < simplex_boundary.end(); ++j) {
+                        values[std::distance(simplex_boundary.begin(), j)]
+                                = structured_cochain(j->discrete_element(), j->discrete_vector());
+                    }
+                    sil::exterior::Cochain<decltype(simplex_boundary)>
+                            cochain_boundary(simplex_boundary, values);
+                    *i = cochain_boundary.integrate();
+                }
+            });
+
+    return structured_coboundary;
+}
+
+KOKKOS_FUNCTION auto deriv(auto& cochain)
 {
     return coboundary(cochain);
+}
+
+KOKKOS_FUNCTION auto deriv(auto& structured_coboundary, auto& structured_cochain)
+{
+    return coboundary(structured_coboundary, structured_cochain);
 }
 
 } // namespace exterior
