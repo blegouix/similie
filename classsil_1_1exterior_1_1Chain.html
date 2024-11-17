@@ -133,25 +133,11 @@ $(document).ready(function(){initNavTree('classsil_1_1exterior_1_1Chain.html',''
 
 <p><code>#include &lt;<a class="el" href="chain_8hpp_source.html">chain.hpp</a>&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for sil::exterior::Chain&lt; SimplexType, Allocator &gt;:</div>
-<div class="dyncontent">
-<div class="center"><img src="classsil_1_1exterior_1_1Chain__inherit__graph.png" border="0" usemap="#asil_1_1exterior_1_1Chain_3_01SimplexType_00_01Allocator_01_4_inherit__map" alt="Inheritance graph"/></div>
-<map name="asil_1_1exterior_1_1Chain_3_01SimplexType_00_01Allocator_01_4_inherit__map" id="asil_1_1exterior_1_1Chain_3_01SimplexType_00_01Allocator_01_4_inherit__map">
-<area shape="rect" title="Chain class." alt="" coords="5,119,199,419"/>
-<area shape="rect" title=" " alt="" coords="41,5,163,71"/>
-<area shape="poly" title=" " alt="" coords="105,85,105,118,99,118,99,85"/>
-</map>
-</div>
-<div class="dynheader">
 Collaboration diagram for sil::exterior::Chain&lt; SimplexType, Allocator &gt;:</div>
 <div class="dyncontent">
 <div class="center"><img src="classsil_1_1exterior_1_1Chain__coll__graph.png" border="0" usemap="#asil_1_1exterior_1_1Chain_3_01SimplexType_00_01Allocator_01_4_coll__map" alt="Collaboration graph"/></div>
 <map name="asil_1_1exterior_1_1Chain_3_01SimplexType_00_01Allocator_01_4_coll__map" id="asil_1_1exterior_1_1Chain_3_01SimplexType_00_01Allocator_01_4_coll__map">
-<area shape="rect" title="Chain class." alt="" coords="5,248,199,548"/>
-<area shape="rect" title=" " alt="" coords="41,133,163,199"/>
-<area shape="poly" title=" " alt="" coords="105,212,105,248,99,248,99,212"/>
-<area shape="rect" title=" " alt="" coords="91,5,113,71"/>
-<area shape="poly" title=" " alt="" coords="105,71,105,117,99,117,99,71"/>
+<area shape="rect" title="Chain class." alt="" coords="5,5,199,485"/>
 </map>
 </div>
 <table class="memberdecls">
@@ -159,8 +145,8 @@ Collaboration diagram for sil::exterior::Chain&lt; SimplexType, Allocator &gt;:<
 Public Types</h2></td></tr>
 <tr class="memitem:af912fb57fdf76de9b2b5412fdb8403cf" id="r_af912fb57fdf76de9b2b5412fdb8403cf"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#af912fb57fdf76de9b2b5412fdb8403cf">simplex_type</a> = SimplexType</td></tr>
 <tr class="separator:af912fb57fdf76de9b2b5412fdb8403cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa825d5c5a3e3c417e6e59fa54c2c201e" id="r_aa825d5c5a3e3c417e6e59fa54c2c201e"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#aa825d5c5a3e3c417e6e59fa54c2c201e">base_type</a> = std::vector&lt; SimplexType, Allocator &gt;</td></tr>
-<tr class="separator:aa825d5c5a3e3c417e6e59fa54c2c201e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7d315233c983e4505d1d2b31adb1e932" id="r_a7d315233c983e4505d1d2b31adb1e932"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a7d315233c983e4505d1d2b31adb1e932">simplices_type</a> = std::vector&lt; SimplexType, Allocator &gt;</td></tr>
+<tr class="separator:a7d315233c983e4505d1d2b31adb1e932"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acd1a44fecdc1c6b6c844f66e281c87ca" id="r_acd1a44fecdc1c6b6c844f66e281c87ca"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#acd1a44fecdc1c6b6c844f66e281c87ca">elem_type</a> = typename simplex_type::elem_type</td></tr>
 <tr class="separator:acd1a44fecdc1c6b6c844f66e281c87ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa83bd3c2788fc1b561dc0d6dc05686dc" id="r_aa83bd3c2788fc1b561dc0d6dc05686dc"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#aa83bd3c2788fc1b561dc0d6dc05686dc">vect_type</a> = typename simplex_type::vect_type</td></tr>
@@ -176,10 +162,28 @@ requires <a class="el" href="namespacesil_1_1misc.html#a094c71e44717da55afa244de
 <tr class="separator:ab45628d0e2d9c45d2c7ddfd83fb23632"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a376a14a10d5bf6725c2a9607572f3e5b" id="r_a376a14a10d5bf6725c2a9607572f3e5b"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a376a14a10d5bf6725c2a9607572f3e5b">Chain</a> (std::vector&lt; SimplexType &gt; simplices) noexcept</td></tr>
 <tr class="separator:a376a14a10d5bf6725c2a9607572f3e5b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af12f097002fa0ca6a00558d7546a6097" id="r_af12f097002fa0ca6a00558d7546a6097"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#af12f097002fa0ca6a00558d7546a6097">size</a> () noexcept</td></tr>
+<tr class="separator:af12f097002fa0ca6a00558d7546a6097"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1633a6111510483c3295ab56ee177dc7" id="r_a1633a6111510483c3295ab56ee177dc7"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION std::size_t const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a1633a6111510483c3295ab56ee177dc7">size</a> () const noexcept</td></tr>
+<tr class="separator:a1633a6111510483c3295ab56ee177dc7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3bc33b0866e31ea74a0a4c5e8d21402b" id="r_a3bc33b0866e31ea74a0a4c5e8d21402b"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a3bc33b0866e31ea74a0a4c5e8d21402b">check</a> ()</td></tr>
 <tr class="separator:a3bc33b0866e31ea74a0a4c5e8d21402b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad5b2a8d2f21b9d59ad0d01dc77cccb96" id="r_ad5b2a8d2f21b9d59ad0d01dc77cccb96"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#ad5b2a8d2f21b9d59ad0d01dc77cccb96">optimize</a> ()</td></tr>
 <tr class="separator:ad5b2a8d2f21b9d59ad0d01dc77cccb96"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a486dc5f0dfed569c5b88c87d812c9d43" id="r_a486dc5f0dfed569c5b88c87d812c9d43"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a486dc5f0dfed569c5b88c87d812c9d43">begin</a> () const</td></tr>
+<tr class="separator:a486dc5f0dfed569c5b88c87d812c9d43"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8ebcceb649a126cbdf0168cae9ed11fd" id="r_a8ebcceb649a126cbdf0168cae9ed11fd"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a8ebcceb649a126cbdf0168cae9ed11fd">end</a> () const</td></tr>
+<tr class="separator:a8ebcceb649a126cbdf0168cae9ed11fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a89e5a33342c67618db7af99986857703" id="r_a89e5a33342c67618db7af99986857703"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a89e5a33342c67618db7af99986857703">cbegin</a> () const</td></tr>
+<tr class="separator:a89e5a33342c67618db7af99986857703"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5d55fb91ff5468cde17f0d658439296d" id="r_a5d55fb91ff5468cde17f0d658439296d"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a5d55fb91ff5468cde17f0d658439296d">cend</a> () const</td></tr>
+<tr class="separator:a5d55fb91ff5468cde17f0d658439296d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a45802ff68d5e5227da95adb7990c1303" id="r_a45802ff68d5e5227da95adb7990c1303"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION SimplexType &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a45802ff68d5e5227da95adb7990c1303">operator[]</a> (std::size_t i) noexcept</td></tr>
+<tr class="separator:a45802ff68d5e5227da95adb7990c1303"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4333aaf4674aabd60c20e0a8ef3e16b1" id="r_a4333aaf4674aabd60c20e0a8ef3e16b1"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION SimplexType const &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a4333aaf4674aabd60c20e0a8ef3e16b1">operator[]</a> (std::size_t i) const noexcept</td></tr>
+<tr class="separator:a4333aaf4674aabd60c20e0a8ef3e16b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2e6cb162399b07ca933a2c670f59dd95" id="r_a2e6cb162399b07ca933a2c670f59dd95"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a2e6cb162399b07ca933a2c670f59dd95">push_back</a> (const <a class="el" href="classsil_1_1exterior_1_1Chain.html#af912fb57fdf76de9b2b5412fdb8403cf">simplex_type</a> &amp;simplex)</td></tr>
+<tr class="separator:a2e6cb162399b07ca933a2c670f59dd95"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1bdf1a51a16ce510a628cf87daa3e2f6" id="r_a1bdf1a51a16ce510a628cf87daa3e2f6"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt; SimplexType &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a1bdf1a51a16ce510a628cf87daa3e2f6">operator-</a> ()</td></tr>
 <tr class="separator:a1bdf1a51a16ce510a628cf87daa3e2f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a834eb1cae6b90819bdc263c81a2ecab4" id="r_a834eb1cae6b90819bdc263c81a2ecab4"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt; SimplexType &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a834eb1cae6b90819bdc263c81a2ecab4">operator+</a> (SimplexType simplex)</td></tr>
@@ -224,8 +228,8 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType
 
 </div>
 </div>
-<a id="aa825d5c5a3e3c417e6e59fa54c2c201e" name="aa825d5c5a3e3c417e6e59fa54c2c201e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa825d5c5a3e3c417e6e59fa54c2c201e">&#9670;&#160;</a></span>base_type</h2>
+<a id="a7d315233c983e4505d1d2b31adb1e932" name="a7d315233c983e4505d1d2b31adb1e932"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7d315233c983e4505d1d2b31adb1e932">&#9670;&#160;</a></span>simplices_type</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -233,7 +237,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType
 template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::base_type =  std::vector&lt;SimplexType, Allocator&gt;</td>
+          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::simplices_type =  std::vector&lt;SimplexType, Allocator&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -304,7 +308,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00030">30</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00031">31</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -337,7 +341,7 @@ requires <a class="el" href="namespacesil_1_1misc.html#a094c71e44717da55afa244de
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00034">34</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00035">35</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -367,7 +371,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00039">39</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00040">40</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -397,7 +401,65 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00045">45</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00046">46</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+
+</div>
+</div>
+<a id="af12f097002fa0ca6a00558d7546a6097" name="af12f097002fa0ca6a00558d7546a6097"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af12f097002fa0ca6a00558d7546a6097">&#9670;&#160;</a></span>size() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION std::size_t <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::size </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00051">51</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a1633a6111510483c3295ab56ee177dc7" name="a1633a6111510483c3295ab56ee177dc7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1633a6111510483c3295ab56ee177dc7">&#9670;&#160;</a></span>size() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION std::size_t const <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::size </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00056">56</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -426,7 +488,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00050">50</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00061">61</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -455,7 +517,213 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00062">62</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00073">73</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a486dc5f0dfed569c5b88c87d812c9d43" name="a486dc5f0dfed569c5b88c87d812c9d43"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a486dc5f0dfed569c5b88c87d812c9d43">&#9670;&#160;</a></span>begin()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::begin </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00090">90</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a8ebcceb649a126cbdf0168cae9ed11fd" name="a8ebcceb649a126cbdf0168cae9ed11fd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8ebcceb649a126cbdf0168cae9ed11fd">&#9670;&#160;</a></span>end()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::end </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00095">95</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a89e5a33342c67618db7af99986857703" name="a89e5a33342c67618db7af99986857703"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a89e5a33342c67618db7af99986857703">&#9670;&#160;</a></span>cbegin()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::cbegin </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00100">100</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a5d55fb91ff5468cde17f0d658439296d" name="a5d55fb91ff5468cde17f0d658439296d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5d55fb91ff5468cde17f0d658439296d">&#9670;&#160;</a></span>cend()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::cend </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00105">105</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a45802ff68d5e5227da95adb7990c1303" name="a45802ff68d5e5227da95adb7990c1303"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a45802ff68d5e5227da95adb7990c1303">&#9670;&#160;</a></span>operator[]() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION SimplexType &amp; <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::operator[] </td>
+          <td>(</td>
+          <td class="paramtype">std::size_t&#160;</td>
+          <td class="paramname"><em>i</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00110">110</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a4333aaf4674aabd60c20e0a8ef3e16b1" name="a4333aaf4674aabd60c20e0a8ef3e16b1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4333aaf4674aabd60c20e0a8ef3e16b1">&#9670;&#160;</a></span>operator[]() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION SimplexType const  &amp; <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::operator[] </td>
+          <td>(</td>
+          <td class="paramtype">std::size_t&#160;</td>
+          <td class="paramname"><em>i</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00115">115</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a2e6cb162399b07ca933a2c670f59dd95" name="a2e6cb162399b07ca933a2c670f59dd95"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2e6cb162399b07ca933a2c670f59dd95">&#9670;&#160;</a></span>push_back()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::push_back </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classsil_1_1exterior_1_1Chain.html#af912fb57fdf76de9b2b5412fdb8403cf">simplex_type</a> &amp;&#160;</td>
+          <td class="paramname"><em>simplex</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00120">120</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -484,7 +752,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00079">79</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00125">125</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -514,7 +782,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00088">88</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00134">134</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -544,7 +812,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00095">95</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00141">141</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -576,7 +844,7 @@ template&lt;class T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00103">103</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00149">149</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -608,7 +876,7 @@ template&lt;class T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00109">109</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00155">155</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -638,7 +906,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00120">120</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00166">166</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
 
 </div>
 </div>

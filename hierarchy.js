@@ -3,6 +3,8 @@ var hierarchy =
     [ "ddc:: ChunkSpan", null, [
       [ "sil::tensor::Tensor< ElementType, ddc::DiscreteDomain< DDim... >, LayoutStridedPolicy, MemorySpace >", "classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html", null ]
     ] ],
+    [ "sil::exterior::Chain< SimplexType, Allocator >", "classsil_1_1exterior_1_1Chain.html", null ],
+    [ "sil::exterior::Cochain< ChainType, ElementType, Allocator >", "classsil_1_1exterior_1_1Cochain.html", null ],
     [ "sil::tensor::Contravariant", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Contravariant", null ],
     [ "sil::exterior::Cosimplex< SimplexType, ElementType >", "classsil_1_1exterior_1_1Cosimplex.html", null ],
     [ "sil::tensor::Covariant", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Covariant", null ],
@@ -39,10 +41,6 @@ var hierarchy =
     [ "detail::TensorNaturalIndexFromTypeSeqDim::type", null, [
       [ "sil::tensor::TensorContravariantNaturalIndex< NaturalIndex >", "structsil_1_1tensor_1_1TensorContravariantNaturalIndex.html", null ],
       [ "sil::tensor::TensorCovariantNaturalIndex< NaturalIndex >", "structsil_1_1tensor_1_1TensorCovariantNaturalIndex.html", null ]
-    ] ],
-    [ "std::vector< T >", null, [
-      [ "sil::exterior::Chain< SimplexType, Allocator >", "classsil_1_1exterior_1_1Chain.html", null ],
-      [ "sil::exterior::Cochain< ChainType, ElementType, Allocator >", "classsil_1_1exterior_1_1Cochain.html", null ]
     ] ],
     [ "sil::young_tableau::YoungTableau< Dimension, TableauSeq >", "classsil_1_1young__tableau_1_1YoungTableau.html", null ],
     [ "sil::young_tableau::YoungTableauSeq< Row >", "classsil_1_1young__tableau_1_1YoungTableauSeq.html", null ],
