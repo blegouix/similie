@@ -137,26 +137,6 @@ public:
         return 0;
     }
 
-    // TODO clarifiy if negative are supported
-    /*
-    KOKKOS_FUNCTION void optimize()
-    {
-        for (auto i = this->begin(); i < this->end() - 1; ++i) {
-            auto k = i;
-            for (auto j = i + 1; k == i && j < this->end(); ++j) {
-                if (*i == -*j) {
-                    k = j;
-                }
-            }
-            if (k != i) {
-                this->erase(k);
-                this->erase(i--);
-            }
-        }
-        assert(check() == 0 && "there are duplicate simplices in the chain");
-    }
-    */
-
     KOKKOS_FUNCTION auto begin() const
     {
         return m_vects.begin();
