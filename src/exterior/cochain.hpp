@@ -36,6 +36,8 @@ private:
     values_type m_values;
 
 public:
+    using std::vector<ElementType, Allocator>::vector;
+
     KOKKOS_FUNCTION constexpr explicit Cochain(ChainType& chain) noexcept
         : m_chain(chain)
         , m_values(ChainType::size())
@@ -76,6 +78,18 @@ public:
     {
         static_assert(values.size() == chain.size());
     }
+
+    KOKKOS_FUNCTION constexpr explicit Cochain(Cochain const& other)
+        : base_type(other)
+        , m_chain(other.chain()) {
+
+          };
+
+    //KOKKOS_DEFAULTED_FUNCTION constexpr Cochain(Cochain const& other) = default;
+
+    KOKKOS_DEFAULTED_FUNCTION constexpr Cochain& operator=(Cochain const& other) = default;
+
+    KOKKOS_DEFAULTED_FUNCTION constexpr Cochain& operator=(Cochain&& other) = default;
 
     static KOKKOS_FUNCTION constexpr std::size_t dimension() noexcept
     {
