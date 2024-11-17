@@ -499,10 +499,7 @@ TEST(StructuredCochain, Test)
     ddc::parallel_fill(
             structured_cochain,
             sil::exterior::
-                    Cochain(sil::exterior::LocalChain<
-                                    sil::exterior::Simplex<1, DDimT, DDimX, DDimY, DDimZ>>(
-                                    ddc::DiscreteVector<DDimX> {1},
-                                    ddc::DiscreteVector<DDimY> {1}),
+                    Cochain(sil::exterior::tangent_basis<typename LocalCochain::simplex_type, DDimX, DDimY>(),
                             1.,
                             2.));
     ddc::for_each(dom, [&](ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> elem) {

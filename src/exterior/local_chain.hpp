@@ -92,8 +92,6 @@ public:
                && "LocalChain must contain simplices with same origin (if not, use Chain)");
     }
 
-private:
-public:
     template <misc::Specialization<ddc::DiscreteVector>... T>
     KOKKOS_FUNCTION constexpr explicit LocalChain(T... vect) noexcept
         : m_vects {(detail::NullVect<vect_type>::run() + vect)...}
@@ -232,6 +230,12 @@ public:
 
 template <misc::NotSpecialization<ddc::DiscreteVector>... T>
 LocalChain(T...) -> LocalChain<ddc::type_seq_element_t<0, ddc::detail::TypeSeq<T...>>>;
+
+template <class SimplexType, class... Tag>
+KOKKOS_FUNCTION constexpr LocalChain<SimplexType> tangent_basis()
+{
+    return LocalChain<SimplexType> {ddc::DiscreteVector<Tag> {1}...};
+}
 
 template <misc::Specialization<LocalChain> ChainType>
 std::ostream& operator<<(std::ostream& out, ChainType const& chain)

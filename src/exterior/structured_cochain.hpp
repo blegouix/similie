@@ -6,9 +6,9 @@
 #include <ddc/ddc.hpp>
 
 #include "are_all_same.hpp"
-#include "chain.hpp"
-#include "local_chain.hpp"
+#include "cochain.hpp"
 #include "specialization.hpp"
+#include "tensor.hpp"
 
 namespace sil {
 
@@ -46,11 +46,16 @@ namespace sil {
 namespace exterior {
 
 /// Cochain class
-template <class CochainType, class... DDim, class LayoutStridedPolicy, class MemorySpace>
+template <
+        misc::Specialization<Cochain> CochainType,
+        class... DDim,
+        class LayoutStridedPolicy,
+        class MemorySpace>
 class StructuredCochain<CochainType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>
     : public ddc::
               ChunkSpan<CochainType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>
 {
+    // TODO static_assert local cochain
 protected:
     using base_type = ddc::
             ChunkSpan<CochainType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>;
@@ -76,6 +81,15 @@ public:
             ChunkSpan<CochainType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>::
             operator();
 
+    using element_type
+            = CochainType; // for consistency with ChunkSpan, but cochain_type is prefered
+    using cochain_type = CochainType;
+    using simplex_type = typename CochainType::simplex_type;
+    using chain_type = CochainType::chain_type;
+    using scalar_element_type = CochainType::element_type;
+    using elem_type = CochainType::elem_type;
+    using vect_type = CochainType::vect_type;
+
     KOKKOS_FUNCTION constexpr explicit StructuredCochain(ddc::ChunkSpan<
                                                          CochainType,
                                                          ddc::DiscreteDomain<DDim...>,
@@ -84,6 +98,72 @@ public:
         : base_type(other)
     {
     }
+
+    /*
+private:
+    template <class VectorType>
+    StructuredCochain<CochainType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace> initialize_vector_field(VectorField) {
+        typename VectorField::non_indices_domain_t
+                non_indices_domain
+                = vector_field.non_indices_domain();
+        cochain_type tangent_basis = tangent_basis(); 
+        
+        ddc::Chunk structured_cochain_alloc(non_indices_domain, ddc::HostAllocator<cochain_type>());
+        StructuredCochain<cochain_type, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace> structured_cochain(structured_cochain_alloc); 
+
+        ddc::Chunk structured_cochain_alloc(dom, ddc::HostAllocator<LocalCochain>());
+    sil::exterior::StructuredCochain<
+            LocalCochain,
+            ddc::DiscreteDomain<DDimT, DDimX, DDimY, DDimZ>,
+            Kokkos::layout_right,
+            Kokkos::DefaultHostExecutionSpace::memory_space>
+            structured_cochain(structured_cochain_alloc);
+    ddc::parallel_fill(
+            structured_cochain,
+            sil::exterior::
+                    Cochain(sil::exterior::LocalChain<
+                                    sil::exterior::Simplex<1, DDimT, DDimX, DDimY, DDimZ>>(
+                                    ddc::DiscreteVector<DDimX> {1},
+                                    ddc::DiscreteVector<DDimY> {1}),
+                            1.,
+                            2.));
+    ddc::for_each(dom, [&](ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> elem) {
+        EXPECT_EQ(structured_cochain(elem).integrate(), 3.);
+    }); 
+
+    }
+
+    template <
+            misc::Specialization<ddc::DiscreteDomain> Dom,
+            misc::Specialization<NaturalTensorIndex> NaturalIndex>
+    KOKKOS_FUNCTION constexpr explicit StructuredCochain(
+            ddc::Tensor<double, Dom, LayoutStridedPolicy, MemorySpace>
+                    vector_field) noexcept
+    {
+        static_assert(ddc::Tensor<double, Dom, LayoutStridedPolicy, MemorySpace>::non_indices_domain_t::rank()==1);
+        tensor::Tensor<double, Dom, LayoutStridedPolicy, MemorySpace>::non_indices_domain_t
+                non_indices_domain
+                = vector_field.non_indices_domain();
+        LocalChain<simplex_type> tangent_basis = tangent_basis(); 
+        
+    }
+        */
+
+    /*
+    template <
+            misc::Specialization<ddc::DiscreteDomain> Dom,
+            misc::Specialization<NaturalTensorIndex>... NaturalIndex>
+    KOKKOS_FUNCTION constexpr explicit StructuredCochain(
+            ddc::Tensor<double, Dom, LayoutStridedPolicy, MemorySpace>
+                    antisymmetric_tensor_field) noexcept
+    {
+        static_assert(
+        ddc::Tensor<double, Dom, LayoutStridedPolicy, MemorySpace>::non_indices_domain_t
+                non_indices_domain
+                = antisymmetric_tensor_fied.non_indices();
+    }
+*/
+
     /*
 public:
     using simplex_type = typename ChainType::simplex_type;
