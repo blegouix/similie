@@ -7,6 +7,7 @@
 
 #include "are_all_same.hpp"
 #include "chain.hpp"
+#include "cosimplex.hpp"
 #include "specialization.hpp"
 
 namespace sil {
@@ -18,7 +19,7 @@ template <
         misc::Specialization<Chain> ChainType,
         class ElementType = double,
         class Allocator = std::allocator<ElementType>>
-class Cochain : public std::vector<ElementType, Allocator>
+class Cochain
 {
 public:
     using simplex_type = typename ChainType::simplex_type;
@@ -26,29 +27,30 @@ public:
     using element_type = ElementType;
     using elem_type = ChainType::elem_type;
     using vect_type = ChainType::vect_type;
-    using base_type = std::vector<ElementType, Allocator>;
+    using values_type = std::vector<ElementType, Allocator>;
 
 private:
     ChainType const& m_chain;
+    values_type m_values;
 
 public:
     KOKKOS_FUNCTION constexpr explicit Cochain(ChainType& chain) noexcept
-        : base_type(ChainType::size())
-        , m_chain(chain)
+        : m_chain(chain)
+        , m_values(ChainType::size())
     {
     }
 
     KOKKOS_FUNCTION constexpr explicit Cochain(ChainType&& chain) noexcept
-        : base_type(ChainType::size())
-        , m_chain(std::move(chain))
+        : m_chain(std::move(chain))
+        , m_values(ChainType::size())
     {
     }
 
     template <class... T>
         requires(sizeof...(T) >= 1)
     KOKKOS_FUNCTION constexpr explicit Cochain(ChainType& chain, T... value) noexcept
-        : base_type {value...}
-        , m_chain(chain)
+        : m_chain(chain)
+        , m_values {value...}
     {
         assert(sizeof...(T) == chain.size()
                && "cochain constructor must get as much values as the chain contains simplices");
@@ -57,8 +59,8 @@ public:
     template <class... T>
         requires(sizeof...(T) >= 1)
     KOKKOS_FUNCTION constexpr explicit Cochain(ChainType&& chain, T... value) noexcept
-        : base_type {value...}
-        , m_chain(std::move(chain))
+        : m_chain(std::move(chain))
+        , m_values {value...}
     {
         assert(sizeof...(T) == chain.size()
                && "cochain constructor must get as much values as the chain contains simplices");
@@ -67,8 +69,8 @@ public:
     KOKKOS_FUNCTION constexpr explicit Cochain(
             ChainType& chain,
             std::vector<ElementType>& values) noexcept
-        : base_type(values)
-        , m_chain(chain)
+        : m_chain(chain)
+        , m_values(values)
     {
         static_assert(values.size() == chain.size());
     }
@@ -78,25 +80,51 @@ public:
         return ChainType::dimension();
     }
 
+    KOKKOS_FUNCTION std::size_t size() noexcept
+    {
+        return m_chain.size();
+    }
+
+    KOKKOS_FUNCTION std::size_t const size() const noexcept
+    {
+        return m_chain.size();
+    }
+
     KOKKOS_FUNCTION ChainType const& chain() const noexcept
     {
         return m_chain;
     }
 
+    KOKKOS_FUNCTION ChainType const& values() const noexcept
+    {
+        return m_values;
+    }
+
     KOKKOS_FUNCTION auto const chain_it(auto it) const noexcept
     {
-        return m_chain.begin() + std::distance(this->begin(), it);
+        return m_chain.begin() + std::distance(m_values.begin(), it);
     }
 
     KOKKOS_FUNCTION auto chain_it(auto it) noexcept
     {
-        return m_chain.begin() + std::distance(this->begin(), it);
+        return m_chain.begin() + std::distance(m_values.begin(), it);
+    }
+
+    KOKKOS_FUNCTION Cosimplex<simplex_type, element_type>& operator[](std::size_t i) noexcept
+    {
+        return Cosimplex<simplex_type, element_type>(m_chain[i], m_values[i]);
+    }
+
+    KOKKOS_FUNCTION Cosimplex<simplex_type, element_type> const& operator[](
+            std::size_t i) const noexcept
+    {
+        return Cosimplex<simplex_type, element_type>(m_chain[i], m_values[i]);
     }
 
     KOKKOS_FUNCTION element_type integrate() noexcept
     {
         element_type out = 0;
-        for (auto i = this->begin(); i < this->end(); ++i) {
+        for (auto i = m_values.begin(); i < m_values.end(); ++i) {
             out += (chain_it(i)->negative() ? -1 : 1) * *i;
         }
         return out;
@@ -105,7 +133,7 @@ public:
     KOKKOS_FUNCTION element_type const integrate() const noexcept
     {
         element_type out = 0;
-        for (auto i = this->begin(); i < this->end(); ++i) {
+        for (auto i = m_values.begin(); i < m_values.end(); ++i) {
             out += (chain_it(i)->negative() ? -1 : 1) * *i;
         }
         return out;
@@ -116,7 +144,7 @@ template <misc::Specialization<Cochain> CochainType>
 std::ostream& operator<<(std::ostream& out, CochainType const& cochain)
 {
     out << "[\n";
-    for (auto i = cochain.begin(); i < cochain.end(); ++i) {
+    for (auto i = cochain.values().begin(); i < cochain.values().end(); ++i) {
         out << " " << *cochain.chain_it(i) << ": " << *i << "\n";
     }
     out << "]";

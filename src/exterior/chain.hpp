@@ -15,29 +15,30 @@ namespace exterior {
 
 /// Chain class
 template <class SimplexType, class Allocator = std::allocator<SimplexType>>
-class Chain : public std::vector<SimplexType, Allocator>
+class Chain
 {
 public:
     using simplex_type = SimplexType;
-    using base_type = std::vector<SimplexType, Allocator>;
+    using simplices_type = std::vector<SimplexType, Allocator>;
     using elem_type = typename simplex_type::elem_type;
     using vect_type = typename simplex_type::vect_type;
 
 private:
     static constexpr std::size_t s_k = SimplexType::dimension();
+    simplices_type m_simplices;
 
 public:
-    KOKKOS_FUNCTION constexpr explicit Chain() noexcept : base_type {} {}
+    KOKKOS_FUNCTION constexpr explicit Chain() noexcept : m_simplices {} {}
 
     template <class... T>
         requires misc::are_all_same<T...>
-    KOKKOS_FUNCTION constexpr explicit Chain(T... simplex) noexcept : base_type {simplex...}
+    KOKKOS_FUNCTION constexpr explicit Chain(T... simplex) noexcept : m_simplices {simplex...}
     {
         assert(check() == 0 && "there are duplicate simplices in the chain");
     }
 
     KOKKOS_FUNCTION constexpr explicit Chain(std::vector<SimplexType> simplices) noexcept
-        : base_type(simplices)
+        : m_simplices(simplices)
     {
         assert(check() == 0 && "there are duplicate simplices in the chain");
     }
@@ -47,10 +48,20 @@ public:
         return s_k;
     }
 
+    KOKKOS_FUNCTION std::size_t size() noexcept
+    {
+        return m_simplices.size();
+    }
+
+    KOKKOS_FUNCTION std::size_t const size() const noexcept
+    {
+        return m_simplices.size();
+    }
+
     KOKKOS_FUNCTION int check()
     {
-        for (auto i = this->begin(); i < this->end() - 1; ++i) {
-            for (auto j = i + 1; j < this->end(); ++j) {
+        for (auto i = m_simplices.begin(); i < m_simplices.end() - 1; ++i) {
+            for (auto j = i + 1; j < m_simplices.end(); ++j) {
                 if (*i == *j) {
                     return -1;
                 }
@@ -61,24 +72,59 @@ public:
 
     KOKKOS_FUNCTION void optimize()
     {
-        for (auto i = this->begin(); i < this->end() - 1; ++i) {
+        for (auto i = m_simplices.begin(); i < m_simplices.end() - 1; ++i) {
             auto k = i;
-            for (auto j = i + 1; k == i && j < this->end(); ++j) {
+            for (auto j = i + 1; k == i && j < m_simplices.end(); ++j) {
                 if (*i == -*j) {
                     k = j;
                 }
             }
             if (k != i) {
-                this->erase(k);
-                this->erase(i--);
+                m_simplices.erase(k);
+                m_simplices.erase(i--);
             }
         }
         assert(check() == 0 && "there are duplicate simplices in the chain");
     }
 
+    KOKKOS_FUNCTION auto begin() const
+    {
+        return m_simplices.begin();
+    }
+
+    KOKKOS_FUNCTION auto end() const
+    {
+        return m_simplices.end();
+    }
+
+    KOKKOS_FUNCTION auto cbegin() const
+    {
+        return m_simplices.begin();
+    }
+
+    KOKKOS_FUNCTION auto cend() const
+    {
+        return m_simplices.end();
+    }
+
+    KOKKOS_FUNCTION SimplexType& operator[](std::size_t i) noexcept
+    {
+        return m_simplices[i];
+    }
+
+    KOKKOS_FUNCTION SimplexType const& operator[](std::size_t i) const noexcept
+    {
+        return m_simplices[i];
+    }
+
+    void push_back(const simplex_type& simplex)
+    {
+        m_simplices.push_back(simplex);
+    };
+
     KOKKOS_FUNCTION Chain<SimplexType> operator-()
     {
-        std::vector<SimplexType> simplices = *this;
+        std::vector<SimplexType> simplices = m_simplices;
         for (SimplexType& simplex : simplices) {
             simplex = -simplex;
         }
@@ -87,14 +133,14 @@ public:
 
     KOKKOS_FUNCTION Chain<SimplexType> operator+(SimplexType simplex)
     {
-        std::vector<SimplexType> simplices = *this;
+        simplices_type simplices = m_simplices;
         simplices.push_back(simplex);
         return Chain<SimplexType>(simplices);
     }
 
     KOKKOS_FUNCTION Chain<SimplexType> operator+(Chain<SimplexType> simplices_to_add)
     {
-        std::vector<SimplexType> simplices = *this;
+        simplices_type simplices = m_simplices;
         simplices.insert(simplices.end(), simplices_to_add.begin(), simplices_to_add.end());
         return Chain<SimplexType>(simplices);
     }
@@ -120,7 +166,7 @@ public:
     KOKKOS_FUNCTION bool operator==(Chain<SimplexType> simplices)
     {
         for (auto i = simplices.begin(); i < simplices.end(); ++i) {
-            if (*i != (*this)[std::distance(simplices.begin(), i)]) {
+            if (*i != m_simplices[std::distance(simplices.begin(), i)]) {
                 return false;
             }
         }
