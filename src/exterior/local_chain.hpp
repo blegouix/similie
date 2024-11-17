@@ -99,6 +99,11 @@ public:
         return m_elem;
     }
 
+    static KOKKOS_FUNCTION constexpr bool negative()
+    {
+        return false;
+    }
+
     KOKKOS_FUNCTION int check()
     {
         for (auto i = this->begin(); i < this->end() - 1; ++i) {

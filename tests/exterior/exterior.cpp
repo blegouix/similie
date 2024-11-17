@@ -467,3 +467,16 @@ TEST(LocalChain, Test)
                             Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
                                     ddc::DiscreteVector<DDimZ> {1})));
 }
+
+TEST(LocalCochain, Test)
+{
+    sil::exterior::LocalChain
+            chain(sil::exterior::
+                          Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
+                                  ddc::DiscreteVector<DDimX> {1}),
+                  sil::exterior::
+                          Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
+                                  ddc::DiscreteVector<DDimY> {1}));
+    sil::exterior::Cochain cochain(chain, 1., 2.);
+    EXPECT_EQ(cochain.integrate(), 3.);
+}

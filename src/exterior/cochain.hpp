@@ -8,6 +8,7 @@
 #include "are_all_same.hpp"
 #include "chain.hpp"
 #include "cosimplex.hpp"
+#include "local_chain.hpp"
 #include "specialization.hpp"
 
 namespace sil {
@@ -16,9 +17,10 @@ namespace exterior {
 
 /// Cochain class
 template <
-        misc::Specialization<Chain> ChainType,
+        class ChainType,
         class ElementType = double,
         class Allocator = std::allocator<ElementType>>
+    requires(misc::Specialization<ChainType, Chain> || misc::Specialization<ChainType, LocalChain>)
 class Cochain
 {
 public:
@@ -100,6 +102,26 @@ public:
         return m_values;
     }
 
+    KOKKOS_FUNCTION auto begin() const
+    {
+        return m_values.begin();
+    }
+
+    KOKKOS_FUNCTION auto end() const
+    {
+        return m_values.end();
+    }
+
+    KOKKOS_FUNCTION auto cbegin() const
+    {
+        return m_values.begin();
+    }
+
+    KOKKOS_FUNCTION auto cend() const
+    {
+        return m_values.end();
+    }
+
     KOKKOS_FUNCTION auto const chain_it(auto it) const noexcept
     {
         return m_chain.begin() + std::distance(m_values.begin(), it);
@@ -125,7 +147,11 @@ public:
     {
         element_type out = 0;
         for (auto i = m_values.begin(); i < m_values.end(); ++i) {
-            out += (chain_it(i)->negative() ? -1 : 1) * *i;
+            if constexpr (misc::Specialization<chain_type, Chain>) {
+                out += (chain_it(i)->negative() ? -1 : 1) * *i;
+            } else if (misc::Specialization<chain_type, LocalChain>) {
+                out += (m_chain.negative() ? -1 : 1) * *i; // always false
+            }
         }
         return out;
     }
@@ -134,7 +160,11 @@ public:
     {
         element_type out = 0;
         for (auto i = m_values.begin(); i < m_values.end(); ++i) {
-            out += (chain_it(i)->negative() ? -1 : 1) * *i;
+            if constexpr (misc::Specialization<chain_type, Chain>) {
+                out += (chain_it(i)->negative() ? -1 : 1) * *i;
+            } else if (misc::Specialization<chain_type, LocalChain>) {
+                out += (m_chain.negative() ? -1 : 1) * *i; // always false
+            }
         }
         return out;
     }
@@ -144,10 +174,17 @@ template <misc::Specialization<Cochain> CochainType>
 std::ostream& operator<<(std::ostream& out, CochainType const& cochain)
 {
     out << "[\n";
-    for (auto i = cochain.values().begin(); i < cochain.values().end(); ++i) {
-        out << " " << *cochain.chain_it(i) << ": " << *i << "\n";
+    for (auto i = cochain.begin(); i < cochain.end(); ++i) {
+        if constexpr (misc::Specialization<typename CochainType::chain_type, Chain>) {
+            out << " " << *cochain.chain_it(i) << " : " << *i << "\n";
+        } else if (misc::Specialization<typename CochainType::chain_type, LocalChain>) {
+            out << " " << cochain.chain().discrete_element() << " -> "
+                << cochain.chain().discrete_element() + *cochain.chain_it(i) << " : " << *i << "\n";
+        }
     }
+
     out << "]";
+
     return out;
 }
 
