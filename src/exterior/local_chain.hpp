@@ -7,6 +7,7 @@
 
 #include "are_all_same.hpp"
 #include "binomial_coefficient.hpp"
+#include "null_struct.hpp"
 #include "simplex.hpp"
 #include "specialization.hpp"
 
@@ -25,19 +26,6 @@ std::vector<typename SimplexType::vect_type> extract_vects(std::vector<SimplexTy
     }
     return vects;
 }
-
-template <class Vect>
-struct NullVect;
-
-template <class... Tag>
-struct NullVect<ddc::DiscreteVector<Tag...>>
-{
-    static constexpr ddc::DiscreteVector<Tag...> run()
-    {
-        return ddc::DiscreteVector<Tag...> {
-                0 * ddc::type_seq_rank_v<Tag, ddc::detail::TypeSeq<Tag...>>...};
-    }
-};
 
 } // namespace detail
 
@@ -95,7 +83,7 @@ public:
 
     template <misc::Specialization<ddc::DiscreteVector>... T>
     KOKKOS_FUNCTION constexpr explicit LocalChain(T... vect) noexcept
-        : m_vects {(detail::NullVect<vect_type>::run() + vect)...}
+        : m_vects {(misc::null_struct<vect_type>() + vect)...}
     {
         assert(check() == 0 && "there are duplicate simplices in the chain");
     }
