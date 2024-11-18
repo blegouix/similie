@@ -24,6 +24,7 @@ public:
     using discrete_vector_type = typename simplex_type::discrete_vector_type;
 
 private:
+    static constexpr bool s_is_local = false;
     static constexpr std::size_t s_k = SimplexType::dimension();
     simplices_type m_simplices;
 
@@ -41,6 +42,11 @@ public:
         : m_simplices(simplices)
     {
         assert(check() == 0 && "there are duplicate simplices in the chain");
+    }
+
+    static KOKKOS_FUNCTION constexpr bool is_local() noexcept
+    {
+        return s_is_local;
     }
 
     static KOKKOS_FUNCTION constexpr std::size_t dimension() noexcept
@@ -87,9 +93,19 @@ public:
         assert(check() == 0 && "there are duplicate simplices in the chain");
     }
 
+    KOKKOS_FUNCTION auto begin()
+    {
+        return m_simplices.begin();
+    }
+
     KOKKOS_FUNCTION auto begin() const
     {
         return m_simplices.begin();
+    }
+
+    KOKKOS_FUNCTION auto end()
+    {
+        return m_simplices.end();
     }
 
     KOKKOS_FUNCTION auto end() const

@@ -430,7 +430,7 @@ TEST(Coboundary, Test)
     sil::exterior::Cochain cochain_boundary(simplex_boundary, 5., 8., 3., 2.);
     sil::exterior::Cosimplex cosimplex = sil::exterior::coboundary(cochain_boundary);
     EXPECT_EQ(cosimplex.simplex(), simplex);
-    EXPECT_EQ(cosimplex(), 4.);
+    EXPECT_EQ(cosimplex.value(), 4.);
 }
 
 TEST(LocalChain, Test)
