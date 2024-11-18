@@ -81,7 +81,7 @@ public:
     {
         assert(m_values.size() == chain.size()
                && "cochain constructor must get as much values as the chain contains simplices");
-        // TODO replace std::vectors with Kokkos::View to replace the pointer (avoid copy)
+        // TODO replace std::vectors with Kokkos::View to replace the pointer (avoid copy) ?
         for (auto i = m_values.begin(); i < m_values.end(); ++i) {
             *i = tensor.mem(
                     ddc::DiscreteElement<AntisymmetricIndex>(std::distance(m_values.begin(), i)));
