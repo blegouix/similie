@@ -212,38 +212,6 @@ public:
 template <misc::NotSpecialization<ddc::DiscreteVector>... T>
 LocalChain(T...) -> LocalChain<ddc::type_seq_element_t<0, ddc::detail::TypeSeq<T...>>>;
 
-namespace detail {
-
-template <std::size_t Nt, std::size_t Ns>
-static std::vector<std::array<std::size_t, Nt>> permutations_subset(
-        std::array<std::size_t, Nt> t,
-        std::array<std::size_t, Ns> subset_values)
-{
-    std::array<std::size_t, Ns> subset_indices;
-    std::array<std::size_t, Ns> elements_to_permute;
-    int j = 0;
-    for (std::size_t i = 0; i < t.size(); ++i) {
-        if (std::find(subset_values.begin(), subset_values.end(), t[i] + 1)
-            != std::end(subset_values)) {
-            subset_indices[j] = i;
-            elements_to_permute[j++] = t[i];
-        }
-    }
-
-    std::vector<std::array<std::size_t, Nt>> result;
-    do {
-        std::array<std::size_t, Nt> tmp = t;
-        for (std::size_t i = 0; i < Ns; ++i) {
-            tmp[subset_indices[i]] = elements_to_permute[i];
-        }
-        result.push_back(tmp);
-    } while (std::next_permutation(elements_to_permute.begin(), elements_to_permute.end()));
-
-    return result;
-}
-
-} // namespace detail
-
 template <std::size_t K, misc::NotSpecialization<ddc::DiscreteDomain>... Tag>
 KOKKOS_FUNCTION constexpr LocalChain<Simplex<K, Tag...>> tangent_basis()
 {
