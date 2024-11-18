@@ -12,6 +12,8 @@ namespace sil {
 
 namespace exterior {
 
+namespace detail {
+
 template <class T, class ElementType, class Allocator>
 struct FormWrapper;
 
@@ -35,9 +37,11 @@ template <misc::Specialization<Chain> Head, class ElementType, class Allocator>
 FormWrapper(Head, ElementType, Allocator) -> FormWrapper<Head, ElementType, Allocator>;
 */
 
+} // namespace detail
+
 // Usage should be avoided because CTAD cannot go through it
 template <class T, class ElementType = double, class Allocator = std::allocator<double>>
-using Form = typename FormWrapper<T, ElementType, Allocator>::type;
+using Form = typename detail::FormWrapper<T, ElementType, Allocator>::type;
 
 } // namespace exterior
 

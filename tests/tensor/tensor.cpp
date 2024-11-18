@@ -96,9 +96,7 @@ TEST(Tensor, NaturalIndexing)
     EXPECT_EQ(tensor.get(tensor.access_element<Z, Z>()), 11.);
 }
 
-struct FullIndex : sil::tensor::TensorFullIndex<Alpha, Nu>
-{
-};
+using FullIndex = sil::tensor::TensorFullIndex<Alpha, Nu>;
 
 TEST(Tensor, TensorFullIndexing)
 {
@@ -147,9 +145,7 @@ TEST(Tensor, TensorFullIndexing)
     EXPECT_EQ(tensor.get(tensor.access_element<Z, Z>()), 11.);
 }
 
-struct IdIndex : sil::tensor::TensorIdentityIndex<Mu, Nu>
-{
-};
+using IdIndex = sil::tensor::TensorIdentityIndex<Mu, Nu>;
 
 TEST(Tensor, TensorIdentityIndexing)
 {
@@ -181,10 +177,8 @@ TEST(Tensor, TensorIdentityIndexing)
     EXPECT_EQ(tensor.get(tensor.access_element<Z, Z>()), 1.);
 }
 
-struct LorentzianSignIndex
-    : sil::tensor::TensorLorentzianSignIndex<std::integral_constant<std::size_t, 2>, Mu, Nu>
-{
-};
+using LorentzianSignIndex
+        = sil::tensor::TensorLorentzianSignIndex<std::integral_constant<std::size_t, 2>, Mu, Nu>;
 
 TEST(Tensor, TensorLorentzianSignIndexing)
 {
@@ -216,9 +210,7 @@ TEST(Tensor, TensorLorentzianSignIndexing)
     EXPECT_EQ(tensor.get(tensor.access_element<Z, Z>()), 1.);
 }
 
-struct DiagIndex : sil::tensor::TensorDiagonalIndex<Mu, Nu>
-{
-};
+using DiagIndex = sil::tensor::TensorDiagonalIndex<Mu, Nu>;
 
 TEST(Tensor, TensorDiagonalIndexing)
 {
@@ -261,9 +253,7 @@ TEST(Tensor, TensorDiagonalIndexing)
     EXPECT_EQ(tensor.get(tensor.access_element<Z, Z>()), 4.);
 }
 
-struct SymIndex : sil::tensor::TensorSymmetricIndex<Mu, Nu>
-{
-};
+using SymIndex = sil::tensor::TensorSymmetricIndex<Mu, Nu>;
 
 TEST(Tensor, TensorSymmetricIndexing4x4)
 {
@@ -313,9 +303,7 @@ TEST(Tensor, TensorSymmetricIndexing4x4)
     EXPECT_EQ(tensor.get(tensor.access_element<Z, Z>()), 9.);
 }
 
-struct SymIndex3x3x3 : sil::tensor::TensorSymmetricIndex<Alpha, Beta, Gamma>
-{
-};
+using SymIndex3x3x3 = sil::tensor::TensorSymmetricIndex<Alpha, Beta, Gamma>;
 
 TEST(Tensor, TensorSymmetricIndexing3x3x3)
 {
@@ -375,9 +363,7 @@ TEST(Tensor, TensorSymmetricIndexing3x3x3)
     EXPECT_EQ(tensor.get(tensor.access_element<Z, Z, Z>()), 9.);
 }
 
-struct AntisymIndex : sil::tensor::TensorAntisymmetricIndex<Mu, Nu>
-{
-};
+using AntisymIndex = sil::tensor::TensorAntisymmetricIndex<Mu, Nu>;
 
 TEST(Tensor, TensorAntisymmetricIndexing4x4)
 {
@@ -422,9 +408,7 @@ TEST(Tensor, TensorAntisymmetricIndexing4x4)
     EXPECT_EQ(tensor.get(tensor.access_element<Z, Z>()), 0.);
 }
 
-struct SymIndex3x3 : sil::tensor::TensorSymmetricIndex<Alpha, Beta>
-{
-};
+using SymIndex3x3 = sil::tensor::TensorSymmetricIndex<Alpha, Beta>;
 
 TEST(Tensor, PartiallyTensorSymmetricIndexing4x3x3)
 {
@@ -507,16 +491,12 @@ TEST(Tensor, PartiallyTensorSymmetricIndexing4x3x3)
     EXPECT_EQ(tensor.get(tensor.access_element<Z, Z, Z>()), 23.);
 }
 
-struct YoungTableauIndex
-    : sil::tensor::TensorYoungTableauIndex<
-              sil::young_tableau::YoungTableau<
-                      3,
-                      sil::young_tableau::YoungTableauSeq<std::index_sequence<1, 2, 3>>>,
-              Alpha,
-              Beta,
-              Gamma>
-{
-};
+using YoungTableauIndex = sil::tensor::TensorYoungTableauIndex<
+        sil::young_tableau::
+                YoungTableau<3, sil::young_tableau::YoungTableauSeq<std::index_sequence<1, 2, 3>>>,
+        Alpha,
+        Beta,
+        Gamma>;
 
 TEST(Tensor, YoungTableauIndexing)
 {

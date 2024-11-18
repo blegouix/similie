@@ -20,8 +20,8 @@ class Chain
 public:
     using simplex_type = SimplexType;
     using simplices_type = std::vector<SimplexType, Allocator>;
-    using elem_type = typename simplex_type::elem_type;
-    using vect_type = typename simplex_type::vect_type;
+    using discrete_element_type = typename simplex_type::discrete_element_type;
+    using discrete_vector_type = typename simplex_type::discrete_vector_type;
 
 private:
     static constexpr std::size_t s_k = SimplexType::dimension();
