@@ -1,7 +1,5 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" title=" " alt="" coords="5,78,136,103"/>
-<area shape="rect" id="Node000001" href="$classsil_1_1exterior_1_1StructuredCochain_3_01CochainType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_d401157446c1454971eb45b27f073d40.html" title="Cochain class." alt="" coords="184,5,475,75"/>
-<area shape="poly" id="edge1_Node000000_Node000001" title=" " alt="" coords="150,73,183,66,184,71,151,78"/>
-<area shape="rect" id="Node000002" href="$classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html" title="Tensor class." alt="" coords="234,99,425,183"/>
-<area shape="poly" id="edge2_Node000000_Node000002" title=" " alt="" coords="150,103,234,120,233,125,149,109"/>
+<area shape="rect" id="Node000000" title=" " alt="" coords="5,35,136,60"/>
+<area shape="rect" id="Node000001" href="$classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html" title="Tensor class." alt="" coords="184,5,375,89"/>
+<area shape="poly" id="edge1_Node000000_Node000001" title=" " alt="" coords="149,45,184,45,184,50,149,50"/>
 </map>

@@ -12,9 +12,7 @@ var annotated_dup =
         [ "FormWrapper", "namespacesil_1_1exterior.html#structsil_1_1exterior_1_1FormWrapper", null ],
         [ "FormWrapper< T, ElementType, Allocator >", "namespacesil_1_1exterior.html#structsil_1_1exterior_1_1FormWrapper_3_01T_00_01ElementType_00_01Allocator_01_4", "namespacesil_1_1exterior_structsil_1_1exterior_1_1FormWrapper_3_01T_00_01ElementType_00_01Allocator_01_4_dup" ],
         [ "LocalChain", "classsil_1_1exterior_1_1LocalChain.html", "classsil_1_1exterior_1_1LocalChain" ],
-        [ "Simplex", "classsil_1_1exterior_1_1Simplex.html", "classsil_1_1exterior_1_1Simplex" ],
-        [ "StructuredCochain", "namespacesil_1_1exterior.html#classsil_1_1exterior_1_1StructuredCochain", null ],
-        [ "StructuredCochain< CochainType, ddc::DiscreteDomain< DDim... >, LayoutStridedPolicy, MemorySpace >", "classsil_1_1exterior_1_1StructuredCochain_3_01CochainType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_d401157446c1454971eb45b27f073d40.html", "classsil_1_1exterior_1_1StructuredCochain_3_01CochainType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_d401157446c1454971eb45b27f073d40" ]
+        [ "Simplex", "classsil_1_1exterior_1_1Simplex.html", "classsil_1_1exterior_1_1Simplex" ]
       ] ],
       [ "mesher", "namespacesil_1_1mesher.html", [
         [ "Mesher", "classsil_1_1mesher_1_1Mesher.html", "classsil_1_1mesher_1_1Mesher" ]

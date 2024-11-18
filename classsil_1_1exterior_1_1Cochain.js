@@ -9,6 +9,7 @@ var classsil_1_1exterior_1_1Cochain =
     [ "Cochain", "classsil_1_1exterior_1_1Cochain.html#a9544079186c9ec322ea30624c19993f9", null ],
     [ "Cochain", "classsil_1_1exterior_1_1Cochain.html#a0b0ecb0ed84549b892b5be95a1d70255", null ],
     [ "Cochain", "classsil_1_1exterior_1_1Cochain.html#a7958ca715da75fa2acf94cd3c9f17671", null ],
+    [ "Cochain", "classsil_1_1exterior_1_1Cochain.html#a0b39bda611918543b5a1c0f1e8354dae", null ],
     [ "size", "classsil_1_1exterior_1_1Cochain.html#ab2421074433be34821a40a375020f263", null ],
     [ "size", "classsil_1_1exterior_1_1Cochain.html#a13a7ae45bd3d7ea3140229b0cdcdb4e4", null ],
     [ "chain", "classsil_1_1exterior_1_1Cochain.html#a44510b7f6fc7748be68ac5dfd02a3990", null ],
