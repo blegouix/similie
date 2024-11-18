@@ -14,7 +14,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 - Consider creating a misc enum for {-1 1} and use it in simplices/chains
 - cochain iterator should give access to a cosimplex, not to the value
 - replace chain_it with value_it
-- usings in tensor tests
 
 ----- CMAKE BASIC COMMAND -----
 
