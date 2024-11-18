@@ -38,8 +38,8 @@ namespace detail {
 
 template <class SimplexType>
 KOKKOS_FUNCTION constexpr Chain<boundary_t<SimplexType>> generate_half_subchain(
-        typename SimplexType::elem_type elem,
-        typename SimplexType::vect_type vect,
+        typename SimplexType::discrete_element_type elem,
+        typename SimplexType::discrete_vector_type vect,
         bool negative = false)
 {
     auto array = ddc::detail::array(vect);
@@ -51,7 +51,7 @@ KOKKOS_FUNCTION constexpr Chain<boundary_t<SimplexType>> generate_half_subchain(
         auto id = std::find_if(j, array_.end(), [](int k) { return k != 0; });
         id_dist = std::distance(array_.begin(), id);
         *id = 0;
-        typename SimplexType::vect_type vect_;
+        typename SimplexType::discrete_vector_type vect_;
         ddc::detail::array(vect_) = array_;
         chain.push_back(boundary_t<SimplexType>(elem, vect_, (negative + i) % 2));
         j = id + 1;

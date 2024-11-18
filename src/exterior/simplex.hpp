@@ -19,12 +19,12 @@ protected:
     using base_type = ddc::DiscreteElement<Tag...>;
 
 public:
-    using elem_type = base_type;
-    using vect_type = ddc::DiscreteVector<Tag...>;
+    using discrete_element_type = base_type;
+    using discrete_vector_type = ddc::DiscreteVector<Tag...>;
 
 private:
     static constexpr std::size_t s_k = K;
-    vect_type
+    discrete_vector_type
             m_vect; // Only booleans are stored but ddc::DiscreteVector supports only std::ptrdiff_t
     bool m_negative;
 
@@ -45,9 +45,9 @@ private:
     }
 
     template <class... T>
-    static constexpr vect_type add_null_dimensions(ddc::DiscreteVector<T...> vect)
+    static constexpr discrete_vector_type add_null_dimensions(ddc::DiscreteVector<T...> vect)
     {
-        return vect_type(add_eventually_null_dimensions_<Tag, T...>(vect)...);
+        return discrete_vector_type(add_eventually_null_dimensions_<Tag, T...>(vect)...);
     }
 
     template <class... T>
@@ -56,15 +56,15 @@ private:
     template <>
     struct Reorient<>
     {
-        static constexpr base_type run_elem(base_type elem, vect_type)
+        static constexpr base_type run_elem(base_type elem, discrete_vector_type)
         {
             return elem;
         }
-        static constexpr vect_type run_vect(base_type, vect_type vect)
+        static constexpr discrete_vector_type run_vect(base_type, discrete_vector_type vect)
         {
             return vect;
         }
-        static constexpr bool run_negative(vect_type vect, bool negative)
+        static constexpr bool run_negative(discrete_vector_type vect, bool negative)
         {
             return negative;
         }
@@ -74,7 +74,7 @@ private:
     template <class HeadTag, class... TailTag>
     struct Reorient<HeadTag, TailTag...>
     {
-        static constexpr base_type run_elem(base_type elem, vect_type vect)
+        static constexpr base_type run_elem(base_type elem, discrete_vector_type vect)
         {
             if (vect.template get<HeadTag>() == -1) {
                 elem.template uid<HeadTag>()--;
@@ -82,7 +82,7 @@ private:
             return Reorient<TailTag...>::run_elem(elem, vect);
         }
 
-        static constexpr vect_type run_vect(base_type elem, vect_type vect)
+        static constexpr discrete_vector_type run_vect(base_type elem, discrete_vector_type vect)
         {
             if (vect.template get<HeadTag>() == -1) {
                 vect.template get<HeadTag>() = 1;
@@ -90,7 +90,7 @@ private:
             return Reorient<TailTag...>::run_vect(elem, vect);
         }
 
-        static constexpr bool run_negative(vect_type vect, bool negative)
+        static constexpr bool run_negative(discrete_vector_type vect, bool negative)
         {
             return Reorient<TailTag...>::
                     run_negative(vect, (vect.template get<HeadTag>() == -1) != negative);
@@ -100,7 +100,7 @@ private:
 public:
     template <misc::Specialization<ddc::DiscreteVector> T>
     KOKKOS_FUNCTION constexpr explicit Simplex(
-            elem_type elem,
+            discrete_element_type elem,
             T vect,
             bool negative = false) noexcept
         : base_type(Reorient<Tag...>::run_elem(elem, add_null_dimensions(vect)))
@@ -114,7 +114,7 @@ public:
     template <misc::Specialization<ddc::DiscreteVector> T>
     KOKKOS_FUNCTION constexpr explicit Simplex(
             std::integral_constant<std::size_t, K>,
-            elem_type elem,
+            discrete_element_type elem,
             T vect,
             bool negative = false) noexcept
         : base_type(Reorient<Tag...>::run_elem(elem, add_null_dimensions(vect)))
@@ -140,12 +140,12 @@ public:
         return base_type {this->template uid<Tag>()...};
     }
 
-    KOKKOS_FUNCTION vect_type& discrete_vector() noexcept
+    KOKKOS_FUNCTION discrete_vector_type& discrete_vector() noexcept
     {
         return m_vect;
     }
 
-    KOKKOS_FUNCTION vect_type const& discrete_vector() const noexcept
+    KOKKOS_FUNCTION discrete_vector_type const& discrete_vector() const noexcept
     {
         return m_vect;
     }

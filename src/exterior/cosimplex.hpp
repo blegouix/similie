@@ -20,8 +20,8 @@ class Cosimplex
 public:
     using simplex_type = SimplexType;
     using element_type = ElementType;
-    using elem_type = SimplexType::elem_type;
-    using vect_type = SimplexType::vect_type;
+    using discrete_element_type = SimplexType::discrete_element_type;
+    using discrete_vector_type = SimplexType::discrete_vector_type;
 
 private:
     SimplexType m_simplex;

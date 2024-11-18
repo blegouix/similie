@@ -28,8 +28,8 @@ public:
     using simplex_type = typename ChainType::simplex_type;
     using chain_type = ChainType;
     using element_type = ElementType;
-    using elem_type = ChainType::elem_type;
-    using vect_type = ChainType::vect_type;
+    using discrete_element_type = ChainType::discrete_element_type;
+    using discrete_vector_type = ChainType::discrete_vector_type;
     using values_type = std::vector<ElementType, Allocator>;
 
 private:
