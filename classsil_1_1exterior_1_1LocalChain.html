@@ -137,7 +137,7 @@ Collaboration diagram for sil::exterior::LocalChain&lt; SimplexType, Allocator &
 <div class="dyncontent">
 <div class="center"><img src="classsil_1_1exterior_1_1LocalChain__coll__graph.png" border="0" usemap="#asil_1_1exterior_1_1LocalChain_3_01SimplexType_00_01Allocator_01_4_coll__map" alt="Collaboration graph"/></div>
 <map name="asil_1_1exterior_1_1LocalChain_3_01SimplexType_00_01Allocator_01_4_coll__map" id="asil_1_1exterior_1_1LocalChain_3_01SimplexType_00_01Allocator_01_4_coll__map">
-<area shape="rect" title="LocalChain class." alt="" coords="5,5,199,505"/>
+<area shape="rect" title="LocalChain class." alt="" coords="5,5,199,565"/>
 </map>
 </div>
 <table class="memberdecls">
@@ -149,8 +149,8 @@ Public Types</h2></td></tr>
 <tr class="separator:ad534a9401c93df9eeb9d305a43dd6fcb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a127dcd142a23f2e11367a3e7c6bc7d97" id="r_a127dcd142a23f2e11367a3e7c6bc7d97"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1LocalChain.html#a127dcd142a23f2e11367a3e7c6bc7d97">discrete_vector_type</a> = typename simplex_type::discrete_vector_type</td></tr>
 <tr class="separator:a127dcd142a23f2e11367a3e7c6bc7d97"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a18b82f72b248daa145287488ca2dec8c" id="r_a18b82f72b248daa145287488ca2dec8c"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1LocalChain.html#a18b82f72b248daa145287488ca2dec8c">vects_type</a> = std::vector&lt; <a class="el" href="classsil_1_1exterior_1_1LocalChain.html#a127dcd142a23f2e11367a3e7c6bc7d97">discrete_vector_type</a> &gt;</td></tr>
-<tr class="separator:a18b82f72b248daa145287488ca2dec8c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a31c06b246a9f59e9c4eda9225d8d33e6" id="r_a31c06b246a9f59e9c4eda9225d8d33e6"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1LocalChain.html#a31c06b246a9f59e9c4eda9225d8d33e6">simplices_type</a> = std::vector&lt; <a class="el" href="classsil_1_1exterior_1_1LocalChain.html#a127dcd142a23f2e11367a3e7c6bc7d97">discrete_vector_type</a> &gt;</td></tr>
+<tr class="separator:a31c06b246a9f59e9c4eda9225d8d33e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -173,8 +173,12 @@ requires <a class="el" href="namespacesil_1_1misc.html#a094c71e44717da55afa244de
 <tr class="separator:a8c29fe341864b82eb59a39664097508d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adf5d8ff7f8ed72bcf480b1fa44bb5f2e" id="r_adf5d8ff7f8ed72bcf480b1fa44bb5f2e"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1LocalChain.html#adf5d8ff7f8ed72bcf480b1fa44bb5f2e">check</a> ()</td></tr>
 <tr class="separator:adf5d8ff7f8ed72bcf480b1fa44bb5f2e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5549b408f3758c4d1a3356be0022f9e4" id="r_a5549b408f3758c4d1a3356be0022f9e4"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1LocalChain.html#a5549b408f3758c4d1a3356be0022f9e4">begin</a> ()</td></tr>
+<tr class="separator:a5549b408f3758c4d1a3356be0022f9e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a23043729ddd74915db769eaf5a8eb10d" id="r_a23043729ddd74915db769eaf5a8eb10d"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1LocalChain.html#a23043729ddd74915db769eaf5a8eb10d">begin</a> () const</td></tr>
 <tr class="separator:a23043729ddd74915db769eaf5a8eb10d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae985f202c565e78de94376ec2ab55344" id="r_ae985f202c565e78de94376ec2ab55344"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1LocalChain.html#ae985f202c565e78de94376ec2ab55344">end</a> ()</td></tr>
+<tr class="separator:ae985f202c565e78de94376ec2ab55344"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab1298a6336392d5792bb16480ad54a69" id="r_ab1298a6336392d5792bb16480ad54a69"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1LocalChain.html#ab1298a6336392d5792bb16480ad54a69">end</a> () const</td></tr>
 <tr class="separator:ab1298a6336392d5792bb16480ad54a69"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7708422a987a96647c1f3e1c9758e6a1" id="r_a7708422a987a96647c1f3e1c9758e6a1"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1LocalChain.html#a7708422a987a96647c1f3e1c9758e6a1">cbegin</a> () const</td></tr>
@@ -201,6 +205,8 @@ requires <a class="el" href="namespacesil_1_1misc.html#a094c71e44717da55afa244de
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
+<tr class="memitem:a093fd0968b746c15dba044270374fa28" id="r_a093fd0968b746c15dba044270374fa28"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1LocalChain.html#a093fd0968b746c15dba044270374fa28">is_local</a> () noexcept</td></tr>
+<tr class="separator:a093fd0968b746c15dba044270374fa28"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1a25174bf8f8e9833f2a9d377e6d0187" id="r_a1a25174bf8f8e9833f2a9d377e6d0187"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1LocalChain.html#a1a25174bf8f8e9833f2a9d377e6d0187">dimension</a> () noexcept</td></tr>
 <tr class="separator:a1a25174bf8f8e9833f2a9d377e6d0187"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a47e27a39953ed55babc4cb3344962d5c" id="r_a47e27a39953ed55babc4cb3344962d5c"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1LocalChain.html#a47e27a39953ed55babc4cb3344962d5c">negative</a> ()</td></tr>
@@ -266,8 +272,8 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 
 </div>
 </div>
-<a id="a18b82f72b248daa145287488ca2dec8c" name="a18b82f72b248daa145287488ca2dec8c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a18b82f72b248daa145287488ca2dec8c">&#9670;&#160;</a></span>vects_type</h2>
+<a id="a31c06b246a9f59e9c4eda9225d8d33e6" name="a31c06b246a9f59e9c4eda9225d8d33e6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a31c06b246a9f59e9c4eda9225d8d33e6">&#9670;&#160;</a></span>simplices_type</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -275,7 +281,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::discrete_vector_type&gt;&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1LocalChain.html">sil::exterior::LocalChain</a>&lt; SimplexType, Allocator &gt;::vects_type =  std::vector&lt;<a class="el" href="classsil_1_1exterior_1_1LocalChain.html#a127dcd142a23f2e11367a3e7c6bc7d97">discrete_vector_type</a>&gt;</td>
+          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1LocalChain.html">sil::exterior::LocalChain</a>&lt; SimplexType, Allocator &gt;::simplices_type =  std::vector&lt;<a class="el" href="classsil_1_1exterior_1_1LocalChain.html#a127dcd142a23f2e11367a3e7c6bc7d97">discrete_vector_type</a>&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -310,7 +316,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00051">51</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00052">52</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -343,7 +349,7 @@ requires <a class="el" href="namespacesil_1_1misc.html#a094c71e44717da55afa244de
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00059">59</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00060">60</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -373,7 +379,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00069">69</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00070">70</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -405,7 +411,7 @@ template&lt;misc::Specialization&lt; ddc::DiscreteVector &gt;... T&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00090">90</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00091">91</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -435,11 +441,40 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00096">96</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00097">97</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a093fd0968b746c15dba044270374fa28" name="a093fd0968b746c15dba044270374fa28"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a093fd0968b746c15dba044270374fa28">&#9670;&#160;</a></span>is_local()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::discrete_vector_type&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static KOKKOS_FUNCTION constexpr bool <a class="el" href="classsil_1_1exterior_1_1LocalChain.html">sil::exterior::LocalChain</a>&lt; SimplexType, Allocator &gt;::is_local </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span><span class="mlabel">constexpr</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00103">103</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+
+</div>
+</div>
 <a id="a1a25174bf8f8e9833f2a9d377e6d0187" name="a1a25174bf8f8e9833f2a9d377e6d0187"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a1a25174bf8f8e9833f2a9d377e6d0187">&#9670;&#160;</a></span>dimension()</h2>
 
@@ -465,7 +500,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00102">102</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00108">108</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -494,7 +529,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00107">107</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00113">113</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -523,7 +558,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00112">112</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00118">118</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -552,7 +587,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00117">117</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00123">123</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -581,12 +616,41 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00122">122</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00128">128</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a5549b408f3758c4d1a3356be0022f9e4" name="a5549b408f3758c4d1a3356be0022f9e4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5549b408f3758c4d1a3356be0022f9e4">&#9670;&#160;</a></span>begin() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::discrete_vector_type&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1LocalChain.html">sil::exterior::LocalChain</a>&lt; SimplexType, Allocator &gt;::begin </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00140">140</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
 <a id="a23043729ddd74915db769eaf5a8eb10d" name="a23043729ddd74915db769eaf5a8eb10d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a23043729ddd74915db769eaf5a8eb10d">&#9670;&#160;</a></span>begin()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a23043729ddd74915db769eaf5a8eb10d">&#9670;&#160;</a></span>begin() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -610,12 +674,41 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00134">134</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00145">145</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+
+</div>
+</div>
+<a id="ae985f202c565e78de94376ec2ab55344" name="ae985f202c565e78de94376ec2ab55344"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae985f202c565e78de94376ec2ab55344">&#9670;&#160;</a></span>end() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::discrete_vector_type&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1LocalChain.html">sil::exterior::LocalChain</a>&lt; SimplexType, Allocator &gt;::end </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00150">150</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
 <a id="ab1298a6336392d5792bb16480ad54a69" name="ab1298a6336392d5792bb16480ad54a69"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab1298a6336392d5792bb16480ad54a69">&#9670;&#160;</a></span>end()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ab1298a6336392d5792bb16480ad54a69">&#9670;&#160;</a></span>end() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -639,7 +732,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00139">139</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00155">155</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -668,7 +761,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00144">144</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00160">160</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -697,7 +790,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00149">149</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00165">165</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -727,7 +820,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00154">154</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00170">170</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -757,7 +850,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00159">159</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00175">175</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -814,7 +907,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00166">166</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00182">182</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -844,7 +937,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00173">173</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00189">189</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -904,7 +997,7 @@ template&lt;class T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00183">183</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00199">199</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -934,7 +1027,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00194">194</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00210">210</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>

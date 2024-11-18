@@ -2,6 +2,7 @@ var namespacesil_1_1exterior =
 [
     [ "Chain", "classsil_1_1exterior_1_1Chain.html", "classsil_1_1exterior_1_1Chain" ],
     [ "Cochain", "classsil_1_1exterior_1_1Cochain.html", "classsil_1_1exterior_1_1Cochain" ],
+    [ "CochainIterator", "classsil_1_1exterior_1_1CochainIterator.html", "classsil_1_1exterior_1_1CochainIterator" ],
     [ "Cosimplex", "classsil_1_1exterior_1_1Cosimplex.html", "classsil_1_1exterior_1_1Cosimplex" ],
     [ "LocalChain", "classsil_1_1exterior_1_1LocalChain.html", "classsil_1_1exterior_1_1LocalChain" ],
     [ "Simplex", "classsil_1_1exterior_1_1Simplex.html", "classsil_1_1exterior_1_1Simplex" ],

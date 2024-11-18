@@ -5,6 +5,7 @@ var hierarchy =
     ] ],
     [ "sil::exterior::Chain< SimplexType, Allocator >", "classsil_1_1exterior_1_1Chain.html", null ],
     [ "sil::exterior::Cochain< ChainType, ElementType, Allocator >", "classsil_1_1exterior_1_1Cochain.html", null ],
+    [ "sil::exterior::CochainIterator< CochainType >", "classsil_1_1exterior_1_1CochainIterator.html", null ],
     [ "sil::tensor::Contravariant", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Contravariant", null ],
     [ "sil::exterior::Cosimplex< SimplexType, ElementType >", "classsil_1_1exterior_1_1Cosimplex.html", null ],
     [ "sil::tensor::Covariant", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Covariant", null ],

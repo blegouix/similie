@@ -44,7 +44,8 @@ var NAVTREE =
         [ "All", "functions.html", "functions_dup" ],
         [ "Functions", "functions_func.html", "functions_func" ],
         [ "Variables", "functions_vars.html", null ],
-        [ "Typedefs", "functions_type.html", null ]
+        [ "Typedefs", "functions_type.html", null ],
+        [ "Related Symbols", "functions_rela.html", null ]
       ] ]
     ] ]
   ] ]
@@ -53,8 +54,8 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "annotated.html",
-"classsil_1_1tensor_1_1TensorAccessor.html#a12a1f091540c8274049bad6e814cae26",
-"structsil_1_1tensor_1_1TensorNaturalIndex.html"
+"classsil_1_1exterior_1_1LocalChain.html#a7708422a987a96647c1f3e1c9758e6a1",
+"namespacesil_1_1tensor.html#a10d538d7bbe57026bb31dd4967dceec1"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

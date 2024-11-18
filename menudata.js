@@ -121,4 +121,5 @@ var menudata={children:[
 {text:"s",url:"functions_type.html#index_s"},
 {text:"t",url:"functions_type.html#index_t"},
 {text:"v",url:"functions_type.html#index_v"},
-{text:"y",url:"functions_type.html#index_y"}]}]}]}]}
+{text:"y",url:"functions_type.html#index_y"}]},
+{text:"Related Symbols",url:"functions_rela.html"}]}]}]}
