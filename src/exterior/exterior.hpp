@@ -11,4 +11,3 @@
 #include "form.hpp"
 #include "local_chain.hpp"
 #include "simplex.hpp"
-#include "structured_cochain.hpp"
