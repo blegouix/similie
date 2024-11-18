@@ -191,6 +191,12 @@ public:
     }
 };
 
+/*
+template <
+        class ChainType, misc::Specialization<tensor::Tensor> TensorType>
+Cochain(ChainType&, TensorType) -> Cochain<ChainType, typename TensorType::element_type>;
+*/
+
 template <misc::Specialization<Cochain> CochainType>
 std::ostream& operator<<(std::ostream& out, CochainType const& cochain)
 {
