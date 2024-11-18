@@ -481,96 +481,78 @@ TEST(LocalCochain, Test)
     EXPECT_EQ(cochain.integrate(), 3.);
 }
 
-using Local4D1Cochain = sil::exterior::Cochain<
-        sil::exterior::LocalChain<sil::exterior::Simplex<1, DDimT, DDimX, DDimY, DDimZ>>>;
-
-TEST(StructuredCochain, Test)
+struct Mu : sil::tensor::TensorNaturalIndex<X, Y>
 {
-    ddc::DiscreteDomain<DDimT, DDimX, DDimY, DDimZ>
-            dom(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
-                ddc::DiscreteVector<DDimT, DDimX, DDimY, DDimZ> {3, 3, 3, 3});
-    ddc::Chunk structured_cochain_alloc(dom, ddc::HostAllocator<Local4D1Cochain>());
-    sil::exterior::StructuredCochain<
-            Local4D1Cochain,
-            ddc::DiscreteDomain<DDimT, DDimX, DDimY, DDimZ>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            structured_cochain(structured_cochain_alloc);
-    ddc::parallel_fill(
-            structured_cochain,
-            sil::exterior::
-                    Cochain(sil::exterior::tangent_basis<
-                                    typename Local4D1Cochain::simplex_type,
-                                    DDimX,
-                                    DDimY>(),
-                            1.,
-                            2.));
-    ddc::for_each(dom, [&](ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> elem) {
-        EXPECT_EQ(structured_cochain(elem).integrate(), 3.);
-    });
-}
+};
 
-using Local2D1Cochain = sil::exterior::Cochain<
-        sil::exterior::LocalChain<sil::exterior::Simplex<1, DDimX, DDimY>>>;
-using Local2D2Cochain = sil::exterior::Cochain<
-        sil::exterior::LocalChain<sil::exterior::Simplex<2, DDimX, DDimY>>>;
-
-TEST(ExteriorDerivative, Test)
+struct Nu : sil::tensor::TensorNaturalIndex<X, Y>
 {
-    ddc::DiscreteDomain<DDimX, DDimY>
-            dom(ddc::DiscreteElement<DDimX, DDimY> {0, 0},
-                ddc::DiscreteVector<DDimX, DDimY> {3, 3});
-    ddc::Chunk structured_cochain_alloc(dom, ddc::HostAllocator<Local2D1Cochain>());
-    sil::exterior::StructuredCochain<
-            Local2D1Cochain,
-            ddc::DiscreteDomain<DDimX, DDimY>,
+};
+
+using Form1Index = sil::tensor::TensorAntisymmetricIndex<Nu>;
+using Form2Index = sil::tensor::TensorAntisymmetricIndex<Mu, Nu>;
+
+TEST(ExteriorDerivative, Rotational)
+{
+    sil::tensor::TensorAccessor<Form1Index> tensor_accessor;
+    ddc::DiscreteDomain<Form1Index, DDimX, DDimY>
+            dom(tensor_accessor.mem_domain(),
+                ddc::DiscreteDomain(
+                        ddc::DiscreteElement<DDimX, DDimY> {0, 0},
+                        ddc::DiscreteVector<DDimX, DDimY> {3, 3}));
+    ddc::Chunk tensor_alloc(dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor<
+            double,
+            ddc::DiscreteDomain<Form1Index, DDimX, DDimY>,
             Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
-            structured_cochain(structured_cochain_alloc);
-    ddc::parallel_fill(
-            structured_cochain,
-            Local2D1Cochain(
-                    sil::exterior::
-                            tangent_basis<typename Local2D1Cochain::simplex_type, DDimX, DDimY>(),
-                    1.,
-                    2.));
-    structured_cochain(ddc::DiscreteElement<DDimX, DDimY> {1, 1}) = Local2D1Cochain(
-            sil::exterior::tangent_basis<typename Local2D1Cochain::simplex_type, DDimX, DDimY>(),
-            4.,
-            3.);
-    ddc::DiscreteDomain<DDimX, DDimY>
-            dom2(ddc::DiscreteElement<DDimX, DDimY> {0, 0},
-                 ddc::DiscreteVector<DDimX, DDimY> {2, 2});
-    ddc::Chunk structured_cochain_alloc2(dom2, ddc::HostAllocator<Local2D2Cochain>());
-    sil::exterior::StructuredCochain<
-            Local2D2Cochain,
-            ddc::DiscreteDomain<DDimX, DDimY>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            structured_cochain2(structured_cochain_alloc2);
-    ddc::parallel_fill(
-            structured_cochain2,
-            Local2D2Cochain(typename Local2D2Cochain::chain_type(
-                    ddc::DiscreteVector<DDimX, DDimY> {1, 1})));
-    sil::exterior::deriv(structured_cochain2, structured_cochain);
-    EXPECT_EQ(
-            structured_cochain2(
+            tensor(tensor_alloc);
+    ddc::parallel_for_each(
+            Kokkos::DefaultHostExecutionSpace(),
+            tensor.non_indices_domain(),
+            [&](auto elem) {
+                tensor(tensor_accessor.access_element<X>(), elem) = 1.;
+                tensor(tensor_accessor.access_element<Y>(), elem) = 2.;
+            });
+    tensor(tensor_accessor.access_element<X>(), ddc::DiscreteElement<DDimX, DDimY> {1, 1}) = 4.;
+    tensor(tensor_accessor.access_element<Y>(), ddc::DiscreteElement<DDimX, DDimY> {1, 1}) = 3.;
+
+    sil::tensor::TensorAccessor<Form2Index> derivative_accessor;
+    ddc::DiscreteDomain<Form2Index, DDimX, DDimY> derivative_dom(
+            derivative_accessor.mem_domain(),
+            ddc::DiscreteDomain(
                     ddc::DiscreteElement<DDimX, DDimY> {0, 0},
-                    ddc::DiscreteVector<DDimX, DDimY> {1, 1}),
+                    ddc::DiscreteVector<DDimX, DDimY> {2, 2}));
+    ddc::Chunk derivative_alloc(derivative_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor<
+            double,
+            ddc::DiscreteDomain<Form2Index, DDimX, DDimY>,
+            Kokkos::layout_right,
+            Kokkos::DefaultHostExecutionSpace::memory_space>
+            derivative(derivative_alloc);
+    ddc::parallel_for_each(
+            Kokkos::DefaultHostExecutionSpace(),
+            derivative.non_indices_domain(),
+            [&](auto elem) { derivative(derivative_accessor.access_element<X, Y>(), elem) = 1.; });
+    sil::exterior::deriv<Form1Index, Mu>(derivative, tensor);
+    EXPECT_EQ(
+            derivative(
+                    ddc::DiscreteElement<DDimX, DDimY> {0, 0},
+                    derivative_accessor.access_element<X, Y>()),
             0.);
     EXPECT_EQ(
-            structured_cochain2(
-                    ddc::DiscreteElement<DDimX, DDimY> {0, 1},
-                    ddc::DiscreteVector<DDimX, DDimY> {1, 1}),
-            1.);
-    EXPECT_EQ(
-            structured_cochain2(
+            derivative(
                     ddc::DiscreteElement<DDimX, DDimY> {1, 0},
-                    ddc::DiscreteVector<DDimX, DDimY> {1, 1}),
+                    derivative_accessor.access_element<X, Y>()),
             -3.);
     EXPECT_EQ(
-            structured_cochain2(
+            derivative(
+                    ddc::DiscreteElement<DDimX, DDimY> {0, 1},
+                    derivative_accessor.access_element<X, Y>()),
+            1.);
+    EXPECT_EQ(
+            derivative(
                     ddc::DiscreteElement<DDimX, DDimY> {1, 1},
-                    ddc::DiscreteVector<DDimX, DDimY> {1, 1}),
+                    derivative_accessor.access_element<X, Y>()),
             2.);
 }

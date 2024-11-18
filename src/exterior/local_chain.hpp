@@ -6,6 +6,7 @@
 #include <ddc/ddc.hpp>
 
 #include "are_all_same.hpp"
+#include "binomial_coefficient.hpp"
 #include "simplex.hpp"
 #include "specialization.hpp"
 
@@ -211,10 +212,77 @@ public:
 template <misc::NotSpecialization<ddc::DiscreteVector>... T>
 LocalChain(T...) -> LocalChain<ddc::type_seq_element_t<0, ddc::detail::TypeSeq<T...>>>;
 
-template <class SimplexType, class... Tag>
-KOKKOS_FUNCTION constexpr LocalChain<SimplexType> tangent_basis()
+namespace detail {
+
+template <std::size_t Nt, std::size_t Ns>
+static std::vector<std::array<std::size_t, Nt>> permutations_subset(
+        std::array<std::size_t, Nt> t,
+        std::array<std::size_t, Ns> subset_values)
 {
-    return LocalChain<SimplexType> {ddc::DiscreteVector<Tag> {1}...};
+    std::array<std::size_t, Ns> subset_indices;
+    std::array<std::size_t, Ns> elements_to_permute;
+    int j = 0;
+    for (std::size_t i = 0; i < t.size(); ++i) {
+        if (std::find(subset_values.begin(), subset_values.end(), t[i] + 1)
+            != std::end(subset_values)) {
+            subset_indices[j] = i;
+            elements_to_permute[j++] = t[i];
+        }
+    }
+
+    std::vector<std::array<std::size_t, Nt>> result;
+    do {
+        std::array<std::size_t, Nt> tmp = t;
+        for (std::size_t i = 0; i < Ns; ++i) {
+            tmp[subset_indices[i]] = elements_to_permute[i];
+        }
+        result.push_back(tmp);
+    } while (std::next_permutation(elements_to_permute.begin(), elements_to_permute.end()));
+
+    return result;
+}
+
+} // namespace detail
+
+template <std::size_t K, misc::NotSpecialization<ddc::DiscreteDomain>... Tag>
+KOKKOS_FUNCTION constexpr LocalChain<Simplex<K, Tag...>> tangent_basis()
+{
+    std::array<std::ptrdiff_t, sizeof...(Tag)> permutation
+            = {0 * ddc::type_seq_rank_v<Tag, ddc::detail::TypeSeq<Tag...>>...};
+    for (auto i = permutation.begin(); i < permutation.begin() + K; ++i) {
+        *i = 1;
+    }
+    std::vector<ddc::DiscreteVector<Tag...>> basis {};
+    std::size_t i = 0;
+    do {
+        basis.push_back(ddc::DiscreteVector<Tag...>());
+        ddc::detail::array(basis[i++]) = permutation;
+    } while (std::prev_permutation(permutation.begin(), permutation.end()));
+
+    return LocalChain<Simplex<K, Tag...>>(basis);
+}
+
+namespace detail {
+
+template <std::size_t K, misc::Specialization<ddc::DiscreteDomain> Dom>
+struct TangentBasis;
+
+
+template <std::size_t K, class... Tag>
+struct TangentBasis<K, ddc::DiscreteDomain<Tag...>>
+{
+    static auto constexpr run()
+    {
+        return tangent_basis<K, Tag...>();
+    }
+};
+
+} // namespace detail
+
+template <std::size_t K, misc::Specialization<ddc::DiscreteDomain> Dom>
+KOKKOS_FUNCTION constexpr auto tangent_basis()
+{
+    return detail::TangentBasis<K, Dom>::run();
 }
 
 template <misc::Specialization<LocalChain> ChainType>
@@ -222,7 +290,7 @@ std::ostream& operator<<(std::ostream& out, ChainType const& chain)
 {
     out << "[\n";
     for (typename ChainType::vect_type const& vect : chain) {
-        out << " -> " << chain.discrete_element() + vect << "\n";
+        out << " -> " << vect << "\n";
     }
     out << "]";
     return out;

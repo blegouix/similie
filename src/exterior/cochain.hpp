@@ -5,6 +5,7 @@
 
 #include <ddc/ddc.hpp>
 
+#include "antisymmetric_tensor.hpp"
 #include "are_all_same.hpp"
 #include "chain.hpp"
 #include "cosimplex.hpp"
@@ -61,6 +62,30 @@ public:
     {
         assert(values.size() == chain.size()
                && "cochain constructor must get as much values as the chain contains simplices");
+    }
+
+    template <
+            class OElementType,
+            misc::Specialization<tensor::TensorAntisymmetricIndex> AntisymmetricIndex,
+            class LayoutStridedPolicy,
+            class MemorySpace>
+    KOKKOS_FUNCTION constexpr explicit Cochain(
+            ChainType& chain,
+            tensor::Tensor<
+                    OElementType,
+                    ddc::DiscreteDomain<AntisymmetricIndex>,
+                    LayoutStridedPolicy,
+                    MemorySpace> tensor) noexcept
+        : m_chain(chain)
+        , m_values(tensor.domain().size())
+    {
+        assert(m_values.size() == chain.size()
+               && "cochain constructor must get as much values as the chain contains simplices");
+        // TODO replace std::vectors with Kokkos::View to replace the pointer (avoid copy)
+        for (auto i = m_values.begin(); i < m_values.end(); ++i) {
+            *i = tensor.mem(
+                    ddc::DiscreteElement<AntisymmetricIndex>(std::distance(m_values.begin(), i)));
+        }
     }
 
     static KOKKOS_FUNCTION constexpr std::size_t dimension() noexcept
@@ -165,6 +190,12 @@ public:
         return out;
     }
 };
+
+/*
+template <
+        class ChainType, misc::Specialization<tensor::Tensor> TensorType>
+Cochain(ChainType&, TensorType) -> Cochain<ChainType, typename TensorType::element_type>;
+*/
 
 template <misc::Specialization<Cochain> CochainType>
 std::ostream& operator<<(std::ostream& out, CochainType const& cochain)

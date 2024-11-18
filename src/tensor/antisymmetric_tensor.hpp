@@ -47,7 +47,11 @@ struct TensorAntisymmetricIndex
 
     static constexpr std::size_t access_size()
     {
-        return mem_size() + 1;
+        if constexpr (rank() == 1) {
+            return mem_size();
+        } else {
+            return mem_size() + 1;
+        }
     }
 
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_lin_comb(
@@ -99,24 +103,34 @@ public:
     static constexpr std::size_t access_id(
             std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
-        if (std::all_of(ids.begin(), ids.end(), [&](const std::size_t id) {
-                return id == *ids.begin();
-            })) {
-            return 0;
-        } else if (!permutation_parity(ids)) {
-            return 1 + std::get<1>(mem_lin_comb(ids))[0];
+        if constexpr (rank() == 1) {
+            return std::get<1>(mem_lin_comb(ids))[0];
         } else {
-            return access_size() + std::get<1>(mem_lin_comb(ids))[0];
+            if (std::all_of(ids.begin(), ids.end(), [&](const std::size_t id) {
+                    return id == *ids.begin();
+                })) {
+                return 0;
+            } else if (!permutation_parity(ids)) {
+                return 1 + std::get<1>(mem_lin_comb(ids))[0];
+            } else {
+                return access_size() + std::get<1>(mem_lin_comb(ids))[0];
+            }
         }
     }
 
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>>
     access_id_to_mem_lin_comb(std::size_t access_id)
     {
-        assert(access_id != 0 && "There is no mem_lin_comb associated to access_id=0");
-        return std::pair<std::vector<double>, std::vector<std::size_t>>(
-                std::vector<double> {1.},
-                std::vector<std::size_t> {(access_id - 1) % mem_size()});
+        if constexpr (rank() == 1) {
+            return std::pair<std::vector<double>, std::vector<std::size_t>>(
+                    std::vector<double> {1.},
+                    std::vector<std::size_t> {access_id});
+        } else {
+            assert(access_id != 0 && "There is no mem_lin_comb associated to access_id=0");
+            return std::pair<std::vector<double>, std::vector<std::size_t>>(
+                    std::vector<double> {1.},
+                    std::vector<std::size_t> {(access_id - 1) % mem_size()});
+        }
     }
 
     template <class Tensor, class Elem, class Id>
@@ -125,12 +139,16 @@ public:
             Tensor tensor,
             Elem elem)
     {
-        if (elem.template uid<Id>() == 0) {
-            return 0.;
-        } else if (elem.template uid<Id>() < access_size()) {
+        if constexpr (rank() == 1) {
             return access(tensor, elem);
         } else {
-            return -access(tensor, elem);
+            if (elem.template uid<Id>() == 0) {
+                return 0.;
+            } else if (elem.template uid<Id>() < access_size()) {
+                return access(tensor, elem);
+            } else {
+                return -access(tensor, elem);
+            }
         }
     }
 };
