@@ -16,6 +16,9 @@ namespace sil {
 
 namespace exterior {
 
+template <typename CochainType>
+class CochainIterator;
+
 /// Cochain class
 template <
         class ChainType,
@@ -31,6 +34,7 @@ public:
     using discrete_element_type = ChainType::discrete_element_type;
     using discrete_vector_type = ChainType::discrete_vector_type;
     using values_type = std::vector<ElementType, Allocator>;
+    using cosimplex_type = Cosimplex<simplex_type, element_type>;
 
 private:
     // ChainType const& m_chain;
@@ -113,44 +117,36 @@ public:
         return m_values;
     }
 
+    using iterator = CochainIterator<Cochain>;
+
     KOKKOS_FUNCTION auto begin()
     {
-        return m_values.begin();
+        return iterator(m_chain.begin(), m_values.begin());
     }
 
     KOKKOS_FUNCTION auto begin() const
     {
-        return m_values.begin();
+        return iterator(m_chain.begin(), m_values.begin());
     }
 
     KOKKOS_FUNCTION auto end()
     {
-        return m_values.end();
+        return iterator(m_chain.end(), m_values.end());
     }
 
     KOKKOS_FUNCTION auto end() const
     {
-        return m_values.end();
+        return iterator(m_chain.end(), m_values.end());
     }
 
     KOKKOS_FUNCTION auto cbegin() const
     {
-        return m_values.begin();
+        return iterator(m_chain.begin(), m_values.begin());
     }
 
     KOKKOS_FUNCTION auto cend() const
     {
-        return m_values.end();
-    }
-
-    KOKKOS_FUNCTION auto const chain_it(auto it) const noexcept
-    {
-        return m_chain.begin() + std::distance(m_values.begin(), it);
-    }
-
-    KOKKOS_FUNCTION auto chain_it(auto it) noexcept
-    {
-        return m_chain.begin() + std::distance(m_values.begin(), it);
+        return iterator(m_chain.end(), m_values.end());
     }
 
     KOKKOS_FUNCTION Cosimplex<simplex_type, element_type>& operator[](std::size_t i) noexcept
@@ -167,11 +163,11 @@ public:
     KOKKOS_FUNCTION element_type integrate() noexcept
     {
         element_type out = 0;
-        for (auto i = m_values.begin(); i < m_values.end(); ++i) {
+        for (auto i = begin(); i < end(); ++i) {
             if constexpr (misc::Specialization<chain_type, Chain>) {
-                out += (chain_it(i)->negative() ? -1 : 1) * *i;
+                out += ((*i).simplex().negative() ? -1 : 1) * (*i)();
             } else if (misc::Specialization<chain_type, LocalChain>) {
-                out += (m_chain.negative() ? -1 : 1) * *i; // always false
+                out += (m_chain.negative() ? -1 : 1) * (*i)(); // always false
             }
         }
         return out;
@@ -180,14 +176,164 @@ public:
     KOKKOS_FUNCTION element_type const integrate() const noexcept
     {
         element_type out = 0;
-        for (auto i = m_values.begin(); i < m_values.end(); ++i) {
+        for (auto i = begin(); i < end(); ++i) {
             if constexpr (misc::Specialization<chain_type, Chain>) {
-                out += (chain_it(i)->negative() ? -1 : 1) * *i;
+                out += ((*i).negative() ? -1 : 1) * (*i)();
             } else if (misc::Specialization<chain_type, LocalChain>) {
-                out += (m_chain.negative() ? -1 : 1) * *i; // always false
+                out += (m_chain.negative() ? -1 : 1) * (*i)(); // always false
             }
         }
         return out;
+    }
+};
+
+template <typename CochainType>
+class CochainIterator
+{
+public:
+    using iterator_category = std::forward_iterator_tag;
+    using value_type = typename CochainType::cosimplex_type;
+    using difference_type = std::ptrdiff_t;
+    using pointer = value_type*;
+    using reference = value_type&;
+
+    using cosimplex_type = typename CochainType::cosimplex_type;
+
+    using chain_iterator = typename CochainType::chain_type::simplices_type::iterator;
+    using values_iterator = typename CochainType::values_type::iterator;
+
+private:
+    chain_iterator m_chain;
+    values_iterator m_values;
+
+public:
+    KOKKOS_DEFAULTED_FUNCTION CochainIterator() = default;
+
+    KOKKOS_FUNCTION constexpr explicit CochainIterator(
+            chain_iterator chain_it,
+            values_iterator values_it)
+        : m_chain(chain_it)
+        , m_values(values_it)
+    {
+    }
+
+    KOKKOS_FUNCTION constexpr value_type operator*() const noexcept
+    {
+        if constexpr (!CochainType::chain_type::is_local()) {
+            return cosimplex_type(*m_chain, *m_values);
+        } else {
+            return cosimplex_type(
+                    Simplex(std::integral_constant<std::size_t, CochainType::dimension()> {},
+                            misc::null_struct<typename CochainType::discrete_element_type>(),
+                            *m_chain),
+                    *m_values);
+        }
+    }
+
+    KOKKOS_FUNCTION constexpr CochainIterator& operator++()
+    {
+        ++m_chain;
+        ++m_values;
+        return *this;
+    }
+
+    KOKKOS_FUNCTION constexpr CochainIterator operator++(int)
+    {
+        auto tmp = *this;
+        ++*this;
+        return tmp;
+    }
+
+    KOKKOS_FUNCTION constexpr CochainIterator& operator--()
+    {
+        --m_chain;
+        --m_values;
+        return *this;
+    }
+
+    KOKKOS_FUNCTION constexpr CochainIterator operator--(int)
+    {
+        auto tmp = *this;
+        --*this;
+        return tmp;
+    }
+
+    KOKKOS_FUNCTION constexpr CochainIterator& operator+=(difference_type n)
+    {
+        m_chain += n;
+        m_values += n;
+        return *this;
+    }
+
+    KOKKOS_FUNCTION constexpr CochainIterator& operator-=(difference_type n)
+    {
+        m_chain -= n;
+        m_values -= n;
+        return *this;
+    }
+
+    /*
+    KOKKOS_FUNCTION constexpr value_type operator[](difference_type n) const
+    {
+        return m_value + n;
+    }
+    */
+
+    friend KOKKOS_FUNCTION constexpr bool operator==(
+            CochainIterator const& xx,
+            CochainIterator const& yy)
+    {
+        return xx.m_chain == yy.m_chain && xx.m_values == yy.m_values;
+    }
+
+    friend KOKKOS_FUNCTION constexpr bool operator<(
+            CochainIterator const& xx,
+            CochainIterator const& yy)
+    {
+        return xx.m_chain < yy.m_chain && xx.m_values < yy.m_values;
+    }
+
+    friend KOKKOS_FUNCTION constexpr bool operator>(
+            CochainIterator const& xx,
+            CochainIterator const& yy)
+    {
+        return xx.m_chain > yy.m_chain && xx.m_values > yy.m_values;
+    }
+
+    friend KOKKOS_FUNCTION constexpr bool operator<=(
+            CochainIterator const& xx,
+            CochainIterator const& yy)
+    {
+        return !(yy < xx);
+    }
+
+    friend KOKKOS_FUNCTION constexpr bool operator>=(
+            CochainIterator const& xx,
+            CochainIterator const& yy)
+    {
+        return !(xx < yy);
+    }
+
+    friend KOKKOS_FUNCTION constexpr CochainIterator operator+(CochainIterator i, difference_type n)
+    {
+        return i += n;
+    }
+
+    friend KOKKOS_FUNCTION constexpr CochainIterator operator+(difference_type n, CochainIterator i)
+    {
+        return i += n;
+    }
+
+    friend KOKKOS_FUNCTION constexpr CochainIterator operator-(CochainIterator i, difference_type n)
+    {
+        return i -= n;
+    }
+
+    friend KOKKOS_FUNCTION constexpr difference_type operator-(
+            CochainIterator const& xx,
+            CochainIterator const& yy)
+    {
+        return xx - yy;
     }
 };
 
@@ -197,7 +343,7 @@ std::ostream& operator<<(std::ostream& out, CochainType const& cochain)
     out << "[\n";
     for (auto i = cochain.begin(); i < cochain.end(); ++i) {
         if constexpr (misc::Specialization<typename CochainType::chain_type, Chain>) {
-            out << " " << *cochain.chain_it(i) << " : " << *i << "\n";
+            out << " " << i->simplex() << " : " << i->operator()() << "\n";
         } else if (misc::Specialization<typename CochainType::chain_type, LocalChain>) {
             out << " -> " << *cochain.chain_it(i) << " : " << *i << "\n";
         }

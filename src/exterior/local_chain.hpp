@@ -41,11 +41,12 @@ public:
     using simplex_type = SimplexType;
     using discrete_element_type = typename simplex_type::discrete_element_type;
     using discrete_vector_type = typename simplex_type::discrete_vector_type;
-    using vects_type = std::vector<discrete_vector_type>;
+    using simplices_type = std::vector<discrete_vector_type>;
 
 private:
+    static constexpr bool s_is_local = true;
     static constexpr std::size_t s_k = SimplexType::dimension();
-    vects_type m_vects;
+    simplices_type m_vects;
 
 public:
     KOKKOS_FUNCTION constexpr explicit LocalChain() noexcept : discrete_element_type {}, m_vects {}
@@ -99,6 +100,11 @@ public:
         assert(check() == 0 && "there are duplicate simplices in the chain");
     }
 
+    static KOKKOS_FUNCTION constexpr bool is_local() noexcept
+    {
+        return s_is_local;
+    }
+
     static KOKKOS_FUNCTION constexpr std::size_t dimension() noexcept
     {
         return s_k;
@@ -131,9 +137,19 @@ public:
         return 0;
     }
 
+    KOKKOS_FUNCTION auto begin()
+    {
+        return m_vects.begin();
+    }
+
     KOKKOS_FUNCTION auto begin() const
     {
         return m_vects.begin();
+    }
+
+    KOKKOS_FUNCTION auto end()
+    {
+        return m_vects.end();
     }
 
     KOKKOS_FUNCTION auto end() const
@@ -165,14 +181,14 @@ public:
 
     KOKKOS_FUNCTION LocalChain<SimplexType> operator+(SimplexType simplex)
     {
-        vects_type vects(m_vects);
+        simplices_type vects(m_vects);
         vects.push_back(simplex.discrete_vector());
         return LocalChain<SimplexType>(vects);
     }
 
     KOKKOS_FUNCTION LocalChain<SimplexType> operator+(LocalChain<SimplexType> simplices_to_add)
     {
-        vects_type vects(m_vects);
+        simplices_type vects(m_vects);
         vects.insert(vects.end(), simplices_to_add.begin(), simplices_to_add.end());
         return LocalChain<SimplexType>(vects);
     }
