@@ -13,9 +13,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 - Unify TensorAccessor::access_element() functions. Also get<Dims...>() in Tensor ?
 - Consider creating a misc enum for {-1 1} and use it in simplices/chains
 - The using at the beginning of Tensor should rely on base_type
-- /cond tensor and structured_cochain primary specialization
-- vect_type -> discrete_vector_type, elem_type -> discrete_element_type
-- element_type and scalar_element_type -> scalar_type
 - cochain iterator should give access to a cosimplex, not to the value
 - replace chain_it with value_it
 

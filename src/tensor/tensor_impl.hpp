@@ -461,14 +461,14 @@ struct LambdaMemElem<InterestDim>
 
 } // namespace detail
 
+// @cond
+
 template <class ElementType, class SupportType, class LayoutStridedPolicy, class MemorySpace>
 class Tensor;
 
 } // namespace tensor
 
 } // namespace sil
-
-// @cond
 
 namespace ddc {
 
@@ -484,11 +484,11 @@ inline constexpr bool enable_borrowed_chunk<
 
 } // namespace ddc
 
-// @endcond
-
 namespace sil {
 
 namespace tensor {
+
+// @endcond
 
 /// Tensor class
 template <class ElementType, class... DDim, class LayoutStridedPolicy, class MemorySpace>

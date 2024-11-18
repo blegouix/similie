@@ -13,7 +13,7 @@ namespace sil {
 
 namespace exterior {
 
-/// Cochain class
+/// Cosimplex class
 template <class SimplexType, class ElementType = double>
 class Cosimplex
 {
