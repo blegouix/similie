@@ -15,7 +15,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 - cochain iterator should give access to a cosimplex, not to the value
 - replace chain_it with value_it
 - usings in tensor tests
-- remove NullVect
 
 ----- CMAKE BASIC COMMAND -----
 
