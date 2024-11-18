@@ -64,7 +64,6 @@ struct CoboundaryTensorType<
 template <misc::Specialization<Cochain> CochainType>
 using coboundary_t = typename detail::CoboundaryType<CochainType>::type;
 
-
 template <
         misc::Specialization<tensor::TensorAntisymmetricIndex> CochainTag,
         tensor::TensorNatIndex TagToAddToCochain,
