@@ -134,8 +134,7 @@ coboundary(
                         CochainTag::rank(),
                         typename AntisymmetricTensorType::non_indices_domain_t>();
                 auto cochain = Cochain(chain, coboundary_tensor[elem]);
-                for (auto i = cochain.begin(); i < cochain.end();
-                     ++i) { // TODO Better to iterate on tensor elements ?
+                for (auto i = cochain.begin(); i < cochain.end(); ++i) {
                     sil::exterior::Chain simplex_boundary = boundary(
                             sil::exterior::Simplex(elem, *cochain.chain_it(i))); // TODO simplify
                     std::vector<double> values(simplex_boundary.size());
