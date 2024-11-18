@@ -145,12 +145,12 @@ Collaboration diagram for sil::exterior::LocalChain&lt; SimplexType, Allocator &
 Public Types</h2></td></tr>
 <tr class="memitem:a09062d7d1f332315a8d15f0c2f608847" id="r_a09062d7d1f332315a8d15f0c2f608847"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1LocalChain.html#a09062d7d1f332315a8d15f0c2f608847">simplex_type</a> = SimplexType</td></tr>
 <tr class="separator:a09062d7d1f332315a8d15f0c2f608847"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a545da4c1d5fb98737450212ef8875159" id="r_a545da4c1d5fb98737450212ef8875159"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1LocalChain.html#a545da4c1d5fb98737450212ef8875159">elem_type</a> = typename simplex_type::elem_type</td></tr>
-<tr class="separator:a545da4c1d5fb98737450212ef8875159"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6f15f9b93a6cb988d8eb498ec7902ebe" id="r_a6f15f9b93a6cb988d8eb498ec7902ebe"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1LocalChain.html#a6f15f9b93a6cb988d8eb498ec7902ebe">vect_type</a> = typename simplex_type::vect_type</td></tr>
-<tr class="separator:a6f15f9b93a6cb988d8eb498ec7902ebe"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a892821c2b20997d4ac46ccb1f5930577" id="r_a892821c2b20997d4ac46ccb1f5930577"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1LocalChain.html#a892821c2b20997d4ac46ccb1f5930577">vects_type</a> = std::vector&lt; <a class="el" href="classsil_1_1exterior_1_1LocalChain.html#a6f15f9b93a6cb988d8eb498ec7902ebe">vect_type</a> &gt;</td></tr>
-<tr class="separator:a892821c2b20997d4ac46ccb1f5930577"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad534a9401c93df9eeb9d305a43dd6fcb" id="r_ad534a9401c93df9eeb9d305a43dd6fcb"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1LocalChain.html#ad534a9401c93df9eeb9d305a43dd6fcb">discrete_element_type</a> = typename simplex_type::discrete_element_type</td></tr>
+<tr class="separator:ad534a9401c93df9eeb9d305a43dd6fcb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a127dcd142a23f2e11367a3e7c6bc7d97" id="r_a127dcd142a23f2e11367a3e7c6bc7d97"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1LocalChain.html#a127dcd142a23f2e11367a3e7c6bc7d97">discrete_vector_type</a> = typename simplex_type::discrete_vector_type</td></tr>
+<tr class="separator:a127dcd142a23f2e11367a3e7c6bc7d97"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a18b82f72b248daa145287488ca2dec8c" id="r_a18b82f72b248daa145287488ca2dec8c"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1LocalChain.html#a18b82f72b248daa145287488ca2dec8c">vects_type</a> = std::vector&lt; <a class="el" href="classsil_1_1exterior_1_1LocalChain.html#a127dcd142a23f2e11367a3e7c6bc7d97">discrete_vector_type</a> &gt;</td></tr>
+<tr class="separator:a18b82f72b248daa145287488ca2dec8c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -165,8 +165,8 @@ requires <a class="el" href="namespacesil_1_1misc.html#a094c71e44717da55afa244de
 <tr class="memitem:a20286037a815f1d6976ce7367fb00336" id="r_a20286037a815f1d6976ce7367fb00336"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; ddc::DiscreteVector &gt;... T&gt; </td></tr>
 <tr class="memitem:a20286037a815f1d6976ce7367fb00336"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1LocalChain.html#a20286037a815f1d6976ce7367fb00336">LocalChain</a> (T... vect) noexcept</td></tr>
 <tr class="separator:a20286037a815f1d6976ce7367fb00336"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa23281dbbfdf08c54effbad785c51d17" id="r_aa23281dbbfdf08c54effbad785c51d17"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1LocalChain.html#aa23281dbbfdf08c54effbad785c51d17">LocalChain</a> (std::vector&lt; <a class="el" href="classsil_1_1exterior_1_1LocalChain.html#a6f15f9b93a6cb988d8eb498ec7902ebe">vect_type</a> &gt; vects) noexcept</td></tr>
-<tr class="separator:aa23281dbbfdf08c54effbad785c51d17"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a40d140268067df038f3c7d20b1f6150e" id="r_a40d140268067df038f3c7d20b1f6150e"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1LocalChain.html#a40d140268067df038f3c7d20b1f6150e">LocalChain</a> (std::vector&lt; <a class="el" href="classsil_1_1exterior_1_1LocalChain.html#a127dcd142a23f2e11367a3e7c6bc7d97">discrete_vector_type</a> &gt; vects) noexcept</td></tr>
+<tr class="separator:a40d140268067df038f3c7d20b1f6150e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8d437750b6262bd74f9e2220feb37b5f" id="r_a8d437750b6262bd74f9e2220feb37b5f"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1LocalChain.html#a8d437750b6262bd74f9e2220feb37b5f">size</a> () noexcept</td></tr>
 <tr class="separator:a8d437750b6262bd74f9e2220feb37b5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8c29fe341864b82eb59a39664097508d" id="r_a8c29fe341864b82eb59a39664097508d"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION std::size_t const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1LocalChain.html#a8c29fe341864b82eb59a39664097508d">size</a> () const noexcept</td></tr>
@@ -207,10 +207,10 @@ Static Public Member Functions</h2></td></tr>
 <tr class="separator:a47e27a39953ed55babc4cb3344962d5c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><div class="compoundTemplParams">template&lt;class SimplexType, class Allocator = std::allocator&lt;typename SimplexType::vect_type&gt;&gt;<br />
+<div class="textblock"><div class="compoundTemplParams">template&lt;class SimplexType, class Allocator = std::allocator&lt;typename SimplexType::discrete_vector_type&gt;&gt;<br />
 class sil::exterior::LocalChain&lt; SimplexType, Allocator &gt;</div><p><a class="el" href="classsil_1_1exterior_1_1LocalChain.html" title="LocalChain class.">LocalChain</a> class. </p>
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00047">47</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00038">38</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
 <a id="a09062d7d1f332315a8d15f0c2f608847" name="a09062d7d1f332315a8d15f0c2f608847"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a09062d7d1f332315a8d15f0c2f608847">&#9670;&#160;</a></span>simplex_type</h2>
@@ -218,7 +218,7 @@ class sil::exterior::LocalChain&lt; SimplexType, Allocator &gt;</div><p><a class
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::vect_type&gt;&gt; </div>
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::discrete_vector_type&gt;&gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1LocalChain.html">sil::exterior::LocalChain</a>&lt; SimplexType, Allocator &gt;::simplex_type =  SimplexType</td>
@@ -226,61 +226,61 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00050">50</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00041">41</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a545da4c1d5fb98737450212ef8875159" name="a545da4c1d5fb98737450212ef8875159"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a545da4c1d5fb98737450212ef8875159">&#9670;&#160;</a></span>elem_type</h2>
+<a id="ad534a9401c93df9eeb9d305a43dd6fcb" name="ad534a9401c93df9eeb9d305a43dd6fcb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad534a9401c93df9eeb9d305a43dd6fcb">&#9670;&#160;</a></span>discrete_element_type</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::vect_type&gt;&gt; </div>
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::discrete_vector_type&gt;&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1LocalChain.html">sil::exterior::LocalChain</a>&lt; SimplexType, Allocator &gt;::elem_type =  typename simplex_type::elem_type</td>
+          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1LocalChain.html">sil::exterior::LocalChain</a>&lt; SimplexType, Allocator &gt;::discrete_element_type =  typename simplex_type::discrete_element_type</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00051">51</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00042">42</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a6f15f9b93a6cb988d8eb498ec7902ebe" name="a6f15f9b93a6cb988d8eb498ec7902ebe"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6f15f9b93a6cb988d8eb498ec7902ebe">&#9670;&#160;</a></span>vect_type</h2>
+<a id="a127dcd142a23f2e11367a3e7c6bc7d97" name="a127dcd142a23f2e11367a3e7c6bc7d97"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a127dcd142a23f2e11367a3e7c6bc7d97">&#9670;&#160;</a></span>discrete_vector_type</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::vect_type&gt;&gt; </div>
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::discrete_vector_type&gt;&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1LocalChain.html">sil::exterior::LocalChain</a>&lt; SimplexType, Allocator &gt;::vect_type =  typename simplex_type::vect_type</td>
+          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1LocalChain.html">sil::exterior::LocalChain</a>&lt; SimplexType, Allocator &gt;::discrete_vector_type =  typename simplex_type::discrete_vector_type</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00052">52</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00043">43</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a892821c2b20997d4ac46ccb1f5930577" name="a892821c2b20997d4ac46ccb1f5930577"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a892821c2b20997d4ac46ccb1f5930577">&#9670;&#160;</a></span>vects_type</h2>
+<a id="a18b82f72b248daa145287488ca2dec8c" name="a18b82f72b248daa145287488ca2dec8c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a18b82f72b248daa145287488ca2dec8c">&#9670;&#160;</a></span>vects_type</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::vect_type&gt;&gt; </div>
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::discrete_vector_type&gt;&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1LocalChain.html">sil::exterior::LocalChain</a>&lt; SimplexType, Allocator &gt;::vects_type =  std::vector&lt;<a class="el" href="classsil_1_1exterior_1_1LocalChain.html#a6f15f9b93a6cb988d8eb498ec7902ebe">vect_type</a>&gt;</td>
+          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1LocalChain.html">sil::exterior::LocalChain</a>&lt; SimplexType, Allocator &gt;::vects_type =  std::vector&lt;<a class="el" href="classsil_1_1exterior_1_1LocalChain.html#a127dcd142a23f2e11367a3e7c6bc7d97">discrete_vector_type</a>&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00053">53</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00044">44</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -291,7 +291,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::vect_type&gt;&gt; </div>
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::discrete_vector_type&gt;&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -310,7 +310,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00060">60</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00051">51</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -320,7 +320,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::vect_type&gt;&gt; </div>
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::discrete_vector_type&gt;&gt; </div>
 <div class="memtemplate">
 template&lt;misc::NotSpecialization&lt; ddc::DiscreteVector &gt;... T&gt; <br />
 requires <a class="el" href="namespacesil_1_1misc.html#a094c71e44717da55afa244de80ca4b2c">misc::are_all_same</a>&lt;T...&gt;</div>
@@ -343,7 +343,7 @@ requires <a class="el" href="namespacesil_1_1misc.html#a094c71e44717da55afa244de
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00066">66</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00059">59</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -353,7 +353,7 @@ requires <a class="el" href="namespacesil_1_1misc.html#a094c71e44717da55afa244de
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::vect_type&gt;&gt; </div>
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::discrete_vector_type&gt;&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -373,7 +373,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00076">76</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00069">69</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -383,7 +383,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::vect_type&gt;&gt; </div>
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::discrete_vector_type&gt;&gt; </div>
 <div class="memtemplate">
 template&lt;misc::Specialization&lt; ddc::DiscreteVector &gt;... T&gt; </div>
 <table class="mlabels">
@@ -405,17 +405,17 @@ template&lt;misc::Specialization&lt; ddc::DiscreteVector &gt;... T&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00097">97</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00090">90</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="aa23281dbbfdf08c54effbad785c51d17" name="aa23281dbbfdf08c54effbad785c51d17"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa23281dbbfdf08c54effbad785c51d17">&#9670;&#160;</a></span>LocalChain() <span class="overload">[5/5]</span></h2>
+<a id="a40d140268067df038f3c7d20b1f6150e" name="a40d140268067df038f3c7d20b1f6150e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a40d140268067df038f3c7d20b1f6150e">&#9670;&#160;</a></span>LocalChain() <span class="overload">[5/5]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::vect_type&gt;&gt; </div>
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::discrete_vector_type&gt;&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -423,7 +423,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
         <tr>
           <td class="memname">KOKKOS_FUNCTION constexpr <a class="el" href="classsil_1_1exterior_1_1LocalChain.html">sil::exterior::LocalChain</a>&lt; SimplexType, Allocator &gt;::LocalChain </td>
           <td>(</td>
-          <td class="paramtype">std::vector&lt; <a class="el" href="classsil_1_1exterior_1_1LocalChain.html#a6f15f9b93a6cb988d8eb498ec7902ebe">vect_type</a> &gt;&#160;</td>
+          <td class="paramtype">std::vector&lt; <a class="el" href="classsil_1_1exterior_1_1LocalChain.html#a127dcd142a23f2e11367a3e7c6bc7d97">discrete_vector_type</a> &gt;&#160;</td>
           <td class="paramname"><em>vects</em></td><td>)</td>
           <td></td>
         </tr>
@@ -435,7 +435,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00103">103</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00096">96</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -446,7 +446,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::vect_type&gt;&gt; </div>
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::discrete_vector_type&gt;&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -465,7 +465,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00109">109</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00102">102</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -475,7 +475,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::vect_type&gt;&gt; </div>
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::discrete_vector_type&gt;&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -494,7 +494,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00114">114</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00107">107</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -504,7 +504,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::vect_type&gt;&gt; </div>
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::discrete_vector_type&gt;&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -523,7 +523,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00119">119</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00112">112</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -533,7 +533,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::vect_type&gt;&gt; </div>
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::discrete_vector_type&gt;&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -552,7 +552,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00124">124</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00117">117</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -562,7 +562,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::vect_type&gt;&gt; </div>
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::discrete_vector_type&gt;&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -581,7 +581,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00129">129</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00122">122</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -591,7 +591,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::vect_type&gt;&gt; </div>
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::discrete_vector_type&gt;&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -610,7 +610,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00141">141</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00134">134</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -620,7 +620,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::vect_type&gt;&gt; </div>
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::discrete_vector_type&gt;&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -639,7 +639,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00146">146</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00139">139</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -649,7 +649,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::vect_type&gt;&gt; </div>
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::discrete_vector_type&gt;&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -668,7 +668,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00151">151</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00144">144</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -678,7 +678,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::vect_type&gt;&gt; </div>
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::discrete_vector_type&gt;&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -697,7 +697,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00156">156</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00149">149</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -707,7 +707,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::vect_type&gt;&gt; </div>
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::discrete_vector_type&gt;&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -727,7 +727,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00161">161</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00154">154</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -737,7 +737,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::vect_type&gt;&gt; </div>
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::discrete_vector_type&gt;&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -757,7 +757,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00166">166</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00159">159</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -767,7 +767,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::vect_type&gt;&gt; </div>
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::discrete_vector_type&gt;&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -794,7 +794,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::vect_type&gt;&gt; </div>
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::discrete_vector_type&gt;&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -814,7 +814,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00173">173</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00166">166</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -824,7 +824,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::vect_type&gt;&gt; </div>
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::discrete_vector_type&gt;&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -844,7 +844,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00180">180</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00173">173</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -854,7 +854,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::vect_type&gt;&gt; </div>
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::discrete_vector_type&gt;&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -882,7 +882,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::vect_type&gt;&gt; </div>
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::discrete_vector_type&gt;&gt; </div>
 <div class="memtemplate">
 template&lt;class T &gt; </div>
 <table class="mlabels">
@@ -904,7 +904,7 @@ template&lt;class T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00190">190</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00183">183</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -914,7 +914,7 @@ template&lt;class T &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::vect_type&gt;&gt; </div>
+template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename SimplexType::discrete_vector_type&gt;&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -934,7 +934,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;typename Si
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00201">201</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00194">194</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>

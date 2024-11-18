@@ -149,10 +149,10 @@ Public Types</h2></td></tr>
 <tr class="separator:aac31675af3cf925adfe85748dce99120"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a43af062b2238fdca597b927866222d4a" id="r_a43af062b2238fdca597b927866222d4a"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a43af062b2238fdca597b927866222d4a">element_type</a> = ElementType</td></tr>
 <tr class="separator:a43af062b2238fdca597b927866222d4a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab9408980b89e5df779974843b8a04a90" id="r_ab9408980b89e5df779974843b8a04a90"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#ab9408980b89e5df779974843b8a04a90">elem_type</a> = ChainType::elem_type</td></tr>
-<tr class="separator:ab9408980b89e5df779974843b8a04a90"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a808203426dd44a2e547b346254595d84" id="r_a808203426dd44a2e547b346254595d84"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a808203426dd44a2e547b346254595d84">vect_type</a> = ChainType::vect_type</td></tr>
-<tr class="separator:a808203426dd44a2e547b346254595d84"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab529664e52931c0ea1b3ebb83a1bb375" id="r_ab529664e52931c0ea1b3ebb83a1bb375"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#ab529664e52931c0ea1b3ebb83a1bb375">discrete_element_type</a> = ChainType::discrete_element_type</td></tr>
+<tr class="separator:ab529664e52931c0ea1b3ebb83a1bb375"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a23c3a3b730c8320e8ea117b0154a80d5" id="r_a23c3a3b730c8320e8ea117b0154a80d5"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a23c3a3b730c8320e8ea117b0154a80d5">discrete_vector_type</a> = ChainType::discrete_vector_type</td></tr>
+<tr class="separator:a23c3a3b730c8320e8ea117b0154a80d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5b6c9ee6a9ccbd8256445f1f0824c62a" id="r_a5b6c9ee6a9ccbd8256445f1f0824c62a"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a5b6c9ee6a9ccbd8256445f1f0824c62a">values_type</a> = std::vector&lt; ElementType, Allocator &gt;</td></tr>
 <tr class="separator:a5b6c9ee6a9ccbd8256445f1f0824c62a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -167,7 +167,7 @@ requires (sizeof...(T) &gt;= 1)</td></tr>
 <tr class="memitem:a7958ca715da75fa2acf94cd3c9f17671" id="r_a7958ca715da75fa2acf94cd3c9f17671"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a7958ca715da75fa2acf94cd3c9f17671">Cochain</a> (ChainType &amp;<a class="el" href="classsil_1_1exterior_1_1Cochain.html#a44510b7f6fc7748be68ac5dfd02a3990">chain</a>, std::vector&lt; ElementType &gt; &amp;<a class="el" href="classsil_1_1exterior_1_1Cochain.html#a163ec69903f763f302c93d6fcc6f82d9">values</a>) noexcept</td></tr>
 <tr class="separator:a7958ca715da75fa2acf94cd3c9f17671"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0b39bda611918543b5a1c0f1e8354dae" id="r_a0b39bda611918543b5a1c0f1e8354dae"><td class="memTemplParams" colspan="2">template&lt;class OElementType , misc::Specialization&lt; <a class="el" href="structsil_1_1tensor_1_1TensorAntisymmetricIndex.html">tensor::TensorAntisymmetricIndex</a> &gt; AntisymmetricIndex, class LayoutStridedPolicy , class MemorySpace &gt; </td></tr>
-<tr class="memitem:a0b39bda611918543b5a1c0f1e8354dae"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a0b39bda611918543b5a1c0f1e8354dae">Cochain</a> (ChainType &amp;<a class="el" href="classsil_1_1exterior_1_1Cochain.html#a44510b7f6fc7748be68ac5dfd02a3990">chain</a>, <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a>&lt; OElementType, ddc::DiscreteDomain&lt; AntisymmetricIndex &gt;, LayoutStridedPolicy, MemorySpace &gt; tensor) noexcept</td></tr>
+<tr class="memitem:a0b39bda611918543b5a1c0f1e8354dae"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a0b39bda611918543b5a1c0f1e8354dae">Cochain</a> (ChainType &amp;<a class="el" href="classsil_1_1exterior_1_1Cochain.html#a44510b7f6fc7748be68ac5dfd02a3990">chain</a>, tensor::Tensor&lt; OElementType, ddc::DiscreteDomain&lt; AntisymmetricIndex &gt;, LayoutStridedPolicy, MemorySpace &gt; tensor) noexcept</td></tr>
 <tr class="separator:a0b39bda611918543b5a1c0f1e8354dae"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab2421074433be34821a40a375020f263" id="r_ab2421074433be34821a40a375020f263"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#ab2421074433be34821a40a375020f263">size</a> () noexcept</td></tr>
 <tr class="separator:ab2421074433be34821a40a375020f263"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -268,8 +268,8 @@ template&lt;class ChainType , class ElementType  = double, class Allocator  = st
 
 </div>
 </div>
-<a id="ab9408980b89e5df779974843b8a04a90" name="ab9408980b89e5df779974843b8a04a90"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab9408980b89e5df779974843b8a04a90">&#9670;&#160;</a></span>elem_type</h2>
+<a id="ab529664e52931c0ea1b3ebb83a1bb375" name="ab529664e52931c0ea1b3ebb83a1bb375"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab529664e52931c0ea1b3ebb83a1bb375">&#9670;&#160;</a></span>discrete_element_type</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -277,7 +277,7 @@ template&lt;class ChainType , class ElementType  = double, class Allocator  = st
 template&lt;class ChainType , class ElementType  = double, class Allocator  = std::allocator&lt;ElementType&gt;&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, Allocator &gt;::elem_type =  ChainType::elem_type</td>
+          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, Allocator &gt;::discrete_element_type =  ChainType::discrete_element_type</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -286,8 +286,8 @@ template&lt;class ChainType , class ElementType  = double, class Allocator  = st
 
 </div>
 </div>
-<a id="a808203426dd44a2e547b346254595d84" name="a808203426dd44a2e547b346254595d84"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a808203426dd44a2e547b346254595d84">&#9670;&#160;</a></span>vect_type</h2>
+<a id="a23c3a3b730c8320e8ea117b0154a80d5" name="a23c3a3b730c8320e8ea117b0154a80d5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a23c3a3b730c8320e8ea117b0154a80d5">&#9670;&#160;</a></span>discrete_vector_type</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -295,7 +295,7 @@ template&lt;class ChainType , class ElementType  = double, class Allocator  = st
 template&lt;class ChainType , class ElementType  = double, class Allocator  = std::allocator&lt;ElementType&gt;&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, Allocator &gt;::vect_type =  ChainType::vect_type</td>
+          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, Allocator &gt;::discrete_vector_type =  ChainType::discrete_vector_type</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -458,7 +458,7 @@ template&lt;class OElementType , misc::Specialization&lt; <a class="el" href="st
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a>&lt; OElementType, ddc::DiscreteDomain&lt; AntisymmetricIndex &gt;, LayoutStridedPolicy, MemorySpace &gt;&#160;</td>
+          <td class="paramtype">tensor::Tensor&lt; OElementType, ddc::DiscreteDomain&lt; AntisymmetricIndex &gt;, LayoutStridedPolicy, MemorySpace &gt;&#160;</td>
           <td class="paramname"><em>tensor</em>&#160;</td>
         </tr>
         <tr>

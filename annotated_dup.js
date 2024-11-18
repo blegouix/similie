@@ -9,8 +9,6 @@ var annotated_dup =
         [ "Chain", "classsil_1_1exterior_1_1Chain.html", "classsil_1_1exterior_1_1Chain" ],
         [ "Cochain", "classsil_1_1exterior_1_1Cochain.html", "classsil_1_1exterior_1_1Cochain" ],
         [ "Cosimplex", "classsil_1_1exterior_1_1Cosimplex.html", "classsil_1_1exterior_1_1Cosimplex" ],
-        [ "FormWrapper", "namespacesil_1_1exterior.html#structsil_1_1exterior_1_1FormWrapper", null ],
-        [ "FormWrapper< T, ElementType, Allocator >", "namespacesil_1_1exterior.html#structsil_1_1exterior_1_1FormWrapper_3_01T_00_01ElementType_00_01Allocator_01_4", "namespacesil_1_1exterior_structsil_1_1exterior_1_1FormWrapper_3_01T_00_01ElementType_00_01Allocator_01_4_dup" ],
         [ "LocalChain", "classsil_1_1exterior_1_1LocalChain.html", "classsil_1_1exterior_1_1LocalChain" ],
         [ "Simplex", "classsil_1_1exterior_1_1Simplex.html", "classsil_1_1exterior_1_1Simplex" ]
       ] ],
@@ -27,7 +25,6 @@ var annotated_dup =
         [ "MetricIndex1", "structsil_1_1tensor_1_1MetricIndex1.html", null ],
         [ "MetricIndex2", "structsil_1_1tensor_1_1MetricIndex2.html", null ],
         [ "prime", "structsil_1_1tensor_1_1prime.html", null ],
-        [ "Tensor", "namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor", null ],
         [ "Tensor< ElementType, ddc::DiscreteDomain< DDim... >, LayoutStridedPolicy, MemorySpace >", "classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html", "classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c" ],
         [ "TensorAccessor", "classsil_1_1tensor_1_1TensorAccessor.html", "classsil_1_1tensor_1_1TensorAccessor" ],
         [ "TensorAntisymmetricIndex", "structsil_1_1tensor_1_1TensorAntisymmetricIndex.html", "structsil_1_1tensor_1_1TensorAntisymmetricIndex" ],

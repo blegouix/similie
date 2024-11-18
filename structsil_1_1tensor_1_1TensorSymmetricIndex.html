@@ -161,8 +161,8 @@ Static Public Member Functions</h2></td></tr>
 <tr class="separator:ad953b68a88fe3b806d3214264f4232bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1c86c01d399f9ba0dd4a60dbafd64582" id="r_a1c86c01d399f9ba0dd4a60dbafd64582"><td class="memItemLeft" align="right" valign="top">static constexpr std::pair&lt; std::vector&lt; double &gt;, std::vector&lt; std::size_t &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1tensor_1_1TensorSymmetricIndex.html#a1c86c01d399f9ba0dd4a60dbafd64582">access_id_to_mem_lin_comb</a> (std::size_t <a class="el" href="structsil_1_1tensor_1_1TensorSymmetricIndex.html#ad953b68a88fe3b806d3214264f4232bb">access_id</a>)</td></tr>
 <tr class="separator:a1c86c01d399f9ba0dd4a60dbafd64582"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a306b7309a1d23c150a4d77e64c380e0b" id="r_a306b7309a1d23c150a4d77e64c380e0b"><td class="memTemplParams" colspan="2">template&lt;class <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a> , class Elem , class Id &gt; </td></tr>
-<tr class="memitem:a306b7309a1d23c150a4d77e64c380e0b"><td class="memTemplItemLeft" align="right" valign="top">static constexpr Tensor::element_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structsil_1_1tensor_1_1TensorSymmetricIndex.html#a306b7309a1d23c150a4d77e64c380e0b">process_access</a> (std::function&lt; typename Tensor::element_type(<a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a>, Elem)&gt; access, <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a> tensor, Elem elem)</td></tr>
+<tr class="memitem:a306b7309a1d23c150a4d77e64c380e0b" id="r_a306b7309a1d23c150a4d77e64c380e0b"><td class="memTemplParams" colspan="2">template&lt;class Tensor , class Elem , class Id &gt; </td></tr>
+<tr class="memitem:a306b7309a1d23c150a4d77e64c380e0b"><td class="memTemplItemLeft" align="right" valign="top">static constexpr Tensor::element_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structsil_1_1tensor_1_1TensorSymmetricIndex.html#a306b7309a1d23c150a4d77e64c380e0b">process_access</a> (std::function&lt; typename Tensor::element_type(Tensor, Elem)&gt; access, Tensor tensor, Elem elem)</td></tr>
 <tr class="separator:a306b7309a1d23c150a4d77e64c380e0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
@@ -437,7 +437,7 @@ template&lt;class... TensorIndex&gt; </div>
 <div class="memtemplate">
 template&lt;class... TensorIndex&gt; </div>
 <div class="memtemplate">
-template&lt;class <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a> , class Elem , class Id &gt; </div>
+template&lt;class Tensor , class Elem , class Id &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -445,13 +445,13 @@ template&lt;class <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1te
         <tr>
           <td class="memname">static constexpr Tensor::element_type <a class="el" href="structsil_1_1tensor_1_1TensorSymmetricIndex.html">sil::tensor::TensorSymmetricIndex</a>&lt; TensorIndex &gt;::process_access </td>
           <td>(</td>
-          <td class="paramtype">std::function&lt; typename Tensor::element_type(<a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a>, Elem)&gt;&#160;</td>
+          <td class="paramtype">std::function&lt; typename Tensor::element_type(Tensor, Elem)&gt;&#160;</td>
           <td class="paramname"><em>access</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a>&#160;</td>
+          <td class="paramtype">Tensor&#160;</td>
           <td class="paramname"><em>tensor</em>, </td>
         </tr>
         <tr>

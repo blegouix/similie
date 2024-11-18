@@ -312,13 +312,13 @@ $(document).ready(function(){initNavTree('tensor__prod_8hpp_source.html',''); in
 <div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>       Kokkos::DefaultHostExecutionSpace::memory_space&gt;</div>
 <div class="foldopen" id="foldopen00182" data-start="{" data-end="}">
 <div class="line"><a id="l00182" name="l00182"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#ad0909bef2c4e7603aff7b1b57592f0c2">  182</a></span>tensor_prod(</div>
-<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>        <a class="code hl_class" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a>&lt;ElementType,</div>
+<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>        Tensor&lt;ElementType,</div>
 <div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>               ddc::DiscreteDomain&lt;ProdDDim...&gt;,</div>
 <div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>               Kokkos::layout_right,</div>
 <div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>               Kokkos::DefaultHostExecutionSpace::memory_space&gt; prod_tensor,</div>
-<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>        <a class="code hl_class" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a>&lt;ElementType, ddc::DiscreteDomain&lt;Index1...&gt;, LayoutStridedPolicy, MemorySpace&gt;</div>
+<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>        Tensor&lt;ElementType, ddc::DiscreteDomain&lt;Index1...&gt;, LayoutStridedPolicy, MemorySpace&gt;</div>
 <div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>                tensor1,</div>
-<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>        <a class="code hl_class" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a>&lt;ElementType, ddc::DiscreteDomain&lt;Index2...&gt;, LayoutStridedPolicy, MemorySpace&gt;</div>
+<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>        Tensor&lt;ElementType, ddc::DiscreteDomain&lt;Index2...&gt;, LayoutStridedPolicy, MemorySpace&gt;</div>
 <div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>                tensor2)</div>
 <div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span>{</div>
 <div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>    <a class="code hl_function" href="namespacesil_1_1tensor.html#a13d4a3e249edb25ac1599f0598af2fcc">check_tensors_compatibility</a>&lt;</div>
@@ -388,7 +388,7 @@ $(document).ready(function(){initNavTree('tensor__prod_8hpp_source.html',''); in
 <div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span>        ddc::Chunk uncompressed_tensor1_alloc(</div>
 <div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span>                Index1::subindices_domain(),</div>
 <div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span>                ddc::HostAllocator&lt;double&gt;());</div>
-<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span>        <a class="code hl_class" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a>&lt;</div>
+<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span>        tensor::Tensor&lt;</div>
 <div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span>                double,</div>
 <div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span>                <span class="keyword">typename</span> Index1::subindices_domain_t,</div>
 <div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span>                Kokkos::layout_right,</div>
@@ -416,12 +416,12 @@ $(document).ready(function(){initNavTree('tensor__prod_8hpp_source.html',''); in
 <div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span>       Kokkos::DefaultHostExecutionSpace::memory_space&gt;</div>
 <div class="foldopen" id="foldopen00284" data-start="{" data-end="}">
 <div class="line"><a id="l00284" name="l00284"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#ab4f3792878f8b9ff69a73f9b53eafc1b">  284</a></span>tensor_prod(</div>
-<div class="line"><a id="l00285" name="l00285"></a><span class="lineno">  285</span>        <a class="code hl_class" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a>&lt;ElementType,</div>
+<div class="line"><a id="l00285" name="l00285"></a><span class="lineno">  285</span>        Tensor&lt;ElementType,</div>
 <div class="line"><a id="l00286" name="l00286"></a><span class="lineno">  286</span>               ddc::DiscreteDomain&lt;ProdDDim...&gt;,</div>
 <div class="line"><a id="l00287" name="l00287"></a><span class="lineno">  287</span>               Kokkos::layout_right,</div>
 <div class="line"><a id="l00288" name="l00288"></a><span class="lineno">  288</span>               Kokkos::DefaultHostExecutionSpace::memory_space&gt; prod_tensor,</div>
-<div class="line"><a id="l00289" name="l00289"></a><span class="lineno">  289</span>        <a class="code hl_class" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a>&lt;ElementType, ddc::DiscreteDomain&lt;Index1&gt;, LayoutStridedPolicy, MemorySpace&gt; tensor1,</div>
-<div class="line"><a id="l00290" name="l00290"></a><span class="lineno">  290</span>        <a class="code hl_class" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a>&lt;ElementType, ddc::DiscreteDomain&lt;DDim2...&gt;, LayoutStridedPolicy, MemorySpace&gt;</div>
+<div class="line"><a id="l00289" name="l00289"></a><span class="lineno">  289</span>        Tensor&lt;ElementType, ddc::DiscreteDomain&lt;Index1&gt;, LayoutStridedPolicy, MemorySpace&gt; tensor1,</div>
+<div class="line"><a id="l00290" name="l00290"></a><span class="lineno">  290</span>        Tensor&lt;ElementType, ddc::DiscreteDomain&lt;DDim2...&gt;, LayoutStridedPolicy, MemorySpace&gt;</div>
 <div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span>                tensor2)</div>
 <div class="line"><a id="l00292" name="l00292"></a><span class="lineno">  292</span>{</div>
 <div class="line"><a id="l00293" name="l00293"></a><span class="lineno">  293</span>    <span class="comment">/*</span></div>
@@ -485,7 +485,7 @@ $(document).ready(function(){initNavTree('tensor__prod_8hpp_source.html',''); in
 <div class="line"><a id="l00350" name="l00350"></a><span class="lineno">  350</span>        ddc::Chunk uncompressed_tensor1_alloc(</div>
 <div class="line"><a id="l00351" name="l00351"></a><span class="lineno">  351</span>                Index1::subindices_domain(),</div>
 <div class="line"><a id="l00352" name="l00352"></a><span class="lineno">  352</span>                ddc::HostAllocator&lt;double&gt;());</div>
-<div class="line"><a id="l00353" name="l00353"></a><span class="lineno">  353</span>        <a class="code hl_class" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a>&lt;</div>
+<div class="line"><a id="l00353" name="l00353"></a><span class="lineno">  353</span>        tensor::Tensor&lt;</div>
 <div class="line"><a id="l00354" name="l00354"></a><span class="lineno">  354</span>                double,</div>
 <div class="line"><a id="l00355" name="l00355"></a><span class="lineno">  355</span>                <span class="keyword">typename</span> Index1::subindices_domain_t,</div>
 <div class="line"><a id="l00356" name="l00356"></a><span class="lineno">  356</span>                Kokkos::layout_right,</div>
@@ -495,7 +495,7 @@ $(document).ready(function(){initNavTree('tensor__prod_8hpp_source.html',''); in
 <div class="line"><a id="l00360" name="l00360"></a><span class="lineno">  360</span>        ddc::Chunk uncompressed_tensor2_alloc(</div>
 <div class="line"><a id="l00361" name="l00361"></a><span class="lineno">  361</span>                Index2::subindices_domain(),</div>
 <div class="line"><a id="l00362" name="l00362"></a><span class="lineno">  362</span>                ddc::HostAllocator&lt;double&gt;());</div>
-<div class="line"><a id="l00363" name="l00363"></a><span class="lineno">  363</span>        <a class="code hl_class" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a>&lt;</div>
+<div class="line"><a id="l00363" name="l00363"></a><span class="lineno">  363</span>        tensor::Tensor&lt;</div>
 <div class="line"><a id="l00364" name="l00364"></a><span class="lineno">  364</span>                double,</div>
 <div class="line"><a id="l00365" name="l00365"></a><span class="lineno">  365</span>                <span class="keyword">typename</span> Index2::subindices_domain_t,</div>
 <div class="line"><a id="l00366" name="l00366"></a><span class="lineno">  366</span>                Kokkos::layout_right,</div>
@@ -524,12 +524,12 @@ $(document).ready(function(){initNavTree('tensor__prod_8hpp_source.html',''); in
 <div class="line"><a id="l00389" name="l00389"></a><span class="lineno">  389</span>       Kokkos::DefaultHostExecutionSpace::memory_space&gt;</div>
 <div class="foldopen" id="foldopen00390" data-start="{" data-end="}">
 <div class="line"><a id="l00390" name="l00390"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#ab1850d31897a1dd43622b0e25d1a1b28">  390</a></span>tensor_prod(</div>
-<div class="line"><a id="l00391" name="l00391"></a><span class="lineno">  391</span>        <a class="code hl_class" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a>&lt;ElementType,</div>
+<div class="line"><a id="l00391" name="l00391"></a><span class="lineno">  391</span>        Tensor&lt;ElementType,</div>
 <div class="line"><a id="l00392" name="l00392"></a><span class="lineno">  392</span>               ddc::DiscreteDomain&lt;ProdDDim...&gt;,</div>
 <div class="line"><a id="l00393" name="l00393"></a><span class="lineno">  393</span>               Kokkos::layout_right,</div>
 <div class="line"><a id="l00394" name="l00394"></a><span class="lineno">  394</span>               Kokkos::DefaultHostExecutionSpace::memory_space&gt; prod_tensor,</div>
-<div class="line"><a id="l00395" name="l00395"></a><span class="lineno">  395</span>        <a class="code hl_class" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a>&lt;ElementType, ddc::DiscreteDomain&lt;Index1&gt;, LayoutStridedPolicy, MemorySpace&gt; tensor1,</div>
-<div class="line"><a id="l00396" name="l00396"></a><span class="lineno">  396</span>        <a class="code hl_class" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a>&lt;ElementType, ddc::DiscreteDomain&lt;Index2&gt;, LayoutStridedPolicy, MemorySpace&gt; tensor2)</div>
+<div class="line"><a id="l00395" name="l00395"></a><span class="lineno">  395</span>        Tensor&lt;ElementType, ddc::DiscreteDomain&lt;Index1&gt;, LayoutStridedPolicy, MemorySpace&gt; tensor1,</div>
+<div class="line"><a id="l00396" name="l00396"></a><span class="lineno">  396</span>        Tensor&lt;ElementType, ddc::DiscreteDomain&lt;Index2&gt;, LayoutStridedPolicy, MemorySpace&gt; tensor2)</div>
 <div class="line"><a id="l00397" name="l00397"></a><span class="lineno">  397</span>{</div>
 <div class="line"><a id="l00398" name="l00398"></a><span class="lineno">  398</span>    <a class="code hl_function" href="namespacesil_1_1tensor.html#a13d4a3e249edb25ac1599f0598af2fcc">check_tensors_compatibility</a>&lt;</div>
 <div class="line"><a id="l00399" name="l00399"></a><span class="lineno">  399</span>            ddc::detail::TypeSeq&lt;ProdDDim...&gt;,</div>
@@ -607,7 +607,7 @@ $(document).ready(function(){initNavTree('tensor__prod_8hpp_source.html',''); in
 <div class="line"><a id="l00470" name="l00470"></a><span class="lineno">  470</span>        ddc::Chunk uncompressed_prod_alloc(</div>
 <div class="line"><a id="l00471" name="l00471"></a><span class="lineno">  471</span>                ddc::DiscreteDomain(ProdDDim::subindices_domain()...),</div>
 <div class="line"><a id="l00472" name="l00472"></a><span class="lineno">  472</span>                ddc::HostAllocator&lt;double&gt;());</div>
-<div class="line"><a id="l00473" name="l00473"></a><span class="lineno">  473</span>        <a class="code hl_class" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">tensor::Tensor</a>&lt;</div>
+<div class="line"><a id="l00473" name="l00473"></a><span class="lineno">  473</span>        tensor::Tensor&lt;</div>
 <div class="line"><a id="l00474" name="l00474"></a><span class="lineno">  474</span>                double,</div>
 <div class="line"><a id="l00475" name="l00475"></a><span class="lineno">  475</span>                ddc::cartesian_prod_t&lt;<span class="keyword">typename</span> ProdDDim::subindices_domain_t...&gt;,</div>
 <div class="line"><a id="l00476" name="l00476"></a><span class="lineno">  476</span>                Kokkos::layout_right,</div>
@@ -657,13 +657,13 @@ $(document).ready(function(){initNavTree('tensor__prod_8hpp_source.html',''); in
 <div class="line"><a id="l00520" name="l00520"></a><span class="lineno">  520</span>       Kokkos::DefaultHostExecutionSpace::memory_space&gt;</div>
 <div class="foldopen" id="foldopen00521" data-start="{" data-end="}">
 <div class="line"><a id="l00521" name="l00521"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#a7e4359fdab0cd544d99ed58a60beaac4">  521</a></span>tensor_prod(</div>
-<div class="line"><a id="l00522" name="l00522"></a><span class="lineno">  522</span>        <a class="code hl_class" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a>&lt;ElementType,</div>
+<div class="line"><a id="l00522" name="l00522"></a><span class="lineno">  522</span>        Tensor&lt;ElementType,</div>
 <div class="line"><a id="l00523" name="l00523"></a><span class="lineno">  523</span>               ddc::DiscreteDomain&lt;ProdDDim&gt;,</div>
 <div class="line"><a id="l00524" name="l00524"></a><span class="lineno">  524</span>               Kokkos::layout_right,</div>
 <div class="line"><a id="l00525" name="l00525"></a><span class="lineno">  525</span>               Kokkos::DefaultHostExecutionSpace::memory_space&gt; prod_tensor,</div>
-<div class="line"><a id="l00526" name="l00526"></a><span class="lineno">  526</span>        <a class="code hl_class" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a>&lt;ElementType, ddc::DiscreteDomain&lt;Index1...&gt;, LayoutStridedPolicy, MemorySpace&gt;</div>
+<div class="line"><a id="l00526" name="l00526"></a><span class="lineno">  526</span>        Tensor&lt;ElementType, ddc::DiscreteDomain&lt;Index1...&gt;, LayoutStridedPolicy, MemorySpace&gt;</div>
 <div class="line"><a id="l00527" name="l00527"></a><span class="lineno">  527</span>                tensor1,</div>
-<div class="line"><a id="l00528" name="l00528"></a><span class="lineno">  528</span>        <a class="code hl_class" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a>&lt;ElementType, ddc::DiscreteDomain&lt;Index2...&gt;, LayoutStridedPolicy, MemorySpace&gt;</div>
+<div class="line"><a id="l00528" name="l00528"></a><span class="lineno">  528</span>        Tensor&lt;ElementType, ddc::DiscreteDomain&lt;Index2...&gt;, LayoutStridedPolicy, MemorySpace&gt;</div>
 <div class="line"><a id="l00529" name="l00529"></a><span class="lineno">  529</span>                tensor2)</div>
 <div class="line"><a id="l00530" name="l00530"></a><span class="lineno">  530</span>{</div>
 <div class="line"><a id="l00531" name="l00531"></a><span class="lineno">  531</span>    <a class="code hl_function" href="namespacesil_1_1tensor.html#a13d4a3e249edb25ac1599f0598af2fcc">check_tensors_compatibility</a>&lt;</div>
@@ -706,7 +706,6 @@ $(document).ready(function(){initNavTree('tensor__prod_8hpp_source.html',''); in
 <div class="ttc" id="anamespacesil_1_1tensor_html_a1a4318eb5f036a7aaceac344b6b948c8"><div class="ttname"><a href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">sil::tensor::uncharacterize</a></div><div class="ttdeci">detail::Uncharacterize&lt; Index &gt;::type uncharacterize</div><div class="ttdef"><b>Definition</b> <a href="character_8hpp_source.html#l00143">character.hpp:143</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_a1e054223bfa913f0bc231631e71d337b"><div class="ttname"><a href="namespacesil_1_1tensor.html#a1e054223bfa913f0bc231631e71d337b">sil::tensor::uncharacterize_tensor</a></div><div class="ttdeci">uncharacterize_tensor_t&lt; TensorType &gt; uncharacterize_tensor(TensorType tensor)</div><div class="ttdef"><b>Definition</b> <a href="character_8hpp_source.html#l00153">character.hpp:153</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_a6b27db71d3e86781564c6387125e264d"><div class="ttname"><a href="namespacesil_1_1tensor.html#a6b27db71d3e86781564c6387125e264d">sil::tensor::subindices_domain_t</a></div><div class="ttdeci">detail::SubindicesDomain&lt; T &gt;::type subindices_domain_t</div><div class="ttdef"><b>Definition</b> <a href="tensor__prod_8hpp_source.html#l00038">tensor_prod.hpp:38</a></div></div>
-<div class="ttc" id="anamespacesil_1_1tensor_html_classsil_1_1tensor_1_1Tensor"><div class="ttname"><a href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">sil::tensor::Tensor</a></div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00465">tensor_impl.hpp:465</a></div></div>
 <div class="ttc" id="anamespacesil_html"><div class="ttname"><a href="namespacesil.html">sil</a></div><div class="ttdef"><b>Definition</b> <a href="csr_8hpp_source.html#l00013">csr.hpp:13</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->

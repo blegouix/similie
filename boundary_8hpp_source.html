@@ -168,8 +168,8 @@ $(document).ready(function(){initNavTree('boundary_8hpp_source.html',''); initRe
 <div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span> </div>
 <div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> SimplexType&gt;</div>
 <div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>KOKKOS_FUNCTION <span class="keyword">constexpr</span> <a class="code hl_class" href="classsil_1_1exterior_1_1Chain.html">Chain&lt;boundary_t&lt;SimplexType&gt;</a>&gt; generate_half_subchain(</div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>        <span class="keyword">typename</span> SimplexType::elem_type elem,</div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>        <span class="keyword">typename</span> SimplexType::vect_type vect,</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>        <span class="keyword">typename</span> SimplexType::discrete_element_type elem,</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>        <span class="keyword">typename</span> SimplexType::discrete_vector_type vect,</div>
 <div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>        <span class="keywordtype">bool</span> negative = <span class="keyword">false</span>)</div>
 <div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>{</div>
 <div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    <span class="keyword">auto</span> array = ddc::detail::array(vect);</div>
@@ -181,7 +181,7 @@ $(document).ready(function(){initNavTree('boundary_8hpp_source.html',''); initRe
 <div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>        <span class="keyword">auto</span> <span class="keywordtype">id</span> = std::find_if(j, array_.end(), [](<span class="keywordtype">int</span> k) { return k != 0; });</div>
 <div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>        id_dist = std::distance(array_.begin(), <span class="keywordtype">id</span>);</div>
 <div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>        *<span class="keywordtype">id</span> = 0;</div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>        <span class="keyword">typename</span> SimplexType::vect_type vect_;</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>        <span class="keyword">typename</span> SimplexType::discrete_vector_type vect_;</div>
 <div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>        ddc::detail::array(vect_) = array_;</div>
 <div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>        chain.<a class="code hl_function" href="classsil_1_1exterior_1_1Chain.html#a2e6cb162399b07ca933a2c670f59dd95">push_back</a>(<a class="code hl_typedef" href="namespacesil_1_1exterior.html#a23a36b9d5c6beaf7c9647044ee0acb2a">boundary_t&lt;SimplexType&gt;</a>(elem, vect_, (negative + i) % 2));</div>
 <div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>        j = <span class="keywordtype">id</span> + 1;</div>

@@ -16,11 +16,8 @@ var hierarchy =
     [ "std::false_type", null, [
       [ "sil::misc::is_specialization_of< T, U >", "structsil_1_1misc_1_1is__specialization__of.html", null ]
     ] ],
-    [ "sil::exterior::FormWrapper< T, ElementType, Allocator >", "namespacesil_1_1exterior.html#structsil_1_1exterior_1_1FormWrapper", null ],
-    [ "sil::exterior::FormWrapper< T, ElementType, Allocator >", "namespacesil_1_1exterior.html#structsil_1_1exterior_1_1FormWrapper_3_01T_00_01ElementType_00_01Allocator_01_4", null ],
     [ "sil::exterior::LocalChain< SimplexType, Allocator >", "classsil_1_1exterior_1_1LocalChain.html", null ],
     [ "sil::mesher::Mesher< D, CDim >", "classsil_1_1mesher_1_1Mesher.html", null ],
-    [ "sil::tensor::Tensor< ElementType, SupportType, LayoutStridedPolicy, MemorySpace >", "namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor", null ],
     [ "sil::tensor::TensorAccessor< Index >", "classsil_1_1tensor_1_1TensorAccessor.html", null ],
     [ "sil::tensor::TensorAntisymmetricIndex< TensorIndex >", "structsil_1_1tensor_1_1TensorAntisymmetricIndex.html", null ],
     [ "sil::tensor::TensorDiagonalIndex< TensorIndex >", "structsil_1_1tensor_1_1TensorDiagonalIndex.html", null ],

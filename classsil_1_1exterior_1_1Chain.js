@@ -2,8 +2,8 @@ var classsil_1_1exterior_1_1Chain =
 [
     [ "simplex_type", "classsil_1_1exterior_1_1Chain.html#af912fb57fdf76de9b2b5412fdb8403cf", null ],
     [ "simplices_type", "classsil_1_1exterior_1_1Chain.html#a7d315233c983e4505d1d2b31adb1e932", null ],
-    [ "elem_type", "classsil_1_1exterior_1_1Chain.html#acd1a44fecdc1c6b6c844f66e281c87ca", null ],
-    [ "vect_type", "classsil_1_1exterior_1_1Chain.html#aa83bd3c2788fc1b561dc0d6dc05686dc", null ],
+    [ "discrete_element_type", "classsil_1_1exterior_1_1Chain.html#a71550e7d92633f90d3b7c03839d0f8b0", null ],
+    [ "discrete_vector_type", "classsil_1_1exterior_1_1Chain.html#a8add68e44a36540d702e3a17bf6e14da", null ],
     [ "Chain", "classsil_1_1exterior_1_1Chain.html#a3fa179872c448bc4339f4fe8bacd5bea", null ],
     [ "Chain", "classsil_1_1exterior_1_1Chain.html#ab45628d0e2d9c45d2c7ddfd83fb23632", null ],
     [ "Chain", "classsil_1_1exterior_1_1Chain.html#a376a14a10d5bf6725c2a9607572f3e5b", null ],

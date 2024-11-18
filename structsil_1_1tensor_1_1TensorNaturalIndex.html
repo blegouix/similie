@@ -166,8 +166,8 @@ Static Public Member Functions</h2></td></tr>
 <tr class="separator:a24772b28728b046a6752073f74a3ee7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a519a646809d8557b87c9fd1a25fcab6a" id="r_a519a646809d8557b87c9fd1a25fcab6a"><td class="memItemLeft" align="right" valign="top">static constexpr std::pair&lt; std::vector&lt; double &gt;, std::vector&lt; std::size_t &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1tensor_1_1TensorNaturalIndex.html#a519a646809d8557b87c9fd1a25fcab6a">access_id_to_mem_lin_comb</a> (std::size_t <a class="el" href="structsil_1_1tensor_1_1TensorNaturalIndex.html#a24772b28728b046a6752073f74a3ee7f">access_id</a>)</td></tr>
 <tr class="separator:a519a646809d8557b87c9fd1a25fcab6a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6b140a5f75930899bc5c32305caebd64" id="r_a6b140a5f75930899bc5c32305caebd64"><td class="memTemplParams" colspan="2">template&lt;class <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a> , class Elem , class Id &gt; </td></tr>
-<tr class="memitem:a6b140a5f75930899bc5c32305caebd64"><td class="memTemplItemLeft" align="right" valign="top">static constexpr Tensor::element_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structsil_1_1tensor_1_1TensorNaturalIndex.html#a6b140a5f75930899bc5c32305caebd64">process_access</a> (std::function&lt; typename Tensor::element_type(<a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a>, Elem)&gt; access, <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a> tensor, Elem elem)</td></tr>
+<tr class="memitem:a6b140a5f75930899bc5c32305caebd64" id="r_a6b140a5f75930899bc5c32305caebd64"><td class="memTemplParams" colspan="2">template&lt;class Tensor , class Elem , class Id &gt; </td></tr>
+<tr class="memitem:a6b140a5f75930899bc5c32305caebd64"><td class="memTemplItemLeft" align="right" valign="top">static constexpr Tensor::element_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structsil_1_1tensor_1_1TensorNaturalIndex.html#a6b140a5f75930899bc5c32305caebd64">process_access</a> (std::function&lt; typename Tensor::element_type(Tensor, Elem)&gt; access, Tensor tensor, Elem elem)</td></tr>
 <tr class="separator:a6b140a5f75930899bc5c32305caebd64"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
@@ -493,7 +493,7 @@ template&lt;class... CDim&gt; </div>
 <div class="memtemplate">
 template&lt;class... CDim&gt; </div>
 <div class="memtemplate">
-template&lt;class <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a> , class Elem , class Id &gt; </div>
+template&lt;class Tensor , class Elem , class Id &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -501,13 +501,13 @@ template&lt;class <a class="el" href="namespacesil_1_1tensor.html#classsil_1_1te
         <tr>
           <td class="memname">static constexpr Tensor::element_type <a class="el" href="structsil_1_1tensor_1_1TensorNaturalIndex.html">sil::tensor::TensorNaturalIndex</a>&lt; CDim &gt;::process_access </td>
           <td>(</td>
-          <td class="paramtype">std::function&lt; typename Tensor::element_type(<a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a>, Elem)&gt;&#160;</td>
+          <td class="paramtype">std::function&lt; typename Tensor::element_type(Tensor, Elem)&gt;&#160;</td>
           <td class="paramname"><em>access</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a>&#160;</td>
+          <td class="paramtype">Tensor&#160;</td>
           <td class="paramname"><em>tensor</em>, </td>
         </tr>
         <tr>
