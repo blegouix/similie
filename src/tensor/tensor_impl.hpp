@@ -501,25 +501,13 @@ protected:
             ChunkSpan<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>;
 
 public:
-    using ddc::
-            ChunkSpan<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>::
-                    ChunkSpan;
-    using reference = ddc::
-            ChunkSpan<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>::
-                    reference;
-    using discrete_domain_type = ddc::
-            ChunkSpan<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>::
-                    discrete_domain_type;
-    using discrete_element_type = ddc::
-            ChunkSpan<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>::
-                    discrete_element_type;
+    using base_type::ChunkSpan;
+    using reference = base_type::reference;
+    using discrete_domain_type = base_type::discrete_domain_type;
+    using discrete_element_type = base_type::discrete_element_type;
 
-    using ddc::
-            ChunkSpan<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>::
-                    domain;
-    using ddc::
-            ChunkSpan<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>::
-            operator();
+    using base_type::domain;
+    using base_type::operator();
 
     KOKKOS_FUNCTION constexpr explicit Tensor(ddc::ChunkSpan<
                                               ElementType,
