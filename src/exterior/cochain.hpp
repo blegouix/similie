@@ -92,6 +92,11 @@ public:
         }
     }
 
+    static KOKKOS_FUNCTION constexpr bool is_local() noexcept
+    {
+        return ChainType::is_local();
+    }
+
     static KOKKOS_FUNCTION constexpr std::size_t dimension() noexcept
     {
         return ChainType::dimension();
@@ -342,10 +347,10 @@ std::ostream& operator<<(std::ostream& out, CochainType const& cochain)
 {
     out << "[\n";
     for (auto i = cochain.begin(); i < cochain.end(); ++i) {
-        if constexpr (misc::Specialization<typename CochainType::chain_type, Chain>) {
-            out << " " << i->simplex() << " : " << i->operator()() << "\n";
-        } else if (misc::Specialization<typename CochainType::chain_type, LocalChain>) {
-            out << " -> " << *cochain.chain_it(i) << " : " << *i << "\n";
+        if constexpr (!cochain.is_local()) {
+            out << " " << (*i).simplex() << " : " << (*i).value() << "\n";
+        } else {
+            out << " -> " << (*i).discrete_vector() << " : " << (*i).value() << "\n";
         }
     }
 
