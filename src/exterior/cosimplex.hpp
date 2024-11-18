@@ -49,12 +49,12 @@ public:
         return m_simplex;
     }
 
-    KOKKOS_FUNCTION element_type operator()() noexcept
+    KOKKOS_FUNCTION element_type value() noexcept
     {
         return m_value;
     }
 
-    KOKKOS_FUNCTION element_type const operator()() const noexcept
+    KOKKOS_FUNCTION element_type const value() const noexcept
     {
         return m_value;
     }
@@ -63,7 +63,7 @@ public:
 template <misc::Specialization<Cosimplex> CosimplexType>
 std::ostream& operator<<(std::ostream& out, CosimplexType const& cosimplex)
 {
-    out << " " << cosimplex.simplex() << ": " << cosimplex() << "\n";
+    out << " " << cosimplex.simplex() << ": " << cosimplex.value() << "\n";
     return out;
 }
 
