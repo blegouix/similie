@@ -32,6 +32,10 @@ TODO:
 - Generalization to electromagnetism.
 - ...
 
+## Contact
+
+Send an email to baptistelegouix@gmail.com
+
 ## References
 
 - [Gravitation](https://ui.adsabs.harvard.edu/abs/1973grav.book.....M/abstract). By C.W. Misner, K.S. Thorne and J.A. Wheeler. ISBN 0-7167-0334-3, ISBN 0-7167-0344-0 (pbk). San Francisco: W.H. Freeman and Company, 1973
