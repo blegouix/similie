@@ -148,7 +148,7 @@ coboundary(
                         values[std::distance(simplex_boundary.begin(), j)] = tensor.mem(
                                 misc::domain_contains(tensor.domain(), j->discrete_element())
                                         ? j->discrete_element()
-                                        : elem, // TODO this is un assumption on boundary condition (free boundary), need to be generalized
+                                        : elem, // TODO this is an assumption on boundary condition (free boundary), needs to be generalized
                                 ddc::DiscreteElement<CochainTag>(std::distance(
                                         lower_chain.begin(),
                                         std::
