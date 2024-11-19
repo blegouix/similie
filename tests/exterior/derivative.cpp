@@ -51,6 +51,7 @@ static auto test_derivative()
             Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             derivative(derivative_alloc);
+    std::cout << tensor;
     sil::exterior::deriv<
             InIndex,
             ddc::type_seq_element_t<

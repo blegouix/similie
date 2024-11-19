@@ -16,6 +16,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 - Optional compilation of embed-based modules
 - similie.hpp
 - reverse deriv template parameters
+- realign tensor indices on what is done in antisymmetric
 
 ----- CMAKE BASIC COMMAND -----
 
