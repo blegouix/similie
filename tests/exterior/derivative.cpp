@@ -97,12 +97,13 @@ struct Mu : sil::tensor::TensorNaturalIndex<X, Y>
 {
 };
 
+using Form1Index = sil::tensor::TensorAntisymmetricIndex<Mu>;
+
 struct Nu : sil::tensor::TensorNaturalIndex<X, Y>
 {
 };
 
-using Form1Index = sil::tensor::TensorAntisymmetricIndex<Nu>;
-using Form2Index = sil::tensor::TensorAntisymmetricIndex<Mu, Nu>;
+using Form2Index = sil::tensor::TensorAntisymmetricIndex<Nu, Mu>;
 
 TEST(ExteriorDerivative, Rotational)
 {
