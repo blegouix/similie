@@ -31,11 +31,11 @@ static auto test_derivative()
         ddc::parallel_for_each(
                 Kokkos::DefaultHostExecutionSpace(),
                 tensor.non_indices_domain(),
-                [&](auto elem) { tensor.mem(elem, ddc::DiscreteElement<InIndex>(i)) = i; });
+                [&](auto elem) { tensor.mem(elem, ddc::DiscreteElement<InIndex>(i)) = i + 1.; });
         tensor
                 .mem(sil::misc::filled_struct<ddc::DiscreteElement<DDim...>>(1),
                      ddc::DiscreteElement<InIndex>(i))
-                = i + 1;
+                = i + 2.;
     }
 
     sil::tensor::TensorAccessor<OutIndex> derivative_accessor;
@@ -115,6 +115,43 @@ TEST(ExteriorDerivative, 1DGradient)
 struct Mu2 : sil::tensor::TensorNaturalIndex<X, Y>
 {
 };
+
+TEST(ExteriorDerivative, 2DGradient)
+{
+    auto [alloc, derivative] = test_derivative<
+            3,
+            sil::tensor::TensorAntisymmetricIndex<>,
+            sil::tensor::TensorAntisymmetricIndex<Mu2>,
+            DDimX,
+            DDimY>();
+    /*
+    EXPECT_EQ(
+            derivative(
+                    ddc::DiscreteElement<DDimX, DDimY> {0, 0},
+                    derivative.accessor().access_element<X>()),
+            0.);
+    EXPECT_EQ(
+            derivative(
+                    ddc::DiscreteElement<DDimX, DDimY> {0, 0},
+                    derivative.accessor().access_element<Y>()),
+            0.);
+    EXPECT_EQ(
+            derivative(
+                    ddc::DiscreteElement<DDimX, DDimY> {1, 0},
+                    derivative.accessor().access_element<X, Y>()),
+            -1.);
+    EXPECT_EQ(
+            derivative(
+                    ddc::DiscreteElement<DDimX, DDimY> {0, 1},
+                    derivative.accessor().access_element<X, Y>()),
+            1.);
+    EXPECT_EQ(
+            derivative(
+                    ddc::DiscreteElement<DDimX, DDimY> {1, 1},
+                    derivative.accessor().access_element<X, Y>()),
+            0.);
+*/
+}
 
 struct Nu2 : sil::tensor::TensorNaturalIndex<X, Y>
 {
