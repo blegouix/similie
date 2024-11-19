@@ -45,7 +45,8 @@ static auto test_derivative()
                 derivative_accessor.mem_domain(),
                 ddc::DiscreteDomain(
                         sil::misc::filled_struct<ddc::DiscreteElement<DDim...>>(0),
-                        sil::misc::filled_struct<ddc::DiscreteVector<DDim...>>(N - 1)));
+                        sil::misc::filled_struct<ddc::DiscreteVector<DDim...>>(
+                                OutIndex::rank() == 1 ? N : N - 1)));
         ddc::Chunk derivative_alloc(derivative_dom, ddc::HostAllocator<double>());
         sil::tensor::Tensor<
                 double,
@@ -90,7 +91,8 @@ static auto test_derivative()
         ddc::DiscreteDomain<DDim..., OutIndex> derivative_dom(
                 ddc::DiscreteDomain(
                         sil::misc::filled_struct<ddc::DiscreteElement<DDim...>>(0),
-                        sil::misc::filled_struct<ddc::DiscreteVector<DDim...>>(N - 1)),
+                        sil::misc::filled_struct<ddc::DiscreteVector<DDim...>>(
+                                OutIndex::rank() == 1 ? N : N - 1)),
                 derivative_accessor.mem_domain());
         ddc::Chunk derivative_alloc(derivative_dom, ddc::HostAllocator<double>());
         sil::tensor::Tensor<
@@ -192,6 +194,7 @@ TEST(ExteriorDerivative, 2DGradient)
             sil::tensor::TensorAntisymmetricIndex<Mu2>,
             DDimX,
             DDimY>();
+    std::cout << derivative;
     EXPECT_EQ(
             derivative(
                     ddc::DiscreteElement<DDimX, DDimY> {0, 0},
