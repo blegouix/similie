@@ -23,5 +23,6 @@ var searchData=
   ['tensorsymmetricindex_20',['TensorSymmetricIndex',['../structsil_1_1tensor_1_1TensorSymmetricIndex.html',1,'sil::tensor']]],
   ['tensoryoungtableauindex_21',['TensorYoungTableauIndex',['../structsil_1_1tensor_1_1TensorYoungTableauIndex.html',1,'sil::tensor']]],
   ['to_5ftype_5fseq_5ft_22',['to_type_seq_t',['../namespacesil_1_1misc.html#aa3e226295c6a1b35a01f1d46f87bbcd6',1,'sil::misc']]],
-  ['type_5fseq_5fdimensions_23',['type_seq_dimensions',['../structsil_1_1tensor_1_1TensorNaturalIndex.html#aa699cc4c175565100a353a4299b4491c',1,'sil::tensor::TensorNaturalIndex']]]
+  ['type_5fseq_5fdimensions_23',['type_seq_dimensions',['../structsil_1_1tensor_1_1TensorNaturalIndex.html#aa699cc4c175565100a353a4299b4491c',1,'sil::tensor::TensorNaturalIndex']]],
+  ['type_5fseq_5fintersect_5ft_24',['type_seq_intersect_t',['../namespacesil_1_1misc.html#ad1a72d80e205ad1ba9618e19a403c94c',1,'sil::misc']]]
 ];

@@ -151,6 +151,9 @@ Typedefs</h2></td></tr>
 <tr class="memitem:aaf2e9c4453ff349939186425e5bbc3ec" id="r_aaf2e9c4453ff349939186425e5bbc3ec"><td class="memTemplParams" colspan="2">template&lt;template&lt; class... &gt; class T, class Seq &gt; </td></tr>
 <tr class="memitem:aaf2e9c4453ff349939186425e5bbc3ec"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1misc.html#aaf2e9c4453ff349939186425e5bbc3ec">convert_type_seq_to_t</a> = typename detail::ConvertTypeSeqTo&lt; T, Seq &gt;::type</td></tr>
 <tr class="separator:aaf2e9c4453ff349939186425e5bbc3ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad1a72d80e205ad1ba9618e19a403c94c" id="r_ad1a72d80e205ad1ba9618e19a403c94c"><td class="memTemplParams" colspan="2">template&lt;class TagSeqA , class TagSeqB &gt; </td></tr>
+<tr class="memitem:ad1a72d80e205ad1ba9618e19a403c94c"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1misc.html#ad1a72d80e205ad1ba9618e19a403c94c">type_seq_intersect_t</a> = ddc::type_seq_remove_t&lt; TagSeqA, ddc::type_seq_remove_t&lt; TagSeqA, TagSeqB &gt; &gt;</td></tr>
+<tr class="separator:ad1a72d80e205ad1ba9618e19a403c94c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
@@ -162,9 +165,15 @@ Functions</h2></td></tr>
 <tr class="separator:a5a1751c14a48bdc336c6ff27d10b1041"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aea35c72a0b5289f6bef175d41e5001d1" id="r_aea35c72a0b5289f6bef175d41e5001d1"><td class="memItemLeft" align="right" valign="top">constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesil_1_1misc.html#aea35c72a0b5289f6bef175d41e5001d1">binomial_coefficient</a> (std::size_t n, std::size_t k) noexcept</td></tr>
 <tr class="separator:aea35c72a0b5289f6bef175d41e5001d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a66ff8d3a90478554a50a774e2bf90ab5" id="r_a66ff8d3a90478554a50a774e2bf90ab5"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
-<tr class="memitem:a66ff8d3a90478554a50a774e2bf90ab5"><td class="memTemplItemLeft" align="right" valign="top">constexpr T&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1misc.html#a66ff8d3a90478554a50a774e2bf90ab5">null_struct</a> ()</td></tr>
-<tr class="separator:a66ff8d3a90478554a50a774e2bf90ab5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3972a6165c52a1398ca03e1b4ef8d993" id="r_a3972a6165c52a1398ca03e1b4ef8d993"><td class="memTemplParams" colspan="2">template&lt;class... DDim, class... ODDim&gt; </td></tr>
+<tr class="memitem:a3972a6165c52a1398ca03e1b4ef8d993"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1misc.html#a3972a6165c52a1398ca03e1b4ef8d993">domain_contains</a> (ddc::DiscreteDomain&lt; DDim... &gt; dom, ddc::DiscreteElement&lt; ODDim... &gt; elem)</td></tr>
+<tr class="separator:a3972a6165c52a1398ca03e1b4ef8d993"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab627aa8f81b5446714d73f76e87e5533" id="r_ab627aa8f81b5446714d73f76e87e5533"><td class="memTemplParams" colspan="2">template&lt;class T , class ElementType  = std::size_t&gt; </td></tr>
+<tr class="memitem:ab627aa8f81b5446714d73f76e87e5533"><td class="memTemplItemLeft" align="right" valign="top">constexpr T&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1misc.html#ab627aa8f81b5446714d73f76e87e5533">filled_struct</a> (ElementType const n=0)</td></tr>
+<tr class="separator:ab627aa8f81b5446714d73f76e87e5533"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac4920dd15665754dd8afd25c431036c5" id="r_ac4920dd15665754dd8afd25c431036c5"><td class="memTemplParams" colspan="2">template&lt;class Seq , class T &gt; </td></tr>
+<tr class="memitem:ac4920dd15665754dd8afd25c431036c5"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1misc.html#ac4920dd15665754dd8afd25c431036c5">select_from_type_seq</a> (T t)</td></tr>
+<tr class="separator:ac4920dd15665754dd8afd25c431036c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
 Variables</h2></td></tr>
@@ -206,6 +215,24 @@ template&lt;template&lt; class... &gt; class T, class Seq &gt; </div>
 </div><div class="memdoc">
 
 <p class="definition">Definition at line <a class="el" href="type__seq__conversion_8hpp_source.html#l00042">42</a> of file <a class="el" href="type__seq__conversion_8hpp_source.html">type_seq_conversion.hpp</a>.</p>
+
+</div>
+</div>
+<a id="ad1a72d80e205ad1ba9618e19a403c94c" name="ad1a72d80e205ad1ba9618e19a403c94c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad1a72d80e205ad1ba9618e19a403c94c">&#9670;&#160;</a></span>type_seq_intersect_t</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class TagSeqA , class TagSeqB &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="namespacesil_1_1misc.html#ad1a72d80e205ad1ba9618e19a403c94c">sil::misc::type_seq_intersect_t</a> = typedef ddc::type_seq_remove_t&lt;TagSeqA, ddc::type_seq_remove_t&lt;TagSeqA, TagSeqB&gt; &gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="type__seq__ext_8hpp_source.html#l00013">13</a> of file <a class="el" href="type__seq__ext_8hpp_source.html">type_seq_ext.hpp</a>.</p>
 
 </div>
 </div>
@@ -318,21 +345,54 @@ template&lt;misc::Specialization&lt; std::vector &gt; T&gt; </div>
 
 </div>
 </div>
-<a id="a66ff8d3a90478554a50a774e2bf90ab5" name="a66ff8d3a90478554a50a774e2bf90ab5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a66ff8d3a90478554a50a774e2bf90ab5">&#9670;&#160;</a></span>null_struct()</h2>
+<a id="a3972a6165c52a1398ca03e1b4ef8d993" name="a3972a6165c52a1398ca03e1b4ef8d993"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3972a6165c52a1398ca03e1b4ef8d993">&#9670;&#160;</a></span>domain_contains()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class T &gt; </div>
+template&lt;class... DDim, class... ODDim&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION bool sil::misc::domain_contains </td>
+          <td>(</td>
+          <td class="paramtype">ddc::DiscreteDomain&lt; DDim... &gt;&#160;</td>
+          <td class="paramname"><em>dom</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">ddc::DiscreteElement&lt; ODDim... &gt;&#160;</td>
+          <td class="paramname"><em>elem</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="domain__contains_8hpp_source.html#l00035">35</a> of file <a class="el" href="domain__contains_8hpp_source.html">domain_contains.hpp</a>.</p>
+
+</div>
+</div>
+<a id="ab627aa8f81b5446714d73f76e87e5533" name="ab627aa8f81b5446714d73f76e87e5533"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab627aa8f81b5446714d73f76e87e5533">&#9670;&#160;</a></span>filled_struct()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class T , class ElementType  = std::size_t&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">constexpr T sil::misc::null_struct </td>
+          <td class="memname">constexpr T sil::misc::filled_struct </td>
           <td>(</td>
-          <td class="paramname"></td><td>)</td>
+          <td class="paramtype">ElementType const&#160;</td>
+          <td class="paramname"><em>n</em> = <code>0</code></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -343,7 +403,29 @@ template&lt;class T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="null__struct_8hpp_source.html#l00029">29</a> of file <a class="el" href="null__struct_8hpp_source.html">null_struct.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="filled__struct_8hpp_source.html#l00031">31</a> of file <a class="el" href="filled__struct_8hpp_source.html">filled_struct.hpp</a>.</p>
+
+</div>
+</div>
+<a id="ac4920dd15665754dd8afd25c431036c5" name="ac4920dd15665754dd8afd25c431036c5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac4920dd15665754dd8afd25c431036c5">&#9670;&#160;</a></span>select_from_type_seq()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Seq , class T &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION auto sil::misc::select_from_type_seq </td>
+          <td>(</td>
+          <td class="paramtype">T&#160;</td>
+          <td class="paramname"><em>t</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="select__from__type__seq_8hpp_source.html#l00030">30</a> of file <a class="el" href="select__from__type__seq_8hpp_source.html">select_from_type_seq.hpp</a>.</p>
 
 </div>
 </div>
