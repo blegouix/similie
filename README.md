@@ -4,7 +4,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 -->
 
 # SimiLie
-Documentation [here](https://blegouix.github.io/SimiLie/).
+Documentation [here](https://blegouix.github.io/similie/).
 
 SimiLie (aka. Simulation in Lie groups) is a performance-portable (CPU & GPU) C++ library aiming to extent the capabilities of [DDC](https://github.com/CExA-project/ddc) to offer a complete toolkit able to address any physical problem from eventually-relativistic classical field theory (in particular: solid & fluid mechanics, electromagnetism and gravitation, or coupling between those).
 
