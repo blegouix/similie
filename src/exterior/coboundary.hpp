@@ -9,7 +9,7 @@
 #include "are_all_same.hpp"
 #include "cochain.hpp"
 #include "cosimplex.hpp"
-#include "null_struct.hpp"
+#include "filled_struct.hpp"
 #include "specialization.hpp"
 #include "type_seq_conversion.hpp"
 

@@ -193,7 +193,7 @@ struct IdFromTypeSeqDims<Index, ddc::DiscreteDomain<Subindex...>, ddc::detail::T
 
 // Returns Index::access_id for the subindex Index of the IndicesTypeSeq
 template <class Index, class IndicesTypeSeq, class... CDim>
-static consteval std::size_t access_id()
+static constexpr std::size_t access_id()
 {
     if constexpr (TensorNatIndex<Index>) {
         return IdFromTypeSeqDims<
@@ -269,7 +269,7 @@ public:
     static constexpr discrete_domain_type access_domain();
 
     template <class... CDim>
-    static consteval discrete_element_type access_element();
+    static constexpr discrete_element_type access_element();
 
     template <class... NaturalIndex>
     static constexpr discrete_element_type access_element(
@@ -334,7 +334,7 @@ constexpr TensorAccessor<Index...>::discrete_domain_type TensorAccessor<Index...
 
 template <TensorIndex... Index>
 template <class... CDim>
-consteval TensorAccessor<Index...>::discrete_element_type TensorAccessor<Index...>::access_element()
+constexpr TensorAccessor<Index...>::discrete_element_type TensorAccessor<Index...>::access_element()
 {
     return ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(
             detail::access_id<Index, ddc::detail::TypeSeq<Index...>, CDim...>())...);
@@ -564,7 +564,7 @@ public:
     }
 
     template <class... CDim>
-    KOKKOS_FUNCTION consteval discrete_element_type access_element()
+    KOKKOS_FUNCTION constexpr discrete_element_type access_element()
             const noexcept // TODO merge this with the one below
     {
         return discrete_element_type(accessor_t::template access_element<CDim...>());

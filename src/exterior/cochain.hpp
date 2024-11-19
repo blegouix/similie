@@ -229,7 +229,7 @@ public:
         } else {
             return cosimplex_type(
                     Simplex(std::integral_constant<std::size_t, CochainType::dimension()> {},
-                            misc::null_struct<typename CochainType::discrete_element_type>(),
+                            misc::filled_struct<typename CochainType::discrete_element_type>(),
                             *m_chain),
                     *m_values);
         }

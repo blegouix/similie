@@ -7,7 +7,7 @@
 
 #include "are_all_same.hpp"
 #include "binomial_coefficient.hpp"
-#include "null_struct.hpp"
+#include "filled_struct.hpp"
 #include "simplex.hpp"
 #include "specialization.hpp"
 
@@ -89,7 +89,7 @@ public:
 
     template <misc::Specialization<ddc::DiscreteVector>... T>
     KOKKOS_FUNCTION constexpr explicit LocalChain(T... vect) noexcept
-        : m_vects {(misc::null_struct<discrete_vector_type>() + vect)...}
+        : m_vects {(misc::filled_struct<discrete_vector_type>() + vect)...}
     {
         assert(check() == 0 && "there are duplicate simplices in the chain");
     }
