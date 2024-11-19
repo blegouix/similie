@@ -9,7 +9,8 @@
 #include "are_all_same.hpp"
 #include "cochain.hpp"
 #include "cosimplex.hpp"
-#include "null_struct.hpp"
+#include "domain_contains.hpp"
+#include "filled_struct.hpp"
 #include "specialization.hpp"
 #include "type_seq_conversion.hpp"
 
@@ -136,18 +137,24 @@ coboundary(
                 auto cochain = Cochain(chain, coboundary_tensor[elem]);
                 for (auto i = cochain.begin(); i < cochain.end(); ++i) {
                     sil::exterior::Chain simplex_boundary
-                            = boundary(sil::exterior::Simplex(elem, (*i).discrete_vector()));
+                            = boundary(sil::exterior::
+                                               Simplex(std::integral_constant<
+                                                               std::size_t,
+                                                               CochainTag::rank() + 1> {},
+                                                       elem,
+                                                       (*i).discrete_vector()));
                     std::vector<double> values(simplex_boundary.size());
                     for (auto j = simplex_boundary.begin(); j < simplex_boundary.end(); ++j) {
-                        values[std::distance(simplex_boundary.begin(), j)]
-                                = tensor
-                                          .mem(j->discrete_element(),
-                                               ddc::DiscreteElement<CochainTag>(std::distance(
-                                                       lower_chain.begin(),
-                                                       std::
-                                                               find(lower_chain.begin(),
-                                                                    lower_chain.end(),
-                                                                    j->discrete_vector()))));
+                        values[std::distance(simplex_boundary.begin(), j)] = tensor.mem(
+                                misc::domain_contains(tensor.domain(), j->discrete_element())
+                                        ? j->discrete_element()
+                                        : elem, // TODO this is an assumption on boundary condition (free boundary), needs to be generalized
+                                ddc::DiscreteElement<CochainTag>(std::distance(
+                                        lower_chain.begin(),
+                                        std::
+                                                find(lower_chain.begin(),
+                                                     lower_chain.end(),
+                                                     j->discrete_vector()))));
                     }
                     sil::exterior::Cochain<decltype(simplex_boundary)>
                             cochain_boundary(simplex_boundary, values);

@@ -7,7 +7,7 @@
 
 #include "are_all_same.hpp"
 #include "binomial_coefficient.hpp"
-#include "null_struct.hpp"
+#include "filled_struct.hpp"
 #include "simplex.hpp"
 #include "specialization.hpp"
 
@@ -89,7 +89,7 @@ public:
 
     template <misc::Specialization<ddc::DiscreteVector>... T>
     KOKKOS_FUNCTION constexpr explicit LocalChain(T... vect) noexcept
-        : m_vects {(misc::null_struct<discrete_vector_type>() + vect)...}
+        : m_vects {(misc::filled_struct<discrete_vector_type>() + vect)...}
     {
         assert(check() == 0 && "there are duplicate simplices in the chain");
     }
@@ -167,14 +167,14 @@ public:
         return m_vects.end();
     }
 
-    KOKKOS_FUNCTION SimplexType& operator[](std::size_t i) noexcept
+    KOKKOS_FUNCTION SimplexType operator[](std::size_t i) noexcept
     {
-        return m_vects[i];
+        return SimplexType(misc::filled_struct<discrete_element_type>(), m_vects[i]);
     }
 
-    KOKKOS_FUNCTION SimplexType const& operator[](std::size_t i) const noexcept
+    KOKKOS_FUNCTION SimplexType const operator[](std::size_t i) const noexcept
     {
-        return m_vects[i];
+        return SimplexType(misc::filled_struct<discrete_element_type>(), m_vects[i]);
     }
 
     LocalChain<SimplexType> operator-() = delete;

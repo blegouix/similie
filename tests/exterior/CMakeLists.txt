@@ -13,3 +13,14 @@ target_link_libraries(unit_tests_exterior
 )
 
 gtest_discover_tests(unit_tests_exterior DISCOVERY_MODE PRE_TEST)
+
+add_executable(unit_tests_derivative derivative.cpp ../main.cpp)
+
+target_link_libraries(unit_tests_derivative
+    PUBLIC
+        GTest::gtest
+        DDC::DDC
+        sil::exterior
+)
+
+gtest_discover_tests(unit_tests_derivative DISCOVERY_MODE PRE_TEST)

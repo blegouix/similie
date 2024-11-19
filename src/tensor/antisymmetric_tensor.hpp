@@ -30,24 +30,36 @@ struct TensorAntisymmetricIndex
 
     static constexpr std::size_t rank()
     {
-        return (TensorIndex::rank() + ...);
+        if constexpr (sizeof...(TensorIndex) == 0) {
+            return 0;
+        } else {
+            return (TensorIndex::rank() + ...);
+        }
     }
 
     static constexpr std::size_t size()
     {
-        return (TensorIndex::size() * ...);
+        if constexpr (sizeof...(TensorIndex) == 0) {
+            return 1;
+        } else {
+            return (TensorIndex::size() + ...);
+        }
     }
 
     static constexpr std::size_t mem_size()
     {
-        return misc::binomial_coefficient(
-                std::min({TensorIndex::mem_size()...}),
-                sizeof...(TensorIndex));
+        if constexpr (rank() == 0) {
+            return 1;
+        } else {
+            return misc::binomial_coefficient(
+                    std::min({TensorIndex::mem_size()...}),
+                    sizeof...(TensorIndex));
+        }
     }
 
     static constexpr std::size_t access_size()
     {
-        if constexpr (rank() == 1) {
+        if constexpr (rank() <= 1) {
             return mem_size();
         } else {
             return mem_size() + 1;
@@ -62,29 +74,29 @@ struct TensorAntisymmetricIndex
         return std::pair<std::vector<double>, std::vector<std::size_t>>(
                 std::vector<double> {1.},
                 std::vector<std::size_t> {static_cast<std::size_t>(
-                        misc::binomial_coefficient(
-                                std::min({TensorIndex::mem_size()...}),
-                                sizeof...(TensorIndex))
-                        - ((sorted_ids[ddc::type_seq_rank_v<
-                                    TensorIndex,
-                                    ddc::detail::TypeSeq<TensorIndex...>>]
-                                            == TensorIndex::mem_size() - sizeof...(TensorIndex)
-                                                       + ddc::type_seq_rank_v<
-                                                               TensorIndex,
-                                                               ddc::detail::TypeSeq<TensorIndex...>>
-                                    ? 0
-                                    : misc::binomial_coefficient(
-                                              TensorIndex::mem_size()
-                                                      - sorted_ids[ddc::type_seq_rank_v<
-                                                              TensorIndex,
-                                                              ddc::detail::TypeSeq<TensorIndex...>>]
-                                                      - 1,
-                                              sizeof...(TensorIndex)
-                                                      - ddc::type_seq_rank_v<
-                                                              TensorIndex,
-                                                              ddc::detail::TypeSeq<
-                                                                      TensorIndex...>>))
-                           + ...)
+                        mem_size()
+                        - (0 + ...
+                           + (sorted_ids[ddc::type_seq_rank_v<
+                                      TensorIndex,
+                                      ddc::detail::TypeSeq<TensorIndex...>>]
+                                              == TensorIndex::mem_size() - sizeof...(TensorIndex)
+                                                         + ddc::type_seq_rank_v<
+                                                                 TensorIndex,
+                                                                 ddc::detail::TypeSeq<
+                                                                         TensorIndex...>>
+                                      ? 0
+                                      : misc::binomial_coefficient(
+                                                TensorIndex::mem_size()
+                                                        - sorted_ids[ddc::type_seq_rank_v<
+                                                                TensorIndex,
+                                                                ddc::detail::TypeSeq<
+                                                                        TensorIndex...>>]
+                                                        - 1,
+                                                sizeof...(TensorIndex)
+                                                        - ddc::type_seq_rank_v<
+                                                                TensorIndex,
+                                                                ddc::detail::TypeSeq<
+                                                                        TensorIndex...>>)))
                         - 1)});
     }
 
@@ -103,7 +115,7 @@ public:
     static constexpr std::size_t access_id(
             std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
-        if constexpr (rank() == 1) {
+        if constexpr (rank() <= 1) {
             return std::get<1>(mem_lin_comb(ids))[0];
         } else {
             if (std::all_of(ids.begin(), ids.end(), [&](const std::size_t id) {
@@ -121,7 +133,7 @@ public:
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>>
     access_id_to_mem_lin_comb(std::size_t access_id)
     {
-        if constexpr (rank() == 1) {
+        if constexpr (rank() <= 1) {
             return std::pair<std::vector<double>, std::vector<std::size_t>>(
                     std::vector<double> {1.},
                     std::vector<std::size_t> {access_id});
@@ -139,7 +151,7 @@ public:
             Tensor tensor,
             Elem elem)
     {
-        if constexpr (rank() == 1) {
+        if constexpr (rank() <= 1) {
             return access(tensor, elem);
         } else {
             if (elem.template uid<Id>() == 0) {

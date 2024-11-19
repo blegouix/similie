@@ -12,6 +12,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 - tests for relabelize_indexes and relabelize_metric
 - Unify TensorAccessor::access_element() functions. Also get<Dims...>() in Tensor ?
 - Consider creating a misc enum for {-1 1} and use it in simplices/chains
+- Remove dependency to Boost
+- Optional compilation of embed-based modules
+- similie.hpp
+- reverse deriv template parameters
+- support scalar and natural vector as forms
 
 ----- CMAKE BASIC COMMAND -----
 
