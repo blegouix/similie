@@ -730,3 +730,80 @@ TEST(ExteriorDerivative, 3DDivergency)
                     derivative2.accessor().access_element<X, Y, Z>()),
             -1.);
 }
+
+struct Mu4 : sil::tensor::TensorNaturalIndex<T, X, Y, Z>
+{
+};
+
+TEST(ExteriorDerivative, 4DGradient)
+{
+    auto [alloc, derivative] = test_derivative<
+            3,
+            false,
+            sil::tensor::TensorAntisymmetricIndex<>,
+            sil::tensor::TensorAntisymmetricIndex<Mu4>,
+            DDimT,
+            DDimX,
+            DDimY,
+            DDimZ>();
+    EXPECT_EQ(
+            derivative(
+                    ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
+                    derivative.accessor().access_element<T>()),
+            0.);
+    EXPECT_EQ(
+            derivative(
+                    ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 1, 1, 1},
+                    derivative.accessor().access_element<T>()),
+            1.);
+    EXPECT_EQ(
+            derivative(
+                    ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {1, 0, 1, 1},
+                    derivative.accessor().access_element<X>()),
+            1.);
+    EXPECT_EQ(
+            derivative(
+                    ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {1, 1, 0, 1},
+                    derivative.accessor().access_element<Y>()),
+            1.);
+    EXPECT_EQ(
+            derivative(
+                    ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {1, 1, 1, 0},
+                    derivative.accessor().access_element<Z>()),
+            1.);
+
+    auto [alloc2, derivative2] = test_derivative<
+            3,
+            true,
+            sil::tensor::TensorAntisymmetricIndex<>,
+            sil::tensor::TensorAntisymmetricIndex<Mu4>,
+            DDimT,
+            DDimX,
+            DDimY,
+            DDimZ>();
+    EXPECT_EQ(
+            derivative2(
+                    ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
+                    derivative2.accessor().access_element<T>()),
+            0.);
+    EXPECT_EQ(
+            derivative2(
+                    ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 1, 1, 1},
+                    derivative2.accessor().access_element<T>()),
+            1.);
+    EXPECT_EQ(
+            derivative2(
+                    ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {1, 0, 1, 1},
+                    derivative2.accessor().access_element<X>()),
+            1.);
+    EXPECT_EQ(
+            derivative2(
+                    ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {1, 1, 0, 1},
+                    derivative2.accessor().access_element<Y>()),
+            1.);
+    EXPECT_EQ(
+            derivative2(
+                    ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {1, 1, 1, 0},
+                    derivative2.accessor().access_element<Z>()),
+            1.);
+}
