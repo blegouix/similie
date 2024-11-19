@@ -136,7 +136,12 @@ coboundary(
                 auto cochain = Cochain(chain, coboundary_tensor[elem]);
                 for (auto i = cochain.begin(); i < cochain.end(); ++i) {
                     sil::exterior::Chain simplex_boundary
-                            = boundary(sil::exterior::Simplex(elem, (*i).discrete_vector()));
+                            = boundary(sil::exterior::
+                                               Simplex(std::integral_constant<
+                                                               std::size_t,
+                                                               CochainTag::rank() + 1> {},
+                                                       elem,
+                                                       (*i).discrete_vector()));
                     std::vector<double> values(simplex_boundary.size());
                     for (auto j = simplex_boundary.begin(); j < simplex_boundary.end(); ++j) {
                         values[std::distance(simplex_boundary.begin(), j)]

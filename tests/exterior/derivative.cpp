@@ -11,54 +11,103 @@
 #include "filled_struct.hpp"
 #include "type_seq_conversion.hpp"
 
-template <std::size_t N, class InIndex, class OutIndex, class... DDim>
+template <std::size_t N, bool CoalescentIndexing, class InIndex, class OutIndex, class... DDim>
 static auto test_derivative()
 {
     sil::tensor::TensorAccessor<InIndex> tensor_accessor;
-    ddc::DiscreteDomain<InIndex, DDim...>
-            dom(tensor_accessor.mem_domain(),
+    if constexpr (CoalescentIndexing) {
+        ddc::DiscreteDomain<InIndex, DDim...>
+                dom(tensor_accessor.mem_domain(),
+                    ddc::DiscreteDomain(
+                            sil::misc::filled_struct<ddc::DiscreteElement<DDim...>>(0),
+                            sil::misc::filled_struct<ddc::DiscreteVector<DDim...>>(N)));
+        ddc::Chunk tensor_alloc(dom, ddc::HostAllocator<double>());
+        sil::tensor::Tensor<
+                double,
+                ddc::DiscreteDomain<InIndex, DDim...>,
+                Kokkos::layout_right,
+                Kokkos::DefaultHostExecutionSpace::memory_space>
+                tensor(tensor_alloc);
+        for (std::size_t i = 0; i < InIndex::mem_size(); ++i) {
+            ddc::parallel_for_each(
+                    Kokkos::DefaultHostExecutionSpace(),
+                    tensor.non_indices_domain(),
+                    [&](auto elem) {
+                        tensor.mem(elem, ddc::DiscreteElement<InIndex>(i)) = i + 1.;
+                    });
+            tensor
+                    .mem(sil::misc::filled_struct<ddc::DiscreteElement<DDim...>>(1),
+                         ddc::DiscreteElement<InIndex>(i))
+                    = i + 2.;
+        }
+        sil::tensor::TensorAccessor<OutIndex> derivative_accessor;
+        ddc::DiscreteDomain<OutIndex, DDim...> derivative_dom(
+                derivative_accessor.mem_domain(),
                 ddc::DiscreteDomain(
                         sil::misc::filled_struct<ddc::DiscreteElement<DDim...>>(0),
-                        sil::misc::filled_struct<ddc::DiscreteVector<DDim...>>(N)));
-    ddc::Chunk tensor_alloc(dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<InIndex, DDim...>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            tensor(tensor_alloc);
-    for (std::size_t i = 0; i < InIndex::mem_size(); ++i) {
-        ddc::parallel_for_each(
-                Kokkos::DefaultHostExecutionSpace(),
-                tensor.non_indices_domain(),
-                [&](auto elem) { tensor.mem(elem, ddc::DiscreteElement<InIndex>(i)) = i + 1.; });
-        tensor
-                .mem(sil::misc::filled_struct<ddc::DiscreteElement<DDim...>>(1),
-                     ddc::DiscreteElement<InIndex>(i))
-                = i + 2.;
+                        sil::misc::filled_struct<ddc::DiscreteVector<DDim...>>(N - 1)));
+        ddc::Chunk derivative_alloc(derivative_dom, ddc::HostAllocator<double>());
+        sil::tensor::Tensor<
+                double,
+                ddc::DiscreteDomain<OutIndex, DDim...>,
+                Kokkos::layout_right,
+                Kokkos::DefaultHostExecutionSpace::memory_space>
+                derivative(derivative_alloc);
+        sil::exterior::deriv<
+                InIndex,
+                ddc::type_seq_element_t<
+                        0,
+                        ddc::type_seq_remove_t<
+                                sil::misc::to_type_seq_t<OutIndex>,
+                                sil::misc::to_type_seq_t<InIndex>>>>(derivative, tensor);
+        return std::make_pair(std::move(derivative_alloc), derivative);
+    } else {
+        ddc::DiscreteDomain<DDim..., InIndex>
+                dom(ddc::DiscreteDomain(
+                            sil::misc::filled_struct<ddc::DiscreteElement<DDim...>>(0),
+                            sil::misc::filled_struct<ddc::DiscreteVector<DDim...>>(N)),
+                    tensor_accessor.mem_domain());
+        ddc::Chunk tensor_alloc(dom, ddc::HostAllocator<double>());
+        sil::tensor::Tensor<
+                double,
+                ddc::DiscreteDomain<DDim..., InIndex>,
+                Kokkos::layout_right,
+                Kokkos::DefaultHostExecutionSpace::memory_space>
+                tensor(tensor_alloc);
+        for (std::size_t i = 0; i < InIndex::mem_size(); ++i) {
+            ddc::parallel_for_each(
+                    Kokkos::DefaultHostExecutionSpace(),
+                    tensor.non_indices_domain(),
+                    [&](auto elem) {
+                        tensor.mem(elem, ddc::DiscreteElement<InIndex>(i)) = i + 1.;
+                    });
+            tensor
+                    .mem(sil::misc::filled_struct<ddc::DiscreteElement<DDim...>>(1),
+                         ddc::DiscreteElement<InIndex>(i))
+                    = i + 2.;
+        }
+        sil::tensor::TensorAccessor<OutIndex> derivative_accessor;
+        ddc::DiscreteDomain<DDim..., OutIndex> derivative_dom(
+                ddc::DiscreteDomain(
+                        sil::misc::filled_struct<ddc::DiscreteElement<DDim...>>(0),
+                        sil::misc::filled_struct<ddc::DiscreteVector<DDim...>>(N - 1)),
+                derivative_accessor.mem_domain());
+        ddc::Chunk derivative_alloc(derivative_dom, ddc::HostAllocator<double>());
+        sil::tensor::Tensor<
+                double,
+                ddc::DiscreteDomain<DDim..., OutIndex>,
+                Kokkos::layout_right,
+                Kokkos::DefaultHostExecutionSpace::memory_space>
+                derivative(derivative_alloc);
+        sil::exterior::deriv<
+                InIndex,
+                ddc::type_seq_element_t<
+                        0,
+                        ddc::type_seq_remove_t<
+                                sil::misc::to_type_seq_t<OutIndex>,
+                                sil::misc::to_type_seq_t<InIndex>>>>(derivative, tensor);
+        return std::make_pair(std::move(derivative_alloc), derivative);
     }
-
-    sil::tensor::TensorAccessor<OutIndex> derivative_accessor;
-    ddc::DiscreteDomain<OutIndex, DDim...> derivative_dom(
-            derivative_accessor.mem_domain(),
-            ddc::DiscreteDomain(
-                    sil::misc::filled_struct<ddc::DiscreteElement<DDim...>>(0),
-                    sil::misc::filled_struct<ddc::DiscreteVector<DDim...>>(N - 1)));
-    ddc::Chunk derivative_alloc(derivative_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<OutIndex, DDim...>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            derivative(derivative_alloc);
-    sil::exterior::deriv<
-            InIndex,
-            ddc::type_seq_element_t<
-                    0,
-                    ddc::type_seq_remove_t<
-                            sil::misc::to_type_seq_t<OutIndex>,
-                            sil::misc::to_type_seq_t<InIndex>>>>(derivative, tensor);
-    return std::make_pair(std::move(derivative_alloc), derivative);
 }
 
 struct T
@@ -101,6 +150,7 @@ TEST(ExteriorDerivative, 1DGradient)
 {
     auto [alloc, derivative] = test_derivative<
             3,
+            false,
             sil::tensor::TensorAntisymmetricIndex<>,
             sil::tensor::TensorAntisymmetricIndex<Mu1>,
             DDimX>();
@@ -120,10 +170,12 @@ TEST(ExteriorDerivative, 2DGradient)
 {
     auto [alloc, derivative] = test_derivative<
             3,
+            true,
             sil::tensor::TensorAntisymmetricIndex<>,
             sil::tensor::TensorAntisymmetricIndex<Mu2>,
             DDimX,
             DDimY>();
+    std::cout << derivative;
     /*
     EXPECT_EQ(
             derivative(
@@ -161,6 +213,7 @@ TEST(ExteriorDerivative, 2DRotational)
 {
     auto [alloc, derivative] = test_derivative<
             3,
+            false,
             sil::tensor::TensorAntisymmetricIndex<Mu2>,
             sil::tensor::TensorAntisymmetricIndex<Nu2, Mu2>,
             DDimX,
