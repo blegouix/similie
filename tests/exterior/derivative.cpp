@@ -51,7 +51,6 @@ static auto test_derivative()
             Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             derivative(derivative_alloc);
-    std::cout << tensor;
     sil::exterior::deriv<
             InIndex,
             ddc::type_seq_element_t<
@@ -94,51 +93,41 @@ struct DDimZ : ddc::UniformPointSampling<Z>
 {
 };
 
-using Form0Index = sil::tensor::TensorAntisymmetricIndex<>;
-
-struct Mu : sil::tensor::TensorNaturalIndex<X, Y>
+struct Mu1 : sil::tensor::TensorNaturalIndex<X>
 {
 };
-
-using Form1Index = sil::tensor::TensorAntisymmetricIndex<Mu>;
 
 TEST(ExteriorDerivative, 1DGradient)
 {
-    auto [alloc, derivative] = test_derivative<3, Form0Index, Form1Index, DDimX>();
-    std::cout << derivative;
-    /*
+    auto [alloc, derivative] = test_derivative<
+            3,
+            sil::tensor::TensorAntisymmetricIndex<>,
+            sil::tensor::TensorAntisymmetricIndex<Mu1>,
+            DDimX>();
     EXPECT_EQ(
-            derivative(
-                    ddc::DiscreteElement<DDimX, DDimY> {0, 0},
-                    derivative.accessor().access_element<X, Y>()),
-            0.);
-    EXPECT_EQ(
-            derivative(
-                    ddc::DiscreteElement<DDimX, DDimY> {1, 0},
-                    derivative.accessor().access_element<X, Y>()),
-            -1.);
-    EXPECT_EQ(
-            derivative(
-                    ddc::DiscreteElement<DDimX, DDimY> {0, 1},
-                    derivative.accessor().access_element<X, Y>()),
+            derivative(ddc::DiscreteElement<DDimX> {0}, derivative.accessor().access_element<X>()),
             1.);
     EXPECT_EQ(
-            derivative(
-                    ddc::DiscreteElement<DDimX, DDimY> {1, 1},
-                    derivative.accessor().access_element<X, Y>()),
-            0.);
-    */
+            derivative(ddc::DiscreteElement<DDimX> {1}, derivative.accessor().access_element<X>()),
+            -1.);
 }
 
-struct Nu : sil::tensor::TensorNaturalIndex<X, Y>
+struct Mu2 : sil::tensor::TensorNaturalIndex<X, Y>
 {
 };
 
-using Form2Index = sil::tensor::TensorAntisymmetricIndex<Nu, Mu>;
+struct Nu2 : sil::tensor::TensorNaturalIndex<X, Y>
+{
+};
 
 TEST(ExteriorDerivative, 2DRotational)
 {
-    auto [alloc, derivative] = test_derivative<3, Form1Index, Form2Index, DDimX, DDimY>();
+    auto [alloc, derivative] = test_derivative<
+            3,
+            sil::tensor::TensorAntisymmetricIndex<Mu2>,
+            sil::tensor::TensorAntisymmetricIndex<Nu2, Mu2>,
+            DDimX,
+            DDimY>();
     EXPECT_EQ(
             derivative(
                     ddc::DiscreteElement<DDimX, DDimY> {0, 0},

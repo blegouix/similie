@@ -115,7 +115,7 @@ public:
     static constexpr std::size_t access_id(
             std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
-        if constexpr (rank() == 1) {
+        if constexpr (rank() <= 1) {
             return std::get<1>(mem_lin_comb(ids))[0];
         } else {
             if (std::all_of(ids.begin(), ids.end(), [&](const std::size_t id) {
@@ -133,7 +133,7 @@ public:
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>>
     access_id_to_mem_lin_comb(std::size_t access_id)
     {
-        if constexpr (rank() == 1) {
+        if constexpr (rank() <= 1) {
             return std::pair<std::vector<double>, std::vector<std::size_t>>(
                     std::vector<double> {1.},
                     std::vector<std::size_t> {access_id});
@@ -151,7 +151,7 @@ public:
             Tensor tensor,
             Elem elem)
     {
-        if constexpr (rank() == 1) {
+        if constexpr (rank() <= 1) {
             return access(tensor, elem);
         } else {
             if (elem.template uid<Id>() == 0) {
