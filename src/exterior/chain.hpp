@@ -176,6 +176,7 @@ public:
             return -*this;
         } else {
             assert(false && "chain must be multiplied  by 1 or -1");
+            return *this;
         }
     }
 
