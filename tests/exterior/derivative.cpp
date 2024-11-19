@@ -162,6 +162,9 @@ TEST(ExteriorDerivative, 1DGradient)
     EXPECT_EQ(
             derivative(ddc::DiscreteElement<DDimX> {1}, derivative.accessor().access_element<X>()),
             -1.);
+    EXPECT_EQ(
+            derivative(ddc::DiscreteElement<DDimX> {2}, derivative.accessor().access_element<X>()),
+            0.);
 
     auto [alloc2, derivative2] = test_derivative<
             3,
@@ -179,6 +182,11 @@ TEST(ExteriorDerivative, 1DGradient)
                     ddc::DiscreteElement<DDimX> {1},
                     derivative2.accessor().access_element<X>()),
             -1.);
+    EXPECT_EQ(
+            derivative2(
+                    ddc::DiscreteElement<DDimX> {2},
+                    derivative2.accessor().access_element<X>()),
+            0.);
 }
 
 struct Mu2 : sil::tensor::TensorNaturalIndex<X, Y>
@@ -217,6 +225,16 @@ TEST(ExteriorDerivative, 2DGradient)
             0.);
     EXPECT_EQ(
             derivative(
+                    ddc::DiscreteElement<DDimX, DDimY> {0, 2},
+                    derivative.accessor().access_element<X>()),
+            0.);
+    EXPECT_EQ(
+            derivative(
+                    ddc::DiscreteElement<DDimX, DDimY> {0, 2},
+                    derivative.accessor().access_element<Y>()),
+            0.);
+    EXPECT_EQ(
+            derivative(
                     ddc::DiscreteElement<DDimX, DDimY> {1, 0},
                     derivative.accessor().access_element<X>()),
             0.);
@@ -235,6 +253,46 @@ TEST(ExteriorDerivative, 2DGradient)
                     ddc::DiscreteElement<DDimX, DDimY> {1, 1},
                     derivative.accessor().access_element<Y>()),
             -1.);
+    EXPECT_EQ(
+            derivative(
+                    ddc::DiscreteElement<DDimX, DDimY> {1, 2},
+                    derivative.accessor().access_element<X>()),
+            0.);
+    EXPECT_EQ(
+            derivative(
+                    ddc::DiscreteElement<DDimX, DDimY> {1, 2},
+                    derivative.accessor().access_element<Y>()),
+            0.);
+    EXPECT_EQ(
+            derivative(
+                    ddc::DiscreteElement<DDimX, DDimY> {2, 0},
+                    derivative.accessor().access_element<X>()),
+            0.);
+    EXPECT_EQ(
+            derivative(
+                    ddc::DiscreteElement<DDimX, DDimY> {2, 0},
+                    derivative.accessor().access_element<Y>()),
+            0.);
+    EXPECT_EQ(
+            derivative(
+                    ddc::DiscreteElement<DDimX, DDimY> {2, 1},
+                    derivative.accessor().access_element<X>()),
+            0.);
+    EXPECT_EQ(
+            derivative(
+                    ddc::DiscreteElement<DDimX, DDimY> {2, 1},
+                    derivative.accessor().access_element<Y>()),
+            0.);
+    EXPECT_EQ(
+            derivative(
+                    ddc::DiscreteElement<DDimX, DDimY> {2, 2},
+                    derivative.accessor().access_element<X>()),
+            0.);
+    EXPECT_EQ(
+            derivative(
+                    ddc::DiscreteElement<DDimX, DDimY> {2, 2},
+                    derivative.accessor().access_element<Y>()),
+            0.);
 
     auto [alloc2, derivative2] = test_derivative<
             3,
@@ -265,6 +323,16 @@ TEST(ExteriorDerivative, 2DGradient)
             0.);
     EXPECT_EQ(
             derivative2(
+                    ddc::DiscreteElement<DDimX, DDimY> {0, 2},
+                    derivative2.accessor().access_element<X>()),
+            0.);
+    EXPECT_EQ(
+            derivative2(
+                    ddc::DiscreteElement<DDimX, DDimY> {0, 2},
+                    derivative2.accessor().access_element<Y>()),
+            0.);
+    EXPECT_EQ(
+            derivative2(
                     ddc::DiscreteElement<DDimX, DDimY> {1, 0},
                     derivative2.accessor().access_element<X>()),
             0.);
@@ -283,6 +351,46 @@ TEST(ExteriorDerivative, 2DGradient)
                     ddc::DiscreteElement<DDimX, DDimY> {1, 1},
                     derivative2.accessor().access_element<Y>()),
             -1.);
+    EXPECT_EQ(
+            derivative2(
+                    ddc::DiscreteElement<DDimX, DDimY> {1, 2},
+                    derivative2.accessor().access_element<X>()),
+            0.);
+    EXPECT_EQ(
+            derivative2(
+                    ddc::DiscreteElement<DDimX, DDimY> {1, 2},
+                    derivative2.accessor().access_element<Y>()),
+            0.);
+    EXPECT_EQ(
+            derivative2(
+                    ddc::DiscreteElement<DDimX, DDimY> {2, 0},
+                    derivative2.accessor().access_element<X>()),
+            0.);
+    EXPECT_EQ(
+            derivative2(
+                    ddc::DiscreteElement<DDimX, DDimY> {2, 0},
+                    derivative2.accessor().access_element<Y>()),
+            0.);
+    EXPECT_EQ(
+            derivative2(
+                    ddc::DiscreteElement<DDimX, DDimY> {2, 1},
+                    derivative2.accessor().access_element<X>()),
+            0.);
+    EXPECT_EQ(
+            derivative2(
+                    ddc::DiscreteElement<DDimX, DDimY> {2, 1},
+                    derivative2.accessor().access_element<Y>()),
+            0.);
+    EXPECT_EQ(
+            derivative2(
+                    ddc::DiscreteElement<DDimX, DDimY> {2, 2},
+                    derivative2.accessor().access_element<X>()),
+            0.);
+    EXPECT_EQ(
+            derivative2(
+                    ddc::DiscreteElement<DDimX, DDimY> {2, 2},
+                    derivative2.accessor().access_element<Y>()),
+            0.);
 }
 
 struct Nu2 : sil::tensor::TensorNaturalIndex<X, Y>

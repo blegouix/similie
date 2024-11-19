@@ -145,19 +145,16 @@ coboundary(
                                                        (*i).discrete_vector()));
                     std::vector<double> values(simplex_boundary.size());
                     for (auto j = simplex_boundary.begin(); j < simplex_boundary.end(); ++j) {
-                        values[std::distance(simplex_boundary.begin(), j)]
-                                = (misc::domain_contains(
-                                          tensor.domain(),
-                                          j->discrete_element() + j->discrete_vector()))
-                                          ? tensor.mem(
-                                                    j->discrete_element(),
-                                                    ddc::DiscreteElement<CochainTag>(std::distance(
-                                                            lower_chain.begin(),
-                                                            std::
-                                                                    find(lower_chain.begin(),
-                                                                         lower_chain.end(),
-                                                                         j->discrete_vector()))))
-                                          : 0;
+                        values[std::distance(simplex_boundary.begin(), j)] = tensor.mem(
+                                misc::domain_contains(tensor.domain(), j->discrete_element())
+                                        ? j->discrete_element()
+                                        : elem,
+                                ddc::DiscreteElement<CochainTag>(std::distance(
+                                        lower_chain.begin(),
+                                        std::
+                                                find(lower_chain.begin(),
+                                                     lower_chain.end(),
+                                                     j->discrete_vector()))));
                     }
                     sil::exterior::Cochain<decltype(simplex_boundary)>
                             cochain_boundary(simplex_boundary, values);

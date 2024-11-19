@@ -167,14 +167,14 @@ public:
         return m_vects.end();
     }
 
-    KOKKOS_FUNCTION SimplexType& operator[](std::size_t i) noexcept
+    KOKKOS_FUNCTION SimplexType operator[](std::size_t i) noexcept
     {
-        return m_vects[i];
+        return SimplexType(misc::filled_struct<discrete_element_type>(), m_vects[i]);
     }
 
-    KOKKOS_FUNCTION SimplexType const& operator[](std::size_t i) const noexcept
+    KOKKOS_FUNCTION SimplexType const operator[](std::size_t i) const noexcept
     {
-        return m_vects[i];
+        return SimplexType(misc::filled_struct<discrete_element_type>(), m_vects[i]);
     }
 
     LocalChain<SimplexType> operator-() = delete;
