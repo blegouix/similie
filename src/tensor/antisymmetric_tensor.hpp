@@ -30,24 +30,36 @@ struct TensorAntisymmetricIndex
 
     static constexpr std::size_t rank()
     {
-        return (TensorIndex::rank() + ...);
+        if constexpr (sizeof...(TensorIndex) == 0) {
+            return 0;
+        } else {
+            return (TensorIndex::rank() + ...);
+        }
     }
 
     static constexpr std::size_t size()
     {
-        return (TensorIndex::size() * ...);
+        if constexpr (sizeof...(TensorIndex) == 0) {
+            return 0;
+        } else {
+            return (TensorIndex::size() + ...);
+        }
     }
 
     static constexpr std::size_t mem_size()
     {
-        return misc::binomial_coefficient(
-                std::min({TensorIndex::mem_size()...}),
-                sizeof...(TensorIndex));
+        if constexpr (rank() == 0) {
+            return 0;
+        } else {
+            return misc::binomial_coefficient(
+                    std::min({TensorIndex::mem_size()...}),
+                    sizeof...(TensorIndex));
+        }
     }
 
     static constexpr std::size_t access_size()
     {
-        if constexpr (rank() == 1) {
+        if constexpr (rank() <= 1) {
             return mem_size();
         } else {
             return mem_size() + 1;
