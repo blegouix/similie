@@ -807,3 +807,84 @@ TEST(ExteriorDerivative, 4DGradient)
                     derivative2.accessor().access_element<Z>()),
             1.);
 }
+
+struct Nu4 : sil::tensor::TensorNaturalIndex<T, X, Y, Z>
+{
+};
+
+TEST(ExteriorDerivative, 4DRotational)
+{
+    auto [alloc, derivative] = test_derivative<
+            3,
+            false,
+            sil::tensor::TensorAntisymmetricIndex<Mu4>,
+            sil::tensor::TensorAntisymmetricIndex<Nu4, Mu4>,
+            DDimT,
+            DDimX,
+            DDimY,
+            DDimZ>();
+
+    auto [alloc2, derivative2] = test_derivative<
+            3,
+            true,
+            sil::tensor::TensorAntisymmetricIndex<Mu4>,
+            sil::tensor::TensorAntisymmetricIndex<Nu4, Mu4>,
+            DDimT,
+            DDimX,
+            DDimY,
+            DDimZ>();
+}
+
+struct Rho4 : sil::tensor::TensorNaturalIndex<T, X, Y, Z>
+{
+};
+
+TEST(ExteriorDerivative, 4DDivergency)
+{
+    auto [alloc, derivative] = test_derivative<
+            3,
+            false,
+            sil::tensor::TensorAntisymmetricIndex<Nu4, Mu4>,
+            sil::tensor::TensorAntisymmetricIndex<Rho4, Nu4, Mu4>,
+            DDimT,
+            DDimX,
+            DDimY,
+            DDimZ>();
+
+    auto [alloc2, derivative2] = test_derivative<
+            3,
+            true,
+            sil::tensor::TensorAntisymmetricIndex<Nu4, Mu4>,
+            sil::tensor::TensorAntisymmetricIndex<Rho4, Nu4, Mu4>,
+            DDimT,
+            DDimX,
+            DDimY,
+            DDimZ>();
+}
+
+struct Sigma4 : sil::tensor::TensorNaturalIndex<T, X, Y, Z>
+{
+};
+
+TEST(ExteriorDerivative, 4DHyperDivergency)
+{
+    auto [alloc, derivative] = test_derivative<
+            3,
+            false,
+            sil::tensor::TensorAntisymmetricIndex<Rho4, Nu4, Mu4>,
+            sil::tensor::TensorAntisymmetricIndex<Sigma4, Rho4, Nu4, Mu4>,
+            DDimT,
+            DDimX,
+            DDimY,
+            DDimZ>();
+
+    auto [alloc2, derivative2] = test_derivative<
+            3,
+            true,
+            sil::tensor::TensorAntisymmetricIndex<Rho4, Nu4, Mu4>,
+            sil::tensor::TensorAntisymmetricIndex<Sigma4, Rho4, Nu4, Mu4>,
+            DDimT,
+            DDimX,
+            DDimY,
+            DDimZ>();
+}
