@@ -6,6 +6,7 @@
 #include <ddc/ddc.hpp>
 
 #include <gtest/gtest.h>
+#include <similie/tensor/symmetric_tensor.hpp>
 
 #include "exterior.hpp"
 #include "filled_struct.hpp"
@@ -889,4 +890,140 @@ TEST(ExteriorDerivative, 4DHyperDivergency)
             DDimX,
             DDimY,
             DDimZ>();
+}
+
+struct DDimSpect : ddc::UniformPointSampling<T>
+{
+};
+
+struct SpectNatIndex1 : sil::tensor::TensorNaturalIndex<T, X, Y, Z>
+{
+};
+
+struct SpectNatIndex2 : sil::tensor::TensorNaturalIndex<T, X, Y, Z>
+{
+};
+
+struct IndexSpect : sil::tensor::TensorSymmetricIndex<SpectNatIndex1, SpectNatIndex2>
+{
+};
+
+TEST(ExteriorDerivative, 2DRotationalWithSpects)
+{
+    const std::size_t N = 3;
+    sil::tensor::TensorAccessor<IndexSpect, sil::tensor::TensorAntisymmetricIndex<Mu2>>
+            tensor_accessor;
+    ddc::DiscreteDomain<
+            sil::tensor::TensorAntisymmetricIndex<Mu2>,
+            DDimSpect,
+            DDimX,
+            IndexSpect,
+            DDimY>
+            dom(tensor_accessor.mem_domain(),
+                ddc::DiscreteDomain(
+                        sil::misc::filled_struct<ddc::DiscreteElement<DDimSpect, DDimX, DDimY>>(0),
+                        sil::misc::filled_struct<ddc::DiscreteVector<DDimSpect, DDimX, DDimY>>(N)));
+    ddc::Chunk tensor_alloc(dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor<
+            double,
+            ddc::DiscreteDomain<
+                    sil::tensor::TensorAntisymmetricIndex<Mu2>,
+                    DDimSpect,
+                    DDimX,
+                    IndexSpect,
+                    DDimY>,
+            Kokkos::layout_right,
+            Kokkos::DefaultHostExecutionSpace::memory_space>
+            tensor(tensor_alloc);
+    for (std::size_t i = 0; i < sil::tensor::TensorAntisymmetricIndex<Mu2>::mem_size(); ++i) {
+        ddc::parallel_for_each(
+                Kokkos::DefaultHostExecutionSpace(),
+                ddc::DiscreteDomain<DDimSpect, DDimX, IndexSpect, DDimY>(tensor.domain()),
+                [&](auto elem) {
+                    tensor
+                            .mem(elem,
+                                 ddc::DiscreteElement<sil::tensor::TensorAntisymmetricIndex<Mu2>>(
+                                         i))
+                            = i + 1.;
+                });
+        for (auto dim_spect_elem : ddc::DiscreteDomain<DDimSpect>(tensor.mem_domain())) {
+            for (auto index_spect_elem : ddc::DiscreteDomain<IndexSpect>(tensor.mem_domain())) {
+                tensor
+                        .mem(dim_spect_elem,
+                             index_spect_elem,
+                             ddc::DiscreteElement<DDimX, DDimY> {1, 1},
+                             ddc::DiscreteElement<sil::tensor::TensorAntisymmetricIndex<Mu2>>(i))
+                        = i + 2.;
+            }
+        }
+    }
+
+    sil::tensor::TensorAccessor<IndexSpect, sil::tensor::TensorAntisymmetricIndex<Nu2, Mu2>>
+            derivative_accessor;
+    ddc::DiscreteDomain<
+            sil::tensor::TensorAntisymmetricIndex<Nu2, Mu2>,
+            DDimSpect,
+            DDimX,
+            IndexSpect,
+            DDimY>
+            derivative_dom(
+                    derivative_accessor.mem_domain(),
+                    ddc::DiscreteDomain(
+                            sil::misc::filled_struct<ddc::DiscreteElement<DDimSpect, DDimX, DDimY>>(
+                                    0),
+                            ddc::DiscreteVector<DDimSpect, DDimX, DDimY> {3, 2, 2}));
+    ddc::Chunk derivative_alloc(derivative_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor<
+            double,
+            ddc::DiscreteDomain<
+                    sil::tensor::TensorAntisymmetricIndex<Nu2, Mu2>,
+                    DDimSpect,
+                    DDimX,
+                    IndexSpect,
+                    DDimY>,
+            Kokkos::layout_right,
+            Kokkos::DefaultHostExecutionSpace::memory_space>
+            derivative(derivative_alloc);
+    sil::exterior::deriv<Nu2, sil::tensor::TensorAntisymmetricIndex<Mu2>>(derivative, tensor);
+
+    for (auto dim_spect_elem : ddc::DiscreteDomain<DDimSpect>(tensor.mem_domain())) {
+        for (auto index_spect_elem : ddc::DiscreteDomain<IndexSpect>(tensor.mem_domain())) {
+            EXPECT_EQ(
+                    derivative(
+                            ddc::DiscreteElement<DDimX, DDimY> {0, 0},
+                            dim_spect_elem,
+                            index_spect_elem,
+                            sil::tensor::TensorAccessor<
+                                    sil::tensor::TensorAntisymmetricIndex<Nu2, Mu2>>::
+                                    access_element<X, Y>()),
+                    0.);
+            EXPECT_EQ(
+                    derivative(
+                            ddc::DiscreteElement<DDimX, DDimY> {1, 0},
+                            dim_spect_elem,
+                            index_spect_elem,
+                            sil::tensor::TensorAccessor<
+                                    sil::tensor::TensorAntisymmetricIndex<Nu2, Mu2>>::
+                                    access_element<X, Y>()),
+                    -1.);
+            EXPECT_EQ(
+                    derivative(
+                            ddc::DiscreteElement<DDimX, DDimY> {0, 1},
+                            dim_spect_elem,
+                            index_spect_elem,
+                            sil::tensor::TensorAccessor<
+                                    sil::tensor::TensorAntisymmetricIndex<Nu2, Mu2>>::
+                                    access_element<X, Y>()),
+                    1.);
+            EXPECT_EQ(
+                    derivative(
+                            ddc::DiscreteElement<DDimX, DDimY> {1, 1},
+                            dim_spect_elem,
+                            index_spect_elem,
+                            sil::tensor::TensorAccessor<
+                                    sil::tensor::TensorAntisymmetricIndex<Nu2, Mu2>>::
+                                    access_element<X, Y>()),
+                    0.);
+        }
+    }
 }

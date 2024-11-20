@@ -165,6 +165,24 @@ KOKKOS_FUNCTION coboundary_t<CochainType> coboundary(
             cochain.integrate());
 }
 
+namespace detail {
+
+template <tensor::TensorNatIndex Index, class Dom>
+struct NonSpectatorDimension;
+
+template <tensor::TensorNatIndex Index, class... DDim>
+struct NonSpectatorDimension<Index, ddc::DiscreteDomain<DDim...>>
+{
+    using type = ddc::cartesian_prod_t<std::conditional_t<
+            ddc::type_seq_contains_v<
+                    ddc::detail::TypeSeq<typename DDim::continuous_dimension_type>,
+                    typename Index::type_seq_dimensions>,
+            ddc::DiscreteDomain<DDim>,
+            ddc::DiscreteDomain<>>...>;
+};
+
+} // namespace detail
+
 template <
         tensor::TensorNatIndex TagToAddToCochain,
         tensor::TensorIndex CochainTag,
@@ -201,10 +219,14 @@ KOKKOS_FUNCTION coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> c
             [&](auto elem) {
                 auto chain = tangent_basis<
                         CochainTag::rank() + 1,
-                        typename TensorType::non_indices_domain_t>();
+                        typename detail::NonSpectatorDimension<
+                                TagToAddToCochain,
+                                typename TensorType::non_indices_domain_t>::type>();
                 auto lower_chain = tangent_basis<
                         CochainTag::rank(),
-                        typename TensorType::non_indices_domain_t>();
+                        typename detail::NonSpectatorDimension<
+                                TagToAddToCochain,
+                                typename TensorType::non_indices_domain_t>::type>();
                 auto cochain = Cochain(chain, antisymmetric_coboundary_tensor[elem]);
                 for (auto i = cochain.begin(); i < cochain.end(); ++i) {
                     sil::exterior::Chain simplex_boundary
