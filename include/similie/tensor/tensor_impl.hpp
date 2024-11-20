@@ -29,12 +29,16 @@ struct TensorNaturalIndex
 
     static constexpr std::size_t rank()
     {
-        return 1;
+        return sizeof...(CDim) != 0;
     }
 
     static constexpr std::size_t size()
     {
-        return sizeof...(CDim);
+        if constexpr (rank() == 0) {
+            return 1;
+        } else {
+            return sizeof...(CDim);
+        }
     }
 
     static constexpr std::size_t mem_size()
@@ -50,9 +54,16 @@ struct TensorNaturalIndex
     template <class ODim>
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_lin_comb()
     {
-        return std::pair<std::vector<double>, std::vector<std::size_t>>(
-                std::vector<double> {1.},
-                std::vector<std::size_t> {ddc::type_seq_rank_v<ODim, type_seq_dimensions>});
+        if constexpr (rank() == 0) {
+            return std::pair<
+                    std::vector<double>,
+                    std::vector<
+                            std::size_t>>(std::vector<double> {1.}, std::vector<std::size_t> {0});
+        } else {
+            return std::pair<std::vector<double>, std::vector<std::size_t>>(
+                    std::vector<double> {1.},
+                    std::vector<std::size_t> {ddc::type_seq_rank_v<ODim, type_seq_dimensions>});
+        }
     }
 
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_lin_comb(
