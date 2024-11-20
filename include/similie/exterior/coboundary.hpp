@@ -281,7 +281,6 @@ KOKKOS_FUNCTION coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> c
 template <
         tensor::TensorNatIndex TagToAddToCochain,
         tensor::TensorIndex CochainTag,
-
         misc::Specialization<tensor::Tensor> TensorType>
 KOKKOS_FUNCTION coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> deriv(
         coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
