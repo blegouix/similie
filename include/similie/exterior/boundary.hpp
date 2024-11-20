@@ -5,8 +5,9 @@
 
 #include <ddc/ddc.hpp>
 
+#include <similie/misc/specialization.hpp>
+
 #include "chain.hpp"
-#include "specialization.hpp"
 
 namespace sil {
 

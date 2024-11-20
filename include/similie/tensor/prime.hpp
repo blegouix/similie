@@ -5,8 +5,9 @@
 
 #include <ddc/ddc.hpp>
 
+#include <similie/misc/specialization.hpp>
+
 #include "character.hpp"
-#include "specialization.hpp"
 
 namespace sil {
 

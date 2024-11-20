@@ -5,14 +5,16 @@
 
 #include <ddc/ddc.hpp>
 
-#include "antisymmetric_tensor.hpp"
-#include "are_all_same.hpp"
+#include <similie/misc/are_all_same.hpp>
+#include <similie/misc/domain_contains.hpp>
+#include <similie/misc/filled_struct.hpp>
+#include <similie/misc/specialization.hpp>
+#include <similie/misc/type_seq_conversion.hpp>
+#include <similie/tensor/antisymmetric_tensor.hpp>
+
 #include "cochain.hpp"
 #include "cosimplex.hpp"
-#include "domain_contains.hpp"
-#include "filled_struct.hpp"
-#include "specialization.hpp"
-#include "type_seq_conversion.hpp"
+
 
 namespace sil {
 

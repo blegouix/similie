@@ -5,7 +5,8 @@
 
 #include <ddc/ddc.hpp>
 
-#include "binomial_coefficient.hpp"
+#include <similie/misc/binomial_coefficient.hpp>
+
 #include "tensor_impl.hpp"
 
 namespace sil {

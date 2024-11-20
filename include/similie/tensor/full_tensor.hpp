@@ -5,8 +5,9 @@
 
 #include <ddc/ddc.hpp>
 
-#include "stride.hpp"
-#include "tensor.hpp"
+#include <similie/misc/stride.hpp>
+
+#include "tensor_impl.hpp"
 
 namespace sil {
 

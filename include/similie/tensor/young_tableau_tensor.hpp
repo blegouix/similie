@@ -5,10 +5,11 @@
 
 #include <ddc/ddc.hpp>
 
-#include "csr.hpp"
-#include "stride.hpp"
-#include "tensor.hpp"
-#include "young_tableau.hpp"
+#include <similie/csr/csr.hpp>
+#include <similie/misc/stride.hpp>
+#include <similie/young_tableau/young_tableau.hpp>
+
+#include "tensor_impl.hpp"
 
 namespace sil {
 

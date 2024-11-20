@@ -5,9 +5,10 @@
 
 #include <ddc/ddc.hpp>
 
-#include "are_all_same.hpp"
+#include <similie/misc/are_all_same.hpp>
+#include <similie/misc/specialization.hpp>
+
 #include "simplex.hpp"
-#include "specialization.hpp"
 
 namespace sil {
 

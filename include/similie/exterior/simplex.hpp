@@ -5,7 +5,7 @@
 
 #include <ddc/ddc.hpp>
 
-#include "specialization.hpp"
+#include <similie/misc/specialization.hpp>
 
 namespace sil {
 

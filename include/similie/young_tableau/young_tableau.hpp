@@ -7,12 +7,12 @@
 
 #include <ddc/ddc.hpp>
 
-#include "csr.hpp"
-#include "csr_dynamic.hpp"
-#include "prime.hpp"
-#include "specialization.hpp"
-#include "stride.hpp"
-#include "tensor_impl.hpp"
+#include <similie/csr/csr.hpp>
+#include <similie/csr/csr_dynamic.hpp>
+#include <similie/misc/specialization.hpp>
+#include <similie/misc/stride.hpp>
+#include <similie/tensor/prime.hpp>
+#include <similie/tensor/tensor_impl.hpp>
 
 namespace sil {
 
