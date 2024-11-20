@@ -186,9 +186,7 @@ struct NonSpectatorDimension<Index, ddc::DiscreteDomain<DDim...>>
 template <
         tensor::TensorNatIndex TagToAddToCochain,
         tensor::TensorIndex CochainTag,
-
-        misc::Specialization<tensor::Tensor> TensorType,
-        class... ODDim>
+        misc::Specialization<tensor::Tensor> TensorType>
 KOKKOS_FUNCTION coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
         coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
         TensorType tensor)
@@ -284,8 +282,7 @@ template <
         tensor::TensorNatIndex TagToAddToCochain,
         tensor::TensorIndex CochainTag,
 
-        misc::Specialization<tensor::Tensor> TensorType,
-        class... ODDim>
+        misc::Specialization<tensor::Tensor> TensorType>
 KOKKOS_FUNCTION coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> deriv(
         coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
         TensorType tensor)
@@ -293,8 +290,7 @@ KOKKOS_FUNCTION coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> d
     return coboundary<
             TagToAddToCochain,
             CochainTag,
-            TensorType,
-            ODDim...>(coboundary_tensor, tensor);
+            TensorType>(coboundary_tensor, tensor);
 }
 
 } // namespace exterior
