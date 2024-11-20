@@ -155,7 +155,7 @@ Typedefs</h2></td></tr>
 <tr class="memitem:aae9b86ebeebff7e21df62d67785ebedd" id="r_aae9b86ebeebff7e21df62d67785ebedd"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; <a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a> &gt; CochainType&gt; </td></tr>
 <tr class="memitem:aae9b86ebeebff7e21df62d67785ebedd"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1exterior.html#aae9b86ebeebff7e21df62d67785ebedd">coboundary_t</a> = typename detail::CoboundaryType&lt; CochainType &gt;::type</td></tr>
 <tr class="separator:aae9b86ebeebff7e21df62d67785ebedd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aef98055b159558aa4e09c970dcf5bc0d" id="r_aef98055b159558aa4e09c970dcf5bc0d"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorNatIndex TagToAddToCochain, misc::Specialization&lt; <a class="el" href="structsil_1_1tensor_1_1TensorAntisymmetricIndex.html">tensor::TensorAntisymmetricIndex</a> &gt; CochainTag, misc::Specialization&lt; tensor::Tensor &gt; TensorType&gt; </td></tr>
+<tr class="memitem:aef98055b159558aa4e09c970dcf5bc0d" id="r_aef98055b159558aa4e09c970dcf5bc0d"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag, misc::Specialization&lt; tensor::Tensor &gt; TensorType&gt; </td></tr>
 <tr class="memitem:aef98055b159558aa4e09c970dcf5bc0d"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1exterior.html#aef98055b159558aa4e09c970dcf5bc0d">coboundary_tensor_t</a> = typename detail::CoboundaryTensorType&lt; TagToAddToCochain, CochainTag, TensorType &gt;::type</td></tr>
 <tr class="separator:aef98055b159558aa4e09c970dcf5bc0d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a91ad2e2a2afbf4daa1a78d5d4955dd1b" id="r_a91ad2e2a2afbf4daa1a78d5d4955dd1b"><td class="memTemplParams" colspan="2">template&lt;class T , class ElementType  = double, class Allocator  = std::allocator&lt;double&gt;&gt; </td></tr>
@@ -179,12 +179,12 @@ Functions</h2></td></tr>
 <tr class="memitem:a3ac9f6a5916d6d2a26961706f2e33ec3" id="r_a3ac9f6a5916d6d2a26961706f2e33ec3"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; <a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a> &gt; CochainType&gt; </td></tr>
 <tr class="memitem:a3ac9f6a5916d6d2a26961706f2e33ec3"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="namespacesil_1_1exterior.html#aae9b86ebeebff7e21df62d67785ebedd">coboundary_t</a>&lt; CochainType &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1exterior.html#a3ac9f6a5916d6d2a26961706f2e33ec3">coboundary</a> (CochainType cochain)</td></tr>
 <tr class="separator:a3ac9f6a5916d6d2a26961706f2e33ec3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a07418d6747b4b81ee9fb1fbd47701aee" id="r_a07418d6747b4b81ee9fb1fbd47701aee"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorNatIndex TagToAddToCochain, misc::Specialization&lt; <a class="el" href="structsil_1_1tensor_1_1TensorAntisymmetricIndex.html">tensor::TensorAntisymmetricIndex</a> &gt; CochainTag, misc::Specialization&lt; tensor::Tensor &gt; AntisymmetricTensorType&gt; </td></tr>
-<tr class="memitem:a07418d6747b4b81ee9fb1fbd47701aee"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="namespacesil_1_1exterior.html#aef98055b159558aa4e09c970dcf5bc0d">coboundary_tensor_t</a>&lt; TagToAddToCochain, CochainTag, AntisymmetricTensorType &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1exterior.html#a07418d6747b4b81ee9fb1fbd47701aee">coboundary</a> (<a class="el" href="namespacesil_1_1exterior.html#aef98055b159558aa4e09c970dcf5bc0d">coboundary_tensor_t</a>&lt; TagToAddToCochain, CochainTag, AntisymmetricTensorType &gt; coboundary_tensor, AntisymmetricTensorType tensor)</td></tr>
-<tr class="separator:a07418d6747b4b81ee9fb1fbd47701aee"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a15607c4e3eb0dd6cc335ebccc18442c2" id="r_a15607c4e3eb0dd6cc335ebccc18442c2"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorNatIndex TagToAddToCochain, misc::Specialization&lt; <a class="el" href="structsil_1_1tensor_1_1TensorAntisymmetricIndex.html">tensor::TensorAntisymmetricIndex</a> &gt; CochainTag, misc::Specialization&lt; tensor::Tensor &gt; AntisymmetricTensorType&gt; </td></tr>
-<tr class="memitem:a15607c4e3eb0dd6cc335ebccc18442c2"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="namespacesil_1_1exterior.html#aef98055b159558aa4e09c970dcf5bc0d">coboundary_tensor_t</a>&lt; TagToAddToCochain, CochainTag, AntisymmetricTensorType &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1exterior.html#a15607c4e3eb0dd6cc335ebccc18442c2">deriv</a> (<a class="el" href="namespacesil_1_1exterior.html#aef98055b159558aa4e09c970dcf5bc0d">coboundary_tensor_t</a>&lt; TagToAddToCochain, CochainTag, AntisymmetricTensorType &gt; coboundary_tensor, AntisymmetricTensorType tensor)</td></tr>
-<tr class="separator:a15607c4e3eb0dd6cc335ebccc18442c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0783a923221f379e41af51955da799b2" id="r_a0783a923221f379e41af51955da799b2"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag, misc::Specialization&lt; tensor::Tensor &gt; TensorType&gt; </td></tr>
+<tr class="memitem:a0783a923221f379e41af51955da799b2"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="namespacesil_1_1exterior.html#aef98055b159558aa4e09c970dcf5bc0d">coboundary_tensor_t</a>&lt; TagToAddToCochain, CochainTag, TensorType &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1exterior.html#a0783a923221f379e41af51955da799b2">coboundary</a> (<a class="el" href="namespacesil_1_1exterior.html#aef98055b159558aa4e09c970dcf5bc0d">coboundary_tensor_t</a>&lt; TagToAddToCochain, CochainTag, TensorType &gt; coboundary_tensor, TensorType tensor)</td></tr>
+<tr class="separator:a0783a923221f379e41af51955da799b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adf1dde8733252a13def821ec3cd8f5c5" id="r_adf1dde8733252a13def821ec3cd8f5c5"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag, misc::Specialization&lt; tensor::Tensor &gt; TensorType&gt; </td></tr>
+<tr class="memitem:adf1dde8733252a13def821ec3cd8f5c5"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="namespacesil_1_1exterior.html#aef98055b159558aa4e09c970dcf5bc0d">coboundary_tensor_t</a>&lt; TagToAddToCochain, CochainTag, TensorType &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1exterior.html#adf1dde8733252a13def821ec3cd8f5c5">deriv</a> (<a class="el" href="namespacesil_1_1exterior.html#aef98055b159558aa4e09c970dcf5bc0d">coboundary_tensor_t</a>&lt; TagToAddToCochain, CochainTag, TensorType &gt; coboundary_tensor, TensorType tensor)</td></tr>
+<tr class="separator:adf1dde8733252a13def821ec3cd8f5c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a77b1d154b6e5a5a8a225bf23ff67d1ae" id="r_a77b1d154b6e5a5a8a225bf23ff67d1ae"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; <a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a> &gt; CochainType&gt; </td></tr>
 <tr class="memitem:a77b1d154b6e5a5a8a225bf23ff67d1ae"><td class="memTemplItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1exterior.html#a77b1d154b6e5a5a8a225bf23ff67d1ae">operator&lt;&lt;</a> (std::ostream &amp;out, CochainType const &amp;cochain)</td></tr>
 <tr class="separator:a77b1d154b6e5a5a8a225bf23ff67d1ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -243,7 +243,7 @@ template&lt;misc::Specialization&lt; <a class="el" href="classsil_1_1exterior_1_
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00068">68</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00117">117</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
 
 </div>
 </div>
@@ -253,7 +253,7 @@ template&lt;misc::Specialization&lt; <a class="el" href="classsil_1_1exterior_1_
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;tensor::TensorNatIndex TagToAddToCochain, misc::Specialization&lt; <a class="el" href="structsil_1_1tensor_1_1TensorAntisymmetricIndex.html">tensor::TensorAntisymmetricIndex</a> &gt; CochainTag, misc::Specialization&lt; tensor::Tensor &gt; TensorType&gt; </div>
+template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag, misc::Specialization&lt; tensor::Tensor &gt; TensorType&gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">using <a class="el" href="namespacesil_1_1exterior.html#aef98055b159558aa4e09c970dcf5bc0d">sil::exterior::coboundary_tensor_t</a> = typedef typename detail::CoboundaryTensorType&lt;TagToAddToCochain, CochainTag, TensorType&gt;::type</td>
@@ -261,7 +261,7 @@ template&lt;tensor::TensorNatIndex TagToAddToCochain, misc::Specialization&lt; <
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00074">74</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00123">123</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
 
 </div>
 </div>
@@ -398,28 +398,28 @@ template&lt;misc::Specialization&lt; <a class="el" href="classsil_1_1exterior_1_
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00104">104</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00153">153</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a07418d6747b4b81ee9fb1fbd47701aee" name="a07418d6747b4b81ee9fb1fbd47701aee"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a07418d6747b4b81ee9fb1fbd47701aee">&#9670;&#160;</a></span>coboundary() <span class="overload">[2/2]</span></h2>
+<a id="a0783a923221f379e41af51955da799b2" name="a0783a923221f379e41af51955da799b2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0783a923221f379e41af51955da799b2">&#9670;&#160;</a></span>coboundary() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;tensor::TensorNatIndex TagToAddToCochain, misc::Specialization&lt; <a class="el" href="structsil_1_1tensor_1_1TensorAntisymmetricIndex.html">tensor::TensorAntisymmetricIndex</a> &gt; CochainTag, misc::Specialization&lt; tensor::Tensor &gt; AntisymmetricTensorType&gt; </div>
+template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag, misc::Specialization&lt; tensor::Tensor &gt; TensorType&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION <a class="el" href="namespacesil_1_1exterior.html#aef98055b159558aa4e09c970dcf5bc0d">coboundary_tensor_t</a>&lt; TagToAddToCochain, CochainTag, AntisymmetricTensorType &gt; sil::exterior::coboundary </td>
+          <td class="memname">KOKKOS_FUNCTION <a class="el" href="namespacesil_1_1exterior.html#aef98055b159558aa4e09c970dcf5bc0d">coboundary_tensor_t</a>&lt; TagToAddToCochain, CochainTag, TensorType &gt; sil::exterior::coboundary </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="namespacesil_1_1exterior.html#aef98055b159558aa4e09c970dcf5bc0d">coboundary_tensor_t</a>&lt; TagToAddToCochain, CochainTag, AntisymmetricTensorType &gt;&#160;</td>
+          <td class="paramtype"><a class="el" href="namespacesil_1_1exterior.html#aef98055b159558aa4e09c970dcf5bc0d">coboundary_tensor_t</a>&lt; TagToAddToCochain, CochainTag, TensorType &gt;&#160;</td>
           <td class="paramname"><em>coboundary_tensor</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">AntisymmetricTensorType&#160;</td>
+          <td class="paramtype">TensorType&#160;</td>
           <td class="paramname"><em>tensor</em>&#160;</td>
         </tr>
         <tr>
@@ -430,28 +430,28 @@ template&lt;tensor::TensorNatIndex TagToAddToCochain, misc::Specialization&lt; <
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00124">124</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00172">172</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a15607c4e3eb0dd6cc335ebccc18442c2" name="a15607c4e3eb0dd6cc335ebccc18442c2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a15607c4e3eb0dd6cc335ebccc18442c2">&#9670;&#160;</a></span>deriv()</h2>
+<a id="adf1dde8733252a13def821ec3cd8f5c5" name="adf1dde8733252a13def821ec3cd8f5c5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adf1dde8733252a13def821ec3cd8f5c5">&#9670;&#160;</a></span>deriv()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;tensor::TensorNatIndex TagToAddToCochain, misc::Specialization&lt; <a class="el" href="structsil_1_1tensor_1_1TensorAntisymmetricIndex.html">tensor::TensorAntisymmetricIndex</a> &gt; CochainTag, misc::Specialization&lt; tensor::Tensor &gt; AntisymmetricTensorType&gt; </div>
+template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag, misc::Specialization&lt; tensor::Tensor &gt; TensorType&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION <a class="el" href="namespacesil_1_1exterior.html#aef98055b159558aa4e09c970dcf5bc0d">coboundary_tensor_t</a>&lt; TagToAddToCochain, CochainTag, AntisymmetricTensorType &gt; sil::exterior::deriv </td>
+          <td class="memname">KOKKOS_FUNCTION <a class="el" href="namespacesil_1_1exterior.html#aef98055b159558aa4e09c970dcf5bc0d">coboundary_tensor_t</a>&lt; TagToAddToCochain, CochainTag, TensorType &gt; sil::exterior::deriv </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="namespacesil_1_1exterior.html#aef98055b159558aa4e09c970dcf5bc0d">coboundary_tensor_t</a>&lt; TagToAddToCochain, CochainTag, AntisymmetricTensorType &gt;&#160;</td>
+          <td class="paramtype"><a class="el" href="namespacesil_1_1exterior.html#aef98055b159558aa4e09c970dcf5bc0d">coboundary_tensor_t</a>&lt; TagToAddToCochain, CochainTag, TensorType &gt;&#160;</td>
           <td class="paramname"><em>coboundary_tensor</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">AntisymmetricTensorType&#160;</td>
+          <td class="paramtype">TensorType&#160;</td>
           <td class="paramname"><em>tensor</em>&#160;</td>
         </tr>
         <tr>
@@ -462,7 +462,7 @@ template&lt;tensor::TensorNatIndex TagToAddToCochain, misc::Specialization&lt; <
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00182">182</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00263">263</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
 
 </div>
 </div>
