@@ -60,12 +60,11 @@ endif()
 # Our project code
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-
 add_library(similie INTERFACE)
 add_library(sil::sil ALIAS similie)
 target_compile_features(similie INTERFACE cxx_std_23)
 target_include_directories(
-    similie 
+    similie
     INTERFACE
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
         "$<INSTALL_INTERFACE:include>"
