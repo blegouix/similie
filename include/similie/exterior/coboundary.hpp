@@ -33,7 +33,7 @@ struct CoboundaryType<Cochain<Chain<Simplex<K, Tag...>>, ElementType, Allocator>
 
 template <
         tensor::TensorNatIndex TagToAddToCochain,
-        misc::Specialization<tensor::TensorAntisymmetricIndex> CochainTag,
+        tensor::TensorIndex CochainTag,
         misc::Specialization<tensor::Tensor> TensorType>
 struct CoboundaryTensorType;
 
@@ -69,7 +69,7 @@ using coboundary_t = typename detail::CoboundaryType<CochainType>::type;
 
 template <
         tensor::TensorNatIndex TagToAddToCochain,
-        misc::Specialization<tensor::TensorAntisymmetricIndex> CochainTag,
+        tensor::TensorIndex CochainTag,
         misc::Specialization<tensor::Tensor> TensorType>
 using coboundary_tensor_t =
         typename detail::CoboundaryTensorType<TagToAddToCochain, CochainTag, TensorType>::type;
@@ -118,25 +118,44 @@ KOKKOS_FUNCTION coboundary_t<CochainType> coboundary(
 
 template <
         tensor::TensorNatIndex TagToAddToCochain,
-        misc::Specialization<tensor::TensorAntisymmetricIndex> CochainTag,
-        misc::Specialization<tensor::Tensor> AntisymmetricTensorType>
-KOKKOS_FUNCTION coboundary_tensor_t<TagToAddToCochain, CochainTag, AntisymmetricTensorType>
-coboundary(
-        coboundary_tensor_t<TagToAddToCochain, CochainTag, AntisymmetricTensorType>
-                coboundary_tensor,
-        AntisymmetricTensorType tensor)
+        tensor::TensorIndex CochainTag,
+        misc::Specialization<tensor::Tensor> TensorType>
+KOKKOS_FUNCTION coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
+        coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
+        TensorType tensor)
 {
+    tensor::relabelize_index_of_t<
+            coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType>,
+            CochainTag,
+            tensor::to_tensor_antisymmetric_index_t<CochainTag>>
+            antisymmetric_coboundary_tensor = tensor::relabelize_index_of<
+                    CochainTag,
+                    tensor::to_tensor_antisymmetric_index_t<CochainTag>>(coboundary_tensor);
+    tensor::relabelize_index_of_t<
+            TensorType,
+            CochainTag,
+            tensor::to_tensor_antisymmetric_index_t<CochainTag>>
+            antisymmetric_tensor = tensor::relabelize_index_of<
+                    CochainTag,
+                    tensor::to_tensor_antisymmetric_index_t<CochainTag>>(tensor);
+
     ddc::parallel_for_each(
             Kokkos::DefaultHostExecutionSpace(),
-            coboundary_tensor.non_indices_domain(),
+            ddc::remove_dims_of<typename misc::convert_type_seq_to_t<
+                    tensor::TensorAntisymmetricIndex,
+                    ddc::type_seq_merge_t<
+                            ddc::detail::TypeSeq<TagToAddToCochain>,
+                            misc::to_type_seq_t<
+                                    tensor::to_tensor_antisymmetric_index_t<CochainTag>>>>>(
+                    antisymmetric_coboundary_tensor.domain()),
             [&](auto elem) {
                 auto chain = tangent_basis<
                         CochainTag::rank() + 1,
-                        typename AntisymmetricTensorType::non_indices_domain_t>();
+                        typename TensorType::non_indices_domain_t>();
                 auto lower_chain = tangent_basis<
                         CochainTag::rank(),
-                        typename AntisymmetricTensorType::non_indices_domain_t>();
-                auto cochain = Cochain(chain, coboundary_tensor[elem]);
+                        typename TensorType::non_indices_domain_t>();
+                auto cochain = Cochain(chain, antisymmetric_coboundary_tensor[elem]);
                 for (auto i = cochain.begin(); i < cochain.end(); ++i) {
                     sil::exterior::Chain simplex_boundary
                             = boundary(sil::exterior::
@@ -147,26 +166,32 @@ coboundary(
                                                        (*i).discrete_vector()));
                     std::vector<double> values(simplex_boundary.size());
                     for (auto j = simplex_boundary.begin(); j < simplex_boundary.end(); ++j) {
-                        values[std::distance(simplex_boundary.begin(), j)] = tensor.mem(
-                                misc::domain_contains(tensor.domain(), j->discrete_element())
+                        values[std::distance(simplex_boundary.begin(), j)] = antisymmetric_tensor.mem(
+                                misc::domain_contains(
+                                        antisymmetric_tensor.domain(),
+                                        j->discrete_element())
                                         ? j->discrete_element()
                                         : elem, // TODO this is an assumption on boundary condition (free boundary), needs to be generalized
-                                ddc::DiscreteElement<CochainTag>(std::distance(
-                                        lower_chain.begin(),
-                                        std::
-                                                find(lower_chain.begin(),
-                                                     lower_chain.end(),
-                                                     j->discrete_vector()))));
+                                ddc::DiscreteElement<
+                                        tensor::to_tensor_antisymmetric_index_t<CochainTag>>(
+                                        std::distance(
+                                                lower_chain.begin(),
+                                                std::
+                                                        find(lower_chain.begin(),
+                                                             lower_chain.end(),
+                                                             j->discrete_vector()))));
                     }
                     sil::exterior::Cochain<decltype(simplex_boundary)>
                             cochain_boundary(simplex_boundary, values);
-                    coboundary_tensor
+                    antisymmetric_coboundary_tensor
                             .mem(elem,
                                  ddc::DiscreteElement<typename misc::convert_type_seq_to_t<
                                          tensor::TensorAntisymmetricIndex,
                                          ddc::type_seq_merge_t<
                                                  ddc::detail::TypeSeq<TagToAddToCochain>,
-                                                 misc::to_type_seq_t<CochainTag>>>>(
+                                                 misc::to_type_seq_t<
+                                                         tensor::to_tensor_antisymmetric_index_t<
+                                                                 CochainTag>>>>>(
                                          std::distance(cochain.begin(), i)))
                             = cochain_boundary.integrate();
                 }
@@ -177,17 +202,13 @@ coboundary(
 
 template <
         tensor::TensorNatIndex TagToAddToCochain,
-        misc::Specialization<tensor::TensorAntisymmetricIndex> CochainTag,
-        misc::Specialization<tensor::Tensor> AntisymmetricTensorType>
-KOKKOS_FUNCTION coboundary_tensor_t<TagToAddToCochain, CochainTag, AntisymmetricTensorType> deriv(
-        coboundary_tensor_t<TagToAddToCochain, CochainTag, AntisymmetricTensorType>
-                coboundary_tensor,
-        AntisymmetricTensorType tensor)
+        tensor::TensorIndex CochainTag,
+        misc::Specialization<tensor::Tensor> TensorType>
+KOKKOS_FUNCTION coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> deriv(
+        coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
+        TensorType tensor)
 {
-    return coboundary<
-            TagToAddToCochain,
-            CochainTag,
-            AntisymmetricTensorType>(coboundary_tensor, tensor);
+    return coboundary<TagToAddToCochain, CochainTag, TensorType>(coboundary_tensor, tensor);
 }
 
 } // namespace exterior
