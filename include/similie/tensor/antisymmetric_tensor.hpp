@@ -173,6 +173,14 @@ template <class T>
 struct ToTensorAntisymmetricIndex;
 
 template <tensor::TensorNatIndex Index>
+    requires(Index::size() == 0)
+struct ToTensorAntisymmetricIndex<Index>
+{
+    using type = TensorAntisymmetricIndex<>;
+};
+
+template <tensor::TensorNatIndex Index>
+    requires(Index::size() > 0)
 struct ToTensorAntisymmetricIndex<Index>
 {
     using type = TensorAntisymmetricIndex<Index>;

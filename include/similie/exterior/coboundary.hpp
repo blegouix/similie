@@ -39,6 +39,55 @@ struct CoboundaryTensorType;
 
 template <
         tensor::TensorNatIndex TagToAddToCochain,
+        class ElementType,
+        class... DDim,
+        class SupportType,
+        class MemorySpace>
+struct CoboundaryTensorType<
+        TagToAddToCochain,
+        tensor::TensorNaturalIndex<>,
+        tensor::Tensor<ElementType, ddc::DiscreteDomain<DDim...>, SupportType, MemorySpace>>
+{
+    static_assert(ddc::type_seq_contains_v<
+                  ddc::detail::TypeSeq<tensor::TensorNaturalIndex<>>,
+                  ddc::detail::TypeSeq<DDim...>>);
+    using type = tensor::Tensor<
+            ElementType,
+            ddc::replace_dim_of_t<
+                    ddc::DiscreteDomain<DDim...>,
+                    tensor::TensorNaturalIndex<>,
+                    TagToAddToCochain>,
+            SupportType,
+            MemorySpace>;
+};
+
+template <
+        tensor::TensorNatIndex TagToAddToCochain,
+        tensor::TensorNatIndex NaturalCochainTag,
+        class ElementType,
+        class... DDim,
+        class SupportType,
+        class MemorySpace>
+struct CoboundaryTensorType<
+        TagToAddToCochain,
+        NaturalCochainTag,
+        tensor::Tensor<ElementType, ddc::DiscreteDomain<DDim...>, SupportType, MemorySpace>>
+{
+    static_assert(ddc::type_seq_contains_v<
+                  ddc::detail::TypeSeq<NaturalCochainTag>,
+                  ddc::detail::TypeSeq<DDim...>>);
+    using type = tensor::Tensor<
+            ElementType,
+            ddc::replace_dim_of_t<
+                    ddc::DiscreteDomain<DDim...>,
+                    NaturalCochainTag,
+                    tensor::TensorAntisymmetricIndex<TagToAddToCochain, NaturalCochainTag>>,
+            SupportType,
+            MemorySpace>;
+};
+
+template <
+        tensor::TensorNatIndex TagToAddToCochain,
         tensor::TensorNatIndex... NaturalCochainTag,
         class ElementType,
         class... DDim,
@@ -124,21 +173,18 @@ KOKKOS_FUNCTION coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> c
         coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
         TensorType tensor)
 {
-    tensor::relabelize_index_of_t<
-            coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType>,
-            CochainTag,
-            tensor::to_tensor_antisymmetric_index_t<CochainTag>>
-            antisymmetric_coboundary_tensor = tensor::relabelize_index_of<
-                    CochainTag,
-                    tensor::to_tensor_antisymmetric_index_t<CochainTag>>(coboundary_tensor);
-    tensor::relabelize_index_of_t<
-            TensorType,
-            CochainTag,
-            tensor::to_tensor_antisymmetric_index_t<CochainTag>>
-            antisymmetric_tensor = tensor::relabelize_index_of<
-                    CochainTag,
-                    tensor::to_tensor_antisymmetric_index_t<CochainTag>>(tensor);
+    auto antisymmetric_coboundary_tensor = tensor::relabelize_indices_of<
+            ddc::detail::TypeSeq<TagToAddToCochain, CochainTag>,
+            ddc::detail::TypeSeq<
+                    tensor::to_tensor_antisymmetric_index_t<TagToAddToCochain>,
+                    tensor::to_tensor_antisymmetric_index_t<CochainTag>>>(coboundary_tensor);
+    auto antisymmetric_tensor = tensor::relabelize_indices_of<
+            ddc::detail::TypeSeq<TagToAddToCochain, CochainTag>,
+            ddc::detail::TypeSeq<
+                    tensor::to_tensor_antisymmetric_index_t<TagToAddToCochain>,
+                    tensor::to_tensor_antisymmetric_index_t<CochainTag>>>(tensor);
 
+    std::cout << antisymmetric_tensor;
     ddc::parallel_for_each(
             Kokkos::DefaultHostExecutionSpace(),
             ddc::remove_dims_of<typename misc::convert_type_seq_to_t<
