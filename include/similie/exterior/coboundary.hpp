@@ -32,21 +32,21 @@ struct CoboundaryType<Cochain<Chain<Simplex<K, Tag...>>, ElementType, Allocator>
 };
 
 template <
-        misc::Specialization<tensor::TensorAntisymmetricIndex> CochainTag,
         tensor::TensorNatIndex TagToAddToCochain,
+        misc::Specialization<tensor::TensorAntisymmetricIndex> CochainTag,
         misc::Specialization<tensor::Tensor> TensorType>
 struct CoboundaryTensorType;
 
 template <
-        tensor::TensorNatIndex... NaturalCochainTag,
         tensor::TensorNatIndex TagToAddToCochain,
+        tensor::TensorNatIndex... NaturalCochainTag,
         class ElementType,
         class... DDim,
         class SupportType,
         class MemorySpace>
 struct CoboundaryTensorType<
-        tensor::TensorAntisymmetricIndex<NaturalCochainTag...>,
         TagToAddToCochain,
+        tensor::TensorAntisymmetricIndex<NaturalCochainTag...>,
         tensor::Tensor<ElementType, ddc::DiscreteDomain<DDim...>, SupportType, MemorySpace>>
 {
     static_assert(ddc::type_seq_contains_v<
@@ -68,11 +68,11 @@ template <misc::Specialization<Cochain> CochainType>
 using coboundary_t = typename detail::CoboundaryType<CochainType>::type;
 
 template <
-        misc::Specialization<tensor::TensorAntisymmetricIndex> CochainTag,
         tensor::TensorNatIndex TagToAddToCochain,
+        misc::Specialization<tensor::TensorAntisymmetricIndex> CochainTag,
         misc::Specialization<tensor::Tensor> TensorType>
 using coboundary_tensor_t =
-        typename detail::CoboundaryTensorType<CochainTag, TagToAddToCochain, TensorType>::type;
+        typename detail::CoboundaryTensorType<TagToAddToCochain, CochainTag, TensorType>::type;
 
 namespace detail {
 
@@ -117,12 +117,12 @@ KOKKOS_FUNCTION coboundary_t<CochainType> coboundary(
 }
 
 template <
-        misc::Specialization<tensor::TensorAntisymmetricIndex> CochainTag,
         tensor::TensorNatIndex TagToAddToCochain,
+        misc::Specialization<tensor::TensorAntisymmetricIndex> CochainTag,
         misc::Specialization<tensor::Tensor> AntisymmetricTensorType>
-KOKKOS_FUNCTION coboundary_tensor_t<CochainTag, TagToAddToCochain, AntisymmetricTensorType>
+KOKKOS_FUNCTION coboundary_tensor_t<TagToAddToCochain, CochainTag, AntisymmetricTensorType>
 coboundary(
-        coboundary_tensor_t<CochainTag, TagToAddToCochain, AntisymmetricTensorType>
+        coboundary_tensor_t<TagToAddToCochain, CochainTag, AntisymmetricTensorType>
                 coboundary_tensor,
         AntisymmetricTensorType tensor)
 {
@@ -176,17 +176,17 @@ coboundary(
 }
 
 template <
-        misc::Specialization<tensor::TensorAntisymmetricIndex> CochainTag,
         tensor::TensorNatIndex TagToAddToCochain,
+        misc::Specialization<tensor::TensorAntisymmetricIndex> CochainTag,
         misc::Specialization<tensor::Tensor> AntisymmetricTensorType>
-KOKKOS_FUNCTION coboundary_tensor_t<CochainTag, TagToAddToCochain, AntisymmetricTensorType> deriv(
-        coboundary_tensor_t<CochainTag, TagToAddToCochain, AntisymmetricTensorType>
+KOKKOS_FUNCTION coboundary_tensor_t<TagToAddToCochain, CochainTag, AntisymmetricTensorType> deriv(
+        coboundary_tensor_t<TagToAddToCochain, CochainTag, AntisymmetricTensorType>
                 coboundary_tensor,
         AntisymmetricTensorType tensor)
 {
     return coboundary<
-            CochainTag,
             TagToAddToCochain,
+            CochainTag,
             AntisymmetricTensorType>(coboundary_tensor, tensor);
 }
 

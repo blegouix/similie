@@ -55,12 +55,12 @@ static auto test_derivative()
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 derivative(derivative_alloc);
         sil::exterior::deriv<
-                InIndex,
                 ddc::type_seq_element_t<
                         0,
                         ddc::type_seq_remove_t<
                                 sil::misc::to_type_seq_t<OutIndex>,
-                                sil::misc::to_type_seq_t<InIndex>>>>(derivative, tensor);
+                                sil::misc::to_type_seq_t<InIndex>>>,
+                InIndex>(derivative, tensor);
         return std::make_pair(std::move(derivative_alloc), derivative);
     } else {
         ddc::DiscreteDomain<DDim..., InIndex>
@@ -102,12 +102,12 @@ static auto test_derivative()
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 derivative(derivative_alloc);
         sil::exterior::deriv<
-                InIndex,
                 ddc::type_seq_element_t<
                         0,
                         ddc::type_seq_remove_t<
                                 sil::misc::to_type_seq_t<OutIndex>,
-                                sil::misc::to_type_seq_t<InIndex>>>>(derivative, tensor);
+                                sil::misc::to_type_seq_t<InIndex>>>,
+                InIndex>(derivative, tensor);
         return std::make_pair(std::move(derivative_alloc), derivative);
     }
 }
