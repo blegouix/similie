@@ -4,8 +4,7 @@
 #include <ddc/ddc.hpp>
 #include <ddc/kernels/splines.hpp>
 
-#include "mesher.hpp"
-#include "tensor.hpp"
+#include <similie/similie.hpp>
 
 static constexpr std::size_t s_degree = 3;
 

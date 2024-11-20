@@ -59,7 +59,20 @@ endif()
 ###############################################################################################
 # Our project code
 
-add_subdirectory(src)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+add_library(similie INTERFACE)
+add_library(sil::sil ALIAS similie)
+target_compile_features(similie INTERFACE cxx_std_23)
+target_include_directories(
+    similie 
+    INTERFACE
+        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+        "$<INSTALL_INTERFACE:include>"
+)
+target_link_libraries(similie INTERFACE DDC)
+
+add_subdirectory(include/similie)
 add_subdirectory(tests)
 add_subdirectory(examples)
 if("${SIMILIE_BUILD_DOCUMENTATION}")

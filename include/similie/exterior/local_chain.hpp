@@ -5,11 +5,12 @@
 
 #include <ddc/ddc.hpp>
 
-#include "are_all_same.hpp"
-#include "binomial_coefficient.hpp"
-#include "filled_struct.hpp"
+#include <similie/misc/are_all_same.hpp>
+#include <similie/misc/binomial_coefficient.hpp>
+#include <similie/misc/filled_struct.hpp>
+#include <similie/misc/specialization.hpp>
+
 #include "simplex.hpp"
-#include "specialization.hpp"
 
 namespace sil {
 

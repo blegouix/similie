@@ -5,12 +5,13 @@
 
 #include <ddc/ddc.hpp>
 
-#include "antisymmetric_tensor.hpp"
-#include "are_all_same.hpp"
+#include <similie/misc/are_all_same.hpp>
+#include <similie/misc/specialization.hpp>
+#include <similie/tensor/antisymmetric_tensor.hpp>
+
 #include "chain.hpp"
 #include "cosimplex.hpp"
 #include "local_chain.hpp"
-#include "specialization.hpp"
 
 namespace sil {
 
