@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['deriv_0',['deriv',['../namespacesil_1_1exterior.html#a556558a18ccaa776815bc860b43517e5',1,'sil::exterior']]],
+  ['deriv_0',['deriv',['../namespacesil_1_1exterior.html#a15607c4e3eb0dd6cc335ebccc18442c2',1,'sil::exterior']]],
   ['difference_5ftype_1',['difference_type',['../classsil_1_1exterior_1_1CochainIterator.html#ae42dd60031a3f0828f80844f83f6c64f',1,'sil::exterior::CochainIterator']]],
   ['dimension_2',['dimension',['../classsil_1_1exterior_1_1Chain.html#a3023ae1a3d6a7ca71f4f5aced7dcc980',1,'sil::exterior::Chain::dimension()'],['../classsil_1_1young__tableau_1_1YoungTableau.html#a3c925170a764bd17630701a7b15d5e8a',1,'sil::young_tableau::YoungTableau::dimension()'],['../classsil_1_1exterior_1_1Simplex.html#ab8d40a137256a7d05ed399b0f505da5a',1,'sil::exterior::Simplex::dimension()'],['../classsil_1_1exterior_1_1LocalChain.html#a1a25174bf8f8e9833f2a9d377e6d0187',1,'sil::exterior::LocalChain::dimension()'],['../classsil_1_1exterior_1_1Cosimplex.html#a0aa6aabcbac5cb6444e7a5bf4238e0d9',1,'sil::exterior::Cosimplex::dimension()'],['../classsil_1_1exterior_1_1Cochain.html#a1e991260813c0d49c046e257652debe3',1,'sil::exterior::Cochain::dimension()']]],
   ['discrete_5fdimension_5ftype_3',['discrete_dimension_type',['../classsil_1_1mesher_1_1Mesher.html#a2c782c36150ade73c887534725240a1d',1,'sil::mesher::Mesher']]],
