@@ -168,7 +168,9 @@ KOKKOS_FUNCTION coboundary_t<CochainType> coboundary(
 template <
         tensor::TensorNatIndex TagToAddToCochain,
         tensor::TensorIndex CochainTag,
-        misc::Specialization<tensor::Tensor> TensorType>
+
+        misc::Specialization<tensor::Tensor> TensorType,
+        class... ODDim>
 KOKKOS_FUNCTION coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
         coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
         TensorType tensor)
@@ -199,12 +201,9 @@ KOKKOS_FUNCTION coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> c
                                     tensor::TensorAntisymmetricIndex<>>>>>(
                     antisymmetric_coboundary_tensor.domain()),
             [&](auto elem) {
-                auto chain = tangent_basis<
-                        CochainTag::rank() + 1,
-                        typename TensorType::non_indices_domain_t>();
-                auto lower_chain = tangent_basis<
-                        CochainTag::rank(),
-                        typename TensorType::non_indices_domain_t>();
+                auto chain = tangent_basis<CochainTag::rank() + 1, ddc::DiscreteDomain<ODDim...>>();
+                auto lower_chain
+                        = tangent_basis<CochainTag::rank(), ddc::DiscreteDomain<ODDim...>>();
                 auto cochain = Cochain(chain, antisymmetric_coboundary_tensor[elem]);
                 for (auto i = cochain.begin(); i < cochain.end(); ++i) {
                     sil::exterior::Chain simplex_boundary
@@ -259,12 +258,18 @@ KOKKOS_FUNCTION coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> c
 template <
         tensor::TensorNatIndex TagToAddToCochain,
         tensor::TensorIndex CochainTag,
-        misc::Specialization<tensor::Tensor> TensorType>
+
+        misc::Specialization<tensor::Tensor> TensorType,
+        class... ODDim>
 KOKKOS_FUNCTION coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> deriv(
         coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
         TensorType tensor)
 {
-    return coboundary<TagToAddToCochain, CochainTag, TensorType>(coboundary_tensor, tensor);
+    return coboundary<
+            TagToAddToCochain,
+            CochainTag,
+            TensorType,
+            ODDim...>(coboundary_tensor, tensor);
 }
 
 } // namespace exterior

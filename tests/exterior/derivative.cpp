@@ -56,7 +56,7 @@ static auto test_derivative()
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 derivative(derivative_alloc);
         if constexpr (sil::tensor::TensorNatIndex<OutIndex>) {
-            sil::exterior::deriv<OutIndex, InIndex>(derivative, tensor);
+            sil::exterior::deriv<OutIndex, InIndex, decltype(tensor), DDim...>(derivative, tensor);
         } else {
             sil::exterior::deriv<
                     ddc::type_seq_element_t<
@@ -64,7 +64,9 @@ static auto test_derivative()
                             ddc::type_seq_remove_t<
                                     sil::misc::to_type_seq_t<OutIndex>,
                                     sil::misc::to_type_seq_t<InIndex>>>,
-                    InIndex>(derivative, tensor);
+                    InIndex,
+                    decltype(tensor),
+                    DDim...>(derivative, tensor);
         }
         return std::make_pair(std::move(derivative_alloc), derivative);
     } else {
@@ -107,7 +109,7 @@ static auto test_derivative()
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 derivative(derivative_alloc);
         if constexpr (sil::tensor::TensorNatIndex<OutIndex>) {
-            sil::exterior::deriv<OutIndex, InIndex>(derivative, tensor);
+            sil::exterior::deriv<OutIndex, InIndex, decltype(tensor), DDim...>(derivative, tensor);
         } else {
             sil::exterior::deriv<
                     ddc::type_seq_element_t<
@@ -115,7 +117,9 @@ static auto test_derivative()
                             ddc::type_seq_remove_t<
                                     sil::misc::to_type_seq_t<OutIndex>,
                                     sil::misc::to_type_seq_t<InIndex>>>,
-                    InIndex>(derivative, tensor);
+                    InIndex,
+                    decltype(tensor),
+                    DDim...>(derivative, tensor);
         }
         return std::make_pair(std::move(derivative_alloc), derivative);
     }
@@ -892,11 +896,9 @@ TEST(ExteriorDerivative, 4DHyperDivergency)
             DDimZ>();
 }
 
-/*
-struct IndexSpect : ddc::UniformPointSampling<T>
+struct DDimSpect : ddc::UniformPointSampling<T>
 {
 };
-*/
 
 struct SpectNatIndex1 : sil::tensor::TensorNaturalIndex<T, X, Y, Z>
 {
@@ -915,16 +917,22 @@ TEST(ExteriorDerivative, 2DRotationalWithSpects)
     const std::size_t N = 3;
     sil::tensor::TensorAccessor<IndexSpect, sil::tensor::TensorAntisymmetricIndex<Mu2>>
             tensor_accessor;
-    ddc::DiscreteDomain<sil::tensor::TensorAntisymmetricIndex<Mu2>, DDimX, IndexSpect, DDimY>
+    ddc::DiscreteDomain<
+            sil::tensor::TensorAntisymmetricIndex<Mu2>,
+            DDimSpect,
+            DDimX,
+            IndexSpect,
+            DDimY>
             dom(tensor_accessor.mem_domain(),
                 ddc::DiscreteDomain(
-                        sil::misc::filled_struct<ddc::DiscreteElement<DDimX, DDimY>>(0),
-                        sil::misc::filled_struct<ddc::DiscreteVector<DDimX, DDimY>>(N)));
+                        sil::misc::filled_struct<ddc::DiscreteElement<DDimSpect, DDimX, DDimY>>(0),
+                        sil::misc::filled_struct<ddc::DiscreteVector<DDimSpect, DDimX, DDimY>>(N)));
     ddc::Chunk tensor_alloc(dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<
                     sil::tensor::TensorAntisymmetricIndex<Mu2>,
+                    DDimSpect,
                     DDimX,
                     IndexSpect,
                     DDimY>,
@@ -934,7 +942,7 @@ TEST(ExteriorDerivative, 2DRotationalWithSpects)
     for (std::size_t i = 0; i < sil::tensor::TensorAntisymmetricIndex<Mu2>::mem_size(); ++i) {
         ddc::parallel_for_each(
                 Kokkos::DefaultHostExecutionSpace(),
-                ddc::DiscreteDomain<DDimX, IndexSpect, DDimY>(tensor.domain()),
+                ddc::DiscreteDomain<DDimSpect, DDimX, IndexSpect, DDimY>(tensor.domain()),
                 [&](auto elem) {
                     tensor
                             .mem(elem,
@@ -942,69 +950,89 @@ TEST(ExteriorDerivative, 2DRotationalWithSpects)
                                          i))
                             = i + 1.;
                 });
-        for (std::size_t j = 0; j < IndexSpect::mem_size(); ++j) {
-            tensor
-                    .mem(sil::misc::filled_struct<ddc::DiscreteElement<DDimX, DDimY>>(1),
-                         ddc::DiscreteElement<sil::tensor::TensorAntisymmetricIndex<Mu2>>(i),
-                         ddc::DiscreteElement<IndexSpect>(j))
-                    = i + 2.;
+        for (auto dim_spect_elem : ddc::DiscreteDomain<DDimSpect>(tensor.mem_domain())) {
+            for (auto index_spect_elem : ddc::DiscreteDomain<IndexSpect>(tensor.mem_domain())) {
+                tensor
+                        .mem(dim_spect_elem,
+                             index_spect_elem,
+                             ddc::DiscreteElement<DDimX, DDimY> {1, 1},
+                             ddc::DiscreteElement<sil::tensor::TensorAntisymmetricIndex<Mu2>>(i))
+                        = i + 2.;
+            }
         }
     }
+
     sil::tensor::TensorAccessor<IndexSpect, sil::tensor::TensorAntisymmetricIndex<Nu2, Mu2>>
             derivative_accessor;
-    ddc::DiscreteDomain<sil::tensor::TensorAntisymmetricIndex<Nu2, Mu2>, DDimX, IndexSpect, DDimY>
+    ddc::DiscreteDomain<
+            sil::tensor::TensorAntisymmetricIndex<Nu2, Mu2>,
+            DDimSpect,
+            DDimX,
+            IndexSpect,
+            DDimY>
             derivative_dom(
                     derivative_accessor.mem_domain(),
                     ddc::DiscreteDomain(
-                            sil::misc::filled_struct<
-                                    ddc::DiscreteElement<DDimX, DDimY>>(0),
-                            sil::misc::filled_struct<ddc::DiscreteVector<DDimX, DDimY>>(
-                                    2)));
+                            sil::misc::filled_struct<ddc::DiscreteElement<DDimSpect, DDimX, DDimY>>(
+                                    0),
+                            ddc::DiscreteVector<DDimSpect, DDimX, DDimY> {3, 2, 2}));
     ddc::Chunk derivative_alloc(derivative_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<
                     sil::tensor::TensorAntisymmetricIndex<Nu2, Mu2>,
+                    DDimSpect,
                     DDimX,
                     IndexSpect,
                     DDimY>,
             Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             derivative(derivative_alloc);
-    sil::exterior::deriv<Nu2, sil::tensor::TensorAntisymmetricIndex<Mu2>>(derivative, tensor);
-    std::cout << derivative;
-    for (auto i : ddc::DiscreteDomain<IndexSpect>(derivative.mem_domain())) {
-        EXPECT_EQ(
-                derivative(
-                        ddc::DiscreteElement<DDimX, DDimY> {0, 0},
-                        i,
-                        sil::tensor::TensorAccessor<
-                                sil::tensor::TensorAntisymmetricIndex<Nu2, Mu2>>::
-                                access_element<X, Y>()),
-                0.);
-        EXPECT_EQ(
-                derivative(
-                        ddc::DiscreteElement<DDimX, DDimY> {1, 0},
-                        i,
-                        sil::tensor::TensorAccessor<
-                                sil::tensor::TensorAntisymmetricIndex<Nu2, Mu2>>::
-                                access_element<X, Y>()),
-                -1.);
-        EXPECT_EQ(
-                derivative(
-                        ddc::DiscreteElement<DDimX, DDimY> {0, 1},
-                        i,
-                        sil::tensor::TensorAccessor<
-                                sil::tensor::TensorAntisymmetricIndex<Nu2, Mu2>>::
-                                access_element<X, Y>()),
-                1.);
-        EXPECT_EQ(
-                derivative(
-                        ddc::DiscreteElement<DDimX, DDimY> {1, 1},
-                        i,
-                        sil::tensor::TensorAccessor<
-                                sil::tensor::TensorAntisymmetricIndex<Nu2, Mu2>>::
-                                access_element<X, Y>()),
-                0.);
+    sil::exterior::deriv<
+            Nu2,
+            sil::tensor::TensorAntisymmetricIndex<Mu2>,
+            decltype(tensor),
+            DDimX,
+            DDimY>(derivative, tensor);
+
+    for (auto dim_spect_elem : ddc::DiscreteDomain<DDimSpect>(tensor.mem_domain())) {
+        for (auto index_spect_elem : ddc::DiscreteDomain<IndexSpect>(tensor.mem_domain())) {
+            EXPECT_EQ(
+                    derivative(
+                            ddc::DiscreteElement<DDimX, DDimY> {0, 0},
+                            dim_spect_elem,
+                            index_spect_elem,
+                            sil::tensor::TensorAccessor<
+                                    sil::tensor::TensorAntisymmetricIndex<Nu2, Mu2>>::
+                                    access_element<X, Y>()),
+                    0.);
+            EXPECT_EQ(
+                    derivative(
+                            ddc::DiscreteElement<DDimX, DDimY> {1, 0},
+                            dim_spect_elem,
+                            index_spect_elem,
+                            sil::tensor::TensorAccessor<
+                                    sil::tensor::TensorAntisymmetricIndex<Nu2, Mu2>>::
+                                    access_element<X, Y>()),
+                    -1.);
+            EXPECT_EQ(
+                    derivative(
+                            ddc::DiscreteElement<DDimX, DDimY> {0, 1},
+                            dim_spect_elem,
+                            index_spect_elem,
+                            sil::tensor::TensorAccessor<
+                                    sil::tensor::TensorAntisymmetricIndex<Nu2, Mu2>>::
+                                    access_element<X, Y>()),
+                    1.);
+            EXPECT_EQ(
+                    derivative(
+                            ddc::DiscreteElement<DDimX, DDimY> {1, 1},
+                            dim_spect_elem,
+                            index_spect_elem,
+                            sil::tensor::TensorAccessor<
+                                    sil::tensor::TensorAntisymmetricIndex<Nu2, Mu2>>::
+                                    access_element<X, Y>()),
+                    0.);
+        }
     }
 }
