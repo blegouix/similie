@@ -286,10 +286,7 @@ KOKKOS_FUNCTION coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> d
         coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
         TensorType tensor)
 {
-    return coboundary<
-            TagToAddToCochain,
-            CochainTag,
-            TensorType>(coboundary_tensor, tensor);
+    return coboundary<TagToAddToCochain, CochainTag, TensorType>(coboundary_tensor, tensor);
 }
 
 } // namespace exterior
