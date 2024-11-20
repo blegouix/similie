@@ -184,7 +184,6 @@ KOKKOS_FUNCTION coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> c
                     tensor::to_tensor_antisymmetric_index_t<TagToAddToCochain>,
                     tensor::to_tensor_antisymmetric_index_t<CochainTag>>>(tensor);
 
-    std::cout << antisymmetric_tensor;
     ddc::parallel_for_each(
             Kokkos::DefaultHostExecutionSpace(),
             ddc::remove_dims_of<typename misc::convert_type_seq_to_t<
