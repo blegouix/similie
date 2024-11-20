@@ -29,12 +29,16 @@ struct TensorNaturalIndex
 
     static constexpr std::size_t rank()
     {
-        return 1;
+        return sizeof...(CDim) != 0;
     }
 
     static constexpr std::size_t size()
     {
-        return sizeof...(CDim);
+        if constexpr (rank() == 0) {
+            return 1;
+        } else {
+            return sizeof...(CDim);
+        }
     }
 
     static constexpr std::size_t mem_size()
@@ -50,9 +54,16 @@ struct TensorNaturalIndex
     template <class ODim>
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_lin_comb()
     {
-        return std::pair<std::vector<double>, std::vector<std::size_t>>(
-                std::vector<double> {1.},
-                std::vector<std::size_t> {ddc::type_seq_rank_v<ODim, type_seq_dimensions>});
+        if constexpr (rank() == 0) {
+            return std::pair<
+                    std::vector<double>,
+                    std::vector<
+                            std::size_t>>(std::vector<double> {1.}, std::vector<std::size_t> {0});
+        } else {
+            return std::pair<std::vector<double>, std::vector<std::size_t>>(
+                    std::vector<double> {1.},
+                    std::vector<std::size_t> {ddc::type_seq_rank_v<ODim, type_seq_dimensions>});
+        }
     }
 
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_lin_comb(
@@ -663,8 +674,11 @@ public:
 
 // Relabelize index without altering allocation
 namespace detail {
-template <class IndexToRelabelize, TensorNatIndex OldIndex, TensorNatIndex NewIndex>
-struct RelabelizeIndex
+template <class IndexToRelabelize, class OldIndex, class NewIndex>
+struct RelabelizeIndex;
+
+template <class IndexToRelabelize, TensorIndex OldIndex, TensorIndex NewIndex>
+struct RelabelizeIndex<IndexToRelabelize, OldIndex, NewIndex>
 {
     using type = std::
             conditional_t<std::is_same_v<IndexToRelabelize, OldIndex>, NewIndex, IndexToRelabelize>;
@@ -673,8 +687,8 @@ struct RelabelizeIndex
 template <
         template <class...>
         class IndexToRelabelizeType,
-        class OldIndex,
-        class NewIndex,
+        TensorNatIndex OldIndex,
+        TensorNatIndex NewIndex,
         class... Arg>
 struct RelabelizeIndex<IndexToRelabelizeType<Arg...>, OldIndex, NewIndex>
 {
@@ -686,6 +700,21 @@ struct RelabelizeIndex<IndexToRelabelizeType<Arg...>, OldIndex, NewIndex>
                     IndexToRelabelizeType<Arg...>>,
             IndexToRelabelizeType<
                     std::conditional_t<std::is_same_v<Arg, OldIndex>, NewIndex, Arg>...>>;
+};
+
+template <
+        template <class...>
+        class IndexToRelabelizeType,
+        TensorIndex OldIndex,
+        TensorIndex NewIndex,
+        class... Arg>
+    requires(!TensorNatIndex<OldIndex> && !TensorNatIndex<NewIndex>)
+struct RelabelizeIndex<IndexToRelabelizeType<Arg...>, OldIndex, NewIndex>
+{
+    using type = std::conditional_t<
+            std::is_same_v<IndexToRelabelizeType<Arg...>, OldIndex>,
+            NewIndex,
+            IndexToRelabelizeType<Arg...>>;
 };
 
 template <class Dom, class OldIndex, class NewIndex>

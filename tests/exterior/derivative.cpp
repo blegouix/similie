@@ -54,13 +54,17 @@ static auto test_derivative()
                 Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 derivative(derivative_alloc);
-        sil::exterior::deriv<
-                ddc::type_seq_element_t<
-                        0,
-                        ddc::type_seq_remove_t<
-                                sil::misc::to_type_seq_t<OutIndex>,
-                                sil::misc::to_type_seq_t<InIndex>>>,
-                InIndex>(derivative, tensor);
+        if constexpr (sil::tensor::TensorNatIndex<OutIndex>) {
+            sil::exterior::deriv<OutIndex, InIndex>(derivative, tensor);
+        } else {
+            sil::exterior::deriv<
+                    ddc::type_seq_element_t<
+                            0,
+                            ddc::type_seq_remove_t<
+                                    sil::misc::to_type_seq_t<OutIndex>,
+                                    sil::misc::to_type_seq_t<InIndex>>>,
+                    InIndex>(derivative, tensor);
+        }
         return std::make_pair(std::move(derivative_alloc), derivative);
     } else {
         ddc::DiscreteDomain<DDim..., InIndex>
@@ -101,13 +105,17 @@ static auto test_derivative()
                 Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 derivative(derivative_alloc);
-        sil::exterior::deriv<
-                ddc::type_seq_element_t<
-                        0,
-                        ddc::type_seq_remove_t<
-                                sil::misc::to_type_seq_t<OutIndex>,
-                                sil::misc::to_type_seq_t<InIndex>>>,
-                InIndex>(derivative, tensor);
+        if constexpr (sil::tensor::TensorNatIndex<OutIndex>) {
+            sil::exterior::deriv<OutIndex, InIndex>(derivative, tensor);
+        } else {
+            sil::exterior::deriv<
+                    ddc::type_seq_element_t<
+                            0,
+                            ddc::type_seq_remove_t<
+                                    sil::misc::to_type_seq_t<OutIndex>,
+                                    sil::misc::to_type_seq_t<InIndex>>>,
+                    InIndex>(derivative, tensor);
+        }
         return std::make_pair(std::move(derivative_alloc), derivative);
     }
 }
@@ -202,7 +210,6 @@ TEST(ExteriorDerivative, 2DGradient)
             sil::tensor::TensorAntisymmetricIndex<Mu2>,
             DDimX,
             DDimY>();
-    std::cout << derivative;
     EXPECT_EQ(
             derivative(
                     ddc::DiscreteElement<DDimX, DDimY> {0, 0},
@@ -294,13 +301,8 @@ TEST(ExteriorDerivative, 2DGradient)
                     derivative.accessor().access_element<Y>()),
             0.);
 
-    auto [alloc2, derivative2] = test_derivative<
-            3,
-            true,
-            sil::tensor::TensorAntisymmetricIndex<>,
-            sil::tensor::TensorAntisymmetricIndex<Mu2>,
-            DDimX,
-            DDimY>();
+    auto [alloc2, derivative2]
+            = test_derivative<3, true, sil::tensor::TensorNaturalIndex<>, Mu2, DDimX, DDimY>();
     EXPECT_EQ(
             derivative2(
                     ddc::DiscreteElement<DDimX, DDimY> {0, 0},
@@ -430,7 +432,7 @@ TEST(ExteriorDerivative, 2DRotational)
     auto [alloc2, derivative2] = test_derivative<
             3,
             true,
-            sil::tensor::TensorAntisymmetricIndex<Mu2>,
+            Mu2,
             sil::tensor::TensorAntisymmetricIndex<Nu2, Mu2>,
             DDimX,
             DDimY>();

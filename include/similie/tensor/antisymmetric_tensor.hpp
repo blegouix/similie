@@ -6,6 +6,7 @@
 #include <ddc/ddc.hpp>
 
 #include <similie/misc/binomial_coefficient.hpp>
+#include <similie/misc/specialization.hpp>
 
 #include "tensor_impl.hpp"
 
@@ -165,6 +166,36 @@ public:
         }
     }
 };
+
+namespace detail {
+
+template <class T>
+struct ToTensorAntisymmetricIndex;
+
+template <tensor::TensorNatIndex Index>
+    requires(Index::size() == 0)
+struct ToTensorAntisymmetricIndex<Index>
+{
+    using type = TensorAntisymmetricIndex<>;
+};
+
+template <tensor::TensorNatIndex Index>
+    requires(Index::size() > 0)
+struct ToTensorAntisymmetricIndex<Index>
+{
+    using type = TensorAntisymmetricIndex<Index>;
+};
+
+template <tensor::TensorNatIndex... Index>
+struct ToTensorAntisymmetricIndex<TensorAntisymmetricIndex<Index...>>
+{
+    using type = TensorAntisymmetricIndex<Index...>;
+};
+
+} // namespace detail
+
+template <class T>
+using to_tensor_antisymmetric_index_t = typename detail::ToTensorAntisymmetricIndex<T>::type;
 
 } // namespace tensor
 

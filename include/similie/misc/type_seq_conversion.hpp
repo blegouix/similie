@@ -12,7 +12,10 @@ namespace misc {
 namespace detail {
 
 template <class T>
-struct ToTypeSeq;
+struct ToTypeSeq
+{
+    using type = ddc::detail::TypeSeq<>;
+};
 
 template <template <class...> class T, class... Arg>
 struct ToTypeSeq<T<Arg...>>
