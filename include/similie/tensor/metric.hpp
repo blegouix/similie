@@ -58,7 +58,7 @@ using relabelize_metric_in_domain_t = relabelize_indices_in_domain_t<
                         typename Index1::type_seq_dimensions>::type,
                 typename detail::ConvertTypeSeqToMetricIndex2<
                         typename Index2::type_seq_dimensions>::type>,
-        ddc::detail::TypeSeq<Index1, Index2>>;
+        ddc::detail::TypeSeq<uncharacterize<Index1>, uncharacterize<Index2>>>;
 
 template <TensorNatIndex Index1, TensorNatIndex Index2, class Dom>
 relabelize_metric_in_domain_t<Dom, Index1, Index2> relabelize_metric_in_domain(Dom metric_dom)
@@ -69,7 +69,7 @@ relabelize_metric_in_domain_t<Dom, Index1, Index2> relabelize_metric_in_domain(D
                             typename Index1::type_seq_dimensions>::type,
                     typename detail::ConvertTypeSeqToMetricIndex2<
                             typename Index2::type_seq_dimensions>::type>,
-            ddc::detail::TypeSeq<Index1, Index2>>(metric_dom);
+            ddc::detail::TypeSeq<uncharacterize<Index1>, uncharacterize<Index2>>>(metric_dom);
 }
 
 template <misc::Specialization<Tensor> TensorType, TensorNatIndex Index1, TensorNatIndex Index2>
@@ -80,7 +80,7 @@ using relabelize_metric_t = relabelize_indices_of_t<
                         typename Index1::type_seq_dimensions>::type,
                 typename detail::ConvertTypeSeqToMetricIndex2<
                         typename Index2::type_seq_dimensions>::type>,
-        ddc::detail::TypeSeq<Index1, Index2>>;
+        ddc::detail::TypeSeq<uncharacterize<Index1>, uncharacterize<Index2>>>;
 
 template <TensorNatIndex Index1, TensorNatIndex Index2, misc::Specialization<Tensor> TensorType>
 relabelize_metric_t<TensorType, Index1, Index2> relabelize_metric(TensorType tensor)
@@ -91,7 +91,7 @@ relabelize_metric_t<TensorType, Index1, Index2> relabelize_metric(TensorType ten
                             typename Index1::type_seq_dimensions>::type,
                     typename detail::ConvertTypeSeqToMetricIndex2<
                             typename Index2::type_seq_dimensions>::type>,
-            ddc::detail::TypeSeq<Index1, Index2>>(tensor);
+            ddc::detail::TypeSeq<uncharacterize<Index1>, uncharacterize<Index2>>>(tensor);
 }
 
 // Compute domain for a tensor product of metrics (ie. g_mu_muprime*g_nu_nuprime*...)

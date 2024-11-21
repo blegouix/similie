@@ -674,10 +674,11 @@ public:
 
 // Relabelize index without altering allocation
 namespace detail {
-template <class IndexToRelabelize, class OldIndex, class NewIndex>
+template <class IndexToRelabelize, TensorIndex OldIndex, TensorIndex NewIndex>
 struct RelabelizeIndex;
 
 template <class IndexToRelabelize, TensorIndex OldIndex, TensorIndex NewIndex>
+    requires(!TensorIndex<IndexToRelabelize> || TensorNatIndex<IndexToRelabelize>)
 struct RelabelizeIndex<IndexToRelabelize, OldIndex, NewIndex>
 {
     using type = std::
@@ -687,34 +688,15 @@ struct RelabelizeIndex<IndexToRelabelize, OldIndex, NewIndex>
 template <
         template <class...>
         class IndexToRelabelizeType,
-        TensorNatIndex OldIndex,
-        TensorNatIndex NewIndex,
-        class... Arg>
-struct RelabelizeIndex<IndexToRelabelizeType<Arg...>, OldIndex, NewIndex>
-{
-    using type = std::conditional_t<
-            TensorNatIndex<IndexToRelabelizeType<Arg...>>,
-            std::conditional_t<
-                    std::is_same_v<IndexToRelabelizeType<Arg...>, OldIndex>,
-                    NewIndex,
-                    IndexToRelabelizeType<Arg...>>,
-            IndexToRelabelizeType<
-                    std::conditional_t<std::is_same_v<Arg, OldIndex>, NewIndex, Arg>...>>;
-};
-
-template <
-        template <class...>
-        class IndexToRelabelizeType,
         TensorIndex OldIndex,
         TensorIndex NewIndex,
         class... Arg>
-    requires(!TensorNatIndex<OldIndex> && !TensorNatIndex<NewIndex>)
 struct RelabelizeIndex<IndexToRelabelizeType<Arg...>, OldIndex, NewIndex>
 {
     using type = std::conditional_t<
             std::is_same_v<IndexToRelabelizeType<Arg...>, OldIndex>,
             NewIndex,
-            IndexToRelabelizeType<Arg...>>;
+            IndexToRelabelizeType<typename RelabelizeIndex<Arg, OldIndex, NewIndex>::type...>>;
 };
 
 template <class Dom, class OldIndex, class NewIndex>
@@ -801,25 +783,20 @@ namespace detail {
 template <class IndexToRelabelize, class OldIndices, class NewIndices>
 struct RelabelizeIndices;
 
-template <template <class...> class IndexToRelabelizeType, class... Arg>
-struct RelabelizeIndices<
-        IndexToRelabelizeType<Arg...>,
-        ddc::detail::TypeSeq<>,
-        ddc::detail::TypeSeq<>>
+template <class IndexToRelabelize>
+struct RelabelizeIndices<IndexToRelabelize, ddc::detail::TypeSeq<>, ddc::detail::TypeSeq<>>
 {
-    using type = IndexToRelabelizeType<Arg...>;
+    using type = IndexToRelabelize;
 };
 
 template <
-        template <class...>
-        class IndexToRelabelizeType,
+        class IndexToRelabelize,
         class HeadOldIndex,
         class... TailOldIndex,
         class HeadNewIndex,
-        class... TailNewIndex,
-        class... Arg>
+        class... TailNewIndex>
 struct RelabelizeIndices<
-        IndexToRelabelizeType<Arg...>,
+        IndexToRelabelize,
         ddc::detail::TypeSeq<HeadOldIndex, TailOldIndex...>,
         ddc::detail::TypeSeq<HeadNewIndex, TailNewIndex...>>
 {
@@ -827,14 +804,10 @@ struct RelabelizeIndices<
     using type = std::conditional_t<
             (sizeof...(TailOldIndex) > 0),
             typename RelabelizeIndices<
-                    typename RelabelizeIndex<
-                            IndexToRelabelizeType<Arg...>,
-                            HeadOldIndex,
-                            HeadNewIndex>::type,
+                    typename RelabelizeIndex<IndexToRelabelize, HeadOldIndex, HeadNewIndex>::type,
                     ddc::detail::TypeSeq<TailOldIndex...>,
                     ddc::detail::TypeSeq<TailNewIndex...>>::type,
-            typename RelabelizeIndex<IndexToRelabelizeType<Arg...>, HeadOldIndex, HeadNewIndex>::
-                    type>;
+            typename RelabelizeIndex<IndexToRelabelize, HeadOldIndex, HeadNewIndex>::type>;
 };
 
 template <class Dom, class OldIndices, class NewIndices>

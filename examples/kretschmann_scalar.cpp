@@ -31,8 +31,8 @@ struct Z
 // Declare the Minkowski metric as a Lorentzian signature (-, +, +, +)
 using MetricIndex = sil::tensor::TensorLorentzianSignIndex<
         std::integral_constant<std::size_t, 1>,
-        sil::tensor::MetricIndex1<T, X, Y, Z>,
-        sil::tensor::MetricIndex2<T, X, Y, Z>>;
+        sil::tensor::TensorCovariantNaturalIndex<sil::tensor::MetricIndex1<T, X, Y, Z>>,
+        sil::tensor::TensorCovariantNaturalIndex<sil::tensor::MetricIndex2<T, X, Y, Z>>>;
 
 // Declare natural indices taking values in {T, X, Y, Z}
 struct Mu : sil::tensor::TensorNaturalIndex<T, X, Y, Z>
