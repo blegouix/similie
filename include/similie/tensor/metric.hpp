@@ -5,8 +5,14 @@
 
 #include <ddc/ddc.hpp>
 
+#include <KokkosBatched_Gesv.hpp>
+
 #include "character.hpp"
+#include "diagonal_tensor.hpp"
+#include "identity_tensor.hpp"
+#include "lorentzian_sign_tensor.hpp"
 #include "prime.hpp"
+#include "symmetric_tensor.hpp"
 
 namespace sil {
 
@@ -358,6 +364,32 @@ invert_metric_t<MetricType> fill_inverse_metric(
         invert_metric_t<MetricType> inv_metric,
         MetricType metric)
 {
+    if constexpr (misc::Specialization<MetricType, TensorIdentityIndex>) {
+    } else if (
+            misc::Specialization<MetricType, TensorLorentzianSignIndex>
+            || misc::Specialization<MetricType, TensorDiagonalIndex>) {
+        ddc::parallel_for_each(
+                Kokkos::DefaultHostExecutionSpace(),
+                inv_metric.mem_domain(),
+                [&](auto elem) {
+                    // inv_metric(elem) = 1./metric(elem);
+                });
+    } else if (misc::Specialization<MetricType, TensorSymmetricIndex>) {
+        /*
+        ddc::parallel_for_each(
+            Kokkos::DefaultHostExecutionSpace(),
+            ddc::remove_dims_of<coboundary_index_t<TagToAddToCochain, CochainTag>>(
+                    coboundary_tensor.domain()),
+            [&](auto elem) {
+                        auto sub_b = Kokkos::subview(b, Kokkos::ALL, i);
+                        KokkosBatched::SerialGetrs<
+                                KokkosBatched::Trans::NoTranspose,
+                                KokkosBatched::Algo::Getrs::Unblocked>::
+                                invoke(a_device, ipiv_device, sub_b);
+                    });
+        */
+    }
+
     /*
     ddc::Chunk inv_metric_alloc(
             relabelize_indices_in_domain<
