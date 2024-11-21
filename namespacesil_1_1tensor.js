@@ -43,6 +43,7 @@ var namespacesil_1_1tensor =
     [ "relabelize_metric_in_domain", "namespacesil_1_1tensor.html#a98595b60ec04ec0975ec9096bb8e9f50", null ],
     [ "relabelize_metric", "namespacesil_1_1tensor.html#a6ee78e45a231d3e25c4e5c508fb602e2", null ],
     [ "fill_metric_prod", "namespacesil_1_1tensor.html#a0a599911b5e36d70cfc2892ede933968", null ],
+    [ "inplace_apply_metric", "namespacesil_1_1tensor.html#adee2138cf3eae0ec55033998a7bef485", null ],
     [ "inplace_apply_metric", "namespacesil_1_1tensor.html#af0f478b7d5ca1d765db3ffabc2ceb80e", null ],
     [ "relabelize_index_of", "namespacesil_1_1tensor.html#add390e552dbb809298417732a99fd132", null ],
     [ "relabelize_indices_in_domain", "namespacesil_1_1tensor.html#aa89f6ee83c61eecf70ddd76307895747", null ],

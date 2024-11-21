@@ -395,82 +395,104 @@ $(document).ready(function(){initNavTree('metric_8hpp_source.html',''); initResi
 <div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span>}</div>
 </div>
 <div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span> </div>
-<div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span><span class="comment">// Apply metrics inplace (like g_mu_muprime*T^muprime^nu)</span></div>
-<div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span><span class="keyword">template</span> &lt;</div>
-<div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span>        TensorIndex MetricIndex,</div>
-<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>        TensorNatIndex... Index1,</div>
-<div class="line"><a id="l00263" name="l00263"></a><span class="lineno">  263</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;Tensor&gt;</a> MetricType,</div>
-<div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;Tensor&gt;</a> TensorType&gt;</div>
-<div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span><a class="code hl_typedef" href="namespacesil_1_1tensor.html#a18bb38e8250062242859a699221b5be5">relabelize_indices_of_t</a>&lt;</div>
-<div class="line"><a id="l00266" name="l00266"></a><span class="lineno">  266</span>        TensorType,</div>
-<div class="line"><a id="l00267" name="l00267"></a><span class="lineno">  267</span>        <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1364499495fc821f7a333e92244f205b">upper</a>&lt;ddc::detail::TypeSeq&lt;Index1...&gt;&gt;,</div>
-<div class="line"><a id="l00268" name="l00268"></a><span class="lineno">  268</span>        ddc::detail::TypeSeq&lt;Index1...&gt;&gt;</div>
-<div class="foldopen" id="foldopen00269" data-start="{" data-end="}">
-<div class="line"><a id="l00269" name="l00269"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#af0f478b7d5ca1d765db3ffabc2ceb80e">  269</a></span><a class="code hl_function" href="namespacesil_1_1tensor.html#af0f478b7d5ca1d765db3ffabc2ceb80e">inplace_apply_metric</a>(TensorType tensor, MetricType metric)</div>
-<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span>{</div>
-<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a6adfee8fa46a7b0d4cb1739e1b305317">tensor::tensor_accessor_for_domain_t</a>&lt;<a class="code hl_typedef" href="namespacesil_1_1tensor.html#a4e5368f425f7bbbab77cd8edaff01b87">metric_prod_domain_t</a>&lt;</div>
-<div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span>            MetricIndex,</div>
-<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>            ddc::detail::TypeSeq&lt;Index1...&gt;,</div>
-<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span>            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#aa6f1b27f2ca0ebfd55a3c528d61d77f5">primes</a>&lt;ddc::detail::TypeSeq&lt;Index1...&gt;&gt;&gt;&gt;</div>
-<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>            metric_prod_accessor;</div>
-<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span>    ddc::Chunk metric_prod_alloc(</div>
-<div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span>            ddc::cartesian_prod_t&lt;</div>
-<div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span>                    <span class="keyword">typename</span> TensorType::non_indices_domain_t,</div>
-<div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span>                    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a4e5368f425f7bbbab77cd8edaff01b87">metric_prod_domain_t</a>&lt;</div>
-<div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span>                            MetricIndex,</div>
-<div class="line"><a id="l00281" name="l00281"></a><span class="lineno">  281</span>                            ddc::detail::TypeSeq&lt;Index1...&gt;,</div>
-<div class="line"><a id="l00282" name="l00282"></a><span class="lineno">  282</span>                            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#aa6f1b27f2ca0ebfd55a3c528d61d77f5">primes</a>&lt;ddc::detail::TypeSeq&lt;Index1...&gt;&gt;&gt;&gt;(</div>
-<div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span>                    tensor.non_indices_domain(),</div>
-<div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span>                    metric_prod_accessor.mem_domain()),</div>
-<div class="line"><a id="l00285" name="l00285"></a><span class="lineno">  285</span>            ddc::HostAllocator&lt;double&gt;());</div>
-<div class="line"><a id="l00286" name="l00286"></a><span class="lineno">  286</span>    tensor::Tensor&lt;</div>
-<div class="line"><a id="l00287" name="l00287"></a><span class="lineno">  287</span>            double,</div>
-<div class="line"><a id="l00288" name="l00288"></a><span class="lineno">  288</span>            ddc::cartesian_prod_t&lt;</div>
-<div class="line"><a id="l00289" name="l00289"></a><span class="lineno">  289</span>                    <span class="keyword">typename</span> TensorType::non_indices_domain_t,</div>
-<div class="line"><a id="l00290" name="l00290"></a><span class="lineno">  290</span>                    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a4e5368f425f7bbbab77cd8edaff01b87">metric_prod_domain_t</a>&lt;</div>
-<div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span>                            MetricIndex,</div>
-<div class="line"><a id="l00292" name="l00292"></a><span class="lineno">  292</span>                            ddc::detail::TypeSeq&lt;Index1...&gt;,</div>
-<div class="line"><a id="l00293" name="l00293"></a><span class="lineno">  293</span>                            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#aa6f1b27f2ca0ebfd55a3c528d61d77f5">primes</a>&lt;ddc::detail::TypeSeq&lt;Index1...&gt;&gt;&gt;&gt;,</div>
-<div class="line"><a id="l00294" name="l00294"></a><span class="lineno">  294</span>            Kokkos::layout_right,</div>
-<div class="line"><a id="l00295" name="l00295"></a><span class="lineno">  295</span>            Kokkos::DefaultHostExecutionSpace::memory_space&gt;</div>
-<div class="line"><a id="l00296" name="l00296"></a><span class="lineno">  296</span>            metric_prod(metric_prod_alloc);</div>
-<div class="line"><a id="l00297" name="l00297"></a><span class="lineno">  297</span> </div>
-<div class="line"><a id="l00298" name="l00298"></a><span class="lineno">  298</span>    <a class="code hl_function" href="namespacesil_1_1tensor.html#a0a599911b5e36d70cfc2892ede933968">fill_metric_prod</a>&lt;</div>
-<div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span>            MetricIndex,</div>
-<div class="line"><a id="l00300" name="l00300"></a><span class="lineno">  300</span>            ddc::detail::TypeSeq&lt;Index1...&gt;,</div>
-<div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span>            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#aa6f1b27f2ca0ebfd55a3c528d61d77f5">primes</a>&lt;ddc::detail::TypeSeq&lt;Index1...&gt;&gt;&gt;(metric_prod, metric);</div>
-<div class="line"><a id="l00302" name="l00302"></a><span class="lineno">  302</span> </div>
-<div class="line"><a id="l00303" name="l00303"></a><span class="lineno">  303</span>    ddc::Chunk result_alloc(</div>
-<div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span>            <a class="code hl_function" href="namespacesil_1_1tensor.html#aa89f6ee83c61eecf70ddd76307895747">relabelize_indices_in_domain</a>&lt;</div>
-<div class="line"><a id="l00305" name="l00305"></a><span class="lineno">  305</span>                    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1364499495fc821f7a333e92244f205b">upper</a>&lt;ddc::detail::TypeSeq&lt;Index1...&gt;&gt;,</div>
-<div class="line"><a id="l00306" name="l00306"></a><span class="lineno">  306</span>                    ddc::detail::TypeSeq&lt;Index1...&gt;&gt;(tensor.domain()),</div>
-<div class="line"><a id="l00307" name="l00307"></a><span class="lineno">  307</span>            ddc::HostAllocator&lt;double&gt;());</div>
-<div class="line"><a id="l00308" name="l00308"></a><span class="lineno">  308</span>    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a18bb38e8250062242859a699221b5be5">relabelize_indices_of_t</a>&lt;</div>
-<div class="line"><a id="l00309" name="l00309"></a><span class="lineno">  309</span>            TensorType,</div>
-<div class="line"><a id="l00310" name="l00310"></a><span class="lineno">  310</span>            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1364499495fc821f7a333e92244f205b">upper</a>&lt;ddc::detail::TypeSeq&lt;Index1...&gt;&gt;,</div>
-<div class="line"><a id="l00311" name="l00311"></a><span class="lineno">  311</span>            ddc::detail::TypeSeq&lt;Index1...&gt;&gt;</div>
-<div class="line"><a id="l00312" name="l00312"></a><span class="lineno">  312</span>            result(result_alloc);</div>
-<div class="line"><a id="l00313" name="l00313"></a><span class="lineno">  313</span>    ddc::for_each(tensor.non_indices_domain(), [&amp;](<span class="keyword">auto</span> elem) {</div>
-<div class="line"><a id="l00314" name="l00314"></a><span class="lineno">  314</span>        tensor_prod(</div>
-<div class="line"><a id="l00315" name="l00315"></a><span class="lineno">  315</span>                result[elem],</div>
-<div class="line"><a id="l00316" name="l00316"></a><span class="lineno">  316</span>                metric_prod[elem],</div>
-<div class="line"><a id="l00317" name="l00317"></a><span class="lineno">  317</span>                relabelize_indices_of&lt;</div>
-<div class="line"><a id="l00318" name="l00318"></a><span class="lineno">  318</span>                        upper&lt;ddc::detail::TypeSeq&lt;Index1...&gt;&gt;,</div>
-<div class="line"><a id="l00319" name="l00319"></a><span class="lineno">  319</span>                        primes&lt;upper&lt;ddc::detail::TypeSeq&lt;Index1...&gt;&gt;&gt;&gt;(tensor)[elem]);</div>
-<div class="line"><a id="l00320" name="l00320"></a><span class="lineno">  320</span>    });</div>
-<div class="line"><a id="l00321" name="l00321"></a><span class="lineno">  321</span>    Kokkos::deep_copy(</div>
-<div class="line"><a id="l00322" name="l00322"></a><span class="lineno">  322</span>            tensor.allocation_kokkos_view(),</div>
-<div class="line"><a id="l00323" name="l00323"></a><span class="lineno">  323</span>            result.allocation_kokkos_view()); <span class="comment">// We rely on Kokkos::deep_copy in place of ddc::parallel_deepcopy to avoid type verification of the type dimensions</span></div>
-<div class="line"><a id="l00324" name="l00324"></a><span class="lineno">  324</span> </div>
-<div class="line"><a id="l00325" name="l00325"></a><span class="lineno">  325</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="namespacesil_1_1tensor.html#aca53f2d15ecbed2537c526e29e308947">relabelize_indices_of</a>&lt;</div>
-<div class="line"><a id="l00326" name="l00326"></a><span class="lineno">  326</span>            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1364499495fc821f7a333e92244f205b">upper</a>&lt;ddc::detail::TypeSeq&lt;Index1...&gt;&gt;,</div>
-<div class="line"><a id="l00327" name="l00327"></a><span class="lineno">  327</span>            ddc::detail::TypeSeq&lt;Index1...&gt;&gt;(tensor);</div>
-<div class="line"><a id="l00328" name="l00328"></a><span class="lineno">  328</span>}</div>
+<div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span><span class="keyword">namespace </span>detail {</div>
+<div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span> </div>
+<div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Dom&gt;</div>
+<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span><span class="keyword">using </span>non_primes = ddc::type_seq_remove_t&lt;ddc::to_type_seq_t&lt;Dom&gt;, primes&lt;ddc::to_type_seq_t&lt;Dom&gt;&gt;&gt;;</div>
+<div class="line"><a id="l00263" name="l00263"></a><span class="lineno">  263</span> </div>
+<div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span>} <span class="comment">// namespace detail</span></div>
+<div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span> </div>
+<div class="line"><a id="l00266" name="l00266"></a><span class="lineno">  266</span><span class="comment">// Apply metrics inplace (like g_mu_muprime*T^muprime^nu)</span></div>
+<div class="line"><a id="l00267" name="l00267"></a><span class="lineno">  267</span><span class="keyword">template</span> &lt;misc::Specialization&lt;Tensor&gt; MetricType, misc::Specialization&lt;Tensor&gt; TensorType&gt;</div>
+<div class="foldopen" id="foldopen00268" data-start="{" data-end="}">
+<div class="line"><a id="l00268" name="l00268"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#adee2138cf3eae0ec55033998a7bef485">  268</a></span><span class="keyword">auto</span> <a class="code hl_function" href="namespacesil_1_1tensor.html#adee2138cf3eae0ec55033998a7bef485">inplace_apply_metric</a>(TensorType tensor, MetricType metric_prod)</div>
+<div class="line"><a id="l00269" name="l00269"></a><span class="lineno">  269</span>{</div>
+<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span>    ddc::Chunk result_alloc(</div>
+<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>            <a class="code hl_function" href="namespacesil_1_1tensor.html#aa89f6ee83c61eecf70ddd76307895747">relabelize_indices_in_domain</a>&lt;</div>
+<div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span>                    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1364499495fc821f7a333e92244f205b">upper</a>&lt;detail::non_primes&lt;typename MetricType::accessor_t::natural_domain_t&gt;&gt;,</div>
+<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>                    detail::non_primes&lt;typename MetricType::accessor_t::natural_domain_t&gt;&gt;(</div>
+<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span>                    tensor.domain()),</div>
+<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>            ddc::HostAllocator&lt;double&gt;());</div>
+<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span>    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a18bb38e8250062242859a699221b5be5">relabelize_indices_of_t</a>&lt;</div>
+<div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span>            TensorType,</div>
+<div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span>            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1364499495fc821f7a333e92244f205b">upper&lt;detail::non_primes&lt;typename MetricType::accessor_t::natural_domain_t&gt;</a>&gt;,</div>
+<div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span>            detail::non_primes&lt;typename MetricType::accessor_t::natural_domain_t&gt;&gt;</div>
+<div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span>            result(result_alloc);</div>
+<div class="line"><a id="l00281" name="l00281"></a><span class="lineno">  281</span>    ddc::parallel_for_each(</div>
+<div class="line"><a id="l00282" name="l00282"></a><span class="lineno">  282</span>            Kokkos::DefaultHostExecutionSpace(),</div>
+<div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span>            tensor.non_indices_domain(),</div>
+<div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span>            [&amp;](<span class="keyword">auto</span> elem) {</div>
+<div class="line"><a id="l00285" name="l00285"></a><span class="lineno">  285</span>                tensor_prod(</div>
+<div class="line"><a id="l00286" name="l00286"></a><span class="lineno">  286</span>                        result[elem],</div>
+<div class="line"><a id="l00287" name="l00287"></a><span class="lineno">  287</span>                        metric_prod[elem],</div>
+<div class="line"><a id="l00288" name="l00288"></a><span class="lineno">  288</span>                        relabelize_indices_of&lt;</div>
+<div class="line"><a id="l00289" name="l00289"></a><span class="lineno">  289</span>                                upper&lt;detail::non_primes&lt;</div>
+<div class="line"><a id="l00290" name="l00290"></a><span class="lineno">  290</span>                                        typename MetricType::accessor_t::natural_domain_t&gt;&gt;,</div>
+<div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span>                                primes&lt;upper&lt;detail::non_primes&lt;</div>
+<div class="line"><a id="l00292" name="l00292"></a><span class="lineno">  292</span>                                        typename MetricType::accessor_t::natural_domain_t&gt;&gt;&gt;&gt;(</div>
+<div class="line"><a id="l00293" name="l00293"></a><span class="lineno">  293</span>                                tensor)[elem]);</div>
+<div class="line"><a id="l00294" name="l00294"></a><span class="lineno">  294</span>            });</div>
+<div class="line"><a id="l00295" name="l00295"></a><span class="lineno">  295</span>    Kokkos::deep_copy(</div>
+<div class="line"><a id="l00296" name="l00296"></a><span class="lineno">  296</span>            tensor.allocation_kokkos_view(),</div>
+<div class="line"><a id="l00297" name="l00297"></a><span class="lineno">  297</span>            result.allocation_kokkos_view()); <span class="comment">// We rely on Kokkos::deep_copy in place of ddc::parallel_deepcopy to avoid type verification of the type dimensions</span></div>
+<div class="line"><a id="l00298" name="l00298"></a><span class="lineno">  298</span> </div>
+<div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="namespacesil_1_1tensor.html#aca53f2d15ecbed2537c526e29e308947">relabelize_indices_of</a>&lt;</div>
+<div class="line"><a id="l00300" name="l00300"></a><span class="lineno">  300</span>            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1364499495fc821f7a333e92244f205b">upper&lt;detail::non_primes&lt;typename MetricType::accessor_t::natural_domain_t&gt;</a>&gt;,</div>
+<div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span>            detail::non_primes&lt;typename MetricType::accessor_t::natural_domain_t&gt;&gt;(tensor);</div>
+<div class="line"><a id="l00302" name="l00302"></a><span class="lineno">  302</span>}</div>
 </div>
-<div class="line"><a id="l00329" name="l00329"></a><span class="lineno">  329</span> </div>
-<div class="line"><a id="l00330" name="l00330"></a><span class="lineno">  330</span>} <span class="comment">// namespace tensor</span></div>
-<div class="line"><a id="l00331" name="l00331"></a><span class="lineno">  331</span> </div>
-<div class="line"><a id="l00332" name="l00332"></a><span class="lineno">  332</span>} <span class="comment">// namespace sil</span></div>
+<div class="line"><a id="l00303" name="l00303"></a><span class="lineno">  303</span> </div>
+<div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span><span class="keyword">template</span> &lt;</div>
+<div class="line"><a id="l00305" name="l00305"></a><span class="lineno">  305</span>        TensorIndex MetricIndex,</div>
+<div class="line"><a id="l00306" name="l00306"></a><span class="lineno">  306</span>        TensorNatIndex... Index1,</div>
+<div class="line"><a id="l00307" name="l00307"></a><span class="lineno">  307</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;Tensor&gt;</a> MetricType,</div>
+<div class="line"><a id="l00308" name="l00308"></a><span class="lineno">  308</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;Tensor&gt;</a> TensorType&gt;</div>
+<div class="line"><a id="l00309" name="l00309"></a><span class="lineno">  309</span><a class="code hl_typedef" href="namespacesil_1_1tensor.html#a18bb38e8250062242859a699221b5be5">relabelize_indices_of_t</a>&lt;</div>
+<div class="line"><a id="l00310" name="l00310"></a><span class="lineno">  310</span>        TensorType,</div>
+<div class="line"><a id="l00311" name="l00311"></a><span class="lineno">  311</span>        <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a1364499495fc821f7a333e92244f205b">upper</a>&lt;ddc::detail::TypeSeq&lt;Index1...&gt;&gt;,</div>
+<div class="line"><a id="l00312" name="l00312"></a><span class="lineno">  312</span>        ddc::detail::TypeSeq&lt;Index1...&gt;&gt;</div>
+<div class="foldopen" id="foldopen00313" data-start="{" data-end="}">
+<div class="line"><a id="l00313" name="l00313"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#af0f478b7d5ca1d765db3ffabc2ceb80e">  313</a></span><a class="code hl_function" href="namespacesil_1_1tensor.html#adee2138cf3eae0ec55033998a7bef485">inplace_apply_metric</a>(TensorType tensor, MetricType metric)</div>
+<div class="line"><a id="l00314" name="l00314"></a><span class="lineno">  314</span>{</div>
+<div class="line"><a id="l00315" name="l00315"></a><span class="lineno">  315</span>    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a6adfee8fa46a7b0d4cb1739e1b305317">tensor::tensor_accessor_for_domain_t</a>&lt;<a class="code hl_typedef" href="namespacesil_1_1tensor.html#a4e5368f425f7bbbab77cd8edaff01b87">metric_prod_domain_t</a>&lt;</div>
+<div class="line"><a id="l00316" name="l00316"></a><span class="lineno">  316</span>            MetricIndex,</div>
+<div class="line"><a id="l00317" name="l00317"></a><span class="lineno">  317</span>            ddc::detail::TypeSeq&lt;Index1...&gt;,</div>
+<div class="line"><a id="l00318" name="l00318"></a><span class="lineno">  318</span>            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#aa6f1b27f2ca0ebfd55a3c528d61d77f5">primes</a>&lt;ddc::detail::TypeSeq&lt;Index1...&gt;&gt;&gt;&gt;</div>
+<div class="line"><a id="l00319" name="l00319"></a><span class="lineno">  319</span>            metric_prod_accessor;</div>
+<div class="line"><a id="l00320" name="l00320"></a><span class="lineno">  320</span>    ddc::Chunk metric_prod_alloc(</div>
+<div class="line"><a id="l00321" name="l00321"></a><span class="lineno">  321</span>            ddc::cartesian_prod_t&lt;</div>
+<div class="line"><a id="l00322" name="l00322"></a><span class="lineno">  322</span>                    <span class="keyword">typename</span> TensorType::non_indices_domain_t,</div>
+<div class="line"><a id="l00323" name="l00323"></a><span class="lineno">  323</span>                    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a4e5368f425f7bbbab77cd8edaff01b87">metric_prod_domain_t</a>&lt;</div>
+<div class="line"><a id="l00324" name="l00324"></a><span class="lineno">  324</span>                            MetricIndex,</div>
+<div class="line"><a id="l00325" name="l00325"></a><span class="lineno">  325</span>                            ddc::detail::TypeSeq&lt;Index1...&gt;,</div>
+<div class="line"><a id="l00326" name="l00326"></a><span class="lineno">  326</span>                            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#aa6f1b27f2ca0ebfd55a3c528d61d77f5">primes</a>&lt;ddc::detail::TypeSeq&lt;Index1...&gt;&gt;&gt;&gt;(</div>
+<div class="line"><a id="l00327" name="l00327"></a><span class="lineno">  327</span>                    tensor.non_indices_domain(),</div>
+<div class="line"><a id="l00328" name="l00328"></a><span class="lineno">  328</span>                    metric_prod_accessor.mem_domain()),</div>
+<div class="line"><a id="l00329" name="l00329"></a><span class="lineno">  329</span>            ddc::HostAllocator&lt;double&gt;());</div>
+<div class="line"><a id="l00330" name="l00330"></a><span class="lineno">  330</span>    tensor::Tensor&lt;</div>
+<div class="line"><a id="l00331" name="l00331"></a><span class="lineno">  331</span>            double,</div>
+<div class="line"><a id="l00332" name="l00332"></a><span class="lineno">  332</span>            ddc::cartesian_prod_t&lt;</div>
+<div class="line"><a id="l00333" name="l00333"></a><span class="lineno">  333</span>                    <span class="keyword">typename</span> TensorType::non_indices_domain_t,</div>
+<div class="line"><a id="l00334" name="l00334"></a><span class="lineno">  334</span>                    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a4e5368f425f7bbbab77cd8edaff01b87">metric_prod_domain_t</a>&lt;</div>
+<div class="line"><a id="l00335" name="l00335"></a><span class="lineno">  335</span>                            MetricIndex,</div>
+<div class="line"><a id="l00336" name="l00336"></a><span class="lineno">  336</span>                            ddc::detail::TypeSeq&lt;Index1...&gt;,</div>
+<div class="line"><a id="l00337" name="l00337"></a><span class="lineno">  337</span>                            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#aa6f1b27f2ca0ebfd55a3c528d61d77f5">primes</a>&lt;ddc::detail::TypeSeq&lt;Index1...&gt;&gt;&gt;&gt;,</div>
+<div class="line"><a id="l00338" name="l00338"></a><span class="lineno">  338</span>            Kokkos::layout_right,</div>
+<div class="line"><a id="l00339" name="l00339"></a><span class="lineno">  339</span>            Kokkos::DefaultHostExecutionSpace::memory_space&gt;</div>
+<div class="line"><a id="l00340" name="l00340"></a><span class="lineno">  340</span>            metric_prod(metric_prod_alloc);</div>
+<div class="line"><a id="l00341" name="l00341"></a><span class="lineno">  341</span> </div>
+<div class="line"><a id="l00342" name="l00342"></a><span class="lineno">  342</span>    <a class="code hl_function" href="namespacesil_1_1tensor.html#a0a599911b5e36d70cfc2892ede933968">fill_metric_prod</a>&lt;</div>
+<div class="line"><a id="l00343" name="l00343"></a><span class="lineno">  343</span>            MetricIndex,</div>
+<div class="line"><a id="l00344" name="l00344"></a><span class="lineno">  344</span>            ddc::detail::TypeSeq&lt;Index1...&gt;,</div>
+<div class="line"><a id="l00345" name="l00345"></a><span class="lineno">  345</span>            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#aa6f1b27f2ca0ebfd55a3c528d61d77f5">primes</a>&lt;ddc::detail::TypeSeq&lt;Index1...&gt;&gt;&gt;(metric_prod, metric);</div>
+<div class="line"><a id="l00346" name="l00346"></a><span class="lineno">  346</span> </div>
+<div class="line"><a id="l00347" name="l00347"></a><span class="lineno">  347</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="namespacesil_1_1tensor.html#adee2138cf3eae0ec55033998a7bef485">inplace_apply_metric</a>(tensor, metric_prod);</div>
+<div class="line"><a id="l00348" name="l00348"></a><span class="lineno">  348</span>}</div>
+</div>
+<div class="line"><a id="l00349" name="l00349"></a><span class="lineno">  349</span> </div>
+<div class="line"><a id="l00350" name="l00350"></a><span class="lineno">  350</span>} <span class="comment">// namespace tensor</span></div>
+<div class="line"><a id="l00351" name="l00351"></a><span class="lineno">  351</span> </div>
+<div class="line"><a id="l00352" name="l00352"></a><span class="lineno">  352</span>} <span class="comment">// namespace sil</span></div>
 <div class="ttc" id="aconceptsil_1_1misc_1_1Specialization_html"><div class="ttname"><a href="conceptsil_1_1misc_1_1Specialization.html">sil::misc::Specialization</a></div><div class="ttdef"><b>Definition</b> <a href="specialization_8hpp_source.html#l00023">specialization.hpp:23</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_a0a599911b5e36d70cfc2892ede933968"><div class="ttname"><a href="namespacesil_1_1tensor.html#a0a599911b5e36d70cfc2892ede933968">sil::tensor::fill_metric_prod</a></div><div class="ttdeci">metric_prod_t&lt; typename MetricType::non_indices_domain_t, MetricIndex, Indices1, Indices2 &gt; fill_metric_prod(metric_prod_t&lt; typename MetricType::non_indices_domain_t, MetricIndex, Indices1, Indices2 &gt; metric_prod, MetricType metric)</div><div class="ttdef"><b>Definition</b> <a href="metric_8hpp_source.html#l00241">metric.hpp:241</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_a10d538d7bbe57026bb31dd4967dceec1"><div class="ttname"><a href="namespacesil_1_1tensor.html#a10d538d7bbe57026bb31dd4967dceec1">sil::tensor::relabelize_indices_in_domain_t</a></div><div class="ttdeci">typename detail::RelabelizeIndicesInDomainType&lt; Dom, OldIndices, NewIndices &gt;::type relabelize_indices_in_domain_t</div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00870">tensor_impl.hpp:871</a></div></div>
@@ -486,7 +508,7 @@ $(document).ready(function(){initNavTree('metric_8hpp_source.html',''); initResi
 <div class="ttc" id="anamespacesil_1_1tensor_html_aaa9d5e3edfa546a78f7b7666fad48abb"><div class="ttname"><a href="namespacesil_1_1tensor.html#aaa9d5e3edfa546a78f7b7666fad48abb">sil::tensor::relabelize_metric_in_domain_t</a></div><div class="ttdeci">relabelize_indices_in_domain_t&lt; Dom, ddc::detail::TypeSeq&lt; typename detail::ConvertTypeSeqToMetricIndex1&lt; typename Index1::type_seq_dimensions &gt;::type, typename detail::ConvertTypeSeqToMetricIndex2&lt; typename Index2::type_seq_dimensions &gt;::type &gt;, ddc::detail::TypeSeq&lt; Index1, Index2 &gt; &gt; relabelize_metric_in_domain_t</div><div class="ttdef"><b>Definition</b> <a href="metric_8hpp_source.html#l00054">metric.hpp:61</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_ac78669c4a01fe2ec3b4a8a48d0c94e2a"><div class="ttname"><a href="namespacesil_1_1tensor.html#ac78669c4a01fe2ec3b4a8a48d0c94e2a">sil::tensor::metric_prod_t</a></div><div class="ttdeci">typename detail::MetricProdType&lt; NonMetricDom, MetricIndex, Indices1, Indices2 &gt;::type metric_prod_t</div><div class="ttdef"><b>Definition</b> <a href="metric_8hpp_source.html#l00159">metric.hpp:160</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_aca53f2d15ecbed2537c526e29e308947"><div class="ttname"><a href="namespacesil_1_1tensor.html#aca53f2d15ecbed2537c526e29e308947">sil::tensor::relabelize_indices_of</a></div><div class="ttdeci">relabelize_indices_of_t&lt; Tensor, OldIndices, NewIndices &gt; relabelize_indices_of(Tensor tensor)</div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l01007">tensor_impl.hpp:1007</a></div></div>
-<div class="ttc" id="anamespacesil_1_1tensor_html_af0f478b7d5ca1d765db3ffabc2ceb80e"><div class="ttname"><a href="namespacesil_1_1tensor.html#af0f478b7d5ca1d765db3ffabc2ceb80e">sil::tensor::inplace_apply_metric</a></div><div class="ttdeci">relabelize_indices_of_t&lt; TensorType, upper&lt; ddc::detail::TypeSeq&lt; Index1... &gt; &gt;, ddc::detail::TypeSeq&lt; Index1... &gt; &gt; inplace_apply_metric(TensorType tensor, MetricType metric)</div><div class="ttdef"><b>Definition</b> <a href="metric_8hpp_source.html#l00269">metric.hpp:269</a></div></div>
+<div class="ttc" id="anamespacesil_1_1tensor_html_adee2138cf3eae0ec55033998a7bef485"><div class="ttname"><a href="namespacesil_1_1tensor.html#adee2138cf3eae0ec55033998a7bef485">sil::tensor::inplace_apply_metric</a></div><div class="ttdeci">auto inplace_apply_metric(TensorType tensor, MetricType metric_prod)</div><div class="ttdef"><b>Definition</b> <a href="metric_8hpp_source.html#l00268">metric.hpp:268</a></div></div>
 <div class="ttc" id="anamespacesil_html"><div class="ttname"><a href="namespacesil.html">sil</a></div><div class="ttdoc">The top-level namespace of SimiLie.</div><div class="ttdef"><b>Definition</b> <a href="csr_8hpp_source.html#l00014">csr.hpp:14</a></div></div>
 <div class="ttc" id="astructsil_1_1tensor_1_1MetricIndex1_html"><div class="ttname"><a href="structsil_1_1tensor_1_1MetricIndex1.html">sil::tensor::MetricIndex1</a></div><div class="ttdef"><b>Definition</b> <a href="metric_8hpp_source.html#l00018">metric.hpp:19</a></div></div>
 <div class="ttc" id="astructsil_1_1tensor_1_1MetricIndex2_html"><div class="ttname"><a href="structsil_1_1tensor_1_1MetricIndex2.html">sil::tensor::MetricIndex2</a></div><div class="ttdef"><b>Definition</b> <a href="metric_8hpp_source.html#l00023">metric.hpp:24</a></div></div>
