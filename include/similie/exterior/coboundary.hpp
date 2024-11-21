@@ -62,74 +62,25 @@ struct CoboundaryTensorType;
 
 template <
         tensor::TensorNatIndex TagToAddToCochain,
+        tensor::TensorIndex CochainIndex,
         class ElementType,
         class... DDim,
         class SupportType,
         class MemorySpace>
 struct CoboundaryTensorType<
         TagToAddToCochain,
-        tensor::TensorNaturalIndex<>,
+        CochainIndex,
         tensor::Tensor<ElementType, ddc::DiscreteDomain<DDim...>, SupportType, MemorySpace>>
 {
     static_assert(ddc::type_seq_contains_v<
-                  ddc::detail::TypeSeq<tensor::TensorNaturalIndex<>>,
+                  ddc::detail::TypeSeq<CochainIndex>,
                   ddc::detail::TypeSeq<DDim...>>);
     using type = tensor::Tensor<
             ElementType,
             ddc::replace_dim_of_t<
                     ddc::DiscreteDomain<DDim...>,
-                    tensor::TensorNaturalIndex<>,
-                    TagToAddToCochain>,
-            SupportType,
-            MemorySpace>;
-};
-
-template <
-        tensor::TensorNatIndex TagToAddToCochain,
-        tensor::TensorNatIndex NaturalCochainTag,
-        class ElementType,
-        class... DDim,
-        class SupportType,
-        class MemorySpace>
-struct CoboundaryTensorType<
-        TagToAddToCochain,
-        NaturalCochainTag,
-        tensor::Tensor<ElementType, ddc::DiscreteDomain<DDim...>, SupportType, MemorySpace>>
-{
-    static_assert(ddc::type_seq_contains_v<
-                  ddc::detail::TypeSeq<NaturalCochainTag>,
-                  ddc::detail::TypeSeq<DDim...>>);
-    using type = tensor::Tensor<
-            ElementType,
-            ddc::replace_dim_of_t<
-                    ddc::DiscreteDomain<DDim...>,
-                    NaturalCochainTag,
-                    tensor::TensorAntisymmetricIndex<TagToAddToCochain, NaturalCochainTag>>,
-            SupportType,
-            MemorySpace>;
-};
-
-template <
-        tensor::TensorNatIndex TagToAddToCochain,
-        tensor::TensorNatIndex... NaturalCochainTag,
-        class ElementType,
-        class... DDim,
-        class SupportType,
-        class MemorySpace>
-struct CoboundaryTensorType<
-        TagToAddToCochain,
-        tensor::TensorAntisymmetricIndex<NaturalCochainTag...>,
-        tensor::Tensor<ElementType, ddc::DiscreteDomain<DDim...>, SupportType, MemorySpace>>
-{
-    static_assert(ddc::type_seq_contains_v<
-                  ddc::detail::TypeSeq<tensor::TensorAntisymmetricIndex<NaturalCochainTag...>>,
-                  ddc::detail::TypeSeq<DDim...>>);
-    using type = tensor::Tensor<
-            ElementType,
-            ddc::replace_dim_of_t<
-                    ddc::DiscreteDomain<DDim...>,
-                    tensor::TensorAntisymmetricIndex<NaturalCochainTag...>,
-                    tensor::TensorAntisymmetricIndex<TagToAddToCochain, NaturalCochainTag...>>,
+                    CochainIndex,
+                    typename CoboundaryIndex<TagToAddToCochain, CochainIndex>::type>,
             SupportType,
             MemorySpace>;
 };
