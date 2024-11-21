@@ -256,7 +256,51 @@ fill_metric_prod(
     return detail::FillMetricProd<Indices1, Indices2>::run(metric_prod, metric, metric_prod_);
 }
 
+namespace detail {
+
+template <class Dom>
+using non_primes = ddc::type_seq_remove_t<ddc::to_type_seq_t<Dom>, primes<ddc::to_type_seq_t<Dom>>>;
+
+} // namespace detail
+
 // Apply metrics inplace (like g_mu_muprime*T^muprime^nu)
+template <misc::Specialization<Tensor> MetricType, misc::Specialization<Tensor> TensorType>
+auto inplace_apply_metric(TensorType tensor, MetricType metric_prod)
+{
+    ddc::Chunk result_alloc(
+            relabelize_indices_in_domain<
+                    upper<detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>,
+                    detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>(
+                    tensor.domain()),
+            ddc::HostAllocator<double>());
+    relabelize_indices_of_t<
+            TensorType,
+            upper<detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>,
+            detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>
+            result(result_alloc);
+    ddc::parallel_for_each(
+            Kokkos::DefaultHostExecutionSpace(),
+            tensor.non_indices_domain(),
+            [&](auto elem) {
+                tensor_prod(
+                        result[elem],
+                        metric_prod[elem],
+                        relabelize_indices_of<
+                                upper<detail::non_primes<
+                                        typename MetricType::accessor_t::natural_domain_t>>,
+                                primes<upper<detail::non_primes<
+                                        typename MetricType::accessor_t::natural_domain_t>>>>(
+                                tensor)[elem]);
+            });
+    Kokkos::deep_copy(
+            tensor.allocation_kokkos_view(),
+            result.allocation_kokkos_view()); // We rely on Kokkos::deep_copy in place of ddc::parallel_deepcopy to avoid type verification of the type dimensions
+
+    return relabelize_indices_of<
+            upper<detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>,
+            detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>(tensor);
+}
+
 template <
         TensorIndex MetricIndex,
         TensorNatIndex... Index1,
@@ -300,31 +344,7 @@ inplace_apply_metric(TensorType tensor, MetricType metric)
             ddc::detail::TypeSeq<Index1...>,
             primes<ddc::detail::TypeSeq<Index1...>>>(metric_prod, metric);
 
-    ddc::Chunk result_alloc(
-            relabelize_indices_in_domain<
-                    upper<ddc::detail::TypeSeq<Index1...>>,
-                    ddc::detail::TypeSeq<Index1...>>(tensor.domain()),
-            ddc::HostAllocator<double>());
-    relabelize_indices_of_t<
-            TensorType,
-            upper<ddc::detail::TypeSeq<Index1...>>,
-            ddc::detail::TypeSeq<Index1...>>
-            result(result_alloc);
-    ddc::for_each(tensor.non_indices_domain(), [&](auto elem) {
-        tensor_prod(
-                result[elem],
-                metric_prod[elem],
-                relabelize_indices_of<
-                        upper<ddc::detail::TypeSeq<Index1...>>,
-                        primes<upper<ddc::detail::TypeSeq<Index1...>>>>(tensor)[elem]);
-    });
-    Kokkos::deep_copy(
-            tensor.allocation_kokkos_view(),
-            result.allocation_kokkos_view()); // We rely on Kokkos::deep_copy in place of ddc::parallel_deepcopy to avoid type verification of the type dimensions
-
-    return relabelize_indices_of<
-            upper<ddc::detail::TypeSeq<Index1...>>,
-            ddc::detail::TypeSeq<Index1...>>(tensor);
+    return inplace_apply_metric(tensor, metric_prod);
 }
 
 } // namespace tensor
