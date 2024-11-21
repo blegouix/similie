@@ -278,8 +278,7 @@ auto inplace_apply_metric(TensorType tensor, MetricType metric_prod)
             upper<detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>,
             detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>
             result(result_alloc);
-    ddc::parallel_for_each(
-            Kokkos::DefaultHostExecutionSpace(),
+    ddc::for_each( // TODO use parallel_for_each, there is a weird lock when doing so
             tensor.non_indices_domain(),
             [&](auto elem) {
                 tensor_prod(
