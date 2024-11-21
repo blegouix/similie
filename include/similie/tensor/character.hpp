@@ -65,10 +65,10 @@ struct Lower<TensorContravariantNaturalIndex<NaturalIndex>>
     using type = TensorCovariantNaturalIndex<NaturalIndex>;
 };
 
-template <TensorNatIndex... NaturalIndex>
-struct Lower<ddc::detail::TypeSeq<NaturalIndex...>>
+template <template <TensorIndex...> class T, TensorIndex... Index>
+struct Lower<T<Index...>>
 {
-    using type = ddc::detail::TypeSeq<typename Lower<NaturalIndex>::type...>;
+    using type = T<typename Lower<Index>::type...>;
 };
 
 } // namespace detail
@@ -93,10 +93,10 @@ struct Upper<TensorContravariantNaturalIndex<NaturalIndex>>
     using type = TensorContravariantNaturalIndex<NaturalIndex>;
 };
 
-template <TensorNatIndex... NaturalIndex>
-struct Upper<ddc::detail::TypeSeq<NaturalIndex...>>
+template <template <TensorIndex...> class T, TensorIndex... Index>
+struct Upper<T<Index...>>
 {
-    using type = ddc::detail::TypeSeq<typename Upper<NaturalIndex>::type...>;
+    using type = T<typename Upper<Index>::type...>;
 };
 
 } // namespace detail
@@ -121,10 +121,10 @@ struct Uncharacterize<TensorContravariantNaturalIndex<NaturalIndex>>
     using type = NaturalIndex;
 };
 
-template <class... Index>
-struct Uncharacterize<ddc::detail::TypeSeq<Index...>>
+template <template <TensorIndex...> class T, TensorIndex... Index>
+struct Uncharacterize<T<Index...>>
 {
-    using type = ddc::detail::TypeSeq<typename Uncharacterize<Index>::type...>;
+    using type = T<typename Uncharacterize<Index>::type...>;
 };
 
 template <class Index>

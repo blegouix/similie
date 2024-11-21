@@ -33,7 +33,7 @@ struct J : sil::tensor::TensorNaturalIndex<X, Y>
 
 using MetricLikeIndex = sil::tensor::TensorSymmetricIndex<I, J>;
 
-TEST(TensorField, MetricLike)
+TEST(Metric, MetricLike)
 {
     ddc::DiscreteDomain<DDimX, DDimY>
             mesh_xy(ddc::DiscreteElement<DDimX, DDimY>(0, 0),
@@ -69,7 +69,7 @@ using MetricIndex = sil::tensor::TensorSymmetricIndex<
         sil::tensor::TensorCovariantNaturalIndex<sil::tensor::MetricIndex1<X, Y>>,
         sil::tensor::TensorCovariantNaturalIndex<sil::tensor::MetricIndex2<X, Y>>>;
 
-TEST(TensorField, Metric)
+TEST(Metric, Covariant)
 {
     ddc::DiscreteDomain<DDimX, DDimY>
             mesh_xy(ddc::DiscreteElement<DDimX, DDimY>(0, 0),
@@ -106,7 +106,7 @@ struct K : sil::tensor::TensorNaturalIndex<X, Y>
 using KLow = sil::tensor::TensorCovariantNaturalIndex<K>;
 using KUp = sil::tensor::upper<KLow>;
 
-TEST(TensorField, ChristoffelLike)
+TEST(Metric, ChristoffelLike)
 {
     ddc::DiscreteDomain<DDimX, DDimY>
             mesh_xy(ddc::DiscreteElement<DDimX, DDimY>(0, 0),
@@ -201,4 +201,41 @@ TEST(TensorField, ChristoffelLike)
                 christoffel_2nd.get(elem, christoffel_2nd.accessor().access_element<Y, Y, Y>()),
                 12.);
     });
+}
+
+// TODO test for metric_prod
+
+using InvMetricIndex = sil::tensor::TensorSymmetricIndex<
+        sil::tensor::TensorContravariantNaturalIndex<sil::tensor::MetricIndex1<X, Y>>,
+        sil::tensor::TensorContravariantNaturalIndex<sil::tensor::MetricIndex2<X, Y>>>;
+
+TEST(Metric, Inverse)
+{
+    ddc::DiscreteDomain<DDimX, DDimY>
+            mesh_xy(ddc::DiscreteElement<DDimX, DDimY>(0, 0),
+                    ddc::DiscreteVector<DDimX, DDimY>(10, 10));
+
+    sil::tensor::TensorAccessor<MetricIndex> metric_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, MetricIndex>
+            metric_dom(mesh_xy, metric_accessor.mem_domain());
+    ddc::Chunk metric_alloc(metric_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor<
+            double,
+            ddc::DiscreteDomain<DDimX, DDimY, MetricIndex>,
+            Kokkos::layout_right,
+            Kokkos::DefaultHostExecutionSpace::memory_space>
+            metric(metric_alloc);
+
+    sil::tensor::TensorAccessor<InvMetricIndex> inv_metric_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, InvMetricIndex>
+            inv_metric_dom(mesh_xy, inv_metric_accessor.mem_domain());
+    ddc::Chunk inv_metric_alloc(inv_metric_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor<
+            double,
+            ddc::DiscreteDomain<DDimX, DDimY, InvMetricIndex>,
+            Kokkos::layout_right,
+            Kokkos::DefaultHostExecutionSpace::memory_space>
+            inv_metric(inv_metric_alloc);
+
+    sil::tensor::fill_inverse_metric(inv_metric, metric);
 }
