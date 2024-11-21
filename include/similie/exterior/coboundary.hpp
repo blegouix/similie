@@ -10,7 +10,8 @@
 #include <similie/misc/filled_struct.hpp>
 #include <similie/misc/specialization.hpp>
 #include <similie/misc/type_seq_conversion.hpp>
-#include <similie/tensor/tensor.hpp>
+#include <similie/tensor/antisymmetric_tensor.hpp>
+#include <similie/tensor/tensor_impl.hpp>
 
 #include "cochain.hpp"
 #include "cosimplex.hpp"
@@ -54,6 +55,13 @@ struct CoboundaryIndex<TagToAddToCochain, tensor::TensorAntisymmetricIndex<Tag..
     using type = tensor::TensorAntisymmetricIndex<TagToAddToCochain, Tag...>;
 };
 
+} // namespace detail
+
+template <class TagToAddToCochain, class CochainTag>
+using coboundary_index_t = typename detail::CoboundaryIndex<TagToAddToCochain, CochainTag>::type;
+
+namespace detail {
+
 template <
         tensor::TensorNatIndex TagToAddToCochain,
         tensor::TensorIndex CochainTag,
@@ -80,7 +88,7 @@ struct CoboundaryTensorType<
             ddc::replace_dim_of_t<
                     ddc::DiscreteDomain<DDim...>,
                     CochainIndex,
-                    typename CoboundaryIndex<TagToAddToCochain, CochainIndex>::type>,
+                    coboundary_index_t<TagToAddToCochain, CochainIndex>>,
             SupportType,
             MemorySpace>;
 };
@@ -170,8 +178,7 @@ KOKKOS_FUNCTION coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> c
             ddc::remove_dims_of_t<
                     typename coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType>::
                             discrete_domain_type,
-                    typename detail::CoboundaryIndex<TagToAddToCochain, CochainTag>::type>(
-                    coboundary_tensor.domain()),
+                    coboundary_index_t<TagToAddToCochain, CochainTag>>(coboundary_tensor.domain()),
             [&](auto elem) {
                 auto chain = tangent_basis<
                         CochainTag::rank() + 1,
@@ -211,9 +218,9 @@ KOKKOS_FUNCTION coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> c
                             cochain_boundary(simplex_boundary, values);
                     coboundary_tensor
                             .mem(elem,
-                                 ddc::DiscreteElement<typename detail::CoboundaryIndex<
-                                         TagToAddToCochain,
-                                         CochainTag>::type>(std::distance(cochain.begin(), i)))
+                                 ddc::DiscreteElement<
+                                         coboundary_index_t<TagToAddToCochain, CochainTag>>(
+                                         std::distance(cochain.begin(), i)))
                             = cochain_boundary.integrate();
                 }
             });
