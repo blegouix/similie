@@ -7,6 +7,7 @@ var namespacesil_1_1exterior =
     [ "LocalChain", "classsil_1_1exterior_1_1LocalChain.html", "classsil_1_1exterior_1_1LocalChain" ],
     [ "Simplex", "classsil_1_1exterior_1_1Simplex.html", "classsil_1_1exterior_1_1Simplex" ],
     [ "boundary_t", "namespacesil_1_1exterior.html#a23a36b9d5c6beaf7c9647044ee0acb2a", null ],
+    [ "coboundary_index_t", "namespacesil_1_1exterior.html#a55302a820d4c13731517af91caa04c6c", null ],
     [ "coboundary_t", "namespacesil_1_1exterior.html#aae9b86ebeebff7e21df62d67785ebedd", null ],
     [ "coboundary_tensor_t", "namespacesil_1_1exterior.html#aef98055b159558aa4e09c970dcf5bc0d", null ],
     [ "Form", "namespacesil_1_1exterior.html#a91ad2e2a2afbf4daa1a78d5d4955dd1b", null ],

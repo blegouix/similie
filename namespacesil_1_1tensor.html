@@ -190,12 +190,12 @@ Typedefs</h2></td></tr>
 <tr class="memitem:a73fd1f7d374ac218e2f00fbc8c76eb31" id="r_a73fd1f7d374ac218e2f00fbc8c76eb31"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; Tensor &gt; TensorType&gt; </td></tr>
 <tr class="memitem:a73fd1f7d374ac218e2f00fbc8c76eb31"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a73fd1f7d374ac218e2f00fbc8c76eb31">uncharacterize_tensor_t</a> = <a class="el" href="namespacesil_1_1tensor.html#a18bb38e8250062242859a699221b5be5">relabelize_indices_of_t</a>&lt; TensorType, ddc::to_type_seq_t&lt; typename TensorType::accessor_t::natural_domain_t &gt;, <a class="el" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt; ddc::to_type_seq_t&lt; typename TensorType::accessor_t::natural_domain_t &gt; &gt; &gt;</td></tr>
 <tr class="separator:a73fd1f7d374ac218e2f00fbc8c76eb31"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaa9d5e3edfa546a78f7b7666fad48abb" id="r_aaa9d5e3edfa546a78f7b7666fad48abb"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom, TensorNatIndex Index1, TensorNatIndex Index2&gt; </td></tr>
-<tr class="memitem:aaa9d5e3edfa546a78f7b7666fad48abb"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#aaa9d5e3edfa546a78f7b7666fad48abb">relabelize_metric_in_domain_t</a> = <a class="el" href="namespacesil_1_1tensor.html#a10d538d7bbe57026bb31dd4967dceec1">relabelize_indices_in_domain_t</a>&lt; Dom, ddc::detail::TypeSeq&lt; typename detail::ConvertTypeSeqToMetricIndex1&lt; typename Index1::type_seq_dimensions &gt;::type, typename detail::ConvertTypeSeqToMetricIndex2&lt; typename Index2::type_seq_dimensions &gt;::type &gt;, ddc::detail::TypeSeq&lt; Index1, Index2 &gt; &gt;</td></tr>
-<tr class="separator:aaa9d5e3edfa546a78f7b7666fad48abb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a21d03977dcbfcb8cca19e13ec3ecd43b" id="r_a21d03977dcbfcb8cca19e13ec3ecd43b"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; Tensor &gt; TensorType, TensorNatIndex Index1, TensorNatIndex Index2&gt; </td></tr>
-<tr class="memitem:a21d03977dcbfcb8cca19e13ec3ecd43b"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a21d03977dcbfcb8cca19e13ec3ecd43b">relabelize_metric_t</a> = <a class="el" href="namespacesil_1_1tensor.html#a18bb38e8250062242859a699221b5be5">relabelize_indices_of_t</a>&lt; TensorType, ddc::detail::TypeSeq&lt; typename detail::ConvertTypeSeqToMetricIndex1&lt; typename Index1::type_seq_dimensions &gt;::type, typename detail::ConvertTypeSeqToMetricIndex2&lt; typename Index2::type_seq_dimensions &gt;::type &gt;, ddc::detail::TypeSeq&lt; Index1, Index2 &gt; &gt;</td></tr>
-<tr class="separator:a21d03977dcbfcb8cca19e13ec3ecd43b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae0ca5d5176c9a4fe340bc05e05d5b69e" id="r_ae0ca5d5176c9a4fe340bc05e05d5b69e"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom, TensorNatIndex Index1, TensorNatIndex Index2&gt; </td></tr>
+<tr class="memitem:ae0ca5d5176c9a4fe340bc05e05d5b69e"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#ae0ca5d5176c9a4fe340bc05e05d5b69e">relabelize_metric_in_domain_t</a> = <a class="el" href="namespacesil_1_1tensor.html#a10d538d7bbe57026bb31dd4967dceec1">relabelize_indices_in_domain_t</a>&lt; Dom, ddc::detail::TypeSeq&lt; typename detail::ConvertTypeSeqToMetricIndex1&lt; typename Index1::type_seq_dimensions &gt;::type, typename detail::ConvertTypeSeqToMetricIndex2&lt; typename Index2::type_seq_dimensions &gt;::type &gt;, ddc::detail::TypeSeq&lt; <a class="el" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt; Index1 &gt;, <a class="el" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt; Index2 &gt; &gt; &gt;</td></tr>
+<tr class="separator:ae0ca5d5176c9a4fe340bc05e05d5b69e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a501a35496af8f3afa414257911575664" id="r_a501a35496af8f3afa414257911575664"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; Tensor &gt; TensorType, TensorNatIndex Index1, TensorNatIndex Index2&gt; </td></tr>
+<tr class="memitem:a501a35496af8f3afa414257911575664"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a501a35496af8f3afa414257911575664">relabelize_metric_t</a> = <a class="el" href="namespacesil_1_1tensor.html#a18bb38e8250062242859a699221b5be5">relabelize_indices_of_t</a>&lt; TensorType, ddc::detail::TypeSeq&lt; typename detail::ConvertTypeSeqToMetricIndex1&lt; typename Index1::type_seq_dimensions &gt;::type, typename detail::ConvertTypeSeqToMetricIndex2&lt; typename Index2::type_seq_dimensions &gt;::type &gt;, ddc::detail::TypeSeq&lt; <a class="el" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt; Index1 &gt;, <a class="el" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt; Index2 &gt; &gt; &gt;</td></tr>
+<tr class="separator:a501a35496af8f3afa414257911575664"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4e5368f425f7bbbab77cd8edaff01b87" id="r_a4e5368f425f7bbbab77cd8edaff01b87"><td class="memTemplParams" colspan="2">template&lt;TensorIndex MetricIndex, misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices1, misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices2&gt; </td></tr>
 <tr class="memitem:a4e5368f425f7bbbab77cd8edaff01b87"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a4e5368f425f7bbbab77cd8edaff01b87">metric_prod_domain_t</a> = typename detail::MetricProdDomainType&lt; MetricIndex, Indices1, Indices2 &gt;::type</td></tr>
 <tr class="separator:a4e5368f425f7bbbab77cd8edaff01b87"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -242,10 +242,10 @@ Functions</h2></td></tr>
 <tr class="memitem:a1e054223bfa913f0bc231631e71d337b"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacesil_1_1tensor.html#a73fd1f7d374ac218e2f00fbc8c76eb31">uncharacterize_tensor_t</a>&lt; TensorType &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a1e054223bfa913f0bc231631e71d337b">uncharacterize_tensor</a> (TensorType tensor)</td></tr>
 <tr class="separator:a1e054223bfa913f0bc231631e71d337b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a98595b60ec04ec0975ec9096bb8e9f50" id="r_a98595b60ec04ec0975ec9096bb8e9f50"><td class="memTemplParams" colspan="2">template&lt;TensorNatIndex Index1, TensorNatIndex Index2, class Dom &gt; </td></tr>
-<tr class="memitem:a98595b60ec04ec0975ec9096bb8e9f50"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacesil_1_1tensor.html#aaa9d5e3edfa546a78f7b7666fad48abb">relabelize_metric_in_domain_t</a>&lt; Dom, Index1, Index2 &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a98595b60ec04ec0975ec9096bb8e9f50">relabelize_metric_in_domain</a> (Dom metric_dom)</td></tr>
+<tr class="memitem:a98595b60ec04ec0975ec9096bb8e9f50"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacesil_1_1tensor.html#ae0ca5d5176c9a4fe340bc05e05d5b69e">relabelize_metric_in_domain_t</a>&lt; Dom, Index1, Index2 &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a98595b60ec04ec0975ec9096bb8e9f50">relabelize_metric_in_domain</a> (Dom metric_dom)</td></tr>
 <tr class="separator:a98595b60ec04ec0975ec9096bb8e9f50"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6ee78e45a231d3e25c4e5c508fb602e2" id="r_a6ee78e45a231d3e25c4e5c508fb602e2"><td class="memTemplParams" colspan="2">template&lt;TensorNatIndex Index1, TensorNatIndex Index2, misc::Specialization&lt; Tensor &gt; TensorType&gt; </td></tr>
-<tr class="memitem:a6ee78e45a231d3e25c4e5c508fb602e2"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacesil_1_1tensor.html#a21d03977dcbfcb8cca19e13ec3ecd43b">relabelize_metric_t</a>&lt; TensorType, Index1, Index2 &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a6ee78e45a231d3e25c4e5c508fb602e2">relabelize_metric</a> (TensorType tensor)</td></tr>
+<tr class="memitem:a6ee78e45a231d3e25c4e5c508fb602e2"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacesil_1_1tensor.html#a501a35496af8f3afa414257911575664">relabelize_metric_t</a>&lt; TensorType, Index1, Index2 &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a6ee78e45a231d3e25c4e5c508fb602e2">relabelize_metric</a> (TensorType tensor)</td></tr>
 <tr class="separator:a6ee78e45a231d3e25c4e5c508fb602e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0a599911b5e36d70cfc2892ede933968" id="r_a0a599911b5e36d70cfc2892ede933968"><td class="memTemplParams" colspan="2">template&lt;TensorIndex MetricIndex, misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices1, misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices2, misc::Specialization&lt; Tensor &gt; MetricType&gt; </td></tr>
 <tr class="memitem:a0a599911b5e36d70cfc2892ede933968"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacesil_1_1tensor.html#ac78669c4a01fe2ec3b4a8a48d0c94e2a">metric_prod_t</a>&lt; typename MetricType::non_indices_domain_t, MetricIndex, Indices1, Indices2 &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a0a599911b5e36d70cfc2892ede933968">fill_metric_prod</a> (<a class="el" href="namespacesil_1_1tensor.html#ac78669c4a01fe2ec3b4a8a48d0c94e2a">metric_prod_t</a>&lt; typename MetricType::non_indices_domain_t, MetricIndex, Indices1, Indices2 &gt; metric_prod, MetricType metric)</td></tr>
@@ -440,8 +440,8 @@ template&lt;misc::Specialization&lt; Tensor &gt; TensorType&gt; </div>
 
 </div>
 </div>
-<a id="aaa9d5e3edfa546a78f7b7666fad48abb" name="aaa9d5e3edfa546a78f7b7666fad48abb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aaa9d5e3edfa546a78f7b7666fad48abb">&#9670;&#160;</a></span>relabelize_metric_in_domain_t</h2>
+<a id="ae0ca5d5176c9a4fe340bc05e05d5b69e" name="ae0ca5d5176c9a4fe340bc05e05d5b69e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae0ca5d5176c9a4fe340bc05e05d5b69e">&#9670;&#160;</a></span>relabelize_metric_in_domain_t</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -449,7 +449,7 @@ template&lt;misc::Specialization&lt; Tensor &gt; TensorType&gt; </div>
 template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom, TensorNatIndex Index1, TensorNatIndex Index2&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="namespacesil_1_1tensor.html#aaa9d5e3edfa546a78f7b7666fad48abb">sil::tensor::relabelize_metric_in_domain_t</a> = typedef <a class="el" href="namespacesil_1_1tensor.html#a10d538d7bbe57026bb31dd4967dceec1">relabelize_indices_in_domain_t</a>&lt; Dom, ddc::detail::TypeSeq&lt; typename detail::ConvertTypeSeqToMetricIndex1&lt; typename Index1::type_seq_dimensions&gt;::type, typename detail::ConvertTypeSeqToMetricIndex2&lt; typename Index2::type_seq_dimensions&gt;::type&gt;, ddc::detail::TypeSeq&lt;Index1, Index2&gt; &gt;</td>
+          <td class="memname">using <a class="el" href="namespacesil_1_1tensor.html#ae0ca5d5176c9a4fe340bc05e05d5b69e">sil::tensor::relabelize_metric_in_domain_t</a> = typedef <a class="el" href="namespacesil_1_1tensor.html#a10d538d7bbe57026bb31dd4967dceec1">relabelize_indices_in_domain_t</a>&lt; Dom, ddc::detail::TypeSeq&lt; typename detail::ConvertTypeSeqToMetricIndex1&lt; typename Index1::type_seq_dimensions&gt;::type, typename detail::ConvertTypeSeqToMetricIndex2&lt; typename Index2::type_seq_dimensions&gt;::type&gt;, ddc::detail::TypeSeq&lt;<a class="el" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt;Index1&gt;, <a class="el" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt;Index2&gt; &gt;&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -458,8 +458,8 @@ template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom, TensorNatInde
 
 </div>
 </div>
-<a id="a21d03977dcbfcb8cca19e13ec3ecd43b" name="a21d03977dcbfcb8cca19e13ec3ecd43b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a21d03977dcbfcb8cca19e13ec3ecd43b">&#9670;&#160;</a></span>relabelize_metric_t</h2>
+<a id="a501a35496af8f3afa414257911575664" name="a501a35496af8f3afa414257911575664"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a501a35496af8f3afa414257911575664">&#9670;&#160;</a></span>relabelize_metric_t</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -467,7 +467,7 @@ template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom, TensorNatInde
 template&lt;misc::Specialization&lt; Tensor &gt; TensorType, TensorNatIndex Index1, TensorNatIndex Index2&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="namespacesil_1_1tensor.html#a21d03977dcbfcb8cca19e13ec3ecd43b">sil::tensor::relabelize_metric_t</a> = typedef <a class="el" href="namespacesil_1_1tensor.html#a18bb38e8250062242859a699221b5be5">relabelize_indices_of_t</a>&lt; TensorType, ddc::detail::TypeSeq&lt; typename detail::ConvertTypeSeqToMetricIndex1&lt; typename Index1::type_seq_dimensions&gt;::type, typename detail::ConvertTypeSeqToMetricIndex2&lt; typename Index2::type_seq_dimensions&gt;::type&gt;, ddc::detail::TypeSeq&lt;Index1, Index2&gt; &gt;</td>
+          <td class="memname">using <a class="el" href="namespacesil_1_1tensor.html#a501a35496af8f3afa414257911575664">sil::tensor::relabelize_metric_t</a> = typedef <a class="el" href="namespacesil_1_1tensor.html#a18bb38e8250062242859a699221b5be5">relabelize_indices_of_t</a>&lt; TensorType, ddc::detail::TypeSeq&lt; typename detail::ConvertTypeSeqToMetricIndex1&lt; typename Index1::type_seq_dimensions&gt;::type, typename detail::ConvertTypeSeqToMetricIndex2&lt; typename Index2::type_seq_dimensions&gt;::type&gt;, ddc::detail::TypeSeq&lt;<a class="el" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt;Index1&gt;, <a class="el" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt;Index2&gt; &gt;&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -616,7 +616,7 @@ template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom, TensorIndex O
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00732">732</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00714">714</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -634,7 +634,7 @@ template&lt;misc::Specialization&lt; Tensor &gt; TensorType, TensorIndex OldInde
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00763">763</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00745">745</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -652,7 +652,7 @@ template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom, class OldIndi
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00870">870</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00843">843</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -670,7 +670,7 @@ template&lt;misc::Specialization&lt; Tensor &gt; TensorType, misc::Specializatio
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01000">1000</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00973">973</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -688,7 +688,7 @@ template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom1, misc::Specia
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01058">1058</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01031">1031</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -742,7 +742,7 @@ template&lt;misc::Specialization&lt; Tensor &gt; TensorType&gt; </div>
 template&lt;TensorNatIndex Index1, TensorNatIndex Index2, class Dom &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespacesil_1_1tensor.html#aaa9d5e3edfa546a78f7b7666fad48abb">relabelize_metric_in_domain_t</a>&lt; Dom, Index1, Index2 &gt; sil::tensor::relabelize_metric_in_domain </td>
+          <td class="memname"><a class="el" href="namespacesil_1_1tensor.html#ae0ca5d5176c9a4fe340bc05e05d5b69e">relabelize_metric_in_domain_t</a>&lt; Dom, Index1, Index2 &gt; sil::tensor::relabelize_metric_in_domain </td>
           <td>(</td>
           <td class="paramtype">Dom&#160;</td>
           <td class="paramname"><em>metric_dom</em></td><td>)</td>
@@ -764,7 +764,7 @@ template&lt;TensorNatIndex Index1, TensorNatIndex Index2, class Dom &gt; </div>
 template&lt;TensorNatIndex Index1, TensorNatIndex Index2, misc::Specialization&lt; Tensor &gt; TensorType&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespacesil_1_1tensor.html#a21d03977dcbfcb8cca19e13ec3ecd43b">relabelize_metric_t</a>&lt; TensorType, Index1, Index2 &gt; sil::tensor::relabelize_metric </td>
+          <td class="memname"><a class="el" href="namespacesil_1_1tensor.html#a501a35496af8f3afa414257911575664">relabelize_metric_t</a>&lt; TensorType, Index1, Index2 &gt; sil::tensor::relabelize_metric </td>
           <td>(</td>
           <td class="paramtype">TensorType&#160;</td>
           <td class="paramname"><em>tensor</em></td><td>)</td>
@@ -891,7 +891,7 @@ template&lt;TensorIndex OldIndex, TensorIndex NewIndex, class ElementType , clas
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00776">776</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00758">758</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -913,7 +913,7 @@ template&lt;class OldIndices , class NewIndices , misc::Specialization&lt; ddc::
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00911">911</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00884">884</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -935,7 +935,7 @@ template&lt;misc::Specialization&lt; ddc::detail::TypeSeq &gt; OldIndices, misc:
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01007">1007</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00980">980</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -967,7 +967,7 @@ template&lt;class... DDim, class ElementType , class LayoutStridedPolicy , class
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01024">1024</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00997">997</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -999,7 +999,7 @@ template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom1, misc::Specia
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01063">1063</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01036">1036</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -1037,7 +1037,7 @@ template&lt;TensorNatIndex... ProdDDim, TensorNatIndex... DDim1, TensorNatIndex.
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01128">1128</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01101">1101</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -1069,7 +1069,7 @@ template&lt;misc::Specialization&lt; Tensor &gt; TensorType&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01214">1214</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01187">1187</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>

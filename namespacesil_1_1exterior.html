@@ -152,6 +152,9 @@ Typedefs</h2></td></tr>
 <tr class="memitem:a23a36b9d5c6beaf7c9647044ee0acb2a" id="r_a23a36b9d5c6beaf7c9647044ee0acb2a"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
 <tr class="memitem:a23a36b9d5c6beaf7c9647044ee0acb2a"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1exterior.html#a23a36b9d5c6beaf7c9647044ee0acb2a">boundary_t</a> = typename detail::BoundaryType&lt; T &gt;::type</td></tr>
 <tr class="separator:a23a36b9d5c6beaf7c9647044ee0acb2a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a55302a820d4c13731517af91caa04c6c" id="r_a55302a820d4c13731517af91caa04c6c"><td class="memTemplParams" colspan="2">template&lt;class TagToAddToCochain , class CochainTag &gt; </td></tr>
+<tr class="memitem:a55302a820d4c13731517af91caa04c6c"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1exterior.html#a55302a820d4c13731517af91caa04c6c">coboundary_index_t</a> = typename detail::CoboundaryIndex&lt; TagToAddToCochain, CochainTag &gt;::type</td></tr>
+<tr class="separator:a55302a820d4c13731517af91caa04c6c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aae9b86ebeebff7e21df62d67785ebedd" id="r_aae9b86ebeebff7e21df62d67785ebedd"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; <a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a> &gt; CochainType&gt; </td></tr>
 <tr class="memitem:aae9b86ebeebff7e21df62d67785ebedd"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1exterior.html#aae9b86ebeebff7e21df62d67785ebedd">coboundary_t</a> = typename detail::CoboundaryType&lt; CochainType &gt;::type</td></tr>
 <tr class="separator:aae9b86ebeebff7e21df62d67785ebedd"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -229,6 +232,24 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
+<a id="a55302a820d4c13731517af91caa04c6c" name="a55302a820d4c13731517af91caa04c6c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a55302a820d4c13731517af91caa04c6c">&#9670;&#160;</a></span>coboundary_index_t</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class TagToAddToCochain , class CochainTag &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="namespacesil_1_1exterior.html#a55302a820d4c13731517af91caa04c6c">sil::exterior::coboundary_index_t</a> = typedef typename detail::CoboundaryIndex&lt;TagToAddToCochain, CochainTag&gt;::type</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00061">61</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
+
+</div>
+</div>
 <a id="aae9b86ebeebff7e21df62d67785ebedd" name="aae9b86ebeebff7e21df62d67785ebedd"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aae9b86ebeebff7e21df62d67785ebedd">&#9670;&#160;</a></span>coboundary_t</h2>
 
@@ -243,7 +264,7 @@ template&lt;misc::Specialization&lt; <a class="el" href="classsil_1_1exterior_1_
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00117">117</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00099">99</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
 
 </div>
 </div>
@@ -261,7 +282,7 @@ template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex Cochai
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00123">123</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00105">105</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
 
 </div>
 </div>
@@ -398,7 +419,7 @@ template&lt;misc::Specialization&lt; <a class="el" href="classsil_1_1exterior_1_
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00153">153</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00135">135</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
 
 </div>
 </div>
@@ -430,7 +451,7 @@ template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex Cochai
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00190">190</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00172">172</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
 
 </div>
 </div>
@@ -462,7 +483,7 @@ template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex Cochai
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00285">285</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00233">233</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
 
 </div>
 </div>
@@ -494,7 +515,7 @@ template&lt;misc::Specialization&lt; <a class="el" href="classsil_1_1exterior_1_
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00347">347</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00348">348</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
