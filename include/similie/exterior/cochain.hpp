@@ -50,7 +50,7 @@ public:
     }
 
     template <class... T>
-        requires(sizeof...(T) >= 1)
+        requires(sizeof...(T) >= 1 && (std::is_convertible_v<T, double> && ...))
     KOKKOS_FUNCTION constexpr explicit Cochain(ChainType chain, T... value) noexcept
         : m_chain(chain)
         , m_values {value...}
@@ -71,14 +71,16 @@ public:
 
     template <
             class OElementType,
-            misc::Specialization<tensor::TensorAntisymmetricIndex> AntisymmetricIndex,
+            tensor::TensorIndex Index,
             class LayoutStridedPolicy,
             class MemorySpace>
+        requires(misc::Specialization<Index, tensor::TensorAntisymmetricIndex>
+                 || tensor::TensorNatIndex<Index>)
     KOKKOS_FUNCTION constexpr explicit Cochain(
             ChainType& chain,
             tensor::Tensor<
                     OElementType,
-                    ddc::DiscreteDomain<AntisymmetricIndex>,
+                    ddc::DiscreteDomain<Index>,
                     LayoutStridedPolicy,
                     MemorySpace> tensor) noexcept
         : m_chain(chain)
@@ -88,8 +90,7 @@ public:
                && "cochain constructor must get as much values as the chain contains simplices");
         // TODO replace std::vectors with Kokkos::View to replace the pointer (avoid copy) ?
         for (auto i = m_values.begin(); i < m_values.end(); ++i) {
-            *i = tensor.mem(
-                    ddc::DiscreteElement<AntisymmetricIndex>(std::distance(m_values.begin(), i)));
+            *i = tensor.mem(ddc::DiscreteElement<Index>(std::distance(m_values.begin(), i)));
         }
     }
 

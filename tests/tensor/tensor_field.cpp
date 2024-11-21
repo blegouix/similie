@@ -65,8 +65,9 @@ TEST(TensorField, MetricLike)
 using ILow = sil::tensor::TensorCovariantNaturalIndex<I>;
 using JLow = sil::tensor::TensorCovariantNaturalIndex<J>;
 
-using MetricIndex = sil::tensor::
-        TensorSymmetricIndex<sil::tensor::MetricIndex1<X, Y>, sil::tensor::MetricIndex2<X, Y>>;
+using MetricIndex = sil::tensor::TensorSymmetricIndex<
+        sil::tensor::TensorCovariantNaturalIndex<sil::tensor::MetricIndex1<X, Y>>,
+        sil::tensor::TensorCovariantNaturalIndex<sil::tensor::MetricIndex2<X, Y>>>;
 
 TEST(TensorField, Metric)
 {
