@@ -205,13 +205,25 @@ TEST(Metric, ChristoffelLike)
 
 // TODO test for metric_prod
 
+struct Z
+{
+};
+
+using DirectMetricIndex = sil::tensor::TensorSymmetricIndex<
+        sil::tensor::TensorCovariantNaturalIndex<sil::tensor::MetricIndex1<X, Y, Z>>,
+        sil::tensor::TensorCovariantNaturalIndex<sil::tensor::MetricIndex2<X, Y, Z>>>;
+
 using InvMetricIndex = sil::tensor::TensorSymmetricIndex<
-        sil::tensor::TensorContravariantNaturalIndex<sil::tensor::MetricIndex1<X, Y>>,
-        sil::tensor::TensorContravariantNaturalIndex<sil::tensor::MetricIndex2<X, Y>>>;
+        sil::tensor::TensorContravariantNaturalIndex<sil::tensor::MetricIndex1<X, Y, Z>>,
+        sil::tensor::TensorContravariantNaturalIndex<sil::tensor::MetricIndex2<X, Y, Z>>>;
 
 using IdIndex = sil::tensor::TensorSymmetricIndex<
-        sil::tensor::TensorCovariantNaturalIndex<sil::tensor::MetricIndex1<X, Y>>,
-        sil::tensor::TensorContravariantNaturalIndex<sil::tensor::MetricIndex2<X, Y>>>;
+        sil::tensor::TensorCovariantNaturalIndex<sil::tensor::MetricIndex1<X, Y, Z>>,
+        sil::tensor::TensorContravariantNaturalIndex<sil::tensor::MetricIndex2<X, Y, Z>>>;
+
+struct Alpha : sil::tensor::TensorNaturalIndex<X, Y, Z>
+{
+};
 
 TEST(Metric, Inverse)
 {
@@ -219,20 +231,23 @@ TEST(Metric, Inverse)
             mesh_xy(ddc::DiscreteElement<DDimX, DDimY>(0, 0),
                     ddc::DiscreteVector<DDimX, DDimY>(10, 10));
 
-    sil::tensor::TensorAccessor<MetricIndex> metric_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, MetricIndex>
+    sil::tensor::TensorAccessor<DirectMetricIndex> metric_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, DirectMetricIndex>
             metric_dom(mesh_xy, metric_accessor.mem_domain());
     ddc::Chunk metric_alloc(metric_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
-            ddc::DiscreteDomain<DDimX, DDimY, MetricIndex>,
+            ddc::DiscreteDomain<DDimX, DDimY, DirectMetricIndex>,
             Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             metric(metric_alloc);
     ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
-        metric(elem, metric.accessor().access_element<X, X>()) = 1.;
-        metric(elem, metric.accessor().access_element<X, Y>()) = 2.;
-        metric(elem, metric.accessor().access_element<Y, Y>()) = 3.;
+        metric(elem, metric.accessor().access_element<X, X>()) = 4.;
+        metric(elem, metric.accessor().access_element<X, Y>()) = 1.;
+        metric(elem, metric.accessor().access_element<X, Z>()) = 2.;
+        metric(elem, metric.accessor().access_element<Y, Y>()) = 5.;
+        metric(elem, metric.accessor().access_element<Y, Z>()) = 3.;
+        metric(elem, metric.accessor().access_element<Z, Z>()) = 6.;
     });
 
     sil::tensor::TensorAccessor<InvMetricIndex> inv_metric_accessor;
@@ -246,7 +261,7 @@ TEST(Metric, Inverse)
             Kokkos::DefaultHostExecutionSpace::memory_space>
             inv_metric(inv_metric_alloc);
 
-    sil::tensor::fill_inverse_metric<MetricIndex>(inv_metric, metric);
+    sil::tensor::fill_inverse_metric<DirectMetricIndex>(inv_metric, metric);
 
     sil::tensor::TensorAccessor<IdIndex> identity_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, IdIndex>
@@ -259,19 +274,35 @@ TEST(Metric, Inverse)
             Kokkos::DefaultHostExecutionSpace::memory_space>
             identity(identity_alloc);
 
-    ddc::parallel_for_each(Kokkos::DefaultHostExecutionSpace(), mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
-        sil::tensor::tensor_prod(
-                identity[elem],
-                sil::tensor::relabelize_index_of<sil::tensor::MetricIndex2<X, Y>, I>(inv_metric[elem]), sil::tensor::relabelize_index_of<sil::tensor::MetricIndex1<X, Y>, I>(metric[elem]));
-    });
-    std::cout << metric;
-    std::cout << inv_metric;
-    std::cout << identity;
-    /*
+    ddc::parallel_for_each(
+            Kokkos::DefaultHostExecutionSpace(),
+            mesh_xy,
+            [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
+                sil::tensor::tensor_prod(
+                        identity[elem],
+                        sil::tensor::relabelize_index_of<sil::tensor::MetricIndex2<X, Y, Z>, Alpha>(
+                                inv_metric[elem]),
+                        sil::tensor::relabelize_index_of<sil::tensor::MetricIndex1<X, Y, Z>, Alpha>(
+                                metric[elem]));
+            });
     ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
-        EXPECT_EQ(
+        EXPECT_NEAR(
                 identity.get(elem, identity.accessor().access_element<X, X>()),
-                1.);
+                1., 1e-14);
+        EXPECT_NEAR(
+                identity.get(elem, identity.accessor().access_element<X, Y>()),
+                0., 1e-14);
+        EXPECT_NEAR(
+                identity.get(elem, identity.accessor().access_element<X, Z>()),
+                0., 1e-14);
+        EXPECT_NEAR(
+                identity.get(elem, identity.accessor().access_element<Y, Y>()),
+                1., 1e-14);
+        EXPECT_NEAR(
+                identity.get(elem, identity.accessor().access_element<Y, Z>()),
+                0., 1e-14);
+        EXPECT_NEAR(
+                identity.get(elem, identity.accessor().access_element<Z, Z>()),
+                1., 1e-14);
     });
-    */
 }

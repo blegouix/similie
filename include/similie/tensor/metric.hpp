@@ -6,6 +6,7 @@
 #include <ddc/ddc.hpp>
 
 #include <KokkosBatched_InverseLU_Decl.hpp>
+#include <KokkosBatched_LU_Decl.hpp>
 
 #include "character.hpp"
 #include "diagonal_tensor.hpp"
@@ -394,13 +395,31 @@ invert_metric_t<MetricType> fill_inverse_metric(
                         metric_view(ddc::detail::array(index)[0], ddc::detail::array(index)[1])
                                 = metric(metric.access_element(elem, index));
                     });
-                    Kokkos::View<double*, Kokkos::LayoutRight, Kokkos::HostSpace> const
-                            buffer("metric_inversion_buffer", n * n);
 
-                    Kokkos::fence();
-                    std::cout << KokkosBatched::SerialInverseLU<
+                    Kokkos::View<double*, Kokkos::LayoutRight, Kokkos::HostSpace> const
+                            buffer("metric_inversion_buffer", n);
+                    int err = KokkosBatched::SerialLU<KokkosBatched::Algo::SolveLU::Unblocked>::
+                            invoke(metric_view); // Seems to require diagonal-dominant
+                    err += KokkosBatched::SerialInverseLU<
                             KokkosBatched::Algo::SolveLU::Unblocked>::invoke(metric_view, buffer);
-                    Kokkos::fence();
+                    assert(err == 0 && "Kokkos-kernels failed at inverting metric tensor");
+                    /*
+                    Kokkos::View<double**, Kokkos::LayoutRight, Kokkos::HostSpace> const
+                            sol("metric_inversion_sol", n, n);
+                    for (std::size_t i=0; i<n; ++i) {
+                        Kokkos::View<double*, Kokkos::LayoutRight, Kokkos::HostSpace> const
+                            rhs("metric_inversion_rhs", n);
+                        for (std::size_t j=0; j<n; ++j) {
+                            rhs(j) = 0.;
+                        }
+                        rhs(i) = 1.;
+                        Kokkos::View<double**, Kokkos::LayoutRight, Kokkos::HostSpace> const
+                            tmp("metric_inversion_tmp", n, n+4);
+                        const int err = KokkosBatched::SerialGesv<KokkosBatched::Gesv::NoPivoting>::invoke(metric_view, Kokkos::subview(sol, i, Kokkos::ALL), rhs, tmp);
+                        assert(err==0 && "Kokkos-kernels failed at inverting metric tensor");
+                    }
+                    */
+
                     ddc::for_each(inv_metric.accessor().natural_domain(), [&](auto index) {
                         // TODO do better, symmetric tensor is filled twice
                         inv_metric(inv_metric.access_element(elem, index)) = metric_view(
