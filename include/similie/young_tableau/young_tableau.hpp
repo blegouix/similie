@@ -9,9 +9,9 @@
 
 #include <similie/csr/csr.hpp>
 #include <similie/csr/csr_dynamic.hpp>
+#include <similie/misc/permutation_parity.hpp>
 #include <similie/misc/specialization.hpp>
 #include <similie/misc/stride.hpp>
-#include <similie/misc/permutation_parity.hpp>
 #include <similie/tensor/prime.hpp>
 #include <similie/tensor/tensor_impl.hpp>
 
