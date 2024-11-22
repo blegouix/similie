@@ -5,6 +5,8 @@
 
 #include <ddc/ddc.hpp>
 
+#include <similie/misc/permutation_parity.hpp>
+
 #include "tensor_impl.hpp"
 
 namespace sil {
@@ -13,7 +15,7 @@ namespace tensor {
 
 // struct representing an identity tensor (no storage).
 template <class... TensorIndex>
-struct TensorIdentityIndex
+struct TensorLeviCivitaIndex
 {
     static constexpr bool is_tensor_index = true;
 
@@ -32,6 +34,8 @@ struct TensorIdentityIndex
         return (TensorIndex::rank() + ...);
     }
 
+    static_assert(((TensorIndex::size() == rank()) && ...));
+
     static constexpr std::size_t size()
     {
         return (TensorIndex::size() * ...);
@@ -44,7 +48,7 @@ struct TensorIdentityIndex
 
     static constexpr std::size_t access_size()
     {
-        return 2;
+        return 3;
     }
 
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_lin_comb(
@@ -58,12 +62,13 @@ struct TensorIdentityIndex
     static constexpr std::size_t access_id(
             std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
-        if (!std::all_of(ids.begin(), ids.end(), [&](const std::size_t id) {
-                return id == *ids.begin();
-            })) {
+        int const parity = misc::permutation_parity(ids);
+        if (parity == 0) {
             return 0;
-        } else {
+        } else if (parity == 1) {
             return 1;
+        } else {
+            return 2;
         }
     }
 
@@ -82,9 +87,11 @@ struct TensorIdentityIndex
             Elem elem)
     {
         if (elem.template uid<Id>() == 0) {
-            return 0.;
-        } else {
+            return 0;
+        } else if (elem.template uid<Id>() == 1) {
             return access(tensor, elem);
+        } else {
+            return -access(tensor, elem);
         }
     }
 };

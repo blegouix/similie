@@ -408,6 +408,49 @@ TEST(Tensor, TensorAntisymmetricIndexing4x4)
     EXPECT_EQ(tensor.get(tensor.access_element<Z, Z>()), 0.);
 }
 
+using LeviCivitaIndex = sil::tensor::TensorLeviCivitaIndex<Alpha, Beta, Gamma>;
+
+TEST(Tensor, TensorLeviCivitaIndexing)
+{
+    sil::tensor::TensorAccessor<LeviCivitaIndex> tensor_accessor;
+    ddc::DiscreteDomain<LeviCivitaIndex> tensor_dom = tensor_accessor.mem_domain();
+    ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor<
+            double,
+            ddc::DiscreteDomain<LeviCivitaIndex>,
+            Kokkos::layout_right,
+            Kokkos::DefaultHostExecutionSpace::memory_space>
+            tensor(tensor_alloc);
+
+    EXPECT_EQ(tensor.get(tensor.access_element<X, X, X>()), 0.);
+    EXPECT_EQ(tensor.get(tensor.access_element<X, X, Y>()), 0.);
+    EXPECT_EQ(tensor.get(tensor.access_element<X, X, Z>()), 0.);
+    EXPECT_EQ(tensor.get(tensor.access_element<X, Y, X>()), 0.);
+    EXPECT_EQ(tensor.get(tensor.access_element<X, Y, Y>()), 0.);
+    EXPECT_EQ(tensor.get(tensor.access_element<X, Y, Z>()), 1.);
+    EXPECT_EQ(tensor.get(tensor.access_element<X, Z, X>()), 0.);
+    EXPECT_EQ(tensor.get(tensor.access_element<X, Z, Y>()), -1.);
+    EXPECT_EQ(tensor.get(tensor.access_element<X, Z, Z>()), 0.);
+    EXPECT_EQ(tensor.get(tensor.access_element<Y, X, X>()), 0.);
+    EXPECT_EQ(tensor.get(tensor.access_element<Y, X, Y>()), 0.);
+    EXPECT_EQ(tensor.get(tensor.access_element<Y, X, Z>()), -1.);
+    EXPECT_EQ(tensor.get(tensor.access_element<Y, Y, X>()), 0.);
+    EXPECT_EQ(tensor.get(tensor.access_element<Y, Y, Y>()), 0.);
+    EXPECT_EQ(tensor.get(tensor.access_element<Y, Y, Z>()), 0.);
+    EXPECT_EQ(tensor.get(tensor.access_element<Y, Z, X>()), 1.);
+    EXPECT_EQ(tensor.get(tensor.access_element<Y, Z, Y>()), 0.);
+    EXPECT_EQ(tensor.get(tensor.access_element<Y, Z, Z>()), 0.);
+    EXPECT_EQ(tensor.get(tensor.access_element<Z, X, X>()), 0.);
+    EXPECT_EQ(tensor.get(tensor.access_element<Z, X, Y>()), 1.);
+    EXPECT_EQ(tensor.get(tensor.access_element<Z, X, Z>()), 0.);
+    EXPECT_EQ(tensor.get(tensor.access_element<Z, Y, X>()), -1.);
+    EXPECT_EQ(tensor.get(tensor.access_element<Z, Y, Y>()), 0.);
+    EXPECT_EQ(tensor.get(tensor.access_element<Z, Y, Z>()), 0.);
+    EXPECT_EQ(tensor.get(tensor.access_element<Z, Z, X>()), 0.);
+    EXPECT_EQ(tensor.get(tensor.access_element<Z, Z, Y>()), 0.);
+    EXPECT_EQ(tensor.get(tensor.access_element<Z, Z, Z>()), 0.);
+}
+
 using SymIndex3x3 = sil::tensor::TensorSymmetricIndex<Alpha, Beta>;
 
 TEST(Tensor, PartiallyTensorSymmetricIndexing4x3x3)

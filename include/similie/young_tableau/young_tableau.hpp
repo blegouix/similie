@@ -9,6 +9,7 @@
 
 #include <similie/csr/csr.hpp>
 #include <similie/csr/csr_dynamic.hpp>
+#include <similie/misc/permutation_parity.hpp>
 #include <similie/misc/specialization.hpp>
 #include <similie/misc/stride.hpp>
 #include <similie/tensor/prime.hpp>
@@ -831,26 +832,6 @@ public:
     }
 };
 
-
-/*
- Given a permutation of the digits 0..N, 
- returns its parity (or sign): +1 for even parity; -1 for odd.
- */
-template <std::size_t Nt>
-static int permutation_parity(std::array<std::size_t, Nt> lst)
-{
-    int parity = 1;
-    for (int i = 0; i < lst.size() - 1; ++i) {
-        if (lst[i] != i) {
-            parity *= -1;
-            std::size_t mn
-                    = std::distance(lst.begin(), std::min_element(lst.begin() + i, lst.end()));
-            std::swap(lst[i], lst[mn]);
-        }
-    }
-    return parity;
-}
-
 template <std::size_t Dimension, bool AntiSym, class... Id>
 static tensor::Tensor<
         double,
@@ -876,7 +857,7 @@ fill_symmetrizer(
     ddc::for_each(tr.domain(), TrFunctor<Dimension, sizeof...(Id) / 2, Id...>(tr, idx_to_permute));
 
     if constexpr (AntiSym) {
-        tr *= static_cast<double>(permutation_parity(idx_to_permute));
+        tr *= static_cast<double>(misc::permutation_parity(idx_to_permute));
     }
     sym += tr;
 
