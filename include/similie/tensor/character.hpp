@@ -107,6 +107,34 @@ using upper = detail::Upper<T>::type;
 namespace detail {
 
 template <class Index>
+struct SwapCharacter;
+
+template <TensorNatIndex NaturalIndex>
+struct SwapCharacter<TensorCovariantNaturalIndex<NaturalIndex>>
+{
+    using type = TensorContravariantNaturalIndex<NaturalIndex>;
+};
+
+template <TensorNatIndex NaturalIndex>
+struct SwapCharacter<TensorContravariantNaturalIndex<NaturalIndex>>
+{
+    using type = TensorCovariantNaturalIndex<NaturalIndex>;
+};
+
+template <template <TensorIndex...> class T, TensorIndex... Index>
+struct SwapCharacter<T<Index...>>
+{
+    using type = T<typename SwapCharacter<Index>::type...>;
+};
+
+} // namespace detail
+
+template <class T>
+using swap_character = detail::SwapCharacter<T>::type;
+
+namespace detail {
+
+template <class Index>
 struct Uncharacterize;
 
 template <class NaturalIndex>
@@ -141,6 +169,7 @@ struct Uncharacterize
 
 template <class Index>
 using uncharacterize = detail::Uncharacterize<Index>::type;
+
 
 // uncharacterize a tensor
 template <misc::Specialization<Tensor> TensorType>

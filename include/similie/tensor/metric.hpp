@@ -276,13 +276,14 @@ auto inplace_apply_metric(TensorType tensor, MetricType metric_prod)
 {
     ddc::Chunk result_alloc(
             relabelize_indices_in<
-                    upper<detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>,
+                    swap_character<
+                            detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>,
                     detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>(
                     tensor.domain()),
             ddc::HostAllocator<double>());
     relabelize_indices_of_t<
             TensorType,
-            upper<detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>,
+            swap_character<detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>,
             detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>
             result(result_alloc);
     ddc::for_each( // TODO use parallel_for_each, there is a weird lock when doing so
@@ -292,9 +293,9 @@ auto inplace_apply_metric(TensorType tensor, MetricType metric_prod)
                         result[elem],
                         metric_prod[elem],
                         relabelize_indices_of<
-                                upper<detail::non_primes<
+                                swap_character<detail::non_primes<
                                         typename MetricType::accessor_t::natural_domain_t>>,
-                                primes<upper<detail::non_primes<
+                                primes<swap_character<detail::non_primes<
                                         typename MetricType::accessor_t::natural_domain_t>>>>(
                                 tensor)[elem]);
             });
@@ -303,7 +304,7 @@ auto inplace_apply_metric(TensorType tensor, MetricType metric_prod)
             result.allocation_kokkos_view()); // We rely on Kokkos::deep_copy in place of ddc::parallel_deepcopy to avoid type verification of the type dimensions
 
     return relabelize_indices_of<
-            upper<detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>,
+            swap_character<detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>,
             detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>(tensor);
 }
 
@@ -314,7 +315,7 @@ template <
         misc::Specialization<Tensor> TensorType>
 relabelize_indices_of_t<
         TensorType,
-        upper<ddc::detail::TypeSeq<Index1...>>,
+        swap_character<ddc::detail::TypeSeq<Index1...>>,
         ddc::detail::TypeSeq<Index1...>>
 inplace_apply_metric(TensorType tensor, MetricType metric)
 {
@@ -357,9 +358,9 @@ template <misc::Specialization<Tensor> MetricType>
 using invert_metric_t = relabelize_indices_of_t<
         MetricType,
         ddc::to_type_seq_t<typename MetricType::accessor_t::natural_domain_t>,
-        upper<ddc::to_type_seq_t<typename MetricType::accessor_t::natural_domain_t>>>;
+        swap_character<ddc::to_type_seq_t<typename MetricType::accessor_t::natural_domain_t>>>;
 
-// Apply metrics inplace (like g_mu_muprime*T^muprime^nu)
+// Compute invert metric (g_mu_nu for gmunu or gmunu for g_mu_nu)
 template <TensorIndex MetricIndex, misc::Specialization<Tensor> MetricType>
 invert_metric_t<MetricType> fill_inverse_metric(
         invert_metric_t<MetricType> inv_metric,
@@ -376,7 +377,7 @@ invert_metric_t<MetricType> fill_inverse_metric(
                     inv_metric(elem)
                             = 1.
                               / metric(relabelize_indices_in<
-                                       upper<ddc::to_type_seq_t<
+                                       swap_character<ddc::to_type_seq_t<
                                                typename MetricType::accessor_t::natural_domain_t>>,
                                        ddc::to_type_seq_t<
                                                typename MetricType::accessor_t::natural_domain_t>>(
