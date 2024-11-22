@@ -8,6 +8,7 @@
 #include "diagonal_tensor.hpp"
 #include "full_tensor.hpp"
 #include "identity_tensor.hpp"
+#include "levi_civita_tensor.hpp"
 #include "lorentzian_sign_tensor.hpp"
 #include "metric.hpp"
 #include "prime.hpp"

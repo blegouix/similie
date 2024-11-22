@@ -34,6 +34,8 @@ struct TensorLeviCivitaIndex
         return (TensorIndex::rank() + ...);
     }
 
+    static_assert(((TensorIndex::size() == rank()) && ...));
+
     static constexpr std::size_t size()
     {
         return (TensorIndex::size() * ...);
@@ -52,17 +54,16 @@ struct TensorLeviCivitaIndex
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_lin_comb(
             std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
-        assert(false);
         return std::pair<
                 std::vector<double>,
-                std::vector<std::size_t>>(std::vector<double> {1.}, std::vector<std::size_t> {});
+                std::vector<std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {});
     }
 
     static constexpr std::size_t access_id(
             std::array<std::size_t, sizeof...(TensorIndex)> const ids)
     {
-        int constexpr parity = misc::permutation_parity(idx);
-        if constexpr (parity == 0) {
+        int const parity = misc::permutation_parity(ids);
+        if (parity == 0) {
             return 0;
         } else if (parity == 1) {
             return 1;
@@ -74,10 +75,9 @@ struct TensorLeviCivitaIndex
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>>
     access_id_to_mem_lin_comb(std::size_t access_id)
     {
-        assert(false);
         return std::pair<
                 std::vector<double>,
-                std::vector<std::size_t>>(std::vector<double> {1.}, std::vector<std::size_t> {});
+                std::vector<std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {});
     }
 
     template <class Tensor, class Elem, class Id>
@@ -86,7 +86,7 @@ struct TensorLeviCivitaIndex
             Tensor tensor,
             Elem elem)
     {
-        if constexpr (elem.template uid<Id>() == 0) {
+        if (elem.template uid<Id>() == 0) {
             return 0;
         } else if (elem.template uid<Id>() == 1) {
             return access(tensor, elem);

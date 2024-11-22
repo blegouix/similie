@@ -17,6 +17,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 - Rename TensorCovariantTensorIndex -> Covariant
 - Relabelizion in different file ?
 - Tensor indexes should be template with TensorNatIndex
+- Try DOUBLE_EQ in place of NEAR_EQ
 
 ----- CMAKE BASIC COMMAND -----
 
