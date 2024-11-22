@@ -5,7 +5,7 @@
 
 #include <ddc/ddc.hpp>
 
-#include <KokkosBatched_Gesv.hpp>
+#include <KokkosBatched_InverseLU_Decl.hpp>
 
 #include "character.hpp"
 #include "diagonal_tensor.hpp"
@@ -359,15 +359,15 @@ using invert_metric_t = relabelize_indices_of_t<
         upper<ddc::to_type_seq_t<typename MetricType::accessor_t::natural_domain_t>>>;
 
 // Apply metrics inplace (like g_mu_muprime*T^muprime^nu)
-template <misc::Specialization<Tensor> MetricType>
+template <TensorIndex MetricIndex, misc::Specialization<Tensor> MetricType>
 invert_metric_t<MetricType> fill_inverse_metric(
         invert_metric_t<MetricType> inv_metric,
         MetricType metric)
 {
     if constexpr (
-            misc::Specialization<MetricType, TensorIdentityIndex>
-            || misc::Specialization<MetricType, TensorLorentzianSignIndex>) {
-    } else if (misc::Specialization<MetricType, TensorDiagonalIndex>) {
+            misc::Specialization<MetricIndex, TensorIdentityIndex>
+            || misc::Specialization<MetricIndex, TensorLorentzianSignIndex>) {
+    } else if (misc::Specialization<MetricIndex, TensorDiagonalIndex>) {
         ddc::parallel_for_each(
                 Kokkos::DefaultHostExecutionSpace(),
                 inv_metric.mem_domain(),
@@ -381,20 +381,33 @@ invert_metric_t<MetricType> fill_inverse_metric(
                                                typename MetricType::accessor_t::natural_domain_t>>(
                                       elem));
                 });
-    } else if (misc::Specialization<MetricType, TensorSymmetricIndex>) {
-        /*
-        ddc::parallel_for_each(
-            Kokkos::DefaultHostExecutionSpace(),
-            ddc::remove_dims_of<coboundary_index_t<TagToAddToCochain, CochainTag>>(
-                    coboundary_tensor.domain()),
-            [&](auto elem) {
-                        auto sub_b = Kokkos::subview(b, Kokkos::ALL, i);
-                        KokkosBatched::SerialGetrs<
-                                KokkosBatched::Trans::NoTranspose,
-                                KokkosBatched::Algo::Getrs::Unblocked>::
-                                invoke(a_device, ipiv_device, sub_b);
+    } else if (misc::Specialization<MetricIndex, TensorSymmetricIndex>) {
+        ddc::for_each( // TODO parallel_for_each, weird lock happening
+                inv_metric.non_indices_domain(),
+                [&](auto elem) {
+                    Kokkos::View<double**, Kokkos::LayoutRight, Kokkos::HostSpace> const
+                            rhs("metric_inversion_buffer",
+                                ddc::type_seq_element_t<
+                                        0,
+                                        ddc::to_type_seq_t<
+                                                typename MetricIndex::subindices_domain_t>>::size(),
+                                ddc::type_seq_element_t<
+                                        1,
+                                        ddc::to_type_seq_t<typename MetricIndex::
+                                                                   subindices_domain_t>>::size());
+                    ddc::for_each(metric.accessor().natural_domain(), [&](auto index) {
+                        rhs(ddc::detail::array(index)[0], ddc::detail::array(index)[1])
+                                = metric(metric.access_element(elem, index));
                     });
-        */
+                    Kokkos::View buffer = Kokkos::create_mirror(rhs);
+                    KokkosBatched::SerialInverseLU<
+                            KokkosBatched::Algo::SolveLU::Unblocked>::invoke(rhs, buffer);
+                    ddc::for_each(inv_metric.accessor().natural_domain(), [&](auto index) {
+                        // TODO do better, symmetric tensor is filled twice
+                        inv_metric(inv_metric.access_element(elem, index))
+                                = rhs(ddc::detail::array(index)[0], ddc::detail::array(index)[1]);
+                    });
+                });
     }
 
     /*

@@ -225,6 +225,11 @@ TEST(Metric, Inverse)
             Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             metric(metric_alloc);
+    ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
+        metric(elem, metric.accessor().access_element<X, X>()) = 1.;
+        metric(elem, metric.accessor().access_element<X, Y>()) = 2.;
+        metric(elem, metric.accessor().access_element<Y, Y>()) = 3.;
+    });
 
     sil::tensor::TensorAccessor<InvMetricIndex> inv_metric_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, InvMetricIndex>
@@ -237,5 +242,6 @@ TEST(Metric, Inverse)
             Kokkos::DefaultHostExecutionSpace::memory_space>
             inv_metric(inv_metric_alloc);
 
-    sil::tensor::fill_inverse_metric(inv_metric, metric);
+    sil::tensor::fill_inverse_metric<MetricIndex>(inv_metric, metric);
+    std::cout << inv_metric;
 }
