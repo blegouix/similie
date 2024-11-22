@@ -191,64 +191,62 @@ $(document).ready(function(){initNavTree('lorentzian__sign__tensor_8hpp_source.h
 <div class="line"><a id="l00050" name="l00050"></a><span class="lineno"><a class="line" href="structsil_1_1tensor_1_1TensorLorentzianSignIndex.html#a26b09669fb13e36621806252c2bb4d22">   50</a></span>    <span class="keyword">static</span> <span class="keyword">constexpr</span> std::pair&lt;std::vector&lt;double&gt;, std::vector&lt;std::size_t&gt;&gt; <a class="code hl_function" href="structsil_1_1tensor_1_1TensorLorentzianSignIndex.html#a26b09669fb13e36621806252c2bb4d22">mem_lin_comb</a>(</div>
 <div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>            std::array&lt;std::size_t, <span class="keyword">sizeof</span>...(<a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndex.html">TensorIndex</a>)&gt; <span class="keyword">const</span> ids)</div>
 <div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>    {</div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>        assert(<span class="keyword">false</span>);</div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>        <span class="keywordflow">return</span> std::pair&lt;</div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>                std::vector&lt;double&gt;,</div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>                std::vector&lt;std::size_t&gt;&gt;(std::vector&lt;double&gt; {1.}, std::vector&lt;std::size_t&gt; {});</div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    }</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>        <span class="keywordflow">return</span> std::pair&lt;</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>                std::vector&lt;double&gt;,</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>                std::vector&lt;std::size_t&gt;&gt;(std::vector&lt;double&gt; {}, std::vector&lt;std::size_t&gt; {});</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>    }</div>
 </div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span> </div>
-<div class="foldopen" id="foldopen00059" data-start="{" data-end="}">
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno"><a class="line" href="structsil_1_1tensor_1_1TensorLorentzianSignIndex.html#a785694933c2f1297f63c2314481b990c">   59</a></span>    <span class="keyword">static</span> <span class="keyword">constexpr</span> std::size_t <a class="code hl_function" href="structsil_1_1tensor_1_1TensorLorentzianSignIndex.html#a785694933c2f1297f63c2314481b990c">access_id</a>(</div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>            std::array&lt;std::size_t, <span class="keyword">sizeof</span>...(<a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndex.html">TensorIndex</a>)&gt; <span class="keyword">const</span> ids)</div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>    {</div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>        <span class="keywordflow">if</span> (!std::all_of(ids.begin(), ids.end(), [&amp;](<span class="keyword">const</span> std::size_t <span class="keywordtype">id</span>) {</div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>                return id == *ids.begin();</div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>            })) {</div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>            <span class="keywordflow">return</span> 0;</div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>        } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>            <span class="keywordflow">if</span> (ids[0] &lt; Q::value) {</div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>                <span class="keywordflow">return</span> 1;</div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>            } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>                <span class="keywordflow">return</span> 2;</div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>            }</div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>        }</div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>    }</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span> </div>
+<div class="foldopen" id="foldopen00058" data-start="{" data-end="}">
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno"><a class="line" href="structsil_1_1tensor_1_1TensorLorentzianSignIndex.html#a785694933c2f1297f63c2314481b990c">   58</a></span>    <span class="keyword">static</span> <span class="keyword">constexpr</span> std::size_t <a class="code hl_function" href="structsil_1_1tensor_1_1TensorLorentzianSignIndex.html#a785694933c2f1297f63c2314481b990c">access_id</a>(</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>            std::array&lt;std::size_t, <span class="keyword">sizeof</span>...(<a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndex.html">TensorIndex</a>)&gt; <span class="keyword">const</span> ids)</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>    {</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>        <span class="keywordflow">if</span> (!std::all_of(ids.begin(), ids.end(), [&amp;](<span class="keyword">const</span> std::size_t <span class="keywordtype">id</span>) {</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>                return id == *ids.begin();</div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>            })) {</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>            <span class="keywordflow">return</span> 0;</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>        } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>            <span class="keywordflow">if</span> (ids[0] &lt; Q::value) {</div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>                <span class="keywordflow">return</span> 1;</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>            } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>                <span class="keywordflow">return</span> 2;</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>            }</div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>        }</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>    }</div>
 </div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span> </div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>    <span class="keyword">static</span> <span class="keyword">constexpr</span> std::pair&lt;std::vector&lt;double&gt;, std::vector&lt;std::size_t&gt;&gt;</div>
-<div class="foldopen" id="foldopen00076" data-start="{" data-end="}">
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno"><a class="line" href="structsil_1_1tensor_1_1TensorLorentzianSignIndex.html#abb8370a70d159d706597043cd4a6502a">   76</a></span>    <a class="code hl_function" href="structsil_1_1tensor_1_1TensorLorentzianSignIndex.html#abb8370a70d159d706597043cd4a6502a">access_id_to_mem_lin_comb</a>(std::size_t <a class="code hl_function" href="structsil_1_1tensor_1_1TensorLorentzianSignIndex.html#a785694933c2f1297f63c2314481b990c">access_id</a>)</div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>    {</div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>        assert(<a class="code hl_function" href="structsil_1_1tensor_1_1TensorLorentzianSignIndex.html#a785694933c2f1297f63c2314481b990c">access_id</a> != 0 &amp;&amp; <span class="stringliteral">&quot;There is no mem_lin_comb associated to access_id=0&quot;</span>);</div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>        <span class="keywordflow">return</span> std::pair&lt;</div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>                std::vector&lt;double&gt;,</div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>                std::vector&lt;std::size_t&gt;&gt;(std::vector&lt;double&gt; {}, std::vector&lt;std::size_t&gt; {});</div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>    }</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span> </div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>    <span class="keyword">static</span> <span class="keyword">constexpr</span> std::pair&lt;std::vector&lt;double&gt;, std::vector&lt;std::size_t&gt;&gt;</div>
+<div class="foldopen" id="foldopen00075" data-start="{" data-end="}">
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno"><a class="line" href="structsil_1_1tensor_1_1TensorLorentzianSignIndex.html#abb8370a70d159d706597043cd4a6502a">   75</a></span>    <a class="code hl_function" href="structsil_1_1tensor_1_1TensorLorentzianSignIndex.html#abb8370a70d159d706597043cd4a6502a">access_id_to_mem_lin_comb</a>(std::size_t <a class="code hl_function" href="structsil_1_1tensor_1_1TensorLorentzianSignIndex.html#a785694933c2f1297f63c2314481b990c">access_id</a>)</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>    {</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>        <span class="keywordflow">return</span> std::pair&lt;</div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>                std::vector&lt;double&gt;,</div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>                std::vector&lt;std::size_t&gt;&gt;(std::vector&lt;double&gt; {}, std::vector&lt;std::size_t&gt; {});</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>    }</div>
 </div>
-<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span> </div>
-<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> Tensor, <span class="keyword">class</span> Elem, <span class="keyword">class</span> Id&gt;</div>
-<div class="foldopen" id="foldopen00085" data-start="{" data-end="}">
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno"><a class="line" href="structsil_1_1tensor_1_1TensorLorentzianSignIndex.html#a9c1786dd968f81ba2dded947c4cc59d1">   85</a></span>    <span class="keyword">static</span> <span class="keyword">constexpr</span> Tensor::element_type <a class="code hl_function" href="structsil_1_1tensor_1_1TensorLorentzianSignIndex.html#a9c1786dd968f81ba2dded947c4cc59d1">process_access</a>(</div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>            std::function&lt;<span class="keyword">typename</span> Tensor::element_type(Tensor, Elem)&gt; access,</div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>            Tensor tensor,</div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>            Elem elem)</div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>    {</div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>        <span class="keywordflow">if</span> (elem.template uid&lt;Id&gt;() == 0) {</div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>            <span class="keywordflow">return</span> 0.;</div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>        } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (elem.template uid&lt;Id&gt;() == 1) {</div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>            <span class="keywordflow">return</span> -access(tensor, elem);</div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>        } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>            <span class="keywordflow">return</span> access(tensor, elem);</div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>        }</div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>    }</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span> </div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> Tensor, <span class="keyword">class</span> Elem, <span class="keyword">class</span> Id&gt;</div>
+<div class="foldopen" id="foldopen00083" data-start="{" data-end="}">
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno"><a class="line" href="structsil_1_1tensor_1_1TensorLorentzianSignIndex.html#a9c1786dd968f81ba2dded947c4cc59d1">   83</a></span>    <span class="keyword">static</span> <span class="keyword">constexpr</span> Tensor::element_type <a class="code hl_function" href="structsil_1_1tensor_1_1TensorLorentzianSignIndex.html#a9c1786dd968f81ba2dded947c4cc59d1">process_access</a>(</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>            std::function&lt;<span class="keyword">typename</span> Tensor::element_type(Tensor, Elem)&gt; access,</div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>            Tensor tensor,</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>            Elem elem)</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>    {</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>        <span class="keywordflow">if</span> (elem.template uid&lt;Id&gt;() == 0) {</div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>            <span class="keywordflow">return</span> 0.;</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>        } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (elem.template uid&lt;Id&gt;() == 1) {</div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>            <span class="keywordflow">return</span> -access(tensor, elem);</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>        } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>            <span class="keywordflow">return</span> access(tensor, elem);</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>        }</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>    }</div>
 </div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>};</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>};</div>
 </div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span> </div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>} <span class="comment">// namespace tensor</span></div>
 <div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span> </div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>} <span class="comment">// namespace tensor</span></div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span> </div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>} <span class="comment">// namespace sil</span></div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>} <span class="comment">// namespace sil</span></div>
 <div class="ttc" id="aconceptsil_1_1tensor_1_1TensorIndex_html"><div class="ttname"><a href="conceptsil_1_1tensor_1_1TensorIndex.html">sil::tensor::TensorIndex</a></div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00101">tensor_impl.hpp:101</a></div></div>
 <div class="ttc" id="anamespacesil_html"><div class="ttname"><a href="namespacesil.html">sil</a></div><div class="ttdoc">The top-level namespace of SimiLie.</div><div class="ttdef"><b>Definition</b> <a href="csr_8hpp_source.html#l00014">csr.hpp:14</a></div></div>
 <div class="ttc" id="astructsil_1_1tensor_1_1TensorLorentzianSignIndex_html"><div class="ttname"><a href="structsil_1_1tensor_1_1TensorLorentzianSignIndex.html">sil::tensor::TensorLorentzianSignIndex</a></div><div class="ttdef"><b>Definition</b> <a href="lorentzian__sign__tensor_8hpp_source.html#l00016">lorentzian_sign_tensor.hpp:17</a></div></div>
@@ -257,9 +255,9 @@ $(document).ready(function(){initNavTree('lorentzian__sign__tensor_8hpp_source.h
 <div class="ttc" id="astructsil_1_1tensor_1_1TensorLorentzianSignIndex_html_a595943c8b831fb16f0df199c26de0464"><div class="ttname"><a href="structsil_1_1tensor_1_1TensorLorentzianSignIndex.html#a595943c8b831fb16f0df199c26de0464">sil::tensor::TensorLorentzianSignIndex::subindices_domain_t</a></div><div class="ttdeci">ddc::DiscreteDomain&lt; TensorIndex... &gt; subindices_domain_t</div><div class="ttdef"><b>Definition</b> <a href="lorentzian__sign__tensor_8hpp_source.html#l00020">lorentzian_sign_tensor.hpp:20</a></div></div>
 <div class="ttc" id="astructsil_1_1tensor_1_1TensorLorentzianSignIndex_html_a74f354bd9b1990e8d23d6bc37af769e3"><div class="ttname"><a href="structsil_1_1tensor_1_1TensorLorentzianSignIndex.html#a74f354bd9b1990e8d23d6bc37af769e3">sil::tensor::TensorLorentzianSignIndex::rank</a></div><div class="ttdeci">static constexpr std::size_t rank()</div><div class="ttdef"><b>Definition</b> <a href="lorentzian__sign__tensor_8hpp_source.html#l00030">lorentzian_sign_tensor.hpp:30</a></div></div>
 <div class="ttc" id="astructsil_1_1tensor_1_1TensorLorentzianSignIndex_html_a766b8f8411b32d965893bd016d3a4d49"><div class="ttname"><a href="structsil_1_1tensor_1_1TensorLorentzianSignIndex.html#a766b8f8411b32d965893bd016d3a4d49">sil::tensor::TensorLorentzianSignIndex::mem_size</a></div><div class="ttdeci">static constexpr std::size_t mem_size()</div><div class="ttdef"><b>Definition</b> <a href="lorentzian__sign__tensor_8hpp_source.html#l00040">lorentzian_sign_tensor.hpp:40</a></div></div>
-<div class="ttc" id="astructsil_1_1tensor_1_1TensorLorentzianSignIndex_html_a785694933c2f1297f63c2314481b990c"><div class="ttname"><a href="structsil_1_1tensor_1_1TensorLorentzianSignIndex.html#a785694933c2f1297f63c2314481b990c">sil::tensor::TensorLorentzianSignIndex::access_id</a></div><div class="ttdeci">static constexpr std::size_t access_id(std::array&lt; std::size_t, sizeof...(TensorIndex)&gt; const ids)</div><div class="ttdef"><b>Definition</b> <a href="lorentzian__sign__tensor_8hpp_source.html#l00059">lorentzian_sign_tensor.hpp:59</a></div></div>
-<div class="ttc" id="astructsil_1_1tensor_1_1TensorLorentzianSignIndex_html_a9c1786dd968f81ba2dded947c4cc59d1"><div class="ttname"><a href="structsil_1_1tensor_1_1TensorLorentzianSignIndex.html#a9c1786dd968f81ba2dded947c4cc59d1">sil::tensor::TensorLorentzianSignIndex::process_access</a></div><div class="ttdeci">static constexpr Tensor::element_type process_access(std::function&lt; typename Tensor::element_type(Tensor, Elem)&gt; access, Tensor tensor, Elem elem)</div><div class="ttdef"><b>Definition</b> <a href="lorentzian__sign__tensor_8hpp_source.html#l00085">lorentzian_sign_tensor.hpp:85</a></div></div>
-<div class="ttc" id="astructsil_1_1tensor_1_1TensorLorentzianSignIndex_html_abb8370a70d159d706597043cd4a6502a"><div class="ttname"><a href="structsil_1_1tensor_1_1TensorLorentzianSignIndex.html#abb8370a70d159d706597043cd4a6502a">sil::tensor::TensorLorentzianSignIndex::access_id_to_mem_lin_comb</a></div><div class="ttdeci">static constexpr std::pair&lt; std::vector&lt; double &gt;, std::vector&lt; std::size_t &gt; &gt; access_id_to_mem_lin_comb(std::size_t access_id)</div><div class="ttdef"><b>Definition</b> <a href="lorentzian__sign__tensor_8hpp_source.html#l00076">lorentzian_sign_tensor.hpp:76</a></div></div>
+<div class="ttc" id="astructsil_1_1tensor_1_1TensorLorentzianSignIndex_html_a785694933c2f1297f63c2314481b990c"><div class="ttname"><a href="structsil_1_1tensor_1_1TensorLorentzianSignIndex.html#a785694933c2f1297f63c2314481b990c">sil::tensor::TensorLorentzianSignIndex::access_id</a></div><div class="ttdeci">static constexpr std::size_t access_id(std::array&lt; std::size_t, sizeof...(TensorIndex)&gt; const ids)</div><div class="ttdef"><b>Definition</b> <a href="lorentzian__sign__tensor_8hpp_source.html#l00058">lorentzian_sign_tensor.hpp:58</a></div></div>
+<div class="ttc" id="astructsil_1_1tensor_1_1TensorLorentzianSignIndex_html_a9c1786dd968f81ba2dded947c4cc59d1"><div class="ttname"><a href="structsil_1_1tensor_1_1TensorLorentzianSignIndex.html#a9c1786dd968f81ba2dded947c4cc59d1">sil::tensor::TensorLorentzianSignIndex::process_access</a></div><div class="ttdeci">static constexpr Tensor::element_type process_access(std::function&lt; typename Tensor::element_type(Tensor, Elem)&gt; access, Tensor tensor, Elem elem)</div><div class="ttdef"><b>Definition</b> <a href="lorentzian__sign__tensor_8hpp_source.html#l00083">lorentzian_sign_tensor.hpp:83</a></div></div>
+<div class="ttc" id="astructsil_1_1tensor_1_1TensorLorentzianSignIndex_html_abb8370a70d159d706597043cd4a6502a"><div class="ttname"><a href="structsil_1_1tensor_1_1TensorLorentzianSignIndex.html#abb8370a70d159d706597043cd4a6502a">sil::tensor::TensorLorentzianSignIndex::access_id_to_mem_lin_comb</a></div><div class="ttdeci">static constexpr std::pair&lt; std::vector&lt; double &gt;, std::vector&lt; std::size_t &gt; &gt; access_id_to_mem_lin_comb(std::size_t access_id)</div><div class="ttdef"><b>Definition</b> <a href="lorentzian__sign__tensor_8hpp_source.html#l00075">lorentzian_sign_tensor.hpp:75</a></div></div>
 <div class="ttc" id="astructsil_1_1tensor_1_1TensorLorentzianSignIndex_html_aeefeccb14fc88236ac06981c773be248"><div class="ttname"><a href="structsil_1_1tensor_1_1TensorLorentzianSignIndex.html#aeefeccb14fc88236ac06981c773be248">sil::tensor::TensorLorentzianSignIndex::size</a></div><div class="ttdeci">static constexpr std::size_t size()</div><div class="ttdef"><b>Definition</b> <a href="lorentzian__sign__tensor_8hpp_source.html#l00035">lorentzian_sign_tensor.hpp:35</a></div></div>
 <div class="ttc" id="astructsil_1_1tensor_1_1TensorLorentzianSignIndex_html_aefec75be44e751fefc6d48575ef9b91e"><div class="ttname"><a href="structsil_1_1tensor_1_1TensorLorentzianSignIndex.html#aefec75be44e751fefc6d48575ef9b91e">sil::tensor::TensorLorentzianSignIndex::is_tensor_index</a></div><div class="ttdeci">static constexpr bool is_tensor_index</div><div class="ttdef"><b>Definition</b> <a href="lorentzian__sign__tensor_8hpp_source.html#l00018">lorentzian_sign_tensor.hpp:18</a></div></div>
 <div class="ttc" id="astructsil_1_1tensor_1_1TensorLorentzianSignIndex_html_af8fff25cdda6493e58d45685600bd264"><div class="ttname"><a href="structsil_1_1tensor_1_1TensorLorentzianSignIndex.html#af8fff25cdda6493e58d45685600bd264">sil::tensor::TensorLorentzianSignIndex::access_size</a></div><div class="ttdeci">static constexpr std::size_t access_size()</div><div class="ttdef"><b>Definition</b> <a href="lorentzian__sign__tensor_8hpp_source.html#l00045">lorentzian_sign_tensor.hpp:45</a></div></div>
