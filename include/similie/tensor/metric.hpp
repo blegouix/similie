@@ -364,16 +364,14 @@ invert_metric_t<MetricType> fill_inverse_metric(
         invert_metric_t<MetricType> inv_metric,
         MetricType metric)
 {
-    if constexpr (misc::Specialization<MetricType, TensorIdentityIndex>) {
-    } else if (
-            misc::Specialization<MetricType, TensorLorentzianSignIndex>
-            || misc::Specialization<MetricType, TensorDiagonalIndex>) {
+    if constexpr (
+            misc::Specialization<MetricType, TensorIdentityIndex>
+            || misc::Specialization<MetricType, TensorLorentzianSignIndex>) {
+    } else if (misc::Specialization<MetricType, TensorDiagonalIndex>) {
         ddc::parallel_for_each(
                 Kokkos::DefaultHostExecutionSpace(),
                 inv_metric.mem_domain(),
-                [&](auto elem) {
-                    // inv_metric(elem) = 1./metric(elem);
-                });
+                [&](auto elem) { /* inv_metric(elem) = 1. / metric(elem); */ });
     } else if (misc::Specialization<MetricType, TensorSymmetricIndex>) {
         /*
         ddc::parallel_for_each(
