@@ -385,27 +385,27 @@ invert_metric_t<MetricType> fill_inverse_metric(
         ddc::for_each( // TODO parallel_for_each, weird lock happening
                 inv_metric.non_indices_domain(),
                 [&](auto elem) {
+                    constexpr std::size_t n = ddc::type_seq_element_t<
+                            0,
+                            ddc::to_type_seq_t<typename MetricIndex::subindices_domain_t>>::size();
                     Kokkos::View<double**, Kokkos::LayoutRight, Kokkos::HostSpace> const
-                            rhs("metric_inversion_buffer",
-                                ddc::type_seq_element_t<
-                                        0,
-                                        ddc::to_type_seq_t<
-                                                typename MetricIndex::subindices_domain_t>>::size(),
-                                ddc::type_seq_element_t<
-                                        1,
-                                        ddc::to_type_seq_t<typename MetricIndex::
-                                                                   subindices_domain_t>>::size());
+                            metric_view("metric_inversion_metric_view", n, n);
                     ddc::for_each(metric.accessor().natural_domain(), [&](auto index) {
-                        rhs(ddc::detail::array(index)[0], ddc::detail::array(index)[1])
+                        metric_view(ddc::detail::array(index)[0], ddc::detail::array(index)[1])
                                 = metric(metric.access_element(elem, index));
                     });
-                    Kokkos::View buffer = Kokkos::create_mirror(rhs);
-                    KokkosBatched::SerialInverseLU<
-                            KokkosBatched::Algo::SolveLU::Unblocked>::invoke(rhs, buffer);
+                    Kokkos::View<double*, Kokkos::LayoutRight, Kokkos::HostSpace> const
+                            buffer("metric_inversion_buffer", n * n);
+
+                    Kokkos::fence();
+                    std::cout << KokkosBatched::SerialInverseLU<
+                            KokkosBatched::Algo::SolveLU::Unblocked>::invoke(metric_view, buffer);
+                    Kokkos::fence();
                     ddc::for_each(inv_metric.accessor().natural_domain(), [&](auto index) {
                         // TODO do better, symmetric tensor is filled twice
-                        inv_metric(inv_metric.access_element(elem, index))
-                                = rhs(ddc::detail::array(index)[0], ddc::detail::array(index)[1]);
+                        inv_metric(inv_metric.access_element(elem, index)) = metric_view(
+                                ddc::detail::array(index)[0],
+                                ddc::detail::array(index)[1]);
                     });
                 });
     }
