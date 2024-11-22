@@ -408,8 +408,7 @@ TEST(Tensor, TensorAntisymmetricIndexing4x4)
     EXPECT_EQ(tensor.get(tensor.access_element<Z, Z>()), 0.);
 }
 
-using LeviCivitaIndex
-        = sil::tensor::TensorLeviCivitaIndex<Alpha, Beta, Gamma>;
+using LeviCivitaIndex = sil::tensor::TensorLeviCivitaIndex<Alpha, Beta, Gamma>;
 
 TEST(Tensor, TensorLeviCivitaIndexing)
 {
