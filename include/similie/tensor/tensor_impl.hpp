@@ -851,10 +851,12 @@ struct RelabelizeIndicesIn
     static auto run(ddc::DiscreteElement<DDim...> elem)
     {
         if constexpr (I != ddc::type_seq_size_v<OldIndices>) {
-            return ddc::DiscreteElement<typename detail::RelabelizeIndex<
-                    DDim,
-                    ddc::type_seq_element_t<I, OldIndices>,
-                    ddc::type_seq_element_t<I, NewIndices>>::type...>(elem.template uid<DDim>()...);
+            return RelabelizeIndicesIn<OldIndices, NewIndices, I + 1>::run(
+                    ddc::DiscreteElement<typename detail::RelabelizeIndex<
+                            DDim,
+                            ddc::type_seq_element_t<I, OldIndices>,
+                            ddc::type_seq_element_t<I, NewIndices>>::type...>(
+                            elem.template uid<DDim>()...));
         } else {
             return elem;
         }
@@ -864,11 +866,12 @@ struct RelabelizeIndicesIn
     static auto run(ddc::DiscreteVector<DDim...> vect)
     {
         if constexpr (I != ddc::type_seq_size_v<OldIndices>) {
-            return ddc::DiscreteVector<typename detail::RelabelizeIndex<
-                    DDim,
-                    ddc::type_seq_element_t<I, OldIndices>,
-                    ddc::type_seq_element_t<I, NewIndices>>::type...>(
-                    static_cast<std::size_t>(vect.template get<DDim>())...);
+            return RelabelizeIndicesIn<OldIndices, NewIndices, I + 1>::run(
+                    ddc::DiscreteVector<typename detail::RelabelizeIndex<
+                            DDim,
+                            ddc::type_seq_element_t<I, OldIndices>,
+                            ddc::type_seq_element_t<I, NewIndices>>::type...>(
+                            static_cast<std::size_t>(vect.template get<DDim>())...));
         } else {
             return vect;
         }
