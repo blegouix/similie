@@ -660,45 +660,28 @@ TEST(Tensor, YoungTableauIndexing)
     EXPECT_DOUBLE_EQ(uncompressed.get(natural_accessor.access_element<Z, Z, Z>()), 9.);
 }
 
-TEST(TensorPrint, Rank3xRank3)
+TEST(Tensor, Determinant)
 {
-    sil::tensor::TensorAccessor<Alpha, Beta, Gamma> tensor_accessor;
-    ddc::DiscreteDomain<Alpha, Beta, Gamma> tensor_dom = tensor_accessor.mem_domain();
+    sil::tensor::TensorAccessor<SymIndex> tensor_accessor;
+    ddc::DiscreteDomain<SymIndex> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
-            ddc::DiscreteDomain<Alpha, Beta, Gamma>,
+            ddc::DiscreteDomain<SymIndex>,
             Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor(tensor_alloc);
 
-    tensor(tensor.access_element<X, X, X>()) = 0.;
-    tensor(tensor.access_element<X, X, Y>()) = 1.;
-    tensor(tensor.access_element<X, X, Z>()) = 2.;
-    tensor(tensor.access_element<X, Y, X>()) = 3.;
-    tensor(tensor.access_element<X, Y, Y>()) = 4.;
-    tensor(tensor.access_element<X, Y, Z>()) = 5.;
-    tensor(tensor.access_element<X, Z, X>()) = 6.;
-    tensor(tensor.access_element<X, Z, Y>()) = 7.;
-    tensor(tensor.access_element<X, Z, Z>()) = 8.;
-    tensor(tensor.access_element<Y, X, X>()) = 9.;
-    tensor(tensor.access_element<Y, X, Y>()) = 10.;
-    tensor(tensor.access_element<Y, X, Z>()) = 11.;
-    tensor(tensor.access_element<Y, Y, X>()) = 12.;
-    tensor(tensor.access_element<Y, Y, Y>()) = 13.;
-    tensor(tensor.access_element<Y, Y, Z>()) = 14.;
-    tensor(tensor.access_element<Y, Z, X>()) = 15.;
-    tensor(tensor.access_element<Y, Z, Y>()) = 16.;
-    tensor(tensor.access_element<Y, Z, Z>()) = 17.;
-    tensor(tensor.access_element<Z, X, X>()) = 18.;
-    tensor(tensor.access_element<Z, X, Y>()) = 19.;
-    tensor(tensor.access_element<Z, X, Z>()) = 20.;
-    tensor(tensor.access_element<Z, Y, X>()) = 21.;
-    tensor(tensor.access_element<Z, Y, Y>()) = 22.;
-    tensor(tensor.access_element<Z, Y, Z>()) = 23.;
-    tensor(tensor.access_element<Z, Z, X>()) = 24.;
-    tensor(tensor.access_element<Z, Z, Y>()) = 25.;
-    tensor(tensor.access_element<Z, Z, Z>()) = 26.;
+    tensor(tensor.access_element<T, T>()) = 1.;
+    tensor(tensor.access_element<T, X>()) = 2.;
+    tensor(tensor.access_element<T, Y>()) = 3.;
+    tensor(tensor.access_element<T, Z>()) = 4.;
+    tensor(tensor.access_element<X, X>()) = 5.;
+    tensor(tensor.access_element<X, Y>()) = 6.;
+    tensor(tensor.access_element<X, Z>()) = 7.;
+    tensor(tensor.access_element<Y, Y>()) = 8.;
+    tensor(tensor.access_element<Y, Z>()) = 9.;
+    tensor(tensor.access_element<Z, Z>()) = 10.;
 
-    std::cout << tensor;
+    EXPECT_EQ(determinant(tensor), -2.);
 }
