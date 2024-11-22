@@ -286,23 +286,11 @@ TEST(Metric, Inverse)
                                 metric[elem]));
             });
     ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
-        EXPECT_NEAR(
-                identity.get(elem, identity.accessor().access_element<X, X>()),
-                1., 1e-14);
-        EXPECT_NEAR(
-                identity.get(elem, identity.accessor().access_element<X, Y>()),
-                0., 1e-14);
-        EXPECT_NEAR(
-                identity.get(elem, identity.accessor().access_element<X, Z>()),
-                0., 1e-14);
-        EXPECT_NEAR(
-                identity.get(elem, identity.accessor().access_element<Y, Y>()),
-                1., 1e-14);
-        EXPECT_NEAR(
-                identity.get(elem, identity.accessor().access_element<Y, Z>()),
-                0., 1e-14);
-        EXPECT_NEAR(
-                identity.get(elem, identity.accessor().access_element<Z, Z>()),
-                1., 1e-14);
+        EXPECT_NEAR(identity.get(elem, identity.accessor().access_element<X, X>()), 1., 1e-14);
+        EXPECT_NEAR(identity.get(elem, identity.accessor().access_element<X, Y>()), 0., 1e-14);
+        EXPECT_NEAR(identity.get(elem, identity.accessor().access_element<X, Z>()), 0., 1e-14);
+        EXPECT_NEAR(identity.get(elem, identity.accessor().access_element<Y, Y>()), 1., 1e-14);
+        EXPECT_NEAR(identity.get(elem, identity.accessor().access_element<Y, Z>()), 0., 1e-14);
+        EXPECT_NEAR(identity.get(elem, identity.accessor().access_element<Z, Z>()), 1., 1e-14);
     });
 }
