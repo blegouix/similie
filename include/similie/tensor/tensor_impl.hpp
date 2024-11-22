@@ -888,11 +888,9 @@ struct RelabelizeIndicesIn
     {
         if constexpr (I != ddc::type_seq_size_v<OldIndices>) {
             return RelabelizeIndicesIn<OldIndices, NewIndices, I + 1>::run(
-                    ddc::DiscreteElement<typename detail::RelabelizeIndex<
-                            DDim,
+                    relabelize_index_in<
                             ddc::type_seq_element_t<I, OldIndices>,
-                            ddc::type_seq_element_t<I, NewIndices>>::type...>(
-                            elem.template uid<DDim>()...));
+                            ddc::type_seq_element_t<I, NewIndices>>(elem));
         } else {
             return elem;
         }
@@ -903,11 +901,9 @@ struct RelabelizeIndicesIn
     {
         if constexpr (I != ddc::type_seq_size_v<OldIndices>) {
             return RelabelizeIndicesIn<OldIndices, NewIndices, I + 1>::run(
-                    ddc::DiscreteVector<typename detail::RelabelizeIndex<
-                            DDim,
+                    relabelize_index_in<
                             ddc::type_seq_element_t<I, OldIndices>,
-                            ddc::type_seq_element_t<I, NewIndices>>::type...>(
-                            static_cast<std::size_t>(vect.template get<DDim>())...));
+                            ddc::type_seq_element_t<I, NewIndices>>(vect));
         } else {
             return vect;
         }
@@ -918,18 +914,9 @@ struct RelabelizeIndicesIn
     {
         if constexpr (I != ddc::type_seq_size_v<OldIndices>) {
             return RelabelizeIndicesIn<OldIndices, NewIndices, I + 1>::run(
-                    relabelize_index_in_t<
-                            ddc::DiscreteDomain<DDim...>,
+                    relabelize_index_in<
                             ddc::type_seq_element_t<I, OldIndices>,
-                            ddc::type_seq_element_t<I, NewIndices>>(
-                            relabelize_indices_in<
-                                    ddc::detail::TypeSeq<ddc::type_seq_element_t<I, OldIndices>>,
-                                    ddc::detail::TypeSeq<ddc::type_seq_element_t<I, NewIndices>>>(
-                                    dom.front()),
-                            relabelize_indices_in<
-                                    ddc::detail::TypeSeq<ddc::type_seq_element_t<I, OldIndices>>,
-                                    ddc::detail::TypeSeq<ddc::type_seq_element_t<I, NewIndices>>>(
-                                    dom.extents())));
+                            ddc::type_seq_element_t<I, NewIndices>>(dom));
         } else {
             return dom;
         }
