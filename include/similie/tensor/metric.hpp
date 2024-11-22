@@ -5,8 +5,15 @@
 
 #include <ddc/ddc.hpp>
 
+#include <KokkosBatched_InverseLU_Decl.hpp>
+#include <KokkosBatched_LU_Decl.hpp>
+
 #include "character.hpp"
+#include "diagonal_tensor.hpp"
+#include "identity_tensor.hpp"
+#include "lorentzian_sign_tensor.hpp"
 #include "prime.hpp"
+#include "symmetric_tensor.hpp"
 
 namespace sil {
 
@@ -51,7 +58,7 @@ template <
         misc::Specialization<ddc::DiscreteDomain> Dom,
         TensorNatIndex Index1,
         TensorNatIndex Index2>
-using relabelize_metric_in_domain_t = relabelize_indices_in_domain_t<
+using relabelize_metric_in_domain_t = relabelize_indices_in_t<
         Dom,
         ddc::detail::TypeSeq<
                 typename detail::ConvertTypeSeqToMetricIndex1<
@@ -63,7 +70,7 @@ using relabelize_metric_in_domain_t = relabelize_indices_in_domain_t<
 template <TensorNatIndex Index1, TensorNatIndex Index2, class Dom>
 relabelize_metric_in_domain_t<Dom, Index1, Index2> relabelize_metric_in_domain(Dom metric_dom)
 {
-    return relabelize_indices_in_domain<
+    return relabelize_indices_in<
             ddc::detail::TypeSeq<
                     typename detail::ConvertTypeSeqToMetricIndex1<
                             typename Index1::type_seq_dimensions>::type,
@@ -268,14 +275,15 @@ template <misc::Specialization<Tensor> MetricType, misc::Specialization<Tensor> 
 auto inplace_apply_metric(TensorType tensor, MetricType metric_prod)
 {
     ddc::Chunk result_alloc(
-            relabelize_indices_in_domain<
-                    upper<detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>,
+            relabelize_indices_in<
+                    swap_character<
+                            detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>,
                     detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>(
                     tensor.domain()),
             ddc::HostAllocator<double>());
     relabelize_indices_of_t<
             TensorType,
-            upper<detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>,
+            swap_character<detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>,
             detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>
             result(result_alloc);
     ddc::for_each( // TODO use parallel_for_each, there is a weird lock when doing so
@@ -285,9 +293,9 @@ auto inplace_apply_metric(TensorType tensor, MetricType metric_prod)
                         result[elem],
                         metric_prod[elem],
                         relabelize_indices_of<
-                                upper<detail::non_primes<
+                                swap_character<detail::non_primes<
                                         typename MetricType::accessor_t::natural_domain_t>>,
-                                primes<upper<detail::non_primes<
+                                primes<swap_character<detail::non_primes<
                                         typename MetricType::accessor_t::natural_domain_t>>>>(
                                 tensor)[elem]);
             });
@@ -296,7 +304,7 @@ auto inplace_apply_metric(TensorType tensor, MetricType metric_prod)
             result.allocation_kokkos_view()); // We rely on Kokkos::deep_copy in place of ddc::parallel_deepcopy to avoid type verification of the type dimensions
 
     return relabelize_indices_of<
-            upper<detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>,
+            swap_character<detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>,
             detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>(tensor);
 }
 
@@ -307,7 +315,7 @@ template <
         misc::Specialization<Tensor> TensorType>
 relabelize_indices_of_t<
         TensorType,
-        upper<ddc::detail::TypeSeq<Index1...>>,
+        swap_character<ddc::detail::TypeSeq<Index1...>>,
         ddc::detail::TypeSeq<Index1...>>
 inplace_apply_metric(TensorType tensor, MetricType metric)
 {
@@ -344,6 +352,85 @@ inplace_apply_metric(TensorType tensor, MetricType metric)
             primes<ddc::detail::TypeSeq<Index1...>>>(metric_prod, metric);
 
     return inplace_apply_metric(tensor, metric_prod);
+}
+
+template <misc::Specialization<Tensor> MetricType>
+using invert_metric_t = relabelize_indices_of_t<
+        MetricType,
+        ddc::to_type_seq_t<typename MetricType::accessor_t::natural_domain_t>,
+        swap_character<ddc::to_type_seq_t<typename MetricType::accessor_t::natural_domain_t>>>;
+
+// Compute invert metric (g_mu_nu for gmunu or gmunu for g_mu_nu)
+template <TensorIndex MetricIndex, misc::Specialization<Tensor> MetricType>
+invert_metric_t<MetricType> fill_inverse_metric(
+        invert_metric_t<MetricType> inv_metric,
+        MetricType metric)
+{
+    if constexpr (
+            misc::Specialization<MetricIndex, TensorIdentityIndex>
+            || misc::Specialization<MetricIndex, TensorLorentzianSignIndex>) {
+    } else if (misc::Specialization<MetricIndex, TensorDiagonalIndex>) {
+        ddc::parallel_for_each(
+                Kokkos::DefaultHostExecutionSpace(),
+                inv_metric.mem_domain(),
+                [&](auto elem) {
+                    inv_metric(elem)
+                            = 1.
+                              / metric(relabelize_indices_in<
+                                       swap_character<ddc::to_type_seq_t<
+                                               typename MetricType::accessor_t::natural_domain_t>>,
+                                       ddc::to_type_seq_t<
+                                               typename MetricType::accessor_t::natural_domain_t>>(
+                                      elem));
+                });
+    } else if (misc::Specialization<MetricIndex, TensorSymmetricIndex>) {
+        ddc::for_each( // TODO parallel_for_each, weird lock happening
+                inv_metric.non_indices_domain(),
+                [&](auto elem) {
+                    constexpr std::size_t n = ddc::type_seq_element_t<
+                            0,
+                            ddc::to_type_seq_t<typename MetricIndex::subindices_domain_t>>::size();
+                    Kokkos::View<double**, Kokkos::LayoutRight, Kokkos::HostSpace> const
+                            metric_view("metric_inversion_metric_view", n, n);
+                    ddc::for_each(metric.accessor().natural_domain(), [&](auto index) {
+                        metric_view(ddc::detail::array(index)[0], ddc::detail::array(index)[1])
+                                = metric(metric.access_element(elem, index));
+                    });
+
+                    Kokkos::View<double*, Kokkos::LayoutRight, Kokkos::HostSpace> const
+                            buffer("metric_inversion_buffer", n);
+                    int err = KokkosBatched::SerialLU<KokkosBatched::Algo::SolveLU::Unblocked>::
+                            invoke(metric_view); // Seems to require diagonal-dominant
+                    err += KokkosBatched::SerialInverseLU<
+                            KokkosBatched::Algo::SolveLU::Unblocked>::invoke(metric_view, buffer);
+                    assert(err == 0 && "Kokkos-kernels failed at inverting metric tensor");
+                    /*
+                    Kokkos::View<double**, Kokkos::LayoutRight, Kokkos::HostSpace> const
+                            sol("metric_inversion_sol", n, n);
+                    for (std::size_t i=0; i<n; ++i) {
+                        Kokkos::View<double*, Kokkos::LayoutRight, Kokkos::HostSpace> const
+                            rhs("metric_inversion_rhs", n);
+                        for (std::size_t j=0; j<n; ++j) {
+                            rhs(j) = 0.;
+                        }
+                        rhs(i) = 1.;
+                        Kokkos::View<double**, Kokkos::LayoutRight, Kokkos::HostSpace> const
+                            tmp("metric_inversion_tmp", n, n+4);
+                        const int err = KokkosBatched::SerialGesv<KokkosBatched::Gesv::NoPivoting>::invoke(metric_view, Kokkos::subview(sol, i, Kokkos::ALL), rhs, tmp);
+                        assert(err==0 && "Kokkos-kernels failed at inverting metric tensor");
+                    }
+                    */
+
+                    ddc::for_each(inv_metric.accessor().natural_domain(), [&](auto index) {
+                        // TODO do better, symmetric tensor is filled twice
+                        inv_metric(inv_metric.access_element(elem, index)) = metric_view(
+                                ddc::detail::array(index)[0],
+                                ddc::detail::array(index)[1]);
+                    });
+                });
+    }
+
+    return inv_metric;
 }
 
 } // namespace tensor
