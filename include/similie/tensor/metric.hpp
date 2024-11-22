@@ -410,43 +410,6 @@ invert_metric_t<MetricType> fill_inverse_metric(
                 });
     }
 
-    /*
-    ddc::Chunk inv_metric_alloc(
-            relabelize_indices_in<
-                    typename MetricType::accessor_t::natural_domain_t,
-                    upper<typename MetricType::accessor_t::natural_domain_t>>(
-                    tensor.domain()),
-            ddc::HostAllocator<double>());
-    relabelize_indices_of_t<
-            MetricType,
-            typename MetricType::accessor_t::natural_domain_t,
-                    upper<typename MetricType::accessor_t::natural_domain_t>>
-            inv_metric(inv_metric_alloc);
-    */
-    /*
-    relabelize_indices_of_t<
-            TensorType,
-            upper<detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>,
-            detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>
-            result(result_alloc);
-    ddc::for_each( // TODO use parallel_for_each, there is a weird lock when doing so
-            tensor.non_indices_domain(),
-            [&](auto elem) {
-                tensor_prod(
-                        result[elem],
-                        metric_prod[elem],
-                        relabelize_indices_of<
-                                upper<detail::non_primes<
-                                        typename MetricType::accessor_t::natural_domain_t>>,
-                                primes<upper<detail::non_primes<
-                                        typename MetricType::accessor_t::natural_domain_t>>>>(
-                                tensor)[elem]);
-            });
-    Kokkos::deep_copy(
-            tensor.allocation_kokkos_view(),
-            result.allocation_kokkos_view()); // We rely on Kokkos::deep_copy in place of ddc::parallel_deepcopy to avoid type verification of the type dimensions
-    */
-
     return inv_metric;
 }
 
