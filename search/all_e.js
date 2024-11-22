@@ -1,16 +1,17 @@
 var searchData=
 [
   ['rank_0',['rank',['../structsil_1_1tensor_1_1TensorAntisymmetricIndex.html#ab02f9ec0978362edc368cd134cdb0493',1,'sil::tensor::TensorAntisymmetricIndex::rank()'],['../structsil_1_1tensor_1_1TensorDiagonalIndex.html#ae8d1f9553e6e5b7560ae4cf9410e89b6',1,'sil::tensor::TensorDiagonalIndex::rank()'],['../structsil_1_1tensor_1_1TensorFullIndex.html#a8e3c354ebade545fe77532c42504cb2c',1,'sil::tensor::TensorFullIndex::rank()'],['../structsil_1_1tensor_1_1TensorIdentityIndex.html#a379f296cc937d2f096885e084c7fe63e',1,'sil::tensor::TensorIdentityIndex::rank()'],['../structsil_1_1tensor_1_1TensorLorentzianSignIndex.html#a74f354bd9b1990e8d23d6bc37af769e3',1,'sil::tensor::TensorLorentzianSignIndex::rank()'],['../structsil_1_1tensor_1_1TensorSymmetricIndex.html#a6ff60c02af9b5b2cf19b46da37d16455',1,'sil::tensor::TensorSymmetricIndex::rank()'],['../structsil_1_1tensor_1_1TensorNaturalIndex.html#aadfab2ae539ed9cfdbded1179231463d',1,'sil::tensor::TensorNaturalIndex::rank()'],['../structsil_1_1tensor_1_1TensorYoungTableauIndex.html#a800cb50564fc4dc8e987f83ec2cd2996',1,'sil::tensor::TensorYoungTableauIndex::rank()'],['../classsil_1_1young__tableau_1_1YoungTableau.html#a6d16bea8b8a5bdf6eac7208a2587aa67',1,'sil::young_tableau::YoungTableau::rank()'],['../classsil_1_1young__tableau_1_1YoungTableauSeq.html#a6f39f3485442c15ecbac61b8218286f7',1,'sil::young_tableau::YoungTableauSeq::rank']]],
-  ['reference_1',['reference',['../classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html#afdc9bb835d626b36ec2343a4e375fc2b',1,'sil::tensor::Tensor&lt; ElementType, ddc::DiscreteDomain&lt; DDim... &gt;, LayoutStridedPolicy, MemorySpace &gt;::reference'],['../classsil_1_1exterior_1_1CochainIterator.html#ae43321b03719cc0dd0b869645a8f9499',1,'sil::exterior::CochainIterator::reference']]],
-  ['relabelize_5findex_5fin_5fdomain_5ft_2',['relabelize_index_in_domain_t',['../namespacesil_1_1tensor.html#a0214bc8ad782e43f17d3c93317875fcb',1,'sil::tensor']]],
-  ['relabelize_5findex_5fof_3',['relabelize_index_of',['../namespacesil_1_1tensor.html#add390e552dbb809298417732a99fd132',1,'sil::tensor']]],
-  ['relabelize_5findex_5fof_5ft_4',['relabelize_index_of_t',['../namespacesil_1_1tensor.html#ac1e0e01a20d7a11534af89234ed817e8',1,'sil::tensor']]],
-  ['relabelize_5findices_5fin_5fdomain_5',['relabelize_indices_in_domain',['../namespacesil_1_1tensor.html#aa89f6ee83c61eecf70ddd76307895747',1,'sil::tensor']]],
-  ['relabelize_5findices_5fin_5fdomain_5ft_6',['relabelize_indices_in_domain_t',['../namespacesil_1_1tensor.html#a10d538d7bbe57026bb31dd4967dceec1',1,'sil::tensor']]],
-  ['relabelize_5findices_5fof_7',['relabelize_indices_of',['../namespacesil_1_1tensor.html#aca53f2d15ecbed2537c526e29e308947',1,'sil::tensor']]],
-  ['relabelize_5findices_5fof_5ft_8',['relabelize_indices_of_t',['../namespacesil_1_1tensor.html#a18bb38e8250062242859a699221b5be5',1,'sil::tensor']]],
-  ['relabelize_5fmetric_9',['relabelize_metric',['../namespacesil_1_1tensor.html#a6ee78e45a231d3e25c4e5c508fb602e2',1,'sil::tensor']]],
-  ['relabelize_5fmetric_5fin_5fdomain_10',['relabelize_metric_in_domain',['../namespacesil_1_1tensor.html#a98595b60ec04ec0975ec9096bb8e9f50',1,'sil::tensor']]],
-  ['relabelize_5fmetric_5fin_5fdomain_5ft_11',['relabelize_metric_in_domain_t',['../namespacesil_1_1tensor.html#ae0ca5d5176c9a4fe340bc05e05d5b69e',1,'sil::tensor']]],
-  ['relabelize_5fmetric_5ft_12',['relabelize_metric_t',['../namespacesil_1_1tensor.html#a501a35496af8f3afa414257911575664',1,'sil::tensor']]]
+  ['reference_1',['reference',['../classsil_1_1exterior_1_1CochainIterator.html#ae43321b03719cc0dd0b869645a8f9499',1,'sil::exterior::CochainIterator::reference'],['../classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html#afdc9bb835d626b36ec2343a4e375fc2b',1,'sil::tensor::Tensor&lt; ElementType, ddc::DiscreteDomain&lt; DDim... &gt;, LayoutStridedPolicy, MemorySpace &gt;::reference']]],
+  ['relabelize_5findex_5fin_2',['relabelize_index_in',['../namespacesil_1_1tensor.html#a1149b769e7a0aef9e3cf7954e5dee6cc',1,'sil::tensor']]],
+  ['relabelize_5findex_5fin_5ft_3',['relabelize_index_in_t',['../namespacesil_1_1tensor.html#a310c07950338cf2a31de2bef33916ee1',1,'sil::tensor']]],
+  ['relabelize_5findex_5fof_4',['relabelize_index_of',['../namespacesil_1_1tensor.html#add390e552dbb809298417732a99fd132',1,'sil::tensor']]],
+  ['relabelize_5findex_5fof_5ft_5',['relabelize_index_of_t',['../namespacesil_1_1tensor.html#ac1e0e01a20d7a11534af89234ed817e8',1,'sil::tensor']]],
+  ['relabelize_5findices_5fin_6',['relabelize_indices_in',['../namespacesil_1_1tensor.html#a258bf6bfc10128c923cff5a0e82dfbaf',1,'sil::tensor']]],
+  ['relabelize_5findices_5fin_5ft_7',['relabelize_indices_in_t',['../namespacesil_1_1tensor.html#a821e03a87f529b4e08fcd8e8fd6d108e',1,'sil::tensor']]],
+  ['relabelize_5findices_5fof_8',['relabelize_indices_of',['../namespacesil_1_1tensor.html#aca53f2d15ecbed2537c526e29e308947',1,'sil::tensor']]],
+  ['relabelize_5findices_5fof_5ft_9',['relabelize_indices_of_t',['../namespacesil_1_1tensor.html#a18bb38e8250062242859a699221b5be5',1,'sil::tensor']]],
+  ['relabelize_5fmetric_10',['relabelize_metric',['../namespacesil_1_1tensor.html#a6ee78e45a231d3e25c4e5c508fb602e2',1,'sil::tensor']]],
+  ['relabelize_5fmetric_5fin_5fdomain_11',['relabelize_metric_in_domain',['../namespacesil_1_1tensor.html#a98595b60ec04ec0975ec9096bb8e9f50',1,'sil::tensor']]],
+  ['relabelize_5fmetric_5fin_5fdomain_5ft_12',['relabelize_metric_in_domain_t',['../namespacesil_1_1tensor.html#a1d7a6851fded61e2c756bd7c04a4b5fe',1,'sil::tensor']]],
+  ['relabelize_5fmetric_5ft_13',['relabelize_metric_t',['../namespacesil_1_1tensor.html#a501a35496af8f3afa414257911575664',1,'sil::tensor']]]
 ];

@@ -184,15 +184,18 @@ Typedefs</h2></td></tr>
 <tr class="memitem:a1364499495fc821f7a333e92244f205b" id="r_a1364499495fc821f7a333e92244f205b"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
 <tr class="memitem:a1364499495fc821f7a333e92244f205b"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a1364499495fc821f7a333e92244f205b">upper</a> = detail::Upper&lt; T &gt;::type</td></tr>
 <tr class="separator:a1364499495fc821f7a333e92244f205b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5c644f8e2e92a6445ddeaec01e5fc7af" id="r_a5c644f8e2e92a6445ddeaec01e5fc7af"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
+<tr class="memitem:a5c644f8e2e92a6445ddeaec01e5fc7af"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a5c644f8e2e92a6445ddeaec01e5fc7af">swap_character</a> = detail::SwapCharacter&lt; T &gt;::type</td></tr>
+<tr class="separator:a5c644f8e2e92a6445ddeaec01e5fc7af"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1a4318eb5f036a7aaceac344b6b948c8" id="r_a1a4318eb5f036a7aaceac344b6b948c8"><td class="memTemplParams" colspan="2">template&lt;class Index &gt; </td></tr>
 <tr class="memitem:a1a4318eb5f036a7aaceac344b6b948c8"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a> = detail::Uncharacterize&lt; Index &gt;::type</td></tr>
 <tr class="separator:a1a4318eb5f036a7aaceac344b6b948c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a73fd1f7d374ac218e2f00fbc8c76eb31" id="r_a73fd1f7d374ac218e2f00fbc8c76eb31"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; Tensor &gt; TensorType&gt; </td></tr>
 <tr class="memitem:a73fd1f7d374ac218e2f00fbc8c76eb31"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a73fd1f7d374ac218e2f00fbc8c76eb31">uncharacterize_tensor_t</a> = <a class="el" href="namespacesil_1_1tensor.html#a18bb38e8250062242859a699221b5be5">relabelize_indices_of_t</a>&lt; TensorType, ddc::to_type_seq_t&lt; typename TensorType::accessor_t::natural_domain_t &gt;, <a class="el" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt; ddc::to_type_seq_t&lt; typename TensorType::accessor_t::natural_domain_t &gt; &gt; &gt;</td></tr>
 <tr class="separator:a73fd1f7d374ac218e2f00fbc8c76eb31"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae0ca5d5176c9a4fe340bc05e05d5b69e" id="r_ae0ca5d5176c9a4fe340bc05e05d5b69e"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom, TensorNatIndex Index1, TensorNatIndex Index2&gt; </td></tr>
-<tr class="memitem:ae0ca5d5176c9a4fe340bc05e05d5b69e"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#ae0ca5d5176c9a4fe340bc05e05d5b69e">relabelize_metric_in_domain_t</a> = <a class="el" href="namespacesil_1_1tensor.html#a10d538d7bbe57026bb31dd4967dceec1">relabelize_indices_in_domain_t</a>&lt; Dom, ddc::detail::TypeSeq&lt; typename detail::ConvertTypeSeqToMetricIndex1&lt; typename Index1::type_seq_dimensions &gt;::type, typename detail::ConvertTypeSeqToMetricIndex2&lt; typename Index2::type_seq_dimensions &gt;::type &gt;, ddc::detail::TypeSeq&lt; <a class="el" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt; Index1 &gt;, <a class="el" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt; Index2 &gt; &gt; &gt;</td></tr>
-<tr class="separator:ae0ca5d5176c9a4fe340bc05e05d5b69e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1d7a6851fded61e2c756bd7c04a4b5fe" id="r_a1d7a6851fded61e2c756bd7c04a4b5fe"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom, TensorNatIndex Index1, TensorNatIndex Index2&gt; </td></tr>
+<tr class="memitem:a1d7a6851fded61e2c756bd7c04a4b5fe"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a1d7a6851fded61e2c756bd7c04a4b5fe">relabelize_metric_in_domain_t</a> = <a class="el" href="namespacesil_1_1tensor.html#a821e03a87f529b4e08fcd8e8fd6d108e">relabelize_indices_in_t</a>&lt; Dom, ddc::detail::TypeSeq&lt; typename detail::ConvertTypeSeqToMetricIndex1&lt; typename Index1::type_seq_dimensions &gt;::type, typename detail::ConvertTypeSeqToMetricIndex2&lt; typename Index2::type_seq_dimensions &gt;::type &gt;, ddc::detail::TypeSeq&lt; <a class="el" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt; Index1 &gt;, <a class="el" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt; Index2 &gt; &gt; &gt;</td></tr>
+<tr class="separator:a1d7a6851fded61e2c756bd7c04a4b5fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a501a35496af8f3afa414257911575664" id="r_a501a35496af8f3afa414257911575664"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; Tensor &gt; TensorType, TensorNatIndex Index1, TensorNatIndex Index2&gt; </td></tr>
 <tr class="memitem:a501a35496af8f3afa414257911575664"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a501a35496af8f3afa414257911575664">relabelize_metric_t</a> = <a class="el" href="namespacesil_1_1tensor.html#a18bb38e8250062242859a699221b5be5">relabelize_indices_of_t</a>&lt; TensorType, ddc::detail::TypeSeq&lt; typename detail::ConvertTypeSeqToMetricIndex1&lt; typename Index1::type_seq_dimensions &gt;::type, typename detail::ConvertTypeSeqToMetricIndex2&lt; typename Index2::type_seq_dimensions &gt;::type &gt;, ddc::detail::TypeSeq&lt; <a class="el" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt; Index1 &gt;, <a class="el" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt; Index2 &gt; &gt; &gt;</td></tr>
 <tr class="separator:a501a35496af8f3afa414257911575664"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -202,6 +205,9 @@ Typedefs</h2></td></tr>
 <tr class="memitem:ac78669c4a01fe2ec3b4a8a48d0c94e2a" id="r_ac78669c4a01fe2ec3b4a8a48d0c94e2a"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; NonMetricDom, TensorIndex MetricIndex, misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices1, misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices2&gt; </td></tr>
 <tr class="memitem:ac78669c4a01fe2ec3b4a8a48d0c94e2a"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#ac78669c4a01fe2ec3b4a8a48d0c94e2a">metric_prod_t</a> = typename detail::MetricProdType&lt; NonMetricDom, MetricIndex, Indices1, Indices2 &gt;::type</td></tr>
 <tr class="separator:ac78669c4a01fe2ec3b4a8a48d0c94e2a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af33166c877c35ec06401d8727e163f58" id="r_af33166c877c35ec06401d8727e163f58"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; Tensor &gt; MetricType&gt; </td></tr>
+<tr class="memitem:af33166c877c35ec06401d8727e163f58"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#af33166c877c35ec06401d8727e163f58">invert_metric_t</a> = <a class="el" href="namespacesil_1_1tensor.html#a18bb38e8250062242859a699221b5be5">relabelize_indices_of_t</a>&lt; MetricType, ddc::to_type_seq_t&lt; typename MetricType::accessor_t::natural_domain_t &gt;, <a class="el" href="namespacesil_1_1tensor.html#a5c644f8e2e92a6445ddeaec01e5fc7af">swap_character</a>&lt; ddc::to_type_seq_t&lt; typename MetricType::accessor_t::natural_domain_t &gt; &gt; &gt;</td></tr>
+<tr class="separator:af33166c877c35ec06401d8727e163f58"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a49798c9ff92aad88c6c1d6ac9e3c7ddb" id="r_a49798c9ff92aad88c6c1d6ac9e3c7ddb"><td class="memTemplParams" colspan="2">template&lt;TensorNatIndex Index&gt; </td></tr>
 <tr class="memitem:a49798c9ff92aad88c6c1d6ac9e3c7ddb"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a49798c9ff92aad88c6c1d6ac9e3c7ddb">second</a> = <a class="el" href="structsil_1_1tensor_1_1prime.html">prime</a>&lt; Index, 2 &gt;</td></tr>
 <tr class="separator:a49798c9ff92aad88c6c1d6ac9e3c7ddb"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -217,15 +223,15 @@ Typedefs</h2></td></tr>
 <tr class="memitem:a6adfee8fa46a7b0d4cb1739e1b305317" id="r_a6adfee8fa46a7b0d4cb1739e1b305317"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom&gt; </td></tr>
 <tr class="memitem:a6adfee8fa46a7b0d4cb1739e1b305317"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a6adfee8fa46a7b0d4cb1739e1b305317">tensor_accessor_for_domain_t</a> = detail::TensorAccessorForDomain&lt; Dom &gt;::type</td></tr>
 <tr class="separator:a6adfee8fa46a7b0d4cb1739e1b305317"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0214bc8ad782e43f17d3c93317875fcb" id="r_a0214bc8ad782e43f17d3c93317875fcb"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom, TensorIndex OldIndex, TensorIndex NewIndex&gt; </td></tr>
-<tr class="memitem:a0214bc8ad782e43f17d3c93317875fcb"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a0214bc8ad782e43f17d3c93317875fcb">relabelize_index_in_domain_t</a> = detail::RelabelizeIndexInDomainType&lt; Dom, OldIndex, NewIndex &gt;::type</td></tr>
-<tr class="separator:a0214bc8ad782e43f17d3c93317875fcb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a310c07950338cf2a31de2bef33916ee1" id="r_a310c07950338cf2a31de2bef33916ee1"><td class="memTemplParams" colspan="2">template&lt;class T , TensorIndex OldIndex, TensorIndex NewIndex&gt; </td></tr>
+<tr class="memitem:a310c07950338cf2a31de2bef33916ee1"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a310c07950338cf2a31de2bef33916ee1">relabelize_index_in_t</a> = detail::RelabelizeIndexInType&lt; T, OldIndex, NewIndex &gt;::type</td></tr>
+<tr class="separator:a310c07950338cf2a31de2bef33916ee1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac1e0e01a20d7a11534af89234ed817e8" id="r_ac1e0e01a20d7a11534af89234ed817e8"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; Tensor &gt; TensorType, TensorIndex OldIndex, TensorIndex NewIndex&gt; </td></tr>
 <tr class="memitem:ac1e0e01a20d7a11534af89234ed817e8"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#ac1e0e01a20d7a11534af89234ed817e8">relabelize_index_of_t</a> = detail::RelabelizeIndexOfType&lt; TensorType, OldIndex, NewIndex &gt;::type</td></tr>
 <tr class="separator:ac1e0e01a20d7a11534af89234ed817e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a10d538d7bbe57026bb31dd4967dceec1" id="r_a10d538d7bbe57026bb31dd4967dceec1"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom, class OldIndices , class NewIndices &gt; </td></tr>
-<tr class="memitem:a10d538d7bbe57026bb31dd4967dceec1"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a10d538d7bbe57026bb31dd4967dceec1">relabelize_indices_in_domain_t</a> = typename detail::RelabelizeIndicesInDomainType&lt; Dom, OldIndices, NewIndices &gt;::type</td></tr>
-<tr class="separator:a10d538d7bbe57026bb31dd4967dceec1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a821e03a87f529b4e08fcd8e8fd6d108e" id="r_a821e03a87f529b4e08fcd8e8fd6d108e"><td class="memTemplParams" colspan="2">template&lt;class T , class OldIndices , class NewIndices &gt; </td></tr>
+<tr class="memitem:a821e03a87f529b4e08fcd8e8fd6d108e"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a821e03a87f529b4e08fcd8e8fd6d108e">relabelize_indices_in_t</a> = typename detail::RelabelizeIndicesInType&lt; T, OldIndices, NewIndices &gt;::type</td></tr>
+<tr class="separator:a821e03a87f529b4e08fcd8e8fd6d108e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a18bb38e8250062242859a699221b5be5" id="r_a18bb38e8250062242859a699221b5be5"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; Tensor &gt; TensorType, misc::Specialization&lt; ddc::detail::TypeSeq &gt; OldIndices, misc::Specialization&lt; ddc::detail::TypeSeq &gt; NewIndices&gt; </td></tr>
 <tr class="memitem:a18bb38e8250062242859a699221b5be5"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a18bb38e8250062242859a699221b5be5">relabelize_indices_of_t</a> = detail::RelabelizeIndicesOfType&lt; TensorType, OldIndices, NewIndices &gt;::type</td></tr>
 <tr class="separator:a18bb38e8250062242859a699221b5be5"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -242,7 +248,7 @@ Functions</h2></td></tr>
 <tr class="memitem:a1e054223bfa913f0bc231631e71d337b"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacesil_1_1tensor.html#a73fd1f7d374ac218e2f00fbc8c76eb31">uncharacterize_tensor_t</a>&lt; TensorType &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a1e054223bfa913f0bc231631e71d337b">uncharacterize_tensor</a> (TensorType tensor)</td></tr>
 <tr class="separator:a1e054223bfa913f0bc231631e71d337b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a98595b60ec04ec0975ec9096bb8e9f50" id="r_a98595b60ec04ec0975ec9096bb8e9f50"><td class="memTemplParams" colspan="2">template&lt;TensorNatIndex Index1, TensorNatIndex Index2, class Dom &gt; </td></tr>
-<tr class="memitem:a98595b60ec04ec0975ec9096bb8e9f50"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacesil_1_1tensor.html#ae0ca5d5176c9a4fe340bc05e05d5b69e">relabelize_metric_in_domain_t</a>&lt; Dom, Index1, Index2 &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a98595b60ec04ec0975ec9096bb8e9f50">relabelize_metric_in_domain</a> (Dom metric_dom)</td></tr>
+<tr class="memitem:a98595b60ec04ec0975ec9096bb8e9f50"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacesil_1_1tensor.html#a1d7a6851fded61e2c756bd7c04a4b5fe">relabelize_metric_in_domain_t</a>&lt; Dom, Index1, Index2 &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a98595b60ec04ec0975ec9096bb8e9f50">relabelize_metric_in_domain</a> (Dom metric_dom)</td></tr>
 <tr class="separator:a98595b60ec04ec0975ec9096bb8e9f50"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6ee78e45a231d3e25c4e5c508fb602e2" id="r_a6ee78e45a231d3e25c4e5c508fb602e2"><td class="memTemplParams" colspan="2">template&lt;TensorNatIndex Index1, TensorNatIndex Index2, misc::Specialization&lt; Tensor &gt; TensorType&gt; </td></tr>
 <tr class="memitem:a6ee78e45a231d3e25c4e5c508fb602e2"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacesil_1_1tensor.html#a501a35496af8f3afa414257911575664">relabelize_metric_t</a>&lt; TensorType, Index1, Index2 &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a6ee78e45a231d3e25c4e5c508fb602e2">relabelize_metric</a> (TensorType tensor)</td></tr>
@@ -253,15 +259,21 @@ Functions</h2></td></tr>
 <tr class="memitem:adee2138cf3eae0ec55033998a7bef485" id="r_adee2138cf3eae0ec55033998a7bef485"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; Tensor &gt; MetricType, misc::Specialization&lt; Tensor &gt; TensorType&gt; </td></tr>
 <tr class="memitem:adee2138cf3eae0ec55033998a7bef485"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#adee2138cf3eae0ec55033998a7bef485">inplace_apply_metric</a> (TensorType tensor, MetricType metric_prod)</td></tr>
 <tr class="separator:adee2138cf3eae0ec55033998a7bef485"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af0f478b7d5ca1d765db3ffabc2ceb80e" id="r_af0f478b7d5ca1d765db3ffabc2ceb80e"><td class="memTemplParams" colspan="2">template&lt;TensorIndex MetricIndex, TensorNatIndex... Index1, misc::Specialization&lt; Tensor &gt; MetricType, misc::Specialization&lt; Tensor &gt; TensorType&gt; </td></tr>
-<tr class="memitem:af0f478b7d5ca1d765db3ffabc2ceb80e"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacesil_1_1tensor.html#a18bb38e8250062242859a699221b5be5">relabelize_indices_of_t</a>&lt; TensorType, <a class="el" href="namespacesil_1_1tensor.html#a1364499495fc821f7a333e92244f205b">upper</a>&lt; ddc::detail::TypeSeq&lt; Index1... &gt; &gt;, ddc::detail::TypeSeq&lt; Index1... &gt; &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#af0f478b7d5ca1d765db3ffabc2ceb80e">inplace_apply_metric</a> (TensorType tensor, MetricType metric)</td></tr>
-<tr class="separator:af0f478b7d5ca1d765db3ffabc2ceb80e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3bceadc5944fd5bc5aa43a7eb7d6fb9c" id="r_a3bceadc5944fd5bc5aa43a7eb7d6fb9c"><td class="memTemplParams" colspan="2">template&lt;TensorIndex MetricIndex, TensorNatIndex... Index1, misc::Specialization&lt; Tensor &gt; MetricType, misc::Specialization&lt; Tensor &gt; TensorType&gt; </td></tr>
+<tr class="memitem:a3bceadc5944fd5bc5aa43a7eb7d6fb9c"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacesil_1_1tensor.html#a18bb38e8250062242859a699221b5be5">relabelize_indices_of_t</a>&lt; TensorType, <a class="el" href="namespacesil_1_1tensor.html#a5c644f8e2e92a6445ddeaec01e5fc7af">swap_character</a>&lt; ddc::detail::TypeSeq&lt; Index1... &gt; &gt;, ddc::detail::TypeSeq&lt; Index1... &gt; &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a3bceadc5944fd5bc5aa43a7eb7d6fb9c">inplace_apply_metric</a> (TensorType tensor, MetricType metric)</td></tr>
+<tr class="separator:a3bceadc5944fd5bc5aa43a7eb7d6fb9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0a90678356af2c213d94effa6f214227" id="r_a0a90678356af2c213d94effa6f214227"><td class="memTemplParams" colspan="2">template&lt;TensorIndex MetricIndex, misc::Specialization&lt; Tensor &gt; MetricType&gt; </td></tr>
+<tr class="memitem:a0a90678356af2c213d94effa6f214227"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacesil_1_1tensor.html#af33166c877c35ec06401d8727e163f58">invert_metric_t</a>&lt; MetricType &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a0a90678356af2c213d94effa6f214227">fill_inverse_metric</a> (<a class="el" href="namespacesil_1_1tensor.html#af33166c877c35ec06401d8727e163f58">invert_metric_t</a>&lt; MetricType &gt; inv_metric, MetricType metric)</td></tr>
+<tr class="separator:a0a90678356af2c213d94effa6f214227"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1149b769e7a0aef9e3cf7954e5dee6cc" id="r_a1149b769e7a0aef9e3cf7954e5dee6cc"><td class="memTemplParams" colspan="2">template&lt;class OldIndex , class NewIndex , class T &gt; </td></tr>
+<tr class="memitem:a1149b769e7a0aef9e3cf7954e5dee6cc"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacesil_1_1tensor.html#a310c07950338cf2a31de2bef33916ee1">relabelize_index_in_t</a>&lt; T, OldIndex, NewIndex &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a1149b769e7a0aef9e3cf7954e5dee6cc">relabelize_index_in</a> (T t)</td></tr>
+<tr class="separator:a1149b769e7a0aef9e3cf7954e5dee6cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:add390e552dbb809298417732a99fd132" id="r_add390e552dbb809298417732a99fd132"><td class="memTemplParams" colspan="2">template&lt;TensorIndex OldIndex, TensorIndex NewIndex, class ElementType , class... DDim, class LayoutStridedPolicy , class MemorySpace &gt; </td></tr>
 <tr class="memitem:add390e552dbb809298417732a99fd132"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacesil_1_1tensor.html#ac1e0e01a20d7a11534af89234ed817e8">relabelize_index_of_t</a>&lt; Tensor&lt; ElementType, ddc::DiscreteDomain&lt; DDim... &gt;, LayoutStridedPolicy, MemorySpace &gt;, OldIndex, NewIndex &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#add390e552dbb809298417732a99fd132">relabelize_index_of</a> (Tensor&lt; ElementType, ddc::DiscreteDomain&lt; DDim... &gt;, LayoutStridedPolicy, MemorySpace &gt; old_tensor)</td></tr>
 <tr class="separator:add390e552dbb809298417732a99fd132"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa89f6ee83c61eecf70ddd76307895747" id="r_aa89f6ee83c61eecf70ddd76307895747"><td class="memTemplParams" colspan="2">template&lt;class OldIndices , class NewIndices , misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom&gt; </td></tr>
-<tr class="memitem:aa89f6ee83c61eecf70ddd76307895747"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacesil_1_1tensor.html#a10d538d7bbe57026bb31dd4967dceec1">relabelize_indices_in_domain_t</a>&lt; Dom, OldIndices, NewIndices &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#aa89f6ee83c61eecf70ddd76307895747">relabelize_indices_in_domain</a> (Dom dom)</td></tr>
-<tr class="separator:aa89f6ee83c61eecf70ddd76307895747"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a258bf6bfc10128c923cff5a0e82dfbaf" id="r_a258bf6bfc10128c923cff5a0e82dfbaf"><td class="memTemplParams" colspan="2">template&lt;class OldIndices , class NewIndices , class T &gt; </td></tr>
+<tr class="memitem:a258bf6bfc10128c923cff5a0e82dfbaf"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacesil_1_1tensor.html#a821e03a87f529b4e08fcd8e8fd6d108e">relabelize_indices_in_t</a>&lt; T, OldIndices, NewIndices &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a258bf6bfc10128c923cff5a0e82dfbaf">relabelize_indices_in</a> (T t)</td></tr>
+<tr class="separator:a258bf6bfc10128c923cff5a0e82dfbaf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aca53f2d15ecbed2537c526e29e308947" id="r_aca53f2d15ecbed2537c526e29e308947"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; ddc::detail::TypeSeq &gt; OldIndices, misc::Specialization&lt; ddc::detail::TypeSeq &gt; NewIndices, misc::Specialization&lt; Tensor &gt; Tensor&gt; </td></tr>
 <tr class="memitem:aca53f2d15ecbed2537c526e29e308947"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacesil_1_1tensor.html#a18bb38e8250062242859a699221b5be5">relabelize_indices_of_t</a>&lt; Tensor, OldIndices, NewIndices &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#aca53f2d15ecbed2537c526e29e308947">relabelize_indices_of</a> (Tensor tensor)</td></tr>
 <tr class="separator:aca53f2d15ecbed2537c526e29e308947"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -404,6 +416,24 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
+<a id="a5c644f8e2e92a6445ddeaec01e5fc7af" name="a5c644f8e2e92a6445ddeaec01e5fc7af"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5c644f8e2e92a6445ddeaec01e5fc7af">&#9670;&#160;</a></span>swap_character</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class T &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="namespacesil_1_1tensor.html#a5c644f8e2e92a6445ddeaec01e5fc7af">sil::tensor::swap_character</a> = typedef detail::SwapCharacter&lt;T&gt;::type</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00133">133</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
+
+</div>
+</div>
 <a id="a1a4318eb5f036a7aaceac344b6b948c8" name="a1a4318eb5f036a7aaceac344b6b948c8"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a1a4318eb5f036a7aaceac344b6b948c8">&#9670;&#160;</a></span>uncharacterize</h2>
 
@@ -418,7 +448,7 @@ template&lt;class Index &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00143">143</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00171">171</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
 
 </div>
 </div>
@@ -436,12 +466,12 @@ template&lt;misc::Specialization&lt; Tensor &gt; TensorType&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00147">147</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00176">176</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
 
 </div>
 </div>
-<a id="ae0ca5d5176c9a4fe340bc05e05d5b69e" name="ae0ca5d5176c9a4fe340bc05e05d5b69e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae0ca5d5176c9a4fe340bc05e05d5b69e">&#9670;&#160;</a></span>relabelize_metric_in_domain_t</h2>
+<a id="a1d7a6851fded61e2c756bd7c04a4b5fe" name="a1d7a6851fded61e2c756bd7c04a4b5fe"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1d7a6851fded61e2c756bd7c04a4b5fe">&#9670;&#160;</a></span>relabelize_metric_in_domain_t</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -449,12 +479,12 @@ template&lt;misc::Specialization&lt; Tensor &gt; TensorType&gt; </div>
 template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom, TensorNatIndex Index1, TensorNatIndex Index2&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="namespacesil_1_1tensor.html#ae0ca5d5176c9a4fe340bc05e05d5b69e">sil::tensor::relabelize_metric_in_domain_t</a> = typedef <a class="el" href="namespacesil_1_1tensor.html#a10d538d7bbe57026bb31dd4967dceec1">relabelize_indices_in_domain_t</a>&lt; Dom, ddc::detail::TypeSeq&lt; typename detail::ConvertTypeSeqToMetricIndex1&lt; typename Index1::type_seq_dimensions&gt;::type, typename detail::ConvertTypeSeqToMetricIndex2&lt; typename Index2::type_seq_dimensions&gt;::type&gt;, ddc::detail::TypeSeq&lt;<a class="el" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt;Index1&gt;, <a class="el" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt;Index2&gt; &gt;&gt;</td>
+          <td class="memname">using <a class="el" href="namespacesil_1_1tensor.html#a1d7a6851fded61e2c756bd7c04a4b5fe">sil::tensor::relabelize_metric_in_domain_t</a> = typedef <a class="el" href="namespacesil_1_1tensor.html#a821e03a87f529b4e08fcd8e8fd6d108e">relabelize_indices_in_t</a>&lt; Dom, ddc::detail::TypeSeq&lt; typename detail::ConvertTypeSeqToMetricIndex1&lt; typename Index1::type_seq_dimensions&gt;::type, typename detail::ConvertTypeSeqToMetricIndex2&lt; typename Index2::type_seq_dimensions&gt;::type&gt;, ddc::detail::TypeSeq&lt;<a class="el" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt;Index1&gt;, <a class="el" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt;Index2&gt; &gt;&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00054">54</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00061">61</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
 
 </div>
 </div>
@@ -472,7 +502,7 @@ template&lt;misc::Specialization&lt; Tensor &gt; TensorType, TensorNatIndex Inde
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00076">76</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00083">83</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
 
 </div>
 </div>
@@ -490,7 +520,7 @@ template&lt;TensorIndex MetricIndex, misc::Specialization&lt; ddc::detail::TypeS
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00124">124</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00131">131</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
 
 </div>
 </div>
@@ -508,7 +538,25 @@ template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; NonMetricDom, Tens
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00159">159</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00166">166</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+
+</div>
+</div>
+<a id="af33166c877c35ec06401d8727e163f58" name="af33166c877c35ec06401d8727e163f58"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af33166c877c35ec06401d8727e163f58">&#9670;&#160;</a></span>invert_metric_t</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;misc::Specialization&lt; Tensor &gt; MetricType&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="namespacesil_1_1tensor.html#af33166c877c35ec06401d8727e163f58">sil::tensor::invert_metric_t</a> = typedef <a class="el" href="namespacesil_1_1tensor.html#a18bb38e8250062242859a699221b5be5">relabelize_indices_of_t</a>&lt; MetricType, ddc::to_type_seq_t&lt;typename MetricType::accessor_t::natural_domain_t&gt;, <a class="el" href="namespacesil_1_1tensor.html#a5c644f8e2e92a6445ddeaec01e5fc7af">swap_character</a>&lt;ddc::to_type_seq_t&lt;typename MetricType::accessor_t::natural_domain_t&gt; &gt;&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00358">358</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
 
 </div>
 </div>
@@ -602,16 +650,16 @@ template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom&gt; </div>
 
 </div>
 </div>
-<a id="a0214bc8ad782e43f17d3c93317875fcb" name="a0214bc8ad782e43f17d3c93317875fcb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0214bc8ad782e43f17d3c93317875fcb">&#9670;&#160;</a></span>relabelize_index_in_domain_t</h2>
+<a id="a310c07950338cf2a31de2bef33916ee1" name="a310c07950338cf2a31de2bef33916ee1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a310c07950338cf2a31de2bef33916ee1">&#9670;&#160;</a></span>relabelize_index_in_t</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom, TensorIndex OldIndex, TensorIndex NewIndex&gt; </div>
+template&lt;class T , TensorIndex OldIndex, TensorIndex NewIndex&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="namespacesil_1_1tensor.html#a0214bc8ad782e43f17d3c93317875fcb">sil::tensor::relabelize_index_in_domain_t</a> = typedef detail::RelabelizeIndexInDomainType&lt;Dom, OldIndex, NewIndex&gt;::type</td>
+          <td class="memname">using <a class="el" href="namespacesil_1_1tensor.html#a310c07950338cf2a31de2bef33916ee1">sil::tensor::relabelize_index_in_t</a> = typedef detail::RelabelizeIndexInType&lt;T, OldIndex, NewIndex&gt;::type</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -634,25 +682,25 @@ template&lt;misc::Specialization&lt; Tensor &gt; TensorType, TensorIndex OldInde
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00745">745</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00780">780</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a10d538d7bbe57026bb31dd4967dceec1" name="a10d538d7bbe57026bb31dd4967dceec1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a10d538d7bbe57026bb31dd4967dceec1">&#9670;&#160;</a></span>relabelize_indices_in_domain_t</h2>
+<a id="a821e03a87f529b4e08fcd8e8fd6d108e" name="a821e03a87f529b4e08fcd8e8fd6d108e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a821e03a87f529b4e08fcd8e8fd6d108e">&#9670;&#160;</a></span>relabelize_indices_in_t</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom, class OldIndices , class NewIndices &gt; </div>
+template&lt;class T , class OldIndices , class NewIndices &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="namespacesil_1_1tensor.html#a10d538d7bbe57026bb31dd4967dceec1">sil::tensor::relabelize_indices_in_domain_t</a> = typedef typename detail::RelabelizeIndicesInDomainType&lt;Dom, OldIndices, NewIndices&gt;::type</td>
+          <td class="memname">using <a class="el" href="namespacesil_1_1tensor.html#a821e03a87f529b4e08fcd8e8fd6d108e">sil::tensor::relabelize_indices_in_t</a> = typedef typename detail::RelabelizeIndicesInType&lt;T, OldIndices, NewIndices&gt;::type</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00843">843</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00878">878</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -670,7 +718,7 @@ template&lt;misc::Specialization&lt; Tensor &gt; TensorType, misc::Specializatio
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00973">973</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01018">1018</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -688,7 +736,7 @@ template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom1, misc::Specia
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01031">1031</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01076">1076</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -729,7 +777,7 @@ template&lt;misc::Specialization&lt; Tensor &gt; TensorType&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00153">153</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00182">182</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
 
 </div>
 </div>
@@ -742,7 +790,7 @@ template&lt;misc::Specialization&lt; Tensor &gt; TensorType&gt; </div>
 template&lt;TensorNatIndex Index1, TensorNatIndex Index2, class Dom &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespacesil_1_1tensor.html#ae0ca5d5176c9a4fe340bc05e05d5b69e">relabelize_metric_in_domain_t</a>&lt; Dom, Index1, Index2 &gt; sil::tensor::relabelize_metric_in_domain </td>
+          <td class="memname"><a class="el" href="namespacesil_1_1tensor.html#a1d7a6851fded61e2c756bd7c04a4b5fe">relabelize_metric_in_domain_t</a>&lt; Dom, Index1, Index2 &gt; sil::tensor::relabelize_metric_in_domain </td>
           <td>(</td>
           <td class="paramtype">Dom&#160;</td>
           <td class="paramname"><em>metric_dom</em></td><td>)</td>
@@ -751,7 +799,7 @@ template&lt;TensorNatIndex Index1, TensorNatIndex Index2, class Dom &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00064">64</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00071">71</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
 
 </div>
 </div>
@@ -773,7 +821,7 @@ template&lt;TensorNatIndex Index1, TensorNatIndex Index2, misc::Specialization&l
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00086">86</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00093">93</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
 
 </div>
 </div>
@@ -805,7 +853,7 @@ template&lt;TensorIndex MetricIndex, misc::Specialization&lt; ddc::detail::TypeS
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00241">241</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00248">248</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
 
 </div>
 </div>
@@ -837,12 +885,12 @@ template&lt;misc::Specialization&lt; Tensor &gt; MetricType, misc::Specializatio
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00268">268</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00275">275</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
 
 </div>
 </div>
-<a id="af0f478b7d5ca1d765db3ffabc2ceb80e" name="af0f478b7d5ca1d765db3ffabc2ceb80e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af0f478b7d5ca1d765db3ffabc2ceb80e">&#9670;&#160;</a></span>inplace_apply_metric() <span class="overload">[2/2]</span></h2>
+<a id="a3bceadc5944fd5bc5aa43a7eb7d6fb9c" name="a3bceadc5944fd5bc5aa43a7eb7d6fb9c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3bceadc5944fd5bc5aa43a7eb7d6fb9c">&#9670;&#160;</a></span>inplace_apply_metric() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -850,7 +898,7 @@ template&lt;misc::Specialization&lt; Tensor &gt; MetricType, misc::Specializatio
 template&lt;TensorIndex MetricIndex, TensorNatIndex... Index1, misc::Specialization&lt; Tensor &gt; MetricType, misc::Specialization&lt; Tensor &gt; TensorType&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespacesil_1_1tensor.html#a18bb38e8250062242859a699221b5be5">relabelize_indices_of_t</a>&lt; TensorType, <a class="el" href="namespacesil_1_1tensor.html#a1364499495fc821f7a333e92244f205b">upper</a>&lt; ddc::detail::TypeSeq&lt; Index1... &gt; &gt;, ddc::detail::TypeSeq&lt; Index1... &gt; &gt; sil::tensor::inplace_apply_metric </td>
+          <td class="memname"><a class="el" href="namespacesil_1_1tensor.html#a18bb38e8250062242859a699221b5be5">relabelize_indices_of_t</a>&lt; TensorType, <a class="el" href="namespacesil_1_1tensor.html#a5c644f8e2e92a6445ddeaec01e5fc7af">swap_character</a>&lt; ddc::detail::TypeSeq&lt; Index1... &gt; &gt;, ddc::detail::TypeSeq&lt; Index1... &gt; &gt; sil::tensor::inplace_apply_metric </td>
           <td>(</td>
           <td class="paramtype">TensorType&#160;</td>
           <td class="paramname"><em>tensor</em>, </td>
@@ -869,7 +917,61 @@ template&lt;TensorIndex MetricIndex, TensorNatIndex... Index1, misc::Specializat
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00312">312</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00320">320</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a0a90678356af2c213d94effa6f214227" name="a0a90678356af2c213d94effa6f214227"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0a90678356af2c213d94effa6f214227">&#9670;&#160;</a></span>fill_inverse_metric()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;TensorIndex MetricIndex, misc::Specialization&lt; Tensor &gt; MetricType&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacesil_1_1tensor.html#af33166c877c35ec06401d8727e163f58">invert_metric_t</a>&lt; MetricType &gt; sil::tensor::fill_inverse_metric </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespacesil_1_1tensor.html#af33166c877c35ec06401d8727e163f58">invert_metric_t</a>&lt; MetricType &gt;&#160;</td>
+          <td class="paramname"><em>inv_metric</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">MetricType&#160;</td>
+          <td class="paramname"><em>metric</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00365">365</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a1149b769e7a0aef9e3cf7954e5dee6cc" name="a1149b769e7a0aef9e3cf7954e5dee6cc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1149b769e7a0aef9e3cf7954e5dee6cc">&#9670;&#160;</a></span>relabelize_index_in()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class OldIndex , class NewIndex , class T &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacesil_1_1tensor.html#a310c07950338cf2a31de2bef33916ee1">relabelize_index_in_t</a>&lt; T, OldIndex, NewIndex &gt; sil::tensor::relabelize_index_in </td>
+          <td>(</td>
+          <td class="paramtype">T&#160;</td>
+          <td class="paramname"><em>t</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00749">749</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -891,29 +993,29 @@ template&lt;TensorIndex OldIndex, TensorIndex NewIndex, class ElementType , clas
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00758">758</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00793">793</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
-<a id="aa89f6ee83c61eecf70ddd76307895747" name="aa89f6ee83c61eecf70ddd76307895747"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa89f6ee83c61eecf70ddd76307895747">&#9670;&#160;</a></span>relabelize_indices_in_domain()</h2>
+<a id="a258bf6bfc10128c923cff5a0e82dfbaf" name="a258bf6bfc10128c923cff5a0e82dfbaf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a258bf6bfc10128c923cff5a0e82dfbaf">&#9670;&#160;</a></span>relabelize_indices_in()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class OldIndices , class NewIndices , misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom&gt; </div>
+template&lt;class OldIndices , class NewIndices , class T &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespacesil_1_1tensor.html#a10d538d7bbe57026bb31dd4967dceec1">relabelize_indices_in_domain_t</a>&lt; Dom, OldIndices, NewIndices &gt; sil::tensor::relabelize_indices_in_domain </td>
+          <td class="memname"><a class="el" href="namespacesil_1_1tensor.html#a821e03a87f529b4e08fcd8e8fd6d108e">relabelize_indices_in_t</a>&lt; T, OldIndices, NewIndices &gt; sil::tensor::relabelize_indices_in </td>
           <td>(</td>
-          <td class="paramtype">Dom&#160;</td>
-          <td class="paramname"><em>dom</em></td><td>)</td>
+          <td class="paramtype">T&#160;</td>
+          <td class="paramname"><em>t</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00884">884</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00929">929</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -935,7 +1037,7 @@ template&lt;misc::Specialization&lt; ddc::detail::TypeSeq &gt; OldIndices, misc:
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00980">980</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01025">1025</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -967,7 +1069,7 @@ template&lt;class... DDim, class ElementType , class LayoutStridedPolicy , class
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00997">997</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01042">1042</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -999,7 +1101,7 @@ template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom1, misc::Specia
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01036">1036</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01081">1081</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -1037,7 +1139,7 @@ template&lt;TensorNatIndex... ProdDDim, TensorNatIndex... DDim1, TensorNatIndex.
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01101">1101</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01146">1146</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -1069,7 +1171,7 @@ template&lt;misc::Specialization&lt; Tensor &gt; TensorType&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01187">1187</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01232">1232</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
