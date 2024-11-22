@@ -57,7 +57,7 @@ template <
         misc::Specialization<ddc::DiscreteDomain> Dom,
         TensorNatIndex Index1,
         TensorNatIndex Index2>
-using relabelize_metric_in_domain_t = relabelize_indices_in_domain_t<
+using relabelize_metric_in_domain_t = relabelize_indices_in_t<
         Dom,
         ddc::detail::TypeSeq<
                 typename detail::ConvertTypeSeqToMetricIndex1<
@@ -69,7 +69,7 @@ using relabelize_metric_in_domain_t = relabelize_indices_in_domain_t<
 template <TensorNatIndex Index1, TensorNatIndex Index2, class Dom>
 relabelize_metric_in_domain_t<Dom, Index1, Index2> relabelize_metric_in_domain(Dom metric_dom)
 {
-    return relabelize_indices_in_domain<
+    return relabelize_indices_in<
             ddc::detail::TypeSeq<
                     typename detail::ConvertTypeSeqToMetricIndex1<
                             typename Index1::type_seq_dimensions>::type,
@@ -274,7 +274,7 @@ template <misc::Specialization<Tensor> MetricType, misc::Specialization<Tensor> 
 auto inplace_apply_metric(TensorType tensor, MetricType metric_prod)
 {
     ddc::Chunk result_alloc(
-            relabelize_indices_in_domain<
+            relabelize_indices_in<
                     upper<detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>,
                     detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>(
                     tensor.domain()),
@@ -390,7 +390,7 @@ invert_metric_t<MetricType> fill_inverse_metric(
 
     /*
     ddc::Chunk inv_metric_alloc(
-            relabelize_indices_in_domain<
+            relabelize_indices_in<
                     typename MetricType::accessor_t::natural_domain_t,
                     upper<typename MetricType::accessor_t::natural_domain_t>>(
                     tensor.domain()),
