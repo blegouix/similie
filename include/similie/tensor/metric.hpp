@@ -371,7 +371,16 @@ invert_metric_t<MetricType> fill_inverse_metric(
         ddc::parallel_for_each(
                 Kokkos::DefaultHostExecutionSpace(),
                 inv_metric.mem_domain(),
-                [&](auto elem) { /* inv_metric(elem) = 1. / metric(elem); */ });
+                [&](auto elem) {
+                    inv_metric(elem)
+                            = 1.
+                              / metric(relabelize_indices_in<
+                                       upper<ddc::to_type_seq_t<
+                                               typename MetricType::accessor_t::natural_domain_t>>,
+                                       ddc::to_type_seq_t<
+                                               typename MetricType::accessor_t::natural_domain_t>>(
+                                      elem));
+                });
     } else if (misc::Specialization<MetricType, TensorSymmetricIndex>) {
         /*
         ddc::parallel_for_each(
