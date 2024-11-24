@@ -292,13 +292,26 @@ public:
 
 namespace detail {
 
+template <class Seq>
+struct TensorAccessorForTypeSeq;
+
+template <TensorIndex... Index>
+struct TensorAccessorForTypeSeq<ddc::detail::TypeSeq<Index...>>
+{
+    using type = TensorAccessor<Index...>;
+};
+
 template <class Dom>
 struct TensorAccessorForDomain;
 
-template <class... Index>
-struct TensorAccessorForDomain<ddc::DiscreteDomain<Index...>>
+template <class... DDim>
+struct TensorAccessorForDomain<ddc::DiscreteDomain<DDim...>>
 {
-    using type = TensorAccessor<Index...>;
+    using type = typename TensorAccessorForTypeSeq<
+            ddc::to_type_seq_t<ddc::cartesian_prod_t<std::conditional_t<
+                    TensorIndex<DDim>,
+                    ddc::DiscreteDomain<DDim>,
+                    ddc::DiscreteDomain<>>...>>>::type;
 };
 
 } // namespace detail
