@@ -6,6 +6,7 @@
 #include <ddc/ddc.hpp>
 
 #include <similie/misc/specialization.hpp>
+#include <similie/tensor/tensor_impl.hpp>
 
 namespace sil {
 
