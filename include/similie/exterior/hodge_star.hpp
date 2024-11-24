@@ -85,8 +85,7 @@ HodgeStarType fill_hodge_star(HodgeStarType hodge_star, MetricType metric)
             Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             metric_det(metric_det_alloc);
-    ddc::parallel_for_each(
-            Kokkos::DefaultHostExecutionSpace(),
+    ddc::for_each( // TODO parallel_for_each (weird lock)
             metric_det.domain(),
             [&](auto elem) { metric_det(elem) = tensor::determinant(metric[elem]); });
 

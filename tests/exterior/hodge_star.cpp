@@ -85,10 +85,6 @@ TEST(HodgeStar, Test)
         metric(elem, metric.accessor().access_element<Z, Z>()) = 6.;
     });
 
-    /*
-    sil::exterior::hodge_star_domain_t<ddc::detail::TypeSeq<Mu, Nu>, ddc::detail::TypeSeq<Rho>>
-            hodge_star_dom(ddc::cartesian_prod(metric_dom, levi_civita_dom));
-    */
     sil::tensor::TensorAccessor<HodgeStarIndex> hodge_star_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, HodgeStarIndex>
             hodge_star_dom(metric.non_indices_domain(), hodge_star_accessor.mem_domain());
@@ -104,4 +100,5 @@ TEST(HodgeStar, Test)
             MetricIndex,
             ddc::detail::TypeSeq<Mu, Nu>,
             ddc::detail::TypeSeq<Rho>>(hodge_star, metric);
+    std::cout << hodge_star;
 }

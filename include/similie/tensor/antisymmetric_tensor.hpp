@@ -140,10 +140,16 @@ public:
                     std::vector<double> {1.},
                     std::vector<std::size_t> {access_id});
         } else {
-            assert(access_id != 0 && "There is no mem_lin_comb associated to access_id=0");
-            return std::pair<std::vector<double>, std::vector<std::size_t>>(
-                    std::vector<double> {1.},
-                    std::vector<std::size_t> {(access_id - 1) % mem_size()});
+            if (access_id != 0) {
+                return std::pair<std::vector<double>, std::vector<std::size_t>>(
+                        std::vector<double> {1.},
+                        std::vector<std::size_t> {(access_id - 1) % mem_size()});
+            } else {
+                return std::pair<
+                        std::vector<double>,
+                        std::vector<
+                                std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {});
+            }
         }
     }
 
