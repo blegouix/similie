@@ -17,7 +17,7 @@ namespace detail {
 
 // ChatGPT-generated, TODO rely on KokkosKernels LU factorization
 template <misc::Specialization<Kokkos::View> ViewType>
-typename ViewType::value_type determinant(const ViewType& matrix)
+KOKKOS_FUNCTION typename ViewType::value_type determinant(const ViewType& matrix)
 {
     const std::size_t N = matrix.extent(0);
 
