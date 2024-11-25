@@ -55,6 +55,58 @@ static constexpr std::size_t next_stride()
     }
 }
 
+// Helpers to compute the strides of a symmetric tensor.
+template <class OTensorNaturalIndex, class... TensorNaturalIndex>
+static constexpr std::size_t symmetric_stride()
+{
+    return misc::binomial_coefficient(
+            OTensorNaturalIndex::mem_size(),
+            ddc::type_seq_rank_v<OTensorNaturalIndex, ddc::detail::TypeSeq<TensorNaturalIndex...>>);
+}
+
+template <class OTensorNaturalIndex, class... TensorNaturalIndex>
+static constexpr std::size_t symmetric_next_stride()
+{
+    if constexpr (
+            ddc::type_seq_rank_v<OTensorNaturalIndex, ddc::detail::TypeSeq<TensorNaturalIndex...>>
+            == 0) {
+        return std::numeric_limits<std::size_t>::max();
+    } else {
+        return misc::binomial_coefficient(
+                OTensorNaturalIndex::mem_size(),
+                ddc::type_seq_rank_v<
+                        OTensorNaturalIndex,
+                        ddc::detail::TypeSeq<TensorNaturalIndex...>>
+                        - 1);
+    }
+}
+
+// Helpers to compute the strides of an antisymmetric tensor.
+template <class OTensorNaturalIndex, class... TensorNaturalIndex>
+static constexpr std::size_t antisymmetric_stride()
+{
+    return misc::binomial_coefficient(
+            OTensorNaturalIndex::mem_size(),
+            ddc::type_seq_rank_v<OTensorNaturalIndex, ddc::detail::TypeSeq<TensorNaturalIndex...>>);
+}
+
+template <class OTensorNaturalIndex, class... TensorNaturalIndex>
+static constexpr std::size_t antisymmetric_next_stride()
+{
+    if constexpr (
+            ddc::type_seq_rank_v<OTensorNaturalIndex, ddc::detail::TypeSeq<TensorNaturalIndex...>>
+            == 0) {
+        return std::numeric_limits<std::size_t>::max();
+    } else {
+        return misc::binomial_coefficient(
+                OTensorNaturalIndex::mem_size(),
+                ddc::type_seq_rank_v<
+                        OTensorNaturalIndex,
+                        ddc::detail::TypeSeq<TensorNaturalIndex...>>
+                        - 1);
+    }
+}
+
 } // namespace detail
 
 } // namespace misc

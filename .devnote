@@ -18,6 +18,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 - Relabelizion in different file ?
 - Tensor indexes should be template with TensorNatIndex
 - Try DOUBLE_EQ in place of NEAR_EQ
+- Remove metric_prod_t (and every helper producing a tensor)
+- is_same_character_v and use it in tensor product
+- find a way to use CTAD when constructing a Tensor and DiscreteDomain
+- static constexpr attribute in TensorIndex classes to know if it returns mem_lin_comb of just mem_id
+- Precise "natural_ids" as attributes of mem_lin_comb
 
 ----- CMAKE BASIC COMMAND -----
 

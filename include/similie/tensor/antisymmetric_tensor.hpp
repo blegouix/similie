@@ -7,6 +7,7 @@
 
 #include <similie/misc/binomial_coefficient.hpp>
 #include <similie/misc/specialization.hpp>
+#include <similie/misc/stride.hpp>
 
 #include "tensor_impl.hpp"
 
@@ -140,10 +141,16 @@ public:
                     std::vector<double> {1.},
                     std::vector<std::size_t> {access_id});
         } else {
-            assert(access_id != 0 && "There is no mem_lin_comb associated to access_id=0");
-            return std::pair<std::vector<double>, std::vector<std::size_t>>(
-                    std::vector<double> {1.},
-                    std::vector<std::size_t> {(access_id - 1) % mem_size()});
+            if (access_id != 0) {
+                return std::pair<std::vector<double>, std::vector<std::size_t>>(
+                        std::vector<double> {1.},
+                        std::vector<std::size_t> {(access_id - 1) % mem_size()});
+            } else {
+                return std::pair<
+                        std::vector<double>,
+                        std::vector<
+                                std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {});
+            }
         }
     }
 
@@ -164,6 +171,15 @@ public:
                 return -access(tensor, elem);
             }
         }
+    }
+
+    static constexpr std::vector<std::size_t> mem_id_to_canonical_natural_ids(std::size_t mem_id)
+    {
+        assert(mem_id < mem_size());
+        return std::vector<std::size_t> {
+                (((mem_id % misc::detail::antisymmetric_next_stride<TensorIndex, TensorIndex...>())
+                  / misc::detail::antisymmetric_stride<TensorIndex, TensorIndex...>())
+                 + ...)};
     }
 };
 
