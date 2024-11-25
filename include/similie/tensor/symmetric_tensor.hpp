@@ -6,6 +6,7 @@
 #include <ddc/ddc.hpp>
 
 #include <similie/misc/binomial_coefficient.hpp>
+#include <similie/misc/stride.hpp>
 
 #include "tensor_impl.hpp"
 
@@ -113,23 +114,9 @@ struct TensorSymmetricIndex
     {
         assert(mem_id < mem_size());
         return std::vector<std::size_t> {
-                (mem_id
-                 % misc::binomial_coefficient(
-                         TensorIndex::mem_size()
-                                 /*
-                                 - sorted_ids[ddc::type_seq_rank_v<
-                                         TensorIndex,
-                                         ddc::detail::TypeSeq<TensorIndex...>>]
-                                */
-                                 + sizeof...(TensorIndex)
-                                 - ddc::type_seq_rank_v<
-                                         TensorIndex,
-                                         ddc::detail::TypeSeq<TensorIndex...>>
-                                 - 2,
-                         sizeof...(TensorIndex)
-                                 - ddc::type_seq_rank_v<
-                                         TensorIndex,
-                                         ddc::detail::TypeSeq<TensorIndex...>>))...};
+                (((mem_id % misc::detail::symmetric_next_stride<TensorIndex, TensorIndex...>())
+                  / misc::detail::symmetric_stride<TensorIndex, TensorIndex...>())
+                 + ...)};
     }
 };
 

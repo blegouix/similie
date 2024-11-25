@@ -7,6 +7,7 @@
 
 #include <similie/misc/binomial_coefficient.hpp>
 #include <similie/misc/specialization.hpp>
+#include <similie/misc/stride.hpp>
 
 #include "tensor_impl.hpp"
 
@@ -176,19 +177,9 @@ public:
     {
         assert(mem_id < mem_size());
         return std::vector<std::size_t> {
-                (mem_id
-                 % misc::binomial_coefficient(
-                         TensorIndex::mem_size()
-                                 /*
-                                 - sorted_ids[ddc::type_seq_rank_v<
-                                         TensorIndex,
-                                         ddc::detail::TypeSeq<TensorIndex...>>]
-                                */
-                                 - 1,
-                         sizeof...(TensorIndex)
-                                 - ddc::type_seq_rank_v<
-                                         TensorIndex,
-                                         ddc::detail::TypeSeq<TensorIndex...>>))...};
+                (((mem_id % misc::detail::antisymmetric_next_stride<TensorIndex, TensorIndex...>())
+                  / misc::detail::antisymmetric_stride<TensorIndex, TensorIndex...>())
+                 + ...)};
     }
 };
 
