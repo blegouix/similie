@@ -137,26 +137,23 @@ struct TensorProdAnyAnyAny<
         tensor::TensorAccessor<ContractDDim...> contract_accessor;
         ddc::DiscreteDomain<ContractDDim...> contract_dom = contract_accessor.natural_domain();
 
-        ddc::for_each(
-                prod_tensor.natural_domain(), // TODO iterate on access_domain, not natural_domain
-                [&](ddc::cartesian_prod_t<natural_domain_t<ProdDDim>...>::discrete_element_type
-                            elem) {
-                    prod_tensor(prod_tensor.access_element(elem)) = ddc::transform_reduce(
-                            contract_dom,
-                            0.,
-                            ddc::reducer::sum<ElementType>(),
-                            [&](ddc::DiscreteElement<ContractDDim...> contract_elem) {
-                                return tensor1.get(tensor1.access_element(
-                                               ddc::DiscreteElement<HeadDDim1..., ContractDDim...>(
-                                                       ddc::select<HeadDDim1...>(elem),
-                                                       contract_accessor.access_element(
-                                                               contract_elem))))
-                                       * tensor2.get(tensor2.access_element(
-                                               ddc::DiscreteElement<ContractDDim..., TailDDim2...>(
-                                                       contract_elem,
-                                                       ddc::select<TailDDim2...>(elem))));
-                            });
-                });
+        ddc::for_each(prod_tensor.domain(), [&](ddc::DiscreteElement<ProdDDim...> mem_elem) {
+            auto elem = prod_tensor.canonical_natural_element(mem_elem);
+            prod_tensor(mem_elem) = ddc::transform_reduce(
+                    contract_dom,
+                    0.,
+                    ddc::reducer::sum<ElementType>(),
+                    [&](ddc::DiscreteElement<ContractDDim...> contract_elem) {
+                        return tensor1.get(tensor1.access_element(
+                                       ddc::DiscreteElement<HeadDDim1..., ContractDDim...>(
+                                               ddc::select<HeadDDim1...>(elem),
+                                               contract_accessor.access_element(contract_elem))))
+                               * tensor2.get(tensor2.access_element(
+                                       ddc::DiscreteElement<ContractDDim..., TailDDim2...>(
+                                               contract_elem,
+                                               ddc::select<TailDDim2...>(elem))));
+                    });
+        });
         return prod_tensor;
     }
 };

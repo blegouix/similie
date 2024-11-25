@@ -81,6 +81,13 @@ struct TensorFullIndex
     {
         return access(tensor, elem);
     }
+
+    static constexpr std::vector<std::size_t> mem_id_to_canonical_natural_ids(std::size_t mem_id)
+    {
+        assert(mem_id < mem_size());
+        return std::vector<std::size_t> {
+                (mem_id % misc::detail::stride<TensorIndex, TensorIndex...>())...};
+    }
 };
 
 } // namespace tensor

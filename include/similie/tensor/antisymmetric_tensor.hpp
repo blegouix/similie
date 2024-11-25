@@ -140,10 +140,16 @@ public:
                     std::vector<double> {1.},
                     std::vector<std::size_t> {access_id});
         } else {
-            assert(access_id != 0 && "There is no mem_lin_comb associated to access_id=0");
-            return std::pair<std::vector<double>, std::vector<std::size_t>>(
-                    std::vector<double> {1.},
-                    std::vector<std::size_t> {(access_id - 1) % mem_size()});
+            if (access_id != 0) {
+                return std::pair<std::vector<double>, std::vector<std::size_t>>(
+                        std::vector<double> {1.},
+                        std::vector<std::size_t> {(access_id - 1) % mem_size()});
+            } else {
+                return std::pair<
+                        std::vector<double>,
+                        std::vector<
+                                std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {});
+            }
         }
     }
 
@@ -164,6 +170,25 @@ public:
                 return -access(tensor, elem);
             }
         }
+    }
+
+    static constexpr std::vector<std::size_t> mem_id_to_canonical_natural_ids(std::size_t mem_id)
+    {
+        assert(mem_id < mem_size());
+        return std::vector<std::size_t> {
+                (mem_id
+                 % misc::binomial_coefficient(
+                         TensorIndex::mem_size()
+                                 /*
+                                 - sorted_ids[ddc::type_seq_rank_v<
+                                         TensorIndex,
+                                         ddc::detail::TypeSeq<TensorIndex...>>]
+                                */
+                                 - 1,
+                         sizeof...(TensorIndex)
+                                 - ddc::type_seq_rank_v<
+                                         TensorIndex,
+                                         ddc::detail::TypeSeq<TensorIndex...>>))...};
     }
 };
 

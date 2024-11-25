@@ -5,6 +5,8 @@
 
 #include <ddc/ddc.hpp>
 
+#include <similie/misc/filled_struct.hpp>
+
 #include "tensor_impl.hpp"
 
 namespace sil {
@@ -91,6 +93,12 @@ struct TensorDiagonalIndex
         } else {
             return access(tensor, elem);
         }
+    }
+
+    static constexpr std::vector<std::size_t> mem_id_to_canonical_natural_ids(std::size_t mem_id)
+    {
+        assert(mem_id < mem_size());
+        return misc::filled_struct<std::vector<std::size_t>>(mem_id);
     }
 };
 
