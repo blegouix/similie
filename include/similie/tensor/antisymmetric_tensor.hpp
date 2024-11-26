@@ -82,7 +82,8 @@ struct TensorAntisymmetricIndex
                            + (sorted_ids[ddc::type_seq_rank_v<
                                       TensorIndex,
                                       ddc::detail::TypeSeq<TensorIndex...>>]
-                                              == TensorIndex::mem_size() - sizeof...(TensorIndex)
+                                              == TensorIndex::mem_size()
+                                                         - sizeof...(TensorIndex) // TODO rank()
                                                          + ddc::type_seq_rank_v<
                                                                  TensorIndex,
                                                                  ddc::detail::TypeSeq<
@@ -176,10 +177,25 @@ public:
     static constexpr std::vector<std::size_t> mem_id_to_canonical_natural_ids(std::size_t mem_id)
     {
         assert(mem_id < mem_size());
-        return std::vector<std::size_t> {
-                (((mem_id % misc::detail::antisymmetric_next_stride<TensorIndex, TensorIndex...>())
-                  / misc::detail::antisymmetric_stride<TensorIndex, TensorIndex...>())
-                 + ...)};
+        std::vector<std::size_t> ids(rank());
+        std::size_t const d
+                = ddc::type_seq_element_t<0, ddc::detail::TypeSeq<TensorIndex...>>::mem_size() - 1;
+        std::size_t r = rank();
+        for (std::size_t i = 0; i < rank(); ++i) {
+            const std::size_t triangle_size = misc::binomial_coefficient(d + r - i - 1, r - i);
+            for (std::size_t j = i == 0 ? 1 : ids[i - 1] + 1; j < d; ++j) {
+                const std::size_t subtriangle_size
+                        = misc::binomial_coefficient(d - j + r - i - 1, r - i);
+                std::cout << j << " " << subtriangle_size << " " << triangle_size - mem_id << "\n";
+                if (mem_id >= triangle_size - subtriangle_size) {
+                    ids[i] = j;
+                    mem_id -= triangle_size - subtriangle_size;
+                    break;
+                }
+            }
+            std::cout << mem_id << "\n";
+        }
+        return ids;
     }
 };
 

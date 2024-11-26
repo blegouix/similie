@@ -23,6 +23,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 - find a way to use CTAD when constructing a Tensor and DiscreteDomain
 - static constexpr attribute in TensorIndex classes to know if it returns mem_lin_comb of just mem_id
 - Precise "natural_ids" as attributes of mem_lin_comb
+- mem_id_to_canonical should return std::array
 
 ----- CMAKE BASIC COMMAND -----
 

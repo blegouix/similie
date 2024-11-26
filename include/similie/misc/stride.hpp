@@ -82,15 +82,15 @@ static constexpr std::size_t symmetric_next_stride()
 }
 
 // Helpers to compute the strides of an antisymmetric tensor.
-template <class OTensorNaturalIndex, class... TensorNaturalIndex>
+template <std::size_t i, class OTensorNaturalIndex, class... TensorNaturalIndex>
 static constexpr std::size_t antisymmetric_stride()
 {
     return misc::binomial_coefficient(
             OTensorNaturalIndex::mem_size(),
-            ddc::type_seq_rank_v<OTensorNaturalIndex, ddc::detail::TypeSeq<TensorNaturalIndex...>>);
+            sizeof...(TensorNaturalIndex) - ddc::type_seq_rank_v<OTensorNaturalIndex, ddc::detail::TypeSeq<TensorNaturalIndex...>>);
 }
 
-template <class OTensorNaturalIndex, class... TensorNaturalIndex>
+template <std::size_t i, class OTensorNaturalIndex, class... TensorNaturalIndex>
 static constexpr std::size_t antisymmetric_next_stride()
 {
     if constexpr (
@@ -100,7 +100,7 @@ static constexpr std::size_t antisymmetric_next_stride()
     } else {
         return misc::binomial_coefficient(
                 OTensorNaturalIndex::mem_size(),
-                ddc::type_seq_rank_v<
+                sizeof...(TensorNaturalIndex) - ddc::type_seq_rank_v<
                         OTensorNaturalIndex,
                         ddc::detail::TypeSeq<TensorNaturalIndex...>>
                         - 1);
