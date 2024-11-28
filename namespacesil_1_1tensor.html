@@ -134,6 +134,8 @@ Classes</h2></td></tr>
 <tr class="separator:structsil_1_1tensor_1_1Contravariant"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:structsil_1_1tensor_1_1Covariant" id="r_structsil_1_1tensor_1_1Covariant"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Covariant">Covariant</a></td></tr>
 <tr class="separator:structsil_1_1tensor_1_1Covariant"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:structsil_1_1tensor_1_1Dummy" id="r_structsil_1_1tensor_1_1Dummy"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Dummy">Dummy</a></td></tr>
+<tr class="separator:structsil_1_1tensor_1_1Dummy"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1tensor_1_1MetricIndex1.html">MetricIndex1</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1tensor_1_1MetricIndex2.html">MetricIndex2</a></td></tr>
@@ -195,6 +197,9 @@ Typedefs</h2></td></tr>
 <tr class="memitem:a73fd1f7d374ac218e2f00fbc8c76eb31" id="r_a73fd1f7d374ac218e2f00fbc8c76eb31"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; Tensor &gt; TensorType&gt; </td></tr>
 <tr class="memitem:a73fd1f7d374ac218e2f00fbc8c76eb31"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a73fd1f7d374ac218e2f00fbc8c76eb31">uncharacterize_tensor_t</a> = <a class="el" href="namespacesil_1_1tensor.html#a18bb38e8250062242859a699221b5be5">relabelize_indices_of_t</a>&lt; TensorType, ddc::to_type_seq_t&lt; typename TensorType::accessor_t::natural_domain_t &gt;, <a class="el" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt; ddc::to_type_seq_t&lt; typename TensorType::accessor_t::natural_domain_t &gt; &gt; &gt;</td></tr>
 <tr class="separator:a73fd1f7d374ac218e2f00fbc8c76eb31"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a201b576b1f3194623e18c3fc0076bdfc" id="r_a201b576b1f3194623e18c3fc0076bdfc"><td class="memTemplParams" colspan="2">template&lt;std::size_t Dimension, std::size_t Rank&gt; </td></tr>
+<tr class="memitem:a201b576b1f3194623e18c3fc0076bdfc"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a201b576b1f3194623e18c3fc0076bdfc">dummy_index_t</a> = detail::DummyIndex&lt; std::make_index_sequence&lt; Dimension &gt;, std::make_index_sequence&lt; Rank &gt; &gt;::type</td></tr>
+<tr class="separator:a201b576b1f3194623e18c3fc0076bdfc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1d7a6851fded61e2c756bd7c04a4b5fe" id="r_a1d7a6851fded61e2c756bd7c04a4b5fe"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom, TensorNatIndex Index1, TensorNatIndex Index2&gt; </td></tr>
 <tr class="memitem:a1d7a6851fded61e2c756bd7c04a4b5fe"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a1d7a6851fded61e2c756bd7c04a4b5fe">relabelize_metric_in_domain_t</a> = <a class="el" href="namespacesil_1_1tensor.html#a821e03a87f529b4e08fcd8e8fd6d108e">relabelize_indices_in_t</a>&lt; Dom, ddc::detail::TypeSeq&lt; typename detail::ConvertTypeSeqToMetricIndex1&lt; typename Index1::type_seq_dimensions &gt;::type, typename detail::ConvertTypeSeqToMetricIndex2&lt; typename Index2::type_seq_dimensions &gt;::type &gt;, ddc::detail::TypeSeq&lt; <a class="el" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt; Index1 &gt;, <a class="el" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt; Index2 &gt; &gt; &gt;</td></tr>
 <tr class="separator:a1d7a6851fded61e2c756bd7c04a4b5fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -330,7 +335,7 @@ requires ( ((!TensorNatIndex&lt;ProdDDim&gt; || ...) || (!TensorNatIndex&lt;Inde
       </table>
 </div><div class="memdoc">
 <div class="textblock">
-<p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00018">18</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00019">19</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
 </div><div class="dynheader">
 Collaboration diagram for sil::tensor::Contravariant:</div>
 <div class="dyncontent">
@@ -354,13 +359,38 @@ Collaboration diagram for sil::tensor::Contravariant:</div>
       </table>
 </div><div class="memdoc">
 <div class="textblock">
-<p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00014">14</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00015">15</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
 </div><div class="dynheader">
 Collaboration diagram for sil::tensor::Covariant:</div>
 <div class="dyncontent">
 <div class="center"><img src="structsil_1_1tensor_1_1Covariant__coll__graph.png" border="0" usemap="#asil_1_1tensor_1_1Covariant_coll__map" alt="Collaboration graph"/></div>
 <map name="asil_1_1tensor_1_1Covariant_coll__map" id="asil_1_1tensor_1_1Covariant_coll__map">
 <area shape="rect" title=" " alt="" coords="5,5,155,71"/>
+</map>
+</div>
+
+</div>
+</div>
+<a name="structsil_1_1tensor_1_1Dummy" id="structsil_1_1tensor_1_1Dummy"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#structsil_1_1tensor_1_1Dummy">&#9670;&#160;</a></span>sil::tensor::Dummy</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">struct sil::tensor::Dummy</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<div class="textblock"><div class="compoundTemplParams">template&lt;std::size_t I&gt;<br />
+struct sil::tensor::Dummy&lt; I &gt;</div>
+<p class="definition">Definition at line <a class="el" href="dummy__index_8hpp_source.html#l00017">17</a> of file <a class="el" href="dummy__index_8hpp_source.html">dummy_index.hpp</a>.</p>
+</div><div class="dynheader">
+Collaboration diagram for sil::tensor::Dummy&lt; I &gt;:</div>
+<div class="dyncontent">
+<div class="center"><img src="structsil_1_1tensor_1_1Dummy__coll__graph.png" border="0" usemap="#asil_1_1tensor_1_1Dummy_3_01I_01_4_coll__map" alt="Collaboration graph"/></div>
+<map name="asil_1_1tensor_1_1Dummy_3_01I_01_4_coll__map" id="asil_1_1tensor_1_1Dummy_3_01I_01_4_coll__map">
+<area shape="rect" title=" " alt="" coords="5,5,177,71"/>
 </map>
 </div>
 
@@ -399,7 +429,7 @@ template&lt;class T &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00077">77</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00078">78</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
 
 </div>
 </div>
@@ -417,7 +447,7 @@ template&lt;class T &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00105">105</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00106">106</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
 
 </div>
 </div>
@@ -435,7 +465,7 @@ template&lt;class T &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00133">133</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00134">134</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
 
 </div>
 </div>
@@ -453,7 +483,7 @@ template&lt;class Index &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00171">171</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00172">172</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
 
 </div>
 </div>
@@ -471,7 +501,25 @@ template&lt;misc::Specialization&lt; Tensor &gt; TensorType&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00176">176</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00177">177</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a201b576b1f3194623e18c3fc0076bdfc" name="a201b576b1f3194623e18c3fc0076bdfc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a201b576b1f3194623e18c3fc0076bdfc">&#9670;&#160;</a></span>dummy_index_t</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;std::size_t Dimension, std::size_t Rank&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="namespacesil_1_1tensor.html#a201b576b1f3194623e18c3fc0076bdfc">sil::tensor::dummy_index_t</a> = typedef detail:: DummyIndex&lt;std::make_index_sequence&lt;Dimension&gt;, std::make_index_sequence&lt;Rank&gt; &gt;::type</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="dummy__index_8hpp_source.html#l00048">48</a> of file <a class="el" href="dummy__index_8hpp_source.html">dummy_index.hpp</a>.</p>
 
 </div>
 </div>
@@ -489,7 +537,7 @@ template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom, TensorNatInde
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00061">61</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00062">62</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
 
 </div>
 </div>
@@ -507,7 +555,7 @@ template&lt;misc::Specialization&lt; Tensor &gt; TensorType, TensorNatIndex Inde
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00083">83</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00084">84</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
 
 </div>
 </div>
@@ -525,7 +573,7 @@ template&lt;TensorIndex MetricIndex, misc::Specialization&lt; ddc::detail::TypeS
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00131">131</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00132">132</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
 
 </div>
 </div>
@@ -543,7 +591,7 @@ template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; NonMetricDom, Tens
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00166">166</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00167">167</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
 
 </div>
 </div>
@@ -561,7 +609,7 @@ template&lt;misc::Specialization&lt; Tensor &gt; MetricType&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00358">358</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00359">359</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
 
 </div>
 </div>
@@ -651,7 +699,7 @@ template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00307">307</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00320">320</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -669,7 +717,7 @@ template&lt;class T , TensorIndex OldIndex, TensorIndex NewIndex&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00773">773</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00786">786</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -687,7 +735,7 @@ template&lt;misc::Specialization&lt; Tensor &gt; TensorType, TensorIndex OldInde
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00839">839</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00852">852</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -705,7 +753,7 @@ template&lt;class T , class OldIndices , class NewIndices &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00937">937</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00950">950</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -723,7 +771,7 @@ template&lt;misc::Specialization&lt; Tensor &gt; TensorType, misc::Specializatio
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01077">1077</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01090">1090</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -741,7 +789,7 @@ template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom1, misc::Specia
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01135">1135</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01148">1148</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -782,7 +830,7 @@ template&lt;misc::Specialization&lt; Tensor &gt; TensorType&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00182">182</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00183">183</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
 
 </div>
 </div>
@@ -826,7 +874,7 @@ template&lt;TensorNatIndex Index1, TensorNatIndex Index2, class Dom &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00071">71</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00072">72</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
 
 </div>
 </div>
@@ -848,7 +896,7 @@ template&lt;TensorNatIndex Index1, TensorNatIndex Index2, misc::Specialization&l
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00093">93</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00094">94</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
 
 </div>
 </div>
@@ -880,7 +928,7 @@ template&lt;TensorIndex MetricIndex, misc::Specialization&lt; ddc::detail::TypeS
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00248">248</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00249">249</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
 
 </div>
 </div>
@@ -912,7 +960,7 @@ template&lt;misc::Specialization&lt; Tensor &gt; MetricType, misc::Specializatio
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00275">275</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00276">276</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
 
 </div>
 </div>
@@ -944,7 +992,7 @@ template&lt;TensorIndex MetricIndex, TensorNatIndex... Index1, misc::Specializat
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00320">320</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00321">321</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
 
 </div>
 </div>
@@ -976,7 +1024,7 @@ template&lt;TensorIndex MetricIndex, misc::Specialization&lt; Tensor &gt; Metric
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00365">365</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00366">366</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
 
 </div>
 </div>
@@ -998,7 +1046,7 @@ template&lt;class OldIndex , class NewIndex , class T &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00808">808</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00821">821</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -1020,7 +1068,7 @@ template&lt;TensorIndex OldIndex, TensorIndex NewIndex, class ElementType , clas
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00852">852</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00865">865</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -1042,7 +1090,7 @@ template&lt;class OldIndices , class NewIndices , class T &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00988">988</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01001">1001</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -1064,7 +1112,7 @@ template&lt;misc::Specialization&lt; ddc::detail::TypeSeq &gt; OldIndices, misc:
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01084">1084</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01097">1097</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -1096,7 +1144,7 @@ template&lt;class... DDim, class ElementType , class LayoutStridedPolicy , class
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01101">1101</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01114">1114</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -1128,7 +1176,7 @@ template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom1, misc::Specia
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01140">1140</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01153">1153</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -1166,7 +1214,7 @@ template&lt;TensorNatIndex... ProdDDim, TensorNatIndex... DDim1, TensorNatIndex.
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01205">1205</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01218">1218</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -1198,7 +1246,7 @@ template&lt;misc::Specialization&lt; Tensor &gt; TensorType&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01291">1291</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01304">1304</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>

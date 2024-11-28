@@ -164,6 +164,9 @@ Typedefs</h2></td></tr>
 <tr class="memitem:a91ad2e2a2afbf4daa1a78d5d4955dd1b" id="r_a91ad2e2a2afbf4daa1a78d5d4955dd1b"><td class="memTemplParams" colspan="2">template&lt;class T , class ElementType  = double, class Allocator  = std::allocator&lt;double&gt;&gt; </td></tr>
 <tr class="memitem:a91ad2e2a2afbf4daa1a78d5d4955dd1b"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1exterior.html#a91ad2e2a2afbf4daa1a78d5d4955dd1b">Form</a> = typename detail::FormWrapper&lt; T, ElementType, Allocator &gt;::type</td></tr>
 <tr class="separator:a91ad2e2a2afbf4daa1a78d5d4955dd1b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a21e9011f4a297de3552b0781a0c907bb" id="r_a21e9011f4a297de3552b0781a0c907bb"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices1, misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices2&gt; </td></tr>
+<tr class="memitem:a21e9011f4a297de3552b0781a0c907bb"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1exterior.html#a21e9011f4a297de3552b0781a0c907bb">hodge_star_domain_t</a> = ddc::detail::convert_type_seq_to_discrete_domain_t&lt; ddc::type_seq_merge_t&lt; ddc::detail::TypeSeq&lt; <a class="el" href="namespacesil_1_1misc.html#aaf2e9c4453ff349939186425e5bbc3ec">misc::convert_type_seq_to_t</a>&lt; <a class="el" href="structsil_1_1tensor_1_1TensorFullIndex.html">tensor::TensorFullIndex</a>, Indices1 &gt; &gt;, ddc::detail::TypeSeq&lt; <a class="el" href="namespacesil_1_1misc.html#aaf2e9c4453ff349939186425e5bbc3ec">misc::convert_type_seq_to_t</a>&lt; <a class="el" href="structsil_1_1tensor_1_1TensorAntisymmetricIndex.html">tensor::TensorAntisymmetricIndex</a>, Indices2 &gt; &gt; &gt; &gt;</td></tr>
+<tr class="separator:a21e9011f4a297de3552b0781a0c907bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
@@ -194,6 +197,13 @@ Functions</h2></td></tr>
 <tr class="memitem:a941c3e48322d9c305635d3b5a1376ab8" id="r_a941c3e48322d9c305635d3b5a1376ab8"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; <a class="el" href="classsil_1_1exterior_1_1Cosimplex.html">Cosimplex</a> &gt; CosimplexType&gt; </td></tr>
 <tr class="memitem:a941c3e48322d9c305635d3b5a1376ab8"><td class="memTemplItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1exterior.html#a941c3e48322d9c305635d3b5a1376ab8">operator&lt;&lt;</a> (std::ostream &amp;out, CosimplexType const &amp;cosimplex)</td></tr>
 <tr class="separator:a941c3e48322d9c305635d3b5a1376ab8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7f807817675d32d99f75b6861c93a627" id="r_a7f807817675d32d99f75b6861c93a627"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices1, misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices2, misc::Specialization&lt; tensor::Tensor &gt; HodgeStarType, class MetricDeterminantType , misc::Specialization&lt; tensor::Tensor &gt; MetricProdType&gt; <br />
+requires ( misc::Specialization&lt;MetricDeterminantType, ddc::ChunkSpan&gt; || misc::Specialization&lt;MetricDeterminantType, tensor::Tensor&gt;)</td></tr>
+<tr class="memitem:a7f807817675d32d99f75b6861c93a627"><td class="memTemplItemLeft" align="right" valign="top">HodgeStarType&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1exterior.html#a7f807817675d32d99f75b6861c93a627">fill_hodge_star</a> (HodgeStarType hodge_star, MetricDeterminantType metric_determinant, MetricProdType metric_prod)</td></tr>
+<tr class="separator:a7f807817675d32d99f75b6861c93a627"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aba443744b441935d6a290ab3ce20285e" id="r_aba443744b441935d6a290ab3ce20285e"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorIndex MetricIndex, misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices1, misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices2, misc::Specialization&lt; tensor::Tensor &gt; HodgeStarType, misc::Specialization&lt; tensor::Tensor &gt; MetricType&gt; </td></tr>
+<tr class="memitem:aba443744b441935d6a290ab3ce20285e"><td class="memTemplItemLeft" align="right" valign="top">HodgeStarType&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1exterior.html#aba443744b441935d6a290ab3ce20285e">fill_hodge_star</a> (HodgeStarType hodge_star, MetricType metric)</td></tr>
+<tr class="separator:aba443744b441935d6a290ab3ce20285e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a76857a60340aac9f209225cebf0a127e" id="r_a76857a60340aac9f209225cebf0a127e"><td class="memTemplParams" colspan="2">template&lt;misc::NotSpecialization&lt; ddc::DiscreteVector &gt;... T&gt; </td></tr>
 <tr class="memitem:a76857a60340aac9f209225cebf0a127e"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1exterior.html#a76857a60340aac9f209225cebf0a127e">LocalChain</a> (T...) -&gt; <a class="el" href="classsil_1_1exterior_1_1LocalChain.html">LocalChain</a>&lt; ddc::type_seq_element_t&lt; 0, ddc::detail::TypeSeq&lt; T... &gt; &gt; &gt;</td></tr>
 <tr class="separator:a76857a60340aac9f209225cebf0a127e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -301,6 +311,24 @@ template&lt;class T , class ElementType  = double, class Allocator  = std::alloc
 </div><div class="memdoc">
 
 <p class="definition">Definition at line <a class="el" href="form_8hpp_source.html#l00044">44</a> of file <a class="el" href="form_8hpp_source.html">form.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a21e9011f4a297de3552b0781a0c907bb" name="a21e9011f4a297de3552b0781a0c907bb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a21e9011f4a297de3552b0781a0c907bb">&#9670;&#160;</a></span>hodge_star_domain_t</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices1, misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices2&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="namespacesil_1_1exterior.html#a21e9011f4a297de3552b0781a0c907bb">sil::exterior::hodge_star_domain_t</a> = typedef ddc::detail::convert_type_seq_to_discrete_domain_t&lt;ddc::type_seq_merge_t&lt; ddc::detail::TypeSeq&lt; <a class="el" href="namespacesil_1_1misc.html#aaf2e9c4453ff349939186425e5bbc3ec">misc::convert_type_seq_to_t</a>&lt;<a class="el" href="structsil_1_1tensor_1_1TensorFullIndex.html">tensor::TensorFullIndex</a>, Indices1&gt; &gt;, ddc::detail::TypeSeq&lt; <a class="el" href="namespacesil_1_1misc.html#aaf2e9c4453ff349939186425e5bbc3ec">misc::convert_type_seq_to_t</a>&lt;<a class="el" href="structsil_1_1tensor_1_1TensorAntisymmetricIndex.html">tensor::TensorAntisymmetricIndex</a>, Indices2&gt; &gt;&gt; &gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="hodge__star_8hpp_source.html#l00026">26</a> of file <a class="el" href="hodge__star_8hpp_source.html">hodge_star.hpp</a>.</p>
 
 </div>
 </div>
@@ -548,6 +576,77 @@ template&lt;misc::Specialization&lt; <a class="el" href="classsil_1_1exterior_1_
 </div><div class="memdoc">
 
 <p class="definition">Definition at line <a class="el" href="cosimplex_8hpp_source.html#l00095">95</a> of file <a class="el" href="cosimplex_8hpp_source.html">cosimplex.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a7f807817675d32d99f75b6861c93a627" name="a7f807817675d32d99f75b6861c93a627"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7f807817675d32d99f75b6861c93a627">&#9670;&#160;</a></span>fill_hodge_star() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices1, misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices2, misc::Specialization&lt; tensor::Tensor &gt; HodgeStarType, class MetricDeterminantType , misc::Specialization&lt; tensor::Tensor &gt; MetricProdType&gt; <br />
+requires ( misc::Specialization&lt;MetricDeterminantType, ddc::ChunkSpan&gt; || misc::Specialization&lt;MetricDeterminantType, tensor::Tensor&gt;)</div>
+      <table class="memname">
+        <tr>
+          <td class="memname">HodgeStarType sil::exterior::fill_hodge_star </td>
+          <td>(</td>
+          <td class="paramtype">HodgeStarType&#160;</td>
+          <td class="paramname"><em>hodge_star</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">MetricDeterminantType&#160;</td>
+          <td class="paramname"><em>metric_determinant</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">MetricProdType&#160;</td>
+          <td class="paramname"><em>metric_prod</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="hodge__star_8hpp_source.html#l00042">42</a> of file <a class="el" href="hodge__star_8hpp_source.html">hodge_star.hpp</a>.</p>
+
+</div>
+</div>
+<a id="aba443744b441935d6a290ab3ce20285e" name="aba443744b441935d6a290ab3ce20285e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aba443744b441935d6a290ab3ce20285e">&#9670;&#160;</a></span>fill_hodge_star() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;tensor::TensorIndex MetricIndex, misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices1, misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices2, misc::Specialization&lt; tensor::Tensor &gt; HodgeStarType, misc::Specialization&lt; tensor::Tensor &gt; MetricType&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">HodgeStarType sil::exterior::fill_hodge_star </td>
+          <td>(</td>
+          <td class="paramtype">HodgeStarType&#160;</td>
+          <td class="paramname"><em>hodge_star</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">MetricType&#160;</td>
+          <td class="paramname"><em>metric</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="hodge__star_8hpp_source.html#l00084">84</a> of file <a class="el" href="hodge__star_8hpp_source.html">hodge_star.hpp</a>.</p>
 
 </div>
 </div>

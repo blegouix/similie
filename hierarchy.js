@@ -14,6 +14,7 @@ var hierarchy =
     [ "ddc::DiscreteElement", null, [
       [ "sil::exterior::Simplex< K, Tag >", "classsil_1_1exterior_1_1Simplex.html", null ]
     ] ],
+    [ "sil::tensor::Dummy< I >", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Dummy", null ],
     [ "std::false_type", null, [
       [ "sil::misc::is_specialization_of< T, U >", "structsil_1_1misc_1_1is__specialization__of.html", null ]
     ] ],

@@ -11,6 +11,7 @@ var namespacesil_1_1misc =
     [ "are_all_equal", "namespacesil_1_1misc.html#a5a1751c14a48bdc336c6ff27d10b1041", null ],
     [ "binomial_coefficient", "namespacesil_1_1misc.html#aea35c72a0b5289f6bef175d41e5001d1", null ],
     [ "domain_contains", "namespacesil_1_1misc.html#a3972a6165c52a1398ca03e1b4ef8d993", null ],
+    [ "factorial", "namespacesil_1_1misc.html#a36a53a5b4de947314917a5d09fc314b8", null ],
     [ "filled_struct", "namespacesil_1_1misc.html#ab627aa8f81b5446714d73f76e87e5533", null ],
     [ "permutation_parity", "namespacesil_1_1misc.html#a9350273fed3e9b0c5ac7f0cb4b85a649", null ],
     [ "select_from_type_seq", "namespacesil_1_1misc.html#ac4920dd15665754dd8afd25c431036c5", null ],

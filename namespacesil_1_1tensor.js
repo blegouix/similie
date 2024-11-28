@@ -2,6 +2,7 @@ var namespacesil_1_1tensor =
 [
     [ "Contravariant", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Contravariant", null ],
     [ "Covariant", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Covariant", null ],
+    [ "Dummy", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Dummy", null ],
     [ "MetricIndex1", "structsil_1_1tensor_1_1MetricIndex1.html", null ],
     [ "MetricIndex2", "structsil_1_1tensor_1_1MetricIndex2.html", null ],
     [ "prime", "structsil_1_1tensor_1_1prime.html", null ],
@@ -26,6 +27,7 @@ var namespacesil_1_1tensor =
     [ "swap_character", "namespacesil_1_1tensor.html#a5c644f8e2e92a6445ddeaec01e5fc7af", null ],
     [ "uncharacterize", "namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8", null ],
     [ "uncharacterize_tensor_t", "namespacesil_1_1tensor.html#a73fd1f7d374ac218e2f00fbc8c76eb31", null ],
+    [ "dummy_index_t", "namespacesil_1_1tensor.html#a201b576b1f3194623e18c3fc0076bdfc", null ],
     [ "relabelize_metric_in_domain_t", "namespacesil_1_1tensor.html#a1d7a6851fded61e2c756bd7c04a4b5fe", null ],
     [ "relabelize_metric_t", "namespacesil_1_1tensor.html#a501a35496af8f3afa414257911575664", null ],
     [ "metric_prod_domain_t", "namespacesil_1_1tensor.html#a4e5368f425f7bbbab77cd8edaff01b87", null ],

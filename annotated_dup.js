@@ -23,6 +23,7 @@ var annotated_dup =
       [ "tensor", "namespacesil_1_1tensor.html", [
         [ "Contravariant", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Contravariant", null ],
         [ "Covariant", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Covariant", null ],
+        [ "Dummy", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Dummy", null ],
         [ "MetricIndex1", "structsil_1_1tensor_1_1MetricIndex1.html", null ],
         [ "MetricIndex2", "structsil_1_1tensor_1_1MetricIndex2.html", null ],
         [ "prime", "structsil_1_1tensor_1_1prime.html", null ],
