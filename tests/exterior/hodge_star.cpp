@@ -55,16 +55,14 @@ using MetricIndex = sil::tensor::TensorSymmetricIndex<
         sil::tensor::TensorCovariantNaturalIndex<sil::tensor::MetricIndex1<X, Y, Z>>,
         sil::tensor::TensorCovariantNaturalIndex<sil::tensor::MetricIndex2<X, Y, Z>>>;
 
-using LeviCivitaIndex = sil::tensor::TensorLeviCivitaIndex<Mu, Nu, Rho>;
-
-using HodgeStarIndex = sil::exterior::
-        hodge_star_index_t<ddc::detail::TypeSeq<MuLow, NuLow>, ddc::detail::TypeSeq<RhoUp>>;
+using HodgeStarDomain = sil::exterior::
+        hodge_star_domain_t<ddc::detail::TypeSeq<MuLow, NuLow>, ddc::detail::TypeSeq<RhoUp>>;
 
 TEST(HodgeStar, Test)
 {
     ddc::DiscreteDomain<DDimX, DDimY>
             mesh_xy(ddc::DiscreteElement<DDimX, DDimY>(0, 0),
-                    ddc::DiscreteVector<DDimX, DDimY>(10, 10));
+                    ddc::DiscreteVector<DDimX, DDimY>(1, 1));
 
     sil::tensor::TensorAccessor<MetricIndex> metric_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, MetricIndex>
@@ -85,13 +83,13 @@ TEST(HodgeStar, Test)
         metric(elem, metric.accessor().access_element<Z, Z>()) = 6.;
     });
 
-    sil::tensor::TensorAccessor<HodgeStarIndex> hodge_star_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, HodgeStarIndex>
+    sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain> hodge_star_accessor;
+    ddc::cartesian_prod_t<ddc::DiscreteDomain<DDimX, DDimY>, HodgeStarDomain>
             hodge_star_dom(metric.non_indices_domain(), hodge_star_accessor.mem_domain());
     ddc::Chunk hodge_star_alloc(hodge_star_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
-            ddc::DiscreteDomain<DDimX, DDimY, HodgeStarIndex>,
+            ddc::cartesian_prod_t<ddc::DiscreteDomain<DDimX, DDimY>, HodgeStarDomain>,
             Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             hodge_star(hodge_star_alloc);
@@ -100,5 +98,10 @@ TEST(HodgeStar, Test)
             MetricIndex,
             ddc::detail::TypeSeq<Mu, Nu>,
             ddc::detail::TypeSeq<Rho>>(hodge_star, metric);
-    std::cout << hodge_star;
+    std::cout << hodge_star.natural_domain().front() << std::endl;
+    std::cout << hodge_star.natural_domain().back() << std::endl;
+    ddc::for_each(hodge_star.mem_domain(), [&] (auto elem) {
+        std::cout << hodge_star.mem(elem) << std::endl;
+    });
+    std::cout << hodge_star[mesh_xy.front()];
 }

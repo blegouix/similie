@@ -8,6 +8,7 @@
 #include <similie/misc/factorial.hpp>
 #include <similie/misc/specialization.hpp>
 #include <similie/misc/type_seq_conversion.hpp>
+#include <similie/tensor/antisymmetric_tensor.hpp>
 #include <similie/tensor/character.hpp>
 #include <similie/tensor/determinant.hpp>
 #include <similie/tensor/full_tensor.hpp>
@@ -22,8 +23,12 @@ namespace exterior {
 template <
         misc::Specialization<ddc::detail::TypeSeq> Indices1,
         misc::Specialization<ddc::detail::TypeSeq> Indices2>
-using hodge_star_index_t = misc::
-        convert_type_seq_to_t<tensor::TensorFullIndex, ddc::type_seq_merge_t<Indices1, Indices2>>;
+using hodge_star_domain_t
+        = ddc::detail::convert_type_seq_to_discrete_domain_t<ddc::type_seq_merge_t<
+                ddc::detail::TypeSeq<
+                        misc::convert_type_seq_to_t<tensor::TensorFullIndex, Indices1>>,
+                ddc::detail::TypeSeq<
+                        misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, Indices2>>>>;
 
 template <
         misc::Specialization<ddc::detail::TypeSeq> Indices1,
