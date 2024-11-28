@@ -80,7 +80,7 @@ struct TensorAntisymmetricIndex
                            + (sorted_ids[ddc::type_seq_rank_v<
                                       TensorIndex,
                                       ddc::detail::TypeSeq<TensorIndex...>>]
-                                              == TensorIndex::mem_size() - rank() // TODO rank()
+                                              == TensorIndex::mem_size() - rank()
                                                          + ddc::type_seq_rank_v<
                                                                  TensorIndex,
                                                                  ddc::detail::TypeSeq<
