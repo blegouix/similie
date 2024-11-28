@@ -428,7 +428,7 @@ using Rank3SymIndex3 = sil::tensor::TensorSymmetricIndex<
         sil::tensor::TensorContravariantNaturalIndex<Nu>,
         sil::tensor::TensorContravariantNaturalIndex<Sigma>>;
 
-TEST(TensorProd, SimpleContractionRank3SymIndexedxRank3SymIndexed)
+TEST(TensorProd, SimpleContractionRank3SymIndexedxRank2SymIndexed)
 {
     sil::tensor::TensorAccessor<Rank3SymIndex1> tensor_accessor1;
     ddc::DiscreteDomain<Rank3SymIndex1> tensor1_dom = tensor_accessor1.mem_domain();
@@ -472,26 +472,16 @@ TEST(TensorProd, SimpleContractionRank3SymIndexedxRank3SymIndexed)
             Kokkos::DefaultHostExecutionSpace::memory_space>
             tensor2(tensor2_alloc);
 
-    tensor2(tensor2.access_element<T, T, T>()) = 21.;
-    tensor2(tensor2.access_element<T, T, X>()) = 22.;
-    tensor2(tensor2.access_element<T, T, Y>()) = 23.;
-    tensor2(tensor2.access_element<T, T, Z>()) = 24.;
-    tensor2(tensor2.access_element<T, X, X>()) = 25.;
-    tensor2(tensor2.access_element<T, X, Y>()) = 26.;
-    tensor2(tensor2.access_element<T, X, Z>()) = 27.;
-    tensor2(tensor2.access_element<T, Y, Y>()) = 28.;
-    tensor2(tensor2.access_element<T, Y, Z>()) = 29.;
-    tensor2(tensor2.access_element<T, Z, Z>()) = 30.;
-    tensor2(tensor2.access_element<X, X, X>()) = 31.;
-    tensor2(tensor2.access_element<X, X, Y>()) = 32.;
-    tensor2(tensor2.access_element<X, X, Z>()) = 33.;
-    tensor2(tensor2.access_element<X, Y, Y>()) = 34.;
-    tensor2(tensor2.access_element<X, Y, Z>()) = 35.;
-    tensor2(tensor2.access_element<X, Z, Z>()) = 36.;
-    tensor2(tensor2.access_element<Y, Y, Y>()) = 37.;
-    tensor2(tensor2.access_element<Y, Y, Z>()) = 38.;
-    tensor2(tensor2.access_element<Y, Z, Z>()) = 39.;
-    tensor2(tensor2.access_element<Z, Z, Z>()) = 40.;
+    tensor2(tensor2.access_element<T, T>()) = 21.;
+    tensor2(tensor2.access_element<T, X>()) = 22.;
+    tensor2(tensor2.access_element<T, Y>()) = 23.;
+    tensor2(tensor2.access_element<T, Z>()) = 24.;
+    tensor2(tensor2.access_element<X, X>()) = 25.;
+    tensor2(tensor2.access_element<X, Y>()) = 26.;
+    tensor2(tensor2.access_element<X, Z>()) = 27.;
+    tensor2(tensor2.access_element<Y, Y>()) = 28.;
+    tensor2(tensor2.access_element<Y, Z>()) = 29.;
+    tensor2(tensor2.access_element<Z, Z>()) = 30.;
 
 
     sil::tensor::TensorAccessor<Rank3SymIndex3> prod_tensor_accessor;
@@ -507,26 +497,26 @@ TEST(TensorProd, SimpleContractionRank3SymIndexedxRank3SymIndexed)
 
     sil::tensor::tensor_prod(prod_tensor, tensor1, tensor2);
 
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, T, T>()), 285.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, T, X>()), 342.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, T, Y>()), 369.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, T, Z>()), 379.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, X, X>()), 681.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, X, Y>()), 734.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, X, Z>()), 754.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, Y, Y>()), 952.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, Y, Z>()), 978.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, Z, Z>()), 1123.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, X, X>()), 1386.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, X, Y>()), 1493.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, X, Z>()), 1534.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, Y, Y>()), 1711.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, Y, Z>()), 1758.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, Z, Z>()), 1903.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Y, Y, Y>()), 2070.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Y, Y, Z>()), 2127.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Y, Z, Z>()), 2272.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Z, Z, Z>()), 2417.);
+    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, T, T>()), 230.);
+    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, T, X>()), 258.);
+    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, T, Y>()), 275.);
+    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, T, Z>()), 285.);
+    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, X, X>()), 514.);
+    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, X, Y>()), 547.);
+    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, X, Z>()), 567.);
+    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, Y, Y>()), 710.);
+    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, Y, Z>()), 736.);
+    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, Z, Z>()), 846.);
+    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, X, X>()), 1048.);
+    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, X, Y>()), 1114.);
+    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, X, Z>()), 1155.);
+    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, Y, Y>()), 1277.);
+    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, Y, Z>()), 1324.);
+    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, Z, Z>()), 1434.);
+    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Y, Y, Y>()), 1546.);
+    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Y, Y, Z>()), 1603.);
+    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Y, Z, Z>()), 1713.);
+    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Z, Z, Z>()), 1823.);
 }
 
 using Rank3AntisymIndex1 = sil::tensor::TensorAntisymmetricIndex<
@@ -541,7 +531,7 @@ using Rank3AntisymIndex3 = sil::tensor::TensorAntisymmetricIndex<
         sil::tensor::TensorContravariantNaturalIndex<Nu>,
         sil::tensor::TensorContravariantNaturalIndex<Sigma>>;
 
-TEST(TensorProd, SimpleContractionRank3AntisymIndexedxRank3AntisymIndexed)
+TEST(TensorProd, SimpleContractionRank3AntisymIndexedxRank2AntisymIndexed)
 {
     sil::tensor::TensorAccessor<Rank3AntisymIndex1> tensor_accessor1;
     ddc::DiscreteDomain<Rank3AntisymIndex1> tensor1_dom = tensor_accessor1.mem_domain();
