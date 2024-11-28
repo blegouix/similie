@@ -20,8 +20,9 @@ struct Y
 };
 
 // Declare a metric
-using MetricIndex = sil::tensor::
-        TensorSymmetricIndex<sil::tensor::MetricIndex1<X, Y>, sil::tensor::MetricIndex2<X, Y>>;
+using MetricIndex = sil::tensor::TensorSymmetricIndex<
+        sil::tensor::TensorCovariantNaturalIndex<sil::tensor::MetricIndex1<X, Y>>,
+        sil::tensor::TensorCovariantNaturalIndex<sil::tensor::MetricIndex2<X, Y>>>;
 
 using MesherXY = sil::mesher::Mesher<s_degree, X, Y>;
 
@@ -50,9 +51,20 @@ struct Nu : sil::tensor::TensorNaturalIndex<X, Y>
 {
 };
 
+struct Rho : sil::tensor::TensorNaturalIndex<X, Y>
+{
+};
+
 // Declare upper (contravariant) indices
+using MuLow = sil::tensor::TensorCovariantNaturalIndex<Mu>;
 using MuUp = sil::tensor::TensorContravariantNaturalIndex<Mu>;
+using NuLow = sil::tensor::TensorCovariantNaturalIndex<Nu>;
 using NuUp = sil::tensor::TensorContravariantNaturalIndex<Nu>;
+using RhoLow = sil::tensor::TensorCovariantNaturalIndex<Rho>;
+using RhoUp = sil::tensor::TensorContravariantNaturalIndex<Rho>;
+
+using HodgeStarDomain = sil::exterior::
+        hodge_star_domain_t<ddc::detail::TypeSeq<MuUp, NuUp>, ddc::detail::TypeSeq<RhoLow>>;
 
 int main(int argc, char** argv)
 {
@@ -80,11 +92,41 @@ int main(int argc, char** argv)
             Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             metric(metric_alloc);
-    auto gmunu = sil::tensor::relabelize_metric<MuUp, NuUp>(metric);
     ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
-        gmunu(elem, gmunu.accessor().access_element<X, X>()) = 1.;
-        gmunu(elem, gmunu.accessor().access_element<X, Y>()) = 2.;
-        gmunu(elem, gmunu.accessor().access_element<Y, Y>()) = 3.;
+        metric(elem, metric.accessor().access_element<X, X>()) = 1.;
+        metric(elem, metric.accessor().access_element<X, Y>()) = 0.;
+        metric(elem, metric.accessor().access_element<Y, Y>()) = 1.;
     });
-    std::cout << gmunu;
+
+    // Invert metric
+    sil::tensor::TensorAccessor<sil::tensor::upper<MetricIndex>> inv_metric_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::upper<MetricIndex>>
+            inv_metric_dom(mesh_xy, inv_metric_accessor.mem_domain());
+    ddc::Chunk inv_metric_alloc(inv_metric_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor<
+            double,
+            ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::upper<MetricIndex>>,
+            Kokkos::layout_right,
+            Kokkos::DefaultHostExecutionSpace::memory_space>
+            inv_metric(inv_metric_alloc);
+    sil::tensor::fill_inverse_metric<MetricIndex>(inv_metric, metric);
+    // auto gmunu = sil::tensor::relabelize_metric<MuUp, NuUp>(inv_metric);
+
+    // Hodge star
+    sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain> hodge_star_accessor;
+    ddc::cartesian_prod_t<ddc::DiscreteDomain<DDimX, DDimY>, HodgeStarDomain>
+            hodge_star_dom(metric.non_indices_domain(), hodge_star_accessor.mem_domain());
+    ddc::Chunk hodge_star_alloc(hodge_star_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor<
+            double,
+            ddc::cartesian_prod_t<ddc::DiscreteDomain<DDimX, DDimY>, HodgeStarDomain>,
+            Kokkos::layout_right,
+            Kokkos::DefaultHostExecutionSpace::memory_space>
+            hodge_star(hodge_star_alloc);
+
+    sil::exterior::fill_hodge_star<
+            MetricIndex,
+            ddc::detail::TypeSeq<MuLow, NuLow>,
+            ddc::detail::TypeSeq<RhoUp>>(hodge_star, inv_metric);
+    std::cout << hodge_star;
 }
