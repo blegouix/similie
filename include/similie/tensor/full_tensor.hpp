@@ -86,7 +86,8 @@ struct TensorFullIndex
     {
         assert(mem_id < mem_size());
         return std::vector<std::size_t> {
-                (mem_id % misc::detail::stride<TensorIndex, TensorIndex...>())...};
+                (mem_id % misc::detail::next_stride<TensorIndex, TensorIndex...>())
+                / misc::detail::stride<TensorIndex, TensorIndex...>()...};
     }
 };
 
