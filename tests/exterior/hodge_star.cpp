@@ -67,7 +67,7 @@ TEST(HodgeStar, Test)
 {
     ddc::DiscreteDomain<DDimX, DDimY>
             mesh_xy(ddc::DiscreteElement<DDimX, DDimY>(0, 0),
-                    ddc::DiscreteVector<DDimX, DDimY>(1, 1));
+                    ddc::DiscreteVector<DDimX, DDimY>(3, 3));
 
     sil::tensor::TensorAccessor<MetricIndex> metric_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, MetricIndex>
