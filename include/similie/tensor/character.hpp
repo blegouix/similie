@@ -188,6 +188,121 @@ uncharacterize_tensor_t<TensorType> uncharacterize_tensor(TensorType tensor)
             tensor);
 }
 
+// check if index is covariant
+namespace detail {
+
+template <TensorNatIndex Index>
+struct IsCovariant;
+
+template <TensorNatIndex Index>
+struct IsCovariant<TensorCovariantNaturalIndex<Index>>
+{
+    static constexpr bool value = true;
+};
+
+template <TensorNatIndex Index>
+struct IsCovariant<TensorContravariantNaturalIndex<Index>>
+{
+    static constexpr bool value = false;
+};
+
+} // namespace detail
+
+template <class T>
+bool constexpr is_covariant_v = detail::IsCovariant<T>::value;
+
+namespace detail {
+
+template <class Seq>
+struct AreCovariant;
+
+template <TensorNatIndex... Index>
+struct AreCovariant<ddc::detail::TypeSeq<Index...>>
+{
+    static constexpr bool value = (is_covariant_v<Index> && ...);
+};
+
+} // namespace detail
+
+template <misc::Specialization<ddc::detail::TypeSeq> Seq>
+bool constexpr are_covariant_v = detail::AreCovariant<Seq>::value;
+
+// check if index is contravariant
+namespace detail {
+
+template <TensorNatIndex Index>
+struct IsContravariant;
+
+template <TensorNatIndex Index>
+struct IsContravariant<TensorCovariantNaturalIndex<Index>>
+{
+    static constexpr bool value = false;
+};
+
+template <TensorNatIndex Index>
+struct IsContravariant<TensorContravariantNaturalIndex<Index>>
+{
+    static constexpr bool value = true;
+};
+
+} // namespace detail
+
+template <class T>
+bool constexpr is_contravariant_v = detail::IsContravariant<T>::value;
+
+namespace detail {
+
+template <class Seq>
+struct AreContravariant;
+
+template <TensorNatIndex... Index>
+struct AreContravariant<ddc::detail::TypeSeq<Index...>>
+{
+    static constexpr bool value = (is_contravariant_v<Index> && ...);
+};
+
+} // namespace detail
+
+template <misc::Specialization<ddc::detail::TypeSeq> Seq>
+bool constexpr are_contravariant_v = detail::AreContravariant<Seq>::value;
+
+// check if characters are equal
+namespace detail {
+
+template <TensorNatIndex Index1, TensorNatIndex Index2>
+struct IsSameCharacter;
+
+template <TensorNatIndex Index1, TensorNatIndex Index2>
+struct IsSameCharacter<TensorCovariantNaturalIndex<Index1>, TensorCovariantNaturalIndex<Index2>>
+{
+    static constexpr bool value = true;
+};
+
+template <TensorNatIndex Index1, TensorNatIndex Index2>
+struct IsSameCharacter<TensorContravariantNaturalIndex<Index1>, TensorCovariantNaturalIndex<Index2>>
+{
+    static constexpr bool value = false;
+};
+
+template <TensorNatIndex Index1, TensorNatIndex Index2>
+struct IsSameCharacter<TensorCovariantNaturalIndex<Index1>, TensorContravariantNaturalIndex<Index2>>
+{
+    static constexpr bool value = false;
+};
+
+template <TensorNatIndex Index1, TensorNatIndex Index2>
+struct IsSameCharacter<
+        TensorContravariantNaturalIndex<Index1>,
+        TensorContravariantNaturalIndex<Index2>>
+{
+    static constexpr bool value = true;
+};
+
+} // namespace detail
+
+template <class T1, class T2>
+using is_same_character_v = detail::IsSameCharacter<T1, T2>::value;
+
 } // namespace tensor
 
 } // namespace sil
