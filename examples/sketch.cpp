@@ -125,8 +125,10 @@ int main(int argc, char** argv)
             hodge_star(hodge_star_alloc);
 
     sil::exterior::fill_hodge_star<
-            MetricIndex,
-            ddc::detail::TypeSeq<MuLow, NuLow>,
-            ddc::detail::TypeSeq<RhoUp>>(hodge_star, inv_metric);
+            sil::tensor::upper<MetricIndex>,
+            ddc::detail::TypeSeq<MuUp, NuUp>,
+            ddc::detail::TypeSeq<>>(hodge_star, inv_metric);
     std::cout << hodge_star;
+
+    // Electrostatic potential
 }
