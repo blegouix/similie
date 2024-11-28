@@ -111,10 +111,11 @@ struct TensorSymmetricIndex
         return access(tensor, elem);
     }
 
-    static constexpr std::vector<std::size_t> mem_id_to_canonical_natural_ids(std::size_t mem_id)
+    static constexpr std::array<std::size_t, rank()> mem_id_to_canonical_natural_ids(
+            std::size_t mem_id)
     {
         assert(mem_id < mem_size());
-        std::vector<std::size_t> ids(rank());
+        std::array<std::size_t, rank()> ids;
         std::size_t d
                 = ddc::type_seq_element_t<0, ddc::detail::TypeSeq<TensorIndex...>>::mem_size();
         std::size_t r = rank();

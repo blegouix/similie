@@ -95,10 +95,13 @@ struct TensorDiagonalIndex
         }
     }
 
-    static constexpr std::vector<std::size_t> mem_id_to_canonical_natural_ids(std::size_t mem_id)
+    static constexpr std::array<std::size_t, rank()> mem_id_to_canonical_natural_ids(
+            std::size_t mem_id)
     {
         assert(mem_id < mem_size());
-        return misc::filled_struct<std::vector<std::size_t>>(mem_id);
+        std::array<std::size_t, rank()> ids;
+        std::fill(ids.begin(), ids.end(), mem_id);
+        return ids;
     }
 };
 

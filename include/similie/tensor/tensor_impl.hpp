@@ -3,8 +3,6 @@
 
 #pragma once
 
-#include <numeric>
-
 #include <ddc/ddc.hpp>
 
 #include <similie/misc/specialization.hpp>
@@ -98,10 +96,11 @@ struct TensorNaturalIndex
         return access(tensor, elem);
     }
 
-    static constexpr std::vector<std::size_t> mem_id_to_canonical_natural_ids(std::size_t mem_id)
+    static constexpr std::array<std::size_t, rank()> mem_id_to_canonical_natural_ids(
+            std::size_t mem_id)
     {
         assert(mem_id < mem_size());
-        return std::vector<std::size_t> {mem_id};
+        return std::array<std::size_t, rank()> {mem_id};
     }
 };
 
@@ -378,14 +377,16 @@ template <class... MemIndex>
 constexpr TensorAccessor<Index...>::natural_domain_t::discrete_element_type TensorAccessor<
         Index...>::canonical_natural_element(ddc::DiscreteElement<MemIndex...> mem_elem)
 {
-    std::vector<std::vector<std::size_t>> id_vects {
-            MemIndex::mem_id_to_canonical_natural_ids(mem_elem.template uid<MemIndex>())...};
     std::array<std::size_t, natural_domain_t::rank()> ids {};
     auto it = ids.begin();
-    for (auto i = id_vects.begin(); i < id_vects.end(); ++i) {
-        std::move((*i).begin(), (*i).end(), it);
-        it += i->size();
-    }
+    (
+            [&]() {
+                auto i = MemIndex::mem_id_to_canonical_natural_ids(
+                        mem_elem.template uid<MemIndex>());
+                std::copy(i.begin(), i.end(), it);
+                it += i.size();
+            }(),
+            ...);
     typename natural_domain_t::discrete_element_type natural_elem;
     ddc::detail::array(natural_elem) = std::array<std::size_t, natural_domain_t::rank()>(ids);
     return natural_elem;
