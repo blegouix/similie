@@ -6,8 +6,6 @@
 #include <ddc/ddc.hpp>
 
 #include <similie/misc/binomial_coefficient.hpp>
-#include <similie/misc/specialization.hpp>
-#include <similie/misc/stride.hpp>
 
 #include "tensor_impl.hpp"
 
@@ -173,35 +171,6 @@ public:
             }
         }
     }
-
-    /*
-    static constexpr std::vector<std::size_t> mem_id_to_canonical_natural_ids(std::size_t mem_id)
-    {
-        assert(mem_id < mem_size());
-        std::vector<std::size_t> ids(rank());
-        std::size_t d
-                = ddc::type_seq_element_t<0, ddc::detail::TypeSeq<TensorIndex...>>::mem_size() - 1;
-        std::size_t r = rank();
-        for (std::size_t i = 0; i < rank(); ++i) {
-            const std::size_t triangle_size = misc::binomial_coefficient(d + r - i - 1, r - i);
-            for (std::size_t j = 0; j < d; ++j) {
-                const std::size_t subtriangle_size
-                        = misc::binomial_coefficient(d - j + r - i - 2, r - i);
-                std::cout << mem_id << " " << i << " " << j << " " << subtriangle_size << " " << triangle_size - subtriangle_size << "\n";
-                if (triangle_size - subtriangle_size > mem_id) {
-                    ids[i] = ddc::type_seq_element_t<0, ddc::detail::TypeSeq<TensorIndex...>>::mem_size()-d+i+j-1;
-                    std::cout << triangle_size - misc::binomial_coefficient(d - j + r - i - 1, r - i) << "\n";
-                    mem_id -= triangle_size - misc::binomial_coefficient(d - j + r - i - 1, r - i);
-                    d -= j;
-                    break;
-                }
-                ids[i] = 0; 
-            }
-            // std::cout << mem_id << "\n";
-        }
-        return ids;
-    }
-    */
 
     static constexpr std::vector<std::size_t> mem_id_to_canonical_natural_ids(std::size_t mem_id)
     {
