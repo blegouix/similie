@@ -440,7 +440,7 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
                             if constexpr (IndexInterest::is_explicitely_stored_tensor) {
                                 std::size_t const mem_id = IndexInterest::access_id_to_mem_id(
                                         elem_.template uid<IndexInterest>());
-                                if (mem_id != std::numeric_limits<std::size_t>::infinity()) {
+                                if (mem_id != std::numeric_limits<std::size_t>::max()) {
                                     tensor_field_value
                                             = tensor_field_
                                                       .mem(ddc::DiscreteElement<IndexHead...>(
@@ -505,8 +505,8 @@ struct LambdaMemElem<InterestDim>
         if constexpr (InterestDim::is_explicitely_stored_tensor) {
             std::size_t const mem_id
                     = InterestDim::access_id_to_mem_id(elem.template uid<InterestDim>());
-            assert(mem_id != std::numeric_limits<std::size_t>::infinity()
-                   && "mem_elem is not defined because mem_id() returned an infinity");
+            assert(mem_id != std::numeric_limits<std::size_t>::max()
+                   && "mem_elem is not defined because mem_id() returned a max integer");
             return ddc::DiscreteElement<InterestDim>(mem_id);
         } else {
             std::pair<std::vector<double>, std::vector<std::size_t>> const mem_lin_comb

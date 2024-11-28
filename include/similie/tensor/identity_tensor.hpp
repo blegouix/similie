@@ -51,7 +51,7 @@ struct TensorIdentityIndex
     static constexpr std::size_t mem_id(
             std::array<std::size_t, sizeof...(TensorIndex)> const natural_ids)
     {
-        return std::numeric_limits<std::size_t>::infinity();
+        return std::numeric_limits<std::size_t>::max();
     }
 
     static constexpr std::size_t access_id(
@@ -68,7 +68,7 @@ struct TensorIdentityIndex
 
     static constexpr std::size_t access_id_to_mem_id(std::size_t access_id)
     {
-        return std::numeric_limits<std::size_t>::infinity();
+        return std::numeric_limits<std::size_t>::max();
     }
 
     template <class Tensor, class Elem, class Id>

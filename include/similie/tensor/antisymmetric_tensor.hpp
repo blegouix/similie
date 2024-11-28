@@ -132,7 +132,7 @@ public:
             if (access_id != 0) {
                 return (access_id - 1) % mem_size();
             } else {
-                return std::numeric_limits<std::size_t>::infinity();
+                return std::numeric_limits<std::size_t>::max();
             }
         }
     }
