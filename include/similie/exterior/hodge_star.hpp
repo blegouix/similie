@@ -83,6 +83,8 @@ template <
         misc::Specialization<tensor::Tensor> MetricType>
 HodgeStarType fill_hodge_star(HodgeStarType hodge_star, MetricType metric)
 {
+    static_assert(tensor::are_contravariant_v<Indices1>);
+    static_assert(tensor::are_covariant_v<Indices2>);
     ddc::Chunk metric_det_alloc(metric.non_indices_domain(), ddc::HostAllocator<double>());
     ddc::ChunkSpan<
             double,
