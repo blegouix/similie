@@ -83,7 +83,8 @@ template <
         misc::Specialization<tensor::Tensor> MetricType>
 HodgeStarType fill_hodge_star(HodgeStarType hodge_star, MetricType metric)
 {
-    static_assert(tensor::are_contravariant_v<ddc::to_type_seq_t<typename MetricType::accessor_t::natural_domain_t>>);
+    static_assert(tensor::are_contravariant_v<
+                  ddc::to_type_seq_t<typename MetricType::accessor_t::natural_domain_t>>);
     static_assert(tensor::are_contravariant_v<Indices1>);
     static_assert(tensor::are_covariant_v<Indices2>);
     ddc::Chunk metric_det_alloc(metric.non_indices_domain(), ddc::HostAllocator<double>());
@@ -95,7 +96,7 @@ HodgeStarType fill_hodge_star(HodgeStarType hodge_star, MetricType metric)
             metric_det(metric_det_alloc);
     ddc::for_each( // TODO parallel_for_each (weird lock)
             metric_det.domain(),
-            [&](auto elem) { metric_det(elem) = 1./tensor::determinant(metric[elem]); });
+            [&](auto elem) { metric_det(elem) = 1. / tensor::determinant(metric[elem]); });
 
     tensor::tensor_accessor_for_domain_t<
             tensor::metric_prod_domain_t<MetricIndex, Indices1, tensor::primes<Indices1>>>
