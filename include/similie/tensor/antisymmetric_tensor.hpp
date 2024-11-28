@@ -18,6 +18,7 @@ template <class... TensorIndex>
 struct TensorAntisymmetricIndex
 {
     static constexpr bool is_tensor_index = true;
+    static constexpr bool is_explicitely_stored_tensor = true;
 
     using subindices_domain_t = ddc::DiscreteDomain<TensorIndex...>;
 
@@ -67,38 +68,31 @@ struct TensorAntisymmetricIndex
         }
     }
 
-    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_lin_comb(
-            std::array<std::size_t, rank()> const ids)
+    static constexpr std::size_t mem_id(std::array<std::size_t, rank()> const natural_ids)
     {
-        std::array<std::size_t, rank()> sorted_ids(ids);
+        std::array<std::size_t, rank()> sorted_ids(natural_ids);
         std::sort(sorted_ids.begin(), sorted_ids.end());
-        return std::pair<std::vector<double>, std::vector<std::size_t>>(
-                std::vector<double> {1.},
-                std::vector<std::size_t> {static_cast<std::size_t>(
-                        mem_size()
-                        - (0 + ...
-                           + (sorted_ids[ddc::type_seq_rank_v<
-                                      TensorIndex,
-                                      ddc::detail::TypeSeq<TensorIndex...>>]
-                                              == TensorIndex::mem_size() - rank()
-                                                         + ddc::type_seq_rank_v<
-                                                                 TensorIndex,
-                                                                 ddc::detail::TypeSeq<
-                                                                         TensorIndex...>>
-                                      ? 0
-                                      : misc::binomial_coefficient(
-                                                TensorIndex::mem_size()
-                                                        - sorted_ids[ddc::type_seq_rank_v<
-                                                                TensorIndex,
-                                                                ddc::detail::TypeSeq<
-                                                                        TensorIndex...>>]
-                                                        - 1,
-                                                rank()
-                                                        - ddc::type_seq_rank_v<
-                                                                TensorIndex,
-                                                                ddc::detail::TypeSeq<
-                                                                        TensorIndex...>>)))
-                        - 1)});
+        return mem_size()
+               - (0 + ...
+                  + (sorted_ids[ddc::type_seq_rank_v<
+                             TensorIndex,
+                             ddc::detail::TypeSeq<TensorIndex...>>]
+                                     == TensorIndex::mem_size() - rank()
+                                                + ddc::type_seq_rank_v<
+                                                        TensorIndex,
+                                                        ddc::detail::TypeSeq<TensorIndex...>>
+                             ? 0
+                             : misc::binomial_coefficient(
+                                       TensorIndex::mem_size()
+                                               - sorted_ids[ddc::type_seq_rank_v<
+                                                       TensorIndex,
+                                                       ddc::detail::TypeSeq<TensorIndex...>>]
+                                               - 1,
+                                       rank()
+                                               - ddc::type_seq_rank_v<
+                                                       TensorIndex,
+                                                       ddc::detail::TypeSeq<TensorIndex...>>)))
+               - 1;
     }
 
 private:
@@ -113,40 +107,32 @@ private:
     }
 
 public:
-    static constexpr std::size_t access_id(std::array<std::size_t, rank()> const ids)
+    static constexpr std::size_t access_id(std::array<std::size_t, rank()> const natural_ids)
     {
         if constexpr (rank() <= 1) {
-            return std::get<1>(mem_lin_comb(ids))[0];
+            return mem_id(natural_ids);
         } else {
-            if (std::all_of(ids.begin(), ids.end(), [&](const std::size_t id) {
-                    return id == *ids.begin();
+            if (std::all_of(natural_ids.begin(), natural_ids.end(), [&](const std::size_t id) {
+                    return id == *natural_ids.begin();
                 })) {
                 return 0;
-            } else if (!permutation_parity(ids)) {
-                return 1 + std::get<1>(mem_lin_comb(ids))[0];
+            } else if (!permutation_parity(natural_ids)) {
+                return 1 + mem_id(natural_ids);
             } else {
-                return access_size() + std::get<1>(mem_lin_comb(ids))[0];
+                return access_size() + mem_id(natural_ids);
             }
         }
     }
 
-    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>>
-    access_id_to_mem_lin_comb(std::size_t access_id)
+    static constexpr std::size_t access_id_to_mem_id(std::size_t access_id)
     {
         if constexpr (rank() <= 1) {
-            return std::pair<std::vector<double>, std::vector<std::size_t>>(
-                    std::vector<double> {1.},
-                    std::vector<std::size_t> {access_id});
+            return access_id;
         } else {
             if (access_id != 0) {
-                return std::pair<std::vector<double>, std::vector<std::size_t>>(
-                        std::vector<double> {1.},
-                        std::vector<std::size_t> {(access_id - 1) % mem_size()});
+                return (access_id - 1) % mem_size();
             } else {
-                return std::pair<
-                        std::vector<double>,
-                        std::vector<
-                                std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {});
+                return std::numeric_limits<std::size_t>::max();
             }
         }
     }

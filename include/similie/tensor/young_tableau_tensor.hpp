@@ -20,6 +20,7 @@ template <class YoungTableau, class... TensorIndex>
 struct TensorYoungTableauIndex
 {
     static constexpr bool is_tensor_index = true;
+    static constexpr bool is_explicitely_stored_tensor = false;
 
     using young_tableau = YoungTableau;
 
@@ -54,7 +55,7 @@ struct TensorYoungTableauIndex
     }
 
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_lin_comb(
-            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
+            std::array<std::size_t, sizeof...(TensorIndex)> const natural_ids)
     {
         std::pair<std::vector<double>, std::vector<std::size_t>> result {};
         constexpr csr::Csr v = young_tableau::template v<
@@ -66,7 +67,7 @@ struct TensorYoungTableauIndex
         for (std::size_t j = 0; j < v.values().size(); ++j) {
             if (((v.idx()[ddc::type_seq_rank_v<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>>]
                          [j]
-                  == TensorIndex::access_id(ids))
+                  == TensorIndex::access_id(natural_ids))
                  && ...)) {
                 std::get<0>(result).push_back(v.values()[j]);
                 std::size_t k = 0;
@@ -80,10 +81,11 @@ struct TensorYoungTableauIndex
     }
 
     static constexpr std::size_t access_id(
-            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
+            std::array<std::size_t, sizeof...(TensorIndex)> const natural_ids)
     {
         return ((misc::detail::stride<TensorIndex, TensorIndex...>()
-                 * ids[ddc::type_seq_rank_v<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>>])
+                 * natural_ids
+                         [ddc::type_seq_rank_v<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>>])
                 + ...);
     }
 

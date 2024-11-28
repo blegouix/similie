@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <iostream>
+
 #include <ddc/ddc.hpp>
 
 #include <similie/misc/specialization.hpp>
@@ -17,6 +19,7 @@ struct TensorNaturalIndex
 {
     static constexpr bool is_tensor_index = true;
     static constexpr bool is_tensor_natural_index = true;
+    static constexpr bool is_explicitely_stored_tensor = true;
 
     using type_seq_dimensions = ddc::detail::TypeSeq<CDim...>;
 
@@ -52,39 +55,28 @@ struct TensorNaturalIndex
     }
 
     template <class ODim>
-    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_lin_comb()
+    static constexpr std::size_t mem_id()
     {
         if constexpr (rank() == 0) {
-            return std::pair<
-                    std::vector<double>,
-                    std::vector<
-                            std::size_t>>(std::vector<double> {1.}, std::vector<std::size_t> {0});
+            return 0;
         } else {
-            return std::pair<std::vector<double>, std::vector<std::size_t>>(
-                    std::vector<double> {1.},
-                    std::vector<std::size_t> {ddc::type_seq_rank_v<ODim, type_seq_dimensions>});
+            return ddc::type_seq_rank_v<ODim, type_seq_dimensions>;
         }
     }
 
-    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_lin_comb(
-            std::size_t const id)
+    static constexpr std::size_t mem_id(std::size_t const natural_id)
     {
-        return std::pair<
-                std::vector<double>,
-                std::vector<std::size_t>>(std::vector<double> {1.}, std::vector<std::size_t> {id});
+        return natural_id;
     }
 
-    static constexpr std::size_t access_id(std::size_t const id)
+    static constexpr std::size_t access_id(std::size_t const natural_id)
     {
-        return id;
+        return natural_id;
     }
 
-    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>>
-    access_id_to_mem_lin_comb(std::size_t access_id)
+    static constexpr std::size_t access_id_to_mem_id(std::size_t access_id)
     {
-        return std::pair<std::vector<double>, std::vector<std::size_t>>(
-                std::vector<double> {1.},
-                std::vector<std::size_t> {access_id});
+        return access_id;
     }
 
     template <class Tensor, class Elem, class Id>
@@ -443,24 +435,42 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
             if constexpr (TensorIndex<IndexInterest>) {
                 return IndexInterest::template process_access<TensorField, Elem, IndexInterest>(
                         [](TensorField tensor_field_, Elem elem_) -> TensorField::element_type {
-                            std::pair<std::vector<double>, std::vector<std::size_t>> mem_lin_comb
-                                    = IndexInterest::access_id_to_mem_lin_comb(
-                                            elem_.template uid<IndexInterest>());
-
                             double tensor_field_value = 0;
-                            if (std::get<0>(mem_lin_comb).size() > 0) {
-                                for (std::size_t i = 0; i < std::get<0>(mem_lin_comb).size(); ++i) {
+                            if constexpr (IndexInterest::is_explicitely_stored_tensor) {
+                                std::size_t const mem_id = IndexInterest::access_id_to_mem_id(
+                                        elem_.template uid<IndexInterest>());
+                                if (mem_id != std::numeric_limits<std::size_t>::max()) {
                                     tensor_field_value
-                                            += std::get<0>(mem_lin_comb)[i]
-                                               * tensor_field_
-                                                         .mem(ddc::DiscreteElement<IndexHead...>(
-                                                                      elem_),
-                                                              ddc::DiscreteElement<IndexInterest>(
-                                                                      std::get<1>(
-                                                                              mem_lin_comb)[i]));
+                                            = tensor_field_
+                                                      .mem(ddc::DiscreteElement<IndexHead...>(
+                                                                   elem_),
+                                                           ddc::DiscreteElement<IndexInterest>(
+                                                                   mem_id));
+                                } else {
+                                    tensor_field_value = 1.;
                                 }
                             } else {
-                                tensor_field_value = 1.;
+                                std::pair<std::vector<double>, std::vector<std::size_t>> const
+                                        mem_lin_comb
+                                        = IndexInterest::access_id_to_mem_lin_comb(
+                                                elem_.template uid<IndexInterest>());
+
+                                if (std::get<0>(mem_lin_comb).size() > 0) {
+                                    for (std::size_t i = 0; i < std::get<0>(mem_lin_comb).size();
+                                         ++i) {
+                                        tensor_field_value
+                                                += std::get<0>(mem_lin_comb)[i]
+                                                   * tensor_field_
+                                                             .mem(ddc::DiscreteElement<
+                                                                          IndexHead...>(elem_),
+                                                                  ddc::DiscreteElement<
+                                                                          IndexInterest>(std::get<
+                                                                                         1>(
+                                                                          mem_lin_comb)[i]));
+                                    }
+                                } else {
+                                    tensor_field_value = 1.;
+                                }
                             }
 
                             return tensor_field_value;
@@ -491,13 +501,21 @@ struct LambdaMemElem<InterestDim>
     template <class Elem>
     static ddc::DiscreteElement<InterestDim> run(Elem elem)
     {
-        std::pair<std::vector<double>, std::vector<std::size_t>> mem_lin_comb
-                = InterestDim::access_id_to_mem_lin_comb(elem.template uid<InterestDim>());
-        assert(std::get<0>(mem_lin_comb).size() > 0
-               && "mem_elem is not defined because mem_lin_comb contains no id");
-        assert(std::get<0>(mem_lin_comb).size() == 1
-               && "mem_elem is not defined because mem_lin_comb contains several ids");
-        return ddc::DiscreteElement<InterestDim>(std::get<1>(mem_lin_comb)[0]);
+        if constexpr (InterestDim::is_explicitely_stored_tensor) {
+            std::size_t const mem_id
+                    = InterestDim::access_id_to_mem_id(elem.template uid<InterestDim>());
+            assert(mem_id != std::numeric_limits<std::size_t>::max()
+                   && "mem_elem is not defined because mem_id() returned a max integer");
+            return ddc::DiscreteElement<InterestDim>(mem_id);
+        } else {
+            std::pair<std::vector<double>, std::vector<std::size_t>> const mem_lin_comb
+                    = InterestDim::access_id_to_mem_lin_comb(elem.template uid<InterestDim>());
+            assert(std::get<0>(mem_lin_comb).size() > 0
+                   && "mem_elem is not defined because mem_lin_comb contains no id");
+            assert(std::get<0>(mem_lin_comb).size() == 1
+                   && "mem_elem is not defined because mem_lin_comb contains several ids");
+            return ddc::DiscreteElement<InterestDim>(std::get<1>(mem_lin_comb)[0]);
+        }
     }
 };
 

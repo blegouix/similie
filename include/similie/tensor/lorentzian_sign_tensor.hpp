@@ -16,6 +16,7 @@ template <class Q, class... TensorIndex>
 struct TensorLorentzianSignIndex
 {
     static constexpr bool is_tensor_index = true;
+    static constexpr bool is_explicitely_stored_tensor = true;
 
     using subindices_domain_t = ddc::DiscreteDomain<TensorIndex...>;
 
@@ -47,23 +48,21 @@ struct TensorLorentzianSignIndex
         return 3;
     }
 
-    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_lin_comb(
-            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
+    static constexpr std::size_t mem_id(
+            std::array<std::size_t, sizeof...(TensorIndex)> const natural_ids)
     {
-        return std::pair<
-                std::vector<double>,
-                std::vector<std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {});
+        return std::numeric_limits<std::size_t>::max();
     }
 
     static constexpr std::size_t access_id(
-            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
+            std::array<std::size_t, sizeof...(TensorIndex)> const natural_ids)
     {
-        if (!std::all_of(ids.begin(), ids.end(), [&](const std::size_t id) {
-                return id == *ids.begin();
+        if (!std::all_of(natural_ids.begin(), natural_ids.end(), [&](const std::size_t id) {
+                return id == *natural_ids.begin();
             })) {
             return 0;
         } else {
-            if (ids[0] < Q::value) {
+            if (natural_ids[0] < Q::value) {
                 return 1;
             } else {
                 return 2;
@@ -71,12 +70,9 @@ struct TensorLorentzianSignIndex
         }
     }
 
-    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>>
-    access_id_to_mem_lin_comb(std::size_t access_id)
+    static constexpr std::size_t access_id_to_mem_id(std::size_t access_id)
     {
-        return std::pair<
-                std::vector<double>,
-                std::vector<std::size_t>>(std::vector<double> {}, std::vector<std::size_t> {});
+        return std::numeric_limits<std::size_t>::max();
     }
 
     template <class Tensor, class Elem, class Id>
