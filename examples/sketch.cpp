@@ -66,6 +66,8 @@ using RhoUp = sil::tensor::TensorContravariantNaturalIndex<Rho>;
 using HodgeStarDomain = sil::exterior::
         hodge_star_domain_t<ddc::detail::TypeSeq<MuUp, NuUp>, ddc::detail::TypeSeq<RhoLow>>;
 
+using DummyIndex = sil::tensor::TensorCovariantNaturalIndex<sil::tensor::TensorNaturalIndex<>>;
+
 int main(int argc, char** argv)
 {
     Kokkos::ScopeGuard const kokkos_scope(argc, argv);
@@ -74,8 +76,8 @@ int main(int argc, char** argv)
     printf("start example\n");
 
     MesherXY mesher;
-    ddc::Coordinate<X, Y> lower_bounds(0., 0.);
-    ddc::Coordinate<X, Y> upper_bounds(1., 1.);
+    ddc::Coordinate<X, Y> lower_bounds(-10., -10.);
+    ddc::Coordinate<X, Y> upper_bounds(10., 10.);
     ddc::DiscreteVector<DDimX, DDimY> nb_cells(10, 10);
     ddc::DiscreteDomain<DDimX, DDimY> mesh_xy = mesher.template mesh<
             ddc::detail::TypeSeq<DDimX, DDimY>,
@@ -128,7 +130,51 @@ int main(int argc, char** argv)
             sil::tensor::upper<MetricIndex>,
             ddc::detail::TypeSeq<MuUp, NuUp>,
             ddc::detail::TypeSeq<>>(hodge_star, inv_metric);
-    std::cout << hodge_star;
 
     // Electrostatic potential
+    ddc::DiscreteDomain<DDimX, DDimY, DummyIndex>
+            potential_dom(metric.non_indices_domain(), ddc::DiscreteDomain<DummyIndex>());
+    ddc::Chunk potential_alloc(potential_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor<
+            double,
+            ddc::DiscreteDomain<DDimX, DDimY, DummyIndex>,
+            Kokkos::layout_right,
+            Kokkos::DefaultHostExecutionSpace::memory_space>
+            potential(potential_alloc);
+
+    ddc::for_each(potential.domain(), [&](auto elem) {
+        double const r = Kokkos::sqrt(
+                static_cast<double>(
+                        ddc::coordinate(ddc::DiscreteElement<DDimX>(elem))
+                        * ddc::coordinate(ddc::DiscreteElement<DDimX>(elem)))
+                + static_cast<double>(
+                        ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))
+                        * ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))));
+        if (r < 1) {
+            potential.mem(elem) = r;
+        } else {
+            potential.mem(elem) = 1. / r;
+        }
+    });
+
+    sil::tensor::TensorAccessor<MuLow> gradient_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, MuLow> gradient_dom(
+            mesh_xy.remove_last(ddc::DiscreteVector<DDimX, DDimY> {1, 1}),
+            gradient_accessor.mem_domain());
+    ddc::Chunk gradient_alloc(gradient_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor<
+            double,
+            ddc::DiscreteDomain<DDimX, DDimY, MuLow>,
+            Kokkos::layout_right,
+            Kokkos::DefaultHostExecutionSpace::memory_space>
+            gradient(gradient_alloc);
+    // std::cout << potential;
+    sil::exterior::deriv<MuLow, DummyIndex>(gradient, potential);
+    // std::cout << gradient;
+    /*
+    sil::exterior::fill_hodge_star<
+            sil::tensor::upper<MetricIndex>,
+            ddc::detail::TypeSeq<MuUp, NuUp>,
+            ddc::detail::TypeSeq<>>(hodge_star, inv_metric);
+    */
 }
