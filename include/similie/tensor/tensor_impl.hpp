@@ -3,7 +3,6 @@
 
 #pragma once
 
-#include <cmath>
 #include <iostream>
 
 #include <ddc/ddc.hpp>
