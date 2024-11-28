@@ -139,7 +139,6 @@ struct TensorProdAnyAnyAny<
 
         ddc::for_each(prod_tensor.domain(), [&](ddc::DiscreteElement<ProdDDim...> mem_elem) {
             auto elem = prod_tensor.canonical_natural_element(mem_elem);
-            std::cout << elem << mem_elem << "\n";
             prod_tensor.mem(mem_elem) = ddc::transform_reduce(
                     contract_dom,
                     0.,
