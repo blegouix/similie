@@ -18,6 +18,7 @@ template <class... TensorIndex>
 struct TensorDiagonalIndex
 {
     static constexpr bool is_tensor_index = true;
+    static constexpr bool is_explicitely_stored_tensor = true;
 
     using subindices_domain_t = ddc::DiscreteDomain<TensorIndex...>;
 
@@ -49,37 +50,31 @@ struct TensorDiagonalIndex
         return 1 + mem_size();
     }
 
-    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_lin_comb(
-            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
+    static constexpr std::size_t mem_id(
+            std::array<std::size_t, sizeof...(TensorIndex)> const natural_ids)
     {
-        assert(std::all_of(ids.begin(), ids.end(), [&](const std::size_t id) {
-            return id == *ids.begin();
+        assert(std::all_of(natural_ids.begin(), natural_ids.end(), [&](const std::size_t id) {
+            return id == *natural_ids.begin();
         }));
-        return std::pair<
-                std::vector<double>,
-                std::vector<
-                        std::size_t>>(std::vector<double> {1.}, std::vector<std::size_t> {ids[0]});
+        return natural_ids[0];
     }
 
     static constexpr std::size_t access_id(
-            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
+            std::array<std::size_t, sizeof...(TensorIndex)> const natural_ids)
     {
-        if (!std::all_of(ids.begin(), ids.end(), [&](const std::size_t id) {
-                return id == *ids.begin();
+        if (!std::all_of(natural_ids.begin(), natural_ids.end(), [&](const std::size_t id) {
+                return id == *natural_ids.begin();
             })) {
             return 0;
         } else {
-            return 1 + std::get<1>(mem_lin_comb(ids))[0];
+            return 1 + mem_id(natural_ids);
         }
     }
 
-    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>>
-    access_id_to_mem_lin_comb(std::size_t access_id)
+    static constexpr std::size_t access_id_to_mem_id(std::size_t access_id)
     {
-        assert(access_id != 0 && "There is no mem_lin_comb associated to access_id=0");
-        return std::pair<std::vector<double>, std::vector<std::size_t>>(
-                std::vector<double> {1.},
-                std::vector<std::size_t> {access_id - 1});
+        assert(access_id != 0 && "There is no mem_id associated to access_id=0");
+        return access_id - 1;
     }
 
     template <class Tensor, class Elem, class Id>

@@ -20,6 +20,7 @@ template <class YoungTableau, class... TensorIndex>
 struct TensorYoungTableauIndex
 {
     static constexpr bool is_tensor_index = true;
+    static constexpr bool is_explicitely_stored_tensor = false;
 
     using young_tableau = YoungTableau;
 

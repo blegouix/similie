@@ -18,6 +18,7 @@ template <class... TensorIndex>
 struct TensorFullIndex
 {
     static constexpr bool is_tensor_index = true;
+    static constexpr bool is_explicitely_stored_tensor = true;
 
     using subindices_domain_t = ddc::DiscreteDomain<TensorIndex...>;
 
@@ -49,28 +50,24 @@ struct TensorFullIndex
         return (TensorIndex::access_size() * ...);
     }
 
-    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_lin_comb(
-            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
+    static constexpr std::size_t mem_id(
+            std::array<std::size_t, sizeof...(TensorIndex)> const natural_ids)
     {
-        return std::pair<std::vector<double>, std::vector<std::size_t>>(
-                std::vector<double> {1.},
-                std::vector<std::size_t> {access_id(ids)});
+        return access_id(natural_ids);
     }
 
     static constexpr std::size_t access_id(
-            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
+            std::array<std::size_t, sizeof...(TensorIndex)> const natural_ids)
     {
         return ((misc::detail::stride<TensorIndex, TensorIndex...>()
-                 * ids[ddc::type_seq_rank_v<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>>])
+                 * natural_ids
+                         [ddc::type_seq_rank_v<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>>])
                 + ...);
     }
 
-    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>>
-    access_id_to_mem_lin_comb(std::size_t access_id)
+    static constexpr std::size_t access_id_to_mem_id(std::size_t access_id)
     {
-        return std::pair<std::vector<double>, std::vector<std::size_t>>(
-                std::vector<double> {1.},
-                std::vector<std::size_t> {access_id});
+        return access_id;
     }
 
     template <class Tensor, class Elem, class Id>
