@@ -55,8 +55,8 @@ using RhoUp = sil::tensor::TensorContravariantNaturalIndex<Rho>;
 using RhoLow = sil::tensor::TensorCovariantNaturalIndex<Rho>;
 
 using MetricIndex = sil::tensor::TensorSymmetricIndex<
-        sil::tensor::TensorCovariantNaturalIndex<sil::tensor::MetricIndex1<X, Y, Z>>,
-        sil::tensor::TensorCovariantNaturalIndex<sil::tensor::MetricIndex2<X, Y, Z>>>;
+        sil::tensor::TensorContravariantNaturalIndex<sil::tensor::MetricIndex1<X, Y, Z>>,
+        sil::tensor::TensorContravariantNaturalIndex<sil::tensor::MetricIndex2<X, Y, Z>>>;
 
 using HodgeStarDomain = sil::exterior::
         hodge_star_domain_t<ddc::detail::TypeSeq<MuUp, NuUp>, ddc::detail::TypeSeq<RhoLow>>;

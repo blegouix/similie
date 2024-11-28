@@ -46,11 +46,11 @@ HodgeStarType fill_hodge_star(
 {
     sil::tensor::TensorAccessor<misc::convert_type_seq_to_t<
             tensor::TensorLeviCivitaIndex,
-            ddc::type_seq_merge_t<tensor::primes<Indices1>, Indices2>>>
+            ddc::type_seq_merge_t<tensor::primes<tensor::lower<Indices1>>, Indices2>>>
             levi_civita_accessor;
     ddc::DiscreteDomain<misc::convert_type_seq_to_t<
             tensor::TensorLeviCivitaIndex,
-            ddc::type_seq_merge_t<tensor::primes<Indices1>, Indices2>>>
+            ddc::type_seq_merge_t<tensor::primes<tensor::lower<Indices1>>, Indices2>>>
             levi_civita_dom(levi_civita_accessor.mem_domain());
     ddc::Chunk levi_civita_alloc(
             levi_civita_dom,
@@ -59,7 +59,7 @@ HodgeStarType fill_hodge_star(
             double,
             ddc::DiscreteDomain<misc::convert_type_seq_to_t<
                     tensor::TensorLeviCivitaIndex,
-                    ddc::type_seq_merge_t<tensor::primes<Indices1>, Indices2>>>,
+                    ddc::type_seq_merge_t<tensor::primes<tensor::lower<Indices1>>, Indices2>>>,
             Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             levi_civita(levi_civita_alloc);
@@ -69,7 +69,7 @@ HodgeStarType fill_hodge_star(
             hodge_star.non_indices_domain(),
             [&](auto elem) {
                 tensor_prod(hodge_star[elem], metric_prod[elem], levi_civita);
-                hodge_star[elem] *= 1. / Kokkos::sqrt(Kokkos::abs(metric_determinant(elem)))
+                hodge_star[elem] *= Kokkos::sqrt(Kokkos::abs(metric_determinant(elem)))
                                     / misc::factorial(ddc::type_seq_size_v<Indices1>);
             });
     return hodge_star;
@@ -83,6 +83,7 @@ template <
         misc::Specialization<tensor::Tensor> MetricType>
 HodgeStarType fill_hodge_star(HodgeStarType hodge_star, MetricType metric)
 {
+    static_assert(tensor::are_contravariant_v<ddc::to_type_seq_t<typename MetricType::accessor_t::natural_domain_t>>);
     static_assert(tensor::are_contravariant_v<Indices1>);
     static_assert(tensor::are_covariant_v<Indices2>);
     ddc::Chunk metric_det_alloc(metric.non_indices_domain(), ddc::HostAllocator<double>());
@@ -94,7 +95,7 @@ HodgeStarType fill_hodge_star(HodgeStarType hodge_star, MetricType metric)
             metric_det(metric_det_alloc);
     ddc::for_each( // TODO parallel_for_each (weird lock)
             metric_det.domain(),
-            [&](auto elem) { metric_det(elem) = tensor::determinant(metric[elem]); });
+            [&](auto elem) { metric_det(elem) = 1./tensor::determinant(metric[elem]); });
 
     tensor::tensor_accessor_for_domain_t<
             tensor::metric_prod_domain_t<MetricIndex, Indices1, tensor::primes<Indices1>>>
