@@ -27,6 +27,7 @@ var namespacesil_1_1tensor =
     [ "swap_character", "namespacesil_1_1tensor.html#a5c644f8e2e92a6445ddeaec01e5fc7af", null ],
     [ "uncharacterize", "namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8", null ],
     [ "uncharacterize_tensor_t", "namespacesil_1_1tensor.html#a73fd1f7d374ac218e2f00fbc8c76eb31", null ],
+    [ "is_same_character_v", "namespacesil_1_1tensor.html#af9c7455e16a3a7d74b7c1822b5ad25bb", null ],
     [ "dummy_index_t", "namespacesil_1_1tensor.html#a201b576b1f3194623e18c3fc0076bdfc", null ],
     [ "relabelize_metric_in_domain_t", "namespacesil_1_1tensor.html#a1d7a6851fded61e2c756bd7c04a4b5fe", null ],
     [ "relabelize_metric_t", "namespacesil_1_1tensor.html#a501a35496af8f3afa414257911575664", null ],
@@ -66,5 +67,9 @@ var namespacesil_1_1tensor =
     [ "tensor_prod", "namespacesil_1_1tensor.html#ab1850d31897a1dd43622b0e25d1a1b28", null ],
     [ "tensor_prod", "namespacesil_1_1tensor.html#a7e4359fdab0cd544d99ed58a60beaac4", null ],
     [ "compress", "namespacesil_1_1tensor.html#afc46d5ce3910fb5ced652d618294726c", null ],
-    [ "uncompress", "namespacesil_1_1tensor.html#afc897fb906eb5efe172d443f520b5c13", null ]
+    [ "uncompress", "namespacesil_1_1tensor.html#afc897fb906eb5efe172d443f520b5c13", null ],
+    [ "is_covariant_v", "namespacesil_1_1tensor.html#ad87f841c21af50491ee8198e88631449", null ],
+    [ "are_covariant_v", "namespacesil_1_1tensor.html#a474d163b3d8d2bd9b386cce130049b98", null ],
+    [ "is_contravariant_v", "namespacesil_1_1tensor.html#a6663bbd2dd68f6841a544eec9abdb78d", null ],
+    [ "are_contravariant_v", "namespacesil_1_1tensor.html#af1114b530ae34962788b74719bd1eeb2", null ]
 ];

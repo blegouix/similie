@@ -123,7 +123,8 @@ $(document).ready(function(){initNavTree('namespacesil_1_1tensor.html',''); init
 <a href="#nested-classes">Classes</a> &#124;
 <a href="#concepts">Concepts</a> &#124;
 <a href="#typedef-members">Typedefs</a> &#124;
-<a href="#func-members">Functions</a>  </div>
+<a href="#func-members">Functions</a> &#124;
+<a href="#var-members">Variables</a>  </div>
   <div class="headertitle"><div class="title">sil::tensor Namespace Reference</div></div>
 </div><!--header-->
 <div class="contents">
@@ -197,6 +198,9 @@ Typedefs</h2></td></tr>
 <tr class="memitem:a73fd1f7d374ac218e2f00fbc8c76eb31" id="r_a73fd1f7d374ac218e2f00fbc8c76eb31"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; Tensor &gt; TensorType&gt; </td></tr>
 <tr class="memitem:a73fd1f7d374ac218e2f00fbc8c76eb31"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a73fd1f7d374ac218e2f00fbc8c76eb31">uncharacterize_tensor_t</a> = <a class="el" href="namespacesil_1_1tensor.html#a18bb38e8250062242859a699221b5be5">relabelize_indices_of_t</a>&lt; TensorType, ddc::to_type_seq_t&lt; typename TensorType::accessor_t::natural_domain_t &gt;, <a class="el" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt; ddc::to_type_seq_t&lt; typename TensorType::accessor_t::natural_domain_t &gt; &gt; &gt;</td></tr>
 <tr class="separator:a73fd1f7d374ac218e2f00fbc8c76eb31"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af9c7455e16a3a7d74b7c1822b5ad25bb" id="r_af9c7455e16a3a7d74b7c1822b5ad25bb"><td class="memTemplParams" colspan="2">template&lt;class T1 , class T2 &gt; </td></tr>
+<tr class="memitem:af9c7455e16a3a7d74b7c1822b5ad25bb"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#af9c7455e16a3a7d74b7c1822b5ad25bb">is_same_character_v</a> = detail::IsSameCharacter&lt; T1, T2 &gt;::value</td></tr>
+<tr class="separator:af9c7455e16a3a7d74b7c1822b5ad25bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a201b576b1f3194623e18c3fc0076bdfc" id="r_a201b576b1f3194623e18c3fc0076bdfc"><td class="memTemplParams" colspan="2">template&lt;std::size_t Dimension, std::size_t Rank&gt; </td></tr>
 <tr class="memitem:a201b576b1f3194623e18c3fc0076bdfc"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a201b576b1f3194623e18c3fc0076bdfc">dummy_index_t</a> = detail::DummyIndex&lt; std::make_index_sequence&lt; Dimension &gt;, std::make_index_sequence&lt; Rank &gt; &gt;::type</td></tr>
 <tr class="separator:a201b576b1f3194623e18c3fc0076bdfc"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -321,6 +325,21 @@ requires ( ((!TensorNatIndex&lt;ProdDDim&gt; || ...) || (!TensorNatIndex&lt;Inde
 <tr class="memitem:afc897fb906eb5efe172d443f520b5c13" id="r_afc897fb906eb5efe172d443f520b5c13"><td class="memTemplParams" colspan="2">template&lt;class YoungTableauIndex , class... Id&gt; </td></tr>
 <tr class="memitem:afc897fb906eb5efe172d443f520b5c13"><td class="memTemplItemLeft" align="right" valign="top">tensor::Tensor&lt; double, ddc::DiscreteDomain&lt; Id... &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#afc897fb906eb5efe172d443f520b5c13">uncompress</a> (tensor::Tensor&lt; double, ddc::DiscreteDomain&lt; Id... &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt; uncompressed, tensor::Tensor&lt; double, ddc::DiscreteDomain&lt; YoungTableauIndex &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt; tensor)</td></tr>
 <tr class="separator:afc897fb906eb5efe172d443f520b5c13"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
+Variables</h2></td></tr>
+<tr class="memitem:ad87f841c21af50491ee8198e88631449" id="r_ad87f841c21af50491ee8198e88631449"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
+<tr class="memitem:ad87f841c21af50491ee8198e88631449"><td class="memTemplItemLeft" align="right" valign="top">bool constexpr&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#ad87f841c21af50491ee8198e88631449">is_covariant_v</a> = detail::IsCovariant&lt;T&gt;::value</td></tr>
+<tr class="separator:ad87f841c21af50491ee8198e88631449"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a474d163b3d8d2bd9b386cce130049b98" id="r_a474d163b3d8d2bd9b386cce130049b98"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; ddc::detail::TypeSeq &gt; Seq&gt; </td></tr>
+<tr class="memitem:a474d163b3d8d2bd9b386cce130049b98"><td class="memTemplItemLeft" align="right" valign="top">bool constexpr&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a474d163b3d8d2bd9b386cce130049b98">are_covariant_v</a> = detail::AreCovariant&lt;Seq&gt;::value</td></tr>
+<tr class="separator:a474d163b3d8d2bd9b386cce130049b98"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6663bbd2dd68f6841a544eec9abdb78d" id="r_a6663bbd2dd68f6841a544eec9abdb78d"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
+<tr class="memitem:a6663bbd2dd68f6841a544eec9abdb78d"><td class="memTemplItemLeft" align="right" valign="top">bool constexpr&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a6663bbd2dd68f6841a544eec9abdb78d">is_contravariant_v</a> = detail::IsContravariant&lt;T&gt;::value</td></tr>
+<tr class="separator:a6663bbd2dd68f6841a544eec9abdb78d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af1114b530ae34962788b74719bd1eeb2" id="r_af1114b530ae34962788b74719bd1eeb2"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; ddc::detail::TypeSeq &gt; Seq&gt; </td></tr>
+<tr class="memitem:af1114b530ae34962788b74719bd1eeb2"><td class="memTemplItemLeft" align="right" valign="top">bool constexpr&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#af1114b530ae34962788b74719bd1eeb2">are_contravariant_v</a> = detail::AreContravariant&lt;Seq&gt;::value</td></tr>
+<tr class="separator:af1114b530ae34962788b74719bd1eeb2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/><h2 class="groupheader">Class Documentation</h2>
 <a name="structsil_1_1tensor_1_1Contravariant" id="structsil_1_1tensor_1_1Contravariant"></a>
@@ -502,6 +521,24 @@ template&lt;misc::Specialization&lt; Tensor &gt; TensorType&gt; </div>
 </div><div class="memdoc">
 
 <p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00177">177</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
+
+</div>
+</div>
+<a id="af9c7455e16a3a7d74b7c1822b5ad25bb" name="af9c7455e16a3a7d74b7c1822b5ad25bb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af9c7455e16a3a7d74b7c1822b5ad25bb">&#9670;&#160;</a></span>is_same_character_v</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class T1 , class T2 &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="namespacesil_1_1tensor.html#af9c7455e16a3a7d74b7c1822b5ad25bb">sil::tensor::is_same_character_v</a> = typedef detail::IsSameCharacter&lt;T1, T2&gt;::value</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00304">304</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
 
 </div>
 </div>
@@ -1493,6 +1530,111 @@ template&lt;class YoungTableauIndex , class... Id&gt; </div>
 </div><div class="memdoc">
 
 <p class="definition">Definition at line <a class="el" href="young__tableau__tensor_8hpp_source.html#l00160">160</a> of file <a class="el" href="young__tableau__tensor_8hpp_source.html">young_tableau_tensor.hpp</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">Variable Documentation</h2>
+<a id="ad87f841c21af50491ee8198e88631449" name="ad87f841c21af50491ee8198e88631449"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad87f841c21af50491ee8198e88631449">&#9670;&#160;</a></span>is_covariant_v</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool constexpr sil::tensor::is_covariant_v = detail::IsCovariant&lt;T&gt;::value</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00212">212</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a474d163b3d8d2bd9b386cce130049b98" name="a474d163b3d8d2bd9b386cce130049b98"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a474d163b3d8d2bd9b386cce130049b98">&#9670;&#160;</a></span>are_covariant_v</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;misc::Specialization&lt; ddc::detail::TypeSeq &gt; Seq&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool constexpr sil::tensor::are_covariant_v = detail::AreCovariant&lt;Seq&gt;::value</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00228">228</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a6663bbd2dd68f6841a544eec9abdb78d" name="a6663bbd2dd68f6841a544eec9abdb78d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6663bbd2dd68f6841a544eec9abdb78d">&#9670;&#160;</a></span>is_contravariant_v</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool constexpr sil::tensor::is_contravariant_v = detail::IsContravariant&lt;T&gt;::value</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00251">251</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
+
+</div>
+</div>
+<a id="af1114b530ae34962788b74719bd1eeb2" name="af1114b530ae34962788b74719bd1eeb2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af1114b530ae34962788b74719bd1eeb2">&#9670;&#160;</a></span>are_contravariant_v</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;misc::Specialization&lt; ddc::detail::TypeSeq &gt; Seq&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool constexpr sil::tensor::are_contravariant_v = detail::AreContravariant&lt;Seq&gt;::value</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00267">267</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
 
 </div>
 </div>

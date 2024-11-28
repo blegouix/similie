@@ -10,5 +10,7 @@ var searchData=
   ['accessor_7',['accessor',['../classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html#a0ce049d45baed34b4a16edd157a18a50',1,'sil::tensor::Tensor&lt; ElementType, ddc::DiscreteDomain&lt; DDim... &gt;, LayoutStridedPolicy, MemorySpace &gt;']]],
   ['accessor_5ft_8',['accessor_t',['../classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html#a02d8212c5792d4a4bb5f0b2f32a61ef7',1,'sil::tensor::Tensor&lt; ElementType, ddc::DiscreteDomain&lt; DDim... &gt;, LayoutStridedPolicy, MemorySpace &gt;']]],
   ['are_5fall_5fequal_9',['are_all_equal',['../namespacesil_1_1misc.html#a9be032ba1e7bb2c1c931d858a2ab90f2',1,'sil::misc::are_all_equal(Head head, Tail... tail)'],['../namespacesil_1_1misc.html#a5a1751c14a48bdc336c6ff27d10b1041',1,'sil::misc::are_all_equal(T t)']]],
-  ['are_5fall_5fsame_10',['are_all_same',['../namespacesil_1_1misc.html#a094c71e44717da55afa244de80ca4b2c',1,'sil::misc']]]
+  ['are_5fall_5fsame_10',['are_all_same',['../namespacesil_1_1misc.html#a094c71e44717da55afa244de80ca4b2c',1,'sil::misc']]],
+  ['are_5fcontravariant_5fv_11',['are_contravariant_v',['../namespacesil_1_1tensor.html#af1114b530ae34962788b74719bd1eeb2',1,'sil::tensor']]],
+  ['are_5fcovariant_5fv_12',['are_covariant_v',['../namespacesil_1_1tensor.html#a474d163b3d8d2bd9b386cce130049b98',1,'sil::tensor']]]
 ];
