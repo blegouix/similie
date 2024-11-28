@@ -95,6 +95,13 @@ struct TensorNaturalIndex
     {
         return access(tensor, elem);
     }
+
+    static constexpr std::array<std::size_t, rank()> mem_id_to_canonical_natural_ids(
+            std::size_t mem_id)
+    {
+        assert(mem_id < mem_size());
+        return std::array<std::size_t, rank()> {mem_id};
+    }
 };
 
 template <class DDim>
@@ -285,6 +292,10 @@ public:
     template <class... NaturalIndex>
     static constexpr discrete_element_type access_element(
             ddc::DiscreteElement<NaturalIndex...> natural_elem);
+
+    template <class... MemIndex>
+    static constexpr natural_domain_t::discrete_element_type canonical_natural_element(
+            ddc::DiscreteElement<MemIndex...> mem_elem);
 };
 
 namespace detail {
@@ -359,6 +370,26 @@ constexpr TensorAccessor<Index...>::discrete_element_type TensorAccessor<Index..
     return ddc::DiscreteElement<Index...>(
             ddc::DiscreteElement<Index>(detail::access_id<Index, ddc::detail::TypeSeq<Index...>>(
                     typename natural_domain_t::discrete_element_type(natural_elem)))...);
+}
+
+template <TensorIndex... Index>
+template <class... MemIndex>
+constexpr TensorAccessor<Index...>::natural_domain_t::discrete_element_type TensorAccessor<
+        Index...>::canonical_natural_element(ddc::DiscreteElement<MemIndex...> mem_elem)
+{
+    std::array<std::size_t, natural_domain_t::rank()> ids {};
+    auto it = ids.begin();
+    (
+            [&]() {
+                auto i = MemIndex::mem_id_to_canonical_natural_ids(
+                        mem_elem.template uid<MemIndex>());
+                std::copy(i.begin(), i.end(), it);
+                it += i.size();
+            }(),
+            ...);
+    typename natural_domain_t::discrete_element_type natural_elem;
+    ddc::detail::array(natural_elem) = std::array<std::size_t, natural_domain_t::rank()>(ids);
+    return natural_elem;
 }
 
 namespace detail {
@@ -588,6 +619,16 @@ public:
                 accessor_t::access_element(
                         typename accessor_t::natural_domain_t::discrete_element_type(elem...)),
                 typename non_indices_domain_t::discrete_element_type(elem...));
+    }
+
+    template <class... Elem>
+    KOKKOS_FUNCTION constexpr natural_domain_t::discrete_element_type canonical_natural_element(
+            Elem... mem_elem) const noexcept
+    {
+        return typename natural_domain_t::discrete_element_type(
+                accessor_t::canonical_natural_element(
+                        typename accessor_t::discrete_element_type(mem_elem...)),
+                typename non_indices_domain_t::discrete_element_type(mem_elem...));
     }
 
     template <class... DElems>

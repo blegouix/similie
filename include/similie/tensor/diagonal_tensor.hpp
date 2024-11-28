@@ -5,6 +5,8 @@
 
 #include <ddc/ddc.hpp>
 
+#include <similie/misc/filled_struct.hpp>
+
 #include "tensor_impl.hpp"
 
 namespace sil {
@@ -39,7 +41,7 @@ struct TensorDiagonalIndex
 
     static constexpr std::size_t mem_size()
     {
-        return std::min({TensorIndex::mem_size()...});
+        return ddc::type_seq_element_t<0, ddc::detail::TypeSeq<TensorIndex...>>::mem_size();
     }
 
     static constexpr std::size_t access_size()
@@ -91,6 +93,15 @@ struct TensorDiagonalIndex
         } else {
             return access(tensor, elem);
         }
+    }
+
+    static constexpr std::array<std::size_t, rank()> mem_id_to_canonical_natural_ids(
+            std::size_t mem_id)
+    {
+        assert(mem_id < mem_size());
+        std::array<std::size_t, rank()> ids;
+        std::fill(ids.begin(), ids.end(), mem_id);
+        return ids;
     }
 };
 

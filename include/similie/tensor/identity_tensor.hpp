@@ -87,6 +87,14 @@ struct TensorIdentityIndex
             return access(tensor, elem);
         }
     }
+
+    static constexpr std::array<std::size_t, rank()> mem_id_to_canonical_natural_ids(
+            std::size_t mem_id)
+    {
+        assert(mem_id < mem_size()); // Always false
+        std::array<std::size_t, rank()> ids;
+        return ids;
+    }
 };
 
 } // namespace tensor
