@@ -40,7 +40,7 @@ struct TensorAntisymmetricIndex
 
     static constexpr std::size_t size()
     {
-        if constexpr (sizeof...(TensorIndex) == 0) {
+        if constexpr (rank() == 0) {
             return 1;
         } else {
             return (TensorIndex::size() + ...);
@@ -53,8 +53,8 @@ struct TensorAntisymmetricIndex
             return 1;
         } else {
             return misc::binomial_coefficient(
-                    std::min({TensorIndex::mem_size()...}),
-                    sizeof...(TensorIndex));
+                    ddc::type_seq_element_t<0, ddc::detail::TypeSeq<TensorIndex...>>::mem_size(),
+                    rank());
         }
     }
 
@@ -68,9 +68,9 @@ struct TensorAntisymmetricIndex
     }
 
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_lin_comb(
-            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
+            std::array<std::size_t, rank()> const ids)
     {
-        std::array<std::size_t, sizeof...(TensorIndex)> sorted_ids(ids);
+        std::array<std::size_t, rank()> sorted_ids(ids);
         std::sort(sorted_ids.begin(), sorted_ids.end());
         return std::pair<std::vector<double>, std::vector<std::size_t>>(
                 std::vector<double> {1.},
@@ -80,8 +80,7 @@ struct TensorAntisymmetricIndex
                            + (sorted_ids[ddc::type_seq_rank_v<
                                       TensorIndex,
                                       ddc::detail::TypeSeq<TensorIndex...>>]
-                                              == TensorIndex::mem_size()
-                                                         - sizeof...(TensorIndex) // TODO rank()
+                                              == TensorIndex::mem_size() - rank() // TODO rank()
                                                          + ddc::type_seq_rank_v<
                                                                  TensorIndex,
                                                                  ddc::detail::TypeSeq<
@@ -94,7 +93,7 @@ struct TensorAntisymmetricIndex
                                                                 ddc::detail::TypeSeq<
                                                                         TensorIndex...>>]
                                                         - 1,
-                                                sizeof...(TensorIndex)
+                                                rank()
                                                         - ddc::type_seq_rank_v<
                                                                 TensorIndex,
                                                                 ddc::detail::TypeSeq<
@@ -103,19 +102,18 @@ struct TensorAntisymmetricIndex
     }
 
 private:
-    static constexpr bool permutation_parity(std::array<std::size_t, sizeof...(TensorIndex)> ids)
+    static constexpr bool permutation_parity(std::array<std::size_t, rank()> ids)
     {
         bool cnt = false;
-        for (int i = 0; i < sizeof...(TensorIndex); i++)
-            for (int j = i + 1; j < sizeof...(TensorIndex); j++)
+        for (int i = 0; i < rank(); i++)
+            for (int j = i + 1; j < rank(); j++)
                 if (ids[i] > ids[j])
                     cnt = !cnt;
         return cnt;
     }
 
 public:
-    static constexpr std::size_t access_id(
-            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
+    static constexpr std::size_t access_id(std::array<std::size_t, rank()> const ids)
     {
         if constexpr (rank() <= 1) {
             return std::get<1>(mem_lin_comb(ids))[0];

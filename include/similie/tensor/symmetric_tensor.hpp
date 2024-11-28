@@ -42,8 +42,9 @@ struct TensorSymmetricIndex
     static constexpr std::size_t mem_size()
     {
         return misc::binomial_coefficient(
-                std::min({TensorIndex::mem_size()...}) + sizeof...(TensorIndex) - 1,
-                sizeof...(TensorIndex));
+                ddc::type_seq_element_t<0, ddc::detail::TypeSeq<TensorIndex...>>::mem_size()
+                        + rank() - 1,
+                rank());
     }
 
     static constexpr std::size_t access_size()
@@ -52,16 +53,18 @@ struct TensorSymmetricIndex
     }
 
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_lin_comb(
-            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
+            std::array<std::size_t, rank()> const ids)
     {
-        std::array<std::size_t, sizeof...(TensorIndex)> sorted_ids(ids);
+        std::array<std::size_t, rank()> sorted_ids(ids);
         std::sort(sorted_ids.begin(), sorted_ids.end());
         return std::pair<std::vector<double>, std::vector<std::size_t>>(
                 std::vector<double> {1.},
                 std::vector<std::size_t> {static_cast<std::size_t>(
                         misc::binomial_coefficient(
-                                std::min({TensorIndex::mem_size()...}) + sizeof...(TensorIndex) - 1,
-                                sizeof...(TensorIndex))
+                                ddc::type_seq_element_t<0, ddc::detail::TypeSeq<TensorIndex...>>::
+                                                mem_size()
+                                        + rank() - 1,
+                                rank())
                         - ((sorted_ids[ddc::type_seq_rank_v<
                                     TensorIndex,
                                     ddc::detail::TypeSeq<TensorIndex...>>]
@@ -72,12 +75,12 @@ struct TensorSymmetricIndex
                                                       - sorted_ids[ddc::type_seq_rank_v<
                                                               TensorIndex,
                                                               ddc::detail::TypeSeq<TensorIndex...>>]
-                                                      + sizeof...(TensorIndex)
+                                                      + rank()
                                                       - ddc::type_seq_rank_v<
                                                               TensorIndex,
                                                               ddc::detail::TypeSeq<TensorIndex...>>
                                                       - 2,
-                                              sizeof...(TensorIndex)
+                                              rank()
                                                       - ddc::type_seq_rank_v<
                                                               TensorIndex,
                                                               ddc::detail::TypeSeq<
@@ -86,8 +89,7 @@ struct TensorSymmetricIndex
                         - 1)});
     }
 
-    static constexpr std::size_t access_id(
-            std::array<std::size_t, sizeof...(TensorIndex)> const ids)
+    static constexpr std::size_t access_id(std::array<std::size_t, rank()> const ids)
     {
         return std::get<1>(mem_lin_comb(ids))[0];
     }
