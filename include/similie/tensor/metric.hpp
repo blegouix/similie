@@ -14,6 +14,7 @@
 #include "lorentzian_sign_tensor.hpp"
 #include "prime.hpp"
 #include "symmetric_tensor.hpp"
+#include "tensor_prod.hpp"
 
 namespace sil {
 
