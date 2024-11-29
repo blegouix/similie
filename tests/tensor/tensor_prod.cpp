@@ -586,7 +586,7 @@ TEST(TensorProd, SimpleContractionRank3AntisymIndexedxRank2AntisymIndexed)
     EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, Y, Z>()), 19.);
 }
 
-#ifdef BUILD_YOUNG_TABLEAU
+#if defined BUILD_YOUNG_TABLEAU
 using YoungTableauIndex = sil::tensor::TensorYoungTableauIndex<
         sil::young_tableau::
                 YoungTableau<3, sil::young_tableau::YoungTableauSeq<std::index_sequence<1, 2, 3>>>,

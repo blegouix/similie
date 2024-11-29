@@ -16,6 +16,6 @@
 #include "symmetric_tensor.hpp"
 #include "tensor_impl.hpp"
 #include "tensor_prod.hpp"
-#ifdef BUILD_YOUNG_TABLEAU
+#if defined BUILD_YOUNG_TABLEAU
 #include "young_tableau_tensor.hpp"
 #endif

@@ -3,7 +3,7 @@
 
 #pragma once
 
-#ifdef BUILD_YOUNG_TABLEAU
+#if defined BUILD_YOUNG_TABLEAU
 
 #include <ddc/ddc.hpp>
 

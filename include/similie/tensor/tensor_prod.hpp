@@ -8,7 +8,7 @@
 #include <similie/misc/specialization.hpp>
 
 #include "character.hpp"
-#ifdef BUILD_YOUNG_TABLEAU
+#if defined BUILD_YOUNG_TABLEAU
 #include "young_tableau_tensor.hpp"
 #endif
 
@@ -172,7 +172,7 @@ template <
     requires(
             ((!TensorNatIndex<ProdDDim> || ...) || (!TensorNatIndex<Index2> || ...)
              || (!TensorNatIndex<Index1> || ...))
-#ifdef BUILD_YOUNG_TABLEAU
+#if defined BUILD_YOUNG_TABLEAU
             && (!misc::Specialization<ProdDDim, TensorYoungTableauIndex> && ...)
             && (!misc::Specialization<Index1, TensorYoungTableauIndex> && ...)
             && (!misc::Specialization<Index2, TensorYoungTableauIndex> && ...)
@@ -222,7 +222,7 @@ tensor_prod(
     return prod_tensor;
 }
 
-#ifdef BUILD_YOUNG_TABLEAU
+#if defined BUILD_YOUNG_TABLEAU
 // Young-dense product
 namespace detail {
 
