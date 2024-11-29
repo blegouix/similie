@@ -40,10 +40,6 @@ var annotated_dup =
         [ "TensorNaturalIndex", "structsil_1_1tensor_1_1TensorNaturalIndex.html", "structsil_1_1tensor_1_1TensorNaturalIndex" ],
         [ "TensorSymmetricIndex", "structsil_1_1tensor_1_1TensorSymmetricIndex.html", "structsil_1_1tensor_1_1TensorSymmetricIndex" ],
         [ "TensorYoungTableauIndex", "structsil_1_1tensor_1_1TensorYoungTableauIndex.html", "structsil_1_1tensor_1_1TensorYoungTableauIndex" ]
-      ] ],
-      [ "young_tableau", "namespacesil_1_1young__tableau.html", [
-        [ "YoungTableau", "classsil_1_1young__tableau_1_1YoungTableau.html", "classsil_1_1young__tableau_1_1YoungTableau" ],
-        [ "YoungTableauSeq", "classsil_1_1young__tableau_1_1YoungTableauSeq.html", "classsil_1_1young__tableau_1_1YoungTableauSeq" ]
       ] ]
     ] ]
 ];

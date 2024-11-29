@@ -306,19 +306,10 @@ Functions</h2></td></tr>
 <tr class="memitem:a13d4a3e249edb25ac1599f0598af2fcc" id="r_a13d4a3e249edb25ac1599f0598af2fcc"><td class="memTemplParams" colspan="2">template&lt;class ProdDDims , class Indices1 , class Indices2 &gt; </td></tr>
 <tr class="memitem:a13d4a3e249edb25ac1599f0598af2fcc"><td class="memTemplItemLeft" align="right" valign="top">constexpr void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a13d4a3e249edb25ac1599f0598af2fcc">check_tensors_compatibility</a> ()</td></tr>
 <tr class="separator:a13d4a3e249edb25ac1599f0598af2fcc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad0909bef2c4e7603aff7b1b57592f0c2" id="r_ad0909bef2c4e7603aff7b1b57592f0c2"><td class="memTemplParams" colspan="2">template&lt;class... ProdDDim, class... Index1, class... Index2, class ElementType , class LayoutStridedPolicy , class MemorySpace &gt; <br />
-requires ( ((!TensorNatIndex&lt;ProdDDim&gt; || ...) || (!TensorNatIndex&lt;Index2&gt; || ...) || (!TensorNatIndex&lt;Index1&gt; || ...)) &amp;&amp; (!misc::Specialization&lt;ProdDDim, <a class="el" href="structsil_1_1tensor_1_1TensorYoungTableauIndex.html">TensorYoungTableauIndex</a>&gt; &amp;&amp; ...) &amp;&amp; (!misc::Specialization&lt;Index1, <a class="el" href="structsil_1_1tensor_1_1TensorYoungTableauIndex.html">TensorYoungTableauIndex</a>&gt; &amp;&amp; ...) &amp;&amp; (!misc::Specialization&lt;Index2, <a class="el" href="structsil_1_1tensor_1_1TensorYoungTableauIndex.html">TensorYoungTableauIndex</a>&gt; &amp;&amp; ...))</td></tr>
-<tr class="memitem:ad0909bef2c4e7603aff7b1b57592f0c2"><td class="memTemplItemLeft" align="right" valign="top">Tensor&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim... &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#ad0909bef2c4e7603aff7b1b57592f0c2">tensor_prod</a> (Tensor&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim... &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt; prod_tensor, Tensor&lt; ElementType, ddc::DiscreteDomain&lt; Index1... &gt;, LayoutStridedPolicy, MemorySpace &gt; tensor1, Tensor&lt; ElementType, ddc::DiscreteDomain&lt; Index2... &gt;, LayoutStridedPolicy, MemorySpace &gt; tensor2)</td></tr>
-<tr class="separator:ad0909bef2c4e7603aff7b1b57592f0c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab4f3792878f8b9ff69a73f9b53eafc1b" id="r_ab4f3792878f8b9ff69a73f9b53eafc1b"><td class="memTemplParams" colspan="2">template&lt;TensorNatIndex... ProdDDim, misc::Specialization&lt; <a class="el" href="structsil_1_1tensor_1_1TensorYoungTableauIndex.html">TensorYoungTableauIndex</a> &gt; Index1, TensorNatIndex... DDim2, class ElementType , class LayoutStridedPolicy , class MemorySpace &gt; </td></tr>
-<tr class="memitem:ab4f3792878f8b9ff69a73f9b53eafc1b"><td class="memTemplItemLeft" align="right" valign="top">Tensor&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim... &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#ab4f3792878f8b9ff69a73f9b53eafc1b">tensor_prod</a> (Tensor&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim... &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt; prod_tensor, Tensor&lt; ElementType, ddc::DiscreteDomain&lt; Index1 &gt;, LayoutStridedPolicy, MemorySpace &gt; tensor1, Tensor&lt; ElementType, ddc::DiscreteDomain&lt; DDim2... &gt;, LayoutStridedPolicy, MemorySpace &gt; tensor2)</td></tr>
-<tr class="separator:ab4f3792878f8b9ff69a73f9b53eafc1b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab1850d31897a1dd43622b0e25d1a1b28" id="r_ab1850d31897a1dd43622b0e25d1a1b28"><td class="memTemplParams" colspan="2">template&lt;TensorNatIndex... ProdDDim, misc::Specialization&lt; <a class="el" href="structsil_1_1tensor_1_1TensorYoungTableauIndex.html">TensorYoungTableauIndex</a> &gt; Index1, misc::Specialization&lt; <a class="el" href="structsil_1_1tensor_1_1TensorYoungTableauIndex.html">TensorYoungTableauIndex</a> &gt; Index2, class ElementType , class LayoutStridedPolicy , class MemorySpace &gt; </td></tr>
-<tr class="memitem:ab1850d31897a1dd43622b0e25d1a1b28"><td class="memTemplItemLeft" align="right" valign="top">Tensor&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim... &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#ab1850d31897a1dd43622b0e25d1a1b28">tensor_prod</a> (Tensor&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim... &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt; prod_tensor, Tensor&lt; ElementType, ddc::DiscreteDomain&lt; Index1 &gt;, LayoutStridedPolicy, MemorySpace &gt; tensor1, Tensor&lt; ElementType, ddc::DiscreteDomain&lt; Index2 &gt;, LayoutStridedPolicy, MemorySpace &gt; tensor2)</td></tr>
-<tr class="separator:ab1850d31897a1dd43622b0e25d1a1b28"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7e4359fdab0cd544d99ed58a60beaac4" id="r_a7e4359fdab0cd544d99ed58a60beaac4"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; <a class="el" href="structsil_1_1tensor_1_1TensorYoungTableauIndex.html">TensorYoungTableauIndex</a> &gt; ProdDDim, class... Index1, class... Index2, class ElementType , class LayoutStridedPolicy , class MemorySpace &gt; </td></tr>
-<tr class="memitem:a7e4359fdab0cd544d99ed58a60beaac4"><td class="memTemplItemLeft" align="right" valign="top">Tensor&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a7e4359fdab0cd544d99ed58a60beaac4">tensor_prod</a> (Tensor&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt; prod_tensor, Tensor&lt; ElementType, ddc::DiscreteDomain&lt; Index1... &gt;, LayoutStridedPolicy, MemorySpace &gt; tensor1, Tensor&lt; ElementType, ddc::DiscreteDomain&lt; Index2... &gt;, LayoutStridedPolicy, MemorySpace &gt; tensor2)</td></tr>
-<tr class="separator:a7e4359fdab0cd544d99ed58a60beaac4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae4b81ca041e3ff05e5bfffe8af919066" id="r_ae4b81ca041e3ff05e5bfffe8af919066"><td class="memTemplParams" colspan="2">template&lt;class... ProdDDim, class... Index1, class... Index2, class ElementType , class LayoutStridedPolicy , class MemorySpace &gt; <br />
+requires ( ((!TensorNatIndex&lt;ProdDDim&gt; || ...) || (!TensorNatIndex&lt;Index2&gt; || ...) || (!TensorNatIndex&lt;Index1&gt; || ...)) )</td></tr>
+<tr class="memitem:ae4b81ca041e3ff05e5bfffe8af919066"><td class="memTemplItemLeft" align="right" valign="top">Tensor&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim... &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#ae4b81ca041e3ff05e5bfffe8af919066">tensor_prod</a> (Tensor&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim... &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt; prod_tensor, Tensor&lt; ElementType, ddc::DiscreteDomain&lt; Index1... &gt;, LayoutStridedPolicy, MemorySpace &gt; tensor1, Tensor&lt; ElementType, ddc::DiscreteDomain&lt; Index2... &gt;, LayoutStridedPolicy, MemorySpace &gt; tensor2)</td></tr>
+<tr class="separator:ae4b81ca041e3ff05e5bfffe8af919066"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afc46d5ce3910fb5ced652d618294726c" id="r_afc46d5ce3910fb5ced652d618294726c"><td class="memTemplParams" colspan="2">template&lt;class YoungTableauIndex , class... Id&gt; </td></tr>
 <tr class="memitem:afc46d5ce3910fb5ced652d618294726c"><td class="memTemplItemLeft" align="right" valign="top">tensor::Tensor&lt; double, ddc::DiscreteDomain&lt; YoungTableauIndex &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#afc46d5ce3910fb5ced652d618294726c">compress</a> (tensor::Tensor&lt; double, ddc::DiscreteDomain&lt; YoungTableauIndex &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt; compressed, tensor::Tensor&lt; double, ddc::DiscreteDomain&lt; Id... &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt; tensor)</td></tr>
 <tr class="separator:afc46d5ce3910fb5ced652d618294726c"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -844,7 +835,7 @@ template&lt;class T &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__prod_8hpp_source.html#l00039">39</a> of file <a class="el" href="tensor__prod_8hpp_source.html">tensor_prod.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__prod_8hpp_source.html#l00041">41</a> of file <a class="el" href="tensor__prod_8hpp_source.html">tensor_prod.hpp</a>.</p>
 
 </div>
 </div>
@@ -1218,7 +1209,7 @@ template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom1, misc::Specia
 </div>
 </div>
 <a id="a1bf1827923f85e07f3f920b6402ae377" name="a1bf1827923f85e07f3f920b6402ae377"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1bf1827923f85e07f3f920b6402ae377">&#9670;&#160;</a></span>tensor_prod() <span class="overload">[1/5]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a1bf1827923f85e07f3f920b6402ae377">&#9670;&#160;</a></span>tensor_prod() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1312,18 +1303,18 @@ template&lt;class ProdDDims , class Indices1 , class Indices2 &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__prod_8hpp_source.html#l00094">94</a> of file <a class="el" href="tensor__prod_8hpp_source.html">tensor_prod.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__prod_8hpp_source.html#l00096">96</a> of file <a class="el" href="tensor__prod_8hpp_source.html">tensor_prod.hpp</a>.</p>
 
 </div>
 </div>
-<a id="ad0909bef2c4e7603aff7b1b57592f0c2" name="ad0909bef2c4e7603aff7b1b57592f0c2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad0909bef2c4e7603aff7b1b57592f0c2">&#9670;&#160;</a></span>tensor_prod() <span class="overload">[2/5]</span></h2>
+<a id="ae4b81ca041e3ff05e5bfffe8af919066" name="ae4b81ca041e3ff05e5bfffe8af919066"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae4b81ca041e3ff05e5bfffe8af919066">&#9670;&#160;</a></span>tensor_prod() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
 template&lt;class... ProdDDim, class... Index1, class... Index2, class ElementType , class LayoutStridedPolicy , class MemorySpace &gt; <br />
-requires ( ((!TensorNatIndex&lt;ProdDDim&gt; || ...) || (!TensorNatIndex&lt;Index2&gt; || ...) || (!TensorNatIndex&lt;Index1&gt; || ...)) &amp;&amp; (!misc::Specialization&lt;ProdDDim, <a class="el" href="structsil_1_1tensor_1_1TensorYoungTableauIndex.html">TensorYoungTableauIndex</a>&gt; &amp;&amp; ...) &amp;&amp; (!misc::Specialization&lt;Index1, <a class="el" href="structsil_1_1tensor_1_1TensorYoungTableauIndex.html">TensorYoungTableauIndex</a>&gt; &amp;&amp; ...) &amp;&amp; (!misc::Specialization&lt;Index2, <a class="el" href="structsil_1_1tensor_1_1TensorYoungTableauIndex.html">TensorYoungTableauIndex</a>&gt; &amp;&amp; ...))</div>
+requires ( ((!TensorNatIndex&lt;ProdDDim&gt; || ...) || (!TensorNatIndex&lt;Index2&gt; || ...) || (!TensorNatIndex&lt;Index1&gt; || ...)) )</div>
       <table class="memname">
         <tr>
           <td class="memname">Tensor&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim... &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt; sil::tensor::tensor_prod </td>
@@ -1351,121 +1342,7 @@ requires ( ((!TensorNatIndex&lt;ProdDDim&gt; || ...) || (!TensorNatIndex&lt;Inde
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__prod_8hpp_source.html#l00180">180</a> of file <a class="el" href="tensor__prod_8hpp_source.html">tensor_prod.hpp</a>.</p>
-
-</div>
-</div>
-<a id="ab4f3792878f8b9ff69a73f9b53eafc1b" name="ab4f3792878f8b9ff69a73f9b53eafc1b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab4f3792878f8b9ff69a73f9b53eafc1b">&#9670;&#160;</a></span>tensor_prod() <span class="overload">[3/5]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;TensorNatIndex... ProdDDim, misc::Specialization&lt; <a class="el" href="structsil_1_1tensor_1_1TensorYoungTableauIndex.html">TensorYoungTableauIndex</a> &gt; Index1, TensorNatIndex... DDim2, class ElementType , class LayoutStridedPolicy , class MemorySpace &gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">Tensor&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim... &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt; sil::tensor::tensor_prod </td>
-          <td>(</td>
-          <td class="paramtype">Tensor&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim... &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt;&#160;</td>
-          <td class="paramname"><em>prod_tensor</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">Tensor&lt; ElementType, ddc::DiscreteDomain&lt; Index1 &gt;, LayoutStridedPolicy, MemorySpace &gt;&#160;</td>
-          <td class="paramname"><em>tensor1</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">Tensor&lt; ElementType, ddc::DiscreteDomain&lt; DDim2... &gt;, LayoutStridedPolicy, MemorySpace &gt;&#160;</td>
-          <td class="paramname"><em>tensor2</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p class="definition">Definition at line <a class="el" href="tensor__prod_8hpp_source.html#l00282">282</a> of file <a class="el" href="tensor__prod_8hpp_source.html">tensor_prod.hpp</a>.</p>
-
-</div>
-</div>
-<a id="ab1850d31897a1dd43622b0e25d1a1b28" name="ab1850d31897a1dd43622b0e25d1a1b28"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab1850d31897a1dd43622b0e25d1a1b28">&#9670;&#160;</a></span>tensor_prod() <span class="overload">[4/5]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;TensorNatIndex... ProdDDim, misc::Specialization&lt; <a class="el" href="structsil_1_1tensor_1_1TensorYoungTableauIndex.html">TensorYoungTableauIndex</a> &gt; Index1, misc::Specialization&lt; <a class="el" href="structsil_1_1tensor_1_1TensorYoungTableauIndex.html">TensorYoungTableauIndex</a> &gt; Index2, class ElementType , class LayoutStridedPolicy , class MemorySpace &gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">Tensor&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim... &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt; sil::tensor::tensor_prod </td>
-          <td>(</td>
-          <td class="paramtype">Tensor&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim... &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt;&#160;</td>
-          <td class="paramname"><em>prod_tensor</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">Tensor&lt; ElementType, ddc::DiscreteDomain&lt; Index1 &gt;, LayoutStridedPolicy, MemorySpace &gt;&#160;</td>
-          <td class="paramname"><em>tensor1</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">Tensor&lt; ElementType, ddc::DiscreteDomain&lt; Index2 &gt;, LayoutStridedPolicy, MemorySpace &gt;&#160;</td>
-          <td class="paramname"><em>tensor2</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p class="definition">Definition at line <a class="el" href="tensor__prod_8hpp_source.html#l00388">388</a> of file <a class="el" href="tensor__prod_8hpp_source.html">tensor_prod.hpp</a>.</p>
-
-</div>
-</div>
-<a id="a7e4359fdab0cd544d99ed58a60beaac4" name="a7e4359fdab0cd544d99ed58a60beaac4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7e4359fdab0cd544d99ed58a60beaac4">&#9670;&#160;</a></span>tensor_prod() <span class="overload">[5/5]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;misc::Specialization&lt; <a class="el" href="structsil_1_1tensor_1_1TensorYoungTableauIndex.html">TensorYoungTableauIndex</a> &gt; ProdDDim, class... Index1, class... Index2, class ElementType , class LayoutStridedPolicy , class MemorySpace &gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">Tensor&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt; sil::tensor::tensor_prod </td>
-          <td>(</td>
-          <td class="paramtype">Tensor&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt;&#160;</td>
-          <td class="paramname"><em>prod_tensor</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">Tensor&lt; ElementType, ddc::DiscreteDomain&lt; Index1... &gt;, LayoutStridedPolicy, MemorySpace &gt;&#160;</td>
-          <td class="paramname"><em>tensor1</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">Tensor&lt; ElementType, ddc::DiscreteDomain&lt; Index2... &gt;, LayoutStridedPolicy, MemorySpace &gt;&#160;</td>
-          <td class="paramname"><em>tensor2</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p class="definition">Definition at line <a class="el" href="tensor__prod_8hpp_source.html#l00519">519</a> of file <a class="el" href="tensor__prod_8hpp_source.html">tensor_prod.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__prod_8hpp_source.html#l00185">185</a> of file <a class="el" href="tensor__prod_8hpp_source.html">tensor_prod.hpp</a>.</p>
 
 </div>
 </div>

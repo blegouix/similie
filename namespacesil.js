@@ -4,6 +4,5 @@ var namespacesil =
     [ "exterior", "namespacesil_1_1exterior.html", "namespacesil_1_1exterior" ],
     [ "mesher", "namespacesil_1_1mesher.html", "namespacesil_1_1mesher" ],
     [ "misc", "namespacesil_1_1misc.html", "namespacesil_1_1misc" ],
-    [ "tensor", "namespacesil_1_1tensor.html", "namespacesil_1_1tensor" ],
-    [ "young_tableau", "namespacesil_1_1young__tableau.html", "namespacesil_1_1young__tableau" ]
+    [ "tensor", "namespacesil_1_1tensor.html", "namespacesil_1_1tensor" ]
 ];

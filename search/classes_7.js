@@ -13,7 +13,6 @@ var searchData=
   ['tensornaturalindex_10',['TensorNaturalIndex',['../structsil_1_1tensor_1_1TensorNaturalIndex.html',1,'sil::tensor']]],
   ['tensornaturalindex_3c_20cdim_2e_2e_2e_20_3e_11',['TensorNaturalIndex&lt; CDim... &gt;',['../structsil_1_1tensor_1_1TensorNaturalIndex.html',1,'sil::tensor']]],
   ['tensornaturalindex_3c_20dummy_3c_20id_20_3e_2e_2e_2e_20_3e_12',['TensorNaturalIndex&lt; Dummy&lt; Id &gt;... &gt;',['../structsil_1_1tensor_1_1TensorNaturalIndex.html',1,'sil::tensor']]],
-  ['tensornaturalindex_3c_3e_13',['TensorNaturalIndex&lt;&gt;',['../structsil_1_1tensor_1_1TensorNaturalIndex.html',1,'sil::tensor']]],
-  ['tensorsymmetricindex_14',['TensorSymmetricIndex',['../structsil_1_1tensor_1_1TensorSymmetricIndex.html',1,'sil::tensor']]],
-  ['tensoryoungtableauindex_15',['TensorYoungTableauIndex',['../structsil_1_1tensor_1_1TensorYoungTableauIndex.html',1,'sil::tensor']]]
+  ['tensorsymmetricindex_13',['TensorSymmetricIndex',['../structsil_1_1tensor_1_1TensorSymmetricIndex.html',1,'sil::tensor']]],
+  ['tensoryoungtableauindex_14',['TensorYoungTableauIndex',['../structsil_1_1tensor_1_1TensorYoungTableauIndex.html',1,'sil::tensor']]]
 ];

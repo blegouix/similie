@@ -33,7 +33,6 @@ var hierarchy =
       [ "sil::tensor::MetricIndex2< CDim >", "structsil_1_1tensor_1_1MetricIndex2.html", null ]
     ] ],
     [ "sil::tensor::TensorNaturalIndex< Dummy< Id >... >", "structsil_1_1tensor_1_1TensorNaturalIndex.html", null ],
-    [ "sil::tensor::TensorNaturalIndex<>", "structsil_1_1tensor_1_1TensorNaturalIndex.html", null ],
     [ "sil::tensor::TensorSymmetricIndex< TensorIndex >", "structsil_1_1tensor_1_1TensorSymmetricIndex.html", null ],
     [ "sil::tensor::TensorYoungTableauIndex< YoungTableau, TensorIndex >", "structsil_1_1tensor_1_1TensorYoungTableauIndex.html", null ],
     [ "std::true_type", null, [
@@ -43,8 +42,6 @@ var hierarchy =
       [ "sil::tensor::TensorContravariantNaturalIndex< NaturalIndex >", "structsil_1_1tensor_1_1TensorContravariantNaturalIndex.html", null ],
       [ "sil::tensor::TensorCovariantNaturalIndex< NaturalIndex >", "structsil_1_1tensor_1_1TensorCovariantNaturalIndex.html", null ]
     ] ],
-    [ "sil::young_tableau::YoungTableau< Dimension, TableauSeq >", "classsil_1_1young__tableau_1_1YoungTableau.html", null ],
-    [ "sil::young_tableau::YoungTableauSeq< Row >", "classsil_1_1young__tableau_1_1YoungTableauSeq.html", null ],
     [ "sil::tensor::Index", null, [
       [ "sil::tensor::prime< Index, I >", "structsil_1_1tensor_1_1prime.html", null ]
     ] ]
