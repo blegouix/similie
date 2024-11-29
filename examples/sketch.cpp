@@ -117,11 +117,9 @@ int main(int argc, char** argv)
     // auto gmunu = sil::tensor::relabelize_metric<MuUp, NuUp>(inv_metric);
 
     // Potential
-    ddc::DiscreteDomain<DDimX, DDimY, DummyIndex> potential_dom(
-            metric.non_indices_domain(),
-            ddc::DiscreteDomain<DummyIndex>(
-                    ddc::DiscreteElement<DummyIndex>(0),
-                    ddc::DiscreteVector<DummyIndex>(1)));
+    sil::tensor::TensorAccessor<DummyIndex> potential_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, DummyIndex>
+            potential_dom(metric.non_indices_domain(), potential_accessor.mem_domain());
     ddc::Chunk potential_alloc(potential_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
@@ -144,6 +142,10 @@ int main(int argc, char** argv)
             potential.mem(elem) = -Kokkos::numbers::pi_v<double> * Kokkos::log(r);
         }
     });
+
+    std::cout << "Potential:" << std::endl;
+    std::cout << potential[potential_accessor.mem_domain().front()] << std::endl;
+    std::cout << "\n" << std::endl;
 
     // Gradient
     sil::tensor::TensorAccessor<MuLow> gradient_accessor;
@@ -239,8 +241,11 @@ int main(int argc, char** argv)
             Kokkos::DefaultHostExecutionSpace::memory_space>
             laplacian(laplacian_alloc);
 
+    ddc::parallel_fill(laplacian, 0.);
     ddc::for_each(laplacian.non_indices_domain(), [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
         sil::tensor::tensor_prod(laplacian[elem], dual_laplacian[elem], hodge_star2[elem]);
     });
-    std::cout << laplacian;
+
+    std::cout << "Laplacian:" << std::endl;
+    std::cout << laplacian[laplacian_accessor.mem_domain().front()] << std::endl;
 }
