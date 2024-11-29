@@ -11,6 +11,64 @@ namespace sil {
 
 namespace exterior {
 
+namespace detail {
+
+template <class... T>
+struct Reorient;
+
+template <>
+struct Reorient<>
+{
+    template <class Elem, class Vect>
+    static constexpr Elem run_elem(Elem elem, Vect)
+    {
+        return elem;
+    }
+
+    template <class Elem, class Vect>
+    static constexpr Vect run_vect(Elem, Vect vect)
+    {
+        return vect;
+    }
+
+    template <class Vect>
+    static constexpr bool run_negative(Vect vect, bool negative)
+    {
+        return negative;
+    }
+};
+
+template <class HeadTag, class... TailTag>
+struct Reorient<HeadTag, TailTag...>
+{
+    template <class Elem, class Vect>
+    static constexpr Elem run_elem(Elem elem, Vect vect)
+    {
+        if (vect.template get<HeadTag>() == -1) {
+            elem.template uid<HeadTag>()--;
+        }
+        return Reorient<TailTag...>::run_elem(elem, vect);
+    }
+
+    template <class Elem, class Vect>
+    static constexpr Vect run_vect(Elem elem, Vect vect)
+    {
+        if (vect.template get<HeadTag>() == -1) {
+            vect.template get<HeadTag>() = 1;
+        }
+        return Reorient<TailTag...>::run_vect(elem, vect);
+    }
+
+    template <class Vect>
+    static constexpr bool run_negative(Vect vect, bool negative)
+    {
+        return Reorient<
+                TailTag...>::run_negative(vect, (vect.template get<HeadTag>() == -1) != negative);
+    }
+};
+
+} // namespace detail
+
 /// Simplex class
 template <std::size_t K, class... Tag>
 class Simplex : public ddc::DiscreteElement<Tag...>
@@ -50,62 +108,15 @@ private:
         return discrete_vector_type(add_eventually_null_dimensions_<Tag, T...>(vect)...);
     }
 
-    template <class... T>
-    struct Reorient;
-
-    template <>
-    struct Reorient<>
-    {
-        static constexpr base_type run_elem(base_type elem, discrete_vector_type)
-        {
-            return elem;
-        }
-        static constexpr discrete_vector_type run_vect(base_type, discrete_vector_type vect)
-        {
-            return vect;
-        }
-        static constexpr bool run_negative(discrete_vector_type vect, bool negative)
-        {
-            return negative;
-        }
-    };
-
-
-    template <class HeadTag, class... TailTag>
-    struct Reorient<HeadTag, TailTag...>
-    {
-        static constexpr base_type run_elem(base_type elem, discrete_vector_type vect)
-        {
-            if (vect.template get<HeadTag>() == -1) {
-                elem.template uid<HeadTag>()--;
-            }
-            return Reorient<TailTag...>::run_elem(elem, vect);
-        }
-
-        static constexpr discrete_vector_type run_vect(base_type elem, discrete_vector_type vect)
-        {
-            if (vect.template get<HeadTag>() == -1) {
-                vect.template get<HeadTag>() = 1;
-            }
-            return Reorient<TailTag...>::run_vect(elem, vect);
-        }
-
-        static constexpr bool run_negative(discrete_vector_type vect, bool negative)
-        {
-            return Reorient<TailTag...>::
-                    run_negative(vect, (vect.template get<HeadTag>() == -1) != negative);
-        }
-    };
-
 public:
     template <misc::Specialization<ddc::DiscreteVector> T>
     KOKKOS_FUNCTION constexpr explicit Simplex(
             discrete_element_type elem,
             T vect,
             bool negative = false) noexcept
-        : base_type(Reorient<Tag...>::run_elem(elem, add_null_dimensions(vect)))
-        , m_vect(Reorient<Tag...>::run_vect(elem, add_null_dimensions(vect)))
-        , m_negative(Reorient<Tag...>::run_negative(add_null_dimensions(vect), negative))
+        : base_type(detail::Reorient<Tag...>::run_elem(elem, add_null_dimensions(vect)))
+        , m_vect(detail::Reorient<Tag...>::run_vect(elem, add_null_dimensions(vect)))
+        , m_negative(detail::Reorient<Tag...>::run_negative(add_null_dimensions(vect), negative))
     {
         assert(((m_vect.template get<Tag>() == 0 || m_vect.template get<Tag>() == 1) && ...)
                && "simplex vector must contain only -1, 0 or 1");
@@ -117,9 +128,9 @@ public:
             discrete_element_type elem,
             T vect,
             bool negative = false) noexcept
-        : base_type(Reorient<Tag...>::run_elem(elem, add_null_dimensions(vect)))
-        , m_vect(Reorient<Tag...>::run_vect(elem, add_null_dimensions(vect)))
-        , m_negative(Reorient<Tag...>::run_negative(add_null_dimensions(vect), negative))
+        : base_type(detail::Reorient<Tag...>::run_elem(elem, add_null_dimensions(vect)))
+        , m_vect(detail::Reorient<Tag...>::run_vect(elem, add_null_dimensions(vect)))
+        , m_negative(detail::Reorient<Tag...>::run_negative(add_null_dimensions(vect), negative))
     {
         assert(((m_vect.template get<Tag>() == 0 || m_vect.template get<Tag>() == 1) && ...)
                && "simplex vector must contain only -1, 0 or 1");

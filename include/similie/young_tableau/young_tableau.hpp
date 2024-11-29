@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <iostream>
+#if defined BUILD_YOUNG_TABLEAU
 
 #include <ddc/ddc.hpp>
 
@@ -1336,3 +1336,5 @@ std::ostream& operator<<(std::ostream& os, YoungTableau<Dimension, TableauSeq> c
 } // namespace young_tableau
 
 } // namespace sil
+
+#endif

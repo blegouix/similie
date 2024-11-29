@@ -8,7 +8,9 @@
 #include <similie/misc/specialization.hpp>
 
 #include "character.hpp"
+#if defined BUILD_YOUNG_TABLEAU
 #include "young_tableau_tensor.hpp"
+#endif
 
 namespace sil {
 
@@ -170,9 +172,12 @@ template <
     requires(
             ((!TensorNatIndex<ProdDDim> || ...) || (!TensorNatIndex<Index2> || ...)
              || (!TensorNatIndex<Index1> || ...))
+#if defined BUILD_YOUNG_TABLEAU
             && (!misc::Specialization<ProdDDim, TensorYoungTableauIndex> && ...)
             && (!misc::Specialization<Index1, TensorYoungTableauIndex> && ...)
-            && (!misc::Specialization<Index2, TensorYoungTableauIndex> && ...))
+            && (!misc::Specialization<Index2, TensorYoungTableauIndex> && ...)
+#endif
+                    )
 Tensor<ElementType,
        ddc::DiscreteDomain<ProdDDim...>,
        Kokkos::layout_right,
@@ -217,6 +222,7 @@ tensor_prod(
     return prod_tensor;
 }
 
+#if defined BUILD_YOUNG_TABLEAU
 // Young-dense product
 namespace detail {
 
@@ -555,6 +561,8 @@ tensor_prod(
                 uncharacterize_tensor(tensor2));
     return prod_tensor;
 }
+#endif
+
 } // namespace tensor
 
 } // namespace sil

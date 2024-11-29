@@ -586,6 +586,7 @@ TEST(TensorProd, SimpleContractionRank3AntisymIndexedxRank2AntisymIndexed)
     EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, Y, Z>()), 19.);
 }
 
+#if defined BUILD_YOUNG_TABLEAU
 using YoungTableauIndex = sil::tensor::TensorYoungTableauIndex<
         sil::young_tableau::
                 YoungTableau<3, sil::young_tableau::YoungTableauSeq<std::index_sequence<1, 2, 3>>>,
@@ -706,3 +707,4 @@ TEST(TensorProd, DoubleContractionYoungIndexedxNaturalIndex)
     EXPECT_DOUBLE_EQ(prod_tensor.get(prod_tensor.access_element<Z, Y>()), 808.);
     EXPECT_DOUBLE_EQ(prod_tensor.get(prod_tensor.access_element<Z, Z>()), 860.);
 }
+#endif

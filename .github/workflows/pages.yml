@@ -88,6 +88,7 @@ jobs:
           set -xe
           git config --global --add safe.directory '*'
           cmake \
+              -DSIMILIE_BUILD_YOUNG_TABLEAU=ON \
               -DSIMILIE_BUILD_DOCUMENTATION=ON \
               -DCMAKE_CXX_STANDARD=23 \
               -DDOXYGEN_EXTRACT_ALL=YES \
@@ -149,6 +150,7 @@ jobs:
           # export CC=clang
           # export CXX=clang++
           cmake \
+              -DSIMILIE_BUILD_YOUNG_TABLEAU=ON \
               -DSIMILIE_BUILD_DOCUMENTATION=ON \
               -DCMAKE_CXX_FLAGS="-Wno-unused-command-line-argument" \
               -DCMAKE_CXX_STANDARD=23 \

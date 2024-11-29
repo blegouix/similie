@@ -9,6 +9,7 @@ target_link_libraries(2d_laplacian
         sil::sil
 )
 
+if("${SIMILIE_BUILD_YOUNG_TABLEAU}")
 add_executable(kretschmann_scalar kretschmann_scalar.cpp)
 
 target_link_libraries(kretschmann_scalar
@@ -16,3 +17,4 @@ target_link_libraries(kretschmann_scalar
         DDC::DDC
         sil::tensor
 )
+endif()
