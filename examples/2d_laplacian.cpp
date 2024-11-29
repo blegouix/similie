@@ -144,7 +144,7 @@ int main(int argc, char** argv)
     });
 
     std::cout << "Potential:" << std::endl;
-    std::cout << potential[potential_accessor.mem_domain().front()] << "\n" << std::endl;
+    std::cout << potential[potential_accessor.mem_domain().front()] << std::endl;
 
     // Gradient
     sil::tensor::TensorAccessor<MuLow> gradient_accessor;

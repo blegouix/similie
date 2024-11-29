@@ -1,9 +1,9 @@
 # SPDX-FileCopyrightText: 2024 Baptiste Legouix
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-add_executable(sketch sketch.cpp)
+add_executable(2d_laplacian 2d_laplacian.cpp)
 
-target_link_libraries(sketch
+target_link_libraries(2d_laplacian
     PUBLIC
         DDC::DDC
         sil::sil
