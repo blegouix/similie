@@ -147,9 +147,7 @@ int main(int argc, char** argv)
 
     // Gradient
     sil::tensor::TensorAccessor<MuLow> gradient_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, MuLow> gradient_dom(
-            mesh_xy,
-            gradient_accessor.mem_domain());
+    ddc::DiscreteDomain<DDimX, DDimY, MuLow> gradient_dom(mesh_xy, gradient_accessor.mem_domain());
     ddc::Chunk gradient_alloc(gradient_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor<
             double,
