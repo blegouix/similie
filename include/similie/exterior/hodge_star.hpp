@@ -25,8 +25,9 @@ template <
         misc::Specialization<ddc::detail::TypeSeq> Indices2>
 using hodge_star_domain_t
         = ddc::detail::convert_type_seq_to_discrete_domain_t<ddc::type_seq_merge_t<
-                ddc::detail::TypeSeq<
-                        misc::convert_type_seq_to_t<tensor::TensorFullIndex, Indices1>>,
+                ddc::detail::TypeSeq<misc::convert_type_seq_to_t<
+                        tensor::TensorFullIndex,
+                        Indices1>>, // TODO clarify Antisymmetric
                 ddc::detail::TypeSeq<
                         misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, Indices2>>>>;
 

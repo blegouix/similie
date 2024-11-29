@@ -21,7 +21,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 - Remove metric_prod_t (and every helper producing a tensor)
 - is_same_character_v and use it in tensor product
 - find a way to use CTAD when constructing a Tensor and DiscreteDomain
-- Fix HodgeStar using FullIndex
 
 ----- CMAKE BASIC COMMAND -----
 

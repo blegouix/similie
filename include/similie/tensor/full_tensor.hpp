@@ -32,17 +32,29 @@ struct TensorFullIndex
 
     static constexpr std::size_t rank()
     {
-        return (TensorIndex::rank() + ...);
+        if constexpr (sizeof...(TensorIndex) == 0) {
+            return 0;
+        } else {
+            return (TensorIndex::rank() + ...);
+        }
     }
 
     static constexpr std::size_t size()
     {
-        return (TensorIndex::size() * ...);
+        if constexpr (rank() == 0) {
+            return 1;
+        } else {
+            return (TensorIndex::size() * ...);
+        }
     }
 
     static constexpr std::size_t mem_size()
     {
-        return (TensorIndex::mem_size() * ...);
+        if constexpr (rank() == 0) {
+            return 1;
+        } else {
+            return (TensorIndex::mem_size() * ...);
+        }
     }
 
     static constexpr std::size_t access_size()
@@ -59,10 +71,15 @@ struct TensorFullIndex
     static constexpr std::size_t access_id(
             std::array<std::size_t, sizeof...(TensorIndex)> const natural_ids)
     {
-        return ((misc::detail::stride<TensorIndex, TensorIndex...>()
-                 * natural_ids
-                         [ddc::type_seq_rank_v<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>>])
-                + ...);
+        if constexpr (rank() == 0) {
+            return 0;
+        } else {
+            return ((misc::detail::stride<TensorIndex, TensorIndex...>()
+                     * natural_ids[ddc::type_seq_rank_v<
+                             TensorIndex,
+                             ddc::detail::TypeSeq<TensorIndex...>>])
+                    + ...);
+        }
     }
 
     static constexpr std::size_t access_id_to_mem_id(std::size_t access_id)
@@ -83,9 +100,13 @@ struct TensorFullIndex
             std::size_t mem_id)
     {
         assert(mem_id < mem_size());
-        return std::array<std::size_t, rank()> {
-                (mem_id % misc::detail::next_stride<TensorIndex, TensorIndex...>())
-                / misc::detail::stride<TensorIndex, TensorIndex...>()...};
+        if constexpr (rank() == 0) {
+            return std::array<std::size_t, rank()> {};
+        } else {
+            return std::array<std::size_t, rank()> {
+                    (mem_id % misc::detail::next_stride<TensorIndex, TensorIndex...>())
+                    / misc::detail::stride<TensorIndex, TensorIndex...>()...};
+        }
     }
 };
 
