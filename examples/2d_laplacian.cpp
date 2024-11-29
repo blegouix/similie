@@ -55,7 +55,7 @@ struct Rho : sil::tensor::TensorNaturalIndex<X, Y>
 {
 };
 
-// Declare upper (contravariant) indices
+// Declare indices
 using MuLow = sil::tensor::TensorCovariantNaturalIndex<Mu>;
 using MuUp = sil::tensor::TensorContravariantNaturalIndex<Mu>;
 using NuLow = sil::tensor::TensorCovariantNaturalIndex<Nu>;
@@ -114,7 +114,6 @@ int main(int argc, char** argv)
             Kokkos::DefaultHostExecutionSpace::memory_space>
             inv_metric(inv_metric_alloc);
     sil::tensor::fill_inverse_metric<MetricIndex>(inv_metric, metric);
-    // auto gmunu = sil::tensor::relabelize_metric<MuUp, NuUp>(inv_metric);
 
     // Potential
     sil::tensor::TensorAccessor<DummyIndex> potential_accessor;
@@ -149,7 +148,6 @@ int main(int argc, char** argv)
     // Gradient
     sil::tensor::TensorAccessor<MuLow> gradient_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, MuLow> gradient_dom(
-            // mesh_xy.remove_last(ddc::DiscreteVector<DDimX, DDimY> {1, 1}),
             mesh_xy,
             gradient_accessor.mem_domain());
     ddc::Chunk gradient_alloc(gradient_dom, ddc::HostAllocator<double>());
