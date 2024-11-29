@@ -9,6 +9,7 @@ set_property(GLOBAL PROPERTY GLOBAL_DEPENDS_NO_CYCLES ON)
 set(CMAKE_CXX_STANDARD 23 CACHE INTERNAL "The C++ standard whose features are requested to build this project.")
 
 # List of options
+option(SIMILIE_BUILD_YOUNG_TABLEAU "Build module dedicated to Young tableau indexing" OFF) # Requires compiler supporting #embed directive
 option(SIMILIE_BUILD_DOCUMENTATION "Build DDC documentation/website" OFF)
 
 # Set default DDC options when included
@@ -18,10 +19,13 @@ option(DDC_BUILD_EXAMPLES         "Build DDC examples" OFF)
 option(DDC_BUILD_TESTS            "Build DDC tests if BUILD_TESTING is enabled" OFF)
 
 # Custom variables
-if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/irreps_dict.bin)
+if("${SIMILIE_BUILD_YOUNG_TABLEAU}")
+  add_compile_definitions("BUILD_YOUNG_TABLEAU")
+  if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/irreps_dict.bin)
     file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/irreps_dict.bin "")
+  endif()
+  add_compile_definitions("IRREPS_DICT_PATH=\"${CMAKE_CURRENT_BINARY_DIR}/irreps_dict.bin\"")
 endif()
-add_compile_definitions("IRREPS_DICT_PATH=\"${CMAKE_CURRENT_BINARY_DIR}/irreps_dict.bin\"")
 
 # Dependencies
 

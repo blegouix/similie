@@ -534,6 +534,7 @@ TEST(Tensor, PartiallyTensorSymmetricIndexing4x3x3)
     EXPECT_EQ(tensor.get(tensor.access_element<Z, Z, Z>()), 23.);
 }
 
+#ifdef BUILD_YOUNG_TABLEAU
 using YoungTableauIndex = sil::tensor::TensorYoungTableauIndex<
         sil::young_tableau::
                 YoungTableau<3, sil::young_tableau::YoungTableauSeq<std::index_sequence<1, 2, 3>>>,
@@ -659,6 +660,7 @@ TEST(Tensor, YoungTableauIndexing)
     EXPECT_DOUBLE_EQ(uncompressed.get(natural_accessor.access_element<Z, Z, Y>()), 8.);
     EXPECT_DOUBLE_EQ(uncompressed.get(natural_accessor.access_element<Z, Z, Z>()), 9.);
 }
+#endif
 
 TEST(Tensor, Determinant)
 {
