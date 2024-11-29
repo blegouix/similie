@@ -92,7 +92,11 @@ struct TensorNaturalIndex
             std::size_t mem_id)
     {
         assert(mem_id < mem_size());
-        return std::array<std::size_t, rank()> {mem_id};
+        if constexpr (rank() == 0) {
+            return std::array<std::size_t, rank()> {};
+        } else {
+            return std::array<std::size_t, rank()> {mem_id};
+        }
     }
 };
 

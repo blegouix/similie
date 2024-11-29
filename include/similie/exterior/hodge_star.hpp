@@ -84,6 +84,8 @@ template <
 HodgeStarType fill_hodge_star(HodgeStarType hodge_star, MetricType metric)
 {
     static_assert(tensor::are_contravariant_v<
+                  ddc::to_type_seq_t<typename MetricIndex::subindices_domain_t>>);
+    static_assert(tensor::are_contravariant_v<
                   ddc::to_type_seq_t<typename MetricType::accessor_t::natural_domain_t>>);
     static_assert(tensor::are_contravariant_v<Indices1>);
     static_assert(tensor::are_covariant_v<Indices2>);
