@@ -26,9 +26,7 @@ Last but not least, the `sil::young_tableau` module relies on the [embed](https:
 
 # Compilation 
 
-Clone the main branch of the github repo [here](https://github.com/blegouix/similie).
-
-First, be sure to have a full installation of Ginkgo and Clang 19. Populate the other dependencies with:
+First, be sure to have a full installation of Ginkgo and Clang 19. Then clone the main branch of the [github repo](https://github.com/blegouix/similie) and populate the other dependencies with:
 
 ```
 git submodule update --init --recursive
