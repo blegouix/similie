@@ -9,6 +9,6 @@ git clone -c feature.manyFiles=true --depth=2 https://github.com/spack/spack.git
 spack external find cmake
 spack compiler find
 spack install cuda
-spack install openblas
+spack install netlib-lapack
 spack install fftw -mpi +openmp
 spack install ginkgo@1.8.0 cuda_arch=70 +cuda
