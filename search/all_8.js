@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['idx_0',['idx',['../classsil_1_1csr_1_1Csr.html#a0e3de7c3271e9cdf7cbaa7aa9209b77d',1,'sil::csr::Csr::idx()'],['../classsil_1_1csr_1_1CsrDynamic.html#a86f91fd0bd9174d5ec66590d833e60a0',1,'sil::csr::CsrDynamic::idx()']]],
+  ['idx_0',['idx',['../classsil_1_1csr_1_1Csr.html#a0e3de7c3271e9cdf7cbaa7aa9209b77d',1,'sil::csr::Csr::idx()'],['../classsil_1_1csr_1_1CsrDynamic.html#a55117e034496388c0a1ea3cb833a1d3d',1,'sil::csr::CsrDynamic::idx()']]],
   ['indices_5fdomain_1',['indices_domain',['../classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html#aeb762034b5c0d0d6da6b0ba38e156c69',1,'sil::tensor::Tensor&lt; ElementType, ddc::DiscreteDomain&lt; DDim... &gt;, LayoutStridedPolicy, MemorySpace &gt;']]],
   ['indices_5fdomain_5ft_2',['indices_domain_t',['../classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html#af0827abcc0f70a6aac80d7eb4e3c213d',1,'sil::tensor::Tensor&lt; ElementType, ddc::DiscreteDomain&lt; DDim... &gt;, LayoutStridedPolicy, MemorySpace &gt;']]],
   ['inplace_5fapply_5fmetric_3',['inplace_apply_metric',['../namespacesil_1_1tensor.html#adee2138cf3eae0ec55033998a7bef485',1,'sil::tensor::inplace_apply_metric(TensorType tensor, MetricType metric_prod)'],['../namespacesil_1_1tensor.html#a3bceadc5944fd5bc5aa43a7eb7d6fb9c',1,'sil::tensor::inplace_apply_metric(TensorType tensor, MetricType metric)']]],
