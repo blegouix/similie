@@ -6,7 +6,7 @@ project(SimiLie VERSION 0.0.0 LANGUAGES CXX)
 
 set_property(GLOBAL PROPERTY GLOBAL_DEPENDS_NO_CYCLES ON)
 
-set(CMAKE_CXX_STANDARD 23 CACHE INTERNAL "The C++ standard whose features are requested to build this project.")
+set(CMAKE_CXX_STANDARD 20 CACHE INTERNAL "The C++ standard whose features are requested to build this project.")
 
 # List of options
 option(SIMILIE_BUILD_YOUNG_TABLEAU "Build module dedicated to Young tableau indexing" OFF) # Requires compiler supporting #embed directive
@@ -66,7 +66,7 @@ endif()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_library(similie INTERFACE)
 add_library(sil::sil ALIAS similie)
-target_compile_features(similie INTERFACE cxx_std_23)
+target_compile_features(similie INTERFACE cxx_std_20)
 target_include_directories(
     similie
     INTERFACE
