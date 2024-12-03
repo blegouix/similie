@@ -49,17 +49,18 @@ public:
         return m_domain;
     }
 
-    constexpr std::vector<std::size_t> coalesc_idx() const
+    std::vector<std::size_t> coalesc_idx() const // Can be constexpr with C++23
     {
         return m_coalesc_idx;
     }
 
-    constexpr std::array<std::vector<std::size_t>, sizeof...(TailTensorIndex)> idx() const
+    std::array<std::vector<std::size_t>, sizeof...(TailTensorIndex)> idx()
+            const // Can be constexpr with C++23
     {
         return m_idx;
     }
 
-    constexpr std::vector<double> values() const
+    std::vector<double> values() const // Can be constexpr with C++23
     {
         return m_values;
     }

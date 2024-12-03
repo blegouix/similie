@@ -134,7 +134,7 @@ public:
         return m_simplices[i];
     }
 
-    void push_back(const simplex_type& simplex)
+    KOKKOS_FUNCTION void push_back(const simplex_type& simplex)
     {
         m_simplices.push_back(simplex);
     };
@@ -192,8 +192,8 @@ public:
     }
 };
 
-template <class... T>
-Chain(T...) -> Chain<ddc::type_seq_element_t<0, ddc::detail::TypeSeq<T...>>>;
+template <class Head, class... Tail>
+Chain(Head, Tail...) -> Chain<Head>;
 
 template <misc::Specialization<Chain> ChainType>
 std::ostream& operator<<(std::ostream& out, ChainType const& chain)

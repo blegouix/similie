@@ -249,7 +249,7 @@ struct TangentBasis;
 template <std::size_t K, class... Tag>
 struct TangentBasis<K, ddc::DiscreteDomain<Tag...>>
 {
-    static auto constexpr run()
+    KOKKOS_FUNCTION static auto constexpr run()
     {
         return tangent_basis<K, Tag...>();
     }

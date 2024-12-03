@@ -43,24 +43,24 @@ struct DDimZ : ddc::UniformPointSampling<Z>
 
 TEST(Chain, Optimization)
 {
-    sil::exterior::Chain chain
-            = sil::exterior::Chain(
-                      sil::exterior::
-                              Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
-                                      ddc::DiscreteVector<DDimX, DDimY> {1, 1}))
-              + sil::exterior::
-                      Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 1, 1, 0},
-                              ddc::DiscreteVector<DDimX, DDimY> {1, -1})
-              + sil::exterior::
-                      Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {1, 0, 1, 0},
-                              ddc::DiscreteVector<DDimX, DDimY> {1, -1})
-              - sil::exterior::
-                      Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
-                              ddc::DiscreteVector<DDimX, DDimY> {1, 1})
-              - sil::exterior::Chain(
-                      sil::exterior::
-                              Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 1},
-                                      ddc::DiscreteVector<DDimX, DDimY> {1, 1}));
+    sil::exterior::Chain chain = sil::exterior::Chain(
+            sil::exterior::
+                    Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
+                            ddc::DiscreteVector<DDimX, DDimY> {1, 1}));
+    chain = chain
+            + sil::exterior::
+                    Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 1, 1, 0},
+                            ddc::DiscreteVector<DDimX, DDimY> {1, -1})
+            + sil::exterior::
+                    Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {1, 0, 1, 0},
+                            ddc::DiscreteVector<DDimX, DDimY> {1, -1})
+            - sil::exterior::
+                    Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
+                            ddc::DiscreteVector<DDimX, DDimY> {1, 1})
+            - sil::exterior::Chain(
+                    sil::exterior::
+                            Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 1},
+                                    ddc::DiscreteVector<DDimX, DDimY> {1, 1}));
     chain.optimize();
     EXPECT_TRUE(
             chain
