@@ -173,8 +173,7 @@ KOKKOS_FUNCTION coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> c
         coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
         TensorType tensor)
 {
-    ddc::parallel_for_each(
-            Kokkos::DefaultHostExecutionSpace(),
+    ddc::for_each(
             ddc::remove_dims_of<coboundary_index_t<TagToAddToCochain, CochainTag>>(
                     coboundary_tensor.domain()),
             [&](auto elem) {
