@@ -35,22 +35,14 @@ public:
     ddc::DiscreteDomain<DDim> mesh(
             ddc::Coordinate<CDim> lower_boundary,
             ddc::Coordinate<CDim> upper_boundary,
-            ddc::DiscreteVector<DDim> nb_cells);
+            ddc::DiscreteVector<DDim> nb_cells)
+    {
+        ddc::init_discrete_space<BSplines>(lower_boundary, upper_boundary, nb_cells);
+        ddc::init_discrete_space<DDim>(
+                greville_points_type<BSplines>::template get_sampling<DDim>());
+        return greville_points_type<BSplines>::template get_domain<DDim>();
+    };
 };
-
-template <std::size_t D, class CDim>
-template <
-        std::derived_from<typename Mesher1D<D, CDim>::discrete_dimension_type> DDim,
-        std::derived_from<typename Mesher1D<D, CDim>::bsplines_type> BSplines>
-ddc::DiscreteDomain<DDim> Mesher1D<D, CDim>::mesh(
-        ddc::Coordinate<CDim> lower_boundary,
-        ddc::Coordinate<CDim> upper_boundary,
-        ddc::DiscreteVector<DDim> nb_cells)
-{
-    ddc::init_discrete_space<BSplines>(lower_boundary, upper_boundary, nb_cells);
-    ddc::init_discrete_space<DDim>(greville_points_type<BSplines>::template get_sampling<DDim>());
-    return greville_points_type<BSplines>::template get_domain<DDim>();
-}
 
 } // namespace detail
 
