@@ -32,7 +32,7 @@ public:
     template <
             std::derived_from<discrete_dimension_type> DDim,
             std::derived_from<bsplines_type> BSplines>
-    ddc::DiscreteDomain<DDim> mesh(
+    constexpr ddc::DiscreteDomain<DDim> mesh(
             ddc::Coordinate<CDim> lower_boundary,
             ddc::Coordinate<CDim> upper_boundary,
             ddc::DiscreteVector<DDim> nb_cells)
@@ -67,7 +67,7 @@ public:
                     interpolation_discrete_dimension_type;
 
     template <class TypeSeqDDim, class TypeSeqBSplines>
-    ddc::detail::convert_type_seq_to_discrete_domain_t<TypeSeqDDim> mesh(
+    constexpr ddc::detail::convert_type_seq_to_discrete_domain_t<TypeSeqDDim> mesh(
             ddc::Coordinate<CDim...> lower_boundaries,
             ddc::Coordinate<CDim...> upper_boundaries,
             ddc::detail::convert_type_seq_to_discrete_domain_t<TypeSeqDDim>::mlength_type nb_cells);
@@ -75,7 +75,7 @@ public:
 
 template <std::size_t D, class... CDim>
 template <class TypeSeqDDim, class TypeSeqBSplines>
-ddc::detail::convert_type_seq_to_discrete_domain_t<TypeSeqDDim> Mesher<D, CDim...>::mesh(
+constexpr ddc::detail::convert_type_seq_to_discrete_domain_t<TypeSeqDDim> Mesher<D, CDim...>::mesh(
         ddc::Coordinate<CDim...> lower_boundaries,
         ddc::Coordinate<CDim...> upper_boundaries,
         ddc::detail::convert_type_seq_to_discrete_domain_t<TypeSeqDDim>::mlength_type nb_cells)

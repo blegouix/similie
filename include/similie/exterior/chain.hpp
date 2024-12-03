@@ -134,7 +134,7 @@ public:
         return m_simplices[i];
     }
 
-    void push_back(const simplex_type& simplex)
+    KOKKOS_FUNCTION void push_back(const simplex_type& simplex)
     {
         m_simplices.push_back(simplex);
     };
