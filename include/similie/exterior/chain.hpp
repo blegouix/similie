@@ -21,10 +21,11 @@ template <class SimplexType, class ExecSpace = Kokkos::DefaultHostExecutionSpace
 class Chain
 {
 public:
+    using execution_space = ExecSpace;
     using memory_space = typename ExecSpace::memory_space;
 
     using simplex_type = SimplexType;
-    using simplices_type = Kokkos::<SimplexType*, memory_space>;
+    using simplices_type = Kokkos::View<SimplexType*, memory_space>;
     using discrete_element_type = typename simplex_type::discrete_element_type;
     using discrete_vector_type = typename simplex_type::discrete_vector_type;
 
@@ -43,8 +44,7 @@ public:
         assert(check() == 0 && "there are duplicate simplices in the chain");
     }
 
-    KOKKOS_FUNCTION constexpr explicit Chain(
-            Kokkos::<simplex_type*, memory_space>simplices) noexcept
+    KOKKOS_FUNCTION constexpr explicit Chain(simplices_type simplices) noexcept
         : m_simplices(simplices)
     {
         assert(check() == 0 && "there are duplicate simplices in the chain");
@@ -102,7 +102,7 @@ public:
                 simplices_vect.erase(i--);
             }
         }
-        Kokkos::<simplex_type*, Kokkos::HostSpace>new_simplices_host(
+        Kokkos::View<simplex_type*, Kokkos::HostSpace> new_simplices_host(
                 simplices_vect.data(),
                 simplices_vect.data() + simplices_vect.size());
         m_simplices = Kokkos::create_mirror_view_and_copy(memory_space, new_simplices_host);
