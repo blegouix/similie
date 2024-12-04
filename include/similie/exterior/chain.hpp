@@ -141,12 +141,12 @@ public:
 
     KOKKOS_FUNCTION auto cbegin() const
     {
-        return Kokkos::Experimental::cbegin(m_simplices);
+        return Kokkos::Experimental::begin(m_simplices);
     }
 
     KOKKOS_FUNCTION auto cend() const
     {
-        return Kokkos::Experimental::cend(m_simplices);
+        return Kokkos::Experimental::end(m_simplices);
     }
 
     KOKKOS_FUNCTION simplex_type& operator[](std::size_t i) noexcept
