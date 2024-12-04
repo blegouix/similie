@@ -76,7 +76,7 @@ public:
                && "negative simplices are not supported in LocalChain");
     }
 
-    KOKKOS_FUNCTION constexpr explicit LocalChain(simplices_type simplices) noexcept
+    KOKKOS_FUNCTION explicit LocalChain(simplices_type simplices) noexcept // Can be constexpr with C++23
         : m_vects(detail::extract_vects(simplices))
     {
         assert(check() == 0 && "there are duplicate simplices in the chain");
