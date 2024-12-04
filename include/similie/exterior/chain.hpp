@@ -166,7 +166,7 @@ public:
     KOKKOS_FUNCTION void push_back(const simplex_type& simplex)
     {
         Kokkos::resize(m_simplices, m_simplices.size() + 1);
-        m_simplices(m_simplices.size()) = simplex;
+        m_simplices(m_simplices.size() - 1) = simplex;
     }
 
     KOKKOS_FUNCTION void push_back(const Chain<simplex_type>& simplices_to_add)
@@ -183,7 +183,7 @@ public:
     {
         simplices_type simplices = m_simplices;
         for (auto i = Kokkos::Experimental::begin(simplices);
-             i < Kokkos::Experimental::end(simplices) - 1;
+             i < Kokkos::Experimental::end(simplices);
              ++i) {
             *i = -*i;
         }

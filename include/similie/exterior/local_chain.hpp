@@ -200,13 +200,13 @@ public:
     KOKKOS_FUNCTION void push_back(const discrete_vector_type& vect)
     {
         Kokkos::resize(m_vects, m_vects.size() + 1);
-        m_vects(m_vects.size()) = vect;
+        m_vects(m_vects.size() - 1) = vect;
     }
 
     KOKKOS_FUNCTION void push_back(const simplex_type& simplex)
     {
         Kokkos::resize(m_vects, m_vects.size() + 1);
-        m_vects(m_vects.size()) = simplex.discrete_vector();
+        m_vects(m_vects.size() - 1) = simplex.discrete_vector();
     }
 
     KOKKOS_FUNCTION void push_back(const vects_type& vects)
