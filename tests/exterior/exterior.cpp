@@ -62,7 +62,6 @@ TEST(Chain, Optimization)
                             Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 1},
                                     ddc::DiscreteVector<DDimX, DDimY> {1, 1}));
     chain.optimize();
-
     EXPECT_TRUE(
             chain
             == sil::exterior::
