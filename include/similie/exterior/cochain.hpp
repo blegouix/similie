@@ -359,7 +359,7 @@ public:
             CochainIterator const& xx,
             CochainIterator const& yy)
     {
-        return xx - yy;
+        return xx.m_chain - yy.m_chain;
     }
 };
 

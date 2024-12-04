@@ -208,19 +208,20 @@ KOKKOS_FUNCTION coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> c
                                                 (*j).discrete_element())
                                                 ? (*j).discrete_element()
                                                 : elem, // TODO this is an assumption on boundary condition (free boundary), needs to be generalized
-                                        ddc::DiscreteElement<CochainTag>(std::distance(
-                                                lower_chain.begin(),
-                                                std::
-                                                        find(lower_chain.begin(),
-                                                             lower_chain.end(),
-                                                             (*j).discrete_vector()))));
+                                        ddc::DiscreteElement<CochainTag>(
+                                                Kokkos::Experimental::distance(
+                                                        lower_chain.begin(),
+                                                        std::
+                                                                find(lower_chain.begin(),
+                                                                     lower_chain.end(),
+                                                                     (*j).discrete_vector()))));
                     }
                     sil::exterior::Cochain cochain_boundary(simplex_boundary, values);
                     coboundary_tensor
                             .mem(elem,
                                  ddc::DiscreteElement<
                                          coboundary_index_t<TagToAddToCochain, CochainTag>>(
-                                         std::distance(cochain.begin(), i)))
+                                         Kokkos::Experimental::distance(cochain.begin(), i)))
                             = cochain_boundary.integrate();
                 }
             });
