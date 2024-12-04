@@ -13,6 +13,8 @@
 #include <similie/tensor/antisymmetric_tensor.hpp>
 #include <similie/tensor/tensor_impl.hpp>
 
+#include <Kokkos_StdAlgorithms.hpp>
+
 #include "cochain.hpp"
 #include "cosimplex.hpp"
 
@@ -196,20 +198,21 @@ KOKKOS_FUNCTION coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> c
                                                                CochainTag::rank() + 1> {},
                                                        elem,
                                                        (*i).discrete_vector()));
-                    std::vector<double> values(simplex_boundary.size());
+                    Kokkos::View<double, Kokkos::HostSpace> values(simplex_boundary.size());
                     for (auto j = simplex_boundary.begin(); j < simplex_boundary.end(); ++j) {
-                        values[std::distance(simplex_boundary.begin(), j)] = tensor.mem(
-                                misc::domain_contains(
-                                        tensor.domain(),
-                                        j->discrete_element())
-                                        ? j->discrete_element()
-                                        : elem, // TODO this is an assumption on boundary condition (free boundary), needs to be generalized
-                                ddc::DiscreteElement<CochainTag>(std::distance(
-                                        lower_chain.begin(),
-                                        std::
-                                                find(lower_chain.begin(),
-                                                     lower_chain.end(),
-                                                     j->discrete_vector()))));
+                        values[Kokkos::Experimental::distance(simplex_boundary.begin(), j)]
+                                = tensor.mem(
+                                        misc::domain_contains(
+                                                tensor.domain(),
+                                                j->discrete_element())
+                                                ? j->discrete_element()
+                                                : elem, // TODO this is an assumption on boundary condition (free boundary), needs to be generalized
+                                        ddc::DiscreteElement<CochainTag>(std::distance(
+                                                lower_chain.begin(),
+                                                std::
+                                                        find(lower_chain.begin(),
+                                                             lower_chain.end(),
+                                                             j->discrete_vector()))));
                     }
                     sil::exterior::Cochain<decltype(simplex_boundary)>
                             cochain_boundary(simplex_boundary, values);

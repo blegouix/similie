@@ -56,8 +56,10 @@ public:
         requires(sizeof...(T) >= 1 && (std::is_convertible_v<T, double> && ...))
     KOKKOS_FUNCTION constexpr explicit Cochain(chain_type chain, T... value) noexcept
         : m_chain(chain)
-        , m_values {value...}
+        , m_values("cochain_values", sizeof...(T))
     {
+        int i = 0;
+        ((m_values(i++) = value), ...);
         assert(sizeof...(T) == chain.size()
                && "cochain constructor must get as much values as the chain contains simplices");
     }
@@ -91,7 +93,8 @@ public:
                && "cochain constructor must get as much values as the chain contains simplices");
         // TODO avoid copy
         for (auto i = m_values.begin(); i < m_values.end(); ++i) {
-            *i = tensor.mem(ddc::DiscreteElement<Index>(Kokkos::distance(m_values.begin(), i)));
+            *i = tensor.mem(ddc::DiscreteElement<Index>(
+                    Kokkos::Experimental::distance(m_values.begin(), i)));
         }
     }
 
@@ -129,32 +132,32 @@ public:
 
     KOKKOS_FUNCTION auto begin()
     {
-        return iterator(m_chain.begin(), m_values.begin());
+        return iterator(m_chain.begin(), Kokkos::Experimental::begin(m_values));
     }
 
     KOKKOS_FUNCTION auto begin() const
     {
-        return iterator(m_chain.begin(), m_values.begin());
+        return iterator(m_chain.begin(), Kokkos::Experimental::begin(m_values));
     }
 
     KOKKOS_FUNCTION auto end()
     {
-        return iterator(m_chain.end(), m_values.end());
+        return iterator(m_chain.end(), Kokkos::Experimental::end(m_values));
     }
 
     KOKKOS_FUNCTION auto end() const
     {
-        return iterator(m_chain.end(), m_values.end());
+        return iterator(m_chain.end(), Kokkos::Experimental::end(m_values));
     }
 
     KOKKOS_FUNCTION auto cbegin() const
     {
-        return iterator(m_chain.begin(), m_values.begin());
+        return iterator(m_chain.begin(), Kokkos::Experimental::begin(m_values));
     }
 
     KOKKOS_FUNCTION auto cend() const
     {
-        return iterator(m_chain.end(), m_values.end());
+        return iterator(m_chain.end(), Kokkos::Experimental::end(m_values));
     }
 
     KOKKOS_FUNCTION Cosimplex<simplex_type, element_type>& operator[](std::size_t i) noexcept
@@ -199,7 +202,7 @@ template <typename CochainType>
 class CochainIterator
 {
 public:
-    using iterator_category = std::forward_iterator_tag;
+    using iterator_category = std::random_access_iterator_tag;
     using value_type = typename CochainType::cosimplex_type;
     using difference_type = std::ptrdiff_t;
     using pointer = value_type*;
@@ -207,8 +210,9 @@ public:
 
     using cosimplex_type = typename CochainType::cosimplex_type;
 
-    using chain_iterator = typename CochainType::chain_type::simplices_type::iterator;
-    using values_iterator = typename CochainType::values_type::iterator;
+    using chain_iterator = typename CochainType::chain_type::iterator_type;
+    using values_iterator
+            = Kokkos::Experimental::Impl::RandomAccessIterator<typename CochainType::values_type>;
 
 private:
     chain_iterator m_chain;

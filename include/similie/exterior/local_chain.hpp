@@ -24,9 +24,9 @@ Kokkos::View<typename SimplexType::discrete_vector_type*, MemorySpace> extract_v
 {
     Kokkos::View<typename SimplexType::discrete_vector_type*, MemorySpace> vects(
             simplices.extent(0));
-    for (auto i = Kokkos::experimental::begin(simplices); i < Kokkos::experimental::end(simplices);
+    for (auto i = Kokkos::Experimental::begin(simplices); i < Kokkos::Experimental::end(simplices);
          ++i) {
-        vects[i] = simplex.discrete_vector();
+        vects[i] = i->discrete_vector();
     }
     return vects;
 }
@@ -48,6 +48,8 @@ public:
     using discrete_vector_type = typename simplex_type::discrete_vector_type;
     using vects_type = Kokkos::View<discrete_vector_type*, memory_space>;
 
+    using iterator_type = Kokkos::Experimental::Impl::RandomAccessIterator<vects_type>;
+
 private:
     static constexpr bool s_is_local = true;
     static constexpr std::size_t s_k = simplex_type::dimension();
@@ -63,8 +65,10 @@ public:
     template <misc::NotSpecialization<ddc::DiscreteVector>... T>
         requires misc::are_all_same<T...>
     KOKKOS_FUNCTION constexpr explicit LocalChain(T... simplex) noexcept
-        : m_vects {simplex.discrete_vector()...}
+        : m_vects("local_chain_vects", sizeof...(T))
     {
+        int i = 0;
+        ((m_vects(i++) = simplex.discrete_vector()), ...);
         assert(check() == 0 && "there are duplicate simplices in the chain");
         assert(misc::are_all_equal(simplex.discrete_element()...)
                && "LocalChain must contain simplices with same origin (if not, use Chain)");
@@ -78,24 +82,21 @@ public:
         assert(check() == 0 && "there are duplicate simplices in the chain");
         std::function<bool()> check_common_elem = [&]() {
             Kokkos::View<discrete_element_type*, memory_space> elems(simplices.size());
-            for (auto i = Kokkos::experimental::begin(simplices);
-                 i < Kokkos::experimental::end(simplices);
+            for (auto i = Kokkos::Experimental::begin(simplices);
+                 i < Kokkos::Experimental::end(simplices);
                  ++i) {
-                elems[Kokkos::distance(Kokkos::experimental::begin(simplices), i)]
+                elems[Kokkos::Experimental::distance(Kokkos::Experimental::begin(simplices), i)]
                         = i->discrete_element();
             }
             return misc::are_all_equal(elems);
         };
         assert(check_common_elem()
                && "LocalChain must contain simplices with same origin (if not, use Chain)");
-        // TODO restore
-        /*
         assert(std::
-                       all_of(simplices.begin(),
-                              simplices.end(),
+                       all_of(Kokkos::Experimental::begin(simplices),
+                              Kokkos::Experimental::end(simplices),
                               [&](const std::size_t i) { return !simplices[i].negative(); })
                && "LocalChain must contain simplices with same origin (if not, use Chain)");
-	*/
     }
 
     template <misc::Specialization<ddc::DiscreteVector>... T>
@@ -149,32 +150,32 @@ public:
 
     KOKKOS_FUNCTION auto begin()
     {
-        return Kokkos::experimental::begin(m_vects);
+        return Kokkos::Experimental::begin(m_vects);
     }
 
     KOKKOS_FUNCTION auto begin() const
     {
-        return Kokkos::experimental::begin(m_vects);
+        return Kokkos::Experimental::begin(m_vects);
     }
 
     KOKKOS_FUNCTION auto end()
     {
-        return Kokkos::experimental::end(m_vects);
+        return Kokkos::Experimental::end(m_vects);
     }
 
     KOKKOS_FUNCTION auto end() const
     {
-        return Kokkos::experimental::end(m_vects);
+        return Kokkos::Experimental::end(m_vects);
     }
 
     KOKKOS_FUNCTION auto cbegin() const
     {
-        return Kokkos::experimental::begin(m_vects);
+        return Kokkos::Experimental::begin(m_vects);
     }
 
     KOKKOS_FUNCTION auto cend() const
     {
-        return Kokkos::experimental::end(m_vects);
+        return Kokkos::Experimental::end(m_vects);
     }
 
     KOKKOS_FUNCTION simplex_type operator[](std::size_t i) noexcept
@@ -189,32 +190,34 @@ public:
 
     KOKKOS_FUNCTION void push_back(const discrete_vector_type& vect)
     {
-        m_vects.resize(m_vects.size() + 1);
+        Kokkos::resize(m_vects, m_vects.size() + 1);
         m_vects[m_vects.size()] = vect;
     }
 
     KOKKOS_FUNCTION void push_back(const simplex_type& simplex)
     {
-        m_vects.resize(m_vects.size() + 1);
+        Kokkos::resize(m_vects, m_vects.size() + 1);
         m_vects[m_vects.size()] = simplex.discrete_vector();
     }
 
     KOKKOS_FUNCTION void push_back(const vects_type& vects)
     {
         std::size_t old_size = m_vects.size();
-        m_vects.resize(old_size + vects.size());
-        for (auto i = Kokkos::experimental::begin(vects); i < Kokkos::experimental::end(vects);
+        Kokkos::resize(m_vects, old_size + vects.size());
+        for (auto i = Kokkos::Experimental::begin(vects); i < Kokkos::Experimental::end(vects);
              ++i) {
-            m_vects[old_size + Kokkos::distance(Kokkos::experimental::begin(vects), i)] = *i;
+            m_vects[old_size
+                    + Kokkos::Experimental::distance(Kokkos::Experimental::begin(vects), i)]
+                    = *i;
         }
     }
 
-    KOKKOS_FUNCTION void push_back(const Chain<simplex_type>& simplices_to_add)
+    KOKKOS_FUNCTION void push_back(const LocalChain<simplex_type>& simplices_to_add)
     {
         std::size_t old_size = m_vects.size();
-        m_values.resize(old_size + simplices_to_add.size());
+        Kokkos::resize(m_vects, old_size + simplices_to_add.size());
         for (auto i = simplices_to_add.begin(); i < simplices_to_add.end(); ++i) {
-            m_vects[old_size + Kokkos::distance(simplices_to_add.begin(), i)]
+            m_vects[old_size + Kokkos::Experimental::distance(simplices_to_add.begin(), i)]
                     = i->discrete_vector();
         }
     }
@@ -223,16 +226,16 @@ public:
 
     KOKKOS_FUNCTION LocalChain<simplex_type> operator+(simplex_type simplex)
     {
-        vects_type vects(m_vects);
-        vects.push_back(simplex);
-        return LocalChain<simplex_type>(vects);
+        LocalChain<simplex_type> local_chain = *this;
+        local_chain.push_back(simplex);
+        return local_chain;
     }
 
     KOKKOS_FUNCTION LocalChain<simplex_type> operator+(LocalChain<simplex_type> simplices_to_add)
     {
-        simplices_type simplices = m_simplices;
-        simplices.push_back(simplices_to_add);
-        return LocalChain<simplex_type>(simplices_to_add);
+        LocalChain<simplex_type> local_chain = *this;
+        local_chain.push_back(simplices_to_add);
+        return local_chain;
     }
 
     LocalChain<simplex_type> operator-(LocalChain<simplex_type>) = delete;
@@ -252,7 +255,7 @@ public:
     KOKKOS_FUNCTION bool operator==(LocalChain<simplex_type> simplices)
     {
         for (auto i = simplices.begin(); i < simplices.end(); ++i) {
-            if (*i != m_vects[Kokkos::distance(simplices.begin(), i)]) {
+            if (*i != m_vects[Kokkos::Experimental::distance(simplices.begin(), i)]) {
                 return false;
             }
         }
@@ -271,7 +274,7 @@ KOKKOS_FUNCTION constexpr LocalChain<Simplex<K, Tag...>> tangent_basis()
     for (auto i = permutation.begin(); i < permutation.begin() + K; ++i) {
         *i = 1;
     }
-    std::vector<ddc::DiscreteVector<Tag...>> basis {};
+    Kokkos::View<ddc::DiscreteVector<Tag...>*, Kokkos::HostSpace> basis();
     std::size_t i = 0;
     do {
         basis.push_back(ddc::DiscreteVector<Tag...>());
