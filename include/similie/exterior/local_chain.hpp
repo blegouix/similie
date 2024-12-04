@@ -191,13 +191,13 @@ public:
     KOKKOS_FUNCTION void push_back(const discrete_vector_type& vect)
     {
         Kokkos::resize(m_vects, m_vects.size() + 1);
-        m_vects[m_vects.size()] = vect;
+        m_vects(m_vects.size()) = vect;
     }
 
     KOKKOS_FUNCTION void push_back(const simplex_type& simplex)
     {
         Kokkos::resize(m_vects, m_vects.size() + 1);
-        m_vects[m_vects.size()] = simplex.discrete_vector();
+        m_vects(m_vects.size()) = simplex.discrete_vector();
     }
 
     KOKKOS_FUNCTION void push_back(const vects_type& vects)
@@ -206,8 +206,8 @@ public:
         Kokkos::resize(m_vects, old_size + vects.size());
         for (auto i = Kokkos::Experimental::begin(vects); i < Kokkos::Experimental::end(vects);
              ++i) {
-            m_vects[old_size
-                    + Kokkos::Experimental::distance(Kokkos::Experimental::begin(vects), i)]
+            m_vects(old_size
+                    + Kokkos::Experimental::distance(Kokkos::Experimental::begin(vects), i))
                     = *i;
         }
     }
@@ -217,7 +217,7 @@ public:
         std::size_t old_size = m_vects.size();
         Kokkos::resize(m_vects, old_size + simplices_to_add.size());
         for (auto i = simplices_to_add.begin(); i < simplices_to_add.end(); ++i) {
-            m_vects[old_size + Kokkos::Experimental::distance(simplices_to_add.begin(), i)] = *i;
+            m_vects(old_size + Kokkos::Experimental::distance(simplices_to_add.begin(), i)) = *i;
         }
     }
 
@@ -254,7 +254,7 @@ public:
     KOKKOS_FUNCTION bool operator==(LocalChain<simplex_type> simplices)
     {
         for (auto i = simplices.begin(); i < simplices.end(); ++i) {
-            if (*i != m_vects[Kokkos::Experimental::distance(simplices.begin(), i)]) {
+            if (*i != m_vects(Kokkos::Experimental::distance(simplices.begin(), i))) {
                 return false;
             }
         }
@@ -277,8 +277,8 @@ KOKKOS_FUNCTION constexpr LocalChain<Simplex<K, Tag...>> tangent_basis()
             basis("tangent_basis", misc::binomial_coefficient(sizeof...(Tag), K));
     std::size_t i = 0;
     do {
-        basis[i++] = ddc::DiscreteVector<Tag...>();
-        ddc::detail::array(basis[i++]) = permutation;
+        basis(i) = ddc::DiscreteVector<Tag...>();
+        ddc::detail::array(basis(i++)) = permutation;
     } while (std::prev_permutation(permutation.begin(), permutation.end()));
 
     return LocalChain<Simplex<K, Tag...>>(basis);

@@ -145,18 +145,18 @@ public:
 
     KOKKOS_FUNCTION simplex_type& operator[](std::size_t i) noexcept
     {
-        return m_simplices[i];
+        return m_simplices(i);
     }
 
     KOKKOS_FUNCTION simplex_type const& operator[](std::size_t i) const noexcept
     {
-        return m_simplices[i];
+        return m_simplices(i);
     }
 
     KOKKOS_FUNCTION void push_back(const simplex_type& simplex)
     {
         Kokkos::resize(m_simplices, m_simplices.size() + 1);
-        m_simplices[m_simplices.size()] = simplex;
+        m_simplices(m_simplices.size()) = simplex;
     }
 
     KOKKOS_FUNCTION void push_back(const Chain<simplex_type>& simplices_to_add)
@@ -164,7 +164,7 @@ public:
         std::size_t old_size = m_simplices.size();
         Kokkos::resize(m_simplices, old_size + simplices_to_add.size());
         for (auto i = simplices_to_add.begin(); i < simplices_to_add.end(); ++i) {
-            m_simplices[old_size + Kokkos::Experimental::distance(simplices_to_add.begin(), i)]
+            m_simplices(old_size + Kokkos::Experimental::distance(simplices_to_add.begin(), i))
                     = *i;
         }
     }
@@ -216,7 +216,7 @@ public:
     KOKKOS_FUNCTION bool operator==(Chain<simplex_type> simplices)
     {
         for (auto i = simplices.begin(); i < simplices.end(); ++i) {
-            if (*i != m_simplices[Kokkos::Experimental::distance(simplices.begin(), i)]) {
+            if (*i != m_simplices(Kokkos::Experimental::distance(simplices.begin(), i))) {
                 return false;
             }
         }

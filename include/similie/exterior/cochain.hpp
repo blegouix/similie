@@ -162,13 +162,13 @@ public:
 
     KOKKOS_FUNCTION Cosimplex<simplex_type, element_type>& operator[](std::size_t i) noexcept
     {
-        return Cosimplex<simplex_type, element_type>(m_chain[i], m_values[i]);
+        return Cosimplex<simplex_type, element_type>(m_chain(i), m_values(i));
     }
 
     KOKKOS_FUNCTION Cosimplex<simplex_type, element_type> const& operator[](
             std::size_t i) const noexcept
     {
-        return Cosimplex<simplex_type, element_type>(m_chain[i], m_values[i]);
+        return Cosimplex<simplex_type, element_type>(m_chain(i), m_values(i));
     }
 
     KOKKOS_FUNCTION element_type integrate() noexcept
