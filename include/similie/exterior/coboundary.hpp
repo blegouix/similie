@@ -13,6 +13,8 @@
 #include <similie/tensor/antisymmetric_tensor.hpp>
 #include <similie/tensor/tensor_impl.hpp>
 
+#include <Kokkos_StdAlgorithms.hpp>
+
 #include "cochain.hpp"
 #include "cosimplex.hpp"
 
@@ -120,7 +122,7 @@ struct ComputeSimplex<Chain<Simplex<K, Tag...>>>
         for (auto i = chain.begin(); i < chain.end(); ++i) {
             vect = ddc::DiscreteVector<Tag...> {
                     (static_cast<bool>(vect.template get<Tag>())
-                     || static_cast<bool>(i->discrete_vector().template get<Tag>()))...};
+                     || static_cast<bool>((*i).discrete_vector().template get<Tag>()))...};
         }
         return Simplex(
                 std::integral_constant<std::size_t, K + 1> {},
@@ -196,28 +198,30 @@ KOKKOS_FUNCTION coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> c
                                                                CochainTag::rank() + 1> {},
                                                        elem,
                                                        (*i).discrete_vector()));
-                    std::vector<double> values(simplex_boundary.size());
+                    Kokkos::View<double*, Kokkos::HostSpace>
+                            values("coboundary_values", simplex_boundary.size());
                     for (auto j = simplex_boundary.begin(); j < simplex_boundary.end(); ++j) {
-                        values[std::distance(simplex_boundary.begin(), j)] = tensor.mem(
-                                misc::domain_contains(
-                                        tensor.domain(),
-                                        j->discrete_element())
-                                        ? j->discrete_element()
-                                        : elem, // TODO this is an assumption on boundary condition (free boundary), needs to be generalized
-                                ddc::DiscreteElement<CochainTag>(std::distance(
-                                        lower_chain.begin(),
-                                        std::
-                                                find(lower_chain.begin(),
-                                                     lower_chain.end(),
-                                                     j->discrete_vector()))));
+                        values(Kokkos::Experimental::distance(simplex_boundary.begin(), j))
+                                = tensor.mem(
+                                        misc::domain_contains(
+                                                tensor.domain(),
+                                                (*j).discrete_element())
+                                                ? (*j).discrete_element()
+                                                : elem, // TODO this is an assumption on boundary condition (free boundary), needs to be generalized
+                                        ddc::DiscreteElement<CochainTag>(
+                                                Kokkos::Experimental::distance(
+                                                        lower_chain.begin(),
+                                                        std::
+                                                                find(lower_chain.begin(),
+                                                                     lower_chain.end(),
+                                                                     (*j).discrete_vector()))));
                     }
-                    sil::exterior::Cochain<decltype(simplex_boundary)>
-                            cochain_boundary(simplex_boundary, values);
+                    sil::exterior::Cochain cochain_boundary(simplex_boundary, values);
                     coboundary_tensor
                             .mem(elem,
                                  ddc::DiscreteElement<
                                          coboundary_index_t<TagToAddToCochain, CochainTag>>(
-                                         std::distance(cochain.begin(), i)))
+                                         Kokkos::Experimental::distance(cochain.begin(), i)))
                             = cochain_boundary.integrate();
                 }
             });

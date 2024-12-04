@@ -8,6 +8,8 @@
 #include <similie/misc/are_all_same.hpp>
 #include <similie/misc/specialization.hpp>
 
+#include <Kokkos_StdAlgorithms.hpp>
+
 #include "simplex.hpp"
 
 namespace sil {
@@ -15,35 +17,53 @@ namespace sil {
 namespace exterior {
 
 /// Chain class
-template <class SimplexType, class Allocator = std::allocator<SimplexType>>
+template <class SimplexType, class ExecSpace = Kokkos::DefaultHostExecutionSpace>
 class Chain
 {
 public:
+    using execution_space = ExecSpace;
+    using memory_space = typename ExecSpace::memory_space;
+
     using simplex_type = SimplexType;
-    using simplices_type = std::vector<SimplexType, Allocator>;
+    using simplices_type = Kokkos::View<SimplexType*, memory_space>;
     using discrete_element_type = typename simplex_type::discrete_element_type;
     using discrete_vector_type = typename simplex_type::discrete_vector_type;
 
+    using iterator_type = Kokkos::Experimental::Impl::RandomAccessIterator<simplices_type>;
+
 private:
     static constexpr bool s_is_local = false;
-    static constexpr std::size_t s_k = SimplexType::dimension();
+    static constexpr std::size_t s_k = simplex_type::dimension();
     simplices_type m_simplices;
 
 public:
-    KOKKOS_FUNCTION constexpr explicit Chain() noexcept : m_simplices {} {}
+    KOKKOS_DEFAULTED_FUNCTION constexpr Chain() = default;
+
+    KOKKOS_DEFAULTED_FUNCTION constexpr Chain(Chain const&) = default;
+
+    KOKKOS_DEFAULTED_FUNCTION constexpr Chain(Chain&&) = default;
 
     template <class... T>
         requires misc::are_all_same<T...>
-    KOKKOS_FUNCTION constexpr explicit Chain(T... simplex) noexcept : m_simplices {simplex...}
+    KOKKOS_FUNCTION constexpr explicit Chain(T... simplex) noexcept
+        : m_simplices("chain_simplices", sizeof...(T))
     {
+        int i = 0;
+        ((m_simplices(i++) = simplex), ...);
         assert(check() == 0 && "there are duplicate simplices in the chain");
     }
 
-    KOKKOS_FUNCTION constexpr explicit Chain(std::vector<SimplexType> simplices) noexcept
+    KOKKOS_FUNCTION constexpr explicit Chain(simplices_type simplices) noexcept
         : m_simplices(simplices)
     {
         assert(check() == 0 && "there are duplicate simplices in the chain");
     }
+
+    KOKKOS_DEFAULTED_FUNCTION ~Chain() = default;
+
+    KOKKOS_DEFAULTED_FUNCTION Chain& operator=(Chain const& other) = default;
+
+    KOKKOS_DEFAULTED_FUNCTION Chain& operator=(Chain&& other) = default;
 
     static KOKKOS_FUNCTION constexpr bool is_local() noexcept
     {
@@ -67,8 +87,10 @@ public:
 
     KOKKOS_FUNCTION int check()
     {
-        for (auto i = m_simplices.begin(); i < m_simplices.end() - 1; ++i) {
-            for (auto j = i + 1; j < m_simplices.end(); ++j) {
+        for (auto i = Kokkos::Experimental::begin(m_simplices);
+             i < Kokkos::Experimental::end(m_simplices) - 1;
+             ++i) {
+            for (auto j = i + 1; j < Kokkos::Experimental::end(m_simplices); ++j) {
                 if (*i == *j) {
                     return -1;
                 }
@@ -79,87 +101,111 @@ public:
 
     KOKKOS_FUNCTION void optimize()
     {
-        for (auto i = m_simplices.begin(); i < m_simplices.end() - 1; ++i) {
+        auto simplices_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), m_simplices);
+        std::vector<simplex_type> simplices_vect(
+                simplices_host.data(),
+                simplices_host.data() + simplices_host.extent(0));
+        for (auto i = simplices_vect.begin(); i < simplices_vect.end() - 1; ++i) {
             auto k = i;
-            for (auto j = i + 1; k == i && j < m_simplices.end(); ++j) {
+            for (auto j = i + 1; k == i && j < simplices_vect.end(); ++j) {
                 if (*i == -*j) {
                     k = j;
                 }
             }
             if (k != i) {
-                m_simplices.erase(k);
-                m_simplices.erase(i--);
+                simplices_vect.erase(k);
+                simplices_vect.erase(i--);
             }
         }
+
+        simplices_host = Kokkos::View<
+                simplex_type*,
+                Kokkos::HostSpace>(simplices_vect.data(), simplices_vect.size());
+        Kokkos::realloc(m_simplices, simplices_host.size());
+        Kokkos::deep_copy(m_simplices, simplices_host);
+
         assert(check() == 0 && "there are duplicate simplices in the chain");
     }
 
     KOKKOS_FUNCTION auto begin()
     {
-        return m_simplices.begin();
+        return Kokkos::Experimental::begin(m_simplices);
     }
 
     KOKKOS_FUNCTION auto begin() const
     {
-        return m_simplices.begin();
+        return Kokkos::Experimental::begin(m_simplices);
     }
 
     KOKKOS_FUNCTION auto end()
     {
-        return m_simplices.end();
+        return Kokkos::Experimental::end(m_simplices);
     }
 
     KOKKOS_FUNCTION auto end() const
     {
-        return m_simplices.end();
+        return Kokkos::Experimental::end(m_simplices);
     }
 
     KOKKOS_FUNCTION auto cbegin() const
     {
-        return m_simplices.begin();
+        return Kokkos::Experimental::begin(m_simplices);
     }
 
     KOKKOS_FUNCTION auto cend() const
     {
-        return m_simplices.end();
+        return Kokkos::Experimental::end(m_simplices);
     }
 
-    KOKKOS_FUNCTION SimplexType& operator[](std::size_t i) noexcept
+    KOKKOS_FUNCTION simplex_type& operator[](std::size_t i) noexcept
     {
-        return m_simplices[i];
+        return m_simplices(i);
     }
 
-    KOKKOS_FUNCTION SimplexType const& operator[](std::size_t i) const noexcept
+    KOKKOS_FUNCTION simplex_type const& operator[](std::size_t i) const noexcept
     {
-        return m_simplices[i];
+        return m_simplices(i);
     }
 
     KOKKOS_FUNCTION void push_back(const simplex_type& simplex)
     {
-        m_simplices.push_back(simplex);
-    };
+        Kokkos::resize(m_simplices, m_simplices.size() + 1);
+        m_simplices(m_simplices.size() - 1) = simplex;
+    }
 
-    KOKKOS_FUNCTION Chain<SimplexType> operator-()
+    KOKKOS_FUNCTION void push_back(const Chain<simplex_type>& simplices_to_add)
     {
-        std::vector<SimplexType> simplices = m_simplices;
-        for (SimplexType& simplex : simplices) {
-            simplex = -simplex;
+        std::size_t old_size = m_simplices.size();
+        Kokkos::resize(m_simplices, old_size + simplices_to_add.size());
+        for (auto i = simplices_to_add.begin(); i < simplices_to_add.end(); ++i) {
+            m_simplices(old_size + Kokkos::Experimental::distance(simplices_to_add.begin(), i))
+                    = *i;
         }
-        return Chain<SimplexType>(simplices);
     }
 
-    KOKKOS_FUNCTION Chain<SimplexType> operator+(SimplexType simplex)
+    KOKKOS_FUNCTION Chain<simplex_type> operator-()
     {
         simplices_type simplices = m_simplices;
-        simplices.push_back(simplex);
-        return Chain<SimplexType>(simplices);
+        for (auto i = Kokkos::Experimental::begin(simplices);
+             i < Kokkos::Experimental::end(simplices);
+             ++i) {
+            *i = -*i;
+        }
+        return Chain<simplex_type>(simplices);
     }
 
-    KOKKOS_FUNCTION Chain<SimplexType> operator+(Chain<SimplexType> simplices_to_add)
+    KOKKOS_FUNCTION Chain<simplex_type> operator+(simplex_type simplex)
     {
-        simplices_type simplices = m_simplices;
-        simplices.insert(simplices.end(), simplices_to_add.begin(), simplices_to_add.end());
-        return Chain<SimplexType>(simplices);
+        Chain<simplex_type> chain = *this;
+        chain.push_back(simplex);
+        return chain;
+    }
+
+    KOKKOS_FUNCTION Chain<simplex_type> operator+(Chain<simplex_type> simplices_to_add)
+    {
+        Chain<simplex_type> chain = *this;
+        chain.push_back(simplices_to_add);
+        return chain;
     }
 
     template <class T>
@@ -181,10 +227,10 @@ public:
         }
     }
 
-    KOKKOS_FUNCTION bool operator==(Chain<SimplexType> simplices)
+    KOKKOS_FUNCTION bool operator==(Chain<simplex_type> simplices)
     {
         for (auto i = simplices.begin(); i < simplices.end(); ++i) {
-            if (*i != m_simplices[std::distance(simplices.begin(), i)]) {
+            if (*i != m_simplices(Kokkos::Experimental::distance(simplices.begin(), i))) {
                 return false;
             }
         }

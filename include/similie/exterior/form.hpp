@@ -14,34 +14,34 @@ namespace exterior {
 
 namespace detail {
 
-template <class T, class ElementType, class Allocator>
+template <class T, class ElementType, class ExecSpace>
 struct FormWrapper;
 
-template <misc::NotSpecialization<Chain> T, class ElementType, class Allocator>
-struct FormWrapper<T, ElementType, Allocator>
+template <misc::NotSpecialization<Chain> T, class ElementType, class ExecSpace>
+struct FormWrapper<T, ElementType, ExecSpace>
 {
     using type = Cosimplex<T, ElementType>;
 };
 
-template <misc::Specialization<Chain> T, class ElementType, class Allocator>
-struct FormWrapper<T, ElementType, Allocator>
+template <misc::Specialization<Chain> T, class ElementType, class ExecSpace>
+struct FormWrapper<T, ElementType, ExecSpace>
 {
-    using type = Cochain<T, ElementType, Allocator>;
+    using type = Cochain<T, ElementType, ExecSpace>;
 };
 
 /*
 template <misc::NotSpecialization<Chain> Head, class ElementType>
-FormWrapper(Head, ElementType) -> FormWrapper<Head, ElementType, std::allocator<ElementType>>;
+FormWrapper(Head, ElementType) -> FormWrapper<Head, ElementType, Kokkos::DefaultHostExecutionSpace>;
 
-template <misc::Specialization<Chain> Head, class ElementType, class Allocator>
-FormWrapper(Head, ElementType, Allocator) -> FormWrapper<Head, ElementType, Allocator>;
+template <misc::Specialization<Chain> Head, class ElementType, class ExecSpace>
+FormWrapper(Head, ElementType, Allocator) -> FormWrapper<Head, ElementType, ExecSpace>;
 */
 
 } // namespace detail
 
 // Usage should be avoided because CTAD cannot go through it
-template <class T, class ElementType = double, class Allocator = std::allocator<double>>
-using Form = typename detail::FormWrapper<T, ElementType, Allocator>::type;
+template <class T, class ElementType = double, class ExecSpace = Kokkos::DefaultHostExecutionSpace>
+using Form = typename detail::FormWrapper<T, ElementType, ExecSpace>::type;
 
 } // namespace exterior
 

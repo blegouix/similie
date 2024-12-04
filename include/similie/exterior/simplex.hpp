@@ -109,6 +109,12 @@ private:
     }
 
 public:
+    KOKKOS_DEFAULTED_FUNCTION constexpr Simplex() = default;
+
+    KOKKOS_DEFAULTED_FUNCTION constexpr Simplex(Simplex const&) = default;
+
+    KOKKOS_DEFAULTED_FUNCTION constexpr Simplex(Simplex&&) = default;
+
     template <misc::Specialization<ddc::DiscreteVector> T>
     KOKKOS_FUNCTION constexpr explicit Simplex(
             discrete_element_type elem,
@@ -135,6 +141,12 @@ public:
         assert(((m_vect.template get<Tag>() == 0 || m_vect.template get<Tag>() == 1) && ...)
                && "simplex vector must contain only -1, 0 or 1");
     }
+
+    KOKKOS_DEFAULTED_FUNCTION ~Simplex() = default;
+
+    KOKKOS_DEFAULTED_FUNCTION Simplex& operator=(Simplex const& other) = default;
+
+    KOKKOS_DEFAULTED_FUNCTION Simplex& operator=(Simplex&& other) = default;
 
     static KOKKOS_FUNCTION constexpr std::size_t dimension() noexcept
     {

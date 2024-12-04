@@ -29,11 +29,23 @@ private:
     ElementType m_value;
 
 public:
+    KOKKOS_DEFAULTED_FUNCTION constexpr Cosimplex() = default;
+
+    KOKKOS_DEFAULTED_FUNCTION constexpr Cosimplex(Cosimplex const&) = default;
+
+    KOKKOS_DEFAULTED_FUNCTION constexpr Cosimplex(Cosimplex&&) = default;
+
     KOKKOS_FUNCTION constexpr explicit Cosimplex(SimplexType simplex, ElementType value) noexcept
         : m_simplex(simplex)
         , m_value(value)
     {
     }
+
+    KOKKOS_DEFAULTED_FUNCTION ~Cosimplex() = default;
+
+    KOKKOS_DEFAULTED_FUNCTION Cosimplex& operator=(Cosimplex const& other) = default;
+
+    KOKKOS_DEFAULTED_FUNCTION Cosimplex& operator=(Cosimplex&& other) = default;
 
     static KOKKOS_FUNCTION constexpr std::size_t dimension() noexcept
     {
