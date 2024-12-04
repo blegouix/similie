@@ -117,9 +117,13 @@ public:
                 simplices_vect.erase(i--);
             }
         }
-        Kokkos::View<simplex_type*, Kokkos::HostSpace>
-                new_simplices_host(simplices_vect.data(), simplices_vect.size());
-        m_simplices = Kokkos::create_mirror_view_and_copy(memory_space(), new_simplices_host);
+
+        simplices_host = Kokkos::View<
+                simplex_type*,
+                Kokkos::HostSpace>(simplices_vect.data(), simplices_vect.size());
+        Kokkos::realloc(m_simplices, simplices_host.size());
+        Kokkos::deep_copy(m_simplices, simplices_host);
+
         assert(check() == 0 && "there are duplicate simplices in the chain");
     }
 
