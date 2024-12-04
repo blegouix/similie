@@ -122,7 +122,7 @@ struct ComputeSimplex<Chain<Simplex<K, Tag...>>>
         for (auto i = chain.begin(); i < chain.end(); ++i) {
             vect = ddc::DiscreteVector<Tag...> {
                     (static_cast<bool>(vect.template get<Tag>())
-                     || static_cast<bool>(i->discrete_vector().template get<Tag>()))...};
+                     || static_cast<bool>((*i).discrete_vector().template get<Tag>()))...};
         }
         return Simplex(
                 std::integral_constant<std::size_t, K + 1> {},

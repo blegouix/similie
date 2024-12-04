@@ -217,8 +217,7 @@ public:
         std::size_t old_size = m_vects.size();
         Kokkos::resize(m_vects, old_size + simplices_to_add.size());
         for (auto i = simplices_to_add.begin(); i < simplices_to_add.end(); ++i) {
-            m_vects[old_size + Kokkos::Experimental::distance(simplices_to_add.begin(), i)]
-                    = i->discrete_vector();
+            m_vects[old_size + Kokkos::Experimental::distance(simplices_to_add.begin(), i)] = *i;
         }
     }
 
