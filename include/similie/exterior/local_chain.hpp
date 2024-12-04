@@ -283,7 +283,7 @@ KOKKOS_FUNCTION constexpr LocalChain<Simplex<K, Tag...>> tangent_basis()
         *i = 1;
     }
     Kokkos::View<ddc::DiscreteVector<Tag...>*, Kokkos::HostSpace>
-            basis("tangent_basis", misc::binomial_coefficient(sizeof...(Tag), K));
+            basis("", misc::binomial_coefficient(sizeof...(Tag), K));
     std::size_t i = 0;
     do {
         basis(i) = ddc::DiscreteVector<Tag...>();
