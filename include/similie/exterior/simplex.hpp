@@ -109,7 +109,9 @@ private:
     }
 
 public:
-    KOKKOS_DEFAULTED_FUNCTION Simplex() = default;
+    KOKKOS_DEFAULTED_FUNCTION constexpr Simplex() = default;
+
+    KOKKOS_DEFAULTED_FUNCTION constexpr Simplex(Simplex const&) = default;
 
     template <misc::Specialization<ddc::DiscreteVector> T>
     KOKKOS_FUNCTION constexpr explicit Simplex(
