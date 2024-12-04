@@ -23,20 +23,5 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 ----- SETUP BASIC COMMAND -----
 
-sudo apt install cmake
-sudo apt install g++
-wget http://www.fftw.org/fftw-3.3.10.tar.gz
-tar -xf fftw-3.3.10.tar.gz
-cd fftw-3.3.10.tar.gz
-./configure
-make
-make install
-cd -
-git clone git@github.com:ginkgo-project/ginkgo.git
-mkdir ginkgo/build; cd ginkgo/build
-cmake -G "Unix Makefiles" .. && cmake --build .
-cmake --install .
-cd -
-git clone --recurse-submodules git@github.com:blegouix/similie.git
-mkdir similie/build; cd similie/build
 cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-Wfatal-errors" -DDDC_BUILD_PDI_WRAPPER=OFF ..
+cmake -DCMAKE_CXX_COMPILER=$KOKKOS_BIN/nvcc_wrapper -DCMAKE_BUILD_TYPE=Debug -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_VOLTA70=ON -DCMAKE_CXX_FLAGS="-Wfatal-errors" -DDDC_BUILD_PDI_WRAPPER=OFF ..
