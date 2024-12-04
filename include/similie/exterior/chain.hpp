@@ -80,7 +80,7 @@ public:
         return m_simplices.size();
     }
 
-    KOKKOS_FUNCTION std::size_t const size() const noexcept
+    KOKKOS_FUNCTION std::size_t size() const noexcept
     {
         return m_simplices.size();
     }

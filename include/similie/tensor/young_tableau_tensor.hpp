@@ -26,7 +26,7 @@ struct TensorYoungTableauIndex
 
     using subindices_domain_t = ddc::DiscreteDomain<TensorIndex...>;
 
-    static constexpr subindices_domain_t subindices_domain()
+    KOKKOS_FUNCTION static constexpr subindices_domain_t subindices_domain()
     {
         return ddc::DiscreteDomain<TensorIndex...>(
                 ddc::DiscreteElement<TensorIndex...>(ddc::DiscreteElement<TensorIndex>(0)...),
@@ -34,28 +34,28 @@ struct TensorYoungTableauIndex
                         ddc::DiscreteVector<TensorIndex>(TensorIndex::size())...));
     }
 
-    static constexpr std::size_t rank()
+    KOKKOS_FUNCTION static constexpr std::size_t rank()
     {
         return (TensorIndex::rank() + ...);
     }
 
-    static constexpr std::size_t size()
+    KOKKOS_FUNCTION static constexpr std::size_t size()
     {
         return (TensorIndex::size() * ...);
     }
 
-    static constexpr std::size_t mem_size()
+    KOKKOS_FUNCTION static constexpr std::size_t mem_size()
     {
         return YoungTableau::irrep_dim();
     }
 
-    static constexpr std::size_t access_size()
+    KOKKOS_FUNCTION static constexpr std::size_t access_size()
     {
         return size();
     }
 
-    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_lin_comb(
-            std::array<std::size_t, sizeof...(TensorIndex)> const natural_ids)
+    KOKKOS_FUNCTION static constexpr std::pair<std::vector<double>, std::vector<std::size_t>>
+    mem_lin_comb(std::array<std::size_t, sizeof...(TensorIndex)> const natural_ids)
     {
         std::pair<std::vector<double>, std::vector<std::size_t>> result {};
         constexpr csr::Csr v = young_tableau::template v<
@@ -80,7 +80,7 @@ struct TensorYoungTableauIndex
         return result;
     }
 
-    static constexpr std::size_t access_id(
+    KOKKOS_FUNCTION static constexpr std::size_t access_id(
             std::array<std::size_t, sizeof...(TensorIndex)> const natural_ids)
     {
         return ((misc::detail::stride<TensorIndex, TensorIndex...>()
@@ -89,7 +89,7 @@ struct TensorYoungTableauIndex
                 + ...);
     }
 
-    static constexpr std::pair<std::vector<double>, std::vector<std::size_t>>
+    KOKKOS_FUNCTION static constexpr std::pair<std::vector<double>, std::vector<std::size_t>>
     access_id_to_mem_lin_comb(std::size_t access_id)
     {
         std::pair<std::vector<double>, std::vector<std::size_t>> result {};
@@ -117,7 +117,7 @@ struct TensorYoungTableauIndex
     }
 
     template <class Tensor, class Elem, class Id>
-    static constexpr Tensor::element_type process_access(
+    KOKKOS_FUNCTION static constexpr Tensor::element_type process_access(
             std::function<typename Tensor::element_type(Tensor, Elem)> access,
             Tensor tensor,
             Elem const elem)
