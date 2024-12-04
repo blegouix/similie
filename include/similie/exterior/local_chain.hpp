@@ -56,9 +56,9 @@ private:
     vects_type m_vects;
 
 public:
-    KOKKOS_FUNCTION constexpr explicit LocalChain() noexcept : discrete_element_type {}, m_vects {}
-    {
-    }
+    KOKKOS_DEFAULTED_FUNCTION constexpr LocalChain() = default;
+
+    KOKKOS_DEFAULTED_FUNCTION constexpr LocalChain(LocalChain const&) = default;
 
     // TODO Reorganize discrete vectors in all constructors ?
 
@@ -111,6 +111,10 @@ public:
     {
         assert(check() == 0 && "there are duplicate simplices in the chain");
     }
+
+    KOKKOS_DEFAULTED_FUNCTION ~LocalChain() = default;
+
+    KOKKOS_DEFAULTED_FUNCTION LocalChain& operator=(LocalChain const& other) = default;
 
     static KOKKOS_FUNCTION constexpr bool is_local() noexcept
     {

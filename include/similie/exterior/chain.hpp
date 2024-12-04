@@ -37,7 +37,9 @@ private:
     simplices_type m_simplices;
 
 public:
-    KOKKOS_FUNCTION constexpr explicit Chain() noexcept : m_simplices {} {}
+    KOKKOS_DEFAULTED_FUNCTION constexpr Chain() = default;
+
+    KOKKOS_DEFAULTED_FUNCTION constexpr Chain(Chain const&) = default;
 
     template <class... T>
         requires misc::are_all_same<T...>
@@ -54,6 +56,10 @@ public:
     {
         assert(check() == 0 && "there are duplicate simplices in the chain");
     }
+
+    KOKKOS_DEFAULTED_FUNCTION ~Chain() = default;
+
+    KOKKOS_DEFAULTED_FUNCTION Chain& operator=(Chain const& other) = default;
 
     static KOKKOS_FUNCTION constexpr bool is_local() noexcept
     {

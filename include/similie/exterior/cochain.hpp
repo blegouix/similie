@@ -46,6 +46,10 @@ private:
     values_type m_values;
 
 public:
+    KOKKOS_DEFAULTED_FUNCTION constexpr Cochain() = default;
+
+    KOKKOS_DEFAULTED_FUNCTION constexpr Cochain(Cochain const&) = default;
+
     KOKKOS_FUNCTION constexpr explicit Cochain(chain_type chain) noexcept
         : m_chain(chain)
         , m_values(chain.size())
@@ -99,6 +103,10 @@ public:
                     Kokkos::Experimental::distance(Kokkos::Experimental::begin(m_values), i)));
         }
     }
+
+    KOKKOS_DEFAULTED_FUNCTION ~Cochain() = default;
+
+    KOKKOS_DEFAULTED_FUNCTION Cochain& operator=(Cochain const& other) = default;
 
     static KOKKOS_FUNCTION constexpr bool is_local() noexcept
     {

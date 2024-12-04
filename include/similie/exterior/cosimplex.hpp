@@ -39,6 +39,10 @@ public:
     {
     }
 
+    KOKKOS_DEFAULTED_FUNCTION ~Cosimplex() = default;
+
+    KOKKOS_DEFAULTED_FUNCTION Cosimplex& operator=(Cosimplex const& other) = default;
+
     static KOKKOS_FUNCTION constexpr std::size_t dimension() noexcept
     {
         return SimplexType::dimension();

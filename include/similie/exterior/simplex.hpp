@@ -140,6 +140,10 @@ public:
                && "simplex vector must contain only -1, 0 or 1");
     }
 
+    KOKKOS_DEFAULTED_FUNCTION ~Simplex() = default;
+
+    KOKKOS_DEFAULTED_FUNCTION Simplex& operator=(Simplex const& other) = default;
+
     static KOKKOS_FUNCTION constexpr std::size_t dimension() noexcept
     {
         return s_k;
