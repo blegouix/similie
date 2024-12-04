@@ -25,17 +25,17 @@ struct TensorNaturalIndex
 
     using subindices_domain_t = ddc::DiscreteDomain<>;
 
-    static constexpr subindices_domain_t subindices_domain()
+    KOKKOS_FUNCTION static constexpr subindices_domain_t subindices_domain()
     {
         return ddc::DiscreteDomain<>();
     }
 
-    static constexpr std::size_t rank()
+    KOKKOS_FUNCTION static constexpr std::size_t rank()
     {
         return sizeof...(CDim) != 0;
     }
 
-    static constexpr std::size_t size()
+    KOKKOS_FUNCTION static constexpr std::size_t size()
     {
         if constexpr (rank() == 0) {
             return 1;
@@ -44,18 +44,18 @@ struct TensorNaturalIndex
         }
     }
 
-    static constexpr std::size_t mem_size()
+    KOKKOS_FUNCTION static constexpr std::size_t mem_size()
     {
         return size();
     }
 
-    static constexpr std::size_t access_size()
+    KOKKOS_FUNCTION static constexpr std::size_t access_size()
     {
         return size();
     }
 
     template <class ODim>
-    static constexpr std::size_t mem_id()
+    KOKKOS_FUNCTION static constexpr std::size_t mem_id()
     {
         if constexpr (rank() == 0) {
             return 0;
@@ -64,23 +64,23 @@ struct TensorNaturalIndex
         }
     }
 
-    static constexpr std::size_t mem_id(std::size_t const natural_id)
+    KOKKOS_FUNCTION static constexpr std::size_t mem_id(std::size_t const natural_id)
     {
         return natural_id;
     }
 
-    static constexpr std::size_t access_id(std::size_t const natural_id)
+    KOKKOS_FUNCTION static constexpr std::size_t access_id(std::size_t const natural_id)
     {
         return natural_id;
     }
 
-    static constexpr std::size_t access_id_to_mem_id(std::size_t access_id)
+    KOKKOS_FUNCTION static constexpr std::size_t access_id_to_mem_id(std::size_t access_id)
     {
         return access_id;
     }
 
     template <class Tensor, class Elem, class Id>
-    static constexpr Tensor::element_type process_access(
+    KOKKOS_FUNCTION static constexpr Tensor::element_type process_access(
             std::function<typename Tensor::element_type(Tensor, Elem)> access,
             Tensor tensor,
             Elem elem)
@@ -88,8 +88,8 @@ struct TensorNaturalIndex
         return access(tensor, elem);
     }
 
-    static constexpr std::array<std::size_t, rank()> mem_id_to_canonical_natural_ids(
-            std::size_t mem_id)
+    KOKKOS_FUNCTION static constexpr std::array<std::size_t, rank()>
+    mem_id_to_canonical_natural_ids(std::size_t mem_id)
     {
         assert(mem_id < mem_size());
         if constexpr (rank() == 0) {
@@ -421,7 +421,7 @@ template <
 struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInterest, IndexTail...>
 {
     template <class Elem>
-    static TensorField::element_type run(TensorField tensor_field, Elem const& elem)
+    KOKKOS_FUNCTION static TensorField::element_type run(TensorField tensor_field, Elem const& elem)
     {
         /*
          ----- Important warning -----
@@ -506,7 +506,7 @@ template <class InterestDim>
 struct LambdaMemElem
 {
     template <class Elem>
-    static ddc::DiscreteElement<InterestDim> run(Elem elem)
+    KOKKOS_FUNCTION static ddc::DiscreteElement<InterestDim> run(Elem elem)
     {
         return ddc::DiscreteElement<InterestDim>(elem);
     }
@@ -516,7 +516,7 @@ template <TensorIndex InterestDim>
 struct LambdaMemElem<InterestDim>
 {
     template <class Elem>
-    static ddc::DiscreteElement<InterestDim> run(Elem elem)
+    KOKKOS_FUNCTION static ddc::DiscreteElement<InterestDim> run(Elem elem)
     {
         if constexpr (InterestDim::is_explicitely_stored_tensor) {
             std::size_t const mem_id
@@ -1111,15 +1111,9 @@ template <
         class LayoutStridedPolicy,
         class MemorySpace,
         misc::Specialization<Tensor>... TensorType>
-Tensor<ElementType,
-       ddc::DiscreteDomain<DDim...>,
-       LayoutStridedPolicy,
-       Kokkos::DefaultHostExecutionSpace::memory_space>
-tensor_sum(
-        Tensor<ElementType,
-               ddc::DiscreteDomain<DDim...>,
-               LayoutStridedPolicy,
-               Kokkos::DefaultHostExecutionSpace::memory_space> sum_tensor,
+Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace> tensor_sum(
+        Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>
+                sum_tensor,
         TensorType... tensor)
 {
     ddc::for_each(sum_tensor.domain(), [&](ddc::DiscreteElement<DDim...> elem) {

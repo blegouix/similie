@@ -115,7 +115,7 @@ struct ComputeSimplex;
 template <std::size_t K, class... Tag>
 struct ComputeSimplex<Chain<Simplex<K, Tag...>>>
 {
-    static Simplex<K + 1, Tag...> run(Chain<Simplex<K, Tag...>> const& chain)
+    KOKKOS_FUNCTION static Simplex<K + 1, Tag...> run(Chain<Simplex<K, Tag...>> const& chain)
     {
         ddc::DiscreteVector<Tag...> vect {
                 0 * ddc::type_seq_rank_v<Tag, ddc::detail::TypeSeq<Tag...>>...};
