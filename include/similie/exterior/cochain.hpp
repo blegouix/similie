@@ -97,7 +97,6 @@ public:
     {
         assert(m_values.size() == chain.size()
                && "cochain constructor must get as much values as the chain contains simplices");
-        // TODO avoid copy
         for (auto i = Kokkos::Experimental::begin(m_values);
              i < Kokkos::Experimental::end(m_values);
              ++i) {
