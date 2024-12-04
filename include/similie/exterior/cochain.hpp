@@ -87,14 +87,16 @@ public:
                     LayoutStridedPolicy,
                     MemorySpace> tensor) noexcept
         : m_chain(chain)
-        , m_values(tensor.domain().size())
+        , m_values("cochain_values", tensor.domain().size())
     {
         assert(m_values.size() == chain.size()
                && "cochain constructor must get as much values as the chain contains simplices");
         // TODO avoid copy
-        for (auto i = m_values.begin(); i < m_values.end(); ++i) {
+        for (auto i = Kokkos::Experimental::begin(m_values);
+             i < Kokkos::Experimental::end(m_values);
+             ++i) {
             *i = tensor.mem(ddc::DiscreteElement<Index>(
-                    Kokkos::Experimental::distance(m_values.begin(), i)));
+                    Kokkos::Experimental::distance(Kokkos::Experimental::begin(m_values), i)));
         }
     }
 

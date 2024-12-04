@@ -198,7 +198,7 @@ KOKKOS_FUNCTION coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> c
                                                                CochainTag::rank() + 1> {},
                                                        elem,
                                                        (*i).discrete_vector()));
-                    Kokkos::View<double, Kokkos::HostSpace>
+                    Kokkos::View<double*, Kokkos::HostSpace>
                             values("coboundary_values", simplex_boundary.size());
                     for (auto j = simplex_boundary.begin(); j < simplex_boundary.end(); ++j) {
                         values(Kokkos::Experimental::distance(simplex_boundary.begin(), j))
@@ -215,8 +215,7 @@ KOKKOS_FUNCTION coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> c
                                                              lower_chain.end(),
                                                              (*j).discrete_vector()))));
                     }
-                    sil::exterior::Cochain<decltype(simplex_boundary)>
-                            cochain_boundary(simplex_boundary, values);
+                    sil::exterior::Cochain cochain_boundary(simplex_boundary, values);
                     coboundary_tensor
                             .mem(elem,
                                  ddc::DiscreteElement<
