@@ -10,7 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>SimiLie: sil::exterior::Chain&lt; SimplexType, Allocator &gt; Class Template Reference</title>
+<title>SimiLie: sil::exterior::Chain&lt; SimplexType, ExecSpace &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -124,7 +124,7 @@ $(document).ready(function(){initNavTree('classsil_1_1exterior_1_1Chain.html',''
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="classsil_1_1exterior_1_1Chain-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">sil::exterior::Chain&lt; SimplexType, Allocator &gt; Class Template Reference</div></div>
+  <div class="headertitle"><div class="title">sil::exterior::Chain&lt; SimplexType, ExecSpace &gt; Class Template Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
@@ -133,135 +133,117 @@ $(document).ready(function(){initNavTree('classsil_1_1exterior_1_1Chain.html',''
 
 <p><code>#include &lt;<a class="el" href="chain_8hpp_source.html">chain.hpp</a>&gt;</code></p>
 <div class="dynheader">
-Collaboration diagram for sil::exterior::Chain&lt; SimplexType, Allocator &gt;:</div>
+Collaboration diagram for sil::exterior::Chain&lt; SimplexType, ExecSpace &gt;:</div>
 <div class="dyncontent">
-<div class="center"><img src="classsil_1_1exterior_1_1Chain__coll__graph.png" border="0" usemap="#asil_1_1exterior_1_1Chain_3_01SimplexType_00_01Allocator_01_4_coll__map" alt="Collaboration graph"/></div>
-<map name="asil_1_1exterior_1_1Chain_3_01SimplexType_00_01Allocator_01_4_coll__map" id="asil_1_1exterior_1_1Chain_3_01SimplexType_00_01Allocator_01_4_coll__map">
-<area shape="rect" title="Chain class." alt="" coords="5,5,199,545"/>
+<div class="center"><img src="classsil_1_1exterior_1_1Chain__coll__graph.png" border="0" usemap="#asil_1_1exterior_1_1Chain_3_01SimplexType_00_01ExecSpace_01_4_coll__map" alt="Collaboration graph"/></div>
+<map name="asil_1_1exterior_1_1Chain_3_01SimplexType_00_01ExecSpace_01_4_coll__map" id="asil_1_1exterior_1_1Chain_3_01SimplexType_00_01ExecSpace_01_4_coll__map">
+<area shape="rect" title="Chain class." alt="" coords="5,5,209,665"/>
 </map>
 </div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:af912fb57fdf76de9b2b5412fdb8403cf" id="r_af912fb57fdf76de9b2b5412fdb8403cf"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#af912fb57fdf76de9b2b5412fdb8403cf">simplex_type</a> = SimplexType</td></tr>
-<tr class="separator:af912fb57fdf76de9b2b5412fdb8403cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7d315233c983e4505d1d2b31adb1e932" id="r_a7d315233c983e4505d1d2b31adb1e932"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a7d315233c983e4505d1d2b31adb1e932">simplices_type</a> = std::vector&lt; SimplexType, Allocator &gt;</td></tr>
-<tr class="separator:a7d315233c983e4505d1d2b31adb1e932"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a71550e7d92633f90d3b7c03839d0f8b0" id="r_a71550e7d92633f90d3b7c03839d0f8b0"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a71550e7d92633f90d3b7c03839d0f8b0">discrete_element_type</a> = typename simplex_type::discrete_element_type</td></tr>
-<tr class="separator:a71550e7d92633f90d3b7c03839d0f8b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8add68e44a36540d702e3a17bf6e14da" id="r_a8add68e44a36540d702e3a17bf6e14da"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a8add68e44a36540d702e3a17bf6e14da">discrete_vector_type</a> = typename simplex_type::discrete_vector_type</td></tr>
-<tr class="separator:a8add68e44a36540d702e3a17bf6e14da"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adb1733e62cb968bc455ce9f078891da5" id="r_adb1733e62cb968bc455ce9f078891da5"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#adb1733e62cb968bc455ce9f078891da5">execution_space</a> = ExecSpace</td></tr>
+<tr class="separator:adb1733e62cb968bc455ce9f078891da5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3c892d70dbc28dfa14cd7ef5efbbe33e" id="r_a3c892d70dbc28dfa14cd7ef5efbbe33e"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a3c892d70dbc28dfa14cd7ef5efbbe33e">memory_space</a> = typename ExecSpace::memory_space</td></tr>
+<tr class="separator:a3c892d70dbc28dfa14cd7ef5efbbe33e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0c61838d94229172b7f637801115b4d4" id="r_a0c61838d94229172b7f637801115b4d4"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a0c61838d94229172b7f637801115b4d4">simplex_type</a> = SimplexType</td></tr>
+<tr class="separator:a0c61838d94229172b7f637801115b4d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a244d8c32a3dea76944fef50a203ae41c" id="r_a244d8c32a3dea76944fef50a203ae41c"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a244d8c32a3dea76944fef50a203ae41c">simplices_type</a> = Kokkos::View&lt; SimplexType *, <a class="el" href="classsil_1_1exterior_1_1Chain.html#a3c892d70dbc28dfa14cd7ef5efbbe33e">memory_space</a> &gt;</td></tr>
+<tr class="separator:a244d8c32a3dea76944fef50a203ae41c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a805b55898ab611f733ffa4e08b2942c1" id="r_a805b55898ab611f733ffa4e08b2942c1"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a805b55898ab611f733ffa4e08b2942c1">discrete_element_type</a> = typename simplex_type::discrete_element_type</td></tr>
+<tr class="separator:a805b55898ab611f733ffa4e08b2942c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4b92c563a09d1790ee6d228bee89dda3" id="r_a4b92c563a09d1790ee6d228bee89dda3"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a4b92c563a09d1790ee6d228bee89dda3">discrete_vector_type</a> = typename simplex_type::discrete_vector_type</td></tr>
+<tr class="separator:a4b92c563a09d1790ee6d228bee89dda3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8a93d6fec175c37d1744f4aa24b83466" id="r_a8a93d6fec175c37d1744f4aa24b83466"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a8a93d6fec175c37d1744f4aa24b83466">iterator_type</a> = Kokkos::Experimental::Impl::RandomAccessIterator&lt; <a class="el" href="classsil_1_1exterior_1_1Chain.html#a244d8c32a3dea76944fef50a203ae41c">simplices_type</a> &gt;</td></tr>
+<tr class="separator:a8a93d6fec175c37d1744f4aa24b83466"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a3fa179872c448bc4339f4fe8bacd5bea" id="r_a3fa179872c448bc4339f4fe8bacd5bea"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a3fa179872c448bc4339f4fe8bacd5bea">Chain</a> () noexcept</td></tr>
-<tr class="separator:a3fa179872c448bc4339f4fe8bacd5bea"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab45628d0e2d9c45d2c7ddfd83fb23632" id="r_ab45628d0e2d9c45d2c7ddfd83fb23632"><td class="memTemplParams" colspan="2">template&lt;class... T&gt; <br />
+<tr class="memitem:ade4606805ada80ca9248358ab39e6a1a" id="r_ade4606805ada80ca9248358ab39e6a1a"><td class="memItemLeft" align="right" valign="top">KOKKOS_DEFAULTED_FUNCTION constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#ade4606805ada80ca9248358ab39e6a1a">Chain</a> ()=default</td></tr>
+<tr class="separator:ade4606805ada80ca9248358ab39e6a1a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a15cabd3c2fc0dd349c5889386da95381" id="r_a15cabd3c2fc0dd349c5889386da95381"><td class="memItemLeft" align="right" valign="top">KOKKOS_DEFAULTED_FUNCTION constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a15cabd3c2fc0dd349c5889386da95381">Chain</a> (<a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a> const &amp;)=default</td></tr>
+<tr class="separator:a15cabd3c2fc0dd349c5889386da95381"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aed76452401a3883b37accba5d9037570" id="r_aed76452401a3883b37accba5d9037570"><td class="memItemLeft" align="right" valign="top">KOKKOS_DEFAULTED_FUNCTION constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#aed76452401a3883b37accba5d9037570">Chain</a> (<a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a> &amp;&amp;)=default</td></tr>
+<tr class="separator:aed76452401a3883b37accba5d9037570"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a99800d9c2b4a848bd1fffd383bb55196" id="r_a99800d9c2b4a848bd1fffd383bb55196"><td class="memTemplParams" colspan="2">template&lt;class... T&gt; <br />
 requires <a class="el" href="namespacesil_1_1misc.html#a094c71e44717da55afa244de80ca4b2c">misc::are_all_same</a>&lt;T...&gt;</td></tr>
-<tr class="memitem:ab45628d0e2d9c45d2c7ddfd83fb23632"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#ab45628d0e2d9c45d2c7ddfd83fb23632">Chain</a> (T... simplex) noexcept</td></tr>
-<tr class="separator:ab45628d0e2d9c45d2c7ddfd83fb23632"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a376a14a10d5bf6725c2a9607572f3e5b" id="r_a376a14a10d5bf6725c2a9607572f3e5b"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a376a14a10d5bf6725c2a9607572f3e5b">Chain</a> (std::vector&lt; SimplexType &gt; simplices) noexcept</td></tr>
-<tr class="separator:a376a14a10d5bf6725c2a9607572f3e5b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af12f097002fa0ca6a00558d7546a6097" id="r_af12f097002fa0ca6a00558d7546a6097"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#af12f097002fa0ca6a00558d7546a6097">size</a> () noexcept</td></tr>
-<tr class="separator:af12f097002fa0ca6a00558d7546a6097"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1633a6111510483c3295ab56ee177dc7" id="r_a1633a6111510483c3295ab56ee177dc7"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION std::size_t const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a1633a6111510483c3295ab56ee177dc7">size</a> () const noexcept</td></tr>
-<tr class="separator:a1633a6111510483c3295ab56ee177dc7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3bc33b0866e31ea74a0a4c5e8d21402b" id="r_a3bc33b0866e31ea74a0a4c5e8d21402b"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a3bc33b0866e31ea74a0a4c5e8d21402b">check</a> ()</td></tr>
-<tr class="separator:a3bc33b0866e31ea74a0a4c5e8d21402b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad5b2a8d2f21b9d59ad0d01dc77cccb96" id="r_ad5b2a8d2f21b9d59ad0d01dc77cccb96"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#ad5b2a8d2f21b9d59ad0d01dc77cccb96">optimize</a> ()</td></tr>
-<tr class="separator:ad5b2a8d2f21b9d59ad0d01dc77cccb96"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5a48233cf0eeafa7f5edec25aed20fa0" id="r_a5a48233cf0eeafa7f5edec25aed20fa0"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a5a48233cf0eeafa7f5edec25aed20fa0">begin</a> ()</td></tr>
-<tr class="separator:a5a48233cf0eeafa7f5edec25aed20fa0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a486dc5f0dfed569c5b88c87d812c9d43" id="r_a486dc5f0dfed569c5b88c87d812c9d43"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a486dc5f0dfed569c5b88c87d812c9d43">begin</a> () const</td></tr>
-<tr class="separator:a486dc5f0dfed569c5b88c87d812c9d43"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9c62c079fa1e62af0a45efc0c1146355" id="r_a9c62c079fa1e62af0a45efc0c1146355"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a9c62c079fa1e62af0a45efc0c1146355">end</a> ()</td></tr>
-<tr class="separator:a9c62c079fa1e62af0a45efc0c1146355"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8ebcceb649a126cbdf0168cae9ed11fd" id="r_a8ebcceb649a126cbdf0168cae9ed11fd"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a8ebcceb649a126cbdf0168cae9ed11fd">end</a> () const</td></tr>
-<tr class="separator:a8ebcceb649a126cbdf0168cae9ed11fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a89e5a33342c67618db7af99986857703" id="r_a89e5a33342c67618db7af99986857703"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a89e5a33342c67618db7af99986857703">cbegin</a> () const</td></tr>
-<tr class="separator:a89e5a33342c67618db7af99986857703"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5d55fb91ff5468cde17f0d658439296d" id="r_a5d55fb91ff5468cde17f0d658439296d"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a5d55fb91ff5468cde17f0d658439296d">cend</a> () const</td></tr>
-<tr class="separator:a5d55fb91ff5468cde17f0d658439296d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a45802ff68d5e5227da95adb7990c1303" id="r_a45802ff68d5e5227da95adb7990c1303"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION SimplexType &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a45802ff68d5e5227da95adb7990c1303">operator[]</a> (std::size_t i) noexcept</td></tr>
-<tr class="separator:a45802ff68d5e5227da95adb7990c1303"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4333aaf4674aabd60c20e0a8ef3e16b1" id="r_a4333aaf4674aabd60c20e0a8ef3e16b1"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION SimplexType const &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a4333aaf4674aabd60c20e0a8ef3e16b1">operator[]</a> (std::size_t i) const noexcept</td></tr>
-<tr class="separator:a4333aaf4674aabd60c20e0a8ef3e16b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4ac4a00e1aabb10eceec348f5e160330" id="r_a4ac4a00e1aabb10eceec348f5e160330"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a4ac4a00e1aabb10eceec348f5e160330">push_back</a> (const <a class="el" href="classsil_1_1exterior_1_1Chain.html#af912fb57fdf76de9b2b5412fdb8403cf">simplex_type</a> &amp;simplex)</td></tr>
-<tr class="separator:a4ac4a00e1aabb10eceec348f5e160330"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1bdf1a51a16ce510a628cf87daa3e2f6" id="r_a1bdf1a51a16ce510a628cf87daa3e2f6"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt; SimplexType &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a1bdf1a51a16ce510a628cf87daa3e2f6">operator-</a> ()</td></tr>
-<tr class="separator:a1bdf1a51a16ce510a628cf87daa3e2f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a834eb1cae6b90819bdc263c81a2ecab4" id="r_a834eb1cae6b90819bdc263c81a2ecab4"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt; SimplexType &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a834eb1cae6b90819bdc263c81a2ecab4">operator+</a> (SimplexType simplex)</td></tr>
-<tr class="separator:a834eb1cae6b90819bdc263c81a2ecab4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0d0ec82c2693c873b7b90404e1a36265" id="r_a0d0ec82c2693c873b7b90404e1a36265"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt; SimplexType &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a0d0ec82c2693c873b7b90404e1a36265">operator+</a> (<a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt; SimplexType &gt; simplices_to_add)</td></tr>
-<tr class="separator:a0d0ec82c2693c873b7b90404e1a36265"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab6c02f3d62db1f7b219696c9bbd722fe" id="r_ab6c02f3d62db1f7b219696c9bbd722fe"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
-<tr class="memitem:ab6c02f3d62db1f7b219696c9bbd722fe"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#ab6c02f3d62db1f7b219696c9bbd722fe">operator-</a> (T t)</td></tr>
-<tr class="separator:ab6c02f3d62db1f7b219696c9bbd722fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aade88e86edc6b549ab5d333a93191866" id="r_aade88e86edc6b549ab5d333a93191866"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
-<tr class="memitem:aade88e86edc6b549ab5d333a93191866"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#aade88e86edc6b549ab5d333a93191866">operator*</a> (T t)</td></tr>
-<tr class="separator:aade88e86edc6b549ab5d333a93191866"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a78d71be72da58341c21f72a0cfb6d919" id="r_a78d71be72da58341c21f72a0cfb6d919"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a78d71be72da58341c21f72a0cfb6d919">operator==</a> (<a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt; SimplexType &gt; simplices)</td></tr>
-<tr class="separator:a78d71be72da58341c21f72a0cfb6d919"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a99800d9c2b4a848bd1fffd383bb55196"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a99800d9c2b4a848bd1fffd383bb55196">Chain</a> (T... simplex) noexcept</td></tr>
+<tr class="separator:a99800d9c2b4a848bd1fffd383bb55196"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2e00960bbba40f82ad1cdef327bd8f94" id="r_a2e00960bbba40f82ad1cdef327bd8f94"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a2e00960bbba40f82ad1cdef327bd8f94">Chain</a> (<a class="el" href="classsil_1_1exterior_1_1Chain.html#a244d8c32a3dea76944fef50a203ae41c">simplices_type</a> simplices) noexcept</td></tr>
+<tr class="separator:a2e00960bbba40f82ad1cdef327bd8f94"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6d52f408a06091d1e874cf94a883f76b" id="r_a6d52f408a06091d1e874cf94a883f76b"><td class="memItemLeft" align="right" valign="top">KOKKOS_DEFAULTED_FUNCTION&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a6d52f408a06091d1e874cf94a883f76b">~Chain</a> ()=default</td></tr>
+<tr class="separator:a6d52f408a06091d1e874cf94a883f76b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7237d89b45844729700304a84676b44e" id="r_a7237d89b45844729700304a84676b44e"><td class="memItemLeft" align="right" valign="top">KOKKOS_DEFAULTED_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a7237d89b45844729700304a84676b44e">operator=</a> (<a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a> const &amp;other)=default</td></tr>
+<tr class="separator:a7237d89b45844729700304a84676b44e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1bdf1550c5f968a4db86f7deba29c864" id="r_a1bdf1550c5f968a4db86f7deba29c864"><td class="memItemLeft" align="right" valign="top">KOKKOS_DEFAULTED_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a1bdf1550c5f968a4db86f7deba29c864">operator=</a> (<a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a> &amp;&amp;other)=default</td></tr>
+<tr class="separator:a1bdf1550c5f968a4db86f7deba29c864"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab2da8dc72801c6de295bb7430c8c6b3b" id="r_ab2da8dc72801c6de295bb7430c8c6b3b"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#ab2da8dc72801c6de295bb7430c8c6b3b">size</a> () noexcept</td></tr>
+<tr class="separator:ab2da8dc72801c6de295bb7430c8c6b3b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0e7131866f4370f8e38d801be62a8f55" id="r_a0e7131866f4370f8e38d801be62a8f55"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION std::size_t const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a0e7131866f4370f8e38d801be62a8f55">size</a> () const noexcept</td></tr>
+<tr class="separator:a0e7131866f4370f8e38d801be62a8f55"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1fa20199d7bbf2b28e7a8e5a5d7fd110" id="r_a1fa20199d7bbf2b28e7a8e5a5d7fd110"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a1fa20199d7bbf2b28e7a8e5a5d7fd110">check</a> ()</td></tr>
+<tr class="separator:a1fa20199d7bbf2b28e7a8e5a5d7fd110"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa479d74b7a4b71a1b4807568458b70e6" id="r_aa479d74b7a4b71a1b4807568458b70e6"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#aa479d74b7a4b71a1b4807568458b70e6">optimize</a> ()</td></tr>
+<tr class="separator:aa479d74b7a4b71a1b4807568458b70e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4fbfcd0d0696fcae8d1b4c3f33f8621d" id="r_a4fbfcd0d0696fcae8d1b4c3f33f8621d"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a4fbfcd0d0696fcae8d1b4c3f33f8621d">begin</a> ()</td></tr>
+<tr class="separator:a4fbfcd0d0696fcae8d1b4c3f33f8621d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acca212f34fe5b0eba38496592ef4a6be" id="r_acca212f34fe5b0eba38496592ef4a6be"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#acca212f34fe5b0eba38496592ef4a6be">begin</a> () const</td></tr>
+<tr class="separator:acca212f34fe5b0eba38496592ef4a6be"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae6462c7c3663a21db2e19020ecb4739b" id="r_ae6462c7c3663a21db2e19020ecb4739b"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#ae6462c7c3663a21db2e19020ecb4739b">end</a> ()</td></tr>
+<tr class="separator:ae6462c7c3663a21db2e19020ecb4739b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa3809d69003a2e18a7be45c2447a0ef2" id="r_aa3809d69003a2e18a7be45c2447a0ef2"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#aa3809d69003a2e18a7be45c2447a0ef2">end</a> () const</td></tr>
+<tr class="separator:aa3809d69003a2e18a7be45c2447a0ef2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5a47f73011dbfe80bddb2d0fe92919f1" id="r_a5a47f73011dbfe80bddb2d0fe92919f1"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a5a47f73011dbfe80bddb2d0fe92919f1">cbegin</a> () const</td></tr>
+<tr class="separator:a5a47f73011dbfe80bddb2d0fe92919f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afbd727bff4f3dbb5572127b666beafa4" id="r_afbd727bff4f3dbb5572127b666beafa4"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#afbd727bff4f3dbb5572127b666beafa4">cend</a> () const</td></tr>
+<tr class="separator:afbd727bff4f3dbb5572127b666beafa4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acb5b1d6b0638e7da088989e7cda2cfa8" id="r_acb5b1d6b0638e7da088989e7cda2cfa8"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Chain.html#a0c61838d94229172b7f637801115b4d4">simplex_type</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#acb5b1d6b0638e7da088989e7cda2cfa8">operator[]</a> (std::size_t i) noexcept</td></tr>
+<tr class="separator:acb5b1d6b0638e7da088989e7cda2cfa8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9865c22c9891334c7bec3af4a5067e33" id="r_a9865c22c9891334c7bec3af4a5067e33"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Chain.html#a0c61838d94229172b7f637801115b4d4">simplex_type</a> const &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a9865c22c9891334c7bec3af4a5067e33">operator[]</a> (std::size_t i) const noexcept</td></tr>
+<tr class="separator:a9865c22c9891334c7bec3af4a5067e33"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9680329cd6e9f6f940a97546eb296a25" id="r_a9680329cd6e9f6f940a97546eb296a25"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a9680329cd6e9f6f940a97546eb296a25">push_back</a> (const <a class="el" href="classsil_1_1exterior_1_1Chain.html#a0c61838d94229172b7f637801115b4d4">simplex_type</a> &amp;simplex)</td></tr>
+<tr class="separator:a9680329cd6e9f6f940a97546eb296a25"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af0cda7f2b29e67728a4b89720a508633" id="r_af0cda7f2b29e67728a4b89720a508633"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#af0cda7f2b29e67728a4b89720a508633">push_back</a> (const <a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt; <a class="el" href="classsil_1_1exterior_1_1Chain.html#a0c61838d94229172b7f637801115b4d4">simplex_type</a> &gt; &amp;simplices_to_add)</td></tr>
+<tr class="separator:af0cda7f2b29e67728a4b89720a508633"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae2edf5247410ddeaaad14787e1d91628" id="r_ae2edf5247410ddeaaad14787e1d91628"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt; <a class="el" href="classsil_1_1exterior_1_1Chain.html#a0c61838d94229172b7f637801115b4d4">simplex_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#ae2edf5247410ddeaaad14787e1d91628">operator-</a> ()</td></tr>
+<tr class="separator:ae2edf5247410ddeaaad14787e1d91628"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a82c414d17c3b4d75b3e2911e2106469c" id="r_a82c414d17c3b4d75b3e2911e2106469c"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt; <a class="el" href="classsil_1_1exterior_1_1Chain.html#a0c61838d94229172b7f637801115b4d4">simplex_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a82c414d17c3b4d75b3e2911e2106469c">operator+</a> (<a class="el" href="classsil_1_1exterior_1_1Chain.html#a0c61838d94229172b7f637801115b4d4">simplex_type</a> simplex)</td></tr>
+<tr class="separator:a82c414d17c3b4d75b3e2911e2106469c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af74c54b2405d134c42aecea396626004" id="r_af74c54b2405d134c42aecea396626004"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt; <a class="el" href="classsil_1_1exterior_1_1Chain.html#a0c61838d94229172b7f637801115b4d4">simplex_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#af74c54b2405d134c42aecea396626004">operator+</a> (<a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt; <a class="el" href="classsil_1_1exterior_1_1Chain.html#a0c61838d94229172b7f637801115b4d4">simplex_type</a> &gt; simplices_to_add)</td></tr>
+<tr class="separator:af74c54b2405d134c42aecea396626004"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abd4f64bb0db5038f1efa959644f71936" id="r_abd4f64bb0db5038f1efa959644f71936"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
+<tr class="memitem:abd4f64bb0db5038f1efa959644f71936"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#abd4f64bb0db5038f1efa959644f71936">operator-</a> (T t)</td></tr>
+<tr class="separator:abd4f64bb0db5038f1efa959644f71936"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab7056a8464d7bcfeb87a60f325b65acd" id="r_ab7056a8464d7bcfeb87a60f325b65acd"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
+<tr class="memitem:ab7056a8464d7bcfeb87a60f325b65acd"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#ab7056a8464d7bcfeb87a60f325b65acd">operator*</a> (T t)</td></tr>
+<tr class="separator:ab7056a8464d7bcfeb87a60f325b65acd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a806a423663cc097589b72c2d63093d87" id="r_a806a423663cc097589b72c2d63093d87"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a806a423663cc097589b72c2d63093d87">operator==</a> (<a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt; <a class="el" href="classsil_1_1exterior_1_1Chain.html#a0c61838d94229172b7f637801115b4d4">simplex_type</a> &gt; simplices)</td></tr>
+<tr class="separator:a806a423663cc097589b72c2d63093d87"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a1179d44cf9117dc067954e4c4898e19c" id="r_a1179d44cf9117dc067954e4c4898e19c"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a1179d44cf9117dc067954e4c4898e19c">is_local</a> () noexcept</td></tr>
-<tr class="separator:a1179d44cf9117dc067954e4c4898e19c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3023ae1a3d6a7ca71f4f5aced7dcc980" id="r_a3023ae1a3d6a7ca71f4f5aced7dcc980"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a3023ae1a3d6a7ca71f4f5aced7dcc980">dimension</a> () noexcept</td></tr>
-<tr class="separator:a3023ae1a3d6a7ca71f4f5aced7dcc980"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a63145c142266ab32468a3ae73ab8b089" id="r_a63145c142266ab32468a3ae73ab8b089"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a63145c142266ab32468a3ae73ab8b089">is_local</a> () noexcept</td></tr>
+<tr class="separator:a63145c142266ab32468a3ae73ab8b089"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aae8cc4b43d85c5befe24cd045d6552a5" id="r_aae8cc4b43d85c5befe24cd045d6552a5"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Chain.html#aae8cc4b43d85c5befe24cd045d6552a5">dimension</a> () noexcept</td></tr>
+<tr class="separator:aae8cc4b43d85c5befe24cd045d6552a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><div class="compoundTemplParams">template&lt;class SimplexType, class Allocator = std::allocator&lt;SimplexType&gt;&gt;<br />
-class sil::exterior::Chain&lt; SimplexType, Allocator &gt;</div><p><a class="el" href="classsil_1_1exterior_1_1Chain.html" title="Chain class.">Chain</a> class. </p>
+<div class="textblock"><div class="compoundTemplParams">template&lt;class SimplexType, class ExecSpace = Kokkos::DefaultHostExecutionSpace&gt;<br />
+class sil::exterior::Chain&lt; SimplexType, ExecSpace &gt;</div><p><a class="el" href="classsil_1_1exterior_1_1Chain.html" title="Chain class.">Chain</a> class. </p>
 
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00019">19</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00021">21</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
-<a id="af912fb57fdf76de9b2b5412fdb8403cf" name="af912fb57fdf76de9b2b5412fdb8403cf"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af912fb57fdf76de9b2b5412fdb8403cf">&#9670;&#160;</a></span>simplex_type</h2>
+<a id="adb1733e62cb968bc455ce9f078891da5" name="adb1733e62cb968bc455ce9f078891da5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adb1733e62cb968bc455ce9f078891da5">&#9670;&#160;</a></span>execution_space</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::simplex_type =  SimplexType</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00022">22</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
-
-</div>
-</div>
-<a id="a7d315233c983e4505d1d2b31adb1e932" name="a7d315233c983e4505d1d2b31adb1e932"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7d315233c983e4505d1d2b31adb1e932">&#9670;&#160;</a></span>simplices_type</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::simplices_type =  std::vector&lt;SimplexType, Allocator&gt;</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00023">23</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
-
-</div>
-</div>
-<a id="a71550e7d92633f90d3b7c03839d0f8b0" name="a71550e7d92633f90d3b7c03839d0f8b0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a71550e7d92633f90d3b7c03839d0f8b0">&#9670;&#160;</a></span>discrete_element_type</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::discrete_element_type =  typename simplex_type::discrete_element_type</td>
+          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::execution_space =  ExecSpace</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -270,16 +252,16 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType
 
 </div>
 </div>
-<a id="a8add68e44a36540d702e3a17bf6e14da" name="a8add68e44a36540d702e3a17bf6e14da"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8add68e44a36540d702e3a17bf6e14da">&#9670;&#160;</a></span>discrete_vector_type</h2>
+<a id="a3c892d70dbc28dfa14cd7ef5efbbe33e" name="a3c892d70dbc28dfa14cd7ef5efbbe33e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3c892d70dbc28dfa14cd7ef5efbbe33e">&#9670;&#160;</a></span>memory_space</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::discrete_vector_type =  typename simplex_type::discrete_vector_type</td>
+          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::memory_space =  typename ExecSpace::memory_space</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -288,20 +270,110 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType
 
 </div>
 </div>
-<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a3fa179872c448bc4339f4fe8bacd5bea" name="a3fa179872c448bc4339f4fe8bacd5bea"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3fa179872c448bc4339f4fe8bacd5bea">&#9670;&#160;</a></span>Chain() <span class="overload">[1/3]</span></h2>
+<a id="a0c61838d94229172b7f637801115b4d4" name="a0c61838d94229172b7f637801115b4d4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0c61838d94229172b7f637801115b4d4">&#9670;&#160;</a></span>simplex_type</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::simplex_type =  SimplexType</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00027">27</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a244d8c32a3dea76944fef50a203ae41c" name="a244d8c32a3dea76944fef50a203ae41c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a244d8c32a3dea76944fef50a203ae41c">&#9670;&#160;</a></span>simplices_type</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::simplices_type =  Kokkos::View&lt;SimplexType*, <a class="el" href="classsil_1_1exterior_1_1Chain.html#a3c892d70dbc28dfa14cd7ef5efbbe33e">memory_space</a>&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00028">28</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a805b55898ab611f733ffa4e08b2942c1" name="a805b55898ab611f733ffa4e08b2942c1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a805b55898ab611f733ffa4e08b2942c1">&#9670;&#160;</a></span>discrete_element_type</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::discrete_element_type =  typename simplex_type::discrete_element_type</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00029">29</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a4b92c563a09d1790ee6d228bee89dda3" name="a4b92c563a09d1790ee6d228bee89dda3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4b92c563a09d1790ee6d228bee89dda3">&#9670;&#160;</a></span>discrete_vector_type</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::discrete_vector_type =  typename simplex_type::discrete_vector_type</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00030">30</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a8a93d6fec175c37d1744f4aa24b83466" name="a8a93d6fec175c37d1744f4aa24b83466"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8a93d6fec175c37d1744f4aa24b83466">&#9670;&#160;</a></span>iterator_type</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::iterator_type =  Kokkos::Experimental::Impl::RandomAccessIterator&lt;<a class="el" href="classsil_1_1exterior_1_1Chain.html#a244d8c32a3dea76944fef50a203ae41c">simplices_type</a>&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00032">32</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a id="ade4606805ada80ca9248358ab39e6a1a" name="ade4606805ada80ca9248358ab39e6a1a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ade4606805ada80ca9248358ab39e6a1a">&#9670;&#160;</a></span>Chain() <span class="overload">[1/5]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION constexpr <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::Chain </td>
+          <td class="memname">KOKKOS_DEFAULTED_FUNCTION constexpr <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::Chain </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -309,22 +381,76 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">explicit</span><span class="mlabel">constexpr</span><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">constexpr</span><span class="mlabel">default</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00033">33</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
-
 </div>
 </div>
-<a id="ab45628d0e2d9c45d2c7ddfd83fb23632" name="ab45628d0e2d9c45d2c7ddfd83fb23632"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab45628d0e2d9c45d2c7ddfd83fb23632">&#9670;&#160;</a></span>Chain() <span class="overload">[2/3]</span></h2>
+<a id="a15cabd3c2fc0dd349c5889386da95381" name="a15cabd3c2fc0dd349c5889386da95381"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a15cabd3c2fc0dd349c5889386da95381">&#9670;&#160;</a></span>Chain() <span class="overload">[2/5]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_DEFAULTED_FUNCTION constexpr <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::Chain </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt; SimplexType, ExecSpace &gt; const &amp;&#160;</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">constexpr</span><span class="mlabel">default</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aed76452401a3883b37accba5d9037570" name="aed76452401a3883b37accba5d9037570"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aed76452401a3883b37accba5d9037570">&#9670;&#160;</a></span>Chain() <span class="overload">[3/5]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_DEFAULTED_FUNCTION constexpr <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::Chain </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt; SimplexType, ExecSpace &gt; &amp;&amp;&#160;</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">constexpr</span><span class="mlabel">default</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a99800d9c2b4a848bd1fffd383bb55196" name="a99800d9c2b4a848bd1fffd383bb55196"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a99800d9c2b4a848bd1fffd383bb55196">&#9670;&#160;</a></span>Chain() <span class="overload">[4/5]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
 <div class="memtemplate">
 template&lt;class... T&gt; <br />
 requires <a class="el" href="namespacesil_1_1misc.html#a094c71e44717da55afa244de80ca4b2c">misc::are_all_same</a>&lt;T...&gt;</div>
@@ -333,7 +459,7 @@ requires <a class="el" href="namespacesil_1_1misc.html#a094c71e44717da55afa244de
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION constexpr <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::Chain </td>
+          <td class="memname">KOKKOS_FUNCTION constexpr <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::Chain </td>
           <td>(</td>
           <td class="paramtype">T...&#160;</td>
           <td class="paramname"><em>simplex</em></td><td>)</td>
@@ -347,25 +473,25 @@ requires <a class="el" href="namespacesil_1_1misc.html#a094c71e44717da55afa244de
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00037">37</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00048">48</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a376a14a10d5bf6725c2a9607572f3e5b" name="a376a14a10d5bf6725c2a9607572f3e5b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a376a14a10d5bf6725c2a9607572f3e5b">&#9670;&#160;</a></span>Chain() <span class="overload">[3/3]</span></h2>
+<a id="a2e00960bbba40f82ad1cdef327bd8f94" name="a2e00960bbba40f82ad1cdef327bd8f94"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2e00960bbba40f82ad1cdef327bd8f94">&#9670;&#160;</a></span>Chain() <span class="overload">[5/5]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION constexpr <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::Chain </td>
+          <td class="memname">KOKKOS_FUNCTION constexpr <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::Chain </td>
           <td>(</td>
-          <td class="paramtype">std::vector&lt; SimplexType &gt;&#160;</td>
+          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a244d8c32a3dea76944fef50a203ae41c">simplices_type</a>&#160;</td>
           <td class="paramname"><em>simplices</em></td><td>)</td>
           <td></td>
         </tr>
@@ -377,24 +503,107 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00042">42</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00056">56</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a6d52f408a06091d1e874cf94a883f76b" name="a6d52f408a06091d1e874cf94a883f76b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6d52f408a06091d1e874cf94a883f76b">&#9670;&#160;</a></span>~Chain()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_DEFAULTED_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::~<a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a> </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">default</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
 
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a1179d44cf9117dc067954e4c4898e19c" name="a1179d44cf9117dc067954e4c4898e19c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1179d44cf9117dc067954e4c4898e19c">&#9670;&#160;</a></span>is_local()</h2>
+<a id="a7237d89b45844729700304a84676b44e" name="a7237d89b45844729700304a84676b44e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7237d89b45844729700304a84676b44e">&#9670;&#160;</a></span>operator=() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">static KOKKOS_FUNCTION constexpr bool <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::is_local </td>
+          <td class="memname">KOKKOS_DEFAULTED_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a> &amp; <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::operator= </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt; SimplexType, ExecSpace &gt; const &amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">default</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a1bdf1550c5f968a4db86f7deba29c864" name="a1bdf1550c5f968a4db86f7deba29c864"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1bdf1550c5f968a4db86f7deba29c864">&#9670;&#160;</a></span>operator=() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_DEFAULTED_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a> &amp; <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::operator= </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt; SimplexType, ExecSpace &gt; &amp;&amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">default</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a63145c142266ab32468a3ae73ab8b089" name="a63145c142266ab32468a3ae73ab8b089"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a63145c142266ab32468a3ae73ab8b089">&#9670;&#160;</a></span>is_local()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static KOKKOS_FUNCTION constexpr bool <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::is_local </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -403,122 +612,6 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType
   </td>
   <td class="mlabels-right">
 <span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span><span class="mlabel">constexpr</span><span class="mlabel">noexcept</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00048">48</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
-
-</div>
-</div>
-<a id="a3023ae1a3d6a7ca71f4f5aced7dcc980" name="a3023ae1a3d6a7ca71f4f5aced7dcc980"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3023ae1a3d6a7ca71f4f5aced7dcc980">&#9670;&#160;</a></span>dimension()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">static KOKKOS_FUNCTION constexpr std::size_t <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::dimension </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span><span class="mlabel">constexpr</span><span class="mlabel">noexcept</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00053">53</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
-
-</div>
-</div>
-<a id="af12f097002fa0ca6a00558d7546a6097" name="af12f097002fa0ca6a00558d7546a6097"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af12f097002fa0ca6a00558d7546a6097">&#9670;&#160;</a></span>size() <span class="overload">[1/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">KOKKOS_FUNCTION std::size_t <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::size </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00058">58</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
-
-</div>
-</div>
-<a id="a1633a6111510483c3295ab56ee177dc7" name="a1633a6111510483c3295ab56ee177dc7"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1633a6111510483c3295ab56ee177dc7">&#9670;&#160;</a></span>size() <span class="overload">[2/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">KOKKOS_FUNCTION std::size_t const <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::size </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00063">63</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
-
-</div>
-</div>
-<a id="a3bc33b0866e31ea74a0a4c5e8d21402b" name="a3bc33b0866e31ea74a0a4c5e8d21402b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3bc33b0866e31ea74a0a4c5e8d21402b">&#9670;&#160;</a></span>check()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">KOKKOS_FUNCTION int <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::check </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -527,19 +620,19 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType
 
 </div>
 </div>
-<a id="ad5b2a8d2f21b9d59ad0d01dc77cccb96" name="ad5b2a8d2f21b9d59ad0d01dc77cccb96"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad5b2a8d2f21b9d59ad0d01dc77cccb96">&#9670;&#160;</a></span>optimize()</h2>
+<a id="aae8cc4b43d85c5befe24cd045d6552a5" name="aae8cc4b43d85c5befe24cd045d6552a5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aae8cc4b43d85c5befe24cd045d6552a5">&#9670;&#160;</a></span>dimension()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION void <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::optimize </td>
+          <td class="memname">static KOKKOS_FUNCTION constexpr std::size_t <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::dimension </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -547,28 +640,28 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span><span class="mlabel">constexpr</span><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00080">80</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00073">73</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a5a48233cf0eeafa7f5edec25aed20fa0" name="a5a48233cf0eeafa7f5edec25aed20fa0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5a48233cf0eeafa7f5edec25aed20fa0">&#9670;&#160;</a></span>begin() <span class="overload">[1/2]</span></h2>
+<a id="ab2da8dc72801c6de295bb7430c8c6b3b" name="ab2da8dc72801c6de295bb7430c8c6b3b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab2da8dc72801c6de295bb7430c8c6b3b">&#9670;&#160;</a></span>size() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::begin </td>
+          <td class="memname">KOKKOS_FUNCTION std::size_t <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::size </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -576,31 +669,89 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00097">97</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00078">78</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a486dc5f0dfed569c5b88c87d812c9d43" name="a486dc5f0dfed569c5b88c87d812c9d43"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a486dc5f0dfed569c5b88c87d812c9d43">&#9670;&#160;</a></span>begin() <span class="overload">[2/2]</span></h2>
+<a id="a0e7131866f4370f8e38d801be62a8f55" name="a0e7131866f4370f8e38d801be62a8f55"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0e7131866f4370f8e38d801be62a8f55">&#9670;&#160;</a></span>size() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::begin </td>
+          <td class="memname">KOKKOS_FUNCTION std::size_t const <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::size </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00083">83</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a1fa20199d7bbf2b28e7a8e5a5d7fd110" name="a1fa20199d7bbf2b28e7a8e5a5d7fd110"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1fa20199d7bbf2b28e7a8e5a5d7fd110">&#9670;&#160;</a></span>check()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION int <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::check </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00088">88</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+
+</div>
+</div>
+<a id="aa479d74b7a4b71a1b4807568458b70e6" name="aa479d74b7a4b71a1b4807568458b70e6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa479d74b7a4b71a1b4807568458b70e6">&#9670;&#160;</a></span>optimize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION void <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::optimize </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
         </tr>
       </table>
   </td>
@@ -614,19 +765,19 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType
 
 </div>
 </div>
-<a id="a9c62c079fa1e62af0a45efc0c1146355" name="a9c62c079fa1e62af0a45efc0c1146355"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9c62c079fa1e62af0a45efc0c1146355">&#9670;&#160;</a></span>end() <span class="overload">[1/2]</span></h2>
+<a id="a4fbfcd0d0696fcae8d1b4c3f33f8621d" name="a4fbfcd0d0696fcae8d1b4c3f33f8621d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4fbfcd0d0696fcae8d1b4c3f33f8621d">&#9670;&#160;</a></span>begin() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::end </td>
+          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::begin </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -639,23 +790,23 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00107">107</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00130">130</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a8ebcceb649a126cbdf0168cae9ed11fd" name="a8ebcceb649a126cbdf0168cae9ed11fd"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8ebcceb649a126cbdf0168cae9ed11fd">&#9670;&#160;</a></span>end() <span class="overload">[2/2]</span></h2>
+<a id="acca212f34fe5b0eba38496592ef4a6be" name="acca212f34fe5b0eba38496592ef4a6be"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acca212f34fe5b0eba38496592ef4a6be">&#9670;&#160;</a></span>begin() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::end </td>
+          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::begin </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -668,23 +819,52 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00112">112</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00135">135</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a89e5a33342c67618db7af99986857703" name="a89e5a33342c67618db7af99986857703"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a89e5a33342c67618db7af99986857703">&#9670;&#160;</a></span>cbegin()</h2>
+<a id="ae6462c7c3663a21db2e19020ecb4739b" name="ae6462c7c3663a21db2e19020ecb4739b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae6462c7c3663a21db2e19020ecb4739b">&#9670;&#160;</a></span>end() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::cbegin </td>
+          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::end </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00140">140</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+
+</div>
+</div>
+<a id="aa3809d69003a2e18a7be45c2447a0ef2" name="aa3809d69003a2e18a7be45c2447a0ef2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa3809d69003a2e18a7be45c2447a0ef2">&#9670;&#160;</a></span>end() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::end </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -697,23 +877,23 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00117">117</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00145">145</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a5d55fb91ff5468cde17f0d658439296d" name="a5d55fb91ff5468cde17f0d658439296d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5d55fb91ff5468cde17f0d658439296d">&#9670;&#160;</a></span>cend()</h2>
+<a id="a5a47f73011dbfe80bddb2d0fe92919f1" name="a5a47f73011dbfe80bddb2d0fe92919f1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5a47f73011dbfe80bddb2d0fe92919f1">&#9670;&#160;</a></span>cbegin()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::cend </td>
+          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::cbegin </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -726,23 +906,52 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00122">122</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00150">150</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a45802ff68d5e5227da95adb7990c1303" name="a45802ff68d5e5227da95adb7990c1303"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a45802ff68d5e5227da95adb7990c1303">&#9670;&#160;</a></span>operator[]() <span class="overload">[1/2]</span></h2>
+<a id="afbd727bff4f3dbb5572127b666beafa4" name="afbd727bff4f3dbb5572127b666beafa4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afbd727bff4f3dbb5572127b666beafa4">&#9670;&#160;</a></span>cend()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION SimplexType &amp; <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::operator[] </td>
+          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::cend </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00155">155</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+
+</div>
+</div>
+<a id="acb5b1d6b0638e7da088989e7cda2cfa8" name="acb5b1d6b0638e7da088989e7cda2cfa8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acb5b1d6b0638e7da088989e7cda2cfa8">&#9670;&#160;</a></span>operator[]() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Chain.html#a0c61838d94229172b7f637801115b4d4">simplex_type</a> &amp; <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::operator[] </td>
           <td>(</td>
           <td class="paramtype">std::size_t&#160;</td>
           <td class="paramname"><em>i</em></td><td>)</td>
@@ -756,23 +965,23 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00127">127</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00160">160</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a4333aaf4674aabd60c20e0a8ef3e16b1" name="a4333aaf4674aabd60c20e0a8ef3e16b1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4333aaf4674aabd60c20e0a8ef3e16b1">&#9670;&#160;</a></span>operator[]() <span class="overload">[2/2]</span></h2>
+<a id="a9865c22c9891334c7bec3af4a5067e33" name="a9865c22c9891334c7bec3af4a5067e33"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9865c22c9891334c7bec3af4a5067e33">&#9670;&#160;</a></span>operator[]() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION SimplexType const  &amp; <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::operator[] </td>
+          <td class="memname">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Chain.html#a0c61838d94229172b7f637801115b4d4">simplex_type</a> const  &amp; <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::operator[] </td>
           <td>(</td>
           <td class="paramtype">std::size_t&#160;</td>
           <td class="paramname"><em>i</em></td><td>)</td>
@@ -786,25 +995,25 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00132">132</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00165">165</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a4ac4a00e1aabb10eceec348f5e160330" name="a4ac4a00e1aabb10eceec348f5e160330"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4ac4a00e1aabb10eceec348f5e160330">&#9670;&#160;</a></span>push_back()</h2>
+<a id="a9680329cd6e9f6f940a97546eb296a25" name="a9680329cd6e9f6f940a97546eb296a25"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9680329cd6e9f6f940a97546eb296a25">&#9670;&#160;</a></span>push_back() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION void <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::push_back </td>
+          <td class="memname">KOKKOS_FUNCTION void <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::push_back </td>
           <td>(</td>
-          <td class="paramtype">const <a class="el" href="classsil_1_1exterior_1_1Chain.html#af912fb57fdf76de9b2b5412fdb8403cf">simplex_type</a> &amp;&#160;</td>
+          <td class="paramtype">const <a class="el" href="classsil_1_1exterior_1_1Chain.html#a0c61838d94229172b7f637801115b4d4">simplex_type</a> &amp;&#160;</td>
           <td class="paramname"><em>simplex</em></td><td>)</td>
           <td></td>
         </tr>
@@ -816,84 +1025,25 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00137">137</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00170">170</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a1bdf1a51a16ce510a628cf87daa3e2f6" name="a1bdf1a51a16ce510a628cf87daa3e2f6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1bdf1a51a16ce510a628cf87daa3e2f6">&#9670;&#160;</a></span>operator-() <span class="overload">[1/2]</span></h2>
+<a id="af0cda7f2b29e67728a4b89720a508633" name="af0cda7f2b29e67728a4b89720a508633"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af0cda7f2b29e67728a4b89720a508633">&#9670;&#160;</a></span>push_back() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt; SimplexType &gt; <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::operator- </td>
+          <td class="memname">KOKKOS_FUNCTION void <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::push_back </td>
           <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00142">142</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
-
-</div>
-</div>
-<a id="a834eb1cae6b90819bdc263c81a2ecab4" name="a834eb1cae6b90819bdc263c81a2ecab4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a834eb1cae6b90819bdc263c81a2ecab4">&#9670;&#160;</a></span>operator+() <span class="overload">[1/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt; SimplexType &gt; <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::operator+ </td>
-          <td>(</td>
-          <td class="paramtype">SimplexType&#160;</td>
-          <td class="paramname"><em>simplex</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00151">151</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
-
-</div>
-</div>
-<a id="a0d0ec82c2693c873b7b90404e1a36265" name="a0d0ec82c2693c873b7b90404e1a36265"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0d0ec82c2693c873b7b90404e1a36265">&#9670;&#160;</a></span>operator+() <span class="overload">[2/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt; SimplexType &gt; <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::operator+ </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt; SimplexType &gt;&#160;</td>
+          <td class="paramtype">const <a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt; <a class="el" href="classsil_1_1exterior_1_1Chain.html#a0c61838d94229172b7f637801115b4d4">simplex_type</a> &gt; &amp;&#160;</td>
           <td class="paramname"><em>simplices_to_add</em></td><td>)</td>
           <td></td>
         </tr>
@@ -905,17 +1055,106 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00158">158</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00176">176</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="ab6c02f3d62db1f7b219696c9bbd722fe" name="ab6c02f3d62db1f7b219696c9bbd722fe"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab6c02f3d62db1f7b219696c9bbd722fe">&#9670;&#160;</a></span>operator-() <span class="overload">[2/2]</span></h2>
+<a id="ae2edf5247410ddeaaad14787e1d91628" name="ae2edf5247410ddeaaad14787e1d91628"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae2edf5247410ddeaaad14787e1d91628">&#9670;&#160;</a></span>operator-() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt; <a class="el" href="classsil_1_1exterior_1_1Chain.html#a0c61838d94229172b7f637801115b4d4">simplex_type</a> &gt; <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::operator- </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00186">186</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a82c414d17c3b4d75b3e2911e2106469c" name="a82c414d17c3b4d75b3e2911e2106469c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a82c414d17c3b4d75b3e2911e2106469c">&#9670;&#160;</a></span>operator+() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt; <a class="el" href="classsil_1_1exterior_1_1Chain.html#a0c61838d94229172b7f637801115b4d4">simplex_type</a> &gt; <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::operator+ </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Chain.html#a0c61838d94229172b7f637801115b4d4">simplex_type</a>&#160;</td>
+          <td class="paramname"><em>simplex</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00197">197</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+
+</div>
+</div>
+<a id="af74c54b2405d134c42aecea396626004" name="af74c54b2405d134c42aecea396626004"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af74c54b2405d134c42aecea396626004">&#9670;&#160;</a></span>operator+() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt; <a class="el" href="classsil_1_1exterior_1_1Chain.html#a0c61838d94229172b7f637801115b4d4">simplex_type</a> &gt; <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::operator+ </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt; <a class="el" href="classsil_1_1exterior_1_1Chain.html#a0c61838d94229172b7f637801115b4d4">simplex_type</a> &gt;&#160;</td>
+          <td class="paramname"><em>simplices_to_add</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00204">204</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+
+</div>
+</div>
+<a id="abd4f64bb0db5038f1efa959644f71936" name="abd4f64bb0db5038f1efa959644f71936"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abd4f64bb0db5038f1efa959644f71936">&#9670;&#160;</a></span>operator-() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
 <div class="memtemplate">
 template&lt;class T &gt; </div>
 <table class="mlabels">
@@ -923,7 +1162,7 @@ template&lt;class T &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::operator- </td>
+          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::operator- </td>
           <td>(</td>
           <td class="paramtype">T&#160;</td>
           <td class="paramname"><em>t</em></td><td>)</td>
@@ -937,17 +1176,17 @@ template&lt;class T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00166">166</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00212">212</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="aade88e86edc6b549ab5d333a93191866" name="aade88e86edc6b549ab5d333a93191866"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aade88e86edc6b549ab5d333a93191866">&#9670;&#160;</a></span>operator*()</h2>
+<a id="ab7056a8464d7bcfeb87a60f325b65acd" name="ab7056a8464d7bcfeb87a60f325b65acd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab7056a8464d7bcfeb87a60f325b65acd">&#9670;&#160;</a></span>operator*()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
 <div class="memtemplate">
 template&lt;class T &gt; </div>
 <table class="mlabels">
@@ -955,7 +1194,7 @@ template&lt;class T &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::operator* </td>
+          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::operator* </td>
           <td>(</td>
           <td class="paramtype">T&#160;</td>
           <td class="paramname"><em>t</em></td><td>)</td>
@@ -969,25 +1208,25 @@ template&lt;class T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00172">172</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00218">218</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a78d71be72da58341c21f72a0cfb6d919" name="a78d71be72da58341c21f72a0cfb6d919"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a78d71be72da58341c21f72a0cfb6d919">&#9670;&#160;</a></span>operator==()</h2>
+<a id="a806a423663cc097589b72c2d63093d87" name="a806a423663cc097589b72c2d63093d87"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a806a423663cc097589b72c2d63093d87">&#9670;&#160;</a></span>operator==()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType&gt;&gt; </div>
+template&lt;class SimplexType , class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION bool <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, Allocator &gt;::operator== </td>
+          <td class="memname">KOKKOS_FUNCTION bool <a class="el" href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a>&lt; SimplexType, ExecSpace &gt;::operator== </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt; SimplexType &gt;&#160;</td>
+          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt; <a class="el" href="classsil_1_1exterior_1_1Chain.html#a0c61838d94229172b7f637801115b4d4">simplex_type</a> &gt;&#160;</td>
           <td class="paramname"><em>simplices</em></td><td>)</td>
           <td></td>
         </tr>
@@ -999,7 +1238,7 @@ template&lt;class SimplexType , class Allocator  = std::allocator&lt;SimplexType
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00184">184</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="chain_8hpp_source.html#l00230">230</a> of file <a class="el" href="chain_8hpp_source.html">chain.hpp</a>.</p>
 
 </div>
 </div>

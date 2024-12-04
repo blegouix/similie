@@ -143,39 +143,39 @@ $(document).ready(function(){initNavTree('form_8hpp_source.html',''); initResiza
 <div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span> </div>
 <div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="keyword">namespace </span>detail {</div>
 <div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span> </div>
-<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> T, <span class="keyword">class</span> ElementType, <span class="keyword">class</span> Allocator&gt;</div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> T, <span class="keyword">class</span> ElementType, <span class="keyword">class</span> ExecSpace&gt;</div>
 <div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="keyword">struct </span>FormWrapper;</div>
 <div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span> </div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="keyword">template</span> &lt;misc::NotSpecialization&lt;Chain&gt; T, <span class="keyword">class</span> ElementType, <span class="keyword">class</span> Allocator&gt;</div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="keyword">struct </span>FormWrapper&lt;T, ElementType, Allocator&gt;</div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="keyword">template</span> &lt;misc::NotSpecialization&lt;Chain&gt; T, <span class="keyword">class</span> ElementType, <span class="keyword">class</span> ExecSpace&gt;</div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="keyword">struct </span>FormWrapper&lt;T, ElementType, ExecSpace&gt;</div>
 <div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>{</div>
 <div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>    <span class="keyword">using </span>type = Cosimplex&lt;T, ElementType&gt;;</div>
 <div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>};</div>
 <div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span> </div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="keyword">template</span> &lt;misc::Specialization&lt;Chain&gt; T, <span class="keyword">class</span> ElementType, <span class="keyword">class</span> Allocator&gt;</div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="keyword">struct </span>FormWrapper&lt;T, ElementType, Allocator&gt;</div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="keyword">template</span> &lt;misc::Specialization&lt;Chain&gt; T, <span class="keyword">class</span> ElementType, <span class="keyword">class</span> ExecSpace&gt;</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="keyword">struct </span>FormWrapper&lt;T, ElementType, ExecSpace&gt;</div>
 <div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>{</div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>    <span class="keyword">using </span>type = Cochain&lt;T, ElementType, Allocator&gt;;</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>    <span class="keyword">using </span>type = Cochain&lt;T, ElementType, ExecSpace&gt;;</div>
 <div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>};</div>
 <div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span> </div>
 <div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span><span class="comment">/*</span></div>
 <div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span><span class="comment">template &lt;misc::NotSpecialization&lt;Chain&gt; Head, class ElementType&gt;</span></div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span><span class="comment">FormWrapper(Head, ElementType) -&gt; FormWrapper&lt;Head, ElementType, std::allocator&lt;ElementType&gt;&gt;;</span></div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span><span class="comment">FormWrapper(Head, ElementType) -&gt; FormWrapper&lt;Head, ElementType, Kokkos::DefaultHostExecutionSpace&gt;;</span></div>
 <div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span><span class="comment"></span> </div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span><span class="comment">template &lt;misc::Specialization&lt;Chain&gt; Head, class ElementType, class Allocator&gt;</span></div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span><span class="comment">FormWrapper(Head, ElementType, Allocator) -&gt; FormWrapper&lt;Head, ElementType, Allocator&gt;;</span></div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span><span class="comment">template &lt;misc::Specialization&lt;Chain&gt; Head, class ElementType, class ExecSpace&gt;</span></div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span><span class="comment">FormWrapper(Head, ElementType, Allocator) -&gt; FormWrapper&lt;Head, ElementType, ExecSpace&gt;;</span></div>
 <div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span><span class="comment">*/</span></div>
 <div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span> </div>
 <div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>} <span class="comment">// namespace detail</span></div>
 <div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span> </div>
 <div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span><span class="comment">// Usage should be avoided because CTAD cannot go through it</span></div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> T, <span class="keyword">class</span> ElementType = <span class="keywordtype">double</span>, <span class="keyword">class</span> Allocator = std::allocator&lt;<span class="keywordtype">double</span>&gt;&gt;</div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno"><a class="line" href="namespacesil_1_1exterior.html#a91ad2e2a2afbf4daa1a78d5d4955dd1b">   44</a></span><span class="keyword">using </span><a class="code hl_typedef" href="namespacesil_1_1exterior.html#a91ad2e2a2afbf4daa1a78d5d4955dd1b">Form</a> = <span class="keyword">typename</span> detail::FormWrapper&lt;T, ElementType, Allocator&gt;::type;</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> T, <span class="keyword">class</span> ElementType = <span class="keywordtype">double</span>, <span class="keyword">class</span> ExecSpace = Kokkos::DefaultHostExecutionSpace&gt;</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno"><a class="line" href="namespacesil_1_1exterior.html#a3aeb46fb25bc97b1d7ca37153bc6d62d">   44</a></span><span class="keyword">using </span><a class="code hl_typedef" href="namespacesil_1_1exterior.html#a3aeb46fb25bc97b1d7ca37153bc6d62d">Form</a> = <span class="keyword">typename</span> detail::FormWrapper&lt;T, ElementType, ExecSpace&gt;::type;</div>
 <div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span> </div>
 <div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>} <span class="comment">// namespace exterior</span></div>
 <div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span> </div>
 <div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>} <span class="comment">// namespace sil</span></div>
-<div class="ttc" id="anamespacesil_1_1exterior_html_a91ad2e2a2afbf4daa1a78d5d4955dd1b"><div class="ttname"><a href="namespacesil_1_1exterior.html#a91ad2e2a2afbf4daa1a78d5d4955dd1b">sil::exterior::Form</a></div><div class="ttdeci">typename detail::FormWrapper&lt; T, ElementType, Allocator &gt;::type Form</div><div class="ttdef"><b>Definition</b> <a href="form_8hpp_source.html#l00044">form.hpp:44</a></div></div>
+<div class="ttc" id="anamespacesil_1_1exterior_html_a3aeb46fb25bc97b1d7ca37153bc6d62d"><div class="ttname"><a href="namespacesil_1_1exterior.html#a3aeb46fb25bc97b1d7ca37153bc6d62d">sil::exterior::Form</a></div><div class="ttdeci">typename detail::FormWrapper&lt; T, ElementType, ExecSpace &gt;::type Form</div><div class="ttdef"><b>Definition</b> <a href="form_8hpp_source.html#l00044">form.hpp:44</a></div></div>
 <div class="ttc" id="anamespacesil_html"><div class="ttname"><a href="namespacesil.html">sil</a></div><div class="ttdoc">The top-level namespace of SimiLie.</div><div class="ttdef"><b>Definition</b> <a href="csr_8hpp_source.html#l00014">csr.hpp:14</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
