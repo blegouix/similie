@@ -42,7 +42,7 @@ public:
     template <class... T>
         requires misc::are_all_same<T...>
     KOKKOS_FUNCTION constexpr explicit Chain(T... simplex) noexcept
-        : m_simplices("simplices", sizeof...(T))
+        : m_simplices("chain_simplices", sizeof...(T))
     {
         int i = 0;
         ((m_simplices(i++) = simplex), ...);
