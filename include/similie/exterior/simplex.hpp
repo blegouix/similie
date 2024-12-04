@@ -113,6 +113,8 @@ public:
 
     KOKKOS_DEFAULTED_FUNCTION constexpr Simplex(Simplex const&) = default;
 
+    KOKKOS_DEFAULTED_FUNCTION constexpr Simplex(Simplex&&) = default;
+
     template <misc::Specialization<ddc::DiscreteVector> T>
     KOKKOS_FUNCTION constexpr explicit Simplex(
             discrete_element_type elem,
@@ -143,6 +145,8 @@ public:
     KOKKOS_DEFAULTED_FUNCTION ~Simplex() = default;
 
     KOKKOS_DEFAULTED_FUNCTION Simplex& operator=(Simplex const& other) = default;
+
+    KOKKOS_DEFAULTED_FUNCTION Simplex& operator=(Simplex&& other) = default;
 
     static KOKKOS_FUNCTION constexpr std::size_t dimension() noexcept
     {

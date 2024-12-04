@@ -50,6 +50,8 @@ public:
 
     KOKKOS_DEFAULTED_FUNCTION constexpr Cochain(Cochain const&) = default;
 
+    KOKKOS_DEFAULTED_FUNCTION constexpr Cochain(Cochain&&) = default;
+
     KOKKOS_FUNCTION constexpr explicit Cochain(chain_type chain) noexcept
         : m_chain(chain)
         , m_values(chain.size())
@@ -107,6 +109,8 @@ public:
     KOKKOS_DEFAULTED_FUNCTION ~Cochain() = default;
 
     KOKKOS_DEFAULTED_FUNCTION Cochain& operator=(Cochain const& other) = default;
+
+    KOKKOS_DEFAULTED_FUNCTION Cochain& operator=(Cochain&& other) = default;
 
     static KOKKOS_FUNCTION constexpr bool is_local() noexcept
     {

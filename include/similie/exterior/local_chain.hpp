@@ -60,6 +60,8 @@ public:
 
     KOKKOS_DEFAULTED_FUNCTION constexpr LocalChain(LocalChain const&) = default;
 
+    KOKKOS_DEFAULTED_FUNCTION constexpr LocalChain(LocalChain&&) = default;
+
     // TODO Reorganize discrete vectors in all constructors ?
 
     template <misc::NotSpecialization<ddc::DiscreteVector>... T>
@@ -115,6 +117,8 @@ public:
     KOKKOS_DEFAULTED_FUNCTION ~LocalChain() = default;
 
     KOKKOS_DEFAULTED_FUNCTION LocalChain& operator=(LocalChain const& other) = default;
+
+    KOKKOS_DEFAULTED_FUNCTION LocalChain& operator=(LocalChain&& other) = default;
 
     static KOKKOS_FUNCTION constexpr bool is_local() noexcept
     {

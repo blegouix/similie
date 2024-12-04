@@ -41,6 +41,8 @@ public:
 
     KOKKOS_DEFAULTED_FUNCTION constexpr Chain(Chain const&) = default;
 
+    KOKKOS_DEFAULTED_FUNCTION constexpr Chain(Chain&&) = default;
+
     template <class... T>
         requires misc::are_all_same<T...>
     KOKKOS_FUNCTION constexpr explicit Chain(T... simplex) noexcept
@@ -60,6 +62,8 @@ public:
     KOKKOS_DEFAULTED_FUNCTION ~Chain() = default;
 
     KOKKOS_DEFAULTED_FUNCTION Chain& operator=(Chain const& other) = default;
+
+    KOKKOS_DEFAULTED_FUNCTION Chain& operator=(Chain&& other) = default;
 
     static KOKKOS_FUNCTION constexpr bool is_local() noexcept
     {
