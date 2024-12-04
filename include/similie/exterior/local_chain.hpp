@@ -273,10 +273,11 @@ KOKKOS_FUNCTION constexpr LocalChain<Simplex<K, Tag...>> tangent_basis()
     for (auto i = permutation.begin(); i < permutation.begin() + K; ++i) {
         *i = 1;
     }
-    Kokkos::View<ddc::DiscreteVector<Tag...>*, Kokkos::HostSpace> basis();
+    Kokkos::View<ddc::DiscreteVector<Tag...>*, Kokkos::HostSpace>
+            basis("tangent_basis", misc::binomial_coefficient(sizeof...(Tag), K));
     std::size_t i = 0;
     do {
-        basis.push_back(ddc::DiscreteVector<Tag...>());
+        basis[i++] = ddc::DiscreteVector<Tag...>();
         ddc::detail::array(basis[i++]) = permutation;
     } while (std::prev_permutation(permutation.begin(), permutation.end()));
 
