@@ -37,6 +37,7 @@ using boundary_t = typename detail::BoundaryType<T>::type;
 
 namespace detail {
 
+// TODO Kokkosify
 template <class SimplexType>
 KOKKOS_FUNCTION constexpr Chain<boundary_t<SimplexType>> generate_half_subchain(
         typename SimplexType::discrete_element_type elem,
