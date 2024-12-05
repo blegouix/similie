@@ -432,13 +432,14 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
         if constexpr (sizeof...(IndexTail) > 0) {
             if constexpr (TensorIndex<IndexInterest>) {
                 return IndexInterest::template process_access<TensorField, Elem, IndexInterest>(
-                        KOKKOS_LAMBDA (TensorField tensor_field_, Elem elem_) -> TensorField::element_type {
-                            return Access<
-                                    TensorField,
-                                    Element,
-                                    ddc::detail::TypeSeq<IndexHead..., IndexInterest>,
-                                    IndexTail...>::run(tensor_field_, elem_);
-                        },
+                        KOKKOS_LAMBDA(TensorField tensor_field_, Elem elem_)
+                                ->TensorField::element_type {
+                                    return Access<
+                                            TensorField,
+                                            Element,
+                                            ddc::detail::TypeSeq<IndexHead..., IndexInterest>,
+                                            IndexTail...>::run(tensor_field_, elem_);
+                                },
                         tensor_field,
                         elem);
             } else {
@@ -451,47 +452,51 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
         } else {
             if constexpr (TensorIndex<IndexInterest>) {
                 return IndexInterest::template process_access<TensorField, Elem, IndexInterest>(
-                        KOKKOS_LAMBDA (TensorField tensor_field_, Elem elem_) -> TensorField::element_type {
-                            double tensor_field_value = 0;
-                            if constexpr (IndexInterest::is_explicitely_stored_tensor) {
-                                std::size_t const mem_id = IndexInterest::access_id_to_mem_id(
-                                        elem_.template uid<IndexInterest>());
-                                if (mem_id != std::numeric_limits<std::size_t>::max()) {
-                                    tensor_field_value
-                                            = tensor_field_
-                                                      .mem(ddc::DiscreteElement<IndexHead...>(
-                                                                   elem_),
-                                                           ddc::DiscreteElement<IndexInterest>(
-                                                                   mem_id));
-                                } else {
-                                    tensor_field_value = 1.;
-                                }
-                            } else {
-                                std::pair<std::vector<double>, std::vector<std::size_t>> const
-                                        mem_lin_comb
-                                        = IndexInterest::access_id_to_mem_lin_comb(
-                                                elem_.template uid<IndexInterest>());
+                        KOKKOS_LAMBDA(TensorField tensor_field_, Elem elem_)
+                                ->TensorField::element_type {
+                                    double tensor_field_value = 0;
+                                    if constexpr (IndexInterest::is_explicitely_stored_tensor) {
+                                        std::size_t const mem_id
+                                                = IndexInterest::access_id_to_mem_id(
+                                                        elem_.template uid<IndexInterest>());
+                                        if (mem_id != std::numeric_limits<std::size_t>::max()) {
+                                            tensor_field_value
+                                                    = tensor_field_
+                                                              .mem(ddc::DiscreteElement<
+                                                                           IndexHead...>(elem_),
+                                                                   ddc::DiscreteElement<
+                                                                           IndexInterest>(mem_id));
+                                        } else {
+                                            tensor_field_value = 1.;
+                                        }
+                                    } else {
+                                        std::pair<
+                                                std::vector<double>,
+                                                std::vector<std::size_t>> const mem_lin_comb
+                                                = IndexInterest::access_id_to_mem_lin_comb(
+                                                        elem_.template uid<IndexInterest>());
 
-                                if (std::get<0>(mem_lin_comb).size() > 0) {
-                                    for (std::size_t i = 0; i < std::get<0>(mem_lin_comb).size();
-                                         ++i) {
-                                        tensor_field_value
-                                                += std::get<0>(mem_lin_comb)[i]
-                                                   * tensor_field_
-                                                             .mem(ddc::DiscreteElement<
-                                                                          IndexHead...>(elem_),
-                                                                  ddc::DiscreteElement<
-                                                                          IndexInterest>(std::get<
-                                                                                         1>(
-                                                                          mem_lin_comb)[i]));
+                                        if (std::get<0>(mem_lin_comb).size() > 0) {
+                                            for (std::size_t i = 0;
+                                                 i < std::get<0>(mem_lin_comb).size();
+                                                 ++i) {
+                                                tensor_field_value
+                                                        += std::get<0>(mem_lin_comb)[i]
+                                                           * tensor_field_.mem(
+                                                                   ddc::DiscreteElement<
+                                                                           IndexHead...>(elem_),
+                                                                   ddc::DiscreteElement<
+                                                                           IndexInterest>(std::get<
+                                                                                          1>(
+                                                                           mem_lin_comb)[i]));
+                                            }
+                                        } else {
+                                            tensor_field_value = 1.;
+                                        }
                                     }
-                                } else {
-                                    tensor_field_value = 1.;
-                                }
-                            }
 
-                            return tensor_field_value;
-                        },
+                                    return tensor_field_value;
+                                },
                         tensor_field,
                         elem);
             } else {
