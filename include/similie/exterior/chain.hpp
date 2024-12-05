@@ -101,29 +101,32 @@ public:
 
     KOKKOS_FUNCTION void optimize()
     {
-        auto simplices_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), m_simplices);
-        std::vector<simplex_type> simplices_vect(
-                simplices_host.data(),
-                simplices_host.data() + simplices_host.extent(0));
-        for (auto i = simplices_vect.begin(); i < simplices_vect.end() - 1; ++i) {
+        auto i = Kokkos::Experimental::begin(m_simplices);
+        auto end = Kokkos::Experimental::end(m_simplices);
+        while (i < end - 1) {
             auto k = i;
-            for (auto j = i + 1; k == i && j < simplices_vect.end(); ++j) {
+            for (auto j = i + 1; k == i && j < end; ++j) {
                 if (*i == -*j) {
                     k = j;
                 }
             }
             if (k != i) {
-                simplices_vect.erase(k);
-                simplices_vect.erase(i--);
+                Kokkos::Experimental::shift_left(
+                        Kokkos::DefaultHostExecutionSpace(),
+                        k,
+                        Kokkos::Experimental::end(m_simplices),
+                        1);
+                Kokkos::Experimental::shift_left(
+                        Kokkos::DefaultHostExecutionSpace(),
+                        i,
+                        Kokkos::Experimental::end(m_simplices),
+                        1);
+                Kokkos::resize(m_simplices, m_simplices.size() - 2);
+                end = Kokkos::Experimental::end(m_simplices);
+            } else {
+                i++;
             }
         }
-
-        simplices_host = Kokkos::View<
-                simplex_type*,
-                Kokkos::HostSpace>(simplices_vect.data(), simplices_vect.size());
-        Kokkos::realloc(m_simplices, simplices_host.size());
-        Kokkos::deep_copy(m_simplices, simplices_host);
-
         assert(check() == 0 && "there are duplicate simplices in the chain");
     }
 
