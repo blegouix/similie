@@ -605,7 +605,7 @@ $(document).ready(function(){initNavTree('tensor__impl_8hpp_source.html',''); in
 <div class="line"><a id="l00432" name="l00432"></a><span class="lineno">  432</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (<span class="keyword">sizeof</span>...(IndexTail) &gt; 0) {</div>
 <div class="line"><a id="l00433" name="l00433"></a><span class="lineno">  433</span>            <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (<a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndex.html">TensorIndex&lt;IndexInterest&gt;</a>) {</div>
 <div class="line"><a id="l00434" name="l00434"></a><span class="lineno">  434</span>                <span class="keywordflow">return</span> IndexInterest::template process_access&lt;TensorField, Elem, IndexInterest&gt;(</div>
-<div class="line"><a id="l00435" name="l00435"></a><span class="lineno">  435</span>                        [](TensorField tensor_field_, Elem elem_) -&gt; TensorField::element_type {</div>
+<div class="line"><a id="l00435" name="l00435"></a><span class="lineno">  435</span>                        KOKKOS_LAMBDA (TensorField tensor_field_, Elem elem_) -&gt; TensorField::element_type {</div>
 <div class="line"><a id="l00436" name="l00436"></a><span class="lineno">  436</span>                            <span class="keywordflow">return</span> Access&lt;</div>
 <div class="line"><a id="l00437" name="l00437"></a><span class="lineno">  437</span>                                    TensorField,</div>
 <div class="line"><a id="l00438" name="l00438"></a><span class="lineno">  438</span>                                    Element,</div>
@@ -624,7 +624,7 @@ $(document).ready(function(){initNavTree('tensor__impl_8hpp_source.html',''); in
 <div class="line"><a id="l00451" name="l00451"></a><span class="lineno">  451</span>        } <span class="keywordflow">else</span> {</div>
 <div class="line"><a id="l00452" name="l00452"></a><span class="lineno">  452</span>            <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (TensorIndex&lt;IndexInterest&gt;) {</div>
 <div class="line"><a id="l00453" name="l00453"></a><span class="lineno">  453</span>                <span class="keywordflow">return</span> IndexInterest::template process_access&lt;TensorField, Elem, IndexInterest&gt;(</div>
-<div class="line"><a id="l00454" name="l00454"></a><span class="lineno">  454</span>                        [](TensorField tensor_field_, Elem elem_) -&gt; TensorField::element_type {</div>
+<div class="line"><a id="l00454" name="l00454"></a><span class="lineno">  454</span>                        KOKKOS_LAMBDA (TensorField tensor_field_, Elem elem_) -&gt; TensorField::element_type {</div>
 <div class="line"><a id="l00455" name="l00455"></a><span class="lineno">  455</span>                            <span class="keywordtype">double</span> tensor_field_value = 0;</div>
 <div class="line"><a id="l00456" name="l00456"></a><span class="lineno">  456</span>                            <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (IndexInterest::is_explicitely_stored_tensor) {</div>
 <div class="line"><a id="l00457" name="l00457"></a><span class="lineno">  457</span>                                std::size_t <span class="keyword">const</span> mem_id = IndexInterest::access_id_to_mem_id(</div>
