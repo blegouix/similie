@@ -432,7 +432,7 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
         if constexpr (sizeof...(IndexTail) > 0) {
             if constexpr (TensorIndex<IndexInterest>) {
                 return IndexInterest::template process_access<TensorField, Elem, IndexInterest>(
-                        [](TensorField tensor_field_, Elem elem_) -> TensorField::element_type {
+                        KOKKOS_LAMBDA (TensorField tensor_field_, Elem elem_) -> TensorField::element_type {
                             return Access<
                                     TensorField,
                                     Element,
@@ -451,7 +451,7 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
         } else {
             if constexpr (TensorIndex<IndexInterest>) {
                 return IndexInterest::template process_access<TensorField, Elem, IndexInterest>(
-                        [](TensorField tensor_field_, Elem elem_) -> TensorField::element_type {
+                        KOKKOS_LAMBDA (TensorField tensor_field_, Elem elem_) -> TensorField::element_type {
                             double tensor_field_value = 0;
                             if constexpr (IndexInterest::is_explicitely_stored_tensor) {
                                 std::size_t const mem_id = IndexInterest::access_id_to_mem_id(
