@@ -35,6 +35,7 @@ private:
     static constexpr bool s_is_local = false;
     static constexpr std::size_t s_k = simplex_type::dimension();
     simplices_type m_simplices;
+    std::size_t m_size; // Effective size, not necessarily equal to m_simplices.size()
 
 public:
     KOKKOS_DEFAULTED_FUNCTION constexpr Chain() = default;
@@ -44,17 +45,18 @@ public:
     KOKKOS_DEFAULTED_FUNCTION constexpr Chain(Chain&&) = default;
 
     template <class... T>
-        requires misc::are_all_same<T...>
-    KOKKOS_FUNCTION constexpr explicit Chain(T... simplex) noexcept
-        : m_simplices("chain_simplices", sizeof...(T))
+    KOKKOS_FUNCTION constexpr explicit Chain(simplices_type allocation, T... simplex) noexcept
+        : m_simplices(allocation) // TODO std::move ?
+        , m_size(sizeof...(T) == 0 ? allocation.size() : sizeof...(T))
     {
-        int i = 0;
+        std::size_t i = 0;
         ((m_simplices(i++) = simplex), ...);
         assert(check() == 0 && "there are duplicate simplices in the chain");
     }
 
-    KOKKOS_FUNCTION constexpr explicit Chain(simplices_type simplices) noexcept
-        : m_simplices(simplices)
+    KOKKOS_FUNCTION constexpr explicit Chain(simplices_type allocation, std::size_t size) noexcept
+        : m_simplices(allocation)
+        , m_size(size)
     {
         assert(check() == 0 && "there are duplicate simplices in the chain");
     }
@@ -77,20 +79,38 @@ public:
 
     KOKKOS_FUNCTION std::size_t size() noexcept
     {
-        return m_simplices.size();
+        return m_size;
     }
 
     KOKKOS_FUNCTION std::size_t size() const noexcept
     {
+        return m_size;
+    }
+
+    KOKKOS_FUNCTION std::size_t allocation_size() noexcept
+    {
         return m_simplices.size();
+    }
+
+    KOKKOS_FUNCTION std::size_t allocation_size() const noexcept
+    {
+        return m_simplices.size();
+    }
+
+    void resize()
+    {
+        Kokkos::resize(m_simplices, size());
+    }
+
+    void resize(std::size_t size)
+    {
+        Kokkos::resize(m_simplices, size);
     }
 
     KOKKOS_FUNCTION int check()
     {
-        for (auto i = Kokkos::Experimental::begin(m_simplices);
-             i < Kokkos::Experimental::end(m_simplices) - 1;
-             ++i) {
-            for (auto j = i + 1; j < Kokkos::Experimental::end(m_simplices); ++j) {
+        for (auto i = begin(); i < end() - 1; ++i) {
+            for (auto j = i + 1; j < end(); ++j) {
                 if (*i == *j) {
                     return -1;
                 }
@@ -101,28 +121,20 @@ public:
 
     KOKKOS_FUNCTION void optimize()
     {
-        auto i = Kokkos::Experimental::begin(m_simplices);
-        auto end = Kokkos::Experimental::end(m_simplices);
-        while (i < end - 1) {
+        auto i = begin();
+        auto stop = end();
+        while (i < stop - 1) {
             auto k = i;
-            for (auto j = i + 1; k == i && j < end; ++j) {
+            for (auto j = i + 1; k == i && j < stop; ++j) {
                 if (*i == -*j) {
                     k = j;
                 }
             }
             if (k != i) {
-                Kokkos::Experimental::shift_left(
-                        Kokkos::DefaultHostExecutionSpace(),
-                        k,
-                        Kokkos::Experimental::end(m_simplices),
-                        1);
-                Kokkos::Experimental::shift_left(
-                        Kokkos::DefaultHostExecutionSpace(),
-                        i,
-                        Kokkos::Experimental::end(m_simplices),
-                        1);
-                Kokkos::resize(m_simplices, m_simplices.size() - 2);
-                end = Kokkos::Experimental::end(m_simplices);
+                Kokkos::Experimental::shift_left(Kokkos::DefaultHostExecutionSpace(), k, stop, 1);
+                Kokkos::Experimental::shift_left(Kokkos::DefaultHostExecutionSpace(), i, stop, 1);
+                m_size -= 2;
+                stop = end();
             } else {
                 i++;
             }
@@ -142,12 +154,12 @@ public:
 
     KOKKOS_FUNCTION auto end()
     {
-        return Kokkos::Experimental::end(m_simplices);
+        return Kokkos::Experimental::begin(m_simplices) + size();
     }
 
     KOKKOS_FUNCTION auto end() const
     {
-        return Kokkos::Experimental::end(m_simplices);
+        return Kokkos::Experimental::begin(m_simplices) + size();
     }
 
     KOKKOS_FUNCTION auto cbegin() const
@@ -157,44 +169,46 @@ public:
 
     KOKKOS_FUNCTION auto cend() const
     {
-        return Kokkos::Experimental::end(m_simplices);
+        return Kokkos::Experimental::begin(m_simplices) + size();
     }
 
     KOKKOS_FUNCTION simplex_type& operator[](std::size_t i) noexcept
     {
+        assert(i < size());
         return m_simplices(i);
     }
 
     KOKKOS_FUNCTION simplex_type const& operator[](std::size_t i) const noexcept
     {
+        assert(i < size());
         return m_simplices(i);
     }
 
     KOKKOS_FUNCTION void push_back(const simplex_type& simplex)
     {
-        Kokkos::resize(m_simplices, m_simplices.size() + 1);
-        m_simplices(m_simplices.size() - 1) = simplex;
+        assert(size() < allocation_size());
+        m_simplices(m_size) = simplex;
+        m_size++;
     }
 
     KOKKOS_FUNCTION void push_back(const Chain<simplex_type>& simplices_to_add)
     {
-        std::size_t old_size = m_simplices.size();
-        Kokkos::resize(m_simplices, old_size + simplices_to_add.size());
+        assert(size() + simplices_to_add.size() <= allocation_size());
         for (auto i = simplices_to_add.begin(); i < simplices_to_add.end(); ++i) {
-            m_simplices(old_size + Kokkos::Experimental::distance(simplices_to_add.begin(), i))
-                    = *i;
+            m_simplices(m_size + Kokkos::Experimental::distance(simplices_to_add.begin(), i)) = *i;
         }
+        m_size += simplices_to_add.size();
     }
 
     KOKKOS_FUNCTION Chain<simplex_type> operator-()
     {
         simplices_type simplices = m_simplices;
         for (auto i = Kokkos::Experimental::begin(simplices);
-             i < Kokkos::Experimental::end(simplices);
+             i < Kokkos::Experimental::begin(m_simplices) + size();
              ++i) {
             *i = -*i;
         }
-        return Chain<simplex_type>(simplices);
+        return Chain<simplex_type>(simplices, size());
     }
 
     KOKKOS_FUNCTION Chain<simplex_type> operator+(simplex_type simplex)
@@ -242,7 +256,7 @@ public:
 };
 
 template <class Head, class... Tail>
-Chain(Head, Tail...) -> Chain<Head>;
+Chain(Head, Tail...) -> Chain<typename Head::value_type>;
 
 template <misc::Specialization<Chain> ChainType>
 std::ostream& operator<<(std::ostream& out, ChainType const& chain)
