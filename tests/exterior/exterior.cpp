@@ -134,17 +134,23 @@ TEST(Boundary, 1Simplex)
                                           ddc::DiscreteVector<> {})));
 }
 
-/*
 TEST(Boundary, 2Simplex)
 {
     sil::exterior::Simplex
             simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
                     ddc::DiscreteVector<DDimT, DDimX> {1, 1});
-    sil::exterior::Chain chain = sil::exterior::boundary(simplex);
+    sil::exterior::Chain chain = sil::exterior::boundary(
+            Kokkos::View<
+                    sil::exterior::Simplex<1, DDimT, DDimX, DDimY, DDimZ>*,
+                    Kokkos::HostSpace>("", 4),
+            simplex);
     EXPECT_TRUE(
             chain
             == sil::exterior::
-                    Chain(sil::exterior::
+                    Chain(Kokkos::View<
+                                  sil::exterior::Simplex<1, DDimT, DDimX, DDimY, DDimZ>*,
+                                  Kokkos::HostSpace>("", 4),
+                          sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
@@ -176,11 +182,18 @@ TEST(Boundary, 2Simplex)
     sil::exterior::Simplex simplex2(
             ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
             ddc::DiscreteVector<DDimX, DDimZ> {1, 1});
-    sil::exterior::Chain chain2 = sil::exterior::boundary(simplex2);
+    sil::exterior::Chain chain2 = sil::exterior::boundary(
+            Kokkos::View<
+                    sil::exterior::Simplex<1, DDimT, DDimX, DDimY, DDimZ>*,
+                    Kokkos::HostSpace>("", 4),
+            simplex2);
     EXPECT_TRUE(
             chain2
             == sil::exterior::
-                    Chain(sil::exterior::
+                    Chain(Kokkos::View<
+                                  sil::exterior::Simplex<1, DDimT, DDimX, DDimY, DDimZ>*,
+                                  Kokkos::HostSpace>("", 4),
+                          sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
@@ -215,11 +228,18 @@ TEST(Boundary, 3Simplex)
     sil::exterior::Simplex
             simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
                     ddc::DiscreteVector<DDimT, DDimY, DDimZ> {1, 1, 1});
-    sil::exterior::Chain chain = sil::exterior::boundary(simplex);
+    sil::exterior::Chain chain = sil::exterior::boundary(
+            Kokkos::View<
+                    sil::exterior::Simplex<2, DDimT, DDimX, DDimY, DDimZ>*,
+                    Kokkos::HostSpace>("", 6),
+            simplex);
     EXPECT_TRUE(
             chain
             == sil::exterior::
-                    Chain(sil::exterior::
+                    Chain(Kokkos::View<
+                                  sil::exterior::Simplex<2, DDimT, DDimX, DDimY, DDimZ>*,
+                                  Kokkos::HostSpace>("", 6),
+                          sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
@@ -267,11 +287,18 @@ TEST(Boundary, 3Simplex)
     sil::exterior::Simplex simplex2(
             ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
             ddc::DiscreteVector<DDimX, DDimY, DDimZ> {1, 1, 1});
-    sil::exterior::Chain chain2 = sil::exterior::boundary(simplex2);
+    sil::exterior::Chain chain2 = sil::exterior::boundary(
+            Kokkos::View<
+                    sil::exterior::Simplex<2, DDimT, DDimX, DDimY, DDimZ>*,
+                    Kokkos::HostSpace>("", 6),
+            simplex2);
     EXPECT_TRUE(
             chain2
             == sil::exterior::
-                    Chain(sil::exterior::
+                    Chain(Kokkos::View<
+                                  sil::exterior::Simplex<2, DDimT, DDimX, DDimY, DDimZ>*,
+                                  Kokkos::HostSpace>("", 6),
+                          sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
@@ -318,6 +345,7 @@ TEST(Boundary, 3Simplex)
                                           ddc::DiscreteVector<DDimX, DDimY> {-1, -1})));
 }
 
+/*
 TEST(Boundary, Chain)
 {
     sil::exterior::Chain chain = sil::exterior::
