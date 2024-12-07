@@ -522,13 +522,15 @@ TEST(Coboundary, Test)
     EXPECT_EQ(cosimplex.simplex(), simplex);
     EXPECT_EQ(cosimplex.value(), 4.);
 }
+*/
 
 TEST(LocalChain, Test)
 {
     sil::exterior::LocalChain
             chain(Kokkos::View<
                           ddc::DiscreteVector<DDimT, DDimX, DDimY, DDimZ>*,
-                          Kokkos::HostSpace>("", 3), sil::exterior::
+                          Kokkos::HostSpace>("", 4),
+                  sil::exterior::
                           Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
                                   ddc::DiscreteVector<DDimX> {1}),
                   sil::exterior::
@@ -540,12 +542,18 @@ TEST(LocalChain, Test)
                             ddc::DiscreteVector<DDimT> {1});
     chain = chain
             + sil::exterior::LocalChain(
+                    Kokkos::View<
+                            ddc::DiscreteVector<DDimT, DDimX, DDimY, DDimZ>*,
+                            Kokkos::HostSpace>("", 1),
                     sil::exterior::
                             Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
                                     ddc::DiscreteVector<DDimZ> {1}));
     EXPECT_TRUE(
             chain
             == sil::exterior::LocalChain(
+                    Kokkos::View<
+                            ddc::DiscreteVector<DDimT, DDimX, DDimY, DDimZ>*,
+                            Kokkos::HostSpace>("", 4),
                     sil::exterior::
                             Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
                                     ddc::DiscreteVector<DDimX> {1}),
@@ -560,6 +568,7 @@ TEST(LocalChain, Test)
                                     ddc::DiscreteVector<DDimZ> {1})));
 }
 
+/*
 TEST(LocalCochain, Test)
 {
     sil::exterior::LocalChain

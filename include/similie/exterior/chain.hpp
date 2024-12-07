@@ -275,9 +275,9 @@ public:
     template <class T>
     KOKKOS_FUNCTION auto operator*(T t)
     {
-        simplices_type simplices = m_simplices;
-        simplices *= t;
-        return simplices;
+        Chain<simplex_type> chain = *this;
+        chain *= t;
+        return chain;
     }
 
     KOKKOS_FUNCTION bool operator==(Chain<simplex_type> simplices)
