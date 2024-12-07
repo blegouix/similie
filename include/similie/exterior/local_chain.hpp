@@ -75,8 +75,10 @@ public:
         ((m_vects(i++) = misc::filled_struct<discrete_vector_type>() + simplex.discrete_vector()),
          ...);
         assert(check() == 0 && "there are duplicate simplices in the chain");
-        assert(misc::are_all_equal(simplex.discrete_element()...)
-               && "LocalChain must contain simplices with same origin (if not, use Chain)");
+        if constexpr (sizeof...(T) > 1) {
+            assert(misc::are_all_equal(simplex.discrete_element()...)
+                   && "LocalChain must contain simplices with same origin (if not, use Chain)");
+        }
         assert((!simplex.negative() && ...)
                && "negative simplices are not supported in LocalChain");
     }
@@ -112,6 +114,7 @@ public:
     }
 
     template <misc::Specialization<ddc::DiscreteVector>... T>
+        requires(sizeof...(T) >= 1)
     KOKKOS_FUNCTION constexpr explicit LocalChain(vects_type allocation, T... vect) noexcept
         : m_vects(std::move(allocation))
         , m_size(sizeof...(T))
