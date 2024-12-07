@@ -203,13 +203,18 @@ KOKKOS_FUNCTION coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> c
                                 typename TensorType::non_indices_domain_t>::type>();
                 auto cochain = Cochain(chain, coboundary_tensor[elem]);
                 for (auto i = cochain.begin(); i < cochain.end(); ++i) {
+                    auto simplex = Simplex(
+                            std::integral_constant<std::size_t, CochainTag::rank() + 1> {},
+                            elem,
+                            (*i).discrete_vector());
+                    Kokkos::View<
+                            decltype(Simplex(
+                                    std::integral_constant<std::size_t, CochainTag::rank()> {},
+                                    elem))*,
+                            Kokkos::HostSpace>
+                            simplex_boundary_alloc("simplex_boundary", 2 * CochainTag::rank());
                     sil::exterior::Chain simplex_boundary
-                            = boundary(sil::exterior::
-                                               Simplex(std::integral_constant<
-                                                               std::size_t,
-                                                               CochainTag::rank() + 1> {},
-                                                       elem,
-                                                       (*i).discrete_vector()));
+                            = boundary(simplex_boundary_alloc, simplex);
                     Kokkos::View<double*, Kokkos::HostSpace>
                             values("coboundary_values", simplex_boundary.size());
                     for (auto j = simplex_boundary.begin(); j < simplex_boundary.end(); ++j) {

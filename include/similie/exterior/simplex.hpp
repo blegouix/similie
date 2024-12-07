@@ -118,7 +118,7 @@ public:
     template <misc::Specialization<ddc::DiscreteVector> T>
     KOKKOS_FUNCTION constexpr explicit Simplex(
             discrete_element_type elem,
-            T vect,
+            T vect = ddc::DiscreteVector<> {},
             bool negative = false) noexcept
         : base_type(detail::Reorient<Tag...>::run_elem(elem, add_null_dimensions(vect)))
         , m_vect(detail::Reorient<Tag...>::run_vect(elem, add_null_dimensions(vect)))
@@ -128,11 +128,11 @@ public:
                && "simplex vector must contain only -1, 0 or 1");
     }
 
-    template <misc::Specialization<ddc::DiscreteVector> T>
+    template <misc::Specialization<ddc::DiscreteVector> T = ddc::DiscreteVector<>>
     KOKKOS_FUNCTION constexpr explicit Simplex(
             std::integral_constant<std::size_t, K>,
             discrete_element_type elem,
-            T vect,
+            T vect = ddc::DiscreteVector<> {},
             bool negative = false) noexcept
         : base_type(detail::Reorient<Tag...>::run_elem(elem, add_null_dimensions(vect)))
         , m_vect(detail::Reorient<Tag...>::run_vect(elem, add_null_dimensions(vect)))
