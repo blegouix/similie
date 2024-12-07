@@ -46,7 +46,7 @@ KOKKOS_FUNCTION constexpr Chain<boundary_t<SimplexType>> generate_half_subchain(
         bool negative = false)
 {
     auto array = ddc::detail::array(vect);
-    Chain<boundary_t<SimplexType>> chain(allocation, allocation.size());
+    Chain<boundary_t<SimplexType>> chain(allocation);
     auto id_dist = -1;
     for (std::size_t i = 0; i < SimplexType::dimension(); ++i) {
         auto array_ = array;
@@ -56,7 +56,7 @@ KOKKOS_FUNCTION constexpr Chain<boundary_t<SimplexType>> generate_half_subchain(
         *id = 0;
         typename SimplexType::discrete_vector_type vect_;
         ddc::detail::array(vect_) = array_;
-        chain[i] = boundary_t<SimplexType>(elem, vect_, (negative + i) % 2);
+        chain += boundary_t<SimplexType>(elem, vect_, (negative + i) % 2);
         j = id + 1;
     }
     return chain;
