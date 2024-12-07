@@ -60,9 +60,12 @@ public:
 
     template <class... T>
         requires(sizeof...(T) >= 1 && (std::is_convertible_v<T, double> && ...))
-    KOKKOS_FUNCTION constexpr explicit Cochain(chain_type chain, T... value) noexcept
-        : m_chain(chain)
-        , m_values("cochain_values", sizeof...(T))
+    KOKKOS_FUNCTION constexpr explicit Cochain(
+            chain_type chain,
+            values_type allocation,
+            T... value) noexcept
+        : m_chain(std::move(chain))
+        , m_values(std::move(allocation))
     {
         int i = 0;
         ((m_values(i++) = value), ...);
@@ -71,8 +74,8 @@ public:
     }
 
     KOKKOS_FUNCTION constexpr explicit Cochain(chain_type& chain, values_type& values) noexcept
-        : m_chain(chain)
-        , m_values(values)
+        : m_chain(std::move(chain))
+        , m_values(std::move(values))
     {
         assert(values.size() == chain.size()
                && "cochain constructor must get as much values as the chain contains simplices");
@@ -93,16 +96,18 @@ public:
                     LayoutStridedPolicy,
                     MemorySpace> tensor) noexcept
         : m_chain(chain)
-        , m_values("cochain_values", tensor.domain().size())
+        , m_values(tensor.allocation_kokkos_view())
     {
         assert(m_values.size() == chain.size()
                && "cochain constructor must get as much values as the chain contains simplices");
+        /*
         for (auto i = Kokkos::Experimental::begin(m_values);
              i < Kokkos::Experimental::end(m_values);
              ++i) {
             *i = tensor.mem(ddc::DiscreteElement<Index>(
                     Kokkos::Experimental::distance(Kokkos::Experimental::begin(m_values), i)));
         }
+	*/
     }
 
     KOKKOS_DEFAULTED_FUNCTION ~Cochain() = default;
@@ -129,6 +134,16 @@ public:
     KOKKOS_FUNCTION std::size_t size() const noexcept
     {
         return m_chain.size();
+    }
+
+    KOKKOS_FUNCTION std::size_t allocation_size() noexcept
+    {
+        return m_chain.allocation_size();
+    }
+
+    KOKKOS_FUNCTION std::size_t allocation_size() const noexcept
+    {
+        return m_chain.allocation_size();
     }
 
     KOKKOS_FUNCTION chain_type const& chain() const noexcept
@@ -175,12 +190,14 @@ public:
 
     KOKKOS_FUNCTION Cosimplex<simplex_type, element_type>& operator[](std::size_t i) noexcept
     {
+        assert(i < size());
         return Cosimplex<simplex_type, element_type>(m_chain(i), m_values(i));
     }
 
     KOKKOS_FUNCTION Cosimplex<simplex_type, element_type> const& operator[](
             std::size_t i) const noexcept
     {
+        assert(i < size());
         return Cosimplex<simplex_type, element_type>(m_chain(i), m_values(i));
     }
 
