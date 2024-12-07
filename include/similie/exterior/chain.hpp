@@ -46,6 +46,7 @@ public:
     KOKKOS_DEFAULTED_FUNCTION constexpr Chain(Chain&&) = default;
 
     template <class... T>
+        requires(!std::is_convertible_v<T, std::size_t> && ...)
     KOKKOS_FUNCTION constexpr explicit Chain(simplices_type allocation, T... simplex) noexcept
         : m_simplices(std::move(allocation))
         , m_size(sizeof...(T))
