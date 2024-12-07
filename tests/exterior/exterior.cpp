@@ -50,12 +50,14 @@ TEST(Chain, Optimization)
                   sil::exterior::
                           Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
                                   ddc::DiscreteVector<DDimX, DDimY> {1, 1}));
-    Kokkos::View<sil::exterior::Simplex<2, DDimT, DDimX, DDimY, DDimZ>*, Kokkos::HostSpace>
-            chain_alloc2("", 1);
-    chain_alloc2(0) = sil::exterior::
+    sil::exterior::Chain
+            chain2(Kokkos::View<
+                           sil::exterior::Simplex<2, DDimT, DDimX, DDimY, DDimZ>*,
+                           Kokkos::HostSpace>("", 1),
+                   1);
+    chain2[0] = sil::exterior::
             Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 1},
                     ddc::DiscreteVector<DDimX, DDimY> {1, 1});
-    sil::exterior::Chain chain2(chain_alloc2, chain_alloc2.size());
     chain = chain
             + sil::exterior::
                     Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 1, 1, 0},
@@ -524,7 +526,9 @@ TEST(Coboundary, Test)
 TEST(LocalChain, Test)
 {
     sil::exterior::LocalChain
-            chain(sil::exterior::
+            chain(Kokkos::View<
+                          ddc::DiscreteVector<DDimT, DDimX, DDimY, DDimZ>*,
+                          Kokkos::HostSpace>("", 3), sil::exterior::
                           Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
                                   ddc::DiscreteVector<DDimX> {1}),
                   sil::exterior::
