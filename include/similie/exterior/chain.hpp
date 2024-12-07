@@ -35,7 +35,8 @@ private:
     static constexpr bool s_is_local = false;
     static constexpr std::size_t s_k = simplex_type::dimension();
     simplices_type m_simplices;
-    std::size_t m_size; // Effective size, not necessarily equal to m_simplices.size()
+    std::size_t
+            m_size; // Effective size, m_simplices elements between m_size and m_simplices.size() are undefined
 
 public:
     KOKKOS_DEFAULTED_FUNCTION constexpr Chain() = default;
@@ -46,7 +47,7 @@ public:
 
     template <class... T>
     KOKKOS_FUNCTION constexpr explicit Chain(simplices_type allocation, T... simplex) noexcept
-        : m_simplices(allocation) // TODO std::move ?
+        : m_simplices(std::move(allocation))
         , m_size(sizeof...(T))
     {
         std::size_t i = 0;
@@ -55,7 +56,7 @@ public:
     }
 
     KOKKOS_FUNCTION constexpr explicit Chain(simplices_type allocation, std::size_t size) noexcept
-        : m_simplices(allocation)
+        : m_simplices(std::move(allocation))
         , m_size(size)
     {
         assert(check() == 0 && "there are duplicate simplices in the chain");
