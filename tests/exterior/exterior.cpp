@@ -483,14 +483,17 @@ TEST(Form, Alias)
                                   ddc::DiscreteVector<DDimX, DDimY> {1, 1}));
     // Unfortunately CTAD cannot deduce template arguments
     sil::exterior::Form<typename decltype(chain)::simplex_type> cosimplex(chain[0], 0.);
-    sil::exterior::Form<decltype(chain)> cochain(chain, 0.);
+    sil::exterior::Form<decltype(chain)>
+            cochain(chain, Kokkos::View<double*, Kokkos::HostSpace>("", 1), 0.);
 }
 
-/*
 TEST(Cochain, Test)
 {
     sil::exterior::Chain
-            chain(sil::exterior::
+            chain(Kokkos::View<
+                          sil::exterior::Simplex<2, DDimT, DDimX, DDimY, DDimZ>*,
+                          Kokkos::HostSpace>("", 3),
+                  sil::exterior::
                           Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 1, 0, 0},
                                   ddc::DiscreteVector<DDimX, DDimY> {1, 1}),
                   sil::exterior::
@@ -500,10 +503,12 @@ TEST(Cochain, Test)
                           Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 1},
                                   ddc::DiscreteVector<DDimX, DDimY> {1, 1},
                                   true));
-    sil::exterior::Cochain cochain(chain, 0., 1., 2.);
+    sil::exterior::Cochain
+            cochain(chain, Kokkos::View<double*, Kokkos::HostSpace>("", 3), 0., 1., 2.);
     EXPECT_EQ(cochain.integrate(), -1.);
 }
 
+/*
 TEST(Coboundary, Test)
 {
     sil::exterior::Simplex
