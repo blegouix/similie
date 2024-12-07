@@ -197,6 +197,7 @@ public:
         return simplex_type(misc::filled_struct<discrete_element_type>(), m_vects[i]);
     }
 
+    // TODO operator +=
     KOKKOS_FUNCTION void push_back(const discrete_vector_type& vect)
     {
         Kokkos::resize(m_vects, m_vects.size() + 1);
