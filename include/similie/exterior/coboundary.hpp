@@ -28,11 +28,24 @@ namespace detail {
 template <class T>
 struct CoboundaryType;
 
-template <std::size_t K, class... Tag, class ElementType, class Allocator>
-struct CoboundaryType<Cochain<Chain<Simplex<K, Tag...>>, ElementType, Allocator>>
+template <std::size_t K, class... Tag, class ElementType, class ExecSpace>
+struct CoboundaryType<Cochain<Chain<Simplex<K, Tag...>>, ElementType, ExecSpace>>
 {
     using type = Cosimplex<Simplex<K + 1, Tag...>, ElementType>;
 };
+
+template <std::size_t K, class... Tag, class ElementType, class ExecSpace>
+struct CoboundaryType<Cochain<Chain<Simplex<K, Tag...>, ExecSpace>, ElementType, ExecSpace>>
+{
+    using type = Cosimplex<Simplex<K + 1, Tag...>, ElementType>;
+};
+
+} // namespace detail
+
+template <misc::Specialization<Cochain> CochainType>
+using coboundary_t = typename detail::CoboundaryType<CochainType>::type;
+
+namespace detail {
 
 template <class TagToAddToCochain, class CochainTag>
 struct CoboundaryIndex;
@@ -97,9 +110,6 @@ struct CoboundaryTensorType<
 
 } // namespace detail
 
-template <misc::Specialization<Cochain> CochainType>
-using coboundary_t = typename detail::CoboundaryType<CochainType>::type;
-
 template <
         tensor::TensorNatIndex TagToAddToCochain,
         tensor::TensorIndex CochainTag,
@@ -141,8 +151,10 @@ KOKKOS_FUNCTION coboundary_t<CochainType> coboundary(
     assert(cochain.size() == 2 * (cochain.dimension() + 1)
            && "only cochain over the boundary of a single simplex is supported");
 
+    /* Commented because would require an additional buffer
     assert(boundary(cochain.chain()) == boundary_t<typename CochainType::chain_type> {}
            && "only cochain over the boundary of a single simplex is supported");
+     */
 
     return coboundary_t<CochainType>(
             detail::ComputeSimplex<typename CochainType::chain_type>::run(cochain.chain()),

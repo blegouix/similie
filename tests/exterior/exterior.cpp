@@ -510,19 +510,27 @@ TEST(Cochain, Test)
     EXPECT_EQ(cochain.integrate(), -1.);
 }
 
-/*
 TEST(Coboundary, Test)
 {
     sil::exterior::Simplex
             simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 1, 0, 0},
                     ddc::DiscreteVector<DDimX, DDimY> {1, 1});
-    sil::exterior::Chain simplex_boundary = boundary(simplex);
-    sil::exterior::Cochain cochain_boundary(simplex_boundary, 5., 8., 3., 2.);
+    sil::exterior::Chain simplex_boundary = boundary(
+            Kokkos::View<
+                    sil::exterior::Simplex<1, DDimT, DDimX, DDimY, DDimZ>*,
+                    Kokkos::HostSpace>("", 4),
+            simplex);
+    sil::exterior::Cochain cochain_boundary(
+            simplex_boundary,
+            Kokkos::View<double*, Kokkos::HostSpace>("", 4),
+            5.,
+            8.,
+            3.,
+            2.);
     sil::exterior::Cosimplex cosimplex = sil::exterior::coboundary(cochain_boundary);
     EXPECT_EQ(cosimplex.simplex(), simplex);
     EXPECT_EQ(cosimplex.value(), 4.);
 }
-*/
 
 TEST(LocalChain, Test)
 {
