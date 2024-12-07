@@ -412,14 +412,21 @@ TEST(Boundary, Chain)
                                           ddc::DiscreteVector<DDimX> {-1})));
 }
 
-/*
 TEST(Boundary, PoincarreLemma2)
 {
     sil::exterior::Simplex simplex = sil::exterior::
             Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
                     ddc::DiscreteVector<DDimX, DDimY> {1, 1});
-    sil::exterior::Chain boundary_chain = sil::exterior::boundary(simplex);
-    sil::exterior::Chain boundary_chain2 = sil::exterior::boundary(boundary_chain);
+    sil::exterior::Chain boundary_chain = sil::exterior::boundary(
+            Kokkos::View<
+                    sil::exterior::Simplex<1, DDimT, DDimX, DDimY, DDimZ>*,
+                    Kokkos::HostSpace>("", 4),
+            simplex);
+    sil::exterior::Chain boundary_chain2 = sil::exterior::boundary(
+            Kokkos::View<
+                    sil::exterior::Simplex<0, DDimT, DDimX, DDimY, DDimZ>*,
+                    Kokkos::HostSpace>("", 8),
+            boundary_chain);
     auto empty_chain
             = sil::exterior::Chain<sil::exterior::Simplex<0, DDimT, DDimX, DDimY, DDimZ>> {};
     EXPECT_TRUE(boundary_chain2 == empty_chain);
@@ -430,8 +437,16 @@ TEST(Boundary, PoincarreLemma3)
     sil::exterior::Simplex simplex = sil::exterior::
             Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
                     ddc::DiscreteVector<DDimX, DDimY, DDimZ> {1, 1, 1});
-    sil::exterior::Chain boundary_chain = sil::exterior::boundary(simplex);
-    sil::exterior::Chain boundary_chain2 = sil::exterior::boundary(boundary_chain);
+    sil::exterior::Chain boundary_chain = sil::exterior::boundary(
+            Kokkos::View<
+                    sil::exterior::Simplex<2, DDimT, DDimX, DDimY, DDimZ>*,
+                    Kokkos::HostSpace>("", 6),
+            simplex);
+    sil::exterior::Chain boundary_chain2 = sil::exterior::boundary(
+            Kokkos::View<
+                    sil::exterior::Simplex<1, DDimT, DDimX, DDimY, DDimZ>*,
+                    Kokkos::HostSpace>("", 24),
+            boundary_chain);
     auto empty_chain
             = sil::exterior::Chain<sil::exterior::Simplex<1, DDimT, DDimX, DDimY, DDimZ>> {};
     EXPECT_TRUE(boundary_chain2 == empty_chain);
@@ -442,8 +457,16 @@ TEST(Boundary, PoincarreLemma4)
     sil::exterior::Simplex simplex = sil::exterior::
             Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
                     ddc::DiscreteVector<DDimT, DDimX, DDimY, DDimZ> {1, 1, 1, 1});
-    sil::exterior::Chain boundary_chain = sil::exterior::boundary(simplex);
-    sil::exterior::Chain boundary_chain2 = sil::exterior::boundary(boundary_chain);
+    sil::exterior::Chain boundary_chain = sil::exterior::boundary(
+            Kokkos::View<
+                    sil::exterior::Simplex<3, DDimT, DDimX, DDimY, DDimZ>*,
+                    Kokkos::HostSpace>("", 8),
+            simplex);
+    sil::exterior::Chain boundary_chain2 = sil::exterior::boundary(
+            Kokkos::View<
+                    sil::exterior::Simplex<2, DDimT, DDimX, DDimY, DDimZ>*,
+                    Kokkos::HostSpace>("", 64),
+            boundary_chain);
     auto empty_chain
             = sil::exterior::Chain<sil::exterior::Simplex<2, DDimT, DDimX, DDimY, DDimZ>> {};
     EXPECT_TRUE(boundary_chain2 == empty_chain);
@@ -451,15 +474,19 @@ TEST(Boundary, PoincarreLemma4)
 
 TEST(Form, Alias)
 {
-    sil::exterior::Chain chain(
-            sil::exterior::
-                    Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 1, 0, 0},
-                            ddc::DiscreteVector<DDimX, DDimY> {1, 1}));
+    sil::exterior::Chain
+            chain(Kokkos::View<
+                          sil::exterior::Simplex<2, DDimT, DDimX, DDimY, DDimZ>*,
+                          Kokkos::HostSpace>("", 1),
+                  sil::exterior::
+                          Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 1, 0, 0},
+                                  ddc::DiscreteVector<DDimX, DDimY> {1, 1}));
     // Unfortunately CTAD cannot deduce template arguments
     sil::exterior::Form<typename decltype(chain)::simplex_type> cosimplex(chain[0], 0.);
     sil::exterior::Form<decltype(chain)> cochain(chain, 0.);
 }
 
+/*
 TEST(Cochain, Test)
 {
     sil::exterior::Chain
