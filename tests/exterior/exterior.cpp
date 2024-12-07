@@ -55,7 +55,7 @@ TEST(Chain, Optimization)
     chain_alloc2(0) = sil::exterior::
             Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 1},
                     ddc::DiscreteVector<DDimX, DDimY> {1, 1});
-    sil::exterior::Chain chain2(chain_alloc2);
+    sil::exterior::Chain chain2(chain_alloc2, chain_alloc2.size());
     chain = chain
             + sil::exterior::
                     Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 1, 1, 0},
@@ -88,17 +88,21 @@ TEST(Chain, Optimization)
     EXPECT_TRUE(chain == chain3);
 }
 
-/*
 TEST(Boundary, 1Simplex)
 {
     sil::exterior::Simplex
             simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
                     ddc::DiscreteVector<DDimX> {1});
-    sil::exterior::Chain chain = sil::exterior::boundary(simplex);
+    Kokkos::View<sil::exterior::Simplex<0, DDimT, DDimX, DDimY, DDimZ>*, Kokkos::HostSpace>
+            chain_alloc("", 2);
+    sil::exterior::Chain chain = sil::exterior::boundary(chain_alloc, simplex);
+    Kokkos::View<sil::exterior::Simplex<0, DDimT, DDimX, DDimY, DDimZ>*, Kokkos::HostSpace>
+            chain_alloc2("", 2);
     EXPECT_TRUE(
             chain
             == sil::exterior::
-                    Chain(sil::exterior::
+                    Chain(chain_alloc2,
+                          sil::exterior::
                                   Simplex(ddc::DiscreteElement<
                                                   DDimT,
                                                   DDimX,
@@ -115,6 +119,7 @@ TEST(Boundary, 1Simplex)
                                           ddc::DiscreteVector<> {})));
 }
 
+/*
 TEST(Boundary, 2Simplex)
 {
     sil::exterior::Simplex
