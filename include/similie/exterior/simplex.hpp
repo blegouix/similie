@@ -216,6 +216,22 @@ Simplex(ddc::DiscreteElement<Tag...>,
         ddc::DiscreteVector<T...>,
         bool) -> Simplex<sizeof...(T), Tag...>;
 
+namespace detail {
+
+template <std::size_t K, class Dom>
+struct SimplexForDomain;
+
+template <std::size_t K, class... Tag>
+struct SimplexForDomain<K, ddc::DiscreteDomain<Tag...>>
+{
+    using type = Simplex<K, Tag...>;
+};
+
+} // namespace detail
+
+template <std::size_t K, class Dom>
+using simplex_for_domain_t = detail::SimplexForDomain<K, Dom>::type;
+
 template <std::size_t K, class... Tag>
 std::ostream& operator<<(std::ostream& out, Simplex<K, Tag...> const& simplex)
 {

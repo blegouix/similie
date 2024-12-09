@@ -217,9 +217,14 @@ KOKKOS_FUNCTION coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> c
                             elem,
                             (*i).discrete_vector());
                     Kokkos::View<
-                            decltype(Simplex(
-                                    std::integral_constant<std::size_t, CochainTag::rank()> {},
-                                    elem))*,
+                            simplex_for_domain_t<
+                                    CochainTag::rank(),
+                                    ddc::remove_dims_of_t<
+                                            typename coboundary_tensor_t<
+                                                    TagToAddToCochain,
+                                                    CochainTag,
+                                                    TensorType>::discrete_domain_type,
+                                            coboundary_index_t<TagToAddToCochain, CochainTag>>>*,
                             Kokkos::LayoutRight,
                             Kokkos::HostSpace>
                             simplex_boundary_alloc("simplex_boundary", 2 * simplex.size());
