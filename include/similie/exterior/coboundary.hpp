@@ -236,6 +236,7 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
     Kokkos::View<double*, Kokkos::LayoutRight, Kokkos::HostSpace>
             values("coboundary_values", 2 * (CochainTag::rank() + 1));
 
+    // TODO fix race condition
     // process
     ddc::parallel_for_each(
             Kokkos::DefaultHostExecutionSpace(),
