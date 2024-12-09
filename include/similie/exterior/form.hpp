@@ -14,34 +14,34 @@ namespace exterior {
 
 namespace detail {
 
-template <class T, class ElementType, class ExecSpace>
+template <class T, class ElementType, class LayoutStridedPolicy>
 struct FormWrapper;
 
-template <misc::NotSpecialization<Chain> T, class ElementType, class ExecSpace>
-struct FormWrapper<T, ElementType, ExecSpace>
+template <misc::NotSpecialization<Chain> T, class ElementType, class LayoutStridedPolicy>
+struct FormWrapper<T, ElementType, LayoutStridedPolicy>
 {
     using type = Cosimplex<T, ElementType>;
 };
 
-template <misc::Specialization<Chain> T, class ElementType, class ExecSpace>
-struct FormWrapper<T, ElementType, ExecSpace>
+template <misc::Specialization<Chain> T, class ElementType, class LayoutStridedPolicy>
+struct FormWrapper<T, ElementType, LayoutStridedPolicy>
 {
-    using type = Cochain<T, ElementType, ExecSpace>;
+    using type = Cochain<T, ElementType, LayoutStridedPolicy>;
 };
 
 /*
-template <misc::NotSpecialization<Chain> Head, class ElementType>
-FormWrapper(Head, ElementType) -> FormWrapper<Head, ElementType, Kokkos::DefaultHostExecutionSpace>;
+template <misc::NotSpecialization<Chain> Head, class ElementType, class LayoutStridedPoliy >
+FormWrapper(Head, ElementType) -> FormWrapper<Head, ElementType, LayoutStridedPolicy, Kokkos::DefaultHostExecutionSpace>;
 
-template <misc::Specialization<Chain> Head, class ElementType, class ExecSpace>
-FormWrapper(Head, ElementType, Allocator) -> FormWrapper<Head, ElementType, ExecSpace>;
+template <misc::Specialization<Chain> Head, class ElementType, class LayoutStridedPolicy, class ExecSpace>
+FormWrapper(Head, ElementType, Allocator) -> FormWrapper<Head, ElementType, LayoutStridedPolicy, ExecSpace>;
 */
 
 } // namespace detail
 
 // Usage should be avoided because CTAD cannot go through it
-template <class T, class ElementType = double, class ExecSpace = Kokkos::DefaultHostExecutionSpace>
-using Form = typename detail::FormWrapper<T, ElementType, ExecSpace>::type;
+template <class T, class ElementType = double, class LayoutStridedPolicy = Kokkos::LayoutRight>
+using Form = typename detail::FormWrapper<T, ElementType, LayoutStridedPolicy>::type;
 
 } // namespace exterior
 

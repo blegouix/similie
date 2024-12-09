@@ -28,14 +28,23 @@ namespace detail {
 template <class T>
 struct CoboundaryType;
 
-template <std::size_t K, class... Tag, class ElementType, class ExecSpace>
-struct CoboundaryType<Cochain<Chain<Simplex<K, Tag...>>, ElementType, ExecSpace>>
+template <std::size_t K, class... Tag, class ElementType, class LayoutStridedPolicy>
+struct CoboundaryType<Cochain<Chain<Simplex<K, Tag...>>, ElementType, LayoutStridedPolicy>>
 {
     using type = Cosimplex<Simplex<K + 1, Tag...>, ElementType>;
 };
 
-template <std::size_t K, class... Tag, class ElementType, class ExecSpace>
-struct CoboundaryType<Cochain<Chain<Simplex<K, Tag...>, ExecSpace>, ElementType, ExecSpace>>
+template <
+        std::size_t K,
+        class... Tag,
+        class ElementType,
+        class LayoutStridedPolicy1,
+        class LayoutStridedPolicy2,
+        class ExecSpace>
+struct CoboundaryType<
+        Cochain<Chain<Simplex<K, Tag...>, LayoutStridedPolicy1, ExecSpace>,
+                ElementType,
+                LayoutStridedPolicy2>>
 {
     using type = Cosimplex<Simplex<K + 1, Tag...>, ElementType>;
 };
