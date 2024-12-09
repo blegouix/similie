@@ -73,7 +73,9 @@ public:
                && "cochain constructor must get as much values as the chain contains simplices");
     }
 
-    KOKKOS_FUNCTION constexpr explicit Cochain(chain_type& chain, values_type& values) noexcept
+    KOKKOS_FUNCTION constexpr explicit Cochain(
+            chain_type const& chain,
+            values_type const& values) noexcept
         : m_chain(std::move(chain))
         , m_values(std::move(values))
     {
@@ -85,7 +87,7 @@ public:
         requires(misc::Specialization<Index, tensor::TensorAntisymmetricIndex>
                  || tensor::TensorNatIndex<Index>)
     KOKKOS_FUNCTION constexpr explicit Cochain(
-            chain_type& chain,
+            chain_type const& chain,
             tensor::Tensor<
                     element_type,
                     ddc::DiscreteDomain<Index>,

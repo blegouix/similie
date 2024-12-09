@@ -192,14 +192,32 @@ template <
         tensor::TensorNatIndex TagToAddToCochain,
         tensor::TensorIndex CochainTag,
         misc::Specialization<tensor::Tensor> TensorType>
-KOKKOS_FUNCTION coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
+coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
         coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
         TensorType tensor)
 {
-    ddc::for_each(
+    // Two buffers
+
+
+    ddc::parallel_for_each(
+            Kokkos::DefaultHostExecutionSpace(),
             ddc::remove_dims_of<coboundary_index_t<TagToAddToCochain, CochainTag>>(
                     coboundary_tensor.domain()),
-            [&](auto elem) {
+            KOKKOS_LAMBDA(auto elem) {
+                Kokkos::View<
+                        simplex_for_domain_t<
+                                CochainTag::rank(),
+                                ddc::remove_dims_of_t<
+                                        typename coboundary_tensor_t<
+                                                TagToAddToCochain,
+                                                CochainTag,
+                                                TensorType>::discrete_domain_type,
+                                        coboundary_index_t<TagToAddToCochain, CochainTag>>>*,
+                        Kokkos::LayoutRight,
+                        Kokkos::HostSpace>
+                        simplex_boundary_alloc("simplex_boundary", 2 * (CochainTag::rank() + 1));
+                Kokkos::View<double*, Kokkos::LayoutRight, Kokkos::HostSpace>
+                        values("coboundary_values", 2 * (CochainTag::rank() + 1));
                 auto chain = tangent_basis<
                         CochainTag::rank() + 1,
                         typename detail::NonSpectatorDimension<
@@ -216,22 +234,8 @@ KOKKOS_FUNCTION coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> c
                             std::integral_constant<std::size_t, CochainTag::rank() + 1> {},
                             elem,
                             (*i).discrete_vector());
-                    Kokkos::View<
-                            simplex_for_domain_t<
-                                    CochainTag::rank(),
-                                    ddc::remove_dims_of_t<
-                                            typename coboundary_tensor_t<
-                                                    TagToAddToCochain,
-                                                    CochainTag,
-                                                    TensorType>::discrete_domain_type,
-                                            coboundary_index_t<TagToAddToCochain, CochainTag>>>*,
-                            Kokkos::LayoutRight,
-                            Kokkos::HostSpace>
-                            simplex_boundary_alloc("simplex_boundary", 2 * simplex.size());
                     sil::exterior::Chain simplex_boundary
                             = boundary(simplex_boundary_alloc, simplex);
-                    Kokkos::View<double*, Kokkos::LayoutRight, Kokkos::HostSpace>
-                            values("coboundary_values", simplex_boundary.size());
                     for (auto j = simplex_boundary.begin(); j < simplex_boundary.end(); ++j) {
                         values(Kokkos::Experimental::distance(simplex_boundary.begin(), j))
                                 = tensor.mem(
