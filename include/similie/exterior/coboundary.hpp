@@ -207,7 +207,7 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
             = ddc::remove_dims_of<coboundary_index_t<TagToAddToCochain, CochainTag>>(
                     coboundary_tensor.domain());
 
-    // buffers
+    // buffer to store the local K+1-chain tangent to the discrete manifold at each node of the mesh
     ddc::Chunk tangent_basis_alloc(
             ddc::cartesian_prod_t<
                     ddc::remove_dims_of_t<
@@ -231,6 +231,8 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
                     TagToAddToCochain,
                     typename TensorType::non_indices_domain_t>::type::mlength_type>());
     ddc::ChunkSpan tangent_basis_span = tangent_basis_alloc.span_view();
+
+    // buffer to store the local K-chain tangent to the discrete manifold at each node of the mesh
     ddc::Chunk lower_tangent_basis_alloc(
             ddc::cartesian_prod_t<
                     ddc::remove_dims_of_t<
@@ -254,59 +256,63 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
                     TagToAddToCochain,
                     typename TensorType::non_indices_domain_t>::type::mlength_type>());
     ddc::ChunkSpan lower_tangent_basis_span = lower_tangent_basis_alloc.span_view();
-    /*
-    Kokkos::View<
-            typename detail::NonSpectatorDimension<
-                    TagToAddToCochain,
-                    typename TensorType::non_indices_domain_t>::type::mlength_type*,
-            Kokkos::HostSpace>
-            tangent_basis_alloc(
-                    "tangent_basis",
-                    misc::binomial_coefficient(
-                            detail::NonSpectatorDimension<
+
+    // buffer to store the chain containing the boundary of each K-simplex of the mesh
+    ddc::Chunk simplex_boundary_alloc(
+            ddc::cartesian_prod_t<
+                    ddc::remove_dims_of_t<
+                            typename coboundary_tensor_t<
                                     TagToAddToCochain,
-                                    typename TensorType::non_indices_domain_t>::type::rank(),
-                            CochainTag::rank() + 1));
-    Kokkos::View<
-            typename detail::NonSpectatorDimension<
-                    TagToAddToCochain,
-                    typename TensorType::non_indices_domain_t>::type::mlength_type*,
-            Kokkos::HostSpace>
-            lower_tangent_basis_alloc(
-                    "lower_tangent_basis",
-                    misc::binomial_coefficient(
-                            detail::NonSpectatorDimension<
-                                    TagToAddToCochain,
-                                    typename TensorType::non_indices_domain_t>::type::rank(),
-                            CochainTag::rank()));
-    */
-    Kokkos::View<
-            simplex_for_domain_t<
+                                    CochainTag,
+                                    TensorType>::discrete_domain_type,
+                            coboundary_index_t<TagToAddToCochain, CochainTag>>,
+                    ddc::DiscreteDomain<detail::DummyIndexTangentBasis>>(
+                    batch_dom,
+                    ddc::DiscreteDomain<detail::DummyIndexTangentBasis>(
+                            ddc::DiscreteElement<detail::DummyIndexTangentBasis>(0),
+                            ddc::DiscreteVector<detail::DummyIndexTangentBasis>(
+                                    2 * (CochainTag::rank() + 1)))),
+            ddc::HostAllocator<simplex_for_domain_t<
                     CochainTag::rank(),
                     ddc::remove_dims_of_t<
                             typename coboundary_tensor_t<
                                     TagToAddToCochain,
                                     CochainTag,
                                     TensorType>::discrete_domain_type,
-                            coboundary_index_t<TagToAddToCochain, CochainTag>>>*,
-            Kokkos::LayoutRight,
-            Kokkos::HostSpace>
-            simplex_boundary_alloc("simplex_boundary", 2 * (CochainTag::rank() + 1));
-    Kokkos::View<double*, Kokkos::LayoutRight, Kokkos::HostSpace>
-            values("coboundary_values", 2 * (CochainTag::rank() + 1));
+                            coboundary_index_t<TagToAddToCochain, CochainTag>>>>());
+    ddc::ChunkSpan simplex_boundary_span = simplex_boundary_alloc.span_view();
 
-    // TODO fix race condition
+    // buffer to store the values on the boundary of each K-cosimplex of the mesh
+    ddc::Chunk boundary_values_alloc(
+            ddc::cartesian_prod_t<
+                    ddc::remove_dims_of_t<
+                            typename coboundary_tensor_t<
+                                    TagToAddToCochain,
+                                    CochainTag,
+                                    TensorType>::discrete_domain_type,
+                            coboundary_index_t<TagToAddToCochain, CochainTag>>,
+                    ddc::DiscreteDomain<detail::DummyIndexTangentBasis>>(
+                    batch_dom,
+                    ddc::DiscreteDomain<detail::DummyIndexTangentBasis>(
+                            ddc::DiscreteElement<detail::DummyIndexTangentBasis>(0),
+                            ddc::DiscreteVector<detail::DummyIndexTangentBasis>(
+                                    2 * (CochainTag::rank() + 1)))),
+            ddc::HostAllocator<double>());
+    ddc::ChunkSpan boundary_values_span = boundary_values_alloc.span_view();
+
     // process
     ddc::parallel_for_each(
             Kokkos::DefaultHostExecutionSpace(),
             batch_dom,
             KOKKOS_LAMBDA(auto elem) {
+                // compute the tangent K+1-basis for each node of the mesh. This is a local K+1-chain.
                 auto chain = tangent_basis<
                         CochainTag::rank() + 1,
                         typename detail::NonSpectatorDimension<
                                 TagToAddToCochain,
                                 typename TensorType::non_indices_domain_t>::type>(
                         tangent_basis_span[elem].allocation_kokkos_view());
+                // compute the tangent K+1-basis for each node of the mesh
                 auto lower_chain = tangent_basis<
                         CochainTag::rank(),
                         typename detail::NonSpectatorDimension<
@@ -319,10 +325,12 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
                             std::integral_constant<std::size_t, CochainTag::rank() + 1> {},
                             elem,
                             (*i).discrete_vector());
-                    sil::exterior::Chain simplex_boundary
-                            = boundary(simplex_boundary_alloc, simplex);
+                    sil::exterior::Chain simplex_boundary = boundary(
+                            simplex_boundary_span[elem].allocation_kokkos_view(),
+                            simplex);
                     for (auto j = simplex_boundary.begin(); j < simplex_boundary.end(); ++j) {
-                        values(Kokkos::Experimental::distance(simplex_boundary.begin(), j))
+                        boundary_values_span[elem].allocation_kokkos_view()(
+                                Kokkos::Experimental::distance(simplex_boundary.begin(), j))
                                 = tensor.mem(
                                         misc::domain_contains(
                                                 tensor.domain(),
@@ -337,7 +345,9 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
                                                                      lower_chain.end(),
                                                                      (*j).discrete_vector()))));
                     }
-                    sil::exterior::Cochain cochain_boundary(simplex_boundary, values);
+                    sil::exterior::Cochain cochain_boundary(
+                            simplex_boundary,
+                            boundary_values_span[elem].allocation_kokkos_view());
                     coboundary_tensor
                             .mem(elem,
                                  ddc::DiscreteElement<
