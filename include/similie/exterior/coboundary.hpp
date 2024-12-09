@@ -211,11 +211,12 @@ KOKKOS_FUNCTION coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> c
                             decltype(Simplex(
                                     std::integral_constant<std::size_t, CochainTag::rank()> {},
                                     elem))*,
+                            Kokkos::LayoutRight,
                             Kokkos::HostSpace>
-                            simplex_boundary_alloc("simplex_boundary", 2 * CochainTag::rank());
+                            simplex_boundary_alloc("simplex_boundary", 2 * simplex.size());
                     sil::exterior::Chain simplex_boundary
                             = boundary(simplex_boundary_alloc, simplex);
-                    Kokkos::View<double*, Kokkos::HostSpace>
+                    Kokkos::View<double*, Kokkos::LayoutRight, Kokkos::HostSpace>
                             values("coboundary_values", simplex_boundary.size());
                     for (auto j = simplex_boundary.begin(); j < simplex_boundary.end(); ++j) {
                         values(Kokkos::Experimental::distance(simplex_boundary.begin(), j))

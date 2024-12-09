@@ -18,10 +18,15 @@ namespace exterior {
 
 namespace detail {
 
-template <class SimplexType, class MemorySpace>
+template <
+        class SimplexType,
+        class LayoutStridedPolicy1,
+        class LayoutStridedPolicy2,
+        class MemorySpace>
 Kokkos::View<typename SimplexType::discrete_vector_type*, MemorySpace> extract_vects(
-        Kokkos::View<typename SimplexType::discrete_vector_type*, MemorySpace> vects,
-        Kokkos::View<SimplexType*, MemorySpace> simplices)
+        Kokkos::View<typename SimplexType::discrete_vector_type*, LayoutStridedPolicy1, MemorySpace>
+                vects,
+        Kokkos::View<SimplexType*, LayoutStridedPolicy2, MemorySpace> simplices)
 {
     for (auto i = Kokkos::Experimental::begin(simplices); i < Kokkos::Experimental::end(simplices);
          ++i) {
@@ -34,7 +39,10 @@ Kokkos::View<typename SimplexType::discrete_vector_type*, MemorySpace> extract_v
 
 
 /// LocalChain class
-template <class SimplexType, class ExecSpace = Kokkos::DefaultHostExecutionSpace>
+template <
+        class SimplexType,
+        class LayoutStridedPolicy = Kokkos::LayoutRight,
+        class ExecSpace = Kokkos::DefaultHostExecutionSpace>
 class LocalChain
 {
 public:
@@ -42,10 +50,10 @@ public:
     using memory_space = typename ExecSpace::memory_space;
 
     using simplex_type = SimplexType;
-    using simplices_type = Kokkos::View<SimplexType*, memory_space>;
+    using simplices_type = Kokkos::View<SimplexType*, LayoutStridedPolicy, memory_space>;
     using discrete_element_type = typename simplex_type::discrete_element_type;
     using discrete_vector_type = typename simplex_type::discrete_vector_type;
-    using vects_type = Kokkos::View<discrete_vector_type*, memory_space>;
+    using vects_type = Kokkos::View<discrete_vector_type*, LayoutStridedPolicy, memory_space>;
 
     using iterator_type = Kokkos::Experimental::Impl::RandomAccessIterator<vects_type>;
 
@@ -368,7 +376,7 @@ KOKKOS_FUNCTION constexpr LocalChain<Simplex<K, Tag...>> tangent_basis()
         ddc::detail::array(basis(i++)) = permutation;
     } while (std::prev_permutation(permutation.begin(), permutation.end()));
 
-    return LocalChain<Simplex<K, Tag...>>(basis);
+    return LocalChain<Simplex<K, Tag...>>(basis, basis.size());
 }
 
 namespace detail {

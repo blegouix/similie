@@ -61,7 +61,7 @@ HodgeStarType fill_hodge_star(
             ddc::DiscreteDomain<misc::convert_type_seq_to_t<
                     tensor::TensorLeviCivitaIndex,
                     ddc::type_seq_merge_t<tensor::primes<tensor::lower<Indices1>>, Indices2>>>,
-            Kokkos::layout_right,
+            Kokkos::LayoutRight,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             levi_civita(levi_civita_alloc);
 
@@ -94,7 +94,7 @@ HodgeStarType fill_hodge_star(HodgeStarType hodge_star, MetricType metric)
     ddc::ChunkSpan<
             double,
             typename MetricType::non_indices_domain_t,
-            Kokkos::layout_right,
+            Kokkos::LayoutRight,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             metric_det(metric_det_alloc);
     ddc::for_each( // TODO parallel_for_each (weird lock)
@@ -116,7 +116,7 @@ HodgeStarType fill_hodge_star(HodgeStarType hodge_star, MetricType metric)
             ddc::cartesian_prod_t<
                     typename MetricType::non_indices_domain_t,
                     tensor::metric_prod_domain_t<MetricIndex, Indices1, tensor::primes<Indices1>>>,
-            Kokkos::layout_right,
+            Kokkos::LayoutRight,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             metric_prod(metric_prod_alloc);
 

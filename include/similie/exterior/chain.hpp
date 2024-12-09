@@ -17,7 +17,10 @@ namespace sil {
 namespace exterior {
 
 /// Chain class
-template <class SimplexType, class ExecSpace = Kokkos::DefaultHostExecutionSpace>
+template <
+        class SimplexType,
+        class LayoutStridedPolicy = Kokkos::LayoutRight,
+        class ExecSpace = Kokkos::DefaultHostExecutionSpace>
 class Chain
 {
 public:
@@ -25,7 +28,7 @@ public:
     using memory_space = typename ExecSpace::memory_space;
 
     using simplex_type = SimplexType;
-    using simplices_type = Kokkos::View<SimplexType*, memory_space>;
+    using simplices_type = Kokkos::View<SimplexType*, LayoutStridedPolicy, memory_space>;
     using discrete_element_type = typename simplex_type::discrete_element_type;
     using discrete_vector_type = typename simplex_type::discrete_vector_type;
 
