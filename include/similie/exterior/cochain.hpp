@@ -81,7 +81,7 @@ public:
                && "cochain constructor must get as much values as the chain contains simplices");
     }
 
-    template <tensor::TensorIndex Index, class OLayoutStridedPolicy>
+    template <tensor::TensorIndex Index>
         requires(misc::Specialization<Index, tensor::TensorAntisymmetricIndex>
                  || tensor::TensorNatIndex<Index>)
     KOKKOS_FUNCTION constexpr explicit Cochain(
@@ -89,11 +89,10 @@ public:
             tensor::Tensor<
                     element_type,
                     ddc::DiscreteDomain<Index>,
-                    OLayoutStridedPolicy,
+                    ddc::detail::kokkos_to_mdspan_layout_t<LayoutStridedPolicy>,
                     memory_space> tensor) noexcept
         : m_chain(std::move(chain))
-        // , m_values(tensor.allocation_kokkos_view())
-        , m_values("", 1)
+        , m_values(tensor.allocation_kokkos_view())
     {
         assert(m_values.size() == chain.size()
                && "cochain constructor must get as much values as the chain contains simplices");
@@ -230,7 +229,7 @@ Cochain(ChainType, TensorType)
         -> Cochain<
                 ChainType,
                 typename TensorType::value_type,
-                ddc::detail::mdspan_to_kokkos_layout_t<typename TensorType::array_layout>>;
+                ddc::detail::mdspan_to_kokkos_layout_t<typename TensorType::layout_type>>;
 
 template <typename CochainType>
 class CochainIterator
