@@ -361,22 +361,21 @@ LocalChain(Head, Tail...) -> LocalChain<decltype(Simplex(
 
 // TODO Kokkosify
 template <std::size_t K, misc::NotSpecialization<ddc::DiscreteDomain>... Tag>
-KOKKOS_FUNCTION constexpr LocalChain<Simplex<K, Tag...>> tangent_basis()
+KOKKOS_FUNCTION constexpr LocalChain<Simplex<K, Tag...>> tangent_basis(
+        Kokkos::View<ddc::DiscreteVector<Tag...>*, Kokkos::HostSpace> allocation)
 {
     std::array<std::ptrdiff_t, sizeof...(Tag)> permutation
             = {0 * ddc::type_seq_rank_v<Tag, ddc::detail::TypeSeq<Tag...>>...};
     for (auto i = permutation.begin(); i < permutation.begin() + K; ++i) {
         *i = 1;
     }
-    Kokkos::View<ddc::DiscreteVector<Tag...>*, Kokkos::HostSpace>
-            basis("", misc::binomial_coefficient(sizeof...(Tag), K));
     std::size_t i = 0;
     do {
-        basis(i) = ddc::DiscreteVector<Tag...>();
-        ddc::detail::array(basis(i++)) = permutation;
+        allocation(i) = ddc::DiscreteVector<Tag...>();
+        ddc::detail::array(allocation(i++)) = permutation;
     } while (std::prev_permutation(permutation.begin(), permutation.end()));
 
-    return LocalChain<Simplex<K, Tag...>>(basis, basis.size());
+    return LocalChain<Simplex<K, Tag...>>(allocation, allocation.size());
 }
 
 namespace detail {
@@ -388,18 +387,20 @@ struct TangentBasis;
 template <std::size_t K, class... Tag>
 struct TangentBasis<K, ddc::DiscreteDomain<Tag...>>
 {
-    KOKKOS_FUNCTION static auto constexpr run()
+    KOKKOS_FUNCTION static auto constexpr run(
+            Kokkos::View<ddc::DiscreteVector<Tag...>*, Kokkos::HostSpace> allocation)
     {
-        return tangent_basis<K, Tag...>();
+        return tangent_basis<K, Tag...>(allocation);
     }
 };
 
 } // namespace detail
 
 template <std::size_t K, misc::Specialization<ddc::DiscreteDomain> Dom>
-KOKKOS_FUNCTION constexpr auto tangent_basis()
+KOKKOS_FUNCTION constexpr auto tangent_basis(
+        Kokkos::View<typename Dom::mlength_type*, Kokkos::HostSpace> allocation)
 {
-    return detail::TangentBasis<K, Dom>::run();
+    return detail::TangentBasis<K, Dom>::run(allocation);
 }
 
 template <misc::Specialization<LocalChain> ChainType>

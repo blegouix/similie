@@ -196,38 +196,54 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
         coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
         TensorType tensor)
 {
-    // Two buffers
+    // buffers
+    Kokkos::View<
+            typename detail::NonSpectatorDimension<
+                    TagToAddToCochain,
+                    typename TensorType::non_indices_domain_t>::type::mlength_type*,
+            Kokkos::HostSpace>
+            tangent_basis_alloc(
+                    "tangent_basis",
+                    misc::binomial_coefficient(
+                            detail::NonSpectatorDimension<
+                                    TagToAddToCochain,
+                                    typename TensorType::non_indices_domain_t>::type::rank(),
+                            CochainTag::rank() + 1));
+    Kokkos::View<
+            typename detail::NonSpectatorDimension<
+                    TagToAddToCochain,
+                    typename TensorType::non_indices_domain_t>::type::mlength_type*,
+            Kokkos::HostSpace>
+            lower_tangent_basis_alloc(
+                    "lower_tangent_basis",
+                    misc::binomial_coefficient(
+                            detail::NonSpectatorDimension<
+                                    TagToAddToCochain,
+                                    typename TensorType::non_indices_domain_t>::type::rank(),
+                            CochainTag::rank()));
+    Kokkos::View<
+            simplex_for_domain_t<
+                    CochainTag::rank(),
+                    ddc::remove_dims_of_t<
+                            typename coboundary_tensor_t<
+                                    TagToAddToCochain,
+                                    CochainTag,
+                                    TensorType>::discrete_domain_type,
+                            coboundary_index_t<TagToAddToCochain, CochainTag>>>*,
+            Kokkos::LayoutRight,
+            Kokkos::HostSpace>
+            simplex_boundary_alloc("simplex_boundary", 2 * (CochainTag::rank() + 1));
+    Kokkos::View<double*, Kokkos::LayoutRight, Kokkos::HostSpace>
+            values("coboundary_values", 2 * (CochainTag::rank() + 1));
 
-
+    // process
     ddc::parallel_for_each(
             Kokkos::DefaultHostExecutionSpace(),
             ddc::remove_dims_of<coboundary_index_t<TagToAddToCochain, CochainTag>>(
                     coboundary_tensor.domain()),
             KOKKOS_LAMBDA(auto elem) {
-                Kokkos::View<
-                        simplex_for_domain_t<
-                                CochainTag::rank(),
-                                ddc::remove_dims_of_t<
-                                        typename coboundary_tensor_t<
-                                                TagToAddToCochain,
-                                                CochainTag,
-                                                TensorType>::discrete_domain_type,
-                                        coboundary_index_t<TagToAddToCochain, CochainTag>>>*,
-                        Kokkos::LayoutRight,
-                        Kokkos::HostSpace>
-                        simplex_boundary_alloc("simplex_boundary", 2 * (CochainTag::rank() + 1));
-                Kokkos::View<double*, Kokkos::LayoutRight, Kokkos::HostSpace>
-                        values("coboundary_values", 2 * (CochainTag::rank() + 1));
-                auto chain = tangent_basis<
-                        CochainTag::rank() + 1,
-                        typename detail::NonSpectatorDimension<
-                                TagToAddToCochain,
-                                typename TensorType::non_indices_domain_t>::type>();
-                auto lower_chain = tangent_basis<
-                        CochainTag::rank(),
-                        typename detail::NonSpectatorDimension<
-                                TagToAddToCochain,
-                                typename TensorType::non_indices_domain_t>::type>();
+                auto chain = tangent_basis<CochainTag::rank() + 1>(tangent_basis_alloc);
+                auto lower_chain = tangent_basis<CochainTag::rank()>(lower_tangent_basis_alloc);
                 auto cochain = Cochain(chain, coboundary_tensor[elem]);
                 for (auto i = cochain.begin(); i < cochain.end(); ++i) {
                     auto simplex = Simplex(
