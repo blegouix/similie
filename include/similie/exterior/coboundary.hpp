@@ -187,11 +187,11 @@ struct NonSpectatorDimension<Index, ddc::DiscreteDomain<DDim...>>
             ddc::DiscreteDomain<>>...>;
 };
 
-struct DummyTagTangentBasis
+struct DummyTag
 {
 };
 
-using DummyIndexTangentBasis = ddc::UniformPointSampling<DummyTagTangentBasis>;
+using DummyIndex = ddc::UniformPointSampling<DummyTag>;
 
 } // namespace detail
 
@@ -216,12 +216,11 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
                                     CochainTag,
                                     TensorType>::discrete_domain_type,
                             coboundary_index_t<TagToAddToCochain, CochainTag>>,
-                    ddc::DiscreteDomain<detail::DummyIndexTangentBasis>>(
+                    ddc::DiscreteDomain<detail::DummyIndex>>(
                     batch_dom,
-                    ddc::DiscreteDomain<detail::DummyIndexTangentBasis>(
-                            ddc::DiscreteElement<detail::DummyIndexTangentBasis>(0),
-                            ddc::DiscreteVector<detail::DummyIndexTangentBasis>(
-                                    2 * (CochainTag::rank() + 1)))),
+                    ddc::DiscreteDomain<detail::DummyIndex>(
+                            ddc::DiscreteElement<detail::DummyIndex>(0),
+                            ddc::DiscreteVector<detail::DummyIndex>(2 * (CochainTag::rank() + 1)))),
             ddc::HostAllocator<simplex_for_domain_t<
                     CochainTag::rank(),
                     ddc::remove_dims_of_t<
@@ -230,7 +229,7 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
                                     CochainTag,
                                     TensorType>::discrete_domain_type,
                             coboundary_index_t<TagToAddToCochain, CochainTag>>>>());
-    ddc::ChunkSpan simplex_boundary_span = simplex_boundary_alloc.span_view();
+    ddc::ChunkSpan simplex_boundary = simplex_boundary_alloc.span_view();
 
     // buffer to store the values on the boundary of each K+1-cosimplex of the mesh
     ddc::Chunk boundary_values_alloc(
@@ -241,14 +240,13 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
                                     CochainTag,
                                     TensorType>::discrete_domain_type,
                             coboundary_index_t<TagToAddToCochain, CochainTag>>,
-                    ddc::DiscreteDomain<detail::DummyIndexTangentBasis>>(
+                    ddc::DiscreteDomain<detail::DummyIndex>>(
                     batch_dom,
-                    ddc::DiscreteDomain<detail::DummyIndexTangentBasis>(
-                            ddc::DiscreteElement<detail::DummyIndexTangentBasis>(0),
-                            ddc::DiscreteVector<detail::DummyIndexTangentBasis>(
-                                    2 * (CochainTag::rank() + 1)))),
+                    ddc::DiscreteDomain<detail::DummyIndex>(
+                            ddc::DiscreteElement<detail::DummyIndex>(0),
+                            ddc::DiscreteVector<detail::DummyIndex>(2 * (CochainTag::rank() + 1)))),
             ddc::HostAllocator<double>());
-    ddc::ChunkSpan boundary_values_span = boundary_values_alloc.span_view();
+    ddc::ChunkSpan boundary_values = boundary_values_alloc.span_view();
 
     // compute the tangent K+1-basis for each node of the mesh. This is a local K+1-chain.
     auto chain = tangent_basis<
@@ -272,19 +270,18 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
                 auto cochain = Cochain(chain, coboundary_tensor[elem]);
                 for (auto i = cochain.begin(); i < cochain.end(); ++i) {
                     // extract the K+1-simplex from the current K+1-cosimplex (this is not absolutly trivial because the cochain is based on a LocalChain)
-                    auto simplex = Simplex(
+                    Simplex simplex = Simplex(
                             std::integral_constant<std::size_t, CochainTag::rank() + 1> {},
                             elem,
                             (*i).discrete_vector());
                     // compute its boundary as a K-chain in the simplex_boundary buffer
-                    sil::exterior::Chain simplex_boundary = boundary(
-                            simplex_boundary_span[elem].allocation_kokkos_view(),
-                            simplex);
+                    Chain boundary_chain
+                            = boundary(simplex_boundary[elem].allocation_kokkos_view(), simplex);
                     // iterate over every K-simplex forming the boundary
-                    for (auto j = simplex_boundary.begin(); j < simplex_boundary.end(); ++j) {
+                    for (auto j = boundary_chain.begin(); j < boundary_chain.end(); ++j) {
                         // extract from the input K-cochain the values associated to every K-simplex of the boundary and fill the boundary_values buffer
-                        boundary_values_span[elem].allocation_kokkos_view()(
-                                Kokkos::Experimental::distance(simplex_boundary.begin(), j))
+                        boundary_values[elem].allocation_kokkos_view()(
+                                Kokkos::Experimental::distance(boundary_chain.begin(), j))
                                 = tensor.mem(
                                         misc::domain_contains(
                                                 tensor.domain(),
@@ -300,9 +297,9 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
                                                                      (*j).discrete_vector()))));
                     }
                     // build the cochain of the boundary
-                    sil::exterior::Cochain cochain_boundary(
-                            simplex_boundary,
-                            boundary_values_span[elem].allocation_kokkos_view());
+                    Cochain cochain_boundary(
+                            boundary_chain,
+                            boundary_values[elem].allocation_kokkos_view());
                     // integrate over the cochain forming the boundary to compute the coboundary
                     // (*i).value() = cochain_boundary.integrate(); // Cannot be used bevause CochainIterator::operator* does not return a reference
                     coboundary_tensor
