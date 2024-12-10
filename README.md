@@ -6,7 +6,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 # SimiLie
 Documentation [here](https://blegouix.github.io/similie/).
 
-SimiLie is a performance-portable (CPU & GPU) C++ library aiming to extent the capabilities of [Kokkos](https://github.com/kokkos/kokkos) and [DDC](https://github.com/CExA-project/ddc) to offer a complete toolkit able to perfom tensor calculus, differential calculus and solving PDE. It should be able to address any multiphysical problem from eventually-relativistic classical field theory (in particular: solid & fluid mechanics, electromagnetism and gravitation).
+SimiLie is a performance-portable (CPU & GPU) C++20 library aiming to extent the capabilities of [Kokkos](https://github.com/kokkos/kokkos) and [DDC](https://github.com/CExA-project/ddc) to offer a complete toolkit able to perfom tensor calculus, differential calculus and solving PDE. It should be able to address any multiphysical problem from eventually-relativistic classical field theory (in particular: solid & fluid mechanics, electromagnetism and gravitation).
 
 **Absolute WIP, there is no guarantee for proper working. Kokkos backends other than `Serial` are not yet supported.**
 
