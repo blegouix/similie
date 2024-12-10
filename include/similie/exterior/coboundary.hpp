@@ -302,7 +302,7 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
                             boundary_chain,
                             boundary_values[elem].allocation_kokkos_view());
                     // integrate over the cochain forming the boundary to compute the coboundary
-                    // (*i).value() = cochain_boundary.integrate(); // Cannot be used bevause CochainIterator::operator* does not return a reference
+                    // (*i).value() = cochain_boundary.integrate(); // Cannot be used because CochainIterator::operator* does not return a reference
                     coboundary_tensor
                             .mem(elem,
                                  ddc::DiscreteElement<
