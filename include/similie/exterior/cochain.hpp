@@ -52,12 +52,6 @@ public:
 
     KOKKOS_DEFAULTED_FUNCTION constexpr Cochain(Cochain&&) = default;
 
-    KOKKOS_FUNCTION constexpr explicit Cochain(chain_type chain) noexcept
-        : m_chain(chain)
-        , m_values("", chain.size())
-    {
-    }
-
     template <class... T>
         requires(sizeof...(T) >= 1 && (std::is_convertible_v<T, double> && ...))
     KOKKOS_FUNCTION constexpr explicit Cochain(
@@ -98,14 +92,6 @@ public:
     {
         assert(m_values.size() == chain.size()
                && "cochain constructor must get as much values as the chain contains simplices");
-        /*
-        for (auto i = Kokkos::Experimental::begin(m_values);
-             i < Kokkos::Experimental::end(m_values);
-             ++i) {
-            *i = tensor.mem(ddc::DiscreteElement<Index>(
-                    Kokkos::Experimental::distance(Kokkos::Experimental::begin(m_values), i)));
-        }
-	*/
     }
 
     KOKKOS_DEFAULTED_FUNCTION ~Cochain() = default;
