@@ -99,24 +99,25 @@ public:
     {
         detail::extract_vects(m_vects, simplices)
                 assert(check() == 0 && "there are duplicate simplices in the chain");
-        assert((KOKKOS_LAMBDA() {
-                   Kokkos::View<discrete_element_type*, memory_space> elems(simplices.size());
-                   for (auto i = Kokkos::Experimental::begin(simplices);
-                        i < Kokkos::Experimental::end(simplices);
-                        ++i) {
-                       elems[Kokkos::Experimental::
-                                     distance(Kokkos::Experimental::begin(simplices), i)]
-                               = i->discrete_element();
-                   }
-                   return misc::are_all_equal(elems);
-               })()
+#if not defined NDEBUG
+        Kokkos::View<discrete_element_type*, memory_space> elems(simplices.size());
+        for (auto i = Kokkos::Experimental::begin(simplices);
+             i < Kokkos::Experimental::end(simplices);
+             ++i) {
+            elems[Kokkos::Experimental::distance(Kokkos::Experimental::begin(simplices), i)]
+                    = i->discrete_element();
+        }
+        assert(misc::are_all_equal(elems)
                && "LocalChain must contain simplices with same origin (if not, use Chain)");
-        // TODO Kokkosify
-        assert(std::all_of(
-                       Kokkos::Experimental::begin(simplices),
-                       Kokkos::Experimental::end(simplices),
-                       KOKKOS_LAMBDA(const std::size_t i) { return !simplices[i].negative(); })
-               && "LocalChain must contain simplices with same origin (if not, use Chain)");
+
+        bool flag = true;
+        for (auto i = Kokkos::Experimental::begin(simplices);
+             i < Kokkos::Experimental::end(simplices);
+             ++i) {
+            flag &= !i->negative();
+        }
+        assert(flag && "LocalChain must contain simplices with same origin (if not, use Chain)");
+#endif
     }
 
     template <misc::Specialization<ddc::DiscreteVector>... T>
@@ -359,7 +360,7 @@ LocalChain(Head, Tail...) -> LocalChain<decltype(Simplex(
 
 // TODO Kokkosify
 template <std::size_t K, misc::NotSpecialization<ddc::DiscreteDomain>... Tag>
-KOKKOS_FUNCTION constexpr LocalChain<Simplex<K, Tag...>> tangent_basis()
+constexpr LocalChain<Simplex<K, Tag...>> tangent_basis()
 {
     std::array<std::ptrdiff_t, sizeof...(Tag)> permutation
             = {0 * ddc::type_seq_rank_v<Tag, ddc::detail::TypeSeq<Tag...>>...};
@@ -386,7 +387,7 @@ struct TangentBasis;
 template <std::size_t K, class... Tag>
 struct TangentBasis<K, ddc::DiscreteDomain<Tag...>>
 {
-    KOKKOS_FUNCTION static auto constexpr run()
+    static auto constexpr run()
     {
         return tangent_basis<K, Tag...>();
     }
@@ -395,7 +396,7 @@ struct TangentBasis<K, ddc::DiscreteDomain<Tag...>>
 } // namespace detail
 
 template <std::size_t K, misc::Specialization<ddc::DiscreteDomain> Dom>
-KOKKOS_FUNCTION constexpr auto tangent_basis()
+constexpr auto tangent_basis()
 {
     return detail::TangentBasis<K, Dom>::run();
 }
