@@ -60,7 +60,6 @@ public:
 private:
     static constexpr bool s_is_local = true;
     static constexpr std::size_t s_k = simplex_type::dimension();
-    // TODO m_elem ?
     vects_type m_vects;
     std::size_t
             m_size; // Effective size, m_simplices elements between m_size and m_simplices.size() are undefined
@@ -360,25 +359,24 @@ LocalChain(Head, Tail...) -> LocalChain<decltype(Simplex(
                                   ddc::type_seq_element_t<0, ddc::detail::TypeSeq<Tail...>>()))>;
 
 // TODO Kokkosify
-/*
-template <std::size_t K, class misc::NotSpecialization<ddc::DiscreteDomain>... Tag>
-KOKKOS_FUNCTION constexpr LocalChain<Simplex<K, Tag...>> tangent_basis(
-        Kokkos::View<ddc::DiscreteVector<Tag...>*, Kokkos::HostSpace> allocation)
+template <std::size_t K, misc::NotSpecialization<ddc::DiscreteDomain>... Tag>
+KOKKOS_FUNCTION constexpr LocalChain<Simplex<K, Tag...>> tangent_basis()
 {
     std::array<std::ptrdiff_t, sizeof...(Tag)> permutation
             = {0 * ddc::type_seq_rank_v<Tag, ddc::detail::TypeSeq<Tag...>>...};
     for (auto i = permutation.begin(); i < permutation.begin() + K; ++i) {
         *i = 1;
     }
+    Kokkos::View<ddc::DiscreteVector<Tag...>*, Kokkos::HostSpace>
+            basis("", misc::binomial_coefficient(sizeof...(Tag), K));
     std::size_t i = 0;
     do {
-        allocation(i) = ddc::DiscreteVector<Tag...>();
-        ddc::detail::array(allocation(i++)) = permutation;
+        basis(i) = ddc::DiscreteVector<Tag...>();
+        ddc::detail::array(basis(i++)) = permutation;
     } while (std::prev_permutation(permutation.begin(), permutation.end()));
 
-    return LocalChain<Simplex<K, Tag...>>(allocation, allocation.size());
+    return LocalChain<Simplex<K, Tag...>>(basis, basis.size());
 }
-*/
 
 namespace detail {
 
@@ -389,35 +387,18 @@ struct TangentBasis;
 template <std::size_t K, class... Tag>
 struct TangentBasis<K, ddc::DiscreteDomain<Tag...>>
 {
-    // TODO Kokkosify
-    template <class LayoutStridedPolicy>
-    KOKKOS_FUNCTION static LocalChain<Simplex<K, Tag...>> constexpr run(
-            Kokkos::View<ddc::DiscreteVector<Tag...>*, LayoutStridedPolicy, Kokkos::HostSpace>
-                    allocation)
+    KOKKOS_FUNCTION static auto constexpr run()
     {
-        std::array<std::ptrdiff_t, sizeof...(Tag)> permutation
-                = {0 * ddc::type_seq_rank_v<Tag, ddc::detail::TypeSeq<Tag...>>...};
-        for (auto i = permutation.begin(); i < permutation.begin() + K; ++i) {
-            *i = 1;
-        }
-        std::size_t i = 0;
-        do {
-            allocation(i) = ddc::DiscreteVector<Tag...>();
-            ddc::detail::array(allocation(i++)) = permutation;
-        } while (std::prev_permutation(permutation.begin(), permutation.end()));
-
-        return LocalChain<Simplex<K, Tag...>>(allocation, allocation.size());
+        return tangent_basis<K, Tag...>();
     }
 };
 
 } // namespace detail
 
-template <std::size_t K, misc::Specialization<ddc::DiscreteDomain> Dom, class LayoutStridedPolicy>
-KOKKOS_FUNCTION constexpr auto tangent_basis(
-        Kokkos::View<typename Dom::mlength_type*, LayoutStridedPolicy, Kokkos::HostSpace>
-                allocation)
+template <std::size_t K, misc::Specialization<ddc::DiscreteDomain> Dom>
+KOKKOS_FUNCTION constexpr auto tangent_basis()
 {
-    return detail::TangentBasis<K, Dom>::run(allocation);
+    return detail::TangentBasis<K, Dom>::run();
 }
 
 template <misc::Specialization<LocalChain> ChainType>

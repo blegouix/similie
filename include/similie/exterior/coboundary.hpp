@@ -207,57 +207,7 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
             = ddc::remove_dims_of<coboundary_index_t<TagToAddToCochain, CochainTag>>(
                     coboundary_tensor.domain());
 
-    // buffer to store the local K+1-chain tangent to the discrete manifold at each node of the mesh
-    ddc::Chunk tangent_basis_alloc(
-            ddc::cartesian_prod_t<
-                    ddc::remove_dims_of_t<
-                            typename coboundary_tensor_t<
-                                    TagToAddToCochain,
-                                    CochainTag,
-                                    TensorType>::discrete_domain_type,
-                            coboundary_index_t<TagToAddToCochain, CochainTag>>,
-                    ddc::DiscreteDomain<detail::DummyIndexTangentBasis>>(
-                    batch_dom,
-                    ddc::DiscreteDomain<detail::DummyIndexTangentBasis>(
-                            ddc::DiscreteElement<detail::DummyIndexTangentBasis>(0),
-                            ddc::DiscreteVector<detail::DummyIndexTangentBasis>(
-                                    misc::binomial_coefficient(
-                                            detail::NonSpectatorDimension<
-                                                    TagToAddToCochain,
-                                                    typename TensorType::non_indices_domain_t>::
-                                                    type::rank(),
-                                            CochainTag::rank() + 1)))),
-            ddc::HostAllocator<typename detail::NonSpectatorDimension<
-                    TagToAddToCochain,
-                    typename TensorType::non_indices_domain_t>::type::mlength_type>());
-    ddc::ChunkSpan tangent_basis_span = tangent_basis_alloc.span_view();
-
-    // buffer to store the local K-chain tangent to the discrete manifold at each node of the mesh
-    ddc::Chunk lower_tangent_basis_alloc(
-            ddc::cartesian_prod_t<
-                    ddc::remove_dims_of_t<
-                            typename coboundary_tensor_t<
-                                    TagToAddToCochain,
-                                    CochainTag,
-                                    TensorType>::discrete_domain_type,
-                            coboundary_index_t<TagToAddToCochain, CochainTag>>,
-                    ddc::DiscreteDomain<detail::DummyIndexTangentBasis>>(
-                    batch_dom,
-                    ddc::DiscreteDomain<detail::DummyIndexTangentBasis>(
-                            ddc::DiscreteElement<detail::DummyIndexTangentBasis>(0),
-                            ddc::DiscreteVector<detail::DummyIndexTangentBasis>(
-                                    misc::binomial_coefficient(
-                                            detail::NonSpectatorDimension<
-                                                    TagToAddToCochain,
-                                                    typename TensorType::non_indices_domain_t>::
-                                                    type::rank(),
-                                            CochainTag::rank())))),
-            ddc::HostAllocator<typename detail::NonSpectatorDimension<
-                    TagToAddToCochain,
-                    typename TensorType::non_indices_domain_t>::type::mlength_type>());
-    ddc::ChunkSpan lower_tangent_basis_span = lower_tangent_basis_alloc.span_view();
-
-    // buffer to store the chain containing the boundary of each K-simplex of the mesh
+    // buffer to store the chain containing the boundary of each K+1-simplex of the mesh
     ddc::Chunk simplex_boundary_alloc(
             ddc::cartesian_prod_t<
                     ddc::remove_dims_of_t<
@@ -282,7 +232,7 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
                             coboundary_index_t<TagToAddToCochain, CochainTag>>>>());
     ddc::ChunkSpan simplex_boundary_span = simplex_boundary_alloc.span_view();
 
-    // buffer to store the values on the boundary of each K-cosimplex of the mesh
+    // buffer to store the values on the boundary of each K+1-cosimplex of the mesh
     ddc::Chunk boundary_values_alloc(
             ddc::cartesian_prod_t<
                     ddc::remove_dims_of_t<
@@ -300,35 +250,39 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
             ddc::HostAllocator<double>());
     ddc::ChunkSpan boundary_values_span = boundary_values_alloc.span_view();
 
-    // process
+    // compute the tangent K+1-basis for each node of the mesh. This is a local K+1-chain.
+    auto chain = tangent_basis<
+            CochainTag::rank() + 1,
+            typename detail::NonSpectatorDimension<
+                    TagToAddToCochain,
+                    typename TensorType::non_indices_domain_t>::type>();
+    // compute the tangent K+1-basis for each node of the mesh. This is a local K-chain.
+    auto lower_chain = tangent_basis<
+            CochainTag::rank(),
+            typename detail::NonSpectatorDimension<
+                    TagToAddToCochain,
+                    typename TensorType::non_indices_domain_t>::type>();
+
+    // iterate over every node, we will work inside the tangent space associated to each of them
     ddc::parallel_for_each(
             Kokkos::DefaultHostExecutionSpace(),
             batch_dom,
             KOKKOS_LAMBDA(auto elem) {
-                // compute the tangent K+1-basis for each node of the mesh. This is a local K+1-chain.
-                auto chain = tangent_basis<
-                        CochainTag::rank() + 1,
-                        typename detail::NonSpectatorDimension<
-                                TagToAddToCochain,
-                                typename TensorType::non_indices_domain_t>::type>(
-                        tangent_basis_span[elem].allocation_kokkos_view());
-                // compute the tangent K+1-basis for each node of the mesh
-                auto lower_chain = tangent_basis<
-                        CochainTag::rank(),
-                        typename detail::NonSpectatorDimension<
-                                TagToAddToCochain,
-                                typename TensorType::non_indices_domain_t>::type>(
-                        lower_tangent_basis_span[elem].allocation_kokkos_view());
+                // declare a K+1-cochain storing the K+1-cosimplices of the output cochain for the current tangent space and iterate over them
                 auto cochain = Cochain(chain, coboundary_tensor[elem]);
                 for (auto i = cochain.begin(); i < cochain.end(); ++i) {
+                    // extract the K+1-simplex from the current K+1-cosimplex (this is not absolutly trivial because the cochain is based on a LocalChain)
                     auto simplex = Simplex(
                             std::integral_constant<std::size_t, CochainTag::rank() + 1> {},
                             elem,
                             (*i).discrete_vector());
+                    // compute its boundary as a K-chain in the simplex_boundary buffer
                     sil::exterior::Chain simplex_boundary = boundary(
                             simplex_boundary_span[elem].allocation_kokkos_view(),
                             simplex);
+                    // iterate over every K-simplex forming the boundary
                     for (auto j = simplex_boundary.begin(); j < simplex_boundary.end(); ++j) {
+                        // extract from the input K-cochain the values associated to every K-simplex of the boundary and fill the boundary_values buffer
                         boundary_values_span[elem].allocation_kokkos_view()(
                                 Kokkos::Experimental::distance(simplex_boundary.begin(), j))
                                 = tensor.mem(
@@ -345,9 +299,12 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
                                                                      lower_chain.end(),
                                                                      (*j).discrete_vector()))));
                     }
+                    // build the cochain of the boundary
                     sil::exterior::Cochain cochain_boundary(
                             simplex_boundary,
                             boundary_values_span[elem].allocation_kokkos_view());
+                    // integrate over the cochain forming the boundary to compute the coboundary
+                    // (*i).value() = cochain_boundary.integrate(); // Cannot be used bevause CochainIterator::operator* does not return a reference
                     coboundary_tensor
                             .mem(elem,
                                  ddc::DiscreteElement<
