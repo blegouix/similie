@@ -24,20 +24,20 @@ class CochainIterator;
 template <
         class ChainType,
         class ElementType = double,
-        class ExecSpace = Kokkos::DefaultHostExecutionSpace>
+        class LayoutStridedPolicy = Kokkos::LayoutRight>
     requires(misc::Specialization<ChainType, Chain> || misc::Specialization<ChainType, LocalChain>)
 class Cochain
 {
 public:
-    using execution_space = ExecSpace;
-    using memory_space = typename ExecSpace::memory_space;
+    using execution_space = typename ChainType::execution_space;
+    using memory_space = typename ChainType::memory_space;
 
     using simplex_type = typename ChainType::simplex_type;
     using chain_type = ChainType;
     using element_type = ElementType;
     using discrete_element_type = ChainType::discrete_element_type;
     using discrete_vector_type = ChainType::discrete_vector_type;
-    using values_type = Kokkos::View<ElementType*, ExecSpace>;
+    using values_type = Kokkos::View<ElementType*, LayoutStridedPolicy, memory_space>;
     using cosimplex_type = Cosimplex<simplex_type, element_type>;
 
 private:
@@ -52,17 +52,14 @@ public:
 
     KOKKOS_DEFAULTED_FUNCTION constexpr Cochain(Cochain&&) = default;
 
-    KOKKOS_FUNCTION constexpr explicit Cochain(chain_type chain) noexcept
-        : m_chain(chain)
-        , m_values(chain.size())
-    {
-    }
-
     template <class... T>
         requires(sizeof...(T) >= 1 && (std::is_convertible_v<T, double> && ...))
-    KOKKOS_FUNCTION constexpr explicit Cochain(chain_type chain, T... value) noexcept
-        : m_chain(chain)
-        , m_values("cochain_values", sizeof...(T))
+    KOKKOS_FUNCTION constexpr explicit Cochain(
+            chain_type chain,
+            values_type allocation,
+            T... value) noexcept
+        : m_chain(std::move(chain))
+        , m_values(std::move(allocation))
     {
         int i = 0;
         ((m_values(i++) = value), ...);
@@ -70,39 +67,31 @@ public:
                && "cochain constructor must get as much values as the chain contains simplices");
     }
 
-    KOKKOS_FUNCTION constexpr explicit Cochain(chain_type& chain, values_type& values) noexcept
-        : m_chain(chain)
-        , m_values(values)
+    KOKKOS_FUNCTION constexpr explicit Cochain(
+            chain_type const& chain,
+            values_type const& values) noexcept
+        : m_chain(std::move(chain))
+        , m_values(std::move(values))
     {
         assert(values.size() == chain.size()
                && "cochain constructor must get as much values as the chain contains simplices");
     }
 
-    template <
-            class OElementType,
-            tensor::TensorIndex Index,
-            class LayoutStridedPolicy,
-            class MemorySpace>
+    template <tensor::TensorIndex Index>
         requires(misc::Specialization<Index, tensor::TensorAntisymmetricIndex>
                  || tensor::TensorNatIndex<Index>)
     KOKKOS_FUNCTION constexpr explicit Cochain(
-            chain_type& chain,
+            chain_type const& chain,
             tensor::Tensor<
-                    OElementType,
+                    element_type,
                     ddc::DiscreteDomain<Index>,
-                    LayoutStridedPolicy,
-                    MemorySpace> tensor) noexcept
-        : m_chain(chain)
-        , m_values("cochain_values", tensor.domain().size())
+                    ddc::detail::kokkos_to_mdspan_layout_t<LayoutStridedPolicy>,
+                    memory_space> tensor) noexcept
+        : m_chain(std::move(chain))
+        , m_values(tensor.allocation_kokkos_view())
     {
         assert(m_values.size() == chain.size()
                && "cochain constructor must get as much values as the chain contains simplices");
-        for (auto i = Kokkos::Experimental::begin(m_values);
-             i < Kokkos::Experimental::end(m_values);
-             ++i) {
-            *i = tensor.mem(ddc::DiscreteElement<Index>(
-                    Kokkos::Experimental::distance(Kokkos::Experimental::begin(m_values), i)));
-        }
     }
 
     KOKKOS_DEFAULTED_FUNCTION ~Cochain() = default;
@@ -129,6 +118,16 @@ public:
     KOKKOS_FUNCTION std::size_t size() const noexcept
     {
         return m_chain.size();
+    }
+
+    KOKKOS_FUNCTION std::size_t allocation_size() noexcept
+    {
+        return m_chain.allocation_size();
+    }
+
+    KOKKOS_FUNCTION std::size_t allocation_size() const noexcept
+    {
+        return m_chain.allocation_size();
     }
 
     KOKKOS_FUNCTION chain_type const& chain() const noexcept
@@ -175,12 +174,14 @@ public:
 
     KOKKOS_FUNCTION Cosimplex<simplex_type, element_type>& operator[](std::size_t i) noexcept
     {
+        assert(i < size());
         return Cosimplex<simplex_type, element_type>(m_chain(i), m_values(i));
     }
 
     KOKKOS_FUNCTION Cosimplex<simplex_type, element_type> const& operator[](
             std::size_t i) const noexcept
     {
+        assert(i < size());
         return Cosimplex<simplex_type, element_type>(m_chain(i), m_values(i));
     }
 
@@ -210,6 +211,13 @@ public:
         return out;
     }
 };
+
+template <class ChainType, misc::Specialization<tensor::Tensor> TensorType>
+Cochain(ChainType, TensorType)
+        -> Cochain<
+                ChainType,
+                typename TensorType::value_type,
+                ddc::detail::mdspan_to_kokkos_layout_t<typename TensorType::layout_type>>;
 
 template <typename CochainType>
 class CochainIterator

@@ -118,7 +118,7 @@ public:
     template <misc::Specialization<ddc::DiscreteVector> T>
     KOKKOS_FUNCTION constexpr explicit Simplex(
             discrete_element_type elem,
-            T vect,
+            T vect = ddc::DiscreteVector<> {},
             bool negative = false) noexcept
         : base_type(detail::Reorient<Tag...>::run_elem(elem, add_null_dimensions(vect)))
         , m_vect(detail::Reorient<Tag...>::run_vect(elem, add_null_dimensions(vect)))
@@ -128,11 +128,11 @@ public:
                && "simplex vector must contain only -1, 0 or 1");
     }
 
-    template <misc::Specialization<ddc::DiscreteVector> T>
+    template <misc::Specialization<ddc::DiscreteVector> T = ddc::DiscreteVector<>>
     KOKKOS_FUNCTION constexpr explicit Simplex(
             std::integral_constant<std::size_t, K>,
             discrete_element_type elem,
-            T vect,
+            T vect = ddc::DiscreteVector<> {},
             bool negative = false) noexcept
         : base_type(detail::Reorient<Tag...>::run_elem(elem, add_null_dimensions(vect)))
         , m_vect(detail::Reorient<Tag...>::run_vect(elem, add_null_dimensions(vect)))
@@ -215,6 +215,22 @@ template <class... Tag, class... T>
 Simplex(ddc::DiscreteElement<Tag...>,
         ddc::DiscreteVector<T...>,
         bool) -> Simplex<sizeof...(T), Tag...>;
+
+namespace detail {
+
+template <std::size_t K, class Dom>
+struct SimplexForDomain;
+
+template <std::size_t K, class... Tag>
+struct SimplexForDomain<K, ddc::DiscreteDomain<Tag...>>
+{
+    using type = Simplex<K, Tag...>;
+};
+
+} // namespace detail
+
+template <std::size_t K, class Dom>
+using simplex_for_domain_t = detail::SimplexForDomain<K, Dom>::type;
 
 template <std::size_t K, class... Tag>
 std::ostream& operator<<(std::ostream& out, Simplex<K, Tag...> const& simplex)

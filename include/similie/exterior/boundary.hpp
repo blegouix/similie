@@ -38,14 +38,15 @@ using boundary_t = typename detail::BoundaryType<T>::type;
 namespace detail {
 
 // TODO Kokkosify
-template <class SimplexType>
+template <class SimplexType, misc::Specialization<Kokkos::View> AllocationType>
 KOKKOS_FUNCTION constexpr Chain<boundary_t<SimplexType>> generate_half_subchain(
+        AllocationType allocation,
         typename SimplexType::discrete_element_type elem,
         typename SimplexType::discrete_vector_type vect,
         bool negative = false)
 {
     auto array = ddc::detail::array(vect);
-    Chain<boundary_t<SimplexType>> chain;
+    Chain<boundary_t<SimplexType>> chain(allocation);
     auto id_dist = -1;
     for (std::size_t i = 0; i < SimplexType::dimension(); ++i) {
         auto array_ = array;
@@ -55,7 +56,7 @@ KOKKOS_FUNCTION constexpr Chain<boundary_t<SimplexType>> generate_half_subchain(
         *id = 0;
         typename SimplexType::discrete_vector_type vect_;
         ddc::detail::array(vect_) = array_;
-        chain.push_back(boundary_t<SimplexType>(elem, vect_, (negative + i) % 2));
+        chain += boundary_t<SimplexType>(elem, vect_, (negative + i) % 2);
         j = id + 1;
     }
     return chain;
@@ -63,29 +64,49 @@ KOKKOS_FUNCTION constexpr Chain<boundary_t<SimplexType>> generate_half_subchain(
 
 } // namespace detail
 
-template <class SimplexType>
-KOKKOS_FUNCTION Chain<boundary_t<SimplexType>> boundary(SimplexType simplex)
+template <misc::Specialization<Kokkos::View> AllocationType, class SimplexType>
+KOKKOS_FUNCTION Chain<boundary_t<SimplexType>> boundary(
+        AllocationType allocation,
+        SimplexType simplex)
 {
-    return Chain<boundary_t<SimplexType>>(
-                   detail::generate_half_subchain<SimplexType>(
-                           simplex.discrete_element(),
-                           simplex.discrete_vector(),
-                           SimplexType::dimension() % 2)
-                   + detail::generate_half_subchain<SimplexType>(
-                           simplex.discrete_element() + simplex.discrete_vector(),
-                           -simplex.discrete_vector()))
-           * (SimplexType::dimension() % 2 ? 1 : -1) * (simplex.negative() ? -1 : 1);
+    Chain<boundary_t<SimplexType>> chain(allocation);
+    detail::generate_half_subchain<SimplexType>(
+            Kokkos::
+                    subview(allocation,
+                            std::pair<std::size_t, std::size_t>(0, SimplexType::dimension())),
+            simplex.discrete_element(),
+            simplex.discrete_vector(),
+            SimplexType::dimension() % 2);
+    chain += SimplexType::dimension();
+    detail::generate_half_subchain<SimplexType>(
+            Kokkos::
+                    subview(allocation,
+                            std::pair<std::size_t, std::size_t>(
+                                    SimplexType::dimension(),
+                                    2 * SimplexType::dimension())),
+            simplex.discrete_element() + simplex.discrete_vector(),
+            -simplex.discrete_vector());
+    chain += SimplexType::dimension();
+    chain *= (SimplexType::dimension() % 2 ? 1 : -1) * (simplex.negative() ? -1 : 1);
+    return chain;
 }
 
-template <class SimplexType>
-KOKKOS_FUNCTION Chain<boundary_t<SimplexType>> boundary(Chain<SimplexType> chain)
+template <misc::Specialization<Kokkos::View> AllocationType, class SimplexType>
+KOKKOS_FUNCTION Chain<boundary_t<SimplexType>> boundary(
+        AllocationType allocation,
+        Chain<SimplexType> chain)
 {
-    Chain<boundary_t<SimplexType>> boundary_chain;
-    for (auto& simplex : chain) {
-        Chain<boundary_t<SimplexType>> boundary_simplex = boundary(simplex);
-        for (auto& simplex_ : boundary_simplex) {
-            boundary_chain.push_back(simplex_);
-        }
+    Chain<boundary_t<SimplexType>> boundary_chain(allocation);
+    for (auto i = chain.begin(); i < chain.end(); ++i) {
+        std::size_t const distance = Kokkos::Experimental::distance(chain.begin(), i);
+        boundary(
+                Kokkos::
+                        subview(allocation,
+                                std::pair<std::size_t, std::size_t>(
+                                        2 * SimplexType::dimension() * distance,
+                                        2 * SimplexType::dimension() * (distance + 1))),
+                *i);
+        boundary_chain += 2 * SimplexType::dimension();
     }
     boundary_chain.optimize();
     return boundary_chain;
