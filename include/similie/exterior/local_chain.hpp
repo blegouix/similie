@@ -90,11 +90,10 @@ public:
                && "negative simplices are not supported in LocalChain");
     }
 
-    KOKKOS_FUNCTION explicit LocalChain(
+    KOKKOS_FUNCTION constexpr explicit LocalChain(
             vects_type allocation,
             simplices_type simplices,
-            std::size_t
-                    size) noexcept // Can be constexpr with C++23 TODO is it not already the case now that simplices is a Kokkos::View ?
+            std::size_t size) noexcept
         : m_vects(std::move(allocation))
         , m_size(size)
     {
