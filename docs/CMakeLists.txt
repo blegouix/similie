@@ -70,5 +70,6 @@ doxygen_add_docs(doc
         "${CMAKE_CURRENT_SOURCE_DIR}/About.md"
 	"${CMAKE_CURRENT_SOURCE_DIR}/Running.md"
 	"${CMAKE_CURRENT_SOURCE_DIR}/tensor_module.md"
+	"${CMAKE_CURRENT_SOURCE_DIR}/exterior_module.md"
         "${SimiLie_SOURCE_DIR}/include/similie/"
         ALL)
