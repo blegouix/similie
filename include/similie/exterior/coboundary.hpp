@@ -187,6 +187,12 @@ struct NonSpectatorDimension<Index, ddc::DiscreteDomain<DDim...>>
             ddc::DiscreteDomain<>>...>;
 };
 
+struct DummyTag
+{
+};
+
+using DummyIndex = ddc::UniformPointSampling<DummyTag>;
+
 } // namespace detail
 
 template <
@@ -197,12 +203,6 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
         coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
         TensorType tensor)
 {
-    struct DummyTag
-    {
-    };
-
-    using DummyIndex = ddc::UniformPointSampling<DummyTag>;
-
     ddc::DiscreteDomain batch_dom
             = ddc::remove_dims_of<coboundary_index_t<TagToAddToCochain, CochainTag>>(
                     coboundary_tensor.domain());
@@ -216,11 +216,11 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
                                     CochainTag,
                                     TensorType>::discrete_domain_type,
                             coboundary_index_t<TagToAddToCochain, CochainTag>>,
-                    ddc::DiscreteDomain<DummyIndex>>(
+                    ddc::DiscreteDomain<detail::DummyIndex>>(
                     batch_dom,
-                    ddc::DiscreteDomain<DummyIndex>(
-                            ddc::DiscreteElement<DummyIndex>(0),
-                            ddc::DiscreteVector<DummyIndex>(2 * (CochainTag::rank() + 1)))),
+                    ddc::DiscreteDomain<detail::DummyIndex>(
+                            ddc::DiscreteElement<detail::DummyIndex>(0),
+                            ddc::DiscreteVector<detail::DummyIndex>(2 * (CochainTag::rank() + 1)))),
             ddc::HostAllocator<simplex_for_domain_t<
                     CochainTag::rank(),
                     ddc::remove_dims_of_t<
@@ -240,11 +240,11 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
                                     CochainTag,
                                     TensorType>::discrete_domain_type,
                             coboundary_index_t<TagToAddToCochain, CochainTag>>,
-                    ddc::DiscreteDomain<DummyIndex>>(
+                    ddc::DiscreteDomain<detail::DummyIndex>>(
                     batch_dom,
-                    ddc::DiscreteDomain<DummyIndex>(
-                            ddc::DiscreteElement<DummyIndex>(0),
-                            ddc::DiscreteVector<DummyIndex>(2 * (CochainTag::rank() + 1)))),
+                    ddc::DiscreteDomain<detail::DummyIndex>(
+                            ddc::DiscreteElement<detail::DummyIndex>(0),
+                            ddc::DiscreteVector<detail::DummyIndex>(2 * (CochainTag::rank() + 1)))),
             ddc::HostAllocator<double>());
     ddc::ChunkSpan boundary_values = boundary_values_alloc.span_view();
 
@@ -266,7 +266,7 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
     ddc::parallel_for_each(
             Kokkos::DefaultHostExecutionSpace(),
             batch_dom,
-            KOKKOS_LAMBDA(auto elem) {
+            KOKKOS_LAMBDA(typename decltype(batch_dom)::discrete_element_type elem) {
                 // declare a K+1-cochain storing the K+1-cosimplices of the output cochain for the current tangent space and iterate over them
                 auto cochain = Cochain(chain, coboundary_tensor[elem]);
                 for (auto i = cochain.begin(); i < cochain.end(); ++i) {
@@ -319,7 +319,7 @@ template <
         tensor::TensorNatIndex TagToAddToCochain,
         tensor::TensorIndex CochainTag,
         misc::Specialization<tensor::Tensor> TensorType>
-KOKKOS_FUNCTION coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> deriv(
+coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> deriv(
         coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
         TensorType tensor)
 {
