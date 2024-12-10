@@ -10,7 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>SimiLie: sil::exterior::Cochain&lt; ChainType, ElementType, ExecSpace &gt; Class Template Reference</title>
+<title>SimiLie: sil::exterior::Cochain&lt; ChainType, ElementType, LayoutStridedPolicy &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -124,7 +124,7 @@ $(document).ready(function(){initNavTree('classsil_1_1exterior_1_1Cochain.html',
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="classsil_1_1exterior_1_1Cochain-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">sil::exterior::Cochain&lt; ChainType, ElementType, ExecSpace &gt; Class Template Reference</div></div>
+  <div class="headertitle"><div class="title">sil::exterior::Cochain&lt; ChainType, ElementType, LayoutStridedPolicy &gt; Class Template Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
@@ -133,116 +133,118 @@ $(document).ready(function(){initNavTree('classsil_1_1exterior_1_1Cochain.html',
 
 <p><code>#include &lt;<a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>&gt;</code></p>
 <div class="dynheader">
-Collaboration diagram for sil::exterior::Cochain&lt; ChainType, ElementType, ExecSpace &gt;:</div>
+Collaboration diagram for sil::exterior::Cochain&lt; ChainType, ElementType, LayoutStridedPolicy &gt;:</div>
 <div class="dyncontent">
-<div class="center"><img src="classsil_1_1exterior_1_1Cochain__coll__graph.png" border="0" usemap="#asil_1_1exterior_1_1Cochain_3_01ChainType_00_01ElementType_00_01ExecSpace_01_4_coll__map" alt="Collaboration graph"/></div>
-<map name="asil_1_1exterior_1_1Cochain_3_01ChainType_00_01ElementType_00_01ExecSpace_01_4_coll__map" id="asil_1_1exterior_1_1Cochain_3_01ChainType_00_01ElementType_00_01ExecSpace_01_4_coll__map">
-<area shape="rect" title="Cochain class." alt="" coords="5,5,197,600"/>
+<div class="center"><img src="classsil_1_1exterior_1_1Cochain__coll__graph.png" border="0" usemap="#asil_1_1exterior_1_1Cochain_3_01ChainType_00_01ElementType_00_01LayoutStridedPolicy_01_4_coll__map" alt="Collaboration graph"/></div>
+<map name="asil_1_1exterior_1_1Cochain_3_01ChainType_00_01ElementType_00_01LayoutStridedPolicy_01_4_coll__map" id="asil_1_1exterior_1_1Cochain_3_01ChainType_00_01ElementType_00_01LayoutStridedPolicy_01_4_coll__map">
+<area shape="rect" title="Cochain class." alt="" coords="5,5,197,620"/>
 </map>
 </div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a8400edb3176626595eb636342ce29a80" id="r_a8400edb3176626595eb636342ce29a80"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a8400edb3176626595eb636342ce29a80">execution_space</a> = ExecSpace</td></tr>
-<tr class="separator:a8400edb3176626595eb636342ce29a80"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6cd9724d632807da00a553d35d11bd0c" id="r_a6cd9724d632807da00a553d35d11bd0c"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a6cd9724d632807da00a553d35d11bd0c">memory_space</a> = typename ExecSpace::memory_space</td></tr>
-<tr class="separator:a6cd9724d632807da00a553d35d11bd0c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4d77cdd3222897629fc4fa43dc909aa9" id="r_a4d77cdd3222897629fc4fa43dc909aa9"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a4d77cdd3222897629fc4fa43dc909aa9">simplex_type</a> = typename ChainType::simplex_type</td></tr>
-<tr class="separator:a4d77cdd3222897629fc4fa43dc909aa9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa20ef6edda020cf708e0833f36dcaf7c" id="r_aa20ef6edda020cf708e0833f36dcaf7c"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#aa20ef6edda020cf708e0833f36dcaf7c">chain_type</a> = ChainType</td></tr>
-<tr class="separator:aa20ef6edda020cf708e0833f36dcaf7c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a04d9e7c2b0dab6420aa884f047e6f922" id="r_a04d9e7c2b0dab6420aa884f047e6f922"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a04d9e7c2b0dab6420aa884f047e6f922">element_type</a> = ElementType</td></tr>
-<tr class="separator:a04d9e7c2b0dab6420aa884f047e6f922"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1687b18884b7b5cff598e06e72a21ef1" id="r_a1687b18884b7b5cff598e06e72a21ef1"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a1687b18884b7b5cff598e06e72a21ef1">discrete_element_type</a> = ChainType::discrete_element_type</td></tr>
-<tr class="separator:a1687b18884b7b5cff598e06e72a21ef1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac1cf28ed39db7e9effaaedfae006b059" id="r_ac1cf28ed39db7e9effaaedfae006b059"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#ac1cf28ed39db7e9effaaedfae006b059">discrete_vector_type</a> = ChainType::discrete_vector_type</td></tr>
-<tr class="separator:ac1cf28ed39db7e9effaaedfae006b059"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1eff4ffac3710382a01eaa2dde8069bd" id="r_a1eff4ffac3710382a01eaa2dde8069bd"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a1eff4ffac3710382a01eaa2dde8069bd">values_type</a> = Kokkos::View&lt; ElementType *, ExecSpace &gt;</td></tr>
-<tr class="separator:a1eff4ffac3710382a01eaa2dde8069bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4901295a5dc5f2e6a6bc8f3ab1a3e095" id="r_a4901295a5dc5f2e6a6bc8f3ab1a3e095"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a4901295a5dc5f2e6a6bc8f3ab1a3e095">cosimplex_type</a> = <a class="el" href="classsil_1_1exterior_1_1Cosimplex.html">Cosimplex</a>&lt; <a class="el" href="classsil_1_1exterior_1_1Cochain.html#a4d77cdd3222897629fc4fa43dc909aa9">simplex_type</a>, <a class="el" href="classsil_1_1exterior_1_1Cochain.html#a04d9e7c2b0dab6420aa884f047e6f922">element_type</a> &gt;</td></tr>
-<tr class="separator:a4901295a5dc5f2e6a6bc8f3ab1a3e095"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac913c37bb138987dcb68e04190d484f4" id="r_ac913c37bb138987dcb68e04190d484f4"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#ac913c37bb138987dcb68e04190d484f4">iterator</a> = <a class="el" href="classsil_1_1exterior_1_1CochainIterator.html">CochainIterator</a>&lt; <a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a> &gt;</td></tr>
-<tr class="separator:ac913c37bb138987dcb68e04190d484f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7c0635ffcde7d46d321f057d4d2cceb1" id="r_a7c0635ffcde7d46d321f057d4d2cceb1"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a7c0635ffcde7d46d321f057d4d2cceb1">execution_space</a> = typename ChainType::execution_space</td></tr>
+<tr class="separator:a7c0635ffcde7d46d321f057d4d2cceb1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af7e7ed72c9f84298f90d439bb8666bbe" id="r_af7e7ed72c9f84298f90d439bb8666bbe"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#af7e7ed72c9f84298f90d439bb8666bbe">memory_space</a> = typename ChainType::memory_space</td></tr>
+<tr class="separator:af7e7ed72c9f84298f90d439bb8666bbe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7e72ac33d849a8377e44cc89d8002d1f" id="r_a7e72ac33d849a8377e44cc89d8002d1f"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a7e72ac33d849a8377e44cc89d8002d1f">simplex_type</a> = typename ChainType::simplex_type</td></tr>
+<tr class="separator:a7e72ac33d849a8377e44cc89d8002d1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a007d4ba4197f81f5711edf7d71c5edb3" id="r_a007d4ba4197f81f5711edf7d71c5edb3"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a007d4ba4197f81f5711edf7d71c5edb3">chain_type</a> = ChainType</td></tr>
+<tr class="separator:a007d4ba4197f81f5711edf7d71c5edb3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af822db86d28b316bef56fdfb13407651" id="r_af822db86d28b316bef56fdfb13407651"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#af822db86d28b316bef56fdfb13407651">element_type</a> = ElementType</td></tr>
+<tr class="separator:af822db86d28b316bef56fdfb13407651"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5d2033ec4804fa4807f390a89ddf04cc" id="r_a5d2033ec4804fa4807f390a89ddf04cc"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a5d2033ec4804fa4807f390a89ddf04cc">discrete_element_type</a> = ChainType::discrete_element_type</td></tr>
+<tr class="separator:a5d2033ec4804fa4807f390a89ddf04cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abd181dd4992dcc9ca8ab46d3db6605ff" id="r_abd181dd4992dcc9ca8ab46d3db6605ff"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#abd181dd4992dcc9ca8ab46d3db6605ff">discrete_vector_type</a> = ChainType::discrete_vector_type</td></tr>
+<tr class="separator:abd181dd4992dcc9ca8ab46d3db6605ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0212df884d04e97942dc638509b78710" id="r_a0212df884d04e97942dc638509b78710"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a0212df884d04e97942dc638509b78710">values_type</a> = Kokkos::View&lt; ElementType *, LayoutStridedPolicy, <a class="el" href="classsil_1_1exterior_1_1Cochain.html#af7e7ed72c9f84298f90d439bb8666bbe">memory_space</a> &gt;</td></tr>
+<tr class="separator:a0212df884d04e97942dc638509b78710"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6f5e094cf0f178ce7194a4a320402d66" id="r_a6f5e094cf0f178ce7194a4a320402d66"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a6f5e094cf0f178ce7194a4a320402d66">cosimplex_type</a> = <a class="el" href="classsil_1_1exterior_1_1Cosimplex.html">Cosimplex</a>&lt; <a class="el" href="classsil_1_1exterior_1_1Cochain.html#a7e72ac33d849a8377e44cc89d8002d1f">simplex_type</a>, <a class="el" href="classsil_1_1exterior_1_1Cochain.html#af822db86d28b316bef56fdfb13407651">element_type</a> &gt;</td></tr>
+<tr class="separator:a6f5e094cf0f178ce7194a4a320402d66"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad406be9ee3cff5f382c8fdc7d098b0f3" id="r_ad406be9ee3cff5f382c8fdc7d098b0f3"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#ad406be9ee3cff5f382c8fdc7d098b0f3">iterator</a> = <a class="el" href="classsil_1_1exterior_1_1CochainIterator.html">CochainIterator</a>&lt; <a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a> &gt;</td></tr>
+<tr class="separator:ad406be9ee3cff5f382c8fdc7d098b0f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ad3ed13a9176e264c9897e3782b35a9e2" id="r_ad3ed13a9176e264c9897e3782b35a9e2"><td class="memItemLeft" align="right" valign="top">KOKKOS_DEFAULTED_FUNCTION constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#ad3ed13a9176e264c9897e3782b35a9e2">Cochain</a> ()=default</td></tr>
-<tr class="separator:ad3ed13a9176e264c9897e3782b35a9e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3f8b8e718dcbb76857eebf43966427ef" id="r_a3f8b8e718dcbb76857eebf43966427ef"><td class="memItemLeft" align="right" valign="top">KOKKOS_DEFAULTED_FUNCTION constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a3f8b8e718dcbb76857eebf43966427ef">Cochain</a> (<a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a> const &amp;)=default</td></tr>
-<tr class="separator:a3f8b8e718dcbb76857eebf43966427ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a39778fb55e7f81b914d7874bfb104a9c" id="r_a39778fb55e7f81b914d7874bfb104a9c"><td class="memItemLeft" align="right" valign="top">KOKKOS_DEFAULTED_FUNCTION constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a39778fb55e7f81b914d7874bfb104a9c">Cochain</a> (<a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a> &amp;&amp;)=default</td></tr>
-<tr class="separator:a39778fb55e7f81b914d7874bfb104a9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7e94c16b030243a8f9d53ef786cbe8e8" id="r_a7e94c16b030243a8f9d53ef786cbe8e8"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a7e94c16b030243a8f9d53ef786cbe8e8">Cochain</a> (<a class="el" href="classsil_1_1exterior_1_1Cochain.html#aa20ef6edda020cf708e0833f36dcaf7c">chain_type</a> <a class="el" href="classsil_1_1exterior_1_1Cochain.html#af4dd0b34fae7ea6b1d806801affa34f6">chain</a>) noexcept</td></tr>
-<tr class="separator:a7e94c16b030243a8f9d53ef786cbe8e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4024b9026e181b965a582d723686341d" id="r_a4024b9026e181b965a582d723686341d"><td class="memTemplParams" colspan="2">template&lt;class... T&gt; <br />
+<tr class="memitem:a00ace4c3dbf4554dd047cda01c0920f6" id="r_a00ace4c3dbf4554dd047cda01c0920f6"><td class="memItemLeft" align="right" valign="top">KOKKOS_DEFAULTED_FUNCTION constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a00ace4c3dbf4554dd047cda01c0920f6">Cochain</a> ()=default</td></tr>
+<tr class="separator:a00ace4c3dbf4554dd047cda01c0920f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1946f471f281d02f9e9ecaa68c8e2abd" id="r_a1946f471f281d02f9e9ecaa68c8e2abd"><td class="memItemLeft" align="right" valign="top">KOKKOS_DEFAULTED_FUNCTION constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a1946f471f281d02f9e9ecaa68c8e2abd">Cochain</a> (<a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a> const &amp;)=default</td></tr>
+<tr class="separator:a1946f471f281d02f9e9ecaa68c8e2abd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7ac5ee536a0be2e1ee39965a11979952" id="r_a7ac5ee536a0be2e1ee39965a11979952"><td class="memItemLeft" align="right" valign="top">KOKKOS_DEFAULTED_FUNCTION constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a7ac5ee536a0be2e1ee39965a11979952">Cochain</a> (<a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a> &amp;&amp;)=default</td></tr>
+<tr class="separator:a7ac5ee536a0be2e1ee39965a11979952"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a062f6b04becc34211473484ea28f8310" id="r_a062f6b04becc34211473484ea28f8310"><td class="memTemplParams" colspan="2">template&lt;class... T&gt; <br />
 requires (sizeof...(T) &gt;= 1 &amp;&amp; (std::is_convertible_v&lt;T, double&gt; &amp;&amp; ...))</td></tr>
-<tr class="memitem:a4024b9026e181b965a582d723686341d"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a4024b9026e181b965a582d723686341d">Cochain</a> (<a class="el" href="classsil_1_1exterior_1_1Cochain.html#aa20ef6edda020cf708e0833f36dcaf7c">chain_type</a> <a class="el" href="classsil_1_1exterior_1_1Cochain.html#af4dd0b34fae7ea6b1d806801affa34f6">chain</a>, T... value) noexcept</td></tr>
-<tr class="separator:a4024b9026e181b965a582d723686341d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae7f7661693227ee1ddd1dbd665bb0666" id="r_ae7f7661693227ee1ddd1dbd665bb0666"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#ae7f7661693227ee1ddd1dbd665bb0666">Cochain</a> (<a class="el" href="classsil_1_1exterior_1_1Cochain.html#aa20ef6edda020cf708e0833f36dcaf7c">chain_type</a> &amp;<a class="el" href="classsil_1_1exterior_1_1Cochain.html#af4dd0b34fae7ea6b1d806801affa34f6">chain</a>, <a class="el" href="classsil_1_1exterior_1_1Cochain.html#a1eff4ffac3710382a01eaa2dde8069bd">values_type</a> &amp;<a class="el" href="classsil_1_1exterior_1_1Cochain.html#aa64e3ea50d5aebe4c07093fcac3ef2b5">values</a>) noexcept</td></tr>
-<tr class="separator:ae7f7661693227ee1ddd1dbd665bb0666"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a340d3b8ae813351b9d0175d80ea071d5" id="r_a340d3b8ae813351b9d0175d80ea071d5"><td class="memTemplParams" colspan="2">template&lt;class OElementType , tensor::TensorIndex Index, class LayoutStridedPolicy , class MemorySpace &gt; <br />
+<tr class="memitem:a062f6b04becc34211473484ea28f8310"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a062f6b04becc34211473484ea28f8310">Cochain</a> (<a class="el" href="classsil_1_1exterior_1_1Cochain.html#a007d4ba4197f81f5711edf7d71c5edb3">chain_type</a> <a class="el" href="classsil_1_1exterior_1_1Cochain.html#a44b02104d687099f23bc32789867b631">chain</a>, <a class="el" href="classsil_1_1exterior_1_1Cochain.html#a0212df884d04e97942dc638509b78710">values_type</a> allocation, T... value) noexcept</td></tr>
+<tr class="separator:a062f6b04becc34211473484ea28f8310"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae46a56ae08288a3c5973656444f1b16c" id="r_ae46a56ae08288a3c5973656444f1b16c"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#ae46a56ae08288a3c5973656444f1b16c">Cochain</a> (<a class="el" href="classsil_1_1exterior_1_1Cochain.html#a007d4ba4197f81f5711edf7d71c5edb3">chain_type</a> const &amp;<a class="el" href="classsil_1_1exterior_1_1Cochain.html#a44b02104d687099f23bc32789867b631">chain</a>, <a class="el" href="classsil_1_1exterior_1_1Cochain.html#a0212df884d04e97942dc638509b78710">values_type</a> const &amp;<a class="el" href="classsil_1_1exterior_1_1Cochain.html#a738cf8febe379dce06675974a3f6e6f2">values</a>) noexcept</td></tr>
+<tr class="separator:ae46a56ae08288a3c5973656444f1b16c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a775165706e6e9fe6f609c37375f32329" id="r_a775165706e6e9fe6f609c37375f32329"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorIndex Index&gt; <br />
 requires (misc::Specialization&lt;Index, <a class="el" href="structsil_1_1tensor_1_1TensorAntisymmetricIndex.html">tensor::TensorAntisymmetricIndex</a>&gt; || tensor::TensorNatIndex&lt;Index&gt;)</td></tr>
-<tr class="memitem:a340d3b8ae813351b9d0175d80ea071d5"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a340d3b8ae813351b9d0175d80ea071d5">Cochain</a> (<a class="el" href="classsil_1_1exterior_1_1Cochain.html#aa20ef6edda020cf708e0833f36dcaf7c">chain_type</a> &amp;<a class="el" href="classsil_1_1exterior_1_1Cochain.html#af4dd0b34fae7ea6b1d806801affa34f6">chain</a>, tensor::Tensor&lt; OElementType, ddc::DiscreteDomain&lt; Index &gt;, LayoutStridedPolicy, MemorySpace &gt; tensor) noexcept</td></tr>
-<tr class="separator:a340d3b8ae813351b9d0175d80ea071d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad02156f956175888f4806e0ee5452b75" id="r_ad02156f956175888f4806e0ee5452b75"><td class="memItemLeft" align="right" valign="top">KOKKOS_DEFAULTED_FUNCTION&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#ad02156f956175888f4806e0ee5452b75">~Cochain</a> ()=default</td></tr>
-<tr class="separator:ad02156f956175888f4806e0ee5452b75"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a797f42e2bd1a2a69035155f5b1ba5954" id="r_a797f42e2bd1a2a69035155f5b1ba5954"><td class="memItemLeft" align="right" valign="top">KOKKOS_DEFAULTED_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a797f42e2bd1a2a69035155f5b1ba5954">operator=</a> (<a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a> const &amp;other)=default</td></tr>
-<tr class="separator:a797f42e2bd1a2a69035155f5b1ba5954"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a18b2cf22ee501f59fc2412ec5a7ce589" id="r_a18b2cf22ee501f59fc2412ec5a7ce589"><td class="memItemLeft" align="right" valign="top">KOKKOS_DEFAULTED_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a18b2cf22ee501f59fc2412ec5a7ce589">operator=</a> (<a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a> &amp;&amp;other)=default</td></tr>
-<tr class="separator:a18b2cf22ee501f59fc2412ec5a7ce589"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af8bb1f3e1d242d5cb3d06b179454a1b8" id="r_af8bb1f3e1d242d5cb3d06b179454a1b8"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#af8bb1f3e1d242d5cb3d06b179454a1b8">size</a> () noexcept</td></tr>
-<tr class="separator:af8bb1f3e1d242d5cb3d06b179454a1b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5ffa60296f4e8814b0dc0c551496e229" id="r_a5ffa60296f4e8814b0dc0c551496e229"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a5ffa60296f4e8814b0dc0c551496e229">size</a> () const noexcept</td></tr>
-<tr class="separator:a5ffa60296f4e8814b0dc0c551496e229"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af4dd0b34fae7ea6b1d806801affa34f6" id="r_af4dd0b34fae7ea6b1d806801affa34f6"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cochain.html#aa20ef6edda020cf708e0833f36dcaf7c">chain_type</a> const &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#af4dd0b34fae7ea6b1d806801affa34f6">chain</a> () const noexcept</td></tr>
-<tr class="separator:af4dd0b34fae7ea6b1d806801affa34f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa64e3ea50d5aebe4c07093fcac3ef2b5" id="r_aa64e3ea50d5aebe4c07093fcac3ef2b5"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cochain.html#aa20ef6edda020cf708e0833f36dcaf7c">chain_type</a> const &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#aa64e3ea50d5aebe4c07093fcac3ef2b5">values</a> () const noexcept</td></tr>
-<tr class="separator:aa64e3ea50d5aebe4c07093fcac3ef2b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a413d5cf913c3c4eda0d1e348dd41ac2f" id="r_a413d5cf913c3c4eda0d1e348dd41ac2f"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a413d5cf913c3c4eda0d1e348dd41ac2f">begin</a> ()</td></tr>
-<tr class="separator:a413d5cf913c3c4eda0d1e348dd41ac2f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9906d00fc3f29df93b62b72c09912a89" id="r_a9906d00fc3f29df93b62b72c09912a89"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a9906d00fc3f29df93b62b72c09912a89">begin</a> () const</td></tr>
-<tr class="separator:a9906d00fc3f29df93b62b72c09912a89"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a33ae98de44b10bea26abcffd6ff348f5" id="r_a33ae98de44b10bea26abcffd6ff348f5"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a33ae98de44b10bea26abcffd6ff348f5">end</a> ()</td></tr>
-<tr class="separator:a33ae98de44b10bea26abcffd6ff348f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af271a03cab64284800748b3c91ffc19d" id="r_af271a03cab64284800748b3c91ffc19d"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#af271a03cab64284800748b3c91ffc19d">end</a> () const</td></tr>
-<tr class="separator:af271a03cab64284800748b3c91ffc19d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afca6d0656b05a7ac111d876843d5bd67" id="r_afca6d0656b05a7ac111d876843d5bd67"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#afca6d0656b05a7ac111d876843d5bd67">cbegin</a> () const</td></tr>
-<tr class="separator:afca6d0656b05a7ac111d876843d5bd67"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9ec1bf84c05f8c0f265d1793a9d70752" id="r_a9ec1bf84c05f8c0f265d1793a9d70752"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a9ec1bf84c05f8c0f265d1793a9d70752">cend</a> () const</td></tr>
-<tr class="separator:a9ec1bf84c05f8c0f265d1793a9d70752"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a70b0aca7a32094523249d48e6df96ced" id="r_a70b0aca7a32094523249d48e6df96ced"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cosimplex.html">Cosimplex</a>&lt; <a class="el" href="classsil_1_1exterior_1_1Cochain.html#a4d77cdd3222897629fc4fa43dc909aa9">simplex_type</a>, <a class="el" href="classsil_1_1exterior_1_1Cochain.html#a04d9e7c2b0dab6420aa884f047e6f922">element_type</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a70b0aca7a32094523249d48e6df96ced">operator[]</a> (std::size_t i) noexcept</td></tr>
-<tr class="separator:a70b0aca7a32094523249d48e6df96ced"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a76aa681dce6bd438b258abe0bdfad948" id="r_a76aa681dce6bd438b258abe0bdfad948"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cosimplex.html">Cosimplex</a>&lt; <a class="el" href="classsil_1_1exterior_1_1Cochain.html#a4d77cdd3222897629fc4fa43dc909aa9">simplex_type</a>, <a class="el" href="classsil_1_1exterior_1_1Cochain.html#a04d9e7c2b0dab6420aa884f047e6f922">element_type</a> &gt; const &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a76aa681dce6bd438b258abe0bdfad948">operator[]</a> (std::size_t i) const noexcept</td></tr>
-<tr class="separator:a76aa681dce6bd438b258abe0bdfad948"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab0c3007616426fdc29dd56f2bade536d" id="r_ab0c3007616426fdc29dd56f2bade536d"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cochain.html#a04d9e7c2b0dab6420aa884f047e6f922">element_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#ab0c3007616426fdc29dd56f2bade536d">integrate</a> () noexcept</td></tr>
-<tr class="separator:ab0c3007616426fdc29dd56f2bade536d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2bf47f692fc07c3a1b7a024fa2437c3a" id="r_a2bf47f692fc07c3a1b7a024fa2437c3a"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cochain.html#a04d9e7c2b0dab6420aa884f047e6f922">element_type</a> const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a2bf47f692fc07c3a1b7a024fa2437c3a">integrate</a> () const noexcept</td></tr>
-<tr class="separator:a2bf47f692fc07c3a1b7a024fa2437c3a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a775165706e6e9fe6f609c37375f32329"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a775165706e6e9fe6f609c37375f32329">Cochain</a> (<a class="el" href="classsil_1_1exterior_1_1Cochain.html#a007d4ba4197f81f5711edf7d71c5edb3">chain_type</a> const &amp;<a class="el" href="classsil_1_1exterior_1_1Cochain.html#a44b02104d687099f23bc32789867b631">chain</a>, tensor::Tensor&lt; <a class="el" href="classsil_1_1exterior_1_1Cochain.html#af822db86d28b316bef56fdfb13407651">element_type</a>, ddc::DiscreteDomain&lt; Index &gt;, ddc::detail::kokkos_to_mdspan_layout_t&lt; LayoutStridedPolicy &gt;, <a class="el" href="classsil_1_1exterior_1_1Cochain.html#af7e7ed72c9f84298f90d439bb8666bbe">memory_space</a> &gt; tensor) noexcept</td></tr>
+<tr class="separator:a775165706e6e9fe6f609c37375f32329"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad9fdff270e87176e735b98c1897b7db9" id="r_ad9fdff270e87176e735b98c1897b7db9"><td class="memItemLeft" align="right" valign="top">KOKKOS_DEFAULTED_FUNCTION&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#ad9fdff270e87176e735b98c1897b7db9">~Cochain</a> ()=default</td></tr>
+<tr class="separator:ad9fdff270e87176e735b98c1897b7db9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a48ed3bf022196eadc537ce67e2f83024" id="r_a48ed3bf022196eadc537ce67e2f83024"><td class="memItemLeft" align="right" valign="top">KOKKOS_DEFAULTED_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a48ed3bf022196eadc537ce67e2f83024">operator=</a> (<a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a> const &amp;other)=default</td></tr>
+<tr class="separator:a48ed3bf022196eadc537ce67e2f83024"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a413344c8c105552d036603b6618dcb36" id="r_a413344c8c105552d036603b6618dcb36"><td class="memItemLeft" align="right" valign="top">KOKKOS_DEFAULTED_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a413344c8c105552d036603b6618dcb36">operator=</a> (<a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a> &amp;&amp;other)=default</td></tr>
+<tr class="separator:a413344c8c105552d036603b6618dcb36"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8691aa090c426daa7ab474b705b2c929" id="r_a8691aa090c426daa7ab474b705b2c929"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a8691aa090c426daa7ab474b705b2c929">size</a> () noexcept</td></tr>
+<tr class="separator:a8691aa090c426daa7ab474b705b2c929"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa66001d2bd2c3100c9111180d08e7ee6" id="r_aa66001d2bd2c3100c9111180d08e7ee6"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#aa66001d2bd2c3100c9111180d08e7ee6">size</a> () const noexcept</td></tr>
+<tr class="separator:aa66001d2bd2c3100c9111180d08e7ee6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae0e65e36adcef586c5f50c190ef0b01f" id="r_ae0e65e36adcef586c5f50c190ef0b01f"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#ae0e65e36adcef586c5f50c190ef0b01f">allocation_size</a> () noexcept</td></tr>
+<tr class="separator:ae0e65e36adcef586c5f50c190ef0b01f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a091ce1753626e4de7e246fb0e5e62ffe" id="r_a091ce1753626e4de7e246fb0e5e62ffe"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a091ce1753626e4de7e246fb0e5e62ffe">allocation_size</a> () const noexcept</td></tr>
+<tr class="separator:a091ce1753626e4de7e246fb0e5e62ffe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a44b02104d687099f23bc32789867b631" id="r_a44b02104d687099f23bc32789867b631"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cochain.html#a007d4ba4197f81f5711edf7d71c5edb3">chain_type</a> const &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a44b02104d687099f23bc32789867b631">chain</a> () const noexcept</td></tr>
+<tr class="separator:a44b02104d687099f23bc32789867b631"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a738cf8febe379dce06675974a3f6e6f2" id="r_a738cf8febe379dce06675974a3f6e6f2"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cochain.html#a007d4ba4197f81f5711edf7d71c5edb3">chain_type</a> const &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a738cf8febe379dce06675974a3f6e6f2">values</a> () const noexcept</td></tr>
+<tr class="separator:a738cf8febe379dce06675974a3f6e6f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a263988497579d4b36512efc8bd6c1659" id="r_a263988497579d4b36512efc8bd6c1659"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a263988497579d4b36512efc8bd6c1659">begin</a> ()</td></tr>
+<tr class="separator:a263988497579d4b36512efc8bd6c1659"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad4d5571092ef69a7822c8050c29e483e" id="r_ad4d5571092ef69a7822c8050c29e483e"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#ad4d5571092ef69a7822c8050c29e483e">begin</a> () const</td></tr>
+<tr class="separator:ad4d5571092ef69a7822c8050c29e483e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1f3371aac9318abfe0193a9732df7354" id="r_a1f3371aac9318abfe0193a9732df7354"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a1f3371aac9318abfe0193a9732df7354">end</a> ()</td></tr>
+<tr class="separator:a1f3371aac9318abfe0193a9732df7354"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4f35cf887e74739b2268810660bb99db" id="r_a4f35cf887e74739b2268810660bb99db"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a4f35cf887e74739b2268810660bb99db">end</a> () const</td></tr>
+<tr class="separator:a4f35cf887e74739b2268810660bb99db"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae8cfbb3ee2ea8548e085343bd13de438" id="r_ae8cfbb3ee2ea8548e085343bd13de438"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#ae8cfbb3ee2ea8548e085343bd13de438">cbegin</a> () const</td></tr>
+<tr class="separator:ae8cfbb3ee2ea8548e085343bd13de438"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ace878b5e78c140e8e0949fe7f82a9d97" id="r_ace878b5e78c140e8e0949fe7f82a9d97"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#ace878b5e78c140e8e0949fe7f82a9d97">cend</a> () const</td></tr>
+<tr class="separator:ace878b5e78c140e8e0949fe7f82a9d97"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6f0b2c3935e1db5a72f232f213c113bf" id="r_a6f0b2c3935e1db5a72f232f213c113bf"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cosimplex.html">Cosimplex</a>&lt; <a class="el" href="classsil_1_1exterior_1_1Cochain.html#a7e72ac33d849a8377e44cc89d8002d1f">simplex_type</a>, <a class="el" href="classsil_1_1exterior_1_1Cochain.html#af822db86d28b316bef56fdfb13407651">element_type</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a6f0b2c3935e1db5a72f232f213c113bf">operator[]</a> (std::size_t i) noexcept</td></tr>
+<tr class="separator:a6f0b2c3935e1db5a72f232f213c113bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acd0ddc0e2938390d17d5e4f67df16eea" id="r_acd0ddc0e2938390d17d5e4f67df16eea"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cosimplex.html">Cosimplex</a>&lt; <a class="el" href="classsil_1_1exterior_1_1Cochain.html#a7e72ac33d849a8377e44cc89d8002d1f">simplex_type</a>, <a class="el" href="classsil_1_1exterior_1_1Cochain.html#af822db86d28b316bef56fdfb13407651">element_type</a> &gt; const &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#acd0ddc0e2938390d17d5e4f67df16eea">operator[]</a> (std::size_t i) const noexcept</td></tr>
+<tr class="separator:acd0ddc0e2938390d17d5e4f67df16eea"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a890f2f6b55bed14b36fbe43472eb5879" id="r_a890f2f6b55bed14b36fbe43472eb5879"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cochain.html#af822db86d28b316bef56fdfb13407651">element_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a890f2f6b55bed14b36fbe43472eb5879">integrate</a> () noexcept</td></tr>
+<tr class="separator:a890f2f6b55bed14b36fbe43472eb5879"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acc089fac9d869e039ab61a0ac2b0fc1b" id="r_acc089fac9d869e039ab61a0ac2b0fc1b"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cochain.html#af822db86d28b316bef56fdfb13407651">element_type</a> const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#acc089fac9d869e039ab61a0ac2b0fc1b">integrate</a> () const noexcept</td></tr>
+<tr class="separator:acc089fac9d869e039ab61a0ac2b0fc1b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:aeb6f7c7dd5faae6f04534362d97c880d" id="r_aeb6f7c7dd5faae6f04534362d97c880d"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#aeb6f7c7dd5faae6f04534362d97c880d">is_local</a> () noexcept</td></tr>
-<tr class="separator:aeb6f7c7dd5faae6f04534362d97c880d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aca9b107daf2041ed03bdb508dbbf5e2b" id="r_aca9b107daf2041ed03bdb508dbbf5e2b"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#aca9b107daf2041ed03bdb508dbbf5e2b">dimension</a> () noexcept</td></tr>
-<tr class="separator:aca9b107daf2041ed03bdb508dbbf5e2b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a08a8082b1db2a59a25659eeab076e7d5" id="r_a08a8082b1db2a59a25659eeab076e7d5"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a08a8082b1db2a59a25659eeab076e7d5">is_local</a> () noexcept</td></tr>
+<tr class="separator:a08a8082b1db2a59a25659eeab076e7d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4048dda021294116c9115b41bc64e50e" id="r_a4048dda021294116c9115b41bc64e50e"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a4048dda021294116c9115b41bc64e50e">dimension</a> () noexcept</td></tr>
+<tr class="separator:a4048dda021294116c9115b41bc64e50e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><div class="compoundTemplParams">template&lt;class ChainType, class ElementType = double, class ExecSpace = Kokkos::DefaultHostExecutionSpace&gt;<br />
+<div class="textblock"><div class="compoundTemplParams">template&lt;class ChainType, class ElementType = double, class LayoutStridedPolicy = Kokkos::LayoutRight&gt;<br />
 requires (misc::Specialization&lt;ChainType, <a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&gt; || misc::Specialization&lt;ChainType, <a class="el" href="classsil_1_1exterior_1_1LocalChain.html">LocalChain</a>&gt;)<br />
-class sil::exterior::Cochain&lt; ChainType, ElementType, ExecSpace &gt;</div><p><a class="el" href="classsil_1_1exterior_1_1Cochain.html" title="Cochain class.">Cochain</a> class. </p>
+class sil::exterior::Cochain&lt; ChainType, ElementType, LayoutStridedPolicy &gt;</div><p><a class="el" href="classsil_1_1exterior_1_1Cochain.html" title="Cochain class.">Cochain</a> class. </p>
 
 <p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00029">29</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
-<a id="a8400edb3176626595eb636342ce29a80" name="a8400edb3176626595eb636342ce29a80"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8400edb3176626595eb636342ce29a80">&#9670;&#160;</a></span>execution_space</h2>
+<a id="a7c0635ffcde7d46d321f057d4d2cceb1" name="a7c0635ffcde7d46d321f057d4d2cceb1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7c0635ffcde7d46d321f057d4d2cceb1">&#9670;&#160;</a></span>execution_space</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::execution_space =  ExecSpace</td>
+          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::execution_space =  typename ChainType::execution_space</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -251,16 +253,16 @@ template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Ko
 
 </div>
 </div>
-<a id="a6cd9724d632807da00a553d35d11bd0c" name="a6cd9724d632807da00a553d35d11bd0c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6cd9724d632807da00a553d35d11bd0c">&#9670;&#160;</a></span>memory_space</h2>
+<a id="af7e7ed72c9f84298f90d439bb8666bbe" name="af7e7ed72c9f84298f90d439bb8666bbe"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af7e7ed72c9f84298f90d439bb8666bbe">&#9670;&#160;</a></span>memory_space</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::memory_space =  typename ExecSpace::memory_space</td>
+          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::memory_space =  typename ChainType::memory_space</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -269,16 +271,16 @@ template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Ko
 
 </div>
 </div>
-<a id="a4d77cdd3222897629fc4fa43dc909aa9" name="a4d77cdd3222897629fc4fa43dc909aa9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4d77cdd3222897629fc4fa43dc909aa9">&#9670;&#160;</a></span>simplex_type</h2>
+<a id="a7e72ac33d849a8377e44cc89d8002d1f" name="a7e72ac33d849a8377e44cc89d8002d1f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7e72ac33d849a8377e44cc89d8002d1f">&#9670;&#160;</a></span>simplex_type</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::simplex_type =  typename ChainType::simplex_type</td>
+          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::simplex_type =  typename ChainType::simplex_type</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -287,16 +289,16 @@ template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Ko
 
 </div>
 </div>
-<a id="aa20ef6edda020cf708e0833f36dcaf7c" name="aa20ef6edda020cf708e0833f36dcaf7c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa20ef6edda020cf708e0833f36dcaf7c">&#9670;&#160;</a></span>chain_type</h2>
+<a id="a007d4ba4197f81f5711edf7d71c5edb3" name="a007d4ba4197f81f5711edf7d71c5edb3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a007d4ba4197f81f5711edf7d71c5edb3">&#9670;&#160;</a></span>chain_type</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::chain_type =  ChainType</td>
+          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::chain_type =  ChainType</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -305,16 +307,16 @@ template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Ko
 
 </div>
 </div>
-<a id="a04d9e7c2b0dab6420aa884f047e6f922" name="a04d9e7c2b0dab6420aa884f047e6f922"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a04d9e7c2b0dab6420aa884f047e6f922">&#9670;&#160;</a></span>element_type</h2>
+<a id="af822db86d28b316bef56fdfb13407651" name="af822db86d28b316bef56fdfb13407651"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af822db86d28b316bef56fdfb13407651">&#9670;&#160;</a></span>element_type</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::element_type =  ElementType</td>
+          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::element_type =  ElementType</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -323,16 +325,16 @@ template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Ko
 
 </div>
 </div>
-<a id="a1687b18884b7b5cff598e06e72a21ef1" name="a1687b18884b7b5cff598e06e72a21ef1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1687b18884b7b5cff598e06e72a21ef1">&#9670;&#160;</a></span>discrete_element_type</h2>
+<a id="a5d2033ec4804fa4807f390a89ddf04cc" name="a5d2033ec4804fa4807f390a89ddf04cc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5d2033ec4804fa4807f390a89ddf04cc">&#9670;&#160;</a></span>discrete_element_type</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::discrete_element_type =  ChainType::discrete_element_type</td>
+          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::discrete_element_type =  ChainType::discrete_element_type</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -341,16 +343,16 @@ template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Ko
 
 </div>
 </div>
-<a id="ac1cf28ed39db7e9effaaedfae006b059" name="ac1cf28ed39db7e9effaaedfae006b059"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac1cf28ed39db7e9effaaedfae006b059">&#9670;&#160;</a></span>discrete_vector_type</h2>
+<a id="abd181dd4992dcc9ca8ab46d3db6605ff" name="abd181dd4992dcc9ca8ab46d3db6605ff"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abd181dd4992dcc9ca8ab46d3db6605ff">&#9670;&#160;</a></span>discrete_vector_type</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::discrete_vector_type =  ChainType::discrete_vector_type</td>
+          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::discrete_vector_type =  ChainType::discrete_vector_type</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -359,16 +361,16 @@ template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Ko
 
 </div>
 </div>
-<a id="a1eff4ffac3710382a01eaa2dde8069bd" name="a1eff4ffac3710382a01eaa2dde8069bd"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1eff4ffac3710382a01eaa2dde8069bd">&#9670;&#160;</a></span>values_type</h2>
+<a id="a0212df884d04e97942dc638509b78710" name="a0212df884d04e97942dc638509b78710"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0212df884d04e97942dc638509b78710">&#9670;&#160;</a></span>values_type</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::values_type =  Kokkos::View&lt;ElementType*, ExecSpace&gt;</td>
+          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::values_type =  Kokkos::View&lt;ElementType*, LayoutStridedPolicy, <a class="el" href="classsil_1_1exterior_1_1Cochain.html#af7e7ed72c9f84298f90d439bb8666bbe">memory_space</a>&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -377,16 +379,16 @@ template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Ko
 
 </div>
 </div>
-<a id="a4901295a5dc5f2e6a6bc8f3ab1a3e095" name="a4901295a5dc5f2e6a6bc8f3ab1a3e095"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4901295a5dc5f2e6a6bc8f3ab1a3e095">&#9670;&#160;</a></span>cosimplex_type</h2>
+<a id="a6f5e094cf0f178ce7194a4a320402d66" name="a6f5e094cf0f178ce7194a4a320402d66"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6f5e094cf0f178ce7194a4a320402d66">&#9670;&#160;</a></span>cosimplex_type</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::cosimplex_type =  <a class="el" href="classsil_1_1exterior_1_1Cosimplex.html">Cosimplex</a>&lt;<a class="el" href="classsil_1_1exterior_1_1Cochain.html#a4d77cdd3222897629fc4fa43dc909aa9">simplex_type</a>, <a class="el" href="classsil_1_1exterior_1_1Cochain.html#a04d9e7c2b0dab6420aa884f047e6f922">element_type</a>&gt;</td>
+          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::cosimplex_type =  <a class="el" href="classsil_1_1exterior_1_1Cosimplex.html">Cosimplex</a>&lt;<a class="el" href="classsil_1_1exterior_1_1Cochain.html#a7e72ac33d849a8377e44cc89d8002d1f">simplex_type</a>, <a class="el" href="classsil_1_1exterior_1_1Cochain.html#af822db86d28b316bef56fdfb13407651">element_type</a>&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -395,38 +397,38 @@ template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Ko
 
 </div>
 </div>
-<a id="ac913c37bb138987dcb68e04190d484f4" name="ac913c37bb138987dcb68e04190d484f4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac913c37bb138987dcb68e04190d484f4">&#9670;&#160;</a></span>iterator</h2>
+<a id="ad406be9ee3cff5f382c8fdc7d098b0f3" name="ad406be9ee3cff5f382c8fdc7d098b0f3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad406be9ee3cff5f382c8fdc7d098b0f3">&#9670;&#160;</a></span>iterator</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::iterator =  <a class="el" href="classsil_1_1exterior_1_1CochainIterator.html">CochainIterator</a>&lt;<a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a>&gt;</td>
+          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::iterator =  <a class="el" href="classsil_1_1exterior_1_1CochainIterator.html">CochainIterator</a>&lt;<a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a>&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00144">144</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00143">143</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="ad3ed13a9176e264c9897e3782b35a9e2" name="ad3ed13a9176e264c9897e3782b35a9e2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad3ed13a9176e264c9897e3782b35a9e2">&#9670;&#160;</a></span>Cochain() <span class="overload">[1/7]</span></h2>
+<a id="a00ace4c3dbf4554dd047cda01c0920f6" name="a00ace4c3dbf4554dd047cda01c0920f6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a00ace4c3dbf4554dd047cda01c0920f6">&#9670;&#160;</a></span>Cochain() <span class="overload">[1/6]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_DEFAULTED_FUNCTION constexpr <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::Cochain </td>
+          <td class="memname">KOKKOS_DEFAULTED_FUNCTION constexpr <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::Cochain </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -441,21 +443,21 @@ template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Ko
 
 </div>
 </div>
-<a id="a3f8b8e718dcbb76857eebf43966427ef" name="a3f8b8e718dcbb76857eebf43966427ef"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3f8b8e718dcbb76857eebf43966427ef">&#9670;&#160;</a></span>Cochain() <span class="overload">[2/7]</span></h2>
+<a id="a1946f471f281d02f9e9ecaa68c8e2abd" name="a1946f471f281d02f9e9ecaa68c8e2abd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1946f471f281d02f9e9ecaa68c8e2abd">&#9670;&#160;</a></span>Cochain() <span class="overload">[2/6]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_DEFAULTED_FUNCTION constexpr <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::Cochain </td>
+          <td class="memname">KOKKOS_DEFAULTED_FUNCTION constexpr <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::Cochain </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt; const &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt; const &amp;&#160;</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
         </tr>
@@ -469,21 +471,21 @@ template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Ko
 
 </div>
 </div>
-<a id="a39778fb55e7f81b914d7874bfb104a9c" name="a39778fb55e7f81b914d7874bfb104a9c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a39778fb55e7f81b914d7874bfb104a9c">&#9670;&#160;</a></span>Cochain() <span class="overload">[3/7]</span></h2>
+<a id="a7ac5ee536a0be2e1ee39965a11979952" name="a7ac5ee536a0be2e1ee39965a11979952"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7ac5ee536a0be2e1ee39965a11979952">&#9670;&#160;</a></span>Cochain() <span class="overload">[3/6]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_DEFAULTED_FUNCTION constexpr <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::Cochain </td>
+          <td class="memname">KOKKOS_DEFAULTED_FUNCTION constexpr <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::Cochain </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt; &amp;&amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt; &amp;&amp;&#160;</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
         </tr>
@@ -497,43 +499,13 @@ template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Ko
 
 </div>
 </div>
-<a id="a7e94c16b030243a8f9d53ef786cbe8e8" name="a7e94c16b030243a8f9d53ef786cbe8e8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7e94c16b030243a8f9d53ef786cbe8e8">&#9670;&#160;</a></span>Cochain() <span class="overload">[4/7]</span></h2>
+<a id="a062f6b04becc34211473484ea28f8310" name="a062f6b04becc34211473484ea28f8310"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a062f6b04becc34211473484ea28f8310">&#9670;&#160;</a></span>Cochain() <span class="overload">[4/6]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">KOKKOS_FUNCTION constexpr <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::Cochain </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#aa20ef6edda020cf708e0833f36dcaf7c">chain_type</a>&#160;</td>
-          <td class="paramname"><em>chain</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">explicit</span><span class="mlabel">constexpr</span><span class="mlabel">noexcept</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00055">55</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
-
-</div>
-</div>
-<a id="a4024b9026e181b965a582d723686341d" name="a4024b9026e181b965a582d723686341d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4024b9026e181b965a582d723686341d">&#9670;&#160;</a></span>Cochain() <span class="overload">[5/7]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
 <div class="memtemplate">
 template&lt;class... T&gt; <br />
 requires (sizeof...(T) &gt;= 1 &amp;&amp; (std::is_convertible_v&lt;T, double&gt; &amp;&amp; ...))</div>
@@ -542,10 +514,16 @@ requires (sizeof...(T) &gt;= 1 &amp;&amp; (std::is_convertible_v&lt;T, double&gt
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION constexpr <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::Cochain </td>
+          <td class="memname">KOKKOS_FUNCTION constexpr <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::Cochain </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#aa20ef6edda020cf708e0833f36dcaf7c">chain_type</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a007d4ba4197f81f5711edf7d71c5edb3">chain_type</a>&#160;</td>
           <td class="paramname"><em>chain</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a0212df884d04e97942dc638509b78710">values_type</a>&#160;</td>
+          <td class="paramname"><em>allocation</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -566,31 +544,31 @@ requires (sizeof...(T) &gt;= 1 &amp;&amp; (std::is_convertible_v&lt;T, double&gt
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00063">63</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00057">57</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="ae7f7661693227ee1ddd1dbd665bb0666" name="ae7f7661693227ee1ddd1dbd665bb0666"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae7f7661693227ee1ddd1dbd665bb0666">&#9670;&#160;</a></span>Cochain() <span class="overload">[6/7]</span></h2>
+<a id="ae46a56ae08288a3c5973656444f1b16c" name="ae46a56ae08288a3c5973656444f1b16c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae46a56ae08288a3c5973656444f1b16c">&#9670;&#160;</a></span>Cochain() <span class="overload">[5/6]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION constexpr <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::Cochain </td>
+          <td class="memname">KOKKOS_FUNCTION constexpr <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::Cochain </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#aa20ef6edda020cf708e0833f36dcaf7c">chain_type</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a007d4ba4197f81f5711edf7d71c5edb3">chain_type</a> const &amp;&#160;</td>
           <td class="paramname"><em>chain</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a1eff4ffac3710382a01eaa2dde8069bd">values_type</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a0212df884d04e97942dc638509b78710">values_type</a> const &amp;&#160;</td>
           <td class="paramname"><em>values</em>&#160;</td>
         </tr>
         <tr>
@@ -606,34 +584,34 @@ template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Ko
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00073">73</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00070">70</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a340d3b8ae813351b9d0175d80ea071d5" name="a340d3b8ae813351b9d0175d80ea071d5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a340d3b8ae813351b9d0175d80ea071d5">&#9670;&#160;</a></span>Cochain() <span class="overload">[7/7]</span></h2>
+<a id="a775165706e6e9fe6f609c37375f32329" name="a775165706e6e9fe6f609c37375f32329"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a775165706e6e9fe6f609c37375f32329">&#9670;&#160;</a></span>Cochain() <span class="overload">[6/6]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
 <div class="memtemplate">
-template&lt;class OElementType , tensor::TensorIndex Index, class LayoutStridedPolicy , class MemorySpace &gt; <br />
+template&lt;tensor::TensorIndex Index&gt; <br />
 requires (misc::Specialization&lt;Index, <a class="el" href="structsil_1_1tensor_1_1TensorAntisymmetricIndex.html">tensor::TensorAntisymmetricIndex</a>&gt; || tensor::TensorNatIndex&lt;Index&gt;)</div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION constexpr <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::Cochain </td>
+          <td class="memname">KOKKOS_FUNCTION constexpr <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::Cochain </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#aa20ef6edda020cf708e0833f36dcaf7c">chain_type</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Cochain.html#a007d4ba4197f81f5711edf7d71c5edb3">chain_type</a> const &amp;&#160;</td>
           <td class="paramname"><em>chain</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">tensor::Tensor&lt; OElementType, ddc::DiscreteDomain&lt; Index &gt;, LayoutStridedPolicy, MemorySpace &gt;&#160;</td>
+          <td class="paramtype">tensor::Tensor&lt; <a class="el" href="classsil_1_1exterior_1_1Cochain.html#af822db86d28b316bef56fdfb13407651">element_type</a>, ddc::DiscreteDomain&lt; Index &gt;, ddc::detail::kokkos_to_mdspan_layout_t&lt; LayoutStridedPolicy &gt;, <a class="el" href="classsil_1_1exterior_1_1Cochain.html#af7e7ed72c9f84298f90d439bb8666bbe">memory_space</a> &gt;&#160;</td>
           <td class="paramname"><em>tensor</em>&#160;</td>
         </tr>
         <tr>
@@ -649,23 +627,23 @@ requires (misc::Specialization&lt;Index, <a class="el" href="structsil_1_1tensor
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00088">88</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00083">83</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="ad02156f956175888f4806e0ee5452b75" name="ad02156f956175888f4806e0ee5452b75"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad02156f956175888f4806e0ee5452b75">&#9670;&#160;</a></span>~Cochain()</h2>
+<a id="ad9fdff270e87176e735b98c1897b7db9" name="ad9fdff270e87176e735b98c1897b7db9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad9fdff270e87176e735b98c1897b7db9">&#9670;&#160;</a></span>~Cochain()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_DEFAULTED_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::~<a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a> </td>
+          <td class="memname">KOKKOS_DEFAULTED_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::~<a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a> </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -681,21 +659,21 @@ template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Ko
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a797f42e2bd1a2a69035155f5b1ba5954" name="a797f42e2bd1a2a69035155f5b1ba5954"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a797f42e2bd1a2a69035155f5b1ba5954">&#9670;&#160;</a></span>operator=() <span class="overload">[1/2]</span></h2>
+<a id="a48ed3bf022196eadc537ce67e2f83024" name="a48ed3bf022196eadc537ce67e2f83024"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a48ed3bf022196eadc537ce67e2f83024">&#9670;&#160;</a></span>operator=() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_DEFAULTED_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a> &amp; <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::operator= </td>
+          <td class="memname">KOKKOS_DEFAULTED_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a> &amp; <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::operator= </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt; const &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt; const &amp;&#160;</td>
           <td class="paramname"><em>other</em></td><td>)</td>
           <td></td>
         </tr>
@@ -709,21 +687,21 @@ template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Ko
 
 </div>
 </div>
-<a id="a18b2cf22ee501f59fc2412ec5a7ce589" name="a18b2cf22ee501f59fc2412ec5a7ce589"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a18b2cf22ee501f59fc2412ec5a7ce589">&#9670;&#160;</a></span>operator=() <span class="overload">[2/2]</span></h2>
+<a id="a413344c8c105552d036603b6618dcb36" name="a413344c8c105552d036603b6618dcb36"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a413344c8c105552d036603b6618dcb36">&#9670;&#160;</a></span>operator=() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_DEFAULTED_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a> &amp; <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::operator= </td>
+          <td class="memname">KOKKOS_DEFAULTED_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a> &amp; <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::operator= </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt; &amp;&amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt; &amp;&amp;&#160;</td>
           <td class="paramname"><em>other</em></td><td>)</td>
           <td></td>
         </tr>
@@ -737,19 +715,19 @@ template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Ko
 
 </div>
 </div>
-<a id="aeb6f7c7dd5faae6f04534362d97c880d" name="aeb6f7c7dd5faae6f04534362d97c880d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aeb6f7c7dd5faae6f04534362d97c880d">&#9670;&#160;</a></span>is_local()</h2>
+<a id="a08a8082b1db2a59a25659eeab076e7d5" name="a08a8082b1db2a59a25659eeab076e7d5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a08a8082b1db2a59a25659eeab076e7d5">&#9670;&#160;</a></span>is_local()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">static KOKKOS_FUNCTION constexpr bool <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::is_local </td>
+          <td class="memname">static KOKKOS_FUNCTION constexpr bool <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::is_local </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -762,23 +740,23 @@ template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Ko
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00114">114</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00103">103</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="aca9b107daf2041ed03bdb508dbbf5e2b" name="aca9b107daf2041ed03bdb508dbbf5e2b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aca9b107daf2041ed03bdb508dbbf5e2b">&#9670;&#160;</a></span>dimension()</h2>
+<a id="a4048dda021294116c9115b41bc64e50e" name="a4048dda021294116c9115b41bc64e50e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4048dda021294116c9115b41bc64e50e">&#9670;&#160;</a></span>dimension()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">static KOKKOS_FUNCTION constexpr std::size_t <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::dimension </td>
+          <td class="memname">static KOKKOS_FUNCTION constexpr std::size_t <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::dimension </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -791,23 +769,23 @@ template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Ko
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00119">119</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00108">108</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="af8bb1f3e1d242d5cb3d06b179454a1b8" name="af8bb1f3e1d242d5cb3d06b179454a1b8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af8bb1f3e1d242d5cb3d06b179454a1b8">&#9670;&#160;</a></span>size() <span class="overload">[1/2]</span></h2>
+<a id="a8691aa090c426daa7ab474b705b2c929" name="a8691aa090c426daa7ab474b705b2c929"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8691aa090c426daa7ab474b705b2c929">&#9670;&#160;</a></span>size() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION std::size_t <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::size </td>
+          <td class="memname">KOKKOS_FUNCTION std::size_t <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::size </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -820,23 +798,23 @@ template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Ko
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00124">124</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00113">113</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a5ffa60296f4e8814b0dc0c551496e229" name="a5ffa60296f4e8814b0dc0c551496e229"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5ffa60296f4e8814b0dc0c551496e229">&#9670;&#160;</a></span>size() <span class="overload">[2/2]</span></h2>
+<a id="aa66001d2bd2c3100c9111180d08e7ee6" name="aa66001d2bd2c3100c9111180d08e7ee6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa66001d2bd2c3100c9111180d08e7ee6">&#9670;&#160;</a></span>size() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION std::size_t <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::size </td>
+          <td class="memname">KOKKOS_FUNCTION std::size_t <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::size </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -849,23 +827,52 @@ template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Ko
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00129">129</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00118">118</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="af4dd0b34fae7ea6b1d806801affa34f6" name="af4dd0b34fae7ea6b1d806801affa34f6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af4dd0b34fae7ea6b1d806801affa34f6">&#9670;&#160;</a></span>chain()</h2>
+<a id="ae0e65e36adcef586c5f50c190ef0b01f" name="ae0e65e36adcef586c5f50c190ef0b01f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae0e65e36adcef586c5f50c190ef0b01f">&#9670;&#160;</a></span>allocation_size() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cochain.html#aa20ef6edda020cf708e0833f36dcaf7c">chain_type</a> const  &amp; <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::chain </td>
+          <td class="memname">KOKKOS_FUNCTION std::size_t <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::allocation_size </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00123">123</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a091ce1753626e4de7e246fb0e5e62ffe" name="a091ce1753626e4de7e246fb0e5e62ffe"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a091ce1753626e4de7e246fb0e5e62ffe">&#9670;&#160;</a></span>allocation_size() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION std::size_t <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::allocation_size </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -878,23 +885,23 @@ template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Ko
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00134">134</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00128">128</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="aa64e3ea50d5aebe4c07093fcac3ef2b5" name="aa64e3ea50d5aebe4c07093fcac3ef2b5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa64e3ea50d5aebe4c07093fcac3ef2b5">&#9670;&#160;</a></span>values()</h2>
+<a id="a44b02104d687099f23bc32789867b631" name="a44b02104d687099f23bc32789867b631"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a44b02104d687099f23bc32789867b631">&#9670;&#160;</a></span>chain()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cochain.html#aa20ef6edda020cf708e0833f36dcaf7c">chain_type</a> const  &amp; <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::values </td>
+          <td class="memname">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cochain.html#a007d4ba4197f81f5711edf7d71c5edb3">chain_type</a> const  &amp; <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::chain </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -907,23 +914,52 @@ template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Ko
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00139">139</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00133">133</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a413d5cf913c3c4eda0d1e348dd41ac2f" name="a413d5cf913c3c4eda0d1e348dd41ac2f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a413d5cf913c3c4eda0d1e348dd41ac2f">&#9670;&#160;</a></span>begin() <span class="overload">[1/2]</span></h2>
+<a id="a738cf8febe379dce06675974a3f6e6f2" name="a738cf8febe379dce06675974a3f6e6f2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a738cf8febe379dce06675974a3f6e6f2">&#9670;&#160;</a></span>values()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::begin </td>
+          <td class="memname">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cochain.html#a007d4ba4197f81f5711edf7d71c5edb3">chain_type</a> const  &amp; <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::values </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00138">138</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a263988497579d4b36512efc8bd6c1659" name="a263988497579d4b36512efc8bd6c1659"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a263988497579d4b36512efc8bd6c1659">&#9670;&#160;</a></span>begin() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::begin </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -936,23 +972,23 @@ template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Ko
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00146">146</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00145">145</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a9906d00fc3f29df93b62b72c09912a89" name="a9906d00fc3f29df93b62b72c09912a89"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9906d00fc3f29df93b62b72c09912a89">&#9670;&#160;</a></span>begin() <span class="overload">[2/2]</span></h2>
+<a id="ad4d5571092ef69a7822c8050c29e483e" name="ad4d5571092ef69a7822c8050c29e483e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad4d5571092ef69a7822c8050c29e483e">&#9670;&#160;</a></span>begin() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::begin </td>
+          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::begin </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -965,23 +1001,23 @@ template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Ko
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00151">151</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00150">150</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a33ae98de44b10bea26abcffd6ff348f5" name="a33ae98de44b10bea26abcffd6ff348f5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a33ae98de44b10bea26abcffd6ff348f5">&#9670;&#160;</a></span>end() <span class="overload">[1/2]</span></h2>
+<a id="a1f3371aac9318abfe0193a9732df7354" name="a1f3371aac9318abfe0193a9732df7354"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1f3371aac9318abfe0193a9732df7354">&#9670;&#160;</a></span>end() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::end </td>
+          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::end </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -994,23 +1030,23 @@ template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Ko
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00156">156</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00155">155</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="af271a03cab64284800748b3c91ffc19d" name="af271a03cab64284800748b3c91ffc19d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af271a03cab64284800748b3c91ffc19d">&#9670;&#160;</a></span>end() <span class="overload">[2/2]</span></h2>
+<a id="a4f35cf887e74739b2268810660bb99db" name="a4f35cf887e74739b2268810660bb99db"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4f35cf887e74739b2268810660bb99db">&#9670;&#160;</a></span>end() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::end </td>
+          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::end </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -1023,23 +1059,23 @@ template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Ko
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00161">161</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00160">160</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="afca6d0656b05a7ac111d876843d5bd67" name="afca6d0656b05a7ac111d876843d5bd67"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afca6d0656b05a7ac111d876843d5bd67">&#9670;&#160;</a></span>cbegin()</h2>
+<a id="ae8cfbb3ee2ea8548e085343bd13de438" name="ae8cfbb3ee2ea8548e085343bd13de438"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae8cfbb3ee2ea8548e085343bd13de438">&#9670;&#160;</a></span>cbegin()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::cbegin </td>
+          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::cbegin </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -1052,23 +1088,23 @@ template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Ko
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00166">166</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00165">165</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a9ec1bf84c05f8c0f265d1793a9d70752" name="a9ec1bf84c05f8c0f265d1793a9d70752"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9ec1bf84c05f8c0f265d1793a9d70752">&#9670;&#160;</a></span>cend()</h2>
+<a id="ace878b5e78c140e8e0949fe7f82a9d97" name="ace878b5e78c140e8e0949fe7f82a9d97"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ace878b5e78c140e8e0949fe7f82a9d97">&#9670;&#160;</a></span>cend()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::cend </td>
+          <td class="memname">KOKKOS_FUNCTION auto <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::cend </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -1081,23 +1117,23 @@ template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Ko
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00171">171</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00170">170</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a70b0aca7a32094523249d48e6df96ced" name="a70b0aca7a32094523249d48e6df96ced"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a70b0aca7a32094523249d48e6df96ced">&#9670;&#160;</a></span>operator[]() <span class="overload">[1/2]</span></h2>
+<a id="a6f0b2c3935e1db5a72f232f213c113bf" name="a6f0b2c3935e1db5a72f232f213c113bf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6f0b2c3935e1db5a72f232f213c113bf">&#9670;&#160;</a></span>operator[]() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cosimplex.html">Cosimplex</a>&lt; <a class="el" href="classsil_1_1exterior_1_1Cochain.html#a4d77cdd3222897629fc4fa43dc909aa9">simplex_type</a>, <a class="el" href="classsil_1_1exterior_1_1Cochain.html#a04d9e7c2b0dab6420aa884f047e6f922">element_type</a> &gt; &amp; <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::operator[] </td>
+          <td class="memname">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cosimplex.html">Cosimplex</a>&lt; <a class="el" href="classsil_1_1exterior_1_1Cochain.html#a7e72ac33d849a8377e44cc89d8002d1f">simplex_type</a>, <a class="el" href="classsil_1_1exterior_1_1Cochain.html#af822db86d28b316bef56fdfb13407651">element_type</a> &gt; &amp; <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::operator[] </td>
           <td>(</td>
           <td class="paramtype">std::size_t&#160;</td>
           <td class="paramname"><em>i</em></td><td>)</td>
@@ -1111,23 +1147,23 @@ template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Ko
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00176">176</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00175">175</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a76aa681dce6bd438b258abe0bdfad948" name="a76aa681dce6bd438b258abe0bdfad948"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a76aa681dce6bd438b258abe0bdfad948">&#9670;&#160;</a></span>operator[]() <span class="overload">[2/2]</span></h2>
+<a id="acd0ddc0e2938390d17d5e4f67df16eea" name="acd0ddc0e2938390d17d5e4f67df16eea"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acd0ddc0e2938390d17d5e4f67df16eea">&#9670;&#160;</a></span>operator[]() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cosimplex.html">Cosimplex</a>&lt; <a class="el" href="classsil_1_1exterior_1_1Cochain.html#a4d77cdd3222897629fc4fa43dc909aa9">simplex_type</a>, <a class="el" href="classsil_1_1exterior_1_1Cochain.html#a04d9e7c2b0dab6420aa884f047e6f922">element_type</a> &gt; const  &amp; <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::operator[] </td>
+          <td class="memname">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cosimplex.html">Cosimplex</a>&lt; <a class="el" href="classsil_1_1exterior_1_1Cochain.html#a7e72ac33d849a8377e44cc89d8002d1f">simplex_type</a>, <a class="el" href="classsil_1_1exterior_1_1Cochain.html#af822db86d28b316bef56fdfb13407651">element_type</a> &gt; const  &amp; <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::operator[] </td>
           <td>(</td>
           <td class="paramtype">std::size_t&#160;</td>
           <td class="paramname"><em>i</em></td><td>)</td>
@@ -1145,19 +1181,19 @@ template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Ko
 
 </div>
 </div>
-<a id="ab0c3007616426fdc29dd56f2bade536d" name="ab0c3007616426fdc29dd56f2bade536d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab0c3007616426fdc29dd56f2bade536d">&#9670;&#160;</a></span>integrate() <span class="overload">[1/2]</span></h2>
+<a id="a890f2f6b55bed14b36fbe43472eb5879" name="a890f2f6b55bed14b36fbe43472eb5879"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a890f2f6b55bed14b36fbe43472eb5879">&#9670;&#160;</a></span>integrate() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cochain.html#a04d9e7c2b0dab6420aa884f047e6f922">element_type</a> <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::integrate </td>
+          <td class="memname">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cochain.html#af822db86d28b316bef56fdfb13407651">element_type</a> <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::integrate </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -1170,23 +1206,23 @@ template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Ko
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00187">187</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00188">188</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a2bf47f692fc07c3a1b7a024fa2437c3a" name="a2bf47f692fc07c3a1b7a024fa2437c3a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2bf47f692fc07c3a1b7a024fa2437c3a">&#9670;&#160;</a></span>integrate() <span class="overload">[2/2]</span></h2>
+<a id="acc089fac9d869e039ab61a0ac2b0fc1b" name="acc089fac9d869e039ab61a0ac2b0fc1b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acc089fac9d869e039ab61a0ac2b0fc1b">&#9670;&#160;</a></span>integrate() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Kokkos::DefaultHostExecutionSpace&gt; </div>
+template&lt;class ChainType , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cochain.html#a04d9e7c2b0dab6420aa884f047e6f922">element_type</a> const <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, ExecSpace &gt;::integrate </td>
+          <td class="memname">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Cochain.html#af822db86d28b316bef56fdfb13407651">element_type</a> const <a class="el" href="classsil_1_1exterior_1_1Cochain.html">sil::exterior::Cochain</a>&lt; ChainType, ElementType, LayoutStridedPolicy &gt;::integrate </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -1199,7 +1235,7 @@ template&lt;class ChainType , class ElementType  = double, class ExecSpace  = Ko
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00200">200</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00201">201</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>

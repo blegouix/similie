@@ -3,8 +3,8 @@ var hierarchy =
     [ "ddc:: ChunkSpan", null, [
       [ "sil::tensor::Tensor< ElementType, ddc::DiscreteDomain< DDim... >, LayoutStridedPolicy, MemorySpace >", "classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html", null ]
     ] ],
-    [ "sil::exterior::Chain< SimplexType, ExecSpace >", "classsil_1_1exterior_1_1Chain.html", null ],
-    [ "sil::exterior::Cochain< ChainType, ElementType, ExecSpace >", "classsil_1_1exterior_1_1Cochain.html", null ],
+    [ "sil::exterior::Chain< SimplexType, LayoutStridedPolicy, ExecSpace >", "classsil_1_1exterior_1_1Chain.html", null ],
+    [ "sil::exterior::Cochain< ChainType, ElementType, LayoutStridedPolicy >", "classsil_1_1exterior_1_1Cochain.html", null ],
     [ "sil::exterior::CochainIterator< CochainType >", "classsil_1_1exterior_1_1CochainIterator.html", null ],
     [ "sil::tensor::Contravariant", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Contravariant", null ],
     [ "sil::exterior::Cosimplex< SimplexType, ElementType >", "classsil_1_1exterior_1_1Cosimplex.html", null ],
@@ -18,7 +18,7 @@ var hierarchy =
     [ "std::false_type", null, [
       [ "sil::misc::is_specialization_of< T, U >", "structsil_1_1misc_1_1is__specialization__of.html", null ]
     ] ],
-    [ "sil::exterior::LocalChain< SimplexType, ExecSpace >", "classsil_1_1exterior_1_1LocalChain.html", null ],
+    [ "sil::exterior::LocalChain< SimplexType, LayoutStridedPolicy, ExecSpace >", "classsil_1_1exterior_1_1LocalChain.html", null ],
     [ "sil::mesher::Mesher< D, CDim >", "classsil_1_1mesher_1_1Mesher.html", null ],
     [ "sil::tensor::TensorAccessor< Index >", "classsil_1_1tensor_1_1TensorAccessor.html", null ],
     [ "sil::tensor::TensorAntisymmetricIndex< TensorIndex >", "structsil_1_1tensor_1_1TensorAntisymmetricIndex.html", null ],
