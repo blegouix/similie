@@ -110,6 +110,13 @@ public:
         assert(misc::are_all_equal(elems)
                && "LocalChain must contain simplices with same origin (if not, use Chain)");
 
+        /* Does not compile with nvcc, so we inline it 
+        assert(misc::all_of(
+                       Kokkos::Experimental::begin(simplices),
+                       Kokkos::Experimental::end(simplices),
+                       KOKKOS_LAMBDA(const std::size_t i) { return !simplices[i].negative(); })
+               && "LocalChain must contain simplices with same origin (if not, use Chain)");
+         */
         bool flag = true;
         for (auto i = Kokkos::Experimental::begin(simplices);
              i < Kokkos::Experimental::end(simplices);

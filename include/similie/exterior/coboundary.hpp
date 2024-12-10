@@ -8,6 +8,7 @@
 #include <similie/misc/are_all_same.hpp>
 #include <similie/misc/domain_contains.hpp>
 #include <similie/misc/filled_struct.hpp>
+#include <similie/misc/portable_stl.hpp>
 #include <similie/misc/specialization.hpp>
 #include <similie/misc/type_seq_conversion.hpp>
 #include <similie/tensor/antisymmetric_tensor.hpp>
@@ -292,7 +293,7 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
                                         ddc::DiscreteElement<CochainTag>(
                                                 Kokkos::Experimental::distance(
                                                         lower_chain.begin(),
-                                                        std::
+                                                        misc::
                                                                 find(lower_chain.begin(),
                                                                      lower_chain.end(),
                                                                      (*j).discrete_vector()))));
