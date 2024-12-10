@@ -207,7 +207,7 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
             = ddc::remove_dims_of<coboundary_index_t<TagToAddToCochain, CochainTag>>(
                     coboundary_tensor.domain());
 
-    // buffer to store the chain containing the boundary of each K+1-simplex of the mesh
+    // buffer to store the K-chain containing the boundary of each K+1-simplex of the mesh
     ddc::Chunk simplex_boundary_alloc(
             ddc::cartesian_prod_t<
                     ddc::remove_dims_of_t<
@@ -231,7 +231,7 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
                             coboundary_index_t<TagToAddToCochain, CochainTag>>>>());
     ddc::ChunkSpan simplex_boundary = simplex_boundary_alloc.span_view();
 
-    // buffer to store the values on the boundary of each K+1-cosimplex of the mesh
+    // buffer to store the values of the K-cochain on the boundary of each K+1-cosimplex of the mesh
     ddc::Chunk boundary_values_alloc(
             ddc::cartesian_prod_t<
                     ddc::remove_dims_of_t<
