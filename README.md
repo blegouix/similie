@@ -6,7 +6,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 # SimiLie
 Documentation [here](https://blegouix.github.io/similie/).
 
-SimiLie (aka. Simulation in Lie groups) is a performance-portable (CPU & GPU) C++ library aiming to extent the capabilities of [DDC](https://github.com/CExA-project/ddc) to offer a complete toolkit able to address any physical problem from eventually-relativistic classical field theory (in particular: solid & fluid mechanics, electromagnetism and gravitation, or coupling between those).
+SimiLie is a performance-portable (CPU & GPU) C++ library aiming to extent the capabilities of [DDC](https://github.com/CExA-project/ddc) to offer a complete toolkit able to perfom tensor calculus, differential calculus and solving PDE. It should be able to address any multiphysical problem from eventually-relativistic classical field theory (in particular: solid & fluid mechanics, electromagnetism and gravitation).
 
 **Absolute WIP, there is no guarantee for proper working. [Kokkos](https://github.com/kokkos/kokkos) backends other than `Serial` are not yet supported.**
 
@@ -14,7 +14,7 @@ SimiLie (aka. Simulation in Lie groups) is a performance-portable (CPU & GPU) C+
 
 1. Short term: simulate electromagnetism on manifold.
 2. Mid term (months): simulate geometrodynamics.
-3. Long term: generalize to all kinds of *classical* gauge theories and put Lie groups and Clifford algebra at the center of the construction.
+3. Long term: generalize to all kinds of *classical* gauge theories.
 4. Extra-long term (years): quantization.
 
 ## Initial roadmap
@@ -24,6 +24,7 @@ DONE:
 - Differential forms: (co)simplices, (co)chains, (co)boundary operator, discrete Hodge star.
 
 TODO:
+- GPU support.
 - Finite elements solver.
 - Application to an electromagnetism problem on manifold.
 - ...
