@@ -255,7 +255,7 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
                     TagToAddToCochain,
                     typename TensorType::non_indices_domain_t>::type>();
 
-    // compute the tangent K+1-basis for each node of the mesh. This is a local K-chain.
+    // compute the tangent K-basis for each node of the mesh. This is a local K-chain.
     auto lower_chain = tangent_basis<
             CochainTag::rank(),
             typename detail::NonSpectatorDimension<
