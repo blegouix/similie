@@ -187,12 +187,6 @@ struct NonSpectatorDimension<Index, ddc::DiscreteDomain<DDim...>>
             ddc::DiscreteDomain<>>...>;
 };
 
-struct DummyTag
-{
-};
-
-using DummyIndex = ddc::UniformPointSampling<DummyTag>;
-
 } // namespace detail
 
 template <
@@ -203,6 +197,12 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
         coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
         TensorType tensor)
 {
+    struct DummyTag
+    {
+    };
+
+    using DummyIndex = ddc::UniformPointSampling<DummyTag>;
+
     ddc::DiscreteDomain batch_dom
             = ddc::remove_dims_of<coboundary_index_t<TagToAddToCochain, CochainTag>>(
                     coboundary_tensor.domain());
@@ -216,11 +216,11 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
                                     CochainTag,
                                     TensorType>::discrete_domain_type,
                             coboundary_index_t<TagToAddToCochain, CochainTag>>,
-                    ddc::DiscreteDomain<detail::DummyIndex>>(
+                    ddc::DiscreteDomain<DummyIndex>>(
                     batch_dom,
-                    ddc::DiscreteDomain<detail::DummyIndex>(
-                            ddc::DiscreteElement<detail::DummyIndex>(0),
-                            ddc::DiscreteVector<detail::DummyIndex>(2 * (CochainTag::rank() + 1)))),
+                    ddc::DiscreteDomain<DummyIndex>(
+                            ddc::DiscreteElement<DummyIndex>(0),
+                            ddc::DiscreteVector<DummyIndex>(2 * (CochainTag::rank() + 1)))),
             ddc::HostAllocator<simplex_for_domain_t<
                     CochainTag::rank(),
                     ddc::remove_dims_of_t<
@@ -240,11 +240,11 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
                                     CochainTag,
                                     TensorType>::discrete_domain_type,
                             coboundary_index_t<TagToAddToCochain, CochainTag>>,
-                    ddc::DiscreteDomain<detail::DummyIndex>>(
+                    ddc::DiscreteDomain<DummyIndex>>(
                     batch_dom,
-                    ddc::DiscreteDomain<detail::DummyIndex>(
-                            ddc::DiscreteElement<detail::DummyIndex>(0),
-                            ddc::DiscreteVector<detail::DummyIndex>(2 * (CochainTag::rank() + 1)))),
+                    ddc::DiscreteDomain<DummyIndex>(
+                            ddc::DiscreteElement<DummyIndex>(0),
+                            ddc::DiscreteVector<DummyIndex>(2 * (CochainTag::rank() + 1)))),
             ddc::HostAllocator<double>());
     ddc::ChunkSpan boundary_values = boundary_values_alloc.span_view();
 
