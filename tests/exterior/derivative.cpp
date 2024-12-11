@@ -15,7 +15,7 @@
 template <std::size_t N, bool CoalescentIndexing, class InIndex, class OutIndex, class... DDim>
 static auto test_derivative()
 {
-    sil::tensor::TensorAccessor<InIndex> tensor_accessor;
+    [[maybe_unused]] sil::tensor::TensorAccessor<InIndex> tensor_accessor;
     if constexpr (CoalescentIndexing) {
         ddc::DiscreteDomain<InIndex, DDim...>
                 dom(tensor_accessor.mem_domain(),
@@ -41,7 +41,7 @@ static auto test_derivative()
                          ddc::DiscreteElement<InIndex>(i))
                     = i + 2.;
         }
-        sil::tensor::TensorAccessor<OutIndex> derivative_accessor;
+        [[maybe_unused]] sil::tensor::TensorAccessor<OutIndex> derivative_accessor;
         ddc::DiscreteDomain<OutIndex, DDim...> derivative_dom(
                 derivative_accessor.mem_domain(),
                 ddc::DiscreteDomain(
@@ -92,7 +92,7 @@ static auto test_derivative()
                          ddc::DiscreteElement<InIndex>(i))
                     = i + 2.;
         }
-        sil::tensor::TensorAccessor<OutIndex> derivative_accessor;
+        [[maybe_unused]] sil::tensor::TensorAccessor<OutIndex> derivative_accessor;
         ddc::DiscreteDomain<DDim..., OutIndex> derivative_dom(
                 ddc::DiscreteDomain(
                         sil::misc::filled_struct<ddc::DiscreteElement<DDim...>>(0),
@@ -911,8 +911,8 @@ struct IndexSpect : sil::tensor::TensorSymmetricIndex<SpectNatIndex1, SpectNatIn
 TEST(ExteriorDerivative, 2DRotationalWithSpects)
 {
     const std::size_t N = 3;
-    sil::tensor::TensorAccessor<IndexSpect, sil::tensor::TensorAntisymmetricIndex<Mu2>>
-            tensor_accessor;
+    [[maybe_unused]] sil::tensor::
+            TensorAccessor<IndexSpect, sil::tensor::TensorAntisymmetricIndex<Mu2>> tensor_accessor;
     ddc::DiscreteDomain<
             sil::tensor::TensorAntisymmetricIndex<Mu2>,
             DDimSpect,
@@ -958,8 +958,9 @@ TEST(ExteriorDerivative, 2DRotationalWithSpects)
         }
     }
 
-    sil::tensor::TensorAccessor<IndexSpect, sil::tensor::TensorAntisymmetricIndex<Nu2, Mu2>>
-            derivative_accessor;
+    [[maybe_unused]] sil::tensor::TensorAccessor<
+            IndexSpect,
+            sil::tensor::TensorAntisymmetricIndex<Nu2, Mu2>> derivative_accessor;
     ddc::DiscreteDomain<
             sil::tensor::TensorAntisymmetricIndex<Nu2, Mu2>,
             DDimSpect,

@@ -69,7 +69,7 @@ TEST(HodgeStar, Test)
             mesh_xy(ddc::DiscreteElement<DDimX, DDimY>(0, 0),
                     ddc::DiscreteVector<DDimX, DDimY>(3, 3));
 
-    sil::tensor::TensorAccessor<MetricIndex> metric_accessor;
+    [[maybe_unused]] sil::tensor::TensorAccessor<MetricIndex> metric_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, MetricIndex>
             metric_dom(mesh_xy, metric_accessor.mem_domain());
     ddc::Chunk metric_alloc(metric_dom, ddc::HostAllocator<double>());
@@ -104,7 +104,8 @@ TEST(HodgeStar, Test)
             ddc::detail::TypeSeq<MuUp, NuUp>,
             ddc::detail::TypeSeq<RhoLow>>(hodge_star, metric);
 
-    sil::tensor::TensorAccessor<sil::tensor::TensorAntisymmetricIndex<MuLow, NuLow>> form_accessor;
+    [[maybe_unused]] sil::tensor::TensorAccessor<
+            sil::tensor::TensorAntisymmetricIndex<MuLow, NuLow>> form_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::TensorAntisymmetricIndex<MuLow, NuLow>>
             form_dom(metric.non_indices_domain(), form_accessor.mem_domain());
     ddc::Chunk form_alloc(form_dom, ddc::HostAllocator<double>());
@@ -120,7 +121,7 @@ TEST(HodgeStar, Test)
         form(elem, form.accessor().access_element<Y, Z>()) = 3.;
     });
 
-    sil::tensor::TensorAccessor<RhoLow> dual_form_accessor;
+    [[maybe_unused]] sil::tensor::TensorAccessor<RhoLow> dual_form_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, RhoLow>
             dual_form_dom(metric.non_indices_domain(), dual_form_accessor.mem_domain());
     ddc::Chunk dual_form_alloc(dual_form_dom, ddc::HostAllocator<double>());

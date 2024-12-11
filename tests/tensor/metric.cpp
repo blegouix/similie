@@ -39,7 +39,7 @@ TEST(Metric, MetricLike)
             mesh_xy(ddc::DiscreteElement<DDimX, DDimY>(0, 0),
                     ddc::DiscreteVector<DDimX, DDimY>(10, 10));
 
-    sil::tensor::TensorAccessor<MetricLikeIndex> metric_accessor;
+    [[maybe_unused]] sil::tensor::TensorAccessor<MetricLikeIndex> metric_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, MetricLikeIndex>
             metric_dom(mesh_xy, metric_accessor.mem_domain());
 
@@ -75,7 +75,7 @@ TEST(Metric, Covariant)
             mesh_xy(ddc::DiscreteElement<DDimX, DDimY>(0, 0),
                     ddc::DiscreteVector<DDimX, DDimY>(10, 10));
 
-    sil::tensor::TensorAccessor<MetricIndex> metric_accessor;
+    [[maybe_unused]] sil::tensor::TensorAccessor<MetricIndex> metric_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, MetricIndex>
             metric_dom(mesh_xy, metric_accessor.mem_domain());
     ddc::Chunk metric_alloc(metric_dom, ddc::HostAllocator<double>());
@@ -112,7 +112,7 @@ TEST(Metric, ChristoffelLike)
             mesh_xy(ddc::DiscreteElement<DDimX, DDimY>(0, 0),
                     ddc::DiscreteVector<DDimX, DDimY>(10, 10));
 
-    sil::tensor::TensorAccessor<MetricIndex> metric_accessor;
+    [[maybe_unused]] sil::tensor::TensorAccessor<MetricIndex> metric_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, MetricIndex>
             metric_dom(mesh_xy, metric_accessor.mem_domain());
     ddc::Chunk metric_alloc(metric_dom, ddc::HostAllocator<double>());
@@ -128,7 +128,7 @@ TEST(Metric, ChristoffelLike)
         metric(elem, metric.accessor().access_element<Y, Y>()) = 2.;
     });
 
-    sil::tensor::TensorAccessor<KUp, sil::tensor::TensorSymmetricIndex<ILow, JLow>>
+    [[maybe_unused]] sil::tensor::TensorAccessor<KUp, sil::tensor::TensorSymmetricIndex<ILow, JLow>>
             christoffel_1st_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, KUp, sil::tensor::TensorSymmetricIndex<ILow, JLow>>
             christoffel_1st_dom(mesh_xy, christoffel_1st_accessor.mem_domain());
@@ -231,7 +231,7 @@ TEST(Metric, Inverse)
             mesh_xy(ddc::DiscreteElement<DDimX, DDimY>(0, 0),
                     ddc::DiscreteVector<DDimX, DDimY>(10, 10));
 
-    sil::tensor::TensorAccessor<DirectMetricIndex> metric_accessor;
+    [[maybe_unused]] sil::tensor::TensorAccessor<DirectMetricIndex> metric_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, DirectMetricIndex>
             metric_dom(mesh_xy, metric_accessor.mem_domain());
     ddc::Chunk metric_alloc(metric_dom, ddc::HostAllocator<double>());
@@ -250,7 +250,7 @@ TEST(Metric, Inverse)
         metric(elem, metric.accessor().access_element<Z, Z>()) = 6.;
     });
 
-    sil::tensor::TensorAccessor<InvMetricIndex> inv_metric_accessor;
+    [[maybe_unused]] sil::tensor::TensorAccessor<InvMetricIndex> inv_metric_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, InvMetricIndex>
             inv_metric_dom(mesh_xy, inv_metric_accessor.mem_domain());
     ddc::Chunk inv_metric_alloc(inv_metric_dom, ddc::HostAllocator<double>());
@@ -263,7 +263,7 @@ TEST(Metric, Inverse)
 
     sil::tensor::fill_inverse_metric<DirectMetricIndex>(inv_metric, metric);
 
-    sil::tensor::TensorAccessor<IdIndex> identity_accessor;
+    [[maybe_unused]] sil::tensor::TensorAccessor<IdIndex> identity_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, IdIndex>
             identity_dom(mesh_xy, identity_accessor.mem_domain());
     ddc::Chunk identity_alloc(identity_dom, ddc::HostAllocator<double>());
