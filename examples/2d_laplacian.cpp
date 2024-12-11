@@ -159,7 +159,7 @@ int main(int argc, char** argv)
     sil::exterior::deriv<MuLow, DummyIndex>(gradient, potential);
 
     // Hodge star
-    sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain> hodge_star_accessor;
+    [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain> hodge_star_accessor;
     ddc::cartesian_prod_t<ddc::DiscreteDomain<DDimX, DDimY>, HodgeStarDomain>
             hodge_star_dom(metric.non_indices_domain(), hodge_star_accessor.mem_domain());
     ddc::Chunk hodge_star_alloc(hodge_star_dom, ddc::HostAllocator<double>());
@@ -208,7 +208,8 @@ int main(int argc, char** argv)
     sil::exterior::deriv<RhoLow, NuLow>(dual_laplacian, dual_gradient);
 
     // Hodge star 2
-    sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain2> hodge_star_accessor2;
+    [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain2>
+            hodge_star_accessor2;
     ddc::cartesian_prod_t<ddc::DiscreteDomain<DDimX, DDimY>, HodgeStarDomain2>
             hodge_star_dom2(metric.non_indices_domain(), hodge_star_accessor2.mem_domain());
     ddc::Chunk hodge_star_alloc2(hodge_star_dom2, ddc::HostAllocator<double>());
