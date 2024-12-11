@@ -90,31 +90,55 @@ HodgeStarType fill_hodge_star(HodgeStarType hodge_star, MetricType metric)
                   ddc::to_type_seq_t<typename MetricType::accessor_t::natural_domain_t>>);
     static_assert(tensor::are_contravariant_v<Indices1>);
     static_assert(tensor::are_covariant_v<Indices2>);
-    ddc::Chunk metric_det_alloc(metric.non_indices_domain(), ddc::HostAllocator<double>());
-    ddc::ChunkSpan<
-            double,
-            typename MetricType::non_indices_domain_t,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            metric_det(metric_det_alloc);
-    ddc::for_each( // TODO parallel_for_each (weird lock)
-            metric_det.domain(),
-            [&](auto elem) { metric_det(elem) = 1. / tensor::determinant(metric[elem]); });
 
+    // Allocate metric_det to receive metric field determinant values
+    ddc::Chunk metric_det_alloc(
+            ddc::remove_dims_of<MetricIndex>(metric.domain()),
+            ddc::HostAllocator<double>());
+    ddc::ChunkSpan metric_det = metric_det_alloc.span_view();
+    // Allocate a buffer mirroring the metric as a full matrix, it will be overwritten by tensor::determinant() which involves a LU decomposition
+    ddc::Chunk buffer_alloc(
+            ddc::cartesian_prod_t<
+                    ddc::remove_dims_of_t<typename MetricType::discrete_domain_type, MetricIndex>,
+                    ddc::DiscreteDomain<
+                            tensor::metric_index_1<MetricIndex>,
+                            tensor::metric_index_2<MetricIndex>>>(
+                    ddc::remove_dims_of<MetricIndex>(metric.domain()),
+                    ddc::DiscreteDomain<
+                            tensor::metric_index_1<MetricIndex>,
+                            tensor::metric_index_2<MetricIndex>>(metric.natural_domain())),
+            ddc::HostAllocator<double>());
+    ddc::ChunkSpan buffer = buffer_alloc.span_view();
+    // Compute determinants
+    ddc::parallel_for_each(
+            Kokkos::DefaultHostExecutionSpace(),
+            ddc::remove_dims_of<MetricIndex>(metric.domain()),
+            [&](auto elem) {
+                ddc::for_each(
+                        ddc::DiscreteDomain<
+                                tensor::metric_index_1<MetricIndex>,
+                                tensor::metric_index_2<MetricIndex>>(metric.natural_domain()),
+                        [&](auto index) {
+                            buffer(elem, index) = metric(metric.access_element(elem, index));
+                        });
+                metric_det(elem) = 1. / tensor::determinant(buffer[elem].allocation_kokkos_view());
+            });
+
+    // Allocate & compute the product of metrics
     tensor::tensor_accessor_for_domain_t<
             tensor::metric_prod_domain_t<MetricIndex, Indices1, tensor::primes<Indices1>>>
             metric_prod_accessor;
     ddc::Chunk metric_prod_alloc(
             ddc::cartesian_prod_t<
-                    typename MetricType::non_indices_domain_t,
+                    ddc::remove_dims_of_t<typename MetricType::discrete_domain_type, MetricIndex>,
                     tensor::metric_prod_domain_t<MetricIndex, Indices1, tensor::primes<Indices1>>>(
-                    metric.non_indices_domain(),
+                    ddc::remove_dims_of<MetricIndex>(metric.domain()),
                     metric_prod_accessor.mem_domain()),
             ddc::HostAllocator<double>());
     tensor::Tensor<
             double,
             ddc::cartesian_prod_t<
-                    typename MetricType::non_indices_domain_t,
+                    ddc::remove_dims_of_t<typename MetricType::discrete_domain_type, MetricIndex>,
                     tensor::metric_prod_domain_t<MetricIndex, Indices1, tensor::primes<Indices1>>>,
             Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
@@ -122,6 +146,7 @@ HodgeStarType fill_hodge_star(HodgeStarType hodge_star, MetricType metric)
 
     fill_metric_prod<MetricIndex, Indices1, tensor::primes<Indices1>>(metric_prod, metric);
 
+    // Compute Hodge star
     return fill_hodge_star<Indices1, Indices2>(hodge_star, metric_det, metric_prod);
 }
 

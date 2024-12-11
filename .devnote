@@ -21,9 +21,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 - is_same_character_v and use it in tensor product
 - find a way to use CTAD when constructing a Tensor and DiscreteDomain
 - Avoid usage of std::array in non-constexpr tensor_impl function (exclusive to YoungTableauIndexing)
-- using keyword can be used inside functions, check if it can simplify some implementations
 
 ----- SETUP BASIC COMMAND -----
 
-cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-Wfatal-errors" -DDDC_BUILD_PDI_WRAPPER=OFF ..
+cmake -DCMAKE_CXX_COMPILER=clang++-19 -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-Wfatal-errors" -DDDC_BUILD_PDI_WRAPPER=OFF ..
+cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Debug -DKokkos_ENABLE_OPENMP=ON -DCMAKE_CXX_FLAGS="-Wfatal-errors" -DDDC_BUILD_PDI_WRAPPER=OFF ..
 cmake -DCMAKE_CXX_COMPILER=$KOKKOS_BIN/nvcc_wrapper -DCMAKE_BUILD_TYPE=Debug -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_VOLTA70=ON -DCMAKE_CXX_FLAGS="-Wfatal-errors" -DDDC_BUILD_PDI_WRAPPER=OFF ..
