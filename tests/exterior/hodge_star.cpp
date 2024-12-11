@@ -88,7 +88,7 @@ TEST(HodgeStar, Test)
         metric(elem, metric.accessor().access_element<Z, Z>()) = 6.;
     });
 
-    sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain> hodge_star_accessor;
+    [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain> hodge_star_accessor;
     ddc::cartesian_prod_t<ddc::DiscreteDomain<DDimX, DDimY>, HodgeStarDomain>
             hodge_star_dom(metric.non_indices_domain(), hodge_star_accessor.mem_domain());
     ddc::Chunk hodge_star_alloc(hodge_star_dom, ddc::HostAllocator<double>());
@@ -136,7 +136,8 @@ TEST(HodgeStar, Test)
         sil::tensor::tensor_prod(dual_form[elem], hodge_star[elem], form[elem]);
     });
 
-    sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain2> hodge_star_accessor2;
+    [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain2>
+            hodge_star_accessor2;
     ddc::cartesian_prod_t<ddc::DiscreteDomain<DDimX, DDimY>, HodgeStarDomain2>
             hodge_star_dom2(metric.non_indices_domain(), hodge_star_accessor2.mem_domain());
     ddc::Chunk hodge_star_alloc2(hodge_star_dom2, ddc::HostAllocator<double>());

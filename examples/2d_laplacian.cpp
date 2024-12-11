@@ -86,7 +86,7 @@ int main(int argc, char** argv)
             ddc::detail::TypeSeq<BSplinesX, BSplinesY>>(lower_bounds, upper_bounds, nb_cells);
 
     // Allocate and instantiate a metric tensor field.
-    sil::tensor::TensorAccessor<MetricIndex> metric_accessor;
+    [[maybe_unused]] sil::tensor::TensorAccessor<MetricIndex> metric_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, MetricIndex>
             metric_dom(mesh_xy, metric_accessor.mem_domain());
     ddc::Chunk metric_alloc(metric_dom, ddc::HostAllocator<double>());
@@ -103,7 +103,8 @@ int main(int argc, char** argv)
     });
 
     // Invert metric
-    sil::tensor::TensorAccessor<sil::tensor::upper<MetricIndex>> inv_metric_accessor;
+    [[maybe_unused]] sil::tensor::TensorAccessor<sil::tensor::upper<MetricIndex>>
+            inv_metric_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::upper<MetricIndex>>
             inv_metric_dom(mesh_xy, inv_metric_accessor.mem_domain());
     ddc::Chunk inv_metric_alloc(inv_metric_dom, ddc::HostAllocator<double>());
@@ -116,7 +117,7 @@ int main(int argc, char** argv)
     sil::tensor::fill_inverse_metric<MetricIndex>(inv_metric, metric);
 
     // Potential
-    sil::tensor::TensorAccessor<DummyIndex> potential_accessor;
+    [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> potential_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, DummyIndex>
             potential_dom(metric.non_indices_domain(), potential_accessor.mem_domain());
     ddc::Chunk potential_alloc(potential_dom, ddc::HostAllocator<double>());
@@ -146,7 +147,7 @@ int main(int argc, char** argv)
     std::cout << potential[potential_accessor.mem_domain().front()] << std::endl;
 
     // Gradient
-    sil::tensor::TensorAccessor<MuLow> gradient_accessor;
+    [[maybe_unused]] sil::tensor::TensorAccessor<MuLow> gradient_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, MuLow> gradient_dom(mesh_xy, gradient_accessor.mem_domain());
     ddc::Chunk gradient_alloc(gradient_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor<
@@ -175,7 +176,7 @@ int main(int argc, char** argv)
             ddc::detail::TypeSeq<NuLow>>(hodge_star, inv_metric);
 
     // Dual gradient
-    sil::tensor::TensorAccessor<NuLow> dual_gradient_accessor;
+    [[maybe_unused]] sil::tensor::TensorAccessor<NuLow> dual_gradient_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, NuLow>
             dual_gradient_dom(mesh_xy, dual_gradient_accessor.mem_domain());
     ddc::Chunk dual_gradient_alloc(dual_gradient_dom, ddc::HostAllocator<double>());
@@ -191,8 +192,8 @@ int main(int argc, char** argv)
     });
 
     // Dual Laplacian
-    sil::tensor::TensorAccessor<sil::tensor::TensorAntisymmetricIndex<RhoLow, NuLow>>
-            dual_laplacian_accessor;
+    [[maybe_unused]] sil::tensor::TensorAccessor<
+            sil::tensor::TensorAntisymmetricIndex<RhoLow, NuLow>> dual_laplacian_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::TensorAntisymmetricIndex<RhoLow, NuLow>>
             dual_laplacian_dom(
                     mesh_xy.remove_last(ddc::DiscreteVector<DDimX, DDimY> {1, 1}),
@@ -224,7 +225,7 @@ int main(int argc, char** argv)
             ddc::detail::TypeSeq<>>(hodge_star2, inv_metric);
 
     // Laplacian
-    sil::tensor::TensorAccessor<DummyIndex> laplacian_accessor;
+    [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> laplacian_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, DummyIndex> laplacian_dom(
             mesh_xy.remove_last(ddc::DiscreteVector<DDimX, DDimY> {1, 1}),
             laplacian_accessor.mem_domain());
