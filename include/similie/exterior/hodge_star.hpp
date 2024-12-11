@@ -91,11 +91,6 @@ HodgeStarType fill_hodge_star(HodgeStarType hodge_star, MetricType metric)
     static_assert(tensor::are_contravariant_v<Indices1>);
     static_assert(tensor::are_covariant_v<Indices2>);
 
-    using MetricIndex1 = ddc::
-            type_seq_element_t<0, ddc::to_type_seq_t<typename MetricIndex::subindices_domain_t>>;
-    using MetricIndex2 = ddc::
-            type_seq_element_t<1, ddc::to_type_seq_t<typename MetricIndex::subindices_domain_t>>;
-
     // Allocate metric_det to receive metric field determinant values
     ddc::Chunk metric_det_alloc(
             ddc::remove_dims_of<MetricIndex>(metric.domain()),
@@ -105,9 +100,13 @@ HodgeStarType fill_hodge_star(HodgeStarType hodge_star, MetricType metric)
     ddc::Chunk buffer_alloc(
             ddc::cartesian_prod_t<
                     ddc::remove_dims_of_t<typename MetricType::discrete_domain_type, MetricIndex>,
-                    ddc::DiscreteDomain<MetricIndex1, MetricIndex2>>(
+                    ddc::DiscreteDomain<
+                            tensor::metric_index_1<MetricIndex>,
+                            tensor::metric_index_2<MetricIndex>>>(
                     ddc::remove_dims_of<MetricIndex>(metric.domain()),
-                    ddc::DiscreteDomain<MetricIndex1, MetricIndex2>(metric.natural_domain())),
+                    ddc::DiscreteDomain<
+                            tensor::metric_index_1<MetricIndex>,
+                            tensor::metric_index_2<MetricIndex>>(metric.natural_domain())),
             ddc::HostAllocator<double>());
     ddc::ChunkSpan buffer = buffer_alloc.span_view();
     // Compute determinants
@@ -116,7 +115,9 @@ HodgeStarType fill_hodge_star(HodgeStarType hodge_star, MetricType metric)
             ddc::remove_dims_of<MetricIndex>(metric.domain()),
             [&](auto elem) {
                 ddc::for_each(
-                        ddc::DiscreteDomain<MetricIndex1, MetricIndex2>(metric.natural_domain()),
+                        ddc::DiscreteDomain<
+                                tensor::metric_index_1<MetricIndex>,
+                                tensor::metric_index_2<MetricIndex>>(metric.natural_domain()),
                         [&](auto index) {
                             buffer(elem, index) = metric(metric.access_element(elem, index));
                         });

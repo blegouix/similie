@@ -27,10 +27,18 @@ struct MetricIndex1 : TensorNaturalIndex<CDim...>
 {
 };
 
+template <class MetricIndex>
+using metric_index_1
+        = ddc::type_seq_element_t<0, ddc::to_type_seq_t<typename MetricIndex::subindices_domain_t>>;
+
 template <class... CDim>
 struct MetricIndex2 : TensorNaturalIndex<CDim...>
 {
 };
+
+template <class MetricIndex>
+using metric_index_2
+        = ddc::type_seq_element_t<1, ddc::to_type_seq_t<typename MetricIndex::subindices_domain_t>>;
 
 namespace detail {
 
