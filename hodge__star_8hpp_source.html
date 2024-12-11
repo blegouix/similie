@@ -222,52 +222,80 @@ $(document).ready(function(){initNavTree('hodge__star_8hpp_source.html',''); ini
 <div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>                  ddc::to_type_seq_t&lt;typename MetricType::accessor_t::natural_domain_t&gt;&gt;);</div>
 <div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>    <span class="keyword">static_assert</span>(tensor::are_contravariant_v&lt;Indices1&gt;);</div>
 <div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>    <span class="keyword">static_assert</span>(tensor::are_covariant_v&lt;Indices2&gt;);</div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>    ddc::Chunk metric_det_alloc(metric.non_indices_domain(), ddc::HostAllocator&lt;double&gt;());</div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>    ddc::ChunkSpan&lt;</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>            double,</div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>            <span class="keyword">typename</span> MetricType::non_indices_domain_t,</div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>            Kokkos::layout_right,</div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>            Kokkos::DefaultHostExecutionSpace::memory_space&gt;</div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>            metric_det(metric_det_alloc);</div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>    ddc::for_each( <span class="comment">// TODO parallel_for_each (weird lock)</span></div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>            metric_det.domain(),</div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>            [&amp;](<span class="keyword">auto</span> elem) { metric_det(elem) = 1. / tensor::determinant(metric[elem]); });</div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span> </div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a6adfee8fa46a7b0d4cb1739e1b305317">tensor::tensor_accessor_for_domain_t</a>&lt;</div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a4e5368f425f7bbbab77cd8edaff01b87">tensor::metric_prod_domain_t&lt;MetricIndex, Indices1, tensor::primes&lt;Indices1&gt;</a>&gt;&gt;</div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>            metric_prod_accessor;</div>
-<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>    ddc::Chunk metric_prod_alloc(</div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>            ddc::cartesian_prod_t&lt;</div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>                    <span class="keyword">typename</span> MetricType::non_indices_domain_t,</div>
-<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>                    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a4e5368f425f7bbbab77cd8edaff01b87">tensor::metric_prod_domain_t</a>&lt;MetricIndex, Indices1, <a class="code hl_typedef" href="namespacesil_1_1tensor.html#aa6f1b27f2ca0ebfd55a3c528d61d77f5">tensor::primes&lt;Indices1&gt;</a>&gt;&gt;(</div>
-<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>                    metric.non_indices_domain(),</div>
-<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>                    metric_prod_accessor.mem_domain()),</div>
-<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>            ddc::HostAllocator&lt;double&gt;());</div>
-<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>    tensor::Tensor&lt;</div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>            double,</div>
-<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>            ddc::cartesian_prod_t&lt;</div>
-<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>                    <span class="keyword">typename</span> MetricType::non_indices_domain_t,</div>
-<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>                    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a4e5368f425f7bbbab77cd8edaff01b87">tensor::metric_prod_domain_t&lt;MetricIndex, Indices1, tensor::primes&lt;Indices1&gt;</a>&gt;&gt;,</div>
-<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>            Kokkos::layout_right,</div>
-<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>            Kokkos::DefaultHostExecutionSpace::memory_space&gt;</div>
-<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>            metric_prod(metric_prod_alloc);</div>
-<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span> </div>
-<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>    fill_metric_prod&lt;MetricIndex, Indices1, tensor::primes&lt;Indices1&gt;&gt;(metric_prod, metric);</div>
-<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span> </div>
-<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>    <span class="keywordflow">return</span> fill_hodge_star&lt;Indices1, Indices2&gt;(hodge_star, metric_det, metric_prod);</div>
-<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>}</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span> </div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>    <span class="comment">// Allocate metric_det to receive metric field determinant values</span></div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>    ddc::Chunk metric_det_alloc(</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>            ddc::remove_dims_of&lt;MetricIndex&gt;(metric.domain()),</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>            ddc::HostAllocator&lt;double&gt;());</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>    ddc::ChunkSpan metric_det = metric_det_alloc.span_view();</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>    <span class="comment">// Allocate a buffer mirroring the metric as a full matrix, it will be overwritten by tensor::determinant() which involves a LU decomposition</span></div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>    ddc::Chunk buffer_alloc(</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>            ddc::cartesian_prod_t&lt;</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>                    ddc::remove_dims_of_t&lt;typename MetricType::discrete_domain_type, MetricIndex&gt;,</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>                    ddc::DiscreteDomain&lt;</div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>                            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a2bfc9ad6cd7faac5cdef7b258d17f18e">tensor::metric_index_1&lt;MetricIndex&gt;</a>,</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>                            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a6614fd844f1fbc04e34bd367cc3b0cbc">tensor::metric_index_2&lt;MetricIndex&gt;</a>&gt;&gt;(</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>                    ddc::remove_dims_of&lt;MetricIndex&gt;(metric.domain()),</div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>                    ddc::DiscreteDomain&lt;</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>                            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a2bfc9ad6cd7faac5cdef7b258d17f18e">tensor::metric_index_1&lt;MetricIndex&gt;</a>,</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>                            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a6614fd844f1fbc04e34bd367cc3b0cbc">tensor::metric_index_2&lt;MetricIndex&gt;</a>&gt;(metric.natural_domain())),</div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>            ddc::HostAllocator&lt;double&gt;());</div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>    ddc::ChunkSpan buffer = buffer_alloc.span_view();</div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>    <span class="comment">// Compute determinants</span></div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>    ddc::parallel_for_each(</div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>            Kokkos::DefaultHostExecutionSpace(),</div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>            ddc::remove_dims_of&lt;MetricIndex&gt;(metric.domain()),</div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>            [&amp;](<span class="keyword">auto</span> elem) {</div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>                ddc::for_each(</div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>                        ddc::DiscreteDomain&lt;</div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>                                tensor::metric_index_1&lt;MetricIndex&gt;,</div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>                                tensor::metric_index_2&lt;MetricIndex&gt;&gt;(metric.natural_domain()),</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>                        [&amp;](auto index) {</div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>                            buffer(elem, index) = metric(metric.access_element(elem, index));</div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>                        });</div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>                metric_det(elem) = 1. / <a class="code hl_function" href="namespacesil_1_1tensor.html#a61fe8bf1b3d411f3d86fdef8beaafc06">tensor::determinant</a>(buffer[elem].allocation_kokkos_view());</div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>            });</div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span> </div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>    <span class="comment">// Allocate &amp; compute the product of metrics</span></div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a6adfee8fa46a7b0d4cb1739e1b305317">tensor::tensor_accessor_for_domain_t</a>&lt;</div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a4e5368f425f7bbbab77cd8edaff01b87">tensor::metric_prod_domain_t&lt;MetricIndex, Indices1, tensor::primes&lt;Indices1&gt;</a>&gt;&gt;</div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>            metric_prod_accessor;</div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>    ddc::Chunk metric_prod_alloc(</div>
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>            ddc::cartesian_prod_t&lt;</div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>                    ddc::remove_dims_of_t&lt;typename MetricType::discrete_domain_type, MetricIndex&gt;,</div>
+<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>                    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a4e5368f425f7bbbab77cd8edaff01b87">tensor::metric_prod_domain_t</a>&lt;MetricIndex, Indices1, <a class="code hl_typedef" href="namespacesil_1_1tensor.html#aa6f1b27f2ca0ebfd55a3c528d61d77f5">tensor::primes&lt;Indices1&gt;</a>&gt;&gt;(</div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>                    ddc::remove_dims_of&lt;MetricIndex&gt;(metric.domain()),</div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>                    metric_prod_accessor.mem_domain()),</div>
+<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>            ddc::HostAllocator&lt;double&gt;());</div>
+<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>    tensor::Tensor&lt;</div>
+<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span>            double,</div>
+<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span>            ddc::cartesian_prod_t&lt;</div>
+<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>                    ddc::remove_dims_of_t&lt;typename MetricType::discrete_domain_type, MetricIndex&gt;,</div>
+<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>                    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a4e5368f425f7bbbab77cd8edaff01b87">tensor::metric_prod_domain_t&lt;MetricIndex, Indices1, tensor::primes&lt;Indices1&gt;</a>&gt;&gt;,</div>
+<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>            Kokkos::layout_right,</div>
+<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>            Kokkos::DefaultHostExecutionSpace::memory_space&gt;</div>
+<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>            metric_prod(metric_prod_alloc);</div>
+<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span> </div>
+<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>    fill_metric_prod&lt;MetricIndex, Indices1, tensor::primes&lt;Indices1&gt;&gt;(metric_prod, metric);</div>
+<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span> </div>
+<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>    <span class="comment">// Compute Hodge star</span></div>
+<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>    <span class="keywordflow">return</span> fill_hodge_star&lt;Indices1, Indices2&gt;(hodge_star, metric_det, metric_prod);</div>
+<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>}</div>
 </div>
-<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span> </div>
-<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>} <span class="comment">// namespace exterior</span></div>
-<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span> </div>
-<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>} <span class="comment">// namespace sil</span></div>
+<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span> </div>
+<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>} <span class="comment">// namespace exterior</span></div>
+<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span> </div>
+<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>} <span class="comment">// namespace sil</span></div>
 <div class="ttc" id="aclasssil_1_1tensor_1_1TensorAccessor_html"><div class="ttname"><a href="classsil_1_1tensor_1_1TensorAccessor.html">sil::tensor::TensorAccessor</a></div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00265">tensor_impl.hpp:266</a></div></div>
 <div class="ttc" id="aconceptsil_1_1misc_1_1Specialization_html"><div class="ttname"><a href="conceptsil_1_1misc_1_1Specialization.html">sil::misc::Specialization</a></div><div class="ttdef"><b>Definition</b> <a href="specialization_8hpp_source.html#l00023">specialization.hpp:23</a></div></div>
 <div class="ttc" id="aconceptsil_1_1tensor_1_1TensorIndex_html"><div class="ttname"><a href="conceptsil_1_1tensor_1_1TensorIndex.html">sil::tensor::TensorIndex</a></div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00104">tensor_impl.hpp:104</a></div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html_a3008c3a92ad4960842a0837bda52d7c2"><div class="ttname"><a href="namespacesil_1_1exterior.html#a3008c3a92ad4960842a0837bda52d7c2">sil::exterior::hodge_star_domain_t</a></div><div class="ttdeci">ddc::detail::convert_type_seq_to_discrete_domain_t&lt; ddc::type_seq_merge_t&lt; ddc::detail::TypeSeq&lt; misc::convert_type_seq_to_t&lt; tensor::TensorFullIndex, Indices1 &gt; &gt;, ddc::detail::TypeSeq&lt; misc::convert_type_seq_to_t&lt; tensor::TensorAntisymmetricIndex, Indices2 &gt; &gt; &gt; &gt; hodge_star_domain_t</div><div class="ttdef"><b>Definition</b> <a href="hodge__star_8hpp_source.html#l00026">hodge_star.hpp:32</a></div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html_a7f807817675d32d99f75b6861c93a627"><div class="ttname"><a href="namespacesil_1_1exterior.html#a7f807817675d32d99f75b6861c93a627">sil::exterior::fill_hodge_star</a></div><div class="ttdeci">HodgeStarType fill_hodge_star(HodgeStarType hodge_star, MetricDeterminantType metric_determinant, MetricProdType metric_prod)</div><div class="ttdef"><b>Definition</b> <a href="hodge__star_8hpp_source.html#l00043">hodge_star.hpp:43</a></div></div>
 <div class="ttc" id="anamespacesil_1_1misc_html_aaf2e9c4453ff349939186425e5bbc3ec"><div class="ttname"><a href="namespacesil_1_1misc.html#aaf2e9c4453ff349939186425e5bbc3ec">sil::misc::convert_type_seq_to_t</a></div><div class="ttdeci">typename detail::ConvertTypeSeqTo&lt; T, Seq &gt;::type convert_type_seq_to_t</div><div class="ttdef"><b>Definition</b> <a href="type__seq__conversion_8hpp_source.html#l00045">type_seq_conversion.hpp:45</a></div></div>
-<div class="ttc" id="anamespacesil_1_1tensor_html_a4e5368f425f7bbbab77cd8edaff01b87"><div class="ttname"><a href="namespacesil_1_1tensor.html#a4e5368f425f7bbbab77cd8edaff01b87">sil::tensor::metric_prod_domain_t</a></div><div class="ttdeci">typename detail::MetricProdDomainType&lt; MetricIndex, Indices1, Indices2 &gt;::type metric_prod_domain_t</div><div class="ttdef"><b>Definition</b> <a href="metric_8hpp_source.html#l00132">metric.hpp:133</a></div></div>
+<div class="ttc" id="anamespacesil_1_1tensor_html_a2bfc9ad6cd7faac5cdef7b258d17f18e"><div class="ttname"><a href="namespacesil_1_1tensor.html#a2bfc9ad6cd7faac5cdef7b258d17f18e">sil::tensor::metric_index_1</a></div><div class="ttdeci">ddc::type_seq_element_t&lt; 0, ddc::to_type_seq_t&lt; typename MetricIndex::subindices_domain_t &gt; &gt; metric_index_1</div><div class="ttdef"><b>Definition</b> <a href="metric_8hpp_source.html#l00031">metric.hpp:32</a></div></div>
+<div class="ttc" id="anamespacesil_1_1tensor_html_a4e5368f425f7bbbab77cd8edaff01b87"><div class="ttname"><a href="namespacesil_1_1tensor.html#a4e5368f425f7bbbab77cd8edaff01b87">sil::tensor::metric_prod_domain_t</a></div><div class="ttdeci">typename detail::MetricProdDomainType&lt; MetricIndex, Indices1, Indices2 &gt;::type metric_prod_domain_t</div><div class="ttdef"><b>Definition</b> <a href="metric_8hpp_source.html#l00140">metric.hpp:141</a></div></div>
+<div class="ttc" id="anamespacesil_1_1tensor_html_a61fe8bf1b3d411f3d86fdef8beaafc06"><div class="ttname"><a href="namespacesil_1_1tensor.html#a61fe8bf1b3d411f3d86fdef8beaafc06">sil::tensor::determinant</a></div><div class="ttdeci">KOKKOS_FUNCTION ViewType::value_type determinant(const ViewType &amp;matrix)</div><div class="ttdef"><b>Definition</b> <a href="determinant_8hpp_source.html#l00018">determinant.hpp:18</a></div></div>
+<div class="ttc" id="anamespacesil_1_1tensor_html_a6614fd844f1fbc04e34bd367cc3b0cbc"><div class="ttname"><a href="namespacesil_1_1tensor.html#a6614fd844f1fbc04e34bd367cc3b0cbc">sil::tensor::metric_index_2</a></div><div class="ttdeci">ddc::type_seq_element_t&lt; 1, ddc::to_type_seq_t&lt; typename MetricIndex::subindices_domain_t &gt; &gt; metric_index_2</div><div class="ttdef"><b>Definition</b> <a href="metric_8hpp_source.html#l00040">metric.hpp:41</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_a6adfee8fa46a7b0d4cb1739e1b305317"><div class="ttname"><a href="namespacesil_1_1tensor.html#a6adfee8fa46a7b0d4cb1739e1b305317">sil::tensor::tensor_accessor_for_domain_t</a></div><div class="ttdeci">detail::TensorAccessorForDomain&lt; Dom &gt;::type tensor_accessor_for_domain_t</div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00324">tensor_impl.hpp:324</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_aa6f1b27f2ca0ebfd55a3c528d61d77f5"><div class="ttname"><a href="namespacesil_1_1tensor.html#aa6f1b27f2ca0ebfd55a3c528d61d77f5">sil::tensor::primes</a></div><div class="ttdeci">detail::Primes&lt; Indices, I &gt;::type primes</div><div class="ttdef"><b>Definition</b> <a href="prime_8hpp_source.html#l00050">prime.hpp:50</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_af1114b530ae34962788b74719bd1eeb2"><div class="ttname"><a href="namespacesil_1_1tensor.html#af1114b530ae34962788b74719bd1eeb2">sil::tensor::are_contravariant_v</a></div><div class="ttdeci">bool constexpr are_contravariant_v</div><div class="ttdef"><b>Definition</b> <a href="character_8hpp_source.html#l00267">character.hpp:267</a></div></div>
