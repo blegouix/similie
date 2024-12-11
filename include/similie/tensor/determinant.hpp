@@ -17,7 +17,8 @@ namespace tensor {
 template <misc::Specialization<Kokkos::View> ViewType>
 KOKKOS_FUNCTION typename ViewType::value_type determinant(const ViewType& matrix)
 {
-    assert(matrix.extent(0) == matrix.extent(1) && "Matrix should be squared to compute its determinant");
+    assert(matrix.extent(0) == matrix.extent(1)
+           && "Matrix should be squared to compute its determinant");
 
     const std::size_t N = matrix.extent(0);
 
@@ -77,10 +78,13 @@ TensorType::element_type determinant(TensorType tensor)
 
     Kokkos::View<typename TensorType::element_type**, Kokkos::LayoutRight, Kokkos::HostSpace>
             buffer("determinant_buffer", n, n);
-    ddc::parallel_for_each(Kokkos::DefaultHostExecutionSpace(), tensor.accessor().natural_domain(), [&](auto index) {
-        buffer(ddc::detail::array(index)[0], ddc::detail::array(index)[1])
-                = tensor(tensor.access_element(index));
-    });
+    ddc::parallel_for_each(
+            Kokkos::DefaultHostExecutionSpace(),
+            tensor.accessor().natural_domain(),
+            [&](auto index) {
+                buffer(ddc::detail::array(index)[0], ddc::detail::array(index)[1])
+                        = tensor(tensor.access_element(index));
+            });
     return determinant(buffer);
 }
 
