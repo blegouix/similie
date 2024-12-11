@@ -13,17 +13,13 @@ namespace sil {
 
 namespace tensor {
 
-namespace detail {
-
-// ChatGPT-generated, TODO rely on KokkosKernels LU factorization
+// ChatGPT-generated, TODO rely on KokkosKernels LU factorization. It overwrite matrix
 template <misc::Specialization<Kokkos::View> ViewType>
 KOKKOS_FUNCTION typename ViewType::value_type determinant(const ViewType& matrix)
 {
-    const std::size_t N = matrix.extent(0);
+    assert(matrix.extent(0) == matrix.extent(1) && "Matrix should be squared to compute its determinant");
 
-    // Create a copy of the input matrix (LU decomposition modifies the matrix)
-    ViewType LU("LU", N, N);
-    Kokkos::deep_copy(LU, matrix);
+    const std::size_t N = matrix.extent(0);
 
     // Permutation sign (to account for row swaps)
     int permutation_sign = 1;
@@ -32,11 +28,11 @@ KOKKOS_FUNCTION typename ViewType::value_type determinant(const ViewType& matrix
     for (int i = 0; i < N; ++i) {
         // Pivoting (find the largest element in the current column)
         int pivot = i;
-        typename ViewType::value_type max_val = std::abs(LU(i, i));
+        typename ViewType::value_type max_val = Kokkos::abs(matrix(i, i));
         for (int j = i + 1; j < N; ++j) {
-            if (std::abs(LU(j, i)) > max_val) {
+            if (Kokkos::abs(matrix(j, i)) > max_val) {
                 pivot = j;
-                max_val = std::abs(LU(j, i));
+                max_val = Kokkos::abs(matrix(j, i));
             }
         }
 
@@ -44,20 +40,20 @@ KOKKOS_FUNCTION typename ViewType::value_type determinant(const ViewType& matrix
         if (pivot != i) {
             permutation_sign *= -1; // Track the effect of row swaps
             for (int k = 0; k < N; ++k) {
-                std::swap(LU(i, k), LU(pivot, k));
+                Kokkos::kokkos_swap(matrix(i, k), matrix(pivot, k));
             }
         }
 
         // Check for singular matrix
-        if (LU(i, i) == 0.0) {
+        if (matrix(i, i) == 0.0) {
             return 0.0; // Determinant is zero for singular matrices
         }
 
         // Perform elimination below the pivot
         for (int j = i + 1; j < N; ++j) {
-            LU(j, i) /= LU(i, i);
+            matrix(j, i) /= matrix(i, i);
             for (int k = i + 1; k < N; ++k) {
-                LU(j, k) -= LU(j, i) * LU(i, k);
+                matrix(j, k) -= matrix(j, i) * matrix(i, k);
             }
         }
     }
@@ -65,16 +61,14 @@ KOKKOS_FUNCTION typename ViewType::value_type determinant(const ViewType& matrix
     // Compute the determinant as the product of the diagonal elements
     typename ViewType::value_type det = permutation_sign;
     for (int i = 0; i < N; ++i) {
-        det *= LU(i, i);
+        det *= matrix(i, i);
     }
 
     return det;
 }
 
-} // namespace detail
-
 template <misc::Specialization<Tensor> TensorType>
-KOKKOS_FUNCTION TensorType::element_type determinant(TensorType tensor)
+TensorType::element_type determinant(TensorType tensor)
 {
     static_assert(TensorType::natural_domain_t::rank() == 2);
     auto extents = ddc::detail::array(tensor.natural_domain().extents());
@@ -83,11 +77,11 @@ KOKKOS_FUNCTION TensorType::element_type determinant(TensorType tensor)
 
     Kokkos::View<typename TensorType::element_type**, Kokkos::LayoutRight, Kokkos::HostSpace>
             buffer("determinant_buffer", n, n);
-    ddc::for_each(tensor.accessor().natural_domain(), [&](auto index) {
+    ddc::parallel_for_each(Kokkos::DefaultHostExecutionSpace(), tensor.accessor().natural_domain(), [&](auto index) {
         buffer(ddc::detail::array(index)[0], ddc::detail::array(index)[1])
                 = tensor(tensor.access_element(index));
     });
-    return detail::determinant(buffer);
+    return determinant(buffer);
 }
 
 } // namespace tensor

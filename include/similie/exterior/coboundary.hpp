@@ -188,11 +188,9 @@ struct NonSpectatorDimension<Index, ddc::DiscreteDomain<DDim...>>
             ddc::DiscreteDomain<>>...>;
 };
 
-struct DummyTag
+struct DummyIndex
 {
 };
-
-using DummyIndex = ddc::UniformPointSampling<DummyTag>;
 
 } // namespace detail
 
