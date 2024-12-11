@@ -142,8 +142,8 @@ public:
                 }
             }
             if (k != i) {
-                misc::shift_left(k, stop, 1);
-                misc::shift_left(i, stop, 1);
+                misc::detail::shift_left(k, stop, 1);
+                misc::detail::shift_left(i, stop, 1);
                 m_size -= 2;
                 stop = end();
             } else {
