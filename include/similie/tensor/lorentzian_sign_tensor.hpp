@@ -75,9 +75,9 @@ struct TensorLorentzianSignIndex
         return std::numeric_limits<std::size_t>::max();
     }
 
-    template <class Tensor, class Elem, class Id>
+    template <class Tensor, class Elem, class Id, class FunctorType>
     KOKKOS_FUNCTION static constexpr Tensor::element_type process_access(
-            std::function<typename Tensor::element_type(Tensor, Elem)> access,
+            const FunctorType& access,
             Tensor tensor,
             Elem elem)
     {
