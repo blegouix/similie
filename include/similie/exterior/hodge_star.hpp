@@ -76,28 +76,6 @@ HodgeStarType fill_hodge_star(
     return hodge_star;
 }
 
-namespace detail {
-
-struct DummyTag1
-{
-};
-
-struct DummyTag2
-{
-};
-
-struct DummyIndex1
-{
-    static constexpr bool is_tensor_index = true;
-};
-
-struct DummyIndex2
-{
-    static constexpr bool is_tensor_index = true;
-};
-
-} // namespace detail
-
 template <
         tensor::TensorIndex MetricIndex,
         misc::Specialization<ddc::detail::TypeSeq> Indices1,
@@ -113,65 +91,53 @@ HodgeStarType fill_hodge_star(HodgeStarType hodge_star, MetricType metric)
     static_assert(tensor::are_contravariant_v<Indices1>);
     static_assert(tensor::are_covariant_v<Indices2>);
 
+    using MetricIndex1 = ddc::
+            type_seq_element_t<0, ddc::to_type_seq_t<typename MetricIndex::subindices_domain_t>>;
+    using MetricIndex2 = ddc::
+            type_seq_element_t<1, ddc::to_type_seq_t<typename MetricIndex::subindices_domain_t>>;
+
     // Allocate metric_det to receive metric field determinant values
-    ddc::Chunk metric_det_alloc(metric.non_indices_domain(), ddc::HostAllocator<double>());
+    ddc::Chunk metric_det_alloc(
+            ddc::remove_dims_of<MetricIndex>(metric.domain()),
+            ddc::HostAllocator<double>());
     ddc::ChunkSpan metric_det = metric_det_alloc.span_view();
     // Allocate a buffer mirroring the metric as a full matrix, it will be overwritten by tensor::determinant() which involves a LU decomposition
     ddc::Chunk buffer_alloc(
             ddc::cartesian_prod_t<
-                    typename MetricType::non_indices_domain_t,
-                    ddc::DiscreteDomain<detail::DummyIndex1, detail::DummyIndex2>>(
-                    metric.non_indices_domain(),
-                    ddc::DiscreteDomain<detail::DummyIndex1, detail::DummyIndex2>(
-                            ddc::DiscreteElement<detail::DummyIndex1, detail::DummyIndex2>(0, 0),
-                            ddc::DiscreteVector<detail::DummyIndex1, detail::DummyIndex2>(
-                                    static_cast<std::size_t>(
-                                            metric.natural_domain()
-                                                    .template extent<ddc::type_seq_element_t<
-                                                            0,
-                                                            ddc::to_type_seq_t<
-                                                                    typename MetricIndex::
-                                                                            subindices_domain_t>>>()),
-                                    static_cast<std::size_t>(
-                                            metric.natural_domain()
-                                                    .template extent<ddc::type_seq_element_t<
-                                                            1,
-                                                            ddc::to_type_seq_t<
-                                                                    typename MetricIndex::
-                                                                            subindices_domain_t>>>())))),
+                    ddc::remove_dims_of_t<typename MetricType::discrete_domain_type, MetricIndex>,
+                    ddc::DiscreteDomain<MetricIndex1, MetricIndex2>>(
+                    ddc::remove_dims_of<MetricIndex>(metric.domain()),
+                    ddc::DiscreteDomain<MetricIndex1, MetricIndex2>(metric.natural_domain())),
             ddc::HostAllocator<double>());
     ddc::ChunkSpan buffer = buffer_alloc.span_view();
     // Compute determinants
     ddc::parallel_for_each(
             Kokkos::DefaultHostExecutionSpace(),
-            metric.non_indices_domain(),
+            ddc::remove_dims_of<MetricIndex>(metric.domain()),
             [&](auto elem) {
-                ddc::for_each(metric.accessor().natural_domain(), [&](auto index) {
-                    std::cout << buffer(elem, index);
-                    /*
-                    buffer(elem, index)
-                            = metric(elem, metric.access_element(index));
-                */
-                });
-                /*
+                ddc::for_each(
+                        ddc::DiscreteDomain<MetricIndex1, MetricIndex2>(metric.natural_domain()),
+                        [&](auto index) {
+                            buffer(elem, index) = metric(metric.access_element(elem, index));
+                        });
                 metric_det(elem) = 1. / tensor::determinant(buffer[elem].allocation_kokkos_view());
-                */
             });
 
+    // Allocate & compute the product of metrics
     tensor::tensor_accessor_for_domain_t<
             tensor::metric_prod_domain_t<MetricIndex, Indices1, tensor::primes<Indices1>>>
             metric_prod_accessor;
     ddc::Chunk metric_prod_alloc(
             ddc::cartesian_prod_t<
-                    typename MetricType::non_indices_domain_t,
+                    ddc::remove_dims_of_t<typename MetricType::discrete_domain_type, MetricIndex>,
                     tensor::metric_prod_domain_t<MetricIndex, Indices1, tensor::primes<Indices1>>>(
-                    metric.non_indices_domain(),
+                    ddc::remove_dims_of<MetricIndex>(metric.domain()),
                     metric_prod_accessor.mem_domain()),
             ddc::HostAllocator<double>());
     tensor::Tensor<
             double,
             ddc::cartesian_prod_t<
-                    typename MetricType::non_indices_domain_t,
+                    ddc::remove_dims_of_t<typename MetricType::discrete_domain_type, MetricIndex>,
                     tensor::metric_prod_domain_t<MetricIndex, Indices1, tensor::primes<Indices1>>>,
             Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
@@ -179,6 +145,7 @@ HodgeStarType fill_hodge_star(HodgeStarType hodge_star, MetricType metric)
 
     fill_metric_prod<MetricIndex, Indices1, tensor::primes<Indices1>>(metric_prod, metric);
 
+    // Compute Hodge star
     return fill_hodge_star<Indices1, Indices2>(hodge_star, metric_det, metric_prod);
 }
 
