@@ -6,6 +6,7 @@
 #include <ddc/ddc.hpp>
 
 #include <similie/misc/are_all_same.hpp>
+#include <similie/misc/portable_stl.hpp>
 #include <similie/misc/specialization.hpp>
 
 #include <Kokkos_StdAlgorithms.hpp>
@@ -141,8 +142,8 @@ public:
                 }
             }
             if (k != i) {
-                Kokkos::Experimental::shift_left(Kokkos::DefaultHostExecutionSpace(), k, stop, 1);
-                Kokkos::Experimental::shift_left(Kokkos::DefaultHostExecutionSpace(), i, stop, 1);
+                misc::shift_left(k, stop, 1);
+                misc::shift_left(i, stop, 1);
                 m_size -= 2;
                 stop = end();
             } else {
