@@ -291,7 +291,7 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
                                         ddc::DiscreteElement<CochainTag>(
                                                 Kokkos::Experimental::distance(
                                                         lower_chain.begin(),
-                                                        misc::
+                                                        misc::detail::
                                                                 find(lower_chain.begin(),
                                                                      lower_chain.end(),
                                                                      (*j).discrete_vector()))));
