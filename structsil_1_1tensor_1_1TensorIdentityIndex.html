@@ -161,9 +161,9 @@ Static Public Member Functions</h2></td></tr>
 <tr class="separator:a5566aee27c61a6d80cc922edbad9423e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a90aa4311ef2bfbd1decd4383d644118d" id="r_a90aa4311ef2bfbd1decd4383d644118d"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1tensor_1_1TensorIdentityIndex.html#a90aa4311ef2bfbd1decd4383d644118d">access_id_to_mem_id</a> (std::size_t <a class="el" href="structsil_1_1tensor_1_1TensorIdentityIndex.html#a5566aee27c61a6d80cc922edbad9423e">access_id</a>)</td></tr>
 <tr class="separator:a90aa4311ef2bfbd1decd4383d644118d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab18e970727d48743f56793632fc9b8e2" id="r_ab18e970727d48743f56793632fc9b8e2"><td class="memTemplParams" colspan="2">template&lt;class Tensor , class Elem , class Id &gt; </td></tr>
-<tr class="memitem:ab18e970727d48743f56793632fc9b8e2"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr Tensor::element_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structsil_1_1tensor_1_1TensorIdentityIndex.html#ab18e970727d48743f56793632fc9b8e2">process_access</a> (std::function&lt; typename Tensor::element_type(Tensor, Elem)&gt; access, Tensor tensor, Elem elem)</td></tr>
-<tr class="separator:ab18e970727d48743f56793632fc9b8e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a26f1dd0f02b7d32c0a106a12cb2d24d0" id="r_a26f1dd0f02b7d32c0a106a12cb2d24d0"><td class="memTemplParams" colspan="2">template&lt;class Tensor , class Elem , class Id , class FunctorType &gt; </td></tr>
+<tr class="memitem:a26f1dd0f02b7d32c0a106a12cb2d24d0"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr Tensor::element_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structsil_1_1tensor_1_1TensorIdentityIndex.html#a26f1dd0f02b7d32c0a106a12cb2d24d0">process_access</a> (const FunctorType &amp;access, Tensor tensor, Elem elem)</td></tr>
+<tr class="separator:a26f1dd0f02b7d32c0a106a12cb2d24d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a34e87b7987f95989af0e9eb56e8f3f5c" id="r_a34e87b7987f95989af0e9eb56e8f3f5c"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION constexpr std::array&lt; std::size_t, <a class="el" href="structsil_1_1tensor_1_1TensorIdentityIndex.html#a35ac032ec442ef5466bc96edfdcdbbda">rank</a>()&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1tensor_1_1TensorIdentityIndex.html#a34e87b7987f95989af0e9eb56e8f3f5c">mem_id_to_canonical_natural_ids</a> (std::size_t <a class="el" href="structsil_1_1tensor_1_1TensorIdentityIndex.html#aa9b137ef2664e66b274f9b9e96834337">mem_id</a>)</td></tr>
 <tr class="separator:a34e87b7987f95989af0e9eb56e8f3f5c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -433,15 +433,15 @@ template&lt;class... TensorIndex&gt; </div>
 
 </div>
 </div>
-<a id="ab18e970727d48743f56793632fc9b8e2" name="ab18e970727d48743f56793632fc9b8e2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab18e970727d48743f56793632fc9b8e2">&#9670;&#160;</a></span>process_access()</h2>
+<a id="a26f1dd0f02b7d32c0a106a12cb2d24d0" name="a26f1dd0f02b7d32c0a106a12cb2d24d0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a26f1dd0f02b7d32c0a106a12cb2d24d0">&#9670;&#160;</a></span>process_access()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
 template&lt;class... TensorIndex&gt; </div>
 <div class="memtemplate">
-template&lt;class Tensor , class Elem , class Id &gt; </div>
+template&lt;class Tensor , class Elem , class Id , class FunctorType &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -449,7 +449,7 @@ template&lt;class Tensor , class Elem , class Id &gt; </div>
         <tr>
           <td class="memname">static KOKKOS_FUNCTION constexpr Tensor::element_type <a class="el" href="structsil_1_1tensor_1_1TensorIdentityIndex.html">sil::tensor::TensorIdentityIndex</a>&lt; TensorIndex &gt;::process_access </td>
           <td>(</td>
-          <td class="paramtype">std::function&lt; typename Tensor::element_type(Tensor, Elem)&gt;&#160;</td>
+          <td class="paramtype">const FunctorType &amp;&#160;</td>
           <td class="paramname"><em>access</em>, </td>
         </tr>
         <tr>
