@@ -800,7 +800,7 @@ template <class OldIndex, class NewIndex>
 struct RelabelizeIndexIn
 {
     template <class... DDim>
-    static auto run(ddc::DiscreteElement<DDim...> elem)
+    static constexpr auto run(ddc::DiscreteElement<DDim...> elem)
     {
         return ddc::DiscreteElement<
                 typename detail::RelabelizeIndex<DDim, OldIndex, NewIndex>::type...>(
@@ -808,7 +808,7 @@ struct RelabelizeIndexIn
     }
 
     template <class... DDim>
-    static auto run(ddc::DiscreteVector<DDim...> vect)
+    static constexpr auto run(ddc::DiscreteVector<DDim...> vect)
     {
         return ddc::DiscreteVector<
                 typename detail::RelabelizeIndex<DDim, OldIndex, NewIndex>::type...>(
@@ -816,7 +816,7 @@ struct RelabelizeIndexIn
     }
 
     template <class... DDim>
-    static auto run(ddc::DiscreteDomain<DDim...> dom)
+    static constexpr auto run(ddc::DiscreteDomain<DDim...> dom)
     {
         return relabelize_index_in_t<ddc::DiscreteDomain<DDim...>, OldIndex, NewIndex>(
                 relabelize_index_in<OldIndex, NewIndex>(dom.front()),
@@ -870,10 +870,8 @@ template <
 relabelize_index_of_t<
         Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>,
         OldIndex,
-        NewIndex>
-relabelize_index_of(
-        Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>
-                old_tensor)
+        NewIndex> constexpr relabelize_index_of(Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>
+                                                        old_tensor)
 {
     return relabelize_index_of_t<
             Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>,
@@ -965,7 +963,7 @@ template <class OldIndices, class NewIndices, std::size_t I = 0>
 struct RelabelizeIndicesIn
 {
     template <class... DDim>
-    static auto run(ddc::DiscreteElement<DDim...> elem)
+    static constexpr auto run(ddc::DiscreteElement<DDim...> elem)
     {
         if constexpr (I != ddc::type_seq_size_v<OldIndices>) {
             return RelabelizeIndicesIn<OldIndices, NewIndices, I + 1>::run(
@@ -978,7 +976,7 @@ struct RelabelizeIndicesIn
     }
 
     template <class... DDim>
-    static auto run(ddc::DiscreteVector<DDim...> vect)
+    static constexpr auto run(ddc::DiscreteVector<DDim...> vect)
     {
         if constexpr (I != ddc::type_seq_size_v<OldIndices>) {
             return RelabelizeIndicesIn<OldIndices, NewIndices, I + 1>::run(
@@ -991,7 +989,7 @@ struct RelabelizeIndicesIn
     }
 
     template <class... DDim>
-    static auto run(ddc::DiscreteDomain<DDim...> dom)
+    static constexpr auto run(ddc::DiscreteDomain<DDim...> dom)
     {
         if constexpr (I != ddc::type_seq_size_v<OldIndices>) {
             return RelabelizeIndicesIn<OldIndices, NewIndices, I + 1>::run(
@@ -1046,7 +1044,7 @@ template <
         class... DDim,
         class LayoutStridedPolicy,
         class MemorySpace>
-auto RelabelizeIndicesOf(
+auto constexpr RelabelizeIndicesOf(
         Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>
                 old_tensor)
 {
@@ -1103,7 +1101,8 @@ template <
         misc::Specialization<ddc::detail::TypeSeq> OldIndices,
         misc::Specialization<ddc::detail::TypeSeq> NewIndices,
         misc::Specialization<Tensor> Tensor>
-relabelize_indices_of_t<Tensor, OldIndices, NewIndices> relabelize_indices_of(Tensor tensor)
+relabelize_indices_of_t<Tensor, OldIndices, NewIndices> constexpr relabelize_indices_of(
+        Tensor tensor)
 {
     static_assert(ddc::type_seq_size_v<OldIndices> == ddc::type_seq_size_v<NewIndices>);
     return detail::RelabelizeIndicesOf<OldIndices, NewIndices, 0>(tensor);

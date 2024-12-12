@@ -89,33 +89,44 @@ int main(int argc, char** argv)
     [[maybe_unused]] sil::tensor::TensorAccessor<MetricIndex> metric_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, MetricIndex>
             metric_dom(mesh_xy, metric_accessor.mem_domain());
-    ddc::Chunk metric_alloc(metric_dom, ddc::HostAllocator<double>());
+    ddc::Chunk metric_alloc(metric_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<DDimX, DDimY, MetricIndex>,
             Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
+            Kokkos::DefaultExecutionSpace::memory_space>
             metric(metric_alloc);
-    ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
-        metric(elem, metric.accessor().access_element<X, X>()) = 1.;
-        metric(elem, metric.accessor().access_element<X, Y>()) = 0.;
-        metric(elem, metric.accessor().access_element<Y, Y>()) = 1.;
-    });
+    ddc::parallel_for_each(
+            Kokkos::DefaultExecutionSpace(),
+            mesh_xy,
+            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
+                metric(elem, metric.accessor().access_element<X, X>()) = 1.;
+                metric(elem, metric.accessor().access_element<X, Y>()) = 0.;
+                metric(elem, metric.accessor().access_element<Y, Y>()) = 1.;
+            });
 
     // Invert metric
     [[maybe_unused]] sil::tensor::TensorAccessor<sil::tensor::upper<MetricIndex>>
             inv_metric_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::upper<MetricIndex>>
             inv_metric_dom(mesh_xy, inv_metric_accessor.mem_domain());
-    ddc::Chunk inv_metric_alloc(inv_metric_dom, ddc::HostAllocator<double>());
+    ddc::Chunk inv_metric_alloc(inv_metric_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::upper<MetricIndex>>,
             Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
+            Kokkos::DefaultExecutionSpace::memory_space>
             inv_metric(inv_metric_alloc);
-    sil::tensor::fill_inverse_metric<MetricIndex>(inv_metric, metric);
+    sil::tensor::fill_inverse_metric<
+            MetricIndex>(Kokkos::DefaultExecutionSpace(), inv_metric, metric);
 
+    ddc::parallel_for_each(
+            Kokkos::DefaultExecutionSpace(),
+            mesh_xy,
+            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
+                Kokkos::printf("%f ", metric(elem, metric.accessor().access_element<X, X>()));
+            });
+    /*
     // Potential
     [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> potential_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, DummyIndex>
@@ -245,4 +256,5 @@ int main(int argc, char** argv)
 
     std::cout << "Laplacian:" << std::endl;
     std::cout << laplacian[laplacian_accessor.mem_domain().front()] << std::endl;
+    */
 }

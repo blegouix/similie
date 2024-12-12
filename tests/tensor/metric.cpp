@@ -261,7 +261,8 @@ TEST(Metric, Inverse)
             Kokkos::DefaultHostExecutionSpace::memory_space>
             inv_metric(inv_metric_alloc);
 
-    sil::tensor::fill_inverse_metric<DirectMetricIndex>(inv_metric, metric);
+    sil::tensor::fill_inverse_metric<
+            DirectMetricIndex>(Kokkos::DefaultHostExecutionSpace(), inv_metric, metric);
 
     [[maybe_unused]] sil::tensor::TensorAccessor<IdIndex> identity_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, IdIndex>

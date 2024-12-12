@@ -370,8 +370,9 @@ using invert_metric_t = relabelize_indices_of_t<
         swap_character<ddc::to_type_seq_t<typename MetricType::accessor_t::natural_domain_t>>>;
 
 // Compute invert metric (g_mu_nu for gmunu or gmunu for g_mu_nu)
-template <TensorIndex MetricIndex, misc::Specialization<Tensor> MetricType>
+template <TensorIndex MetricIndex, misc::Specialization<Tensor> MetricType, class ExecSpace>
 invert_metric_t<MetricType> fill_inverse_metric(
+        ExecSpace const& exec_space,
         invert_metric_t<MetricType> inv_metric,
         MetricType metric)
 {
@@ -380,9 +381,9 @@ invert_metric_t<MetricType> fill_inverse_metric(
             || misc::Specialization<MetricIndex, TensorLorentzianSignIndex>) {
     } else if (misc::Specialization<MetricIndex, TensorDiagonalIndex>) {
         ddc::parallel_for_each(
-                Kokkos::DefaultHostExecutionSpace(),
+                exec_space,
                 inv_metric.mem_domain(),
-                [&](auto elem) {
+                KOKKOS_LAMBDA(invert_metric_t<MetricType>::discrete_element_type elem) {
                     inv_metric(elem)
                             = 1.
                               / metric(relabelize_indices_in<
@@ -393,12 +394,14 @@ invert_metric_t<MetricType> fill_inverse_metric(
                                       elem));
                 });
     } else if (misc::Specialization<MetricIndex, TensorSymmetricIndex>) {
-        ddc::for_each( // TODO parallel_for_each, weird lock happening
+        constexpr std::size_t n = ddc::type_seq_element_t<
+                0,
+                ddc::to_type_seq_t<typename MetricIndex::subindices_domain_t>>::size();
+        ddc::parallel_for_each(
+                exec_space,
                 inv_metric.non_indices_domain(),
-                [&](auto elem) {
-                    constexpr std::size_t n = ddc::type_seq_element_t<
-                            0,
-                            ddc::to_type_seq_t<typename MetricIndex::subindices_domain_t>>::size();
+                KOKKOS_LAMBDA(typename invert_metric_t<
+                              MetricType>::non_indices_domain_t::discrete_element_type elem) {
                     Kokkos::View<double**, Kokkos::LayoutRight, Kokkos::HostSpace> const
                             metric_view("metric_inversion_metric_view", n, n);
                     ddc::for_each(metric.accessor().natural_domain(), [&](auto index) {
