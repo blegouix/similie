@@ -1,4 +1,12 @@
+<!--
+SPDX-FileCopyrightText: 2024 Baptiste Legouix
+SPDX-License-Identifier: GPL-3.0-or-later
+-->
+
+# Toolchain for V100 GPU 
+
 Tested on OVH T1-LE-45 instance with Ubuntu 24
-- Run ubuntu24.sh to install spack dependencies and nvidia driver. It will reboot.
-- Run prepare.sh to install spack environment
-- Run environment.sh to load spack environment
+
+1. Run ubuntu24.sh to install spack dependencies and nvidia driver. It will reboot.
+2. Run prepare.sh to install spack environment
+3. Run environment.sh to load spack environment
