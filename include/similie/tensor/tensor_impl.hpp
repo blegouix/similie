@@ -827,7 +827,7 @@ struct RelabelizeIndexIn
 } // namespace detail
 
 template <class OldIndex, class NewIndex, class T>
-relabelize_index_in_t<T, OldIndex, NewIndex> relabelize_index_in(T t)
+constexpr relabelize_index_in_t<T, OldIndex, NewIndex> relabelize_index_in(T t)
 {
     return detail::RelabelizeIndexIn<OldIndex, NewIndex>::run(t);
 }
@@ -867,11 +867,13 @@ template <
         class... DDim,
         class LayoutStridedPolicy,
         class MemorySpace>
-relabelize_index_of_t<
+constexpr relabelize_index_of_t<
         Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>,
         OldIndex,
-        NewIndex> constexpr relabelize_index_of(Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>
-                                                        old_tensor)
+        NewIndex>
+relabelize_index_of(
+        Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>
+                old_tensor)
 {
     return relabelize_index_of_t<
             Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>,
@@ -1005,7 +1007,7 @@ struct RelabelizeIndicesIn
 } // namespace detail
 
 template <class OldIndices, class NewIndices, class T>
-relabelize_indices_in_t<T, OldIndices, NewIndices> relabelize_indices_in(T t)
+constexpr relabelize_indices_in_t<T, OldIndices, NewIndices> relabelize_indices_in(T t)
 {
     static_assert(ddc::type_seq_size_v<OldIndices> == ddc::type_seq_size_v<NewIndices>);
     return detail::RelabelizeIndicesIn<OldIndices, NewIndices>::run(t);
@@ -1101,7 +1103,7 @@ template <
         misc::Specialization<ddc::detail::TypeSeq> OldIndices,
         misc::Specialization<ddc::detail::TypeSeq> NewIndices,
         misc::Specialization<Tensor> Tensor>
-relabelize_indices_of_t<Tensor, OldIndices, NewIndices> constexpr relabelize_indices_of(
+constexpr relabelize_indices_of_t<Tensor, OldIndices, NewIndices> relabelize_indices_of(
         Tensor tensor)
 {
     static_assert(ddc::type_seq_size_v<OldIndices> == ddc::type_seq_size_v<NewIndices>);

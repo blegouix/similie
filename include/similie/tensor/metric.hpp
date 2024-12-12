@@ -394,27 +394,54 @@ invert_metric_t<MetricType> fill_inverse_metric(
                                       elem));
                 });
     } else if (misc::Specialization<MetricIndex, TensorSymmetricIndex>) {
-        constexpr std::size_t n = ddc::type_seq_element_t<
-                0,
-                ddc::to_type_seq_t<typename MetricIndex::subindices_domain_t>>::size();
+        // Allocate a buffer mirroring the metric as a full matrix
+        ddc::Chunk buffer_alloc(
+                ddc::cartesian_prod_t<
+                        ddc::remove_dims_of_t<
+                                typename MetricType::discrete_domain_type,
+                                MetricIndex>,
+                        ddc::DiscreteDomain<
+                                tensor::metric_index_1<MetricIndex>,
+                                tensor::metric_index_2<MetricIndex>>>(
+                        ddc::remove_dims_of<MetricIndex>(metric.domain()),
+                        ddc::DiscreteDomain<
+                                tensor::metric_index_1<MetricIndex>,
+                                tensor::metric_index_2<MetricIndex>>(metric.natural_domain())),
+                ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
+        ddc::ChunkSpan buffer = buffer_alloc.span_view();
+        // Allocate a buffer for KokkosBatched::SerialInverseLU internal needs
+        ddc::Chunk buffer_alloc2(
+                ddc::cartesian_prod_t<
+                        ddc::remove_dims_of_t<
+                                typename MetricType::discrete_domain_type,
+                                MetricIndex>,
+                        ddc::DiscreteDomain<tensor::metric_index_1<MetricIndex>>>(
+                        ddc::remove_dims_of<MetricIndex>(metric.domain()),
+                        ddc::DiscreteDomain<tensor::metric_index_1<MetricIndex>>(
+                                metric.natural_domain())),
+                ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
+        ddc::ChunkSpan buffer2 = buffer_alloc2.span_view();
+
+        // process
         ddc::parallel_for_each(
                 exec_space,
                 inv_metric.non_indices_domain(),
                 KOKKOS_LAMBDA(typename invert_metric_t<
                               MetricType>::non_indices_domain_t::discrete_element_type elem) {
-                    Kokkos::View<double**, Kokkos::LayoutRight, Kokkos::HostSpace> const
-                            metric_view("metric_inversion_metric_view", n, n);
-                    ddc::for_each(metric.accessor().natural_domain(), [&](auto index) {
-                        metric_view(ddc::detail::array(index)[0], ddc::detail::array(index)[1])
-                                = metric(metric.access_element(elem, index));
-                    });
+                    ddc::for_each(
+                            ddc::DiscreteDomain<
+                                    tensor::metric_index_1<MetricIndex>,
+                                    tensor::metric_index_2<MetricIndex>>(metric.natural_domain()),
+                            [&](auto index) {
+                                buffer(elem, index) = metric(metric.access_element(elem, index));
+                            });
 
-                    Kokkos::View<double*, Kokkos::LayoutRight, Kokkos::HostSpace> const
-                            buffer("metric_inversion_buffer", n);
-                    int err = KokkosBatched::SerialLU<KokkosBatched::Algo::SolveLU::Unblocked>::
-                            invoke(metric_view); // Seems to require diagonal-dominant
-                    err += KokkosBatched::SerialInverseLU<
-                            KokkosBatched::Algo::SolveLU::Unblocked>::invoke(metric_view, buffer);
+                    int err = KokkosBatched::SerialLU<KokkosBatched::Algo::SolveLU::Unblocked>::invoke(
+                            buffer[elem]
+                                    .allocation_kokkos_view()); // Seems to require diagonal-dominant
+                    err += KokkosBatched::SerialInverseLU<KokkosBatched::Algo::SolveLU::Unblocked>::
+                            invoke(buffer[elem].allocation_kokkos_view(),
+                                   buffer2[elem].allocation_kokkos_view());
                     assert(err == 0 && "Kokkos-kernels failed at inverting metric tensor");
                     /*
                     Kokkos::View<double**, Kokkos::LayoutRight, Kokkos::HostSpace> const
@@ -433,13 +460,26 @@ invert_metric_t<MetricType> fill_inverse_metric(
                     }
                     */
 
-                    ddc::for_each(inv_metric.accessor().natural_domain(), [&](auto index) {
-                        // TODO do better, symmetric tensor is filled twice
-                        inv_metric(inv_metric.access_element(elem, index)) = metric_view(
-                                ddc::detail::array(index)[0],
-                                ddc::detail::array(index)[1]);
-                    });
+                    ddc::for_each(
+                            tensor::swap_character<ddc::DiscreteDomain<
+                                    tensor::metric_index_1<MetricIndex>,
+                                    tensor::metric_index_2<MetricIndex>>>(
+                                    inv_metric.natural_domain()),
+                            [&](auto index) {
+                                // TODO do better, symmetric tensor is filled twice
+                                inv_metric(inv_metric.access_element(elem, index)) = buffer(
+                                        elem,
+                                        tensor::relabelize_indices_in<
+                                                tensor::swap_character<ddc::detail::TypeSeq<
+                                                        tensor::metric_index_1<MetricIndex>,
+                                                        tensor::metric_index_2<MetricIndex>>>,
+                                                ddc::detail::TypeSeq<
+                                                        tensor::metric_index_1<MetricIndex>,
+                                                        tensor::metric_index_2<MetricIndex>>>(
+                                                index));
+                            });
                 });
+        Kokkos::fence();
     }
 
     return inv_metric;

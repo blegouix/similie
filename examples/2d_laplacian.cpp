@@ -20,6 +20,7 @@ struct Y
 };
 
 // Declare a metric
+// using MetricIndex = sil::tensor::TensorSymmetricIndex<
 using MetricIndex = sil::tensor::TensorSymmetricIndex<
         sil::tensor::TensorCovariantNaturalIndex<sil::tensor::MetricIndex1<X, Y>>,
         sil::tensor::TensorCovariantNaturalIndex<sil::tensor::MetricIndex2<X, Y>>>;
@@ -124,7 +125,9 @@ int main(int argc, char** argv)
             Kokkos::DefaultExecutionSpace(),
             mesh_xy,
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
-                Kokkos::printf("%f ", metric(elem, metric.accessor().access_element<X, X>()));
+                Kokkos::printf("%f ", inv_metric(elem, inv_metric.accessor().access_element<X, X>()));
+                Kokkos::printf("%f ", inv_metric(elem, inv_metric.accessor().access_element<X, Y>()));
+                Kokkos::printf("%f \n", inv_metric(elem, inv_metric.accessor().access_element<Y, Y>()));
             });
     /*
     // Potential
