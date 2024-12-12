@@ -5,7 +5,4 @@ export SPACK_USER_PREFIX="${WORKDIR}/spack"
 
 . ${SPACK_USER_PREFIX}/share/spack/setup-env.sh
 
-spack load cuda
-spack load netlib-lapack
-spack load fftw
-spack load ginkgo
+spacktivate similie
