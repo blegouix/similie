@@ -125,9 +125,15 @@ int main(int argc, char** argv)
             Kokkos::DefaultExecutionSpace(),
             mesh_xy,
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
-                Kokkos::printf("%f ", inv_metric(elem, inv_metric.accessor().access_element<X, X>()));
-                Kokkos::printf("%f ", inv_metric(elem, inv_metric.accessor().access_element<X, Y>()));
-                Kokkos::printf("%f \n", inv_metric(elem, inv_metric.accessor().access_element<Y, Y>()));
+                Kokkos::
+                        printf("%f ",
+                               inv_metric(elem, inv_metric.accessor().access_element<X, X>()));
+                Kokkos::
+                        printf("%f ",
+                               inv_metric(elem, inv_metric.accessor().access_element<X, Y>()));
+                Kokkos::
+                        printf("%f \n",
+                               inv_metric(elem, inv_metric.accessor().access_element<Y, Y>()));
             });
     /*
     // Potential
