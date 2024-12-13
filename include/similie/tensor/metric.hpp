@@ -209,7 +209,7 @@ struct FillMetricProd<ddc::detail::TypeSeq<>, ddc::detail::TypeSeq<>>
     static MetricProdType run(
             ExecSpace const& exec_space,
             MetricProdType metric_prod,
-            MetricType metric,
+            [[maybe_unused]] MetricType metric,
             MetricProdType_ metric_prod_)
     {
         Kokkos::deep_copy(

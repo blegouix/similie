@@ -41,7 +41,7 @@ public:
         ddc::init_discrete_space<DDim>(
                 greville_points_type<BSplines>::template get_sampling<DDim>());
         return greville_points_type<BSplines>::template get_domain<DDim>();
-    };
+    }
 };
 
 } // namespace detail

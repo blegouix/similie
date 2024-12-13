@@ -71,7 +71,8 @@ struct TensorLeviCivitaIndex
         }
     }
 
-    KOKKOS_FUNCTION static constexpr std::size_t access_id_to_mem_id(std::size_t access_id)
+    KOKKOS_FUNCTION static constexpr std::size_t access_id_to_mem_id(
+            [[maybe_unused]] std::size_t access_id)
     {
         return std::numeric_limits<std::size_t>::max();
     }

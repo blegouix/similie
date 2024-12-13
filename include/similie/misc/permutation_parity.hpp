@@ -19,7 +19,7 @@ template <std::size_t N>
 inline constexpr int permutation_parity(std::array<std::size_t, N> lst)
 {
     int parity = 1;
-    for (int i = 0; i < lst.size() - 1; ++i) {
+    for (std::size_t i = 0; i < lst.size() - 1; ++i) {
         if (lst[i] != i) {
             parity *= -1;
             std::size_t mn
