@@ -246,17 +246,7 @@ struct FillMetricProd<
         ddc::Chunk new_metric_prod_alloc_(
                 new_metric_prod_dom_,
                 ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
-        tensor::Tensor<
-                double,
-                ddc::cartesian_prod_t<
-                        typename MetricProdType_::discrete_domain_type,
-                        relabelize_metric_in_domain_t<
-                                typename MetricType::indices_domain_t,
-                                HeadIndex1,
-                                HeadIndex2>>,
-                Kokkos::layout_right,
-                typename ExecSpace::memory_space>
-                new_metric_prod_(new_metric_prod_alloc_);
+        tensor::Tensor new_metric_prod_(new_metric_prod_alloc_);
 
         if (new_metric_prod_dom_.size() != 0) {
             ddc::parallel_for_each(
@@ -308,12 +298,7 @@ fill_metric_prod(
     ddc::Chunk metric_prod_alloc_(
             dom_,
             ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
-    tensor::Tensor<
-            double,
-            typename MetricType::non_indices_domain_t,
-            Kokkos::layout_right,
-            typename ExecSpace::memory_space>
-            metric_prod_(metric_prod_alloc_);
+    tensor::Tensor metric_prod_(metric_prod_alloc_);
     ddc::parallel_fill(exec_space, metric_prod_, 1.);
 
     return detail::FillMetricProd<Indices1, Indices2>::
@@ -400,17 +385,7 @@ inplace_apply_metric(ExecSpace const& exec_space, TensorType tensor, MetricType 
                     tensor.non_indices_domain(),
                     metric_prod_accessor.mem_domain()),
             ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
-    tensor::Tensor<
-            double,
-            ddc::cartesian_prod_t<
-                    typename TensorType::non_indices_domain_t,
-                    metric_prod_domain_t<
-                            MetricIndex,
-                            ddc::detail::TypeSeq<Index1...>,
-                            primes<ddc::detail::TypeSeq<Index1...>>>>,
-            Kokkos::layout_right,
-            typename ExecSpace::memory_space>
-            metric_prod(metric_prod_alloc);
+    tensor::Tensor metric_prod(metric_prod_alloc);
 
     fill_metric_prod<
             MetricIndex,
