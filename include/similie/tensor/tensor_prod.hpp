@@ -58,7 +58,7 @@ struct CheckTensorsCompatibility<
         ddc::detail::TypeSeq<Index1...>,
         ddc::detail::TypeSeq<Index2...>>
 {
-    static constexpr void run()
+    KOKKOS_FUNCTION static constexpr void run()
     {
         static_assert(std::is_same_v<
                       ddc::type_seq_remove_t<
@@ -126,7 +126,11 @@ struct TensorProdAnyAnyAny<
         ddc::detail::TypeSeq<TailDDim2...>>
 {
     template <class ElementType, class LayoutStridedPolicy, class MemorySpace>
-    static Tensor<ElementType, ddc::DiscreteDomain<ProdDDim...>, LayoutStridedPolicy, MemorySpace>
+    KOKKOS_FUNCTION static Tensor<
+            ElementType,
+            ddc::DiscreteDomain<ProdDDim...>,
+            LayoutStridedPolicy,
+            MemorySpace>
     run(Tensor<ElementType,
                ddc::DiscreteDomain<ProdDDim...>,
                Kokkos::layout_right,
@@ -182,15 +186,19 @@ Tensor<ElementType,
        ddc::DiscreteDomain<ProdDDim...>,
        Kokkos::layout_right,
        Kokkos::DefaultHostExecutionSpace::memory_space>
-tensor_prod(
-        Tensor<ElementType,
-               ddc::DiscreteDomain<ProdDDim...>,
-               Kokkos::layout_right,
-               Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
-        Tensor<ElementType, ddc::DiscreteDomain<Index1...>, LayoutStridedPolicy, MemorySpace>
-                tensor1,
-        Tensor<ElementType, ddc::DiscreteDomain<Index2...>, LayoutStridedPolicy, MemorySpace>
-                tensor2)
+        KOKKOS_FUNCTION tensor_prod(
+                Tensor<ElementType,
+                       ddc::DiscreteDomain<ProdDDim...>,
+                       Kokkos::layout_right,
+                       Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
+                Tensor<ElementType,
+                       ddc::DiscreteDomain<Index1...>,
+                       LayoutStridedPolicy,
+                       MemorySpace> tensor1,
+                Tensor<ElementType,
+                       ddc::DiscreteDomain<Index2...>,
+                       LayoutStridedPolicy,
+                       MemorySpace> tensor2)
 {
     check_tensors_compatibility<
             ddc::detail::TypeSeq<ProdDDim...>,

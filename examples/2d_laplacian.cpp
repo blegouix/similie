@@ -120,35 +120,21 @@ int main(int argc, char** argv)
             inv_metric(inv_metric_alloc);
     sil::tensor::fill_inverse_metric<
             MetricIndex>(Kokkos::DefaultExecutionSpace(), inv_metric, metric);
-
-    ddc::parallel_for_each(
-            Kokkos::DefaultExecutionSpace(),
-            mesh_xy,
-            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
-                Kokkos::
-                        printf("%f ",
-                               inv_metric(elem, inv_metric.accessor().access_element<X, X>()));
-                Kokkos::
-                        printf("%f ",
-                               inv_metric(elem, inv_metric.accessor().access_element<X, Y>()));
-                Kokkos::
-                        printf("%f \n",
-                               inv_metric(elem, inv_metric.accessor().access_element<Y, Y>()));
-            });
-    /*
+    // TODO weird -1 for X, X on GPU
+ 
     // Potential
     [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> potential_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, DummyIndex>
             potential_dom(metric.non_indices_domain(), potential_accessor.mem_domain());
-    ddc::Chunk potential_alloc(potential_dom, ddc::HostAllocator<double>());
+    ddc::Chunk potential_alloc(potential_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<DDimX, DDimY, DummyIndex>,
             Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
+            Kokkos::DefaultExecutionSpace::memory_space>
             potential(potential_alloc);
 
-    ddc::for_each(potential.domain(), [&](auto elem) {
+    ddc::parallel_for_each(potential.domain(), KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
         double const r = Kokkos::sqrt(
                 static_cast<double>(
                         ddc::coordinate(ddc::DiscreteElement<DDimX>(elem))
@@ -164,8 +150,24 @@ int main(int argc, char** argv)
     });
 
     std::cout << "Potential:" << std::endl;
-    std::cout << potential[potential_accessor.mem_domain().front()] << std::endl;
+    auto potential_host = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), potential);
+    std::cout << sil::tensor::Tensor(potential_host[potential_accessor.mem_domain().front()]) << std::endl;
 
+    /*
+     ddc::parallel_for_each(
+            Kokkos::DefaultExecutionSpace(),
+            mesh_xy,
+            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
+                Kokkos::
+                        printf("%f ",
+                               inv_metric(elem, inv_metric.accessor().access_element<X, X>()));
+                Kokkos::
+                        printf("%f ",
+                               inv_metric(elem, inv_metric.accessor().access_element<X, Y>()));
+                Kokkos::
+                        printf("%f \n",
+                               inv_metric(elem, inv_metric.accessor().access_element<Y, Y>()));
+            });
     // Gradient
     [[maybe_unused]] sil::tensor::TensorAccessor<MuLow> gradient_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, MuLow> gradient_dom(mesh_xy, gradient_accessor.mem_domain());

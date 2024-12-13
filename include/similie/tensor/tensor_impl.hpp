@@ -753,6 +753,14 @@ public:
     }
 };
 
+template <class ElementType, class SupportType, class Allocator>
+Tensor(ddc::Chunk<ElementType, SupportType, Allocator>)
+        -> Tensor<ElementType, SupportType, Kokkos::layout_right, typename Allocator::memory_space>;
+
+template <class ElementType, class SupportType, class LayoutStridedPolicy, class MemorySpace>
+Tensor(ddc::ChunkSpan<ElementType, SupportType, LayoutStridedPolicy, MemorySpace>)
+        -> Tensor<ElementType, SupportType, LayoutStridedPolicy, MemorySpace>;
+
 // Relabelize index without altering allocation
 namespace detail {
 template <class IndexToRelabelize, TensorIndex OldIndex, TensorIndex NewIndex>

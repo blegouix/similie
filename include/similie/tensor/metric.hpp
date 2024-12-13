@@ -281,7 +281,11 @@ using non_primes = ddc::type_seq_remove_t<ddc::to_type_seq_t<Dom>, primes<ddc::t
 
 // Apply metrics inplace (like g_mu_muprime*T^muprime^nu)
 template <misc::Specialization<Tensor> MetricType, misc::Specialization<Tensor> TensorType>
-auto inplace_apply_metric(TensorType tensor, MetricType metric_prod)
+relabelize_indices_of_t<
+        TensorType,
+        swap_character<detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>,
+        detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>
+inplace_apply_metric(TensorType tensor, MetricType metric_prod)
 {
     ddc::Chunk result_alloc(
             relabelize_indices_in<
@@ -298,7 +302,7 @@ auto inplace_apply_metric(TensorType tensor, MetricType metric_prod)
     ddc::parallel_for_each(
             Kokkos::DefaultHostExecutionSpace(),
             tensor.non_indices_domain(),
-            KOKKOS_LAMBDA(auto elem) {
+            KOKKOS_LAMBDA(typename TensorType::non_indices_domain_t::discrete_element_type elem) {
                 tensor_prod(
                         result[elem],
                         metric_prod[elem],
