@@ -269,7 +269,7 @@ bool constexpr are_contravariant_v = detail::AreContravariant<Seq>::value;
 // check if characters are equal
 namespace detail {
 
-template <class Index1, class Index2>
+template <TensorNatIndex Index1, TensorNatIndex Index2>
 struct IsSameCharacter;
 
 template <TensorNatIndex Index1, TensorNatIndex Index2>
