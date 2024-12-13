@@ -8,7 +8,8 @@ git clone -c feature.manyFiles=true --depth=2 https://github.com/spack/spack.git
 
 spack env create similie
 spacktivate similie
-spack external find cmake
+spack external find
+spack external find cuda
 spack compiler find
 spack add cuda
 spack add netlib-lapack
