@@ -20,7 +20,6 @@ struct Y
 };
 
 // Declare a metric
-// using MetricIndex = sil::tensor::TensorSymmetricIndex<
 using MetricIndex = sil::tensor::TensorSymmetricIndex<
         sil::tensor::TensorCovariantNaturalIndex<sil::tensor::MetricIndex1<X, Y>>,
         sil::tensor::TensorCovariantNaturalIndex<sil::tensor::MetricIndex2<X, Y>>>;
