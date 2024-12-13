@@ -36,11 +36,13 @@ template <
         misc::Specialization<ddc::detail::TypeSeq> Indices2,
         misc::Specialization<tensor::Tensor> HodgeStarType,
         class MetricDeterminantType,
-        misc::Specialization<tensor::Tensor> MetricProdType>
+        misc::Specialization<tensor::Tensor> MetricProdType,
+        class ExecSpace>
     requires(
             misc::Specialization<MetricDeterminantType, ddc::ChunkSpan>
             || misc::Specialization<MetricDeterminantType, tensor::Tensor>)
 HodgeStarType fill_hodge_star(
+        ExecSpace const& exec_space,
         HodgeStarType hodge_star,
         MetricDeterminantType metric_determinant,
         MetricProdType metric_prod)
@@ -55,20 +57,23 @@ HodgeStarType fill_hodge_star(
             levi_civita_dom(levi_civita_accessor.mem_domain());
     ddc::Chunk levi_civita_alloc(
             levi_civita_dom,
-            ddc::HostAllocator<double>()); // TODO consider avoid allocation
+            ddc::KokkosAllocator<
+                    double,
+                    typename ExecSpace::memory_space>()); // TODO consider avoid allocation
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<misc::convert_type_seq_to_t<
                     tensor::TensorLeviCivitaIndex,
                     ddc::type_seq_merge_t<tensor::primes<tensor::lower<Indices1>>, Indices2>>>,
             Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
+            typename ExecSpace::memory_space>
             levi_civita(levi_civita_alloc);
 
     ddc::parallel_for_each(
-            Kokkos::DefaultHostExecutionSpace(),
+            exec_space,
             hodge_star.non_indices_domain(),
-            [&](auto elem) {
+            KOKKOS_LAMBDA(
+                    typename HodgeStarType::non_indices_domain_t::discrete_element_type elem) {
                 tensor_prod(hodge_star[elem], metric_prod[elem], levi_civita);
                 hodge_star[elem] *= Kokkos::sqrt(Kokkos::abs(metric_determinant(elem)))
                                     / misc::factorial(ddc::type_seq_size_v<Indices1>);
@@ -81,8 +86,12 @@ template <
         misc::Specialization<ddc::detail::TypeSeq> Indices1,
         misc::Specialization<ddc::detail::TypeSeq> Indices2,
         misc::Specialization<tensor::Tensor> HodgeStarType,
-        misc::Specialization<tensor::Tensor> MetricType>
-HodgeStarType fill_hodge_star(HodgeStarType hodge_star, MetricType metric)
+        misc::Specialization<tensor::Tensor> MetricType,
+        class ExecSpace>
+HodgeStarType fill_hodge_star(
+        ExecSpace const& exec_space,
+        HodgeStarType hodge_star,
+        MetricType metric)
 {
     static_assert(tensor::are_contravariant_v<
                   ddc::to_type_seq_t<typename MetricIndex::subindices_domain_t>>);
@@ -94,7 +103,7 @@ HodgeStarType fill_hodge_star(HodgeStarType hodge_star, MetricType metric)
     // Allocate metric_det to receive metric field determinant values
     ddc::Chunk metric_det_alloc(
             ddc::remove_dims_of<MetricIndex>(metric.domain()),
-            ddc::HostAllocator<double>());
+            ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
     ddc::ChunkSpan metric_det = metric_det_alloc.span_view();
     // Allocate a buffer mirroring the metric as a full matrix, it will be overwritten by tensor::determinant() which involves a LU decomposition
     ddc::Chunk buffer_alloc(
@@ -107,19 +116,25 @@ HodgeStarType fill_hodge_star(HodgeStarType hodge_star, MetricType metric)
                     ddc::DiscreteDomain<
                             tensor::metric_index_1<MetricIndex>,
                             tensor::metric_index_2<MetricIndex>>(metric.natural_domain())),
-            ddc::HostAllocator<double>());
+            ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
     ddc::ChunkSpan buffer = buffer_alloc.span_view();
     // Compute determinants
     ddc::parallel_for_each(
-            Kokkos::DefaultHostExecutionSpace(),
+            exec_space,
             ddc::remove_dims_of<MetricIndex>(metric.domain()),
-            [&](auto elem) {
+            KOKKOS_LAMBDA(typename ddc::remove_dims_of_t<
+                          typename MetricType::discrete_domain_type,
+                          MetricIndex>::discrete_element_type elem) {
                 ddc::for_each(
                         ddc::DiscreteDomain<
                                 tensor::metric_index_1<MetricIndex>,
                                 tensor::metric_index_2<MetricIndex>>(metric.natural_domain()),
-                        [&](auto index) {
-                            buffer(elem, index) = metric(metric.access_element(elem, index));
+                        [=](ddc::DiscreteElement<
+                                tensor::metric_index_1<MetricIndex>,
+                                tensor::metric_index_2<MetricIndex>> index) {
+                            buffer(elem, index) = metric(metric.access_element(
+                                    elem,
+                                    index)); // TODO: triggers a "nvlink warning : Stack size for entry function cannot be statically determined"
                         });
                 metric_det(elem) = 1. / tensor::determinant(buffer[elem].allocation_kokkos_view());
             });
@@ -134,20 +149,23 @@ HodgeStarType fill_hodge_star(HodgeStarType hodge_star, MetricType metric)
                     tensor::metric_prod_domain_t<MetricIndex, Indices1, tensor::primes<Indices1>>>(
                     ddc::remove_dims_of<MetricIndex>(metric.domain()),
                     metric_prod_accessor.mem_domain()),
-            ddc::HostAllocator<double>());
+            ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
     tensor::Tensor<
             double,
             ddc::cartesian_prod_t<
                     ddc::remove_dims_of_t<typename MetricType::discrete_domain_type, MetricIndex>,
                     tensor::metric_prod_domain_t<MetricIndex, Indices1, tensor::primes<Indices1>>>,
             Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
+            typename ExecSpace::memory_space>
             metric_prod(metric_prod_alloc);
 
-    fill_metric_prod<MetricIndex, Indices1, tensor::primes<Indices1>>(metric_prod, metric);
+    fill_metric_prod<
+            MetricIndex,
+            Indices1,
+            tensor::primes<Indices1>>(exec_space, metric_prod, metric);
 
     // Compute Hodge star
-    return fill_hodge_star<Indices1, Indices2>(hodge_star, metric_det, metric_prod);
+    return fill_hodge_star<Indices1, Indices2>(exec_space, hodge_star, metric_det, metric_prod);
 }
 
 } // namespace exterior

@@ -173,8 +173,9 @@ TEST(Metric, ChristoffelLike)
                 christoffel_1st.get(elem, christoffel_1st.accessor().access_element<Y, Y, Y>()),
                 6.);
     });
-    auto christoffel_2nd
-            = sil::tensor::inplace_apply_metric<MetricIndex, KLow>(christoffel_1st, metric);
+    auto christoffel_2nd = sil::tensor::inplace_apply_metric<
+            MetricIndex,
+            KLow>(Kokkos::DefaultHostExecutionSpace(), christoffel_1st, metric);
     ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
         EXPECT_EQ(
                 christoffel_2nd.get(elem, christoffel_2nd.accessor().access_element<X, X, X>()),
@@ -261,7 +262,8 @@ TEST(Metric, Inverse)
             Kokkos::DefaultHostExecutionSpace::memory_space>
             inv_metric(inv_metric_alloc);
 
-    sil::tensor::fill_inverse_metric<DirectMetricIndex>(inv_metric, metric);
+    sil::tensor::fill_inverse_metric<
+            DirectMetricIndex>(Kokkos::DefaultHostExecutionSpace(), inv_metric, metric);
 
     [[maybe_unused]] sil::tensor::TensorAccessor<IdIndex> identity_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, IdIndex>

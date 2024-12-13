@@ -56,7 +56,9 @@ static auto test_derivative()
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 derivative(derivative_alloc);
         if constexpr (sil::tensor::TensorNatIndex<OutIndex>) {
-            sil::exterior::deriv<OutIndex, InIndex>(derivative, tensor);
+            sil::exterior::deriv<
+                    OutIndex,
+                    InIndex>(Kokkos::DefaultHostExecutionSpace(), derivative, tensor);
         } else {
             sil::exterior::deriv<
                     ddc::type_seq_element_t<
@@ -64,7 +66,7 @@ static auto test_derivative()
                             ddc::type_seq_remove_t<
                                     sil::misc::to_type_seq_t<OutIndex>,
                                     sil::misc::to_type_seq_t<InIndex>>>,
-                    InIndex>(derivative, tensor);
+                    InIndex>(Kokkos::DefaultHostExecutionSpace(), derivative, tensor);
         }
         return std::make_pair(std::move(derivative_alloc), derivative);
     } else {
@@ -107,7 +109,9 @@ static auto test_derivative()
                 Kokkos::DefaultHostExecutionSpace::memory_space>
                 derivative(derivative_alloc);
         if constexpr (sil::tensor::TensorNatIndex<OutIndex>) {
-            sil::exterior::deriv<OutIndex, InIndex>(derivative, tensor);
+            sil::exterior::deriv<
+                    OutIndex,
+                    InIndex>(Kokkos::DefaultHostExecutionSpace(), derivative, tensor);
         } else {
             sil::exterior::deriv<
                     ddc::type_seq_element_t<
@@ -115,7 +119,7 @@ static auto test_derivative()
                             ddc::type_seq_remove_t<
                                     sil::misc::to_type_seq_t<OutIndex>,
                                     sil::misc::to_type_seq_t<InIndex>>>,
-                    InIndex>(derivative, tensor);
+                    InIndex>(Kokkos::DefaultHostExecutionSpace(), derivative, tensor);
         }
         return std::make_pair(std::move(derivative_alloc), derivative);
     }
@@ -985,7 +989,10 @@ TEST(ExteriorDerivative, 2DRotationalWithSpects)
             Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
             derivative(derivative_alloc);
-    sil::exterior::deriv<Nu2, sil::tensor::TensorAntisymmetricIndex<Mu2>>(derivative, tensor);
+    sil::exterior::deriv<
+            Nu2,
+            sil::tensor::TensorAntisymmetricIndex<
+                    Mu2>>(Kokkos::DefaultHostExecutionSpace(), derivative, tensor);
 
     for (auto dim_spect_elem : ddc::DiscreteDomain<DDimSpect>(tensor.mem_domain())) {
         for (auto index_spect_elem : ddc::DiscreteDomain<IndexSpect>(tensor.mem_domain())) {

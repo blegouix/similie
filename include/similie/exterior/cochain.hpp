@@ -29,7 +29,6 @@ template <
 class Cochain
 {
 public:
-    using execution_space = typename ChainType::execution_space;
     using memory_space = typename ChainType::memory_space;
 
     using simplex_type = typename ChainType::simplex_type;

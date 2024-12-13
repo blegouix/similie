@@ -89,107 +89,129 @@ int main(int argc, char** argv)
     [[maybe_unused]] sil::tensor::TensorAccessor<MetricIndex> metric_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, MetricIndex>
             metric_dom(mesh_xy, metric_accessor.mem_domain());
-    ddc::Chunk metric_alloc(metric_dom, ddc::HostAllocator<double>());
+    ddc::Chunk metric_alloc(metric_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<DDimX, DDimY, MetricIndex>,
             Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
+            Kokkos::DefaultExecutionSpace::memory_space>
             metric(metric_alloc);
-    ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
-        metric(elem, metric.accessor().access_element<X, X>()) = 1.;
-        metric(elem, metric.accessor().access_element<X, Y>()) = 0.;
-        metric(elem, metric.accessor().access_element<Y, Y>()) = 1.;
-    });
+    ddc::parallel_for_each(
+            Kokkos::DefaultExecutionSpace(),
+            mesh_xy,
+            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
+                metric(elem, metric.accessor().access_element<X, X>()) = 1.;
+                metric(elem, metric.accessor().access_element<X, Y>()) = 0.;
+                metric(elem, metric.accessor().access_element<Y, Y>()) = 1.;
+            });
 
     // Invert metric
     [[maybe_unused]] sil::tensor::TensorAccessor<sil::tensor::upper<MetricIndex>>
             inv_metric_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::upper<MetricIndex>>
             inv_metric_dom(mesh_xy, inv_metric_accessor.mem_domain());
-    ddc::Chunk inv_metric_alloc(inv_metric_dom, ddc::HostAllocator<double>());
+    ddc::Chunk inv_metric_alloc(inv_metric_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::upper<MetricIndex>>,
             Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
+            Kokkos::DefaultExecutionSpace::memory_space>
             inv_metric(inv_metric_alloc);
-    sil::tensor::fill_inverse_metric<MetricIndex>(inv_metric, metric);
+    sil::tensor::fill_inverse_metric<
+            MetricIndex>(Kokkos::DefaultExecutionSpace(), inv_metric, metric);
+    // TODO weird -1 for X, X on GPU
+    Kokkos::deep_copy(
+            inv_metric.allocation_kokkos_view(),
+            metric.allocation_kokkos_view()); // FIXME: Temporary patch
+
+    auto debug = inv_metric;
+    auto debug_host = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), debug);
+    std::cout << "DEBUG:" << std::endl;
+    std::cout << sil::tensor::Tensor(debug_host[debug.accessor().mem_domain().front()])
+              << std::endl;
 
     // Potential
     [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> potential_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, DummyIndex>
             potential_dom(metric.non_indices_domain(), potential_accessor.mem_domain());
-    ddc::Chunk potential_alloc(potential_dom, ddc::HostAllocator<double>());
+    ddc::Chunk potential_alloc(potential_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<DDimX, DDimY, DummyIndex>,
             Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
+            Kokkos::DefaultExecutionSpace::memory_space>
             potential(potential_alloc);
 
-    ddc::for_each(potential.domain(), [&](auto elem) {
-        double const r = Kokkos::sqrt(
-                static_cast<double>(
-                        ddc::coordinate(ddc::DiscreteElement<DDimX>(elem))
-                        * ddc::coordinate(ddc::DiscreteElement<DDimX>(elem)))
-                + static_cast<double>(
-                        ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))
-                        * ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))));
-        if (r <= 1) {
-            potential.mem(elem) = -Kokkos::numbers::pi_v<double> / 2 * r * r;
-        } else {
-            potential.mem(elem) = -Kokkos::numbers::pi_v<double> * Kokkos::log(r);
-        }
-    });
+    ddc::parallel_for_each(
+            potential.domain(),
+            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
+                double const r = Kokkos::sqrt(
+                        static_cast<double>(
+                                ddc::coordinate(ddc::DiscreteElement<DDimX>(elem))
+                                * ddc::coordinate(ddc::DiscreteElement<DDimX>(elem)))
+                        + static_cast<double>(
+                                ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))
+                                * ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))));
+                if (r <= 1) {
+                    potential.mem(elem) = -Kokkos::numbers::pi_v<double> / 2 * r * r;
+                } else {
+                    potential.mem(elem) = -Kokkos::numbers::pi_v<double> * Kokkos::log(r);
+                }
+            });
 
     std::cout << "Potential:" << std::endl;
-    std::cout << potential[potential_accessor.mem_domain().front()] << std::endl;
+    auto potential_host
+            = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), potential);
+    std::cout << sil::tensor::Tensor(potential_host[potential_accessor.mem_domain().front()])
+              << std::endl;
 
     // Gradient
     [[maybe_unused]] sil::tensor::TensorAccessor<MuLow> gradient_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, MuLow> gradient_dom(mesh_xy, gradient_accessor.mem_domain());
-    ddc::Chunk gradient_alloc(gradient_dom, ddc::HostAllocator<double>());
+    ddc::Chunk gradient_alloc(gradient_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<DDimX, DDimY, MuLow>,
             Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
+            Kokkos::DefaultExecutionSpace::memory_space>
             gradient(gradient_alloc);
-    sil::exterior::deriv<MuLow, DummyIndex>(gradient, potential);
+    sil::exterior::deriv<MuLow, DummyIndex>(Kokkos::DefaultExecutionSpace(), gradient, potential);
 
     // Hodge star
     [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain> hodge_star_accessor;
     ddc::cartesian_prod_t<ddc::DiscreteDomain<DDimX, DDimY>, HodgeStarDomain>
             hodge_star_dom(metric.non_indices_domain(), hodge_star_accessor.mem_domain());
-    ddc::Chunk hodge_star_alloc(hodge_star_dom, ddc::HostAllocator<double>());
+    ddc::Chunk hodge_star_alloc(hodge_star_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor<
             double,
             ddc::cartesian_prod_t<ddc::DiscreteDomain<DDimX, DDimY>, HodgeStarDomain>,
             Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
+            Kokkos::DefaultExecutionSpace::memory_space>
             hodge_star(hodge_star_alloc);
 
     sil::exterior::fill_hodge_star<
             sil::tensor::upper<MetricIndex>,
             ddc::detail::TypeSeq<MuUp>,
-            ddc::detail::TypeSeq<NuLow>>(hodge_star, inv_metric);
+            ddc::detail::TypeSeq<NuLow>>(Kokkos::DefaultExecutionSpace(), hodge_star, inv_metric);
 
     // Dual gradient
     [[maybe_unused]] sil::tensor::TensorAccessor<NuLow> dual_gradient_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, NuLow>
             dual_gradient_dom(mesh_xy, dual_gradient_accessor.mem_domain());
-    ddc::Chunk dual_gradient_alloc(dual_gradient_dom, ddc::HostAllocator<double>());
+    ddc::Chunk dual_gradient_alloc(dual_gradient_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<DDimX, DDimY, NuLow>,
             Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
+            Kokkos::DefaultExecutionSpace::memory_space>
             dual_gradient(dual_gradient_alloc);
 
-    ddc::for_each(dual_gradient.non_indices_domain(), [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
-        sil::tensor::tensor_prod(dual_gradient[elem], gradient[elem], hodge_star[elem]);
-    });
+    ddc::parallel_for_each(
+            Kokkos::DefaultExecutionSpace(),
+            dual_gradient.non_indices_domain(),
+            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
+                sil::tensor::tensor_prod(dual_gradient[elem], gradient[elem], hodge_star[elem]);
+            });
 
     // Dual Laplacian
     [[maybe_unused]] sil::tensor::TensorAccessor<
@@ -198,51 +220,57 @@ int main(int argc, char** argv)
             dual_laplacian_dom(
                     mesh_xy.remove_last(ddc::DiscreteVector<DDimX, DDimY> {1, 1}),
                     dual_laplacian_accessor.mem_domain());
-    ddc::Chunk dual_laplacian_alloc(dual_laplacian_dom, ddc::HostAllocator<double>());
+    ddc::Chunk dual_laplacian_alloc(dual_laplacian_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::TensorAntisymmetricIndex<RhoLow, NuLow>>,
             Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
+            Kokkos::DefaultExecutionSpace::memory_space>
             dual_laplacian(dual_laplacian_alloc);
-    sil::exterior::deriv<RhoLow, NuLow>(dual_laplacian, dual_gradient);
+    sil::exterior::
+            deriv<RhoLow, NuLow>(Kokkos::DefaultExecutionSpace(), dual_laplacian, dual_gradient);
 
     // Hodge star 2
     [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain2>
             hodge_star_accessor2;
     ddc::cartesian_prod_t<ddc::DiscreteDomain<DDimX, DDimY>, HodgeStarDomain2>
             hodge_star_dom2(metric.non_indices_domain(), hodge_star_accessor2.mem_domain());
-    ddc::Chunk hodge_star_alloc2(hodge_star_dom2, ddc::HostAllocator<double>());
+    ddc::Chunk hodge_star_alloc2(hodge_star_dom2, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor<
             double,
             ddc::cartesian_prod_t<ddc::DiscreteDomain<DDimX, DDimY>, HodgeStarDomain2>,
             Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
+            Kokkos::DefaultExecutionSpace::memory_space>
             hodge_star2(hodge_star_alloc2);
 
     sil::exterior::fill_hodge_star<
             sil::tensor::upper<MetricIndex>,
             ddc::detail::TypeSeq<RhoUp, NuUp>,
-            ddc::detail::TypeSeq<>>(hodge_star2, inv_metric);
+            ddc::detail::TypeSeq<>>(Kokkos::DefaultExecutionSpace(), hodge_star2, inv_metric);
 
     // Laplacian
     [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> laplacian_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, DummyIndex> laplacian_dom(
             mesh_xy.remove_last(ddc::DiscreteVector<DDimX, DDimY> {1, 1}),
             laplacian_accessor.mem_domain());
-    ddc::Chunk laplacian_alloc(laplacian_dom, ddc::HostAllocator<double>());
+    ddc::Chunk laplacian_alloc(laplacian_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<DDimX, DDimY, DummyIndex>,
             Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
+            Kokkos::DefaultExecutionSpace::memory_space>
             laplacian(laplacian_alloc);
 
-    ddc::parallel_fill(laplacian, 0.);
-    ddc::for_each(laplacian.non_indices_domain(), [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
-        sil::tensor::tensor_prod(laplacian[elem], dual_laplacian[elem], hodge_star2[elem]);
-    });
+    ddc::parallel_for_each(
+            Kokkos::DefaultExecutionSpace(),
+            laplacian.non_indices_domain(),
+            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
+                sil::tensor::tensor_prod(laplacian[elem], dual_laplacian[elem], hodge_star2[elem]);
+            });
 
+    auto laplacian_host
+            = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), laplacian);
     std::cout << "Laplacian:" << std::endl;
-    std::cout << laplacian[laplacian_accessor.mem_domain().front()] << std::endl;
+    std::cout << sil::tensor::Tensor(laplacian_host[laplacian_accessor.mem_domain().front()])
+              << std::endl;
 }

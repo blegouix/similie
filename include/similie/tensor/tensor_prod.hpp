@@ -58,7 +58,7 @@ struct CheckTensorsCompatibility<
         ddc::detail::TypeSeq<Index1...>,
         ddc::detail::TypeSeq<Index2...>>
 {
-    static constexpr void run()
+    KOKKOS_FUNCTION static constexpr void run()
     {
         static_assert(std::is_same_v<
                       ddc::type_seq_remove_t<
@@ -126,11 +126,13 @@ struct TensorProdAnyAnyAny<
         ddc::detail::TypeSeq<TailDDim2...>>
 {
     template <class ElementType, class LayoutStridedPolicy, class MemorySpace>
-    static Tensor<ElementType, ddc::DiscreteDomain<ProdDDim...>, LayoutStridedPolicy, MemorySpace>
-    run(Tensor<ElementType,
-               ddc::DiscreteDomain<ProdDDim...>,
-               Kokkos::layout_right,
-               Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
+    KOKKOS_FUNCTION static Tensor<
+            ElementType,
+            ddc::DiscreteDomain<ProdDDim...>,
+            LayoutStridedPolicy,
+            MemorySpace>
+    run(Tensor<ElementType, ddc::DiscreteDomain<ProdDDim...>, LayoutStridedPolicy, MemorySpace>
+                prod_tensor,
         Tensor<ElementType, ddc::DiscreteDomain<Index1...>, LayoutStridedPolicy, MemorySpace>
                 tensor1,
         Tensor<ElementType, ddc::DiscreteDomain<Index2...>, LayoutStridedPolicy, MemorySpace>
@@ -139,13 +141,13 @@ struct TensorProdAnyAnyAny<
         tensor::TensorAccessor<ContractDDim...> contract_accessor;
         ddc::DiscreteDomain<ContractDDim...> contract_dom = contract_accessor.natural_domain();
 
-        ddc::for_each(prod_tensor.domain(), [&](ddc::DiscreteElement<ProdDDim...> mem_elem) {
+        ddc::for_each(prod_tensor.domain(), [=](ddc::DiscreteElement<ProdDDim...> mem_elem) {
             auto elem = prod_tensor.canonical_natural_element(mem_elem);
             prod_tensor.mem(mem_elem) = ddc::transform_reduce(
                     contract_dom,
                     0.,
                     ddc::reducer::sum<ElementType>(),
-                    [&](ddc::DiscreteElement<ContractDDim...> contract_elem) {
+                    [=](ddc::DiscreteElement<ContractDDim...> contract_elem) {
                         return tensor1.get(tensor1.access_element(
                                        ddc::DiscreteElement<HeadDDim1..., ContractDDim...>(
                                                ddc::select<HeadDDim1...>(elem),
@@ -178,19 +180,20 @@ template <
             && (!misc::Specialization<Index2, TensorYoungTableauIndex> && ...)
 #endif
                     )
-Tensor<ElementType,
-       ddc::DiscreteDomain<ProdDDim...>,
-       Kokkos::layout_right,
-       Kokkos::DefaultHostExecutionSpace::memory_space>
-tensor_prod(
-        Tensor<ElementType,
-               ddc::DiscreteDomain<ProdDDim...>,
-               Kokkos::layout_right,
-               Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
-        Tensor<ElementType, ddc::DiscreteDomain<Index1...>, LayoutStridedPolicy, MemorySpace>
-                tensor1,
-        Tensor<ElementType, ddc::DiscreteDomain<Index2...>, LayoutStridedPolicy, MemorySpace>
-                tensor2)
+Tensor<ElementType, ddc::DiscreteDomain<ProdDDim...>, LayoutStridedPolicy, MemorySpace>
+        KOKKOS_FUNCTION tensor_prod(
+                Tensor<ElementType,
+                       ddc::DiscreteDomain<ProdDDim...>,
+                       LayoutStridedPolicy,
+                       MemorySpace> prod_tensor,
+                Tensor<ElementType,
+                       ddc::DiscreteDomain<Index1...>,
+                       LayoutStridedPolicy,
+                       MemorySpace> tensor1,
+                Tensor<ElementType,
+                       ddc::DiscreteDomain<Index2...>,
+                       LayoutStridedPolicy,
+                       MemorySpace> tensor2)
 {
     check_tensors_compatibility<
             ddc::detail::TypeSeq<ProdDDim...>,
@@ -486,13 +489,13 @@ struct TensorProdYoungAnyAny<
 
         ddc::for_each(
                 uncompressed_prod.domain(),
-                [&](ddc::cartesian_prod_t<
+                [=](ddc::cartesian_prod_t<
                         typename ProdDDim::subindices_domain_t...>::discrete_element_type elem) {
                     uncompressed_prod(elem) = ddc::transform_reduce(
                             contract_dom,
                             0.,
                             ddc::reducer::sum<ElementType>(),
-                            [&](ddc::DiscreteElement<ContractDDim...> contract_elem) {
+                            [=](ddc::DiscreteElement<ContractDDim...> contract_elem) {
                                 return tensor1.get(tensor1.access_element(
                                                ddc::DiscreteElement<HeadDDim1..., ContractDDim...>(
                                                        ddc::select<HeadDDim1...>(elem),

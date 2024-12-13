@@ -30,12 +30,6 @@ namespace detail {
 template <class T>
 struct CoboundaryType;
 
-template <std::size_t K, class... Tag, class ElementType, class LayoutStridedPolicy>
-struct CoboundaryType<Cochain<Chain<Simplex<K, Tag...>>, ElementType, LayoutStridedPolicy>>
-{
-    using type = Cosimplex<Simplex<K + 1, Tag...>, ElementType>;
-};
-
 template <
         std::size_t K,
         class... Tag,
@@ -133,10 +127,11 @@ namespace detail {
 template <misc::Specialization<Chain> ChainType>
 struct ComputeSimplex;
 
-template <std::size_t K, class... Tag>
-struct ComputeSimplex<Chain<Simplex<K, Tag...>>>
+template <std::size_t K, class... Tag, class LayoutStridedPolicy, class ExecSpace>
+struct ComputeSimplex<Chain<Simplex<K, Tag...>, LayoutStridedPolicy, ExecSpace>>
 {
-    KOKKOS_FUNCTION static Simplex<K + 1, Tag...> run(Chain<Simplex<K, Tag...>> const& chain)
+    KOKKOS_FUNCTION static Simplex<K + 1, Tag...> run(
+            Chain<Simplex<K, Tag...>, LayoutStridedPolicy, ExecSpace> const& chain)
     {
         ddc::DiscreteVector<Tag...> vect {
                 0 * ddc::type_seq_rank_v<Tag, ddc::detail::TypeSeq<Tag...>>...};
@@ -197,8 +192,10 @@ struct DummyIndex
 template <
         tensor::TensorNatIndex TagToAddToCochain,
         tensor::TensorIndex CochainTag,
-        misc::Specialization<tensor::Tensor> TensorType>
+        misc::Specialization<tensor::Tensor> TensorType,
+        class ExecSpace>
 coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
+        ExecSpace const& exec_space,
         coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
         TensorType tensor)
 {
@@ -220,14 +217,16 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
                     ddc::DiscreteDomain<detail::DummyIndex>(
                             ddc::DiscreteElement<detail::DummyIndex>(0),
                             ddc::DiscreteVector<detail::DummyIndex>(2 * (CochainTag::rank() + 1)))),
-            ddc::HostAllocator<simplex_for_domain_t<
-                    CochainTag::rank(),
-                    ddc::remove_dims_of_t<
-                            typename coboundary_tensor_t<
-                                    TagToAddToCochain,
-                                    CochainTag,
-                                    TensorType>::discrete_domain_type,
-                            coboundary_index_t<TagToAddToCochain, CochainTag>>>>());
+            ddc::KokkosAllocator<
+                    simplex_for_domain_t<
+                            CochainTag::rank(),
+                            ddc::remove_dims_of_t<
+                                    typename coboundary_tensor_t<
+                                            TagToAddToCochain,
+                                            CochainTag,
+                                            TensorType>::discrete_domain_type,
+                                    coboundary_index_t<TagToAddToCochain, CochainTag>>>,
+                    typename ExecSpace::memory_space>());
     ddc::ChunkSpan simplex_boundary = simplex_boundary_alloc.span_view();
 
     // buffer to store the values of the K-cochain on the boundary of each K+1-cosimplex of the mesh
@@ -244,7 +243,7 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
                     ddc::DiscreteDomain<detail::DummyIndex>(
                             ddc::DiscreteElement<detail::DummyIndex>(0),
                             ddc::DiscreteVector<detail::DummyIndex>(2 * (CochainTag::rank() + 1)))),
-            ddc::HostAllocator<double>());
+            ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
     ddc::ChunkSpan boundary_values = boundary_values_alloc.span_view();
 
     // compute the tangent K+1-basis for each node of the mesh. This is a local K+1-chain.
@@ -252,18 +251,20 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
             CochainTag::rank() + 1,
             typename detail::NonSpectatorDimension<
                     TagToAddToCochain,
-                    typename TensorType::non_indices_domain_t>::type>();
+                    typename TensorType::non_indices_domain_t>::type,
+            typename ExecSpace::memory_space>();
 
     // compute the tangent K-basis for each node of the mesh. This is a local K-chain.
     auto lower_chain = tangent_basis<
             CochainTag::rank(),
             typename detail::NonSpectatorDimension<
                     TagToAddToCochain,
-                    typename TensorType::non_indices_domain_t>::type>();
+                    typename TensorType::non_indices_domain_t>::type,
+            typename ExecSpace::memory_space>();
 
     // iterate over every node, we will work inside the tangent space associated to each of them
     ddc::parallel_for_each(
-            Kokkos::DefaultHostExecutionSpace(),
+            exec_space,
             batch_dom,
             KOKKOS_LAMBDA(typename decltype(batch_dom)::discrete_element_type elem) {
                 // declare a K+1-cochain storing the K+1-cosimplices of the output cochain for the current tangent space and iterate over them
@@ -317,12 +318,17 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
 template <
         tensor::TensorNatIndex TagToAddToCochain,
         tensor::TensorIndex CochainTag,
-        misc::Specialization<tensor::Tensor> TensorType>
+        misc::Specialization<tensor::Tensor> TensorType,
+        class ExecSpace>
 coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> deriv(
+        ExecSpace const& exec_space,
         coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
         TensorType tensor)
 {
-    return coboundary<TagToAddToCochain, CochainTag, TensorType>(coboundary_tensor, tensor);
+    return coboundary<
+            TagToAddToCochain,
+            CochainTag,
+            TensorType>(exec_space, coboundary_tensor, tensor);
 }
 
 } // namespace exterior
