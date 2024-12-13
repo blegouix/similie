@@ -301,7 +301,60 @@ struct IsSameCharacter<
 } // namespace detail
 
 template <class T1, class T2>
-using is_same_character_v = detail::IsSameCharacter<T1, T2>::value;
+constexpr bool is_same_character_v = detail::IsSameCharacter<T1, T2>::value;
+
+namespace detail {
+
+template <class T1, class T2>
+struct AreSameCharacters;
+
+template <
+        template <TensorNatIndex...>
+        class T,
+        TensorNatIndex HeadIndex1,
+        TensorNatIndex... TailIndex1,
+        TensorNatIndex HeadIndex2,
+        TensorNatIndex... TailIndex2>
+struct AreSameCharacters<T<HeadIndex1, TailIndex1...>, T<HeadIndex2, TailIndex2...>>
+{
+    static constexpr bool value = IsSameCharacter<HeadIndex1, HeadIndex2>::value
+                                  && AreSameCharacters<T<TailIndex1...>, T<TailIndex2...>>::value;
+};
+
+} // namespace detail
+
+template <class T1, class T2>
+constexpr bool are_same_characters_v = detail::AreSameCharacters<T1, T2>::value;
+
+namespace detail {
+
+template <class T1, class T2>
+struct AreDifferentCharacters;
+
+template <template <TensorNatIndex...> class T>
+struct AreDifferentCharacters<T<>, T<>>
+{
+    static constexpr bool value = true;
+};
+
+template <
+        template <TensorNatIndex...>
+        class T,
+        TensorNatIndex HeadIndex1,
+        TensorNatIndex... TailIndex1,
+        TensorNatIndex HeadIndex2,
+        TensorNatIndex... TailIndex2>
+struct AreDifferentCharacters<T<HeadIndex1, TailIndex1...>, T<HeadIndex2, TailIndex2...>>
+{
+    static constexpr bool value
+            = !IsSameCharacter<HeadIndex1, HeadIndex2>::value
+              && AreDifferentCharacters<T<TailIndex1...>, T<TailIndex2...>>::value;
+};
+
+} // namespace detail
+
+template <class T1, class T2>
+constexpr bool are_different_characters_v = detail::AreDifferentCharacters<T1, T2>::value;
 
 } // namespace tensor
 

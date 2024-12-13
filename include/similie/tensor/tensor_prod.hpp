@@ -71,22 +71,17 @@ struct CheckTensorsCompatibility<
                                       ddc::cartesian_prod_t<natural_domain_t<Index2>...>>>,
                               uncharacterize<ddc::to_type_seq_t<
                                       ddc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>>>);
-        static_assert(
-                std::is_same_v<
-                        ddc::type_seq_remove_t<
-                                ddc::to_type_seq_t<
-                                        ddc::cartesian_prod_t<natural_domain_t<Index1>...>>,
-                                ddc::to_type_seq_t<
-                                        ddc::cartesian_prod_t<natural_domain_t<Index2>...>>>,
-                        ddc::to_type_seq_t<ddc::cartesian_prod_t<natural_domain_t<Index1>...>>>
-                && std::is_same_v<
-                        ddc::type_seq_remove_t<
-                                ddc::to_type_seq_t<
-                                        ddc::cartesian_prod_t<natural_domain_t<Index2>...>>,
-                                ddc::to_type_seq_t<
-                                        ddc::cartesian_prod_t<natural_domain_t<Index1>...>>>,
-                        ddc::to_type_seq_t<ddc::cartesian_prod_t<natural_domain_t<
-                                Index2>...>>>); // tensor1 and tensor2 should not have any index in common because their characters are different
+        static_assert(are_different_characters_v<
+                      ddc::type_seq_remove_t<
+                              ddc::to_type_seq_t<
+                                      ddc::cartesian_prod_t<natural_domain_t<Index1>...>>,
+                              ddc::to_type_seq_t<
+                                      ddc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>,
+                      ddc::type_seq_remove_t<
+                              ddc::to_type_seq_t<
+                                      ddc::cartesian_prod_t<natural_domain_t<Index2>...>>,
+                              ddc::to_type_seq_t<
+                                      ddc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>>);
     }
 };
 

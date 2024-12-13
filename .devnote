@@ -16,9 +16,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 - Rename TensorCovariantTensorIndex -> Covariant
 - Relabelizion in different file ?
 - Tensor indexes should be template with TensorNatIndex
-- Try DOUBLE_EQ in place of NEAR_EQ
 - Remove metric_prod_t (and every helper producing a tensor)
-- is_same_character_v and use it in tensor product
 - Avoid usage of std::array in non-constexpr tensor_impl function (exclusive to YoungTableauIndexing)
 
 ----- SETUP BASIC COMMAND -----
