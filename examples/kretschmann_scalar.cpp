@@ -83,35 +83,20 @@ int main(int argc, char** argv)
     [[maybe_unused]] sil::tensor::TensorAccessor<MetricIndex> metric_accessor;
     ddc::DiscreteDomain<MetricIndex> metric_dom = metric_accessor.mem_domain();
     ddc::Chunk metric_alloc(metric_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<MetricIndex>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            metric(metric_alloc);
+    sil::tensor::Tensor metric(metric_alloc);
 
     // Allocate and instantiate a fully-contravariant Riemann tensor. The size of the allocation is 20 because the Riemann tensor has 20 independant components.
     [[maybe_unused]] sil::tensor::TensorAccessor<RiemannUpTensorIndex> riemann_up_accessor;
     ddc::DiscreteDomain<RiemannUpTensorIndex> riemann_up_dom = riemann_up_accessor.mem_domain();
     ddc::Chunk riemann_up_alloc(riemann_up_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<RiemannUpTensorIndex>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            riemann_up(riemann_up_alloc);
+    sil::tensor::Tensor riemann_up(riemann_up_alloc);
 
     // Young-tableau-indexed tensors cannot be filled directly (because the 20 independant components do not appear explicitely in the 4^4 Riemann tensor. The explicit components of the Riemann tensor are linear combinations of the 20 independant components). We thus need to allocate a naturally-indexed 4^4 tensor to be filled.
     ddc::DiscreteDomain<MuUp, NuUp, RhoUp, SigmaUp> natural_tensor_dom(
             ddc::DiscreteElement<MuUp, NuUp, RhoUp, SigmaUp>(0, 0, 0, 0),
             ddc::DiscreteVector<MuUp, NuUp, RhoUp, SigmaUp>(4, 4, 4, 4));
     ddc::Chunk natural_tensor_alloc(natural_tensor_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<MuUp, NuUp, RhoUp, SigmaUp>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            natural_tensor(natural_tensor_alloc);
+    sil::tensor::Tensor natural_tensor(natural_tensor_alloc);
     ddc::parallel_fill(natural_tensor, 0.);
 
     // We fill the naturally-indexed tensor with the pre-computed values of the explicit Riemann tensor components on the horizon in the Lemaitre coordinate system (cf. the python script)
@@ -156,22 +141,14 @@ int main(int argc, char** argv)
     ddc::Chunk riemann_low_alloc = ddc::create_mirror_and_copy(riemann_up);
     auto riemann_low
             = sil::tensor::inplace_apply_metric<MetricIndex, MuLow, NuLow, RhoLow, SigmaLow>(
-                    sil::tensor::Tensor<
-                            double,
-                            ddc::DiscreteDomain<RiemannUpTensorIndex>,
-                            Kokkos::layout_right,
-                            Kokkos::DefaultHostExecutionSpace::memory_space>(riemann_low_alloc),
+                    Kokkos::DefaultHostExecutionSpace(),
+                    sil::tensor::Tensor(riemann_low_alloc),
                     metric);
 
     // We allocate the Kretschmann scalar (a single double) and perform the tensor product between covariant an contravariant Riemann tensors.
     ddc::DiscreteDomain<> dom;
     ddc::Chunk scalar_alloc(dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            scalar(scalar_alloc);
+    sil::tensor::Tensor scalar(scalar_alloc);
     sil::tensor::tensor_prod(scalar, riemann_low, riemann_up);
     std::cout << "Kreschmann scalar = " << scalar(ddc::DiscreteElement<>()) << "\n";
 }

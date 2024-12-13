@@ -59,12 +59,7 @@ TEST(YoungTableau, 1_2)
     [[maybe_unused]] sil::tensor::TensorAccessor<Mu, Nu> tensor_accessor;
     ddc::DiscreteDomain<Mu, Nu> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<Mu, Nu>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            tensor(tensor_alloc);
+    sil::tensor::Tensor tensor(tensor_alloc);
 
     tensor(tensor.access_element<T, T>()) = 0.;
     tensor(tensor.access_element<T, X>()) = 1.;
@@ -88,14 +83,7 @@ TEST(YoungTableau, 1_2)
     ddc::Chunk prod_alloc(
             natural_tensor_prod_domain(proj.domain(), tensor.domain()),
             ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            sil::tensor::natural_tensor_prod_domain_t<
-                    typename decltype(young_tableau)::projector_domain<Mu, Nu>,
-                    ddc::DiscreteDomain<Mu, Nu>>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            prod(prod_alloc);
+    sil::tensor::Tensor prod(prod_alloc);
 
     sil::tensor::tensor_prod(prod, proj, tensor);
 
@@ -135,12 +123,7 @@ TEST(YoungTableau, 1l2)
     [[maybe_unused]] sil::tensor::TensorAccessor<Mu, Nu> tensor_accessor;
     ddc::DiscreteDomain<Mu, Nu> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<Mu, Nu>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            tensor(tensor_alloc);
+    sil::tensor::Tensor tensor(tensor_alloc);
 
     tensor(tensor.access_element<T, T>()) = 0.;
     tensor(tensor.access_element<T, X>()) = 1.;
@@ -164,14 +147,7 @@ TEST(YoungTableau, 1l2)
     ddc::Chunk prod_alloc(
             natural_tensor_prod_domain(proj.domain(), tensor.domain()),
             ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            sil::tensor::natural_tensor_prod_domain_t<
-                    typename decltype(young_tableau)::projector_domain<Mu, Nu>,
-                    ddc::DiscreteDomain<Mu, Nu>>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            prod(prod_alloc);
+    sil::tensor::Tensor prod(prod_alloc);
 
     sil::tensor::tensor_prod(prod, proj, tensor);
 
@@ -214,12 +190,7 @@ TEST(YoungTableau, 1_2_3)
     [[maybe_unused]] sil::tensor::TensorAccessor<Alpha, Beta, Gamma> tensor_accessor;
     ddc::DiscreteDomain<Alpha, Beta, Gamma> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<Alpha, Beta, Gamma>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            tensor(tensor_alloc);
+    sil::tensor::Tensor tensor(tensor_alloc);
 
     tensor(tensor.access_element<X, X, X>()) = 0.;
     tensor(tensor.access_element<X, X, Y>()) = 1.;
@@ -254,14 +225,7 @@ TEST(YoungTableau, 1_2_3)
     ddc::Chunk prod_alloc(
             natural_tensor_prod_domain(proj.domain(), tensor.domain()),
             ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            sil::tensor::natural_tensor_prod_domain_t<
-                    typename decltype(young_tableau)::projector_domain<Alpha, Beta, Gamma>,
-                    ddc::DiscreteDomain<Alpha, Beta, Gamma>>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            prod(prod_alloc);
+    sil::tensor::Tensor prod(prod_alloc);
 
     sil::tensor::tensor_prod(prod, proj, tensor);
 
@@ -333,12 +297,7 @@ TEST(YoungTableau, 1l2l3)
     [[maybe_unused]] sil::tensor::TensorAccessor<Alpha, Beta, Gamma> tensor_accessor;
     ddc::DiscreteDomain<Alpha, Beta, Gamma> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<Alpha, Beta, Gamma>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            tensor(tensor_alloc);
+    sil::tensor::Tensor tensor(tensor_alloc);
 
     tensor(tensor.access_element<X, X, X>()) = 0.;
     tensor(tensor.access_element<X, X, Y>()) = 1.;
@@ -373,14 +332,7 @@ TEST(YoungTableau, 1l2l3)
     ddc::Chunk prod_alloc(
             natural_tensor_prod_domain(proj.domain(), tensor.domain()),
             ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            sil::tensor::natural_tensor_prod_domain_t<
-                    typename decltype(young_tableau)::projector_domain<Alpha, Beta, Gamma>,
-                    ddc::DiscreteDomain<Alpha, Beta, Gamma>>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            prod(prod_alloc);
+    sil::tensor::Tensor prod(prod_alloc);
 
     sil::tensor::tensor_prod(prod, proj, tensor);
 
@@ -454,12 +406,7 @@ TEST(YoungTableau, 1_2l3)
     [[maybe_unused]] sil::tensor::TensorAccessor<Alpha, Beta, Gamma> tensor_accessor;
     ddc::DiscreteDomain<Alpha, Beta, Gamma> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<Alpha, Beta, Gamma>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            tensor(tensor_alloc);
+    sil::tensor::Tensor tensor(tensor_alloc);
 
     tensor(tensor.access_element<X, X, X>()) = 0.;
     tensor(tensor.access_element<X, X, Y>()) = 1.;
@@ -494,14 +441,7 @@ TEST(YoungTableau, 1_2l3)
     ddc::Chunk prod_alloc(
             natural_tensor_prod_domain(proj.domain(), tensor.domain()),
             ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            sil::tensor::natural_tensor_prod_domain_t<
-                    typename decltype(young_tableau)::projector_domain<Alpha, Beta, Gamma>,
-                    ddc::DiscreteDomain<Alpha, Beta, Gamma>>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            prod(prod_alloc);
+    sil::tensor::Tensor prod(prod_alloc);
 
     sil::tensor::tensor_prod(prod, proj, tensor);
 
@@ -528,12 +468,7 @@ TEST(YoungTableau, 1_3l2)
     [[maybe_unused]] sil::tensor::TensorAccessor<Alpha, Beta, Gamma> tensor_accessor;
     ddc::DiscreteDomain<Alpha, Beta, Gamma> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<Alpha, Beta, Gamma>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            tensor(tensor_alloc);
+    sil::tensor::Tensor tensor(tensor_alloc);
 
     tensor(tensor.access_element<X, X, X>()) = 0.;
     tensor(tensor.access_element<X, X, Y>()) = 1.;
@@ -568,14 +503,7 @@ TEST(YoungTableau, 1_3l2)
     ddc::Chunk prod_alloc(
             natural_tensor_prod_domain(proj.domain(), tensor.domain()),
             ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            sil::tensor::natural_tensor_prod_domain_t<
-                    typename decltype(young_tableau)::projector_domain<Alpha, Beta, Gamma>,
-                    ddc::DiscreteDomain<Alpha, Beta, Gamma>>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            prod(prod_alloc);
+    sil::tensor::Tensor prod(prod_alloc);
 
     sil::tensor::tensor_prod(prod, proj, tensor);
 
@@ -603,12 +531,7 @@ TEST(YoungTableau, 1l3_2l4)
     [[maybe_unused]] sil::tensor::TensorAccessor<Alpha, Beta, Gamma, Delta> tensor_accessor;
     ddc::DiscreteDomain<Alpha, Beta, Gamma, Delta> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<Alpha, Beta, Gamma, Delta>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            tensor(tensor_alloc);
+    sil::tensor::Tensor tensor(tensor_alloc);
 
     tensor(tensor.access_element<X, X, X, X>()) = 0.;
     tensor(tensor.access_element<X, X, X, Y>()) = 1.;
@@ -697,14 +620,7 @@ TEST(YoungTableau, 1l3_2l4)
     ddc::Chunk prod_alloc(
             natural_tensor_prod_domain(proj.domain(), tensor.domain()),
             ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            sil::tensor::natural_tensor_prod_domain_t<
-                    typename decltype(young_tableau)::projector_domain<Alpha, Beta, Gamma, Delta>,
-                    ddc::DiscreteDomain<Alpha, Beta, Gamma, Delta>>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            prod(prod_alloc);
+    sil::tensor::Tensor prod(prod_alloc);
 
     sil::tensor::tensor_prod(prod, proj, tensor);
 

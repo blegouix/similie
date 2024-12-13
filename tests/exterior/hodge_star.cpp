@@ -73,12 +73,7 @@ TEST(HodgeStar, Test)
     ddc::DiscreteDomain<DDimX, DDimY, MetricIndex>
             metric_dom(mesh_xy, metric_accessor.mem_domain());
     ddc::Chunk metric_alloc(metric_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<DDimX, DDimY, MetricIndex>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            metric(metric_alloc);
+    sil::tensor::Tensor metric(metric_alloc);
     ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
         metric(elem, metric.accessor().access_element<X, X>()) = 4.;
         metric(elem, metric.accessor().access_element<X, Y>()) = 1.;
@@ -92,12 +87,7 @@ TEST(HodgeStar, Test)
     ddc::cartesian_prod_t<ddc::DiscreteDomain<DDimX, DDimY>, HodgeStarDomain>
             hodge_star_dom(metric.non_indices_domain(), hodge_star_accessor.mem_domain());
     ddc::Chunk hodge_star_alloc(hodge_star_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::cartesian_prod_t<ddc::DiscreteDomain<DDimX, DDimY>, HodgeStarDomain>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            hodge_star(hodge_star_alloc);
+    sil::tensor::Tensor hodge_star(hodge_star_alloc);
 
     sil::exterior::fill_hodge_star<
             MetricIndex,
@@ -109,12 +99,7 @@ TEST(HodgeStar, Test)
     ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::TensorAntisymmetricIndex<MuLow, NuLow>>
             form_dom(metric.non_indices_domain(), form_accessor.mem_domain());
     ddc::Chunk form_alloc(form_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::TensorAntisymmetricIndex<MuLow, NuLow>>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            form(form_alloc);
+    sil::tensor::Tensor form(form_alloc);
     ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
         form(elem, form.accessor().access_element<X, Y>()) = 1.;
         form(elem, form.accessor().access_element<X, Z>()) = 2.;
@@ -125,12 +110,7 @@ TEST(HodgeStar, Test)
     ddc::DiscreteDomain<DDimX, DDimY, RhoLow>
             dual_form_dom(metric.non_indices_domain(), dual_form_accessor.mem_domain());
     ddc::Chunk dual_form_alloc(dual_form_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<DDimX, DDimY, RhoLow>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            dual_form(dual_form_alloc);
+    sil::tensor::Tensor dual_form(dual_form_alloc);
 
     ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
         sil::tensor::tensor_prod(dual_form[elem], hodge_star[elem], form[elem]);
@@ -141,12 +121,7 @@ TEST(HodgeStar, Test)
     ddc::cartesian_prod_t<ddc::DiscreteDomain<DDimX, DDimY>, HodgeStarDomain2>
             hodge_star_dom2(metric.non_indices_domain(), hodge_star_accessor2.mem_domain());
     ddc::Chunk hodge_star_alloc2(hodge_star_dom2, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::cartesian_prod_t<ddc::DiscreteDomain<DDimX, DDimY>, HodgeStarDomain2>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            hodge_star2(hodge_star_alloc2);
+    sil::tensor::Tensor hodge_star2(hodge_star_alloc2);
 
     sil::exterior::fill_hodge_star<
             MetricIndex,

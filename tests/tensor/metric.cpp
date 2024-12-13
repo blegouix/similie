@@ -44,12 +44,7 @@ TEST(Metric, MetricLike)
             metric_dom(mesh_xy, metric_accessor.mem_domain());
 
     ddc::Chunk metric_alloc(metric_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<DDimX, DDimY, MetricLikeIndex>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            metric(metric_alloc);
+    sil::tensor::Tensor metric(metric_alloc);
     ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
         metric(elem, metric.accessor().access_element<X, X>()) = 1.;
         metric(elem, metric.accessor().access_element<X, Y>()) = 2.;
@@ -79,12 +74,8 @@ TEST(Metric, Covariant)
     ddc::DiscreteDomain<DDimX, DDimY, MetricIndex>
             metric_dom(mesh_xy, metric_accessor.mem_domain());
     ddc::Chunk metric_alloc(metric_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<DDimX, DDimY, MetricIndex>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            metric(metric_alloc);
+    sil::tensor::Tensor metric(metric_alloc);
+
     auto g_i_j = sil::tensor::relabelize_metric<ILow, JLow>(metric);
     ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
         g_i_j(elem, g_i_j.accessor().access_element<X, X>()) = 1.;
@@ -116,12 +107,7 @@ TEST(Metric, ChristoffelLike)
     ddc::DiscreteDomain<DDimX, DDimY, MetricIndex>
             metric_dom(mesh_xy, metric_accessor.mem_domain());
     ddc::Chunk metric_alloc(metric_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<DDimX, DDimY, MetricIndex>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            metric(metric_alloc);
+    sil::tensor::Tensor metric(metric_alloc);
     ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
         metric(elem, metric.accessor().access_element<X, X>()) = 1.;
         metric(elem, metric.accessor().access_element<X, Y>()) = 0.;
@@ -133,12 +119,7 @@ TEST(Metric, ChristoffelLike)
     ddc::DiscreteDomain<DDimX, DDimY, KUp, sil::tensor::TensorSymmetricIndex<ILow, JLow>>
             christoffel_1st_dom(mesh_xy, christoffel_1st_accessor.mem_domain());
     ddc::Chunk christoffel_1st_alloc(christoffel_1st_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<DDimX, DDimY, KUp, sil::tensor::TensorSymmetricIndex<ILow, JLow>>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            christoffel_1st(christoffel_1st_alloc);
+    sil::tensor::Tensor christoffel_1st(christoffel_1st_alloc);
     ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
         christoffel_1st(elem, christoffel_1st.accessor().access_element<X, X, X>()) = 1.;
         christoffel_1st(elem, christoffel_1st.accessor().access_element<X, X, Y>()) = 2.;
@@ -236,12 +217,7 @@ TEST(Metric, Inverse)
     ddc::DiscreteDomain<DDimX, DDimY, DirectMetricIndex>
             metric_dom(mesh_xy, metric_accessor.mem_domain());
     ddc::Chunk metric_alloc(metric_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<DDimX, DDimY, DirectMetricIndex>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            metric(metric_alloc);
+    sil::tensor::Tensor metric(metric_alloc);
     ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
         metric(elem, metric.accessor().access_element<X, X>()) = 4.;
         metric(elem, metric.accessor().access_element<X, Y>()) = 1.;
@@ -255,12 +231,7 @@ TEST(Metric, Inverse)
     ddc::DiscreteDomain<DDimX, DDimY, InvMetricIndex>
             inv_metric_dom(mesh_xy, inv_metric_accessor.mem_domain());
     ddc::Chunk inv_metric_alloc(inv_metric_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<DDimX, DDimY, InvMetricIndex>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            inv_metric(inv_metric_alloc);
+    sil::tensor::Tensor inv_metric(inv_metric_alloc);
 
     sil::tensor::fill_inverse_metric<
             DirectMetricIndex>(Kokkos::DefaultHostExecutionSpace(), inv_metric, metric);
@@ -269,12 +240,7 @@ TEST(Metric, Inverse)
     ddc::DiscreteDomain<DDimX, DDimY, IdIndex>
             identity_dom(mesh_xy, identity_accessor.mem_domain());
     ddc::Chunk identity_alloc(identity_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<DDimX, DDimY, IdIndex>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            identity(identity_alloc);
+    sil::tensor::Tensor identity(identity_alloc);
 
     ddc::parallel_for_each(
             Kokkos::DefaultHostExecutionSpace(),
