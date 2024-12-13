@@ -198,9 +198,6 @@ Typedefs</h2></td></tr>
 <tr class="memitem:a73fd1f7d374ac218e2f00fbc8c76eb31" id="r_a73fd1f7d374ac218e2f00fbc8c76eb31"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a> &gt; TensorType&gt; </td></tr>
 <tr class="memitem:a73fd1f7d374ac218e2f00fbc8c76eb31"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a73fd1f7d374ac218e2f00fbc8c76eb31">uncharacterize_tensor_t</a> = <a class="el" href="namespacesil_1_1tensor.html#a18bb38e8250062242859a699221b5be5">relabelize_indices_of_t</a>&lt; TensorType, ddc::to_type_seq_t&lt; typename TensorType::accessor_t::natural_domain_t &gt;, <a class="el" href="namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8">uncharacterize</a>&lt; ddc::to_type_seq_t&lt; typename TensorType::accessor_t::natural_domain_t &gt; &gt; &gt;</td></tr>
 <tr class="separator:a73fd1f7d374ac218e2f00fbc8c76eb31"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af9c7455e16a3a7d74b7c1822b5ad25bb" id="r_af9c7455e16a3a7d74b7c1822b5ad25bb"><td class="memTemplParams" colspan="2">template&lt;class T1 , class T2 &gt; </td></tr>
-<tr class="memitem:af9c7455e16a3a7d74b7c1822b5ad25bb"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#af9c7455e16a3a7d74b7c1822b5ad25bb">is_same_character_v</a> = detail::IsSameCharacter&lt; T1, T2 &gt;::value</td></tr>
-<tr class="separator:af9c7455e16a3a7d74b7c1822b5ad25bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a201b576b1f3194623e18c3fc0076bdfc" id="r_a201b576b1f3194623e18c3fc0076bdfc"><td class="memTemplParams" colspan="2">template&lt;std::size_t Dimension, std::size_t Rank&gt; </td></tr>
 <tr class="memitem:a201b576b1f3194623e18c3fc0076bdfc"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a201b576b1f3194623e18c3fc0076bdfc">dummy_index_t</a> = detail::DummyIndex&lt; std::make_index_sequence&lt; Dimension &gt;, std::make_index_sequence&lt; Rank &gt; &gt;::type</td></tr>
 <tr class="separator:a201b576b1f3194623e18c3fc0076bdfc"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -346,6 +343,15 @@ Variables</h2></td></tr>
 <tr class="memitem:af1114b530ae34962788b74719bd1eeb2" id="r_af1114b530ae34962788b74719bd1eeb2"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; ddc::detail::TypeSeq &gt; Seq&gt; </td></tr>
 <tr class="memitem:af1114b530ae34962788b74719bd1eeb2"><td class="memTemplItemLeft" align="right" valign="top">bool constexpr&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#af1114b530ae34962788b74719bd1eeb2">are_contravariant_v</a> = detail::AreContravariant&lt;Seq&gt;::value</td></tr>
 <tr class="separator:af1114b530ae34962788b74719bd1eeb2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6cf51c8836b1198ff4e2ffdfd68f60b9" id="r_a6cf51c8836b1198ff4e2ffdfd68f60b9"><td class="memTemplParams" colspan="2">template&lt;class T1 , class T2 &gt; </td></tr>
+<tr class="memitem:a6cf51c8836b1198ff4e2ffdfd68f60b9"><td class="memTemplItemLeft" align="right" valign="top">constexpr bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a6cf51c8836b1198ff4e2ffdfd68f60b9">is_same_character_v</a> = detail::IsSameCharacter&lt;T1, T2&gt;::value</td></tr>
+<tr class="separator:a6cf51c8836b1198ff4e2ffdfd68f60b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2e6798d76f9c9ff66e5be7fe70655858" id="r_a2e6798d76f9c9ff66e5be7fe70655858"><td class="memTemplParams" colspan="2">template&lt;class T1 , class T2 &gt; </td></tr>
+<tr class="memitem:a2e6798d76f9c9ff66e5be7fe70655858"><td class="memTemplItemLeft" align="right" valign="top">constexpr bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a2e6798d76f9c9ff66e5be7fe70655858">are_same_characters_v</a> = detail::AreSameCharacters&lt;T1, T2&gt;::value</td></tr>
+<tr class="separator:a2e6798d76f9c9ff66e5be7fe70655858"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7f82dfccc78dc4f1dabf64f94f922e99" id="r_a7f82dfccc78dc4f1dabf64f94f922e99"><td class="memTemplParams" colspan="2">template&lt;class T1 , class T2 &gt; </td></tr>
+<tr class="memitem:a7f82dfccc78dc4f1dabf64f94f922e99"><td class="memTemplItemLeft" align="right" valign="top">constexpr bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesil_1_1tensor.html#a7f82dfccc78dc4f1dabf64f94f922e99">are_different_characters_v</a> = detail::AreDifferentCharacters&lt;T1, T2&gt;::value</td></tr>
+<tr class="separator:a7f82dfccc78dc4f1dabf64f94f922e99"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/><h2 class="groupheader">Class Documentation</h2>
 <a name="structsil_1_1tensor_1_1Contravariant" id="structsil_1_1tensor_1_1Contravariant"></a>
@@ -527,24 +533,6 @@ template&lt;misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.
 </div><div class="memdoc">
 
 <p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00177">177</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
-
-</div>
-</div>
-<a id="af9c7455e16a3a7d74b7c1822b5ad25bb" name="af9c7455e16a3a7d74b7c1822b5ad25bb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af9c7455e16a3a7d74b7c1822b5ad25bb">&#9670;&#160;</a></span>is_same_character_v</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class T1 , class T2 &gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">using <a class="el" href="namespacesil_1_1tensor.html#af9c7455e16a3a7d74b7c1822b5ad25bb">sil::tensor::is_same_character_v</a> = typedef detail::IsSameCharacter&lt;T1, T2&gt;::value</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00304">304</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
 
 </div>
 </div>
@@ -1496,7 +1484,7 @@ template&lt;class ProdDDims , class Indices1 , class Indices2 &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__prod_8hpp_source.html#l00096">96</a> of file <a class="el" href="tensor__prod_8hpp_source.html">tensor_prod.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__prod_8hpp_source.html#l00091">91</a> of file <a class="el" href="tensor__prod_8hpp_source.html">tensor_prod.hpp</a>.</p>
 
 </div>
 </div>
@@ -1535,7 +1523,7 @@ requires ( ((!TensorNatIndex&lt;ProdDDim&gt; || ...) || (!TensorNatIndex&lt;Inde
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__prod_8hpp_source.html#l00184">184</a> of file <a class="el" href="tensor__prod_8hpp_source.html">tensor_prod.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__prod_8hpp_source.html#l00179">179</a> of file <a class="el" href="tensor__prod_8hpp_source.html">tensor_prod.hpp</a>.</p>
 
 </div>
 </div>
@@ -1705,6 +1693,84 @@ template&lt;misc::Specialization&lt; ddc::detail::TypeSeq &gt; Seq&gt; </div>
 </div><div class="memdoc">
 
 <p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00267">267</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a6cf51c8836b1198ff4e2ffdfd68f60b9" name="a6cf51c8836b1198ff4e2ffdfd68f60b9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6cf51c8836b1198ff4e2ffdfd68f60b9">&#9670;&#160;</a></span>is_same_character_v</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class T1 , class T2 &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr bool sil::tensor::is_same_character_v = detail::IsSameCharacter&lt;T1, T2&gt;::value</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00304">304</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a2e6798d76f9c9ff66e5be7fe70655858" name="a2e6798d76f9c9ff66e5be7fe70655858"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2e6798d76f9c9ff66e5be7fe70655858">&#9670;&#160;</a></span>are_same_characters_v</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class T1 , class T2 &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr bool sil::tensor::are_same_characters_v = detail::AreSameCharacters&lt;T1, T2&gt;::value</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00327">327</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a7f82dfccc78dc4f1dabf64f94f922e99" name="a7f82dfccc78dc4f1dabf64f94f922e99"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7f82dfccc78dc4f1dabf64f94f922e99">&#9670;&#160;</a></span>are_different_characters_v</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class T1 , class T2 &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr bool sil::tensor::are_different_characters_v = detail::AreDifferentCharacters&lt;T1, T2&gt;::value</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="character_8hpp_source.html#l00357">357</a> of file <a class="el" href="character_8hpp_source.html">character.hpp</a>.</p>
 
 </div>
 </div>

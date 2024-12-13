@@ -27,7 +27,6 @@ var namespacesil_1_1tensor =
     [ "swap_character", "namespacesil_1_1tensor.html#a5c644f8e2e92a6445ddeaec01e5fc7af", null ],
     [ "uncharacterize", "namespacesil_1_1tensor.html#a1a4318eb5f036a7aaceac344b6b948c8", null ],
     [ "uncharacterize_tensor_t", "namespacesil_1_1tensor.html#a73fd1f7d374ac218e2f00fbc8c76eb31", null ],
-    [ "is_same_character_v", "namespacesil_1_1tensor.html#af9c7455e16a3a7d74b7c1822b5ad25bb", null ],
     [ "dummy_index_t", "namespacesil_1_1tensor.html#a201b576b1f3194623e18c3fc0076bdfc", null ],
     [ "metric_index_1", "namespacesil_1_1tensor.html#a2bfc9ad6cd7faac5cdef7b258d17f18e", null ],
     [ "metric_index_2", "namespacesil_1_1tensor.html#a6614fd844f1fbc04e34bd367cc3b0cbc", null ],
@@ -73,5 +72,8 @@ var namespacesil_1_1tensor =
     [ "is_covariant_v", "namespacesil_1_1tensor.html#ad87f841c21af50491ee8198e88631449", null ],
     [ "are_covariant_v", "namespacesil_1_1tensor.html#a474d163b3d8d2bd9b386cce130049b98", null ],
     [ "is_contravariant_v", "namespacesil_1_1tensor.html#a6663bbd2dd68f6841a544eec9abdb78d", null ],
-    [ "are_contravariant_v", "namespacesil_1_1tensor.html#af1114b530ae34962788b74719bd1eeb2", null ]
+    [ "are_contravariant_v", "namespacesil_1_1tensor.html#af1114b530ae34962788b74719bd1eeb2", null ],
+    [ "is_same_character_v", "namespacesil_1_1tensor.html#a6cf51c8836b1198ff4e2ffdfd68f60b9", null ],
+    [ "are_same_characters_v", "namespacesil_1_1tensor.html#a2e6798d76f9c9ff66e5be7fe70655858", null ],
+    [ "are_different_characters_v", "namespacesil_1_1tensor.html#a7f82dfccc78dc4f1dabf64f94f922e99", null ]
 ];
