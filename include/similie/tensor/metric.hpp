@@ -418,7 +418,14 @@ invert_metric_t<MetricType> fill_inverse_metric(
                         ddc::DiscreteDomain<tensor::metric_index_1<MetricIndex>>>(
                         ddc::remove_dims_of<MetricIndex>(metric.domain()),
                         ddc::DiscreteDomain<tensor::metric_index_1<MetricIndex>>(
-                                metric.natural_domain())),
+                                ddc::DiscreteElement<tensor::metric_index_1<MetricIndex>>(0),
+                                ddc::DiscreteVector<tensor::metric_index_1<MetricIndex>>(
+                                        metric.natural_domain()
+                                                .template extent<
+                                                        tensor::metric_index_1<MetricIndex>>()
+                                        * metric.natural_domain()
+                                                  .template extent<
+                                                          tensor::metric_index_1<MetricIndex>>()))),
                 ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
         ddc::ChunkSpan buffer2 = buffer_alloc2.span_view();
 
@@ -479,7 +486,6 @@ invert_metric_t<MetricType> fill_inverse_metric(
                                                 index));
                             });
                 });
-        Kokkos::fence();
     }
 
     return inv_metric;
