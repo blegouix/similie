@@ -121,6 +121,15 @@ int main(int argc, char** argv)
     sil::tensor::fill_inverse_metric<
             MetricIndex>(Kokkos::DefaultExecutionSpace(), inv_metric, metric);
     // TODO weird -1 for X, X on GPU
+    Kokkos::deep_copy(
+            inv_metric.allocation_kokkos_view(),
+            metric.allocation_kokkos_view()); // FIXME: Temporary patch
+
+    auto debug = inv_metric;
+    auto debug_host = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), debug);
+    std::cout << "DEBUG:" << std::endl;
+    std::cout << sil::tensor::Tensor(debug_host[debug.accessor().mem_domain().front()])
+              << std::endl;
 
     // Potential
     [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> potential_accessor;
