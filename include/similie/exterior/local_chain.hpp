@@ -202,13 +202,15 @@ public:
 
     KOKKOS_FUNCTION int check()
     {
-        for (auto i = this->begin(); i < this->end() - 1; ++i) {
-            for (auto j = i + 1; j < this->end(); ++j) {
-                if (*i == *j) {
-                    return -1;
+        /* // TODO reactivate, support checking if MemorySpace is not accessible
+            for (auto i = this->begin(); i < this->end() - 1; ++i) {
+                for (auto j = i + 1; j < this->end(); ++j) {
+                    if (*i == *j) {
+                        return -1;
+                    }
                 }
             }
-        }
+         */
         return 0;
     }
 
@@ -385,13 +387,15 @@ struct TangentBasis<K, ddc::DiscreteDomain<Tag...>, MemorySpace>
         for (auto i = permutation.begin(); i < permutation.begin() + K; ++i) {
             *i = 1;
         }
-        Kokkos::View<ddc::DiscreteVector<Tag...>*, MemorySpace>
-                basis("", misc::binomial_coefficient(sizeof...(Tag), K));
+        Kokkos::View<ddc::DiscreteVector<Tag...>*, Kokkos::HostSpace>
+                basis_host("", misc::binomial_coefficient(sizeof...(Tag), K));
         std::size_t i = 0;
         do {
-            basis(i) = ddc::DiscreteVector<Tag...>();
-            ddc::detail::array(basis(i++)) = permutation;
+            basis_host(i) = ddc::DiscreteVector<Tag...>();
+            ddc::detail::array(basis_host(i++)) = permutation;
         } while (std::prev_permutation(permutation.begin(), permutation.end()));
+        Kokkos::View<ddc::DiscreteVector<Tag...>*, MemorySpace> basis
+                = create_mirror_view_and_copy(MemorySpace(), basis_host);
 
         return LocalChain<
                 Simplex<K, Tag...>,
