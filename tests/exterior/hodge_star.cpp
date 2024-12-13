@@ -102,7 +102,7 @@ TEST(HodgeStar, Test)
     sil::exterior::fill_hodge_star<
             MetricIndex,
             ddc::detail::TypeSeq<MuUp, NuUp>,
-            ddc::detail::TypeSeq<RhoLow>>(hodge_star, metric);
+            ddc::detail::TypeSeq<RhoLow>>(Kokkos::DefaultHostExecutionSpace(), hodge_star, metric);
 
     [[maybe_unused]] sil::tensor::TensorAccessor<
             sil::tensor::TensorAntisymmetricIndex<MuLow, NuLow>> form_accessor;
@@ -151,7 +151,9 @@ TEST(HodgeStar, Test)
     sil::exterior::fill_hodge_star<
             MetricIndex,
             ddc::detail::TypeSeq<RhoUp>,
-            ddc::detail::TypeSeq<MuLow, NuLow>>(hodge_star2, metric);
+            ddc::detail::TypeSeq<
+                    MuLow,
+                    NuLow>>(Kokkos::DefaultHostExecutionSpace(), hodge_star2, metric);
 
     ddc::parallel_fill(form, 0.);
     ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {

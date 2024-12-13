@@ -730,12 +730,16 @@ public:
         }
     }
 
-    Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>& operator+=(
-            const Tensor<
-                    ElementType,
-                    ddc::DiscreteDomain<DDim...>,
-                    LayoutStridedPolicy,
-                    MemorySpace>& tensor)
+    KOKKOS_FUNCTION Tensor<
+            ElementType,
+            ddc::DiscreteDomain<DDim...>,
+            LayoutStridedPolicy,
+            MemorySpace>&
+    operator+=(const Tensor<
+               ElementType,
+               ddc::DiscreteDomain<DDim...>,
+               LayoutStridedPolicy,
+               MemorySpace>& tensor)
     {
         ddc::for_each(this->domain(), [&](ddc::DiscreteElement<DDim...> elem) {
             this->mem(elem) += tensor.mem(elem);
@@ -743,8 +747,12 @@ public:
         return *this;
     }
 
-    Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>& operator*=(
-            const ElementType scalar)
+    KOKKOS_FUNCTION Tensor<
+            ElementType,
+            ddc::DiscreteDomain<DDim...>,
+            LayoutStridedPolicy,
+            MemorySpace>&
+    operator*=(const ElementType scalar)
     {
         ddc::for_each(this->domain(), [&](ddc::DiscreteElement<DDim...> elem) {
             this->mem(elem) *= scalar;
@@ -1054,7 +1062,7 @@ template <
         class... DDim,
         class LayoutStridedPolicy,
         class MemorySpace>
-auto constexpr RelabelizeIndicesOf(
+constexpr auto RelabelizeIndicesOf(
         Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>
                 old_tensor)
 {

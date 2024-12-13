@@ -131,10 +131,8 @@ struct TensorProdAnyAnyAny<
             ddc::DiscreteDomain<ProdDDim...>,
             LayoutStridedPolicy,
             MemorySpace>
-    run(Tensor<ElementType,
-               ddc::DiscreteDomain<ProdDDim...>,
-               Kokkos::layout_right,
-               Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
+    run(Tensor<ElementType, ddc::DiscreteDomain<ProdDDim...>, LayoutStridedPolicy, MemorySpace>
+                prod_tensor,
         Tensor<ElementType, ddc::DiscreteDomain<Index1...>, LayoutStridedPolicy, MemorySpace>
                 tensor1,
         Tensor<ElementType, ddc::DiscreteDomain<Index2...>, LayoutStridedPolicy, MemorySpace>
@@ -182,15 +180,12 @@ template <
             && (!misc::Specialization<Index2, TensorYoungTableauIndex> && ...)
 #endif
                     )
-Tensor<ElementType,
-       ddc::DiscreteDomain<ProdDDim...>,
-       Kokkos::layout_right,
-       Kokkos::DefaultHostExecutionSpace::memory_space>
+Tensor<ElementType, ddc::DiscreteDomain<ProdDDim...>, LayoutStridedPolicy, MemorySpace>
         KOKKOS_FUNCTION tensor_prod(
                 Tensor<ElementType,
                        ddc::DiscreteDomain<ProdDDim...>,
-                       Kokkos::layout_right,
-                       Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
+                       LayoutStridedPolicy,
+                       MemorySpace> prod_tensor,
                 Tensor<ElementType,
                        ddc::DiscreteDomain<Index1...>,
                        LayoutStridedPolicy,
