@@ -1,6 +1,5 @@
 var classsil_1_1exterior_1_1Cochain =
 [
-    [ "execution_space", "classsil_1_1exterior_1_1Cochain.html#a7c0635ffcde7d46d321f057d4d2cceb1", null ],
     [ "memory_space", "classsil_1_1exterior_1_1Cochain.html#af7e7ed72c9f84298f90d439bb8666bbe", null ],
     [ "simplex_type", "classsil_1_1exterior_1_1Cochain.html#a7e72ac33d849a8377e44cc89d8002d1f", null ],
     [ "chain_type", "classsil_1_1exterior_1_1Cochain.html#a007d4ba4197f81f5711edf7d71c5edb3", null ],
