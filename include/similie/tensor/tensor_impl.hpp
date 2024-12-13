@@ -1138,7 +1138,7 @@ Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpa
                 sum_tensor,
         TensorType... tensor)
 {
-    ddc::for_each(sum_tensor.domain(), [&](ddc::DiscreteElement<DDim...> elem) {
+    ddc::for_each(sum_tensor.domain(), [=](ddc::DiscreteElement<DDim...> elem) {
         sum_tensor(elem) = (tensor(elem) + ...);
     });
     return sum_tensor;
@@ -1208,12 +1208,12 @@ struct NaturalTensorProd<
     {
         ddc::for_each(
                 prod_tensor.domain(),
-                [&](ddc::DiscreteElement<HeadDDim1..., TailDDim2...> elem) {
+                [=](ddc::DiscreteElement<HeadDDim1..., TailDDim2...> elem) {
                     prod_tensor(elem) = ddc::transform_reduce(
                             tensor1.template domain<ContractDDim...>(),
                             0.,
                             ddc::reducer::sum<ElementType>(),
-                            [&](ddc::DiscreteElement<ContractDDim...> contract_elem) {
+                            [=](ddc::DiscreteElement<ContractDDim...> contract_elem) {
                                 return tensor1(ddc::select<HeadDDim1...>(elem), contract_elem)
                                        * tensor2(ddc::select<TailDDim2...>(elem), contract_elem);
                             });

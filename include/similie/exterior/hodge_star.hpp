@@ -129,8 +129,12 @@ HodgeStarType fill_hodge_star(
                         ddc::DiscreteDomain<
                                 tensor::metric_index_1<MetricIndex>,
                                 tensor::metric_index_2<MetricIndex>>(metric.natural_domain()),
-                        [&](auto index) {
-                            buffer(elem, index) = metric(metric.access_element(elem, index));
+                        [=](ddc::DiscreteElement<
+                                tensor::metric_index_1<MetricIndex>,
+                                tensor::metric_index_2<MetricIndex>> index) {
+                            buffer(elem, index) = metric(metric.access_element(
+                                    elem,
+                                    index)); // TODO: triggers a "nvlink warning : Stack size for entry function cannot be statically determined"
                         });
                 metric_det(elem) = 1. / tensor::determinant(buffer[elem].allocation_kokkos_view());
             });

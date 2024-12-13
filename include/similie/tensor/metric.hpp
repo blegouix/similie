@@ -496,7 +496,9 @@ invert_metric_t<MetricType> fill_inverse_metric(
                             ddc::DiscreteDomain<
                                     tensor::metric_index_1<MetricIndex>,
                                     tensor::metric_index_2<MetricIndex>>(metric.natural_domain()),
-                            [&](auto index) {
+                            [=](ddc::DiscreteElement<
+                                    tensor::metric_index_1<MetricIndex>,
+                                    tensor::metric_index_2<MetricIndex>> index) {
                                 buffer(elem, index) = metric(metric.access_element(elem, index));
                             });
 
@@ -529,7 +531,10 @@ invert_metric_t<MetricType> fill_inverse_metric(
                                     tensor::metric_index_1<MetricIndex>,
                                     tensor::metric_index_2<MetricIndex>>>(
                                     inv_metric.natural_domain()),
-                            [&](auto index) {
+                            [=](decltype(tensor::swap_character<ddc::DiscreteDomain<
+                                                 tensor::metric_index_1<MetricIndex>,
+                                                 tensor::metric_index_2<MetricIndex>>>(
+                                    inv_metric.natural_domain()))::discrete_element_type index) {
                                 // TODO do better, symmetric tensor is filled twice
                                 inv_metric(inv_metric.access_element(elem, index)) = buffer(
                                         elem,
