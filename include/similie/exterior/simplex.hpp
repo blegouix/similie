@@ -20,19 +20,19 @@ template <>
 struct Reorient<>
 {
     template <class Elem, class Vect>
-    static constexpr Elem run_elem(Elem elem, Vect)
+    static constexpr Elem run_elem(Elem elem, [[maybe_unused]] Vect)
     {
         return elem;
     }
 
     template <class Elem, class Vect>
-    static constexpr Vect run_vect(Elem, Vect vect)
+    static constexpr Vect run_vect([[maybe_unused]] Elem, Vect vect)
     {
         return vect;
     }
 
     template <class Vect>
-    static constexpr bool run_negative(Vect vect, bool negative)
+    static constexpr bool run_negative([[maybe_unused]] Vect vect, bool negative)
     {
         return negative;
     }
@@ -89,7 +89,7 @@ private:
     template <class Tag_, class... T>
         requires(!ddc::type_seq_contains_v<ddc::detail::TypeSeq<Tag_>, ddc::detail::TypeSeq<T...>>)
     static constexpr ddc::DiscreteVector<Tag_> add_eventually_null_dimensions_(
-            ddc::DiscreteVector<T...> vect)
+            [[maybe_unused]] ddc::DiscreteVector<T...> vect)
     {
         return ddc::DiscreteVector<Tag_> {0};
     }

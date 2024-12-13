@@ -374,7 +374,7 @@ constexpr TensorAccessor<Index...>::discrete_element_type TensorAccessor<Index..
 template <TensorIndex... Index>
 template <class... NaturalIndex>
 constexpr TensorAccessor<Index...>::discrete_element_type TensorAccessor<Index...>::access_element(
-        ddc::DiscreteElement<NaturalIndex...> natural_elem)
+        [[maybe_unused]] ddc::DiscreteElement<NaturalIndex...> natural_elem)
 {
     return ddc::DiscreteElement<Index...>(
             ddc::DiscreteElement<Index>(detail::access_id<Index, ddc::detail::TypeSeq<Index...>>(

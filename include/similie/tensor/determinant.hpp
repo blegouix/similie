@@ -26,11 +26,11 @@ KOKKOS_FUNCTION typename ViewType::value_type determinant(const ViewType& matrix
     int permutation_sign = 1;
 
     // Perform LU decomposition with partial pivoting
-    for (int i = 0; i < N; ++i) {
+    for (std::size_t i = 0; i < N; ++i) {
         // Pivoting (find the largest element in the current column)
-        int pivot = i;
+        std::size_t pivot = i;
         typename ViewType::value_type max_val = Kokkos::abs(matrix(i, i));
-        for (int j = i + 1; j < N; ++j) {
+        for (std::size_t j = i + 1; j < N; ++j) {
             if (Kokkos::abs(matrix(j, i)) > max_val) {
                 pivot = j;
                 max_val = Kokkos::abs(matrix(j, i));
@@ -40,7 +40,7 @@ KOKKOS_FUNCTION typename ViewType::value_type determinant(const ViewType& matrix
         // Swap rows if necessary
         if (pivot != i) {
             permutation_sign *= -1; // Track the effect of row swaps
-            for (int k = 0; k < N; ++k) {
+            for (std::size_t k = 0; k < N; ++k) {
                 Kokkos::kokkos_swap(matrix(i, k), matrix(pivot, k));
             }
         }
@@ -51,9 +51,9 @@ KOKKOS_FUNCTION typename ViewType::value_type determinant(const ViewType& matrix
         }
 
         // Perform elimination below the pivot
-        for (int j = i + 1; j < N; ++j) {
+        for (std::size_t j = i + 1; j < N; ++j) {
             matrix(j, i) /= matrix(i, i);
-            for (int k = i + 1; k < N; ++k) {
+            for (std::size_t k = i + 1; k < N; ++k) {
                 matrix(j, k) -= matrix(j, i) * matrix(i, k);
             }
         }
@@ -61,7 +61,7 @@ KOKKOS_FUNCTION typename ViewType::value_type determinant(const ViewType& matrix
 
     // Compute the determinant as the product of the diagonal elements
     typename ViewType::value_type det = permutation_sign;
-    for (int i = 0; i < N; ++i) {
+    for (std::size_t i = 0; i < N; ++i) {
         det *= matrix(i, i);
     }
 

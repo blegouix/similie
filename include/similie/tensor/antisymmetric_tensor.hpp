@@ -100,8 +100,8 @@ private:
     static constexpr bool permutation_parity(std::array<std::size_t, rank()> ids)
     {
         bool cnt = false;
-        for (int i = 0; i < rank(); i++)
-            for (int j = i + 1; j < rank(); j++)
+        for (std::size_t i = 0; i < rank(); i++)
+            for (std::size_t j = i + 1; j < rank(); j++)
                 if (ids[i] > ids[j])
                     cnt = !cnt;
         return cnt;
