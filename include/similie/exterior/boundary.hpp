@@ -24,10 +24,10 @@ struct BoundaryType<Simplex<K, Tag...>>
     using type = Simplex<K - 1, Tag...>;
 };
 
-template <class SimplexType>
-struct BoundaryType<Chain<SimplexType>>
+template <class SimplexType, class LayoutStridedPolicy, class MemorySpace>
+struct BoundaryType<Chain<SimplexType, LayoutStridedPolicy, MemorySpace>>
 {
-    using type = Chain<typename BoundaryType<SimplexType>::type>;
+    using type = Chain<typename BoundaryType<SimplexType>::type, LayoutStridedPolicy, MemorySpace>;
 };
 
 } // namespace detail
@@ -39,14 +39,21 @@ namespace detail {
 
 // TODO Kokkosify
 template <class SimplexType, misc::Specialization<Kokkos::View> AllocationType>
-KOKKOS_FUNCTION constexpr Chain<boundary_t<SimplexType>> generate_half_subchain(
+KOKKOS_FUNCTION constexpr Chain<
+        boundary_t<SimplexType>,
+        typename AllocationType::array_layout,
+        typename AllocationType::memory_space>
+generate_half_subchain(
         AllocationType allocation,
         typename SimplexType::discrete_element_type elem,
         typename SimplexType::discrete_vector_type vect,
         bool negative = false)
 {
     auto array = ddc::detail::array(vect);
-    Chain<boundary_t<SimplexType>> chain(allocation);
+    Chain<boundary_t<SimplexType>,
+          typename AllocationType::array_layout,
+          typename AllocationType::memory_space>
+            chain(allocation);
     auto id_dist = -1;
     for (std::size_t i = 0; i < SimplexType::dimension(); ++i) {
         auto array_ = array;
@@ -65,11 +72,16 @@ KOKKOS_FUNCTION constexpr Chain<boundary_t<SimplexType>> generate_half_subchain(
 } // namespace detail
 
 template <misc::Specialization<Kokkos::View> AllocationType, class SimplexType>
-KOKKOS_FUNCTION Chain<boundary_t<SimplexType>> boundary(
-        AllocationType allocation,
-        SimplexType simplex)
+KOKKOS_FUNCTION Chain<
+        boundary_t<SimplexType>,
+        typename AllocationType::array_layout,
+        typename AllocationType::memory_space>
+boundary(AllocationType allocation, SimplexType simplex)
 {
-    Chain<boundary_t<SimplexType>> chain(allocation);
+    Chain<boundary_t<SimplexType>,
+          typename AllocationType::array_layout,
+          typename AllocationType::memory_space>
+            chain(allocation);
     detail::generate_half_subchain<SimplexType>(
             Kokkos::
                     subview(allocation,
@@ -92,11 +104,20 @@ KOKKOS_FUNCTION Chain<boundary_t<SimplexType>> boundary(
 }
 
 template <misc::Specialization<Kokkos::View> AllocationType, class SimplexType>
-KOKKOS_FUNCTION Chain<boundary_t<SimplexType>> boundary(
+KOKKOS_FUNCTION Chain<
+        boundary_t<SimplexType>,
+        typename AllocationType::array_layout,
+        typename AllocationType::memory_space>
+boundary(
         AllocationType allocation,
-        Chain<SimplexType> chain)
+        Chain<SimplexType,
+              typename AllocationType::array_layout,
+              typename AllocationType::memory_space> chain)
 {
-    Chain<boundary_t<SimplexType>> boundary_chain(allocation);
+    Chain<boundary_t<SimplexType>,
+          typename AllocationType::array_layout,
+          typename AllocationType::memory_space>
+            boundary_chain(allocation);
     for (auto i = chain.begin(); i < chain.end(); ++i) {
         std::size_t const distance = Kokkos::Experimental::distance(chain.begin(), i);
         boundary(

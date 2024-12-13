@@ -21,12 +21,11 @@ namespace exterior {
 template <
         class SimplexType,
         class LayoutStridedPolicy = Kokkos::LayoutRight,
-        class ExecSpace = Kokkos::DefaultHostExecutionSpace>
+        class MemorySpace = Kokkos::HostSpace>
 class Chain
 {
 public:
-    using execution_space = ExecSpace;
-    using memory_space = typename ExecSpace::memory_space;
+    using memory_space = MemorySpace;
 
     using simplex_type = SimplexType;
     using simplices_type = Kokkos::View<SimplexType*, LayoutStridedPolicy, memory_space>;
@@ -195,21 +194,21 @@ public:
         return m_simplices(i);
     }
 
-    KOKKOS_FUNCTION Chain<simplex_type>& operator++()
+    KOKKOS_FUNCTION Chain& operator++()
     {
         assert(size() < allocation_size());
         m_size++;
         return *this;
     }
 
-    KOKKOS_FUNCTION Chain<simplex_type>& operator+=(const std::size_t n)
+    KOKKOS_FUNCTION Chain& operator+=(const std::size_t n)
     {
         assert(size() + n <= allocation_size());
         m_size += n;
         return *this;
     }
 
-    KOKKOS_FUNCTION Chain<simplex_type>& operator+=(const simplex_type& simplex)
+    KOKKOS_FUNCTION Chain& operator+=(const simplex_type& simplex)
     {
         assert(size() < allocation_size());
         m_simplices(m_size) = simplex;
@@ -217,7 +216,7 @@ public:
         return *this;
     }
 
-    KOKKOS_FUNCTION Chain<simplex_type>& operator+=(const Chain<simplex_type>& simplices_to_add)
+    KOKKOS_FUNCTION Chain& operator+=(const Chain& simplices_to_add)
     {
         assert(size() + simplices_to_add.size() <= allocation_size());
         for (auto i = simplices_to_add.begin(); i < simplices_to_add.end(); ++i) {
@@ -227,21 +226,21 @@ public:
         return *this;
     }
 
-    KOKKOS_FUNCTION Chain<simplex_type> operator+(simplex_type simplex)
+    KOKKOS_FUNCTION Chain operator+(simplex_type simplex)
     {
-        Chain<simplex_type> chain = *this;
+        Chain chain = *this;
         chain += simplex;
         return chain;
     }
 
-    KOKKOS_FUNCTION Chain<simplex_type> operator+(Chain<simplex_type> simplices_to_add)
+    KOKKOS_FUNCTION Chain operator+(Chain simplices_to_add)
     {
-        Chain<simplex_type> chain = *this;
+        Chain chain = *this;
         chain += simplices_to_add;
         return chain;
     }
 
-    KOKKOS_FUNCTION Chain<simplex_type>& revert()
+    KOKKOS_FUNCTION Chain& revert()
     {
         for (auto i = Kokkos::Experimental::begin(m_simplices);
              i < Kokkos::Experimental::begin(m_simplices) + size();
@@ -251,9 +250,9 @@ public:
         return *this;
     }
 
-    KOKKOS_FUNCTION Chain<simplex_type> operator-()
+    KOKKOS_FUNCTION Chain operator-()
     {
-        Chain<simplex_type> chain = *this;
+        Chain chain = *this;
         chain.revert();
         return chain;
     }
@@ -265,7 +264,7 @@ public:
     }
 
     template <class T>
-    KOKKOS_FUNCTION Chain<simplex_type>& operator*=(T t)
+    KOKKOS_FUNCTION Chain& operator*=(T t)
     {
         if (t == 1) {
         } else if (t == -1) {
@@ -279,12 +278,12 @@ public:
     template <class T>
     KOKKOS_FUNCTION auto operator*(T t)
     {
-        Chain<simplex_type> chain = *this;
+        Chain chain = *this;
         chain *= t;
         return chain;
     }
 
-    KOKKOS_FUNCTION bool operator==(Chain<simplex_type> simplices)
+    KOKKOS_FUNCTION bool operator==(Chain simplices)
     {
         for (auto i = simplices.begin(); i < simplices.end(); ++i) {
             if (*i != m_simplices(Kokkos::Experimental::distance(simplices.begin(), i))) {
@@ -296,7 +295,10 @@ public:
 };
 
 template <class Head, class... Tail>
-Chain(Head, Tail...) -> Chain<typename Head::value_type>;
+Chain(Head, Tail...) -> Chain<
+                             typename Head::value_type,
+                             typename Head::array_layout,
+                             typename Head::memory_space>;
 
 template <misc::Specialization<Chain> ChainType>
 std::ostream& operator<<(std::ostream& out, ChainType const& chain)

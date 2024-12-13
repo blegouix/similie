@@ -152,34 +152,22 @@ int main(int argc, char** argv)
     std::cout << "Potential:" << std::endl;
     auto potential_host = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), potential);
     std::cout << sil::tensor::Tensor(potential_host[potential_accessor.mem_domain().front()]) << std::endl;
-
-    /*
-     ddc::parallel_for_each(
-            Kokkos::DefaultExecutionSpace(),
-            mesh_xy,
-            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
-                Kokkos::
-                        printf("%f ",
-                               inv_metric(elem, inv_metric.accessor().access_element<X, X>()));
-                Kokkos::
-                        printf("%f ",
-                               inv_metric(elem, inv_metric.accessor().access_element<X, Y>()));
-                Kokkos::
-                        printf("%f \n",
-                               inv_metric(elem, inv_metric.accessor().access_element<Y, Y>()));
-            });
+ 
     // Gradient
     [[maybe_unused]] sil::tensor::TensorAccessor<MuLow> gradient_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, MuLow> gradient_dom(mesh_xy, gradient_accessor.mem_domain());
-    ddc::Chunk gradient_alloc(gradient_dom, ddc::HostAllocator<double>());
+    ddc::Chunk gradient_alloc(gradient_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor<
             double,
             ddc::DiscreteDomain<DDimX, DDimY, MuLow>,
             Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
+            Kokkos::DefaultExecutionSpace::memory_space>
             gradient(gradient_alloc);
-    sil::exterior::deriv<MuLow, DummyIndex>(gradient, potential);
+    sil::exterior::deriv<MuLow, DummyIndex>(Kokkos::DefaultExecutionSpace(), gradient, potential);
 
+    auto gradient_host = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), gradient);
+    std::cout << sil::tensor::Tensor(gradient_host[gradient_accessor.mem_domain().front()]) << std::endl;
+    /*
     // Hodge star
     [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain> hodge_star_accessor;
     ddc::cartesian_prod_t<ddc::DiscreteDomain<DDimX, DDimY>, HodgeStarDomain>

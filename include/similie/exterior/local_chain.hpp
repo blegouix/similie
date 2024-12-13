@@ -42,12 +42,11 @@ Kokkos::View<typename SimplexType::discrete_vector_type*, MemorySpace> extract_v
 template <
         class SimplexType,
         class LayoutStridedPolicy = Kokkos::LayoutRight,
-        class ExecSpace = Kokkos::DefaultHostExecutionSpace>
+        class MemorySpace = Kokkos::HostSpace>
 class LocalChain
 {
 public:
-    using execution_space = ExecSpace;
-    using memory_space = typename ExecSpace::memory_space;
+    using memory_space = MemorySpace;
 
     using simplex_type = SimplexType;
     using simplices_type = Kokkos::View<SimplexType*, LayoutStridedPolicy, memory_space>;
@@ -255,21 +254,21 @@ public:
         return simplex_type(misc::filled_struct<discrete_element_type>(), m_vects[i]);
     }
 
-    KOKKOS_FUNCTION LocalChain<simplex_type>& operator++()
+    KOKKOS_FUNCTION LocalChain& operator++()
     {
         assert(size() < allocation_size());
         m_size++;
         return *this;
     }
 
-    KOKKOS_FUNCTION LocalChain<simplex_type>& operator+=(const std::size_t n)
+    KOKKOS_FUNCTION LocalChain& operator+=(const std::size_t n)
     {
         assert(size() + n <= allocation_size());
         m_size += n;
         return *this;
     }
 
-    KOKKOS_FUNCTION LocalChain<simplex_type>& operator+=(const discrete_vector_type& vect)
+    KOKKOS_FUNCTION LocalChain& operator+=(const discrete_vector_type& vect)
     {
         assert(size() < allocation_size());
         m_vects(m_size) = vect;
@@ -277,7 +276,7 @@ public:
         return *this;
     }
 
-    KOKKOS_FUNCTION LocalChain<simplex_type>& operator+=(const simplex_type& simplex)
+    KOKKOS_FUNCTION LocalChain& operator+=(const simplex_type& simplex)
     {
         assert(size() < allocation_size());
         m_vects(m_size) = simplex.discrete_vector();
@@ -285,7 +284,7 @@ public:
         return *this;
     }
 
-    KOKKOS_FUNCTION LocalChain<simplex_type>& operator+=(const vects_type& vects_to_add)
+    KOKKOS_FUNCTION LocalChain& operator+=(const vects_type& vects_to_add)
     {
         assert(size() + vects_to_add.size() <= allocation_size());
         for (auto i = vects_to_add.begin(); i < vects_to_add.end(); ++i) {
@@ -295,8 +294,7 @@ public:
         return *this;
     }
 
-    KOKKOS_FUNCTION LocalChain<simplex_type>& operator+=(
-            const LocalChain<simplex_type>& simplices_to_add)
+    KOKKOS_FUNCTION LocalChain& operator+=(const LocalChain& simplices_to_add)
     {
         assert(size() + simplices_to_add.size() <= allocation_size());
         for (auto i = simplices_to_add.begin(); i < simplices_to_add.end(); ++i) {
@@ -306,26 +304,26 @@ public:
         return *this;
     }
 
-    KOKKOS_FUNCTION LocalChain<simplex_type> operator+(simplex_type simplex)
+    KOKKOS_FUNCTION LocalChain operator+(simplex_type simplex)
     {
-        LocalChain<simplex_type> local_chain = *this;
+        LocalChain local_chain = *this;
         local_chain += simplex;
         return local_chain;
     }
 
-    KOKKOS_FUNCTION LocalChain<simplex_type> operator+(LocalChain<simplex_type> simplices_to_add)
+    KOKKOS_FUNCTION LocalChain operator+(LocalChain simplices_to_add)
     {
-        LocalChain<simplex_type> local_chain = *this;
+        LocalChain local_chain = *this;
         local_chain += simplices_to_add;
         return local_chain;
     }
 
-    LocalChain<simplex_type> operator-() = delete;
+    LocalChain operator-() = delete;
 
-    LocalChain<simplex_type> operator-(LocalChain<simplex_type>) = delete;
+    LocalChain operator-(LocalChain) = delete;
 
     template <class T>
-    KOKKOS_FUNCTION LocalChain<simplex_type>& operator*=(T t)
+    KOKKOS_FUNCTION LocalChain& operator*=(T t)
     {
         if (t == 1) {
         } else if (t == -1) {
@@ -339,12 +337,12 @@ public:
     template <class T>
     KOKKOS_FUNCTION auto operator*(T t)
     {
-        Chain<simplex_type> chain = *this;
+        Chain chain = *this;
         chain *= t;
         return chain;
     }
 
-    KOKKOS_FUNCTION bool operator==(LocalChain<simplex_type> simplices)
+    KOKKOS_FUNCTION bool operator==(LocalChain simplices)
     {
         for (auto i = simplices.begin(); i < simplices.end(); ++i) {
             if (*i != m_vects(Kokkos::Experimental::distance(simplices.begin(), i))) {
@@ -356,56 +354,58 @@ public:
 };
 
 template <class Head, misc::NotSpecialization<ddc::DiscreteVector>... Tail>
-LocalChain(Head, Tail...) -> LocalChain<ddc::type_seq_element_t<0, ddc::detail::TypeSeq<Tail...>>>;
+LocalChain(Head, Tail...) -> LocalChain<
+                                  ddc::type_seq_element_t<0, ddc::detail::TypeSeq<Tail...>>,
+                                  typename Head::array_layout,
+                                  typename Head::memory_space>;
 
 template <class Head, misc::Specialization<ddc::DiscreteVector>... Tail>
-LocalChain(Head, Tail...) -> LocalChain<decltype(Simplex(
-                                  misc::convert_type_seq_to_t<
-                                          ddc::DiscreteElement,
-                                          ddc::to_type_seq_t<typename Head::value_type>>(),
-                                  ddc::type_seq_element_t<0, ddc::detail::TypeSeq<Tail...>>()))>;
-
-// TODO Kokkosify
-template <std::size_t K, misc::NotSpecialization<ddc::DiscreteDomain>... Tag>
-constexpr LocalChain<Simplex<K, Tag...>> tangent_basis()
-{
-    std::array<std::ptrdiff_t, sizeof...(Tag)> permutation
-            = {0 * ddc::type_seq_rank_v<Tag, ddc::detail::TypeSeq<Tag...>>...};
-    for (auto i = permutation.begin(); i < permutation.begin() + K; ++i) {
-        *i = 1;
-    }
-    Kokkos::View<ddc::DiscreteVector<Tag...>*, Kokkos::HostSpace>
-            basis("", misc::binomial_coefficient(sizeof...(Tag), K));
-    std::size_t i = 0;
-    do {
-        basis(i) = ddc::DiscreteVector<Tag...>();
-        ddc::detail::array(basis(i++)) = permutation;
-    } while (std::prev_permutation(permutation.begin(), permutation.end()));
-
-    return LocalChain<Simplex<K, Tag...>>(basis, basis.size());
-}
+LocalChain(Head, Tail...)
+        -> LocalChain<
+                decltype(Simplex(
+                        misc::convert_type_seq_to_t<
+                                ddc::DiscreteElement,
+                                ddc::to_type_seq_t<typename Head::value_type>>(),
+                        ddc::type_seq_element_t<0, ddc::detail::TypeSeq<Tail...>>())),
+                typename Head::array_layout,
+                typename Head::memory_space>;
 
 namespace detail {
 
-template <std::size_t K, misc::Specialization<ddc::DiscreteDomain> Dom>
+template <std::size_t K, misc::Specialization<ddc::DiscreteDomain> Dom, class MemorySpace>
 struct TangentBasis;
 
-
-template <std::size_t K, class... Tag>
-struct TangentBasis<K, ddc::DiscreteDomain<Tag...>>
+template <std::size_t K, class... Tag, class MemorySpace>
+struct TangentBasis<K, ddc::DiscreteDomain<Tag...>, MemorySpace>
 {
     static auto constexpr run()
     {
-        return tangent_basis<K, Tag...>();
+        std::array<std::ptrdiff_t, sizeof...(Tag)> permutation
+                = {0 * ddc::type_seq_rank_v<Tag, ddc::detail::TypeSeq<Tag...>>...};
+        for (auto i = permutation.begin(); i < permutation.begin() + K; ++i) {
+            *i = 1;
+        }
+        Kokkos::View<ddc::DiscreteVector<Tag...>*, MemorySpace>
+                basis("", misc::binomial_coefficient(sizeof...(Tag), K));
+        std::size_t i = 0;
+        do {
+            basis(i) = ddc::DiscreteVector<Tag...>();
+            ddc::detail::array(basis(i++)) = permutation;
+        } while (std::prev_permutation(permutation.begin(), permutation.end()));
+
+        return LocalChain<
+                Simplex<K, Tag...>,
+                Kokkos::LayoutRight,
+                MemorySpace>(basis, basis.size());
     }
 };
 
 } // namespace detail
 
-template <std::size_t K, misc::Specialization<ddc::DiscreteDomain> Dom>
+template <std::size_t K, misc::Specialization<ddc::DiscreteDomain> Dom, class MemorySpace>
 constexpr auto tangent_basis()
 {
-    return detail::TangentBasis<K, Dom>::run();
+    return detail::TangentBasis<K, Dom, MemorySpace>::run();
 }
 
 template <misc::Specialization<LocalChain> ChainType>
