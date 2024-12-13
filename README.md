@@ -8,7 +8,7 @@ Documentation [here](https://blegouix.github.io/similie/).
 
 SimiLie is a performance-portable (CPU & GPU) C++20 library aiming to extent the capabilities of [Kokkos](https://github.com/kokkos/kokkos) and [DDC](https://github.com/CExA-project/ddc) to offer a complete toolkit able to perfom tensor calculus, differential calculus and solving PDE. It should be able to address any multiphysical problem from eventually-relativistic classical field theory (in particular: solid & fluid mechanics, electromagnetism and gravitation).
 
-**Absolute WIP, there is no guarantee for proper working. Kokkos backends other than `Serial` are not yet supported.**
+**Absolute WIP, there is no guarantee for proper working.**
 
 ## Development plan
 
@@ -22,9 +22,9 @@ SimiLie is a performance-portable (CPU & GPU) C++20 library aiming to extent the
 DONE:
 - Tensors (any dimension, rank and structure), tensor fields, tensor product, covariant/contravariant character, metric.
 - Differential forms: (co)simplices, (co)chains, (co)boundary operator, discrete Hodge star.
+- GPU support.
 
 TODO:
-- GPU support.
 - Finite elements solver.
 - Application to an electromagnetism problem on manifold.
 - ...
