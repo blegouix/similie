@@ -295,9 +295,10 @@ auto inplace_apply_metric(TensorType tensor, MetricType metric_prod)
             swap_character<detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>,
             detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>
             result(result_alloc);
-    ddc::for_each( // TODO use parallel_for_each, there is a weird lock when doing so
+    ddc::parallel_for_each(
+            Kokkos::DefaultHostExecutionSpace(),
             tensor.non_indices_domain(),
-            [&](auto elem) {
+            KOKKOS_LAMBDA(auto elem) {
                 tensor_prod(
                         result[elem],
                         metric_prod[elem],
