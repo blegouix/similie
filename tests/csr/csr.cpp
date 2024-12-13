@@ -39,12 +39,7 @@ TEST(CsrDynamic, Csr2Dense)
     [[maybe_unused]] sil::tensor::TensorAccessor<Alpha, Beta, Gamma> tensor_accessor;
     ddc::DiscreteDomain<Alpha, Beta, Gamma> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<Alpha, Beta, Gamma>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            tensor(tensor_alloc);
+    sil::tensor::Tensor tensor(tensor_alloc);
 
     ddc::parallel_fill(tensor, 0.);
     tensor(tensor.access_element<X, X, Y>()) = 1.;
@@ -64,12 +59,7 @@ TEST(CsrDynamic, Csr2Dense)
     csr.push_back(tensor[ddc::DiscreteElement<Alpha>(2)]);
 
     ddc::Chunk dense_tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<Alpha, Beta, Gamma>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            dense_tensor(dense_tensor_alloc);
+    sil::tensor::Tensor dense_tensor(dense_tensor_alloc);
     sil::csr::csr2dense(dense_tensor, csr);
 
     EXPECT_EQ(dense_tensor.get(dense_tensor.access_element<X, X, X>()), 0.);
@@ -106,12 +96,7 @@ TEST(Csr, CsrDenseProducts)
     [[maybe_unused]] sil::tensor::TensorAccessor<Alpha, Beta, Gamma> tensor_accessor;
     ddc::DiscreteDomain<Alpha, Beta, Gamma> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<Alpha, Beta, Gamma>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            tensor(tensor_alloc);
+    sil::tensor::Tensor tensor(tensor_alloc);
 
     ddc::parallel_fill(tensor, 0.);
     tensor(tensor.access_element<X, X, Y>()) = 1.;
@@ -135,23 +120,13 @@ TEST(Csr, CsrDenseProducts)
     [[maybe_unused]] sil::tensor::TensorAccessor<Beta, Gamma> right_tensor_accessor;
     ddc::DiscreteDomain<Beta, Gamma> right_tensor_dom = right_tensor_accessor.mem_domain();
     ddc::Chunk right_tensor_alloc(right_tensor_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<Beta, Gamma>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            right_tensor(right_tensor_alloc);
+    sil::tensor::Tensor right_tensor(right_tensor_alloc);
     ddc::parallel_fill(right_tensor, 1.);
 
     [[maybe_unused]] sil::tensor::TensorAccessor<Alpha> right_prod_accessor;
     ddc::DiscreteDomain<Alpha> right_prod_dom = right_prod_accessor.mem_domain();
     ddc::Chunk right_prod_alloc(right_prod_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<Alpha>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            right_prod(right_prod_alloc);
+    sil::tensor::Tensor right_prod(right_prod_alloc);
 
     sil::csr::tensor_prod(right_prod, csr, right_tensor);
 
@@ -162,23 +137,13 @@ TEST(Csr, CsrDenseProducts)
     [[maybe_unused]] sil::tensor::TensorAccessor<Alpha> left_vector_accessor;
     ddc::DiscreteDomain<Alpha> left_vector_dom = left_vector_accessor.mem_domain();
     ddc::Chunk left_vector_alloc(left_vector_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<Alpha>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            left_vector(left_vector_alloc);
+    sil::tensor::Tensor left_vector(left_vector_alloc);
     ddc::parallel_fill(left_vector, 1.);
 
     [[maybe_unused]] sil::tensor::TensorAccessor<Beta, Gamma> left_prod_accessor;
     ddc::DiscreteDomain<Beta, Gamma> left_prod_dom = left_prod_accessor.mem_domain();
     ddc::Chunk left_prod_alloc(left_prod_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<Beta, Gamma>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            left_prod(left_prod_alloc);
+    sil::tensor::Tensor left_prod(left_prod_alloc);
 
     sil::csr::tensor_prod(left_prod, left_vector, csr);
 

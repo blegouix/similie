@@ -23,12 +23,7 @@ static auto test_derivative()
                             sil::misc::filled_struct<ddc::DiscreteElement<DDim...>>(0),
                             sil::misc::filled_struct<ddc::DiscreteVector<DDim...>>(N)));
         ddc::Chunk tensor_alloc(dom, ddc::HostAllocator<double>());
-        sil::tensor::Tensor<
-                double,
-                ddc::DiscreteDomain<InIndex, DDim...>,
-                Kokkos::layout_right,
-                Kokkos::DefaultHostExecutionSpace::memory_space>
-                tensor(tensor_alloc);
+        sil::tensor::Tensor tensor(tensor_alloc);
         for (std::size_t i = 0; i < InIndex::mem_size(); ++i) {
             ddc::parallel_for_each(
                     Kokkos::DefaultHostExecutionSpace(),
@@ -49,12 +44,7 @@ static auto test_derivative()
                         sil::misc::filled_struct<ddc::DiscreteVector<DDim...>>(
                                 OutIndex::rank() == 1 ? N : N - 1)));
         ddc::Chunk derivative_alloc(derivative_dom, ddc::HostAllocator<double>());
-        sil::tensor::Tensor<
-                double,
-                ddc::DiscreteDomain<OutIndex, DDim...>,
-                Kokkos::layout_right,
-                Kokkos::DefaultHostExecutionSpace::memory_space>
-                derivative(derivative_alloc);
+        sil::tensor::Tensor derivative(derivative_alloc);
         if constexpr (sil::tensor::TensorNatIndex<OutIndex>) {
             sil::exterior::deriv<
                     OutIndex,
@@ -76,12 +66,7 @@ static auto test_derivative()
                             sil::misc::filled_struct<ddc::DiscreteVector<DDim...>>(N)),
                     tensor_accessor.mem_domain());
         ddc::Chunk tensor_alloc(dom, ddc::HostAllocator<double>());
-        sil::tensor::Tensor<
-                double,
-                ddc::DiscreteDomain<DDim..., InIndex>,
-                Kokkos::layout_right,
-                Kokkos::DefaultHostExecutionSpace::memory_space>
-                tensor(tensor_alloc);
+        sil::tensor::Tensor tensor(tensor_alloc);
         for (std::size_t i = 0; i < InIndex::mem_size(); ++i) {
             ddc::parallel_for_each(
                     Kokkos::DefaultHostExecutionSpace(),
@@ -102,12 +87,7 @@ static auto test_derivative()
                                 OutIndex::rank() == 1 ? N : N - 1)),
                 derivative_accessor.mem_domain());
         ddc::Chunk derivative_alloc(derivative_dom, ddc::HostAllocator<double>());
-        sil::tensor::Tensor<
-                double,
-                ddc::DiscreteDomain<DDim..., OutIndex>,
-                Kokkos::layout_right,
-                Kokkos::DefaultHostExecutionSpace::memory_space>
-                derivative(derivative_alloc);
+        sil::tensor::Tensor derivative(derivative_alloc);
         if constexpr (sil::tensor::TensorNatIndex<OutIndex>) {
             sil::exterior::deriv<
                     OutIndex,
@@ -928,17 +908,7 @@ TEST(ExteriorDerivative, 2DRotationalWithSpects)
                         sil::misc::filled_struct<ddc::DiscreteElement<DDimSpect, DDimX, DDimY>>(0),
                         sil::misc::filled_struct<ddc::DiscreteVector<DDimSpect, DDimX, DDimY>>(N)));
     ddc::Chunk tensor_alloc(dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<
-                    sil::tensor::TensorAntisymmetricIndex<Mu2>,
-                    DDimSpect,
-                    DDimX,
-                    IndexSpect,
-                    DDimY>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            tensor(tensor_alloc);
+    sil::tensor::Tensor tensor(tensor_alloc);
     for (std::size_t i = 0; i < sil::tensor::TensorAntisymmetricIndex<Mu2>::mem_size(); ++i) {
         ddc::parallel_for_each(
                 Kokkos::DefaultHostExecutionSpace(),
@@ -978,17 +948,7 @@ TEST(ExteriorDerivative, 2DRotationalWithSpects)
                                     0),
                             ddc::DiscreteVector<DDimSpect, DDimX, DDimY> {3, 2, 2}));
     ddc::Chunk derivative_alloc(derivative_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<
-                    sil::tensor::TensorAntisymmetricIndex<Nu2, Mu2>,
-                    DDimSpect,
-                    DDimX,
-                    IndexSpect,
-                    DDimY>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            derivative(derivative_alloc);
+    sil::tensor::Tensor derivative(derivative_alloc);
     sil::exterior::deriv<
             Nu2,
             sil::tensor::TensorAntisymmetricIndex<

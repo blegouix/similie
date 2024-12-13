@@ -90,12 +90,7 @@ int main(int argc, char** argv)
     ddc::DiscreteDomain<DDimX, DDimY, MetricIndex>
             metric_dom(mesh_xy, metric_accessor.mem_domain());
     ddc::Chunk metric_alloc(metric_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<DDimX, DDimY, MetricIndex>,
-            Kokkos::layout_right,
-            Kokkos::DefaultExecutionSpace::memory_space>
-            metric(metric_alloc);
+    sil::tensor::Tensor metric(metric_alloc);
     ddc::parallel_for_each(
             Kokkos::DefaultExecutionSpace(),
             mesh_xy,
@@ -111,12 +106,7 @@ int main(int argc, char** argv)
     ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::upper<MetricIndex>>
             inv_metric_dom(mesh_xy, inv_metric_accessor.mem_domain());
     ddc::Chunk inv_metric_alloc(inv_metric_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::upper<MetricIndex>>,
-            Kokkos::layout_right,
-            Kokkos::DefaultExecutionSpace::memory_space>
-            inv_metric(inv_metric_alloc);
+    sil::tensor::Tensor inv_metric(inv_metric_alloc);
     sil::tensor::fill_inverse_metric<
             MetricIndex>(Kokkos::DefaultExecutionSpace(), inv_metric, metric);
     // TODO weird -1 for X, X on GPU
@@ -135,12 +125,7 @@ int main(int argc, char** argv)
     ddc::DiscreteDomain<DDimX, DDimY, DummyIndex>
             potential_dom(metric.non_indices_domain(), potential_accessor.mem_domain());
     ddc::Chunk potential_alloc(potential_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<DDimX, DDimY, DummyIndex>,
-            Kokkos::layout_right,
-            Kokkos::DefaultExecutionSpace::memory_space>
-            potential(potential_alloc);
+    sil::tensor::Tensor potential(potential_alloc);
 
     ddc::parallel_for_each(
             potential.domain(),
@@ -169,12 +154,7 @@ int main(int argc, char** argv)
     [[maybe_unused]] sil::tensor::TensorAccessor<MuLow> gradient_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, MuLow> gradient_dom(mesh_xy, gradient_accessor.mem_domain());
     ddc::Chunk gradient_alloc(gradient_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<DDimX, DDimY, MuLow>,
-            Kokkos::layout_right,
-            Kokkos::DefaultExecutionSpace::memory_space>
-            gradient(gradient_alloc);
+    sil::tensor::Tensor gradient(gradient_alloc);
     sil::exterior::deriv<MuLow, DummyIndex>(Kokkos::DefaultExecutionSpace(), gradient, potential);
 
     // Hodge star
@@ -182,12 +162,7 @@ int main(int argc, char** argv)
     ddc::cartesian_prod_t<ddc::DiscreteDomain<DDimX, DDimY>, HodgeStarDomain>
             hodge_star_dom(metric.non_indices_domain(), hodge_star_accessor.mem_domain());
     ddc::Chunk hodge_star_alloc(hodge_star_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::cartesian_prod_t<ddc::DiscreteDomain<DDimX, DDimY>, HodgeStarDomain>,
-            Kokkos::layout_right,
-            Kokkos::DefaultExecutionSpace::memory_space>
-            hodge_star(hodge_star_alloc);
+    sil::tensor::Tensor hodge_star(hodge_star_alloc);
 
     sil::exterior::fill_hodge_star<
             sil::tensor::upper<MetricIndex>,
@@ -199,12 +174,7 @@ int main(int argc, char** argv)
     ddc::DiscreteDomain<DDimX, DDimY, NuLow>
             dual_gradient_dom(mesh_xy, dual_gradient_accessor.mem_domain());
     ddc::Chunk dual_gradient_alloc(dual_gradient_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<DDimX, DDimY, NuLow>,
-            Kokkos::layout_right,
-            Kokkos::DefaultExecutionSpace::memory_space>
-            dual_gradient(dual_gradient_alloc);
+    sil::tensor::Tensor dual_gradient(dual_gradient_alloc);
 
     ddc::parallel_for_each(
             Kokkos::DefaultExecutionSpace(),
@@ -221,12 +191,7 @@ int main(int argc, char** argv)
                     mesh_xy.remove_last(ddc::DiscreteVector<DDimX, DDimY> {1, 1}),
                     dual_laplacian_accessor.mem_domain());
     ddc::Chunk dual_laplacian_alloc(dual_laplacian_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::TensorAntisymmetricIndex<RhoLow, NuLow>>,
-            Kokkos::layout_right,
-            Kokkos::DefaultExecutionSpace::memory_space>
-            dual_laplacian(dual_laplacian_alloc);
+    sil::tensor::Tensor dual_laplacian(dual_laplacian_alloc);
     sil::exterior::
             deriv<RhoLow, NuLow>(Kokkos::DefaultExecutionSpace(), dual_laplacian, dual_gradient);
 
@@ -236,12 +201,7 @@ int main(int argc, char** argv)
     ddc::cartesian_prod_t<ddc::DiscreteDomain<DDimX, DDimY>, HodgeStarDomain2>
             hodge_star_dom2(metric.non_indices_domain(), hodge_star_accessor2.mem_domain());
     ddc::Chunk hodge_star_alloc2(hodge_star_dom2, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::cartesian_prod_t<ddc::DiscreteDomain<DDimX, DDimY>, HodgeStarDomain2>,
-            Kokkos::layout_right,
-            Kokkos::DefaultExecutionSpace::memory_space>
-            hodge_star2(hodge_star_alloc2);
+    sil::tensor::Tensor hodge_star2(hodge_star_alloc2);
 
     sil::exterior::fill_hodge_star<
             sil::tensor::upper<MetricIndex>,
@@ -254,12 +214,7 @@ int main(int argc, char** argv)
             mesh_xy.remove_last(ddc::DiscreteVector<DDimX, DDimY> {1, 1}),
             laplacian_accessor.mem_domain());
     ddc::Chunk laplacian_alloc(laplacian_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<DDimX, DDimY, DummyIndex>,
-            Kokkos::layout_right,
-            Kokkos::DefaultExecutionSpace::memory_space>
-            laplacian(laplacian_alloc);
+    sil::tensor::Tensor laplacian(laplacian_alloc);
 
     ddc::parallel_for_each(
             Kokkos::DefaultExecutionSpace(),

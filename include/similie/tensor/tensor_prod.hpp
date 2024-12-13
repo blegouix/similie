@@ -262,12 +262,7 @@ struct TensorProdNatYoungNat<
         ddc::Chunk uncompressed_tensor1_alloc(
                 Index1::subindices_domain(),
                 ddc::HostAllocator<double>());
-        tensor::Tensor<
-                double,
-                typename Index1::subindices_domain_t,
-                Kokkos::layout_right,
-                Kokkos::DefaultHostExecutionSpace::memory_space>
-                uncompressed_tensor1(uncompressed_tensor1_alloc);
+        tensor::Tensor uncompressed_tensor1(uncompressed_tensor1_alloc);
 
         tensor::uncompress(uncompressed_tensor1, tensor1);
 
@@ -357,22 +352,12 @@ struct TensorProdNatYoungYoung<
         ddc::Chunk uncompressed_tensor1_alloc(
                 Index1::subindices_domain(),
                 ddc::HostAllocator<double>());
-        tensor::Tensor<
-                double,
-                typename Index1::subindices_domain_t,
-                Kokkos::layout_right,
-                Kokkos::DefaultHostExecutionSpace::memory_space>
-                uncompressed_tensor1(uncompressed_tensor1_alloc);
+        tensor::Tensor uncompressed_tensor1(uncompressed_tensor1_alloc);
 
         ddc::Chunk uncompressed_tensor2_alloc(
                 Index2::subindices_domain(),
                 ddc::HostAllocator<double>());
-        tensor::Tensor<
-                double,
-                typename Index2::subindices_domain_t,
-                Kokkos::layout_right,
-                Kokkos::DefaultHostExecutionSpace::memory_space>
-                uncompressed_tensor2(uncompressed_tensor2_alloc);
+        tensor::Tensor uncompressed_tensor2(uncompressed_tensor2_alloc);
 
         tensor::uncompress(uncompressed_tensor1, tensor1);
         tensor::uncompress(uncompressed_tensor2, tensor2);
@@ -477,12 +462,7 @@ struct TensorProdYoungAnyAny<
         ddc::Chunk uncompressed_prod_alloc(
                 ddc::DiscreteDomain(ProdDDim::subindices_domain()...),
                 ddc::HostAllocator<double>());
-        tensor::Tensor<
-                double,
-                ddc::cartesian_prod_t<typename ProdDDim::subindices_domain_t...>,
-                Kokkos::layout_right,
-                Kokkos::DefaultHostExecutionSpace::memory_space>
-                uncompressed_prod(uncompressed_prod_alloc);
+        tensor::Tensor uncompressed_prod(uncompressed_prod_alloc);
 
         tensor::TensorAccessor<ContractDDim...> contract_accessor;
         ddc::DiscreteDomain<ContractDDim...> contract_dom = contract_accessor.natural_domain();

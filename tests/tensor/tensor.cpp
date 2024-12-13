@@ -54,12 +54,7 @@ TEST(Tensor, NaturalIndexing)
     [[maybe_unused]] sil::tensor::TensorAccessor<Alpha, Nu> tensor_accessor;
     ddc::DiscreteDomain<Alpha, Nu> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<Alpha, Nu>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            tensor(tensor_alloc);
+    sil::tensor::Tensor tensor(tensor_alloc);
 
     /*
     for (int i = 0; i < 3; ++i) {
@@ -103,12 +98,7 @@ TEST(Tensor, TensorFullIndexing)
     [[maybe_unused]] sil::tensor::TensorAccessor<FullIndex> tensor_accessor;
     ddc::DiscreteDomain<FullIndex> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<FullIndex>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            tensor(tensor_alloc);
+    sil::tensor::Tensor tensor(tensor_alloc);
 
     /*
     for (int i = 0; i < 3; ++i) {
@@ -152,12 +142,7 @@ TEST(Tensor, TensorIdentityIndexing)
     [[maybe_unused]] sil::tensor::TensorAccessor<IdIndex> tensor_accessor;
     ddc::DiscreteDomain<IdIndex> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<IdIndex>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            tensor(tensor_alloc);
+    sil::tensor::Tensor tensor(tensor_alloc);
 
     EXPECT_EQ(tensor.get(tensor.access_element<T, T>()), 1.);
     EXPECT_EQ(tensor.get(tensor.access_element<T, X>()), 0.);
@@ -185,12 +170,7 @@ TEST(Tensor, TensorLorentzianSignIndexing)
     [[maybe_unused]] sil::tensor::TensorAccessor<LorentzianSignIndex> tensor_accessor;
     ddc::DiscreteDomain<LorentzianSignIndex> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<LorentzianSignIndex>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            tensor(tensor_alloc);
+    sil::tensor::Tensor tensor(tensor_alloc);
 
     EXPECT_EQ(tensor.get(tensor.access_element<T, T>()), -1.);
     EXPECT_EQ(tensor.get(tensor.access_element<T, X>()), 0.);
@@ -217,12 +197,7 @@ TEST(Tensor, TensorDiagonalIndexing)
     [[maybe_unused]] sil::tensor::TensorAccessor<DiagIndex> tensor_accessor;
     ddc::DiscreteDomain<DiagIndex> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<DiagIndex>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            tensor(tensor_alloc);
+    sil::tensor::Tensor tensor(tensor_alloc);
 
     /*
     for (int i = 1; i < 5; ++i) {
@@ -260,12 +235,7 @@ TEST(Tensor, TensorSymmetricIndexing4x4)
     [[maybe_unused]] sil::tensor::TensorAccessor<SymIndex> tensor_accessor;
     ddc::DiscreteDomain<SymIndex> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<SymIndex>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            tensor(tensor_alloc);
+    sil::tensor::Tensor tensor(tensor_alloc);
 
 
     /*
@@ -310,12 +280,7 @@ TEST(Tensor, TensorSymmetricIndexing3x3x3)
     [[maybe_unused]] sil::tensor::TensorAccessor<SymIndex3x3x3> tensor_accessor;
     ddc::DiscreteDomain<SymIndex3x3x3> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<SymIndex3x3x3>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            tensor(tensor_alloc);
+    sil::tensor::Tensor tensor(tensor_alloc);
 
     /*
     for (int i = 0; i < 10; ++i) {
@@ -370,12 +335,7 @@ TEST(Tensor, TensorAntisymmetricIndexing4x4)
     [[maybe_unused]] sil::tensor::TensorAccessor<AntisymIndex> tensor_accessor;
     ddc::DiscreteDomain<AntisymIndex> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<AntisymIndex>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            tensor(tensor_alloc);
+    sil::tensor::Tensor tensor(tensor_alloc);
 
     /*
     for (int i = 1; i < 7; ++i) {
@@ -415,12 +375,7 @@ TEST(Tensor, TensorLeviCivitaIndexing)
     [[maybe_unused]] sil::tensor::TensorAccessor<LeviCivitaIndex> tensor_accessor;
     ddc::DiscreteDomain<LeviCivitaIndex> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<LeviCivitaIndex>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            tensor(tensor_alloc);
+    sil::tensor::Tensor tensor(tensor_alloc);
 
     EXPECT_EQ(tensor.get(tensor.access_element<X, X, X>()), 0.);
     EXPECT_EQ(tensor.get(tensor.access_element<X, X, Y>()), 0.);
@@ -458,12 +413,7 @@ TEST(Tensor, PartiallyTensorSymmetricIndexing4x3x3)
     [[maybe_unused]] sil::tensor::TensorAccessor<Mu, SymIndex3x3> tensor_accessor;
     ddc::DiscreteDomain<Mu, SymIndex3x3> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<Mu, SymIndex3x3>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            tensor(tensor_alloc);
+    sil::tensor::Tensor tensor(tensor_alloc);
 
     /*
     for (int i = 0; i < 24; ++i) {
@@ -547,12 +497,7 @@ TEST(Tensor, YoungTableauIndexing)
     [[maybe_unused]] sil::tensor::TensorAccessor<Alpha, Beta, Gamma> natural_accessor;
     ddc::DiscreteDomain<Alpha, Beta, Gamma> natural_dom = natural_accessor.mem_domain();
     ddc::Chunk natural_alloc(natural_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<Alpha, Beta, Gamma>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            natural(natural_alloc);
+    sil::tensor::Tensor natural(natural_alloc);
 
     natural(natural_accessor.access_element<X, X, X>()) = 0.;
     natural(natural_accessor.access_element<X, X, Y>()) = 1.;
@@ -585,12 +530,7 @@ TEST(Tensor, YoungTableauIndexing)
     [[maybe_unused]] sil::tensor::TensorAccessor<YoungTableauIndex> tensor_accessor;
     ddc::DiscreteDomain<YoungTableauIndex> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<YoungTableauIndex>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            tensor(tensor_alloc);
+    sil::tensor::Tensor tensor(tensor_alloc);
 
     sil::tensor::compress(tensor, natural);
 
@@ -623,12 +563,7 @@ TEST(Tensor, YoungTableauIndexing)
     EXPECT_DOUBLE_EQ(tensor.get(tensor.access_element<Z, Z, Z>()), 9.);
 
     ddc::Chunk uncompressed_alloc(natural_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<Alpha, Beta, Gamma>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            uncompressed(uncompressed_alloc);
+    sil::tensor::Tensor uncompressed(uncompressed_alloc);
 
     sil::tensor::uncompress(uncompressed, tensor);
 
@@ -667,12 +602,7 @@ TEST(Tensor, Determinant)
     [[maybe_unused]] sil::tensor::TensorAccessor<SymIndex> tensor_accessor;
     ddc::DiscreteDomain<SymIndex> tensor_dom = tensor_accessor.mem_domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<SymIndex>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            tensor(tensor_alloc);
+    sil::tensor::Tensor tensor(tensor_alloc);
 
     tensor(tensor.access_element<T, T>()) = 1.;
     tensor(tensor.access_element<T, X>()) = 2.;

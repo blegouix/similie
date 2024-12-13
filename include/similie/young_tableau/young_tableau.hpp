@@ -546,32 +546,17 @@ orthogonalize(
     ddc::Chunk eigentensor_alloc(
             ddc::DiscreteDomain<BasisId, Id...>(basis.domain()),
             ddc::HostAllocator<double>());
-    tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<BasisId, Id...>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            eigentensor(eigentensor_alloc);
+    tensor::Tensor eigentensor(eigentensor_alloc);
     for (ddc::DiscreteElement<BasisId> elem : ddc::DiscreteDomain<BasisId>(
                  ddc::DiscreteElement<BasisId>(0),
                  ddc::DiscreteVector<BasisId>(max_basis_id))) {
         csr::csr2dense(eigentensor, basis.get(elem));
 
         ddc::Chunk scalar_prod_alloc(ddc::DiscreteDomain<> {}, ddc::HostAllocator<double>());
-        tensor::Tensor<
-                double,
-                ddc::DiscreteDomain<>,
-                Kokkos::layout_right,
-                Kokkos::DefaultHostExecutionSpace::memory_space>
-                scalar_prod(scalar_prod_alloc);
+        tensor::Tensor scalar_prod(scalar_prod_alloc);
         tensor::tensor_prod(scalar_prod, tensor, eigentensor[ddc::DiscreteElement<BasisId>(0)]);
         ddc::Chunk norm_squared_alloc(ddc::DiscreteDomain<> {}, ddc::HostAllocator<double>());
-        tensor::Tensor<
-                double,
-                ddc::DiscreteDomain<>,
-                Kokkos::layout_right,
-                Kokkos::DefaultHostExecutionSpace::memory_space>
-                norm_squared(norm_squared_alloc);
+        tensor::Tensor norm_squared(norm_squared_alloc);
         tensor::tensor_prod(norm_squared, eigentensor, eigentensor);
 
         eigentensor *= -1. * scalar_prod(ddc::DiscreteElement<>())
@@ -620,23 +605,11 @@ struct OrthonormalBasisSubspaceEigenvalueOne<tensor::TensorFullIndex<Id...>>
         tensor::TensorAccessor<Id...> candidate_accessor;
         ddc::DiscreteDomain<Id...> candidate_dom = candidate_accessor.mem_domain();
         ddc::Chunk candidate_alloc(candidate_dom, ddc::HostAllocator<double>());
-        tensor::Tensor<
-                double,
-                ddc::DiscreteDomain<Id...>,
-                Kokkos::layout_right,
-                Kokkos::DefaultHostExecutionSpace::memory_space>
-                candidate(candidate_alloc);
+        tensor::Tensor candidate(candidate_alloc);
         ddc::Chunk prod_alloc(
                 tensor::natural_tensor_prod_domain(proj.domain(), candidate.domain()),
                 ddc::HostAllocator<double>());
-        tensor::Tensor<
-                double,
-                tensor::natural_tensor_prod_domain_t<
-                        typename YoungTableau::template projector_domain<Id...>,
-                        ddc::DiscreteDomain<Id...>>,
-                Kokkos::layout_right,
-                Kokkos::DefaultHostExecutionSpace::memory_space>
-                prod(prod_alloc);
+        tensor::Tensor prod(prod_alloc);
 
         ddc::DiscreteDomain<BasisId, Id...> basis_dom(
                 ddc::DiscreteDomain<BasisId>(
@@ -671,12 +644,7 @@ struct OrthonormalBasisSubspaceEigenvalueOne<tensor::TensorFullIndex<Id...>>
                         [&](ddc::DiscreteElement<Id...> elem) { return candidate(elem) > 1e-6; })) {
                 ddc::Chunk
                         norm_squared_alloc(ddc::DiscreteDomain<> {}, ddc::HostAllocator<double>());
-                tensor::Tensor<
-                        double,
-                        ddc::DiscreteDomain<>,
-                        Kokkos::layout_right,
-                        Kokkos::DefaultHostExecutionSpace::memory_space>
-                        norm_squared(norm_squared_alloc);
+                tensor::Tensor norm_squared(norm_squared_alloc);
                 tensor::tensor_prod(norm_squared, candidate, candidate);
                 ddc::parallel_for_each(candidate.domain(), [&](ddc::DiscreteElement<Id...> elem) {
                     candidate(elem) /= Kokkos::sqrt(norm_squared(ddc::DiscreteElement<>()));
@@ -816,12 +784,7 @@ fill_symmetrizer(
         std::array<std::size_t, sizeof...(Id) / 2> idx_to_permute)
 {
     ddc::Chunk tr_alloc(sym.domain(), ddc::HostAllocator<double>());
-    tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<Id...>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            tr(tr_alloc);
+    tensor::Tensor tr(tr_alloc);
     ddc::parallel_fill(tr, 0);
     ddc::for_each(tr.domain(), TrFunctor<Dimension, sizeof...(Id) / 2, Id...>(tr, idx_to_permute));
 
@@ -894,12 +857,7 @@ struct Projector<
                     = sym_accessor.mem_domain();
 
             ddc::Chunk sym_alloc(sym_dom, ddc::HostAllocator<double>());
-            tensor::Tensor<
-                    double,
-                    ddc::DiscreteDomain<symmetrizer_index_t<Id, Id...>...>,
-                    Kokkos::layout_right,
-                    Kokkos::DefaultHostExecutionSpace::memory_space>
-                    sym(sym_alloc);
+            tensor::Tensor sym(sym_alloc);
             ddc::parallel_fill(sym, 0);
             std::array<std::size_t, sizeof...(Id) / 2> idx_to_permute;
             for (std::size_t i = 0; i < sizeof...(Id) / 2; ++i) {
@@ -920,14 +878,7 @@ struct Projector<
             ddc::Chunk prod_alloc(
                     natural_tensor_prod_domain(sym.domain(), proj.domain()),
                     ddc::HostAllocator<double>());
-            tensor::Tensor<
-                    double,
-                    tensor::natural_tensor_prod_domain_t<
-                            ddc::DiscreteDomain<symmetrizer_index_t<Id, Id...>...>,
-                            ddc::DiscreteDomain<Id...>>,
-                    Kokkos::layout_right,
-                    Kokkos::DefaultHostExecutionSpace::memory_space>
-                    prod(prod_alloc);
+            tensor::Tensor prod(prod_alloc);
             tensor::tensor_prod(prod, sym, proj);
             Kokkos::deep_copy(
                     proj.allocation_kokkos_view(),
@@ -953,12 +904,7 @@ auto YoungTableau<Dimension, TableauSeq>::projector()
 
     // Allocate a projector and fill it as an identity tensor
     ddc::Chunk proj_alloc(proj_dom, ddc::HostAllocator<double>());
-    tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<tensor::prime<Id>..., Id...>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space>
-            proj(proj_alloc);
+    tensor::Tensor proj(proj_alloc);
     ddc::parallel_fill(proj, 0);
     std::array<std::size_t, s_r> idx_to_permute;
     for (std::size_t i = 0; i < s_r; ++i) {

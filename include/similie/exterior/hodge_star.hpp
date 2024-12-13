@@ -60,14 +60,7 @@ HodgeStarType fill_hodge_star(
             ddc::KokkosAllocator<
                     double,
                     typename ExecSpace::memory_space>()); // TODO consider avoid allocation
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<misc::convert_type_seq_to_t<
-                    tensor::TensorLeviCivitaIndex,
-                    ddc::type_seq_merge_t<tensor::primes<tensor::lower<Indices1>>, Indices2>>>,
-            Kokkos::layout_right,
-            typename ExecSpace::memory_space>
-            levi_civita(levi_civita_alloc);
+    sil::tensor::Tensor levi_civita(levi_civita_alloc);
 
     ddc::parallel_for_each(
             exec_space,
@@ -150,14 +143,7 @@ HodgeStarType fill_hodge_star(
                     ddc::remove_dims_of<MetricIndex>(metric.domain()),
                     metric_prod_accessor.mem_domain()),
             ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
-    tensor::Tensor<
-            double,
-            ddc::cartesian_prod_t<
-                    ddc::remove_dims_of_t<typename MetricType::discrete_domain_type, MetricIndex>,
-                    tensor::metric_prod_domain_t<MetricIndex, Indices1, tensor::primes<Indices1>>>,
-            Kokkos::layout_right,
-            typename ExecSpace::memory_space>
-            metric_prod(metric_prod_alloc);
+    tensor::Tensor metric_prod(metric_prod_alloc);
 
     fill_metric_prod<
             MetricIndex,
