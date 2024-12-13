@@ -5,9 +5,9 @@ sudo apt install -y build-essential
 sudo apt install -y cmake
 sudo apt install -y bzip2 ca-certificates file gcc-13 g++-13 gfortran-13 git gzip lsb-release patch python3 tar unzip xz-utils zstd
 if ! nvidia-smi &> /dev/null; then
-    wget https://uk.download.nvidia.com/tesla/560.35.03/nvidia-driver-local-repo-ubuntu2404-560.35.03_1.0-1_amd64.deb
-    sudo cp /var/nvidia-driver-local-repo-ubuntu2404-560.35.03/nvidia-driver-local-BCE469C4-keyring.gpg /usr/share/keyrings/
-    sudo dpkg -i nvidia-driver-local-repo-ubuntu2404-560.35.03_1.0-1_amd64.deb
+    wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb
+    sudo dpkg -i cuda-keyring_1.1-1_all.deb
     sudo apt update
     sudo apt install -y nvidia-driver-560
+    sudo reboot
 fi
