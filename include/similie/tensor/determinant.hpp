@@ -23,7 +23,7 @@ KOKKOS_FUNCTION typename ViewType::value_type determinant(const ViewType& matrix
     const std::size_t N = matrix.extent(0);
 
     // Permutation sign (to account for row swaps)
-    std::size_t permutation_sign = 1;
+    int permutation_sign = 1;
 
     // Perform LU decomposition with partial pivoting
     for (std::size_t i = 0; i < N; ++i) {
