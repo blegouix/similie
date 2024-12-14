@@ -70,7 +70,8 @@ public:
     constexpr ddc::detail::convert_type_seq_to_discrete_domain_t<TypeSeqDDim> mesh(
             ddc::Coordinate<CDim...> lower_boundaries,
             ddc::Coordinate<CDim...> upper_boundaries,
-            ddc::detail::convert_type_seq_to_discrete_domain_t<TypeSeqDDim>::mlength_type nb_cells);
+            ddc::detail::convert_type_seq_to_discrete_domain_t<TypeSeqDDim>::discrete_vector_type
+                    nb_cells);
 };
 
 template <std::size_t D, class... CDim>
@@ -78,7 +79,8 @@ template <class TypeSeqDDim, class TypeSeqBSplines>
 constexpr ddc::detail::convert_type_seq_to_discrete_domain_t<TypeSeqDDim> Mesher<D, CDim...>::mesh(
         ddc::Coordinate<CDim...> lower_boundaries,
         ddc::Coordinate<CDim...> upper_boundaries,
-        ddc::detail::convert_type_seq_to_discrete_domain_t<TypeSeqDDim>::mlength_type nb_cells)
+        ddc::detail::convert_type_seq_to_discrete_domain_t<TypeSeqDDim>::discrete_vector_type
+                nb_cells)
 {
     std::tuple<detail::Mesher1D<D, CDim>...> meshers;
     std::tuple<ddc::DiscreteDomain<ddc::type_seq_element_t<

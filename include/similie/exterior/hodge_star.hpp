@@ -97,7 +97,7 @@ HodgeStarType fill_hodge_star(
     ddc::Chunk metric_det_alloc(
             ddc::remove_dims_of<MetricIndex>(metric.domain()),
             ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
-    ddc::ChunkSpan metric_det = metric_det_alloc.span_view();
+    ddc::ChunkSpan metric_det(metric_det_alloc);
     // Allocate a buffer mirroring the metric as a full matrix, it will be overwritten by tensor::determinant() which involves a LU decomposition
     ddc::Chunk buffer_alloc(
             ddc::cartesian_prod_t<
@@ -110,7 +110,7 @@ HodgeStarType fill_hodge_star(
                             tensor::metric_index_1<MetricIndex>,
                             tensor::metric_index_2<MetricIndex>>(metric.natural_domain())),
             ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
-    ddc::ChunkSpan buffer = buffer_alloc.span_view();
+    ddc::ChunkSpan buffer(buffer_alloc);
     // Compute determinants
     ddc::parallel_for_each(
             exec_space,
