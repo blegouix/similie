@@ -440,7 +440,7 @@ invert_metric_t<MetricType> fill_inverse_metric(
                                 tensor::metric_index_1<MetricIndex>,
                                 tensor::metric_index_2<MetricIndex>>(metric.natural_domain())),
                 ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
-        ddc::ChunkSpan buffer = buffer_alloc.span_view();
+        ddc::ChunkSpan buffer(buffer_alloc);
         // Allocate a buffer for KokkosBatched::SerialInverseLU internal needs
         ddc::Chunk buffer_alloc2(
                 ddc::cartesian_prod_t<
@@ -459,7 +459,7 @@ invert_metric_t<MetricType> fill_inverse_metric(
                                                   .template extent<
                                                           tensor::metric_index_1<MetricIndex>>()))),
                 ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
-        ddc::ChunkSpan buffer2 = buffer_alloc2.span_view();
+        ddc::ChunkSpan buffer2(buffer_alloc2);
 
         // process
         ddc::parallel_for_each(

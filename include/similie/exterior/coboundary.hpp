@@ -227,7 +227,7 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
                                             TensorType>::discrete_domain_type,
                                     coboundary_index_t<TagToAddToCochain, CochainTag>>>,
                     typename ExecSpace::memory_space>());
-    ddc::ChunkSpan simplex_boundary = simplex_boundary_alloc.span_view();
+    ddc::ChunkSpan simplex_boundary(simplex_boundary_alloc);
 
     // buffer to store the values of the K-cochain on the boundary of each K+1-cosimplex of the mesh
     ddc::Chunk boundary_values_alloc(
@@ -244,7 +244,7 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
                             ddc::DiscreteElement<detail::DummyIndex>(0),
                             ddc::DiscreteVector<detail::DummyIndex>(2 * (CochainTag::rank() + 1)))),
             ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
-    ddc::ChunkSpan boundary_values = boundary_values_alloc.span_view();
+    ddc::ChunkSpan boundary_values(boundary_values_alloc);
 
     // compute the tangent K+1-basis for each node of the mesh. This is a local K+1-chain.
     auto chain = tangent_basis<
