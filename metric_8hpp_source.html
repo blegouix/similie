@@ -584,7 +584,7 @@ $(document).ready(function(){initNavTree('metric_8hpp_source.html',''); initResi
 <div class="line"><a id="l00440" name="l00440"></a><span class="lineno">  440</span>                                <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a2bfc9ad6cd7faac5cdef7b258d17f18e">tensor::metric_index_1&lt;MetricIndex&gt;</a>,</div>
 <div class="line"><a id="l00441" name="l00441"></a><span class="lineno">  441</span>                                <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a6614fd844f1fbc04e34bd367cc3b0cbc">tensor::metric_index_2&lt;MetricIndex&gt;</a>&gt;(metric.natural_domain())),</div>
 <div class="line"><a id="l00442" name="l00442"></a><span class="lineno">  442</span>                ddc::KokkosAllocator&lt;double, typename ExecSpace::memory_space&gt;());</div>
-<div class="line"><a id="l00443" name="l00443"></a><span class="lineno">  443</span>        ddc::ChunkSpan buffer = buffer_alloc.span_view();</div>
+<div class="line"><a id="l00443" name="l00443"></a><span class="lineno">  443</span>        ddc::ChunkSpan buffer(buffer_alloc);</div>
 <div class="line"><a id="l00444" name="l00444"></a><span class="lineno">  444</span>        <span class="comment">// Allocate a buffer for KokkosBatched::SerialInverseLU internal needs</span></div>
 <div class="line"><a id="l00445" name="l00445"></a><span class="lineno">  445</span>        ddc::Chunk buffer_alloc2(</div>
 <div class="line"><a id="l00446" name="l00446"></a><span class="lineno">  446</span>                ddc::cartesian_prod_t&lt;</div>
@@ -603,7 +603,7 @@ $(document).ready(function(){initNavTree('metric_8hpp_source.html',''); initResi
 <div class="line"><a id="l00459" name="l00459"></a><span class="lineno">  459</span>                                                  .template extent&lt;</div>
 <div class="line"><a id="l00460" name="l00460"></a><span class="lineno">  460</span>                                                          <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a2bfc9ad6cd7faac5cdef7b258d17f18e">tensor::metric_index_1&lt;MetricIndex&gt;</a>&gt;()))),</div>
 <div class="line"><a id="l00461" name="l00461"></a><span class="lineno">  461</span>                ddc::KokkosAllocator&lt;double, typename ExecSpace::memory_space&gt;());</div>
-<div class="line"><a id="l00462" name="l00462"></a><span class="lineno">  462</span>        ddc::ChunkSpan buffer2 = buffer_alloc2.span_view();</div>
+<div class="line"><a id="l00462" name="l00462"></a><span class="lineno">  462</span>        ddc::ChunkSpan buffer2(buffer_alloc2);</div>
 <div class="line"><a id="l00463" name="l00463"></a><span class="lineno">  463</span> </div>
 <div class="line"><a id="l00464" name="l00464"></a><span class="lineno">  464</span>        <span class="comment">// process</span></div>
 <div class="line"><a id="l00465" name="l00465"></a><span class="lineno">  465</span>        ddc::parallel_for_each(</div>

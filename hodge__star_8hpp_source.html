@@ -229,7 +229,7 @@ $(document).ready(function(){initNavTree('hodge__star_8hpp_source.html',''); ini
 <div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>    ddc::Chunk metric_det_alloc(</div>
 <div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>            ddc::remove_dims_of&lt;MetricIndex&gt;(metric.domain()),</div>
 <div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>            ddc::KokkosAllocator&lt;double, typename ExecSpace::memory_space&gt;());</div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>    ddc::ChunkSpan metric_det = metric_det_alloc.span_view();</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>    ddc::ChunkSpan metric_det(metric_det_alloc);</div>
 <div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>    <span class="comment">// Allocate a buffer mirroring the metric as a full matrix, it will be overwritten by tensor::determinant() which involves a LU decomposition</span></div>
 <div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>    ddc::Chunk buffer_alloc(</div>
 <div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>            ddc::cartesian_prod_t&lt;</div>
@@ -242,7 +242,7 @@ $(document).ready(function(){initNavTree('hodge__star_8hpp_source.html',''); ini
 <div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>                            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a2bfc9ad6cd7faac5cdef7b258d17f18e">tensor::metric_index_1&lt;MetricIndex&gt;</a>,</div>
 <div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>                            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a6614fd844f1fbc04e34bd367cc3b0cbc">tensor::metric_index_2&lt;MetricIndex&gt;</a>&gt;(metric.natural_domain())),</div>
 <div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>            ddc::KokkosAllocator&lt;double, typename ExecSpace::memory_space&gt;());</div>
-<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>    ddc::ChunkSpan buffer = buffer_alloc.span_view();</div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>    ddc::ChunkSpan buffer(buffer_alloc);</div>
 <div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>    <span class="comment">// Compute determinants</span></div>
 <div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>    ddc::parallel_for_each(</div>
 <div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>            exec_space,</div>

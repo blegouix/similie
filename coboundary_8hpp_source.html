@@ -359,7 +359,7 @@ $(document).ready(function(){initNavTree('coboundary_8hpp_source.html',''); init
 <div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span>                                            TensorType&gt;::discrete_domain_type,</div>
 <div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span>                                    <a class="code hl_typedef" href="namespacesil_1_1exterior.html#a55302a820d4c13731517af91caa04c6c">coboundary_index_t&lt;TagToAddToCochain, CochainTag&gt;</a>&gt;&gt;,</div>
 <div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span>                    <span class="keyword">typename</span> ExecSpace::memory_space&gt;());</div>
-<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span>    ddc::ChunkSpan simplex_boundary = simplex_boundary_alloc.span_view();</div>
+<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span>    ddc::ChunkSpan simplex_boundary(simplex_boundary_alloc);</div>
 <div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span> </div>
 <div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span>    <span class="comment">// buffer to store the values of the K-cochain on the boundary of each K+1-cosimplex of the mesh</span></div>
 <div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span>    ddc::Chunk boundary_values_alloc(</div>
@@ -376,7 +376,7 @@ $(document).ready(function(){initNavTree('coboundary_8hpp_source.html',''); init
 <div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span>                            ddc::DiscreteElement&lt;detail::DummyIndex&gt;(0),</div>
 <div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span>                            ddc::DiscreteVector&lt;detail::DummyIndex&gt;(2 * (CochainTag::rank() + 1)))),</div>
 <div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span>            ddc::KokkosAllocator&lt;double, typename ExecSpace::memory_space&gt;());</div>
-<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span>    ddc::ChunkSpan boundary_values = boundary_values_alloc.span_view();</div>
+<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span>    ddc::ChunkSpan boundary_values(boundary_values_alloc);</div>
 <div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span> </div>
 <div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span>    <span class="comment">// compute the tangent K+1-basis for each node of the mesh. This is a local K+1-chain.</span></div>
 <div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span>    <span class="keyword">auto</span> chain = <a class="code hl_function" href="namespacesil_1_1exterior.html#ac4ff55b0430b4097486cf919f833b192">tangent_basis</a>&lt;</div>

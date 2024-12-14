@@ -198,57 +198,59 @@ $(document).ready(function(){initNavTree('mesher_8hpp_source.html',''); initResi
 <div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>                    interpolation_discrete_dimension_type;</div>
 <div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span> </div>
 <div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> TypeSeqDDim, <span class="keyword">class</span> TypeSeqBSplines&gt;</div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>    <span class="keyword">constexpr</span> ddc::detail::convert_type_seq_to_discrete_domain_t&lt;TypeSeqDDim&gt; <a class="code hl_function" href="classsil_1_1mesher_1_1Mesher.html#a2f24c62c3bbc5852cb2d413ae6cb039f">mesh</a>(</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>    <span class="keyword">constexpr</span> ddc::detail::convert_type_seq_to_discrete_domain_t&lt;TypeSeqDDim&gt; <a class="code hl_function" href="classsil_1_1mesher_1_1Mesher.html#aceb024ed661bc4274401e0b711d95129">mesh</a>(</div>
 <div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>            ddc::Coordinate&lt;CDim...&gt; lower_boundaries,</div>
 <div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>            ddc::Coordinate&lt;CDim...&gt; upper_boundaries,</div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>            ddc::detail::convert_type_seq_to_discrete_domain_t&lt;TypeSeqDDim&gt;::mlength_type nb_cells);</div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>};</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>            ddc::detail::convert_type_seq_to_discrete_domain_t&lt;TypeSeqDDim&gt;::discrete_vector_type</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>                    nb_cells);</div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>};</div>
 </div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span> </div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span><span class="keyword">template</span> &lt;std::size_t D, <span class="keyword">class</span>... CDim&gt;</div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> TypeSeqDDim, <span class="keyword">class</span> TypeSeqBSplines&gt;</div>
-<div class="foldopen" id="foldopen00078" data-start="{" data-end="}">
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno"><a class="line" href="classsil_1_1mesher_1_1Mesher.html#a2f24c62c3bbc5852cb2d413ae6cb039f">   78</a></span><span class="keyword">constexpr</span> ddc::detail::convert_type_seq_to_discrete_domain_t&lt;TypeSeqDDim&gt; <a class="code hl_function" href="classsil_1_1mesher_1_1Mesher.html#a2f24c62c3bbc5852cb2d413ae6cb039f">Mesher&lt;D, CDim...&gt;::mesh</a>(</div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>        ddc::Coordinate&lt;CDim...&gt; lower_boundaries,</div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>        ddc::Coordinate&lt;CDim...&gt; upper_boundaries,</div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>        ddc::detail::convert_type_seq_to_discrete_domain_t&lt;TypeSeqDDim&gt;::mlength_type nb_cells)</div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>{</div>
-<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>    std::tuple&lt;detail::Mesher1D&lt;D, CDim&gt;...&gt; meshers;</div>
-<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>    std::tuple&lt;ddc::DiscreteDomain&lt;ddc::type_seq_element_t&lt;</div>
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>            ddc::type_seq_rank_v&lt;CDim, ddc::detail::TypeSeq&lt;CDim...&gt;&gt;,</div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>            TypeSeqDDim&gt;&gt;...&gt;</div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>            meshs;</div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span> </div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>    ((std ::get&lt;ddc::type_seq_rank_v&lt;CDim, ddc::detail::TypeSeq&lt;CDim...&gt;&gt;&gt;(meshs)</div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>      = std ::get&lt;ddc::type_seq_rank_v&lt;CDim, ddc::detail::TypeSeq&lt;CDim...&gt;&gt;&gt;(meshers)</div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>                .template mesh&lt;</div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>                        ddc::type_seq_element_t&lt;</div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>                                ddc::type_seq_rank_v&lt;CDim, ddc::detail::TypeSeq&lt;CDim...&gt;&gt;,</div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>                                TypeSeqDDim&gt;,</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>                        ddc::type_seq_element_t&lt;</div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>                                ddc::type_seq_rank_v&lt;CDim, ddc::detail::TypeSeq&lt;CDim...&gt;&gt;,</div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>                                TypeSeqBSplines&gt;&gt;(</div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>                        ddc::select&lt;CDim&gt;(lower_boundaries),</div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>                        ddc::select&lt;CDim&gt;(upper_boundaries),</div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>                        ddc::select&lt;ddc::type_seq_element_t&lt;</div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>                                ddc::type_seq_rank_v&lt;CDim, ddc::detail::TypeSeq&lt;CDim...&gt;&gt;,</div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>                                TypeSeqDDim&gt;&gt;(nb_cells))),</div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>     ...);</div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span> </div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>    <span class="keywordflow">return</span> ddc::detail::convert_type_seq_to_discrete_domain_t&lt;TypeSeqDDim&gt;(</div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>            std::get&lt;ddc::type_seq_rank_v&lt;CDim, ddc::detail::TypeSeq&lt;CDim...&gt;&gt;&gt;(meshs)...);</div>
-<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>}</div>
-</div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span> </div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>} <span class="comment">// namespace mesher</span></div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span> </div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span><span class="keyword">template</span> &lt;std::size_t D, <span class="keyword">class</span>... CDim&gt;</div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> TypeSeqDDim, <span class="keyword">class</span> TypeSeqBSplines&gt;</div>
+<div class="foldopen" id="foldopen00079" data-start="{" data-end="}">
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno"><a class="line" href="classsil_1_1mesher_1_1Mesher.html#aceb024ed661bc4274401e0b711d95129">   79</a></span><span class="keyword">constexpr</span> ddc::detail::convert_type_seq_to_discrete_domain_t&lt;TypeSeqDDim&gt; <a class="code hl_function" href="classsil_1_1mesher_1_1Mesher.html#aceb024ed661bc4274401e0b711d95129">Mesher&lt;D, CDim...&gt;::mesh</a>(</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>        ddc::Coordinate&lt;CDim...&gt; lower_boundaries,</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>        ddc::Coordinate&lt;CDim...&gt; upper_boundaries,</div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>        ddc::detail::convert_type_seq_to_discrete_domain_t&lt;TypeSeqDDim&gt;::discrete_vector_type</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>                nb_cells)</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>{</div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>    std::tuple&lt;detail::Mesher1D&lt;D, CDim&gt;...&gt; meshers;</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>    std::tuple&lt;ddc::DiscreteDomain&lt;ddc::type_seq_element_t&lt;</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>            ddc::type_seq_rank_v&lt;CDim, ddc::detail::TypeSeq&lt;CDim...&gt;&gt;,</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>            TypeSeqDDim&gt;&gt;...&gt;</div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>            meshs;</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span> </div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>    ((std ::get&lt;ddc::type_seq_rank_v&lt;CDim, ddc::detail::TypeSeq&lt;CDim...&gt;&gt;&gt;(meshs)</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>      = std ::get&lt;ddc::type_seq_rank_v&lt;CDim, ddc::detail::TypeSeq&lt;CDim...&gt;&gt;&gt;(meshers)</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>                .template mesh&lt;</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>                        ddc::type_seq_element_t&lt;</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>                                ddc::type_seq_rank_v&lt;CDim, ddc::detail::TypeSeq&lt;CDim...&gt;&gt;,</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>                                TypeSeqDDim&gt;,</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>                        ddc::type_seq_element_t&lt;</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>                                ddc::type_seq_rank_v&lt;CDim, ddc::detail::TypeSeq&lt;CDim...&gt;&gt;,</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>                                TypeSeqBSplines&gt;&gt;(</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>                        ddc::select&lt;CDim&gt;(lower_boundaries),</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>                        ddc::select&lt;CDim&gt;(upper_boundaries),</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>                        ddc::select&lt;ddc::type_seq_element_t&lt;</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>                                ddc::type_seq_rank_v&lt;CDim, ddc::detail::TypeSeq&lt;CDim...&gt;&gt;,</div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>                                TypeSeqDDim&gt;&gt;(nb_cells))),</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>     ...);</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span> </div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>    <span class="keywordflow">return</span> ddc::detail::convert_type_seq_to_discrete_domain_t&lt;TypeSeqDDim&gt;(</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>            std::get&lt;ddc::type_seq_rank_v&lt;CDim, ddc::detail::TypeSeq&lt;CDim...&gt;&gt;&gt;(meshs)...);</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>}</div>
 </div>
 <div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span> </div>
-<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>} <span class="comment">// namespace sil</span></div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>} <span class="comment">// namespace mesher</span></div>
+</div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span> </div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>} <span class="comment">// namespace sil</span></div>
 <div class="ttc" id="aclasssil_1_1mesher_1_1Mesher_html"><div class="ttname"><a href="classsil_1_1mesher_1_1Mesher.html">sil::mesher::Mesher</a></div><div class="ttdef"><b>Definition</b> <a href="mesher_8hpp_source.html#l00051">mesher.hpp:52</a></div></div>
 <div class="ttc" id="aclasssil_1_1mesher_1_1Mesher_html_a1161cee72ecbc8cbcb8df18fc5892899"><div class="ttname"><a href="classsil_1_1mesher_1_1Mesher.html#a1161cee72ecbc8cbcb8df18fc5892899">sil::mesher::Mesher::bsplines_type</a></div><div class="ttdeci">ddc::UniformBSplines&lt; T, D &gt; bsplines_type</div><div class="ttdef"><b>Definition</b> <a href="mesher_8hpp_source.html#l00057">mesher.hpp:57</a></div></div>
 <div class="ttc" id="aclasssil_1_1mesher_1_1Mesher_html_a2c782c36150ade73c887534725240a1d"><div class="ttname"><a href="classsil_1_1mesher_1_1Mesher.html#a2c782c36150ade73c887534725240a1d">sil::mesher::Mesher::discrete_dimension_type</a></div><div class="ttdeci">typename greville_points_type&lt; typename Mesher&lt; D, CDim... &gt;::template bsplines_type&lt; T &gt; &gt;::interpolation_discrete_dimension_type discrete_dimension_type</div><div class="ttdef"><b>Definition</b> <a href="mesher_8hpp_source.html#l00065">mesher.hpp:67</a></div></div>
-<div class="ttc" id="aclasssil_1_1mesher_1_1Mesher_html_a2f24c62c3bbc5852cb2d413ae6cb039f"><div class="ttname"><a href="classsil_1_1mesher_1_1Mesher.html#a2f24c62c3bbc5852cb2d413ae6cb039f">sil::mesher::Mesher::mesh</a></div><div class="ttdeci">constexpr ddc::detail::convert_type_seq_to_discrete_domain_t&lt; TypeSeqDDim &gt; mesh(ddc::Coordinate&lt; CDim... &gt; lower_boundaries, ddc::Coordinate&lt; CDim... &gt; upper_boundaries, ddc::detail::convert_type_seq_to_discrete_domain_t&lt; TypeSeqDDim &gt;::mlength_type nb_cells)</div><div class="ttdef"><b>Definition</b> <a href="mesher_8hpp_source.html#l00078">mesher.hpp:78</a></div></div>
 <div class="ttc" id="aclasssil_1_1mesher_1_1Mesher_html_ac3f9204e172f1ff8c7e8390351e12c95"><div class="ttname"><a href="classsil_1_1mesher_1_1Mesher.html#ac3f9204e172f1ff8c7e8390351e12c95">sil::mesher::Mesher::BoundCond</a></div><div class="ttdeci">static constexpr ddc::BoundCond BoundCond</div><div class="ttdef"><b>Definition</b> <a href="mesher_8hpp_source.html#l00054">mesher.hpp:54</a></div></div>
+<div class="ttc" id="aclasssil_1_1mesher_1_1Mesher_html_aceb024ed661bc4274401e0b711d95129"><div class="ttname"><a href="classsil_1_1mesher_1_1Mesher.html#aceb024ed661bc4274401e0b711d95129">sil::mesher::Mesher::mesh</a></div><div class="ttdeci">constexpr ddc::detail::convert_type_seq_to_discrete_domain_t&lt; TypeSeqDDim &gt; mesh(ddc::Coordinate&lt; CDim... &gt; lower_boundaries, ddc::Coordinate&lt; CDim... &gt; upper_boundaries, ddc::detail::convert_type_seq_to_discrete_domain_t&lt; TypeSeqDDim &gt;::discrete_vector_type nb_cells)</div><div class="ttdef"><b>Definition</b> <a href="mesher_8hpp_source.html#l00079">mesher.hpp:79</a></div></div>
 <div class="ttc" id="anamespacesil_html"><div class="ttname"><a href="namespacesil.html">sil</a></div><div class="ttdoc">The top-level namespace of SimiLie.</div><div class="ttdef"><b>Definition</b> <a href="csr_8hpp_source.html#l00014">csr.hpp:14</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
