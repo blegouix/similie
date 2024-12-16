@@ -80,7 +80,7 @@ int main(int argc, char** argv)
     MesherXY mesher;
     ddc::Coordinate<X, Y> lower_bounds(-5., -5.);
     ddc::Coordinate<X, Y> upper_bounds(5., 5.);
-    ddc::DiscreteVector<DDimX, DDimY> nb_cells(40, 40);
+    ddc::DiscreteVector<DDimX, DDimY> nb_cells(50, 50);
     ddc::DiscreteDomain<DDimX, DDimY> mesh_xy = mesher.template mesh<
             ddc::detail::TypeSeq<DDimX, DDimY>,
             ddc::detail::TypeSeq<BSplinesX, BSplinesY>>(lower_bounds, upper_bounds, nb_cells);
@@ -130,6 +130,7 @@ int main(int argc, char** argv)
     ddc::parallel_for_each(
             potential.domain(),
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
+                double const R = 2.;
                 double const r = Kokkos::sqrt(
                         static_cast<double>(
                                 ddc::coordinate(ddc::DiscreteElement<DDimX>(elem))
@@ -137,10 +138,10 @@ int main(int argc, char** argv)
                         + static_cast<double>(
                                 ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))
                                 * ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))));
-                if (r <= 1) {
-                    potential.mem(elem) = -Kokkos::numbers::pi_v<double> / 2 * r * r;
+                if (r <= R) {
+                    potential.mem(elem) = 6.25 * r * r;
                 } else {
-                    potential.mem(elem) = -Kokkos::numbers::pi_v<double> * Kokkos::log(r);
+                    potential.mem(elem) = 6.25 * (Kokkos::log(r / R) + (R * R));
                 }
             });
 
@@ -156,6 +157,7 @@ int main(int argc, char** argv)
     ddc::Chunk gradient_alloc(gradient_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor gradient(gradient_alloc);
     sil::exterior::deriv<MuLow, DummyIndex>(Kokkos::DefaultExecutionSpace(), gradient, potential);
+    Kokkos::fence();
 
     // Hodge star
     [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain> hodge_star_accessor;
@@ -168,6 +170,7 @@ int main(int argc, char** argv)
             sil::tensor::upper<MetricIndex>,
             ddc::detail::TypeSeq<MuUp>,
             ddc::detail::TypeSeq<NuLow>>(Kokkos::DefaultExecutionSpace(), hodge_star, inv_metric);
+    Kokkos::fence();
 
     // Dual gradient
     [[maybe_unused]] sil::tensor::TensorAccessor<NuLow> dual_gradient_accessor;
@@ -182,6 +185,7 @@ int main(int argc, char** argv)
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
                 sil::tensor::tensor_prod(dual_gradient[elem], gradient[elem], hodge_star[elem]);
             });
+    Kokkos::fence();
 
     // Dual Laplacian
     [[maybe_unused]] sil::tensor::TensorAccessor<
@@ -194,6 +198,7 @@ int main(int argc, char** argv)
     sil::tensor::Tensor dual_laplacian(dual_laplacian_alloc);
     sil::exterior::
             deriv<RhoLow, NuLow>(Kokkos::DefaultExecutionSpace(), dual_laplacian, dual_gradient);
+    Kokkos::fence();
 
     // Hodge star 2
     [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain2>
@@ -207,6 +212,7 @@ int main(int argc, char** argv)
             sil::tensor::upper<MetricIndex>,
             ddc::detail::TypeSeq<RhoUp, NuUp>,
             ddc::detail::TypeSeq<>>(Kokkos::DefaultExecutionSpace(), hodge_star2, inv_metric);
+    Kokkos::fence();
 
     // Laplacian
     [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> laplacian_accessor;
@@ -222,6 +228,7 @@ int main(int argc, char** argv)
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
                 sil::tensor::tensor_prod(laplacian[elem], dual_laplacian[elem], hodge_star2[elem]);
             });
+    Kokkos::fence();
 
     auto laplacian_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), laplacian);
