@@ -19,9 +19,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 - Remove metric_prod_t (and every helper producing a tensor)
 - Avoid usage of std::array in non-constexpr tensor_impl function (exclusive to YoungTableauIndexing)
 - Find a way to call destructor before getting out of scope
+- Move Laplacian implementation in a function
 
 ----- SETUP BASIC COMMAND -----
 
-cmake -DCMAKE_CXX_COMPILER=clang++-19 -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-Wfatal-errors" -DDDC_BUILD_PDI_WRAPPER=OFF ..
-cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Debug -DKokkos_ENABLE_OPENMP=ON -DCMAKE_CXX_FLAGS="-Wfatal-errors" -DDDC_BUILD_PDI_WRAPPER=OFF ..
-cmake -DCMAKE_CXX_COMPILER=$KOKKOS_BIN/nvcc_wrapper -DCMAKE_BUILD_TYPE=Debug -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_VOLTA70=ON -DCMAKE_CXX_FLAGS="-Wfatal-errors" -DDDC_BUILD_PDI_WRAPPER=OFF ..
+cmake -DCMAKE_CXX_COMPILER=clang++-19 -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-Wfatal-errors" ..
+cmake -DCMAKE_CXX_COMPILER=g++-13 -DCMAKE_BUILD_TYPE=Debug -DKokkos_ENABLE_OPENMP=ON -DCMAKE_CXX_FLAGS="-Wfatal-errors" ..
+cmake -DCMAKE_CXX_COMPILER=$KOKKOS_BIN/nvcc_wrapper -DCMAKE_BUILD_TYPE=Debug -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_VOLTA70=ON -DCMAKE_CXX_FLAGS="-Wfatal-errors" ..
