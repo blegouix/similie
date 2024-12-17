@@ -7,6 +7,7 @@
 #include "chain.hpp"
 #include "coboundary.hpp"
 #include "cochain.hpp"
+#include "codifferential.hpp"
 #include "cosimplex.hpp"
 #include "form.hpp"
 #include "hodge_star.hpp"
