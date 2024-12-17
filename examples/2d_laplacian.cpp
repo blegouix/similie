@@ -3,8 +3,30 @@
 
 #include <ddc/ddc.hpp>
 #include <ddc/kernels/splines.hpp>
+#include <ddc/pdi.hpp>
 
 #include <similie/similie.hpp>
+
+// PDI config
+constexpr char const* const PDI_CFG = R"PDI_CFG(
+metadata:
+  Nx : int
+  Ny : int
+
+data:
+  potential:
+    type: array
+    subtype: double
+    size: [ '$Nx', '$Ny' ]
+
+plugins:
+  decl_hdf5:
+    - file: '2d_laplacian.h5'
+      on_event: [export]
+      collision_policy: replace_and_warn
+      write: [Nx, Ny, potential]
+  #trace: ~
+)PDI_CFG";
 
 static constexpr std::size_t s_degree = 3;
 
@@ -72,10 +94,12 @@ using DummyIndex = sil::tensor::TensorCovariantNaturalIndex<sil::tensor::TensorN
 
 int main(int argc, char** argv)
 {
+    PC_tree_t conf_pdi = PC_parse_string(PDI_CFG);
+    PC_errhandler(PC_NULL_HANDLER);
+    PDI_init(conf_pdi);
+
     Kokkos::ScopeGuard const kokkos_scope(argc, argv);
     ddc::ScopeGuard const ddc_scope(argc, argv);
-
-    printf("start example\n");
 
     MesherXY mesher;
     ddc::Coordinate<X, Y> lower_bounds(-5., -5.);
@@ -84,6 +108,8 @@ int main(int argc, char** argv)
     ddc::DiscreteDomain<DDimX, DDimY> mesh_xy = mesher.template mesh<
             ddc::detail::TypeSeq<DDimX, DDimY>,
             ddc::detail::TypeSeq<BSplinesX, BSplinesY>>(lower_bounds, upper_bounds, nb_cells);
+    ddc::expose_to_pdi("Nx", static_cast<int>(mesh_xy.template extent<DDimX>()));
+    ddc::expose_to_pdi("Ny", static_cast<int>(mesh_xy.template extent<DDimY>()));
 
     // Allocate and instantiate a metric tensor field.
     [[maybe_unused]] sil::tensor::TensorAccessor<MetricIndex> metric_accessor;
@@ -113,12 +139,13 @@ int main(int argc, char** argv)
     Kokkos::deep_copy(
             inv_metric.allocation_kokkos_view(),
             metric.allocation_kokkos_view()); // FIXME: Temporary patch
-
+    /*
     auto debug = inv_metric;
     auto debug_host = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), debug);
     std::cout << "DEBUG:" << std::endl;
     std::cout << sil::tensor::Tensor(debug_host[debug.accessor().mem_domain().front()])
               << std::endl;
+    */
 
     // Potential
     [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> potential_accessor;
@@ -144,12 +171,8 @@ int main(int argc, char** argv)
                     potential.mem(elem) = 6.25 * (Kokkos::log(r / R) + (R * R));
                 }
             });
-
-    std::cout << "Potential:" << std::endl;
     auto potential_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), potential);
-    std::cout << sil::tensor::Tensor(potential_host[potential_accessor.mem_domain().front()])
-              << std::endl;
 
     // Gradient
     [[maybe_unused]] sil::tensor::TensorAccessor<MuLow> gradient_accessor;
@@ -232,7 +255,11 @@ int main(int argc, char** argv)
 
     auto laplacian_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), laplacian);
-    std::cout << "Laplacian:" << std::endl;
-    std::cout << sil::tensor::Tensor(laplacian_host[laplacian_accessor.mem_domain().front()])
-              << std::endl;
+
+    ddc::PdiEvent("export").with("potential", potential_host);
+    std::cout << "Computation result exported in 2d_laplacian.h5" << std::endl;
+    PC_tree_destroy(&conf_pdi);
+    PDI_finalize();
+
+    return EXIT_SUCCESS;
 }
