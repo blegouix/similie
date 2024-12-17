@@ -223,10 +223,15 @@ int main(int argc, char** argv)
     ddc::Chunk potential_alloc(potential_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor potential(potential_alloc);
 
+    double const R = 2.;
+    double const L = ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().back()))
+                     - ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().front()));
+    double const alpha = (static_cast<double>(nb_cells.template get<DDimX>())
+                          * static_cast<double>(nb_cells.template get<DDimY>()))
+                         / L / 2 / L / 2;
     ddc::parallel_for_each(
             potential.domain(),
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
-                double const R = 2.;
                 double const r = Kokkos::sqrt(
                         static_cast<double>(
                                 ddc::coordinate(ddc::DiscreteElement<DDimX>(elem))
@@ -235,11 +240,9 @@ int main(int argc, char** argv)
                                 ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))
                                 * ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))));
                 if (r <= R) {
-                    potential.mem(elem) = static_cast<double>(nb_cells.template get<DDimX>()) / 8
-                                          * ((r * r) - (R * R));
+                    potential.mem(elem) = alpha * ((r * r) - (R * R));
                 } else {
-                    potential.mem(elem) = static_cast<double>(nb_cells.template get<DDimX>()) / 4
-                                          * R * R * Kokkos::log(r / R);
+                    potential.mem(elem) = alpha * 2 * R * R * Kokkos::log(r / R);
                 }
             });
     auto potential_host
