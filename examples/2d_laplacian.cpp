@@ -14,6 +14,14 @@ metadata:
   Ny : int
 
 data:
+  X:
+    type: array
+    subtype: double
+    size: [ '$Nx', '$Ny' ]
+  Y:
+    type: array
+    subtype: double
+    size: [ '$Nx', '$Ny' ]
   potential:
     type: array
     subtype: double
@@ -24,9 +32,43 @@ plugins:
     - file: '2d_laplacian.h5'
       on_event: [export]
       collision_policy: replace_and_warn
-      write: [Nx, Ny, potential]
+      write: [Nx, Ny, X, Y, potential]
   #trace: ~
 )PDI_CFG";
+
+// XDMF (for Paraview visualization)
+int write_xdmf(int Nx, int Ny)
+{
+    constexpr char const* const xdmf = R"XDMF(<?xml version="1.0" ?>
+<!DOCTYPE Xdmf SYSTEM "Xdmf.dtd" []>
+<Xdmf Version="2.0">
+ <Domain>
+   <Grid Name="mesh1" GridType="Uniform">
+     <Topology TopologyType="2DSMesh" NumberOfElements="%i %i"/>
+     <Geometry GeometryType="X_Y">
+       <DataItem Dimensions="%i %i" NumberType="Float" Precision="8" Format="HDF">
+        2d_laplacian.h5:/X
+       </DataItem>
+       <DataItem Dimensions="%i %i" NumberType="Float" Precision="8" Format="HDF">
+        2d_laplacian.h5:/Y
+       </DataItem>
+     </Geometry>
+     <Attribute Name="Potential" AttributeType="Scalar" Center="Node">
+       <DataItem Dimensions="%i %i" NumberType="Float" Precision="8" Format="HDF">
+        2d_laplacian.h5:/potential
+       </DataItem>
+     </Attribute>
+   </Grid>
+ </Domain>
+</Xdmf>
+)XDMF";
+
+    FILE* file = fopen("2d_laplacian.xmf", "w");
+    fprintf(file, xdmf, Nx, Ny, Nx, Ny, Nx, Ny, Nx, Ny);
+    fclose(file);
+
+    return 1;
+}
 
 static constexpr std::size_t s_degree = 3;
 
@@ -110,6 +152,21 @@ int main(int argc, char** argv)
             ddc::detail::TypeSeq<BSplinesX, BSplinesY>>(lower_bounds, upper_bounds, nb_cells);
     ddc::expose_to_pdi("Nx", static_cast<int>(mesh_xy.template extent<DDimX>()));
     ddc::expose_to_pdi("Ny", static_cast<int>(mesh_xy.template extent<DDimY>()));
+
+    // Allocate and instantiate a position field (used only to be exported).
+    [[maybe_unused]] sil::tensor::TensorAccessor<MuUp> position_accessor;
+    ddc::DiscreteDomain<MuUp, DDimX, DDimY> position_dom(mesh_xy, position_accessor.mem_domain());
+    ddc::Chunk position_alloc(position_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor position(position_alloc);
+    ddc::parallel_for_each(
+            Kokkos::DefaultHostExecutionSpace(),
+            mesh_xy,
+            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
+                position(elem, position.accessor().access_element<X>())
+                        = static_cast<double>(ddc::coordinate(ddc::DiscreteElement<DDimX>(elem)));
+                position(elem, position.accessor().access_element<Y>())
+                        = static_cast<double>(ddc::coordinate(ddc::DiscreteElement<DDimY>(elem)));
+            });
 
     // Allocate and instantiate a metric tensor field.
     [[maybe_unused]] sil::tensor::TensorAccessor<MetricIndex> metric_accessor;
@@ -256,10 +313,17 @@ int main(int argc, char** argv)
     auto laplacian_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), laplacian);
 
-    ddc::PdiEvent("export").with("potential", potential_host);
+    ddc::PdiEvent("export")
+            .with("X", position[position.accessor().access_element<X>()])
+            .and_with("Y", position[position.accessor().access_element<Y>()])
+            .and_with("potential", potential_host);
     std::cout << "Computation result exported in 2d_laplacian.h5" << std::endl;
     PC_tree_destroy(&conf_pdi);
     PDI_finalize();
+
+    write_xdmf(
+            static_cast<int>(mesh_xy.template extent<DDimX>()),
+            static_cast<int>(mesh_xy.template extent<DDimY>()));
 
     return EXIT_SUCCESS;
 }
