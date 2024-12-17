@@ -26,17 +26,21 @@ data:
     type: array
     subtype: double
     size: [ '$Nx', '$Ny' ]
+  laplacian:
+    type: array
+    subtype: double
+    size: [ '$Nx-1', '$Ny-1' ]
 
 plugins:
   decl_hdf5:
     - file: '2d_laplacian.h5'
       on_event: [export]
       collision_policy: replace_and_warn
-      write: [Nx, Ny, X, Y, potential]
+      write: [Nx, Ny, X, Y, potential, laplacian]
   #trace: ~
 )PDI_CFG";
 
-// XDMF (for Paraview visualization)
+// XDMF
 int write_xdmf(int Nx, int Ny)
 {
     constexpr char const* const xdmf = R"XDMF(<?xml version="1.0" ?>
@@ -58,13 +62,18 @@ int write_xdmf(int Nx, int Ny)
         2d_laplacian.h5:/potential
        </DataItem>
      </Attribute>
+     <Attribute Name="Laplacian" AttributeType="Scalar" Center="Cell">
+       <DataItem Dimensions="%i %i" NumberType="Float" Precision="8" Format="HDF">
+        2d_laplacian.h5:laplacian/
+       </DataItem>
+     </Attribute>
    </Grid>
  </Domain>
 </Xdmf>
 )XDMF";
 
     FILE* file = fopen("2d_laplacian.xmf", "w");
-    fprintf(file, xdmf, Nx, Ny, Nx, Ny, Nx, Ny, Nx, Ny);
+    fprintf(file, xdmf, Nx, Ny, Nx, Ny, Nx, Ny, Nx, Ny, Nx - 1, Ny - 1);
     fclose(file);
 
     return 1;
@@ -146,7 +155,7 @@ int main(int argc, char** argv)
     MesherXY mesher;
     ddc::Coordinate<X, Y> lower_bounds(-5., -5.);
     ddc::Coordinate<X, Y> upper_bounds(5., 5.);
-    ddc::DiscreteVector<DDimX, DDimY> nb_cells(50, 50);
+    ddc::DiscreteVector<DDimX, DDimY> nb_cells(1000, 1000);
     ddc::DiscreteDomain<DDimX, DDimY> mesh_xy = mesher.template mesh<
             ddc::detail::TypeSeq<DDimX, DDimY>,
             ddc::detail::TypeSeq<BSplinesX, BSplinesY>>(lower_bounds, upper_bounds, nb_cells);
@@ -316,7 +325,8 @@ int main(int argc, char** argv)
     ddc::PdiEvent("export")
             .with("X", position[position.accessor().access_element<X>()])
             .and_with("Y", position[position.accessor().access_element<Y>()])
-            .and_with("potential", potential_host);
+            .and_with("potential", potential_host)
+            .and_with("laplacian", laplacian_host);
     std::cout << "Computation result exported in 2d_laplacian.h5" << std::endl;
     PC_tree_destroy(&conf_pdi);
     PDI_finalize();
