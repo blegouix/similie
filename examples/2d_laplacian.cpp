@@ -145,6 +145,7 @@ using DummyIndex = sil::tensor::TensorCovariantNaturalIndex<sil::tensor::TensorN
 
 int main(int argc, char** argv)
 {
+    // Initialize PDI, Kokkos and DDC
     PC_tree_t conf_pdi = PC_parse_string(PDI_CFG);
     PC_errhandler(PC_NULL_HANDLER);
     PDI_init(conf_pdi);
@@ -152,6 +153,7 @@ int main(int argc, char** argv)
     Kokkos::ScopeGuard const kokkos_scope(argc, argv);
     ddc::ScopeGuard const ddc_scope(argc, argv);
 
+    // Produce mesh
     MesherXY mesher;
     ddc::Coordinate<X, Y> lower_bounds(-5., -5.);
     ddc::Coordinate<X, Y> upper_bounds(5., 5.);
@@ -159,6 +161,7 @@ int main(int argc, char** argv)
     ddc::DiscreteDomain<DDimX, DDimY> mesh_xy = mesher.template mesh<
             ddc::detail::TypeSeq<DDimX, DDimY>,
             ddc::detail::TypeSeq<BSplinesX, BSplinesY>>(lower_bounds, upper_bounds, nb_cells);
+    assert(mesh_xy.template extent<DDimX>() == mesh_xy.template extent<DDimY>());
     ddc::expose_to_pdi("Nx", static_cast<int>(mesh_xy.template extent<DDimX>()));
     ddc::expose_to_pdi("Ny", static_cast<int>(mesh_xy.template extent<DDimY>()));
 
@@ -232,9 +235,11 @@ int main(int argc, char** argv)
                                 ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))
                                 * ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))));
                 if (r <= R) {
-                    potential.mem(elem) = 6.25 * r * r;
+                    potential.mem(elem) = static_cast<double>(nb_cells.template get<DDimX>()) / 8
+                                          * ((r * r) - (R * R));
                 } else {
-                    potential.mem(elem) = 6.25 * (Kokkos::log(r / R) + (R * R));
+                    potential.mem(elem) = static_cast<double>(nb_cells.template get<DDimX>()) / 4
+                                          * R * R * Kokkos::log(r / R);
                 }
             });
     auto potential_host
@@ -322,6 +327,7 @@ int main(int argc, char** argv)
     auto laplacian_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), laplacian);
 
+    // Export HDF5 and XDMF, finalize PDI
     ddc::PdiEvent("export")
             .with("X", position[position.accessor().access_element<X>()])
             .and_with("Y", position[position.accessor().access_element<Y>()])
