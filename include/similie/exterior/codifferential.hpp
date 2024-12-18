@@ -5,14 +5,8 @@
 
 #include <ddc/ddc.hpp>
 
-#include <similie/misc/are_all_same.hpp>
-#include <similie/misc/domain_contains.hpp>
-#include <similie/misc/filled_struct.hpp>
-#include <similie/misc/portable_stl.hpp>
 #include <similie/misc/specialization.hpp>
-#include <similie/misc/type_seq_conversion.hpp>
-#include <similie/tensor/antisymmetric_tensor.hpp>
-#include <similie/tensor/dummy_index.hpp>
+#include <similie/tensor/character.hpp>
 #include <similie/tensor/tensor_impl.hpp>
 
 #include <Kokkos_StdAlgorithms.hpp>
@@ -63,7 +57,9 @@ struct CodifferentialIndex<TagToRemoveFromCochain, CochainTag>
 };
 
 template <tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorNatIndex... Tag>
-struct CodifferentialIndex<tensor::TensorAntisymmetricIndex<TagToRemoveFromCochain, Tag...>>
+struct CodifferentialIndex<
+        TagToRemoveFromCochain,
+        tensor::TensorAntisymmetricIndex<TagToRemoveFromCochain, Tag...>>
 {
     using type = tensor::TensorAntisymmetricIndex<Tag...>;
 };
@@ -109,36 +105,43 @@ struct CodifferentialTensorType<
 
 } // namespace detail
 
+namespace {
+
+template <std::size_t I, class T>
+struct Dummy : tensor::uncharacterize<T>
 {
-    template <class T>
-    struct Nu : tensor::uncharacterize<T>
-    {
-    };
+};
 
-    template <
-            tensor::TensorNatIndex TagToRemoveFromCochain,
-            tensor::TensorIndex CochainTag,
-            misc::Specialization<tensor::Tensor> TensorType>
-    using codifferential_tensor_t = typename detail::
-            CodifferentialTensorType<TagToRemoveFromCochain, CochainTag, TensorType>::type;
+} // namespace
 
-    template <
-            tensor::TensorNatIndex TagToRemoveFromCochain,
-            tensor::TensorIndex CochainTag,
-            misc::Specialization<tensor::Tensor> TensorType,
-            misc::Specialization<tensor::Tensor> MetricType,
-            class ExecSpace>
-    codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codifferential(
-            ExecSpace const& exec_space,
-            codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType>
-                    codifferential_tensor,
-            TensorType tensor,
-            MetricType inv_metric)
-    {
-        static_assert(tensor::is_covariant_v<TagToRemoveFromCochain>);
-        using NuLow = tensor::TensorCovariantNaturalIndex<Nu>;
-        using NuUp = tensor::TensorContravariantNaturalIndex<Nu>;
+template <
+        tensor::TensorNatIndex TagToRemoveFromCochain,
+        tensor::TensorIndex CochainTag,
+        misc::Specialization<tensor::Tensor> TensorType>
+using codifferential_tensor_t = typename detail::
+        CodifferentialTensorType<TagToRemoveFromCochain, CochainTag, TensorType>::type;
 
+template <
+        tensor::TensorNatIndex TagToRemoveFromCochain,
+        tensor::TensorIndex CochainTag,
+        misc::Specialization<tensor::Tensor> TensorType,
+        misc::Specialization<tensor::Tensor> MetricType,
+        class ExecSpace>
+codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codifferential(
+        ExecSpace const& exec_space,
+        codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType>
+                codifferential_tensor,
+        TensorType tensor,
+        MetricType inv_metric)
+{
+    static_assert(tensor::is_covariant_v<TagToRemoveFromCochain>);
+    using NuLow = tensor::TensorCovariantNaturalIndex<Dummy<0, TagToRemoveFromCochain>>;
+    using NuUp = tensor::TensorContravariantNaturalIndex<Dummy<0, TagToRemoveFromCochain>>;
+    using RhoLow = tensor::TensorCovariantNaturalIndex<Dummy<1, TagToRemoveFromCochain>>;
+
+    std::cout << std::is_same_v<NuLow, RhoLow>;
+
+    /*
         using HodgeStarDomain = sil::exterior::hodge_star_domain_t<
                 ddc::to_type_seq_t<typename natural_domain_t<CochainTag>>>,
               ddc::type_seq_remove_t < ddc::to_type_seq_t < typename MetricType::natural_domain_t,
@@ -213,8 +216,8 @@ struct CodifferentialTensorType<
                 laplacian_accessor.mem_domain());
         ddc::Chunk laplacian_alloc(laplacian_dom, ddc::DeviceAllocator<double>());
         sil::tensor::Tensor laplacian(laplacian_alloc);
-        return coboundary_tensor;
-    }
+    */
+    return codifferential_tensor;
 }
 
 } // namespace exterior

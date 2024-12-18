@@ -20,6 +20,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 - Avoid usage of std::array in non-constexpr tensor_impl function (exclusive to YoungTableauIndexing)
 - Find a way to call destructor before getting out of scope
 - Move Laplacian implementation in a function
+- Anonymous namespace make alias scope local
 
 ----- SETUP BASIC COMMAND -----
 
