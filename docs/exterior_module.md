@@ -19,3 +19,12 @@ Integration is used to compute global quantities from local ones, ie. the curren
 \f\[
 \int_{\delta\Omega} \omega = \int_\Omega d\omega
 \f\]
+
+## Discrete exterior calculus
+
+A whole zoo of differential operators has been developed over the centuries : gradient, rotational, divergency, 4-gradient, 4-divergency, directional derivative, material derivative, covariant derivative, Lie derivative, etc. During the 20th century, mathematicians proposed a refactoring of it known as Exterior calculus, which revealed highly suitable for discretization (now known as Discrete exterior calculus). Only two fundamental operators are defined and can be used to build every possible differential operators:  
+
+- The <em>exterior derivative</em> \f$d\f$.
+- The <em>Hodge star</em> \f$\star\f$.
+
+Those operators must be applied on <em>differential forms</em>, which can be assimilated to antisymmetric tensor fields. Note that partially-antisymmetric tensor fields may be assimilated to differential form-valued lower rank tensor fields (ie. the Cauchy stress tensor or the Christoffel symbols).
