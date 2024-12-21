@@ -37,19 +37,19 @@ The generic Laplacian is defined as \f$\delta d + d \delta\f$.
 
 An important relation is the Poincarré Lemma \f$dd = 0\f$. It leads to the very deep physical concept of gauge invariance, which tells us potentials are defined up to a derivative (because \f$d(A+d\alpha) = dA + dd\alpha = dA\f$).
 
-\important A key paradigm of SimiLie is the exclusive support of structured meshes to avoid sparse linear algebra and produce mostly-embarrassing parallel code. It implies that the main difference between the theory described in [Discrete Differential Forms for Computational Modeling](http://www.geometry.caltech.edu/pubs/DKT05.pdf) and the implementation in SimiLie is that discrete exterior derivative is not build upon a sparse adjacency matrix, but directly computed locally for each node of the mesh. Otherwise, SimiLie follows closely he constrution described in the document.
+\important A key paradigm of SimiLie is the exclusive support of structured meshes to avoid sparse linear algebra and produce mostly-embarrassing parallel code. It implies that the main difference between the theory described in [Discrete Differential Forms for Computational Modeling](http://www.geometry.caltech.edu/pubs/DKT05.pdf) and the implementation in SimiLie is that discrete exterior derivative is not build upon a sparse adjacency matrix, but directly computed locally for each node of the mesh. Otherwise, SimiLie follows quite closely the constrution described in the document.
 
 ### Simplex
 
 A \f$k-\f$simplex is an oriented discrete element of dimension \f$k\f$ belonging to the discrete manifold. Ie. a \f$0\f$-simplex is a node, a \f$1\f$-simplex is an edge, a \f$2\f$-simplex is a face and a \f$3\f$-simplex is a cell. It can be defined for any dimension \f$n\f$ of the discrete manifold.
 
-In SimiLie, a simplex derives from `ddc::DiscreteElement`, associating to it a shift vector with \f$k\f$ `1` and \f$n-k\f$ `0`, and a boolean flag `negative` giving the orientation.
+In SimiLie, a simplex derives from `ddc::DiscreteElement`, associated to a shift vector with \f$k\f$ `1` and \f$n-k\f$ `0`, and a boolean flag `negative` giving the orientation.
 
 ### Chain
 
 A \f$k-\f$chain - at least in the sense it is used in SimiLie - is basically a set of \f$k-\f$simplices.
 
-\note In [Discrete Differential Forms for Computational Modeling](http://www.geometry.caltech.edu/pubs/DKT05.pdf) chains are defined as linear combination of simplices, but in SimiLie we assume all the coefficients to be `1`, every simplex belonging to the chain is thus already correctly oriented.
+\note In [Discrete Differential Forms for Computational Modeling](http://www.geometry.caltech.edu/pubs/DKT05.pdf) chains are defined as linear combinations of simplices, but in SimiLie we assume all the coefficients to be `1`, every simplex belonging to the chain thus has to be already correctly oriented.
 
 \attention In SimiLie we also have the non-standard LocalChain class which allows to define a chain whose every simplex shares a node in common.
 
