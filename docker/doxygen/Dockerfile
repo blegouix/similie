@@ -36,12 +36,16 @@ RUN chmod +x /bin/bash_run \
     git \
     graphviz \
     pkg-config \
-    doxygen-latex \
  && git clone -b v1.8.0 https://github.com/ginkgo-project/ginkgo.git \
  && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DGINKGO_BUILD_OMP=OFF -DGINKGO_BUILD_TESTS=OFF -DGINKGO_BUILD_EXAMPLES=OFF -DGINKGO_BUILD_BENCHMARKS=OFF -B build-ginkgo -S ginkgo \
  && cmake --build build-ginkgo \
  && cmake --install build-ginkgo \
  && rm -rf ginkgo \
+ && wget https://github.com/doxygen/doxygen/releases/download/Release_1_12_0/doxygen-1.12.0.src.tar.gz \
+ && tar -xf doxygen-1.12.0.src.tar.gz \
+ && cmake -G "Unix Makefiles" -B build-doxygen -S doxygen-1.12.0 \
+ && cmake --build build-doxygen \
+ && cmake --install build-doxygen \
  && apt-get purge -y \
     apt-transport-https \
  && apt-get autoremove -y \
