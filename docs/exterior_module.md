@@ -37,7 +37,7 @@ The generic Laplacian is defined as \f$\delta d + d \delta\f$.
 
 An important relation is the Poincarré Lemma \f$dd = 0\f$. It leads to the very deep physical concept of gauge invariance, which tells us potentials are defined up to a derivative (because \f$d(A+d\alpha) = dA + dd\alpha = dA\f$).
 
-\important A key paradigm of SimiLie is the exclusive support of structured meshes to avoid sparse linear algebra and produce mostly-embarrassing parallel code. It implies that the main difference between the theory described in [Discrete Differential Forms for Computational Modeling](http://www.geometry.caltech.edu/pubs/DKT05.pdf) and the implementation in SimiLie is that discrete exterior derivative is not build upon a sparse adjacency matrix, but directly computed locally for each node of the mesh. Otherwise, SimiLie follows quite closely the constrution described in the document.
+\important A key paradigm of SimiLie is the exclusive support of structured meshes to avoid sparse linear algebra and produce mostly-embarrassing parallel code. It implies that the main difference between the theory described in [Discrete Differential Forms for Computational Modeling](http://www.geometry.caltech.edu/pubs/DKT05.pdf) and the implementation in SimiLie is that discrete exterior derivative is not build upon a sparse adjacency matrix, but directly computed locally for each node of the mesh. Otherwise, SimiLie follows quite closely the construction presented in the document.
 
 ### Simplex
 
@@ -49,9 +49,9 @@ In SimiLie, a simplex derives from `ddc::DiscreteElement`, associated to a shift
 
 A \f$k-\f$chain - at least in the sense it is used in SimiLie - is basically a set of \f$k-\f$simplices.
 
-\note In [Discrete Differential Forms for Computational Modeling](http://www.geometry.caltech.edu/pubs/DKT05.pdf) chains are defined as linear combinations of simplices, but in SimiLie we assume all the coefficients to be `1`, every simplex belonging to the chain thus has to be already correctly oriented.
+\note In [Discrete Differential Forms for Computational Modeling](http://www.geometry.caltech.edu/pubs/DKT05.pdf) chains are defined as linear combinations of simplices, but in SimiLie we assume all the coefficients to be `1`, every simplex belonging to the chain thus has to be oriented accordingly to the chain purpose.
 
-\attention In SimiLie we also have the non-standard LocalChain class which allows to define a chain whose every simplex shares a node in common.
+\attention In SimiLie we also have the non-standard LocalChain class which allows to define a chain in which all the simplices share a node in common.
 
 ### Boundary operator
 
@@ -63,7 +63,7 @@ A \f$k-\f$cosimplex is the association of a simplex and of a real (or complex) n
 
 ### Cochain
 
-A \f$k-\f$cochain is basically a set of cosimplices. This is a discrete differential \f$k-\f$form.
+A \f$k-\f$cochain is basically a set of cosimplices. This is a discrete differential \f$k-\f$form. It can be represented as a rank-k antisymmetric tensor field (there is a Cochain constructor which takes an antisymmetric tensor as argument).
 
 ### Coboundary operator
 

@@ -14,11 +14,11 @@ In general relativity, the [Christoffel symbols](https://en.wikipedia.org/wiki/C
 
 A special class of tensors are the [antisymmetric tensors](https://en.wikipedia.org/wiki/Antisymmetric_tensor) which correspond to differential forms (ie. the [Faraday tensor](https://en.wikipedia.org/wiki/Electromagnetic_tensor) of electromagnetism), implemented in the \ref exterior_module "Exterior module" of SimiLie. Even more specials are the [vectors](https://en.wikipedia.org/wiki/Vector_(mathematics_and_physics)) which correspond to 1-forms.
 
-The [Scalar](https://en.wikipedia.org/wiki/Scalar) corresponds to a 0-form and is a degenerated type of tensors.
+The [Scalar](https://en.wikipedia.org/wiki/Scalar) corresponds to a 0-form and is a degenerated (rank-0) type of tensors.
 
 ## Do Kokkos and DDC support tensor fields ? What can SimiLie do in addition ?
 
-Kokkos aims to handle [Multidimensional arrays](https://en.wikipedia.org/wiki/Array_\(data_structure\)#Multidimensional_arrays). A `N-rank` tensor field defined over a `M-dimension` discrete manifold can be stored as a `N*M-dimensions` array. But this is not very conveniant, because Kokkos does not allow to labelize the dimensions of the array, so the user has to keep track of the ordering of physical dimensions and tensor indices, which may be very cumbersome and can easily lead to silent bugs.
+Kokkos aims to handle [Multidimensional arrays](https://en.wikipedia.org/wiki/Array_\(data_structure\)#Multidimensional_arrays). A rank-N tensor field defined over a M-dimension discrete manifold can be stored as a N\*M-dimensions array. But this is not very convenient, because Kokkos does not allow to labelize the dimensions of the array, so the user has to keep track of the ordering of physical dimensions and tensor indices, which may be very cumbersome and can easily lead to silent bugs.
 
 DDC offers the possibility to labelize the physical dimensions, but its support for tensor fields is limited. Scalar fields are described using the `ddc::Chunk` and `ddc::ChunkSpan` classes, which internally relie on `mdspan` (the C++ standardization of `Kokkos::View`). They take as a template argument a `ddc::DiscreteDomain`, which is itself template by the physical dimensions of the problem:
 
@@ -32,11 +32,9 @@ A simple way to support a tensor field would be adding non-physical dimensions r
 ddc::DiscreteDomain<DDimX, DDimY, DDimZ, Mu, Nu>
 ```
 
-This is precisely the starting point of SimiLie, which extents this natural support of tensor fields in DDC to tensor fields with internal symmetries (diagonal tensor, symmetric tensor, antisymmetric tensor, etc... or tensor product of lower-rank tensors with their own internal symmetries). Under the hood there are still `ddc::Chunk` and `mdspan` but conveniant interfaces are provided to manipulate tensors with internal symmetries.
+This is precisely the starting point of SimiLie, which extents this natural support of tensor fields in DDC to tensor fields with internal symmetries (diagonal tensor, symmetric tensor, antisymmetric tensor, etc... or tensor product of lower-rank tensors with their own internal symmetries). Under the hood there are still `ddc::Chunk` and `mdspan` but convenient interfaces are provided to manipulate tensors with internal symmetries.
 
-SimiLie also provides a dictionary of functions to perform tensor products, with the ability to run on GPU and benefiting from the structure of the involved tensors.
-
-\important The `Tensor` terminology in SimiLie does not guarantee the invariance under diffeomorphism, as it is the case in maths and physics. Tensor fields in SimiLie are just multidimensional arrays mapped over discrete manifolds and with conveniant accessors to benefit from internal symmetries. 
+\important The `Tensor` terminology in SimiLie does not guarantee the invariance under diffeomorphism, as it is the case in maths and physics. Tensor fields in SimiLie are just multidimensional arrays mapped over discrete manifolds and with convenient accessors to benefit from internal symmetries.
 
 ## Tensor indices
 
@@ -81,25 +79,25 @@ using DDom = ddc::DiscreteDomain<DDimX, Rho, DDimY, sil::tensor::TensorSymmetric
 
 is perfectly valid and `DDom` represents the type of the support of a rank-3 tensor field on a `XY` manifold, with the pair `Mu, Nu` being symmetric.
 
-\attention The contiguity-coalescence rule of DDC continues to stand in SimiLie: the leftest template argument of the `ddc::DiscreteDomain` declaration will be the most coalescent in the underlying multidimensional array while the rightest will be the most contiguous.
+\attention The contiguity-coalescence rule of DDC sill stands in SimiLie: the leftest template argument of the `ddc::DiscreteDomain` declaration will be the most coalescent in the underlying multidimensional array while the rightest will be the most contiguous.
 
 \note `ddc::DiscreteDomain<Mu, Nu>` and `ddc::DiscreteDomain<sil::tensor::TensorFullIndex<Mu, Nu>>` are mostly the same thing.
 
-\important Nested non-natural tensor indices are not supported, ie. `sil::tensor::TensorSymmetricIndex<sil::tensor::TensorAntisymmetricIndex<Mu, Nu>, Rho>` is not valid.
+\important Nested non-natural tensor indices are forbidden, ie. `sil::tensor::TensorSymmetricIndex<sil::tensor::TensorAntisymmetricIndex<Mu, Nu>, Rho>` is not valid.
 
 ## Internal mechanism
 
 The most important concept to understand is that elements of tensors are indexed (in the sense of <em>associated to integers which identify their positions</em>) using three different kind of `id`s:
 
-- The `natural_ids` is the most intuitive, ie. `(1, 2)` identifies the tensor element at index `1` along the row and at index `2` along the columns, regardless of the eventual symmetries of the tensor.
-- The `access_id` gives a way to benefit from internal symmetries when trying to access the element of a tensor. Ie. all the non-diagonal elements of a diagonal tensor share the same value `0` and are thus accessed using the same `access_id` (which is also `0`) while diagonal terms are accessed starting from `1`.
+- The `natural_ids` is the most intuitive, ie. `(1, 2)` identifies the tensor element at index `1` along the rows and at index `2` along the columns, regardless of the eventual symmetries of the tensor.
+- The `access_id` gives a way to benefit from internal symmetries when trying to access to an element of a tensor. Ie. all the non-diagonal elements of a diagonal tensor share the same value `0` and are thus accessed using the same `access_id` (which is also `0`) while diagonal terms are accessed starting from `1`.
 - The `mem_id` corresponds to the location in the memory, ie. the non-diagonal elements of a diagonal tensor are known to be `0` so they do not need to be stored, thus only the diagonal is stored starting from `0`.
 
 Most of the logic implemented in the `tensor_impl.hpp` file aims to provide kind-of-converters between those three kinds of `id`s.
 
 ## Tensor accessor
 
-Once the different tensor indices involved in your physical problem are declared, you need to declare a `TensorAccessor` templated by them indices. Ie.:
+Once the different tensor indices involved in your physical problem are declared, you need to declare a `TensorAccessor` templated by those indices. Ie.:
 
 ```
 struct Mu : sil::tensor::TensorNaturalIndex<X, Y, Z> {};
@@ -109,7 +107,7 @@ using Sigma = sil::tensor::TensorAntisymmetricIndex<Mu, Nu>;
 [[maybe_unused]] sil::tensor::TensorAccessor<Rho, Sigma> tensor_accessor;
 ```
 
-\note The `[[maybe_unused]]` is conveniant because all the member functions of `TensorAccessor` are `static`, so it avoids a compilation warning.
+\note The `[[maybe_unused]]` is convenient because all the member functions of `TensorAccessor` are `static`, so it avoids a compilation warning.
 
 \important The `TensorAccessor` class only handles the indicial part of a tensor (ie. not the dimensions of the manifold supporting a tensor field). You must not pass dimensions to its template arguments!
 
@@ -119,7 +117,7 @@ Then using the accessor you can get the required domain supporting the allocatio
 ddc::DiscreteDomain<Rho, Sigma> single_tensor_dom = tensor_accessor.mem_domain();
 ```
 
-But in practice it is more conveniant to directly compute the cartesian product with the mesh:
+But in practice it is more convenient to directly compute the cartesian product with the mesh:
 
 
 ```
@@ -139,7 +137,7 @@ In DDC an allocation is made using the `ddc::Chunk` class. We do the same in Sim
 ddc::Chunk tensor_field_alloc(tensor_field_dom, ddc::HostAllocator<double>());
 ```
 
-In DDC we would then build a `ddc::ChunkSpan` to manipulate this data. In SimiLie we have a class `Tensor` which derives from `ChunkSpan` and which is more conveniant to represent tensor fields:
+In DDC we would then build a `ddc::ChunkSpan` to manipulate this data. In SimiLie we have a class `Tensor` which derives from `ChunkSpan` and which is more convenient to represent tensor fields:
 
 ```
 sil::tensor::Tensor tensor_field(tensor_field_alloc);
@@ -157,7 +155,7 @@ A metric is a squared symmetric rank-2 tensor field \f$g\f$ with number of eleme
 ds^2 = g_{\mu\nu}\;dx^\mu\; dx^\nu
 \f\]
 
-The most basic metric is the Euclidean metric which is the identity tensor. A Lorentzian metric is the equivalent in special relativistic frame. More complicated metrics are used in general relativity or non-cartesian coordinate systems.
+The simplest metric is the Euclidean metric which is the identity tensor. A Lorentzian metric is the equivalent in special relativistic frame. More complicated metrics are used in general relativity or non-cartesian coordinate systems.
 
 In SimiLie a metric is defined using the two natural tensor indices `MetricIndex1` and `MetricIndex2`. A metric index is defined as ie.:
 
@@ -167,7 +165,7 @@ using MetricIndex = sil::tensor::TensorSymmetricIndex<sil::tensor::MetricIndex1<
 
 And the metric tensor field is build upon it as described previously.
 
-The most usefull usage of metric is <em>lowering</em> or <em>raising</em> indices. Indeed, on Riemannian manifolds the natural indices are attributed with a <em>covariant</em> or <em>contravariant character</em>. It is very conveniant to produce a tensor product of metrics (like \f$g_{\mu\mu'}\;g_{\nu\nu'}\;g_{\rho\rho'}\f$), which is permitted by the `fill_metric_prod` function.
+The most usefull usage of metric is <em>lowering</em> or <em>raising</em> indices. Indeed, on Riemannian manifolds the natural indices are attributed with a <em>covariant</em> or <em>contravariant character</em>. It is very convenient to produce a tensor product of metrics (like \f$g_{\mu\mu'}\;g_{\nu\nu'}\;g_{\rho\rho'}\f$), which is permitted by the `fill_metric_prod` function.
 
 Lowering indices is thus made by performing a tensor product with a contravariant tensor, ie.:
 
