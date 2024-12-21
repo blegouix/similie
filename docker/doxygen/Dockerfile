@@ -41,8 +41,8 @@ RUN chmod +x /bin/bash_run \
  && cmake --build build-ginkgo \
  && cmake --install build-ginkgo \
  && rm -rf ginkgo \
- && wget https://github.com/doxygen/doxygen/releases/download/Release_1_12_0/doxygen-1.12.0.linux.bin.tar.gz \
- && tar -xf doxygen-1.12.0.linux.bin.tar.gz \
+ && wget https://github.com/doxygen/doxygen/releases/download/Release_1_12_0/doxygen-1.12.0.src.tar.gz \
+ && tar -xf doxygen-1.12.0.src.tar.gz \
  && cmake -G "Unix Makefiles" -B build-doxygen -S doxygen-1.12.0 \
  && cmake --build build-doxygen \
  && cmake --install build-doxygen \
