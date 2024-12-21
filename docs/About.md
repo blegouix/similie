@@ -4,7 +4,7 @@ SPDX-FileCopyrightText: 2024 Baptiste Legouix
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
 
-# SimiLie
+## SimiLie
 **Github repo [here](https://github.com/blegouix/similie).**
 
 SimiLie is a performance-portable (CPU & GPU) C++20 library aiming to extent the capabilities of [Kokkos](https://github.com/kokkos/kokkos) and [DDC](https://github.com/CExA-project/ddc) to offer a complete toolkit able to perform tensor calculus, differential calculus and solving PDE. A key paradigm is the exclusive support of structured meshes to avoid sparse linear algebra and produce mostly-embarrassing parallel code. It should be able to address any multiphysical problem on fixed grid from eventually-relativistic classical field theory (in particular: solid & fluid mechanics, electromagnetism and gravitation).

@@ -4,7 +4,7 @@ SPDX-FileCopyrightText: 2024 Baptiste Legouix
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
 
-# General usage 
+## Dependencies
 
 SimiLie relies on `git submodule` to manage its dependencies and on `cmake` as a build system. It is a lightweight header-only library. It can thus be included as a dependency of your project with the `cmake` command-line:
 
@@ -26,7 +26,7 @@ Finally, the `sil::young_tableau` module relies on the [embed](https://en.cppref
 
 \attention A Spack-based toolchain is provided [here](https://github.com/blegouix/similie/tree/main/toolchains/v100.spack) to get a complete environment for Ubuntu 24 and Nvidia V100 GPU. It can be easily adapted to other OS/hardware.
 
-# Compilation 
+## Compilation
 
 First, be sure to have a full install of FFTW, LAPACKE, Ginkgo and PDI. Then clone the main branch of the [github repo](https://github.com/blegouix/similie) and populate the other dependencies with:
 
@@ -54,7 +54,7 @@ You can then edit the configuration with `ccmake .`. Please refer to the documen
 
 Finally compile with the `make` command (with `-j` flag for parallel compilation).
 
-# Usage
+## Usage
 
 Tests chain can be run with:
 

@@ -4,7 +4,7 @@ SPDX-FileCopyrightText: 2024 Baptiste Legouix
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
 
-# Why tensors are importants for physics ?
+## Why tensors are importants for physics ?
 
 [Tensors](https://en.wikipedia.org/wiki/Tensor) are the numerical counterparts of algebraic structures which form the base of fundamental physics as Lie algebra (represent gauge fields) or Clifford algebra (represent fermionic fields). They can thus constitute the building blocks of quantum physics solvers (long term roadmap of SimiLie).
 
@@ -16,7 +16,7 @@ A special class of tensors are the [antisymmetric tensors](https://en.wikipedia.
 
 The [Scalar](https://en.wikipedia.org/wiki/Scalar) corresponds to a 0-form and is a degenerated type of tensors.
 
-# Do Kokkos and DDC support tensor fields ? What can SimiLie do in addition ?
+## Do Kokkos and DDC support tensor fields ? What can SimiLie do in addition ?
 
 Kokkos aims to handle [Multidimensional arrays](https://en.wikipedia.org/wiki/Array_\(data_structure\)#Multidimensional_arrays). A `N-rank` tensor field defined over a `M-dimension` discrete manifold can be stored as a `N*M-dimensions` array. But this is not very conveniant, because Kokkos does not allow to labelize the dimensions of the array, so the user has to keep track of the ordering of physical dimensions and tensor indices, which may be very cumbersome and can easily lead to silent bugs.
 
@@ -38,7 +38,7 @@ SimiLie also provides a dictionary of functions to perform tensor products, with
 
 \important The `Tensor` terminology in SimiLie does not guarantee the invariance under diffeomorphism, as it is the case in maths and physics. Tensor fields in SimiLie are just multidimensional arrays mapped over discrete manifolds and with conveniant accessors to benefit from internal symmetries. 
 
-# Tensor indices
+## Tensor indices
 
 First, the class `TensorNaturalIndex` allows to build natural indices like `Mu` or `Nu` while giving the different labels it can take (ie. `T`, `X`, `Y` and `Z`). When the following DDC code declares a new dimension:
 
@@ -87,7 +87,7 @@ is perfectly valid and `DDom` represents the type of the support of a rank-3 ten
 
 \important Nested non-natural tensor indices are not supported, ie. `sil::tensor::TensorSymmetricIndex<sil::tensor::TensorAntisymmetricIndex<Mu, Nu>, Rho>` is not valid.
 
-# Internal mechanism
+## Internal mechanism
 
 The most important concept to understand is that elements of tensors are indexed (in the sense of <em>associated to integers which identify their positions</em>) using three different kind of `id`s:
 
@@ -97,7 +97,7 @@ The most important concept to understand is that elements of tensors are indexed
 
 Most of the logic implemented in the `tensor_impl.hpp` file aims to provide kind-of-converters between those three kinds of `id`s.
 
-# Tensor accessor
+## Tensor accessor
 
 Once the different tensor indices involved in your physical problem are declared, you need to declare a `TensorAccessor` templated by them indices. Ie.:
 
@@ -131,7 +131,7 @@ The `mem_domain()` functions produces the domain in which the `mem_id`s stand. I
 
 \note `TensorAccessor` also provides several member functions to perform kind-of-conversions between the three kinds of indices. Please check its API, examples and tests for common usage.
 
-# Tensor class
+## Tensor class
 
 In DDC an allocation is made using the `ddc::Chunk` class. We do the same in SimiLie (ie. on CPU) :
 
