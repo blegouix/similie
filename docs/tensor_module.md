@@ -148,3 +148,39 @@ sil::tensor::Tensor tensor_field(tensor_field_alloc);
 \note `Tensor` provides a lot of member functions to perform usefull operations like accessing an element or slicing using natural indices, etc. 
 
 \attention Remember that `TensorAccessor` only handles the indicial part of the tensor, while `Tensor` handles the whole field involving indicial and non-indicial parts of its support. Please check their respective APIs, the tests and examples for common usages.
+
+## Metric
+
+A metric is a squared symmetric rank-2 tensor field \f$g\f$ with number of elements along one of the tensor dimensions equal to the dimension of the manifold. It encodes the local information required to compute a distance \f$s\f$ on a Riemannian manifold:
+
+\f\[
+ds^2 = g_{\mu\nu}\;dx^\mu\; dx^\nu
+\f\]
+
+The most basic metric is the Euclidean metric which is the identity tensor. A Lorentzian metric is the equivalent in special relativistic frame. More complicated metrics are used in general relativity or non-cartesian coordinate systems.
+
+In SimiLie a metric is defined using the two natural tensor indices `MetricIndex1` and `MetricIndex2`. A metric index is defined as ie.:
+
+```
+using MetricIndex = sil::tensor::TensorSymmetricIndex<sil::tensor::MetricIndex1<X, Y, Z>, sil::tensor::MetricIndex2<X, Y, Z>>;
+```
+
+And the metric tensor field is build upon it as described previously.
+
+The most usefull usage of metric is <em>lowering</em> or <em>raising</em> indices. Indeed, on Riemannian manifolds the natural indices are attributed with a <em>covariant</em> or <em>contravariant character</em>. It is very conveniant to produce a tensor product of metrics (like \f$g_{\mu\mu'}\;g_{\nu\nu'}\;g_{\rho\rho'}\f$), which is permitted by the `fill_metric_prod` function.
+
+Lowering indices is thus made by performing a tensor product with a contravariant tensor, ie.:
+
+\f\[
+T_{\mu\nu\rho} = g_{\mu\mu'}\;g_{\nu\nu'}\;g_{\rho\rho'}\;T^{\mu'\nu'\rho'}
+\f\]
+
+using the `tensor_prod` function described in next section, or the `inplace_apply_metric` function if you want to reuse the allocation of \f$T^{\mu'\nu'\rho'}\f$ to store \f$T_{\mu\nu\rho}\f$ (which internally relies on `tensor_prod`).
+
+\note The `fill_inverse_metric` function relies on `kokkos-kernels` `KokkosBatched::SerialInverseLU` function to compute the inverse metric (contravariant indexing of the metric, used to raise indices afterward).
+
+## Tensor product
+
+The generic `tensor_prod` function supports input and output tensors with any kind of internal symmetries. The Einstein convention stands: indices appearing in the two input tensors (one covariant and the other contravariant) are contracted while other indices are spectators (outer product). Any memory layouts are supported but bad choice of layout may highly deteriorate the performance. 
+
+\important `tensor_prod` does not support tensor fields. You need to iterate over the nodes of the mesh, extract tensors (using the `Tensor::operator[]` function) and call `tensor_prod` at each node.
