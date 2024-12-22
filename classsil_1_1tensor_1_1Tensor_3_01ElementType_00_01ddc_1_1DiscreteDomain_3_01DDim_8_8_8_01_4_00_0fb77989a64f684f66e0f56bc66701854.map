@@ -1,5 +1,5 @@
 <map id="sil::tensor::Tensor&lt; ElementType, ddc::DiscreteDomain&lt; DDim... &gt;, LayoutStridedPolicy, MemorySpace &gt;" name="sil::tensor::Tensor&lt; ElementType, ddc::DiscreteDomain&lt; DDim... &gt;, LayoutStridedPolicy, MemorySpace &gt;">
-<area shape="rect" id="Node000001" title="Tensor class." alt="" coords="15,177,230,601"/>
-<area shape="rect" id="Node000002" title=" " alt="" coords="5,5,240,129"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="125,143,125,177,120,177,120,143"/>
+<area shape="rect" id="Node000001" title="Tensor class." alt="" coords="15,163,230,587"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,5,240,115"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="125,128,125,162,120,162,120,128"/>
 </map>

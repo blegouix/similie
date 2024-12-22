@@ -1,9 +1,9 @@
 var hierarchy =
 [
-    [ "ddc:: ChunkSpan", null, [
+    [ "sil::exterior::Chain< SimplexType, LayoutStridedPolicy, MemorySpace >", "classsil_1_1exterior_1_1Chain.html", null ],
+    [ "ddc::ChunkSpan", null, [
       [ "sil::tensor::Tensor< ElementType, ddc::DiscreteDomain< DDim... >, LayoutStridedPolicy, MemorySpace >", "classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html", null ]
     ] ],
-    [ "sil::exterior::Chain< SimplexType, LayoutStridedPolicy, MemorySpace >", "classsil_1_1exterior_1_1Chain.html", null ],
     [ "sil::exterior::Cochain< ChainType, ElementType, LayoutStridedPolicy >", "classsil_1_1exterior_1_1Cochain.html", null ],
     [ "sil::exterior::CochainIterator< CochainType >", "classsil_1_1exterior_1_1CochainIterator.html", null ],
     [ "sil::tensor::Contravariant", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Contravariant", null ],

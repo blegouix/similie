@@ -25,7 +25,34 @@
 var NAVTREE =
 [
   [ "SimiLie", "index.html", [
-    [ "About", "index.html", null ],
+    [ "About", "index.html", "index" ],
+    [ "Running SimiLie", "Running.html", [
+      [ "Dependencies", "Running.html#autotoc_md3", null ],
+      [ "Compilation", "Running.html#autotoc_md4", null ],
+      [ "Usage", "Running.html#autotoc_md5", null ]
+    ] ],
+    [ "Tensor module", "tensor_module.html", [
+      [ "Why tensors are importants for physics ?", "tensor_module.html#autotoc_md6", null ],
+      [ "Do Kokkos and DDC support tensor fields ? What can SimiLie do in addition ?", "tensor_module.html#autotoc_md7", null ],
+      [ "Tensor indices", "tensor_module.html#autotoc_md8", null ],
+      [ "Internal mechanism", "tensor_module.html#autotoc_md9", null ],
+      [ "Tensor accessor", "tensor_module.html#autotoc_md10", null ],
+      [ "Tensor class", "tensor_module.html#autotoc_md11", null ],
+      [ "Metric", "tensor_module.html#autotoc_md12", null ],
+      [ "Tensor product", "tensor_module.html#autotoc_md13", null ]
+    ] ],
+    [ "Exterior module", "exterior_module.html", [
+      [ "Why integro-differential calculus is important for physics ?", "exterior_module.html#autotoc_md14", null ],
+      [ "Discrete exterior calculus", "exterior_module.html#autotoc_md15", [
+        [ "Simplex", "exterior_module.html#autotoc_md16", null ],
+        [ "Chain", "exterior_module.html#autotoc_md17", null ],
+        [ "Boundary operator", "exterior_module.html#autotoc_md18", null ],
+        [ "Cosimplex", "exterior_module.html#autotoc_md19", null ],
+        [ "Cochain", "exterior_module.html#autotoc_md20", null ],
+        [ "Coboundary operator", "exterior_module.html#autotoc_md21", null ],
+        [ "Hodge star operator", "exterior_module.html#autotoc_md22", null ]
+      ] ]
+    ] ],
     [ "Namespaces", "namespaces.html", [
       [ "Namespace List", "namespaces.html", "namespaces_dup" ],
       [ "Namespace Members", "namespacemembers.html", [
@@ -53,9 +80,9 @@ var NAVTREE =
 
 var NAVTREEINDEX =
 [
-"annotated.html",
-"classsil_1_1exterior_1_1Cosimplex.html#a018af9b7f01871dd43bd5112d3ab2626",
-"conceptsil_1_1tensor_1_1TensorIndex.html"
+"Running.html",
+"classsil_1_1exterior_1_1CochainIterator.html#af93af6d97bd143b0860c5b4993bdbcee",
+"conceptsil_1_1misc_1_1NotSpecialization.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';
