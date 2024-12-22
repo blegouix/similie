@@ -31,11 +31,11 @@ RUN chmod +x /bin/bash_run \
     libfftw3-dev \
     liblapacke-dev \
     libpdi-dev \
-    libboost-all-dev \
     ghostscript \
     git \
     graphviz \
     pkg-config \
+    flex \
  && git clone -b v1.8.0 https://github.com/ginkgo-project/ginkgo.git \
  && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DGINKGO_BUILD_OMP=OFF -DGINKGO_BUILD_TESTS=OFF -DGINKGO_BUILD_EXAMPLES=OFF -DGINKGO_BUILD_BENCHMARKS=OFF -B build-ginkgo -S ginkgo \
  && cmake --build build-ginkgo \
