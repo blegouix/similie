@@ -257,7 +257,7 @@ int main(int argc, char** argv)
     sil::exterior::deriv<MuLow, DummyIndex>(Kokkos::DefaultExecutionSpace(), gradient, potential);
     Kokkos::fence();
 
-/*
+    /*
     // Hodge star
     [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain> hodge_star_accessor;
     ddc::cartesian_prod_t<ddc::DiscreteDomain<DDimX, DDimY>, HodgeStarDomain>
@@ -322,7 +322,7 @@ int main(int argc, char** argv)
     ddc::Chunk laplacian_alloc(laplacian_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor laplacian(laplacian_alloc);
 
-/*
+    /*
     ddc::parallel_for_each(
             Kokkos::DefaultExecutionSpace(),
             laplacian.non_indices_domain(),
@@ -331,8 +331,9 @@ int main(int argc, char** argv)
             });
     Kokkos::fence();
 */
-    sil::exterior::
-            codifferential<MuLow, MuLow>(Kokkos::DefaultExecutionSpace(), laplacian, gradient, inv_metric);
+    sil::exterior::codifferential<
+            MuLow,
+            MuLow>(Kokkos::DefaultExecutionSpace(), laplacian, gradient, inv_metric);
 
     auto laplacian_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), laplacian);
