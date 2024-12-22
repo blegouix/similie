@@ -79,7 +79,7 @@ using DDom = ddc::DiscreteDomain<DDimX, Rho, DDimY, sil::tensor::TensorSymmetric
 
 is perfectly valid and `DDom` represents the type of the support of a rank-3 tensor field on a `XY` manifold, with the pair `Mu, Nu` being symmetric.
 
-\attention The contiguity-coalescence rule of DDC sill stands in SimiLie: the leftest template argument of the `ddc::DiscreteDomain` declaration will be the most coalescent in the underlying multidimensional array while the rightest will be the most contiguous.
+\attention The contiguity-coalescence rule of DDC still stands in SimiLie: the leftest template argument of the `ddc::DiscreteDomain` declaration will be the most coalescent in the underlying multidimensional array while the rightest will be the most contiguous.
 
 \note `ddc::DiscreteDomain<Mu, Nu>` and `ddc::DiscreteDomain<sil::tensor::TensorFullIndex<Mu, Nu>>` are mostly the same thing.
 
