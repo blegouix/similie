@@ -104,6 +104,17 @@ struct CodifferentialTensorType<
             MemorySpace>;
 };
 
+} // namespace detail
+
+template <
+        tensor::TensorNatIndex TagToRemoveFromCochain,
+        tensor::TensorIndex CochainTag,
+        misc::Specialization<tensor::Tensor> TensorType>
+using codifferential_tensor_t = typename detail::
+        CodifferentialTensorType<TagToRemoveFromCochain, CochainTag, TensorType>::type;
+
+namespace detail {
+
 template <std::size_t I, class T>
 struct CodifferentialDummyIndex : tensor::uncharacterize<T>
 {
@@ -120,13 +131,6 @@ struct CodifferentialDummyIndexSeq<std::index_sequence<Id...>, T>
 };
 
 } // namespace detail
-
-template <
-        tensor::TensorNatIndex TagToRemoveFromCochain,
-        tensor::TensorIndex CochainTag,
-        misc::Specialization<tensor::Tensor> TensorType>
-using codifferential_tensor_t = typename detail::
-        CodifferentialTensorType<TagToRemoveFromCochain, CochainTag, TensorType>::type;
 
 template <
         tensor::TensorIndex MetricIndex,
