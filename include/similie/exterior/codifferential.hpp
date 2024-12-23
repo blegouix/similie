@@ -149,6 +149,8 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
             std::make_index_sequence<TagToRemoveFromCochain::size() - CochainTag::rank()>,
             TagToRemoveFromCochain>::type;
     using NuUpSeq = tensor::upper<NuLowSeq>;
+    using RhoLowSeq = ddc::type_seq_merge_t<ddc::detail::TypeSeq<TagToRemoveFromCochain>, NuLowSeq>;
+    using RhoUpSeq = tensor::upper<RhoLowSeq>;
 
     using HodgeStarDomain = sil::exterior::hodge_star_domain_t<MuUpSeq, NuLowSeq>;
     /*
@@ -172,11 +174,13 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
     Kokkos::fence();
 
     // Dual tensor
-    [[maybe_unused]] tensor::tensor_accessor_for_domain_t<
-            ddc::detail::convert_type_seq_to_discrete_domain_t<NuLowSeq>> dual_tensor_accessor;
+    [[maybe_unused]] tensor::tensor_accessor_for_domain_t<ddc::DiscreteDomain<
+            misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, NuLowSeq>>>
+            dual_tensor_accessor;
     ddc::cartesian_prod_t<
             typename TensorType::non_indices_domain_t,
-            ddc::detail::convert_type_seq_to_discrete_domain_t<NuLowSeq>>
+            ddc::DiscreteDomain<
+                    misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, NuLowSeq>>>
             dual_tensor_dom(tensor.non_indices_domain(), dual_tensor_accessor.mem_domain());
     ddc::Chunk dual_tensor_alloc(
             dual_tensor_dom,
@@ -191,22 +195,30 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
             });
     Kokkos::fence();
 
-    std::cout << dual_tensor;
-    /*
-        // Dual Laplacian
-        [[maybe_unused]] sil::tensor::TensorAccessor<
-                sil::tensor::TensorAntisymmetricIndex<RhoLow, NuLow>> dual_laplacian_accessor;
-        ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::TensorAntisymmetricIndex<RhoLow, NuLow>>
-                dual_laplacian_dom(
-                        mesh_xy.remove_last(ddc::DiscreteVector<DDimX, DDimY> {1, 1}),
-                        dual_laplacian_accessor.mem_domain());
-        ddc::Chunk dual_laplacian_alloc(dual_laplacian_dom, ddc::DeviceAllocator<double>());
-        sil::tensor::Tensor dual_laplacian(dual_laplacian_alloc);
-        sil::exterior::deriv<
-                RhoLow,
-                NuLow>(Kokkos::DefaultExecutionSpace(), dual_laplacian, dual_tensor);
-        Kokkos::fence();
+    // Dual codifferential
+    [[maybe_unused]] tensor::tensor_accessor_for_domain_t<ddc::DiscreteDomain<
+            misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, RhoLowSeq>>>
+            dual_codifferential_accessor;
+    ddc::cartesian_prod_t<
+            typename TensorType::non_indices_domain_t,
+            ddc::DiscreteDomain<
+                    misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, RhoLowSeq>>>
+            dual_codifferential_dom(
+                    tensor.non_indices_domain(),
+                    dual_codifferential_accessor.mem_domain());
+    ddc::Chunk dual_codifferential_alloc(
+            dual_codifferential_dom,
+            ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
+    sil::tensor::Tensor dual_codifferential(dual_codifferential_alloc);
+    sil::exterior::deriv<
+            TagToRemoveFromCochain,
+            misc::convert_type_seq_to_t<
+                    tensor::TensorAntisymmetricIndex,
+                    NuLowSeq>>(Kokkos::DefaultExecutionSpace(), dual_codifferential, dual_tensor);
+    Kokkos::fence();
 
+    std::cout << dual_codifferential;
+    /*
         // Hodge star 2
         [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain2>
                 hodge_star_accessor2;
@@ -222,12 +234,12 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
         Kokkos::fence();
 
         // Laplacian
-        [[maybe_unused]] sil::tensor::TensorAccessor<CodifferentialDummyIndex> laplacian_accessor;
-        ddc::DiscreteDomain<DDimX, DDimY, CodifferentialDummyIndex> laplacian_dom(
+        [[maybe_unused]] sil::tensor::TensorAccessor<CodifferentialDummyIndex> codifferential_accessor;
+        ddc::DiscreteDomain<DDimX, DDimY, CodifferentialDummyIndex> codifferential_dom(
                 mesh_xy.remove_last(ddc::DiscreteVector<DDimX, DDimY> {1, 1}),
-                laplacian_accessor.mem_domain());
-        ddc::Chunk laplacian_alloc(laplacian_dom, ddc::DeviceAllocator<double>());
-        sil::tensor::Tensor laplacian(laplacian_alloc);
+                codifferential_accessor.mem_domain());
+        ddc::Chunk codifferential_alloc(codifferential_dom, ddc::DeviceAllocator<double>());
+        sil::tensor::Tensor codifferential(codifferential_alloc);
     */
     return codifferential_tensor;
 }
