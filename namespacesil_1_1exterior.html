@@ -167,6 +167,15 @@ Typedefs</h2></td></tr>
 <tr class="memitem:a6b84e7779045ab2b05d12295aeb6bcc8" id="r_a6b84e7779045ab2b05d12295aeb6bcc8"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor</a> &gt; TensorType&gt; </td></tr>
 <tr class="memitem:a6b84e7779045ab2b05d12295aeb6bcc8"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a6b84e7779045ab2b05d12295aeb6bcc8">coboundary_tensor_t</a></td></tr>
 <tr class="separator:a6b84e7779045ab2b05d12295aeb6bcc8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af879a35dd2e3fe608f5c086560f16065" id="r_af879a35dd2e3fe608f5c086560f16065"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; <a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a> &gt; CochainType&gt; </td></tr>
+<tr class="memitem:af879a35dd2e3fe608f5c086560f16065"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#af879a35dd2e3fe608f5c086560f16065">codifferential_t</a> = typename detail::CodifferentialType&lt;CochainType&gt;::type</td></tr>
+<tr class="separator:af879a35dd2e3fe608f5c086560f16065"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aab91885c880898f8e30304a22b965a22" id="r_aab91885c880898f8e30304a22b965a22"><td class="memTemplParams" colspan="2">template&lt;class TagToRemoveFromCochain , class CochainTag &gt; </td></tr>
+<tr class="memitem:aab91885c880898f8e30304a22b965a22"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#aab91885c880898f8e30304a22b965a22">codifferential_index_t</a></td></tr>
+<tr class="separator:aab91885c880898f8e30304a22b965a22"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3da5f6d818417a943e98321a4f70d534" id="r_a3da5f6d818417a943e98321a4f70d534"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor</a> &gt; TensorType&gt; </td></tr>
+<tr class="memitem:a3da5f6d818417a943e98321a4f70d534"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a3da5f6d818417a943e98321a4f70d534">codifferential_tensor_t</a></td></tr>
+<tr class="separator:a3da5f6d818417a943e98321a4f70d534"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a04a63056a25815fe3b4e94eddd7dbede" id="r_a04a63056a25815fe3b4e94eddd7dbede"><td class="memTemplParams" colspan="2">template&lt;class T , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </td></tr>
 <tr class="memitem:a04a63056a25815fe3b4e94eddd7dbede"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a04a63056a25815fe3b4e94eddd7dbede">Form</a> = typename detail::FormWrapper&lt;T, ElementType, LayoutStridedPolicy&gt;::type</td></tr>
 <tr class="separator:a04a63056a25815fe3b4e94eddd7dbede"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -206,6 +215,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a77b1d154b6e5a5a8a225bf23ff67d1ae" id="r_a77b1d154b6e5a5a8a225bf23ff67d1ae"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; <a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a> &gt; CochainType&gt; </td></tr>
 <tr class="memitem:a77b1d154b6e5a5a8a225bf23ff67d1ae"><td class="memTemplItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a77b1d154b6e5a5a8a225bf23ff67d1ae">operator&lt;&lt;</a> (std::ostream &amp;out, CochainType const &amp;cochain)</td></tr>
 <tr class="separator:a77b1d154b6e5a5a8a225bf23ff67d1ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adaff4942e5eaf3e7ba7c50589e252feb" id="r_adaff4942e5eaf3e7ba7c50589e252feb"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor</a> &gt; TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor</a> &gt; MetricType, class ExecSpace &gt; </td></tr>
+<tr class="memitem:adaff4942e5eaf3e7ba7c50589e252feb"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="#a3da5f6d818417a943e98321a4f70d534">codifferential_tensor_t</a>&lt; TagToRemoveFromCochain, CochainTag, TensorType &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#adaff4942e5eaf3e7ba7c50589e252feb">codifferential</a> (ExecSpace const &amp;exec_space, <a class="el" href="#a3da5f6d818417a943e98321a4f70d534">codifferential_tensor_t</a>&lt; TagToRemoveFromCochain, CochainTag, TensorType &gt; codifferential_tensor, TensorType tensor, MetricType inv_metric)</td></tr>
+<tr class="separator:adaff4942e5eaf3e7ba7c50589e252feb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a941c3e48322d9c305635d3b5a1376ab8" id="r_a941c3e48322d9c305635d3b5a1376ab8"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; <a class="el" href="classsil_1_1exterior_1_1Cosimplex.html">Cosimplex</a> &gt; CosimplexType&gt; </td></tr>
 <tr class="memitem:a941c3e48322d9c305635d3b5a1376ab8"><td class="memTemplItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a941c3e48322d9c305635d3b5a1376ab8">operator&lt;&lt;</a> (std::ostream &amp;out, CosimplexType const &amp;cosimplex)</td></tr>
 <tr class="separator:a941c3e48322d9c305635d3b5a1376ab8"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -304,6 +316,64 @@ template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex Cochai
 <div class="line">        <span class="keyword">typename</span> detail::CoboundaryTensorType&lt;TagToAddToCochain, CochainTag, TensorType&gt;::type</div>
 </div><!-- fragment -->
 <p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00122">122</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
+
+</div>
+</div>
+<a id="af879a35dd2e3fe608f5c086560f16065" name="af879a35dd2e3fe608f5c086560f16065"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af879a35dd2e3fe608f5c086560f16065">&#9670;&#160;</a></span>codifferential_t</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;misc::Specialization&lt; <a class="el" href="classsil_1_1exterior_1_1Cochain.html">Cochain</a> &gt; CochainType&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="#af879a35dd2e3fe608f5c086560f16065">sil::exterior::codifferential_t</a> = typename detail::CodifferentialType&lt;CochainType&gt;::type</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00046">46</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+
+</div>
+</div>
+<a id="aab91885c880898f8e30304a22b965a22" name="aab91885c880898f8e30304a22b965a22"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aab91885c880898f8e30304a22b965a22">&#9670;&#160;</a></span>codifferential_index_t</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class TagToRemoveFromCochain , class CochainTag &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="#aab91885c880898f8e30304a22b965a22">sil::exterior::codifferential_index_t</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line"> </div>
+<div class="line">        <span class="keyword">typename</span> detail::CodifferentialIndex&lt;TagToRemoveFromCochain, CochainTag&gt;::type</div>
+</div><!-- fragment -->
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00071">71</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a3da5f6d818417a943e98321a4f70d534" name="a3da5f6d818417a943e98321a4f70d534"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3da5f6d818417a943e98321a4f70d534">&#9670;&#160;</a></span>codifferential_tensor_t</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor</a> &gt; TensorType&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="#a3da5f6d818417a943e98321a4f70d534">sil::exterior::codifferential_tensor_t</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line"> <span class="keyword">typename</span> detail::</div>
+<div class="line">        CodifferentialTensorType&lt;TagToRemoveFromCochain, CochainTag, TensorType&gt;::type</div>
+</div><!-- fragment -->
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00113">113</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
 
 </div>
 </div>
@@ -543,7 +613,7 @@ template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex Cochai
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00323">323</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00325">325</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
 
 </div>
 </div>
@@ -592,6 +662,41 @@ template&lt;misc::Specialization&lt; <a class="el" href="classsil_1_1exterior_1_
 </div><div class="memdoc">
 
 <p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00373">373</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+
+</div>
+</div>
+<a id="adaff4942e5eaf3e7ba7c50589e252feb" name="adaff4942e5eaf3e7ba7c50589e252feb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adaff4942e5eaf3e7ba7c50589e252feb">&#9670;&#160;</a></span>codifferential()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor</a> &gt; TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor</a> &gt; MetricType, class ExecSpace &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="#a3da5f6d818417a943e98321a4f70d534">codifferential_tensor_t</a>&lt; TagToRemoveFromCochain, CochainTag, TensorType &gt; sil::exterior::codifferential </td>
+          <td>(</td>
+          <td class="paramtype">ExecSpace const &amp;</td>          <td class="paramname"><span class="paramname"><em>exec_space</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="#a3da5f6d818417a943e98321a4f70d534">codifferential_tensor_t</a>&lt; TagToRemoveFromCochain, CochainTag, TensorType &gt;</td>          <td class="paramname"><span class="paramname"><em>codifferential_tensor</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">TensorType</td>          <td class="paramname"><span class="paramname"><em>tensor</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">MetricType</td>          <td class="paramname"><span class="paramname"><em>inv_metric</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00142">142</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
 
 </div>
 </div>
