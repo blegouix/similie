@@ -153,10 +153,8 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
     using RhoUpSeq = tensor::upper<RhoLowSeq>;
 
     using HodgeStarDomain = sil::exterior::hodge_star_domain_t<MuUpSeq, NuLowSeq>;
-    /*
-        using HodgeStarDomain2 = sil::exterior::
-                hodge_star_domain_t<ddc::detail::TypeSeq<RhoUp, NuUp>, ddc::detail::TypeSeq<>>;
-		*/
+    using HodgeStarDomain2 = sil::exterior::
+            hodge_star_domain_t<ddc::type_seq_merge_t<RhoUpSeq, NuUpSeq>, ddc::detail::TypeSeq<>>;
 
     // Hodge star
     [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain> hodge_star_accessor;
@@ -188,7 +186,7 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
     sil::tensor::Tensor dual_tensor(dual_tensor_alloc);
 
     ddc::parallel_for_each(
-            Kokkos::DefaultExecutionSpace(),
+            exec_space,
             dual_tensor.non_indices_domain(),
             KOKKOS_LAMBDA(typename TensorType::non_indices_domain_t::discrete_element_type elem) {
                 sil::tensor::tensor_prod(dual_tensor[elem], tensor[elem], hodge_star[elem]);
@@ -217,30 +215,34 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
                     NuLowSeq>>(Kokkos::DefaultExecutionSpace(), dual_codifferential, dual_tensor);
     Kokkos::fence();
 
-    std::cout << dual_codifferential;
-    /*
-        // Hodge star 2
-        [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain2>
-                hodge_star_accessor2;
-        ddc::cartesian_prod_t<ddc::DiscreteDomain<DDimX, DDimY>, HodgeStarDomain2>
-                hodge_star_dom2(metric.non_indices_domain(), hodge_star_accessor2.mem_domain());
-        ddc::Chunk hodge_star_alloc2(hodge_star_dom2, ddc::DeviceAllocator<double>());
-        sil::tensor::Tensor hodge_star2(hodge_star_alloc2);
+    // Hodge star 2
+    [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain2>
+            hodge_star_accessor2;
+    ddc::cartesian_prod_t<typename MetricType::non_indices_domain_t, HodgeStarDomain2>
+            hodge_star_dom2(inv_metric.non_indices_domain(), hodge_star_accessor2.mem_domain());
+    ddc::Chunk hodge_star_alloc2(
+            hodge_star_dom2,
+            ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
+    sil::tensor::Tensor hodge_star2(hodge_star_alloc2);
 
-        sil::exterior::fill_hodge_star<
-                sil::tensor::upper<MetricIndex>,
-                ddc::detail::TypeSeq<RhoUp, NuUp>,
-                ddc::detail::TypeSeq<>>(Kokkos::DefaultExecutionSpace(), hodge_star2, inv_metric);
-        Kokkos::fence();
+    sil::exterior::fill_hodge_star<
+            sil::tensor::upper<MetricIndex>,
+            ddc::type_seq_merge_t<RhoUpSeq, NuUpSeq>,
+            ddc::detail::TypeSeq<>>(Kokkos::DefaultExecutionSpace(), hodge_star2, inv_metric);
+    Kokkos::fence();
 
-        // Laplacian
-        [[maybe_unused]] sil::tensor::TensorAccessor<CodifferentialDummyIndex> codifferential_accessor;
-        ddc::DiscreteDomain<DDimX, DDimY, CodifferentialDummyIndex> codifferential_dom(
-                mesh_xy.remove_last(ddc::DiscreteVector<DDimX, DDimY> {1, 1}),
-                codifferential_accessor.mem_domain());
-        ddc::Chunk codifferential_alloc(codifferential_dom, ddc::DeviceAllocator<double>());
-        sil::tensor::Tensor codifferential(codifferential_alloc);
-    */
+    // Codifferential
+    ddc::parallel_for_each(
+            exec_space,
+            codifferential_tensor.non_indices_domain(),
+            KOKKOS_LAMBDA(typename TensorType::non_indices_domain_t::discrete_element_type elem) {
+                sil::tensor::tensor_prod(
+                        codifferential_tensor[elem],
+                        dual_codifferential[elem],
+                        hodge_star2[elem]);
+            });
+    Kokkos::fence();
+
     return codifferential_tensor;
 }
 

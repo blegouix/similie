@@ -131,15 +131,6 @@ struct Rho : sil::tensor::TensorNaturalIndex<X, Y>
 // Declare indices
 using MuLow = sil::tensor::TensorCovariantNaturalIndex<Mu>;
 using MuUp = sil::tensor::TensorContravariantNaturalIndex<Mu>;
-using NuLow = sil::tensor::TensorCovariantNaturalIndex<Nu>;
-using NuUp = sil::tensor::TensorContravariantNaturalIndex<Nu>;
-using RhoLow = sil::tensor::TensorCovariantNaturalIndex<Rho>;
-using RhoUp = sil::tensor::TensorContravariantNaturalIndex<Rho>;
-
-using HodgeStarDomain = sil::exterior::
-        hodge_star_domain_t<ddc::detail::TypeSeq<MuUp>, ddc::detail::TypeSeq<NuLow>>;
-using HodgeStarDomain2 = sil::exterior::
-        hodge_star_domain_t<ddc::detail::TypeSeq<RhoUp, NuUp>, ddc::detail::TypeSeq<>>;
 
 using DummyIndex = sil::tensor::TensorCovariantNaturalIndex<sil::tensor::TensorNaturalIndex<>>;
 
@@ -157,7 +148,7 @@ int main(int argc, char** argv)
     MesherXY mesher;
     ddc::Coordinate<X, Y> lower_bounds(-5., -5.);
     ddc::Coordinate<X, Y> upper_bounds(5., 5.);
-    ddc::DiscreteVector<DDimX, DDimY> nb_cells(10, 10);
+    ddc::DiscreteVector<DDimX, DDimY> nb_cells(1000, 1000);
     ddc::DiscreteDomain<DDimX, DDimY> mesh_xy = mesher.template mesh<
             ddc::detail::TypeSeq<DDimX, DDimY>,
             ddc::detail::TypeSeq<BSplinesX, BSplinesY>>(lower_bounds, upper_bounds, nb_cells);
@@ -254,67 +245,11 @@ int main(int argc, char** argv)
     ddc::DiscreteDomain<DDimX, DDimY, MuLow> gradient_dom(mesh_xy, gradient_accessor.mem_domain());
     ddc::Chunk gradient_alloc(gradient_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor gradient(gradient_alloc);
+
     sil::exterior::deriv<MuLow, DummyIndex>(Kokkos::DefaultExecutionSpace(), gradient, potential);
     Kokkos::fence();
 
-    /*
-    // Hodge star
-    [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain> hodge_star_accessor;
-    ddc::cartesian_prod_t<ddc::DiscreteDomain<DDimX, DDimY>, HodgeStarDomain>
-            hodge_star_dom(metric.non_indices_domain(), hodge_star_accessor.mem_domain());
-    ddc::Chunk hodge_star_alloc(hodge_star_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor hodge_star(hodge_star_alloc);
-
-    sil::exterior::fill_hodge_star<
-            sil::tensor::upper<MetricIndex>,
-            ddc::detail::TypeSeq<MuUp>,
-            ddc::detail::TypeSeq<NuLow>>(Kokkos::DefaultExecutionSpace(), hodge_star, inv_metric);
-    Kokkos::fence();
-
-    // Dual gradient
-    [[maybe_unused]] sil::tensor::TensorAccessor<NuLow> dual_gradient_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, NuLow>
-            dual_gradient_dom(mesh_xy, dual_gradient_accessor.mem_domain());
-    ddc::Chunk dual_gradient_alloc(dual_gradient_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor dual_gradient(dual_gradient_alloc);
-
-    ddc::parallel_for_each(
-            Kokkos::DefaultExecutionSpace(),
-            dual_gradient.non_indices_domain(),
-            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
-                sil::tensor::tensor_prod(dual_gradient[elem], gradient[elem], hodge_star[elem]);
-            });
-    Kokkos::fence();
-
-    // Dual Laplacian
-    [[maybe_unused]] sil::tensor::TensorAccessor<
-            sil::tensor::TensorAntisymmetricIndex<RhoLow, NuLow>> dual_laplacian_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::TensorAntisymmetricIndex<RhoLow, NuLow>>
-            dual_laplacian_dom(
-                    mesh_xy.remove_last(ddc::DiscreteVector<DDimX, DDimY> {1, 1}),
-                    dual_laplacian_accessor.mem_domain());
-    ddc::Chunk dual_laplacian_alloc(dual_laplacian_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor dual_laplacian(dual_laplacian_alloc);
-    sil::exterior::
-            deriv<RhoLow, NuLow>(Kokkos::DefaultExecutionSpace(), dual_laplacian, dual_gradient);
-    Kokkos::fence();
-
-    // Hodge star 2
-    [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain2>
-            hodge_star_accessor2;
-    ddc::cartesian_prod_t<ddc::DiscreteDomain<DDimX, DDimY>, HodgeStarDomain2>
-            hodge_star_dom2(metric.non_indices_domain(), hodge_star_accessor2.mem_domain());
-    ddc::Chunk hodge_star_alloc2(hodge_star_dom2, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor hodge_star2(hodge_star_alloc2);
-
-    sil::exterior::fill_hodge_star<
-            sil::tensor::upper<MetricIndex>,
-            ddc::detail::TypeSeq<RhoUp, NuUp>,
-            ddc::detail::TypeSeq<>>(Kokkos::DefaultExecutionSpace(), hodge_star2, inv_metric);
-    Kokkos::fence();
-
     // Laplacian
-*/
     [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> laplacian_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, DummyIndex> laplacian_dom(
             mesh_xy.remove_last(ddc::DiscreteVector<DDimX, DDimY> {1, 1}),
@@ -322,19 +257,11 @@ int main(int argc, char** argv)
     ddc::Chunk laplacian_alloc(laplacian_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor laplacian(laplacian_alloc);
 
-    /*
-    ddc::parallel_for_each(
-            Kokkos::DefaultExecutionSpace(),
-            laplacian.non_indices_domain(),
-            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
-                sil::tensor::tensor_prod(laplacian[elem], dual_laplacian[elem], hodge_star2[elem]);
-            });
-    Kokkos::fence();
-*/
     sil::exterior::codifferential<
             MetricIndex,
             MuLow,
             MuLow>(Kokkos::DefaultExecutionSpace(), laplacian, gradient, inv_metric);
+    Kokkos::fence();
 
     auto laplacian_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), laplacian);
