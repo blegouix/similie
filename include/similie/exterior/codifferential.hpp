@@ -170,23 +170,29 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
             MuUpSeq,
             NuLowSeq>(exec_space, hodge_star, inv_metric);
     Kokkos::fence();
+
+    // Dual tensor
+    [[maybe_unused]] tensor::tensor_accessor_for_domain_t<
+            ddc::detail::convert_type_seq_to_discrete_domain_t<NuLowSeq>> dual_tensor_accessor;
+    ddc::cartesian_prod_t<
+            typename TensorType::non_indices_domain_t,
+            ddc::detail::convert_type_seq_to_discrete_domain_t<NuLowSeq>>
+            dual_tensor_dom(tensor.non_indices_domain(), dual_tensor_accessor.mem_domain());
+    ddc::Chunk dual_tensor_alloc(
+            dual_tensor_dom,
+            ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
+    sil::tensor::Tensor dual_tensor(dual_tensor_alloc);
+
+    ddc::parallel_for_each(
+            Kokkos::DefaultExecutionSpace(),
+            dual_tensor.non_indices_domain(),
+            KOKKOS_LAMBDA(typename TensorType::non_indices_domain_t::discrete_element_type elem) {
+                sil::tensor::tensor_prod(dual_tensor[elem], tensor[elem], hodge_star[elem]);
+            });
+    Kokkos::fence();
+
+    std::cout << dual_tensor;
     /*
-
-        // Dual gradient
-        [[maybe_unused]] sil::tensor::TensorAccessor<NuLow> dual_gradient_accessor;
-        ddc::DiscreteDomain<DDimX, DDimY, NuLow>
-                dual_gradient_dom(mesh_xy, dual_gradient_accessor.mem_domain());
-        ddc::Chunk dual_gradient_alloc(dual_gradient_dom, ddc::DeviceAllocator<double>());
-        sil::tensor::Tensor dual_gradient(dual_gradient_alloc);
-
-        ddc::parallel_for_each(
-                Kokkos::DefaultExecutionSpace(),
-                dual_gradient.non_indices_domain(),
-                KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
-                    sil::tensor::tensor_prod(dual_gradient[elem], gradient[elem], hodge_star[elem]);
-                });
-        Kokkos::fence();
-
         // Dual Laplacian
         [[maybe_unused]] sil::tensor::TensorAccessor<
                 sil::tensor::TensorAntisymmetricIndex<RhoLow, NuLow>> dual_laplacian_accessor;
@@ -198,7 +204,7 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
         sil::tensor::Tensor dual_laplacian(dual_laplacian_alloc);
         sil::exterior::deriv<
                 RhoLow,
-                NuLow>(Kokkos::DefaultExecutionSpace(), dual_laplacian, dual_gradient);
+                NuLow>(Kokkos::DefaultExecutionSpace(), dual_laplacian, dual_tensor);
         Kokkos::fence();
 
         // Hodge star 2
