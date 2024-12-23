@@ -332,6 +332,7 @@ int main(int argc, char** argv)
     Kokkos::fence();
 */
     sil::exterior::codifferential<
+	    MetricIndex,
             MuLow,
             MuLow>(Kokkos::DefaultExecutionSpace(), laplacian, gradient, inv_metric);
 

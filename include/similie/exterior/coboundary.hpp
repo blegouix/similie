@@ -183,7 +183,7 @@ struct NonSpectatorDimension<Index, ddc::DiscreteDomain<DDim...>>
             ddc::DiscreteDomain<>>...>;
 };
 
-struct DummyIndex
+struct CoboundaryDummyIndex
 {
 };
 
@@ -212,11 +212,12 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
                                     CochainTag,
                                     TensorType>::discrete_domain_type,
                             coboundary_index_t<TagToAddToCochain, CochainTag>>,
-                    ddc::DiscreteDomain<detail::DummyIndex>>(
+                    ddc::DiscreteDomain<detail::CoboundaryDummyIndex>>(
                     batch_dom,
-                    ddc::DiscreteDomain<detail::DummyIndex>(
-                            ddc::DiscreteElement<detail::DummyIndex>(0),
-                            ddc::DiscreteVector<detail::DummyIndex>(2 * (CochainTag::rank() + 1)))),
+                    ddc::DiscreteDomain<detail::CoboundaryDummyIndex>(
+                            ddc::DiscreteElement<detail::CoboundaryDummyIndex>(0),
+                            ddc::DiscreteVector<detail::CoboundaryDummyIndex>(
+                                    2 * (CochainTag::rank() + 1)))),
             ddc::KokkosAllocator<
                     simplex_for_domain_t<
                             CochainTag::rank(),
@@ -238,11 +239,12 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
                                     CochainTag,
                                     TensorType>::discrete_domain_type,
                             coboundary_index_t<TagToAddToCochain, CochainTag>>,
-                    ddc::DiscreteDomain<detail::DummyIndex>>(
+                    ddc::DiscreteDomain<detail::CoboundaryDummyIndex>>(
                     batch_dom,
-                    ddc::DiscreteDomain<detail::DummyIndex>(
-                            ddc::DiscreteElement<detail::DummyIndex>(0),
-                            ddc::DiscreteVector<detail::DummyIndex>(2 * (CochainTag::rank() + 1)))),
+                    ddc::DiscreteDomain<detail::CoboundaryDummyIndex>(
+                            ddc::DiscreteElement<detail::CoboundaryDummyIndex>(0),
+                            ddc::DiscreteVector<detail::CoboundaryDummyIndex>(
+                                    2 * (CochainTag::rank() + 1)))),
             ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
     ddc::ChunkSpan boundary_values(boundary_values_alloc);
 

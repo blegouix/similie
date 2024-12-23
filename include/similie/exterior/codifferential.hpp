@@ -5,6 +5,7 @@
 
 #include <ddc/ddc.hpp>
 
+#include <similie/exterior/hodge_star.hpp>
 #include <similie/misc/specialization.hpp>
 #include <similie/tensor/character.hpp>
 #include <similie/tensor/tensor_impl.hpp>
@@ -103,16 +104,22 @@ struct CodifferentialTensorType<
             MemorySpace>;
 };
 
-} // namespace detail
-
-namespace {
-
 template <std::size_t I, class T>
-struct Dummy : tensor::uncharacterize<T>
+struct CodifferentialDummyIndex : tensor::uncharacterize<T>
 {
 };
 
-} // namespace
+template <class Ids, class T>
+struct CodifferentialDummyIndexSeq;
+
+template <std::size_t... Id, class T>
+struct CodifferentialDummyIndexSeq<std::index_sequence<Id...>, T>
+{
+    using type = ddc::detail::TypeSeq<
+            tensor::TensorCovariantNaturalIndex<CodifferentialDummyIndex<Id, T>>...>;
+};
+
+} // namespace detail
 
 template <
         tensor::TensorNatIndex TagToRemoveFromCochain,
@@ -122,6 +129,7 @@ using codifferential_tensor_t = typename detail::
         CodifferentialTensorType<TagToRemoveFromCochain, CochainTag, TensorType>::type;
 
 template <
+        tensor::TensorIndex MetricIndex,
         tensor::TensorNatIndex TagToRemoveFromCochain,
         tensor::TensorIndex CochainTag,
         misc::Specialization<tensor::Tensor> TensorType,
@@ -135,36 +143,34 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
         MetricType inv_metric)
 {
     static_assert(tensor::is_covariant_v<TagToRemoveFromCochain>);
-    using NuLow = tensor::TensorCovariantNaturalIndex<Dummy<0, TagToRemoveFromCochain>>;
-    using NuUp = tensor::TensorContravariantNaturalIndex<Dummy<0, TagToRemoveFromCochain>>;
-    using RhoLow = tensor::TensorCovariantNaturalIndex<Dummy<1, TagToRemoveFromCochain>>;
+    using MuLowSeq = ddc::to_type_seq_t<tensor::natural_domain_t<CochainTag>>;
+    using MuUpSeq = tensor::upper<MuLowSeq>;
+    using NuLowSeq = typename detail::CodifferentialDummyIndexSeq<
+            std::make_index_sequence<TagToRemoveFromCochain::size() - CochainTag::rank()>,
+            TagToRemoveFromCochain>::type;
+    using NuUpSeq = tensor::upper<NuLowSeq>;
 
-    std::cout << std::is_same_v<NuLow, RhoLow>;
-
+    using HodgeStarDomain = sil::exterior::hodge_star_domain_t<MuUpSeq, NuLowSeq>;
     /*
-        using HodgeStarDomain = sil::exterior::hodge_star_domain_t<
-                ddc::to_type_seq_t<typename natural_domain_t<CochainTag>>>,
-              ddc::type_seq_remove_t < ddc::to_type_seq_t < typename MetricType::natural_domain_t,
-              >>> ;
         using HodgeStarDomain2 = sil::exterior::
                 hodge_star_domain_t<ddc::detail::TypeSeq<RhoUp, NuUp>, ddc::detail::TypeSeq<>>;
+		*/
 
-        // Hodge star
-        [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain>
-                hodge_star_accessor;
-        ddc::cartesian_prod_t<typename MetricType::non_indices_domain_t, HodgeStarDomain>
-                hodge_star_dom(metric.non_indices_domain(), hodge_star_accessor.mem_domain());
-        ddc::Chunk hodge_star_alloc(
-                hodge_star_dom,
-                ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
-        sil::tensor::Tensor hodge_star(hodge_star_alloc);
+    // Hodge star
+    [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain> hodge_star_accessor;
+    ddc::cartesian_prod_t<typename MetricType::non_indices_domain_t, HodgeStarDomain>
+            hodge_star_dom(inv_metric.non_indices_domain(), hodge_star_accessor.mem_domain());
+    ddc::Chunk hodge_star_alloc(
+            hodge_star_dom,
+            ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
+    sil::tensor::Tensor hodge_star(hodge_star_alloc);
 
-        sil::exterior::fill_hodge_star<
-                sil::tensor::upper<MetricIndex>,
-                ddc::detail::TypeSeq<MuUp>,
-                ddc::detail::TypeSeq<
-                        NuLow>>(Kokkos::DefaultExecutionSpace(), hodge_star, inv_metric);
-        Kokkos::fence();
+    sil::exterior::fill_hodge_star<
+            sil::tensor::upper<MetricIndex>,
+            MuUpSeq,
+            NuLowSeq>(exec_space, hodge_star, inv_metric);
+    Kokkos::fence();
+    /*
 
         // Dual gradient
         [[maybe_unused]] sil::tensor::TensorAccessor<NuLow> dual_gradient_accessor;
@@ -210,8 +216,8 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
         Kokkos::fence();
 
         // Laplacian
-        [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> laplacian_accessor;
-        ddc::DiscreteDomain<DDimX, DDimY, DummyIndex> laplacian_dom(
+        [[maybe_unused]] sil::tensor::TensorAccessor<CodifferentialDummyIndex> laplacian_accessor;
+        ddc::DiscreteDomain<DDimX, DDimY, CodifferentialDummyIndex> laplacian_dom(
                 mesh_xy.remove_last(ddc::DiscreteVector<DDimX, DDimY> {1, 1}),
                 laplacian_accessor.mem_domain());
         ddc::Chunk laplacian_alloc(laplacian_dom, ddc::DeviceAllocator<double>());
