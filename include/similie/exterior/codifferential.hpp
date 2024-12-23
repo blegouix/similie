@@ -244,6 +244,10 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
                         codifferential_tensor[elem],
                         dual_codifferential[elem],
                         hodge_star2[elem]);
+                if constexpr (
+                        (TagToRemoveFromCochain::size() * (CochainTag::rank() + 1) + 1) % 2 == 1) {
+                    codifferential_tensor[elem] *= -1;
+                }
             });
     Kokkos::fence();
 
