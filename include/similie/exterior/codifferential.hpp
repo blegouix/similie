@@ -212,7 +212,7 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
             TagToRemoveFromCochain,
             misc::convert_type_seq_to_t<
                     tensor::TensorAntisymmetricIndex,
-                    NuLowSeq>>(Kokkos::DefaultExecutionSpace(), dual_codifferential, dual_tensor);
+                    NuLowSeq>>(exec_space, dual_codifferential, dual_tensor);
     Kokkos::fence();
 
     // Hodge star 2
@@ -228,7 +228,7 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
     sil::exterior::fill_hodge_star<
             sil::tensor::upper<MetricIndex>,
             ddc::type_seq_merge_t<RhoUpSeq, NuUpSeq>,
-            ddc::detail::TypeSeq<>>(Kokkos::DefaultExecutionSpace(), hodge_star2, inv_metric);
+            ddc::detail::TypeSeq<>>(exec_space, hodge_star2, inv_metric);
     Kokkos::fence();
 
     // Codifferential
