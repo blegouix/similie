@@ -232,9 +232,9 @@ int main(int argc, char** argv)
                                 ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))
                                 * ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))));
                 if (r <= R) {
-                    potential.mem(elem) = -alpha * ((r * r) - (R * R));
+                    potential.mem(elem) = alpha * ((R * R) - (r * r));
                 } else {
-                    potential.mem(elem) = -alpha * 2 * R * R * Kokkos::log(r / R);
+                    potential.mem(elem) = alpha * 2 * R * R * Kokkos::log(R / r);
                 }
             });
     auto potential_host
@@ -272,13 +272,14 @@ int main(int argc, char** argv)
             .and_with("Y", position[position.accessor().access_element<Y>()])
             .and_with("potential", potential_host)
             .and_with("laplacian", laplacian_host);
-    std::cout << "Computation result exported in 2d_laplacian.h5" << std::endl;
+    std::cout << "Computation result exported in 2d_laplacian.h5." << std::endl;
     PC_tree_destroy(&conf_pdi);
     PDI_finalize();
 
     write_xdmf(
             static_cast<int>(mesh_xy.template extent<DDimX>()),
             static_cast<int>(mesh_xy.template extent<DDimY>()));
+    std::cout << "XDMF model exported in 2d_laplacian.xmf." << std::endl;
 
     return EXIT_SUCCESS;
 }
