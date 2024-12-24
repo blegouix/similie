@@ -257,20 +257,22 @@ int main(int argc, char** argv)
     auto laplacian_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), laplacian);
 
-    // Export HDF5 and XDMF, finalize PDI
+    // Export HDF5 and XDMF
     ddc::PdiEvent("export")
             .with("X", position[position.accessor().access_element<X>()])
             .and_with("Y", position[position.accessor().access_element<Y>()])
             .and_with("potential", potential_host)
             .and_with("laplacian", laplacian_host);
     std::cout << "Computation result exported in 2d_laplacian.h5." << std::endl;
-    PC_tree_destroy(&conf_pdi);
-    PDI_finalize();
 
     write_xdmf(
             static_cast<int>(mesh_xy.template extent<DDimX>()),
             static_cast<int>(mesh_xy.template extent<DDimY>()));
     std::cout << "XDMF model exported in 2d_laplacian.xmf." << std::endl;
+
+    // Finalize PDI
+    PC_tree_destroy(&conf_pdi);
+    PDI_finalize();
 
     return EXIT_SUCCESS;
 }
