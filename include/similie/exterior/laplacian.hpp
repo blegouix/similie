@@ -103,7 +103,7 @@ TensorType coboundary_of_codifferential(
     return out_tensor;
 }
 
-template <std::size_t I, class T>
+template <class T>
 struct LaplacianDummy2 : tensor::uncharacterize<T>
 {
 };
@@ -124,7 +124,8 @@ TensorType laplacian(
         MetricType inv_metric)
 {
     static_assert(tensor::is_covariant_v<LaplacianDummyIndex>);
-    using LaplacianDummyIndex2 = tensor::TensorCovariantNaturalIndex<LaplacianDummyIndex>;
+    using LaplacianDummyIndex2
+            = tensor::TensorCovariantNaturalIndex<detail::LaplacianDummy2<LaplacianDummyIndex>>;
 
     if constexpr (CochainTag::rank() == 0) {
         detail::codifferential_of_coboundary<
@@ -140,10 +141,12 @@ TensorType laplacian(
                 CochainTag>(exec_space, laplacian_tensor, tensor, inv_metric);
         Kokkos::fence();
     } else {
+        /*
         detail::codifferential_of_coboundary<
                 MetricIndex,
                 LaplacianDummyIndex2,
                 CochainTag>(exec_space, laplacian_tensor, tensor, inv_metric);
+		*/
 
         auto tmp_alloc = ddc::create_mirror_view(laplacian_tensor);
         tensor::Tensor tmp(tmp_alloc);

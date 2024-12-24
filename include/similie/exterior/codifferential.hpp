@@ -57,7 +57,16 @@ struct CodifferentialIndex<TagToRemoveFromCochain, CochainTag>
     using type = tensor::TensorCovariantNaturalIndex<tensor::TensorNaturalIndex<>>;
 };
 
+template <tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorNatIndex Tag>
+struct CodifferentialIndex<
+        TagToRemoveFromCochain,
+        tensor::TensorAntisymmetricIndex<TagToRemoveFromCochain, Tag>>
+{
+    using type = Tag;
+};
+
 template <tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorNatIndex... Tag>
+    requires(sizeof...(Tag) > 1)
 struct CodifferentialIndex<
         TagToRemoveFromCochain,
         tensor::TensorAntisymmetricIndex<TagToRemoveFromCochain, Tag...>>
