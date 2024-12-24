@@ -89,18 +89,24 @@ TensorType coboundary_of_codifferential(
     sil::exterior::codifferential<
             MetricIndex,
             LaplacianDummyIndex,
-            coboundary_index_t<
-                    LaplacianDummyIndex,
-                    CochainTag>>(exec_space, codifferential_tensor, tensor, inv_metric);
+            CochainTag>(exec_space, codifferential_tensor, tensor, inv_metric);
     Kokkos::fence();
 
     // Derivative
-    sil::exterior::
-            deriv<LaplacianDummyIndex, CochainTag>(exec_space, out_tensor, codifferential_tensor);
+    sil::exterior::deriv<
+            LaplacianDummyIndex,
+            codifferential_index_t<
+                    LaplacianDummyIndex,
+                    CochainTag>>(exec_space, out_tensor, codifferential_tensor);
     Kokkos::fence();
 
     return out_tensor;
 }
+
+template <std::size_t I, class T>
+struct LaplacianDummy2 : tensor::uncharacterize<T>
+{
+};
 
 } // namespace detail
 
@@ -118,40 +124,33 @@ TensorType laplacian(
         MetricType inv_metric)
 {
     static_assert(tensor::is_covariant_v<LaplacianDummyIndex>);
+    using LaplacianDummyIndex2 = tensor::TensorCovariantNaturalIndex<LaplacianDummyIndex>;
 
     if constexpr (CochainTag::rank() == 0) {
         detail::codifferential_of_coboundary<
                 MetricIndex,
-                LaplacianDummyIndex,
-                coboundary_index_t<
-                        LaplacianDummyIndex,
-                        CochainTag>>(exec_space, laplacian_tensor, tensor, inv_metric);
+                LaplacianDummyIndex2,
+                CochainTag>(exec_space, laplacian_tensor, tensor, inv_metric);
         Kokkos::fence();
 
     } else if (CochainTag::rank() == LaplacianDummyIndex::size()) {
         detail::coboundary_of_codifferential<
                 MetricIndex,
                 LaplacianDummyIndex,
-                coboundary_index_t<
-                        LaplacianDummyIndex,
-                        CochainTag>>(exec_space, laplacian_tensor, tensor, inv_metric);
+                CochainTag>(exec_space, laplacian_tensor, tensor, inv_metric);
         Kokkos::fence();
     } else {
         detail::codifferential_of_coboundary<
                 MetricIndex,
-                LaplacianDummyIndex,
-                coboundary_index_t<
-                        LaplacianDummyIndex,
-                        CochainTag>>(exec_space, laplacian_tensor, tensor, inv_metric);
+                LaplacianDummyIndex2,
+                CochainTag>(exec_space, laplacian_tensor, tensor, inv_metric);
 
         auto tmp_alloc = ddc::create_mirror_view(laplacian_tensor);
         tensor::Tensor tmp(tmp_alloc);
         detail::coboundary_of_codifferential<
                 MetricIndex,
                 LaplacianDummyIndex,
-                coboundary_index_t<
-                        LaplacianDummyIndex,
-                        CochainTag>>(exec_space, tmp, tensor, inv_metric);
+                CochainTag>(exec_space, tmp, tensor, inv_metric);
         Kokkos::fence();
 
         ddc::parallel_for_each(

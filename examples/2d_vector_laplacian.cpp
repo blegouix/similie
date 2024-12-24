@@ -145,8 +145,9 @@ struct Nu : sil::tensor::TensorNaturalIndex<X, Y>
 
 // Declare indices
 using MuUp = sil::tensor::TensorContravariantNaturalIndex<Mu>;
-using NuLow = sil::tensor::TensorCovariantNaturalIndex<Nu>;
+using MuLow = sil::tensor::TensorCovariantNaturalIndex<Mu>;
 using NuUp = sil::tensor::TensorContravariantNaturalIndex<Nu>;
+using NuLow = sil::tensor::TensorCovariantNaturalIndex<Nu>;
 
 int main(int argc, char** argv)
 {
@@ -223,8 +224,8 @@ int main(int argc, char** argv)
     */
 
     // Potential
-    [[maybe_unused]] sil::tensor::TensorAccessor<MuUp> potential_accessor;
-    ddc::DiscreteDomain<MuUp, DDimX, DDimY>
+    [[maybe_unused]] sil::tensor::TensorAccessor<MuLow> potential_accessor;
+    ddc::DiscreteDomain<MuLow, DDimX, DDimY>
             potential_dom(metric.non_indices_domain(), potential_accessor.mem_domain());
     ddc::Chunk potential_alloc(potential_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor potential(potential_alloc);
@@ -257,9 +258,9 @@ int main(int argc, char** argv)
                     potential.mem(elem, potential_accessor.access_element<Y>())
                             = alpha * ((R * R) - (r * r)) * Kokkos::sin(theta);
                 } else {
-                    potential.mem(elem)
+                    potential.mem(elem, potential_accessor.access_element<X>())
                             = alpha * 2 * R * R * Kokkos::log(R / r) * Kokkos::cos(theta);
-                    potential.mem(elem)
+                    potential.mem(elem, potential_accessor.access_element<Y>())
                             = alpha * 2 * R * R * Kokkos::log(R / r) * Kokkos::sin(theta);
                 }
             });
@@ -267,8 +268,8 @@ int main(int argc, char** argv)
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), potential);
 
     // Laplacian
-    [[maybe_unused]] sil::tensor::TensorAccessor<MuUp> laplacian_accessor;
-    ddc::DiscreteDomain<MuUp, DDimX, DDimY> laplacian_dom(
+    [[maybe_unused]] sil::tensor::TensorAccessor<MuLow> laplacian_accessor;
+    ddc::DiscreteDomain<MuLow, DDimX, DDimY> laplacian_dom(
             mesh_xy.remove_last(ddc::DiscreteVector<DDimX, DDimY> {1, 1}),
             laplacian_accessor.mem_domain());
     ddc::Chunk laplacian_alloc(laplacian_dom, ddc::DeviceAllocator<double>());
@@ -276,8 +277,8 @@ int main(int argc, char** argv)
 
     sil::exterior::laplacian<
             MetricIndex,
-            NuLow,
-            MuUp>(Kokkos::DefaultExecutionSpace(), laplacian, potential, inv_metric);
+            MuLow,
+            MuLow>(Kokkos::DefaultExecutionSpace(), laplacian, potential, inv_metric);
     Kokkos::fence();
 
     auto laplacian_host
