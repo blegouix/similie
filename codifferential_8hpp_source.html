@@ -375,16 +375,20 @@ $(function(){initNavTree('codifferential_8hpp_source.html',''); initResizable(tr
 <div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span>                        codifferential_tensor[elem],</div>
 <div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span>                        dual_codifferential[elem],</div>
 <div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span>                        hodge_star2[elem]);</div>
-<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span>            });</div>
-<div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span>    Kokkos::fence();</div>
-<div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span> </div>
-<div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span>    <span class="keywordflow">return</span> codifferential_tensor;</div>
-<div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span>}</div>
+<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span>                <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (</div>
+<div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span>                        (TagToRemoveFromCochain::size() * (CochainTag::rank() + 1) + 1) % 2 == 1) {</div>
+<div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span>                    codifferential_tensor[elem] *= -1;</div>
+<div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span>                }</div>
+<div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span>            });</div>
+<div class="line"><a id="l00252" name="l00252"></a><span class="lineno">  252</span>    Kokkos::fence();</div>
+<div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span> </div>
+<div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span>    <span class="keywordflow">return</span> codifferential_tensor;</div>
+<div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span>}</div>
 </div>
-<div class="line"><a id="l00252" name="l00252"></a><span class="lineno">  252</span> </div>
-<div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span>} <span class="comment">// namespace exterior</span></div>
-<div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span> </div>
-<div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span>} <span class="comment">// namespace sil</span></div>
+<div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span> </div>
+<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span>} <span class="comment">// namespace exterior</span></div>
+<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span> </div>
+<div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span>} <span class="comment">// namespace sil</span></div>
 <div class="ttc" id="aconceptsil_1_1misc_1_1Specialization_html"><div class="ttname"><a href="conceptsil_1_1misc_1_1Specialization.html">sil::misc::Specialization</a></div><div class="ttdef"><b>Definition</b> <a href="specialization_8hpp_source.html#l00023">specialization.hpp:23</a></div></div>
 <div class="ttc" id="aconceptsil_1_1tensor_1_1TensorIndex_html"><div class="ttname"><a href="conceptsil_1_1tensor_1_1TensorIndex.html">sil::tensor::TensorIndex</a></div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00104">tensor_impl.hpp:104</a></div></div>
 <div class="ttc" id="aconceptsil_1_1tensor_1_1TensorNatIndex_html"><div class="ttname"><a href="conceptsil_1_1tensor_1_1TensorNatIndex.html">sil::tensor::TensorNatIndex</a></div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00109">tensor_impl.hpp:109</a></div></div>
