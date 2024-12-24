@@ -19,6 +19,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 - Remove metric_prod_t (and every helper producing a tensor)
 - Avoid usage of std::array in non-constexpr tensor_impl function (exclusive to YoungTableauIndexing)
 - Document codifferential
+- Higher Laplacians and tests
 
 ----- SETUP BASIC COMMAND -----
 

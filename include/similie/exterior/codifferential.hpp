@@ -176,8 +176,8 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
     Kokkos::fence();
 
     // Dual tensor
-    [[maybe_unused]] tensor::tensor_accessor_for_domain_t<ddc::DiscreteDomain<
-            misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, NuLowSeq>>>
+    [[maybe_unused]] tensor::TensorAccessor<
+            misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, NuLowSeq>>
             dual_tensor_accessor;
     ddc::cartesian_prod_t<
             typename TensorType::non_indices_domain_t,
@@ -198,8 +198,8 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
     Kokkos::fence();
 
     // Dual codifferential
-    [[maybe_unused]] tensor::tensor_accessor_for_domain_t<ddc::DiscreteDomain<
-            misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, RhoLowSeq>>>
+    [[maybe_unused]] tensor::TensorAccessor<
+            misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, RhoLowSeq>>
             dual_codifferential_accessor;
     ddc::cartesian_prod_t<
             typename TensorType::non_indices_domain_t,
