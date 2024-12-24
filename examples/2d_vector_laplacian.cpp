@@ -245,13 +245,22 @@ int main(int argc, char** argv)
                         + static_cast<double>(
                                 ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))
                                 * ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))));
-		double const theta = Kokkos::tan(ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))/ddc::coordinate(ddc::DiscreteElement<DDimX>(elem))) + (ddc::coordinate(ddc::DiscreteElement<DDimX>(elem)) < 0 ? Kokkos::numbers::pi_v<double> : 0);
+                double const theta = Kokkos::tan(
+                                             ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))
+                                             / ddc::coordinate(ddc::DiscreteElement<DDimX>(elem)))
+                                     + (ddc::coordinate(ddc::DiscreteElement<DDimX>(elem)) < 0
+                                                ? Kokkos::numbers::pi_v<double>
+                                                : 0);
                 if (r <= R) {
-                    potential.mem(elem, potential_accessor.access_element<X>()) = alpha * ((R * R) - (r * r)) * Kokkos::cos(theta);
-                    potential.mem(elem, potential_accessor.access_element<Y>()) = alpha * ((R * R) - (r * r)) * Kokkos::sin(theta);
+                    potential.mem(elem, potential_accessor.access_element<X>())
+                            = alpha * ((R * R) - (r * r)) * Kokkos::cos(theta);
+                    potential.mem(elem, potential_accessor.access_element<Y>())
+                            = alpha * ((R * R) - (r * r)) * Kokkos::sin(theta);
                 } else {
-                    potential.mem(elem) = alpha * 2 * R * R * Kokkos::log(R / r) * Kokkos::cos(theta);
-                    potential.mem(elem) = alpha * 2 * R * R * Kokkos::log(R / r) * Kokkos::sin(theta);
+                    potential.mem(elem)
+                            = alpha * 2 * R * R * Kokkos::log(R / r) * Kokkos::cos(theta);
+                    potential.mem(elem)
+                            = alpha * 2 * R * R * Kokkos::log(R / r) * Kokkos::sin(theta);
                 }
             });
     auto potential_host
@@ -280,7 +289,7 @@ int main(int argc, char** argv)
             .and_with("Y", position[position.accessor().access_element<Y>()])
             .and_with("potential_x", potential_host[potential_accessor.access_element<X>()])
             .and_with("potential_y", potential_host[potential_accessor.access_element<Y>()])
-            .and_with("laplacian_x", laplacian_host[laplacian_accessor.access_element<X>()]);
+            .and_with("laplacian_x", laplacian_host[laplacian_accessor.access_element<X>()])
             .and_with("laplacian_y", laplacian_host[laplacian_accessor.access_element<Y>()]);
     std::cout << "Computation result exported in 2d_vecotr_laplacian.h5." << std::endl;
 
