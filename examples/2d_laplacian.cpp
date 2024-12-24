@@ -240,15 +240,6 @@ int main(int argc, char** argv)
     auto potential_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), potential);
 
-    // Gradient
-    [[maybe_unused]] sil::tensor::TensorAccessor<MuLow> gradient_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, MuLow> gradient_dom(mesh_xy, gradient_accessor.mem_domain());
-    ddc::Chunk gradient_alloc(gradient_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor gradient(gradient_alloc);
-
-    sil::exterior::deriv<MuLow, DummyIndex>(Kokkos::DefaultExecutionSpace(), gradient, potential);
-    Kokkos::fence();
-
     // Laplacian
     [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> laplacian_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, DummyIndex> laplacian_dom(
@@ -257,10 +248,10 @@ int main(int argc, char** argv)
     ddc::Chunk laplacian_alloc(laplacian_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor laplacian(laplacian_alloc);
 
-    sil::exterior::codifferential<
+    sil::exterior::laplacian<
             MetricIndex,
             MuLow,
-            MuLow>(Kokkos::DefaultExecutionSpace(), laplacian, gradient, inv_metric);
+            DummyIndex>(Kokkos::DefaultExecutionSpace(), laplacian, potential, inv_metric);
     Kokkos::fence();
 
     auto laplacian_host
