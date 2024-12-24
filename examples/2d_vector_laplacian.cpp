@@ -225,7 +225,7 @@ int main(int argc, char** argv)
 
     // Potential
     [[maybe_unused]] sil::tensor::TensorAccessor<MuLow> potential_accessor;
-    ddc::DiscreteDomain<MuLow, DDimX, DDimY>
+    ddc::DiscreteDomain<DDimX, DDimY, MuLow>
             potential_dom(metric.non_indices_domain(), potential_accessor.mem_domain());
     ddc::Chunk potential_alloc(potential_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor potential(potential_alloc);
@@ -269,7 +269,7 @@ int main(int argc, char** argv)
 
     // Laplacian
     [[maybe_unused]] sil::tensor::TensorAccessor<MuLow> laplacian_accessor;
-    ddc::DiscreteDomain<MuLow, DDimX, DDimY> laplacian_dom(
+    ddc::DiscreteDomain<DDimX, DDimY, MuLow> laplacian_dom(
             mesh_xy.remove_last(ddc::DiscreteVector<DDimX, DDimY> {1, 1}),
             laplacian_accessor.mem_domain());
     ddc::Chunk laplacian_alloc(laplacian_dom, ddc::DeviceAllocator<double>());
