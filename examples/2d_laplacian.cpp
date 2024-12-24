@@ -120,14 +120,6 @@ struct Mu : sil::tensor::TensorNaturalIndex<X, Y>
 {
 };
 
-struct Nu : sil::tensor::TensorNaturalIndex<X, Y>
-{
-};
-
-struct Rho : sil::tensor::TensorNaturalIndex<X, Y>
-{
-};
-
 // Declare indices
 using MuLow = sil::tensor::TensorCovariantNaturalIndex<Mu>;
 using MuUp = sil::tensor::TensorContravariantNaturalIndex<Mu>;
