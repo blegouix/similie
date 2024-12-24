@@ -228,6 +228,9 @@ requires ( misc::Specialization&lt;MetricDeterminantType, ddc::ChunkSpan&gt; || 
 <tr class="memitem:ad06c01fb6d6a67c26644e4ccfb4d28cc" id="r_ad06c01fb6d6a67c26644e4ccfb4d28cc"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorIndex MetricIndex, misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices1, misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices2, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor</a> &gt; HodgeStarType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor</a> &gt; MetricType, class ExecSpace &gt; </td></tr>
 <tr class="memitem:ad06c01fb6d6a67c26644e4ccfb4d28cc"><td class="memTemplItemLeft" align="right" valign="top">HodgeStarType&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ad06c01fb6d6a67c26644e4ccfb4d28cc">fill_hodge_star</a> (ExecSpace const &amp;exec_space, HodgeStarType hodge_star, MetricType metric)</td></tr>
 <tr class="separator:ad06c01fb6d6a67c26644e4ccfb4d28cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a267c82204d74450c93390dd5c11ca7b8" id="r_a267c82204d74450c93390dd5c11ca7b8"><td class="memTemplParams" colspan="2">template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex LaplacianDummyIndex, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor</a> &gt; TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor</a> &gt; MetricType, class ExecSpace &gt; </td></tr>
+<tr class="memitem:a267c82204d74450c93390dd5c11ca7b8"><td class="memTemplItemLeft" align="right" valign="top">TensorType&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a267c82204d74450c93390dd5c11ca7b8">laplacian</a> (ExecSpace const &amp;exec_space, TensorType laplacian_tensor, TensorType tensor, MetricType inv_metric)</td></tr>
+<tr class="separator:a267c82204d74450c93390dd5c11ca7b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab438931846b5b39c2e5424037b5b32d9" id="r_ab438931846b5b39c2e5424037b5b32d9"><td class="memTemplParams" colspan="2">template&lt;class Head , misc::NotSpecialization&lt; ddc::DiscreteVector &gt;... Tail&gt; </td></tr>
 <tr class="memitem:ab438931846b5b39c2e5424037b5b32d9"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ab438931846b5b39c2e5424037b5b32d9">LocalChain</a> (Head, Tail...) -&gt; LocalChain&lt; ddc::type_seq_element_t&lt; 0, ddc::detail::TypeSeq&lt; Tail... &gt; &gt;, typename Head::array_layout, typename Head::memory_space &gt;</td></tr>
 <tr class="separator:ab438931846b5b39c2e5424037b5b32d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -788,6 +791,41 @@ template&lt;tensor::TensorIndex MetricIndex, misc::Specialization&lt; ddc::detai
 </div><div class="memdoc">
 
 <p class="definition">Definition at line <a class="el" href="hodge__star_8hpp_source.html#l00083">83</a> of file <a class="el" href="hodge__star_8hpp_source.html">hodge_star.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a267c82204d74450c93390dd5c11ca7b8" name="a267c82204d74450c93390dd5c11ca7b8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a267c82204d74450c93390dd5c11ca7b8">&#9670;&#160;</a></span>laplacian()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex LaplacianDummyIndex, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor</a> &gt; TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor</a> &gt; MetricType, class ExecSpace &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">TensorType sil::exterior::laplacian </td>
+          <td>(</td>
+          <td class="paramtype">ExecSpace const &amp;</td>          <td class="paramname"><span class="paramname"><em>exec_space</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">TensorType</td>          <td class="paramname"><span class="paramname"><em>laplacian_tensor</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">TensorType</td>          <td class="paramname"><span class="paramname"><em>tensor</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">MetricType</td>          <td class="paramname"><span class="paramname"><em>inv_metric</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="laplacian_8hpp_source.html#l00027">27</a> of file <a class="el" href="laplacian_8hpp_source.html">laplacian.hpp</a>.</p>
 
 </div>
 </div>
