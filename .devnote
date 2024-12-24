@@ -18,8 +18,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 - Tensor indexes should be template with TensorNatIndex
 - Remove metric_prod_t (and every helper producing a tensor)
 - Avoid usage of std::array in non-constexpr tensor_impl function (exclusive to YoungTableauIndexing)
-- Find a way to call destructor before getting out of scope
-- Move Laplacian implementation in a function
+- Document codifferential
+- Higher Laplacians and tests
 
 ----- SETUP BASIC COMMAND -----
 

@@ -120,14 +120,6 @@ struct Mu : sil::tensor::TensorNaturalIndex<X, Y>
 {
 };
 
-struct Nu : sil::tensor::TensorNaturalIndex<X, Y>
-{
-};
-
-struct Rho : sil::tensor::TensorNaturalIndex<X, Y>
-{
-};
-
 // Declare indices
 using MuLow = sil::tensor::TensorCovariantNaturalIndex<Mu>;
 using MuUp = sil::tensor::TensorContravariantNaturalIndex<Mu>;
@@ -240,15 +232,6 @@ int main(int argc, char** argv)
     auto potential_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), potential);
 
-    // Gradient
-    [[maybe_unused]] sil::tensor::TensorAccessor<MuLow> gradient_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, MuLow> gradient_dom(mesh_xy, gradient_accessor.mem_domain());
-    ddc::Chunk gradient_alloc(gradient_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor gradient(gradient_alloc);
-
-    sil::exterior::deriv<MuLow, DummyIndex>(Kokkos::DefaultExecutionSpace(), gradient, potential);
-    Kokkos::fence();
-
     // Laplacian
     [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> laplacian_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, DummyIndex> laplacian_dom(
@@ -257,29 +240,31 @@ int main(int argc, char** argv)
     ddc::Chunk laplacian_alloc(laplacian_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor laplacian(laplacian_alloc);
 
-    sil::exterior::codifferential<
+    sil::exterior::laplacian<
             MetricIndex,
             MuLow,
-            MuLow>(Kokkos::DefaultExecutionSpace(), laplacian, gradient, inv_metric);
+            DummyIndex>(Kokkos::DefaultExecutionSpace(), laplacian, potential, inv_metric);
     Kokkos::fence();
 
     auto laplacian_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), laplacian);
 
-    // Export HDF5 and XDMF, finalize PDI
+    // Export HDF5 and XDMF
     ddc::PdiEvent("export")
             .with("X", position[position.accessor().access_element<X>()])
             .and_with("Y", position[position.accessor().access_element<Y>()])
             .and_with("potential", potential_host)
             .and_with("laplacian", laplacian_host);
     std::cout << "Computation result exported in 2d_laplacian.h5." << std::endl;
-    PC_tree_destroy(&conf_pdi);
-    PDI_finalize();
 
     write_xdmf(
             static_cast<int>(mesh_xy.template extent<DDimX>()),
             static_cast<int>(mesh_xy.template extent<DDimY>()));
     std::cout << "XDMF model exported in 2d_laplacian.xmf." << std::endl;
+
+    // Finalize PDI
+    PC_tree_destroy(&conf_pdi);
+    PDI_finalize();
 
     return EXIT_SUCCESS;
 }
