@@ -48,7 +48,7 @@ TensorType laplacian(
     sil::exterior::deriv<LaplacianDummyTag, CochainTag>(exec_space, derivative_tensor, tensor);
     Kokkos::fence();
 
-    // Laplacian
+    // Codifferential
     sil::exterior::codifferential<
             MetricIndex,
             LaplacianDummyTag,
