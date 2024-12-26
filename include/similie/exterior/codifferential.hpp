@@ -156,16 +156,14 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
         MetricType inv_metric)
 {
     static_assert(tensor::is_covariant_v<TagToRemoveFromCochain>);
-    using MuLowSeq = ddc::to_type_seq_t<tensor::natural_domain_t<CochainTag>>;
-    using MuUpSeq = tensor::upper<MuLowSeq>;
+    using MuUpSeq = tensor::upper<ddc::to_type_seq_t<tensor::natural_domain_t<CochainTag>>>;
     using NuLowSeq = typename detail::CodifferentialDummyIndexSeq<
             std::make_index_sequence<TagToRemoveFromCochain::size() - CochainTag::rank()>,
             TagToRemoveFromCochain>::type;
-    using NuUpSeq = tensor::upper<NuLowSeq>;
     using RhoLowSeq = ddc::type_seq_merge_t<ddc::detail::TypeSeq<TagToRemoveFromCochain>, NuLowSeq>;
     using RhoUpSeq = tensor::upper<RhoLowSeq>;
-    using SigmaLowSeq
-            = ddc::type_seq_remove_t<MuLowSeq, ddc::detail::TypeSeq<TagToRemoveFromCochain>>;
+    using SigmaLowSeq = ddc::
+            type_seq_remove_t<tensor::lower<MuUpSeq>, ddc::detail::TypeSeq<TagToRemoveFromCochain>>;
 
     using HodgeStarDomain = sil::exterior::hodge_star_domain_t<MuUpSeq, NuLowSeq>;
     using HodgeStarDomain2 = sil::exterior::hodge_star_domain_t<RhoUpSeq, SigmaLowSeq>;
