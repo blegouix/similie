@@ -163,7 +163,7 @@ int main(int argc, char** argv)
     MesherXY mesher;
     ddc::Coordinate<X, Y> lower_bounds(-5., -5.);
     ddc::Coordinate<X, Y> upper_bounds(5., 5.);
-    ddc::DiscreteVector<DDimX, DDimY> nb_cells(10, 10);
+    ddc::DiscreteVector<DDimX, DDimY> nb_cells(1000, 1000);
     ddc::DiscreteDomain<DDimX, DDimY> mesh_xy = mesher.template mesh<
             ddc::detail::TypeSeq<DDimX, DDimY>,
             ddc::detail::TypeSeq<BSplinesX, BSplinesY>>(lower_bounds, upper_bounds, nb_cells);
@@ -246,12 +246,9 @@ int main(int argc, char** argv)
                         + static_cast<double>(
                                 ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))
                                 * ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))));
-                double const theta = Kokkos::tan(
-                                             ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))
-                                             / ddc::coordinate(ddc::DiscreteElement<DDimX>(elem)))
-                                     + (ddc::coordinate(ddc::DiscreteElement<DDimX>(elem)) < 0
-                                                ? Kokkos::numbers::pi_v<double>
-                                                : 0);
+                double const theta = Kokkos::
+                        atan2(ddc::coordinate(ddc::DiscreteElement<DDimY>(elem)),
+                              ddc::coordinate(ddc::DiscreteElement<DDimX>(elem)));
                 if (r <= R) {
                     potential.mem(elem, potential_accessor.access_element<X>())
                             = alpha * ((R * R) - (r * r)) * Kokkos::cos(theta);
