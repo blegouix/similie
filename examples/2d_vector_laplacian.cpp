@@ -65,34 +65,52 @@ int write_xdmf(int Nx, int Ny)
         2d_vector_laplacian.h5:/Y
        </DataItem>
      </Geometry>
-     <Attribute Name="PotentialX" AttributeType="Scalar" Center="Node">
-       <DataItem Dimensions="%i %i" NumberType="Float" Precision="8" Format="HDF">
-        2d_vector_laplacian.h5:/potential_x
+     <Attribute Name="Potential" AttributeType="Vector" Center="Node">
+       <DataItem ItemType="Function" Dimensions="%i %i 2" Function="JOIN($0, $1)">
+         <DataItem Dimensions="%i %i" NumberType="Float" Precision="8" Format="HDF">
+          2d_vector_laplacian.h5:/potential_x
+         </DataItem>
+         <DataItem Dimensions="%i %i" NumberType="Float" Precision="8" Format="HDF">
+          2d_vector_laplacian.h5:/potential_y
+         </DataItem>
        </DataItem>
      </Attribute>
-    <Attribute Name="PotentialY" AttributeType="Scalar" Center="Node">
-       <DataItem Dimensions="%i %i" NumberType="Float" Precision="8" Format="HDF">
-        2d_vector_laplacian.h5:/potential_y
+     <Attribute Name="Laplacian" AttributeType="Vector" Center="Cell">
+       <DataItem ItemType="Function" Dimensions="%i %i 2" Function="JOIN($0, $1)">
+         <DataItem Dimensions="%i %i" NumberType="Float" Precision="8" Format="HDF">
+          2d_vector_laplacian.h5:laplacian_x/
+         </DataItem>
+         <DataItem Dimensions="%i %i" NumberType="Float" Precision="8" Format="HDF">
+          2d_vector_laplacian.h5:laplacian_y/
+         </DataItem>
        </DataItem>
      </Attribute>
-     <Attribute Name="LaplacianX" AttributeType="Scalar" Center="Cell">
-       <DataItem Dimensions="%i %i" NumberType="Float" Precision="8" Format="HDF">
-        2d_vector_laplacian.h5:laplacian_x/
-       </DataItem>
-     </Attribute>
-     <Attribute Name="LaplacianY" AttributeType="Scalar" Center="Cell">
-       <DataItem Dimensions="%i %i" NumberType="Float" Precision="8" Format="HDF">
-        2d_vector_laplacian.h5:laplacian_y/
-       </DataItem>
-     </Attribute>
-
    </Grid>
  </Domain>
 </Xdmf>
 )XDMF";
 
     FILE* file = fopen("2d_vector_laplacian.xmf", "w");
-    fprintf(file, xdmf, Nx, Ny, Nx, Ny, Nx, Ny, Nx, Ny, Nx, Ny, Nx - 1, Ny - 1, Nx - 1, Ny - 1);
+    fprintf(file,
+            xdmf,
+            Nx,
+            Ny,
+            Nx,
+            Ny,
+            Nx,
+            Ny,
+            Nx,
+            Ny,
+            Nx,
+            Ny,
+            Nx,
+            Ny,
+            Nx - 1,
+            Ny - 1,
+            Nx - 1,
+            Ny - 1,
+            Nx - 1,
+            Ny - 1);
     fclose(file);
 
     return 1;
