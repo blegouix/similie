@@ -64,7 +64,7 @@ int write_xdmf(int Nx, int Ny)
      </Attribute>
      <Attribute Name="Laplacian" AttributeType="Scalar" Center="Cell">
        <DataItem Dimensions="%i %i" NumberType="Float" Precision="8" Format="HDF">
-        2d_laplacian.h5:laplacian/
+        2d_laplacian.h5:/laplacian
        </DataItem>
      </Attribute>
    </Grid>
