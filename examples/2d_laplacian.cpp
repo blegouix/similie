@@ -224,9 +224,9 @@ int main(int argc, char** argv)
                                 ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))
                                 * ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))));
                 if (r <= R) {
-                    potential.mem(elem) = alpha * ((R * R) - (r * r));
+                    potential.mem(elem) = -alpha * r * r;
                 } else {
-                    potential.mem(elem) = alpha * 2 * R * R * Kokkos::log(R / r);
+                    potential.mem(elem) = alpha * R * R * (2 * Kokkos::log(R / r) - 1);
                 }
             });
     auto potential_host

@@ -232,14 +232,14 @@ int main(int argc, char** argv)
                               ddc::coordinate(ddc::DiscreteElement<DDimX>(elem)));
                 if (r <= R) {
                     potential.mem(elem, potential_accessor.access_element<X>())
-                            = alpha * ((R * R) - (r * r)) * Kokkos::cos(theta);
+                            = alpha * r * r * Kokkos::sin(theta);
                     potential.mem(elem, potential_accessor.access_element<Y>())
-                            = alpha * ((R * R) - (r * r)) * Kokkos::sin(theta);
+                            = -alpha * r * r * Kokkos::cos(theta);
                 } else {
                     potential.mem(elem, potential_accessor.access_element<X>())
-                            = alpha * 2 * R * R * Kokkos::log(R / r) * Kokkos::cos(theta);
+                            = -alpha * R * R * (2 * Kokkos::log(R / r) - 1) * Kokkos::sin(theta);
                     potential.mem(elem, potential_accessor.access_element<Y>())
-                            = alpha * 2 * R * R * Kokkos::log(R / r) * Kokkos::sin(theta);
+                            = alpha * R * R * (2 * Kokkos::log(R / r) - 1) * Kokkos::cos(theta);
                 }
             });
     auto potential_host
