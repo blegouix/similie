@@ -22,29 +22,21 @@ data:
     type: array
     subtype: double
     size: [ '$Nx', '$Ny' ]
-  potential_x:
+  potential:
     type: array
     subtype: double
-    size: [ '$Nx', '$Ny' ]
-  potential_y:
+    size: [ '$Nx', '$Ny', '2' ]
+  laplacian:
     type: array
     subtype: double
-    size: [ '$Nx', '$Ny' ]
-  laplacian_x:
-    type: array
-    subtype: double
-    size: [ '$Nx-1', '$Ny-1' ]
-  laplacian_y:
-    type: array
-    subtype: double
-    size: [ '$Nx-1', '$Ny-1' ]
+    size: [ '$Nx-1', '$Ny-1', 2 ]
 
 plugins:
   decl_hdf5:
     - file: '2d_vector_laplacian.h5'
       on_event: [export]
       collision_policy: replace_and_warn
-      write: [Nx, Ny, X, Y, potential_x, potential_y, laplacian_x, laplacian_y]
+      write: [Nx, Ny, X, Y, potential, laplacian]
   #trace: ~
 )PDI_CFG";
 
@@ -66,23 +58,13 @@ int write_xdmf(int Nx, int Ny)
        </DataItem>
      </Geometry>
      <Attribute Name="Potential" AttributeType="Vector" Center="Node">
-       <DataItem ItemType="Function" Dimensions="%i %i 2" Function="JOIN($0, $1)">
-         <DataItem Dimensions="%i %i" NumberType="Float" Precision="8" Format="HDF">
-          2d_vector_laplacian.h5:/potential_x
-         </DataItem>
-         <DataItem Dimensions="%i %i" NumberType="Float" Precision="8" Format="HDF">
-          2d_vector_laplacian.h5:/potential_y
-         </DataItem>
+       <DataItem Dimensions="%i %i 2" NumberType="Float" Precision="8" Format="HDF">
+        2d_vector_laplacian.h5:/potential
        </DataItem>
      </Attribute>
      <Attribute Name="Laplacian" AttributeType="Vector" Center="Cell">
-       <DataItem ItemType="Function" Dimensions="%i %i 2" Function="JOIN($0, $1)">
-         <DataItem Dimensions="%i %i" NumberType="Float" Precision="8" Format="HDF">
-          2d_vector_laplacian.h5:laplacian_x/
-         </DataItem>
-         <DataItem Dimensions="%i %i" NumberType="Float" Precision="8" Format="HDF">
-          2d_vector_laplacian.h5:laplacian_y/
-         </DataItem>
+       <DataItem Dimensions="%i %i 2" NumberType="Float" Precision="8" Format="HDF">
+        2d_vector_laplacian.h5:/laplacian
        </DataItem>
      </Attribute>
    </Grid>
@@ -91,26 +73,7 @@ int write_xdmf(int Nx, int Ny)
 )XDMF";
 
     FILE* file = fopen("2d_vector_laplacian.xmf", "w");
-    fprintf(file,
-            xdmf,
-            Nx,
-            Ny,
-            Nx,
-            Ny,
-            Nx,
-            Ny,
-            Nx,
-            Ny,
-            Nx,
-            Ny,
-            Nx,
-            Ny,
-            Nx - 1,
-            Ny - 1,
-            Nx - 1,
-            Ny - 1,
-            Nx - 1,
-            Ny - 1);
+    fprintf(file, xdmf, Nx, Ny, Nx, Ny, Nx, Ny, Nx, Ny, Nx - 1, Ny - 1);
     fclose(file);
 
     return 1;
@@ -303,10 +266,8 @@ int main(int argc, char** argv)
     ddc::PdiEvent("export")
             .with("X", position[position.accessor().access_element<X>()])
             .and_with("Y", position[position.accessor().access_element<Y>()])
-            .and_with("potential_x", potential_host[potential_accessor.access_element<X>()])
-            .and_with("potential_y", potential_host[potential_accessor.access_element<Y>()])
-            .and_with("laplacian_x", laplacian_host[laplacian_accessor.access_element<X>()])
-            .and_with("laplacian_y", laplacian_host[laplacian_accessor.access_element<Y>()]);
+            .and_with("potential", potential_host)
+            .and_with("laplacian", laplacian_host);
     std::cout << "Computation result exported in 2d_vector_laplacian.h5." << std::endl;
 
     write_xdmf(
