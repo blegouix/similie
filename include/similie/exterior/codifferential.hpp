@@ -164,10 +164,11 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
     using NuUpSeq = tensor::upper<NuLowSeq>;
     using RhoLowSeq = ddc::type_seq_merge_t<ddc::detail::TypeSeq<TagToRemoveFromCochain>, NuLowSeq>;
     using RhoUpSeq = tensor::upper<RhoLowSeq>;
+    using SigmaLowSeq
+            = ddc::type_seq_remove_t<MuLowSeq, ddc::detail::TypeSeq<TagToRemoveFromCochain>>;
 
     using HodgeStarDomain = sil::exterior::hodge_star_domain_t<MuUpSeq, NuLowSeq>;
-    using HodgeStarDomain2 = sil::exterior::
-            hodge_star_domain_t<ddc::type_seq_merge_t<RhoUpSeq, NuUpSeq>, ddc::detail::TypeSeq<>>;
+    using HodgeStarDomain2 = sil::exterior::hodge_star_domain_t<RhoUpSeq, SigmaLowSeq>;
 
     // Hodge star
     [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain> hodge_star_accessor;
@@ -240,8 +241,8 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
 
     sil::exterior::fill_hodge_star<
             sil::tensor::upper<MetricIndex>,
-            ddc::type_seq_merge_t<RhoUpSeq, NuUpSeq>,
-            ddc::detail::TypeSeq<>>(exec_space, hodge_star2, inv_metric);
+            RhoUpSeq,
+            SigmaLowSeq>(exec_space, hodge_star2, inv_metric);
     Kokkos::fence();
 
     // Codifferential

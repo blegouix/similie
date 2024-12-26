@@ -32,7 +32,7 @@ TensorType codifferential_of_coboundary(
         TensorType tensor,
         MetricType inv_metric)
 {
-    // Derivative
+    // Coboundary
     [[maybe_unused]] tensor::TensorAccessor<coboundary_index_t<LaplacianDummyIndex, CochainTag>>
             derivative_accessor;
     ddc::cartesian_prod_t<
@@ -92,7 +92,7 @@ TensorType coboundary_of_codifferential(
             CochainTag>(exec_space, codifferential_tensor, tensor, inv_metric);
     Kokkos::fence();
 
-    // Derivative
+    // Coboundary
     sil::exterior::deriv<
             LaplacianDummyIndex,
             codifferential_index_t<
@@ -104,7 +104,7 @@ TensorType coboundary_of_codifferential(
 }
 
 template <class T>
-struct LaplacianDummy2 : tensor::uncharacterize<T>
+struct LaplacianDummy2 : T
 {
 };
 
@@ -124,8 +124,8 @@ TensorType laplacian(
         MetricType inv_metric)
 {
     static_assert(tensor::is_covariant_v<LaplacianDummyIndex>);
-    using LaplacianDummyIndex2
-            = tensor::TensorCovariantNaturalIndex<detail::LaplacianDummy2<LaplacianDummyIndex>>;
+    using LaplacianDummyIndex2 = tensor::TensorCovariantNaturalIndex<
+            detail::LaplacianDummy2<tensor::uncharacterize<LaplacianDummyIndex>>>;
 
     if constexpr (CochainTag::rank() == 0) {
         detail::codifferential_of_coboundary<
@@ -141,12 +141,10 @@ TensorType laplacian(
                 CochainTag>(exec_space, laplacian_tensor, tensor, inv_metric);
         Kokkos::fence();
     } else {
-        /*
         detail::codifferential_of_coboundary<
                 MetricIndex,
                 LaplacianDummyIndex2,
                 CochainTag>(exec_space, laplacian_tensor, tensor, inv_metric);
-		*/
 
         auto tmp_alloc = ddc::create_mirror_view(laplacian_tensor);
         tensor::Tensor tmp(tmp_alloc);
