@@ -163,7 +163,7 @@ int main(int argc, char** argv)
     MesherXY mesher;
     ddc::Coordinate<X, Y> lower_bounds(-5., -5.);
     ddc::Coordinate<X, Y> upper_bounds(5., 5.);
-    ddc::DiscreteVector<DDimX, DDimY> nb_cells(1000, 1000);
+    ddc::DiscreteVector<DDimX, DDimY> nb_cells(10, 10);
     ddc::DiscreteDomain<DDimX, DDimY> mesh_xy = mesher.template mesh<
             ddc::detail::TypeSeq<DDimX, DDimY>,
             ddc::detail::TypeSeq<BSplinesX, BSplinesY>>(lower_bounds, upper_bounds, nb_cells);
@@ -292,7 +292,7 @@ int main(int argc, char** argv)
             .and_with("potential_y", potential_host[potential_accessor.access_element<Y>()])
             .and_with("laplacian_x", laplacian_host[laplacian_accessor.access_element<X>()])
             .and_with("laplacian_y", laplacian_host[laplacian_accessor.access_element<Y>()]);
-    std::cout << "Computation result exported in 2d_vecotr_laplacian.h5." << std::endl;
+    std::cout << "Computation result exported in 2d_vector_laplacian.h5." << std::endl;
 
     write_xdmf(
             static_cast<int>(mesh_xy.template extent<DDimX>()),
