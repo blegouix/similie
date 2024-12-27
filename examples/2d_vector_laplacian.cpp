@@ -17,19 +17,19 @@ data:
   position:
     type: array
     subtype: double
-    size: [ '$Nx', '$Ny', 2]
+    size: [ '$Nx', '$Ny' , 2]
   potential:
     type: array
     subtype: double
-    size: [ '$Nx', '$Ny' ]
+    size: [ '$Nx', '$Ny', 2 ]
   laplacian:
     type: array
     subtype: double
-    size: [ '$Nx-1', '$Ny-1' ]
+    size: [ '$Nx-1', '$Ny-1', 2 ]
 
 plugins:
   decl_hdf5:
-    - file: '2d_laplacian.h5'
+    - file: '2d_vector_laplacian.h5'
       on_event: [export]
       collision_policy: replace_and_warn
       write: [Nx, Ny, position, potential, laplacian]
@@ -47,17 +47,17 @@ int write_xdmf(int Nx, int Ny)
      <Topology TopologyType="2DSMesh" NumberOfElements="%i %i"/>
      <Geometry GeometryType="XY">
        <DataItem Dimensions="%i %i 2" NumberType="Float" Precision="8" Format="HDF">
-        2d_laplacian.h5:/position
+        2d_vector_laplacian.h5:/position
        </DataItem>
      </Geometry>
-     <Attribute Name="Potential" AttributeType="Scalar" Center="Node">
-       <DataItem Dimensions="%i %i" NumberType="Float" Precision="8" Format="HDF">
-        2d_laplacian.h5:/potential
+     <Attribute Name="Potential" AttributeType="Vector" Center="Cell"> // Cell enforced because of Paraview bug
+       <DataItem Dimensions="%i %i 2" NumberType="Float" Precision="8" Format="HDF">
+        2d_vector_laplacian.h5:/potential
        </DataItem>
      </Attribute>
-     <Attribute Name="Laplacian" AttributeType="Scalar" Center="Cell">
-       <DataItem Dimensions="%i %i" NumberType="Float" Precision="8" Format="HDF">
-        2d_laplacian.h5:/laplacian
+     <Attribute Name="Laplacian" AttributeType="Vector" Center="Cell">
+       <DataItem Dimensions="%i %i 2" NumberType="Float" Precision="8" Format="HDF">
+        2d_vector_laplacian.h5:/laplacian
        </DataItem>
      </Attribute>
    </Grid>
@@ -65,7 +65,7 @@ int write_xdmf(int Nx, int Ny)
 </Xdmf>
 )XDMF";
 
-    FILE* file = fopen("2d_laplacian.xmf", "w");
+    FILE* file = fopen("2d_vector_laplacian.xmf", "w");
     fprintf(file, xdmf, Nx, Ny, Nx, Ny, Nx, Ny, Nx - 1, Ny - 1);
     fclose(file);
 
@@ -109,15 +109,19 @@ struct DDimY : MesherXY::template discrete_dimension_type<Y>
 };
 
 // Declare natural indices taking values in {X, Y}
+struct Mu : sil::tensor::TensorNaturalIndex<X, Y>
+{
+};
+
 struct Nu : sil::tensor::TensorNaturalIndex<X, Y>
 {
 };
 
 // Declare indices
-using NuLow = sil::tensor::TensorCovariantNaturalIndex<Nu>;
+using MuUp = sil::tensor::TensorContravariantNaturalIndex<Mu>;
+using MuLow = sil::tensor::TensorCovariantNaturalIndex<Mu>;
 using NuUp = sil::tensor::TensorContravariantNaturalIndex<Nu>;
-
-using DummyIndex = sil::tensor::TensorCovariantNaturalIndex<sil::tensor::TensorNaturalIndex<>>;
+using NuLow = sil::tensor::TensorCovariantNaturalIndex<Nu>;
 
 int main(int argc, char** argv)
 {
@@ -194,8 +198,8 @@ int main(int argc, char** argv)
     */
 
     // Potential
-    [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> potential_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, DummyIndex>
+    [[maybe_unused]] sil::tensor::TensorAccessor<MuLow> potential_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, MuLow>
             potential_dom(metric.non_indices_domain(), potential_accessor.mem_domain());
     ddc::Chunk potential_alloc(potential_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor potential(potential_alloc);
@@ -207,8 +211,8 @@ int main(int argc, char** argv)
                           * static_cast<double>(nb_cells.template get<DDimY>()))
                          / L / 2 / L / 2;
     ddc::parallel_for_each(
-            potential.domain(),
-            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
+            potential.non_indices_domain(),
+            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
                 double const r = Kokkos::sqrt(
                         static_cast<double>(
                                 ddc::coordinate(ddc::DiscreteElement<DDimX>(elem))
@@ -216,18 +220,27 @@ int main(int argc, char** argv)
                         + static_cast<double>(
                                 ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))
                                 * ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))));
+                double const theta = Kokkos::
+                        atan2(ddc::coordinate(ddc::DiscreteElement<DDimY>(elem)),
+                              ddc::coordinate(ddc::DiscreteElement<DDimX>(elem)));
                 if (r <= R) {
-                    potential.mem(elem) = -alpha * r * r;
+                    potential.mem(elem, potential_accessor.access_element<X>())
+                            = alpha * r * r * Kokkos::sin(theta);
+                    potential.mem(elem, potential_accessor.access_element<Y>())
+                            = -alpha * r * r * Kokkos::cos(theta);
                 } else {
-                    potential.mem(elem) = alpha * R * R * (2 * Kokkos::log(R / r) - 1);
+                    potential.mem(elem, potential_accessor.access_element<X>())
+                            = -alpha * R * R * (2 * Kokkos::log(R / r) - 1) * Kokkos::sin(theta);
+                    potential.mem(elem, potential_accessor.access_element<Y>())
+                            = alpha * R * R * (2 * Kokkos::log(R / r) - 1) * Kokkos::cos(theta);
                 }
             });
     auto potential_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), potential);
 
     // Laplacian
-    [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> laplacian_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, DummyIndex> laplacian_dom(
+    [[maybe_unused]] sil::tensor::TensorAccessor<MuLow> laplacian_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, MuLow> laplacian_dom(
             mesh_xy.remove_last(ddc::DiscreteVector<DDimX, DDimY> {1, 1}),
             laplacian_accessor.mem_domain());
     ddc::Chunk laplacian_alloc(laplacian_dom, ddc::DeviceAllocator<double>());
@@ -235,8 +248,8 @@ int main(int argc, char** argv)
 
     sil::exterior::laplacian<
             MetricIndex,
-            NuLow,
-            DummyIndex>(Kokkos::DefaultExecutionSpace(), laplacian, potential, inv_metric);
+            MuLow,
+            MuLow>(Kokkos::DefaultExecutionSpace(), laplacian, potential, inv_metric);
     Kokkos::fence();
 
     auto laplacian_host
@@ -247,12 +260,12 @@ int main(int argc, char** argv)
             .with("position", position)
             .and_with("potential", potential_host)
             .and_with("laplacian", laplacian_host);
-    std::cout << "Computation result exported in 2d_laplacian.h5." << std::endl;
+    std::cout << "Computation result exported in 2d_vector_laplacian.h5." << std::endl;
 
     write_xdmf(
             static_cast<int>(mesh_xy.template extent<DDimX>()),
             static_cast<int>(mesh_xy.template extent<DDimY>()));
-    std::cout << "XDMF model exported in 2d_laplacian.xmf." << std::endl;
+    std::cout << "XDMF model exported in 2d_vector_laplacian.xmf." << std::endl;
 
     // Finalize PDI
     PC_tree_destroy(&conf_pdi);
