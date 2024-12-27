@@ -14,14 +14,10 @@ metadata:
   Ny : int
 
 data:
-  X:
+  position:
     type: array
     subtype: double
-    size: [ '$Nx', '$Ny' ]
-  Y:
-    type: array
-    subtype: double
-    size: [ '$Nx', '$Ny' ]
+    size: [ '$Nx', '$Ny', 2]
   potential:
     type: array
     subtype: double
@@ -36,7 +32,7 @@ plugins:
     - file: '2d_laplacian.h5'
       on_event: [export]
       collision_policy: replace_and_warn
-      write: [Nx, Ny, X, Y, potential, laplacian]
+      write: [Nx, Ny, position, potential, laplacian]
   #trace: ~
 )PDI_CFG";
 
@@ -49,12 +45,9 @@ int write_xdmf(int Nx, int Ny)
  <Domain>
    <Grid Name="mesh1" GridType="Uniform">
      <Topology TopologyType="2DSMesh" NumberOfElements="%i %i"/>
-     <Geometry GeometryType="X_Y">
-       <DataItem Dimensions="%i %i" NumberType="Float" Precision="8" Format="HDF">
-        2d_laplacian.h5:/X
-       </DataItem>
-       <DataItem Dimensions="%i %i" NumberType="Float" Precision="8" Format="HDF">
-        2d_laplacian.h5:/Y
+     <Geometry GeometryType="XY">
+       <DataItem Dimensions="%i %i 2" NumberType="Float" Precision="8" Format="HDF">
+        2d_laplacian.h5:/position
        </DataItem>
      </Geometry>
      <Attribute Name="Potential" AttributeType="Scalar" Center="Node">
@@ -73,7 +66,7 @@ int write_xdmf(int Nx, int Ny)
 )XDMF";
 
     FILE* file = fopen("2d_laplacian.xmf", "w");
-    fprintf(file, xdmf, Nx, Ny, Nx, Ny, Nx, Ny, Nx, Ny, Nx - 1, Ny - 1);
+    fprintf(file, xdmf, Nx, Ny, Nx, Ny, Nx, Ny, Nx - 1, Ny - 1);
     fclose(file);
 
     return 1;
@@ -151,7 +144,7 @@ int main(int argc, char** argv)
 
     // Allocate and instantiate a position field (used only to be exported).
     [[maybe_unused]] sil::tensor::TensorAccessor<NuUp> position_accessor;
-    ddc::DiscreteDomain<NuUp, DDimX, DDimY> position_dom(mesh_xy, position_accessor.mem_domain());
+    ddc::DiscreteDomain<DDimX, DDimY, NuUp> position_dom(mesh_xy, position_accessor.mem_domain());
     ddc::Chunk position_alloc(position_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor position(position_alloc);
     ddc::parallel_for_each(
@@ -251,8 +244,7 @@ int main(int argc, char** argv)
 
     // Export HDF5 and XDMF
     ddc::PdiEvent("export")
-            .with("X", position[position.accessor().access_element<X>()])
-            .and_with("Y", position[position.accessor().access_element<Y>()])
+            .with("position", position)
             .and_with("potential", potential_host)
             .and_with("laplacian", laplacian_host);
     std::cout << "Computation result exported in 2d_laplacian.h5." << std::endl;
