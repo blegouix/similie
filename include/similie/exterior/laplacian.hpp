@@ -141,13 +141,13 @@ TensorType laplacian(
                 CochainTag>(exec_space, laplacian_tensor, tensor, inv_metric);
         Kokkos::fence();
     } else {
+        auto tmp_alloc = ddc::create_mirror(laplacian_tensor);
+        tensor::Tensor tmp(tmp_alloc);
+
         detail::codifferential_of_coboundary<
                 MetricIndex,
                 LaplacianDummyIndex2,
                 CochainTag>(exec_space, laplacian_tensor, tensor, inv_metric);
-
-        auto tmp_alloc = ddc::create_mirror_view(laplacian_tensor);
-        tensor::Tensor tmp(tmp_alloc);
         detail::coboundary_of_codifferential<
                 MetricIndex,
                 LaplacianDummyIndex,
