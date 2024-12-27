@@ -312,7 +312,7 @@ $(function(){initNavTree('codifferential_8hpp_source.html',''); initResizable(tr
 <div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a7aebefceb7d24467500a817f5073a311">sil::tensor::upper&lt;MetricIndex&gt;</a>,</div>
 <div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>            MuUpSeq,</div>
 <div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>            NuLowSeq&gt;(exec_space, hodge_star, inv_metric);</div>
-<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>    Kokkos::fence();</div>
+<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>    exec_space.fence();</div>
 <div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span> </div>
 <div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>    <span class="comment">// Dual tensor</span></div>
 <div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>    [[maybe_unused]] <a class="code hl_class" href="classsil_1_1tensor_1_1TensorAccessor.html">tensor::TensorAccessor</a>&lt;</div>
@@ -334,7 +334,7 @@ $(function(){initNavTree('codifferential_8hpp_source.html',''); initResizable(tr
 <div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>            KOKKOS_LAMBDA(<span class="keyword">typename</span> TensorType::non_indices_domain_t::discrete_element_type elem) {</div>
 <div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>                <a class="code hl_function" href="namespacesil_1_1tensor.html#a1bf1827923f85e07f3f920b6402ae377">sil::tensor::tensor_prod</a>(dual_tensor[elem], tensor[elem], hodge_star[elem]);</div>
 <div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span>            });</div>
-<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>    Kokkos::fence();</div>
+<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>    exec_space.fence();</div>
 <div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span> </div>
 <div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span>    <span class="comment">// Dual codifferential</span></div>
 <div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>    [[maybe_unused]] <a class="code hl_class" href="classsil_1_1tensor_1_1TensorAccessor.html">tensor::TensorAccessor</a>&lt;</div>
@@ -356,7 +356,7 @@ $(function(){initNavTree('codifferential_8hpp_source.html',''); initResizable(tr
 <div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span>            <a class="code hl_typedef" href="namespacesil_1_1misc.html#af83a849e8c4a2149160bd276d3e445c1">misc::convert_type_seq_to_t</a>&lt;</div>
 <div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span>                    <a class="code hl_struct" href="structsil_1_1tensor_1_1TensorAntisymmetricIndex.html">tensor::TensorAntisymmetricIndex</a>,</div>
 <div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span>                    NuLowSeq&gt;&gt;(exec_space, dual_codifferential, dual_tensor);</div>
-<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span>    Kokkos::fence();</div>
+<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span>    exec_space.fence();</div>
 <div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span> </div>
 <div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span>    <span class="comment">// Hodge star 2</span></div>
 <div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span>    [[maybe_unused]] <a class="code hl_typedef" href="namespacesil_1_1tensor.html#aeada71b3699ecf64d8d6cbfc44bf6a8c">sil::tensor::tensor_accessor_for_domain_t&lt;HodgeStarDomain2&gt;</a></div>
@@ -372,7 +372,7 @@ $(function(){initNavTree('codifferential_8hpp_source.html',''); initResizable(tr
 <div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span>            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a7aebefceb7d24467500a817f5073a311">sil::tensor::upper&lt;MetricIndex&gt;</a>,</div>
 <div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span>            RhoUpSeq,</div>
 <div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span>            SigmaLowSeq&gt;(exec_space, hodge_star2, inv_metric);</div>
-<div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span>    Kokkos::fence();</div>
+<div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span>    exec_space.fence();</div>
 <div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span> </div>
 <div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span>    <span class="comment">// Codifferential</span></div>
 <div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span>    ddc::parallel_for_each(</div>
@@ -388,7 +388,7 @@ $(function(){initNavTree('codifferential_8hpp_source.html',''); initResizable(tr
 <div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span>                    codifferential_tensor[elem] *= -1;</div>
 <div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span>                }</div>
 <div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span>            });</div>
-<div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span>    Kokkos::fence();</div>
+<div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span>    exec_space.fence();</div>
 <div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span> </div>
 <div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>    <span class="keywordflow">return</span> codifferential_tensor;</div>
 <div class="line"><a id="l00263" name="l00263"></a><span class="lineno">  263</span>}</div>
