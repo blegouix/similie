@@ -60,29 +60,29 @@ TEST(Laplacian, 2D1Form)
 {
     ddc::Coordinate<X, Y> lower_bounds(-5., -5.);
     ddc::Coordinate<X, Y> upper_bounds(5., 5.);
-    ddc::DiscreteVector<DDimX, DDimY> nb_cells(10, 10);
-    ddc::DiscreteDomain<DDimX> mesh_x = ddc::init_discrete_space<DDimX>(
+    ddc::DiscreteVector<DDimX, DDimY> nb_cells(50, 50);
+    ddc::DiscreteDomain<DDimX> mesh_x = ddc::init_discrete_space<DDimX>(DDimX::init<DDimX>(
             ddc::Coordinate<X>(lower_bounds),
             ddc::Coordinate<X>(upper_bounds),
-            ddc::DiscreteVector<DDimX>(nb_cells));
-    ddc::DiscreteDomain<DDimY> mesh_y = ddc::init_discrete_space<DDimY>(
+            ddc::DiscreteVector<DDimX>(nb_cells)));
+    ddc::DiscreteDomain<DDimY> mesh_y = ddc::init_discrete_space<DDimY>(DDimY::init<DDimY>(
             ddc::Coordinate<Y>(lower_bounds),
             ddc::Coordinate<Y>(upper_bounds),
-            ddc::DiscreteVector<DDimY>(nb_cells));
+            ddc::DiscreteVector<DDimY>(nb_cells)));
     ddc::DiscreteDomain<DDimX, DDimY> mesh_xy(mesh_x, mesh_y);
 
     // Allocate and instantiate an inverse metric tensor field.
     [[maybe_unused]] sil::tensor::TensorAccessor<MetricIndex<X, Y>> inv_metric_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, MetricIndex<X, Y>>
-            metric_dom(mesh_xy, metric_accessor.mem_domain());
-    ddc::Chunk metric_alloc(metric_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor metric(metric_alloc);
+            inv_metric_dom(mesh_xy, inv_metric_accessor.mem_domain());
+    ddc::Chunk inv_metric_alloc(inv_metric_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor inv_metric(inv_metric_alloc);
 
     // Potential
     [[maybe_unused]] sil::tensor::TensorAccessor<sil::tensor::TensorCovariantNaturalIndex<Mu2>>
             potential_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::TensorCovariantNaturalIndex<Mu2>>
-            potential_dom(metric.non_indices_domain(), potential_accessor.mem_domain());
+            potential_dom(mesh_xy, potential_accessor.mem_domain());
     ddc::Chunk potential_alloc(potential_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor potential(potential_alloc);
 
@@ -93,7 +93,7 @@ TEST(Laplacian, 2D1Form)
                           * static_cast<double>(nb_cells.template get<DDimY>()))
                          / L / 2 / L / 2;
     ddc::parallel_for_each(
-            DefaultHostExecutionSpace(),
+            Kokkos::DefaultHostExecutionSpace(),
             potential.non_indices_domain(),
             [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
                 double const r = Kokkos::sqrt(
@@ -120,20 +120,28 @@ TEST(Laplacian, 2D1Form)
             });
 
 
-    auto [alloc, laplacian]
-            = test_derivative<MetricIndex<X, Y>, Mu2, Mu2, DDimX>(potential, inv_metric);
+    auto [alloc, laplacian] = test_derivative<
+            MetricIndex<X, Y>,
+            sil::tensor::TensorCovariantNaturalIndex<Mu2>,
+            sil::tensor::TensorCovariantNaturalIndex<Mu2>,
+            DDimX,
+            DDimY>(potential, inv_metric);
     ddc::parallel_for_each(
-            DefaultHostExecutionSpace(),
-            laplacian.template domain<DDimX>(),
+            Kokkos::DefaultHostExecutionSpace(),
+            laplacian.template domain<DDimX>().remove_last(ddc::DiscreteVector<DDimX>(1)),
             [&](ddc::DiscreteElement<DDimX> elem) {
-                if constexpr (ddc::coordinate(elem) > 0) && ddc::coordinate(elem)<R)
-                    {
-                        EXPECT_EQ(
-                                laplacian(
-                                        elem,
-                                        ddc::DiscreteElement<DDimY> {0},
-                                        laplacian.accessor().access_element<Y>()),
-                                1.);
-                    }
+                double const value = laplacian(
+                        elem,
+                        ddc::DiscreteElement<DDimY> {
+                                static_cast<std::size_t>(nb_cells.template get<DDimY>()) / 2},
+                        laplacian.accessor().access_element<Y>());
+                if (ddc::coordinate(elem) < -1.2 * R || ddc::coordinate(elem) > 1.2 * R) {
+                    EXPECT_NEAR(value, 0., .5);
+                } else if (ddc::coordinate(elem) > -.8 * R && ddc::coordinate(elem) < -.2 * R) {
+                    EXPECT_NEAR(value, -1., .5);
+                }
+                if (ddc::coordinate(elem) > .2 * R && ddc::coordinate(elem) < .8 * R) {
+                    EXPECT_NEAR(value, 1., .5);
+                }
             });
 }
