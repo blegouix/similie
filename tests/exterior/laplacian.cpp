@@ -1,0 +1,139 @@
+// SPDX-FileCopyrightText: 2024 Baptiste Legouix
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+#include <cmath>
+
+#include <ddc/ddc.hpp>
+
+#include <gtest/gtest.h>
+#include <similie/tensor/identity_tensor.hpp>
+
+#include "exterior.hpp"
+
+// std::size_t N ?
+template <class MetricIndex, class InterestIndex, class Index, class... DDim>
+static auto test_derivative(auto potential, auto inv_metric)
+{
+    [[maybe_unused]] sil::tensor::TensorAccessor<Index> laplacian_accessor;
+    ddc::DiscreteDomain<DDim..., InterestIndex> laplacian_dom(
+            potential.non_indices_domain().remove_last(
+                    ddc::DiscreteVector<DDim...>(ddc::DiscreteVector<DDim>(1)...)),
+            laplacian_accessor.mem_domain());
+    ddc::Chunk laplacian_alloc(laplacian_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor laplacian(laplacian_alloc);
+
+    sil::exterior::laplacian<
+            MetricIndex,
+            InterestIndex,
+            Index>(Kokkos::DefaultHostExecutionSpace(), laplacian, potential, inv_metric);
+    Kokkos::fence();
+
+    return std::make_pair(std::move(laplacian_alloc), laplacian);
+}
+
+struct X
+{
+};
+
+struct Y
+{
+};
+
+struct DDimX : ddc::UniformPointSampling<X>
+{
+};
+
+struct DDimY : ddc::UniformPointSampling<Y>
+{
+};
+
+template <class... CDim>
+using MetricIndex = sil::tensor::TensorIdentityIndex<
+        sil::tensor::TensorContravariantNaturalIndex<sil::tensor::MetricIndex1<CDim...>>,
+        sil::tensor::TensorContravariantNaturalIndex<sil::tensor::MetricIndex2<CDim...>>>;
+
+struct Mu2 : sil::tensor::TensorNaturalIndex<X, Y>
+{
+};
+
+TEST(Laplacian, 2D1Form)
+{
+    ddc::Coordinate<X, Y> lower_bounds(-5., -5.);
+    ddc::Coordinate<X, Y> upper_bounds(5., 5.);
+    ddc::DiscreteVector<DDimX, DDimY> nb_cells(10, 10);
+    ddc::DiscreteDomain<DDimX> mesh_x = ddc::init_discrete_space<DDimX>(
+            ddc::Coordinate<X>(lower_bounds),
+            ddc::Coordinate<X>(upper_bounds),
+            ddc::DiscreteVector<DDimX>(nb_cells));
+    ddc::DiscreteDomain<DDimY> mesh_y = ddc::init_discrete_space<DDimY>(
+            ddc::Coordinate<Y>(lower_bounds),
+            ddc::Coordinate<Y>(upper_bounds),
+            ddc::DiscreteVector<DDimY>(nb_cells));
+    ddc::DiscreteDomain<DDimX, DDimY> mesh_xy(mesh_x, mesh_y);
+
+    // Allocate and instantiate an inverse metric tensor field.
+    [[maybe_unused]] sil::tensor::TensorAccessor<MetricIndex<X, Y>> inv_metric_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, MetricIndex<X, Y>>
+            metric_dom(mesh_xy, metric_accessor.mem_domain());
+    ddc::Chunk metric_alloc(metric_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor metric(metric_alloc);
+
+    // Potential
+    [[maybe_unused]] sil::tensor::TensorAccessor<sil::tensor::TensorCovariantNaturalIndex<Mu2>>
+            potential_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::TensorCovariantNaturalIndex<Mu2>>
+            potential_dom(metric.non_indices_domain(), potential_accessor.mem_domain());
+    ddc::Chunk potential_alloc(potential_dom, ddc::DeviceAllocator<double>());
+    sil::tensor::Tensor potential(potential_alloc);
+
+    double const R = 2.;
+    double const L = ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().back()))
+                     - ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().front()));
+    double const alpha = (static_cast<double>(nb_cells.template get<DDimX>())
+                          * static_cast<double>(nb_cells.template get<DDimY>()))
+                         / L / 2 / L / 2;
+    ddc::parallel_for_each(
+            DefaultHostExecutionSpace(),
+            potential.non_indices_domain(),
+            [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
+                double const r = Kokkos::sqrt(
+                        static_cast<double>(
+                                ddc::coordinate(ddc::DiscreteElement<DDimX>(elem))
+                                * ddc::coordinate(ddc::DiscreteElement<DDimX>(elem)))
+                        + static_cast<double>(
+                                ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))
+                                * ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))));
+                double const theta = Kokkos::
+                        atan2(ddc::coordinate(ddc::DiscreteElement<DDimY>(elem)),
+                              ddc::coordinate(ddc::DiscreteElement<DDimX>(elem)));
+                if (r <= R) {
+                    potential.mem(elem, potential_accessor.access_element<X>())
+                            = alpha * r * r * Kokkos::sin(theta);
+                    potential.mem(elem, potential_accessor.access_element<Y>())
+                            = -alpha * r * r * Kokkos::cos(theta);
+                } else {
+                    potential.mem(elem, potential_accessor.access_element<X>())
+                            = -alpha * R * R * (2 * Kokkos::log(R / r) - 1) * Kokkos::sin(theta);
+                    potential.mem(elem, potential_accessor.access_element<Y>())
+                            = alpha * R * R * (2 * Kokkos::log(R / r) - 1) * Kokkos::cos(theta);
+                }
+            });
+
+
+    auto [alloc, laplacian]
+            = test_derivative<MetricIndex<X, Y>, Mu2, Mu2, DDimX>(potential, inv_metric);
+    ddc::parallel_for_each(
+            DefaultHostExecutionSpace(),
+            laplacian.template domain<DDimX>(),
+            [&](ddc::DiscreteElement<DDimX> elem) {
+                if constexpr (ddc::coordinate(elem) > 0) && ddc::coordinate(elem)<R)
+                    {
+                        EXPECT_EQ(
+                                laplacian(
+                                        elem,
+                                        ddc::DiscreteElement<DDimY> {0},
+                                        laplacian.accessor().access_element<Y>()),
+                                1.);
+                    }
+            });
+}
