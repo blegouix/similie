@@ -111,7 +111,9 @@ concept TensorNatIndex = requires {
 } && DDim::is_tensor_natural_index;
 
 // ScalarIndex, a generic rank-0 index
-struct ScalarIndex : TensorNaturalIndex<> {};
+struct ScalarIndex : TensorNaturalIndex<>
+{
+};
 
 // natural_domain_t is obtained using concept and specialization
 namespace detail {
