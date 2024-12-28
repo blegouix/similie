@@ -10,10 +10,24 @@
 
 #include "exterior.hpp"
 
+template <class... CDim>
+using MetricIndex = sil::tensor::TensorIdentityIndex<
+        sil::tensor::TensorContravariantNaturalIndex<sil::tensor::MetricIndex1<CDim...>>,
+        sil::tensor::TensorContravariantNaturalIndex<sil::tensor::MetricIndex2<CDim...>>>;
+
 // std::size_t N ?
-template <class MetricIndex, class InterestIndex, class Index, class... DDim>
-static auto test_derivative(auto potential, auto inv_metric)
+template <class InterestIndex, class Index, class... DDim>
+static auto test_derivative(auto potential)
 {
+    // Allocate and instantiate an inverse metric tensor field.
+    [[maybe_unused]] sil::tensor::TensorAccessor<
+            MetricIndex<typename DDim::continuous_dimension_type...>> inv_metric_accessor;
+    ddc::DiscreteDomain<DDim..., MetricIndex<typename DDim::continuous_dimension_type...>>
+            inv_metric_dom(potential.non_indices_domain(), inv_metric_accessor.mem_domain());
+    ddc::Chunk inv_metric_alloc(inv_metric_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor inv_metric(inv_metric_alloc);
+
+    // Allocate and compute Laplacian
     [[maybe_unused]] sil::tensor::TensorAccessor<Index> laplacian_accessor;
     ddc::DiscreteDomain<DDim..., InterestIndex> laplacian_dom(
             potential.non_indices_domain().remove_last(
@@ -23,7 +37,7 @@ static auto test_derivative(auto potential, auto inv_metric)
     sil::tensor::Tensor laplacian(laplacian_alloc);
 
     sil::exterior::laplacian<
-            MetricIndex,
+            MetricIndex<typename DDim::continuous_dimension_type...>,
             InterestIndex,
             Index>(Kokkos::DefaultHostExecutionSpace(), laplacian, potential, inv_metric);
     Kokkos::fence();
@@ -47,11 +61,6 @@ struct DDimY : ddc::UniformPointSampling<Y>
 {
 };
 
-template <class... CDim>
-using MetricIndex = sil::tensor::TensorIdentityIndex<
-        sil::tensor::TensorContravariantNaturalIndex<sil::tensor::MetricIndex1<CDim...>>,
-        sil::tensor::TensorContravariantNaturalIndex<sil::tensor::MetricIndex2<CDim...>>>;
-
 struct Mu2 : sil::tensor::TensorNaturalIndex<X, Y>
 {
 };
@@ -70,13 +79,6 @@ TEST(Laplacian, 2D1Form)
             ddc::Coordinate<Y>(upper_bounds),
             ddc::DiscreteVector<DDimY>(nb_cells)));
     ddc::DiscreteDomain<DDimX, DDimY> mesh_xy(mesh_x, mesh_y);
-
-    // Allocate and instantiate an inverse metric tensor field.
-    [[maybe_unused]] sil::tensor::TensorAccessor<MetricIndex<X, Y>> inv_metric_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, MetricIndex<X, Y>>
-            inv_metric_dom(mesh_xy, inv_metric_accessor.mem_domain());
-    ddc::Chunk inv_metric_alloc(inv_metric_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor inv_metric(inv_metric_alloc);
 
     // Potential
     [[maybe_unused]] sil::tensor::TensorAccessor<sil::tensor::TensorCovariantNaturalIndex<Mu2>>
@@ -121,11 +123,10 @@ TEST(Laplacian, 2D1Form)
 
 
     auto [alloc, laplacian] = test_derivative<
-            MetricIndex<X, Y>,
             sil::tensor::TensorCovariantNaturalIndex<Mu2>,
             sil::tensor::TensorCovariantNaturalIndex<Mu2>,
             DDimX,
-            DDimY>(potential, inv_metric);
+            DDimY>(potential);
     ddc::parallel_for_each(
             Kokkos::DefaultHostExecutionSpace(),
             laplacian.template domain<DDimX>().remove_last(ddc::DiscreteVector<DDimX>(1)),
