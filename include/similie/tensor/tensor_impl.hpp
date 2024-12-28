@@ -532,15 +532,18 @@ struct LambdaMemElem<InterestDim>
             std::size_t const mem_id
                     = InterestDim::access_id_to_mem_id(elem.template uid<InterestDim>());
             assert(mem_id != std::numeric_limits<std::size_t>::max()
-                   && "mem_elem is not defined because mem_id() returned a max integer");
+                   && "mem_elem is not defined because mem_id() returned a max integer. Maybe you "
+                      "used Tensor::operator() in place of Tensor::get ?");
             return ddc::DiscreteElement<InterestDim>(mem_id);
         } else {
             std::pair<std::vector<double>, std::vector<std::size_t>> const mem_lin_comb
                     = InterestDim::access_id_to_mem_lin_comb(elem.template uid<InterestDim>());
             assert(std::get<0>(mem_lin_comb).size() > 0
-                   && "mem_elem is not defined because mem_lin_comb contains no id");
+                   && "mem_elem is not defined because mem_lin_comb contains no id. Maybe you used "
+                      "Tensor::operator() in place of Tensor::get ?");
             assert(std::get<0>(mem_lin_comb).size() == 1
-                   && "mem_elem is not defined because mem_lin_comb contains several ids");
+                   && "mem_elem is not defined because mem_lin_comb contains several ids. Maybe "
+                      "you used Tensor::operator() in place of Tensor::get ?");
             return ddc::DiscreteElement<InterestDim>(std::get<1>(mem_lin_comb)[0]);
         }
     }

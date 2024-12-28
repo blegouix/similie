@@ -69,7 +69,7 @@ TEST(Laplacian, 1D0Form)
 {
     ddc::Coordinate<X> lower_bounds(-5.);
     ddc::Coordinate<X> upper_bounds(5.);
-    ddc::DiscreteVector<DDimX> nb_cells(50);
+    ddc::DiscreteVector<DDimX> nb_cells(1000);
     ddc::DiscreteDomain<DDimX> mesh_x = ddc::init_discrete_space<DDimX>(
             DDimX::init<DDimX>(lower_bounds, upper_bounds, nb_cells));
 
@@ -84,15 +84,15 @@ TEST(Laplacian, 1D0Form)
     double const R = 2.;
     double const L = ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().back()))
                      - ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().front()));
-    double const alpha = static_cast<double>(nb_cells.template get<DDimX>()) / L / 2;
+    double const alpha = static_cast<double>(nb_cells.template get<DDimX>()) * 5;
     ddc::parallel_for_each(
             Kokkos::DefaultHostExecutionSpace(),
             potential.domain(),
             [&](ddc::DiscreteElement<
                     DDimX,
                     sil::tensor::TensorCovariantNaturalIndex<sil::tensor::ScalarIndex>> elem) {
-                double const r
-                        = static_cast<double>(ddc::coordinate(ddc::DiscreteElement<DDimX>(elem)));
+                double const r = Kokkos::abs(
+                        static_cast<double>(ddc::coordinate(ddc::DiscreteElement<DDimX>(elem))));
                 if (r <= R) {
                     potential.mem(elem) = -alpha * r * r;
                 } else {
@@ -115,9 +115,9 @@ TEST(Laplacian, 1D0Form)
                         ddc::DiscreteElement<sil::tensor::TensorCovariantNaturalIndex<
                                 sil::tensor::ScalarIndex>> {0});
                 if (ddc::coordinate(elem) < -1.2 * R || ddc::coordinate(elem) > 1.2 * R) {
-                    EXPECT_NEAR(value, 0., .5);
+                    EXPECT_NEAR(value, 0., 1e-2);
                 } else if (ddc::coordinate(elem) > -.8 * R && ddc::coordinate(elem) < .8 * R) {
-                    EXPECT_NEAR(value, 1., .5);
+                    EXPECT_NEAR(value, 1., 1e-2);
                 }
             });
     ddc::detail::g_discrete_space_dual<DDimX>.reset();
