@@ -65,10 +65,6 @@ struct Mu2 : sil::tensor::TensorNaturalIndex<X, Y>
 {
 };
 
-struct DummyIndex : sil::tensor::TensorNaturalIndex<>
-{
-};
-
 TEST(Laplacian, 2D0Form)
 {
     ddc::Coordinate<X, Y> lower_bounds(-5., -5.);
@@ -86,8 +82,11 @@ TEST(Laplacian, 2D0Form)
 
     // Potential
     [[maybe_unused]] sil::tensor::TensorAccessor<
-            sil::tensor::TensorCovariantNaturalIndex<DummyIndex>> potential_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::TensorCovariantNaturalIndex<DummyIndex>>
+            sil::tensor::TensorCovariantNaturalIndex<sil::tensor::ScalarIndex>> potential_accessor;
+    ddc::DiscreteDomain<
+            DDimX,
+            DDimY,
+            sil::tensor::TensorCovariantNaturalIndex<sil::tensor::ScalarIndex>>
             potential_dom(mesh_xy, potential_accessor.mem_domain());
     ddc::Chunk potential_alloc(potential_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor potential(potential_alloc);
@@ -104,7 +103,7 @@ TEST(Laplacian, 2D0Form)
             [&](ddc::DiscreteElement<
                     DDimX,
                     DDimY,
-                    sil::tensor::TensorCovariantNaturalIndex<DummyIndex>> elem) {
+                    sil::tensor::TensorCovariantNaturalIndex<sil::tensor::ScalarIndex>> elem) {
                 double const r = Kokkos::sqrt(
                         static_cast<double>(
                                 ddc::coordinate(ddc::DiscreteElement<DDimX>(elem))
@@ -122,7 +121,7 @@ TEST(Laplacian, 2D0Form)
 
     auto [alloc, laplacian] = test_derivative<
             sil::tensor::TensorCovariantNaturalIndex<Mu2>,
-            sil::tensor::TensorCovariantNaturalIndex<DummyIndex>,
+            sil::tensor::TensorCovariantNaturalIndex<sil::tensor::ScalarIndex>,
             DDimX,
             DDimY>(potential);
 
@@ -134,14 +133,16 @@ TEST(Laplacian, 2D0Form)
                         elem,
                         ddc::DiscreteElement<DDimY> {
                                 static_cast<std::size_t>(nb_cells.template get<DDimY>()) / 2},
-                        ddc::DiscreteElement<sil::tensor::TensorCovariantNaturalIndex<DummyIndex>> {
-                                0});
+                        ddc::DiscreteElement<sil::tensor::TensorCovariantNaturalIndex<
+                                sil::tensor::ScalarIndex>> {0});
                 if (ddc::coordinate(elem) < -1.2 * R || ddc::coordinate(elem) > 1.2 * R) {
                     EXPECT_NEAR(value, 0., .5);
                 } else if (ddc::coordinate(elem) > -.8 * R && ddc::coordinate(elem) < .8 * R) {
                     EXPECT_NEAR(value, 1., .5);
                 }
             });
+    ddc::detail::g_discrete_space_dual<DDimX>.reset();
+    ddc::detail::g_discrete_space_dual<DDimY>.reset();
 }
 
 TEST(Laplacian, 2D1Form)
@@ -224,4 +225,6 @@ TEST(Laplacian, 2D1Form)
                     EXPECT_NEAR(value, 1., .5);
                 }
             });
+    ddc::detail::g_discrete_space_dual<DDimX>.reset();
+    ddc::detail::g_discrete_space_dual<DDimY>.reset();
 }
