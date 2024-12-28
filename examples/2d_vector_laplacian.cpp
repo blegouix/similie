@@ -211,6 +211,7 @@ int main(int argc, char** argv)
                           * static_cast<double>(nb_cells.template get<DDimY>()))
                          / L / 2 / L / 2;
     ddc::parallel_for_each(
+            DefaultExecutionSpace(),
             potential.non_indices_domain(),
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
                 double const r = Kokkos::sqrt(

@@ -7,19 +7,19 @@ SPDX-License-Identifier: GPL-3.0-or-later
 ----- TODO -----
 
 - sil::tensor::detail::Access implementation is not complete 
+- Avoid usage of std::array in non-constexpr tensor_impl function (exclusive to YoungTableauIndexing)
 - Partial CTAD works for function. Check if it can simplify some implementations
 - Primary-specialization is given by not writing <>. Maybe it can simplify some implementation
 - tests for relabelize_indexes and relabelize_metric
 - Unify TensorAccessor::access_element() functions. Also get<Dims...>() in Tensor ?
 - Consider creating a misc enum for {-1 1} and use it in simplices/chains
 - enforced_deep_copy (avoid call to Kokkos::deep_copy)
-- Rename TensorCovariantTensorIndex -> Covariant
-- Relabelizion in different file ?
 - Tensor indexes should be template with TensorNatIndex
-- Remove metric_prod_t (and every helper producing a tensor)
-- Avoid usage of std::array in non-constexpr tensor_impl function (exclusive to YoungTableauIndexing)
-- Document codifferential
-- exec_space.fence()
+- Consider removing metric_prod_t (and every helper producing a tensor). At least, standardize API.
+- Relabelizion in different file ?
+- Rename TensorCovariantTensorIndex -> Covariant
+- Streams in Laplacian
+- No need to return pairs in tests, just use CTAD to recover the Tensor from the Chunk
 
 ----- SETUP BASIC COMMAND -----
 

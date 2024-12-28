@@ -35,3 +35,14 @@ target_link_libraries(unit_tests_hodge_star
 )
 
 gtest_discover_tests(unit_tests_hodge_star DISCOVERY_MODE PRE_TEST)
+
+add_executable(unit_tests_laplacian laplacian.cpp ../main.cpp)
+
+target_link_libraries(unit_tests_laplacian
+    PUBLIC
+        GTest::gtest
+        DDC::DDC
+        sil::exterior
+)
+
+gtest_discover_tests(unit_tests_laplacian DISCOVERY_MODE PRE_TEST)
