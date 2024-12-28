@@ -29,7 +29,7 @@ static auto test_derivative(auto potential)
 
     // Allocate and compute Laplacian
     [[maybe_unused]] sil::tensor::TensorAccessor<Index> laplacian_accessor;
-    ddc::DiscreteDomain<DDim..., InterestIndex> laplacian_dom(
+    ddc::DiscreteDomain<DDim..., Index> laplacian_dom(
             potential.non_indices_domain().remove_last(
                     ddc::DiscreteVector<DDim...>(ddc::DiscreteVector<DDim>(1)...)),
             laplacian_accessor.mem_domain());
@@ -134,7 +134,8 @@ TEST(Laplacian, 2D0Form)
                         elem,
                         ddc::DiscreteElement<DDimY> {
                                 static_cast<std::size_t>(nb_cells.template get<DDimY>()) / 2},
-                        laplacian.accessor().access_element<Y>());
+                        ddc::DiscreteElement<sil::tensor::TensorCovariantNaturalIndex<DummyIndex>> {
+                                0});
                 if (ddc::coordinate(elem) < -1.2 * R || ddc::coordinate(elem) > 1.2 * R) {
                     EXPECT_NEAR(value, 0., .5);
                 } else if (ddc::coordinate(elem) > -.8 * R && ddc::coordinate(elem) < .8 * R) {
