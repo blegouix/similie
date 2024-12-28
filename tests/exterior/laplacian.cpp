@@ -123,6 +123,59 @@ TEST(Laplacian, 1D0Form)
     ddc::detail::g_discrete_space_dual<DDimX>.reset();
 }
 
+TEST(Laplacian, 1D1Form)
+{
+    ddc::Coordinate<X> lower_bounds(-5.);
+    ddc::Coordinate<X> upper_bounds(5.);
+    ddc::DiscreteVector<DDimX> nb_cells(1000);
+    ddc::DiscreteDomain<DDimX> mesh_x = ddc::init_discrete_space<DDimX>(
+            DDimX::init<DDimX>(lower_bounds, upper_bounds, nb_cells));
+
+    // Potential
+    [[maybe_unused]] sil::tensor::TensorAccessor<sil::tensor::TensorCovariantNaturalIndex<Mu1>>
+            potential_accessor;
+    ddc::DiscreteDomain<DDimX, sil::tensor::TensorCovariantNaturalIndex<Mu1>>
+            potential_dom(mesh_x, potential_accessor.mem_domain());
+    ddc::Chunk potential_alloc(potential_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor potential(potential_alloc);
+
+    double const R = 2.;
+    double const L = ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().back()))
+                     - ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().front()));
+    double const alpha = static_cast<double>(nb_cells.template get<DDimX>()) * 5;
+    ddc::parallel_for_each(
+            Kokkos::DefaultHostExecutionSpace(),
+            potential.domain(),
+            [&](ddc::DiscreteElement<DDimX, sil::tensor::TensorCovariantNaturalIndex<Mu1>> elem) {
+                double const r = Kokkos::abs(
+                        static_cast<double>(ddc::coordinate(ddc::DiscreteElement<DDimX>(elem))));
+                if (r <= R) {
+                    potential.mem(elem) = -alpha * r * r;
+                } else {
+                    potential.mem(elem) = -alpha * R * (2 * r - R);
+                }
+            });
+
+
+    auto [alloc, laplacian] = test_derivative<
+            sil::tensor::TensorCovariantNaturalIndex<Mu1>,
+            sil::tensor::TensorCovariantNaturalIndex<Mu1>,
+            DDimX>(potential);
+
+    ddc::parallel_for_each(
+            Kokkos::DefaultHostExecutionSpace(),
+            laplacian.template domain<DDimX>().remove_last(ddc::DiscreteVector<DDimX>(1)),
+            [&](ddc::DiscreteElement<DDimX> elem) {
+                double const value = laplacian(elem, laplacian.accessor().access_element<X>());
+                if (ddc::coordinate(elem) < -1.2 * R || ddc::coordinate(elem) > 1.2 * R) {
+                    EXPECT_NEAR(value, 0., 1e-2);
+                } else if (ddc::coordinate(elem) > -.8 * R && ddc::coordinate(elem) < .8 * R) {
+                    EXPECT_NEAR(value, 1., 1e-2);
+                }
+            });
+    ddc::detail::g_discrete_space_dual<DDimX>.reset();
+}
+
 struct Mu2 : sil::tensor::TensorNaturalIndex<X, Y>
 {
 };
