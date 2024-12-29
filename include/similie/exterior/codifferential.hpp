@@ -130,13 +130,30 @@ struct CodifferentialDummyIndex : tensor::uncharacterize<T>
 };
 
 template <class Ids, class T>
-struct CodifferentialDummyIndexSeq;
+struct CodifferentialDummyIndexSeq_;
 
 template <std::size_t... Id, class T>
-struct CodifferentialDummyIndexSeq<std::index_sequence<Id...>, T>
+struct CodifferentialDummyIndexSeq_<std::index_sequence<Id...>, T>
 {
     using type = ddc::detail::TypeSeq<
             tensor::TensorCovariantNaturalIndex<CodifferentialDummyIndex<Id, T>>...>;
+};
+
+template <std::size_t EndId, class T>
+struct CodifferentialDummyIndexSeq;
+
+template <std::size_t EndId, class T>
+    requires(EndId == 0)
+struct CodifferentialDummyIndexSeq<EndId, T>
+{
+    using type = ddc::detail::TypeSeq<>;
+};
+
+template <std::size_t EndId, class T>
+    requires(EndId > 0)
+struct CodifferentialDummyIndexSeq<EndId, T>
+{
+    using type = typename CodifferentialDummyIndexSeq_<std::make_index_sequence<EndId>, T>::type;
 };
 
 } // namespace detail
@@ -158,7 +175,7 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
     static_assert(tensor::is_covariant_v<TagToRemoveFromCochain>);
     using MuUpSeq = tensor::upper<ddc::to_type_seq_t<tensor::natural_domain_t<CochainTag>>>;
     using NuLowSeq = typename detail::CodifferentialDummyIndexSeq<
-            std::make_index_sequence<TagToRemoveFromCochain::size() - CochainTag::rank()>,
+            TagToRemoveFromCochain::size() - CochainTag::rank(),
             TagToRemoveFromCochain>::type;
     using RhoLowSeq = ddc::type_seq_merge_t<ddc::detail::TypeSeq<TagToRemoveFromCochain>, NuLowSeq>;
     using RhoUpSeq = tensor::upper<RhoLowSeq>;
