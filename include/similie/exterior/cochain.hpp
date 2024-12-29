@@ -190,7 +190,7 @@ public:
         for (auto i = begin(); i < end(); ++i) {
             if constexpr (misc::Specialization<chain_type, Chain>) {
                 out += ((*i).negative() ? -1 : 1) * (*i).value();
-            } else if (misc::Specialization<chain_type, LocalChain>) {
+            } else if constexpr (misc::Specialization<chain_type, LocalChain>) {
                 out += (m_chain.negative() ? -1 : 1) * (*i).value(); // always false
             }
         }
@@ -203,7 +203,7 @@ public:
         for (auto i = begin(); i < end(); ++i) {
             if constexpr (misc::Specialization<chain_type, Chain>) {
                 out += ((*i).negative() ? -1 : 1) * (*i).value();
-            } else if (misc::Specialization<chain_type, LocalChain>) {
+            } else if constexpr (misc::Specialization<chain_type, LocalChain>) {
                 out += (m_chain.negative() ? -1 : 1) * (*i).value(); // always false
             }
         }
