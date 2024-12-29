@@ -124,7 +124,7 @@ TensorType laplacian(
         MetricType inv_metric)
 {
     static_assert(tensor::is_covariant_v<LaplacianDummyIndex>);
-    using LaplacianDummyIndex2 = tensor::TensorCovariantNaturalIndex<
+    using LaplacianDummyIndex2 = tensor::Covariant<
             detail::LaplacianDummy2<tensor::uncharacterize<LaplacianDummyIndex>>>;
 
     if constexpr (CochainTag::rank() == 0) {

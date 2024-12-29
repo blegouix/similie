@@ -17,9 +17,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 - Tensor indexes should be template with TensorNatIndex
 - Consider removing metric_prod_t (and every helper producing a tensor). At least, standardize API.
 - Relabelizion in different file ?
-- Rename TensorCovariantTensorIndex -> Covariant
 - Streams in Laplacian
-- else if constexpr
 
 ----- SETUP BASIC COMMAND -----
 

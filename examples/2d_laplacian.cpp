@@ -87,8 +87,8 @@ struct Y
 
 // Declare a metric
 using MetricIndex = sil::tensor::TensorSymmetricIndex<
-        sil::tensor::TensorCovariantNaturalIndex<sil::tensor::MetricIndex1<X, Y>>,
-        sil::tensor::TensorCovariantNaturalIndex<sil::tensor::MetricIndex2<X, Y>>>;
+        sil::tensor::Covariant<sil::tensor::MetricIndex1<X, Y>>,
+        sil::tensor::Covariant<sil::tensor::MetricIndex2<X, Y>>>;
 
 using MesherXY = sil::mesher::Mesher<s_degree, X, Y>;
 
@@ -114,10 +114,10 @@ struct Nu : sil::tensor::TensorNaturalIndex<X, Y>
 };
 
 // Declare indices
-using NuLow = sil::tensor::TensorCovariantNaturalIndex<Nu>;
-using NuUp = sil::tensor::TensorContravariantNaturalIndex<Nu>;
+using NuLow = sil::tensor::Covariant<Nu>;
+using NuUp = sil::tensor::Contravariant<Nu>;
 
-using DummyIndex = sil::tensor::TensorCovariantNaturalIndex<sil::tensor::ScalarIndex>;
+using DummyIndex = sil::tensor::Covariant<sil::tensor::ScalarIndex>;
 
 int main(int argc, char** argv)
 {

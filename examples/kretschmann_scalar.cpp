@@ -31,8 +31,8 @@ struct Z
 // Declare the Minkowski metric as a Lorentzian signature (-, +, +, +)
 using MetricIndex = sil::tensor::TensorLorentzianSignIndex<
         std::integral_constant<std::size_t, 1>,
-        sil::tensor::TensorCovariantNaturalIndex<sil::tensor::MetricIndex1<T, X, Y, Z>>,
-        sil::tensor::TensorCovariantNaturalIndex<sil::tensor::MetricIndex2<T, X, Y, Z>>>;
+        sil::tensor::Covariant<sil::tensor::MetricIndex1<T, X, Y, Z>>,
+        sil::tensor::Covariant<sil::tensor::MetricIndex2<T, X, Y, Z>>>;
 
 // Declare natural indices taking values in {T, X, Y, Z}
 struct Mu : sil::tensor::TensorNaturalIndex<T, X, Y, Z>
@@ -52,10 +52,10 @@ struct Sigma : sil::tensor::TensorNaturalIndex<T, X, Y, Z>
 };
 
 // Declare upper (contravariant) indices
-using MuUp = sil::tensor::TensorContravariantNaturalIndex<Mu>;
-using NuUp = sil::tensor::TensorContravariantNaturalIndex<Nu>;
-using RhoUp = sil::tensor::TensorContravariantNaturalIndex<Rho>;
-using SigmaUp = sil::tensor::TensorContravariantNaturalIndex<Sigma>;
+using MuUp = sil::tensor::Contravariant<Mu>;
+using NuUp = sil::tensor::Contravariant<Nu>;
+using RhoUp = sil::tensor::Contravariant<Rho>;
+using SigmaUp = sil::tensor::Contravariant<Sigma>;
 
 // Declare also their covariant counterparts
 using MuLow = sil::tensor::lower<MuUp>;

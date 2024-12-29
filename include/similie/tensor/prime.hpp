@@ -33,15 +33,15 @@ struct Primes<ddc::detail::TypeSeq<Index...>, I>
 };
 
 template <class... Index, std::size_t I>
-struct Primes<ddc::detail::TypeSeq<TensorContravariantNaturalIndex<Index>...>, I>
+struct Primes<ddc::detail::TypeSeq<Contravariant<Index>...>, I>
 {
-    using type = ddc::detail::TypeSeq<TensorContravariantNaturalIndex<prime<Index, I>>...>;
+    using type = ddc::detail::TypeSeq<Contravariant<prime<Index, I>>...>;
 };
 
 template <class... Index, std::size_t I>
-struct Primes<ddc::detail::TypeSeq<TensorCovariantNaturalIndex<Index>...>, I>
+struct Primes<ddc::detail::TypeSeq<Covariant<Index>...>, I>
 {
-    using type = ddc::detail::TypeSeq<TensorCovariantNaturalIndex<prime<Index, I>>...>;
+    using type = ddc::detail::TypeSeq<Covariant<prime<Index, I>>...>;
 };
 
 } // namespace detail

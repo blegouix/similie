@@ -47,16 +47,16 @@ struct Rho : sil::tensor::TensorNaturalIndex<X, Y, Z>
 {
 };
 
-using MuUp = sil::tensor::TensorContravariantNaturalIndex<Mu>;
-using MuLow = sil::tensor::TensorCovariantNaturalIndex<Mu>;
-using NuUp = sil::tensor::TensorContravariantNaturalIndex<Nu>;
-using NuLow = sil::tensor::TensorCovariantNaturalIndex<Nu>;
-using RhoUp = sil::tensor::TensorContravariantNaturalIndex<Rho>;
-using RhoLow = sil::tensor::TensorCovariantNaturalIndex<Rho>;
+using MuUp = sil::tensor::Contravariant<Mu>;
+using MuLow = sil::tensor::Covariant<Mu>;
+using NuUp = sil::tensor::Contravariant<Nu>;
+using NuLow = sil::tensor::Covariant<Nu>;
+using RhoUp = sil::tensor::Contravariant<Rho>;
+using RhoLow = sil::tensor::Covariant<Rho>;
 
 using MetricIndex = sil::tensor::TensorSymmetricIndex<
-        sil::tensor::TensorContravariantNaturalIndex<sil::tensor::MetricIndex1<X, Y, Z>>,
-        sil::tensor::TensorContravariantNaturalIndex<sil::tensor::MetricIndex2<X, Y, Z>>>;
+        sil::tensor::Contravariant<sil::tensor::MetricIndex1<X, Y, Z>>,
+        sil::tensor::Contravariant<sil::tensor::MetricIndex2<X, Y, Z>>>;
 
 using HodgeStarDomain = sil::exterior::
         hodge_star_domain_t<ddc::detail::TypeSeq<MuUp, NuUp>, ddc::detail::TypeSeq<RhoLow>>;

@@ -12,8 +12,8 @@
 
 template <class... CDim>
 using MetricIndex = sil::tensor::TensorIdentityIndex<
-        sil::tensor::TensorContravariantNaturalIndex<sil::tensor::MetricIndex1<CDim...>>,
-        sil::tensor::TensorContravariantNaturalIndex<sil::tensor::MetricIndex2<CDim...>>>;
+        sil::tensor::Contravariant<sil::tensor::MetricIndex1<CDim...>>,
+        sil::tensor::Contravariant<sil::tensor::MetricIndex2<CDim...>>>;
 
 template <class InterestIndex, class Index, class... DDim>
 static auto test_derivative(auto potential)
@@ -81,9 +81,9 @@ TEST(Laplacian, 1D0Form)
             DDimX::init<DDimX>(lower_bounds, upper_bounds, nb_cells));
 
     // Potential
-    [[maybe_unused]] sil::tensor::TensorAccessor<
-            sil::tensor::TensorCovariantNaturalIndex<sil::tensor::ScalarIndex>> potential_accessor;
-    ddc::DiscreteDomain<DDimX, sil::tensor::TensorCovariantNaturalIndex<sil::tensor::ScalarIndex>>
+    [[maybe_unused]] sil::tensor::TensorAccessor<sil::tensor::Covariant<sil::tensor::ScalarIndex>>
+            potential_accessor;
+    ddc::DiscreteDomain<DDimX, sil::tensor::Covariant<sil::tensor::ScalarIndex>>
             potential_dom(mesh_x, potential_accessor.mem_domain());
     ddc::Chunk potential_alloc(potential_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor potential(potential_alloc);
@@ -95,9 +95,8 @@ TEST(Laplacian, 1D0Form)
     ddc::parallel_for_each(
             Kokkos::DefaultHostExecutionSpace(),
             potential.domain(),
-            [&](ddc::DiscreteElement<
-                    DDimX,
-                    sil::tensor::TensorCovariantNaturalIndex<sil::tensor::ScalarIndex>> elem) {
+            [&](ddc::DiscreteElement<DDimX, sil::tensor::Covariant<sil::tensor::ScalarIndex>>
+                        elem) {
                 double const r = Kokkos::abs(
                         static_cast<double>(ddc::coordinate(ddc::DiscreteElement<DDimX>(elem))));
                 if (r <= R) {
@@ -109,8 +108,8 @@ TEST(Laplacian, 1D0Form)
 
 
     auto [alloc, laplacian] = test_derivative<
-            sil::tensor::TensorCovariantNaturalIndex<Mu1>,
-            sil::tensor::TensorCovariantNaturalIndex<sil::tensor::ScalarIndex>,
+            sil::tensor::Covariant<Mu1>,
+            sil::tensor::Covariant<sil::tensor::ScalarIndex>,
             DDimX>(potential);
 
     ddc::parallel_for_each(
@@ -119,8 +118,7 @@ TEST(Laplacian, 1D0Form)
             [&](ddc::DiscreteElement<DDimX> elem) {
                 double const value = laplacian(
                         elem,
-                        ddc::DiscreteElement<sil::tensor::TensorCovariantNaturalIndex<
-                                sil::tensor::ScalarIndex>> {0});
+                        ddc::DiscreteElement<sil::tensor::Covariant<sil::tensor::ScalarIndex>> {0});
                 if (ddc::coordinate(elem) < -1.2 * R || ddc::coordinate(elem) > 1.2 * R) {
                     EXPECT_NEAR(value, 0., 1e-2);
                 } else if (ddc::coordinate(elem) > -.8 * R && ddc::coordinate(elem) < .8 * R) {
@@ -139,9 +137,8 @@ TEST(Laplacian, 1D1Form)
             DDimX::init<DDimX>(lower_bounds, upper_bounds, nb_cells));
 
     // Potential
-    [[maybe_unused]] sil::tensor::TensorAccessor<sil::tensor::TensorCovariantNaturalIndex<Mu1>>
-            potential_accessor;
-    ddc::DiscreteDomain<DDimX, sil::tensor::TensorCovariantNaturalIndex<Mu1>>
+    [[maybe_unused]] sil::tensor::TensorAccessor<sil::tensor::Covariant<Mu1>> potential_accessor;
+    ddc::DiscreteDomain<DDimX, sil::tensor::Covariant<Mu1>>
             potential_dom(mesh_x, potential_accessor.mem_domain());
     ddc::Chunk potential_alloc(potential_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor potential(potential_alloc);
@@ -153,7 +150,7 @@ TEST(Laplacian, 1D1Form)
     ddc::parallel_for_each(
             Kokkos::DefaultHostExecutionSpace(),
             potential.domain(),
-            [&](ddc::DiscreteElement<DDimX, sil::tensor::TensorCovariantNaturalIndex<Mu1>> elem) {
+            [&](ddc::DiscreteElement<DDimX, sil::tensor::Covariant<Mu1>> elem) {
                 double const r = Kokkos::abs(
                         static_cast<double>(ddc::coordinate(ddc::DiscreteElement<DDimX>(elem))));
                 if (r <= R) {
@@ -164,10 +161,9 @@ TEST(Laplacian, 1D1Form)
             });
 
 
-    auto [alloc, laplacian] = test_derivative<
-            sil::tensor::TensorCovariantNaturalIndex<Mu1>,
-            sil::tensor::TensorCovariantNaturalIndex<Mu1>,
-            DDimX>(potential);
+    auto [alloc, laplacian]
+            = test_derivative<sil::tensor::Covariant<Mu1>, sil::tensor::Covariant<Mu1>, DDimX>(
+                    potential);
 
     ddc::parallel_for_each(
             Kokkos::DefaultHostExecutionSpace(),
@@ -203,12 +199,9 @@ TEST(Laplacian, 2D0Form)
     ddc::DiscreteDomain<DDimX, DDimY> mesh_xy(mesh_x, mesh_y);
 
     // Potential
-    [[maybe_unused]] sil::tensor::TensorAccessor<
-            sil::tensor::TensorCovariantNaturalIndex<sil::tensor::ScalarIndex>> potential_accessor;
-    ddc::DiscreteDomain<
-            DDimX,
-            DDimY,
-            sil::tensor::TensorCovariantNaturalIndex<sil::tensor::ScalarIndex>>
+    [[maybe_unused]] sil::tensor::TensorAccessor<sil::tensor::Covariant<sil::tensor::ScalarIndex>>
+            potential_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::Covariant<sil::tensor::ScalarIndex>>
             potential_dom(mesh_xy, potential_accessor.mem_domain());
     ddc::Chunk potential_alloc(potential_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor potential(potential_alloc);
@@ -222,10 +215,8 @@ TEST(Laplacian, 2D0Form)
     ddc::parallel_for_each(
             Kokkos::DefaultHostExecutionSpace(),
             potential.domain(),
-            [&](ddc::DiscreteElement<
-                    DDimX,
-                    DDimY,
-                    sil::tensor::TensorCovariantNaturalIndex<sil::tensor::ScalarIndex>> elem) {
+            [&](ddc::DiscreteElement<DDimX, DDimY, sil::tensor::Covariant<sil::tensor::ScalarIndex>>
+                        elem) {
                 double const r = Kokkos::sqrt(
                         static_cast<double>(
                                 ddc::coordinate(ddc::DiscreteElement<DDimX>(elem))
@@ -242,8 +233,8 @@ TEST(Laplacian, 2D0Form)
 
 
     auto [alloc, laplacian] = test_derivative<
-            sil::tensor::TensorCovariantNaturalIndex<Mu2>,
-            sil::tensor::TensorCovariantNaturalIndex<sil::tensor::ScalarIndex>,
+            sil::tensor::Covariant<Mu2>,
+            sil::tensor::Covariant<sil::tensor::ScalarIndex>,
             DDimX,
             DDimY>(potential);
 
@@ -255,8 +246,7 @@ TEST(Laplacian, 2D0Form)
                         elem,
                         ddc::DiscreteElement<DDimY> {
                                 static_cast<std::size_t>(nb_cells.template get<DDimY>()) / 2},
-                        ddc::DiscreteElement<sil::tensor::TensorCovariantNaturalIndex<
-                                sil::tensor::ScalarIndex>> {0});
+                        ddc::DiscreteElement<sil::tensor::Covariant<sil::tensor::ScalarIndex>> {0});
                 if (ddc::coordinate(elem) < -1.2 * R || ddc::coordinate(elem) > 1.2 * R) {
                     EXPECT_NEAR(value, 0., .5);
                 } else if (ddc::coordinate(elem) > -.8 * R && ddc::coordinate(elem) < .8 * R) {
@@ -283,9 +273,8 @@ TEST(Laplacian, 2D1Form)
     ddc::DiscreteDomain<DDimX, DDimY> mesh_xy(mesh_x, mesh_y);
 
     // Potential
-    [[maybe_unused]] sil::tensor::TensorAccessor<sil::tensor::TensorCovariantNaturalIndex<Mu2>>
-            potential_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::TensorCovariantNaturalIndex<Mu2>>
+    [[maybe_unused]] sil::tensor::TensorAccessor<sil::tensor::Covariant<Mu2>> potential_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::Covariant<Mu2>>
             potential_dom(mesh_xy, potential_accessor.mem_domain());
     ddc::Chunk potential_alloc(potential_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor potential(potential_alloc);
@@ -325,8 +314,8 @@ TEST(Laplacian, 2D1Form)
 
 
     auto [alloc, laplacian] = test_derivative<
-            sil::tensor::TensorCovariantNaturalIndex<Mu2>,
-            sil::tensor::TensorCovariantNaturalIndex<Mu2>,
+            sil::tensor::Covariant<Mu2>,
+            sil::tensor::Covariant<Mu2>,
             DDimX,
             DDimY>(potential);
 
@@ -375,9 +364,8 @@ TEST(Laplacian, 3D1Form)
     ddc::DiscreteDomain<DDimX, DDimY, DDimZ> mesh_xyz(mesh_x, mesh_y, mesh_z);
 
     // Potential
-    [[maybe_unused]] sil::tensor::TensorAccessor<sil::tensor::TensorCovariantNaturalIndex<Mu3>>
-            potential_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, DDimZ, sil::tensor::TensorCovariantNaturalIndex<Mu3>>
+    [[maybe_unused]] sil::tensor::TensorAccessor<sil::tensor::Covariant<Mu3>> potential_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, DDimZ, sil::tensor::Covariant<Mu3>>
             potential_dom(mesh_xyz, potential_accessor.mem_domain());
     ddc::Chunk potential_alloc(potential_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor potential(potential_alloc);
@@ -421,8 +409,8 @@ TEST(Laplacian, 3D1Form)
 
 
     auto [alloc, laplacian] = test_derivative<
-            sil::tensor::TensorCovariantNaturalIndex<Mu3>,
-            sil::tensor::TensorCovariantNaturalIndex<Mu3>,
+            sil::tensor::Covariant<Mu3>,
+            sil::tensor::Covariant<Mu3>,
             DDimX,
             DDimY,
             DDimZ>(potential);

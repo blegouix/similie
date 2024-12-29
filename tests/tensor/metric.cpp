@@ -57,12 +57,12 @@ TEST(Metric, MetricLike)
     });
 }
 
-using ILow = sil::tensor::TensorCovariantNaturalIndex<I>;
-using JLow = sil::tensor::TensorCovariantNaturalIndex<J>;
+using ILow = sil::tensor::Covariant<I>;
+using JLow = sil::tensor::Covariant<J>;
 
 using MetricIndex = sil::tensor::TensorSymmetricIndex<
-        sil::tensor::TensorCovariantNaturalIndex<sil::tensor::MetricIndex1<X, Y>>,
-        sil::tensor::TensorCovariantNaturalIndex<sil::tensor::MetricIndex2<X, Y>>>;
+        sil::tensor::Covariant<sil::tensor::MetricIndex1<X, Y>>,
+        sil::tensor::Covariant<sil::tensor::MetricIndex2<X, Y>>>;
 
 TEST(Metric, Covariant)
 {
@@ -94,7 +94,7 @@ struct K : sil::tensor::TensorNaturalIndex<X, Y>
 {
 };
 
-using KLow = sil::tensor::TensorCovariantNaturalIndex<K>;
+using KLow = sil::tensor::Covariant<K>;
 using KUp = sil::tensor::upper<KLow>;
 
 TEST(Metric, ChristoffelLike)
@@ -192,16 +192,16 @@ struct Z
 };
 
 using DirectMetricIndex = sil::tensor::TensorSymmetricIndex<
-        sil::tensor::TensorCovariantNaturalIndex<sil::tensor::MetricIndex1<X, Y, Z>>,
-        sil::tensor::TensorCovariantNaturalIndex<sil::tensor::MetricIndex2<X, Y, Z>>>;
+        sil::tensor::Covariant<sil::tensor::MetricIndex1<X, Y, Z>>,
+        sil::tensor::Covariant<sil::tensor::MetricIndex2<X, Y, Z>>>;
 
 using InvMetricIndex = sil::tensor::TensorSymmetricIndex<
-        sil::tensor::TensorContravariantNaturalIndex<sil::tensor::MetricIndex1<X, Y, Z>>,
-        sil::tensor::TensorContravariantNaturalIndex<sil::tensor::MetricIndex2<X, Y, Z>>>;
+        sil::tensor::Contravariant<sil::tensor::MetricIndex1<X, Y, Z>>,
+        sil::tensor::Contravariant<sil::tensor::MetricIndex2<X, Y, Z>>>;
 
 using IdIndex = sil::tensor::TensorSymmetricIndex<
-        sil::tensor::TensorCovariantNaturalIndex<sil::tensor::MetricIndex1<X, Y, Z>>,
-        sil::tensor::TensorContravariantNaturalIndex<sil::tensor::MetricIndex2<X, Y, Z>>>;
+        sil::tensor::Covariant<sil::tensor::MetricIndex1<X, Y, Z>>,
+        sil::tensor::Contravariant<sil::tensor::MetricIndex2<X, Y, Z>>>;
 
 struct Alpha : sil::tensor::TensorNaturalIndex<X, Y, Z>
 {
