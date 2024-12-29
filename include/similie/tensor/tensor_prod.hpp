@@ -140,7 +140,7 @@ struct TensorProdAnyAnyAny<
                 prod_tensor.domain(),
                 [=](ddc::DiscreteElement<ProdDDim...> mem_elem) {
                     auto elem = prod_tensor.canonical_natural_element(mem_elem);
-                    prod_tensor.mem(mem_elem) = ddc::transform_reduce(
+                    prod_tensor.mem(mem_elem) = ddc::annotated_transform_reduce(
                             contract_dom,
                             0.,
                             ddc::reducer::sum<ElementType>(),
