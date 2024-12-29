@@ -419,7 +419,7 @@ struct IrrepDim<
         prod /= HeadElemOfHeadRow;
         if constexpr (sizeof...(TailRow) == 0 && sizeof...(TailElemOfHeadRow) == 0) {
             return prod;
-        } else if (sizeof...(TailElemOfHeadRow) == 0) {
+        } else if constexpr (sizeof...(TailElemOfHeadRow) == 0) {
             return IrrepDim<Dimension, YoungTableauSeq<TailRow...>, I + 1, 0>::run(prod);
         } else {
             return IrrepDim<
