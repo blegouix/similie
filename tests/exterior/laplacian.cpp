@@ -53,11 +53,19 @@ struct Y
 {
 };
 
+struct Z
+{
+};
+
 struct DDimX : ddc::UniformPointSampling<X>
 {
 };
 
 struct DDimY : ddc::UniformPointSampling<Y>
+{
+};
+
+struct DDimZ : ddc::UniformPointSampling<Z>
 {
 };
 
@@ -184,7 +192,7 @@ TEST(Laplacian, 2D0Form)
 {
     ddc::Coordinate<X, Y> lower_bounds(-5., -5.);
     ddc::Coordinate<X, Y> upper_bounds(5., 5.);
-    ddc::DiscreteVector<DDimX, DDimY> nb_cells(50, 50);
+    ddc::DiscreteVector<DDimX, DDimY> nb_cells(31, 31);
     ddc::DiscreteDomain<DDimX> mesh_x = ddc::init_discrete_space<DDimX>(DDimX::init<DDimX>(
             ddc::Coordinate<X>(lower_bounds),
             ddc::Coordinate<X>(upper_bounds),
@@ -264,7 +272,7 @@ TEST(Laplacian, 2D1Form)
 {
     ddc::Coordinate<X, Y> lower_bounds(-5., -5.);
     ddc::Coordinate<X, Y> upper_bounds(5., 5.);
-    ddc::DiscreteVector<DDimX, DDimY> nb_cells(50, 50);
+    ddc::DiscreteVector<DDimX, DDimY> nb_cells(31, 31);
     ddc::DiscreteDomain<DDimX> mesh_x = ddc::init_discrete_space<DDimX>(DDimX::init<DDimX>(
             ddc::Coordinate<X>(lower_bounds),
             ddc::Coordinate<X>(upper_bounds),
@@ -332,6 +340,109 @@ TEST(Laplacian, 2D1Form)
                         ddc::DiscreteElement<DDimY> {
                                 static_cast<std::size_t>(nb_cells.template get<DDimY>()) / 2},
                         laplacian.accessor().access_element<Y>());
+                if (ddc::coordinate(elem) < -1.2 * R || ddc::coordinate(elem) > 1.2 * R) {
+                    EXPECT_NEAR(value, 0., .5);
+                } else if (ddc::coordinate(elem) > -.8 * R && ddc::coordinate(elem) < -.2 * R) {
+                    EXPECT_NEAR(value, -1., .5);
+                } else if (ddc::coordinate(elem) > .2 * R && ddc::coordinate(elem) < .8 * R) {
+                    EXPECT_NEAR(value, 1., .5);
+                }
+            });
+    ddc::detail::g_discrete_space_dual<DDimX>.reset();
+    ddc::detail::g_discrete_space_dual<DDimY>.reset();
+}
+
+struct Mu3 : sil::tensor::TensorNaturalIndex<X, Y, Z>
+{
+};
+
+TEST(Laplacian, 3D1Form)
+{
+    ddc::Coordinate<X, Y, Z> lower_bounds(-5., -5., -5.);
+    ddc::Coordinate<X, Y, Z> upper_bounds(5., 5., 5.);
+    ddc::DiscreteVector<DDimX, DDimY, DDimZ> nb_cells(31, 31, 3);
+    ddc::DiscreteDomain<DDimX> mesh_x = ddc::init_discrete_space<DDimX>(DDimX::init<DDimX>(
+            ddc::Coordinate<X>(lower_bounds),
+            ddc::Coordinate<X>(upper_bounds),
+            ddc::DiscreteVector<DDimX>(nb_cells)));
+    ddc::DiscreteDomain<DDimY> mesh_y = ddc::init_discrete_space<DDimY>(DDimY::init<DDimY>(
+            ddc::Coordinate<Y>(lower_bounds),
+            ddc::Coordinate<Y>(upper_bounds),
+            ddc::DiscreteVector<DDimY>(nb_cells)));
+    ddc::DiscreteDomain<DDimZ> mesh_z = ddc::init_discrete_space<DDimZ>(DDimZ::init<DDimZ>(
+            ddc::Coordinate<Z>(lower_bounds),
+            ddc::Coordinate<Z>(upper_bounds),
+            ddc::DiscreteVector<DDimZ>(nb_cells)));
+    ddc::DiscreteDomain<DDimX, DDimY, DDimZ> mesh_xyz(mesh_x, mesh_y, mesh_z);
+
+    // Potential
+    [[maybe_unused]] sil::tensor::TensorAccessor<sil::tensor::TensorCovariantNaturalIndex<Mu3>>
+            potential_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, DDimZ, sil::tensor::TensorCovariantNaturalIndex<Mu3>>
+            potential_dom(mesh_xyz, potential_accessor.mem_domain());
+    ddc::Chunk potential_alloc(potential_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor potential(potential_alloc);
+
+    double const R = 2.;
+    double const L = ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().back()))
+                     - ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().front()));
+    double const alpha = (static_cast<double>(nb_cells.template get<DDimX>())
+                          * static_cast<double>(
+                                  nb_cells.template get<DDimY>()
+                                  * static_cast<double>(nb_cells.template get<DDimZ>())))
+                         / L / 2 / L / 2 / L / 2;
+    ddc::parallel_for_each(
+            Kokkos::DefaultHostExecutionSpace(),
+            potential.non_indices_domain(),
+            [&](ddc::DiscreteElement<DDimX, DDimY, DDimZ> elem) {
+                double const r = Kokkos::sqrt(
+                        static_cast<double>(
+                                ddc::coordinate(ddc::DiscreteElement<DDimX>(elem))
+                                * ddc::coordinate(ddc::DiscreteElement<DDimX>(elem)))
+                        + static_cast<double>(
+                                ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))
+                                * ddc::coordinate(ddc::DiscreteElement<DDimY>(elem)))
+                        + static_cast<double>(
+                                ddc::coordinate(ddc::DiscreteElement<DDimZ>(elem))
+                                * ddc::coordinate(ddc::DiscreteElement<DDimZ>(elem))));
+                double const theta = Kokkos::
+                        atan2(ddc::coordinate(ddc::DiscreteElement<DDimY>(elem)),
+                              ddc::coordinate(ddc::DiscreteElement<DDimX>(elem)));
+                if (r <= R) {
+                    potential.mem(elem, potential_accessor.access_element<X>())
+                            = alpha * r * r * Kokkos::sin(theta);
+                    potential.mem(elem, potential_accessor.access_element<Y>())
+                            = -alpha * r * r * Kokkos::cos(theta);
+                } else {
+                    potential.mem(elem, potential_accessor.access_element<X>())
+                            = -alpha * R * R * (2 / r - 1) * Kokkos::sin(theta);
+                    potential.mem(elem, potential_accessor.access_element<Y>())
+                            = alpha * R * R * (2 / r - 1) * Kokkos::cos(theta);
+                }
+                potential.mem(elem, potential_accessor.access_element<Z>()) = 0.;
+            });
+
+
+    auto [alloc, laplacian] = test_derivative<
+            sil::tensor::TensorCovariantNaturalIndex<Mu3>,
+            sil::tensor::TensorCovariantNaturalIndex<Mu3>,
+            DDimX,
+            DDimY,
+            DDimZ>(potential);
+
+    ddc::parallel_for_each(
+            Kokkos::DefaultHostExecutionSpace(),
+            laplacian.template domain<DDimX>().remove_last(ddc::DiscreteVector<DDimX>(1)),
+            [&](ddc::DiscreteElement<DDimX> elem) {
+                double const value = laplacian(
+                        elem,
+                        ddc::DiscreteElement<DDimY> {
+                                static_cast<std::size_t>(nb_cells.template get<DDimY>()) / 2},
+                        ddc::DiscreteElement<DDimZ> {
+                                static_cast<std::size_t>(nb_cells.template get<DDimZ>()) / 2},
+
+                        laplacian.accessor().access_element<Y>());
+                std::cout << value << std::endl;
                 if (ddc::coordinate(elem) < -1.2 * R || ddc::coordinate(elem) > 1.2 * R) {
                     EXPECT_NEAR(value, 0., .5);
                 } else if (ddc::coordinate(elem) > -.8 * R && ddc::coordinate(elem) < -.2 * R) {
