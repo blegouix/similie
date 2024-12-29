@@ -122,7 +122,7 @@ HodgeStarType fill_hodge_star(
             KOKKOS_LAMBDA(typename ddc::remove_dims_of_t<
                           typename MetricType::discrete_domain_type,
                           MetricIndex>::discrete_element_type elem) {
-                ddc::for_each(
+                ddc::annotated_for_each(
                         ddc::DiscreteDomain<
                                 tensor::metric_index_1<MetricIndex>,
                                 tensor::metric_index_2<MetricIndex>>(metric.natural_domain()),

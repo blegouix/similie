@@ -467,7 +467,7 @@ invert_metric_t<MetricType> fill_inverse_metric(
                 inv_metric.non_indices_domain(),
                 KOKKOS_LAMBDA(typename invert_metric_t<
                               MetricType>::non_indices_domain_t::discrete_element_type elem) {
-                    ddc::for_each(
+                    ddc::annotated_for_each(
                             ddc::DiscreteDomain<
                                     tensor::metric_index_1<MetricIndex>,
                                     tensor::metric_index_2<MetricIndex>>(metric.natural_domain()),
@@ -501,7 +501,7 @@ invert_metric_t<MetricType> fill_inverse_metric(
                     }
                     */
 
-                    ddc::for_each(
+                    ddc::annotated_for_each(
                             tensor::swap_character<ddc::DiscreteDomain<
                                     tensor::metric_index_1<MetricIndex>,
                                     tensor::metric_index_2<MetricIndex>>>(
