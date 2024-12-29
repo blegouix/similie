@@ -12,11 +12,11 @@ namespace sil {
 
 namespace tensor {
 
-struct Covariant
+struct CovariantCharacter
 {
 };
 
-struct Contravariant
+struct ContravariantCharacter
 {
 };
 
@@ -38,14 +38,14 @@ template <TensorNatIndex NaturalIndex>
 struct Covariant
     : detail::TensorNaturalIndexFromTypeSeqDim<typename NaturalIndex::type_seq_dimensions>::type
 {
-    using character = Covariant;
+    using character = CovariantCharacter;
 };
 
 template <TensorNatIndex NaturalIndex>
 struct Contravariant
     : detail::TensorNaturalIndexFromTypeSeqDim<typename NaturalIndex::type_seq_dimensions>::type
 {
-    using character = Contravariant;
+    using character = ContravariantCharacter;
 };
 
 // helpes to lower, upper or uncharacterize indices
