@@ -360,7 +360,7 @@ TEST(Laplacian, 3D1Form)
 {
     ddc::Coordinate<X, Y, Z> lower_bounds(-5., -5., -5.);
     ddc::Coordinate<X, Y, Z> upper_bounds(5., 5., 5.);
-    ddc::DiscreteVector<DDimX, DDimY, DDimZ> nb_cells(31, 31, 3);
+    ddc::DiscreteVector<DDimX, DDimY, DDimZ> nb_cells(101, 101, 3);
     ddc::DiscreteDomain<DDimX> mesh_x = ddc::init_discrete_space<DDimX>(DDimX::init<DDimX>(
             ddc::Coordinate<X>(lower_bounds),
             ddc::Coordinate<X>(upper_bounds),
@@ -387,9 +387,8 @@ TEST(Laplacian, 3D1Form)
     double const L = ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().back()))
                      - ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().front()));
     double const alpha = (static_cast<double>(nb_cells.template get<DDimX>())
-                          * static_cast<double>(
-                                  nb_cells.template get<DDimY>()
-                                  * static_cast<double>(nb_cells.template get<DDimZ>())))
+                          * static_cast<double>(nb_cells.template get<DDimY>())
+                          * static_cast<double>(nb_cells.template get<DDimZ>()))
                          / L / 2 / L / 2 / L / 2;
     ddc::parallel_for_each(
             Kokkos::DefaultHostExecutionSpace(),
@@ -415,9 +414,9 @@ TEST(Laplacian, 3D1Form)
                             = -alpha * r * r * Kokkos::cos(theta);
                 } else {
                     potential.mem(elem, potential_accessor.access_element<X>())
-                            = -alpha * R * R * (2 / r - 1) * Kokkos::sin(theta);
+                            = alpha * R * R * (2 - R / r) * Kokkos::sin(theta);
                     potential.mem(elem, potential_accessor.access_element<Y>())
-                            = alpha * R * R * (2 / r - 1) * Kokkos::cos(theta);
+                            = -alpha * R * R * (2 - R / r) * Kokkos::cos(theta);
                 }
                 potential.mem(elem, potential_accessor.access_element<Z>()) = 0.;
             });
