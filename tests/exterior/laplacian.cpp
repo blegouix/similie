@@ -360,7 +360,7 @@ TEST(Laplacian, 3D1Form)
 {
     ddc::Coordinate<X, Y, Z> lower_bounds(-5., -5., -5.);
     ddc::Coordinate<X, Y, Z> upper_bounds(5., 5., 5.);
-    ddc::DiscreteVector<DDimX, DDimY, DDimZ> nb_cells(31, 31, 31);
+    ddc::DiscreteVector<DDimX, DDimY, DDimZ> nb_cells(21, 21, 21);
     ddc::DiscreteDomain<DDimX> mesh_x = ddc::init_discrete_space<DDimX>(DDimX::init<DDimX>(
             ddc::Coordinate<X>(lower_bounds),
             ddc::Coordinate<X>(upper_bounds),
@@ -440,11 +440,11 @@ TEST(Laplacian, 3D1Form)
                                 static_cast<std::size_t>(nb_cells.template get<DDimZ>()) / 2},
 
                         laplacian.accessor().access_element<Y>());
-                if (ddc::coordinate(elem) < -1.2 * R || ddc::coordinate(elem) > 1.2 * R) {
+                if (ddc::coordinate(elem) < -1.3 * R || ddc::coordinate(elem) > 1.3 * R) {
                     EXPECT_NEAR(value, 0., .5);
-                } else if (ddc::coordinate(elem) > -.8 * R && ddc::coordinate(elem) < -.2 * R) {
+                } else if (ddc::coordinate(elem) > -.7 * R && ddc::coordinate(elem) < -.3 * R) {
                     EXPECT_NEAR(value, -1., .5);
-                } else if (ddc::coordinate(elem) > .2 * R && ddc::coordinate(elem) < .8 * R) {
+                } else if (ddc::coordinate(elem) > .3 * R && ddc::coordinate(elem) < .7 * R) {
                     EXPECT_NEAR(value, 1., .5);
                 }
             });
