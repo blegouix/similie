@@ -117,7 +117,7 @@ struct Nu : sil::tensor::TensorNaturalIndex<X, Y>
 using NuLow = sil::tensor::TensorCovariantNaturalIndex<Nu>;
 using NuUp = sil::tensor::TensorContravariantNaturalIndex<Nu>;
 
-using DummyIndex = sil::tensor::TensorCovariantNaturalIndex<sil::tensor::TensorNaturalIndex<>>;
+using DummyIndex = sil::tensor::TensorCovariantNaturalIndex<sil::tensor::ScalarIndex>;
 
 int main(int argc, char** argv)
 {

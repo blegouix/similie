@@ -28,8 +28,12 @@ using hodge_star_domain_t
                 ddc::detail::TypeSeq<misc::convert_type_seq_to_t<
                         tensor::TensorFullIndex,
                         Indices1>>, // TODO clarify Antisymmetric
-                ddc::detail::TypeSeq<
-                        misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, Indices2>>>>;
+                std::conditional_t<
+                        (ddc::type_seq_size_v<Indices2> == 0),
+                        ddc::detail::TypeSeq<>,
+                        ddc::detail::TypeSeq<misc::convert_type_seq_to_t<
+                                tensor::TensorAntisymmetricIndex,
+                                Indices2>>>>>;
 
 template <
         misc::Specialization<ddc::detail::TypeSeq> Indices1,
@@ -125,7 +129,7 @@ HodgeStarType fill_hodge_star(
                         [=](ddc::DiscreteElement<
                                 tensor::metric_index_1<MetricIndex>,
                                 tensor::metric_index_2<MetricIndex>> index) {
-                            buffer(elem, index) = metric(metric.access_element(
+                            buffer(elem, index) = metric.get(metric.access_element(
                                     elem,
                                     index)); // TODO: triggers a "nvlink warning : Stack size for entry function cannot be statically determined"
                         });

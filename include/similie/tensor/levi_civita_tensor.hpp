@@ -61,13 +61,17 @@ struct TensorLeviCivitaIndex
     KOKKOS_FUNCTION static constexpr std::size_t access_id(
             std::array<std::size_t, sizeof...(TensorIndex)> const natural_ids)
     {
-        int const parity = misc::permutation_parity(natural_ids);
-        if (parity == 0) {
-            return 0;
-        } else if (parity == 1) {
+        if constexpr (rank() == 1) {
             return 1;
         } else {
-            return 2;
+            int const parity = misc::permutation_parity(natural_ids);
+            if (parity == 0) {
+                return 0;
+            } else if (parity == 1) {
+                return 1;
+            } else {
+                return 2;
+            }
         }
     }
 

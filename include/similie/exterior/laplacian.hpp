@@ -133,7 +133,7 @@ TensorType laplacian(
                 LaplacianDummyIndex2,
                 CochainTag>(exec_space, laplacian_tensor, tensor, inv_metric);
         exec_space.fence();
-    } else if (CochainTag::rank() < LaplacianDummyIndex::size()) {
+    } else if constexpr (CochainTag::rank() < LaplacianDummyIndex::size()) {
         auto tmp_alloc = ddc::create_mirror(laplacian_tensor);
         tensor::Tensor tmp(tmp_alloc);
 
@@ -153,7 +153,7 @@ TensorType laplacian(
                 KOKKOS_LAMBDA(typename TensorType::discrete_element_type elem) {
                     laplacian_tensor(elem) += tmp(elem);
                 });
-    } else if (CochainTag::rank() == LaplacianDummyIndex::size()) {
+    } else if constexpr (CochainTag::rank() == LaplacianDummyIndex::size()) {
         detail::coboundary_of_codifferential<
                 MetricIndex,
                 LaplacianDummyIndex,
