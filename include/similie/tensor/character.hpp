@@ -12,11 +12,11 @@ namespace sil {
 
 namespace tensor {
 
-struct Covariant
+struct CovariantCharacter
 {
 };
 
-struct Contravariant
+struct ContravariantCharacter
 {
 };
 
@@ -35,17 +35,17 @@ struct TensorNaturalIndexFromTypeSeqDim<ddc::detail::TypeSeq<CDim...>>
 
 // struct representing an index mu or nu in a tensor Tmunu.
 template <TensorNatIndex NaturalIndex>
-struct TensorCovariantNaturalIndex
+struct Covariant
     : detail::TensorNaturalIndexFromTypeSeqDim<typename NaturalIndex::type_seq_dimensions>::type
 {
-    using character = Covariant;
+    using character = CovariantCharacter;
 };
 
 template <TensorNatIndex NaturalIndex>
-struct TensorContravariantNaturalIndex
+struct Contravariant
     : detail::TensorNaturalIndexFromTypeSeqDim<typename NaturalIndex::type_seq_dimensions>::type
 {
-    using character = Contravariant;
+    using character = ContravariantCharacter;
 };
 
 // helpes to lower, upper or uncharacterize indices
@@ -55,15 +55,15 @@ template <class Index>
 struct Lower;
 
 template <TensorNatIndex NaturalIndex>
-struct Lower<TensorCovariantNaturalIndex<NaturalIndex>>
+struct Lower<Covariant<NaturalIndex>>
 {
-    using type = TensorCovariantNaturalIndex<NaturalIndex>;
+    using type = Covariant<NaturalIndex>;
 };
 
 template <TensorNatIndex NaturalIndex>
-struct Lower<TensorContravariantNaturalIndex<NaturalIndex>>
+struct Lower<Contravariant<NaturalIndex>>
 {
-    using type = TensorCovariantNaturalIndex<NaturalIndex>;
+    using type = Covariant<NaturalIndex>;
 };
 
 template <template <TensorIndex...> class T, TensorIndex... Index>
@@ -83,15 +83,15 @@ template <class Index>
 struct Upper;
 
 template <TensorNatIndex NaturalIndex>
-struct Upper<TensorCovariantNaturalIndex<NaturalIndex>>
+struct Upper<Covariant<NaturalIndex>>
 {
-    using type = TensorContravariantNaturalIndex<NaturalIndex>;
+    using type = Contravariant<NaturalIndex>;
 };
 
 template <TensorNatIndex NaturalIndex>
-struct Upper<TensorContravariantNaturalIndex<NaturalIndex>>
+struct Upper<Contravariant<NaturalIndex>>
 {
-    using type = TensorContravariantNaturalIndex<NaturalIndex>;
+    using type = Contravariant<NaturalIndex>;
 };
 
 template <template <TensorIndex...> class T, TensorIndex... Index>
@@ -111,15 +111,15 @@ template <class Index>
 struct SwapCharacter;
 
 template <TensorNatIndex NaturalIndex>
-struct SwapCharacter<TensorCovariantNaturalIndex<NaturalIndex>>
+struct SwapCharacter<Covariant<NaturalIndex>>
 {
-    using type = TensorContravariantNaturalIndex<NaturalIndex>;
+    using type = Contravariant<NaturalIndex>;
 };
 
 template <TensorNatIndex NaturalIndex>
-struct SwapCharacter<TensorContravariantNaturalIndex<NaturalIndex>>
+struct SwapCharacter<Contravariant<NaturalIndex>>
 {
-    using type = TensorCovariantNaturalIndex<NaturalIndex>;
+    using type = Covariant<NaturalIndex>;
 };
 
 template <template <TensorIndex...> class T, TensorIndex... Index>
@@ -139,13 +139,13 @@ template <class Index>
 struct Uncharacterize;
 
 template <class NaturalIndex>
-struct Uncharacterize<TensorCovariantNaturalIndex<NaturalIndex>>
+struct Uncharacterize<Covariant<NaturalIndex>>
 {
     using type = NaturalIndex;
 };
 
 template <class NaturalIndex>
-struct Uncharacterize<TensorContravariantNaturalIndex<NaturalIndex>>
+struct Uncharacterize<Contravariant<NaturalIndex>>
 {
     using type = NaturalIndex;
 };
@@ -195,13 +195,13 @@ template <TensorNatIndex Index>
 struct IsCovariant;
 
 template <TensorNatIndex Index>
-struct IsCovariant<TensorCovariantNaturalIndex<Index>>
+struct IsCovariant<Covariant<Index>>
 {
     static constexpr bool value = true;
 };
 
 template <TensorNatIndex Index>
-struct IsCovariant<TensorContravariantNaturalIndex<Index>>
+struct IsCovariant<Contravariant<Index>>
 {
     static constexpr bool value = false;
 };
@@ -234,13 +234,13 @@ template <TensorNatIndex Index>
 struct IsContravariant;
 
 template <TensorNatIndex Index>
-struct IsContravariant<TensorCovariantNaturalIndex<Index>>
+struct IsContravariant<Covariant<Index>>
 {
     static constexpr bool value = false;
 };
 
 template <TensorNatIndex Index>
-struct IsContravariant<TensorContravariantNaturalIndex<Index>>
+struct IsContravariant<Contravariant<Index>>
 {
     static constexpr bool value = true;
 };
@@ -273,27 +273,25 @@ template <TensorNatIndex Index1, TensorNatIndex Index2>
 struct IsSameCharacter;
 
 template <TensorNatIndex Index1, TensorNatIndex Index2>
-struct IsSameCharacter<TensorCovariantNaturalIndex<Index1>, TensorCovariantNaturalIndex<Index2>>
+struct IsSameCharacter<Covariant<Index1>, Covariant<Index2>>
 {
     static constexpr bool value = true;
 };
 
 template <TensorNatIndex Index1, TensorNatIndex Index2>
-struct IsSameCharacter<TensorContravariantNaturalIndex<Index1>, TensorCovariantNaturalIndex<Index2>>
+struct IsSameCharacter<Contravariant<Index1>, Covariant<Index2>>
 {
     static constexpr bool value = false;
 };
 
 template <TensorNatIndex Index1, TensorNatIndex Index2>
-struct IsSameCharacter<TensorCovariantNaturalIndex<Index1>, TensorContravariantNaturalIndex<Index2>>
+struct IsSameCharacter<Covariant<Index1>, Contravariant<Index2>>
 {
     static constexpr bool value = false;
 };
 
 template <TensorNatIndex Index1, TensorNatIndex Index2>
-struct IsSameCharacter<
-        TensorContravariantNaturalIndex<Index1>,
-        TensorContravariantNaturalIndex<Index2>>
+struct IsSameCharacter<Contravariant<Index1>, Contravariant<Index2>>
 {
     static constexpr bool value = true;
 };

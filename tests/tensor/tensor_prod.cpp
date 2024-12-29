@@ -232,15 +232,12 @@ struct Rho : sil::tensor::TensorNaturalIndex<T, X, Y, Z>
 {
 };
 
-using Rank2SymIndex1 = sil::tensor::TensorSymmetricIndex<
-        sil::tensor::TensorContravariantNaturalIndex<Mu>,
-        sil::tensor::TensorCovariantNaturalIndex<Nu>>;
-using Rank2SymIndex2 = sil::tensor::TensorSymmetricIndex<
-        sil::tensor::TensorContravariantNaturalIndex<Nu>,
-        sil::tensor::TensorContravariantNaturalIndex<Rho>>;
-using Rank2SymIndex3 = sil::tensor::TensorSymmetricIndex<
-        sil::tensor::TensorContravariantNaturalIndex<Mu>,
-        sil::tensor::TensorContravariantNaturalIndex<Rho>>;
+using Rank2SymIndex1 = sil::tensor::
+        TensorSymmetricIndex<sil::tensor::Contravariant<Mu>, sil::tensor::Covariant<Nu>>;
+using Rank2SymIndex2 = sil::tensor::
+        TensorSymmetricIndex<sil::tensor::Contravariant<Nu>, sil::tensor::Contravariant<Rho>>;
+using Rank2SymIndex3 = sil::tensor::
+        TensorSymmetricIndex<sil::tensor::Contravariant<Mu>, sil::tensor::Contravariant<Rho>>;
 
 TEST(TensorProd, SimpleContractionRank2SymIndexedxRank2SymIndexed)
 {
@@ -298,15 +295,12 @@ TEST(TensorProd, SimpleContractionRank2SymIndexedxRank2SymIndexed)
     EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Z, Z>()), 546.);
 }
 
-using Rank2AntisymIndex1 = sil::tensor::TensorAntisymmetricIndex<
-        sil::tensor::TensorContravariantNaturalIndex<Mu>,
-        sil::tensor::TensorCovariantNaturalIndex<Nu>>;
-using Rank2AntisymIndex2 = sil::tensor::TensorAntisymmetricIndex<
-        sil::tensor::TensorContravariantNaturalIndex<Nu>,
-        sil::tensor::TensorContravariantNaturalIndex<Rho>>;
-using Rank2AntisymIndex3 = sil::tensor::TensorAntisymmetricIndex<
-        sil::tensor::TensorContravariantNaturalIndex<Mu>,
-        sil::tensor::TensorContravariantNaturalIndex<Rho>>;
+using Rank2AntisymIndex1 = sil::tensor::
+        TensorAntisymmetricIndex<sil::tensor::Contravariant<Mu>, sil::tensor::Covariant<Nu>>;
+using Rank2AntisymIndex2 = sil::tensor::
+        TensorAntisymmetricIndex<sil::tensor::Contravariant<Nu>, sil::tensor::Contravariant<Rho>>;
+using Rank2AntisymIndex3 = sil::tensor::
+        TensorAntisymmetricIndex<sil::tensor::Contravariant<Mu>, sil::tensor::Contravariant<Rho>>;
 
 TEST(TensorProd, SimpleContractionRank2AntisymIndexedxRank2AntisymIndexed)
 {
@@ -357,16 +351,15 @@ struct Sigma : sil::tensor::TensorNaturalIndex<T, X, Y, Z>
 };
 
 using Rank3SymIndex1 = sil::tensor::TensorSymmetricIndex<
-        sil::tensor::TensorContravariantNaturalIndex<Mu>,
-        sil::tensor::TensorContravariantNaturalIndex<Nu>,
-        sil::tensor::TensorCovariantNaturalIndex<Rho>>;
-using Rank3SymIndex2 = sil::tensor::TensorSymmetricIndex<
-        sil::tensor::TensorContravariantNaturalIndex<Rho>,
-        sil::tensor::TensorContravariantNaturalIndex<Sigma>>;
+        sil::tensor::Contravariant<Mu>,
+        sil::tensor::Contravariant<Nu>,
+        sil::tensor::Covariant<Rho>>;
+using Rank3SymIndex2 = sil::tensor::
+        TensorSymmetricIndex<sil::tensor::Contravariant<Rho>, sil::tensor::Contravariant<Sigma>>;
 using Rank3SymIndex3 = sil::tensor::TensorSymmetricIndex<
-        sil::tensor::TensorContravariantNaturalIndex<Mu>,
-        sil::tensor::TensorContravariantNaturalIndex<Nu>,
-        sil::tensor::TensorContravariantNaturalIndex<Sigma>>;
+        sil::tensor::Contravariant<Mu>,
+        sil::tensor::Contravariant<Nu>,
+        sil::tensor::Contravariant<Sigma>>;
 
 TEST(TensorProd, SimpleContractionRank3SymIndexedxRank2SymIndexed)
 {
@@ -445,16 +438,16 @@ TEST(TensorProd, SimpleContractionRank3SymIndexedxRank2SymIndexed)
 }
 
 using Rank3AntisymIndex1 = sil::tensor::TensorAntisymmetricIndex<
-        sil::tensor::TensorContravariantNaturalIndex<Mu>,
-        sil::tensor::TensorContravariantNaturalIndex<Nu>,
-        sil::tensor::TensorCovariantNaturalIndex<Rho>>;
+        sil::tensor::Contravariant<Mu>,
+        sil::tensor::Contravariant<Nu>,
+        sil::tensor::Covariant<Rho>>;
 using Rank3AntisymIndex2 = sil::tensor::TensorAntisymmetricIndex<
-        sil::tensor::TensorContravariantNaturalIndex<Rho>,
-        sil::tensor::TensorContravariantNaturalIndex<Sigma>>;
+        sil::tensor::Contravariant<Rho>,
+        sil::tensor::Contravariant<Sigma>>;
 using Rank3AntisymIndex3 = sil::tensor::TensorAntisymmetricIndex<
-        sil::tensor::TensorContravariantNaturalIndex<Mu>,
-        sil::tensor::TensorContravariantNaturalIndex<Nu>,
-        sil::tensor::TensorContravariantNaturalIndex<Sigma>>;
+        sil::tensor::Contravariant<Mu>,
+        sil::tensor::Contravariant<Nu>,
+        sil::tensor::Contravariant<Sigma>>;
 
 TEST(TensorProd, SimpleContractionRank3AntisymIndexedxRank2AntisymIndexed)
 {

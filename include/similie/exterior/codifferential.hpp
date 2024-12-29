@@ -54,7 +54,7 @@ template <tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorNatIndex 
     requires(CochainTag::rank() == 1 && std::is_same_v<TagToRemoveFromCochain, CochainTag>)
 struct CodifferentialIndex<TagToRemoveFromCochain, CochainTag>
 {
-    using type = tensor::TensorCovariantNaturalIndex<tensor::ScalarIndex>;
+    using type = tensor::Covariant<tensor::ScalarIndex>;
 };
 
 template <tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorNatIndex Tag>
@@ -135,8 +135,7 @@ struct CodifferentialDummyIndexSeq_;
 template <std::size_t... Id, class T>
 struct CodifferentialDummyIndexSeq_<std::index_sequence<Id...>, T>
 {
-    using type = ddc::detail::TypeSeq<
-            tensor::TensorCovariantNaturalIndex<CodifferentialDummyIndex<Id, T>>...>;
+    using type = ddc::detail::TypeSeq<tensor::Covariant<CodifferentialDummyIndex<Id, T>>...>;
 };
 
 template <std::size_t EndId, class T>
