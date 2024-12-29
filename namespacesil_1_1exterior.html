@@ -179,9 +179,9 @@ Typedefs</h2></td></tr>
 <tr class="memitem:a04a63056a25815fe3b4e94eddd7dbede" id="r_a04a63056a25815fe3b4e94eddd7dbede"><td class="memTemplParams" colspan="2">template&lt;class T , class ElementType  = double, class LayoutStridedPolicy  = Kokkos::LayoutRight&gt; </td></tr>
 <tr class="memitem:a04a63056a25815fe3b4e94eddd7dbede"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a04a63056a25815fe3b4e94eddd7dbede">Form</a> = typename detail::FormWrapper&lt;T, ElementType, LayoutStridedPolicy&gt;::type</td></tr>
 <tr class="separator:a04a63056a25815fe3b4e94eddd7dbede"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afd93aa912be271019b5425e00391049e" id="r_afd93aa912be271019b5425e00391049e"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices1, misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices2&gt; </td></tr>
-<tr class="memitem:afd93aa912be271019b5425e00391049e"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#afd93aa912be271019b5425e00391049e">hodge_star_domain_t</a></td></tr>
-<tr class="separator:afd93aa912be271019b5425e00391049e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4efa14fa3fbc50aef998647604aa1589" id="r_a4efa14fa3fbc50aef998647604aa1589"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices1, misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices2&gt; </td></tr>
+<tr class="memitem:a4efa14fa3fbc50aef998647604aa1589"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a4efa14fa3fbc50aef998647604aa1589">hodge_star_domain_t</a></td></tr>
+<tr class="separator:a4efa14fa3fbc50aef998647604aa1589"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abaced41367e3e156dc7d8467022b3b94" id="r_abaced41367e3e156dc7d8467022b3b94"><td class="memTemplParams" colspan="2">template&lt;std::size_t K, class Dom &gt; </td></tr>
 <tr class="memitem:abaced41367e3e156dc7d8467022b3b94"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#abaced41367e3e156dc7d8467022b3b94">simplex_for_domain_t</a> = detail::SimplexForDomain&lt;K, Dom&gt;::type</td></tr>
 <tr class="separator:abaced41367e3e156dc7d8467022b3b94"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -398,8 +398,8 @@ template&lt;class T , class ElementType  = double, class LayoutStridedPolicy  = 
 
 </div>
 </div>
-<a id="afd93aa912be271019b5425e00391049e" name="afd93aa912be271019b5425e00391049e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afd93aa912be271019b5425e00391049e">&#9670;&#160;</a></span>hodge_star_domain_t</h2>
+<a id="a4efa14fa3fbc50aef998647604aa1589" name="a4efa14fa3fbc50aef998647604aa1589"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4efa14fa3fbc50aef998647604aa1589">&#9670;&#160;</a></span>hodge_star_domain_t</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -407,7 +407,7 @@ template&lt;class T , class ElementType  = double, class LayoutStridedPolicy  = 
 template&lt;misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices1, misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices2&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="#afd93aa912be271019b5425e00391049e">sil::exterior::hodge_star_domain_t</a></td>
+          <td class="memname">using <a class="el" href="#a4efa14fa3fbc50aef998647604aa1589">sil::exterior::hodge_star_domain_t</a></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -415,8 +415,12 @@ template&lt;misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices1, misc::S
 <div class="line">                ddc::detail::TypeSeq&lt;misc::convert_type_seq_to_t&lt;</div>
 <div class="line">                        tensor::TensorFullIndex,</div>
 <div class="line">                        Indices1&gt;&gt;, </div>
-<div class="line">                ddc::detail::TypeSeq&lt;</div>
-<div class="line">                        misc::convert_type_seq_to_t&lt;tensor::TensorAntisymmetricIndex, Indices2&gt;&gt;&gt;&gt;</div>
+<div class="line">                std::conditional_t&lt;</div>
+<div class="line">                        (ddc::type_seq_size_v&lt;Indices2&gt; == 0),</div>
+<div class="line">                        ddc::detail::TypeSeq&lt;&gt;,</div>
+<div class="line">                        ddc::detail::TypeSeq&lt;misc::convert_type_seq_to_t&lt;</div>
+<div class="line">                                tensor::TensorAntisymmetricIndex,</div>
+<div class="line">                                Indices2&gt;&gt;&gt;&gt;&gt;</div>
 </div><!-- fragment -->
 <p class="definition">Definition at line <a class="el" href="hodge__star_8hpp_source.html#l00026">26</a> of file <a class="el" href="hodge__star_8hpp_source.html">hodge_star.hpp</a>.</p>
 
@@ -699,7 +703,7 @@ template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveF
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00151">151</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00168">168</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
 
 </div>
 </div>
@@ -760,7 +764,7 @@ requires ( misc::Specialization&lt;MetricDeterminantType, ddc::ChunkSpan&gt; || 
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="hodge__star_8hpp_source.html#l00043">43</a> of file <a class="el" href="hodge__star_8hpp_source.html">hodge_star.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="hodge__star_8hpp_source.html#l00047">47</a> of file <a class="el" href="hodge__star_8hpp_source.html">hodge_star.hpp</a>.</p>
 
 </div>
 </div>
@@ -790,7 +794,7 @@ template&lt;tensor::TensorIndex MetricIndex, misc::Specialization&lt; ddc::detai
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="hodge__star_8hpp_source.html#l00083">83</a> of file <a class="el" href="hodge__star_8hpp_source.html">hodge_star.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="hodge__star_8hpp_source.html#l00087">87</a> of file <a class="el" href="hodge__star_8hpp_source.html">hodge_star.hpp</a>.</p>
 
 </div>
 </div>

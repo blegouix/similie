@@ -14,7 +14,7 @@ var namespacesil_1_1exterior =
     [ "codifferential_index_t", "namespacesil_1_1exterior.html#aab91885c880898f8e30304a22b965a22", null ],
     [ "codifferential_tensor_t", "namespacesil_1_1exterior.html#a3da5f6d818417a943e98321a4f70d534", null ],
     [ "Form", "namespacesil_1_1exterior.html#a04a63056a25815fe3b4e94eddd7dbede", null ],
-    [ "hodge_star_domain_t", "namespacesil_1_1exterior.html#afd93aa912be271019b5425e00391049e", null ],
+    [ "hodge_star_domain_t", "namespacesil_1_1exterior.html#a4efa14fa3fbc50aef998647604aa1589", null ],
     [ "simplex_for_domain_t", "namespacesil_1_1exterior.html#abaced41367e3e156dc7d8467022b3b94", null ],
     [ "boundary", "namespacesil_1_1exterior.html#ab67124170cc5aa39c400687dc9e9e439", null ],
     [ "boundary", "namespacesil_1_1exterior.html#a5c98c080f983d9b2020d6b0f13598044", null ],
