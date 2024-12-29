@@ -549,7 +549,7 @@ $(function(){initNavTree('young__tableau_8hpp_source.html',''); initResizable(tr
 <div class="line"><a id="l00419" name="l00419"></a><span class="lineno">  419</span>        prod /= HeadElemOfHeadRow;</div>
 <div class="line"><a id="l00420" name="l00420"></a><span class="lineno">  420</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (<span class="keyword">sizeof</span>...(TailRow) == 0 &amp;&amp; <span class="keyword">sizeof</span>...(TailElemOfHeadRow) == 0) {</div>
 <div class="line"><a id="l00421" name="l00421"></a><span class="lineno">  421</span>            <span class="keywordflow">return</span> prod;</div>
-<div class="line"><a id="l00422" name="l00422"></a><span class="lineno">  422</span>        } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (<span class="keyword">sizeof</span>...(TailElemOfHeadRow) == 0) {</div>
+<div class="line"><a id="l00422" name="l00422"></a><span class="lineno">  422</span>        } <span class="keywordflow">else</span> <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (<span class="keyword">sizeof</span>...(TailElemOfHeadRow) == 0) {</div>
 <div class="line"><a id="l00423" name="l00423"></a><span class="lineno">  423</span>            <span class="keywordflow">return</span> IrrepDim&lt;Dimension, YoungTableauSeq&lt;TailRow...&gt;, I + 1, 0&gt;::run(prod);</div>
 <div class="line"><a id="l00424" name="l00424"></a><span class="lineno">  424</span>        } <span class="keywordflow">else</span> {</div>
 <div class="line"><a id="l00425" name="l00425"></a><span class="lineno">  425</span>            <span class="keywordflow">return</span> IrrepDim&lt;</div>
