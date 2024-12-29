@@ -1134,29 +1134,6 @@ constexpr relabelize_indices_of_t<Tensor, OldIndices, NewIndices> relabelize_ind
     return detail::RelabelizeIndicesOf<OldIndices, NewIndices, 0>(tensor);
 }
 
-// Sum of tensors
-template <
-        class ExecSpace,
-        class... DDim,
-        class ElementType,
-        class LayoutStridedPolicy,
-        class MemorySpace,
-        misc::Specialization<Tensor>... TensorType>
-Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace> tensor_sum(
-        ExecSpace const& exec_space,
-        Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>
-                sum_tensor,
-        TensorType... tensor)
-{
-    ddc::parallel_for_each(
-            exec_space,
-            sum_tensor.domain(),
-            KOKKOS_LAMBDA(ddc::DiscreteElement<DDim...> elem) {
-                sum_tensor(elem) = (tensor(elem) + ...);
-            });
-    return sum_tensor;
-}
-
 namespace detail {
 
 // Domain of a tensor result of product between two tensors

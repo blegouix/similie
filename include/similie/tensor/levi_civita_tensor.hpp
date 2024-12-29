@@ -99,8 +99,11 @@ struct TensorLeviCivitaIndex
     KOKKOS_FUNCTION static constexpr std::array<std::size_t, rank()>
     mem_id_to_canonical_natural_ids(std::size_t mem_id)
     {
-        assert(mem_id < mem_size()); // Always false
+        assert(mem_id < mem_size());
         std::array<std::size_t, rank()> ids;
+        for (auto i = ids.begin(); i < ids.end(); ++i) {
+            *i = 0;
+        }
         return ids;
     }
 };
