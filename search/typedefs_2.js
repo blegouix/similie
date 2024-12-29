@@ -2,7 +2,7 @@ var searchData=
 [
   ['chain_5fiterator_0',['chain_iterator',['../classsil_1_1exterior_1_1CochainIterator.html#acfc7730dd6d27a731aa0d42b4147d43e',1,'sil::exterior::CochainIterator']]],
   ['chain_5ftype_1',['chain_type',['../classsil_1_1exterior_1_1Cochain.html#a007d4ba4197f81f5711edf7d71c5edb3',1,'sil::exterior::Cochain']]],
-  ['character_2',['character',['../structsil_1_1tensor_1_1TensorCovariantNaturalIndex.html#a63541c3d50f01ac9e256ea8c9f089df2',1,'sil::tensor::TensorCovariantNaturalIndex::character'],['../structsil_1_1tensor_1_1TensorContravariantNaturalIndex.html#ae8388a802e13a5ace13053a873ddc45f',1,'sil::tensor::TensorContravariantNaturalIndex::character']]],
+  ['character_2',['character',['../structsil_1_1tensor_1_1Covariant.html#a74d299cdfa41641760d2d5158a97fbe7',1,'sil::tensor::Covariant::character'],['../structsil_1_1tensor_1_1Contravariant.html#a1e2229d97e53a260c14b9a6c3ab2a1ab',1,'sil::tensor::Contravariant::character']]],
   ['coboundary_5findex_5ft_3',['coboundary_index_t',['../namespacesil_1_1exterior.html#ad9397455da98fe2a3f15d1f9ebeebd8c',1,'sil::exterior']]],
   ['coboundary_5ft_4',['coboundary_t',['../namespacesil_1_1exterior.html#af909312837528d942e73443a79fd9f17',1,'sil::exterior']]],
   ['coboundary_5ftensor_5ft_5',['coboundary_tensor_t',['../namespacesil_1_1exterior.html#a6b84e7779045ab2b05d12295aeb6bcc8',1,'sil::exterior']]],

@@ -6,9 +6,9 @@ var hierarchy =
     ] ],
     [ "sil::exterior::Cochain< ChainType, ElementType, LayoutStridedPolicy >", "classsil_1_1exterior_1_1Cochain.html", null ],
     [ "sil::exterior::CochainIterator< CochainType >", "classsil_1_1exterior_1_1CochainIterator.html", null ],
-    [ "sil::tensor::Contravariant", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Contravariant", null ],
+    [ "sil::tensor::ContravariantCharacter", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1ContravariantCharacter", null ],
     [ "sil::exterior::Cosimplex< SimplexType, ElementType >", "classsil_1_1exterior_1_1Cosimplex.html", null ],
-    [ "sil::tensor::Covariant", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Covariant", null ],
+    [ "sil::tensor::CovariantCharacter", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1CovariantCharacter", null ],
     [ "sil::csr::Csr< N, HeadTensorIndex, TailTensorIndex >", "classsil_1_1csr_1_1Csr.html", null ],
     [ "sil::csr::CsrDynamic< HeadTensorIndex, TailTensorIndex >", "classsil_1_1csr_1_1CsrDynamic.html", null ],
     [ "ddc::DiscreteElement", null, [
@@ -42,8 +42,8 @@ var hierarchy =
       [ "sil::misc::is_specialization_of< T, T< Us... > >", "structsil_1_1misc_1_1is__specialization__of_3_01T_00_01T_3_01Us_8_8_8_01_4_01_4.html", null ]
     ] ],
     [ "detail::TensorNaturalIndexFromTypeSeqDim::type", null, [
-      [ "sil::tensor::TensorContravariantNaturalIndex< NaturalIndex >", "structsil_1_1tensor_1_1TensorContravariantNaturalIndex.html", null ],
-      [ "sil::tensor::TensorCovariantNaturalIndex< NaturalIndex >", "structsil_1_1tensor_1_1TensorCovariantNaturalIndex.html", null ]
+      [ "sil::tensor::Contravariant< NaturalIndex >", "structsil_1_1tensor_1_1Contravariant.html", null ],
+      [ "sil::tensor::Covariant< NaturalIndex >", "structsil_1_1tensor_1_1Covariant.html", null ]
     ] ],
     [ "sil::tensor::Index", null, [
       [ "sil::tensor::prime< Index, I >", "structsil_1_1tensor_1_1prime.html", null ]

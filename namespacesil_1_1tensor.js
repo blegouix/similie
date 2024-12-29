@@ -1,7 +1,9 @@
 var namespacesil_1_1tensor =
 [
-    [ "Contravariant", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Contravariant", null ],
-    [ "Covariant", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Covariant", null ],
+    [ "Contravariant", "structsil_1_1tensor_1_1Contravariant.html", "structsil_1_1tensor_1_1Contravariant" ],
+    [ "ContravariantCharacter", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1ContravariantCharacter", null ],
+    [ "Covariant", "structsil_1_1tensor_1_1Covariant.html", "structsil_1_1tensor_1_1Covariant" ],
+    [ "CovariantCharacter", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1CovariantCharacter", null ],
     [ "Dummy", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Dummy", null ],
     [ "MetricIndex1", "structsil_1_1tensor_1_1MetricIndex1.html", null ],
     [ "MetricIndex2", "structsil_1_1tensor_1_1MetricIndex2.html", null ],
@@ -10,8 +12,6 @@ var namespacesil_1_1tensor =
     [ "Tensor< ElementType, ddc::DiscreteDomain< DDim... >, LayoutStridedPolicy, MemorySpace >", "classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html", "classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c" ],
     [ "TensorAccessor", "classsil_1_1tensor_1_1TensorAccessor.html", "classsil_1_1tensor_1_1TensorAccessor" ],
     [ "TensorAntisymmetricIndex", "structsil_1_1tensor_1_1TensorAntisymmetricIndex.html", "structsil_1_1tensor_1_1TensorAntisymmetricIndex" ],
-    [ "TensorContravariantNaturalIndex", "structsil_1_1tensor_1_1TensorContravariantNaturalIndex.html", "structsil_1_1tensor_1_1TensorContravariantNaturalIndex" ],
-    [ "TensorCovariantNaturalIndex", "structsil_1_1tensor_1_1TensorCovariantNaturalIndex.html", "structsil_1_1tensor_1_1TensorCovariantNaturalIndex" ],
     [ "TensorDiagonalIndex", "structsil_1_1tensor_1_1TensorDiagonalIndex.html", "structsil_1_1tensor_1_1TensorDiagonalIndex" ],
     [ "TensorFullIndex", "structsil_1_1tensor_1_1TensorFullIndex.html", "structsil_1_1tensor_1_1TensorFullIndex" ],
     [ "TensorIdentityIndex", "structsil_1_1tensor_1_1TensorIdentityIndex.html", "structsil_1_1tensor_1_1TensorIdentityIndex" ],
