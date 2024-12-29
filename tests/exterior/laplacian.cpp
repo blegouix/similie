@@ -15,7 +15,6 @@ using MetricIndex = sil::tensor::TensorIdentityIndex<
         sil::tensor::TensorContravariantNaturalIndex<sil::tensor::MetricIndex1<CDim...>>,
         sil::tensor::TensorContravariantNaturalIndex<sil::tensor::MetricIndex2<CDim...>>>;
 
-// std::size_t N ?
 template <class InterestIndex, class Index, class... DDim>
 static auto test_derivative(auto potential)
 {
