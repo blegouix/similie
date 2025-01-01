@@ -7,6 +7,7 @@
 
 #include <ddc/ddc.hpp>
 
+#include <similie/misc/portable_stl.hpp>
 #include <similie/misc/specialization.hpp>
 
 namespace sil {
@@ -397,7 +398,7 @@ constexpr TensorAccessor<Index...>::natural_domain_t::discrete_element_type Tens
             [&]() {
                 auto i = MemIndex::mem_id_to_canonical_natural_ids(
                         mem_elem.template uid<MemIndex>());
-                std::copy(i.begin(), i.end(), it);
+                misc::detail::copy(i.begin(), i.end(), it);
                 it += i.size();
             }(),
             ...);
@@ -1186,7 +1187,7 @@ struct NaturalTensorProd<
     run(Tensor<ElementType,
                ddc::DiscreteDomain<HeadDDim1..., TailDDim2...>,
                LayoutStridedPolicy,
-               Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
+               MemorySpace> prod_tensor,
         Tensor<ElementType,
                ddc::DiscreteDomain<HeadDDim1..., ContractDDim...>,
                LayoutStridedPolicy,
@@ -1221,15 +1222,9 @@ template <
         class ElementType,
         class LayoutStridedPolicy,
         class MemorySpace>
-Tensor<ElementType,
-       ddc::DiscreteDomain<ProdDDim...>,
-       LayoutStridedPolicy,
-       Kokkos::DefaultHostExecutionSpace::memory_space>
-tensor_prod(
-        Tensor<ElementType,
-               ddc::DiscreteDomain<ProdDDim...>,
-               LayoutStridedPolicy,
-               Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
+Tensor<ElementType, ddc::DiscreteDomain<ProdDDim...>, LayoutStridedPolicy, MemorySpace> tensor_prod(
+        Tensor<ElementType, ddc::DiscreteDomain<ProdDDim...>, LayoutStridedPolicy, MemorySpace>
+                prod_tensor,
         Tensor<ElementType, ddc::DiscreteDomain<DDim1...>, LayoutStridedPolicy, MemorySpace>
                 tensor1,
         Tensor<ElementType, ddc::DiscreteDomain<DDim2...>, LayoutStridedPolicy, MemorySpace>
