@@ -66,7 +66,7 @@ KOKKOS_FUNCTION OutputIt move(InputIt first, InputIt last, OutputIt d_first)
 }
 
 template <class I>
-constexpr std::size_t bounded_advance(I& i, std::size_t n, I const bound)
+KOKKOS_FUNCTION constexpr std::size_t bounded_advance(I& i, std::size_t n, I const bound)
 {
     for (; n > 0 && i != bound; --n, void(++i)) {
         ;
