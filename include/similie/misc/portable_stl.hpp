@@ -89,6 +89,15 @@ KOKKOS_FUNCTION ForwardIt shift_left(ForwardIt first, ForwardIt last, std::size_
     return move(move(mid), move(last), move(first));
 }
 
+template <class InputIt, class OutputIt>
+constexpr OutputIt copy(InputIt first, InputIt last, OutputIt d_first)
+{
+    for (; first != last; (void)++first, (void)++d_first)
+        *d_first = *first;
+
+    return d_first;
+}
+
 } // namespace detail
 
 } // namespace misc

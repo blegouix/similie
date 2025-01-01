@@ -197,7 +197,6 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
             sil::tensor::upper<MetricIndex>,
             MuUpSeq,
             NuLowSeq>(exec_space, hodge_star, inv_metric);
-    exec_space.fence();
 
     // Dual tensor
     [[maybe_unused]] tensor::TensorAccessor<
@@ -219,7 +218,6 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
             KOKKOS_LAMBDA(typename TensorType::non_indices_domain_t::discrete_element_type elem) {
                 sil::tensor::tensor_prod(dual_tensor[elem], tensor[elem], hodge_star[elem]);
             });
-    exec_space.fence();
 
     // Dual codifferential
     [[maybe_unused]] tensor::TensorAccessor<
@@ -241,7 +239,6 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
             misc::convert_type_seq_to_t<
                     tensor::TensorAntisymmetricIndex,
                     NuLowSeq>>(exec_space, dual_codifferential, dual_tensor);
-    exec_space.fence();
 
     // Hodge star 2
     [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain2>
@@ -257,7 +254,6 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
             sil::tensor::upper<MetricIndex>,
             RhoUpSeq,
             SigmaLowSeq>(exec_space, hodge_star2, inv_metric);
-    exec_space.fence();
 
     // Codifferential
     ddc::parallel_for_each(
@@ -273,7 +269,6 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
                     codifferential_tensor[elem] *= -1;
                 }
             });
-    exec_space.fence();
 
     return codifferential_tensor;
 }

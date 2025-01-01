@@ -217,7 +217,6 @@ struct FillMetricProd<ddc::detail::TypeSeq<>, ddc::detail::TypeSeq<>>
                 metric_prod.allocation_kokkos_view(),
                 metric_prod_
                         .allocation_kokkos_view()); // We rely on Kokkos::deep_copy in place of ddc::parallel_deepcopy to avoid type verification of the type dimensions
-        exec_space.fence();
         return metric_prod;
     }
 };
@@ -354,7 +353,6 @@ inplace_apply_metric(ExecSpace const& exec_space, TensorType tensor, MetricType 
             exec_space,
             tensor.allocation_kokkos_view(),
             result.allocation_kokkos_view()); // We rely on Kokkos::deep_copy in place of ddc::parallel_deepcopy to avoid type verification of the type dimensions
-    exec_space.fence();
 
     return relabelize_indices_of<
             swap_character<detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>,
