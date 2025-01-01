@@ -21,6 +21,5 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 ----- SETUP BASIC COMMAND -----
 
-cmake -DCMAKE_CXX_COMPILER=clang++-19 -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-Wfatal-errors" ..
-cmake -DCMAKE_CXX_COMPILER=g++-13 -DCMAKE_BUILD_TYPE=Debug -DKokkos_ENABLE_OPENMP=ON -DCMAKE_CXX_FLAGS="-Wfatal-errors" ..
-cmake -DCMAKE_CXX_COMPILER=$KOKKOS_BIN/nvcc_wrapper -DCMAKE_BUILD_TYPE=Debug -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_VOLTA70=ON -DCMAKE_CXX_FLAGS="-Wfatal-errors" ..
+cmake -DCMAKE_CXX_COMPILER=clang++-19 -DCMAKE_BUILD_TYPE=Debug -DKokkos_ENABLE_OPENMP=ON -DCMAKE_CXX_FLAGS="-Wfatal-errors" ..
+cmake -DCMAKE_CXX_COMPILER=$KOKKOS_BIN/nvcc_wrapper -DCMAKE_BUILD_TYPE=Debug -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_VOLTA70=ON -DCMAKE_CXX_FLAGS="-G -Wfatal-errors" ..
