@@ -18,6 +18,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 - Consider removing metric_prod_t (and every helper producing a tensor). At least, standardize API.
 - Relabelizion in different file ?
 - Streams in Laplacian
+- Clarify domain() and mem_domain() (the same)
+- There are several projection of metric on MetricIndex which is simply a metric.indices_domain()
 
 ----- SETUP BASIC COMMAND -----
 
