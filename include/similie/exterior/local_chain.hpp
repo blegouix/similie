@@ -374,13 +374,14 @@ LocalChain(Head, Tail...)
 
 namespace detail {
 
-template <std::size_t K, misc::Specialization<ddc::DiscreteDomain> Dom, class MemorySpace>
+template <std::size_t K, misc::Specialization<ddc::DiscreteDomain> Dom>
 struct TangentBasis;
 
-template <std::size_t K, class... Tag, class MemorySpace>
-struct TangentBasis<K, ddc::DiscreteDomain<Tag...>, MemorySpace>
+template <std::size_t K, class... Tag>
+struct TangentBasis<K, ddc::DiscreteDomain<Tag...>>
 {
-    static auto constexpr run()
+    template <class ExecSpace>
+    static auto constexpr run(ExecSpace const& exec_space)
     {
         std::array<std::ptrdiff_t, sizeof...(Tag)> permutation
                 = {0 * ddc::type_seq_rank_v<Tag, ddc::detail::TypeSeq<Tag...>>...};
@@ -394,22 +395,22 @@ struct TangentBasis<K, ddc::DiscreteDomain<Tag...>, MemorySpace>
             basis_host(i) = ddc::DiscreteVector<Tag...>();
             ddc::detail::array(basis_host(i++)) = permutation;
         } while (std::prev_permutation(permutation.begin(), permutation.end()));
-        Kokkos::View<ddc::DiscreteVector<Tag...>*, MemorySpace> basis
-                = create_mirror_view_and_copy(MemorySpace(), basis_host);
+        Kokkos::View<ddc::DiscreteVector<Tag...>*, typename ExecSpace::memory_space> basis
+                = create_mirror_view_and_copy(exec_space, basis_host);
 
         return LocalChain<
                 Simplex<K, Tag...>,
                 Kokkos::LayoutRight,
-                MemorySpace>(basis, basis.size());
+                typename ExecSpace::memory_space>(basis, basis.size());
     }
 };
 
 } // namespace detail
 
-template <std::size_t K, misc::Specialization<ddc::DiscreteDomain> Dom, class MemorySpace>
-constexpr auto tangent_basis()
+template <std::size_t K, misc::Specialization<ddc::DiscreteDomain> Dom, class ExecSpace>
+constexpr auto tangent_basis(ExecSpace const& exec_space)
 {
-    return detail::TangentBasis<K, Dom, MemorySpace>::run();
+    return detail::TangentBasis<K, Dom>::run(exec_space);
 }
 
 template <misc::Specialization<LocalChain> ChainType>

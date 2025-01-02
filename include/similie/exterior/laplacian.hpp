@@ -45,7 +45,6 @@ TensorType codifferential_of_coboundary(
     sil::tensor::Tensor derivative_tensor(derivative_tensor_alloc);
 
     sil::exterior::deriv<LaplacianDummyIndex, CochainTag>(exec_space, derivative_tensor, tensor);
-    exec_space.fence();
 
     // Codifferential
     sil::exterior::codifferential<
@@ -54,7 +53,6 @@ TensorType codifferential_of_coboundary(
             coboundary_index_t<
                     LaplacianDummyIndex,
                     CochainTag>>(exec_space, out_tensor, derivative_tensor, inv_metric);
-    exec_space.fence();
 
     return out_tensor;
 }
@@ -90,7 +88,6 @@ TensorType coboundary_of_codifferential(
             MetricIndex,
             LaplacianDummyIndex,
             CochainTag>(exec_space, codifferential_tensor, tensor, inv_metric);
-    exec_space.fence();
 
     // Coboundary
     sil::exterior::deriv<
@@ -98,7 +95,6 @@ TensorType coboundary_of_codifferential(
             codifferential_index_t<
                     LaplacianDummyIndex,
                     CochainTag>>(exec_space, out_tensor, codifferential_tensor);
-    exec_space.fence();
 
     return out_tensor;
 }
@@ -132,7 +128,6 @@ TensorType laplacian(
                 MetricIndex,
                 LaplacianDummyIndex2,
                 CochainTag>(exec_space, laplacian_tensor, tensor, inv_metric);
-        exec_space.fence();
     } else if constexpr (CochainTag::rank() < LaplacianDummyIndex::size()) {
         auto tmp_alloc = ddc::create_mirror(exec_space, laplacian_tensor);
         tensor::Tensor tmp(tmp_alloc);
@@ -145,7 +140,6 @@ TensorType laplacian(
                 MetricIndex,
                 LaplacianDummyIndex,
                 CochainTag>(exec_space, tmp, tensor, inv_metric);
-        exec_space.fence();
 
         ddc::parallel_for_each(
                 exec_space,
@@ -158,7 +152,6 @@ TensorType laplacian(
                 MetricIndex,
                 LaplacianDummyIndex,
                 CochainTag>(exec_space, laplacian_tensor, tensor, inv_metric);
-        exec_space.fence();
     } else {
         assert(false && "Unsupported differential form in Laplacian operator");
     }
