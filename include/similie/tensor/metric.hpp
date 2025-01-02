@@ -254,10 +254,12 @@ struct FillMetricProd<
                     new_metric_prod_.non_indices_domain(),
                     KOKKOS_LAMBDA(typename decltype(new_metric_prod_)::non_indices_domain_t::
                                           discrete_element_type elem) {
+                            /*
                         tensor_prod(
                                 new_metric_prod_[elem],
                                 metric_prod_[elem],
                                 relabelize_metric<HeadIndex1, HeadIndex2>(metric)[elem]);
+*/
                     });
         }
 
@@ -475,7 +477,7 @@ invert_metric_t<MetricType> fill_inverse_metric(
                             [&](ddc::DiscreteElement<
                                     tensor::metric_index_1<MetricIndex>,
                                     tensor::metric_index_2<MetricIndex>> index) {
-                                buffer(elem, index) = metric(metric.access_element(elem, index));
+                                //                               buffer(elem, index) = metric(metric.access_element(elem, index));
                             });
 
                     int err = KokkosBatched::SerialLU<KokkosBatched::Algo::SolveLU::Unblocked>::invoke(
@@ -507,6 +509,7 @@ invert_metric_t<MetricType> fill_inverse_metric(
                                     inv_metric.domain()),
                             [&](tensor::swap_character<ddc::DiscreteElement<MetricIndex>>
                                         mem_index) {
+                                /*
                                 inv_metric.mem(elem, mem_index) = buffer(
                                         elem,
                                         tensor::relabelize_indices_in<
@@ -518,6 +521,7 @@ invert_metric_t<MetricType> fill_inverse_metric(
                                                         tensor::metric_index_2<MetricIndex>>>(
                                                 inv_metric.accessor().canonical_natural_element(
                                                         mem_index)));
+*/
                             });
                 });
     }

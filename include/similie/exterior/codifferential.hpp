@@ -256,6 +256,7 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
             SigmaLowSeq>(exec_space, hodge_star2, inv_metric);
 
     // Codifferential
+    /*
     ddc::parallel_for_each(
             exec_space,
             codifferential_tensor.non_indices_domain(),
@@ -269,6 +270,7 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
                     codifferential_tensor[elem] *= -1;
                 }
             });
+    */
 
     return codifferential_tensor;
 }

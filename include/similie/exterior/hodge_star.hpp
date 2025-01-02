@@ -66,6 +66,7 @@ HodgeStarType fill_hodge_star(
                     typename ExecSpace::memory_space>()); // TODO consider avoid allocation
     sil::tensor::Tensor levi_civita(levi_civita_alloc);
 
+    /*
     ddc::parallel_for_each(
             exec_space,
             hodge_star.non_indices_domain(),
@@ -75,6 +76,7 @@ HodgeStarType fill_hodge_star(
                 hodge_star[elem] *= Kokkos::sqrt(Kokkos::abs(metric_determinant(elem)))
                                     / misc::factorial(ddc::type_seq_size_v<Indices1>);
             });
+*/
     return hodge_star;
 }
 
@@ -122,6 +124,7 @@ HodgeStarType fill_hodge_star(
             KOKKOS_LAMBDA(typename ddc::remove_dims_of_t<
                           typename MetricType::discrete_domain_type,
                           MetricIndex>::discrete_element_type elem) {
+                    /*
                 ddc::annotated_for_each(
                         ddc::DiscreteDomain<
                                 tensor::metric_index_1<MetricIndex>,
@@ -134,6 +137,7 @@ HodgeStarType fill_hodge_star(
                                     index)); // TODO: triggers a "nvlink warning : Stack size for entry function cannot be statically determined"
                         });
                 metric_det(elem) = 1. / tensor::determinant(buffer[elem].allocation_kokkos_view());
+*/
             });
 
     // Allocate & compute the product of metrics
