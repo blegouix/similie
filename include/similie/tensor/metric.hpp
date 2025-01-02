@@ -472,7 +472,7 @@ invert_metric_t<MetricType> fill_inverse_metric(
                             ddc::DiscreteDomain<
                                     tensor::metric_index_1<MetricIndex>,
                                     tensor::metric_index_2<MetricIndex>>(metric.natural_domain()),
-                            [=](ddc::DiscreteElement<
+                            [&](ddc::DiscreteElement<
                                     tensor::metric_index_1<MetricIndex>,
                                     tensor::metric_index_2<MetricIndex>> index) {
                                 buffer(elem, index) = metric(metric.access_element(elem, index));
@@ -505,7 +505,7 @@ invert_metric_t<MetricType> fill_inverse_metric(
                     ddc::annotated_for_each(
                             tensor::swap_character<ddc::DiscreteDomain<MetricIndex>>(
                                     inv_metric.domain()),
-                            [=](tensor::swap_character<ddc::DiscreteElement<MetricIndex>>
+                            [&](tensor::swap_character<ddc::DiscreteElement<MetricIndex>>
                                         mem_index) {
                                 inv_metric.mem(elem, mem_index) = buffer(
                                         elem,

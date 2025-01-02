@@ -138,13 +138,13 @@ struct TensorProdAnyAnyAny<
 
         ddc::annotated_for_each(
                 prod_tensor.domain(),
-                [=](ddc::DiscreteElement<ProdDDim...> mem_elem) {
+                [&](ddc::DiscreteElement<ProdDDim...> mem_elem) {
                     auto elem = prod_tensor.canonical_natural_element(mem_elem);
                     prod_tensor.mem(mem_elem) = ddc::annotated_transform_reduce(
                             contract_dom,
                             0.,
                             ddc::reducer::sum<ElementType>(),
-                            [=](ddc::DiscreteElement<ContractDDim...> contract_elem) {
+                            [&](ddc::DiscreteElement<ContractDDim...> contract_elem) {
                                 return tensor1.get(tensor1.access_element(
                                                ddc::DiscreteElement<HeadDDim1..., ContractDDim...>(
                                                        ddc::select<HeadDDim1...>(elem),
@@ -467,13 +467,13 @@ struct TensorProdYoungAnyAny<
 
         ddc::for_each(
                 uncompressed_prod.domain(),
-                [=](ddc::cartesian_prod_t<
+                [&](ddc::cartesian_prod_t<
                         typename ProdDDim::subindices_domain_t...>::discrete_element_type elem) {
                     uncompressed_prod(elem) = ddc::transform_reduce(
                             contract_dom,
                             0.,
                             ddc::reducer::sum<ElementType>(),
-                            [=](ddc::DiscreteElement<ContractDDim...> contract_elem) {
+                            [&](ddc::DiscreteElement<ContractDDim...> contract_elem) {
                                 return tensor1.get(tensor1.access_element(
                                                ddc::DiscreteElement<HeadDDim1..., ContractDDim...>(
                                                        ddc::select<HeadDDim1...>(elem),

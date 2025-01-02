@@ -126,7 +126,7 @@ HodgeStarType fill_hodge_star(
                         ddc::DiscreteDomain<
                                 tensor::metric_index_1<MetricIndex>,
                                 tensor::metric_index_2<MetricIndex>>(metric.natural_domain()),
-                        [=](ddc::DiscreteElement<
+                        [&](ddc::DiscreteElement<
                                 tensor::metric_index_1<MetricIndex>,
                                 tensor::metric_index_2<MetricIndex>> index) {
                             buffer(elem, index) = metric.get(metric.access_element(

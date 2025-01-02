@@ -1199,12 +1199,12 @@ struct NaturalTensorProd<
     {
         ddc::annotated_for_each(
                 prod_tensor.domain(),
-                [=](ddc::DiscreteElement<HeadDDim1..., TailDDim2...> elem) {
+                [&](ddc::DiscreteElement<HeadDDim1..., TailDDim2...> elem) {
                     prod_tensor(elem) = ddc::annotated_transform_reduce(
                             tensor1.template domain<ContractDDim...>(),
                             0.,
                             ddc::reducer::sum<ElementType>(),
-                            [=](ddc::DiscreteElement<ContractDDim...> contract_elem) {
+                            [&](ddc::DiscreteElement<ContractDDim...> contract_elem) {
                                 return tensor1(ddc::select<HeadDDim1...>(elem), contract_elem)
                                        * tensor2(ddc::select<TailDDim2...>(elem), contract_elem);
                             });
