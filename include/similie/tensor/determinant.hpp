@@ -68,6 +68,7 @@ KOKKOS_FUNCTION typename ViewType::value_type determinant(const ViewType& matrix
     return det;
 }
 
+// TODO port on GPU
 template <misc::Specialization<Tensor> TensorType>
 TensorType::element_type determinant(TensorType tensor)
 {
