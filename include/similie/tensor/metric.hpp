@@ -417,14 +417,14 @@ invert_metric_t<MetricType> fill_inverse_metric(
                 exec_space,
                 inv_metric.mem_domain(),
                 KOKKOS_LAMBDA(invert_metric_t<MetricType>::discrete_element_type elem) {
-                    inv_metric(elem)
+                    inv_metric.mem(elem)
                             = 1.
-                              / metric(relabelize_indices_in<
-                                       swap_character<ddc::to_type_seq_t<
-                                               typename MetricType::accessor_t::natural_domain_t>>,
-                                       ddc::to_type_seq_t<
-                                               typename MetricType::accessor_t::natural_domain_t>>(
-                                      elem));
+                              / metric.mem(relabelize_indices_in<
+                                           swap_character<ddc::to_type_seq_t<
+                                                   typename MetricType::accessor_t::
+                                                           natural_domain_t>>,
+                                           ddc::to_type_seq_t<typename MetricType::accessor_t::
+                                                                      natural_domain_t>>(elem));
                 });
     } else if (misc::Specialization<MetricIndex, TensorSymmetricIndex>) {
         // Allocate a buffer mirroring the metric as a full matrix
@@ -503,26 +503,23 @@ invert_metric_t<MetricType> fill_inverse_metric(
                     */
 
                     ddc::annotated_for_each(
-                            tensor::swap_character<ddc::DiscreteDomain<
-                                    tensor::metric_index_1<MetricIndex>,
-                                    tensor::metric_index_2<MetricIndex>>>(
-                                    inv_metric.natural_domain()),
-                            [=](decltype(tensor::swap_character<ddc::DiscreteDomain<
-                                                 tensor::metric_index_1<MetricIndex>,
-                                                 tensor::metric_index_2<MetricIndex>>>(
-                                    inv_metric.natural_domain()))::discrete_element_type index) {
-                                // TODO do better, symmetric tensor is filled twice
-                                inv_metric(inv_metric.access_element(elem, index)) = buffer(
-                                        elem,
-                                        tensor::relabelize_indices_in<
-                                                tensor::swap_character<ddc::detail::TypeSeq<
-                                                        tensor::metric_index_1<MetricIndex>,
-                                                        tensor::metric_index_2<MetricIndex>>>,
-                                                ddc::detail::TypeSeq<
-                                                        tensor::metric_index_1<MetricIndex>,
-                                                        tensor::metric_index_2<MetricIndex>>>(
-                                                index));
-                            });
+                            tensor::swap_character<ddc::DiscreteDomain<MetricIndex>>(
+                                    inv_metric.domain()),
+                            [=](tensor::swap_character<ddc::DiscreteElement<MetricIndex>>(
+                                    inv_metric.domain()))::discrete_element_type mem_index)
+                    {
+                        inv_metric.mem(elem, mem_index) = buffer(
+                                elem,
+                                tensor::relabelize_indices_in<
+                                        tensor::swap_character<ddc::detail::TypeSeq<
+                                                tensor::metric_index_1<MetricIndex>,
+                                                tensor::metric_index_2<MetricIndex>>>,
+                                        ddc::detail::TypeSeq<
+                                                tensor::metric_index_1<MetricIndex>,
+                                                tensor::metric_index_2<MetricIndex>>>(
+                                        inv_metric.accessor().canonical_natural_element(
+                                                mem_index)));
+                    });
                 });
     }
 
