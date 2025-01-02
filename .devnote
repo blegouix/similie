@@ -20,6 +20,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 - Streams in Laplacian
 - Clarify domain() and mem_domain() (the same)
 - There are several projection of metric on MetricIndex which is simply a metric.indices_domain()
+- swap_character_t
 
 ----- SETUP BASIC COMMAND -----
 
