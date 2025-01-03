@@ -253,16 +253,14 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
             CochainTag::rank() + 1,
             typename detail::NonSpectatorDimension<
                     TagToAddToCochain,
-                    typename TensorType::non_indices_domain_t>::type,
-            typename ExecSpace::memory_space>();
+                    typename TensorType::non_indices_domain_t>::type>(exec_space);
 
     // compute the tangent K-basis for each node of the mesh. This is a local K-chain.
     auto lower_chain = tangent_basis<
             CochainTag::rank(),
             typename detail::NonSpectatorDimension<
                     TagToAddToCochain,
-                    typename TensorType::non_indices_domain_t>::type,
-            typename ExecSpace::memory_space>();
+                    typename TensorType::non_indices_domain_t>::type>(exec_space);
 
     // iterate over every node, we will work inside the tangent space associated to each of them
     ddc::parallel_for_each(
