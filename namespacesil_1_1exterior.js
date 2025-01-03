@@ -31,7 +31,7 @@ var namespacesil_1_1exterior =
     [ "fill_hodge_star", "namespacesil_1_1exterior.html#ad06c01fb6d6a67c26644e4ccfb4d28cc", null ],
     [ "laplacian", "namespacesil_1_1exterior.html#a267c82204d74450c93390dd5c11ca7b8", null ],
     [ "LocalChain", "namespacesil_1_1exterior.html#ab438931846b5b39c2e5424037b5b32d9", null ],
-    [ "tangent_basis", "namespacesil_1_1exterior.html#ac4ff55b0430b4097486cf919f833b192", null ],
+    [ "tangent_basis", "namespacesil_1_1exterior.html#a0a55f67a65dbd21a2155b6a1e4853367", null ],
     [ "Simplex", "namespacesil_1_1exterior.html#a19dd94e9180327a407f012154b3c2bc4", null ],
     [ "Simplex", "namespacesil_1_1exterior.html#a0f1e1f80c56429b7ed438a0ab465cb37", null ],
     [ "operator<<", "namespacesil_1_1exterior.html#a0ff4a1fb1f2e531dc4ed4b58dbcef566", null ]

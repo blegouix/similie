@@ -238,17 +238,20 @@ $(function(){initNavTree('identity__tensor_8hpp_source.html',''); initResizable(
 <div class="foldopen" id="foldopen00089" data-start="{" data-end="}">
 <div class="line"><a id="l00089" name="l00089"></a><span class="lineno"><a class="line" href="structsil_1_1tensor_1_1TensorIdentityIndex.html#a34e87b7987f95989af0e9eb56e8f3f5c">   89</a></span>    <a class="code hl_function" href="structsil_1_1tensor_1_1TensorIdentityIndex.html#a34e87b7987f95989af0e9eb56e8f3f5c">mem_id_to_canonical_natural_ids</a>(std::size_t <a class="code hl_function" href="structsil_1_1tensor_1_1TensorIdentityIndex.html#aa9b137ef2664e66b274f9b9e96834337">mem_id</a>)</div>
 <div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>    {</div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>        assert(<a class="code hl_function" href="structsil_1_1tensor_1_1TensorIdentityIndex.html#aa9b137ef2664e66b274f9b9e96834337">mem_id</a> &lt; <a class="code hl_function" href="structsil_1_1tensor_1_1TensorIdentityIndex.html#ab206a815cc41a1445d899e21121339a6">mem_size</a>()); <span class="comment">// Always false</span></div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>        assert(<span class="keyword">false</span>);</div>
 <div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>        std::array&lt;std::size_t, <a class="code hl_function" href="structsil_1_1tensor_1_1TensorIdentityIndex.html#a35ac032ec442ef5466bc96edfdcdbbda">rank</a>()&gt; ids;</div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>        <span class="keywordflow">return</span> ids;</div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>    }</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>        <span class="keywordflow">for</span> (<span class="keyword">auto</span> i = ids.begin(); i &lt; ids.end(); ++i) {</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>            *i = 0;</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>        }</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>        <span class="keywordflow">return</span> ids;</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>    }</div>
 </div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>};</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>};</div>
 </div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span> </div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>} <span class="comment">// namespace tensor</span></div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span> </div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>} <span class="comment">// namespace sil</span></div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span> </div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>} <span class="comment">// namespace tensor</span></div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span> </div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>} <span class="comment">// namespace sil</span></div>
 <div class="ttc" id="aconceptsil_1_1tensor_1_1TensorIndex_html"><div class="ttname"><a href="conceptsil_1_1tensor_1_1TensorIndex.html">sil::tensor::TensorIndex</a></div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00104">tensor_impl.hpp:104</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_a164aa1d6ecb53a91d54f7158f7b0bcb7"><div class="ttname"><a href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">sil::tensor::Tensor</a></div><div class="ttdeci">Tensor(ddc::Chunk&lt; ElementType, SupportType, Allocator &gt;) -&gt; Tensor&lt; ElementType, SupportType, Kokkos::layout_right, typename Allocator::memory_space &gt;</div></div>
 <div class="ttc" id="anamespacesil_html"><div class="ttname"><a href="namespacesil.html">sil</a></div><div class="ttdoc">The top-level namespace of SimiLie.</div><div class="ttdef"><b>Definition</b> <a href="csr_8hpp_source.html#l00014">csr.hpp:14</a></div></div>

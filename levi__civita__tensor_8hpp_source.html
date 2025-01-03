@@ -249,17 +249,20 @@ $(function(){initNavTree('levi__civita__tensor_8hpp_source.html',''); initResiza
 <div class="foldopen" id="foldopen00100" data-start="{" data-end="}">
 <div class="line"><a id="l00100" name="l00100"></a><span class="lineno"><a class="line" href="structsil_1_1tensor_1_1TensorLeviCivitaIndex.html#adc028ab8bb7b7b24ae65e75a72021f93">  100</a></span>    <a class="code hl_function" href="structsil_1_1tensor_1_1TensorLeviCivitaIndex.html#adc028ab8bb7b7b24ae65e75a72021f93">mem_id_to_canonical_natural_ids</a>(std::size_t <a class="code hl_function" href="structsil_1_1tensor_1_1TensorLeviCivitaIndex.html#a5997ae755922d82c7773081831222aff">mem_id</a>)</div>
 <div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>    {</div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>        assert(<a class="code hl_function" href="structsil_1_1tensor_1_1TensorLeviCivitaIndex.html#a5997ae755922d82c7773081831222aff">mem_id</a> &lt; <a class="code hl_function" href="structsil_1_1tensor_1_1TensorLeviCivitaIndex.html#ac97e1831a2637071cc6844a13881e09a">mem_size</a>()); <span class="comment">// Always false</span></div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>        assert(<span class="keyword">false</span>);</div>
 <div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>        std::array&lt;std::size_t, <a class="code hl_function" href="structsil_1_1tensor_1_1TensorLeviCivitaIndex.html#a0aefc4f5b9eacb202ec129b572bdc102">rank</a>()&gt; ids;</div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>        <span class="keywordflow">return</span> ids;</div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>    }</div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>        <span class="keywordflow">for</span> (<span class="keyword">auto</span> i = ids.begin(); i &lt; ids.end(); ++i) {</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>            *i = 0;</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>        }</div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>        <span class="keywordflow">return</span> ids;</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>    }</div>
 </div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>};</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>};</div>
 </div>
-<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span> </div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>} <span class="comment">// namespace tensor</span></div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span> </div>
-<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>} <span class="comment">// namespace sil</span></div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span> </div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>} <span class="comment">// namespace tensor</span></div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span> </div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>} <span class="comment">// namespace sil</span></div>
 <div class="ttc" id="aconceptsil_1_1tensor_1_1TensorIndex_html"><div class="ttname"><a href="conceptsil_1_1tensor_1_1TensorIndex.html">sil::tensor::TensorIndex</a></div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00104">tensor_impl.hpp:104</a></div></div>
 <div class="ttc" id="anamespacesil_1_1misc_html_a9350273fed3e9b0c5ac7f0cb4b85a649"><div class="ttname"><a href="namespacesil_1_1misc.html#a9350273fed3e9b0c5ac7f0cb4b85a649">sil::misc::permutation_parity</a></div><div class="ttdeci">constexpr int permutation_parity(std::array&lt; std::size_t, N &gt; lst)</div><div class="ttdef"><b>Definition</b> <a href="permutation__parity_8hpp_source.html#l00019">permutation_parity.hpp:19</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_a164aa1d6ecb53a91d54f7158f7b0bcb7"><div class="ttname"><a href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">sil::tensor::Tensor</a></div><div class="ttdeci">Tensor(ddc::Chunk&lt; ElementType, SupportType, Allocator &gt;) -&gt; Tensor&lt; ElementType, SupportType, Kokkos::layout_right, typename Allocator::memory_space &gt;</div></div>

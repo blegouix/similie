@@ -64,7 +64,7 @@ var namespacesil_1_1tensor =
     [ "relabelize_indices_of", "namespacesil_1_1tensor.html#ad550ba4fb8a3062a3cec97a08e31ee44", null ],
     [ "tensor_sum", "namespacesil_1_1tensor.html#a4dcd2abd3401c0613db18a84b2fb1539", null ],
     [ "natural_tensor_prod_domain", "namespacesil_1_1tensor.html#ac265afa3e78c715cbb7f64f9ace68f9d", null ],
-    [ "tensor_prod", "namespacesil_1_1tensor.html#a1bf1827923f85e07f3f920b6402ae377", null ],
+    [ "tensor_prod", "namespacesil_1_1tensor.html#aa7e70ef3014d5865f10f7427d6be216d", null ],
     [ "operator<<", "namespacesil_1_1tensor.html#a6e4843c3706eb7cb8edd8c0e0c26aa4e", null ],
     [ "check_tensors_compatibility", "namespacesil_1_1tensor.html#a13d4a3e249edb25ac1599f0598af2fcc", null ],
     [ "tensor_prod", "namespacesil_1_1tensor.html#afafa161f38b2b6c9033dfaf54d6fa926", null ],

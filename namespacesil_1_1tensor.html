@@ -317,9 +317,9 @@ Functions</h2></td></tr>
 <tr class="memitem:ac265afa3e78c715cbb7f64f9ace68f9d" id="r_ac265afa3e78c715cbb7f64f9ace68f9d"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom1, misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom2&gt; </td></tr>
 <tr class="memitem:ac265afa3e78c715cbb7f64f9ace68f9d"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="#a6b2f3421d43c572b05cc7ecb8334e5fd">natural_tensor_prod_domain_t</a>&lt; Dom1, Dom2 &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ac265afa3e78c715cbb7f64f9ace68f9d">natural_tensor_prod_domain</a> (Dom1 dom1, Dom2 dom2)</td></tr>
 <tr class="separator:ac265afa3e78c715cbb7f64f9ace68f9d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1bf1827923f85e07f3f920b6402ae377" id="r_a1bf1827923f85e07f3f920b6402ae377"><td class="memTemplParams" colspan="2">template&lt;TensorNatIndex... ProdDDim, TensorNatIndex... DDim1, TensorNatIndex... DDim2, class ElementType , class LayoutStridedPolicy , class MemorySpace &gt; </td></tr>
-<tr class="memitem:a1bf1827923f85e07f3f920b6402ae377"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim... &gt;, LayoutStridedPolicy, Kokkos::DefaultHostExecutionSpace::memory_space &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a1bf1827923f85e07f3f920b6402ae377">tensor_prod</a> (<a class="el" href="#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim... &gt;, LayoutStridedPolicy, Kokkos::DefaultHostExecutionSpace::memory_space &gt; prod_tensor, <a class="el" href="#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>&lt; ElementType, ddc::DiscreteDomain&lt; DDim1... &gt;, LayoutStridedPolicy, MemorySpace &gt; tensor1, <a class="el" href="#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>&lt; ElementType, ddc::DiscreteDomain&lt; DDim2... &gt;, LayoutStridedPolicy, MemorySpace &gt; tensor2)</td></tr>
-<tr class="separator:a1bf1827923f85e07f3f920b6402ae377"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa7e70ef3014d5865f10f7427d6be216d" id="r_aa7e70ef3014d5865f10f7427d6be216d"><td class="memTemplParams" colspan="2">template&lt;TensorNatIndex... ProdDDim, TensorNatIndex... DDim1, TensorNatIndex... DDim2, class ElementType , class LayoutStridedPolicy , class MemorySpace &gt; </td></tr>
+<tr class="memitem:aa7e70ef3014d5865f10f7427d6be216d"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim... &gt;, LayoutStridedPolicy, MemorySpace &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#aa7e70ef3014d5865f10f7427d6be216d">tensor_prod</a> (<a class="el" href="#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim... &gt;, LayoutStridedPolicy, MemorySpace &gt; prod_tensor, <a class="el" href="#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>&lt; ElementType, ddc::DiscreteDomain&lt; DDim1... &gt;, LayoutStridedPolicy, MemorySpace &gt; tensor1, <a class="el" href="#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>&lt; ElementType, ddc::DiscreteDomain&lt; DDim2... &gt;, LayoutStridedPolicy, MemorySpace &gt; tensor2)</td></tr>
+<tr class="separator:aa7e70ef3014d5865f10f7427d6be216d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6e4843c3706eb7cb8edd8c0e0c26aa4e" id="r_a6e4843c3706eb7cb8edd8c0e0c26aa4e"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; <a class="el" href="#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a> &gt; TensorType&gt; </td></tr>
 <tr class="memitem:a6e4843c3706eb7cb8edd8c0e0c26aa4e"><td class="memTemplItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a6e4843c3706eb7cb8edd8c0e0c26aa4e">operator&lt;&lt;</a> (std::ostream &amp;os, TensorType const &amp;tensor)</td></tr>
 <tr class="separator:a6e4843c3706eb7cb8edd8c0e0c26aa4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -721,7 +721,7 @@ template&lt;misc::Specialization&lt; <a class="el" href="#a164aa1d6ecb53a91d54f7
 <div class="line">        ddc::to_type_seq_t&lt;typename MetricType::accessor_t::natural_domain_t&gt;,</div>
 <div class="line">        swap_character&lt;ddc::to_type_seq_t&lt;typename MetricType::accessor_t::natural_domain_t&gt;&gt;&gt;</div>
 </div><!-- fragment -->
-<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00397">397</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00398">398</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
 
 </div>
 </div>
@@ -993,7 +993,7 @@ template&lt;misc::Specialization&lt; <a class="el" href="#a164aa1d6ecb53a91d54f7
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="determinant_8hpp_source.html#l00072">72</a> of file <a class="el" href="determinant_8hpp_source.html">determinant.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="determinant_8hpp_source.html#l00073">73</a> of file <a class="el" href="determinant_8hpp_source.html">determinant.hpp</a>.</p>
 
 </div>
 </div>
@@ -1141,7 +1141,7 @@ template&lt;TensorIndex MetricIndex, TensorNatIndex... Index1, misc::Specializat
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00369">369</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00370">370</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
 
 </div>
 </div>
@@ -1171,7 +1171,7 @@ template&lt;TensorIndex MetricIndex, misc::Specialization&lt; <a class="el" href
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00404">404</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00405">405</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
 
 </div>
 </div>
@@ -1379,8 +1379,8 @@ template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom1, misc::Specia
 
 </div>
 </div>
-<a id="a1bf1827923f85e07f3f920b6402ae377" name="a1bf1827923f85e07f3f920b6402ae377"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1bf1827923f85e07f3f920b6402ae377">&#9670;&#160;</a></span>tensor_prod() <span class="overload">[1/2]</span></h2>
+<a id="aa7e70ef3014d5865f10f7427d6be216d" name="aa7e70ef3014d5865f10f7427d6be216d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa7e70ef3014d5865f10f7427d6be216d">&#9670;&#160;</a></span>tensor_prod() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1388,9 +1388,9 @@ template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom1, misc::Specia
 template&lt;TensorNatIndex... ProdDDim, TensorNatIndex... DDim1, TensorNatIndex... DDim2, class ElementType , class LayoutStridedPolicy , class MemorySpace &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim... &gt;, LayoutStridedPolicy, Kokkos::DefaultHostExecutionSpace::memory_space &gt; sil::tensor::tensor_prod </td>
+          <td class="memname"><a class="el" href="#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim... &gt;, LayoutStridedPolicy, MemorySpace &gt; sil::tensor::tensor_prod </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim... &gt;, LayoutStridedPolicy, Kokkos::DefaultHostExecutionSpace::memory_space &gt;</td>          <td class="paramname"><span class="paramname"><em>prod_tensor</em></span>, </td>
+          <td class="paramtype"><a class="el" href="#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim... &gt;, LayoutStridedPolicy, MemorySpace &gt;</td>          <td class="paramname"><span class="paramname"><em>prod_tensor</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -1405,7 +1405,7 @@ template&lt;TensorNatIndex... ProdDDim, TensorNatIndex... DDim1, TensorNatIndex.
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01245">1245</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01241">1241</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -1430,7 +1430,7 @@ template&lt;misc::Specialization&lt; <a class="el" href="#a164aa1d6ecb53a91d54f7
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01331">1331</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l01325">1325</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
