@@ -101,7 +101,8 @@ constexpr OutputIt copy(InputIt first, InputIt last, OutputIt d_first)
 
 
 template <typename It, typename Compare = std::less<>>
-constexpr void sort(It begin, It end, Compare comp = Compare()) {
+constexpr void sort(It begin, It end, Compare comp = Compare())
+{
     for (It i = begin; i != end; ++i) {
         for (It j = begin; j < end - 1; ++j) {
             if (comp(*(j + 1), *j)) {
