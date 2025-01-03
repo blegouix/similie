@@ -212,12 +212,14 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
             ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
     sil::tensor::Tensor dual_tensor(dual_tensor_alloc);
 
+    /*
     ddc::parallel_for_each(
             exec_space,
             dual_tensor.non_indices_domain(),
             KOKKOS_LAMBDA(typename TensorType::non_indices_domain_t::discrete_element_type elem) {
                 sil::tensor::tensor_prod(dual_tensor[elem], tensor[elem], hodge_star[elem]);
             });
+    */
 
     // Dual codifferential
     [[maybe_unused]] tensor::TensorAccessor<
