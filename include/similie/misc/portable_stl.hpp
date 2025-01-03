@@ -11,6 +11,7 @@ namespace misc {
 
 namespace detail {
 
+// Not sure why KOKKOS_FUNCTION is required despite constexpr
 template <class InputIt, class T = typename std::iterator_traits<InputIt>::value_type>
 KOKKOS_FUNCTION constexpr InputIt find(InputIt first, InputIt last, const T& value)
 {
@@ -50,7 +51,7 @@ KOKKOS_FUNCTION constexpr bool all_of(InputIt first, InputIt last, UnaryPred p)
 */
 
 template <class T>
-KOKKOS_FUNCTION constexpr std::remove_reference_t<T>&& move(T&& t) noexcept
+constexpr std::remove_reference_t<T>&& move(T&& t) noexcept
 {
     return static_cast<typename std::remove_reference<T>::type&&>(t);
 }
@@ -87,6 +88,28 @@ KOKKOS_FUNCTION ForwardIt shift_left(ForwardIt first, ForwardIt last, std::size_
     }
 
     return move(move(mid), move(last), move(first));
+}
+
+template <class InputIt, class OutputIt>
+constexpr OutputIt copy(InputIt first, InputIt last, OutputIt d_first)
+{
+    for (; first != last; (void)++first, (void)++d_first)
+        *d_first = *first;
+
+    return d_first;
+}
+
+
+template <typename It, typename Compare = std::less<>>
+constexpr void sort(It begin, It end, Compare comp = Compare())
+{
+    for (It i = begin; i != end; ++i) {
+        for (It j = begin; j < end - 1; ++j) {
+            if (comp(*(j + 1), *j)) {
+                Kokkos::kokkos_swap(*j, *(j + 1));
+            }
+        }
+    }
 }
 
 } // namespace detail

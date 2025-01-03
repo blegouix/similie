@@ -6,6 +6,7 @@
 #include <ddc/ddc.hpp>
 
 #include <similie/misc/binomial_coefficient.hpp>
+#include <similie/misc/portable_stl.hpp>
 
 #include "tensor_impl.hpp"
 
@@ -72,7 +73,7 @@ struct TensorAntisymmetricIndex
             std::array<std::size_t, rank()> const natural_ids)
     {
         std::array<std::size_t, rank()> sorted_ids(natural_ids);
-        std::sort(sorted_ids.begin(), sorted_ids.end());
+        misc::detail::sort(sorted_ids.begin(), sorted_ids.end());
         return mem_size()
                - (0 + ...
                   + (sorted_ids[ddc::type_seq_rank_v<

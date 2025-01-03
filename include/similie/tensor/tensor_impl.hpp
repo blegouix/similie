@@ -7,6 +7,7 @@
 
 #include <ddc/ddc.hpp>
 
+#include <similie/misc/portable_stl.hpp>
 #include <similie/misc/specialization.hpp>
 
 namespace sil {
@@ -397,7 +398,7 @@ constexpr TensorAccessor<Index...>::natural_domain_t::discrete_element_type Tens
             [&]() {
                 auto i = MemIndex::mem_id_to_canonical_natural_ids(
                         mem_elem.template uid<MemIndex>());
-                std::copy(i.begin(), i.end(), it);
+                misc::detail::copy(i.begin(), i.end(), it);
                 it += i.size();
             }(),
             ...);
@@ -749,7 +750,7 @@ public:
                LayoutStridedPolicy,
                MemorySpace>& tensor)
     {
-        ddc::for_each(this->domain(), [&](ddc::DiscreteElement<DDim...> elem) {
+        ddc::annotated_for_each(this->domain(), [&](ddc::DiscreteElement<DDim...> elem) {
             this->mem(elem) += tensor.mem(elem);
         });
         return *this;
@@ -762,7 +763,7 @@ public:
             MemorySpace>&
     operator*=(const ElementType scalar)
     {
-        ddc::for_each(this->domain(), [&](ddc::DiscreteElement<DDim...> elem) {
+        ddc::annotated_for_each(this->domain(), [&](ddc::DiscreteElement<DDim...> elem) {
             this->mem(elem) *= scalar;
         });
         return *this;
@@ -1134,24 +1135,6 @@ constexpr relabelize_indices_of_t<Tensor, OldIndices, NewIndices> relabelize_ind
     return detail::RelabelizeIndicesOf<OldIndices, NewIndices, 0>(tensor);
 }
 
-// Sum of tensors
-template <
-        class... DDim,
-        class ElementType,
-        class LayoutStridedPolicy,
-        class MemorySpace,
-        misc::Specialization<Tensor>... TensorType>
-Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace> tensor_sum(
-        Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>
-                sum_tensor,
-        TensorType... tensor)
-{
-    ddc::for_each(sum_tensor.domain(), [=](ddc::DiscreteElement<DDim...> elem) {
-        sum_tensor(elem) = (tensor(elem) + ...);
-    });
-    return sum_tensor;
-}
-
 namespace detail {
 
 // Domain of a tensor result of product between two tensors
@@ -1196,7 +1179,7 @@ struct NaturalTensorProd<
         ddc::detail::TypeSeq<TailDDim2...>>
 {
     template <class ElementType, class LayoutStridedPolicy, class MemorySpace>
-    static Tensor<
+    KOKKOS_FUNCTION static Tensor<
             ElementType,
             ddc::DiscreteDomain<HeadDDim1..., TailDDim2...>,
             LayoutStridedPolicy,
@@ -1214,14 +1197,14 @@ struct NaturalTensorProd<
                LayoutStridedPolicy,
                MemorySpace> tensor2)
     {
-        ddc::for_each(
+        ddc::annotated_for_each(
                 prod_tensor.domain(),
-                [=](ddc::DiscreteElement<HeadDDim1..., TailDDim2...> elem) {
-                    prod_tensor(elem) = ddc::transform_reduce(
+                [&](ddc::DiscreteElement<HeadDDim1..., TailDDim2...> elem) {
+                    prod_tensor(elem) = ddc::annotated_transform_reduce(
                             tensor1.template domain<ContractDDim...>(),
                             0.,
                             ddc::reducer::sum<ElementType>(),
-                            [=](ddc::DiscreteElement<ContractDDim...> contract_elem) {
+                            [&](ddc::DiscreteElement<ContractDDim...> contract_elem) {
                                 return tensor1(ddc::select<HeadDDim1...>(elem), contract_elem)
                                        * tensor2(ddc::select<TailDDim2...>(elem), contract_elem);
                             });
