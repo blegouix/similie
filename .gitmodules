@@ -1,12 +1,12 @@
 # SPDX-FileCopyrightText: 2024 Baptiste Legouix
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-[submodule "vendor/ddc"]
-	path = vendor/ddc
-	url = git@github.com:CExA-project/ddc.git
 [submodule "vendor/googletest"]
 	path = vendor/googletest
 	url = git@github.com:google/googletest.git
 [submodule "vendor/doxygen-awesome-css"]
 	path = vendor/doxygen-awesome-css
 	url = git@github.com:jothepro/doxygen-awesome-css.git
+[submodule "vendor/ddc"]
+	path = vendor/ddc
+	url = git@github.com:blegouix/ddc.git
