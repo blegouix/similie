@@ -13,6 +13,7 @@
 #include "identity_tensor.hpp"
 #include "lorentzian_sign_tensor.hpp"
 #include "prime.hpp"
+#include "relabelization.hpp"
 #include "symmetric_tensor.hpp"
 #include "tensor_prod.hpp"
 

@@ -15,7 +15,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 - Consider creating a misc enum for {-1 1} and use it in simplices/chains
 - enforced_deep_copy (avoid call to Kokkos::deep_copy)
 - Consider removing metric_prod_t (and every helper producing a tensor). At least, standardize API.
-- Relabelizion in different file ?
 - Streams in Laplacian
 - There are several projection of metric on MetricIndex which is simply a metric.indices_domain()
 
