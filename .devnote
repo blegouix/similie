@@ -14,7 +14,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 - Unify TensorAccessor::access_element() functions. Also get<Dims...>() in Tensor ?
 - Consider creating a misc enum for {-1 1} and use it in simplices/chains
 - Consider removing metric_prod_t (and every helper producing a tensor). At least, standardize API.
-- Streams in Laplacian
 
 ----- SETUP BASIC COMMAND -----
 

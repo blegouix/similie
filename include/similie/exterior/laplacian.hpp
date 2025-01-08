@@ -132,14 +132,18 @@ TensorType laplacian(
         auto tmp_alloc = ddc::create_mirror(exec_space, laplacian_tensor);
         tensor::Tensor tmp(tmp_alloc);
 
+        auto exec_spaces = Kokkos::Experimental::partition_space(exec_space, 1, 1);
+
         detail::codifferential_of_coboundary<
                 MetricIndex,
                 LaplacianDummyIndex2,
-                CochainTag>(exec_space, laplacian_tensor, tensor, inv_metric);
+                CochainTag>(exec_spaces[0], laplacian_tensor, tensor, inv_metric);
         detail::coboundary_of_codifferential<
                 MetricIndex,
                 LaplacianDummyIndex,
-                CochainTag>(exec_space, tmp, tensor, inv_metric);
+                CochainTag>(exec_spaces[1], tmp, tensor, inv_metric);
+        exec_spaces[0].fence();
+        exec_spaces[1].fence();
 
         ddc::parallel_for_each(
                 exec_space,
