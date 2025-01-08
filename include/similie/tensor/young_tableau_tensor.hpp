@@ -16,7 +16,7 @@ namespace sil {
 namespace tensor {
 
 // struct representing an abstract unique index sweeping on all possible combination of natural indices, for a summetric tensor.
-template <class YoungTableau, class... TensorIndex>
+template <class YoungTableau, TensorNatIndex... TensorIndex>
 struct TensorYoungTableauIndex
 {
     static constexpr bool is_tensor_index = true;

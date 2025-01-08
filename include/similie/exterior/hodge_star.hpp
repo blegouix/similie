@@ -53,12 +53,12 @@ HodgeStarType fill_hodge_star(
 {
     sil::tensor::TensorAccessor<misc::convert_type_seq_to_t<
             tensor::TensorLeviCivitaIndex,
-            ddc::type_seq_merge_t<tensor::primes<tensor::lower<Indices1>>, Indices2>>>
+            ddc::type_seq_merge_t<tensor::primes<tensor::lower_t<Indices1>>, Indices2>>>
             levi_civita_accessor;
     ddc::DiscreteDomain<misc::convert_type_seq_to_t<
             tensor::TensorLeviCivitaIndex,
-            ddc::type_seq_merge_t<tensor::primes<tensor::lower<Indices1>>, Indices2>>>
-            levi_civita_dom(levi_civita_accessor.mem_domain());
+            ddc::type_seq_merge_t<tensor::primes<tensor::lower_t<Indices1>>, Indices2>>>
+            levi_civita_dom(levi_civita_accessor.domain());
     ddc::Chunk levi_civita_alloc(
             levi_civita_dom,
             ddc::KokkosAllocator<
@@ -99,17 +99,17 @@ HodgeStarType fill_hodge_star(
 
     // Allocate metric_det to receive metric field determinant values
     ddc::Chunk metric_det_alloc(
-            ddc::remove_dims_of<MetricIndex>(metric.domain()),
+            metric.non_indices_domain(),
             ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
     ddc::ChunkSpan metric_det(metric_det_alloc);
     // Allocate a buffer mirroring the metric as a full matrix, it will be overwritten by tensor::determinant() which involves a LU decomposition
     ddc::Chunk buffer_alloc(
             ddc::cartesian_prod_t<
-                    ddc::remove_dims_of_t<typename MetricType::discrete_domain_type, MetricIndex>,
+                    typename MetricType::non_indices_domain_t,
                     ddc::DiscreteDomain<
                             tensor::metric_index_1<MetricIndex>,
                             tensor::metric_index_2<MetricIndex>>>(
-                    ddc::remove_dims_of<MetricIndex>(metric.domain()),
+                    metric.non_indices_domain(),
                     ddc::DiscreteDomain<
                             tensor::metric_index_1<MetricIndex>,
                             tensor::metric_index_2<MetricIndex>>(metric.natural_domain())),
@@ -118,10 +118,8 @@ HodgeStarType fill_hodge_star(
     // Compute determinants
     ddc::parallel_for_each(
             exec_space,
-            ddc::remove_dims_of<MetricIndex>(metric.domain()),
-            KOKKOS_LAMBDA(typename ddc::remove_dims_of_t<
-                          typename MetricType::discrete_domain_type,
-                          MetricIndex>::discrete_element_type elem) {
+            metric.non_indices_domain(),
+            KOKKOS_LAMBDA(typename MetricType::non_indices_domain_t::discrete_element_type elem) {
                 ddc::annotated_for_each(
                         ddc::DiscreteDomain<
                                 tensor::metric_index_1<MetricIndex>,
@@ -142,10 +140,10 @@ HodgeStarType fill_hodge_star(
             metric_prod_accessor;
     ddc::Chunk metric_prod_alloc(
             ddc::cartesian_prod_t<
-                    ddc::remove_dims_of_t<typename MetricType::discrete_domain_type, MetricIndex>,
+                    typename MetricType::non_indices_domain_t,
                     tensor::metric_prod_domain_t<MetricIndex, Indices1, tensor::primes<Indices1>>>(
-                    ddc::remove_dims_of<MetricIndex>(metric.domain()),
-                    metric_prod_accessor.mem_domain()),
+                    metric.non_indices_domain(),
+                    metric_prod_accessor.domain()),
             ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
     tensor::Tensor metric_prod(metric_prod_alloc);
 

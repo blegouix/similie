@@ -62,14 +62,14 @@ struct CheckTensorsCompatibility<
     {
         static_assert(std::is_same_v<
                       ddc::type_seq_remove_t<
-                              uncharacterize<ddc::to_type_seq_t<
+                              uncharacterize_t<ddc::to_type_seq_t<
                                       ddc::cartesian_prod_t<natural_domain_t<Index1>...>>>,
-                              uncharacterize<ddc::to_type_seq_t<
+                              uncharacterize_t<ddc::to_type_seq_t<
                                       ddc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>>,
                       ddc::type_seq_remove_t<
-                              uncharacterize<ddc::to_type_seq_t<
+                              uncharacterize_t<ddc::to_type_seq_t<
                                       ddc::cartesian_prod_t<natural_domain_t<Index2>...>>>,
-                              uncharacterize<ddc::to_type_seq_t<
+                              uncharacterize_t<ddc::to_type_seq_t<
                                       ddc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>>>);
         static_assert(are_different_characters_v<
                       ddc::type_seq_remove_t<
@@ -199,23 +199,23 @@ Tensor<ElementType, ddc::DiscreteDomain<ProdDDim...>, LayoutStridedPolicy, Memor
             ddc::detail::TypeSeq<Index2...>>();
 
     detail::TensorProdAnyAnyAny<
-            uncharacterize<ddc::detail::TypeSeq<ProdDDim...>>,
-            uncharacterize<ddc::detail::TypeSeq<Index1...>>,
-            uncharacterize<ddc::detail::TypeSeq<Index2...>>,
+            uncharacterize_t<ddc::detail::TypeSeq<ProdDDim...>>,
+            uncharacterize_t<ddc::detail::TypeSeq<Index1...>>,
+            uncharacterize_t<ddc::detail::TypeSeq<Index2...>>,
             ddc::type_seq_remove_t<
-                    uncharacterize<ddc::to_type_seq_t<
+                    uncharacterize_t<ddc::to_type_seq_t<
                             ddc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>,
-                    uncharacterize<ddc::to_type_seq_t<
+                    uncharacterize_t<ddc::to_type_seq_t<
                             ddc::cartesian_prod_t<natural_domain_t<Index2>...>>>>,
             ddc::type_seq_remove_t<
-                    uncharacterize<
+                    uncharacterize_t<
                             ddc::to_type_seq_t<ddc::cartesian_prod_t<natural_domain_t<Index1>...>>>,
-                    uncharacterize<ddc::to_type_seq_t<
+                    uncharacterize_t<ddc::to_type_seq_t<
                             ddc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>>,
             ddc::type_seq_remove_t<
-                    uncharacterize<ddc::to_type_seq_t<
+                    uncharacterize_t<ddc::to_type_seq_t<
                             ddc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>,
-                    uncharacterize<ddc::to_type_seq_t<
+                    uncharacterize_t<ddc::to_type_seq_t<
                             ddc::cartesian_prod_t<natural_domain_t<Index1>...>>>>>::
             run(uncharacterize_tensor(prod_tensor),
                 uncharacterize_tensor(tensor1),
@@ -391,22 +391,22 @@ tensor_prod(
             ddc::detail::TypeSeq<Index2>>();
 
     detail::TensorProdNatYoungYoung<
-            uncharacterize<Index1>,
-            uncharacterize<Index2>,
+            uncharacterize_t<Index1>,
+            uncharacterize_t<Index2>,
             ddc::type_seq_remove_t<
-                    uncharacterize<ddc::to_type_seq_t<
+                    uncharacterize_t<ddc::to_type_seq_t<
                             ddc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>,
-                    uncharacterize<
+                    uncharacterize_t<
                             ddc::to_type_seq_t<ddc::cartesian_prod_t<natural_domain_t<Index2>>>>>,
             ddc::type_seq_remove_t<
-                    uncharacterize<
+                    uncharacterize_t<
                             ddc::to_type_seq_t<ddc::cartesian_prod_t<natural_domain_t<Index1>>>>,
-                    uncharacterize<ddc::to_type_seq_t<
+                    uncharacterize_t<ddc::to_type_seq_t<
                             ddc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>>,
             ddc::type_seq_remove_t<
-                    uncharacterize<ddc::to_type_seq_t<
+                    uncharacterize_t<ddc::to_type_seq_t<
                             ddc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>,
-                    uncharacterize<
+                    uncharacterize_t<
                             ddc::to_type_seq_t<ddc::cartesian_prod_t<natural_domain_t<Index1>>>>>>::
             run(uncharacterize_tensor(prod_tensor),
                 uncharacterize_tensor(tensor1),
@@ -519,23 +519,23 @@ tensor_prod(
             ddc::detail::TypeSeq<Index2...>>();
 
     detail::TensorProdYoungAnyAny<
-            uncharacterize<ddc::detail::TypeSeq<ProdDDim>>,
-            uncharacterize<ddc::detail::TypeSeq<Index1...>>,
-            uncharacterize<ddc::detail::TypeSeq<Index2...>>,
+            uncharacterize_t<ddc::detail::TypeSeq<ProdDDim>>,
+            uncharacterize_t<ddc::detail::TypeSeq<Index1...>>,
+            uncharacterize_t<ddc::detail::TypeSeq<Index2...>>,
             ddc::type_seq_remove_t<
-                    uncharacterize<
+                    uncharacterize_t<
                             ddc::to_type_seq_t<ddc::cartesian_prod_t<natural_domain_t<ProdDDim>>>>,
-                    uncharacterize<ddc::to_type_seq_t<
+                    uncharacterize_t<ddc::to_type_seq_t<
                             ddc::cartesian_prod_t<natural_domain_t<Index2>...>>>>,
             ddc::type_seq_remove_t<
-                    uncharacterize<
+                    uncharacterize_t<
                             ddc::to_type_seq_t<ddc::cartesian_prod_t<natural_domain_t<Index1>...>>>,
-                    uncharacterize<
+                    uncharacterize_t<
                             ddc::to_type_seq_t<ddc::cartesian_prod_t<natural_domain_t<ProdDDim>>>>>,
             ddc::type_seq_remove_t<
-                    uncharacterize<
+                    uncharacterize_t<
                             ddc::to_type_seq_t<ddc::cartesian_prod_t<natural_domain_t<ProdDDim>>>>,
-                    uncharacterize<ddc::to_type_seq_t<
+                    uncharacterize_t<ddc::to_type_seq_t<
                             ddc::cartesian_prod_t<natural_domain_t<Index1>...>>>>>::
             run(uncharacterize_tensor(prod_tensor),
                 uncharacterize_tensor(tensor1),

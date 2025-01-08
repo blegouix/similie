@@ -14,7 +14,7 @@ namespace sil {
 namespace tensor {
 
 // struct representing an abstract unique index sweeping on all possible combination of natural indices, for a full tensor (dense with no particular structure).
-template <class... TensorIndex>
+template <TensorNatIndex... TensorIndex>
 struct TensorFullIndex
 {
     static constexpr bool is_tensor_index = true;

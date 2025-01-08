@@ -15,7 +15,7 @@ namespace sil {
 namespace tensor {
 
 // struct representing an abstract unique index sweeping on all possible combination of natural indices, for a summetric tensor.
-template <class... TensorIndex>
+template <TensorNatIndex... TensorIndex>
 struct TensorSymmetricIndex
 {
     static constexpr bool is_tensor_index = true;

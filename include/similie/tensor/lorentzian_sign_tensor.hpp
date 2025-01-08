@@ -12,7 +12,7 @@ namespace sil {
 namespace tensor {
 
 // struct representing an identity tensor (no storage).
-template <class Q, class... TensorIndex>
+template <class Q, TensorNatIndex... TensorIndex>
 struct TensorLorentzianSignIndex
 {
     static constexpr bool is_tensor_index = true;

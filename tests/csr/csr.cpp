@@ -37,7 +37,7 @@ struct Gamma : sil::tensor::TensorNaturalIndex<X, Y, Z>
 TEST(CsrDynamic, Csr2Dense)
 {
     [[maybe_unused]] sil::tensor::TensorAccessor<Alpha, Beta, Gamma> tensor_accessor;
-    ddc::DiscreteDomain<Alpha, Beta, Gamma> tensor_dom = tensor_accessor.mem_domain();
+    ddc::DiscreteDomain<Alpha, Beta, Gamma> tensor_dom = tensor_accessor.domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor tensor(tensor_alloc);
 
@@ -94,7 +94,7 @@ TEST(CsrDynamic, Csr2Dense)
 TEST(Csr, CsrDenseProducts)
 {
     [[maybe_unused]] sil::tensor::TensorAccessor<Alpha, Beta, Gamma> tensor_accessor;
-    ddc::DiscreteDomain<Alpha, Beta, Gamma> tensor_dom = tensor_accessor.mem_domain();
+    ddc::DiscreteDomain<Alpha, Beta, Gamma> tensor_dom = tensor_accessor.domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor tensor(tensor_alloc);
 
@@ -118,13 +118,13 @@ TEST(Csr, CsrDenseProducts)
     sil::csr::Csr<9, Alpha, Beta, Gamma> csr(csr_dyn);
 
     [[maybe_unused]] sil::tensor::TensorAccessor<Beta, Gamma> right_tensor_accessor;
-    ddc::DiscreteDomain<Beta, Gamma> right_tensor_dom = right_tensor_accessor.mem_domain();
+    ddc::DiscreteDomain<Beta, Gamma> right_tensor_dom = right_tensor_accessor.domain();
     ddc::Chunk right_tensor_alloc(right_tensor_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor right_tensor(right_tensor_alloc);
     ddc::parallel_fill(right_tensor, 1.);
 
     [[maybe_unused]] sil::tensor::TensorAccessor<Alpha> right_prod_accessor;
-    ddc::DiscreteDomain<Alpha> right_prod_dom = right_prod_accessor.mem_domain();
+    ddc::DiscreteDomain<Alpha> right_prod_dom = right_prod_accessor.domain();
     ddc::Chunk right_prod_alloc(right_prod_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor right_prod(right_prod_alloc);
 
@@ -135,13 +135,13 @@ TEST(Csr, CsrDenseProducts)
     EXPECT_EQ(right_prod.get(right_prod_accessor.access_element<Z>()), 30.);
 
     [[maybe_unused]] sil::tensor::TensorAccessor<Alpha> left_vector_accessor;
-    ddc::DiscreteDomain<Alpha> left_vector_dom = left_vector_accessor.mem_domain();
+    ddc::DiscreteDomain<Alpha> left_vector_dom = left_vector_accessor.domain();
     ddc::Chunk left_vector_alloc(left_vector_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor left_vector(left_vector_alloc);
     ddc::parallel_fill(left_vector, 1.);
 
     [[maybe_unused]] sil::tensor::TensorAccessor<Beta, Gamma> left_prod_accessor;
-    ddc::DiscreteDomain<Beta, Gamma> left_prod_dom = left_prod_accessor.mem_domain();
+    ddc::DiscreteDomain<Beta, Gamma> left_prod_dom = left_prod_accessor.domain();
     ddc::Chunk left_prod_alloc(left_prod_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor left_prod(left_prod_alloc);
 

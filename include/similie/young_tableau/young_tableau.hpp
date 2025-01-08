@@ -603,7 +603,7 @@ struct OrthonormalBasisSubspaceEigenvalueOne<tensor::TensorFullIndex<Id...>>
         auto [proj_alloc, proj] = tableau.template projector<Id...>();
 
         tensor::TensorAccessor<Id...> candidate_accessor;
-        ddc::DiscreteDomain<Id...> candidate_dom = candidate_accessor.mem_domain();
+        ddc::DiscreteDomain<Id...> candidate_dom = candidate_accessor.domain();
         ddc::Chunk candidate_alloc(candidate_dom, ddc::HostAllocator<double>());
         tensor::Tensor candidate(candidate_alloc);
         ddc::Chunk prod_alloc(
@@ -853,8 +853,7 @@ struct Projector<
         if constexpr (sizeof...(ElemOfHeadRow) >= 2) {
             // Allocate & build a symmetric projector for the row
             tensor::TensorAccessor<symmetrizer_index_t<Id, Id...>...> sym_accessor;
-            ddc::DiscreteDomain<symmetrizer_index_t<Id, Id...>...> sym_dom
-                    = sym_accessor.mem_domain();
+            ddc::DiscreteDomain<symmetrizer_index_t<Id, Id...>...> sym_dom = sym_accessor.domain();
 
             ddc::Chunk sym_alloc(sym_dom, ddc::HostAllocator<double>());
             tensor::Tensor sym(sym_alloc);
@@ -900,7 +899,7 @@ auto YoungTableau<Dimension, TableauSeq>::projector()
 {
     static_assert(sizeof...(Id) == s_r);
     tensor::TensorAccessor<tensor::prime<Id>..., Id...> proj_accessor;
-    ddc::DiscreteDomain<tensor::prime<Id>..., Id...> proj_dom = proj_accessor.mem_domain();
+    ddc::DiscreteDomain<tensor::prime<Id>..., Id...> proj_dom = proj_accessor.domain();
 
     // Allocate a projector and fill it as an identity tensor
     ddc::Chunk proj_alloc(proj_dom, ddc::HostAllocator<double>());
