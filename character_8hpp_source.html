@@ -206,7 +206,7 @@ $(function(){initNavTree('character_8hpp_source.html',''); initResizable(true); 
 <div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>    <span class="keyword">using </span>type = Covariant&lt;NaturalIndex&gt;;</div>
 <div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>};</div>
 <div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span> </div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;TensorIndex...&gt; <span class="keyword">class </span>T, TensorIndex... Index&gt;</div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>...&gt; <span class="keyword">class </span>T, TensorIndex... Index&gt;</div>
 <div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span><span class="keyword">struct </span>Lower&lt;T&lt;Index...&gt;&gt;</div>
 <div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>{</div>
 <div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>    <span class="keyword">using </span>type = T&lt;typename Lower&lt;Index&gt;::type...&gt;;</div>
@@ -234,7 +234,7 @@ $(function(){initNavTree('character_8hpp_source.html',''); initResizable(true); 
 <div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>    <span class="keyword">using </span>type = <a class="code hl_struct" href="structsil_1_1tensor_1_1Contravariant.html">Contravariant&lt;NaturalIndex&gt;</a>;</div>
 <div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>};</div>
 <div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span> </div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndex.html">TensorIndex</a>...&gt; <span class="keyword">class </span>T, <a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndex.html">TensorIndex</a>... Index&gt;</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>...&gt; <span class="keyword">class </span>T, <a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndex.html">TensorIndex</a>... Index&gt;</div>
 <div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span><span class="keyword">struct </span>Upper&lt;T&lt;Index...&gt;&gt;</div>
 <div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>{</div>
 <div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>    <span class="keyword">using </span>type = T&lt;typename Upper&lt;Index&gt;::type...&gt;;</div>
@@ -262,7 +262,7 @@ $(function(){initNavTree('character_8hpp_source.html',''); initResizable(true); 
 <div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>    <span class="keyword">using </span>type = <a class="code hl_struct" href="structsil_1_1tensor_1_1Covariant.html">Covariant&lt;NaturalIndex&gt;</a>;</div>
 <div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>};</div>
 <div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span> </div>
-<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndex.html">TensorIndex</a>...&gt; <span class="keyword">class </span>T, <a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndex.html">TensorIndex</a>... Index&gt;</div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>...&gt; <span class="keyword">class </span>T, <a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndex.html">TensorIndex</a>... Index&gt;</div>
 <div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span><span class="keyword">struct </span>SwapCharacter&lt;T&lt;Index...&gt;&gt;</div>
 <div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>{</div>
 <div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>    <span class="keyword">using </span>type = T&lt;typename SwapCharacter&lt;Index&gt;::type...&gt;;</div>
@@ -290,7 +290,7 @@ $(function(){initNavTree('character_8hpp_source.html',''); initResizable(true); 
 <div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>    <span class="keyword">using </span>type = NaturalIndex;</div>
 <div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>};</div>
 <div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span> </div>
-<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndex.html">TensorIndex</a>...&gt; <span class="keyword">class </span>T, <a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndex.html">TensorIndex</a>... Index&gt;</div>
+<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>...&gt; <span class="keyword">class </span>T, <a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndex.html">TensorIndex</a>... Index&gt;</div>
 <div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span><span class="keyword">struct </span>Uncharacterize&lt;T&lt;Index...&gt;&gt;</div>
 <div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>{</div>
 <div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>    <span class="keyword">using </span>type = T&lt;typename Uncharacterize&lt;Index&gt;::type...&gt;;</div>
