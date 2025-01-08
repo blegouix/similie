@@ -50,7 +50,7 @@ struct Contravariant
     using character = ContravariantCharacter;
 };
 
-// helpes to lower, upper_t or uncharacterize indices
+// helpes to lower, upper or uncharacterize indices
 namespace detail {
 
 template <class Index>
