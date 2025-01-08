@@ -121,7 +121,7 @@ TensorType laplacian(
 {
     static_assert(tensor::is_covariant_v<LaplacianDummyIndex>);
     using LaplacianDummyIndex2 = tensor::Covariant<
-            detail::LaplacianDummy2<tensor::uncharacterize<LaplacianDummyIndex>>>;
+            detail::LaplacianDummy2<tensor::uncharacterize_t<LaplacianDummyIndex>>>;
 
     if constexpr (CochainTag::rank() == 0) {
         detail::codifferential_of_coboundary<

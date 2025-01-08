@@ -125,7 +125,7 @@ using codifferential_tensor_t = typename detail::
 namespace detail {
 
 template <std::size_t I, class T>
-struct CodifferentialDummyIndex : tensor::uncharacterize<T>
+struct CodifferentialDummyIndex : tensor::uncharacterize_t<T>
 {
 };
 
@@ -172,14 +172,15 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
         MetricType inv_metric)
 {
     static_assert(tensor::is_covariant_v<TagToRemoveFromCochain>);
-    using MuUpSeq = tensor::upper<ddc::to_type_seq_t<tensor::natural_domain_t<CochainTag>>>;
+    using MuUpSeq = tensor::upper_t<ddc::to_type_seq_t<tensor::natural_domain_t<CochainTag>>>;
     using NuLowSeq = typename detail::CodifferentialDummyIndexSeq<
             TagToRemoveFromCochain::size() - CochainTag::rank(),
             TagToRemoveFromCochain>::type;
     using RhoLowSeq = ddc::type_seq_merge_t<ddc::detail::TypeSeq<TagToRemoveFromCochain>, NuLowSeq>;
-    using RhoUpSeq = tensor::upper<RhoLowSeq>;
-    using SigmaLowSeq = ddc::
-            type_seq_remove_t<tensor::lower<MuUpSeq>, ddc::detail::TypeSeq<TagToRemoveFromCochain>>;
+    using RhoUpSeq = tensor::upper_t<RhoLowSeq>;
+    using SigmaLowSeq = ddc::type_seq_remove_t<
+            tensor::lower_t<MuUpSeq>,
+            ddc::detail::TypeSeq<TagToRemoveFromCochain>>;
 
     using HodgeStarDomain = sil::exterior::hodge_star_domain_t<MuUpSeq, NuLowSeq>;
     using HodgeStarDomain2 = sil::exterior::hodge_star_domain_t<RhoUpSeq, SigmaLowSeq>;
@@ -194,7 +195,7 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
     sil::tensor::Tensor hodge_star(hodge_star_alloc);
 
     sil::exterior::fill_hodge_star<
-            sil::tensor::upper<MetricIndex>,
+            sil::tensor::upper_t<MetricIndex>,
             MuUpSeq,
             NuLowSeq>(exec_space, hodge_star, inv_metric);
 
@@ -251,7 +252,7 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
     sil::tensor::Tensor hodge_star2(hodge_star_alloc2);
 
     sil::exterior::fill_hodge_star<
-            sil::tensor::upper<MetricIndex>,
+            sil::tensor::upper_t<MetricIndex>,
             RhoUpSeq,
             SigmaLowSeq>(exec_space, hodge_star2, inv_metric);
 

@@ -53,11 +53,11 @@ HodgeStarType fill_hodge_star(
 {
     sil::tensor::TensorAccessor<misc::convert_type_seq_to_t<
             tensor::TensorLeviCivitaIndex,
-            ddc::type_seq_merge_t<tensor::primes<tensor::lower<Indices1>>, Indices2>>>
+            ddc::type_seq_merge_t<tensor::primes<tensor::lower_t<Indices1>>, Indices2>>>
             levi_civita_accessor;
     ddc::DiscreteDomain<misc::convert_type_seq_to_t<
             tensor::TensorLeviCivitaIndex,
-            ddc::type_seq_merge_t<tensor::primes<tensor::lower<Indices1>>, Indices2>>>
+            ddc::type_seq_merge_t<tensor::primes<tensor::lower_t<Indices1>>, Indices2>>>
             levi_civita_dom(levi_civita_accessor.domain());
     ddc::Chunk levi_civita_alloc(
             levi_civita_dom,

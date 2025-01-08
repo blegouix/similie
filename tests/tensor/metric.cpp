@@ -94,7 +94,7 @@ struct K : sil::tensor::TensorNaturalIndex<X, Y>
 };
 
 using KLow = sil::tensor::Covariant<K>;
-using KUp = sil::tensor::upper<KLow>;
+using KUp = sil::tensor::upper_t<KLow>;
 
 TEST(Metric, ChristoffelLike)
 {

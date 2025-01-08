@@ -48,7 +48,7 @@ struct Contravariant
     using character = ContravariantCharacter;
 };
 
-// helpes to lower, upper or uncharacterize indices
+// helpes to lower, upper_t or uncharacterize indices
 namespace detail {
 
 template <class Index>
@@ -75,7 +75,7 @@ struct Lower<T<Index...>>
 } // namespace detail
 
 template <class T>
-using lower = detail::Lower<T>::type;
+using lower_t = detail::Lower<T>::type;
 
 namespace detail {
 
@@ -103,7 +103,7 @@ struct Upper<T<Index...>>
 } // namespace detail
 
 template <class T>
-using upper = detail::Upper<T>::type;
+using upper_t = detail::Upper<T>::type;
 
 namespace detail {
 
@@ -131,7 +131,7 @@ struct SwapCharacter<T<Index...>>
 } // namespace detail
 
 template <class T>
-using swap_character = detail::SwapCharacter<T>::type;
+using swap_character_t = detail::SwapCharacter<T>::type;
 
 namespace detail {
 
@@ -169,7 +169,7 @@ struct Uncharacterize
 } // namespace detail
 
 template <class Index>
-using uncharacterize = detail::Uncharacterize<Index>::type;
+using uncharacterize_t = detail::Uncharacterize<Index>::type;
 
 
 // uncharacterize a tensor
@@ -177,15 +177,15 @@ template <misc::Specialization<Tensor> TensorType>
 using uncharacterize_tensor_t = relabelize_indices_of_t<
         TensorType,
         ddc::to_type_seq_t<typename TensorType::accessor_t::natural_domain_t>,
-        uncharacterize<ddc::to_type_seq_t<typename TensorType::accessor_t::natural_domain_t>>>;
+        uncharacterize_t<ddc::to_type_seq_t<typename TensorType::accessor_t::natural_domain_t>>>;
 
 template <misc::Specialization<Tensor> TensorType>
 constexpr uncharacterize_tensor_t<TensorType> uncharacterize_tensor(TensorType tensor)
 {
     return relabelize_indices_of<
             ddc::to_type_seq_t<typename TensorType::accessor_t::natural_domain_t>,
-            uncharacterize<ddc::to_type_seq_t<typename TensorType::accessor_t::natural_domain_t>>>(
-            tensor);
+            uncharacterize_t<
+                    ddc::to_type_seq_t<typename TensorType::accessor_t::natural_domain_t>>>(tensor);
 }
 
 // check if index is covariant

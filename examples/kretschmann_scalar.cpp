@@ -58,10 +58,10 @@ using RhoUp = sil::tensor::Contravariant<Rho>;
 using SigmaUp = sil::tensor::Contravariant<Sigma>;
 
 // Declare also their covariant counterparts
-using MuLow = sil::tensor::lower<MuUp>;
-using NuLow = sil::tensor::lower<NuUp>;
-using RhoLow = sil::tensor::lower<RhoUp>;
-using SigmaLow = sil::tensor::lower<SigmaUp>;
+using MuLow = sil::tensor::lower_t<MuUp>;
+using NuLow = sil::tensor::lower_t<NuUp>;
+using RhoLow = sil::tensor::lower_t<RhoUp>;
+using SigmaLow = sil::tensor::lower_t<SigmaUp>;
 
 // Declare a unique index for fully-contravariant Riemann tensor, satisfying Riemann symmetries (cf. https://birdtracks.eu/ section 10.5)
 using RiemannUpTensorIndex = sil::tensor::TensorYoungTableauIndex<

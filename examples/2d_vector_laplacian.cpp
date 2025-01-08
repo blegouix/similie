@@ -176,9 +176,9 @@ int main(int argc, char** argv)
             });
 
     // Invert metric
-    [[maybe_unused]] sil::tensor::TensorAccessor<sil::tensor::upper<MetricIndex>>
+    [[maybe_unused]] sil::tensor::TensorAccessor<sil::tensor::upper_t<MetricIndex>>
             inv_metric_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::upper<MetricIndex>>
+    ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::upper_t<MetricIndex>>
             inv_metric_dom(mesh_xy, inv_metric_accessor.domain());
     ddc::Chunk inv_metric_alloc(inv_metric_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor inv_metric(inv_metric_alloc);

@@ -74,7 +74,7 @@ using relabelize_metric_in_domain_t = relabelize_indices_in_t<
                         typename Index1::type_seq_dimensions>::type,
                 typename detail::ConvertTypeSeqToMetricIndex2<
                         typename Index2::type_seq_dimensions>::type>,
-        ddc::detail::TypeSeq<uncharacterize<Index1>, uncharacterize<Index2>>>;
+        ddc::detail::TypeSeq<uncharacterize_t<Index1>, uncharacterize_t<Index2>>>;
 
 template <TensorNatIndex Index1, TensorNatIndex Index2, class Dom>
 constexpr relabelize_metric_in_domain_t<Dom, Index1, Index2> relabelize_metric_in_domain(
@@ -86,7 +86,7 @@ constexpr relabelize_metric_in_domain_t<Dom, Index1, Index2> relabelize_metric_i
                             typename Index1::type_seq_dimensions>::type,
                     typename detail::ConvertTypeSeqToMetricIndex2<
                             typename Index2::type_seq_dimensions>::type>,
-            ddc::detail::TypeSeq<uncharacterize<Index1>, uncharacterize<Index2>>>(metric_dom);
+            ddc::detail::TypeSeq<uncharacterize_t<Index1>, uncharacterize_t<Index2>>>(metric_dom);
 }
 
 template <misc::Specialization<Tensor> TensorType, TensorNatIndex Index1, TensorNatIndex Index2>
@@ -97,7 +97,7 @@ using relabelize_metric_t = relabelize_indices_of_t<
                         typename Index1::type_seq_dimensions>::type,
                 typename detail::ConvertTypeSeqToMetricIndex2<
                         typename Index2::type_seq_dimensions>::type>,
-        ddc::detail::TypeSeq<uncharacterize<Index1>, uncharacterize<Index2>>>;
+        ddc::detail::TypeSeq<uncharacterize_t<Index1>, uncharacterize_t<Index2>>>;
 
 template <TensorNatIndex Index1, TensorNatIndex Index2, misc::Specialization<Tensor> TensorType>
 constexpr relabelize_metric_t<TensorType, Index1, Index2> relabelize_metric(TensorType tensor)
@@ -108,7 +108,7 @@ constexpr relabelize_metric_t<TensorType, Index1, Index2> relabelize_metric(Tens
                             typename Index1::type_seq_dimensions>::type,
                     typename detail::ConvertTypeSeqToMetricIndex2<
                             typename Index2::type_seq_dimensions>::type>,
-            ddc::detail::TypeSeq<uncharacterize<Index1>, uncharacterize<Index2>>>(tensor);
+            ddc::detail::TypeSeq<uncharacterize_t<Index1>, uncharacterize_t<Index2>>>(tensor);
 }
 
 // Compute domain for a tensor product of metrics (ie. g_mu_muprime*g_nu_nuprime*...)
@@ -319,20 +319,20 @@ template <
         class ExecSpace>
 relabelize_indices_of_t<
         TensorType,
-        swap_character<detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>,
+        swap_character_t<detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>,
         detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>
 inplace_apply_metric(ExecSpace const& exec_space, TensorType tensor, MetricType metric_prod)
 {
     ddc::Chunk result_alloc(
             relabelize_indices_in<
-                    swap_character<
+                    swap_character_t<
                             detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>,
                     detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>(
                     tensor.domain()),
             ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
     relabelize_indices_of_t<
             TensorType,
-            swap_character<detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>,
+            swap_character_t<detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>,
             detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>
             result(result_alloc);
     ddc::parallel_for_each(
@@ -343,9 +343,9 @@ inplace_apply_metric(ExecSpace const& exec_space, TensorType tensor, MetricType 
                         result[elem],
                         metric_prod[elem],
                         relabelize_indices_of<
-                                swap_character<detail::non_primes<
+                                swap_character_t<detail::non_primes<
                                         typename MetricType::accessor_t::natural_domain_t>>,
-                                primes<swap_character<detail::non_primes<
+                                primes<swap_character_t<detail::non_primes<
                                         typename MetricType::accessor_t::natural_domain_t>>>>(
                                 tensor)[elem]);
             });
@@ -355,7 +355,7 @@ inplace_apply_metric(ExecSpace const& exec_space, TensorType tensor, MetricType 
             result.allocation_kokkos_view()); // We rely on Kokkos::deep_copy in place of ddc::parallel_deepcopy to avoid type verification of the type dimensions
 
     return relabelize_indices_of<
-            swap_character<detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>,
+            swap_character_t<detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>,
             detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>(tensor);
 }
 
@@ -367,7 +367,7 @@ template <
         class ExecSpace>
 relabelize_indices_of_t<
         TensorType,
-        swap_character<ddc::detail::TypeSeq<Index1...>>,
+        swap_character_t<ddc::detail::TypeSeq<Index1...>>,
         ddc::detail::TypeSeq<Index1...>>
 inplace_apply_metric(ExecSpace const& exec_space, TensorType tensor, MetricType metric)
 {
@@ -400,7 +400,7 @@ template <misc::Specialization<Tensor> MetricType>
 using invert_metric_t = relabelize_indices_of_t<
         MetricType,
         ddc::to_type_seq_t<typename MetricType::accessor_t::natural_domain_t>,
-        swap_character<ddc::to_type_seq_t<typename MetricType::accessor_t::natural_domain_t>>>;
+        swap_character_t<ddc::to_type_seq_t<typename MetricType::accessor_t::natural_domain_t>>>;
 
 // Compute invert metric (g_mu_nu for gmunu or gmunu for g_mu_nu)
 template <TensorIndex MetricIndex, misc::Specialization<Tensor> MetricType, class ExecSpace>
@@ -420,7 +420,7 @@ invert_metric_t<MetricType> fill_inverse_metric(
                     inv_metric.mem(elem)
                             = 1.
                               / metric.mem(relabelize_indices_in<
-                                           swap_character<ddc::to_type_seq_t<
+                                           swap_character_t<ddc::to_type_seq_t<
                                                    typename MetricType::accessor_t::
                                                            natural_domain_t>>,
                                            ddc::to_type_seq_t<typename MetricType::accessor_t::
@@ -503,14 +503,14 @@ invert_metric_t<MetricType> fill_inverse_metric(
                     */
 
                     ddc::annotated_for_each(
-                            tensor::swap_character<ddc::DiscreteDomain<MetricIndex>>(
+                            tensor::swap_character_t<ddc::DiscreteDomain<MetricIndex>>(
                                     inv_metric.domain()),
-                            [&](tensor::swap_character<ddc::DiscreteElement<MetricIndex>>
+                            [&](tensor::swap_character_t<ddc::DiscreteElement<MetricIndex>>
                                         mem_index) {
                                 inv_metric.mem(elem, mem_index) = buffer(
                                         elem,
                                         tensor::relabelize_indices_in<
-                                                tensor::swap_character<ddc::detail::TypeSeq<
+                                                tensor::swap_character_t<ddc::detail::TypeSeq<
                                                         tensor::metric_index_1<MetricIndex>,
                                                         tensor::metric_index_2<MetricIndex>>>,
                                                 ddc::detail::TypeSeq<
