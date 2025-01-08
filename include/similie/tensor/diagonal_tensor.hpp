@@ -14,7 +14,7 @@ namespace sil {
 namespace tensor {
 
 // struct representing and index for a diagonal tensor (only diagonal is stored).
-template <class... TensorIndex>
+template <TensorNatIndex... TensorIndex>
 struct TensorDiagonalIndex
 {
     static constexpr bool is_tensor_index = true;
