@@ -5,6 +5,8 @@
 
 #include <ddc/ddc.hpp>
 
+#include <similie/misc/unsecure_parallel_deepcopy.hpp>
+
 #include <KokkosBatched_InverseLU_Decl.hpp>
 #include <KokkosBatched_LU_Decl.hpp>
 
@@ -213,11 +215,7 @@ struct FillMetricProd<ddc::detail::TypeSeq<>, ddc::detail::TypeSeq<>>
             [[maybe_unused]] MetricType metric,
             MetricProdType_ metric_prod_)
     {
-        Kokkos::deep_copy(
-                exec_space,
-                metric_prod.allocation_kokkos_view(),
-                metric_prod_
-                        .allocation_kokkos_view()); // We rely on Kokkos::deep_copy in place of ddc::parallel_deepcopy to avoid type verification of the type dimensions
+        misc::detail::unsecure_parallel_deepcopy(exec_space, metric_prod, metric_prod_);
         return metric_prod;
     }
 };
@@ -350,10 +348,7 @@ inplace_apply_metric(ExecSpace const& exec_space, TensorType tensor, MetricType 
                                         typename MetricType::accessor_t::natural_domain_t>>>>(
                                 tensor)[elem]);
             });
-    Kokkos::deep_copy(
-            exec_space,
-            tensor.allocation_kokkos_view(),
-            result.allocation_kokkos_view()); // We rely on Kokkos::deep_copy in place of ddc::parallel_deepcopy to avoid type verification of the type dimensions
+    misc::detail::unsecure_parallel_deepcopy(exec_space, tensor, result);
 
     return relabelize_indices_of<
             swap_character_t<detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>,
