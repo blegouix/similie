@@ -68,7 +68,7 @@ struct Lower<Contravariant<NaturalIndex>>
     using type = Covariant<NaturalIndex>;
 };
 
-template <template <TensorIndex...> class T, TensorIndex... Index>
+template <template <class...> class T, TensorIndex... Index>
 struct Lower<T<Index...>>
 {
     using type = T<typename Lower<Index>::type...>;
@@ -96,7 +96,7 @@ struct Upper<Contravariant<NaturalIndex>>
     using type = Contravariant<NaturalIndex>;
 };
 
-template <template <TensorIndex...> class T, TensorIndex... Index>
+template <template <class...> class T, TensorIndex... Index>
 struct Upper<T<Index...>>
 {
     using type = T<typename Upper<Index>::type...>;
@@ -124,7 +124,7 @@ struct SwapCharacter<Contravariant<NaturalIndex>>
     using type = Covariant<NaturalIndex>;
 };
 
-template <template <TensorIndex...> class T, TensorIndex... Index>
+template <template <class...> class T, TensorIndex... Index>
 struct SwapCharacter<T<Index...>>
 {
     using type = T<typename SwapCharacter<Index>::type...>;
@@ -152,7 +152,7 @@ struct Uncharacterize<Contravariant<NaturalIndex>>
     using type = NaturalIndex;
 };
 
-template <template <TensorIndex...> class T, TensorIndex... Index>
+template <template <class...> class T, TensorIndex... Index>
 struct Uncharacterize<T<Index...>>
 {
     using type = T<typename Uncharacterize<Index>::type...>;
