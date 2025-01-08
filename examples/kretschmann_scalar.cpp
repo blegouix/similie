@@ -81,13 +81,13 @@ int main(int argc, char** argv)
 
     // Allocate and instantiate a metric tensor. Because the metric in Lorentzian, the size of the allocation is 0 (metric_dom is empty).
     [[maybe_unused]] sil::tensor::TensorAccessor<MetricIndex> metric_accessor;
-    ddc::DiscreteDomain<MetricIndex> metric_dom = metric_accessor.mem_domain();
+    ddc::DiscreteDomain<MetricIndex> metric_dom = metric_accessor.domain();
     ddc::Chunk metric_alloc(metric_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor metric(metric_alloc);
 
     // Allocate and instantiate a fully-contravariant Riemann tensor. The size of the allocation is 20 because the Riemann tensor has 20 independant components.
     [[maybe_unused]] sil::tensor::TensorAccessor<RiemannUpTensorIndex> riemann_up_accessor;
-    ddc::DiscreteDomain<RiemannUpTensorIndex> riemann_up_dom = riemann_up_accessor.mem_domain();
+    ddc::DiscreteDomain<RiemannUpTensorIndex> riemann_up_dom = riemann_up_accessor.domain();
     ddc::Chunk riemann_up_alloc(riemann_up_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor riemann_up(riemann_up_alloc);
 

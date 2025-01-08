@@ -58,7 +58,7 @@ HodgeStarType fill_hodge_star(
     ddc::DiscreteDomain<misc::convert_type_seq_to_t<
             tensor::TensorLeviCivitaIndex,
             ddc::type_seq_merge_t<tensor::primes<tensor::lower<Indices1>>, Indices2>>>
-            levi_civita_dom(levi_civita_accessor.mem_domain());
+            levi_civita_dom(levi_civita_accessor.domain());
     ddc::Chunk levi_civita_alloc(
             levi_civita_dom,
             ddc::KokkosAllocator<
@@ -145,7 +145,7 @@ HodgeStarType fill_hodge_star(
                     ddc::remove_dims_of_t<typename MetricType::discrete_domain_type, MetricIndex>,
                     tensor::metric_prod_domain_t<MetricIndex, Indices1, tensor::primes<Indices1>>>(
                     ddc::remove_dims_of<MetricIndex>(metric.domain()),
-                    metric_prod_accessor.mem_domain()),
+                    metric_prod_accessor.domain()),
             ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
     tensor::Tensor metric_prod(metric_prod_alloc);
 

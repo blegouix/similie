@@ -57,7 +57,7 @@ TEST(YoungTableau, 1_2)
     EXPECT_EQ(young_tableau.irrep_dim(), 10);
 
     [[maybe_unused]] sil::tensor::TensorAccessor<Mu, Nu> tensor_accessor;
-    ddc::DiscreteDomain<Mu, Nu> tensor_dom = tensor_accessor.mem_domain();
+    ddc::DiscreteDomain<Mu, Nu> tensor_dom = tensor_accessor.domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor tensor(tensor_alloc);
 
@@ -121,7 +121,7 @@ TEST(YoungTableau, 1l2)
     EXPECT_EQ(young_tableau.irrep_dim(), 6);
 
     [[maybe_unused]] sil::tensor::TensorAccessor<Mu, Nu> tensor_accessor;
-    ddc::DiscreteDomain<Mu, Nu> tensor_dom = tensor_accessor.mem_domain();
+    ddc::DiscreteDomain<Mu, Nu> tensor_dom = tensor_accessor.domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor tensor(tensor_alloc);
 
@@ -188,7 +188,7 @@ TEST(YoungTableau, 1_2_3)
     EXPECT_EQ(young_tableau.irrep_dim(), 10);
 
     [[maybe_unused]] sil::tensor::TensorAccessor<Alpha, Beta, Gamma> tensor_accessor;
-    ddc::DiscreteDomain<Alpha, Beta, Gamma> tensor_dom = tensor_accessor.mem_domain();
+    ddc::DiscreteDomain<Alpha, Beta, Gamma> tensor_dom = tensor_accessor.domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor tensor(tensor_alloc);
 
@@ -295,7 +295,7 @@ TEST(YoungTableau, 1l2l3)
             young_tableau;
 
     [[maybe_unused]] sil::tensor::TensorAccessor<Alpha, Beta, Gamma> tensor_accessor;
-    ddc::DiscreteDomain<Alpha, Beta, Gamma> tensor_dom = tensor_accessor.mem_domain();
+    ddc::DiscreteDomain<Alpha, Beta, Gamma> tensor_dom = tensor_accessor.domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor tensor(tensor_alloc);
 
@@ -404,7 +404,7 @@ TEST(YoungTableau, 1_2l3)
     EXPECT_EQ(young_tableau.irrep_dim(), 8);
 
     [[maybe_unused]] sil::tensor::TensorAccessor<Alpha, Beta, Gamma> tensor_accessor;
-    ddc::DiscreteDomain<Alpha, Beta, Gamma> tensor_dom = tensor_accessor.mem_domain();
+    ddc::DiscreteDomain<Alpha, Beta, Gamma> tensor_dom = tensor_accessor.domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor tensor(tensor_alloc);
 
@@ -466,7 +466,7 @@ TEST(YoungTableau, 1_3l2)
     EXPECT_EQ(young_tableau.irrep_dim(), 8);
 
     [[maybe_unused]] sil::tensor::TensorAccessor<Alpha, Beta, Gamma> tensor_accessor;
-    ddc::DiscreteDomain<Alpha, Beta, Gamma> tensor_dom = tensor_accessor.mem_domain();
+    ddc::DiscreteDomain<Alpha, Beta, Gamma> tensor_dom = tensor_accessor.domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor tensor(tensor_alloc);
 
@@ -529,7 +529,7 @@ TEST(YoungTableau, 1l3_2l4)
     EXPECT_EQ(young_tableau.irrep_dim(), 6);
 
     [[maybe_unused]] sil::tensor::TensorAccessor<Alpha, Beta, Gamma, Delta> tensor_accessor;
-    ddc::DiscreteDomain<Alpha, Beta, Gamma, Delta> tensor_dom = tensor_accessor.mem_domain();
+    ddc::DiscreteDomain<Alpha, Beta, Gamma, Delta> tensor_dom = tensor_accessor.domain();
     ddc::Chunk tensor_alloc(tensor_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor tensor(tensor_alloc);
 

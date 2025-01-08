@@ -384,7 +384,7 @@ inplace_apply_metric(ExecSpace const& exec_space, TensorType tensor, MetricType 
                             ddc::detail::TypeSeq<Index1...>,
                             primes<ddc::detail::TypeSeq<Index1...>>>>(
                     tensor.non_indices_domain(),
-                    metric_prod_accessor.mem_domain()),
+                    metric_prod_accessor.domain()),
             ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
     tensor::Tensor metric_prod(metric_prod_alloc);
 
@@ -415,7 +415,7 @@ invert_metric_t<MetricType> fill_inverse_metric(
     } else if (misc::Specialization<MetricIndex, TensorDiagonalIndex>) {
         ddc::parallel_for_each(
                 exec_space,
-                inv_metric.mem_domain(),
+                inv_metric.domain(),
                 KOKKOS_LAMBDA(invert_metric_t<MetricType>::discrete_element_type elem) {
                     inv_metric.mem(elem)
                             = 1.

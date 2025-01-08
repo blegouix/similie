@@ -38,7 +38,7 @@ TensorType codifferential_of_coboundary(
     ddc::cartesian_prod_t<
             typename TensorType::non_indices_domain_t,
             ddc::DiscreteDomain<coboundary_index_t<LaplacianDummyIndex, CochainTag>>>
-            derivative_tensor_dom(tensor.non_indices_domain(), derivative_accessor.mem_domain());
+            derivative_tensor_dom(tensor.non_indices_domain(), derivative_accessor.domain());
     ddc::Chunk derivative_tensor_alloc(
             derivative_tensor_dom,
             ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
@@ -78,7 +78,7 @@ TensorType coboundary_of_codifferential(
             ddc::DiscreteDomain<codifferential_index_t<LaplacianDummyIndex, CochainTag>>>
             codifferential_tensor_dom(
                     tensor.non_indices_domain(),
-                    codifferential_accessor.mem_domain());
+                    codifferential_accessor.domain());
     ddc::Chunk codifferential_tensor_alloc(
             codifferential_tensor_dom,
             ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());

@@ -284,7 +284,7 @@ public:
 
     static constexpr natural_domain_t natural_domain();
 
-    static constexpr discrete_domain_type mem_domain();
+    static constexpr discrete_domain_type domain();
 
     static constexpr discrete_domain_type access_domain();
 
@@ -354,7 +354,7 @@ constexpr TensorAccessor<Index...>::natural_domain_t TensorAccessor<Index...>::n
 }
 
 template <TensorIndex... Index>
-constexpr TensorAccessor<Index...>::discrete_domain_type TensorAccessor<Index...>::mem_domain()
+constexpr TensorAccessor<Index...>::discrete_domain_type TensorAccessor<Index...>::domain()
 {
     return ddc::DiscreteDomain<Index...>(
             ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(0)...),
@@ -642,11 +642,6 @@ public:
     KOKKOS_FUNCTION constexpr natural_domain_t natural_domain() const noexcept
     {
         return natural_domain_t(non_indices_domain(), accessor_t::natural_domain());
-    }
-
-    KOKKOS_FUNCTION constexpr discrete_domain_type mem_domain() const noexcept
-    {
-        return discrete_domain_type(non_indices_domain(), accessor_t::mem_domain());
     }
 
     KOKKOS_FUNCTION constexpr discrete_domain_type access_domain() const noexcept

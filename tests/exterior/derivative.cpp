@@ -18,7 +18,7 @@ static auto test_derivative()
     [[maybe_unused]] sil::tensor::TensorAccessor<InIndex> tensor_accessor;
     if constexpr (CoalescentIndexing) {
         ddc::DiscreteDomain<InIndex, DDim...>
-                dom(tensor_accessor.mem_domain(),
+                dom(tensor_accessor.domain(),
                     ddc::DiscreteDomain(
                             sil::misc::filled_struct<ddc::DiscreteElement<DDim...>>(0),
                             sil::misc::filled_struct<ddc::DiscreteVector<DDim...>>(N)));
@@ -38,7 +38,7 @@ static auto test_derivative()
         }
         [[maybe_unused]] sil::tensor::TensorAccessor<OutIndex> derivative_accessor;
         ddc::DiscreteDomain<OutIndex, DDim...> derivative_dom(
-                derivative_accessor.mem_domain(),
+                derivative_accessor.domain(),
                 ddc::DiscreteDomain(
                         sil::misc::filled_struct<ddc::DiscreteElement<DDim...>>(0),
                         sil::misc::filled_struct<ddc::DiscreteVector<DDim...>>(
@@ -64,7 +64,7 @@ static auto test_derivative()
                 dom(ddc::DiscreteDomain(
                             sil::misc::filled_struct<ddc::DiscreteElement<DDim...>>(0),
                             sil::misc::filled_struct<ddc::DiscreteVector<DDim...>>(N)),
-                    tensor_accessor.mem_domain());
+                    tensor_accessor.domain());
         ddc::Chunk tensor_alloc(dom, ddc::HostAllocator<double>());
         sil::tensor::Tensor tensor(tensor_alloc);
         for (std::size_t i = 0; i < InIndex::mem_size(); ++i) {
@@ -85,7 +85,7 @@ static auto test_derivative()
                         sil::misc::filled_struct<ddc::DiscreteElement<DDim...>>(0),
                         sil::misc::filled_struct<ddc::DiscreteVector<DDim...>>(
                                 OutIndex::rank() == 1 ? N : N - 1)),
-                derivative_accessor.mem_domain());
+                derivative_accessor.domain());
         ddc::Chunk derivative_alloc(derivative_dom, ddc::HostAllocator<double>());
         sil::tensor::Tensor derivative(derivative_alloc);
         if constexpr (sil::tensor::TensorNatIndex<OutIndex>) {
@@ -903,7 +903,7 @@ TEST(ExteriorDerivative, 2DRotationalWithSpects)
             DDimX,
             IndexSpect,
             DDimY>
-            dom(tensor_accessor.mem_domain(),
+            dom(tensor_accessor.domain(),
                 ddc::DiscreteDomain(
                         sil::misc::filled_struct<ddc::DiscreteElement<DDimSpect, DDimX, DDimY>>(0),
                         sil::misc::filled_struct<ddc::DiscreteVector<DDimSpect, DDimX, DDimY>>(N)));
@@ -920,8 +920,8 @@ TEST(ExteriorDerivative, 2DRotationalWithSpects)
                                          i))
                             = i + 1.;
                 });
-        for (auto dim_spect_elem : ddc::DiscreteDomain<DDimSpect>(tensor.mem_domain())) {
-            for (auto index_spect_elem : ddc::DiscreteDomain<IndexSpect>(tensor.mem_domain())) {
+        for (auto dim_spect_elem : ddc::DiscreteDomain<DDimSpect>(tensor.domain())) {
+            for (auto index_spect_elem : ddc::DiscreteDomain<IndexSpect>(tensor.domain())) {
                 tensor
                         .mem(dim_spect_elem,
                              index_spect_elem,
@@ -942,7 +942,7 @@ TEST(ExteriorDerivative, 2DRotationalWithSpects)
             IndexSpect,
             DDimY>
             derivative_dom(
-                    derivative_accessor.mem_domain(),
+                    derivative_accessor.domain(),
                     ddc::DiscreteDomain(
                             sil::misc::filled_struct<ddc::DiscreteElement<DDimSpect, DDimX, DDimY>>(
                                     0),
@@ -954,8 +954,8 @@ TEST(ExteriorDerivative, 2DRotationalWithSpects)
             sil::tensor::TensorAntisymmetricIndex<
                     Mu2>>(Kokkos::DefaultHostExecutionSpace(), derivative, tensor);
 
-    for (auto dim_spect_elem : ddc::DiscreteDomain<DDimSpect>(tensor.mem_domain())) {
-        for (auto index_spect_elem : ddc::DiscreteDomain<IndexSpect>(tensor.mem_domain())) {
+    for (auto dim_spect_elem : ddc::DiscreteDomain<DDimSpect>(tensor.domain())) {
+        for (auto index_spect_elem : ddc::DiscreteDomain<IndexSpect>(tensor.domain())) {
             EXPECT_EQ(
                     derivative(
                             ddc::DiscreteElement<DDimX, DDimY> {0, 0},

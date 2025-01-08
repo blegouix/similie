@@ -44,7 +44,7 @@ struct Delta : sil::tensor::TensorNaturalIndex<X, Y, Z>
 TEST(TensorProd, SimpleContractionRank3xRank2)
 {
     [[maybe_unused]] sil::tensor::TensorAccessor<Alpha, Beta, Gamma> tensor_accessor1;
-    ddc::DiscreteDomain<Alpha, Beta, Gamma> tensor1_dom = tensor_accessor1.mem_domain();
+    ddc::DiscreteDomain<Alpha, Beta, Gamma> tensor1_dom = tensor_accessor1.domain();
     ddc::Chunk tensor1_alloc(tensor1_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor tensor1(tensor1_alloc);
 
@@ -78,7 +78,7 @@ TEST(TensorProd, SimpleContractionRank3xRank2)
 
 
     [[maybe_unused]] sil::tensor::TensorAccessor<Gamma, Delta> tensor_accessor2;
-    ddc::DiscreteDomain<Gamma, Delta> tensor2_dom = tensor_accessor2.mem_domain();
+    ddc::DiscreteDomain<Gamma, Delta> tensor2_dom = tensor_accessor2.domain();
     ddc::Chunk tensor2_alloc(tensor2_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor tensor2(tensor2_alloc);
 
@@ -93,7 +93,7 @@ TEST(TensorProd, SimpleContractionRank3xRank2)
     tensor2(tensor2.access_element<Z, Z>()) = 8.;
 
     [[maybe_unused]] sil::tensor::TensorAccessor<Alpha, Beta, Delta> prod_tensor_accessor;
-    ddc::DiscreteDomain<Alpha, Beta, Delta> prod_tensor_dom = prod_tensor_accessor.mem_domain();
+    ddc::DiscreteDomain<Alpha, Beta, Delta> prod_tensor_dom = prod_tensor_accessor.domain();
 
     ddc::Chunk prod_tensor_alloc(prod_tensor_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor prod_tensor(prod_tensor_alloc);
@@ -132,7 +132,7 @@ TEST(TensorProd, SimpleContractionRank3xRank2)
 TEST(TensorProd, DoubleContractionRank3xRank3)
 {
     [[maybe_unused]] sil::tensor::TensorAccessor<Alpha, Beta, Gamma> tensor_accessor1;
-    ddc::DiscreteDomain<Alpha, Beta, Gamma> tensor1_dom = tensor_accessor1.mem_domain();
+    ddc::DiscreteDomain<Alpha, Beta, Gamma> tensor1_dom = tensor_accessor1.domain();
     ddc::Chunk tensor1_alloc(tensor1_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor tensor1(tensor1_alloc);
 
@@ -166,7 +166,7 @@ TEST(TensorProd, DoubleContractionRank3xRank3)
 
 
     [[maybe_unused]] sil::tensor::TensorAccessor<Beta, Gamma, Delta> tensor_accessor2;
-    ddc::DiscreteDomain<Beta, Gamma, Delta> tensor2_dom = tensor_accessor2.mem_domain();
+    ddc::DiscreteDomain<Beta, Gamma, Delta> tensor2_dom = tensor_accessor2.domain();
     ddc::Chunk tensor2_alloc(tensor2_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor tensor2(tensor2_alloc);
 
@@ -199,7 +199,7 @@ TEST(TensorProd, DoubleContractionRank3xRank3)
     tensor2(tensor2.access_element<Z, Z, Z>()) = 26.;
 
     [[maybe_unused]] sil::tensor::TensorAccessor<Alpha, Delta> prod_tensor_accessor;
-    ddc::DiscreteDomain<Alpha, Delta> prod_tensor_dom = prod_tensor_accessor.mem_domain();
+    ddc::DiscreteDomain<Alpha, Delta> prod_tensor_dom = prod_tensor_accessor.domain();
 
     ddc::Chunk prod_tensor_alloc(prod_tensor_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor prod_tensor(prod_tensor_alloc);
@@ -242,7 +242,7 @@ using Rank2SymIndex3 = sil::tensor::
 TEST(TensorProd, SimpleContractionRank2SymIndexedxRank2SymIndexed)
 {
     [[maybe_unused]] sil::tensor::TensorAccessor<Rank2SymIndex1> tensor_accessor1;
-    ddc::DiscreteDomain<Rank2SymIndex1> tensor1_dom = tensor_accessor1.mem_domain();
+    ddc::DiscreteDomain<Rank2SymIndex1> tensor1_dom = tensor_accessor1.domain();
     ddc::Chunk tensor1_alloc(tensor1_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor tensor1(tensor1_alloc);
 
@@ -259,7 +259,7 @@ TEST(TensorProd, SimpleContractionRank2SymIndexedxRank2SymIndexed)
 
 
     [[maybe_unused]] sil::tensor::TensorAccessor<Rank2SymIndex2> tensor_accessor2;
-    ddc::DiscreteDomain<Rank2SymIndex2> tensor2_dom = tensor_accessor2.mem_domain();
+    ddc::DiscreteDomain<Rank2SymIndex2> tensor2_dom = tensor_accessor2.domain();
     ddc::Chunk tensor2_alloc(tensor2_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor tensor2(tensor2_alloc);
 
@@ -276,7 +276,7 @@ TEST(TensorProd, SimpleContractionRank2SymIndexedxRank2SymIndexed)
 
 
     [[maybe_unused]] sil::tensor::TensorAccessor<Rank2SymIndex3> prod_tensor_accessor;
-    ddc::DiscreteDomain<Rank2SymIndex3> prod_tensor_dom = prod_tensor_accessor.mem_domain();
+    ddc::DiscreteDomain<Rank2SymIndex3> prod_tensor_dom = prod_tensor_accessor.domain();
 
     ddc::Chunk prod_tensor_alloc(prod_tensor_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor prod_tensor(prod_tensor_alloc);
@@ -305,7 +305,7 @@ using Rank2AntisymIndex3 = sil::tensor::
 TEST(TensorProd, SimpleContractionRank2AntisymIndexedxRank2AntisymIndexed)
 {
     [[maybe_unused]] sil::tensor::TensorAccessor<Rank2AntisymIndex1> tensor_accessor1;
-    ddc::DiscreteDomain<Rank2AntisymIndex1> tensor1_dom = tensor_accessor1.mem_domain();
+    ddc::DiscreteDomain<Rank2AntisymIndex1> tensor1_dom = tensor_accessor1.domain();
     ddc::Chunk tensor1_alloc(tensor1_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor tensor1(tensor1_alloc);
 
@@ -318,7 +318,7 @@ TEST(TensorProd, SimpleContractionRank2AntisymIndexedxRank2AntisymIndexed)
 
 
     [[maybe_unused]] sil::tensor::TensorAccessor<Rank2AntisymIndex2> tensor_accessor2;
-    ddc::DiscreteDomain<Rank2AntisymIndex2> tensor2_dom = tensor_accessor2.mem_domain();
+    ddc::DiscreteDomain<Rank2AntisymIndex2> tensor2_dom = tensor_accessor2.domain();
     ddc::Chunk tensor2_alloc(tensor2_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor tensor2(tensor2_alloc);
 
@@ -331,7 +331,7 @@ TEST(TensorProd, SimpleContractionRank2AntisymIndexedxRank2AntisymIndexed)
 
 
     [[maybe_unused]] sil::tensor::TensorAccessor<Rank2AntisymIndex3> prod_tensor_accessor;
-    ddc::DiscreteDomain<Rank2AntisymIndex3> prod_tensor_dom = prod_tensor_accessor.mem_domain();
+    ddc::DiscreteDomain<Rank2AntisymIndex3> prod_tensor_dom = prod_tensor_accessor.domain();
 
     ddc::Chunk prod_tensor_alloc(prod_tensor_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor prod_tensor(prod_tensor_alloc);
@@ -364,7 +364,7 @@ using Rank3SymIndex3 = sil::tensor::TensorSymmetricIndex<
 TEST(TensorProd, SimpleContractionRank3SymIndexedxRank2SymIndexed)
 {
     [[maybe_unused]] sil::tensor::TensorAccessor<Rank3SymIndex1> tensor_accessor1;
-    ddc::DiscreteDomain<Rank3SymIndex1> tensor1_dom = tensor_accessor1.mem_domain();
+    ddc::DiscreteDomain<Rank3SymIndex1> tensor1_dom = tensor_accessor1.domain();
     ddc::Chunk tensor1_alloc(tensor1_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor tensor1(tensor1_alloc);
 
@@ -391,7 +391,7 @@ TEST(TensorProd, SimpleContractionRank3SymIndexedxRank2SymIndexed)
 
 
     [[maybe_unused]] sil::tensor::TensorAccessor<Rank3SymIndex2> tensor_accessor2;
-    ddc::DiscreteDomain<Rank3SymIndex2> tensor2_dom = tensor_accessor2.mem_domain();
+    ddc::DiscreteDomain<Rank3SymIndex2> tensor2_dom = tensor_accessor2.domain();
     ddc::Chunk tensor2_alloc(tensor2_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor tensor2(tensor2_alloc);
 
@@ -408,7 +408,7 @@ TEST(TensorProd, SimpleContractionRank3SymIndexedxRank2SymIndexed)
 
 
     [[maybe_unused]] sil::tensor::TensorAccessor<Rank3SymIndex3> prod_tensor_accessor;
-    ddc::DiscreteDomain<Rank3SymIndex3> prod_tensor_dom = prod_tensor_accessor.mem_domain();
+    ddc::DiscreteDomain<Rank3SymIndex3> prod_tensor_dom = prod_tensor_accessor.domain();
 
     ddc::Chunk prod_tensor_alloc(prod_tensor_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor prod_tensor(prod_tensor_alloc);
@@ -452,7 +452,7 @@ using Rank3AntisymIndex3 = sil::tensor::TensorAntisymmetricIndex<
 TEST(TensorProd, SimpleContractionRank3AntisymIndexedxRank2AntisymIndexed)
 {
     [[maybe_unused]] sil::tensor::TensorAccessor<Rank3AntisymIndex1> tensor_accessor1;
-    ddc::DiscreteDomain<Rank3AntisymIndex1> tensor1_dom = tensor_accessor1.mem_domain();
+    ddc::DiscreteDomain<Rank3AntisymIndex1> tensor1_dom = tensor_accessor1.domain();
     ddc::Chunk tensor1_alloc(tensor1_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor tensor1(tensor1_alloc);
 
@@ -463,7 +463,7 @@ TEST(TensorProd, SimpleContractionRank3AntisymIndexedxRank2AntisymIndexed)
 
 
     [[maybe_unused]] sil::tensor::TensorAccessor<Rank3AntisymIndex2> tensor_accessor2;
-    ddc::DiscreteDomain<Rank3AntisymIndex2> tensor2_dom = tensor_accessor2.mem_domain();
+    ddc::DiscreteDomain<Rank3AntisymIndex2> tensor2_dom = tensor_accessor2.domain();
     ddc::Chunk tensor2_alloc(tensor2_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor tensor2(tensor2_alloc);
 
@@ -476,7 +476,7 @@ TEST(TensorProd, SimpleContractionRank3AntisymIndexedxRank2AntisymIndexed)
 
 
     [[maybe_unused]] sil::tensor::TensorAccessor<Rank3AntisymIndex3> prod_tensor_accessor;
-    ddc::DiscreteDomain<Rank3AntisymIndex3> prod_tensor_dom = prod_tensor_accessor.mem_domain();
+    ddc::DiscreteDomain<Rank3AntisymIndex3> prod_tensor_dom = prod_tensor_accessor.domain();
 
     ddc::Chunk prod_tensor_alloc(prod_tensor_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor prod_tensor(prod_tensor_alloc);
@@ -500,7 +500,7 @@ using YoungTableauIndex = sil::tensor::TensorYoungTableauIndex<
 TEST(TensorProd, DoubleContractionYoungIndexedxNaturalIndex)
 {
     [[maybe_unused]] sil::tensor::TensorAccessor<Alpha, Beta, Gamma> natural_accessor;
-    ddc::DiscreteDomain<Alpha, Beta, Gamma> natural_dom = natural_accessor.mem_domain();
+    ddc::DiscreteDomain<Alpha, Beta, Gamma> natural_dom = natural_accessor.domain();
     ddc::Chunk natural_alloc(natural_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor natural(natural_alloc);
 
@@ -533,14 +533,14 @@ TEST(TensorProd, DoubleContractionYoungIndexedxNaturalIndex)
     natural(natural_accessor.access_element<Z, Z, Z>()) = 9.;
 
     [[maybe_unused]] sil::tensor::TensorAccessor<YoungTableauIndex> tensor_accessor1;
-    ddc::DiscreteDomain<YoungTableauIndex> tensor1_dom = tensor_accessor1.mem_domain();
+    ddc::DiscreteDomain<YoungTableauIndex> tensor1_dom = tensor_accessor1.domain();
     ddc::Chunk tensor1_alloc(tensor1_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor tensor1(tensor1_alloc);
 
     sil::tensor::compress(tensor1, natural);
 
     [[maybe_unused]] sil::tensor::TensorAccessor<Beta, Gamma, Delta> tensor_accessor2;
-    ddc::DiscreteDomain<Beta, Gamma, Delta> tensor2_dom = tensor_accessor2.mem_domain();
+    ddc::DiscreteDomain<Beta, Gamma, Delta> tensor2_dom = tensor_accessor2.domain();
     ddc::Chunk tensor2_alloc(tensor2_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor tensor2(tensor2_alloc);
 
@@ -573,7 +573,7 @@ TEST(TensorProd, DoubleContractionYoungIndexedxNaturalIndex)
     tensor2(tensor2.access_element<Z, Z, Z>()) = 26.;
 
     [[maybe_unused]] sil::tensor::TensorAccessor<Alpha, Delta> prod_tensor_accessor;
-    ddc::DiscreteDomain<Alpha, Delta> prod_tensor_dom = prod_tensor_accessor.mem_domain();
+    ddc::DiscreteDomain<Alpha, Delta> prod_tensor_dom = prod_tensor_accessor.domain();
 
     ddc::Chunk prod_tensor_alloc(prod_tensor_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor prod_tensor(prod_tensor_alloc);

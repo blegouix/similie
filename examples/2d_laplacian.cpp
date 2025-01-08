@@ -144,7 +144,7 @@ int main(int argc, char** argv)
 
     // Allocate and instantiate a position field (used only to be exported).
     [[maybe_unused]] sil::tensor::TensorAccessor<NuUp> position_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, NuUp> position_dom(mesh_xy, position_accessor.mem_domain());
+    ddc::DiscreteDomain<DDimX, DDimY, NuUp> position_dom(mesh_xy, position_accessor.domain());
     ddc::Chunk position_alloc(position_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor position(position_alloc);
     ddc::parallel_for_each(
@@ -159,8 +159,7 @@ int main(int argc, char** argv)
 
     // Allocate and instantiate a metric tensor field.
     [[maybe_unused]] sil::tensor::TensorAccessor<MetricIndex> metric_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, MetricIndex>
-            metric_dom(mesh_xy, metric_accessor.mem_domain());
+    ddc::DiscreteDomain<DDimX, DDimY, MetricIndex> metric_dom(mesh_xy, metric_accessor.domain());
     ddc::Chunk metric_alloc(metric_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor metric(metric_alloc);
     ddc::parallel_for_each(
@@ -176,7 +175,7 @@ int main(int argc, char** argv)
     [[maybe_unused]] sil::tensor::TensorAccessor<sil::tensor::upper<MetricIndex>>
             inv_metric_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::upper<MetricIndex>>
-            inv_metric_dom(mesh_xy, inv_metric_accessor.mem_domain());
+            inv_metric_dom(mesh_xy, inv_metric_accessor.domain());
     ddc::Chunk inv_metric_alloc(inv_metric_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor inv_metric(inv_metric_alloc);
     sil::tensor::fill_inverse_metric<
@@ -185,7 +184,7 @@ int main(int argc, char** argv)
     // Potential
     [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> potential_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, DummyIndex>
-            potential_dom(metric.non_indices_domain(), potential_accessor.mem_domain());
+            potential_dom(metric.non_indices_domain(), potential_accessor.domain());
     ddc::Chunk potential_alloc(potential_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor potential(potential_alloc);
 
@@ -218,7 +217,7 @@ int main(int argc, char** argv)
     [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> laplacian_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, DummyIndex> laplacian_dom(
             mesh_xy.remove_last(ddc::DiscreteVector<DDimX, DDimY> {1, 1}),
-            laplacian_accessor.mem_domain());
+            laplacian_accessor.domain());
     ddc::Chunk laplacian_alloc(laplacian_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor laplacian(laplacian_alloc);
 

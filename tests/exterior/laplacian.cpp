@@ -22,7 +22,7 @@ static auto test_derivative(auto potential)
     [[maybe_unused]] sil::tensor::TensorAccessor<
             MetricIndex<typename DDim::continuous_dimension_type...>> inv_metric_accessor;
     ddc::DiscreteDomain<DDim..., MetricIndex<typename DDim::continuous_dimension_type...>>
-            inv_metric_dom(potential.non_indices_domain(), inv_metric_accessor.mem_domain());
+            inv_metric_dom(potential.non_indices_domain(), inv_metric_accessor.domain());
     ddc::Chunk inv_metric_alloc(inv_metric_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor inv_metric(inv_metric_alloc);
 
@@ -31,7 +31,7 @@ static auto test_derivative(auto potential)
     ddc::DiscreteDomain<DDim..., Index> laplacian_dom(
             potential.non_indices_domain().remove_last(
                     ddc::DiscreteVector<DDim...>(ddc::DiscreteVector<DDim>(1)...)),
-            laplacian_accessor.mem_domain());
+            laplacian_accessor.domain());
     ddc::Chunk laplacian_alloc(laplacian_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor laplacian(laplacian_alloc);
 
@@ -84,7 +84,7 @@ TEST(Laplacian, 1D0Form)
     [[maybe_unused]] sil::tensor::TensorAccessor<sil::tensor::Covariant<sil::tensor::ScalarIndex>>
             potential_accessor;
     ddc::DiscreteDomain<DDimX, sil::tensor::Covariant<sil::tensor::ScalarIndex>>
-            potential_dom(mesh_x, potential_accessor.mem_domain());
+            potential_dom(mesh_x, potential_accessor.domain());
     ddc::Chunk potential_alloc(potential_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor potential(potential_alloc);
 
@@ -139,7 +139,7 @@ TEST(Laplacian, 1D1Form)
     // Potential
     [[maybe_unused]] sil::tensor::TensorAccessor<sil::tensor::Covariant<Mu1>> potential_accessor;
     ddc::DiscreteDomain<DDimX, sil::tensor::Covariant<Mu1>>
-            potential_dom(mesh_x, potential_accessor.mem_domain());
+            potential_dom(mesh_x, potential_accessor.domain());
     ddc::Chunk potential_alloc(potential_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor potential(potential_alloc);
 
@@ -202,7 +202,7 @@ TEST(Laplacian, 2D0Form)
     [[maybe_unused]] sil::tensor::TensorAccessor<sil::tensor::Covariant<sil::tensor::ScalarIndex>>
             potential_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::Covariant<sil::tensor::ScalarIndex>>
-            potential_dom(mesh_xy, potential_accessor.mem_domain());
+            potential_dom(mesh_xy, potential_accessor.domain());
     ddc::Chunk potential_alloc(potential_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor potential(potential_alloc);
 
@@ -275,7 +275,7 @@ TEST(Laplacian, 2D1Form)
     // Potential
     [[maybe_unused]] sil::tensor::TensorAccessor<sil::tensor::Covariant<Mu2>> potential_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::Covariant<Mu2>>
-            potential_dom(mesh_xy, potential_accessor.mem_domain());
+            potential_dom(mesh_xy, potential_accessor.domain());
     ddc::Chunk potential_alloc(potential_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor potential(potential_alloc);
 
@@ -366,7 +366,7 @@ TEST(Laplacian, 3D1Form)
     // Potential
     [[maybe_unused]] sil::tensor::TensorAccessor<sil::tensor::Covariant<Mu3>> potential_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, DDimZ, sil::tensor::Covariant<Mu3>>
-            potential_dom(mesh_xyz, potential_accessor.mem_domain());
+            potential_dom(mesh_xyz, potential_accessor.domain());
     ddc::Chunk potential_alloc(potential_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor potential(potential_alloc);
 
