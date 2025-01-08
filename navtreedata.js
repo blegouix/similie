@@ -82,7 +82,7 @@ var NAVTREEINDEX =
 [
 "Running.html",
 "classsil_1_1exterior_1_1CochainIterator.html#af93af6d97bd143b0860c5b4993bdbcee",
-"conceptsil_1_1misc_1_1NotSpecialization.html"
+"conceptsil_1_1misc_1_1Specialization.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

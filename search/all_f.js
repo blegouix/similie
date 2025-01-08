@@ -13,8 +13,8 @@ var searchData=
   ['relabelize_5findices_5fof_5ft_10',['relabelize_indices_of_t',['../namespacesil_1_1tensor.html#a3318cc0d5802ebbef660dc7d3d4044d0',1,'sil::tensor']]],
   ['relabelize_5fmetric_11',['relabelize_metric',['../namespacesil_1_1tensor.html#a6ba69aa07989b01533e9568120931be3',1,'sil::tensor']]],
   ['relabelize_5fmetric_5fin_5fdomain_12',['relabelize_metric_in_domain',['../namespacesil_1_1tensor.html#a60772fdae84eea61783cd4cc2a2fa0af',1,'sil::tensor']]],
-  ['relabelize_5fmetric_5fin_5fdomain_5ft_13',['relabelize_metric_in_domain_t',['../namespacesil_1_1tensor.html#a818942c0b51017a6b1486b95708a416f',1,'sil::tensor']]],
-  ['relabelize_5fmetric_5ft_14',['relabelize_metric_t',['../namespacesil_1_1tensor.html#ae675c282e61cccc12927db7acacf828e',1,'sil::tensor']]],
+  ['relabelize_5fmetric_5fin_5fdomain_5ft_13',['relabelize_metric_in_domain_t',['../namespacesil_1_1tensor.html#ab4ddf893b9ca6fcd52a9a5eedf7b0bdf',1,'sil::tensor']]],
+  ['relabelize_5fmetric_5ft_14',['relabelize_metric_t',['../namespacesil_1_1tensor.html#a68ad1778b8d070acf65d14184c6d345d',1,'sil::tensor']]],
   ['resize_15',['resize',['../classsil_1_1exterior_1_1Chain.html#a4c8cdde8624e3dc60a4d8ceb4aca56cb',1,'sil::exterior::Chain::resize()'],['../classsil_1_1exterior_1_1Chain.html#a0435da54d27ab5056656fb770e102668',1,'sil::exterior::Chain::resize(std::size_t size)'],['../classsil_1_1exterior_1_1LocalChain.html#a42a802b16ebd64d68b5a1469eebdbb20',1,'sil::exterior::LocalChain::resize()'],['../classsil_1_1exterior_1_1LocalChain.html#a5814caa7c9367c64ea7d97471a861a9f',1,'sil::exterior::LocalChain::resize(std::size_t size)']]],
   ['revert_16',['revert',['../classsil_1_1exterior_1_1Chain.html#a14a26a922589a8c367dc1460cbfb4d8d',1,'sil::exterior::Chain']]],
   ['running_20similie_17',['Running SimiLie',['../Running.html',1,'']]]

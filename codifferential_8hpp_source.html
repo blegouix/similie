@@ -255,7 +255,7 @@ $(function(){initNavTree('codifferential_8hpp_source.html',''); initResizable(tr
 <div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span><span class="keyword">namespace </span>detail {</div>
 <div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span> </div>
 <div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span><span class="keyword">template</span> &lt;std::<span class="keywordtype">size_t</span> I, <span class="keyword">class</span> T&gt;</div>
-<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span><span class="keyword">struct </span>CodifferentialDummyIndex : <a class="code hl_typedef" href="namespacesil_1_1tensor.html#ae99219778ac9edef94c1e46ee478caa2">tensor::uncharacterize</a>&lt;T&gt;</div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span><span class="keyword">struct </span>CodifferentialDummyIndex : <a class="code hl_typedef" href="namespacesil_1_1tensor.html#ab7e663826196ec03f2eec4be87ffa4cf">tensor::uncharacterize_t</a>&lt;T&gt;</div>
 <div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>{</div>
 <div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>};</div>
 <div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span> </div>
@@ -303,111 +303,112 @@ $(function(){initNavTree('codifferential_8hpp_source.html',''); initResizable(tr
 <div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>        MetricType inv_metric)</div>
 <div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>{</div>
 <div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>    <span class="keyword">static_assert</span>(<a class="code hl_variable" href="namespacesil_1_1tensor.html#ad87f841c21af50491ee8198e88631449">tensor::is_covariant_v&lt;TagToRemoveFromCochain&gt;</a>);</div>
-<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>    <span class="keyword">using </span>MuUpSeq = <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a7aebefceb7d24467500a817f5073a311">tensor::upper&lt;ddc::to_type_seq_t&lt;tensor::natural_domain_t&lt;CochainTag&gt;</a>&gt;&gt;;</div>
+<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>    <span class="keyword">using </span>MuUpSeq = <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a3e2f32622aaafaa7ee4402aba31f1e9c">tensor::upper_t&lt;ddc::to_type_seq_t&lt;tensor::natural_domain_t&lt;CochainTag&gt;</a>&gt;&gt;;</div>
 <div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span>    <span class="keyword">using </span>NuLowSeq = <span class="keyword">typename</span> detail::CodifferentialDummyIndexSeq&lt;</div>
 <div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>            TagToRemoveFromCochain::size() - CochainTag::rank(),</div>
 <div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>            TagToRemoveFromCochain&gt;::type;</div>
 <div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>    <span class="keyword">using </span>RhoLowSeq = ddc::type_seq_merge_t&lt;ddc::detail::TypeSeq&lt;TagToRemoveFromCochain&gt;, NuLowSeq&gt;;</div>
-<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>    <span class="keyword">using </span>RhoUpSeq = <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a7aebefceb7d24467500a817f5073a311">tensor::upper&lt;RhoLowSeq&gt;</a>;</div>
-<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>    <span class="keyword">using </span>SigmaLowSeq = ddc::</div>
-<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>            type_seq_remove_t&lt;tensor::lower&lt;MuUpSeq&gt;, ddc::detail::TypeSeq&lt;TagToRemoveFromCochain&gt;&gt;;</div>
-<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span> </div>
-<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>    <span class="keyword">using </span>HodgeStarDomain = <a class="code hl_typedef" href="namespacesil_1_1exterior.html#a4efa14fa3fbc50aef998647604aa1589">sil::exterior::hodge_star_domain_t&lt;MuUpSeq, NuLowSeq&gt;</a>;</div>
-<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>    <span class="keyword">using </span>HodgeStarDomain2 = <a class="code hl_typedef" href="namespacesil_1_1exterior.html#a4efa14fa3fbc50aef998647604aa1589">sil::exterior::hodge_star_domain_t&lt;RhoUpSeq, SigmaLowSeq&gt;</a>;</div>
-<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span> </div>
-<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>    <span class="comment">// Hodge star</span></div>
-<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>    [[maybe_unused]] <a class="code hl_typedef" href="namespacesil_1_1tensor.html#aeada71b3699ecf64d8d6cbfc44bf6a8c">sil::tensor::tensor_accessor_for_domain_t&lt;HodgeStarDomain&gt;</a> hodge_star_accessor;</div>
-<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>    ddc::cartesian_prod_t&lt;typename MetricType::non_indices_domain_t, HodgeStarDomain&gt;</div>
-<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>            hodge_star_dom(inv_metric.non_indices_domain(), hodge_star_accessor.mem_domain());</div>
-<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span>    ddc::Chunk hodge_star_alloc(</div>
-<div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>            hodge_star_dom,</div>
-<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>            ddc::KokkosAllocator&lt;double, typename ExecSpace::memory_space&gt;());</div>
-<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>    <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">sil::tensor::Tensor</a> hodge_star(hodge_star_alloc);</div>
-<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span> </div>
-<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>    <a class="code hl_function" href="namespacesil_1_1exterior.html#a1282f9c8dac69ca3b12ac70a9502cdf7">sil::exterior::fill_hodge_star</a>&lt;</div>
-<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span>            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a7aebefceb7d24467500a817f5073a311">sil::tensor::upper&lt;MetricIndex&gt;</a>,</div>
-<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>            MuUpSeq,</div>
-<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>            NuLowSeq&gt;(exec_space, hodge_star, inv_metric);</div>
-<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span> </div>
-<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>    <span class="comment">// Dual tensor</span></div>
-<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>    [[maybe_unused]] <a class="code hl_class" href="classsil_1_1tensor_1_1TensorAccessor.html">tensor::TensorAccessor</a>&lt;</div>
-<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>            <a class="code hl_typedef" href="namespacesil_1_1misc.html#af83a849e8c4a2149160bd276d3e445c1">misc::convert_type_seq_to_t&lt;tensor::TensorAntisymmetricIndex, NuLowSeq&gt;</a>&gt;</div>
-<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>            dual_tensor_accessor;</div>
-<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span>    ddc::cartesian_prod_t&lt;</div>
-<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>            <span class="keyword">typename</span> TensorType::non_indices_domain_t,</div>
-<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span>            ddc::DiscreteDomain&lt;</div>
-<div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span>                    <a class="code hl_typedef" href="namespacesil_1_1misc.html#af83a849e8c4a2149160bd276d3e445c1">misc::convert_type_seq_to_t&lt;tensor::TensorAntisymmetricIndex, NuLowSeq&gt;</a>&gt;&gt;</div>
-<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>            dual_tensor_dom(tensor.non_indices_domain(), dual_tensor_accessor.mem_domain());</div>
-<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>    ddc::Chunk dual_tensor_alloc(</div>
-<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span>            dual_tensor_dom,</div>
-<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>            ddc::KokkosAllocator&lt;double, typename ExecSpace::memory_space&gt;());</div>
-<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>    <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">sil::tensor::Tensor</a> dual_tensor(dual_tensor_alloc);</div>
-<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span> </div>
-<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>    ddc::parallel_for_each(</div>
-<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span>            exec_space,</div>
-<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span>            dual_tensor.non_indices_domain(),</div>
-<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span>            KOKKOS_LAMBDA(<span class="keyword">typename</span> TensorType::non_indices_domain_t::discrete_element_type elem) {</div>
-<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span>                <a class="code hl_function" href="namespacesil_1_1tensor.html#aa7e70ef3014d5865f10f7427d6be216d">sil::tensor::tensor_prod</a>(dual_tensor[elem], tensor[elem], hodge_star[elem]);</div>
-<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span>            });</div>
-<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span> </div>
-<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span>    <span class="comment">// Dual codifferential</span></div>
-<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span>    [[maybe_unused]] <a class="code hl_class" href="classsil_1_1tensor_1_1TensorAccessor.html">tensor::TensorAccessor</a>&lt;</div>
-<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span>            <a class="code hl_typedef" href="namespacesil_1_1misc.html#af83a849e8c4a2149160bd276d3e445c1">misc::convert_type_seq_to_t&lt;tensor::TensorAntisymmetricIndex, RhoLowSeq&gt;</a>&gt;</div>
-<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span>            dual_codifferential_accessor;</div>
-<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span>    ddc::cartesian_prod_t&lt;</div>
-<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span>            <span class="keyword">typename</span> TensorType::non_indices_domain_t,</div>
-<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span>            ddc::DiscreteDomain&lt;</div>
-<div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span>                    <a class="code hl_typedef" href="namespacesil_1_1misc.html#af83a849e8c4a2149160bd276d3e445c1">misc::convert_type_seq_to_t&lt;tensor::TensorAntisymmetricIndex, RhoLowSeq&gt;</a>&gt;&gt;</div>
-<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span>            dual_codifferential_dom(</div>
-<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span>                    tensor.non_indices_domain(),</div>
-<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span>                    dual_codifferential_accessor.mem_domain());</div>
-<div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span>    ddc::Chunk dual_codifferential_alloc(</div>
-<div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span>            dual_codifferential_dom,</div>
-<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span>            ddc::KokkosAllocator&lt;double, typename ExecSpace::memory_space&gt;());</div>
-<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span>    <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">sil::tensor::Tensor</a> dual_codifferential(dual_codifferential_alloc);</div>
-<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span>    <a class="code hl_function" href="namespacesil_1_1exterior.html#a76eff1470caed08ad176c575149ca560">sil::exterior::deriv</a>&lt;</div>
-<div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span>            TagToRemoveFromCochain,</div>
-<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span>            <a class="code hl_typedef" href="namespacesil_1_1misc.html#af83a849e8c4a2149160bd276d3e445c1">misc::convert_type_seq_to_t</a>&lt;</div>
-<div class="line"><a id="l00240" name="l00240"></a><span class="lineno">  240</span>                    <a class="code hl_struct" href="structsil_1_1tensor_1_1TensorAntisymmetricIndex.html">tensor::TensorAntisymmetricIndex</a>,</div>
-<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span>                    NuLowSeq&gt;&gt;(exec_space, dual_codifferential, dual_tensor);</div>
-<div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span> </div>
-<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span>    <span class="comment">// Hodge star 2</span></div>
-<div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span>    [[maybe_unused]] <a class="code hl_typedef" href="namespacesil_1_1tensor.html#aeada71b3699ecf64d8d6cbfc44bf6a8c">sil::tensor::tensor_accessor_for_domain_t&lt;HodgeStarDomain2&gt;</a></div>
-<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span>            hodge_star_accessor2;</div>
-<div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span>    ddc::cartesian_prod_t&lt;typename MetricType::non_indices_domain_t, HodgeStarDomain2&gt;</div>
-<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span>            hodge_star_dom2(inv_metric.non_indices_domain(), hodge_star_accessor2.mem_domain());</div>
-<div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span>    ddc::Chunk hodge_star_alloc2(</div>
-<div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span>            hodge_star_dom2,</div>
-<div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span>            ddc::KokkosAllocator&lt;double, typename ExecSpace::memory_space&gt;());</div>
-<div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span>    <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">sil::tensor::Tensor</a> hodge_star2(hodge_star_alloc2);</div>
-<div class="line"><a id="l00252" name="l00252"></a><span class="lineno">  252</span> </div>
-<div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span>    <a class="code hl_function" href="namespacesil_1_1exterior.html#a1282f9c8dac69ca3b12ac70a9502cdf7">sil::exterior::fill_hodge_star</a>&lt;</div>
-<div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span>            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a7aebefceb7d24467500a817f5073a311">sil::tensor::upper&lt;MetricIndex&gt;</a>,</div>
-<div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span>            RhoUpSeq,</div>
-<div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span>            SigmaLowSeq&gt;(exec_space, hodge_star2, inv_metric);</div>
-<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span> </div>
-<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span>    <span class="comment">// Codifferential</span></div>
-<div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span>    ddc::parallel_for_each(</div>
-<div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span>            exec_space,</div>
-<div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span>            codifferential_tensor.non_indices_domain(),</div>
-<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>            KOKKOS_LAMBDA(<span class="keyword">typename</span> TensorType::non_indices_domain_t::discrete_element_type elem) {</div>
-<div class="line"><a id="l00263" name="l00263"></a><span class="lineno">  263</span>                <a class="code hl_function" href="namespacesil_1_1tensor.html#aa7e70ef3014d5865f10f7427d6be216d">sil::tensor::tensor_prod</a>(</div>
-<div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span>                        codifferential_tensor[elem],</div>
-<div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span>                        dual_codifferential[elem],</div>
-<div class="line"><a id="l00266" name="l00266"></a><span class="lineno">  266</span>                        hodge_star2[elem]);</div>
-<div class="line"><a id="l00267" name="l00267"></a><span class="lineno">  267</span>                <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (</div>
-<div class="line"><a id="l00268" name="l00268"></a><span class="lineno">  268</span>                        (TagToRemoveFromCochain::size() * (CochainTag::rank() + 1) + 1) % 2 == 1) {</div>
-<div class="line"><a id="l00269" name="l00269"></a><span class="lineno">  269</span>                    codifferential_tensor[elem] *= -1;</div>
-<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span>                }</div>
-<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>            });</div>
-<div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span> </div>
-<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>    <span class="keywordflow">return</span> codifferential_tensor;</div>
-<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span>}</div>
+<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>    <span class="keyword">using </span>RhoUpSeq = <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a3e2f32622aaafaa7ee4402aba31f1e9c">tensor::upper_t&lt;RhoLowSeq&gt;</a>;</div>
+<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>    <span class="keyword">using </span>SigmaLowSeq = ddc::type_seq_remove_t&lt;</div>
+<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#ad1b951f27338222afe0730eda16f06db">tensor::lower_t&lt;MuUpSeq&gt;</a>,</div>
+<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>            ddc::detail::TypeSeq&lt;TagToRemoveFromCochain&gt;&gt;;</div>
+<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span> </div>
+<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>    <span class="keyword">using </span>HodgeStarDomain = <a class="code hl_typedef" href="namespacesil_1_1exterior.html#a4efa14fa3fbc50aef998647604aa1589">sil::exterior::hodge_star_domain_t&lt;MuUpSeq, NuLowSeq&gt;</a>;</div>
+<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>    <span class="keyword">using </span>HodgeStarDomain2 = <a class="code hl_typedef" href="namespacesil_1_1exterior.html#a4efa14fa3fbc50aef998647604aa1589">sil::exterior::hodge_star_domain_t&lt;RhoUpSeq, SigmaLowSeq&gt;</a>;</div>
+<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span> </div>
+<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>    <span class="comment">// Hodge star</span></div>
+<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>    [[maybe_unused]] <a class="code hl_typedef" href="namespacesil_1_1tensor.html#aeada71b3699ecf64d8d6cbfc44bf6a8c">sil::tensor::tensor_accessor_for_domain_t&lt;HodgeStarDomain&gt;</a> hodge_star_accessor;</div>
+<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>    ddc::cartesian_prod_t&lt;typename MetricType::non_indices_domain_t, HodgeStarDomain&gt;</div>
+<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span>            hodge_star_dom(inv_metric.non_indices_domain(), hodge_star_accessor.domain());</div>
+<div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>    ddc::Chunk hodge_star_alloc(</div>
+<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>            hodge_star_dom,</div>
+<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>            ddc::KokkosAllocator&lt;double, typename ExecSpace::memory_space&gt;());</div>
+<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>    <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">sil::tensor::Tensor</a> hodge_star(hodge_star_alloc);</div>
+<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span> </div>
+<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span>    <a class="code hl_function" href="namespacesil_1_1exterior.html#a1282f9c8dac69ca3b12ac70a9502cdf7">sil::exterior::fill_hodge_star</a>&lt;</div>
+<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a3e2f32622aaafaa7ee4402aba31f1e9c">sil::tensor::upper_t&lt;MetricIndex&gt;</a>,</div>
+<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>            MuUpSeq,</div>
+<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>            NuLowSeq&gt;(exec_space, hodge_star, inv_metric);</div>
+<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span> </div>
+<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>    <span class="comment">// Dual tensor</span></div>
+<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>    [[maybe_unused]] <a class="code hl_class" href="classsil_1_1tensor_1_1TensorAccessor.html">tensor::TensorAccessor</a>&lt;</div>
+<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>            <a class="code hl_typedef" href="namespacesil_1_1misc.html#af83a849e8c4a2149160bd276d3e445c1">misc::convert_type_seq_to_t&lt;tensor::TensorAntisymmetricIndex, NuLowSeq&gt;</a>&gt;</div>
+<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span>            dual_tensor_accessor;</div>
+<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>    ddc::cartesian_prod_t&lt;</div>
+<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span>            <span class="keyword">typename</span> TensorType::non_indices_domain_t,</div>
+<div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span>            ddc::DiscreteDomain&lt;</div>
+<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>                    <a class="code hl_typedef" href="namespacesil_1_1misc.html#af83a849e8c4a2149160bd276d3e445c1">misc::convert_type_seq_to_t&lt;tensor::TensorAntisymmetricIndex, NuLowSeq&gt;</a>&gt;&gt;</div>
+<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>            dual_tensor_dom(tensor.non_indices_domain(), dual_tensor_accessor.domain());</div>
+<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span>    ddc::Chunk dual_tensor_alloc(</div>
+<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>            dual_tensor_dom,</div>
+<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>            ddc::KokkosAllocator&lt;double, typename ExecSpace::memory_space&gt;());</div>
+<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span>    <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">sil::tensor::Tensor</a> dual_tensor(dual_tensor_alloc);</div>
+<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span> </div>
+<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span>    ddc::parallel_for_each(</div>
+<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span>            exec_space,</div>
+<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span>            dual_tensor.non_indices_domain(),</div>
+<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span>            KOKKOS_LAMBDA(<span class="keyword">typename</span> TensorType::non_indices_domain_t::discrete_element_type elem) {</div>
+<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span>                <a class="code hl_function" href="namespacesil_1_1tensor.html#aa7e70ef3014d5865f10f7427d6be216d">sil::tensor::tensor_prod</a>(dual_tensor[elem], tensor[elem], hodge_star[elem]);</div>
+<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span>            });</div>
+<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span> </div>
+<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span>    <span class="comment">// Dual codifferential</span></div>
+<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span>    [[maybe_unused]] <a class="code hl_class" href="classsil_1_1tensor_1_1TensorAccessor.html">tensor::TensorAccessor</a>&lt;</div>
+<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span>            <a class="code hl_typedef" href="namespacesil_1_1misc.html#af83a849e8c4a2149160bd276d3e445c1">misc::convert_type_seq_to_t&lt;tensor::TensorAntisymmetricIndex, RhoLowSeq&gt;</a>&gt;</div>
+<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span>            dual_codifferential_accessor;</div>
+<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span>    ddc::cartesian_prod_t&lt;</div>
+<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span>            <span class="keyword">typename</span> TensorType::non_indices_domain_t,</div>
+<div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span>            ddc::DiscreteDomain&lt;</div>
+<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span>                    <a class="code hl_typedef" href="namespacesil_1_1misc.html#af83a849e8c4a2149160bd276d3e445c1">misc::convert_type_seq_to_t&lt;tensor::TensorAntisymmetricIndex, RhoLowSeq&gt;</a>&gt;&gt;</div>
+<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span>            dual_codifferential_dom(</div>
+<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span>                    tensor.non_indices_domain(),</div>
+<div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span>                    dual_codifferential_accessor.domain());</div>
+<div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span>    ddc::Chunk dual_codifferential_alloc(</div>
+<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span>            dual_codifferential_dom,</div>
+<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span>            ddc::KokkosAllocator&lt;double, typename ExecSpace::memory_space&gt;());</div>
+<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span>    <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">sil::tensor::Tensor</a> dual_codifferential(dual_codifferential_alloc);</div>
+<div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span>    <a class="code hl_function" href="namespacesil_1_1exterior.html#a76eff1470caed08ad176c575149ca560">sil::exterior::deriv</a>&lt;</div>
+<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span>            TagToRemoveFromCochain,</div>
+<div class="line"><a id="l00240" name="l00240"></a><span class="lineno">  240</span>            <a class="code hl_typedef" href="namespacesil_1_1misc.html#af83a849e8c4a2149160bd276d3e445c1">misc::convert_type_seq_to_t</a>&lt;</div>
+<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span>                    <a class="code hl_struct" href="structsil_1_1tensor_1_1TensorAntisymmetricIndex.html">tensor::TensorAntisymmetricIndex</a>,</div>
+<div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span>                    NuLowSeq&gt;&gt;(exec_space, dual_codifferential, dual_tensor);</div>
+<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span> </div>
+<div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span>    <span class="comment">// Hodge star 2</span></div>
+<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span>    [[maybe_unused]] <a class="code hl_typedef" href="namespacesil_1_1tensor.html#aeada71b3699ecf64d8d6cbfc44bf6a8c">sil::tensor::tensor_accessor_for_domain_t&lt;HodgeStarDomain2&gt;</a></div>
+<div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span>            hodge_star_accessor2;</div>
+<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span>    ddc::cartesian_prod_t&lt;typename MetricType::non_indices_domain_t, HodgeStarDomain2&gt;</div>
+<div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span>            hodge_star_dom2(inv_metric.non_indices_domain(), hodge_star_accessor2.domain());</div>
+<div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span>    ddc::Chunk hodge_star_alloc2(</div>
+<div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span>            hodge_star_dom2,</div>
+<div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span>            ddc::KokkosAllocator&lt;double, typename ExecSpace::memory_space&gt;());</div>
+<div class="line"><a id="l00252" name="l00252"></a><span class="lineno">  252</span>    <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">sil::tensor::Tensor</a> hodge_star2(hodge_star_alloc2);</div>
+<div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span> </div>
+<div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span>    <a class="code hl_function" href="namespacesil_1_1exterior.html#a1282f9c8dac69ca3b12ac70a9502cdf7">sil::exterior::fill_hodge_star</a>&lt;</div>
+<div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span>            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a3e2f32622aaafaa7ee4402aba31f1e9c">sil::tensor::upper_t&lt;MetricIndex&gt;</a>,</div>
+<div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span>            RhoUpSeq,</div>
+<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span>            SigmaLowSeq&gt;(exec_space, hodge_star2, inv_metric);</div>
+<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span> </div>
+<div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span>    <span class="comment">// Codifferential</span></div>
+<div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span>    ddc::parallel_for_each(</div>
+<div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span>            exec_space,</div>
+<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>            codifferential_tensor.non_indices_domain(),</div>
+<div class="line"><a id="l00263" name="l00263"></a><span class="lineno">  263</span>            KOKKOS_LAMBDA(<span class="keyword">typename</span> TensorType::non_indices_domain_t::discrete_element_type elem) {</div>
+<div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span>                <a class="code hl_function" href="namespacesil_1_1tensor.html#aa7e70ef3014d5865f10f7427d6be216d">sil::tensor::tensor_prod</a>(</div>
+<div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span>                        codifferential_tensor[elem],</div>
+<div class="line"><a id="l00266" name="l00266"></a><span class="lineno">  266</span>                        dual_codifferential[elem],</div>
+<div class="line"><a id="l00267" name="l00267"></a><span class="lineno">  267</span>                        hodge_star2[elem]);</div>
+<div class="line"><a id="l00268" name="l00268"></a><span class="lineno">  268</span>                <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (</div>
+<div class="line"><a id="l00269" name="l00269"></a><span class="lineno">  269</span>                        (TagToRemoveFromCochain::size() * (CochainTag::rank() + 1) + 1) % 2 == 1) {</div>
+<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span>                    codifferential_tensor[elem] *= -1;</div>
+<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>                }</div>
+<div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span>            });</div>
+<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span> </div>
+<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span>    <span class="keywordflow">return</span> codifferential_tensor;</div>
+<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>}</div>
 </div>
-<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span> </div>
-<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span>} <span class="comment">// namespace exterior</span></div>
-<div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span> </div>
-<div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span>} <span class="comment">// namespace sil</span></div>
+<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span> </div>
+<div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span>} <span class="comment">// namespace exterior</span></div>
+<div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span> </div>
+<div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span>} <span class="comment">// namespace sil</span></div>
 <div class="ttc" id="aclasssil_1_1tensor_1_1TensorAccessor_html"><div class="ttname"><a href="classsil_1_1tensor_1_1TensorAccessor.html">sil::tensor::TensorAccessor</a></div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00271">tensor_impl.hpp:272</a></div></div>
 <div class="ttc" id="aconceptsil_1_1misc_1_1Specialization_html"><div class="ttname"><a href="conceptsil_1_1misc_1_1Specialization.html">sil::misc::Specialization</a></div><div class="ttdef"><b>Definition</b> <a href="specialization_8hpp_source.html#l00023">specialization.hpp:23</a></div></div>
 <div class="ttc" id="aconceptsil_1_1tensor_1_1TensorIndex_html"><div class="ttname"><a href="conceptsil_1_1tensor_1_1TensorIndex.html">sil::tensor::TensorIndex</a></div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00105">tensor_impl.hpp:105</a></div></div>
@@ -424,13 +425,14 @@ $(function(){initNavTree('codifferential_8hpp_source.html',''); initResizable(tr
 <div class="ttc" id="anamespacesil_1_1exterior_html_af879a35dd2e3fe608f5c086560f16065"><div class="ttname"><a href="namespacesil_1_1exterior.html#af879a35dd2e3fe608f5c086560f16065">sil::exterior::codifferential_t</a></div><div class="ttdeci">typename detail::CodifferentialType&lt; CochainType &gt;::type codifferential_t</div><div class="ttdef"><b>Definition</b> <a href="#l00046">codifferential.hpp:46</a></div></div>
 <div class="ttc" id="anamespacesil_1_1misc_html_af83a849e8c4a2149160bd276d3e445c1"><div class="ttname"><a href="namespacesil_1_1misc.html#af83a849e8c4a2149160bd276d3e445c1">sil::misc::convert_type_seq_to_t</a></div><div class="ttdeci">typename detail::ConvertTypeSeqTo&lt; T, Seq &gt;::type convert_type_seq_to_t</div><div class="ttdef"><b>Definition</b> <a href="type__seq__conversion_8hpp_source.html#l00045">type_seq_conversion.hpp:45</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_a164aa1d6ecb53a91d54f7158f7b0bcb7"><div class="ttname"><a href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">sil::tensor::Tensor</a></div><div class="ttdeci">Tensor(ddc::Chunk&lt; ElementType, SupportType, Allocator &gt;) -&gt; Tensor&lt; ElementType, SupportType, Kokkos::layout_right, typename Allocator::memory_space &gt;</div></div>
-<div class="ttc" id="anamespacesil_1_1tensor_html_a7aebefceb7d24467500a817f5073a311"><div class="ttname"><a href="namespacesil_1_1tensor.html#a7aebefceb7d24467500a817f5073a311">sil::tensor::upper</a></div><div class="ttdeci">detail::Upper&lt; T &gt;::type upper</div><div class="ttdef"><b>Definition</b> <a href="character_8hpp_source.html#l00106">character.hpp:106</a></div></div>
-<div class="ttc" id="anamespacesil_1_1tensor_html_aa7e70ef3014d5865f10f7427d6be216d"><div class="ttname"><a href="namespacesil_1_1tensor.html#aa7e70ef3014d5865f10f7427d6be216d">sil::tensor::tensor_prod</a></div><div class="ttdeci">Tensor&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim... &gt;, LayoutStridedPolicy, MemorySpace &gt; tensor_prod(Tensor&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim... &gt;, LayoutStridedPolicy, MemorySpace &gt; prod_tensor, Tensor&lt; ElementType, ddc::DiscreteDomain&lt; DDim1... &gt;, LayoutStridedPolicy, MemorySpace &gt; tensor1, Tensor&lt; ElementType, ddc::DiscreteDomain&lt; DDim2... &gt;, LayoutStridedPolicy, MemorySpace &gt; tensor2)</div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l01224">tensor_impl.hpp:1224</a></div></div>
-<div class="ttc" id="anamespacesil_1_1tensor_html_ad87f841c21af50491ee8198e88631449"><div class="ttname"><a href="namespacesil_1_1tensor.html#ad87f841c21af50491ee8198e88631449">sil::tensor::is_covariant_v</a></div><div class="ttdeci">bool constexpr is_covariant_v</div><div class="ttdef"><b>Definition</b> <a href="character_8hpp_source.html#l00212">character.hpp:212</a></div></div>
-<div class="ttc" id="anamespacesil_1_1tensor_html_ae99219778ac9edef94c1e46ee478caa2"><div class="ttname"><a href="namespacesil_1_1tensor.html#ae99219778ac9edef94c1e46ee478caa2">sil::tensor::uncharacterize</a></div><div class="ttdeci">detail::Uncharacterize&lt; Index &gt;::type uncharacterize</div><div class="ttdef"><b>Definition</b> <a href="character_8hpp_source.html#l00172">character.hpp:172</a></div></div>
+<div class="ttc" id="anamespacesil_1_1tensor_html_a3e2f32622aaafaa7ee4402aba31f1e9c"><div class="ttname"><a href="namespacesil_1_1tensor.html#a3e2f32622aaafaa7ee4402aba31f1e9c">sil::tensor::upper_t</a></div><div class="ttdeci">detail::Upper&lt; T &gt;::type upper_t</div><div class="ttdef"><b>Definition</b> <a href="character_8hpp_source.html#l00108">character.hpp:108</a></div></div>
+<div class="ttc" id="anamespacesil_1_1tensor_html_aa7e70ef3014d5865f10f7427d6be216d"><div class="ttname"><a href="namespacesil_1_1tensor.html#aa7e70ef3014d5865f10f7427d6be216d">sil::tensor::tensor_prod</a></div><div class="ttdeci">Tensor&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim... &gt;, LayoutStridedPolicy, MemorySpace &gt; tensor_prod(Tensor&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim... &gt;, LayoutStridedPolicy, MemorySpace &gt; prod_tensor, Tensor&lt; ElementType, ddc::DiscreteDomain&lt; DDim1... &gt;, LayoutStridedPolicy, MemorySpace &gt; tensor1, Tensor&lt; ElementType, ddc::DiscreteDomain&lt; DDim2... &gt;, LayoutStridedPolicy, MemorySpace &gt; tensor2)</div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00863">tensor_impl.hpp:863</a></div></div>
+<div class="ttc" id="anamespacesil_1_1tensor_html_ab7e663826196ec03f2eec4be87ffa4cf"><div class="ttname"><a href="namespacesil_1_1tensor.html#ab7e663826196ec03f2eec4be87ffa4cf">sil::tensor::uncharacterize_t</a></div><div class="ttdeci">detail::Uncharacterize&lt; Index &gt;::type uncharacterize_t</div><div class="ttdef"><b>Definition</b> <a href="character_8hpp_source.html#l00174">character.hpp:174</a></div></div>
+<div class="ttc" id="anamespacesil_1_1tensor_html_ad1b951f27338222afe0730eda16f06db"><div class="ttname"><a href="namespacesil_1_1tensor.html#ad1b951f27338222afe0730eda16f06db">sil::tensor::lower_t</a></div><div class="ttdeci">detail::Lower&lt; T &gt;::type lower_t</div><div class="ttdef"><b>Definition</b> <a href="character_8hpp_source.html#l00080">character.hpp:80</a></div></div>
+<div class="ttc" id="anamespacesil_1_1tensor_html_ad87f841c21af50491ee8198e88631449"><div class="ttname"><a href="namespacesil_1_1tensor.html#ad87f841c21af50491ee8198e88631449">sil::tensor::is_covariant_v</a></div><div class="ttdeci">bool constexpr is_covariant_v</div><div class="ttdef"><b>Definition</b> <a href="character_8hpp_source.html#l00214">character.hpp:214</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_aeada71b3699ecf64d8d6cbfc44bf6a8c"><div class="ttname"><a href="namespacesil_1_1tensor.html#aeada71b3699ecf64d8d6cbfc44bf6a8c">sil::tensor::tensor_accessor_for_domain_t</a></div><div class="ttdeci">detail::TensorAccessorForDomain&lt; Dom &gt;::type tensor_accessor_for_domain_t</div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00330">tensor_impl.hpp:330</a></div></div>
 <div class="ttc" id="anamespacesil_html"><div class="ttname"><a href="namespacesil.html">sil</a></div><div class="ttdoc">The top-level namespace of SimiLie.</div><div class="ttdef"><b>Definition</b> <a href="csr_8hpp_source.html#l00014">csr.hpp:14</a></div></div>
-<div class="ttc" id="astructsil_1_1tensor_1_1Covariant_html"><div class="ttname"><a href="structsil_1_1tensor_1_1Covariant.html">sil::tensor::Covariant</a></div><div class="ttdef"><b>Definition</b> <a href="character_8hpp_source.html#l00038">character.hpp:40</a></div></div>
+<div class="ttc" id="astructsil_1_1tensor_1_1Covariant_html"><div class="ttname"><a href="structsil_1_1tensor_1_1Covariant.html">sil::tensor::Covariant</a></div><div class="ttdef"><b>Definition</b> <a href="character_8hpp_source.html#l00040">character.hpp:42</a></div></div>
 <div class="ttc" id="astructsil_1_1tensor_1_1TensorAntisymmetricIndex_html"><div class="ttname"><a href="structsil_1_1tensor_1_1TensorAntisymmetricIndex.html">sil::tensor::TensorAntisymmetricIndex</a></div><div class="ttdef"><b>Definition</b> <a href="antisymmetric__tensor_8hpp_source.html#l00019">antisymmetric_tensor.hpp:20</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->

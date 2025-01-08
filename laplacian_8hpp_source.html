@@ -168,7 +168,7 @@ $(function(){initNavTree('laplacian_8hpp_source.html',''); initResizable(true); 
 <div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    ddc::cartesian_prod_t&lt;</div>
 <div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>            <span class="keyword">typename</span> TensorType::non_indices_domain_t,</div>
 <div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>            ddc::DiscreteDomain&lt;coboundary_index_t&lt;LaplacianDummyIndex, CochainTag&gt;&gt;&gt;</div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>            derivative_tensor_dom(tensor.non_indices_domain(), derivative_accessor.mem_domain());</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>            derivative_tensor_dom(tensor.non_indices_domain(), derivative_accessor.domain());</div>
 <div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    ddc::Chunk derivative_tensor_alloc(</div>
 <div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>            derivative_tensor_dom,</div>
 <div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>            ddc::KokkosAllocator&lt;double, typename ExecSpace::memory_space&gt;());</div>
@@ -208,7 +208,7 @@ $(function(){initNavTree('laplacian_8hpp_source.html',''); initResizable(true); 
 <div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>            ddc::DiscreteDomain&lt;codifferential_index_t&lt;LaplacianDummyIndex, CochainTag&gt;&gt;&gt;</div>
 <div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>            codifferential_tensor_dom(</div>
 <div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>                    tensor.non_indices_domain(),</div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>                    codifferential_accessor.mem_domain());</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>                    codifferential_accessor.domain());</div>
 <div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>    ddc::Chunk codifferential_tensor_alloc(</div>
 <div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>            codifferential_tensor_dom,</div>
 <div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>            ddc::KokkosAllocator&lt;double, typename ExecSpace::memory_space&gt;());</div>
@@ -252,7 +252,7 @@ $(function(){initNavTree('laplacian_8hpp_source.html',''); initResizable(true); 
 <div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>{</div>
 <div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>    <span class="keyword">static_assert</span>(<a class="code hl_variable" href="namespacesil_1_1tensor.html#ad87f841c21af50491ee8198e88631449">tensor::is_covariant_v&lt;LaplacianDummyIndex&gt;</a>);</div>
 <div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>    <span class="keyword">using </span>LaplacianDummyIndex2 = <a class="code hl_struct" href="structsil_1_1tensor_1_1Covariant.html">tensor::Covariant</a>&lt;</div>
-<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>            detail::LaplacianDummy2&lt;tensor::uncharacterize&lt;LaplacianDummyIndex&gt;&gt;&gt;;</div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>            detail::LaplacianDummy2&lt;tensor::uncharacterize_t&lt;LaplacianDummyIndex&gt;&gt;&gt;;</div>
 <div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span> </div>
 <div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>    <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (CochainTag::rank() == 0) {</div>
 <div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>        detail::codifferential_of_coboundary&lt;</div>
@@ -300,9 +300,9 @@ $(function(){initNavTree('laplacian_8hpp_source.html',''); initResizable(true); 
 <div class="ttc" id="anamespacesil_1_1exterior_html_ad9397455da98fe2a3f15d1f9ebeebd8c"><div class="ttname"><a href="namespacesil_1_1exterior.html#ad9397455da98fe2a3f15d1f9ebeebd8c">sil::exterior::coboundary_index_t</a></div><div class="ttdeci">typename detail::CoboundaryIndex&lt; TagToAddToCochain, CochainTag &gt;::type coboundary_index_t</div><div class="ttdef"><b>Definition</b> <a href="coboundary_8hpp_source.html#l00081">coboundary.hpp:81</a></div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html_adaff4942e5eaf3e7ba7c50589e252feb"><div class="ttname"><a href="namespacesil_1_1exterior.html#adaff4942e5eaf3e7ba7c50589e252feb">sil::exterior::codifferential</a></div><div class="ttdeci">codifferential_tensor_t&lt; TagToRemoveFromCochain, CochainTag, TensorType &gt; codifferential(ExecSpace const &amp;exec_space, codifferential_tensor_t&lt; TagToRemoveFromCochain, CochainTag, TensorType &gt; codifferential_tensor, TensorType tensor, MetricType inv_metric)</div><div class="ttdef"><b>Definition</b> <a href="codifferential_8hpp_source.html#l00167">codifferential.hpp:167</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_a164aa1d6ecb53a91d54f7158f7b0bcb7"><div class="ttname"><a href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">sil::tensor::Tensor</a></div><div class="ttdeci">Tensor(ddc::Chunk&lt; ElementType, SupportType, Allocator &gt;) -&gt; Tensor&lt; ElementType, SupportType, Kokkos::layout_right, typename Allocator::memory_space &gt;</div></div>
-<div class="ttc" id="anamespacesil_1_1tensor_html_ad87f841c21af50491ee8198e88631449"><div class="ttname"><a href="namespacesil_1_1tensor.html#ad87f841c21af50491ee8198e88631449">sil::tensor::is_covariant_v</a></div><div class="ttdeci">bool constexpr is_covariant_v</div><div class="ttdef"><b>Definition</b> <a href="character_8hpp_source.html#l00212">character.hpp:212</a></div></div>
+<div class="ttc" id="anamespacesil_1_1tensor_html_ad87f841c21af50491ee8198e88631449"><div class="ttname"><a href="namespacesil_1_1tensor.html#ad87f841c21af50491ee8198e88631449">sil::tensor::is_covariant_v</a></div><div class="ttdeci">bool constexpr is_covariant_v</div><div class="ttdef"><b>Definition</b> <a href="character_8hpp_source.html#l00214">character.hpp:214</a></div></div>
 <div class="ttc" id="anamespacesil_html"><div class="ttname"><a href="namespacesil.html">sil</a></div><div class="ttdoc">The top-level namespace of SimiLie.</div><div class="ttdef"><b>Definition</b> <a href="csr_8hpp_source.html#l00014">csr.hpp:14</a></div></div>
-<div class="ttc" id="astructsil_1_1tensor_1_1Covariant_html"><div class="ttname"><a href="structsil_1_1tensor_1_1Covariant.html">sil::tensor::Covariant</a></div><div class="ttdef"><b>Definition</b> <a href="character_8hpp_source.html#l00038">character.hpp:40</a></div></div>
+<div class="ttc" id="astructsil_1_1tensor_1_1Covariant_html"><div class="ttname"><a href="structsil_1_1tensor_1_1Covariant.html">sil::tensor::Covariant</a></div><div class="ttdef"><b>Definition</b> <a href="character_8hpp_source.html#l00040">character.hpp:42</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!--

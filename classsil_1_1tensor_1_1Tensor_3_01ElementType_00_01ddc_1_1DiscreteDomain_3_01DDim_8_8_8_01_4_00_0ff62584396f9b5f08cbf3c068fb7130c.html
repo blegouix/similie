@@ -144,7 +144,7 @@ Inheritance diagram for sil::tensor::Tensor&lt; ElementType, ddc::DiscreteDomain
 <div class="dyncontent">
 <div class="center"><img src="classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0fb77989a64f684f66e0f56bc66701854.png" border="0" usemap="#asil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_01LayoutStridedPolicy_00_01MemorySpace_01_4_inherit__map" alt="Inheritance graph"/></div>
 <map name="asil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_01LayoutStridedPolicy_00_01MemorySpace_01_4_inherit__map" id="asil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_01LayoutStridedPolicy_00_01MemorySpace_01_4_inherit__map">
-<area shape="rect" title="Tensor class." alt="" coords="15,163,230,587"/>
+<area shape="rect" title="Tensor class." alt="" coords="15,163,230,567"/>
 <area shape="rect" title=" " alt="" coords="5,5,240,115"/>
 <area shape="poly" title=" " alt="" coords="125,128,125,162,120,162,120,128"/>
 </map>
@@ -154,7 +154,7 @@ Collaboration diagram for sil::tensor::Tensor&lt; ElementType, ddc::DiscreteDoma
 <div class="dyncontent">
 <div class="center"><img src="classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0c67927fe0e2fcc70ad932b0d0b60a7fb.png" border="0" usemap="#asil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_01LayoutStridedPolicy_00_01MemorySpace_01_4_coll__map" alt="Collaboration graph"/></div>
 <map name="asil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_01LayoutStridedPolicy_00_01MemorySpace_01_4_coll__map" id="asil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_01LayoutStridedPolicy_00_01MemorySpace_01_4_coll__map">
-<area shape="rect" title="Tensor class." alt="" coords="15,163,230,587"/>
+<area shape="rect" title="Tensor class." alt="" coords="15,163,230,567"/>
 <area shape="rect" title=" " alt="" coords="5,5,240,115"/>
 <area shape="poly" title=" " alt="" coords="125,128,125,162,120,162,120,128"/>
 </map>
@@ -187,8 +187,6 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a8f1bc9c454fff45dcb23af2693f54ddb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a59f64fa3448569d6f092acf42d24f244" id="r_a59f64fa3448569d6f092acf42d24f244"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr <a class="el" href="#a2dbd11173fe65fecb953cf3b527a40fb">natural_domain_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a59f64fa3448569d6f092acf42d24f244">natural_domain</a> () const noexcept</td></tr>
 <tr class="separator:a59f64fa3448569d6f092acf42d24f244"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a217e9499c41ce60c44af228c7bf80726" id="r_a217e9499c41ce60c44af228c7bf80726"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr <a class="el" href="#a2089308a2b2228647d62115ce3109b1b">discrete_domain_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a217e9499c41ce60c44af228c7bf80726">mem_domain</a> () const noexcept</td></tr>
-<tr class="separator:a217e9499c41ce60c44af228c7bf80726"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3629c86747fec40af787e5d61cdefd3c" id="r_a3629c86747fec40af787e5d61cdefd3c"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr <a class="el" href="#a2089308a2b2228647d62115ce3109b1b">discrete_domain_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a3629c86747fec40af787e5d61cdefd3c">access_domain</a> () const noexcept</td></tr>
 <tr class="separator:a3629c86747fec40af787e5d61cdefd3c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8bd918cc83d7130c9c65bc5173fcfa5b" id="r_a8bd918cc83d7130c9c65bc5173fcfa5b"><td class="memTemplParams" colspan="2">template&lt;class... CDim&gt; </td></tr>
@@ -543,35 +541,6 @@ template&lt;class ElementType , class... DDim, class LayoutStridedPolicy , class
 
 </div>
 </div>
-<a id="a217e9499c41ce60c44af228c7bf80726" name="a217e9499c41ce60c44af228c7bf80726"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a217e9499c41ce60c44af228c7bf80726">&#9670;&#160;</a></span>mem_domain()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class ElementType , class... DDim, class LayoutStridedPolicy , class MemorySpace &gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">KOKKOS_FUNCTION constexpr <a class="el" href="#a2089308a2b2228647d62115ce3109b1b">discrete_domain_type</a> <a class="el" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">sil::tensor::Tensor</a>&lt; ElementType, ddc::DiscreteDomain&lt; DDim... &gt;, LayoutStridedPolicy, MemorySpace &gt;::mem_domain </td>
-          <td>(</td>
-          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span><span class="mlabel">noexcept</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00645">645</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
-
-</div>
-</div>
 <a id="a3629c86747fec40af787e5d61cdefd3c" name="a3629c86747fec40af787e5d61cdefd3c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a3629c86747fec40af787e5d61cdefd3c">&#9670;&#160;</a></span>access_domain()</h2>
 
@@ -597,7 +566,7 @@ template&lt;class ElementType , class... DDim, class LayoutStridedPolicy , class
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00650">650</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00645">645</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -628,7 +597,7 @@ template&lt;class... CDim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00656">656</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00651">651</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -659,7 +628,7 @@ template&lt;class... Elem&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00663">663</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00658">658</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -690,7 +659,7 @@ template&lt;class... Elem&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00672">672</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00667">667</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -721,7 +690,7 @@ template&lt;class... DElems&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00682">682</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00677">677</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -752,7 +721,7 @@ template&lt;class... DElems&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00692">692</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00687">687</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -783,7 +752,7 @@ template&lt;class... ODDim&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00704">704</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00699">699</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -814,7 +783,7 @@ template&lt;class... DElems&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00724">724</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00719">719</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -843,7 +812,7 @@ template&lt;class ElementType , class... DDim, class LayoutStridedPolicy , class
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00745">745</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00740">740</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -872,7 +841,7 @@ template&lt;class ElementType , class... DDim, class LayoutStridedPolicy , class
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00762">762</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00757">757</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
