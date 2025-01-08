@@ -139,6 +139,7 @@ int main(int argc, char** argv)
 
     // We allocate and compute the covariant counterpart of the Riemann tensor which is needed for the computation of the Kretschmann scalar. Actually, in this particular case (Minkowski metric and even-rank tensor), contravariant and covariant Riemann tensors have the same components, but we perform the computation like if it was not the case.
     ddc::Chunk riemann_low_alloc = ddc::create_mirror_and_copy(riemann_up);
+    // FIXME This does not work because inplace_apply_metric involves a parallel_for_each to perform a tensor product which involves ddc::Chunk allocations (not supported)
     auto riemann_low
             = sil::tensor::inplace_apply_metric<MetricIndex, MuLow, NuLow, RhoLow, SigmaLow>(
                     Kokkos::DefaultHostExecutionSpace(),
