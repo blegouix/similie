@@ -16,7 +16,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 - enforced_deep_copy (avoid call to Kokkos::deep_copy)
 - Consider removing metric_prod_t (and every helper producing a tensor). At least, standardize API.
 - Streams in Laplacian
-- There are several projection of metric on MetricIndex which is simply a metric.indices_domain()
 
 ----- SETUP BASIC COMMAND -----
 

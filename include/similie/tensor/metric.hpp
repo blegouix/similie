@@ -431,13 +431,11 @@ invert_metric_t<MetricType> fill_inverse_metric(
         // Allocate a buffer mirroring the metric as a full matrix
         ddc::Chunk buffer_alloc(
                 ddc::cartesian_prod_t<
-                        ddc::remove_dims_of_t<
-                                typename MetricType::discrete_domain_type,
-                                MetricIndex>,
+                        typename MetricType::non_indices_domain_t,
                         ddc::DiscreteDomain<
                                 tensor::metric_index_1<MetricIndex>,
                                 tensor::metric_index_2<MetricIndex>>>(
-                        ddc::remove_dims_of<MetricIndex>(metric.domain()),
+                        metric.non_indices_domain(),
                         ddc::DiscreteDomain<
                                 tensor::metric_index_1<MetricIndex>,
                                 tensor::metric_index_2<MetricIndex>>(metric.natural_domain())),
@@ -446,11 +444,9 @@ invert_metric_t<MetricType> fill_inverse_metric(
         // Allocate a buffer for KokkosBatched::SerialInverseLU internal needs
         ddc::Chunk buffer_alloc2(
                 ddc::cartesian_prod_t<
-                        ddc::remove_dims_of_t<
-                                typename MetricType::discrete_domain_type,
-                                MetricIndex>,
+                        typename MetricType::non_indices_domain_t,
                         ddc::DiscreteDomain<tensor::metric_index_1<MetricIndex>>>(
-                        ddc::remove_dims_of<MetricIndex>(metric.domain()),
+                        metric.non_indices_domain(),
                         ddc::DiscreteDomain<tensor::metric_index_1<MetricIndex>>(
                                 ddc::DiscreteElement<tensor::metric_index_1<MetricIndex>>(0),
                                 ddc::DiscreteVector<tensor::metric_index_1<MetricIndex>>(
