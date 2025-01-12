@@ -128,6 +128,10 @@ using NuUp = sil::tensor::Contravariant<Nu>;
 
 using DummyIndex = sil::tensor::Covariant<sil::tensor::ScalarIndex>;
 
+// Declare boundary conditions (Dirichlet)
+static constexpr ddc::BoundCond BoundCond = ddc::BoundCond::GREVILLE;
+using ExtrapolationRule = ddc::NullExtrapolationRule;
+
 int main(int argc, char** argv)
 {
     // Initialize PDI, Kokkos and DDC
@@ -218,6 +222,47 @@ int main(int argc, char** argv)
 
     auto source_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), source);
+
+    // Spline builder & evaluator
+    ddc::SplineBuilder<
+            Kokkos::DefaultExecutionSpace,
+            Kokkos::DefaultExecutionSpace::memory_space,
+            BSplinesX,
+            DDimX,
+            BoundCond,
+            BoundCond,
+            ddc::SplineSolver::LAPACK,
+            DDimX,
+            DDimY> const spline_builder_x(mesh_xy);
+    ddc::SplineBuilder<
+            Kokkos::DefaultExecutionSpace,
+            Kokkos::DefaultExecutionSpace::memory_space,
+            BSplinesY,
+            DDimY,
+            BoundCond,
+            BoundCond,
+            ddc::SplineSolver::LAPACK,
+            DDimX,
+            DDimY> const spline_builder_y(mesh_xy);
+    ExtrapolationRule const extrapolation_rule;
+    ddc::SplineEvaluator<
+            Kokkos::DefaultExecutionSpace,
+            Kokkos::DefaultExecutionSpace::memory_space,
+            BSplinesX,
+            DDimX,
+            ExtrapolationRule,
+            ExtrapolationRule,
+            DDimX,
+            DDimY> const spline_evaluator_x(extrapolation_rule, extrapolation_rule);
+    ddc::SplineEvaluator<
+            Kokkos::DefaultExecutionSpace,
+            Kokkos::DefaultExecutionSpace::memory_space,
+            BSplinesY,
+            DDimY,
+            ExtrapolationRule,
+            ExtrapolationRule,
+            DDimX,
+            DDimY> const spline_evaluator_y(extrapolation_rule, extrapolation_rule);
 
     // Potential
     [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> potential_accessor;
