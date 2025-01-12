@@ -36,7 +36,7 @@ plugins:
     - file: '2d_poisson.h5'
       on_event: [export]
       collision_policy: replace_and_warn
-      write: [Nx, Ny, position, potential, laplacian]
+      write: [Nx, Ny, position, source, potential, laplacian]
   #trace: ~
 )PDI_CFG";
 
