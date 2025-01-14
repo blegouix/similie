@@ -26,22 +26,22 @@ Partial differential equations are the main mathematical tool to describe rules 
 
 ## What is Finite Element Method ?
 
-Finite Element Method aims to discretize PDE to produce numerical schemes to solve it. It relies on the weak formulation of the PDE:
+Finite Element Method aims to discretize PDE to produce numerical schemes to solve it. It relies on the weak formulation of the PDE (\f$\left<\cdot, \cdot\right>\f$ is the inner product between functions):
 
 \f\[
-\int \frac{\partial u}{\partial t}v\; d\Omega + \int \mathcal{J}\frac{d \mathcal{H}(u, t)}{dx}v\; d\Omega + \int \mathcal{D}(D^k u, D^{k-1} u,... ,D u, u, x) v \; d\Omega = \int f v \; d\Omega
+\left<\frac{\partial u}{\partial t}, v\right> + \left< \mathcal{J}\frac{d \mathcal{H}(u, t)}{dx}, v\right> + \left< \mathcal{D}(D^k u, D^{k-1} u,... ,D u, u, x), v \right> = \left< f, v\right>
 \f\]
 
 In which the total derivative of the Hamiltonian can be expanded using the [functional derivative](https://en.wikipedia.org/wiki/Functional_derivative):
 
 \f\[
-\int \frac{\partial u}{\partial t}v\; d\Omega + \int \mathcal{J}\left(\frac{\partial \mathcal{H}(u, t)}{\partial x} - \nabla\cdot \frac{\partial \mathcal{H}(u, t)}{\partial (\nabla x)}\right)v\; d\Omega + \int \mathcal{D}(D^k u, D^{k-1} u,... ,D u, u, x) v \; d\Omega = \int f v \; d\Omega
+\left<\frac{\partial u}{\partial t}, v\right> + \left< \mathcal{J}\left(\frac{\partial \mathcal{H}(u, t)}{\partial x} - \nabla\cdot \frac{\partial \mathcal{H}(u, t)}{\partial (\nabla x)}\right), v\right> + \left< \mathcal{D}(D^k u, D^{k-1} u,... ,D u, u, x), v \right> = \left< f, v\right>
 \f\]
 
 Leading to:
 
 \f\[
-\int \frac{\partial u}{\partial t}v\; d\Omega + \int \mathcal{J}\frac{\partial \mathcal{H}(u, t)}{\partial x} v\; d\Omega - \int \mathcal{J}\frac{\partial \mathcal{H}(u, t)}{\partial (\nabla x)}\nabla v\; d\Omega + \int \mathcal{D}(D^k u, D^{k-1} u,... ,D u, u, x) v \; d\Omega = \int f v \; d\Omega
+\left<\frac{\partial u}{\partial t}, v\right> + \left< \mathcal{J}\frac{\partial \mathcal{H}(u, t)}{\partial x}, v\right> - \left< \mathcal{J}\frac{\partial \mathcal{H}(u, t)}{\partial (\nabla x)}, \nabla v\right> + \left< \mathcal{D}(D^k u, D^{k-1} u,... ,D u, u, x), v \right> = \left< f, v\right>
 \f\]
 
 
