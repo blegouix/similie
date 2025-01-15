@@ -41,13 +41,19 @@ In which the variational derivative of the Hamiltonian can be expanded as:
 Leading to:
 
 \f\[
-\left<\frac{\partial u}{\partial t}, \psi_j\right>_\Omega + \left< \mathcal{J}\frac{\partial \mathcal{H}}{\partial u}, \psi_j\right>_\Omega + \left< \mathcal{J}\frac{\partial \mathcal{H}}{\partial (\nabla u)}, \psi_j\right>_{\partial\Omega} - \left< \mathcal{J}\frac{\partial \mathcal{H}}{\partial (\nabla u)}, \nabla \psi_j\right>_\Omega = \left< \mathcal{D}(D^k u, D^{k-1} u,... ,D u, u, x), \psi_j \right>_\Omega
+\left<\frac{\partial u}{\partial t}, \psi_j\right>_\Omega + \left< \mathcal{J}\frac{\partial \mathcal{H}}{\partial u}, \psi_j\right>_\Omega + \left< \mathcal{J}\frac{\partial \mathcal{H}}{\partial (\nabla u)}, \psi_j\vec{n}\right>_{\partial\Omega} - \left< \mathcal{J}\frac{\partial \mathcal{H}}{\partial (\nabla u)}, \nabla \psi_j\right>_\Omega = \left< \mathcal{D}(D^k u, D^{k-1} u,... ,D u, u, x), \psi_j \right>_\Omega
 \f\]
 
 
-\note \f$\left< \mathcal{J}\nabla\cdot\frac{\partial \mathcal{H}}{\partial (\nabla u)}, \psi_j\right>_\Omega\f$ has been transformed into \f$\left< \mathcal{J}\frac{\partial \mathcal{H}}{\partial (\nabla u)}, \psi_j\right>_{\partial\Omega} - \left< \mathcal{J}\frac{\partial \mathcal{H}}{\partial (\nabla u)}, \nabla \psi_j\right>_\Omega\f$ using integration by parts. 
+\note \f$\left< \mathcal{J}\nabla\cdot\frac{\partial \mathcal{H}}{\partial (\nabla u)}, \psi_j\right>_\Omega\f$ has been transformed into \f$\left< \mathcal{J}\frac{\partial \mathcal{H}}{\partial (\nabla u)}, \psi_j\vec{n}\right>_{\partial\Omega} - \left< \mathcal{J}\frac{\partial \mathcal{H}}{\partial (\nabla u)}, \nabla \psi_j\right>_\Omega\f$ using integration by parts. 
 
 Where \f$\psi\f$ is a basis of test functions.
+
+\note As an example, the heat equation \f$\frac{\partial u}{\partial t} + \Delta u = s\f$ is associated to the Hamiltonian \f$\mathcal{H} = \frac{1}{2}|\nabla u|^2\f$ and the heat source term \f$\mathcal{D} = s\f$, leading to:
+
+\note \f\[
+\left<\frac{\partial u}{\partial t}, \psi_j\right>_\Omega + \left< \mathcal{J}\nabla u, \psi_j\vec{n}\right>_{\partial\Omega} - \left< \mathcal{J}\nabla u, \nabla \psi_j\right>_\Omega = \left<s, \psi_j \right>_\Omega
+\f\]
 
 We decompose \f$u\f$ and \f$\psi_j\f$ in a discrete basis function \f$\phi\f$. 
 
@@ -63,4 +69,9 @@ The weak formulation is thus rewritten (Einstein summation convention applies):
 \frac{\partial \tilde{u}_i}{\partial t}\left<\phi_i, \psi_j\right>_\Omega + \left< \mathcal{J}\frac{\partial \mathcal{H}}{\partial u}, \psi_j\right>_\Omega + \left< \mathcal{J}\frac{\partial \mathcal{H}}{\partial (\nabla u)}, \psi_j\right>_{\partial\Omega} - \left< \mathcal{J}\frac{\partial \mathcal{H}}{\partial (\nabla u)}, \nabla \psi_j\right>_\Omega = \left< \mathcal{D}(D^k u, D^{k-1} u,... ,D u, u, x), \psi_j \right>_\Omega
 \f\]
 
-\note As an example, the Poisson equation \f$\Delta u = \rho\f$ is associated to the Hamiltonian \f$\mathcal{H} = \frac{1}{2}|\nabla u|^2 - \rho u\f$.
+\note As an example, the Poisson equation \f$\Delta u = \rho\f$ is associated to the Hamiltonian \f$\mathcal{H} = \frac{1}{2}|\nabla u|^2 - \rho u\f$, leading to:
+
+\note \f\[
+\frac{\partial \tilde{u}_i}{\partial t}\left<\phi_i, \psi_j\right>_\Omega + \left< \mathcal{J}\frac{\partial \mathcal{H}}{\partial u}, \psi_j\right>_\Omega + \left< \mathcal{J}\frac{\partial \mathcal{H}}{\partial (\nabla u)}, \psi_j\right>_{\partial\Omega} - \left< \mathcal{J}\frac{\partial \mathcal{H}}{\partial (\nabla u)}, \nabla \psi_j\right>_\Omega = \left< \mathcal{D}(D^k u, D^{k-1} u,... ,D u, u, x), \psi_j \right>_\Omega
+\f\]
+
