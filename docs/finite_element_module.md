@@ -69,9 +69,42 @@ The weak formulation is thus rewritten (Einstein summation convention applies):
 \frac{\partial \tilde{u}_i}{\partial t}\left<\phi_i, \psi_j\right>_\Omega + \left< \mathcal{J}\frac{\partial \mathcal{H}}{\partial u}, \psi_j\right>_\Omega + \left< \mathcal{J}\frac{\partial \mathcal{H}}{\partial (\nabla u)}, \psi_j\right>_{\partial\Omega} - \left< \mathcal{J}\frac{\partial \mathcal{H}}{\partial (\nabla u)}, \nabla \psi_j\right>_\Omega = \left< \mathcal{D}(D^k u, D^{k-1} u,... ,D u, u, x), \psi_j \right>_\Omega
 \f\]
 
-\note As an example, the Poisson equation \f$\Delta u = \rho\f$ is associated to the Hamiltonian \f$\mathcal{H} = \frac{1}{2}|\nabla u|^2 - \rho u\f$, leading to:
+To continue the computation, we need to assume a quadratic form for the Hamiltonian:
 
-\note \f\[
-\frac{\partial \tilde{u}_i}{\partial t}\left<\phi_i, \psi_j\right>_\Omega + \left< \mathcal{J}\frac{\partial \mathcal{H}}{\partial u}, \psi_j\right>_\Omega + \left< \mathcal{J}\frac{\partial \mathcal{H}}{\partial (\nabla u)}, \psi_j\right>_{\partial\Omega} - \left< \mathcal{J}\frac{\partial \mathcal{H}}{\partial (\nabla u)}, \nabla \psi_j\right>_\Omega = \left< \mathcal{D}(D^k u, D^{k-1} u,... ,D u, u, x), \psi_j \right>_\Omega
+\f\[
+\mathcal{H} \sim \frac{\alpha}{2} u^2 + \frac{\beta}{2} |\nabla u|^2 + \gamma u|\nabla u| + \delta u + \epsilon \nabla u + \zeta
 \f\]
 
+\attention If the Hamiltonian does not have this form, implementing a non-linear solver is required (it would rely on a quadratic approximation of \f$\mathcal{H}\f$, thus being able to solve the quadratic case is still necessary). 
+
+\f\[
+\frac{\partial \tilde{u}_i}{\partial t}\left<\phi_i, \psi_j\right>_\Omega + \tilde{u}_i\left(\left< \mathcal{J}\left(\alpha \phi_i+\gamma |\nabla \phi_i| + \delta\right), \psi_j\right>_\Omega + \left< \mathcal{J}\left(\beta |\nabla \phi_i|+ \gamma \phi + \epsilon\right), \psi_j\right>_{\partial\Omega}\\ - \left< \mathcal{J}\left(\beta |\nabla \phi_i|+ \gamma \phi_i + \epsilon\right), \nabla \psi_j\right>_\Omega\right) = \left< \mathcal{D}(D^k u, D^{k-1} u,... ,D u, u, x), \psi_j \right>_\Omega
+\f\]
+
+Or in other words:
+
+\f[
+M\frac{\partial \tilde{u}}{\partial t} + K\tilde{u} = \left< \mathcal{D}(D^k u, D^{k-1} u,... ,D u, u, x), \psi_j \right>_\Omega
+\f]
+
+With:
+
+\f\[
+\left\{\begin{matrix}
+M = \left<\phi_i, \psi_j\right>_\Omega\\
+K = \left< \mathcal{J}\left(\alpha \phi_i+\gamma |\nabla \phi_i| + \delta\right), \psi_j\right>_\Omega\\ + \left< \mathcal{J}\left(\beta |\nabla \phi_i|+ \gamma \phi + \epsilon\right), \psi_j\right>_{\partial\Omega}\\ - \left< \mathcal{J}\left(\beta |\nabla \phi_i|+ \gamma \phi_i + \epsilon\right), \nabla \psi_j\right>_\Omega
+\end{matrix}\right.
+\f\]
+
+(\f$M\f$ is called the <em>mass matrix</em> and \f$S\f$ the <em>stiffness matrix</em>)
+
+\note As an example, the heat equation is associated to: 
+
+\note \f\[
+\left\{\begin{matrix}
+M = \left<\phi_i, \psi_j\right>_\Omega\\
+K = \left< \mathcal{J}\nabla \phi_i, \psi_j\right>_{\partial\Omega}\\ - \left< \mathcal{J} |\nabla \phi_i|, \nabla \psi_j\right>_\Omega
+\end{matrix}\right.
+\f\]
+
+## How is Finite Element Method implemented in Similie ?
