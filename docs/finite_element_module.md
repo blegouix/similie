@@ -32,10 +32,10 @@ Finite Element Method aims to discretize PDEs to produce numerical schemes able 
 \left<\frac{\partial u}{\partial t}, \psi_j\right>_\Omega + \left< \mathcal{J}\frac{\delta \mathcal{H}}{\delta u}, \psi_j\right>_\Omega = \left< \mathcal{D}(D^k u, D^{k-1} u,... ,D u, u, x), \psi_j \right>_\Omega
 \f\]
 
-In which the variational derivative of the Hamiltonian can be expanded as: 
+In which the variational derivative of the Hamiltonian can be expanded as (\f$d\f$ is the exterior derivative and \f$\delta\f$ the codifferential): 
 
 \f\[
-\frac{\delta \mathcal{H}}{\delta u} = \frac{\partial \mathcal{H}}{\partial u} - d\frac{\partial \mathcal{H}}{\partial (du)}
+\frac{\delta \mathcal{H}}{\delta u} = \frac{\partial \mathcal{H}}{\partial u} - \delta\frac{\partial \mathcal{H}}{\partial (du)}
 \f\]
 
 Leading to:
@@ -44,7 +44,7 @@ Leading to:
 \left<\frac{\partial u}{\partial t}, \psi_j\right>_\Omega + \left< \mathcal{J}\frac{\partial \mathcal{H}}{\partial u}, \psi_j\right>_\Omega + \int_{\partial\Omega} \mathrm{tr} \; \mathcal{J}\frac{\partial \mathcal{H}}{\partial (du)} \wedge \mathrm{tr} \star \psi_j + \left< \mathcal{J}\frac{\partial \mathcal{H}}{\partial (du)}, d \psi_j\right>_\Omega = \left< \mathcal{D}(D^k u, D^{k-1} u,... ,D u, u, x), \psi_j \right>_\Omega
 \f\]
 
-\note \f$\left< \mathcal{J}d\frac{\partial \mathcal{H}}{\partial (d u)}, \psi_j\right>_\Omega\f$ has been transformed into \f$\int_{\partial\Omega} \mathrm{tr} \; \mathcal{J}\frac{\partial \mathcal{H}}{\partial (du)} \wedge \mathrm{tr} \star \psi_j + \left< \mathcal{J}\frac{\partial \mathcal{H}}{\partial (du)}, d\psi_j\right>_\Omega\f$ using integration by parts. 
+\note \f$\left< \mathcal{J}\delta\frac{\partial \mathcal{H}}{\partial (d u)}, \psi_j\right>_\Omega\f$ has been transformed into \f$\int_{\partial\Omega} \mathrm{tr} \; \mathcal{J}\frac{\partial \mathcal{H}}{\partial (du)} \wedge \mathrm{tr} \star \psi_j + \left< \mathcal{J}\frac{\partial \mathcal{H}}{\partial (du)}, d\psi_j\right>_\Omega\f$ using integration by parts. 
 
 Where \f$\psi\f$ is a basis of test functions.
 
