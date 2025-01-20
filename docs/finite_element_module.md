@@ -6,19 +6,69 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 ## Why partial differential equations are importants for physics ?
 
-Given a differential form \f$u\f$ parametrized by coordinates \f$x\f$, any [partial differential equation](https://en.wikipedia.org/wiki/Partial_differential_equation) can be written:
+### Splitting between Hamiltonian and non-Hamiltonian parts 
+
+Given a differential form \f$u\f$ parametrized by coordinates \f$q^i\f$ and conjugate momenta \f$p_i\f$, any [partial differential equation](https://en.wikipedia.org/wiki/Partial_differential_equation) can be written:
 
 \f\[
-\mathcal{F}(D^k u, D^{k-1} u,... ,D u, u, x) = 0
+\mathcal{F}(D^k u, D^{k-1} u,... ,D u, u, p, q) = 0
 \f\]
 
-Where \f$D^k\f$ is a \f$k-\f$order differential operator. Any partial differential equation can be splitted into a Hamiltonian and non-Hamiltonian parts:
+Where \f$D^k\f$ is a \f$k-\f$order differential operator. Defining the [conjugate momentum field](https://en.wikipedia.org/wiki/Hamiltonian_field_theory) \f$v\f$ of \f$u\f$, let's prove that any partial differential equation can be splitted into a Hamiltonian and non-Hamiltonian parts:
 
 \f\[
-\frac{\partial u}{\partial t} + \{\mathcal{H}, u\} = \mathcal{D}(D^k u, D^{k-1} u,... ,D u, u, x) 
+\iota_X\Omega = d\mathcal{H}(u, v, q, p)  + \mathcal{D}(D^k u, D^{k-1} u,... ,D u, u, q, p) 
 \f\]
 
-Where \f$\{\mathcal{H}, u\}\f$ is the Poisson bracket between the Hamiltonian \f$\mathcal{H}(u, du, t)\f$ of the system and \f$u\f$. It can always be written \f$\{\mathcal{H}, u\} = \mathcal{J}\frac{\delta \mathcal{H}}{\delta u}\f$ in term of the symplectic matrix \f$\mathcal{J}\f$ (where \f$\frac{\delta}{\delta u}\f$ is a [variational derivative](https://en.wikipedia.org/wiki/Functional_derivative)). The Hamiltonian part of the PDE is associated to conserved quantities such as mass, momentum or energy.
+Where the vector field \f$X\f$ is the infinitesimal generator of the [vector flow](https://en.wikipedia.org/wiki/Vector_flow) describing the dynamic of the field \f$u\f$. In other words, \f$u\f$ is transported along the integral curves \f$\gamma\f$ such that:
+
+\f\[
+\frac{d\gamma}{dt} = X(\gamma(t))
+\f\]
+
+Let's define the [Hamiltonian vector field](https://en.wikipedia.org/wiki/Hamiltonian_vector_field) \f$X_\mathcal{H}\f$ associated to the [Hamiltonian](https://en.wikipedia.org/wiki/Hamiltonian_mechanics) \f$\mathcal{H}\f$ such that:
+
+\f\[
+\iota_{X_\mathcal{H}} \Omega = d\mathcal{H}
+\f\]
+ 
+Where \f$\iota_{X_\mathcal{H}} \Omega\f$ is the interior product of the Hamiltonian vector field \f$X_\mathcal{H}\f$ with the inverse \f$\Omega\f$ of the [symplectic \f$2-\f$form](https://en.wikipedia.org/wiki/Symplectic_vector_space) \f$\omega = dp_i\wedge dq^i\f$. Such a field is [symplectic](https://en.wikipedia.org/wiki/Symplectic_vector_field), that is to say it obeys the [Liouville equation](https://en.wikipedia.org/wiki/Liouville%27s_theorem_(Hamiltonian)):
+
+\f\[
+\mathcal{L}_{X_\mathcal{H}}\Omega = \iota_{X_\mathcal{H}} d\Omega + d(\iota_{X_\mathcal{H}}\Omega) = \iota_{X_\mathcal{H}} d\Omega - dd\mathcal{H} = 0
+\f\]
+
+Because \f$\Omega\f$ is a closed form and [Poincaré lemma](https://en.wikipedia.org/wiki/Poincar%C3%A9_lemma) applies. This means \f$\Omega\f$ is preserved along the flow. In other words, along an integral curve \f$\gamma_\mathcal{H}\f$ defined such that:
+
+\f\[
+\frac{d\gamma_\mathcal{H}}{dt} = X_\mathcal{H}(\gamma(t))
+\f\]
+
+The symplectic form \f$\Omega\f$ is preserved.
+
+By defining the non-Hamiltonian part of the vector field \f$X_\mathcal{D} = X - X_\mathcal{D}\f$, obeying:
+
+\f\[
+\iota_{X_\mathcal{D}}\Omega = \mathcal{D}(D^k u, D^{k-1} u,... ,D u, u, q, p) 
+\f\]
+
+The linearity of the interior product immediatly leads to:
+
+\f\[
+\iota_X\Omega = d\mathcal{H}(u, v, q, p)  + \mathcal{D}(D^k u, D^{k-1} u,... ,D u, u, q, p) 
+\f\]
+
+
+### Splitting between Hamiltonian and non-Hamiltonian parts 
+
+
+Any partial differential equation can be splitted into a Hamiltonian and non-Hamiltonian parts:
+
+\f\[
+\iota_X \Omega = d\mathcal{H}(D^k u, D^{k-1} u,... ,D u, u, x)  + \mathcal{D}(D^k u, D^{k-1} u,... ,D u, u, x) 
+\f\]
+
+It can always be written \f$\{\mathcal{H}, u\} = \mathcal{J}\frac{\delta \mathcal{H}}{\delta u}\f$ in term of the symplectic matrix \f$\mathcal{J}\f$ (where \f$\frac{\delta}{\delta u}\f$ is a [variational derivative](https://en.wikipedia.org/wiki/Functional_derivative)). The Hamiltonian part of the PDE is associated to conserved quantities such as mass, momentum or energy.
 
 \note If a PDE involves a second-order temporal derivative \f$\frac{\partial^2 u}{\partial t^2}\f$ (like in wave equation) we can always define \f$U = (\frac{\partial u}{\partial t}, u)\f$ and write the PDE in term of  \f$U\f$.
 
