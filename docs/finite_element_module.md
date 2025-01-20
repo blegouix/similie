@@ -26,10 +26,19 @@ Where the vector field \f$X\f$ is the infinitesimal generator of the [vector flo
 \frac{d\gamma}{dt} = X(\gamma(t))
 \f\]
 
-Let's define the [Hamiltonian vector field](https://en.wikipedia.org/wiki/Hamiltonian_vector_field) \f$X_\mathcal{H}\f$ associated to the [Hamiltonian](https://en.wikipedia.org/wiki/Hamiltonian_mechanics) \f$\mathcal{H}\f$ such that:
+Let's define the [Hamiltonian vector field](https://en.wikipedia.org/wiki/Hamiltonian_vector_field) \f$X_\mathcal{H}\f$ associated to the [Hamiltonian](https://en.wikipedia.org/wiki/Hamiltonian_mechanics) \f$\mathcal{H}\f$:
 
 \f\[
 \iota_{X_\mathcal{H}} \Omega = d\mathcal{H}
+\f\]
+
+\note This key definition is the exterior calculus counterpart of the [Hamilton's field equations](https://en.wikipedia.org/wiki/Hamiltonian_field_theory), usually written in term of the variational derivative \f$\frac{\delta}{\delta f}\f$:
+
+\note \f\[
+\left\{\begin{matrix}
+\frac{\partial u}{\partial t} = \frac{\delta \mathcal{H}}{\delta v}\\
+\frac{\partial v}{\partial t} = -\frac{\delta \mathcal{H}}{\delta u}
+\end{matrix}\right.
 \f\]
  
 Where \f$\iota_{X_\mathcal{H}} \Omega\f$ is the interior product of the Hamiltonian vector field \f$X_\mathcal{H}\f$ with the inverse \f$\Omega\f$ of the [symplectic \f$2-\f$form](https://en.wikipedia.org/wiki/Symplectic_vector_space) \f$\omega = dp_i\wedge dq^i\f$. Such a field is [symplectic](https://en.wikipedia.org/wiki/Symplectic_vector_field), that is to say it obeys the [Liouville equation](https://en.wikipedia.org/wiki/Liouville%27s_theorem_(Hamiltonian)):
@@ -44,15 +53,15 @@ Because \f$\Omega\f$ is a closed form and [Poincaré lemma](https://en.wikipedia
 \frac{d\gamma_\mathcal{H}}{dt} = X_\mathcal{H}(\gamma(t))
 \f\]
 
-The symplectic form \f$\Omega\f$ is preserved.
+The symplectic form \f$\Omega\f$ is invariant.
 
-By defining the non-Hamiltonian part of the vector field \f$X_\mathcal{D} = X - X_\mathcal{D}\f$, obeying:
+By defining the non-Hamiltonian part of the vector field \f$X_\mathcal{D} = X - X_\mathcal{H}\f$, obeying:
 
 \f\[
 \iota_{X_\mathcal{D}}\Omega = \mathcal{D}(D^k u, D^{k-1} u,... ,D u, u, q, p) 
 \f\]
 
-The linearity of the interior product immediatly leads to:
+The linearity of the interior product immediately leads to:
 
 \f\[
 \iota_X\Omega = d\mathcal{H}(u, v, q, p)  + \mathcal{D}(D^k u, D^{k-1} u,... ,D u, u, q, p) 
