@@ -17,6 +17,14 @@ target_link_libraries(2d_vector_laplacian
         sil::sil
 )
 
+add_executable(2d_poisson 2d_poisson.cpp)
+
+target_link_libraries(2d_poisson
+    PUBLIC
+        DDC::DDC
+        sil::sil
+)
+
 if("${SIMILIE_BUILD_YOUNG_TABLEAU}")
 add_executable(kretschmann_scalar kretschmann_scalar.cpp)
 
