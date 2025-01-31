@@ -1,7 +1,7 @@
 # Finite element module {#finite_element_module}
 <!--
 SPDX-FileCopyrightText: 2025 Baptiste Legouix
-SPDX-License-Identifier: GPL-3.0-or-later
+SPDX-License-Identifier: MIT
 -->
 
 ## Why partial differential equations are importants for physics ?
