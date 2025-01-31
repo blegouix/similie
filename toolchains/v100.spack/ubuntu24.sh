@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: 2024 Baptiste Legouix
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: MIT
 
 sudo apt install -y build-essential
 sudo apt install -y cmake

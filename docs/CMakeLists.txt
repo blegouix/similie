@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: 2024 Baptiste Legouix
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: MIT
 
 cmake_minimum_required(VERSION 3.22)
 
