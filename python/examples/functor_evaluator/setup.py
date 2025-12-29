@@ -11,9 +11,9 @@ root = Path(__file__).resolve().parents[2]
 extensions = [
     Extension(
         name="cython_functor",
-        sources=["cython_functor.pyx", "functor_bridge.cpp"],
+        sources=["cython_functor.pyx"],
         language="c++",
-        include_dirs=[str(root / "include"), str(Path(__file__).parent)],
+        include_dirs=[str(root / "include")],
     ),
 ]
 

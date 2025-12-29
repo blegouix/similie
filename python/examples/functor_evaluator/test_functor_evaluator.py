@@ -22,10 +22,6 @@ def test_cython_functor_via_cpp():
     build_extension()
     cython_functor = importlib.import_module("cython_functor")
 
-    handle = cython_functor.cython_functor_create(0.5)
-    try:
-        value = cython_functor.evaluate_from_cpp(handle, 52, 34, 1)
-    finally:
-        cython_functor.cython_functor_destroy(handle)
+    value = cython_functor.evaluate_functor(0.5, 52, 34, 1)
 
     assert value == pytest.approx(246.0)
