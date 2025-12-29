@@ -19,10 +19,10 @@ namespace misc {
  * module) and exposes an operator() that forwards the uids of a DiscreteElement for the
  * ordered indices of a discrete domain to that callable.
  *
- * @tparam Functor Callable type invoked with the uids of the discrete domain @p Dom.
  * @tparam Dom Discrete domain whose `discrete_element_type` defines the element forwarded.
+ * @tparam Functor Callable type invoked with the uids of the discrete domain @p Dom.
  */
-template <class Functor, class Dom>
+template <class Dom, class Functor>
 class FunctorEvaluatorByOrderedIndices
 {
 public:

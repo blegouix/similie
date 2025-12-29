@@ -34,7 +34,7 @@ TEST(FunctorEvaluatorByOrderedIndices, ForwardsIndicesToFunctor)
 
     using domain_t = ddc::DiscreteDomain<DDimX, DDimY, DDimZ>;
 
-    sil::misc::FunctorEvaluatorByOrderedIndices<ExternalFunctor, domain_t> evaluator(
+    sil::misc::FunctorEvaluatorByOrderedIndices<domain_t, ExternalFunctor> evaluator(
             ExternalFunctor {0.5});
 
     ddc::DiscreteElement<DDimX, DDimY, DDimZ> elem(52, 34, 1);
@@ -55,7 +55,7 @@ TEST(FunctorEvaluatorByOrderedIndices, SupportsMoveOnlyFunctor)
 
     using domain_t = ddc::DiscreteDomain<DDimX>;
 
-    sil::misc::FunctorEvaluatorByOrderedIndices<MoveOnlyFunctor, domain_t> evaluator(
+    sil::misc::FunctorEvaluatorByOrderedIndices<domain_t, MoveOnlyFunctor> evaluator(
             MoveOnlyFunctor {std::make_unique<int>(3)});
 
     ddc::DiscreteElement<DDimX> elem(7);
