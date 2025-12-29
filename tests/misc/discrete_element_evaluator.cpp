@@ -21,7 +21,7 @@ struct DDimZ
 {
 };
 
-TEST(DiscreteElementEvaluator, ForwardsIndicesToFunctor)
+TEST(FunctorEvaluatorByOrderedIndices, ForwardsIndicesToFunctor)
 {
     struct ExternalFunctor {
         double factor;
@@ -32,7 +32,9 @@ TEST(DiscreteElementEvaluator, ForwardsIndicesToFunctor)
         }
     };
 
-    sil::misc::DiscreteElementEvaluator<ExternalFunctor, DDimX, DDimY, DDimZ> evaluator(
+    using domain_t = ddc::DiscreteDomain<DDimX, DDimY, DDimZ>;
+
+    sil::misc::FunctorEvaluatorByOrderedIndices<ExternalFunctor, domain_t> evaluator(
             ExternalFunctor {0.5});
 
     ddc::DiscreteElement<DDimX, DDimY, DDimZ> elem(52, 34, 1);
@@ -40,7 +42,7 @@ TEST(DiscreteElementEvaluator, ForwardsIndicesToFunctor)
     EXPECT_DOUBLE_EQ(evaluator(elem), 0.5 * (100.0 + 340.0 + 52.0));
 }
 
-TEST(DiscreteElementEvaluator, SupportsMoveOnlyFunctor)
+TEST(FunctorEvaluatorByOrderedIndices, SupportsMoveOnlyFunctor)
 {
     struct MoveOnlyFunctor {
         std::unique_ptr<int> weight;
@@ -51,7 +53,9 @@ TEST(DiscreteElementEvaluator, SupportsMoveOnlyFunctor)
         }
     };
 
-    auto evaluator = sil::misc::make_discrete_element_evaluator<DDimX>(
+    using domain_t = ddc::DiscreteDomain<DDimX>;
+
+    sil::misc::FunctorEvaluatorByOrderedIndices<MoveOnlyFunctor, domain_t> evaluator(
             MoveOnlyFunctor {std::make_unique<int>(3)});
 
     ddc::DiscreteElement<DDimX> elem(7);
