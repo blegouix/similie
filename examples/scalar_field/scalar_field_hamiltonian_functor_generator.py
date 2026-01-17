@@ -13,26 +13,32 @@ from sympy.printing.codeprinter import cxxcode
 output_path = Path(sys.argv[1])
 output_path.parent.mkdir(parents=True, exist_ok=True)
 
-x, y = symbols("x y")
-hamiltonian = 0.5 * (x**2 + y**2) + 0.25 * (x**2 + y**2) ** 2 # TODO params in class
-hamiltonian_grad = Matrix([diff(hamiltonian, x), diff(hamiltonian, y)])
-hamiltonian_cxx = cxxcode(hamiltonian)
+phi, pi_x, pi_y = symbols("phi pi_x pi_y")
+mass = symbols("mass")
+hamiltonian = 0.5 * (pi_x**2 + pi_y**2) + 0.5 * mass**2 * phi**2
+hamiltonian_grad = Matrix(
+    [diff(hamiltonian, phi), diff(hamiltonian, pi_x), diff(hamiltonian, pi_y)]
+)
+
 cxx = f"""\
 // SPDX-FileCopyrightText: 2026 Baptiste Legouix
 // SPDX-License-Identifier: MIT
 
 #pragma once
 
-struct ScalarFieldHamiltonian
-{{
-    static constexpr double value(double x, double y)
+struct ScalarFieldHamiltonian {{
+    const double mass;
+
+    ScalarFieldHamiltonian(const double mass_) : mass(mass_) {{}}
+
+    constexpr double value(double phi, double pi_x, double pi_y)
     {{
-        return {hamiltonian_cxx};
+        return {cxxcode(hamiltonian)};
     }}
 
-    static constexpr std::pair<double, double> grad(double x, double y)
+    constexpr std::tuple<double, double, double> d(double phi, double pi_x, double pi_y)
     {{
-        return std::make_pair({cxxcode(hamiltonian_grad[0])}, {cxxcode(hamiltonian_grad[1])});
+        return std::make_tuple({cxxcode(hamiltonian_grad[0])}, {cxxcode(hamiltonian_grad[1])}, {cxxcode(hamiltonian_grad[2])});
     }}
 
 }};
