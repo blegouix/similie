@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Baptiste Legouix
+# SPDX-License-Identifier: MIT
+
 [project]
 name = "similie-scalar-field-example"
 version = "0.0.0"
