@@ -4,29 +4,19 @@
 
 from __future__ import annotations
 
-import argparse
+import sys
 from pathlib import Path
 
-from sympy import diff, expand, symbols
+from sympy import symbols, Matrix, diff
 from sympy.printing.codeprinter import cxxcode
 
-parser = argparse.ArgumentParser(
-    description="Generate a constexpr functor for the scalar field Hamiltonian derivative."
-)
-parser.add_argument(
-    "--output",
-    type=Path,
-    required=True,
-    help="Path to write the generated header.",
-)
-args = parser.parse_args()
-args.output.parent.mkdir(parents=True, exist_ok=True)
+output_path = Path(sys.argv[1])
+output_path.parent.mkdir(parents=True, exist_ok=True)
 
 x, y = symbols("x y")
-hamiltonian = 0.5 * (x**2 + y**2) + 0.25 * (x**2 + y**2) ** 2
-hamiltonian_derivative = expand(diff(hamiltonian, x))
+hamiltonian = 0.5 * (x**2 + y**2) + 0.25 * (x**2 + y**2) ** 2 # TODO params in class
+hamiltonian_grad = Matrix([diff(hamiltonian, x), diff(hamiltonian, y)])
 hamiltonian_cxx = cxxcode(hamiltonian)
-hamiltonian_derivative_cxx = cxxcode(hamiltonian_derivative)
 cxx = f"""\
 // SPDX-FileCopyrightText: 2026 Baptiste Legouix
 // SPDX-License-Identifier: MIT
@@ -35,16 +25,16 @@ cxx = f"""\
 
 struct ScalarFieldHamiltonian
 {{
-    static constexpr float operator()(float x, float y)
+    static constexpr double value(double x, double y)
     {{
-        return static_cast<float>({hamiltonian_cxx});
+        return {hamiltonian_cxx};
     }}
 
-    static constexpr float grad()(float x, float y)
+    static constexpr std::pair<double, double> grad(double x, double y)
     {{
-        return std::make_pair(static_cast<float>({hamiltonian_derivative_cxx}), static_cast<float>({hamiltonian_derivative_cxx}));
+        return std::make_pair({cxxcode(hamiltonian_grad[0])}, {cxxcode(hamiltonian_grad[1])});
     }}
 
 }};
 """
-args.output.write_text(cxx)
+output_path.write_text(cxx)

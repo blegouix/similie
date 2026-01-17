@@ -38,7 +38,7 @@ struct DDimY : MesherXY::template discrete_dimension_type<Y>
 {
 };
 
-using DummyIndex = sil::tensor::Covariant<sil::tensor::ScalarIndex>;
+using Mu = sil::tensor::TensorNaturalIndex<X, Y>;
 
 int main(int argc, char** argv)
 {
@@ -53,21 +53,24 @@ int main(int argc, char** argv)
             ddc::detail::TypeSeq<DDimX, DDimY>,
             ddc::detail::TypeSeq<BSplinesX, BSplinesY>>(lower_bounds, upper_bounds, nb_cells);
 
-    [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> scalar_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, DummyIndex> scalar_dom(mesh_xy, scalar_accessor.domain());
-    ddc::Chunk scalar_alloc(scalar_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor scalar_field(scalar_alloc);
+    [[maybe_unused]] sil::tensor::TensorAccessor<Mu> hamiltonian_grad_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, Mu>
+            hamiltonian_grad_dom(mesh_xy, hamiltonian_grad_accessor.domain());
+    ddc::Chunk hamiltonian_grad_alloc(hamiltonian_grad_dom, ddc::DeviceAllocator<double>());
+    sil::tensor::Tensor hamiltonian_grad(hamiltonian_grad_alloc);
 
     ddc::parallel_for_each(
             Kokkos::DefaultExecutionSpace(),
             mesh_xy,
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
-                float const x
-                        = static_cast<float>(ddc::coordinate(ddc::DiscreteElement<DDimX>(elem)));
-                float const y
-                        = static_cast<float>(ddc::coordinate(ddc::DiscreteElement<DDimY>(elem)));
-                scalar_field.mem(elem)
-                        = static_cast<double>(ScalarFieldHamiltonianDerivative::operator()(x, y));
+                const std::pair<float, float> grad = ScalarFieldHamiltonian::
+                        grad(ddc::coordinate(ddc::DiscreteElement<DDimX>(elem)),
+                             ddc::coordinate(ddc::DiscreteElement<DDimX>(elem)));
+
+                hamiltonian_grad(elem, ddc::DiscreteElement<Mu>(0)) = std::get<0>(grad);
+                hamiltonian_grad(elem, ddc::DiscreteElement<Mu>(1)) = std::get<1>(grad);
+
+                printf("%f ", hamiltonian_grad(elem, ddc::DiscreteElement<Mu>(0)));
             });
     Kokkos::fence();
 

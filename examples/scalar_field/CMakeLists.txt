@@ -12,8 +12,7 @@ add_custom_command(
     OUTPUT "${SCALAR_FIELD_HAMILTONIAN}"
     COMMAND "${CMAKE_COMMAND}" -E make_directory
             "${CMAKE_CURRENT_BINARY_DIR}/generated"
-    COMMAND "${Python3_EXECUTABLE}" "${SCALAR_FIELD_HAMILTONIAN_FUNCTOR_GENERATOR}"
-            --output "${SCALAR_FIELD_HAMILTONIAN}"
+    COMMAND "${Python3_EXECUTABLE}" "${SCALAR_FIELD_HAMILTONIAN_FUNCTOR_GENERATOR}" "${SCALAR_FIELD_HAMILTONIAN}"
     DEPENDS "${SCALAR_FIELD_HAMILTONIAN_FUNCTOR_GENERATOR}"
     COMMENT "Generating scalar field Hamiltonian functor"
     VERBATIM
@@ -28,7 +27,7 @@ add_dependencies(2d_scalar_field scalar_field_hamiltonian)
 target_sources(2d_scalar_field PRIVATE "${SCALAR_FIELD_HAMILTONIAN}")
 
 target_include_directories(2d_scalar_field PRIVATE
-    "${CMAKE_CURRENT_BINARY_DIR}/generated/scalar_field"
+    "${CMAKE_CURRENT_BINARY_DIR}/generated"
 )
 
 target_link_libraries(2d_scalar_field
