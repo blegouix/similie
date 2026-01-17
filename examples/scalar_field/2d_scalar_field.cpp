@@ -62,12 +62,12 @@ int main(int argc, char** argv)
             Kokkos::DefaultExecutionSpace(),
             mesh_xy,
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
-                float const x = static_cast<float>(
-                        ddc::coordinate(ddc::DiscreteElement<DDimX>(elem)));
-                float const y = static_cast<float>(
-                        ddc::coordinate(ddc::DiscreteElement<DDimY>(elem)));
-                scalar_field.mem(elem) = static_cast<double>(
-                        ScalarFieldHamiltonianDerivative::operator()(x, y));
+                float const x
+                        = static_cast<float>(ddc::coordinate(ddc::DiscreteElement<DDimX>(elem)));
+                float const y
+                        = static_cast<float>(ddc::coordinate(ddc::DiscreteElement<DDimY>(elem)));
+                scalar_field.mem(elem)
+                        = static_cast<double>(ScalarFieldHamiltonianDerivative::operator()(x, y));
             });
     Kokkos::fence();
 
