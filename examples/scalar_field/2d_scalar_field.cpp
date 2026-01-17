@@ -227,9 +227,10 @@ int main(int argc, char** argv)
             mesh_xy,
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
                 const double phi = potential.mem(elem, ddc::DiscreteElement<DummyIndex>());
+                const std::array<const double, 2> pi {0., 0.};
 
                 const std::tuple<double, double, double> dH
-                        = ScalarFieldHamiltonian(mass).d(phi, 0., 0.); // TODO moments
+                        = ScalarFieldHamiltonian(mass).d(phi, pi); // TODO moments
 
                 hamiltonian_grad(elem, ddc::DiscreteElement<Mu>(0)) = std::get<1>(dH); // dH/dpi_x
                 hamiltonian_grad(elem, ddc::DiscreteElement<Mu>(1)) = std::get<2>(dH); // dH/dpi_y
@@ -237,7 +238,7 @@ int main(int argc, char** argv)
                 // printf("%f ", hamiltonian_grad(elem, ddc::DiscreteElement<Mu>(0)));
                 // printf("%f ", phi); // dH/dphi
                 // printf("%f ", std::get<0>(dH)); // dH/dphi
-                printf("%f ", ScalarFieldHamiltonian(mass).value(phi, 0., 0.)); // dH/dphi
+                printf("%f ", ScalarFieldHamiltonian(mass).value(phi, pi));
             });
     Kokkos::fence();
 
