@@ -1,9 +1,9 @@
 [project]
-name = "similie-examples"
+name = "similie-scalar-field-example"
 version = "0.0.0"
-description = "Dependencies for examples with compile-time code generation."
+description = "Dependencies SimiLie example solving scalar field with SymPy code generating C++ code at compile-tim"
 requires-python = ">=3.9"
-dependencies = ["sympy>=1.12"]
+dependencies = ["sympy>=1.12", "ruff"]
 
 [build-system]
 requires = ["setuptools>=68"]
