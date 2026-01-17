@@ -220,7 +220,7 @@ int main(int argc, char** argv)
     ddc::Chunk hamiltonian_grad_alloc(hamiltonian_grad_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor hamiltonian_grad(hamiltonian_grad_alloc);
 
-    double const mass = 2.;
+    double const mass = 1.;
 
     ddc::parallel_for_each(
             Kokkos::DefaultExecutionSpace(),
@@ -229,11 +229,11 @@ int main(int argc, char** argv)
                 const double phi = potential.mem(elem, ddc::DiscreteElement<DummyIndex>());
                 const std::array<const double, 2> pi {0., 0.};
 
-                const std::tuple<double, double, double> dH
+                const std::array<const double, 3> dH
                         = ScalarFieldHamiltonian(mass).d(phi, pi); // TODO moments
 
-                hamiltonian_grad(elem, ddc::DiscreteElement<Mu>(0)) = std::get<1>(dH); // dH/dpi_x
-                hamiltonian_grad(elem, ddc::DiscreteElement<Mu>(1)) = std::get<2>(dH); // dH/dpi_y
+                hamiltonian_grad(elem, ddc::DiscreteElement<Mu>(0)) = dH[1]; // dH/dpi_x
+                hamiltonian_grad(elem, ddc::DiscreteElement<Mu>(1)) = dH[2]; // dH/dpi_y
 
                 // printf("%f ", hamiltonian_grad(elem, ddc::DiscreteElement<Mu>(0)));
                 // printf("%f ", phi); // dH/dphi

@@ -10,43 +10,48 @@ from pathlib import Path
 from sympy import symbols, Matrix, diff
 from sympy.printing.codeprinter import cxxcode
 
-output_path = Path(sys.argv[1])
+N = int(sys.argv[1])  # Number of dimensions
+output_path = Path(sys.argv[2])  # Path of the output file
 output_path.parent.mkdir(parents=True, exist_ok=True)
 
-phi, pi_x, pi_y = symbols("phi pi_x pi_y")
 mass = symbols("mass")
-hamiltonian = 0.5 * (pi_x**2 + pi_y**2 + mass**2 * phi**2)
-hamiltonian_grad = Matrix(
-    [diff(hamiltonian, phi), diff(hamiltonian, pi_x), diff(hamiltonian, pi_y)]
+phi = symbols("phi")
+pi = symbols(f"pi0:{N}")
+
+hamiltonian = 0.5 * (sum(pi_**2 for pi_ in pi) + mass**2 * phi**2)
+hamiltonian_diff = Matrix(
+    [diff(hamiltonian, phi), *[diff(hamiltonian, pi_) for pi_ in pi]]
 )
 
-cxx = f"""\
+
+def preprocess_cxx(expr: str) -> str:
+    for i in range(N):
+        expr = expr.replace(f"pi{i}", f"pi[{i}]")
+    return expr
+
+
+output_path.write_text(f"""\
 // SPDX-FileCopyrightText: 2026 Baptiste Legouix
 // SPDX-License-Identifier: MIT
 
 #pragma once
 
 struct ScalarFieldHamiltonian {{
+    static constexpr std::size_t N = {N};
+
     const double mass;
 
     ScalarFieldHamiltonian(const double mass_) : mass(mass_) {{}}
 
-    constexpr double value(const double phi, const std::span<const double> pi)
+    constexpr double value(const double phi, const std::span<const double, N>& pi)
     {{
-        const float pi_x = pi[0];
-        const float pi_y = pi[1];
-
-        return {cxxcode(hamiltonian)};
+        return {preprocess_cxx(cxxcode(hamiltonian))};
     }}
 
-    constexpr std::tuple<double, double, double> d(const double phi, std::span<const double> pi)
+    constexpr std::array<const double, N+1> d(const double phi, const std::span<const double, N>& pi)
     {{
-        const float pi_x = pi[0];
-        const float pi_y = pi[1];
-        
-        return std::make_tuple({cxxcode(hamiltonian_grad[0])}, {cxxcode(hamiltonian_grad[1])}, {cxxcode(hamiltonian_grad[2])});
+        return std::array<const double, N+1>{{ {", ".join([preprocess_cxx(cxxcode(hamiltonian_diff[i])) for i in range(N + 1)])} }};
     }}
 
 }};
-"""
-output_path.write_text(cxx)
+""")
