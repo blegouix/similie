@@ -236,7 +236,8 @@ int main(int argc, char** argv)
 
                 // printf("%f ", hamiltonian_grad(elem, ddc::DiscreteElement<Mu>(0)));
                 // printf("%f ", phi); // dH/dphi
-                printf("%f ", std::get<0>(dH)); // dH/dphi
+                // printf("%f ", std::get<0>(dH)); // dH/dphi
+                printf("%f ", ScalarFieldHamiltonian(mass).value(phi, 0., 0.)); // dH/dphi
             });
     Kokkos::fence();
 
