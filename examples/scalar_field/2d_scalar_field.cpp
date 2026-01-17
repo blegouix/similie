@@ -6,7 +6,7 @@
 
 #include <similie/similie.hpp>
 
-#include "sympy_scalar_field_hamiltonian.hpp"
+#include "scalar_field_hamiltonian.hpp"
 
 static constexpr std::size_t s_degree = 3;
 
