@@ -20,7 +20,8 @@ static auto test_derivative(auto potential)
 {
     // Allocate and instantiate an inverse metric tensor field.
     [[maybe_unused]] sil::tensor::TensorAccessor<
-            MetricIndex<typename DDim::continuous_dimension_type...>> inv_metric_accessor;
+            MetricIndex<typename DDim::continuous_dimension_type...>>
+            inv_metric_accessor;
     ddc::DiscreteDomain<DDim..., MetricIndex<typename DDim::continuous_dimension_type...>>
             inv_metric_dom(potential.non_indices_domain(), inv_metric_accessor.domain());
     ddc::Chunk inv_metric_alloc(inv_metric_dom, ddc::HostAllocator<double>());

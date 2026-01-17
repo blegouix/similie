@@ -94,7 +94,8 @@ TEST(HodgeStar, Test)
             ddc::detail::TypeSeq<RhoLow>>(Kokkos::DefaultHostExecutionSpace(), hodge_star, metric);
 
     [[maybe_unused]] sil::tensor::TensorAccessor<
-            sil::tensor::TensorAntisymmetricIndex<MuLow, NuLow>> form_accessor;
+            sil::tensor::TensorAntisymmetricIndex<MuLow, NuLow>>
+            form_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::TensorAntisymmetricIndex<MuLow, NuLow>>
             form_dom(metric.non_indices_domain(), form_accessor.domain());
     ddc::Chunk form_alloc(form_dom, ddc::HostAllocator<double>());

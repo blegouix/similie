@@ -211,7 +211,14 @@ int main(int argc, char** argv)
     auto potential_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), potential);
 
-    // TODO moments
+    // Moments
+    [[maybe_unused]] sil::tensor::TensorAccessor<Mu> moments_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, Mu> moments_dom(mesh_xy, moments_accessor.domain());
+    ddc::Chunk moments_alloc(moments_dom, ddc::DeviceAllocator<double>());
+    sil::tensor::Tensor moments(moments_alloc);
+
+    sil::exterior::deriv<Mu, DummyIndex>(Kokkos::DefaultHostExecutionSpace(), moments, potential);
+    Kokkos::fence();
 
     // Fill Hamiltonian grad
     [[maybe_unused]] sil::tensor::TensorAccessor<Mu> hamiltonian_grad_accessor;
@@ -227,10 +234,11 @@ int main(int argc, char** argv)
             mesh_xy,
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
                 const double phi = potential.mem(elem, ddc::DiscreteElement<DummyIndex>());
-                const std::array<const double, 2> pi {0., 0.};
+                const std::array<const double, 2>
+                        pi {moments(elem, ddc::DiscreteElement<Mu>(0)),
+                            moments(elem, ddc::DiscreteElement<Mu>(1))};
 
-                const std::array<const double, 3> dH
-                        = ScalarFieldHamiltonian(mass).d(phi, pi); // TODO moments
+                const std::array<const double, 3> dH = ScalarFieldHamiltonian(mass).d(phi, pi);
 
                 hamiltonian_grad(elem, ddc::DiscreteElement<Mu>(0)) = dH[1]; // dH/dpi_x
                 hamiltonian_grad(elem, ddc::DiscreteElement<Mu>(1)) = dH[2]; // dH/dpi_y
