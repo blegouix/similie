@@ -67,6 +67,10 @@ int write_xdmf(int Nx, int Ny)
 
 static constexpr std::size_t s_degree = 3;
 
+struct T
+{
+};
+
 struct X
 {
     static constexpr bool PERIODIC = false;
@@ -101,11 +105,20 @@ struct DDimY : MesherXY::template discrete_dimension_type<Y>
 };
 
 // Declare natural indices taking values in {X, Y}
-struct Mu : sil::tensor::TensorNaturalIndex<X, Y>
+struct Mu : sil::tensor::TensorNaturalIndex<T, X, Y>
 {
 };
 
-struct Nu : sil::tensor::TensorNaturalIndex<X, Y>
+struct Nu : sil::tensor::TensorNaturalIndex<T, X, Y>
+{
+};
+
+// Declare spatial parts of Mu and Nu
+struct Alpha : sil::tensor::TensorNaturalIndex<X, Y>
+{
+};
+
+struct Beta : sil::tensor::TensorNaturalIndex<X, Y>
 {
 };
 
@@ -211,18 +224,21 @@ int main(int argc, char** argv)
     auto potential_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), potential);
 
-    // Moments
-    [[maybe_unused]] sil::tensor::TensorAccessor<Mu> moments_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, Mu> moments_dom(mesh_xy, moments_accessor.domain());
-    ddc::Chunk moments_alloc(moments_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor moments(moments_alloc);
+    // Spatial moments
+    [[maybe_unused]] sil::tensor::TensorAccessor<Alpha> spatial_moments_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, Alpha>
+            spatial_moments_dom(mesh_xy, spatial_moments_accessor.domain());
+    ddc::Chunk spatial_moments_alloc(spatial_moments_dom, ddc::DeviceAllocator<double>());
+    sil::tensor::Tensor spatial_moments(spatial_moments_alloc);
 
-    sil::exterior::deriv<Mu, DummyIndex>(Kokkos::DefaultHostExecutionSpace(), moments, potential);
+    sil::exterior::deriv<
+            Alpha,
+            DummyIndex>(Kokkos::DefaultHostExecutionSpace(), spatial_moments, potential);
     Kokkos::fence();
 
     // Fill Hamiltonian grad
-    [[maybe_unused]] sil::tensor::TensorAccessor<Mu> hamiltonian_grad_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, Mu>
+    [[maybe_unused]] sil::tensor::TensorAccessor<Alpha> hamiltonian_grad_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, Alpha>
             hamiltonian_grad_dom(mesh_xy, hamiltonian_grad_accessor.domain());
     ddc::Chunk hamiltonian_grad_alloc(hamiltonian_grad_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor hamiltonian_grad(hamiltonian_grad_alloc);
@@ -234,19 +250,14 @@ int main(int argc, char** argv)
             mesh_xy,
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
                 const double phi = potential.mem(elem, ddc::DiscreteElement<DummyIndex>());
-                const std::array<const double, 2>
-                        pi {moments(elem, ddc::DiscreteElement<Mu>(0)),
-                            moments(elem, ddc::DiscreteElement<Mu>(1))};
+                const std::array<const double, 2> spatial_pi {
+                        spatial_moments(elem, ddc::DiscreteElement<Alpha>(0)),
+                        spatial_moments(elem, ddc::DiscreteElement<Alpha>(1))};
 
-                const std::array<const double, 3> dH = ScalarFieldHamiltonian(mass).d(phi, pi);
-
-                hamiltonian_grad(elem, ddc::DiscreteElement<Mu>(0)) = dH[1]; // dH/dpi_x
-                hamiltonian_grad(elem, ddc::DiscreteElement<Mu>(1)) = dH[2]; // dH/dpi_y
-
-                // printf("%f ", hamiltonian_grad(elem, ddc::DiscreteElement<Mu>(0)));
-                // printf("%f ", phi); // dH/dphi
-                // printf("%f ", std::get<0>(dH)); // dH/dphi
-                printf("%f ", ScalarFieldHamiltonian(mass).value(phi, pi));
+                hamiltonian_grad(elem, ddc::DiscreteElement<Alpha>(0))
+                        = ScalarFieldHamiltonian(mass).d_dpi1(spatial_pi[0]); // dH/dpi_x
+                hamiltonian_grad(elem, ddc::DiscreteElement<Alpha>(1))
+                        = ScalarFieldHamiltonian(mass).d_dpi2(spatial_pi[1]); // dH/dpi_y
             });
     Kokkos::fence();
 

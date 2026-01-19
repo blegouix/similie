@@ -36,22 +36,34 @@ output_path.write_text(f"""\
 
 #pragma once
 
+#include <span>
+
 struct ScalarFieldHamiltonian {{
     static constexpr std::size_t N = {N};
 
     const double mass;
 
-    ScalarFieldHamiltonian(const double mass_) : mass(mass_) {{}}
+    explicit ScalarFieldHamiltonian(double mass_) : mass(mass_) {{}}
 
-    constexpr double value(const double phi, const std::span<const double, N>& pi)
+    constexpr double operator()(double phi, const std::span<const double, N>& pi) const
     {{
         return {preprocess_cxx(cxxcode(hamiltonian))};
     }}
 
-    constexpr std::array<const double, N+1> d(const double phi, const std::span<const double, N>& pi)
+    constexpr double d_dphi(double phi) const
     {{
-        return std::array<const double, N+1>{{ {", ".join([preprocess_cxx(cxxcode(hamiltonian_diff[i])) for i in range(N + 1)])} }};
+        return {cxxcode(hamiltonian_diff[0])};
     }}
-
+{
+    "".join(
+        f'''
+    constexpr double d_dpi{i}(const double pi{i}) const
+    {{
+        return {cxxcode(hamiltonian_diff[i + 1])};
+    }}
+'''
+        for i in range(N)
+    )
+}
 }};
 """)
