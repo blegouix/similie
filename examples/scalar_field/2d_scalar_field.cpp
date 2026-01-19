@@ -224,7 +224,7 @@ int main(int argc, char** argv)
     auto potential_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), potential);
 
-    // Spatial moments
+    // Spatial moments gradient TODO generalize it, its identification to the potential derivatives is specific to free scalar field
     [[maybe_unused]] sil::tensor::TensorAccessor<Alpha> spatial_moments_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, Alpha>
             spatial_moments_dom(mesh_xy, spatial_moments_accessor.domain());
@@ -245,19 +245,25 @@ int main(int argc, char** argv)
 
     double const mass = 1.;
 
+    // Solve dphi/dx^\alpha = -dH/dpi_\alpha
     ddc::parallel_for_each(
             Kokkos::DefaultExecutionSpace(),
             mesh_xy,
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
-                const double phi = potential.mem(elem, ddc::DiscreteElement<DummyIndex>());
+                // const double phi = potential.mem(elem, ddc::DiscreteElement<DummyIndex>());
+                /*
                 const std::array<const double, 2> spatial_pi {
                         spatial_moments(elem, ddc::DiscreteElement<Alpha>(0)),
                         spatial_moments(elem, ddc::DiscreteElement<Alpha>(1))};
-
+			*/
+                // dH/dpi_x
                 hamiltonian_grad(elem, ddc::DiscreteElement<Alpha>(0))
-                        = ScalarFieldHamiltonian(mass).d_dpi1(spatial_pi[0]); // dH/dpi_x
+                        = ScalarFieldHamiltonian(mass).d_dpi1(
+                                spatial_moments(elem, ddc::DiscreteElement<Alpha>(0)));
+                // dH/dpi_y
                 hamiltonian_grad(elem, ddc::DiscreteElement<Alpha>(1))
-                        = ScalarFieldHamiltonian(mass).d_dpi2(spatial_pi[1]); // dH/dpi_y
+                        = ScalarFieldHamiltonian(mass).d_dpi2(
+                                spatial_moments(elem, ddc::DiscreteElement<Alpha>(1)));
             });
     Kokkos::fence();
 
