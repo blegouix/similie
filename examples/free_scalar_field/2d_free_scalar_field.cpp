@@ -7,7 +7,7 @@
 
 #include <similie/similie.hpp>
 
-#include "scalar_field_hamiltonian.hpp"
+#include "free_scalar_field_hamiltonian.hpp"
 
 // PDI config
 constexpr char const* const PDI_CFG = R"PDI_CFG(
@@ -27,7 +27,7 @@ data:
 
 plugins:
   decl_hdf5:
-    - file: 'scalar_field.h5'
+    - file: 'free_scalar_field.h5'
       on_event: [export]
       collision_policy: replace_and_warn
       write: [Nx, Ny, position, potential]
@@ -50,7 +50,7 @@ int write_xdmf(int Nx, int Ny)
      </Geometry>
      <Attribute Name="Potential" AttributeType="Vector" Center="Cell"> // Cell enforced because of Paraview bug
        <DataItem Dimensions="%i %i 2" NumberType="Float" Precision="8" Format="HDF">
-        scalar_field.h5:/potential
+        free_scalar_field.h5:/potential
        </DataItem>
      </Attribute>
    </Grid>
@@ -58,7 +58,7 @@ int write_xdmf(int Nx, int Ny)
 </Xdmf>
 )XDMF";
 
-    FILE* file = fopen("scalar_field.xmf", "w");
+    FILE* file = fopen("free_scalar_field.xmf", "w");
     fprintf(file, xdmf, Nx, Ny, Nx, Ny, Nx, Ny);
     fclose(file);
 
@@ -224,24 +224,24 @@ int main(int argc, char** argv)
     auto potential_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), potential);
 
-    // Spatial moments gradient TODO generalize it, its identification to the potential derivatives is specific to free scalar field
+    // Potential gradient
+    [[maybe_unused]] sil::tensor::TensorAccessor<Alpha> potential_grad_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, Alpha>
+            potential_grad_dom(mesh_xy, potential_grad_accessor.domain());
+    ddc::Chunk potential_grad_alloc(potential_grad_dom, ddc::DeviceAllocator<double>());
+    sil::tensor::Tensor potential_grad(potential_grad_alloc);
+
+    sil::exterior::deriv<
+            Alpha,
+            DummyIndex>(Kokkos::DefaultHostExecutionSpace(), potential_grad, potential);
+    Kokkos::fence();
+
+    // Spatial moments
     [[maybe_unused]] sil::tensor::TensorAccessor<Alpha> spatial_moments_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, Alpha>
             spatial_moments_dom(mesh_xy, spatial_moments_accessor.domain());
     ddc::Chunk spatial_moments_alloc(spatial_moments_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor spatial_moments(spatial_moments_alloc);
-
-    sil::exterior::deriv<
-            Alpha,
-            DummyIndex>(Kokkos::DefaultHostExecutionSpace(), spatial_moments, potential);
-    Kokkos::fence();
-
-    // Fill Hamiltonian grad
-    [[maybe_unused]] sil::tensor::TensorAccessor<Alpha> hamiltonian_grad_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, Alpha>
-            hamiltonian_grad_dom(mesh_xy, hamiltonian_grad_accessor.domain());
-    ddc::Chunk hamiltonian_grad_alloc(hamiltonian_grad_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor hamiltonian_grad(hamiltonian_grad_alloc);
 
     double const mass = 1.;
 
@@ -257,15 +257,22 @@ int main(int argc, char** argv)
                         spatial_moments(elem, ddc::DiscreteElement<Alpha>(1))};
 			*/
                 // dH/dpi_x
-                hamiltonian_grad(elem, ddc::DiscreteElement<Alpha>(0))
-                        = ScalarFieldHamiltonian(mass).d_dpi1(
-                                spatial_moments(elem, ddc::DiscreteElement<Alpha>(0)));
-                // dH/dpi_y
-                hamiltonian_grad(elem, ddc::DiscreteElement<Alpha>(1))
-                        = ScalarFieldHamiltonian(mass).d_dpi2(
-                                spatial_moments(elem, ddc::DiscreteElement<Alpha>(1)));
+                spatial_moments(elem, ddc::DiscreteElement<Alpha>(0))
+                        = FreeScalarFieldHamiltonian(mass).pi1(
+                                potential_grad(elem, ddc::DiscreteElement<Alpha>(0)));
+                spatial_moments(elem, ddc::DiscreteElement<Alpha>(1))
+                        = FreeScalarFieldHamiltonian(mass).pi2(
+                                potential_grad(elem, ddc::DiscreteElement<Alpha>(1)));
             });
     Kokkos::fence();
+
+
+    // Fill Hamiltonian grad
+    [[maybe_unused]] sil::tensor::TensorAccessor<Alpha> hamiltonian_grad_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, Alpha>
+            hamiltonian_grad_dom(mesh_xy, hamiltonian_grad_accessor.domain());
+    ddc::Chunk hamiltonian_grad_alloc(hamiltonian_grad_dom, ddc::DeviceAllocator<double>());
+    sil::tensor::Tensor hamiltonian_grad(hamiltonian_grad_alloc);
 
     return EXIT_SUCCESS;
 }

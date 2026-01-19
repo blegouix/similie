@@ -2,9 +2,9 @@
 # SPDX-License-Identifier: MIT
 
 [project]
-name = "similie-scalar-field-example"
+name = "similie-free-scalar-field-example"
 version = "0.0.0"
-description = "Dependencies SimiLie example solving scalar field with SymPy code generating C++ code at compile-time"
+description = "Dependencies SimiLie example solving free scalar field with SymPy code generating C++ code at compile-time"
 requires-python = ">=3.9"
 dependencies = ["sympy>=1.12", "ruff"]
 
