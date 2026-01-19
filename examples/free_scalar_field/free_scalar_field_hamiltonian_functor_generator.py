@@ -25,7 +25,7 @@ hamiltonian_diff = Matrix(
 
 dphi_dx = symbols(f"dphi_dx0:{N}")
 pi_from_dphi_dx = solve(
-    [dphi_dx[i] - hamiltonian_diff[i + 1] for i in range(N)], list(pi), dict=True
+    [dphi_dx[i] + hamiltonian_diff[i + 1] for i in range(N)], list(pi), dict=True
 )[0]
 if not pi_from_dphi_dx:
     raise RuntimeError("Could not solve for pi in terms of dphi/dx.")

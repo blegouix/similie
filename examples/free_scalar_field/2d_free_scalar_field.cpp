@@ -105,15 +105,6 @@ struct DDimY : MesherXY::template discrete_dimension_type<Y>
 };
 
 // Declare natural indices taking values in {X, Y}
-struct Mu : sil::tensor::TensorNaturalIndex<T, X, Y>
-{
-};
-
-struct Nu : sil::tensor::TensorNaturalIndex<T, X, Y>
-{
-};
-
-// Declare spatial parts of Mu and Nu
 struct Alpha : sil::tensor::TensorNaturalIndex<X, Y>
 {
 };
@@ -123,10 +114,10 @@ struct Beta : sil::tensor::TensorNaturalIndex<X, Y>
 };
 
 // Declare indices
-using MuUp = sil::tensor::Contravariant<Mu>;
-using MuLow = sil::tensor::Covariant<Mu>;
-using NuUp = sil::tensor::Contravariant<Nu>;
-using NuLow = sil::tensor::Covariant<Nu>;
+using AlphaUp = sil::tensor::Contravariant<Alpha>;
+using AlphaLow = sil::tensor::Covariant<Alpha>;
+using BetaUp = sil::tensor::Contravariant<Beta>;
+using BetaLow = sil::tensor::Covariant<Beta>;
 
 using DummyIndex = sil::tensor::Covariant<sil::tensor::ScalarIndex>;
 
@@ -154,8 +145,8 @@ int main(int argc, char** argv)
     ddc::expose_to_pdi("Ny", static_cast<int>(mesh_xy.template extent<DDimY>()));
 
     // Allocate and instantiate a position field (used only to be exported).
-    [[maybe_unused]] sil::tensor::TensorAccessor<NuUp> position_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, NuUp> position_dom(mesh_xy, position_accessor.domain());
+    [[maybe_unused]] sil::tensor::TensorAccessor<AlphaUp> position_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, AlphaUp> position_dom(mesh_xy, position_accessor.domain());
     ddc::Chunk position_alloc(position_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor position(position_alloc);
     ddc::parallel_for_each(
@@ -225,27 +216,26 @@ int main(int argc, char** argv)
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), potential);
 
     // Potential gradient
-    [[maybe_unused]] sil::tensor::TensorAccessor<Alpha> potential_grad_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, Alpha>
+    [[maybe_unused]] sil::tensor::TensorAccessor<AlphaLow> potential_grad_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, AlphaLow>
             potential_grad_dom(mesh_xy, potential_grad_accessor.domain());
     ddc::Chunk potential_grad_alloc(potential_grad_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor potential_grad(potential_grad_alloc);
 
     sil::exterior::deriv<
-            Alpha,
+            AlphaLow,
             DummyIndex>(Kokkos::DefaultHostExecutionSpace(), potential_grad, potential);
     Kokkos::fence();
 
-    // Spatial moments
-    [[maybe_unused]] sil::tensor::TensorAccessor<Alpha> spatial_moments_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, Alpha>
+    // Compute the spatial moments pi_\alpha by solving dphi/dx^\alpha = -dH/dpi_\alpha
+    [[maybe_unused]] sil::tensor::TensorAccessor<AlphaLow> spatial_moments_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, AlphaLow>
             spatial_moments_dom(mesh_xy, spatial_moments_accessor.domain());
     ddc::Chunk spatial_moments_alloc(spatial_moments_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor spatial_moments(spatial_moments_alloc);
 
     double const mass = 1.;
 
-    // Solve dphi/dx^\alpha = -dH/dpi_\alpha
     ddc::parallel_for_each(
             Kokkos::DefaultExecutionSpace(),
             mesh_xy,
@@ -257,22 +247,57 @@ int main(int argc, char** argv)
                         spatial_moments(elem, ddc::DiscreteElement<Alpha>(1))};
 			*/
                 // dH/dpi_x
-                spatial_moments(elem, ddc::DiscreteElement<Alpha>(0))
+                spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(0))
                         = FreeScalarFieldHamiltonian(mass).pi1(
-                                potential_grad(elem, ddc::DiscreteElement<Alpha>(0)));
-                spatial_moments(elem, ddc::DiscreteElement<Alpha>(1))
+                                potential_grad(elem, ddc::DiscreteElement<AlphaLow>(0)));
+                spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(1))
                         = FreeScalarFieldHamiltonian(mass).pi2(
-                                potential_grad(elem, ddc::DiscreteElement<Alpha>(1)));
+                                potential_grad(elem, ddc::DiscreteElement<AlphaLow>(1)));
             });
     Kokkos::fence();
 
+    // Compute the divergence dpi_\alpha/dx^\alpha of the spatial moments, which is the codifferential \delta pi of the spatial moments
+    [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> spatial_moments_div_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, DummyIndex>
+            spatial_moments_div_dom(mesh_xy, spatial_moments_div_accessor.domain());
+    ddc::Chunk spatial_moments_div_alloc(spatial_moments_div_dom, ddc::DeviceAllocator<double>());
+    sil::tensor::Tensor spatial_moments_div(spatial_moments_div_alloc);
 
-    // Fill Hamiltonian grad
-    [[maybe_unused]] sil::tensor::TensorAccessor<Alpha> hamiltonian_grad_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, Alpha>
-            hamiltonian_grad_dom(mesh_xy, hamiltonian_grad_accessor.domain());
-    ddc::Chunk hamiltonian_grad_alloc(hamiltonian_grad_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor hamiltonian_grad(hamiltonian_grad_alloc);
+    sil::exterior::codifferential<MetricIndex, AlphaLow, AlphaLow>(
+            Kokkos::DefaultHostExecutionSpace(),
+            spatial_moments_div,
+            spatial_moments,
+            inv_metric);
+    Kokkos::fence();
+
+    // Compute dpi_0/dx^0 by solving dpi_mu/dx^\mu = dH/d\phi and advect pi_0 by a time step dx^0. Then, compute dphi/dx^0 by solving dphi/dx^0 = -dH/dpi_0 and advect phi by a time step dx^0.
+    // TODO use better temporal integration scheme like Runge-Kutta
+    [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> temporal_moment_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, DummyIndex>
+            temporal_moment_dom(mesh_xy, temporal_moment_accessor.domain());
+    ddc::Chunk temporal_moment_alloc(temporal_moment_dom, ddc::DeviceAllocator<double>());
+    sil::tensor::Tensor temporal_moment(temporal_moment_alloc);
+    ddc::parallel_for_each(
+            Kokkos::DefaultExecutionSpace(),
+            spatial_moments_div.domain(),
+            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
+                temporal_moment(elem) = 0.;
+            });
+    Kokkos::fence();
+
+    const float dt = 1e-3;
+
+    ddc::parallel_for_each(
+            Kokkos::DefaultExecutionSpace(),
+            spatial_moments_div.domain(),
+            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
+                temporal_moment(elem) += (FreeScalarFieldHamiltonian(mass).dH_dphi(potential(elem))
+                                          - spatial_moments_div(elem))
+                                         * dt;
+                potential(elem)
+                        += -FreeScalarFieldHamiltonian(mass).dH_dpi0(temporal_moment(elem)) * dt;
+            });
+    Kokkos::fence();
 
     return EXIT_SUCCESS;
 }
