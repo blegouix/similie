@@ -24,13 +24,21 @@ data:
     type: array
     subtype: double
     size: [ '$Nx', '$Ny', 2 ]
+  temporal_moment:
+    type: array
+    subtype: double
+    size: [ '$Nx', '$Ny', 2 ]
+  spatial_moments:
+    type: array
+    subtype: double
+    size: [ '$Nx-1', '$Ny-1', 2 ]
 
 plugins:
   decl_hdf5:
-    - file: 'free_scalar_field.h5'
+    - file: '2d_free_scalar_field.h5'
       on_event: [export]
       collision_policy: replace_and_warn
-      write: [Nx, Ny, position, potential]
+      write: [Nx, Ny, position, potential, temporal_moment, spatial_moments]
   #trace: ~
 )PDI_CFG";
 
@@ -45,12 +53,22 @@ int write_xdmf(int Nx, int Ny)
      <Topology TopologyType="2DSMesh" NumberOfElements="%i %i"/>
      <Geometry GeometryType="XY">
        <DataItem Dimensions="%i %i 2" NumberType="Float" Precision="8" Format="HDF">
-        2d_vector_laplacian.h5:/position
+        2d_free_scalar_field.h5:/position
        </DataItem>
      </Geometry>
-     <Attribute Name="Potential" AttributeType="Vector" Center="Cell"> // Cell enforced because of Paraview bug
+     <Attribute Name="Potential" AttributeType="Scalar" Center="Node">
+       <DataItem Dimensions="%i %i" NumberType="Float" Precision="8" Format="HDF">
+        2d_free_scalar_field.h5:/potential
+       </DataItem>
+     </Attribute>
+     <Attribute Name="Temporal moment" AttributeType="Scalar" Center="Node">
+       <DataItem Dimensions="%i %i" NumberType="Float" Precision="8" Format="HDF">
+        2d_free_scalar_field.h5:/temporal_moment
+       </DataItem>
+     </Attribute>
+     <Attribute Name="Spatial moments" AttributeType="Vector" Center="Cell">
        <DataItem Dimensions="%i %i 2" NumberType="Float" Precision="8" Format="HDF">
-        free_scalar_field.h5:/potential
+        2d_free_scalar_field.h5:/spatial_moments
        </DataItem>
      </Attribute>
    </Grid>
@@ -58,8 +76,8 @@ int write_xdmf(int Nx, int Ny)
 </Xdmf>
 )XDMF";
 
-    FILE* file = fopen("free_scalar_field.xmf", "w");
-    fprintf(file, xdmf, Nx, Ny, Nx, Ny, Nx, Ny);
+    FILE* file = fopen("2d_free_scalar_field.xmf", "w");
+    fprintf(file, xdmf, Nx, Ny, Nx, Ny, Nx, Ny, Nx, Ny, Nx - 1, Ny - 1);
     fclose(file);
 
     return 1;
@@ -130,6 +148,10 @@ int main(int argc, char** argv)
 
     Kokkos::ScopeGuard const kokkos_scope(argc, argv);
     ddc::ScopeGuard const ddc_scope(argc, argv);
+
+    // ------------------------------------------
+    // ----- ALLOCATIONS AND INSTANTIATIONS -----
+    // ------------------------------------------
 
     // Produce mesh
     MesherXY mesher;
@@ -229,6 +251,9 @@ int main(int argc, char** argv)
     ddc::Chunk spatial_moments_alloc(spatial_moments_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor spatial_moments(spatial_moments_alloc);
 
+    auto spatial_moments_host = ddc::
+            create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), spatial_moments);
+
     // Spatial moments divergence
     [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> spatial_moments_div_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, DummyIndex>
@@ -242,12 +267,14 @@ int main(int argc, char** argv)
             temporal_moment_dom(mesh_xy, temporal_moment_accessor.domain());
     ddc::Chunk temporal_moment_alloc(temporal_moment_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor temporal_moment(temporal_moment_alloc);
-    ddc::parallel_for_each(
-            Kokkos::DefaultExecutionSpace(),
-            spatial_moments_div.domain(),
-            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
-                temporal_moment(elem) = 0.;
-            });
+    ddc::parallel_fill(Kokkos::DefaultExecutionSpace(), temporal_moment, 0.);
+
+    auto temporal_moment_host = ddc::
+            create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), temporal_moment);
+
+    // ------------------
+    // ----- SOLVER -----
+    // ------------------
 
     double const mass = 1.;
     int const nb_iter = 10;
@@ -275,6 +302,11 @@ int main(int argc, char** argv)
                 });
         Kokkos::fence();
 
+        ddc::parallel_deepcopy(
+                Kokkos::DefaultExecutionSpace(),
+                spatial_moments_host,
+                spatial_moments);
+
         // Compute the divergence dpi_\alpha/dx^\alpha of the spatial moments, which is the codifferential \delta pi of the spatial moments
         sil::exterior::codifferential<MetricIndex, AlphaLow, AlphaLow>(
                 Kokkos::DefaultHostExecutionSpace(),
@@ -297,6 +329,25 @@ int main(int argc, char** argv)
                             -= FreeScalarFieldHamiltonian(mass).dH_dpi0(temporal_moment(elem)) * dt;
                 });
         Kokkos::fence();
+
+        ddc::parallel_deepcopy(
+                Kokkos::DefaultExecutionSpace(),
+                temporal_moment_host,
+                temporal_moment);
+        ddc::parallel_deepcopy(Kokkos::DefaultExecutionSpace(), potential_host, potential);
+
+        // Export HDF5 and XDMF
+        ddc::PdiEvent("export")
+                .with("position", position)
+                .and_with("potential", potential_host)
+                .and_with("temporal_moment", temporal_moment_host)
+                .and_with("spatial_moments", spatial_moments_host);
+        std::cout << "Computation result exported in 2d_free_scalar_field.h5." << std::endl;
+
+        write_xdmf(
+                static_cast<int>(mesh_xy.template extent<DDimX>()),
+                static_cast<int>(mesh_xy.template extent<DDimY>()));
+        std::cout << "XDMF model exported in 2d_free_scalar_field.xmf." << std::endl;
     }
 
     return EXIT_SUCCESS;
