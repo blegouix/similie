@@ -50,7 +50,7 @@ struct FreeScalarFieldHamiltonian {{
 
     const double mass;
 
-    explicit FreeScalarFieldHamiltonian(double mass_) : mass(mass_) {{}}
+    constexpr FreeScalarFieldHamiltonian(double mass_) : mass(mass_) {{}}
 
     constexpr double H(double phi, const std::span<const double, N>& pi) const
     {{

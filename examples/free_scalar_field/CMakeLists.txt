@@ -14,7 +14,7 @@ add_custom_command(
             "${CMAKE_CURRENT_BINARY_DIR}/generated"
     COMMAND "${Python3_EXECUTABLE}" "${SCALAR_FIELD_HAMILTONIAN_FUNCTOR_GENERATOR}" 3 "${SCALAR_FIELD_HAMILTONIAN}"
     DEPENDS "${SCALAR_FIELD_HAMILTONIAN_FUNCTOR_GENERATOR}"
-    COMMENT "Generating free_scalar field Hamiltonian functor"
+    COMMENT "Generating free scalar field Hamiltonian functor"
     VERBATIM
 )
 
