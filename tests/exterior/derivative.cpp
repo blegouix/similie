@@ -896,8 +896,7 @@ TEST(ExteriorDerivative, 2DRotationalWithSpects)
 {
     const std::size_t N = 3;
     [[maybe_unused]] sil::tensor::
-            TensorAccessor<IndexSpect, sil::tensor::TensorAntisymmetricIndex<Mu2>>
-                    tensor_accessor;
+            TensorAccessor<IndexSpect, sil::tensor::TensorAntisymmetricIndex<Mu2>> tensor_accessor;
     ddc::DiscreteDomain<
             sil::tensor::TensorAntisymmetricIndex<Mu2>,
             DDimSpect,
@@ -933,9 +932,9 @@ TEST(ExteriorDerivative, 2DRotationalWithSpects)
         }
     }
 
-    [[maybe_unused]] sil::tensor::
-            TensorAccessor<IndexSpect, sil::tensor::TensorAntisymmetricIndex<Nu2, Mu2>>
-                    derivative_accessor;
+    [[maybe_unused]] sil::tensor::TensorAccessor<
+            IndexSpect,
+            sil::tensor::TensorAntisymmetricIndex<Nu2, Mu2>> derivative_accessor;
     ddc::DiscreteDomain<
             sil::tensor::TensorAntisymmetricIndex<Nu2, Mu2>,
             DDimSpect,

@@ -172,7 +172,7 @@ int main(int argc, char** argv)
     ddc::Chunk position_alloc(position_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor position(position_alloc);
     ddc::parallel_for_each(
-            Kokkos::DefaultHostExecutionSpace(),
+            Kokkos::DefaultExecutionSpace(),
             mesh_xy,
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
                 position(elem, position.accessor().access_element<X>())
@@ -273,7 +273,7 @@ int main(int argc, char** argv)
         // Compute the potential gradient
         sil::exterior::deriv<
                 AlphaLow,
-                DummyIndex>(Kokkos::DefaultHostExecutionSpace(), potential_grad, potential);
+                DummyIndex>(Kokkos::DefaultExecutionSpace(), potential_grad, potential);
         Kokkos::fence();
 
         // Compute the spatial moments pi_\alpha by solving dphi/dx^\alpha = -dH/dpi_\alpha
@@ -297,7 +297,7 @@ int main(int argc, char** argv)
 
         // Compute the divergence dpi_\alpha/dx^\alpha of the spatial moments, which is the codifferential \delta pi of the spatial moments
         sil::exterior::codifferential<MetricIndex, AlphaLow, AlphaLow>(
-                Kokkos::DefaultHostExecutionSpace(),
+                Kokkos::DefaultExecutionSpace(),
                 spatial_moments_div,
                 spatial_moments,
                 inv_metric);
