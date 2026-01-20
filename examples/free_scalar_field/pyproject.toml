@@ -1,0 +1,13 @@
+# SPDX-FileCopyrightText: 2026 Baptiste Legouix
+# SPDX-License-Identifier: MIT
+
+[project]
+name = "similie-free-scalar-field-example"
+version = "0.0.0"
+description = "Dependencies SimiLie example solving free scalar field with SymPy code generating C++ code at compile-time"
+requires-python = ">=3.9"
+dependencies = ["sympy>=1.12", "ruff"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
