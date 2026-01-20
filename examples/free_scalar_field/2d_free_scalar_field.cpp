@@ -265,7 +265,7 @@ int main(int argc, char** argv)
     double const mass = 1.;
     int const nb_iter_between_exports = 10;
     int const nb_iter = 10000;
-    float const dt = 1e-3;
+    double const dt = 1e-3;
 
     for (int i = 0; i < nb_iter; i++) {
         std::cout << "Start iteration " << i << std::endl;
@@ -309,7 +309,7 @@ int main(int argc, char** argv)
                 Kokkos::DefaultExecutionSpace(),
                 spatial_moments_div.domain(),
                 KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
-                    float temporal_moment = temporal_moment(elem);
+                    double temporal_moment_ = temporal_moment(elem);
 
                     temporal_moment_ += (FreeScalarFieldHamiltonian(mass).dH_dphi(potential(elem))
                                          - spatial_moments_div(elem))
