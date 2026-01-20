@@ -309,12 +309,15 @@ int main(int argc, char** argv)
                 Kokkos::DefaultExecutionSpace(),
                 spatial_moments_div.domain(),
                 KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
-                    temporal_moment(elem)
-                            += (FreeScalarFieldHamiltonian(mass).dH_dphi(potential(elem))
-                                - spatial_moments_div(elem))
-                               * dt;
+                    float temporal_moment = temporal_moment(elem);
+
+                    temporal_moment_ += (FreeScalarFieldHamiltonian(mass).dH_dphi(potential(elem))
+                                         - spatial_moments_div(elem))
+                                        * dt;
                     potential(elem)
-                            -= FreeScalarFieldHamiltonian(mass).dH_dpi0(temporal_moment(elem)) * dt;
+                            -= FreeScalarFieldHamiltonian(mass).dH_dpi0(temporal_moment_) * dt;
+
+                    temporal_moment(elem) = temporal_moment_;
                 });
         Kokkos::fence();
 
