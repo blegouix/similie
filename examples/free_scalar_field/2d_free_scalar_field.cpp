@@ -23,11 +23,11 @@ data:
   potential:
     type: array
     subtype: double
-    size: [ '$Nx', '$Ny', 2 ]
+    size: [ '$Nx', '$Ny' ]
   temporal_moment:
     type: array
     subtype: double
-    size: [ '$Nx', '$Ny', 2 ]
+    size: [ '$Nx', '$Ny' ]
   spatial_moments:
     type: array
     subtype: double
@@ -212,27 +212,16 @@ int main(int argc, char** argv)
     ddc::Chunk potential_alloc(potential_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor potential(potential_alloc);
 
-    double const R = 2.;
-    double const L = ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().back()))
-                     - ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().front()));
-    double const alpha = (static_cast<double>(nb_cells.template get<DDimX>())
-                          * static_cast<double>(nb_cells.template get<DDimY>()))
-                         / L / 2 / L / 2;
     ddc::parallel_for_each(
             potential.domain(),
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
-                double const r = Kokkos::sqrt(
-                        static_cast<double>(
-                                ddc::coordinate(ddc::DiscreteElement<DDimX>(elem))
-                                * ddc::coordinate(ddc::DiscreteElement<DDimX>(elem)))
-                        + static_cast<double>(
-                                ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))
-                                * ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))));
-                if (r <= R) {
-                    potential.mem(elem) = -alpha * r * r;
-                } else {
-                    potential.mem(elem) = alpha * R * R * (2 * Kokkos::log(R / r) - 1);
-                }
+                potential(elem) = elem
+                                                  == ddc::DiscreteElement<DDimX, DDimY, DummyIndex>(
+                                                          potential.extent<DDimX>() / 2,
+                                                          potential.extent<DDimY>() / 2,
+                                                          0)
+                                          ? 1.
+                                          : 0.;
             });
     auto potential_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), potential);
@@ -245,11 +234,8 @@ int main(int argc, char** argv)
     sil::tensor::Tensor potential_grad(potential_grad_alloc);
 
     // Spatial moments
-    [[maybe_unused]] sil::tensor::TensorAccessor<AlphaLow> spatial_moments_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, AlphaLow>
-            spatial_moments_dom(mesh_xy, spatial_moments_accessor.domain());
-    ddc::Chunk spatial_moments_alloc(spatial_moments_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor spatial_moments(spatial_moments_alloc);
+    auto& spatial_moments
+            = potential_grad; // We can perform the computations inplace so spatial_moments is just an alias of potential_grad
 
     auto spatial_moments_host = ddc::
             create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), spatial_moments);
@@ -277,11 +263,13 @@ int main(int argc, char** argv)
     // ------------------
 
     double const mass = 1.;
-    int const nb_iter = 10;
+    int const nb_iter_between_exports = 10;
+    int const nb_iter = 10000;
     float const dt = 1e-3;
 
     for (int i = 0; i < nb_iter; i++) {
         std::cout << "Start iteration " << i << std::endl;
+
         // Compute the potential gradient
         sil::exterior::deriv<
                 AlphaLow,
@@ -337,17 +325,25 @@ int main(int argc, char** argv)
         ddc::parallel_deepcopy(Kokkos::DefaultExecutionSpace(), potential_host, potential);
 
         // Export HDF5 and XDMF
-        ddc::PdiEvent("export")
-                .with("position", position)
-                .and_with("potential", potential_host)
-                .and_with("temporal_moment", temporal_moment_host)
-                .and_with("spatial_moments", spatial_moments_host);
-        std::cout << "Computation result exported in 2d_free_scalar_field.h5." << std::endl;
+        std::cout << "Potential center = "
+                  << potential(ddc::DiscreteElement<DDimX, DDimY, DummyIndex>(
+                             potential.extent<DDimX>() / 2,
+                             potential.extent<DDimY>() / 2,
+                             0))
+                  << std::endl;
+        if (i % nb_iter_between_exports == 0) {
+            ddc::PdiEvent("export")
+                    .with("position", position)
+                    .and_with("potential", potential_host)
+                    .and_with("temporal_moment", temporal_moment_host)
+                    .and_with("spatial_moments", spatial_moments_host);
+            std::cout << "Computation result exported in 2d_free_scalar_field.h5." << std::endl;
 
-        write_xdmf(
-                static_cast<int>(mesh_xy.template extent<DDimX>()),
-                static_cast<int>(mesh_xy.template extent<DDimY>()));
-        std::cout << "XDMF model exported in 2d_free_scalar_field.xmf." << std::endl;
+            write_xdmf(
+                    static_cast<int>(mesh_xy.template extent<DDimX>()),
+                    static_cast<int>(mesh_xy.template extent<DDimY>()));
+            std::cout << "XDMF model exported in 2d_free_scalar_field.xmf." << std::endl;
+        }
     }
 
     return EXIT_SUCCESS;
