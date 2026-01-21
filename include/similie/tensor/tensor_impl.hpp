@@ -3,7 +3,9 @@
 
 #pragma once
 
+#include <functional>
 #include <iostream>
+#include <variant>
 
 #include <ddc/ddc.hpp>
 
@@ -81,7 +83,7 @@ struct TensorNaturalIndex
     }
 
     template <class Tensor, class Elem, class Id, class FunctorType>
-    KOKKOS_FUNCTION static constexpr Tensor::element_type process_access(
+    KOKKOS_FUNCTION static constexpr typename Tensor::access_return_t process_access(
             const FunctorType& access,
             Tensor tensor,
             Elem elem)
@@ -429,7 +431,9 @@ template <
 struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInterest, IndexTail...>
 {
     template <class Elem>
-    KOKKOS_FUNCTION static TensorField::element_type run(TensorField tensor_field, Elem const& elem)
+    KOKKOS_FUNCTION static typename TensorField::access_return_t run(
+            TensorField tensor_field,
+            Elem const& elem)
     {
         /*
          ----- Important warning -----
@@ -441,7 +445,7 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
             if constexpr (TensorIndex<IndexInterest>) {
                 return IndexInterest::template process_access<TensorField, Elem, IndexInterest>(
                         KOKKOS_LAMBDA(TensorField tensor_field_, Elem elem_)
-                                ->TensorField::element_type {
+                                ->typename TensorField::access_return_t {
                                     return Access<
                                             TensorField,
                                             Element,
@@ -461,22 +465,20 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
             if constexpr (TensorIndex<IndexInterest>) {
                 return IndexInterest::template process_access<TensorField, Elem, IndexInterest>(
                         KOKKOS_LAMBDA(TensorField tensor_field_, Elem elem_)
-                                ->TensorField::element_type {
-                                    double tensor_field_value = 0;
+                                ->typename TensorField::access_return_t {
                                     if constexpr (IndexInterest::is_explicitely_stored_tensor) {
                                         std::size_t const mem_id
                                                 = IndexInterest::access_id_to_mem_id(
                                                         elem_.template uid<IndexInterest>());
                                         if (mem_id != std::numeric_limits<std::size_t>::max()) {
-                                            tensor_field_value
-                                                    = tensor_field_
-                                                              .mem(ddc::DiscreteElement<
-                                                                           IndexHead...>(elem_),
-                                                                   ddc::DiscreteElement<
-                                                                           IndexInterest>(mem_id));
-                                        } else {
-                                            tensor_field_value = 1.;
+                                            return typename TensorField::access_return_t(std::ref(
+                                                    tensor_field_.mem(
+                                                            ddc::DiscreteElement<IndexHead...>(
+                                                                    elem_),
+                                                            ddc::DiscreteElement<IndexInterest>(
+                                                                    mem_id))));
                                         }
+                                        return typename TensorField::element_type(1.);
                                     } else {
                                         std::pair<
                                                 std::vector<double>,
@@ -485,6 +487,8 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
                                                         elem_.template uid<IndexInterest>());
 
                                         if (std::get<0>(mem_lin_comb).size() > 0) {
+                                            typename TensorField::element_type tensor_field_value
+                                                    = 0.;
                                             for (std::size_t i = 0;
                                                  i < std::get<0>(mem_lin_comb).size();
                                                  ++i) {
@@ -498,17 +502,15 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
                                                                                           1>(
                                                                            mem_lin_comb)[i]));
                                             }
-                                        } else {
-                                            tensor_field_value = 1.;
+                                            return tensor_field_value;
                                         }
+                                        return typename TensorField::element_type(1.);
                                     }
-
-                                    return tensor_field_value;
                                 },
                         tensor_field,
                         elem);
             } else {
-                return tensor_field(elem);
+                return typename TensorField::access_return_t(std::ref(tensor_field(elem)));
             }
         }
     }
@@ -595,7 +597,10 @@ protected:
 
 public:
     using base_type::ChunkSpan;
+    using element_type = ElementType;
     using reference = base_type::reference;
+    using access_reference_t = std::reference_wrapper<ElementType>;
+    using access_return_t = std::variant<access_reference_t, ElementType>;
     using discrete_domain_type = base_type::discrete_domain_type;
     using discrete_element_type = base_type::discrete_element_type;
 
@@ -722,10 +727,10 @@ public:
     }
 
     template <class... DElems>
-    KOKKOS_FUNCTION ElementType get(DElems const&... delems) const noexcept
+    KOKKOS_FUNCTION access_return_t get(DElems const&... delems) const noexcept
     {
         if constexpr (sizeof...(DDim) == 0) {
-            return operator()(delems...);
+            return access_return_t(std::ref(operator()(delems...)));
         } else {
             return detail::Access<
                     Tensor<ElementType,
@@ -736,6 +741,12 @@ public:
                     ddc::detail::TypeSeq<>,
                     DDim...>::run(*this, ddc::DiscreteElement<DDim...>(delems...));
         }
+    }
+
+    template <class... DElems>
+    KOKKOS_FUNCTION ElementType get_value(DElems const&... delems) const noexcept
+    {
+        return detail::access_value<Tensor>(get(delems...));
     }
 
     KOKKOS_FUNCTION Tensor<
@@ -778,6 +789,17 @@ Tensor(ddc::ChunkSpan<ElementType, SupportType, LayoutStridedPolicy, MemorySpace
         -> Tensor<ElementType, SupportType, LayoutStridedPolicy, MemorySpace>;
 
 namespace detail {
+
+template <class TensorType>
+KOKKOS_FUNCTION constexpr typename TensorType::element_type access_value(
+        typename TensorType::access_return_t const& access)
+{
+    using access_reference_t = typename TensorType::access_reference_t;
+    if (auto ref = std::get_if<access_reference_t>(&access)) {
+        return ref->get();
+    }
+    return std::get<typename TensorType::element_type>(access);
+}
 
 // Domain of a tensor result of product between two tensors
 template <class Dom1, class Dom2>
@@ -911,7 +933,7 @@ struct PrintTensor<
         for (ddc::DiscreteElement<InterestDDim> elem :
              ddc::DiscreteDomain<InterestDDim>(tensor.natural_domain())) {
             str = str + " "
-                  + std::to_string(tensor.get(tensor.access_element(
+                  + std::to_string(tensor.get_value(tensor.access_element(
                           ddc::DiscreteElement<HeadDDim..., InterestDDim>(i, elem))));
         }
         str += "\n";

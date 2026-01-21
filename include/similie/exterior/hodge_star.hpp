@@ -127,7 +127,7 @@ HodgeStarType fill_hodge_star(
                         [&](ddc::DiscreteElement<
                                 tensor::metric_index_1<MetricIndex>,
                                 tensor::metric_index_2<MetricIndex>> index) {
-                            buffer(elem, index) = metric.get(metric.access_element(
+                            buffer(elem, index) = metric.get_value(metric.access_element(
                                     elem,
                                     index)); // TODO: triggers a "nvlink warning : Stack size for entry function cannot be statically determined"
                         });

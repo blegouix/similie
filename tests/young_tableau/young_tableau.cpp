@@ -92,23 +92,23 @@ TEST(YoungTableau, 1_2)
             ddc::DiscreteDomain<Mu, Nu>>>
             tensor_accessor_prod;
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<T, X>()),
-            prod.get(tensor_accessor_prod.access_element<X, T>()));
+            prod.get_value(tensor_accessor_prod.access_element<T, X>()),
+            prod.get_value(tensor_accessor_prod.access_element<X, T>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<T, Y>()),
-            prod.get(tensor_accessor_prod.access_element<Y, T>()));
+            prod.get_value(tensor_accessor_prod.access_element<T, Y>()),
+            prod.get_value(tensor_accessor_prod.access_element<Y, T>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<T, Z>()),
-            prod.get(tensor_accessor_prod.access_element<Z, T>()));
+            prod.get_value(tensor_accessor_prod.access_element<T, Z>()),
+            prod.get_value(tensor_accessor_prod.access_element<Z, T>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<X, Y>()),
-            prod.get(tensor_accessor_prod.access_element<Y, X>()));
+            prod.get_value(tensor_accessor_prod.access_element<X, Y>()),
+            prod.get_value(tensor_accessor_prod.access_element<Y, X>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<X, Z>()),
-            prod.get(tensor_accessor_prod.access_element<Z, X>()));
+            prod.get_value(tensor_accessor_prod.access_element<X, Z>()),
+            prod.get_value(tensor_accessor_prod.access_element<Z, X>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<Y, Z>()),
-            prod.get(tensor_accessor_prod.access_element<Z, Y>()));
+            prod.get_value(tensor_accessor_prod.access_element<Y, Z>()),
+            prod.get_value(tensor_accessor_prod.access_element<Z, Y>()));
 }
 
 TEST(YoungTableau, 1l2)
@@ -155,28 +155,28 @@ TEST(YoungTableau, 1l2)
             typename decltype(young_tableau)::projector_domain<Mu, Nu>,
             ddc::DiscreteDomain<Mu, Nu>>>
             tensor_accessor_prod;
-    EXPECT_EQ(prod.get(tensor_accessor_prod.access_element<T, T>()), 0.);
+    EXPECT_EQ(prod.get_value(tensor_accessor_prod.access_element<T, T>()), 0.);
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<T, X>()),
-            -prod.get(tensor_accessor_prod.access_element<X, T>()));
+            prod.get_value(tensor_accessor_prod.access_element<T, X>()),
+            -prod.get_value(tensor_accessor_prod.access_element<X, T>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<T, Y>()),
-            -prod.get(tensor_accessor_prod.access_element<Y, T>()));
+            prod.get_value(tensor_accessor_prod.access_element<T, Y>()),
+            -prod.get_value(tensor_accessor_prod.access_element<Y, T>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<T, Z>()),
-            -prod.get(tensor_accessor_prod.access_element<Z, T>()));
-    EXPECT_EQ(prod.get(tensor_accessor_prod.access_element<X, X>()), 0.);
+            prod.get_value(tensor_accessor_prod.access_element<T, Z>()),
+            -prod.get_value(tensor_accessor_prod.access_element<Z, T>()));
+    EXPECT_EQ(prod.get_value(tensor_accessor_prod.access_element<X, X>()), 0.);
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<X, Y>()),
-            -prod.get(tensor_accessor_prod.access_element<Y, X>()));
+            prod.get_value(tensor_accessor_prod.access_element<X, Y>()),
+            -prod.get_value(tensor_accessor_prod.access_element<Y, X>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<X, Z>()),
-            -prod.get(tensor_accessor_prod.access_element<Z, X>()));
-    EXPECT_EQ(prod.get(tensor_accessor_prod.access_element<Y, Y>()), 0.);
+            prod.get_value(tensor_accessor_prod.access_element<X, Z>()),
+            -prod.get_value(tensor_accessor_prod.access_element<Z, X>()));
+    EXPECT_EQ(prod.get_value(tensor_accessor_prod.access_element<Y, Y>()), 0.);
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<Y, Z>()),
-            -prod.get(tensor_accessor_prod.access_element<Z, Y>()));
-    EXPECT_EQ(prod.get(tensor_accessor_prod.access_element<Z, Z>()), 0.);
+            prod.get_value(tensor_accessor_prod.access_element<Y, Z>()),
+            -prod.get_value(tensor_accessor_prod.access_element<Z, Y>()));
+    EXPECT_EQ(prod.get_value(tensor_accessor_prod.access_element<Z, Z>()), 0.);
 }
 
 TEST(YoungTableau, 1_2_3)
@@ -235,53 +235,53 @@ TEST(YoungTableau, 1_2_3)
             tensor_accessor_prod;
 
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<X, X, Y>()),
-            prod.get(tensor_accessor_prod.access_element<X, Y, X>()));
+            prod.get_value(tensor_accessor_prod.access_element<X, X, Y>()),
+            prod.get_value(tensor_accessor_prod.access_element<X, Y, X>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<X, Y, X>()),
-            prod.get(tensor_accessor_prod.access_element<Y, X, X>()));
+            prod.get_value(tensor_accessor_prod.access_element<X, Y, X>()),
+            prod.get_value(tensor_accessor_prod.access_element<Y, X, X>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<X, X, Z>()),
-            prod.get(tensor_accessor_prod.access_element<X, Z, X>()));
+            prod.get_value(tensor_accessor_prod.access_element<X, X, Z>()),
+            prod.get_value(tensor_accessor_prod.access_element<X, Z, X>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<X, Z, X>()),
-            prod.get(tensor_accessor_prod.access_element<Z, X, X>()));
+            prod.get_value(tensor_accessor_prod.access_element<X, Z, X>()),
+            prod.get_value(tensor_accessor_prod.access_element<Z, X, X>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<Y, Y, X>()),
-            prod.get(tensor_accessor_prod.access_element<Y, X, Y>()));
+            prod.get_value(tensor_accessor_prod.access_element<Y, Y, X>()),
+            prod.get_value(tensor_accessor_prod.access_element<Y, X, Y>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<Y, X, Y>()),
-            prod.get(tensor_accessor_prod.access_element<X, Y, Y>()));
+            prod.get_value(tensor_accessor_prod.access_element<Y, X, Y>()),
+            prod.get_value(tensor_accessor_prod.access_element<X, Y, Y>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<Y, Y, Z>()),
-            prod.get(tensor_accessor_prod.access_element<Y, Z, Y>()));
+            prod.get_value(tensor_accessor_prod.access_element<Y, Y, Z>()),
+            prod.get_value(tensor_accessor_prod.access_element<Y, Z, Y>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<Y, Z, Y>()),
-            prod.get(tensor_accessor_prod.access_element<Z, Y, Y>()));
+            prod.get_value(tensor_accessor_prod.access_element<Y, Z, Y>()),
+            prod.get_value(tensor_accessor_prod.access_element<Z, Y, Y>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<Z, Z, X>()),
-            prod.get(tensor_accessor_prod.access_element<Z, X, Z>()));
+            prod.get_value(tensor_accessor_prod.access_element<Z, Z, X>()),
+            prod.get_value(tensor_accessor_prod.access_element<Z, X, Z>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<Z, X, Z>()),
-            prod.get(tensor_accessor_prod.access_element<X, Z, Z>()));
+            prod.get_value(tensor_accessor_prod.access_element<Z, X, Z>()),
+            prod.get_value(tensor_accessor_prod.access_element<X, Z, Z>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<Z, Z, Y>()),
-            prod.get(tensor_accessor_prod.access_element<Z, Y, Z>()));
+            prod.get_value(tensor_accessor_prod.access_element<Z, Z, Y>()),
+            prod.get_value(tensor_accessor_prod.access_element<Z, Y, Z>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<X, Y, Z>()),
-            prod.get(tensor_accessor_prod.access_element<X, Z, Y>()));
+            prod.get_value(tensor_accessor_prod.access_element<X, Y, Z>()),
+            prod.get_value(tensor_accessor_prod.access_element<X, Z, Y>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<X, Z, Y>()),
-            prod.get(tensor_accessor_prod.access_element<Y, X, Z>()));
+            prod.get_value(tensor_accessor_prod.access_element<X, Z, Y>()),
+            prod.get_value(tensor_accessor_prod.access_element<Y, X, Z>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<Y, X, Z>()),
-            prod.get(tensor_accessor_prod.access_element<Y, Z, X>()));
+            prod.get_value(tensor_accessor_prod.access_element<Y, X, Z>()),
+            prod.get_value(tensor_accessor_prod.access_element<Y, Z, X>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<Y, Z, X>()),
-            prod.get(tensor_accessor_prod.access_element<Z, X, Y>()));
+            prod.get_value(tensor_accessor_prod.access_element<Y, Z, X>()),
+            prod.get_value(tensor_accessor_prod.access_element<Z, X, Y>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<Z, X, Y>()),
-            prod.get(tensor_accessor_prod.access_element<Z, Y, X>()));
+            prod.get_value(tensor_accessor_prod.access_element<Z, X, Y>()),
+            prod.get_value(tensor_accessor_prod.access_element<Z, Y, X>()));
 }
 
 TEST(YoungTableau, 1l2l3)
@@ -341,57 +341,57 @@ TEST(YoungTableau, 1l2l3)
             ddc::DiscreteDomain<Alpha, Beta, Gamma>>>
             tensor_accessor_prod;
 
-    EXPECT_EQ(prod.get(tensor_accessor_prod.access_element<X, X, X>()), 0.);
-    EXPECT_EQ(prod.get(tensor_accessor_prod.access_element<Y, Y, Y>()), 0.);
-    EXPECT_EQ(prod.get(tensor_accessor_prod.access_element<Z, Z, Z>()), 0.);
+    EXPECT_EQ(prod.get_value(tensor_accessor_prod.access_element<X, X, X>()), 0.);
+    EXPECT_EQ(prod.get_value(tensor_accessor_prod.access_element<Y, Y, Y>()), 0.);
+    EXPECT_EQ(prod.get_value(tensor_accessor_prod.access_element<Z, Z, Z>()), 0.);
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<X, X, Y>()),
-            -prod.get(tensor_accessor_prod.access_element<X, Y, X>()));
+            prod.get_value(tensor_accessor_prod.access_element<X, X, Y>()),
+            -prod.get_value(tensor_accessor_prod.access_element<X, Y, X>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<X, Y, X>()),
-            -prod.get(tensor_accessor_prod.access_element<Y, X, X>()));
+            prod.get_value(tensor_accessor_prod.access_element<X, Y, X>()),
+            -prod.get_value(tensor_accessor_prod.access_element<Y, X, X>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<X, X, Z>()),
-            -prod.get(tensor_accessor_prod.access_element<X, Z, X>()));
+            prod.get_value(tensor_accessor_prod.access_element<X, X, Z>()),
+            -prod.get_value(tensor_accessor_prod.access_element<X, Z, X>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<X, Z, X>()),
-            -prod.get(tensor_accessor_prod.access_element<Z, X, X>()));
+            prod.get_value(tensor_accessor_prod.access_element<X, Z, X>()),
+            -prod.get_value(tensor_accessor_prod.access_element<Z, X, X>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<Y, Y, X>()),
-            -prod.get(tensor_accessor_prod.access_element<Y, X, Y>()));
+            prod.get_value(tensor_accessor_prod.access_element<Y, Y, X>()),
+            -prod.get_value(tensor_accessor_prod.access_element<Y, X, Y>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<Y, X, Y>()),
-            -prod.get(tensor_accessor_prod.access_element<X, Y, Y>()));
+            prod.get_value(tensor_accessor_prod.access_element<Y, X, Y>()),
+            -prod.get_value(tensor_accessor_prod.access_element<X, Y, Y>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<Y, Y, Z>()),
-            -prod.get(tensor_accessor_prod.access_element<Y, Z, Y>()));
+            prod.get_value(tensor_accessor_prod.access_element<Y, Y, Z>()),
+            -prod.get_value(tensor_accessor_prod.access_element<Y, Z, Y>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<Y, Z, Y>()),
-            -prod.get(tensor_accessor_prod.access_element<Z, Y, Y>()));
+            prod.get_value(tensor_accessor_prod.access_element<Y, Z, Y>()),
+            -prod.get_value(tensor_accessor_prod.access_element<Z, Y, Y>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<Z, Z, X>()),
-            -prod.get(tensor_accessor_prod.access_element<Z, X, Z>()));
+            prod.get_value(tensor_accessor_prod.access_element<Z, Z, X>()),
+            -prod.get_value(tensor_accessor_prod.access_element<Z, X, Z>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<Z, X, Z>()),
-            -prod.get(tensor_accessor_prod.access_element<X, Z, Z>()));
+            prod.get_value(tensor_accessor_prod.access_element<Z, X, Z>()),
+            -prod.get_value(tensor_accessor_prod.access_element<X, Z, Z>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<Z, Z, Y>()),
-            -prod.get(tensor_accessor_prod.access_element<Z, Y, Z>()));
+            prod.get_value(tensor_accessor_prod.access_element<Z, Z, Y>()),
+            -prod.get_value(tensor_accessor_prod.access_element<Z, Y, Z>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<X, Y, Z>()),
-            -prod.get(tensor_accessor_prod.access_element<X, Z, Y>()));
+            prod.get_value(tensor_accessor_prod.access_element<X, Y, Z>()),
+            -prod.get_value(tensor_accessor_prod.access_element<X, Z, Y>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<X, Z, Y>()),
-            prod.get(tensor_accessor_prod.access_element<Y, X, Z>()));
+            prod.get_value(tensor_accessor_prod.access_element<X, Z, Y>()),
+            prod.get_value(tensor_accessor_prod.access_element<Y, X, Z>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<Y, X, Z>()),
-            -prod.get(tensor_accessor_prod.access_element<Y, Z, X>()));
+            prod.get_value(tensor_accessor_prod.access_element<Y, X, Z>()),
+            -prod.get_value(tensor_accessor_prod.access_element<Y, Z, X>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<Y, Z, X>()),
-            prod.get(tensor_accessor_prod.access_element<Z, X, Y>()));
+            prod.get_value(tensor_accessor_prod.access_element<Y, Z, X>()),
+            prod.get_value(tensor_accessor_prod.access_element<Z, X, Y>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<Z, X, Y>()),
-            -prod.get(tensor_accessor_prod.access_element<Z, Y, X>()));
+            prod.get_value(tensor_accessor_prod.access_element<Z, X, Y>()),
+            -prod.get_value(tensor_accessor_prod.access_element<Z, Y, X>()));
 }
 
 TEST(YoungTableau, 1_2l3)
@@ -451,8 +451,8 @@ TEST(YoungTableau, 1_2l3)
             tensor_accessor_prod;
 
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<X, Y, Z>()),
-            -prod.get(tensor_accessor_prod.access_element<Z, Y, X>()));
+            prod.get_value(tensor_accessor_prod.access_element<X, Y, Z>()),
+            -prod.get_value(tensor_accessor_prod.access_element<Z, Y, X>()));
     // TODO understand better the symmetry of rank-3 mixed tensor and test it.
 }
 
@@ -513,8 +513,8 @@ TEST(YoungTableau, 1_3l2)
             tensor_accessor_prod;
 
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<X, Y, Z>()),
-            -prod.get(tensor_accessor_prod.access_element<Y, X, Z>()));
+            prod.get_value(tensor_accessor_prod.access_element<X, Y, Z>()),
+            -prod.get_value(tensor_accessor_prod.access_element<Y, X, Z>()));
     // TODO understand better the symmetry of rank-3 mixed tensor and test it.
 }
 
@@ -630,17 +630,17 @@ TEST(YoungTableau, 1l3_2l4)
             tensor_accessor_prod;
 
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<X, Y, Z, X>()),
-            -prod.get(tensor_accessor_prod.access_element<Y, X, Z, X>()));
+            prod.get_value(tensor_accessor_prod.access_element<X, Y, Z, X>()),
+            -prod.get_value(tensor_accessor_prod.access_element<Y, X, Z, X>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<X, Y, Z, X>()),
-            -prod.get(tensor_accessor_prod.access_element<X, Y, X, Z>()));
+            prod.get_value(tensor_accessor_prod.access_element<X, Y, Z, X>()),
+            -prod.get_value(tensor_accessor_prod.access_element<X, Y, X, Z>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<X, Y, Z, X>()),
-            prod.get(tensor_accessor_prod.access_element<Z, X, X, Y>()));
+            prod.get_value(tensor_accessor_prod.access_element<X, Y, Z, X>()),
+            prod.get_value(tensor_accessor_prod.access_element<Z, X, X, Y>()));
     EXPECT_EQ(
-            prod.get(tensor_accessor_prod.access_element<X, Y, Z, X>())
-                    + prod.get(tensor_accessor_prod.access_element<X, X, Y, Z>())
-                    + prod.get(tensor_accessor_prod.access_element<X, Z, X, Y>()),
+            prod.get_value(tensor_accessor_prod.access_element<X, Y, Z, X>())
+                    + prod.get_value(tensor_accessor_prod.access_element<X, X, Y, Z>())
+                    + prod.get_value(tensor_accessor_prod.access_element<X, Z, X, Y>()),
             0.);
 }

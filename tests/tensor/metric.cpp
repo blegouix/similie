@@ -51,9 +51,9 @@ TEST(Metric, MetricLike)
         metric(elem, metric.accessor().access_element<Y, Y>()) = 3.;
     });
     ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
-        EXPECT_EQ(metric.get(elem, metric.accessor().access_element<X, X>()), 1.);
-        EXPECT_EQ(metric.get(elem, metric.accessor().access_element<X, Y>()), 2.);
-        EXPECT_EQ(metric.get(elem, metric.accessor().access_element<Y, Y>()), 3.);
+        EXPECT_EQ(metric.get_value(elem, metric.accessor().access_element<X, X>()), 1.);
+        EXPECT_EQ(metric.get_value(elem, metric.accessor().access_element<X, Y>()), 2.);
+        EXPECT_EQ(metric.get_value(elem, metric.accessor().access_element<Y, Y>()), 3.);
     });
 }
 
@@ -82,10 +82,10 @@ TEST(Metric, Covariant)
         g_i_j(elem, g_i_j.accessor().access_element<Y, Y>()) = 3.;
     });
     ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
-        EXPECT_EQ(g_i_j.get(elem, g_i_j.accessor().access_element<X, X>()), 1.);
-        EXPECT_EQ(g_i_j.get(elem, g_i_j.accessor().access_element<X, Y>()), 2.);
-        EXPECT_EQ(g_i_j.get(elem, g_i_j.accessor().access_element<Y, X>()), 2.);
-        EXPECT_EQ(g_i_j.get(elem, g_i_j.accessor().access_element<Y, Y>()), 3.);
+        EXPECT_EQ(g_i_j.get_value(elem, g_i_j.accessor().access_element<X, X>()), 1.);
+        EXPECT_EQ(g_i_j.get_value(elem, g_i_j.accessor().access_element<X, Y>()), 2.);
+        EXPECT_EQ(g_i_j.get_value(elem, g_i_j.accessor().access_element<Y, X>()), 2.);
+        EXPECT_EQ(g_i_j.get_value(elem, g_i_j.accessor().access_element<Y, Y>()), 3.);
     });
 }
 
@@ -128,28 +128,28 @@ TEST(Metric, ChristoffelLike)
     });
     ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
         EXPECT_EQ(
-                christoffel_1st.get(elem, christoffel_1st.accessor().access_element<X, X, X>()),
+                christoffel_1st.get_value(elem, christoffel_1st.accessor().access_element<X, X, X>()),
                 1.);
         EXPECT_EQ(
-                christoffel_1st.get(elem, christoffel_1st.accessor().access_element<X, X, Y>()),
+                christoffel_1st.get_value(elem, christoffel_1st.accessor().access_element<X, X, Y>()),
                 2.);
         EXPECT_EQ(
-                christoffel_1st.get(elem, christoffel_1st.accessor().access_element<X, Y, X>()),
+                christoffel_1st.get_value(elem, christoffel_1st.accessor().access_element<X, Y, X>()),
                 2.);
         EXPECT_EQ(
-                christoffel_1st.get(elem, christoffel_1st.accessor().access_element<X, Y, Y>()),
+                christoffel_1st.get_value(elem, christoffel_1st.accessor().access_element<X, Y, Y>()),
                 3.);
         EXPECT_EQ(
-                christoffel_1st.get(elem, christoffel_1st.accessor().access_element<Y, X, X>()),
+                christoffel_1st.get_value(elem, christoffel_1st.accessor().access_element<Y, X, X>()),
                 4.);
         EXPECT_EQ(
-                christoffel_1st.get(elem, christoffel_1st.accessor().access_element<Y, X, Y>()),
+                christoffel_1st.get_value(elem, christoffel_1st.accessor().access_element<Y, X, Y>()),
                 5.);
         EXPECT_EQ(
-                christoffel_1st.get(elem, christoffel_1st.accessor().access_element<Y, Y, X>()),
+                christoffel_1st.get_value(elem, christoffel_1st.accessor().access_element<Y, Y, X>()),
                 5.);
         EXPECT_EQ(
-                christoffel_1st.get(elem, christoffel_1st.accessor().access_element<Y, Y, Y>()),
+                christoffel_1st.get_value(elem, christoffel_1st.accessor().access_element<Y, Y, Y>()),
                 6.);
     });
     auto christoffel_2nd = sil::tensor::inplace_apply_metric<
@@ -157,28 +157,28 @@ TEST(Metric, ChristoffelLike)
             KLow>(Kokkos::DefaultHostExecutionSpace(), christoffel_1st, metric);
     ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
         EXPECT_EQ(
-                christoffel_2nd.get(elem, christoffel_2nd.accessor().access_element<X, X, X>()),
+                christoffel_2nd.get_value(elem, christoffel_2nd.accessor().access_element<X, X, X>()),
                 1.);
         EXPECT_EQ(
-                christoffel_2nd.get(elem, christoffel_2nd.accessor().access_element<X, X, Y>()),
+                christoffel_2nd.get_value(elem, christoffel_2nd.accessor().access_element<X, X, Y>()),
                 2.);
         EXPECT_EQ(
-                christoffel_2nd.get(elem, christoffel_2nd.accessor().access_element<X, Y, X>()),
+                christoffel_2nd.get_value(elem, christoffel_2nd.accessor().access_element<X, Y, X>()),
                 2.);
         EXPECT_EQ(
-                christoffel_2nd.get(elem, christoffel_2nd.accessor().access_element<X, Y, Y>()),
+                christoffel_2nd.get_value(elem, christoffel_2nd.accessor().access_element<X, Y, Y>()),
                 3.);
         EXPECT_EQ(
-                christoffel_2nd.get(elem, christoffel_2nd.accessor().access_element<Y, X, X>()),
+                christoffel_2nd.get_value(elem, christoffel_2nd.accessor().access_element<Y, X, X>()),
                 8.);
         EXPECT_EQ(
-                christoffel_2nd.get(elem, christoffel_2nd.accessor().access_element<Y, X, Y>()),
+                christoffel_2nd.get_value(elem, christoffel_2nd.accessor().access_element<Y, X, Y>()),
                 10.);
         EXPECT_EQ(
-                christoffel_2nd.get(elem, christoffel_2nd.accessor().access_element<Y, Y, X>()),
+                christoffel_2nd.get_value(elem, christoffel_2nd.accessor().access_element<Y, Y, X>()),
                 10.);
         EXPECT_EQ(
-                christoffel_2nd.get(elem, christoffel_2nd.accessor().access_element<Y, Y, Y>()),
+                christoffel_2nd.get_value(elem, christoffel_2nd.accessor().access_element<Y, Y, Y>()),
                 12.);
     });
 }
@@ -251,11 +251,11 @@ TEST(Metric, Inverse)
                                 metric[elem]));
             });
     ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
-        EXPECT_NEAR(identity.get(elem, identity.accessor().access_element<X, X>()), 1., 1e-14);
-        EXPECT_NEAR(identity.get(elem, identity.accessor().access_element<X, Y>()), 0., 1e-14);
-        EXPECT_NEAR(identity.get(elem, identity.accessor().access_element<X, Z>()), 0., 1e-14);
-        EXPECT_NEAR(identity.get(elem, identity.accessor().access_element<Y, Y>()), 1., 1e-14);
-        EXPECT_NEAR(identity.get(elem, identity.accessor().access_element<Y, Z>()), 0., 1e-14);
-        EXPECT_NEAR(identity.get(elem, identity.accessor().access_element<Z, Z>()), 1., 1e-14);
+        EXPECT_NEAR(identity.get_value(elem, identity.accessor().access_element<X, X>()), 1., 1e-14);
+        EXPECT_NEAR(identity.get_value(elem, identity.accessor().access_element<X, Y>()), 0., 1e-14);
+        EXPECT_NEAR(identity.get_value(elem, identity.accessor().access_element<X, Z>()), 0., 1e-14);
+        EXPECT_NEAR(identity.get_value(elem, identity.accessor().access_element<Y, Y>()), 1., 1e-14);
+        EXPECT_NEAR(identity.get_value(elem, identity.accessor().access_element<Y, Z>()), 0., 1e-14);
+        EXPECT_NEAR(identity.get_value(elem, identity.accessor().access_element<Z, Z>()), 1., 1e-14);
     });
 }

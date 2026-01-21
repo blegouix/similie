@@ -141,7 +141,7 @@ public:
     }
 
     template <class Tensor, class Elem, class Id, class FunctorType>
-    KOKKOS_FUNCTION static constexpr Tensor::element_type process_access(
+    KOKKOS_FUNCTION static constexpr typename Tensor::access_return_t process_access(
             const FunctorType& access,
             Tensor tensor,
             Elem elem)
@@ -150,12 +150,12 @@ public:
             return access(tensor, elem);
         } else {
             if (elem.template uid<Id>() == 0) {
-                return 0.;
+                return typename Tensor::element_type(0.);
             } else if (elem.template uid<Id>() < access_size()) {
                 return access(tensor, elem);
-            } else {
-                return -access(tensor, elem);
             }
+            return typename Tensor::element_type(
+                    -detail::access_value<Tensor>(access(tensor, elem)));
         }
     }
 

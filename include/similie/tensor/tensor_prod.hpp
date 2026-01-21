@@ -145,12 +145,12 @@ struct TensorProdAnyAnyAny<
                             0.,
                             ddc::reducer::sum<ElementType>(),
                             [&](ddc::DiscreteElement<ContractDDim...> contract_elem) {
-                                return tensor1.get(tensor1.access_element(
+                                return tensor1.get_value(tensor1.access_element(
                                                ddc::DiscreteElement<HeadDDim1..., ContractDDim...>(
                                                        ddc::select<HeadDDim1...>(elem),
                                                        contract_accessor.access_element(
                                                                contract_elem))))
-                                       * tensor2.get(tensor2.access_element(
+                                       * tensor2.get_value(tensor2.access_element(
                                                ddc::DiscreteElement<ContractDDim..., TailDDim2...>(
                                                        contract_elem,
                                                        ddc::select<TailDDim2...>(elem))));
@@ -474,12 +474,12 @@ struct TensorProdYoungAnyAny<
                             0.,
                             ddc::reducer::sum<ElementType>(),
                             [&](ddc::DiscreteElement<ContractDDim...> contract_elem) {
-                                return tensor1.get(tensor1.access_element(
+                                return tensor1.get_value(tensor1.access_element(
                                                ddc::DiscreteElement<HeadDDim1..., ContractDDim...>(
                                                        ddc::select<HeadDDim1...>(elem),
                                                        contract_accessor.access_element(
                                                                contract_elem))))
-                                       * tensor2.get(tensor2.access_element(
+                                       * tensor2.get_value(tensor2.access_element(
                                                ddc::DiscreteElement<ContractDDim..., TailDDim2...>(
                                                        contract_elem,
                                                        ddc::select<TailDDim2...>(elem))));

@@ -78,16 +78,15 @@ struct TensorDiagonalIndex
     }
 
     template <class Tensor, class Elem, class Id, class FunctorType>
-    KOKKOS_FUNCTION static constexpr Tensor::element_type process_access(
+    KOKKOS_FUNCTION static constexpr typename Tensor::access_return_t process_access(
             const FunctorType& access,
             Tensor tensor,
             Elem elem)
     {
         if (elem.template uid<Id>() == 0) {
-            return 0.;
-        } else {
-            return access(tensor, elem);
+            return typename Tensor::element_type(0.);
         }
+        return access(tensor, elem);
     }
 
     KOKKOS_FUNCTION static constexpr std::array<std::size_t, rank()>

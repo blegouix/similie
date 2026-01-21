@@ -100,33 +100,33 @@ TEST(TensorProd, SimpleContractionRank3xRank2)
 
     sil::tensor::tensor_prod(prod_tensor, tensor1, tensor2);
 
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, X, X>()), 15.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, X, Y>()), 18.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, X, Z>()), 21.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, Y, X>()), 42.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, Y, Y>()), 54.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, Y, Z>()), 66.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, Z, X>()), 69.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, Z, Y>()), 90.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, Z, Z>()), 111.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Y, X, X>()), 96.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Y, X, Y>()), 126.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Y, X, Z>()), 156.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Y, Y, X>()), 123.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Y, Y, Y>()), 162.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Y, Y, Z>()), 201.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Y, Z, X>()), 150.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Y, Z, Y>()), 198.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Y, Z, Z>()), 246.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Z, X, X>()), 177.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Z, X, Y>()), 234.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Z, X, Z>()), 291.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Z, Y, X>()), 204.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Z, Y, Y>()), 270.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Z, Y, Z>()), 336.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Z, Z, X>()), 231.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Z, Z, Y>()), 306.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Z, Z, Z>()), 381.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<X, X, X>()), 15.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<X, X, Y>()), 18.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<X, X, Z>()), 21.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<X, Y, X>()), 42.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<X, Y, Y>()), 54.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<X, Y, Z>()), 66.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<X, Z, X>()), 69.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<X, Z, Y>()), 90.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<X, Z, Z>()), 111.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<Y, X, X>()), 96.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<Y, X, Y>()), 126.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<Y, X, Z>()), 156.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<Y, Y, X>()), 123.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<Y, Y, Y>()), 162.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<Y, Y, Z>()), 201.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<Y, Z, X>()), 150.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<Y, Z, Y>()), 198.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<Y, Z, Z>()), 246.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<Z, X, X>()), 177.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<Z, X, Y>()), 234.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<Z, X, Z>()), 291.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<Z, Y, X>()), 204.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<Z, Y, Y>()), 270.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<Z, Y, Z>()), 336.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<Z, Z, X>()), 231.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<Z, Z, Y>()), 306.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<Z, Z, Z>()), 381.);
 }
 
 TEST(TensorProd, DoubleContractionRank3xRank3)
@@ -206,15 +206,15 @@ TEST(TensorProd, DoubleContractionRank3xRank3)
 
     sil::tensor::tensor_prod(prod_tensor, tensor1, tensor2);
 
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, X>()), 612.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, Y>()), 648.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, Z>()), 684.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Y, X>()), 1584.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Y, Y>()), 1701.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Y, Z>()), 1818.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Z, X>()), 2556.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Z, Y>()), 2754.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Z, Z>()), 2952.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<X, X>()), 612.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<X, Y>()), 648.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<X, Z>()), 684.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<Y, X>()), 1584.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<Y, Y>()), 1701.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<Y, Z>()), 1818.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<Z, X>()), 2556.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<Z, Y>()), 2754.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<Z, Z>()), 2952.);
 }
 
 // Warning : the following tests compute the results of the tensor product of
@@ -283,16 +283,16 @@ TEST(TensorProd, SimpleContractionRank2SymIndexedxRank2SymIndexed)
 
     sil::tensor::tensor_prod(prod_tensor, tensor1, tensor2);
 
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, T>()), 130.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, X>()), 158.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, Y>()), 175.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, Z>()), 185.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, X>()), 314.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, Y>()), 347.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, Z>()), 367.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Y, Y>()), 450.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Y, Z>()), 476.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Z, Z>()), 546.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<T, T>()), 130.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<T, X>()), 158.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<T, Y>()), 175.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<T, Z>()), 185.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<X, X>()), 314.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<X, Y>()), 347.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<X, Z>()), 367.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<Y, Y>()), 450.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<Y, Z>()), 476.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<Z, Z>()), 546.);
 }
 
 using Rank2AntisymIndex1 = sil::tensor::
@@ -338,12 +338,12 @@ TEST(TensorProd, SimpleContractionRank2AntisymIndexedxRank2AntisymIndexed)
 
     sil::tensor::tensor_prod(prod_tensor, tensor1, tensor2);
 
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, X>()), -53.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, Y>()), -26.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, Z>()), 35.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, Y>()), -68.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, Z>()), 39.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Y, Z>()), -62.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<T, X>()), -53.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<T, Y>()), -26.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<T, Z>()), 35.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<X, Y>()), -68.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<X, Z>()), 39.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<Y, Z>()), -62.);
 }
 
 struct Sigma : sil::tensor::TensorNaturalIndex<T, X, Y, Z>
@@ -415,26 +415,26 @@ TEST(TensorProd, SimpleContractionRank3SymIndexedxRank2SymIndexed)
 
     sil::tensor::tensor_prod(prod_tensor, tensor1, tensor2);
 
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, T, T>()), 230.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, T, X>()), 258.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, T, Y>()), 275.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, T, Z>()), 285.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, X, X>()), 514.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, X, Y>()), 547.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, X, Z>()), 567.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, Y, Y>()), 710.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, Y, Z>()), 736.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, Z, Z>()), 846.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, X, X>()), 1048.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, X, Y>()), 1114.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, X, Z>()), 1155.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, Y, Y>()), 1277.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, Y, Z>()), 1324.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, Z, Z>()), 1434.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Y, Y, Y>()), 1546.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Y, Y, Z>()), 1603.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Y, Z, Z>()), 1713.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<Z, Z, Z>()), 1823.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<T, T, T>()), 230.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<T, T, X>()), 258.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<T, T, Y>()), 275.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<T, T, Z>()), 285.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<T, X, X>()), 514.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<T, X, Y>()), 547.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<T, X, Z>()), 567.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<T, Y, Y>()), 710.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<T, Y, Z>()), 736.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<T, Z, Z>()), 846.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<X, X, X>()), 1048.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<X, X, Y>()), 1114.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<X, X, Z>()), 1155.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<X, Y, Y>()), 1277.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<X, Y, Z>()), 1324.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<X, Z, Z>()), 1434.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<Y, Y, Y>()), 1546.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<Y, Y, Z>()), 1603.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<Y, Z, Z>()), 1713.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<Z, Z, Z>()), 1823.);
 }
 
 using Rank3AntisymIndex1 = sil::tensor::TensorAntisymmetricIndex<
@@ -483,10 +483,10 @@ TEST(TensorProd, SimpleContractionRank3AntisymIndexedxRank2AntisymIndexed)
 
     sil::tensor::tensor_prod(prod_tensor, tensor1, tensor2);
 
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, X, Y>()), -8.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, X, Z>()), 24.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, Y, Z>()), 32.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, Y, Z>()), 19.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<T, X, Y>()), -8.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<T, X, Z>()), 24.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<T, Y, Z>()), 32.);
+    EXPECT_EQ(prod_tensor.get_value(prod_tensor.access_element<X, Y, Z>()), 19.);
 }
 
 #if defined BUILD_YOUNG_TABLEAU
@@ -580,14 +580,14 @@ TEST(TensorProd, DoubleContractionYoungIndexedxNaturalIndex)
 
     sil::tensor::tensor_prod(prod_tensor, tensor1, tensor2);
 
-    EXPECT_DOUBLE_EQ(prod_tensor.get(prod_tensor.access_element<X, X>()), 360.);
-    EXPECT_DOUBLE_EQ(prod_tensor.get(prod_tensor.access_element<X, Y>()), 382.);
-    EXPECT_DOUBLE_EQ(prod_tensor.get(prod_tensor.access_element<X, Z>()), 404.);
-    EXPECT_DOUBLE_EQ(prod_tensor.get(prod_tensor.access_element<Y, X>()), 648.);
-    EXPECT_DOUBLE_EQ(prod_tensor.get(prod_tensor.access_element<Y, Y>()), 691.);
-    EXPECT_DOUBLE_EQ(prod_tensor.get(prod_tensor.access_element<Y, Z>()), 734.);
-    EXPECT_DOUBLE_EQ(prod_tensor.get(prod_tensor.access_element<Z, X>()), 756.);
-    EXPECT_DOUBLE_EQ(prod_tensor.get(prod_tensor.access_element<Z, Y>()), 808.);
-    EXPECT_DOUBLE_EQ(prod_tensor.get(prod_tensor.access_element<Z, Z>()), 860.);
+    EXPECT_DOUBLE_EQ(prod_tensor.get_value(prod_tensor.access_element<X, X>()), 360.);
+    EXPECT_DOUBLE_EQ(prod_tensor.get_value(prod_tensor.access_element<X, Y>()), 382.);
+    EXPECT_DOUBLE_EQ(prod_tensor.get_value(prod_tensor.access_element<X, Z>()), 404.);
+    EXPECT_DOUBLE_EQ(prod_tensor.get_value(prod_tensor.access_element<Y, X>()), 648.);
+    EXPECT_DOUBLE_EQ(prod_tensor.get_value(prod_tensor.access_element<Y, Y>()), 691.);
+    EXPECT_DOUBLE_EQ(prod_tensor.get_value(prod_tensor.access_element<Y, Z>()), 734.);
+    EXPECT_DOUBLE_EQ(prod_tensor.get_value(prod_tensor.access_element<Z, X>()), 756.);
+    EXPECT_DOUBLE_EQ(prod_tensor.get_value(prod_tensor.access_element<Z, Y>()), 808.);
+    EXPECT_DOUBLE_EQ(prod_tensor.get_value(prod_tensor.access_element<Z, Z>()), 860.);
 }
 #endif

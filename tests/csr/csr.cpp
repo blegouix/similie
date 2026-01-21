@@ -62,33 +62,33 @@ TEST(CsrDynamic, Csr2Dense)
     sil::tensor::Tensor dense_tensor(dense_tensor_alloc);
     sil::csr::csr2dense(dense_tensor, csr);
 
-    EXPECT_EQ(dense_tensor.get(dense_tensor.access_element<X, X, X>()), 0.);
-    EXPECT_EQ(dense_tensor.get(dense_tensor.access_element<X, X, Y>()), 1.);
-    EXPECT_EQ(dense_tensor.get(dense_tensor.access_element<X, X, Z>()), 0.);
-    EXPECT_EQ(dense_tensor.get(dense_tensor.access_element<X, Y, X>()), 0.);
-    EXPECT_EQ(dense_tensor.get(dense_tensor.access_element<X, Y, Y>()), 0.);
-    EXPECT_EQ(dense_tensor.get(dense_tensor.access_element<X, Y, Z>()), 0.);
-    EXPECT_EQ(dense_tensor.get(dense_tensor.access_element<X, Z, X>()), 0.);
-    EXPECT_EQ(dense_tensor.get(dense_tensor.access_element<X, Z, Y>()), 2.);
-    EXPECT_EQ(dense_tensor.get(dense_tensor.access_element<X, Z, Z>()), 0.);
-    EXPECT_EQ(dense_tensor.get(dense_tensor.access_element<Y, X, X>()), 3.);
-    EXPECT_EQ(dense_tensor.get(dense_tensor.access_element<Y, X, Y>()), 0.);
-    EXPECT_EQ(dense_tensor.get(dense_tensor.access_element<Y, X, Z>()), 4.);
-    EXPECT_EQ(dense_tensor.get(dense_tensor.access_element<Y, Y, X>()), 0.);
-    EXPECT_EQ(dense_tensor.get(dense_tensor.access_element<Y, Y, Y>()), 0.);
-    EXPECT_EQ(dense_tensor.get(dense_tensor.access_element<Y, Y, Z>()), 0.);
-    EXPECT_EQ(dense_tensor.get(dense_tensor.access_element<Y, Z, X>()), 0.);
-    EXPECT_EQ(dense_tensor.get(dense_tensor.access_element<Y, Z, Y>()), 0.);
-    EXPECT_EQ(dense_tensor.get(dense_tensor.access_element<Y, Z, Z>()), 5.);
-    EXPECT_EQ(dense_tensor.get(dense_tensor.access_element<Z, X, X>()), 0.);
-    EXPECT_EQ(dense_tensor.get(dense_tensor.access_element<Z, X, Y>()), 8.);
-    EXPECT_EQ(dense_tensor.get(dense_tensor.access_element<Z, X, Z>()), 6.);
-    EXPECT_EQ(dense_tensor.get(dense_tensor.access_element<Z, Y, X>()), 0.);
-    EXPECT_EQ(dense_tensor.get(dense_tensor.access_element<Z, Y, Y>()), 7.);
-    EXPECT_EQ(dense_tensor.get(dense_tensor.access_element<Z, Y, Z>()), 0.);
-    EXPECT_EQ(dense_tensor.get(dense_tensor.access_element<Z, Z, X>()), 0.);
-    EXPECT_EQ(dense_tensor.get(dense_tensor.access_element<Z, Z, Y>()), 0.);
-    EXPECT_EQ(dense_tensor.get(dense_tensor.access_element<Z, Z, Z>()), 9.);
+    EXPECT_EQ(dense_tensor.get_value(dense_tensor.access_element<X, X, X>()), 0.);
+    EXPECT_EQ(dense_tensor.get_value(dense_tensor.access_element<X, X, Y>()), 1.);
+    EXPECT_EQ(dense_tensor.get_value(dense_tensor.access_element<X, X, Z>()), 0.);
+    EXPECT_EQ(dense_tensor.get_value(dense_tensor.access_element<X, Y, X>()), 0.);
+    EXPECT_EQ(dense_tensor.get_value(dense_tensor.access_element<X, Y, Y>()), 0.);
+    EXPECT_EQ(dense_tensor.get_value(dense_tensor.access_element<X, Y, Z>()), 0.);
+    EXPECT_EQ(dense_tensor.get_value(dense_tensor.access_element<X, Z, X>()), 0.);
+    EXPECT_EQ(dense_tensor.get_value(dense_tensor.access_element<X, Z, Y>()), 2.);
+    EXPECT_EQ(dense_tensor.get_value(dense_tensor.access_element<X, Z, Z>()), 0.);
+    EXPECT_EQ(dense_tensor.get_value(dense_tensor.access_element<Y, X, X>()), 3.);
+    EXPECT_EQ(dense_tensor.get_value(dense_tensor.access_element<Y, X, Y>()), 0.);
+    EXPECT_EQ(dense_tensor.get_value(dense_tensor.access_element<Y, X, Z>()), 4.);
+    EXPECT_EQ(dense_tensor.get_value(dense_tensor.access_element<Y, Y, X>()), 0.);
+    EXPECT_EQ(dense_tensor.get_value(dense_tensor.access_element<Y, Y, Y>()), 0.);
+    EXPECT_EQ(dense_tensor.get_value(dense_tensor.access_element<Y, Y, Z>()), 0.);
+    EXPECT_EQ(dense_tensor.get_value(dense_tensor.access_element<Y, Z, X>()), 0.);
+    EXPECT_EQ(dense_tensor.get_value(dense_tensor.access_element<Y, Z, Y>()), 0.);
+    EXPECT_EQ(dense_tensor.get_value(dense_tensor.access_element<Y, Z, Z>()), 5.);
+    EXPECT_EQ(dense_tensor.get_value(dense_tensor.access_element<Z, X, X>()), 0.);
+    EXPECT_EQ(dense_tensor.get_value(dense_tensor.access_element<Z, X, Y>()), 8.);
+    EXPECT_EQ(dense_tensor.get_value(dense_tensor.access_element<Z, X, Z>()), 6.);
+    EXPECT_EQ(dense_tensor.get_value(dense_tensor.access_element<Z, Y, X>()), 0.);
+    EXPECT_EQ(dense_tensor.get_value(dense_tensor.access_element<Z, Y, Y>()), 7.);
+    EXPECT_EQ(dense_tensor.get_value(dense_tensor.access_element<Z, Y, Z>()), 0.);
+    EXPECT_EQ(dense_tensor.get_value(dense_tensor.access_element<Z, Z, X>()), 0.);
+    EXPECT_EQ(dense_tensor.get_value(dense_tensor.access_element<Z, Z, Y>()), 0.);
+    EXPECT_EQ(dense_tensor.get_value(dense_tensor.access_element<Z, Z, Z>()), 9.);
 }
 
 TEST(Csr, CsrDenseProducts)
@@ -130,9 +130,9 @@ TEST(Csr, CsrDenseProducts)
 
     sil::csr::tensor_prod(right_prod, csr, right_tensor);
 
-    EXPECT_EQ(right_prod.get(right_prod_accessor.access_element<X>()), 3.);
-    EXPECT_EQ(right_prod.get(right_prod_accessor.access_element<Y>()), 12.);
-    EXPECT_EQ(right_prod.get(right_prod_accessor.access_element<Z>()), 30.);
+    EXPECT_EQ(right_prod.get_value(right_prod_accessor.access_element<X>()), 3.);
+    EXPECT_EQ(right_prod.get_value(right_prod_accessor.access_element<Y>()), 12.);
+    EXPECT_EQ(right_prod.get_value(right_prod_accessor.access_element<Z>()), 30.);
 
     [[maybe_unused]] sil::tensor::TensorAccessor<Alpha> left_vector_accessor;
     ddc::DiscreteDomain<Alpha> left_vector_dom = left_vector_accessor.domain();
@@ -147,13 +147,13 @@ TEST(Csr, CsrDenseProducts)
 
     sil::csr::tensor_prod(left_prod, left_vector, csr);
 
-    EXPECT_EQ(left_prod.get(left_prod_accessor.access_element<X, X>()), 3.);
-    EXPECT_EQ(left_prod.get(left_prod_accessor.access_element<X, Y>()), 9.);
-    EXPECT_EQ(left_prod.get(left_prod_accessor.access_element<X, Z>()), 10.);
-    EXPECT_EQ(left_prod.get(left_prod_accessor.access_element<Y, X>()), 0.);
-    EXPECT_EQ(left_prod.get(left_prod_accessor.access_element<Y, Y>()), 7.);
-    EXPECT_EQ(left_prod.get(left_prod_accessor.access_element<Y, Z>()), 0.);
-    EXPECT_EQ(left_prod.get(left_prod_accessor.access_element<Z, X>()), 0.);
-    EXPECT_EQ(left_prod.get(left_prod_accessor.access_element<Z, Y>()), 2.);
-    EXPECT_EQ(left_prod.get(left_prod_accessor.access_element<Z, Z>()), 14.);
+    EXPECT_EQ(left_prod.get_value(left_prod_accessor.access_element<X, X>()), 3.);
+    EXPECT_EQ(left_prod.get_value(left_prod_accessor.access_element<X, Y>()), 9.);
+    EXPECT_EQ(left_prod.get_value(left_prod_accessor.access_element<X, Z>()), 10.);
+    EXPECT_EQ(left_prod.get_value(left_prod_accessor.access_element<Y, X>()), 0.);
+    EXPECT_EQ(left_prod.get_value(left_prod_accessor.access_element<Y, Y>()), 7.);
+    EXPECT_EQ(left_prod.get_value(left_prod_accessor.access_element<Y, Z>()), 0.);
+    EXPECT_EQ(left_prod.get_value(left_prod_accessor.access_element<Z, X>()), 0.);
+    EXPECT_EQ(left_prod.get_value(left_prod_accessor.access_element<Z, Y>()), 2.);
+    EXPECT_EQ(left_prod.get_value(left_prod_accessor.access_element<Z, Z>()), 14.);
 }
