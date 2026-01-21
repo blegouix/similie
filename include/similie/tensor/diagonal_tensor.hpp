@@ -85,7 +85,7 @@ struct TensorDiagonalIndex
             Elem elem)
     {
         if (elem.template uid<Id>() == 0) {
-            return detail::static_zero<typename Tensor::element_type>;
+            return ::sil::detail::static_zero<typename Tensor::element_type>;
         } else {
             return access(tensor, elem);
         }

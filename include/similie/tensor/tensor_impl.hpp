@@ -473,7 +473,7 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
                                                     ddc::DiscreteElement<IndexHead...>(elem_),
                                                     ddc::DiscreteElement<IndexInterest>(mem_id));
                                         } else {
-                                            return detail::static_one<
+                                            return ::sil::detail::static_one<
                                                     typename TensorField::element_type>;
                                         }
                                     } else {
@@ -499,11 +499,11 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
                                                                                           1>(
                                                                            mem_lin_comb)[i]));
                                             }
-                                            return detail::static_value<
+                                            return ::sil::detail::static_value<
                                                     typename TensorField::element_type>(
                                                     tensor_field_value);
                                         } else {
-                                            return detail::static_one<
+                                            return ::sil::detail::static_one<
                                                     typename TensorField::element_type>;
                                         }
                                     }

@@ -89,11 +89,11 @@ struct TensorLeviCivitaIndex
             Elem elem)
     {
         if (elem.template uid<Id>() == 0) {
-            return detail::static_zero<typename Tensor::element_type>;
+            return ::sil::detail::static_zero<typename Tensor::element_type>;
         } else if (elem.template uid<Id>() == 1) {
             return access(tensor, elem);
         } else {
-            return detail::static_value<typename Tensor::element_type>(
+            return ::sil::detail::static_value<typename Tensor::element_type>(
                     -access(tensor, elem));
         }
     }
