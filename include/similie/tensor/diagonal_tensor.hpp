@@ -82,7 +82,7 @@ struct TensorDiagonalIndex
     process_access(const FunctorType& access, Tensor tensor, Elem elem)
     {
         if (elem.template uid<Id>() == 0) {
-            return ::sil::detail::static_zero<typename Tensor::element_type>;
+            return ::sil::detail::static_zero<typename Tensor::element_type>();
         } else {
             return access(tensor, elem);
         }

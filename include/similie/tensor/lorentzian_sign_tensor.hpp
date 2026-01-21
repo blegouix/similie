@@ -81,7 +81,7 @@ struct TensorLorentzianSignIndex
     process_access(const FunctorType& access, Tensor tensor, Elem elem)
     {
         if (elem.template uid<Id>() == 0) {
-            return ::sil::detail::static_zero<typename Tensor::element_type>;
+            return ::sil::detail::static_zero<typename Tensor::element_type>();
         } else if (elem.template uid<Id>() == 1) {
             return ::sil::detail::static_value<typename Tensor::element_type>(
                     -access(tensor, elem));

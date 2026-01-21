@@ -148,7 +148,7 @@ public:
             return access(tensor, elem);
         } else {
             if (elem.template uid<Id>() == 0) {
-                return ::sil::detail::static_zero<typename Tensor::element_type>;
+                return ::sil::detail::static_zero<typename Tensor::element_type>();
             } else if (elem.template uid<Id>() < access_size()) {
                 return access(tensor, elem);
             } else {
