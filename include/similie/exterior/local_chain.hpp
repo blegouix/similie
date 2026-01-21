@@ -357,20 +357,19 @@ public:
 
 template <class Head, misc::NotSpecialization<ddc::DiscreteVector>... Tail>
 LocalChain(Head, Tail...) -> LocalChain<
-                                  ddc::type_seq_element_t<0, ddc::detail::TypeSeq<Tail...>>,
-                                  typename Head::array_layout,
-                                  typename Head::memory_space>;
+        ddc::type_seq_element_t<0, ddc::detail::TypeSeq<Tail...>>,
+        typename Head::array_layout,
+        typename Head::memory_space>;
 
 template <class Head, misc::Specialization<ddc::DiscreteVector>... Tail>
-LocalChain(Head, Tail...)
-        -> LocalChain<
-                decltype(Simplex(
-                        misc::convert_type_seq_to_t<
-                                ddc::DiscreteElement,
-                                ddc::to_type_seq_t<typename Head::value_type>>(),
-                        ddc::type_seq_element_t<0, ddc::detail::TypeSeq<Tail...>>())),
-                typename Head::array_layout,
-                typename Head::memory_space>;
+LocalChain(Head, Tail...) -> LocalChain<
+        decltype(Simplex(
+                misc::convert_type_seq_to_t<
+                        ddc::DiscreteElement,
+                        ddc::to_type_seq_t<typename Head::value_type>>(),
+                ddc::type_seq_element_t<0, ddc::detail::TypeSeq<Tail...>>())),
+        typename Head::array_layout,
+        typename Head::memory_space>;
 
 namespace detail {
 

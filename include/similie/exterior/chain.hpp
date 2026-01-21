@@ -296,9 +296,9 @@ public:
 
 template <class Head, class... Tail>
 Chain(Head, Tail...) -> Chain<
-                             typename Head::value_type,
-                             typename Head::array_layout,
-                             typename Head::memory_space>;
+        typename Head::value_type,
+        typename Head::array_layout,
+        typename Head::memory_space>;
 
 template <misc::Specialization<Chain> ChainType>
 std::ostream& operator<<(std::ostream& out, ChainType const& chain)

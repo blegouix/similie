@@ -13,12 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: DoozyX/clang-format-lint-action@v0.18
+    - uses: DoozyX/clang-format-lint-action@v0.20
       with:
         source: 'examples/ include/similie/ tests/'
         exclude: ''
         extensions: 'hpp,cpp'
-        clangFormatVersion: 18
+        clangFormatVersion: 20
     - name: Prefer 'if defined' over 'ifdef'
       run: if grep -R "ifdef" examples/ include/similie/ tests/; then exit 1; fi
     - name: Find modifications of Kokkos reserved macros

@@ -1203,7 +1203,7 @@ struct ArrayToString<std::index_sequence<RowId...>>
     static constexpr auto run(Tuple const tableau)
     {
         return concatenate(
-                RowToString<RowId != sizeof...(RowId) - 1>::run(std::get<RowId>(tableau))...);
+                RowToString < RowId != sizeof...(RowId) - 1 > ::run(std::get<RowId>(tableau))...);
     }
 };
 

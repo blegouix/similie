@@ -212,9 +212,8 @@ template <class... Tag, class... T>
 Simplex(ddc::DiscreteElement<Tag...>, ddc::DiscreteVector<T...>) -> Simplex<sizeof...(T), Tag...>;
 
 template <class... Tag, class... T>
-Simplex(ddc::DiscreteElement<Tag...>,
-        ddc::DiscreteVector<T...>,
-        bool) -> Simplex<sizeof...(T), Tag...>;
+Simplex(ddc::DiscreteElement<Tag...>, ddc::DiscreteVector<T...>, bool)
+        -> Simplex<sizeof...(T), Tag...>;
 
 namespace detail {
 
