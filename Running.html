@@ -147,10 +147,10 @@ Dependencies</h1>
 Compilation</h1>
 <p>First, be sure to have a full install of FFTW, LAPACKE, Ginkgo and PDI. Then clone the main branch of the <a href="https://github.com/blegouix/similie">github repo</a> and populate the other dependencies with:</p>
 <div class="fragment"><div class="line">git clone --recurse-submodules git@github.com:blegouix/similie.git</div>
-</div><!-- fragment --><p>Make a <code>build/</code> folder, <code>cd build/</code> and run the command:</p>
-<div class="fragment"><div class="line">cmake -DCMAKE_CXX_COMPILER=g++-13 -DCMAKE_BUILD_TYPE=Debug -DKokkos_ENABLE_OPENMP=ON ..</div>
+</div><!-- fragment --><p>Run the <code>CMake</code>command:</p>
+<div class="fragment"><div class="line">cmake -DCMAKE_CXX_COMPILER=g++-13 -DCMAKE_BUILD_TYPE=Debug -DKokkos_ENABLE_OPENMP=ON -B build -S .</div>
 </div><!-- fragment --><p>for CPU compilation or:</p>
-<div class="fragment"><div class="line">cmake -DCMAKE_CXX_COMPILER=../vendor/ddc/vendor/kokkos/bin/nvcc_wrapper -DCMAKE_BUILD_TYPE=Debug -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_&lt;YOUR_ARCH_NAMECODE&gt;=ON ..</div>
+<div class="fragment"><div class="line">cmake -DCMAKE_CXX_COMPILER=$PWD/vendor/ddc/vendor/kokkos/bin/nvcc_wrapper -DCMAKE_BUILD_TYPE=Debug -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_&lt;YOUR_ARCH_NAMECODE&gt;=ON -B similie/build -S similie</div>
 </div><!-- fragment --><p>for Nvidia GPU compilation. <code>&lt;YOUR_ARCH_NAMECODE&gt;</code> must be replaced with a hardware-specific namecode that you will find <a href="https://kokkos.org/kokkos-core-wiki/keywords.html#architectures">here</a>.</p>
 <dl class="section important"><dt>Important</dt><dd>Debug mode is strongly recommended during development because a lot of assertions guarantee the correct usage of library. Running in Release mode without having checked first the proper execution in Debug mode may result to silent bugs. Release mode is of course required at a later stage to get full performance.</dd></dl>
 <p>You can then edit the configuration with <code>ccmake .</code>. Please refer to the documentations of Kokkos and DDC for their respective cmake compilation flags.</p>
