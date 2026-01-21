@@ -34,16 +34,16 @@ First, be sure to have a full install of FFTW, LAPACKE, Ginkgo and PDI. Then clo
 git clone --recurse-submodules git@github.com:blegouix/similie.git
 ```
 
-Make a `build/` folder, `cd build/` and run the command:
+Run the `CMake`command:
 
 ```
-cmake -DCMAKE_CXX_COMPILER=g++-13 -DCMAKE_BUILD_TYPE=Debug -DKokkos_ENABLE_OPENMP=ON ..
+cmake -DCMAKE_CXX_COMPILER=g++-13 -DCMAKE_BUILD_TYPE=Debug -DKokkos_ENABLE_OPENMP=ON -B build -S .
 ```
 
 for CPU compilation or:
 
 ```
-cmake -DCMAKE_CXX_COMPILER=../vendor/ddc/vendor/kokkos/bin/nvcc_wrapper -DCMAKE_BUILD_TYPE=Debug -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_<YOUR_ARCH_NAMECODE>=ON ..
+cmake -DCMAKE_CXX_COMPILER=$PWD/vendor/ddc/vendor/kokkos/bin/nvcc_wrapper -DCMAKE_BUILD_TYPE=Debug -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_<YOUR_ARCH_NAMECODE>=ON -B similie/build -S similie
 ```
 
 for Nvidia GPU compilation. `<YOUR_ARCH_NAMECODE>` must be replaced with a hardware-specific namecode that you will find [here](https://kokkos.org/kokkos-core-wiki/keywords.html#architectures).
