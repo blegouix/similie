@@ -14,10 +14,20 @@
 namespace sil::detail {
 
 template <class ElementType>
-inline constexpr ElementType static_zero = ElementType(0);
+KOKKOS_FUNCTION SIL_CONSTEXPR_IF_CXX23 inline ElementType const& static_zero()
+{
+    static ElementType storage {};
+    storage = ElementType(0);
+    return storage;
+}
 
 template <class ElementType>
-inline constexpr ElementType static_one = ElementType(1);
+KOKKOS_FUNCTION SIL_CONSTEXPR_IF_CXX23 inline ElementType const& static_one()
+{
+    static ElementType storage {};
+    storage = ElementType(1);
+    return storage;
+}
 
 template <class ElementType>
 KOKKOS_FUNCTION SIL_CONSTEXPR_IF_CXX23 inline ElementType const& static_value(ElementType value)
