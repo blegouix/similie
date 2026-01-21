@@ -74,10 +74,7 @@ struct TensorIdentityIndex
 
     template <class Tensor, class Elem, class Id, class FunctorType>
     KOKKOS_FUNCTION static SIL_CONSTEXPR_IF_CXX23 typename Tensor::element_type const&
-    process_access(
-            const FunctorType& access,
-            Tensor tensor,
-            Elem elem)
+    process_access(const FunctorType& access, Tensor tensor, Elem elem)
     {
         if (elem.template uid<Id>() == 0) {
             return ::sil::detail::static_zero<typename Tensor::element_type>;

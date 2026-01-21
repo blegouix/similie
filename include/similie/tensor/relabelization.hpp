@@ -25,8 +25,7 @@ struct RelabelizeIndex<IndexToRelabelize, OldIndex, NewIndex>
 };
 
 template <
-        template <class...>
-        class IndexToRelabelizeType,
+        template <class...> class IndexToRelabelizeType,
         TensorIndex OldIndex,
         TensorIndex NewIndex,
         class... Arg>

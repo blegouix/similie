@@ -251,8 +251,9 @@ struct FillMetricProd<
             ddc::parallel_for_each(
                     exec_space,
                     new_metric_prod_.non_indices_domain(),
-                    KOKKOS_LAMBDA(typename decltype(new_metric_prod_)::non_indices_domain_t::
-                                          discrete_element_type elem) {
+                    KOKKOS_LAMBDA(
+                            typename decltype(new_metric_prod_)::non_indices_domain_t::
+                                    discrete_element_type elem) {
                         tensor_prod(
                                 new_metric_prod_[elem],
                                 metric_prod_[elem],
@@ -415,12 +416,13 @@ invert_metric_t<MetricType> fill_inverse_metric(
                 KOKKOS_LAMBDA(invert_metric_t<MetricType>::discrete_element_type elem) {
                     inv_metric.mem(elem)
                             = 1.
-                              / metric.mem(relabelize_indices_in<
-                                           swap_character_t<ddc::to_type_seq_t<
-                                                   typename MetricType::accessor_t::
-                                                           natural_domain_t>>,
-                                           ddc::to_type_seq_t<typename MetricType::accessor_t::
-                                                                      natural_domain_t>>(elem));
+                              / metric.mem(
+                                      relabelize_indices_in<
+                                              swap_character_t<ddc::to_type_seq_t<
+                                                      typename MetricType::accessor_t::
+                                                              natural_domain_t>>,
+                                              ddc::to_type_seq_t<typename MetricType::accessor_t::
+                                                                         natural_domain_t>>(elem));
                 });
     } else if (misc::Specialization<MetricIndex, TensorSymmetricIndex>) {
         // Allocate a buffer mirroring the metric as a full matrix
@@ -458,8 +460,9 @@ invert_metric_t<MetricType> fill_inverse_metric(
         ddc::parallel_for_each(
                 exec_space,
                 inv_metric.non_indices_domain(),
-                KOKKOS_LAMBDA(typename invert_metric_t<
-                              MetricType>::non_indices_domain_t::discrete_element_type elem) {
+                KOKKOS_LAMBDA(
+                        typename invert_metric_t<
+                                MetricType>::non_indices_domain_t::discrete_element_type elem) {
                     ddc::annotated_for_each(
                             ddc::DiscreteDomain<
                                     tensor::metric_index_1<MetricIndex>,

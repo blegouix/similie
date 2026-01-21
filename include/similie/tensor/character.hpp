@@ -309,8 +309,7 @@ template <class T1, class T2>
 struct AreSameCharacters;
 
 template <
-        template <TensorNatIndex...>
-        class T,
+        template <TensorNatIndex...> class T,
         TensorNatIndex HeadIndex1,
         TensorNatIndex... TailIndex1,
         TensorNatIndex HeadIndex2,
@@ -338,8 +337,7 @@ struct AreDifferentCharacters<T<>, T<>>
 };
 
 template <
-        template <TensorNatIndex...>
-        class T,
+        template <TensorNatIndex...> class T,
         TensorNatIndex HeadIndex1,
         TensorNatIndex... TailIndex1,
         TensorNatIndex HeadIndex2,

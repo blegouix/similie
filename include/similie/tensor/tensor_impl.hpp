@@ -83,10 +83,7 @@ struct TensorNaturalIndex
 
     template <class Tensor, class Elem, class Id, class FunctorType>
     KOKKOS_FUNCTION static SIL_CONSTEXPR_IF_CXX23 typename Tensor::element_type const&
-    process_access(
-            const FunctorType& access,
-            Tensor tensor,
-            Elem elem)
+    process_access(const FunctorType& access, Tensor tensor, Elem elem)
     {
         return access(tensor, elem);
     }
@@ -202,13 +199,14 @@ struct IdFromTypeSeqDims<Index, ddc::DiscreteDomain<Subindex...>, ddc::detail::T
             return Index::access_id(
                     ddc::type_seq_rank_v<CDim, typename Index::type_seq_dimensions>...);
         } else {
-            return Index::access_id(std::array<
-                                    std::size_t,
-                                    sizeof...(Subindex)> {ddc::type_seq_rank_v<
-                    typename ddc::type_seq_element_t<
-                            ddc::type_seq_rank_v<Subindex, ddc::detail::TypeSeq<Subindex...>>,
-                            ddc::detail::TypeSeq<CDim...>>,
-                    typename Subindex::type_seq_dimensions>...});
+            return Index::access_id(
+                    std::array<std::size_t, sizeof...(Subindex)> {ddc::type_seq_rank_v<
+                            typename ddc::type_seq_element_t<
+                                    ddc::type_seq_rank_v<
+                                            Subindex,
+                                            ddc::detail::TypeSeq<Subindex...>>,
+                                    ddc::detail::TypeSeq<CDim...>>,
+                            typename Subindex::type_seq_dimensions>...});
         }
     }
 };
@@ -250,8 +248,9 @@ struct IdFromElem<Index, ddc::DiscreteDomain<Subindex...>>
         if constexpr (TensorNatIndex<Index>) {
             return Index::access_id(natural_elem.template uid<Index>());
         } else {
-            return Index::access_id(std::array<std::size_t, sizeof...(Subindex)> {
-                    natural_elem.template uid<Subindex>()...});
+            return Index::access_id(
+                    std::array<std::size_t, sizeof...(Subindex)> {
+                            natural_elem.template uid<Subindex>()...});
         }
     }
 };
@@ -463,51 +462,47 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
             if constexpr (TensorIndex<IndexInterest>) {
                 return IndexInterest::template process_access<TensorField, Elem, IndexInterest>(
                         KOKKOS_LAMBDA(TensorField tensor_field_, Elem elem_)
-                                ->typename TensorField::element_type const& {
-                                    if constexpr (IndexInterest::is_explicitely_stored_tensor) {
-                                        std::size_t const mem_id
-                                                = IndexInterest::access_id_to_mem_id(
-                                                        elem_.template uid<IndexInterest>());
-                                        if (mem_id != std::numeric_limits<std::size_t>::max()) {
-                                            return tensor_field_.mem(
-                                                    ddc::DiscreteElement<IndexHead...>(elem_),
-                                                    ddc::DiscreteElement<IndexInterest>(mem_id));
-                                        } else {
-                                            return ::sil::detail::static_one<
-                                                    typename TensorField::element_type>;
-                                        }
-                                    } else {
-                                        std::pair<
-                                                std::vector<double>,
-                                                std::vector<std::size_t>> const mem_lin_comb
-                                                = IndexInterest::access_id_to_mem_lin_comb(
-                                                        elem_.template uid<IndexInterest>());
+                                ->
+                        typename TensorField::element_type const& {
+                            if constexpr (IndexInterest::is_explicitely_stored_tensor) {
+                                std::size_t const mem_id = IndexInterest::access_id_to_mem_id(
+                                        elem_.template uid<IndexInterest>());
+                                if (mem_id != std::numeric_limits<std::size_t>::max()) {
+                                    return tensor_field_
+                                            .mem(ddc::DiscreteElement<IndexHead...>(elem_),
+                                                 ddc::DiscreteElement<IndexInterest>(mem_id));
+                                } else {
+                                    return ::sil::detail::static_one<
+                                            typename TensorField::element_type>;
+                                }
+                            } else {
+                                std::pair<std::vector<double>, std::vector<std::size_t>> const
+                                        mem_lin_comb
+                                        = IndexInterest::access_id_to_mem_lin_comb(
+                                                elem_.template uid<IndexInterest>());
 
-                                        if (std::get<0>(mem_lin_comb).size() > 0) {
-                                            typename TensorField::element_type tensor_field_value =
-                                                    0;
-                                            for (std::size_t i = 0;
-                                                 i < std::get<0>(mem_lin_comb).size();
-                                                 ++i) {
-                                                tensor_field_value
-                                                        += std::get<0>(mem_lin_comb)[i]
-                                                           * tensor_field_.mem(
-                                                                   ddc::DiscreteElement<
-                                                                           IndexHead...>(elem_),
-                                                                   ddc::DiscreteElement<
-                                                                           IndexInterest>(std::get<
-                                                                                          1>(
-                                                                           mem_lin_comb)[i]));
-                                            }
-                                            return ::sil::detail::static_value<
-                                                    typename TensorField::element_type>(
-                                                    tensor_field_value);
-                                        } else {
-                                            return ::sil::detail::static_one<
-                                                    typename TensorField::element_type>;
-                                        }
+                                if (std::get<0>(mem_lin_comb).size() > 0) {
+                                    typename TensorField::element_type tensor_field_value = 0;
+                                    for (std::size_t i = 0; i < std::get<0>(mem_lin_comb).size();
+                                         ++i) {
+                                        tensor_field_value
+                                                += std::get<0>(mem_lin_comb)[i]
+                                                   * tensor_field_
+                                                             .mem(ddc::DiscreteElement<
+                                                                          IndexHead...>(elem_),
+                                                                  ddc::DiscreteElement<
+                                                                          IndexInterest>(std::get<
+                                                                                         1>(
+                                                                          mem_lin_comb)[i]));
                                     }
-                                },
+                                    return ::sil::detail::static_value<
+                                            typename TensorField::element_type>(tensor_field_value);
+                                } else {
+                                    return ::sil::detail::static_one<
+                                            typename TensorField::element_type>;
+                                }
+                            }
+                        },
                         tensor_field,
                         elem);
             } else {
@@ -605,11 +600,12 @@ public:
     using base_type::domain;
     using base_type::operator();
 
-    KOKKOS_FUNCTION constexpr explicit Tensor(ddc::ChunkSpan<
-                                              ElementType,
-                                              ddc::DiscreteDomain<DDim...>,
-                                              LayoutStridedPolicy,
-                                              MemorySpace> other) noexcept
+    KOKKOS_FUNCTION constexpr explicit Tensor(
+            ddc::ChunkSpan<
+                    ElementType,
+                    ddc::DiscreteDomain<DDim...>,
+                    LayoutStridedPolicy,
+                    MemorySpace> other) noexcept
         : base_type(other)
     {
     }
@@ -687,7 +683,8 @@ public:
                 ElementType,
                 ddc::DiscreteDomain<DDim...>,
                 LayoutStridedPolicy,
-                MemorySpace>::operator()(delems...);
+                MemorySpace>::
+        operator()(delems...);
     }
 
     template <class... DElems>
