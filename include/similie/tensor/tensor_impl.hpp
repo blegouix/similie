@@ -17,27 +17,18 @@ namespace tensor {
 namespace detail {
 
 template <class ElementType>
-struct StaticValue
+inline constexpr ElementType tensor_zero_v = ElementType(0);
+
+template <class ElementType>
+inline constexpr ElementType tensor_one_v = ElementType(1);
+
+template <class ElementType>
+KOKKOS_FUNCTION inline ElementType const& tensor_store_value(ElementType value)
 {
-    KOKKOS_FUNCTION static constexpr ElementType const& zero()
-    {
-        static constexpr ElementType value = ElementType(0);
-        return value;
-    }
-
-    KOKKOS_FUNCTION static constexpr ElementType const& one()
-    {
-        static constexpr ElementType value = ElementType(1);
-        return value;
-    }
-
-    KOKKOS_FUNCTION static ElementType const& from_value(ElementType value)
-    {
-        static ElementType storage {};
-        storage = value;
-        return storage;
-    }
-};
+    static ElementType storage {};
+    storage = value;
+    return storage;
+}
 
 } // namespace detail
 
@@ -108,7 +99,7 @@ struct TensorNaturalIndex
     }
 
     template <class Tensor, class Elem, class Id, class FunctorType>
-    KOKKOS_FUNCTION static typename Tensor::element_type const& process_access(
+    KOKKOS_FUNCTION static constexpr typename Tensor::element_type const& process_access(
             const FunctorType& access,
             Tensor tensor,
             Elem elem)
@@ -498,8 +489,8 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
                                                     ddc::DiscreteElement<IndexHead...>(elem_),
                                                     ddc::DiscreteElement<IndexInterest>(mem_id));
                                         } else {
-                                            return StaticValue<
-                                                    typename TensorField::element_type>::one();
+                                            return detail::tensor_one_v<
+                                                    typename TensorField::element_type>;
                                         }
                                     } else {
                                         std::pair<
@@ -524,12 +515,12 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
                                                                                           1>(
                                                                            mem_lin_comb)[i]));
                                             }
-                                            return StaticValue<
-                                                    typename TensorField::element_type>::
-                                                    from_value(tensor_field_value);
+                                            return detail::tensor_store_value<
+                                                    typename TensorField::element_type>(
+                                                    tensor_field_value);
                                         } else {
-                                            return StaticValue<
-                                                    typename TensorField::element_type>::one();
+                                            return detail::tensor_one_v<
+                                                    typename TensorField::element_type>;
                                         }
                                     }
                                 },

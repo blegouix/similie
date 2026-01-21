@@ -83,9 +83,9 @@ struct TensorLorentzianSignIndex
             Elem elem)
     {
         if (elem.template uid<Id>() == 0) {
-            return detail::StaticValue<typename Tensor::element_type>::zero();
+            return detail::tensor_zero_v<typename Tensor::element_type>;
         } else if (elem.template uid<Id>() == 1) {
-            return detail::StaticValue<typename Tensor::element_type>::from_value(
+            return detail::tensor_store_value<typename Tensor::element_type>(
                     -access(tensor, elem));
         } else {
             return access(tensor, elem);

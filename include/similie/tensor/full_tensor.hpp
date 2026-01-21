@@ -88,7 +88,7 @@ struct TensorFullIndex
     }
 
     template <class Tensor, class Elem, class Id, class FunctorType>
-    KOKKOS_FUNCTION static typename Tensor::element_type const& process_access(
+    KOKKOS_FUNCTION static constexpr typename Tensor::element_type const& process_access(
             const FunctorType& access,
             Tensor tensor,
             Elem elem)

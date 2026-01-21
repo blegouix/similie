@@ -73,13 +73,13 @@ struct TensorIdentityIndex
     }
 
     template <class Tensor, class Elem, class Id, class FunctorType>
-    KOKKOS_FUNCTION static typename Tensor::element_type const& process_access(
+    KOKKOS_FUNCTION static constexpr typename Tensor::element_type const& process_access(
             const FunctorType& access,
             Tensor tensor,
             Elem elem)
     {
         if (elem.template uid<Id>() == 0) {
-            return detail::StaticValue<typename Tensor::element_type>::zero();
+            return detail::tensor_zero_v<typename Tensor::element_type>;
         } else {
             return access(tensor, elem);
         }
