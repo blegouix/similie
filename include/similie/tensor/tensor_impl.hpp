@@ -9,28 +9,11 @@
 
 #include <similie/misc/portable_stl.hpp>
 #include <similie/misc/specialization.hpp>
+#include <similie/misc/static_values.hpp>
 
 namespace sil {
 
 namespace tensor {
-
-namespace detail {
-
-template <class ElementType>
-inline constexpr ElementType tensor_zero_v = ElementType(0);
-
-template <class ElementType>
-inline constexpr ElementType tensor_one_v = ElementType(1);
-
-template <class ElementType>
-KOKKOS_FUNCTION inline ElementType const& tensor_store_value(ElementType value)
-{
-    static ElementType storage {};
-    storage = value;
-    return storage;
-}
-
-} // namespace detail
 
 // struct representing an index mu or nu in a tensor Tmunu.
 template <class... CDim>
@@ -99,7 +82,8 @@ struct TensorNaturalIndex
     }
 
     template <class Tensor, class Elem, class Id, class FunctorType>
-    KOKKOS_FUNCTION static constexpr typename Tensor::element_type const& process_access(
+    KOKKOS_FUNCTION static SIL_CONSTEXPR_IF_CXX23 typename Tensor::element_type const&
+    process_access(
             const FunctorType& access,
             Tensor tensor,
             Elem elem)
@@ -489,7 +473,7 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
                                                     ddc::DiscreteElement<IndexHead...>(elem_),
                                                     ddc::DiscreteElement<IndexInterest>(mem_id));
                                         } else {
-                                            return detail::tensor_one_v<
+                                            return detail::static_one<
                                                     typename TensorField::element_type>;
                                         }
                                     } else {
@@ -515,11 +499,11 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
                                                                                           1>(
                                                                            mem_lin_comb)[i]));
                                             }
-                                            return detail::tensor_store_value<
+                                            return detail::static_value<
                                                     typename TensorField::element_type>(
                                                     tensor_field_value);
                                         } else {
-                                            return detail::tensor_one_v<
+                                            return detail::static_one<
                                                     typename TensorField::element_type>;
                                         }
                                     }

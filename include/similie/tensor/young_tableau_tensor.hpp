@@ -117,7 +117,8 @@ struct TensorYoungTableauIndex
     }
 
     template <class Tensor, class Elem, class Id, class FunctorType>
-    KOKKOS_FUNCTION static constexpr typename Tensor::element_type const& process_access(
+    KOKKOS_FUNCTION static SIL_CONSTEXPR_IF_CXX23 typename Tensor::element_type const&
+    process_access(
             const FunctorType& access,
             Tensor tensor,
             Elem elem)
