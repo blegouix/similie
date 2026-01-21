@@ -329,10 +329,11 @@ int main(int argc, char** argv)
 
         // Export HDF5 and XDMF
         std::cout << "Potential center = "
-                  << potential(ddc::DiscreteElement<DDimX, DDimY, DummyIndex>(
-                             potential.extent<DDimX>() / 2,
-                             potential.extent<DDimY>() / 2,
-                             0))
+                  << potential(
+                             ddc::DiscreteElement<DDimX, DDimY, DummyIndex>(
+                                     potential.extent<DDimX>() / 2,
+                                     potential.extent<DDimY>() / 2,
+                                     0))
                   << std::endl;
         if (i % nb_iter_between_exports == 0) {
             ddc::PdiEvent("export")

@@ -212,11 +212,10 @@ public:
 };
 
 template <class ChainType, misc::Specialization<tensor::Tensor> TensorType>
-Cochain(ChainType, TensorType)
-        -> Cochain<
-                ChainType,
-                typename TensorType::value_type,
-                ddc::detail::mdspan_to_kokkos_layout_t<typename TensorType::layout_type>>;
+Cochain(ChainType, TensorType) -> Cochain<
+        ChainType,
+        typename TensorType::value_type,
+        ddc::detail::mdspan_to_kokkos_layout_t<typename TensorType::layout_type>>;
 
 template <typename CochainType>
 class CochainIterator

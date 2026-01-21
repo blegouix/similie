@@ -65,11 +65,12 @@ public:
         return m_values;
     }
 
-    void push_back(sil::tensor::Tensor<
-                   double,
-                   ddc::DiscreteDomain<TailTensorIndex...>,
-                   Kokkos::layout_right,
-                   Kokkos::DefaultHostExecutionSpace::memory_space> dense)
+    void push_back(
+            sil::tensor::Tensor<
+                    double,
+                    ddc::DiscreteDomain<TailTensorIndex...>,
+                    Kokkos::layout_right,
+                    Kokkos::DefaultHostExecutionSpace::memory_space> dense)
     {
         m_coalesc_idx.push_back(m_coalesc_idx.back());
         ddc::for_each(dense.domain(), [&](ddc::DiscreteElement<TailTensorIndex...> elem) {
