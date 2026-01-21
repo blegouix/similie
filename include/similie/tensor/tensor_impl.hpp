@@ -14,6 +14,33 @@ namespace sil {
 
 namespace tensor {
 
+namespace detail {
+
+template <class ElementType>
+struct StaticValue
+{
+    KOKKOS_FUNCTION static constexpr ElementType const& zero()
+    {
+        static constexpr ElementType value = ElementType(0);
+        return value;
+    }
+
+    KOKKOS_FUNCTION static constexpr ElementType const& one()
+    {
+        static constexpr ElementType value = ElementType(1);
+        return value;
+    }
+
+    KOKKOS_FUNCTION static ElementType const& from_value(ElementType value)
+    {
+        static ElementType storage {};
+        storage = value;
+        return storage;
+    }
+};
+
+} // namespace detail
+
 // struct representing an index mu or nu in a tensor Tmunu.
 template <class... CDim>
 struct TensorNaturalIndex
@@ -81,7 +108,7 @@ struct TensorNaturalIndex
     }
 
     template <class Tensor, class Elem, class Id, class FunctorType>
-    KOKKOS_FUNCTION static constexpr Tensor::element_type process_access(
+    KOKKOS_FUNCTION static typename Tensor::element_type const& process_access(
             const FunctorType& access,
             Tensor tensor,
             Elem elem)
@@ -427,7 +454,9 @@ template <
 struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInterest, IndexTail...>
 {
     template <class Elem>
-    KOKKOS_FUNCTION static TensorField::element_type run(TensorField tensor_field, Elem const& elem)
+    KOKKOS_FUNCTION static typename TensorField::element_type const& run(
+            TensorField tensor_field,
+            Elem const& elem)
     {
         /*
          ----- Important warning -----
@@ -439,7 +468,7 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
             if constexpr (TensorIndex<IndexInterest>) {
                 return IndexInterest::template process_access<TensorField, Elem, IndexInterest>(
                         KOKKOS_LAMBDA(TensorField tensor_field_, Elem elem_)
-                                ->TensorField::element_type {
+                                ->typename TensorField::element_type const& {
                                     return Access<
                                             TensorField,
                                             Element,
@@ -459,21 +488,18 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
             if constexpr (TensorIndex<IndexInterest>) {
                 return IndexInterest::template process_access<TensorField, Elem, IndexInterest>(
                         KOKKOS_LAMBDA(TensorField tensor_field_, Elem elem_)
-                                ->TensorField::element_type {
-                                    double tensor_field_value = 0;
+                                ->typename TensorField::element_type const& {
                                     if constexpr (IndexInterest::is_explicitely_stored_tensor) {
                                         std::size_t const mem_id
                                                 = IndexInterest::access_id_to_mem_id(
                                                         elem_.template uid<IndexInterest>());
                                         if (mem_id != std::numeric_limits<std::size_t>::max()) {
-                                            tensor_field_value
-                                                    = tensor_field_
-                                                              .mem(ddc::DiscreteElement<
-                                                                           IndexHead...>(elem_),
-                                                                   ddc::DiscreteElement<
-                                                                           IndexInterest>(mem_id));
+                                            return tensor_field_.mem(
+                                                    ddc::DiscreteElement<IndexHead...>(elem_),
+                                                    ddc::DiscreteElement<IndexInterest>(mem_id));
                                         } else {
-                                            tensor_field_value = 1.;
+                                            return StaticValue<
+                                                    typename TensorField::element_type>::one();
                                         }
                                     } else {
                                         std::pair<
@@ -483,6 +509,8 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
                                                         elem_.template uid<IndexInterest>());
 
                                         if (std::get<0>(mem_lin_comb).size() > 0) {
+                                            typename TensorField::element_type tensor_field_value =
+                                                    0;
                                             for (std::size_t i = 0;
                                                  i < std::get<0>(mem_lin_comb).size();
                                                  ++i) {
@@ -496,12 +524,14 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
                                                                                           1>(
                                                                            mem_lin_comb)[i]));
                                             }
+                                            return StaticValue<
+                                                    typename TensorField::element_type>::
+                                                    from_value(tensor_field_value);
                                         } else {
-                                            tensor_field_value = 1.;
+                                            return StaticValue<
+                                                    typename TensorField::element_type>::one();
                                         }
                                     }
-
-                                    return tensor_field_value;
                                 },
                         tensor_field,
                         elem);
@@ -718,7 +748,7 @@ public:
     }
 
     template <class... DElems>
-    KOKKOS_FUNCTION ElementType get(DElems const&... delems) const noexcept
+    KOKKOS_FUNCTION ElementType const& get(DElems const&... delems) const noexcept
     {
         if constexpr (sizeof...(DDim) == 0) {
             return operator()(delems...);
