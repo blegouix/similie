@@ -367,42 +367,41 @@ $(function(){initNavTree('simplex_8hpp_source.html',''); initResizable(true); })
 <div class="line"><a id="l00212" name="l00212"></a><span class="lineno"><a class="line" href="namespacesil_1_1exterior.html#a19dd94e9180327a407f012154b3c2bc4">  212</a></span><a class="code hl_function" href="namespacesil_1_1exterior.html#a19dd94e9180327a407f012154b3c2bc4">Simplex</a>(ddc::DiscreteElement&lt;Tag...&gt;, ddc::DiscreteVector&lt;T...&gt;) -&gt; <a class="code hl_class" href="classsil_1_1exterior_1_1Simplex.html">Simplex</a>&lt;<span class="keyword">sizeof</span>...(T), Tag...&gt;;</div>
 <div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span> </div>
 <div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span><span class="keyword">template</span> &lt;<span class="keyword">class</span>... Tag, <span class="keyword">class</span>... T&gt;</div>
-<div class="line"><a id="l00215" name="l00215"></a><span class="lineno"><a class="line" href="namespacesil_1_1exterior.html#a0f1e1f80c56429b7ed438a0ab465cb37">  215</a></span><a class="code hl_function" href="namespacesil_1_1exterior.html#a19dd94e9180327a407f012154b3c2bc4">Simplex</a>(ddc::DiscreteElement&lt;Tag...&gt;,</div>
-<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span>        ddc::DiscreteVector&lt;T...&gt;,</div>
-<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span>        <span class="keywordtype">bool</span>) -&gt; <a class="code hl_class" href="classsil_1_1exterior_1_1Simplex.html">Simplex</a>&lt;<span class="keyword">sizeof</span>...(T), Tag...&gt;;</div>
-<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span> </div>
-<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span><span class="keyword">namespace </span>detail {</div>
-<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span> </div>
-<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span><span class="keyword">template</span> &lt;std::<span class="keywordtype">size_t</span> K, <span class="keyword">class</span> Dom&gt;</div>
-<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span><span class="keyword">struct </span>SimplexForDomain;</div>
-<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span> </div>
-<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span><span class="keyword">template</span> &lt;std::size_t K, <span class="keyword">class</span>... Tag&gt;</div>
-<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span><span class="keyword">struct </span>SimplexForDomain&lt;K, ddc::DiscreteDomain&lt;Tag...&gt;&gt;</div>
-<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span>{</div>
-<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span>    <span class="keyword">using </span>type = <a class="code hl_class" href="classsil_1_1exterior_1_1Simplex.html">Simplex</a>&lt;K, Tag...&gt;;</div>
-<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span>};</div>
-<div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span> </div>
-<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span>} <span class="comment">// namespace detail</span></div>
-<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span> </div>
-<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span><span class="keyword">template</span> &lt;std::<span class="keywordtype">size_t</span> K, <span class="keyword">class</span> Dom&gt;</div>
-<div class="line"><a id="l00233" name="l00233"></a><span class="lineno"><a class="line" href="namespacesil_1_1exterior.html#abaced41367e3e156dc7d8467022b3b94">  233</a></span><span class="keyword">using </span><a class="code hl_typedef" href="namespacesil_1_1exterior.html#abaced41367e3e156dc7d8467022b3b94">simplex_for_domain_t</a> = detail::SimplexForDomain&lt;K, Dom&gt;::type;</div>
-<div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span> </div>
-<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span><span class="keyword">template</span> &lt;std::size_t K, <span class="keyword">class</span>... Tag&gt;</div>
-<div class="foldopen" id="foldopen00236" data-start="{" data-end="}">
-<div class="line"><a id="l00236" name="l00236"></a><span class="lineno"><a class="line" href="namespacesil_1_1exterior.html#a0ff4a1fb1f2e531dc4ed4b58dbcef566">  236</a></span>std::ostream&amp; <a class="code hl_function" href="namespacesil_1_1exterior.html#a04760285452846b449766e33ce145496">operator&lt;&lt;</a>(std::ostream&amp; out, <a class="code hl_class" href="classsil_1_1exterior_1_1Simplex.html">Simplex&lt;K, Tag...&gt;</a> <span class="keyword">const</span>&amp; simplex)</div>
-<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span>{</div>
-<div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span>    out &lt;&lt; <span class="stringliteral">&quot; &quot;</span>;</div>
-<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span>    out &lt;&lt; simplex.<a class="code hl_function" href="classsil_1_1exterior_1_1Simplex.html#a5e856054cececc885df32b8ebfe104b8">discrete_element</a>();</div>
-<div class="line"><a id="l00240" name="l00240"></a><span class="lineno">  240</span>    out &lt;&lt; (simplex.<a class="code hl_function" href="classsil_1_1exterior_1_1Simplex.html#a5bc2f4cd78660d0ba66dddc47c3b0194">negative</a>() ? <span class="stringliteral">&quot; &lt;- &quot;</span> : <span class="stringliteral">&quot; -&gt; &quot;</span>);</div>
-<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span>    out &lt;&lt; simplex.<a class="code hl_function" href="classsil_1_1exterior_1_1Simplex.html#a5e856054cececc885df32b8ebfe104b8">discrete_element</a>() + simplex.<a class="code hl_function" href="classsil_1_1exterior_1_1Simplex.html#ab4058356203285d9d007303407f2d82e">discrete_vector</a>();</div>
-<div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span>    out &lt;&lt; <span class="stringliteral">&quot; &quot;</span>;</div>
-<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span>    <span class="keywordflow">return</span> out;</div>
-<div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span>}</div>
+<div class="line"><a id="l00215" name="l00215"></a><span class="lineno"><a class="line" href="namespacesil_1_1exterior.html#a0f1e1f80c56429b7ed438a0ab465cb37">  215</a></span><a class="code hl_function" href="namespacesil_1_1exterior.html#a19dd94e9180327a407f012154b3c2bc4">Simplex</a>(ddc::DiscreteElement&lt;Tag...&gt;, ddc::DiscreteVector&lt;T...&gt;, <span class="keywordtype">bool</span>)</div>
+<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span>        -&gt; <a class="code hl_class" href="classsil_1_1exterior_1_1Simplex.html">Simplex</a>&lt;<span class="keyword">sizeof</span>...(T), Tag...&gt;;</div>
+<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span> </div>
+<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span><span class="keyword">namespace </span>detail {</div>
+<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span> </div>
+<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span><span class="keyword">template</span> &lt;std::<span class="keywordtype">size_t</span> K, <span class="keyword">class</span> Dom&gt;</div>
+<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span><span class="keyword">struct </span>SimplexForDomain;</div>
+<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span> </div>
+<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span><span class="keyword">template</span> &lt;std::size_t K, <span class="keyword">class</span>... Tag&gt;</div>
+<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span><span class="keyword">struct </span>SimplexForDomain&lt;K, ddc::DiscreteDomain&lt;Tag...&gt;&gt;</div>
+<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span>{</div>
+<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span>    <span class="keyword">using </span>type = <a class="code hl_class" href="classsil_1_1exterior_1_1Simplex.html">Simplex</a>&lt;K, Tag...&gt;;</div>
+<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span>};</div>
+<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span> </div>
+<div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span>} <span class="comment">// namespace detail</span></div>
+<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span> </div>
+<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span><span class="keyword">template</span> &lt;std::<span class="keywordtype">size_t</span> K, <span class="keyword">class</span> Dom&gt;</div>
+<div class="line"><a id="l00232" name="l00232"></a><span class="lineno"><a class="line" href="namespacesil_1_1exterior.html#abaced41367e3e156dc7d8467022b3b94">  232</a></span><span class="keyword">using </span><a class="code hl_typedef" href="namespacesil_1_1exterior.html#abaced41367e3e156dc7d8467022b3b94">simplex_for_domain_t</a> = detail::SimplexForDomain&lt;K, Dom&gt;::type;</div>
+<div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span> </div>
+<div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span><span class="keyword">template</span> &lt;std::size_t K, <span class="keyword">class</span>... Tag&gt;</div>
+<div class="foldopen" id="foldopen00235" data-start="{" data-end="}">
+<div class="line"><a id="l00235" name="l00235"></a><span class="lineno"><a class="line" href="namespacesil_1_1exterior.html#a0ff4a1fb1f2e531dc4ed4b58dbcef566">  235</a></span>std::ostream&amp; <a class="code hl_function" href="namespacesil_1_1exterior.html#a04760285452846b449766e33ce145496">operator&lt;&lt;</a>(std::ostream&amp; out, <a class="code hl_class" href="classsil_1_1exterior_1_1Simplex.html">Simplex&lt;K, Tag...&gt;</a> <span class="keyword">const</span>&amp; simplex)</div>
+<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span>{</div>
+<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span>    out &lt;&lt; <span class="stringliteral">&quot; &quot;</span>;</div>
+<div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span>    out &lt;&lt; simplex.<a class="code hl_function" href="classsil_1_1exterior_1_1Simplex.html#a5e856054cececc885df32b8ebfe104b8">discrete_element</a>();</div>
+<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span>    out &lt;&lt; (simplex.<a class="code hl_function" href="classsil_1_1exterior_1_1Simplex.html#a5bc2f4cd78660d0ba66dddc47c3b0194">negative</a>() ? <span class="stringliteral">&quot; &lt;- &quot;</span> : <span class="stringliteral">&quot; -&gt; &quot;</span>);</div>
+<div class="line"><a id="l00240" name="l00240"></a><span class="lineno">  240</span>    out &lt;&lt; simplex.<a class="code hl_function" href="classsil_1_1exterior_1_1Simplex.html#a5e856054cececc885df32b8ebfe104b8">discrete_element</a>() + simplex.<a class="code hl_function" href="classsil_1_1exterior_1_1Simplex.html#ab4058356203285d9d007303407f2d82e">discrete_vector</a>();</div>
+<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span>    out &lt;&lt; <span class="stringliteral">&quot; &quot;</span>;</div>
+<div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span>    <span class="keywordflow">return</span> out;</div>
+<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span>}</div>
 </div>
-<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span> </div>
-<div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span>} <span class="comment">// namespace exterior</span></div>
-<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span> </div>
-<div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span>} <span class="comment">// namespace sil</span></div>
+<div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span> </div>
+<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span>} <span class="comment">// namespace exterior</span></div>
+<div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span> </div>
+<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span>} <span class="comment">// namespace sil</span></div>
 <div class="ttc" id="aclasssil_1_1exterior_1_1Simplex_html"><div class="ttname"><a href="classsil_1_1exterior_1_1Simplex.html">sil::exterior::Simplex</a></div><div class="ttdoc">Simplex class.</div><div class="ttdef"><b>Definition</b> <a href="#l00074">simplex.hpp:75</a></div></div>
 <div class="ttc" id="aclasssil_1_1exterior_1_1Simplex_html_a04b3ed266cf4ca50d2d20ef004d90f9f"><div class="ttname"><a href="classsil_1_1exterior_1_1Simplex.html#a04b3ed266cf4ca50d2d20ef004d90f9f">sil::exterior::Simplex::Simplex</a></div><div class="ttdeci">KOKKOS_FUNCTION constexpr Simplex(discrete_element_type elem, T vect=ddc::DiscreteVector&lt;&gt; {}, bool negative=false) noexcept</div><div class="ttdef"><b>Definition</b> <a href="#l00119">simplex.hpp:119</a></div></div>
 <div class="ttc" id="aclasssil_1_1exterior_1_1Simplex_html_a157ab6368968069562863032c047176d"><div class="ttname"><a href="classsil_1_1exterior_1_1Simplex.html#a157ab6368968069562863032c047176d">sil::exterior::Simplex::operator==</a></div><div class="ttdeci">KOKKOS_FUNCTION bool operator==(Simplex&lt; s_k, Tag... &gt; simplex)</div><div class="ttdef"><b>Definition</b> <a href="#l00203">simplex.hpp:203</a></div></div>
@@ -427,7 +426,7 @@ $(function(){initNavTree('simplex_8hpp_source.html',''); initResizable(true); })
 <div class="ttc" id="aclasssil_1_1exterior_1_1Simplex_html_afcceeeff18a384b810d14ec4f519b621"><div class="ttname"><a href="classsil_1_1exterior_1_1Simplex.html#afcceeeff18a384b810d14ec4f519b621">sil::exterior::Simplex::operator-</a></div><div class="ttdeci">KOKKOS_FUNCTION Simplex&lt; s_k, Tag... &gt; operator-()</div><div class="ttdef"><b>Definition</b> <a href="#l00186">simplex.hpp:186</a></div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html_a04760285452846b449766e33ce145496"><div class="ttname"><a href="namespacesil_1_1exterior.html#a04760285452846b449766e33ce145496">sil::exterior::operator&lt;&lt;</a></div><div class="ttdeci">std::ostream &amp; operator&lt;&lt;(std::ostream &amp;out, ChainType const &amp;chain)</div><div class="ttdef"><b>Definition</b> <a href="chain_8hpp_source.html#l00304">chain.hpp:304</a></div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html_a19dd94e9180327a407f012154b3c2bc4"><div class="ttname"><a href="namespacesil_1_1exterior.html#a19dd94e9180327a407f012154b3c2bc4">sil::exterior::Simplex</a></div><div class="ttdeci">Simplex(ddc::DiscreteElement&lt; Tag... &gt;, ddc::DiscreteVector&lt; T... &gt;) -&gt; Simplex&lt; sizeof...(T), Tag... &gt;</div></div>
-<div class="ttc" id="anamespacesil_1_1exterior_html_abaced41367e3e156dc7d8467022b3b94"><div class="ttname"><a href="namespacesil_1_1exterior.html#abaced41367e3e156dc7d8467022b3b94">sil::exterior::simplex_for_domain_t</a></div><div class="ttdeci">detail::SimplexForDomain&lt; K, Dom &gt;::type simplex_for_domain_t</div><div class="ttdef"><b>Definition</b> <a href="#l00233">simplex.hpp:233</a></div></div>
+<div class="ttc" id="anamespacesil_1_1exterior_html_abaced41367e3e156dc7d8467022b3b94"><div class="ttname"><a href="namespacesil_1_1exterior.html#abaced41367e3e156dc7d8467022b3b94">sil::exterior::simplex_for_domain_t</a></div><div class="ttdeci">detail::SimplexForDomain&lt; K, Dom &gt;::type simplex_for_domain_t</div><div class="ttdef"><b>Definition</b> <a href="#l00232">simplex.hpp:232</a></div></div>
 <div class="ttc" id="anamespacesil_html"><div class="ttname"><a href="namespacesil.html">sil</a></div><div class="ttdoc">The top-level namespace of SimiLie.</div><div class="ttdef"><b>Definition</b> <a href="csr_8hpp_source.html#l00014">csr.hpp:14</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
