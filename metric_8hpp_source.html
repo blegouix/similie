@@ -608,7 +608,7 @@ $(function(){initNavTree('metric_8hpp_source.html',''); initResizable(true); });
 <div class="line"><a id="l00463" name="l00463"></a><span class="lineno">  463</span>                KOKKOS_LAMBDA(</div>
 <div class="line"><a id="l00464" name="l00464"></a><span class="lineno">  464</span>                        <span class="keyword">typename</span> <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a2aeefba03f422e9e851e0fd04eedace8">invert_metric_t</a>&lt;</div>
 <div class="line"><a id="l00465" name="l00465"></a><span class="lineno">  465</span>                                MetricType&gt;::non_indices_domain_t::discrete_element_type elem) {</div>
-<div class="line"><a id="l00466" name="l00466"></a><span class="lineno">  466</span>                    ddc::annotated_for_each(</div>
+<div class="line"><a id="l00466" name="l00466"></a><span class="lineno">  466</span>                    ddc::device_for_each(</div>
 <div class="line"><a id="l00467" name="l00467"></a><span class="lineno">  467</span>                            ddc::DiscreteDomain&lt;</div>
 <div class="line"><a id="l00468" name="l00468"></a><span class="lineno">  468</span>                                    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a42fd85f35c7a98d5f8504f4b56227f8d">tensor::metric_index_1&lt;MetricIndex&gt;</a>,</div>
 <div class="line"><a id="l00469" name="l00469"></a><span class="lineno">  469</span>                                    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a860a14ced1380cc778822b7e81873698">tensor::metric_index_2&lt;MetricIndex&gt;</a>&gt;(metric.natural_domain()),</div>
@@ -642,7 +642,7 @@ $(function(){initNavTree('metric_8hpp_source.html',''); initResizable(true); });
 <div class="line"><a id="l00497" name="l00497"></a><span class="lineno">  497</span><span class="comment">                    }</span></div>
 <div class="line"><a id="l00498" name="l00498"></a><span class="lineno">  498</span><span class="comment">                    */</span></div>
 <div class="line"><a id="l00499" name="l00499"></a><span class="lineno">  499</span> </div>
-<div class="line"><a id="l00500" name="l00500"></a><span class="lineno">  500</span>                    ddc::annotated_for_each(</div>
+<div class="line"><a id="l00500" name="l00500"></a><span class="lineno">  500</span>                    ddc::device_for_each(</div>
 <div class="line"><a id="l00501" name="l00501"></a><span class="lineno">  501</span>                            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#aa95e03ef666444ae59ef4f48a2824120">tensor::swap_character_t</a>&lt;ddc::DiscreteDomain&lt;MetricIndex&gt;&gt;(</div>
 <div class="line"><a id="l00502" name="l00502"></a><span class="lineno">  502</span>                                    inv_metric.domain()),</div>
 <div class="line"><a id="l00503" name="l00503"></a><span class="lineno">  503</span>                            [&amp;](<a class="code hl_typedef" href="namespacesil_1_1tensor.html#aa95e03ef666444ae59ef4f48a2824120">tensor::swap_character_t</a>&lt;ddc::DiscreteElement&lt;MetricIndex&gt;&gt;</div>

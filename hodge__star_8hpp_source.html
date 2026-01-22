@@ -253,7 +253,7 @@ $(function(){initNavTree('hodge__star_8hpp_source.html',''); initResizable(true)
 <div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>            exec_space,</div>
 <div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>            metric.non_indices_domain(),</div>
 <div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>            KOKKOS_LAMBDA(<span class="keyword">typename</span> MetricType::non_indices_domain_t::discrete_element_type elem) {</div>
-<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>                ddc::annotated_for_each(</div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>                ddc::device_for_each(</div>
 <div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>                        ddc::DiscreteDomain&lt;</div>
 <div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>                                <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a42fd85f35c7a98d5f8504f4b56227f8d">tensor::metric_index_1&lt;MetricIndex&gt;</a>,</div>
 <div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>                                <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a860a14ced1380cc778822b7e81873698">tensor::metric_index_2&lt;MetricIndex&gt;</a>&gt;(metric.natural_domain()),</div>

@@ -952,7 +952,7 @@ $(function(){initNavTree('tensor__impl_8hpp_source.html',''); initResizable(true
 <div class="line"><a id="l00749" name="l00749"></a><span class="lineno">  749</span>               LayoutStridedPolicy,</div>
 <div class="line"><a id="l00750" name="l00750"></a><span class="lineno">  750</span>               MemorySpace&gt;&amp; tensor)</div>
 <div class="line"><a id="l00751" name="l00751"></a><span class="lineno">  751</span>    {</div>
-<div class="line"><a id="l00752" name="l00752"></a><span class="lineno">  752</span>        ddc::annotated_for_each(this-&gt;domain(), [&amp;](ddc::DiscreteElement&lt;DDim...&gt; elem) {</div>
+<div class="line"><a id="l00752" name="l00752"></a><span class="lineno">  752</span>        ddc::device_for_each(this-&gt;domain(), [&amp;](ddc::DiscreteElement&lt;DDim...&gt; elem) {</div>
 <div class="line"><a id="l00753" name="l00753"></a><span class="lineno">  753</span>            this-&gt;mem(elem) += tensor.mem(elem);</div>
 <div class="line"><a id="l00754" name="l00754"></a><span class="lineno">  754</span>        });</div>
 </div>
@@ -967,7 +967,7 @@ $(function(){initNavTree('tensor__impl_8hpp_source.html',''); initResizable(true
 <div class="line"><a id="l00762" name="l00762"></a><span class="lineno">  762</span>            MemorySpace&gt;&amp;</div>
 <div class="line"><a id="l00763" name="l00763"></a><span class="lineno">  763</span>    operator*=(<span class="keyword">const</span> ElementType scalar)</div>
 <div class="line"><a id="l00764" name="l00764"></a><span class="lineno">  764</span>    {</div>
-<div class="line"><a id="l00765" name="l00765"></a><span class="lineno">  765</span>        ddc::annotated_for_each(this-&gt;domain(), [&amp;](ddc::DiscreteElement&lt;DDim...&gt; elem) {</div>
+<div class="line"><a id="l00765" name="l00765"></a><span class="lineno">  765</span>        ddc::device_for_each(this-&gt;domain(), [&amp;](ddc::DiscreteElement&lt;DDim...&gt; elem) {</div>
 <div class="line"><a id="l00766" name="l00766"></a><span class="lineno">  766</span>            this-&gt;mem(elem) *= scalar;</div>
 <div class="line"><a id="l00767" name="l00767"></a><span class="lineno">  767</span>        });</div>
 </div>
@@ -1048,10 +1048,10 @@ $(function(){initNavTree('tensor__impl_8hpp_source.html',''); initResizable(true
 <div class="line"><a id="l00839" name="l00839"></a><span class="lineno">  839</span>               LayoutStridedPolicy,</div>
 <div class="line"><a id="l00840" name="l00840"></a><span class="lineno">  840</span>               MemorySpace&gt; tensor2)</div>
 <div class="line"><a id="l00841" name="l00841"></a><span class="lineno">  841</span>    {</div>
-<div class="line"><a id="l00842" name="l00842"></a><span class="lineno">  842</span>        ddc::annotated_for_each(</div>
+<div class="line"><a id="l00842" name="l00842"></a><span class="lineno">  842</span>        ddc::device_for_each(</div>
 <div class="line"><a id="l00843" name="l00843"></a><span class="lineno">  843</span>                prod_tensor.domain(),</div>
 <div class="line"><a id="l00844" name="l00844"></a><span class="lineno">  844</span>                [&amp;](ddc::DiscreteElement&lt;HeadDDim1..., TailDDim2...&gt; elem) {</div>
-<div class="line"><a id="l00845" name="l00845"></a><span class="lineno">  845</span>                    prod_tensor(elem) = ddc::annotated_transform_reduce(</div>
+<div class="line"><a id="l00845" name="l00845"></a><span class="lineno">  845</span>                    prod_tensor(elem) = ddc::device_transform_reduce(</div>
 <div class="line"><a id="l00846" name="l00846"></a><span class="lineno">  846</span>                            tensor1.template domain&lt;ContractDDim...&gt;(),</div>
 <div class="line"><a id="l00847" name="l00847"></a><span class="lineno">  847</span>                            0.,</div>
 <div class="line"><a id="l00848" name="l00848"></a><span class="lineno">  848</span>                            ddc::reducer::sum&lt;ElementType&gt;(),</div>
