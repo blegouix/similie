@@ -78,7 +78,7 @@ target_include_directories(
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
         "$<INSTALL_INTERFACE:include>"
 )
-target_link_libraries(similie INTERFACE DDC)
+target_link_libraries(similie INTERFACE DDC::core DDC::splines)
 
 add_subdirectory(include/similie)
 add_subdirectory(tests)
