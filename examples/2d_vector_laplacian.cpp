@@ -247,8 +247,8 @@ int main(int argc, char** argv)
     // Export HDF5 and XDMF
     ddc::PdiEvent("export")
             .with("position", position)
-            .and_with("potential", potential_host)
-            .and_with("laplacian", laplacian_host);
+            .with("potential", potential_host)
+            .with("laplacian", laplacian_host);
     std::cout << "Computation result exported in 2d_vector_laplacian.h5." << std::endl;
 
     write_xdmf(

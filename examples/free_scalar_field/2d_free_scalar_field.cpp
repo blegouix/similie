@@ -338,9 +338,9 @@ int main(int argc, char** argv)
         if (i % nb_iter_between_exports == 0) {
             ddc::PdiEvent("export")
                     .with("position", position)
-                    .and_with("potential", potential_host)
-                    .and_with("temporal_moment", temporal_moment_host)
-                    .and_with("spatial_moments", spatial_moments_host);
+                    .with("potential", potential_host)
+                    .with("temporal_moment", temporal_moment_host)
+                    .with("spatial_moments", spatial_moments_host);
             std::cout << "Computation result exported in 2d_free_scalar_field.h5." << std::endl;
 
             write_xdmf(

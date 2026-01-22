@@ -5,7 +5,8 @@ add_executable(2d_laplacian 2d_laplacian.cpp)
 
 target_link_libraries(2d_laplacian
     PUBLIC
-        DDC::DDC
+        DDC::core
+        DDC::splines
         sil::sil
 )
 
@@ -13,7 +14,8 @@ add_executable(2d_vector_laplacian 2d_vector_laplacian.cpp)
 
 target_link_libraries(2d_vector_laplacian
     PUBLIC
-        DDC::DDC
+        DDC::core
+        DDC::splines
         sil::sil
 )
 
@@ -24,7 +26,8 @@ add_executable(kretschmann_scalar kretschmann_scalar.cpp)
 
 target_link_libraries(kretschmann_scalar
     PUBLIC
-        DDC::DDC
+        DDC::core
+        DDC::splines
         sil::tensor
 )
 endif()

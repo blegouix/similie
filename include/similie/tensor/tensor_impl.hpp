@@ -749,7 +749,7 @@ public:
                LayoutStridedPolicy,
                MemorySpace>& tensor)
     {
-        ddc::annotated_for_each(this->domain(), [&](ddc::DiscreteElement<DDim...> elem) {
+        ddc::device_for_each(this->domain(), [&](ddc::DiscreteElement<DDim...> elem) {
             this->mem(elem) += tensor.mem(elem);
         });
         return *this;
@@ -762,7 +762,7 @@ public:
             MemorySpace>&
     operator*=(const ElementType scalar)
     {
-        ddc::annotated_for_each(this->domain(), [&](ddc::DiscreteElement<DDim...> elem) {
+        ddc::device_for_each(this->domain(), [&](ddc::DiscreteElement<DDim...> elem) {
             this->mem(elem) *= scalar;
         });
         return *this;
@@ -839,10 +839,10 @@ struct NaturalTensorProd<
                LayoutStridedPolicy,
                MemorySpace> tensor2)
     {
-        ddc::annotated_for_each(
+        ddc::device_for_each(
                 prod_tensor.domain(),
                 [&](ddc::DiscreteElement<HeadDDim1..., TailDDim2...> elem) {
-                    prod_tensor(elem) = ddc::annotated_transform_reduce(
+                    prod_tensor(elem) = ddc::device_transform_reduce(
                             tensor1.template domain<ContractDDim...>(),
                             0.,
                             ddc::reducer::sum<ElementType>(),

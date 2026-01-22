@@ -8,7 +8,7 @@ add_executable(unit_tests_exterior exterior.cpp ../main.cpp)
 target_link_libraries(unit_tests_exterior
     PUBLIC
         GTest::gtest
-        DDC::DDC
+        DDC::core
         sil::exterior
 )
 
@@ -19,7 +19,7 @@ add_executable(unit_tests_derivative derivative.cpp ../main.cpp)
 target_link_libraries(unit_tests_derivative
     PUBLIC
         GTest::gtest
-        DDC::DDC
+        DDC::core
         sil::exterior
 )
 
@@ -30,7 +30,7 @@ add_executable(unit_tests_hodge_star hodge_star.cpp ../main.cpp)
 target_link_libraries(unit_tests_hodge_star
     PUBLIC
         GTest::gtest
-        DDC::DDC
+        DDC::core
         sil::exterior
 )
 
@@ -41,7 +41,7 @@ add_executable(unit_tests_laplacian laplacian.cpp ../main.cpp)
 target_link_libraries(unit_tests_laplacian
     PUBLIC
         GTest::gtest
-        DDC::DDC
+        DDC::core
         sil::exterior
 )
 

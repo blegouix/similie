@@ -32,6 +32,7 @@ target_include_directories(2d_free_scalar_field PRIVATE
 
 target_link_libraries(2d_free_scalar_field
     PUBLIC
-        DDC::DDC
+        DDC::core
+        DDC::splines
         sil::sil
 )

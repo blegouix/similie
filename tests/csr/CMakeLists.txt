@@ -8,7 +8,7 @@ add_executable(unit_tests_csr csr.cpp ../main.cpp)
 target_link_libraries(unit_tests_csr 
     PUBLIC
         GTest::gtest
-        DDC::DDC
+        DDC::core
         sil::csr
 ) 
 
