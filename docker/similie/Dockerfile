@@ -1,4 +1,5 @@
-FROM ubuntu:noble 
+ARG BASE_IMAGE = nvidia/cuda:13.1.1-cudnn-devel-ubuntu24.04
+FROM $BASE_IMAGE
 
 # SPDX-FileCopyrightText: 2026 Baptiste Legouix
 # SPDX-License-Identifier: MIT
@@ -11,7 +12,10 @@ FROM ubuntu:noble
 # sudo docker run -ti similie
 # git config --global url."https://github.com/".insteadOf git@github.com:
 # git clone --recurse-submodules https://github.com/blegouix/similie.git
+# for cpu:
 # cmake -DCMAKE_CXX_COMPILER=g++-13 -DCMAKE_BUILD_TYPE=Release -DKokkos_ENABLE_OPENMP=ON -B similie/build -S similie
+# for cuda:
+# cmake -DCMAKE_CXX_COMPILER=$PWD/similie/vendor/ddc/vendor/kokkos/bin/nvcc_wrapper -DCMAKE_BUILD_TYPE=RELEASE -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_<YOUR_ARCH_NAMECODE>=ON -B similie/build -S similie
 # cmake --build similie/build -j 8
 # ctest --test-dir similie/build
 
@@ -19,9 +23,7 @@ FROM ubuntu:noble
 # ----- BUILD CHAIN -----
 # -----------------------
 
-# TODO support preinstalled CUDA images
-
-ARG BACKEND=cpu
+ARG BACKEND=cuda
 
 RUN apt update
 
@@ -59,7 +61,7 @@ RUN if [ "${BACKEND}" = "cpu" ]; then \
             -DGINKGO_BUILD_EXAMPLES=OFF \
             -DGINKGO_BUILD_BENCHMARKS=OFF \
             -B ginkgo/build -S ginkgo; \
-        elif [ "${BACKEND}" = "cuda" ]; then \
+    elif [ "${BACKEND}" = "cuda" ]; then \
       cmake -DCMAKE_C_COMPILER=gcc \
             -DCMAKE_CXX_COMPILER=g++ \
             -DCMAKE_CUDA_HOST_COMPILER=g++ \
@@ -70,10 +72,10 @@ RUN if [ "${BACKEND}" = "cpu" ]; then \
             -DGINKGO_BUILD_EXAMPLES=OFF \
             -DGINKGO_BUILD_BENCHMARKS=OFF \
             -B ginkgo/build -S ginkgo; \
-        else \
-          echo "ERROR: BACKEND must be 'cpu' or 'cuda' (got: '${BACKEND}')" >&2; \
-          exit 1; \
-        fi
+    else \
+      echo "ERROR: BACKEND must be 'cpu' or 'cuda' (got: '${BACKEND}')" >&2; \
+      exit 1; \
+    fi
 RUN cmake --build ginkgo/build -j 8
 RUN cmake --install ginkgo/build
 
