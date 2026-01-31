@@ -215,8 +215,7 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
     sil::tensor::Tensor dual_tensor(dual_tensor_alloc);
 
     exec_space.fence();
-     std::cout << "aya-1" << std::endl;
-    exec_space.fence();
+     std::cout << "print hodge star" << std::endl;
 
     ddc::parallel_for_each(
             exec_space,
@@ -227,7 +226,6 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
 
     exec_space.fence();
     std::cout << "aya" << std::endl;
-    exec_space.fence();
     ddc::parallel_for_each(
             exec_space,
             dual_tensor.non_indices_domain(),
