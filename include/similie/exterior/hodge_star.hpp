@@ -72,6 +72,7 @@ HodgeStarType fill_hodge_star(
             KOKKOS_LAMBDA(
                     typename HodgeStarType::non_indices_domain_t::discrete_element_type elem) {
                 tensor_prod(hodge_star[elem], metric_prod[elem], levi_civita);
+                printf("-----");
                 hodge_star[elem] *= Kokkos::sqrt(Kokkos::abs(metric_determinant(elem)))
                                     / misc::factorial(ddc::type_seq_size_v<Indices1>);
             });

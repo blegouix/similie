@@ -136,9 +136,6 @@ struct TensorProdAnyAnyAny<
         tensor::TensorAccessor<ContractDDim...> contract_accessor;
         ddc::DiscreteDomain<ContractDDim...> contract_dom = contract_accessor.natural_domain();
 
-        if constexpr (contract_dom.rank() == 1) {
-            printf("size = %u | ", contract_dom.size());
-        }
         ddc::device_for_each(prod_tensor.domain(), [&](ddc::DiscreteElement<ProdDDim...> mem_elem) {
             auto elem = prod_tensor.canonical_natural_element(mem_elem);
             prod_tensor.mem(mem_elem) = ddc::device_transform_reduce(
@@ -146,32 +143,17 @@ struct TensorProdAnyAnyAny<
                     0.,
                     ddc::reducer::sum<ElementType>(),
                     [&](ddc::DiscreteElement<ContractDDim...> contract_elem) {
-                        if (tensor2.get(tensor2.access_element(
-                                    ddc::DiscreteElement<ContractDDim..., TailDDim2...>(
-                                            contract_accessor.access_element(contract_elem),
-                                            ddc::select<TailDDim2...>(elem))))
-                            != 0) {
-                            printf("elem = %u value1 = %f value2 = %f | ",
-                                   ddc::detail::array(contract_elem)[0],
-                                   tensor1.get(tensor1.access_element(
-                                           ddc::DiscreteElement<HeadDDim1..., ContractDDim...>(
-                                                   ddc::select<HeadDDim1...>(elem),
-                                                   contract_accessor.access_element(
-                                                           contract_elem)))),
-                                   tensor2.get(tensor2.access_element(
-                                           ddc::DiscreteElement<ContractDDim..., TailDDim2...>(
-                                                   contract_accessor.access_element(contract_elem),
-                                                   ddc::select<TailDDim2...>(elem)))));
-                        }
+                        float value1 = tensor1.get(tensor1.access_element(
+                                ddc::DiscreteElement<HeadDDim1..., ContractDDim...>(
+                                        ddc::select<HeadDDim1...>(elem),
+                                        contract_accessor.access_element(contract_elem))));
+                        float value2 = tensor2.get(tensor2.access_element(
+                                ddc::DiscreteElement<ContractDDim..., TailDDim2...>(
+                                        contract_accessor.access_element(contract_elem),
+                                        ddc::select<TailDDim2...>(elem))));
+                        printf("value1 = %f value2 = %f value = %f | ", value1, value2, value1 * value2);
 
-                        return tensor1.get(tensor1.access_element(
-                                       ddc::DiscreteElement<HeadDDim1..., ContractDDim...>(
-                                               ddc::select<HeadDDim1...>(elem),
-                                               contract_accessor.access_element(contract_elem))))
-                               * tensor2.get(tensor2.access_element(
-                                       ddc::DiscreteElement<ContractDDim..., TailDDim2...>(
-                                               contract_accessor.access_element(contract_elem),
-                                               ddc::select<TailDDim2...>(elem))));
+                        return value1 * value2;
                     });
         });
         return prod_tensor;
