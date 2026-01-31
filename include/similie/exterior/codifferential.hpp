@@ -9,6 +9,7 @@
 #include <similie/misc/specialization.hpp>
 #include <similie/tensor/character.hpp>
 #include <similie/tensor/tensor_impl.hpp>
+#include <similie/tensor/tensor_prod.hpp>
 
 #include <Kokkos_StdAlgorithms.hpp>
 
@@ -213,12 +214,29 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
             ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
     sil::tensor::Tensor dual_tensor(dual_tensor_alloc);
 
+    exec_space.fence();
+     std::cout << "aya-1" << std::endl;
+    exec_space.fence();
+
+    ddc::parallel_for_each(
+            exec_space,
+            hodge_star.domain(),
+            KOKKOS_LAMBDA(typename decltype(hodge_star)::discrete_element_type elem) {
+                printf("%f ", hodge_star(elem));
+            });
+
+    exec_space.fence();
+    std::cout << "aya" << std::endl;
+    exec_space.fence();
     ddc::parallel_for_each(
             exec_space,
             dual_tensor.non_indices_domain(),
             KOKKOS_LAMBDA(typename TensorType::non_indices_domain_t::discrete_element_type elem) {
                 sil::tensor::tensor_prod(dual_tensor[elem], tensor[elem], hodge_star[elem]);
             });
+    exec_space.fence();
+    std::cout << "aya2" << std::endl;
+    exec_space.fence();
 
     // Dual codifferential
     [[maybe_unused]] tensor::TensorAccessor<
