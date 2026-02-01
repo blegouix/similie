@@ -92,8 +92,7 @@ TEST(Laplacian, 1D0Form)
     double const L = ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().back()))
                      - ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().front()));
     double const alpha = static_cast<double>(nb_cells.template get<DDimX>()) * L / 2;
-    ddc::parallel_for_each(
-            Kokkos::DefaultHostExecutionSpace(),
+    ddc::host_for_each(
             potential.domain(),
             [&](ddc::DiscreteElement<DDimX, sil::tensor::Covariant<sil::tensor::ScalarIndex>>
                         elem) {
@@ -112,8 +111,7 @@ TEST(Laplacian, 1D0Form)
             sil::tensor::Covariant<sil::tensor::ScalarIndex>,
             DDimX>(potential);
 
-    ddc::parallel_for_each(
-            Kokkos::DefaultHostExecutionSpace(),
+    ddc::host_for_each(
             laplacian.template domain<DDimX>().remove_last(ddc::DiscreteVector<DDimX>(1)),
             [&](ddc::DiscreteElement<DDimX> elem) {
                 double const value = laplacian(
@@ -147,8 +145,7 @@ TEST(Laplacian, 1D1Form)
     double const L = ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().back()))
                      - ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().front()));
     double const alpha = static_cast<double>(nb_cells.template get<DDimX>()) * 5;
-    ddc::parallel_for_each(
-            Kokkos::DefaultHostExecutionSpace(),
+    ddc::host_for_each(
             potential.domain(),
             [&](ddc::DiscreteElement<DDimX, sil::tensor::Covariant<Mu1>> elem) {
                 double const r = Kokkos::abs(
@@ -165,8 +162,7 @@ TEST(Laplacian, 1D1Form)
             = test_derivative<sil::tensor::Covariant<Mu1>, sil::tensor::Covariant<Mu1>, DDimX>(
                     potential);
 
-    ddc::parallel_for_each(
-            Kokkos::DefaultHostExecutionSpace(),
+    ddc::host_for_each(
             laplacian.template domain<DDimX>().remove_last(ddc::DiscreteVector<DDimX>(1)),
             [&](ddc::DiscreteElement<DDimX> elem) {
                 double const value = laplacian(elem, laplacian.accessor().access_element<X>());
@@ -212,8 +208,7 @@ TEST(Laplacian, 2D0Form)
     double const alpha = (static_cast<double>(nb_cells.template get<DDimX>())
                           * static_cast<double>(nb_cells.template get<DDimY>()))
                          / 4 / L / L;
-    ddc::parallel_for_each(
-            Kokkos::DefaultHostExecutionSpace(),
+    ddc::host_for_each(
             potential.domain(),
             [&](ddc::DiscreteElement<DDimX, DDimY, sil::tensor::Covariant<sil::tensor::ScalarIndex>>
                         elem) {
@@ -238,8 +233,7 @@ TEST(Laplacian, 2D0Form)
             DDimX,
             DDimY>(potential);
 
-    ddc::parallel_for_each(
-            Kokkos::DefaultHostExecutionSpace(),
+    ddc::host_for_each(
             laplacian.template domain<DDimX>().remove_last(ddc::DiscreteVector<DDimX>(1)),
             [&](ddc::DiscreteElement<DDimX> elem) {
                 double const value = laplacian(
@@ -285,8 +279,7 @@ TEST(Laplacian, 2D1Form)
     double const alpha = (static_cast<double>(nb_cells.template get<DDimX>())
                           * static_cast<double>(nb_cells.template get<DDimY>()))
                          / 4 / L / L;
-    ddc::parallel_for_each(
-            Kokkos::DefaultHostExecutionSpace(),
+    ddc::host_for_each(
             potential.non_indices_domain(),
             [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
                 double const r = Kokkos::sqrt(
@@ -319,8 +312,7 @@ TEST(Laplacian, 2D1Form)
             DDimX,
             DDimY>(potential);
 
-    ddc::parallel_for_each(
-            Kokkos::DefaultHostExecutionSpace(),
+    ddc::host_for_each(
             laplacian.template domain<DDimX>().remove_last(ddc::DiscreteVector<DDimX>(1)),
             [&](ddc::DiscreteElement<DDimX> elem) {
                 double const value = laplacian(
@@ -376,8 +368,7 @@ TEST(Laplacian, 3D1Form)
     double const alpha = (static_cast<double>(nb_cells.template get<DDimX>())
                           * static_cast<double>(nb_cells.template get<DDimY>()))
                          / 50 / L;
-    ddc::parallel_for_each(
-            Kokkos::DefaultHostExecutionSpace(),
+    ddc::host_for_each(
             potential.non_indices_domain(),
             [&](ddc::DiscreteElement<DDimX, DDimY, DDimZ> elem) {
                 double const r = Kokkos::sqrt(
@@ -415,8 +406,7 @@ TEST(Laplacian, 3D1Form)
             DDimY,
             DDimZ>(potential);
 
-    ddc::parallel_for_each(
-            Kokkos::DefaultHostExecutionSpace(),
+    ddc::host_for_each(
             laplacian.template domain<DDimX>().remove_last(ddc::DiscreteVector<DDimX>(1)),
             [&](ddc::DiscreteElement<DDimX> elem) {
                 double const value = laplacian(

@@ -25,12 +25,9 @@ static auto test_derivative()
         ddc::Chunk tensor_alloc(dom, ddc::HostAllocator<double>());
         sil::tensor::Tensor tensor(tensor_alloc);
         for (std::size_t i = 0; i < InIndex::mem_size(); ++i) {
-            ddc::parallel_for_each(
-                    Kokkos::DefaultHostExecutionSpace(),
-                    tensor.non_indices_domain(),
-                    [&](auto elem) {
-                        tensor.mem(elem, ddc::DiscreteElement<InIndex>(i)) = i + 1.;
-                    });
+            ddc::host_for_each(tensor.non_indices_domain(), [&](auto elem) {
+                tensor.mem(elem, ddc::DiscreteElement<InIndex>(i)) = i + 1.;
+            });
             tensor
                     .mem(sil::misc::filled_struct<ddc::DiscreteElement<DDim...>>(1),
                          ddc::DiscreteElement<InIndex>(i))
@@ -68,12 +65,9 @@ static auto test_derivative()
         ddc::Chunk tensor_alloc(dom, ddc::HostAllocator<double>());
         sil::tensor::Tensor tensor(tensor_alloc);
         for (std::size_t i = 0; i < InIndex::mem_size(); ++i) {
-            ddc::parallel_for_each(
-                    Kokkos::DefaultHostExecutionSpace(),
-                    tensor.non_indices_domain(),
-                    [&](auto elem) {
-                        tensor.mem(elem, ddc::DiscreteElement<InIndex>(i)) = i + 1.;
-                    });
+            ddc::host_for_each(tensor.non_indices_domain(), [&](auto elem) {
+                tensor.mem(elem, ddc::DiscreteElement<InIndex>(i)) = i + 1.;
+            });
             tensor
                     .mem(sil::misc::filled_struct<ddc::DiscreteElement<DDim...>>(1),
                          ddc::DiscreteElement<InIndex>(i))
@@ -910,8 +904,7 @@ TEST(ExteriorDerivative, 2DRotationalWithSpects)
     ddc::Chunk tensor_alloc(dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor tensor(tensor_alloc);
     for (std::size_t i = 0; i < sil::tensor::TensorAntisymmetricIndex<Mu2>::mem_size(); ++i) {
-        ddc::parallel_for_each(
-                Kokkos::DefaultHostExecutionSpace(),
+        ddc::host_for_each(
                 ddc::DiscreteDomain<DDimSpect, DDimX, IndexSpect, DDimY>(tensor.domain()),
                 [&](auto elem) {
                     tensor
