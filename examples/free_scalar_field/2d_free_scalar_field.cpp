@@ -172,7 +172,7 @@ int main(int argc, char** argv)
     ddc::Chunk position_alloc(position_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor position(position_alloc);
     ddc::parallel_for_each(
-            Kokkos::DefaultExecutionSpace(),
+            Kokkos::DefaultHostExecutionSpace(),
             mesh_xy,
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
                 position(elem, position.accessor().access_element<X>())
@@ -274,7 +274,6 @@ int main(int argc, char** argv)
         sil::exterior::deriv<
                 AlphaLow,
                 DummyIndex>(Kokkos::DefaultExecutionSpace(), potential_grad, potential);
-        Kokkos::fence();
 
         // Compute the spatial moments pi_\alpha by solving dphi/dx^\alpha = -dH/dpi_\alpha
         ddc::parallel_for_each(
@@ -288,12 +287,7 @@ int main(int argc, char** argv)
                             = FreeScalarFieldHamiltonian(mass).pi2(
                                     potential_grad(elem, ddc::DiscreteElement<AlphaLow>(1)));
                 });
-        Kokkos::fence();
-
-        ddc::parallel_deepcopy(
-                Kokkos::DefaultExecutionSpace(),
-                spatial_moments_host,
-                spatial_moments);
+        ddc::parallel_deepcopy(spatial_moments_host, spatial_moments);
 
         // Compute the divergence dpi_\alpha/dx^\alpha of the spatial moments, which is the codifferential \delta pi of the spatial moments
         sil::exterior::codifferential<MetricIndex, AlphaLow, AlphaLow>(
@@ -301,7 +295,6 @@ int main(int argc, char** argv)
                 spatial_moments_div,
                 spatial_moments,
                 inv_metric);
-        Kokkos::fence();
 
         // Compute dpi_0/dx^0 by solving dpi_mu/dx^\mu = dH/d\phi and advect pi_0 by a time step dx^0. Then, compute dphi/dx^0 by solving dphi/dx^0 = -dH/dpi_0 and advect phi by a time step dx^0.
         // TODO use better temporal integration scheme like Runge-Kutta
@@ -319,17 +312,12 @@ int main(int argc, char** argv)
 
                     temporal_moment(elem) = temporal_moment_;
                 });
-        Kokkos::fence();
-
-        ddc::parallel_deepcopy(
-                Kokkos::DefaultExecutionSpace(),
-                temporal_moment_host,
-                temporal_moment);
-        ddc::parallel_deepcopy(Kokkos::DefaultExecutionSpace(), potential_host, potential);
+        ddc::parallel_deepcopy(temporal_moment_host, temporal_moment);
+        ddc::parallel_deepcopy(potential_host, potential);
 
         // Export HDF5 and XDMF
         std::cout << "Potential center = "
-                  << potential(
+                  << potential_host(
                              ddc::DiscreteElement<DDimX, DDimY, DummyIndex>(
                                      potential.extent<DDimX>() / 2,
                                      potential.extent<DDimY>() / 2,
