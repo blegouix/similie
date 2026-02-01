@@ -462,7 +462,7 @@ struct TensorProdYoungAnyAny<
         tensor::TensorAccessor<ContractDDim...> contract_accessor;
         ddc::DiscreteDomain<ContractDDim...> contract_dom = contract_accessor.natural_domain();
 
-        ddc::for_each(
+        ddc::host_for_each(
                 uncompressed_prod.domain(),
                 [&](ddc::cartesian_prod_t<
                         typename ProdDDim::subindices_domain_t...>::discrete_element_type elem) {

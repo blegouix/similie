@@ -786,7 +786,9 @@ fill_symmetrizer(
     ddc::Chunk tr_alloc(sym.domain(), ddc::HostAllocator<double>());
     tensor::Tensor tr(tr_alloc);
     ddc::parallel_fill(tr, 0);
-    ddc::for_each(tr.domain(), TrFunctor<Dimension, sizeof...(Id) / 2, Id...>(tr, idx_to_permute));
+    ddc::host_for_each(
+            tr.domain(),
+            TrFunctor<Dimension, sizeof...(Id) / 2, Id...>(tr, idx_to_permute));
 
     if constexpr (AntiSym) {
         tr *= static_cast<double>(misc::permutation_parity(idx_to_permute));
@@ -909,7 +911,7 @@ auto YoungTableau<Dimension, TableauSeq>::projector()
     for (std::size_t i = 0; i < s_r; ++i) {
         idx_to_permute[i] = i;
     }
-    ddc::for_each(
+    ddc::host_for_each(
             proj.domain(),
             detail::TrFunctor<s_d, s_r, tensor::prime<Id>..., Id...>(proj, idx_to_permute));
 

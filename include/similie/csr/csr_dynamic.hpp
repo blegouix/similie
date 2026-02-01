@@ -73,7 +73,7 @@ public:
                     Kokkos::DefaultHostExecutionSpace::memory_space> dense)
     {
         m_coalesc_idx.push_back(m_coalesc_idx.back());
-        ddc::for_each(dense.domain(), [&](ddc::DiscreteElement<TailTensorIndex...> elem) {
+        ddc::host_for_each(dense.domain(), [&](ddc::DiscreteElement<TailTensorIndex...> elem) {
             if (dense(elem) != 0) {
                 m_coalesc_idx.back() += 1;
                 (m_idx[ddc::type_seq_rank_v<

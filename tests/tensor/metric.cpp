@@ -45,12 +45,12 @@ TEST(Metric, MetricLike)
 
     ddc::Chunk metric_alloc(metric_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor metric(metric_alloc);
-    ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
+    ddc::host_for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
         metric(elem, metric.accessor().access_element<X, X>()) = 1.;
         metric(elem, metric.accessor().access_element<X, Y>()) = 2.;
         metric(elem, metric.accessor().access_element<Y, Y>()) = 3.;
     });
-    ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
+    ddc::host_for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
         EXPECT_EQ(metric.get(elem, metric.accessor().access_element<X, X>()), 1.);
         EXPECT_EQ(metric.get(elem, metric.accessor().access_element<X, Y>()), 2.);
         EXPECT_EQ(metric.get(elem, metric.accessor().access_element<Y, Y>()), 3.);
@@ -76,12 +76,12 @@ TEST(Metric, Covariant)
     sil::tensor::Tensor metric(metric_alloc);
 
     auto g_i_j = sil::tensor::relabelize_metric<ILow, JLow>(metric);
-    ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
+    ddc::host_for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
         g_i_j(elem, g_i_j.accessor().access_element<X, X>()) = 1.;
         g_i_j(elem, g_i_j.accessor().access_element<X, Y>()) = 2.;
         g_i_j(elem, g_i_j.accessor().access_element<Y, Y>()) = 3.;
     });
-    ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
+    ddc::host_for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
         EXPECT_EQ(g_i_j.get(elem, g_i_j.accessor().access_element<X, X>()), 1.);
         EXPECT_EQ(g_i_j.get(elem, g_i_j.accessor().access_element<X, Y>()), 2.);
         EXPECT_EQ(g_i_j.get(elem, g_i_j.accessor().access_element<Y, X>()), 2.);
@@ -106,7 +106,7 @@ TEST(Metric, ChristoffelLike)
     ddc::DiscreteDomain<DDimX, DDimY, MetricIndex> metric_dom(mesh_xy, metric_accessor.domain());
     ddc::Chunk metric_alloc(metric_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor metric(metric_alloc);
-    ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
+    ddc::host_for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
         metric(elem, metric.accessor().access_element<X, X>()) = 1.;
         metric(elem, metric.accessor().access_element<X, Y>()) = 0.;
         metric(elem, metric.accessor().access_element<Y, Y>()) = 2.;
@@ -118,7 +118,7 @@ TEST(Metric, ChristoffelLike)
             christoffel_1st_dom(mesh_xy, christoffel_1st_accessor.domain());
     ddc::Chunk christoffel_1st_alloc(christoffel_1st_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor christoffel_1st(christoffel_1st_alloc);
-    ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
+    ddc::host_for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
         christoffel_1st(elem, christoffel_1st.accessor().access_element<X, X, X>()) = 1.;
         christoffel_1st(elem, christoffel_1st.accessor().access_element<X, X, Y>()) = 2.;
         christoffel_1st(elem, christoffel_1st.accessor().access_element<X, Y, Y>()) = 3.;
@@ -126,7 +126,7 @@ TEST(Metric, ChristoffelLike)
         christoffel_1st(elem, christoffel_1st.accessor().access_element<Y, X, Y>()) = 5.;
         christoffel_1st(elem, christoffel_1st.accessor().access_element<Y, Y, Y>()) = 6.;
     });
-    ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
+    ddc::host_for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
         EXPECT_EQ(
                 christoffel_1st.get(elem, christoffel_1st.accessor().access_element<X, X, X>()),
                 1.);
@@ -155,7 +155,7 @@ TEST(Metric, ChristoffelLike)
     auto christoffel_2nd = sil::tensor::inplace_apply_metric<
             MetricIndex,
             KLow>(Kokkos::DefaultHostExecutionSpace(), christoffel_1st, metric);
-    ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
+    ddc::host_for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
         EXPECT_EQ(
                 christoffel_2nd.get(elem, christoffel_2nd.accessor().access_element<X, X, X>()),
                 1.);
@@ -216,7 +216,7 @@ TEST(Metric, Inverse)
             metric_dom(mesh_xy, metric_accessor.domain());
     ddc::Chunk metric_alloc(metric_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor metric(metric_alloc);
-    ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
+    ddc::host_for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
         metric(elem, metric.accessor().access_element<X, X>()) = 4.;
         metric(elem, metric.accessor().access_element<X, Y>()) = 1.;
         metric(elem, metric.accessor().access_element<X, Z>()) = 2.;
@@ -250,7 +250,7 @@ TEST(Metric, Inverse)
                         sil::tensor::relabelize_index_of<sil::tensor::MetricIndex1<X, Y, Z>, Alpha>(
                                 metric[elem]));
             });
-    ddc::for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
+    ddc::host_for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
         EXPECT_NEAR(identity.get(elem, identity.accessor().access_element<X, X>()), 1., 1e-14);
         EXPECT_NEAR(identity.get(elem, identity.accessor().access_element<X, Y>()), 0., 1e-14);
         EXPECT_NEAR(identity.get(elem, identity.accessor().access_element<X, Z>()), 0., 1e-14);
