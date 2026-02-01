@@ -263,12 +263,14 @@ int main(int argc, char** argv)
     // ------------------
 
     double const mass = 1.;
-    int const nb_iter_between_exports = 10;
+    int const nb_iter_between_exports = 100;
     int const nb_iter = 10000;
     double const dt = 1e-3;
 
     for (int i = 0; i < nb_iter; i++) {
-        std::cout << "Start iteration " << i << std::endl;
+        if (i % nb_iter_between_exports == 0) {
+            std::cout << "Start iteration " << i << std::endl;
+        }
 
         // Compute the potential gradient
         sil::exterior::deriv<
@@ -287,7 +289,9 @@ int main(int argc, char** argv)
                             = FreeScalarFieldHamiltonian(mass).pi2(
                                     potential_grad(elem, ddc::DiscreteElement<AlphaLow>(1)));
                 });
-        ddc::parallel_deepcopy(spatial_moments_host, spatial_moments);
+        if (i % nb_iter_between_exports == 0) {
+            ddc::parallel_deepcopy(spatial_moments_host, spatial_moments);
+        }
 
         // Compute the divergence dpi_\alpha/dx^\alpha of the spatial moments, which is the codifferential \delta pi of the spatial moments
         sil::exterior::codifferential<MetricIndex, AlphaLow, AlphaLow>(
@@ -312,18 +316,18 @@ int main(int argc, char** argv)
 
                     temporal_moment(elem) = temporal_moment_;
                 });
-        ddc::parallel_deepcopy(temporal_moment_host, temporal_moment);
-        ddc::parallel_deepcopy(potential_host, potential);
-
-        // Export HDF5 and XDMF
-        std::cout << "Potential center = "
-                  << potential_host(
-                             ddc::DiscreteElement<DDimX, DDimY, DummyIndex>(
-                                     potential.extent<DDimX>() / 2,
-                                     potential.extent<DDimY>() / 2,
-                                     0))
-                  << std::endl;
         if (i % nb_iter_between_exports == 0) {
+            ddc::parallel_deepcopy(temporal_moment_host, temporal_moment);
+            ddc::parallel_deepcopy(potential_host, potential);
+
+            // Export HDF5 and XDMF
+            std::cout << "Potential center = "
+                      << potential_host(
+                                 ddc::DiscreteElement<DDimX, DDimY, DummyIndex>(
+                                         potential.extent<DDimX>() / 2,
+                                         potential.extent<DDimY>() / 2,
+                                         0))
+                      << std::endl;
             ddc::PdiEvent("export")
                     .with("position", position)
                     .with("potential", potential_host)
