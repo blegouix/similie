@@ -151,10 +151,10 @@ struct TensorProdAnyAnyAny<
                                 ddc::DiscreteElement<ContractDDim..., TailDDim2...>(
                                         contract_accessor.access_element(contract_elem),
                                         ddc::select<TailDDim2...>(elem))));
-                        printf("value1 = %f value2 = %f value = %f | ", value1, value2, value1 * value2);
 
                         return value1 * value2;
                     });
+            printf("value = %f | ", prod_tensor.mem(mem_elem));
         });
         return prod_tensor;
     }
