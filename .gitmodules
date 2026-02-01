@@ -9,4 +9,4 @@
 	url = git@github.com:jothepro/doxygen-awesome-css.git
 [submodule "vendor/ddc"]
 	path = vendor/ddc
-	url = git@github.com:CExA-project/ddc.git
+	url = git@github.com:blegouix/ddc.git

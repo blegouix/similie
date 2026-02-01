@@ -43,10 +43,10 @@ cmake -DCMAKE_CXX_COMPILER=g++-13 -DCMAKE_BUILD_TYPE=Debug -DKokkos_ENABLE_OPENM
 for CPU compilation or:
 
 ```
-cmake -DCMAKE_CXX_COMPILER=$PWD/vendor/ddc/vendor/kokkos/bin/nvcc_wrapper -DCMAKE_BUILD_TYPE=Debug -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_<YOUR_ARCH_NAMECODE>=ON -B similie/build -S similie
+cmake -DCMAKE_CXX_COMPILER=$PWD/vendor/ddc/vendor/kokkos/bin/nvcc_wrapper -DCMAKE_BUILD_TYPE=Debug -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_<YOUR_ARCH_NAMECODE>=ON -DKokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE=OFF -B similie/build -S similie
 ```
 
-for Nvidia GPU compilation. `<YOUR_ARCH_NAMECODE>` must be replaced with a hardware-specific namecode that you will find [here](https://kokkos.org/kokkos-core-wiki/keywords.html#architectures).
+for Nvidia GPU compilation. `<YOUR_ARCH_NAMECODE>` must be replaced with a hardware-specific namecode that you will find [here](https://kokkos.org/kokkos-core-wiki/keywords.html#architectures). The `Relocatable Device Code` CUDA feature is disabled to prevent irrelevent `nvlink` warnings.
 
 \important Debug mode is strongly recommended during development because a lot of assertions guarantee the correct usage of library. Running in Release mode without having checked first the proper execution in Debug mode may result to silent bugs. Release mode is of course required at a later stage to get full performance.
 
