@@ -152,7 +152,7 @@ struct TensorProdAnyAnyAny<
                                                contract_elem,
                                                ddc::select<TailDDim2...>(elem))));
                     });
-            printf("%i %lu %lu | ", decltype(prod_tensor)::rank(), ddc::detail::array(mem_elem)[0], ddc::detail::array(mem_elem)[1]);
+            printf("%i %lu | ", decltype(prod_tensor)::rank(), ddc::detail::array(mem_elem)[0]);
         });
         return prod_tensor;
     }
