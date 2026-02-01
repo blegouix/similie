@@ -116,6 +116,7 @@ HodgeStarType fill_hodge_star(
             ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
     ddc::ChunkSpan buffer(buffer_alloc);
     // Compute determinants
+    std::cout << "compute determinants" << std::endl;
     ddc::parallel_for_each(
             exec_space,
             metric.non_indices_domain(),
@@ -136,6 +137,7 @@ HodgeStarType fill_hodge_star(
     exec_space.fence();
 
     // Allocate & compute the product of metrics
+    std::cout << "fill metric prod" << std::endl;
     tensor::tensor_accessor_for_domain_t<
             tensor::metric_prod_domain_t<MetricIndex, Indices1, tensor::primes<Indices1>>>
             metric_prod_accessor;
@@ -154,6 +156,7 @@ HodgeStarType fill_hodge_star(
             tensor::primes<Indices1>>(exec_space, metric_prod, metric);
     exec_space.fence();
 
+    std::cout << "fill hodge star" << std::endl;
     // Compute Hodge star
     return fill_hodge_star<Indices1, Indices2>(exec_space, hodge_star, metric_det, metric_prod);
 }
