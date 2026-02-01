@@ -133,7 +133,7 @@ int main(int argc, char** argv)
     MesherXY mesher;
     ddc::Coordinate<X, Y> lower_bounds(-5., -5.);
     ddc::Coordinate<X, Y> upper_bounds(5., 5.);
-    ddc::DiscreteVector<DDimX, DDimY> nb_cells(1000, 1000);
+    ddc::DiscreteVector<DDimX, DDimY> nb_cells(2, 2);
     ddc::DiscreteDomain<DDimX, DDimY> mesh_xy = mesher.template mesh<
             ddc::detail::TypeSeq<DDimX, DDimY>,
             ddc::detail::TypeSeq<BSplinesX, BSplinesY>>(lower_bounds, upper_bounds, nb_cells);
@@ -170,8 +170,10 @@ int main(int argc, char** argv)
                 metric(elem, metric.accessor().access_element<X, Y>()) = 0.;
                 metric(elem, metric.accessor().access_element<Y, Y>()) = 1.;
             });
+    Kokkos::fence();
 
     // Invert metric
+    std::cout << "invert metric" << std::endl;
     [[maybe_unused]] sil::tensor::TensorAccessor<sil::tensor::upper_t<MetricIndex>>
             inv_metric_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::upper_t<MetricIndex>>
@@ -180,8 +182,10 @@ int main(int argc, char** argv)
     sil::tensor::Tensor inv_metric(inv_metric_alloc);
     sil::tensor::fill_inverse_metric<
             MetricIndex>(Kokkos::DefaultExecutionSpace(), inv_metric, metric);
+    Kokkos::fence();
 
     // Potential
+    std::cout << "potential" << std::endl;
     [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> potential_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, DummyIndex>
             potential_dom(metric.non_indices_domain(), potential_accessor.domain());
@@ -212,6 +216,7 @@ int main(int argc, char** argv)
             });
     auto potential_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), potential);
+    Kokkos::fence();
 
     // Laplacian
     [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> laplacian_accessor;
@@ -227,8 +232,10 @@ int main(int argc, char** argv)
             DummyIndex>(Kokkos::DefaultExecutionSpace(), laplacian, potential, inv_metric);
     Kokkos::fence();
 
+/*
     auto laplacian_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), laplacian);
+    Kokkos::fence();
 
     // Export HDF5 and XDMF
     ddc::PdiEvent("export")
@@ -241,6 +248,7 @@ int main(int argc, char** argv)
             static_cast<int>(mesh_xy.template extent<DDimX>()),
             static_cast<int>(mesh_xy.template extent<DDimY>()));
     std::cout << "XDMF model exported in 2d_laplacian.xmf." << std::endl;
+*/
 
     // Finalize PDI
     PC_tree_destroy(&conf_pdi);

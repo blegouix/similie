@@ -133,6 +133,7 @@ HodgeStarType fill_hodge_star(
                         });
                 metric_det(elem) = 1. / tensor::determinant(buffer[elem].allocation_kokkos_view());
             });
+    exec_space.fence();
 
     // Allocate & compute the product of metrics
     tensor::tensor_accessor_for_domain_t<
@@ -151,6 +152,7 @@ HodgeStarType fill_hodge_star(
             MetricIndex,
             Indices1,
             tensor::primes<Indices1>>(exec_space, metric_prod, metric);
+    exec_space.fence();
 
     // Compute Hodge star
     return fill_hodge_star<Indices1, Indices2>(exec_space, hodge_star, metric_det, metric_prod);

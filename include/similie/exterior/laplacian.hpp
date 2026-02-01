@@ -33,6 +33,7 @@ TensorType codifferential_of_coboundary(
         MetricType inv_metric)
 {
     // Coboundary
+    std::cout << "cobound" << std::endl;
     [[maybe_unused]] tensor::TensorAccessor<coboundary_index_t<LaplacianDummyIndex, CochainTag>>
             derivative_accessor;
     ddc::cartesian_prod_t<
@@ -45,6 +46,8 @@ TensorType codifferential_of_coboundary(
     sil::tensor::Tensor derivative_tensor(derivative_tensor_alloc);
 
     sil::exterior::deriv<LaplacianDummyIndex, CochainTag>(exec_space, derivative_tensor, tensor);
+    exec_space.fence();
+    std::cout << "codiff" << std::endl;
 
     // Codifferential
     sil::exterior::codifferential<
