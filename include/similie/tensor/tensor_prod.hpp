@@ -149,7 +149,7 @@ struct TensorProdAnyAnyAny<
                                                contract_accessor.access_element(contract_elem))))
                                * tensor2.get(tensor2.access_element(
                                        ddc::DiscreteElement<ContractDDim..., TailDDim2...>(
-                                               contract_elem,
+                                               contract_accessor.access_element(contract_elem),
                                                ddc::select<TailDDim2...>(elem))));
                     });
         });
@@ -478,7 +478,8 @@ struct TensorProdYoungAnyAny<
                                                                contract_elem))))
                                        * tensor2.get(tensor2.access_element(
                                                ddc::DiscreteElement<ContractDDim..., TailDDim2...>(
-                                                       contract_elem,
+                                                       contract_accessor.access_element(
+                                                               contract_elem),
                                                        ddc::select<TailDDim2...>(elem))));
                             });
                 });
