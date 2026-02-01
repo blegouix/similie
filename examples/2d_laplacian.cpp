@@ -232,7 +232,6 @@ int main(int argc, char** argv)
             DummyIndex>(Kokkos::DefaultExecutionSpace(), laplacian, potential, inv_metric);
     Kokkos::fence();
 
-/*
     auto laplacian_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), laplacian);
     Kokkos::fence();
@@ -248,7 +247,6 @@ int main(int argc, char** argv)
             static_cast<int>(mesh_xy.template extent<DDimX>()),
             static_cast<int>(mesh_xy.template extent<DDimY>()));
     std::cout << "XDMF model exported in 2d_laplacian.xmf." << std::endl;
-*/
 
     // Finalize PDI
     PC_tree_destroy(&conf_pdi);

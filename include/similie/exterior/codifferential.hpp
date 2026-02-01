@@ -186,6 +186,7 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
     using HodgeStarDomain2 = sil::exterior::hodge_star_domain_t<RhoUpSeq, SigmaLowSeq>;
 
     // Hodge star
+    std::cout << "fill hodge star" << std::endl;
     [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain> hodge_star_accessor;
     ddc::cartesian_prod_t<typename MetricType::non_indices_domain_t, HodgeStarDomain>
             hodge_star_dom(inv_metric.non_indices_domain(), hodge_star_accessor.domain());
@@ -201,6 +202,7 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
     exec_space.fence();
 
     // Dual tensor
+    std::cout << "dual tensor" << std::endl;
     [[maybe_unused]] tensor::TensorAccessor<
             misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, NuLowSeq>>
             dual_tensor_accessor;
@@ -223,6 +225,7 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
     exec_space.fence();
 
     // Dual codifferential
+    std::cout << "dual codiff" << std::endl;
     [[maybe_unused]] tensor::TensorAccessor<
             misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, RhoLowSeq>>
             dual_codifferential_accessor;
@@ -245,6 +248,7 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
     exec_space.fence();
 
     // Hodge star 2
+    std::cout << "hodge star 2" << std::endl;
     [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain2>
             hodge_star_accessor2;
     ddc::cartesian_prod_t<typename MetricType::non_indices_domain_t, HodgeStarDomain2>
@@ -261,6 +265,7 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
     exec_space.fence();
 
     // Codifferential
+    std::cout << "cidiff" << std::endl;
     ddc::parallel_for_each(
             exec_space,
             codifferential_tensor.non_indices_domain(),

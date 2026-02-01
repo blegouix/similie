@@ -143,7 +143,6 @@ struct TensorProdAnyAnyAny<
                     0.,
                     ddc::reducer::sum<ElementType>(),
                     [&](ddc::DiscreteElement<ContractDDim...> contract_elem) {
-                        
                         return tensor1.get(tensor1.access_element(
                                        ddc::DiscreteElement<HeadDDim1..., ContractDDim...>(
                                                ddc::select<HeadDDim1...>(elem),
