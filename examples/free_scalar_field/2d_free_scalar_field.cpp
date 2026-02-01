@@ -157,7 +157,7 @@ int main(int argc, char** argv)
     MesherXY mesher;
     ddc::Coordinate<X, Y> lower_bounds(-5., -5.);
     ddc::Coordinate<X, Y> upper_bounds(5., 5.);
-    ddc::DiscreteVector<DDimX, DDimY> nb_cells(256, 256);
+    ddc::DiscreteVector<DDimX, DDimY> nb_cells(1000, 1000);
     ddc::DiscreteDomain<DDimX, DDimY> mesh_xy = mesher.template mesh<
             ddc::detail::TypeSeq<DDimX, DDimY>,
             ddc::detail::TypeSeq<BSplinesX, BSplinesY>>(lower_bounds, upper_bounds, nb_cells);
@@ -215,13 +215,9 @@ int main(int argc, char** argv)
     ddc::parallel_for_each(
             potential.domain(),
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
-                potential(elem) = elem
-                                                  == ddc::DiscreteElement<DDimX, DDimY, DummyIndex>(
-                                                          potential.extent<DDimX>() / 2,
-                                                          potential.extent<DDimY>() / 2,
-                                                          0)
-                                          ? 1.
-                                          : 0.;
+                double const x = ddc::coordinate(ddc::DiscreteElement<DDimX>(elem));
+                double const y = ddc::coordinate(ddc::DiscreteElement<DDimY>(elem));
+                potential(elem) = std::exp(x * x + y * y);
             });
     auto potential_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), potential);
@@ -265,7 +261,7 @@ int main(int argc, char** argv)
     double const mass = 1.;
     int const nb_iter_between_exports = 100;
     int const nb_iter = 10000;
-    double const dt = 1e-3;
+    double const dt = 1e-2;
 
     for (int i = 0; i < nb_iter; i++) {
         if (i % nb_iter_between_exports == 0) {
