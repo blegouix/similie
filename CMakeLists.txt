@@ -78,11 +78,24 @@ target_include_directories(
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
         "$<INSTALL_INTERFACE:include>"
 )
-target_link_libraries(similie INTERFACE DDC::core DDC::splines)
+target_link_libraries(similie INTERFACE
+    DDC::core
+    DDC::splines
+)
 
 add_subdirectory(include/similie)
 add_subdirectory(tests)
 add_subdirectory(examples)
 if("${SIMILIE_BUILD_DOCUMENTATION}")
     add_subdirectory(docs/)
+endif()
+
+target_link_libraries(similie INTERFACE
+    sil::csr
+    sil::exterior
+    sil::mesher
+    sil::misc
+)
+if("${SIMILIE_BUILD_YOUNG_TABLEAU}")
+    target_link_libraries(similie INTERFACE sil::young_tableau)
 endif()
