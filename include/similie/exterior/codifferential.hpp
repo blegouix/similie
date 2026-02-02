@@ -6,6 +6,7 @@
 #include <ddc/ddc.hpp>
 
 #include <similie/exterior/hodge_star.hpp>
+#include <similie/misc/macros.hpp>
 #include <similie/misc/specialization.hpp>
 #include <similie/tensor/character.hpp>
 #include <similie/tensor/tensor_impl.hpp>
@@ -213,8 +214,10 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
             ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
     sil::tensor::Tensor dual_tensor(dual_tensor_alloc);
 
+    SIMILIE_DEBUG_LOG("similie_compute_dual_tensor");
     ddc::parallel_for_each(
             exec_space,
+            "similie_compute_dual_tensor",
             dual_tensor.non_indices_domain(),
             KOKKOS_LAMBDA(typename TensorType::non_indices_domain_t::discrete_element_type elem) {
                 sil::tensor::tensor_prod(dual_tensor[elem], tensor[elem], hodge_star[elem]);
@@ -257,8 +260,10 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
             SigmaLowSeq>(exec_space, hodge_star2, inv_metric);
 
     // Codifferential
+    SIMILIE_DEBUG_LOG("similie_compute_codifferential");
     ddc::parallel_for_each(
             exec_space,
+            "similie_compute_codifferential",
             codifferential_tensor.non_indices_domain(),
             KOKKOS_LAMBDA(typename TensorType::non_indices_domain_t::discrete_element_type elem) {
                 sil::tensor::tensor_prod(

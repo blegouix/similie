@@ -6,6 +6,7 @@
 #include <ddc/ddc.hpp>
 
 #include <similie/misc/are_all_same.hpp>
+#include <similie/misc/macros.hpp>
 #include <similie/misc/domain_contains.hpp>
 #include <similie/misc/filled_struct.hpp>
 #include <similie/misc/portable_stl.hpp>
@@ -263,8 +264,10 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
                     typename TensorType::non_indices_domain_t>::type>(exec_space);
 
     // iterate over every node, we will work inside the tangent space associated to each of them
+    SIMILIE_DEBUG_LOG("similie_compute_coboundary");
     ddc::parallel_for_each(
             exec_space,
+            "similie_compute_coboundary",
             batch_dom,
             KOKKOS_LAMBDA(typename decltype(batch_dom)::discrete_element_type elem) {
                 // declare a K+1-cochain storing the K+1-cosimplices of the output cochain for the current tangent space and iterate over them

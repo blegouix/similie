@@ -5,6 +5,7 @@
 
 #include <ddc/ddc.hpp>
 
+#include <similie/misc/macros.hpp>
 #include <similie/misc/specialization.hpp>
 #include <similie/tensor/character.hpp>
 #include <similie/tensor/tensor_impl.hpp>
@@ -145,8 +146,10 @@ TensorType laplacian(
         exec_spaces[0].fence();
         exec_spaces[1].fence();
 
+        SIMILIE_DEBUG_LOG("similie_add_coboundary_of_codifferential_contribution_to_laplacian");
         ddc::parallel_for_each(
                 exec_space,
+                "similie_add_coboundary_of_codifferential_contribution_to_laplacian",
                 laplacian_tensor.domain(),
                 KOKKOS_LAMBDA(typename TensorType::discrete_element_type elem) {
                     laplacian_tensor(elem) += tmp(elem);

@@ -7,6 +7,7 @@
 
 #include <ddc/ddc.hpp>
 
+#include <similie/misc/macros.hpp>
 #include <similie/tensor/tensor_impl.hpp>
 
 namespace sil {
@@ -151,12 +152,13 @@ csr2dense(
                 Kokkos::DefaultHostExecutionSpace::memory_space> dense,
         CsrDynamic<HeadId, TailId...> csr)
 {
+    SIMILIE_DEBUG_LOG("similie_perform_csr2dense");
     ddc::parallel_fill(dense, 0.);
     for (std::size_t i = 0; i < csr.coalesc_idx().size() - 1; ++i) {
         std::size_t const j_begin = csr.coalesc_idx()[i];
         std::size_t const j_end = csr.coalesc_idx()[i + 1];
         Kokkos::parallel_for(
-                "csr2dense",
+                "similie_perform_csr2dense",
                 Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(j_begin, j_end),
                 [&](const int j) {
                     dense(ddc::DiscreteElement<HeadId>(i),

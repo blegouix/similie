@@ -5,6 +5,7 @@
 
 #include <ddc/ddc.hpp>
 
+#include <similie/misc/macros.hpp>
 #include <similie/misc/unsecure_parallel_deepcopy.hpp>
 
 #include <KokkosBatched_InverseLU_Decl.hpp>
@@ -248,8 +249,10 @@ struct FillMetricProd<
         tensor::Tensor new_metric_prod_(new_metric_prod_alloc_);
 
         if (new_metric_prod_dom_.size() != 0) {
+            SIMILIE_DEBUG_LOG("similie_compute_metric_prod");
             ddc::parallel_for_each(
                     exec_space,
+                    "similie_compute_metric_prod",
                     new_metric_prod_.non_indices_domain(),
                     KOKKOS_LAMBDA(
                             typename decltype(new_metric_prod_)::non_indices_domain_t::
@@ -335,8 +338,10 @@ inplace_apply_metric(ExecSpace const& exec_space, TensorType tensor, MetricType 
             swap_character_t<detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>,
             detail::non_primes<typename MetricType::accessor_t::natural_domain_t>>
             result(result_alloc);
+    SIMILIE_DEBUG_LOG("similie_inplace_apply_metric");
     ddc::parallel_for_each(
             exec_space,
+            "similie_inplace_apply_metric",
             tensor.non_indices_domain(),
             KOKKOS_LAMBDA(typename TensorType::non_indices_domain_t::discrete_element_type elem) {
                 tensor_prod(
@@ -410,8 +415,10 @@ invert_metric_t<MetricType> fill_inverse_metric(
             misc::Specialization<MetricIndex, TensorIdentityIndex>
             || misc::Specialization<MetricIndex, TensorLorentzianSignIndex>) {
     } else if (misc::Specialization<MetricIndex, TensorDiagonalIndex>) {
+        SIMILIE_DEBUG_LOG("similie_invert_diagonal_metric");
         ddc::parallel_for_each(
                 exec_space,
+                "similie_invert_diagonal_metric",
                 inv_metric.domain(),
                 KOKKOS_LAMBDA(invert_metric_t<MetricType>::discrete_element_type elem) {
                     inv_metric.mem(elem)
@@ -457,8 +464,10 @@ invert_metric_t<MetricType> fill_inverse_metric(
         ddc::ChunkSpan buffer2(buffer_alloc2);
 
         // process
+        SIMILIE_DEBUG_LOG("similie_invert_metric");
         ddc::parallel_for_each(
                 exec_space,
+                "similie_invert_metric",
                 inv_metric.non_indices_domain(),
                 KOKKOS_LAMBDA(
                         typename invert_metric_t<

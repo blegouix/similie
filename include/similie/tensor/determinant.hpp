@@ -5,6 +5,7 @@
 
 #include <ddc/ddc.hpp>
 
+#include <similie/misc/macros.hpp>
 #include <similie/misc/specialization.hpp>
 
 #include "tensor_impl.hpp"
@@ -79,8 +80,10 @@ TensorType::element_type determinant(TensorType tensor)
 
     Kokkos::View<typename TensorType::element_type**, Kokkos::LayoutRight, Kokkos::HostSpace>
             buffer("determinant_buffer", n, n);
+    SIMILIE_DEBUG_LOG("similie_compute_determinant");
     ddc::parallel_for_each(
             Kokkos::DefaultHostExecutionSpace(),
+            "similie_compute_determinant",
             tensor.accessor().natural_domain(),
             [&](auto index) {
                 buffer(ddc::detail::array(index)[0], ddc::detail::array(index)[1])
