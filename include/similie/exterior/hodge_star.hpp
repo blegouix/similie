@@ -5,8 +5,8 @@
 
 #include <ddc/ddc.hpp>
 
-#include <similie/misc/macros.hpp>
 #include <similie/misc/factorial.hpp>
+#include <similie/misc/macros.hpp>
 #include <similie/misc/specialization.hpp>
 #include <similie/misc/type_seq_conversion.hpp>
 #include <similie/tensor/antisymmetric_tensor.hpp>
@@ -69,8 +69,8 @@ HodgeStarType fill_hodge_star(
 
     SIMILIE_DEBUG_LOG("similie_compute_hodge_star");
     ddc::parallel_for_each(
-            exec_space,
             "similie_compute_hodge_star",
+            exec_space,
             hodge_star.non_indices_domain(),
             KOKKOS_LAMBDA(
                     typename HodgeStarType::non_indices_domain_t::discrete_element_type elem) {
@@ -121,8 +121,8 @@ HodgeStarType fill_hodge_star(
     // Compute determinants
     SIMILIE_DEBUG_LOG("similie_compute_metric_determinant");
     ddc::parallel_for_each(
-            exec_space,
             "similie_compute_metric_determinant",
+            exec_space,
             metric.non_indices_domain(),
             KOKKOS_LAMBDA(typename MetricType::non_indices_domain_t::discrete_element_type elem) {
                 ddc::device_for_each(

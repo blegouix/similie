@@ -148,8 +148,8 @@ TensorType laplacian(
 
         SIMILIE_DEBUG_LOG("similie_add_coboundary_of_codifferential_contribution_to_laplacian");
         ddc::parallel_for_each(
-                exec_space,
                 "similie_add_coboundary_of_codifferential_contribution_to_laplacian",
+                exec_space,
                 laplacian_tensor.domain(),
                 KOKKOS_LAMBDA(typename TensorType::discrete_element_type elem) {
                     laplacian_tensor(elem) += tmp(elem);

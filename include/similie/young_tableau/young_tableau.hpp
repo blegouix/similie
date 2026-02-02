@@ -632,9 +632,10 @@ struct OrthonormalBasisSubspaceEigenvalueOne<tensor::TensorFullIndex<Id...>>
                     Kokkos::DefaultHostExecutionSpace(),
                     candidate.domain(),
                     [&](ddc::DiscreteElement<Id...> elem) {
-                candidate(elem) = hamming_weight_code[(
-                        (misc::detail::stride<Id, Id...>() * elem.template uid<Id>()) + ...)];
-            });
+                        candidate(elem) = hamming_weight_code[(
+                                (misc::detail::stride<Id, Id...>() * elem.template uid<Id>())
+                                + ...)];
+                    });
 
             tensor::tensor_prod(prod, proj, candidate);
             SIMILIE_DEBUG_LOG("similie_compute_young_tableau_candidate_copy");
@@ -659,8 +660,8 @@ struct OrthonormalBasisSubspaceEigenvalueOne<tensor::TensorFullIndex<Id...>>
                         Kokkos::DefaultHostExecutionSpace(),
                         candidate.domain(),
                         [&](ddc::DiscreteElement<Id...> elem) {
-                    candidate(elem) /= Kokkos::sqrt(norm_squared(ddc::DiscreteElement<>()));
-                });
+                            candidate(elem) /= Kokkos::sqrt(norm_squared(ddc::DiscreteElement<>()));
+                        });
                 // Not sure if u = v is correct in any case (ie. complex tensors ?)
                 u.push_back(candidate);
                 v.push_back(candidate);

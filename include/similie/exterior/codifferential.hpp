@@ -216,8 +216,8 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
 
     SIMILIE_DEBUG_LOG("similie_compute_dual_tensor");
     ddc::parallel_for_each(
-            exec_space,
             "similie_compute_dual_tensor",
+            exec_space,
             dual_tensor.non_indices_domain(),
             KOKKOS_LAMBDA(typename TensorType::non_indices_domain_t::discrete_element_type elem) {
                 sil::tensor::tensor_prod(dual_tensor[elem], tensor[elem], hodge_star[elem]);
@@ -262,8 +262,8 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
     // Codifferential
     SIMILIE_DEBUG_LOG("similie_compute_codifferential");
     ddc::parallel_for_each(
-            exec_space,
             "similie_compute_codifferential",
+            exec_space,
             codifferential_tensor.non_indices_domain(),
             KOKKOS_LAMBDA(typename TensorType::non_indices_domain_t::discrete_element_type elem) {
                 sil::tensor::tensor_prod(

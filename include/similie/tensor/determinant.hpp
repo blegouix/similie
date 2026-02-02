@@ -82,8 +82,8 @@ TensorType::element_type determinant(TensorType tensor)
             buffer("determinant_buffer", n, n);
     SIMILIE_DEBUG_LOG("similie_compute_determinant");
     ddc::parallel_for_each(
-            Kokkos::DefaultHostExecutionSpace(),
             "similie_compute_determinant",
+            Kokkos::DefaultHostExecutionSpace(),
             tensor.accessor().natural_domain(),
             [&](auto index) {
                 buffer(ddc::detail::array(index)[0], ddc::detail::array(index)[1])
