@@ -18,11 +18,21 @@ mass = symbols("mass")
 phi = symbols("phi")
 pi = symbols(f"pi0:{N}")
 
-hamiltonian = 0.5 * (sum(pi_**2 for pi_ in pi) + mass**2 * phi**2)
+# Minkowski signature (+, -, -, ..., -)
+metric_sign = [1] + [-1] * (N - 1)
+
+# H = 1/2 m^2 phi^2 + 1/2 (p0^2 - p1^2 - ... - p{N-1}^2)
+hamiltonian = 0.5 * (
+    mass**2 * phi**2 + sum(metric_sign[i] * pi[i] ** 2 for i in range(N))
+)
+
+# [dH/dphi, dH/dpi0, dH/dpi1, ...]
 hamiltonian_diff = Matrix(
     [diff(hamiltonian, phi), *[diff(hamiltonian, pi_) for pi_ in pi]]
 )
 
+# De Donder–Weyl equation: ∂_mu phi = ∂H/∂p^mu
+# So we solve: dphi_dx[mu] - dH_dpi[mu] = 0  for pi[mu]
 dphi_dx = symbols(f"dphi_dx0:{N}")
 pi_from_dphi_dx = solve(
     [dphi_dx[i] + hamiltonian_diff[i + 1] for i in range(N)], list(pi), dict=True
@@ -31,6 +41,7 @@ if not pi_from_dphi_dx:
     raise RuntimeError("Could not solve for pi in terms of dphi/dx.")
 
 
+# Generate C++ code
 def preprocess_cxx(expr: str) -> str:
     for i in range(N):
         expr = expr.replace(f"pi{i}", f"pi[{i}]")
