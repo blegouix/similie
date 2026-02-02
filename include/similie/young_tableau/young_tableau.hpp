@@ -9,6 +9,7 @@
 
 #include <similie/csr/csr.hpp>
 #include <similie/csr/csr_dynamic.hpp>
+#include <similie/misc/macros.hpp>
 #include <similie/misc/permutation_parity.hpp>
 #include <similie/misc/specialization.hpp>
 #include <similie/misc/stride.hpp>
@@ -625,19 +626,26 @@ struct OrthonormalBasisSubspaceEigenvalueOne<tensor::TensorFullIndex<Id...>>
             std::vector<bool> hamming_weight_code
                     = index_hamming_weight_code(index, (Id::size() * ...));
 
-            ddc::parallel_for_each(candidate.domain(), [&](ddc::DiscreteElement<Id...> elem) {
-                candidate(elem) = hamming_weight_code[(
-                        (misc::detail::stride<Id, Id...>() * elem.template uid<Id>()) + ...)];
-            });
+            SIMILIE_DEBUG_LOG("similie_init_young_tableau_candidate");
+            ddc::parallel_for_each(
+                    "similie_init_young_tableau_candidate",
+                    Kokkos::DefaultHostExecutionSpace(),
+                    candidate.domain(),
+                    [&](ddc::DiscreteElement<Id...> elem) {
+                        candidate(elem) = hamming_weight_code[(
+                                (misc::detail::stride<Id, Id...>() * elem.template uid<Id>())
+                                + ...)];
+                    });
 
             tensor::tensor_prod(prod, proj, candidate);
+            SIMILIE_DEBUG_LOG("similie_compute_young_tableau_candidate_copy");
             Kokkos::deep_copy(
                     candidate.allocation_kokkos_view(),
                     prod.allocation_kokkos_view()); // We rely on Kokkos::deep_copy in place of ddc::parallel_deepcopy to avoid type verification of the type dimensions
 
             orthogonalize(candidate, v, n_irreps);
 
-            if (ddc ::transform_reduce(
+            if (ddc ::host_transform_reduce(
                         candidate.domain(),
                         false,
                         ddc::reducer::lor<bool>(),
@@ -646,9 +654,14 @@ struct OrthonormalBasisSubspaceEigenvalueOne<tensor::TensorFullIndex<Id...>>
                         norm_squared_alloc(ddc::DiscreteDomain<> {}, ddc::HostAllocator<double>());
                 tensor::Tensor norm_squared(norm_squared_alloc);
                 tensor::tensor_prod(norm_squared, candidate, candidate);
-                ddc::parallel_for_each(candidate.domain(), [&](ddc::DiscreteElement<Id...> elem) {
-                    candidate(elem) /= Kokkos::sqrt(norm_squared(ddc::DiscreteElement<>()));
-                });
+                SIMILIE_DEBUG_LOG("similie_normalize_young_tableau_candidate");
+                ddc::parallel_for_each(
+                        "similie_normalize_young_tableau_candidate",
+                        Kokkos::DefaultHostExecutionSpace(),
+                        candidate.domain(),
+                        [&](ddc::DiscreteElement<Id...> elem) {
+                            candidate(elem) /= Kokkos::sqrt(norm_squared(ddc::DiscreteElement<>()));
+                        });
                 // Not sure if u = v is correct in any case (ie. complex tensors ?)
                 u.push_back(candidate);
                 v.push_back(candidate);

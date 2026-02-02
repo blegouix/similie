@@ -6,6 +6,7 @@
 #include <ddc/ddc.hpp>
 
 #include <similie/misc/factorial.hpp>
+#include <similie/misc/macros.hpp>
 #include <similie/misc/specialization.hpp>
 #include <similie/misc/type_seq_conversion.hpp>
 #include <similie/tensor/antisymmetric_tensor.hpp>
@@ -66,7 +67,9 @@ HodgeStarType fill_hodge_star(
                     typename ExecSpace::memory_space>()); // TODO consider avoid allocation
     sil::tensor::Tensor levi_civita(levi_civita_alloc);
 
+    SIMILIE_DEBUG_LOG("similie_compute_hodge_star");
     ddc::parallel_for_each(
+            "similie_compute_hodge_star",
             exec_space,
             hodge_star.non_indices_domain(),
             KOKKOS_LAMBDA(
@@ -116,7 +119,9 @@ HodgeStarType fill_hodge_star(
             ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
     ddc::ChunkSpan buffer(buffer_alloc);
     // Compute determinants
+    SIMILIE_DEBUG_LOG("similie_compute_metric_determinant");
     ddc::parallel_for_each(
+            "similie_compute_metric_determinant",
             exec_space,
             metric.non_indices_domain(),
             KOKKOS_LAMBDA(typename MetricType::non_indices_domain_t::discrete_element_type elem) {

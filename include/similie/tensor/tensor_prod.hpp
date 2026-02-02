@@ -466,7 +466,7 @@ struct TensorProdYoungAnyAny<
                 uncompressed_prod.domain(),
                 [&](ddc::cartesian_prod_t<
                         typename ProdDDim::subindices_domain_t...>::discrete_element_type elem) {
-                    uncompressed_prod(elem) = ddc::transform_reduce(
+                    uncompressed_prod(elem) = ddc::host_transform_reduce(
                             contract_dom,
                             0.,
                             ddc::reducer::sum<ElementType>(),

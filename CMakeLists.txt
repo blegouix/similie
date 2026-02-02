@@ -10,7 +10,8 @@ set(CMAKE_CXX_STANDARD 20 CACHE INTERNAL "The C++ standard whose features are re
 
 # List of options
 option(SIMILIE_BUILD_YOUNG_TABLEAU "Build module dedicated to Young tableau indexing" OFF) # Requires compiler supporting #embed directive
-option(SIMILIE_BUILD_DOCUMENTATION "Build DDC documentation/website" OFF)
+option(SIMILIE_BUILD_DOCUMENTATION "Build SimiLie documentation/website" OFF)
+option(SIMILIE_DEBUG_LOG "Enable logging of SimiLie internal kernels" OFF)
 
 # Set default DDC options when included
 option(DDC_BUILD_BENCHMARKS       "Build DDC benchmarks." OFF)
@@ -82,6 +83,9 @@ target_link_libraries(similie INTERFACE
     DDC::core
     DDC::splines
 )
+if("${SIMILIE_DEBUG_LOG}")
+  target_compile_definitions(similie INTERFACE SIMILIE_DEBUG_LOG_)
+endif()
 
 add_subdirectory(include/similie)
 add_subdirectory(tests)

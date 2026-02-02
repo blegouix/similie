@@ -7,6 +7,7 @@
 
 #include <ddc/ddc.hpp>
 
+#include <similie/misc/macros.hpp>
 #include <similie/tensor/tensor_impl.hpp>
 
 #include "csr_dynamic.hpp"
@@ -117,6 +118,7 @@ tensor_prod(
                 Kokkos::DefaultHostExecutionSpace::memory_space> dense,
         Csr<N, HeadTensorIndex, TailTensorIndex...> csr)
 {
+    SIMILIE_DEBUG_LOG("similie_compute_vector_dense_multiplication");
     ddc::parallel_fill(prod, 0.);
     for (std::size_t i = 0; i < csr.coalesc_idx().size() - 1;
          ++i) { // TODO base on iterator ? Kokkosify ?
@@ -124,7 +126,7 @@ tensor_prod(
         std::size_t const j_begin = csr.coalesc_idx()[i];
         std::size_t const j_end = csr.coalesc_idx()[i + 1];
         Kokkos::parallel_for(
-                "vector_dense_multiplication",
+                "similie_compute_vector_dense_multiplication",
                 Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(j_begin, j_end),
                 [&](const int j) {
                     prod(ddc::DiscreteElement<TailTensorIndex...>(csr.idx()[ddc::type_seq_rank_v<
@@ -161,13 +163,14 @@ tensor_prod(
                 Kokkos::layout_right,
                 Kokkos::DefaultHostExecutionSpace::memory_space> dense)
 {
+    SIMILIE_DEBUG_LOG("similie_compute_csr_dense_multiplication");
     ddc::parallel_fill(prod, 0.);
     for (std::size_t i = 0; i < csr.coalesc_idx().size() - 1;
          ++i) { // TODO base on iterator ? Kokkosify ?
         std::size_t const j_begin = csr.coalesc_idx()[i];
         std::size_t const j_end = csr.coalesc_idx()[i + 1];
         Kokkos::parallel_reduce(
-                "csr_dense_multiplication",
+                "similie_compute_csr_dense_multiplication",
                 Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(j_begin, j_end),
                 [&](const int j, double& lsum) {
                     double const dense_value = dense(
