@@ -217,7 +217,7 @@ int main(int argc, char** argv)
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
                 double const x = ddc::coordinate(ddc::DiscreteElement<DDimX>(elem));
                 double const y = ddc::coordinate(ddc::DiscreteElement<DDimY>(elem));
-                potential(elem) = std::exp(-x * x + y * y);
+                potential(elem) = std::exp(-(x * x + y * y));
             });
     auto potential_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), potential);
