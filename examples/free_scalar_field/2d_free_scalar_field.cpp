@@ -212,12 +212,26 @@ int main(int argc, char** argv)
     ddc::Chunk potential_alloc(potential_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor potential(potential_alloc);
 
+    float const x_0 = -2.;
+    float const y_0 = 0.;
+    float const x_1 = 2.;
+    float const y_1 = -0.3;
+    float sigma = .5;
+    float const k = 0.;
     ddc::parallel_for_each(
             potential.domain(),
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
                 double const x = ddc::coordinate(ddc::DiscreteElement<DDimX>(elem));
                 double const y = ddc::coordinate(ddc::DiscreteElement<DDimY>(elem));
-                potential(elem) = 1./(1+std::exp(-x))*std::exp(-(x * x + y * y));
+                // Two Gaussian wave packets
+                potential(elem) = std::cos(k * (x - x_0))
+                                          * std::exp(
+                                                  -((x - x_0) * (x - x_0) + (y - y_0) * (y - y_0))
+                                                  / 2. / sigma / sigma)
+                                  + std::cos(k * (x - x_1))
+                                            * std::exp(
+                                                    -((x - x_1) * (x - x_1) + (y - y_1) * (y - y_1))
+                                                    / 2. / sigma / sigma);
             });
     auto potential_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), potential);
@@ -249,7 +263,21 @@ int main(int argc, char** argv)
             temporal_moment_dom(mesh_xy, temporal_moment_accessor.domain());
     ddc::Chunk temporal_moment_alloc(temporal_moment_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor temporal_moment(temporal_moment_alloc);
-    ddc::parallel_fill(Kokkos::DefaultExecutionSpace(), temporal_moment, 0.);
+
+    float const v = 1.;
+    ddc::parallel_for_each(
+            potential.domain(),
+            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
+                double const x = ddc::coordinate(ddc::DiscreteElement<DDimX>(elem));
+                double const y = ddc::coordinate(ddc::DiscreteElement<DDimY>(elem)) - y_0;
+                // v*dphi/dx of the left wave packet only to get a pure kick along x toward the immobile right one
+                temporal_moment(elem) = v
+                                        * (k * std::sin(k * (x - x_0))
+                                           + (x - x_0) / sigma / sigma * std::cos(k * (x - x_0)))
+                                        * std::exp(
+                                                -((x - x_0) * (x - x_0) + (y - y_0) * (y - y_0))
+                                                / 2. / sigma / sigma);
+            });
 
     auto temporal_moment_host = ddc::
             create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), temporal_moment);
