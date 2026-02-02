@@ -94,12 +94,29 @@ if("${SIMILIE_BUILD_DOCUMENTATION}")
     add_subdirectory(docs/)
 endif()
 
-target_link_libraries(similie INTERFACE
+set(SIMILIE_INTERNAL_LIBS
     sil::csr
     sil::exterior
     sil::mesher
     sil::misc
 )
+set(SIMILIE_INTERNAL_TARGETS
+    csr
+    exterior
+    mesher
+    misc
+    tensor
+)
 if("${SIMILIE_BUILD_YOUNG_TABLEAU}")
-    target_link_libraries(similie INTERFACE sil::young_tableau)
+  list(APPEND SIMILIE_INTERNAL_LIBS sil::young_tableau)
+  list(APPEND SIMILIE_INTERNAL_TARGETS young_tableau)
+endif()
+target_link_libraries(similie INTERFACE ${SIMILIE_INTERNAL_LIBS})
+
+if("${SIMILIE_DEBUG_LOG}")
+  foreach(similie_target IN LISTS SIMILIE_INTERNAL_TARGETS)
+    if(TARGET ${similie_target})
+      target_compile_definitions(${similie_target} INTERFACE SIMILIE_DEBUG_LOG_)
+    endif()
+  endforeach()
 endif()
