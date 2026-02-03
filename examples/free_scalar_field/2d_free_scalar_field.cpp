@@ -98,7 +98,7 @@ int write_xdmf(int Nx, int Ny)
 )XDMF";
 
     FILE* file = fopen("2d_free_scalar_field.xmf", "w");
-    fprintf(file, xdmf, Nx, Ny, Nx, Ny, Nx, Ny, Nx, Ny, Nx, Ny, Nx, Ny);
+    fprintf(file, xdmf, Nx, Ny, Nx, Ny, Nx, Ny, Nx, Ny, Nx, Ny, Nx, Ny, Nx, Ny);
     fclose(file);
 
     return 1;
