@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.12.0"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>SimiLie: are_all_same.hpp Source File</title>
+<title>SimiLie: macros.hpp Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -99,7 +99,7 @@ $(function() {
 </div>
 <script type="text/javascript">
 /* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
-$(function(){initNavTree('are__all__same_8hpp_source.html',''); initResizable(true); });
+$(function(){initNavTree('macros_8hpp_source.html',''); initResizable(true); });
 /* @license-end */
 </script>
 <div id="doc-content">
@@ -125,7 +125,7 @@ $(function(){initNavTree('are__all__same_8hpp_source.html',''); initResizable(tr
 </div>
 
 <div class="header">
-  <div class="headertitle"><div class="title">are_all_same.hpp</div></div>
+  <div class="headertitle"><div class="title">macros.hpp</div></div>
 </div><!--header-->
 <div class="contents">
 <div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="comment">// SPDX-FileCopyrightText: 2024 Baptiste Legouix</span></div>
@@ -133,39 +133,24 @@ $(function(){initNavTree('are__all__same_8hpp_source.html',''); initResizable(tr
 <div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span> </div>
 <div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#pragma once</span></div>
 <div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span> </div>
-<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#include &quot;specialization.hpp&quot;</span></div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#include &lt;string_view&gt;</span></div>
 <div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span> </div>
-<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacesil.html">sil</a> {</div>
-<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
-<div class="foldopen" id="foldopen00010" data-start="{" data-end="}">
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno"><a class="line" href="namespacesil_1_1misc.html">   10</a></span><span class="keyword">namespace </span>misc {</div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#ifdef SIMILIE_DEBUG_LOG_</span></div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &lt;iostream&gt;</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="keyword">template</span> &lt;<span class="keyword">class </span>Head, <span class="keyword">class</span>... Tail&gt;</div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno"><a class="line" href="namespacesil_1_1misc.html#a094c71e44717da55afa244de80ca4b2c">   13</a></span><span class="keyword">inline</span> <span class="keyword">constexpr</span> <span class="keywordtype">bool</span> <a class="code hl_variable" href="namespacesil_1_1misc.html#a094c71e44717da55afa244de80ca4b2c">are_all_same</a> = (std::is_same_v&lt;Head, Tail&gt; &amp;&amp; ...);</div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span> </div>
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="keyword">template</span> &lt;<span class="keyword">class </span>Head, <span class="keyword">class</span>... Tail&gt;</div>
-<div class="foldopen" id="foldopen00016" data-start="{" data-end="}">
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno"><a class="line" href="namespacesil_1_1misc.html#a9be032ba1e7bb2c1c931d858a2ab90f2">   16</a></span><span class="keyword">inline</span> <span class="keyword">constexpr</span> <span class="keywordtype">bool</span> <a class="code hl_function" href="namespacesil_1_1misc.html#a9be032ba1e7bb2c1c931d858a2ab90f2">are_all_equal</a>(Head head, Tail... tail)</div>
-<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span>{</div>
-<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span>    <span class="keywordflow">return</span> ((head == tail) &amp;&amp; ...);</div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="keyword">namespace </span>sil::misc::detail {</div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="keyword">inline</span> <span class="keywordtype">void</span> debug_log_launch([[maybe_unused]] std::string_view name)</div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span>{</div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="preprocessor">#ifdef SIMILIE_DEBUG_LOG_</span></div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span>    std::cout &lt;&lt; <span class="stringliteral">&quot;Launch &quot;</span> &lt;&lt; name &lt;&lt; std::endl;</div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span>}</div>
-</div>
 <div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span> </div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="keyword">template</span> &lt;misc::Specialization&lt;std::vector&gt; T&gt;</div>
-<div class="foldopen" id="foldopen00022" data-start="{" data-end="}">
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno"><a class="line" href="namespacesil_1_1misc.html#a5a1751c14a48bdc336c6ff27d10b1041">   22</a></span><span class="keyword">inline</span> <span class="keyword">constexpr</span> <span class="keywordtype">bool</span> <a class="code hl_function" href="namespacesil_1_1misc.html#a9be032ba1e7bb2c1c931d858a2ab90f2">are_all_equal</a>(T t)</div>
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>{</div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>    <span class="keywordflow">return</span> std::all_of(t.begin(), t.end(), [&amp;](<span class="keyword">const</span> std::size_t i) { return i == *t.begin(); });</div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>}</div>
-</div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span> </div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>} <span class="comment">// namespace misc</span></div>
-</div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span> </div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>} <span class="comment">// namespace sil</span></div>
-<div class="ttc" id="anamespacesil_1_1misc_html_a094c71e44717da55afa244de80ca4b2c"><div class="ttname"><a href="namespacesil_1_1misc.html#a094c71e44717da55afa244de80ca4b2c">sil::misc::are_all_same</a></div><div class="ttdeci">constexpr bool are_all_same</div><div class="ttdef"><b>Definition</b> <a href="#l00013">are_all_same.hpp:13</a></div></div>
-<div class="ttc" id="anamespacesil_1_1misc_html_a9be032ba1e7bb2c1c931d858a2ab90f2"><div class="ttname"><a href="namespacesil_1_1misc.html#a9be032ba1e7bb2c1c931d858a2ab90f2">sil::misc::are_all_equal</a></div><div class="ttdeci">constexpr bool are_all_equal(Head head, Tail... tail)</div><div class="ttdef"><b>Definition</b> <a href="#l00016">are_all_same.hpp:16</a></div></div>
-<div class="ttc" id="anamespacesil_html"><div class="ttname"><a href="namespacesil.html">sil</a></div><div class="ttdoc">The top-level namespace of SimiLie.</div><div class="ttdef"><b>Definition</b> <a href="csr_8hpp_source.html#l00015">csr.hpp:15</a></div></div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>} <span class="comment">// namespace sil::misc::detail</span></div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span> </div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><span class="preprocessor">#define SIMILIE_DEBUG_LOG(name) ::sil::misc::detail::debug_log_launch(name)</span></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!--
@@ -176,7 +161,7 @@ SPDX-License-Identifier: MIT
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_4852fb43325bd19e890e1df30fbd375f.html">similie</a></li><li class="navelem"><a class="el" href="dir_5d94c4e593873399fbcb1de7cf284403.html">misc</a></li><li class="navelem"><b>are_all_same.hpp</b></li>
+    <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_4852fb43325bd19e890e1df30fbd375f.html">similie</a></li><li class="navelem"><a class="el" href="dir_5d94c4e593873399fbcb1de7cf284403.html">misc</a></li><li class="navelem"><b>macros.hpp</b></li>
     <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0 </li>
   </ul>
 </div>

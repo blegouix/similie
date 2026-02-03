@@ -135,99 +135,102 @@ $(function(){initNavTree('determinant_8hpp_source.html',''); initResizable(true)
 <div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span> </div>
 <div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#include &lt;ddc/ddc.hpp&gt;</span></div>
 <div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span> </div>
-<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &lt;similie/misc/specialization.hpp&gt;</span></div>
-<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &quot;tensor_impl.hpp&quot;</span></div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacesil.html">sil</a> {</div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="keyword">namespace </span>tensor {</div>
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span> </div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="comment">// ChatGPT-generated, TODO rely on KokkosKernels LU factorization. It overwrite matrix</span></div>
-<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="keyword">template</span> &lt;misc::Specialization&lt;Kokkos::View&gt; ViewType&gt;</div>
-<div class="foldopen" id="foldopen00018" data-start="{" data-end="}">
-<div class="line"><a id="l00018" name="l00018"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#a61fe8bf1b3d411f3d86fdef8beaafc06">   18</a></span>KOKKOS_FUNCTION <span class="keyword">typename</span> ViewType::value_type <a class="code hl_function" href="namespacesil_1_1tensor.html#a61fe8bf1b3d411f3d86fdef8beaafc06">determinant</a>(<span class="keyword">const</span> ViewType&amp; matrix)</div>
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span>{</div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>    assert(matrix.extent(0) == matrix.extent(1)</div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>           &amp;&amp; <span class="stringliteral">&quot;Matrix should be squared to compute its determinant&quot;</span>);</div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span> </div>
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>    <span class="keyword">const</span> std::size_t N = matrix.extent(0);</div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span> </div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>    <span class="comment">// Permutation sign (to account for row swaps)</span></div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>    <span class="keywordtype">int</span> permutation_sign = 1;</div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span> </div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>    <span class="comment">// Perform LU decomposition with partial pivoting</span></div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>    <span class="keywordflow">for</span> (std::size_t i = 0; i &lt; N; ++i) {</div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>        <span class="comment">// Pivoting (find the largest element in the current column)</span></div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>        std::size_t pivot = i;</div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>        <span class="keyword">typename</span> ViewType::value_type max_val = Kokkos::abs(matrix(i, i));</div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>        <span class="keywordflow">for</span> (std::size_t j = i + 1; j &lt; N; ++j) {</div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>            <span class="keywordflow">if</span> (Kokkos::abs(matrix(j, i)) &gt; max_val) {</div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>                pivot = j;</div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>                max_val = Kokkos::abs(matrix(j, i));</div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>            }</div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>        }</div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span> </div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>        <span class="comment">// Swap rows if necessary</span></div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>        <span class="keywordflow">if</span> (pivot != i) {</div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>            permutation_sign *= -1; <span class="comment">// Track the effect of row swaps</span></div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>            <span class="keywordflow">for</span> (std::size_t k = 0; k &lt; N; ++k) {</div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>                Kokkos::kokkos_swap(matrix(i, k), matrix(pivot, k));</div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>            }</div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>        }</div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span> </div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>        <span class="comment">// Check for singular matrix</span></div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>        <span class="keywordflow">if</span> (matrix(i, i) == 0.0) {</div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>            <span class="keywordflow">return</span> 0.0; <span class="comment">// Determinant is zero for singular matrices</span></div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>        }</div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span> </div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>        <span class="comment">// Perform elimination below the pivot</span></div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>        <span class="keywordflow">for</span> (std::size_t j = i + 1; j &lt; N; ++j) {</div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>            matrix(j, i) /= matrix(i, i);</div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>            <span class="keywordflow">for</span> (std::size_t k = i + 1; k &lt; N; ++k) {</div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>                matrix(j, k) -= matrix(j, i) * matrix(i, k);</div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>            }</div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>        }</div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>    }</div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span> </div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>    <span class="comment">// Compute the determinant as the product of the diagonal elements</span></div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    <span class="keyword">typename</span> ViewType::value_type det = permutation_sign;</div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>    <span class="keywordflow">for</span> (std::size_t i = 0; i &lt; N; ++i) {</div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>        det *= matrix(i, i);</div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>    }</div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span> </div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>    <span class="keywordflow">return</span> det;</div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>}</div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &lt;similie/misc/macros.hpp&gt;</span></div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &lt;similie/misc/specialization.hpp&gt;</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span> </div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &quot;tensor_impl.hpp&quot;</span></div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span> </div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacesil.html">sil</a> {</div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span> </div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="keyword">namespace </span>tensor {</div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span> </div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="comment">// ChatGPT-generated, TODO rely on KokkosKernels LU factorization. It overwrite matrix</span></div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="keyword">template</span> &lt;misc::Specialization&lt;Kokkos::View&gt; ViewType&gt;</div>
+<div class="foldopen" id="foldopen00019" data-start="{" data-end="}">
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#a61fe8bf1b3d411f3d86fdef8beaafc06">   19</a></span>KOKKOS_FUNCTION <span class="keyword">typename</span> ViewType::value_type <a class="code hl_function" href="namespacesil_1_1tensor.html#a61fe8bf1b3d411f3d86fdef8beaafc06">determinant</a>(<span class="keyword">const</span> ViewType&amp; matrix)</div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>{</div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>    assert(matrix.extent(0) == matrix.extent(1)</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>           &amp;&amp; <span class="stringliteral">&quot;Matrix should be squared to compute its determinant&quot;</span>);</div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span> </div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>    <span class="keyword">const</span> std::size_t N = matrix.extent(0);</div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span> </div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>    <span class="comment">// Permutation sign (to account for row swaps)</span></div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>    <span class="keywordtype">int</span> permutation_sign = 1;</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span> </div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>    <span class="comment">// Perform LU decomposition with partial pivoting</span></div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>    <span class="keywordflow">for</span> (std::size_t i = 0; i &lt; N; ++i) {</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>        <span class="comment">// Pivoting (find the largest element in the current column)</span></div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>        std::size_t pivot = i;</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>        <span class="keyword">typename</span> ViewType::value_type max_val = Kokkos::abs(matrix(i, i));</div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>        <span class="keywordflow">for</span> (std::size_t j = i + 1; j &lt; N; ++j) {</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>            <span class="keywordflow">if</span> (Kokkos::abs(matrix(j, i)) &gt; max_val) {</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>                pivot = j;</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>                max_val = Kokkos::abs(matrix(j, i));</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>            }</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>        }</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span> </div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>        <span class="comment">// Swap rows if necessary</span></div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>        <span class="keywordflow">if</span> (pivot != i) {</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>            permutation_sign *= -1; <span class="comment">// Track the effect of row swaps</span></div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>            <span class="keywordflow">for</span> (std::size_t k = 0; k &lt; N; ++k) {</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>                Kokkos::kokkos_swap(matrix(i, k), matrix(pivot, k));</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>            }</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>        }</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span> </div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>        <span class="comment">// Check for singular matrix</span></div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>        <span class="keywordflow">if</span> (matrix(i, i) == 0.0) {</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>            <span class="keywordflow">return</span> 0.0; <span class="comment">// Determinant is zero for singular matrices</span></div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>        }</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span> </div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>        <span class="comment">// Perform elimination below the pivot</span></div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>        <span class="keywordflow">for</span> (std::size_t j = i + 1; j &lt; N; ++j) {</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>            matrix(j, i) /= matrix(i, i);</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>            <span class="keywordflow">for</span> (std::size_t k = i + 1; k &lt; N; ++k) {</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>                matrix(j, k) -= matrix(j, i) * matrix(i, k);</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>            }</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>        }</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>    }</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span> </div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    <span class="comment">// Compute the determinant as the product of the diagonal elements</span></div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>    <span class="keyword">typename</span> ViewType::value_type det = permutation_sign;</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>    <span class="keywordflow">for</span> (std::size_t i = 0; i &lt; N; ++i) {</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>        det *= matrix(i, i);</div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>    }</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span> </div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>    <span class="keywordflow">return</span> det;</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>}</div>
 </div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span> </div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span><span class="comment">// TODO port on GPU</span></div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span><span class="keyword">template</span> &lt;misc::Specialization&lt;Tensor&gt; TensorType&gt;</div>
-<div class="foldopen" id="foldopen00073" data-start="{" data-end="}">
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#a6049da34dd9724305cd77d3e3733bb82">   73</a></span>TensorType::element_type <a class="code hl_function" href="namespacesil_1_1tensor.html#a61fe8bf1b3d411f3d86fdef8beaafc06">determinant</a>(TensorType tensor)</div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>{</div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>    <span class="keyword">static_assert</span>(TensorType::natural_domain_t::rank() == 2);</div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>    <span class="keyword">auto</span> extents = ddc::detail::array(tensor.natural_domain().extents());</div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>    assert(extents[0] == extents[1] &amp;&amp; <span class="stringliteral">&quot;Matrix should be squared to compute its determinant&quot;</span>);</div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>    <span class="keyword">const</span> std::size_t n = extents[0];</div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span> </div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>    Kokkos::View&lt;typename TensorType::element_type**, Kokkos::LayoutRight, Kokkos::HostSpace&gt;</div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>            buffer(<span class="stringliteral">&quot;determinant_buffer&quot;</span>, n, n);</div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>    ddc::parallel_for_each(</div>
-<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>            Kokkos::DefaultHostExecutionSpace(),</div>
-<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>            tensor.accessor().natural_domain(),</div>
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>            [&amp;](<span class="keyword">auto</span> index) {</div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>                buffer(ddc::detail::array(index)[0], ddc::detail::array(index)[1])</div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>                        = tensor(tensor.access_element(index));</div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>            });</div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="namespacesil_1_1tensor.html#a61fe8bf1b3d411f3d86fdef8beaafc06">determinant</a>(buffer);</div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>}</div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span> </div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span><span class="comment">// TODO port on GPU</span></div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span><span class="keyword">template</span> &lt;misc::Specialization&lt;Tensor&gt; TensorType&gt;</div>
+<div class="foldopen" id="foldopen00074" data-start="{" data-end="}">
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#a6049da34dd9724305cd77d3e3733bb82">   74</a></span>TensorType::element_type <a class="code hl_function" href="namespacesil_1_1tensor.html#a61fe8bf1b3d411f3d86fdef8beaafc06">determinant</a>(TensorType tensor)</div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>{</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>    <span class="keyword">static_assert</span>(TensorType::natural_domain_t::rank() == 2);</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>    <span class="keyword">auto</span> extents = ddc::detail::array(tensor.natural_domain().extents());</div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>    assert(extents[0] == extents[1] &amp;&amp; <span class="stringliteral">&quot;Matrix should be squared to compute its determinant&quot;</span>);</div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>    <span class="keyword">const</span> std::size_t n = extents[0];</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span> </div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>    Kokkos::View&lt;typename TensorType::element_type**, Kokkos::LayoutRight, Kokkos::HostSpace&gt;</div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>            buffer(<span class="stringliteral">&quot;determinant_buffer&quot;</span>, n, n);</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>    SIMILIE_DEBUG_LOG(<span class="stringliteral">&quot;similie_compute_determinant&quot;</span>);</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>    ddc::parallel_for_each(</div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>            <span class="stringliteral">&quot;similie_compute_determinant&quot;</span>,</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>            Kokkos::DefaultHostExecutionSpace(),</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>            tensor.accessor().natural_domain(),</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>            [&amp;](<span class="keyword">auto</span> index) {</div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>                buffer(ddc::detail::array(index)[0], ddc::detail::array(index)[1])</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>                        = tensor(tensor.access_element(index));</div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>            });</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="namespacesil_1_1tensor.html#a61fe8bf1b3d411f3d86fdef8beaafc06">determinant</a>(buffer);</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>}</div>
 </div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span> </div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>} <span class="comment">// namespace tensor</span></div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span> </div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>} <span class="comment">// namespace sil</span></div>
-<div class="ttc" id="anamespacesil_1_1tensor_html_a61fe8bf1b3d411f3d86fdef8beaafc06"><div class="ttname"><a href="namespacesil_1_1tensor.html#a61fe8bf1b3d411f3d86fdef8beaafc06">sil::tensor::determinant</a></div><div class="ttdeci">KOKKOS_FUNCTION ViewType::value_type determinant(const ViewType &amp;matrix)</div><div class="ttdef"><b>Definition</b> <a href="#l00018">determinant.hpp:18</a></div></div>
-<div class="ttc" id="anamespacesil_html"><div class="ttname"><a href="namespacesil.html">sil</a></div><div class="ttdoc">The top-level namespace of SimiLie.</div><div class="ttdef"><b>Definition</b> <a href="csr_8hpp_source.html#l00014">csr.hpp:14</a></div></div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span> </div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>} <span class="comment">// namespace tensor</span></div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span> </div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>} <span class="comment">// namespace sil</span></div>
+<div class="ttc" id="anamespacesil_1_1tensor_html_a61fe8bf1b3d411f3d86fdef8beaafc06"><div class="ttname"><a href="namespacesil_1_1tensor.html#a61fe8bf1b3d411f3d86fdef8beaafc06">sil::tensor::determinant</a></div><div class="ttdeci">KOKKOS_FUNCTION ViewType::value_type determinant(const ViewType &amp;matrix)</div><div class="ttdef"><b>Definition</b> <a href="#l00019">determinant.hpp:19</a></div></div>
+<div class="ttc" id="anamespacesil_html"><div class="ttname"><a href="namespacesil.html">sil</a></div><div class="ttdoc">The top-level namespace of SimiLie.</div><div class="ttdef"><b>Definition</b> <a href="csr_8hpp_source.html#l00015">csr.hpp:15</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!--
