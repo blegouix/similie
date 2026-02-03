@@ -1,11 +1,11 @@
 // SPDX-FileCopyrightText: 2026 Baptiste Legouix
 // SPDX-License-Identifier: MIT
 
+#include <array>
+
 #include <ddc/ddc.hpp>
 #include <ddc/kernels/splines.hpp>
 #include <ddc/pdi.hpp>
-
-#include <array>
 
 #include <similie/similie.hpp>
 
@@ -295,11 +295,8 @@ int main(int argc, char** argv)
     auto temporal_moment_host = ddc::
             create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), temporal_moment);
 
-    // Hamiltonian
-    [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> hamiltonian_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, DummyIndex>
-            hamiltonian_dom(mesh_xy, hamiltonian_accessor.domain());
-    ddc::Chunk hamiltonian_alloc(hamiltonian_dom, ddc::DeviceAllocator<double>());
+    // Hamiltonian, only for export
+    ddc::Chunk hamiltonian_alloc(mesh_xy, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor hamiltonian(hamiltonian_alloc);
     auto h_hamiltonian
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), hamiltonian);
@@ -371,12 +368,14 @@ int main(int argc, char** argv)
                     Kokkos::DefaultExecutionSpace(),
                     mesh_xy,
                     KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
-                        std::array<double, FreeScalarFieldHamiltonian::N> pi = {
-                                temporal_moment(elem),
-                                spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(0)),
-                                spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(1))};
+                        std::array<double, 3> pi
+                                = {temporal_moment(elem, ddc::DiscreteElement<DummyIndex>()),
+                                   spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(0)),
+                                   spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(1))};
                         hamiltonian(elem)
-                                = FreeScalarFieldHamiltonian(mass).H(potential(elem), pi);
+                                = FreeScalarFieldHamiltonian(mass)
+                                          .H(potential(elem, ddc::DiscreteElement<DummyIndex>()),
+                                             pi);
                     });
             ddc::parallel_deepcopy(h_hamiltonian, hamiltonian);
 
