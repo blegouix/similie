@@ -82,13 +82,23 @@ int write_xdmf(int Nx, int Ny)
         2d_free_scalar_field.h5:/spatial_moments
        </DataItem>
      </Attribute>
+     <Attribute Name="Spatial moments divergency" AttributeType="Scalar" Center="Node">
+       <DataItem Dimensions="%i %i" NumberType="Float" Precision="8" Format="HDF">
+        2d_free_scalar_field.h5:/spatial_moments_div
+       </DataItem>
+     </Attribute>
+     <Attribute Name="Hamiltonian" AttributeType="Scalar" Center="Node">
+       <DataItem Dimensions="%i %i" NumberType="Float" Precision="8" Format="HDF">
+        2d_free_scalar_field.h5:/hamiltonian
+       </DataItem>
+     </Attribute>
    </Grid>
  </Domain>
 </Xdmf>
 )XDMF";
 
     FILE* file = fopen("2d_free_scalar_field.xmf", "w");
-    fprintf(file, xdmf, Nx, Ny, Nx, Ny, Nx, Ny, Nx, Ny, Nx, Ny);
+    fprintf(file, xdmf, Nx, Ny, Nx, Ny, Nx, Ny, Nx, Ny, Nx, Ny, Nx, Ny);
     fclose(file);
 
     return 1;
