@@ -5,6 +5,8 @@
 #include <ddc/kernels/splines.hpp>
 #include <ddc/pdi.hpp>
 
+#include <array>
+
 #include <similie/similie.hpp>
 
 #include "free_scalar_field_hamiltonian.hpp"
@@ -32,13 +34,22 @@ data:
     type: array
     subtype: double
     size: [ '$Nx', '$Ny', 2 ]
+  spatial_moments_div:
+    type: array
+    subtype: double
+    size: [ '$Nx', '$Ny' ]
+  hamiltonian:
+    type: array
+    subtype: double
+    size: [ '$Nx', '$Ny' ]
 
 plugins:
   decl_hdf5:
     - file: '2d_free_scalar_field.h5'
       on_event: [export]
       collision_policy: replace_and_warn
-      write: [Nx, Ny, position, potential, temporal_moment, spatial_moments]
+      write:
+        [Nx, Ny, position, potential, temporal_moment, spatial_moments, spatial_moments_div, hamiltonian]
   #trace: ~
 )PDI_CFG";
 
@@ -256,6 +267,8 @@ int main(int argc, char** argv)
             spatial_moments_div_dom(mesh_xy, spatial_moments_div_accessor.domain());
     ddc::Chunk spatial_moments_div_alloc(spatial_moments_div_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor spatial_moments_div(spatial_moments_div_alloc);
+    auto h_spatial_moments_div = ddc::
+            create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), spatial_moments_div);
 
     // Temporal moment
     [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> temporal_moment_accessor;
@@ -281,6 +294,15 @@ int main(int argc, char** argv)
 
     auto temporal_moment_host = ddc::
             create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), temporal_moment);
+
+    // Hamiltonian
+    [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> hamiltonian_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, DummyIndex>
+            hamiltonian_dom(mesh_xy, hamiltonian_accessor.domain());
+    ddc::Chunk hamiltonian_alloc(hamiltonian_dom, ddc::DeviceAllocator<double>());
+    sil::tensor::Tensor hamiltonian(hamiltonian_alloc);
+    auto h_hamiltonian
+            = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), hamiltonian);
 
     // ------------------
     // ----- SOLVER -----
@@ -343,6 +365,20 @@ int main(int argc, char** argv)
         if (i % nb_iter_between_exports == 0) {
             ddc::parallel_deepcopy(temporal_moment_host, temporal_moment);
             ddc::parallel_deepcopy(potential_host, potential);
+            ddc::parallel_deepcopy(h_spatial_moments_div, spatial_moments_div);
+
+            ddc::parallel_for_each(
+                    Kokkos::DefaultExecutionSpace(),
+                    mesh_xy,
+                    KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
+                        std::array<double, FreeScalarFieldHamiltonian::N> pi = {
+                                temporal_moment(elem),
+                                spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(0)),
+                                spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(1))};
+                        hamiltonian(elem)
+                                = FreeScalarFieldHamiltonian(mass).H(potential(elem), pi);
+                    });
+            ddc::parallel_deepcopy(h_hamiltonian, hamiltonian);
 
             // Export HDF5 and XDMF
             std::cout << "Potential center = "
@@ -356,7 +392,9 @@ int main(int argc, char** argv)
                     .with("position", position)
                     .with("potential", potential_host)
                     .with("temporal_moment", temporal_moment_host)
-                    .with("spatial_moments", spatial_moments_host);
+                    .with("spatial_moments", spatial_moments_host)
+                    .with("spatial_moments_div", h_spatial_moments_div)
+                    .with("hamiltonian", h_hamiltonian);
             std::cout << "Computation result exported in 2d_free_scalar_field.h5." << std::endl;
 
             write_xdmf(
