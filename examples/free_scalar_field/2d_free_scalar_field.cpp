@@ -287,16 +287,17 @@ int main(int argc, char** argv)
     ddc::Chunk temporal_moment_alloc(temporal_moment_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor temporal_moment(temporal_moment_alloc);
 
-    float const v = 1.;
+    double const mass = 10.;
+    const double omega = std::sqrt(k * k + mass * mass);
+    const double v = k / omega;
     ddc::parallel_for_each(
             potential.domain(),
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
                 double const x = ddc::coordinate(ddc::DiscreteElement<DDimX>(elem));
                 double const y = ddc::coordinate(ddc::DiscreteElement<DDimY>(elem)) - y_0;
                 // v*dphi/dx of the left wave packet only to get a pure kick along x toward the immobile right one
-                temporal_moment(elem) = v
-                                        * (k * std::sin(k * (x - x_0))
-                                           + (x - x_0) / sigma / sigma * std::cos(k * (x - x_0)))
+                temporal_moment(elem) = -(omega * std::sin(k * (x - x_0))
+                                          + v * (x - x_0) / sigma / sigma * std::cos(k * (x - x_0)))
                                         * std::exp(
                                                 -((x - x_0) * (x - x_0) + (y - y_0) * (y - y_0))
                                                 / 2. / sigma / sigma);
@@ -315,7 +316,6 @@ int main(int argc, char** argv)
     // ----- SOLVER -----
     // ------------------
 
-    double const mass = 1.;
     int const nb_iter_between_exports = 100;
     int const nb_iter = 10000;
     double const dt = 1e-2;
@@ -354,20 +354,31 @@ int main(int argc, char** argv)
                 inv_metric);
 
         // Compute dpi_0/dx^0 by solving dpi_mu/dx^\mu = dH/d\phi and advect pi_0 by a time step dx^0. Then, compute dphi/dx^0 by solving dphi/dx^0 = -dH/dpi_0 and advect phi by a time step dx^0.
-        // TODO use better temporal integration scheme like Runge-Kutta
+        double const dS = (ddc::get<X>(upper_bounds) - ddc::get<X>(lower_bounds))
+                          * (ddc::get<Y>(upper_bounds) - ddc::get<Y>(lower_bounds))
+                          / ddc::get<DDimX>(nb_cells) / ddc::get<DDimY>(nb_cells);
         ddc::parallel_for_each(
                 Kokkos::DefaultExecutionSpace(),
                 spatial_moments_div.domain(),
                 KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
                     double temporal_moment_ = temporal_moment(elem);
+                    double spatial_moments_div_ = spatial_moments_div(elem);
 
-                    temporal_moment_ += (FreeScalarFieldHamiltonian(mass).dH_dphi(potential(elem))
-                                         - spatial_moments_div(elem))
-                                        * dt;
+                    /*
+                    spatial_moments_div_
+                            /= dS; // TODO move this normalization into the library, it has to take in account metric
+                     */
+
+                    // TODO clarify order
+                    temporal_moment_
+                            += (FreeScalarFieldHamiltonian(mass).dH_dphi(potential(elem))
+                                - spatial_moments_div_)
+                               * dt; // TODO use better temporal integration scheme like Runge-Kutta
                     potential(elem)
                             -= FreeScalarFieldHamiltonian(mass).dH_dpi0(temporal_moment_) * dt;
 
                     temporal_moment(elem) = temporal_moment_;
+                    spatial_moments_div(elem) = spatial_moments_div_;
                 });
         if (i % nb_iter_between_exports == 0) {
             ddc::parallel_deepcopy(temporal_moment_host, temporal_moment);
