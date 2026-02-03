@@ -31,7 +31,7 @@ data:
   spatial_moments:
     type: array
     subtype: double
-    size: [ '$Nx-1', '$Ny-1', 2 ]
+    size: [ '$Nx', '$Ny', 2 ]
 
 plugins:
   decl_hdf5:
@@ -77,7 +77,7 @@ int write_xdmf(int Nx, int Ny)
 )XDMF";
 
     FILE* file = fopen("2d_free_scalar_field.xmf", "w");
-    fprintf(file, xdmf, Nx, Ny, Nx, Ny, Nx, Ny, Nx, Ny, Nx - 1, Ny - 1);
+    fprintf(file, xdmf, Nx, Ny, Nx, Ny, Nx, Ny, Nx, Ny, Nx, Ny);
     fclose(file);
 
     return 1;
