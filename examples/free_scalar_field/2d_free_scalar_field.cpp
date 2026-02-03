@@ -238,7 +238,7 @@ int main(int argc, char** argv)
     float const x_1 = 2.;
     float const y_1 = -0.3;
     float sigma = .5;
-    float const k = 0.;
+    float const k = 10.;
     ddc::parallel_for_each(
             potential.domain(),
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
