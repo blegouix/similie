@@ -19,9 +19,9 @@ phi = symbols("phi")
 pi = symbols(f"pi0:{N}")
 
 # Minkowski signature (+, -, -, ..., -)
-metric_sign = [1] + [-1] * (N - 1)
+metric_sign = [-1] + [1] * (N - 1)
 
-# H = 1/2 m^2 phi^2 + 1/2 (p0^2 - p1^2 - ... - p{N-1}^2)
+# H = 1/2 m^2 phi^2 + 1/2 (-p0^2 + p1^2 - ... - p{N-1}^2)
 hamiltonian = 0.5 * (
     mass**2 * phi**2 + sum(metric_sign[i] * pi[i] ** 2 for i in range(N))
 )
@@ -31,11 +31,20 @@ hamiltonian_diff = Matrix(
     [diff(hamiltonian, phi), *[diff(hamiltonian, pi_) for pi_ in pi]]
 )
 
-# De Donder–Weyl equation: ∂_mu phi = ∂H/∂p^mu
-# So we solve: dphi_dx[mu] - dH_dpi[mu] = 0  for pi[mu]
+# DeDonder-Weyl equations are commonly written:
+# dpi^\mu/dx^\mu = -dH/dphi
+# dphi/dx^\mu = dH/dpi^\mu
+#
+# But we follow the convention with pi being stored as covariant. Thus:
+# eta^\mu\nu dpi_\nu/dx^\mu = -dH/dphi
+# dphi/dx^\mu = eta^\mu\nu dH/dpi_\nu
+#
+# Solve dphi/dx^\mu = eta^\mu\nu dH/dpi_\nu
 dphi_dx = symbols(f"dphi_dx0:{N}")
 pi_from_dphi_dx = solve(
-    [dphi_dx[i] + hamiltonian_diff[i + 1] for i in range(N)], list(pi), dict=True
+    [dphi_dx[i] - metric_sign[i] * hamiltonian_diff[i + 1] for i in range(N)],
+    list(pi),
+    dict=True,
 )[0]
 if not pi_from_dphi_dx:
     raise RuntimeError("Could not solve for pi in terms of dphi/dx.")
