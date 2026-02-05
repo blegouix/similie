@@ -237,11 +237,11 @@ int main(int argc, char** argv)
     float const y_0 = 0.;
     float const x_1 = 2.;
     float const y_1 = -0.3;
-    float sigma = .5;
+    float sigma = .2;
 
-    double const v = .02;
-    double const k = 0.;
-    double const mass = 1e-4;
+    double const v = .1;
+    double const k = 10.;
+    double const mass = 1e-2;
 
     ddc::parallel_for_each(
             potential.domain(),
@@ -249,11 +249,11 @@ int main(int argc, char** argv)
                 double const x = ddc::coordinate(ddc::DiscreteElement<DDimX>(elem));
                 double const y = ddc::coordinate(ddc::DiscreteElement<DDimY>(elem));
                 // Two Gaussian wave packets
-                potential(elem) = std::cos(k * (x - x_0))
+                potential(elem) = std::sin(k * (x - x_0))
                                           * std::exp(
                                                   -((x - x_0) * (x - x_0) + (y - y_0) * (y - y_0))
                                                   / 2. / sigma / sigma)
-                                  + std::cos(k * (x - x_1))
+                                  + std::sin(k * (x - x_1))
                                             * std::exp(
                                                     -((x - x_1) * (x - x_1) + (y - y_1) * (y - y_1))
                                                     / 2. / sigma / sigma);
@@ -298,8 +298,8 @@ int main(int argc, char** argv)
                 double const y = ddc::coordinate(ddc::DiscreteElement<DDimY>(elem)) - y_0;
                 // v*dphi/dx of the left wave packet only to get a pure kick along x toward the immobile right one
                 temporal_moment(elem) = -v
-                                        * (k * std::sin(k * (x - x_0))
-                                           + (x - x_0) / sigma / sigma * std::cos(k * (x - x_0)))
+                                        * (-k * std::cos(k * (x - x_0))
+                                           + (x - x_0) / sigma / sigma * std::sin(k * (x - x_0)))
                                         * std::exp(
                                                 -((x - x_0) * (x - x_0) + (y - y_0) * (y - y_0))
                                                 / 2. / sigma / sigma);
