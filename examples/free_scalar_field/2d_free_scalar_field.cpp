@@ -1,7 +1,9 @@
 // SPDX-FileCopyrightText: 2026 Baptiste Legouix
 // SPDX-License-Identifier: MIT
 
+#include <algorithm>
 #include <array>
+#include <cmath>
 
 #include <ddc/ddc.hpp>
 #include <ddc/kernels/splines.hpp>
@@ -326,7 +328,12 @@ int main(int argc, char** argv)
 
     int const nb_iter_between_exports = 50;
     int const nb_iter = 10000;
-    double const dt = 1e-2;
+    double const dx = (ddc::get<X>(upper_bounds) - ddc::get<X>(lower_bounds))
+                      / ddc::get<DDimX>(nb_cells);
+    double const dy = (ddc::get<Y>(upper_bounds) - ddc::get<Y>(lower_bounds))
+                      / ddc::get<DDimY>(nb_cells);
+    double const cfl = 0.5;
+    double const dt = cfl * std::min(dx, dy) / std::sqrt(2.0);
 
     /*
      * DeDonder-Weyl equations are commonly written:
