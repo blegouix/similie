@@ -238,7 +238,11 @@ int main(int argc, char** argv)
     float const x_1 = 2.;
     float const y_1 = -0.3;
     float sigma = .5;
-    float const k = 10.;
+
+    double const v = .02;
+    double const k = 0.;
+    double const mass = 1e-4;
+
     ddc::parallel_for_each(
             potential.domain(),
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
@@ -287,24 +291,19 @@ int main(int argc, char** argv)
     ddc::Chunk temporal_moment_alloc(temporal_moment_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor temporal_moment(temporal_moment_alloc);
 
-    double const mass = 1.;
-    const double omega = std::sqrt(k * k + mass * mass);
-    // const double v = 100*k / omega;
-    const double v = 10;
     ddc::parallel_for_each(
             potential.domain(),
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
                 double const x = ddc::coordinate(ddc::DiscreteElement<DDimX>(elem));
                 double const y = ddc::coordinate(ddc::DiscreteElement<DDimY>(elem)) - y_0;
                 // v*dphi/dx of the left wave packet only to get a pure kick along x toward the immobile right one
-                /*
-                temporal_moment(elem) = -(omega * std::sin(k * (x - x_0))
-                                          + v * (x - x_0) / sigma / sigma * std::cos(k * (x - x_0)))
+                temporal_moment(elem) = -v
+                                        * (k * std::sin(k * (x - x_0))
+                                           + (x - x_0) / sigma / sigma * std::cos(k * (x - x_0)))
                                         * std::exp(
                                                 -((x - x_0) * (x - x_0) + (y - y_0) * (y - y_0))
                                                 / 2. / sigma / sigma);
-*/
-                temporal_moment(elem) = 0;
+                // temporal_moment(elem) = 0;
             });
 
     auto temporal_moment_host = ddc::
@@ -320,9 +319,9 @@ int main(int argc, char** argv)
     // ----- SOLVER -----
     // ------------------
 
-    int const nb_iter_between_exports = 20;
+    int const nb_iter_between_exports = 50;
     int const nb_iter = 10000;
-    double const dt = 2e-3;
+    double const dt = 5e-3;
 
     /*
      * DeDonder-Weyl equations are commonly written:
@@ -391,11 +390,10 @@ int main(int argc, char** argv)
                 KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
                     double potential_ = potential(elem);
                     double temporal_moment_ = temporal_moment(elem);
-                    double spatial_moments_div_
-                            = -spatial_moments_div(elem); // FIXME why minus sign required
+                    double spatial_moments_div_ = 100 * spatial_moments_div(elem);
 
                     temporal_moment_ += (FreeScalarFieldHamiltonian(mass).dH_dphi(potential_)
-                                         - spatial_moments_div_)
+                                         + spatial_moments_div_)
                                         * dt;
                     potential_
                             -= FreeScalarFieldHamiltonian(mass).dH_dpi0(temporal_moment_) * dt / 2.;
