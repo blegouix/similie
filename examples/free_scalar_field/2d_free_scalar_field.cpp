@@ -233,15 +233,16 @@ int main(int argc, char** argv)
     ddc::Chunk potential_alloc(potential_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor potential(potential_alloc);
 
+
     float const x_0 = -2.;
     float const y_0 = 0.;
     float const x_1 = 2.;
     float const y_1 = -0.3;
     float sigma = .2;
 
-    double const v = .1;
-    double const k = 10.;
-    double const mass = 1e-2;
+    double const v = .01;
+    double const k = 1.;
+    double const mass = 1e-6;
 
     ddc::parallel_for_each(
             potential.domain(),
@@ -260,6 +261,10 @@ int main(int argc, char** argv)
             });
     auto potential_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), potential);
+
+    // Half-step potential: mid-point integration requires additional allocation
+    ddc::Chunk half_step_potential_alloc(potential_dom, ddc::DeviceAllocator<double>());
+    sil::tensor::Tensor half_step_potential(half_step_potential_alloc);
 
     // Potential gradient
     [[maybe_unused]] sil::tensor::TensorAccessor<AlphaLow> potential_grad_accessor;
@@ -321,7 +326,7 @@ int main(int argc, char** argv)
 
     int const nb_iter_between_exports = 50;
     int const nb_iter = 10000;
-    double const dt = 5e-3;
+    double const dt = 1e-2;
 
     /*
      * DeDonder-Weyl equations are commonly written:
@@ -336,6 +341,8 @@ int main(int argc, char** argv)
      * - dpi_0/dx^0 + dpi_\alpha/dx^\alpha = -dH/dphi
      * dphi/dx^0 = - dH/dpi_0
      * dphi/dx^\alpha = dH/dpi_\alpha
+     *
+     * We implement mid-point explicit temporal integration scheme.
      */
     for (int i = 0; i < nb_iter; i++) {
         if (i % nb_iter_between_exports == 0) {
@@ -345,17 +352,18 @@ int main(int argc, char** argv)
         // First half-advect phi by solving dphi/dx^0 = -dH/dpi_0
         ddc::parallel_for_each(
                 Kokkos::DefaultExecutionSpace(),
-                spatial_moments_div.domain(),
+                half_step_potential.domain(),
                 KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
-                    potential(elem)
-                            -= FreeScalarFieldHamiltonian(mass).dH_dpi0(temporal_moment(elem)) * dt
-                               / 2.;
+                    half_step_potential(elem)
+                            = potential(elem)
+                              - FreeScalarFieldHamiltonian(mass).dH_dpi0(temporal_moment(elem)) * dt
+                                        / 2.;
                 });
 
         // Compute the potential gradient
         sil::exterior::deriv<
                 AlphaLow,
-                DummyIndex>(Kokkos::DefaultExecutionSpace(), potential_grad, potential);
+                DummyIndex>(Kokkos::DefaultExecutionSpace(), potential_grad, half_step_potential);
 
         // Compute the spatial moments pi_\alpha by solving dphi/dx^\alpha = dH/dpi_\alpha
         ddc::parallel_for_each(
@@ -388,19 +396,27 @@ int main(int argc, char** argv)
                 Kokkos::DefaultExecutionSpace(),
                 spatial_moments_div.domain(),
                 KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
-                    double potential_ = potential(elem);
-                    double temporal_moment_ = temporal_moment(elem);
-                    double spatial_moments_div_ = 100 * spatial_moments_div(elem);
+                    const double half_step_potential_ = half_step_potential(elem);
+                    const double temporal_moment_ = temporal_moment(elem);
+                    const double spatial_moments_div_ = spatial_moments_div(elem);
 
-                    temporal_moment_ += (FreeScalarFieldHamiltonian(mass).dH_dphi(potential_)
-                                         + spatial_moments_div_)
-                                        * dt;
-                    potential_
-                            -= FreeScalarFieldHamiltonian(mass).dH_dpi0(temporal_moment_) * dt / 2.;
+                    // Advect temporal moment by half-step, this is what is needed to perform the whole-step potential advection
+                    const double half_step_temporal_moment_
+                            = temporal_moment_
+                              + (FreeScalarFieldHamiltonian(mass).dH_dphi(half_step_potential_)
+                                 + spatial_moments_div_)
+                                        * dt / 2;
 
-                    temporal_moment(elem) = temporal_moment_;
-                    potential(elem) = potential_;
+                    // Whole-step advection of field state
+                    potential(elem)
+                            += FreeScalarFieldHamiltonian(mass).dH_dpi0(half_step_temporal_moment_)
+                               * dt;
+                    temporal_moment(elem)
+                            += (FreeScalarFieldHamiltonian(mass).dH_dphi(half_step_potential_)
+                                + spatial_moments_div_)
+                               * dt;
                 });
+
         if (i % nb_iter_between_exports == 0) {
             ddc::parallel_deepcopy(temporal_moment_host, temporal_moment);
             ddc::parallel_deepcopy(potential_host, potential);
