@@ -123,7 +123,7 @@ struct Y
 };
 
 // Declare a metric
-using MetricIndex = sil::tensor::TensorSymmetricIndex<
+using MetricIndex = sil::tensor::TensorIdentityIndex<
         sil::tensor::Covariant<sil::tensor::MetricIndex1<X, Y>>,
         sil::tensor::Covariant<sil::tensor::MetricIndex2<X, Y>>>;
 
@@ -209,6 +209,7 @@ int main(int argc, char** argv)
     ddc::DiscreteDomain<DDimX, DDimY, MetricIndex> metric_dom(mesh_xy, metric_accessor.domain());
     ddc::Chunk metric_alloc(metric_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor metric(metric_alloc);
+    /*
     ddc::parallel_for_each(
             Kokkos::DefaultExecutionSpace(),
             mesh_xy,
@@ -217,6 +218,7 @@ int main(int argc, char** argv)
                 metric(elem, metric.accessor().access_element<X, Y>()) = 0.;
                 metric(elem, metric.accessor().access_element<Y, Y>()) = 1.;
             });
+    */
 
     // Invert metric
     [[maybe_unused]] sil::tensor::TensorAccessor<sil::tensor::upper_t<MetricIndex>>
@@ -225,8 +227,10 @@ int main(int argc, char** argv)
             inv_metric_dom(mesh_xy, inv_metric_accessor.domain());
     ddc::Chunk inv_metric_alloc(inv_metric_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor inv_metric(inv_metric_alloc);
+    /* // Metric inversion generates small noise which makes the simulation unsable so we prefer to rely on an identity tensor index
     sil::tensor::fill_inverse_metric<
             MetricIndex>(Kokkos::DefaultExecutionSpace(), inv_metric, metric);
+    */
 
     // Potential
     [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> potential_accessor;
@@ -236,15 +240,15 @@ int main(int argc, char** argv)
     sil::tensor::Tensor potential(potential_alloc);
 
 
-    float const x_0 = -2.;
-    float const y_0 = 0.;
-    float const x_1 = 2.;
-    float const y_1 = -0.3;
-    float sigma = .2;
+    double const x_0 = -2.;
+    double const y_0 = 0.;
+    double const x_1 = 2.;
+    double const y_1 = -0.3;
+    double const sigma = .5;
 
-    double const v = .01;
+    double const v = 1.;
     double const k = 1.;
-    double const mass = 1e-6;
+    double const mass = 1.;
 
     ddc::parallel_for_each(
             potential.domain(),
@@ -310,7 +314,6 @@ int main(int argc, char** argv)
                                         * std::exp(
                                                 -((x - x_0) * (x - x_0) + (y - y_0) * (y - y_0))
                                                 / 2. / sigma / sigma);
-                // temporal_moment(elem) = 0;
             });
 
     auto temporal_moment_host = ddc::
@@ -328,12 +331,12 @@ int main(int argc, char** argv)
 
     int const nb_iter_between_exports = 50;
     int const nb_iter = 10000;
-    double const dx = (ddc::get<X>(upper_bounds) - ddc::get<X>(lower_bounds))
-                      / ddc::get<DDimX>(nb_cells);
-    double const dy = (ddc::get<Y>(upper_bounds) - ddc::get<Y>(lower_bounds))
-                      / ddc::get<DDimY>(nb_cells);
-    double const cfl = 0.5;
-    double const dt = cfl * std::min(dx, dy) / std::sqrt(2.0);
+    double const dx
+            = (ddc::get<X>(upper_bounds) - ddc::get<X>(lower_bounds)) / ddc::get<DDimX>(nb_cells);
+    double const dy
+            = (ddc::get<Y>(upper_bounds) - ddc::get<Y>(lower_bounds)) / ddc::get<DDimY>(nb_cells);
+    double const dt = .5 * std::min(dx, dy) / std::sqrt(2.0);
+    std::cout << "Time step = " << dt << std::endl;
 
     /*
      * DeDonder-Weyl equations are commonly written:
