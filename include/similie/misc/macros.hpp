@@ -13,7 +13,7 @@ namespace sil::misc::detail {
 
 inline void debug_log_launch([[maybe_unused]] std::string_view name)
 {
-#ifdef SIMILIE_DEBUG_LOG_
+#if defined(SIMILIE_DEBUG_LOG_)
     std::cout << "Launch " << name << std::endl;
 #endif
 }
