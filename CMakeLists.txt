@@ -65,7 +65,7 @@ endif()
 ###############################################################################################
 # Our project code
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_library(similie INTERFACE)
 add_library(sil::sil ALIAS similie)
 if("${SIMILIE_BUILD_YOUNG_TABLEAU}")
@@ -76,8 +76,8 @@ endif()
 target_include_directories(
     similie
     INTERFACE
-        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-        "$<INSTALL_INTERFACE:include>"
+        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>"
+        "$<INSTALL_INTERFACE:src>"
 )
 target_link_libraries(similie INTERFACE
     DDC::core
@@ -87,7 +87,7 @@ if("${SIMILIE_DEBUG_LOG}")
   target_compile_definitions(similie INTERFACE SIMILIE_DEBUG_LOG_)
 endif()
 
-add_subdirectory(include/similie)
+add_subdirectory(src/similie)
 add_subdirectory(tests)
 add_subdirectory(examples)
 if("${SIMILIE_BUILD_DOCUMENTATION}")
