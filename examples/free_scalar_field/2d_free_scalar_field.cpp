@@ -28,6 +28,8 @@ metadata:
 data:
   export_id:
     type: int
+  write_position:
+    type: int
   time:
     type: double
   position:
@@ -91,7 +93,7 @@ plugins:
           size: [ '$Nt' ]
       write:
         position:
-          when: "$export_id==0"
+          when: "$write_position"
         potential:
           dataset_selection:
             start: [ '$export_id', 0, 0 ]
@@ -560,8 +562,10 @@ int main(int argc, char** argv)
                                          0))
                       << std::endl;
             double const time = i * dt;
+            int const write_position = (export_id == 0) ? 1 : 0;
             ddc::PdiEvent("export")
                     .with("export_id", export_id)
+                    .with("write_position", write_position)
                     .with("time", time)
                     .with("position", position)
                     .with("potential", potential_host)
