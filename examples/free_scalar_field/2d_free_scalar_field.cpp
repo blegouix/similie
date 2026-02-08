@@ -347,7 +347,7 @@ int main(int argc, char** argv)
     double const y_1 = -0.3;
     double const sigma = .5;
 
-    double const v = 1.;
+    double const v = 10.;
     double const k = 1.;
     double const mass = 1.;
 
@@ -361,7 +361,7 @@ int main(int argc, char** argv)
                                           * std::exp(
                                                   -((x - x_0) * (x - x_0) + (y - y_0) * (y - y_0))
                                                   / 2. / sigma / sigma)
-                                  + std::sin(k * (x - x_1))
+                                  + 30. * std::sin(k * (x - x_1))
                                             * std::exp(
                                                     -((x - x_1) * (x - x_1) + (y - y_1) * (y - y_1))
                                                     / 2. / sigma / sigma);
