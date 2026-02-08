@@ -26,7 +26,7 @@ set(DOXYGEN_FULL_PATH_NAMES NO)
 set(DOXYGEN_HTML_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/html")
 set(DOXYGEN_HTML_TIMESTAMP NO)
 set(DOXYGEN_INCLUDE_GRAPH NO)
-set(DOXYGEN_INCLUDE_PATH "${SimiLie_SOURCE_DIR}/include/similie/")
+set(DOXYGEN_INCLUDE_PATH "${SimiLie_SOURCE_DIR}/src/similie/")
 set(DOXYGEN_INCLUDED_BY_GRAPH NO)
 set(DOXYGEN_INLINE_SIMPLE_STRUCTS YES)
 set(DOXYGEN_JAVADOC_AUTOBRIEF YES)
@@ -71,5 +71,5 @@ doxygen_add_docs(doc
 	"${CMAKE_CURRENT_SOURCE_DIR}/Running.md"
 	"${CMAKE_CURRENT_SOURCE_DIR}/tensor_module.md"
 	"${CMAKE_CURRENT_SOURCE_DIR}/exterior_module.md"
-        "${SimiLie_SOURCE_DIR}/include/similie/"
+        "${SimiLie_SOURCE_DIR}/src/similie/"
         ALL)
