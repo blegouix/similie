@@ -15,14 +15,14 @@ jobs:
     - uses: actions/checkout@v4
     - uses: DoozyX/clang-format-lint-action@v0.20
       with:
-        source: 'examples/ include/similie/ tests/'
+        source: 'examples/ src/similie/ tests/'
         exclude: ''
         extensions: 'hpp,cpp'
         clangFormatVersion: 20
     - name: Prefer 'if defined' over 'ifdef'
-      run: if grep -R "ifdef" examples/ include/similie/ tests/; then exit 1; fi
+      run: if grep -R "ifdef" examples/ src/similie/ tests/; then exit 1; fi
     - name: Find modifications of Kokkos reserved macros
-      run: if grep -RE "(define|undef) KOKKOS_" examples/ include/similie/ tests/; then exit 1; fi
+      run: if grep -RE "(define|undef) KOKKOS_" examples/ src/similie/ tests/; then exit 1; fi
     - name: REUSE Compliance Check
       if: always()
       uses: fsfe/reuse-action@v4
