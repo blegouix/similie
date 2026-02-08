@@ -432,14 +432,13 @@ int main(int argc, char** argv)
 
     int const nb_iter_between_exports = 50;
     int const nb_iter = 10000;
-    int const nb_exports = (nb_iter - 1) / nb_iter_between_exports + 1;
     double const dx
             = (ddc::get<X>(upper_bounds) - ddc::get<X>(lower_bounds)) / ddc::get<DDimX>(nb_cells);
     double const dy
             = (ddc::get<Y>(upper_bounds) - ddc::get<Y>(lower_bounds)) / ddc::get<DDimY>(nb_cells);
     double const dt = .5 * std::min(dx, dy) / std::sqrt(2.0);
     std::cout << "Time step = " << dt << std::endl;
-    ddc::expose_to_pdi("Nt", nb_exports);
+    ddc::expose_to_pdi("Nt", (nb_iter - 1) / nb_iter_between_exports + 1);
     std::remove("2d_free_scalar_field.h5");
 
     /*
@@ -575,7 +574,7 @@ int main(int argc, char** argv)
             write_xdmf(
                     static_cast<int>(mesh_xy.template extent<DDimX>()),
                     static_cast<int>(mesh_xy.template extent<DDimY>()),
-                    nb_exports,
+                    (nb_iter - 1) / nb_iter_between_exports + 1,
                     i / nb_iter_between_exports + 1,
                     dt * nb_iter_between_exports);
             std::cout << "XDMF model exported in 2d_free_scalar_field.xmf." << std::endl;
