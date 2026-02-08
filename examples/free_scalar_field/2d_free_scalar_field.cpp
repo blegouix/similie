@@ -6,6 +6,9 @@
 #include <cmath>
 #include <cstdio>
 #include <fstream>
+#include <iomanip>
+#include <sstream>
+#include <string>
 
 #include <ddc/ddc.hpp>
 #include <ddc/kernels/splines.hpp>
@@ -117,122 +120,87 @@ plugins:
 )PDI_CFG";
 
 // XDMF
-int write_xdmf(int Nx, int Ny)
-{
-    constexpr char const* const xdmf = R"XDMF(<?xml version="1.0" ?>
-<!DOCTYPE Xdmf SYSTEM "Xdmf.dtd" []>
-<Xdmf Version="2.0">
- <Domain>
-   <Grid Name="mesh1" GridType="Uniform">
-     <Topology TopologyType="2DSMesh" NumberOfElements="%i %i"/>
-     <Geometry GeometryType="XY">
-       <DataItem Dimensions="%i %i 2" NumberType="Float" Precision="8" Format="HDF">
-        2d_free_scalar_field.h5:/position
-       </DataItem>
-     </Geometry>
-     <Attribute Name="Potential" AttributeType="Scalar" Center="Node">
-       <DataItem Dimensions="%i %i" NumberType="Float" Precision="8" Format="HDF">
-        2d_free_scalar_field.h5:/potential
-       </DataItem>
-     </Attribute>
-     <Attribute Name="Temporal moment" AttributeType="Scalar" Center="Node">
-       <DataItem Dimensions="%i %i" NumberType="Float" Precision="8" Format="HDF">
-        2d_free_scalar_field.h5:/temporal_moment
-       </DataItem>
-     </Attribute>
-     <Attribute Name="Spatial moments" AttributeType="Vector" Center="Cell">
-       <DataItem Dimensions="%i %i 2" NumberType="Float" Precision="8" Format="HDF">
-        2d_free_scalar_field.h5:/spatial_moments
-       </DataItem>
-     </Attribute>
-     <Attribute Name="Spatial moments divergency" AttributeType="Scalar" Center="Node">
-       <DataItem Dimensions="%i %i" NumberType="Float" Precision="8" Format="HDF">
-        2d_free_scalar_field.h5:/spatial_moments_div
-       </DataItem>
-     </Attribute>
-     <Attribute Name="Hamiltonian" AttributeType="Scalar" Center="Node">
-       <DataItem Dimensions="%i %i" NumberType="Float" Precision="8" Format="HDF">
-        2d_free_scalar_field.h5:/hamiltonian
-       </DataItem>
-     </Attribute>
-   </Grid>
- </Domain>
-</Xdmf>
-)XDMF";
-
-    FILE* file = fopen("2d_free_scalar_field.xmf", "w");
-    fprintf(file, xdmf, Nx, Ny, Nx, Ny, Nx, Ny, Nx, Ny, Nx, Ny, Nx, Ny, Nx, Ny);
-    fclose(file);
-
-    return 1;
-}
-
 int write_xdmf(int Nx, int Ny, int total_steps, int visible_steps, double export_dt)
 {
     std::ofstream file("2d_free_scalar_field.xmf", std::ios::trunc);
-    file << "<?xml version=\"1.0\" ?>\n";
-    file << "<!DOCTYPE Xdmf SYSTEM \"Xdmf.dtd\" []>\n";
-    file << "<Xdmf Version=\"2.0\">\n";
-    file << " <Domain>\n";
-    file << "  <Grid Name=\"TimeSeries\" GridType=\"Collection\" CollectionType=\"Temporal\">\n";
+    file << R"XMF(<?xml version="1.0" ?>
+<!DOCTYPE Xdmf SYSTEM "Xdmf.dtd" []>
+<Xdmf Version="2.0">
+ <Domain>
+  <Grid Name="TimeSeries" GridType="Collection" CollectionType="Temporal">
+)XMF";
+
+    int const step_width = std::max(1, static_cast<int>(std::to_string(total_steps - 1).size()));
     for (int step = 0; step < visible_steps; step++) {
         double const time = step * export_dt;
-        file << "   <Grid Name=\"Step" << step << "\" GridType=\"Uniform\">\n";
+        std::ostringstream step_name;
+        step_name << "Step" << std::setw(step_width) << std::setfill('0') << step;
+        file << "   <Grid Name=\"" << step_name.str() << "\" GridType=\"Uniform\">\n";
         file << "    <Time Value=\"" << time << "\"/>\n";
         file << "    <Topology TopologyType=\"2DSMesh\" NumberOfElements=\"" << Nx << " " << Ny
              << "\"/>\n";
-        file << "    <Geometry GeometryType=\"XY\">\n";
-        file << "      <DataItem Dimensions=\"" << Nx << " " << Ny
-             << " 2\" NumberType=\"Float\" Precision=\"8\" Format=\"HDF\">\n";
-        file << "       2d_free_scalar_field.h5:/position\n";
-        file << "      </DataItem>\n";
-        file << "    </Geometry>\n";
+        file << R"XMF(    <Geometry GeometryType="XY">
+      <DataItem Dimensions=")XMF"
+             << Nx << " " << Ny << R"XMF( 2" NumberType="Float" Precision="8" Format="HDF">
+       2d_free_scalar_field.h5:/position
+      </DataItem>
+    </Geometry>
+)XMF";
 
         auto write_scalar_attribute = [&](char const* name, char const* dataset) {
-            file << "    <Attribute Name=\"" << name
-                 << "\" AttributeType=\"Scalar\" Center=\"Node\">\n";
-            file << "      <DataItem ItemType=\"HyperSlab\" Dimensions=\"" << Nx << " " << Ny
-                 << "\">\n";
-            file << "        <DataItem Dimensions=\"3 3\" Format=\"XML\">\n";
-            file << "         " << step << " 0 0\n";
-            file << "         1 1 1\n";
-            file << "         1 " << Nx << " " << Ny << "\n";
-            file << "        </DataItem>\n";
-            file << "        <DataItem Dimensions=\"" << total_steps << " " << Nx << " " << Ny
-                 << "\" NumberType=\"Float\" Precision=\"8\" Format=\"HDF\">\n";
-            file << "         2d_free_scalar_field.h5:/" << dataset << "\n";
-            file << "        </DataItem>\n";
-            file << "      </DataItem>\n";
-            file << "    </Attribute>\n";
+            file << R"XMF(    <Attribute Name=")XMF" << name
+                 << R"XMF(" AttributeType="Scalar" Center="Node">
+      <DataItem ItemType="HyperSlab" Dimensions=")XMF"
+                 << Nx << " " << Ny << R"XMF(">
+        <DataItem Dimensions="3 3" Format="XML">
+         )XMF" << step
+                 << R"XMF( 0 0
+         1 1 1
+         1 )XMF" << Nx
+                 << " " << Ny << R"XMF(
+        </DataItem>
+        <DataItem Dimensions=")XMF"
+                 << total_steps << " " << Nx << " " << Ny
+                 << R"XMF(" NumberType="Float" Precision="8" Format="HDF">
+         2d_free_scalar_field.h5:/)XMF"
+                 << dataset << R"XMF(
+        </DataItem>
+      </DataItem>
+    </Attribute>
+)XMF";
         };
 
         write_scalar_attribute("Potential", "potential");
         write_scalar_attribute("Temporal moment", "temporal_moment");
 
-        file << "    <Attribute Name=\"Spatial moments\" AttributeType=\"Vector\" "
-                "Center=\"Cell\">\n";
-        file << "      <DataItem ItemType=\"HyperSlab\" Dimensions=\"" << Nx << " " << Ny
-             << " 2\">\n";
-        file << "        <DataItem Dimensions=\"3 4\" Format=\"XML\">\n";
-        file << "         " << step << " 0 0 0\n";
-        file << "         1 1 1 1\n";
-        file << "         1 " << Nx << " " << Ny << " 2\n";
-        file << "        </DataItem>\n";
-        file << "        <DataItem Dimensions=\"" << total_steps << " " << Nx << " " << Ny
-             << " 2\" NumberType=\"Float\" Precision=\"8\" Format=\"HDF\">\n";
-        file << "         2d_free_scalar_field.h5:/spatial_moments\n";
-        file << "        </DataItem>\n";
-        file << "      </DataItem>\n";
-        file << "    </Attribute>\n";
+        file << R"XMF(    <Attribute Name="Spatial moments" AttributeType="Vector" Center="Cell">
+      <DataItem ItemType="HyperSlab" Dimensions=")XMF"
+             << Nx << " " << Ny << R"XMF( 2">
+        <DataItem Dimensions="3 4" Format="XML">
+         )XMF"
+             << step << R"XMF( 0 0 0
+         1 1 1 1
+         1 )XMF"
+             << Nx << " " << Ny << R"XMF( 2
+        </DataItem>
+        <DataItem Dimensions=")XMF"
+             << total_steps << " " << Nx << " " << Ny
+             << R"XMF( 2" NumberType="Float" Precision="8" Format="HDF">
+         2d_free_scalar_field.h5:/spatial_moments
+        </DataItem>
+      </DataItem>
+    </Attribute>
+)XMF";
 
         write_scalar_attribute("Spatial moments divergency", "spatial_moments_div");
         write_scalar_attribute("Hamiltonian", "hamiltonian");
 
         file << "   </Grid>\n";
     }
-    file << "  </Grid>\n";
-    file << " </Domain>\n";
-    file << "</Xdmf>\n";
+    file << R"XMF(  </Grid>
+ </Domain>
+</Xdmf>
+)XMF";
 
     return 1;
 }
