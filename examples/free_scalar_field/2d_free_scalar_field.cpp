@@ -230,6 +230,15 @@ using MetricIndex = sil::tensor::TensorIdentityIndex<
 
 using MesherXY = sil::mesher::Mesher<s_degree, X, Y>;
 
+struct DDimX : ddc::UniformPointSampling<X>
+{
+};
+
+struct DDimY : ddc::UniformPointSampling<Y>
+{
+};
+
+/*
 struct BSplinesX : MesherXY::template bsplines_type<X>
 {
 };
@@ -245,6 +254,7 @@ struct BSplinesY : MesherXY::template bsplines_type<Y>
 struct DDimY : MesherXY::template discrete_dimension_type<Y>
 {
 };
+*/
 
 // Declare natural indices taking values in {X, Y}
 struct Alpha : sil::tensor::TensorNaturalIndex<X, Y>
@@ -278,13 +288,25 @@ int main(int argc, char** argv)
     // ------------------------------------------
 
     // Produce mesh
-    MesherXY mesher;
     ddc::Coordinate<X, Y> lower_bounds(-5., -5.);
     ddc::Coordinate<X, Y> upper_bounds(5., 5.);
     ddc::DiscreteVector<DDimX, DDimY> nb_cells(1000, 1000);
+    /*
+    MesherXY mesher;
     ddc::DiscreteDomain<DDimX, DDimY> mesh_xy = mesher.template mesh<
             ddc::detail::TypeSeq<DDimX, DDimY>,
             ddc::detail::TypeSeq<BSplinesX, BSplinesY>>(lower_bounds, upper_bounds, nb_cells);
+     */
+    auto const x_dom = ddc::init_discrete_space<DDimX>(DDimX::init<DDimX>(
+            ddc::select<X>(lower_bounds),
+            ddc::select<X>(upper_bounds),
+            ddc::select<DDimX>(nb_cells)));
+    auto const y_dom = ddc::init_discrete_space<DDimY>(DDimY::init<DDimY>(
+            ddc::select<Y>(lower_bounds),
+            ddc::select<Y>(upper_bounds),
+            ddc::select<DDimY>(nb_cells)));
+    ddc::DiscreteDomain<DDimX, DDimY> mesh_xy(x_dom, y_dom);
+
     assert(static_cast<std::size_t>(mesh_xy.template extent<DDimX>())
            == static_cast<std::size_t>(mesh_xy.template extent<DDimY>()));
     ddc::expose_to_pdi("Nx", static_cast<int>(mesh_xy.template extent<DDimX>()));
