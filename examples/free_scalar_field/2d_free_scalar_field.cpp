@@ -26,9 +26,9 @@ metadata:
   Nt : int
 
 data:
-  export_id:
-    type: int
   write_position:
+    type: int
+  export_id:
     type: int
   time:
     type: double
@@ -122,7 +122,7 @@ plugins:
 )PDI_CFG";
 
 // XDMF
-int write_xdmf(int Nx, int Ny, int total_steps, int visible_steps, double export_dt)
+int write_xdmf(int Nx, int Ny, int total_steps, int exported_ids, double export_dt)
 {
     std::ofstream file("2d_free_scalar_field.xmf", std::ios::trunc);
     file << R"XMF(<?xml version="1.0" ?>
@@ -133,7 +133,7 @@ int write_xdmf(int Nx, int Ny, int total_steps, int visible_steps, double export
 )XMF";
 
     int const step_width = std::max(1, static_cast<int>(std::to_string(total_steps - 1).size()));
-    for (int step = 0; step < visible_steps; step++) {
+    for (int step = 0; step < exported_ids; step++) {
         double const time = step * export_dt;
         std::ostringstream step_name;
         step_name << "Step" << std::setw(step_width) << std::setfill('0') << step;
@@ -439,10 +439,8 @@ int main(int argc, char** argv)
             = (ddc::get<Y>(upper_bounds) - ddc::get<Y>(lower_bounds)) / ddc::get<DDimY>(nb_cells);
     double const dt = .5 * std::min(dx, dy) / std::sqrt(2.0);
     std::cout << "Time step = " << dt << std::endl;
-    double const export_dt = dt * nb_iter_between_exports;
     ddc::expose_to_pdi("Nt", nb_exports);
     std::remove("2d_free_scalar_field.h5");
-    int export_id = 0;
 
     /*
      * DeDonder-Weyl equations are commonly written:
@@ -562,10 +560,9 @@ int main(int argc, char** argv)
                                          0))
                       << std::endl;
             double const time = i * dt;
-            int const write_position = (export_id == 0) ? 1 : 0;
             ddc::PdiEvent("export")
-                    .with("export_id", export_id)
-                    .with("write_position", write_position)
+                    .with("export_id", i / nb_iter_between_exports)
+                    .with("write_position", i / nb_iter_between_exports == 0 ? 1 : 0)
                     .with("time", time)
                     .with("position", position)
                     .with("potential", potential_host)
@@ -579,10 +576,9 @@ int main(int argc, char** argv)
                     static_cast<int>(mesh_xy.template extent<DDimX>()),
                     static_cast<int>(mesh_xy.template extent<DDimY>()),
                     nb_exports,
-                    export_id + 1,
-                    export_dt);
+                    i / nb_iter_between_exports + 1,
+                    dt * nb_iter_between_exports);
             std::cout << "XDMF model exported in 2d_free_scalar_field.xmf." << std::endl;
-            export_id++;
         }
     }
 
