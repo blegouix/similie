@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstdio>
+#include <fstream>
 
 #include <ddc/ddc.hpp>
 #include <ddc/kernels/splines.hpp>
@@ -18,8 +20,13 @@ constexpr char const* const PDI_CFG = R"PDI_CFG(
 metadata:
   Nx : int
   Ny : int
+  Nt : int
 
 data:
+  export_id:
+    type: int
+  time:
+    type: double
   position:
     type: array
     subtype: double
@@ -49,9 +56,63 @@ plugins:
   decl_hdf5:
     - file: '2d_free_scalar_field.h5'
       on_event: [export]
-      collision_policy: replace_and_warn
+      collision_policy: write_into
+      datasets:
+        position:
+          type: array
+          subtype: double
+          size: [ '$Nx', '$Ny' , 2]
+        potential:
+          type: array
+          subtype: double
+          size: [ '$Nt', '$Nx', '$Ny' ]
+        temporal_moment:
+          type: array
+          subtype: double
+          size: [ '$Nt', '$Nx', '$Ny' ]
+        spatial_moments:
+          type: array
+          subtype: double
+          size: [ '$Nt', '$Nx', '$Ny', 2 ]
+        spatial_moments_div:
+          type: array
+          subtype: double
+          size: [ '$Nt', '$Nx', '$Ny' ]
+        hamiltonian:
+          type: array
+          subtype: double
+          size: [ '$Nt', '$Nx', '$Ny' ]
+        time:
+          type: array
+          subtype: double
+          size: [ '$Nt' ]
       write:
-        [Nx, Ny, position, potential, temporal_moment, spatial_moments, spatial_moments_div, hamiltonian]
+        position:
+          when: "$export_id==0"
+        potential:
+          dataset_selection:
+            start: [ '$export_id', 0, 0 ]
+            size: [ 1, '$Nx', '$Ny' ]
+        temporal_moment:
+          dataset_selection:
+            start: [ '$export_id', 0, 0 ]
+            size: [ 1, '$Nx', '$Ny' ]
+        spatial_moments:
+          dataset_selection:
+            start: [ '$export_id', 0, 0, 0 ]
+            size: [ 1, '$Nx', '$Ny', 2 ]
+        spatial_moments_div:
+          dataset_selection:
+            start: [ '$export_id', 0, 0 ]
+            size: [ 1, '$Nx', '$Ny' ]
+        hamiltonian:
+          dataset_selection:
+            start: [ '$export_id', 0, 0 ]
+            size: [ 1, '$Nx', '$Ny' ]
+        time:
+          dataset_selection:
+            start: [ '$export_id' ]
+            size: [ 1 ]
   #trace: ~
 )PDI_CFG";
 
@@ -102,6 +163,76 @@ int write_xdmf(int Nx, int Ny)
     FILE* file = fopen("2d_free_scalar_field.xmf", "w");
     fprintf(file, xdmf, Nx, Ny, Nx, Ny, Nx, Ny, Nx, Ny, Nx, Ny, Nx, Ny, Nx, Ny);
     fclose(file);
+
+    return 1;
+}
+
+int write_xdmf(int Nx, int Ny, int total_steps, int visible_steps, double export_dt)
+{
+    std::ofstream file("2d_free_scalar_field.xmf", std::ios::trunc);
+    file << "<?xml version=\"1.0\" ?>\n";
+    file << "<!DOCTYPE Xdmf SYSTEM \"Xdmf.dtd\" []>\n";
+    file << "<Xdmf Version=\"2.0\">\n";
+    file << " <Domain>\n";
+    file << "  <Grid Name=\"TimeSeries\" GridType=\"Collection\" CollectionType=\"Temporal\">\n";
+    for (int step = 0; step < visible_steps; step++) {
+        double const time = step * export_dt;
+        file << "   <Grid Name=\"Step" << step << "\" GridType=\"Uniform\">\n";
+        file << "    <Time Value=\"" << time << "\"/>\n";
+        file << "    <Topology TopologyType=\"2DSMesh\" NumberOfElements=\"" << Nx << " " << Ny
+             << "\"/>\n";
+        file << "    <Geometry GeometryType=\"XY\">\n";
+        file << "      <DataItem Dimensions=\"" << Nx << " " << Ny
+             << " 2\" NumberType=\"Float\" Precision=\"8\" Format=\"HDF\">\n";
+        file << "       2d_free_scalar_field.h5:/position\n";
+        file << "      </DataItem>\n";
+        file << "    </Geometry>\n";
+
+        auto write_scalar_attribute = [&](char const* name, char const* dataset) {
+            file << "    <Attribute Name=\"" << name
+                 << "\" AttributeType=\"Scalar\" Center=\"Node\">\n";
+            file << "      <DataItem ItemType=\"HyperSlab\" Dimensions=\"" << Nx << " " << Ny
+                 << "\">\n";
+            file << "        <DataItem Dimensions=\"3 3\" Format=\"XML\">\n";
+            file << "         " << step << " 0 0\n";
+            file << "         1 1 1\n";
+            file << "         1 " << Nx << " " << Ny << "\n";
+            file << "        </DataItem>\n";
+            file << "        <DataItem Dimensions=\"" << total_steps << " " << Nx << " " << Ny
+                 << "\" NumberType=\"Float\" Precision=\"8\" Format=\"HDF\">\n";
+            file << "         2d_free_scalar_field.h5:/" << dataset << "\n";
+            file << "        </DataItem>\n";
+            file << "      </DataItem>\n";
+            file << "    </Attribute>\n";
+        };
+
+        write_scalar_attribute("Potential", "potential");
+        write_scalar_attribute("Temporal moment", "temporal_moment");
+
+        file << "    <Attribute Name=\"Spatial moments\" AttributeType=\"Vector\" "
+                "Center=\"Cell\">\n";
+        file << "      <DataItem ItemType=\"HyperSlab\" Dimensions=\"" << Nx << " " << Ny
+             << " 2\">\n";
+        file << "        <DataItem Dimensions=\"3 4\" Format=\"XML\">\n";
+        file << "         " << step << " 0 0 0\n";
+        file << "         1 1 1 1\n";
+        file << "         1 " << Nx << " " << Ny << " 2\n";
+        file << "        </DataItem>\n";
+        file << "        <DataItem Dimensions=\"" << total_steps << " " << Nx << " " << Ny
+             << " 2\" NumberType=\"Float\" Precision=\"8\" Format=\"HDF\">\n";
+        file << "         2d_free_scalar_field.h5:/spatial_moments\n";
+        file << "        </DataItem>\n";
+        file << "      </DataItem>\n";
+        file << "    </Attribute>\n";
+
+        write_scalar_attribute("Spatial moments divergency", "spatial_moments_div");
+        write_scalar_attribute("Hamiltonian", "hamiltonian");
+
+        file << "   </Grid>\n";
+    }
+    file << "  </Grid>\n";
+    file << " </Domain>\n";
+    file << "</Xdmf>\n";
 
     return 1;
 }
@@ -331,12 +462,17 @@ int main(int argc, char** argv)
 
     int const nb_iter_between_exports = 50;
     int const nb_iter = 10000;
+    int const nb_exports = (nb_iter - 1) / nb_iter_between_exports + 1;
     double const dx
             = (ddc::get<X>(upper_bounds) - ddc::get<X>(lower_bounds)) / ddc::get<DDimX>(nb_cells);
     double const dy
             = (ddc::get<Y>(upper_bounds) - ddc::get<Y>(lower_bounds)) / ddc::get<DDimY>(nb_cells);
     double const dt = .5 * std::min(dx, dy) / std::sqrt(2.0);
     std::cout << "Time step = " << dt << std::endl;
+    double const export_dt = dt * nb_iter_between_exports;
+    ddc::expose_to_pdi("Nt", nb_exports);
+    std::remove("2d_free_scalar_field.h5");
+    int export_id = 0;
 
     /*
      * DeDonder-Weyl equations are commonly written:
@@ -455,7 +591,10 @@ int main(int argc, char** argv)
                                          potential.extent<DDimY>() / 2,
                                          0))
                       << std::endl;
+            double const time = i * dt;
             ddc::PdiEvent("export")
+                    .with("export_id", export_id)
+                    .with("time", time)
                     .with("position", position)
                     .with("potential", potential_host)
                     .with("temporal_moment", temporal_moment_host)
@@ -466,8 +605,12 @@ int main(int argc, char** argv)
 
             write_xdmf(
                     static_cast<int>(mesh_xy.template extent<DDimX>()),
-                    static_cast<int>(mesh_xy.template extent<DDimY>()));
+                    static_cast<int>(mesh_xy.template extent<DDimY>()),
+                    nb_exports,
+                    export_id + 1,
+                    export_dt);
             std::cout << "XDMF model exported in 2d_free_scalar_field.xmf." << std::endl;
+            export_id++;
         }
     }
 
