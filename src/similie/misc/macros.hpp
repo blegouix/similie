@@ -5,7 +5,7 @@
 
 #include <string_view>
 
-#ifdef SIMILIE_DEBUG_LOG_
+#if defined(SIMILIE_DEBUG_LOG_)
 #include <iostream>
 #endif
 
