@@ -530,16 +530,10 @@ int main(int argc, char** argv)
                 Kokkos::DefaultExecutionSpace(),
                 spatial_moments_div.domain(),
                 KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
-                    const double potential_ = potential(elem);
-                    const double half_step_potential_ = half_step_potential(elem);
-                    const double temporal_moment_ = temporal_moment(elem);
-                    const double spatial_moments_div_ = spatial_moments_div(elem);
-
-                    // Advect temporal moment by half-step,
-                    const double half_step_temporal_moment_
-                            = temporal_moment_
-                              + (FreeScalarFieldHamiltonian(mass).dH_dphi(potential_)
-                                 + spatial_moments_div_)
+                    half_step_temporal_moment(elem)
+                            = temporal_moment(elem)
+                              + (FreeScalarFieldHamiltonian(mass).dH_dphi(potential(elem))
+                                 + spatial_moments_div(elem))
                                         * dt / 2;
                 });
 
