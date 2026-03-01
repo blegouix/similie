@@ -1,4 +1,4 @@
-ARG BASE_IMAGE = nvidia/cuda:13.1.1-cudnn-devel-ubuntu24.04
+ARG BASE_IMAGE=nvidia/cuda:13.1.1-cudnn-devel-ubuntu24.04
 FROM $BASE_IMAGE
 
 # SPDX-FileCopyrightText: 2026 Baptiste Legouix

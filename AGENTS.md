@@ -9,10 +9,9 @@ SPDX-License-Identifier: MIT
 - Clone with `git clone --recurse-submodules git@github.com:blegouix/similie.git` or any similar commande which suits the network configuration. Be sure to pull the submodules recursively.
 
 # Build environment
-- **Requirement:** Always build and run in the `docker/similie_env/Dockerfile` image that you call "similie_env:latest". You'll need to make a copy of similie inside the container before compiling it.
+- **Requirement:** Check if all the necessary dependencies listed in `docker/similie_env/Dockerfile` are available in the current environment (in particular `nvcc` and `openmpi`). If not, build and run in the `docker/similie_env/Dockerfile` image that you call "similie_env:latest". You'll need to mount the `similie/` folder before compiling it.
 - Configure `CMake` for CPU with `cmake -DCMAKE_CXX_COMPILER=g++-13 -DCMAKE_BUILD_TYPE=Debug -DKokkos_ENABLE_OPENMP=ON -B build -S .` or for CUDA with `cmake -DCMAKE_CXX_COMPILER=$PWD/vendor/ddc/vendor/kokkos/bin/nvcc_wrapper -DCMAKE_BUILD_TYPE=Debug -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_<YOUR_ARCH_NAMECODE>=ON -B build -S .`. Of course replace `<YOUR_ARCH_NAMECODE>` with the arch namecode which suits the GPU.
 - Compile as usual once configured (`make -jN_PROC` from `build`).
 
 ## Run tests
-- Always run tests inside the `docker/similie/Dockerfile` image.
-- From `build` in the container, run `ctest`.
+- From `build`, first recompile then run `ctest`.
