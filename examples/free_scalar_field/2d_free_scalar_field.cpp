@@ -238,6 +238,14 @@ struct DDimY : ddc::UniformPointSampling<Y>
 {
 };
 
+struct DDimXHalf : ddc::UniformPointSampling<X>
+{
+};
+
+struct DDimYHalf : ddc::UniformPointSampling<Y>
+{
+};
+
 /*
 struct BSplinesX : MesherXY::template bsplines_type<X>
 {
@@ -305,7 +313,29 @@ int main(int argc, char** argv)
             ddc::select<Y>(lower_bounds),
             ddc::select<Y>(upper_bounds),
             ddc::select<DDimY>(nb_cells)));
+    auto const x_face_x_dom = ddc::init_discrete_space<DDimXHalf>(DDimXHalf::init<DDimXHalf>(
+            ddc::Coordinate<X>(
+                    ddc::select<X>(lower_bounds)
+                    + (ddc::select<X>(upper_bounds) - ddc::select<X>(lower_bounds))
+                              / (2 * (ddc::select<DDimX>(nb_cells).value() - 1))),
+            ddc::Coordinate<X>(
+                    ddc::select<X>(upper_bounds)
+                    - (ddc::select<X>(upper_bounds) - ddc::select<X>(lower_bounds))
+                              / (2 * (ddc::select<DDimX>(nb_cells).value() - 1))),
+            ddc::DiscreteVector<DDimXHalf>(ddc::select<DDimX>(nb_cells).value() - 1)));
+    auto const y_face_y_dom = ddc::init_discrete_space<DDimYHalf>(DDimYHalf::init<DDimYHalf>(
+            ddc::Coordinate<Y>(
+                    ddc::select<Y>(lower_bounds)
+                    + (ddc::select<Y>(upper_bounds) - ddc::select<Y>(lower_bounds))
+                              / (2 * (ddc::select<DDimY>(nb_cells).value() - 1))),
+            ddc::Coordinate<Y>(
+                    ddc::select<Y>(upper_bounds)
+                    - (ddc::select<Y>(upper_bounds) - ddc::select<Y>(lower_bounds))
+                              / (2 * (ddc::select<DDimY>(nb_cells).value() - 1))),
+            ddc::DiscreteVector<DDimYHalf>(ddc::select<DDimY>(nb_cells).value() - 1)));
     ddc::DiscreteDomain<DDimX, DDimY> mesh_xy(x_dom, y_dom);
+    ddc::DiscreteDomain<DDimXHalf, DDimY> x_face_dom(x_face_x_dom, y_dom);
+    ddc::DiscreteDomain<DDimX, DDimYHalf> y_face_dom(x_dom, y_face_y_dom);
 
     assert(static_cast<std::size_t>(mesh_xy.template extent<DDimX>())
            == static_cast<std::size_t>(mesh_xy.template extent<DDimY>()));
@@ -395,17 +425,40 @@ int main(int argc, char** argv)
     ddc::Chunk half_step_potential_alloc(potential_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor half_step_potential(half_step_potential_alloc);
 
-    // Potential gradient
-    [[maybe_unused]] sil::tensor::TensorAccessor<AlphaLow> potential_grad_accessor;
+    // Staggered potential gradients
+    [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> scalar_accessor;
+    ddc::DiscreteDomain<DDimXHalf, DDimY, DummyIndex>
+            potential_grad_x_dom(x_face_dom, scalar_accessor.domain());
+    ddc::Chunk potential_grad_x_alloc(potential_grad_x_dom, ddc::DeviceAllocator<double>());
+    sil::tensor::Tensor potential_grad_x(potential_grad_x_alloc);
+
+    ddc::DiscreteDomain<DDimX, DDimYHalf, DummyIndex>
+            potential_grad_y_dom(y_face_dom, scalar_accessor.domain());
+    ddc::Chunk potential_grad_y_alloc(potential_grad_y_dom, ddc::DeviceAllocator<double>());
+    sil::tensor::Tensor potential_grad_y(potential_grad_y_alloc);
+
+    // Staggered spatial moments
+    ddc::DiscreteDomain<DDimXHalf, DDimY, DummyIndex>
+            spatial_moment_x_dom(x_face_dom, scalar_accessor.domain());
+    ddc::Chunk spatial_moment_x_alloc(spatial_moment_x_dom, ddc::DeviceAllocator<double>());
+    sil::tensor::Tensor spatial_moment_x(spatial_moment_x_alloc);
+
+    ddc::DiscreteDomain<DDimX, DDimYHalf, DummyIndex>
+            spatial_moment_y_dom(y_face_dom, scalar_accessor.domain());
+    ddc::Chunk spatial_moment_y_alloc(spatial_moment_y_dom, ddc::DeviceAllocator<double>());
+    sil::tensor::Tensor spatial_moment_y(spatial_moment_y_alloc);
+
+    auto spatial_moment_x_host = ddc::
+            create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), spatial_moment_x);
+    auto spatial_moment_y_host = ddc::
+            create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), spatial_moment_y);
+
+    // Reconstructed spatial moments on nodes, only for export and diagnostics
+    [[maybe_unused]] sil::tensor::TensorAccessor<AlphaLow> spatial_moments_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, AlphaLow>
-            potential_grad_dom(mesh_xy, potential_grad_accessor.domain());
-    ddc::Chunk potential_grad_alloc(potential_grad_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor potential_grad(potential_grad_alloc);
-
-    // Spatial moments
-    auto& spatial_moments
-            = potential_grad; // We can perform the computations inplace so spatial_moments is just an alias of potential_grad
-
+            spatial_moments_dom(mesh_xy, spatial_moments_accessor.domain());
+    ddc::Chunk spatial_moments_alloc(spatial_moments_dom, ddc::DeviceAllocator<double>());
+    sil::tensor::Tensor spatial_moments(spatial_moments_alloc);
     auto spatial_moments_host = ddc::
             create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), spatial_moments);
 
@@ -495,32 +548,50 @@ int main(int argc, char** argv)
                                         / 2.;
                 });
 
-        // Compute the potential gradient
-        sil::exterior::deriv<
-                AlphaLow,
-                DummyIndex>(Kokkos::DefaultExecutionSpace(), potential_grad, half_step_potential);
+        // Compute the staggered potential gradients
+        sil::exterior::staggered_deriv_component<X>(
+                Kokkos::DefaultExecutionSpace(),
+                potential_grad_x,
+                half_step_potential);
+        sil::exterior::staggered_deriv_component<Y>(
+                Kokkos::DefaultExecutionSpace(),
+                potential_grad_y,
+                half_step_potential);
 
         // Compute the spatial moments pi_\alpha by solving dphi/dx^\alpha = dH/dpi_\alpha
         ddc::parallel_for_each(
                 Kokkos::DefaultExecutionSpace(),
-                mesh_xy,
-                KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
-                    spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(0))
+                x_face_dom,
+                KOKKOS_LAMBDA(ddc::DiscreteElement<DDimXHalf, DDimY> elem) {
+                    spatial_moment_x(elem, ddc::DiscreteElement<DummyIndex>(0))
                             = FreeScalarFieldHamiltonian(mass).pi1(
-                                    potential_grad(elem, ddc::DiscreteElement<AlphaLow>(0)));
-                    spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(1))
-                            = FreeScalarFieldHamiltonian(mass).pi2(
-                                    potential_grad(elem, ddc::DiscreteElement<AlphaLow>(1)));
+                                    potential_grad_x(elem, ddc::DiscreteElement<DummyIndex>(0)));
                 });
-        if (i % nb_iter_between_exports == 0) {
-            ddc::parallel_deepcopy(spatial_moments_host, spatial_moments);
-        }
+        ddc::parallel_for_each(
+                Kokkos::DefaultExecutionSpace(),
+                y_face_dom,
+                KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimYHalf> elem) {
+                    spatial_moment_y(elem, ddc::DiscreteElement<DummyIndex>(0))
+                            = FreeScalarFieldHamiltonian(mass).pi2(
+                                    potential_grad_y(elem, ddc::DiscreteElement<DummyIndex>(0)));
+                });
 
         // Compute the divergence dpi_\alpha/dx^\alpha of the spatial moments, which is the codifferential \delta pi of the spatial moments
-        sil::exterior::codifferential<MetricIndex, AlphaLow, AlphaLow>(
+        ddc::parallel_for_each(
+                Kokkos::DefaultExecutionSpace(),
+                spatial_moments_div.domain(),
+                KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
+                    spatial_moments_div(elem) = 0.;
+                });
+        sil::exterior::add_staggered_codifferential_component<X, X>(
                 Kokkos::DefaultExecutionSpace(),
                 spatial_moments_div,
-                spatial_moments,
+                spatial_moment_x,
+                inv_metric);
+        sil::exterior::add_staggered_codifferential_component<Y, Y>(
+                Kokkos::DefaultExecutionSpace(),
+                spatial_moments_div,
+                spatial_moment_y,
                 inv_metric);
 
         // Compute dpi_0/dx^0 by solving - dpi_0/dx^0 + dpi_\alpha/dx^\alpha = -dH/dphi and advect pi_0 by a time step dx^0. Also Then, perform the second phi half-advection by solving dphi/dx^0 = -dH/dpi_0
@@ -538,17 +609,17 @@ int main(int argc, char** argv)
                     // Advect temporal moment by half-step, this is what is needed to perform the whole-step potential advection
                     const double half_step_temporal_moment_
                             = temporal_moment_
-                              + (FreeScalarFieldHamiltonian(mass).dH_dphi(half_step_potential_)
-                                 + spatial_moments_div_)
+                              + (spatial_moments_div_
+                                 - FreeScalarFieldHamiltonian(mass).dH_dphi(half_step_potential_))
                                         * dt / 2;
 
                     // Whole-step advection of field state
                     potential(elem)
-                            += FreeScalarFieldHamiltonian(mass).dH_dpi0(half_step_temporal_moment_)
+                            -= FreeScalarFieldHamiltonian(mass).dH_dpi0(half_step_temporal_moment_)
                                * dt;
                     temporal_moment(elem)
-                            += (FreeScalarFieldHamiltonian(mass).dH_dphi(half_step_potential_)
-                                + spatial_moments_div_)
+                            += (spatial_moments_div_
+                                - FreeScalarFieldHamiltonian(mass).dH_dphi(half_step_potential_))
                                * dt;
                 });
 
@@ -556,6 +627,61 @@ int main(int argc, char** argv)
             ddc::parallel_deepcopy(temporal_moment_host, temporal_moment);
             ddc::parallel_deepcopy(potential_host, potential);
             ddc::parallel_deepcopy(h_spatial_moments_div, spatial_moments_div);
+            ddc::parallel_deepcopy(spatial_moment_x_host, spatial_moment_x);
+            ddc::parallel_deepcopy(spatial_moment_y_host, spatial_moment_y);
+
+            {
+                ddc::DiscreteElement<DDimX, DDimY> const mesh_front = mesh_xy.front();
+                for (std::size_t ix = 0; ix < mesh_xy.template extent<DDimX>(); ++ix) {
+                    for (std::size_t iy = 0; iy < mesh_xy.template extent<DDimY>(); ++iy) {
+                        ddc::DiscreteElement<DDimX, DDimY> const elem
+                                = mesh_front + ddc::DiscreteVector<DDimX, DDimY>(ix, iy);
+                        spatial_moments_host(elem, ddc::DiscreteElement<AlphaLow>(0)) = 0.;
+                        spatial_moments_host(elem, ddc::DiscreteElement<AlphaLow>(1)) = 0.;
+                    }
+                }
+            }
+            {
+                ddc::DiscreteElement<DDimXHalf, DDimY> const x_face_front = x_face_dom.front();
+                for (std::size_t ix = 0; ix < x_face_dom.template extent<DDimXHalf>(); ++ix) {
+                    for (std::size_t iy = 0; iy < x_face_dom.template extent<DDimY>(); ++iy) {
+                        ddc::DiscreteElement<DDimXHalf, DDimY> const elem
+                                = x_face_front + ddc::DiscreteVector<DDimXHalf, DDimY>(ix, iy);
+                        ddc::DiscreteElement<DDimX, DDimY> const left_node(
+                                ddc::DiscreteElement<DDimX>(ddc::uid<DDimXHalf>(elem)),
+                                ddc::DiscreteElement<DDimY>(elem));
+                        double const value
+                                = spatial_moment_x_host(elem, ddc::DiscreteElement<DummyIndex>(0));
+                        spatial_moments_host(left_node, ddc::DiscreteElement<AlphaLow>(0))
+                                += value / 2.;
+                        spatial_moments_host(
+                                left_node + ddc::DiscreteVector<DDimX, DDimY>(1, 0),
+                                ddc::DiscreteElement<AlphaLow>(0))
+                                += value / 2.;
+                    }
+                }
+            }
+            {
+                ddc::DiscreteElement<DDimX, DDimYHalf> const y_face_front = y_face_dom.front();
+                for (std::size_t ix = 0; ix < y_face_dom.template extent<DDimX>(); ++ix) {
+                    for (std::size_t iy = 0; iy < y_face_dom.template extent<DDimYHalf>(); ++iy) {
+                        ddc::DiscreteElement<DDimX, DDimYHalf> const elem
+                                = y_face_front + ddc::DiscreteVector<DDimX, DDimYHalf>(ix, iy);
+                        ddc::DiscreteElement<DDimX, DDimY> const lower_node(
+                                ddc::DiscreteElement<DDimX>(elem),
+                                ddc::DiscreteElement<DDimY>(ddc::uid<DDimYHalf>(elem)));
+                        double const value
+                                = spatial_moment_y_host(elem, ddc::DiscreteElement<DummyIndex>(0));
+                        spatial_moments_host(lower_node, ddc::DiscreteElement<AlphaLow>(1))
+                                += value / 2.;
+                        spatial_moments_host(
+                                lower_node + ddc::DiscreteVector<DDimX, DDimY>(0, 1),
+                                ddc::DiscreteElement<AlphaLow>(1))
+                                += value / 2.;
+                    }
+                }
+            }
+            ddc::parallel_deepcopy(spatial_moments, spatial_moments_host);
 
             ddc::parallel_for_each(
                     Kokkos::DefaultExecutionSpace(),
