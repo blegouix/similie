@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 
 # Build environment
 - **Requirement:** Check if all the necessary dependencies listed in `docker/similie_env/Dockerfile` are available in the current environment (in particular `nvcc` and `openmpi`). If not, build and run in the `docker/similie_env/Dockerfile` image that you call "similie_env:latest". You'll need to mount the `similie/` folder before compiling it.
+- **CUDA in Docker:** When building or running the CUDA backend inside Docker, start the container with `--gpus all` so the NVIDIA driver and GPU devices are exposed in the container.
 - Configure `CMake` for CPU with `cmake -DCMAKE_CXX_COMPILER=g++-13 -DCMAKE_BUILD_TYPE=Debug -DKokkos_ENABLE_OPENMP=ON -B build -S .` or for CUDA with `cmake -DCMAKE_CXX_COMPILER=$PWD/vendor/ddc/vendor/kokkos/bin/nvcc_wrapper -DCMAKE_BUILD_TYPE=Debug -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_<YOUR_ARCH_NAMECODE>=ON -B build -S .`. Of course replace `<YOUR_ARCH_NAMECODE>` with the arch namecode which suits the GPU.
 - Compile as usual once configured (`make -jN_PROC` from `build`).
 
