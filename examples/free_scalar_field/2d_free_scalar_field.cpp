@@ -415,6 +415,9 @@ int main(int argc, char** argv)
             potential_grad_y_dom(y_face_dom, scalar_accessor.domain());
     ddc::Chunk potential_grad_y_alloc(potential_grad_y_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor potential_grad_y(potential_grad_y_alloc);
+    auto potential_grad = sil::exterior::make_tensor_form(
+            sil::exterior::component<X>(potential_grad_x),
+            sil::exterior::component<Y>(potential_grad_y));
 
     // Staggered spatial moments
     ddc::DiscreteDomain<DDimXDual, DDimY, DummyIndex>
@@ -426,6 +429,9 @@ int main(int argc, char** argv)
             spatial_moment_y_dom(y_face_dom, scalar_accessor.domain());
     ddc::Chunk spatial_moment_y_alloc(spatial_moment_y_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor spatial_moment_y(spatial_moment_y_alloc);
+    auto spatial_moment = sil::exterior::make_tensor_form(
+            sil::exterior::component<X>(spatial_moment_x),
+            sil::exterior::component<Y>(spatial_moment_y));
 
     auto spatial_moment_x_host = ddc::
             create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), spatial_moment_x);
@@ -528,20 +534,7 @@ int main(int argc, char** argv)
                 });
 
         // Compute the staggered potential gradients
-        sil::exterior::deriv<
-                X,
-                DummyIndex>(
-                Kokkos::DefaultExecutionSpace(),
-                potential_grad_x,
-                half_step_potential,
-                x_dualizer);
-        sil::exterior::deriv<
-                Y,
-                DummyIndex>(
-                Kokkos::DefaultExecutionSpace(),
-                potential_grad_y,
-                half_step_potential,
-                y_dualizer);
+        sil::exterior::deriv(Kokkos::DefaultExecutionSpace(), potential_grad, half_step_potential);
 
         // Compute the spatial moments pi_\alpha by solving dphi/dx^\alpha = dH/dpi_\alpha
         ddc::parallel_for_each(
@@ -569,23 +562,10 @@ int main(int argc, char** argv)
                     spatial_moments_div(elem) = 0.;
                 });
         sil::exterior::codifferential<
-                MetricIndex,
-                X,
-                DummyIndex>(
-                Kokkos::DefaultExecutionSpace(),
-                spatial_moments_div,
-                spatial_moment_x,
-                inv_metric,
-                x_dualizer);
-        sil::exterior::codifferential<
-                MetricIndex,
-                Y,
-                DummyIndex>(
-                Kokkos::DefaultExecutionSpace(),
-                spatial_moments_div,
-                spatial_moment_y,
-                inv_metric,
-                y_dualizer);
+                MetricIndex>(Kokkos::DefaultExecutionSpace(),
+                             spatial_moments_div,
+                             spatial_moment,
+                             inv_metric);
 
         // Compute dpi_0/dx^0 by solving - dpi_0/dx^0 + dpi_\alpha/dx^\alpha = -dH/dphi and advect pi_0 by a time step dx^0. Also Then, perform the second phi half-advection by solving dphi/dx^0 = -dH/dpi_0
         double const dS = (ddc::get<X>(upper_bounds) - ddc::get<X>(lower_bounds))

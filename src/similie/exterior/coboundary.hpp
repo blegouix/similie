@@ -21,6 +21,7 @@
 
 #include "cochain.hpp"
 #include "cosimplex.hpp"
+#include "form.hpp"
 
 
 namespace sil {
@@ -378,6 +379,29 @@ OutTensorType deriv(
                           / dx;
             });
     return out_tensor;
+}
+
+template <
+        class... Components,
+        misc::Specialization<tensor::Tensor> TensorType,
+        class ExecSpace>
+TensorForm<Components...> deriv(
+        ExecSpace const& exec_space,
+        TensorForm<Components...> out_form,
+        TensorType tensor)
+{
+    using in_index_t = ddc::type_seq_element_t<
+            0,
+            ddc::to_type_seq_t<typename TensorType::indices_domain_t>>;
+    static_assert(in_index_t::rank() == 0);
+
+    (...,
+     sil::exterior::deriv<typename Components::tag, in_index_t>(
+             exec_space,
+             out_form.template component<typename Components::tag>(),
+             tensor,
+             mesher::HalfShiftDualizer<typename Components::tag> {}));
+    return out_form;
 }
 
 } // namespace exterior

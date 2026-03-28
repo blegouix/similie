@@ -16,6 +16,7 @@
 
 #include "cochain.hpp"
 #include "cosimplex.hpp"
+#include "form.hpp"
 
 
 namespace sil {
@@ -299,6 +300,9 @@ OutTensorType codifferential(
     using out_index_t = ddc::type_seq_element_t<
             0,
             ddc::to_type_seq_t<typename OutTensorType::indices_domain_t>>;
+    using metric_component_index_t = ddc::type_seq_element_t<
+            0,
+            ddc::to_type_seq_t<typename MetricType::indices_domain_t>>;
     using out_d_dim_t = mesher::detail::
             discrete_dimension_for_t<TagToRemoveFromCochain, typename OutTensorType::non_indices_domain_t>;
     using flux_d_dim_t = mesher::detail::
@@ -331,14 +335,48 @@ OutTensorType codifferential(
                 double const deriv = (tensor.get(right_face, ddc::DiscreteElement<flux_index_t>(0))
                                       - tensor.get(left_face, ddc::DiscreteElement<flux_index_t>(0)))
                                      / dx;
+                double const metric_factor = [&]() -> double {
+                    if constexpr (
+                            misc::Specialization<metric_component_index_t, tensor::TensorIdentityIndex>) {
+                        return 1.;
+                    } else {
+                        return inv_metric(
+                                out_elem,
+                                inv_metric.accessor().template access_element<
+                                        TagToRemoveFromCochain,
+                                        TagToRemoveFromCochain>());
+                    }
+                }();
                 out_tensor.mem(out_elem, ddc::DiscreteElement<out_index_t>(0))
-                        += inv_metric.get(
-                                   out_elem,
-                                   inv_metric.accessor().template access_element<
-                                           TagToRemoveFromCochain,
-                                           TagToRemoveFromCochain>())
-                           * deriv;
+                        += metric_factor * deriv;
             });
+    return out_tensor;
+}
+
+template <
+        tensor::TensorIndex MetricIndex,
+        misc::Specialization<tensor::Tensor> OutTensorType,
+        class... Components,
+        misc::Specialization<tensor::Tensor> MetricType,
+        class ExecSpace>
+OutTensorType codifferential(
+        ExecSpace const& exec_space,
+        OutTensorType out_tensor,
+        TensorForm<Components...> tensor_form,
+        MetricType inv_metric)
+{
+    (...,
+     sil::exterior::codifferential<
+             MetricIndex,
+             typename Components::tag,
+             ddc::type_seq_element_t<
+                     0,
+                     ddc::to_type_seq_t<typename Components::tensor_type::indices_domain_t>>>(
+             exec_space,
+             out_tensor,
+             tensor_form.template component<typename Components::tag>(),
+             inv_metric,
+             mesher::HalfShiftDualizer<typename Components::tag> {}));
     return out_tensor;
 }
 
