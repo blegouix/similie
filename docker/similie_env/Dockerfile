@@ -1,4 +1,4 @@
-ARG BASE_IMAGE = nvidia/cuda:13.1.1-cudnn-devel-ubuntu24.04
+ARG BASE_IMAGE=nvidia/cuda:13.1.1-cudnn-devel-ubuntu24.04
 FROM $BASE_IMAGE
 
 # SPDX-FileCopyrightText: 2026 Baptiste Legouix
@@ -52,8 +52,13 @@ RUN apt install -y libfftw3-dev
 # LAPACKE
 RUN apt install -y liblapacke-dev
 
+# Thrust
+RUN if [ "${BACKEND}" = "cuda" ]; then \
+  apt install -y libthrust-dev; \
+fi
+
 # Ginkgo
-RUN git clone -b v1.8.0 --depth 1 https://github.com/ginkgo-project/ginkgo.git
+RUN git clone -b v1.11.0 --depth 1 https://github.com/ginkgo-project/ginkgo.git
 RUN if [ "${BACKEND}" = "cpu" ]; then \
       cmake -DCMAKE_BUILD_TYPE=Release \
             -DGINKGO_BUILD_OMP=ON \
@@ -66,8 +71,8 @@ RUN if [ "${BACKEND}" = "cpu" ]; then \
             -DCMAKE_CXX_COMPILER=g++ \
             -DCMAKE_CUDA_HOST_COMPILER=g++ \
             -DCMAKE_BUILD_TYPE=Release \
-            -DGINKGO_CUDA_ARCHITECTURES=70 \
             -DGINKGO_BUILD_CUDA=ON \
+            -DGINKGO_CUDA_ARCHITECTURES=89 \
             -DGINKGO_BUILD_TESTS=OFF \
             -DGINKGO_BUILD_EXAMPLES=OFF \
             -DGINKGO_BUILD_BENCHMARKS=OFF \
@@ -76,7 +81,7 @@ RUN if [ "${BACKEND}" = "cpu" ]; then \
       echo "ERROR: BACKEND must be 'cpu' or 'cuda' (got: '${BACKEND}')" >&2; \
       exit 1; \
     fi
-RUN cmake --build ginkgo/build -j 8
+RUN cmake --build ginkgo/build -j 4
 RUN cmake --install ginkgo/build
 
 # PDI 
@@ -91,3 +96,6 @@ EOF
 RUN wget -O /usr/share/keyrings/pdidev-archive-automatic.gpg https://repo.pdi.dev/ubuntu/pdidev-archive-keyring.gpg
 RUN apt update
 RUN apt install -y libpdi-dev pdiplugin-all
+
+# Sympy
+RUN apt install -y python3-sympy
