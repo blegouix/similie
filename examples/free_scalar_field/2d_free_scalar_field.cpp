@@ -528,14 +528,20 @@ int main(int argc, char** argv)
                 });
 
         // Compute the staggered potential gradients
-        sil::exterior::staggered_deriv_component<X>(
+        sil::exterior::deriv<
+                X,
+                DummyIndex>(
                 Kokkos::DefaultExecutionSpace(),
                 potential_grad_x,
-                half_step_potential);
-        sil::exterior::staggered_deriv_component<Y>(
+                half_step_potential,
+                x_dualizer);
+        sil::exterior::deriv<
+                Y,
+                DummyIndex>(
                 Kokkos::DefaultExecutionSpace(),
                 potential_grad_y,
-                half_step_potential);
+                half_step_potential,
+                y_dualizer);
 
         // Compute the spatial moments pi_\alpha by solving dphi/dx^\alpha = dH/dpi_\alpha
         ddc::parallel_for_each(
@@ -562,16 +568,24 @@ int main(int argc, char** argv)
                 KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
                     spatial_moments_div(elem) = 0.;
                 });
-        sil::exterior::add_staggered_codifferential_component<X, X>(
+        sil::exterior::codifferential<
+                MetricIndex,
+                X,
+                DummyIndex>(
                 Kokkos::DefaultExecutionSpace(),
                 spatial_moments_div,
                 spatial_moment_x,
-                inv_metric);
-        sil::exterior::add_staggered_codifferential_component<Y, Y>(
+                inv_metric,
+                x_dualizer);
+        sil::exterior::codifferential<
+                MetricIndex,
+                Y,
+                DummyIndex>(
                 Kokkos::DefaultExecutionSpace(),
                 spatial_moments_div,
                 spatial_moment_y,
-                inv_metric);
+                inv_metric,
+                y_dualizer);
 
         // Compute dpi_0/dx^0 by solving - dpi_0/dx^0 + dpi_\alpha/dx^\alpha = -dH/dphi and advect pi_0 by a time step dx^0. Also Then, perform the second phi half-advection by solving dphi/dx^0 = -dH/dpi_0
         double const dS = (ddc::get<X>(upper_bounds) - ddc::get<X>(lower_bounds))

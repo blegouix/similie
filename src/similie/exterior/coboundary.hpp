@@ -12,6 +12,7 @@
 #include <similie/misc/portable_stl.hpp>
 #include <similie/misc/specialization.hpp>
 #include <similie/misc/type_seq_conversion.hpp>
+#include <similie/mesher/dualizer.hpp>
 #include <similie/tensor/antisymmetric_tensor.hpp>
 #include <similie/tensor/dummy_index.hpp>
 #include <similie/tensor/tensor_impl.hpp>
@@ -332,6 +333,51 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> deriv(
             TagToAddToCochain,
             CochainTag,
             TensorType>(exec_space, coboundary_tensor, tensor);
+}
+
+template <
+        class TagToAddToCochain,
+        tensor::TensorIndex CochainTag,
+        misc::Specialization<tensor::Tensor> OutTensorType,
+        misc::Specialization<tensor::Tensor> TensorType,
+        class Dualizer,
+        class ExecSpace>
+OutTensorType deriv(
+        ExecSpace const& exec_space,
+        OutTensorType out_tensor,
+        TensorType tensor,
+        Dualizer const& dualizer)
+{
+    using out_index_t = ddc::type_seq_element_t<
+            0,
+            ddc::to_type_seq_t<typename OutTensorType::indices_domain_t>>;
+    using in_index_t = ddc::type_seq_element_t<
+            0,
+            ddc::to_type_seq_t<typename TensorType::indices_domain_t>>;
+    using in_d_dim_t = mesher::detail::
+            discrete_dimension_for_t<TagToAddToCochain, typename TensorType::non_indices_domain_t>;
+    using out_elem_t = typename OutTensorType::non_indices_domain_t::discrete_element_type;
+    using in_elem_t = typename TensorType::non_indices_domain_t::discrete_element_type;
+    static_assert(out_index_t::rank() == 0);
+    static_assert(in_index_t::rank() == 0);
+    static_assert(!std::is_void_v<in_d_dim_t>);
+
+    ddc::parallel_for_each(
+            "similie_compute_centered_dualized_deriv",
+            exec_space,
+            out_tensor.non_indices_domain(),
+            KOKKOS_LAMBDA(out_elem_t out_elem) {
+                in_elem_t const in_left = dualizer.primal(out_elem);
+                in_elem_t const in_right = in_left + ddc::DiscreteVector<in_d_dim_t>(1);
+                double const dx = static_cast<double>(
+                        ddc::coordinate(ddc::DiscreteElement<in_d_dim_t>(in_right))
+                        - ddc::coordinate(ddc::DiscreteElement<in_d_dim_t>(in_left)));
+                out_tensor.mem(out_elem, ddc::DiscreteElement<out_index_t>(0))
+                        = (tensor.get(in_right, ddc::DiscreteElement<in_index_t>(0))
+                           - tensor.get(in_left, ddc::DiscreteElement<in_index_t>(0)))
+                          / dx;
+            });
+    return out_tensor;
 }
 
 } // namespace exterior

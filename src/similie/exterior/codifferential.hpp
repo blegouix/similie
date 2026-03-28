@@ -6,6 +6,7 @@
 #include <ddc/ddc.hpp>
 
 #include <similie/exterior/hodge_star.hpp>
+#include <similie/mesher/dualizer.hpp>
 #include <similie/misc/macros.hpp>
 #include <similie/misc/specialization.hpp>
 #include <similie/tensor/character.hpp>
@@ -277,6 +278,68 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
             });
 
     return codifferential_tensor;
+}
+
+template <
+        tensor::TensorIndex MetricIndex,
+        class TagToRemoveFromCochain,
+        tensor::TensorIndex CochainTag,
+        misc::Specialization<tensor::Tensor> OutTensorType,
+        misc::Specialization<tensor::Tensor> TensorType,
+        misc::Specialization<tensor::Tensor> MetricType,
+        class Dualizer,
+        class ExecSpace>
+OutTensorType codifferential(
+        ExecSpace const& exec_space,
+        OutTensorType out_tensor,
+        TensorType tensor,
+        MetricType inv_metric,
+        Dualizer const& dualizer)
+{
+    using out_index_t = ddc::type_seq_element_t<
+            0,
+            ddc::to_type_seq_t<typename OutTensorType::indices_domain_t>>;
+    using out_d_dim_t = mesher::detail::
+            discrete_dimension_for_t<TagToRemoveFromCochain, typename OutTensorType::non_indices_domain_t>;
+    using flux_d_dim_t = mesher::detail::
+            discrete_dimension_for_t<TagToRemoveFromCochain, typename TensorType::non_indices_domain_t>;
+    using out_elem_t = typename OutTensorType::non_indices_domain_t::discrete_element_type;
+    using flux_elem_t = typename TensorType::non_indices_domain_t::discrete_element_type;
+    using flux_index_t = ddc::type_seq_element_t<
+            0,
+            ddc::to_type_seq_t<typename TensorType::indices_domain_t>>;
+    static_assert(out_index_t::rank() == 0);
+    static_assert(!std::is_void_v<out_d_dim_t>);
+    static_assert(!std::is_void_v<flux_d_dim_t>);
+
+    ddc::parallel_for_each(
+            "similie_compute_centered_dualized_codifferential",
+            exec_space,
+            out_tensor.non_indices_domain(),
+            KOKKOS_LAMBDA(out_elem_t out_elem) {
+                ddc::DiscreteDomain<out_d_dim_t> dim_dom(out_tensor.non_indices_domain());
+                ddc::DiscreteElement<out_d_dim_t> dim_elem(out_elem);
+                if (dim_elem.uid() == dim_dom.front().uid() || dim_elem.uid() == dim_dom.back().uid()) {
+                    return;
+                }
+
+                flux_elem_t const right_face = dualizer(out_elem);
+                flux_elem_t const left_face = right_face - ddc::DiscreteVector<flux_d_dim_t>(1);
+                double const dx = static_cast<double>(
+                        ddc::coordinate(ddc::DiscreteElement<flux_d_dim_t>(right_face))
+                        - ddc::coordinate(ddc::DiscreteElement<flux_d_dim_t>(left_face)));
+                double const deriv = (tensor.get(right_face, ddc::DiscreteElement<flux_index_t>(0))
+                                      - tensor.get(left_face, ddc::DiscreteElement<flux_index_t>(0)))
+                                     / dx;
+                out_tensor.mem(out_elem, ddc::DiscreteElement<out_index_t>(0))
+                        += inv_metric.get(
+                                   out_elem,
+                                   inv_metric.accessor().template access_element<
+                                           TagToRemoveFromCochain,
+                                           TagToRemoveFromCochain>())
+                           * deriv;
+            });
+    return out_tensor;
 }
 
 } // namespace exterior

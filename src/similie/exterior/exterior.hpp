@@ -14,4 +14,3 @@
 #include "laplacian.hpp"
 #include "local_chain.hpp"
 #include "simplex.hpp"
-#include "staggered_difference.hpp"
