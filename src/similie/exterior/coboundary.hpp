@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <array>
+
 #include <ddc/ddc.hpp>
 
 #include <similie/misc/are_all_same.hpp>
@@ -18,6 +20,7 @@
 
 #include <Kokkos_StdAlgorithms.hpp>
 
+#include "boundary.hpp"
 #include "cochain.hpp"
 #include "cosimplex.hpp"
 
@@ -125,6 +128,106 @@ using coboundary_tensor_t =
 
 namespace detail {
 
+template <class SimplexType>
+using simplex_boundary_type
+        = std::array<boundary_t<SimplexType>, 2 * SimplexType::dimension()>;
+
+template <class SimplexType>
+KOKKOS_FUNCTION constexpr void generate_half_simplex_boundary(
+        simplex_boundary_type<SimplexType>& simplex_boundary,
+        std::size_t const offset,
+        typename SimplexType::discrete_element_type elem,
+        typename SimplexType::discrete_vector_type vect,
+        bool const negative = false)
+{
+    auto array = ddc::detail::array(vect);
+    auto id_dist = -1;
+    for (std::size_t i = 0; i < SimplexType::dimension(); ++i) {
+        auto array_ = array;
+        for (std::size_t j = id_dist + 1; j < array_.size(); ++j) {
+            if (array_[j] != 0) {
+                id_dist = static_cast<int>(j);
+                array_[j] = 0;
+                break;
+            }
+        }
+        typename SimplexType::discrete_vector_type vect_;
+        ddc::detail::array(vect_) = array_;
+        simplex_boundary[offset + i]
+                = boundary_t<SimplexType>(elem, vect_, (negative + i) % 2);
+    }
+}
+
+template <class SimplexType>
+KOKKOS_FUNCTION constexpr simplex_boundary_type<SimplexType> simplex_boundary(SimplexType simplex)
+{
+    simplex_boundary_type<SimplexType> simplex_boundary;
+
+    generate_half_simplex_boundary<SimplexType>(
+            simplex_boundary,
+            0,
+            simplex.discrete_element(),
+            simplex.discrete_vector(),
+            SimplexType::dimension() % 2);
+    generate_half_simplex_boundary<SimplexType>(
+            simplex_boundary,
+            SimplexType::dimension(),
+            simplex.discrete_element() + simplex.discrete_vector(),
+            -simplex.discrete_vector());
+
+    int const sign = (SimplexType::dimension() % 2 ? 1 : -1) * (simplex.negative() ? -1 : 1);
+    if (sign == -1) {
+        for (auto& boundary_simplex : simplex_boundary) {
+            boundary_simplex = -boundary_simplex;
+        }
+    }
+
+    return simplex_boundary;
+}
+
+template <misc::Specialization<LocalChain> ChainType, class DiscreteVectorType>
+KOKKOS_FUNCTION std::size_t local_chain_index(
+        ChainType const& chain,
+        DiscreteVectorType const& vect)
+{
+    for (std::size_t i = 0; i < chain.size(); ++i) {
+        if (chain[i].discrete_vector() == vect) {
+            return i;
+        }
+    }
+    assert(false && "simplex boundary vector must belong to the tangent basis");
+    return 0;
+}
+
+template <
+        tensor::TensorIndex CochainTag,
+        misc::Specialization<tensor::Tensor> TensorType,
+        misc::Specialization<LocalChain> ChainType,
+        class Elem,
+        class SimplexType>
+KOKKOS_FUNCTION typename TensorType::value_type coboundary_value(
+        TensorType const& tensor,
+        ChainType const& lower_chain,
+        Elem const& elem,
+        SimplexType const& simplex)
+{
+    typename TensorType::value_type out = 0.;
+    auto const simplex_boundary = detail::simplex_boundary(simplex);
+
+    for (auto const& boundary_simplex : simplex_boundary) {
+        std::size_t const lower_chain_idx
+                = local_chain_index(lower_chain, boundary_simplex.discrete_vector());
+        out += (boundary_simplex.negative() ? -1. : 1.)
+               * tensor.mem(
+                       misc::domain_contains(tensor.domain(), boundary_simplex.discrete_element())
+                               ? boundary_simplex.discrete_element()
+                               : elem,
+                       ddc::DiscreteElement<CochainTag>(lower_chain_idx));
+    }
+
+    return out;
+}
+
 template <misc::Specialization<Chain> ChainType>
 struct ComputeSimplex;
 
@@ -204,51 +307,6 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
             = ddc::remove_dims_of<coboundary_index_t<TagToAddToCochain, CochainTag>>(
                     coboundary_tensor.domain());
 
-    // buffer to store the K-chain containing the boundary of each K+1-simplex of the mesh
-    ddc::Chunk simplex_boundary_alloc(
-            ddc::cartesian_prod_t<
-                    ddc::remove_dims_of_t<
-                            typename coboundary_tensor_t<
-                                    TagToAddToCochain,
-                                    CochainTag,
-                                    TensorType>::discrete_domain_type,
-                            coboundary_index_t<TagToAddToCochain, CochainTag>>,
-                    ddc::DiscreteDomain<detail::CoboundaryDummyIndex>>(
-                    batch_dom,
-                    ddc::DiscreteDomain<detail::CoboundaryDummyIndex>(
-                            ddc::DiscreteElement<detail::CoboundaryDummyIndex>(0),
-                            ddc::DiscreteVector<detail::CoboundaryDummyIndex>(
-                                    2 * (CochainTag::rank() + 1)))),
-            ddc::KokkosAllocator<
-                    simplex_for_domain_t<
-                            CochainTag::rank(),
-                            ddc::remove_dims_of_t<
-                                    typename coboundary_tensor_t<
-                                            TagToAddToCochain,
-                                            CochainTag,
-                                            TensorType>::discrete_domain_type,
-                                    coboundary_index_t<TagToAddToCochain, CochainTag>>>,
-                    typename ExecSpace::memory_space>());
-    ddc::ChunkSpan simplex_boundary(simplex_boundary_alloc);
-
-    // buffer to store the values of the K-cochain on the boundary of each K+1-cosimplex of the mesh
-    ddc::Chunk boundary_values_alloc(
-            ddc::cartesian_prod_t<
-                    ddc::remove_dims_of_t<
-                            typename coboundary_tensor_t<
-                                    TagToAddToCochain,
-                                    CochainTag,
-                                    TensorType>::discrete_domain_type,
-                            coboundary_index_t<TagToAddToCochain, CochainTag>>,
-                    ddc::DiscreteDomain<detail::CoboundaryDummyIndex>>(
-                    batch_dom,
-                    ddc::DiscreteDomain<detail::CoboundaryDummyIndex>(
-                            ddc::DiscreteElement<detail::CoboundaryDummyIndex>(0),
-                            ddc::DiscreteVector<detail::CoboundaryDummyIndex>(
-                                    2 * (CochainTag::rank() + 1)))),
-            ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
-    ddc::ChunkSpan boundary_values(boundary_values_alloc);
-
     // compute the tangent K+1-basis for each node of the mesh. This is a local K+1-chain.
     auto chain = tangent_basis<
             CochainTag::rank() + 1,
@@ -270,48 +328,21 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
             exec_space,
             batch_dom,
             KOKKOS_LAMBDA(typename decltype(batch_dom)::discrete_element_type elem) {
-                // declare a K+1-cochain storing the K+1-cosimplices of the output cochain for the current tangent space and iterate over them
-                auto cochain = Cochain(chain, coboundary_tensor[elem]);
-                for (auto i = cochain.begin(); i < cochain.end(); ++i) {
-                    // extract the K+1-simplex from the current K+1-cosimplex (this is not absolutly trivial because the cochain is based on a LocalChain)
+                for (std::size_t i = 0; i < chain.size(); ++i) {
                     Simplex simplex = Simplex(
                             std::integral_constant<std::size_t, CochainTag::rank() + 1> {},
                             elem,
-                            (*i).discrete_vector());
-                    // compute its boundary as a K-chain in the simplex_boundary buffer
-                    Chain boundary_chain
-                            = boundary(simplex_boundary[elem].allocation_kokkos_view(), simplex);
-                    // iterate over every K-simplex forming the boundary
-                    for (auto j = boundary_chain.begin(); j < boundary_chain.end(); ++j) {
-                        // extract from the input K-cochain the values associated to every K-simplex of the boundary and fill the boundary_values buffer
-                        boundary_values[elem].allocation_kokkos_view()(
-                                Kokkos::Experimental::distance(boundary_chain.begin(), j))
-                                = tensor.mem(
-                                        misc::domain_contains(
-                                                tensor.domain(),
-                                                (*j).discrete_element())
-                                                ? (*j).discrete_element()
-                                                : elem, // TODO this is an assumption on boundary condition (free boundary), needs to be generalized
-                                        ddc::DiscreteElement<CochainTag>(
-                                                Kokkos::Experimental::distance(
-                                                        lower_chain.begin(),
-                                                        misc::detail::
-                                                                find(lower_chain.begin(),
-                                                                     lower_chain.end(),
-                                                                     (*j).discrete_vector()))));
-                    }
-                    // build the cochain of the boundary
-                    Cochain cochain_boundary(
-                            boundary_chain,
-                            boundary_values[elem].allocation_kokkos_view());
-                    // integrate over the cochain forming the boundary to compute the coboundary
-                    // (*i).value() = cochain_boundary.integrate(); // Cannot be used because CochainIterator::operator* does not return a reference
+                            chain[i].discrete_vector());
                     coboundary_tensor
                             .mem(elem,
                                  ddc::DiscreteElement<
                                          coboundary_index_t<TagToAddToCochain, CochainTag>>(
-                                         Kokkos::Experimental::distance(cochain.begin(), i)))
-                            = cochain_boundary.integrate();
+                                         i))
+                            = detail::coboundary_value<CochainTag>(
+                                    tensor,
+                                    lower_chain,
+                                    elem,
+                                    simplex);
                 }
             });
 
