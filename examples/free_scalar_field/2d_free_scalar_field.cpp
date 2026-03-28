@@ -238,14 +238,6 @@ struct DDimY : ddc::UniformPointSampling<Y>
 {
 };
 
-struct DDimXHalf : ddc::UniformPointSampling<X>
-{
-};
-
-struct DDimYHalf : ddc::UniformPointSampling<Y>
-{
-};
-
 /*
 struct BSplinesX : MesherXY::template bsplines_type<X>
 {
@@ -281,6 +273,11 @@ using BetaLow = sil::tensor::Covariant<Beta>;
 
 using DummyIndex = sil::tensor::Covariant<sil::tensor::ScalarIndex>;
 
+using XDualizer = sil::mesher::HalfShiftDualizer<X>;
+using YDualizer = sil::mesher::HalfShiftDualizer<Y>;
+using DDimXDual = sil::mesher::dual_discrete_dimension_t<XDualizer, DDimX>;
+using DDimYDual = sil::mesher::dual_discrete_dimension_t<YDualizer, DDimY>;
+
 int main(int argc, char** argv)
 {
     // Initialize PDI, Kokkos and DDC
@@ -313,29 +310,11 @@ int main(int argc, char** argv)
             ddc::select<Y>(lower_bounds),
             ddc::select<Y>(upper_bounds),
             ddc::select<DDimY>(nb_cells)));
-    auto const x_face_x_dom = ddc::init_discrete_space<DDimXHalf>(DDimXHalf::init<DDimXHalf>(
-            ddc::Coordinate<X>(
-                    ddc::select<X>(lower_bounds)
-                    + (ddc::select<X>(upper_bounds) - ddc::select<X>(lower_bounds))
-                              / (2 * (ddc::select<DDimX>(nb_cells).value() - 1))),
-            ddc::Coordinate<X>(
-                    ddc::select<X>(upper_bounds)
-                    - (ddc::select<X>(upper_bounds) - ddc::select<X>(lower_bounds))
-                              / (2 * (ddc::select<DDimX>(nb_cells).value() - 1))),
-            ddc::DiscreteVector<DDimXHalf>(ddc::select<DDimX>(nb_cells).value() - 1)));
-    auto const y_face_y_dom = ddc::init_discrete_space<DDimYHalf>(DDimYHalf::init<DDimYHalf>(
-            ddc::Coordinate<Y>(
-                    ddc::select<Y>(lower_bounds)
-                    + (ddc::select<Y>(upper_bounds) - ddc::select<Y>(lower_bounds))
-                              / (2 * (ddc::select<DDimY>(nb_cells).value() - 1))),
-            ddc::Coordinate<Y>(
-                    ddc::select<Y>(upper_bounds)
-                    - (ddc::select<Y>(upper_bounds) - ddc::select<Y>(lower_bounds))
-                              / (2 * (ddc::select<DDimY>(nb_cells).value() - 1))),
-            ddc::DiscreteVector<DDimYHalf>(ddc::select<DDimY>(nb_cells).value() - 1)));
     ddc::DiscreteDomain<DDimX, DDimY> mesh_xy(x_dom, y_dom);
-    ddc::DiscreteDomain<DDimXHalf, DDimY> x_face_dom(x_face_x_dom, y_dom);
-    ddc::DiscreteDomain<DDimX, DDimYHalf> y_face_dom(x_dom, y_face_y_dom);
+    XDualizer const x_dualizer;
+    YDualizer const y_dualizer;
+    ddc::DiscreteDomain<DDimXDual, DDimY> x_face_dom = x_dualizer(mesh_xy);
+    ddc::DiscreteDomain<DDimX, DDimYDual> y_face_dom = y_dualizer(mesh_xy);
 
     assert(static_cast<std::size_t>(mesh_xy.template extent<DDimX>())
            == static_cast<std::size_t>(mesh_xy.template extent<DDimY>()));
@@ -427,23 +406,23 @@ int main(int argc, char** argv)
 
     // Staggered potential gradients
     [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> scalar_accessor;
-    ddc::DiscreteDomain<DDimXHalf, DDimY, DummyIndex>
+    ddc::DiscreteDomain<DDimXDual, DDimY, DummyIndex>
             potential_grad_x_dom(x_face_dom, scalar_accessor.domain());
     ddc::Chunk potential_grad_x_alloc(potential_grad_x_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor potential_grad_x(potential_grad_x_alloc);
 
-    ddc::DiscreteDomain<DDimX, DDimYHalf, DummyIndex>
+    ddc::DiscreteDomain<DDimX, DDimYDual, DummyIndex>
             potential_grad_y_dom(y_face_dom, scalar_accessor.domain());
     ddc::Chunk potential_grad_y_alloc(potential_grad_y_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor potential_grad_y(potential_grad_y_alloc);
 
     // Staggered spatial moments
-    ddc::DiscreteDomain<DDimXHalf, DDimY, DummyIndex>
+    ddc::DiscreteDomain<DDimXDual, DDimY, DummyIndex>
             spatial_moment_x_dom(x_face_dom, scalar_accessor.domain());
     ddc::Chunk spatial_moment_x_alloc(spatial_moment_x_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor spatial_moment_x(spatial_moment_x_alloc);
 
-    ddc::DiscreteDomain<DDimX, DDimYHalf, DummyIndex>
+    ddc::DiscreteDomain<DDimX, DDimYDual, DummyIndex>
             spatial_moment_y_dom(y_face_dom, scalar_accessor.domain());
     ddc::Chunk spatial_moment_y_alloc(spatial_moment_y_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor spatial_moment_y(spatial_moment_y_alloc);
@@ -562,7 +541,7 @@ int main(int argc, char** argv)
         ddc::parallel_for_each(
                 Kokkos::DefaultExecutionSpace(),
                 x_face_dom,
-                KOKKOS_LAMBDA(ddc::DiscreteElement<DDimXHalf, DDimY> elem) {
+                KOKKOS_LAMBDA(ddc::DiscreteElement<DDimXDual, DDimY> elem) {
                     spatial_moment_x(elem, ddc::DiscreteElement<DummyIndex>(0))
                             = FreeScalarFieldHamiltonian(mass).pi1(
                                     potential_grad_x(elem, ddc::DiscreteElement<DummyIndex>(0)));
@@ -570,7 +549,7 @@ int main(int argc, char** argv)
         ddc::parallel_for_each(
                 Kokkos::DefaultExecutionSpace(),
                 y_face_dom,
-                KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimYHalf> elem) {
+                KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimYDual> elem) {
                     spatial_moment_y(elem, ddc::DiscreteElement<DummyIndex>(0))
                             = FreeScalarFieldHamiltonian(mass).pi2(
                                     potential_grad_y(elem, ddc::DiscreteElement<DummyIndex>(0)));
@@ -642,14 +621,12 @@ int main(int argc, char** argv)
                 }
             }
             {
-                ddc::DiscreteElement<DDimXHalf, DDimY> const x_face_front = x_face_dom.front();
-                for (std::size_t ix = 0; ix < x_face_dom.template extent<DDimXHalf>(); ++ix) {
+                ddc::DiscreteElement<DDimXDual, DDimY> const x_face_front = x_face_dom.front();
+                for (std::size_t ix = 0; ix < x_face_dom.template extent<DDimXDual>(); ++ix) {
                     for (std::size_t iy = 0; iy < x_face_dom.template extent<DDimY>(); ++iy) {
-                        ddc::DiscreteElement<DDimXHalf, DDimY> const elem
-                                = x_face_front + ddc::DiscreteVector<DDimXHalf, DDimY>(ix, iy);
-                        ddc::DiscreteElement<DDimX, DDimY> const left_node(
-                                ddc::DiscreteElement<DDimX>(ddc::uid<DDimXHalf>(elem)),
-                                ddc::DiscreteElement<DDimY>(elem));
+                        ddc::DiscreteElement<DDimXDual, DDimY> const elem
+                                = x_face_front + ddc::DiscreteVector<DDimXDual, DDimY>(ix, iy);
+                        ddc::DiscreteElement<DDimX, DDimY> const left_node = x_dualizer.primal(elem);
                         double const value
                                 = spatial_moment_x_host(elem, ddc::DiscreteElement<DummyIndex>(0));
                         spatial_moments_host(left_node, ddc::DiscreteElement<AlphaLow>(0))
@@ -662,14 +639,12 @@ int main(int argc, char** argv)
                 }
             }
             {
-                ddc::DiscreteElement<DDimX, DDimYHalf> const y_face_front = y_face_dom.front();
+                ddc::DiscreteElement<DDimX, DDimYDual> const y_face_front = y_face_dom.front();
                 for (std::size_t ix = 0; ix < y_face_dom.template extent<DDimX>(); ++ix) {
-                    for (std::size_t iy = 0; iy < y_face_dom.template extent<DDimYHalf>(); ++iy) {
-                        ddc::DiscreteElement<DDimX, DDimYHalf> const elem
-                                = y_face_front + ddc::DiscreteVector<DDimX, DDimYHalf>(ix, iy);
-                        ddc::DiscreteElement<DDimX, DDimY> const lower_node(
-                                ddc::DiscreteElement<DDimX>(elem),
-                                ddc::DiscreteElement<DDimY>(ddc::uid<DDimYHalf>(elem)));
+                    for (std::size_t iy = 0; iy < y_face_dom.template extent<DDimYDual>(); ++iy) {
+                        ddc::DiscreteElement<DDimX, DDimYDual> const elem
+                                = y_face_front + ddc::DiscreteVector<DDimX, DDimYDual>(ix, iy);
+                        ddc::DiscreteElement<DDimX, DDimY> const lower_node = y_dualizer.primal(elem);
                         double const value
                                 = spatial_moment_y_host(elem, ddc::DiscreteElement<DummyIndex>(0));
                         spatial_moments_host(lower_node, ddc::DiscreteElement<AlphaLow>(1))
