@@ -7,6 +7,9 @@ SPDX-License-Identifier: MIT
 
 <!-- Example usage: "run tests" -->
 
+# Compile or test anything in the project
+- Except contradictory instructions, always run compilation or tests in the docker image (see below). 
+
 # Clone
 - Clone with `git clone --recurse-submodules git@github.com:blegouix/similie.git` or any similar commande which suits the network configuration. Be sure to pull the submodules recursively.
 
@@ -20,3 +23,6 @@ SPDX-License-Identifier: MIT
 
 ## Run tests
 - From `build`, first recompile then run `ctest`.
+
+## Run examples
+- From `build`, first recompile then run the asked example. Except contradictory instructions, just run few iterations. 
