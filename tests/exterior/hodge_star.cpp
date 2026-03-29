@@ -36,6 +36,22 @@ struct DDimZ : ddc::UniformPointSampling<Z>
 {
 };
 
+struct X2
+{
+};
+
+struct Y2
+{
+};
+
+struct DDimX2 : ddc::UniformPointSampling<X2>
+{
+};
+
+struct DDimY2 : ddc::UniformPointSampling<Y2>
+{
+};
+
 struct Mu : sil::tensor::TensorNaturalIndex<X, Y, Z>
 {
 };
@@ -173,18 +189,12 @@ TEST(HodgeStar, TensorForm1In2D)
             ddc::HostAllocator<double>());
     sil::tensor::Tensor primal_y(primal_y_alloc);
 
-    ddc::parallel_for_each(
-            Kokkos::DefaultHostExecutionSpace(),
-            primal_x.domain(),
-            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimXDual, DDimY, DummyIndex> elem) {
-                primal_x(elem) = 2.;
-            });
-    ddc::parallel_for_each(
-            Kokkos::DefaultHostExecutionSpace(),
-            primal_y.domain(),
-            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimYDual, DummyIndex> elem) {
-                primal_y(elem) = 3.;
-            });
+    ddc::host_for_each(primal_x.domain(), [&](ddc::DiscreteElement<DDimXDual, DDimY, DummyIndex> elem) {
+        primal_x(elem) = 2.;
+    });
+    ddc::host_for_each(primal_y.domain(), [&](ddc::DiscreteElement<DDimX, DDimYDual, DummyIndex> elem) {
+        primal_y(elem) = 3.;
+    });
 
     auto primal_form = sil::exterior::make_tensor_form(
             sil::exterior::component<X>(primal_x),
@@ -235,18 +245,6 @@ TEST(HodgeStar, TensorForm1In2D)
 
 TEST(HodgeStar, ScalarTensor0And2In2D)
 {
-    struct X2
-    {
-    };
-    struct Y2
-    {
-    };
-    struct DDimX2 : ddc::UniformPointSampling<X2>
-    {
-    };
-    struct DDimY2 : ddc::UniformPointSampling<Y2>
-    {
-    };
     using ScalarIndex = sil::tensor::Covariant<sil::tensor::ScalarIndex>;
     using Metric2DIndex = sil::tensor::TensorDiagonalIndex<
             sil::tensor::Contravariant<sil::tensor::MetricIndex1<X2, Y2>>,
@@ -274,23 +272,19 @@ TEST(HodgeStar, ScalarTensor0And2In2D)
             ddc::DiscreteDomain<DDimX2, DDimY2, ScalarIndex>(mesh, scalar_accessor.domain()),
             ddc::HostAllocator<double>());
     sil::tensor::Tensor scalar(scalar_alloc);
-    ddc::parallel_for_each(
-            Kokkos::DefaultHostExecutionSpace(),
-            scalar.domain(),
-            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX2, DDimY2, ScalarIndex> elem) { scalar(elem) = 2.; });
+    ddc::host_for_each(scalar.domain(), [&](ddc::DiscreteElement<DDimX2, DDimY2, ScalarIndex> elem) {
+        scalar(elem) = 2.;
+    });
 
     [[maybe_unused]] sil::tensor::TensorAccessor<Metric2DIndex> metric_accessor;
     ddc::Chunk metric_alloc(
             ddc::DiscreteDomain<DDimX2, DDimY2, Metric2DIndex>(mesh, metric_accessor.domain()),
             ddc::HostAllocator<double>());
     sil::tensor::Tensor metric(metric_alloc);
-    ddc::parallel_for_each(
-            Kokkos::DefaultHostExecutionSpace(),
-            mesh,
-            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX2, DDimY2> elem) {
-                metric(elem, metric.accessor().access_element<X2, X2>()) = 4.;
-                metric(elem, metric.accessor().access_element<Y2, Y2>()) = 9.;
-            });
+    ddc::host_for_each(mesh, [&](ddc::DiscreteElement<DDimX2, DDimY2> elem) {
+        metric(elem, metric.accessor().access_element<X2, X2>()) = 4.;
+        metric(elem, metric.accessor().access_element<Y2, Y2>()) = 9.;
+    });
 
     ddc::Chunk dual_scalar_alloc(
             ddc::DiscreteDomain<DDimXDual, DDimYDual, ScalarIndex>(dual_mesh, scalar_accessor.domain()),

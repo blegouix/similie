@@ -78,6 +78,95 @@ struct IsFullyDualDomain<ddc::DiscreteDomain<DDims...>>
 template <class Dom>
 constexpr bool is_fully_dual_domain_v = IsFullyDualDomain<Dom>::value;
 
+template <class OutTensor, class InTensor, class OutIndex, class InIndex>
+struct TensorFormHodgeStarFirstComponentFunctor
+{
+    OutTensor out_tensor;
+    InTensor in_tensor;
+
+    KOKKOS_FUNCTION void operator()(typename InTensor::non_indices_domain_t::discrete_element_type elem) const
+    {
+        out_tensor.mem(elem, ddc::DiscreteElement<OutIndex>(0))
+                = -in_tensor.get(elem, ddc::DiscreteElement<InIndex>(0));
+    }
+};
+
+template <class OutTensor, class InTensor, class OutIndex, class InIndex>
+struct TensorFormHodgeStarSecondComponentFunctor
+{
+    OutTensor out_tensor;
+    InTensor in_tensor;
+
+    KOKKOS_FUNCTION void operator()(typename InTensor::non_indices_domain_t::discrete_element_type elem) const
+    {
+        out_tensor.mem(elem, ddc::DiscreteElement<OutIndex>(0))
+                = in_tensor.get(elem, ddc::DiscreteElement<InIndex>(0));
+    }
+};
+
+template <
+        class FirstTag,
+        class SecondTag,
+        class SupportTag,
+        class... OutComponents,
+        class FirstComponent,
+        class SecondComponent,
+        class ExecSpace>
+void fill_tensor_form_hodge_star_2d(
+        ExecSpace const& exec_space,
+        TensorForm<hodge_dual_support_t<SupportTag>, OutComponents...> out_form,
+        TensorForm<SupportTag, FirstComponent, SecondComponent> in_form)
+{
+    using first_in_tensor_t = typename FirstComponent::tensor_type;
+    using second_in_tensor_t = typename SecondComponent::tensor_type;
+    using out_first_component_t = typename FormComponentByTag<FirstTag, OutComponents...>::type;
+    using out_second_component_t = typename FormComponentByTag<SecondTag, OutComponents...>::type;
+    using first_in_index_t = ddc::type_seq_element_t<
+            0,
+            ddc::to_type_seq_t<typename first_in_tensor_t::indices_domain_t>>;
+    using second_in_index_t = ddc::type_seq_element_t<
+            0,
+            ddc::to_type_seq_t<typename second_in_tensor_t::indices_domain_t>>;
+    using first_out_index_t = ddc::type_seq_element_t<
+            0,
+            ddc::to_type_seq_t<typename second_in_tensor_t::indices_domain_t>>;
+    using second_out_index_t = ddc::type_seq_element_t<
+            0,
+            ddc::to_type_seq_t<typename out_second_component_t::tensor_type::indices_domain_t>>;
+    static_assert(!std::is_void_v<out_first_component_t>);
+    static_assert(!std::is_void_v<out_second_component_t>);
+    static_assert(std::is_same_v<typename out_first_component_t::tensor_type, second_in_tensor_t>);
+    static_assert(std::is_same_v<typename out_second_component_t::tensor_type, first_in_tensor_t>);
+    static_assert(first_in_index_t::rank() == 0);
+    static_assert(second_in_index_t::rank() == 0);
+    static_assert(first_out_index_t::rank() == 0);
+    static_assert(second_out_index_t::rank() == 0);
+
+    auto const in_first = in_form.template component<FirstTag>();
+    auto const in_second = in_form.template component<SecondTag>();
+    auto const out_first = out_form.template component<FirstTag>();
+    auto const out_second = out_form.template component<SecondTag>();
+
+    ddc::parallel_for_each(
+            "similie_compute_tensor_form_hodge_star_first_component",
+            exec_space,
+            out_first.non_indices_domain(),
+            TensorFormHodgeStarFirstComponentFunctor<
+                    decltype(out_first),
+                    decltype(in_second),
+                    first_out_index_t,
+                    second_in_index_t> {out_first, in_second});
+    ddc::parallel_for_each(
+            "similie_compute_tensor_form_hodge_star_second_component",
+            exec_space,
+            out_second.non_indices_domain(),
+            TensorFormHodgeStarSecondComponentFunctor<
+                    decltype(out_second),
+                    decltype(in_first),
+                    second_out_index_t,
+                    first_in_index_t> {out_second, in_first});
+}
+
 } // namespace detail
 
 template <
@@ -231,56 +320,11 @@ auto hodge_star(
         ExecSpace const& exec_space,
         TensorForm<hodge_dual_support_t<SupportTag>, OutComponents...> out_form,
         TensorForm<SupportTag, FirstComponent, SecondComponent> in_form,
-        MetricType const&)
+        MetricType const&) -> TensorForm<hodge_dual_support_t<SupportTag>, OutComponents...>
 {
-    using first_in_tensor_t = typename FirstComponent::tensor_type;
-    using second_in_tensor_t = typename SecondComponent::tensor_type;
-    using out_first_component_t = typename detail::
-            FormComponentByTag<typename FirstComponent::tag, OutComponents...>::type;
-    using out_second_component_t = typename detail::
-            FormComponentByTag<typename SecondComponent::tag, OutComponents...>::type;
-    using first_in_index_t = ddc::type_seq_element_t<
-            0,
-            ddc::to_type_seq_t<typename first_in_tensor_t::indices_domain_t>>;
-    using second_in_index_t = ddc::type_seq_element_t<
-            0,
-            ddc::to_type_seq_t<typename second_in_tensor_t::indices_domain_t>>;
-    using first_out_index_t = ddc::type_seq_element_t<
-            0,
-            ddc::to_type_seq_t<typename second_in_tensor_t::indices_domain_t>>;
-    using second_out_index_t = ddc::type_seq_element_t<
-            0,
-            ddc::to_type_seq_t<typename out_second_component_t::tensor_type::indices_domain_t>>;
-    static_assert(!std::is_void_v<out_first_component_t>);
-    static_assert(!std::is_void_v<out_second_component_t>);
-    static_assert(std::is_same_v<typename out_first_component_t::tensor_type, second_in_tensor_t>);
-    static_assert(std::is_same_v<typename out_second_component_t::tensor_type, first_in_tensor_t>);
-    static_assert(first_in_index_t::rank() == 0);
-    static_assert(second_in_index_t::rank() == 0);
-    static_assert(first_out_index_t::rank() == 0);
-    static_assert(second_out_index_t::rank() == 0);
-
-    auto const in_first = in_form.template component<typename FirstComponent::tag>();
-    auto const in_second = in_form.template component<typename SecondComponent::tag>();
-    auto const out_first = out_form.template component<typename FirstComponent::tag>();
-    auto const out_second = out_form.template component<typename SecondComponent::tag>();
-
-    ddc::parallel_for_each(
-            "similie_compute_tensor_form_hodge_star_first_component",
-            exec_space,
-            out_first.non_indices_domain(),
-            KOKKOS_LAMBDA(typename second_in_tensor_t::non_indices_domain_t::discrete_element_type elem) {
-                out_first.mem(elem, ddc::DiscreteElement<first_out_index_t>(0))
-                        = -in_second.get(elem, ddc::DiscreteElement<second_in_index_t>(0));
-            });
-    ddc::parallel_for_each(
-            "similie_compute_tensor_form_hodge_star_second_component",
-            exec_space,
-            out_second.non_indices_domain(),
-            KOKKOS_LAMBDA(typename first_in_tensor_t::non_indices_domain_t::discrete_element_type elem) {
-                out_second.mem(elem, ddc::DiscreteElement<second_out_index_t>(0))
-                        = in_first.get(elem, ddc::DiscreteElement<first_in_index_t>(0));
-            });
+    detail::fill_tensor_form_hodge_star_2d<
+            typename FirstComponent::tag,
+            typename SecondComponent::tag>(exec_space, out_form, in_form);
     return out_form;
 }
 

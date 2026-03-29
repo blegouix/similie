@@ -41,6 +41,14 @@ struct DDimZ : ddc::UniformPointSampling<Z>
 {
 };
 
+struct DDimX2 : ddc::UniformPointSampling<X>
+{
+};
+
+struct DDimY2 : ddc::UniformPointSampling<Y>
+{
+};
+
 TEST(Chain, Optimization)
 {
     sil::exterior::Chain chain = sil::exterior::
@@ -541,14 +549,11 @@ TEST(Form, TensorFormDeriv)
             ddc::DiscreteDomain<DDimX, DDimY, DummyIndex>(mesh, scalar_accessor.domain()),
             ddc::HostAllocator<double>());
     sil::tensor::Tensor scalar(scalar_alloc);
-    ddc::parallel_for_each(
-            Kokkos::DefaultHostExecutionSpace(),
-            mesh,
-            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
-                double const x = ddc::coordinate(ddc::DiscreteElement<DDimX>(elem));
-                double const y = ddc::coordinate(ddc::DiscreteElement<DDimY>(elem));
-                scalar(elem, ddc::DiscreteElement<DummyIndex>(0)) = x * x + y;
-            });
+    ddc::host_for_each(mesh, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
+        double const x = ddc::coordinate(ddc::DiscreteElement<DDimX>(elem));
+        double const y = ddc::coordinate(ddc::DiscreteElement<DDimY>(elem));
+        scalar(elem, ddc::DiscreteElement<DummyIndex>(0)) = x * x + y;
+    });
 
     ddc::Chunk grad_x_alloc(
             ddc::DiscreteDomain<DDimXDual, DDimY, DummyIndex>(
@@ -578,12 +583,6 @@ TEST(Form, TensorFormDeriv)
 
 TEST(Form, TensorFormCodifferential)
 {
-    struct DDimX2 : ddc::UniformPointSampling<X>
-    {
-    };
-    struct DDimY2 : ddc::UniformPointSampling<Y>
-    {
-    };
     using MetricIndex = sil::tensor::TensorIdentityIndex<
             sil::tensor::Covariant<sil::tensor::MetricIndex1<X, Y>>,
             sil::tensor::Covariant<sil::tensor::MetricIndex2<X, Y>>>;
@@ -622,19 +621,13 @@ TEST(Form, TensorFormCodifferential)
             ddc::HostAllocator<double>());
     sil::tensor::Tensor grad_y(grad_y_alloc);
 
-    ddc::parallel_for_each(
-            Kokkos::DefaultHostExecutionSpace(),
-            grad_x.domain(),
-            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimXDual, DDimY2, DummyIndex> elem) {
-                double const x = ddc::coordinate(ddc::DiscreteElement<DDimXDual>(elem));
-                grad_x(elem) = 2. * x;
-            });
-    ddc::parallel_for_each(
-            Kokkos::DefaultHostExecutionSpace(),
-            grad_y.domain(),
-            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX2, DDimYDual, DummyIndex> elem) {
-                grad_y(elem) = 1.;
-            });
+    ddc::host_for_each(grad_x.domain(), [&](ddc::DiscreteElement<DDimXDual, DDimY2, DummyIndex> elem) {
+        double const x = ddc::coordinate(ddc::DiscreteElement<DDimXDual>(elem));
+        grad_x(elem) = 2. * x;
+    });
+    ddc::host_for_each(grad_y.domain(), [&](ddc::DiscreteElement<DDimX2, DDimYDual, DummyIndex> elem) {
+        grad_y(elem) = 1.;
+    });
 
     auto form = sil::exterior::make_tensor_form(
             sil::exterior::component<X>(grad_x),
@@ -652,10 +645,9 @@ TEST(Form, TensorFormCodifferential)
             ddc::DiscreteDomain<DDimX2, DDimY2, DummyIndex>(mesh, scalar_accessor.domain()),
             ddc::HostAllocator<double>());
     sil::tensor::Tensor div(div_alloc);
-    ddc::parallel_for_each(
-            Kokkos::DefaultHostExecutionSpace(),
-            div.domain(),
-            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX2, DDimY2, DummyIndex> elem) { div(elem) = 0.; });
+    ddc::host_for_each(div.domain(), [&](ddc::DiscreteElement<DDimX2, DDimY2, DummyIndex> elem) {
+        div(elem) = 0.;
+    });
 
     sil::exterior::codifferential<MetricIndex>(
             Kokkos::DefaultHostExecutionSpace(),

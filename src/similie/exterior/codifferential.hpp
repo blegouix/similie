@@ -162,6 +162,36 @@ template <class DDim>
 constexpr bool is_dual_discrete_dimension_v
         = !std::is_same_v<DDim, mesher::detail::primal_discrete_dimension_t<DDim>>;
 
+template <class DDim, class Domain, class Elem>
+KOKKOS_FUNCTION bool is_on_primal_boundary(Domain const& domain, Elem const& elem)
+{
+    if constexpr (is_dual_discrete_dimension_v<DDim>) {
+        return false;
+    } else {
+        ddc::DiscreteDomain<DDim> const dim_dom(domain);
+        ddc::DiscreteElement<DDim> const dim_elem(elem);
+        return dim_elem.uid() == dim_dom.front().uid() || dim_elem.uid() == dim_dom.back().uid();
+    }
+}
+
+template <
+        class MetricComponentIndex,
+        class TagToRemoveFromCochain,
+        misc::Specialization<tensor::Tensor> MetricType,
+        class Elem>
+KOKKOS_FUNCTION double codifferential_metric_factor(MetricType const& inv_metric, Elem const& elem)
+{
+    if constexpr (misc::Specialization<MetricComponentIndex, tensor::TensorIdentityIndex>) {
+        return 1.;
+    } else {
+        return inv_metric(
+                elem,
+                inv_metric.accessor().template access_element<
+                        TagToRemoveFromCochain,
+                        TagToRemoveFromCochain>());
+    }
+}
+
 template <
         class AxisTag,
         misc::Specialization<tensor::Tensor> OutTensorType,
@@ -232,21 +262,9 @@ OutTensorType exterior_derivative_of_tensor_form_2d(
             exec_space,
             out_tensor.non_indices_domain(),
             KOKKOS_LAMBDA(typename OutTensorType::non_indices_domain_t::discrete_element_type elem) {
-                if constexpr (!is_dual_discrete_dimension_v<first_out_d_dim_t>) {
-                    ddc::DiscreteDomain<first_out_d_dim_t> dim_dom(out_tensor.non_indices_domain());
-                    ddc::DiscreteElement<first_out_d_dim_t> dim_elem(elem);
-                    if (dim_elem.uid() == dim_dom.front().uid()
-                        || dim_elem.uid() == dim_dom.back().uid()) {
-                        return;
-                    }
-                }
-                if constexpr (!is_dual_discrete_dimension_v<second_out_d_dim_t>) {
-                    ddc::DiscreteDomain<second_out_d_dim_t> dim_dom(out_tensor.non_indices_domain());
-                    ddc::DiscreteElement<second_out_d_dim_t> dim_elem(elem);
-                    if (dim_elem.uid() == dim_dom.front().uid()
-                        || dim_elem.uid() == dim_dom.back().uid()) {
-                        return;
-                    }
+                if (is_on_primal_boundary<first_out_d_dim_t>(out_tensor.non_indices_domain(), elem)
+                    || is_on_primal_boundary<second_out_d_dim_t>(out_tensor.non_indices_domain(), elem)) {
+                    return;
                 }
                 out_tensor.mem(elem, ddc::DiscreteElement<out_index_t>(0))
                         += centered_form_derivative<typename FirstComponent::tag, OutTensorType>(
@@ -436,18 +454,9 @@ OutTensorType codifferential(
                 double const deriv = (tensor.get(right_face, ddc::DiscreteElement<flux_index_t>(0))
                                       - tensor.get(left_face, ddc::DiscreteElement<flux_index_t>(0)))
                                      / dx;
-                double const metric_factor = [&]() -> double {
-                    if constexpr (
-                            misc::Specialization<metric_component_index_t, tensor::TensorIdentityIndex>) {
-                        return 1.;
-                    } else {
-                        return inv_metric(
-                                out_elem,
-                                inv_metric.accessor().template access_element<
-                                        TagToRemoveFromCochain,
-                                        TagToRemoveFromCochain>());
-                    }
-                }();
+                double const metric_factor = detail::codifferential_metric_factor<
+                        metric_component_index_t,
+                        TagToRemoveFromCochain>(inv_metric, out_elem);
                 out_tensor.mem(out_elem, ddc::DiscreteElement<out_index_t>(0))
                         += metric_factor * deriv;
             });
