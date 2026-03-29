@@ -378,8 +378,8 @@ int main(int argc, char** argv)
     double const y_1 = -0.3;
     double const sigma = .5;
 
-    double const v = 0.9;
-    double const mass = 10;
+    double const v = 0.5;
+    double const mass = 100;
     double const k = mass * v / std::sqrt(1. - v * v);
 
     ddc::parallel_for_each(
