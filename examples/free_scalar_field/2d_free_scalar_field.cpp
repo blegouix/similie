@@ -462,15 +462,14 @@ int main(int argc, char** argv)
     ddc::Chunk temporal_moment_alloc(temporal_moment_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor temporal_moment(temporal_moment_alloc);
 
+    double const omega = std::sqrt(k * k + mass * mass);
     ddc::parallel_for_each(
             potential.domain(),
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
                 double const x = ddc::coordinate(ddc::DiscreteElement<DDimX>(elem));
                 double const y = ddc::coordinate(ddc::DiscreteElement<DDimY>(elem)) - y_0;
-                // -vg * dphi/dx of the left wave packet only, to launch it toward +x
-                temporal_moment(elem) = -k / std::sqrt(k * k + mass * mass)
-                                        * (-k * std::cos(k * (x - x_0))
-                                           + (x - x_0) / sigma / sigma * std::sin(k * (x - x_0)))
+                temporal_moment(elem) = (-omega * std::cos(k * (x - x_0))
+                                         + v * (x - x_0) / sigma / sigma * std::sin(k * (x - x_0)))
                                         * std::exp(
                                                 -((x - x_0) * (x - x_0) + (y - y_0) * (y - y_0))
                                                 / 2. / sigma / sigma);
