@@ -378,9 +378,9 @@ int main(int argc, char** argv)
     double const y_1 = -0.3;
     double const sigma = .5;
 
-    double const v = 10.;
-    double const k = 1.;
-    double const mass = 1.;
+    double const v = 0.9;
+    double const mass = 10;
+    double const k = mass * v / std::sqrt(1. - v * v);
 
     ddc::parallel_for_each(
             potential.domain(),
@@ -392,10 +392,9 @@ int main(int argc, char** argv)
                                           * std::exp(
                                                   -((x - x_0) * (x - x_0) + (y - y_0) * (y - y_0))
                                                   / 2. / sigma / sigma)
-                                  + 30. * std::sin(k * (x - x_1))
-                                            * std::exp(
-                                                    -((x - x_1) * (x - x_1) + (y - y_1) * (y - y_1))
-                                                    / 2. / sigma / sigma);
+                                  + std::exp(
+                                          -((x - x_1) * (x - x_1) + (y - y_1) * (y - y_1)) / 2.
+                                          / sigma / sigma);
             });
     auto potential_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), potential);
@@ -468,8 +467,8 @@ int main(int argc, char** argv)
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
                 double const x = ddc::coordinate(ddc::DiscreteElement<DDimX>(elem));
                 double const y = ddc::coordinate(ddc::DiscreteElement<DDimY>(elem)) - y_0;
-                // v*dphi/dx of the left wave packet only to get a pure kick along x toward the immobile right one
-                temporal_moment(elem) = -v
+                // -vg * dphi/dx of the left wave packet only, to launch it toward +x
+                temporal_moment(elem) = -k / std::sqrt(k * k + mass * mass)
                                         * (-k * std::cos(k * (x - x_0))
                                            + (x - x_0) / sigma / sigma * std::sin(k * (x - x_0)))
                                         * std::exp(
@@ -561,11 +560,11 @@ int main(int argc, char** argv)
                 KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
                     spatial_moments_div(elem) = 0.;
                 });
-        sil::exterior::codifferential<
-                MetricIndex>(Kokkos::DefaultExecutionSpace(),
-                             spatial_moments_div,
-                             spatial_moment,
-                             inv_metric);
+        sil::exterior::codifferential<MetricIndex>(
+                Kokkos::DefaultExecutionSpace(),
+                spatial_moments_div,
+                spatial_moment,
+                inv_metric);
 
         // Compute dpi_0/dx^0 by solving - dpi_0/dx^0 + dpi_\alpha/dx^\alpha = -dH/dphi and advect pi_0 by a time step dx^0. Also Then, perform the second phi half-advection by solving dphi/dx^0 = -dH/dpi_0
         double const dS = (ddc::get<X>(upper_bounds) - ddc::get<X>(lower_bounds))
@@ -620,7 +619,8 @@ int main(int argc, char** argv)
                     for (std::size_t iy = 0; iy < x_face_dom.template extent<DDimY>(); ++iy) {
                         ddc::DiscreteElement<DDimXDual, DDimY> const elem
                                 = x_face_front + ddc::DiscreteVector<DDimXDual, DDimY>(ix, iy);
-                        ddc::DiscreteElement<DDimX, DDimY> const left_node = x_dualizer.primal(elem);
+                        ddc::DiscreteElement<DDimX, DDimY> const left_node
+                                = x_dualizer.primal(elem);
                         double const value
                                 = spatial_moment_x_host(elem, ddc::DiscreteElement<DummyIndex>(0));
                         spatial_moments_host(left_node, ddc::DiscreteElement<AlphaLow>(0))
@@ -638,7 +638,8 @@ int main(int argc, char** argv)
                     for (std::size_t iy = 0; iy < y_face_dom.template extent<DDimYDual>(); ++iy) {
                         ddc::DiscreteElement<DDimX, DDimYDual> const elem
                                 = y_face_front + ddc::DiscreteVector<DDimX, DDimYDual>(ix, iy);
-                        ddc::DiscreteElement<DDimX, DDimY> const lower_node = y_dualizer.primal(elem);
+                        ddc::DiscreteElement<DDimX, DDimY> const lower_node
+                                = y_dualizer.primal(elem);
                         double const value
                                 = spatial_moment_y_host(elem, ddc::DiscreteElement<DummyIndex>(0));
                         spatial_moments_host(lower_node, ddc::DiscreteElement<AlphaLow>(1))
