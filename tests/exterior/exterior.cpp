@@ -576,6 +576,98 @@ TEST(Form, TensorFormDeriv)
     EXPECT_NEAR(grad_y(y_face_elem, ddc::DiscreteElement<DummyIndex>(0)), 1.0, 1e-12);
 }
 
+TEST(Form, TensorFormCodifferential)
+{
+    struct DDimX2 : ddc::UniformPointSampling<X>
+    {
+    };
+    struct DDimY2 : ddc::UniformPointSampling<Y>
+    {
+    };
+    using MetricIndex = sil::tensor::TensorIdentityIndex<
+            sil::tensor::Covariant<sil::tensor::MetricIndex1<X, Y>>,
+            sil::tensor::Covariant<sil::tensor::MetricIndex2<X, Y>>>;
+    using InverseMetricIndex = sil::tensor::upper_t<MetricIndex>;
+    using DummyIndex = sil::tensor::Covariant<sil::tensor::ScalarIndex>;
+    using XDualizer = sil::mesher::HalfShiftDualizer<X>;
+    using YDualizer = sil::mesher::HalfShiftDualizer<Y>;
+    using DDimXDual = sil::mesher::dual_discrete_dimension_t<XDualizer, DDimX2>;
+    using DDimYDual = sil::mesher::dual_discrete_dimension_t<YDualizer, DDimY2>;
+
+    auto const x_dom = ddc::init_discrete_space<DDimX2>(DDimX2::init<DDimX2>(
+            ddc::Coordinate<X>(0.),
+            ddc::Coordinate<X>(1.),
+            ddc::DiscreteVector<DDimX2>(6)));
+    auto const y_dom = ddc::init_discrete_space<DDimY2>(DDimY2::init<DDimY2>(
+            ddc::Coordinate<Y>(0.),
+            ddc::Coordinate<Y>(1.),
+            ddc::DiscreteVector<DDimY2>(6)));
+    ddc::DiscreteDomain<DDimX2, DDimY2> const mesh(x_dom, y_dom);
+    XDualizer const x_dualizer;
+    YDualizer const y_dualizer;
+    ddc::DiscreteDomain<DDimXDual, DDimY2> const x_face_dom = x_dualizer(mesh);
+    ddc::DiscreteDomain<DDimX2, DDimYDual> const y_face_dom = y_dualizer(mesh);
+
+    [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> scalar_accessor;
+    ddc::Chunk grad_x_alloc(
+            ddc::DiscreteDomain<DDimXDual, DDimY2, DummyIndex>(
+                    x_face_dom,
+                    scalar_accessor.domain()),
+            ddc::HostAllocator<double>());
+    sil::tensor::Tensor grad_x(grad_x_alloc);
+    ddc::Chunk grad_y_alloc(
+            ddc::DiscreteDomain<DDimX2, DDimYDual, DummyIndex>(
+                    y_face_dom,
+                    scalar_accessor.domain()),
+            ddc::HostAllocator<double>());
+    sil::tensor::Tensor grad_y(grad_y_alloc);
+
+    ddc::parallel_for_each(
+            Kokkos::DefaultHostExecutionSpace(),
+            grad_x.domain(),
+            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimXDual, DDimY2, DummyIndex> elem) {
+                double const x = ddc::coordinate(ddc::DiscreteElement<DDimXDual>(elem));
+                grad_x(elem) = 2. * x;
+            });
+    ddc::parallel_for_each(
+            Kokkos::DefaultHostExecutionSpace(),
+            grad_y.domain(),
+            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX2, DDimYDual, DummyIndex> elem) {
+                grad_y(elem) = 1.;
+            });
+
+    auto form = sil::exterior::make_tensor_form(
+            sil::exterior::component<X>(grad_x),
+            sil::exterior::component<Y>(grad_y));
+
+    [[maybe_unused]] sil::tensor::TensorAccessor<InverseMetricIndex> inv_metric_accessor;
+    ddc::Chunk inv_metric_alloc(
+            ddc::DiscreteDomain<DDimX2, DDimY2, InverseMetricIndex>(
+                    mesh,
+                    inv_metric_accessor.domain()),
+            ddc::HostAllocator<double>());
+    sil::tensor::Tensor inv_metric(inv_metric_alloc);
+
+    ddc::Chunk div_alloc(
+            ddc::DiscreteDomain<DDimX2, DDimY2, DummyIndex>(mesh, scalar_accessor.domain()),
+            ddc::HostAllocator<double>());
+    sil::tensor::Tensor div(div_alloc);
+    ddc::parallel_for_each(
+            Kokkos::DefaultHostExecutionSpace(),
+            div.domain(),
+            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX2, DDimY2, DummyIndex> elem) { div(elem) = 0.; });
+
+    sil::exterior::codifferential<MetricIndex>(
+            Kokkos::DefaultHostExecutionSpace(),
+            div,
+            form,
+            inv_metric);
+
+    ddc::DiscreteElement<DDimX2, DDimY2> const center
+            = mesh.front() + ddc::DiscreteVector<DDimX2, DDimY2>(2, 2);
+    EXPECT_NEAR(div(center, ddc::DiscreteElement<DummyIndex>(0)), 2.0, 1e-12);
+}
+
 TEST(Cochain, Test)
 {
     sil::exterior::Chain

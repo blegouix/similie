@@ -158,6 +158,107 @@ struct CodifferentialDummyIndexSeq<EndId, T>
     using type = typename CodifferentialDummyIndexSeq_<std::make_index_sequence<EndId>, T>::type;
 };
 
+template <class DDim>
+constexpr bool is_dual_discrete_dimension_v
+        = !std::is_same_v<DDim, mesher::detail::primal_discrete_dimension_t<DDim>>;
+
+template <
+        class AxisTag,
+        misc::Specialization<tensor::Tensor> OutTensorType,
+        misc::Specialization<tensor::Tensor> TensorType>
+KOKKOS_FUNCTION double centered_form_derivative(
+        typename OutTensorType::non_indices_domain_t::discrete_element_type out_elem,
+        TensorType tensor)
+{
+    using out_d_dim_t = mesher::detail::
+            discrete_dimension_for_t<AxisTag, typename OutTensorType::non_indices_domain_t>;
+    using comp_d_dim_t = mesher::detail::
+            discrete_dimension_for_t<AxisTag, typename TensorType::non_indices_domain_t>;
+    using comp_elem_t = typename TensorType::non_indices_domain_t::discrete_element_type;
+    using comp_index_t = ddc::type_seq_element_t<
+            0,
+            ddc::to_type_seq_t<typename TensorType::indices_domain_t>>;
+    static_assert(!std::is_void_v<out_d_dim_t>);
+    static_assert(!std::is_void_v<comp_d_dim_t>);
+    static_assert(comp_index_t::rank() == 0);
+
+    comp_elem_t const aligned_elem = mesher::detail::dualizer_remap_element<comp_elem_t>(out_elem);
+    if constexpr (is_dual_discrete_dimension_v<out_d_dim_t>) {
+        auto const left = aligned_elem;
+        auto const right = left + ddc::DiscreteVector<comp_d_dim_t>(1);
+        double const dx = static_cast<double>(
+                ddc::coordinate(ddc::DiscreteElement<comp_d_dim_t>(right))
+                - ddc::coordinate(ddc::DiscreteElement<comp_d_dim_t>(left)));
+        return (tensor.get(right, ddc::DiscreteElement<comp_index_t>(0))
+                - tensor.get(left, ddc::DiscreteElement<comp_index_t>(0)))
+               / dx;
+    } else {
+        auto const right = aligned_elem;
+        auto const left = right - ddc::DiscreteVector<comp_d_dim_t>(1);
+        double const dx = static_cast<double>(
+                ddc::coordinate(ddc::DiscreteElement<comp_d_dim_t>(right))
+                - ddc::coordinate(ddc::DiscreteElement<comp_d_dim_t>(left)));
+        return (tensor.get(right, ddc::DiscreteElement<comp_index_t>(0))
+                - tensor.get(left, ddc::DiscreteElement<comp_index_t>(0)))
+               / dx;
+    }
+}
+
+template <
+        misc::Specialization<tensor::Tensor> OutTensorType,
+        class SupportTag,
+        class FirstComponent,
+        class SecondComponent,
+        class ExecSpace>
+OutTensorType exterior_derivative_of_tensor_form_2d(
+        ExecSpace const& exec_space,
+        OutTensorType out_tensor,
+        TensorForm<SupportTag, FirstComponent, SecondComponent> tensor_form)
+{
+    using out_index_t = ddc::type_seq_element_t<
+            0,
+            ddc::to_type_seq_t<typename OutTensorType::indices_domain_t>>;
+    using first_out_d_dim_t = mesher::detail::
+            discrete_dimension_for_t<typename FirstComponent::tag, typename OutTensorType::non_indices_domain_t>;
+    using second_out_d_dim_t = mesher::detail::
+            discrete_dimension_for_t<typename SecondComponent::tag, typename OutTensorType::non_indices_domain_t>;
+    static_assert(out_index_t::rank() == 0);
+
+    auto const first_tensor = tensor_form.template component<typename FirstComponent::tag>();
+    auto const second_tensor = tensor_form.template component<typename SecondComponent::tag>();
+
+    ddc::parallel_for_each(
+            "similie_compute_tensor_form_exterior_derivative_2d",
+            exec_space,
+            out_tensor.non_indices_domain(),
+            KOKKOS_LAMBDA(typename OutTensorType::non_indices_domain_t::discrete_element_type elem) {
+                if constexpr (!is_dual_discrete_dimension_v<first_out_d_dim_t>) {
+                    ddc::DiscreteDomain<first_out_d_dim_t> dim_dom(out_tensor.non_indices_domain());
+                    ddc::DiscreteElement<first_out_d_dim_t> dim_elem(elem);
+                    if (dim_elem.uid() == dim_dom.front().uid()
+                        || dim_elem.uid() == dim_dom.back().uid()) {
+                        return;
+                    }
+                }
+                if constexpr (!is_dual_discrete_dimension_v<second_out_d_dim_t>) {
+                    ddc::DiscreteDomain<second_out_d_dim_t> dim_dom(out_tensor.non_indices_domain());
+                    ddc::DiscreteElement<second_out_d_dim_t> dim_elem(elem);
+                    if (dim_elem.uid() == dim_dom.front().uid()
+                        || dim_elem.uid() == dim_dom.back().uid()) {
+                        return;
+                    }
+                }
+                out_tensor.mem(elem, ddc::DiscreteElement<out_index_t>(0))
+                        += centered_form_derivative<typename FirstComponent::tag, OutTensorType>(
+                                   elem,
+                                   second_tensor)
+                           - centered_form_derivative<typename SecondComponent::tag, OutTensorType>(
+                                   elem,
+                                   first_tensor);
+            });
+    return out_tensor;
+}
+
 } // namespace detail
 
 template <
@@ -357,28 +458,32 @@ template <
         tensor::TensorIndex MetricIndex,
         misc::Specialization<tensor::Tensor> OutTensorType,
         class SupportTag,
-        class... Components,
+        class FirstComponent,
+        class SecondComponent,
         misc::Specialization<tensor::Tensor> MetricType,
         class ExecSpace>
 OutTensorType codifferential(
         ExecSpace const& exec_space,
         OutTensorType out_tensor,
-        TensorForm<SupportTag, Components...> tensor_form,
+        TensorForm<SupportTag, FirstComponent, SecondComponent> tensor_form,
         MetricType inv_metric)
 {
-    (...,
-     sil::exterior::codifferential<
-             MetricIndex,
-             typename Components::tag,
-             ddc::type_seq_element_t<
-                     0,
-                     ddc::to_type_seq_t<typename Components::tensor_type::indices_domain_t>>>(
-             exec_space,
-             out_tensor,
-             tensor_form.template component<typename Components::tag>(),
-             inv_metric,
-             mesher::HalfShiftDualizer<typename Components::tag> {}));
-    return out_tensor;
+    ddc::Chunk dual_first_alloc(
+            typename SecondComponent::tensor_type::discrete_domain_type(
+                    tensor_form.template component<typename SecondComponent::tag>().domain()),
+            ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
+    sil::tensor::Tensor dual_first(dual_first_alloc);
+    ddc::Chunk dual_second_alloc(
+            typename FirstComponent::tensor_type::discrete_domain_type(
+                    tensor_form.template component<typename FirstComponent::tag>().domain()),
+            ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
+    sil::tensor::Tensor dual_second(dual_second_alloc);
+    auto dual_form = make_tensor_form<hodge_dual_support_t<SupportTag>>(
+            component<typename FirstComponent::tag>(dual_first),
+            component<typename SecondComponent::tag>(dual_second));
+
+    sil::exterior::hodge_star(exec_space, dual_form, tensor_form, inv_metric);
+    return detail::exterior_derivative_of_tensor_form_2d(exec_space, out_tensor, dual_form);
 }
 
 } // namespace exterior
