@@ -18,6 +18,32 @@ namespace sil {
 
 namespace exterior {
 
+struct PrimalSupport
+{
+};
+
+struct DualSupport
+{
+};
+
+template <class SupportTag>
+struct HodgeDualSupport;
+
+template <>
+struct HodgeDualSupport<PrimalSupport>
+{
+    using type = DualSupport;
+};
+
+template <>
+struct HodgeDualSupport<DualSupport>
+{
+    using type = PrimalSupport;
+};
+
+template <class SupportTag>
+using hodge_dual_support_t = typename HodgeDualSupport<SupportTag>::type;
+
 namespace detail {
 
 template <class T, class ElementType, class LayoutStridedPolicy>
@@ -97,7 +123,7 @@ constexpr bool has_unique_component_tags_v<HeadComponent, TailComponents...>
 
 } // namespace detail
 
-template <class... Components>
+template <class SupportTag, class... Components>
 class TensorForm
 {
     static_assert(sizeof...(Components) > 0);
@@ -106,6 +132,7 @@ class TensorForm
     std::tuple<Components...> m_components;
 
 public:
+    using support_tag = SupportTag;
     using components_tuple_type = std::tuple<Components...>;
 
     constexpr explicit TensorForm(Components... components) noexcept
@@ -122,10 +149,10 @@ public:
     }
 };
 
-template <class... Components>
-constexpr TensorForm<Components...> make_tensor_form(Components... components) noexcept
+template <class SupportTag = PrimalSupport, class... Components>
+constexpr TensorForm<SupportTag, Components...> make_tensor_form(Components... components) noexcept
 {
-    return TensorForm<Components...>(components...);
+    return TensorForm<SupportTag, Components...>(components...);
 }
 
 } // namespace exterior

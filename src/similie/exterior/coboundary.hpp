@@ -382,12 +382,13 @@ OutTensorType deriv(
 }
 
 template <
+        class SupportTag,
         class... Components,
         misc::Specialization<tensor::Tensor> TensorType,
         class ExecSpace>
-TensorForm<Components...> deriv(
+TensorForm<SupportTag, Components...> deriv(
         ExecSpace const& exec_space,
-        TensorForm<Components...> out_form,
+        TensorForm<SupportTag, Components...> out_form,
         TensorType tensor)
 {
     using in_index_t = ddc::type_seq_element_t<

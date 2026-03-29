@@ -7,6 +7,7 @@
 
 #include <gtest/gtest.h>
 #include <similie/exterior/hodge_star.hpp>
+#include <similie/mesher/dualizer.hpp>
 #include <similie/tensor/levi_civita_tensor.hpp>
 #include <similie/tensor/metric.hpp>
 #include <similie/tensor/symmetric_tensor.hpp>
@@ -62,6 +63,8 @@ using HodgeStarDomain = sil::exterior::
         hodge_star_domain_t<ddc::detail::TypeSeq<MuUp, NuUp>, ddc::detail::TypeSeq<RhoLow>>;
 using HodgeStarDomain2 = sil::exterior::
         hodge_star_domain_t<ddc::detail::TypeSeq<RhoUp>, ddc::detail::TypeSeq<MuLow, NuLow>>;
+
+using DummyIndex = sil::tensor::Covariant<sil::tensor::ScalarIndex>;
 
 TEST(HodgeStar, Test)
 {
@@ -136,4 +139,96 @@ TEST(HodgeStar, Test)
         EXPECT_DOUBLE_EQ(form(elem, form.accessor().access_element<X, Z>()), 2.);
         EXPECT_DOUBLE_EQ(form(elem, form.accessor().access_element<Y, Z>()), 3.);
     });
+}
+
+TEST(HodgeStar, TensorForm1In2D)
+{
+    using XDualizer = sil::mesher::HalfShiftDualizer<X>;
+    using YDualizer = sil::mesher::HalfShiftDualizer<Y>;
+    using DDimXDual = sil::mesher::dual_discrete_dimension_t<XDualizer, DDimX>;
+    using DDimYDual = sil::mesher::dual_discrete_dimension_t<YDualizer, DDimY>;
+
+    auto const x_dom = ddc::init_discrete_space<DDimX>(DDimX::init<DDimX>(
+            ddc::Coordinate<X>(0.),
+            ddc::Coordinate<X>(1.),
+            ddc::DiscreteVector<DDimX>(4)));
+    auto const y_dom = ddc::init_discrete_space<DDimY>(DDimY::init<DDimY>(
+            ddc::Coordinate<Y>(0.),
+            ddc::Coordinate<Y>(1.),
+            ddc::DiscreteVector<DDimY>(4)));
+    ddc::DiscreteDomain<DDimX, DDimY> const mesh(x_dom, y_dom);
+    XDualizer const x_dualizer;
+    YDualizer const y_dualizer;
+    ddc::DiscreteDomain<DDimXDual, DDimY> const x_face_dom = x_dualizer(mesh);
+    ddc::DiscreteDomain<DDimX, DDimYDual> const y_face_dom = y_dualizer(mesh);
+
+    [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> scalar_accessor;
+
+    ddc::Chunk primal_x_alloc(
+            ddc::DiscreteDomain<DDimXDual, DDimY, DummyIndex>(x_face_dom, scalar_accessor.domain()),
+            ddc::HostAllocator<double>());
+    sil::tensor::Tensor primal_x(primal_x_alloc);
+    ddc::Chunk primal_y_alloc(
+            ddc::DiscreteDomain<DDimX, DDimYDual, DummyIndex>(y_face_dom, scalar_accessor.domain()),
+            ddc::HostAllocator<double>());
+    sil::tensor::Tensor primal_y(primal_y_alloc);
+
+    ddc::parallel_for_each(
+            Kokkos::DefaultHostExecutionSpace(),
+            primal_x.domain(),
+            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimXDual, DDimY, DummyIndex> elem) {
+                primal_x(elem) = 2.;
+            });
+    ddc::parallel_for_each(
+            Kokkos::DefaultHostExecutionSpace(),
+            primal_y.domain(),
+            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimYDual, DummyIndex> elem) {
+                primal_y(elem) = 3.;
+            });
+
+    auto primal_form = sil::exterior::make_tensor_form(
+            sil::exterior::component<X>(primal_x),
+            sil::exterior::component<Y>(primal_y));
+
+    ddc::Chunk dual_x_alloc(
+            ddc::DiscreteDomain<DDimX, DDimYDual, DummyIndex>(y_face_dom, scalar_accessor.domain()),
+            ddc::HostAllocator<double>());
+    sil::tensor::Tensor dual_x(dual_x_alloc);
+    ddc::Chunk dual_y_alloc(
+            ddc::DiscreteDomain<DDimXDual, DDimY, DummyIndex>(x_face_dom, scalar_accessor.domain()),
+            ddc::HostAllocator<double>());
+    sil::tensor::Tensor dual_y(dual_y_alloc);
+    auto dual_form = sil::exterior::make_tensor_form<sil::exterior::DualSupport>(
+            sil::exterior::component<X>(dual_x),
+            sil::exterior::component<Y>(dual_y));
+
+    sil::exterior::hodge_star(Kokkos::DefaultHostExecutionSpace(), dual_form, primal_form, 0);
+
+    EXPECT_DOUBLE_EQ(
+            dual_x(y_face_dom.front(), ddc::DiscreteElement<DummyIndex>(0)),
+            -3.);
+    EXPECT_DOUBLE_EQ(
+            dual_y(x_face_dom.front(), ddc::DiscreteElement<DummyIndex>(0)),
+            2.);
+
+    ddc::Chunk primal_back_x_alloc(
+            ddc::DiscreteDomain<DDimXDual, DDimY, DummyIndex>(x_face_dom, scalar_accessor.domain()),
+            ddc::HostAllocator<double>());
+    sil::tensor::Tensor primal_back_x(primal_back_x_alloc);
+    ddc::Chunk primal_back_y_alloc(
+            ddc::DiscreteDomain<DDimX, DDimYDual, DummyIndex>(y_face_dom, scalar_accessor.domain()),
+            ddc::HostAllocator<double>());
+    sil::tensor::Tensor primal_back_y(primal_back_y_alloc);
+    auto primal_back = sil::exterior::make_tensor_form(
+            sil::exterior::component<X>(primal_back_x),
+            sil::exterior::component<Y>(primal_back_y));
+
+    sil::exterior::hodge_star(Kokkos::DefaultHostExecutionSpace(), primal_back, dual_form, 0);
+
+    EXPECT_DOUBLE_EQ(
+            primal_back_x(x_face_dom.front(), ddc::DiscreteElement<DummyIndex>(0)),
+            -2.);
+    EXPECT_DOUBLE_EQ(
+            primal_back_y(y_face_dom.front(), ddc::DiscreteElement<DummyIndex>(0)),
+            -3.);
 }

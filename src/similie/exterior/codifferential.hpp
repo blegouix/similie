@@ -356,13 +356,14 @@ OutTensorType codifferential(
 template <
         tensor::TensorIndex MetricIndex,
         misc::Specialization<tensor::Tensor> OutTensorType,
+        class SupportTag,
         class... Components,
         misc::Specialization<tensor::Tensor> MetricType,
         class ExecSpace>
 OutTensorType codifferential(
         ExecSpace const& exec_space,
         OutTensorType out_tensor,
-        TensorForm<Components...> tensor_form,
+        TensorForm<SupportTag, Components...> tensor_form,
         MetricType inv_metric)
 {
     (...,
