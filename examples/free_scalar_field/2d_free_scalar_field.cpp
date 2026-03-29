@@ -380,6 +380,7 @@ int main(int argc, char** argv)
 
     double const v = 0.5;
     double const mass = 100;
+    double const quartic_coupling_constant = 0;
     double const k = mass * v / std::sqrt(1. - v * v);
 
     ddc::parallel_for_each(
@@ -527,8 +528,9 @@ int main(int argc, char** argv)
                 KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
                     half_step_potential(elem)
                             = potential(elem)
-                              - FreeScalarFieldHamiltonian(mass).dH_dpi0(temporal_moment(elem)) * dt
-                                        / 2.;
+                              - FreeScalarFieldHamiltonian(mass, quartic_coupling_constant)
+                                                .dH_dpi0(temporal_moment(elem))
+                                        * dt / 2.;
                 });
 
         // Compute the staggered potential gradients
@@ -540,16 +542,20 @@ int main(int argc, char** argv)
                 x_face_dom,
                 KOKKOS_LAMBDA(ddc::DiscreteElement<DDimXDual, DDimY> elem) {
                     spatial_moment_x(elem, ddc::DiscreteElement<DummyIndex>(0))
-                            = FreeScalarFieldHamiltonian(mass).pi1(
-                                    potential_grad_x(elem, ddc::DiscreteElement<DummyIndex>(0)));
+                            = FreeScalarFieldHamiltonian(mass, quartic_coupling_constant)
+                                      .pi1(potential_grad_x(
+                                              elem,
+                                              ddc::DiscreteElement<DummyIndex>(0)));
                 });
         ddc::parallel_for_each(
                 Kokkos::DefaultExecutionSpace(),
                 y_face_dom,
                 KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimYDual> elem) {
                     spatial_moment_y(elem, ddc::DiscreteElement<DummyIndex>(0))
-                            = FreeScalarFieldHamiltonian(mass).pi2(
-                                    potential_grad_y(elem, ddc::DiscreteElement<DummyIndex>(0)));
+                            = FreeScalarFieldHamiltonian(mass, quartic_coupling_constant)
+                                      .pi2(potential_grad_y(
+                                              elem,
+                                              ddc::DiscreteElement<DummyIndex>(0)));
                 });
 
         // Compute the divergence dpi_\alpha/dx^\alpha of the spatial moments, which is the codifferential \delta pi of the spatial moments
@@ -581,16 +587,18 @@ int main(int argc, char** argv)
                     const double half_step_temporal_moment_
                             = temporal_moment_
                               + (spatial_moments_div_
-                                 - FreeScalarFieldHamiltonian(mass).dH_dphi(half_step_potential_))
+                                 - FreeScalarFieldHamiltonian(mass, quartic_coupling_constant)
+                                           .dH_dphi(half_step_potential_))
                                         * dt / 2;
 
                     // Whole-step advection of field state
-                    potential(elem)
-                            -= FreeScalarFieldHamiltonian(mass).dH_dpi0(half_step_temporal_moment_)
-                               * dt;
+                    potential(elem) -= FreeScalarFieldHamiltonian(mass, quartic_coupling_constant)
+                                               .dH_dpi0(half_step_temporal_moment_)
+                                       * dt;
                     temporal_moment(elem)
                             += (spatial_moments_div_
-                                - FreeScalarFieldHamiltonian(mass).dH_dphi(half_step_potential_))
+                                - FreeScalarFieldHamiltonian(mass, quartic_coupling_constant)
+                                          .dH_dphi(half_step_potential_))
                                * dt;
                 });
 
@@ -661,7 +669,7 @@ int main(int argc, char** argv)
                                    spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(0)),
                                    spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(1))};
                         hamiltonian(elem)
-                                = FreeScalarFieldHamiltonian(mass)
+                                = FreeScalarFieldHamiltonian(mass, quartic_coupling_constant)
                                           .H(potential(elem, ddc::DiscreteElement<DummyIndex>()),
                                              pi);
                     });
