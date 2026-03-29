@@ -232,3 +232,94 @@ TEST(HodgeStar, TensorForm1In2D)
             primal_back_y(y_face_dom.front(), ddc::DiscreteElement<DummyIndex>(0)),
             -3.);
 }
+
+TEST(HodgeStar, ScalarTensor0And2In2D)
+{
+    struct X2
+    {
+    };
+    struct Y2
+    {
+    };
+    struct DDimX2 : ddc::UniformPointSampling<X2>
+    {
+    };
+    struct DDimY2 : ddc::UniformPointSampling<Y2>
+    {
+    };
+    using ScalarIndex = sil::tensor::Covariant<sil::tensor::ScalarIndex>;
+    using Metric2DIndex = sil::tensor::TensorDiagonalIndex<
+            sil::tensor::Contravariant<sil::tensor::MetricIndex1<X2, Y2>>,
+            sil::tensor::Contravariant<sil::tensor::MetricIndex2<X2, Y2>>>;
+    using XDualizer = sil::mesher::HalfShiftDualizer<X2>;
+    using YDualizer = sil::mesher::HalfShiftDualizer<Y2>;
+    using DDimXDual = sil::mesher::dual_discrete_dimension_t<XDualizer, DDimX2>;
+    using DDimYDual = sil::mesher::dual_discrete_dimension_t<YDualizer, DDimY2>;
+
+    auto const x_dom = ddc::init_discrete_space<DDimX2>(DDimX2::init<DDimX2>(
+            ddc::Coordinate<X2>(0.),
+            ddc::Coordinate<X2>(1.),
+            ddc::DiscreteVector<DDimX2>(4)));
+    auto const y_dom = ddc::init_discrete_space<DDimY2>(DDimY2::init<DDimY2>(
+            ddc::Coordinate<Y2>(0.),
+            ddc::Coordinate<Y2>(1.),
+            ddc::DiscreteVector<DDimY2>(4)));
+    ddc::DiscreteDomain<DDimX2, DDimY2> const mesh(x_dom, y_dom);
+    XDualizer const x_dualizer;
+    YDualizer const y_dualizer;
+    auto const dual_mesh = y_dualizer(x_dualizer(mesh));
+
+    [[maybe_unused]] sil::tensor::TensorAccessor<ScalarIndex> scalar_accessor;
+    ddc::Chunk scalar_alloc(
+            ddc::DiscreteDomain<DDimX2, DDimY2, ScalarIndex>(mesh, scalar_accessor.domain()),
+            ddc::HostAllocator<double>());
+    sil::tensor::Tensor scalar(scalar_alloc);
+    ddc::parallel_for_each(
+            Kokkos::DefaultHostExecutionSpace(),
+            scalar.domain(),
+            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX2, DDimY2, ScalarIndex> elem) { scalar(elem) = 2.; });
+
+    [[maybe_unused]] sil::tensor::TensorAccessor<Metric2DIndex> metric_accessor;
+    ddc::Chunk metric_alloc(
+            ddc::DiscreteDomain<DDimX2, DDimY2, Metric2DIndex>(mesh, metric_accessor.domain()),
+            ddc::HostAllocator<double>());
+    sil::tensor::Tensor metric(metric_alloc);
+    ddc::parallel_for_each(
+            Kokkos::DefaultHostExecutionSpace(),
+            mesh,
+            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX2, DDimY2> elem) {
+                metric(elem, metric.accessor().access_element<X2, X2>()) = 4.;
+                metric(elem, metric.accessor().access_element<Y2, Y2>()) = 9.;
+            });
+
+    ddc::Chunk dual_scalar_alloc(
+            ddc::DiscreteDomain<DDimXDual, DDimYDual, ScalarIndex>(dual_mesh, scalar_accessor.domain()),
+            ddc::HostAllocator<double>());
+    sil::tensor::Tensor dual_scalar(dual_scalar_alloc);
+
+    sil::exterior::hodge_star<Metric2DIndex>(
+            Kokkos::DefaultHostExecutionSpace(),
+            dual_scalar,
+            scalar,
+            metric);
+
+    EXPECT_DOUBLE_EQ(dual_scalar(dual_scalar.domain().front()), 1. / 3.);
+
+    ddc::DiscreteDomain<DDimX2, DDimY2> const primal_submesh(
+            mesh.front(),
+            ddc::DiscreteVector<DDimX2, DDimY2>(
+                    dual_mesh.template extent<DDimXDual>().value(),
+                    dual_mesh.template extent<DDimYDual>().value()));
+    ddc::Chunk scalar_back_alloc(
+            ddc::DiscreteDomain<DDimX2, DDimY2, ScalarIndex>(primal_submesh, scalar_accessor.domain()),
+            ddc::HostAllocator<double>());
+    sil::tensor::Tensor scalar_back(scalar_back_alloc);
+    ddc::parallel_fill(scalar_back, 0.);
+    sil::exterior::hodge_star<Metric2DIndex>(
+            Kokkos::DefaultHostExecutionSpace(),
+            scalar_back,
+            dual_scalar,
+            metric);
+
+    EXPECT_DOUBLE_EQ(scalar_back(scalar_back.domain().front()), 2.);
+}
