@@ -273,6 +273,11 @@ using BetaLow = sil::tensor::Covariant<Beta>;
 
 using DummyIndex = sil::tensor::Covariant<sil::tensor::ScalarIndex>;
 
+using XDualizer = sil::mesher::HalfShiftDualizer<X>;
+using YDualizer = sil::mesher::HalfShiftDualizer<Y>;
+using DDimXDual = sil::mesher::dual_discrete_dimension_t<XDualizer, DDimX>;
+using DDimYDual = sil::mesher::dual_discrete_dimension_t<YDualizer, DDimY>;
+
 int main(int argc, char** argv)
 {
     // Initialize PDI, Kokkos and DDC
@@ -306,6 +311,10 @@ int main(int argc, char** argv)
             ddc::select<Y>(upper_bounds),
             ddc::select<DDimY>(nb_cells)));
     ddc::DiscreteDomain<DDimX, DDimY> mesh_xy(x_dom, y_dom);
+    XDualizer const x_dualizer;
+    YDualizer const y_dualizer;
+    ddc::DiscreteDomain<DDimXDual, DDimY> x_face_dom = x_dualizer(mesh_xy);
+    ddc::DiscreteDomain<DDimX, DDimYDual> y_face_dom = y_dualizer(mesh_xy);
 
     assert(static_cast<std::size_t>(mesh_xy.template extent<DDimX>())
            == static_cast<std::size_t>(mesh_xy.template extent<DDimY>()));
@@ -369,9 +378,11 @@ int main(int argc, char** argv)
     double const y_1 = -0.3;
     double const sigma = .5;
 
-    double const v = 10.;
-    double const k = 1.;
-    double const mass = 1.;
+    double const v = 0.5;
+    double const mass = 100;
+    double const linear_coupling_constant = 0;
+    double const quartic_coupling_constant = 0;
+    double const k = mass * v / std::sqrt(1. - v * v);
 
     ddc::parallel_for_each(
             potential.domain(),
@@ -383,10 +394,9 @@ int main(int argc, char** argv)
                                           * std::exp(
                                                   -((x - x_0) * (x - x_0) + (y - y_0) * (y - y_0))
                                                   / 2. / sigma / sigma)
-                                  + 30. * std::sin(k * (x - x_1))
-                                            * std::exp(
-                                                    -((x - x_1) * (x - x_1) + (y - y_1) * (y - y_1))
-                                                    / 2. / sigma / sigma);
+                                  + std::exp(
+                                          -((x - x_1) * (x - x_1) + (y - y_1) * (y - y_1)) / 2.
+                                          / sigma / sigma);
             });
     auto potential_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), potential);
@@ -395,17 +405,46 @@ int main(int argc, char** argv)
     ddc::Chunk half_step_potential_alloc(potential_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor half_step_potential(half_step_potential_alloc);
 
-    // Potential gradient
-    [[maybe_unused]] sil::tensor::TensorAccessor<AlphaLow> potential_grad_accessor;
+    // Staggered potential gradients
+    [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> scalar_accessor;
+    ddc::DiscreteDomain<DDimXDual, DDimY, DummyIndex>
+            potential_grad_x_dom(x_face_dom, scalar_accessor.domain());
+    ddc::Chunk potential_grad_x_alloc(potential_grad_x_dom, ddc::DeviceAllocator<double>());
+    sil::tensor::Tensor potential_grad_x(potential_grad_x_alloc);
+
+    ddc::DiscreteDomain<DDimX, DDimYDual, DummyIndex>
+            potential_grad_y_dom(y_face_dom, scalar_accessor.domain());
+    ddc::Chunk potential_grad_y_alloc(potential_grad_y_dom, ddc::DeviceAllocator<double>());
+    sil::tensor::Tensor potential_grad_y(potential_grad_y_alloc);
+    auto potential_grad = sil::exterior::make_tensor_form(
+            sil::exterior::component<X>(potential_grad_x),
+            sil::exterior::component<Y>(potential_grad_y));
+
+    // Staggered spatial moments
+    ddc::DiscreteDomain<DDimXDual, DDimY, DummyIndex>
+            spatial_moment_x_dom(x_face_dom, scalar_accessor.domain());
+    ddc::Chunk spatial_moment_x_alloc(spatial_moment_x_dom, ddc::DeviceAllocator<double>());
+    sil::tensor::Tensor spatial_moment_x(spatial_moment_x_alloc);
+
+    ddc::DiscreteDomain<DDimX, DDimYDual, DummyIndex>
+            spatial_moment_y_dom(y_face_dom, scalar_accessor.domain());
+    ddc::Chunk spatial_moment_y_alloc(spatial_moment_y_dom, ddc::DeviceAllocator<double>());
+    sil::tensor::Tensor spatial_moment_y(spatial_moment_y_alloc);
+    auto spatial_moment = sil::exterior::make_tensor_form(
+            sil::exterior::component<X>(spatial_moment_x),
+            sil::exterior::component<Y>(spatial_moment_y));
+
+    auto spatial_moment_x_host = ddc::
+            create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), spatial_moment_x);
+    auto spatial_moment_y_host = ddc::
+            create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), spatial_moment_y);
+
+    // Reconstructed spatial moments on nodes, only for export and diagnostics
+    [[maybe_unused]] sil::tensor::TensorAccessor<AlphaLow> spatial_moments_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, AlphaLow>
-            potential_grad_dom(mesh_xy, potential_grad_accessor.domain());
-    ddc::Chunk potential_grad_alloc(potential_grad_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor potential_grad(potential_grad_alloc);
-
-    // Spatial moments
-    auto& spatial_moments
-            = potential_grad; // We can perform the computations inplace so spatial_moments is just an alias of potential_grad
-
+            spatial_moments_dom(mesh_xy, spatial_moments_accessor.domain());
+    ddc::Chunk spatial_moments_alloc(spatial_moments_dom, ddc::DeviceAllocator<double>());
+    sil::tensor::Tensor spatial_moments(spatial_moments_alloc);
     auto spatial_moments_host = ddc::
             create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), spatial_moments);
 
@@ -425,15 +464,14 @@ int main(int argc, char** argv)
     ddc::Chunk temporal_moment_alloc(temporal_moment_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor temporal_moment(temporal_moment_alloc);
 
+    double const omega = std::sqrt(k * k + mass * mass);
     ddc::parallel_for_each(
             potential.domain(),
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
                 double const x = ddc::coordinate(ddc::DiscreteElement<DDimX>(elem));
                 double const y = ddc::coordinate(ddc::DiscreteElement<DDimY>(elem)) - y_0;
-                // v*dphi/dx of the left wave packet only to get a pure kick along x toward the immobile right one
-                temporal_moment(elem) = -v
-                                        * (-k * std::cos(k * (x - x_0))
-                                           + (x - x_0) / sigma / sigma * std::sin(k * (x - x_0)))
+                temporal_moment(elem) = (-omega * std::cos(k * (x - x_0))
+                                         + v * (x - x_0) / sigma / sigma * std::sin(k * (x - x_0)))
                                         * std::exp(
                                                 -((x - x_0) * (x - x_0) + (y - y_0) * (y - y_0))
                                                 / 2. / sigma / sigma);
@@ -491,36 +529,56 @@ int main(int argc, char** argv)
                 KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
                     half_step_potential(elem)
                             = potential(elem)
-                              - FreeScalarFieldHamiltonian(mass).dH_dpi0(temporal_moment(elem)) * dt
-                                        / 2.;
+                              - FreeScalarFieldHamiltonian(
+                                        mass,
+                                        quartic_coupling_constant,
+                                        linear_coupling_constant)
+                                                .dH_dpi0(temporal_moment(elem))
+                                        * dt / 2.;
                 });
 
-        // Compute the potential gradient
-        sil::exterior::deriv<
-                AlphaLow,
-                DummyIndex>(Kokkos::DefaultExecutionSpace(), potential_grad, half_step_potential);
+        // Compute the staggered potential gradients
+        sil::exterior::deriv(Kokkos::DefaultExecutionSpace(), potential_grad, half_step_potential);
 
         // Compute the spatial moments pi_\alpha by solving dphi/dx^\alpha = dH/dpi_\alpha
         ddc::parallel_for_each(
                 Kokkos::DefaultExecutionSpace(),
-                mesh_xy,
-                KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
-                    spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(0))
-                            = FreeScalarFieldHamiltonian(mass).pi1(
-                                    potential_grad(elem, ddc::DiscreteElement<AlphaLow>(0)));
-                    spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(1))
-                            = FreeScalarFieldHamiltonian(mass).pi2(
-                                    potential_grad(elem, ddc::DiscreteElement<AlphaLow>(1)));
+                x_face_dom,
+                KOKKOS_LAMBDA(ddc::DiscreteElement<DDimXDual, DDimY> elem) {
+                    spatial_moment_x(elem, ddc::DiscreteElement<DummyIndex>(0))
+                            = FreeScalarFieldHamiltonian(
+                                      mass,
+                                      quartic_coupling_constant,
+                                      linear_coupling_constant)
+                                      .pi1(potential_grad_x(
+                                              elem,
+                                              ddc::DiscreteElement<DummyIndex>(0)));
                 });
-        if (i % nb_iter_between_exports == 0) {
-            ddc::parallel_deepcopy(spatial_moments_host, spatial_moments);
-        }
+        ddc::parallel_for_each(
+                Kokkos::DefaultExecutionSpace(),
+                y_face_dom,
+                KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimYDual> elem) {
+                    spatial_moment_y(elem, ddc::DiscreteElement<DummyIndex>(0))
+                            = FreeScalarFieldHamiltonian(
+                                      mass,
+                                      quartic_coupling_constant,
+                                      linear_coupling_constant)
+                                      .pi2(potential_grad_y(
+                                              elem,
+                                              ddc::DiscreteElement<DummyIndex>(0)));
+                });
 
         // Compute the divergence dpi_\alpha/dx^\alpha of the spatial moments, which is the codifferential \delta pi of the spatial moments
-        sil::exterior::codifferential<MetricIndex, AlphaLow, AlphaLow>(
+        ddc::parallel_for_each(
+                Kokkos::DefaultExecutionSpace(),
+                spatial_moments_div.domain(),
+                KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
+                    spatial_moments_div(elem) = 0.;
+                });
+        sil::exterior::codifferential<MetricIndex>(
                 Kokkos::DefaultExecutionSpace(),
                 spatial_moments_div,
-                spatial_moments,
+                spatial_moment,
                 inv_metric);
 
         // Compute dpi_0/dx^0 by solving - dpi_0/dx^0 + dpi_\alpha/dx^\alpha = -dH/dphi and advect pi_0 by a time step dx^0. Also Then, perform the second phi half-advection by solving dphi/dx^0 = -dH/dpi_0
@@ -538,17 +596,29 @@ int main(int argc, char** argv)
                     // Advect temporal moment by half-step, this is what is needed to perform the whole-step potential advection
                     const double half_step_temporal_moment_
                             = temporal_moment_
-                              + (FreeScalarFieldHamiltonian(mass).dH_dphi(half_step_potential_)
-                                 + spatial_moments_div_)
+                              + (spatial_moments_div_
+                                 - FreeScalarFieldHamiltonian(
+                                           mass,
+                                           quartic_coupling_constant,
+                                           linear_coupling_constant)
+                                           .dH_dphi(half_step_potential_))
                                         * dt / 2;
 
                     // Whole-step advection of field state
                     potential(elem)
-                            += FreeScalarFieldHamiltonian(mass).dH_dpi0(half_step_temporal_moment_)
-                               * dt;
+                            -= FreeScalarFieldHamiltonian(
+                                       mass,
+                                       quartic_coupling_constant,
+                                       linear_coupling_constant)
+                                       .dH_dpi0(half_step_temporal_moment_)
+                                       * dt;
                     temporal_moment(elem)
-                            += (FreeScalarFieldHamiltonian(mass).dH_dphi(half_step_potential_)
-                                + spatial_moments_div_)
+                            += (spatial_moments_div_
+                                - FreeScalarFieldHamiltonian(
+                                          mass,
+                                          quartic_coupling_constant,
+                                          linear_coupling_constant)
+                                          .dH_dphi(half_step_potential_))
                                * dt;
                 });
 
@@ -556,6 +626,59 @@ int main(int argc, char** argv)
             ddc::parallel_deepcopy(temporal_moment_host, temporal_moment);
             ddc::parallel_deepcopy(potential_host, potential);
             ddc::parallel_deepcopy(h_spatial_moments_div, spatial_moments_div);
+            ddc::parallel_deepcopy(spatial_moment_x_host, spatial_moment_x);
+            ddc::parallel_deepcopy(spatial_moment_y_host, spatial_moment_y);
+
+            {
+                ddc::DiscreteElement<DDimX, DDimY> const mesh_front = mesh_xy.front();
+                for (std::size_t ix = 0; ix < mesh_xy.template extent<DDimX>(); ++ix) {
+                    for (std::size_t iy = 0; iy < mesh_xy.template extent<DDimY>(); ++iy) {
+                        ddc::DiscreteElement<DDimX, DDimY> const elem
+                                = mesh_front + ddc::DiscreteVector<DDimX, DDimY>(ix, iy);
+                        spatial_moments_host(elem, ddc::DiscreteElement<AlphaLow>(0)) = 0.;
+                        spatial_moments_host(elem, ddc::DiscreteElement<AlphaLow>(1)) = 0.;
+                    }
+                }
+            }
+            {
+                ddc::DiscreteElement<DDimXDual, DDimY> const x_face_front = x_face_dom.front();
+                for (std::size_t ix = 0; ix < x_face_dom.template extent<DDimXDual>(); ++ix) {
+                    for (std::size_t iy = 0; iy < x_face_dom.template extent<DDimY>(); ++iy) {
+                        ddc::DiscreteElement<DDimXDual, DDimY> const elem
+                                = x_face_front + ddc::DiscreteVector<DDimXDual, DDimY>(ix, iy);
+                        ddc::DiscreteElement<DDimX, DDimY> const left_node
+                                = x_dualizer.primal(elem);
+                        double const value
+                                = spatial_moment_x_host(elem, ddc::DiscreteElement<DummyIndex>(0));
+                        spatial_moments_host(left_node, ddc::DiscreteElement<AlphaLow>(0))
+                                += value / 2.;
+                        spatial_moments_host(
+                                left_node + ddc::DiscreteVector<DDimX, DDimY>(1, 0),
+                                ddc::DiscreteElement<AlphaLow>(0))
+                                += value / 2.;
+                    }
+                }
+            }
+            {
+                ddc::DiscreteElement<DDimX, DDimYDual> const y_face_front = y_face_dom.front();
+                for (std::size_t ix = 0; ix < y_face_dom.template extent<DDimX>(); ++ix) {
+                    for (std::size_t iy = 0; iy < y_face_dom.template extent<DDimYDual>(); ++iy) {
+                        ddc::DiscreteElement<DDimX, DDimYDual> const elem
+                                = y_face_front + ddc::DiscreteVector<DDimX, DDimYDual>(ix, iy);
+                        ddc::DiscreteElement<DDimX, DDimY> const lower_node
+                                = y_dualizer.primal(elem);
+                        double const value
+                                = spatial_moment_y_host(elem, ddc::DiscreteElement<DummyIndex>(0));
+                        spatial_moments_host(lower_node, ddc::DiscreteElement<AlphaLow>(1))
+                                += value / 2.;
+                        spatial_moments_host(
+                                lower_node + ddc::DiscreteVector<DDimX, DDimY>(0, 1),
+                                ddc::DiscreteElement<AlphaLow>(1))
+                                += value / 2.;
+                    }
+                }
+            }
+            ddc::parallel_deepcopy(spatial_moments, spatial_moments_host);
 
             ddc::parallel_for_each(
                     Kokkos::DefaultExecutionSpace(),
@@ -566,7 +689,10 @@ int main(int argc, char** argv)
                                    spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(0)),
                                    spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(1))};
                         hamiltonian(elem)
-                                = FreeScalarFieldHamiltonian(mass)
+                                = FreeScalarFieldHamiltonian(
+                                          mass,
+                                          quartic_coupling_constant,
+                                          linear_coupling_constant)
                                           .H(potential(elem, ddc::DiscreteElement<DummyIndex>()),
                                              pi);
                     });

@@ -10,6 +10,7 @@ namespace sil {
 
 #include "csr/csr.hpp"
 #include "exterior/exterior.hpp"
+#include "mesher/dualizer.hpp"
 #include "mesher/mesher.hpp"
 #include "tensor/tensor.hpp"
 #include "young_tableau/young_tableau.hpp"

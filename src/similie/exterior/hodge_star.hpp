@@ -7,6 +7,7 @@
 
 #include <similie/misc/factorial.hpp>
 #include <similie/misc/macros.hpp>
+#include <similie/mesher/dualizer.hpp>
 #include <similie/misc/specialization.hpp>
 #include <similie/misc/type_seq_conversion.hpp>
 #include <similie/tensor/antisymmetric_tensor.hpp>
@@ -17,9 +18,156 @@
 #include <similie/tensor/metric.hpp>
 #include <similie/tensor/prime.hpp>
 
+#include "form.hpp"
+
 namespace sil {
 
 namespace exterior {
+
+namespace detail {
+
+template <class Axis1, class Axis2, misc::Specialization<tensor::Tensor> MetricType, class Elem>
+KOKKOS_FUNCTION double inverse_metric_component(MetricType metric, Elem elem)
+{
+    using metric_component_index_t = ddc::type_seq_element_t<
+            0,
+            ddc::to_type_seq_t<typename MetricType::indices_domain_t>>;
+    if constexpr (misc::Specialization<metric_component_index_t, tensor::TensorIdentityIndex>) {
+        return std::is_same_v<Axis1, Axis2> ? 1. : 0.;
+    } else if constexpr (
+            misc::Specialization<metric_component_index_t, tensor::TensorDiagonalIndex>) {
+        if constexpr (std::is_same_v<Axis1, Axis2>) {
+            return metric(
+                    elem,
+                    metric.accessor().template access_element<Axis1, Axis2>());
+        } else {
+            return 0.;
+        }
+    } else {
+        return metric(
+                elem,
+                metric.accessor().template access_element<Axis1, Axis2>());
+    }
+}
+
+template <tensor::TensorIndex MetricIndex, misc::Specialization<tensor::Tensor> MetricType, class Elem>
+KOKKOS_FUNCTION double primal_volume_factor(MetricType metric, Elem elem)
+{
+    using metric_index_1_t = tensor::metric_index_1<tensor::upper_t<MetricIndex>>;
+    using axis1_t = ddc::type_seq_element_t<0, typename metric_index_1_t::type_seq_dimensions>;
+    using axis2_t = ddc::type_seq_element_t<1, typename metric_index_1_t::type_seq_dimensions>;
+    double const gxx = inverse_metric_component<axis1_t, axis1_t>(metric, elem);
+    double const gxy = inverse_metric_component<axis1_t, axis2_t>(metric, elem);
+    double const gyx = inverse_metric_component<axis2_t, axis1_t>(metric, elem);
+    double const gyy = inverse_metric_component<axis2_t, axis2_t>(metric, elem);
+    double const det_inv_metric = gxx * gyy - gxy * gyx;
+    return Kokkos::sqrt(Kokkos::abs(1. / det_inv_metric));
+}
+
+template <class Dom>
+struct IsFullyDualDomain;
+
+template <class... DDims>
+struct IsFullyDualDomain<ddc::DiscreteDomain<DDims...>>
+{
+    static constexpr bool value
+            = (true
+               && ... && !std::is_same_v<DDims, sil::mesher::detail::primal_discrete_dimension_t<DDims>>);
+};
+
+template <class Dom>
+constexpr bool is_fully_dual_domain_v = IsFullyDualDomain<Dom>::value;
+
+template <class OutTensor, class InTensor, class OutIndex, class InIndex>
+struct TensorFormHodgeStarFirstComponentFunctor
+{
+    OutTensor out_tensor;
+    InTensor in_tensor;
+
+    KOKKOS_FUNCTION void operator()(typename InTensor::non_indices_domain_t::discrete_element_type elem) const
+    {
+        out_tensor.mem(elem, ddc::DiscreteElement<OutIndex>(0))
+                = -in_tensor.get(elem, ddc::DiscreteElement<InIndex>(0));
+    }
+};
+
+template <class OutTensor, class InTensor, class OutIndex, class InIndex>
+struct TensorFormHodgeStarSecondComponentFunctor
+{
+    OutTensor out_tensor;
+    InTensor in_tensor;
+
+    KOKKOS_FUNCTION void operator()(typename InTensor::non_indices_domain_t::discrete_element_type elem) const
+    {
+        out_tensor.mem(elem, ddc::DiscreteElement<OutIndex>(0))
+                = in_tensor.get(elem, ddc::DiscreteElement<InIndex>(0));
+    }
+};
+
+template <
+        class FirstTag,
+        class SecondTag,
+        class SupportTag,
+        class... OutComponents,
+        class FirstComponent,
+        class SecondComponent,
+        class ExecSpace>
+void fill_tensor_form_hodge_star_2d(
+        ExecSpace const& exec_space,
+        TensorForm<hodge_dual_support_t<SupportTag>, OutComponents...> out_form,
+        TensorForm<SupportTag, FirstComponent, SecondComponent> in_form)
+{
+    using first_in_tensor_t = typename FirstComponent::tensor_type;
+    using second_in_tensor_t = typename SecondComponent::tensor_type;
+    using out_first_component_t = typename FormComponentByTag<FirstTag, OutComponents...>::type;
+    using out_second_component_t = typename FormComponentByTag<SecondTag, OutComponents...>::type;
+    using first_in_index_t = ddc::type_seq_element_t<
+            0,
+            ddc::to_type_seq_t<typename first_in_tensor_t::indices_domain_t>>;
+    using second_in_index_t = ddc::type_seq_element_t<
+            0,
+            ddc::to_type_seq_t<typename second_in_tensor_t::indices_domain_t>>;
+    using first_out_index_t = ddc::type_seq_element_t<
+            0,
+            ddc::to_type_seq_t<typename second_in_tensor_t::indices_domain_t>>;
+    using second_out_index_t = ddc::type_seq_element_t<
+            0,
+            ddc::to_type_seq_t<typename out_second_component_t::tensor_type::indices_domain_t>>;
+    static_assert(!std::is_void_v<out_first_component_t>);
+    static_assert(!std::is_void_v<out_second_component_t>);
+    static_assert(std::is_same_v<typename out_first_component_t::tensor_type, second_in_tensor_t>);
+    static_assert(std::is_same_v<typename out_second_component_t::tensor_type, first_in_tensor_t>);
+    static_assert(first_in_index_t::rank() == 0);
+    static_assert(second_in_index_t::rank() == 0);
+    static_assert(first_out_index_t::rank() == 0);
+    static_assert(second_out_index_t::rank() == 0);
+
+    auto const in_first = in_form.template component<FirstTag>();
+    auto const in_second = in_form.template component<SecondTag>();
+    auto const out_first = out_form.template component<FirstTag>();
+    auto const out_second = out_form.template component<SecondTag>();
+
+    ddc::parallel_for_each(
+            "similie_compute_tensor_form_hodge_star_first_component",
+            exec_space,
+            out_first.non_indices_domain(),
+            TensorFormHodgeStarFirstComponentFunctor<
+                    decltype(out_first),
+                    decltype(in_second),
+                    first_out_index_t,
+                    second_in_index_t> {out_first, in_second});
+    ddc::parallel_for_each(
+            "similie_compute_tensor_form_hodge_star_second_component",
+            exec_space,
+            out_second.non_indices_domain(),
+            TensorFormHodgeStarSecondComponentFunctor<
+                    decltype(out_second),
+                    decltype(in_first),
+                    second_out_index_t,
+                    first_in_index_t> {out_second, in_first});
+}
+
+} // namespace detail
 
 template <
         misc::Specialization<ddc::detail::TypeSeq> Indices1,
@@ -159,6 +307,74 @@ HodgeStarType fill_hodge_star(
 
     // Compute Hodge star
     return fill_hodge_star<Indices1, Indices2>(exec_space, hodge_star, metric_det, metric_prod);
+}
+
+template <
+        class SupportTag,
+        class... OutComponents,
+        class FirstComponent,
+        class SecondComponent,
+        class MetricType,
+        class ExecSpace>
+auto hodge_star(
+        ExecSpace const& exec_space,
+        TensorForm<hodge_dual_support_t<SupportTag>, OutComponents...> out_form,
+        TensorForm<SupportTag, FirstComponent, SecondComponent> in_form,
+        MetricType const&) -> TensorForm<hodge_dual_support_t<SupportTag>, OutComponents...>
+{
+    detail::fill_tensor_form_hodge_star_2d<
+            typename FirstComponent::tag,
+            typename SecondComponent::tag>(exec_space, out_form, in_form);
+    return out_form;
+}
+
+template <
+        tensor::TensorIndex MetricIndex,
+        misc::Specialization<tensor::Tensor> OutTensorType,
+        misc::Specialization<tensor::Tensor> InTensorType,
+        misc::Specialization<tensor::Tensor> MetricType,
+        class ExecSpace>
+    requires(
+            ddc::type_seq_element_t<0, ddc::to_type_seq_t<typename OutTensorType::indices_domain_t>>::rank()
+                    == 0
+            && ddc::type_seq_element_t<
+                               0,
+                               ddc::to_type_seq_t<typename InTensorType::indices_domain_t>>::rank()
+                       == 0
+            && OutTensorType::non_indices_domain_t::rank() == 2
+            && InTensorType::non_indices_domain_t::rank() == 2)
+OutTensorType hodge_star(
+        ExecSpace const& exec_space,
+        OutTensorType out_tensor,
+        InTensorType in_tensor,
+        MetricType metric)
+{
+    using out_index_t = ddc::type_seq_element_t<
+            0,
+            ddc::to_type_seq_t<typename OutTensorType::indices_domain_t>>;
+    using in_index_t = ddc::type_seq_element_t<
+            0,
+            ddc::to_type_seq_t<typename InTensorType::indices_domain_t>>;
+    using out_elem_t = typename OutTensorType::non_indices_domain_t::discrete_element_type;
+    using in_elem_t = typename InTensorType::non_indices_domain_t::discrete_element_type;
+    using metric_elem_t = typename MetricType::non_indices_domain_t::discrete_element_type;
+    constexpr bool in_is_fully_dual = detail::is_fully_dual_domain_v<typename InTensorType::non_indices_domain_t>;
+
+    ddc::parallel_for_each(
+            "similie_compute_scalar_tensor_hodge_star_2d",
+            exec_space,
+            out_tensor.non_indices_domain(),
+            KOKKOS_LAMBDA(out_elem_t out_elem) {
+                in_elem_t const in_elem
+                        = sil::mesher::detail::dualizer_remap_element<in_elem_t>(out_elem);
+                metric_elem_t const metric_elem
+                        = sil::mesher::detail::dualizer_remap_element<metric_elem_t>(out_elem);
+                double const volume_factor = detail::primal_volume_factor<MetricIndex>(metric, metric_elem);
+                double const scale = in_is_fully_dual ? 1. / volume_factor : volume_factor;
+                out_tensor.mem(out_elem, ddc::DiscreteElement<out_index_t>(0))
+                        = scale * in_tensor.get(in_elem, ddc::DiscreteElement<in_index_t>(0));
+            });
+    return out_tensor;
 }
 
 } // namespace exterior
