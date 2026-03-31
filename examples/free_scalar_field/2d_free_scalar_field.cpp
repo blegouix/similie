@@ -380,6 +380,7 @@ int main(int argc, char** argv)
 
     double const v = 0.5;
     double const mass = 100;
+    double const linear_coupling_constant = 0;
     double const quartic_coupling_constant = 0;
     double const k = mass * v / std::sqrt(1. - v * v);
 
@@ -528,7 +529,10 @@ int main(int argc, char** argv)
                 KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
                     half_step_potential(elem)
                             = potential(elem)
-                              - FreeScalarFieldHamiltonian(mass, quartic_coupling_constant)
+                              - FreeScalarFieldHamiltonian(
+                                        mass,
+                                        quartic_coupling_constant,
+                                        linear_coupling_constant)
                                                 .dH_dpi0(temporal_moment(elem))
                                         * dt / 2.;
                 });
@@ -542,7 +546,10 @@ int main(int argc, char** argv)
                 x_face_dom,
                 KOKKOS_LAMBDA(ddc::DiscreteElement<DDimXDual, DDimY> elem) {
                     spatial_moment_x(elem, ddc::DiscreteElement<DummyIndex>(0))
-                            = FreeScalarFieldHamiltonian(mass, quartic_coupling_constant)
+                            = FreeScalarFieldHamiltonian(
+                                      mass,
+                                      quartic_coupling_constant,
+                                      linear_coupling_constant)
                                       .pi1(potential_grad_x(
                                               elem,
                                               ddc::DiscreteElement<DummyIndex>(0)));
@@ -552,7 +559,10 @@ int main(int argc, char** argv)
                 y_face_dom,
                 KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimYDual> elem) {
                     spatial_moment_y(elem, ddc::DiscreteElement<DummyIndex>(0))
-                            = FreeScalarFieldHamiltonian(mass, quartic_coupling_constant)
+                            = FreeScalarFieldHamiltonian(
+                                      mass,
+                                      quartic_coupling_constant,
+                                      linear_coupling_constant)
                                       .pi2(potential_grad_y(
                                               elem,
                                               ddc::DiscreteElement<DummyIndex>(0)));
@@ -587,17 +597,27 @@ int main(int argc, char** argv)
                     const double half_step_temporal_moment_
                             = temporal_moment_
                               + (spatial_moments_div_
-                                 - FreeScalarFieldHamiltonian(mass, quartic_coupling_constant)
+                                 - FreeScalarFieldHamiltonian(
+                                           mass,
+                                           quartic_coupling_constant,
+                                           linear_coupling_constant)
                                            .dH_dphi(half_step_potential_))
                                         * dt / 2;
 
                     // Whole-step advection of field state
-                    potential(elem) -= FreeScalarFieldHamiltonian(mass, quartic_coupling_constant)
-                                               .dH_dpi0(half_step_temporal_moment_)
+                    potential(elem)
+                            -= FreeScalarFieldHamiltonian(
+                                       mass,
+                                       quartic_coupling_constant,
+                                       linear_coupling_constant)
+                                       .dH_dpi0(half_step_temporal_moment_)
                                        * dt;
                     temporal_moment(elem)
                             += (spatial_moments_div_
-                                - FreeScalarFieldHamiltonian(mass, quartic_coupling_constant)
+                                - FreeScalarFieldHamiltonian(
+                                          mass,
+                                          quartic_coupling_constant,
+                                          linear_coupling_constant)
                                           .dH_dphi(half_step_potential_))
                                * dt;
                 });
@@ -669,7 +689,10 @@ int main(int argc, char** argv)
                                    spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(0)),
                                    spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(1))};
                         hamiltonian(elem)
-                                = FreeScalarFieldHamiltonian(mass, quartic_coupling_constant)
+                                = FreeScalarFieldHamiltonian(
+                                          mass,
+                                          quartic_coupling_constant,
+                                          linear_coupling_constant)
                                           .H(potential(elem, ddc::DiscreteElement<DummyIndex>()),
                                              pi);
                     });
