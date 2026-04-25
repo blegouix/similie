@@ -26,6 +26,12 @@ namespace detail {
 template <class Indices, std::size_t I>
 struct Primes;
 
+template <std::size_t I>
+struct Primes<ddc::detail::TypeSeq<>, I>
+{
+    using type = ddc::detail::TypeSeq<>;
+};
+
 template <class... Index, std::size_t I>
 struct Primes<ddc::detail::TypeSeq<Index...>, I>
 {

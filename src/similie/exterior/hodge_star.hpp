@@ -21,6 +21,237 @@ namespace sil {
 
 namespace exterior {
 
+namespace detail {
+
+template <misc::Specialization<ddc::detail::TypeSeq> Indices2, class Component>
+KOKKOS_FUNCTION bool is_stored_hodge_component(Component const& component)
+{
+    if constexpr (ddc::type_seq_size_v<Indices2> == 0) {
+        return true;
+    } else {
+        using dual_index_type
+                = misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, Indices2>;
+        if constexpr (dual_index_type::rank() > 1) {
+            return component.template uid<dual_index_type>() != 0;
+        } else {
+            return true;
+        }
+    }
+}
+
+template <class DDim, class Elem, class Domain>
+KOKKOS_FUNCTION double primal_mesh_measure(Elem const& elem, Domain const&)
+{
+    return static_cast<double>(ddc::distance_at_right(ddc::DiscreteElement<DDim>(elem)));
+}
+
+template <class DDim, class Elem, class Domain>
+KOKKOS_FUNCTION double centered_dual_mesh_measure(Elem const& elem, Domain const& domain)
+{
+    ddc::DiscreteElement<DDim> const ddim_elem(elem);
+    double const left = static_cast<double>(ddc::distance_at_left(ddim_elem));
+    double const right = static_cast<double>(ddc::distance_at_right(ddim_elem));
+    bool const is_front = ddim_elem == ddc::DiscreteElement<DDim>(domain.front());
+    bool const is_back = ddim_elem == ddc::DiscreteElement<DDim>(domain.back());
+
+    if (is_front && is_back) {
+        return 0.5 * (left + right);
+    }
+    if (is_front) {
+        return 0.5 * right;
+    }
+    if (is_back) {
+        return 0.5 * left;
+    }
+    return 0.5 * (left + right);
+}
+
+template <bool DualMeasure, class DDim, class Elem, class Domain>
+KOKKOS_FUNCTION double mesh_measure(Elem const& elem, Domain const& domain)
+{
+    if constexpr (DualMeasure) {
+        return centered_dual_mesh_measure<DDim>(elem, domain);
+    } else {
+        return primal_mesh_measure<DDim>(elem, domain);
+    }
+}
+
+template <bool DualMeasure, class NaturalIndex, class DDimSeq, class Elem, class Domain>
+struct measure_from_natural_id;
+
+template <bool DualMeasure, class NaturalIndex, class Elem, class Domain, class... DDim>
+struct measure_from_natural_id<
+        DualMeasure,
+        NaturalIndex,
+        ddc::detail::TypeSeq<DDim...>,
+        Elem,
+        Domain>
+{
+    KOKKOS_FUNCTION static double run(
+            Elem const& elem,
+            Domain const& domain,
+            std::size_t const natural_id)
+    {
+        if constexpr (NaturalIndex::rank() == 0) {
+            return 1.;
+        } else {
+            double measure = 1.;
+            bool matched = false;
+            (
+                    [&] {
+                        if constexpr (ddc::type_seq_contains_v<
+                                              ddc::detail::TypeSeq<
+                                                      typename DDim::continuous_dimension_type>,
+                                              typename NaturalIndex::type_seq_dimensions>) {
+                            if (natural_id
+                                == NaturalIndex::template mem_id<
+                                        typename DDim::continuous_dimension_type>()) {
+                                measure = mesh_measure<DualMeasure, DDim>(elem, domain);
+                                matched = true;
+                            }
+                        }
+                    }(),
+                    ...);
+            return matched ? measure : 1.;
+        }
+    }
+};
+
+template <bool DualMeasure, class Index, class DDimSeq, class Elem, class Domain, class Component>
+struct measure_from_index_component;
+
+template <
+        bool DualMeasure,
+        class... SubIndex,
+        class DDimSeq,
+        class Elem,
+        class Domain,
+        class Component>
+struct measure_from_index_component<
+        DualMeasure,
+        tensor::TensorFullIndex<SubIndex...>,
+        DDimSeq,
+        Elem,
+        Domain,
+        Component>
+{
+    KOKKOS_FUNCTION static double run(
+            Elem const& elem,
+            Domain const& domain,
+            Component const& component)
+    {
+        using index_type = tensor::TensorFullIndex<SubIndex...>;
+        constexpr std::size_t n_subindices = sizeof...(SubIndex);
+        std::array<std::size_t, n_subindices> const natural_ids
+                = index_type::mem_id_to_canonical_natural_ids(
+                        index_type::access_id_to_mem_id(component.template uid<index_type>()));
+
+        return (measure_from_natural_id<DualMeasure, SubIndex, DDimSeq, Elem, Domain>::
+                        run(elem,
+                            domain,
+                            natural_ids[ddc::type_seq_rank_v<
+                                    SubIndex,
+                                    ddc::detail::TypeSeq<SubIndex...>>])
+                * ...);
+    }
+};
+
+template <bool DualMeasure, class DDimSeq, class Elem, class Domain, class Component>
+struct measure_from_index_component<
+        DualMeasure,
+        tensor::TensorFullIndex<>,
+        DDimSeq,
+        Elem,
+        Domain,
+        Component>
+{
+    KOKKOS_FUNCTION static double run(Elem const&, Domain const&, Component const&)
+    {
+        return 1.;
+    }
+};
+
+template <
+        bool DualMeasure,
+        class... SubIndex,
+        class DDimSeq,
+        class Elem,
+        class Domain,
+        class Component>
+struct measure_from_index_component<
+        DualMeasure,
+        tensor::TensorAntisymmetricIndex<SubIndex...>,
+        DDimSeq,
+        Elem,
+        Domain,
+        Component>
+{
+    KOKKOS_FUNCTION static double run(
+            Elem const& elem,
+            Domain const& domain,
+            Component const& component)
+    {
+        using index_type = tensor::TensorAntisymmetricIndex<SubIndex...>;
+        if constexpr (index_type::rank() > 1) {
+            if (component.template uid<index_type>() == 0) {
+                return 1.;
+            }
+        }
+
+        constexpr std::size_t n_subindices = sizeof...(SubIndex);
+        std::array<std::size_t, n_subindices> const natural_ids
+                = index_type::mem_id_to_canonical_natural_ids(
+                        index_type::access_id_to_mem_id(component.template uid<index_type>()));
+
+        return (measure_from_natural_id<DualMeasure, SubIndex, DDimSeq, Elem, Domain>::
+                        run(elem,
+                            domain,
+                            natural_ids[ddc::type_seq_rank_v<
+                                    SubIndex,
+                                    ddc::detail::TypeSeq<SubIndex...>>])
+                * ...);
+    }
+};
+
+template <
+        misc::Specialization<ddc::detail::TypeSeq> Indices1,
+        misc::Specialization<ddc::detail::TypeSeq> Indices2,
+        class NonIndicesDomain,
+        class Elem,
+        class Component>
+KOKKOS_FUNCTION double discrete_hodge_measure_ratio(
+        NonIndicesDomain const& domain,
+        Elem const& elem,
+        Component const& component)
+{
+    using ddim_seq = ddc::to_type_seq_t<NonIndicesDomain>;
+    using primal_index_type = misc::convert_type_seq_to_t<tensor::TensorFullIndex, Indices1>;
+    double const primal_measure = measure_from_index_component<
+            false,
+            primal_index_type,
+            ddim_seq,
+            Elem,
+            NonIndicesDomain,
+            Component>::run(elem, domain, component);
+
+    if constexpr (ddc::type_seq_size_v<Indices2> == 0) {
+        return 1. / primal_measure;
+    } else {
+        using dual_index_type
+                = misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, Indices2>;
+        double const dual_measure = measure_from_index_component<
+                true,
+                dual_index_type,
+                ddim_seq,
+                Elem,
+                NonIndicesDomain,
+                Component>::run(elem, domain, component);
+        return dual_measure / primal_measure;
+    }
+}
+
+} // namespace detail
+
 template <
         misc::Specialization<ddc::detail::TypeSeq> Indices1,
         misc::Specialization<ddc::detail::TypeSeq> Indices2>
@@ -77,6 +308,13 @@ HodgeStarType fill_hodge_star(
                 tensor_prod(hodge_star[elem], metric_prod[elem], levi_civita);
                 hodge_star[elem] *= Kokkos::sqrt(Kokkos::abs(metric_determinant(elem)))
                                     / misc::factorial(ddc::type_seq_size_v<Indices1>);
+                ddc::device_for_each(hodge_star[elem].domain(), [&](auto index_elem) {
+                    if (detail::is_stored_hodge_component<Indices2>(index_elem)) {
+                        hodge_star[elem](index_elem) *= detail::discrete_hodge_measure_ratio<
+                                Indices1,
+                                Indices2>(hodge_star.non_indices_domain(), elem, index_elem);
+                    }
+                });
             });
     return hodge_star;
 }
