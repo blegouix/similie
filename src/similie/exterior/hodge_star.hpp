@@ -161,6 +161,35 @@ HodgeStarType fill_hodge_star(
     return fill_hodge_star<Indices1, Indices2>(exec_space, hodge_star, metric_det, metric_prod);
 }
 
+template <
+        tensor::TensorIndex MetricIndex,
+        misc::Specialization<ddc::detail::TypeSeq> Indices1,
+        misc::Specialization<ddc::detail::TypeSeq> Indices2,
+        misc::Specialization<tensor::Tensor> HodgeStarType,
+        misc::Specialization<tensor::Tensor> MetricType,
+        class ExecSpace>
+HodgeStarType fill_inverse_hodge_star(
+        ExecSpace const& exec_space,
+        HodgeStarType inverse_hodge_star,
+        MetricType metric)
+{
+    fill_hodge_star<MetricIndex, Indices1, Indices2>(exec_space, inverse_hodge_star, metric);
+
+    constexpr std::size_t in_degree = ddc::type_seq_size_v<Indices1>;
+    constexpr std::size_t out_degree = ddc::type_seq_size_v<Indices2>;
+    if constexpr ((in_degree * out_degree) % 2 == 1) {
+        ddc::parallel_for_each(
+                "similie_apply_inverse_hodge_star_sign",
+                exec_space,
+                inverse_hodge_star.domain(),
+                KOKKOS_LAMBDA(typename HodgeStarType::discrete_element_type elem) {
+                    inverse_hodge_star(elem) *= -1.;
+                });
+    }
+
+    return inverse_hodge_star;
+}
+
 } // namespace exterior
 
 } // namespace sil
