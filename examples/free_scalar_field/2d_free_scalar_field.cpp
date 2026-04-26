@@ -488,52 +488,23 @@ int main(int argc, char** argv)
                                         / 2.;
                 });
 
-        // Compute nodal spatial moments and their divergence from the half-step field using
-        // centered finite differences with mirrored boundary values.
-        ddc::parallel_for_each(
+        sil::exterior::deriv<
+                AlphaLow,
+                DummyIndex>(
                 Kokkos::DefaultExecutionSpace(),
-                mesh_xy,
-                KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
-                    ddc::DiscreteElement<DDimX> const x_elem(elem);
-                    ddc::DiscreteElement<DDimY> const y_elem(elem);
-
-                    ddc::DiscreteVector<DDimX, DDimY> const x_shift(1, 0);
-                    ddc::DiscreteVector<DDimX, DDimY> const y_shift(0, 1);
-
-                    bool const has_x_left = x_elem.uid() != x_dom.front().uid();
-                    bool const has_x_right = x_elem.uid() != x_dom.back().uid();
-                    bool const has_y_left = y_elem.uid() != y_dom.front().uid();
-                    bool const has_y_right = y_elem.uid() != y_dom.back().uid();
-
-                    double const phi_center
-                            = half_step_potential(elem, ddc::DiscreteElement<DummyIndex>(0));
-                    double const phi_x_left = half_step_potential(
-                            has_x_left ? elem - x_shift : elem + x_shift,
-                            ddc::DiscreteElement<DummyIndex>(0));
-                    double const phi_x_right = half_step_potential(
-                            has_x_right ? elem + x_shift : elem - x_shift,
-                            ddc::DiscreteElement<DummyIndex>(0));
-                    double const phi_y_left = half_step_potential(
-                            has_y_left ? elem - y_shift : elem + y_shift,
-                            ddc::DiscreteElement<DummyIndex>(0));
-                    double const phi_y_right = half_step_potential(
-                            has_y_right ? elem + y_shift : elem - y_shift,
-                            ddc::DiscreteElement<DummyIndex>(0));
-
-                    spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(0))
-                            = FreeScalarFieldHamiltonian(mass).pi1(
-                                    (phi_x_right - phi_x_left) / (2. * dx));
-                    spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(1))
-                            = FreeScalarFieldHamiltonian(mass).pi2(
-                                    (phi_y_right - phi_y_left) / (2. * dy));
-
-                    spatial_moments_div(elem, ddc::DiscreteElement<DummyIndex>(0))
-                            = (phi_x_right - 2. * phi_center + phi_x_left) / (dx * dx)
-                              + (phi_y_right - 2. * phi_center + phi_y_left) / (dy * dy);
-                });
+                spatial_moments,
+                half_step_potential,
+                sil::exterior::CenteredMirroredBoundary {});
         if (i % nb_iter_between_exports == 0) {
             ddc::parallel_deepcopy(spatial_moments_host, spatial_moments);
         }
+
+        sil::exterior::codifferential<MetricIndex, AlphaLow, AlphaLow>(
+                Kokkos::DefaultExecutionSpace(),
+                spatial_moments_div,
+                spatial_moments,
+                inv_metric,
+                sil::exterior::CenteredMirroredBoundary {});
 
         // Compute dpi_0/dx^0 by solving - dpi_0/dx^0 + dpi_\alpha/dx^\alpha = -dH/dphi and advect pi_0 by a time step dx^0. Also Then, perform the second phi half-advection by solving dphi/dx^0 = -dH/dpi_0
         double const dS = (ddc::get<X>(upper_bounds) - ddc::get<X>(lower_bounds))

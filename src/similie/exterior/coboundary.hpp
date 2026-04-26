@@ -26,6 +26,10 @@ namespace sil {
 
 namespace exterior {
 
+struct CenteredMirroredBoundary
+{
+};
+
 namespace detail {
 
 template <class T>
@@ -188,6 +192,138 @@ struct CoboundaryDummyIndex
 {
 };
 
+template <class CDim, class TypeSeq>
+struct DiscreteDimensionForTypeSeq;
+
+template <class CDim, class DDim, class... Tail>
+struct DiscreteDimensionForTypeSeq<CDim, ddc::detail::TypeSeq<DDim, Tail...>>
+{
+    using type = std::conditional_t<
+            std::is_same_v<typename DDim::continuous_dimension_type, CDim>,
+            DDim,
+            typename DiscreteDimensionForTypeSeq<CDim, ddc::detail::TypeSeq<Tail...>>::type>;
+};
+
+template <class CDim>
+struct DiscreteDimensionForTypeSeq<CDim, ddc::detail::TypeSeq<>>
+{
+    using type = void;
+};
+
+template <class CDim, class T>
+using discrete_dimension_for_t
+        = typename DiscreteDimensionForTypeSeq<CDim, ddc::to_type_seq_t<T>>::type;
+
+template <class DDim, class Vect>
+KOKKOS_FUNCTION Vect unit_shift()
+{
+    Vect shift = misc::filled_struct<Vect>();
+    shift.template get<DDim>() = 1;
+    return shift;
+}
+
+template <class DDim, class Domain, class Elem>
+KOKKOS_FUNCTION double centered_step(Domain const& domain, Elem const& elem)
+{
+    using vect_t = typename Domain::discrete_vector_type;
+    vect_t const shift = unit_shift<DDim, vect_t>();
+    ddc::DiscreteDomain<DDim> const dim_dom(domain);
+    ddc::DiscreteElement<DDim> const dim_elem(elem);
+    bool const has_left = dim_elem.uid() != dim_dom.front().uid();
+    bool const has_right = dim_elem.uid() != dim_dom.back().uid();
+
+    if (has_left && has_right) {
+        return static_cast<double>(
+                ddc::coordinate(ddc::DiscreteElement<DDim>(elem + shift))
+                - ddc::coordinate(ddc::DiscreteElement<DDim>(elem - shift)));
+    } else if (has_right) {
+        return 2.
+               * static_cast<double>(
+                       ddc::coordinate(ddc::DiscreteElement<DDim>(elem + shift))
+                       - ddc::coordinate(ddc::DiscreteElement<DDim>(elem)));
+    } else {
+        return 2.
+               * static_cast<double>(
+                       ddc::coordinate(ddc::DiscreteElement<DDim>(elem))
+                       - ddc::coordinate(ddc::DiscreteElement<DDim>(elem - shift)));
+    }
+}
+
+template <class DDim, class Domain, class Elem>
+KOKKOS_FUNCTION Elem mirrored_left_elem(Domain const& domain, Elem const& elem)
+{
+    using vect_t = typename Domain::discrete_vector_type;
+    vect_t const shift = unit_shift<DDim, vect_t>();
+    ddc::DiscreteDomain<DDim> const dim_dom(domain);
+    ddc::DiscreteElement<DDim> const dim_elem(elem);
+    return dim_elem.uid() != dim_dom.front().uid() ? elem - shift : elem + shift;
+}
+
+template <class DDim, class Domain, class Elem>
+KOKKOS_FUNCTION Elem mirrored_right_elem(Domain const& domain, Elem const& elem)
+{
+    using vect_t = typename Domain::discrete_vector_type;
+    vect_t const shift = unit_shift<DDim, vect_t>();
+    ddc::DiscreteDomain<DDim> const dim_dom(domain);
+    ddc::DiscreteElement<DDim> const dim_elem(elem);
+    return dim_elem.uid() != dim_dom.back().uid() ? elem + shift : elem - shift;
+}
+
+template <
+        class NaturalDims,
+        class OutTensorType,
+        class TensorType,
+        class Elem,
+        class OutIndex,
+        class InIndex>
+struct FillCenteredDerivative;
+
+template <
+        class Axis,
+        class... TailAxes,
+        class OutTensorType,
+        class TensorType,
+        class Elem,
+        class OutIndex,
+        class InIndex>
+struct FillCenteredDerivative<ddc::detail::TypeSeq<Axis, TailAxes...>, OutTensorType, TensorType, Elem, OutIndex, InIndex>
+{
+    KOKKOS_FUNCTION static void run(OutTensorType out_tensor, TensorType tensor, Elem elem)
+    {
+        using d_dim_t = discrete_dimension_for_t<Axis, typename TensorType::non_indices_domain_t>;
+        static_assert(!std::is_void_v<d_dim_t>);
+        constexpr std::size_t comp = ddc::type_seq_rank_v<Axis, typename OutIndex::type_seq_dimensions>;
+
+        auto const left_elem = mirrored_left_elem<d_dim_t>(tensor.non_indices_domain(), elem);
+        auto const right_elem = mirrored_right_elem<d_dim_t>(tensor.non_indices_domain(), elem);
+        double const denom = centered_step<d_dim_t>(tensor.non_indices_domain(), elem);
+
+        out_tensor.mem(elem, ddc::DiscreteElement<OutIndex>(comp))
+                = (tensor.get(right_elem, ddc::DiscreteElement<InIndex>(0))
+                   - tensor.get(left_elem, ddc::DiscreteElement<InIndex>(0)))
+                  / denom;
+
+        FillCenteredDerivative<
+                ddc::detail::TypeSeq<TailAxes...>,
+                OutTensorType,
+                TensorType,
+                Elem,
+                OutIndex,
+                InIndex>::run(out_tensor, tensor, elem);
+    }
+};
+
+template <class OutTensorType, class TensorType, class Elem, class OutIndex, class InIndex>
+struct FillCenteredDerivative<ddc::detail::TypeSeq<>, OutTensorType, TensorType, Elem, OutIndex, InIndex>
+{
+    KOKKOS_FUNCTION static void run(
+            [[maybe_unused]] OutTensorType out_tensor,
+            [[maybe_unused]] TensorType tensor,
+            [[maybe_unused]] Elem elem)
+    {
+    }
+};
+
 } // namespace detail
 
 template <
@@ -332,6 +468,44 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> deriv(
             TagToAddToCochain,
             CochainTag,
             TensorType>(exec_space, coboundary_tensor, tensor);
+}
+
+template <
+        tensor::TensorNatIndex TagToAddToCochain,
+        tensor::TensorIndex CochainTag,
+        misc::Specialization<tensor::Tensor> TensorType,
+        class ExecSpace>
+    requires(CochainTag::rank() == 0 && TagToAddToCochain::rank() == 1)
+coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> deriv(
+        ExecSpace const& exec_space,
+        coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
+        TensorType tensor,
+        CenteredMirroredBoundary)
+{
+    using out_index_t = ddc::type_seq_element_t<
+            0,
+            ddc::to_type_seq_t<typename decltype(coboundary_tensor)::indices_domain_t>>;
+    using in_index_t = ddc::type_seq_element_t<
+            0,
+            ddc::to_type_seq_t<typename TensorType::indices_domain_t>>;
+    static_assert(out_index_t::rank() == 1);
+    static_assert(in_index_t::rank() == 0);
+
+    ddc::parallel_for_each(
+            "similie_compute_centered_mirrored_deriv",
+            exec_space,
+            coboundary_tensor.non_indices_domain(),
+            KOKKOS_LAMBDA(typename decltype(coboundary_tensor)::non_indices_domain_t::discrete_element_type elem) {
+                detail::FillCenteredDerivative<
+                        typename out_index_t::type_seq_dimensions,
+                        decltype(coboundary_tensor),
+                        TensorType,
+                        decltype(elem),
+                        out_index_t,
+                        in_index_t>::run(coboundary_tensor, tensor, elem);
+            });
+
+    return coboundary_tensor;
 }
 
 } // namespace exterior

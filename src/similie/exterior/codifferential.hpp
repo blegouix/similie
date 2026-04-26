@@ -5,6 +5,7 @@
 
 #include <ddc/ddc.hpp>
 
+#include <similie/exterior/coboundary.hpp>
 #include <similie/exterior/hodge_star.hpp>
 #include <similie/misc/macros.hpp>
 #include <similie/misc/specialization.hpp>
@@ -156,6 +157,112 @@ struct CodifferentialDummyIndexSeq<EndId, T>
     using type = typename CodifferentialDummyIndexSeq_<std::make_index_sequence<EndId>, T>::type;
 };
 
+template <
+        class MetricComponentIndex,
+        class Axis,
+        misc::Specialization<tensor::Tensor> MetricType,
+        class Elem>
+KOKKOS_FUNCTION double centered_metric_factor(MetricType const& inv_metric, Elem const& elem)
+{
+    if constexpr (misc::Specialization<MetricComponentIndex, tensor::TensorIdentityIndex>) {
+        return 1.;
+    } else {
+        return inv_metric(
+                elem,
+                inv_metric.accessor().template access_element<Axis, Axis>());
+    }
+}
+
+template <
+        class NaturalDims,
+        class MetricComponentIndex,
+        class OutTensorType,
+        class TensorType,
+        class MetricType,
+        class Elem,
+        class InIndex,
+        class OutIndex>
+struct FillCenteredCodifferential;
+
+template <
+        class Axis,
+        class... TailAxes,
+        class MetricComponentIndex,
+        class OutTensorType,
+        class TensorType,
+        class MetricType,
+        class Elem,
+        class InIndex,
+        class OutIndex>
+struct FillCenteredCodifferential<
+        ddc::detail::TypeSeq<Axis, TailAxes...>,
+        MetricComponentIndex,
+        OutTensorType,
+        TensorType,
+        MetricType,
+        Elem,
+        InIndex,
+        OutIndex>
+{
+    KOKKOS_FUNCTION static void run(
+            OutTensorType out_tensor,
+            TensorType tensor,
+            MetricType inv_metric,
+            Elem elem)
+    {
+        using d_dim_t = discrete_dimension_for_t<Axis, typename TensorType::non_indices_domain_t>;
+        static_assert(!std::is_void_v<d_dim_t>);
+        constexpr std::size_t comp = ddc::type_seq_rank_v<Axis, typename InIndex::type_seq_dimensions>;
+
+        auto const left_elem = mirrored_left_elem<d_dim_t>(tensor.non_indices_domain(), elem);
+        auto const right_elem = mirrored_right_elem<d_dim_t>(tensor.non_indices_domain(), elem);
+        double const denom = centered_step<d_dim_t>(tensor.non_indices_domain(), elem);
+
+        out_tensor.mem(elem, ddc::DiscreteElement<OutIndex>(0))
+                += centered_metric_factor<MetricComponentIndex, Axis>(inv_metric, elem)
+                   * (tensor.get(right_elem, ddc::DiscreteElement<InIndex>(comp))
+                      - tensor.get(left_elem, ddc::DiscreteElement<InIndex>(comp)))
+                   / denom;
+
+        FillCenteredCodifferential<
+                ddc::detail::TypeSeq<TailAxes...>,
+                MetricComponentIndex,
+                OutTensorType,
+                TensorType,
+                MetricType,
+                Elem,
+                InIndex,
+                OutIndex>::run(out_tensor, tensor, inv_metric, elem);
+    }
+};
+
+template <
+        class MetricComponentIndex,
+        class OutTensorType,
+        class TensorType,
+        class MetricType,
+        class Elem,
+        class InIndex,
+        class OutIndex>
+struct FillCenteredCodifferential<
+        ddc::detail::TypeSeq<>,
+        MetricComponentIndex,
+        OutTensorType,
+        TensorType,
+        MetricType,
+        Elem,
+        InIndex,
+        OutIndex>
+{
+    KOKKOS_FUNCTION static void run(
+            [[maybe_unused]] OutTensorType out_tensor,
+            [[maybe_unused]] TensorType tensor,
+            [[maybe_unused]] MetricType inv_metric,
+            [[maybe_unused]] Elem elem)
+    {
+    }
+};
+
 } // namespace detail
 
 template <
@@ -274,6 +381,57 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
                         (TagToRemoveFromCochain::size() * (CochainTag::rank() + 1) + 1) % 2 == 1) {
                     codifferential_tensor[elem] *= -1;
                 }
+            });
+
+    return codifferential_tensor;
+}
+
+template <
+        tensor::TensorIndex MetricIndex,
+        tensor::TensorNatIndex TagToRemoveFromCochain,
+        tensor::TensorIndex CochainTag,
+        misc::Specialization<tensor::Tensor> TensorType,
+        misc::Specialization<tensor::Tensor> MetricType,
+        class ExecSpace>
+    requires(CochainTag::rank() == 1 && TagToRemoveFromCochain::rank() == 1)
+codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codifferential(
+        ExecSpace const& exec_space,
+        codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType>
+                codifferential_tensor,
+        TensorType tensor,
+        MetricType inv_metric,
+        CenteredMirroredBoundary)
+{
+    using metric_component_index_t = ddc::type_seq_element_t<
+            0,
+            ddc::to_type_seq_t<typename MetricType::indices_domain_t>>;
+    using in_index_t = ddc::type_seq_element_t<
+            0,
+            ddc::to_type_seq_t<typename TensorType::indices_domain_t>>;
+    using out_index_t = ddc::type_seq_element_t<
+            0,
+            ddc::to_type_seq_t<typename decltype(codifferential_tensor)::indices_domain_t>>;
+    static_assert(in_index_t::rank() == 1);
+    static_assert(out_index_t::rank() == 0);
+    static_assert(
+            misc::Specialization<metric_component_index_t, tensor::TensorIdentityIndex>
+            && "Centered mirrored codifferential currently supports identity metric only.");
+
+    ddc::parallel_for_each(
+            "similie_compute_centered_mirrored_codifferential",
+            exec_space,
+            codifferential_tensor.non_indices_domain(),
+            KOKKOS_LAMBDA(typename decltype(codifferential_tensor)::non_indices_domain_t::discrete_element_type elem) {
+                codifferential_tensor.mem(elem, ddc::DiscreteElement<out_index_t>(0)) = 0.;
+                detail::FillCenteredCodifferential<
+                        typename in_index_t::type_seq_dimensions,
+                        metric_component_index_t,
+                        decltype(codifferential_tensor),
+                        TensorType,
+                        MetricType,
+                        decltype(elem),
+                        in_index_t,
+                        out_index_t>::run(codifferential_tensor, tensor, inv_metric, elem);
             });
 
     return codifferential_tensor;
