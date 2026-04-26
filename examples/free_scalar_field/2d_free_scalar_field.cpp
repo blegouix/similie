@@ -311,6 +311,10 @@ int main(int argc, char** argv)
            == static_cast<std::size_t>(mesh_xy.template extent<DDimY>()));
     ddc::expose_to_pdi("Nx", static_cast<int>(mesh_xy.template extent<DDimX>()));
     ddc::expose_to_pdi("Ny", static_cast<int>(mesh_xy.template extent<DDimY>()));
+    double const dx
+            = (ddc::get<X>(upper_bounds) - ddc::get<X>(lower_bounds)) / ddc::get<DDimX>(nb_cells);
+    double const dy
+            = (ddc::get<Y>(upper_bounds) - ddc::get<Y>(lower_bounds)) / ddc::get<DDimY>(nb_cells);
 
     // Allocate and instantiate a position field (used only to be exported).
     [[maybe_unused]] sil::tensor::TensorAccessor<AlphaUp> position_accessor;
@@ -369,9 +373,9 @@ int main(int argc, char** argv)
     double const y_1 = -0.3;
     double const sigma = .5;
 
-    double const v = 10.;
-    double const k = 1.;
+    double const v = 0.5;
     double const mass = 1.;
+    double const k = mass * v / std::sqrt(1. - v * v);
 
     ddc::parallel_for_each(
             potential.domain(),
@@ -383,10 +387,9 @@ int main(int argc, char** argv)
                                           * std::exp(
                                                   -((x - x_0) * (x - x_0) + (y - y_0) * (y - y_0))
                                                   / 2. / sigma / sigma)
-                                  + 30. * std::sin(k * (x - x_1))
-                                            * std::exp(
-                                                    -((x - x_1) * (x - x_1) + (y - y_1) * (y - y_1))
-                                                    / 2. / sigma / sigma);
+                                  + std::exp(
+                                          -((x - x_1) * (x - x_1) + (y - y_1) * (y - y_1)) / 2.
+                                          / sigma / sigma);
             });
     auto potential_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), potential);
@@ -395,17 +398,12 @@ int main(int argc, char** argv)
     ddc::Chunk half_step_potential_alloc(potential_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor half_step_potential(half_step_potential_alloc);
 
-    // Potential gradient
-    [[maybe_unused]] sil::tensor::TensorAccessor<AlphaLow> potential_grad_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, AlphaLow>
-            potential_grad_dom(mesh_xy, potential_grad_accessor.domain());
-    ddc::Chunk potential_grad_alloc(potential_grad_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor potential_grad(potential_grad_alloc);
-
     // Spatial moments
-    auto& spatial_moments
-            = potential_grad; // We can perform the computations inplace so spatial_moments is just an alias of potential_grad
-
+    [[maybe_unused]] sil::tensor::TensorAccessor<AlphaLow> spatial_moments_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, AlphaLow>
+            spatial_moments_dom(mesh_xy, spatial_moments_accessor.domain());
+    ddc::Chunk spatial_moments_alloc(spatial_moments_dom, ddc::DeviceAllocator<double>());
+    sil::tensor::Tensor spatial_moments(spatial_moments_alloc);
     auto spatial_moments_host = ddc::
             create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), spatial_moments);
 
@@ -425,15 +423,14 @@ int main(int argc, char** argv)
     ddc::Chunk temporal_moment_alloc(temporal_moment_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor temporal_moment(temporal_moment_alloc);
 
+    double const omega = std::sqrt(k * k + mass * mass);
     ddc::parallel_for_each(
             potential.domain(),
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
                 double const x = ddc::coordinate(ddc::DiscreteElement<DDimX>(elem));
-                double const y = ddc::coordinate(ddc::DiscreteElement<DDimY>(elem)) - y_0;
-                // v*dphi/dx of the left wave packet only to get a pure kick along x toward the immobile right one
-                temporal_moment(elem) = -v
-                                        * (-k * std::cos(k * (x - x_0))
-                                           + (x - x_0) / sigma / sigma * std::sin(k * (x - x_0)))
+                double const y = ddc::coordinate(ddc::DiscreteElement<DDimY>(elem));
+                temporal_moment(elem) = (-omega * std::cos(k * (x - x_0))
+                                         + v * (x - x_0) / sigma / sigma * std::sin(k * (x - x_0)))
                                         * std::exp(
                                                 -((x - x_0) * (x - x_0) + (y - y_0) * (y - y_0))
                                                 / 2. / sigma / sigma);
@@ -454,10 +451,6 @@ int main(int argc, char** argv)
 
     int const nb_iter_between_exports = 50;
     int const nb_iter = 10000;
-    double const dx
-            = (ddc::get<X>(upper_bounds) - ddc::get<X>(lower_bounds)) / ddc::get<DDimX>(nb_cells);
-    double const dy
-            = (ddc::get<Y>(upper_bounds) - ddc::get<Y>(lower_bounds)) / ddc::get<DDimY>(nb_cells);
     double const dt = .5 * std::min(dx, dy) / std::sqrt(2.0);
     std::cout << "Time step = " << dt << std::endl;
     ddc::expose_to_pdi("Nt", (nb_iter - 1) / nb_iter_between_exports + 1);
@@ -495,33 +488,52 @@ int main(int argc, char** argv)
                                         / 2.;
                 });
 
-        // Compute the potential gradient
-        sil::exterior::deriv<
-                AlphaLow,
-                DummyIndex>(Kokkos::DefaultExecutionSpace(), potential_grad, half_step_potential);
-
-        // Compute the spatial moments pi_\alpha by solving dphi/dx^\alpha = dH/dpi_\alpha
+        // Compute nodal spatial moments and their divergence from the half-step field using
+        // centered finite differences with mirrored boundary values.
         ddc::parallel_for_each(
                 Kokkos::DefaultExecutionSpace(),
                 mesh_xy,
                 KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
+                    ddc::DiscreteElement<DDimX> const x_elem(elem);
+                    ddc::DiscreteElement<DDimY> const y_elem(elem);
+
+                    ddc::DiscreteVector<DDimX, DDimY> const x_shift(1, 0);
+                    ddc::DiscreteVector<DDimX, DDimY> const y_shift(0, 1);
+
+                    bool const has_x_left = x_elem.uid() != x_dom.front().uid();
+                    bool const has_x_right = x_elem.uid() != x_dom.back().uid();
+                    bool const has_y_left = y_elem.uid() != y_dom.front().uid();
+                    bool const has_y_right = y_elem.uid() != y_dom.back().uid();
+
+                    double const phi_center
+                            = half_step_potential(elem, ddc::DiscreteElement<DummyIndex>(0));
+                    double const phi_x_left = half_step_potential(
+                            has_x_left ? elem - x_shift : elem + x_shift,
+                            ddc::DiscreteElement<DummyIndex>(0));
+                    double const phi_x_right = half_step_potential(
+                            has_x_right ? elem + x_shift : elem - x_shift,
+                            ddc::DiscreteElement<DummyIndex>(0));
+                    double const phi_y_left = half_step_potential(
+                            has_y_left ? elem - y_shift : elem + y_shift,
+                            ddc::DiscreteElement<DummyIndex>(0));
+                    double const phi_y_right = half_step_potential(
+                            has_y_right ? elem + y_shift : elem - y_shift,
+                            ddc::DiscreteElement<DummyIndex>(0));
+
                     spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(0))
                             = FreeScalarFieldHamiltonian(mass).pi1(
-                                    potential_grad(elem, ddc::DiscreteElement<AlphaLow>(0)));
+                                    (phi_x_right - phi_x_left) / (2. * dx));
                     spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(1))
                             = FreeScalarFieldHamiltonian(mass).pi2(
-                                    potential_grad(elem, ddc::DiscreteElement<AlphaLow>(1)));
+                                    (phi_y_right - phi_y_left) / (2. * dy));
+
+                    spatial_moments_div(elem, ddc::DiscreteElement<DummyIndex>(0))
+                            = (phi_x_right - 2. * phi_center + phi_x_left) / (dx * dx)
+                              + (phi_y_right - 2. * phi_center + phi_y_left) / (dy * dy);
                 });
         if (i % nb_iter_between_exports == 0) {
             ddc::parallel_deepcopy(spatial_moments_host, spatial_moments);
         }
-
-        // Compute the divergence dpi_\alpha/dx^\alpha of the spatial moments, which is the codifferential \delta pi of the spatial moments
-        sil::exterior::codifferential<MetricIndex, AlphaLow, AlphaLow>(
-                Kokkos::DefaultExecutionSpace(),
-                spatial_moments_div,
-                spatial_moments,
-                inv_metric);
 
         // Compute dpi_0/dx^0 by solving - dpi_0/dx^0 + dpi_\alpha/dx^\alpha = -dH/dphi and advect pi_0 by a time step dx^0. Also Then, perform the second phi half-advection by solving dphi/dx^0 = -dH/dpi_0
         double const dS = (ddc::get<X>(upper_bounds) - ddc::get<X>(lower_bounds))
@@ -538,17 +550,17 @@ int main(int argc, char** argv)
                     // Advect temporal moment by half-step, this is what is needed to perform the whole-step potential advection
                     const double half_step_temporal_moment_
                             = temporal_moment_
-                              + (FreeScalarFieldHamiltonian(mass).dH_dphi(half_step_potential_)
-                                 + spatial_moments_div_)
+                              + (spatial_moments_div_
+                                 - FreeScalarFieldHamiltonian(mass).dH_dphi(half_step_potential_))
                                         * dt / 2;
 
                     // Whole-step advection of field state
                     potential(elem)
-                            += FreeScalarFieldHamiltonian(mass).dH_dpi0(half_step_temporal_moment_)
+                            -= FreeScalarFieldHamiltonian(mass).dH_dpi0(half_step_temporal_moment_)
                                * dt;
                     temporal_moment(elem)
-                            += (FreeScalarFieldHamiltonian(mass).dH_dphi(half_step_potential_)
-                                + spatial_moments_div_)
+                            += (spatial_moments_div_
+                                - FreeScalarFieldHamiltonian(mass).dH_dphi(half_step_potential_))
                                * dt;
                 });
 
