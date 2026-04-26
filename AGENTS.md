@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 - Clone with `git clone --recurse-submodules git@github.com:blegouix/similie.git` or any similar commande which suits the network configuration. Be sure to pull the submodules recursively.
 
 # Build environment
+- **Default build** By default (no particular contradictory instructions), you will check if a GPU is available with `nvidia-smi`. If so, you will try to compile for it.
 - **Requirement:** By default (no particular contradictory instructions), build and run in the `docker/similie_env/Dockerfile` image that you call `similie_env:latest`. You'll need to mount the `similie/` folder before compiling it. Compile directly in the host environment only if specifically asked for (if so, check if all the necessary dependencies listed in `docker/similie_env/Dockerfile` are available in the current environment, in particular `nvcc` and `openmpi`).
 - **Mount path in Docker:** If you reuse an existing `build/` or `build_cpu/` directory from the host, mount the repository in Docker at the same absolute path as on the host. Otherwise CMake may fail because the cached source/build paths no longer match.
 - **CUDA in Docker:** When building or running the CUDA backend inside Docker, start the container with `--gpus all` so the NVIDIA driver and GPU devices are exposed in the container.
