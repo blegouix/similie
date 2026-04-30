@@ -19,7 +19,7 @@ phi = symbols("phi")
 pi = symbols(f"pi0:{N}")
 
 # Minkowski signature (+, -, -, ..., -)
-metric_sign = [-1] + [1] * (N - 1)
+metric_sign = [1] + [-1] * (N - 1)
 
 # H = 1/2 m^2 phi^2 + 1/2 (-p0^2 + p1^2 - ... - p{N-1}^2)
 hamiltonian = 0.5 * (

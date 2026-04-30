@@ -458,7 +458,7 @@ int main(int argc, char** argv)
             = (ddc::get<X>(upper_bounds) - ddc::get<X>(lower_bounds)) / ddc::get<DDimX>(nb_cells);
     double const dy
             = (ddc::get<Y>(upper_bounds) - ddc::get<Y>(lower_bounds)) / ddc::get<DDimY>(nb_cells);
-    double const dt = .5 * std::min(dx, dy) / std::sqrt(2.0);
+    double const dt = .005 * std::min(dx, dy) / std::sqrt(2.0);
     std::cout << "Time step = " << dt << std::endl;
     ddc::expose_to_pdi("Nt", (nb_iter - 1) / nb_iter_between_exports + 1);
     std::remove("2d_free_scalar_field.h5");
