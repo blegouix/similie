@@ -86,7 +86,7 @@ struct Y
 };
 
 // Declare a metric
-using MetricIndex = sil::tensor::TensorSymmetricIndex<
+using MetricIndex = sil::tensor::TensorIdentityIndex<
         sil::tensor::Covariant<sil::tensor::MetricIndex1<X, Y>>,
         sil::tensor::Covariant<sil::tensor::MetricIndex2<X, Y>>>;
 
@@ -166,15 +166,6 @@ int main(int argc, char** argv)
     ddc::DiscreteDomain<DDimX, DDimY, MetricIndex> metric_dom(mesh_xy, metric_accessor.domain());
     ddc::Chunk metric_alloc(metric_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor metric(metric_alloc);
-    ddc::parallel_for_each(
-            Kokkos::DefaultExecutionSpace(),
-            mesh_xy,
-            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
-                metric(elem, metric.accessor().access_element<X, X>()) = 1.;
-                metric(elem, metric.accessor().access_element<X, Y>()) = 0.;
-                metric(elem, metric.accessor().access_element<Y, Y>()) = 1.;
-            });
-
     // Invert metric
     [[maybe_unused]] sil::tensor::TensorAccessor<sil::tensor::upper_t<MetricIndex>>
             inv_metric_accessor;

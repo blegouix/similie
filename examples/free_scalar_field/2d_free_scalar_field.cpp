@@ -496,7 +496,7 @@ int main(int argc, char** argv)
                 });
 
         // Compute the potential gradient
-        sil::exterior::structured_coefficient_gradient<
+        sil::exterior::deriv<
                 AlphaLow,
                 DummyIndex>(Kokkos::DefaultExecutionSpace(), potential_grad, half_step_potential);
 
@@ -517,7 +517,7 @@ int main(int argc, char** argv)
         }
 
         // Compute the divergence dpi_\alpha/dx^\alpha of the spatial moments, which is the codifferential \delta pi of the spatial moments
-        sil::exterior::structured_identity_metric_divergence<MetricIndex, AlphaLow>(
+        sil::exterior::codifferential<MetricIndex, AlphaLow, AlphaLow>(
                 Kokkos::DefaultExecutionSpace(),
                 spatial_moments_div,
                 spatial_moments,

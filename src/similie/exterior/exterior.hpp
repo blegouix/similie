@@ -14,4 +14,3 @@
 #include "laplacian.hpp"
 #include "local_chain.hpp"
 #include "simplex.hpp"
-#include "structured_grid_operators.hpp"

@@ -244,7 +244,7 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
                     tensor::TensorAntisymmetricIndex,
                     NuLowSeq>>(exec_space, dual_codifferential, dual_tensor);
 
-    // Hodge star 2
+    // Inverse Hodge star
     [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain2>
             hodge_star_accessor2;
     ddc::cartesian_prod_t<typename MetricType::non_indices_domain_t, HodgeStarDomain2>
@@ -254,7 +254,7 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
             ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
     sil::tensor::Tensor hodge_star2(hodge_star_alloc2);
 
-    sil::exterior::fill_hodge_star<
+    sil::exterior::fill_inverse_hodge_star<
             sil::tensor::upper_t<MetricIndex>,
             RhoUpSeq,
             SigmaLowSeq>(exec_space, hodge_star2, inv_metric);

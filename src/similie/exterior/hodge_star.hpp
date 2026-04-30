@@ -21,6 +21,160 @@ namespace sil {
 
 namespace exterior {
 
+namespace detail {
+
+template <class... DDim>
+bool can_use_cochain_measure_scaling(ddc::DiscreteDomain<DDim...> const&)
+{
+    return (ddc::is_discrete_space_initialized<DDim>() && ...);
+}
+
+template <class DDim, class Domain>
+KOKKOS_FUNCTION double primal_length(Domain const& domain)
+{
+    auto const subdomain = ddc::DiscreteDomain<DDim>(domain);
+    if (subdomain.template extent<DDim>() <= 1) {
+        return 1.;
+    }
+    auto const first = subdomain.front();
+    auto const second = first + ddc::DiscreteVector<DDim>(1);
+    return static_cast<double>(ddc::coordinate(second) - ddc::coordinate(first));
+}
+
+template <class DDim, class Domain, class Elem>
+KOKKOS_FUNCTION double dual_length(Domain const& domain, Elem const& elem)
+{
+    double const h = primal_length<DDim>(domain);
+    auto const subdomain = ddc::DiscreteDomain<DDim>(domain);
+    auto const uid = ddc::uid<DDim>(elem);
+    if (uid == subdomain.front().template uid<DDim>()
+        || uid == subdomain.back().template uid<DDim>()) {
+        return 0.5 * h;
+    }
+    return h;
+}
+
+template <std::size_t Pos, class... Index>
+KOKKOS_FUNCTION bool orientation_contains(ddc::DiscreteElement<Index...> const& natural_elem)
+{
+    return ((natural_elem.template uid<Index>() == Pos) || ...);
+}
+
+template <std::size_t Pos, class DDimSeq>
+struct ForwardMeasureRatio;
+
+template <std::size_t Pos>
+struct ForwardMeasureRatio<Pos, ddc::detail::TypeSeq<>>
+{
+    template <class Domain, class Elem, class NaturalElem>
+    KOKKOS_FUNCTION static double run(Domain const&, Elem const&, NaturalElem const&)
+    {
+        return 1.;
+    }
+};
+
+template <std::size_t Pos, class DDim, class... Tail>
+struct ForwardMeasureRatio<Pos, ddc::detail::TypeSeq<DDim, Tail...>>
+{
+    template <class Domain, class Elem, class NaturalElem>
+    KOKKOS_FUNCTION static double run(
+            Domain const& domain,
+            Elem const& elem,
+            NaturalElem const& natural_elem)
+    {
+        double const factor = orientation_contains<Pos>(natural_elem)
+                                      ? 1. / primal_length<DDim>(domain)
+                                      : dual_length<DDim>(domain, elem);
+        return factor
+               * ForwardMeasureRatio<Pos + 1, ddc::detail::TypeSeq<Tail...>>::
+                       run(domain, elem, natural_elem);
+    }
+};
+
+template <std::size_t Pos, class DDimSeq>
+struct InverseMeasureRatio;
+
+template <std::size_t Pos>
+struct InverseMeasureRatio<Pos, ddc::detail::TypeSeq<>>
+{
+    template <class Domain, class Elem, class NaturalElem>
+    KOKKOS_FUNCTION static double run(Domain const&, Elem const&, NaturalElem const&)
+    {
+        return 1.;
+    }
+};
+
+template <std::size_t Pos, class DDim, class... Tail>
+struct InverseMeasureRatio<Pos, ddc::detail::TypeSeq<DDim, Tail...>>
+{
+    template <class Domain, class Elem, class NaturalElem>
+    KOKKOS_FUNCTION static double run(
+            Domain const& domain,
+            Elem const& elem,
+            NaturalElem const& natural_elem)
+    {
+        double const factor
+                = orientation_contains<Pos>(natural_elem)
+                          ? 1.
+                          : primal_length<DDim>(domain) / dual_length<DDim>(domain, elem);
+        return factor
+               * InverseMeasureRatio<Pos + 1, ddc::detail::TypeSeq<Tail...>>::
+                       run(domain, elem, natural_elem);
+    }
+};
+
+template <
+        misc::Specialization<ddc::detail::TypeSeq> Indices1,
+        misc::Specialization<tensor::Tensor> HodgeStarType,
+        class ExecSpace>
+void apply_forward_cochain_measure_scaling(ExecSpace const& exec_space, HodgeStarType hodge_star)
+{
+    using input_index_t = misc::convert_type_seq_to_t<tensor::TensorFullIndex, Indices1>;
+    tensor::TensorAccessor<input_index_t> input_accessor;
+    ddc::parallel_for_each(
+            "similie_apply_forward_cochain_measure_scaling",
+            exec_space,
+            hodge_star.domain(),
+            KOKKOS_LAMBDA(typename HodgeStarType::discrete_element_type elem) {
+                auto const batch_elem =
+                        typename HodgeStarType::non_indices_domain_t::discrete_element_type(elem);
+                auto const input_elem = ddc::DiscreteElement<input_index_t>(elem);
+                auto const input_natural_elem
+                        = input_accessor.canonical_natural_element(input_elem);
+                hodge_star(elem) *= ForwardMeasureRatio<
+                        0,
+                        ddc::to_type_seq_t<typename HodgeStarType::non_indices_domain_t>>::
+                        run(hodge_star.non_indices_domain(), batch_elem, input_natural_elem);
+            });
+}
+
+template <
+        misc::Specialization<ddc::detail::TypeSeq> Indices1,
+        misc::Specialization<tensor::Tensor> HodgeStarType,
+        class ExecSpace>
+void apply_inverse_cochain_measure_scaling(ExecSpace const& exec_space, HodgeStarType hodge_star)
+{
+    using input_index_t = misc::convert_type_seq_to_t<tensor::TensorFullIndex, Indices1>;
+    tensor::TensorAccessor<input_index_t> input_accessor;
+    ddc::parallel_for_each(
+            "similie_apply_inverse_cochain_measure_scaling",
+            exec_space,
+            hodge_star.domain(),
+            KOKKOS_LAMBDA(typename HodgeStarType::discrete_element_type elem) {
+                auto const batch_elem =
+                        typename HodgeStarType::non_indices_domain_t::discrete_element_type(elem);
+                auto const input_elem = ddc::DiscreteElement<input_index_t>(elem);
+                auto const input_natural_elem
+                        = input_accessor.canonical_natural_element(input_elem);
+                hodge_star(elem) *= InverseMeasureRatio<
+                        0,
+                        ddc::to_type_seq_t<typename HodgeStarType::non_indices_domain_t>>::
+                        run(hodge_star.non_indices_domain(), batch_elem, input_natural_elem);
+            });
+}
+
+} // namespace detail
+
 template <
         misc::Specialization<ddc::detail::TypeSeq> Indices1,
         misc::Specialization<ddc::detail::TypeSeq> Indices2>
@@ -158,7 +312,50 @@ HodgeStarType fill_hodge_star(
             tensor::primes<Indices1>>(exec_space, metric_prod, metric);
 
     // Compute Hodge star
-    return fill_hodge_star<Indices1, Indices2>(exec_space, hodge_star, metric_det, metric_prod);
+    fill_hodge_star<Indices1, Indices2>(exec_space, hodge_star, metric_det, metric_prod);
+
+    if constexpr (misc::Specialization<MetricIndex, tensor::TensorIdentityIndex>) {
+        if (detail::can_use_cochain_measure_scaling(hodge_star.non_indices_domain())) {
+            detail::apply_forward_cochain_measure_scaling<Indices1>(exec_space, hodge_star);
+        }
+    }
+
+    return hodge_star;
+}
+
+template <
+        tensor::TensorIndex MetricIndex,
+        misc::Specialization<ddc::detail::TypeSeq> Indices1,
+        misc::Specialization<ddc::detail::TypeSeq> Indices2,
+        misc::Specialization<tensor::Tensor> HodgeStarType,
+        misc::Specialization<tensor::Tensor> MetricType,
+        class ExecSpace>
+HodgeStarType fill_inverse_hodge_star(
+        ExecSpace const& exec_space,
+        HodgeStarType inverse_hodge_star,
+        MetricType metric)
+{
+    fill_hodge_star<MetricIndex, Indices1, Indices2>(exec_space, inverse_hodge_star, metric);
+
+    if constexpr (misc::Specialization<MetricIndex, tensor::TensorIdentityIndex>) {
+        if (detail::can_use_cochain_measure_scaling(inverse_hodge_star.non_indices_domain())) {
+            detail::apply_inverse_cochain_measure_scaling<Indices1>(exec_space, inverse_hodge_star);
+        }
+    }
+
+    constexpr std::size_t in_degree = ddc::type_seq_size_v<Indices1>;
+    constexpr std::size_t out_degree = ddc::type_seq_size_v<Indices2>;
+    if constexpr ((in_degree * out_degree) % 2 == 1) {
+        ddc::parallel_for_each(
+                "similie_apply_inverse_hodge_star_sign",
+                exec_space,
+                inverse_hodge_star.domain(),
+                KOKKOS_LAMBDA(typename HodgeStarType::discrete_element_type elem) {
+                    inverse_hodge_star(elem) *= -1.;
+                });
+    }
+
+    return inverse_hodge_star;
 }
 
 } // namespace exterior
