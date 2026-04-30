@@ -5,7 +5,6 @@
 #include <array>
 #include <cmath>
 #include <cstdio>
-#include <cstdlib>
 #include <fstream>
 #include <iomanip>
 #include <sstream>
@@ -276,15 +275,6 @@ using DummyIndex = sil::tensor::Covariant<sil::tensor::ScalarIndex>;
 
 int main(int argc, char** argv)
 {
-    auto getenv_int = [](char const* name, int default_value) {
-        char const* value = std::getenv(name);
-        return value == nullptr ? default_value : std::atoi(value);
-    };
-    auto getenv_double = [](char const* name, double default_value) {
-        char const* value = std::getenv(name);
-        return value == nullptr ? default_value : std::atof(value);
-    };
-
     // Initialize PDI, Kokkos and DDC
     PC_tree_t conf_pdi = PC_parse_string(PDI_CFG);
     PC_errhandler(PC_NULL_HANDLER);
@@ -300,8 +290,7 @@ int main(int argc, char** argv)
     // Produce mesh
     ddc::Coordinate<X, Y> lower_bounds(-5., -5.);
     ddc::Coordinate<X, Y> upper_bounds(5., 5.);
-    int const nb_cells_1d = getenv_int("SIMILIE_FREE_SCALAR_FIELD_NB_CELLS", 1000);
-    ddc::DiscreteVector<DDimX, DDimY> nb_cells(nb_cells_1d, nb_cells_1d);
+    ddc::DiscreteVector<DDimX, DDimY> nb_cells(1000, 1000);
     /*
     MesherXY mesher;
     ddc::DiscreteDomain<DDimX, DDimY> mesh_xy = mesher.template mesh<
@@ -463,14 +452,13 @@ int main(int argc, char** argv)
     // ----- SOLVER -----
     // ------------------
 
-    int const nb_iter_between_exports = getenv_int("SIMILIE_FREE_SCALAR_FIELD_EXPORT_EVERY", 50);
-    int const nb_iter = getenv_int("SIMILIE_FREE_SCALAR_FIELD_NB_ITER", 10000);
+    int const nb_iter_between_exports = 50;
+    int const nb_iter = 10000;
     double const dx
             = (ddc::get<X>(upper_bounds) - ddc::get<X>(lower_bounds)) / ddc::get<DDimX>(nb_cells);
     double const dy
             = (ddc::get<Y>(upper_bounds) - ddc::get<Y>(lower_bounds)) / ddc::get<DDimY>(nb_cells);
-    double const dt_scale = getenv_double("SIMILIE_FREE_SCALAR_FIELD_DT_SCALE", .005);
-    double const dt = dt_scale * std::min(dx, dy) / std::sqrt(2.0);
+    double const dt = .005 * std::min(dx, dy) / std::sqrt(2.0);
     std::cout << "Time step = " << dt << std::endl;
     ddc::expose_to_pdi("Nt", (nb_iter - 1) / nb_iter_between_exports + 1);
     std::remove("2d_free_scalar_field.h5");
