@@ -12,19 +12,40 @@
 
 template <class... CDim>
 using MetricIndex = sil::tensor::TensorIdentityIndex<
-        sil::tensor::Contravariant<sil::tensor::MetricIndex1<CDim...>>,
-        sil::tensor::Contravariant<sil::tensor::MetricIndex2<CDim...>>>;
+        sil::tensor::Covariant<sil::tensor::MetricIndex1<CDim...>>,
+        sil::tensor::Covariant<sil::tensor::MetricIndex2<CDim...>>>;
 
 template <class InterestIndex, class Index, class... DDim>
 static auto test_derivative(auto potential)
 {
-    // Allocate and instantiate an inverse metric tensor field.
+    using PositionIndex = sil::tensor::Contravariant<
+            sil::tensor::TensorNaturalIndex<typename DDim::continuous_dimension_type...>>;
+
+    // Allocate and instantiate an identity metric tensor field.
     [[maybe_unused]] sil::tensor::TensorAccessor<
-            MetricIndex<typename DDim::continuous_dimension_type...>> inv_metric_accessor;
+            MetricIndex<typename DDim::continuous_dimension_type...>> metric_accessor;
     ddc::DiscreteDomain<DDim..., MetricIndex<typename DDim::continuous_dimension_type...>>
-            inv_metric_dom(potential.non_indices_domain(), inv_metric_accessor.domain());
-    ddc::Chunk inv_metric_alloc(inv_metric_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor inv_metric(inv_metric_alloc);
+            metric_dom(potential.non_indices_domain(), metric_accessor.domain());
+    ddc::Chunk metric_alloc(metric_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor metric(metric_alloc);
+
+    // Allocate and instantiate the position field from the mesh coordinates.
+    [[maybe_unused]] sil::tensor::TensorAccessor<PositionIndex> position_accessor;
+    ddc::DiscreteDomain<DDim..., PositionIndex>
+            position_dom(potential.non_indices_domain(), position_accessor.domain());
+    ddc::Chunk position_alloc(position_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor position(position_alloc);
+
+    ddc::host_for_each(
+            potential.non_indices_domain(),
+            [&](typename decltype(potential)::non_indices_domain_t::discrete_element_type elem) {
+                ((position
+                          .mem(elem,
+                               position_accessor.template access_element<
+                                       typename DDim::continuous_dimension_type>())
+                  = static_cast<double>(ddc::coordinate(ddc::DiscreteElement<DDim>(elem)))),
+                 ...);
+            });
 
     // Allocate and compute Laplacian
     [[maybe_unused]] sil::tensor::TensorAccessor<Index> laplacian_accessor;
@@ -38,7 +59,7 @@ static auto test_derivative(auto potential)
     sil::exterior::laplacian<
             MetricIndex<typename DDim::continuous_dimension_type...>,
             InterestIndex,
-            Index>(Kokkos::DefaultHostExecutionSpace(), laplacian, potential, inv_metric);
+            Index>(Kokkos::DefaultHostExecutionSpace(), laplacian, potential, metric, position);
     Kokkos::fence();
 
     return std::make_pair(std::move(laplacian_alloc), laplacian);
@@ -89,9 +110,7 @@ TEST(Laplacian, 1D0Form)
     sil::tensor::Tensor potential(potential_alloc);
 
     double const R = 2.;
-    double const L = ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().back()))
-                     - ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().front()));
-    double const alpha = static_cast<double>(nb_cells.template get<DDimX>()) * L / 2;
+    double const alpha = 0.5;
     ddc::host_for_each(
             potential.domain(),
             [&](ddc::DiscreteElement<DDimX, sil::tensor::Covariant<sil::tensor::ScalarIndex>>
@@ -142,9 +161,7 @@ TEST(Laplacian, 1D1Form)
     sil::tensor::Tensor potential(potential_alloc);
 
     double const R = 2.;
-    double const L = ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().back()))
-                     - ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().front()));
-    double const alpha = static_cast<double>(nb_cells.template get<DDimX>()) * 5;
+    double const alpha = 0.5;
     ddc::host_for_each(
             potential.domain(),
             [&](ddc::DiscreteElement<DDimX, sil::tensor::Covariant<Mu1>> elem) {
@@ -203,11 +220,7 @@ TEST(Laplacian, 2D0Form)
     sil::tensor::Tensor potential(potential_alloc);
 
     double const R = 2.;
-    double const L = ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().back()))
-                     - ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().front()));
-    double const alpha = (static_cast<double>(nb_cells.template get<DDimX>())
-                          * static_cast<double>(nb_cells.template get<DDimY>()))
-                         / 4 / L / L;
+    double const alpha = 0.25;
     ddc::host_for_each(
             potential.domain(),
             [&](ddc::DiscreteElement<DDimX, DDimY, sil::tensor::Covariant<sil::tensor::ScalarIndex>>
@@ -274,11 +287,7 @@ TEST(Laplacian, 2D1Form)
     sil::tensor::Tensor potential(potential_alloc);
 
     double const R = 2.;
-    double const L = ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().back()))
-                     - ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().front()));
-    double const alpha = (static_cast<double>(nb_cells.template get<DDimX>())
-                          * static_cast<double>(nb_cells.template get<DDimY>()))
-                         / 4 / L / L;
+    double const alpha = 0.25;
     ddc::host_for_each(
             potential.non_indices_domain(),
             [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
@@ -363,11 +372,7 @@ TEST(Laplacian, 3D1Form)
     sil::tensor::Tensor potential(potential_alloc);
 
     double const R = 2.;
-    double const L = ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().back()))
-                     - ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().front()));
-    double const alpha = (static_cast<double>(nb_cells.template get<DDimX>())
-                          * static_cast<double>(nb_cells.template get<DDimY>()))
-                         / 50 / L;
+    double const alpha = 0.2;
     ddc::host_for_each(
             potential.non_indices_domain(),
             [&](ddc::DiscreteElement<DDimX, DDimY, DDimZ> elem) {

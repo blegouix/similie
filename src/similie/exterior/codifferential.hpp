@@ -164,13 +164,15 @@ template <
         tensor::TensorIndex CochainTag,
         misc::Specialization<tensor::Tensor> TensorType,
         misc::Specialization<tensor::Tensor> MetricType,
+        misc::Specialization<tensor::Tensor> PositionType,
         class ExecSpace>
 codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codifferential(
         ExecSpace const& exec_space,
         codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType>
                 codifferential_tensor,
         TensorType tensor,
-        MetricType inv_metric)
+        MetricType metric,
+        PositionType position)
 {
     static_assert(tensor::is_covariant_v<TagToRemoveFromCochain>);
     using MuUpSeq = tensor::upper_t<ddc::to_type_seq_t<tensor::natural_domain_t<CochainTag>>>;
@@ -189,16 +191,13 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
     // Hodge star
     [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain> hodge_star_accessor;
     ddc::cartesian_prod_t<typename MetricType::non_indices_domain_t, HodgeStarDomain>
-            hodge_star_dom(inv_metric.non_indices_domain(), hodge_star_accessor.domain());
+            hodge_star_dom(metric.non_indices_domain(), hodge_star_accessor.domain());
     ddc::Chunk hodge_star_alloc(
             hodge_star_dom,
             ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
     sil::tensor::Tensor hodge_star(hodge_star_alloc);
 
-    sil::exterior::fill_hodge_star<
-            sil::tensor::upper_t<MetricIndex>,
-            MuUpSeq,
-            NuLowSeq>(exec_space, hodge_star, inv_metric);
+    sil::exterior::fill_hodge_star<MuUpSeq, NuLowSeq>(exec_space, hodge_star, metric, position);
 
     // Dual tensor
     [[maybe_unused]] tensor::TensorAccessor<
@@ -248,16 +247,14 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
     [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain2>
             hodge_star_accessor2;
     ddc::cartesian_prod_t<typename MetricType::non_indices_domain_t, HodgeStarDomain2>
-            hodge_star_dom2(inv_metric.non_indices_domain(), hodge_star_accessor2.domain());
+            hodge_star_dom2(metric.non_indices_domain(), hodge_star_accessor2.domain());
     ddc::Chunk hodge_star_alloc2(
             hodge_star_dom2,
             ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
     sil::tensor::Tensor hodge_star2(hodge_star_alloc2);
 
-    sil::exterior::fill_hodge_star<
-            sil::tensor::upper_t<MetricIndex>,
-            RhoUpSeq,
-            SigmaLowSeq>(exec_space, hodge_star2, inv_metric);
+    sil::exterior::
+            fill_hodge_star<RhoUpSeq, SigmaLowSeq>(exec_space, hodge_star2, metric, position);
 
     // Codifferential
     SIMILIE_DEBUG_LOG("similie_compute_codifferential");

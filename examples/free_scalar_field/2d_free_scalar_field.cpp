@@ -343,18 +343,6 @@ int main(int argc, char** argv)
             });
     */
 
-    // Invert metric
-    [[maybe_unused]] sil::tensor::TensorAccessor<sil::tensor::upper_t<MetricIndex>>
-            inv_metric_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::upper_t<MetricIndex>>
-            inv_metric_dom(mesh_xy, inv_metric_accessor.domain());
-    ddc::Chunk inv_metric_alloc(inv_metric_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor inv_metric(inv_metric_alloc);
-    /* // Metric inversion generates small noise which makes the simulation unsable so we prefer to rely on an identity tensor index
-    sil::tensor::fill_inverse_metric<
-            MetricIndex>(Kokkos::DefaultExecutionSpace(), inv_metric, metric);
-    */
-
     // Potential
     [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> potential_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, DummyIndex>
@@ -521,7 +509,8 @@ int main(int argc, char** argv)
                 Kokkos::DefaultExecutionSpace(),
                 spatial_moments_div,
                 spatial_moments,
-                inv_metric);
+                metric,
+                position);
 
         // Compute dpi_0/dx^0 by solving - dpi_0/dx^0 + dpi_\alpha/dx^\alpha = -dH/dphi and advect pi_0 by a time step dx^0. Also Then, perform the second phi half-advection by solving dphi/dx^0 = -dH/dpi_0
         double const dS = (ddc::get<X>(upper_bounds) - ddc::get<X>(lower_bounds))

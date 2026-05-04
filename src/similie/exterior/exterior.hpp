@@ -14,3 +14,4 @@
 #include "laplacian.hpp"
 #include "local_chain.hpp"
 #include "simplex.hpp"
+#include "volume.hpp"

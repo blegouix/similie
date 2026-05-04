@@ -171,16 +171,6 @@ int main(int argc, char** argv)
                 metric(elem, metric.accessor().access_element<Y, Y>()) = 1.;
             });
 
-    // Invert metric
-    [[maybe_unused]] sil::tensor::TensorAccessor<sil::tensor::upper_t<MetricIndex>>
-            inv_metric_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::upper_t<MetricIndex>>
-            inv_metric_dom(mesh_xy, inv_metric_accessor.domain());
-    ddc::Chunk inv_metric_alloc(inv_metric_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor inv_metric(inv_metric_alloc);
-    sil::tensor::fill_inverse_metric<
-            MetricIndex>(Kokkos::DefaultExecutionSpace(), inv_metric, metric);
-
     // Potential
     [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> potential_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, DummyIndex>
@@ -191,9 +181,7 @@ int main(int argc, char** argv)
     double const R = 2.;
     double const L = ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().back()))
                      - ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().front()));
-    double const alpha = (static_cast<double>(nb_cells.template get<DDimX>())
-                          * static_cast<double>(nb_cells.template get<DDimY>()))
-                         / L / 2 / L / 2;
+    double const alpha = 0.25;
     ddc::parallel_for_each(
             potential.domain(),
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
@@ -224,7 +212,7 @@ int main(int argc, char** argv)
     sil::exterior::laplacian<
             MetricIndex,
             NuLow,
-            DummyIndex>(Kokkos::DefaultExecutionSpace(), laplacian, potential, inv_metric);
+            DummyIndex>(Kokkos::DefaultExecutionSpace(), laplacian, potential, metric, position);
     Kokkos::fence();
 
     auto laplacian_host
