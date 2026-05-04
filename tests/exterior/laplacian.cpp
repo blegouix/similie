@@ -287,30 +287,22 @@ TEST(Laplacian, 2D1Form)
     sil::tensor::Tensor potential(potential_alloc);
 
     double const R = 2.;
-    double const alpha = 0.25;
     ddc::host_for_each(
             potential.non_indices_domain(),
             [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
+                double const x_coord = ddc::coordinate(ddc::DiscreteElement<DDimX>(elem));
+                double const y_coord = ddc::coordinate(ddc::DiscreteElement<DDimY>(elem));
                 double const r = Kokkos::sqrt(
-                        static_cast<double>(
-                                ddc::coordinate(ddc::DiscreteElement<DDimX>(elem))
-                                * ddc::coordinate(ddc::DiscreteElement<DDimX>(elem)))
-                        + static_cast<double>(
-                                ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))
-                                * ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))));
-                double const theta = Kokkos::
-                        atan2(ddc::coordinate(ddc::DiscreteElement<DDimY>(elem)),
-                              ddc::coordinate(ddc::DiscreteElement<DDimX>(elem)));
+                        static_cast<double>(x_coord * x_coord)
+                        + static_cast<double>(y_coord * y_coord));
                 if (r <= R) {
-                    potential.mem(elem, potential_accessor.access_element<X>())
-                            = alpha * r * r * Kokkos::sin(theta);
-                    potential.mem(elem, potential_accessor.access_element<Y>())
-                            = -alpha * r * r * Kokkos::cos(theta);
+                    double const factor = r / 3. - R / 2.;
+                    potential.mem(elem, potential_accessor.access_element<X>()) = y_coord * factor;
+                    potential.mem(elem, potential_accessor.access_element<Y>()) = -x_coord * factor;
                 } else {
-                    potential.mem(elem, potential_accessor.access_element<X>())
-                            = -alpha * R * R * (2 * Kokkos::log(R / r) - 1) * Kokkos::sin(theta);
-                    potential.mem(elem, potential_accessor.access_element<Y>())
-                            = alpha * R * R * (2 * Kokkos::log(R / r) - 1) * Kokkos::cos(theta);
+                    double const factor = -R * R * R / (6. * r * r);
+                    potential.mem(elem, potential_accessor.access_element<X>()) = y_coord * factor;
+                    potential.mem(elem, potential_accessor.access_element<Y>()) = -x_coord * factor;
                 }
             });
 
