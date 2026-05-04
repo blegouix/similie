@@ -26,12 +26,14 @@ template <
         tensor::TensorIndex CochainTag,
         misc::Specialization<tensor::Tensor> TensorType,
         misc::Specialization<tensor::Tensor> MetricType,
+        misc::Specialization<tensor::Tensor> PositionType,
         class ExecSpace>
 TensorType codifferential_of_coboundary(
         ExecSpace const& exec_space,
         TensorType out_tensor,
         TensorType tensor,
-        MetricType inv_metric)
+        MetricType metric,
+        PositionType position)
 {
     // Coboundary
     [[maybe_unused]] tensor::TensorAccessor<coboundary_index_t<LaplacianDummyIndex, CochainTag>>
@@ -53,7 +55,7 @@ TensorType codifferential_of_coboundary(
             LaplacianDummyIndex,
             coboundary_index_t<
                     LaplacianDummyIndex,
-                    CochainTag>>(exec_space, out_tensor, derivative_tensor, inv_metric);
+                    CochainTag>>(exec_space, out_tensor, derivative_tensor, metric, position);
 
     return out_tensor;
 }
@@ -64,12 +66,14 @@ template <
         tensor::TensorIndex CochainTag,
         misc::Specialization<tensor::Tensor> TensorType,
         misc::Specialization<tensor::Tensor> MetricType,
+        misc::Specialization<tensor::Tensor> PositionType,
         class ExecSpace>
 TensorType coboundary_of_codifferential(
         ExecSpace const& exec_space,
         TensorType out_tensor,
         TensorType tensor,
-        MetricType inv_metric)
+        MetricType metric,
+        PositionType position)
 {
     // Codifferential
     [[maybe_unused]] tensor::TensorAccessor<codifferential_index_t<LaplacianDummyIndex, CochainTag>>
@@ -88,7 +92,7 @@ TensorType coboundary_of_codifferential(
     sil::exterior::codifferential<
             MetricIndex,
             LaplacianDummyIndex,
-            CochainTag>(exec_space, codifferential_tensor, tensor, inv_metric);
+            CochainTag>(exec_space, codifferential_tensor, tensor, metric, position);
 
     // Coboundary
     sil::exterior::deriv<
@@ -113,12 +117,14 @@ template <
         tensor::TensorIndex CochainTag,
         misc::Specialization<tensor::Tensor> TensorType,
         misc::Specialization<tensor::Tensor> MetricType,
+        misc::Specialization<tensor::Tensor> PositionType,
         class ExecSpace>
 TensorType laplacian(
         ExecSpace const& exec_space,
         TensorType laplacian_tensor,
         TensorType tensor,
-        MetricType inv_metric)
+        MetricType metric,
+        PositionType position)
 {
     static_assert(tensor::is_covariant_v<LaplacianDummyIndex>);
     using LaplacianDummyIndex2 = tensor::Covariant<
@@ -128,7 +134,7 @@ TensorType laplacian(
         detail::codifferential_of_coboundary<
                 MetricIndex,
                 LaplacianDummyIndex2,
-                CochainTag>(exec_space, laplacian_tensor, tensor, inv_metric);
+                CochainTag>(exec_space, laplacian_tensor, tensor, metric, position);
     } else if constexpr (CochainTag::rank() < LaplacianDummyIndex::size()) {
         auto tmp_alloc = ddc::create_mirror(exec_space, laplacian_tensor);
         tensor::Tensor tmp(tmp_alloc);
@@ -138,11 +144,11 @@ TensorType laplacian(
         detail::codifferential_of_coboundary<
                 MetricIndex,
                 LaplacianDummyIndex2,
-                CochainTag>(exec_spaces[0], laplacian_tensor, tensor, inv_metric);
+                CochainTag>(exec_spaces[0], laplacian_tensor, tensor, metric, position);
         detail::coboundary_of_codifferential<
                 MetricIndex,
                 LaplacianDummyIndex,
-                CochainTag>(exec_spaces[1], tmp, tensor, inv_metric);
+                CochainTag>(exec_spaces[1], tmp, tensor, metric, position);
         exec_spaces[0].fence();
         exec_spaces[1].fence();
 
@@ -158,7 +164,7 @@ TensorType laplacian(
         detail::coboundary_of_codifferential<
                 MetricIndex,
                 LaplacianDummyIndex,
-                CochainTag>(exec_space, laplacian_tensor, tensor, inv_metric);
+                CochainTag>(exec_space, laplacian_tensor, tensor, metric, position);
     } else {
         assert(false && "Unsupported differential form in Laplacian operator");
     }

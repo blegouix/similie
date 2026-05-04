@@ -71,10 +71,20 @@ The coboundary operator associates to a \f$k-\f$cochain a \f$k+1-\f$cosimplex or
 
 ### Hodge star operator
 
-The Hodge star operator implements the formula:
+The Hodge star operator is implemented as a discrete exterior-calculus Hodge star. For a
+\f$k\f$-simplex \f$\sigma\f$ in an \f$n\f$-dimensional mesh, its diagonal action is defined from
+the ratio between the volume of the dual \f$(n-k)\f$-cell and the volume of the primal
+\f$k\f$-simplex:
 
 \f\[
-\star^{i_1, \dots, i_k}_{j_{k+1}, \dots, j_n} = \frac{\sqrt{\left|\det [g_{ab}]\right|}}{k!} g^{i_1 j_1}\cdots g^{i_k j_k} \,\varepsilon_{j_1, \dots, j_n}
+\star_\sigma = \frac{|\star \sigma|}{|\sigma|}
 \f\]
 
-With \f$g\f$ the metric and \f$\varepsilon\f$ the Levi-Civita tensor. It is expected to be applied on a differential form \f$\omega_{i_1, \dots, i_k}\f$.
+The primal and dual volumes are evaluated locally from:
+
+- a position field defined at mesh nodes,
+- a metric field defined at mesh nodes.
+
+The metric is used to build a local Gram matrix from edge vectors, from which simplex and dual
+simplex volumes are obtained. The current implementation supports circumcentric dual cells by
+default, with a barycentric strategy also available at compile time.

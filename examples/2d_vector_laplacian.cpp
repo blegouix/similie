@@ -175,16 +175,6 @@ int main(int argc, char** argv)
                 metric(elem, metric.accessor().access_element<Y, Y>()) = 1.;
             });
 
-    // Invert metric
-    [[maybe_unused]] sil::tensor::TensorAccessor<sil::tensor::upper_t<MetricIndex>>
-            inv_metric_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::upper_t<MetricIndex>>
-            inv_metric_dom(mesh_xy, inv_metric_accessor.domain());
-    ddc::Chunk inv_metric_alloc(inv_metric_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor inv_metric(inv_metric_alloc);
-    sil::tensor::fill_inverse_metric<
-            MetricIndex>(Kokkos::DefaultExecutionSpace(), inv_metric, metric);
-
     // Potential
     [[maybe_unused]] sil::tensor::TensorAccessor<MuLow> potential_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, MuLow>
@@ -193,35 +183,23 @@ int main(int argc, char** argv)
     sil::tensor::Tensor potential(potential_alloc);
 
     double const R = 2.;
-    double const L = ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().back()))
-                     - ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().front()));
-    double const alpha = (static_cast<double>(nb_cells.template get<DDimX>())
-                          * static_cast<double>(nb_cells.template get<DDimY>()))
-                         / L / 2 / L / 2;
     ddc::parallel_for_each(
             Kokkos::DefaultExecutionSpace(),
             potential.non_indices_domain(),
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
+                double const x_coord = ddc::coordinate(ddc::DiscreteElement<DDimX>(elem));
+                double const y_coord = ddc::coordinate(ddc::DiscreteElement<DDimY>(elem));
                 double const r = Kokkos::sqrt(
-                        static_cast<double>(
-                                ddc::coordinate(ddc::DiscreteElement<DDimX>(elem))
-                                * ddc::coordinate(ddc::DiscreteElement<DDimX>(elem)))
-                        + static_cast<double>(
-                                ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))
-                                * ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))));
-                double const theta = Kokkos::
-                        atan2(ddc::coordinate(ddc::DiscreteElement<DDimY>(elem)),
-                              ddc::coordinate(ddc::DiscreteElement<DDimX>(elem)));
+                        static_cast<double>(x_coord * x_coord)
+                        + static_cast<double>(y_coord * y_coord));
                 if (r <= R) {
-                    potential.mem(elem, potential_accessor.access_element<X>())
-                            = alpha * r * r * Kokkos::sin(theta);
-                    potential.mem(elem, potential_accessor.access_element<Y>())
-                            = -alpha * r * r * Kokkos::cos(theta);
+                    double const factor = r / 3. - R / 2.;
+                    potential.mem(elem, potential_accessor.access_element<X>()) = y_coord * factor;
+                    potential.mem(elem, potential_accessor.access_element<Y>()) = -x_coord * factor;
                 } else {
-                    potential.mem(elem, potential_accessor.access_element<X>())
-                            = -alpha * R * R * (2 * Kokkos::log(R / r) - 1) * Kokkos::sin(theta);
-                    potential.mem(elem, potential_accessor.access_element<Y>())
-                            = alpha * R * R * (2 * Kokkos::log(R / r) - 1) * Kokkos::cos(theta);
+                    double const factor = -R * R * R / (6. * r * r);
+                    potential.mem(elem, potential_accessor.access_element<X>()) = y_coord * factor;
+                    potential.mem(elem, potential_accessor.access_element<Y>()) = -x_coord * factor;
                 }
             });
     auto potential_host
@@ -238,7 +216,7 @@ int main(int argc, char** argv)
     sil::exterior::laplacian<
             MetricIndex,
             MuLow,
-            MuLow>(Kokkos::DefaultExecutionSpace(), laplacian, potential, inv_metric);
+            MuLow>(Kokkos::DefaultExecutionSpace(), laplacian, potential, metric, position);
     Kokkos::fence();
 
     auto laplacian_host
