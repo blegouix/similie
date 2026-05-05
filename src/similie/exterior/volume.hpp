@@ -121,37 +121,41 @@ KOKKOS_FUNCTION double dual_volume_factor(std::array<bool, N> const& active_dims
 } // namespace detail
 
 template <std::size_t N, class MetricType, class PositionType, class BatchElem>
-KOKKOS_FUNCTION double simplex_volume(
-        MetricType metric,
-        PositionType position,
-        BatchElem elem,
-        std::array<bool, N> const& active_dims)
+struct SimplexVolume
 {
-    double const det = detail::determinant_from_mask(
-            tensor::gram_matrix<
-                    MetricType,
-                    PositionType,
-                    BatchElem,
-                    N>(metric, position, elem, active_dims),
-            active_dims);
-    return Kokkos::sqrt(Kokkos::abs(det));
-}
+    KOKKOS_FUNCTION static double value(
+            MetricType metric,
+            PositionType position,
+            BatchElem elem,
+            std::array<bool, N> const& active_dims)
+    {
+        double const det = detail::determinant_from_mask(
+                tensor::GramMatrix<MetricType, PositionType, BatchElem, N>::
+                        value(metric, position, elem, active_dims),
+                active_dims);
+        return Kokkos::sqrt(Kokkos::abs(det));
+    }
+};
 
 template <
-        DualStrategy Strategy = DualStrategy::Circumcentric,
+        DualStrategy Strategy,
         std::size_t N,
         class MetricType,
         class PositionType,
         class BatchElem>
-KOKKOS_FUNCTION double dual_simplex_volume(
-        MetricType metric,
-        PositionType position,
-        BatchElem elem,
-        std::array<bool, N> const& active_dims)
+struct DualSimplexVolume
 {
-    return detail::dual_volume_factor<Strategy>(active_dims)
-           * simplex_volume<N>(metric, position, elem, detail::complement(active_dims));
-}
+    KOKKOS_FUNCTION static double value(
+            MetricType metric,
+            PositionType position,
+            BatchElem elem,
+            std::array<bool, N> const& active_dims)
+    {
+        return detail::dual_volume_factor<Strategy>(active_dims)
+               * SimplexVolume<N, MetricType, PositionType, BatchElem>::
+                       value(metric, position, elem, detail::complement(active_dims));
+    }
+};
 
 } // namespace exterior
 

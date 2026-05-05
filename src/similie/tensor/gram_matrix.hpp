@@ -148,21 +148,24 @@ struct GramMatrixBuilder<ddc::detail::TypeSeq<DDim...>, PositionIndex, PositionT
 } // namespace detail
 
 template <class MetricType, class PositionType, class BatchElem, std::size_t N>
-KOKKOS_FUNCTION std::array<double, N * N> gram_matrix(
-        MetricType metric,
-        PositionType position,
-        BatchElem elem,
-        std::array<bool, N> const& active_dims)
+struct GramMatrix
 {
-    using PositionIndex = ddc::
-            type_seq_element_t<0, ddc::to_type_seq_t<typename PositionType::indices_domain_t>>;
-    return detail::GramMatrixBuilder<
-            ddc::to_type_seq_t<typename PositionType::non_indices_domain_t>,
-            PositionIndex,
-            PositionType,
-            BatchElem,
-            N>::run(metric, position, elem, active_dims);
-}
+    KOKKOS_FUNCTION static std::array<double, N * N> value(
+            MetricType metric,
+            PositionType position,
+            BatchElem elem,
+            std::array<bool, N> const& active_dims)
+    {
+        using PositionIndex = ddc::
+                type_seq_element_t<0, ddc::to_type_seq_t<typename PositionType::indices_domain_t>>;
+        return detail::GramMatrixBuilder<
+                ddc::to_type_seq_t<typename PositionType::non_indices_domain_t>,
+                PositionIndex,
+                PositionType,
+                BatchElem,
+                N>::run(metric, position, elem, active_dims);
+    }
+};
 
 } // namespace tensor
 
