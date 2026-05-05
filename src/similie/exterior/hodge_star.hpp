@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2026 Baptiste Legouix
+// SPDX-FileCopyrightText: 2024 Baptiste Legouix
 // SPDX-License-Identifier: MIT
 
 #pragma once
@@ -147,7 +147,7 @@ template <
         class MetricType,
         class PositionType,
         class BatchElem>
-KOKKOS_FUNCTION double hodge_star_entry(
+KOKKOS_FUNCTION double hodge_star(
         MetricType metric,
         PositionType position,
         BatchElem elem,
@@ -199,7 +199,7 @@ HodgeStarType fill_hodge_star(
             hodge_star.domain(),
             KOKKOS_LAMBDA(
                     typename HodgeStarType::discrete_domain_type::discrete_element_type elem) {
-                hodge_star.mem(elem) = detail::hodge_star_entry<Strategy, Indices1, Indices2>(
+                hodge_star.mem(elem) = detail::hodge_star<Strategy, Indices1, Indices2>(
                         metric,
                         position,
                         typename HodgeStarType::non_indices_domain_t::discrete_element_type(elem),

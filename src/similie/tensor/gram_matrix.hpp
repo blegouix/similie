@@ -23,7 +23,7 @@ KOKKOS_FUNCTION constexpr ddc::DiscreteElement<DDim...> shift_along_dimension(
         std::size_t const dim_id,
         std::ptrdiff_t const offset)
 {
-    int const dummy[]
+    std::array<int, sizeof...(DDim)> const dummy
             = {((dim_id
                  == ddc::type_seq_rank_v<
                          typename DDim::continuous_dimension_type,

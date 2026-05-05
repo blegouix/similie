@@ -179,8 +179,6 @@ int main(int argc, char** argv)
     sil::tensor::Tensor potential(potential_alloc);
 
     double const R = 2.;
-    double const L = ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().back()))
-                     - ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().front()));
     double const alpha = 0.25;
     ddc::parallel_for_each(
             potential.domain(),

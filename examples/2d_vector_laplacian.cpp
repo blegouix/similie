@@ -187,19 +187,27 @@ int main(int argc, char** argv)
             Kokkos::DefaultExecutionSpace(),
             potential.non_indices_domain(),
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
-                double const x_coord = ddc::coordinate(ddc::DiscreteElement<DDimX>(elem));
-                double const y_coord = ddc::coordinate(ddc::DiscreteElement<DDimY>(elem));
                 double const r = Kokkos::sqrt(
-                        static_cast<double>(x_coord * x_coord)
-                        + static_cast<double>(y_coord * y_coord));
+                        static_cast<double>(
+                                ddc::coordinate(ddc::DiscreteElement<DDimX>(elem))
+                                * ddc::coordinate(ddc::DiscreteElement<DDimX>(elem)))
+                        + static_cast<double>(
+                                ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))
+                                * ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))));
                 if (r <= R) {
-                    double const factor = r / 3. - R / 2.;
-                    potential.mem(elem, potential_accessor.access_element<X>()) = y_coord * factor;
-                    potential.mem(elem, potential_accessor.access_element<Y>()) = -x_coord * factor;
+                    potential.mem(elem, potential_accessor.access_element<X>())
+                            = ddc::coordinate(ddc::DiscreteElement<DDimY>(elem))
+                              * (r / 3. - R / 2.);
+                    potential.mem(elem, potential_accessor.access_element<Y>())
+                            = -ddc::coordinate(ddc::DiscreteElement<DDimX>(elem))
+                              * (r / 3. - R / 2.);
                 } else {
-                    double const factor = -R * R * R / (6. * r * r);
-                    potential.mem(elem, potential_accessor.access_element<X>()) = y_coord * factor;
-                    potential.mem(elem, potential_accessor.access_element<Y>()) = -x_coord * factor;
+                    potential.mem(elem, potential_accessor.access_element<X>())
+                            = -ddc::coordinate(ddc::DiscreteElement<DDimY>(elem)) * R * R * R
+                              / (6. * r * r);
+                    potential.mem(elem, potential_accessor.access_element<Y>())
+                            = ddc::coordinate(ddc::DiscreteElement<DDimX>(elem)) * R * R * R
+                              / (6. * r * r);
                 }
             });
     auto potential_host
