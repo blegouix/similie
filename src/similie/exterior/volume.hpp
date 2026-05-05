@@ -123,7 +123,7 @@ KOKKOS_FUNCTION double dual_volume_factor(std::array<bool, N> const& active_dims
 template <std::size_t N, class MetricType, class PositionType, class BatchElem>
 struct SimplexVolume
 {
-    KOKKOS_FUNCTION static double value(
+    KOKKOS_FUNCTION static double run(
             MetricType metric,
             PositionType position,
             BatchElem elem,
@@ -145,7 +145,7 @@ template <
         class BatchElem>
 struct DualSimplexVolume
 {
-    KOKKOS_FUNCTION static double value(
+    KOKKOS_FUNCTION static double run(
             MetricType metric,
             PositionType position,
             BatchElem elem,
@@ -153,7 +153,7 @@ struct DualSimplexVolume
     {
         return detail::dual_volume_factor<Strategy>(active_dims)
                * SimplexVolume<N, MetricType, PositionType, BatchElem>::
-                       value(metric, position, elem, detail::complement(active_dims));
+                       run(metric, position, elem, detail::complement(active_dims));
     }
 };
 

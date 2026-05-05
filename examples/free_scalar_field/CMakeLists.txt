@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Baptiste Legouix
 # SPDX-License-Identifier: MIT
 
+set(Python3_EXECUTABLE "/usr/bin/python3" CACHE FILEPATH "Python interpreter used for free_scalar_field generation" FORCE)
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 set(SCALAR_FIELD_HAMILTONIAN_FUNCTOR_GENERATOR

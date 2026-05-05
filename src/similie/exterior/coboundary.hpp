@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <array>
+
 #include <ddc/ddc.hpp>
 
 #include <similie/misc/are_all_same.hpp>
@@ -194,6 +196,73 @@ struct CoboundaryDummyIndex
 {
 };
 
+template <tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag>
+struct PointwiseCoboundary
+{
+    template <
+            class OutTensorType,
+            class ValueAtFunc,
+            class BatchDomain,
+            class ChainType,
+            class LowerChainType,
+            class Elem>
+    KOKKOS_FUNCTION static void run(
+            OutTensorType coboundary_tensor,
+            ValueAtFunc value_at,
+            BatchDomain batch_domain,
+            ChainType chain,
+            LowerChainType lower_chain,
+            Elem elem)
+    {
+        constexpr std::size_t BOUNDARY_SIZE = 2 * (CochainTag::rank() + 1);
+        using BoundarySimplex = typename LowerChainType::simplex_type;
+        using MemorySpace = typename OutTensorType::memory_space;
+        using BoundaryDomain = ddc::DiscreteDomain<CoboundaryDummyIndex>;
+        using BoundaryChunk = ddc::
+                ChunkSpan<BoundarySimplex, BoundaryDomain, Kokkos::layout_right, MemorySpace>;
+        using BoundaryValuesChunk
+                = ddc::ChunkSpan<double, BoundaryDomain, Kokkos::layout_right, MemorySpace>;
+
+        std::array<BoundarySimplex, BOUNDARY_SIZE> simplex_boundary_storage {};
+        std::array<double, BOUNDARY_SIZE> boundary_values_storage {};
+        BoundaryDomain const boundary_domain(
+                ddc::DiscreteElement<CoboundaryDummyIndex>(0),
+                ddc::DiscreteVector<CoboundaryDummyIndex>(BOUNDARY_SIZE));
+        BoundaryChunk simplex_boundary(simplex_boundary_storage.data(), boundary_domain);
+        BoundaryValuesChunk boundary_values(boundary_values_storage.data(), boundary_domain);
+
+        auto cochain = Cochain(chain, coboundary_tensor);
+        for (auto i = cochain.begin(); i < cochain.end(); ++i) {
+            Simplex
+                    simplex(std::integral_constant<std::size_t, CochainTag::rank() + 1> {},
+                            elem,
+                            (*i).discrete_vector());
+            auto boundary_chain = boundary(simplex_boundary.allocation_kokkos_view(), simplex);
+            for (auto j = boundary_chain.begin(); j < boundary_chain.end(); ++j) {
+                std::size_t const boundary_id
+                        = Kokkos::Experimental::distance(boundary_chain.begin(), j);
+                auto const sampled_elem
+                        = misc::domain_contains(batch_domain, (*j).discrete_element())
+                                  ? (*j).discrete_element()
+                                  : elem;
+                boundary_values(ddc::DiscreteElement<CoboundaryDummyIndex>(boundary_id)) = value_at(
+                        sampled_elem,
+                        ddc::DiscreteElement<CochainTag>(Kokkos::Experimental::distance(
+                                lower_chain.begin(),
+                                misc::detail::
+                                        find(lower_chain.begin(),
+                                             lower_chain.end(),
+                                             (*j).discrete_vector()))));
+            }
+            Cochain cochain_boundary(boundary_chain, boundary_values.allocation_kokkos_view());
+            coboundary_tensor.mem(
+                    ddc::DiscreteElement<coboundary_index_t<TagToAddToCochain, CochainTag>>(
+                            Kokkos::Experimental::distance(cochain.begin(), i)))
+                    = cochain_boundary.integrate();
+        }
+    }
+};
+
 } // namespace detail
 
 template <
@@ -203,6 +272,25 @@ template <
         class ExecSpace>
 struct Coboundary<TagToAddToCochain, CochainTag, TensorType, ExecSpace>
 {
+    KOKKOS_FUNCTION static void run(
+            auto coboundary_tensor,
+            TensorType tensor,
+            auto chain,
+            auto lower_chain,
+            typename TensorType::non_indices_domain_t::discrete_element_type elem)
+    {
+        auto value_at = [&](auto sampled_elem, auto cochain_elem) {
+            return tensor.mem(sampled_elem, cochain_elem);
+        };
+        detail::PointwiseCoboundary<TagToAddToCochain, CochainTag>::
+                run(coboundary_tensor,
+                    value_at,
+                    tensor.non_indices_domain(),
+                    chain,
+                    lower_chain,
+                    elem);
+    }
+
     static coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> run(
             ExecSpace const& exec_space,
             coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
@@ -211,51 +299,6 @@ struct Coboundary<TagToAddToCochain, CochainTag, TensorType, ExecSpace>
         ddc::DiscreteDomain batch_dom
                 = ddc::remove_dims_of<coboundary_index_t<TagToAddToCochain, CochainTag>>(
                         coboundary_tensor.domain());
-
-        // buffer to store the K-chain containing the boundary of each K+1-simplex of the mesh
-        ddc::Chunk simplex_boundary_alloc(
-                ddc::cartesian_prod_t<
-                        ddc::remove_dims_of_t<
-                                typename coboundary_tensor_t<
-                                        TagToAddToCochain,
-                                        CochainTag,
-                                        TensorType>::discrete_domain_type,
-                                coboundary_index_t<TagToAddToCochain, CochainTag>>,
-                        ddc::DiscreteDomain<detail::CoboundaryDummyIndex>>(
-                        batch_dom,
-                        ddc::DiscreteDomain<detail::CoboundaryDummyIndex>(
-                                ddc::DiscreteElement<detail::CoboundaryDummyIndex>(0),
-                                ddc::DiscreteVector<detail::CoboundaryDummyIndex>(
-                                        2 * (CochainTag::rank() + 1)))),
-                ddc::KokkosAllocator<
-                        simplex_for_domain_t<
-                                CochainTag::rank(),
-                                ddc::remove_dims_of_t<
-                                        typename coboundary_tensor_t<
-                                                TagToAddToCochain,
-                                                CochainTag,
-                                                TensorType>::discrete_domain_type,
-                                        coboundary_index_t<TagToAddToCochain, CochainTag>>>,
-                        typename ExecSpace::memory_space>());
-        ddc::ChunkSpan simplex_boundary(simplex_boundary_alloc);
-
-        // buffer to store the values of the K-cochain on the boundary of each K+1-cosimplex of the mesh
-        ddc::Chunk boundary_values_alloc(
-                ddc::cartesian_prod_t<
-                        ddc::remove_dims_of_t<
-                                typename coboundary_tensor_t<
-                                        TagToAddToCochain,
-                                        CochainTag,
-                                        TensorType>::discrete_domain_type,
-                                coboundary_index_t<TagToAddToCochain, CochainTag>>,
-                        ddc::DiscreteDomain<detail::CoboundaryDummyIndex>>(
-                        batch_dom,
-                        ddc::DiscreteDomain<detail::CoboundaryDummyIndex>(
-                                ddc::DiscreteElement<detail::CoboundaryDummyIndex>(0),
-                                ddc::DiscreteVector<detail::CoboundaryDummyIndex>(
-                                        2 * (CochainTag::rank() + 1)))),
-                ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
-        ddc::ChunkSpan boundary_values(boundary_values_alloc);
 
         // compute the tangent K+1-basis for each node of the mesh. This is a local K+1-chain.
         auto chain = tangent_basis<
@@ -278,50 +321,7 @@ struct Coboundary<TagToAddToCochain, CochainTag, TensorType, ExecSpace>
                 exec_space,
                 batch_dom,
                 KOKKOS_LAMBDA(typename decltype(batch_dom)::discrete_element_type elem) {
-                    // declare a K+1-cochain storing the K+1-cosimplices of the output cochain for the current tangent space and iterate over them
-                    auto cochain = Cochain(chain, coboundary_tensor[elem]);
-                    for (auto i = cochain.begin(); i < cochain.end(); ++i) {
-                        // extract the K+1-simplex from the current K+1-cosimplex (this is not absolutly trivial because the cochain is based on a LocalChain)
-                        Simplex simplex = Simplex(
-                                std::integral_constant<std::size_t, CochainTag::rank() + 1> {},
-                                elem,
-                                (*i).discrete_vector());
-                        // compute its boundary as a K-chain in the simplex_boundary buffer
-                        Chain boundary_chain = boundary(
-                                simplex_boundary[elem].allocation_kokkos_view(),
-                                simplex);
-                        // iterate over every K-simplex forming the boundary
-                        for (auto j = boundary_chain.begin(); j < boundary_chain.end(); ++j) {
-                            // extract from the input K-cochain the values associated to every K-simplex of the boundary and fill the boundary_values buffer
-                            boundary_values[elem].allocation_kokkos_view()(
-                                    Kokkos::Experimental::distance(boundary_chain.begin(), j))
-                                    = tensor.mem(
-                                            misc::domain_contains(
-                                                    tensor.domain(),
-                                                    (*j).discrete_element())
-                                                    ? (*j).discrete_element()
-                                                    : elem, // TODO this is an assumption on boundary condition (free boundary), needs to be generalized
-                                            ddc::DiscreteElement<CochainTag>(
-                                                    Kokkos::Experimental::distance(
-                                                            lower_chain.begin(),
-                                                            misc::detail::
-                                                                    find(lower_chain.begin(),
-                                                                         lower_chain.end(),
-                                                                         (*j).discrete_vector()))));
-                        }
-                        // build the cochain of the boundary
-                        Cochain cochain_boundary(
-                                boundary_chain,
-                                boundary_values[elem].allocation_kokkos_view());
-                        // integrate over the cochain forming the boundary to compute the coboundary
-                        // (*i).value() = cochain_boundary.integrate(); // Cannot be used because CochainIterator::operator* does not return a reference
-                        coboundary_tensor
-                                .mem(elem,
-                                     ddc::DiscreteElement<
-                                             coboundary_index_t<TagToAddToCochain, CochainTag>>(
-                                             Kokkos::Experimental::distance(cochain.begin(), i)))
-                                = cochain_boundary.integrate();
-                    }
+                    Coboundary::run(coboundary_tensor[elem], tensor, chain, lower_chain, elem);
                 });
 
         return coboundary_tensor;

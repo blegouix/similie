@@ -260,74 +260,6 @@ KOKKOS_FUNCTION double submatrix_determinant(
     }
 }
 
-template <
-        DualStrategy Strategy,
-        class Indices1,
-        class Indices2,
-        class MetricType,
-        class PositionType,
-        class BatchElem>
-struct DiscreteHodgeStar
-{
-    KOKKOS_FUNCTION static double value(
-            MetricType metric,
-            PositionType position,
-            BatchElem elem,
-            auto natural_elem)
-    {
-        constexpr std::size_t N = AmbientDimension<Indices1, Indices2>::value;
-        std::array const source_ids = ExtractIds<Indices1>::run(natural_elem);
-        std::array const target_ids = ExtractIds<Indices2>::run(natural_elem);
-
-        if (!has_unique_ids<N>(source_ids) || !has_unique_ids<N>(target_ids)
-            || !is_complete_permutation<N>(source_ids, target_ids)) {
-            return 0.;
-        }
-
-        std::array<bool, N> const active_dims = active_dimensions<N>(source_ids);
-        double const primal_volume = SimplexVolume<N, MetricType, PositionType, BatchElem>::
-                value(metric, position, elem, active_dims);
-        if (primal_volume == 0.) {
-            return 0.;
-        }
-
-        return static_cast<double>(permutation_sign<N>(source_ids, target_ids))
-               * DualSimplexVolume<Strategy, N, MetricType, PositionType, BatchElem>::
-                       value(metric, position, elem, active_dims)
-               / (primal_volume * misc::factorial(ddc::type_seq_size_v<Indices1>));
-    }
-};
-
-template <class Indices1, class Indices2, class MetricType, class BatchElem>
-struct ContinuousHodgeStar
-{
-    KOKKOS_FUNCTION static double value(MetricType metric, BatchElem elem, auto natural_elem)
-    {
-        constexpr std::size_t N = AmbientDimension<Indices1, Indices2>::value;
-        constexpr std::size_t K = ddc::type_seq_size_v<Indices1>;
-        std::array const source_ids = ExtractIds<Indices1>::run(natural_elem);
-        std::array const target_ids = ExtractIds<Indices2>::run(natural_elem);
-
-        if (!has_unique_ids<N>(source_ids) || !has_unique_ids<N>(target_ids)
-            || !is_complete_permutation<N>(source_ids, target_ids)) {
-            return 0.;
-        }
-
-        std::array<std::size_t, K> const complement = complement_ids<N>(target_ids);
-        std::array<double, N * N> const local_metric_values
-                = tensor::detail::local_metric<N>(metric, elem);
-        MatrixInversionResult<N> const inverse_metric = invert_matrix<N>(local_metric_values);
-        if (!inverse_metric.invertible) {
-            return 0.;
-        }
-
-        return Kokkos::sqrt(Kokkos::abs(inverse_metric.determinant))
-               * static_cast<double>(permutation_sign<N>(complement, target_ids))
-               * submatrix_determinant<N, K>(inverse_metric.inverse, source_ids, complement)
-               / misc::factorial(K);
-    }
-};
-
 } // namespace detail
 
 template <
@@ -345,13 +277,26 @@ struct DiscreteHodgeStar
             BatchElem elem,
             auto natural_elem)
     {
-        return detail::DiscreteHodgeStar<
-                Strategy,
-                Indices1,
-                Indices2,
-                MetricType,
-                PositionType,
-                BatchElem>::value(metric, position, elem, natural_elem);
+        constexpr std::size_t N = detail::AmbientDimension<Indices1, Indices2>::value;
+        std::array const source_ids = detail::ExtractIds<Indices1>::run(natural_elem);
+        std::array const target_ids = detail::ExtractIds<Indices2>::run(natural_elem);
+
+        if (!detail::has_unique_ids<N>(source_ids) || !detail::has_unique_ids<N>(target_ids)
+            || !detail::is_complete_permutation<N>(source_ids, target_ids)) {
+            return 0.;
+        }
+
+        std::array<bool, N> const active_dims = detail::active_dimensions<N>(source_ids);
+        double const primal_volume = SimplexVolume<N, MetricType, PositionType, BatchElem>::
+                run(metric, position, elem, active_dims);
+        if (primal_volume == 0.) {
+            return 0.;
+        }
+
+        return static_cast<double>(detail::permutation_sign<N>(source_ids, target_ids))
+               * DualSimplexVolume<Strategy, N, MetricType, PositionType, BatchElem>::
+                       run(metric, position, elem, active_dims)
+               / (primal_volume * misc::factorial(ddc::type_seq_size_v<Indices1>));
     }
 
     template <
@@ -400,8 +345,29 @@ struct ContinuousHodgeStar
 {
     KOKKOS_FUNCTION static double value(MetricType metric, BatchElem elem, auto natural_elem)
     {
-        return detail::ContinuousHodgeStar<Indices1, Indices2, MetricType, BatchElem>::
-                value(metric, elem, natural_elem);
+        constexpr std::size_t N = detail::AmbientDimension<Indices1, Indices2>::value;
+        constexpr std::size_t K = ddc::type_seq_size_v<Indices1>;
+        std::array const source_ids = detail::ExtractIds<Indices1>::run(natural_elem);
+        std::array const target_ids = detail::ExtractIds<Indices2>::run(natural_elem);
+
+        if (!detail::has_unique_ids<N>(source_ids) || !detail::has_unique_ids<N>(target_ids)
+            || !detail::is_complete_permutation<N>(source_ids, target_ids)) {
+            return 0.;
+        }
+
+        std::array<std::size_t, K> const complement = detail::complement_ids<N>(target_ids);
+        std::array<double, N * N> const local_metric_values
+                = tensor::detail::local_metric<N>(metric, elem);
+        detail::MatrixInversionResult<N> const inverse_metric
+                = detail::invert_matrix<N>(local_metric_values);
+        if (!inverse_metric.invertible) {
+            return 0.;
+        }
+
+        return Kokkos::sqrt(Kokkos::abs(inverse_metric.determinant))
+               * static_cast<double>(detail::permutation_sign<N>(complement, target_ids))
+               * detail::submatrix_determinant<N, K>(inverse_metric.inverse, source_ids, complement)
+               / misc::factorial(K);
     }
     template <
             misc::Specialization<tensor::Tensor> OutTensorType,

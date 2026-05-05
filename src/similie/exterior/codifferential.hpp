@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <array>
+
 #include <ddc/ddc.hpp>
 
 #include <similie/exterior/hodge_star.hpp>
@@ -13,6 +15,7 @@
 
 #include <Kokkos_StdAlgorithms.hpp>
 
+#include "coboundary.hpp"
 #include "cochain.hpp"
 #include "cosimplex.hpp"
 
@@ -194,6 +197,124 @@ struct Codifferential<
         PositionType,
         ExecSpace>
 {
+    KOKKOS_FUNCTION static void run(
+            auto codifferential_tensor,
+            TensorType tensor,
+            MetricType metric,
+            PositionType position,
+            auto chain,
+            auto lower_chain,
+            typename TensorType::non_indices_domain_t::discrete_element_type elem)
+    {
+        using MuUpSeq = tensor::upper_t<ddc::to_type_seq_t<tensor::natural_domain_t<CochainTag>>>;
+        using NuLowSeq = typename detail::CodifferentialDummyIndexSeq<
+                TagToRemoveFromCochain::size() - CochainTag::rank(),
+                TagToRemoveFromCochain>::type;
+        using RhoLowSeq
+                = ddc::type_seq_merge_t<ddc::detail::TypeSeq<TagToRemoveFromCochain>, NuLowSeq>;
+        using RhoUpSeq = tensor::upper_t<RhoLowSeq>;
+        using SigmaLowSeq = ddc::type_seq_remove_t<
+                tensor::lower_t<MuUpSeq>,
+                ddc::detail::TypeSeq<TagToRemoveFromCochain>>;
+
+        using HodgeStarDomain = sil::exterior::hodge_star_domain_t<MuUpSeq, NuLowSeq>;
+        using HodgeStarDomain2 = sil::exterior::hodge_star_domain_t<RhoUpSeq, SigmaLowSeq>;
+        using HodgeStarIndex = misc::convert_type_seq_to_t<tensor::TensorFullIndex, MuUpSeq>;
+        using HodgeStarIndex2
+                = misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, NuLowSeq>;
+        using HodgeStarIndex3 = misc::convert_type_seq_to_t<tensor::TensorFullIndex, RhoUpSeq>;
+        using HodgeStarIndex4
+                = misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, SigmaLowSeq>;
+        using DualIndex = misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, NuLowSeq>;
+        using DualCodifferentialIndex
+                = misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, RhoLowSeq>;
+        using MemorySpace = typename TensorType::memory_space;
+
+        [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain2>
+                hodge_star_accessor2;
+        [[maybe_unused]] tensor::TensorAccessor<DualCodifferentialIndex>
+                dual_codifferential_accessor;
+        static constexpr std::size_t HODGE_STAR_SIZE_2
+                = HodgeStarIndex3::access_size() * HodgeStarIndex4::access_size();
+        static constexpr std::size_t DUAL_CODIFFERENTIAL_SIZE
+                = DualCodifferentialIndex::access_size();
+
+        std::array<double, HODGE_STAR_SIZE_2> hodge_star_storage2 {};
+        std::array<double, DUAL_CODIFFERENTIAL_SIZE> dual_codifferential_storage {};
+
+        ddc::ChunkSpan<double, HodgeStarDomain2, Kokkos::layout_right, MemorySpace>
+                hodge_star_span2(hodge_star_storage2.data(), hodge_star_accessor2.domain());
+        ddc::ChunkSpan<
+                double,
+                ddc::DiscreteDomain<DualCodifferentialIndex>,
+                Kokkos::layout_right,
+                MemorySpace>
+                dual_codifferential_span(
+                        dual_codifferential_storage.data(),
+                        dual_codifferential_accessor.domain());
+
+        sil::tensor::Tensor hodge_star2(hodge_star_span2);
+        sil::tensor::Tensor dual_codifferential(dual_codifferential_span);
+
+        auto dual_value_at = [&](auto sampled_elem, auto dual_elem) {
+            [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain>
+                    hodge_star_accessor;
+            [[maybe_unused]] tensor::TensorAccessor<DualIndex> dual_tensor_accessor;
+            static constexpr std::size_t HODGE_STAR_SIZE
+                    = HodgeStarIndex::access_size() * HodgeStarIndex2::access_size();
+            static constexpr std::size_t DUAL_TENSOR_SIZE = DualIndex::access_size();
+            std::array<double, HODGE_STAR_SIZE> hodge_star_storage {};
+            std::array<double, DUAL_TENSOR_SIZE> dual_tensor_storage {};
+            ddc::ChunkSpan<double, HodgeStarDomain, Kokkos::layout_right, MemorySpace>
+                    hodge_star_span(hodge_star_storage.data(), hodge_star_accessor.domain());
+            ddc::ChunkSpan<
+                    double,
+                    ddc::DiscreteDomain<DualIndex>,
+                    Kokkos::layout_right,
+                    MemorySpace>
+                    dual_tensor_span(dual_tensor_storage.data(), dual_tensor_accessor.domain());
+            sil::tensor::Tensor hodge_star(hodge_star_span);
+            sil::tensor::Tensor dual_tensor(dual_tensor_span);
+
+            ddc::device_for_each(hodge_star.domain(), [&](auto it) {
+                hodge_star.mem(it) = DiscreteHodgeStar<
+                        DualStrategy::Circumcentric,
+                        MuUpSeq,
+                        NuLowSeq,
+                        MetricType,
+                        PositionType,
+                        typename TensorType::non_indices_domain_t::discrete_element_type>::
+                        value(metric,
+                              position,
+                              sampled_elem,
+                              hodge_star.canonical_natural_element(it));
+            });
+            sil::tensor::tensor_prod(dual_tensor, tensor[sampled_elem], hodge_star);
+            return dual_tensor.mem(dual_elem);
+        };
+
+        detail::PointwiseCoboundary<TagToRemoveFromCochain, DualIndex>::
+                run(dual_codifferential,
+                    dual_value_at,
+                    tensor.non_indices_domain(),
+                    chain,
+                    lower_chain,
+                    elem);
+
+        ddc::device_for_each(hodge_star2.domain(), [&](auto it) {
+            hodge_star2.mem(it) = DiscreteHodgeStar<
+                    DualStrategy::Circumcentric,
+                    RhoUpSeq,
+                    SigmaLowSeq,
+                    MetricType,
+                    PositionType,
+                    typename TensorType::non_indices_domain_t::discrete_element_type>::
+                    value(metric, position, elem, hodge_star2.canonical_natural_element(it));
+        });
+        detail::CodifferentialValue<TagToRemoveFromCochain, CochainTag>::
+                run(codifferential_tensor, dual_codifferential, hodge_star2);
+    }
+
     static codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> run(
             ExecSpace const& exec_space,
             codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType>
@@ -214,81 +335,17 @@ struct Codifferential<
                 tensor::lower_t<MuUpSeq>,
                 ddc::detail::TypeSeq<TagToRemoveFromCochain>>;
 
-        using HodgeStarDomain = sil::exterior::hodge_star_domain_t<MuUpSeq, NuLowSeq>;
-        using HodgeStarDomain2 = sil::exterior::hodge_star_domain_t<RhoUpSeq, SigmaLowSeq>;
-
-        // Hodge star
-        [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain>
-                hodge_star_accessor;
-        ddc::cartesian_prod_t<typename MetricType::non_indices_domain_t, HodgeStarDomain>
-                hodge_star_dom(metric.non_indices_domain(), hodge_star_accessor.domain());
-        ddc::Chunk hodge_star_alloc(
-                hodge_star_dom,
-                ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
-        sil::tensor::Tensor hodge_star(hodge_star_alloc);
-
-        sil::exterior::fill_discrete_hodge_star<
-                MuUpSeq,
-                NuLowSeq>(exec_space, hodge_star, metric, position);
-
-        // Dual tensor
-        [[maybe_unused]] tensor::TensorAccessor<
-                misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, NuLowSeq>>
-                dual_tensor_accessor;
-        ddc::cartesian_prod_t<
-                typename TensorType::non_indices_domain_t,
-                ddc::DiscreteDomain<
-                        misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, NuLowSeq>>>
-                dual_tensor_dom(tensor.non_indices_domain(), dual_tensor_accessor.domain());
-        ddc::Chunk dual_tensor_alloc(
-                dual_tensor_dom,
-                ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
-        sil::tensor::Tensor dual_tensor(dual_tensor_alloc);
-
-        SIMILIE_DEBUG_LOG("similie_compute_dual_tensor");
-        ddc::parallel_for_each(
-                "similie_compute_dual_tensor",
-                exec_space,
-                dual_tensor.non_indices_domain(),
-                KOKKOS_LAMBDA(
-                        typename TensorType::non_indices_domain_t::discrete_element_type elem) {
-                    sil::tensor::tensor_prod(dual_tensor[elem], tensor[elem], hodge_star[elem]);
-                });
-
-        // Dual codifferential
-        [[maybe_unused]] tensor::TensorAccessor<
-                misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, RhoLowSeq>>
-                dual_codifferential_accessor;
-        ddc::cartesian_prod_t<
-                typename TensorType::non_indices_domain_t,
-                ddc::DiscreteDomain<
-                        misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, RhoLowSeq>>>
-                dual_codifferential_dom(
-                        tensor.non_indices_domain(),
-                        dual_codifferential_accessor.domain());
-        ddc::Chunk dual_codifferential_alloc(
-                dual_codifferential_dom,
-                ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
-        sil::tensor::Tensor dual_codifferential(dual_codifferential_alloc);
-        sil::exterior::deriv<
-                TagToRemoveFromCochain,
-                misc::convert_type_seq_to_t<
-                        tensor::TensorAntisymmetricIndex,
-                        NuLowSeq>>(exec_space, dual_codifferential, dual_tensor);
-
-        // Hodge star 2
-        [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain2>
-                hodge_star_accessor2;
-        ddc::cartesian_prod_t<typename MetricType::non_indices_domain_t, HodgeStarDomain2>
-                hodge_star_dom2(metric.non_indices_domain(), hodge_star_accessor2.domain());
-        ddc::Chunk hodge_star_alloc2(
-                hodge_star_dom2,
-                ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
-        sil::tensor::Tensor hodge_star2(hodge_star_alloc2);
-
-        sil::exterior::fill_discrete_hodge_star<
-                RhoUpSeq,
-                SigmaLowSeq>(exec_space, hodge_star2, metric, position);
+        using DualIndex = misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, NuLowSeq>;
+        auto chain = tangent_basis<
+                DualIndex::rank() + 1,
+                typename detail::NonSpectatorDimension<
+                        TagToRemoveFromCochain,
+                        typename TensorType::non_indices_domain_t>::type>(exec_space);
+        auto lower_chain = tangent_basis<
+                DualIndex::rank(),
+                typename detail::NonSpectatorDimension<
+                        TagToRemoveFromCochain,
+                        typename TensorType::non_indices_domain_t>::type>(exec_space);
 
         // Codifferential
         SIMILIE_DEBUG_LOG("similie_compute_codifferential");
@@ -298,10 +355,14 @@ struct Codifferential<
                 codifferential_tensor.non_indices_domain(),
                 KOKKOS_LAMBDA(
                         typename TensorType::non_indices_domain_t::discrete_element_type elem) {
-                    detail::CodifferentialValue<TagToRemoveFromCochain, CochainTag>::
+                    Codifferential::
                             run(codifferential_tensor[elem],
-                                dual_codifferential[elem],
-                                hodge_star2[elem]);
+                                tensor,
+                                metric,
+                                position,
+                                chain,
+                                lower_chain,
+                                elem);
                 });
 
         return codifferential_tensor;
