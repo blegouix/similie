@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 cmake_minimum_required(VERSION 3.22)
-project(SimiLie VERSION 0.0.0 LANGUAGES CXX)
+project(SimiLie VERSION 0.0.0 LANGUAGES C CXX) # C is required because PDI::PDI_C propagates C compile features to consumers.
 
 set_property(GLOBAL PROPERTY GLOBAL_DEPENDS_NO_CYCLES ON)
 

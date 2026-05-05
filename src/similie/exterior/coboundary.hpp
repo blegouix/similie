@@ -12,6 +12,7 @@
 #include <similie/misc/filled_struct.hpp>
 #include <similie/misc/macros.hpp>
 #include <similie/misc/portable_stl.hpp>
+#include <similie/misc/select_from_type_seq.hpp>
 #include <similie/misc/specialization.hpp>
 #include <similie/misc/type_seq_conversion.hpp>
 #include <similie/tensor/antisymmetric_tensor.hpp>
@@ -233,18 +234,30 @@ struct PointwiseCoboundary
 
         auto cochain = Cochain(chain, coboundary_tensor);
         for (auto i = cochain.begin(); i < cochain.end(); ++i) {
-            Simplex
+            using CoboundarySimplex = typename ChainType::simplex_type;
+            using CoboundaryElement = typename CoboundarySimplex::discrete_element_type;
+            CoboundarySimplex
                     simplex(std::integral_constant<std::size_t, CochainTag::rank() + 1> {},
-                            elem,
+                            CoboundaryElement(elem),
                             (*i).discrete_vector());
             auto boundary_chain = boundary(simplex_boundary.allocation_kokkos_view(), simplex);
             for (auto j = boundary_chain.begin(); j < boundary_chain.end(); ++j) {
                 std::size_t const boundary_id
                         = Kokkos::Experimental::distance(boundary_chain.begin(), j);
-                auto const sampled_elem
-                        = misc::domain_contains(batch_domain, (*j).discrete_element())
-                                  ? (*j).discrete_element()
-                                  : elem;
+                Elem sampled_elem = elem;
+                if (misc::domain_contains(batch_domain, (*j).discrete_element())) {
+                    using BoundaryElement = typename BoundarySimplex::discrete_element_type;
+                    using SpectatorSeq = ddc::type_seq_remove_t<
+                            ddc::to_type_seq_t<Elem>,
+                            ddc::to_type_seq_t<BoundaryElement>>;
+                    if constexpr (ddc::type_seq_size_v<SpectatorSeq> == 0) {
+                        sampled_elem = Elem((*j).discrete_element());
+                    } else {
+                        sampled_elem
+                                = Elem((*j).discrete_element(),
+                                       misc::select_from_type_seq<SpectatorSeq>(elem));
+                    }
+                }
                 boundary_values(ddc::DiscreteElement<CoboundaryDummyIndex>(boundary_id)) = value_at(
                         sampled_elem,
                         ddc::DiscreteElement<CochainTag>(Kokkos::Experimental::distance(
@@ -277,7 +290,7 @@ struct Coboundary<TagToAddToCochain, CochainTag, TensorType, ExecSpace>
             TensorType tensor,
             auto chain,
             auto lower_chain,
-            typename TensorType::non_indices_domain_t::discrete_element_type elem)
+            auto elem)
     {
         auto value_at = [&](auto sampled_elem, auto cochain_elem) {
             return tensor.mem(sampled_elem, cochain_elem);
