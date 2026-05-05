@@ -39,32 +39,18 @@ using hodge_star_domain_t
 namespace detail {
 
 template <class Indices1, class Indices2>
-struct AmbientDimension;
+struct AmbientIndex;
 
 template <class HeadIndex, class... TailIndex, class Indices2>
-struct AmbientDimension<ddc::detail::TypeSeq<HeadIndex, TailIndex...>, Indices2>
+struct AmbientIndex<ddc::detail::TypeSeq<HeadIndex, TailIndex...>, Indices2>
 {
-    static constexpr std::size_t value = HeadIndex::size();
+    using type = HeadIndex;
 };
 
 template <class HeadIndex, class... TailIndex>
-struct AmbientDimension<ddc::detail::TypeSeq<>, ddc::detail::TypeSeq<HeadIndex, TailIndex...>>
+struct AmbientIndex<ddc::detail::TypeSeq<>, ddc::detail::TypeSeq<HeadIndex, TailIndex...>>
 {
-    static constexpr std::size_t value = HeadIndex::size();
-};
-
-template <class TypeSeq>
-struct ExtractIds;
-
-template <class... Indices>
-struct ExtractIds<ddc::detail::TypeSeq<Indices...>>
-{
-    template <class NaturalElem>
-    KOKKOS_FUNCTION static std::array<std::size_t, sizeof...(Indices)> run(NaturalElem natural_elem)
-    {
-        return std::array<std::size_t, sizeof...(Indices)> {
-                static_cast<std::size_t>(natural_elem.template uid<Indices>())...};
-    }
+    using type = HeadIndex;
 };
 
 template <std::size_t N, std::size_t M>
@@ -132,16 +118,6 @@ KOKKOS_FUNCTION int permutation_sign(
 }
 
 template <std::size_t N, std::size_t M>
-KOKKOS_FUNCTION std::array<bool, N> active_dimensions(std::array<std::size_t, M> const& ids)
-{
-    std::array<bool, N> active_dims {};
-    for (std::size_t id : ids) {
-        active_dims[id] = true;
-    }
-    return active_dims;
-}
-
-template <std::size_t N, std::size_t M>
 KOKKOS_FUNCTION std::array<std::size_t, N - M> complement_ids(std::array<std::size_t, M> const& ids)
 {
     std::array<std::size_t, N - M> complement {};
@@ -158,42 +134,34 @@ KOKKOS_FUNCTION std::array<std::size_t, N - M> complement_ids(std::array<std::si
     return complement;
 }
 
-template <std::size_t N>
-KOKKOS_FUNCTION constexpr std::size_t flat_index(std::size_t const i, std::size_t const j)
+struct HodgeStarMatrixIndex
 {
-    return i * N + j;
-}
-
-template <std::size_t N>
-KOKKOS_FUNCTION std::array<double, N * N> identity_matrix()
-{
-    std::array<double, N * N> matrix {};
-    for (std::size_t i = 0; i < N; ++i) {
-        matrix[flat_index<N>(i, i)] = 1.;
-    }
-    return matrix;
-}
-
-template <std::size_t N>
-struct MatrixInversionResult
-{
-    double determinant;
-    std::array<double, N * N> inverse;
-    bool invertible;
 };
 
-template <std::size_t N>
-KOKKOS_FUNCTION MatrixInversionResult<N> invert_matrix(std::array<double, N * N> matrix)
+struct HodgeStarPrimeMatrixIndex
 {
-    std::array<double, N * N> inverse = identity_matrix<N>();
-    double determinant = 1.;
+};
+
+template <std::size_t N, class MemorySpace>
+KOKKOS_FUNCTION bool invert_matrix(
+        std::array<double, N * N>& inverse_storage,
+        double& determinant,
+        std::array<double, N * N> const& matrix_storage)
+{
+    std::array<double, N * N> matrix = matrix_storage;
+    inverse_storage.fill(0.);
+    for (std::size_t i = 0; i < N; ++i) {
+        inverse_storage[i * N + i] = 1.;
+    }
+
+    determinant = 1.;
     int sign = 1;
 
     for (std::size_t i = 0; i < N; ++i) {
         std::size_t pivot = i;
-        double pivot_abs = Kokkos::abs(matrix[flat_index<N>(i, i)]);
+        double pivot_abs = Kokkos::abs(matrix[i * N + i]);
         for (std::size_t j = i + 1; j < N; ++j) {
-            double const candidate_abs = Kokkos::abs(matrix[flat_index<N>(j, i)]);
+            double const candidate_abs = Kokkos::abs(matrix[j * N + i]);
             if (candidate_abs > pivot_abs) {
                 pivot = j;
                 pivot_abs = candidate_abs;
@@ -201,47 +169,44 @@ KOKKOS_FUNCTION MatrixInversionResult<N> invert_matrix(std::array<double, N * N>
         }
 
         if (pivot_abs == 0.) {
-            return MatrixInversionResult<N> {0., std::array<double, N * N> {}, false};
+            determinant = 0.;
+            inverse_storage.fill(0.);
+            return false;
         }
 
         if (pivot != i) {
             sign *= -1;
             for (std::size_t j = 0; j < N; ++j) {
-                Kokkos::kokkos_swap(matrix[flat_index<N>(i, j)], matrix[flat_index<N>(pivot, j)]);
-                Kokkos::kokkos_swap(inverse[flat_index<N>(i, j)], inverse[flat_index<N>(pivot, j)]);
+                Kokkos::kokkos_swap(matrix[i * N + j], matrix[pivot * N + j]);
+                Kokkos::kokkos_swap(inverse_storage[i * N + j], inverse_storage[pivot * N + j]);
             }
         }
 
-        double const diagonal = matrix[flat_index<N>(i, i)];
+        double const diagonal = matrix[i * N + i];
         determinant *= diagonal;
 
         for (std::size_t j = 0; j < N; ++j) {
-            matrix[flat_index<N>(i, j)] /= diagonal;
-            inverse[flat_index<N>(i, j)] /= diagonal;
+            matrix[i * N + j] /= diagonal;
+            inverse_storage[i * N + j] /= diagonal;
         }
 
         for (std::size_t row = 0; row < N; ++row) {
             if (row == i) {
                 continue;
             }
-            double const factor = matrix[flat_index<N>(row, i)];
+            double const factor = matrix[row * N + i];
             for (std::size_t col = 0; col < N; ++col) {
-                matrix[flat_index<N>(row, col)] -= factor * matrix[flat_index<N>(i, col)];
-                inverse[flat_index<N>(row, col)] -= factor * inverse[flat_index<N>(i, col)];
+                matrix[row * N + col] -= factor * matrix[i * N + col];
+                inverse_storage[row * N + col] -= factor * inverse_storage[i * N + col];
             }
         }
     }
 
-    return MatrixInversionResult<N> {static_cast<double>(sign) * determinant, inverse, true};
+    determinant *= static_cast<double>(sign);
+    return true;
 }
 
-template <std::size_t N>
-KOKKOS_FUNCTION double determinant(std::array<double, N * N> matrix)
-{
-    return invert_matrix<N>(matrix).determinant;
-}
-
-template <std::size_t N, std::size_t K>
+template <std::size_t N, std::size_t K, class MemorySpace>
 KOKKOS_FUNCTION double submatrix_determinant(
         std::array<double, N * N> const& matrix,
         std::array<std::size_t, K> const& row_ids,
@@ -250,13 +215,19 @@ KOKKOS_FUNCTION double submatrix_determinant(
     if constexpr (K == 0) {
         return 1.;
     } else {
-        std::array<double, K * K> submatrix {};
+        std::array<double, K * K> submatrix_storage {};
         for (std::size_t i = 0; i < K; ++i) {
             for (std::size_t j = 0; j < K; ++j) {
-                submatrix[flat_index<K>(i, j)] = matrix[flat_index<N>(row_ids[i], col_ids[j])];
+                submatrix_storage[i * K + j] = matrix[row_ids[i] * N + col_ids[j]];
             }
         }
-        return determinant<K>(submatrix);
+
+        std::array<double, K * K> inverse_storage {};
+        double determinant = 0.;
+        if (!invert_matrix<K, MemorySpace>(inverse_storage, determinant, submatrix_storage)) {
+            return 0.;
+        }
+        return determinant;
     }
 }
 
@@ -277,25 +248,26 @@ struct DiscreteHodgeStar
             BatchElem elem,
             auto natural_elem)
     {
-        constexpr std::size_t N = detail::AmbientDimension<Indices1, Indices2>::value;
-        std::array const source_ids = detail::ExtractIds<Indices1>::run(natural_elem);
-        std::array const target_ids = detail::ExtractIds<Indices2>::run(natural_elem);
+        using AmbientIndex = typename detail::AmbientIndex<Indices1, Indices2>::type;
+        constexpr std::size_t N = AmbientIndex::size();
+        using SourceElem = misc::convert_type_seq_to_t<ddc::DiscreteElement, Indices1>;
+        using TargetElem = misc::convert_type_seq_to_t<ddc::DiscreteElement, Indices2>;
+        std::array const source_ids = ddc::detail::array(SourceElem(natural_elem));
+        std::array const target_ids = ddc::detail::array(TargetElem(natural_elem));
 
         if (!detail::has_unique_ids<N>(source_ids) || !detail::has_unique_ids<N>(target_ids)
             || !detail::is_complete_permutation<N>(source_ids, target_ids)) {
             return 0.;
         }
-
-        std::array<bool, N> const active_dims = detail::active_dimensions<N>(source_ids);
         double const primal_volume = SimplexVolume<N, MetricType, PositionType, BatchElem>::
-                run(metric, position, elem, active_dims);
+                run(metric, position, elem, source_ids);
         if (primal_volume == 0.) {
             return 0.;
         }
 
         return static_cast<double>(detail::permutation_sign<N>(source_ids, target_ids))
                * DualSimplexVolume<Strategy, N, MetricType, PositionType, BatchElem>::
-                       run(metric, position, elem, active_dims)
+                       run(metric, position, elem, source_ids)
                / (primal_volume * misc::factorial(ddc::type_seq_size_v<Indices1>));
     }
 
@@ -345,10 +317,13 @@ struct ContinuousHodgeStar
 {
     KOKKOS_FUNCTION static double value(MetricType metric, BatchElem elem, auto natural_elem)
     {
-        constexpr std::size_t N = detail::AmbientDimension<Indices1, Indices2>::value;
+        using AmbientIndex = typename detail::AmbientIndex<Indices1, Indices2>::type;
+        constexpr std::size_t N = AmbientIndex::size();
         constexpr std::size_t K = ddc::type_seq_size_v<Indices1>;
-        std::array const source_ids = detail::ExtractIds<Indices1>::run(natural_elem);
-        std::array const target_ids = detail::ExtractIds<Indices2>::run(natural_elem);
+        using SourceElem = misc::convert_type_seq_to_t<ddc::DiscreteElement, Indices1>;
+        using TargetElem = misc::convert_type_seq_to_t<ddc::DiscreteElement, Indices2>;
+        std::array const source_ids = ddc::detail::array(SourceElem(natural_elem));
+        std::array const target_ids = ddc::detail::array(TargetElem(natural_elem));
 
         if (!detail::has_unique_ids<N>(source_ids) || !detail::has_unique_ids<N>(target_ids)
             || !detail::is_complete_permutation<N>(source_ids, target_ids)) {
@@ -356,17 +331,35 @@ struct ContinuousHodgeStar
         }
 
         std::array<std::size_t, K> const complement = detail::complement_ids<N>(target_ids);
-        std::array<double, N * N> const local_metric_values
-                = tensor::detail::local_metric<N>(metric, elem);
-        detail::MatrixInversionResult<N> const inverse_metric
-                = detail::invert_matrix<N>(local_metric_values);
-        if (!inverse_metric.invertible) {
+        using MetricIndex = ddc::
+                type_seq_element_t<0, ddc::to_type_seq_t<typename MetricType::indices_domain_t>>;
+        using MetricIndex1 = tensor::metric_index_1<MetricIndex>;
+        using MetricIndex2 = tensor::metric_index_2<MetricIndex>;
+        std::array<double, N * N> metric_storage {};
+        std::array<double, N * N> inverse_metric_storage {};
+        for (std::size_t i = 0; i < N; ++i) {
+            for (std::size_t j = 0; j < N; ++j) {
+                metric_storage[i * N + j] = metric.get(metric.access_element(
+                        elem,
+                        ddc::DiscreteElement<MetricIndex1, MetricIndex2>(i, j)));
+            }
+        }
+
+        double determinant = 0.;
+        if (!detail::invert_matrix<
+                    N,
+                    typename MetricType::
+                            memory_space>(inverse_metric_storage, determinant, metric_storage)) {
             return 0.;
         }
 
-        return Kokkos::sqrt(Kokkos::abs(inverse_metric.determinant))
+        return Kokkos::sqrt(Kokkos::abs(determinant))
                * static_cast<double>(detail::permutation_sign<N>(complement, target_ids))
-               * detail::submatrix_determinant<N, K>(inverse_metric.inverse, source_ids, complement)
+               * detail::submatrix_determinant<
+                       N,
+                       K,
+                       typename MetricType::
+                               memory_space>(inverse_metric_storage, source_ids, complement)
                / misc::factorial(K);
     }
     template <
@@ -423,21 +416,25 @@ HodgeStarType fill_discrete_hodge_star(
     ddc::parallel_for_each(
             "similie_compute_hodge_star",
             exec_space,
-            hodge_star.domain(),
+            hodge_star.non_indices_domain(),
             KOKKOS_LAMBDA(
-                    typename HodgeStarType::discrete_domain_type::discrete_element_type elem) {
-                hodge_star.mem(elem) = DiscreteHodgeStar<
-                        Strategy,
-                        Indices1,
-                        Indices2,
-                        MetricType,
-                        PositionType,
-                        typename HodgeStarType::non_indices_domain_t::discrete_element_type>::
-                        value(metric,
-                              position,
-                              typename HodgeStarType::non_indices_domain_t::discrete_element_type(
-                                      elem),
-                              hodge_star.canonical_natural_element(elem));
+                    typename HodgeStarType::non_indices_domain_t::discrete_element_type elem) {
+                ddc::device_for_each(hodge_star.accessor().domain(), [&](auto mem_elem) {
+                    hodge_star.mem(typename HodgeStarType::discrete_element_type(elem, mem_elem))
+                            = DiscreteHodgeStar<
+                                    Strategy,
+                                    Indices1,
+                                    Indices2,
+                                    MetricType,
+                                    PositionType,
+                                    typename HodgeStarType::non_indices_domain_t::
+                                            discrete_element_type>::
+                                    value(metric,
+                                          position,
+                                          elem,
+                                          hodge_star.accessor().canonical_natural_element(
+                                                  mem_elem));
+                });
             });
     return hodge_star;
 }
@@ -457,18 +454,22 @@ HodgeStarType fill_continuous_hodge_star(
     ddc::parallel_for_each(
             "similie_compute_continuous_hodge_star",
             exec_space,
-            hodge_star.domain(),
+            hodge_star.non_indices_domain(),
             KOKKOS_LAMBDA(
-                    typename HodgeStarType::discrete_domain_type::discrete_element_type elem) {
-                hodge_star.mem(elem) = ContinuousHodgeStar<
-                        Indices1,
-                        Indices2,
-                        MetricType,
-                        typename HodgeStarType::non_indices_domain_t::discrete_element_type>::
-                        value(metric,
-                              typename HodgeStarType::non_indices_domain_t::discrete_element_type(
-                                      elem),
-                              hodge_star.canonical_natural_element(elem));
+                    typename HodgeStarType::non_indices_domain_t::discrete_element_type elem) {
+                ddc::device_for_each(hodge_star.accessor().domain(), [&](auto mem_elem) {
+                    hodge_star.mem(typename HodgeStarType::discrete_element_type(elem, mem_elem))
+                            = ContinuousHodgeStar<
+                                    Indices1,
+                                    Indices2,
+                                    MetricType,
+                                    typename HodgeStarType::non_indices_domain_t::
+                                            discrete_element_type>::
+                                    value(metric,
+                                          elem,
+                                          hodge_star.accessor().canonical_natural_element(
+                                                  mem_elem));
+                });
             });
     return hodge_star;
 }

@@ -161,22 +161,6 @@ struct CodifferentialDummyIndexSeq<EndId, T>
 
 } // namespace detail
 
-namespace detail {
-
-template <tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag>
-struct CodifferentialValue
-{
-    KOKKOS_FUNCTION static void run(auto output, auto dual_codifferential, auto hodge_star)
-    {
-        sil::tensor::tensor_prod(output, dual_codifferential, hodge_star);
-        if constexpr ((TagToRemoveFromCochain::size() * (CochainTag::rank() + 1) + 1) % 2 == 1) {
-            output *= -1;
-        }
-    }
-};
-
-} // namespace detail
-
 template <class... Args>
 struct Codifferential;
 
@@ -186,16 +170,14 @@ template <
         tensor::TensorIndex CochainTag,
         misc::Specialization<tensor::Tensor> TensorType,
         misc::Specialization<tensor::Tensor> MetricType,
-        misc::Specialization<tensor::Tensor> PositionType,
-        class ExecSpace>
+        misc::Specialization<tensor::Tensor> PositionType>
 struct Codifferential<
         MetricIndex,
         TagToRemoveFromCochain,
         CochainTag,
         TensorType,
         MetricType,
-        PositionType,
-        ExecSpace>
+        PositionType>
 {
     KOKKOS_FUNCTION static void run(
             auto codifferential_tensor,
@@ -293,7 +275,7 @@ struct Codifferential<
             return dual_tensor.mem(dual_elem);
         };
 
-        detail::PointwiseCoboundary<TagToRemoveFromCochain, DualIndex>::
+        Coboundary<TagToRemoveFromCochain, DualIndex>::
                 run(dual_codifferential,
                     dual_value_at,
                     tensor.non_indices_domain(),
@@ -311,61 +293,10 @@ struct Codifferential<
                     typename TensorType::non_indices_domain_t::discrete_element_type>::
                     value(metric, position, elem, hodge_star2.canonical_natural_element(it));
         });
-        detail::CodifferentialValue<TagToRemoveFromCochain, CochainTag>::
-                run(codifferential_tensor, dual_codifferential, hodge_star2);
-    }
-
-    static codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> run(
-            ExecSpace const& exec_space,
-            codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType>
-                    codifferential_tensor,
-            TensorType tensor,
-            MetricType metric,
-            PositionType position)
-    {
-        static_assert(tensor::is_covariant_v<TagToRemoveFromCochain>);
-        using MuUpSeq = tensor::upper_t<ddc::to_type_seq_t<tensor::natural_domain_t<CochainTag>>>;
-        using NuLowSeq = typename detail::CodifferentialDummyIndexSeq<
-                TagToRemoveFromCochain::size() - CochainTag::rank(),
-                TagToRemoveFromCochain>::type;
-        using RhoLowSeq
-                = ddc::type_seq_merge_t<ddc::detail::TypeSeq<TagToRemoveFromCochain>, NuLowSeq>;
-        using RhoUpSeq = tensor::upper_t<RhoLowSeq>;
-        using SigmaLowSeq = ddc::type_seq_remove_t<
-                tensor::lower_t<MuUpSeq>,
-                ddc::detail::TypeSeq<TagToRemoveFromCochain>>;
-
-        using DualIndex = misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, NuLowSeq>;
-        auto chain = tangent_basis<
-                DualIndex::rank() + 1,
-                typename detail::NonSpectatorDimension<
-                        TagToRemoveFromCochain,
-                        typename TensorType::non_indices_domain_t>::type>(exec_space);
-        auto lower_chain = tangent_basis<
-                DualIndex::rank(),
-                typename detail::NonSpectatorDimension<
-                        TagToRemoveFromCochain,
-                        typename TensorType::non_indices_domain_t>::type>(exec_space);
-
-        // Codifferential
-        SIMILIE_DEBUG_LOG("similie_compute_codifferential");
-        ddc::parallel_for_each(
-                "similie_compute_codifferential",
-                exec_space,
-                codifferential_tensor.non_indices_domain(),
-                KOKKOS_LAMBDA(
-                        typename TensorType::non_indices_domain_t::discrete_element_type elem) {
-                    Codifferential::
-                            run(codifferential_tensor[elem],
-                                tensor,
-                                metric,
-                                position,
-                                chain,
-                                lower_chain,
-                                elem);
-                });
-
-        return codifferential_tensor;
+        sil::tensor::tensor_prod(codifferential_tensor, dual_codifferential, hodge_star2);
+        if constexpr ((TagToRemoveFromCochain::size() * (CochainTag::rank() + 1) + 1) % 2 == 1) {
+            codifferential_tensor *= -1;
+        }
     }
 };
 
@@ -385,14 +316,45 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
         MetricType metric,
         PositionType position)
 {
-    return Codifferential<
-            MetricIndex,
-            TagToRemoveFromCochain,
-            CochainTag,
-            TensorType,
-            MetricType,
-            PositionType,
-            ExecSpace>::run(exec_space, codifferential_tensor, tensor, metric, position);
+    static_assert(tensor::is_covariant_v<TagToRemoveFromCochain>);
+    using DualDummySeq = typename detail::CodifferentialDummyIndexSeq<
+            TagToRemoveFromCochain::size() - CochainTag::rank(),
+            TagToRemoveFromCochain>::type;
+    using DualIndex = misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, DualDummySeq>;
+    auto chain = tangent_basis<
+            DualIndex::rank() + 1,
+            typename detail::NonSpectatorDimension<
+                    TagToRemoveFromCochain,
+                    typename TensorType::non_indices_domain_t>::type>(exec_space);
+    auto lower_chain = tangent_basis<
+            DualIndex::rank(),
+            typename detail::NonSpectatorDimension<
+                    TagToRemoveFromCochain,
+                    typename TensorType::non_indices_domain_t>::type>(exec_space);
+
+    SIMILIE_DEBUG_LOG("similie_compute_codifferential");
+    ddc::parallel_for_each(
+            "similie_compute_codifferential",
+            exec_space,
+            codifferential_tensor.non_indices_domain(),
+            KOKKOS_LAMBDA(typename TensorType::non_indices_domain_t::discrete_element_type elem) {
+                Codifferential<
+                        MetricIndex,
+                        TagToRemoveFromCochain,
+                        CochainTag,
+                        TensorType,
+                        MetricType,
+                        PositionType>::
+                        run(codifferential_tensor[elem],
+                            tensor,
+                            metric,
+                            position,
+                            chain,
+                            lower_chain,
+                            elem);
+            });
+
+    return codifferential_tensor;
 }
 
 } // namespace exterior

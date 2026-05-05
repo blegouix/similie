@@ -197,8 +197,10 @@ struct CoboundaryDummyIndex
 {
 };
 
+} // namespace detail
+
 template <tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag>
-struct PointwiseCoboundary
+struct Coboundary<TagToAddToCochain, CochainTag>
 {
     template <
             class OutTensorType,
@@ -218,7 +220,7 @@ struct PointwiseCoboundary
         constexpr std::size_t BOUNDARY_SIZE = 2 * (CochainTag::rank() + 1);
         using BoundarySimplex = typename LowerChainType::simplex_type;
         using MemorySpace = typename OutTensorType::memory_space;
-        using BoundaryDomain = ddc::DiscreteDomain<CoboundaryDummyIndex>;
+        using BoundaryDomain = ddc::DiscreteDomain<detail::CoboundaryDummyIndex>;
         using BoundaryChunk = ddc::
                 ChunkSpan<BoundarySimplex, BoundaryDomain, Kokkos::layout_right, MemorySpace>;
         using BoundaryValuesChunk
@@ -227,8 +229,8 @@ struct PointwiseCoboundary
         std::array<BoundarySimplex, BOUNDARY_SIZE> simplex_boundary_storage {};
         std::array<double, BOUNDARY_SIZE> boundary_values_storage {};
         BoundaryDomain const boundary_domain(
-                ddc::DiscreteElement<CoboundaryDummyIndex>(0),
-                ddc::DiscreteVector<CoboundaryDummyIndex>(BOUNDARY_SIZE));
+                ddc::DiscreteElement<detail::CoboundaryDummyIndex>(0),
+                ddc::DiscreteVector<detail::CoboundaryDummyIndex>(BOUNDARY_SIZE));
         BoundaryChunk simplex_boundary(simplex_boundary_storage.data(), boundary_domain);
         BoundaryValuesChunk boundary_values(boundary_values_storage.data(), boundary_domain);
 
@@ -258,14 +260,15 @@ struct PointwiseCoboundary
                                        misc::select_from_type_seq<SpectatorSeq>(elem));
                     }
                 }
-                boundary_values(ddc::DiscreteElement<CoboundaryDummyIndex>(boundary_id)) = value_at(
-                        sampled_elem,
-                        ddc::DiscreteElement<CochainTag>(Kokkos::Experimental::distance(
-                                lower_chain.begin(),
-                                misc::detail::
-                                        find(lower_chain.begin(),
-                                             lower_chain.end(),
-                                             (*j).discrete_vector()))));
+                boundary_values(ddc::DiscreteElement<detail::CoboundaryDummyIndex>(boundary_id))
+                        = value_at(
+                                sampled_elem,
+                                ddc::DiscreteElement<CochainTag>(Kokkos::Experimental::distance(
+                                        lower_chain.begin(),
+                                        misc::detail::
+                                                find(lower_chain.begin(),
+                                                     lower_chain.end(),
+                                                     (*j).discrete_vector()))));
             }
             Cochain cochain_boundary(boundary_chain, boundary_values.allocation_kokkos_view());
             coboundary_tensor.mem(
@@ -273,71 +276,6 @@ struct PointwiseCoboundary
                             Kokkos::Experimental::distance(cochain.begin(), i)))
                     = cochain_boundary.integrate();
         }
-    }
-};
-
-} // namespace detail
-
-template <
-        tensor::TensorNatIndex TagToAddToCochain,
-        tensor::TensorIndex CochainTag,
-        misc::Specialization<tensor::Tensor> TensorType,
-        class ExecSpace>
-struct Coboundary<TagToAddToCochain, CochainTag, TensorType, ExecSpace>
-{
-    KOKKOS_FUNCTION static void run(
-            auto coboundary_tensor,
-            TensorType tensor,
-            auto chain,
-            auto lower_chain,
-            auto elem)
-    {
-        auto value_at = [&](auto sampled_elem, auto cochain_elem) {
-            return tensor.mem(sampled_elem, cochain_elem);
-        };
-        detail::PointwiseCoboundary<TagToAddToCochain, CochainTag>::
-                run(coboundary_tensor,
-                    value_at,
-                    tensor.non_indices_domain(),
-                    chain,
-                    lower_chain,
-                    elem);
-    }
-
-    static coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> run(
-            ExecSpace const& exec_space,
-            coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
-            TensorType tensor)
-    {
-        ddc::DiscreteDomain batch_dom
-                = ddc::remove_dims_of<coboundary_index_t<TagToAddToCochain, CochainTag>>(
-                        coboundary_tensor.domain());
-
-        // compute the tangent K+1-basis for each node of the mesh. This is a local K+1-chain.
-        auto chain = tangent_basis<
-                CochainTag::rank() + 1,
-                typename detail::NonSpectatorDimension<
-                        TagToAddToCochain,
-                        typename TensorType::non_indices_domain_t>::type>(exec_space);
-
-        // compute the tangent K-basis for each node of the mesh. This is a local K-chain.
-        auto lower_chain = tangent_basis<
-                CochainTag::rank(),
-                typename detail::NonSpectatorDimension<
-                        TagToAddToCochain,
-                        typename TensorType::non_indices_domain_t>::type>(exec_space);
-
-        // iterate over every node, we will work inside the tangent space associated to each of them
-        SIMILIE_DEBUG_LOG("similie_compute_coboundary");
-        ddc::parallel_for_each(
-                "similie_compute_coboundary",
-                exec_space,
-                batch_dom,
-                KOKKOS_LAMBDA(typename decltype(batch_dom)::discrete_element_type elem) {
-                    Coboundary::run(coboundary_tensor[elem], tensor, chain, lower_chain, elem);
-                });
-
-        return coboundary_tensor;
     }
 };
 
@@ -357,8 +295,39 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
         coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
         TensorType tensor)
 {
-    return Coboundary<TagToAddToCochain, CochainTag, TensorType, ExecSpace>::
-            run(exec_space, coboundary_tensor, tensor);
+    ddc::DiscreteDomain batch_dom
+            = ddc::remove_dims_of<coboundary_index_t<TagToAddToCochain, CochainTag>>(
+                    coboundary_tensor.domain());
+
+    auto chain = tangent_basis<
+            CochainTag::rank() + 1,
+            typename detail::NonSpectatorDimension<
+                    TagToAddToCochain,
+                    typename TensorType::non_indices_domain_t>::type>(exec_space);
+    auto lower_chain = tangent_basis<
+            CochainTag::rank(),
+            typename detail::NonSpectatorDimension<
+                    TagToAddToCochain,
+                    typename TensorType::non_indices_domain_t>::type>(exec_space);
+
+    SIMILIE_DEBUG_LOG("similie_compute_coboundary");
+    ddc::parallel_for_each(
+            "similie_compute_coboundary",
+            exec_space,
+            batch_dom,
+            KOKKOS_LAMBDA(typename decltype(batch_dom)::discrete_element_type elem) {
+                Coboundary<TagToAddToCochain, CochainTag>::run(
+                        coboundary_tensor[elem],
+                        [&](auto sampled_elem, auto cochain_elem) {
+                            return tensor.mem(sampled_elem, cochain_elem);
+                        },
+                        tensor.non_indices_domain(),
+                        chain,
+                        lower_chain,
+                        elem);
+            });
+
+    return coboundary_tensor;
 }
 
 template <
@@ -371,8 +340,7 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> deriv(
         coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
         TensorType tensor)
 {
-    return Coboundary<TagToAddToCochain, CochainTag, TensorType, ExecSpace>::
-            run(exec_space, coboundary_tensor, tensor);
+    return coboundary<TagToAddToCochain, CochainTag>(exec_space, coboundary_tensor, tensor);
 }
 
 } // namespace exterior

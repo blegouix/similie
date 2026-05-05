@@ -17,23 +17,6 @@ namespace tensor {
 
 namespace detail {
 
-template <class PositionIndex, class... DDim>
-KOKKOS_FUNCTION constexpr ddc::DiscreteElement<DDim...> shift_along_dimension(
-        ddc::DiscreteElement<DDim...> elem,
-        std::size_t const dim_id,
-        std::ptrdiff_t const offset)
-{
-    std::array<int, sizeof...(DDim)> const dummy
-            = {((dim_id
-                 == ddc::type_seq_rank_v<
-                         typename DDim::continuous_dimension_type,
-                         typename PositionIndex::type_seq_dimensions>)
-                        ? (elem.template uid<DDim>() += offset, 0)
-                        : 0)...};
-    (void)dummy;
-    return elem;
-}
-
 template <class PositionIndex, class PositionType, class BatchElem>
 KOKKOS_FUNCTION std::array<double, PositionIndex::size()> edge_vector(
         PositionType position,
@@ -41,8 +24,10 @@ KOKKOS_FUNCTION std::array<double, PositionIndex::size()> edge_vector(
         std::size_t const dim_id)
 {
     std::array<double, PositionIndex::size()> vector {};
-    BatchElem const forward = shift_along_dimension<PositionIndex>(elem, dim_id, 1);
-    BatchElem const backward = shift_along_dimension<PositionIndex>(elem, dim_id, -1);
+    BatchElem forward = elem;
+    BatchElem backward = elem;
+    ddc::detail::array(forward)[dim_id] += 1;
+    ddc::detail::array(backward)[dim_id] -= 1;
 
     bool const has_forward = misc::domain_contains(position.non_indices_domain(), forward);
     bool const has_backward = misc::domain_contains(position.non_indices_domain(), backward);
@@ -61,19 +46,6 @@ KOKKOS_FUNCTION std::array<double, PositionIndex::size()> edge_vector(
     return vector;
 }
 
-template <class MetricIndex, class MetricType, class BatchElem>
-KOKKOS_FUNCTION double metric_component(
-        MetricType metric,
-        BatchElem elem,
-        std::size_t const i,
-        std::size_t const j)
-{
-    using MetricIndex1 = tensor::metric_index_1<MetricIndex>;
-    using MetricIndex2 = tensor::metric_index_2<MetricIndex>;
-    return metric.get(
-            metric.access_element(elem, ddc::DiscreteElement<MetricIndex1, MetricIndex2>(i, j)));
-}
-
 template <std::size_t N>
 KOKKOS_FUNCTION double dot(
         std::array<double, N> const& lhs,
@@ -89,62 +61,6 @@ KOKKOS_FUNCTION double dot(
     return result;
 }
 
-template <std::size_t N, class MetricType, class BatchElem>
-KOKKOS_FUNCTION std::array<double, N * N> local_metric(MetricType metric, BatchElem elem)
-{
-    std::array<double, N * N> local_metric_values {};
-    using MetricIndex
-            = ddc::type_seq_element_t<0, ddc::to_type_seq_t<typename MetricType::indices_domain_t>>;
-    for (std::size_t i = 0; i < N; ++i) {
-        for (std::size_t j = 0; j < N; ++j) {
-            local_metric_values[i * N + j] = metric_component<MetricIndex>(metric, elem, i, j);
-        }
-    }
-    return local_metric_values;
-}
-
-template <class DDimSeq, class PositionIndex, class PositionType, class BatchElem, std::size_t N>
-struct GramMatrixBuilder;
-
-template <class... DDim, class PositionIndex, class PositionType, class BatchElem, std::size_t N>
-struct GramMatrixBuilder<ddc::detail::TypeSeq<DDim...>, PositionIndex, PositionType, BatchElem, N>
-{
-    KOKKOS_FUNCTION static std::array<double, N * N> run(
-            auto metric,
-            PositionType position,
-            BatchElem elem,
-            std::array<bool, N> const& active_dims)
-    {
-        static_assert(sizeof...(DDim) == N);
-
-        std::array<double, N * N> gram {};
-        std::array<double, N * N> const local_metric_values = local_metric<N>(metric, elem);
-        std::array<std::array<double, N>, N> edges {};
-
-        for (std::size_t i = 0; i < N; ++i) {
-            if (active_dims[i]) {
-                edges[i] = edge_vector<PositionIndex>(position, elem, i);
-            }
-        }
-
-        for (std::size_t i = 0; i < N; ++i) {
-            if (!active_dims[i]) {
-                continue;
-            }
-            for (std::size_t j = i; j < N; ++j) {
-                if (!active_dims[j]) {
-                    continue;
-                }
-                double const value = dot(edges[i], edges[j], local_metric_values);
-                gram[i * N + j] = value;
-                gram[j * N + i] = value;
-            }
-        }
-
-        return gram;
-    }
-};
-
 } // namespace detail
 
 template <class MetricType, class PositionType, class BatchElem, std::size_t N>
@@ -158,12 +74,44 @@ struct GramMatrix
     {
         using PositionIndex = ddc::
                 type_seq_element_t<0, ddc::to_type_seq_t<typename PositionType::indices_domain_t>>;
-        return detail::GramMatrixBuilder<
-                ddc::to_type_seq_t<typename PositionType::non_indices_domain_t>,
-                PositionIndex,
-                PositionType,
-                BatchElem,
-                N>::run(metric, position, elem, active_dims);
+        using MetricIndex = ddc::
+                type_seq_element_t<0, ddc::to_type_seq_t<typename MetricType::indices_domain_t>>;
+        using MetricIndex1 = tensor::metric_index_1<MetricIndex>;
+        using MetricIndex2 = tensor::metric_index_2<MetricIndex>;
+
+        std::array<double, N * N> gram {};
+        std::array<double, N * N> local_metric {};
+        std::array<std::array<double, N>, N> edges {};
+
+        for (std::size_t i = 0; i < N; ++i) {
+            for (std::size_t j = 0; j < N; ++j) {
+                local_metric[i * N + j] = metric.get(metric.access_element(
+                        elem,
+                        ddc::DiscreteElement<MetricIndex1, MetricIndex2>(i, j)));
+            }
+        }
+
+        for (std::size_t i = 0; i < N; ++i) {
+            if (active_dims[i]) {
+                edges[i] = detail::edge_vector<PositionIndex>(position, elem, i);
+            }
+        }
+
+        for (std::size_t i = 0; i < N; ++i) {
+            if (!active_dims[i]) {
+                continue;
+            }
+            for (std::size_t j = i; j < N; ++j) {
+                if (!active_dims[j]) {
+                    continue;
+                }
+                double const value = detail::dot(edges[i], edges[j], local_metric);
+                gram[i * N + j] = value;
+                gram[j * N + i] = value;
+            }
+        }
+
+        return gram;
     }
 };
 

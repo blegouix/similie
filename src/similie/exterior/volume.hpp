@@ -10,6 +10,8 @@
 #include <similie/misc/binomial_coefficient.hpp>
 #include <similie/tensor/gram_matrix.hpp>
 
+#include <KokkosBatched_LU_Decl.hpp>
+
 namespace sil {
 
 namespace exterior {
@@ -21,100 +23,78 @@ enum class DualStrategy {
 
 namespace detail {
 
-template <std::size_t N>
-KOKKOS_FUNCTION std::size_t count_active(std::array<bool, N> const& active_dims)
+struct VolumeMatrixIndex
 {
-    std::size_t count = 0;
-    for (bool const active_dim : active_dims) {
-        count += active_dim ? 1 : 0;
-    }
-    return count;
-}
+};
 
-template <std::size_t N>
-KOKKOS_FUNCTION double determinant_from_mask(
+struct VolumePrimeMatrixIndex
+{
+};
+
+template <std::size_t N, std::size_t K, class MemorySpace>
+KOKKOS_FUNCTION double determinant_from_ids(
         std::array<double, N * N> const& matrix,
-        std::array<bool, N> const& active_dims)
+        std::array<std::size_t, K> const& ids)
 {
-    std::array<double, N * N> reduced {};
-    std::size_t const size = count_active(active_dims);
-
-    if (size == 0) {
+    if constexpr (K == 0) {
         return 1.;
-    }
+    } else {
+        std::array<double, K * K> reduced_storage {};
+        ddc::DiscreteDomain<VolumeMatrixIndex, VolumePrimeMatrixIndex> reduced_domain(
+                ddc::DiscreteElement<VolumeMatrixIndex, VolumePrimeMatrixIndex>(0, 0),
+                ddc::DiscreteVector<VolumeMatrixIndex, VolumePrimeMatrixIndex>(K, K));
+        ddc::ChunkSpan<
+                double,
+                ddc::DiscreteDomain<VolumeMatrixIndex, VolumePrimeMatrixIndex>,
+                Kokkos::layout_right,
+                MemorySpace>
+                reduced(reduced_storage.data(), reduced_domain);
+        auto reduced_view = reduced.allocation_kokkos_view();
 
-    std::size_t row_id = 0;
-    for (std::size_t i = 0; i < N; ++i) {
-        if (!active_dims[i]) {
-            continue;
-        }
-        std::size_t col_id = 0;
-        for (std::size_t j = 0; j < N; ++j) {
-            if (!active_dims[j]) {
-                continue;
-            }
-            reduced[row_id * N + col_id] = matrix[i * N + j];
-            ++col_id;
-        }
-        ++row_id;
-    }
-
-    double det = 1.;
-    int sign = 1;
-
-    for (std::size_t i = 0; i < size; ++i) {
-        std::size_t pivot = i;
-        double max_value = Kokkos::abs(reduced[i * N + i]);
-        for (std::size_t j = i + 1; j < size; ++j) {
-            double const candidate = Kokkos::abs(reduced[j * N + i]);
-            if (candidate > max_value) {
-                pivot = j;
-                max_value = candidate;
+        for (std::size_t i = 0; i < K; ++i) {
+            for (std::size_t j = 0; j < K; ++j) {
+                reduced_view(i, j) = matrix[ids[i] * N + ids[j]];
             }
         }
 
-        if (max_value == 0.) {
+        int const err = KokkosBatched::SerialLU<KokkosBatched::Algo::SolveLU::Unblocked>::invoke(
+                reduced.allocation_kokkos_view());
+        if (err != 0) {
             return 0.;
         }
 
-        if (pivot != i) {
-            sign *= -1;
-            for (std::size_t j = 0; j < size; ++j) {
-                Kokkos::kokkos_swap(reduced[i * N + j], reduced[pivot * N + j]);
-            }
+        double det = 1.;
+        for (std::size_t i = 0; i < K; ++i) {
+            det *= reduced_view(i, i);
         }
-
-        double const diagonal = reduced[i * N + i];
-        det *= diagonal;
-        for (std::size_t j = i + 1; j < size; ++j) {
-            double const factor = reduced[j * N + i] / diagonal;
-            for (std::size_t k = i + 1; k < size; ++k) {
-                reduced[j * N + k] -= factor * reduced[i * N + k];
-            }
-        }
+        return det;
     }
-
-    return sign * det;
 }
 
-template <std::size_t N>
-KOKKOS_FUNCTION std::array<bool, N> complement(std::array<bool, N> const& active_dims)
+template <std::size_t N, std::size_t K>
+KOKKOS_FUNCTION std::array<std::size_t, N - K> complement(std::array<std::size_t, K> const& ids)
 {
-    std::array<bool, N> complement_dims {};
+    std::array<std::size_t, N - K> complement_ids {};
+    std::size_t complement_id = 0;
     for (std::size_t i = 0; i < N; ++i) {
-        complement_dims[i] = !active_dims[i];
+        bool found = false;
+        for (std::size_t id : ids) {
+            found = found || id == i;
+        }
+        if (!found) {
+            complement_ids[complement_id++] = i;
+        }
     }
-    return complement_dims;
+    return complement_ids;
 }
 
 template <DualStrategy Strategy, std::size_t N>
-KOKKOS_FUNCTION double dual_volume_factor(std::array<bool, N> const& active_dims)
+KOKKOS_FUNCTION double dual_volume_factor(std::size_t const simplex_dim)
 {
     if constexpr (Strategy == DualStrategy::Circumcentric) {
         return 1.;
     } else {
-        std::size_t const k = count_active(active_dims);
-        return 1. / static_cast<double>(misc::binomial_coefficient(N, k));
+        return 1. / static_cast<double>(misc::binomial_coefficient(N, simplex_dim));
     }
 }
 
@@ -123,16 +103,22 @@ KOKKOS_FUNCTION double dual_volume_factor(std::array<bool, N> const& active_dims
 template <std::size_t N, class MetricType, class PositionType, class BatchElem>
 struct SimplexVolume
 {
+    template <std::size_t K>
     KOKKOS_FUNCTION static double run(
             MetricType metric,
             PositionType position,
             BatchElem elem,
-            std::array<bool, N> const& active_dims)
+            std::array<std::size_t, K> const& ids)
     {
-        double const det = detail::determinant_from_mask(
+        std::array<bool, N> active_dims {};
+        for (std::size_t id : ids) {
+            active_dims[id] = true;
+        }
+
+        double const det = detail::determinant_from_ids<N, K, typename MetricType::memory_space>(
                 tensor::GramMatrix<MetricType, PositionType, BatchElem, N>::
                         value(metric, position, elem, active_dims),
-                active_dims);
+                ids);
         return Kokkos::sqrt(Kokkos::abs(det));
     }
 };
@@ -145,15 +131,16 @@ template <
         class BatchElem>
 struct DualSimplexVolume
 {
+    template <std::size_t K>
     KOKKOS_FUNCTION static double run(
             MetricType metric,
             PositionType position,
             BatchElem elem,
-            std::array<bool, N> const& active_dims)
+            std::array<std::size_t, K> const& ids)
     {
-        return detail::dual_volume_factor<Strategy>(active_dims)
+        return detail::dual_volume_factor<Strategy, N>(K)
                * SimplexVolume<N, MetricType, PositionType, BatchElem>::
-                       run(metric, position, elem, detail::complement(active_dims));
+                       run(metric, position, elem, detail::complement<N>(ids));
     }
 };
 
