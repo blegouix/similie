@@ -48,7 +48,7 @@ data:
     type: array
     subtype: double
     size: [ '$Nx', '$Ny', 2 ]
-  spatial_moments_div:
+  spatial_moments_minus_div:
     type: array
     subtype: double
     size: [ '$Nx', '$Ny' ]
@@ -79,7 +79,7 @@ plugins:
           type: array
           subtype: double
           size: [ '$Nt', '$Nx', '$Ny', 2 ]
-        spatial_moments_div:
+        spatial_moments_minus_div:
           type: array
           subtype: double
           size: [ '$Nt', '$Nx', '$Ny' ]
@@ -106,7 +106,7 @@ plugins:
           dataset_selection:
             start: [ '$export_id', 0, 0, 0 ]
             size: [ 1, '$Nx', '$Ny', 2 ]
-        spatial_moments_div:
+        spatial_moments_minus_div:
           dataset_selection:
             start: [ '$export_id', 0, 0 ]
             size: [ 1, '$Nx', '$Ny' ]
@@ -194,7 +194,7 @@ int write_xdmf(int Nx, int Ny, int total_steps, int exported_ids, double export_
     </Attribute>
 )XMF";
 
-        write_scalar_attribute("Spatial moments divergency", "spatial_moments_div");
+        write_scalar_attribute("Spatial moments divergency", "spatial_moments_minus_div");
         write_scalar_attribute("Hamiltonian", "hamiltonian");
 
         file << "   </Grid>\n";
@@ -398,13 +398,16 @@ int main(int argc, char** argv)
             create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), spatial_moments);
 
     // Spatial moments divergence
-    [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> spatial_moments_div_accessor;
+    [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> spatial_moments_minus_div_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, DummyIndex>
-            spatial_moments_div_dom(mesh_xy, spatial_moments_div_accessor.domain());
-    ddc::Chunk spatial_moments_div_alloc(spatial_moments_div_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor spatial_moments_div(spatial_moments_div_alloc);
-    auto h_spatial_moments_div = ddc::
-            create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), spatial_moments_div);
+            spatial_moments_minus_div_dom(mesh_xy, spatial_moments_minus_div_accessor.domain());
+    ddc::Chunk spatial_moments_minus_div_alloc(
+            spatial_moments_minus_div_dom,
+            ddc::DeviceAllocator<double>());
+    sil::tensor::Tensor spatial_moments_minus_div(spatial_moments_minus_div_alloc);
+    auto h_spatial_moments_minus_div = ddc::create_mirror_view_and_copy(
+            Kokkos::DefaultHostExecutionSpace(),
+            spatial_moments_minus_div);
 
     // Temporal moment
     [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> temporal_moment_accessor;
@@ -545,48 +548,45 @@ int main(int argc, char** argv)
             ddc::parallel_deepcopy(spatial_moments_host, spatial_moments);
         }
 
-        // Compute the divergence dpi_\alpha/dx^\alpha of the spatial moments, which is the codifferential \delta pi of the spatial moments
+        // Compute minus the divergence dpi_\alpha/dx^\alpha of the spatial moments, which is the codifferential \delta pi of the spatial moments
         sil::exterior::codifferential<MetricIndex, AlphaLow, AlphaLow>(
                 Kokkos::DefaultExecutionSpace(),
-                spatial_moments_div,
+                spatial_moments_minus_div,
                 spatial_moments,
                 hodge_star,
                 dual_hodge_star,
                 dual_tensor_buffer);
 
         // Compute dpi_0/dx^0 by solving - dpi_0/dx^0 + dpi_\alpha/dx^\alpha = -dH/dphi and advect pi_0 by a time step dx^0. Also Then, perform the second phi half-advection by solving dphi/dx^0 = -dH/dpi_0
-        double const dS = (ddc::get<X>(upper_bounds) - ddc::get<X>(lower_bounds))
-                          * (ddc::get<Y>(upper_bounds) - ddc::get<Y>(lower_bounds))
-                          / ddc::get<DDimX>(nb_cells) / ddc::get<DDimY>(nb_cells); // FIXME unused
         ddc::parallel_for_each(
                 Kokkos::DefaultExecutionSpace(),
-                spatial_moments_div.domain(),
+                spatial_moments_minus_div.domain(),
                 KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
                     const double half_step_potential_ = half_step_potential(elem);
                     const double temporal_moment_ = temporal_moment(elem);
-                    const double spatial_moments_div_ = spatial_moments_div(elem);
+                    const double spatial_moments_minus_div_ = spatial_moments_minus_div(elem);
 
                     // Advect temporal moment by half-step, this is what is needed to perform the whole-step potential advection
                     const double half_step_temporal_moment_
                             = temporal_moment_
                               + (FreeScalarFieldHamiltonian(mass).dH_dphi(half_step_potential_)
-                                 + spatial_moments_div_)
+                                 + spatial_moments_minus_div_)
                                         * dt / 2;
 
                     // Whole-step advection of field state
                     potential(elem)
-                            += FreeScalarFieldHamiltonian(mass).dH_dpi0(half_step_temporal_moment_)
+                            -= FreeScalarFieldHamiltonian(mass).dH_dpi0(half_step_temporal_moment_)
                                * dt;
                     temporal_moment(elem)
                             += (FreeScalarFieldHamiltonian(mass).dH_dphi(half_step_potential_)
-                                + spatial_moments_div_)
+                                + spatial_moments_minus_div_)
                                * dt;
                 });
 
         if (i % nb_iter_between_exports == 0) {
             ddc::parallel_deepcopy(temporal_moment_host, temporal_moment);
             ddc::parallel_deepcopy(potential_host, potential);
-            ddc::parallel_deepcopy(h_spatial_moments_div, spatial_moments_div);
+            ddc::parallel_deepcopy(h_spatial_moments_minus_div, spatial_moments_minus_div);
 
             ddc::parallel_for_each(
                     Kokkos::DefaultExecutionSpace(),
@@ -620,7 +620,7 @@ int main(int argc, char** argv)
                     .with("potential", potential_host)
                     .with("temporal_moment", temporal_moment_host)
                     .with("spatial_moments", spatial_moments_host)
-                    .with("spatial_moments_div", h_spatial_moments_div)
+                    .with("spatial_moments_minus_div", h_spatial_moments_minus_div)
                     .with("hamiltonian", h_hamiltonian);
             std::cout << "Computation result exported in 2d_free_scalar_field.h5." << std::endl;
 
