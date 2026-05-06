@@ -21,9 +21,9 @@ pi = symbols(f"pi0:{N}")
 # Minkowski signature (-, +, +, ..., +)
 metric_sign = [-1] + [1] * (N - 1)
 
-# H = 1/2 m^2 phi^2 + 1/2 (-p0^2 + p1^2 + ... + p{N-1}^2)
+# H = -1/2 m^2 phi^2 + 1/2 (-p0^2 + p1^2 + ... + p{N-1}^2)
 hamiltonian = 0.5 * (
-    mass**2 * phi**2 + sum(metric_sign[i] * pi[i] ** 2 for i in range(N))
+    -mass**2 * phi**2 + sum(metric_sign[i] * pi[i] ** 2 for i in range(N))
 )
 
 # [dH/dphi, dH/dpi0, dH/dpi1, ...]
