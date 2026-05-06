@@ -224,12 +224,6 @@ int main(int argc, char** argv)
     ddc::Chunk laplacian_alloc(laplacian_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor laplacian(laplacian_alloc);
 
-    [[maybe_unused]] sil::tensor::TensorAccessor<DerivativeIndex> derivative_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, DerivativeIndex>
-            derivative_dom(mesh_xy, derivative_accessor.domain());
-    ddc::Chunk derivative_alloc(derivative_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor derivative_tensor_buffer(derivative_alloc);
-
     [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<
             sil::exterior::hodge_star_domain_t<DerivativeMuUpSeq, DerivativeNuLowSeq>>
             derivative_hodge_star_accessor;
@@ -283,8 +277,7 @@ int main(int argc, char** argv)
             potential,
             derivative_hodge_star,
             dual_derivative_hodge_star,
-            derivative_dual_tensor_buffer,
-            derivative_tensor_buffer);
+            derivative_dual_tensor_buffer);
     Kokkos::fence();
 
     auto laplacian_host
