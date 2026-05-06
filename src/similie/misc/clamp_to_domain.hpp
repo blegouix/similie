@@ -5,21 +5,45 @@
 
 #include <ddc/ddc.hpp>
 
+#include "select_from_type_seq.hpp"
+#include "type_seq_ext.hpp"
+
 namespace sil {
 
 namespace misc {
 
-template <class BatchDomain, class Elem>
-KOKKOS_FUNCTION Elem clamp_to_domain(BatchDomain const& batch_domain, Elem elem)
+namespace detail {
+
+template <class CommonSeq>
+struct ClampToDomain;
+
+template <class... CommonDDim>
+struct ClampToDomain<ddc::detail::TypeSeq<CommonDDim...>>
 {
-    auto const front = batch_domain.front();
-    auto const back = batch_domain.back();
-    for (std::size_t i = 0; i < Elem::size(); ++i) {
-        ddc::detail::array(elem)[i] = std::
-                min(std::max(ddc::detail::array(elem)[i], ddc::detail::array(front)[i]),
-                    ddc::detail::array(back)[i]);
+    template <class BatchDomain, class Elem>
+    KOKKOS_FUNCTION static Elem run(BatchDomain const& batch_domain, Elem elem)
+    {
+        ddc::DiscreteDomain<CommonDDim...> const common_domain
+                = select_from_type_seq<ddc::detail::TypeSeq<CommonDDim...>>(batch_domain);
+        ddc::DiscreteElement<CommonDDim...> const front = common_domain.front();
+        ddc::DiscreteElement<CommonDDim...> const back = common_domain.back();
+
+        ((elem.template uid<CommonDDim>() = std::
+                  min(std::max(elem.template uid<CommonDDim>(), front.template uid<CommonDDim>()),
+                      back.template uid<CommonDDim>())),
+         ...);
+        return elem;
     }
-    return elem;
+};
+
+} // namespace detail
+
+template <class BatchDomain, class Elem>
+KOKKOS_FUNCTION Elem clamp_to_domain(BatchDomain const& batch_domain, Elem const& elem)
+{
+    using CommonSeq
+            = misc::type_seq_intersect_t<ddc::to_type_seq_t<Elem>, ddc::to_type_seq_t<BatchDomain>>;
+    return detail::ClampToDomain<CommonSeq>::run(batch_domain, elem);
 }
 
 } // namespace misc
