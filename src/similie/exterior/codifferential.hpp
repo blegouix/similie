@@ -194,103 +194,64 @@ struct Codifferential<
                 TagToRemoveFromCochain>::type;
         using RhoLowSeq
                 = ddc::type_seq_merge_t<ddc::detail::TypeSeq<TagToRemoveFromCochain>, NuLowSeq>;
-        using RhoUpSeq = tensor::upper_t<RhoLowSeq>;
-        using SigmaLowSeq = ddc::type_seq_remove_t<
-                tensor::lower_t<MuUpSeq>,
-                ddc::detail::TypeSeq<TagToRemoveFromCochain>>;
-
-        using HodgeStarDomain = sil::exterior::hodge_star_domain_t<MuUpSeq, NuLowSeq>;
-        using HodgeStarDomain2 = sil::exterior::hodge_star_domain_t<RhoUpSeq, SigmaLowSeq>;
-        using HodgeStarIndex = misc::convert_type_seq_to_t<tensor::TensorFullIndex, MuUpSeq>;
-        using HodgeStarIndex2
-                = misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, NuLowSeq>;
-        using HodgeStarIndex3 = misc::convert_type_seq_to_t<tensor::TensorFullIndex, RhoUpSeq>;
-        using HodgeStarIndex4
-                = misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, SigmaLowSeq>;
         using DualIndex = misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, NuLowSeq>;
         using DualCodifferentialIndex
                 = misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, RhoLowSeq>;
-        using MemorySpace = typename TensorType::memory_space;
-
-        [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain2>
-                hodge_star_accessor2;
         [[maybe_unused]] tensor::TensorAccessor<DualCodifferentialIndex>
                 dual_codifferential_accessor;
-        static constexpr std::size_t HODGE_STAR_SIZE_2
-                = HodgeStarIndex3::access_size() * HodgeStarIndex4::access_size();
         static constexpr std::size_t DUAL_CODIFFERENTIAL_SIZE
                 = DualCodifferentialIndex::access_size();
 
-        std::array<double, HODGE_STAR_SIZE_2> hodge_star_storage2 {};
-        std::array<double, DUAL_CODIFFERENTIAL_SIZE> dual_codifferential_storage {};
-
-        ddc::ChunkSpan<double, HodgeStarDomain2, Kokkos::layout_right, MemorySpace>
-                hodge_star_span2(hodge_star_storage2.data(), hodge_star_accessor2.domain());
+        std::array<double, DUAL_CODIFFERENTIAL_SIZE> dual_codifferential_alloc {};
         ddc::ChunkSpan<
                 double,
                 ddc::DiscreteDomain<DualCodifferentialIndex>,
                 Kokkos::layout_right,
-                MemorySpace>
+                typename TensorType::memory_space>
                 dual_codifferential_span(
-                        dual_codifferential_storage.data(),
+                        dual_codifferential_alloc.data(),
                         dual_codifferential_accessor.domain());
 
-        sil::tensor::Tensor hodge_star2(hodge_star_span2);
         sil::tensor::Tensor dual_codifferential(dual_codifferential_span);
 
         auto dual_evaluator = [&](auto sampled_elem, auto dual_elem) {
             auto const clamped_elem
                     = misc::clamp_to_domain(tensor.non_indices_domain(), sampled_elem);
-            [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain>
-                    hodge_star_accessor;
             [[maybe_unused]] tensor::TensorAccessor<DualIndex> dual_tensor_accessor;
-            static constexpr std::size_t HODGE_STAR_SIZE
-                    = HodgeStarIndex::access_size() * HodgeStarIndex2::access_size();
             static constexpr std::size_t DUAL_TENSOR_SIZE = DualIndex::access_size();
-            std::array<double, HODGE_STAR_SIZE> hodge_star_storage {};
-            std::array<double, DUAL_TENSOR_SIZE> dual_tensor_storage {};
-            ddc::ChunkSpan<double, HodgeStarDomain, Kokkos::layout_right, MemorySpace>
-                    hodge_star_span(hodge_star_storage.data(), hodge_star_accessor.domain());
+            std::array<double, DUAL_TENSOR_SIZE> dual_tensor_alloc {};
             ddc::ChunkSpan<
                     double,
                     ddc::DiscreteDomain<DualIndex>,
                     Kokkos::layout_right,
-                    MemorySpace>
-                    dual_tensor_span(dual_tensor_storage.data(), dual_tensor_accessor.domain());
-            sil::tensor::Tensor hodge_star(hodge_star_span);
+                    typename TensorType::memory_space>
+                    dual_tensor_span(dual_tensor_alloc.data(), dual_tensor_accessor.domain());
             sil::tensor::Tensor dual_tensor(dual_tensor_span);
 
-            ddc::device_for_each(hodge_star.domain(), [&](auto it) {
-                hodge_star.mem(it) = DiscreteHodgeStar<
-                        DualStrategy::Circumcentric,
-                        MuUpSeq,
-                        NuLowSeq,
-                        MetricType,
-                        PositionType,
-                        typename TensorType::non_indices_domain_t::discrete_element_type>::
-                        value(metric,
-                              position,
-                              clamped_elem,
-                              hodge_star.canonical_natural_element(it));
-            });
-            sil::tensor::tensor_prod(dual_tensor, tensor[clamped_elem], hodge_star);
+            DiscreteHodgeStar<
+                    DualStrategy::Circumcentric,
+                    MuUpSeq,
+                    NuLowSeq,
+                    MetricType,
+                    PositionType,
+                    typename TensorType::non_indices_domain_t::discrete_element_type>::
+                    run(dual_tensor, tensor[clamped_elem], metric, position, clamped_elem);
             return dual_tensor.mem(dual_elem);
         };
 
         Coboundary<TagToRemoveFromCochain, DualIndex>::
                 run(dual_codifferential, dual_evaluator, chain, lower_chain, elem);
 
-        ddc::device_for_each(hodge_star2.domain(), [&](auto it) {
-            hodge_star2.mem(it) = DiscreteHodgeStar<
-                    DualStrategy::Circumcentric,
-                    RhoUpSeq,
-                    SigmaLowSeq,
-                    MetricType,
-                    PositionType,
-                    typename TensorType::non_indices_domain_t::discrete_element_type>::
-                    value(metric, position, elem, hodge_star2.canonical_natural_element(it));
-        });
-        sil::tensor::tensor_prod(codifferential_tensor, dual_codifferential, hodge_star2);
+        DiscreteHodgeStar<
+                DualStrategy::Circumcentric,
+                tensor::upper_t<RhoLowSeq>,
+                ddc::type_seq_remove_t<
+                        tensor::lower_t<MuUpSeq>,
+                        ddc::detail::TypeSeq<TagToRemoveFromCochain>>,
+                MetricType,
+                PositionType,
+                typename TensorType::non_indices_domain_t::discrete_element_type>::
+                run(codifferential_tensor, dual_codifferential, metric, position, elem);
         if constexpr ((TagToRemoveFromCochain::size() * (CochainTag::rank() + 1) + 1) % 2 == 1) {
             codifferential_tensor *= -1;
         }

@@ -66,11 +66,12 @@ KOKKOS_FUNCTION double dot(
 template <class MetricType, class PositionType, class BatchElem, std::size_t N>
 struct GramMatrix
 {
-    KOKKOS_FUNCTION static std::array<double, N * N> value(
+    template <std::size_t K>
+    KOKKOS_FUNCTION static std::array<double, K * K> value(
             MetricType metric,
             PositionType position,
             BatchElem elem,
-            std::array<bool, N> const& active_dims)
+            std::array<std::size_t, K> const& ids)
     {
         using PositionIndex = ddc::
                 type_seq_element_t<0, ddc::to_type_seq_t<typename PositionType::indices_domain_t>>;
@@ -79,7 +80,7 @@ struct GramMatrix
         using MetricIndex1 = tensor::metric_index_1<MetricIndex>;
         using MetricIndex2 = tensor::metric_index_2<MetricIndex>;
 
-        std::array<double, N * N> gram {};
+        std::array<double, K * K> gram {};
         std::array<double, N * N> local_metric {};
         std::array<std::array<double, N>, N> edges {};
 
@@ -91,23 +92,15 @@ struct GramMatrix
             }
         }
 
-        for (std::size_t i = 0; i < N; ++i) {
-            if (active_dims[i]) {
-                edges[i] = detail::edge_vector<PositionIndex>(position, elem, i);
-            }
+        for (std::size_t id : ids) {
+            edges[id] = detail::edge_vector<PositionIndex>(position, elem, id);
         }
 
-        for (std::size_t i = 0; i < N; ++i) {
-            if (!active_dims[i]) {
-                continue;
-            }
-            for (std::size_t j = i; j < N; ++j) {
-                if (!active_dims[j]) {
-                    continue;
-                }
-                double const value = detail::dot(edges[i], edges[j], local_metric);
-                gram[i * N + j] = value;
-                gram[j * N + i] = value;
+        for (std::size_t i = 0; i < K; ++i) {
+            for (std::size_t j = i; j < K; ++j) {
+                double const value = detail::dot(edges[ids[i]], edges[ids[j]], local_metric);
+                gram[i * K + j] = value;
+                gram[j * K + i] = value;
             }
         }
 

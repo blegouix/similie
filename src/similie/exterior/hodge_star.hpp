@@ -142,16 +142,29 @@ struct HodgeStarPrimeMatrixIndex
 {
 };
 
+template <misc::Specialization<ddc::detail::TypeSeq> Indices>
+struct HodgeStarTargetSize
+{
+    static constexpr std::size_t value
+            = misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, Indices>::access_size();
+};
+
+template <>
+struct HodgeStarTargetSize<ddc::detail::TypeSeq<>>
+{
+    static constexpr std::size_t value = 1;
+};
+
 template <std::size_t N, class MemorySpace>
 KOKKOS_FUNCTION bool invert_matrix(
-        std::array<double, N * N>& inverse_storage,
+        std::array<double, N * N>& inverse_alloc,
         double& determinant,
-        std::array<double, N * N> const& matrix_storage)
+        std::array<double, N * N> const& matrix_alloc)
 {
-    std::array<double, N * N> matrix = matrix_storage;
-    inverse_storage.fill(0.);
+    std::array<double, N * N> matrix = matrix_alloc;
+    inverse_alloc.fill(0.);
     for (std::size_t i = 0; i < N; ++i) {
-        inverse_storage[i * N + i] = 1.;
+        inverse_alloc[i * N + i] = 1.;
     }
 
     determinant = 1.;
@@ -170,7 +183,7 @@ KOKKOS_FUNCTION bool invert_matrix(
 
         if (pivot_abs == 0.) {
             determinant = 0.;
-            inverse_storage.fill(0.);
+            inverse_alloc.fill(0.);
             return false;
         }
 
@@ -178,7 +191,7 @@ KOKKOS_FUNCTION bool invert_matrix(
             sign *= -1;
             for (std::size_t j = 0; j < N; ++j) {
                 Kokkos::kokkos_swap(matrix[i * N + j], matrix[pivot * N + j]);
-                Kokkos::kokkos_swap(inverse_storage[i * N + j], inverse_storage[pivot * N + j]);
+                Kokkos::kokkos_swap(inverse_alloc[i * N + j], inverse_alloc[pivot * N + j]);
             }
         }
 
@@ -187,7 +200,7 @@ KOKKOS_FUNCTION bool invert_matrix(
 
         for (std::size_t j = 0; j < N; ++j) {
             matrix[i * N + j] /= diagonal;
-            inverse_storage[i * N + j] /= diagonal;
+            inverse_alloc[i * N + j] /= diagonal;
         }
 
         for (std::size_t row = 0; row < N; ++row) {
@@ -197,7 +210,7 @@ KOKKOS_FUNCTION bool invert_matrix(
             double const factor = matrix[row * N + i];
             for (std::size_t col = 0; col < N; ++col) {
                 matrix[row * N + col] -= factor * matrix[i * N + col];
-                inverse_storage[row * N + col] -= factor * inverse_storage[i * N + col];
+                inverse_alloc[row * N + col] -= factor * inverse_alloc[i * N + col];
             }
         }
     }
@@ -215,16 +228,16 @@ KOKKOS_FUNCTION double submatrix_determinant(
     if constexpr (K == 0) {
         return 1.;
     } else {
-        std::array<double, K * K> submatrix_storage {};
+        std::array<double, K * K> submatrix_alloc {};
         for (std::size_t i = 0; i < K; ++i) {
             for (std::size_t j = 0; j < K; ++j) {
-                submatrix_storage[i * K + j] = matrix[row_ids[i] * N + col_ids[j]];
+                submatrix_alloc[i * K + j] = matrix[row_ids[i] * N + col_ids[j]];
             }
         }
 
-        std::array<double, K * K> inverse_storage {};
+        std::array<double, K * K> inverse_alloc {};
         double determinant = 0.;
-        if (!invert_matrix<K, MemorySpace>(inverse_storage, determinant, submatrix_storage)) {
+        if (!invert_matrix<K, MemorySpace>(inverse_alloc, determinant, submatrix_alloc)) {
             return 0.;
         }
         return determinant;
@@ -242,6 +255,36 @@ template <
         class BatchElem>
 struct DiscreteHodgeStar
 {
+    template <
+            misc::Specialization<tensor::Tensor> OutTensorType,
+            misc::Specialization<tensor::Tensor> InTensorType>
+    KOKKOS_FUNCTION static void run(
+            OutTensorType out_tensor,
+            InTensorType in_tensor,
+            MetricType metric,
+            PositionType position,
+            BatchElem elem)
+    {
+        [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<
+                hodge_star_domain_t<Indices1, Indices2>> hodge_star_accessor;
+        static constexpr std::size_t HODGE_STAR_SIZE
+                = misc::convert_type_seq_to_t<tensor::TensorFullIndex, Indices1>::access_size()
+                  * detail::HodgeStarTargetSize<Indices2>::value;
+        std::array<double, HODGE_STAR_SIZE> hodge_star_alloc {};
+        ddc::ChunkSpan<
+                double,
+                hodge_star_domain_t<Indices1, Indices2>,
+                Kokkos::layout_right,
+                typename OutTensorType::memory_space>
+                hodge_star_span(hodge_star_alloc.data(), hodge_star_accessor.domain());
+        sil::tensor::Tensor hodge_star(hodge_star_span);
+        ddc::device_for_each(hodge_star.domain(), [&](auto it) {
+            hodge_star.mem(it)
+                    = value(metric, position, elem, hodge_star.canonical_natural_element(it));
+        });
+        sil::tensor::tensor_prod(out_tensor, hodge_star, in_tensor);
+    }
+
     KOKKOS_FUNCTION static double value(
             MetricType metric,
             PositionType position,
@@ -270,42 +313,6 @@ struct DiscreteHodgeStar
                        run(metric, position, elem, source_ids)
                / (primal_volume * misc::factorial(ddc::type_seq_size_v<Indices1>));
     }
-
-    template <
-            misc::Specialization<tensor::Tensor> OutTensorType,
-            misc::Specialization<tensor::Tensor> InTensorType,
-            class ExecSpace>
-    static OutTensorType run(
-            ExecSpace const& exec_space,
-            OutTensorType out_tensor,
-            InTensorType in_tensor,
-            MetricType metric,
-            PositionType position)
-    {
-        [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<
-                hodge_star_domain_t<Indices1, Indices2>> hodge_star_accessor;
-        ddc::cartesian_prod_t<
-                typename MetricType::non_indices_domain_t,
-                hodge_star_domain_t<Indices1, Indices2>>
-                hodge_star_dom(metric.non_indices_domain(), hodge_star_accessor.domain());
-        ddc::Chunk hodge_star_alloc(
-                hodge_star_dom,
-                ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
-        sil::tensor::Tensor hodge_star(hodge_star_alloc);
-        fill_discrete_hodge_star<
-                Indices1,
-                Indices2,
-                Strategy>(exec_space, hodge_star, metric, position);
-
-        ddc::parallel_for_each(
-                exec_space,
-                out_tensor.non_indices_domain(),
-                KOKKOS_LAMBDA(
-                        typename OutTensorType::non_indices_domain_t::discrete_element_type elem) {
-                    sil::tensor::tensor_prod(out_tensor[elem], hodge_star[elem], in_tensor[elem]);
-                });
-        return out_tensor;
-    }
 };
 
 template <
@@ -315,6 +322,34 @@ template <
         class BatchElem>
 struct ContinuousHodgeStar
 {
+    template <
+            misc::Specialization<tensor::Tensor> OutTensorType,
+            misc::Specialization<tensor::Tensor> InTensorType>
+    KOKKOS_FUNCTION static void run(
+            OutTensorType out_tensor,
+            InTensorType in_tensor,
+            MetricType metric,
+            BatchElem elem)
+    {
+        [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<
+                hodge_star_domain_t<Indices1, Indices2>> hodge_star_accessor;
+        static constexpr std::size_t HODGE_STAR_SIZE
+                = misc::convert_type_seq_to_t<tensor::TensorFullIndex, Indices1>::access_size()
+                  * detail::HodgeStarTargetSize<Indices2>::value;
+        std::array<double, HODGE_STAR_SIZE> hodge_star_alloc {};
+        ddc::ChunkSpan<
+                double,
+                hodge_star_domain_t<Indices1, Indices2>,
+                Kokkos::layout_right,
+                typename OutTensorType::memory_space>
+                hodge_star_span(hodge_star_alloc.data(), hodge_star_accessor.domain());
+        sil::tensor::Tensor hodge_star(hodge_star_span);
+        ddc::device_for_each(hodge_star.domain(), [&](auto it) {
+            hodge_star.mem(it) = value(metric, elem, hodge_star.canonical_natural_element(it));
+        });
+        sil::tensor::tensor_prod(out_tensor, hodge_star, in_tensor);
+    }
+
     KOKKOS_FUNCTION static double value(MetricType metric, BatchElem elem, auto natural_elem)
     {
         using AmbientIndex = typename detail::AmbientIndex<Indices1, Indices2>::type;
@@ -335,11 +370,11 @@ struct ContinuousHodgeStar
                 type_seq_element_t<0, ddc::to_type_seq_t<typename MetricType::indices_domain_t>>;
         using MetricIndex1 = tensor::metric_index_1<MetricIndex>;
         using MetricIndex2 = tensor::metric_index_2<MetricIndex>;
-        std::array<double, N * N> metric_storage {};
-        std::array<double, N * N> inverse_metric_storage {};
+        std::array<double, N * N> metric_alloc {};
+        std::array<double, N * N> inverse_metric_alloc {};
         for (std::size_t i = 0; i < N; ++i) {
             for (std::size_t j = 0; j < N; ++j) {
-                metric_storage[i * N + j] = metric.get(metric.access_element(
+                metric_alloc[i * N + j] = metric.get(metric.access_element(
                         elem,
                         ddc::DiscreteElement<MetricIndex1, MetricIndex2>(i, j)));
             }
@@ -349,7 +384,7 @@ struct ContinuousHodgeStar
         if (!detail::invert_matrix<
                     N,
                     typename MetricType::
-                            memory_space>(inverse_metric_storage, determinant, metric_storage)) {
+                            memory_space>(inverse_metric_alloc, determinant, metric_alloc)) {
             return 0.;
         }
 
@@ -359,39 +394,8 @@ struct ContinuousHodgeStar
                        N,
                        K,
                        typename MetricType::
-                               memory_space>(inverse_metric_storage, source_ids, complement)
+                               memory_space>(inverse_metric_alloc, source_ids, complement)
                / misc::factorial(K);
-    }
-    template <
-            misc::Specialization<tensor::Tensor> OutTensorType,
-            misc::Specialization<tensor::Tensor> InTensorType,
-            class ExecSpace>
-    static OutTensorType run(
-            ExecSpace const& exec_space,
-            OutTensorType out_tensor,
-            InTensorType in_tensor,
-            MetricType metric)
-    {
-        [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<
-                hodge_star_domain_t<Indices1, Indices2>> hodge_star_accessor;
-        ddc::cartesian_prod_t<
-                typename MetricType::non_indices_domain_t,
-                hodge_star_domain_t<Indices1, Indices2>>
-                hodge_star_dom(metric.non_indices_domain(), hodge_star_accessor.domain());
-        ddc::Chunk hodge_star_alloc(
-                hodge_star_dom,
-                ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
-        sil::tensor::Tensor hodge_star(hodge_star_alloc);
-        fill_continuous_hodge_star<Indices1, Indices2>(exec_space, hodge_star, metric);
-
-        ddc::parallel_for_each(
-                exec_space,
-                out_tensor.non_indices_domain(),
-                KOKKOS_LAMBDA(
-                        typename OutTensorType::non_indices_domain_t::discrete_element_type elem) {
-                    sil::tensor::tensor_prod(out_tensor[elem], hodge_star[elem], in_tensor[elem]);
-                });
-        return out_tensor;
     }
 };
 

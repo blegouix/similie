@@ -252,6 +252,10 @@ TEST(ContinuousHodgeStar, Metric3D)
             metric.non_indices_domain(),
             [&](ddc::DiscreteElement<DDimX, DDimY, DDimZ> elem) {
                 sil::tensor::tensor_prod(dual_form[elem], hodge_star[elem], form[elem]);
+                // Here metric = [[2,1,0],[1,3,0],[0,0,5]], form = 3 dx^dy, and
+                // *(dx^dy) = sqrt(det(g)) g^{xx} g^{yy} dz = 6 * (3/5) * (2/5) dz = 18/25 dz.
+                // The antisymmetric-component convention stores dz with an additional sqrt(det(g))^-1,
+                // hence the expected value 18 / sqrt(70).
                 EXPECT_DOUBLE_EQ(
                         dual_form(elem, dual_form.accessor().access_element<Z>()),
                         18. * std::sqrt(70.) / 70.);

@@ -31,15 +31,13 @@ struct VolumePrimeMatrixIndex
 {
 };
 
-template <std::size_t N, std::size_t K, class MemorySpace>
-KOKKOS_FUNCTION double determinant_from_ids(
-        std::array<double, N * N> const& matrix,
-        std::array<std::size_t, K> const& ids)
+template <std::size_t K, class MemorySpace>
+KOKKOS_FUNCTION double determinant(std::array<double, K * K> const& matrix)
 {
     if constexpr (K == 0) {
         return 1.;
     } else {
-        std::array<double, K * K> reduced_storage {};
+        std::array<double, K * K> reduced_alloc {};
         ddc::DiscreteDomain<VolumeMatrixIndex, VolumePrimeMatrixIndex> reduced_domain(
                 ddc::DiscreteElement<VolumeMatrixIndex, VolumePrimeMatrixIndex>(0, 0),
                 ddc::DiscreteVector<VolumeMatrixIndex, VolumePrimeMatrixIndex>(K, K));
@@ -48,12 +46,12 @@ KOKKOS_FUNCTION double determinant_from_ids(
                 ddc::DiscreteDomain<VolumeMatrixIndex, VolumePrimeMatrixIndex>,
                 Kokkos::layout_right,
                 MemorySpace>
-                reduced(reduced_storage.data(), reduced_domain);
+                reduced(reduced_alloc.data(), reduced_domain);
         auto reduced_view = reduced.allocation_kokkos_view();
 
         for (std::size_t i = 0; i < K; ++i) {
             for (std::size_t j = 0; j < K; ++j) {
-                reduced_view(i, j) = matrix[ids[i] * N + ids[j]];
+                reduced_view(i, j) = matrix[i * K + j];
             }
         }
 
@@ -110,15 +108,9 @@ struct SimplexVolume
             BatchElem elem,
             std::array<std::size_t, K> const& ids)
     {
-        std::array<bool, N> active_dims {};
-        for (std::size_t id : ids) {
-            active_dims[id] = true;
-        }
-
-        double const det = detail::determinant_from_ids<N, K, typename MetricType::memory_space>(
-                tensor::GramMatrix<MetricType, PositionType, BatchElem, N>::
-                        value(metric, position, elem, active_dims),
-                ids);
+        double const det = detail::determinant<K, typename MetricType::memory_space>(
+                tensor::GramMatrix<MetricType, PositionType, BatchElem, N>::template value<
+                        K>(metric, position, elem, ids));
         return Kokkos::sqrt(Kokkos::abs(det));
     }
 };
