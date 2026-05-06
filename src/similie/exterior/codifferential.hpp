@@ -233,7 +233,11 @@ struct Codifferential<
                     MetricType,
                     PositionType,
                     typename TensorType::non_indices_domain_t::discrete_element_type>::
-                    run(dual_tensor, tensor[clamped_elem], metric, position, clamped_elem);
+                    run(dual_tensor,
+                        tensor[clamped_elem],
+                        metric,
+                        position,
+                        clamped_elem); // Warning: there is redundancy here (neighbors threads apply hodge star to same tensor elements) but it is the only way to be able to compute the coboundary afterward without synchronization.
             return dual_tensor.mem(dual_elem);
         };
 
