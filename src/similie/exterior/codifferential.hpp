@@ -264,6 +264,64 @@ template <
         tensor::TensorIndex MetricIndex,
         tensor::TensorNatIndex TagToRemoveFromCochain,
         tensor::TensorIndex CochainTag,
+        misc::Specialization<tensor::Tensor> DualTensorType,
+        misc::Specialization<tensor::Tensor> DualCodifferentialTensorType,
+        misc::Specialization<tensor::Tensor> TensorType,
+        misc::Specialization<tensor::Tensor> HodgeStarType,
+        misc::Specialization<tensor::Tensor> DualHodgeStarType,
+        class ExecSpace>
+codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codifferential(
+        ExecSpace const& exec_space,
+        codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType>
+                codifferential_tensor,
+        TensorType tensor,
+        HodgeStarType hodge_star,
+        DualHodgeStarType dual_hodge_star,
+        DualTensorType dual_tensor_buffer,
+        DualCodifferentialTensorType dual_codifferential_buffer)
+{
+    static_assert(tensor::is_covariant_v<TagToRemoveFromCochain>);
+    using DualDummySeq = typename detail::CodifferentialDummyIndexSeq<
+            TagToRemoveFromCochain::size() - CochainTag::rank(),
+            TagToRemoveFromCochain>::type;
+    using DualIndex = misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, DualDummySeq>;
+
+    SIMILIE_DEBUG_LOG("similie_apply_first_hodge_star_for_codifferential");
+    ddc::parallel_for_each(
+            "similie_apply_first_hodge_star_for_codifferential",
+            exec_space,
+            dual_tensor_buffer.non_indices_domain(),
+            KOKKOS_LAMBDA(typename TensorType::non_indices_domain_t::discrete_element_type elem) {
+                sil::tensor::tensor_prod(dual_tensor_buffer[elem], tensor[elem], hodge_star[elem]);
+            });
+
+    sil::exterior::coboundary<
+            TagToRemoveFromCochain,
+            DualIndex>(exec_space, dual_codifferential_buffer, dual_tensor_buffer);
+
+    SIMILIE_DEBUG_LOG("similie_apply_second_hodge_star_for_codifferential");
+    ddc::parallel_for_each(
+            "similie_apply_second_hodge_star_for_codifferential",
+            exec_space,
+            codifferential_tensor.non_indices_domain(),
+            KOKKOS_LAMBDA(typename TensorType::non_indices_domain_t::discrete_element_type elem) {
+                sil::tensor::tensor_prod(
+                        codifferential_tensor[elem],
+                        dual_codifferential_buffer[elem],
+                        dual_hodge_star[elem]);
+                if constexpr (
+                        (TagToRemoveFromCochain::size() * (CochainTag::rank() + 1) + 1) % 2 == 1) {
+                    codifferential_tensor[elem] *= -1;
+                }
+            });
+
+    return codifferential_tensor;
+}
+
+template <
+        tensor::TensorIndex MetricIndex,
+        tensor::TensorNatIndex TagToRemoveFromCochain,
+        tensor::TensorIndex CochainTag,
         misc::Specialization<tensor::Tensor> TensorType,
         misc::Specialization<tensor::Tensor> MetricType,
         misc::Specialization<tensor::Tensor> PositionType,

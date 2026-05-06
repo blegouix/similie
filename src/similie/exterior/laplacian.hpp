@@ -22,6 +22,91 @@ namespace detail {
 
 template <
         tensor::TensorIndex MetricIndex,
+        tensor::TensorNatIndex TagToRemoveFromCochain,
+        tensor::TensorIndex CochainTag,
+        misc::Specialization<tensor::Tensor> TensorType,
+        misc::Specialization<tensor::Tensor> MetricType,
+        misc::Specialization<tensor::Tensor> PositionType,
+        class ExecSpace>
+codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType>
+apply_prefilled_codifferential(
+        ExecSpace const& exec_space,
+        codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType>
+                codifferential_tensor,
+        TensorType tensor,
+        MetricType metric,
+        PositionType position)
+{
+    using MuUpSeq = tensor::upper_t<ddc::to_type_seq_t<tensor::natural_domain_t<CochainTag>>>;
+    using NuLowSeq = typename detail::CodifferentialDummyIndexSeq<
+            TagToRemoveFromCochain::size() - CochainTag::rank(),
+            TagToRemoveFromCochain>::type;
+    using RhoLowSeq = ddc::type_seq_merge_t<ddc::detail::TypeSeq<TagToRemoveFromCochain>, NuLowSeq>;
+    using RhoUpSeq = tensor::upper_t<RhoLowSeq>;
+    using SigmaLowSeq = ddc::type_seq_remove_t<
+            tensor::lower_t<MuUpSeq>,
+            ddc::detail::TypeSeq<TagToRemoveFromCochain>>;
+    using DualIndex = misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, NuLowSeq>;
+    using DualCodifferentialIndex
+            = misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, RhoLowSeq>;
+
+    [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<
+            hodge_star_domain_t<MuUpSeq, NuLowSeq>> hodge_star_accessor;
+    ddc::cartesian_prod_t<
+            typename MetricType::non_indices_domain_t,
+            hodge_star_domain_t<MuUpSeq, NuLowSeq>>
+            hodge_star_dom(metric.non_indices_domain(), hodge_star_accessor.domain());
+    ddc::Chunk hodge_star_alloc(
+            hodge_star_dom,
+            ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
+    sil::tensor::Tensor hodge_star(hodge_star_alloc);
+
+    [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<
+            hodge_star_domain_t<RhoUpSeq, SigmaLowSeq>> dual_hodge_star_accessor;
+    ddc::cartesian_prod_t<
+            typename MetricType::non_indices_domain_t,
+            hodge_star_domain_t<RhoUpSeq, SigmaLowSeq>>
+            dual_hodge_star_dom(metric.non_indices_domain(), dual_hodge_star_accessor.domain());
+    ddc::Chunk dual_hodge_star_alloc(
+            dual_hodge_star_dom,
+            ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
+    sil::tensor::Tensor dual_hodge_star(dual_hodge_star_alloc);
+
+    [[maybe_unused]] tensor::TensorAccessor<DualIndex> dual_tensor_accessor;
+    ddc::cartesian_prod_t<typename TensorType::non_indices_domain_t, ddc::DiscreteDomain<DualIndex>>
+            dual_tensor_dom(tensor.non_indices_domain(), dual_tensor_accessor.domain());
+    ddc::Chunk dual_tensor_alloc(
+            dual_tensor_dom,
+            ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
+    sil::tensor::Tensor dual_tensor_buffer(dual_tensor_alloc);
+
+    [[maybe_unused]] tensor::TensorAccessor<DualCodifferentialIndex> dual_codifferential_accessor;
+    ddc::cartesian_prod_t<
+            typename TensorType::non_indices_domain_t,
+            ddc::DiscreteDomain<DualCodifferentialIndex>>
+            dual_codifferential_dom(
+                    tensor.non_indices_domain(),
+                    dual_codifferential_accessor.domain());
+    ddc::Chunk dual_codifferential_alloc(
+            dual_codifferential_dom,
+            ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
+    sil::tensor::Tensor dual_codifferential_buffer(dual_codifferential_alloc);
+
+    fill_discrete_hodge_star<MuUpSeq, NuLowSeq>(exec_space, hodge_star, metric, position);
+    fill_discrete_hodge_star<RhoUpSeq, SigmaLowSeq>(exec_space, dual_hodge_star, metric, position);
+
+    return sil::exterior::codifferential<MetricIndex, TagToRemoveFromCochain, CochainTag>(
+            exec_space,
+            codifferential_tensor,
+            tensor,
+            hodge_star,
+            dual_hodge_star,
+            dual_tensor_buffer,
+            dual_codifferential_buffer);
+}
+
+template <
+        tensor::TensorIndex MetricIndex,
         tensor::TensorNatIndex LaplacianDummyIndex,
         tensor::TensorIndex CochainTag,
         misc::Specialization<tensor::Tensor> TensorType,
@@ -50,7 +135,7 @@ TensorType codifferential_of_coboundary(
     sil::exterior::deriv<LaplacianDummyIndex, CochainTag>(exec_space, derivative_tensor, tensor);
 
     // Codifferential
-    sil::exterior::codifferential<
+    detail::apply_prefilled_codifferential<
             MetricIndex,
             LaplacianDummyIndex,
             coboundary_index_t<
@@ -89,7 +174,7 @@ TensorType coboundary_of_codifferential(
             ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
     sil::tensor::Tensor codifferential_tensor(codifferential_tensor_alloc);
 
-    sil::exterior::codifferential<
+    detail::apply_prefilled_codifferential<
             MetricIndex,
             LaplacianDummyIndex,
             CochainTag>(exec_space, codifferential_tensor, tensor, metric, position);

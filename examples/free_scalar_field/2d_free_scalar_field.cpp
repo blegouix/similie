@@ -436,6 +436,57 @@ int main(int argc, char** argv)
     auto h_hamiltonian
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), hamiltonian);
 
+    using MuUpSeq
+            = sil::tensor::upper_t<ddc::to_type_seq_t<sil::tensor::natural_domain_t<AlphaLow>>>;
+    using NuLowSeq = ddc::detail::TypeSeq<
+            sil::tensor::Covariant<sil::exterior::detail::CodifferentialDummyIndex<0, AlphaLow>>>;
+    using RhoLowSeq = ddc::type_seq_merge_t<ddc::detail::TypeSeq<AlphaLow>, NuLowSeq>;
+    using RhoUpSeq = sil::tensor::upper_t<RhoLowSeq>;
+    using SigmaLowSeq
+            = ddc::type_seq_remove_t<sil::tensor::lower_t<MuUpSeq>, ddc::detail::TypeSeq<AlphaLow>>;
+    using DualIndex
+            = sil::misc::convert_type_seq_to_t<sil::tensor::TensorAntisymmetricIndex, NuLowSeq>;
+    using DualCodifferentialIndex
+            = sil::misc::convert_type_seq_to_t<sil::tensor::TensorAntisymmetricIndex, RhoLowSeq>;
+
+    [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<
+            sil::exterior::hodge_star_domain_t<MuUpSeq, NuLowSeq>> hodge_star_accessor;
+    ddc::cartesian_prod_t<
+            decltype(metric.non_indices_domain()),
+            sil::exterior::hodge_star_domain_t<MuUpSeq, NuLowSeq>>
+            hodge_star_dom(metric.non_indices_domain(), hodge_star_accessor.domain());
+    ddc::Chunk hodge_star_alloc(hodge_star_dom, ddc::DeviceAllocator<double>());
+    sil::tensor::Tensor hodge_star(hodge_star_alloc);
+
+    [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<
+            sil::exterior::hodge_star_domain_t<RhoUpSeq, SigmaLowSeq>> dual_hodge_star_accessor;
+    ddc::cartesian_prod_t<
+            decltype(metric.non_indices_domain()),
+            sil::exterior::hodge_star_domain_t<RhoUpSeq, SigmaLowSeq>>
+            dual_hodge_star_dom(metric.non_indices_domain(), dual_hodge_star_accessor.domain());
+    ddc::Chunk dual_hodge_star_alloc(dual_hodge_star_dom, ddc::DeviceAllocator<double>());
+    sil::tensor::Tensor dual_hodge_star(dual_hodge_star_alloc);
+
+    [[maybe_unused]] sil::tensor::TensorAccessor<DualIndex> dual_tensor_accessor;
+    ddc::cartesian_prod_t<decltype(mesh_xy), ddc::DiscreteDomain<DualIndex>>
+            dual_tensor_dom(mesh_xy, dual_tensor_accessor.domain());
+    ddc::Chunk dual_tensor_alloc(dual_tensor_dom, ddc::DeviceAllocator<double>());
+    sil::tensor::Tensor dual_tensor_buffer(dual_tensor_alloc);
+
+    [[maybe_unused]] sil::tensor::TensorAccessor<DualCodifferentialIndex>
+            dual_codifferential_accessor;
+    ddc::cartesian_prod_t<decltype(mesh_xy), ddc::DiscreteDomain<DualCodifferentialIndex>>
+            dual_codifferential_dom(mesh_xy, dual_codifferential_accessor.domain());
+    ddc::Chunk dual_codifferential_alloc(dual_codifferential_dom, ddc::DeviceAllocator<double>());
+    sil::tensor::Tensor dual_codifferential_buffer(dual_codifferential_alloc);
+
+    sil::exterior::fill_discrete_hodge_star<
+            MuUpSeq,
+            NuLowSeq>(Kokkos::DefaultExecutionSpace(), hodge_star, metric, position);
+    sil::exterior::fill_discrete_hodge_star<
+            RhoUpSeq,
+            SigmaLowSeq>(Kokkos::DefaultExecutionSpace(), dual_hodge_star, metric, position);
+
     // ------------------
     // ----- SOLVER -----
     // ------------------
@@ -509,8 +560,10 @@ int main(int argc, char** argv)
                 Kokkos::DefaultExecutionSpace(),
                 spatial_moments_div,
                 spatial_moments,
-                metric,
-                position);
+                hodge_star,
+                dual_hodge_star,
+                dual_tensor_buffer,
+                dual_codifferential_buffer);
 
         // Compute dpi_0/dx^0 by solving - dpi_0/dx^0 + dpi_\alpha/dx^\alpha = -dH/dphi and advect pi_0 by a time step dx^0. Also Then, perform the second phi half-advection by solving dphi/dx^0 = -dH/dpi_0
         double const dS = (ddc::get<X>(upper_bounds) - ddc::get<X>(lower_bounds))

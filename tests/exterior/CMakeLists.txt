@@ -36,6 +36,17 @@ target_link_libraries(unit_tests_hodge_star
 
 gtest_discover_tests(unit_tests_hodge_star DISCOVERY_MODE PRE_TEST)
 
+add_executable(unit_tests_codifferential codifferential.cpp ../main.cpp)
+
+target_link_libraries(unit_tests_codifferential
+    PUBLIC
+        GTest::gtest
+        DDC::core
+        sil::exterior
+)
+
+gtest_discover_tests(unit_tests_codifferential DISCOVERY_MODE PRE_TEST)
+
 add_executable(unit_tests_laplacian laplacian.cpp ../main.cpp)
 
 target_link_libraries(unit_tests_laplacian
