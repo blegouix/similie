@@ -180,17 +180,6 @@ TEST(Codifferential, PrefilledHodgeStarImplementation)
         ddc::Chunk dual_tensor_alloc(dual_tensor_dom, ddc::HostAllocator<double>());
         sil::tensor::Tensor dual_tensor(dual_tensor_alloc);
 
-        [[maybe_unused]] sil::tensor::TensorAccessor<DualCodifferentialIndex>
-                dual_codifferential_accessor;
-        ddc::cartesian_prod_t<
-                typename TensorType::non_indices_domain_t,
-                ddc::DiscreteDomain<DualCodifferentialIndex>>
-                dual_codifferential_dom(
-                        tensor.non_indices_domain(),
-                        dual_codifferential_accessor.domain());
-        ddc::Chunk dual_codifferential_alloc(dual_codifferential_dom, ddc::HostAllocator<double>());
-        sil::tensor::Tensor dual_codifferential(dual_codifferential_alloc);
-
         sil::exterior::fill_discrete_hodge_star<
                 MuUpSeq,
                 NuLowSeq>(Kokkos::DefaultHostExecutionSpace(), hodge_star, metric, position);
@@ -209,7 +198,6 @@ TEST(Codifferential, PrefilledHodgeStarImplementation)
                 tensor,
                 hodge_star,
                 dual_hodge_star,
-                dual_tensor,
-                dual_codifferential);
+                dual_tensor);
     });
 }

@@ -265,7 +265,6 @@ template <
         tensor::TensorNatIndex TagToRemoveFromCochain,
         tensor::TensorIndex CochainTag,
         misc::Specialization<tensor::Tensor> DualTensorType,
-        misc::Specialization<tensor::Tensor> DualCodifferentialTensorType,
         misc::Specialization<tensor::Tensor> TensorType,
         misc::Specialization<tensor::Tensor> HodgeStarType,
         misc::Specialization<tensor::Tensor> DualHodgeStarType,
@@ -277,14 +276,27 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
         TensorType tensor,
         HodgeStarType hodge_star,
         DualHodgeStarType dual_hodge_star,
-        DualTensorType dual_tensor_buffer,
-        DualCodifferentialTensorType dual_codifferential_buffer)
+        DualTensorType dual_tensor_buffer)
 {
     static_assert(tensor::is_covariant_v<TagToRemoveFromCochain>);
     using DualDummySeq = typename detail::CodifferentialDummyIndexSeq<
             TagToRemoveFromCochain::size() - CochainTag::rank(),
             TagToRemoveFromCochain>::type;
     using DualIndex = misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, DualDummySeq>;
+    using RhoLowSeq
+            = ddc::type_seq_merge_t<ddc::detail::TypeSeq<TagToRemoveFromCochain>, DualDummySeq>;
+    using DualCodifferentialIndex
+            = misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, RhoLowSeq>;
+    auto chain = tangent_basis<
+            DualIndex::rank() + 1,
+            typename detail::NonSpectatorDimension<
+                    TagToRemoveFromCochain,
+                    typename TensorType::non_indices_domain_t>::type>(exec_space);
+    auto lower_chain = tangent_basis<
+            DualIndex::rank(),
+            typename detail::NonSpectatorDimension<
+                    TagToRemoveFromCochain,
+                    typename TensorType::non_indices_domain_t>::type>(exec_space);
 
     SIMILIE_DEBUG_LOG("similie_apply_first_hodge_star_for_codifferential");
     ddc::parallel_for_each(
@@ -295,19 +307,42 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
                 sil::tensor::tensor_prod(dual_tensor_buffer[elem], tensor[elem], hodge_star[elem]);
             });
 
-    sil::exterior::coboundary<
-            TagToRemoveFromCochain,
-            DualIndex>(exec_space, dual_codifferential_buffer, dual_tensor_buffer);
-
     SIMILIE_DEBUG_LOG("similie_apply_second_hodge_star_for_codifferential");
     ddc::parallel_for_each(
             "similie_apply_second_hodge_star_for_codifferential",
             exec_space,
             codifferential_tensor.non_indices_domain(),
             KOKKOS_LAMBDA(typename TensorType::non_indices_domain_t::discrete_element_type elem) {
+                [[maybe_unused]] tensor::TensorAccessor<DualCodifferentialIndex>
+                        dual_codifferential_accessor;
+                std::array<double, DualCodifferentialIndex::access_size()>
+                        dual_codifferential_alloc {};
+                ddc::ChunkSpan<
+                        double,
+                        ddc::DiscreteDomain<DualCodifferentialIndex>,
+                        Kokkos::layout_right,
+                        typename TensorType::memory_space>
+                        dual_codifferential_span(
+                                dual_codifferential_alloc.data(),
+                                dual_codifferential_accessor.domain());
+                sil::tensor::Tensor dual_codifferential(dual_codifferential_span);
+
+                Coboundary<TagToRemoveFromCochain, DualIndex>::run(
+                        dual_codifferential,
+                        // TODO this is an assumption on boundary condition (free boundary), needs to be generalized.
+                        [&](auto sampled_elem, auto dual_elem) {
+                            auto const clamped_elem = misc::clamp_to_domain(
+                                    dual_tensor_buffer.non_indices_domain(),
+                                    sampled_elem);
+                            return dual_tensor_buffer.mem(clamped_elem, dual_elem);
+                        },
+                        chain,
+                        lower_chain,
+                        elem);
+
                 sil::tensor::tensor_prod(
                         codifferential_tensor[elem],
-                        dual_codifferential_buffer[elem],
+                        dual_codifferential,
                         dual_hodge_star[elem]);
                 if constexpr (
                         (TagToRemoveFromCochain::size() * (CochainTag::rank() + 1) + 1) % 2 == 1) {
