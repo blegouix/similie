@@ -357,7 +357,7 @@ int main(int argc, char** argv)
     double const y_1 = -0.3;
     double const sigma = .5;
 
-    double const v = 10.;
+    double const v = .9;
     double const k = 1.;
     double const mass = 1.;
 
@@ -509,6 +509,17 @@ int main(int argc, char** argv)
      * dphi/dx^0 = - dH/dpi_0
      * dphi/dx^\alpha = dH/dpi_\alpha
      *
+     * In the exterior calculus formalism, we have :
+     *
+     * d \phi = dphi/dpi^\alpha
+     * \delta \pi = -dpi_\alpha/dx^\alpha
+     *
+     * Thus:
+     *
+     * dpi_0/dx^0 = dH/dphi - \delta \pi
+     * dphi/dx^0 = - dH/dpi_0
+     * d \phi = dH/dpi_\alpha
+     *
      * We implement mid-point explicit temporal integration scheme.
      */
     for (int i = 0; i < nb_iter; i++) {
@@ -532,7 +543,7 @@ int main(int argc, char** argv)
                 AlphaLow,
                 DummyIndex>(Kokkos::DefaultExecutionSpace(), potential_grad, half_step_potential);
 
-        // Compute the spatial moments pi_\alpha by solving dphi/dx^\alpha = dH/dpi_\alpha
+        // Compute the spatial moments pi_\alpha by solving d \phi = dH/dpi_\alpha
         ddc::parallel_for_each(
                 Kokkos::DefaultExecutionSpace(),
                 mesh_xy,
@@ -548,7 +559,7 @@ int main(int argc, char** argv)
             ddc::parallel_deepcopy(spatial_moments_host, spatial_moments);
         }
 
-        // Compute minus the divergence dpi_\alpha/dx^\alpha of the spatial moments, which is the codifferential \delta pi of the spatial moments
+        // Compute minus the divergence \delta \pi of the spatial moments
         sil::exterior::codifferential<MetricIndex, AlphaLow, AlphaLow>(
                 Kokkos::DefaultExecutionSpace(),
                 spatial_moments_minus_div,
@@ -557,7 +568,7 @@ int main(int argc, char** argv)
                 dual_hodge_star,
                 dual_tensor_buffer);
 
-        // Compute dpi_0/dx^0 by solving - dpi_0/dx^0 + dpi_\alpha/dx^\alpha = -dH/dphi and advect pi_0 by a time step dx^0. Also Then, perform the second phi half-advection by solving dphi/dx^0 = -dH/dpi_0
+        // Compute dpi_0/dx^0 = dH/dphi - \delta \pi from the DeDonder-Weyl equation then perform the whole-step advection
         ddc::parallel_for_each(
                 Kokkos::DefaultExecutionSpace(),
                 spatial_moments_minus_div.domain(),
@@ -570,7 +581,7 @@ int main(int argc, char** argv)
                     const double half_step_temporal_moment_
                             = temporal_moment_
                               + (FreeScalarFieldHamiltonian(mass).dH_dphi(half_step_potential_)
-                                 + spatial_moments_minus_div_)
+                                 - spatial_moments_minus_div_)
                                         * dt / 2;
 
                     // Whole-step advection of field state
@@ -579,7 +590,7 @@ int main(int argc, char** argv)
                                * dt;
                     temporal_moment(elem)
                             += (FreeScalarFieldHamiltonian(mass).dH_dphi(half_step_potential_)
-                                + spatial_moments_minus_div_)
+                                - spatial_moments_minus_div_)
                                * dt;
                 });
 
