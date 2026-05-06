@@ -199,10 +199,8 @@ struct Codifferential<
                 = misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, RhoLowSeq>;
         [[maybe_unused]] tensor::TensorAccessor<DualCodifferentialIndex>
                 dual_codifferential_accessor;
-        static constexpr std::size_t DUAL_CODIFFERENTIAL_SIZE
-                = DualCodifferentialIndex::access_size();
 
-        std::array<double, DUAL_CODIFFERENTIAL_SIZE> dual_codifferential_alloc {};
+        std::array<double, DualCodifferentialIndex::access_size()> dual_codifferential_alloc {};
         ddc::ChunkSpan<
                 double,
                 ddc::DiscreteDomain<DualCodifferentialIndex>,

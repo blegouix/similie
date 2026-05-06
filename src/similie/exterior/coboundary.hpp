@@ -204,13 +204,13 @@ template <tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainT
 struct Coboundary<TagToAddToCochain, CochainTag>
 {
     template <
-            class OutTensorType,
+            class CoboundaryTensorType,
             class Evaluator,
             class ChainType,
             class LowerChainType,
             class Elem>
     KOKKOS_FUNCTION static void run(
-            OutTensorType coboundary_tensor,
+            CoboundaryTensorType coboundary_tensor,
             Evaluator evaluator,
             ChainType chain,
             LowerChainType lower_chain,
@@ -226,13 +226,13 @@ struct Coboundary<TagToAddToCochain, CochainTag>
                 typename LowerChainType::simplex_type,
                 ddc::DiscreteDomain<detail::CoboundaryDummyIndex>,
                 Kokkos::layout_right,
-                typename OutTensorType::memory_space>
+                typename CoboundaryTensorType::memory_space>
                 simplex_boundary(simplex_boundary_alloc.data(), boundary_domain);
         ddc::ChunkSpan<
                 double,
                 ddc::DiscreteDomain<detail::CoboundaryDummyIndex>,
                 Kokkos::layout_right,
-                typename OutTensorType::memory_space>
+                typename CoboundaryTensorType::memory_space>
                 boundary_values(boundary_values_alloc.data(), boundary_domain);
 
         auto cochain = Cochain(chain, coboundary_tensor);

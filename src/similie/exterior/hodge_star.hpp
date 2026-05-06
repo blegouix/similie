@@ -256,11 +256,11 @@ template <
 struct DiscreteHodgeStar
 {
     template <
-            misc::Specialization<tensor::Tensor> OutTensorType,
-            misc::Specialization<tensor::Tensor> InTensorType>
+            misc::Specialization<tensor::Tensor> HodgeTensorType,
+            misc::Specialization<tensor::Tensor> FormTensorType>
     KOKKOS_FUNCTION static void run(
-            OutTensorType out_tensor,
-            InTensorType in_tensor,
+            HodgeTensorType hodge_tensor,
+            FormTensorType form_tensor,
             MetricType metric,
             PositionType position,
             BatchElem elem)
@@ -275,14 +275,14 @@ struct DiscreteHodgeStar
                 double,
                 hodge_star_domain_t<Indices1, Indices2>,
                 Kokkos::layout_right,
-                typename OutTensorType::memory_space>
+                typename HodgeTensorType::memory_space>
                 hodge_star_span(hodge_star_alloc.data(), hodge_star_accessor.domain());
         sil::tensor::Tensor hodge_star(hodge_star_span);
         ddc::device_for_each(hodge_star.domain(), [&](auto it) {
             hodge_star.mem(it)
                     = value(metric, position, elem, hodge_star.canonical_natural_element(it));
         });
-        sil::tensor::tensor_prod(out_tensor, hodge_star, in_tensor);
+        sil::tensor::tensor_prod(hodge_tensor, hodge_star, form_tensor);
     }
 
     KOKKOS_FUNCTION static double value(
@@ -323,11 +323,11 @@ template <
 struct ContinuousHodgeStar
 {
     template <
-            misc::Specialization<tensor::Tensor> OutTensorType,
-            misc::Specialization<tensor::Tensor> InTensorType>
+            misc::Specialization<tensor::Tensor> HodgeTensorType,
+            misc::Specialization<tensor::Tensor> FormTensorType>
     KOKKOS_FUNCTION static void run(
-            OutTensorType out_tensor,
-            InTensorType in_tensor,
+            HodgeTensorType hodge_tensor,
+            FormTensorType form_tensor,
             MetricType metric,
             BatchElem elem)
     {
@@ -341,13 +341,13 @@ struct ContinuousHodgeStar
                 double,
                 hodge_star_domain_t<Indices1, Indices2>,
                 Kokkos::layout_right,
-                typename OutTensorType::memory_space>
+                typename HodgeTensorType::memory_space>
                 hodge_star_span(hodge_star_alloc.data(), hodge_star_accessor.domain());
         sil::tensor::Tensor hodge_star(hodge_star_span);
         ddc::device_for_each(hodge_star.domain(), [&](auto it) {
             hodge_star.mem(it) = value(metric, elem, hodge_star.canonical_natural_element(it));
         });
-        sil::tensor::tensor_prod(out_tensor, hodge_star, in_tensor);
+        sil::tensor::tensor_prod(hodge_tensor, hodge_star, form_tensor);
     }
 
     KOKKOS_FUNCTION static double value(MetricType metric, BatchElem elem, auto natural_elem)
