@@ -238,7 +238,9 @@ struct Codifferential<
         sil::tensor::Tensor hodge_star2(hodge_star_span2);
         sil::tensor::Tensor dual_codifferential(dual_codifferential_span);
 
-        auto dual_value_at = [&](auto sampled_elem, auto dual_elem) {
+        auto dual_evaluator = [&](auto sampled_elem, auto dual_elem) {
+            auto const clamped_elem
+                    = misc::clamp_to_domain(tensor.non_indices_domain(), sampled_elem);
             [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain>
                     hodge_star_accessor;
             [[maybe_unused]] tensor::TensorAccessor<DualIndex> dual_tensor_accessor;
@@ -268,20 +270,15 @@ struct Codifferential<
                         typename TensorType::non_indices_domain_t::discrete_element_type>::
                         value(metric,
                               position,
-                              sampled_elem,
+                              clamped_elem,
                               hodge_star.canonical_natural_element(it));
             });
-            sil::tensor::tensor_prod(dual_tensor, tensor[sampled_elem], hodge_star);
+            sil::tensor::tensor_prod(dual_tensor, tensor[clamped_elem], hodge_star);
             return dual_tensor.mem(dual_elem);
         };
 
         Coboundary<TagToRemoveFromCochain, DualIndex>::
-                run(dual_codifferential,
-                    dual_value_at,
-                    tensor.non_indices_domain(),
-                    chain,
-                    lower_chain,
-                    elem);
+                run(dual_codifferential, dual_evaluator, chain, lower_chain, elem);
 
         ddc::device_for_each(hodge_star2.domain(), [&](auto it) {
             hodge_star2.mem(it) = DiscreteHodgeStar<

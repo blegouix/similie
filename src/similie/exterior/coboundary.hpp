@@ -8,6 +8,7 @@
 #include <ddc/ddc.hpp>
 
 #include <similie/misc/are_all_same.hpp>
+#include <similie/misc/clamp_to_domain.hpp>
 #include <similie/misc/domain_contains.hpp>
 #include <similie/misc/filled_struct.hpp>
 #include <similie/misc/macros.hpp>
@@ -204,15 +205,13 @@ struct Coboundary<TagToAddToCochain, CochainTag>
 {
     template <
             class OutTensorType,
-            class ValueAtFunc,
-            class BatchDomain,
+            class Evaluator,
             class ChainType,
             class LowerChainType,
             class Elem>
     KOKKOS_FUNCTION static void run(
             OutTensorType coboundary_tensor,
-            ValueAtFunc value_at,
-            BatchDomain batch_domain,
+            Evaluator evaluator,
             ChainType chain,
             LowerChainType lower_chain,
             Elem elem)
@@ -246,22 +245,20 @@ struct Coboundary<TagToAddToCochain, CochainTag>
             for (auto j = boundary_chain.begin(); j < boundary_chain.end(); ++j) {
                 std::size_t const boundary_id
                         = Kokkos::Experimental::distance(boundary_chain.begin(), j);
-                Elem sampled_elem = elem;
-                if (misc::domain_contains(batch_domain, (*j).discrete_element())) {
-                    using BoundaryElement = typename BoundarySimplex::discrete_element_type;
-                    using SpectatorSeq = ddc::type_seq_remove_t<
-                            ddc::to_type_seq_t<Elem>,
-                            ddc::to_type_seq_t<BoundaryElement>>;
-                    if constexpr (ddc::type_seq_size_v<SpectatorSeq> == 0) {
-                        sampled_elem = Elem((*j).discrete_element());
-                    } else {
-                        sampled_elem
-                                = Elem((*j).discrete_element(),
-                                       misc::select_from_type_seq<SpectatorSeq>(elem));
-                    }
+                using BoundaryElement = typename BoundarySimplex::discrete_element_type;
+                using SpectatorSeq = ddc::type_seq_remove_t<
+                        ddc::to_type_seq_t<Elem>,
+                        ddc::to_type_seq_t<BoundaryElement>>;
+                [[maybe_unused]] Elem sampled_elem = elem;
+                if constexpr (ddc::type_seq_size_v<SpectatorSeq> == 0) {
+                    sampled_elem = Elem((*j).discrete_element());
+                } else {
+                    sampled_elem
+                            = Elem((*j).discrete_element(),
+                                   misc::select_from_type_seq<SpectatorSeq>(elem));
                 }
                 boundary_values(ddc::DiscreteElement<detail::CoboundaryDummyIndex>(boundary_id))
-                        = value_at(
+                        = evaluator(
                                 sampled_elem,
                                 ddc::DiscreteElement<CochainTag>(Kokkos::Experimental::distance(
                                         lower_chain.begin(),
@@ -318,10 +315,12 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
             KOKKOS_LAMBDA(typename decltype(batch_dom)::discrete_element_type elem) {
                 Coboundary<TagToAddToCochain, CochainTag>::run(
                         coboundary_tensor[elem],
+                        // TODO this is an assumption on boundary condition (free boundary), needs to be generalized.
                         [&](auto sampled_elem, auto cochain_elem) {
-                            return tensor.mem(sampled_elem, cochain_elem);
+                            auto const clamped_elem = misc::
+                                    clamp_to_domain(tensor.non_indices_domain(), sampled_elem);
+                            return tensor.mem(clamped_elem, cochain_elem);
                         },
-                        tensor.non_indices_domain(),
                         chain,
                         lower_chain,
                         elem);
