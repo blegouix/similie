@@ -15,7 +15,6 @@
 #include <similie/tensor/character.hpp>
 #include <similie/tensor/full_tensor.hpp>
 #include <similie/tensor/prime.hpp>
-#include <similie/tensor/relabelization.hpp>
 #include <similie/tensor/tensor_impl.hpp>
 
 #include "volume.hpp"
@@ -62,6 +61,19 @@ KOKKOS_FUNCTION bool has_unique_reduction_ids(std::array<std::size_t, N> const& 
     return true;
 }
 
+template <std::size_t N>
+KOKKOS_FUNCTION bool have_same_reduction_ids(
+        std::array<std::size_t, N> const& lhs,
+        std::array<std::size_t, N> const& rhs)
+{
+    for (std::size_t i = 0; i < N; ++i) {
+        if (lhs[i] != rhs[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
 template <std::size_t K>
 KOKKOS_FUNCTION double reduction_determinant(std::array<double, K * K> const& matrix)
 {
@@ -90,6 +102,23 @@ KOKKOS_FUNCTION double reduction_determinant(std::array<double, K * K> const& ma
     }
 }
 
+template <class ReductionNaturalElemType, std::size_t N1, std::size_t N2>
+KOKKOS_FUNCTION ReductionNaturalElemType merge_reduction_natural_elems(
+        std::array<std::size_t, N1> const& first_ids,
+        std::array<std::size_t, N2> const& second_ids)
+{
+    ReductionNaturalElemType reduction_natural_elem;
+    auto reduction_ids = ddc::detail::array(reduction_natural_elem);
+    for (std::size_t i = 0; i < N1; ++i) {
+        reduction_ids[i] = first_ids[i];
+    }
+    for (std::size_t i = 0; i < N2; ++i) {
+        reduction_ids[N1 + i] = second_ids[i];
+    }
+    ddc::detail::array(reduction_natural_elem) = reduction_ids;
+    return reduction_natural_elem;
+}
+
 } // namespace detail
 
 template <misc::Specialization<ddc::detail::TypeSeq> Indices>
@@ -101,6 +130,12 @@ using reduction_domain_t = ddc::detail::convert_type_seq_to_discrete_domain_t<dd
                 tensor::TensorFullIndex,
                 tensor::primes<tensor::upper_t<Indices>>>>,
         ddc::detail::TypeSeq<reduction_index_t<Indices>>>>;
+
+template <misc::Specialization<ddc::detail::TypeSeq> Indices>
+using reconstruction_domain_t
+        = ddc::detail::convert_type_seq_to_discrete_domain_t<ddc::type_seq_merge_t<
+                ddc::detail::TypeSeq<reduction_index_t<Indices>>,
+                ddc::detail::TypeSeq<reduction_index_t<tensor::primes<Indices>>>>>;
 
 template <
         misc::Specialization<ddc::detail::TypeSeq> Indices,
@@ -147,16 +182,10 @@ struct Reduction
                         source_accessor.natural_domain(),
                         [&](auto source_natural_elem) {
                             reduction_natural_elem_type reduction_natural_elem;
-                            auto reduction_ids = ddc::detail::array(reduction_natural_elem);
                             auto const source_ids = ddc::detail::array(source_natural_elem);
                             auto const target_ids = ddc::detail::array(target_natural_elem);
-                            for (std::size_t i = 0; i < source_ids.size(); ++i) {
-                                reduction_ids[i] = source_ids[i];
-                            }
-                            for (std::size_t i = 0; i < target_ids.size(); ++i) {
-                                reduction_ids[source_ids.size() + i] = target_ids[i];
-                            }
-                            ddc::detail::array(reduction_natural_elem) = reduction_ids;
+                            reduction_natural_elem = detail::merge_reduction_natural_elems<
+                                    reduction_natural_elem_type>(source_ids, target_ids);
 
                             form_natural_elem_type form_natural_elem;
                             ddc::detail::array(form_natural_elem)
@@ -237,6 +266,136 @@ ReductionTensorType fill_reduction_operator(
                 });
             });
     return reduction_tensor;
+}
+
+template <
+        misc::Specialization<ddc::detail::TypeSeq> Indices,
+        misc::Specialization<tensor::Tensor> PositionType,
+        class BatchElem>
+struct Reconstruction
+{
+    using source_index_type = reduction_index_t<Indices>;
+    using target_index_type = reduction_index_t<tensor::primes<Indices>>;
+    using source_natural_elem_type =
+            typename tensor::natural_domain_t<source_index_type>::discrete_element_type;
+    using target_natural_elem_type =
+            typename tensor::natural_domain_t<target_index_type>::discrete_element_type;
+
+    template <
+            misc::Specialization<tensor::Tensor> ReconstructedTensorType,
+            misc::Specialization<tensor::Tensor> CochainTensorType>
+    KOKKOS_FUNCTION static void run(
+            ReconstructedTensorType reconstructed_tensor,
+            CochainTensorType cochain_tensor,
+            PositionType position,
+            BatchElem elem)
+    {
+        using reconstruction_accessor_t
+                = sil::tensor::tensor_accessor_for_domain_t<reconstruction_domain_t<Indices>>;
+        using reconstruction_natural_elem_type =
+                typename reconstruction_accessor_t::natural_domain_t::discrete_element_type;
+        using cochain_natural_elem_type =
+                typename CochainTensorType::accessor_t::natural_domain_t::discrete_element_type;
+        if constexpr (source_index_type::rank() == 0) {
+            reconstructed_tensor.mem(ddc::DiscreteElement<source_index_type>(0))
+                    = cochain_tensor.get(
+                            cochain_tensor.access_element(cochain_natural_elem_type()));
+        } else {
+            [[maybe_unused]] sil::tensor::TensorAccessor<source_index_type> source_accessor;
+            ddc::device_for_each(reconstructed_tensor.domain(), [&](auto target_mem_elem) {
+                auto const target_natural_elem
+                        = reconstructed_tensor.canonical_natural_element(target_mem_elem);
+                double reconstructed_value = 0.;
+                ddc::device_for_each(
+                        source_accessor.natural_domain(),
+                        [&](auto source_natural_elem) {
+                            reconstruction_natural_elem_type reconstruction_natural_elem;
+                            reconstruction_natural_elem = detail::merge_reduction_natural_elems<
+                                    reconstruction_natural_elem_type>(
+                                    ddc::detail::array(source_natural_elem),
+                                    ddc::detail::array(target_natural_elem));
+
+                            cochain_natural_elem_type cochain_natural_elem;
+                            ddc::detail::array(cochain_natural_elem)
+                                    = ddc::detail::array(source_natural_elem);
+
+                            reconstructed_value
+                                    += value(position, elem, reconstruction_natural_elem)
+                                       * cochain_tensor.get(
+                                               cochain_tensor.access_element(cochain_natural_elem));
+                        });
+                reconstructed_tensor.mem(target_mem_elem) = reconstructed_value;
+            });
+        }
+    }
+
+    KOKKOS_FUNCTION static double value(PositionType position, BatchElem elem, auto natural_elem)
+    {
+        constexpr std::size_t K = source_index_type::rank();
+        if constexpr (K == 0) {
+            return 1.;
+        } else {
+            std::array const source_ids
+                    = ddc::detail::array(source_natural_elem_type(natural_elem));
+            std::array const target_ids
+                    = ddc::detail::array(target_natural_elem_type(natural_elem));
+            using reduction_accessor_t
+                    = sil::tensor::tensor_accessor_for_domain_t<reduction_domain_t<Indices>>;
+            using reduction_natural_elem_type =
+                    typename reduction_accessor_t::natural_domain_t::discrete_element_type;
+            reduction_natural_elem_type reduction_natural_elem
+                    = detail::merge_reduction_natural_elems<
+                            reduction_natural_elem_type>(source_ids, target_ids);
+            double const reduction_value = Reduction<Indices, PositionType, BatchElem>::
+                    value(position, elem, reduction_natural_elem);
+
+            if (!detail::have_same_reduction_ids<K>(source_ids, target_ids)) {
+                assert(Kokkos::abs(reduction_value) < 1e-14
+                       && "Reconstruction assumes a diagonal local reduction operator.");
+                return 0.;
+            }
+
+            assert(reduction_value != 0.
+                   && "Cannot reconstruct from a zero reduction coefficient.");
+            return 1. / (misc::factorial(K) * reduction_value);
+        }
+    }
+};
+
+template <
+        misc::Specialization<ddc::detail::TypeSeq> Indices,
+        misc::Specialization<tensor::Tensor> ReconstructionTensorType,
+        misc::Specialization<tensor::Tensor> PositionType,
+        class ExecSpace>
+ReconstructionTensorType fill_reconstruction_operator(
+        ExecSpace const& exec_space,
+        ReconstructionTensorType reconstruction_tensor,
+        PositionType position)
+{
+    SIMILIE_DEBUG_LOG("similie_compute_reconstruction_operator");
+    ddc::parallel_for_each(
+            "similie_compute_reconstruction_operator",
+            exec_space,
+            reconstruction_tensor.non_indices_domain(),
+            KOKKOS_LAMBDA(
+                    typename ReconstructionTensorType::non_indices_domain_t::discrete_element_type
+                            elem) {
+                ddc::device_for_each(reconstruction_tensor.accessor().domain(), [&](auto mem_elem) {
+                    reconstruction_tensor.mem(
+                            typename ReconstructionTensorType::
+                                    discrete_element_type(elem, mem_elem))
+                            = Reconstruction<
+                                    Indices,
+                                    PositionType,
+                                    typename ReconstructionTensorType::non_indices_domain_t::
+                                            discrete_element_type>::
+                                    value(position,
+                                          elem,
+                                          reconstruction_tensor.accessor()
+                                                  .canonical_natural_element(mem_elem));
+                });
+            });
+    return reconstruction_tensor;
 }
 
 } // namespace exterior

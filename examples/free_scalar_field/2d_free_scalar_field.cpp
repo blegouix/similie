@@ -390,9 +390,14 @@ int main(int argc, char** argv)
     ddc::Chunk potential_grad_alloc(potential_grad_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor potential_grad(potential_grad_alloc);
 
+    // Reconstructed coefficient version of the potential gradient
+    ddc::Chunk
+            reconstructed_potential_grad_alloc(potential_grad_dom, ddc::DeviceAllocator<double>());
+    sil::tensor::Tensor reconstructed_potential_grad(reconstructed_potential_grad_alloc);
+
     // Spatial moments
-    auto& spatial_moments
-            = potential_grad; // We can perform the computations inplace so spatial_moments is just an alias of potential_grad
+    ddc::Chunk spatial_moments_alloc(potential_grad_dom, ddc::DeviceAllocator<double>());
+    sil::tensor::Tensor spatial_moments(spatial_moments_alloc);
 
     auto spatial_moments_host = ddc::
             create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), spatial_moments);
@@ -439,6 +444,7 @@ int main(int argc, char** argv)
     auto h_hamiltonian
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), hamiltonian);
 
+    using AlphaLowSeq = ddc::to_type_seq_t<sil::tensor::natural_domain_t<AlphaLow>>;
     using MuUpSeq
             = sil::tensor::upper_t<ddc::to_type_seq_t<sil::tensor::natural_domain_t<AlphaLow>>>;
     using NuLowSeq = ddc::detail::TypeSeq<
@@ -543,17 +549,31 @@ int main(int argc, char** argv)
                 AlphaLow,
                 DummyIndex>(Kokkos::DefaultExecutionSpace(), potential_grad, half_step_potential);
 
-        // Compute the spatial moments pi_\alpha by solving d \phi = dH/dpi_\alpha
+        // Reconstruct coefficient gradients, apply the pointwise constitutive law, then reduce back to the DEC cochain.
         ddc::parallel_for_each(
                 Kokkos::DefaultExecutionSpace(),
                 mesh_xy,
                 KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
-                    spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(0))
-                            = FreeScalarFieldHamiltonian(mass).pi1(
-                                    potential_grad(elem, ddc::DiscreteElement<AlphaLow>(0)));
-                    spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(1))
-                            = FreeScalarFieldHamiltonian(mass).pi2(
-                                    potential_grad(elem, ddc::DiscreteElement<AlphaLow>(1)));
+                    sil::exterior::Reconstruction<AlphaLowSeq, decltype(position), decltype(elem)>::
+                            run(reconstructed_potential_grad[elem],
+                                potential_grad[elem],
+                                position,
+                                elem);
+
+                    reconstructed_potential_grad(elem, ddc::DiscreteElement<AlphaLow>(0))
+                            = FreeScalarFieldHamiltonian(mass).pi1(reconstructed_potential_grad(
+                                    elem,
+                                    ddc::DiscreteElement<AlphaLow>(0)));
+                    reconstructed_potential_grad(elem, ddc::DiscreteElement<AlphaLow>(1))
+                            = FreeScalarFieldHamiltonian(mass).pi2(reconstructed_potential_grad(
+                                    elem,
+                                    ddc::DiscreteElement<AlphaLow>(1)));
+
+                    sil::exterior::Reduction<AlphaLowSeq, decltype(position), decltype(elem)>::
+                            run(spatial_moments[elem],
+                                reconstructed_potential_grad[elem],
+                                position,
+                                elem);
                 });
         if (i % nb_iter_between_exports == 0) {
             ddc::parallel_deepcopy(spatial_moments_host, spatial_moments);

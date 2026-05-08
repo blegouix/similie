@@ -16,7 +16,6 @@
 #include <similie/tensor/full_tensor.hpp>
 #include <similie/tensor/gram_matrix.hpp>
 
-#include "reduction.hpp"
 #include "volume.hpp"
 
 namespace sil {

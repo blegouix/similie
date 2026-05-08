@@ -13,6 +13,6 @@
 #include "hodge_star.hpp"
 #include "laplacian.hpp"
 #include "local_chain.hpp"
-#include "reduction.hpp"
+#include "reduction_and_reconstruction.hpp"
 #include "simplex.hpp"
 #include "volume.hpp"
