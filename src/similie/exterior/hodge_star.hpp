@@ -16,6 +16,7 @@
 #include <similie/tensor/full_tensor.hpp>
 #include <similie/tensor/gram_matrix.hpp>
 
+#include "reduction.hpp"
 #include "volume.hpp"
 
 namespace sil {
@@ -245,6 +246,13 @@ KOKKOS_FUNCTION double submatrix_determinant(
 }
 
 } // namespace detail
+
+template <
+        misc::Specialization<ddc::detail::TypeSeq> Indices1,
+        misc::Specialization<ddc::detail::TypeSeq> Indices2,
+        class MetricType,
+        class BatchElem>
+struct ContinuousHodgeStar;
 
 template <
         DualStrategy Strategy,

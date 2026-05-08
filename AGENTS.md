@@ -21,3 +21,10 @@ SPDX-License-Identifier: MIT
 
 ## Run tests
 - From `agents_build` or `agents_build_cpu`, first recompile then run `ctest`.
+
+## Run examples
+- Running `free_scalar_field` example in Debug mode on CPU can be very long (on GPU this can be ok though). By default (no particular contradictory instruction), if you have to run it on CPU, first recompile in Release mode.
+
+## Coding
+- `clang-format 20` is used to format C++, `ruff format` is used to format python.
+- Avoid introducing unecessary constexpr aliases (like, using the `using` keyword for type aliases of `constexpr` for variables aliases). It can be used but not just for readability purpose, except is explicity asked.
