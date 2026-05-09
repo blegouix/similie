@@ -478,13 +478,15 @@ int main(int argc, char** argv)
     // ------------------
 
     int const nb_iter_between_exports = 50;
-    int const nb_iter = 1000;
+    int const nb_iter = 10000;
     double const dx
             = (ddc::get<X>(upper_bounds) - ddc::get<X>(lower_bounds)) / ddc::get<DDimX>(nb_cells);
     double const dy
             = (ddc::get<Y>(upper_bounds) - ddc::get<Y>(lower_bounds)) / ddc::get<DDimY>(nb_cells);
-    double const dt = .5 * std::min(dx, dy) / std::sqrt(2.0);
-    std::cout << "Time step = " << dt << std::endl;
+    double const dt_max = 2.0 / std::sqrt(mass * mass + 4.0 / (dx * dx) + 4.0 / (dy * dy));
+    double const dt = 0.8 * dt_max;
+    std::cout << "Time step = " << dt << " (maximal dt estimated from CFL = " << dt_max << ")"
+              << std::endl;
     ddc::expose_to_pdi("Nt", (nb_iter - 1) / nb_iter_between_exports + 1);
     std::remove("2d_free_scalar_field.h5");
 
