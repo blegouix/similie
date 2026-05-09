@@ -8,6 +8,7 @@
 #include <ddc/ddc.hpp>
 
 #include <similie/exterior/hodge_star.hpp>
+#include <similie/misc/domain_contains.hpp>
 #include <similie/misc/macros.hpp>
 #include <similie/misc/specialization.hpp>
 #include <similie/tensor/character.hpp>
@@ -213,8 +214,9 @@ struct Codifferential<
         sil::tensor::Tensor dual_codifferential(dual_codifferential_span);
 
         auto dual_evaluator = [&](auto sampled_elem, auto dual_elem) {
-            auto const clamped_elem
-                    = misc::clamp_to_domain(tensor.non_indices_domain(), sampled_elem);
+            if (!misc::domain_contains(tensor.non_indices_domain(), sampled_elem)) {
+                return 0.0;
+            }
             [[maybe_unused]] tensor::TensorAccessor<DualIndex> dual_tensor_accessor;
             static constexpr std::size_t DUAL_TENSOR_SIZE = DualIndex::access_size();
             std::array<double, DUAL_TENSOR_SIZE> dual_tensor_alloc {};
@@ -234,14 +236,14 @@ struct Codifferential<
                     PositionType,
                     typename TensorType::non_indices_domain_t::discrete_element_type>::
                     run(dual_tensor,
-                        tensor[clamped_elem],
+                        tensor[sampled_elem],
                         metric,
                         position,
-                        clamped_elem); // Warning: there is redundancy here (neighbors threads apply hodge star to same tensor elements) but it is the only way to be able to compute the coboundary afterward without synchronization.
+                        sampled_elem); // Warning: there is redundancy here (neighbors threads apply hodge star to same tensor elements) but it is the only way to be able to compute the coboundary afterward without synchronization.
             return dual_tensor.mem(dual_elem);
         };
 
-        Coboundary<TagToRemoveFromCochain, DualIndex>::
+        AdjointCoboundary<TagToRemoveFromCochain, DualIndex>::
                 run(dual_codifferential, dual_evaluator, chain, lower_chain, elem);
 
         DiscreteHodgeStar<
@@ -327,14 +329,15 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
                                 dual_codifferential_accessor.domain());
                 sil::tensor::Tensor dual_codifferential(dual_codifferential_span);
 
-                Coboundary<TagToRemoveFromCochain, DualIndex>::run(
+                AdjointCoboundary<TagToRemoveFromCochain, DualIndex>::run(
                         dual_codifferential,
-                        // TODO this is an assumption on boundary condition (free boundary), needs to be generalized.
                         [&](auto sampled_elem, auto dual_elem) {
-                            auto const clamped_elem = misc::clamp_to_domain(
-                                    dual_tensor_buffer.non_indices_domain(),
-                                    sampled_elem);
-                            return dual_tensor_buffer.mem(clamped_elem, dual_elem);
+                            if (!misc::domain_contains(
+                                        dual_tensor_buffer.non_indices_domain(),
+                                        sampled_elem)) {
+                                return 0.0;
+                            }
+                            return dual_tensor_buffer.mem(sampled_elem, dual_elem);
                         },
                         chain,
                         lower_chain,

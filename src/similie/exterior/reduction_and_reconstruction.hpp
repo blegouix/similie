@@ -355,8 +355,9 @@ struct Reconstruction
                 return 0.;
             }
 
-            assert(reduction_value != 0.
-                   && "Cannot reconstruct from a zero reduction coefficient.");
+            if (Kokkos::abs(reduction_value) < 1e-14) {
+                return 0.;
+            }
             return 1. / (misc::factorial(K) * reduction_value);
         }
     }

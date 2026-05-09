@@ -5,6 +5,7 @@
 
 #include <ddc/ddc.hpp>
 
+#include <similie/misc/domain_contains.hpp>
 #include <similie/misc/macros.hpp>
 #include <similie/misc/specialization.hpp>
 #include <similie/tensor/character.hpp>
@@ -119,14 +120,15 @@ TensorType codifferential_of_coboundary(
                                 dual_codifferential_accessor.domain());
                 sil::tensor::Tensor dual_codifferential(dual_codifferential_span);
 
-                Coboundary<LaplacianDummyIndex, DualIndex>::run(
+                AdjointCoboundary<LaplacianDummyIndex, DualIndex>::run(
                         dual_codifferential,
-                        // TODO this is an assumption on boundary condition (free boundary), needs to be generalized.
                         [&](auto sampled_elem, auto dual_elem) {
-                            auto const clamped_elem = misc::clamp_to_domain(
-                                    dual_tensor_buffer.non_indices_domain(),
-                                    sampled_elem);
-                            return dual_tensor_buffer.mem(clamped_elem, dual_elem);
+                            if (!misc::domain_contains(
+                                        dual_tensor_buffer.non_indices_domain(),
+                                        sampled_elem)) {
+                                return 0.0;
+                            }
+                            return dual_tensor_buffer.mem(sampled_elem, dual_elem);
                         },
                         dual_chain,
                         dual_lower_chain,
