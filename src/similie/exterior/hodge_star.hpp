@@ -16,6 +16,7 @@
 #include <similie/tensor/full_tensor.hpp>
 #include <similie/tensor/metric.hpp>
 
+#include "reduction_and_reconstruction.hpp"
 #include "volume.hpp"
 
 namespace sil {
@@ -272,24 +273,45 @@ struct DiscreteHodgeStar
             PositionType position,
             BatchElem elem)
     {
-        [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<
-                hodge_star_domain_t<Indices1, Indices2>> hodge_star_accessor;
-        static constexpr std::size_t HODGE_STAR_SIZE
-                = misc::convert_type_seq_to_t<tensor::TensorFullIndex, Indices1>::access_size()
-                  * detail::HodgeStarTargetSize<Indices2>::value;
-        std::array<double, HODGE_STAR_SIZE> hodge_star_alloc {};
+        using InputIndex = ddc::type_seq_element_t<
+                0,
+                ddc::to_type_seq_t<typename FormTensorType::indices_domain_t>>;
+        using OutputIndex = ddc::type_seq_element_t<
+                0,
+                ddc::to_type_seq_t<typename HodgeTensorType::indices_domain_t>>;
+        using InputIndexSeq
+                = ddc::to_type_seq_t<typename FormTensorType::accessor_t::natural_domain_t>;
+        using OutputIndexSeq
+                = ddc::to_type_seq_t<typename HodgeTensorType::accessor_t::natural_domain_t>;
+
+        [[maybe_unused]] tensor::TensorAccessor<InputIndex> reconstructed_accessor;
+        std::array<double, InputIndex::access_size()> reconstructed_alloc {};
         ddc::ChunkSpan<
                 double,
-                hodge_star_domain_t<Indices1, Indices2>,
+                ddc::DiscreteDomain<InputIndex>,
+                Kokkos::layout_right,
+                typename FormTensorType::memory_space>
+                reconstructed_span(reconstructed_alloc.data(), reconstructed_accessor.domain());
+        sil::tensor::Tensor reconstructed_form(reconstructed_span);
+
+        [[maybe_unused]] tensor::TensorAccessor<OutputIndex> continuous_output_accessor;
+        std::array<double, OutputIndex::access_size()> continuous_output_alloc {};
+        ddc::ChunkSpan<
+                double,
+                ddc::DiscreteDomain<OutputIndex>,
                 Kokkos::layout_right,
                 typename HodgeTensorType::memory_space>
-                hodge_star_span(hodge_star_alloc.data(), hodge_star_accessor.domain());
-        sil::tensor::Tensor hodge_star(hodge_star_span);
-        ddc::device_for_each(hodge_star.domain(), [&](auto it) {
-            hodge_star.mem(it)
-                    = value(metric, position, elem, hodge_star.canonical_natural_element(it));
-        });
-        sil::tensor::tensor_prod(hodge_tensor, hodge_star, form_tensor);
+                continuous_output_span(
+                        continuous_output_alloc.data(),
+                        continuous_output_accessor.domain());
+        sil::tensor::Tensor continuous_output(continuous_output_span);
+
+        Reconstruction<InputIndexSeq, PositionType, BatchElem, CellComplex::Primal>::
+                run(reconstructed_form, form_tensor, position, elem);
+        ContinuousHodgeStar<Indices1, Indices2, MetricType, BatchElem>::
+                run(continuous_output, reconstructed_form, metric, elem);
+        Reduction<OutputIndexSeq, PositionType, BatchElem, Complex>::
+                run(hodge_tensor, continuous_output, metric, position, elem);
     }
 
     KOKKOS_FUNCTION static double value(
@@ -298,28 +320,82 @@ struct DiscreteHodgeStar
             BatchElem elem,
             auto natural_elem)
     {
-        using AmbientIndex = typename detail::AmbientIndex<Indices1, Indices2>::type;
-        constexpr std::size_t N = AmbientIndex::size();
-        using SourceElem = misc::convert_type_seq_to_t<ddc::DiscreteElement, Indices1>;
-        using TargetElem = misc::convert_type_seq_to_t<ddc::DiscreteElement, Indices2>;
-        std::array const source_ids = ddc::detail::array(SourceElem(natural_elem));
-        std::array const target_ids = ddc::detail::array(TargetElem(natural_elem));
+        using SourceIndex = tensor::lower_t<reduction_index_t<Indices1>>;
+        using TargetIndex = reduction_index_t<Indices2>;
+        using SourceNaturalElem =
+                typename tensor::natural_domain_t<SourceIndex>::discrete_element_type;
+        using TargetNaturalElem =
+                typename tensor::natural_domain_t<TargetIndex>::discrete_element_type;
+        using SourceFullElem = misc::convert_type_seq_to_t<ddc::DiscreteElement, Indices1>;
+        using TargetFullElem = misc::convert_type_seq_to_t<ddc::DiscreteElement, Indices2>;
 
-        if (!detail::has_unique_ids<N>(source_ids) || !detail::has_unique_ids<N>(target_ids)
-            || !detail::is_complete_permutation<N>(source_ids, target_ids)) {
-            return 0.;
+        [[maybe_unused]] tensor::TensorAccessor<SourceIndex> source_accessor;
+        std::array<double, SourceIndex::access_size()> source_alloc {};
+        ddc::ChunkSpan<
+                double,
+                ddc::DiscreteDomain<SourceIndex>,
+                Kokkos::layout_right,
+                typename MetricType::memory_space>
+                source_span(source_alloc.data(), source_accessor.domain());
+        sil::tensor::Tensor source_tensor(source_span);
+        ddc::device_for_each(source_tensor.domain(), [&](auto source_mem_elem) {
+            source_tensor.mem(source_mem_elem) = 0.;
+        });
+
+        [[maybe_unused]] tensor::TensorAccessor<TargetIndex> target_accessor;
+        std::array<double, TargetIndex::access_size()> target_alloc {};
+        ddc::ChunkSpan<
+                double,
+                ddc::DiscreteDomain<TargetIndex>,
+                Kokkos::layout_right,
+                typename MetricType::memory_space>
+                target_span(target_alloc.data(), target_accessor.domain());
+        sil::tensor::Tensor target_tensor(target_span);
+        ddc::device_for_each(target_tensor.domain(), [&](auto target_mem_elem) {
+            target_tensor.mem(target_mem_elem) = 0.;
+        });
+
+        std::array source_ids = ddc::detail::array(SourceFullElem(natural_elem));
+        if constexpr (ddc::type_seq_size_v<Indices1> > 1) {
+            if (!detail::has_unique_ids<SourceIndex::size()>(source_ids)) {
+                return 0.;
+            }
         }
-        double const primal_volume
-                = SimplexVolume<CellComplex::Primal, N, MetricType, PositionType, BatchElem>::
-                        run(metric, position, elem, source_ids);
-        if (primal_volume == 0.) {
-            return 0.;
+        bool odd = false;
+        for (std::size_t i = 0; i < source_ids.size(); ++i) {
+            for (std::size_t j = i + 1; j < source_ids.size(); ++j) {
+                odd = (source_ids[i] > source_ids[j]) != odd;
+            }
+        }
+        std::array canonical_source_ids(source_ids);
+        if constexpr (source_ids.size() > 1) {
+            for (std::size_t i = 0; i < canonical_source_ids.size(); ++i) {
+                for (std::size_t j = i + 1; j < canonical_source_ids.size(); ++j) {
+                    if (canonical_source_ids[j] < canonical_source_ids[i]) {
+                        Kokkos::kokkos_swap(canonical_source_ids[i], canonical_source_ids[j]);
+                    }
+                }
+            }
         }
 
-        return static_cast<double>(detail::permutation_sign<N>(source_ids, target_ids))
-               * DualSimplexVolume<Complex, N, MetricType, PositionType, BatchElem>::template run<
-                       ddc::type_seq_size_v<Indices1>>(metric, position, elem, source_ids)
-               / (primal_volume * misc::factorial(ddc::type_seq_size_v<Indices1>));
+        SourceNaturalElem source_natural_elem;
+        ddc::detail::array(source_natural_elem) = canonical_source_ids;
+        source_tensor(source_tensor.accessor().access_element(source_natural_elem)) = 1.;
+
+        run(target_tensor, source_tensor, metric, position, elem);
+
+        double const source_factor
+                = (odd ? -1. : 1.) / misc::factorial(ddc::type_seq_size_v<Indices1>);
+        if constexpr (ddc::type_seq_size_v<Indices2> == 0) {
+            return source_factor
+                   * target_tensor(target_tensor.accessor().access_element(TargetNaturalElem()));
+        } else {
+            TargetNaturalElem target_natural_elem;
+            ddc::detail::array(target_natural_elem)
+                    = ddc::detail::array(TargetFullElem(natural_elem));
+            return source_factor
+                   * target_tensor(target_tensor.accessor().access_element(target_natural_elem));
+        }
     }
 };
 

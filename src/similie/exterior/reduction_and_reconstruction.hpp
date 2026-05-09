@@ -186,6 +186,326 @@ KOKKOS_FUNCTION double reduction_determinant(std::array<double, K * K> const& ma
     }
 }
 
+template <std::size_t N, std::size_t K>
+KOKKOS_FUNCTION std::array<std::size_t, K> combination_from_rank(std::size_t rank)
+{
+    std::array<std::size_t, K> ids {};
+    if constexpr (K == 0) {
+        return ids;
+    } else {
+        std::size_t next_candidate = 0;
+        for (std::size_t i = 0; i < K; ++i) {
+            for (std::size_t candidate = next_candidate; candidate < N; ++candidate) {
+                std::size_t const remaining = K - i - 1;
+                std::size_t const remaining_space = N - candidate - 1;
+                std::size_t const count
+                        = (remaining == 0) ? 1
+                                           : misc::binomial_coefficient(remaining_space, remaining);
+                if (rank < count) {
+                    ids[i] = candidate;
+                    next_candidate = candidate + 1;
+                    break;
+                }
+                rank -= count;
+            }
+        }
+        return ids;
+    }
+}
+
+template <std::size_t N, std::size_t K>
+KOKKOS_FUNCTION std::size_t combination_rank(std::array<std::size_t, K> const& ids)
+{
+    if constexpr (K == 0) {
+        return 0;
+    } else {
+        std::size_t rank = 0;
+        std::size_t next_candidate = 0;
+        for (std::size_t i = 0; i < K; ++i) {
+            for (std::size_t candidate = next_candidate; candidate < ids[i]; ++candidate) {
+                std::size_t const remaining = K - i - 1;
+                std::size_t const remaining_space = N - candidate - 1;
+                rank += (remaining == 0) ? 1
+                                         : misc::binomial_coefficient(remaining_space, remaining);
+            }
+            next_candidate = ids[i] + 1;
+        }
+        return rank;
+    }
+}
+
+template <std::size_t N, std::size_t M>
+KOKKOS_FUNCTION bool hodge_has_unique_ids(std::array<std::size_t, M> const& ids)
+{
+    for (std::size_t i = 0; i < M; ++i) {
+        if (ids[i] >= N) {
+            return false;
+        }
+        for (std::size_t j = i + 1; j < M; ++j) {
+            if (ids[i] == ids[j]) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+template <std::size_t N, std::size_t M1, std::size_t M2>
+KOKKOS_FUNCTION bool hodge_is_complete_permutation(
+        std::array<std::size_t, M1> const& source_ids,
+        std::array<std::size_t, M2> const& target_ids)
+{
+    std::array<int, N> counts {};
+    for (std::size_t id : source_ids) {
+        if (id >= N) {
+            return false;
+        }
+        counts[id]++;
+    }
+    for (std::size_t id : target_ids) {
+        if (id >= N) {
+            return false;
+        }
+        counts[id]++;
+    }
+    for (int count : counts) {
+        if (count != 1) {
+            return false;
+        }
+    }
+    return true;
+}
+
+template <std::size_t N, std::size_t M1, std::size_t M2>
+KOKKOS_FUNCTION int hodge_permutation_sign(
+        std::array<std::size_t, M1> const& source_ids,
+        std::array<std::size_t, M2> const& target_ids)
+{
+    std::array<std::size_t, N> permutation {};
+    for (std::size_t i = 0; i < M1; ++i) {
+        permutation[i] = source_ids[i];
+    }
+    for (std::size_t i = 0; i < M2; ++i) {
+        permutation[M1 + i] = target_ids[i];
+    }
+
+    bool odd = false;
+    for (std::size_t i = 0; i < N; ++i) {
+        for (std::size_t j = i + 1; j < N; ++j) {
+            odd = (permutation[i] > permutation[j]) != odd;
+        }
+    }
+    return odd ? -1 : 1;
+}
+
+template <std::size_t N, std::size_t M>
+KOKKOS_FUNCTION std::array<std::size_t, N - M> hodge_complement_ids(
+        std::array<std::size_t, M> const& ids)
+{
+    std::array<std::size_t, N - M> complement {};
+    std::size_t complement_id = 0;
+    for (std::size_t i = 0; i < N; ++i) {
+        bool found = false;
+        for (std::size_t id : ids) {
+            found = found || (id == i);
+        }
+        if (!found) {
+            complement[complement_id++] = i;
+        }
+    }
+    return complement;
+}
+
+template <std::size_t N, class MemorySpace>
+KOKKOS_FUNCTION bool reduction_invert_matrix(
+        std::array<double, N * N>& inverse_alloc,
+        double& determinant,
+        std::array<double, N * N> const& matrix_alloc)
+{
+    std::array<double, N * N> matrix = matrix_alloc;
+    inverse_alloc.fill(0.);
+    for (std::size_t i = 0; i < N; ++i) {
+        inverse_alloc[i * N + i] = 1.;
+    }
+
+    determinant = 1.;
+    int sign = 1;
+
+    for (std::size_t i = 0; i < N; ++i) {
+        std::size_t pivot = i;
+        double pivot_abs = Kokkos::abs(matrix[i * N + i]);
+        for (std::size_t j = i + 1; j < N; ++j) {
+            double const candidate_abs = Kokkos::abs(matrix[j * N + i]);
+            if (candidate_abs > pivot_abs) {
+                pivot = j;
+                pivot_abs = candidate_abs;
+            }
+        }
+
+        if (pivot_abs == 0.) {
+            determinant = 0.;
+            inverse_alloc.fill(0.);
+            return false;
+        }
+
+        if (pivot != i) {
+            sign *= -1;
+            for (std::size_t j = 0; j < N; ++j) {
+                Kokkos::kokkos_swap(matrix[i * N + j], matrix[pivot * N + j]);
+                Kokkos::kokkos_swap(inverse_alloc[i * N + j], inverse_alloc[pivot * N + j]);
+            }
+        }
+
+        double const diagonal = matrix[i * N + i];
+        determinant *= diagonal;
+
+        for (std::size_t j = 0; j < N; ++j) {
+            matrix[i * N + j] /= diagonal;
+            inverse_alloc[i * N + j] /= diagonal;
+        }
+
+        for (std::size_t row = 0; row < N; ++row) {
+            if (row == i) {
+                continue;
+            }
+            double const factor = matrix[row * N + i];
+            for (std::size_t col = 0; col < N; ++col) {
+                matrix[row * N + col] -= factor * matrix[i * N + col];
+                inverse_alloc[row * N + col] -= factor * inverse_alloc[i * N + col];
+            }
+        }
+    }
+
+    determinant *= static_cast<double>(sign);
+    return true;
+}
+
+template <std::size_t N, std::size_t K, class MemorySpace>
+KOKKOS_FUNCTION double reduction_submatrix_determinant(
+        std::array<double, N * N> const& matrix,
+        std::array<std::size_t, K> const& row_ids,
+        std::array<std::size_t, K> const& col_ids)
+{
+    if constexpr (K == 0) {
+        return 1.;
+    } else {
+        std::array<double, K * K> submatrix_alloc {};
+        for (std::size_t i = 0; i < K; ++i) {
+            for (std::size_t j = 0; j < K; ++j) {
+                submatrix_alloc[i * K + j] = matrix[row_ids[i] * N + col_ids[j]];
+            }
+        }
+
+        std::array<double, K * K> inverse_alloc {};
+        double determinant = 0.;
+        if (!reduction_invert_matrix<K, MemorySpace>(inverse_alloc, determinant, submatrix_alloc)) {
+            return 0.;
+        }
+        return determinant;
+    }
+}
+
+template <class PositionIndex, class PositionType, class BatchElem, std::size_t K>
+KOKKOS_FUNCTION double primal_reconstruction_diagonal(
+        PositionType position,
+        BatchElem elem,
+        std::array<std::size_t, K> const& ids)
+{
+    if constexpr (K == 0) {
+        return 1.;
+    } else {
+        std::array<double, K * K> jacobian_matrix {};
+        for (std::size_t row = 0; row < K; ++row) {
+            for (std::size_t col = 0; col < K; ++col) {
+                std::array<double, PositionIndex::size()> const edge
+                        = sil::exterior::detail::edge_vector<
+                                PositionIndex>(position, elem, ids[col]);
+                jacobian_matrix[row * K + col] = edge[ids[row]];
+            }
+        }
+        double const jacobian = reduction_determinant<K>(jacobian_matrix);
+        if (Kokkos::abs(jacobian) < 1e-14) {
+            return 0.;
+        }
+        return 1. / jacobian;
+    }
+}
+
+template <std::size_t N, std::size_t K, class MetricType, class BatchElem>
+KOKKOS_FUNCTION double continuous_hodge_value_from_ids(
+        MetricType metric,
+        BatchElem elem,
+        std::array<std::size_t, K> const& source_ids,
+        std::array<std::size_t, N - K> const& target_ids)
+{
+    if (!hodge_has_unique_ids<N>(source_ids) || !hodge_has_unique_ids<N>(target_ids)
+        || !hodge_is_complete_permutation<N>(source_ids, target_ids)) {
+        return 0.;
+    }
+
+    std::array<std::size_t, K> const complement = hodge_complement_ids<N>(target_ids);
+    using MetricIndex
+            = ddc::type_seq_element_t<0, ddc::to_type_seq_t<typename MetricType::indices_domain_t>>;
+    using MetricIndex1 = tensor::metric_index_1<MetricIndex>;
+    using MetricIndex2 = tensor::metric_index_2<MetricIndex>;
+    std::array<double, N * N> metric_alloc {};
+    std::array<double, N * N> inverse_metric_alloc {};
+    for (std::size_t i = 0; i < N; ++i) {
+        for (std::size_t j = 0; j < N; ++j) {
+            metric_alloc[i * N + j] = metric.get(metric.access_element(
+                    elem,
+                    ddc::DiscreteElement<MetricIndex1, MetricIndex2>(i, j)));
+        }
+    }
+
+    double determinant = 0.;
+    if (!reduction_invert_matrix<
+                N,
+                typename MetricType::
+                        memory_space>(inverse_metric_alloc, determinant, metric_alloc)) {
+        return 0.;
+    }
+
+    return Kokkos::sqrt(Kokkos::abs(determinant))
+           * static_cast<double>(hodge_permutation_sign<N>(complement, target_ids))
+           * reduction_submatrix_determinant<
+                   N,
+                   K,
+                   typename MetricType::memory_space>(inverse_metric_alloc, source_ids, complement)
+           / misc::factorial(K);
+}
+
+template <
+        CellComplex Complex,
+        std::size_t N,
+        std::size_t K,
+        class MetricType,
+        class PositionType,
+        class BatchElem>
+KOKKOS_FUNCTION double legacy_discrete_hodge_value_from_ids(
+        MetricType metric,
+        PositionType position,
+        BatchElem elem,
+        std::array<std::size_t, K> const& source_ids,
+        std::array<std::size_t, N - K> const& target_ids)
+{
+    if (!hodge_has_unique_ids<N>(source_ids) || !hodge_has_unique_ids<N>(target_ids)
+        || !hodge_is_complete_permutation<N>(source_ids, target_ids)) {
+        return 0.;
+    }
+    double const primal_volume
+            = SimplexVolume<CellComplex::Primal, N, MetricType, PositionType, BatchElem>::
+                    template run<K>(metric, position, elem, source_ids);
+    if (primal_volume == 0.) {
+        return 0.;
+    }
+
+    return static_cast<double>(hodge_permutation_sign<N>(source_ids, target_ids))
+           * DualSimplexVolume<Complex, N, MetricType, PositionType, BatchElem>::template run<
+                   K>(metric, position, elem, source_ids)
+           / (primal_volume * misc::factorial(K));
+}
+
 template <class ReductionNaturalElemType, std::size_t N1, std::size_t N2>
 KOKKOS_FUNCTION ReductionNaturalElemType merge_reduction_natural_elems(
         std::array<std::size_t, N1> const& first_ids,
@@ -283,6 +603,120 @@ struct Reduction
         }
     }
 
+    template <
+            misc::Specialization<tensor::Tensor> ReductionTensorType,
+            misc::Specialization<tensor::Tensor> FormTensorType,
+            misc::Specialization<tensor::Tensor> MetricType>
+    KOKKOS_FUNCTION static void run(
+            ReductionTensorType reduced_tensor,
+            FormTensorType form_tensor,
+            MetricType metric,
+            PositionType position,
+            BatchElem elem)
+    {
+        if constexpr (Complex == CellComplex::Primal) {
+            run(reduced_tensor, form_tensor, position, elem);
+        } else {
+            static_assert(
+                    Complex == CellComplex::CircumcentricDual,
+                    "Metric-aware reduction is only implemented for the circumcentric dual "
+                    "complex.");
+
+            constexpr std::size_t N = position_index_type::size();
+            constexpr std::size_t Q = target_index_type::rank();
+            constexpr std::size_t K = N - Q;
+            constexpr std::size_t NBASIS = misc::binomial_coefficient(N, Q);
+            static_assert(
+                    NBASIS == misc::binomial_coefficient(N, K),
+                    "Complementary basis sizes must match.");
+
+            std::array<double, NBASIS * NBASIS> coeff_from_primal_alloc {};
+            std::array<double, NBASIS * NBASIS> coeff_from_primal_inverse_alloc {};
+            std::array<double, NBASIS * NBASIS> old_hodge_alloc {};
+            std::array<double, NBASIS * NBASIS> dual_reduction_alloc {};
+
+            for (std::size_t primal_id = 0; primal_id < NBASIS; ++primal_id) {
+                std::array<std::size_t, K> const primal_ids
+                        = detail::combination_from_rank<N, K>(primal_id);
+                double const reconstruction_diag = detail::primal_reconstruction_diagonal<
+                        position_index_type>(position, elem, primal_ids);
+                for (std::size_t source_id = 0; source_id < NBASIS; ++source_id) {
+                    std::array<std::size_t, Q> const source_ids
+                            = detail::combination_from_rank<N, Q>(source_id);
+                    coeff_from_primal_alloc[source_id * NBASIS + primal_id]
+                            = detail::continuous_hodge_value_from_ids<
+                                      N,
+                                      K>(metric, elem, primal_ids, source_ids)
+                              * reconstruction_diag;
+                }
+                for (std::size_t target_id = 0; target_id < NBASIS; ++target_id) {
+                    std::array<std::size_t, Q> const target_ids
+                            = detail::combination_from_rank<N, Q>(target_id);
+                    old_hodge_alloc[target_id * NBASIS + primal_id]
+                            = detail::legacy_discrete_hodge_value_from_ids<
+                                    Complex,
+                                    N,
+                                    K>(metric, position, elem, primal_ids, target_ids);
+                }
+            }
+
+            double determinant = 0.;
+            bool const invertible
+                    = detail::reduction_invert_matrix<NBASIS, typename MetricType::memory_space>(
+                            coeff_from_primal_inverse_alloc,
+                            determinant,
+                            coeff_from_primal_alloc);
+
+            ddc::device_for_each(reduced_tensor.domain(), [&](auto target_mem_elem) {
+                auto const target_natural_elem
+                        = reduced_tensor.canonical_natural_element(target_mem_elem);
+                std::size_t const target_id = [&]() {
+                    if constexpr (Q == 0) {
+                        return std::size_t(0);
+                    } else {
+                        std::array<std::size_t, Q> const target_ids
+                                = ddc::detail::array(target_natural_elem);
+                        return detail::combination_rank<N, Q>(target_ids);
+                    }
+                }();
+
+                double reduced_value = 0.;
+                ddc::device_for_each(
+                        form_tensor.accessor().natural_domain(),
+                        [&](auto source_natural_elem) {
+                            std::size_t const source_id = [&]() {
+                                if constexpr (Q == 0) {
+                                    return std::size_t(0);
+                                } else {
+                                    std::array<std::size_t, Q> const source_ids
+                                            = ddc::detail::array(source_natural_elem);
+                                    return detail::combination_rank<N, Q>(source_ids);
+                                }
+                            }();
+                            double dual_reduction_value = 0.;
+                            if (invertible) {
+                                for (std::size_t primal_id = 0; primal_id < NBASIS; ++primal_id) {
+                                    dual_reduction_value
+                                            += old_hodge_alloc[target_id * NBASIS + primal_id]
+                                               * coeff_from_primal_inverse_alloc
+                                                       [primal_id * NBASIS + source_id];
+                                }
+                            }
+
+                            using form_natural_elem_type = typename FormTensorType::accessor_t::
+                                    natural_domain_t::discrete_element_type;
+                            form_natural_elem_type form_natural_elem;
+                            ddc::detail::array(form_natural_elem)
+                                    = ddc::detail::array(source_natural_elem);
+                            reduced_value += dual_reduction_value
+                                             * form_tensor.get(
+                                                     form_tensor.access_element(form_natural_elem));
+                        });
+                reduced_tensor.mem(target_mem_elem) = reduced_value;
+            });
+        }
+    }
+
     KOKKOS_FUNCTION static double value(PositionType position, BatchElem elem, auto natural_elem)
     {
         constexpr std::size_t K = target_index_type::rank();
@@ -301,19 +735,70 @@ struct Reduction
             std::array<double, K * K> jacobian_matrix {};
             for (std::size_t row = 0; row < K; ++row) {
                 for (std::size_t col = 0; col < K; ++col) {
-                    auto shifted_elem = elem;
-                    ddc::detail::array(shifted_elem)[target_ids[col]]++;
-                    shifted_elem
-                            = misc::clamp_to_domain(position.non_indices_domain(), shifted_elem);
-                    auto const position_component = position.accessor().canonical_natural_element(
-                            ddc::DiscreteElement<position_index_type>(source_ids[row]));
-                    jacobian_matrix[row * K + col] = position.mem(shifted_elem, position_component)
-                                                     - position.mem(elem, position_component);
+                    std::array<double, position_index_type::size()> const edge
+                            = sil::exterior::detail::edge_vector<
+                                    position_index_type>(position, elem, target_ids[col]);
+                    jacobian_matrix[row * K + col] = edge[source_ids[row]];
                 }
             }
             return detail::reduction_determinant<K>(jacobian_matrix)
                    * detail::complex_volume_factor<Complex, source_index_type::size()>(K)
                    / misc::factorial(K);
+        }
+    }
+
+    template <misc::Specialization<tensor::Tensor> MetricType>
+    KOKKOS_FUNCTION static double value(
+            MetricType metric,
+            PositionType position,
+            BatchElem elem,
+            auto natural_elem)
+    {
+        if constexpr (Complex == CellComplex::Primal) {
+            return value(position, elem, natural_elem);
+        } else {
+            [[maybe_unused]] sil::tensor::TensorAccessor<source_index_type> source_accessor;
+            std::array<double, source_index_type::access_size()> source_alloc {};
+            ddc::ChunkSpan<
+                    double,
+                    ddc::DiscreteDomain<source_index_type>,
+                    Kokkos::layout_right,
+                    typename MetricType::memory_space>
+                    source_span(source_alloc.data(), source_accessor.domain());
+            sil::tensor::Tensor source_tensor(source_span);
+            ddc::device_for_each(source_tensor.domain(), [&](auto source_mem_elem) {
+                source_tensor.mem(source_mem_elem) = 0.;
+            });
+
+            [[maybe_unused]] sil::tensor::TensorAccessor<target_index_type> target_accessor;
+            std::array<double, target_index_type::access_size()> target_alloc {};
+            ddc::ChunkSpan<
+                    double,
+                    ddc::DiscreteDomain<target_index_type>,
+                    Kokkos::layout_right,
+                    typename MetricType::memory_space>
+                    target_span(target_alloc.data(), target_accessor.domain());
+            sil::tensor::Tensor target_tensor(target_span);
+            ddc::device_for_each(target_tensor.domain(), [&](auto target_mem_elem) {
+                target_tensor.mem(target_mem_elem) = 0.;
+            });
+
+            source_natural_elem_type source_natural_elem;
+            ddc::detail::array(source_natural_elem)
+                    = ddc::detail::array(source_natural_elem_type(natural_elem));
+            source_tensor(source_tensor.accessor().access_element(source_natural_elem)) = 1.;
+
+            run(target_tensor, source_tensor, metric, position, elem);
+
+            if constexpr (target_index_type::rank() == 0) {
+                return target_tensor(
+                        target_tensor.accessor().access_element(target_natural_elem_type()));
+            } else {
+                target_natural_elem_type target_natural_elem;
+                ddc::detail::array(target_natural_elem)
+                        = ddc::detail::array(target_natural_elem_type(natural_elem));
+                return target_tensor(target_tensor.accessor().access_element(target_natural_elem));
+            }
         }
     }
 };
