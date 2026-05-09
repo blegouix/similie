@@ -69,22 +69,144 @@ A \f$k-\f$cochain is basically a set of cosimplices. This is a discrete differen
 
 The coboundary operator associates to a \f$k-\f$cochain a \f$k+1-\f$cosimplex or a \f$k+1-\f$cochain containing the cosimplices which form the coboundary of the cochain. Please refer to [Discrete Differential Forms for Computational Modeling](http://www.geometry.caltech.edu/pubs/DKT05.pdf) for more details. This is the discrete exterior derivative \f$d\f$.
 
+At the implementation level, `Coboundary` evaluates the integral of the input cochain on the
+boundary of each local \f$(k+1)\f$-simplex. For a primal basis simplex \f$\sigma^{k+1}\f$, the
+discrete exterior derivative is therefore
+
+\f\[
+(d\omega)(\sigma^{k+1}) = \omega(\partial \sigma^{k+1}).
+\f\]
+
+SimiLie also provides `AdjointCoboundary`, which is the bounded-domain operator used in the
+codifferential and in the full-domain DEC Laplacian. Instead of building the coboundary of the
+current simplex, it accumulates the contributions of incident higher-dimensional simplices onto
+the current simplex. In matrix language, it is the incidence transpose associated with the local
+structured-mesh coboundary:
+
+\f\[
+d^\ast \sim D^T.
+\f\]
+
+This is the operator needed to implement the discrete adjoint relation behind
+\f$\delta = (-1)^{n(k+1)+1}\star d \star\f$ on a bounded mesh.
+
+\important Boundary handling is currently explicit but not yet user-configurable.
+- `Coboundary` and `deriv(...)` use a clamped out-of-domain sampling rule: if a forward sample
+  exits the mesh, the nearest in-domain node is reused. On a scalar field this behaves like a
+  one-sided "free"/zero-normal-variation closure for the first derivative.
+- `AdjointCoboundary` does **not** clamp. Missing incident simplices on the far side of the
+  boundary are simply omitted. This is what restores the weighted adjointness needed by the
+  codifferential and the full-domain Laplacian.
+- Periodic, Dirichlet and generic Neumann boundary conditions are not yet exposed as configurable
+  policies in this module.
+
+### Volume operators
+
+The DEC Hodge star, reduction and reconstruction all rely on local primal and dual cell volumes.
+Given a \f$k\f$-simplex spanned by edge vectors \f$e_1,\dots,e_k\f$, SimiLie builds the local Gram
+matrix
+
+\f\[
+G_{ij} = g(e_i, e_j),
+\f\]
+
+where \f$g\f$ is the metric evaluated at the current mesh node. In coordinates,
+
+\f\[
+g(e_i, e_j) = \sum_{\alpha,\beta=1}^{n} e_i^\alpha g_{\alpha\beta} e_j^\beta.
+\f\]
+
+The \f$k\f$-volume is then obtained from
+
+\f\[
+|\sigma^k| = \sqrt{|\det G|}.
+\f\]
+
+This is exactly what `SimplexVolume` computes: it first extracts the local edge vectors from the
+position field, assembles the Gram matrix, and finally takes the square root of its determinant.
+`DualSimplexVolume` applies the same formula to the complementary \f$(n-k)\f$ directions. For
+circumcentric dual cells this gives the dual measure \f$|\star \sigma^k|\f$ used by DEC. For the
+barycentric dual strategy, the same local volume is additionally scaled by the combinatorial factor
+associated with the barycentric subdivision.
+
+### Reduction and reconstruction
+
+Reduction and reconstruction are the bridges between pointwise differential-form coefficients and
+geometric cochains.
+
+`Reduction` maps a coefficient \f$k\f$-form to the cochain obtained by integrating it on the
+corresponding cell:
+
+\f\[
+R_k(\omega)(\sigma^k) = \int_{\sigma^k} \omega.
+\f\]
+
+`Reconstruction` is the inverse map used in SimiLie under a piecewise-constant ansatz:
+
+\f\[
+Q_k(c)\big|_{\sigma^k}
+= \frac{c(\sigma^k)}{|\sigma^k|}.
+\f\]
+
+The geometry on which those operators act is configured by `CellComplex`:
+- `CellComplex::Primal`
+- `CellComplex::CircumcentricDual`
+- `CellComplex::BarycentricDual`
+
+For `CellComplex::Primal`, reduction and reconstruction only need the position field because the
+required measure is purely primal. No metric needs to be passed. For dual complexes, the metric
+enters through the dual-cell geometry, so `Reduction<..., CellComplex::CircumcentricDual>` uses
+both the metric and the position.
+
+In the current implementation:
+- primal reduction/reconstruction are diagonal local operators based on primal simplex volumes;
+- circumcentric-dual reduction is the metric-dependent dual geometric map used by the discrete
+  Hodge star;
+- reconstruction is currently only implemented where the piecewise-constant inverse is well
+  defined locally. Unsupported `CellComplex` choices are rejected with `static_assert`.
+
 ### Hodge star operator
 
-The Hodge star operator is implemented as a discrete exterior-calculus Hodge star. For a
-\f$k\f$-simplex \f$\sigma\f$ in an \f$n\f$-dimensional mesh, its diagonal action is defined from
-the ratio between the volume of the dual \f$(n-k)\f$-cell and the volume of the primal
-\f$k\f$-simplex:
+The Hodge star operator is implemented both in continuous and discrete form.
+
+The continuous Hodge star acts pointwise on coefficient forms. In an \f$n\f$-dimensional manifold,
+for a \f$k\f$-form \f$\omega\f$ with components \f$\omega_{i_1 \dots i_k}\f$, it is defined by the
+metric inverse and the Levi-Civita symbol:
+
+\f\[
+(\star \omega)_{j_1 \dots j_{n-k}}
+= \frac{\sqrt{|g|}}{k!}
+\omega_{i_1 \dots i_k}
+g^{i_1 \ell_1} \dots g^{i_k \ell_k}
+\varepsilon_{\ell_1 \dots \ell_k j_1 \dots j_{n-k}}.
+\f\]
+
+`ContinuousHodgeStar` implements exactly this local metric transformation.
+
+The discrete Hodge star acts on cochains. For a \f$k\f$-simplex \f$\sigma\f$ in an
+\f$n\f$-dimensional mesh, its diagonal DEC action is defined from the ratio between the volume of
+the dual \f$(n-k)\f$-cell and the volume of the primal \f$k\f$-simplex:
 
 \f\[
 \star_\sigma = \frac{|\star \sigma|}{|\sigma|}
 \f\]
 
-The primal and dual volumes are evaluated locally from:
+In SimiLie, `DiscreteHodgeStar` is not implemented as a standalone formula anymore. It is built as
+the composition
 
-- a position field defined at mesh nodes,
-- a metric field defined at mesh nodes.
+\f\[
+\star_h
+= R_{n-k}^{\mathrm{dual}}
+\circ \star
+\circ Q_k^{\mathrm{primal}},
+\f\]
 
-The metric is used to build a local Gram matrix from edge vectors, from which simplex and dual
-simplex volumes are obtained. The current implementation supports circumcentric dual cells by
-default, with a barycentric strategy also available at compile time.
+that is:
+- reconstruct the primal cochain into a pointwise coefficient \f$k\f$-form,
+- apply the continuous Hodge star,
+- reduce the resulting \f$(n-k)\f$-form onto the chosen dual cell complex.
+
+Only the final reduction is configurable through the `CellComplex` template parameter of
+`DiscreteHodgeStar`. The primal reconstruction is always primal, and the continuous Hodge star is
+always the pointwise metric Hodge star. By default the discrete operator uses the circumcentric
+dual complex, while a barycentric reduction strategy is also available at compile time.
