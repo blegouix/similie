@@ -408,7 +408,9 @@ TEST(Laplacian, 1D0Form)
             DDimX>(potential);
 
     ddc::host_for_each(
-            laplacian.template domain<DDimX>().remove_last(ddc::DiscreteVector<DDimX>(1)),
+            laplacian.template domain<DDimX>()
+                    .remove_first(ddc::DiscreteVector<DDimX>(1))
+                    .remove_last(ddc::DiscreteVector<DDimX>(1)),
             [&](ddc::DiscreteElement<DDimX> elem) {
                 double const value = laplacian(
                         elem,
@@ -457,7 +459,9 @@ TEST(Laplacian, 1D1Form)
                     potential);
 
     ddc::host_for_each(
-            laplacian.template domain<DDimX>().remove_last(ddc::DiscreteVector<DDimX>(1)),
+            laplacian.template domain<DDimX>()
+                    .remove_first(ddc::DiscreteVector<DDimX>(1))
+                    .remove_last(ddc::DiscreteVector<DDimX>(1)),
             [&](ddc::DiscreteElement<DDimX> elem) {
                 double const value = laplacian(elem, laplacian.accessor().access_element<X>());
                 if (ddc::coordinate(elem) < -1.2 * R || ddc::coordinate(elem) > 1.2 * R) {
@@ -524,7 +528,9 @@ TEST(Laplacian, 2D0Form)
             DDimY>(potential);
 
     ddc::host_for_each(
-            laplacian.template domain<DDimX>().remove_last(ddc::DiscreteVector<DDimX>(1)),
+            laplacian.template domain<DDimX>()
+                    .remove_first(ddc::DiscreteVector<DDimX>(1))
+                    .remove_last(ddc::DiscreteVector<DDimX>(1)),
             [&](ddc::DiscreteElement<DDimX> elem) {
                 double const value = laplacian(
                         elem,
@@ -592,7 +598,9 @@ TEST(Laplacian, 2D1Form)
             DDimY>(potential);
 
     ddc::host_for_each(
-            laplacian.template domain<DDimX>().remove_last(ddc::DiscreteVector<DDimX>(1)),
+            laplacian.template domain<DDimX>()
+                    .remove_first(ddc::DiscreteVector<DDimX>(1))
+                    .remove_last(ddc::DiscreteVector<DDimX>(1)),
             [&](ddc::DiscreteElement<DDimX> elem) {
                 double const value = laplacian(
                         elem,
@@ -690,7 +698,9 @@ TEST(Laplacian, 3D1Form)
             DDimZ>(potential);
 
     ddc::host_for_each(
-            laplacian.template domain<DDimX>().remove_last(ddc::DiscreteVector<DDimX>(1)),
+            laplacian.template domain<DDimX>()
+                    .remove_first(ddc::DiscreteVector<DDimX>(1))
+                    .remove_last(ddc::DiscreteVector<DDimX>(1)),
             [&](ddc::DiscreteElement<DDimX> elem) {
                 double const value = laplacian(
                         elem,
@@ -776,7 +786,9 @@ TEST(Laplacian, 3D2Form)
                     potential);
 
     ddc::host_for_each(
-            laplacian.template domain<DDimX>().remove_last(ddc::DiscreteVector<DDimX>(1)),
+            laplacian.template domain<DDimX>()
+                    .remove_first(ddc::DiscreteVector<DDimX>(1))
+                    .remove_last(ddc::DiscreteVector<DDimX>(1)),
             [&](ddc::DiscreteElement<DDimX> elem) {
                 double const value = laplacian(
                         elem,

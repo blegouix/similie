@@ -346,7 +346,7 @@ int main(int argc, char** argv)
     double const y_1 = -0.3;
     double const sigma = .5;
 
-    double const v = .9;
+    double const v = 10.;
     double const k = 1.;
     double const mass = 1.;
 
