@@ -350,7 +350,7 @@ int main(int argc, char** argv)
     // For a massive field, the actual group velocity is v_g = k / sqrt(k^2 + m^2), so
     // choosing v directly requires deriving the carrier wavenumber from the dispersion relation.
     double const v = 0.5;
-    double const mass = 20.;
+    double const mass = 100.;
     assert(v >= 0. && v < 1.);
     double const k = mass * v / std::sqrt(1. - v * v);
     double const omega = std::sqrt(k * k + mass * mass);
@@ -365,10 +365,9 @@ int main(int argc, char** argv)
                                           * std::exp(
                                                   -((x - x_0) * (x - x_0) + (y - y_0) * (y - y_0))
                                                   / 2. / sigma / sigma)
-                                  + std::sin(k * (x - x_1))
-                                            * std::exp(
-                                                    -((x - x_1) * (x - x_1) + (y - y_1) * (y - y_1))
-                                                    / 2. / sigma / sigma);
+                                  + std::exp(
+                                          -((x - x_1) * (x - x_1) + (y - y_1) * (y - y_1)) / 2.
+                                          / sigma / sigma);
             });
     auto potential_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), potential);
