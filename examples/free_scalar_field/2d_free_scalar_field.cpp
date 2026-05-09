@@ -346,9 +346,14 @@ int main(int argc, char** argv)
     double const y_1 = -0.3;
     double const sigma = .5;
 
-    double const v = 100.;
-    double const k = 1.;
+    // Desired group velocity of the left Klein-Gordon packet in units where c = 1.
+    // For a massive field, the actual group velocity is v_g = k / sqrt(k^2 + m^2), so
+    // choosing v directly requires deriving the carrier wavenumber from the dispersion relation.
+    double const v = 0.5;
     double const mass = 20.;
+    assert(v >= 0. && v < 1.);
+    double const k = mass * v / std::sqrt(1. - v * v);
+    double const omega = std::sqrt(k * k + mass * mass);
 
     ddc::parallel_for_each(
             potential.domain(),
@@ -410,10 +415,9 @@ int main(int argc, char** argv)
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
                 double const x = ddc::coordinate(ddc::DiscreteElement<DDimX>(elem));
                 double const y = ddc::coordinate(ddc::DiscreteElement<DDimY>(elem)) - y_0;
-                // v*dphi/dx of the left wave packet only to get a pure kick along x toward the immobile right one
-                temporal_moment(elem) = -v
-                                        * (-k * std::cos(k * (x - x_0))
-                                           + (x - x_0) / sigma / sigma * std::sin(k * (x - x_0)))
+                // Group velocity toward the right for left wave packet
+                temporal_moment(elem) = (-omega * std::cos(k * (x - x_0))
+                                         + v * (x - x_0) / sigma / sigma * std::sin(k * (x - x_0)))
                                         * std::exp(
                                                 -((x - x_0) * (x - x_0) + (y - y_0) * (y - y_0))
                                                 / 2. / sigma / sigma);
