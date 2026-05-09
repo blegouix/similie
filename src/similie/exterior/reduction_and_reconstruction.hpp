@@ -9,6 +9,7 @@
 
 #include <similie/misc/clamp_to_domain.hpp>
 #include <similie/misc/factorial.hpp>
+#include <similie/misc/small_matrix.hpp>
 #include <similie/misc/specialization.hpp>
 #include <similie/misc/type_seq_conversion.hpp>
 #include <similie/tensor/antisymmetric_tensor.hpp>
@@ -316,95 +317,6 @@ KOKKOS_FUNCTION std::array<std::size_t, N - M> hodge_complement_ids(
     return complement;
 }
 
-template <std::size_t N, class MemorySpace>
-KOKKOS_FUNCTION bool reduction_invert_matrix(
-        std::array<double, N * N>& inverse_alloc,
-        double& determinant,
-        std::array<double, N * N> const& matrix_alloc)
-{
-    std::array<double, N * N> matrix = matrix_alloc;
-    inverse_alloc.fill(0.);
-    for (std::size_t i = 0; i < N; ++i) {
-        inverse_alloc[i * N + i] = 1.;
-    }
-
-    determinant = 1.;
-    int sign = 1;
-
-    for (std::size_t i = 0; i < N; ++i) {
-        std::size_t pivot = i;
-        double pivot_abs = Kokkos::abs(matrix[i * N + i]);
-        for (std::size_t j = i + 1; j < N; ++j) {
-            double const candidate_abs = Kokkos::abs(matrix[j * N + i]);
-            if (candidate_abs > pivot_abs) {
-                pivot = j;
-                pivot_abs = candidate_abs;
-            }
-        }
-
-        if (pivot_abs == 0.) {
-            determinant = 0.;
-            inverse_alloc.fill(0.);
-            return false;
-        }
-
-        if (pivot != i) {
-            sign *= -1;
-            for (std::size_t j = 0; j < N; ++j) {
-                Kokkos::kokkos_swap(matrix[i * N + j], matrix[pivot * N + j]);
-                Kokkos::kokkos_swap(inverse_alloc[i * N + j], inverse_alloc[pivot * N + j]);
-            }
-        }
-
-        double const diagonal = matrix[i * N + i];
-        determinant *= diagonal;
-
-        for (std::size_t j = 0; j < N; ++j) {
-            matrix[i * N + j] /= diagonal;
-            inverse_alloc[i * N + j] /= diagonal;
-        }
-
-        for (std::size_t row = 0; row < N; ++row) {
-            if (row == i) {
-                continue;
-            }
-            double const factor = matrix[row * N + i];
-            for (std::size_t col = 0; col < N; ++col) {
-                matrix[row * N + col] -= factor * matrix[i * N + col];
-                inverse_alloc[row * N + col] -= factor * inverse_alloc[i * N + col];
-            }
-        }
-    }
-
-    determinant *= static_cast<double>(sign);
-    return true;
-}
-
-template <std::size_t N, std::size_t K, class MemorySpace>
-KOKKOS_FUNCTION double reduction_submatrix_determinant(
-        std::array<double, N * N> const& matrix,
-        std::array<std::size_t, K> const& row_ids,
-        std::array<std::size_t, K> const& col_ids)
-{
-    if constexpr (K == 0) {
-        return 1.;
-    } else {
-        std::array<double, K * K> submatrix_alloc {};
-        for (std::size_t i = 0; i < K; ++i) {
-            for (std::size_t j = 0; j < K; ++j) {
-                submatrix_alloc[i * K + j] = matrix[row_ids[i] * N + col_ids[j]];
-            }
-        }
-
-        std::array<double, K * K> inverse_alloc {};
-        double determinant = 0.;
-        if (!reduction_invert_matrix<K, MemorySpace>(inverse_alloc, determinant, submatrix_alloc)) {
-            return 0.;
-        }
-        return determinant;
-    }
-}
-
 template <class PositionIndex, class PositionType, class BatchElem, std::size_t K>
 KOKKOS_FUNCTION double primal_reconstruction_diagonal(
         PositionType position,
@@ -449,7 +361,10 @@ KOKKOS_FUNCTION double continuous_hodge_value_from_ids(
     using MetricIndex1 = tensor::metric_index_1<MetricIndex>;
     using MetricIndex2 = tensor::metric_index_2<MetricIndex>;
     std::array<double, N * N> metric_alloc {};
+    std::array<double, N * N> determinant_metric_alloc {};
     std::array<double, N * N> inverse_metric_alloc {};
+    std::array<double, N * N> workspace_alloc {};
+    std::array<double, K * K> submatrix_alloc {};
     for (std::size_t i = 0; i < N; ++i) {
         for (std::size_t j = 0; j < N; ++j) {
             metric_alloc[i * N + j] = metric.get(metric.access_element(
@@ -457,21 +372,27 @@ KOKKOS_FUNCTION double continuous_hodge_value_from_ids(
                     ddc::DiscreteElement<MetricIndex1, MetricIndex2>(i, j)));
         }
     }
+    determinant_metric_alloc = metric_alloc;
 
-    double determinant = 0.;
-    if (!reduction_invert_matrix<
-                N,
-                typename MetricType::
-                        memory_space>(inverse_metric_alloc, determinant, metric_alloc)) {
+    auto determinant_metric_view = misc::math::matrix_view<
+            double,
+            typename MetricType::memory_space>(determinant_metric_alloc.data(), N, N);
+    auto metric_view = misc::math::
+            matrix_view<double, typename MetricType::memory_space>(metric_alloc.data(), N, N);
+    double const determinant = misc::math::determinant(determinant_metric_view);
+    auto inverse_metric_view = misc::math::matrix_view<
+            double,
+            typename MetricType::memory_space>(inverse_metric_alloc.data(), N, N);
+    auto workspace = misc::math::
+            vector_view<double, typename MetricType::memory_space>(workspace_alloc.data(), N * N);
+    if (!misc::math::invert(inverse_metric_view, metric_view, workspace)) {
         return 0.;
     }
 
     return Kokkos::sqrt(Kokkos::abs(determinant))
            * static_cast<double>(hodge_permutation_sign<N>(complement, target_ids))
-           * reduction_submatrix_determinant<
-                   N,
-                   K,
-                   typename MetricType::memory_space>(inverse_metric_alloc, source_ids, complement)
+           * misc::math::submatrix_determinant<
+                   K>(inverse_metric_view, source_ids, complement, submatrix_alloc)
            / misc::factorial(K);
 }
 
@@ -660,12 +581,20 @@ struct Reduction
                 }
             }
 
-            double determinant = 0.;
-            bool const invertible
-                    = detail::reduction_invert_matrix<NBASIS, typename MetricType::memory_space>(
-                            coeff_from_primal_inverse_alloc,
-                            determinant,
-                            coeff_from_primal_alloc);
+            std::array<double, NBASIS * NBASIS> workspace_alloc {};
+            auto coeff_from_primal_view = misc::math::matrix_view<
+                    double,
+                    typename MetricType::
+                            memory_space>(coeff_from_primal_alloc.data(), NBASIS, NBASIS);
+            auto coeff_from_primal_inverse_view = misc::math::matrix_view<
+                    double,
+                    typename MetricType::
+                            memory_space>(coeff_from_primal_inverse_alloc.data(), NBASIS, NBASIS);
+            auto workspace = misc::math::vector_view<
+                    double,
+                    typename MetricType::memory_space>(workspace_alloc.data(), NBASIS * NBASIS);
+            bool const invertible = misc::math::
+                    invert(coeff_from_primal_inverse_view, coeff_from_primal_view, workspace);
 
             ddc::device_for_each(reduced_tensor.domain(), [&](auto target_mem_elem) {
                 auto const target_natural_elem

@@ -11,9 +11,8 @@
 #include <similie/misc/clamp_to_domain.hpp>
 #include <similie/misc/domain_contains.hpp>
 #include <similie/misc/factorial.hpp>
+#include <similie/misc/small_matrix.hpp>
 #include <similie/tensor/metric.hpp>
-
-#include <KokkosBatched_LU_Decl.hpp>
 
 namespace sil {
 
@@ -27,49 +26,16 @@ enum class CellComplex {
 
 namespace detail {
 
-struct VolumeMatrixIndex
-{
-};
-
-struct VolumePrimeMatrixIndex
-{
-};
-
 template <std::size_t K, class MemorySpace>
 KOKKOS_FUNCTION double determinant(std::array<double, K * K> const& matrix)
 {
     if constexpr (K == 0) {
         return 1.;
     } else {
-        std::array<double, K * K> reduced_alloc {};
-        ddc::DiscreteDomain<VolumeMatrixIndex, VolumePrimeMatrixIndex> reduced_domain(
-                ddc::DiscreteElement<VolumeMatrixIndex, VolumePrimeMatrixIndex>(0, 0),
-                ddc::DiscreteVector<VolumeMatrixIndex, VolumePrimeMatrixIndex>(K, K));
-        ddc::ChunkSpan<
-                double,
-                ddc::DiscreteDomain<VolumeMatrixIndex, VolumePrimeMatrixIndex>,
-                Kokkos::layout_right,
-                MemorySpace>
-                reduced(reduced_alloc.data(), reduced_domain);
-        auto reduced_view = reduced.allocation_kokkos_view();
-
-        for (std::size_t i = 0; i < K; ++i) {
-            for (std::size_t j = 0; j < K; ++j) {
-                reduced_view(i, j) = matrix[i * K + j];
-            }
-        }
-
-        int const err = KokkosBatched::SerialLU<KokkosBatched::Algo::SolveLU::Unblocked>::invoke(
-                reduced.allocation_kokkos_view());
-        if (err != 0) {
-            return 0.;
-        }
-
-        double det = 1.;
-        for (std::size_t i = 0; i < K; ++i) {
-            det *= reduced_view(i, i);
-        }
-        return det;
+        std::array<double, K * K> reduced_alloc = matrix;
+        auto reduced_view
+                = misc::math::matrix_view<double, MemorySpace>(reduced_alloc.data(), K, K);
+        return misc::math::determinant(reduced_view);
     }
 }
 
