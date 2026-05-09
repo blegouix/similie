@@ -26,6 +26,90 @@ namespace exterior {
 
 namespace detail {
 
+template <class ElemType>
+struct FlatNaturalElemRank;
+
+template <class... Tags>
+struct FlatNaturalElemRank<ddc::DiscreteElement<Tags...>>
+{
+    static constexpr std::size_t value = (FlatNaturalElemRank<Tags>::value + ... + 0);
+};
+
+template <class Tag>
+struct FlatNaturalElemRank
+{
+    static constexpr std::size_t value = 1;
+};
+
+template <class ElemType, std::size_t N>
+KOKKOS_FUNCTION void copy_flat_natural_elem_ids(
+        std::array<std::size_t, N>& ids,
+        std::size_t& offset,
+        ElemType const& elem)
+{
+    auto const entries = ddc::detail::array(elem);
+    if constexpr (std::tuple_size_v<decltype(entries)> == 0) {
+        return;
+    } else {
+        using EntryType = std::remove_cvref_t<decltype(entries[0])>;
+        if constexpr (std::is_same_v<EntryType, std::size_t>) {
+            for (std::size_t i = 0; i < entries.size(); ++i) {
+                ids[offset++] = entries[i];
+            }
+        } else {
+            for (std::size_t i = 0; i < entries.size(); ++i) {
+                copy_flat_natural_elem_ids(ids, offset, entries[i]);
+            }
+        }
+    }
+}
+
+template <class ElemType>
+KOKKOS_FUNCTION auto flat_natural_elem_ids(ElemType const& elem)
+{
+    std::array<std::size_t, FlatNaturalElemRank<ElemType>::value> ids {};
+    std::size_t offset = 0;
+    copy_flat_natural_elem_ids(ids, offset, elem);
+    return ids;
+}
+
+template <class ElemType, std::size_t N>
+KOKKOS_FUNCTION void assign_flat_natural_elem_ids(
+        ElemType& elem,
+        std::array<std::size_t, N> const& ids,
+        std::size_t& offset)
+{
+    auto entries = ddc::detail::array(elem);
+    if constexpr (std::tuple_size_v<decltype(entries)> == 0) {
+        return;
+    } else {
+        using EntryType = std::remove_cvref_t<decltype(entries[0])>;
+        if constexpr (std::is_same_v<EntryType, std::size_t>) {
+            for (std::size_t i = 0; i < entries.size(); ++i) {
+                entries[i] = ids[offset++];
+            }
+            ddc::detail::array(elem) = entries;
+        } else {
+            for (std::size_t i = 0; i < entries.size(); ++i) {
+                assign_flat_natural_elem_ids(entries[i], ids, offset);
+            }
+            ddc::detail::array(elem) = entries;
+        }
+    }
+}
+
+template <class ElemType, std::size_t N>
+KOKKOS_FUNCTION ElemType natural_elem_from_flat_ids(std::array<std::size_t, N> const& ids)
+{
+    static_assert(
+            FlatNaturalElemRank<ElemType>::value == N,
+            "Flat natural element ids must match the element rank.");
+    ElemType elem;
+    std::size_t offset = 0;
+    assign_flat_natural_elem_ids(elem, ids, offset);
+    return elem;
+}
+
 template <misc::Specialization<ddc::detail::TypeSeq> Indices>
 struct ReductionTargetIndex;
 
@@ -107,16 +191,14 @@ KOKKOS_FUNCTION ReductionNaturalElemType merge_reduction_natural_elems(
         std::array<std::size_t, N1> const& first_ids,
         std::array<std::size_t, N2> const& second_ids)
 {
-    ReductionNaturalElemType reduction_natural_elem;
-    auto reduction_ids = ddc::detail::array(reduction_natural_elem);
+    std::array<std::size_t, N1 + N2> reduction_ids {};
     for (std::size_t i = 0; i < N1; ++i) {
         reduction_ids[i] = first_ids[i];
     }
     for (std::size_t i = 0; i < N2; ++i) {
         reduction_ids[N1 + i] = second_ids[i];
     }
-    ddc::detail::array(reduction_natural_elem) = reduction_ids;
-    return reduction_natural_elem;
+    return natural_elem_from_flat_ids<ReductionNaturalElemType>(reduction_ids);
 }
 
 } // namespace detail
@@ -140,7 +222,8 @@ using reconstruction_domain_t
 template <
         misc::Specialization<ddc::detail::TypeSeq> Indices,
         misc::Specialization<tensor::Tensor> PositionType,
-        class BatchElem>
+        class BatchElem,
+        CellComplex Complex = CellComplex::Primal>
 struct Reduction
 {
     using source_index_type = misc::convert_type_seq_to_t<
@@ -228,7 +311,9 @@ struct Reduction
                                                      - position.mem(elem, position_component);
                 }
             }
-            return detail::reduction_determinant<K>(jacobian_matrix) / misc::factorial(K);
+            return detail::reduction_determinant<K>(jacobian_matrix)
+                   * detail::complex_volume_factor<Complex, source_index_type::size()>(K)
+                   / misc::factorial(K);
         }
     }
 };
@@ -237,7 +322,8 @@ template <
         misc::Specialization<ddc::detail::TypeSeq> Indices,
         misc::Specialization<tensor::Tensor> ReductionTensorType,
         misc::Specialization<tensor::Tensor> PositionType,
-        class ExecSpace>
+        class ExecSpace,
+        CellComplex Complex = CellComplex::Primal>
 ReductionTensorType fill_reduction_operator(
         ExecSpace const& exec_space,
         ReductionTensorType reduction_tensor,
@@ -258,7 +344,8 @@ ReductionTensorType fill_reduction_operator(
                                     Indices,
                                     PositionType,
                                     typename ReductionTensorType::non_indices_domain_t::
-                                            discrete_element_type>::
+                                            discrete_element_type,
+                                    Complex>::
                                     value(position,
                                           elem,
                                           reduction_tensor.accessor().canonical_natural_element(
@@ -271,7 +358,8 @@ ReductionTensorType fill_reduction_operator(
 template <
         misc::Specialization<ddc::detail::TypeSeq> Indices,
         misc::Specialization<tensor::Tensor> PositionType,
-        class BatchElem>
+        class BatchElem,
+        CellComplex Complex = CellComplex::Primal>
 struct Reconstruction
 {
     using source_index_type = reduction_index_t<Indices>;
@@ -331,6 +419,9 @@ struct Reconstruction
 
     KOKKOS_FUNCTION static double value(PositionType position, BatchElem elem, auto natural_elem)
     {
+        static_assert(
+                Complex != CellComplex::BarycentricDual,
+                "Reconstruction is not implemented for the barycentric dual complex.");
         constexpr std::size_t K = source_index_type::rank();
         if constexpr (K == 0) {
             return 1.;
@@ -346,7 +437,7 @@ struct Reconstruction
             reduction_natural_elem_type reduction_natural_elem
                     = detail::merge_reduction_natural_elems<
                             reduction_natural_elem_type>(source_ids, target_ids);
-            double const reduction_value = Reduction<Indices, PositionType, BatchElem>::
+            double const reduction_value = Reduction<Indices, PositionType, BatchElem, Complex>::
                     value(position, elem, reduction_natural_elem);
 
             if (!detail::have_same_reduction_ids<K>(source_ids, target_ids)) {
@@ -367,7 +458,8 @@ template <
         misc::Specialization<ddc::detail::TypeSeq> Indices,
         misc::Specialization<tensor::Tensor> ReconstructionTensorType,
         misc::Specialization<tensor::Tensor> PositionType,
-        class ExecSpace>
+        class ExecSpace,
+        CellComplex Complex = CellComplex::Primal>
 ReconstructionTensorType fill_reconstruction_operator(
         ExecSpace const& exec_space,
         ReconstructionTensorType reconstruction_tensor,
@@ -389,7 +481,8 @@ ReconstructionTensorType fill_reconstruction_operator(
                                     Indices,
                                     PositionType,
                                     typename ReconstructionTensorType::non_indices_domain_t::
-                                            discrete_element_type>::
+                                            discrete_element_type,
+                                    Complex>::
                                     value(position,
                                           elem,
                                           reconstruction_tensor.accessor()

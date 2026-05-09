@@ -229,7 +229,7 @@ struct Codifferential<
             sil::tensor::Tensor dual_tensor(dual_tensor_span);
 
             DiscreteHodgeStar<
-                    DualStrategy::Circumcentric,
+                    CellComplex::CircumcentricDual,
                     MuUpSeq,
                     NuLowSeq,
                     MetricType,
@@ -247,7 +247,7 @@ struct Codifferential<
                 run(dual_codifferential, dual_evaluator, chain, lower_chain, elem);
 
         DiscreteHodgeStar<
-                DualStrategy::Circumcentric,
+                CellComplex::CircumcentricDual,
                 tensor::upper_t<RhoLowSeq>,
                 ddc::type_seq_remove_t<
                         tensor::lower_t<MuUpSeq>,

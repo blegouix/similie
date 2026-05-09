@@ -346,9 +346,9 @@ int main(int argc, char** argv)
     double const y_1 = -0.3;
     double const sigma = .5;
 
-    double const v = 10.;
+    double const v = 100.;
     double const k = 1.;
-    double const mass = 1.;
+    double const mass = 20.;
 
     ddc::parallel_for_each(
             potential.domain(),
@@ -360,7 +360,7 @@ int main(int argc, char** argv)
                                           * std::exp(
                                                   -((x - x_0) * (x - x_0) + (y - y_0) * (y - y_0))
                                                   / 2. / sigma / sigma)
-                                  + 30. * std::sin(k * (x - x_1))
+                                  + std::sin(k * (x - x_1))
                                             * std::exp(
                                                     -((x - x_1) * (x - x_1) + (y - y_1) * (y - y_1))
                                                     / 2. / sigma / sigma);
@@ -475,7 +475,7 @@ int main(int argc, char** argv)
     // ------------------
 
     int const nb_iter_between_exports = 50;
-    int const nb_iter = 10000;
+    int const nb_iter = 1000;
     double const dx
             = (ddc::get<X>(upper_bounds) - ddc::get<X>(lower_bounds)) / ddc::get<DDimX>(nb_cells);
     double const dy

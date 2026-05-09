@@ -253,7 +253,7 @@ int main(int argc, char** argv)
 
     for (int i = 0; i < n; ++i) {
         mass0[i] = sil::exterior::DualSimplexVolume<
-                sil::exterior::DualStrategy::Circumcentric,
+                sil::exterior::CellComplex::CircumcentricDual,
                 2,
                 decltype(metric),
                 decltype(position),

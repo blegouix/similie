@@ -14,7 +14,7 @@
 #include <similie/tensor/antisymmetric_tensor.hpp>
 #include <similie/tensor/character.hpp>
 #include <similie/tensor/full_tensor.hpp>
-#include <similie/tensor/gram_matrix.hpp>
+#include <similie/tensor/metric.hpp>
 
 #include "volume.hpp"
 
@@ -254,7 +254,7 @@ template <
 struct ContinuousHodgeStar;
 
 template <
-        DualStrategy Strategy,
+        CellComplex Complex,
         misc::Specialization<ddc::detail::TypeSeq> Indices1,
         misc::Specialization<ddc::detail::TypeSeq> Indices2,
         class MetricType,
@@ -309,15 +309,16 @@ struct DiscreteHodgeStar
             || !detail::is_complete_permutation<N>(source_ids, target_ids)) {
             return 0.;
         }
-        double const primal_volume = SimplexVolume<N, MetricType, PositionType, BatchElem>::
-                run(metric, position, elem, source_ids);
+        double const primal_volume
+                = SimplexVolume<CellComplex::Primal, N, MetricType, PositionType, BatchElem>::
+                        run(metric, position, elem, source_ids);
         if (primal_volume == 0.) {
             return 0.;
         }
 
         return static_cast<double>(detail::permutation_sign<N>(source_ids, target_ids))
-               * DualSimplexVolume<Strategy, N, MetricType, PositionType, BatchElem>::
-                       run(metric, position, elem, source_ids)
+               * DualSimplexVolume<Complex, N, MetricType, PositionType, BatchElem>::template run<
+                       ddc::type_seq_size_v<Indices1>>(metric, position, elem, source_ids)
                / (primal_volume * misc::factorial(ddc::type_seq_size_v<Indices1>));
     }
 };
@@ -409,7 +410,7 @@ struct ContinuousHodgeStar
 template <
         misc::Specialization<ddc::detail::TypeSeq> Indices1,
         misc::Specialization<ddc::detail::TypeSeq> Indices2,
-        DualStrategy Strategy = DualStrategy::Circumcentric,
+        CellComplex Complex = CellComplex::CircumcentricDual,
         misc::Specialization<tensor::Tensor> HodgeStarType,
         misc::Specialization<tensor::Tensor> MetricType,
         misc::Specialization<tensor::Tensor> PositionType,
@@ -433,7 +434,7 @@ HodgeStarType fill_discrete_hodge_star(
                 ddc::device_for_each(hodge_star.accessor().domain(), [&](auto mem_elem) {
                     hodge_star.mem(typename HodgeStarType::discrete_element_type(elem, mem_elem))
                             = DiscreteHodgeStar<
-                                    Strategy,
+                                    Complex,
                                     Indices1,
                                     Indices2,
                                     MetricType,
