@@ -146,13 +146,13 @@ int main(int argc, char** argv)
     ddc::expose_to_pdi("Nx", static_cast<int>(mesh_xy.template extent<DDimX>()));
     ddc::expose_to_pdi("Ny", static_cast<int>(mesh_xy.template extent<DDimY>()));
 
-    // Allocate and instantiate a position field (used only to be exported).
+    // Allocate and instantiate the position field.
     [[maybe_unused]] sil::tensor::TensorAccessor<NuUp> position_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, NuUp> position_dom(mesh_xy, position_accessor.domain());
-    ddc::Chunk position_alloc(position_dom, ddc::HostAllocator<double>());
+    ddc::Chunk position_alloc(position_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor position(position_alloc);
     ddc::parallel_for_each(
-            Kokkos::DefaultHostExecutionSpace(),
+            Kokkos::DefaultExecutionSpace(),
             mesh_xy,
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
                 position(elem, position.accessor().access_element<X>())
@@ -348,12 +348,14 @@ int main(int argc, char** argv)
             coboundary_of_codifferential_buffer);
     Kokkos::fence();
 
+    auto position_host
+            = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), position);
     auto laplacian_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), laplacian);
 
     // Export HDF5 and XDMF
     ddc::PdiEvent("export")
-            .with("position", position)
+            .with("position", position_host)
             .with("potential", potential_host)
             .with("laplacian", laplacian_host);
     std::cout << "Computation result exported in 2d_vector_laplacian.h5." << std::endl;

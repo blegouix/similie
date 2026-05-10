@@ -311,13 +311,14 @@ int main(int argc, char** argv)
            == static_cast<std::size_t>(mesh_xy.template extent<DDimY>()));
     ddc::expose_to_pdi("Nx", static_cast<int>(mesh_xy.template extent<DDimX>()));
     ddc::expose_to_pdi("Ny", static_cast<int>(mesh_xy.template extent<DDimY>()));
-    // Allocate and instantiate a position field (used only to be exported).
+
+    // Allocate and instantiate the position field.
     [[maybe_unused]] sil::tensor::TensorAccessor<AlphaUp> position_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, AlphaUp> position_dom(mesh_xy, position_accessor.domain());
-    ddc::Chunk position_alloc(position_dom, ddc::HostAllocator<double>());
+    ddc::Chunk position_alloc(position_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor position(position_alloc);
     ddc::parallel_for_each(
-            Kokkos::DefaultHostExecutionSpace(),
+            Kokkos::DefaultExecutionSpace(),
             mesh_xy,
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
                 position(elem, position.accessor().access_element<X>())
@@ -325,6 +326,8 @@ int main(int argc, char** argv)
                 position(elem, position.accessor().access_element<Y>())
                         = static_cast<double>(ddc::coordinate(ddc::DiscreteElement<DDimY>(elem)));
             });
+    auto position_host
+            = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), position);
 
     // Allocate and instantiate a metric tensor field.
     [[maybe_unused]] sil::tensor::TensorAccessor<MetricIndex> metric_accessor;
@@ -611,7 +614,7 @@ int main(int argc, char** argv)
                     .with("export_id", i / nb_iter_between_exports)
                     .with("write_position", i / nb_iter_between_exports == 0 ? 1 : 0)
                     .with("time", time)
-                    .with("position", position)
+                    .with("position", position_host)
                     .with("potential", potential_host)
                     .with("temporal_moment", temporal_moment_host)
                     .with("spatial_moments", spatial_moments_host)
