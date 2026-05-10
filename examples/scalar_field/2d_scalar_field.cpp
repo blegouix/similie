@@ -16,7 +16,7 @@
 
 #include <similie/similie.hpp>
 
-#include "free_scalar_field_hamiltonian.hpp"
+#include "scalar_field_hamiltonian.hpp"
 
 // PDI config
 constexpr char const* const PDI_CFG = R"PDI_CFG(
@@ -59,7 +59,7 @@ data:
 
 plugins:
   decl_hdf5:
-    - file: '2d_free_scalar_field.h5'
+    - file: '2d_scalar_field.h5'
       on_event: [export]
       collision_policy: write_into
       datasets:
@@ -124,7 +124,7 @@ plugins:
 // XDMF
 int write_xdmf(int Nx, int Ny, int total_steps, int exported_ids, double export_dt)
 {
-    std::ofstream file("2d_free_scalar_field.xmf", std::ios::trunc);
+    std::ofstream file("2d_scalar_field.xmf", std::ios::trunc);
     file << R"XMF(<?xml version="1.0" ?>
 <!DOCTYPE Xdmf SYSTEM "Xdmf.dtd" []>
 <Xdmf Version="2.0">
@@ -144,7 +144,7 @@ int write_xdmf(int Nx, int Ny, int total_steps, int exported_ids, double export_
         file << R"XMF(    <Geometry GeometryType="XY">
       <DataItem Dimensions=")XMF"
              << Nx << " " << Ny << R"XMF( 2" NumberType="Float" Precision="8" Format="HDF">
-       2d_free_scalar_field.h5:/position
+       2d_scalar_field.h5:/position
       </DataItem>
     </Geometry>
 )XMF";
@@ -164,7 +164,7 @@ int write_xdmf(int Nx, int Ny, int total_steps, int exported_ids, double export_
         <DataItem Dimensions=")XMF"
                  << total_steps << " " << Nx << " " << Ny
                  << R"XMF(" NumberType="Float" Precision="8" Format="HDF">
-         2d_free_scalar_field.h5:/)XMF"
+         2d_scalar_field.h5:/)XMF"
                  << dataset << R"XMF(
         </DataItem>
       </DataItem>
@@ -188,7 +188,7 @@ int write_xdmf(int Nx, int Ny, int total_steps, int exported_ids, double export_
         <DataItem Dimensions=")XMF"
              << total_steps << " " << Nx << " " << Ny
              << R"XMF( 2" NumberType="Float" Precision="8" Format="HDF">
-         2d_free_scalar_field.h5:/spatial_moments
+         2d_scalar_field.h5:/spatial_moments
         </DataItem>
       </DataItem>
     </Attribute>
@@ -342,16 +342,14 @@ int main(int argc, char** argv)
 
     double const x_0 = -2.;
     double const y_0 = 0.;
-    double const x_1 = 2.;
-    double const y_1 = -0.3;
+    double const x_1 = 0.;
+    double const y_1 = -1.;
     double const sigma = .5;
 
-    // Desired group velocity of the left Klein-Gordon packet in units where c = 1.
-    // For a massive field, the actual group velocity is v_g = k / sqrt(k^2 + m^2), so
-    // choosing v directly requires deriving the carrier wavenumber from the dispersion relation.
     double const v = 0.5;
-    double const mass = 100.;
     assert(v >= 0. && v < 1.);
+    double const mass = 100.;
+    double const quartic_coupling = 150.;
     double const k = mass * v / std::sqrt(1. - v * v);
     double const omega = std::sqrt(k * k + mass * mass);
 
@@ -413,7 +411,7 @@ int main(int argc, char** argv)
             potential.domain(),
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
                 double const x = ddc::coordinate(ddc::DiscreteElement<DDimX>(elem));
-                double const y = ddc::coordinate(ddc::DiscreteElement<DDimY>(elem)) - y_0;
+                double const y = ddc::coordinate(ddc::DiscreteElement<DDimY>(elem));
                 // Group velocity toward the right for left wave packet
                 temporal_moment(elem) = (-omega * std::cos(k * (x - x_0))
                                          + v * (x - x_0) / sigma / sigma * std::sin(k * (x - x_0)))
@@ -484,11 +482,11 @@ int main(int argc, char** argv)
     double const dy
             = (ddc::get<Y>(upper_bounds) - ddc::get<Y>(lower_bounds)) / ddc::get<DDimY>(nb_cells);
     double const dt_max = 2.0 / std::sqrt(mass * mass + 4.0 / (dx * dx) + 4.0 / (dy * dy));
-    double const dt = 0.8 * dt_max;
+    double const dt = 0.5 * dt_max;
     std::cout << "Time step = " << dt << " (maximal dt estimated from CFL = " << dt_max << ")"
               << std::endl;
     ddc::expose_to_pdi("Nt", (nb_iter - 1) / nb_iter_between_exports + 1);
-    std::remove("2d_free_scalar_field.h5");
+    std::remove("2d_scalar_field.h5");
 
     /*
      * DeDonder-Weyl equations are commonly written:
@@ -527,10 +525,10 @@ int main(int argc, char** argv)
                 Kokkos::DefaultExecutionSpace(),
                 half_step_potential.domain(),
                 KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
-                    half_step_potential(elem)
-                            = potential(elem)
-                              - FreeScalarFieldHamiltonian(mass).dH_dpi0(temporal_moment(elem)) * dt
-                                        / 2.;
+                    half_step_potential(elem) = potential(elem)
+                                                - ScalarFieldHamiltonian(mass, quartic_coupling)
+                                                                  .dH_dpi0(temporal_moment(elem))
+                                                          * dt / 2.;
                 });
 
         // Compute the potential gradient
@@ -538,7 +536,7 @@ int main(int argc, char** argv)
                 AlphaLow,
                 DummyIndex>(Kokkos::DefaultExecutionSpace(), potential_grad, half_step_potential);
 
-        // For the free scalar, the spatial momentum cochain is exactly dphi.
+        // For this scalar model, the spatial momentum cochain is exactly dphi.
         ddc::parallel_deepcopy(spatial_moments, potential_grad);
         if (i % nb_iter_between_exports == 0) {
             ddc::parallel_deepcopy(spatial_moments_host, spatial_moments);
@@ -565,18 +563,19 @@ int main(int argc, char** argv)
                     // Advect temporal moment by half-step, this is what is needed to perform the whole-step potential advection
                     const double half_step_temporal_moment_
                             = temporal_moment_
-                              + (FreeScalarFieldHamiltonian(mass).dH_dphi(half_step_potential_)
+                              + (ScalarFieldHamiltonian(mass, quartic_coupling)
+                                         .dH_dphi(half_step_potential_)
                                  - spatial_moments_minus_div_)
                                         * dt / 2;
 
                     // Whole-step advection of field state
-                    potential(elem)
-                            -= FreeScalarFieldHamiltonian(mass).dH_dpi0(half_step_temporal_moment_)
-                               * dt;
-                    temporal_moment(elem)
-                            += (FreeScalarFieldHamiltonian(mass).dH_dphi(half_step_potential_)
-                                - spatial_moments_minus_div_)
-                               * dt;
+                    potential(elem) -= ScalarFieldHamiltonian(mass, quartic_coupling)
+                                               .dH_dpi0(half_step_temporal_moment_)
+                                       * dt;
+                    temporal_moment(elem) += (ScalarFieldHamiltonian(mass, quartic_coupling)
+                                                      .dH_dphi(half_step_potential_)
+                                              - spatial_moments_minus_div_)
+                                             * dt;
                 });
 
         if (i % nb_iter_between_exports == 0) {
@@ -593,7 +592,7 @@ int main(int argc, char** argv)
                                    spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(0)),
                                    spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(1))};
                         hamiltonian(elem)
-                                = FreeScalarFieldHamiltonian(mass)
+                                = ScalarFieldHamiltonian(mass, quartic_coupling)
                                           .H(potential(elem, ddc::DiscreteElement<DummyIndex>()),
                                              pi);
                     });
@@ -618,7 +617,7 @@ int main(int argc, char** argv)
                     .with("spatial_moments", spatial_moments_host)
                     .with("spatial_moments_minus_div", h_spatial_moments_minus_div)
                     .with("hamiltonian", h_hamiltonian);
-            std::cout << "Computation result exported in 2d_free_scalar_field.h5." << std::endl;
+            std::cout << "Computation result exported in 2d_scalar_field.h5." << std::endl;
 
             write_xdmf(
                     static_cast<int>(mesh_xy.template extent<DDimX>()),
@@ -626,7 +625,7 @@ int main(int argc, char** argv)
                     (nb_iter - 1) / nb_iter_between_exports + 1,
                     i / nb_iter_between_exports + 1,
                     dt * nb_iter_between_exports);
-            std::cout << "XDMF model exported in 2d_free_scalar_field.xmf." << std::endl;
+            std::cout << "XDMF model exported in 2d_scalar_field.xmf." << std::endl;
         }
     }
 
