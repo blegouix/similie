@@ -100,14 +100,14 @@ template <
         class... DDim,
         class SupportType,
         class MemorySpace>
+    requires(ddc::type_seq_contains_v<
+             ddc::detail::TypeSeq<CochainIndex>,
+             ddc::detail::TypeSeq<DDim...>>)
 struct CodifferentialTensorType<
         TagToRemoveFromCochain,
         CochainIndex,
         tensor::Tensor<ElementType, ddc::DiscreteDomain<DDim...>, SupportType, MemorySpace>>
 {
-    static_assert(ddc::type_seq_contains_v<
-                  ddc::detail::TypeSeq<CochainIndex>,
-                  ddc::detail::TypeSeq<DDim...>>);
     using type = tensor::Tensor<
             ElementType,
             ddc::replace_dim_of_t<

@@ -808,24 +808,23 @@ struct Reconstruction
                 auto const target_natural_elem
                         = reconstructed_tensor.canonical_natural_element(target_mem_elem);
                 double reconstructed_value = 0.;
-                ddc::device_for_each(
-                        source_accessor.natural_domain(),
-                        [&](auto source_natural_elem) {
-                            reconstruction_natural_elem_type reconstruction_natural_elem;
-                            reconstruction_natural_elem = detail::merge_reduction_natural_elems<
-                                    reconstruction_natural_elem_type>(
-                                    ddc::detail::array(source_natural_elem),
-                                    ddc::detail::array(target_natural_elem));
+                ddc::device_for_each(source_accessor.domain(), [&](auto source_mem_elem) {
+                    auto const source_natural_elem
+                            = source_accessor.canonical_natural_element(source_mem_elem);
+                    reconstruction_natural_elem_type reconstruction_natural_elem;
+                    reconstruction_natural_elem = detail::merge_reduction_natural_elems<
+                            reconstruction_natural_elem_type>(
+                            ddc::detail::array(source_natural_elem),
+                            ddc::detail::array(target_natural_elem));
 
-                            cochain_natural_elem_type cochain_natural_elem;
-                            ddc::detail::array(cochain_natural_elem)
-                                    = ddc::detail::array(source_natural_elem);
+                    cochain_natural_elem_type cochain_natural_elem;
+                    ddc::detail::array(cochain_natural_elem)
+                            = ddc::detail::array(source_natural_elem);
 
-                            reconstructed_value
-                                    += value(position, elem, reconstruction_natural_elem)
-                                       * cochain_tensor.get(
-                                               cochain_tensor.access_element(cochain_natural_elem));
-                        });
+                    reconstructed_value += value(position, elem, reconstruction_natural_elem)
+                                           * cochain_tensor.get(cochain_tensor.access_element(
+                                                   cochain_natural_elem));
+                });
                 reconstructed_tensor.mem(target_mem_elem) = reconstructed_value;
             });
         }
