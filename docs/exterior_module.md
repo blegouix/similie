@@ -104,10 +104,10 @@ However this is **not** the adjoint of the coboundary operator, because the latt
 
 ### Primal and dual cell complexes
 
-In DEC, cochains are not only characterized by their degree, but also by the cell complex on which they live. There is the primal complex, made of the mesh simplices themselves, but the operators presented below make use of the dual cell complex which allows to introduce metric information.
+In DEC, cochains are not only characterized by their degree, but also by the cell complex on which they live. There is the primal complex, made of the mesh simplices themselves, but the operators presented below make use of a dual cell complex which allows to introduce metric information. Indeed, the dual cell complex provides the complementary cells on which the metric-dependent "orthogonal counterparts" live. This is why the discrete Hodge star, which is the operator encoding the metric in DEC, naturally maps primal cochains to dual cochains.
 
-In SimiLie, this choice is represented explicitly by the `CellComplex` tag:
-- `CellComplex::Primal`
+However, a dual mesh has to be chosen according to some "dualization strategy". In SimiLie, this choice is represented explicitly by the `CellComplex` tag:
+- `CellComplex::Primal` (no dualization)
 - `CellComplex::CircumcentricDual`
 - `CellComplex::BarycentricDual`
 
@@ -187,6 +187,18 @@ This is the adjoint of the coboundary operator in the metric sense. It is built 
 \f\]
 
 where the "right" Hodge star dualizes the primal \f$k\f$-cochain and the "left" one brings the result back to the primal side.
+
+The reason this is the adjoint is that the Hodge star defines the natural inner product on cochains. Very schematically, if
+\f$\langle \alpha,\beta\rangle = \alpha^\top \star \beta\f$, then:
+
+\f\[
+\langle d\omega,\eta\rangle
+= (d\omega)^\top \star \eta
+= \omega^\top d^\top \star \eta
+= \left\langle \omega, \star^{-1} d^\top \star \eta \right\rangle,
+\f\]
+
+up to the usual sign convention, which gives exactly the formula above.
 
 ### Laplacian
 
