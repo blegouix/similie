@@ -214,7 +214,12 @@ int main(int argc, char** argv)
             decltype(metric),
             decltype(position),
             Kokkos::DefaultExecutionSpace>
-            staged_laplacian(Kokkos::DefaultExecutionSpace(), laplacian, potential, metric, position);
+            staged_laplacian(
+                    Kokkos::DefaultExecutionSpace(),
+                    laplacian,
+                    potential,
+                    metric,
+                    position);
     staged_laplacian.run(laplacian, potential);
     Kokkos::fence();
 

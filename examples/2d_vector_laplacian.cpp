@@ -213,33 +213,6 @@ int main(int argc, char** argv)
     auto potential_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), potential);
 
-    using LaplacianDummyIndex2 = sil::tensor::Covariant<
-            sil::exterior::detail::LaplacianDummy2<sil::tensor::uncharacterize_t<MuLow>>>;
-    using DerivativeIndex = sil::exterior::coboundary_index_t<LaplacianDummyIndex2, MuLow>;
-    using DerivativeMuUpSeq = sil::tensor::upper_t<
-            ddc::to_type_seq_t<sil::tensor::natural_domain_t<DerivativeIndex>>>;
-    using DerivativeNuLowSeq = typename sil::exterior::detail::CodifferentialDummyIndexSeq<
-            LaplacianDummyIndex2::size() - DerivativeIndex::rank(),
-            LaplacianDummyIndex2>::type;
-    using DerivativeRhoLowSeq
-            = ddc::type_seq_merge_t<ddc::detail::TypeSeq<LaplacianDummyIndex2>, DerivativeNuLowSeq>;
-    using DerivativeRhoUpSeq = sil::tensor::upper_t<DerivativeRhoLowSeq>;
-    using DerivativeSigmaLowSeq = ddc::type_seq_remove_t<
-            sil::tensor::lower_t<DerivativeMuUpSeq>,
-            ddc::detail::TypeSeq<LaplacianDummyIndex2>>;
-    using DerivativeDualIndex = sil::misc::
-            convert_type_seq_to_t<sil::tensor::TensorAntisymmetricIndex, DerivativeNuLowSeq>;
-    using MuUpSeq = sil::tensor::upper_t<ddc::to_type_seq_t<sil::tensor::natural_domain_t<MuLow>>>;
-    using NuLowSeq = typename sil::exterior::detail::
-            CodifferentialDummyIndexSeq<MuLow::size() - MuLow::rank(), MuLow>::type;
-    using RhoLowSeq = ddc::type_seq_merge_t<ddc::detail::TypeSeq<MuLow>, NuLowSeq>;
-    using RhoUpSeq = sil::tensor::upper_t<RhoLowSeq>;
-    using SigmaLowSeq
-            = ddc::type_seq_remove_t<sil::tensor::lower_t<MuUpSeq>, ddc::detail::TypeSeq<MuLow>>;
-    using DualIndex
-            = sil::misc::convert_type_seq_to_t<sil::tensor::TensorAntisymmetricIndex, NuLowSeq>;
-    using CodifferentialIndex = sil::exterior::codifferential_index_t<MuLow, MuLow>;
-
     // Laplacian
     [[maybe_unused]] sil::tensor::TensorAccessor<MuLow> laplacian_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, MuLow> laplacian_dom(
@@ -247,105 +220,21 @@ int main(int argc, char** argv)
             laplacian_accessor.domain());
     ddc::Chunk laplacian_alloc(laplacian_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor laplacian(laplacian_alloc);
-
-    ddc::Chunk coboundary_of_codifferential_alloc(laplacian_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor coboundary_of_codifferential_buffer(coboundary_of_codifferential_alloc);
-
-    [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<
-            sil::exterior::hodge_star_domain_t<DerivativeMuUpSeq, DerivativeNuLowSeq>>
-            derivative_hodge_star_accessor;
-    ddc::cartesian_prod_t<
-            decltype(metric.non_indices_domain()),
-            sil::exterior::hodge_star_domain_t<DerivativeMuUpSeq, DerivativeNuLowSeq>>
-            derivative_hodge_star_dom(
-                    metric.non_indices_domain(),
-                    derivative_hodge_star_accessor.domain());
-    ddc::Chunk
-            derivative_hodge_star_alloc(derivative_hodge_star_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor derivative_hodge_star(derivative_hodge_star_alloc);
-
-    [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<
-            sil::exterior::hodge_star_domain_t<DerivativeRhoUpSeq, DerivativeSigmaLowSeq>>
-            dual_derivative_hodge_star_accessor;
-    ddc::cartesian_prod_t<
-            decltype(metric.non_indices_domain()),
-            sil::exterior::hodge_star_domain_t<DerivativeRhoUpSeq, DerivativeSigmaLowSeq>>
-            dual_derivative_hodge_star_dom(
-                    metric.non_indices_domain(),
-                    dual_derivative_hodge_star_accessor.domain());
-    ddc::Chunk dual_derivative_hodge_star_alloc(
-            dual_derivative_hodge_star_dom,
-            ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor dual_derivative_hodge_star(dual_derivative_hodge_star_alloc);
-
-    [[maybe_unused]] sil::tensor::TensorAccessor<DerivativeDualIndex>
-            derivative_dual_tensor_accessor;
-    ddc::cartesian_prod_t<decltype(mesh_xy), ddc::DiscreteDomain<DerivativeDualIndex>>
-            derivative_dual_tensor_dom(mesh_xy, derivative_dual_tensor_accessor.domain());
-    ddc::Chunk derivative_dual_tensor_alloc(
-            derivative_dual_tensor_dom,
-            ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor derivative_dual_tensor_buffer(derivative_dual_tensor_alloc);
-
-    [[maybe_unused]] sil::tensor::TensorAccessor<CodifferentialIndex> codifferential_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, CodifferentialIndex>
-            codifferential_dom(mesh_xy, codifferential_accessor.domain());
-    ddc::Chunk codifferential_alloc(codifferential_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor codifferential_tensor_buffer(codifferential_alloc);
-
-    [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<
-            sil::exterior::hodge_star_domain_t<MuUpSeq, NuLowSeq>> hodge_star_accessor;
-    ddc::cartesian_prod_t<
-            decltype(metric.non_indices_domain()),
-            sil::exterior::hodge_star_domain_t<MuUpSeq, NuLowSeq>>
-            hodge_star_dom(metric.non_indices_domain(), hodge_star_accessor.domain());
-    ddc::Chunk hodge_star_alloc(hodge_star_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor hodge_star(hodge_star_alloc);
-
-    [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<
-            sil::exterior::hodge_star_domain_t<RhoUpSeq, SigmaLowSeq>> dual_hodge_star_accessor;
-    ddc::cartesian_prod_t<
-            decltype(metric.non_indices_domain()),
-            sil::exterior::hodge_star_domain_t<RhoUpSeq, SigmaLowSeq>>
-            dual_hodge_star_dom(metric.non_indices_domain(), dual_hodge_star_accessor.domain());
-    ddc::Chunk dual_hodge_star_alloc(dual_hodge_star_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor dual_hodge_star(dual_hodge_star_alloc);
-
-    [[maybe_unused]] sil::tensor::TensorAccessor<DualIndex> dual_tensor_accessor;
-    ddc::cartesian_prod_t<decltype(mesh_xy), ddc::DiscreteDomain<DualIndex>>
-            dual_tensor_dom(mesh_xy, dual_tensor_accessor.domain());
-    ddc::Chunk dual_tensor_alloc(dual_tensor_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor dual_tensor_buffer(dual_tensor_alloc);
-
-    sil::exterior::fill_discrete_hodge_star<DerivativeMuUpSeq, DerivativeNuLowSeq>(
-            Kokkos::DefaultExecutionSpace(),
-            derivative_hodge_star,
-            metric,
-            position);
-    sil::exterior::fill_discrete_hodge_star<DerivativeRhoUpSeq, DerivativeSigmaLowSeq>(
-            Kokkos::DefaultExecutionSpace(),
-            dual_derivative_hodge_star,
-            metric,
-            position);
-    sil::exterior::fill_discrete_hodge_star<
-            MuUpSeq,
-            NuLowSeq>(Kokkos::DefaultExecutionSpace(), hodge_star, metric, position);
-    sil::exterior::fill_discrete_hodge_star<
-            RhoUpSeq,
-            SigmaLowSeq>(Kokkos::DefaultExecutionSpace(), dual_hodge_star, metric, position);
-
-    sil::exterior::laplacian<MetricIndex, MuLow, MuLow>(
-            Kokkos::DefaultExecutionSpace(),
-            laplacian,
-            potential,
-            derivative_hodge_star,
-            dual_derivative_hodge_star,
-            derivative_dual_tensor_buffer,
-            hodge_star,
-            dual_hodge_star,
-            dual_tensor_buffer,
-            codifferential_tensor_buffer,
-            coboundary_of_codifferential_buffer);
+    sil::exterior::StagedLaplacian<
+            MetricIndex,
+            MuLow,
+            MuLow,
+            decltype(laplacian),
+            decltype(metric),
+            decltype(position),
+            Kokkos::DefaultExecutionSpace>
+            staged_laplacian(
+                    Kokkos::DefaultExecutionSpace(),
+                    laplacian,
+                    potential,
+                    metric,
+                    position);
+    staged_laplacian.run(laplacian, potential);
     Kokkos::fence();
 
     auto position_host
