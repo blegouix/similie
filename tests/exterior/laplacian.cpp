@@ -1,7 +1,10 @@
 // SPDX-FileCopyrightText: 2024 Baptiste Legouix
 // SPDX-License-Identifier: MIT
 
+#include <algorithm>
+#include <array>
 #include <cmath>
+#include <vector>
 
 #include <ddc/ddc.hpp>
 

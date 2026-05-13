@@ -137,67 +137,11 @@ TEST(Codifferential, PrefilledHodgeStarImplementation)
                                auto tensor,
                                auto metric,
                                auto position) {
-        using TensorType = decltype(tensor);
-        using MetricType = decltype(metric);
-        using MuUpSeq = sil::tensor::upper_t<
-                ddc::to_type_seq_t<sil::tensor::natural_domain_t<sil::tensor::Covariant<Mu2>>>>;
-        using NuLowSeq = ddc::detail::TypeSeq<sil::tensor::Covariant<
-                sil::exterior::detail::CodifferentialDummyIndex<0, sil::tensor::Covariant<Mu2>>>>;
-        using RhoLowSeq = ddc::
-                type_seq_merge_t<ddc::detail::TypeSeq<sil::tensor::Covariant<Mu2>>, NuLowSeq>;
-        using RhoUpSeq = sil::tensor::upper_t<RhoLowSeq>;
-        using SigmaLowSeq = ddc::type_seq_remove_t<
-                sil::tensor::lower_t<MuUpSeq>,
-                ddc::detail::TypeSeq<sil::tensor::Covariant<Mu2>>>;
-        using DualIndex
-                = sil::misc::convert_type_seq_to_t<sil::tensor::TensorAntisymmetricIndex, NuLowSeq>;
-        using DualCodifferentialIndex = sil::misc::
-                convert_type_seq_to_t<sil::tensor::TensorAntisymmetricIndex, RhoLowSeq>;
-
-        [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<
-                sil::exterior::hodge_star_domain_t<MuUpSeq, NuLowSeq>> hodge_star_accessor;
-        ddc::cartesian_prod_t<
-                typename MetricType::non_indices_domain_t,
-                sil::exterior::hodge_star_domain_t<MuUpSeq, NuLowSeq>>
-                hodge_star_dom(metric.non_indices_domain(), hodge_star_accessor.domain());
-        ddc::Chunk hodge_star_alloc(hodge_star_dom, ddc::HostAllocator<double>());
-        sil::tensor::Tensor hodge_star(hodge_star_alloc);
-
-        [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<
-                sil::exterior::hodge_star_domain_t<RhoUpSeq, SigmaLowSeq>> dual_hodge_star_accessor;
-        ddc::cartesian_prod_t<
-                typename MetricType::non_indices_domain_t,
-                sil::exterior::hodge_star_domain_t<RhoUpSeq, SigmaLowSeq>>
-                dual_hodge_star_dom(metric.non_indices_domain(), dual_hodge_star_accessor.domain());
-        ddc::Chunk dual_hodge_star_alloc(dual_hodge_star_dom, ddc::HostAllocator<double>());
-        sil::tensor::Tensor dual_hodge_star(dual_hodge_star_alloc);
-
-        [[maybe_unused]] sil::tensor::TensorAccessor<DualIndex> dual_tensor_accessor;
-        ddc::cartesian_prod_t<
-                typename TensorType::non_indices_domain_t,
-                ddc::DiscreteDomain<DualIndex>>
-                dual_tensor_dom(tensor.non_indices_domain(), dual_tensor_accessor.domain());
-        ddc::Chunk dual_tensor_alloc(dual_tensor_dom, ddc::HostAllocator<double>());
-        sil::tensor::Tensor dual_tensor(dual_tensor_alloc);
-
-        sil::exterior::fill_discrete_hodge_star<
-                MuUpSeq,
-                NuLowSeq>(Kokkos::DefaultHostExecutionSpace(), hodge_star, metric, position);
-        sil::exterior::fill_discrete_hodge_star<RhoUpSeq, SigmaLowSeq>(
-                Kokkos::DefaultHostExecutionSpace(),
-                dual_hodge_star,
-                metric,
-                position);
-
-        sil::exterior::codifferential<
+        auto staged_codifferential = sil::exterior::make_staged_codifferential<
                 MetricIndex<X, Y>,
                 sil::tensor::Covariant<Mu2>,
-                sil::tensor::Covariant<Mu2>>(
-                Kokkos::DefaultHostExecutionSpace(),
-                codifferential_tensor,
-                tensor,
-                hodge_star,
-                dual_hodge_star,
-                dual_tensor);
+                sil::tensor::Covariant<
+                        Mu2>>(Kokkos::DefaultHostExecutionSpace(), tensor, metric, position);
+        staged_codifferential.run(codifferential_tensor, tensor);
     });
 }
