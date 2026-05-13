@@ -4,6 +4,7 @@
 #pragma once
 
 #include <optional>
+#include <utility>
 
 #include <ddc/ddc.hpp>
 
@@ -246,13 +247,13 @@ class StagedLaplacian<
 public:
     StagedLaplacian(
             ExecSpace const& exec_space,
-            DerivativeHodgeStarTensorType derivative_hodge_star,
-            DualDerivativeHodgeStarTensorType dual_derivative_hodge_star,
-            DerivativeDualTensorType derivative_dual_tensor_buffer)
+            DerivativeHodgeStarTensorType&& derivative_hodge_star,
+            DualDerivativeHodgeStarTensorType&& dual_derivative_hodge_star,
+            DerivativeDualTensorType&& derivative_dual_tensor_buffer)
         : m_exec_space(exec_space)
-        , m_derivative_hodge_star(derivative_hodge_star)
-        , m_dual_derivative_hodge_star(dual_derivative_hodge_star)
-        , m_derivative_dual_tensor_buffer(derivative_dual_tensor_buffer)
+        , m_derivative_hodge_star(std::move(derivative_hodge_star))
+        , m_dual_derivative_hodge_star(std::move(dual_derivative_hodge_star))
+        , m_derivative_dual_tensor_buffer(std::move(derivative_dual_tensor_buffer))
     {
     }
 
@@ -615,7 +616,11 @@ public:
                 TensorType,
                 MetricType,
                 PositionType,
-                ExecSpace>(exec_spaces[1], *m_hodge_star, *m_dual_hodge_star, *m_dual_tensor_buffer)
+                ExecSpace>(
+                exec_spaces[1],
+                std::move(*m_hodge_star),
+                std::move(*m_dual_hodge_star),
+                std::move(*m_dual_tensor_buffer))
                 .run(*m_codifferential_tensor_buffer, tensor);
         sil::exterior::
                 deriv<LaplacianDummyIndex, codifferential_index_t<LaplacianDummyIndex, CochainTag>>(
@@ -718,15 +723,15 @@ private:
 public:
     StagedLaplacian(
             ExecSpace const& exec_space,
-            HodgeStarTensorType hodge_star,
-            DualHodgeStarTensorType dual_hodge_star,
-            DualTensorType dual_tensor_buffer,
-            CodifferentialTensorType codifferential_tensor_buffer)
+            HodgeStarTensorType&& hodge_star,
+            DualHodgeStarTensorType&& dual_hodge_star,
+            DualTensorType&& dual_tensor_buffer,
+            CodifferentialTensorType&& codifferential_tensor_buffer)
         : m_exec_space(exec_space)
-        , m_hodge_star(hodge_star)
-        , m_dual_hodge_star(dual_hodge_star)
-        , m_dual_tensor_buffer(dual_tensor_buffer)
-        , m_codifferential_tensor_buffer(codifferential_tensor_buffer)
+        , m_hodge_star(std::move(hodge_star))
+        , m_dual_hodge_star(std::move(dual_hodge_star))
+        , m_dual_tensor_buffer(std::move(dual_tensor_buffer))
+        , m_codifferential_tensor_buffer(std::move(codifferential_tensor_buffer))
     {
     }
 
@@ -790,7 +795,11 @@ public:
                 TensorType,
                 MetricType,
                 PositionType,
-                ExecSpace>(m_exec_space, *m_hodge_star, *m_dual_hodge_star, *m_dual_tensor_buffer)
+                ExecSpace>(
+                m_exec_space,
+                std::move(*m_hodge_star),
+                std::move(*m_dual_hodge_star),
+                std::move(*m_dual_tensor_buffer))
                 .run(*m_codifferential_tensor_buffer, tensor);
         return sil::exterior::
                 deriv<LaplacianDummyIndex, codifferential_index_t<LaplacianDummyIndex, CochainTag>>(

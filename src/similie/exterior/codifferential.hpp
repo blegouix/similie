@@ -5,6 +5,7 @@
 
 #include <array>
 #include <optional>
+#include <utility>
 
 #include <ddc/ddc.hpp>
 
@@ -336,13 +337,13 @@ class StagedCodifferential
 public:
     StagedCodifferential(
             ExecSpace const& exec_space,
-            HodgeStarTensorType hodge_star,
-            DualHodgeStarTensorType dual_hodge_star,
-            DualTensorType dual_tensor_buffer)
+            HodgeStarTensorType&& hodge_star,
+            DualHodgeStarTensorType&& dual_hodge_star,
+            DualTensorType&& dual_tensor_buffer)
         : m_exec_space(exec_space)
-        , m_hodge_star(hodge_star)
-        , m_dual_hodge_star(dual_hodge_star)
-        , m_dual_tensor_buffer(dual_tensor_buffer)
+        , m_hodge_star(std::move(hodge_star))
+        , m_dual_hodge_star(std::move(dual_hodge_star))
+        , m_dual_tensor_buffer(std::move(dual_tensor_buffer))
         , m_chain(tangent_basis<DualTensorIndex::rank() + 1, NonSpectatorDimensions>(exec_space))
         , m_lower_chain(tangent_basis<DualTensorIndex::rank(), NonSpectatorDimensions>(exec_space))
     {
