@@ -69,34 +69,41 @@ A \f$k-\f$cochain is basically a set of cosimplices. This is a discrete differen
 
 The coboundary operator associates to a \f$k-\f$cochain a \f$k+1-\f$cosimplex or a \f$k+1-\f$cochain containing the cosimplices which form the coboundary of the cochain. Please refer to [Discrete Differential Forms for Computational Modeling](http://www.geometry.caltech.edu/pubs/DKT05.pdf) for more details. This is the discrete exterior derivative \f$d\f$.
 
-At the implementation level, `Coboundary` evaluates the integral of the input cochain on the
-boundary of each local \f$(k+1)\f$-simplex. For a primal basis simplex \f$\sigma^{k+1}\f$, the
-discrete exterior derivative is therefore
+At the implementation level, `Coboundary` evaluates the integral of the input cochain on the boundary of each local \f$(k+1)\f$-simplex. For a primal basis simplex \f$\sigma^{k+1}\f$, the discrete exterior derivative is therefore:
 
 \f\[
 (d\omega)(\sigma^{k+1}) = \omega(\partial \sigma^{k+1}).
 \f\]
 
-SimiLie also provides `AdjointCoboundary`, which is the bounded-domain operator used in the
-codifferential and in the full-domain DEC Laplacian. Instead of building the coboundary of the
-current simplex, it accumulates the contributions of incident higher-dimensional simplices onto
-the current simplex. In matrix language, it is the incidence transpose associated with the local
-structured-mesh coboundary:
+Equivalently, if \f$\omega\f$ is a discrete \f$k\f$-cochain, then:
 
 \f\[
-d^\ast \sim D^T.
+\left(d\omega\right)(\sigma^{k+1})
+= \sum_{\tau^k \subset \partial \sigma^{k+1}}
+\mathrm{sgn}(\tau^k,\sigma^{k+1})\,\omega(\tau^k),
 \f\]
 
-This is the operator needed to implement the discrete adjoint relation behind
-\f$\delta = (-1)^{n(k+1)+1}\star d \star\f$ on a bounded mesh.
+where the sum runs over the oriented boundary \f$k\f$-simplices of \f$\sigma^{k+1}\f$ and \f$\mathrm{sgn}(\tau^k,\sigma^{k+1})\f$ is the induced orientation sign.
+
+### Transposed coboundary operator
+
+The transposed coboundary operator accumulates the contributions of incident higher-dimensional simplices onto the current simplex. Explicitly, if \f$\eta\f$ is a discrete \f$(k+1)\f$-cochain and \f$\tau^k\f$ is a \f$k\f$-simplex, then:
+
+\f\[
+\left(d^\top \eta\right)(\tau^k)
+= \sum_{\sigma^{k+1} \supset \tau^k}
+\mathrm{sgn}(\tau^k,\sigma^{k+1})\,\eta(\sigma^{k+1}),
+\f\]
+
+However this is **not** the adjoint of the coboundary operator, as we may consider non-euclidean metrics. The adjoint is the codifferential, presented below.
 
 \important Boundary handling is currently explicit but not yet user-configurable.
 - `Coboundary` and `deriv(...)` use a clamped out-of-domain sampling rule: if a forward sample
   exits the mesh, the nearest in-domain node is reused. On a scalar field this behaves like a
   one-sided "free"/zero-normal-variation closure for the first derivative.
-- `AdjointCoboundary` does **not** clamp. Missing incident simplices on the far side of the
+- `TransposedCoboundary` does **not** clamp. Missing incident simplices on the far side of the
   boundary are simply omitted. This is what restores the weighted adjointness needed by the
-  codifferential and the full-domain Laplacian.
+  codifferential.
 - Periodic, Dirichlet and generic Neumann boundary conditions are not yet exposed as configurable
   policies in this module.
 
@@ -132,14 +139,19 @@ associated with the barycentric subdivision.
 ### Reduction and reconstruction
 
 Reduction and reconstruction are the bridges between pointwise differential-form coefficients and
-geometric cochains.
+geometric cochains. They always act on a chosen cell complex, selected by the `CellComplex` tag.
 
 `Reduction` maps a coefficient \f$k\f$-form to the cochain obtained by integrating it on the
-corresponding cell:
+corresponding \f$k\f$-cell:
 
 \f\[
 R_k(\omega)(\sigma^k) = \int_{\sigma^k} \omega.
 \f\]
+
+Depending on the chosen `CellComplex`, \f$\sigma^k\f$ is interpreted as:
+- a primal \f$k\f$-simplex for `CellComplex::Primal`,
+- a circumcentric dual \f$k\f$-cell for `CellComplex::CircumcentricDual`,
+- a barycentric dual \f$k\f$-cell for `CellComplex::BarycentricDual`.
 
 `Reconstruction` is the inverse map used in SimiLie under a piecewise-constant ansatz:
 
@@ -148,6 +160,10 @@ Q_k(c)\big|_{\sigma^k}
 = \frac{c(\sigma^k)}{|\sigma^k|}.
 \f\]
 
+Here again, the meaning of \f$\sigma^k\f$ depends on the selected `CellComplex`. In other words,
+the primal/dual nature of the operator is not implicit: it is carried explicitly by the
+`CellComplex` template argument.
+
 The geometry on which those operators act is configured by `CellComplex`:
 - `CellComplex::Primal`
 - `CellComplex::CircumcentricDual`
@@ -155,8 +171,11 @@ The geometry on which those operators act is configured by `CellComplex`:
 
 For `CellComplex::Primal`, reduction and reconstruction only need the position field because the
 required measure is purely primal. No metric needs to be passed. For dual complexes, the metric
-enters through the dual-cell geometry, so `Reduction<..., CellComplex::CircumcentricDual>` uses
-both the metric and the position.
+enters through the dual-cell geometry, so eventual dualization becomes explicit in the API:
+- `Reduction<..., CellComplex::Primal>` is a primal geometric integral map,
+- `Reduction<..., CellComplex::CircumcentricDual>` is a dual geometric integral map,
+- the current reconstruction support is primarily primal, and unsupported dual reconstructions are
+  rejected with `static_assert`.
 
 In the current implementation:
 - primal reduction/reconstruction are diagonal local operators based on primal simplex volumes;
@@ -191,12 +210,11 @@ the dual \f$(n-k)\f$-cell and the volume of the primal \f$k\f$-simplex:
 \star_\sigma = \frac{|\star \sigma|}{|\sigma|}
 \f\]
 
-In SimiLie, `DiscreteHodgeStar` is not implemented as a standalone formula anymore. It is built as
-the composition
+In SimiLie, `DiscreteHodgeStar` is implemented as the composition
 
 \f\[
 \star_h
-= R_{n-k}^{\mathrm{dual}}
+\;=\; R_{n-k}^{\mathrm{dual}}
 \circ \star
 \circ Q_k^{\mathrm{primal}},
 \f\]
@@ -208,5 +226,18 @@ that is:
 
 Only the final reduction is configurable through the `CellComplex` template parameter of
 `DiscreteHodgeStar`. The primal reconstruction is always primal, and the continuous Hodge star is
-always the pointwise metric Hodge star. By default the discrete operator uses the circumcentric
-dual complex, while a barycentric reduction strategy is also available at compile time.
+always the pointwise metric Hodge star. Therefore, the configurable part of the discrete operator
+is exactly the choice of the dual cell complex used in
+\f$R_{n-k}^{\mathrm{dual}}\f$. By default the discrete operator uses the circumcentric dual
+complex, while a barycentric reduction strategy is also available at compile time.
+
+### Codifferential
+
+This is the operator needed to implement the discrete adjoint relation behind the codifferential. At the discrete level used in SimiLie, one may read the codifferential as
+
+\f\[
+\delta_h = (-1)^{n(k+1)+1}\,\star_h^{-1}\, d^\ast_{\mathrm{dual}}\, \star_h,
+\f\]
+
+where the first Hodge star dualizes the primal \f$k\f$-cochain, `AdjointCoboundary` applies the
+dual-side adjoint incidence, and the second Hodge star brings the result back to the primal side.
