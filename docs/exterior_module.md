@@ -174,7 +174,7 @@ It corresponds exactly to the quantity:
 This is the adjoint of the coboundary operator. It is build from the discrete Hodge star and the transposed coboundary operator: 
 
 \f\[
-\delta = (-1)^{n(k+1)+1}\,\star^{-1}\, d^\ast_{\mathrm{dual}}\, \star_h,
+\delta = (-1)^{n(k+1)+1}\,\star^{-1}\, d^\top_\mathrm{dual}\, \star,
 \f\]
 
 where the "right" Hodge star dualizes the primal \f$k\f$-cochain and the "left" one brings the result back to the primal side.
