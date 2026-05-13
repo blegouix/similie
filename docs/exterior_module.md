@@ -102,6 +102,15 @@ However this is **not** the adjoint of the coboundary operator, because the latt
 - `TransposedCoboundary` does **not** clamp. Missing incident simplices on the far side of the boundary are simply omitted. This is what restores the weighted adjointness needed by the codifferential.
 - Periodic, Dirichlet and generic Neumann boundary conditions are not yet exposed as configurable policies in this module.
 
+### Primal and dual cell complexes
+
+In DEC, cochains are not only characterized by their degree, but also by the cell complex on which they live. There is the primal complex, made of the mesh simplices themselves, but the operators presented below make use of the dual cell complex which allows to introduce metric information.
+
+In SimiLie, this choice is represented explicitly by the `CellComplex` tag:
+- `CellComplex::Primal`
+- `CellComplex::CircumcentricDual`
+- `CellComplex::BarycentricDual`
+
 ### Volume operator
 
 To build a discrete operator able to encode the metric (the discrete Hodge star), we need a volume operator (in the sense of \f$k-\f$volume, ie. length, area...) to provide the ability to measure the "size" of a simplex. Given a \f$k\f$-simplex spanned by edge vectors \f$e_1,\dots,e_k\f$, SimiLie builds the local Gram matrix:
