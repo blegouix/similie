@@ -254,10 +254,9 @@ struct Coboundary<TagToAddToCochain, CochainTag>
                                 ddc::to_type_seq_t<typename LowerChainType::simplex_type::
                                                            discrete_element_type>>>
                         == 0) {
-                    Elem const sampled_elem((*j).discrete_element());
                     boundary_values(ddc::DiscreteElement<detail::CoboundaryDummyIndex>(boundary_id))
                             = evaluator(
-                                    sampled_elem,
+                                    Elem((*j).discrete_element()),
                                     ddc::DiscreteElement<CochainTag>(Kokkos::Experimental::distance(
                                             lower_chain.begin(),
                                             misc::detail::
@@ -265,15 +264,14 @@ struct Coboundary<TagToAddToCochain, CochainTag>
                                                          lower_chain.end(),
                                                          (*j).discrete_vector()))));
                 } else {
-                    Elem const sampled_elem(
-                            (*j).discrete_element(),
-                            misc::select_from_type_seq<ddc::type_seq_remove_t<
-                                    ddc::to_type_seq_t<Elem>,
-                                    ddc::to_type_seq_t<typename LowerChainType::simplex_type::
-                                                               discrete_element_type>>>(elem));
                     boundary_values(ddc::DiscreteElement<detail::CoboundaryDummyIndex>(boundary_id))
                             = evaluator(
-                                    sampled_elem,
+                                    Elem((*j).discrete_element(),
+                                         misc::select_from_type_seq<ddc::type_seq_remove_t<
+                                                 ddc::to_type_seq_t<Elem>,
+                                                 ddc::to_type_seq_t<
+                                                         typename LowerChainType::simplex_type::
+                                                                 discrete_element_type>>>(elem)),
                                     ddc::DiscreteElement<CochainTag>(Kokkos::Experimental::distance(
                                             lower_chain.begin(),
                                             misc::detail::
@@ -357,10 +355,9 @@ struct TransposedCoboundary<TagToAddToCochain, CochainTag>
                                 ddc::to_type_seq_t<typename LowerChainType::simplex_type::
                                                            discrete_element_type>>>
                         == 0) {
-                    Elem const sampled_elem(sampled_face_elem);
                     boundary_values(ddc::DiscreteElement<detail::CoboundaryDummyIndex>(boundary_id))
                             = evaluator(
-                                    sampled_elem,
+                                    Elem(sampled_face_elem),
                                     ddc::DiscreteElement<CochainTag>(Kokkos::Experimental::distance(
                                             lower_chain.begin(),
                                             misc::detail::
@@ -368,15 +365,14 @@ struct TransposedCoboundary<TagToAddToCochain, CochainTag>
                                                          lower_chain.end(),
                                                          sampled_face_vector))));
                 } else {
-                    Elem const sampled_elem(
-                            sampled_face_elem,
-                            misc::select_from_type_seq<ddc::type_seq_remove_t<
-                                    ddc::to_type_seq_t<Elem>,
-                                    ddc::to_type_seq_t<typename LowerChainType::simplex_type::
-                                                               discrete_element_type>>>(elem));
                     boundary_values(ddc::DiscreteElement<detail::CoboundaryDummyIndex>(boundary_id))
                             = evaluator(
-                                    sampled_elem,
+                                    Elem(sampled_face_elem,
+                                         misc::select_from_type_seq<ddc::type_seq_remove_t<
+                                                 ddc::to_type_seq_t<Elem>,
+                                                 ddc::to_type_seq_t<
+                                                         typename LowerChainType::simplex_type::
+                                                                 discrete_element_type>>>(elem)),
                                     ddc::DiscreteElement<CochainTag>(Kokkos::Experimental::distance(
                                             lower_chain.begin(),
                                             misc::detail::
