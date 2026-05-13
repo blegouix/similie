@@ -500,14 +500,14 @@ int main(int argc, char** argv)
      * eta^\mu\nu dpi_\nu/dx^\mu = -dH/dphi
      * dphi/dx^\mu = eta^\mu\nu dH/dpi_\nu
      *
-     * Or explicitely with a (-, +, +) metric:
+     * Or explicitly with a (-, +, +) metric:
      * - dpi_0/dx^0 + dpi_\alpha/dx^\alpha = -dH/dphi
      * dphi/dx^0 = - dH/dpi_0
      * dphi/dx^\alpha = dH/dpi_\alpha
      *
      * In the exterior calculus formalism, we have :
      *
-     * d \phi = dphi/dpi^\alpha
+     * d \phi = dH/dpi_\alpha
      * \delta \pi = -dpi_\alpha/dx^\alpha
      *
      * Thus:
