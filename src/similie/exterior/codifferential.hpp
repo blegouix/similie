@@ -243,7 +243,7 @@ struct Codifferential<
             return dual_tensor.mem(dual_elem);
         };
 
-        AdjointCoboundary<TagToRemoveFromCochain, DualIndex>::
+        TransposedCoboundary<TagToRemoveFromCochain, DualIndex>::
                 run(dual_codifferential, dual_evaluator, chain, lower_chain, elem);
 
         DiscreteHodgeStar<
@@ -329,7 +329,7 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
                                 dual_codifferential_accessor.domain());
                 sil::tensor::Tensor dual_codifferential(dual_codifferential_span);
 
-                AdjointCoboundary<TagToRemoveFromCochain, DualIndex>::run(
+                TransposedCoboundary<TagToRemoveFromCochain, DualIndex>::run(
                         dual_codifferential,
                         [&](auto sampled_elem, auto dual_elem) {
                             if (!misc::domain_contains(

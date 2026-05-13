@@ -24,7 +24,7 @@ Integration is used to compute global quantities from local ones, ie. the curren
 
 Please refer to the reference document [Discrete Differential Forms for Computational Modeling](http://www.geometry.caltech.edu/pubs/DKT05.pdf) for a way more detailled description of the theory presented in this section.
 
-A whole zoo of differential operators has been developed over the centuries : gradient, rotational, divergency, 4-gradient, 4-divergency, directional derivative, material derivative, covariant derivative, Lie derivative, etc. During the 20th century, mathematicians proposed a refactoring of it known as Exterior calculus, which revealed highly suitable for discretization (now known as Discrete exterior calculus). Only two fundamental operators are defined and can be used to build any possible differential operator on any-dimension manifold:
+A whole zoo of differential operators has been developed over the centuries : gradient, rotational, divergency, 4-gradient, 4-divergency, directional derivative, material derivative, covariant derivative, Lie derivative, etc. During the 20th century, mathematicians proposed a refactoring of it known as Exterior calculus, which proved highly suitable for discretization (now known as Discrete exterior calculus). Only two fundamental operators are defined and can be used to build any possible differential operator on any-dimension manifold:
 
 - The <em>exterior derivative</em> \f$d\f$.
 - The <em>Hodge star</em> \f$\star\f$.
@@ -37,7 +37,7 @@ The generic Laplacian is defined as \f$\delta d + d \delta\f$.
 
 An important relation is the Poincarré Lemma \f$dd = 0\f$. It leads to the very deep physical concept of gauge invariance, which tells us potentials are defined up to a derivative (because \f$d(A+d\alpha) = dA + dd\alpha = dA\f$).
 
-\important A key paradigm of SimiLie is the exclusive support of structured meshes to avoid sparse linear algebra and produce mostly-embarrassing parallel code. It implies that the main difference between the theory described in [Discrete Differential Forms for Computational Modeling](http://www.geometry.caltech.edu/pubs/DKT05.pdf) and the implementation in SimiLie is that discrete exterior derivative is not build upon a sparse adjacency matrix, but directly computed locally for each node of the mesh (matrix-free approach). Otherwise, SimiLie follows quite closely the construction presented in the document.
+\important A key paradigm of SimiLie is the exclusive support of structured meshes to avoid sparse linear algebra and produce mostly-embarrassingly parallel code. It implies that the main difference between the theory described in [Discrete Differential Forms for Computational Modeling](http://www.geometry.caltech.edu/pubs/DKT05.pdf) and the implementation in SimiLie is that the discrete exterior derivative is not built upon a sparse adjacency matrix, but directly computed locally for each node of the mesh (matrix-free approach). Otherwise, SimiLie follows quite closely the construction presented in the document.
 
 ### Simplex
 
@@ -87,7 +87,7 @@ where the sum runs over the oriented boundary \f$k\f$-simplices of \f$\sigma^{k+
 
 ### Transposed coboundary operator
 
-The transposed coboundary operator accumulates the contributions of incident higher-dimensional simplices onto the current simplex. Explicitly, if \f$\eta\f$ is a discrete \f$(k+1)\f$-cochain and \f$\tau^k\f$ is a \f$k\f$-simplex, then:
+The transposed coboundary operator accumulates the contributions of incident higher-dimensional simplices onto the current simplex. It is the transpose of the incidence operator underlying the coboundary. Explicitly, if \f$\eta\f$ is a discrete \f$(k+1)\f$-cochain and \f$\tau^k\f$ is a \f$k\f$-simplex, then:
 
 \f\[
 \left(d^\top \eta\right)(\tau^k)
@@ -95,7 +95,7 @@ The transposed coboundary operator accumulates the contributions of incident hig
 \mathrm{sgn}(\tau^k,\sigma^{k+1})\,\eta(\sigma^{k+1}),
 \f\]
 
-However this is **not** the adjoint of the coboundary operator, as we may consider non-euclidean metrics. The adjoint is the codifferential, presented below.
+However this is **not** the adjoint of the coboundary operator, because the latter has to involve the metric in some way. The adjoint operator on forms is the codifferential, presented below.
 
 \important Boundary handling is currently explicit but not yet user-configurable.
 - `Coboundary` (and its alias `deriv(...)`) use a clamped out-of-domain sampling rule: if a forward sample exits the mesh, the nearest in-domain node is reused. On a scalar field this behaves like a one-sided "free"/zero-normal-variation closure for the first derivative.
@@ -104,7 +104,7 @@ However this is **not** the adjoint of the coboundary operator, as we may consid
 
 ### Volume operator
 
-To build a discrete operator able to encode the metrics (the discrete Hodge star), we need a volume operator (in the sense of \f$k-\f$volume, ie. length, area...) to provide the ability to measure the "size" of a simplex. Given a \f$k\f$-simplex spanned by edge vectors \f$e_1,\dots,e_k\f$, SimiLie builds the local Gram matrix.
+To build a discrete operator able to encode the metric (the discrete Hodge star), we need a volume operator (in the sense of \f$k-\f$volume, ie. length, area...) to provide the ability to measure the "size" of a simplex. Given a \f$k\f$-simplex spanned by edge vectors \f$e_1,\dots,e_k\f$, SimiLie builds the local Gram matrix:
 
 \f\[
 G_{\mu\nu} = g_{\rho\sigma} e_\mu^\rho e_\nu^\sigma
@@ -116,11 +116,11 @@ where \f$g\f$ is the metric evaluated at the current mesh node. The \f$k\f$-volu
 |\sigma^k| = \sqrt{|\det G|}
 \f\]
 
-This is exactly what `SimplexVolume` computes: it first extracts the local edge vectors from the position field, assembles the Gram matrix, and finally takes the square root of its determinant. `DualSimplexVolume` applies the same formula to the complementary \f$(n-k)\f$ directions. TODO introduce the CellComplex here as it is used in the DualSimplexVolume.
+This is exactly what `SimplexVolume` computes: it first extracts the local edge vectors from the position field, assembles the Gram matrix, and finally takes the square root of its determinant. `DualSimplexVolume` applies the same formula to the complementary \f$(n-k)\f$ directions. The associated dual cell complex is selected through the `CellComplex` tag, typically circumcentric or barycentric.
 
 ### Reduction and reconstruction
 
-Reduction and reconstruction are the bridges between pointwise differential-form coefficients and geometric cochains. Schematically, reduction this is the same as integrating a density field along simplices, providing a natural method to encode a differential form on a mesh in a way such that the simplices volumes become afterward forgetable to perform integro-differential calculus in the eulerian space. Reconstruction is the inverse operation. They always act on a chosen cell complex, selected by the `CellComplex` tag. The reduction maps a coefficient \f$k\f$-form to the cochain obtained by integrating it on the corresponding \f$k\f$-cell:
+Reduction and reconstruction are the bridges between pointwise differential-form coefficients and geometric cochains. Schematically, reduction is the same as integrating a density field along simplices, providing a natural way to encode a differential form on a mesh so that the geometric measures are already absorbed into the cochain values. Reconstruction is the inverse operation. They always act on a chosen cell complex, selected by the `CellComplex` tag. The reduction maps a coefficient \f$k\f$-form to the cochain obtained by integrating it on the corresponding \f$k\f$-cell:
 
 \f\[
 R_k(\omega, \sigma^k) = \int_{\sigma^k} \omega
@@ -131,13 +131,13 @@ Depending on the chosen `CellComplex`, \f$\sigma^k\f$ is interpreted as:
 - a circumcentric dual \f$k\f$-cell for `CellComplex::CircumcentricDual`,
 - a barycentric dual \f$k\f$-cell for `CellComplex::BarycentricDual`.
 
-Th reconstruction is the inverse map assuming a piecewise-constant ansatz:
+The reconstruction is the inverse map assuming a piecewise-constant ansatz:
 
 \f\[
 Q_k(c, \sigma^k) = \frac{c(\sigma^k)}{|\sigma^k|}
 \f\]
 
-Here again, the meaning of \f$\sigma^k\f$ depends on the selected cell complex. For `CellComplex::Primal`, reduction and reconstruction only need the position field because the required measure is purely primal. No metric needs to be passed.
+Here again, the meaning of \f$\sigma^k\f$ depends on the selected cell complex. For `CellComplex::Primal`, reduction and reconstruction only need the position field because the required measure is purely primal. No metric needs to be passed. For dual cell complexes, the dual volumes depend on the metric, so dual reduction needs both the position and the metric.
 
 In the current implementation:
 - primal reduction/reconstruction are diagonal local operators based on primal simplex volumes;
@@ -148,7 +148,7 @@ In the current implementation:
 
 The Hodge star operator is implemented both in continuous and discrete form.
 
-The continuous Hodge star acts pointwise on coefficient forms. It is the exterior calculus pendant of the metric. In an \f$n\f$-dimensional manifold, for a \f$k\f$-form \f$\omega\f$ with components \f$\omega_{i_1 \dots i_k}\f$, it is defined as (\f$\varepsilon\f$ is the Levi-Civita symbol):
+The continuous Hodge star acts pointwise on coefficient forms. It is the exterior-calculus counterpart of the metric. In an \f$n\f$-dimensional manifold, for a \f$k\f$-form \f$\omega\f$ with components \f$\omega_{i_1 \dots i_k}\f$, it is defined as (\f$\varepsilon\f$ is the Levi-Civita symbol):
 
 \f\[
 (\star \omega)_{j_1 \dots j_{n-k}}
@@ -163,7 +163,7 @@ The discrete Hodge star acts on cochains. For a \f$k\f$-simplex \f$\sigma\f$ in 
 - Application of the continuous Hodge star,
 - Reduction of the resulting \f$(n-k)\f$-form onto the chosen dual cell complex.
 
-It corresponds exactly to the quantity:
+This composition reproduces exactly the usual diagonal DEC factor:
 
 \f\[
 \star_\sigma = \frac{|\star \sigma|}{|\sigma|}
@@ -171,10 +171,18 @@ It corresponds exactly to the quantity:
 
 ### Codifferential
 
-This is the adjoint of the coboundary operator. It is build from the discrete Hodge star and the transposed coboundary operator: 
+This is the adjoint of the coboundary operator in the metric sense. It is built from the discrete Hodge star and the transposed coboundary operator:
 
 \f\[
 \delta = (-1)^{n(k+1)+1}\,\star^{-1}\, d^\top_\mathrm{dual}\, \star,
 \f\]
 
 where the "right" Hodge star dualizes the primal \f$k\f$-cochain and the "left" one brings the result back to the primal side.
+
+### Laplacian
+
+The generic DEC Laplacian combines the exterior derivative and the codifferential:
+
+\f\[
+\Delta = \delta d + d \delta
+\f\]

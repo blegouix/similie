@@ -183,7 +183,7 @@ void compute_full_domain_laplacian(
 
 } // namespace
 
-TEST(AdjointCoboundary, FullDomainLaplacianIsWeightedSymmetric)
+TEST(TransposedCoboundary, FullDomainLaplacianIsWeightedSymmetric)
 {
     ddc::Coordinate<X, Y> lower_bounds(-1.0, -1.0);
     ddc::Coordinate<X, Y> upper_bounds(1.0, 1.0);

@@ -120,7 +120,7 @@ TensorType codifferential_of_coboundary(
                                 dual_codifferential_accessor.domain());
                 sil::tensor::Tensor dual_codifferential(dual_codifferential_span);
 
-                AdjointCoboundary<LaplacianDummyIndex, DualIndex>::run(
+                TransposedCoboundary<LaplacianDummyIndex, DualIndex>::run(
                         dual_codifferential,
                         [&](auto sampled_elem, auto dual_elem) {
                             if (!misc::domain_contains(

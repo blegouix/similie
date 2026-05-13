@@ -158,7 +158,7 @@ template <class... Args>
 struct Coboundary;
 
 template <class... Args>
-struct AdjointCoboundary;
+struct TransposedCoboundary;
 
 template <misc::Specialization<Cochain> CochainType>
 struct Coboundary<CochainType>
@@ -292,7 +292,7 @@ struct Coboundary<TagToAddToCochain, CochainTag>
 };
 
 template <tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag>
-struct AdjointCoboundary<TagToAddToCochain, CochainTag>
+struct TransposedCoboundary<TagToAddToCochain, CochainTag>
 {
     template <
             class CoboundaryTensorType,
@@ -452,7 +452,7 @@ template <
         tensor::TensorIndex CochainTag,
         misc::Specialization<tensor::Tensor> TensorType,
         class ExecSpace>
-coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> adjoint_coboundary(
+coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> transposed_coboundary(
         ExecSpace const& exec_space,
         coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
         TensorType tensor)
@@ -472,13 +472,13 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> adjoint_coboundar
                     TagToAddToCochain,
                     typename TensorType::non_indices_domain_t>::type>(exec_space);
 
-    SIMILIE_DEBUG_LOG("similie_compute_adjoint_coboundary");
+    SIMILIE_DEBUG_LOG("similie_compute_transposed_coboundary");
     ddc::parallel_for_each(
-            "similie_compute_adjoint_coboundary",
+            "similie_compute_transposed_coboundary",
             exec_space,
             batch_dom,
             KOKKOS_LAMBDA(typename decltype(batch_dom)::discrete_element_type elem) {
-                AdjointCoboundary<TagToAddToCochain, CochainTag>::run(
+                TransposedCoboundary<TagToAddToCochain, CochainTag>::run(
                         coboundary_tensor[elem],
                         [&](auto sampled_elem, auto cochain_elem) {
                             if (!misc::domain_contains(tensor.non_indices_domain(), sampled_elem)) {
