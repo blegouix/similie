@@ -326,6 +326,39 @@ template <
         tensor::TensorIndex MetricIndex,
         tensor::TensorNatIndex LaplacianDummyIndex,
         tensor::TensorIndex CochainTag,
+        class ExecSpace,
+        misc::Specialization<tensor::Tensor> TensorType,
+        misc::Specialization<tensor::Tensor> MetricType,
+        misc::Specialization<tensor::Tensor> PositionType>
+StagedLaplacian<
+        MetricIndex,
+        LaplacianDummyIndex,
+        CochainTag,
+        TensorType,
+        MetricType,
+        PositionType,
+        ExecSpace>
+make_staged_laplacian(
+        ExecSpace const& exec_space,
+        TensorType laplacian_tensor,
+        TensorType tensor,
+        MetricType metric,
+        PositionType position)
+{
+    return StagedLaplacian<
+            MetricIndex,
+            LaplacianDummyIndex,
+            CochainTag,
+            TensorType,
+            MetricType,
+            PositionType,
+            ExecSpace>(exec_space, laplacian_tensor, tensor, metric, position);
+}
+
+template <
+        tensor::TensorIndex MetricIndex,
+        tensor::TensorNatIndex LaplacianDummyIndex,
+        tensor::TensorIndex CochainTag,
         misc::Specialization<tensor::Tensor> TensorType,
         misc::Specialization<tensor::Tensor> MetricType,
         misc::Specialization<tensor::Tensor> PositionType,

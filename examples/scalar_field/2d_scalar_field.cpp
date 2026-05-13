@@ -432,19 +432,10 @@ int main(int argc, char** argv)
     auto h_hamiltonian
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), hamiltonian);
 
-    sil::exterior::StagedCodifferential<
+    auto staged_codifferential = sil::exterior::make_staged_codifferential<
             MetricIndex,
             AlphaLow,
-            AlphaLow,
-            decltype(spatial_moments),
-            decltype(metric),
-            decltype(position),
-            Kokkos::DefaultExecutionSpace>
-            staged_codifferential(
-                    Kokkos::DefaultExecutionSpace(),
-                    spatial_moments,
-                    metric,
-                    position);
+            AlphaLow>(Kokkos::DefaultExecutionSpace(), spatial_moments, metric, position);
 
     // ------------------
     // ----- SOLVER -----

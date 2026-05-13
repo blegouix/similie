@@ -464,6 +464,38 @@ template <
         tensor::TensorIndex MetricIndex,
         tensor::TensorNatIndex TagToRemoveFromCochain,
         tensor::TensorIndex CochainTag,
+        class ExecSpace,
+        misc::Specialization<tensor::Tensor> TensorType,
+        misc::Specialization<tensor::Tensor> MetricType,
+        misc::Specialization<tensor::Tensor> PositionType>
+StagedCodifferential<
+        MetricIndex,
+        TagToRemoveFromCochain,
+        CochainTag,
+        TensorType,
+        MetricType,
+        PositionType,
+        ExecSpace>
+make_staged_codifferential(
+        ExecSpace const& exec_space,
+        TensorType tensor,
+        MetricType metric,
+        PositionType position)
+{
+    return StagedCodifferential<
+            MetricIndex,
+            TagToRemoveFromCochain,
+            CochainTag,
+            TensorType,
+            MetricType,
+            PositionType,
+            ExecSpace>(exec_space, tensor, metric, position);
+}
+
+template <
+        tensor::TensorIndex MetricIndex,
+        tensor::TensorNatIndex TagToRemoveFromCochain,
+        tensor::TensorIndex CochainTag,
         misc::Specialization<tensor::Tensor> DualTensorType,
         misc::Specialization<tensor::Tensor> TensorType,
         misc::Specialization<tensor::Tensor> HodgeStarType,
@@ -569,14 +601,10 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
         PositionType position)
 {
     static_assert(tensor::is_covariant_v<TagToRemoveFromCochain>);
-    return StagedCodifferential<
+    return make_staged_codifferential<
                    MetricIndex,
                    TagToRemoveFromCochain,
-                   CochainTag,
-                   TensorType,
-                   MetricType,
-                   PositionType,
-                   ExecSpace>(exec_space, tensor, metric, position)
+                   CochainTag>(exec_space, tensor, metric, position)
             .run(codifferential_tensor, tensor);
 }
 
