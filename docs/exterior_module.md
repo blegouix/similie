@@ -188,17 +188,11 @@ This is the adjoint of the coboundary operator in the metric sense. It is built 
 
 where the "right" Hodge star dualizes the primal \f$k\f$-cochain and the "left" one brings the result back to the primal side.
 
-The reason this is the adjoint is that the Hodge star defines the natural inner product on cochains. Very schematically, if
-\f$\langle \alpha,\beta\rangle = \alpha^\top \star \beta\f$, then:
+The reason this is the adjoint is that the Hodge star defines the inner product \f$\langle \alpha,\beta\rangle = \int \alpha \wedge \star \beta\f$ on differential forms (with \f$\wedge\f$ the exterior product). The codifferential is then characterized by:
 
 \f\[
-\langle d\omega,\eta\rangle
-= (d\omega)^\top \star \eta
-= \omega^\top d^\top \star \eta
-= \left\langle \omega, \star^{-1} d^\top \star \eta \right\rangle,
+\langle d\omega,\eta\rangle = \int d(\omega \wedge \star \eta) - (-1)^k \int \omega \wedge d(\star \eta) = \int \omega \wedge \star\left( (-1)^{n(k+1)+1}\star^{-1} d \star \eta \right) = \langle \omega,\delta\eta\rangle.
 \f\]
-
-up to the usual sign convention, which gives exactly the formula above.
 
 ### Laplacian
 
