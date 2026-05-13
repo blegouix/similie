@@ -194,6 +194,8 @@ The reason this is the adjoint is that the Hodge star defines the inner product 
 \langle d\omega,\eta\rangle = \int d(\omega \wedge \star \eta) - (-1)^k \int \omega \wedge d(\star \eta) = \int \omega \wedge \star\left( (-1)^{n(k+1)+1}\star^{-1} d \star \eta \right) = \langle \omega,\delta\eta\rangle.
 \f\]
 
+up to the boundary term and the usual sign convention.
+
 ### Laplacian
 
 The generic DEC Laplacian combines the exterior derivative and the codifferential:
