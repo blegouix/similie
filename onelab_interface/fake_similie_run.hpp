@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <filesystem>
 #include <string>
 
@@ -10,7 +11,7 @@ namespace similie::onelab_interface {
 
 struct FakeRunConfig
 {
-    double tensor_scale = 1.0;
+    std::filesystem::path input_mesh_file;
     bool export_view = true;
     std::filesystem::path output_file;
 };
@@ -18,8 +19,12 @@ struct FakeRunConfig
 struct FakeRunResult
 {
     std::string status;
+    std::size_t nx = 0;
+    std::size_t ny = 0;
+    std::size_t nz = 0;
+    std::size_t num_nodes = 0;
+    std::size_t num_cells = 0;
     double checksum = 0.0;
-    double max_entry = 0.0;
     std::filesystem::path output_file;
 };
 

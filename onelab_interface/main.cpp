@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 #include <filesystem>
+#include <exception>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -85,14 +86,15 @@ void publish_interface_parameters(onelab::remoteNetworkClient& client)
 
     onelab::number scale = get_or_create_number(
             client,
-            "0Modules/SimiLie/0Control/Tensor scale",
+            "0Modules/SimiLie/0Control/Require rectilinear mesh",
             1.0,
-            "Tensor scale",
-            "Scale factor applied to the fake SimiLie tensor entries.",
+            "Require rectilinear mesh",
+            "Reject any incoming mesh that is not a full rectilinear hexahedral grid.",
             0.0,
-            1.e6,
-            0.1);
-    scale.setChoices({0.5, 1.0, 2.0, 10.0});
+            1.0,
+            1.0);
+    scale.setChoices({0.0, 1.0});
+    scale.setValueLabels({{0.0, "No"}, {1.0, "Yes"}});
     client.set(scale);
 
     onelab::number export_view = get_or_create_number(
@@ -111,12 +113,22 @@ void publish_interface_parameters(onelab::remoteNetworkClient& client)
     onelab::string output_file = get_or_create_string(
             client,
             "0Modules/SimiLie/0Control/Output view file",
-            (std::filesystem::path(SIMILIE_ONELAB_DEFAULT_OUTPUT_DIR) / "similie_fake_result.pos")
+            (std::filesystem::path(SIMILIE_ONELAB_DEFAULT_OUTPUT_DIR)
+             / "similie_rectilinear_positions.pos")
                     .string(),
             "Output view file",
-            "Absolute path of the fake .pos result produced by the SimiLie ONELAB interface.");
+            "Absolute path of the node-position .pos result produced by the SimiLie ONELAB interface.");
     output_file.setKind("file");
     client.set(output_file);
+
+    onelab::string input_mesh_file = get_or_create_string(
+            client,
+            "0Modules/SimiLie/0Control/Input mesh file",
+            "",
+            "Input mesh file",
+            "Path to the Gmsh .msh file that the SimiLie ONELAB interface should validate.");
+    input_mesh_file.setKind("file");
+    client.set(input_mesh_file);
 }
 
 similie::onelab_interface::FakeRunConfig read_run_configuration(onelab::remoteNetworkClient& client)
@@ -126,11 +138,6 @@ similie::onelab_interface::FakeRunConfig read_run_configuration(onelab::remoteNe
 
     similie::onelab_interface::FakeRunConfig config;
 
-    client.get(number_parameters, "0Modules/SimiLie/0Control/Tensor scale");
-    if (!number_parameters.empty()) {
-        config.tensor_scale = number_parameters.front().getValue();
-    }
-
     client.get(number_parameters, "0Modules/SimiLie/0Control/Export fake view");
     if (!number_parameters.empty()) {
         config.export_view = (number_parameters.front().getValue() != 0.0);
@@ -139,6 +146,11 @@ similie::onelab_interface::FakeRunConfig read_run_configuration(onelab::remoteNe
     client.get(string_parameters, "0Modules/SimiLie/0Control/Output view file");
     if (!string_parameters.empty()) {
         config.output_file = string_parameters.front().getValue();
+    }
+
+    client.get(string_parameters, "0Modules/SimiLie/0Control/Input mesh file");
+    if (!string_parameters.empty()) {
+        config.input_mesh_file = string_parameters.front().getValue();
     }
 
     return config;
@@ -158,20 +170,47 @@ void publish_result(
     client.set(status);
 
     onelab::number checksum(
-            "0Modules/SimiLie/1Output/Tensor checksum",
+            "0Modules/SimiLie/1Output/Position tensor checksum",
             result.checksum,
-            "Tensor checksum",
-            "Weighted checksum of the fake SimiLie tensor values.");
+            "Position tensor checksum",
+            "Checksum of the tensor that stores the accepted rectilinear node positions.");
     checksum.setReadOnly(true);
     client.set(checksum);
 
-    onelab::number max_entry(
-            "0Modules/SimiLie/1Output/Maximum tensor entry",
-            result.max_entry,
-            "Maximum tensor entry",
-            "Largest entry stored in the fake SimiLie tensor.");
-    max_entry.setReadOnly(true);
-    client.set(max_entry);
+    onelab::number nx("0Modules/SimiLie/1Output/Grid points in x",
+                      static_cast<double>(result.nx),
+                      "Grid points in x",
+                      "Number of grid points along the x axis.");
+    nx.setReadOnly(true);
+    client.set(nx);
+
+    onelab::number ny("0Modules/SimiLie/1Output/Grid points in y",
+                      static_cast<double>(result.ny),
+                      "Grid points in y",
+                      "Number of grid points along the y axis.");
+    ny.setReadOnly(true);
+    client.set(ny);
+
+    onelab::number nz("0Modules/SimiLie/1Output/Grid points in z",
+                      static_cast<double>(result.nz),
+                      "Grid points in z",
+                      "Number of grid points along the z axis.");
+    nz.setReadOnly(true);
+    client.set(nz);
+
+    onelab::number node_count("0Modules/SimiLie/1Output/Number of nodes",
+                              static_cast<double>(result.num_nodes),
+                              "Number of nodes",
+                              "Number of accepted mesh nodes.");
+    node_count.setReadOnly(true);
+    client.set(node_count);
+
+    onelab::number cell_count("0Modules/SimiLie/1Output/Number of hexahedra",
+                              static_cast<double>(result.num_cells),
+                              "Number of hexahedra",
+                              "Number of accepted hexahedral cells.");
+    cell_count.setReadOnly(true);
+    client.set(cell_count);
 
     onelab::string output_file(
             "0Modules/SimiLie/1Output/Result view file",
@@ -213,11 +252,16 @@ int main(int argc, char** argv)
 
     similie::onelab_interface::FakeRunConfig const config = read_run_configuration(client);
 
-    client.sendProgress("SimiLie fake run: allocating tensor");
-    similie::onelab_interface::FakeRunResult const result
-            = similie::onelab_interface::run_fake_similie_job(config);
-    publish_result(client, result, config.export_view);
-    client.sendInfo("SimiLie ONELAB interface finished");
+    try {
+        client.sendProgress("SimiLie ONELAB interface: validating rectilinear mesh");
+        similie::onelab_interface::FakeRunResult const result
+                = similie::onelab_interface::run_fake_similie_job(config);
+        publish_result(client, result, config.export_view);
+        client.sendInfo("SimiLie ONELAB interface finished");
+    } catch (std::exception const& exception) {
+        client.sendError(exception.what());
+        return 3;
+    }
 
     return 0;
 }
