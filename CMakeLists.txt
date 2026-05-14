@@ -9,8 +9,9 @@ set_property(GLOBAL PROPERTY GLOBAL_DEPENDS_NO_CYCLES ON)
 set(CMAKE_CXX_STANDARD 20 CACHE INTERNAL "The C++ standard whose features are requested to build this project.")
 
 # List of options
-option(SIMILIE_BUILD_YOUNG_TABLEAU "Build module dedicated to Young tableau indexing" OFF) # Requires compiler supporting #embed directive
 option(SIMILIE_BUILD_DOCUMENTATION "Build SimiLie documentation/website" OFF)
+option(SIMILIE_BUILD_YOUNG_TABLEAU "Build module dedicated to Young tableau indexing" OFF) # Requires compiler supporting #embed directive
+option(SIMILIE_BUILD_ONELAB_INTERFACE "Build the ONELAB interface executable" ON)
 option(SIMILIE_DEBUG_LOG "Enable logging of SimiLie internal kernels" OFF)
 
 # Set default DDC options when included
@@ -65,6 +66,13 @@ endif()
 ###############################################################################################
 # Our project code
 
+set(
+    SIMILIE_ONELAB_SOURCE_DIR
+    "/gmsh/utils/solvers/c++"
+    CACHE PATH
+    "Path to gmsh ONELAB C++ headers (expects onelab.h and GmshSocket.h)"
+)
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_library(similie INTERFACE)
 add_library(sil::sil ALIAS similie)
@@ -88,6 +96,20 @@ if("${SIMILIE_DEBUG_LOG}")
 endif()
 
 add_subdirectory(src/similie)
+if("${SIMILIE_BUILD_ONELAB_INTERFACE}")
+  if(
+      EXISTS "${SIMILIE_ONELAB_SOURCE_DIR}/onelab.h"
+      AND EXISTS "${SIMILIE_ONELAB_SOURCE_DIR}/GmshSocket.h"
+  )
+    add_subdirectory(onelab_interface)
+  else()
+    message(
+        WARNING
+            "SIMILIE_BUILD_ONELAB_INTERFACE is enabled but no ONELAB headers were found in "
+            "${SIMILIE_ONELAB_SOURCE_DIR}. The onelab_interface target will not be built."
+    )
+  endif()
+endif()
 add_subdirectory(tests)
 add_subdirectory(examples)
 if("${SIMILIE_BUILD_DOCUMENTATION}")
