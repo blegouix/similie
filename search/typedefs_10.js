@@ -1,7 +1,8 @@
 var searchData=
 [
-  ['value_5ftype_0',['value_type',['../classsil_1_1exterior_1_1CochainIterator.html#a5c40f91ad4a601595c3a4cbed8860ebe',1,'sil::exterior::CochainIterator']]],
-  ['values_5fiterator_1',['values_iterator',['../classsil_1_1exterior_1_1CochainIterator.html#adbbc691b78b43e75c7710be3dec32995',1,'sil::exterior::CochainIterator']]],
-  ['values_5ftype_2',['values_type',['../classsil_1_1exterior_1_1Cochain.html#a0212df884d04e97942dc638509b78710',1,'sil::exterior::Cochain']]],
-  ['vects_5ftype_3',['vects_type',['../classsil_1_1exterior_1_1LocalChain.html#a363b91b9c805578468456f9d6b38684a',1,'sil::exterior::LocalChain']]]
+  ['uncharacterize_5ft_0',['uncharacterize_t',['../namespacesil_1_1tensor.html#ab7e663826196ec03f2eec4be87ffa4cf',1,'sil::tensor']]],
+  ['uncharacterize_5ftensor_5ft_1',['uncharacterize_tensor_t',['../namespacesil_1_1tensor.html#af044abf8628054dbcd228a1922c6837b',1,'sil::tensor']]],
+  ['unmanaged_5fmatrix_5fview_5ft_2',['unmanaged_matrix_view_t',['../namespacesil_1_1misc_1_1math.html#af498e338bc880a7473c4bcf3ead5d5f8',1,'sil::misc::math']]],
+  ['unmanaged_5fvector_5fview_5ft_3',['unmanaged_vector_view_t',['../namespacesil_1_1misc_1_1math.html#a0904c4d4494ab3d38f4fa9493e074f39',1,'sil::misc::math']]],
+  ['upper_5ft_4',['upper_t',['../namespacesil_1_1tensor.html#a3e2f32622aaafaa7ee4402aba31f1e9c',1,'sil::tensor']]]
 ];

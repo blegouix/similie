@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['prime_0',['prime',['../structsil_1_1tensor_1_1prime.html',1,'sil::tensor']]]
+  ['localchain_0',['LocalChain',['../classsil_1_1exterior_1_1LocalChain.html',1,'sil::exterior']]]
 ];

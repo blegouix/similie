@@ -13,11 +13,13 @@ var searchData=
   ['allocation_10',['allocation',['../classsil_1_1exterior_1_1Chain.html#af7839cfb9ad6627f0487880b10fc5ce7',1,'sil::exterior::Chain::allocation()'],['../classsil_1_1exterior_1_1LocalChain.html#ab9a9f2f588729d41a03e34c00cdaabfe',1,'sil::exterior::LocalChain::allocation()']]],
   ['allocation_5fsize_11',['allocation_size',['../classsil_1_1exterior_1_1Chain.html#a242f10f851bf20b9491d9f093c447250',1,'sil::exterior::Chain::allocation_size() noexcept'],['../classsil_1_1exterior_1_1Chain.html#a1aa4ebd71ca425518c7116093271b60a',1,'sil::exterior::Chain::allocation_size() const noexcept'],['../classsil_1_1exterior_1_1Cochain.html#ae0e65e36adcef586c5f50c190ef0b01f',1,'sil::exterior::Cochain::allocation_size() noexcept'],['../classsil_1_1exterior_1_1Cochain.html#a091ce1753626e4de7e246fb0e5e62ffe',1,'sil::exterior::Cochain::allocation_size() const noexcept'],['../classsil_1_1exterior_1_1LocalChain.html#a567ca0db1030f39d7b1321f327f3914c',1,'sil::exterior::LocalChain::allocation_size() noexcept'],['../classsil_1_1exterior_1_1LocalChain.html#a174b0ad677a71b6b492ca15dbf31f258',1,'sil::exterior::LocalChain::allocation_size() const noexcept']]],
   ['and_20ddc_20support_20tensor_20fields_20what_20can_20similie_20do_20in_20addition_12',['Do Kokkos and DDC support tensor fields ? What can SimiLie do in addition ?',['../tensor_module.html#autotoc_md7',1,'']]],
-  ['are_20importants_20for_20physics_13',['Why tensors are importants for physics ?',['../tensor_module.html#autotoc_md6',1,'']]],
-  ['are_5fall_5fequal_14',['are_all_equal',['../namespacesil_1_1misc.html#a9be032ba1e7bb2c1c931d858a2ab90f2',1,'sil::misc::are_all_equal(Head head, Tail... tail)'],['../namespacesil_1_1misc.html#a5a1751c14a48bdc336c6ff27d10b1041',1,'sil::misc::are_all_equal(T t)']]],
-  ['are_5fall_5fsame_15',['are_all_same',['../namespacesil_1_1misc.html#a094c71e44717da55afa244de80ca4b2c',1,'sil::misc']]],
-  ['are_5fcontravariant_5fv_16',['are_contravariant_v',['../namespacesil_1_1tensor.html#af1114b530ae34962788b74719bd1eeb2',1,'sil::tensor']]],
-  ['are_5fcovariant_5fv_17',['are_covariant_v',['../namespacesil_1_1tensor.html#a474d163b3d8d2bd9b386cce130049b98',1,'sil::tensor']]],
-  ['are_5fdifferent_5fcharacters_5fv_18',['are_different_characters_v',['../namespacesil_1_1tensor.html#a7f82dfccc78dc4f1dabf64f94f922e99',1,'sil::tensor']]],
-  ['are_5fsame_5fcharacters_5fv_19',['are_same_characters_v',['../namespacesil_1_1tensor.html#a2e6798d76f9c9ff66e5be7fe70655858',1,'sil::tensor']]]
+  ['and_20dual_20cell_20complexes_13',['Primal and dual cell complexes',['../exterior_module.html#autotoc_md23',1,'']]],
+  ['and_20reconstruction_14',['Reduction and reconstruction',['../exterior_module.html#autotoc_md25',1,'']]],
+  ['are_20importants_20for_20physics_15',['Why tensors are importants for physics ?',['../tensor_module.html#autotoc_md6',1,'']]],
+  ['are_5fall_5fequal_16',['are_all_equal',['../namespacesil_1_1misc.html#a9be032ba1e7bb2c1c931d858a2ab90f2',1,'sil::misc::are_all_equal(Head head, Tail... tail)'],['../namespacesil_1_1misc.html#a5a1751c14a48bdc336c6ff27d10b1041',1,'sil::misc::are_all_equal(T t)']]],
+  ['are_5fall_5fsame_17',['are_all_same',['../namespacesil_1_1misc.html#a094c71e44717da55afa244de80ca4b2c',1,'sil::misc']]],
+  ['are_5fcontravariant_5fv_18',['are_contravariant_v',['../namespacesil_1_1tensor.html#af1114b530ae34962788b74719bd1eeb2',1,'sil::tensor']]],
+  ['are_5fcovariant_5fv_19',['are_covariant_v',['../namespacesil_1_1tensor.html#a474d163b3d8d2bd9b386cce130049b98',1,'sil::tensor']]],
+  ['are_5fdifferent_5fcharacters_5fv_20',['are_different_characters_v',['../namespacesil_1_1tensor.html#a7f82dfccc78dc4f1dabf64f94f922e99',1,'sil::tensor']]],
+  ['are_5fsame_5fcharacters_5fv_21',['are_same_characters_v',['../namespacesil_1_1tensor.html#a2e6798d76f9c9ff66e5be7fe70655858',1,'sil::tensor']]]
 ];

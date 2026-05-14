@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['localchain_0',['LocalChain',['../classsil_1_1exterior_1_1LocalChain.html',1,'sil::exterior']]]
+  ['fillreconstructionoperatormem_0',['FillReconstructionOperatorMem',['../structsil_1_1exterior_1_1FillReconstructionOperatorMem.html',1,'sil::exterior']]],
+  ['fillreductionoperatormem_1',['FillReductionOperatorMem',['../structsil_1_1exterior_1_1FillReductionOperatorMem.html',1,'sil::exterior']]]
 ];

@@ -126,6 +126,7 @@ $(function(){initNavTree('namespacesil_1_1misc.html',''); initResizable(true); }
 
 <div class="header">
   <div class="summary">
+<a href="#namespaces">Namespaces</a> &#124;
 <a href="#nested-classes">Classes</a> &#124;
 <a href="#concepts">Concepts</a> &#124;
 <a href="#typedef-members">Typedefs</a> &#124;
@@ -135,6 +136,11 @@ $(function(){initNavTree('namespacesil_1_1misc.html',''); initResizable(true); }
 </div><!--header-->
 <div class="contents">
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
+Namespaces</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesil_1_1misc_1_1math.html">math</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1misc_1_1is__specialization__of.html">is_specialization_of</a></td></tr>
@@ -171,6 +177,9 @@ Functions</h2></td></tr>
 <tr class="separator:a5a1751c14a48bdc336c6ff27d10b1041"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aea35c72a0b5289f6bef175d41e5001d1" id="r_aea35c72a0b5289f6bef175d41e5001d1"><td class="memItemLeft" align="right" valign="top">constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aea35c72a0b5289f6bef175d41e5001d1">binomial_coefficient</a> (std::size_t n, std::size_t k) noexcept</td></tr>
 <tr class="separator:aea35c72a0b5289f6bef175d41e5001d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0c5c59c51d124f3937f0349afde6eb03" id="r_a0c5c59c51d124f3937f0349afde6eb03"><td class="memTemplParams" colspan="2">template&lt;class BatchDomain , class Elem &gt; </td></tr>
+<tr class="memitem:a0c5c59c51d124f3937f0349afde6eb03"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION Elem&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a0c5c59c51d124f3937f0349afde6eb03">clamp_to_domain</a> (BatchDomain const &amp;batch_domain, Elem const &amp;elem)</td></tr>
+<tr class="separator:a0c5c59c51d124f3937f0349afde6eb03"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3972a6165c52a1398ca03e1b4ef8d993" id="r_a3972a6165c52a1398ca03e1b4ef8d993"><td class="memTemplParams" colspan="2">template&lt;class... DDim, class... ODDim&gt; </td></tr>
 <tr class="memitem:a3972a6165c52a1398ca03e1b4ef8d993"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a3972a6165c52a1398ca03e1b4ef8d993">domain_contains</a> (ddc::DiscreteDomain&lt; DDim... &gt; dom, ddc::DiscreteElement&lt; ODDim... &gt; elem)</td></tr>
 <tr class="separator:a3972a6165c52a1398ca03e1b4ef8d993"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -338,6 +347,31 @@ template&lt;misc::Specialization&lt; std::vector &gt; T&gt; </div>
 </div><div class="memdoc">
 
 <p class="definition">Definition at line <a class="el" href="binomial__coefficient_8hpp_source.html#l00013">13</a> of file <a class="el" href="binomial__coefficient_8hpp_source.html">binomial_coefficient.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a0c5c59c51d124f3937f0349afde6eb03" name="a0c5c59c51d124f3937f0349afde6eb03"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0c5c59c51d124f3937f0349afde6eb03">&#9670;&#160;</a></span>clamp_to_domain()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class BatchDomain , class Elem &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION Elem sil::misc::clamp_to_domain </td>
+          <td>(</td>
+          <td class="paramtype">BatchDomain const &amp;</td>          <td class="paramname"><span class="paramname"><em>batch_domain</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Elem const &amp;</td>          <td class="paramname"><span class="paramname"><em>elem</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="clamp__to__domain_8hpp_source.html#l00042">42</a> of file <a class="el" href="clamp__to__domain_8hpp_source.html">clamp_to_domain.hpp</a>.</p>
 
 </div>
 </div>

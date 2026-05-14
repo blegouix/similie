@@ -50,7 +50,13 @@ var NAVTREE =
         [ "Cosimplex", "exterior_module.html#autotoc_md19", null ],
         [ "Cochain", "exterior_module.html#autotoc_md20", null ],
         [ "Coboundary operator", "exterior_module.html#autotoc_md21", null ],
-        [ "Hodge star operator", "exterior_module.html#autotoc_md22", null ]
+        [ "Transposed coboundary operator", "exterior_module.html#autotoc_md22", null ],
+        [ "Primal and dual cell complexes", "exterior_module.html#autotoc_md23", null ],
+        [ "Volume operator", "exterior_module.html#autotoc_md24", null ],
+        [ "Reduction and reconstruction", "exterior_module.html#autotoc_md25", null ],
+        [ "Hodge star operator", "exterior_module.html#autotoc_md26", null ],
+        [ "Codifferential", "exterior_module.html#autotoc_md27", null ],
+        [ "Laplacian", "exterior_module.html#autotoc_md28", null ]
       ] ]
     ] ],
     [ "Namespaces", "namespaces.html", [
@@ -59,7 +65,8 @@ var NAVTREE =
         [ "All", "namespacemembers.html", null ],
         [ "Functions", "namespacemembers_func.html", null ],
         [ "Variables", "namespacemembers_vars.html", null ],
-        [ "Typedefs", "namespacemembers_type.html", null ]
+        [ "Typedefs", "namespacemembers_type.html", null ],
+        [ "Enumerations", "namespacemembers_enum.html", null ]
       ] ]
     ] ],
     [ "Concepts", "concepts.html", "concepts" ],
@@ -82,7 +89,8 @@ var NAVTREEINDEX =
 [
 "Running.html",
 "classsil_1_1exterior_1_1CochainIterator.html#af93af6d97bd143b0860c5b4993bdbcee",
-"conceptsil_1_1misc_1_1Specialization.html"
+"classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html#a88bac7ee9eefe9f6ef53ab92abf9e133",
+"structsil_1_1exterior_1_1DualSimplexVolume.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

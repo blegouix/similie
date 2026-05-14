@@ -1,0 +1,7 @@
+<map id="sil::exterior::FillReconstructionOperatorMem&lt; Indices, ReconstructionTensorType, PositionType, Complex, BatchElem &gt;" name="sil::exterior::FillReconstructionOperatorMem&lt; Indices, ReconstructionTensorType, PositionType, Complex, BatchElem &gt;">
+<area shape="rect" id="Node000001" title=" " alt="" coords="65,133,336,243"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,5,188,71"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="94,71,95,90,100,108,107,119,102,122,96,110,90,91,89,71"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="257,5,353,71"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="297,72,278,111,269,122,265,119,273,108,292,70"/>
+</map>

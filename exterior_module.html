@@ -147,16 +147,16 @@ Why integro-differential calculus is important for physics ?</h1>
 <h1><a class="anchor" id="autotoc_md15"></a>
 Discrete exterior calculus</h1>
 <p>Please refer to the reference document <a href="http://www.geometry.caltech.edu/pubs/DKT05.pdf">Discrete Differential Forms for Computational Modeling</a> for a way more detailled description of the theory presented in this section.</p>
-<p>A whole zoo of differential operators has been developed over the centuries : gradient, rotational, divergency, 4-gradient, 4-divergency, directional derivative, material derivative, covariant derivative, Lie derivative, etc. During the 20th century, mathematicians proposed a refactoring of it known as Exterior calculus, which revealed highly suitable for discretization (now known as Discrete exterior calculus). Only two fundamental operators are defined and can be used to build any possible differential operator on any-dimension manifold:</p>
+<p>A whole zoo of differential operators has been developed over the centuries : gradient, rotational, divergency, 4-gradient, 4-divergency, directional derivative, material derivative, covariant derivative, Lie derivative, etc. During the 20th century, mathematicians proposed a refactoring of it known as Exterior calculus, which proved highly suitable for discretization (now known as Discrete exterior calculus). Only two fundamental operators are defined and can be used to build any possible differential operator on any-dimension manifold:</p>
 <ul>
 <li>The <em>exterior derivative</em> \(d\).</li>
 <li>The <em>Hodge star</em> \(\star\).</li>
 </ul>
-<p>Those operators must be applied on <em>differential forms</em>, which can be assimilated to antisymmetric tensor fields. The exterior derivative transforms a \(k-\)form into a \(k+1-\)form. The Hodge star transforms a \(k-\)form into a \(n-k-\)form where \(n\) is the dimension of the manifold. The <em>codifferential operator</em> \(\delta = (-1)^{n(k+1)+1}\star d \star\) transforms a \(k-\)form into a \(k-1-\)form.</p>
+<p>Those operators must be applied on <em>differential forms</em>, which can be assimilated to antisymmetric tensor fields. The exterior derivative transforms a \(k-\)form into a \(k+1-\)form. The Hodge star transforms a \(k-\)form into a \(n-k-\)form where \(n\) is the dimension of the manifold. The <em>codifferential operator</em> \(\delta = (-1)^{n(k+1)+1}\star d^\top \star\) transforms a \(k-\)form into a \(k-1-\)form.</p>
 <dl class="section note"><dt>Note</dt><dd>Partially-antisymmetric tensor fields may be assimilated to differential form-valued lower rank tensor fields (ie. the Cauchy stress tensor or the Christoffel symbols).</dd></dl>
 <p>The generic Laplacian is defined as \(\delta d + d \delta\).</p>
 <p>An important relation is the Poincarré Lemma \(dd = 0\). It leads to the very deep physical concept of gauge invariance, which tells us potentials are defined up to a derivative (because \(d(A+d\alpha) = dA + dd\alpha = dA\)).</p>
-<dl class="section important"><dt>Important</dt><dd>A key paradigm of SimiLie is the exclusive support of structured meshes to avoid sparse linear algebra and produce mostly-embarrassing parallel code. It implies that the main difference between the theory described in <a href="http://www.geometry.caltech.edu/pubs/DKT05.pdf">Discrete Differential Forms for Computational Modeling</a> and the implementation in SimiLie is that discrete exterior derivative is not build upon a sparse adjacency matrix, but directly computed locally for each node of the mesh. Otherwise, SimiLie follows quite closely the construction presented in the document.</dd></dl>
+<dl class="section important"><dt>Important</dt><dd>A key paradigm of SimiLie is the exclusive support of structured meshes to avoid sparse linear algebra and produce mostly-embarrassingly parallel code. It implies that the main difference between the theory described in <a href="http://www.geometry.caltech.edu/pubs/DKT05.pdf">Discrete Differential Forms for Computational Modeling</a> and the implementation in SimiLie is that the discrete exterior derivative is not built upon a sparse adjacency matrix, but directly computed locally for each node of the mesh (matrix-free approach). Otherwise, SimiLie follows quite closely the construction presented in the document.</dd></dl>
 <h2><a class="anchor" id="autotoc_md16"></a>
 Simplex</h2>
 <p>A \(k-\)simplex is an oriented discrete element of dimension \(k\) belonging to the discrete manifold. Ie. a \(0\)-simplex is a node, a \(1\)-simplex is an edge, a \(2\)-simplex is a face and a \(3\)-simplex is a cell. It can be defined for any dimension \(n\) of the discrete manifold.</p>
@@ -178,16 +178,135 @@ Cochain</h2>
 <h2><a class="anchor" id="autotoc_md21"></a>
 Coboundary operator</h2>
 <p>The coboundary operator associates to a \(k-\)cochain a \(k+1-\)cosimplex or a \(k+1-\)cochain containing the cosimplices which form the coboundary of the cochain. Please refer to <a href="http://www.geometry.caltech.edu/pubs/DKT05.pdf">Discrete Differential Forms for Computational Modeling</a> for more details. This is the discrete exterior derivative \(d\).</p>
-<h2><a class="anchor" id="autotoc_md22"></a>
-Hodge star operator</h2>
-<p>The Hodge star operator implements the formula:</p>
+<p>At the implementation level, <code>Coboundary</code> evaluates the integral of the input cochain on the boundary of each local \((k+1)\)-simplex. For a primal basis simplex \(\sigma^{k+1}\), the discrete exterior derivative is therefore:</p>
 <p class="formulaDsp">
 \[
-\star^{i_1, \dots, i_k}_{j_{k+1}, \dots, j_n} = \frac{\sqrt{\left|\det [g_{ab}]\right|}}{k!} g^{i_1 j_1}\cdots g^{i_k j_k} \,\varepsilon_{j_1, \dots, j_n}
+(d\omega)(\sigma^{k+1}) = \omega(\partial \sigma^{k+1}).
 \]
 </p>
-<p>With \(g\) the metric and \(\varepsilon\) the Levi-Civita tensor. It is expected to be applied on a differential form \(\omega_{i_1, \dots, i_k}\). </p>
-</div></div><!-- contents -->
+<p>Equivalently, if \(\omega\) is a discrete \(k\)-cochain, then:</p>
+<p class="formulaDsp">
+\[
+\left(d\omega\right)(\sigma^{k+1})
+= \sum_{\tau^k \subset \partial \sigma^{k+1}}
+\mathrm{sgn}(\tau^k,\sigma^{k+1})\,\omega(\tau^k),
+\]
+</p>
+<p>where the sum runs over the oriented boundary \(k\)-simplices of \(\sigma^{k+1}\) and \(\mathrm{sgn}(\tau^k,\sigma^{k+1})\) is the induced orientation sign.</p>
+<h2><a class="anchor" id="autotoc_md22"></a>
+Transposed coboundary operator</h2>
+<p>The transposed coboundary operator accumulates the contributions of incident higher-dimensional simplices onto the current simplex. It is the transpose of the incidence operator underlying the coboundary. Explicitly, if \(\eta\) is a discrete \((k+1)\)-cochain and \(\tau^k\) is a \(k\)-simplex, then:</p>
+<p class="formulaDsp">
+\[
+\left(d^\top \eta\right)(\tau^k)
+= \sum_{\sigma^{k+1} \supset \tau^k}
+\mathrm{sgn}(\tau^k,\sigma^{k+1})\,\eta(\sigma^{k+1}),
+\]
+</p>
+<p>However this is <b>not</b> the adjoint of the coboundary operator, because the latter has to involve the metric in some way. The adjoint operator on forms is the codifferential, presented below.</p>
+<dl class="section important"><dt>Important</dt><dd>Boundary handling is currently explicit but not yet user-configurable.<ul>
+<li><code>Coboundary</code> (and its alias <code>deriv(...)</code>) use a clamped out-of-domain sampling rule: if a forward sample exits the mesh, the nearest in-domain node is reused. On a scalar field this behaves like a one-sided "free"/zero-normal-variation closure for the first derivative.</li>
+<li><code>TransposedCoboundary</code> does <b>not</b> clamp. Missing incident simplices on the far side of the boundary are simply omitted. This is what restores the weighted adjointness needed by the codifferential.</li>
+<li>Periodic, Dirichlet and generic Neumann boundary conditions are not yet exposed as configurable policies in this module.</li>
+</ul>
+</dd></dl>
+<h2><a class="anchor" id="autotoc_md23"></a>
+Primal and dual cell complexes</h2>
+<p>In DEC, cochains are not only characterized by their degree, but also by the cell complex on which they live. There is the primal complex, made of the mesh simplices themselves, but the operators presented below make use of a dual cell complex which allows to introduce metric information. Indeed, the dual cell complex provides the complementary cells on which the metric-dependent "orthogonal counterparts" live. This is why the discrete Hodge star, which is the operator encoding the metric in DEC, naturally maps primal cochains to dual cochains.</p>
+<p>However, a dual mesh has to be chosen according to some "dualization strategy". In SimiLie, this choice is represented explicitly by the <code>CellComplex</code> tag:</p><ul>
+<li><code>CellComplex::Primal</code> (no dualization)</li>
+<li><code>CellComplex::CircumcentricDual</code></li>
+<li><code>CellComplex::BarycentricDual</code></li>
+</ul>
+<h2><a class="anchor" id="autotoc_md24"></a>
+Volume operator</h2>
+<p>To build a discrete operator able to encode the metric (the discrete Hodge star), we need a volume operator (in the sense of \(k-\)volume, ie. length, area...) to provide the ability to measure the "size" of a simplex. Given a \(k\)-simplex spanned by edge vectors \(e_1,\dots,e_k\), SimiLie builds the local Gram matrix:</p>
+<p class="formulaDsp">
+\[
+G_{\mu\nu} = g_{\rho\sigma} e_\mu^\rho e_\nu^\sigma
+\]
+</p>
+<p>where \(g\) is the metric evaluated at the current mesh node. The \(k\)-volume is then obtained from</p>
+<p class="formulaDsp">
+\[
+|\sigma^k| = \sqrt{|\det G|}
+\]
+</p>
+<p>This is exactly what <code>SimplexVolume</code> computes: it first extracts the local edge vectors from the position field, assembles the Gram matrix, and finally takes the square root of its determinant. <code>DualSimplexVolume</code> applies the same formula to the complementary \((n-k)\) directions. The associated dual cell complex is selected through the <code>CellComplex</code> tag, typically circumcentric or barycentric.</p>
+<h2><a class="anchor" id="autotoc_md25"></a>
+Reduction and reconstruction</h2>
+<p>Reduction and reconstruction are the bridges between pointwise differential-form coefficients and geometric cochains. Schematically, reduction is the same as integrating a density field along simplices, providing a natural way to encode a differential form on a mesh so that the geometric measures are already absorbed into the cochain values. Reconstruction is the inverse operation. They always act on a chosen cell complex, selected by the <code>CellComplex</code> tag. The reduction maps a coefficient \(k\)-form to the cochain obtained by integrating it on the corresponding \(k\)-cell:</p>
+<p class="formulaDsp">
+\[
+R_k(\omega, \sigma^k) = \int_{\sigma^k} \omega
+\]
+</p>
+<p>Depending on the chosen <code>CellComplex</code>, \(\sigma^k\) is interpreted as:</p><ul>
+<li>a primal \(k\)-simplex for <code>CellComplex::Primal</code>,</li>
+<li>a circumcentric dual \(k\)-cell for <code>CellComplex::CircumcentricDual</code>,</li>
+<li>a barycentric dual \(k\)-cell for <code>CellComplex::BarycentricDual</code>.</li>
+</ul>
+<p>The reconstruction is the inverse map assuming a piecewise-constant ansatz:</p>
+<p class="formulaDsp">
+\[
+Q_k(c, \sigma^k) = \frac{c(\sigma^k)}{|\sigma^k|}
+\]
+</p>
+<p>Here again, the meaning of \(\sigma^k\) depends on the selected cell complex. For <code>CellComplex::Primal</code>, reduction and reconstruction only need the position field because the required measure is purely primal. No metric needs to be passed. For dual cell complexes, the dual volumes depend on the metric, so dual reduction needs both the position and the metric.</p>
+<p>In the current implementation:</p><ul>
+<li>primal reduction/reconstruction are diagonal local operators based on primal simplex volumes;</li>
+<li>circumcentric-dual reduction is the metric-dependent dual geometric map used by the discrete Hodge star;</li>
+<li>reconstruction is currently only implemented where the piecewise-constant inverse is well defined locally. Unsupported <code>CellComplex</code> choices are rejected with <code>static_assert</code>.</li>
+</ul>
+<h2><a class="anchor" id="autotoc_md26"></a>
+Hodge star operator</h2>
+<p>The Hodge star operator is implemented both in continuous and discrete form.</p>
+<p>The continuous Hodge star acts pointwise on coefficient forms. It is the exterior-calculus counterpart of the metric. In an \(n\)-dimensional manifold, for a \(k\)-form \(\omega\) with components \(\omega_{i_1 \dots i_k}\), it is defined as ( \(\varepsilon\) is the Levi-Civita symbol):</p>
+<p class="formulaDsp">
+\[
+(\star \omega)_{j_1 \dots j_{n-k}}
+= \frac{\sqrt{|g|}}{k!}
+\omega_{i_1 \dots i_k}
+g^{i_1 \ell_1} \dots g^{i_k \ell_k}
+\varepsilon_{\ell_1 \dots \ell_k j_1 \dots j_{n-k}}.
+\]
+</p>
+<p>The discrete Hodge star acts on cochains. For a \(k\)-simplex \(\sigma\) in an \(n\)-dimensional mesh, it is the composition:</p><ul>
+<li>Reconstruction of the primal cochain into a pointwise coefficient \(k\)-form,</li>
+<li>Application of the continuous Hodge star,</li>
+<li>Reduction of the resulting \((n-k)\)-form onto the chosen dual cell complex.</li>
+</ul>
+<p>This composition reproduces exactly the usual diagonal DEC factor:</p>
+<p class="formulaDsp">
+\[
+\star_\sigma = \frac{|\star \sigma|}{|\sigma|}
+\]
+</p>
+<h2><a class="anchor" id="autotoc_md27"></a>
+Codifferential</h2>
+<p>This is the adjoint of the coboundary operator in the metric sense. It is built from the discrete Hodge star and the transposed coboundary operator:</p>
+<p class="formulaDsp">
+\[
+\delta = (-1)^{n(k+1)+1}\,\star^{-1}\, d^\top_\mathrm{dual}\, \star,
+\]
+</p>
+<p>where the "right" Hodge star dualizes the primal \(k\)-cochain and the "left" one brings the result back to the primal side.</p>
+<p>The reason this is the adjoint is that the Hodge star defines the inner product \(\langle \alpha,\beta\rangle = \int \alpha \wedge \star \beta\) on differential forms (with \(\wedge\) the exterior product). The codifferential is then characterized by:</p>
+<p class="formulaDsp">
+\[
+\langle d\omega,\eta\rangle = \int d(\omega \wedge \star \eta) - (-1)^k \int \omega \wedge d(\star \eta) = \int \omega \wedge \star\left( (-1)^{n(k+1)+1}\star^{-1} d \star \eta \right) = \langle \omega,\delta\eta\rangle.
+\]
+</p>
+<p>up to the boundary term and the usual sign convention.</p>
+<h2><a class="anchor" id="autotoc_md28"></a>
+Laplacian</h2>
+<p>The generic DEC Laplacian combines the exterior derivative and the codifferential:</p>
+<p class="formulaDsp">
+\[
+\Delta = \delta d + d \delta
+\]
+</p>
+ </div></div><!-- contents -->
 </div><!-- PageDoc -->
 </div><!-- doc-content -->
 <!--

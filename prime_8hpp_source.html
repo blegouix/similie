@@ -158,37 +158,43 @@ $(function(){initNavTree('prime_8hpp_source.html',''); initResizable(true); });
 <div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Indices, std::<span class="keywordtype">size_t</span> I&gt;</div>
 <div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="keyword">struct </span>Primes;</div>
 <div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span> </div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span><span class="keyword">template</span> &lt;<span class="keyword">class</span>... Index, std::size_t I&gt;</div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span><span class="keyword">struct </span>Primes&lt;ddc::detail::TypeSeq&lt;Index...&gt;, I&gt;</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span><span class="keyword">template</span> &lt;std::<span class="keywordtype">size_t</span> I&gt;</div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span><span class="keyword">struct </span>Primes&lt;ddc::detail::TypeSeq&lt;&gt;, I&gt;</div>
 <div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>{</div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>    <span class="keyword">using </span>type = ddc::detail::TypeSeq&lt;prime&lt;Index, I&gt;...&gt;;</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>    <span class="keyword">using </span>type = ddc::detail::TypeSeq&lt;&gt;;</div>
 <div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>};</div>
 <div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span> </div>
 <div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span><span class="keyword">template</span> &lt;<span class="keyword">class</span>... Index, std::size_t I&gt;</div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span><span class="keyword">struct </span>Primes&lt;ddc::detail::TypeSeq&lt;Contravariant&lt;Index&gt;...&gt;, I&gt;</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span><span class="keyword">struct </span>Primes&lt;ddc::detail::TypeSeq&lt;Index...&gt;, I&gt;</div>
 <div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>{</div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    <span class="keyword">using </span>type = ddc::detail::TypeSeq&lt;Contravariant&lt;prime&lt;Index, I&gt;&gt;...&gt;;</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    <span class="keyword">using </span>type = ddc::detail::TypeSeq&lt;prime&lt;Index, I&gt;...&gt;;</div>
 <div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>};</div>
 <div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span> </div>
 <div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span><span class="keyword">template</span> &lt;<span class="keyword">class</span>... Index, std::size_t I&gt;</div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span><span class="keyword">struct </span>Primes&lt;ddc::detail::TypeSeq&lt;Covariant&lt;Index&gt;...&gt;, I&gt;</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span><span class="keyword">struct </span>Primes&lt;ddc::detail::TypeSeq&lt;Contravariant&lt;Index&gt;...&gt;, I&gt;</div>
 <div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>{</div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    <span class="keyword">using </span>type = ddc::detail::TypeSeq&lt;Covariant&lt;prime&lt;Index, I&gt;&gt;...&gt;;</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    <span class="keyword">using </span>type = ddc::detail::TypeSeq&lt;Contravariant&lt;prime&lt;Index, I&gt;&gt;...&gt;;</div>
 <div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>};</div>
 <div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span> </div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>} <span class="comment">// namespace detail</span></div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span> </div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span><span class="keyword">template</span> &lt;misc::Specialization&lt;ddc::detail::TypeSeq&gt; Indices, std::<span class="keywordtype">size_t</span> I = 1&gt;</div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#a4681d520034e5a2ff471c2b219c9763c">   50</a></span><span class="keyword">using </span><a class="code hl_typedef" href="namespacesil_1_1tensor.html#a4681d520034e5a2ff471c2b219c9763c">primes</a> = detail::Primes&lt;Indices, I&gt;::type;</div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span> </div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span><span class="keyword">template</span> &lt;misc::Specialization&lt;ddc::detail::TypeSeq&gt; Indices&gt;</div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#aa4e2474eec9934102995b4e42f343a91">   53</a></span><span class="keyword">using </span><a class="code hl_typedef" href="namespacesil_1_1tensor.html#aa4e2474eec9934102995b4e42f343a91">seconds</a> = <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a4681d520034e5a2ff471c2b219c9763c">primes&lt;Indices, 2&gt;</a>;</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span><span class="keyword">template</span> &lt;<span class="keyword">class</span>... Index, std::size_t I&gt;</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span><span class="keyword">struct </span>Primes&lt;ddc::detail::TypeSeq&lt;Covariant&lt;Index&gt;...&gt;, I&gt;</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>{</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    <span class="keyword">using </span>type = ddc::detail::TypeSeq&lt;Covariant&lt;prime&lt;Index, I&gt;&gt;...&gt;;</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>};</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span> </div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>} <span class="comment">// namespace detail</span></div>
 <div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span> </div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>} <span class="comment">// namespace tensor</span></div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span> </div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>} <span class="comment">// namespace sil</span></div>
-<div class="ttc" id="anamespacesil_1_1tensor_html_a4681d520034e5a2ff471c2b219c9763c"><div class="ttname"><a href="namespacesil_1_1tensor.html#a4681d520034e5a2ff471c2b219c9763c">sil::tensor::primes</a></div><div class="ttdeci">detail::Primes&lt; Indices, I &gt;::type primes</div><div class="ttdef"><b>Definition</b> <a href="#l00050">prime.hpp:50</a></div></div>
-<div class="ttc" id="anamespacesil_1_1tensor_html_aa4e2474eec9934102995b4e42f343a91"><div class="ttname"><a href="namespacesil_1_1tensor.html#aa4e2474eec9934102995b4e42f343a91">sil::tensor::seconds</a></div><div class="ttdeci">primes&lt; Indices, 2 &gt; seconds</div><div class="ttdef"><b>Definition</b> <a href="#l00053">prime.hpp:53</a></div></div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span><span class="keyword">template</span> &lt;misc::Specialization&lt;ddc::detail::TypeSeq&gt; Indices, std::<span class="keywordtype">size_t</span> I = 1&gt;</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#a4681d520034e5a2ff471c2b219c9763c">   56</a></span><span class="keyword">using </span><a class="code hl_typedef" href="namespacesil_1_1tensor.html#a4681d520034e5a2ff471c2b219c9763c">primes</a> = detail::Primes&lt;Indices, I&gt;::type;</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span> </div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span><span class="keyword">template</span> &lt;misc::Specialization&lt;ddc::detail::TypeSeq&gt; Indices&gt;</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#aa4e2474eec9934102995b4e42f343a91">   59</a></span><span class="keyword">using </span><a class="code hl_typedef" href="namespacesil_1_1tensor.html#aa4e2474eec9934102995b4e42f343a91">seconds</a> = <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a4681d520034e5a2ff471c2b219c9763c">primes&lt;Indices, 2&gt;</a>;</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span> </div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>} <span class="comment">// namespace tensor</span></div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span> </div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>} <span class="comment">// namespace sil</span></div>
+<div class="ttc" id="anamespacesil_1_1tensor_html_a4681d520034e5a2ff471c2b219c9763c"><div class="ttname"><a href="namespacesil_1_1tensor.html#a4681d520034e5a2ff471c2b219c9763c">sil::tensor::primes</a></div><div class="ttdeci">detail::Primes&lt; Indices, I &gt;::type primes</div><div class="ttdef"><b>Definition</b> <a href="#l00056">prime.hpp:56</a></div></div>
+<div class="ttc" id="anamespacesil_1_1tensor_html_aa4e2474eec9934102995b4e42f343a91"><div class="ttname"><a href="namespacesil_1_1tensor.html#aa4e2474eec9934102995b4e42f343a91">sil::tensor::seconds</a></div><div class="ttdeci">primes&lt; Indices, 2 &gt; seconds</div><div class="ttdef"><b>Definition</b> <a href="#l00059">prime.hpp:59</a></div></div>
 <div class="ttc" id="anamespacesil_html"><div class="ttname"><a href="namespacesil.html">sil</a></div><div class="ttdoc">The top-level namespace of SimiLie.</div><div class="ttdef"><b>Definition</b> <a href="csr_8hpp_source.html#l00015">csr.hpp:15</a></div></div>
 <div class="ttc" id="astructsil_1_1tensor_1_1prime_html"><div class="ttname"><a href="structsil_1_1tensor_1_1prime.html">sil::tensor::prime</a></div><div class="ttdef"><b>Definition</b> <a href="#l00017">prime.hpp:18</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
