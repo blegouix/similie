@@ -84,6 +84,13 @@ RUN if [ "${BACKEND}" = "cpu" ]; then \
 RUN cmake --build ginkgo/build -j 4
 RUN cmake --install ginkgo/build
 
+# gmsh
+RUN apt install libfltk-dev
+RUN git clone https://gitlab.onelab.info/gmsh/gmsh.git
+RUN cmake -B gmsh/build -S gmsh
+RUN cmake --build gmsh/build -j 4
+RUN cmake --install gmsh/build
+
 # PDI 
 RUN cat > /etc/apt/sources.list.d/pdi.sources <<'EOF'
 Types: deb deb-src
