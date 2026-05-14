@@ -432,8 +432,7 @@ int main(int argc, char** argv)
     auto h_hamiltonian
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), hamiltonian);
 
-    // Reuse the prefilled codifferential object across the time loop so the
-    // expensive Hodge-star setup stays outside the per-step update path.
+    // Codifferential
     auto staged_codifferential = sil::exterior::make_staged_codifferential<
             MetricIndex,
             AlphaLow,
@@ -449,7 +448,8 @@ int main(int argc, char** argv)
             = (ddc::get<X>(upper_bounds) - ddc::get<X>(lower_bounds)) / ddc::get<DDimX>(nb_cells);
     double const dy
             = (ddc::get<Y>(upper_bounds) - ddc::get<Y>(lower_bounds)) / ddc::get<DDimY>(nb_cells);
-    double const dt_max = 2.0 / std::sqrt(mass * mass + 4.0 / (dx * dx) + 4.0 / (dy * dy));
+    double const dt_max
+            = 2.0 / std::sqrt(mass * mass + 4.0 / (dx * dx) + 4.0 / (dy * dy)); // TOJUSTIFY
     double const dt = 0.5 * dt_max;
     std::cout << "Time step = " << dt << " (maximal dt estimated from CFL = " << dt_max << ")"
               << std::endl;
