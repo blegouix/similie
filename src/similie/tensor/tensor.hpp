@@ -3,6 +3,12 @@
 
 #pragma once
 
+#include <ddc/ddc.hpp>
+
+#include <similie/misc/macros.hpp>
+#include <similie/misc/small_matrix.hpp>
+#include <similie/misc/specialization.hpp>
+
 #include "antisymmetric_tensor.hpp"
 #include "character.hpp"
 #include "determinant.hpp"

@@ -142,13 +142,13 @@ int main(int argc, char** argv)
     ddc::expose_to_pdi("Nx", static_cast<int>(mesh_xy.template extent<DDimX>()));
     ddc::expose_to_pdi("Ny", static_cast<int>(mesh_xy.template extent<DDimY>()));
 
-    // Allocate and instantiate a position field (used only to be exported).
+    // Allocate and instantiate the position field.
     [[maybe_unused]] sil::tensor::TensorAccessor<NuUp> position_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, NuUp> position_dom(mesh_xy, position_accessor.domain());
-    ddc::Chunk position_alloc(position_dom, ddc::HostAllocator<double>());
+    ddc::Chunk position_alloc(position_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor position(position_alloc);
     ddc::parallel_for_each(
-            Kokkos::DefaultHostExecutionSpace(),
+            Kokkos::DefaultExecutionSpace(),
             mesh_xy,
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
                 position(elem, position.accessor().access_element<X>())
@@ -171,16 +171,6 @@ int main(int argc, char** argv)
                 metric(elem, metric.accessor().access_element<Y, Y>()) = 1.;
             });
 
-    // Invert metric
-    [[maybe_unused]] sil::tensor::TensorAccessor<sil::tensor::upper_t<MetricIndex>>
-            inv_metric_accessor;
-    ddc::DiscreteDomain<DDimX, DDimY, sil::tensor::upper_t<MetricIndex>>
-            inv_metric_dom(mesh_xy, inv_metric_accessor.domain());
-    ddc::Chunk inv_metric_alloc(inv_metric_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor inv_metric(inv_metric_alloc);
-    sil::tensor::fill_inverse_metric<
-            MetricIndex>(Kokkos::DefaultExecutionSpace(), inv_metric, metric);
-
     // Potential
     [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> potential_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, DummyIndex>
@@ -189,11 +179,7 @@ int main(int argc, char** argv)
     sil::tensor::Tensor potential(potential_alloc);
 
     double const R = 2.;
-    double const L = ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().back()))
-                     - ddc::coordinate(ddc::DiscreteElement<DDimX>(potential.domain().front()));
-    double const alpha = (static_cast<double>(nb_cells.template get<DDimX>())
-                          * static_cast<double>(nb_cells.template get<DDimY>()))
-                         / L / 2 / L / 2;
+    double const alpha = 0.25;
     ddc::parallel_for_each(
             potential.domain(),
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
@@ -219,20 +205,24 @@ int main(int argc, char** argv)
             mesh_xy.remove_last(ddc::DiscreteVector<DDimX, DDimY> {1, 1}),
             laplacian_accessor.domain());
     ddc::Chunk laplacian_alloc(laplacian_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor laplacian(laplacian_alloc);
-
-    sil::exterior::laplacian<
-            MetricIndex,
-            NuLow,
-            DummyIndex>(Kokkos::DefaultExecutionSpace(), laplacian, potential, inv_metric);
+    sil::tensor::Tensor laplacian_tensor(laplacian_alloc);
+    auto laplacian = sil::exterior::make_staged_laplacian<MetricIndex, NuLow, DummyIndex>(
+            Kokkos::DefaultExecutionSpace(),
+            laplacian_tensor,
+            potential,
+            metric,
+            position);
+    laplacian.run(laplacian_tensor, potential);
     Kokkos::fence();
 
-    auto laplacian_host
-            = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), laplacian);
+    auto position_host
+            = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), position);
+    auto laplacian_host = ddc::
+            create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), laplacian_tensor);
 
     // Export HDF5 and XDMF
     ddc::PdiEvent("export")
-            .with("position", position)
+            .with("position", position_host)
             .with("potential", potential_host)
             .with("laplacian", laplacian_host);
     std::cout << "Computation result exported in 2d_laplacian.h5." << std::endl;
