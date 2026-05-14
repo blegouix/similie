@@ -290,7 +290,7 @@ int main(int argc, char** argv)
     // Produce mesh
     ddc::Coordinate<X, Y> lower_bounds(-5., -5.);
     ddc::Coordinate<X, Y> upper_bounds(5., 5.);
-    ddc::DiscreteVector<DDimX, DDimY> nb_cells(1000, 1000);
+    ddc::DiscreteVector<DDimX, DDimY> nb_cells(2000, 2000);
     /*
     MesherXY mesher;
     ddc::DiscreteDomain<DDimX, DDimY> mesh_xy = mesher.template mesh<
@@ -343,18 +343,33 @@ int main(int argc, char** argv)
     sil::tensor::Tensor potential(potential_alloc);
 
 
-    double const x_0 = -2.;
+    double const x_0 = -1.;
     double const y_0 = 0.;
-    double const x_1 = 0.;
-    double const y_1 = -1.;
-    double const sigma = .5;
+    double const x_1 = 1.;
+    double const y_1 = -.25;
+    double const sigma = .25;
 
     double const v = 0.5;
     assert(v >= 0. && v < 1.);
-    double const mass = 100.;
-    double const quartic_coupling = 150.;
+    double const mass = 500.;
+    double const quartic_coupling = 5000.;
     double const k = mass * v / std::sqrt(1. - v * v);
     double const omega = std::sqrt(k * k + mass * mass);
+
+    double const dx
+            = (ddc::get<X>(upper_bounds) - ddc::get<X>(lower_bounds)) / ddc::get<DDimX>(nb_cells);
+    double const dy
+            = (ddc::get<Y>(upper_bounds) - ddc::get<Y>(lower_bounds)) / ddc::get<DDimY>(nb_cells);
+    double const dt_max
+            = 2.0 / std::sqrt(mass * mass + 4.0 / (dx * dx) + 4.0 / (dy * dy)); // TOJUSTIFY
+    double const dt = 0.5 * dt_max;
+    std::cout << "Time step = " << dt << " (CFL condition estimates maximal dt = " << dt_max << ")"
+              << std::endl;
+    if (2 * std::numbers::pi / k < 2 * std::max(dx, dy)) {
+        std::cout << "Warning: 2*pi/k=" << 2 * std::numbers::pi / k
+                  << "is too small compared to space sample" << std::max(dx, dy) << " !"
+                  << std::endl;
+    }
 
     ddc::parallel_for_each(
             potential.domain(),
@@ -442,17 +457,8 @@ int main(int argc, char** argv)
     // ----- SOLVER -----
     // ------------------
 
-    int const nb_iter_between_exports = 50;
-    int const nb_iter = 10000;
-    double const dx
-            = (ddc::get<X>(upper_bounds) - ddc::get<X>(lower_bounds)) / ddc::get<DDimX>(nb_cells);
-    double const dy
-            = (ddc::get<Y>(upper_bounds) - ddc::get<Y>(lower_bounds)) / ddc::get<DDimY>(nb_cells);
-    double const dt_max
-            = 2.0 / std::sqrt(mass * mass + 4.0 / (dx * dx) + 4.0 / (dy * dy)); // TOJUSTIFY
-    double const dt = 0.5 * dt_max;
-    std::cout << "Time step = " << dt << " (maximal dt estimated from CFL = " << dt_max << ")"
-              << std::endl;
+    int const nb_iter_between_exports = 100;
+    int const nb_iter = 20000;
     ddc::expose_to_pdi("Nt", (nb_iter - 1) / nb_iter_between_exports + 1);
     std::remove("2d_scalar_field.h5");
 
