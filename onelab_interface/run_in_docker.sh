@@ -6,7 +6,7 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "${script_dir}/.." && pwd)"
 
 image_name="${SIMILIE_ONELAB_IMAGE:-similie_env:latest}"
-build_dir="${SIMILIE_ONELAB_BUILD_DIR:-${repo_root}/agent_build_cpu}"
+build_dir="${SIMILIE_ONELAB_BUILD_DIR:-${repo_root}/build}"
 binary_path="${SIMILIE_ONELAB_BINARY:-${build_dir}/onelab_interface/similie_onelab}"
 
 if [[ ! -x "${binary_path}" ]]; then
