@@ -115,7 +115,7 @@ void run_codifferential_test(CodifferentialCallable&& codifferential_callable)
     ddc::detail::g_discrete_space_dual<DDimY>.reset();
 }
 
-TEST(Codifferential, GeometryBasedImplementation)
+TEST(Codifferential, NonStaged)
 {
     run_codifferential_test(
             [](auto codifferential_tensor, auto tensor, auto metric, auto position) {
@@ -131,7 +131,7 @@ TEST(Codifferential, GeometryBasedImplementation)
             });
 }
 
-TEST(Codifferential, PrefilledHodgeStarImplementation)
+TEST(Codifferential, Staged)
 {
     run_codifferential_test([](auto codifferential_tensor,
                                auto tensor,

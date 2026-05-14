@@ -25,20 +25,6 @@ enum class CellComplex {
 };
 
 namespace detail {
-
-template <std::size_t K, class MemorySpace>
-KOKKOS_FUNCTION double determinant(std::array<double, K * K> const& matrix)
-{
-    if constexpr (K == 0) {
-        return 1.;
-    } else {
-        std::array<double, K * K> reduced_alloc = matrix;
-        auto reduced_view
-                = misc::math::matrix_view<double, MemorySpace>(reduced_alloc.data(), K, K);
-        return misc::math::determinant(reduced_view);
-    }
-}
-
 template <std::size_t N, std::size_t K>
 KOKKOS_FUNCTION std::array<std::size_t, N - K> complement(std::array<std::size_t, K> const& ids)
 {
@@ -157,10 +143,13 @@ struct SimplexVolume
                 }
             }
 
-            return Kokkos::sqrt(
-                    Kokkos::abs(
-                            detail::determinant<K, typename MetricType::memory_space>(
-                                    gram_matrix)));
+            return Kokkos::sqrt(Kokkos::abs([&]() {
+                std::array<double, K * K> determinant_alloc = gram_matrix;
+                auto determinant_view = misc::math::matrix_view<
+                        double,
+                        typename MetricType::memory_space>(determinant_alloc.data(), K, K);
+                return misc::math::determinant(determinant_view);
+            }()));
         }
     }
 };

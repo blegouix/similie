@@ -40,21 +40,6 @@ using hodge_star_domain_t
 
 namespace detail {
 
-template <class Indices1, class Indices2>
-struct AmbientIndex;
-
-template <class HeadIndex, class... TailIndex, class Indices2>
-struct AmbientIndex<ddc::detail::TypeSeq<HeadIndex, TailIndex...>, Indices2>
-{
-    using type = HeadIndex;
-};
-
-template <class HeadIndex, class... TailIndex>
-struct AmbientIndex<ddc::detail::TypeSeq<>, ddc::detail::TypeSeq<HeadIndex, TailIndex...>>
-{
-    using type = HeadIndex;
-};
-
 template <std::size_t N, std::size_t M>
 KOKKOS_FUNCTION bool has_unique_ids(std::array<std::size_t, M> const& ids)
 {
@@ -340,8 +325,7 @@ struct ContinuousHodgeStar
 
     KOKKOS_FUNCTION static double value(MetricType metric, BatchElem elem, auto natural_elem)
     {
-        using AmbientIndex = typename detail::AmbientIndex<Indices1, Indices2>::type;
-        constexpr std::size_t N = AmbientIndex::size();
+        constexpr std::size_t N = ddc::type_seq_size_v<Indices1> + ddc::type_seq_size_v<Indices2>;
         constexpr std::size_t K = ddc::type_seq_size_v<Indices1>;
         using SourceElem = misc::convert_type_seq_to_t<ddc::DiscreteElement, Indices1>;
         using TargetElem = misc::convert_type_seq_to_t<ddc::DiscreteElement, Indices2>;

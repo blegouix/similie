@@ -432,6 +432,8 @@ int main(int argc, char** argv)
     auto h_hamiltonian
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), hamiltonian);
 
+    // Reuse the prefilled codifferential object across the time loop so the
+    // expensive Hodge-star setup stays outside the per-step update path.
     auto staged_codifferential = sil::exterior::make_staged_codifferential<
             MetricIndex,
             AlphaLow,

@@ -224,8 +224,7 @@ struct Codifferential<
                 return 0.0;
             }
             [[maybe_unused]] tensor::TensorAccessor<dual_tensor_index> dual_tensor_accessor;
-            static constexpr std::size_t DUAL_TENSOR_SIZE = dual_tensor_index::access_size();
-            std::array<double, DUAL_TENSOR_SIZE> dual_tensor_alloc {};
+            std::array<double, dual_tensor_index::access_size()> dual_tensor_alloc {};
             ddc::ChunkSpan<
                     double,
                     ddc::DiscreteDomain<dual_tensor_index>,

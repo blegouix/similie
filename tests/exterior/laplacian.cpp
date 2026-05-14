@@ -26,7 +26,7 @@ static auto test_derivative(auto potential)
     using MetricTensorIndex = MetricIndex<typename DDim::continuous_dimension_type...>;
     using TensorType = decltype(potential);
     using LaplacianDummyIndex2 = sil::tensor::Covariant<
-            sil::exterior::detail::LaplacianDummy2<sil::tensor::uncharacterize_t<InterestIndex>>>;
+            sil::exterior::LaplacianDummy2<sil::tensor::uncharacterize_t<InterestIndex>>>;
 
     // Allocate and instantiate an identity metric tensor field.
     [[maybe_unused]] sil::tensor::TensorAccessor<MetricTensorIndex> metric_accessor;

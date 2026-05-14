@@ -154,11 +154,6 @@ TensorType codifferential_of_coboundary(
     return out_tensor;
 }
 
-template <class T>
-struct LaplacianDummy2 : T
-{
-};
-
 template <class LaplacianDummyIndex, class CochainTag>
 concept ZeroRankLaplacianCochain = CochainTag::rank() == 0;
 
@@ -168,6 +163,18 @@ concept IntermediateRankLaplacianCochain
 
 template <class LaplacianDummyIndex, class CochainTag>
 concept TopRankLaplacianCochain = CochainTag::rank() == LaplacianDummyIndex::size();
+
+} // namespace detail
+
+template <class T>
+struct LaplacianDummy2 : T
+{
+};
+
+namespace detail {
+
+template <class T>
+using LaplacianDummy2 = ::sil::exterior::LaplacianDummy2<T>;
 
 } // namespace detail
 
