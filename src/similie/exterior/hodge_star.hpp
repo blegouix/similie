@@ -38,18 +38,36 @@ using hodge_star_domain_t
                                 tensor::TensorAntisymmetricIndex,
                                 Indices2>>>>>;
 
+template <
+        misc::Specialization<ddc::detail::TypeSeq> Indices1,
+        misc::Specialization<ddc::detail::TypeSeq> Indices2,
+        class MetricType,
+        class BatchElem>
+struct ContinuousHodgeStar;
+
+template <
+        CellComplex Complex,
+        misc::Specialization<ddc::detail::TypeSeq> Indices1,
+        misc::Specialization<ddc::detail::TypeSeq> Indices2,
+        class MetricType,
+        class PositionType,
+        class BatchElem>
+struct DiscreteHodgeStar;
+
 namespace detail {
 
 template <std::size_t N, std::size_t M>
 KOKKOS_FUNCTION bool has_unique_ids(std::array<std::size_t, M> const& ids)
 {
-    for (std::size_t i = 0; i < M; ++i) {
-        if (ids[i] >= N) {
-            return false;
-        }
-        for (std::size_t j = i + 1; j < M; ++j) {
-            if (ids[i] == ids[j]) {
+    if constexpr (M > 0) {
+        for (std::size_t i = 0; i < M; ++i) {
+            if (ids[i] >= N) {
                 return false;
+            }
+            for (std::size_t j = i + 1; j < M; ++j) {
+                if (ids[i] == ids[j]) {
+                    return false;
+                }
             }
         }
     }
@@ -91,8 +109,10 @@ KOKKOS_FUNCTION int permutation_sign(
     for (std::size_t i = 0; i < M1; ++i) {
         permutation[i] = source_ids[i];
     }
-    for (std::size_t i = 0; i < M2; ++i) {
-        permutation[M1 + i] = target_ids[i];
+    if constexpr (M2 > 0) {
+        for (std::size_t i = 0; i < M2; ++i) {
+            permutation[M1 + i] = target_ids[i];
+        }
     }
 
     bool odd = false;
@@ -134,14 +154,63 @@ struct HodgeStarTargetSize<ddc::detail::TypeSeq<>>
     static constexpr std::size_t value = 1;
 };
 
-} // namespace detail
+template <
+        CellComplex Complex,
+        misc::Specialization<ddc::detail::TypeSeq> Indices1,
+        misc::Specialization<ddc::detail::TypeSeq> Indices2,
+        misc::Specialization<tensor::Tensor> HodgeStarType,
+        misc::Specialization<tensor::Tensor> MetricType,
+        misc::Specialization<tensor::Tensor> PositionType,
+        class BatchElem>
+struct FillDiscreteHodgeStarMem
+{
+    HodgeStarType m_hodge_star;
+    MetricType m_metric;
+    PositionType m_position;
+    BatchElem m_elem;
+
+    template <class MemElem>
+    KOKKOS_FUNCTION void operator()(MemElem mem_elem) const
+    {
+        m_hodge_star.mem(typename HodgeStarType::discrete_element_type(m_elem, mem_elem))
+                = DiscreteHodgeStar<
+                        Complex,
+                        Indices1,
+                        Indices2,
+                        MetricType,
+                        PositionType,
+                        BatchElem>::
+                        value(m_metric,
+                              m_position,
+                              m_elem,
+                              m_hodge_star.accessor().canonical_natural_element(mem_elem));
+    }
+};
 
 template <
         misc::Specialization<ddc::detail::TypeSeq> Indices1,
         misc::Specialization<ddc::detail::TypeSeq> Indices2,
-        class MetricType,
+        misc::Specialization<tensor::Tensor> HodgeStarType,
+        misc::Specialization<tensor::Tensor> MetricType,
         class BatchElem>
-struct ContinuousHodgeStar;
+struct FillContinuousHodgeStarMem
+{
+    HodgeStarType m_hodge_star;
+    MetricType m_metric;
+    BatchElem m_elem;
+
+    template <class MemElem>
+    KOKKOS_FUNCTION void operator()(MemElem mem_elem) const
+    {
+        m_hodge_star.mem(typename HodgeStarType::discrete_element_type(m_elem, mem_elem))
+                = ContinuousHodgeStar<Indices1, Indices2, MetricType, BatchElem>::
+                        value(m_metric,
+                              m_elem,
+                              m_hodge_star.accessor().canonical_natural_element(mem_elem));
+    }
+};
+
+} // namespace detail
 
 template <
         CellComplex Complex,
@@ -404,22 +473,21 @@ HodgeStarType fill_discrete_hodge_star(
             hodge_star.non_indices_domain(),
             KOKKOS_LAMBDA(
                     typename HodgeStarType::non_indices_domain_t::discrete_element_type elem) {
-                ddc::device_for_each(hodge_star.accessor().domain(), [&](auto mem_elem) {
-                    hodge_star.mem(typename HodgeStarType::discrete_element_type(elem, mem_elem))
-                            = DiscreteHodgeStar<
-                                    Complex,
-                                    Indices1,
-                                    Indices2,
-                                    MetricType,
-                                    PositionType,
-                                    typename HodgeStarType::non_indices_domain_t::
-                                            discrete_element_type>::
-                                    value(metric,
-                                          position,
-                                          elem,
-                                          hodge_star.accessor().canonical_natural_element(
-                                                  mem_elem));
-                });
+                ddc::device_for_each(
+                        hodge_star.accessor().domain(),
+                        detail::FillDiscreteHodgeStarMem<
+                                Complex,
+                                Indices1,
+                                Indices2,
+                                HodgeStarType,
+                                MetricType,
+                                PositionType,
+                                typename HodgeStarType::non_indices_domain_t::
+                                        discrete_element_type> {
+                                hodge_star,
+                                metric,
+                                position,
+                                elem});
             });
     return hodge_star;
 }
@@ -442,19 +510,15 @@ HodgeStarType fill_continuous_hodge_star(
             hodge_star.non_indices_domain(),
             KOKKOS_LAMBDA(
                     typename HodgeStarType::non_indices_domain_t::discrete_element_type elem) {
-                ddc::device_for_each(hodge_star.accessor().domain(), [&](auto mem_elem) {
-                    hodge_star.mem(typename HodgeStarType::discrete_element_type(elem, mem_elem))
-                            = ContinuousHodgeStar<
-                                    Indices1,
-                                    Indices2,
-                                    MetricType,
-                                    typename HodgeStarType::non_indices_domain_t::
-                                            discrete_element_type>::
-                                    value(metric,
-                                          elem,
-                                          hodge_star.accessor().canonical_natural_element(
-                                                  mem_elem));
-                });
+                ddc::device_for_each(
+                        hodge_star.accessor().domain(),
+                        detail::FillContinuousHodgeStarMem<
+                                Indices1,
+                                Indices2,
+                                HodgeStarType,
+                                MetricType,
+                                typename HodgeStarType::non_indices_domain_t::
+                                        discrete_element_type> {hodge_star, metric, elem});
             });
     return hodge_star;
 }

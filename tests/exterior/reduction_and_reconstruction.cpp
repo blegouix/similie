@@ -127,7 +127,7 @@ void run_reduction_test(
             mesh_xy.remove_last(ddc::DiscreteVector<DDimX, DDimY>(1, 1)),
             [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
                 check_value(reduced, elem);
-                ddc::device_for_each(reduction_operator.accessor().domain(), [&](auto mem_elem) {
+                ddc::host_for_each(reduction_operator.accessor().domain(), [&](auto mem_elem) {
                     double const expected_operator_value = sil::exterior::Reduction<
                             IndexSeq,
                             decltype(position),
@@ -209,21 +209,19 @@ void run_reconstruction_test(SetupForm&& setup_form, CheckValue&& check_value)
             mesh_xy.remove_last(ddc::DiscreteVector<DDimX, DDimY>(1, 1)),
             [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
                 check_value(reconstructed, elem);
-                ddc::device_for_each(
-                        reconstruction_operator.accessor().domain(),
-                        [&](auto mem_elem) {
-                            double const expected_operator_value = sil::exterior::Reconstruction<
-                                    IndexSeq,
-                                    decltype(position),
-                                    ddc::DiscreteElement<DDimX, DDimY>>::
-                                    value(position,
-                                          elem,
-                                          reconstruction_operator.accessor()
-                                                  .canonical_natural_element(mem_elem));
-                            EXPECT_DOUBLE_EQ(
-                                    reconstruction_operator.mem(elem, mem_elem),
-                                    expected_operator_value);
-                        });
+                ddc::host_for_each(reconstruction_operator.accessor().domain(), [&](auto mem_elem) {
+                    double const expected_operator_value = sil::exterior::Reconstruction<
+                            IndexSeq,
+                            decltype(position),
+                            ddc::DiscreteElement<DDimX, DDimY>>::
+                            value(position,
+                                  elem,
+                                  reconstruction_operator.accessor().canonical_natural_element(
+                                          mem_elem));
+                    EXPECT_DOUBLE_EQ(
+                            reconstruction_operator.mem(elem, mem_elem),
+                            expected_operator_value);
+                });
             });
 
     ddc::detail::g_discrete_space_dual<DDimX>.reset();

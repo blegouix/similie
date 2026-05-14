@@ -238,13 +238,15 @@ KOKKOS_FUNCTION std::size_t combination_rank(std::array<std::size_t, K> const& i
 template <std::size_t N, std::size_t M>
 KOKKOS_FUNCTION bool hodge_has_unique_ids(std::array<std::size_t, M> const& ids)
 {
-    for (std::size_t i = 0; i < M; ++i) {
-        if (ids[i] >= N) {
-            return false;
-        }
-        for (std::size_t j = i + 1; j < M; ++j) {
-            if (ids[i] == ids[j]) {
+    if constexpr (M > 0) {
+        for (std::size_t i = 0; i < M; ++i) {
+            if (ids[i] >= N) {
                 return false;
+            }
+            for (std::size_t j = i + 1; j < M; ++j) {
+                if (ids[i] == ids[j]) {
+                    return false;
+                }
             }
         }
     }
@@ -286,8 +288,10 @@ KOKKOS_FUNCTION int hodge_permutation_sign(
     for (std::size_t i = 0; i < M1; ++i) {
         permutation[i] = source_ids[i];
     }
-    for (std::size_t i = 0; i < M2; ++i) {
-        permutation[M1 + i] = target_ids[i];
+    if constexpr (M2 > 0) {
+        for (std::size_t i = 0; i < M2; ++i) {
+            permutation[M1 + i] = target_ids[i];
+        }
     }
 
     bool odd = false;
@@ -736,6 +740,30 @@ template <
         misc::Specialization<ddc::detail::TypeSeq> Indices,
         misc::Specialization<tensor::Tensor> ReductionTensorType,
         misc::Specialization<tensor::Tensor> PositionType,
+        CellComplex Complex,
+        class BatchElem>
+struct FillReductionOperatorMem
+{
+    ReductionTensorType m_reduction_tensor;
+    PositionType m_position;
+    BatchElem m_elem;
+
+    template <class MemElem>
+    KOKKOS_FUNCTION void operator()(MemElem mem_elem) const
+    {
+        m_reduction_tensor.mem(
+                typename ReductionTensorType::discrete_element_type(m_elem, mem_elem))
+                = Reduction<Indices, PositionType, BatchElem, Complex>::
+                        value(m_position,
+                              m_elem,
+                              m_reduction_tensor.accessor().canonical_natural_element(mem_elem));
+    }
+};
+
+template <
+        misc::Specialization<ddc::detail::TypeSeq> Indices,
+        misc::Specialization<tensor::Tensor> ReductionTensorType,
+        misc::Specialization<tensor::Tensor> PositionType,
         class ExecSpace,
         CellComplex Complex = CellComplex::Primal>
 ReductionTensorType fill_reduction_operator(
@@ -751,20 +779,15 @@ ReductionTensorType fill_reduction_operator(
             KOKKOS_LAMBDA(
                     typename ReductionTensorType::non_indices_domain_t::discrete_element_type
                             elem) {
-                ddc::device_for_each(reduction_tensor.accessor().domain(), [&](auto mem_elem) {
-                    reduction_tensor.mem(
-                            typename ReductionTensorType::discrete_element_type(elem, mem_elem))
-                            = Reduction<
-                                    Indices,
-                                    PositionType,
-                                    typename ReductionTensorType::non_indices_domain_t::
-                                            discrete_element_type,
-                                    Complex>::
-                                    value(position,
-                                          elem,
-                                          reduction_tensor.accessor().canonical_natural_element(
-                                                  mem_elem));
-                });
+                ddc::device_for_each(
+                        reduction_tensor.accessor().domain(),
+                        FillReductionOperatorMem<
+                                Indices,
+                                ReductionTensorType,
+                                PositionType,
+                                Complex,
+                                typename ReductionTensorType::non_indices_domain_t::
+                                        discrete_element_type> {reduction_tensor, position, elem});
             });
     return reduction_tensor;
 }
@@ -871,6 +894,31 @@ template <
         misc::Specialization<ddc::detail::TypeSeq> Indices,
         misc::Specialization<tensor::Tensor> ReconstructionTensorType,
         misc::Specialization<tensor::Tensor> PositionType,
+        CellComplex Complex,
+        class BatchElem>
+struct FillReconstructionOperatorMem
+{
+    ReconstructionTensorType m_reconstruction_tensor;
+    PositionType m_position;
+    BatchElem m_elem;
+
+    template <class MemElem>
+    KOKKOS_FUNCTION void operator()(MemElem mem_elem) const
+    {
+        m_reconstruction_tensor.mem(
+                typename ReconstructionTensorType::discrete_element_type(m_elem, mem_elem))
+                = Reconstruction<Indices, PositionType, BatchElem, Complex>::
+                        value(m_position,
+                              m_elem,
+                              m_reconstruction_tensor.accessor().canonical_natural_element(
+                                      mem_elem));
+    }
+};
+
+template <
+        misc::Specialization<ddc::detail::TypeSeq> Indices,
+        misc::Specialization<tensor::Tensor> ReconstructionTensorType,
+        misc::Specialization<tensor::Tensor> PositionType,
         class ExecSpace,
         CellComplex Complex = CellComplex::Primal>
 ReconstructionTensorType fill_reconstruction_operator(
@@ -886,21 +934,18 @@ ReconstructionTensorType fill_reconstruction_operator(
             KOKKOS_LAMBDA(
                     typename ReconstructionTensorType::non_indices_domain_t::discrete_element_type
                             elem) {
-                ddc::device_for_each(reconstruction_tensor.accessor().domain(), [&](auto mem_elem) {
-                    reconstruction_tensor.mem(
-                            typename ReconstructionTensorType::
-                                    discrete_element_type(elem, mem_elem))
-                            = Reconstruction<
-                                    Indices,
-                                    PositionType,
-                                    typename ReconstructionTensorType::non_indices_domain_t::
-                                            discrete_element_type,
-                                    Complex>::
-                                    value(position,
-                                          elem,
-                                          reconstruction_tensor.accessor()
-                                                  .canonical_natural_element(mem_elem));
-                });
+                ddc::device_for_each(
+                        reconstruction_tensor.accessor().domain(),
+                        FillReconstructionOperatorMem<
+                                Indices,
+                                ReconstructionTensorType,
+                                PositionType,
+                                Complex,
+                                typename ReconstructionTensorType::non_indices_domain_t::
+                                        discrete_element_type> {
+                                reconstruction_tensor,
+                                position,
+                                elem});
             });
     return reconstruction_tensor;
 }

@@ -98,4 +98,4 @@ RUN apt update
 RUN apt install -y libpdi-dev pdiplugin-all
 
 # Sympy
-RUN apt install -y python3-sympy python3-h5py
+RUN apt update && apt install -y python3-sympy python3-h5py
