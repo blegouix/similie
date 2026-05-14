@@ -290,7 +290,7 @@ int main(int argc, char** argv)
     // Produce mesh
     ddc::Coordinate<X, Y> lower_bounds(-5., -5.);
     ddc::Coordinate<X, Y> upper_bounds(5., 5.);
-    ddc::DiscreteVector<DDimX, DDimY> nb_cells(1500, 1500);
+    ddc::DiscreteVector<DDimX, DDimY> nb_cells(2000, 2000);
     /*
     MesherXY mesher;
     ddc::DiscreteDomain<DDimX, DDimY> mesh_xy = mesher.template mesh<
