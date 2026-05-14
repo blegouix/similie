@@ -131,7 +131,10 @@ $(function(){initNavTree('index.html',''); initResizable(true); });
 <div class="textblock"><p><a class="anchor" id="mainpage"></a></p>
 <h1><a class="anchor" id="autotoc_md0"></a>
 SimiLie</h1>
-<p><b>Github repo <a href="https://github.com/blegouix/similie">here</a>.</b></p>
+<div class="image">
+<img src="scalar_field_hamiltonian.gif" alt=""/>
+</div>
+    <p><b>Github repo <a href="https://github.com/blegouix/similie">here</a>.</b></p>
 <p>SimiLie is a performance-portable (CPU &amp; GPU) C++20 library aiming to extent the capabilities of <a href="https://github.com/kokkos/kokkos">Kokkos</a> and <a href="https://github.com/CExA-project/ddc">DDC</a> to offer a complete toolkit able to perform tensor calculus, differential calculus and solving PDE. A key paradigm is the exclusive support of structured meshes to avoid sparse linear algebra and produce mostly-embarrassing parallel code. It should be able to address any multiphysical problem on fixed grid from eventually-relativistic classical field theory (in particular: solid &amp; fluid mechanics, electromagnetism and gravitation).</p>
 <dl class="section important"><dt>Important</dt><dd>Absolute WIP, there is no guarantee for proper working. Only OPENMP and CUDA backends have been tested.</dd></dl>
 <h1><a class="anchor" id="autotoc_md1"></a>
