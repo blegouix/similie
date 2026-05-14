@@ -42,9 +42,9 @@ TensorType codifferential_of_coboundary(
         DualTensorBufferType dual_tensor_buffer)
 {
     using coboundary_output_index = coboundary_index_t<LaplacianDummyIndex, CochainTag>;
-    using codifferential_hodge_output_indices = typename detail::CodifferentialDummyIndexSeq<
+    using codifferential_hodge_output_indices = codifferential_hodge_output_indices_t<
             LaplacianDummyIndex::size() - coboundary_output_index::rank(),
-            LaplacianDummyIndex>::type;
+            LaplacianDummyIndex>;
     using coboundary_dual_tensor_index = misc::convert_type_seq_to_t<
             tensor::TensorAntisymmetricIndex,
             codifferential_hodge_output_indices>;
@@ -167,16 +167,9 @@ concept TopRankLaplacianCochain = CochainTag::rank() == LaplacianDummyIndex::siz
 } // namespace detail
 
 template <class T>
-struct LaplacianDummy2 : T
+struct IndexForCodifferentialOfCoboundaryInLaplacian : T
 {
 };
-
-namespace detail {
-
-template <class T>
-using LaplacianDummy2 = ::sil::exterior::LaplacianDummy2<T>;
-
-} // namespace detail
 
 template <class... Args>
 class StagedLaplacian;
@@ -201,20 +194,21 @@ class StagedLaplacian<
 {
     using MemorySpace = typename TensorType::memory_space;
     using AllocatorType = ddc::KokkosAllocator<double, MemorySpace>;
-    using CoboundaryCodifferentialIndex = tensor::Covariant<
-            detail::LaplacianDummy2<tensor::uncharacterize_t<LaplacianDummyIndex>>>;
-    using CoboundaryOutputIndex = coboundary_index_t<CoboundaryCodifferentialIndex, CochainTag>;
+    using CodifferentialOfCoboundaryIndex
+            = tensor::Covariant<IndexForCodifferentialOfCoboundaryInLaplacian<
+                    tensor::uncharacterize_t<LaplacianDummyIndex>>>;
+    using CoboundaryOutputIndex = coboundary_index_t<CodifferentialOfCoboundaryIndex, CochainTag>;
     using CoboundaryHodgeInputIndices
             = tensor::upper_t<ddc::to_type_seq_t<tensor::natural_domain_t<CoboundaryOutputIndex>>>;
-    using CoboundaryHodgeOutputIndices = typename detail::CodifferentialDummyIndexSeq<
-            CoboundaryCodifferentialIndex::size() - CoboundaryOutputIndex::rank(),
-            CoboundaryCodifferentialIndex>::type;
+    using CoboundaryHodgeOutputIndices = codifferential_hodge_output_indices_t<
+            CodifferentialOfCoboundaryIndex::size() - CoboundaryOutputIndex::rank(),
+            CodifferentialOfCoboundaryIndex>;
     using DualCoboundaryHodgeInputIndices = ddc::type_seq_merge_t<
-            ddc::detail::TypeSeq<CoboundaryCodifferentialIndex>,
+            ddc::detail::TypeSeq<CodifferentialOfCoboundaryIndex>,
             CoboundaryHodgeOutputIndices>;
     using DualCoboundaryHodgeOutputIndices = ddc::type_seq_remove_t<
             tensor::lower_t<CoboundaryHodgeInputIndices>,
-            ddc::detail::TypeSeq<CoboundaryCodifferentialIndex>>;
+            ddc::detail::TypeSeq<CodifferentialOfCoboundaryIndex>>;
     using CoboundaryDualTensorIndex = misc::
             convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, CoboundaryHodgeOutputIndices>;
 
@@ -319,7 +313,7 @@ public:
     {
         return detail::codifferential_of_coboundary<
                 MetricIndex,
-                CoboundaryCodifferentialIndex,
+                CodifferentialOfCoboundaryIndex,
                 CochainTag>(
                 m_exec_space,
                 laplacian_tensor,
@@ -383,28 +377,29 @@ class StagedLaplacian<
 {
     using MemorySpace = typename TensorType::memory_space;
     using AllocatorType = ddc::KokkosAllocator<double, MemorySpace>;
-    using CoboundaryCodifferentialIndex = tensor::Covariant<
-            detail::LaplacianDummy2<tensor::uncharacterize_t<LaplacianDummyIndex>>>;
-    using CoboundaryOutputIndex = coboundary_index_t<CoboundaryCodifferentialIndex, CochainTag>;
+    using CodifferentialOfCoboundaryIndex
+            = tensor::Covariant<IndexForCodifferentialOfCoboundaryInLaplacian<
+                    tensor::uncharacterize_t<LaplacianDummyIndex>>>;
+    using CoboundaryOutputIndex = coboundary_index_t<CodifferentialOfCoboundaryIndex, CochainTag>;
     using CoboundaryHodgeInputIndices
             = tensor::upper_t<ddc::to_type_seq_t<tensor::natural_domain_t<CoboundaryOutputIndex>>>;
-    using CoboundaryHodgeOutputIndices = typename detail::CodifferentialDummyIndexSeq<
-            CoboundaryCodifferentialIndex::size() - CoboundaryOutputIndex::rank(),
-            CoboundaryCodifferentialIndex>::type;
+    using CoboundaryHodgeOutputIndices = codifferential_hodge_output_indices_t<
+            CodifferentialOfCoboundaryIndex::size() - CoboundaryOutputIndex::rank(),
+            CodifferentialOfCoboundaryIndex>;
     using DualCoboundaryHodgeInputIndices = ddc::type_seq_merge_t<
-            ddc::detail::TypeSeq<CoboundaryCodifferentialIndex>,
+            ddc::detail::TypeSeq<CodifferentialOfCoboundaryIndex>,
             CoboundaryHodgeOutputIndices>;
     using DualCoboundaryHodgeOutputIndices = ddc::type_seq_remove_t<
             tensor::lower_t<CoboundaryHodgeInputIndices>,
-            ddc::detail::TypeSeq<CoboundaryCodifferentialIndex>>;
+            ddc::detail::TypeSeq<CodifferentialOfCoboundaryIndex>>;
     using CoboundaryDualTensorIndex = misc::
             convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, CoboundaryHodgeOutputIndices>;
 
     using CodifferentialHodgeInputIndices
             = tensor::upper_t<ddc::to_type_seq_t<tensor::natural_domain_t<CochainTag>>>;
-    using CodifferentialHodgeOutputIndices = typename detail::CodifferentialDummyIndexSeq<
+    using CodifferentialHodgeOutputIndices = codifferential_hodge_output_indices_t<
             LaplacianDummyIndex::size() - CochainTag::rank(),
-            LaplacianDummyIndex>::type;
+            LaplacianDummyIndex>;
     using DualCodifferentialHodgeInputIndices = ddc::type_seq_merge_t<
             ddc::detail::TypeSeq<LaplacianDummyIndex>,
             CodifferentialHodgeOutputIndices>;
@@ -607,7 +602,7 @@ public:
 
         detail::codifferential_of_coboundary<
                 MetricIndex,
-                CoboundaryCodifferentialIndex,
+                CodifferentialOfCoboundaryIndex,
                 CochainTag>(
                 exec_spaces[0],
                 laplacian_tensor,
@@ -675,9 +670,9 @@ private:
     using AllocatorType = ddc::KokkosAllocator<double, MemorySpace>;
     using CodifferentialHodgeInputIndices
             = tensor::upper_t<ddc::to_type_seq_t<tensor::natural_domain_t<CochainTag>>>;
-    using CodifferentialHodgeOutputIndices = typename detail::CodifferentialDummyIndexSeq<
+    using CodifferentialHodgeOutputIndices = codifferential_hodge_output_indices_t<
             LaplacianDummyIndex::size() - CochainTag::rank(),
-            LaplacianDummyIndex>::type;
+            LaplacianDummyIndex>;
     using DualCodifferentialHodgeInputIndices = ddc::type_seq_merge_t<
             ddc::detail::TypeSeq<LaplacianDummyIndex>,
             CodifferentialHodgeOutputIndices>;
@@ -834,16 +829,19 @@ TensorType laplacian(
         DualDerivativeHodgeStarType dual_hodge_star,
         DerivativeDualTensorBufferType dual_tensor_buffer)
 {
-    using coboundary_codifferential_index = tensor::Covariant<
-            detail::LaplacianDummy2<tensor::uncharacterize_t<LaplacianDummyIndex>>>;
-    return detail::
-            codifferential_of_coboundary<MetricIndex, coboundary_codifferential_index, CochainTag>(
-                    exec_space,
-                    laplacian_tensor,
-                    tensor,
-                    hodge_star,
-                    dual_hodge_star,
-                    dual_tensor_buffer);
+    using codifferential_of_coboundary_index
+            = tensor::Covariant<IndexForCodifferentialOfCoboundaryInLaplacian<
+                    tensor::uncharacterize_t<LaplacianDummyIndex>>>;
+    return detail::codifferential_of_coboundary<
+            MetricIndex,
+            codifferential_of_coboundary_index,
+            CochainTag>(
+            exec_space,
+            laplacian_tensor,
+            tensor,
+            hodge_star,
+            dual_hodge_star,
+            dual_tensor_buffer);
 }
 
 template <
@@ -874,11 +872,15 @@ TensorType laplacian(
         CodifferentialTensorBufferType codifferential_tensor_buffer,
         CoboundaryOfCodifferentialBufferType coboundary_of_codifferential_buffer)
 {
-    using coboundary_codifferential_index = tensor::Covariant<
-            detail::LaplacianDummy2<tensor::uncharacterize_t<LaplacianDummyIndex>>>;
+    using codifferential_of_coboundary_index
+            = tensor::Covariant<IndexForCodifferentialOfCoboundaryInLaplacian<
+                    tensor::uncharacterize_t<LaplacianDummyIndex>>>;
     auto exec_spaces = Kokkos::Experimental::partition_space(exec_space, 1, 1);
 
-    detail::codifferential_of_coboundary<MetricIndex, coboundary_codifferential_index, CochainTag>(
+    detail::codifferential_of_coboundary<
+            MetricIndex,
+            codifferential_of_coboundary_index,
+            CochainTag>(
             exec_spaces[0],
             laplacian_tensor,
             tensor,

@@ -132,37 +132,42 @@ using codifferential_tensor_t = typename detail::
 namespace detail {
 
 template <std::size_t I, class T>
-struct CodifferentialDummyIndex : tensor::uncharacterize_t<T>
+struct CodifferentialHodgeOutputIndex : tensor::uncharacterize_t<T>
 {
 };
 
 template <class Ids, class T>
-struct CodifferentialDummyIndexSeq_;
+struct CodifferentialHodgeOutputIndexSeq_;
 
 template <std::size_t... Id, class T>
-struct CodifferentialDummyIndexSeq_<std::index_sequence<Id...>, T>
+struct CodifferentialHodgeOutputIndexSeq_<std::index_sequence<Id...>, T>
 {
-    using type = ddc::detail::TypeSeq<tensor::Covariant<CodifferentialDummyIndex<Id, T>>...>;
+    using type = ddc::detail::TypeSeq<tensor::Covariant<CodifferentialHodgeOutputIndex<Id, T>>...>;
 };
 
 template <std::size_t EndId, class T>
-struct CodifferentialDummyIndexSeq;
+struct CodifferentialHodgeOutputIndexSeq;
 
 template <std::size_t EndId, class T>
     requires(EndId == 0)
-struct CodifferentialDummyIndexSeq<EndId, T>
+struct CodifferentialHodgeOutputIndexSeq<EndId, T>
 {
     using type = ddc::detail::TypeSeq<>;
 };
 
 template <std::size_t EndId, class T>
     requires(EndId > 0)
-struct CodifferentialDummyIndexSeq<EndId, T>
+struct CodifferentialHodgeOutputIndexSeq<EndId, T>
 {
-    using type = typename CodifferentialDummyIndexSeq_<std::make_index_sequence<EndId>, T>::type;
+    using type =
+            typename CodifferentialHodgeOutputIndexSeq_<std::make_index_sequence<EndId>, T>::type;
 };
 
 } // namespace detail
+
+template <std::size_t EndId, class T>
+using codifferential_hodge_output_indices_t =
+        typename detail::CodifferentialHodgeOutputIndexSeq<EndId, T>::type;
 
 template <class... Args>
 struct Codifferential;
@@ -193,9 +198,9 @@ struct Codifferential<
     {
         using source_hodge_input_indices
                 = tensor::upper_t<ddc::to_type_seq_t<tensor::natural_domain_t<CochainTag>>>;
-        using source_hodge_output_indices = typename detail::CodifferentialDummyIndexSeq<
+        using source_hodge_output_indices = codifferential_hodge_output_indices_t<
                 TagToRemoveFromCochain::size() - CochainTag::rank(),
-                TagToRemoveFromCochain>::type;
+                TagToRemoveFromCochain>;
         using target_hodge_input_indices = ddc::type_seq_merge_t<
                 ddc::detail::TypeSeq<TagToRemoveFromCochain>,
                 source_hodge_output_indices>;
@@ -279,9 +284,9 @@ class StagedCodifferential
     using AllocatorType = ddc::KokkosAllocator<double, MemorySpace>;
     using SourceHodgeInputIndices
             = tensor::upper_t<ddc::to_type_seq_t<tensor::natural_domain_t<CochainTag>>>;
-    using SourceHodgeOutputIndices = typename detail::CodifferentialDummyIndexSeq<
+    using SourceHodgeOutputIndices = codifferential_hodge_output_indices_t<
             TagToRemoveFromCochain::size() - CochainTag::rank(),
-            TagToRemoveFromCochain>::type;
+            TagToRemoveFromCochain>;
     using TargetHodgeInputIndices = ddc::type_seq_merge_t<
             ddc::detail::TypeSeq<TagToRemoveFromCochain>,
             SourceHodgeOutputIndices>;
@@ -511,9 +516,9 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
         DualTensorType dual_tensor_buffer)
 {
     static_assert(tensor::is_covariant_v<TagToRemoveFromCochain>);
-    using source_hodge_output_indices = typename detail::CodifferentialDummyIndexSeq<
+    using source_hodge_output_indices = codifferential_hodge_output_indices_t<
             TagToRemoveFromCochain::size() - CochainTag::rank(),
-            TagToRemoveFromCochain>::type;
+            TagToRemoveFromCochain>;
     using dual_tensor_index = misc::
             convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, source_hodge_output_indices>;
     using target_hodge_input_indices = ddc::type_seq_merge_t<

@@ -25,8 +25,9 @@ static auto test_derivative(auto potential)
             sil::tensor::TensorNaturalIndex<typename DDim::continuous_dimension_type...>>;
     using MetricTensorIndex = MetricIndex<typename DDim::continuous_dimension_type...>;
     using TensorType = decltype(potential);
-    using LaplacianDummyIndex2 = sil::tensor::Covariant<
-            sil::exterior::LaplacianDummy2<sil::tensor::uncharacterize_t<InterestIndex>>>;
+    using CodifferentialOfCoboundaryIndex
+            = sil::tensor::Covariant<sil::exterior::IndexForCodifferentialOfCoboundaryInLaplacian<
+                    sil::tensor::uncharacterize_t<InterestIndex>>>;
 
     // Allocate and instantiate an identity metric tensor field.
     [[maybe_unused]] sil::tensor::TensorAccessor<MetricTensorIndex> metric_accessor;
@@ -63,18 +64,20 @@ static auto test_derivative(auto potential)
     sil::tensor::Tensor laplacian(laplacian_alloc);
 
     if constexpr (Index::rank() == 0) {
-        using DerivativeIndex = sil::exterior::coboundary_index_t<LaplacianDummyIndex2, Index>;
+        using DerivativeIndex
+                = sil::exterior::coboundary_index_t<CodifferentialOfCoboundaryIndex, Index>;
         using DerivativeMuUpSeq = sil::tensor::upper_t<
                 ddc::to_type_seq_t<sil::tensor::natural_domain_t<DerivativeIndex>>>;
-        using DerivativeNuLowSeq = typename sil::exterior::detail::CodifferentialDummyIndexSeq<
-                LaplacianDummyIndex2::size() - DerivativeIndex::rank(),
-                LaplacianDummyIndex2>::type;
-        using DerivativeRhoLowSeq = ddc::
-                type_seq_merge_t<ddc::detail::TypeSeq<LaplacianDummyIndex2>, DerivativeNuLowSeq>;
+        using DerivativeNuLowSeq = sil::exterior::codifferential_hodge_output_indices_t<
+                CodifferentialOfCoboundaryIndex::size() - DerivativeIndex::rank(),
+                CodifferentialOfCoboundaryIndex>;
+        using DerivativeRhoLowSeq = ddc::type_seq_merge_t<
+                ddc::detail::TypeSeq<CodifferentialOfCoboundaryIndex>,
+                DerivativeNuLowSeq>;
         using DerivativeRhoUpSeq = sil::tensor::upper_t<DerivativeRhoLowSeq>;
         using DerivativeSigmaLowSeq = ddc::type_seq_remove_t<
                 sil::tensor::lower_t<DerivativeMuUpSeq>,
-                ddc::detail::TypeSeq<LaplacianDummyIndex2>>;
+                ddc::detail::TypeSeq<CodifferentialOfCoboundaryIndex>>;
         using DerivativeDualIndex = sil::misc::
                 convert_type_seq_to_t<sil::tensor::TensorAntisymmetricIndex, DerivativeNuLowSeq>;
 
@@ -138,25 +141,27 @@ static auto test_derivative(auto potential)
                 dual_derivative_hodge_star,
                 derivative_dual_tensor_buffer);
     } else if constexpr (Index::rank() < InterestIndex::size()) {
-        using DerivativeIndex = sil::exterior::coboundary_index_t<LaplacianDummyIndex2, Index>;
+        using DerivativeIndex
+                = sil::exterior::coboundary_index_t<CodifferentialOfCoboundaryIndex, Index>;
         using DerivativeMuUpSeq = sil::tensor::upper_t<
                 ddc::to_type_seq_t<sil::tensor::natural_domain_t<DerivativeIndex>>>;
-        using DerivativeNuLowSeq = typename sil::exterior::detail::CodifferentialDummyIndexSeq<
-                LaplacianDummyIndex2::size() - DerivativeIndex::rank(),
-                LaplacianDummyIndex2>::type;
-        using DerivativeRhoLowSeq = ddc::
-                type_seq_merge_t<ddc::detail::TypeSeq<LaplacianDummyIndex2>, DerivativeNuLowSeq>;
+        using DerivativeNuLowSeq = sil::exterior::codifferential_hodge_output_indices_t<
+                CodifferentialOfCoboundaryIndex::size() - DerivativeIndex::rank(),
+                CodifferentialOfCoboundaryIndex>;
+        using DerivativeRhoLowSeq = ddc::type_seq_merge_t<
+                ddc::detail::TypeSeq<CodifferentialOfCoboundaryIndex>,
+                DerivativeNuLowSeq>;
         using DerivativeRhoUpSeq = sil::tensor::upper_t<DerivativeRhoLowSeq>;
         using DerivativeSigmaLowSeq = ddc::type_seq_remove_t<
                 sil::tensor::lower_t<DerivativeMuUpSeq>,
-                ddc::detail::TypeSeq<LaplacianDummyIndex2>>;
+                ddc::detail::TypeSeq<CodifferentialOfCoboundaryIndex>>;
         using DerivativeDualIndex = sil::misc::
                 convert_type_seq_to_t<sil::tensor::TensorAntisymmetricIndex, DerivativeNuLowSeq>;
         using MuUpSeq
                 = sil::tensor::upper_t<ddc::to_type_seq_t<sil::tensor::natural_domain_t<Index>>>;
-        using NuLowSeq = typename sil::exterior::detail::CodifferentialDummyIndexSeq<
+        using NuLowSeq = sil::exterior::codifferential_hodge_output_indices_t<
                 InterestIndex::size() - Index::rank(),
-                InterestIndex>::type;
+                InterestIndex>;
         using RhoLowSeq = ddc::type_seq_merge_t<ddc::detail::TypeSeq<InterestIndex>, NuLowSeq>;
         using RhoUpSeq = sil::tensor::upper_t<RhoLowSeq>;
         using SigmaLowSeq = ddc::type_seq_remove_t<
@@ -277,9 +282,9 @@ static auto test_derivative(auto potential)
     } else if constexpr (Index::rank() == InterestIndex::size()) {
         using MuUpSeq
                 = sil::tensor::upper_t<ddc::to_type_seq_t<sil::tensor::natural_domain_t<Index>>>;
-        using NuLowSeq = typename sil::exterior::detail::CodifferentialDummyIndexSeq<
+        using NuLowSeq = sil::exterior::codifferential_hodge_output_indices_t<
                 InterestIndex::size() - Index::rank(),
-                InterestIndex>::type;
+                InterestIndex>;
         using RhoLowSeq = ddc::type_seq_merge_t<ddc::detail::TypeSeq<InterestIndex>, NuLowSeq>;
         using RhoUpSeq = sil::tensor::upper_t<RhoLowSeq>;
         using SigmaLowSeq = ddc::type_seq_remove_t<
