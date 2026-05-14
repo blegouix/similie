@@ -3,8 +3,12 @@
 
 #include <filesystem>
 #include <exception>
+#include <fstream>
 #include <iostream>
+#include <chrono>
+#include <stdexcept>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include <ddc/ddc.hpp>
@@ -126,9 +130,99 @@ void publish_interface_parameters(onelab::remoteNetworkClient& client)
             "0Modules/SimiLie/0Control/Input mesh file",
             "",
             "Input mesh file",
-            "Path to the Gmsh .msh file that the SimiLie ONELAB interface should validate.");
+            "Optional path to the Gmsh .msh file that the SimiLie ONELAB interface should "
+            "validate. If empty, the interface uses Gmsh/MshFileName.");
     input_mesh_file.setKind("file");
     client.set(input_mesh_file);
+}
+
+std::string get_first_string_value(
+        onelab::remoteNetworkClient& client,
+        std::string const& parameter_name)
+{
+    std::vector<onelab::string> string_parameters;
+    client.get(string_parameters, parameter_name);
+    if (string_parameters.empty()) {
+        return "";
+    }
+    return string_parameters.front().getValue();
+}
+
+std::filesystem::path resolve_input_mesh_file(onelab::remoteNetworkClient& client)
+{
+    std::filesystem::path input_mesh_file
+            = get_first_string_value(client, "0Modules/SimiLie/0Control/Input mesh file");
+    if (!input_mesh_file.empty()) {
+        return input_mesh_file;
+    }
+
+    std::filesystem::path gmsh_mesh_file = get_first_string_value(client, "Gmsh/MshFileName");
+    if (gmsh_mesh_file.empty()) {
+        throw std::runtime_error(
+                "No mesh file available: set 'Input mesh file' or save the current Gmsh mesh.");
+    }
+
+    if (gmsh_mesh_file.is_absolute()) {
+        return gmsh_mesh_file;
+    }
+
+    std::filesystem::path gmsh_model_path
+            = get_first_string_value(client, "Gmsh/Model absolute path");
+    if (!gmsh_model_path.empty()) {
+        return gmsh_model_path / gmsh_mesh_file;
+    }
+
+    return gmsh_mesh_file;
+}
+
+void export_current_mesh_from_gmsh(
+        onelab::remoteNetworkClient& client,
+        std::filesystem::path const& mesh_file)
+{
+    std::filesystem::path const absolute_mesh_file = std::filesystem::absolute(mesh_file);
+    std::filesystem::create_directories(absolute_mesh_file.parent_path());
+    if (std::filesystem::exists(absolute_mesh_file)) {
+        std::filesystem::remove(absolute_mesh_file);
+    }
+
+    std::string const gmsh_command = "Mesh.Binary = 0;"
+                                     "Mesh.MshFileVersion = 2.2;"
+                                     "Save \"" + absolute_mesh_file.string() + "\";";
+
+    client.sendInfo("Asking Gmsh to export the current mesh to " + absolute_mesh_file.string());
+    client.sendParseStringRequest(gmsh_command);
+
+    std::uintmax_t previous_size = 0;
+    int stable_size_count = 0;
+
+    for (int attempt = 0; attempt < 100; ++attempt) {
+        if (std::filesystem::exists(absolute_mesh_file)) {
+            std::uintmax_t const current_size = std::filesystem::file_size(absolute_mesh_file);
+            if (current_size > 0 && current_size == previous_size) {
+                ++stable_size_count;
+            } else {
+                stable_size_count = 0;
+            }
+            previous_size = current_size;
+
+    if (stable_size_count >= 2) {
+        std::ifstream stream(absolute_mesh_file);
+        std::string const content(
+                (std::istreambuf_iterator<char>(stream)),
+                std::istreambuf_iterator<char>());
+        if (content.find("$EndElements") != std::string::npos) {
+            client.sendInfo(
+                    "Detected completed exported mesh file at " + absolute_mesh_file.string());
+            return;
+        }
+    }
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+
+    throw std::runtime_error(
+            "Gmsh did not export the mesh file '" + absolute_mesh_file.string()
+            + "' before the ONELAB timeout.");
 }
 
 similie::onelab_interface::FakeRunConfig read_run_configuration(onelab::remoteNetworkClient& client)
@@ -148,10 +242,8 @@ similie::onelab_interface::FakeRunConfig read_run_configuration(onelab::remoteNe
         config.output_file = string_parameters.front().getValue();
     }
 
-    client.get(string_parameters, "0Modules/SimiLie/0Control/Input mesh file");
-    if (!string_parameters.empty()) {
-        config.input_mesh_file = string_parameters.front().getValue();
-    }
+    config.input_mesh_file = resolve_input_mesh_file(client);
+    export_current_mesh_from_gmsh(client, config.input_mesh_file);
 
     return config;
 }

@@ -81,6 +81,8 @@ RectilinearGridData parse_msh2_mesh(std::filesystem::path const& mesh_file)
 
     RectilinearGridData grid;
     std::string token;
+    bool saw_nodes_section = false;
+    bool saw_elements_section = false;
 
     while (stream >> token) {
         if (token == "$MeshFormat") {
@@ -95,6 +97,7 @@ RectilinearGridData parse_msh2_mesh(std::filesystem::path const& mesh_file)
                 throw std::runtime_error("only ASCII meshes are supported");
             }
         } else if (token == "$Nodes") {
+            saw_nodes_section = true;
             std::size_t node_count = 0;
             stream >> node_count;
             grid.nodes.reserve(node_count);
@@ -104,6 +107,7 @@ RectilinearGridData parse_msh2_mesh(std::filesystem::path const& mesh_file)
                 grid.nodes.push_back(node);
             }
         } else if (token == "$Elements") {
+            saw_elements_section = true;
             std::size_t element_count = 0;
             stream >> element_count;
             for (std::size_t i = 0; i < element_count; ++i) {
@@ -152,7 +156,11 @@ RectilinearGridData parse_msh2_mesh(std::filesystem::path const& mesh_file)
         throw std::runtime_error("the provided mesh does not contain any node");
     }
     if (grid.cells.empty()) {
-        throw std::runtime_error("the provided mesh does not contain any hexahedral cell");
+        std::ostringstream error_stream;
+        error_stream << "the provided mesh does not contain any hexahedral cell"
+                     << " (nodes section seen: " << (saw_nodes_section ? "yes" : "no")
+                     << ", elements section seen: " << (saw_elements_section ? "yes" : "no") << ")";
+        throw std::runtime_error(error_stream.str());
     }
 
     return grid;
