@@ -290,7 +290,7 @@ int main(int argc, char** argv)
     // Produce mesh
     ddc::Coordinate<X, Y> lower_bounds(-5., -5.);
     ddc::Coordinate<X, Y> upper_bounds(5., 5.);
-    ddc::DiscreteVector<DDimX, DDimY> nb_cells(2000, 2000);
+    ddc::DiscreteVector<DDimX, DDimY> nb_cells(1500, 1500);
     /*
     MesherXY mesher;
     ddc::DiscreteDomain<DDimX, DDimY> mesh_xy = mesher.template mesh<
@@ -343,16 +343,18 @@ int main(int argc, char** argv)
     sil::tensor::Tensor potential(potential_alloc);
 
 
-    double const x_0 = -1.;
+    double const x_0 = -3.5;
     double const y_0 = 0.;
-    double const x_1 = 1.;
-    double const y_1 = -.25;
-    double const sigma = .25;
+    double const x_1 = 0.;
+    double const y_1 = -.5;
+    double const sigma = .5;
 
     double const v = 0.5;
     assert(v >= 0. && v < 1.);
-    double const mass = 500.;
-    double const quartic_coupling = 5000.;
+    double const mass = 150.;
+    double const coupling_constant = 1.e15;
+    double const coupling_power
+            = 16.; // High coupling power is required to make coupling between wavepackets predominant compare to self-interactions, such that nice manifest macroscopic momentum transfert can be exhibited.
     double const k = mass * v / std::sqrt(1. - v * v);
     double const omega = std::sqrt(k * k + mass * mass);
 
@@ -360,16 +362,15 @@ int main(int argc, char** argv)
             = (ddc::get<X>(upper_bounds) - ddc::get<X>(lower_bounds)) / ddc::get<DDimX>(nb_cells);
     double const dy
             = (ddc::get<Y>(upper_bounds) - ddc::get<Y>(lower_bounds)) / ddc::get<DDimY>(nb_cells);
+    std::cout << "Space sampling = " << std::max(dx, dy)
+              << " (2*pi/k = " << 2 * std::numbers::pi / k << ")" << std::endl;
     double const dt_max
             = 2.0 / std::sqrt(mass * mass + 4.0 / (dx * dx) + 4.0 / (dy * dy)); // TOJUSTIFY
-    double const dt = 0.5 * dt_max;
-    std::cout << "Time step = " << dt << " (CFL condition estimates maximal dt = " << dt_max << ")"
-              << std::endl;
-    if (2 * std::numbers::pi / k < 2 * std::max(dx, dy)) {
-        std::cout << "Warning: 2*pi/k=" << 2 * std::numbers::pi / k
-                  << "is too small compared to space sample" << std::max(dx, dy) << " !"
-                  << std::endl;
-    }
+    double const dt = 0.2 * dt_max;
+    std::cout << "Time step = " << dt << " (2*pi/omega = " << 2 * std::numbers::pi / omega
+              << " while CFL condition estimates maximal dt = " << dt_max << ")" << std::endl;
+    std::cout << "Space sampling = " << std::max(dx, dy)
+              << " (2*pi/k = " << 2 * std::numbers::pi / k << ")" << std::endl;
 
     ddc::parallel_for_each(
             potential.domain(),
@@ -381,9 +382,10 @@ int main(int argc, char** argv)
                                           * std::exp(
                                                   -((x - x_0) * (x - x_0) + (y - y_0) * (y - y_0))
                                                   / 2. / sigma / sigma)
-                                  + std::exp(
-                                          -((x - x_1) * (x - x_1) + (y - y_1) * (y - y_1)) / 2.
-                                          / sigma / sigma);
+                                  + std::sqrt(1.264) * // Magic number to equalize Hamiltonians
+                                            std::exp(
+                                                    -((x - x_1) * (x - x_1) + (y - y_1) * (y - y_1))
+                                                    / 2. / sigma / sigma);
             });
     auto potential_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), potential);
@@ -489,6 +491,7 @@ int main(int argc, char** argv)
      *
      * We implement mid-point explicit temporal integration scheme.
      */
+    ScalarFieldHamiltonian const hamiltonian_model(mass, coupling_constant, coupling_power);
     for (int i = 0; i < nb_iter; i++) {
         if (i % nb_iter_between_exports == 0) {
             std::cout << "Start iteration " << i << std::endl;
@@ -499,10 +502,9 @@ int main(int argc, char** argv)
                 Kokkos::DefaultExecutionSpace(),
                 half_step_potential.domain(),
                 KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
-                    half_step_potential(elem) = potential(elem)
-                                                - ScalarFieldHamiltonian(mass, quartic_coupling)
-                                                                  .dH_dpi0(temporal_moment(elem))
-                                                          * dt / 2.;
+                    half_step_potential(elem)
+                            = potential(elem)
+                              - hamiltonian_model.dH_dpi0(temporal_moment(elem)) * dt / 2.;
                 });
 
         // Compute the potential gradient
@@ -531,17 +533,13 @@ int main(int argc, char** argv)
                     // Advect temporal moment by half-step, this is what is needed to perform the whole-step potential advection
                     const double half_step_temporal_moment_
                             = temporal_moment_
-                              + (ScalarFieldHamiltonian(mass, quartic_coupling)
-                                         .dH_dphi(half_step_potential_)
+                              + (hamiltonian_model.dH_dphi(half_step_potential_)
                                  - spatial_moments_minus_div_)
                                         * dt / 2;
 
                     // Whole-step advection of field state
-                    potential(elem) -= ScalarFieldHamiltonian(mass, quartic_coupling)
-                                               .dH_dpi0(half_step_temporal_moment_)
-                                       * dt;
-                    temporal_moment(elem) += (ScalarFieldHamiltonian(mass, quartic_coupling)
-                                                      .dH_dphi(half_step_potential_)
+                    potential(elem) -= hamiltonian_model.dH_dpi0(half_step_temporal_moment_) * dt;
+                    temporal_moment(elem) += (hamiltonian_model.dH_dphi(half_step_potential_)
                                               - spatial_moments_minus_div_)
                                              * dt;
                 });
@@ -560,7 +558,7 @@ int main(int argc, char** argv)
                                    spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(0)),
                                    spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(1))};
                         hamiltonian(elem)
-                                = ScalarFieldHamiltonian(mass, quartic_coupling)
+                                = hamiltonian_model
                                           .H(potential(elem, ddc::DiscreteElement<DummyIndex>()),
                                              pi);
                     });

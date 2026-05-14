@@ -7,7 +7,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from sympy import symbols, factorial, Matrix, diff, solve
+from sympy import symbols, gamma, Matrix, diff, solve
 from sympy.printing.codeprinter import cxxcode
 
 N = int(sys.argv[1])  # Number of dimensions
@@ -15,17 +15,18 @@ output_path = Path(sys.argv[2])  # Path of the output file
 output_path.parent.mkdir(parents=True, exist_ok=True)
 
 mass = symbols("mass")
-quartic_coupling = symbols("quartic_coupling")
+coupling_constant = symbols("coupling_constant")
+coupling_power = symbols("coupling_power")
 phi = symbols("phi")
 pi = symbols(f"pi0:{N}")
 
 # Minkowski signature (-, +, +, ..., +)
 metric_sign = [-1] + [1] * (N - 1)
 
-# H = -1/2 m^2 phi^2 - lambda/4! phi^4 + 1/2 (-p0^2 + p1^2 + ... + p{N-1}^2)
+# H = -1/2 m^2 phi^2 - lambda/Gamma(p + 1) phi^p + 1/2 (-p0^2 + p1^2 + ... + p{N-1}^2)
 hamiltonian = 0.5 * (
     -(mass**2) * phi**2 + sum(metric_sign[i] * pi[i] ** 2 for i in range(N))
-) - quartic_coupling * phi**4 / factorial(4)
+) - coupling_constant * phi**coupling_power / gamma(coupling_power + 1)
 
 # [dH/dphi, dH/dpi0, dH/dpi1, ...]
 hamiltonian_diff = Matrix(
@@ -64,16 +65,22 @@ output_path.write_text(f"""\
 
 #pragma once
 
+#include <cmath>
+#include <cstddef>
 #include <span>
 
 struct ScalarFieldHamiltonian {{
     static constexpr std::size_t N = {N};
 
     const double mass;
-    const double quartic_coupling;
+    const double coupling_constant;
+    const double coupling_power;
 
-    constexpr ScalarFieldHamiltonian(double mass_, double quartic_coupling_)
-        : mass(mass_), quartic_coupling(quartic_coupling_) {{}}
+    constexpr ScalarFieldHamiltonian(
+            double mass_,
+            double coupling_constant_,
+            double coupling_power_)
+        : mass(mass_), coupling_constant(coupling_constant_), coupling_power(coupling_power_) {{}}
 
     constexpr double H(double phi, const std::span<const double, N>& pi) const
     {{
