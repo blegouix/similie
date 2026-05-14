@@ -28,3 +28,7 @@ SPDX-License-Identifier: MIT
 ## Coding
 - `clang-format 20` is used to format C++, `ruff format` is used to format python.
 - Avoid introducing unecessary constexpr aliases (like, using the `using` keyword for type aliases of `constexpr` for variables aliases). It can be used but not just for readability purpose, except is explicity asked.
+
+## ONELAB interface
+- `examples/onelab_inductor/Inductor` is a fork from an existing repo, you will never modify it.
+- When running run_onelab_inductor.sh, you will set SIMILIE_ONELAB_BUILD_DIR to the `agent_build/` or `agent_build_cpu/` path.
