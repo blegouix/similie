@@ -66,13 +66,6 @@ endif()
 ###############################################################################################
 # Our project code
 
-set(
-    SIMILIE_ONELAB_SOURCE_DIR
-    "/gmsh/utils/solvers/c++"
-    CACHE PATH
-    "Path to gmsh ONELAB C++ headers (expects onelab.h and GmshSocket.h)"
-)
-
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_library(similie INTERFACE)
 add_library(sil::sil ALIAS similie)
@@ -97,18 +90,7 @@ endif()
 
 add_subdirectory(src/similie)
 if("${SIMILIE_BUILD_ONELAB_INTERFACE}")
-  if(
-      EXISTS "${SIMILIE_ONELAB_SOURCE_DIR}/onelab.h"
-      AND EXISTS "${SIMILIE_ONELAB_SOURCE_DIR}/GmshSocket.h"
-  )
-    add_subdirectory(onelab_interface)
-  else()
-    message(
-        WARNING
-            "SIMILIE_BUILD_ONELAB_INTERFACE is enabled but no ONELAB headers were found in "
-            "${SIMILIE_ONELAB_SOURCE_DIR}. The onelab_interface target will not be built."
-    )
-  endif()
+  add_subdirectory(onelab_interface)
 endif()
 add_subdirectory(tests)
 add_subdirectory(examples)

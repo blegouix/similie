@@ -30,5 +30,5 @@ SPDX-License-Identifier: MIT
 - Avoid introducing unecessary constexpr aliases (like, using the `using` keyword for type aliases of `constexpr` for variables aliases). It can be used but not just for readability purpose, except is explicity asked.
 
 ## ONELAB interface
-- `examples/onelab_inductor/Inductor` is a fork from an existing repo, you will never modify it.
+- `onelab_interface/GmshSocket.h`, `onelab_interface/onelab.h` and the `examples/onelab_inductor/Inductor` folder are forks from existing repos, you will never modify them.
 - When running run_onelab_inductor.sh, you will set SIMILIE_ONELAB_BUILD_DIR to the `agent_build/` or `agent_build_cpu/` path.

@@ -21,11 +21,6 @@ target_compile_definitions(similie_onelab_support
 
 add_executable(similie_onelab main.cpp)
 
-target_include_directories(similie_onelab
-    PRIVATE
-        "${SIMILIE_ONELAB_SOURCE_DIR}"
-)
-
 target_link_libraries(similie_onelab
     PRIVATE
         similie_onelab_support
