@@ -220,11 +220,11 @@ int main(int argc, char** argv)
             laplacian_accessor.domain());
     ddc::Chunk laplacian_alloc(laplacian_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor laplacian(laplacian_alloc);
-    auto staged_laplacian = sil::exterior::make_staged_laplacian<
+    auto laplacian = sil::exterior::make_staged_laplacian<
             MetricIndex,
             MuLow,
             MuLow>(Kokkos::DefaultExecutionSpace(), laplacian, potential, metric, position);
-    staged_laplacian.run(laplacian, potential);
+    laplacian.run(laplacian, potential);
     Kokkos::fence();
 
     auto position_host

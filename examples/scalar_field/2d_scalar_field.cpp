@@ -433,7 +433,7 @@ int main(int argc, char** argv)
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), hamiltonian);
 
     // Codifferential
-    auto staged_codifferential = sil::exterior::make_staged_codifferential<
+    auto codifferential = sil::exterior::make_staged_codifferential<
             MetricIndex,
             AlphaLow,
             AlphaLow>(Kokkos::DefaultExecutionSpace(), spatial_moments, metric, position);
@@ -511,7 +511,7 @@ int main(int argc, char** argv)
         }
 
         // Compute minus the divergence \delta \pi of the spatial moments
-        staged_codifferential.run(spatial_moments_minus_div, spatial_moments);
+        codifferential.run(spatial_moments_minus_div, spatial_moments);
 
         // Compute dpi_0/dx^0 = dH/dphi - \delta \pi from the DeDonder-Weyl equation then perform the whole-step advection
         ddc::parallel_for_each(
