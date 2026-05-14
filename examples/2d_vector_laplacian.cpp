@@ -219,18 +219,20 @@ int main(int argc, char** argv)
             mesh_xy.remove_last(ddc::DiscreteVector<DDimX, DDimY> {1, 1}),
             laplacian_accessor.domain());
     ddc::Chunk laplacian_alloc(laplacian_dom, ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor laplacian(laplacian_alloc);
+    sil::tensor::Tensor laplacian_tensor(laplacian_alloc);
     auto laplacian = sil::exterior::make_staged_laplacian<
             MetricIndex,
             MuLow,
-            MuLow>(Kokkos::DefaultExecutionSpace(), laplacian, potential, metric, position);
-    laplacian.run(laplacian, potential);
+            MuLow>(Kokkos::DefaultExecutionSpace(), laplacian_tensor, potential, metric, position);
+    laplacian.run(laplacian_tensor, potential);
     Kokkos::fence();
 
     auto position_host
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), position);
     auto laplacian_host
-            = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), laplacian);
+            = ddc::create_mirror_view_and_copy(
+                    Kokkos::DefaultHostExecutionSpace(),
+                    laplacian_tensor);
 
     // Export HDF5 and XDMF
     ddc::PdiEvent("export")

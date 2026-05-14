@@ -42,7 +42,6 @@ static auto test_derivative(auto potential)
             position_dom(potential.non_indices_domain(), position_accessor.domain());
     ddc::Chunk position_alloc(position_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor position(position_alloc);
-
     ddc::host_for_each(
             potential.non_indices_domain(),
             [&](typename decltype(potential)::non_indices_domain_t::discrete_element_type elem) {
@@ -623,6 +622,110 @@ TEST(Laplacian, 2D1Form)
                     EXPECT_NEAR(value, 1., .5);
                 }
             });
+    ddc::detail::g_discrete_space_dual<DDimX>.reset();
+    ddc::detail::g_discrete_space_dual<DDimY>.reset();
+    ddc::detail::g_discrete_space_dual<DDimZ>.reset();
+}
+
+TEST(Laplacian, Staged2D1Form)
+{
+    using InterestIndex = sil::tensor::Covariant<Mu2>;
+    using PositionIndex = sil::tensor::Contravariant<sil::tensor::TensorNaturalIndex<X, Y>>;
+
+    ddc::Coordinate<X, Y> lower_bounds(-5., -5.);
+    ddc::Coordinate<X, Y> upper_bounds(5., 5.);
+    ddc::DiscreteVector<DDimX, DDimY> nb_cells(31, 31);
+    ddc::DiscreteDomain<DDimX> mesh_x = ddc::init_discrete_space<DDimX>(DDimX::init<DDimX>(
+            ddc::Coordinate<X>(lower_bounds),
+            ddc::Coordinate<X>(upper_bounds),
+            ddc::DiscreteVector<DDimX>(nb_cells)));
+    ddc::DiscreteDomain<DDimY> mesh_y = ddc::init_discrete_space<DDimY>(DDimY::init<DDimY>(
+            ddc::Coordinate<Y>(lower_bounds),
+            ddc::Coordinate<Y>(upper_bounds),
+            ddc::DiscreteVector<DDimY>(nb_cells)));
+    ddc::DiscreteDomain<DDimX, DDimY> mesh_xy(mesh_x, mesh_y);
+
+    [[maybe_unused]] sil::tensor::TensorAccessor<InterestIndex> potential_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, InterestIndex>
+            potential_dom(mesh_xy, potential_accessor.domain());
+    ddc::Chunk potential_alloc(potential_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor potential(potential_alloc);
+
+    double const R = 2.;
+    ddc::host_for_each(
+            potential.non_indices_domain(),
+            [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
+                double const x_coord = ddc::coordinate(ddc::DiscreteElement<DDimX>(elem));
+                double const y_coord = ddc::coordinate(ddc::DiscreteElement<DDimY>(elem));
+                double const r = Kokkos::sqrt(
+                        static_cast<double>(x_coord * x_coord)
+                        + static_cast<double>(y_coord * y_coord));
+                if (r <= R) {
+                    double const factor = r / 3. - R / 2.;
+                    potential.mem(elem, potential_accessor.access_element<X>()) = y_coord * factor;
+                    potential.mem(elem, potential_accessor.access_element<Y>()) = -x_coord * factor;
+                } else {
+                    double const factor = -R * R * R / (6. * r * r);
+                    potential.mem(elem, potential_accessor.access_element<X>()) = y_coord * factor;
+                    potential.mem(elem, potential_accessor.access_element<Y>()) = -x_coord * factor;
+                }
+            });
+
+    [[maybe_unused]] sil::tensor::TensorAccessor<MetricIndex<X, Y>> metric_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, MetricIndex<X, Y>>
+            metric_dom(potential.non_indices_domain(), metric_accessor.domain());
+    ddc::Chunk metric_alloc(metric_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor metric(metric_alloc);
+
+    [[maybe_unused]] sil::tensor::TensorAccessor<PositionIndex> position_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, PositionIndex>
+            position_dom(potential.non_indices_domain(), position_accessor.domain());
+    ddc::Chunk position_alloc(position_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor position(position_alloc);
+
+    ddc::host_for_each(
+            potential.non_indices_domain(),
+            [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
+                position(elem, position_accessor.access_element<X>())
+                        = static_cast<double>(ddc::coordinate(ddc::DiscreteElement<DDimX>(elem)));
+                position(elem, position_accessor.access_element<Y>())
+                        = static_cast<double>(ddc::coordinate(ddc::DiscreteElement<DDimY>(elem)));
+            });
+
+    [[maybe_unused]] sil::tensor::TensorAccessor<InterestIndex> laplacian_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, InterestIndex> laplacian_dom(
+            potential.non_indices_domain().remove_last(ddc::DiscreteVector<DDimX, DDimY>(1, 1)),
+            laplacian_accessor.domain());
+    ddc::Chunk laplacian_alloc(laplacian_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor laplacian(laplacian_alloc);
+    auto staged_laplacian
+            = sil::exterior::make_staged_laplacian<MetricIndex<X, Y>, InterestIndex, InterestIndex>(
+                    Kokkos::DefaultHostExecutionSpace(),
+                    laplacian,
+                    potential,
+                    metric,
+                    position);
+    staged_laplacian.run(laplacian, potential);
+
+    ddc::host_for_each(
+            laplacian.template domain<DDimX>()
+                    .remove_first(ddc::DiscreteVector<DDimX>(1))
+                    .remove_last(ddc::DiscreteVector<DDimX>(1)),
+            [&](ddc::DiscreteElement<DDimX> elem) {
+                double const value = laplacian(
+                        elem,
+                        ddc::DiscreteElement<DDimY> {
+                                static_cast<std::size_t>(nb_cells.template get<DDimY>()) / 2},
+                        laplacian.accessor().access_element<Y>());
+                if (ddc::coordinate(elem) < -1.2 * R || ddc::coordinate(elem) > 1.2 * R) {
+                    EXPECT_NEAR(value, 0., .5);
+                } else if (ddc::coordinate(elem) > -.8 * R && ddc::coordinate(elem) < -.2 * R) {
+                    EXPECT_NEAR(value, -1., .5);
+                } else if (ddc::coordinate(elem) > .2 * R && ddc::coordinate(elem) < .8 * R) {
+                    EXPECT_NEAR(value, 1., .5);
+                }
+            });
+
     ddc::detail::g_discrete_space_dual<DDimX>.reset();
     ddc::detail::g_discrete_space_dual<DDimY>.reset();
     ddc::detail::g_discrete_space_dual<DDimZ>.reset();

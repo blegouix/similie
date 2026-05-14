@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Baptiste Legouix
 // SPDX-License-Identifier: MIT
 
+#include <type_traits>
+
 #include <ddc/ddc.hpp>
 
 #include <gtest/gtest.h>
@@ -115,23 +117,119 @@ void run_codifferential_test(CodifferentialCallable&& codifferential_callable)
     ddc::detail::g_discrete_space_dual<DDimY>.reset();
 }
 
-TEST(Codifferential, NonStaged)
+TEST(Codifferential, NonStaged2D1Form)
 {
     run_codifferential_test(
             [](auto codifferential_tensor, auto tensor, auto metric, auto position) {
-                sil::exterior::codifferential<
-                        MetricIndex<X, Y>,
-                        sil::tensor::Covariant<Mu2>,
-                        sil::tensor::Covariant<Mu2>>(
-                        Kokkos::DefaultHostExecutionSpace(),
-                        codifferential_tensor,
-                        tensor,
-                        metric,
-                        position);
+                using TensorIndex = sil::tensor::Covariant<Mu2>;
+                using DualTensorIndex = sil::misc::convert_type_seq_to_t<
+                        sil::tensor::TensorAntisymmetricIndex,
+                        sil::exterior::codifferential_hodge_output_indices_t<
+                                TensorIndex::size() - TensorIndex::rank(),
+                                TensorIndex>>;
+                auto chain = sil::exterior::tangent_basis<
+                        DualTensorIndex::rank() + 1,
+                        ddc::DiscreteDomain<DDimX, DDimY>>(Kokkos::DefaultHostExecutionSpace());
+                auto lower_chain = sil::exterior::
+                        tangent_basis<DualTensorIndex::rank(), ddc::DiscreteDomain<DDimX, DDimY>>(
+                                Kokkos::DefaultHostExecutionSpace());
+                ddc::host_for_each(tensor.non_indices_domain(), [&](auto elem) {
+                    sil::exterior::Codifferential<
+                            MetricIndex<X, Y>,
+                            TensorIndex,
+                            TensorIndex,
+                            std::decay_t<decltype(tensor)>,
+                            std::decay_t<decltype(metric)>,
+                            std::decay_t<decltype(position)>>::
+                            run(codifferential_tensor[elem],
+                                tensor,
+                                metric,
+                                position,
+                                chain,
+                                lower_chain,
+                                elem);
+                });
             });
 }
 
-TEST(Codifferential, Staged)
+TEST(Codifferential, Prefilled2D1Form)
+{
+    run_codifferential_test([](auto codifferential_tensor,
+                               auto tensor,
+                               auto metric,
+                               auto position) {
+        using TensorIndex = sil::tensor::Covariant<Mu2>;
+        using SourceHodgeInputIndices = sil::tensor::upper_t<
+                ddc::to_type_seq_t<sil::tensor::natural_domain_t<TensorIndex>>>;
+        using SourceHodgeOutputIndices = sil::exterior::codifferential_hodge_output_indices_t<
+                TensorIndex::size() - TensorIndex::rank(),
+                TensorIndex>;
+        using TargetHodgeInputIndices = ddc::
+                type_seq_merge_t<ddc::detail::TypeSeq<TensorIndex>, SourceHodgeOutputIndices>;
+        using TargetHodgeOutputIndices = ddc::type_seq_remove_t<
+                sil::tensor::lower_t<SourceHodgeInputIndices>,
+                ddc::detail::TypeSeq<TensorIndex>>;
+        using DualTensorIndex = sil::misc::convert_type_seq_to_t<
+                sil::tensor::TensorAntisymmetricIndex,
+                SourceHodgeOutputIndices>;
+
+        [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<
+                sil::exterior::
+                        hodge_star_domain_t<SourceHodgeInputIndices, SourceHodgeOutputIndices>>
+                hodge_star_accessor;
+        ddc::cartesian_prod_t<
+                typename std::decay_t<decltype(metric)>::non_indices_domain_t,
+                sil::exterior::
+                        hodge_star_domain_t<SourceHodgeInputIndices, SourceHodgeOutputIndices>>
+                hodge_star_dom(metric.non_indices_domain(), hodge_star_accessor.domain());
+        ddc::Chunk hodge_star_alloc(hodge_star_dom, ddc::HostAllocator<double>());
+        sil::tensor::Tensor hodge_star(hodge_star_alloc);
+
+        [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<
+                sil::exterior::hodge_star_domain_t<
+                        sil::tensor::upper_t<TargetHodgeInputIndices>,
+                        TargetHodgeOutputIndices>> dual_hodge_star_accessor;
+        ddc::cartesian_prod_t<
+                typename std::decay_t<decltype(metric)>::non_indices_domain_t,
+                sil::exterior::hodge_star_domain_t<
+                        sil::tensor::upper_t<TargetHodgeInputIndices>,
+                        TargetHodgeOutputIndices>>
+                dual_hodge_star_dom(metric.non_indices_domain(), dual_hodge_star_accessor.domain());
+        ddc::Chunk dual_hodge_star_alloc(dual_hodge_star_dom, ddc::HostAllocator<double>());
+        sil::tensor::Tensor dual_hodge_star(dual_hodge_star_alloc);
+
+        [[maybe_unused]] sil::tensor::TensorAccessor<DualTensorIndex> dual_tensor_accessor;
+        ddc::cartesian_prod_t<
+                typename std::decay_t<decltype(tensor)>::non_indices_domain_t,
+                ddc::DiscreteDomain<DualTensorIndex>>
+                dual_tensor_dom(tensor.non_indices_domain(), dual_tensor_accessor.domain());
+        ddc::Chunk dual_tensor_alloc(dual_tensor_dom, ddc::HostAllocator<double>());
+        sil::tensor::Tensor dual_tensor_buffer(dual_tensor_alloc);
+
+        sil::exterior::fill_discrete_hodge_star<SourceHodgeInputIndices, SourceHodgeOutputIndices>(
+                Kokkos::DefaultHostExecutionSpace(),
+                hodge_star,
+                metric,
+                position);
+        sil::exterior::fill_discrete_hodge_star<
+                sil::tensor::upper_t<TargetHodgeInputIndices>,
+                TargetHodgeOutputIndices>(
+                Kokkos::DefaultHostExecutionSpace(),
+                dual_hodge_star,
+                metric,
+                position);
+
+        sil::exterior::codifferential<MetricIndex<X, Y>, TensorIndex, TensorIndex>(
+                Kokkos::DefaultHostExecutionSpace(),
+                codifferential_tensor,
+                tensor,
+                hodge_star,
+                dual_hodge_star,
+                dual_tensor_buffer);
+    });
+}
+
+TEST(Codifferential, Staged2D1Form)
 {
     run_codifferential_test([](auto codifferential_tensor,
                                auto tensor,
