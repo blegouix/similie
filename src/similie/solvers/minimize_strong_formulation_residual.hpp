@@ -7,6 +7,7 @@
 #include <cmath>
 #include <memory>
 #include <stdexcept>
+#include <type_traits>
 
 #include <ginkgo/extensions/kokkos.hpp>
 #include <ginkgo/core/log/convergence.hpp>
@@ -18,9 +19,6 @@
 #include <ginkgo/core/stop/residual_norm.hpp>
 
 #include <Kokkos_Core.hpp>
-
-#include <similie/physics/dedonder_weyl.hpp>
-#include <similie/physics/magnetostatics/structured_linear_magnetostatics.hpp>
 
 namespace similie::solvers {
 
@@ -147,57 +145,10 @@ auto to_gko_dense(std::shared_ptr<gko::Executor const> const& gko_exec, KokkosVi
             view.stride(0));
 }
 
-template <class MemorySpace>
-gko::matrix_data<double, gko::int32> assemble_matrix_data(
-        physics::magnetostatics::StructuredScalarPoissonStrongFormOperator2D<MemorySpace> const& operator_model)
-{
-    auto const x_coords_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), operator_model.x_coords());
-    auto const y_coords_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), operator_model.y_coords());
-
-    std::size_t const nx = operator_model.nx();
-    std::size_t const ny = operator_model.ny();
-
-    gko::matrix_data<double, gko::int32> matrix_data(gko::dim<2>(operator_model.size(), operator_model.size()));
-    matrix_data.nonzeros.reserve(5 * operator_model.size());
-
-    auto flat_index = [nx](std::size_t i, std::size_t j) { return static_cast<gko::int32>(i + nx * j); };
-
-    for (std::size_t j = 0; j < ny; ++j) {
-        for (std::size_t i = 0; i < nx; ++i) {
-            gko::int32 const row = flat_index(i, j);
-            bool const boundary = (i == 0 || j == 0 || i + 1 == nx || j + 1 == ny);
-            if (boundary) {
-                matrix_data.nonzeros.emplace_back(row, row, 1.0);
-                continue;
-            }
-
-            double const dxm = x_coords_host(i) - x_coords_host(i - 1);
-            double const dxp = x_coords_host(i + 1) - x_coords_host(i);
-            double const dym = y_coords_host(j) - y_coords_host(j - 1);
-            double const dyp = y_coords_host(j + 1) - y_coords_host(j);
-
-            double const coeff_im1 = -2.0 / (dxm * (dxm + dxp));
-            double const coeff_ip1 = -2.0 / (dxp * (dxm + dxp));
-            double const coeff_jm1 = -2.0 / (dym * (dym + dyp));
-            double const coeff_jp1 = -2.0 / (dyp * (dym + dyp));
-            double const coeff_center = -coeff_im1 - coeff_ip1 - coeff_jm1 - coeff_jp1;
-
-            matrix_data.nonzeros.emplace_back(row, flat_index(i - 1, j), coeff_im1);
-            matrix_data.nonzeros.emplace_back(row, flat_index(i + 1, j), coeff_ip1);
-            matrix_data.nonzeros.emplace_back(row, flat_index(i, j - 1), coeff_jm1);
-            matrix_data.nonzeros.emplace_back(row, flat_index(i, j + 1), coeff_jp1);
-            matrix_data.nonzeros.emplace_back(row, row, coeff_center);
-        }
-    }
-
-    matrix_data.sort_row_major();
-    return matrix_data;
-}
-
-template <class MemorySpace>
+template <class OperatorModel>
 std::shared_ptr<gko::matrix::Csr<double, gko::int32>> build_matrix(
         std::shared_ptr<gko::Executor const> const& gko_exec,
-        physics::magnetostatics::StructuredScalarPoissonStrongFormOperator2D<MemorySpace> const& operator_model)
+        OperatorModel const& operator_model)
 {
     using matrix_type = gko::matrix::Csr<double, gko::int32>;
     auto matrix = std::shared_ptr<matrix_type>(
@@ -233,18 +184,14 @@ double residual_norm_l2(ExecSpace exec_space, ViewType residual)
 
 } // namespace detail
 
-template <class ExecSpace, class MemorySpace, class RHSViewType, class SolutionViewType>
+template <class ExecSpace, class OperatorModel, class RHSViewType, class SolutionViewType>
 StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
         ExecSpace exec_space,
-        physics::dedonder_weyl::StationaryStrongFormulation<
-                physics::magnetostatics::StructuredScalarPoissonStrongFormOperator2D<MemorySpace>> const&
-                formulation,
+        OperatorModel const& operator_model,
         RHSViewType rhs,
         SolutionViewType solution,
         StrongFormulationSolverSettings settings = {})
 {
-    using operator_model_type
-            = physics::magnetostatics::StructuredScalarPoissonStrongFormOperator2D<MemorySpace>;
     StrongFormulationSolverDiagnostics diagnostics;
 
     detail::fill(exec_space, solution, 0.0);
@@ -255,7 +202,6 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
         return diagnostics;
     }
 
-    operator_model_type const& operator_model = formulation.strong_form_operator;
     auto const gko_exec = gko::ext::kokkos::create_executor(exec_space);
     auto matrix = detail::build_matrix(gko_exec, operator_model);
     auto preconditioner = detail::build_jacobi_preconditioner(

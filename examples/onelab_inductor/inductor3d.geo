@@ -23,7 +23,17 @@ DefineConstant[
   SimiLieJz = {jcoil,
     Name "Input/90SimiLie/0Coil current density magnitude z [A/m^2]", Highlight "Ivory"},
   SimiLieMuCore = {mu_fe,
-    Name "Input/90SimiLie/1Core magnetic permeability [H/m]", Highlight "Ivory"}
+    Name "Input/90SimiLie/1Core magnetic permeability [H/m]", Highlight "Ivory"},
+  SimiLieECoreTag = {ECORE,
+    Name "Input/90SimiLie/2E-core physical tag", Highlight "Ivory"},
+  SimiLieICoreTag = {ICORE,
+    Name "Input/90SimiLie/3I-core physical tag", Highlight "Ivory"},
+  SimiLieCoilLeftTag = {COIL,
+    Name "Input/90SimiLie/4Left coil physical tag", Highlight "Ivory"},
+  SimiLieCoilRightTag = {COIL + 1,
+    Name "Input/90SimiLie/5Right coil physical tag", Highlight "Ivory"},
+  SimiLieAirGapTag = {AIRGAP,
+    Name "Input/90SimiLie/6Air-gap physical tag", Highlight "Ivory"}
 ];
 
 x1 = wcoreE;
