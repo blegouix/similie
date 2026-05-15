@@ -1,3 +1,5 @@
+Flag_3Dmodel = 1;
+
 Include "Inductor/inductor_data.geo";
 
 If(Flag_3Dmodel == 0)
