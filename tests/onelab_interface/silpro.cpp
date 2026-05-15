@@ -4,7 +4,6 @@
 #include <filesystem>
 
 #include <gtest/gtest.h>
-
 #include <similie/physics/hamilton_equations.hpp>
 #include <similie/physics/magnetostatics/linear_magnetostatics.hpp>
 #include <similie/physics/magnetostatics/magnetostatics_quantities.hpp>
@@ -102,7 +101,8 @@ TEST(OnelabInterface, StationaryMagnetostaticsOperatorMatchesPrediscretizedForMu
     Kokkos::deep_copy(x_coords, x_host);
     Kokkos::deep_copy(y_coords, y_host);
 
-    StructuredScalarPoissonStrongFormOperator2D<typename Kokkos::DefaultExecutionSpace::memory_space>
+    StructuredScalarPoissonStrongFormOperator2D<
+            typename Kokkos::DefaultExecutionSpace::memory_space>
             reference_operator(x_coords, y_coords);
     similie::physics::HamiltonEquations equations(LinearMagnetostaticsHamiltonian(1.0));
     auto wrapped_operator = similie::physics::make_stationary_equations_operator(
@@ -127,8 +127,10 @@ TEST(OnelabInterface, StationaryMagnetostaticsOperatorMatchesPrediscretizedForMu
                 reference_operator.apply_at(output_reference, input, row);
                 wrapped_operator.apply_at(output_wrapped, input, row);
             });
-    auto output_reference_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), output_reference);
-    auto output_wrapped_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), output_wrapped);
+    auto output_reference_host
+            = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), output_reference);
+    auto output_wrapped_host
+            = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), output_wrapped);
 
     for (std::size_t row = 0; row < 25; ++row) {
         EXPECT_NEAR(output_wrapped_host(row, 0), output_reference_host(row, 0), 1e-12)

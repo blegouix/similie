@@ -7,9 +7,9 @@
 #include <type_traits>
 #include <utility>
 
-#include <Kokkos_Core.hpp>
-
 #include <similie/physics/magnetostatics/magnetostatics_indices.hpp>
+
+#include <Kokkos_Core.hpp>
 
 namespace similie::physics {
 
@@ -66,28 +66,27 @@ public:
             PotentialTensor potential) const
     {
         if constexpr (requires {
-                          m_hamiltonian.run(
-                                  dspatial_momentum_dt,
-                                  dpotential_dt,
-                                  spatial_momentum,
-                                  potential);
+                          m_hamiltonian
+                                  .run(dspatial_momentum_dt,
+                                       dpotential_dt,
+                                       spatial_momentum,
+                                       potential);
                       }) {
-            m_hamiltonian.run(
-                    dspatial_momentum_dt,
-                    dpotential_dt,
-                    spatial_momentum,
-                    potential);
+            m_hamiltonian.run(dspatial_momentum_dt, dpotential_dt, spatial_momentum, potential);
         } else if constexpr (
                 detail::MagnetostaticsHamiltonian<Hamiltonian>
                 && detail::MagneticInductionLikeTensor<DSpatialMomentumDtTensor>
                 && detail::MagneticFieldLikeTensor<DPotentialDtTensor>
                 && detail::MagneticInductionLikeTensor<SpatialMomentumTensor>) {
             double const bx = spatial_momentum(
-                    spatial_momentum.template access_element<magnetostatics::Y, magnetostatics::Z>());
+                    spatial_momentum
+                            .template access_element<magnetostatics::Y, magnetostatics::Z>());
             double const by = -spatial_momentum(
-                    spatial_momentum.template access_element<magnetostatics::X, magnetostatics::Z>());
+                    spatial_momentum
+                            .template access_element<magnetostatics::X, magnetostatics::Z>());
             double const bz = spatial_momentum(
-                    spatial_momentum.template access_element<magnetostatics::X, magnetostatics::Y>());
+                    spatial_momentum
+                            .template access_element<magnetostatics::X, magnetostatics::Y>());
 
             dpotential_dt(dpotential_dt.template access_element<magnetostatics::X>())
                     = m_hamiltonian.dH_dB0(bx);
@@ -97,18 +96,22 @@ public:
                     = m_hamiltonian.dH_dB2(bz);
 
             dspatial_momentum_dt(
-                    dspatial_momentum_dt.template access_element<magnetostatics::Y, magnetostatics::Z>())
+                    dspatial_momentum_dt
+                            .template access_element<magnetostatics::Y, magnetostatics::Z>())
                     = 0.0;
             dspatial_momentum_dt(
-                    dspatial_momentum_dt.template access_element<magnetostatics::X, magnetostatics::Z>())
+                    dspatial_momentum_dt
+                            .template access_element<magnetostatics::X, magnetostatics::Z>())
                     = 0.0;
             dspatial_momentum_dt(
-                    dspatial_momentum_dt.template access_element<magnetostatics::X, magnetostatics::Y>())
+                    dspatial_momentum_dt
+                            .template access_element<magnetostatics::X, magnetostatics::Y>())
                     = 0.0;
         } else {
 #ifndef __CUDA_ARCH__
             throw std::logic_error(
-                    "HamiltonEquations::run is not implemented for this Hamiltonian/tensor combination");
+                    "HamiltonEquations::run is not implemented for this Hamiltonian/tensor "
+                    "combination");
 #endif
         }
     }

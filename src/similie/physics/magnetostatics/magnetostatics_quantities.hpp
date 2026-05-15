@@ -18,7 +18,11 @@ template <class TensorIndex>
 KOKKOS_FUNCTION auto make_local_tensor(std::array<double, TensorIndex::access_size()>& storage)
 {
     [[maybe_unused]] sil::tensor::TensorAccessor<TensorIndex> accessor;
-    ddc::ChunkSpan<double, ddc::DiscreteDomain<TensorIndex>, Kokkos::layout_right, Kokkos::HostSpace>
+    ddc::ChunkSpan<
+            double,
+            ddc::DiscreteDomain<TensorIndex>,
+            Kokkos::layout_right,
+            Kokkos::HostSpace>
             span(storage.data(), accessor.domain());
     return sil::tensor::Tensor(span);
 }
@@ -49,9 +53,8 @@ public:
     template <
             sil::misc::Specialization<sil::tensor::Tensor> MagneticInductionTensorType,
             sil::misc::Specialization<sil::tensor::Tensor> MagneticVectorPotentialTensorType>
-    KOKKOS_FUNCTION void inverse(
-            MagneticVectorPotentialTensorType,
-            MagneticInductionTensorType) const
+    KOKKOS_FUNCTION void inverse(MagneticVectorPotentialTensorType, MagneticInductionTensorType)
+            const
     {
     }
 };
@@ -86,9 +89,12 @@ public:
 
         double const half_trace = 0.5 * (bx * hx + by * hy + bz * hz);
 
-        maxwell_stress_tensor(maxwell_stress_tensor.template access_element<X, X>()) = bx * hx - half_trace;
-        maxwell_stress_tensor(maxwell_stress_tensor.template access_element<Y, Y>()) = by * hy - half_trace;
-        maxwell_stress_tensor(maxwell_stress_tensor.template access_element<Z, Z>()) = bz * hz - half_trace;
+        maxwell_stress_tensor(maxwell_stress_tensor.template access_element<X, X>())
+                = bx * hx - half_trace;
+        maxwell_stress_tensor(maxwell_stress_tensor.template access_element<Y, Y>())
+                = by * hy - half_trace;
+        maxwell_stress_tensor(maxwell_stress_tensor.template access_element<Z, Z>())
+                = bz * hz - half_trace;
         maxwell_stress_tensor(maxwell_stress_tensor.template access_element<X, Y>()) = bx * hy;
         maxwell_stress_tensor(maxwell_stress_tensor.template access_element<X, Z>()) = bx * hz;
         maxwell_stress_tensor(maxwell_stress_tensor.template access_element<Y, Z>()) = by * hz;

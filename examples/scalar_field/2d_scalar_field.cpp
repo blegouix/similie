@@ -14,9 +14,8 @@
 #include <ddc/kernels/splines.hpp>
 #include <ddc/pdi.hpp>
 
-#include <similie/similie.hpp>
-
 #include <similie/physics/scalar_field/scalar_field_with_power_coupling.hpp>
+#include <similie/similie.hpp>
 
 // PDI config
 constexpr char const* const PDI_CFG = R"PDI_CFG(
@@ -491,10 +490,8 @@ int main(int argc, char** argv)
      *
      * We implement mid-point explicit temporal integration scheme.
      */
-    similie::physics::scalar_field::ScalarFieldHamiltonian const hamiltonian_model(
-            mass,
-            coupling_constant,
-            coupling_power);
+    similie::physics::scalar_field::ScalarFieldHamiltonian const
+            hamiltonian_model(mass, coupling_constant, coupling_power);
     for (int i = 0; i < nb_iter; i++) {
         if (i % nb_iter_between_exports == 0) {
             std::cout << "Start iteration " << i << std::endl;

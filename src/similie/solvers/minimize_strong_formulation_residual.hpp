@@ -9,7 +9,6 @@
 #include <stdexcept>
 #include <type_traits>
 
-#include <ginkgo/extensions/kokkos.hpp>
 #include <ginkgo/core/log/convergence.hpp>
 #include <ginkgo/core/matrix/csr.hpp>
 #include <ginkgo/core/matrix/dense.hpp>
@@ -17,6 +16,7 @@
 #include <ginkgo/core/solver/cg.hpp>
 #include <ginkgo/core/stop/iteration.hpp>
 #include <ginkgo/core/stop/residual_norm.hpp>
+#include <ginkgo/extensions/kokkos.hpp>
 
 #include <Kokkos_Core.hpp>
 
@@ -43,7 +43,11 @@ struct StrongFormulationSolverDiagnostics
 namespace detail {
 
 template <class ExecSpace, class OperatorModel, class InputView, class OutputView>
-void apply_operator(ExecSpace exec_space, OperatorModel const& operator_model, InputView input, OutputView output)
+void apply_operator(
+        ExecSpace exec_space,
+        OperatorModel const& operator_model,
+        InputView input,
+        OutputView output)
 {
     Kokkos::parallel_for(
             "similie_apply_operator",
@@ -58,10 +62,9 @@ double dot(ExecSpace exec_space, ViewType1 lhs, ViewType2 rhs)
     double result = 0.0;
     Kokkos::parallel_reduce(
             "similie_dot",
-            Kokkos::MDRangePolicy<ExecSpace, Kokkos::Rank<2>>(
-                    exec_space,
-                    {0, 0},
-                    {lhs.extent(0), lhs.extent(1)}),
+            Kokkos::MDRangePolicy<
+                    ExecSpace,
+                    Kokkos::Rank<2>>(exec_space, {0, 0}, {lhs.extent(0), lhs.extent(1)}),
             KOKKOS_LAMBDA(std::size_t row, std::size_t column, double& local_sum) {
                 local_sum += lhs(row, column) * rhs(row, column);
             },
@@ -75,10 +78,9 @@ void fill(ExecSpace exec_space, ViewType view, double value)
 {
     Kokkos::parallel_for(
             "similie_fill",
-            Kokkos::MDRangePolicy<ExecSpace, Kokkos::Rank<2>>(
-                    exec_space,
-                    {0, 0},
-                    {view.extent(0), view.extent(1)}),
+            Kokkos::MDRangePolicy<
+                    ExecSpace,
+                    Kokkos::Rank<2>>(exec_space, {0, 0}, {view.extent(0), view.extent(1)}),
             KOKKOS_LAMBDA(std::size_t row, std::size_t column) { view(row, column) = value; });
     exec_space.fence();
 }
@@ -88,10 +90,10 @@ void copy(ExecSpace exec_space, DestinationView destination, SourceView source)
 {
     Kokkos::parallel_for(
             "similie_copy",
-            Kokkos::MDRangePolicy<ExecSpace, Kokkos::Rank<2>>(
-                    exec_space,
-                    {0, 0},
-                    {destination.extent(0), destination.extent(1)}),
+            Kokkos::MDRangePolicy<
+                    ExecSpace,
+                    Kokkos::Rank<
+                            2>>(exec_space, {0, 0}, {destination.extent(0), destination.extent(1)}),
             KOKKOS_LAMBDA(std::size_t row, std::size_t column) {
                 destination(row, column) = source(row, column);
             });
@@ -99,14 +101,20 @@ void copy(ExecSpace exec_space, DestinationView destination, SourceView source)
 }
 
 template <class ExecSpace, class ViewType1, class ViewType2, class ViewType3>
-void update_axpby(ExecSpace exec_space, ViewType1 destination, double alpha, ViewType2 x, double beta, ViewType3 y)
+void update_axpby(
+        ExecSpace exec_space,
+        ViewType1 destination,
+        double alpha,
+        ViewType2 x,
+        double beta,
+        ViewType3 y)
 {
     Kokkos::parallel_for(
             "similie_axpby",
-            Kokkos::MDRangePolicy<ExecSpace, Kokkos::Rank<2>>(
-                    exec_space,
-                    {0, 0},
-                    {destination.extent(0), destination.extent(1)}),
+            Kokkos::MDRangePolicy<
+                    ExecSpace,
+                    Kokkos::Rank<
+                            2>>(exec_space, {0, 0}, {destination.extent(0), destination.extent(1)}),
             KOKKOS_LAMBDA(std::size_t row, std::size_t column) {
                 destination(row, column) = alpha * x(row, column) + beta * y(row, column);
             });
@@ -118,10 +126,10 @@ void axpy_inplace(ExecSpace exec_space, ViewType1 destination, double alpha, Vie
 {
     Kokkos::parallel_for(
             "similie_axpy_inplace",
-            Kokkos::MDRangePolicy<ExecSpace, Kokkos::Rank<2>>(
-                    exec_space,
-                    {0, 0},
-                    {destination.extent(0), destination.extent(1)}),
+            Kokkos::MDRangePolicy<
+                    ExecSpace,
+                    Kokkos::Rank<
+                            2>>(exec_space, {0, 0}, {destination.extent(0), destination.extent(1)}),
             KOKKOS_LAMBDA(std::size_t row, std::size_t column) {
                 destination(row, column) += alpha * source(row, column);
             });
@@ -135,14 +143,15 @@ auto to_gko_dense(std::shared_ptr<gko::Executor const> const& gko_exec, KokkosVi
     using value_type = typename KokkosViewType::traits::value_type;
 
     if (view.stride(1) != 1) {
-        throw std::runtime_error("The Kokkos view passed to Ginkgo must be contiguous in the second dimension");
+        throw std::runtime_error(
+                "The Kokkos view passed to Ginkgo must be contiguous in the second dimension");
     }
 
-    return gko::matrix::Dense<value_type>::create(
-            gko_exec,
-            gko::dim<2>(view.extent(0), view.extent(1)),
-            gko::array<value_type>::view(gko_exec, view.span(), view.data()),
-            view.stride(0));
+    return gko::matrix::Dense<value_type>::
+            create(gko_exec,
+                   gko::dim<2>(view.extent(0), view.extent(1)),
+                   gko::array<value_type>::view(gko_exec, view.span(), view.data()),
+                   view.stride(0));
 }
 
 template <class OperatorModel>
@@ -152,7 +161,8 @@ std::shared_ptr<gko::matrix::Csr<double, gko::int32>> build_matrix(
 {
     using matrix_type = gko::matrix::Csr<double, gko::int32>;
     auto matrix = std::shared_ptr<matrix_type>(
-            matrix_type::create(gko_exec, gko::dim<2>(operator_model.size(), operator_model.size())).release());
+            matrix_type::create(gko_exec, gko::dim<2>(operator_model.size(), operator_model.size()))
+                    .release());
     auto matrix_data = assemble_matrix_data(operator_model);
     matrix->read(matrix_data);
     return matrix;
@@ -214,12 +224,16 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
         auto residual_criterion = gko::stop::ResidualNorm<double>::build()
                                           .with_reduction_factor(settings.relative_tolerance)
                                           .on(gko_exec);
-        auto iterations_criterion
-                = gko::stop::Iteration::build().with_max_iters(settings.max_iterations).on(gko_exec);
-        auto preconditioner_factory = detail::build_jacobi_preconditioner_factory(gko_exec, settings);
+        auto iterations_criterion = gko::stop::Iteration::build()
+                                            .with_max_iters(settings.max_iterations)
+                                            .on(gko_exec);
+        auto preconditioner_factory
+                = detail::build_jacobi_preconditioner_factory(gko_exec, settings);
         auto solver_factory = solver_type::build()
                                       .with_preconditioner(std::move(preconditioner_factory))
-                                      .with_criteria(std::move(residual_criterion), std::move(iterations_criterion))
+                                      .with_criteria(
+                                              std::move(residual_criterion),
+                                              std::move(iterations_criterion))
                                       .on(gko_exec);
         auto solver = solver_factory->generate(std::static_pointer_cast<gko::LinOp const>(matrix));
         auto convergence_logger = std::shared_ptr<gko::log::Convergence<double>>(
@@ -236,21 +250,21 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
         diagnostics.optimization_wall_seconds
                 = std::chrono::duration<double>(optimization_end - optimization_start).count();
 
-        diagnostics.iterations = static_cast<unsigned int>(convergence_logger->get_num_iterations());
+        diagnostics.iterations
+                = static_cast<unsigned int>(convergence_logger->get_num_iterations());
         diagnostics.converged = convergence_logger->has_converged();
-        auto residual_norm_dense
-                = dynamic_cast<gko::matrix::Dense<double> const*>(convergence_logger->get_residual_norm());
+        auto residual_norm_dense = dynamic_cast<gko::matrix::Dense<double> const*>(
+                convergence_logger->get_residual_norm());
         if (residual_norm_dense != nullptr) {
-            auto host_dense = gko::matrix::Dense<double>::create(
-                    gko_exec->get_master(),
-                    residual_norm_dense->get_size());
+            auto host_dense = gko::matrix::Dense<
+                    double>::create(gko_exec->get_master(), residual_norm_dense->get_size());
             residual_norm_dense->convert_to(host_dense.get());
             diagnostics.final_residual_l2 = host_dense->at(0, 0);
         }
-        diagnostics.final_relative_residual = diagnostics.initial_residual_l2 == 0.0
-                                                      ? 0.0
-                                                      : diagnostics.final_residual_l2
-                                                                / diagnostics.initial_residual_l2;
+        diagnostics.final_relative_residual
+                = diagnostics.initial_residual_l2 == 0.0
+                          ? 0.0
+                          : diagnostics.final_residual_l2 / diagnostics.initial_residual_l2;
         return diagnostics;
     }
 
@@ -260,7 +274,8 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
             "similie_preconditioned_residual",
             rhs.extent(0),
             rhs.extent(1));
-    Kokkos::View<double**, memory_space> search_direction("similie_search_direction", rhs.extent(0), rhs.extent(1));
+    Kokkos::View<double**, memory_space>
+            search_direction("similie_search_direction", rhs.extent(0), rhs.extent(1));
     Kokkos::View<double**, memory_space> operator_search_direction(
             "similie_operator_search_direction",
             rhs.extent(0),
@@ -289,7 +304,8 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
                 search_direction,
                 operator_search_direction);
 
-        double const denominator = detail::dot(exec_space, search_direction, operator_search_direction);
+        double const denominator
+                = detail::dot(exec_space, search_direction, operator_search_direction);
         if (std::abs(denominator) < 1.0e-30) {
             break;
         }
@@ -300,18 +316,20 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
 
         double const new_residual_norm_sq = detail::dot(exec_space, residual, residual);
         diagnostics.final_residual_l2 = std::sqrt(new_residual_norm_sq);
-        diagnostics.final_relative_residual = diagnostics.initial_residual_l2 == 0.0
-                                                     ? 0.0
-                                                     : diagnostics.final_residual_l2
-                                                               / diagnostics.initial_residual_l2;
-        if (new_residual_norm_sq <= settings.relative_tolerance * settings.relative_tolerance * initial_norm_sq) {
+        diagnostics.final_relative_residual
+                = diagnostics.initial_residual_l2 == 0.0
+                          ? 0.0
+                          : diagnostics.final_residual_l2 / diagnostics.initial_residual_l2;
+        if (new_residual_norm_sq
+            <= settings.relative_tolerance * settings.relative_tolerance * initial_norm_sq) {
             diagnostics.converged = true;
             break;
         }
 
         {
             auto residual_gko = detail::to_gko_dense(gko_exec, residual);
-            auto preconditioned_residual_gko = detail::to_gko_dense(gko_exec, preconditioned_residual);
+            auto preconditioned_residual_gko
+                    = detail::to_gko_dense(gko_exec, preconditioned_residual);
             preconditioner->apply(residual_gko, preconditioned_residual_gko);
             gko_exec->synchronize();
         }
@@ -320,7 +338,13 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
             break;
         }
         double const beta = new_rz_dot / rz_dot;
-        detail::update_axpby(exec_space, search_direction, 1.0, preconditioned_residual, beta, search_direction);
+        detail::update_axpby(
+                exec_space,
+                search_direction,
+                1.0,
+                preconditioned_residual,
+                beta,
+                search_direction);
         residual_norm_sq = new_residual_norm_sq;
         rz_dot = new_rz_dot;
     }

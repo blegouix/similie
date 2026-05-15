@@ -14,9 +14,7 @@ class StationaryEquationsOperator
     OperatorModel m_operator_model;
 
 public:
-    constexpr StationaryEquationsOperator(
-            Equations equations,
-            OperatorModel operator_model)
+    constexpr StationaryEquationsOperator(Equations equations, OperatorModel operator_model)
         : m_equations(std::move(equations))
         , m_operator_model(std::move(operator_model))
     {
@@ -45,7 +43,12 @@ public:
         // solve follow the physics equations directly, while the wrapped operator
         // still provides the assembled/preconditioning path when needed.
         if constexpr (requires {
-                          apply_stationary_equations_at(output, input, row, m_equations, m_operator_model);
+                          apply_stationary_equations_at(
+                                  output,
+                                  input,
+                                  row,
+                                  m_equations,
+                                  m_operator_model);
                       }) {
             apply_stationary_equations_at(output, input, row, m_equations, m_operator_model);
         } else {
@@ -64,13 +67,11 @@ auto assemble_matrix_data(
 }
 
 template <class Equations, class OperatorModel>
-constexpr auto make_stationary_equations_operator(
-        Equations equations,
-        OperatorModel operator_model)
+constexpr auto make_stationary_equations_operator(Equations equations, OperatorModel operator_model)
 {
-    return StationaryEquationsOperator<Equations, OperatorModel>(
-            std::move(equations),
-            std::move(operator_model));
+    return StationaryEquationsOperator<
+            Equations,
+            OperatorModel>(std::move(equations), std::move(operator_model));
 }
 
 } // namespace similie::physics

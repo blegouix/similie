@@ -64,10 +64,22 @@ struct StructuredGrid2D
     std::vector<MeshNode> ordered_nodes;
     std::vector<QuadrilateralCell> ordered_cells;
 
-    [[nodiscard]] std::size_t nx() const { return x_coords.size(); }
-    [[nodiscard]] std::size_t ny() const { return y_coords.size(); }
-    [[nodiscard]] std::size_t ncell_x() const { return x_coords.size() - 1; }
-    [[nodiscard]] std::size_t ncell_y() const { return y_coords.size() - 1; }
+    [[nodiscard]] std::size_t nx() const
+    {
+        return x_coords.size();
+    }
+    [[nodiscard]] std::size_t ny() const
+    {
+        return y_coords.size();
+    }
+    [[nodiscard]] std::size_t ncell_x() const
+    {
+        return x_coords.size() - 1;
+    }
+    [[nodiscard]] std::size_t ncell_y() const
+    {
+        return y_coords.size() - 1;
+    }
 
     [[nodiscard]] std::size_t node_index(std::size_t i, std::size_t j) const
     {
@@ -79,8 +91,14 @@ struct StructuredGrid2D
         return i + ncell_x() * j;
     }
 
-    [[nodiscard]] double cell_center_x(std::size_t i) const { return 0.5 * (x_coords[i] + x_coords[i + 1]); }
-    [[nodiscard]] double cell_center_y(std::size_t j) const { return 0.5 * (y_coords[j] + y_coords[j + 1]); }
+    [[nodiscard]] double cell_center_x(std::size_t i) const
+    {
+        return 0.5 * (x_coords[i] + x_coords[i + 1]);
+    }
+    [[nodiscard]] double cell_center_y(std::size_t j) const
+    {
+        return 0.5 * (y_coords[j] + y_coords[j + 1]);
+    }
 };
 
 struct StructuredGrid3D
@@ -92,12 +110,30 @@ struct StructuredGrid3D
     std::vector<MeshNode> ordered_nodes;
     std::vector<HexahedralCell> ordered_cells;
 
-    [[nodiscard]] std::size_t nx() const { return x_coords.size(); }
-    [[nodiscard]] std::size_t ny() const { return y_coords.size(); }
-    [[nodiscard]] std::size_t nz() const { return z_coords.size(); }
-    [[nodiscard]] std::size_t ncell_x() const { return x_coords.size() - 1; }
-    [[nodiscard]] std::size_t ncell_y() const { return y_coords.size() - 1; }
-    [[nodiscard]] std::size_t ncell_z() const { return z_coords.size() - 1; }
+    [[nodiscard]] std::size_t nx() const
+    {
+        return x_coords.size();
+    }
+    [[nodiscard]] std::size_t ny() const
+    {
+        return y_coords.size();
+    }
+    [[nodiscard]] std::size_t nz() const
+    {
+        return z_coords.size();
+    }
+    [[nodiscard]] std::size_t ncell_x() const
+    {
+        return x_coords.size() - 1;
+    }
+    [[nodiscard]] std::size_t ncell_y() const
+    {
+        return y_coords.size() - 1;
+    }
+    [[nodiscard]] std::size_t ncell_z() const
+    {
+        return z_coords.size() - 1;
+    }
 
     [[nodiscard]] std::size_t node_index(std::size_t i, std::size_t j, std::size_t k) const
     {
@@ -109,9 +145,18 @@ struct StructuredGrid3D
         return i + ncell_x() * (j + ncell_y() * k);
     }
 
-    [[nodiscard]] double cell_center_x(std::size_t i) const { return 0.5 * (x_coords[i] + x_coords[i + 1]); }
-    [[nodiscard]] double cell_center_y(std::size_t j) const { return 0.5 * (y_coords[j] + y_coords[j + 1]); }
-    [[nodiscard]] double cell_center_z(std::size_t k) const { return 0.5 * (z_coords[k] + z_coords[k + 1]); }
+    [[nodiscard]] double cell_center_x(std::size_t i) const
+    {
+        return 0.5 * (x_coords[i] + x_coords[i + 1]);
+    }
+    [[nodiscard]] double cell_center_y(std::size_t j) const
+    {
+        return 0.5 * (y_coords[j] + y_coords[j + 1]);
+    }
+    [[nodiscard]] double cell_center_z(std::size_t k) const
+    {
+        return 0.5 * (z_coords[k] + z_coords[k + 1]);
+    }
 };
 
 inline bool nearly_equal(double lhs, double rhs)
@@ -381,7 +426,8 @@ inline StructuredGrid2D build_structured_grid(QuadrilateralMesh const& mesh)
         }
 
         if (max_x != min_x + 1 || max_y != min_y + 1) {
-            throw std::runtime_error("a quadrilateral does not match a single rectilinear grid cell");
+            throw std::runtime_error(
+                    "a quadrilateral does not match a single rectilinear grid cell");
         }
 
         std::size_t const linear_index = grid.cell_index(min_x, min_y);
@@ -394,7 +440,8 @@ inline StructuredGrid2D build_structured_grid(QuadrilateralMesh const& mesh)
 
     for (bool occupied_cell : occupied_cells) {
         if (!occupied_cell) {
-            throw std::runtime_error("the quadrilateral cells do not cover a full rectilinear grid");
+            throw std::runtime_error(
+                    "the quadrilateral cells do not cover a full rectilinear grid");
         }
     }
 

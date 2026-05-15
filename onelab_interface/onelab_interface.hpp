@@ -5,9 +5,9 @@
 
 #include <algorithm>
 #include <array>
+#include <cctype>
 #include <chrono>
 #include <cmath>
-#include <cctype>
 #include <exception>
 #include <filesystem>
 #include <fstream>
@@ -28,7 +28,6 @@
 
 #include <ddc/ddc.hpp>
 
-#include "gmsh_structured_msh2.hpp"
 #include <similie/physics/hamilton_equations.hpp>
 #include <similie/physics/magnetostatics/structured_linear_magnetostatics_problem.hpp>
 #include <similie/physics/scalar_field/scalar_field_with_power_coupling.hpp>
@@ -36,16 +35,16 @@
 
 #include <onelab.h>
 
+#include "gmsh_structured_msh2.hpp"
+
 namespace similie::onelab_interface {
 
-enum class SupportedPhysics
-{
+enum class SupportedPhysics {
     ScalarFieldWithPowerCoupling,
     Magnetostatics,
 };
 
-enum class SupportedSolver
-{
+enum class SupportedSolver {
     MinimizeStrongFormulationResidual,
 };
 
@@ -126,8 +125,7 @@ struct SilproSection
 
 struct SilproToken
 {
-    enum class Kind
-    {
+    enum class Kind {
         Word,
         String,
         LBrace,
@@ -234,7 +232,10 @@ public:
     }
 
 private:
-    [[nodiscard]] bool at_end() const { return m_index >= m_tokens.size(); }
+    [[nodiscard]] bool at_end() const
+    {
+        return m_index >= m_tokens.size();
+    }
 
     [[nodiscard]] SilproToken const& peek() const
     {
@@ -295,9 +296,8 @@ inline SilproSection parse_silpro_tree(std::filesystem::path const& file)
         throw std::runtime_error("failed to open .silpro file: " + file.string());
     }
 
-    std::string const content(
-            (std::istreambuf_iterator<char>(stream)),
-            std::istreambuf_iterator<char>());
+    std::string const
+            content((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
     std::vector<SilproToken> const tokens = lex_silpro(content);
     SilproParser parser(tokens);
     return parser.parse_document();
@@ -351,33 +351,31 @@ inline SilproProblem parse_silpro_problem(std::filesystem::path const& file)
 
     SilproProblem problem;
     problem.name = get_value_or(problem_section, "Name", problem.name);
-    problem.physics = parse_physics_kind(get_value_or(problem_section, "Physics", "Magnetostatics"));
+    problem.physics
+            = parse_physics_kind(get_value_or(problem_section, "Physics", "Magnetostatics"));
     problem.solver = parse_solver_kind(
             get_value_or(problem_section, "Solver", "MinimizeStrongFormulationResidual"));
 
-    problem.solver_settings.max_iterations = parse_number<unsigned int>(
-            get_value_or(
-                    solver_section,
-                    "MaxIterations",
-                    std::to_string(problem.solver_settings.max_iterations)));
-    problem.solver_settings.relative_tolerance = parse_number<double>(
-            get_value_or(
-                    solver_section,
-                    "RelativeTolerance",
-                    std::to_string(problem.solver_settings.relative_tolerance)));
-    problem.solver_settings.jacobi_max_block_size = parse_number<unsigned int>(
-            get_value_or(
-                    solver_section,
-                    "JacobiMaxBlockSize",
-                    std::to_string(problem.solver_settings.jacobi_max_block_size)));
-    problem.solver_settings.use_matrix_free = parse_bool(
-            get_value_or(
-                    solver_section,
-                    "UseMatrixFree",
-                    problem.solver_settings.use_matrix_free ? "1" : "0"));
+    problem.solver_settings.max_iterations = parse_number<unsigned int>(get_value_or(
+            solver_section,
+            "MaxIterations",
+            std::to_string(problem.solver_settings.max_iterations)));
+    problem.solver_settings.relative_tolerance = parse_number<double>(get_value_or(
+            solver_section,
+            "RelativeTolerance",
+            std::to_string(problem.solver_settings.relative_tolerance)));
+    problem.solver_settings.jacobi_max_block_size = parse_number<unsigned int>(get_value_or(
+            solver_section,
+            "JacobiMaxBlockSize",
+            std::to_string(problem.solver_settings.jacobi_max_block_size)));
+    problem.solver_settings.use_matrix_free = parse_bool(get_value_or(
+            solver_section,
+            "UseMatrixFree",
+            problem.solver_settings.use_matrix_free ? "1" : "0"));
 
     if (problem.physics == SupportedPhysics::ScalarFieldWithPowerCoupling) {
-        SilproSection const& section = required_section(root, "ScalarFieldWithPowerCoupling", file.string());
+        SilproSection const& section
+                = required_section(root, "ScalarFieldWithPowerCoupling", file.string());
         problem.scalar_field.mass = parse_number<double>(
                 get_value_or(section, "Mass", std::to_string(problem.scalar_field.mass)));
         problem.scalar_field.coupling_constant = parse_number<double>(get_value_or(
@@ -431,7 +429,8 @@ class OnelabInterface
 {
     using Client = onelab::remoteNetworkClient;
     using MagnetostaticsInputs = physics::magnetostatics::StructuredLinearMagnetostaticsInputs;
-    using MagnetostaticsRegionTags = physics::magnetostatics::StructuredLinearMagnetostaticsRegionTags;
+    using MagnetostaticsRegionTags
+            = physics::magnetostatics::StructuredLinearMagnetostaticsRegionTags;
     using MagnetostaticsResult = physics::magnetostatics::StructuredLinearMagnetostaticsResult;
 
 public:
@@ -558,7 +557,9 @@ private:
         return parameters.front().getValue();
     }
 
-    [[nodiscard]] double get_first_number_value(std::string const& parameter_name, double default_value)
+    [[nodiscard]] double get_first_number_value(
+            std::string const& parameter_name,
+            double default_value)
     {
         std::vector<onelab::number> parameters;
         client().get(parameters, parameter_name);
@@ -573,7 +574,9 @@ private:
             std::optional<std::string> const& fallback_parameter,
             double fallback_value)
     {
-        double const preferred_value = get_first_number_value(preferred_parameter, std::numeric_limits<double>::quiet_NaN());
+        double const preferred_value = get_first_number_value(
+                preferred_parameter,
+                std::numeric_limits<double>::quiet_NaN());
         if (!std::isnan(preferred_value)) {
             return preferred_value;
         }
@@ -628,7 +631,8 @@ private:
 
         std::filesystem::path gmsh_mesh_file = get_first_string_value("Gmsh/MshFileName");
         if (gmsh_mesh_file.empty()) {
-            std::filesystem::path gmsh_model_path = get_first_string_value("Gmsh/Model absolute path");
+            std::filesystem::path gmsh_model_path
+                    = get_first_string_value("Gmsh/Model absolute path");
             if (!gmsh_model_path.empty()) {
                 return gmsh_model_path / "similie_onelab_current_mesh.msh";
             }
@@ -657,7 +661,9 @@ private:
         std::filesystem::path const input_mesh_file = resolve_input_mesh_file();
         if (has_explicit_mesh_file_control() && std::filesystem::exists(input_mesh_file)
             && std::filesystem::file_size(input_mesh_file) > 0) {
-            client().sendInfo("Using existing mesh file " + std::filesystem::absolute(input_mesh_file).string());
+            client().sendInfo(
+                    "Using existing mesh file "
+                    + std::filesystem::absolute(input_mesh_file).string());
             return input_mesh_file;
         }
         export_current_mesh_from_gmsh(input_mesh_file);
@@ -666,10 +672,12 @@ private:
 
     [[nodiscard]] std::filesystem::path resolve_problem_file()
     {
-        std::string const configured_file = get_first_string_value(control_parameter_name("Problem file"));
+        std::string const configured_file
+                = get_first_string_value(control_parameter_name("Problem file"));
         if (configured_file.empty()) {
             throw std::runtime_error(
-                    "no .silpro problem file configured: set '0Modules/SimiLie/0Control/Problem file'");
+                    "no .silpro problem file configured: set '0Modules/SimiLie/0Control/Problem "
+                    "file'");
         }
         return configured_file;
     }
@@ -709,7 +717,8 @@ private:
                 control_parameter_name("Mesh file"),
                 "",
                 "Mesh file",
-                "Optional path to the Gmsh .msh file that the SimiLie ONELAB interface should read. "
+                "Optional path to the Gmsh .msh file that the SimiLie ONELAB interface should "
+                "read. "
                 "If empty, the interface uses the current Gmsh mesh export.");
         input_mesh_file.setKind("file");
         client().set(input_mesh_file);
@@ -726,10 +735,13 @@ private:
         client().set(problem_file);
     }
 
-    bool synchronize_problem_controls(SilproProblem const& problem, std::filesystem::path const& silpro_file)
+    bool synchronize_problem_controls(
+            SilproProblem const& problem,
+            std::filesystem::path const& silpro_file)
     {
         std::string const current_file = std::filesystem::absolute(silpro_file).string();
-        std::string const last_file = get_first_string_value(internal_parameter_name("Last synchronized problem file"));
+        std::string const last_file
+                = get_first_string_value(internal_parameter_name("Last synchronized problem file"));
         bool const synchronize = (current_file != last_file);
 
         auto publish_or_sync_string = [&](std::string const& name,
@@ -752,7 +764,8 @@ private:
                                           double max_value,
                                           double step,
                                           std::optional<std::vector<double>> choices = std::nullopt,
-                                          std::optional<std::map<double, std::string>> value_labels = std::nullopt) {
+                                          std::optional<std::map<double, std::string>> value_labels
+                                          = std::nullopt) {
             onelab::number parameter
                     = get_or_create_number(name, value, label, help, min_value, max_value, step);
             if (synchronize) {
@@ -777,8 +790,9 @@ private:
                 problem_parameter_name("0Problem", "1Physics"),
                 "Physics",
                 "Physics selected in the .silpro file.",
-                problem.physics == SupportedPhysics::Magnetostatics ? "Magnetostatics"
-                                                                    : "ScalarFieldWithPowerCoupling",
+                problem.physics == SupportedPhysics::Magnetostatics
+                        ? "Magnetostatics"
+                        : "ScalarFieldWithPowerCoupling",
                 true);
         publish_or_sync_string(
                 problem_parameter_name("0Problem", "2Solver"),
@@ -814,7 +828,8 @@ private:
         publish_or_sync_number(
                 problem_parameter_name("1Solver", "3Use matrix-free"),
                 "Use matrix-free",
-                "When enabled, the strong-form operator is applied matrix-free and only the Jacobi preconditioner uses an auxiliary assembled matrix.",
+                "When enabled, the strong-form operator is applied matrix-free and only the Jacobi "
+                "preconditioner uses an auxiliary assembled matrix.",
                 problem.solver_settings.use_matrix_free ? 1.0 : 0.0,
                 0.0,
                 1.0,
@@ -851,7 +866,9 @@ private:
         }
 
         if (synchronize) {
-            publish_hidden_string(internal_parameter_name("Last synchronized problem file"), current_file);
+            publish_hidden_string(
+                    internal_parameter_name("Last synchronized problem file"),
+                    current_file);
         }
         return synchronize;
     }
@@ -864,14 +881,15 @@ private:
         problem.solver_settings.relative_tolerance = get_first_number_value(
                 problem_parameter_name("1Solver", "1Relative tolerance"),
                 problem.solver_settings.relative_tolerance);
-        problem.solver_settings.jacobi_max_block_size = static_cast<unsigned int>(get_first_number_value(
-                problem_parameter_name("1Solver", "2Jacobi max block size"),
-                static_cast<double>(problem.solver_settings.jacobi_max_block_size)));
-        problem.solver_settings.use_matrix_free = (
-                get_first_number_value(
-                        problem_parameter_name("1Solver", "3Use matrix-free"),
-                        problem.solver_settings.use_matrix_free ? 1.0 : 0.0)
-                != 0.0);
+        problem.solver_settings.jacobi_max_block_size
+                = static_cast<unsigned int>(get_first_number_value(
+                        problem_parameter_name("1Solver", "2Jacobi max block size"),
+                        static_cast<double>(problem.solver_settings.jacobi_max_block_size)));
+        problem.solver_settings.use_matrix_free
+                = (get_first_number_value(
+                           problem_parameter_name("1Solver", "3Use matrix-free"),
+                           problem.solver_settings.use_matrix_free ? 1.0 : 0.0)
+                   != 0.0);
 
         if (problem.physics == SupportedPhysics::ScalarFieldWithPowerCoupling) {
             ScalarFieldWithPowerCouplingProblem& cfg = problem.scalar_field;
@@ -908,8 +926,9 @@ private:
                 "Problem name declared in the .silpro file.");
         publish_output_string(
                 "Physics",
-                problem.physics == SupportedPhysics::Magnetostatics ? "Magnetostatics"
-                                                                    : "ScalarFieldWithPowerCoupling",
+                problem.physics == SupportedPhysics::Magnetostatics
+                        ? "Magnetostatics"
+                        : "ScalarFieldWithPowerCoupling",
                 "Physics",
                 "Physics selected by the .silpro file.");
         publish_output_string(
@@ -936,7 +955,8 @@ private:
             [[maybe_unused]] auto const solver_settings
                     = detail::assemble_solver_settings(problem.solver_settings);
             throw std::runtime_error(
-                    "ScalarFieldWithPowerCoupling .silpro files are parsed successfully, but ONELAB "
+                    "ScalarFieldWithPowerCoupling .silpro files are parsed successfully, but "
+                    "ONELAB "
                     "execution is not implemented yet in this interface");
         }
 
@@ -957,11 +977,13 @@ private:
 
         if (!(current_density_magnitude > 0.0)) {
             throw std::runtime_error(
-                    "missing or invalid 'Input/90SimiLie/0Coil current density magnitude z [A/m^2]' ONELAB parameter");
+                    "missing or invalid 'Input/90SimiLie/0Coil current density magnitude z "
+                    "[A/m^2]' ONELAB parameter");
         }
         if (!(core_mu > 0.0)) {
             throw std::runtime_error(
-                    "missing or invalid 'Input/90SimiLie/1Core magnetic permeability [H/m]' ONELAB parameter");
+                    "missing or invalid 'Input/90SimiLie/1Core magnetic permeability [H/m]' ONELAB "
+                    "parameter");
         }
         return {
                 .current_density_magnitude = current_density_magnitude,
@@ -1040,7 +1062,8 @@ private:
                 "Solver iterations",
                 static_cast<double>(result.solver_diagnostics.iterations),
                 "Solver iterations",
-                "Number of conjugate-gradient iterations performed by the stationary strong-formulation solver.");
+                "Number of conjugate-gradient iterations performed by the stationary "
+                "strong-formulation solver.");
         publish_output_string(
                 "Solver backend",
                 solver_settings.use_matrix_free ? "matrix-free" : "assembled-matrix",
@@ -1050,22 +1073,26 @@ private:
                 "Solver converged",
                 result.solver_diagnostics.converged ? 1.0 : 0.0,
                 "Solver converged",
-                "Equals 1 when the stationary strong-formulation solver met its relative-residual target, 0 otherwise.");
+                "Equals 1 when the stationary strong-formulation solver met its relative-residual "
+                "target, 0 otherwise.");
         publish_output_number(
                 "Final residual L2",
                 result.solver_diagnostics.final_residual_l2,
                 "Final residual L2",
-                "Final L2 norm of the strong-formulation residual returned by the stationary solver.");
+                "Final L2 norm of the strong-formulation residual returned by the stationary "
+                "solver.");
         publish_output_number(
                 "Final relative residual",
                 result.solver_diagnostics.final_relative_residual,
                 "Final relative residual",
-                "Final residual divided by the initial residual, as returned by the stationary solver.");
+                "Final residual divided by the initial residual, as returned by the stationary "
+                "solver.");
         publish_output_number(
                 "Solver optimization wall time [s]",
                 result.solver_diagnostics.optimization_wall_seconds,
                 "Solver optimization wall time [s]",
-                "Wall-clock time spent in the effective iterative optimization, excluding matrix and preconditioner assembly.");
+                "Wall-clock time spent in the effective iterative optimization, excluding matrix "
+                "and preconditioner assembly.");
         publish_output_number(
                 "Maximum magnetic vector potential [SI]",
                 result.max_abs_potential,
@@ -1083,23 +1110,28 @@ private:
                 "Maximum absolute value of the computed magnetic field.");
         publish_output_number(
                 "Air-gap mean magnetic induction [T]",
-                result.num_air_gap_cells == 0 ? 0.0
-                                              : result.air_gap_induction_magnitude_sum
-                                                        / static_cast<double>(result.num_air_gap_cells),
+                result.num_air_gap_cells == 0
+                        ? 0.0
+                        : result.air_gap_induction_magnitude_sum
+                                  / static_cast<double>(result.num_air_gap_cells),
                 "Air-gap mean magnetic induction [T]",
                 "Mean magnitude of the magnetic induction over air-gap cells.");
         publish_output_number(
                 "Mean force density magnitude [N/m^3]",
                 result.num_cells == 0 ? 0.0
-                                      : result.force_density_magnitude_sum / static_cast<double>(result.num_cells),
+                                      : result.force_density_magnitude_sum
+                                                / static_cast<double>(result.num_cells),
                 "Mean force density magnitude [N/m^3]",
                 "Mean magnitude of the force density over all supported cells.");
 
         std::ostringstream diagnostics_stream;
-        diagnostics_stream << "SimiLie solver diagnostics: iterations=" << result.solver_diagnostics.iterations
+        diagnostics_stream << "SimiLie solver diagnostics: iterations="
+                           << result.solver_diagnostics.iterations
                            << ", final residual L2=" << result.solver_diagnostics.final_residual_l2
-                           << ", final relative residual=" << result.solver_diagnostics.final_relative_residual
-                           << ", optimization wall time=" << result.solver_diagnostics.optimization_wall_seconds
+                           << ", final relative residual="
+                           << result.solver_diagnostics.final_relative_residual
+                           << ", optimization wall time="
+                           << result.solver_diagnostics.optimization_wall_seconds
                            << " s, air-gap mean |B|="
                            << (result.num_air_gap_cells == 0
                                        ? 0.0
@@ -1108,7 +1140,8 @@ private:
                            << " T, mean |f|="
                            << (result.num_cells == 0
                                        ? 0.0
-                                       : result.force_density_magnitude_sum / static_cast<double>(result.num_cells))
+                                       : result.force_density_magnitude_sum
+                                                 / static_cast<double>(result.num_cells))
                            << " N/m^3";
         client().sendInfo(diagnostics_stream.str());
         publish_status("Magnetostatics solve completed");
@@ -1116,7 +1149,9 @@ private:
 
     void run_magnetostatics_problem(SilproProblem const& problem)
     {
-        client().sendProgress(module_name() + " ONELAB interface: exporting mesh for problem '" + problem.name + "'");
+        client().sendProgress(
+                module_name() + " ONELAB interface: exporting mesh for problem '" + problem.name
+                + "'");
         std::filesystem::path const mesh_file = export_input_mesh_from_gmsh();
         MagnetostaticsInputs const inputs = read_magnetostatics_inputs();
         MagnetostaticsRegionTags const region_tags = read_magnetostatics_region_tags();
@@ -1175,7 +1210,8 @@ private:
 
         std::string const gmsh_command = "Mesh.Binary = 0;"
                                          "Mesh.MshFileVersion = 2.2;"
-                                         "Save \"" + absolute_mesh_file.string() + "\";";
+                                         "Save \""
+                                         + absolute_mesh_file.string() + "\";";
 
         client().sendInfo(
                 "Asking Gmsh to export the current mesh to " + absolute_mesh_file.string());
@@ -1196,11 +1232,13 @@ private:
 
                 if (stable_size_count >= 2) {
                     std::ifstream stream(absolute_mesh_file);
-                    std::string const content(
-                            (std::istreambuf_iterator<char>(stream)),
-                            std::istreambuf_iterator<char>());
-                    bool const has_completed_elements = content.find("$EndElements") != std::string::npos;
-                    bool const has_empty_nodes = content.find("$Nodes\n0\n$EndNodes") != std::string::npos;
+                    std::string const
+                            content((std::istreambuf_iterator<char>(stream)),
+                                    std::istreambuf_iterator<char>());
+                    bool const has_completed_elements
+                            = content.find("$EndElements") != std::string::npos;
+                    bool const has_empty_nodes
+                            = content.find("$Nodes\n0\n$EndNodes") != std::string::npos;
                     bool const has_empty_elements
                             = content.find("$Elements\n0\n$EndElements") != std::string::npos;
                     if (has_completed_elements && !has_empty_nodes && !has_empty_elements) {
@@ -1216,14 +1254,16 @@ private:
 
         if (std::filesystem::exists(absolute_mesh_file)) {
             std::ifstream stream(absolute_mesh_file);
-            std::string const content(
-                    (std::istreambuf_iterator<char>(stream)),
-                    std::istreambuf_iterator<char>());
+            std::string const
+                    content((std::istreambuf_iterator<char>(stream)),
+                            std::istreambuf_iterator<char>());
             bool const has_empty_nodes = content.find("$Nodes\n0\n$EndNodes") != std::string::npos;
-            bool const has_empty_elements = content.find("$Elements\n0\n$EndElements") != std::string::npos;
+            bool const has_empty_elements
+                    = content.find("$Elements\n0\n$EndElements") != std::string::npos;
             if (has_empty_nodes || has_empty_elements) {
                 throw std::runtime_error(
-                        "no current mesh available in Gmsh: mesh the model first or set 'Mesh file' explicitly");
+                        "no current mesh available in Gmsh: mesh the model first or set 'Mesh "
+                        "file' explicitly");
             }
         }
 

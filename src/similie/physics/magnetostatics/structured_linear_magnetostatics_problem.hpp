@@ -15,15 +15,16 @@
 #include <variant>
 #include <vector>
 
-#include <Kokkos_Core.hpp>
-
-#include "../../../../onelab_interface/gmsh_structured_msh2.hpp"
 #include <similie/physics/hamilton_equations.hpp>
-#include <similie/physics/magnetostatics/linear_magnetostatics.hpp>
 #include <similie/physics/magnetostatics/linear_magnetic_induction_to_magnetic_field.hpp>
+#include <similie/physics/magnetostatics/linear_magnetostatics.hpp>
 #include <similie/physics/magnetostatics/magnetostatics_quantities.hpp>
 #include <similie/physics/magnetostatics/structured_linear_magnetostatics.hpp>
 #include <similie/solvers/minimize_strong_formulation_residual.hpp>
+
+#include <Kokkos_Core.hpp>
+
+#include "../../../../onelab_interface/gmsh_structured_msh2.hpp"
 
 namespace similie::physics::magnetostatics {
 
@@ -125,8 +126,9 @@ inline void write_results_view(
     for (std::size_t j = 0; j < grid.ny(); ++j) {
         for (std::size_t i = 0; i < grid.nx(); ++i) {
             std::size_t const index = grid.node_index(i, j);
-            stream << "  VP(" << grid.x_coords[i] << ", " << grid.y_coords[j] << ", " << grid.z_value
-                   << "){0, 0, " << magnetic_vector_potential[3 * index + 2] << "};\n";
+            stream << "  VP(" << grid.x_coords[i] << ", " << grid.y_coords[j] << ", "
+                   << grid.z_value << "){0, 0, " << magnetic_vector_potential[3 * index + 2]
+                   << "};\n";
         }
     }
     stream << "};\n";
@@ -226,8 +228,8 @@ inline void write_results_view(
             for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
                 std::size_t const index = grid.cell_index(i, j, k);
                 stream << "  VP(" << grid.cell_center_x(i) << ", " << grid.cell_center_y(j) << ", "
-                       << grid.cell_center_z(k) << "){0, 0, " << cell_inputs[index].current_density[2]
-                       << "};\n";
+                       << grid.cell_center_z(k) << "){0, 0, "
+                       << cell_inputs[index].current_density[2] << "};\n";
             }
         }
     }
@@ -392,21 +394,21 @@ StructuredLinearMagnetostaticsResult run_on_quadrilateral_grid(
                 for (int di = -1; di <= 0; ++di) {
                     std::ptrdiff_t const ci = static_cast<std::ptrdiff_t>(i) + di;
                     std::ptrdiff_t const cj = static_cast<std::ptrdiff_t>(j) + dj;
-                    if (ci < 0 || cj < 0
-                        || ci >= static_cast<std::ptrdiff_t>(grid.ncell_x())
+                    if (ci < 0 || cj < 0 || ci >= static_cast<std::ptrdiff_t>(grid.ncell_x())
                         || cj >= static_cast<std::ptrdiff_t>(grid.ncell_y())) {
                         continue;
                     }
-                    accumulated_current_density_z += cell_inputs[grid.cell_index(
-                                                                         static_cast<std::size_t>(ci),
-                                                                         static_cast<std::size_t>(cj))]
-                                                             .current_density[2];
+                    accumulated_current_density_z
+                            += cell_inputs[grid.cell_index(
+                                                   static_cast<std::size_t>(ci),
+                                                   static_cast<std::size_t>(cj))]
+                                       .current_density[2];
                     ++count;
                 }
             }
-            rhs_host(node_index, 0)
-                    = count == 0 ? 0.0
-                                 : inputs.mu0 * accumulated_current_density_z / static_cast<double>(count);
+            rhs_host(node_index, 0) = count == 0 ? 0.0
+                                                 : inputs.mu0 * accumulated_current_density_z
+                                                           / static_cast<double>(count);
         }
     }
     Kokkos::deep_copy(rhs, rhs_host);
@@ -416,14 +418,14 @@ StructuredLinearMagnetostaticsResult run_on_quadrilateral_grid(
     physics::HamiltonEquations equations {hamiltonian};
     auto const operator_model = physics::make_stationary_equations_operator(
             equations,
-            StructuredScalarPoissonStrongFormOperator2D<typename Kokkos::DefaultExecutionSpace::memory_space>(
-                    x_coords,
-                    y_coords));
+            StructuredScalarPoissonStrongFormOperator2D<
+                    typename Kokkos::DefaultExecutionSpace::memory_space>(x_coords, y_coords));
     log_info(
             logger,
             solver_settings.use_matrix_free
                     ? "SimiLie starting matrix-free preconditioned conjugate-gradient solve"
-                    : "SimiLie starting assembled-matrix Ginkgo preconditioned conjugate-gradient solve");
+                    : "SimiLie starting assembled-matrix Ginkgo preconditioned conjugate-gradient "
+                      "solve");
     result.solver_diagnostics = solvers::minimize_strong_formulation_residual(
             Kokkos::DefaultExecutionSpace(),
             operator_model,
@@ -434,16 +436,17 @@ StructuredLinearMagnetostaticsResult run_on_quadrilateral_grid(
             logger,
             solver_settings.use_matrix_free
                     ? "SimiLie matrix-free preconditioned conjugate-gradient solve finished"
-                    : "SimiLie assembled-matrix Ginkgo preconditioned conjugate-gradient solve finished");
+                    : "SimiLie assembled-matrix Ginkgo preconditioned conjugate-gradient solve "
+                      "finished");
 
-    auto magnetic_vector_potential_z_host = Kokkos::create_mirror_view_and_copy(
-            Kokkos::HostSpace(),
-            magnetic_vector_potential_z_view);
+    auto magnetic_vector_potential_z_host = Kokkos::
+            create_mirror_view_and_copy(Kokkos::HostSpace(), magnetic_vector_potential_z_view);
     std::vector<double> magnetic_vector_potential(3 * num_nodes, 0.0);
     for (std::size_t j = 0; j < grid.ny(); ++j) {
         for (std::size_t i = 0; i < grid.nx(); ++i) {
             std::size_t const node_index = grid.node_index(i, j);
-            magnetic_vector_potential[3 * node_index + 2] = magnetic_vector_potential_z_host(node_index, 0);
+            magnetic_vector_potential[3 * node_index + 2]
+                    = magnetic_vector_potential_z_host(node_index, 0);
         }
     }
 
@@ -476,8 +479,10 @@ StructuredLinearMagnetostaticsResult run_on_quadrilateral_grid(
 
             std::array<double, MagneticInductionIndex::access_size()> magnetic_induction_storage {};
             std::array<double, MagneticFieldIndex::access_size()> magnetic_field_storage {};
-            auto magnetic_induction = detail::make_local_tensor<MagneticInductionIndex>(magnetic_induction_storage);
-            auto magnetic_field = detail::make_local_tensor<MagneticFieldIndex>(magnetic_field_storage);
+            auto magnetic_induction
+                    = detail::make_local_tensor<MagneticInductionIndex>(magnetic_induction_storage);
+            auto magnetic_field
+                    = detail::make_local_tensor<MagneticFieldIndex>(magnetic_field_storage);
 
             curl_operator.forward(
                     magnetic_induction,
@@ -503,10 +508,11 @@ StructuredLinearMagnetostaticsResult run_on_quadrilateral_grid(
                     magnetic_field(magnetic_field.template access_element<Y>()),
                     magnetic_field(magnetic_field.template access_element<Z>()),
             };
-            double const half_trace = 0.5
-                                      * (cell_output.magnetic_induction[0] * cell_output.magnetic_field[0]
-                                         + cell_output.magnetic_induction[1] * cell_output.magnetic_field[1]
-                                         + cell_output.magnetic_induction[2] * cell_output.magnetic_field[2]);
+            double const half_trace
+                    = 0.5
+                      * (cell_output.magnetic_induction[0] * cell_output.magnetic_field[0]
+                         + cell_output.magnetic_induction[1] * cell_output.magnetic_field[1]
+                         + cell_output.magnetic_induction[2] * cell_output.magnetic_field[2]);
             cell_output.maxwell_stress = {
                     cell_output.magnetic_induction[0] * cell_output.magnetic_field[0] - half_trace,
                     cell_output.magnetic_induction[1] * cell_output.magnetic_field[1] - half_trace,
@@ -566,7 +572,8 @@ StructuredLinearMagnetostaticsResult run_on_quadrilateral_grid(
                         },
                         j);
             };
-            std::array<double, 3>& force_density = cell_outputs[grid.cell_index(i, j)].force_density;
+            std::array<double, 3>& force_density
+                    = cell_outputs[grid.cell_index(i, j)].force_density;
             force_density[0] = derivative(0, 'x') + derivative(3, 'y');
             force_density[1] = derivative(3, 'x') + derivative(1, 'y');
             force_density[2] = derivative(4, 'x') + derivative(5, 'y');
@@ -576,7 +583,12 @@ StructuredLinearMagnetostaticsResult run_on_quadrilateral_grid(
         }
     }
 
-    write_results_view(output_view_file, grid, cell_inputs, magnetic_vector_potential, cell_outputs);
+    write_results_view(
+            output_view_file,
+            grid,
+            cell_inputs,
+            magnetic_vector_potential,
+            cell_outputs);
     log_info(logger, "SimiLie magnetostatics post-processing exported");
     return result;
 }
@@ -594,9 +606,9 @@ StructuredLinearMagnetostaticsResult run_on_hexahedral_grid(
     log_info(
             logger,
             "SimiLie structured rectilinear hexahedral mesh validated ("
-                    + std::to_string(grid.ordered_nodes.size()) + " nodes, dimensions="
-                    + std::to_string(grid.nx()) + "x" + std::to_string(grid.ny()) + "x"
-                    + std::to_string(grid.nz()) + ")");
+                    + std::to_string(grid.ordered_nodes.size())
+                    + " nodes, dimensions=" + std::to_string(grid.nx()) + "x"
+                    + std::to_string(grid.ny()) + "x" + std::to_string(grid.nz()) + ")");
 
     StructuredLinearMagnetostaticsResult result;
     result.topology = "hexahedral";
@@ -657,26 +669,26 @@ StructuredLinearMagnetostaticsResult run_on_hexahedral_grid(
                 for (int di = -1; di <= 0; ++di) {
                     std::ptrdiff_t const ci = static_cast<std::ptrdiff_t>(i) + di;
                     std::ptrdiff_t const cj = static_cast<std::ptrdiff_t>(j) + dj;
-                    if (ci < 0 || cj < 0
-                        || ci >= static_cast<std::ptrdiff_t>(grid.ncell_x())
+                    if (ci < 0 || cj < 0 || ci >= static_cast<std::ptrdiff_t>(grid.ncell_x())
                         || cj >= static_cast<std::ptrdiff_t>(grid.ncell_y())) {
                         continue;
                     }
                     double slice_sum = 0.0;
                     for (std::size_t ck = 0; ck < grid.ncell_z(); ++ck) {
                         slice_sum += cell_inputs[grid.cell_index(
-                                                          static_cast<std::size_t>(ci),
-                                                          static_cast<std::size_t>(cj),
-                                                          ck)]
+                                                         static_cast<std::size_t>(ci),
+                                                         static_cast<std::size_t>(cj),
+                                                         ck)]
                                              .current_density[2];
                     }
-                    accumulated_current_density_z += slice_sum / static_cast<double>(grid.ncell_z());
+                    accumulated_current_density_z
+                            += slice_sum / static_cast<double>(grid.ncell_z());
                     ++count;
                 }
             }
-            rhs_host(node_index_xy, 0)
-                    = count == 0 ? 0.0
-                                 : inputs.mu0 * accumulated_current_density_z / static_cast<double>(count);
+            rhs_host(node_index_xy, 0) = count == 0 ? 0.0
+                                                    : inputs.mu0 * accumulated_current_density_z
+                                                              / static_cast<double>(count);
         }
     }
     Kokkos::deep_copy(rhs, rhs_host);
@@ -686,14 +698,14 @@ StructuredLinearMagnetostaticsResult run_on_hexahedral_grid(
     physics::HamiltonEquations equations {hamiltonian};
     auto const operator_model = physics::make_stationary_equations_operator(
             equations,
-            StructuredScalarPoissonStrongFormOperator2D<typename Kokkos::DefaultExecutionSpace::memory_space>(
-                    x_coords,
-                    y_coords));
+            StructuredScalarPoissonStrongFormOperator2D<
+                    typename Kokkos::DefaultExecutionSpace::memory_space>(x_coords, y_coords));
     log_info(
             logger,
             solver_settings.use_matrix_free
                     ? "SimiLie starting matrix-free preconditioned conjugate-gradient solve"
-                    : "SimiLie starting assembled-matrix Ginkgo preconditioned conjugate-gradient solve");
+                    : "SimiLie starting assembled-matrix Ginkgo preconditioned conjugate-gradient "
+                      "solve");
     result.solver_diagnostics = solvers::minimize_strong_formulation_residual(
             Kokkos::DefaultExecutionSpace(),
             operator_model,
@@ -704,12 +716,12 @@ StructuredLinearMagnetostaticsResult run_on_hexahedral_grid(
             logger,
             solver_settings.use_matrix_free
                     ? "SimiLie matrix-free preconditioned conjugate-gradient solve finished"
-                    : "SimiLie assembled-matrix Ginkgo preconditioned conjugate-gradient solve finished");
+                    : "SimiLie assembled-matrix Ginkgo preconditioned conjugate-gradient solve "
+                      "finished");
 
     std::size_t const num_nodes = grid.nx() * grid.ny() * grid.nz();
-    auto magnetic_vector_potential_z_xy_host = Kokkos::create_mirror_view_and_copy(
-            Kokkos::HostSpace(),
-            magnetic_vector_potential_z_xy_view);
+    auto magnetic_vector_potential_z_xy_host = Kokkos::
+            create_mirror_view_and_copy(Kokkos::HostSpace(), magnetic_vector_potential_z_xy_view);
     std::vector<double> magnetic_vector_potential(3 * num_nodes, 0.0);
     for (std::size_t k = 0; k < grid.nz(); ++k) {
         for (std::size_t j = 0; j < grid.ny(); ++j) {
@@ -754,10 +766,13 @@ StructuredLinearMagnetostaticsResult run_on_hexahedral_grid(
             for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
                 std::size_t const cell_index = grid.cell_index(i, j, k);
 
-                std::array<double, MagneticInductionIndex::access_size()> magnetic_induction_storage {};
+                std::array<double, MagneticInductionIndex::access_size()>
+                        magnetic_induction_storage {};
                 std::array<double, MagneticFieldIndex::access_size()> magnetic_field_storage {};
-                auto magnetic_induction = detail::make_local_tensor<MagneticInductionIndex>(magnetic_induction_storage);
-                auto magnetic_field = detail::make_local_tensor<MagneticFieldIndex>(magnetic_field_storage);
+                auto magnetic_induction = detail::make_local_tensor<MagneticInductionIndex>(
+                        magnetic_induction_storage);
+                auto magnetic_field
+                        = detail::make_local_tensor<MagneticFieldIndex>(magnetic_field_storage);
 
                 curl_operator.forward(
                         magnetic_induction,
@@ -783,14 +798,18 @@ StructuredLinearMagnetostaticsResult run_on_hexahedral_grid(
                         magnetic_field(magnetic_field.template access_element<Y>()),
                         magnetic_field(magnetic_field.template access_element<Z>()),
                 };
-                double const half_trace = 0.5
-                                          * (cell_output.magnetic_induction[0] * cell_output.magnetic_field[0]
-                                             + cell_output.magnetic_induction[1] * cell_output.magnetic_field[1]
-                                             + cell_output.magnetic_induction[2] * cell_output.magnetic_field[2]);
+                double const half_trace
+                        = 0.5
+                          * (cell_output.magnetic_induction[0] * cell_output.magnetic_field[0]
+                             + cell_output.magnetic_induction[1] * cell_output.magnetic_field[1]
+                             + cell_output.magnetic_induction[2] * cell_output.magnetic_field[2]);
                 cell_output.maxwell_stress = {
-                        cell_output.magnetic_induction[0] * cell_output.magnetic_field[0] - half_trace,
-                        cell_output.magnetic_induction[1] * cell_output.magnetic_field[1] - half_trace,
-                        cell_output.magnetic_induction[2] * cell_output.magnetic_field[2] - half_trace,
+                        cell_output.magnetic_induction[0] * cell_output.magnetic_field[0]
+                                - half_trace,
+                        cell_output.magnetic_induction[1] * cell_output.magnetic_field[1]
+                                - half_trace,
+                        cell_output.magnetic_induction[2] * cell_output.magnetic_field[2]
+                                - half_trace,
                         cell_output.magnetic_induction[0] * cell_output.magnetic_field[1],
                         cell_output.magnetic_induction[0] * cell_output.magnetic_field[2],
                         cell_output.magnetic_induction[1] * cell_output.magnetic_field[2],
@@ -807,7 +826,8 @@ StructuredLinearMagnetostaticsResult run_on_hexahedral_grid(
                     double const induction_magnitude = std::sqrt(
                             cell_output.magnetic_induction[0] * cell_output.magnetic_induction[0]
                             + cell_output.magnetic_induction[1] * cell_output.magnetic_induction[1]
-                            + cell_output.magnetic_induction[2] * cell_output.magnetic_induction[2]);
+                            + cell_output.magnetic_induction[2]
+                                      * cell_output.magnetic_induction[2]);
                     result.air_gap_induction_magnitude_sum += induction_magnitude;
                     ++result.num_air_gap_cells;
                 }
@@ -828,9 +848,10 @@ StructuredLinearMagnetostaticsResult run_on_hexahedral_grid(
         cell_z_coords[k] = grid.cell_center_z(k);
     }
 
-    auto stress_component = [&](std::size_t i, std::size_t j, std::size_t k, std::size_t component) {
-        return cell_outputs[grid.cell_index(i, j, k)].maxwell_stress[component];
-    };
+    auto stress_component
+            = [&](std::size_t i, std::size_t j, std::size_t k, std::size_t component) {
+                  return cell_outputs[grid.cell_index(i, j, k)].maxwell_stress[component];
+              };
     for (std::size_t k = 0; k < grid.ncell_z(); ++k) {
         for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
             for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
@@ -861,7 +882,8 @@ StructuredLinearMagnetostaticsResult run_on_hexahedral_grid(
                             },
                             k);
                 };
-                std::array<double, 3>& force_density = cell_outputs[grid.cell_index(i, j, k)].force_density;
+                std::array<double, 3>& force_density
+                        = cell_outputs[grid.cell_index(i, j, k)].force_density;
                 force_density[0] = derivative(0, 'x') + derivative(3, 'y') + derivative(4, 'z');
                 force_density[1] = derivative(3, 'x') + derivative(1, 'y') + derivative(5, 'z');
                 force_density[2] = derivative(4, 'x') + derivative(5, 'y') + derivative(2, 'z');
@@ -872,7 +894,12 @@ StructuredLinearMagnetostaticsResult run_on_hexahedral_grid(
         }
     }
 
-    write_results_view(output_view_file, grid, cell_inputs, magnetic_vector_potential, cell_outputs);
+    write_results_view(
+            output_view_file,
+            grid,
+            cell_inputs,
+            magnetic_vector_potential,
+            cell_outputs);
     log_info(logger, "SimiLie magnetostatics post-processing exported");
     return result;
 }
@@ -886,7 +913,8 @@ StructuredLinearMagnetostaticsResult run_structured_linear_magnetostatics_proble
         solvers::StrongFormulationSolverSettings const& solver_settings,
         Logger&& logger)
 {
-    sil::mesher::gmsh::SupportedMesh const mesh = sil::mesher::gmsh::parse_supported_msh2_mesh(mesh_file);
+    sil::mesher::gmsh::SupportedMesh const mesh
+            = sil::mesher::gmsh::parse_supported_msh2_mesh(mesh_file);
     if (std::holds_alternative<sil::mesher::gmsh::QuadrilateralMesh>(mesh)) {
         return run_on_quadrilateral_grid(
                 output_view_file,

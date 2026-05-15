@@ -39,7 +39,8 @@ public:
     {
 #ifndef __CUDA_ARCH__
         throw std::logic_error(
-                "DeDonderWeylEquations::run is a placeholder: relativistic equation support is not implemented yet");
+                "DeDonderWeylEquations::run is a placeholder: relativistic equation support is not "
+                "implemented yet");
 #endif
     }
 };

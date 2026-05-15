@@ -33,8 +33,8 @@ struct Nu : sil::tensor::TensorNaturalIndex<X, Y, Z>
 using MagneticVectorPotentialIndex = sil::tensor::Covariant<Mu>;
 using MagneticFieldIndex = sil::tensor::Covariant<Mu>;
 using ForceDensityIndex = sil::tensor::Covariant<Mu>;
-using MagneticInductionIndex
-        = sil::tensor::TensorAntisymmetricIndex<sil::tensor::Covariant<Mu>, sil::tensor::Covariant<Nu>>;
+using MagneticInductionIndex = sil::tensor::
+        TensorAntisymmetricIndex<sil::tensor::Covariant<Mu>, sil::tensor::Covariant<Nu>>;
 using MaxwellStressTensorIndex
         = sil::tensor::TensorSymmetricIndex<sil::tensor::Covariant<Mu>, sil::tensor::Covariant<Nu>>;
 
