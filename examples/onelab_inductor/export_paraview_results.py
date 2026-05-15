@@ -300,6 +300,21 @@ def derive_cell_fields(
     return magnetic_induction, magnetic_field, maxwell_stress, force_density
 
 
+def build_position_dataset(
+    x_coords: np.ndarray,
+    y_coords: np.ndarray,
+    z_coords: np.ndarray,
+) -> np.ndarray:
+    position = np.zeros((x_coords.size, y_coords.size, z_coords.size, 3), dtype=np.float64)
+    for ix, x in enumerate(x_coords):
+        position[ix, :, :, 0] = x
+    for iy, y in enumerate(y_coords):
+        position[:, iy, :, 1] = y
+    for iz, z in enumerate(z_coords):
+        position[:, :, iz, 2] = z
+    return position
+
+
 def write_hdf5(
     h5_file: Path,
     x_coords: np.ndarray,
@@ -314,10 +329,9 @@ def write_hdf5(
     force_density: np.ndarray,
 ) -> None:
     h5_file.parent.mkdir(parents=True, exist_ok=True)
+    position = build_position_dataset(x_coords, y_coords, z_coords)
     with h5py.File(h5_file, "w") as handle:
-        handle.create_dataset("x_coordinates", data=x_coords)
-        handle.create_dataset("y_coordinates", data=y_coords)
-        handle.create_dataset("z_coordinates", data=z_coords)
+        handle.create_dataset("position", data=position)
         handle.create_dataset("magnetic_permeability", data=permeability)
         handle.create_dataset("current_density", data=current_density)
         handle.create_dataset("magnetic_vector_potential", data=magnetic_vector_potential)
@@ -357,15 +371,9 @@ def write_xmf(
  <Domain>
    <Grid Name="mesh1" GridType="Uniform">
      <Topology TopologyType="3DSMesh" NumberOfElements="{nx} {ny} {nz}"/>
-     <Geometry GeometryType="VXVYVZ">
-       <DataItem Dimensions="{nx}" NumberType="Float" Precision="8" Format="HDF">
-        {h5_file.name}:/x_coordinates
-       </DataItem>
-       <DataItem Dimensions="{ny}" NumberType="Float" Precision="8" Format="HDF">
-        {h5_file.name}:/y_coordinates
-       </DataItem>
-       <DataItem Dimensions="{nz}" NumberType="Float" Precision="8" Format="HDF">
-        {h5_file.name}:/z_coordinates
+     <Geometry GeometryType="XYZ">
+       <DataItem Dimensions="{nx} {ny} {nz} 3" NumberType="Float" Precision="8" Format="HDF">
+        {h5_file.name}:/position
        </DataItem>
      </Geometry>
      <Attribute Name="MagneticVectorPotential" AttributeType="Vector" Center="Node">
