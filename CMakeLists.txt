@@ -78,6 +78,7 @@ target_include_directories(
     similie
     INTERFACE
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>"
+        "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/src>"
         "$<INSTALL_INTERFACE:src>"
 )
 target_link_libraries(similie INTERFACE
@@ -103,6 +104,8 @@ set(SIMILIE_INTERNAL_TARGETS
     exterior
     mesher
     misc
+    physics
+    solvers
     tensor
 )
 if("${SIMILIE_BUILD_YOUNG_TABLEAU}")

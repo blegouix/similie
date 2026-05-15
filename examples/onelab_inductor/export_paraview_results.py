@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2026 Baptiste Legouix
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
 import argparse
-import math
 import re
 from pathlib import Path
 
@@ -13,6 +14,21 @@ import numpy as np
 
 HEXAHEDRON_TYPE = 5
 TOL = 1.0e-12
+
+PERMEABILITY_VIEW = "SimiLie linear magnetostatics permeability"
+CURRENT_DENSITY_VIEW = "SimiLie linear magnetostatics current density"
+MAGNETIC_VECTOR_POTENTIAL_VIEW = "SimiLie linear magnetostatics magnetic vector potential"
+MAGNETIC_INDUCTION_VIEW = "SimiLie linear magnetostatics magnetic induction"
+MAGNETIC_FIELD_VIEW = "SimiLie linear magnetostatics magnetic field"
+FORCE_DENSITY_VIEW = "SimiLie linear magnetostatics force density"
+STRESS_VIEW_NAMES = {
+    "SimiLie linear magnetostatics Maxwell stress xx": (0, 0),
+    "SimiLie linear magnetostatics Maxwell stress yy": (1, 1),
+    "SimiLie linear magnetostatics Maxwell stress zz": (2, 2),
+    "SimiLie linear magnetostatics Maxwell stress xy": (0, 1),
+    "SimiLie linear magnetostatics Maxwell stress xz": (0, 2),
+    "SimiLie linear magnetostatics Maxwell stress yz": (1, 2),
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -71,32 +87,79 @@ def nearest_index(coordinates: list[float], value: float) -> int:
     raise RuntimeError("coordinate does not belong to the detected structured grid")
 
 
-def parse_input_fields_pos(pos_file: Path) -> tuple[list[float], list[tuple[float, float, float]]]:
-    scalar_pattern = re.compile(
-        r"SP\(([^,]+),([^,]+),([^)]+)\)\{([^}]+)\};"
-    )
-    vector_pattern = re.compile(
-        r"VP\(([^,]+),([^,]+),([^)]+)\)\{([^,]+),([^,]+),([^}]+)\};"
-    )
+def parse_result_views(
+    pos_file: Path,
+) -> tuple[
+    list[float],
+    list[tuple[float, float, float]],
+    list[tuple[float, float, float]],
+    list[tuple[float, float, float]],
+    list[tuple[float, float, float]],
+    dict[str, list[float]],
+    list[tuple[float, float, float]],
+]:
+    scalar_pattern = re.compile(r'SP\(([^,]+),([^,]+),([^)]+)\)\{([^}]+)\};')
+    vector_pattern = re.compile(r'VP\(([^,]+),([^,]+),([^)]+)\)\{([^,]+),([^,]+),([^}]+)\};')
+    view_pattern = re.compile(r'^View "([^"]+)" \{$')
+
     permeability: list[float] = []
     current_density: list[tuple[float, float, float]] = []
-    for line in pos_file.read_text().splitlines():
+    magnetic_vector_potential: list[tuple[float, float, float]] = []
+    magnetic_induction: list[tuple[float, float, float]] = []
+    magnetic_field: list[tuple[float, float, float]] = []
+    force_density: list[tuple[float, float, float]] = []
+    stress_components = {name: [] for name in STRESS_VIEW_NAMES}
+
+    current_view: str | None = None
+    for raw_line in pos_file.read_text().splitlines():
+        line = raw_line.strip()
+        view_match = view_pattern.match(line)
+        if view_match:
+            current_view = view_match.group(1)
+            continue
+        if line == "};":
+            current_view = None
+            continue
+        if current_view is None:
+            continue
+
         scalar_match = scalar_pattern.search(line)
         if scalar_match:
-            permeability.append(float(scalar_match.group(4)))
+            value = float(scalar_match.group(4))
+            if current_view == PERMEABILITY_VIEW:
+                permeability.append(value)
+            elif current_view in stress_components:
+                stress_components[current_view].append(value)
             continue
+
         vector_match = vector_pattern.search(line)
-        if vector_match:
-            current_density.append(
-                (
-                    float(vector_match.group(4)),
-                    float(vector_match.group(5)),
-                    float(vector_match.group(6)),
-                )
-            )
-    if not permeability or not current_density or len(permeability) != len(current_density):
-        raise RuntimeError("the .pos file does not contain matching permeability and current density views")
-    return permeability, current_density
+        if not vector_match:
+            continue
+        value = (
+            float(vector_match.group(4)),
+            float(vector_match.group(5)),
+            float(vector_match.group(6)),
+        )
+        if current_view == CURRENT_DENSITY_VIEW:
+            current_density.append(value)
+        elif current_view == MAGNETIC_VECTOR_POTENTIAL_VIEW:
+            magnetic_vector_potential.append(value)
+        elif current_view == MAGNETIC_INDUCTION_VIEW:
+            magnetic_induction.append(value)
+        elif current_view == MAGNETIC_FIELD_VIEW:
+            magnetic_field.append(value)
+        elif current_view == FORCE_DENSITY_VIEW:
+            force_density.append(value)
+
+    return (
+        permeability,
+        current_density,
+        magnetic_vector_potential,
+        magnetic_induction,
+        magnetic_field,
+        stress_components,
+        force_density,
+    )
 
 
 def build_structured_arrays(
@@ -104,7 +167,12 @@ def build_structured_arrays(
     cells: list[tuple[int, list[int]]],
     permeability_values: list[float],
     current_density_values: list[tuple[float, float, float]],
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    magnetic_vector_potential_values: list[tuple[float, float, float]],
+    magnetic_induction_values: list[tuple[float, float, float]],
+    magnetic_field_values: list[tuple[float, float, float]],
+    stress_components: dict[str, list[float]],
+    force_density_values: list[tuple[float, float, float]],
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     x_coords = unique_sorted([node[1] for node in nodes])
     y_coords = unique_sorted([node[2] for node in nodes])
     z_coords = unique_sorted([node[3] for node in nodes])
@@ -122,8 +190,19 @@ def build_structured_arrays(
         node_to_indices[tag] = key
 
     num_cells = (nx - 1) * (ny - 1) * (nz - 1)
-    if len(cells) != num_cells or len(permeability_values) != num_cells:
+    if len(cells) != num_cells:
         raise RuntimeError("the number of cells does not match the expected structured grid size")
+    if len(permeability_values) != num_cells or len(current_density_values) != num_cells:
+        raise RuntimeError("the input field views do not match the cell count")
+    if len(magnetic_vector_potential_values) != len(nodes):
+        raise RuntimeError("the magnetic vector potential view does not match the node count")
+    if len(magnetic_induction_values) != num_cells or len(magnetic_field_values) != num_cells:
+        raise RuntimeError("the magnetic induction and field views do not match the cell count")
+    if len(force_density_values) != num_cells:
+        raise RuntimeError("the force density view does not match the cell count")
+    for name, values in stress_components.items():
+        if len(values) != num_cells:
+            raise RuntimeError(f"the stress view '{name}' does not match the cell count")
 
     position = np.zeros((nx, ny, nz, 3), dtype=np.float64)
     for ix, x in enumerate(x_coords):
@@ -133,8 +212,19 @@ def build_structured_arrays(
     for iz, z in enumerate(z_coords):
         position[:, :, iz, 2] = z
 
+    magnetic_vector_potential = np.zeros((nx, ny, nz, 3), dtype=np.float64)
+    for value_idx, value in enumerate(magnetic_vector_potential_values):
+        ix = value_idx % nx
+        iy = (value_idx // nx) % ny
+        iz = value_idx // (nx * ny)
+        magnetic_vector_potential[ix, iy, iz, :] = value
+
     permeability = np.zeros((nx - 1, ny - 1, nz - 1), dtype=np.float64)
     current_density = np.zeros((nx - 1, ny - 1, nz - 1, 3), dtype=np.float64)
+    magnetic_induction = np.zeros((nx - 1, ny - 1, nz - 1, 3), dtype=np.float64)
+    magnetic_field = np.zeros((nx - 1, ny - 1, nz - 1, 3), dtype=np.float64)
+    maxwell_stress = np.zeros((nx - 1, ny - 1, nz - 1, 3, 3), dtype=np.float64)
+    force_density = np.zeros((nx - 1, ny - 1, nz - 1, 3), dtype=np.float64)
 
     occupied_cells: set[tuple[int, int, int]] = set()
     for cell_idx, (_, node_tags) in enumerate(cells):
@@ -154,8 +244,24 @@ def build_structured_arrays(
 
         permeability[min_x, min_y, min_z] = permeability_values[cell_idx]
         current_density[min_x, min_y, min_z, :] = current_density_values[cell_idx]
+        magnetic_induction[min_x, min_y, min_z, :] = magnetic_induction_values[cell_idx]
+        magnetic_field[min_x, min_y, min_z, :] = magnetic_field_values[cell_idx]
+        force_density[min_x, min_y, min_z, :] = force_density_values[cell_idx]
+        for name, (ii, jj) in STRESS_VIEW_NAMES.items():
+            value = stress_components[name][cell_idx]
+            maxwell_stress[min_x, min_y, min_z, ii, jj] = value
+            maxwell_stress[min_x, min_y, min_z, jj, ii] = value
 
-    return position, permeability, current_density
+    return (
+        position,
+        permeability,
+        current_density,
+        magnetic_vector_potential,
+        magnetic_induction,
+        magnetic_field,
+        maxwell_stress,
+        force_density,
+    )
 
 
 def write_hdf5(
@@ -163,12 +269,22 @@ def write_hdf5(
     position: np.ndarray,
     permeability: np.ndarray,
     current_density: np.ndarray,
+    magnetic_vector_potential: np.ndarray,
+    magnetic_induction: np.ndarray,
+    magnetic_field: np.ndarray,
+    maxwell_stress: np.ndarray,
+    force_density: np.ndarray,
 ) -> None:
     h5_file.parent.mkdir(parents=True, exist_ok=True)
     with h5py.File(h5_file, "w") as handle:
         handle.create_dataset("position", data=position)
         handle.create_dataset("magnetic_permeability", data=permeability)
         handle.create_dataset("current_density", data=current_density)
+        handle.create_dataset("magnetic_vector_potential", data=magnetic_vector_potential)
+        handle.create_dataset("magnetic_induction", data=magnetic_induction)
+        handle.create_dataset("magnetic_field", data=magnetic_field)
+        handle.create_dataset("maxwell_stress_tensor", data=maxwell_stress)
+        handle.create_dataset("force_density", data=force_density)
 
 
 def write_xmf(
@@ -177,6 +293,11 @@ def write_xmf(
     position: np.ndarray,
     permeability: np.ndarray,
     current_density: np.ndarray,
+    magnetic_vector_potential: np.ndarray,
+    magnetic_induction: np.ndarray,
+    magnetic_field: np.ndarray,
+    maxwell_stress: np.ndarray,
+    force_density: np.ndarray,
 ) -> None:
     nx, ny, nz, _ = position.shape
     xmf_file.parent.mkdir(parents=True, exist_ok=True)
@@ -192,6 +313,11 @@ def write_xmf(
         {h5_file.name}:/position
        </DataItem>
      </Geometry>
+     <Attribute Name="MagneticVectorPotential" AttributeType="Vector" Center="Node">
+       <DataItem Dimensions="{nx} {ny} {nz} 3" NumberType="Float" Precision="8" Format="HDF">
+        {h5_file.name}:/magnetic_vector_potential
+       </DataItem>
+     </Attribute>
      <Attribute Name="CurrentDensity" AttributeType="Vector" Center="Cell">
        <DataItem Dimensions="{nx - 1} {ny - 1} {nz - 1} 3" NumberType="Float" Precision="8" Format="HDF">
         {h5_file.name}:/current_density
@@ -200,6 +326,26 @@ def write_xmf(
      <Attribute Name="MagneticPermeability" AttributeType="Scalar" Center="Cell">
        <DataItem Dimensions="{nx - 1} {ny - 1} {nz - 1}" NumberType="Float" Precision="8" Format="HDF">
         {h5_file.name}:/magnetic_permeability
+       </DataItem>
+     </Attribute>
+     <Attribute Name="MagneticInduction" AttributeType="Vector" Center="Cell">
+       <DataItem Dimensions="{nx - 1} {ny - 1} {nz - 1} 3" NumberType="Float" Precision="8" Format="HDF">
+        {h5_file.name}:/magnetic_induction
+       </DataItem>
+     </Attribute>
+     <Attribute Name="MagneticField" AttributeType="Vector" Center="Cell">
+       <DataItem Dimensions="{nx - 1} {ny - 1} {nz - 1} 3" NumberType="Float" Precision="8" Format="HDF">
+        {h5_file.name}:/magnetic_field
+       </DataItem>
+     </Attribute>
+     <Attribute Name="MaxwellStressTensor" AttributeType="Tensor" Center="Cell">
+       <DataItem Dimensions="{nx - 1} {ny - 1} {nz - 1} 3 3" NumberType="Float" Precision="8" Format="HDF">
+        {h5_file.name}:/maxwell_stress_tensor
+       </DataItem>
+     </Attribute>
+     <Attribute Name="ForceDensity" AttributeType="Vector" Center="Cell">
+       <DataItem Dimensions="{nx - 1} {ny - 1} {nz - 1} 3" NumberType="Float" Precision="8" Format="HDF">
+        {h5_file.name}:/force_density
        </DataItem>
      </Attribute>
    </Grid>
@@ -217,12 +363,58 @@ def main() -> int:
     xmf_file = Path(args.xmf_output)
 
     nodes, cells = parse_msh2_hex_mesh(mesh_file)
-    permeability_values, current_density_values = parse_input_fields_pos(pos_file)
-    position, permeability, current_density = build_structured_arrays(
-        nodes, cells, permeability_values, current_density_values
+    (
+        permeability_values,
+        current_density_values,
+        magnetic_vector_potential_values,
+        magnetic_induction_values,
+        magnetic_field_values,
+        stress_components,
+        force_density_values,
+    ) = parse_result_views(pos_file)
+    (
+        position,
+        permeability,
+        current_density,
+        magnetic_vector_potential,
+        magnetic_induction,
+        magnetic_field,
+        maxwell_stress,
+        force_density,
+    ) = build_structured_arrays(
+        nodes,
+        cells,
+        permeability_values,
+        current_density_values,
+        magnetic_vector_potential_values,
+        magnetic_induction_values,
+        magnetic_field_values,
+        stress_components,
+        force_density_values,
     )
-    write_hdf5(h5_file, position, permeability, current_density)
-    write_xmf(xmf_file, h5_file, position, permeability, current_density)
+    write_hdf5(
+        h5_file,
+        position,
+        permeability,
+        current_density,
+        magnetic_vector_potential,
+        magnetic_induction,
+        magnetic_field,
+        maxwell_stress,
+        force_density,
+    )
+    write_xmf(
+        xmf_file,
+        h5_file,
+        position,
+        permeability,
+        current_density,
+        magnetic_vector_potential,
+        magnetic_induction,
+        magnetic_field,
+        maxwell_stress,
+        force_density,
+    )
     print(f"Paraview HDF5 result exported in {h5_file}.")
     print(f"Paraview XDMF model exported in {xmf_file}.")
     return 0

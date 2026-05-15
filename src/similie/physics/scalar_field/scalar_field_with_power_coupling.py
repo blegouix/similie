@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2024 Baptiste Legouix
+# SPDX-FileCopyrightText: 2026 Baptiste Legouix
 # SPDX-License-Identifier: MIT
 
 from __future__ import annotations
@@ -7,11 +7,12 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from sympy import symbols, gamma, Matrix, diff, solve
+from sympy import Matrix, diff, gamma, solve, symbols
 from sympy.printing.codeprinter import cxxcode
 
-N = int(sys.argv[1])  # Number of dimensions
-output_path = Path(sys.argv[2])  # Path of the output file
+
+N = int(sys.argv[1])
+output_path = Path(sys.argv[2])
 output_path.parent.mkdir(parents=True, exist_ok=True)
 
 mass = symbols("mass")
@@ -20,28 +21,15 @@ coupling_power = symbols("coupling_power")
 phi = symbols("phi")
 pi = symbols(f"pi0:{N}")
 
-# Minkowski signature (-, +, +, ..., +)
 metric_sign = [-1] + [1] * (N - 1)
-
-# H = -1/2 m^2 phi^2 - lambda/Gamma(p + 1) phi^p + 1/2 (-p0^2 + p1^2 + ... + p{N-1}^2)
 hamiltonian = 0.5 * (
     -(mass**2) * phi**2 + sum(metric_sign[i] * pi[i] ** 2 for i in range(N))
 ) - coupling_constant * phi**coupling_power / gamma(coupling_power + 1)
 
-# [dH/dphi, dH/dpi0, dH/dpi1, ...]
 hamiltonian_diff = Matrix(
     [diff(hamiltonian, phi), *[diff(hamiltonian, pi_) for pi_ in pi]]
 )
 
-# DeDonder-Weyl equations are commonly written:
-# dpi^\mu/dx^\mu = -dH/dphi
-# dphi/dx^\mu = dH/dpi^\mu
-#
-# But we follow the convention with pi being stored as covariant. Thus:
-# eta^\mu\nu dpi_\nu/dx^\mu = -dH/dphi
-# dphi/dx^\mu = eta^\mu\nu dH/dpi_\nu
-#
-# Solve dphi/dx^\mu = eta^\mu\nu dH/dpi_\nu
 dphi_dx = symbols(f"dphi_dx0:{N}")
 pi_from_dphi_dx = solve(
     [dphi_dx[i] - metric_sign[i] * hamiltonian_diff[i + 1] for i in range(N)],
@@ -52,14 +40,14 @@ if not pi_from_dphi_dx:
     raise RuntimeError("Could not solve for pi in terms of dphi/dx.")
 
 
-# Generate C++ code
 def preprocess_cxx(expr: str) -> str:
     for i in range(N):
         expr = expr.replace(f"pi{i}", f"pi[{i}]")
     return expr
 
 
-output_path.write_text(f"""\
+output_path.write_text(
+    f"""\
 // SPDX-FileCopyrightText: 2026 Baptiste Legouix
 // SPDX-License-Identifier: MIT
 
@@ -69,20 +57,22 @@ output_path.write_text(f"""\
 #include <cstddef>
 #include <span>
 
-struct ScalarFieldHamiltonian {{
+namespace similie::physics::scalar_field {{
+
+struct ScalarFieldWithPowerCoupling {{
     static constexpr std::size_t N = {N};
 
     const double mass;
     const double coupling_constant;
     const double coupling_power;
 
-    constexpr ScalarFieldHamiltonian(
+    constexpr ScalarFieldWithPowerCoupling(
             double mass_,
             double coupling_constant_,
             double coupling_power_)
         : mass(mass_), coupling_constant(coupling_constant_), coupling_power(coupling_power_) {{}}
 
-    constexpr double H(double phi, const std::span<const double, N>& pi) const
+    constexpr double H(double phi, std::span<double const, N> pi) const
     {{
         return {preprocess_cxx(cxxcode(hamiltonian))};
     }}
@@ -91,26 +81,28 @@ struct ScalarFieldHamiltonian {{
     {{
         return {cxxcode(hamiltonian_diff[0])};
     }}
-{
-    "".join(
-        f'''
-    constexpr double dH_dpi{i}(const double pi{i}) const
+{''.join(
+f'''
+    constexpr double dH_dpi{i}(double pi{i}) const
     {{
         return {cxxcode(hamiltonian_diff[i + 1])};
     }}
 '''
-        for i in range(N)
-    )
-}{
-    "".join(
-        f'''
-    constexpr double pi{i}(const double dphi_dx{i}) const
+for i in range(N)
+)}
+{''.join(
+f'''
+    constexpr double pi{i}(double dphi_dx{i}) const
     {{
         return {cxxcode(pi_from_dphi_dx[pi[i]])};
     }}
 '''
-        for i in range(N)
-    )
-}
+for i in range(N)
+)}
 }};
-""")
+
+using ScalarFieldHamiltonian = ScalarFieldWithPowerCoupling;
+
+}} // namespace similie::physics::scalar_field
+"""
+)
