@@ -62,6 +62,7 @@ EOF
     -setnumber Mesh.MshFileVersion 2.2 \
     -setstring "0Modules/SimiLie/0Control/Input fields view file" "${result_file}" \
     -setnumber "0Modules/SimiLie/0Control/Export input fields view" 1 \
+    -setnumber "0Modules/SimiLie/0Control/Merge result view in Gmsh" 0 \
     -setstring "0Modules/SimiLie/0Control/Input mesh file" "${mesh_file}" \
     "${geometry_file}" \
     "${control_file}" \
