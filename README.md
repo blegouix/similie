@@ -15,7 +15,7 @@ SimiLie is a performance-portable (CPU & GPU) C++20 library aiming to extent the
 
 ## AI-operability
 
-Coding agents are extensively used to develop SimiLie. The `AGENTS.md` file provides the procedure to operate and develop with SimiLie, with the instruction to automatically detect the presence of a GPU and use the `similie_env` Dockerfile with `OPENMP` or `CUDA` enviroment/compilation. Ie.:
+Coding agents are extensively used to develop SimiLie. The `AGENTS.md` file provides the procedure to operate and develop with SimiLie, with the instruction to automatically detect the presence of a GPU and use the `similie_env` Dockerfile with `OPENMP` or `CUDA` environment/compilation. Ie.:
 
 ```
 vibe
