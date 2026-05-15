@@ -18,6 +18,16 @@ DefineConstant[
     Name "Input/42Core relative permeability", Highlight "AliceBlue"}
 ];
 
+jcoil = Sqrt[2] * Irms * NbWires / (wcoil * hcoil);
+mu_fe = 4.e-7 * Pi * mur_fe;
+
+DefineConstant[
+  SimiLieJz = {jcoil,
+    Name "Input/90SimiLie/0Coil current density magnitude z [A/m^2]", Highlight "Ivory"},
+  SimiLieMuCore = {mu_fe,
+    Name "Input/90SimiLie/1Core magnetic permeability [H/m]", Highlight "Ivory"}
+];
+
 x1 = wcoreE;
 x2 = wcoreE + wcoil;
 x3 = 2 * wcoreE + wcoil;

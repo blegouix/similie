@@ -56,21 +56,6 @@ struct ScalarFieldWithPowerCouplingProblem
     double coupling_power = 4.0;
 };
 
-struct MagnetostaticsProblem
-{
-    std::string current_rms_parameter = "Input/4Coil Parameters/0Current (rms) [A]";
-    std::string number_of_turns_parameter = "Input/4Coil Parameters/1Number of turns";
-    std::string core_relative_permeability_parameter = "Input/42Core relative permeability";
-    std::string coil_width_parameter = "Input/10Geometric dimensions/03Coil width [m]";
-    std::string coil_height_parameter = "Input/10Geometric dimensions/04Coil height [m]";
-
-    double current_rms = 10.0;
-    double number_of_turns = 288.0;
-    double core_relative_permeability = 2000.0;
-    double coil_width = 0.03;
-    double coil_height = 0.09;
-};
-
 struct MinimizeStrongFormulationResidualProblem
 {
     unsigned int max_iterations = 10000U;
@@ -85,7 +70,6 @@ struct SilproProblem
     SupportedPhysics physics = SupportedPhysics::Magnetostatics;
     SupportedSolver solver = SupportedSolver::MinimizeStrongFormulationResidual;
     ScalarFieldWithPowerCouplingProblem scalar_field;
-    MagnetostaticsProblem magnetostatics;
     MinimizeStrongFormulationResidualProblem solver_settings;
 };
 
@@ -392,54 +376,7 @@ inline SilproProblem parse_silpro_problem(std::filesystem::path const& file)
                     "UseMatrixFree",
                     problem.solver_settings.use_matrix_free ? "1" : "0"));
 
-    if (problem.physics == SupportedPhysics::Magnetostatics) {
-        SilproSection const& section = required_section(root, "Magnetostatics", file.string());
-        problem.magnetostatics.current_rms_parameter = get_value_or(
-                section,
-                "CurrentRmsParameter",
-                problem.magnetostatics.current_rms_parameter);
-        problem.magnetostatics.number_of_turns_parameter = get_value_or(
-                section,
-                "NumberOfTurnsParameter",
-                problem.magnetostatics.number_of_turns_parameter);
-        problem.magnetostatics.core_relative_permeability_parameter = get_value_or(
-                section,
-                "CoreRelativePermeabilityParameter",
-                problem.magnetostatics.core_relative_permeability_parameter);
-        problem.magnetostatics.coil_width_parameter = get_value_or(
-                section,
-                "CoilWidthParameter",
-                problem.magnetostatics.coil_width_parameter);
-        problem.magnetostatics.coil_height_parameter = get_value_or(
-                section,
-                "CoilHeightParameter",
-                problem.magnetostatics.coil_height_parameter);
-        problem.magnetostatics.current_rms = parse_number<double>(
-                get_value_or(
-                        section,
-                        "CurrentRms",
-                        std::to_string(problem.magnetostatics.current_rms)));
-        problem.magnetostatics.number_of_turns = parse_number<double>(
-                get_value_or(
-                        section,
-                        "NumberOfTurns",
-                        std::to_string(problem.magnetostatics.number_of_turns)));
-        problem.magnetostatics.core_relative_permeability = parse_number<double>(
-                get_value_or(
-                        section,
-                        "CoreRelativePermeability",
-                        std::to_string(problem.magnetostatics.core_relative_permeability)));
-        problem.magnetostatics.coil_width = parse_number<double>(
-                get_value_or(
-                        section,
-                        "CoilWidth",
-                        std::to_string(problem.magnetostatics.coil_width)));
-        problem.magnetostatics.coil_height = parse_number<double>(
-                get_value_or(
-                        section,
-                        "CoilHeight",
-                        std::to_string(problem.magnetostatics.coil_height)));
-    } else {
+    if (problem.physics == SupportedPhysics::ScalarFieldWithPowerCoupling) {
         SilproSection const& section = required_section(root, "ScalarFieldWithPowerCoupling", file.string());
         problem.scalar_field.mass = parse_number<double>(
                 get_value_or(section, "Mass", std::to_string(problem.scalar_field.mass)));
@@ -1046,6 +983,7 @@ private:
         onelab::string parameter(output_parameter_name(name), value, label, help);
         parameter.setKind(kind);
         parameter.setReadOnly(true);
+        parameter.setVisible(false);
         client().set(parameter);
     }
 
@@ -1057,6 +995,7 @@ private:
     {
         onelab::number parameter(output_parameter_name(name), value, label, help);
         parameter.setReadOnly(true);
+        parameter.setVisible(false);
         client().set(parameter);
     }
 
@@ -1070,8 +1009,11 @@ private:
 
         std::filesystem::path gmsh_mesh_file = get_first_string_value("Gmsh/MshFileName");
         if (gmsh_mesh_file.empty()) {
-            throw std::runtime_error(
-                    "No mesh file available: set 'Mesh file' or let Gmsh manage the current mesh file.");
+            std::filesystem::path gmsh_model_path = get_first_string_value("Gmsh/Model absolute path");
+            if (!gmsh_model_path.empty()) {
+                return gmsh_model_path / "similie_onelab_current_mesh.msh";
+            }
+            return std::filesystem::temp_directory_path() / "similie_onelab_current_mesh.msh";
         }
 
         if (gmsh_mesh_file.is_absolute()) {
@@ -1251,74 +1193,7 @@ private:
                 std::vector<double> {0.0, 1.0},
                 std::map<double, std::string> {{0.0, "No"}, {1.0, "Yes"}});
 
-        if (problem.physics == SupportedPhysics::Magnetostatics) {
-            MagnetostaticsProblem const& cfg = problem.magnetostatics;
-            publish_or_sync_string(
-                    problem_parameter_name("2Magnetostatics", "0Current RMS parameter"),
-                    "Current RMS parameter",
-                    "ONELAB numeric parameter read first for the coil RMS current.",
-                    cfg.current_rms_parameter);
-            publish_or_sync_string(
-                    problem_parameter_name("2Magnetostatics", "1Number of turns parameter"),
-                    "Number of turns parameter",
-                    "ONELAB numeric parameter read first for the number of turns.",
-                    cfg.number_of_turns_parameter);
-            publish_or_sync_string(
-                    problem_parameter_name("2Magnetostatics", "2Core relative permeability parameter"),
-                    "Core relative permeability parameter",
-                    "ONELAB numeric parameter read first for the core relative permeability.",
-                    cfg.core_relative_permeability_parameter);
-            publish_or_sync_string(
-                    problem_parameter_name("2Magnetostatics", "3Coil width parameter"),
-                    "Coil width parameter",
-                    "ONELAB numeric parameter read first for the coil width.",
-                    cfg.coil_width_parameter);
-            publish_or_sync_string(
-                    problem_parameter_name("2Magnetostatics", "4Coil height parameter"),
-                    "Coil height parameter",
-                    "ONELAB numeric parameter read first for the coil height.",
-                    cfg.coil_height_parameter);
-            publish_or_sync_number(
-                    problem_parameter_name("2Magnetostatics", "5Current RMS [A]"),
-                    "Current RMS [A]",
-                    "Fallback coil RMS current used when the ONELAB parameter is not available.",
-                    cfg.current_rms,
-                    0.0,
-                    1.e12,
-                    1.0);
-            publish_or_sync_number(
-                    problem_parameter_name("2Magnetostatics", "6Number of turns"),
-                    "Number of turns",
-                    "Fallback number of turns used when the ONELAB parameter is not available.",
-                    cfg.number_of_turns,
-                    1.0,
-                    1.e12,
-                    1.0);
-            publish_or_sync_number(
-                    problem_parameter_name("2Magnetostatics", "7Core relative permeability"),
-                    "Core relative permeability",
-                    "Fallback relative permeability used when the ONELAB parameter is not available.",
-                    cfg.core_relative_permeability,
-                    1.0,
-                    1.e12,
-                    1.0);
-            publish_or_sync_number(
-                    problem_parameter_name("2Magnetostatics", "8Coil width [m]"),
-                    "Coil width [m]",
-                    "Fallback coil width used when the ONELAB parameter is not available.",
-                    cfg.coil_width,
-                    0.0,
-                    1.e12,
-                    1.e-3);
-            publish_or_sync_number(
-                    problem_parameter_name("2Magnetostatics", "9Coil height [m]"),
-                    "Coil height [m]",
-                    "Fallback coil height used when the ONELAB parameter is not available.",
-                    cfg.coil_height,
-                    0.0,
-                    1.e12,
-                    1.e-3);
-        } else {
+        if (problem.physics == SupportedPhysics::ScalarFieldWithPowerCoupling) {
             ScalarFieldWithPowerCouplingProblem const& cfg = problem.scalar_field;
             publish_or_sync_number(
                     problem_parameter_name("2ScalarFieldWithPowerCoupling", "0Mass"),
@@ -1369,49 +1244,7 @@ private:
                         problem.solver_settings.use_matrix_free ? 1.0 : 0.0)
                 != 0.0);
 
-        if (problem.physics == SupportedPhysics::Magnetostatics) {
-            MagnetostaticsProblem& cfg = problem.magnetostatics;
-            std::string const current_rms_parameter
-                    = get_first_string_value(problem_parameter_name("2Magnetostatics", "0Current RMS parameter"));
-            if (!current_rms_parameter.empty()) {
-                cfg.current_rms_parameter = current_rms_parameter;
-            }
-            std::string const turns_parameter = get_first_string_value(
-                    problem_parameter_name("2Magnetostatics", "1Number of turns parameter"));
-            if (!turns_parameter.empty()) {
-                cfg.number_of_turns_parameter = turns_parameter;
-            }
-            std::string const mur_parameter = get_first_string_value(
-                    problem_parameter_name("2Magnetostatics", "2Core relative permeability parameter"));
-            if (!mur_parameter.empty()) {
-                cfg.core_relative_permeability_parameter = mur_parameter;
-            }
-            std::string const width_parameter = get_first_string_value(
-                    problem_parameter_name("2Magnetostatics", "3Coil width parameter"));
-            if (!width_parameter.empty()) {
-                cfg.coil_width_parameter = width_parameter;
-            }
-            std::string const height_parameter = get_first_string_value(
-                    problem_parameter_name("2Magnetostatics", "4Coil height parameter"));
-            if (!height_parameter.empty()) {
-                cfg.coil_height_parameter = height_parameter;
-            }
-            cfg.current_rms = get_first_number_value(
-                    problem_parameter_name("2Magnetostatics", "5Current RMS [A]"),
-                    cfg.current_rms);
-            cfg.number_of_turns = get_first_number_value(
-                    problem_parameter_name("2Magnetostatics", "6Number of turns"),
-                    cfg.number_of_turns);
-            cfg.core_relative_permeability = get_first_number_value(
-                    problem_parameter_name("2Magnetostatics", "7Core relative permeability"),
-                    cfg.core_relative_permeability);
-            cfg.coil_width = get_first_number_value(
-                    problem_parameter_name("2Magnetostatics", "8Coil width [m]"),
-                    cfg.coil_width);
-            cfg.coil_height = get_first_number_value(
-                    problem_parameter_name("2Magnetostatics", "9Coil height [m]"),
-                    cfg.coil_height);
-        } else {
+        if (problem.physics == SupportedPhysics::ScalarFieldWithPowerCoupling) {
             ScalarFieldWithPowerCouplingProblem& cfg = problem.scalar_field;
             cfg.mass = get_first_number_value(
                     problem_parameter_name("2ScalarFieldWithPowerCoupling", "0Mass"),
@@ -1483,44 +1316,32 @@ private:
 
     void run_magnetostatics_problem(SilproProblem const& problem)
     {
-        MagnetostaticsProblem const& cfg = problem.magnetostatics;
         client().sendProgress(module_name() + " ONELAB interface: exporting mesh for problem '" + problem.name + "'");
         std::filesystem::path const mesh_file = export_input_mesh_from_gmsh();
 
-        double const current_rms = read_number_parameter(
-                cfg.current_rms_parameter,
+        double const current_density_magnitude = read_number_parameter(
+                "Input/90SimiLie/0Coil current density magnitude z [A/m^2]",
                 std::nullopt,
-                cfg.current_rms);
-        double const number_of_turns = read_number_parameter(
-                cfg.number_of_turns_parameter,
+                std::numeric_limits<double>::quiet_NaN());
+        double const core_mu = read_number_parameter(
+                "Input/90SimiLie/1Core magnetic permeability [H/m]",
                 std::nullopt,
-                cfg.number_of_turns);
-        double const core_relative_permeability = read_number_parameter(
-                cfg.core_relative_permeability_parameter,
-                std::nullopt,
-                cfg.core_relative_permeability);
-        double const coil_width = read_number_parameter(
-                cfg.coil_width_parameter,
-                std::nullopt,
-                cfg.coil_width);
-        double const coil_height = read_number_parameter(
-                cfg.coil_height_parameter,
-                std::nullopt,
-                cfg.coil_height);
+                std::numeric_limits<double>::quiet_NaN());
 
         std::filesystem::path const output_view_file
                 = mesh_file.parent_path() / "similie_linear_magnetostatics_inputs.pos";
 
         double const mu0 = 4.e-7 * std::numbers::pi_v<double>;
-        double const core_mu = core_relative_permeability * mu0;
         [[maybe_unused]] auto const magnetostatics_hamiltonian
                 = detail::assemble_linear_magnetostatics_hamiltonian(core_mu);
-        double const coil_section = coil_width * coil_height;
-        if (coil_section <= 0.0) {
-            throw std::runtime_error("the coil width and height must define a strictly positive section");
+        if (!(current_density_magnitude > 0.0)) {
+            throw std::runtime_error(
+                    "missing or invalid 'Input/90SimiLie/0Coil current density magnitude z [A/m^2]' ONELAB parameter");
         }
-        double const current_density_magnitude
-                = std::sqrt(2.0) * current_rms * number_of_turns / coil_section;
+        if (!(core_mu > 0.0)) {
+            throw std::runtime_error(
+                    "missing or invalid 'Input/90SimiLie/1Core magnetic permeability [H/m]' ONELAB parameter");
+        }
 
         detail::HexahedralMesh const mesh = detail::parse_hexahedral_msh2_mesh(mesh_file);
         detail::StructuredGrid const grid = detail::build_structured_grid(mesh);
@@ -1836,10 +1657,10 @@ private:
                 "Mesh file exported by Gmsh for the linear magnetostatics interface.",
                 "file");
         publish_output_number(
-                "Current density magnitude [A/m^2]",
+                "Coil current density magnitude [A/m^2]",
                 current_density_magnitude,
-                "Current density magnitude [A/m^2]",
-                "Current density magnitude derived from the current, the number of turns and the coil section.");
+                "Coil current density magnitude [A/m^2]",
+                "Current density magnitude read from the ONELAB model inputs.");
         publish_output_number(
                 "Air permeability [H/m]",
                 mu0,
@@ -1849,7 +1670,7 @@ private:
                 "Core permeability [H/m]",
                 core_mu,
                 "Core permeability [H/m]",
-                "Magnetic permeability used in core cells.");
+                "Magnetic permeability read from the ONELAB model inputs and used in core cells.");
         publish_output_number(
                 "Number of air cells",
                 static_cast<double>(num_air_cells),

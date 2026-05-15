@@ -26,31 +26,16 @@ Solver {
 }
 ```
 
-The physics-specific section must match the `Problem/Physics` value.
+For magnetostatics, the `.silpro` file currently only selects the physics and solver settings.
+Problem-specific input quantities must come from the driving ONELAB model itself.
 
-## Magnetostatics
+For the structured inductor example, the `.geo` file publishes:
 
-```text
-Magnetostatics {
-  CurrentRmsParameter "Input/4Coil Parameters/0Current (rms) [A]";
-  NumberOfTurnsParameter "Input/4Coil Parameters/1Number of turns";
-  CoreRelativePermeabilityParameter "Input/42Core relative permeability";
-  CoilWidthParameter "Input/10Geometric dimensions/03Coil width [m]";
-  CoilHeightParameter "Input/10Geometric dimensions/04Coil height [m]";
-
-  CurrentRms 10.0;
-  NumberOfTurns 288.0;
-  CoreRelativePermeability 2000.0;
-  CoilWidth 0.03;
-  CoilHeight 0.09;
-
-}
-```
+- `Input/90SimiLie/0Coil current density magnitude z [A/m^2]`
+- `Input/90SimiLie/1Core magnetic permeability [H/m]`
 
 Semantics:
 
-- `*Parameter` entries point to ONELAB numeric inputs to read first.
-- scalar values are fallback defaults when the ONELAB model does not provide them.
 - `UseMatrixFree 1` keeps the matrix-free operator as the default backend.
 - the ONELAB interface always checks hexahedricity and rectilinearity before solving.
 - the ONELAB interface always exports its internal `.pos` view to the mesh output directory.

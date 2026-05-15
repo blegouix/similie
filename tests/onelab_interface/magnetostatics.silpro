@@ -10,16 +10,3 @@ Solver {
   JacobiMaxBlockSize 3;
   UseMatrixFree 0;
 }
-
-Magnetostatics {
-  CurrentRmsParameter "Input/Test Current";
-  NumberOfTurnsParameter "Input/Test Turns";
-  CoreRelativePermeabilityParameter "Input/Test MuR";
-  CoilWidthParameter "Input/Test Coil Width";
-  CoilHeightParameter "Input/Test Coil Height";
-  CurrentRms 12.5;
-  NumberOfTurns 144;
-  CoreRelativePermeability 1500.0;
-  CoilWidth 0.02;
-  CoilHeight 0.08;
-}

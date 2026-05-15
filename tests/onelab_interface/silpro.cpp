@@ -31,14 +31,6 @@ TEST(OnelabInterface, ParseMagnetostaticsSilpro)
     EXPECT_DOUBLE_EQ(problem.solver_settings.relative_tolerance, 1e-8);
     EXPECT_EQ(problem.solver_settings.jacobi_max_block_size, 3U);
     EXPECT_FALSE(problem.solver_settings.use_matrix_free);
-
-    EXPECT_EQ(problem.magnetostatics.current_rms_parameter, "Input/Test Current");
-    EXPECT_EQ(problem.magnetostatics.number_of_turns_parameter, "Input/Test Turns");
-    EXPECT_DOUBLE_EQ(problem.magnetostatics.current_rms, 12.5);
-    EXPECT_DOUBLE_EQ(problem.magnetostatics.number_of_turns, 144.0);
-    EXPECT_DOUBLE_EQ(problem.magnetostatics.core_relative_permeability, 1500.0);
-    EXPECT_DOUBLE_EQ(problem.magnetostatics.coil_width, 0.02);
-    EXPECT_DOUBLE_EQ(problem.magnetostatics.coil_height, 0.08);
 }
 
 TEST(OnelabInterface, ParseScalarFieldSilpro)
