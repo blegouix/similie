@@ -17,6 +17,15 @@ struct StrongFormulationSolverSettings
     double relative_tolerance = 1.0e-12;
 };
 
+struct StrongFormulationSolverDiagnostics
+{
+    unsigned int iterations = 0U;
+    double initial_residual_l2 = 0.0;
+    double final_residual_l2 = 0.0;
+    double final_relative_residual = 0.0;
+    bool converged = true;
+};
+
 namespace detail {
 
 template <class ExecSpace, class OperatorModel, class InputView, class OutputView>
@@ -108,7 +117,7 @@ void axpy_inplace(ExecSpace exec_space, ViewType1 destination, double alpha, Vie
 } // namespace detail
 
 template <class ExecSpace, class OperatorModel, class RHSViewType, class SolutionViewType>
-void minimize_strong_formulation_residual(
+StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
         ExecSpace exec_space,
         physics::dedonder_weyl::StationaryStrongFormulation<OperatorModel> const& formulation,
         RHSViewType rhs,
@@ -116,6 +125,7 @@ void minimize_strong_formulation_residual(
         StrongFormulationSolverSettings settings = {})
 {
     using memory_space = typename SolutionViewType::memory_space;
+    StrongFormulationSolverDiagnostics diagnostics;
 
     Kokkos::View<double**, memory_space> residual("similie_residual", rhs.extent(0), rhs.extent(1));
     Kokkos::View<double**, memory_space> search_direction("similie_search_direction", rhs.extent(0), rhs.extent(1));
@@ -129,12 +139,17 @@ void minimize_strong_formulation_residual(
     detail::copy(exec_space, search_direction, residual);
 
     double const initial_norm_sq = detail::dot(exec_space, residual, residual);
+    diagnostics.initial_residual_l2 = std::sqrt(initial_norm_sq);
+    diagnostics.final_residual_l2 = diagnostics.initial_residual_l2;
+    diagnostics.final_relative_residual = diagnostics.initial_residual_l2 == 0.0 ? 0.0 : 1.0;
     if (initial_norm_sq == 0.0) {
-        return;
+        return diagnostics;
     }
 
     double residual_norm_sq = initial_norm_sq;
+    diagnostics.converged = false;
     for (unsigned int iteration = 0; iteration < settings.max_iterations; ++iteration) {
+        diagnostics.iterations = iteration + 1;
         detail::apply_operator(
                 exec_space,
                 formulation.strong_form_operator,
@@ -151,7 +166,13 @@ void minimize_strong_formulation_residual(
         detail::axpy_inplace(exec_space, residual, -alpha, operator_search_direction);
 
         double const new_residual_norm_sq = detail::dot(exec_space, residual, residual);
+        diagnostics.final_residual_l2 = std::sqrt(new_residual_norm_sq);
+        diagnostics.final_relative_residual = diagnostics.initial_residual_l2 == 0.0
+                                                     ? 0.0
+                                                     : diagnostics.final_residual_l2
+                                                               / diagnostics.initial_residual_l2;
         if (new_residual_norm_sq <= settings.relative_tolerance * settings.relative_tolerance * initial_norm_sq) {
+            diagnostics.converged = true;
             break;
         }
 
@@ -159,6 +180,8 @@ void minimize_strong_formulation_residual(
         detail::update_axpby(exec_space, search_direction, 1.0, residual, beta, search_direction);
         residual_norm_sq = new_residual_norm_sq;
     }
+
+    return diagnostics;
 }
 
 } // namespace similie::solvers

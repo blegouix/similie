@@ -662,7 +662,8 @@ protected:
         solvers::StrongFormulationSolverSettings solver_settings;
         solver_settings.max_iterations = 2000U;
         solver_settings.relative_tolerance = 1.0e-10;
-        solvers::minimize_strong_formulation_residual(
+        solvers::StrongFormulationSolverDiagnostics const solver_diagnostics
+                = solvers::minimize_strong_formulation_residual(
                 Kokkos::DefaultExecutionSpace(),
                 formulation,
                 rhs,
@@ -690,6 +691,9 @@ protected:
         double max_abs_potential = 0.0;
         double max_abs_induction = 0.0;
         double max_abs_field = 0.0;
+        double air_gap_induction_magnitude_sum = 0.0;
+        std::size_t num_air_gap_cells = 0;
+        double force_density_magnitude_sum = 0.0;
         for (double value : magnetic_vector_potential) {
             max_abs_potential = std::max(max_abs_potential, std::abs(value));
         }
@@ -794,6 +798,14 @@ protected:
                     for (double value : cell_output.magnetic_field) {
                         max_abs_field = std::max(max_abs_field, std::abs(value));
                     }
+                    if (grid.ordered_cells[cell_index].physical_tag == detail::AIRGAP_TAG) {
+                        double const induction_magnitude = std::sqrt(
+                                cell_output.magnetic_induction[0] * cell_output.magnetic_induction[0]
+                                + cell_output.magnetic_induction[1] * cell_output.magnetic_induction[1]
+                                + cell_output.magnetic_induction[2] * cell_output.magnetic_induction[2]);
+                        air_gap_induction_magnitude_sum += induction_magnitude;
+                        ++num_air_gap_cells;
+                    }
                 }
             }
         }
@@ -848,6 +860,10 @@ protected:
                     force_density[0] = derivative(0, 'x') + derivative(3, 'y') + derivative(4, 'z');
                     force_density[1] = derivative(3, 'x') + derivative(1, 'y') + derivative(5, 'z');
                     force_density[2] = derivative(4, 'x') + derivative(5, 'y') + derivative(2, 'z');
+                    force_density_magnitude_sum += std::sqrt(
+                            force_density[0] * force_density[0]
+                            + force_density[1] * force_density[1]
+                            + force_density[2] * force_density[2]);
                 }
             }
         }
@@ -907,6 +923,26 @@ protected:
                 "Number of coil cells",
                 "Number of hexahedral cells tagged as coil.");
         publish_output_number(
+                "Solver iterations",
+                static_cast<double>(solver_diagnostics.iterations),
+                "Solver iterations",
+                "Number of conjugate-gradient iterations performed by the stationary strong-formulation solver.");
+        publish_output_number(
+                "Solver converged",
+                solver_diagnostics.converged ? 1.0 : 0.0,
+                "Solver converged",
+                "Equals 1 when the stationary strong-formulation solver met its relative-residual target, 0 otherwise.");
+        publish_output_number(
+                "Final residual L2",
+                solver_diagnostics.final_residual_l2,
+                "Final residual L2",
+                "Final L2 norm of the strong-formulation residual returned by the stationary solver.");
+        publish_output_number(
+                "Final relative residual",
+                solver_diagnostics.final_relative_residual,
+                "Final relative residual",
+                "Final residual divided by the initial residual, as returned by the stationary solver.");
+        publish_output_number(
                 "Maximum magnetic vector potential [SI]",
                 max_abs_potential,
                 "Maximum magnetic vector potential [SI]",
@@ -921,6 +957,33 @@ protected:
                 max_abs_field,
                 "Maximum magnetic field [A/m]",
                 "Maximum absolute cell-centered magnetic field over the structured mesh.");
+        publish_output_number(
+                "Air-gap mean magnetic induction [T]",
+                num_air_gap_cells == 0
+                        ? 0.0
+                        : air_gap_induction_magnitude_sum / static_cast<double>(num_air_gap_cells),
+                "Air-gap mean magnetic induction [T]",
+                "Mean magnetic-induction magnitude over the hexahedral cells tagged as air gap.");
+        publish_output_number(
+                "Mean force density magnitude [N/m^3]",
+                num_cells == 0 ? 0.0 : force_density_magnitude_sum / static_cast<double>(num_cells),
+                "Mean force density magnitude [N/m^3]",
+                "Mean force-density magnitude over all hexahedral cells of the structured mesh.");
+        {
+            std::ostringstream summary;
+            summary << "SimiLie solver diagnostics: iterations=" << solver_diagnostics.iterations
+                    << ", final residual L2=" << solver_diagnostics.final_residual_l2
+                    << ", final relative residual=" << solver_diagnostics.final_relative_residual
+                    << ", air-gap mean |B|="
+                    << (num_air_gap_cells == 0
+                                ? 0.0
+                                : air_gap_induction_magnitude_sum
+                                          / static_cast<double>(num_air_gap_cells))
+                    << " T, mean |f|="
+                    << (num_cells == 0 ? 0.0 : force_density_magnitude_sum / static_cast<double>(num_cells))
+                    << " N/m^3";
+            client().sendInfo(summary.str());
+        }
         publish_status("linear magnetostatics solved on the rectilinear grid");
     }
 
