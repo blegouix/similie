@@ -6,6 +6,7 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "${script_dir}/../.." && pwd)"
 inductor_dir="${script_dir}/Inductor"
 geometry_file="${script_dir}/similie_rectilinear_inductor.geo"
+problem_file="${SIMILIE_ONELAB_PROBLEM_FILE:-${script_dir}/similie_linear_magnetostatics.silpro}"
 output_dir="$(pwd)"
 
 gmsh_executable="${GMSH_EXECUTABLE:-gmsh}"
@@ -24,6 +25,11 @@ fi
 
 if [[ ! -f "${geometry_file}" ]]; then
     echo "missing Inductor geometry file: ${geometry_file}" >&2
+    exit 1
+fi
+
+if [[ ! -f "${problem_file}" ]]; then
+    echo "missing SimiLie .silpro problem file: ${problem_file}" >&2
     exit 1
 fi
 
@@ -60,9 +66,8 @@ EOF
     -setnumber General.Terminal 1 \
     -setnumber Mesh.Binary 0 \
     -setnumber Mesh.MshFileVersion 2.2 \
+    -setstring "0Modules/SimiLie/0Control/Problem file" "${problem_file}" \
     -setstring "0Modules/SimiLie/0Control/Input fields view file" "${result_file}" \
-    -setnumber "0Modules/SimiLie/0Control/Export input fields view" 1 \
-    -setnumber "0Modules/SimiLie/0Control/Merge result view in Gmsh" 0 \
     -setstring "0Modules/SimiLie/0Control/Input mesh file" "${mesh_file}" \
     "${geometry_file}" \
     "${control_file}" \

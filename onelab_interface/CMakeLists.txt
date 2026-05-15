@@ -14,7 +14,7 @@ target_include_directories(similie_onelab_interface
         "${CMAKE_CURRENT_SOURCE_DIR}"
 )
 
-add_executable(similie_onelab magnetostatics/main.cpp)
+add_executable(similie_onelab main.cpp)
 
 target_link_libraries(similie_onelab
     PRIVATE

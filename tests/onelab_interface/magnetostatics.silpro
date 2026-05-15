@@ -1,0 +1,28 @@
+Problem {
+  Name "Test magnetostatics problem";
+  Physics Magnetostatics;
+  Solver MinimizeStrongFormulationResidual;
+}
+
+Solver {
+  MaxIterations 4321;
+  RelativeTolerance 1e-8;
+  JacobiMaxBlockSize 3;
+  UseMatrixFree 0;
+}
+
+Magnetostatics {
+  CurrentRmsParameter "Input/Test Current";
+  NumberOfTurnsParameter "Input/Test Turns";
+  CoreRelativePermeabilityParameter "Input/Test MuR";
+  CoilWidthParameter "Input/Test Coil Width";
+  CoilHeightParameter "Input/Test Coil Height";
+  CurrentRms 12.5;
+  NumberOfTurns 144;
+  CoreRelativePermeability 1500.0;
+  CoilWidth 0.02;
+  CoilHeight 0.08;
+  ExportInputFieldsView 1;
+  MergeResultViewInGmsh 0;
+  InputFieldsViewFile "test_result.pos";
+}

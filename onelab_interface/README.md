@@ -1,17 +1,16 @@
 # ONELAB Interface
 
-This directory contains a first ONELAB client for SimiLie.
+This directory contains the self-contained SimiLie ONELAB client.
 
-Current behavior:
-- Gmsh can launch `similie_onelab` as an external ONELAB client.
-- The code is now structured around a reusable `BaseOnelabInterface` class.
-- The current executable entry point lives in `magnetostatics/` and instantiates `LinearMagnetostaticsOnelabInterface`.
-- The linear magnetostatics interface currently prepares the ONELAB session and exports the mesh from Gmsh, but the actual solver implementation is still pending.
+Current structure:
+- `onelab_interface.hpp` contains the ONELAB driver, the `.silpro` parser, and the current problem dispatch.
+- `main.cpp` instantiates `similie::onelab_interface::OnelabInterface`.
+- the vendored `onelab.h` and `GmshSocket.h` stay local to keep the build independent from a system Gmsh SDK.
 
-Build notes:
-- The ONELAB headers `onelab.h` and `GmshSocket.h` are vendored directly in this directory.
+Current runtime support:
+- `.silpro` parsing for `ScalarFieldWithPowerCoupling` and `Magnetostatics`
+- `MinimizeStrongFormulationResidual` solver settings assembly
+- structured rectilinear magnetostatics execution from Gmsh/ONELAB
 
-Typical workflow:
-1. Build SimiLie in Docker with `SIMILIE_BUILD_ONELAB_INTERFACE=ON`.
-2. Register the built executable as a new ONELAB client in Gmsh.
-3. Let Gmsh launch the client with its usual `-onelab <name> <socket>` arguments.
+The `.silpro` syntax is documented in:
+- [docs/onelab_interface.md](/home/cart3sianbear/similie/docs/onelab_interface.md)
