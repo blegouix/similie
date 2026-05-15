@@ -29,14 +29,27 @@ y3 = htot / 2 - hcoreE + hcoil;
 y4 = htot / 2 - hcoreE + hcoil + wcoreE;
 
 lc0 = wcoil / nn_wcore;
-hcoil_div = Ceil[hcoil / lc0];
-nz_layers = Ceil[Lz / lc0];
+refinement_factor = 8;
+hcoil_div = refinement_factor * Ceil[hcoil / lc0];
+nz_layers = refinement_factor * Ceil[Lz / lc0];
 
 x_coords[] = {-Rext, -x3, -x2, -x1, 0, x1, x2, x3, Rext};
-x_divisions[] = {nn_ro, nn_wcore, nn_wcore, nn_wcore, nn_wcore, nn_wcore, nn_wcore, nn_ro};
+x_divisions[] = {refinement_factor * nn_ro,
+                 refinement_factor * nn_wcore,
+                 refinement_factor * nn_wcore,
+                 refinement_factor * nn_wcore,
+                 refinement_factor * nn_wcore,
+                 refinement_factor * nn_wcore,
+                 refinement_factor * nn_wcore,
+                 refinement_factor * nn_ro};
 
 y_coords[] = {-Rext, y0, y1, y2, y3, y4, Rext};
-y_divisions[] = {nn_ro, nn_wcore, nn_airgap, hcoil_div, nn_wcore, nn_ro};
+y_divisions[] = {refinement_factor * nn_ro,
+                 refinement_factor * nn_wcore,
+                 refinement_factor * nn_airgap,
+                 hcoil_div,
+                 refinement_factor * nn_wcore,
+                 refinement_factor * nn_ro};
 
 num_x = #x_coords[];
 num_y = #y_coords[];

@@ -13,7 +13,7 @@ import numpy as np
 
 
 HEXAHEDRON_TYPE = 5
-TOL = 1.0e-12
+TOL = 1.0e-6
 
 PERMEABILITY_VIEW = "SimiLie linear magnetostatics permeability"
 CURRENT_DENSITY_VIEW = "SimiLie linear magnetostatics current density"
@@ -90,24 +90,24 @@ def nearest_index(coordinates: list[float], value: float) -> int:
 def parse_result_views(
     pos_file: Path,
 ) -> tuple[
-    list[float],
-    list[tuple[float, float, float]],
-    list[tuple[float, float, float]],
-    list[tuple[float, float, float]],
-    list[tuple[float, float, float]],
-    dict[str, list[float]],
-    list[tuple[float, float, float]],
+    list[tuple[tuple[float, float, float], float]],
+    list[tuple[tuple[float, float, float], tuple[float, float, float]]],
+    list[tuple[tuple[float, float, float], tuple[float, float, float]]],
+    list[tuple[tuple[float, float, float], tuple[float, float, float]]],
+    list[tuple[tuple[float, float, float], tuple[float, float, float]]],
+    dict[str, list[tuple[tuple[float, float, float], float]]],
+    list[tuple[tuple[float, float, float], tuple[float, float, float]]],
 ]:
     scalar_pattern = re.compile(r'SP\(([^,]+),([^,]+),([^)]+)\)\{([^}]+)\};')
     vector_pattern = re.compile(r'VP\(([^,]+),([^,]+),([^)]+)\)\{([^,]+),([^,]+),([^}]+)\};')
     view_pattern = re.compile(r'^View "([^"]+)" \{$')
 
-    permeability: list[float] = []
-    current_density: list[tuple[float, float, float]] = []
-    magnetic_vector_potential: list[tuple[float, float, float]] = []
-    magnetic_induction: list[tuple[float, float, float]] = []
-    magnetic_field: list[tuple[float, float, float]] = []
-    force_density: list[tuple[float, float, float]] = []
+    permeability: list[tuple[tuple[float, float, float], float]] = []
+    current_density: list[tuple[tuple[float, float, float], tuple[float, float, float]]] = []
+    magnetic_vector_potential: list[tuple[tuple[float, float, float], tuple[float, float, float]]] = []
+    magnetic_induction: list[tuple[tuple[float, float, float], tuple[float, float, float]]] = []
+    magnetic_field: list[tuple[tuple[float, float, float], tuple[float, float, float]]] = []
+    force_density: list[tuple[tuple[float, float, float], tuple[float, float, float]]] = []
     stress_components = {name: [] for name in STRESS_VIEW_NAMES}
 
     current_view: str | None = None
@@ -125,31 +125,41 @@ def parse_result_views(
 
         scalar_match = scalar_pattern.search(line)
         if scalar_match:
+            xyz = (
+                float(scalar_match.group(1)),
+                float(scalar_match.group(2)),
+                float(scalar_match.group(3)),
+            )
             value = float(scalar_match.group(4))
             if current_view == PERMEABILITY_VIEW:
-                permeability.append(value)
+                permeability.append((xyz, value))
             elif current_view in stress_components:
-                stress_components[current_view].append(value)
+                stress_components[current_view].append((xyz, value))
             continue
 
         vector_match = vector_pattern.search(line)
         if not vector_match:
             continue
+        xyz = (
+            float(vector_match.group(1)),
+            float(vector_match.group(2)),
+            float(vector_match.group(3)),
+        )
         value = (
             float(vector_match.group(4)),
             float(vector_match.group(5)),
             float(vector_match.group(6)),
         )
         if current_view == CURRENT_DENSITY_VIEW:
-            current_density.append(value)
+            current_density.append((xyz, value))
         elif current_view == MAGNETIC_VECTOR_POTENTIAL_VIEW:
-            magnetic_vector_potential.append(value)
+            magnetic_vector_potential.append((xyz, value))
         elif current_view == MAGNETIC_INDUCTION_VIEW:
-            magnetic_induction.append(value)
+            magnetic_induction.append((xyz, value))
         elif current_view == MAGNETIC_FIELD_VIEW:
-            magnetic_field.append(value)
+            magnetic_field.append((xyz, value))
         elif current_view == FORCE_DENSITY_VIEW:
-            force_density.append(value)
+            force_density.append((xyz, value))
 
     return (
         permeability,
@@ -165,13 +175,13 @@ def parse_result_views(
 def build_structured_arrays(
     nodes: list[tuple[int, float, float, float]],
     cells: list[tuple[int, list[int]]],
-    permeability_values: list[float],
-    current_density_values: list[tuple[float, float, float]],
-    magnetic_vector_potential_values: list[tuple[float, float, float]],
-    magnetic_induction_values: list[tuple[float, float, float]],
-    magnetic_field_values: list[tuple[float, float, float]],
-    stress_components: dict[str, list[float]],
-    force_density_values: list[tuple[float, float, float]],
+    permeability_values: list[tuple[tuple[float, float, float], float]],
+    current_density_values: list[tuple[tuple[float, float, float], tuple[float, float, float]]],
+    magnetic_vector_potential_values: list[tuple[tuple[float, float, float], tuple[float, float, float]]],
+    magnetic_induction_values: list[tuple[tuple[float, float, float], tuple[float, float, float]]],
+    magnetic_field_values: list[tuple[tuple[float, float, float], tuple[float, float, float]]],
+    stress_components: dict[str, list[tuple[tuple[float, float, float], float]]],
+    force_density_values: list[tuple[tuple[float, float, float], tuple[float, float, float]]],
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     x_coords = unique_sorted([node[1] for node in nodes])
     y_coords = unique_sorted([node[2] for node in nodes])
@@ -213,10 +223,10 @@ def build_structured_arrays(
         position[:, :, iz, 2] = z
 
     magnetic_vector_potential = np.zeros((nx, ny, nz, 3), dtype=np.float64)
-    for value_idx, value in enumerate(magnetic_vector_potential_values):
-        ix = value_idx % nx
-        iy = (value_idx // nx) % ny
-        iz = value_idx // (nx * ny)
+    for xyz, value in magnetic_vector_potential_values:
+        ix = nearest_index(x_coords, xyz[0])
+        iy = nearest_index(y_coords, xyz[1])
+        iz = nearest_index(z_coords, xyz[2])
         magnetic_vector_potential[ix, iy, iz, :] = value
 
     permeability = np.zeros((nx - 1, ny - 1, nz - 1), dtype=np.float64)
@@ -242,15 +252,36 @@ def build_structured_arrays(
             raise RuntimeError("duplicated structured cell")
         occupied_cells.add(key)
 
-        permeability[min_x, min_y, min_z] = permeability_values[cell_idx]
-        current_density[min_x, min_y, min_z, :] = current_density_values[cell_idx]
-        magnetic_induction[min_x, min_y, min_z, :] = magnetic_induction_values[cell_idx]
-        magnetic_field[min_x, min_y, min_z, :] = magnetic_field_values[cell_idx]
-        force_density[min_x, min_y, min_z, :] = force_density_values[cell_idx]
-        for name, (ii, jj) in STRESS_VIEW_NAMES.items():
-            value = stress_components[name][cell_idx]
-            maxwell_stress[min_x, min_y, min_z, ii, jj] = value
-            maxwell_stress[min_x, min_y, min_z, jj, ii] = value
+    def cell_key_from_xyz(xyz: tuple[float, float, float]) -> tuple[int, int, int]:
+        x_mid = [(x_coords[i] + x_coords[i + 1]) / 2.0 for i in range(nx - 1)]
+        y_mid = [(y_coords[i] + y_coords[i + 1]) / 2.0 for i in range(ny - 1)]
+        z_mid = [(z_coords[i] + z_coords[i + 1]) / 2.0 for i in range(nz - 1)]
+        return (
+            nearest_index(x_mid, xyz[0]),
+            nearest_index(y_mid, xyz[1]),
+            nearest_index(z_mid, xyz[2]),
+        )
+
+    for xyz, value in permeability_values:
+        ix, iy, iz = cell_key_from_xyz(xyz)
+        permeability[ix, iy, iz] = value
+    for xyz, value in current_density_values:
+        ix, iy, iz = cell_key_from_xyz(xyz)
+        current_density[ix, iy, iz, :] = value
+    for xyz, value in magnetic_induction_values:
+        ix, iy, iz = cell_key_from_xyz(xyz)
+        magnetic_induction[ix, iy, iz, :] = value
+    for xyz, value in magnetic_field_values:
+        ix, iy, iz = cell_key_from_xyz(xyz)
+        magnetic_field[ix, iy, iz, :] = value
+    for xyz, value in force_density_values:
+        ix, iy, iz = cell_key_from_xyz(xyz)
+        force_density[ix, iy, iz, :] = value
+    for name, (ii, jj) in STRESS_VIEW_NAMES.items():
+        for xyz, value in stress_components[name]:
+            ix, iy, iz = cell_key_from_xyz(xyz)
+            maxwell_stress[ix, iy, iz, ii, jj] = value
+            maxwell_stress[ix, iy, iz, jj, ii] = value
 
     return (
         position,
@@ -284,6 +315,12 @@ def write_hdf5(
         handle.create_dataset("magnetic_induction", data=magnetic_induction)
         handle.create_dataset("magnetic_field", data=magnetic_field)
         handle.create_dataset("maxwell_stress_tensor", data=maxwell_stress)
+        handle.create_dataset("maxwell_stress_xx", data=maxwell_stress[..., 0, 0])
+        handle.create_dataset("maxwell_stress_yy", data=maxwell_stress[..., 1, 1])
+        handle.create_dataset("maxwell_stress_zz", data=maxwell_stress[..., 2, 2])
+        handle.create_dataset("maxwell_stress_xy", data=maxwell_stress[..., 0, 1])
+        handle.create_dataset("maxwell_stress_xz", data=maxwell_stress[..., 0, 2])
+        handle.create_dataset("maxwell_stress_yz", data=maxwell_stress[..., 1, 2])
         handle.create_dataset("force_density", data=force_density)
 
 
@@ -338,9 +375,34 @@ def write_xmf(
         {h5_file.name}:/magnetic_field
        </DataItem>
      </Attribute>
-     <Attribute Name="MaxwellStressTensor" AttributeType="Tensor" Center="Cell">
-       <DataItem Dimensions="{nx - 1} {ny - 1} {nz - 1} 3 3" NumberType="Float" Precision="8" Format="HDF">
-        {h5_file.name}:/maxwell_stress_tensor
+     <Attribute Name="MaxwellStressXX" AttributeType="Scalar" Center="Cell">
+       <DataItem Dimensions="{nx - 1} {ny - 1} {nz - 1}" NumberType="Float" Precision="8" Format="HDF">
+        {h5_file.name}:/maxwell_stress_xx
+       </DataItem>
+     </Attribute>
+     <Attribute Name="MaxwellStressYY" AttributeType="Scalar" Center="Cell">
+       <DataItem Dimensions="{nx - 1} {ny - 1} {nz - 1}" NumberType="Float" Precision="8" Format="HDF">
+        {h5_file.name}:/maxwell_stress_yy
+       </DataItem>
+     </Attribute>
+     <Attribute Name="MaxwellStressZZ" AttributeType="Scalar" Center="Cell">
+       <DataItem Dimensions="{nx - 1} {ny - 1} {nz - 1}" NumberType="Float" Precision="8" Format="HDF">
+        {h5_file.name}:/maxwell_stress_zz
+       </DataItem>
+     </Attribute>
+     <Attribute Name="MaxwellStressXY" AttributeType="Scalar" Center="Cell">
+       <DataItem Dimensions="{nx - 1} {ny - 1} {nz - 1}" NumberType="Float" Precision="8" Format="HDF">
+        {h5_file.name}:/maxwell_stress_xy
+       </DataItem>
+     </Attribute>
+     <Attribute Name="MaxwellStressXZ" AttributeType="Scalar" Center="Cell">
+       <DataItem Dimensions="{nx - 1} {ny - 1} {nz - 1}" NumberType="Float" Precision="8" Format="HDF">
+        {h5_file.name}:/maxwell_stress_xz
+       </DataItem>
+     </Attribute>
+     <Attribute Name="MaxwellStressYZ" AttributeType="Scalar" Center="Cell">
+       <DataItem Dimensions="{nx - 1} {ny - 1} {nz - 1}" NumberType="Float" Precision="8" Format="HDF">
+        {h5_file.name}:/maxwell_stress_yz
        </DataItem>
      </Attribute>
      <Attribute Name="ForceDensity" AttributeType="Vector" Center="Cell">

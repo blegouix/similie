@@ -637,85 +637,89 @@ protected:
         std::size_t const num_nodes = grid.nx() * grid.ny() * grid.nz();
         Kokkos::View<double*> x_coords("similie_x_coords", grid.nx());
         Kokkos::View<double*> y_coords("similie_y_coords", grid.ny());
-        Kokkos::View<double*> z_coords("similie_z_coords", grid.nz());
         auto x_coords_host = Kokkos::create_mirror_view(x_coords);
         auto y_coords_host = Kokkos::create_mirror_view(y_coords);
-        auto z_coords_host = Kokkos::create_mirror_view(z_coords);
         for (std::size_t i = 0; i < grid.nx(); ++i) {
             x_coords_host(i) = grid.x_coords[i];
         }
         for (std::size_t i = 0; i < grid.ny(); ++i) {
             y_coords_host(i) = grid.y_coords[i];
         }
-        for (std::size_t i = 0; i < grid.nz(); ++i) {
-            z_coords_host(i) = grid.z_coords[i];
-        }
         Kokkos::deep_copy(x_coords, x_coords_host);
         Kokkos::deep_copy(y_coords, y_coords_host);
-        Kokkos::deep_copy(z_coords, z_coords_host);
 
-        Kokkos::View<double**> rhs("similie_rhs", num_nodes, 1);
-        Kokkos::View<double**> magnetic_vector_potential_z_view("similie_Az", num_nodes, 1);
+        std::size_t const num_xy_nodes = grid.nx() * grid.ny();
+        Kokkos::View<double**> rhs("similie_rhs", num_xy_nodes, 1);
+        Kokkos::View<double**> magnetic_vector_potential_z_xy_view("similie_Az", num_xy_nodes, 1);
         auto rhs_host = Kokkos::create_mirror_view(rhs);
-        for (std::size_t k = 0; k < grid.nz(); ++k) {
-            for (std::size_t j = 0; j < grid.ny(); ++j) {
-                for (std::size_t i = 0; i < grid.nx(); ++i) {
-                    std::size_t const node_index = grid.node_index(i, j, k);
-                    double accumulated_current_density_z = 0.0;
-                    std::size_t count = 0;
-                    for (int dk = -1; dk <= 0; ++dk) {
-                        for (int dj = -1; dj <= 0; ++dj) {
-                            for (int di = -1; di <= 0; ++di) {
-                                std::ptrdiff_t const ci = static_cast<std::ptrdiff_t>(i) + di;
-                                std::ptrdiff_t const cj = static_cast<std::ptrdiff_t>(j) + dj;
-                                std::ptrdiff_t const ck = static_cast<std::ptrdiff_t>(k) + dk;
-                                if (ci < 0 || cj < 0 || ck < 0
-                                    || ci >= static_cast<std::ptrdiff_t>(grid.ncell_x())
-                                    || cj >= static_cast<std::ptrdiff_t>(grid.ncell_y())
-                                    || ck >= static_cast<std::ptrdiff_t>(grid.ncell_z())) {
-                                    continue;
-                                }
-                                accumulated_current_density_z += cell_inputs[grid.cell_index(
-                                                                 static_cast<std::size_t>(ci),
-                                                                 static_cast<std::size_t>(cj),
-                                                                 static_cast<std::size_t>(ck))]
-                                                                        .current_density[2];
-                                ++count;
-                            }
-                        }
-                    }
-                    rhs_host(node_index, 0)
-                            = count == 0 ? 0.0
-                                         : mu0 * accumulated_current_density_z
-                                                   / static_cast<double>(count);
+        for (std::size_t j = 0; j < grid.ny(); ++j) {
+            for (std::size_t i = 0; i < grid.nx(); ++i) {
+                std::size_t const node_index_xy = i + grid.nx() * j;
+                bool const boundary = (i == 0 || j == 0 || i + 1 == grid.nx() || j + 1 == grid.ny());
+                if (boundary) {
+                    rhs_host(node_index_xy, 0) = 0.0;
+                    continue;
                 }
+                double accumulated_current_density_z = 0.0;
+                std::size_t count = 0;
+                for (int dj = -1; dj <= 0; ++dj) {
+                    for (int di = -1; di <= 0; ++di) {
+                        std::ptrdiff_t const ci = static_cast<std::ptrdiff_t>(i) + di;
+                        std::ptrdiff_t const cj = static_cast<std::ptrdiff_t>(j) + dj;
+                        if (ci < 0 || cj < 0
+                            || ci >= static_cast<std::ptrdiff_t>(grid.ncell_x())
+                            || cj >= static_cast<std::ptrdiff_t>(grid.ncell_y())) {
+                            continue;
+                        }
+                        double slice_sum = 0.0;
+                        for (std::size_t ck = 0; ck < grid.ncell_z(); ++ck) {
+                            slice_sum += cell_inputs[grid.cell_index(
+                                                              static_cast<std::size_t>(ci),
+                                                              static_cast<std::size_t>(cj),
+                                                              ck)]
+                                                 .current_density[2];
+                        }
+                        accumulated_current_density_z += slice_sum / static_cast<double>(grid.ncell_z());
+                        ++count;
+                    }
+                }
+                rhs_host(node_index_xy, 0)
+                        = count == 0 ? 0.0
+                                     : mu0 * accumulated_current_density_z / static_cast<double>(count);
             }
         }
         Kokkos::deep_copy(rhs, rhs_host);
         client().sendInfo("SimiLie right-hand side assembled on rectilinear nodes");
 
-        physics::magnetostatics::StructuredVectorPoissonStrongFormOperator<
+        physics::magnetostatics::StructuredScalarPoissonStrongFormOperator2D<
                 typename Kokkos::DefaultExecutionSpace::memory_space>
-                operator_model(x_coords, y_coords, z_coords);
+                operator_model(x_coords, y_coords);
         physics::dedonder_weyl::StationaryStrongFormulation formulation {operator_model};
         client().sendInfo("SimiLie starting matrix-free conjugate-gradient solve");
         solvers::StrongFormulationSolverSettings solver_settings;
-        solver_settings.max_iterations = 400U;
-        solver_settings.relative_tolerance = 1.0e-8;
+        solver_settings.max_iterations = 2000U;
+        solver_settings.relative_tolerance = 1.0e-10;
         solvers::minimize_strong_formulation_residual(
                 Kokkos::DefaultExecutionSpace(),
                 formulation,
                 rhs,
-                magnetic_vector_potential_z_view,
+                magnetic_vector_potential_z_xy_view,
                 solver_settings);
         client().sendInfo("SimiLie matrix-free conjugate-gradient solve finished");
 
-        auto magnetic_vector_potential_z_host = Kokkos::create_mirror_view_and_copy(
+        auto magnetic_vector_potential_z_xy_host = Kokkos::create_mirror_view_and_copy(
                 Kokkos::HostSpace(),
-                magnetic_vector_potential_z_view);
+                magnetic_vector_potential_z_xy_view);
         std::vector<double> magnetic_vector_potential(3 * num_nodes, 0.0);
-        for (std::size_t node_index = 0; node_index < num_nodes; ++node_index) {
-            magnetic_vector_potential[3 * node_index + 2] = magnetic_vector_potential_z_host(node_index, 0);
+        for (std::size_t k = 0; k < grid.nz(); ++k) {
+            for (std::size_t j = 0; j < grid.ny(); ++j) {
+                for (std::size_t i = 0; i < grid.nx(); ++i) {
+                    std::size_t const node_index = grid.node_index(i, j, k);
+                    std::size_t const node_index_xy = i + grid.nx() * j;
+                    magnetic_vector_potential[3 * node_index + 2]
+                            = magnetic_vector_potential_z_xy_host(node_index_xy, 0);
+                }
+            }
         }
 
         physics::magnetostatics::MagneticVectorPotentialToMagneticInduction curl_operator;
