@@ -6,7 +6,7 @@ var searchData=
   ['binomial_5fcoefficient_3',['binomial_coefficient',['../namespacesil_1_1misc.html#aea35c72a0b5289f6bef175d41e5001d1',1,'sil::misc']]],
   ['boundary_4',['Boundary',['../structsil_1_1exterior_1_1Boundary.html',1,'sil::exterior']]],
   ['boundary_5',['boundary',['../namespacesil_1_1exterior.html#ab67124170cc5aa39c400687dc9e9e439',1,'sil::exterior::boundary(AllocationType allocation, SimplexType simplex)'],['../namespacesil_1_1exterior.html#a5c98c080f983d9b2020d6b0f13598044',1,'sil::exterior::boundary(AllocationType allocation, Chain&lt; SimplexType, typename AllocationType::array_layout, typename AllocationType::memory_space &gt; chain)']]],
-  ['boundary_20operator_6',['Boundary operator',['../exterior_module.html#autotoc_md18',1,'']]],
+  ['boundary_20operator_6',['Boundary operator',['../exterior_module.html#autotoc_md19',1,'']]],
   ['boundary_5ft_7',['boundary_t',['../namespacesil_1_1exterior.html#a52bc67c02d8ba34a3eeb34de1dd21df8',1,'sil::exterior']]],
   ['boundcond_8',['BoundCond',['../classsil_1_1mesher_1_1Mesher.html#ac3f9204e172f1ff8c7e8390351e12c95',1,'sil::mesher::Mesher']]],
   ['bsplines_5ftype_9',['bsplines_type',['../classsil_1_1mesher_1_1Mesher.html#a1161cee72ecbc8cbcb8df18fc5892899',1,'sil::mesher::Mesher']]]

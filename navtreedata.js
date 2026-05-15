@@ -27,36 +27,36 @@ var NAVTREE =
   [ "SimiLie", "index.html", [
     [ "About", "index.html", "index" ],
     [ "Running SimiLie", "Running.html", [
-      [ "Dependencies", "Running.html#autotoc_md3", null ],
-      [ "Compilation", "Running.html#autotoc_md4", null ],
-      [ "Usage", "Running.html#autotoc_md5", null ]
+      [ "Dependencies", "Running.html#autotoc_md4", null ],
+      [ "Compilation", "Running.html#autotoc_md5", null ],
+      [ "Usage", "Running.html#autotoc_md6", null ]
     ] ],
     [ "Tensor module", "tensor_module.html", [
-      [ "Why tensors are importants for physics ?", "tensor_module.html#autotoc_md6", null ],
-      [ "Do Kokkos and DDC support tensor fields ? What can SimiLie do in addition ?", "tensor_module.html#autotoc_md7", null ],
-      [ "Tensor indices", "tensor_module.html#autotoc_md8", null ],
-      [ "Internal mechanism", "tensor_module.html#autotoc_md9", null ],
-      [ "Tensor accessor", "tensor_module.html#autotoc_md10", null ],
-      [ "Tensor class", "tensor_module.html#autotoc_md11", null ],
-      [ "Metric", "tensor_module.html#autotoc_md12", null ],
-      [ "Tensor product", "tensor_module.html#autotoc_md13", null ]
+      [ "Why tensors are importants for physics ?", "tensor_module.html#autotoc_md7", null ],
+      [ "Do Kokkos and DDC support tensor fields ? What can SimiLie do in addition ?", "tensor_module.html#autotoc_md8", null ],
+      [ "Tensor indices", "tensor_module.html#autotoc_md9", null ],
+      [ "Internal mechanism", "tensor_module.html#autotoc_md10", null ],
+      [ "Tensor accessor", "tensor_module.html#autotoc_md11", null ],
+      [ "Tensor class", "tensor_module.html#autotoc_md12", null ],
+      [ "Metric", "tensor_module.html#autotoc_md13", null ],
+      [ "Tensor product", "tensor_module.html#autotoc_md14", null ]
     ] ],
     [ "Exterior module", "exterior_module.html", [
-      [ "Why integro-differential calculus is important for physics ?", "exterior_module.html#autotoc_md14", null ],
-      [ "Discrete exterior calculus", "exterior_module.html#autotoc_md15", [
-        [ "Simplex", "exterior_module.html#autotoc_md16", null ],
-        [ "Chain", "exterior_module.html#autotoc_md17", null ],
-        [ "Boundary operator", "exterior_module.html#autotoc_md18", null ],
-        [ "Cosimplex", "exterior_module.html#autotoc_md19", null ],
-        [ "Cochain", "exterior_module.html#autotoc_md20", null ],
-        [ "Coboundary operator", "exterior_module.html#autotoc_md21", null ],
-        [ "Transposed coboundary operator", "exterior_module.html#autotoc_md22", null ],
-        [ "Primal and dual cell complexes", "exterior_module.html#autotoc_md23", null ],
-        [ "Volume operator", "exterior_module.html#autotoc_md24", null ],
-        [ "Reduction and reconstruction", "exterior_module.html#autotoc_md25", null ],
-        [ "Hodge star operator", "exterior_module.html#autotoc_md26", null ],
-        [ "Codifferential", "exterior_module.html#autotoc_md27", null ],
-        [ "Laplacian", "exterior_module.html#autotoc_md28", null ]
+      [ "Why integro-differential calculus is important for physics ?", "exterior_module.html#autotoc_md15", null ],
+      [ "Discrete exterior calculus", "exterior_module.html#autotoc_md16", [
+        [ "Simplex", "exterior_module.html#autotoc_md17", null ],
+        [ "Chain", "exterior_module.html#autotoc_md18", null ],
+        [ "Boundary operator", "exterior_module.html#autotoc_md19", null ],
+        [ "Cosimplex", "exterior_module.html#autotoc_md20", null ],
+        [ "Cochain", "exterior_module.html#autotoc_md21", null ],
+        [ "Coboundary operator", "exterior_module.html#autotoc_md22", null ],
+        [ "Transposed coboundary operator", "exterior_module.html#autotoc_md23", null ],
+        [ "Primal and dual cell complexes", "exterior_module.html#autotoc_md24", null ],
+        [ "Volume operator", "exterior_module.html#autotoc_md25", null ],
+        [ "Reduction and reconstruction", "exterior_module.html#autotoc_md26", null ],
+        [ "Hodge star operator", "exterior_module.html#autotoc_md27", null ],
+        [ "Codifferential", "exterior_module.html#autotoc_md28", null ],
+        [ "Laplacian", "exterior_module.html#autotoc_md29", null ]
       ] ]
     ] ],
     [ "Namespaces", "namespaces.html", [
@@ -90,7 +90,7 @@ var NAVTREEINDEX =
 "Running.html",
 "classsil_1_1exterior_1_1CochainIterator.html#af93af6d97bd143b0860c5b4993bdbcee",
 "classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html#a88bac7ee9eefe9f6ef53ab92abf9e133",
-"structsil_1_1exterior_1_1DualSimplexVolume.html"
+"structsil_1_1exterior_1_1DiscreteHodgeStar.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

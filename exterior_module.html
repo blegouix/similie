@@ -129,7 +129,7 @@ $(function(){initNavTree('exterior_module.html',''); initResizable(true); });
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p><a class="anchor" id="md_exterior__module"></a></p>
-<h1><a class="anchor" id="autotoc_md14"></a>
+<h1><a class="anchor" id="autotoc_md15"></a>
 Why integro-differential calculus is important for physics ?</h1>
 <p>Physics is governed by <a href="https://en.wikipedia.org/wiki/Partial_differential_algebraic_equation">Partial differential algebraic equations</a> which involve derivatives of fields. The ability to differentiate and integrate tensor fields is thus a key feature in numerical codes. In general relativity or in non-cartesian coordinate systems, differentiation and integration takes place on manifolds with non-necessarily-Lorentzian metric.</p>
 <p>Examples of tensor fields which are linked one-to-the-other by differentiations are:</p><ul>
@@ -144,7 +144,7 @@ Why integro-differential calculus is important for physics ?</h1>
 \int_{\delta\Omega} \omega = \int_\Omega d\omega
 \]
 </p>
-<h1><a class="anchor" id="autotoc_md15"></a>
+<h1><a class="anchor" id="autotoc_md16"></a>
 Discrete exterior calculus</h1>
 <p>Please refer to the reference document <a href="http://www.geometry.caltech.edu/pubs/DKT05.pdf">Discrete Differential Forms for Computational Modeling</a> for a way more detailled description of the theory presented in this section.</p>
 <p>A whole zoo of differential operators has been developed over the centuries : gradient, rotational, divergency, 4-gradient, 4-divergency, directional derivative, material derivative, covariant derivative, Lie derivative, etc. During the 20th century, mathematicians proposed a refactoring of it known as Exterior calculus, which proved highly suitable for discretization (now known as Discrete exterior calculus). Only two fundamental operators are defined and can be used to build any possible differential operator on any-dimension manifold:</p>
@@ -157,25 +157,25 @@ Discrete exterior calculus</h1>
 <p>The generic Laplacian is defined as \(\delta d + d \delta\).</p>
 <p>An important relation is the Poincarré Lemma \(dd = 0\). It leads to the very deep physical concept of gauge invariance, which tells us potentials are defined up to a derivative (because \(d(A+d\alpha) = dA + dd\alpha = dA\)).</p>
 <dl class="section important"><dt>Important</dt><dd>A key paradigm of SimiLie is the exclusive support of structured meshes to avoid sparse linear algebra and produce mostly-embarrassingly parallel code. It implies that the main difference between the theory described in <a href="http://www.geometry.caltech.edu/pubs/DKT05.pdf">Discrete Differential Forms for Computational Modeling</a> and the implementation in SimiLie is that the discrete exterior derivative is not built upon a sparse adjacency matrix, but directly computed locally for each node of the mesh (matrix-free approach). Otherwise, SimiLie follows quite closely the construction presented in the document.</dd></dl>
-<h2><a class="anchor" id="autotoc_md16"></a>
+<h2><a class="anchor" id="autotoc_md17"></a>
 Simplex</h2>
 <p>A \(k-\)simplex is an oriented discrete element of dimension \(k\) belonging to the discrete manifold. Ie. a \(0\)-simplex is a node, a \(1\)-simplex is an edge, a \(2\)-simplex is a face and a \(3\)-simplex is a cell. It can be defined for any dimension \(n\) of the discrete manifold.</p>
 <p>In SimiLie, a simplex derives from <code>ddc::DiscreteElement</code>, associated to a shift vector with \(k\) <code>1</code> and \(n-k\) <code>0</code>, and a boolean flag <code>negative</code> giving the orientation.</p>
-<h2><a class="anchor" id="autotoc_md17"></a>
+<h2><a class="anchor" id="autotoc_md18"></a>
 Chain</h2>
 <p>A \(k-\)chain - at least in the sense it is used in SimiLie - is basically a set of \(k-\)simplices.</p>
 <dl class="section note"><dt>Note</dt><dd>In <a href="http://www.geometry.caltech.edu/pubs/DKT05.pdf">Discrete Differential Forms for Computational Modeling</a> chains are defined as linear combinations of simplices, but in SimiLie we assume all the coefficients to be <code>1</code>, every simplex belonging to the chain thus has to be oriented accordingly to the chain purpose.</dd></dl>
 <dl class="section attention"><dt>Attention</dt><dd>In SimiLie we also have the non-standard LocalChain class which allows to define a chain in which all the simplices share a node in common.</dd></dl>
-<h2><a class="anchor" id="autotoc_md18"></a>
+<h2><a class="anchor" id="autotoc_md19"></a>
 Boundary operator</h2>
 <p>The boundary operator associates to a \(k-\)simplex a \(k-1-\)chain containing the simplices which form the boundary of the simplex. It can also associate to a \(k-\)chain a \(k-1-\)chain forming the boundary of the chain.</p>
-<h2><a class="anchor" id="autotoc_md19"></a>
+<h2><a class="anchor" id="autotoc_md20"></a>
 Cosimplex</h2>
 <p>A \(k-\)cosimplex is the association of a simplex and of a real (or complex) number.</p>
-<h2><a class="anchor" id="autotoc_md20"></a>
+<h2><a class="anchor" id="autotoc_md21"></a>
 Cochain</h2>
 <p>A \(k-\)cochain is basically a set of cosimplices. This is a discrete differential \(k-\)form. It can be represented as a rank-k antisymmetric tensor field (there is a Cochain constructor which takes an antisymmetric tensor as argument).</p>
-<h2><a class="anchor" id="autotoc_md21"></a>
+<h2><a class="anchor" id="autotoc_md22"></a>
 Coboundary operator</h2>
 <p>The coboundary operator associates to a \(k-\)cochain a \(k+1-\)cosimplex or a \(k+1-\)cochain containing the cosimplices which form the coboundary of the cochain. Please refer to <a href="http://www.geometry.caltech.edu/pubs/DKT05.pdf">Discrete Differential Forms for Computational Modeling</a> for more details. This is the discrete exterior derivative \(d\).</p>
 <p>At the implementation level, <code>Coboundary</code> evaluates the integral of the input cochain on the boundary of each local \((k+1)\)-simplex. For a primal basis simplex \(\sigma^{k+1}\), the discrete exterior derivative is therefore:</p>
@@ -193,7 +193,7 @@ Coboundary operator</h2>
 \]
 </p>
 <p>where the sum runs over the oriented boundary \(k\)-simplices of \(\sigma^{k+1}\) and \(\mathrm{sgn}(\tau^k,\sigma^{k+1})\) is the induced orientation sign.</p>
-<h2><a class="anchor" id="autotoc_md22"></a>
+<h2><a class="anchor" id="autotoc_md23"></a>
 Transposed coboundary operator</h2>
 <p>The transposed coboundary operator accumulates the contributions of incident higher-dimensional simplices onto the current simplex. It is the transpose of the incidence operator underlying the coboundary. Explicitly, if \(\eta\) is a discrete \((k+1)\)-cochain and \(\tau^k\) is a \(k\)-simplex, then:</p>
 <p class="formulaDsp">
@@ -210,7 +210,7 @@ Transposed coboundary operator</h2>
 <li>Periodic, Dirichlet and generic Neumann boundary conditions are not yet exposed as configurable policies in this module.</li>
 </ul>
 </dd></dl>
-<h2><a class="anchor" id="autotoc_md23"></a>
+<h2><a class="anchor" id="autotoc_md24"></a>
 Primal and dual cell complexes</h2>
 <p>In DEC, cochains are not only characterized by their degree, but also by the cell complex on which they live. There is the primal complex, made of the mesh simplices themselves, but the operators presented below make use of a dual cell complex which allows to introduce metric information. Indeed, the dual cell complex provides the complementary cells on which the metric-dependent "orthogonal counterparts" live. This is why the discrete Hodge star, which is the operator encoding the metric in DEC, naturally maps primal cochains to dual cochains.</p>
 <p>However, a dual mesh has to be chosen according to some "dualization strategy". In SimiLie, this choice is represented explicitly by the <code>CellComplex</code> tag:</p><ul>
@@ -218,7 +218,7 @@ Primal and dual cell complexes</h2>
 <li><code>CellComplex::CircumcentricDual</code></li>
 <li><code>CellComplex::BarycentricDual</code></li>
 </ul>
-<h2><a class="anchor" id="autotoc_md24"></a>
+<h2><a class="anchor" id="autotoc_md25"></a>
 Volume operator</h2>
 <p>To build a discrete operator able to encode the metric (the discrete Hodge star), we need a volume operator (in the sense of \(k-\)volume, ie. length, area...) to provide the ability to measure the "size" of a simplex. Given a \(k\)-simplex spanned by edge vectors \(e_1,\dots,e_k\), SimiLie builds the local Gram matrix:</p>
 <p class="formulaDsp">
@@ -233,7 +233,7 @@ G_{\mu\nu} = g_{\rho\sigma} e_\mu^\rho e_\nu^\sigma
 \]
 </p>
 <p>This is exactly what <code>SimplexVolume</code> computes: it first extracts the local edge vectors from the position field, assembles the Gram matrix, and finally takes the square root of its determinant. <code>DualSimplexVolume</code> applies the same formula to the complementary \((n-k)\) directions. The associated dual cell complex is selected through the <code>CellComplex</code> tag, typically circumcentric or barycentric.</p>
-<h2><a class="anchor" id="autotoc_md25"></a>
+<h2><a class="anchor" id="autotoc_md26"></a>
 Reduction and reconstruction</h2>
 <p>Reduction and reconstruction are the bridges between pointwise differential-form coefficients and geometric cochains. Schematically, reduction is the same as integrating a density field along simplices, providing a natural way to encode a differential form on a mesh so that the geometric measures are already absorbed into the cochain values. Reconstruction is the inverse operation. They always act on a chosen cell complex, selected by the <code>CellComplex</code> tag. The reduction maps a coefficient \(k\)-form to the cochain obtained by integrating it on the corresponding \(k\)-cell:</p>
 <p class="formulaDsp">
@@ -258,7 +258,7 @@ Q_k(c, \sigma^k) = \frac{c(\sigma^k)}{|\sigma^k|}
 <li>circumcentric-dual reduction is the metric-dependent dual geometric map used by the discrete Hodge star;</li>
 <li>reconstruction is currently only implemented where the piecewise-constant inverse is well defined locally. Unsupported <code>CellComplex</code> choices are rejected with <code>static_assert</code>.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md26"></a>
+<h2><a class="anchor" id="autotoc_md27"></a>
 Hodge star operator</h2>
 <p>The Hodge star operator is implemented both in continuous and discrete form.</p>
 <p>The continuous Hodge star acts pointwise on coefficient forms. It is the exterior-calculus counterpart of the metric. In an \(n\)-dimensional manifold, for a \(k\)-form \(\omega\) with components \(\omega_{i_1 \dots i_k}\), it is defined as ( \(\varepsilon\) is the Levi-Civita symbol):</p>
@@ -282,7 +282,7 @@ g^{i_1 \ell_1} \dots g^{i_k \ell_k}
 \star_\sigma = \frac{|\star \sigma|}{|\sigma|}
 \]
 </p>
-<h2><a class="anchor" id="autotoc_md27"></a>
+<h2><a class="anchor" id="autotoc_md28"></a>
 Codifferential</h2>
 <p>This is the adjoint of the coboundary operator in the metric sense. It is built from the discrete Hodge star and the transposed coboundary operator:</p>
 <p class="formulaDsp">
@@ -298,7 +298,7 @@ Codifferential</h2>
 \]
 </p>
 <p>up to the boundary term and the usual sign convention.</p>
-<h2><a class="anchor" id="autotoc_md28"></a>
+<h2><a class="anchor" id="autotoc_md29"></a>
 Laplacian</h2>
 <p>The generic DEC Laplacian combines the exterior derivative and the codifferential:</p>
 <p class="formulaDsp">

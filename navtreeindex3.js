@@ -1,5 +1,6 @@
 var NAVTREEINDEX3 =
 {
+"structsil_1_1exterior_1_1DiscreteHodgeStar.html":[6,0,0,1,11],
 "structsil_1_1exterior_1_1DualSimplexVolume.html":[4,0,0,1,12],
 "structsil_1_1exterior_1_1DualSimplexVolume.html":[6,0,0,1,12],
 "structsil_1_1exterior_1_1FillReconstructionOperatorMem.html":[4,0,0,1,13],
@@ -117,12 +118,12 @@ var NAVTREEINDEX3 =
 "structsil_1_1tensor_1_1prime.html":[4,0,0,4,9],
 "structsil_1_1tensor_1_1prime.html":[6,0,0,4,9],
 "tensor_module.html":[2],
-"tensor_module.html#autotoc_md10":[2,4],
-"tensor_module.html#autotoc_md11":[2,5],
-"tensor_module.html#autotoc_md12":[2,6],
-"tensor_module.html#autotoc_md13":[2,7],
-"tensor_module.html#autotoc_md6":[2,0],
-"tensor_module.html#autotoc_md7":[2,1],
-"tensor_module.html#autotoc_md8":[2,2],
-"tensor_module.html#autotoc_md9":[2,3]
+"tensor_module.html#autotoc_md10":[2,3],
+"tensor_module.html#autotoc_md11":[2,4],
+"tensor_module.html#autotoc_md12":[2,5],
+"tensor_module.html#autotoc_md13":[2,6],
+"tensor_module.html#autotoc_md14":[2,7],
+"tensor_module.html#autotoc_md7":[2,0],
+"tensor_module.html#autotoc_md8":[2,1],
+"tensor_module.html#autotoc_md9":[2,2]
 };

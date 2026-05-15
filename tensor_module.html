@@ -129,14 +129,14 @@ $(function(){initNavTree('tensor_module.html',''); initResizable(true); });
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p><a class="anchor" id="md_tensor__module"></a></p>
-<h1><a class="anchor" id="autotoc_md6"></a>
+<h1><a class="anchor" id="autotoc_md7"></a>
 Why tensors are importants for physics ?</h1>
 <p><a href="https://en.wikipedia.org/wiki/Tensor">Tensors</a> are the numerical counterparts of algebraic structures which form the base of fundamental physics as Lie algebra (represent gauge fields) or Clifford algebra (represent fermionic fields). They can thus constitute the building blocks of quantum physics solvers (long term roadmap of SimiLie).</p>
 <p>They also appear in classical physics, with ie. the <a href="https://en.wikipedia.org/wiki/Cauchy_stress_tensor">Cauchy stress tensor</a> which describes internal forces in a fluid or solid or the <a href="https://en.wikipedia.org/wiki/Maxwell_stress_tensor">Maxwell stress tensor</a> if those forces are due to the interaction of the medium with the electromagnetic field. The <a href="https://en.wikipedia.org/wiki/Metric_tensor">Metric tensor</a> is of particular importance because it allows to evaluate distances on a manifold (like space-time in general relativity or more simply non-cartesian coordinate system).</p>
 <p>In general relativity, the <a href="https://en.wikipedia.org/wiki/Christoffel_symbols">Christoffel symbols</a> are not technically tensors (because they do not transform as such under diffeomorphism) but are at least multidimensional arrays which allow to compute geodesics. The <a href="https://en.wikipedia.org/wiki/Riemann_curvature_tensor">Riemann tensor</a> and the <a href="https://en.wikipedia.org/wiki/Stress%E2%80%93energy_tensor">Stress-energy tensor</a> are also at the heart of the theory, as they respectively describe the curvature of space-time and its content in stress, momentum and energy (while being <a href="https://en.wikipedia.org/wiki/Covariant_transformation">invariant under change of basis</a>).</p>
 <p>A special class of tensors are the <a href="https://en.wikipedia.org/wiki/Antisymmetric_tensor">antisymmetric tensors</a> which correspond to differential forms (ie. the <a href="https://en.wikipedia.org/wiki/Electromagnetic_tensor">Faraday tensor</a> of electromagnetism), implemented in the <a class="el" href="exterior_module.html">Exterior module</a> of SimiLie. Even more specials are the <a href="https://en.wikipedia.org/wiki/Vector_(mathematics_and_physics)">vectors</a> which correspond to 1-forms.</p>
 <p>The <a href="https://en.wikipedia.org/wiki/Scalar">Scalar</a> corresponds to a 0-form and is a degenerated (rank-0) type of tensors.</p>
-<h1><a class="anchor" id="autotoc_md7"></a>
+<h1><a class="anchor" id="autotoc_md8"></a>
 Do Kokkos and DDC support tensor fields ? What can SimiLie do in addition ?</h1>
 <p>Kokkos aims to handle <a href="https://en.wikipedia.org/wiki/Array_\(data_structure\)#Multidimensional_arrays">Multidimensional arrays</a>. A rank-N tensor field defined over a M-dimension discrete manifold can be stored as a N*M-dimensions array. But this is not very convenient, because Kokkos does not allow to labelize the dimensions of the array, so the user has to keep track of the ordering of physical dimensions and tensor indices, which may be very cumbersome and can easily lead to silent bugs.</p>
 <p>DDC offers the possibility to labelize the physical dimensions, but its support for tensor fields is limited. Scalar fields are described using the <code>ddc::Chunk</code> and <code>ddc::ChunkSpan</code> classes, which internally relie on <code>mdspan</code> (the C++ standardization of <code>Kokkos::View</code>). They take as a template argument a <code>ddc::DiscreteDomain</code>, which is itself template by the physical dimensions of the problem:</p>
@@ -145,7 +145,7 @@ Do Kokkos and DDC support tensor fields ? What can SimiLie do in addition ?</h1>
 <div class="fragment"><div class="line">ddc::DiscreteDomain&lt;DDimX, DDimY, DDimZ, Mu, Nu&gt;</div>
 </div><!-- fragment --><p>This is precisely the starting point of SimiLie, which extents this natural support of tensor fields in DDC to tensor fields with internal symmetries (diagonal tensor, symmetric tensor, antisymmetric tensor, etc... or tensor product of lower-rank tensors with their own internal symmetries). Under the hood there are still <code>ddc::Chunk</code> and <code>mdspan</code> but convenient interfaces are provided to manipulate tensors with internal symmetries.</p>
 <dl class="section important"><dt>Important</dt><dd>The <code>Tensor</code> terminology in SimiLie does not guarantee the invariance under diffeomorphism, as it is the case in maths and physics. Tensor fields in SimiLie are just multidimensional arrays mapped over discrete manifolds and with convenient accessors to benefit from internal symmetries.</dd></dl>
-<h1><a class="anchor" id="autotoc_md8"></a>
+<h1><a class="anchor" id="autotoc_md9"></a>
 Tensor indices</h1>
 <p>First, the class <code>TensorNaturalIndex</code> allows to build natural indices like <code>Mu</code> or <code>Nu</code> while giving the different labels it can take (ie. <code>T</code>, <code>X</code>, <code>Y</code> and <code>Z</code>). When the following DDC code declares a new dimension:</p>
 <div class="fragment"><div class="line">struct X;</div>
@@ -178,7 +178,7 @@ Tensor indices</h1>
 <dl class="section attention"><dt>Attention</dt><dd>The contiguity-coalescence rule of DDC still stands in SimiLie: the leftest template argument of the <code>ddc::DiscreteDomain</code> declaration will be the most coalescent in the underlying multidimensional array while the rightest will be the most contiguous.</dd></dl>
 <dl class="section note"><dt>Note</dt><dd><code>ddc::DiscreteDomain&lt;Mu, Nu&gt;</code> and <code>ddc::DiscreteDomain&lt;<a class="el" href="structsil_1_1tensor_1_1TensorFullIndex.html">sil::tensor::TensorFullIndex</a>&lt;Mu, Nu&gt;&gt;</code> are mostly the same thing.</dd></dl>
 <dl class="section important"><dt>Important</dt><dd>Nested non-natural tensor indices are forbidden, ie. <code><a class="el" href="structsil_1_1tensor_1_1TensorSymmetricIndex.html">sil::tensor::TensorSymmetricIndex</a>&lt;<a class="el" href="structsil_1_1tensor_1_1TensorAntisymmetricIndex.html">sil::tensor::TensorAntisymmetricIndex</a>&lt;Mu, Nu&gt;, Rho&gt;</code> is not valid.</dd></dl>
-<h1><a class="anchor" id="autotoc_md9"></a>
+<h1><a class="anchor" id="autotoc_md10"></a>
 Internal mechanism</h1>
 <p>The most important concept to understand is that elements of tensors are indexed (in the sense of <em>associated to integers which identify their positions</em>) using three different kind of <code>id</code>s:</p>
 <ul>
@@ -187,7 +187,7 @@ Internal mechanism</h1>
 <li>The <code>mem_id</code> corresponds to the location in the memory, ie. the non-diagonal elements of a diagonal tensor are known to be <code>0</code> so they do not need to be stored, thus only the diagonal is stored starting from <code>0</code>.</li>
 </ul>
 <p>Most of the logic implemented in the <code><a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a></code> file aims to provide kind-of-converters between those three kinds of <code>id</code>s.</p>
-<h1><a class="anchor" id="autotoc_md10"></a>
+<h1><a class="anchor" id="autotoc_md11"></a>
 Tensor accessor</h1>
 <p>Once the different tensor indices involved in your physical problem are declared, you need to declare a <code>TensorAccessor</code> templated by those indices. Ie.:</p>
 <div class="fragment"><div class="line">struct Mu : sil::tensor::TensorNaturalIndex&lt;X, Y, Z&gt; {};</div>
@@ -204,7 +204,7 @@ Tensor accessor</h1>
 <div class="line">ddc::DiscreteDomain&lt;DDimX, DDimY, Rho, Sigma&gt; tensor_field_dom(mesh_xy, tensor_accessor.mem_domain());</div>
 </div><!-- fragment --><p>The <code>mem_domain()</code> functions produces the domain in which the <code>mem_id</code>s stand. Ie. for an identity tensor, <code>mem_domain()</code> will produce a domain of size <code>0</code>.</p>
 <dl class="section note"><dt>Note</dt><dd><code>TensorAccessor</code> also provides several member functions to perform kind-of-conversions between the three kinds of indices. Please check its API, examples and tests for common usage.</dd></dl>
-<h1><a class="anchor" id="autotoc_md11"></a>
+<h1><a class="anchor" id="autotoc_md12"></a>
 Tensor class</h1>
 <p>In DDC an allocation is made using the <code>ddc::Chunk</code> class. We do the same in SimiLie (ie. on CPU) :</p>
 <div class="fragment"><div class="line">ddc::Chunk tensor_field_alloc(tensor_field_dom, ddc::HostAllocator&lt;double&gt;());</div>
@@ -212,7 +212,7 @@ Tensor class</h1>
 <div class="fragment"><div class="line">sil::tensor::Tensor tensor_field(tensor_field_alloc);</div>
 </div><!-- fragment --><dl class="section note"><dt>Note</dt><dd><code>Tensor</code> provides a lot of member functions to perform usefull operations like accessing an element or slicing using natural indices, etc.</dd></dl>
 <dl class="section attention"><dt>Attention</dt><dd>Remember that <code>TensorAccessor</code> only handles the indicial part of the tensor, while <code>Tensor</code> handles the whole field involving indicial and non-indicial parts of its support. Please check their respective APIs, the tests and examples for common usages.</dd></dl>
-<h1><a class="anchor" id="autotoc_md12"></a>
+<h1><a class="anchor" id="autotoc_md13"></a>
 Metric</h1>
 <p>A metric is a squared symmetric rank-2 tensor field \(g\) with number of elements along one of the tensor dimensions equal to the dimension of the manifold. It encodes the local information required to compute a distance \(s\) on a Riemannian manifold:</p>
 <p class="formulaDsp">
@@ -233,7 +233,7 @@ T_{\mu\nu\rho} = g_{\mu\mu&#39;}\;g_{\nu\nu&#39;}\;g_{\rho\rho&#39;}\;T^{\mu&#39
 </p>
 <p>using the <code>tensor_prod</code> function described in next section, or the <code>inplace_apply_metric</code> function if you want to reuse the allocation of \(T^{\mu&#39;\nu&#39;\rho&#39;}\) to store \(T_{\mu\nu\rho}\) (which internally relies on <code>tensor_prod</code>).</p>
 <dl class="section note"><dt>Note</dt><dd>The <code>fill_inverse_metric</code> function relies on <code>kokkos-kernels</code> <code>KokkosBatched::SerialInverseLU</code> function to compute the inverse metric (contravariant indexing of the metric, used to raise indices afterward).</dd></dl>
-<h1><a class="anchor" id="autotoc_md13"></a>
+<h1><a class="anchor" id="autotoc_md14"></a>
 Tensor product</h1>
 <p>The generic <code>tensor_prod</code> function supports input and output tensors with any kind of internal symmetries. The Einstein convention stands: indices appearing in the two input tensors (one covariant and the other contravariant) are contracted while other indices are spectators (outer product). Any memory layouts are supported but bad choice of layout may highly deteriorate the performance.</p>
 <dl class="section important"><dt>Important</dt><dd><code>tensor_prod</code> does not support tensor fields. You need to iterate over the nodes of the mesh, extract tensors (using the <code>Tensor::operator[]</code> function) and call <code>tensor_prod</code> at each node. </dd></dl>

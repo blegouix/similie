@@ -7,5 +7,5 @@ var searchData=
   ['values_5ftype_4',['values_type',['../classsil_1_1exterior_1_1Cochain.html#a0212df884d04e97942dc638509b78710',1,'sil::exterior::Cochain']]],
   ['vector_5fview_5',['vector_view',['../namespacesil_1_1misc_1_1math.html#a57b504ec3990fa45394704d444631f7b',1,'sil::misc::math']]],
   ['vects_5ftype_6',['vects_type',['../classsil_1_1exterior_1_1LocalChain.html#a363b91b9c805578468456f9d6b38684a',1,'sil::exterior::LocalChain']]],
-  ['volume_20operator_7',['Volume operator',['../exterior_module.html#autotoc_md24',1,'']]]
+  ['volume_20operator_7',['Volume operator',['../exterior_module.html#autotoc_md25',1,'']]]
 ];

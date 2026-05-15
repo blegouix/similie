@@ -129,7 +129,7 @@ $(function(){initNavTree('Running.html',''); initResizable(true); });
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p><a class="anchor" id="md_Running"></a></p>
-<h1><a class="anchor" id="autotoc_md3"></a>
+<h1><a class="anchor" id="autotoc_md4"></a>
 Dependencies</h1>
 <p>SimiLie relies on <code>git submodule</code> to manage its dependencies and on <code>cmake</code> as a build system. It is a lightweight header-only library. It can thus be included as a dependency of your project with the <code>cmake</code> command-line:</p>
 <div class="fragment"><div class="line">add_subdirectory(vendor/similie)</div>
@@ -143,7 +143,7 @@ Dependencies</h1>
 <p>I/O are handled by the <a href="https://pdi.dev/1.2/Decl_HDF5_plugin.html">Decl'HDF5 plugin of PDI</a>, that is nor provided as a <code>git submodule</code>.</p>
 <p>Finally, the <code>sil::young_tableau</code> module relies on the <a href="https://en.cppreference.com/w/c/preprocessor/embed">embed</a> directive from C23. As it is not yet in C++ (even in C++26), the only supported compiler for this module at the moment seems to be <a href="https://github.com/llvm/llvm-project/releases">Clang 19</a>. Thus, by default the <code>BUILD_YOUNG_TABLEAU</code> flag is turned <code>OFF</code> and this feature (which is quite independant of the rest of the SimiLie library) is not compiled, making SimiLie a C++20 library.</p>
 <dl class="section attention"><dt>Attention</dt><dd>A Spack-based toolchain is provided <a href="https://github.com/blegouix/similie/tree/main/toolchains/v100.spack">here</a> to get a complete environment for Ubuntu 24 and Nvidia V100 GPU. It can be easily adapted to other OS/hardware.</dd></dl>
-<h1><a class="anchor" id="autotoc_md4"></a>
+<h1><a class="anchor" id="autotoc_md5"></a>
 Compilation</h1>
 <p>First, be sure to have a full install of FFTW, LAPACKE, Ginkgo and PDI. Then clone the main branch of the <a href="https://github.com/blegouix/similie">github repo</a> and populate the other dependencies with:</p>
 <div class="fragment"><div class="line">git clone --recurse-submodules git@github.com:blegouix/similie.git</div>
@@ -155,7 +155,7 @@ Compilation</h1>
 <dl class="section important"><dt>Important</dt><dd>Debug mode is strongly recommended during development because a lot of assertions guarantee the correct usage of library. Running in Release mode without having checked first the proper execution in Debug mode may result to silent bugs. Release mode is of course required at a later stage to get full performance.</dd></dl>
 <p>You can then edit the configuration with <code>ccmake .</code>. Please refer to the documentations of Kokkos and DDC for their respective cmake compilation flags.</p>
 <p>Finally compile with the <code>make</code> command (with <code>-j</code> flag for parallel compilation).</p>
-<h1><a class="anchor" id="autotoc_md5"></a>
+<h1><a class="anchor" id="autotoc_md6"></a>
 Usage</h1>
 <p>Tests chain can be run with:</p>
 <div class="fragment"><div class="line">ctest</div>
