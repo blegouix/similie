@@ -89,7 +89,8 @@ inline void write_results_view(
         std::filesystem::path const& output_file,
         sil::mesher::gmsh::StructuredGrid2D const& grid,
         std::vector<CellInputFields> const& cell_inputs,
-        std::vector<double> const& magnetic_vector_potential)
+        std::vector<double> const& magnetic_vector_potential,
+        std::vector<CellPostProcessFields> const& cell_outputs)
 {
     if (!output_file.parent_path().empty()) {
         std::filesystem::create_directories(output_file.parent_path());
@@ -120,6 +121,16 @@ inline void write_results_view(
     }
     stream << "};\n";
 
+    stream << "View \"SimiLie linear magnetostatics current density\" {\n";
+    for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
+        for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
+            std::size_t const index = grid.cell_index(i, j);
+            stream << "  VP(" << grid.cell_center_x(i) << ", " << grid.cell_center_y(j) << ", "
+                   << grid.z_value << "){0, 0, " << cell_inputs[index].current_density[2] << "};\n";
+        }
+    }
+    stream << "};\n";
+
     stream << "View \"SimiLie linear magnetostatics magnetic vector potential z\" {\n";
     for (std::size_t j = 0; j < grid.ny(); ++j) {
         for (std::size_t i = 0; i < grid.nx(); ++i) {
@@ -129,13 +140,81 @@ inline void write_results_view(
         }
     }
     stream << "};\n";
+
+    stream << "View \"SimiLie linear magnetostatics magnetic vector potential\" {\n";
+    for (std::size_t j = 0; j < grid.ny(); ++j) {
+        for (std::size_t i = 0; i < grid.nx(); ++i) {
+            std::size_t const index = grid.node_index(i, j);
+            stream << "  VP(" << grid.x_coords[i] << ", " << grid.y_coords[j] << ", " << grid.z_value
+                   << "){0, 0, " << magnetic_vector_potential[3 * index + 2] << "};\n";
+        }
+    }
+    stream << "};\n";
+
+    stream << "View \"SimiLie linear magnetostatics magnetic induction\" {\n";
+    for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
+        for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
+            std::size_t const index = grid.cell_index(i, j);
+            auto const& field = cell_outputs[index].magnetic_induction;
+            stream << "  VP(" << grid.cell_center_x(i) << ", " << grid.cell_center_y(j) << ", "
+                   << grid.z_value << "){" << field[0] << ", " << field[1] << ", " << field[2]
+                   << "};\n";
+        }
+    }
+    stream << "};\n";
+
+    stream << "View \"SimiLie linear magnetostatics magnetic field\" {\n";
+    for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
+        for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
+            std::size_t const index = grid.cell_index(i, j);
+            auto const& field = cell_outputs[index].magnetic_field;
+            stream << "  VP(" << grid.cell_center_x(i) << ", " << grid.cell_center_y(j) << ", "
+                   << grid.z_value << "){" << field[0] << ", " << field[1] << ", " << field[2]
+                   << "};\n";
+        }
+    }
+    stream << "};\n";
+
+    constexpr std::array<std::pair<char const*, std::size_t>, 6> stress_components {{
+            {"xx", 0},
+            {"yy", 1},
+            {"zz", 2},
+            {"xy", 3},
+            {"xz", 4},
+            {"yz", 5},
+    }};
+    for (auto const& [label, component] : stress_components) {
+        stream << "View \"SimiLie linear magnetostatics Maxwell stress " << label << "\" {\n";
+        for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
+            for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
+                std::size_t const index = grid.cell_index(i, j);
+                stream << "  SP(" << grid.cell_center_x(i) << ", " << grid.cell_center_y(j) << ", "
+                       << grid.z_value << "){" << cell_outputs[index].maxwell_stress[component]
+                       << "};\n";
+            }
+        }
+        stream << "};\n";
+    }
+
+    stream << "View \"SimiLie linear magnetostatics force density\" {\n";
+    for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
+        for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
+            std::size_t const index = grid.cell_index(i, j);
+            auto const& field = cell_outputs[index].force_density;
+            stream << "  VP(" << grid.cell_center_x(i) << ", " << grid.cell_center_y(j) << ", "
+                   << grid.z_value << "){" << field[0] << ", " << field[1] << ", " << field[2]
+                   << "};\n";
+        }
+    }
+    stream << "};\n";
 }
 
 inline void write_results_view(
         std::filesystem::path const& output_file,
         sil::mesher::gmsh::StructuredGrid3D const& grid,
         std::vector<CellInputFields> const& cell_inputs,
-        std::vector<double> const& magnetic_vector_potential)
+        std::vector<double> const& magnetic_vector_potential,
+        std::vector<CellPostProcessFields> const& cell_outputs)
 {
     if (!output_file.parent_path().empty()) {
         std::filesystem::create_directories(output_file.parent_path());
@@ -171,6 +250,19 @@ inline void write_results_view(
     }
     stream << "};\n";
 
+    stream << "View \"SimiLie linear magnetostatics current density\" {\n";
+    for (std::size_t k = 0; k < grid.ncell_z(); ++k) {
+        for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
+            for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
+                std::size_t const index = grid.cell_index(i, j, k);
+                stream << "  VP(" << grid.cell_center_x(i) << ", " << grid.cell_center_y(j) << ", "
+                       << grid.cell_center_z(k) << "){0, 0, " << cell_inputs[index].current_density[2]
+                       << "};\n";
+            }
+        }
+    }
+    stream << "};\n";
+
     stream << "View \"SimiLie linear magnetostatics magnetic vector potential z\" {\n";
     for (std::size_t k = 0; k < grid.nz(); ++k) {
         for (std::size_t j = 0; j < grid.ny(); ++j) {
@@ -179,6 +271,84 @@ inline void write_results_view(
                 stream << "  SP(" << grid.x_coords[i] << ", " << grid.y_coords[j] << ", "
                        << grid.z_coords[k] << "){" << magnetic_vector_potential[3 * index + 2]
                        << "};\n";
+            }
+        }
+    }
+    stream << "};\n";
+
+    stream << "View \"SimiLie linear magnetostatics magnetic vector potential\" {\n";
+    for (std::size_t k = 0; k < grid.nz(); ++k) {
+        for (std::size_t j = 0; j < grid.ny(); ++j) {
+            for (std::size_t i = 0; i < grid.nx(); ++i) {
+                std::size_t const index = grid.node_index(i, j, k);
+                stream << "  VP(" << grid.x_coords[i] << ", " << grid.y_coords[j] << ", "
+                       << grid.z_coords[k] << "){0, 0, " << magnetic_vector_potential[3 * index + 2]
+                       << "};\n";
+            }
+        }
+    }
+    stream << "};\n";
+
+    stream << "View \"SimiLie linear magnetostatics magnetic induction\" {\n";
+    for (std::size_t k = 0; k < grid.ncell_z(); ++k) {
+        for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
+            for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
+                std::size_t const index = grid.cell_index(i, j, k);
+                auto const& field = cell_outputs[index].magnetic_induction;
+                stream << "  VP(" << grid.cell_center_x(i) << ", " << grid.cell_center_y(j) << ", "
+                       << grid.cell_center_z(k) << "){" << field[0] << ", " << field[1] << ", "
+                       << field[2] << "};\n";
+            }
+        }
+    }
+    stream << "};\n";
+
+    stream << "View \"SimiLie linear magnetostatics magnetic field\" {\n";
+    for (std::size_t k = 0; k < grid.ncell_z(); ++k) {
+        for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
+            for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
+                std::size_t const index = grid.cell_index(i, j, k);
+                auto const& field = cell_outputs[index].magnetic_field;
+                stream << "  VP(" << grid.cell_center_x(i) << ", " << grid.cell_center_y(j) << ", "
+                       << grid.cell_center_z(k) << "){" << field[0] << ", " << field[1] << ", "
+                       << field[2] << "};\n";
+            }
+        }
+    }
+    stream << "};\n";
+
+    constexpr std::array<std::pair<char const*, std::size_t>, 6> stress_components {{
+            {"xx", 0},
+            {"yy", 1},
+            {"zz", 2},
+            {"xy", 3},
+            {"xz", 4},
+            {"yz", 5},
+    }};
+    for (auto const& [label, component] : stress_components) {
+        stream << "View \"SimiLie linear magnetostatics Maxwell stress " << label << "\" {\n";
+        for (std::size_t k = 0; k < grid.ncell_z(); ++k) {
+            for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
+                for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
+                    std::size_t const index = grid.cell_index(i, j, k);
+                    stream << "  SP(" << grid.cell_center_x(i) << ", " << grid.cell_center_y(j)
+                           << ", " << grid.cell_center_z(k) << "){"
+                           << cell_outputs[index].maxwell_stress[component] << "};\n";
+                }
+            }
+        }
+        stream << "};\n";
+    }
+
+    stream << "View \"SimiLie linear magnetostatics force density\" {\n";
+    for (std::size_t k = 0; k < grid.ncell_z(); ++k) {
+        for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
+            for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
+                std::size_t const index = grid.cell_index(i, j, k);
+                auto const& field = cell_outputs[index].force_density;
+                stream << "  VP(" << grid.cell_center_x(i) << ", " << grid.cell_center_y(j) << ", "
+                       << grid.cell_center_z(k) << "){" << field[0] << ", " << field[1] << ", "
+                       << field[2] << "};\n";
             }
         }
     }
@@ -444,7 +614,7 @@ StructuredLinearMagnetostaticsResult run_on_quadrilateral_grid(
         }
     }
 
-    write_results_view(output_view_file, grid, cell_inputs, magnetic_vector_potential);
+    write_results_view(output_view_file, grid, cell_inputs, magnetic_vector_potential, cell_outputs);
     log_info(logger, "SimiLie magnetostatics post-processing exported");
     return result;
 }
@@ -740,7 +910,7 @@ StructuredLinearMagnetostaticsResult run_on_hexahedral_grid(
         }
     }
 
-    write_results_view(output_view_file, grid, cell_inputs, magnetic_vector_potential);
+    write_results_view(output_view_file, grid, cell_inputs, magnetic_vector_potential, cell_outputs);
     log_info(logger, "SimiLie magnetostatics post-processing exported");
     return result;
 }
