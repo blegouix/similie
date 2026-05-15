@@ -971,6 +971,11 @@ protected:
                 "Final relative residual",
                 "Final residual divided by the initial residual, as returned by the stationary solver.");
         publish_output_number(
+                "Solver optimization wall time [s]",
+                solver_diagnostics.optimization_wall_seconds,
+                "Solver optimization wall time [s]",
+                "Wall-clock time spent in the effective iterative optimization, excluding matrix and preconditioner assembly.");
+        publish_output_number(
                 "Maximum magnetic vector potential [SI]",
                 max_abs_potential,
                 "Maximum magnetic vector potential [SI]",
@@ -1002,6 +1007,8 @@ protected:
             summary << "SimiLie solver diagnostics: iterations=" << solver_diagnostics.iterations
                     << ", final residual L2=" << solver_diagnostics.final_residual_l2
                     << ", final relative residual=" << solver_diagnostics.final_relative_residual
+                    << ", optimization wall time=" << solver_diagnostics.optimization_wall_seconds
+                    << " s"
                     << ", air-gap mean |B|="
                     << (num_air_gap_cells == 0
                                 ? 0.0

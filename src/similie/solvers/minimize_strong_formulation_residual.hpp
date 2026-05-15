@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <cmath>
 #include <memory>
 #include <stdexcept>
@@ -37,6 +38,7 @@ struct StrongFormulationSolverDiagnostics
     double initial_residual_l2 = 0.0;
     double final_residual_l2 = 0.0;
     double final_relative_residual = 0.0;
+    double optimization_wall_seconds = 0.0;
     bool converged = true;
 };
 
@@ -280,9 +282,13 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
 
         auto rhs_gko = detail::to_gko_dense(gko_exec, rhs);
         auto solution_gko = detail::to_gko_dense(gko_exec, solution);
+        auto const optimization_start = std::chrono::steady_clock::now();
         solver->apply(rhs_gko, solution_gko);
         gko_exec->synchronize();
+        auto const optimization_end = std::chrono::steady_clock::now();
         solver->remove_logger(convergence_logger);
+        diagnostics.optimization_wall_seconds
+                = std::chrono::duration<double>(optimization_end - optimization_start).count();
 
         diagnostics.iterations = static_cast<unsigned int>(convergence_logger->get_num_iterations());
         diagnostics.converged = convergence_logger->has_converged();
@@ -315,6 +321,7 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
             rhs.extent(1));
 
     detail::copy(exec_space, residual, rhs);
+    auto const optimization_start = std::chrono::steady_clock::now();
     {
         auto residual_gko = detail::to_gko_dense(gko_exec, residual);
         auto preconditioned_residual_gko = detail::to_gko_dense(gko_exec, preconditioned_residual);
@@ -371,6 +378,9 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
         residual_norm_sq = new_residual_norm_sq;
         rz_dot = new_rz_dot;
     }
+    auto const optimization_end = std::chrono::steady_clock::now();
+    diagnostics.optimization_wall_seconds
+            = std::chrono::duration<double>(optimization_end - optimization_start).count();
 
     return diagnostics;
 }
