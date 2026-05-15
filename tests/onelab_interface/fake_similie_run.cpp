@@ -111,3 +111,38 @@ $EndElements
 
     EXPECT_THROW(similie::onelab_interface::run_fake_similie_job(config), std::runtime_error);
 }
+
+TEST(OnelabInterface, NonHexahedralMeshReportsUnsupportedTopology)
+{
+    std::filesystem::path const mesh_file = write_file(
+            "similie_tetrahedral_test.msh",
+            R"($MeshFormat
+2.2 0 8
+$EndMeshFormat
+$Nodes
+4
+1 0 0 0
+2 1 0 0
+3 0 1 0
+4 0 0 1
+$EndNodes
+$Elements
+1
+1 4 2 0 0 1 2 3 4
+$EndElements
+)");
+
+    similie::onelab_interface::FakeRunConfig config;
+    config.input_mesh_file = mesh_file;
+    config.export_view = false;
+
+    try {
+        (void)similie::onelab_interface::run_fake_similie_job(config);
+        FAIL() << "expected a runtime_error";
+    } catch (std::runtime_error const& error) {
+        EXPECT_NE(
+                std::string(error.what()).find(
+                        "requires the whole mesh to be made of quadrilaterals or hexahedra"),
+                std::string::npos);
+    }
+}

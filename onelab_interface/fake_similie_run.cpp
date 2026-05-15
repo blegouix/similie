@@ -61,9 +61,34 @@ struct RectilinearGridData
     std::vector<double> z_coordinates;
 };
 
+int element_dimension(int element_type)
+{
+    switch (element_type) {
+    case 15:
+        return 0;
+    case 1:
+        return 1;
+    case 2:
+    case 3:
+        return 2;
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+        return 3;
+    default:
+        return -1;
+    }
+}
+
 bool is_supported_boundary_element(int element_type)
 {
     return element_type == 1 || element_type == 2 || element_type == 3 || element_type == 15;
+}
+
+bool is_supported_topological_cell(int element_type)
+{
+    return element_type == 3 || element_type == 5;
 }
 
 std::filesystem::path default_output_file()
@@ -83,6 +108,8 @@ RectilinearGridData parse_msh2_mesh(std::filesystem::path const& mesh_file)
     std::string token;
     bool saw_nodes_section = false;
     bool saw_elements_section = false;
+    int mesh_dimension = -1;
+    bool found_supported_cell_type = false;
 
     while (stream >> token) {
         if (token == "$MeshFormat") {
@@ -121,7 +148,17 @@ RectilinearGridData parse_msh2_mesh(std::filesystem::path const& mesh_file)
                     stream >> ignored_tag;
                 }
 
+                int const current_dimension = element_dimension(element_type);
+                if (current_dimension < 0) {
+                    std::ostringstream error_stream;
+                    error_stream << "unsupported Gmsh element type " << element_type
+                                 << " found in mesh";
+                    throw std::runtime_error(error_stream.str());
+                }
+                mesh_dimension = std::max(mesh_dimension, current_dimension);
+
                 if (element_type == 5) {
+                    found_supported_cell_type = true;
                     Hexahedron cell;
                     for (std::size_t k = 0; k < cell.node_tags.size(); ++k) {
                         stream >> cell.node_tags[k];
@@ -143,9 +180,13 @@ RectilinearGridData parse_msh2_mesh(std::filesystem::path const& mesh_file)
                         stream >> ignored_node;
                     }
                 } else {
+                    if (is_supported_topological_cell(element_type)) {
+                        found_supported_cell_type = true;
+                    }
                     std::ostringstream error_stream;
-                    error_stream << "unsupported element type " << element_type
-                                 << " found in mesh; only first-order hexahedra are accepted";
+                    error_stream
+                            << "unsupported cell type in mesh: SimiLie currently requires the "
+                               "whole mesh to be made of quadrilaterals or hexahedra";
                     throw std::runtime_error(error_stream.str());
                 }
             }
@@ -156,11 +197,16 @@ RectilinearGridData parse_msh2_mesh(std::filesystem::path const& mesh_file)
         throw std::runtime_error("the provided mesh does not contain any node");
     }
     if (grid.cells.empty()) {
-        std::ostringstream error_stream;
-        error_stream << "the provided mesh does not contain any hexahedral cell"
-                     << " (nodes section seen: " << (saw_nodes_section ? "yes" : "no")
-                     << ", elements section seen: " << (saw_elements_section ? "yes" : "no") << ")";
-        throw std::runtime_error(error_stream.str());
+        if (saw_elements_section && mesh_dimension >= 0) {
+            std::ostringstream error_stream;
+            error_stream << "unsupported mesh topology: SimiLie currently requires the whole "
+                            "mesh to be made of quadrilaterals or hexahedra";
+            if (!found_supported_cell_type) {
+                error_stream << " (no quadrilateral or hexahedral cell was found)";
+            }
+            throw std::runtime_error(error_stream.str());
+        }
+        throw std::runtime_error("the provided mesh does not contain any hexahedral cell");
     }
 
     return grid;
