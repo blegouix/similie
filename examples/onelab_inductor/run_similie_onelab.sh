@@ -56,7 +56,7 @@ control_file="$(mktemp "${script_dir}/.run_similie_onelab_XXXXXX.geo")"
 trap 'rm -f "${control_file}"' EXIT
 
 cat > "${control_file}" <<EOF
-Mesh 3;
+Mesh 2;
 OnelabRun("SimiLie", "${onelab_client}");
 EOF
 
@@ -67,7 +67,7 @@ EOF
     -setnumber General.Terminal 1 \
     -setnumber Mesh.Binary 0 \
     -setnumber Mesh.MshFileVersion 2.2 \
-    -setnumber "Input/00FE model" 1 \
+    -setnumber "Input/00FE model" 0 \
     -setstring "0Modules/SimiLie/0Control/Problem file" "${problem_file}" \
     -setstring "0Modules/SimiLie/0Control/Mesh file" "${mesh_file}" \
     "${geometry_file}" \

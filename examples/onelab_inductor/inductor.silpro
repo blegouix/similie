@@ -5,8 +5,8 @@ Problem {
 }
 
 Solver {
-  MaxIterations 10000;
-  RelativeTolerance 1e-10;
+  MaxIterations 200;
+  RelativeTolerance 1e-8;
   JacobiMaxBlockSize 1;
-  UseMatrixFree 1;
+  UseMatrixFree 0;
 }
