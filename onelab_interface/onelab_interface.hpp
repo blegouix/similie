@@ -1028,10 +1028,16 @@ private:
         return gmsh_mesh_file;
     }
 
+    [[nodiscard]] bool has_explicit_mesh_file_control()
+    {
+        return !get_first_string_value(control_parameter_name("Mesh file")).empty();
+    }
+
     [[nodiscard]] std::filesystem::path export_input_mesh_from_gmsh()
     {
         std::filesystem::path const input_mesh_file = resolve_input_mesh_file();
-        if (std::filesystem::exists(input_mesh_file) && std::filesystem::file_size(input_mesh_file) > 0) {
+        if (has_explicit_mesh_file_control() && std::filesystem::exists(input_mesh_file)
+            && std::filesystem::file_size(input_mesh_file) > 0) {
             client().sendInfo("Using existing mesh file " + std::filesystem::absolute(input_mesh_file).string());
             return input_mesh_file;
         }
