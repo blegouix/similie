@@ -6,12 +6,16 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "${script_dir}/../.." && pwd)"
 inductor_dir="${script_dir}/Inductor"
 geometry_file="${script_dir}/similie_rectilinear_inductor.geo"
+output_dir="$(pwd)"
 
 gmsh_executable="${GMSH_EXECUTABLE:-gmsh}"
 build_dir="${SIMILIE_ONELAB_BUILD_DIR:-${repo_root}/build}"
 onelab_client="${SIMILIE_ONELAB_BINARY:-${build_dir}/onelab_interface/similie_onelab}"
-mesh_file="${SIMILIE_ONELAB_MESH_FILE:-${script_dir}/similie_inductor_rectilinear.msh}"
-result_file="${SIMILIE_ONELAB_RESULT_FILE:-${script_dir}/similie_inductor_node_positions.pos}"
+mesh_file="${SIMILIE_ONELAB_MESH_FILE:-${output_dir}/similie_inductor_rectilinear.msh}"
+result_file="${SIMILIE_ONELAB_RESULT_FILE:-${output_dir}/similie_linear_magnetostatics_inputs.pos}"
+paraview_h5_file="${SIMILIE_PARAVIEW_H5_FILE:-${output_dir}/similie_linear_magnetostatics.h5}"
+paraview_xmf_file="${SIMILIE_PARAVIEW_XMF_FILE:-${output_dir}/similie_linear_magnetostatics.xmf}"
+paraview_export_script="${script_dir}/export_paraview_results.py"
 
 if [[ ! -d "${inductor_dir}" ]]; then
     echo "missing Inductor example directory: ${inductor_dir}" >&2
@@ -26,6 +30,11 @@ fi
 if [[ ! -x "${onelab_client}" ]]; then
     echo "missing SimiLie ONELAB client executable: ${onelab_client}" >&2
     echo "build the project first, e.g. in ${build_dir}" >&2
+    exit 1
+fi
+
+if [[ ! -f "${paraview_export_script}" ]]; then
+    echo "missing Paraview export script: ${paraview_export_script}" >&2
     exit 1
 fi
 
@@ -51,9 +60,15 @@ EOF
     -setnumber General.Terminal 1 \
     -setnumber Mesh.Binary 0 \
     -setnumber Mesh.MshFileVersion 2.2 \
-    -setstring "0Modules/SimiLie/0Control/Output view file" "${result_file}" \
-    -setnumber "0Modules/SimiLie/0Control/Export fake view" 1 \
+    -setstring "0Modules/SimiLie/0Control/Input fields view file" "${result_file}" \
+    -setnumber "0Modules/SimiLie/0Control/Export input fields view" 1 \
     -setstring "0Modules/SimiLie/0Control/Input mesh file" "${mesh_file}" \
     "${geometry_file}" \
     "${control_file}" \
     "$@"
+
+python3 "${paraview_export_script}" \
+    --mesh "${mesh_file}" \
+    --input-fields-pos "${result_file}" \
+    --h5-output "${paraview_h5_file}" \
+    --xmf-output "${paraview_xmf_file}"

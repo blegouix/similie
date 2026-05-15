@@ -3,7 +3,6 @@
 
 #pragma once
 
-#include <algorithm>
 #include <array>
 #include <cmath>
 #include <filesystem>
@@ -317,6 +316,7 @@ protected:
         output_view_file.setKind("file");
         client().set(output_view_file);
     }
+
     void run_module() override
     {
         client().sendProgress(module_name() + " ONELAB interface: exporting mesh for linear magnetostatics");
@@ -472,7 +472,8 @@ private:
             std::string const& fallback_name,
             double default_value)
     {
-        double const external_value = get_first_number_value(external_name, std::numeric_limits<double>::quiet_NaN());
+        double const external_value
+                = get_first_number_value(external_name, std::numeric_limits<double>::quiet_NaN());
         if (!std::isnan(external_value)) {
             return external_value;
         }

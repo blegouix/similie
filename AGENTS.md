@@ -31,4 +31,5 @@ SPDX-License-Identifier: MIT
 
 ## ONELAB interface
 - `onelab_interface/GmshSocket.h`, `onelab_interface/onelab.h` and the `examples/onelab_inductor/Inductor` folder are forks from existing repos, you will never modify them.
-- When running run_onelab_inductor.sh, you will set SIMILIE_ONELAB_BUILD_DIR to the `agent_build/` or `agent_build_cpu/` path, but dont try to overwrite it's default value in the file.
+- Always run `run_onelab_inductor.sh` from the `agent_build/` or `agent_build_cpu/` folder such that the exported files won't polluate the repo.
+- When running `run_onelab_inductor.sh`, you will set SIMILIE_ONELAB_BUILD_DIR to the `agent_build/` or `agent_build_cpu/` path, but dont try to overwrite it's default value in the file.
