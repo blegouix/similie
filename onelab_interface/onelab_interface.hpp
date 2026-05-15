@@ -1250,12 +1250,6 @@ private:
         return !get_first_string_value(control_parameter_name("Mesh file")).empty();
     }
 
-    [[nodiscard]] int gmsh_meshing_dimension()
-    {
-        double const fe_model = get_first_number_value("Input/00FE model", 1.0);
-        return (fe_model == 0.0) ? 2 : 3;
-    }
-
     [[nodiscard]] std::filesystem::path export_input_mesh_from_gmsh()
     {
         std::filesystem::path const input_mesh_file = resolve_input_mesh_file();
@@ -2016,7 +2010,11 @@ private:
             detail::HexahedralMesh const& mesh)
     {
         detail::StructuredGrid const grid = detail::build_structured_grid(mesh);
-        client().sendInfo("SimiLie structured rectilinear hexahedral mesh validated");
+        client().sendInfo(
+                "SimiLie structured rectilinear hexahedral mesh validated ("
+                + std::to_string(grid.ordered_nodes.size()) + " nodes, dimensions="
+                + std::to_string(grid.nx()) + "x" + std::to_string(grid.ny()) + "x"
+                + std::to_string(grid.nz()) + ")");
 
         std::size_t const num_cells = grid.ncell_x() * grid.ncell_y() * grid.ncell_z();
         std::vector<detail::CellInputFields> cell_inputs(num_cells);
@@ -2402,14 +2400,12 @@ private:
             std::filesystem::remove(absolute_mesh_file);
         }
 
-        int const mesh_dimension = gmsh_meshing_dimension();
-        std::string const gmsh_command = "Mesh " + std::to_string(mesh_dimension) + ";"
-                                         "Mesh.Binary = 0;"
+        std::string const gmsh_command = "Mesh.Binary = 0;"
                                          "Mesh.MshFileVersion = 2.2;"
                                          "Save \"" + absolute_mesh_file.string() + "\";";
 
         client().sendInfo(
-                "Asking Gmsh to mesh and export the current model to " + absolute_mesh_file.string());
+                "Asking Gmsh to export the current mesh to " + absolute_mesh_file.string());
         client().sendParseStringRequest(gmsh_command);
 
         std::uintmax_t previous_size = 0;
@@ -2445,8 +2441,21 @@ private:
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
 
+        if (std::filesystem::exists(absolute_mesh_file)) {
+            std::ifstream stream(absolute_mesh_file);
+            std::string const content(
+                    (std::istreambuf_iterator<char>(stream)),
+                    std::istreambuf_iterator<char>());
+            bool const has_empty_nodes = content.find("$Nodes\n0\n$EndNodes") != std::string::npos;
+            bool const has_empty_elements = content.find("$Elements\n0\n$EndElements") != std::string::npos;
+            if (has_empty_nodes || has_empty_elements) {
+                throw std::runtime_error(
+                        "no current mesh available in Gmsh: mesh the model first or set 'Mesh file' explicitly");
+            }
+        }
+
         throw std::runtime_error(
-                "Gmsh did not export the mesh file '" + absolute_mesh_file.string()
+                "Gmsh did not export the current mesh file '" + absolute_mesh_file.string()
                 + "' before the ONELAB timeout.");
     }
 
