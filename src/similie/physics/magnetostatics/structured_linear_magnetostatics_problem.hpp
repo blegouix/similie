@@ -17,7 +17,7 @@
 
 #include <Kokkos_Core.hpp>
 
-#include <similie/mesher/gmsh_structured_msh2.hpp>
+#include "../../../../onelab_interface/gmsh_structured_msh2.hpp"
 #include <similie/physics/hamilton_equations.hpp>
 #include <similie/physics/magnetostatics/linear_magnetostatics.hpp>
 #include <similie/physics/magnetostatics/linear_magnetic_induction_to_magnetic_field.hpp>

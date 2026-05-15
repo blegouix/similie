@@ -8,5 +8,5 @@ Solver {
   MaxIterations 10000;
   RelativeTolerance 1e-8;
   JacobiMaxBlockSize 1;
-  UseMatrixFree 0;
+  UseMatrixFree 1;
 }

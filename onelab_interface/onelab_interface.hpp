@@ -28,7 +28,7 @@
 
 #include <ddc/ddc.hpp>
 
-#include <similie/mesher/gmsh_structured_msh2.hpp>
+#include "gmsh_structured_msh2.hpp"
 #include <similie/physics/hamilton_equations.hpp>
 #include <similie/physics/magnetostatics/structured_linear_magnetostatics_problem.hpp>
 #include <similie/physics/scalar_field/scalar_field_with_power_coupling.hpp>
