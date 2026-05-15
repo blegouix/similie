@@ -1714,7 +1714,10 @@ private:
             detail::QuadrilateralMesh const& mesh)
     {
         detail::StructuredGrid2D const grid = detail::build_structured_grid(mesh);
-        client().sendInfo("SimiLie structured rectilinear quadrilateral mesh validated");
+        client().sendInfo(
+                "SimiLie structured rectilinear quadrilateral mesh validated ("
+                + std::to_string(grid.ordered_nodes.size()) + " nodes, dimensions="
+                + std::to_string(grid.nx()) + "x" + std::to_string(grid.ny()) + ")");
 
         std::size_t const num_cells = grid.ncell_x() * grid.ncell_y();
         std::vector<detail::CellInputFields> cell_inputs(num_cells);

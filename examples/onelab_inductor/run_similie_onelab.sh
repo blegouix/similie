@@ -8,6 +8,7 @@ inductor_dir="${script_dir}/Inductor"
 geometry_file="${script_dir}/inductor.geo"
 problem_file="${SIMILIE_ONELAB_PROBLEM_FILE:-${script_dir}/inductor.silpro}"
 output_dir="$(pwd)"
+model_dimension=2
 
 gmsh_executable="${GMSH_EXECUTABLE:-gmsh}"
 build_dir="${SIMILIE_ONELAB_BUILD_DIR:-${repo_root}/build}"
@@ -50,13 +51,44 @@ if ! command -v "${gmsh_executable}" >/dev/null 2>&1; then
     exit 1
 fi
 
+gmsh_args=()
+for arg in "$@"; do
+    case "${arg}" in
+        --dim=2)
+            model_dimension=2
+            ;;
+        --dim=3)
+            model_dimension=3
+            ;;
+        *)
+            gmsh_args+=("${arg}")
+            ;;
+    esac
+done
+
+case "${model_dimension}" in
+    2)
+        gmsh_mesh_dimension=2
+        fe_model_dimension=0
+        ;;
+    3)
+        gmsh_mesh_dimension=3
+        fe_model_dimension=1
+        ;;
+    *)
+        echo "unsupported model dimension: ${model_dimension}" >&2
+        echo "use --dim=2 or --dim=3" >&2
+        exit 1
+        ;;
+esac
+
 rm -f "${mesh_file}" "${result_file}" "${paraview_h5_file}" "${paraview_xmf_file}"
 
 control_file="$(mktemp "${script_dir}/.run_similie_onelab_XXXXXX.geo")"
 trap 'rm -f "${control_file}"' EXIT
 
 cat > "${control_file}" <<EOF
-Mesh 2;
+Mesh ${gmsh_mesh_dimension};
 OnelabRun("SimiLie", "${onelab_client}");
 EOF
 
@@ -67,12 +99,12 @@ EOF
     -setnumber General.Terminal 1 \
     -setnumber Mesh.Binary 0 \
     -setnumber Mesh.MshFileVersion 2.2 \
-    -setnumber "Input/00FE model" 0 \
+    -setnumber "Input/00FE model" "${fe_model_dimension}" \
     -setstring "0Modules/SimiLie/0Control/Problem file" "${problem_file}" \
     -setstring "0Modules/SimiLie/0Control/Mesh file" "${mesh_file}" \
     "${geometry_file}" \
     "${control_file}" \
-    "$@"
+    "${gmsh_args[@]}"
 
 python3 "${paraview_export_script}" \
     --mesh "${mesh_file}" \
