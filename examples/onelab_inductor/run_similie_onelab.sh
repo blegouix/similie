@@ -5,14 +5,14 @@ set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "${script_dir}/../.." && pwd)"
 inductor_dir="${script_dir}/Inductor"
-geometry_file="${script_dir}/similie_rectilinear_inductor.geo"
-problem_file="${SIMILIE_ONELAB_PROBLEM_FILE:-${script_dir}/similie_linear_magnetostatics.silpro}"
+geometry_file="${script_dir}/inductor.geo"
+problem_file="${SIMILIE_ONELAB_PROBLEM_FILE:-${script_dir}/inductor.silpro}"
 output_dir="$(pwd)"
 
 gmsh_executable="${GMSH_EXECUTABLE:-gmsh}"
 build_dir="${SIMILIE_ONELAB_BUILD_DIR:-${repo_root}/build}"
 onelab_client="${SIMILIE_ONELAB_BINARY:-${build_dir}/onelab_interface/similie_onelab}"
-mesh_file="${SIMILIE_ONELAB_MESH_FILE:-${output_dir}/similie_inductor_rectilinear.msh}"
+mesh_file="${SIMILIE_ONELAB_MESH_FILE:-${output_dir}/inductor.msh}"
 result_file="${SIMILIE_ONELAB_RESULT_FILE:-${output_dir}/similie_linear_magnetostatics_inputs.pos}"
 paraview_h5_file="${SIMILIE_PARAVIEW_H5_FILE:-${output_dir}/similie_linear_magnetostatics.h5}"
 paraview_xmf_file="${SIMILIE_PARAVIEW_XMF_FILE:-${output_dir}/similie_linear_magnetostatics.xmf}"
@@ -50,12 +50,13 @@ if ! command -v "${gmsh_executable}" >/dev/null 2>&1; then
     exit 1
 fi
 
+rm -f "${mesh_file}" "${result_file}" "${paraview_h5_file}" "${paraview_xmf_file}"
+
 control_file="$(mktemp "${script_dir}/.run_similie_onelab_XXXXXX.geo")"
 trap 'rm -f "${control_file}"' EXIT
 
 cat > "${control_file}" <<EOF
 Mesh 3;
-Save "${mesh_file}";
 OnelabRun("SimiLie", "${onelab_client}");
 EOF
 
@@ -66,6 +67,7 @@ EOF
     -setnumber General.Terminal 1 \
     -setnumber Mesh.Binary 0 \
     -setnumber Mesh.MshFileVersion 2.2 \
+    -setnumber "Input/00FE model" 1 \
     -setstring "0Modules/SimiLie/0Control/Problem file" "${problem_file}" \
     -setstring "0Modules/SimiLie/0Control/Mesh file" "${mesh_file}" \
     "${geometry_file}" \

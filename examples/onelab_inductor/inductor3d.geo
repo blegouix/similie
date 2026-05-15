@@ -1,5 +1,3 @@
-Include "Inductor/inductor_data.geo";
-
 SetFactory("Built-in");
 
 Mesh.Binary = 0;

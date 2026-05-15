@@ -1031,6 +1031,10 @@ private:
     [[nodiscard]] std::filesystem::path export_input_mesh_from_gmsh()
     {
         std::filesystem::path const input_mesh_file = resolve_input_mesh_file();
+        if (std::filesystem::exists(input_mesh_file) && std::filesystem::file_size(input_mesh_file) > 0) {
+            client().sendInfo("Using existing mesh file " + std::filesystem::absolute(input_mesh_file).string());
+            return input_mesh_file;
+        }
         export_current_mesh_from_gmsh(input_mesh_file);
         return input_mesh_file;
     }

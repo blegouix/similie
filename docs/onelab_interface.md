@@ -56,7 +56,7 @@ This physics is parsed and assembled by the interface, but the current ONELAB ru
 
 The inductor example uses:
 
-- [similie_linear_magnetostatics.silpro](/home/cart3sianbear/similie/examples/onelab_inductor/similie_linear_magnetostatics.silpro)
+- [inductor.silpro](/home/cart3sianbear/similie/examples/onelab_inductor/inductor.silpro)
 - [run_similie_onelab.sh](/home/cart3sianbear/similie/examples/onelab_inductor/run_similie_onelab.sh)
 
 The shell script passes the `.silpro` file through:
