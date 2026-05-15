@@ -518,6 +518,18 @@ protected:
         merge_result_view.setChoices({0.0, 1.0});
         merge_result_view.setValueLabels({{0.0, "No"}, {1.0, "Yes"}});
         client().set(merge_result_view);
+
+        onelab::number use_matrix_free_solver = get_or_create_number(
+                control_parameter_name("Use matrix-free solver"),
+                1.0,
+                "Use matrix-free solver",
+                "When enabled, SimiLie applies the strong-form operator matrix-free and uses only an auxiliary assembled matrix to build the Jacobi preconditioner. When disabled, the assembled matrix is used directly in Ginkgo.",
+                0.0,
+                1.0,
+                1.0);
+        use_matrix_free_solver.setChoices({0.0, 1.0});
+        use_matrix_free_solver.setValueLabels({{0.0, "No"}, {1.0, "Yes"}});
+        client().set(use_matrix_free_solver);
     }
 
     void run_module() override
@@ -550,6 +562,9 @@ protected:
                    != 0.0);
         bool const merge_result_view
                 = (get_first_number_value(control_parameter_name("Merge result view in Gmsh"), 0.0)
+                   != 0.0);
+        bool const use_matrix_free_solver
+                = (get_first_number_value(control_parameter_name("Use matrix-free solver"), 1.0)
                    != 0.0);
         std::filesystem::path output_view_file
                 = get_first_string_value(control_parameter_name("Input fields view file"));
@@ -658,11 +673,15 @@ protected:
                 typename Kokkos::DefaultExecutionSpace::memory_space>
                 operator_model(x_coords, y_coords);
         physics::dedonder_weyl::StationaryStrongFormulation formulation {operator_model};
-        client().sendInfo("SimiLie starting Ginkgo preconditioned conjugate-gradient solve");
+        client().sendInfo(
+                use_matrix_free_solver
+                        ? "SimiLie starting matrix-free preconditioned conjugate-gradient solve"
+                        : "SimiLie starting assembled-matrix Ginkgo preconditioned conjugate-gradient solve");
         solvers::StrongFormulationSolverSettings solver_settings;
         solver_settings.max_iterations = 10000U;
         solver_settings.relative_tolerance = 1.0e-10;
         solver_settings.jacobi_max_block_size = 1U;
+        solver_settings.use_matrix_free = use_matrix_free_solver;
         solvers::StrongFormulationSolverDiagnostics const solver_diagnostics
                 = solvers::minimize_strong_formulation_residual(
                 Kokkos::DefaultExecutionSpace(),
@@ -670,7 +689,10 @@ protected:
                 rhs,
                 magnetic_vector_potential_z_xy_view,
                 solver_settings);
-        client().sendInfo("SimiLie Ginkgo preconditioned conjugate-gradient solve finished");
+        client().sendInfo(
+                use_matrix_free_solver
+                        ? "SimiLie matrix-free preconditioned conjugate-gradient solve finished"
+                        : "SimiLie assembled-matrix Ginkgo preconditioned conjugate-gradient solve finished");
 
         auto magnetic_vector_potential_z_xy_host = Kokkos::create_mirror_view_and_copy(
                 Kokkos::HostSpace(),
@@ -928,6 +950,11 @@ protected:
                 static_cast<double>(solver_diagnostics.iterations),
                 "Solver iterations",
                 "Number of conjugate-gradient iterations performed by the stationary strong-formulation solver.");
+        publish_output_string(
+                "Solver backend",
+                use_matrix_free_solver ? "matrix-free" : "assembled-matrix",
+                "Solver backend",
+                "Backend used by the stationary strong-formulation solver.");
         publish_output_number(
                 "Solver converged",
                 solver_diagnostics.converged ? 1.0 : 0.0,
