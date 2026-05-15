@@ -22,6 +22,4 @@ Magnetostatics {
   CoreRelativePermeability 2000.0;
   CoilWidth 0.03;
   CoilHeight 0.09;
-  ExportInputFieldsView 1;
-  MergeResultViewInGmsh 0;
 }

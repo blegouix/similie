@@ -39,9 +39,6 @@ TEST(OnelabInterface, ParseMagnetostaticsSilpro)
     EXPECT_DOUBLE_EQ(problem.magnetostatics.core_relative_permeability, 1500.0);
     EXPECT_DOUBLE_EQ(problem.magnetostatics.coil_width, 0.02);
     EXPECT_DOUBLE_EQ(problem.magnetostatics.coil_height, 0.08);
-    EXPECT_TRUE(problem.magnetostatics.export_input_fields_view);
-    EXPECT_FALSE(problem.magnetostatics.merge_result_view_in_gmsh);
-    EXPECT_EQ(problem.magnetostatics.input_fields_view_file, "test_result.pos");
 }
 
 TEST(OnelabInterface, ParseScalarFieldSilpro)

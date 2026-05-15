@@ -44,9 +44,6 @@ Magnetostatics {
   CoilWidth 0.03;
   CoilHeight 0.09;
 
-  ExportInputFieldsView 1;
-  MergeResultViewInGmsh 0;
-  InputFieldsViewFile "optional_result.pos";
 }
 ```
 
@@ -55,7 +52,8 @@ Semantics:
 - `*Parameter` entries point to ONELAB numeric inputs to read first.
 - scalar values are fallback defaults when the ONELAB model does not provide them.
 - `UseMatrixFree 1` keeps the matrix-free operator as the default backend.
-- `ExportInputFieldsView` and `MergeResultViewInGmsh` control ONELAB-native `.pos` export.
+- the ONELAB interface always checks hexahedricity and rectilinearity before solving.
+- the ONELAB interface always exports its internal `.pos` view to the mesh output directory.
 
 ## Scalar Field
 

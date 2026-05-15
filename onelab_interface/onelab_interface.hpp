@@ -69,10 +69,6 @@ struct MagnetostaticsProblem
     double core_relative_permeability = 2000.0;
     double coil_width = 0.03;
     double coil_height = 0.09;
-
-    bool export_input_fields_view = true;
-    bool merge_result_view_in_gmsh = false;
-    std::string input_fields_view_file;
 };
 
 struct MinimizeStrongFormulationResidualProblem
@@ -443,20 +439,6 @@ inline SilproProblem parse_silpro_problem(std::filesystem::path const& file)
                         section,
                         "CoilHeight",
                         std::to_string(problem.magnetostatics.coil_height)));
-        problem.magnetostatics.export_input_fields_view = parse_bool(
-                get_value_or(
-                        section,
-                        "ExportInputFieldsView",
-                        problem.magnetostatics.export_input_fields_view ? "1" : "0"));
-        problem.magnetostatics.merge_result_view_in_gmsh = parse_bool(
-                get_value_or(
-                        section,
-                        "MergeResultViewInGmsh",
-                        problem.magnetostatics.merge_result_view_in_gmsh ? "1" : "0"));
-        problem.magnetostatics.input_fields_view_file = get_value_or(
-                section,
-                "InputFieldsViewFile",
-                problem.magnetostatics.input_fields_view_file);
     } else {
         SilproSection const& section = required_section(root, "ScalarFieldWithPowerCoupling", file.string());
         problem.scalar_field.mass = parse_number<double>(
@@ -1081,7 +1063,7 @@ private:
     [[nodiscard]] std::filesystem::path resolve_input_mesh_file()
     {
         std::filesystem::path input_mesh_file
-                = get_first_string_value(control_parameter_name("Input mesh file"));
+                = get_first_string_value(control_parameter_name("Mesh file"));
         if (!input_mesh_file.empty()) {
             return input_mesh_file;
         }
@@ -1089,7 +1071,7 @@ private:
         std::filesystem::path gmsh_mesh_file = get_first_string_value("Gmsh/MshFileName");
         if (gmsh_mesh_file.empty()) {
             throw std::runtime_error(
-                    "No mesh file available: set 'Input mesh file' or let Gmsh manage the current mesh file.");
+                    "No mesh file available: set 'Mesh file' or let Gmsh manage the current mesh file.");
         }
 
         if (gmsh_mesh_file.is_absolute()) {
@@ -1121,30 +1103,43 @@ private:
         return configured_file;
     }
 
+    [[nodiscard]] std::string action()
+    {
+        return get_first_string_value(module_name() + "/Action");
+    }
+
+    [[nodiscard]] std::string problem_parameter_name(
+            std::string const& section,
+            std::string const& name) const
+    {
+        return "0Modules/" + module_name() + "/1Problem/" + section + "/" + name;
+    }
+
+    [[nodiscard]] std::string internal_parameter_name(std::string const& name) const
+    {
+        return "0Modules/" + module_name() + "/9Internal/" + name;
+    }
+
+    void publish_hidden_string(std::string const& name, std::string const& value)
+    {
+        onelab::string parameter(name, value, "", "");
+        parameter.setVisible(false);
+        parameter.setReadOnly(true);
+        client().set(parameter);
+    }
+
     void publish_common_parameters()
     {
         onelab::number is_metamodel("IsMetamodel", 1.0);
         is_metamodel.setNeverChanged(true);
         client().set(is_metamodel);
 
-        onelab::number require_rectilinear_mesh = get_or_create_number(
-                control_parameter_name("Require rectilinear mesh"),
-                1.0,
-                "Require rectilinear mesh",
-                "Reject any incoming mesh that is not a full rectilinear grid supported by SimiLie.",
-                0.0,
-                1.0,
-                1.0);
-        require_rectilinear_mesh.setChoices({0.0, 1.0});
-        require_rectilinear_mesh.setValueLabels({{0.0, "No"}, {1.0, "Yes"}});
-        client().set(require_rectilinear_mesh);
-
         onelab::string input_mesh_file = get_or_create_string(
-                control_parameter_name("Input mesh file"),
+                control_parameter_name("Mesh file"),
                 "",
-                "Input mesh file",
+                "Mesh file",
                 "Optional path to the Gmsh .msh file that the SimiLie ONELAB interface should read. "
-                "If empty, the interface uses Gmsh/MshFileName.");
+                "If empty, the interface uses the current Gmsh mesh export.");
         input_mesh_file.setKind("file");
         client().set(input_mesh_file);
     }
@@ -1154,40 +1149,290 @@ private:
         onelab::string problem_file = get_or_create_string(
                 control_parameter_name("Problem file"),
                 "",
-                "Problem file",
+                "Problem file (.silpro)",
                 "Path to the SimiLie .silpro problem description file.");
         problem_file.setKind("file");
         client().set(problem_file);
+    }
 
-        onelab::string formulation = get_or_create_string(
-                control_parameter_name("Supported physics"),
-                "ScalarFieldWithPowerCoupling, Magnetostatics",
-                "Supported physics",
-                "Physics currently supported by the SimiLie .silpro interface.");
-        formulation.setReadOnly(true);
-        client().set(formulation);
+    bool synchronize_problem_controls(SilproProblem const& problem, std::filesystem::path const& silpro_file)
+    {
+        std::string const current_file = std::filesystem::absolute(silpro_file).string();
+        std::string const last_file = get_first_string_value(internal_parameter_name("Last synchronized problem file"));
+        bool const synchronize = (current_file != last_file);
 
-        onelab::string solver = get_or_create_string(
-                control_parameter_name("Supported solvers"),
+        auto publish_or_sync_string = [&](std::string const& name,
+                                          std::string const& label,
+                                          std::string const& help,
+                                          std::string const& value,
+                                          bool read_only = false) {
+            onelab::string parameter = get_or_create_string(name, value, label, help);
+            if (synchronize) {
+                parameter.setValue(value);
+            }
+            parameter.setReadOnly(read_only);
+            client().set(parameter);
+        };
+        auto publish_or_sync_number = [&](std::string const& name,
+                                          std::string const& label,
+                                          std::string const& help,
+                                          double value,
+                                          double min_value,
+                                          double max_value,
+                                          double step,
+                                          std::optional<std::vector<double>> choices = std::nullopt,
+                                          std::optional<std::map<double, std::string>> value_labels = std::nullopt) {
+            onelab::number parameter
+                    = get_or_create_number(name, value, label, help, min_value, max_value, step);
+            if (synchronize) {
+                parameter.setValue(value);
+            }
+            if (choices.has_value()) {
+                parameter.setChoices(*choices);
+            }
+            if (value_labels.has_value()) {
+                parameter.setValueLabels(*value_labels);
+            }
+            client().set(parameter);
+        };
+
+        publish_or_sync_string(
+                problem_parameter_name("0Problem", "0Name"),
+                "Name",
+                "Problem name declared in the .silpro file.",
+                problem.name,
+                true);
+        publish_or_sync_string(
+                problem_parameter_name("0Problem", "1Physics"),
+                "Physics",
+                "Physics selected in the .silpro file.",
+                problem.physics == SupportedPhysics::Magnetostatics ? "Magnetostatics"
+                                                                    : "ScalarFieldWithPowerCoupling",
+                true);
+        publish_or_sync_string(
+                problem_parameter_name("0Problem", "2Solver"),
+                "Solver",
+                "Solver selected in the .silpro file.",
                 "MinimizeStrongFormulationResidual",
-                "Supported solvers",
-                "Solvers currently supported by the SimiLie .silpro interface.");
-        solver.setReadOnly(true);
-        client().set(solver);
+                true);
 
-        onelab::string result_view_file = get_or_create_string(
-                control_parameter_name("Input fields view file"),
-                "",
-                "Input fields view file",
-                "Optional override for the .pos file exported by magnetostatics problems.");
-        result_view_file.setKind("file");
-        client().set(result_view_file);
+        publish_or_sync_number(
+                problem_parameter_name("1Solver", "0Max iterations"),
+                "Max iterations",
+                "Maximum number of iterations for the stationary strong-formulation solver.",
+                static_cast<double>(problem.solver_settings.max_iterations),
+                1.0,
+                1.e9,
+                1.0);
+        publish_or_sync_number(
+                problem_parameter_name("1Solver", "1Relative tolerance"),
+                "Relative tolerance",
+                "Relative convergence tolerance for the stationary strong-formulation solver.",
+                problem.solver_settings.relative_tolerance,
+                0.0,
+                1.0,
+                1.e-12);
+        publish_or_sync_number(
+                problem_parameter_name("1Solver", "2Jacobi max block size"),
+                "Jacobi max block size",
+                "Maximum Jacobi block size used by the auxiliary preconditioner.",
+                static_cast<double>(problem.solver_settings.jacobi_max_block_size),
+                1.0,
+                1.e9,
+                1.0);
+        publish_or_sync_number(
+                problem_parameter_name("1Solver", "3Use matrix-free"),
+                "Use matrix-free",
+                "When enabled, the strong-form operator is applied matrix-free and only the Jacobi preconditioner uses an auxiliary assembled matrix.",
+                problem.solver_settings.use_matrix_free ? 1.0 : 0.0,
+                0.0,
+                1.0,
+                1.0,
+                std::vector<double> {0.0, 1.0},
+                std::map<double, std::string> {{0.0, "No"}, {1.0, "Yes"}});
+
+        if (problem.physics == SupportedPhysics::Magnetostatics) {
+            MagnetostaticsProblem const& cfg = problem.magnetostatics;
+            publish_or_sync_string(
+                    problem_parameter_name("2Magnetostatics", "0Current RMS parameter"),
+                    "Current RMS parameter",
+                    "ONELAB numeric parameter read first for the coil RMS current.",
+                    cfg.current_rms_parameter);
+            publish_or_sync_string(
+                    problem_parameter_name("2Magnetostatics", "1Number of turns parameter"),
+                    "Number of turns parameter",
+                    "ONELAB numeric parameter read first for the number of turns.",
+                    cfg.number_of_turns_parameter);
+            publish_or_sync_string(
+                    problem_parameter_name("2Magnetostatics", "2Core relative permeability parameter"),
+                    "Core relative permeability parameter",
+                    "ONELAB numeric parameter read first for the core relative permeability.",
+                    cfg.core_relative_permeability_parameter);
+            publish_or_sync_string(
+                    problem_parameter_name("2Magnetostatics", "3Coil width parameter"),
+                    "Coil width parameter",
+                    "ONELAB numeric parameter read first for the coil width.",
+                    cfg.coil_width_parameter);
+            publish_or_sync_string(
+                    problem_parameter_name("2Magnetostatics", "4Coil height parameter"),
+                    "Coil height parameter",
+                    "ONELAB numeric parameter read first for the coil height.",
+                    cfg.coil_height_parameter);
+            publish_or_sync_number(
+                    problem_parameter_name("2Magnetostatics", "5Current RMS [A]"),
+                    "Current RMS [A]",
+                    "Fallback coil RMS current used when the ONELAB parameter is not available.",
+                    cfg.current_rms,
+                    0.0,
+                    1.e12,
+                    1.0);
+            publish_or_sync_number(
+                    problem_parameter_name("2Magnetostatics", "6Number of turns"),
+                    "Number of turns",
+                    "Fallback number of turns used when the ONELAB parameter is not available.",
+                    cfg.number_of_turns,
+                    1.0,
+                    1.e12,
+                    1.0);
+            publish_or_sync_number(
+                    problem_parameter_name("2Magnetostatics", "7Core relative permeability"),
+                    "Core relative permeability",
+                    "Fallback relative permeability used when the ONELAB parameter is not available.",
+                    cfg.core_relative_permeability,
+                    1.0,
+                    1.e12,
+                    1.0);
+            publish_or_sync_number(
+                    problem_parameter_name("2Magnetostatics", "8Coil width [m]"),
+                    "Coil width [m]",
+                    "Fallback coil width used when the ONELAB parameter is not available.",
+                    cfg.coil_width,
+                    0.0,
+                    1.e12,
+                    1.e-3);
+            publish_or_sync_number(
+                    problem_parameter_name("2Magnetostatics", "9Coil height [m]"),
+                    "Coil height [m]",
+                    "Fallback coil height used when the ONELAB parameter is not available.",
+                    cfg.coil_height,
+                    0.0,
+                    1.e12,
+                    1.e-3);
+        } else {
+            ScalarFieldWithPowerCouplingProblem const& cfg = problem.scalar_field;
+            publish_or_sync_number(
+                    problem_parameter_name("2ScalarFieldWithPowerCoupling", "0Mass"),
+                    "Mass",
+                    "Scalar-field mass parameter declared in the .silpro file.",
+                    cfg.mass,
+                    0.0,
+                    1.e12,
+                    1.e-3);
+            publish_or_sync_number(
+                    problem_parameter_name("2ScalarFieldWithPowerCoupling", "1Coupling constant"),
+                    "Coupling constant",
+                    "Scalar-field coupling constant declared in the .silpro file.",
+                    cfg.coupling_constant,
+                    -1.e12,
+                    1.e12,
+                    1.e-3);
+            publish_or_sync_number(
+                    problem_parameter_name("2ScalarFieldWithPowerCoupling", "2Coupling power"),
+                    "Coupling power",
+                    "Scalar-field coupling power declared in the .silpro file.",
+                    cfg.coupling_power,
+                    0.0,
+                    1.e12,
+                    1.0);
+        }
+
+        if (synchronize) {
+            publish_hidden_string(internal_parameter_name("Last synchronized problem file"), current_file);
+        }
+        return synchronize;
+    }
+
+    [[nodiscard]] SilproProblem apply_problem_control_overrides(SilproProblem problem)
+    {
+        problem.solver_settings.max_iterations = static_cast<unsigned int>(get_first_number_value(
+                problem_parameter_name("1Solver", "0Max iterations"),
+                static_cast<double>(problem.solver_settings.max_iterations)));
+        problem.solver_settings.relative_tolerance = get_first_number_value(
+                problem_parameter_name("1Solver", "1Relative tolerance"),
+                problem.solver_settings.relative_tolerance);
+        problem.solver_settings.jacobi_max_block_size = static_cast<unsigned int>(get_first_number_value(
+                problem_parameter_name("1Solver", "2Jacobi max block size"),
+                static_cast<double>(problem.solver_settings.jacobi_max_block_size)));
+        problem.solver_settings.use_matrix_free = (
+                get_first_number_value(
+                        problem_parameter_name("1Solver", "3Use matrix-free"),
+                        problem.solver_settings.use_matrix_free ? 1.0 : 0.0)
+                != 0.0);
+
+        if (problem.physics == SupportedPhysics::Magnetostatics) {
+            MagnetostaticsProblem& cfg = problem.magnetostatics;
+            std::string const current_rms_parameter
+                    = get_first_string_value(problem_parameter_name("2Magnetostatics", "0Current RMS parameter"));
+            if (!current_rms_parameter.empty()) {
+                cfg.current_rms_parameter = current_rms_parameter;
+            }
+            std::string const turns_parameter = get_first_string_value(
+                    problem_parameter_name("2Magnetostatics", "1Number of turns parameter"));
+            if (!turns_parameter.empty()) {
+                cfg.number_of_turns_parameter = turns_parameter;
+            }
+            std::string const mur_parameter = get_first_string_value(
+                    problem_parameter_name("2Magnetostatics", "2Core relative permeability parameter"));
+            if (!mur_parameter.empty()) {
+                cfg.core_relative_permeability_parameter = mur_parameter;
+            }
+            std::string const width_parameter = get_first_string_value(
+                    problem_parameter_name("2Magnetostatics", "3Coil width parameter"));
+            if (!width_parameter.empty()) {
+                cfg.coil_width_parameter = width_parameter;
+            }
+            std::string const height_parameter = get_first_string_value(
+                    problem_parameter_name("2Magnetostatics", "4Coil height parameter"));
+            if (!height_parameter.empty()) {
+                cfg.coil_height_parameter = height_parameter;
+            }
+            cfg.current_rms = get_first_number_value(
+                    problem_parameter_name("2Magnetostatics", "5Current RMS [A]"),
+                    cfg.current_rms);
+            cfg.number_of_turns = get_first_number_value(
+                    problem_parameter_name("2Magnetostatics", "6Number of turns"),
+                    cfg.number_of_turns);
+            cfg.core_relative_permeability = get_first_number_value(
+                    problem_parameter_name("2Magnetostatics", "7Core relative permeability"),
+                    cfg.core_relative_permeability);
+            cfg.coil_width = get_first_number_value(
+                    problem_parameter_name("2Magnetostatics", "8Coil width [m]"),
+                    cfg.coil_width);
+            cfg.coil_height = get_first_number_value(
+                    problem_parameter_name("2Magnetostatics", "9Coil height [m]"),
+                    cfg.coil_height);
+        } else {
+            ScalarFieldWithPowerCouplingProblem& cfg = problem.scalar_field;
+            cfg.mass = get_first_number_value(
+                    problem_parameter_name("2ScalarFieldWithPowerCoupling", "0Mass"),
+                    cfg.mass);
+            cfg.coupling_constant = get_first_number_value(
+                    problem_parameter_name("2ScalarFieldWithPowerCoupling", "1Coupling constant"),
+                    cfg.coupling_constant);
+            cfg.coupling_power = get_first_number_value(
+                    problem_parameter_name("2ScalarFieldWithPowerCoupling", "2Coupling power"),
+                    cfg.coupling_power);
+        }
+
+        return problem;
     }
 
     void run_problem()
     {
         std::filesystem::path const silpro_file = resolve_problem_file();
-        SilproProblem const problem = parse_silpro_file(silpro_file);
+        SilproProblem problem = parse_silpro_file(silpro_file);
+        bool const synchronized = synchronize_problem_controls(problem, silpro_file);
+        problem = apply_problem_control_overrides(std::move(problem));
         publish_output_string(
                 "Problem file",
                 silpro_file.string(),
@@ -1210,6 +1455,14 @@ private:
                 "MinimizeStrongFormulationResidual",
                 "Solver",
                 "Solver selected by the .silpro file.");
+
+        if (action() == "initialize") {
+            publish_status(
+                    synchronized ? "Problem configuration synchronized from .silpro file"
+                                 : "Problem configuration initialized");
+            client().sendInfo("SimiLie ONELAB interface initialized without solving");
+            return;
+        }
 
         if (problem.solver != SupportedSolver::MinimizeStrongFormulationResidual) {
             throw std::runtime_error("unsupported solver selected by the .silpro file");
@@ -1255,13 +1508,8 @@ private:
                 std::nullopt,
                 cfg.coil_height);
 
-        std::filesystem::path output_view_file = get_first_string_value(control_parameter_name("Input fields view file"));
-        if (output_view_file.empty()) {
-            output_view_file = cfg.input_fields_view_file;
-        }
-        if (output_view_file.empty()) {
-            output_view_file = mesh_file.parent_path() / "similie_linear_magnetostatics_inputs.pos";
-        }
+        std::filesystem::path const output_view_file
+                = mesh_file.parent_path() / "similie_linear_magnetostatics_inputs.pos";
 
         double const mu0 = 4.e-7 * std::numbers::pi_v<double>;
         double const core_mu = core_relative_permeability * mu0;
@@ -1578,25 +1826,14 @@ private:
             }
         }
 
-        if (cfg.export_input_fields_view) {
-            detail::write_results_view(output_view_file, grid, cell_inputs, magnetic_vector_potential);
-            if (cfg.merge_result_view_in_gmsh) {
-                client().sendMergeFileRequest(output_view_file.string());
-            }
-        }
+        detail::write_results_view(output_view_file, grid, cell_inputs, magnetic_vector_potential);
         client().sendInfo("SimiLie magnetostatics post-processing exported");
 
         publish_output_string(
-                "Input mesh file",
+                "Mesh file",
                 mesh_file.string(),
-                "Input mesh file",
+                "Mesh file",
                 "Mesh file exported by Gmsh for the linear magnetostatics interface.",
-                "file");
-        publish_output_string(
-                "Input fields view file",
-                output_view_file.string(),
-                "Input fields view file",
-                "View file containing the permeability, current density and magnetic vector potential exported by SimiLie.",
                 "file");
         publish_output_number(
                 "Current density magnitude [A/m^2]",
