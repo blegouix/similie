@@ -9,6 +9,15 @@ Mesh.SubdivisionAlgorithm = 1;
 Mesh.Smoothing = 0;
 Mesh.Optimize = 0;
 
+DefineConstant[
+  Irms = {IA, Min 1, Max 4 * IA, Step 2,
+    Name "Input/4Coil Parameters/0Current (rms) [A]", Highlight "AliceBlue"},
+  NbWires = {Nw,
+    Name "Input/4Coil Parameters/1Number of turns", Highlight "AliceBlue"},
+  mur_fe = {2000., Min 100, Max 2000, Step 100,
+    Name "Input/42Core relative permeability", Highlight "AliceBlue"}
+];
+
 x1 = wcoreE;
 x2 = wcoreE + wcoil;
 x3 = 2 * wcoreE + wcoil;
@@ -69,6 +78,34 @@ For j In {0:num_y - 2}
     Plane Surface(surface_id) = {newll - 1};
     Transfinite Surface {surface_id};
     Recombine Surface {surface_id};
+
+    region_tag = AIR;
+    If(i == 0 || i == num_x - 2 || j == 0 || j == num_y - 2)
+      region_tag = AIR;
+    ElseIf(j == 1)
+      region_tag = ICORE;
+    ElseIf(j == 2)
+      If(i == 3 || i == 4)
+        region_tag = AIRGAP;
+      ElseIf(i == 1 || i == 6)
+        region_tag = ECORE;
+      Else
+        region_tag = AIR;
+      EndIf
+    ElseIf(j == 3)
+      If(i == 2)
+        region_tag = COIL;
+      ElseIf(i == 5)
+        region_tag = COIL + 1;
+      ElseIf(i == 1 || i == 3 || i == 4 || i == 6)
+        region_tag = ECORE;
+      Else
+        region_tag = AIR;
+      EndIf
+    ElseIf(j == 4)
+      region_tag = ECORE;
+    EndIf
+    surface_region_tags[] += region_tag;
   EndFor
 EndFor
 
@@ -80,6 +117,26 @@ For s In {0:#surfaces[] - 1}
   };
   volumes[] += out[1];
   Transfinite Volume {out[1]};
+
+  region_tag = surface_region_tags[s];
+  If(region_tag == ECORE)
+    ecore_volumes[] += out[1];
+  ElseIf(region_tag == ICORE)
+    icore_volumes[] += out[1];
+  ElseIf(region_tag == AIRGAP)
+    airgap_volumes[] += out[1];
+  ElseIf(region_tag == COIL)
+    coil_left_volumes[] += out[1];
+  ElseIf(region_tag == COIL + 1)
+    coil_right_volumes[] += out[1];
+  Else
+    air_volumes[] += out[1];
+  EndIf
 EndFor
 
-Physical Volume(1) = {volumes[]};
+Physical Volume(ECORE) = {ecore_volumes[]};
+Physical Volume(ICORE) = {icore_volumes[]};
+Physical Volume(AIRGAP) = {airgap_volumes[]};
+Physical Volume(COIL) = {coil_left_volumes[]};
+Physical Volume(COIL + 1) = {coil_right_volumes[]};
+Physical Volume(AIR) = {air_volumes[]};
