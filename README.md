@@ -13,6 +13,17 @@ SimiLie is a performance-portable (CPU & GPU) C++20 library aiming to extent the
 
 **Absolute WIP, there is no guarantee for proper working. Only OPENMP and CUDA backends have been tested.**
 
+## AI-operability
+
+Coding agents are extensively used to develop SimiLie. The `AGENTS.md` file provides the procedure to operate and develop with SimiLie, with the instruction to automatically detect the presence of a GPU and use the `similie_env` Dockerfile with `OPENMP` or `CUDA` enviroment/compilation. Ie.:
+
+```
+vibe
+run tests
+```
+
+Should detect the presence of a GPU, build the corresponding docker image, compile Similie with `g++` or `nvcc` and run the tests.
+
 ## Development plan
 
 1. Short term: simulate electromagnetism on manifold.
