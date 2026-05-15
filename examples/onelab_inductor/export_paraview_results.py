@@ -18,8 +18,8 @@ HEXAHEDRON_TYPE = 5
 TOL = 1.0e-6
 
 PERMEABILITY_VIEW = "SimiLie linear magnetostatics permeability"
-CURRENT_DENSITY_VIEW = "SimiLie linear magnetostatics current density z"
-MAGNETIC_VECTOR_POTENTIAL_VIEW = "SimiLie linear magnetostatics magnetic vector potential z"
+CURRENT_DENSITY_VIEW = "SimiLie linear magnetostatics current density"
+MAGNETIC_VECTOR_POTENTIAL_VIEW = "SimiLie linear magnetostatics magnetic vector potential"
 
 
 def parse_args() -> argparse.Namespace:
@@ -96,15 +96,16 @@ def parse_result_views(
     pos_file: Path,
 ) -> tuple[
     list[tuple[tuple[float, float, float], float]],
-    list[tuple[tuple[float, float, float], float]],
-    list[tuple[tuple[float, float, float], float]],
+    list[tuple[tuple[float, float, float], tuple[float, float, float]]],
+    list[tuple[tuple[float, float, float], tuple[float, float, float]]],
 ]:
     scalar_pattern = re.compile(r'SP\(([^,]+),([^,]+),([^)]+)\)\{([^}]+)\};')
+    vector_pattern = re.compile(r'VP\(([^,]+),([^,]+),([^)]+)\)\{([^,]+),([^,]+),([^}]+)\};')
     view_pattern = re.compile(r'^View "([^"]+)" \{$')
 
     permeability: list[tuple[tuple[float, float, float], float]] = []
-    current_density: list[tuple[tuple[float, float, float], float]] = []
-    magnetic_vector_potential: list[tuple[tuple[float, float, float], float]] = []
+    current_density: list[tuple[tuple[float, float, float], tuple[float, float, float]]] = []
+    magnetic_vector_potential: list[tuple[tuple[float, float, float], tuple[float, float, float]]] = []
 
     current_view: str | None = None
     for raw_line in pos_file.read_text().splitlines():
@@ -119,21 +120,46 @@ def parse_result_views(
         if current_view is None:
             continue
 
-        scalar_match = scalar_pattern.search(line)
-        if not scalar_match:
-            continue
-
-        xyz = (
-            float(scalar_match.group(1)),
-            float(scalar_match.group(2)),
-            float(scalar_match.group(3)),
-        )
-        value = float(scalar_match.group(4))
         if current_view == PERMEABILITY_VIEW:
+            scalar_match = scalar_pattern.search(line)
+            if not scalar_match:
+                continue
+            xyz = (
+                float(scalar_match.group(1)),
+                float(scalar_match.group(2)),
+                float(scalar_match.group(3)),
+            )
+            value = float(scalar_match.group(4))
             permeability.append((xyz, value))
         elif current_view == CURRENT_DENSITY_VIEW:
+            vector_match = vector_pattern.search(line)
+            if not vector_match:
+                continue
+            xyz = (
+                float(vector_match.group(1)),
+                float(vector_match.group(2)),
+                float(vector_match.group(3)),
+            )
+            value = (
+                float(vector_match.group(4)),
+                float(vector_match.group(5)),
+                float(vector_match.group(6)),
+            )
             current_density.append((xyz, value))
         elif current_view == MAGNETIC_VECTOR_POTENTIAL_VIEW:
+            vector_match = vector_pattern.search(line)
+            if not vector_match:
+                continue
+            xyz = (
+                float(vector_match.group(1)),
+                float(vector_match.group(2)),
+                float(vector_match.group(3)),
+            )
+            value = (
+                float(vector_match.group(4)),
+                float(vector_match.group(5)),
+                float(vector_match.group(6)),
+            )
             magnetic_vector_potential.append((xyz, value))
 
     return permeability, current_density, magnetic_vector_potential
@@ -144,8 +170,8 @@ def build_structured_arrays(
     cells: list[tuple[int, list[int]]],
     topology_dimension: int,
     permeability_values: list[tuple[tuple[float, float, float], float]],
-    current_density_values: list[tuple[tuple[float, float, float], float]],
-    magnetic_vector_potential_values: list[tuple[tuple[float, float, float], float]],
+    current_density_values: list[tuple[tuple[float, float, float], tuple[float, float, float]]],
+    magnetic_vector_potential_values: list[tuple[tuple[float, float, float], tuple[float, float, float]]],
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     x_coords = unique_sorted([node[1] for node in nodes])
     y_coords = unique_sorted([node[2] for node in nodes])
@@ -180,7 +206,7 @@ def build_structured_arrays(
         for xyz, value in magnetic_vector_potential_values:
             ix = nearest_index(x_coords, xyz[0])
             iy = nearest_index(y_coords, xyz[1])
-            magnetic_vector_potential[ix, iy, 2] = value
+            magnetic_vector_potential[ix, iy, :] = value
 
         permeability = np.zeros((nx - 1, ny - 1), dtype=np.float64)
         current_density = np.zeros((nx - 1, ny - 1, 3), dtype=np.float64)
@@ -209,7 +235,7 @@ def build_structured_arrays(
             permeability[ix, iy] = value
         for xyz, value in current_density_values:
             ix, iy = cell_key_from_xyz(xyz)
-            current_density[ix, iy, 2] = value
+            current_density[ix, iy, :] = value
         return (
             np.asarray(x_coords),
             np.asarray(y_coords),
@@ -241,7 +267,7 @@ def build_structured_arrays(
         ix = nearest_index(x_coords, xyz[0])
         iy = nearest_index(y_coords, xyz[1])
         iz = nearest_index(z_coords, xyz[2])
-        magnetic_vector_potential[ix, iy, iz, 2] = value
+        magnetic_vector_potential[ix, iy, iz, :] = value
 
     permeability = np.zeros((nx - 1, ny - 1, nz - 1), dtype=np.float64)
     current_density = np.zeros((nx - 1, ny - 1, nz - 1, 3), dtype=np.float64)
@@ -273,7 +299,7 @@ def build_structured_arrays(
         permeability[ix, iy, iz] = value
     for xyz, value in current_density_values:
         ix, iy, iz = cell_key_from_xyz_3d(xyz)
-        current_density[ix, iy, iz, 2] = value
+        current_density[ix, iy, iz, :] = value
     return (
         np.asarray(x_coords),
         np.asarray(y_coords),
@@ -487,12 +513,20 @@ def write_hdf5(
         handle.create_dataset("magnetic_vector_potential", data=magnetic_vector_potential)
         handle.create_dataset("magnetic_induction", data=magnetic_induction)
         handle.create_dataset("magnetic_field", data=magnetic_field)
-        handle.create_dataset("maxwell_stress_xx", data=maxwell_stress[..., 0, 0])
-        handle.create_dataset("maxwell_stress_yy", data=maxwell_stress[..., 1, 1])
-        handle.create_dataset("maxwell_stress_zz", data=maxwell_stress[..., 2, 2])
-        handle.create_dataset("maxwell_stress_xy", data=maxwell_stress[..., 0, 1])
-        handle.create_dataset("maxwell_stress_xz", data=maxwell_stress[..., 0, 2])
-        handle.create_dataset("maxwell_stress_yz", data=maxwell_stress[..., 1, 2])
+        principal = np.stack(
+            [maxwell_stress[..., 0, 0], maxwell_stress[..., 1, 1], maxwell_stress[..., 2, 2]],
+            axis=-1,
+        )
+        vorticity = np.stack(
+            [
+                2.0 * maxwell_stress[..., 1, 2],
+                -2.0 * maxwell_stress[..., 0, 2],
+                2.0 * maxwell_stress[..., 0, 1],
+            ],
+            axis=-1,
+        )
+        handle.create_dataset("maxwell_stress_tensor_principal", data=principal)
+        handle.create_dataset("maxwell_stress_tensor_vorticity", data=vorticity)
         handle.create_dataset("force_density", data=force_density)
 
 
@@ -553,34 +587,14 @@ def write_xmf(
         {h5_file.name}:/magnetic_field
        </DataItem>
      </Attribute>
-     <Attribute Name="MaxwellStressXX" AttributeType="Scalar" Center="Cell">
-       <DataItem Dimensions="{nx - 1} {ny - 1}" NumberType="Float" Precision="8" Format="HDF">
-        {h5_file.name}:/maxwell_stress_xx
+     <Attribute Name="maxwell_stress_tensor_principal" AttributeType="Vector" Center="Cell">
+       <DataItem Dimensions="{nx - 1} {ny - 1} 3" NumberType="Float" Precision="8" Format="HDF">
+        {h5_file.name}:/maxwell_stress_tensor_principal
        </DataItem>
      </Attribute>
-     <Attribute Name="MaxwellStressYY" AttributeType="Scalar" Center="Cell">
-       <DataItem Dimensions="{nx - 1} {ny - 1}" NumberType="Float" Precision="8" Format="HDF">
-        {h5_file.name}:/maxwell_stress_yy
-       </DataItem>
-     </Attribute>
-     <Attribute Name="MaxwellStressZZ" AttributeType="Scalar" Center="Cell">
-       <DataItem Dimensions="{nx - 1} {ny - 1}" NumberType="Float" Precision="8" Format="HDF">
-        {h5_file.name}:/maxwell_stress_zz
-       </DataItem>
-     </Attribute>
-     <Attribute Name="MaxwellStressXY" AttributeType="Scalar" Center="Cell">
-       <DataItem Dimensions="{nx - 1} {ny - 1}" NumberType="Float" Precision="8" Format="HDF">
-        {h5_file.name}:/maxwell_stress_xy
-       </DataItem>
-     </Attribute>
-     <Attribute Name="MaxwellStressXZ" AttributeType="Scalar" Center="Cell">
-       <DataItem Dimensions="{nx - 1} {ny - 1}" NumberType="Float" Precision="8" Format="HDF">
-        {h5_file.name}:/maxwell_stress_xz
-       </DataItem>
-     </Attribute>
-     <Attribute Name="MaxwellStressYZ" AttributeType="Scalar" Center="Cell">
-       <DataItem Dimensions="{nx - 1} {ny - 1}" NumberType="Float" Precision="8" Format="HDF">
-        {h5_file.name}:/maxwell_stress_yz
+     <Attribute Name="maxwell_stress_tensor_vorticity" AttributeType="Vector" Center="Cell">
+       <DataItem Dimensions="{nx - 1} {ny - 1} 3" NumberType="Float" Precision="8" Format="HDF">
+        {h5_file.name}:/maxwell_stress_tensor_vorticity
        </DataItem>
      </Attribute>
      <Attribute Name="ForceDensity" AttributeType="Vector" Center="Cell">
@@ -632,34 +646,14 @@ def write_xmf(
         {h5_file.name}:/magnetic_field
        </DataItem>
      </Attribute>
-     <Attribute Name="MaxwellStressXX" AttributeType="Scalar" Center="Cell">
-       <DataItem Dimensions="{nx - 1} {ny - 1} {nz - 1}" NumberType="Float" Precision="8" Format="HDF">
-        {h5_file.name}:/maxwell_stress_xx
+     <Attribute Name="maxwell_stress_tensor_principal" AttributeType="Vector" Center="Cell">
+       <DataItem Dimensions="{nx - 1} {ny - 1} {nz - 1} 3" NumberType="Float" Precision="8" Format="HDF">
+        {h5_file.name}:/maxwell_stress_tensor_principal
        </DataItem>
      </Attribute>
-     <Attribute Name="MaxwellStressYY" AttributeType="Scalar" Center="Cell">
-       <DataItem Dimensions="{nx - 1} {ny - 1} {nz - 1}" NumberType="Float" Precision="8" Format="HDF">
-        {h5_file.name}:/maxwell_stress_yy
-       </DataItem>
-     </Attribute>
-     <Attribute Name="MaxwellStressZZ" AttributeType="Scalar" Center="Cell">
-       <DataItem Dimensions="{nx - 1} {ny - 1} {nz - 1}" NumberType="Float" Precision="8" Format="HDF">
-        {h5_file.name}:/maxwell_stress_zz
-       </DataItem>
-     </Attribute>
-     <Attribute Name="MaxwellStressXY" AttributeType="Scalar" Center="Cell">
-       <DataItem Dimensions="{nx - 1} {ny - 1} {nz - 1}" NumberType="Float" Precision="8" Format="HDF">
-        {h5_file.name}:/maxwell_stress_xy
-       </DataItem>
-     </Attribute>
-     <Attribute Name="MaxwellStressXZ" AttributeType="Scalar" Center="Cell">
-       <DataItem Dimensions="{nx - 1} {ny - 1} {nz - 1}" NumberType="Float" Precision="8" Format="HDF">
-        {h5_file.name}:/maxwell_stress_xz
-       </DataItem>
-     </Attribute>
-     <Attribute Name="MaxwellStressYZ" AttributeType="Scalar" Center="Cell">
-       <DataItem Dimensions="{nx - 1} {ny - 1} {nz - 1}" NumberType="Float" Precision="8" Format="HDF">
-        {h5_file.name}:/maxwell_stress_yz
+     <Attribute Name="maxwell_stress_tensor_vorticity" AttributeType="Vector" Center="Cell">
+       <DataItem Dimensions="{nx - 1} {ny - 1} {nz - 1} 3" NumberType="Float" Precision="8" Format="HDF">
+        {h5_file.name}:/maxwell_stress_tensor_vorticity
        </DataItem>
      </Attribute>
      <Attribute Name="ForceDensity" AttributeType="Vector" Center="Cell">
