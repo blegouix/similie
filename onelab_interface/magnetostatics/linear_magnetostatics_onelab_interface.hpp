@@ -658,10 +658,11 @@ protected:
                 typename Kokkos::DefaultExecutionSpace::memory_space>
                 operator_model(x_coords, y_coords);
         physics::dedonder_weyl::StationaryStrongFormulation formulation {operator_model};
-        client().sendInfo("SimiLie starting matrix-free conjugate-gradient solve");
+        client().sendInfo("SimiLie starting Ginkgo preconditioned conjugate-gradient solve");
         solvers::StrongFormulationSolverSettings solver_settings;
-        solver_settings.max_iterations = 2000U;
+        solver_settings.max_iterations = 10000U;
         solver_settings.relative_tolerance = 1.0e-10;
+        solver_settings.jacobi_max_block_size = 1U;
         solvers::StrongFormulationSolverDiagnostics const solver_diagnostics
                 = solvers::minimize_strong_formulation_residual(
                 Kokkos::DefaultExecutionSpace(),
@@ -669,7 +670,7 @@ protected:
                 rhs,
                 magnetic_vector_potential_z_xy_view,
                 solver_settings);
-        client().sendInfo("SimiLie matrix-free conjugate-gradient solve finished");
+        client().sendInfo("SimiLie Ginkgo preconditioned conjugate-gradient solve finished");
 
         auto magnetic_vector_potential_z_xy_host = Kokkos::create_mirror_view_and_copy(
                 Kokkos::HostSpace(),

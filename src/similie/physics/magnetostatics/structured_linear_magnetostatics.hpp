@@ -46,6 +46,26 @@ public:
         return m_nx * m_ny;
     }
 
+    [[nodiscard]] std::size_t nx() const
+    {
+        return m_nx;
+    }
+
+    [[nodiscard]] std::size_t ny() const
+    {
+        return m_ny;
+    }
+
+    [[nodiscard]] coord_view_type x_coords() const
+    {
+        return m_x_coords;
+    }
+
+    [[nodiscard]] coord_view_type y_coords() const
+    {
+        return m_y_coords;
+    }
+
     template <class InputView, class OutputView>
     KOKKOS_INLINE_FUNCTION void apply_at(OutputView output, InputView input, std::size_t row) const
     {
