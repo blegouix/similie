@@ -504,15 +504,21 @@ StructuredLinearMagnetostaticsResult run_on_quadrilateral_grid(
             auto magnetic_field
                     = detail::make_local_tensor<MagneticFieldIndex>(magnetic_field_storage);
 
-            curl_operator.forward(
-                    magnetic_induction,
-                    magnetic_field,
-                    0.0,
-                    derivative_az_at_cell(i, j, 'y'),
-                    derivative_az_at_cell(i, j, 'x'),
-                    0.0,
-                    0.0,
-                    0.0);
+            std::array<double, 3> const magnetic_vector_potential_at_cell = {0.0, 0.0, 0.0};
+            std::array<double, 3> const dpotential_dx = {0.0, 0.0, derivative_az_at_cell(i, j, 'x')};
+            std::array<double, 3> const dpotential_dy = {0.0, 0.0, derivative_az_at_cell(i, j, 'y')};
+            std::array<double, 3> const dpotential_dz = {0.0, 0.0, 0.0};
+            std::array<double, 3> const magnetic_induction_components = curl_operator.forward(
+                    magnetic_vector_potential_at_cell,
+                    dpotential_dx,
+                    dpotential_dy,
+                    dpotential_dz);
+            magnetic_induction(magnetic_induction.template access_element<Y, Z>())
+                    = magnetic_induction_components[0];
+            magnetic_induction(magnetic_induction.template access_element<X, Z>())
+                    = magnetic_induction_components[1];
+            magnetic_induction(magnetic_induction.template access_element<X, Y>())
+                    = magnetic_induction_components[2];
 
             LinearMagneticInductionToMagneticField constitutive_law(cell_inputs[cell_index].mu);
             magnetic_field(magnetic_field.template access_element<X>()) = constitutive_law.forward(
@@ -526,12 +532,12 @@ StructuredLinearMagnetostaticsResult run_on_quadrilateral_grid(
                     magnetic_induction(magnetic_induction.template access_element<X, Y>()));
 
             CellPostProcessFields cell_output {};
-            cell_output.magnetic_induction = {
+            cell_output.magnetic_induction = std::array<double, 3> {
                     magnetic_induction(magnetic_induction.template access_element<Y, Z>()),
                     -magnetic_induction(magnetic_induction.template access_element<X, Z>()),
                     magnetic_induction(magnetic_induction.template access_element<X, Y>()),
             };
-            cell_output.magnetic_field = {
+            cell_output.magnetic_field = std::array<double, 3> {
                     magnetic_field(magnetic_field.template access_element<X>()),
                     magnetic_field(magnetic_field.template access_element<Y>()),
                     magnetic_field(magnetic_field.template access_element<Z>()),
@@ -802,15 +808,29 @@ StructuredLinearMagnetostaticsResult run_on_hexahedral_grid(
                 auto magnetic_field
                         = detail::make_local_tensor<MagneticFieldIndex>(magnetic_field_storage);
 
-                curl_operator.forward(
-                        magnetic_induction,
-                        magnetic_field,
+                std::array<double, 3> const magnetic_vector_potential_at_cell = {0.0, 0.0, 0.0};
+                std::array<double, 3> const dpotential_dx = {
+                        0.0,
+                        0.0,
+                        derivative_az_at_cell(i, j, k, 'x'),
+                };
+                std::array<double, 3> const dpotential_dy = {
+                        0.0,
                         0.0,
                         derivative_az_at_cell(i, j, k, 'y'),
-                        derivative_az_at_cell(i, j, k, 'x'),
-                        0.0,
-                        0.0,
-                        0.0);
+                };
+                std::array<double, 3> const dpotential_dz = {0.0, 0.0, 0.0};
+                std::array<double, 3> const magnetic_induction_components = curl_operator.forward(
+                        magnetic_vector_potential_at_cell,
+                        dpotential_dx,
+                        dpotential_dy,
+                        dpotential_dz);
+                magnetic_induction(magnetic_induction.template access_element<Y, Z>())
+                        = magnetic_induction_components[0];
+                magnetic_induction(magnetic_induction.template access_element<X, Z>())
+                        = magnetic_induction_components[1];
+                magnetic_induction(magnetic_induction.template access_element<X, Y>())
+                        = magnetic_induction_components[2];
 
                 LinearMagneticInductionToMagneticField constitutive_law(cell_inputs[cell_index].mu);
                 magnetic_field(magnetic_field.template access_element<X>())
@@ -830,12 +850,12 @@ StructuredLinearMagnetostaticsResult run_on_hexahedral_grid(
                                         magnetic_induction.template access_element<X, Y>()));
 
                 CellPostProcessFields cell_output {};
-                cell_output.magnetic_induction = {
+                cell_output.magnetic_induction = std::array<double, 3> {
                         magnetic_induction(magnetic_induction.template access_element<Y, Z>()),
                         -magnetic_induction(magnetic_induction.template access_element<X, Z>()),
                         magnetic_induction(magnetic_induction.template access_element<X, Y>()),
                 };
-                cell_output.magnetic_field = {
+                cell_output.magnetic_field = std::array<double, 3> {
                         magnetic_field(magnetic_field.template access_element<X>()),
                         magnetic_field(magnetic_field.template access_element<Y>()),
                         magnetic_field(magnetic_field.template access_element<Z>()),
