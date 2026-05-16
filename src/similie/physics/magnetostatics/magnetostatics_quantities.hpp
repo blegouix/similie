@@ -6,6 +6,7 @@
 #include <array>
 
 #include <similie/misc/specialization.hpp>
+#include <similie/physics/magnetostatics/linear_magnetostatics.hpp>
 #include <similie/physics/magnetostatics/linear_magnetic_induction_to_magnetic_field.hpp>
 #include <similie/physics/magnetostatics/magnetostatics_indices.hpp>
 #include <similie/tensor/tensor.hpp>
@@ -28,6 +29,31 @@ KOKKOS_FUNCTION auto make_local_tensor(std::array<double, TensorIndex::access_si
 }
 
 } // namespace detail
+
+template <
+        sil::misc::Specialization<sil::tensor::Tensor> DSpatialMomentumDtTensorType,
+        sil::misc::Specialization<sil::tensor::Tensor> DPotentialDtTensorType,
+        sil::misc::Specialization<sil::tensor::Tensor> SpatialMomentumTensorType,
+        class PotentialTensorType>
+KOKKOS_FUNCTION void run_hamilton_equations(
+        LinearMagnetostaticsHamiltonian const& hamiltonian,
+        DSpatialMomentumDtTensorType dspatial_momentum_dt,
+        DPotentialDtTensorType dpotential_dt,
+        SpatialMomentumTensorType spatial_momentum,
+        PotentialTensorType)
+{
+    double const bx = spatial_momentum(spatial_momentum.template access_element<Y, Z>());
+    double const by = -spatial_momentum(spatial_momentum.template access_element<X, Z>());
+    double const bz = spatial_momentum(spatial_momentum.template access_element<X, Y>());
+
+    dpotential_dt(dpotential_dt.template access_element<X>()) = hamiltonian.dH_dpi0(bx);
+    dpotential_dt(dpotential_dt.template access_element<Y>()) = hamiltonian.dH_dpi1(by);
+    dpotential_dt(dpotential_dt.template access_element<Z>()) = hamiltonian.dH_dpi2(bz);
+
+    dspatial_momentum_dt(dspatial_momentum_dt.template access_element<Y, Z>()) = 0.0;
+    dspatial_momentum_dt(dspatial_momentum_dt.template access_element<X, Z>()) = 0.0;
+    dspatial_momentum_dt(dspatial_momentum_dt.template access_element<X, Y>()) = 0.0;
+}
 
 class MagneticVectorPotentialToMagneticInduction
 {
