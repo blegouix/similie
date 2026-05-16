@@ -4,19 +4,9 @@
 #pragma once
 
 #include <cstddef>
-#include <type_traits>
 #include <utility>
-#include <variant>
 
 namespace similie::physics {
-
-struct PotentialTimeDerivative
-{
-};
-
-struct MomentumTimeDerivative
-{
-};
 
 namespace detail {
 
@@ -58,35 +48,19 @@ public:
         return -m_hamiltonian.dH_dphi(potential);
     }
 
-    template <class EquationTerm, std::size_t I = 0>
-    [[nodiscard]] constexpr double value(double variable) const
+    template <std::size_t I, class ChainType, class LowerChainType, class Elem>
+    [[nodiscard]] constexpr auto
+    dpotential_dt_value(ChainType chain, LowerChainType lower_chain, Elem elem) const
     {
-        if constexpr (std::is_same_v<EquationTerm, PotentialTimeDerivative>) {
-            return m_hamiltonian.template dH_dpi_value<I>(variable);
-        } else {
-            static_cast<void>(I);
-            return -m_hamiltonian.dH_dphi_value(variable);
-        }
+        return m_hamiltonian.template dH_dpi_value<I>(chain, lower_chain, elem, m_pi_computer_value);
     }
 
-    template <class EquationTerm, std::size_t I = 0, class ChainType, class LowerChainType, class Elem>
+    template <std::size_t I = 0, class ChainType, class LowerChainType, class Elem>
     [[nodiscard]] constexpr auto
-    value(ChainType chain, LowerChainType lower_chain, Elem elem) const
+    dmoments_dt_value(ChainType chain, LowerChainType lower_chain, Elem elem) const
     {
-        if constexpr (std::is_same_v<EquationTerm, PotentialTimeDerivative>) {
-            return m_hamiltonian.template dH_dpi_value<I>(
-                    chain,
-                    lower_chain,
-                    elem,
-                    m_pi_computer_value);
-        } else {
-            static_cast<void>(I);
-            return -m_hamiltonian.dH_dphi_value(
-                    chain,
-                    lower_chain,
-                    elem,
-                    m_pi_computer_value);
-        }
+        static_cast<void>(I);
+        return -m_hamiltonian.dH_dphi_value(chain, lower_chain, elem, m_pi_computer_value);
     }
 };
 

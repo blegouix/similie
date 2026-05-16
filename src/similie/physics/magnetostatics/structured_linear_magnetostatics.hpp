@@ -250,59 +250,6 @@ KOKKOS_INLINE_FUNCTION void apply_stationary_equations_at(
     output(row, 0) = curl_h_z;
 }
 
-template <class Hamiltonian, class MemorySpace>
-KOKKOS_INLINE_FUNCTION double value_stationary_equations_at(
-        std::size_t row,
-        std::size_t column,
-        physics::HamiltonEquations<Hamiltonian> const& equations,
-        StructuredScalarPoissonStrongFormOperator2D<MemorySpace> const& operator_model)
-{
-    std::size_t const nx = operator_model.nx();
-    std::size_t const ny = operator_model.ny();
-    std::size_t const j = row / nx;
-    std::size_t const i = row % nx;
-
-    bool const boundary = operator_model.is_boundary_node(i, j);
-    if (boundary) {
-        return column == row ? 1.0 : 0.0;
-    }
-
-    auto flat_index = [nx](std::size_t ii, std::size_t jj) { return ii + nx * jj; };
-    std::size_t const west = flat_index(i - 1, j);
-    std::size_t const east = flat_index(i + 1, j);
-    std::size_t const south = flat_index(i, j - 1);
-    std::size_t const north = flat_index(i, j + 1);
-    if (column != row && column != west && column != east && column != south && column != north) {
-        return 0.0;
-    }
-
-    auto const x_coords = operator_model.x_coords();
-    auto const y_coords = operator_model.y_coords();
-    double const dxm = x_coords(i) - x_coords(i - 1);
-    double const dxp = x_coords(i + 1) - x_coords(i);
-    double const dym = y_coords(j) - y_coords(j - 1);
-    double const dyp = y_coords(j + 1) - y_coords(j);
-
-    double const coeff_hx
-            = equations.template value<physics::PotentialTimeDerivative, 0>(0.0);
-    double const coeff_hy
-            = equations.template value<physics::PotentialTimeDerivative, 1>(0.0);
-
-    if (column == west) {
-        return -2.0 * coeff_hy / (dxm * (dxm + dxp));
-    }
-    if (column == east) {
-        return -2.0 * coeff_hy / (dxp * (dxm + dxp));
-    }
-    if (column == south) {
-        return -2.0 * coeff_hx / (dym * (dym + dyp));
-    }
-    if (column == north) {
-        return -2.0 * coeff_hx / (dyp * (dym + dyp));
-    }
-    return 2.0 * coeff_hy / (dxm * dxp) + 2.0 * coeff_hx / (dym * dyp);
-}
-
 } // namespace similie::physics::magnetostatics
 
 namespace similie::physics {
@@ -366,19 +313,19 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                 double const dym = y_coords(j) - y_coords(j - 1);
                 double const dyp = y_coords(j + 1) - y_coords(j);
 
-                auto hx_s = operator_model.equations().template value<PotentialTimeDerivative, 0>(
+                auto hx_s = operator_model.equations().template dpotential_dt_value<0>(
                         chain,
                         lower_chain,
                         ddc::DiscreteElement<magnetostatics::X, magnetostatics::Y>(i, j - 1));
-                auto hx_n = operator_model.equations().template value<PotentialTimeDerivative, 0>(
+                auto hx_n = operator_model.equations().template dpotential_dt_value<0>(
                         chain,
                         lower_chain,
                         ddc::DiscreteElement<magnetostatics::X, magnetostatics::Y>(i, j));
-                auto hy_w = operator_model.equations().template value<PotentialTimeDerivative, 1>(
+                auto hy_w = operator_model.equations().template dpotential_dt_value<1>(
                         chain,
                         lower_chain,
                         ddc::DiscreteElement<magnetostatics::X, magnetostatics::Y>(i - 1, j));
-                auto hy_e = operator_model.equations().template value<PotentialTimeDerivative, 1>(
+                auto hy_e = operator_model.equations().template dpotential_dt_value<1>(
                         chain,
                         lower_chain,
                         ddc::DiscreteElement<magnetostatics::X, magnetostatics::Y>(i, j));
