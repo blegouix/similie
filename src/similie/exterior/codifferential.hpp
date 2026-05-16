@@ -187,6 +187,43 @@ struct Codifferential<
         MetricType,
         PositionType>
 {
+    template <class ChainType, class LowerChainType, class NaturalElem>
+    KOKKOS_FUNCTION static auto value(
+            TensorType tensor,
+            MetricType metric,
+            PositionType position,
+            ChainType chain,
+            LowerChainType lower_chain,
+            typename TensorType::non_indices_domain_t::discrete_element_type elem,
+            NaturalElem natural_elem)
+    {
+        using CodifferentialIndex = codifferential_index_t<TagToRemoveFromCochain, CochainTag>;
+        using SpatialDomain = typename TensorType::non_indices_domain_t;
+        using LocalStencil = detail::LocalOperatorValueTensor<SpatialDomain, CochainTag>;
+        using SpatialElem = typename SpatialDomain::discrete_element_type;
+
+        LocalStencil stencil(detail::decrement_all(SpatialElem(elem)));
+        ddc::device_for_each(stencil.domain, [&](auto stencil_elem) {
+            LocalStencil basis(stencil.domain.front());
+            basis.tensor.mem(stencil_elem) = 1.0;
+
+            [[maybe_unused]] tensor::TensorAccessor<CodifferentialIndex> codifferential_accessor;
+            std::array<double, CodifferentialIndex::access_size()> codifferential_alloc {};
+            ddc::ChunkSpan<
+                    double,
+                    ddc::DiscreteDomain<CodifferentialIndex>,
+                    Kokkos::layout_right,
+                    typename TensorType::memory_space>
+                    codifferential_span(codifferential_alloc.data(), codifferential_accessor.domain());
+            sil::tensor::Tensor codifferential_tensor(codifferential_span);
+
+            run(codifferential_tensor, basis.tensor, metric, position, chain, lower_chain, elem);
+            stencil.tensor.mem(stencil_elem)
+                    = codifferential_tensor(codifferential_tensor.access_element(natural_elem));
+        });
+        return stencil;
+    }
+
     KOKKOS_FUNCTION static void run(
             auto codifferential_tensor,
             TensorType tensor,

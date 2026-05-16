@@ -4,6 +4,7 @@
 #pragma once
 
 #include <array>
+#include <cstddef>
 #include <span>
 
 #include <Kokkos_Core.hpp>
@@ -58,6 +59,41 @@ public:
                 elem);
     }
 
+    template <class Evaluator, class ChainType, class LowerChainType, class Elem, class NaturalElem>
+    [[nodiscard]] KOKKOS_FUNCTION static auto forward_exterior_value(
+            Evaluator evaluator,
+            ChainType chain,
+            LowerChainType lower_chain,
+            Elem elem,
+            NaturalElem natural_elem)
+    {
+        return sil::exterior::Coboundary<
+                sil::tensor::Covariant<Nu>,
+                MagneticVectorPotentialIndex>::value(
+                evaluator,
+                chain,
+                lower_chain,
+                elem,
+                natural_elem);
+    }
+
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double forward_value(
+            [[maybe_unused]] std::span<double const, 3> magnetic_vector_potential,
+            std::span<double const, 3> dpotential_dx,
+            std::span<double const, 3> dpotential_dy,
+            std::span<double const, 3> dpotential_dz,
+            std::size_t component) const
+    {
+        switch (component) {
+        case 0:
+            return dpotential_dy[2] - dpotential_dz[1];
+        case 1:
+            return dpotential_dz[0] - dpotential_dx[2];
+        default:
+            return dpotential_dx[1] - dpotential_dy[0];
+        }
+    }
+
     [[nodiscard]] KOKKOS_FUNCTION constexpr std::array<double, 3> forward(
             [[maybe_unused]] std::span<double const, 3> magnetic_vector_potential,
             std::span<double const, 3> dpotential_dx,
@@ -65,16 +101,45 @@ public:
             std::span<double const, 3> dpotential_dz) const
     {
         return {
-                dpotential_dy[2] - dpotential_dz[1],
-                dpotential_dz[0] - dpotential_dx[2],
-                dpotential_dx[1] - dpotential_dy[0],
+                forward_value(
+                        magnetic_vector_potential,
+                        dpotential_dx,
+                        dpotential_dy,
+                        dpotential_dz,
+                        0),
+                forward_value(
+                        magnetic_vector_potential,
+                        dpotential_dx,
+                        dpotential_dy,
+                        dpotential_dz,
+                        1),
+                forward_value(
+                        magnetic_vector_potential,
+                        dpotential_dx,
+                        dpotential_dy,
+                        dpotential_dz,
+                        2),
         };
     }
 
-    [[nodiscard]] KOKKOS_FUNCTION constexpr std::array<double, 6> inverse(
-            std::span<double const, 3>) const
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double inverse_value(
+            [[maybe_unused]] std::span<double const, 3>,
+            [[maybe_unused]] std::size_t component) const
     {
-        return {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+        return 0.0;
+    }
+
+    [[nodiscard]] KOKKOS_FUNCTION constexpr std::array<double, 6> inverse(
+            std::span<double const, 3> magnetic_induction) const
+    {
+        return {
+                inverse_value(magnetic_induction, 0),
+                inverse_value(magnetic_induction, 1),
+                inverse_value(magnetic_induction, 2),
+                inverse_value(magnetic_induction, 3),
+                inverse_value(magnetic_induction, 4),
+                inverse_value(magnetic_induction, 5),
+        };
     }
 };
 
@@ -89,34 +154,70 @@ public:
     {
     }
 
-    [[nodiscard]] KOKKOS_FUNCTION constexpr std::array<double, 6> inverse(
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double inverse_value(
             std::span<double const, 3> magnetic_induction,
-            std::span<double const, 3> magnetic_field) const
+            std::span<double const, 3> magnetic_field,
+            std::size_t component) const
     {
         double const half_trace = 0.5
                                   * (magnetic_induction[0] * magnetic_field[0]
                                      + magnetic_induction[1] * magnetic_field[1]
                                      + magnetic_induction[2] * magnetic_field[2]);
+        switch (component) {
+        case 0:
+            return magnetic_induction[0] * magnetic_field[0] - half_trace;
+        case 1:
+            return magnetic_induction[1] * magnetic_field[1] - half_trace;
+        case 2:
+            return magnetic_induction[2] * magnetic_field[2] - half_trace;
+        case 3:
+            return magnetic_induction[0] * magnetic_field[1];
+        case 4:
+            return magnetic_induction[0] * magnetic_field[2];
+        default:
+            return magnetic_induction[1] * magnetic_field[2];
+        }
+    }
+
+    [[nodiscard]] KOKKOS_FUNCTION constexpr std::array<double, 6> inverse(
+            std::span<double const, 3> magnetic_induction,
+            std::span<double const, 3> magnetic_field) const
+    {
         return {
-                magnetic_induction[0] * magnetic_field[0] - half_trace,
-                magnetic_induction[1] * magnetic_field[1] - half_trace,
-                magnetic_induction[2] * magnetic_field[2] - half_trace,
-                magnetic_induction[0] * magnetic_field[1],
-                magnetic_induction[0] * magnetic_field[2],
-                magnetic_induction[1] * magnetic_field[2],
+                inverse_value(magnetic_induction, magnetic_field, 0),
+                inverse_value(magnetic_induction, magnetic_field, 1),
+                inverse_value(magnetic_induction, magnetic_field, 2),
+                inverse_value(magnetic_induction, magnetic_field, 3),
+                inverse_value(magnetic_induction, magnetic_field, 4),
+                inverse_value(magnetic_induction, magnetic_field, 5),
         };
     }
 
-    [[nodiscard]] KOKKOS_FUNCTION constexpr std::array<double, 6> forward(
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double forward_value(
             std::span<double const, 3> hodge_star,
-            std::span<double const, 3> magnetic_induction) const
+            std::span<double const, 3> magnetic_induction,
+            std::size_t component) const
     {
         std::array<double, 3> const magnetic_field = {
                 m_constitutive_law.forward(hodge_star[0], magnetic_induction[0]),
                 m_constitutive_law.forward(hodge_star[1], magnetic_induction[1]),
                 m_constitutive_law.forward(hodge_star[2], magnetic_induction[2]),
         };
-        return inverse(magnetic_induction, magnetic_field);
+        return inverse_value(magnetic_induction, magnetic_field, component);
+    }
+
+    [[nodiscard]] KOKKOS_FUNCTION constexpr std::array<double, 6> forward(
+            std::span<double const, 3> hodge_star,
+            std::span<double const, 3> magnetic_induction) const
+    {
+        return {
+                forward_value(hodge_star, magnetic_induction, 0),
+                forward_value(hodge_star, magnetic_induction, 1),
+                forward_value(hodge_star, magnetic_induction, 2),
+                forward_value(hodge_star, magnetic_induction, 3),
+                forward_value(hodge_star, magnetic_induction, 4),
+                forward_value(hodge_star, magnetic_induction, 5),
+        };
     }
 };
 
@@ -157,16 +258,75 @@ public:
                 elem);
     }
 
-    [[nodiscard]] KOKKOS_FUNCTION constexpr std::array<double, 6> inverse(
-            std::span<double const, 3>) const
+    template <
+            sil::tensor::TensorIndex MetricIndex,
+            sil::misc::Specialization<sil::tensor::Tensor> TensorType,
+            sil::misc::Specialization<sil::tensor::Tensor> MetricType,
+            sil::misc::Specialization<sil::tensor::Tensor> PositionType,
+            class ChainType,
+            class LowerChainType,
+            class Elem,
+            class NaturalElem>
+    [[nodiscard]] KOKKOS_FUNCTION static auto forward_exterior_value(
+            TensorType maxwell_stress_tensor,
+            MetricType metric,
+            PositionType position,
+            ChainType chain,
+            LowerChainType lower_chain,
+            Elem elem,
+            NaturalElem natural_elem)
     {
-        return {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+        return sil::exterior::Codifferential<
+                MetricIndex,
+                sil::tensor::Covariant<Nu>,
+                MaxwellStressTensorIndex,
+                TensorType,
+                MetricType,
+                PositionType>::value(
+                maxwell_stress_tensor,
+                metric,
+                position,
+                chain,
+                lower_chain,
+                elem,
+                natural_elem);
+    }
+
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double inverse_value(
+            [[maybe_unused]] std::span<double const, 3>,
+            [[maybe_unused]] std::size_t component) const
+    {
+        return 0.0;
+    }
+
+    [[nodiscard]] KOKKOS_FUNCTION constexpr std::array<double, 6> inverse(
+            std::span<double const, 3> force_density) const
+    {
+        return {
+                inverse_value(force_density, 0),
+                inverse_value(force_density, 1),
+                inverse_value(force_density, 2),
+                inverse_value(force_density, 3),
+                inverse_value(force_density, 4),
+                inverse_value(force_density, 5),
+        };
+    }
+
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double forward_value(
+            [[maybe_unused]] std::span<double const, 6>,
+            [[maybe_unused]] std::size_t component) const
+    {
+        return 0.0;
     }
 
     [[nodiscard]] KOKKOS_FUNCTION constexpr std::array<double, 3> forward(
-            std::span<double const, 6>) const
+            std::span<double const, 6> maxwell_stress) const
     {
-        return {0.0, 0.0, 0.0};
+        return {
+                forward_value(maxwell_stress, 0),
+                forward_value(maxwell_stress, 1),
+                forward_value(maxwell_stress, 2),
+        };
     }
 };
 

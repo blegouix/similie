@@ -34,5 +34,5 @@ class LinearMagneticInductionToMagneticFieldConstitutiveLaw:
             parameters=["mu"],
             variables=["hodge_star", "b"],
             output_variable="h",
-            constitutive_law=b / mu / hodge_star,
+            constitutive_law=hodge_star * b / mu,
         )

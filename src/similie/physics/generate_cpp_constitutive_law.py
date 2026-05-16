@@ -7,7 +7,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from sympy import solve, symbols
+from sympy import diff, solve, symbols
 from sympy.printing.codeprinter import cxxcode
 
 
@@ -63,6 +63,8 @@ def write_cpp_constitutive_law_header(
     if not inverse_solution:
         raise ValueError("Unable to invert constitutive law")
     inverse_expression = inverse_solution[0][state_variable_symbol]
+    forward_value_expression = diff(constitutive_law, state_variable_symbol)
+    inverse_value_expression = diff(inverse_expression, output_symbol)
     inverse_replacements = dict(parameter_replacements)
 
     parameter_members = "\n".join(
@@ -103,9 +105,19 @@ public:
     {{
     }}
 
+    KOKKOS_FUNCTION constexpr double forward_value({forward_arguments}) const
+    {{
+        return {_render_expression(forward_value_expression, state_variable_symbol, inverse_output_name, constitutive_law_replacements)};
+    }}
+
     KOKKOS_FUNCTION constexpr double forward({forward_arguments}) const
     {{
         return {_render_expression(constitutive_law, state_variable_symbol, inverse_output_name, constitutive_law_replacements)};
+    }}
+
+    KOKKOS_FUNCTION constexpr double inverse_value({inverse_arguments}) const
+    {{
+        return {_render_expression(inverse_value_expression, output_symbol, output_variable, inverse_replacements)};
     }}
 
     KOKKOS_FUNCTION constexpr double inverse({inverse_arguments}) const

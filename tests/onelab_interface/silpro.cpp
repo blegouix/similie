@@ -97,6 +97,29 @@ TEST(OnelabInterface, HamiltonEquationsStaticMomentumDerivative)
     EXPECT_DOUBLE_EQ(equations.template dmoments_dt<1>(3.0), 12.0);
 }
 
+TEST(OnelabInterface, HamiltonEquationsValueIsLocalOperatorCoefficient)
+{
+    using similie::physics::HamiltonEquations;
+    using similie::physics::MomentumTimeDerivative;
+    using similie::physics::PotentialTimeDerivative;
+    using similie::physics::magnetostatics::LinearMagnetostaticsHamiltonian;
+    using similie::physics::scalar_field::ScalarFieldWithPowerCouplingHamiltonian;
+
+    HamiltonEquations const magnetostatics_equations(LinearMagnetostaticsHamiltonian(2.0));
+    double const magnetostatics_value_x
+            = magnetostatics_equations.template value<PotentialTimeDerivative, 0>(4.0);
+    double const magnetostatics_value_y
+            = magnetostatics_equations.template value<PotentialTimeDerivative, 1>(6.0);
+    EXPECT_DOUBLE_EQ(magnetostatics_value_x, 0.5);
+    EXPECT_DOUBLE_EQ(magnetostatics_value_y, 0.5);
+
+    HamiltonEquations const scalar_field_equations(
+            ScalarFieldWithPowerCouplingHamiltonian(2.0, 0.0, 4.0));
+    double const scalar_field_value
+            = scalar_field_equations.template value<MomentumTimeDerivative, 0>(3.0);
+    EXPECT_DOUBLE_EQ(scalar_field_value, 4.0);
+}
+
 TEST(OnelabInterface, DeDonderWeylEquationsStaticInterfaces)
 {
     using similie::physics::DeDonderWeylEquations;
@@ -107,6 +130,17 @@ TEST(OnelabInterface, DeDonderWeylEquationsStaticInterfaces)
     EXPECT_DOUBLE_EQ(equations.template potential_grad<0>(5.0), -5.0);
     EXPECT_DOUBLE_EQ(equations.template potential_grad<1>(5.0), 5.0);
     EXPECT_DOUBLE_EQ(equations.moments_div(3.0), 12.0);
+}
+
+TEST(OnelabInterface, LinearMagneticInductionToMagneticFieldValueAndApplication)
+{
+    using similie::physics::magnetostatics::LinearMagneticInductionToMagneticField;
+
+    LinearMagneticInductionToMagneticField const constitutive_law(2.0);
+    EXPECT_DOUBLE_EQ(constitutive_law.forward_value(3.0, 4.0), 1.5);
+    EXPECT_DOUBLE_EQ(constitutive_law.forward(3.0, 4.0), 6.0);
+    EXPECT_DOUBLE_EQ(constitutive_law.inverse_value(3.0, 5.0), 2.0 / 3.0);
+    EXPECT_DOUBLE_EQ(constitutive_law.inverse(3.0, 5.0), 10.0 / 3.0);
 }
 
 TEST(OnelabInterface, StationaryMagnetostaticsOperatorMatchesPrediscretizedForMuOne)

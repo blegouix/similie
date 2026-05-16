@@ -73,6 +73,23 @@ def _render_indexed_method(
 """
 
 
+def _render_indexed_value_method(
+    method_name: str,
+    argument_prefix: str,
+    symbols_: list[str],
+    expressions: list,
+    replacements: dict[str, str],
+) -> str:
+    differentiated_expressions = [diff(expression, symbols(symbol_name)) for symbol_name, expression in zip(symbols_, expressions, strict=True)]
+    return _render_indexed_method(
+        method_name,
+        argument_prefix,
+        symbols_,
+        differentiated_expressions,
+        replacements,
+    )
+
+
 def write_cpp_hamiltonian_header(
     output_path: Path,
     namespace: str,
@@ -106,11 +123,18 @@ def write_cpp_hamiltonian_header(
     )
 
     scalar_method = ""
+    scalar_value_method = ""
     if scalar_argument_name is not None and scalar_derivative_expression is not None:
         scalar_method = f"""
     constexpr double dH_dphi(double {scalar_argument_name}) const
     {{
         return {_replace_symbols(cxxcode(scalar_derivative_expression), scalar_replacements)};
+    }}
+"""
+        scalar_value_method = f"""
+    constexpr double dH_dphi_value(double {scalar_argument_name}) const
+    {{
+        return {_replace_symbols(cxxcode(diff(scalar_derivative_expression, symbols(scalar_argument_name))), scalar_replacements)};
     }}
 """
 
@@ -149,7 +173,7 @@ struct {struct_name} {{
     {{
         return {_replace_symbols(cxxcode(hamiltonian), h_replacements)};
     }}
-{scalar_method}{_render_indexed_method("dH_dpi", "pi", derivative_symbols, derivative_expressions, scalar_replacements)}
+{scalar_method}{scalar_value_method}{_render_indexed_method("dH_dpi", "pi", derivative_symbols, derivative_expressions, scalar_replacements)}{_render_indexed_value_method("dH_dpi_value", "pi", derivative_symbols, derivative_expressions, scalar_replacements)}
 {inverse_methods}}};
 }} // namespace {namespace}
 """

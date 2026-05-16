@@ -6,9 +6,6 @@
 #include <array>
 #include <cstddef>
 #include <type_traits>
-
-#include <ginkgo/core/base/matrix_data.hpp>
-#include <ginkgo/core/base/types.hpp>
 #include <similie/physics/hamilton_equations.hpp>
 #include <similie/physics/magnetostatics/magnetostatics_indices.hpp>
 #include <similie/physics/stationary_equations_operator.hpp>
@@ -97,13 +94,34 @@ public:
         return m_y_coords;
     }
 
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION bool is_boundary_node(std::size_t i, std::size_t j) const
+    {
+        return i == 0 || j == 0 || i + 1 == m_nx || j + 1 == m_ny;
+    }
+
+    template <class Functor>
+    KOKKOS_INLINE_FUNCTION void for_each_nonzero_column(std::size_t row, Functor&& functor) const
+    {
+        std::size_t const j = row / m_nx;
+        std::size_t const i = row % m_nx;
+        if (is_boundary_node(i, j)) {
+            functor(row);
+            return;
+        }
+        functor(flat_index(i, j));
+        functor(flat_index(i - 1, j));
+        functor(flat_index(i + 1, j));
+        functor(flat_index(i, j - 1));
+        functor(flat_index(i, j + 1));
+    }
+
     template <class InputView, class OutputView>
     KOKKOS_INLINE_FUNCTION void apply_at(OutputView output, InputView input, std::size_t row) const
     {
         std::size_t const j = row / m_nx;
         std::size_t const i = row % m_nx;
 
-        bool const boundary = (i == 0 || j == 0 || i + 1 == m_nx || j + 1 == m_ny);
+        bool const boundary = is_boundary_node(i, j);
 
         if (boundary) {
             output(row, 0) = input(row, 0);
@@ -135,58 +153,6 @@ private:
         return i + m_nx * j;
     }
 };
-
-template <class MemorySpace>
-gko::matrix_data<double, gko::int32> assemble_matrix_data(
-        StructuredScalarPoissonStrongFormOperator2D<MemorySpace> const& operator_model)
-{
-    auto const x_coords_host
-            = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), operator_model.x_coords());
-    auto const y_coords_host
-            = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), operator_model.y_coords());
-
-    std::size_t const nx = operator_model.nx();
-    std::size_t const ny = operator_model.ny();
-
-    gko::matrix_data<double, gko::int32> matrix_data(
-            gko::dim<2>(operator_model.size(), operator_model.size()));
-    matrix_data.nonzeros.reserve(5 * operator_model.size());
-
-    auto flat_index
-            = [nx](std::size_t i, std::size_t j) { return static_cast<gko::int32>(i + nx * j); };
-
-    for (std::size_t j = 0; j < ny; ++j) {
-        for (std::size_t i = 0; i < nx; ++i) {
-            gko::int32 const row = flat_index(i, j);
-            bool const boundary = (i == 0 || j == 0 || i + 1 == nx || j + 1 == ny);
-            if (boundary) {
-                matrix_data.nonzeros.emplace_back(row, row, 1.0);
-                continue;
-            }
-
-            double const dxm = x_coords_host(i) - x_coords_host(i - 1);
-            double const dxp = x_coords_host(i + 1) - x_coords_host(i);
-            double const dym = y_coords_host(j) - y_coords_host(j - 1);
-            double const dyp = y_coords_host(j + 1) - y_coords_host(j);
-
-            double const coeff_im1 = -2.0 / (dxm * (dxm + dxp));
-            double const coeff_ip1 = -2.0 / (dxp * (dxm + dxp));
-            double const coeff_jm1 = -2.0 / (dym * (dym + dyp));
-            double const coeff_jp1 = -2.0 / (dyp * (dym + dyp));
-            double const coeff_center = -coeff_im1 - coeff_ip1 - coeff_jm1 - coeff_jp1;
-
-            matrix_data.nonzeros.emplace_back(row, flat_index(i - 1, j), coeff_im1);
-            matrix_data.nonzeros.emplace_back(row, flat_index(i + 1, j), coeff_ip1);
-            matrix_data.nonzeros.emplace_back(row, flat_index(i, j - 1), coeff_jm1);
-            matrix_data.nonzeros.emplace_back(row, flat_index(i, j + 1), coeff_jp1);
-            matrix_data.nonzeros.emplace_back(row, row, coeff_center);
-        }
-    }
-
-    matrix_data.sort_row_major();
-    return matrix_data;
-}
-
 template <class Hamiltonian, class MemorySpace, class InputView, class OutputView>
 KOKKOS_INLINE_FUNCTION void apply_stationary_equations_at(
         OutputView output,
@@ -202,7 +168,7 @@ KOKKOS_INLINE_FUNCTION void apply_stationary_equations_at(
     std::size_t const j = row / nx;
     std::size_t const i = row % nx;
 
-    bool const boundary = (i == 0 || j == 0 || i + 1 == nx || j + 1 == ny);
+    bool const boundary = operator_model.is_boundary_node(i, j);
     if (boundary) {
         output(row, 0) = input(row, 0);
         return;
