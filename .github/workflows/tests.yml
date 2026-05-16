@@ -26,3 +26,8 @@ jobs:
     - name: REUSE Compliance Check
       if: always()
       uses: fsfe/reuse-action@v4
+      with:
+        args: >-
+          --exclude examples/onelab_inductor/Inductor
+          --exclude onelab_interface/GmshSocket.h
+          --exclude onelab_interface/onelab.h
