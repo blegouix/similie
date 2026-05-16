@@ -20,17 +20,19 @@ class LinearMagnetostaticsHamiltonian:
             struct_name="LinearMagnetostaticsHamiltonian",
             parameters=["mu"],
             hamiltonian=hamiltonian,
-            state_variables=[b0, b1, b2],
+            variables=[b0, b1, b2],
         )
 
 
 class LinearMagneticInductionToMagneticFieldConstitutiveLaw:
     @staticmethod
     def __call__() -> ConstitutiveLawDefinition:
-        b, mu = symbols("b mu")
+        hodge_star, b, mu = symbols("hodge_star b mu")
         return ConstitutiveLawDefinition(
             namespace="similie::physics::magnetostatics",
             class_name="LinearMagneticInductionToMagneticField",
             parameters=["mu"],
-            constitutive_law=b / mu,
+            variables=["hodge_star", "b"],
+            output_variable="h",
+            constitutive_law=b / mu / hodge_star,
         )

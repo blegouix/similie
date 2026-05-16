@@ -16,6 +16,8 @@ class ConstitutiveLawDefinition:
     namespace: str
     class_name: str
     parameters: list[str]
+    variables: list[str]
+    output_variable: str
     constitutive_law: object
 
 
@@ -25,11 +27,17 @@ def _replace_symbols(expression: str, replacements: dict[str, str]) -> str:
     return expression
 
 
+def _render_expression(expression, symbol, rendered_symbol: str, replacements: dict[str, str]) -> str:
+    return _replace_symbols(cxxcode(expression.subs(symbol, symbols(rendered_symbol))), replacements)
+
+
 def write_cpp_constitutive_law_header(
     output_path: Path,
     namespace: str,
     class_name: str,
     parameters: list[tuple[str, str, bool]],
+    variables: list[str],
+    output_variable: str,
     constitutive_law,
 ) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -37,43 +45,40 @@ def write_cpp_constitutive_law_header(
     parameter_replacements = {
         constructor_name: member_name for member_name, constructor_name, _ in parameters
     }
-    constitutive_law_symbols = [
-        symbol for symbol in constitutive_law.free_symbols if str(symbol) not in parameter_replacements
-    ]
-    if len(constitutive_law_symbols) != 1:
-        raise ValueError("Constitutive law must depend on exactly one state variable")
+    constitutive_law_symbols = {
+        str(symbol): symbol
+        for symbol in constitutive_law.free_symbols
+        if str(symbol) not in parameter_replacements
+    }
+    if not variables:
+        raise ValueError("Constitutive law must define at least one variable")
+    if any(name not in constitutive_law_symbols for name in variables):
+        raise ValueError("Constitutive law variables must match symbolic variables")
 
-    induction_symbol = constitutive_law_symbols[0]
-    constitutive_law_expression = _replace_symbols(
-        cxxcode(constitutive_law),
-        {
-            **parameter_replacements,
-            str(induction_symbol): "b",
-        },
-    )
-    magnetic_field_symbol = symbols("h")
-    inverse_solution = solve(magnetic_field_symbol - constitutive_law, induction_symbol, dict=True)
+    state_variable_name = variables[-1]
+    state_variable_symbol = constitutive_law_symbols[state_variable_name]
+    constitutive_law_replacements = dict(parameter_replacements)
+    output_symbol = symbols(output_variable)
+    inverse_solution = solve(output_symbol - constitutive_law, state_variable_symbol, dict=True)
     if not inverse_solution:
         raise ValueError("Unable to invert constitutive law")
-    inverse_expression = _replace_symbols(
-        cxxcode(inverse_solution[0][induction_symbol]),
-        {
-            **parameter_replacements,
-            str(magnetic_field_symbol): "h",
-        },
-    )
+    inverse_expression = inverse_solution[0][state_variable_symbol]
+    inverse_replacements = dict(parameter_replacements)
 
     parameter_members = "\n".join(
         f"    {'const ' if is_const else ''}double {member_name};"
         for member_name, _, is_const in parameters
     )
     constructor_signature = ",\n            ".join(
-        [*[f"double {constructor_name}_" for _, constructor_name, _ in parameters],
-         "std::array<double, 3> hodge_star = {1.0, 1.0, 1.0}"]
+        f"double {constructor_name}_" for _, constructor_name, _ in parameters
     )
-    constructor_initializers = ",\n        ".join(
-        [f"{member_name}({constructor_name}_)" for member_name, constructor_name, _ in parameters]
-        + ["m_hodge_star(hodge_star)"]
+    constructor_initializers = ", ".join(
+        f"{member_name}({constructor_name}_)" for member_name, constructor_name, _ in parameters
+    )
+    forward_arguments = ", ".join(f"double {name}" for name in variables)
+    inverse_output_name = state_variable_name
+    inverse_arguments = ", ".join(
+        [*[f"double {name}" for name in variables if name != inverse_output_name], f"double {output_variable}"]
     )
 
     output_path.write_text(
@@ -83,18 +88,13 @@ def write_cpp_constitutive_law_header(
 
 #pragma once
 
-#include <array>
-
-#include <similie/misc/specialization.hpp>
-#include <similie/physics/magnetostatics/magnetostatics_indices.hpp>
-#include <similie/tensor/tensor.hpp>
+#include <Kokkos_Core.hpp>
 
 namespace {namespace} {{
 
 class {class_name}
 {{
 {parameter_members}
-    std::array<double, 3> m_hodge_star;
 
 public:
     constexpr explicit {class_name}(
@@ -103,37 +103,14 @@ public:
     {{
     }}
 
-    template <
-            sil::misc::Specialization<sil::tensor::Tensor> MagneticInductionTensorType,
-            sil::misc::Specialization<sil::tensor::Tensor> MagneticFieldTensorType>
-    KOKKOS_FUNCTION void inverse(
-            MagneticInductionTensorType magnetic_induction,
-            MagneticFieldTensorType magnetic_field) const
+    KOKKOS_FUNCTION constexpr double forward({forward_arguments}) const
     {{
-        double const hx = magnetic_field(magnetic_field.template access_element<X>());
-        double const bx = {inverse_expression.replace("h", "hx")};
-        magnetic_induction(magnetic_induction.template access_element<Y, Z>()) = bx * m_hodge_star[0];
-        double const hy = magnetic_field(magnetic_field.template access_element<Y>());
-        double const by = {inverse_expression.replace("h", "hy")};
-        magnetic_induction(magnetic_induction.template access_element<X, Z>()) = -by * m_hodge_star[1];
-        double const hz = magnetic_field(magnetic_field.template access_element<Z>());
-        double const bz = {inverse_expression.replace("h", "hz")};
-        magnetic_induction(magnetic_induction.template access_element<X, Y>()) = bz * m_hodge_star[2];
+        return {_render_expression(constitutive_law, state_variable_symbol, inverse_output_name, constitutive_law_replacements)};
     }}
 
-    template <
-            sil::misc::Specialization<sil::tensor::Tensor> MagneticFieldTensorType,
-            sil::misc::Specialization<sil::tensor::Tensor> MagneticInductionTensorType>
-    KOKKOS_FUNCTION void forward(
-            MagneticFieldTensorType magnetic_field,
-            MagneticInductionTensorType magnetic_induction) const
+    KOKKOS_FUNCTION constexpr double inverse({inverse_arguments}) const
     {{
-        double const bx = magnetic_induction(magnetic_induction.template access_element<Y, Z>()) / m_hodge_star[0];
-        magnetic_field(magnetic_field.template access_element<X>()) = {constitutive_law_expression.replace("b", "bx")};
-        double const by = -magnetic_induction(magnetic_induction.template access_element<X, Z>()) / m_hodge_star[1];
-        magnetic_field(magnetic_field.template access_element<Y>()) = {constitutive_law_expression.replace("b", "by")};
-        double const bz = magnetic_induction(magnetic_induction.template access_element<X, Y>()) / m_hodge_star[2];
-        magnetic_field(magnetic_field.template access_element<Z>()) = {constitutive_law_expression.replace("b", "bz")};
+        return {_render_expression(inverse_expression, output_symbol, output_variable, inverse_replacements)};
     }}
 }};
 
@@ -150,5 +127,7 @@ def generate_cpp_constitutive_law(functor_class, output_path: Path, *args, **kwa
         namespace=definition.namespace,
         class_name=definition.class_name,
         parameters=parameter_tuples,
+        variables=definition.variables,
+        output_variable=definition.output_variable,
         constitutive_law=definition.constitutive_law,
     )

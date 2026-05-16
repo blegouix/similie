@@ -17,7 +17,7 @@ class HamiltonianDefinition:
     struct_name: str
     parameters: list[str]
     hamiltonian: object
-    state_variables: list[object]
+    variables: list[object]
 
 
 def _replace_symbols(expression: str, replacements: dict[str, str]) -> str:
@@ -164,7 +164,7 @@ def generate_cpp_hamiltonian(functor_class, output_path: Path, *args, **kwargs) 
     scalar_derivative_expression = None
     inverse_symbols = None
     inverse_expressions = None
-    derivative_state_variables = list(definition.state_variables)
+    derivative_state_variables = list(definition.variables)
 
     if derivative_state_variables and str(derivative_state_variables[0]) == "phi":
         scalar_state_variable = derivative_state_variables.pop(0)

@@ -515,7 +515,15 @@ StructuredLinearMagnetostaticsResult run_on_quadrilateral_grid(
                     0.0);
 
             LinearMagneticInductionToMagneticField constitutive_law(cell_inputs[cell_index].mu);
-            constitutive_law.forward(magnetic_field, magnetic_induction);
+            magnetic_field(magnetic_field.template access_element<X>()) = constitutive_law.forward(
+                    1.0,
+                    magnetic_induction(magnetic_induction.template access_element<Y, Z>()));
+            magnetic_field(magnetic_field.template access_element<Y>()) = constitutive_law.forward(
+                    1.0,
+                    -magnetic_induction(magnetic_induction.template access_element<X, Z>()));
+            magnetic_field(magnetic_field.template access_element<Z>()) = constitutive_law.forward(
+                    1.0,
+                    magnetic_induction(magnetic_induction.template access_element<X, Y>()));
 
             CellPostProcessFields cell_output {};
             cell_output.magnetic_induction = {
@@ -805,7 +813,21 @@ StructuredLinearMagnetostaticsResult run_on_hexahedral_grid(
                         0.0);
 
                 LinearMagneticInductionToMagneticField constitutive_law(cell_inputs[cell_index].mu);
-                constitutive_law.forward(magnetic_field, magnetic_induction);
+                magnetic_field(magnetic_field.template access_element<X>())
+                        = constitutive_law.forward(
+                                1.0,
+                                magnetic_induction(
+                                        magnetic_induction.template access_element<Y, Z>()));
+                magnetic_field(magnetic_field.template access_element<Y>())
+                        = constitutive_law.forward(
+                                1.0,
+                                -magnetic_induction(
+                                        magnetic_induction.template access_element<X, Z>()));
+                magnetic_field(magnetic_field.template access_element<Z>())
+                        = constitutive_law.forward(
+                                1.0,
+                                magnetic_induction(
+                                        magnetic_induction.template access_element<X, Y>()));
 
                 CellPostProcessFields cell_output {};
                 cell_output.magnetic_induction = {

@@ -27,5 +27,5 @@ class ScalarFieldHamiltonian:
             struct_name="ScalarFieldWithPowerCouplingHamiltonian",
             parameters=["mass", "coupling_constant", "coupling_power"],
             hamiltonian=hamiltonian,
-            state_variables=[phi, *list(pi)],
+            variables=[phi, *list(pi)],
         )

@@ -109,7 +109,15 @@ public:
             MagneticInductionTensorType magnetic_induction,
             MaxwellStressTensorType maxwell_stress_tensor) const
     {
-        m_constitutive_law.forward(magnetic_field, magnetic_induction);
+        magnetic_field(magnetic_field.template access_element<X>()) = m_constitutive_law.forward(
+                1.0,
+                magnetic_induction(magnetic_induction.template access_element<Y, Z>()));
+        magnetic_field(magnetic_field.template access_element<Y>()) = m_constitutive_law.forward(
+                1.0,
+                -magnetic_induction(magnetic_induction.template access_element<X, Z>()));
+        magnetic_field(magnetic_field.template access_element<Z>()) = m_constitutive_law.forward(
+                1.0,
+                magnetic_induction(magnetic_induction.template access_element<X, Y>()));
         inverse(maxwell_stress_tensor, magnetic_induction, magnetic_field);
     }
 };
