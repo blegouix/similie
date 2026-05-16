@@ -1,0 +1,7 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: SimiLie
+Source: https://github.com/blegouix/similie
+Files-Excluded:
+ examples/onelab_inductor/Inductor/*
+ onelab_interface/GmshSocket.h
+ onelab_interface/onelab.h
