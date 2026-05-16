@@ -25,4 +25,4 @@ jobs:
       run: if grep -RE "(define|undef) KOKKOS_" examples/ src/similie/ tests/; then exit 1; fi
     - name: REUSE Compliance Check
       if: always()
-      uses: fsfe/reuse-action@v4
+      uses: fsfe/reuse-action@v6
