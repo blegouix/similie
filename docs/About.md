@@ -5,11 +5,25 @@ SPDX-License-Identifier: MIT
 -->
 
 ## SimiLie
+
+![](images/scalar_field_hamiltonian.gif)
+
 **Github repo [here](https://github.com/blegouix/similie).**
 
 SimiLie is a performance-portable (CPU & GPU) C++20 library aiming to extent the capabilities of [Kokkos](https://github.com/kokkos/kokkos) and [DDC](https://github.com/CExA-project/ddc) to offer a complete toolkit able to perform tensor calculus, differential calculus and solving PDE. A key paradigm is the exclusive support of structured meshes to avoid sparse linear algebra and produce mostly-embarrassing parallel code. It should be able to address any multiphysical problem on fixed grid from eventually-relativistic classical field theory (in particular: solid & fluid mechanics, electromagnetism and gravitation).
 
 \important Absolute WIP, there is no guarantee for proper working. Only OPENMP and CUDA backends have been tested.
+
+## AI-operability
+
+Coding agents are extensively used to develop SimiLie. The `AGENTS.md` file provides the procedure to operate and develop with SimiLie, with the instruction to automatically detect the presence of a GPU and use the `similie_env` Dockerfile with `OPENMP` or `CUDA` environment/compilation. Ie.:
+
+```
+vibe
+run tests
+```
+
+Should detect the presence of a GPU, build the corresponding docker image, compile Similie with `g++` or `nvcc` and run the tests.
 
 ## Development plan
 
