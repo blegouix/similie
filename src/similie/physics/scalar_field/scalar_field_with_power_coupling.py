@@ -9,7 +9,9 @@ from pathlib import Path
 
 from sympy import Matrix, diff, gamma, solve, symbols
 
-from similie.physics.generate_cpp_hamiltonian import write_cpp_hamiltonian_header
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from generate_cpp_hamiltonian import write_cpp_hamiltonian_header
 
 
 N = int(sys.argv[1])

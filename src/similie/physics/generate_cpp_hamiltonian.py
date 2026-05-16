@@ -89,9 +89,14 @@ def write_cpp_hamiltonian_header(
 ) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    replacements = {name: name for name, _, _ in parameters}
+    parameter_replacements = {name: name for name, _, _ in parameters}
+    h_replacements = dict(parameter_replacements)
     for i, symbol_name in enumerate(derivative_symbols):
-        replacements[symbol_name] = f"{array_argument_name}[{i}]"
+        h_replacements[symbol_name] = f"{array_argument_name}[{i}]"
+
+    scalar_replacements = dict(parameter_replacements)
+    if scalar_argument_name is not None:
+        scalar_replacements[scalar_argument_name] = scalar_argument_name
 
     h_signature = (
         f"    constexpr double H(double {scalar_argument_name}, std::span<double const, N> {array_argument_name}) const"
@@ -104,7 +109,7 @@ def write_cpp_hamiltonian_header(
         scalar_method = f"""
     constexpr double dH_dphi(double {scalar_argument_name}) const
     {{
-        return {_replace_symbols(cxxcode(scalar_derivative_expression), replacements)};
+        return {_replace_symbols(cxxcode(scalar_derivative_expression), scalar_replacements)};
     }}
 """
 
@@ -114,7 +119,7 @@ def write_cpp_hamiltonian_header(
             "pi",
             inverse_symbols,
             inverse_expressions,
-            {**replacements, scalar_argument_name or "": scalar_argument_name or ""},
+            scalar_replacements,
         )
 
     alias_block = ""
@@ -145,9 +150,9 @@ struct {struct_name} {{
 
 {h_signature}
     {{
-        return {_replace_symbols(cxxcode(h_expression), replacements)};
+        return {_replace_symbols(cxxcode(h_expression), h_replacements)};
     }}
-{scalar_method}{_render_derivative_methods("dH_dpi", derivative_symbols, derivative_expressions, replacements)}
+{scalar_method}{_render_derivative_methods("dH_dpi", derivative_symbols, derivative_expressions, scalar_replacements)}
 {inverse_methods}}};
 {alias_block}
 }} // namespace {namespace}
