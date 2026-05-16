@@ -8,7 +8,8 @@ import sys
 from pathlib import Path
 
 from sympy import symbols
-from sympy.printing.codeprinter import cxxcode
+
+from similie.physics.generate_cpp_hamiltonian import write_cpp_hamiltonian_header
 
 
 output_dir = Path(sys.argv[1])
@@ -17,48 +18,15 @@ output_dir.mkdir(parents=True, exist_ok=True)
 b0, b1, b2, mu = symbols("b0 b1 b2 mu")
 hamiltonian = (b0**2 + b1**2 + b2**2) / (2 * mu)
 
-(output_dir / "linear_magnetostatics.hpp").write_text(
-    f"""\
-// SPDX-FileCopyrightText: 2026 Baptiste Legouix
-// SPDX-License-Identifier: MIT
-
-#pragma once
-
-#include <cstddef>
-#include <span>
-
-namespace similie::physics::magnetostatics {{
-
-struct LinearMagnetostaticsHamiltonian {{
-    static constexpr std::size_t N = 3;
-
-    double mu;
-
-    constexpr explicit LinearMagnetostaticsHamiltonian(double mu_) : mu(mu_) {{}}
-
-    constexpr double H(std::span<double const, N> magnetic_induction) const
-    {{
-        return {cxxcode(hamiltonian).replace("b0", "magnetic_induction[0]").replace("b1", "magnetic_induction[1]").replace("b2", "magnetic_induction[2]")};
-    }}
-
-    constexpr double dH_dB0(double b0) const
-    {{
-        return {cxxcode(hamiltonian.diff(b0))};
-    }}
-
-    constexpr double dH_dB1(double b1) const
-    {{
-        return {cxxcode(hamiltonian.diff(b1))};
-    }}
-
-    constexpr double dH_dB2(double b2) const
-    {{
-        return {cxxcode(hamiltonian.diff(b2))};
-    }}
-}};
-
-}} // namespace similie::physics::magnetostatics
-"""
+write_cpp_hamiltonian_header(
+    output_path=output_dir / "linear_magnetostatics.hpp",
+    namespace="similie::physics::magnetostatics",
+    struct_name="LinearMagnetostaticsHamiltonian",
+    parameters=[("mu", "mu", False)],
+    h_expression=hamiltonian,
+    derivative_symbols=["b0", "b1", "b2"],
+    derivative_expressions=[hamiltonian.diff(b0), hamiltonian.diff(b1), hamiltonian.diff(b2)],
+    array_argument_name="pi",
 )
 
 (output_dir / "linear_magnetic_induction_to_magnetic_field.hpp").write_text(

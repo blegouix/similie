@@ -8,7 +8,8 @@ import sys
 from pathlib import Path
 
 from sympy import Matrix, diff, gamma, solve, symbols
-from sympy.printing.codeprinter import cxxcode
+
+from similie.physics.generate_cpp_hamiltonian import write_cpp_hamiltonian_header
 
 
 N = int(sys.argv[1])
@@ -39,70 +40,22 @@ pi_from_dphi_dx = solve(
 if not pi_from_dphi_dx:
     raise RuntimeError("Could not solve for pi in terms of dphi/dx.")
 
-
-def preprocess_cxx(expr: str) -> str:
-    for i in range(N):
-        expr = expr.replace(f"pi{i}", f"pi[{i}]")
-    return expr
-
-
-output_path.write_text(
-    f"""\
-// SPDX-FileCopyrightText: 2026 Baptiste Legouix
-// SPDX-License-Identifier: MIT
-
-#pragma once
-
-#include <cmath>
-#include <cstddef>
-#include <span>
-
-namespace similie::physics::scalar_field {{
-
-struct ScalarFieldWithPowerCoupling {{
-    static constexpr std::size_t N = {N};
-
-    const double mass;
-    const double coupling_constant;
-    const double coupling_power;
-
-    constexpr ScalarFieldWithPowerCoupling(
-            double mass_,
-            double coupling_constant_,
-            double coupling_power_)
-        : mass(mass_), coupling_constant(coupling_constant_), coupling_power(coupling_power_) {{}}
-
-    constexpr double H(double phi, std::span<double const, N> pi) const
-    {{
-        return {preprocess_cxx(cxxcode(hamiltonian))};
-    }}
-
-    constexpr double dH_dphi(double phi) const
-    {{
-        return {cxxcode(hamiltonian_diff[0])};
-    }}
-{''.join(
-f'''
-    constexpr double dH_dpi{i}(double pi{i}) const
-    {{
-        return {cxxcode(hamiltonian_diff[i + 1])};
-    }}
-'''
-for i in range(N)
-)}
-{''.join(
-f'''
-    constexpr double pi{i}(double dphi_dx{i}) const
-    {{
-        return {cxxcode(pi_from_dphi_dx[pi[i]])};
-    }}
-'''
-for i in range(N)
-)}
-}};
-
-using ScalarFieldHamiltonian = ScalarFieldWithPowerCoupling;
-
-}} // namespace similie::physics::scalar_field
-"""
+write_cpp_hamiltonian_header(
+    output_path=output_path,
+    namespace="similie::physics::scalar_field",
+    struct_name="ScalarFieldWithPowerCouplingHamiltonian",
+    parameters=[
+        ("mass", "mass", True),
+        ("coupling_constant", "coupling_constant", True),
+        ("coupling_power", "coupling_power", True),
+    ],
+    h_expression=hamiltonian,
+    derivative_symbols=[f"pi{i}" for i in range(N)],
+    derivative_expressions=[hamiltonian_diff[i + 1] for i in range(N)],
+    array_argument_name="pi",
+    scalar_argument_name="phi",
+    scalar_derivative_expression=hamiltonian_diff[0],
+    inverse_symbols=[f"dphi_dx{i}" for i in range(N)],
+    inverse_expressions=[pi_from_dphi_dx[pi[i]] for i in range(N)],
+    aliases=["ScalarFieldWithPowerCoupling", "ScalarFieldHamiltonian"],
 )

@@ -222,12 +222,12 @@ KOKKOS_INLINE_FUNCTION void apply_stationary_equations_at(
             = [&](double bx, double by, double bz, std::size_t component) {
                   auto const& hamiltonian = equations.hamiltonian();
                   if (component == detail::LocalMagneticFieldTensor::template access_element<X>()) {
-                      return hamiltonian.dH_dB0(bx);
+                      return hamiltonian.dH_dpi0(bx);
                   }
                   if (component == detail::LocalMagneticFieldTensor::template access_element<Y>()) {
-                      return hamiltonian.dH_dB1(by);
+                      return hamiltonian.dH_dpi1(by);
                   }
-                  return hamiltonian.dH_dB2(bz);
+                  return hamiltonian.dH_dpi2(bz);
               };
 
     double const bx_s = (value(i, j) - value(i, j - 1)) / dym;

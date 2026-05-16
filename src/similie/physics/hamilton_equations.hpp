@@ -17,9 +17,9 @@ namespace detail {
 
 template <class Hamiltonian>
 concept MagnetostaticsHamiltonian = requires(Hamiltonian const& hamiltonian, double value) {
-    hamiltonian.dH_dB0(value);
-    hamiltonian.dH_dB1(value);
-    hamiltonian.dH_dB2(value);
+    hamiltonian.dH_dpi0(value);
+    hamiltonian.dH_dpi1(value);
+    hamiltonian.dH_dpi2(value);
 };
 
 template <class Tensor>
@@ -89,11 +89,11 @@ public:
                             .template access_element<magnetostatics::X, magnetostatics::Y>());
 
             dpotential_dt(dpotential_dt.template access_element<magnetostatics::X>())
-                    = m_hamiltonian.dH_dB0(bx);
+                    = m_hamiltonian.dH_dpi0(bx);
             dpotential_dt(dpotential_dt.template access_element<magnetostatics::Y>())
-                    = m_hamiltonian.dH_dB1(by);
+                    = m_hamiltonian.dH_dpi1(by);
             dpotential_dt(dpotential_dt.template access_element<magnetostatics::Z>())
-                    = m_hamiltonian.dH_dB2(bz);
+                    = m_hamiltonian.dH_dpi2(bz);
 
             dspatial_momentum_dt(
                     dspatial_momentum_dt

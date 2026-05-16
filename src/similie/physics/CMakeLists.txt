@@ -8,6 +8,8 @@ set(SIMILIE_GENERATED_PHYSICS_DIR "${PROJECT_BINARY_DIR}/src/similie/physics")
 
 set(SCALAR_FIELD_GENERATOR
     "${CMAKE_CURRENT_SOURCE_DIR}/scalar_field/scalar_field_with_power_coupling.py")
+set(GENERIC_HAMILTONIAN_GENERATOR
+    "${CMAKE_CURRENT_SOURCE_DIR}/generate_cpp_hamiltonian.py")
 set(SCALAR_FIELD_HEADER
     "${SIMILIE_GENERATED_PHYSICS_DIR}/scalar_field/scalar_field_with_power_coupling.hpp")
 
@@ -16,7 +18,7 @@ add_custom_command(
     COMMAND "${CMAKE_COMMAND}" -E make_directory
             "${SIMILIE_GENERATED_PHYSICS_DIR}/scalar_field"
     COMMAND "${Python3_EXECUTABLE}" "${SCALAR_FIELD_GENERATOR}" 3 "${SCALAR_FIELD_HEADER}"
-    DEPENDS "${SCALAR_FIELD_GENERATOR}"
+    DEPENDS "${SCALAR_FIELD_GENERATOR}" "${GENERIC_HAMILTONIAN_GENERATOR}"
     COMMENT "Generating scalar field functor with power coupling"
     VERBATIM
 )
@@ -36,7 +38,7 @@ add_custom_command(
             "${SIMILIE_GENERATED_PHYSICS_DIR}/magnetostatics"
     COMMAND "${Python3_EXECUTABLE}" "${LINEAR_MAGNETOSTATICS_GENERATOR}"
             "${SIMILIE_GENERATED_PHYSICS_DIR}/magnetostatics"
-    DEPENDS "${LINEAR_MAGNETOSTATICS_GENERATOR}"
+    DEPENDS "${LINEAR_MAGNETOSTATICS_GENERATOR}" "${GENERIC_HAMILTONIAN_GENERATOR}"
     COMMENT "Generating linear magnetostatics functors"
     VERBATIM
 )
