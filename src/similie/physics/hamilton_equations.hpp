@@ -4,9 +4,8 @@
 #pragma once
 
 #include <stdexcept>
+#include <cstddef>
 #include <utility>
-
-#include <Kokkos_Core.hpp>
 
 namespace similie::physics {
 
@@ -26,37 +25,25 @@ public:
         return m_hamiltonian;
     }
 
-    template <
-            class DSpatialMomentumDtTensor,
-            class DPotentialDtTensor,
-            class SpatialMomentumTensor,
-            class PotentialTensor>
-    KOKKOS_FUNCTION void run(
-            DSpatialMomentumDtTensor dspatial_momentum_dt,
-            DPotentialDtTensor dpotential_dt,
-            SpatialMomentumTensor spatial_momentum,
-            PotentialTensor potential) const
+    template <std::size_t I>
+    [[nodiscard]] static constexpr double dpotential_dt(
+            Hamiltonian const& hamiltonian,
+            double spatial_momentum_component)
     {
-        if constexpr (requires(Hamiltonian const& hamiltonian) {
-                          run_hamilton_equations(
-                                  hamiltonian,
-                                  dspatial_momentum_dt,
-                                  dpotential_dt,
-                                  spatial_momentum,
-                                  potential);
-                      }) {
-            run_hamilton_equations(
-                    m_hamiltonian,
-                    dspatial_momentum_dt,
-                    dpotential_dt,
-                    spatial_momentum,
-                    potential);
+        return hamiltonian.template dH_dpi<I>(spatial_momentum_component);
+    }
+
+    template <std::size_t I>
+    [[nodiscard]] static constexpr double dmomentum_dt(
+            Hamiltonian const& hamiltonian,
+            double potential)
+    {
+        static_cast<void>(I);
+        if constexpr (requires(Hamiltonian const& h) { h.dH_dphi(potential); }) {
+            return -hamiltonian.dH_dphi(potential);
         } else {
-#ifndef __CUDA_ARCH__
             throw std::logic_error(
-                    "HamiltonEquations::run is not implemented for this Hamiltonian/tensor "
-                    "combination");
-#endif
+                    "HamiltonEquations::dmomentum_dt requires a Hamiltonian exposing dH_dphi");
         }
     }
 };

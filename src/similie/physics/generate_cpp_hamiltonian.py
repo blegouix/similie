@@ -34,42 +34,35 @@ def _render_constructor_initializers(parameters: list[tuple[str, str, bool]]) ->
     return ", ".join(f"{name}({constructor_name}_)" for name, constructor_name, _ in parameters)
 
 
-def _render_derivative_methods(
-    derivative_prefix: str,
-    derivative_symbols: list[str],
-    derivative_expressions: list,
+def _render_indexed_method(
+    method_name: str,
+    argument_prefix: str,
+    symbols: list[str],
+    expressions: list,
     replacements: dict[str, str],
 ) -> str:
-    methods: list[str] = []
-    for i, (symbol_name, expression) in enumerate(zip(derivative_symbols, derivative_expressions, strict=True)):
-        methods.append(
-            f"""
-    constexpr double {derivative_prefix}{i}(double {symbol_name}) const
+    branches: list[str] = []
+    for i, (symbol_name, expression) in enumerate(zip(symbols, expressions, strict=True)):
+        branches.append(
+            f"""        if constexpr (I == {i}) {{
+            double const {symbol_name} = {argument_prefix};
+            return {_replace_symbols(cxxcode(expression), replacements)};
+        }}"""
+        )
+
+    branches.append(
+        """        else {
+            static_assert(I < N, "Hamiltonian component index out of range");
+        }"""
+    )
+
+    return f"""
+    template <std::size_t I>
+    constexpr double {method_name}(double {argument_prefix}) const
     {{
-        return {_replace_symbols(cxxcode(expression), replacements)};
+{chr(10).join(branches)}
     }}
 """
-        )
-    return "".join(methods)
-
-
-def _render_inverse_methods(
-    inverse_prefix: str,
-    inverse_symbols: list[str],
-    inverse_expressions: list,
-    replacements: dict[str, str],
-) -> str:
-    methods: list[str] = []
-    for i, (symbol_name, expression) in enumerate(zip(inverse_symbols, inverse_expressions, strict=True)):
-        methods.append(
-            f"""
-    constexpr double {inverse_prefix}{i}(double {symbol_name}) const
-    {{
-        return {_replace_symbols(cxxcode(expression), replacements)};
-    }}
-"""
-        )
-    return "".join(methods)
 
 
 def write_cpp_hamiltonian_header(
@@ -115,8 +108,9 @@ def write_cpp_hamiltonian_header(
 
     inverse_methods = ""
     if inverse_symbols is not None and inverse_expressions is not None:
-        inverse_methods = _render_inverse_methods(
+        inverse_methods = _render_indexed_method(
             "pi",
+            "dphi_dx",
             inverse_symbols,
             inverse_expressions,
             scalar_replacements,
@@ -152,7 +146,7 @@ struct {struct_name} {{
     {{
         return {_replace_symbols(cxxcode(h_expression), h_replacements)};
     }}
-{scalar_method}{_render_derivative_methods("dH_dpi", derivative_symbols, derivative_expressions, scalar_replacements)}
+{scalar_method}{_render_indexed_method("dH_dpi", "pi", derivative_symbols, derivative_expressions, scalar_replacements)}
 {inverse_methods}}};
 {alias_block}
 }} // namespace {namespace}

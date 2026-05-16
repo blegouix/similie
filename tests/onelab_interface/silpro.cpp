@@ -8,6 +8,7 @@
 #include <similie/physics/magnetostatics/linear_magnetostatics.hpp>
 #include <similie/physics/magnetostatics/magnetostatics_quantities.hpp>
 #include <similie/physics/magnetostatics/structured_linear_magnetostatics.hpp>
+#include <similie/physics/scalar_field/scalar_field_with_power_coupling.hpp>
 #include <similie/physics/stationary_equations_operator.hpp>
 
 #include "onelab_interface.hpp"
@@ -56,34 +57,42 @@ TEST(OnelabInterface, ParseScalarFieldSilpro)
     EXPECT_DOUBLE_EQ(problem.scalar_field.coupling_power, 6.0);
 }
 
-TEST(OnelabInterface, HamiltonEquationsMagnetostaticsRun)
+TEST(OnelabInterface, HamiltonEquationsStaticPotentialDerivative)
 {
-    using namespace similie::physics::magnetostatics;
+    using similie::physics::HamiltonEquations;
+    using similie::physics::magnetostatics::LinearMagnetostaticsHamiltonian;
 
     LinearMagnetostaticsHamiltonian const hamiltonian(2.0);
-    similie::physics::HamiltonEquations equations(hamiltonian);
 
-    std::array<double, MagneticInductionIndex::access_size()> db_dt_storage {};
-    std::array<double, MagneticFieldIndex::access_size()> dh_dt_storage {};
-    std::array<double, MagneticInductionIndex::access_size()> b_storage {};
+    EXPECT_DOUBLE_EQ(HamiltonEquations<LinearMagnetostaticsHamiltonian>::dpotential_dt<0>(
+                             hamiltonian,
+                             4.0),
+            2.0);
+    EXPECT_DOUBLE_EQ(HamiltonEquations<LinearMagnetostaticsHamiltonian>::dpotential_dt<1>(
+                             hamiltonian,
+                             6.0),
+            3.0);
+    EXPECT_DOUBLE_EQ(HamiltonEquations<LinearMagnetostaticsHamiltonian>::dpotential_dt<2>(
+                             hamiltonian,
+                             8.0),
+            4.0);
+}
 
-    auto db_dt = detail::make_local_tensor<MagneticInductionIndex>(db_dt_storage);
-    auto dpotential_dt = detail::make_local_tensor<MagneticFieldIndex>(dh_dt_storage);
-    auto magnetic_induction = detail::make_local_tensor<MagneticInductionIndex>(b_storage);
+TEST(OnelabInterface, HamiltonEquationsStaticMomentumDerivative)
+{
+    using similie::physics::HamiltonEquations;
+    using similie::physics::scalar_field::ScalarFieldWithPowerCouplingHamiltonian;
 
-    magnetic_induction(magnetic_induction.template access_element<Y, Z>()) = 4.0;
-    magnetic_induction(magnetic_induction.template access_element<X, Z>()) = -6.0;
-    magnetic_induction(magnetic_induction.template access_element<X, Y>()) = 8.0;
+    ScalarFieldWithPowerCouplingHamiltonian const hamiltonian(2.0, 0.0, 4.0);
 
-    equations.run(db_dt, dpotential_dt, magnetic_induction, dpotential_dt);
-
-    EXPECT_DOUBLE_EQ(dpotential_dt(dpotential_dt.template access_element<X>()), 2.0);
-    EXPECT_DOUBLE_EQ(dpotential_dt(dpotential_dt.template access_element<Y>()), 3.0);
-    EXPECT_DOUBLE_EQ(dpotential_dt(dpotential_dt.template access_element<Z>()), 4.0);
-
-    EXPECT_DOUBLE_EQ(db_dt(db_dt.template access_element<Y, Z>()), 0.0);
-    EXPECT_DOUBLE_EQ(db_dt(db_dt.template access_element<X, Z>()), 0.0);
-    EXPECT_DOUBLE_EQ(db_dt(db_dt.template access_element<X, Y>()), 0.0);
+    EXPECT_DOUBLE_EQ(HamiltonEquations<ScalarFieldWithPowerCouplingHamiltonian>::dmomentum_dt<0>(
+                             hamiltonian,
+                             3.0),
+            12.0);
+    EXPECT_DOUBLE_EQ(HamiltonEquations<ScalarFieldWithPowerCouplingHamiltonian>::dmomentum_dt<1>(
+                             hamiltonian,
+                             3.0),
+            12.0);
 }
 
 TEST(OnelabInterface, StationaryMagnetostaticsOperatorMatchesPrediscretizedForMuOne)

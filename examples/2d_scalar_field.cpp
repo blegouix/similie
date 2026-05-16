@@ -504,7 +504,8 @@ int main(int argc, char** argv)
                 KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
                     half_step_potential(elem)
                             = potential(elem)
-                              - hamiltonian_model.dH_dpi0(temporal_moment(elem)) * dt / 2.;
+                              - hamiltonian_model.template dH_dpi<0>(temporal_moment(elem)) * dt
+                                        / 2.;
                 });
 
         // Compute the potential gradient
@@ -538,7 +539,9 @@ int main(int argc, char** argv)
                                         * dt / 2;
 
                     // Whole-step advection of field state
-                    potential(elem) -= hamiltonian_model.dH_dpi0(half_step_temporal_moment_) * dt;
+                    potential(elem)
+                            -= hamiltonian_model.template dH_dpi<0>(half_step_temporal_moment_)
+                               * dt;
                     temporal_moment(elem) += (hamiltonian_model.dH_dphi(half_step_potential_)
                                               - spatial_moments_minus_div_)
                                              * dt;
