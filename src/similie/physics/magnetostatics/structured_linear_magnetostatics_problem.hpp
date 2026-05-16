@@ -24,7 +24,7 @@
 
 #include <Kokkos_Core.hpp>
 
-#include "../../../../onelab_interface/gmsh_structured_msh2.hpp"
+#include "../../../../onelab_interface/gmsh_structured_grid.hpp"
 
 namespace similie::physics::magnetostatics {
 
@@ -84,6 +84,26 @@ void log_info(Logger&& logger, std::string const& message)
     if constexpr (std::is_invocable_v<Logger, std::string const&>) {
         logger(message);
     }
+}
+
+template <class ValueAt>
+inline double centered_first_derivative(
+        std::vector<double> const& coordinates,
+        ValueAt const& value_at,
+        std::size_t index)
+{
+    if (coordinates.size() <= 1) {
+        return 0.0;
+    }
+    if (index == 0) {
+        return (value_at(1) - value_at(0)) / (coordinates[1] - coordinates[0]);
+    }
+    if (index + 1 == coordinates.size()) {
+        return (value_at(index) - value_at(index - 1))
+               / (coordinates[index] - coordinates[index - 1]);
+    }
+    return (value_at(index + 1) - value_at(index - 1))
+           / (coordinates[index + 1] - coordinates[index - 1]);
 }
 
 inline void write_results_view(
@@ -556,7 +576,7 @@ StructuredLinearMagnetostaticsResult run_on_quadrilateral_grid(
         for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
             auto derivative = [&](std::size_t component, char axis) {
                 if (axis == 'x') {
-                    return sil::mesher::gmsh::centered_first_derivative(
+                    return centered_first_derivative(
                             cell_x_coords,
                             [&](std::size_t index) {
                                 std::size_t const clamped = std::min(index, grid.ncell_x() - 1);
@@ -564,7 +584,7 @@ StructuredLinearMagnetostaticsResult run_on_quadrilateral_grid(
                             },
                             i);
                 }
-                return sil::mesher::gmsh::centered_first_derivative(
+                return centered_first_derivative(
                         cell_y_coords,
                         [&](std::size_t index) {
                             std::size_t const clamped = std::min(index, grid.ncell_y() - 1);
@@ -857,7 +877,7 @@ StructuredLinearMagnetostaticsResult run_on_hexahedral_grid(
             for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
                 auto derivative = [&](std::size_t component, char axis) {
                     if (axis == 'x') {
-                        return sil::mesher::gmsh::centered_first_derivative(
+                        return centered_first_derivative(
                                 cell_x_coords,
                                 [&](std::size_t index) {
                                     std::size_t const clamped = std::min(index, grid.ncell_x() - 1);
@@ -866,7 +886,7 @@ StructuredLinearMagnetostaticsResult run_on_hexahedral_grid(
                                 i);
                     }
                     if (axis == 'y') {
-                        return sil::mesher::gmsh::centered_first_derivative(
+                        return centered_first_derivative(
                                 cell_y_coords,
                                 [&](std::size_t index) {
                                     std::size_t const clamped = std::min(index, grid.ncell_y() - 1);
@@ -874,7 +894,7 @@ StructuredLinearMagnetostaticsResult run_on_hexahedral_grid(
                                 },
                                 j);
                     }
-                    return sil::mesher::gmsh::centered_first_derivative(
+                    return centered_first_derivative(
                             cell_z_coords,
                             [&](std::size_t index) {
                                 std::size_t const clamped = std::min(index, grid.ncell_z() - 1);

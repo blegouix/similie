@@ -35,7 +35,7 @@
 
 #include <onelab.h>
 
-#include "gmsh_structured_msh2.hpp"
+#include "gmsh_structured_grid.hpp"
 
 namespace similie::onelab_interface {
 
@@ -420,7 +420,6 @@ using sil::mesher::gmsh::StructuredGrid2D;
 using sil::mesher::gmsh::SupportedMesh;
 using StructuredGrid = sil::mesher::gmsh::StructuredGrid3D;
 using sil::mesher::gmsh::build_structured_grid;
-using sil::mesher::gmsh::centered_first_derivative;
 using sil::mesher::gmsh::parse_supported_msh2_mesh;
 
 } // namespace detail

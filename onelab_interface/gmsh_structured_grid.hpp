@@ -534,24 +534,4 @@ inline StructuredGrid3D build_structured_grid(HexahedralMesh const& mesh)
     return grid;
 }
 
-template <class ValueAt>
-inline double centered_first_derivative(
-        std::vector<double> const& coordinates,
-        ValueAt const& value_at,
-        std::size_t index)
-{
-    if (coordinates.size() <= 1) {
-        return 0.0;
-    }
-    if (index == 0) {
-        return (value_at(1) - value_at(0)) / (coordinates[1] - coordinates[0]);
-    }
-    if (index + 1 == coordinates.size()) {
-        return (value_at(index) - value_at(index - 1))
-               / (coordinates[index] - coordinates[index - 1]);
-    }
-    return (value_at(index + 1) - value_at(index - 1))
-           / (coordinates[index + 1] - coordinates[index - 1]);
-}
-
 } // namespace sil::mesher::gmsh
