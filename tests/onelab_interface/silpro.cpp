@@ -65,12 +65,9 @@ TEST(OnelabInterface, HamiltonEquationsStaticPotentialDerivative)
 
     HamiltonEquations const equations(LinearMagnetostaticsHamiltonian(2.0));
 
-    EXPECT_DOUBLE_EQ(equations.template dpotential_dt<0>(4.0),
-            2.0);
-    EXPECT_DOUBLE_EQ(equations.template dpotential_dt<1>(6.0),
-            3.0);
-    EXPECT_DOUBLE_EQ(equations.template dpotential_dt<2>(8.0),
-            4.0);
+    EXPECT_DOUBLE_EQ(equations.template dpotential_dt<0>(4.0), 2.0);
+    EXPECT_DOUBLE_EQ(equations.template dpotential_dt<1>(6.0), 3.0);
+    EXPECT_DOUBLE_EQ(equations.template dpotential_dt<2>(8.0), 4.0);
 }
 
 TEST(OnelabInterface, HamiltonEquationsStaticMomentumDerivative)
@@ -80,10 +77,8 @@ TEST(OnelabInterface, HamiltonEquationsStaticMomentumDerivative)
 
     HamiltonEquations const equations(ScalarFieldWithPowerCouplingHamiltonian(2.0, 0.0, 4.0));
 
-    EXPECT_DOUBLE_EQ(equations.template dmomentum_dt<0>(3.0),
-            12.0);
-    EXPECT_DOUBLE_EQ(equations.template dmomentum_dt<1>(3.0),
-            12.0);
+    EXPECT_DOUBLE_EQ(equations.template dmoments_dt<0>(3.0), 12.0);
+    EXPECT_DOUBLE_EQ(equations.template dmoments_dt<1>(3.0), 12.0);
 }
 
 TEST(OnelabInterface, DeDonderWeylEquationsStaticInterfaces)
@@ -91,12 +86,11 @@ TEST(OnelabInterface, DeDonderWeylEquationsStaticInterfaces)
     using similie::physics::DeDonderWeylEquations;
     using similie::physics::scalar_field::ScalarFieldWithPowerCouplingHamiltonian;
 
-    DeDonderWeylEquations const equations(
-            ScalarFieldWithPowerCouplingHamiltonian(2.0, 0.0, 4.0));
+    DeDonderWeylEquations const equations(ScalarFieldWithPowerCouplingHamiltonian(2.0, 0.0, 4.0));
 
     EXPECT_DOUBLE_EQ(equations.template potential_grad<0>(5.0), -5.0);
     EXPECT_DOUBLE_EQ(equations.template potential_grad<1>(5.0), 5.0);
-    EXPECT_DOUBLE_EQ(equations.momentum_div(3.0), 12.0);
+    EXPECT_DOUBLE_EQ(equations.moments_div(3.0), 12.0);
 }
 
 TEST(OnelabInterface, StationaryMagnetostaticsOperatorMatchesPrediscretizedForMuOne)

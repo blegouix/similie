@@ -20,12 +20,12 @@ public:
     }
 
     template <std::size_t I>
-    [[nodiscard]] constexpr double potential_grad(double momentum_component) const
+    [[nodiscard]] constexpr double potential_grad(double moments_component) const
     {
-        return m_hamiltonian.template dH_dpi<I>(momentum_component);
+        return m_hamiltonian.template dH_dpi<I>(moments_component);
     }
 
-    [[nodiscard]] constexpr double momentum_div(double potential) const
+    [[nodiscard]] constexpr double moments_div(double potential) const
     {
         return -m_hamiltonian.dH_dphi(potential);
     }

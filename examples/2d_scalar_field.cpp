@@ -193,7 +193,7 @@ int write_xdmf(int Nx, int Ny, int total_steps, int exported_ids, double export_
     </Attribute>
 )XMF";
 
-        write_scalar_attribute("Spatial moments divergency", "minus_spatial_moments_div");
+        write_scalar_attribute("Minus spatial moments divergence", "minus_spatial_moments_div");
         write_scalar_attribute("Hamiltonian", "hamiltonian");
 
         file << "   </Grid>\n";
@@ -407,7 +407,7 @@ int main(int argc, char** argv)
     auto spatial_moments_host = ddc::
             create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), spatial_moments);
 
-    // Spatial moments divergence
+    // Minus spatial moments divergence
     [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> minus_spatial_moments_div_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, DummyIndex>
             minus_spatial_moments_div_dom(mesh_xy, minus_spatial_moments_div_accessor.domain());
@@ -484,7 +484,7 @@ int main(int argc, char** argv)
      *
      * Thus:
      *
-     * dpi_0/dx^0 = -dH/dphi - div(pi_space)
+     * dpi_0/dx^0 = dH/dphi - \delta \pi
      * dphi/dx^0 = - dH/dpi_0
      * d \phi = dH/dpi_\alpha
      *
@@ -514,7 +514,7 @@ int main(int argc, char** argv)
                 AlphaLow,
                 DummyIndex>(Kokkos::DefaultExecutionSpace(), potential_grad, half_step_potential);
 
-        // For this scalar model, the spatial momentum cochain is exactly dphi.
+        // For this scalar model, the spatial moments cochain is exactly dphi.
         ddc::parallel_deepcopy(spatial_moments, potential_grad);
         if (i % nb_iter_between_exports == 0) {
             ddc::parallel_deepcopy(spatial_moments_host, spatial_moments);
@@ -535,7 +535,7 @@ int main(int argc, char** argv)
                     // Advect temporal moment by half-step, this is what is needed to perform the whole-step potential advection
                     const double half_step_temporal_moment_
                             = temporal_moment_
-                              + (equations.momentum_div(half_step_potential_)
+                              - (equations.moments_div(half_step_potential_)
                                  + minus_spatial_moments_div_)
                                         * dt / 2;
 
@@ -543,7 +543,7 @@ int main(int argc, char** argv)
                     potential(elem)
                             -= equations.template potential_grad<0>(half_step_temporal_moment_)
                                * dt;
-                    temporal_moment(elem) += (equations.momentum_div(half_step_potential_)
+                    temporal_moment(elem) -= (equations.moments_div(half_step_potential_)
                                               + minus_spatial_moments_div_)
                                              * dt;
                 });
