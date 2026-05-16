@@ -18,6 +18,8 @@ class HamiltonianDefinition:
     parameters: list[str]
     hamiltonian: object
     variables: list[object]
+    includes: list[str] | None = None
+    value_computer_type: str | None = None
 
 
 def _replace_symbols(expression: str, replacements: dict[str, str]) -> str:
@@ -114,6 +116,8 @@ def write_cpp_hamiltonian_header(
     hamiltonian,
     derivative_symbols: list[str],
     derivative_expressions: list,
+    includes: list[str] | None = None,
+    value_computer_type: str | None = None,
     scalar_argument_name: str | None = None,
     scalar_derivative_expression=None,
     inverse_symbols: list[str] | None = None,
@@ -180,6 +184,16 @@ def write_cpp_hamiltonian_header(
     }}
 """
 
+    rendered_includes = ""
+    if includes:
+        rendered_includes = "".join(f"#include {header}\n" for header in includes)
+
+    rendered_value_computer_type = ""
+    if value_computer_type is not None:
+        rendered_value_computer_type = (
+            f"    using value_computer_type = {value_computer_type};\n\n"
+        )
+
     output_path.write_text(
         f"""\
 // SPDX-FileCopyrightText: 2026 Baptiste Legouix
@@ -190,12 +204,14 @@ def write_cpp_hamiltonian_header(
 #include <cmath>
 #include <cstddef>
 #include <span>
+{rendered_includes}
 
 namespace {namespace} {{
 
 struct {struct_name} {{
     static constexpr std::size_t N = {len(derivative_symbols)};
 
+{rendered_value_computer_type}\
 {_render_members(parameters)}
 
 {_render_constructor_signature(struct_name, parameters)}
@@ -257,6 +273,8 @@ def generate_cpp_hamiltonian(functor_class, output_path: Path, *args, **kwargs) 
         hamiltonian=definition.hamiltonian,
         derivative_symbols=derivative_symbols,
         derivative_expressions=derivative_expressions,
+        includes=definition.includes,
+        value_computer_type=definition.value_computer_type,
         scalar_argument_name=scalar_argument_name,
         scalar_derivative_expression=scalar_derivative_expression,
         inverse_symbols=inverse_symbols,

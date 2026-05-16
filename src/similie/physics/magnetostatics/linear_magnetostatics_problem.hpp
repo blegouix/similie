@@ -19,7 +19,7 @@
 #include <similie/physics/magnetostatics/linear_magnetic_induction_to_magnetic_field.hpp>
 #include <similie/physics/magnetostatics/linear_magnetostatics.hpp>
 #include <similie/physics/magnetostatics/magnetostatics_quantities.hpp>
-#include <similie/physics/magnetostatics/structured_linear_magnetostatics.hpp>
+#include <similie/physics/magnetostatics/linear_magnetostatics_operators.hpp>
 #include <similie/solvers/minimize_strong_formulation_residual.hpp>
 
 #include <Kokkos_Core.hpp>
@@ -435,13 +435,12 @@ StructuredLinearMagnetostaticsResult run_on_quadrilateral_grid(
     log_info(logger, "SimiLie right-hand side assembled on rectilinear nodes");
 
     [[maybe_unused]] LinearMagnetostaticsHamiltonian const hamiltonian(inputs.core_mu, 0.0);
-    physics::HamiltonEquations equations {
-            hamiltonian,
-            detail::MagneticInductionValueFromPotential(),
-    };
+    physics::HamiltonEquations equations {hamiltonian};
     auto const operator_model = physics::make_stationary_equations_operator(
             equations,
-            StructuredScalarPoissonStrongFormOperator2D<
+            solvers::StructuredScalarPoissonStrongFormOperator2D<
+                    X,
+                    Y,
                     typename Kokkos::DefaultExecutionSpace::memory_space>(x_coords, y_coords));
     log_info(
             logger,
@@ -732,13 +731,12 @@ StructuredLinearMagnetostaticsResult run_on_hexahedral_grid(
     log_info(logger, "SimiLie right-hand side assembled on rectilinear nodes");
 
     [[maybe_unused]] LinearMagnetostaticsHamiltonian const hamiltonian(inputs.core_mu, 0.0);
-    physics::HamiltonEquations equations {
-            hamiltonian,
-            detail::MagneticInductionValueFromPotential(),
-    };
+    physics::HamiltonEquations equations {hamiltonian};
     auto const operator_model = physics::make_stationary_equations_operator(
             equations,
-            StructuredScalarPoissonStrongFormOperator2D<
+            solvers::StructuredScalarPoissonStrongFormOperator2D<
+                    X,
+                    Y,
                     typename Kokkos::DefaultExecutionSpace::memory_space>(x_coords, y_coords));
     log_info(
             logger,

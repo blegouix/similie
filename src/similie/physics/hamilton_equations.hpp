@@ -4,6 +4,7 @@
 #pragma once
 
 #include <cstddef>
+#include <type_traits>
 #include <utility>
 
 namespace similie::physics {
@@ -14,9 +15,23 @@ struct NoPiComputerValue
 {
 };
 
+template <class Hamiltonian, class = void>
+struct HamiltonianValueComputerType
+{
+    using type = NoPiComputerValue;
+};
+
+template <class Hamiltonian>
+struct HamiltonianValueComputerType<Hamiltonian, std::void_t<typename Hamiltonian::value_computer_type>>
+{
+    using type = typename Hamiltonian::value_computer_type;
+};
+
 } // namespace detail
 
-template <class Hamiltonian, class PiComputerValue = detail::NoPiComputerValue>
+template <
+        class Hamiltonian,
+        class PiComputerValue = typename detail::HamiltonianValueComputerType<Hamiltonian>::type>
 class HamiltonEquations
 {
     Hamiltonian m_hamiltonian;
@@ -25,13 +40,7 @@ class HamiltonEquations
 public:
     constexpr explicit HamiltonEquations(Hamiltonian hamiltonian)
         : m_hamiltonian(std::move(hamiltonian))
-        , m_pi_computer_value()
-    {
-    }
-
-    constexpr explicit HamiltonEquations(Hamiltonian hamiltonian, PiComputerValue pi_computer_value)
-        : m_hamiltonian(std::move(hamiltonian))
-        , m_pi_computer_value(std::move(pi_computer_value))
+        , m_pi_computer_value(PiComputerValue())
     {
     }
 

@@ -6,18 +6,24 @@
 #include <array>
 #include <cstddef>
 #include <type_traits>
+
 #include <ddc/ddc.hpp>
 #include <ginkgo/core/base/matrix_data.hpp>
+
+#include <Kokkos_Core.hpp>
+
 #include <similie/exterior/local_chain.hpp>
 #include <similie/physics/hamilton_equations.hpp>
 #include <similie/physics/magnetostatics/linear_magnetostatics.hpp>
 #include <similie/physics/magnetostatics/magnetostatics_indices.hpp>
 #include <similie/physics/magnetostatics/magnetostatics_quantities.hpp>
 #include <similie/physics/stationary_equations_operator.hpp>
-
-#include <Kokkos_Core.hpp>
+#include <similie/solvers/structured_scalar_poisson_strong_form_operator.hpp>
 
 namespace similie::physics::magnetostatics {
+
+using LinearMagnetostaticsOperator2D
+        = solvers::StructuredScalarPoissonStrongFormOperator2D<X, Y, Kokkos::HostSpace>;
 
 namespace detail {
 
@@ -48,21 +54,6 @@ struct LocalMagneticFieldTensor
     }
 };
 
-struct MagneticInductionValueFromPotential
-{
-    template <std::size_t I, class ChainType, class LowerChainType, class Elem>
-    KOKKOS_INLINE_FUNCTION auto operator()(
-            ChainType chain,
-            LowerChainType lower_chain,
-            Elem elem) const
-    {
-        return MagneticVectorPotentialToMagneticInduction::template forward_value<I>(
-                chain,
-                lower_chain,
-                elem);
-    }
-};
-
 struct AssemblyRow
 {
     static constexpr bool PERIODIC = false;
@@ -70,131 +61,20 @@ struct AssemblyRow
 
 } // namespace detail
 
-template <class MemorySpace>
-class StructuredScalarPoissonStrongFormOperator2D
-{
-public:
-    using memory_space = MemorySpace;
-    using coord_view_type = Kokkos::View<double const*, memory_space>;
-
-private:
-    coord_view_type m_x_coords;
-    coord_view_type m_y_coords;
-    std::size_t m_nx;
-    std::size_t m_ny;
-
-public:
-    StructuredScalarPoissonStrongFormOperator2D(coord_view_type x_coords, coord_view_type y_coords)
-        : m_x_coords(x_coords)
-        , m_y_coords(y_coords)
-        , m_nx(x_coords.extent(0))
-        , m_ny(y_coords.extent(0))
-    {
-    }
-
-    StructuredScalarPoissonStrongFormOperator2D() : m_x_coords(), m_y_coords(), m_nx(0), m_ny(0) {}
-
-    [[nodiscard]] KOKKOS_INLINE_FUNCTION std::size_t size() const
-    {
-        return m_nx * m_ny;
-    }
-
-    [[nodiscard]] KOKKOS_INLINE_FUNCTION std::size_t nx() const
-    {
-        return m_nx;
-    }
-
-    [[nodiscard]] KOKKOS_INLINE_FUNCTION std::size_t ny() const
-    {
-        return m_ny;
-    }
-
-    [[nodiscard]] KOKKOS_INLINE_FUNCTION coord_view_type x_coords() const
-    {
-        return m_x_coords;
-    }
-
-    [[nodiscard]] KOKKOS_INLINE_FUNCTION coord_view_type y_coords() const
-    {
-        return m_y_coords;
-    }
-
-    [[nodiscard]] KOKKOS_INLINE_FUNCTION bool is_boundary_node(std::size_t i, std::size_t j) const
-    {
-        return i == 0 || j == 0 || i + 1 == m_nx || j + 1 == m_ny;
-    }
-
-    template <class Functor>
-    KOKKOS_INLINE_FUNCTION void for_each_nonzero_column(std::size_t row, Functor&& functor) const
-    {
-        std::size_t const j = row / m_nx;
-        std::size_t const i = row % m_nx;
-        if (is_boundary_node(i, j)) {
-            functor(row);
-            return;
-        }
-        functor(flat_index(i, j));
-        functor(flat_index(i - 1, j));
-        functor(flat_index(i + 1, j));
-        functor(flat_index(i, j - 1));
-        functor(flat_index(i, j + 1));
-    }
-
-    template <class InputView, class OutputView>
-    KOKKOS_INLINE_FUNCTION void apply_at(OutputView output, InputView input, std::size_t row) const
-    {
-        std::size_t const j = row / m_nx;
-        std::size_t const i = row % m_nx;
-
-        bool const boundary = is_boundary_node(i, j);
-
-        if (boundary) {
-            output(row, 0) = input(row, 0);
-            return;
-        }
-
-        double const dxm = m_x_coords(i) - m_x_coords(i - 1);
-        double const dxp = m_x_coords(i + 1) - m_x_coords(i);
-        double const dym = m_y_coords(j) - m_y_coords(j - 1);
-        double const dyp = m_y_coords(j + 1) - m_y_coords(j);
-
-        auto value = [&](std::size_t ii, std::size_t jj) { return input(flat_index(ii, jj), 0); };
-
-        double const second_x
-                = 2.0
-                  * ((value(i + 1, j) - value(i, j)) / dxp - (value(i, j) - value(i - 1, j)) / dxm)
-                  / (dxm + dxp);
-        double const second_y
-                = 2.0
-                  * ((value(i, j + 1) - value(i, j)) / dyp - (value(i, j) - value(i, j - 1)) / dym)
-                  / (dym + dyp);
-
-        output(row, 0) = -(second_x + second_y);
-    }
-
-private:
-    KOKKOS_INLINE_FUNCTION std::size_t flat_index(std::size_t i, std::size_t j) const
-    {
-        return i + m_nx * j;
-    }
-};
 template <class Hamiltonian, class MemorySpace, class InputView, class OutputView>
 KOKKOS_INLINE_FUNCTION void apply_stationary_equations_at(
         OutputView output,
         InputView input,
         std::size_t row,
         physics::HamiltonEquations<Hamiltonian> const& equations,
-        StructuredScalarPoissonStrongFormOperator2D<MemorySpace> const& operator_model)
+        solvers::StructuredScalarPoissonStrongFormOperator2D<X, Y, MemorySpace> const& operator_model)
 {
-    // This matrix-free action is equations-driven: from A_z we reconstruct B,
-    // evaluate H=dH/dB through the Hamiltonian, then discretize curl(H).
     std::size_t const nx = operator_model.nx();
     std::size_t const ny = operator_model.ny();
     std::size_t const j = row / nx;
     std::size_t const i = row % nx;
 
-    bool const boundary = operator_model.is_boundary_node(i, j);
-    if (boundary) {
+    if (operator_model.is_boundary_node(i, j)) {
         output(row, 0) = input(row, 0);
         return;
     }
@@ -246,8 +126,7 @@ KOKKOS_INLINE_FUNCTION void apply_stationary_equations_at(
             0.0,
             detail::LocalMagneticFieldTensor::template access_element<Y>());
 
-    double const curl_h_z = 2.0 * (hy_e - hy_w) / (dxm + dxp) - 2.0 * (hx_n - hx_s) / (dym + dyp);
-    output(row, 0) = curl_h_z;
+    output(row, 0) = 2.0 * (hy_e - hy_w) / (dxm + dxp) - 2.0 * (hx_n - hx_s) / (dym + dyp);
 }
 
 } // namespace similie::physics::magnetostatics
@@ -258,12 +137,11 @@ template <class PiComputerValue, class MemorySpace>
 gko::matrix_data<double, gko::int32> assemble_matrix_data(
         StationaryEquationsOperator<
                 HamiltonEquations<magnetostatics::LinearMagnetostaticsHamiltonian, PiComputerValue>,
-                magnetostatics::StructuredScalarPoissonStrongFormOperator2D<MemorySpace>> const&
-                operator_model)
+                solvers::StructuredScalarPoissonStrongFormOperator2D<
+                        magnetostatics::X,
+                        magnetostatics::Y,
+                        MemorySpace>> const& operator_model)
 {
-    using OperatorType = StationaryEquationsOperator<
-            HamiltonEquations<magnetostatics::LinearMagnetostaticsHamiltonian, PiComputerValue>,
-            magnetostatics::StructuredScalarPoissonStrongFormOperator2D<MemorySpace>>;
     using RowDomain = ddc::DiscreteDomain<magnetostatics::detail::AssemblyRow>;
     using SpatialDomain = ddc::DiscreteDomain<magnetostatics::X, magnetostatics::Y>;
 
@@ -287,7 +165,6 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                 std::size_t const row = row_elem.uid();
                 auto const& structured_operator = operator_model.operator_model();
                 std::size_t const nx = structured_operator.nx();
-                std::size_t const ny = structured_operator.ny();
                 std::size_t const j = row / nx;
                 std::size_t const i = row % nx;
 
@@ -362,14 +239,15 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
     auto counts_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), counts);
 
     gko::matrix_data<double, gko::int32> matrix_data(gko::dim<2>(size, size));
+    matrix_data.nonzeros.reserve(size * 5);
     for (std::size_t row = 0; row < size; ++row) {
         for (int slot = 0; slot < counts_host(row); ++slot) {
-            double const value = coefficients_host(row, slot);
-            if (value != 0.0) {
+            double const coefficient = coefficients_host(row, slot);
+            if (coefficient != 0.0) {
                 matrix_data.nonzeros.emplace_back(
                         static_cast<gko::int32>(row),
                         static_cast<gko::int32>(columns_host(row, slot)),
-                        value);
+                        coefficient);
             }
         }
     }

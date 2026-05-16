@@ -21,6 +21,8 @@ class LinearMagnetostaticsHamiltonian:
             parameters=["mu", "current_density"],
             hamiltonian=hamiltonian,
             variables=[A, B0, B1, B2],
+            includes=["<similie/physics/magnetostatics/magnetostatics_quantities.hpp>"],
+            value_computer_type="MagneticInductionValueFromPotential",
         )
 
 

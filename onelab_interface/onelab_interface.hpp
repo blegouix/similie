@@ -29,7 +29,7 @@
 #include <ddc/ddc.hpp>
 
 #include <similie/physics/hamilton_equations.hpp>
-#include <similie/physics/magnetostatics/structured_linear_magnetostatics_problem.hpp>
+#include <similie/physics/magnetostatics/linear_magnetostatics_problem.hpp>
 #include <similie/physics/scalar_field/scalar_field_with_power_coupling.hpp>
 #include <similie/solvers/minimize_strong_formulation_residual.hpp>
 

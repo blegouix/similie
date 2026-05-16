@@ -24,6 +24,19 @@ struct InPlaneNu : sil::tensor::TensorNaturalIndex<X, Y>
 {
 };
 
+template <class Quantity>
+struct QuantityValueFromPotential
+{
+    template <std::size_t I, class ChainType, class LowerChainType, class Elem>
+    [[nodiscard]] KOKKOS_FUNCTION constexpr auto operator()(
+            ChainType chain,
+            LowerChainType lower_chain,
+            Elem elem) const
+    {
+        return Quantity::template forward_value<I>(chain, lower_chain, elem);
+    }
+};
+
 template <class TensorIndex>
 KOKKOS_FUNCTION auto make_local_tensor(std::array<double, TensorIndex::access_size()>& storage)
 {
@@ -139,6 +152,9 @@ public:
         };
     }
 };
+
+using MagneticInductionValueFromPotential
+        = detail::QuantityValueFromPotential<MagneticVectorPotentialToMagneticInduction>;
 
 class MaxwellStressTensorToMagneticInductionAndMagneticField
 {

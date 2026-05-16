@@ -8,7 +8,7 @@
 #include <similie/physics/hamilton_equations.hpp>
 #include <similie/physics/magnetostatics/linear_magnetostatics.hpp>
 #include <similie/physics/magnetostatics/magnetostatics_quantities.hpp>
-#include <similie/physics/magnetostatics/structured_linear_magnetostatics.hpp>
+#include <similie/physics/magnetostatics/linear_magnetostatics_operators.hpp>
 #include <similie/physics/scalar_field/scalar_field_with_power_coupling.hpp>
 #include <similie/physics/stationary_equations_operator.hpp>
 
@@ -135,13 +135,17 @@ TEST(OnelabInterface, StationaryMagnetostaticsOperatorMatchesPrediscretizedForMu
     Kokkos::deep_copy(x_coords, x_host);
     Kokkos::deep_copy(y_coords, y_host);
 
-    StructuredScalarPoissonStrongFormOperator2D<
+    similie::solvers::StructuredScalarPoissonStrongFormOperator2D<
+            X,
+            Y,
             typename Kokkos::DefaultExecutionSpace::memory_space>
             reference_operator(x_coords, y_coords);
     similie::physics::HamiltonEquations equations(LinearMagnetostaticsHamiltonian(1.0, 0.0));
     auto wrapped_operator = similie::physics::make_stationary_equations_operator(
             equations,
-            StructuredScalarPoissonStrongFormOperator2D<
+            similie::solvers::StructuredScalarPoissonStrongFormOperator2D<
+                    X,
+                    Y,
                     typename Kokkos::DefaultExecutionSpace::memory_space>(x_coords, y_coords));
 
     Kokkos::View<double**> input("input", 25, 1);
