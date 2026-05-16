@@ -21,6 +21,22 @@ std::filesystem::path test_file(char const* name)
     return std::filesystem::path(SIMILIE_ONELAB_TEST_DIR) / name;
 }
 
+template <class ReferenceOperator, class WrappedOperator, class OutputView, class InputView>
+struct CompareStationaryOperatorsFunctor
+{
+    ReferenceOperator m_reference_operator;
+    WrappedOperator m_wrapped_operator;
+    OutputView m_output_reference;
+    OutputView m_output_wrapped;
+    InputView m_input;
+
+    KOKKOS_FUNCTION void operator()(std::size_t const row) const
+    {
+        m_reference_operator.apply_at(m_output_reference, m_input, row);
+        m_wrapped_operator.apply_at(m_output_wrapped, m_input, row);
+    }
+};
+
 } // namespace
 
 TEST(OnelabInterface, ParseMagnetostaticsSilpro)
@@ -130,9 +146,12 @@ TEST(OnelabInterface, StationaryMagnetostaticsOperatorMatchesPrediscretizedForMu
 
     Kokkos::parallel_for(
             Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, 25),
-            KOKKOS_LAMBDA(std::size_t row) {
-                reference_operator.apply_at(output_reference, input, row);
-                wrapped_operator.apply_at(output_wrapped, input, row);
+            CompareStationaryOperatorsFunctor {
+                    reference_operator,
+                    wrapped_operator,
+                    output_reference,
+                    output_wrapped,
+                    input,
             });
     auto output_reference_host
             = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), output_reference);
