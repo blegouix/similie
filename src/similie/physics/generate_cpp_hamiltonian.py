@@ -152,3 +152,22 @@ struct {struct_name} {{
 }} // namespace {namespace}
 """
     )
+
+
+def generate_cpp_hamiltonian(functor_class, output_path: Path, *args, **kwargs) -> None:
+    definition = functor_class.__call__(*args, **kwargs)
+    write_cpp_hamiltonian_header(
+        output_path=output_path,
+        namespace=definition.namespace,
+        struct_name=definition.struct_name,
+        parameters=definition.parameters,
+        h_expression=definition.h_expression,
+        derivative_symbols=definition.derivative_symbols,
+        derivative_expressions=definition.derivative_expressions,
+        array_argument_name=definition.array_argument_name,
+        scalar_argument_name=definition.scalar_argument_name,
+        scalar_derivative_expression=definition.scalar_derivative_expression,
+        inverse_symbols=definition.inverse_symbols,
+        inverse_expressions=definition.inverse_expressions,
+        aliases=definition.aliases,
+    )
