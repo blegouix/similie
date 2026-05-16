@@ -90,6 +90,39 @@ def _render_indexed_value_method(
     )
 
 
+def _render_indexed_nonlocal_value_method(
+    method_name: str,
+    symbols_: list[str],
+    expressions: list,
+    replacements: dict[str, str],
+) -> str:
+    differentiated_expressions = [
+        diff(expression, symbols(symbol_name))
+        for symbol_name, expression in zip(symbols_, expressions, strict=True)
+    ]
+    branches: list[str] = []
+    for i, expression in enumerate(differentiated_expressions):
+        branches.append(
+            f"""        if constexpr (I == {i}) {{
+            auto value = pi_computer_value.template operator()<I>(chain, lower_chain, elem);
+            value *= {_replace_symbols(cxxcode(expression), replacements)};
+            return value;
+        }}"""
+        )
+    branches.append(
+        """        else {
+            static_assert(I < N, "Hamiltonian component index out of range");
+        }"""
+    )
+    return f"""
+    template <std::size_t I, class ChainType, class LowerChainType, class Elem, class PiComputerValue>
+    constexpr auto {method_name}(ChainType chain, LowerChainType lower_chain, Elem elem, PiComputerValue const& pi_computer_value) const
+    {{
+{chr(10).join(branches)}
+    }}
+"""
+
+
 def write_cpp_hamiltonian_header(
     output_path: Path,
     namespace: str,
@@ -102,6 +135,7 @@ def write_cpp_hamiltonian_header(
     scalar_derivative_expression=None,
     inverse_symbols: list[str] | None = None,
     inverse_expressions: list | None = None,
+    nonlocal_pi_value_methods: bool = False,
 ) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -148,6 +182,28 @@ def write_cpp_hamiltonian_header(
             scalar_replacements,
         )
 
+    nonlocal_value_methods = ""
+    scalar_nonlocal_value_method = ""
+    if nonlocal_pi_value_methods:
+        nonlocal_value_methods = _render_indexed_nonlocal_value_method(
+            "dH_dpi_value",
+            derivative_symbols,
+            derivative_expressions,
+            scalar_replacements,
+        )
+        if scalar_argument_name is not None and scalar_derivative_expression is not None:
+            scalar_nonlocal_value_method = f"""
+    template <class ChainType, class LowerChainType, class Elem, class PiComputerValue>
+    constexpr double dH_dphi_value(
+            [[maybe_unused]] ChainType chain,
+            [[maybe_unused]] LowerChainType lower_chain,
+            [[maybe_unused]] Elem elem,
+            [[maybe_unused]] PiComputerValue const& pi_computer_value) const
+    {{
+        return {_replace_symbols(cxxcode(diff(scalar_derivative_expression, symbols(scalar_argument_name))), scalar_replacements)};
+    }}
+"""
+
     output_path.write_text(
         f"""\
 // SPDX-FileCopyrightText: 2026 Baptiste Legouix
@@ -173,7 +229,7 @@ struct {struct_name} {{
     {{
         return {_replace_symbols(cxxcode(hamiltonian), h_replacements)};
     }}
-{scalar_method}{scalar_value_method}{_render_indexed_method("dH_dpi", "pi", derivative_symbols, derivative_expressions, scalar_replacements)}{_render_indexed_value_method("dH_dpi_value", "pi", derivative_symbols, derivative_expressions, scalar_replacements)}
+{scalar_method}{scalar_value_method}{scalar_nonlocal_value_method}{_render_indexed_method("dH_dpi", "pi", derivative_symbols, derivative_expressions, scalar_replacements)}{_render_indexed_value_method("dH_dpi_value", "pi", derivative_symbols, derivative_expressions, scalar_replacements)}{nonlocal_value_methods}
 {inverse_methods}}};
 }} // namespace {namespace}
 """
@@ -190,7 +246,7 @@ def generate_cpp_hamiltonian(functor_class, output_path: Path, *args, **kwargs) 
     inverse_expressions = None
     derivative_state_variables = list(definition.variables)
 
-    if derivative_state_variables and str(derivative_state_variables[0]) == "phi":
+    if derivative_state_variables:
         scalar_state_variable = derivative_state_variables.pop(0)
         scalar_argument_name = str(scalar_state_variable)
         scalar_derivative_expression = diff(definition.hamiltonian, scalar_state_variable)
@@ -200,7 +256,7 @@ def generate_cpp_hamiltonian(functor_class, output_path: Path, *args, **kwargs) 
         diff(definition.hamiltonian, symbol) for symbol in derivative_state_variables
     ]
 
-    if scalar_argument_name is not None:
+    if scalar_argument_name == "phi":
         dphi_dx_symbols = symbols(f"dphi_dx0:{len(derivative_state_variables)}")
         inverse_solution = solve(
             [
@@ -229,4 +285,5 @@ def generate_cpp_hamiltonian(functor_class, output_path: Path, *args, **kwargs) 
         scalar_derivative_expression=scalar_derivative_expression,
         inverse_symbols=inverse_symbols,
         inverse_expressions=inverse_expressions,
+        nonlocal_pi_value_methods=(scalar_argument_name is not None and scalar_argument_name != "phi"),
     )

@@ -434,8 +434,11 @@ StructuredLinearMagnetostaticsResult run_on_quadrilateral_grid(
     Kokkos::deep_copy(rhs, rhs_host);
     log_info(logger, "SimiLie right-hand side assembled on rectilinear nodes");
 
-    [[maybe_unused]] LinearMagnetostaticsHamiltonian const hamiltonian(inputs.core_mu);
-    physics::HamiltonEquations equations {hamiltonian};
+    [[maybe_unused]] LinearMagnetostaticsHamiltonian const hamiltonian(inputs.core_mu, 0.0);
+    physics::HamiltonEquations equations {
+            hamiltonian,
+            detail::MagneticInductionValueFromPotential(),
+    };
     auto const operator_model = physics::make_stationary_equations_operator(
             equations,
             StructuredScalarPoissonStrongFormOperator2D<
@@ -728,8 +731,11 @@ StructuredLinearMagnetostaticsResult run_on_hexahedral_grid(
     Kokkos::deep_copy(rhs, rhs_host);
     log_info(logger, "SimiLie right-hand side assembled on rectilinear nodes");
 
-    [[maybe_unused]] LinearMagnetostaticsHamiltonian const hamiltonian(inputs.core_mu);
-    physics::HamiltonEquations equations {hamiltonian};
+    [[maybe_unused]] LinearMagnetostaticsHamiltonian const hamiltonian(inputs.core_mu, 0.0);
+    physics::HamiltonEquations equations {
+            hamiltonian,
+            detail::MagneticInductionValueFromPotential(),
+    };
     auto const operator_model = physics::make_stationary_equations_operator(
             equations,
             StructuredScalarPoissonStrongFormOperator2D<

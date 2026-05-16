@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <type_traits>
 #include <utility>
+#include <variant>
 
 namespace similie::physics {
 
@@ -17,14 +18,30 @@ struct MomentumTimeDerivative
 {
 };
 
-template <class Hamiltonian>
+namespace detail {
+
+struct NoPiComputerValue
+{
+};
+
+} // namespace detail
+
+template <class Hamiltonian, class PiComputerValue = detail::NoPiComputerValue>
 class HamiltonEquations
 {
     Hamiltonian m_hamiltonian;
+    PiComputerValue m_pi_computer_value;
 
 public:
     constexpr explicit HamiltonEquations(Hamiltonian hamiltonian)
         : m_hamiltonian(std::move(hamiltonian))
+        , m_pi_computer_value()
+    {
+    }
+
+    constexpr explicit HamiltonEquations(Hamiltonian hamiltonian, PiComputerValue pi_computer_value)
+        : m_hamiltonian(std::move(hamiltonian))
+        , m_pi_computer_value(std::move(pi_computer_value))
     {
     }
 
@@ -49,6 +66,26 @@ public:
         } else {
             static_cast<void>(I);
             return -m_hamiltonian.dH_dphi_value(variable);
+        }
+    }
+
+    template <class EquationTerm, std::size_t I = 0, class ChainType, class LowerChainType, class Elem>
+    [[nodiscard]] constexpr auto
+    value(ChainType chain, LowerChainType lower_chain, Elem elem) const
+    {
+        if constexpr (std::is_same_v<EquationTerm, PotentialTimeDerivative>) {
+            return m_hamiltonian.template dH_dpi_value<I>(
+                    chain,
+                    lower_chain,
+                    elem,
+                    m_pi_computer_value);
+        } else {
+            static_cast<void>(I);
+            return -m_hamiltonian.dH_dphi_value(
+                    chain,
+                    lower_chain,
+                    elem,
+                    m_pi_computer_value);
         }
     }
 };

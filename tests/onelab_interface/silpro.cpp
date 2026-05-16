@@ -79,7 +79,7 @@ TEST(OnelabInterface, HamiltonEquationsStaticPotentialDerivative)
     using similie::physics::HamiltonEquations;
     using similie::physics::magnetostatics::LinearMagnetostaticsHamiltonian;
 
-    HamiltonEquations const equations(LinearMagnetostaticsHamiltonian(2.0));
+    HamiltonEquations const equations(LinearMagnetostaticsHamiltonian(2.0, 0.0));
 
     EXPECT_DOUBLE_EQ(equations.template dpotential_dt<0>(4.0), 2.0);
     EXPECT_DOUBLE_EQ(equations.template dpotential_dt<1>(6.0), 3.0);
@@ -105,7 +105,7 @@ TEST(OnelabInterface, HamiltonEquationsValueIsLocalOperatorCoefficient)
     using similie::physics::magnetostatics::LinearMagnetostaticsHamiltonian;
     using similie::physics::scalar_field::ScalarFieldWithPowerCouplingHamiltonian;
 
-    HamiltonEquations const magnetostatics_equations(LinearMagnetostaticsHamiltonian(2.0));
+    HamiltonEquations const magnetostatics_equations(LinearMagnetostaticsHamiltonian(2.0, 0.0));
     double const magnetostatics_value_x
             = magnetostatics_equations.template value<PotentialTimeDerivative, 0>(4.0);
     double const magnetostatics_value_y
@@ -161,7 +161,7 @@ TEST(OnelabInterface, StationaryMagnetostaticsOperatorMatchesPrediscretizedForMu
     StructuredScalarPoissonStrongFormOperator2D<
             typename Kokkos::DefaultExecutionSpace::memory_space>
             reference_operator(x_coords, y_coords);
-    similie::physics::HamiltonEquations equations(LinearMagnetostaticsHamiltonian(1.0));
+    similie::physics::HamiltonEquations equations(LinearMagnetostaticsHamiltonian(1.0, 0.0));
     auto wrapped_operator = similie::physics::make_stationary_equations_operator(
             equations,
             StructuredScalarPoissonStrongFormOperator2D<

@@ -20,6 +20,10 @@ namespace similie::physics::magnetostatics {
 
 namespace detail {
 
+struct InPlaneNu : sil::tensor::TensorNaturalIndex<X, Y>
+{
+};
+
 template <class TensorIndex>
 KOKKOS_FUNCTION auto make_local_tensor(std::array<double, TensorIndex::access_size()>& storage)
 {
@@ -38,6 +42,37 @@ KOKKOS_FUNCTION auto make_local_tensor(std::array<double, TensorIndex::access_si
 class MagneticVectorPotentialToMagneticInduction
 {
 public:
+    template <std::size_t I, class ChainType, class LowerChainType, class Elem>
+    [[nodiscard]] KOKKOS_FUNCTION static auto
+    forward_value(ChainType chain, LowerChainType lower_chain, Elem elem)
+    {
+        static_assert(I < 2);
+        using PotentialScalarIndex = sil::tensor::ScalarIndex;
+        using CoboundaryOutputIndex = sil::exterior::
+                coboundary_index_t<sil::tensor::Covariant<detail::InPlaneNu>, PotentialScalarIndex>;
+        [[maybe_unused]] sil::tensor::TensorAccessor<CoboundaryOutputIndex> accessor;
+        auto const natural_elem = [&]() {
+            if constexpr (I == 0) {
+                return accessor.template access_element<Y>();
+            } else {
+                return accessor.template access_element<X>();
+            }
+        }();
+
+        auto stencil = sil::exterior::Coboundary<
+                sil::tensor::Covariant<detail::InPlaneNu>,
+                PotentialScalarIndex>::value(
+                [](auto, auto) { return 0.0; },
+                chain,
+                lower_chain,
+                elem,
+                natural_elem);
+        if constexpr (I == 1) {
+            stencil *= -1.0;
+        }
+        return stencil;
+    }
+
     template <
             class CoboundaryTensorType,
             class Evaluator,

@@ -24,6 +24,7 @@
 
 #include "cochain.hpp"
 #include "cosimplex.hpp"
+#include "boundary.hpp"
 
 
 namespace sil {
@@ -232,6 +233,12 @@ struct LocalOperatorValueTensor<ddc::DiscreteDomain<DDims...>, TensorIndex, Memo
     {
         ddc::device_for_each(domain, [&](auto mem_elem) { tensor.mem(mem_elem) = 0.0; });
     }
+
+    KOKKOS_FUNCTION LocalOperatorValueTensor& operator*=(double const scalar)
+    {
+        ddc::device_for_each(domain, [&](auto mem_elem) { tensor.mem(mem_elem) *= scalar; });
+        return *this;
+    }
 };
 
 template <class Elem>
@@ -321,8 +328,7 @@ struct Coboundary<TagToAddToCochain, CochainTag>
             };
 
             run(output_tensor, basis_evaluator, chain, lower_chain, elem);
-            stencil.tensor.mem(stencil_elem)
-                    = output_tensor(output_tensor.access_element(natural_elem));
+            stencil.tensor.mem(stencil_elem) = output_tensor(natural_elem);
         });
 
         return stencil;
@@ -500,8 +506,7 @@ struct TransposedCoboundary<TagToAddToCochain, CochainTag>
             };
 
             run(output_tensor, basis_evaluator, chain, lower_chain, elem);
-            stencil.tensor.mem(stencil_elem)
-                    = output_tensor(output_tensor.access_element(natural_elem));
+            stencil.tensor.mem(stencil_elem) = output_tensor(natural_elem);
         });
 
         return stencil;

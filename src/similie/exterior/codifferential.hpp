@@ -218,8 +218,7 @@ struct Codifferential<
             sil::tensor::Tensor codifferential_tensor(codifferential_span);
 
             run(codifferential_tensor, basis.tensor, metric, position, chain, lower_chain, elem);
-            stencil.tensor.mem(stencil_elem)
-                    = codifferential_tensor(codifferential_tensor.access_element(natural_elem));
+            stencil.tensor.mem(stencil_elem) = codifferential_tensor(natural_elem);
         });
         return stencil;
     }
