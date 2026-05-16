@@ -72,27 +72,27 @@ public:
 
     StructuredScalarPoissonStrongFormOperator2D() : m_x_coords(), m_y_coords(), m_nx(0), m_ny(0) {}
 
-    [[nodiscard]] std::size_t size() const
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION std::size_t size() const
     {
         return m_nx * m_ny;
     }
 
-    [[nodiscard]] std::size_t nx() const
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION std::size_t nx() const
     {
         return m_nx;
     }
 
-    [[nodiscard]] std::size_t ny() const
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION std::size_t ny() const
     {
         return m_ny;
     }
 
-    [[nodiscard]] coord_view_type x_coords() const
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION coord_view_type x_coords() const
     {
         return m_x_coords;
     }
 
-    [[nodiscard]] coord_view_type y_coords() const
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION coord_view_type y_coords() const
     {
         return m_y_coords;
     }
