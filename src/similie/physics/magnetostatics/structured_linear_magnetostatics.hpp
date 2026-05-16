@@ -221,18 +221,12 @@ KOKKOS_INLINE_FUNCTION void apply_stationary_equations_at(
     auto magnetic_field_from_induction
             = [&](double bx, double by, double bz, std::size_t component) {
                   if (component == detail::LocalMagneticFieldTensor::template access_element<X>()) {
-                      return physics::HamiltonEquations<Hamiltonian>::template dpotential_dt<0>(
-                              equations.hamiltonian(),
-                              bx);
+                      return equations.template dpotential_dt<0>(bx);
                   }
                   if (component == detail::LocalMagneticFieldTensor::template access_element<Y>()) {
-                      return physics::HamiltonEquations<Hamiltonian>::template dpotential_dt<1>(
-                              equations.hamiltonian(),
-                              by);
+                      return equations.template dpotential_dt<1>(by);
                   }
-                  return physics::HamiltonEquations<Hamiltonian>::template dpotential_dt<2>(
-                          equations.hamiltonian(),
-                          bz);
+                  return equations.template dpotential_dt<2>(bz);
               };
 
     double const bx_s = (value(i, j) - value(i, j - 1)) / dym;

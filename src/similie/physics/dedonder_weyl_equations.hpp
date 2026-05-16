@@ -3,10 +3,8 @@
 
 #pragma once
 
-#include <stdexcept>
+#include <cstddef>
 #include <utility>
-
-#include <Kokkos_Core.hpp>
 
 namespace similie::physics {
 
@@ -21,27 +19,15 @@ public:
     {
     }
 
-    [[nodiscard]] constexpr Hamiltonian const& hamiltonian() const
+    template <std::size_t I>
+    [[nodiscard]] constexpr double potential_grad(double momentum_component) const
     {
-        return m_hamiltonian;
+        return m_hamiltonian.template dH_dpi<I>(momentum_component);
     }
 
-    template <
-            class DSpatialMomentumDtTensor,
-            class DPotentialDtTensor,
-            class SpatialMomentumTensor,
-            class PotentialTensor>
-    KOKKOS_FUNCTION void run(
-            DSpatialMomentumDtTensor,
-            DPotentialDtTensor,
-            SpatialMomentumTensor,
-            PotentialTensor) const
+    [[nodiscard]] constexpr double momentum_div(double potential) const
     {
-#ifndef __CUDA_ARCH__
-        throw std::logic_error(
-                "DeDonderWeylEquations::run is a placeholder: relativistic equation support is not "
-                "implemented yet");
-#endif
+        return -m_hamiltonian.dH_dphi(potential);
     }
 };
 

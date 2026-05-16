@@ -3,7 +3,6 @@
 
 #pragma once
 
-#include <stdexcept>
 #include <cstddef>
 #include <utility>
 
@@ -20,31 +19,17 @@ public:
     {
     }
 
-    [[nodiscard]] constexpr Hamiltonian const& hamiltonian() const
+    template <std::size_t I>
+    [[nodiscard]] constexpr double dpotential_dt(double spatial_momentum_component) const
     {
-        return m_hamiltonian;
+        return m_hamiltonian.template dH_dpi<I>(spatial_momentum_component);
     }
 
     template <std::size_t I>
-    [[nodiscard]] static constexpr double dpotential_dt(
-            Hamiltonian const& hamiltonian,
-            double spatial_momentum_component)
-    {
-        return hamiltonian.template dH_dpi<I>(spatial_momentum_component);
-    }
-
-    template <std::size_t I>
-    [[nodiscard]] static constexpr double dmomentum_dt(
-            Hamiltonian const& hamiltonian,
-            double potential)
+    [[nodiscard]] constexpr double dmomentum_dt(double potential) const
     {
         static_cast<void>(I);
-        if constexpr (requires(Hamiltonian const& h) { h.dH_dphi(potential); }) {
-            return -hamiltonian.dH_dphi(potential);
-        } else {
-            throw std::logic_error(
-                    "HamiltonEquations::dmomentum_dt requires a Hamiltonian exposing dH_dphi");
-        }
+        return -m_hamiltonian.dH_dphi(potential);
     }
 };
 
