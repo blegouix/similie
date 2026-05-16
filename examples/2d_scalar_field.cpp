@@ -490,7 +490,7 @@ int main(int argc, char** argv)
      *
      * We implement mid-point explicit temporal integration scheme.
      */
-    similie::physics::scalar_field::ScalarFieldHamiltonian const
+    similie::physics::scalar_field::ScalarFieldWithPowerCouplingHamiltonian const
             hamiltonian_model(mass, coupling_constant, coupling_power);
     similie::physics::DeDonderWeylEquations equations(hamiltonian_model);
     for (int i = 0; i < nb_iter; i++) {

@@ -391,10 +391,11 @@ inline SilproProblem parse_silpro_problem(std::filesystem::path const& file)
     return problem;
 }
 
-inline physics::scalar_field::ScalarFieldWithPowerCoupling assemble_scalar_field_hamiltonian(
+inline physics::scalar_field::ScalarFieldWithPowerCouplingHamiltonian
+assemble_scalar_field_hamiltonian(
         ScalarFieldWithPowerCouplingProblem const& problem)
 {
-    return physics::scalar_field::ScalarFieldWithPowerCoupling(
+    return physics::scalar_field::ScalarFieldWithPowerCouplingHamiltonian(
             problem.mass,
             problem.coupling_constant,
             problem.coupling_power);
