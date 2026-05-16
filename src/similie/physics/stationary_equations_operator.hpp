@@ -46,14 +46,12 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data_from_operator_action(
 
     for (std::size_t row = 0; row < operator_model.size(); ++row) {
         operator_model.operator_model().for_each_nonzero_column(row, [&](std::size_t column) {
-            SingleRowOutputView output {.active_row = row};
-            CanonicalBasisInputView input {.active_row = column};
-            operator_model.apply_at(output, input, row);
-            if (output.value != 0.0) {
+            double const coefficient = operator_model.value(row, column);
+            if (coefficient != 0.0) {
                 matrix_data.nonzeros.emplace_back(
                         static_cast<gko::int32>(row),
                         static_cast<gko::int32>(column),
-                        output.value);
+                        coefficient);
             }
         });
     }
@@ -95,10 +93,26 @@ public:
     template <class ColumnIndex>
     [[nodiscard]] KOKKOS_INLINE_FUNCTION double value(std::size_t row, ColumnIndex column) const
     {
-        detail::SingleRowOutputView output {.active_row = row};
-        detail::CanonicalBasisInputView input {.active_row = static_cast<std::size_t>(column)};
-        apply_at(output, input, row);
-        return output.value;
+        if constexpr (requires {
+                          value_stationary_equations_at(
+                                  row,
+                                  static_cast<std::size_t>(column),
+                                  m_equations,
+                                  m_operator_model);
+                      }) {
+            return value_stationary_equations_at(
+                    row,
+                    static_cast<std::size_t>(column),
+                    m_equations,
+                    m_operator_model);
+        } else if constexpr (requires { m_operator_model.value(row, static_cast<std::size_t>(column)); }) {
+            return m_operator_model.value(row, static_cast<std::size_t>(column));
+        } else {
+            detail::SingleRowOutputView output {.active_row = row};
+            detail::CanonicalBasisInputView input {.active_row = static_cast<std::size_t>(column)};
+            apply_at(output, input, row);
+            return output.value;
+        }
     }
 
     template <class InputView, class OutputView>

@@ -59,24 +59,6 @@ public:
                 elem);
     }
 
-    template <class Evaluator, class ChainType, class LowerChainType, class Elem, class NaturalElem>
-    [[nodiscard]] KOKKOS_FUNCTION static auto forward_exterior_value(
-            Evaluator evaluator,
-            ChainType chain,
-            LowerChainType lower_chain,
-            Elem elem,
-            NaturalElem natural_elem)
-    {
-        return sil::exterior::Coboundary<
-                sil::tensor::Covariant<Nu>,
-                MagneticVectorPotentialIndex>::value(
-                evaluator,
-                chain,
-                lower_chain,
-                elem,
-                natural_elem);
-    }
-
     [[nodiscard]] KOKKOS_FUNCTION constexpr double forward_value(
             [[maybe_unused]] std::span<double const, 3> magnetic_vector_potential,
             std::span<double const, 3> dpotential_dx,
@@ -119,26 +101,6 @@ public:
                         dpotential_dy,
                         dpotential_dz,
                         2),
-        };
-    }
-
-    [[nodiscard]] KOKKOS_FUNCTION constexpr double inverse_value(
-            [[maybe_unused]] std::span<double const, 3>,
-            [[maybe_unused]] std::size_t component) const
-    {
-        return 0.0;
-    }
-
-    [[nodiscard]] KOKKOS_FUNCTION constexpr std::array<double, 6> inverse(
-            std::span<double const, 3> magnetic_induction) const
-    {
-        return {
-                inverse_value(magnetic_induction, 0),
-                inverse_value(magnetic_induction, 1),
-                inverse_value(magnetic_induction, 2),
-                inverse_value(magnetic_induction, 3),
-                inverse_value(magnetic_induction, 4),
-                inverse_value(magnetic_induction, 5),
         };
     }
 };
@@ -258,76 +220,6 @@ public:
                 elem);
     }
 
-    template <
-            sil::tensor::TensorIndex MetricIndex,
-            sil::misc::Specialization<sil::tensor::Tensor> TensorType,
-            sil::misc::Specialization<sil::tensor::Tensor> MetricType,
-            sil::misc::Specialization<sil::tensor::Tensor> PositionType,
-            class ChainType,
-            class LowerChainType,
-            class Elem,
-            class NaturalElem>
-    [[nodiscard]] KOKKOS_FUNCTION static auto forward_exterior_value(
-            TensorType maxwell_stress_tensor,
-            MetricType metric,
-            PositionType position,
-            ChainType chain,
-            LowerChainType lower_chain,
-            Elem elem,
-            NaturalElem natural_elem)
-    {
-        return sil::exterior::Codifferential<
-                MetricIndex,
-                sil::tensor::Covariant<Nu>,
-                MaxwellStressTensorIndex,
-                TensorType,
-                MetricType,
-                PositionType>::value(
-                maxwell_stress_tensor,
-                metric,
-                position,
-                chain,
-                lower_chain,
-                elem,
-                natural_elem);
-    }
-
-    [[nodiscard]] KOKKOS_FUNCTION constexpr double inverse_value(
-            [[maybe_unused]] std::span<double const, 3>,
-            [[maybe_unused]] std::size_t component) const
-    {
-        return 0.0;
-    }
-
-    [[nodiscard]] KOKKOS_FUNCTION constexpr std::array<double, 6> inverse(
-            std::span<double const, 3> force_density) const
-    {
-        return {
-                inverse_value(force_density, 0),
-                inverse_value(force_density, 1),
-                inverse_value(force_density, 2),
-                inverse_value(force_density, 3),
-                inverse_value(force_density, 4),
-                inverse_value(force_density, 5),
-        };
-    }
-
-    [[nodiscard]] KOKKOS_FUNCTION constexpr double forward_value(
-            [[maybe_unused]] std::span<double const, 6>,
-            [[maybe_unused]] std::size_t component) const
-    {
-        return 0.0;
-    }
-
-    [[nodiscard]] KOKKOS_FUNCTION constexpr std::array<double, 3> forward(
-            std::span<double const, 6> maxwell_stress) const
-    {
-        return {
-                forward_value(maxwell_stress, 0),
-                forward_value(maxwell_stress, 1),
-                forward_value(maxwell_stress, 2),
-        };
-    }
 };
 
 } // namespace similie::physics::magnetostatics
