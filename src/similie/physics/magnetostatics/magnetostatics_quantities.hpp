@@ -45,8 +45,8 @@ using MagneticFieldIndex = sil::tensor::Covariant<Mu>;
 using ForceDensityIndex = sil::tensor::Covariant<Mu>;
 using MagneticInductionIndex = sil::tensor::
         TensorAntisymmetricIndex<sil::tensor::Covariant<Mu>, sil::tensor::Covariant<Nu>>;
-using MaxwellStressTensorIndex = sil::tensor::
-        TensorSymmetricIndex<sil::tensor::Covariant<Mu>, sil::tensor::Covariant<Nu>>;
+using MaxwellStressTensorIndex
+        = sil::tensor::TensorSymmetricIndex<sil::tensor::Covariant<Mu>, sil::tensor::Covariant<Nu>>;
 
 namespace detail {
 
@@ -126,7 +126,6 @@ public:
         sil::exterior::Coboundary<sil::tensor::Covariant<Nu>, MagneticVectorPotentialIndex>::
                 run(magnetic_induction, evaluator, chain, lower_chain, elem);
     }
-
 };
 
 class MaxwellStressTensorToMagneticInductionAndMagneticField

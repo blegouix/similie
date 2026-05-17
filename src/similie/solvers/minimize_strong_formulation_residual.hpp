@@ -5,8 +5,8 @@
 
 #include <chrono>
 #include <cmath>
-#include <memory>
 #include <iostream>
+#include <memory>
 #include <stdexcept>
 #include <type_traits>
 
@@ -330,8 +330,7 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
         if ((iteration + 1) % 1000 == 0) {
             std::cout << "SimiLie matrix-free CG iteration " << (iteration + 1)
                       << ": residual L2=" << diagnostics.final_residual_l2
-                      << ", relative residual=" << diagnostics.final_relative_residual
-                      << std::endl;
+                      << ", relative residual=" << diagnostics.final_relative_residual << std::endl;
         }
         if (new_residual_norm_sq
             <= settings.relative_tolerance * settings.relative_tolerance * initial_norm_sq) {

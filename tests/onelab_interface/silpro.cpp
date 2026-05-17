@@ -10,8 +10,8 @@
 #include <similie/physics/magnetostatics/magnetostatics_quantities.hpp>
 #include <similie/physics/scalar_field/scalar_field_with_power_coupling.hpp>
 
+#include "linear_magnetostatics_onelab.hpp"
 #include "onelab_interface.hpp"
-#include "magnetostatics_support.hpp"
 
 namespace {
 
@@ -22,14 +22,14 @@ std::filesystem::path test_file(char const* name)
 
 } // namespace
 
-TEST(OnelabInterface, ParseMagnetostaticsSilpro)
+TEST(OnelabInterface, ParseLinearMagnetostaticsSilpro)
 {
     similie::onelab_interface::SilproProblem const problem
             = similie::onelab_interface::OnelabInterface::parse_silpro_file(
                     test_file("magnetostatics.silpro"));
 
     EXPECT_EQ(problem.name, "Test magnetostatics problem");
-    EXPECT_EQ(problem.physics, similie::onelab_interface::SupportedPhysics::Magnetostatics);
+    EXPECT_EQ(problem.physics, similie::onelab_interface::SupportedPhysics::LinearMagnetostatics);
     EXPECT_EQ(
             problem.solver,
             similie::onelab_interface::SupportedSolver::MinimizeStrongFormulationResidual);
@@ -37,6 +37,24 @@ TEST(OnelabInterface, ParseMagnetostaticsSilpro)
     EXPECT_DOUBLE_EQ(problem.solver_settings.relative_tolerance, 1e-8);
     EXPECT_EQ(problem.solver_settings.jacobi_max_block_size, 3U);
     EXPECT_FALSE(problem.solver_settings.use_matrix_free);
+    EXPECT_EQ(
+            problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+                    .name,
+            "SingleElectricalConductorMaterialWithSingleLinearMagneticMaterial");
+    EXPECT_EQ(
+            problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+                    .positive_electrical_conductor_tags.size(),
+            1U);
+    EXPECT_EQ(
+            problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+                    .negative_electrical_conductor_tags.size(),
+            1U);
+    EXPECT_EQ(
+            problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+                    .linear_magnetic_material_tags.size(),
+            2U);
+    EXPECT_EQ(problem.force_density_diagnostics_postprocess.name, "ForceDensityDiagnostics");
+    EXPECT_EQ(problem.force_density_diagnostics_postprocess.diagnostic_region_tags.size(), 1U);
 }
 
 TEST(OnelabInterface, ParseScalarFieldSilpro)
@@ -61,7 +79,8 @@ TEST(OnelabInterface, HamiltonEquationsStaticPotentialDerivative)
 {
     using similie::physics::HamiltonEquations;
     using similie::physics::magnetostatics::LinearMagnetostaticsHamiltonian;
-    using namespace similie::onelab_interface::detail::magnetostatics_local;
+    using namespace similie::onelab_interface::linear_magnetostatics_onelab::detail::
+            magnetostatics_local;
 
     using memory_space = typename Kokkos::DefaultExecutionSpace::memory_space;
     scalar_tensor_alloc_type<memory_space> mu_alloc(
@@ -121,7 +140,8 @@ TEST(OnelabInterface, LinearMagneticInductionToMagneticFieldValueAndApplication)
 
 TEST(OnelabInterface, MagnetostaticsLocalOperatorMatchesItsAssembledMatrix)
 {
-    using namespace similie::onelab_interface::detail::magnetostatics_local;
+    using namespace similie::onelab_interface::linear_magnetostatics_onelab::detail::
+            magnetostatics_local;
     using namespace similie::physics::magnetostatics;
 
     Kokkos::View<double*> x_coords("x", 5);
@@ -154,10 +174,8 @@ TEST(OnelabInterface, MagnetostaticsLocalOperatorMatchesItsAssembledMatrix)
 
     auto const hamiltonian = LinearMagnetostaticsHamiltonian(mu_tensor);
     auto const equations = similie::physics::HamiltonEquations {hamiltonian};
-    MagnetostaticsOperator2D<memory_space, decltype(equations)> operator_model(
-            equations,
-            x_coords,
-            y_coords);
+    MagnetostaticsOperator2D<memory_space, decltype(equations)>
+            operator_model(equations, x_coords, y_coords);
     auto matrix_data = assemble_matrix_data(operator_model);
 
     Kokkos::View<double**> input("input", 25, 1);

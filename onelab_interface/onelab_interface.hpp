@@ -19,8 +19,8 @@
 #include <numbers>
 #include <optional>
 #include <sstream>
-#include <streambuf>
 #include <stdexcept>
+#include <streambuf>
 #include <string>
 #include <thread>
 #include <utility>
@@ -36,13 +36,15 @@
 #include <onelab.h>
 
 #include "gmsh_structured_grid.hpp"
-#include "magnetostatics_support.hpp"
+#include "linear_magnetostatics_onelab.hpp"
+#include "minimize_strong_formulation_residual_onelab.hpp"
+#include "scalar_field_with_power_coupling_onelab.hpp"
 
 namespace similie::onelab_interface {
 
 enum class SupportedPhysics {
     ScalarFieldWithPowerCoupling,
-    Magnetostatics,
+    LinearMagnetostatics,
 };
 
 enum class SupportedSolver {
@@ -64,13 +66,32 @@ struct MinimizeStrongFormulationResidualProblem
     bool use_matrix_free = true;
 };
 
+struct SingleElectricalConductorMaterialWithSingleLinearMagneticMaterialPreprocess
+{
+    std::string name;
+    std::vector<std::string> positive_electrical_conductor_tags;
+    std::vector<std::string> negative_electrical_conductor_tags;
+    std::vector<std::string> linear_magnetic_material_tags;
+    std::string current_density_z_parameter;
+    std::string magnetic_permeability_parameter;
+};
+
+struct ForceDensityDiagnosticsPostprocess
+{
+    std::string name;
+    std::vector<std::string> diagnostic_region_tags;
+};
+
 struct SilproProblem
 {
-    std::string name = "SimiLie problem";
-    SupportedPhysics physics = SupportedPhysics::Magnetostatics;
-    SupportedSolver solver = SupportedSolver::MinimizeStrongFormulationResidual;
+    std::string name;
+    SupportedPhysics physics;
+    SupportedSolver solver;
     ScalarFieldWithPowerCouplingProblem scalar_field;
     MinimizeStrongFormulationResidualProblem solver_settings;
+    SingleElectricalConductorMaterialWithSingleLinearMagneticMaterialPreprocess
+            single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess;
+    ForceDensityDiagnosticsPostprocess force_density_diagnostics_postprocess;
 };
 
 namespace detail {
@@ -325,10 +346,20 @@ inline std::string get_value_or(
     return iterator == section.values.end() ? std::move(default_value) : iterator->second;
 }
 
+inline std::vector<std::string> collect_values(SilproSection const& section)
+{
+    std::vector<std::string> values;
+    values.reserve(section.values.size());
+    for (auto const& [_, value] : section.values) {
+        values.push_back(value);
+    }
+    return values;
+}
+
 inline SupportedPhysics parse_physics_kind(std::string const& value)
 {
-    if (value == "Magnetostatics") {
-        return SupportedPhysics::Magnetostatics;
+    if (value == "LinearMagnetostatics") {
+        return SupportedPhysics::LinearMagnetostatics;
     }
     if (value == "ScalarFieldWithPowerCoupling") {
         return SupportedPhysics::ScalarFieldWithPowerCoupling;
@@ -350,13 +381,31 @@ inline SilproProblem parse_silpro_problem(std::filesystem::path const& file)
     SilproSection const& problem_section = required_section(root, "Problem", file.string());
     SilproSection const& solver_section = required_section(root, "Solver", file.string());
 
-    SilproProblem problem;
-    problem.name = get_value_or(problem_section, "Name", problem.name);
-    problem.physics
-            = parse_physics_kind(get_value_or(problem_section, "Physics", "Magnetostatics"));
-    problem.solver = parse_solver_kind(
-            get_value_or(problem_section, "Solver", "MinimizeStrongFormulationResidual"));
-
+    SilproProblem problem {
+            .name = get_value_or(problem_section, "Name", "SimiLie problem"),
+            .physics = parse_physics_kind(
+                    get_value_or(problem_section, "Physics", "LinearMagnetostatics")),
+            .solver = parse_solver_kind(
+                    get_value_or(problem_section, "Solver", "MinimizeStrongFormulationResidual")),
+            .scalar_field = {},
+            .solver_settings = {},
+            .single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+            = {
+                    .name = "SingleElectricalConductorMaterialWithSingleLinearMagneticMaterial",
+                    .positive_electrical_conductor_tags = {},
+                    .negative_electrical_conductor_tags = {},
+                    .linear_magnetic_material_tags = {},
+                    .current_density_z_parameter
+                    = "Input/90SimiLie/0Coil current density magnitude z [A/m^2]",
+                    .magnetic_permeability_parameter
+                    = "Input/90SimiLie/1Core magnetic permeability [H/m]",
+            },
+            .force_density_diagnostics_postprocess
+            = {
+                    .name = "ForceDensityDiagnostics",
+                    .diagnostic_region_tags = {},
+            },
+    };
     problem.solver_settings.max_iterations = parse_number<unsigned int>(get_value_or(
             solver_section,
             "MaxIterations",
@@ -387,51 +436,84 @@ inline SilproProblem parse_silpro_problem(std::filesystem::path const& file)
                 section,
                 "CouplingPower",
                 std::to_string(problem.scalar_field.coupling_power)));
+    } else if (problem.physics == SupportedPhysics::LinearMagnetostatics) {
+        if (auto preprocess_it = root.sections.find("Preprocess");
+            preprocess_it != root.sections.end()) {
+            SilproSection const& preprocess = preprocess_it->second;
+            problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+                    .name
+                    = get_value_or(
+                            preprocess,
+                            "Name",
+                            problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+                                    .name);
+            if (auto it = preprocess.sections.find("PositiveElectricalConductorTags");
+                it != preprocess.sections.end()) {
+                problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+                        .positive_electrical_conductor_tags
+                        = collect_values(it->second);
+            }
+            if (auto it = preprocess.sections.find("NegativeElectricalConductorTags");
+                it != preprocess.sections.end()) {
+                problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+                        .negative_electrical_conductor_tags
+                        = collect_values(it->second);
+            }
+            if (auto it = preprocess.sections.find("LinearMagneticMaterialTags");
+                it != preprocess.sections.end()) {
+                problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+                        .linear_magnetic_material_tags
+                        = collect_values(it->second);
+            }
+            problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+                    .current_density_z_parameter
+                    = get_value_or(
+                            preprocess,
+                            "CurrentDensityZ",
+                            problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+                                    .current_density_z_parameter);
+            problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+                    .magnetic_permeability_parameter
+                    = get_value_or(
+                            preprocess,
+                            "MagneticPermeability",
+                            problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+                                    .magnetic_permeability_parameter);
+        }
+        if (auto postprocess_it = root.sections.find("PostProcess");
+            postprocess_it != root.sections.end()) {
+            SilproSection const& postprocess = postprocess_it->second;
+            problem.force_density_diagnostics_postprocess.name = get_value_or(
+                    postprocess,
+                    "Name",
+                    problem.force_density_diagnostics_postprocess.name);
+            if (auto it = postprocess.sections.find("DiagnosticRegionTags");
+                it != postprocess.sections.end()) {
+                problem.force_density_diagnostics_postprocess.diagnostic_region_tags
+                        = collect_values(it->second);
+            }
+        }
     }
 
     return problem;
 }
 
-inline physics::scalar_field::ScalarFieldWithPowerCouplingHamiltonian
-assemble_scalar_field_hamiltonian(
-        ScalarFieldWithPowerCouplingProblem const& problem)
-{
-    return physics::scalar_field::ScalarFieldWithPowerCouplingHamiltonian(
-            problem.mass,
-            problem.coupling_constant,
-            problem.coupling_power);
-}
-
-inline solvers::StrongFormulationSolverSettings assemble_solver_settings(
-        MinimizeStrongFormulationResidualProblem const& problem)
-{
-    solvers::StrongFormulationSolverSettings settings;
-    settings.max_iterations = problem.max_iterations;
-    settings.relative_tolerance = problem.relative_tolerance;
-    settings.jacobi_max_block_size = problem.jacobi_max_block_size;
-    settings.use_matrix_free = problem.use_matrix_free;
-    return settings;
-}
-
-using sil::mesher::gmsh::HexahedralCell;
-using sil::mesher::gmsh::HexahedralMesh;
-using sil::mesher::gmsh::MeshNode;
-using sil::mesher::gmsh::QuadrilateralCell;
-using sil::mesher::gmsh::QuadrilateralMesh;
-using sil::mesher::gmsh::StructuredGrid2D;
-using sil::mesher::gmsh::SupportedMesh;
-using StructuredGrid = sil::mesher::gmsh::StructuredGrid3D;
-using sil::mesher::gmsh::build_structured_grid;
-using sil::mesher::gmsh::parse_supported_msh2_mesh;
+using sil::onelab_interface::gmsh::HexahedralCell;
+using sil::onelab_interface::gmsh::HexahedralMesh;
+using sil::onelab_interface::gmsh::MeshNode;
+using sil::onelab_interface::gmsh::QuadrilateralCell;
+using sil::onelab_interface::gmsh::QuadrilateralMesh;
+using sil::onelab_interface::gmsh::StructuredGrid2D;
+using sil::onelab_interface::gmsh::SupportedMesh;
+using StructuredGrid = sil::onelab_interface::gmsh::StructuredGrid3D;
+using sil::onelab_interface::gmsh::build_structured_grid;
+using sil::onelab_interface::gmsh::parse_supported_msh2_mesh;
 
 } // namespace detail
 
 class OnelabInterface
 {
     using Client = onelab::remoteNetworkClient;
-    using MagnetostaticsInputs = detail::StructuredLinearMagnetostaticsInputs;
-    using MagnetostaticsRegionTags = detail::StructuredLinearMagnetostaticsRegionTags;
-    using MagnetostaticsResult = detail::StructuredLinearMagnetostaticsResult;
 
 public:
     explicit OnelabInterface(std::string module_name = "SimiLie")
@@ -873,8 +955,8 @@ private:
                 problem_parameter_name("0Problem", "1Physics"),
                 "Physics",
                 "Physics selected in the .silpro file.",
-                problem.physics == SupportedPhysics::Magnetostatics
-                        ? "Magnetostatics"
+                problem.physics == SupportedPhysics::LinearMagnetostatics
+                        ? "LinearMagnetostatics"
                         : "ScalarFieldWithPowerCoupling",
                 true);
         publish_or_sync_string(
@@ -884,68 +966,30 @@ private:
                 "MinimizeStrongFormulationResidual",
                 true);
 
-        publish_or_sync_number(
-                problem_parameter_name("1Solver", "0Max iterations"),
-                "Max iterations",
-                "Maximum number of iterations for the stationary strong-formulation solver.",
-                static_cast<double>(problem.solver_settings.max_iterations),
-                1.0,
-                1.e9,
-                1.0);
-        publish_or_sync_number(
-                problem_parameter_name("1Solver", "1Relative tolerance"),
-                "Relative tolerance",
-                "Relative convergence tolerance for the stationary strong-formulation solver.",
-                problem.solver_settings.relative_tolerance,
-                0.0,
-                1.0,
-                1.e-12);
-        publish_or_sync_number(
-                problem_parameter_name("1Solver", "2Jacobi max block size"),
-                "Jacobi max block size",
-                "Maximum Jacobi block size used by the auxiliary preconditioner.",
-                static_cast<double>(problem.solver_settings.jacobi_max_block_size),
-                1.0,
-                1.e9,
-                1.0);
-        publish_or_sync_number(
-                problem_parameter_name("1Solver", "3Use matrix-free"),
-                "Use matrix-free",
-                "When enabled, the strong-form operator is applied matrix-free and only the Jacobi "
-                "preconditioner uses an auxiliary assembled matrix.",
-                problem.solver_settings.use_matrix_free ? 1.0 : 0.0,
-                0.0,
-                1.0,
-                1.0,
-                std::vector<double> {0.0, 1.0},
-                std::map<double, std::string> {{0.0, "No"}, {1.0, "Yes"}});
+        minimize_strong_formulation_residual_onelab::synchronize_controls(
+                problem.solver_settings,
+                [&](std::string const& section, std::string const& name) {
+                    return problem_parameter_name(section, name);
+                },
+                publish_or_sync_number);
 
         if (problem.physics == SupportedPhysics::ScalarFieldWithPowerCoupling) {
-            ScalarFieldWithPowerCouplingProblem const& cfg = problem.scalar_field;
-            publish_or_sync_number(
-                    problem_parameter_name("2ScalarFieldWithPowerCoupling", "0Mass"),
-                    "Mass",
-                    "Scalar-field mass parameter declared in the .silpro file.",
-                    cfg.mass,
-                    0.0,
-                    1.e12,
-                    1.e-3);
-            publish_or_sync_number(
-                    problem_parameter_name("2ScalarFieldWithPowerCoupling", "1Coupling constant"),
-                    "Coupling constant",
-                    "Scalar-field coupling constant declared in the .silpro file.",
-                    cfg.coupling_constant,
-                    -1.e12,
-                    1.e12,
-                    1.e-3);
-            publish_or_sync_number(
-                    problem_parameter_name("2ScalarFieldWithPowerCoupling", "2Coupling power"),
-                    "Coupling power",
-                    "Scalar-field coupling power declared in the .silpro file.",
-                    cfg.coupling_power,
-                    0.0,
-                    1.e12,
-                    1.0);
+            scalar_field_with_power_coupling_onelab::synchronize_controls(
+                    problem,
+                    [&](std::string const& section, std::string const& name) {
+                        return problem_parameter_name(section, name);
+                    },
+                    publish_or_sync_number);
+        }
+
+        if (problem.physics == SupportedPhysics::LinearMagnetostatics) {
+            linear_magnetostatics_onelab::synchronize_controls(
+                    problem,
+                    [&](std::string const& section, std::string const& name) {
+                        return problem_parameter_name(section, name);
+                    },
+                    publish_or_sync_string,
+                    publish_or_sync_number);
         }
 
         if (synchronize) {
@@ -958,33 +1002,25 @@ private:
 
     [[nodiscard]] SilproProblem apply_problem_control_overrides(SilproProblem problem)
     {
-        problem.solver_settings.max_iterations = static_cast<unsigned int>(get_first_number_value(
-                problem_parameter_name("1Solver", "0Max iterations"),
-                static_cast<double>(problem.solver_settings.max_iterations)));
-        problem.solver_settings.relative_tolerance = get_first_number_value(
-                problem_parameter_name("1Solver", "1Relative tolerance"),
-                problem.solver_settings.relative_tolerance);
-        problem.solver_settings.jacobi_max_block_size
-                = static_cast<unsigned int>(get_first_number_value(
-                        problem_parameter_name("1Solver", "2Jacobi max block size"),
-                        static_cast<double>(problem.solver_settings.jacobi_max_block_size)));
-        problem.solver_settings.use_matrix_free
-                = (get_first_number_value(
-                           problem_parameter_name("1Solver", "3Use matrix-free"),
-                           problem.solver_settings.use_matrix_free ? 1.0 : 0.0)
-                   != 0.0);
+        problem.solver_settings
+                = minimize_strong_formulation_residual_onelab::apply_control_overrides(
+                        problem.solver_settings,
+                        [&](std::string const& section, std::string const& name) {
+                            return problem_parameter_name(section, name);
+                        },
+                        [&](std::string const& name, double default_value) {
+                            return get_first_number_value(name, default_value);
+                        });
 
         if (problem.physics == SupportedPhysics::ScalarFieldWithPowerCoupling) {
-            ScalarFieldWithPowerCouplingProblem& cfg = problem.scalar_field;
-            cfg.mass = get_first_number_value(
-                    problem_parameter_name("2ScalarFieldWithPowerCoupling", "0Mass"),
-                    cfg.mass);
-            cfg.coupling_constant = get_first_number_value(
-                    problem_parameter_name("2ScalarFieldWithPowerCoupling", "1Coupling constant"),
-                    cfg.coupling_constant);
-            cfg.coupling_power = get_first_number_value(
-                    problem_parameter_name("2ScalarFieldWithPowerCoupling", "2Coupling power"),
-                    cfg.coupling_power);
+            problem = scalar_field_with_power_coupling_onelab::apply_control_overrides(
+                    std::move(problem),
+                    [&](std::string const& section, std::string const& name) {
+                        return problem_parameter_name(section, name);
+                    },
+                    [&](std::string const& name, double default_value) {
+                        return get_first_number_value(name, default_value);
+                    });
         }
 
         return problem;
@@ -1009,8 +1045,8 @@ private:
                 "Problem name declared in the .silpro file.");
         publish_output_string(
                 "Physics",
-                problem.physics == SupportedPhysics::Magnetostatics
-                        ? "Magnetostatics"
+                problem.physics == SupportedPhysics::LinearMagnetostatics
+                        ? "LinearMagnetostatics"
                         : "ScalarFieldWithPowerCoupling",
                 "Physics",
                 "Physics selected by the .silpro file.");
@@ -1034,179 +1070,77 @@ private:
 
         if (problem.physics == SupportedPhysics::ScalarFieldWithPowerCoupling) {
             [[maybe_unused]] auto const physics
-                    = detail::assemble_scalar_field_hamiltonian(problem.scalar_field);
-            [[maybe_unused]] auto const solver_settings
-                    = detail::assemble_solver_settings(problem.solver_settings);
-            throw std::runtime_error(
-                    "ScalarFieldWithPowerCoupling .silpro files are parsed successfully, but "
-                    "ONELAB "
-                    "execution is not implemented yet in this interface");
+                    = scalar_field_with_power_coupling_onelab::assemble_hamiltonian(problem);
+            scalar_field_with_power_coupling_onelab::run();
+            return;
         }
 
-        run_magnetostatics_problem(problem);
+        run_linear_magnetostatics_problem(problem);
     }
 
-    [[nodiscard]] MagnetostaticsInputs read_magnetostatics_inputs()
+    [[nodiscard]] int read_required_integer_parameter(std::string const& parameter_name)
     {
-        double const current_density_magnitude = read_number_parameter(
-                "Input/90SimiLie/0Coil current density magnitude z [A/m^2]",
+        double const value = read_number_parameter(
+                parameter_name,
                 std::nullopt,
                 std::numeric_limits<double>::quiet_NaN());
-        double const core_mu = read_number_parameter(
-                "Input/90SimiLie/1Core magnetic permeability [H/m]",
-                std::nullopt,
-                std::numeric_limits<double>::quiet_NaN());
-        double const mu0 = 4.e-7 * std::numbers::pi_v<double>;
-
-        if (!(current_density_magnitude > 0.0)) {
-            throw std::runtime_error(
-                    "missing or invalid 'Input/90SimiLie/0Coil current density magnitude z "
-                    "[A/m^2]' ONELAB parameter");
+        if (std::isnan(value)) {
+            throw std::runtime_error("missing ONELAB parameter '" + parameter_name + "'");
         }
-        if (!(core_mu > 0.0)) {
-            throw std::runtime_error(
-                    "missing or invalid 'Input/90SimiLie/1Core magnetic permeability [H/m]' ONELAB "
-                    "parameter");
-        }
-        return {
-                .current_density_magnitude = current_density_magnitude,
-                .core_mu = core_mu,
-                .mu0 = mu0,
-        };
+        return static_cast<int>(std::lround(value));
     }
 
-    [[nodiscard]] MagnetostaticsRegionTags read_magnetostatics_region_tags()
+    void run_linear_magnetostatics_problem(SilproProblem const& problem)
     {
-        auto read_integer_tag = [&](std::string const& parameter_name) {
-            double const value = read_number_parameter(
-                    parameter_name,
-                    std::nullopt,
-                    std::numeric_limits<double>::quiet_NaN());
-            if (std::isnan(value)) {
-                throw std::runtime_error(
-                        "missing ONELAB parameter '" + parameter_name
-                        + "' needed to identify magnetostatics regions");
-            }
-            return static_cast<int>(std::lround(value));
+        client().sendProgress(
+                module_name() + " ONELAB interface: exporting mesh for problem '" + problem.name
+                + "'");
+        std::filesystem::path const mesh_file = export_input_mesh_from_gmsh();
+        auto const inputs = linear_magnetostatics_onelab::read_inputs(
+                problem,
+                [&](std::string const& preferred_parameter,
+                    std::optional<std::string> const& fallback_parameter,
+                    double fallback_value) {
+                    return read_number_parameter(
+                            preferred_parameter,
+                            fallback_parameter,
+                            fallback_value);
+                },
+                [&](std::string const& parameter_name) {
+                    return read_required_integer_parameter(parameter_name);
+                });
+        std::filesystem::path const output_view_file
+                = mesh_file.parent_path() / "similie_linear_magnetostatics_inputs.pos";
+        solvers::StrongFormulationSolverSettings const solver_settings {
+                .max_iterations = problem.solver_settings.max_iterations,
+                .relative_tolerance = problem.solver_settings.relative_tolerance,
+                .jacobi_max_block_size = problem.solver_settings.jacobi_max_block_size,
+                .use_matrix_free = problem.solver_settings.use_matrix_free,
         };
-
-        return {
-                .e_core_tag = read_integer_tag("Input/90SimiLie/2E-core physical tag"),
-                .i_core_tag = read_integer_tag("Input/90SimiLie/3I-core physical tag"),
-                .coil_left_tag = read_integer_tag("Input/90SimiLie/4Left coil physical tag"),
-                .coil_right_tag = read_integer_tag("Input/90SimiLie/5Right coil physical tag"),
-                .air_gap_tag = read_integer_tag("Input/90SimiLie/6Air-gap physical tag"),
-        };
-    }
-
-    void publish_magnetostatics_outputs(
-            std::filesystem::path const& mesh_file,
-            MagnetostaticsInputs const& inputs,
-            solvers::StrongFormulationSolverSettings const& solver_settings,
-            MagnetostaticsResult const& result)
-    {
-        publish_output_string(
-                "Mesh file",
-                mesh_file.string(),
-                "Mesh file",
-                "Mesh file exported by Gmsh for the linear magnetostatics interface.",
-                "file");
-        publish_output_number(
-                "Coil current density magnitude [A/m^2]",
-                inputs.current_density_magnitude,
-                "Coil current density magnitude [A/m^2]",
-                "Current density magnitude read from the ONELAB model inputs.");
-        publish_output_number(
-                "Air permeability [H/m]",
-                inputs.mu0,
-                "Air permeability [H/m]",
-                "Magnetic permeability used in air and coil cells.");
-        publish_output_number(
-                "Core permeability [H/m]",
-                inputs.core_mu,
-                "Core permeability [H/m]",
-                "Magnetic permeability read from the ONELAB model inputs and used in core cells.");
-        publish_output_number(
-                "Number of air cells",
-                static_cast<double>(result.num_air_cells),
-                "Number of air cells",
-                "Number of " + result.topology + " cells tagged as air or air gap.");
-        publish_output_number(
-                "Number of core cells",
-                static_cast<double>(result.num_core_cells),
-                "Number of core cells",
-                "Number of " + result.topology + " cells tagged as core.");
-        publish_output_number(
-                "Number of coil cells",
-                static_cast<double>(result.num_coil_cells),
-                "Number of coil cells",
-                "Number of " + result.topology + " cells tagged as coil.");
-        publish_output_number(
-                "Solver iterations",
-                static_cast<double>(result.solver_diagnostics.iterations),
-                "Solver iterations",
-                "Number of conjugate-gradient iterations performed by the stationary "
-                "strong-formulation solver.");
-        publish_output_string(
-                "Solver backend",
-                solver_settings.use_matrix_free ? "matrix-free" : "assembled-matrix",
-                "Solver backend",
-                "Backend used by the stationary strong-formulation solver.");
-        publish_output_number(
-                "Solver converged",
-                result.solver_diagnostics.converged ? 1.0 : 0.0,
-                "Solver converged",
-                "Equals 1 when the stationary strong-formulation solver met its relative-residual "
-                "target, 0 otherwise.");
-        publish_output_number(
-                "Final residual L2",
-                result.solver_diagnostics.final_residual_l2,
-                "Final residual L2",
-                "Final L2 norm of the strong-formulation residual returned by the stationary "
-                "solver.");
-        publish_output_number(
-                "Final relative residual",
-                result.solver_diagnostics.final_relative_residual,
-                "Final relative residual",
-                "Final residual divided by the initial residual, as returned by the stationary "
-                "solver.");
-        publish_output_number(
-                "Solver optimization wall time [s]",
-                result.solver_diagnostics.optimization_wall_seconds,
-                "Solver optimization wall time [s]",
-                "Wall-clock time spent in the effective iterative optimization, excluding matrix "
-                "and preconditioner assembly.");
-        publish_output_number(
-                "Maximum magnetic vector potential [SI]",
-                result.max_abs_potential,
-                "Maximum magnetic vector potential [SI]",
-                "Maximum absolute value of the computed magnetic vector potential.");
-        publish_output_number(
-                "Maximum magnetic induction [T]",
-                result.max_abs_induction,
-                "Maximum magnetic induction [T]",
-                "Maximum absolute value of the computed magnetic induction.");
-        publish_output_number(
-                "Maximum magnetic field [A/m]",
-                result.max_abs_field,
-                "Maximum magnetic field [A/m]",
-                "Maximum absolute value of the computed magnetic field.");
-        publish_output_number(
-                "Air-gap mean magnetic induction [T]",
-                result.num_air_gap_cells == 0
-                        ? 0.0
-                        : result.air_gap_induction_magnitude_sum
-                                  / static_cast<double>(result.num_air_gap_cells),
-                "Air-gap mean magnetic induction [T]",
-                "Mean magnitude of the magnetic induction over air-gap cells.");
-        publish_output_number(
-                "Mean force density magnitude [N/m^3]",
-                result.num_cells == 0 ? 0.0
-                                      : result.force_density_magnitude_sum
-                                                / static_cast<double>(result.num_cells),
-                "Mean force density magnitude [N/m^3]",
-                "Mean magnitude of the force density over all supported cells.");
-
+        auto const result = linear_magnetostatics_onelab::
+                run(mesh_file,
+                    output_view_file,
+                    inputs,
+                    solver_settings,
+                    [&](std::string const& message) { client().sendInfo(message); });
+        client().sendMergeFileRequest(std::filesystem::absolute(output_view_file).string());
+        linear_magnetostatics_onelab::publish_outputs(
+                mesh_file,
+                inputs,
+                solver_settings,
+                result,
+                [&](std::string const& name,
+                    std::string const& value,
+                    std::string const& label,
+                    std::string const& help,
+                    std::string const& kind) {
+                    publish_output_string(name, value, label, help, kind);
+                },
+                [&](std::string const& name,
+                    double value,
+                    std::string const& label,
+                    std::string const& help) { publish_output_number(name, value, label, help); },
+                [&](std::string const& status) { publish_status(status); });
         std::ostringstream diagnostics_stream;
         diagnostics_stream << "SimiLie solver diagnostics: iterations="
                            << result.solver_diagnostics.iterations
@@ -1214,44 +1148,13 @@ private:
                            << ", final relative residual="
                            << result.solver_diagnostics.final_relative_residual
                            << ", optimization wall time="
-                           << result.solver_diagnostics.optimization_wall_seconds
-                           << " s, air-gap mean |B|="
-                           << (result.num_air_gap_cells == 0
+                           << result.solver_diagnostics.optimization_wall_seconds << " s, mean |f|="
+                           << (result.num_diagnostic_cells == 0
                                        ? 0.0
-                                       : result.air_gap_induction_magnitude_sum
-                                                 / static_cast<double>(result.num_air_gap_cells))
-                           << " T, mean |f|="
-                           << (result.num_cells == 0
-                                       ? 0.0
-                                       : result.force_density_magnitude_sum
-                                                 / static_cast<double>(result.num_cells))
+                                       : result.diagnostic_force_density_magnitude_sum
+                                                 / static_cast<double>(result.num_diagnostic_cells))
                            << " N/m^3";
         client().sendInfo(diagnostics_stream.str());
-        publish_status("Magnetostatics solve completed");
-    }
-
-    void run_magnetostatics_problem(SilproProblem const& problem)
-    {
-        client().sendProgress(
-                module_name() + " ONELAB interface: exporting mesh for problem '" + problem.name
-                + "'");
-        std::filesystem::path const mesh_file = export_input_mesh_from_gmsh();
-        MagnetostaticsInputs const inputs = read_magnetostatics_inputs();
-        MagnetostaticsRegionTags const region_tags = read_magnetostatics_region_tags();
-        std::filesystem::path const output_view_file
-                = mesh_file.parent_path() / "similie_linear_magnetostatics_inputs.pos";
-        solvers::StrongFormulationSolverSettings const solver_settings
-                = detail::assemble_solver_settings(problem.solver_settings);
-        MagnetostaticsResult const result
-                = detail::magnetostatics_local::run_structured_linear_magnetostatics_problem(
-                        mesh_file,
-                        output_view_file,
-                        inputs,
-                        region_tags,
-                        solver_settings,
-                        [&](std::string const& message) { client().sendInfo(message); });
-        client().sendMergeFileRequest(std::filesystem::absolute(output_view_file).string());
-        publish_magnetostatics_outputs(mesh_file, inputs, solver_settings, result);
     }
 
     static void print_usage(char const* program_name)

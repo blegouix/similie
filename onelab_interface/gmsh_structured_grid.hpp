@@ -17,7 +17,7 @@
 #include <variant>
 #include <vector>
 
-namespace sil::mesher::gmsh {
+namespace sil::onelab_interface::gmsh {
 
 constexpr double COORD_TOL = 1.0e-12;
 
@@ -534,4 +534,4 @@ inline StructuredGrid3D build_structured_grid(HexahedralMesh const& mesh)
     return grid;
 }
 
-} // namespace sil::mesher::gmsh
+} // namespace sil::onelab_interface::gmsh

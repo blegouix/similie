@@ -1,0 +1,1117 @@
+// SPDX-FileCopyrightText: 2026 Baptiste Legouix
+// SPDX-License-Identifier: MIT
+
+#pragma once
+
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstddef>
+#include <filesystem>
+#include <fstream>
+#include <functional>
+#include <limits>
+#include <numbers>
+#include <optional>
+#include <string>
+#include <type_traits>
+#include <utility>
+#include <variant>
+#include <vector>
+
+#include <ginkgo/core/base/matrix_data.hpp>
+#include <similie/exterior/coboundary.hpp>
+#include <similie/physics/hamilton_equations.hpp>
+#include <similie/physics/magnetostatics/linear_magnetic_induction_to_magnetic_field.hpp>
+#include <similie/physics/magnetostatics/linear_magnetostatics.hpp>
+#include <similie/physics/magnetostatics/magnetostatics_quantities.hpp>
+#include <similie/solvers/minimize_strong_formulation_residual.hpp>
+
+#include <Kokkos_Core.hpp>
+
+#include "gmsh_structured_grid.hpp"
+
+namespace similie::onelab_interface::linear_magnetostatics_onelab {
+
+struct Inputs
+{
+    double current_density_magnitude = 0.0;
+    double core_mu = 0.0;
+    double mu0 = 0.0;
+    std::vector<int> positive_electrical_conductor_tags;
+    std::vector<int> negative_electrical_conductor_tags;
+    std::vector<int> linear_magnetic_material_tags;
+    std::vector<int> diagnostic_region_tags;
+};
+
+struct Result
+{
+    std::string topology;
+    std::size_t node_count = 0;
+    std::array<std::size_t, 3> mesh_dimensions {0, 0, 0};
+    std::size_t num_cells = 0;
+    std::size_t num_air_cells = 0;
+    std::size_t num_core_cells = 0;
+    std::size_t num_coil_cells = 0;
+    std::size_t num_diagnostic_cells = 0;
+    double max_abs_potential = 0.0;
+    double max_abs_induction = 0.0;
+    double max_abs_field = 0.0;
+    double diagnostic_force_density_magnitude_sum = 0.0;
+    solvers::StrongFormulationSolverDiagnostics solver_diagnostics;
+};
+
+template <class Problem, class ProblemParameterName, class PublishString, class PublishNumber>
+void synchronize_controls(
+        Problem const& problem,
+        ProblemParameterName&& problem_parameter_name,
+        PublishString&& publish_or_sync_string,
+        PublishNumber&& publish_or_sync_number)
+{
+    publish_or_sync_string(
+            problem_parameter_name("2LinearMagnetostatics", "0Preprocess"),
+            "Preprocess",
+            "Linear magnetostatics preprocessing strategy selected in the .silpro file.",
+            problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+                    .name,
+            true);
+    publish_or_sync_string(
+            problem_parameter_name("2LinearMagnetostatics", "1PostProcess"),
+            "PostProcess",
+            "Linear magnetostatics postprocess strategy selected in the .silpro file.",
+            problem.force_density_diagnostics_postprocess.name,
+            true);
+}
+
+template <class Problem, class ReadNumberParameter, class ReadRequiredIntegerParameter>
+Inputs read_inputs(
+        Problem const& problem,
+        ReadNumberParameter&& read_number_parameter,
+        ReadRequiredIntegerParameter&& read_required_integer_parameter)
+{
+    double const current_density_magnitude = read_number_parameter(
+            problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+                    .current_density_z_parameter,
+            std::nullopt,
+            std::numeric_limits<double>::quiet_NaN());
+    double const core_mu = read_number_parameter(
+            problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+                    .magnetic_permeability_parameter,
+            std::nullopt,
+            std::numeric_limits<double>::quiet_NaN());
+    double const mu0 = 4.e-7 * std::numbers::pi_v<double>;
+
+    if (!(current_density_magnitude > 0.0)) {
+        throw std::runtime_error(
+                "missing or invalid 'Input/90SimiLie/0Coil current density magnitude z [A/m^2]' "
+                "ONELAB parameter");
+    }
+    if (!(core_mu > 0.0)) {
+        throw std::runtime_error(
+                "missing or invalid 'Input/90SimiLie/1Core magnetic permeability [H/m]' ONELAB "
+                "parameter");
+    }
+
+    Inputs inputs;
+    inputs.current_density_magnitude = current_density_magnitude;
+    inputs.core_mu = core_mu;
+    inputs.mu0 = mu0;
+    for (std::string const& parameter_name :
+         problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+                 .positive_electrical_conductor_tags) {
+        inputs.positive_electrical_conductor_tags.push_back(
+                read_required_integer_parameter(parameter_name));
+    }
+    for (std::string const& parameter_name :
+         problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+                 .negative_electrical_conductor_tags) {
+        inputs.negative_electrical_conductor_tags.push_back(
+                read_required_integer_parameter(parameter_name));
+    }
+    for (std::string const& parameter_name :
+         problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+                 .linear_magnetic_material_tags) {
+        inputs.linear_magnetic_material_tags.push_back(
+                read_required_integer_parameter(parameter_name));
+    }
+    for (std::string const& parameter_name :
+         problem.force_density_diagnostics_postprocess.diagnostic_region_tags) {
+        inputs.diagnostic_region_tags.push_back(read_required_integer_parameter(parameter_name));
+    }
+    return inputs;
+}
+
+template <class PublishOutputString, class PublishOutputNumber, class PublishStatus>
+void publish_outputs(
+        std::filesystem::path const& mesh_file,
+        Inputs const& inputs,
+        solvers::StrongFormulationSolverSettings const& solver_settings,
+        Result const& result,
+        PublishOutputString&& publish_output_string,
+        PublishOutputNumber&& publish_output_number,
+        PublishStatus&& publish_status)
+{
+    publish_output_string(
+            "Mesh file",
+            mesh_file.string(),
+            "Mesh file",
+            "Mesh file exported by Gmsh for the linear magnetostatics interface.",
+            "file");
+    publish_output_number(
+            "Coil current density magnitude [A/m^2]",
+            inputs.current_density_magnitude,
+            "Coil current density magnitude [A/m^2]",
+            "Current density magnitude read from the ONELAB model inputs.");
+    publish_output_number(
+            "Air permeability [H/m]",
+            inputs.mu0,
+            "Air permeability [H/m]",
+            "Magnetic permeability used in air and coil cells.");
+    publish_output_number(
+            "Core permeability [H/m]",
+            inputs.core_mu,
+            "Core permeability [H/m]",
+            "Magnetic permeability read from the ONELAB model inputs and used in core cells.");
+    publish_output_number(
+            "Number of air cells",
+            static_cast<double>(result.num_air_cells),
+            "Number of air cells",
+            "Number of " + result.topology + " cells tagged as air.");
+    publish_output_number(
+            "Number of core cells",
+            static_cast<double>(result.num_core_cells),
+            "Number of core cells",
+            "Number of " + result.topology + " cells tagged as linear magnetic material.");
+    publish_output_number(
+            "Number of coil cells",
+            static_cast<double>(result.num_coil_cells),
+            "Number of coil cells",
+            "Number of " + result.topology + " cells tagged as conductor.");
+    publish_output_number(
+            "Solver iterations",
+            static_cast<double>(result.solver_diagnostics.iterations),
+            "Solver iterations",
+            "Number of conjugate-gradient iterations performed by the stationary "
+            "strong-formulation solver.");
+    publish_output_string(
+            "Solver backend",
+            solver_settings.use_matrix_free ? "matrix-free" : "assembled-matrix",
+            "Solver backend",
+            "Backend used by the stationary strong-formulation solver.",
+            "generic");
+    publish_output_number(
+            "Solver converged",
+            result.solver_diagnostics.converged ? 1.0 : 0.0,
+            "Solver converged",
+            "Equals 1 when the stationary strong-formulation solver met its relative-residual "
+            "target, 0 otherwise.");
+    publish_output_number(
+            "Final residual L2",
+            result.solver_diagnostics.final_residual_l2,
+            "Final residual L2",
+            "Final L2 norm of the strong-formulation residual returned by the stationary solver.");
+    publish_output_number(
+            "Final relative residual",
+            result.solver_diagnostics.final_relative_residual,
+            "Final relative residual",
+            "Final residual divided by the initial residual, as returned by the stationary "
+            "solver.");
+    publish_output_number(
+            "Solver optimization wall time [s]",
+            result.solver_diagnostics.optimization_wall_seconds,
+            "Solver optimization wall time [s]",
+            "Wall-clock time spent in the effective iterative optimization, excluding matrix and "
+            "preconditioner assembly.");
+    publish_output_number(
+            "Maximum magnetic vector potential [SI]",
+            result.max_abs_potential,
+            "Maximum magnetic vector potential [SI]",
+            "Maximum absolute value of the computed magnetic vector potential.");
+    publish_output_number(
+            "Maximum magnetic induction [T]",
+            result.max_abs_induction,
+            "Maximum magnetic induction [T]",
+            "Maximum absolute value of the computed magnetic induction.");
+    publish_output_number(
+            "Maximum magnetic field [A/m]",
+            result.max_abs_field,
+            "Maximum magnetic field [A/m]",
+            "Maximum absolute value of the computed magnetic field.");
+    publish_output_number(
+            "Mean force density magnitude [N/m^3]",
+            result.num_diagnostic_cells == 0
+                    ? 0.0
+                    : result.diagnostic_force_density_magnitude_sum
+                              / static_cast<double>(result.num_diagnostic_cells),
+            "Mean force density magnitude [N/m^3]",
+            "Mean magnitude of the force density over the configured diagnostic regions.");
+    publish_status("Linear magnetostatics solve completed");
+}
+
+namespace detail {
+
+struct CellInputFields
+{
+    double mu = 0.0;
+    std::array<double, 3> current_density {0.0, 0.0, 0.0};
+};
+
+struct CellPostProcessFields
+{
+    std::array<double, 3> magnetic_induction {0.0, 0.0, 0.0};
+    std::array<double, 3> magnetic_field {0.0, 0.0, 0.0};
+    std::array<double, 6> maxwell_stress {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    std::array<double, 3> force_density {0.0, 0.0, 0.0};
+};
+
+template <class Logger>
+void log_info(Logger&& logger, std::string const& message)
+{
+    if constexpr (std::is_invocable_v<Logger, std::string const&>) {
+        logger(message);
+    }
+}
+
+inline bool has_tag(std::vector<int> const& tags, int physical_tag)
+{
+    return std::find(tags.begin(), tags.end(), physical_tag) != tags.end();
+}
+
+template <class StructuredGrid>
+double centered_first_derivative(
+        std::vector<double> const& coordinates,
+        StructuredGrid&& values,
+        std::size_t index)
+{
+    if (coordinates.size() < 2) {
+        return 0.0;
+    }
+    if (index == 0) {
+        return (values(1) - values(0)) / (coordinates[1] - coordinates[0]);
+    }
+    if (index + 1 == coordinates.size()) {
+        return (values(index) - values(index - 1)) / (coordinates[index] - coordinates[index - 1]);
+    }
+    return (values(index + 1) - values(index - 1))
+           / (coordinates[index + 1] - coordinates[index - 1]);
+}
+
+template <class MemorySpace>
+using coord_view_type = Kokkos::View<double const*, MemorySpace>;
+
+namespace magnetostatics_local {
+
+using physics::magnetostatics::LinearMagnetostaticsHamiltonian;
+using physics::magnetostatics::MagneticVectorPotentialToMagneticInduction;
+using physics::magnetostatics::X;
+using physics::magnetostatics::Y;
+using physics::magnetostatics::detail::InPlaneNu;
+
+struct DDimX
+{
+    using continuous_dimension_type = physics::magnetostatics::X;
+    static constexpr bool PERIODIC = false;
+};
+
+struct DDimY
+{
+    using continuous_dimension_type = physics::magnetostatics::Y;
+    static constexpr bool PERIODIC = false;
+};
+
+using NodeDomain2D = ddc::DiscreteDomain<DDimX, DDimY>;
+using ScalarPotentialIndex = sil::tensor::Covariant<sil::tensor::ScalarIndex>;
+
+template <class MemorySpace>
+using scalar_tensor_alloc_type = ddc::Chunk<
+        double,
+        ddc::DiscreteDomain<DDimX, DDimY, ScalarPotentialIndex>,
+        ddc::KokkosAllocator<double, MemorySpace>>;
+
+template <class MemorySpace>
+using ScalarPotentialTensor2D = sil::tensor::Tensor<
+        double,
+        ddc::DiscreteDomain<DDimX, DDimY, ScalarPotentialIndex>,
+        Kokkos::layout_right,
+        MemorySpace>;
+
+template <class MemorySpace, class Equations>
+class MagnetostaticsOperator2D
+{
+public:
+    using coord_view_type = detail::coord_view_type<MemorySpace>;
+    static constexpr int MOMENT_STENCIL_MAX_SIZE = 4;
+    static constexpr int OUTER_STENCIL_MAX_SIZE = 4;
+
+private:
+    Equations m_equations;
+    coord_view_type m_x_coords;
+    coord_view_type m_y_coords;
+    std::size_t m_nx;
+    std::size_t m_ny;
+    NodeDomain2D m_node_domain;
+    Kokkos::View<int* [MOMENT_STENCIL_MAX_SIZE], MemorySpace> m_moment0_columns;
+    Kokkos::View<double* [MOMENT_STENCIL_MAX_SIZE], MemorySpace> m_moment0_coefficients;
+    Kokkos::View<int* [MOMENT_STENCIL_MAX_SIZE], MemorySpace> m_moment1_columns;
+    Kokkos::View<double* [MOMENT_STENCIL_MAX_SIZE], MemorySpace> m_moment1_coefficients;
+    Kokkos::View<int*, MemorySpace> m_moment0_counts;
+    Kokkos::View<int*, MemorySpace> m_moment1_counts;
+    Kokkos::View<int* [OUTER_STENCIL_MAX_SIZE], MemorySpace> m_outer0_columns;
+    Kokkos::View<double* [OUTER_STENCIL_MAX_SIZE], MemorySpace> m_outer0_coefficients;
+    Kokkos::View<int* [OUTER_STENCIL_MAX_SIZE], MemorySpace> m_outer1_columns;
+    Kokkos::View<double* [OUTER_STENCIL_MAX_SIZE], MemorySpace> m_outer1_coefficients;
+    Kokkos::View<int*, MemorySpace> m_outer0_counts;
+    Kokkos::View<int*, MemorySpace> m_outer1_counts;
+
+public:
+    MagnetostaticsOperator2D(
+            Equations equations,
+            coord_view_type x_coords,
+            coord_view_type y_coords)
+        : m_equations(std::move(equations))
+        , m_x_coords(x_coords)
+        , m_y_coords(y_coords)
+        , m_nx(x_coords.extent(0))
+        , m_ny(y_coords.extent(0))
+        , m_node_domain(
+                  ddc::DiscreteElement<DDimX, DDimY>(0, 0),
+                  ddc::DiscreteVector<DDimX, DDimY>(m_nx, m_ny))
+        , m_moment0_columns("similie_moment0_columns", m_nx * m_ny)
+        , m_moment0_coefficients("similie_moment0_coefficients", m_nx * m_ny)
+        , m_moment1_columns("similie_moment1_columns", m_nx * m_ny)
+        , m_moment1_coefficients("similie_moment1_coefficients", m_nx * m_ny)
+        , m_moment0_counts("similie_moment0_counts", m_nx * m_ny)
+        , m_moment1_counts("similie_moment1_counts", m_nx * m_ny)
+        , m_outer0_columns("similie_outer0_columns", m_nx * m_ny)
+        , m_outer0_coefficients("similie_outer0_coefficients", m_nx * m_ny)
+        , m_outer1_columns("similie_outer1_columns", m_nx * m_ny)
+        , m_outer1_coefficients("similie_outer1_coefficients", m_nx * m_ny)
+        , m_outer0_counts("similie_outer0_counts", m_nx * m_ny)
+        , m_outer1_counts("similie_outer1_counts", m_nx * m_ny)
+    {
+        auto moment0_columns_host = Kokkos::create_mirror_view(m_moment0_columns);
+        auto moment0_coefficients_host = Kokkos::create_mirror_view(m_moment0_coefficients);
+        auto moment1_columns_host = Kokkos::create_mirror_view(m_moment1_columns);
+        auto moment1_coefficients_host = Kokkos::create_mirror_view(m_moment1_coefficients);
+        auto moment0_counts_host = Kokkos::create_mirror_view(m_moment0_counts);
+        auto moment1_counts_host = Kokkos::create_mirror_view(m_moment1_counts);
+        auto outer0_columns_host = Kokkos::create_mirror_view(m_outer0_columns);
+        auto outer0_coefficients_host = Kokkos::create_mirror_view(m_outer0_coefficients);
+        auto outer1_columns_host = Kokkos::create_mirror_view(m_outer1_columns);
+        auto outer1_coefficients_host = Kokkos::create_mirror_view(m_outer1_coefficients);
+        auto outer0_counts_host = Kokkos::create_mirror_view(m_outer0_counts);
+        auto outer1_counts_host = Kokkos::create_mirror_view(m_outer1_counts);
+        using OutputIndex = sil::exterior::
+                coboundary_index_t<sil::tensor::Covariant<InPlaneNu>, ScalarPotentialIndex>;
+        auto const output_y
+                = sil::tensor::TensorAccessor<OutputIndex>().template access_element<Y>();
+        auto const output_x
+                = sil::tensor::TensorAccessor<OutputIndex>().template access_element<X>();
+        for (std::size_t j = 0; j < m_ny; ++j) {
+            for (std::size_t i = 0; i < m_nx; ++i) {
+                std::size_t const row = flat_index(i, j);
+                auto const elem = ddc::DiscreteElement<DDimX, DDimY>(i, j);
+                for (int slot = 0; slot < MOMENT_STENCIL_MAX_SIZE; ++slot) {
+                    moment0_columns_host(row, slot) = 0;
+                    moment0_coefficients_host(row, slot) = 0.0;
+                    moment1_columns_host(row, slot) = 0;
+                    moment1_coefficients_host(row, slot) = 0.0;
+                }
+                for (int slot = 0; slot < OUTER_STENCIL_MAX_SIZE; ++slot) {
+                    outer0_columns_host(row, slot) = 0;
+                    outer0_coefficients_host(row, slot) = 0.0;
+                    outer1_columns_host(row, slot) = 0;
+                    outer1_coefficients_host(row, slot) = 0.0;
+                }
+                int moment0_count = 0;
+                auto moment0_stencil
+                        = MagneticVectorPotentialToMagneticInduction::template forward_value<0>(
+                                elem);
+                ddc::device_for_each(moment0_stencil.domain(), [&](auto stencil_elem) {
+                    double const coeff = moment0_stencil.mem(stencil_elem);
+                    if (coeff == 0.0) {
+                        return;
+                    }
+                    auto const potential_elem = ddc::DiscreteElement<DDimX, DDimY>(stencil_elem);
+                    moment0_columns_host(row, moment0_count) = static_cast<int>(flat_index(
+                            static_cast<std::size_t>(
+                                    ddc::DiscreteElement<DDimX>(potential_elem).uid()),
+                            static_cast<std::size_t>(
+                                    ddc::DiscreteElement<DDimY>(potential_elem).uid())));
+                    moment0_coefficients_host(row, moment0_count) = coeff;
+                    ++moment0_count;
+                });
+                moment0_counts_host(row) = moment0_count;
+
+                int moment1_count = 0;
+                auto moment1_stencil
+                        = MagneticVectorPotentialToMagneticInduction::template forward_value<1>(
+                                elem);
+                ddc::device_for_each(moment1_stencil.domain(), [&](auto stencil_elem) {
+                    double const coeff = moment1_stencil.mem(stencil_elem);
+                    if (coeff == 0.0) {
+                        return;
+                    }
+                    auto const potential_elem = ddc::DiscreteElement<DDimX, DDimY>(stencil_elem);
+                    moment1_columns_host(row, moment1_count) = static_cast<int>(flat_index(
+                            static_cast<std::size_t>(
+                                    ddc::DiscreteElement<DDimX>(potential_elem).uid()),
+                            static_cast<std::size_t>(
+                                    ddc::DiscreteElement<DDimY>(potential_elem).uid())));
+                    moment1_coefficients_host(row, moment1_count) = coeff;
+                    ++moment1_count;
+                });
+                moment1_counts_host(row) = moment1_count;
+
+                auto outer_chain = sil::exterior::tangent_basis<1, NodeDomain2D>(elem);
+                auto outer_lower_chain = sil::exterior::tangent_basis<0, NodeDomain2D>(elem);
+                int outer0_count = 0;
+                auto outer0_stencil = sil::exterior::TransposedCoboundary<
+                        sil::tensor::Covariant<InPlaneNu>,
+                        ScalarPotentialIndex>::
+                        value([](auto, auto) { return 0.0; },
+                              outer_chain,
+                              outer_lower_chain,
+                              elem,
+                              output_y);
+                ddc::device_for_each(outer0_stencil.domain(), [&](auto stencil_elem) {
+                    double const coeff = outer0_stencil.mem(stencil_elem);
+                    if (coeff == 0.0) {
+                        return;
+                    }
+                    auto const potential_elem = ddc::DiscreteElement<DDimX, DDimY>(stencil_elem);
+                    outer0_columns_host(row, outer0_count) = static_cast<int>(flat_index(
+                            static_cast<std::size_t>(
+                                    ddc::DiscreteElement<DDimX>(potential_elem).uid()),
+                            static_cast<std::size_t>(
+                                    ddc::DiscreteElement<DDimY>(potential_elem).uid())));
+                    outer0_coefficients_host(row, outer0_count) = coeff;
+                    ++outer0_count;
+                });
+                outer0_counts_host(row) = outer0_count;
+
+                int outer1_count = 0;
+                auto outer1_stencil = sil::exterior::TransposedCoboundary<
+                        sil::tensor::Covariant<InPlaneNu>,
+                        ScalarPotentialIndex>::
+                        value([](auto, auto) { return 0.0; },
+                              outer_chain,
+                              outer_lower_chain,
+                              elem,
+                              output_x);
+                ddc::device_for_each(outer1_stencil.domain(), [&](auto stencil_elem) {
+                    double const coeff = -outer1_stencil.mem(stencil_elem);
+                    if (coeff == 0.0) {
+                        return;
+                    }
+                    auto const potential_elem = ddc::DiscreteElement<DDimX, DDimY>(stencil_elem);
+                    outer1_columns_host(row, outer1_count) = static_cast<int>(flat_index(
+                            static_cast<std::size_t>(
+                                    ddc::DiscreteElement<DDimX>(potential_elem).uid()),
+                            static_cast<std::size_t>(
+                                    ddc::DiscreteElement<DDimY>(potential_elem).uid())));
+                    outer1_coefficients_host(row, outer1_count) = coeff;
+                    ++outer1_count;
+                });
+                outer1_counts_host(row) = outer1_count;
+            }
+        }
+        Kokkos::deep_copy(m_moment0_columns, moment0_columns_host);
+        Kokkos::deep_copy(m_moment0_coefficients, moment0_coefficients_host);
+        Kokkos::deep_copy(m_moment1_columns, moment1_columns_host);
+        Kokkos::deep_copy(m_moment1_coefficients, moment1_coefficients_host);
+        Kokkos::deep_copy(m_moment0_counts, moment0_counts_host);
+        Kokkos::deep_copy(m_moment1_counts, moment1_counts_host);
+        Kokkos::deep_copy(m_outer0_columns, outer0_columns_host);
+        Kokkos::deep_copy(m_outer0_coefficients, outer0_coefficients_host);
+        Kokkos::deep_copy(m_outer1_columns, outer1_columns_host);
+        Kokkos::deep_copy(m_outer1_coefficients, outer1_coefficients_host);
+        Kokkos::deep_copy(m_outer0_counts, outer0_counts_host);
+        Kokkos::deep_copy(m_outer1_counts, outer1_counts_host);
+    }
+
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION std::size_t size() const
+    {
+        return m_nx * m_ny;
+    }
+
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION bool is_boundary_node(std::size_t i, std::size_t j) const
+    {
+        return i == 0 || j == 0 || i + 1 == m_nx || j + 1 == m_ny;
+    }
+
+    template <class ExecSpace, class InputView, class OutputView>
+    void apply(ExecSpace exec_space, InputView input, OutputView output) const
+    {
+        ddc::parallel_for_each(
+                exec_space,
+                m_node_domain,
+                KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
+                    std::size_t const i
+                            = static_cast<std::size_t>(ddc::DiscreteElement<DDimX>(elem).uid());
+                    std::size_t const j
+                            = static_cast<std::size_t>(ddc::DiscreteElement<DDimY>(elem).uid());
+                    std::size_t const row = i + m_nx * j;
+                    if (is_boundary_node(i, j)) {
+                        output(row, 0) = input(row, 0);
+                        return;
+                    }
+
+                    double residual = 0.0;
+                    for (int slot = 0; slot < m_outer0_counts(row); ++slot) {
+                        double const outer_coefficient = m_outer0_coefficients(row, slot);
+                        std::size_t const sampled_row
+                                = static_cast<std::size_t>(m_outer0_columns(row, slot));
+                        auto const sampled_elem = ddc::DiscreteElement<
+                                DDimX,
+                                DDimY>(sampled_row % m_nx, sampled_row / m_nx);
+                        double moment = 0.0;
+                        for (int k = 0; k < m_moment0_counts(sampled_row); ++k) {
+                            moment += m_moment0_coefficients(sampled_row, k)
+                                      * input(static_cast<std::size_t>(
+                                                      m_moment0_columns(sampled_row, k)),
+                                              0);
+                        }
+                        residual -= outer_coefficient
+                                    * m_equations.template dpotential_dt<0>(moment, sampled_elem);
+                    }
+                    for (int slot = 0; slot < m_outer1_counts(row); ++slot) {
+                        double const outer_coefficient = m_outer1_coefficients(row, slot);
+                        std::size_t const sampled_row
+                                = static_cast<std::size_t>(m_outer1_columns(row, slot));
+                        auto const sampled_elem = ddc::DiscreteElement<
+                                DDimX,
+                                DDimY>(sampled_row % m_nx, sampled_row / m_nx);
+                        double moment = 0.0;
+                        for (int k = 0; k < m_moment1_counts(sampled_row); ++k) {
+                            moment += m_moment1_coefficients(sampled_row, k)
+                                      * input(static_cast<std::size_t>(
+                                                      m_moment1_columns(sampled_row, k)),
+                                              0);
+                        }
+                        residual -= outer_coefficient
+                                    * m_equations.template dpotential_dt<1>(moment, sampled_elem);
+                    }
+                    output(row, 0) = residual;
+                });
+    }
+
+    [[nodiscard]] Equations const& equations() const
+    {
+        return m_equations;
+    }
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION coord_view_type x_coords() const
+    {
+        return m_x_coords;
+    }
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION coord_view_type y_coords() const
+    {
+        return m_y_coords;
+    }
+
+private:
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION std::size_t flat_index(std::size_t i, std::size_t j) const
+    {
+        return i + m_nx * j;
+    }
+};
+
+template <class MemorySpace, class Equations>
+gko::matrix_data<double, gko::int32> assemble_matrix_data(
+        MagnetostaticsOperator2D<MemorySpace, Equations> const& operator_model)
+{
+    std::size_t const size = operator_model.size();
+    Kokkos::DefaultExecutionSpace exec_space;
+    Kokkos::View<double* [16]> coefficients("similie_magnetostatics_matrix_coefficients", size);
+    Kokkos::View<int* [16]> columns("similie_magnetostatics_matrix_columns", size);
+    Kokkos::View<int*> counts("similie_magnetostatics_matrix_counts", size);
+
+    auto equations = operator_model.equations();
+    std::size_t const nx = operator_model.x_coords().extent(0);
+    std::size_t const ny = operator_model.y_coords().extent(0);
+    auto node_domain = ddc::DiscreteDomain<DDimX, DDimY>(
+            ddc::DiscreteElement<DDimX, DDimY>(0, 0),
+            ddc::DiscreteVector<DDimX, DDimY>(nx, ny));
+    using OutputIndex = sil::exterior::
+            coboundary_index_t<sil::tensor::Covariant<InPlaneNu>, ScalarPotentialIndex>;
+    auto const output_y = sil::tensor::TensorAccessor<OutputIndex>().template access_element<Y>();
+    auto const output_x = sil::tensor::TensorAccessor<OutputIndex>().template access_element<X>();
+
+    ddc::parallel_for_each(
+            "similie_assemble_magnetostatics_matrix",
+            exec_space,
+            node_domain,
+            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
+                std::size_t const i
+                        = static_cast<std::size_t>(ddc::DiscreteElement<DDimX>(elem).uid());
+                std::size_t const j
+                        = static_cast<std::size_t>(ddc::DiscreteElement<DDimY>(elem).uid());
+                std::size_t const row = i + nx * j;
+
+                auto set_entry = [&](int slot, std::size_t column, double value) {
+                    columns(row, slot) = static_cast<int>(column);
+                    coefficients(row, slot) = value;
+                };
+                auto add_entry = [&](int& count, std::size_t column, double value) {
+                    for (int slot = 0; slot < count; ++slot) {
+                        if (columns(row, slot) == static_cast<int>(column)) {
+                            coefficients(row, slot) += value;
+                            return;
+                        }
+                    }
+                    columns(row, count) = static_cast<int>(column);
+                    coefficients(row, count) = value;
+                    ++count;
+                };
+
+                for (int slot = 0; slot < 16; ++slot) {
+                    set_entry(slot, row, 0.0);
+                }
+
+                if (i == 0 || j == 0 || i + 1 == nx || j + 1 == ny) {
+                    counts(row) = 1;
+                    set_entry(0, row, 1.0);
+                    return;
+                }
+
+                auto outer_chain = sil::exterior::tangent_basis<1, NodeDomain2D>(elem);
+                auto outer_lower_chain = sil::exterior::tangent_basis<0, NodeDomain2D>(elem);
+
+                int count = 0;
+                auto outer0_stencil = sil::exterior::TransposedCoboundary<
+                        sil::tensor::Covariant<InPlaneNu>,
+                        ScalarPotentialIndex>::
+                        value([](auto, auto) { return 0.0; },
+                              outer_chain,
+                              outer_lower_chain,
+                              elem,
+                              output_y);
+                ddc::device_for_each(outer0_stencil.domain(), [&](auto stencil_elem) {
+                    double const outer_coeff = outer0_stencil.mem(stencil_elem);
+                    if (outer_coeff == 0.0) {
+                        return;
+                    }
+                    auto const sampled_elem = ddc::DiscreteElement<DDimX, DDimY>(stencil_elem);
+                    auto moments_stencil = equations.template dpotential_dt_value<0>(sampled_elem);
+                    ddc::device_for_each(moments_stencil.domain(), [&](auto moments_elem) {
+                        double const value = -outer_coeff * moments_stencil.mem(moments_elem);
+                        if (value == 0.0) {
+                            return;
+                        }
+                        auto const potential_elem
+                                = ddc::DiscreteElement<DDimX, DDimY>(moments_elem);
+                        std::size_t const column
+                                = static_cast<std::size_t>(
+                                          ddc::DiscreteElement<DDimX>(potential_elem).uid())
+                                  + nx
+                                            * static_cast<std::size_t>(
+                                                    ddc::DiscreteElement<DDimY>(potential_elem)
+                                                            .uid());
+                        add_entry(count, column, value);
+                    });
+                });
+                auto outer1_stencil = sil::exterior::TransposedCoboundary<
+                        sil::tensor::Covariant<InPlaneNu>,
+                        ScalarPotentialIndex>::
+                        value([](auto, auto) { return 0.0; },
+                              outer_chain,
+                              outer_lower_chain,
+                              elem,
+                              output_x);
+                ddc::device_for_each(outer1_stencil.domain(), [&](auto stencil_elem) {
+                    double const outer_coeff = -outer1_stencil.mem(stencil_elem);
+                    if (outer_coeff == 0.0) {
+                        return;
+                    }
+                    auto const sampled_elem = ddc::DiscreteElement<DDimX, DDimY>(stencil_elem);
+                    auto moments_stencil = equations.template dpotential_dt_value<1>(sampled_elem);
+                    ddc::device_for_each(moments_stencil.domain(), [&](auto moments_elem) {
+                        double const value = -outer_coeff * moments_stencil.mem(moments_elem);
+                        if (value == 0.0) {
+                            return;
+                        }
+                        auto const potential_elem
+                                = ddc::DiscreteElement<DDimX, DDimY>(moments_elem);
+                        std::size_t const column
+                                = static_cast<std::size_t>(
+                                          ddc::DiscreteElement<DDimX>(potential_elem).uid())
+                                  + nx
+                                            * static_cast<std::size_t>(
+                                                    ddc::DiscreteElement<DDimY>(potential_elem)
+                                                            .uid());
+                        add_entry(count, column, value);
+                    });
+                });
+                counts(row) = count;
+            });
+    exec_space.fence();
+
+    auto coefficients_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), coefficients);
+    auto columns_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), columns);
+    auto counts_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), counts);
+
+    gko::matrix_data<double, gko::int32> matrix_data(gko::dim<2>(size, size));
+    matrix_data.nonzeros.reserve(size * 16);
+    for (std::size_t row = 0; row < size; ++row) {
+        for (int slot = 0; slot < counts_host(row); ++slot) {
+            double const coefficient = coefficients_host(row, slot);
+            if (coefficient != 0.0) {
+                matrix_data.nonzeros.emplace_back(
+                        static_cast<gko::int32>(row),
+                        static_cast<gko::int32>(columns_host(row, slot)),
+                        coefficient);
+            }
+        }
+    }
+    return matrix_data;
+}
+
+} // namespace magnetostatics_local
+
+inline void write_results_view(
+        std::filesystem::path const& output_view_file,
+        sil::onelab_interface::gmsh::StructuredGrid2D const& grid,
+        std::vector<CellInputFields> const& cell_inputs,
+        std::vector<double> const& magnetic_vector_potential)
+{
+    std::ofstream stream(output_view_file);
+    if (!stream.is_open()) {
+        throw std::runtime_error("failed to open output view file: " + output_view_file.string());
+    }
+
+    stream << "View \"SimiLie linear magnetostatics permeability\" {\n";
+    for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
+        for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
+            auto const& cell_input = cell_inputs[grid.cell_index(i, j)];
+            stream << "SP(" << grid.cell_center_x(i) << "," << grid.cell_center_y(j) << ","
+                   << grid.z_value << "){" << cell_input.mu << "};\n";
+        }
+    }
+    stream << "};\n";
+
+    stream << "View \"SimiLie linear magnetostatics current density\" {\n";
+    for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
+        for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
+            auto const& cell_input = cell_inputs[grid.cell_index(i, j)];
+            stream << "VP(" << grid.cell_center_x(i) << "," << grid.cell_center_y(j) << ","
+                   << grid.z_value << "){" << cell_input.current_density[0] << ","
+                   << cell_input.current_density[1] << "," << cell_input.current_density[2]
+                   << "};\n";
+        }
+    }
+    stream << "};\n";
+
+    stream << "View \"SimiLie linear magnetostatics magnetic vector potential\" {\n";
+    for (std::size_t j = 0; j < grid.ny(); ++j) {
+        for (std::size_t i = 0; i < grid.nx(); ++i) {
+            std::size_t const node_index = grid.node_index(i, j);
+            stream << "VP(" << grid.x_coords[i] << "," << grid.y_coords[j] << "," << grid.z_value
+                   << "){0,0," << magnetic_vector_potential[3 * node_index + 2] << "};\n";
+        }
+    }
+    stream << "};\n";
+}
+
+template <class Logger>
+Result run_on_quadrilateral_grid(
+        std::filesystem::path const& output_view_file,
+        Inputs const& inputs,
+        solvers::StrongFormulationSolverSettings const& solver_settings,
+        sil::onelab_interface::gmsh::QuadrilateralMesh const& mesh,
+        Logger&& logger)
+{
+    sil::onelab_interface::gmsh::StructuredGrid2D const grid
+            = sil::onelab_interface::gmsh::build_structured_grid(mesh);
+    log_info(
+            logger,
+            "SimiLie structured rectilinear quadrilateral mesh validated ("
+                    + std::to_string(grid.ordered_nodes.size()) + " nodes, dimensions="
+                    + std::to_string(grid.nx()) + "x" + std::to_string(grid.ny()) + ")");
+
+    Result result;
+    result.topology = "quadrilateral";
+    result.node_count = grid.ordered_nodes.size();
+    result.mesh_dimensions = {grid.nx(), grid.ny(), 1};
+    result.num_cells = grid.ncell_x() * grid.ncell_y();
+
+    std::vector<CellInputFields> cell_inputs(result.num_cells);
+    for (std::size_t cell_index = 0; cell_index < result.num_cells; ++cell_index) {
+        CellInputFields field {.mu = inputs.mu0, .current_density = {0.0, 0.0, 0.0}};
+        int const physical_tag = grid.ordered_cells[cell_index].physical_tag;
+        if (has_tag(inputs.linear_magnetic_material_tags, physical_tag)) {
+            field.mu = inputs.core_mu;
+            ++result.num_core_cells;
+        } else if (has_tag(inputs.positive_electrical_conductor_tags, physical_tag)) {
+            field.current_density[2] = inputs.current_density_magnitude;
+            ++result.num_coil_cells;
+        } else if (has_tag(inputs.negative_electrical_conductor_tags, physical_tag)) {
+            field.current_density[2] = -inputs.current_density_magnitude;
+            ++result.num_coil_cells;
+        } else {
+            ++result.num_air_cells;
+        }
+        cell_inputs[cell_index] = field;
+    }
+
+    Kokkos::View<double*> x_coords("similie_x_coords", grid.nx());
+    Kokkos::View<double*> y_coords("similie_y_coords", grid.ny());
+    auto x_coords_host = Kokkos::create_mirror_view(x_coords);
+    auto y_coords_host = Kokkos::create_mirror_view(y_coords);
+    for (std::size_t i = 0; i < grid.nx(); ++i) {
+        x_coords_host(i) = grid.x_coords[i];
+    }
+    for (std::size_t j = 0; j < grid.ny(); ++j) {
+        y_coords_host(j) = grid.y_coords[j];
+    }
+    Kokkos::deep_copy(x_coords, x_coords_host);
+    Kokkos::deep_copy(y_coords, y_coords_host);
+
+    std::size_t const num_nodes = grid.nx() * grid.ny();
+    Kokkos::View<double**> rhs("similie_rhs", num_nodes, 1);
+    Kokkos::View<double**> magnetic_vector_potential_z_view("similie_Az", num_nodes, 1);
+    auto rhs_host = Kokkos::create_mirror_view(rhs);
+    for (std::size_t j = 0; j < grid.ny(); ++j) {
+        for (std::size_t i = 0; i < grid.nx(); ++i) {
+            std::size_t const node_index = grid.node_index(i, j);
+            bool const boundary = (i == 0 || j == 0 || i + 1 == grid.nx() || j + 1 == grid.ny());
+            if (boundary) {
+                rhs_host(node_index, 0) = 0.0;
+                continue;
+            }
+            double accumulated_current_density_z = 0.0;
+            std::size_t count = 0;
+            for (int dj = -1; dj <= 0; ++dj) {
+                for (int di = -1; di <= 0; ++di) {
+                    std::ptrdiff_t const ci = static_cast<std::ptrdiff_t>(i) + di;
+                    std::ptrdiff_t const cj = static_cast<std::ptrdiff_t>(j) + dj;
+                    if (ci < 0 || cj < 0 || ci >= static_cast<std::ptrdiff_t>(grid.ncell_x())
+                        || cj >= static_cast<std::ptrdiff_t>(grid.ncell_y())) {
+                        continue;
+                    }
+                    accumulated_current_density_z
+                            += cell_inputs[grid.cell_index(
+                                                   static_cast<std::size_t>(ci),
+                                                   static_cast<std::size_t>(cj))]
+                                       .current_density[2];
+                    ++count;
+                }
+            }
+            rhs_host(node_index, 0) = count == 0 ? 0.0
+                                                 : inputs.mu0 * accumulated_current_density_z
+                                                           / static_cast<double>(count);
+        }
+    }
+    Kokkos::deep_copy(rhs, rhs_host);
+    log_info(logger, "SimiLie right-hand side assembled on rectilinear nodes");
+
+    using memory_space = typename Kokkos::DefaultExecutionSpace::memory_space;
+    magnetostatics_local::scalar_tensor_alloc_type<memory_space> mu_alloc(
+            ddc::DiscreteDomain<
+                    magnetostatics_local::DDimX,
+                    magnetostatics_local::DDimY,
+                    magnetostatics_local::ScalarPotentialIndex>(
+                    ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(
+                            ddc::DiscreteElement<
+                                    magnetostatics_local::DDimX,
+                                    magnetostatics_local::DDimY>(0, 0),
+                            ddc::DiscreteVector<
+                                    magnetostatics_local::DDimX,
+                                    magnetostatics_local::DDimY>(grid.nx(), grid.ny())),
+                    sil::tensor::TensorAccessor<magnetostatics_local::ScalarPotentialIndex>()
+                            .domain()),
+            ddc::KokkosAllocator<double, memory_space>());
+    magnetostatics_local::ScalarPotentialTensor2D<memory_space> mu_tensor(mu_alloc);
+    auto mu_host = Kokkos::create_mirror_view(mu_alloc.allocation_kokkos_view());
+    for (std::size_t j = 0; j < grid.ny(); ++j) {
+        for (std::size_t i = 0; i < grid.nx(); ++i) {
+            double accumulated_mu = 0.0;
+            std::size_t count = 0;
+            for (int dj = -1; dj <= 0; ++dj) {
+                for (int di = -1; di <= 0; ++di) {
+                    std::ptrdiff_t const ci = static_cast<std::ptrdiff_t>(i) + di;
+                    std::ptrdiff_t const cj = static_cast<std::ptrdiff_t>(j) + dj;
+                    if (ci < 0 || cj < 0 || ci >= static_cast<std::ptrdiff_t>(grid.ncell_x())
+                        || cj >= static_cast<std::ptrdiff_t>(grid.ncell_y())) {
+                        continue;
+                    }
+                    accumulated_mu += cell_inputs[grid.cell_index(
+                                                          static_cast<std::size_t>(ci),
+                                                          static_cast<std::size_t>(cj))]
+                                              .mu;
+                    ++count;
+                }
+            }
+            mu_host(i, j, 0)
+                    = count == 0 ? inputs.mu0 : accumulated_mu / static_cast<double>(count);
+        }
+    }
+    Kokkos::deep_copy(mu_alloc.allocation_kokkos_view(), mu_host);
+
+    auto const hamiltonian = magnetostatics_local::LinearMagnetostaticsHamiltonian(mu_tensor);
+    auto const equations = physics::HamiltonEquations {hamiltonian};
+    auto const operator_model = magnetostatics_local::MagnetostaticsOperator2D<
+            memory_space,
+            decltype(equations)>(equations, x_coords, y_coords);
+    log_info(
+            logger,
+            solver_settings.use_matrix_free
+                    ? "SimiLie starting matrix-free preconditioned conjugate-gradient solve"
+                    : "SimiLie starting assembled-matrix Ginkgo preconditioned conjugate-gradient "
+                      "solve");
+    result.solver_diagnostics = solvers::minimize_strong_formulation_residual(
+            Kokkos::DefaultExecutionSpace(),
+            operator_model,
+            rhs,
+            magnetic_vector_potential_z_view,
+            solver_settings);
+    log_info(
+            logger,
+            solver_settings.use_matrix_free
+                    ? "SimiLie matrix-free preconditioned conjugate-gradient solve finished"
+                    : "SimiLie assembled-matrix Ginkgo preconditioned conjugate-gradient solve "
+                      "finished");
+
+    auto magnetic_vector_potential_z_host = Kokkos::
+            create_mirror_view_and_copy(Kokkos::HostSpace(), magnetic_vector_potential_z_view);
+    std::vector<double> magnetic_vector_potential(3 * num_nodes, 0.0);
+    for (std::size_t j = 0; j < grid.ny(); ++j) {
+        for (std::size_t i = 0; i < grid.nx(); ++i) {
+            std::size_t const node_index = grid.node_index(i, j);
+            magnetic_vector_potential[3 * node_index + 2]
+                    = magnetic_vector_potential_z_host(node_index, 0);
+        }
+    }
+
+    for (double value : magnetic_vector_potential) {
+        result.max_abs_potential = std::max(result.max_abs_potential, std::abs(value));
+    }
+    log_info(logger, "SimiLie starting magnetostatics post-processing");
+
+    auto node_value_z = [&](std::size_t i, std::size_t j) {
+        return magnetic_vector_potential[3 * grid.node_index(i, j) + 2];
+    };
+    auto derivative_az_at_cell = [&](std::size_t i, std::size_t j, char axis) {
+        if (axis == 'x') {
+            double const dx = grid.x_coords[i + 1] - grid.x_coords[i];
+            return ((node_value_z(i + 1, j) - node_value_z(i, j))
+                    + (node_value_z(i + 1, j + 1) - node_value_z(i, j + 1)))
+                   / (2.0 * dx);
+        }
+        double const dy = grid.y_coords[j + 1] - grid.y_coords[j];
+        return ((node_value_z(i, j + 1) - node_value_z(i, j))
+                + (node_value_z(i + 1, j + 1) - node_value_z(i + 1, j)))
+               / (2.0 * dy);
+    };
+
+    std::vector<CellPostProcessFields> cell_outputs(result.num_cells);
+    for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
+        for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
+            std::size_t const cell_index = grid.cell_index(i, j);
+            double const d_az_dx = derivative_az_at_cell(i, j, 'x');
+            double const d_az_dy = derivative_az_at_cell(i, j, 'y');
+            double const bx = d_az_dy;
+            double const by = -d_az_dx;
+            double const bz = 0.0;
+            physics::magnetostatics::LinearMagneticInductionToMagneticField constitutive_law(
+                    cell_inputs[cell_index].mu);
+            double const hx = constitutive_law.forward(1.0, bx);
+            double const hy = constitutive_law.forward(1.0, by);
+            double const hz = 0.0;
+
+            CellPostProcessFields cell_output {};
+            cell_output.magnetic_induction = {bx, by, bz};
+            cell_output.magnetic_field = {hx, hy, hz};
+            double const half_trace = 0.5 * (bx * hx + by * hy + bz * hz);
+            cell_output.maxwell_stress = {
+                    bx * hx - half_trace,
+                    by * hy - half_trace,
+                    bz * hz - half_trace,
+                    bx * hy,
+                    bx * hz,
+                    by * hz,
+            };
+            cell_outputs[cell_index] = cell_output;
+
+            for (double value : cell_output.magnetic_induction) {
+                result.max_abs_induction = std::max(result.max_abs_induction, std::abs(value));
+            }
+            for (double value : cell_output.magnetic_field) {
+                result.max_abs_field = std::max(result.max_abs_field, std::abs(value));
+            }
+        }
+    }
+
+    std::vector<double> cell_x_coords(grid.ncell_x());
+    std::vector<double> cell_y_coords(grid.ncell_y());
+    for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
+        cell_x_coords[i] = grid.cell_center_x(i);
+    }
+    for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
+        cell_y_coords[j] = grid.cell_center_y(j);
+    }
+    auto stress_component = [&](std::size_t i, std::size_t j, std::size_t component) {
+        return cell_outputs[grid.cell_index(i, j)].maxwell_stress[component];
+    };
+    for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
+        for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
+            auto derivative = [&](std::size_t component, char axis) {
+                if (axis == 'x') {
+                    return detail::centered_first_derivative(
+                            cell_x_coords,
+                            [&](std::size_t index) {
+                                std::size_t const clamped = std::min(index, grid.ncell_x() - 1);
+                                return stress_component(clamped, j, component);
+                            },
+                            i);
+                }
+                return detail::centered_first_derivative(
+                        cell_y_coords,
+                        [&](std::size_t index) {
+                            std::size_t const clamped = std::min(index, grid.ncell_y() - 1);
+                            return stress_component(i, clamped, component);
+                        },
+                        j);
+            };
+            std::array<double, 3>& force_density
+                    = cell_outputs[grid.cell_index(i, j)].force_density;
+            force_density[0] = derivative(0, 'x') + derivative(3, 'y');
+            force_density[1] = derivative(3, 'x') + derivative(1, 'y');
+            force_density[2] = derivative(4, 'x') + derivative(5, 'y');
+            if (has_tag(inputs.diagnostic_region_tags,
+                        grid.ordered_cells[grid.cell_index(i, j)].physical_tag)) {
+                result.diagnostic_force_density_magnitude_sum += std::sqrt(
+                        force_density[0] * force_density[0] + force_density[1] * force_density[1]
+                        + force_density[2] * force_density[2]);
+                ++result.num_diagnostic_cells;
+            }
+        }
+    }
+
+    write_results_view(output_view_file, grid, cell_inputs, magnetic_vector_potential);
+    log_info(logger, "SimiLie magnetostatics post-processing exported");
+    return result;
+}
+
+} // namespace detail
+
+template <class Logger>
+Result run(
+        std::filesystem::path const& mesh_file,
+        std::filesystem::path const& output_view_file,
+        Inputs const& inputs,
+        solvers::StrongFormulationSolverSettings const& solver_settings,
+        Logger&& logger)
+{
+    auto const mesh = sil::onelab_interface::gmsh::parse_supported_msh2_mesh(mesh_file);
+    if (std::holds_alternative<sil::onelab_interface::gmsh::QuadrilateralMesh>(mesh)) {
+        return detail::run_on_quadrilateral_grid(
+                output_view_file,
+                inputs,
+                solver_settings,
+                std::get<sil::onelab_interface::gmsh::QuadrilateralMesh>(mesh),
+                std::forward<Logger>(logger));
+    }
+    throw std::runtime_error("SimiLie - 3D magnetostatics restore is not implemented yet");
+}
+
+} // namespace similie::onelab_interface::linear_magnetostatics_onelab
