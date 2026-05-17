@@ -28,11 +28,36 @@ public:
         return m_hamiltonian.template dH_dmoments<I>(spatial_moments_component);
     }
 
+    template <std::size_t I, class Elem>
+    [[nodiscard]] constexpr double dpotential_dt(double spatial_moments_component, Elem elem) const
+    {
+        if constexpr (requires(Hamiltonian const& h) {
+                          h.template dH_dmoments<I>(spatial_moments_component, elem);
+                      }) {
+            return m_hamiltonian.template dH_dmoments<I>(spatial_moments_component, elem);
+        } else {
+            static_cast<void>(elem);
+            return m_hamiltonian.template dH_dmoments<I>(spatial_moments_component);
+        }
+    }
+
     template <std::size_t I>
     [[nodiscard]] constexpr double dmoments_dt(double potential) const
     {
         static_cast<void>(I);
         return -m_hamiltonian.dH_dpotential(potential);
+    }
+
+    template <std::size_t I, class Elem>
+    [[nodiscard]] constexpr double dmoments_dt(double potential, Elem elem) const
+    {
+        static_cast<void>(I);
+        if constexpr (requires(Hamiltonian const& h) { h.dH_dpotential(potential, elem); }) {
+            return -m_hamiltonian.dH_dpotential(potential, elem);
+        } else {
+            static_cast<void>(elem);
+            return -m_hamiltonian.dH_dpotential(potential);
+        }
     }
 
     template <std::size_t I, class Elem>

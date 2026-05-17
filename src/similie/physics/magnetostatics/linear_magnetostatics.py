@@ -26,6 +26,11 @@ class LinearMagnetostaticsHamiltonian:
             variables=[A, B, j],
             includes=["<similie/physics/magnetostatics/magnetostatics_quantities.hpp>"],
             moments_computer="MagneticVectorPotentialToMagneticInduction",
+            template_parameters=["class MuTensor"],
+            parameter_types={"mu": "MuTensor"},
+            parameter_value_expressions={
+                "mu": "m_mu(elem, ddc::DiscreteElement<sil::tensor::Covariant<sil::tensor::ScalarIndex>>(0))"
+            },
         )
 
 

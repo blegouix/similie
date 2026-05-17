@@ -61,12 +61,28 @@ TEST(OnelabInterface, HamiltonEquationsStaticPotentialDerivative)
 {
     using similie::physics::HamiltonEquations;
     using similie::physics::magnetostatics::LinearMagnetostaticsHamiltonian;
+    using namespace similie::onelab_interface::detail::magnetostatics_local;
 
-    HamiltonEquations const equations(LinearMagnetostaticsHamiltonian(2.0));
+    using memory_space = typename Kokkos::DefaultExecutionSpace::memory_space;
+    scalar_tensor_alloc_type<memory_space> mu_alloc(
+            ddc::DiscreteDomain<DDimX, DDimY, ScalarPotentialIndex>(
+                    ddc::DiscreteDomain<DDimX, DDimY>(
+                            ddc::DiscreteElement<DDimX, DDimY>(0, 0),
+                            ddc::DiscreteVector<DDimX, DDimY>(1, 1)),
+                    sil::tensor::TensorAccessor<ScalarPotentialIndex>().domain()),
+            ddc::KokkosAllocator<double, memory_space>());
+    ScalarPotentialTensor2D<memory_space> mu_tensor(mu_alloc);
+    auto mu_host = Kokkos::create_mirror_view(mu_alloc.allocation_kokkos_view());
+    mu_host(0, 0, 0) = 2.0;
+    Kokkos::deep_copy(mu_alloc.allocation_kokkos_view(), mu_host);
 
-    EXPECT_DOUBLE_EQ(equations.template dpotential_dt<0>(4.0), 2.0);
-    EXPECT_DOUBLE_EQ(equations.template dpotential_dt<1>(6.0), 3.0);
-    EXPECT_DOUBLE_EQ(equations.template dpotential_dt<2>(8.0), 4.0);
+    auto const hamiltonian = LinearMagnetostaticsHamiltonian(mu_tensor);
+    auto const equations = HamiltonEquations {hamiltonian};
+    auto const elem = ddc::DiscreteElement<DDimX, DDimY>(0, 0);
+
+    EXPECT_DOUBLE_EQ(equations.template dpotential_dt<0>(4.0, elem), 2.0);
+    EXPECT_DOUBLE_EQ(equations.template dpotential_dt<1>(6.0, elem), 3.0);
+    EXPECT_DOUBLE_EQ(equations.template dpotential_dt<2>(8.0, elem), 4.0);
 }
 
 TEST(OnelabInterface, HamiltonEquationsStaticMomentumDerivative)
@@ -119,8 +135,26 @@ TEST(OnelabInterface, MagnetostaticsLocalOperatorMatchesItsAssembledMatrix)
     Kokkos::deep_copy(x_coords, x_host);
     Kokkos::deep_copy(y_coords, y_host);
 
-    similie::physics::HamiltonEquations equations(LinearMagnetostaticsHamiltonian(1.0));
-    MagnetostaticsOperator2D<typename Kokkos::DefaultExecutionSpace::memory_space> operator_model(
+    using memory_space = typename Kokkos::DefaultExecutionSpace::memory_space;
+    scalar_tensor_alloc_type<memory_space> mu_alloc(
+            ddc::DiscreteDomain<DDimX, DDimY, ScalarPotentialIndex>(
+                    ddc::DiscreteDomain<DDimX, DDimY>(
+                            ddc::DiscreteElement<DDimX, DDimY>(0, 0),
+                            ddc::DiscreteVector<DDimX, DDimY>(5, 5)),
+                    sil::tensor::TensorAccessor<ScalarPotentialIndex>().domain()),
+            ddc::KokkosAllocator<double, memory_space>());
+    ScalarPotentialTensor2D<memory_space> mu_tensor(mu_alloc);
+    auto mu_host = Kokkos::create_mirror_view(mu_alloc.allocation_kokkos_view());
+    for (std::size_t j = 0; j < 5; ++j) {
+        for (std::size_t i = 0; i < 5; ++i) {
+            mu_host(i, j, 0) = 1.0;
+        }
+    }
+    Kokkos::deep_copy(mu_alloc.allocation_kokkos_view(), mu_host);
+
+    auto const hamiltonian = LinearMagnetostaticsHamiltonian(mu_tensor);
+    auto const equations = similie::physics::HamiltonEquations {hamiltonian};
+    MagnetostaticsOperator2D<memory_space, decltype(equations)> operator_model(
             equations,
             x_coords,
             y_coords);

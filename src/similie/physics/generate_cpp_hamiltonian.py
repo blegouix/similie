@@ -20,6 +20,9 @@ class HamiltonianDefinition:
     variables: list[object]
     includes: list[str] | None = None
     moments_computer: str | None = None
+    template_parameters: list[str] | None = None
+    parameter_types: dict[str, str] | None = None
+    parameter_value_expressions: dict[str, str] | None = None
 
 
 def _flatten_variable_entries(entries: list[object]) -> list[object]:
@@ -53,20 +56,27 @@ def _replace_symbols(expression: str, replacements: dict[str, str]) -> str:
     return expression
 
 
-def _render_members(parameters: list[tuple[str, str, bool]]) -> str:
+def _render_members(parameters: list[tuple[str, str, bool, str]]) -> str:
     return "\n".join(
-        f"    {'const ' if is_const else ''}double {name};"
-        for name, _, is_const in parameters
+        f"    {'const ' if is_const else ''}{type_name} {name};"
+        for name, _, is_const, type_name in parameters
     )
 
 
-def _render_constructor_signature(struct_name: str, parameters: list[tuple[str, str, bool]]) -> str:
-    params = ",\n            ".join(f"double {constructor_name}_" for _, constructor_name, _ in parameters)
+def _render_constructor_signature(
+    struct_name: str, parameters: list[tuple[str, str, bool, str]]
+) -> str:
+    params = ",\n            ".join(
+        f"{type_name} {constructor_name}_"
+        for _, constructor_name, _, type_name in parameters
+    )
     return f"    constexpr {struct_name}(\n            {params})"
 
 
-def _render_constructor_initializers(parameters: list[tuple[str, str, bool]]) -> str:
-    return ", ".join(f"{name}({constructor_name}_)" for name, constructor_name, _ in parameters)
+def _render_constructor_initializers(parameters: list[tuple[str, str, bool, str]]) -> str:
+    return ", ".join(
+        f"{name}({constructor_name}_)" for name, constructor_name, _, _ in parameters
+    )
 
 
 def _render_indexed_method(
@@ -167,20 +177,26 @@ def write_cpp_hamiltonian_header(
     output_path: Path,
     namespace: str,
     struct_name: str,
-    parameters: list[tuple[str, str, bool]],
+    parameters: list[tuple[str, str, bool, str]],
     hamiltonian,
     variable_entries: list[dict[str, object]],
     includes: list[str] | None = None,
     moments_computer: str | None = None,
     inverse_symbols: list[str] | None = None,
     inverse_expressions: list | None = None,
+    template_parameters: list[str] | None = None,
+    parameter_value_expressions: dict[str, str] | None = None,
 ) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    parameter_replacements = {
-        constructor_name: member_name for member_name, constructor_name, _ in parameters
-    }
+    parameter_value_expressions = parameter_value_expressions or {}
+    parameter_replacements = {}
+    for member_name, constructor_name, _, _ in parameters:
+        parameter_replacements[constructor_name] = parameter_value_expressions.get(
+            constructor_name, member_name
+        )
     h_replacements = dict(parameter_replacements)
+    requires_elem = any("elem" in replacement for replacement in parameter_replacements.values())
     argument_signature_parts: list[str] = []
     arguments_call_parts: list[str] = []
     for entry in variable_entries:
@@ -198,7 +214,13 @@ def write_cpp_hamiltonian_header(
             for i, symbol in enumerate(entry_symbols):
                 h_replacements[str(symbol)] = f"{entry_name}[{i}]"
 
-    h_signature = f"    constexpr double H({', '.join(argument_signature_parts)}) const"
+    if requires_elem:
+        h_signature = (
+            f"    template <class Elem>\n"
+            f"    constexpr double H({', '.join(argument_signature_parts)}, Elem elem) const"
+        )
+    else:
+        h_signature = f"    constexpr double H({', '.join(argument_signature_parts)}) const"
 
     potential_entry = variable_entries[0]
     moments_entry = variable_entries[1]
@@ -227,7 +249,22 @@ def write_cpp_hamiltonian_header(
 
     if len(potential_symbols) == 1:
         potential_method_signature = ", ".join(potential_signature_parts)
-        potential_method = f"""
+        if requires_elem:
+            potential_method = f"""
+    template <class Elem>
+    constexpr double dH_d{potential_name}({potential_method_signature}, Elem elem) const
+    {{
+        return {_replace_symbols(cxxcode(potential_derivative_expressions[0]), potential_replacements)};
+    }}
+
+    template <class Elem>
+    constexpr double dH_dpotential(double potential, Elem elem) const
+    {{
+        return dH_d{potential_name}(potential, elem);
+    }}
+"""
+        else:
+            potential_method = f"""
     constexpr double dH_d{potential_name}({potential_method_signature}) const
     {{
         return {_replace_symbols(cxxcode(potential_derivative_expressions[0]), potential_replacements)};
@@ -252,7 +289,16 @@ def write_cpp_hamiltonian_header(
         }"""
         )
         potential_method_signature = ", ".join(potential_signature_parts)
-        potential_method = f"""
+        if requires_elem:
+            potential_method = f"""
+    template <std::size_t I, class Elem>
+    constexpr double dH_d{potential_name}({potential_method_signature}, Elem elem) const
+    {{
+{chr(10).join(branches)}
+    }}
+"""
+        else:
+            potential_method = f"""
     template <std::size_t I>
     constexpr double dH_d{potential_name}({potential_method_signature}) const
     {{
@@ -279,13 +325,34 @@ def write_cpp_hamiltonian_header(
             moments_replacements,
         )
     else:
-        moments_method = _render_indexed_span_method(
-            f"dH_d{moments_name}",
-            moments_name,
-            [str(symbol) for symbol in moments_symbols],
-            moments_derivative_expressions,
-            h_replacements,
-        )
+        if requires_elem:
+            branches: list[str] = []
+            for i, expression in enumerate(moments_derivative_expressions):
+                branches.append(
+                    f"""        if constexpr (I == {i}) {{
+            return {_replace_symbols(cxxcode(expression), h_replacements)};
+        }}"""
+                )
+            branches.append(
+                """        else {
+            static_assert(I < N, "Hamiltonian component index out of range");
+        }"""
+            )
+            moments_method = f"""
+    template <std::size_t I, class Elem>
+    constexpr double dH_d{moments_name}(std::span<double const, {len(moments_symbols)}> {moments_name}, Elem elem) const
+    {{
+{chr(10).join(branches)}
+    }}
+"""
+        else:
+            moments_method = _render_indexed_span_method(
+                f"dH_d{moments_name}",
+                moments_name,
+                [str(symbol) for symbol in moments_symbols],
+                moments_derivative_expressions,
+                h_replacements,
+            )
     generic_moments_branches: list[str] = []
     generic_moments_replacements = {
         **parameter_replacements,
@@ -302,7 +369,16 @@ def write_cpp_hamiltonian_header(
             static_assert(I < N, "Hamiltonian component index out of range");
         }"""
     )
-    generic_moments_method = f"""
+    if requires_elem:
+        generic_moments_method = f"""
+    template <std::size_t I, class Elem>
+    constexpr double dH_dmoments(double moments, Elem elem) const
+    {{
+{chr(10).join(generic_moments_branches)}
+    }}
+"""
+    else:
+        generic_moments_method = f"""
     template <std::size_t I>
     constexpr double dH_dmoments(double moments) const
     {{
@@ -338,6 +414,10 @@ def write_cpp_hamiltonian_header(
             f"    using MomentsComputer = {moments_computer};\n\n"
         )
 
+    template_prefix = ""
+    if template_parameters:
+        template_prefix = "template <" + ", ".join(template_parameters) + ">\n"
+
     output_path.write_text(
         f"""\
 // SPDX-FileCopyrightText: 2026 Baptiste Legouix
@@ -354,7 +434,7 @@ def write_cpp_hamiltonian_header(
 
 namespace {namespace} {{
 
-struct {struct_name} {{
+{template_prefix}struct {struct_name} {{
     static constexpr std::size_t N = {len(moments_symbols)};
 
 {rendered_moments_computer}\
@@ -376,7 +456,11 @@ struct {struct_name} {{
 
 def generate_cpp_hamiltonian(functor_class, output_path: Path, *args, **kwargs) -> None:
     definition = functor_class.__call__(*args, **kwargs)
-    parameter_tuples = [(f"m_{name}", name, True) for name in definition.parameters]
+    parameter_types = definition.parameter_types or {}
+    parameter_tuples = [
+        (f"m_{name}", name, True, parameter_types.get(name, "double"))
+        for name in definition.parameters
+    ]
 
     inverse_symbols = None
     inverse_expressions = None
@@ -414,4 +498,6 @@ def generate_cpp_hamiltonian(functor_class, output_path: Path, *args, **kwargs) 
         moments_computer=definition.moments_computer,
         inverse_symbols=inverse_symbols,
         inverse_expressions=inverse_expressions,
+        template_parameters=definition.template_parameters,
+        parameter_value_expressions=definition.parameter_value_expressions,
     )
