@@ -12,7 +12,7 @@ namespace sil {
 #include <similie/physics/hamilton_equations.hpp>
 #include <similie/physics/magnetostatics/magnetostatics_indices.hpp>
 #include <similie/physics/magnetostatics/magnetostatics_quantities.hpp>
-#include <similie/physics/magnetostatics/linear_magnetostatics_operators.hpp>
+#include <similie/physics/structured_scalar_potential_equations.hpp>
 #include <similie/physics/scalar_field/scalar_field_with_power_coupling.hpp>
 #include <similie/solvers/minimize_strong_formulation_residual.hpp>
 

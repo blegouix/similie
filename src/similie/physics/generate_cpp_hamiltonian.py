@@ -18,8 +18,19 @@ class HamiltonianDefinition:
     parameters: list[str]
     hamiltonian: object
     variables: list[object]
+    input_variables: list[object] | None = None
     includes: list[str] | None = None
     value_computer_type: str | None = None
+
+
+def _flatten_variable_entries(entries: list[object]) -> list[object]:
+    flattened: list[object] = []
+    for entry in entries:
+        if isinstance(entry, (list, tuple)):
+            flattened.extend(_flatten_variable_entries(list(entry)))
+        else:
+            flattened.append(entry)
+    return flattened
 
 
 def _replace_symbols(expression: str, replacements: dict[str, str]) -> str:
@@ -119,6 +130,7 @@ def write_cpp_hamiltonian_header(
     includes: list[str] | None = None,
     value_computer_type: str | None = None,
     scalar_argument_name: str | None = None,
+    input_argument_names: list[str] | None = None,
     scalar_derivative_expression=None,
     inverse_symbols: list[str] | None = None,
     inverse_expressions: list | None = None,
@@ -130,23 +142,39 @@ def write_cpp_hamiltonian_header(
         constructor_name: member_name for member_name, constructor_name, _ in parameters
     }
     h_replacements = dict(parameter_replacements)
+    input_argument_names = [] if input_argument_names is None else input_argument_names
+    for i, input_argument_name in enumerate(input_argument_names):
+        h_replacements[input_argument_name] = f"inputs[{i}]"
     for i, symbol_name in enumerate(derivative_symbols):
         h_replacements[symbol_name] = f"pi[{i}]"
 
     scalar_replacements = dict(parameter_replacements)
     if scalar_argument_name is not None:
         scalar_replacements[scalar_argument_name] = scalar_argument_name
+    for i, input_argument_name in enumerate(input_argument_names):
+        scalar_replacements[input_argument_name] = f"inputs[{i}]"
 
-    h_signature = (
-        f"    constexpr double H(double {scalar_argument_name}, std::span<double const, N> pi) const"
-        if scalar_argument_name is not None
-        else f"    constexpr double H(std::span<double const, N> pi) const"
-    )
+    if scalar_argument_name is not None:
+        if input_argument_names:
+            h_signature = (
+                f"    constexpr double H(double {scalar_argument_name}, "
+                f"std::span<double const, {len(input_argument_names)}> inputs, "
+                "std::span<double const, N> pi) const"
+            )
+        else:
+            h_signature = (
+                f"    constexpr double H(double {scalar_argument_name}, std::span<double const, N> pi) const"
+            )
+    else:
+        h_signature = f"    constexpr double H(std::span<double const, N> pi) const"
 
     scalar_method = ""
     if scalar_argument_name is not None and scalar_derivative_expression is not None:
+        scalar_signature = f"double {scalar_argument_name}"
+        if input_argument_names:
+            scalar_signature += f", std::span<double const, {len(input_argument_names)}> inputs"
         scalar_method = f"""
-    constexpr double dH_dphi(double {scalar_argument_name}) const
+    constexpr double dH_dphi({scalar_signature}) const
     {{
         return {_replace_symbols(cxxcode(scalar_derivative_expression), scalar_replacements)};
     }}
@@ -172,15 +200,38 @@ def write_cpp_hamiltonian_header(
             scalar_replacements,
         )
         if scalar_argument_name is not None and scalar_derivative_expression is not None:
+            scalar_value_components = []
+            for input_argument_name in input_argument_names:
+                scalar_value_components.append(
+                    _replace_symbols(
+                        cxxcode(diff(scalar_derivative_expression, symbols(input_argument_name))),
+                        scalar_replacements,
+                    )
+                )
+            scalar_value_return_type = (
+                f"std::array<double, {len(input_argument_names)}>"
+                if input_argument_names
+                else "double"
+            )
+            scalar_value_return = (
+                "{"
+                + ", ".join(scalar_value_components)
+                + "}"
+                if input_argument_names
+                else _replace_symbols(
+                    cxxcode(diff(scalar_derivative_expression, symbols(scalar_argument_name))),
+                    scalar_replacements,
+                )
+            )
             scalar_nonlocal_value_method = f"""
     template <class ChainType, class LowerChainType, class Elem, class PiComputerValue>
-    constexpr double dH_dphi_value(
+    constexpr {scalar_value_return_type} dH_dphi_value(
             [[maybe_unused]] ChainType chain,
             [[maybe_unused]] LowerChainType lower_chain,
             [[maybe_unused]] Elem elem,
             [[maybe_unused]] PiComputerValue const& pi_computer_value) const
     {{
-        return {_replace_symbols(cxxcode(diff(scalar_derivative_expression, symbols(scalar_argument_name))), scalar_replacements)};
+        return {scalar_value_return};
     }}
 """
 
@@ -201,6 +252,7 @@ def write_cpp_hamiltonian_header(
 
 #pragma once
 
+#include <array>
 #include <cmath>
 #include <cstddef>
 #include <span>
@@ -233,15 +285,27 @@ def generate_cpp_hamiltonian(functor_class, output_path: Path, *args, **kwargs) 
     parameter_tuples = [(f"m_{name}", name, True) for name in definition.parameters]
 
     scalar_argument_name = None
+    input_argument_names: list[str] = []
     scalar_derivative_expression = None
     inverse_symbols = None
     inverse_expressions = None
-    derivative_state_variables = list(definition.variables)
+    derivative_state_variables = _flatten_variable_entries(list(definition.variables))
 
     if derivative_state_variables:
         scalar_state_variable = derivative_state_variables.pop(0)
         scalar_argument_name = str(scalar_state_variable)
         scalar_derivative_expression = diff(definition.hamiltonian, scalar_state_variable)
+
+    input_variables = (
+        []
+        if definition.input_variables is None
+        else _flatten_variable_entries(list(definition.input_variables))
+    )
+    input_argument_names = [str(symbol) for symbol in input_variables]
+    if input_variables:
+        derivative_state_variables = [
+            symbol for symbol in derivative_state_variables if symbol not in input_variables
+        ]
 
     derivative_symbols = [str(symbol) for symbol in derivative_state_variables]
     derivative_expressions = [
@@ -276,6 +340,7 @@ def generate_cpp_hamiltonian(functor_class, output_path: Path, *args, **kwargs) 
         includes=definition.includes,
         value_computer_type=definition.value_computer_type,
         scalar_argument_name=scalar_argument_name,
+        input_argument_names=input_argument_names,
         scalar_derivative_expression=scalar_derivative_expression,
         inverse_symbols=inverse_symbols,
         inverse_expressions=inverse_expressions,

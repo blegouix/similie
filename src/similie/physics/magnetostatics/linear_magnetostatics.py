@@ -12,15 +12,17 @@ from sympy import symbols
 class LinearMagnetostaticsHamiltonian:
     @staticmethod
     def __call__() -> HamiltonianDefinition:
-        A, B0, B1, B2, mu, current_density = symbols("A B0 B1 B2 mu current_density")
-        hamiltonian = (B0**2 + B1**2 + B2**2) / (2 * mu) - current_density * A
+        A, j, mu = symbols("A j mu")
+        B = symbols("B0:3")
+        hamiltonian = (B[0] ** 2 + B[1] ** 2 + B[2] ** 2) / (2 * mu) - j * A
 
         return HamiltonianDefinition(
             namespace="similie::physics::magnetostatics",
             struct_name="LinearMagnetostaticsHamiltonian",
-            parameters=["mu", "current_density"],
+            parameters=["mu"],
             hamiltonian=hamiltonian,
-            variables=[A, B0, B1, B2],
+            variables=[A, B, j],
+            input_variables=[j],
             includes=["<similie/physics/magnetostatics/magnetostatics_quantities.hpp>"],
             value_computer_type="MagneticInductionValueFromPotential",
         )

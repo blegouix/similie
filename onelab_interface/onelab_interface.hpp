@@ -19,6 +19,7 @@
 #include <numbers>
 #include <optional>
 #include <sstream>
+#include <streambuf>
 #include <stdexcept>
 #include <string>
 #include <thread>
@@ -29,13 +30,13 @@
 #include <ddc/ddc.hpp>
 
 #include <similie/physics/hamilton_equations.hpp>
-#include <similie/physics/magnetostatics/linear_magnetostatics_problem.hpp>
 #include <similie/physics/scalar_field/scalar_field_with_power_coupling.hpp>
 #include <similie/solvers/minimize_strong_formulation_residual.hpp>
 
 #include <onelab.h>
 
 #include "gmsh_structured_grid.hpp"
+#include "magnetostatics_support.hpp"
 
 namespace similie::onelab_interface {
 
@@ -428,10 +429,9 @@ using sil::mesher::gmsh::parse_supported_msh2_mesh;
 class OnelabInterface
 {
     using Client = onelab::remoteNetworkClient;
-    using MagnetostaticsInputs = physics::magnetostatics::StructuredLinearMagnetostaticsInputs;
-    using MagnetostaticsRegionTags
-            = physics::magnetostatics::StructuredLinearMagnetostaticsRegionTags;
-    using MagnetostaticsResult = physics::magnetostatics::StructuredLinearMagnetostaticsResult;
+    using MagnetostaticsInputs = detail::StructuredLinearMagnetostaticsInputs;
+    using MagnetostaticsRegionTags = detail::StructuredLinearMagnetostaticsRegionTags;
+    using MagnetostaticsResult = detail::StructuredLinearMagnetostaticsResult;
 
 public:
     explicit OnelabInterface(std::string module_name = "SimiLie")
@@ -458,6 +458,7 @@ public:
         }
 
         client().sendInfo(module_name() + " ONELAB interface connected");
+        ScopedOnelabStreamForwarding const stream_forwarding(client());
         publish_common_parameters();
         publish_interface_parameters();
 
@@ -482,6 +483,88 @@ private:
     {
         std::string client_name;
         std::string socket_address;
+    };
+
+    class OnelabStreambuf : public std::streambuf
+    {
+        Client* m_client;
+        bool m_error_stream;
+        std::string m_buffer;
+
+    public:
+        explicit OnelabStreambuf(Client* client, bool error_stream)
+            : m_client(client)
+            , m_error_stream(error_stream)
+        {
+        }
+
+        ~OnelabStreambuf() override
+        {
+            flush_buffer();
+        }
+
+    protected:
+        int overflow(int ch) override
+        {
+            if (ch == traits_type::eof()) {
+                flush_buffer();
+                return traits_type::not_eof(ch);
+            }
+
+            char const c = static_cast<char>(ch);
+            if (c == '\n') {
+                flush_buffer();
+            } else {
+                m_buffer.push_back(c);
+            }
+            return ch;
+        }
+
+        int sync() override
+        {
+            flush_buffer();
+            return 0;
+        }
+
+    private:
+        void flush_buffer()
+        {
+            if (m_client == nullptr || m_buffer.empty()) {
+                m_buffer.clear();
+                return;
+            }
+            if (m_error_stream) {
+                m_client->sendError(m_buffer);
+            } else {
+                m_client->sendInfo(m_buffer);
+            }
+            m_buffer.clear();
+        }
+    };
+
+    class ScopedOnelabStreamForwarding
+    {
+        OnelabStreambuf m_cout_buffer;
+        OnelabStreambuf m_cerr_buffer;
+        std::streambuf* m_old_cout_buffer;
+        std::streambuf* m_old_cerr_buffer;
+
+    public:
+        explicit ScopedOnelabStreamForwarding(Client& client)
+            : m_cout_buffer(&client, false)
+            , m_cerr_buffer(&client, true)
+            , m_old_cout_buffer(std::cout.rdbuf(&m_cout_buffer))
+            , m_old_cerr_buffer(std::cerr.rdbuf(&m_cerr_buffer))
+        {
+        }
+
+        ~ScopedOnelabStreamForwarding()
+        {
+            std::cout.flush();
+            std::cerr.flush();
+            std::cout.rdbuf(m_old_cout_buffer);
+            std::cerr.rdbuf(m_old_cerr_buffer);
+        }
     };
 
     [[nodiscard]] std::string module_name() const
@@ -1160,7 +1243,7 @@ private:
         solvers::StrongFormulationSolverSettings const solver_settings
                 = detail::assemble_solver_settings(problem.solver_settings);
         MagnetostaticsResult const result
-                = physics::magnetostatics::detail::run_structured_linear_magnetostatics_problem(
+                = detail::magnetostatics_local::run_structured_linear_magnetostatics_problem(
                         mesh_file,
                         output_view_file,
                         inputs,

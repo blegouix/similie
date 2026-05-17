@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <array>
 #include <cstddef>
 #include <type_traits>
 #include <utility>
@@ -14,6 +15,22 @@ namespace detail {
 struct NoPiComputerValue
 {
 };
+
+template <class ValueType>
+[[nodiscard]] constexpr auto negate_value(ValueType const& value)
+{
+    return -value;
+}
+
+template <class T, std::size_t N>
+[[nodiscard]] constexpr auto negate_value(std::array<T, N> const& value)
+{
+    std::array<T, N> negated {};
+    for (std::size_t i = 0; i < N; ++i) {
+        negated[i] = -value[i];
+    }
+    return negated;
+}
 
 template <class Hamiltonian, class = void>
 struct HamiltonianValueComputerType
@@ -69,7 +86,8 @@ public:
     dmoments_dt_value(ChainType chain, LowerChainType lower_chain, Elem elem) const
     {
         static_cast<void>(I);
-        return -m_hamiltonian.dH_dphi_value(chain, lower_chain, elem, m_pi_computer_value);
+        return detail::negate_value(
+                m_hamiltonian.dH_dphi_value(chain, lower_chain, elem, m_pi_computer_value));
     }
 };
 
