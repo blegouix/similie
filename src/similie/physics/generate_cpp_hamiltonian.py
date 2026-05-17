@@ -100,7 +100,7 @@ def _render_indexed_nonlocal_value_method(
     for i, expression in enumerate(differentiated_expressions):
         branches.append(
             f"""        if constexpr (I == {i}) {{
-            auto value = pi_computer_value.template operator()<I>(chain, lower_chain, elem);
+            auto value = moments_computer_value.template operator()<I>(chain, lower_chain, elem);
             value *= {_replace_symbols(cxxcode(expression), replacements)};
             return value;
         }}"""
@@ -111,8 +111,8 @@ def _render_indexed_nonlocal_value_method(
         }"""
     )
     return f"""
-    template <std::size_t I, class ChainType, class LowerChainType, class Elem, class PiComputerValue>
-    constexpr auto {method_name}(ChainType chain, LowerChainType lower_chain, Elem elem, PiComputerValue const& pi_computer_value) const
+    template <std::size_t I, class ChainType, class LowerChainType, class Elem, class MomentsComputerValue>
+    constexpr auto {method_name}(ChainType chain, LowerChainType lower_chain, Elem elem, MomentsComputerValue const& moments_computer_value) const
     {{
 {chr(10).join(branches)}
     }}
@@ -224,12 +224,12 @@ def write_cpp_hamiltonian_header(
                 )
             )
             scalar_nonlocal_value_method = f"""
-    template <class ChainType, class LowerChainType, class Elem, class PiComputerValue>
+    template <class ChainType, class LowerChainType, class Elem, class MomentsComputerValue>
     constexpr {scalar_value_return_type} dH_dphi_value(
             [[maybe_unused]] ChainType chain,
             [[maybe_unused]] LowerChainType lower_chain,
             [[maybe_unused]] Elem elem,
-            [[maybe_unused]] PiComputerValue const& pi_computer_value) const
+            [[maybe_unused]] MomentsComputerValue const& moments_computer_value) const
     {{
         return {scalar_value_return};
     }}

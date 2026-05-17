@@ -7,14 +7,14 @@
 #include <cstddef>
 #include <span>
 
-#include <Kokkos_Core.hpp>
-
 #include <similie/exterior/coboundary.hpp>
 #include <similie/exterior/codifferential.hpp>
 #include <similie/misc/specialization.hpp>
 #include <similie/physics/magnetostatics/linear_magnetic_induction_to_magnetic_field.hpp>
 #include <similie/physics/magnetostatics/magnetostatics_indices.hpp>
 #include <similie/tensor/tensor.hpp>
+
+#include <Kokkos_Core.hpp>
 
 namespace similie::physics::magnetostatics {
 
@@ -56,8 +56,10 @@ class MagneticVectorPotentialToMagneticInduction
 {
 public:
     template <std::size_t I, class ChainType, class LowerChainType, class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION static auto
-    forward_value(ChainType chain, LowerChainType lower_chain, Elem elem)
+    [[nodiscard]] KOKKOS_FUNCTION static auto forward_value(
+            ChainType chain,
+            LowerChainType lower_chain,
+            Elem elem)
     {
         static_assert(I < 2);
         using PotentialScalarIndex = sil::tensor::ScalarIndex;
@@ -74,12 +76,8 @@ public:
 
         auto stencil = sil::exterior::Coboundary<
                 sil::tensor::Covariant<detail::InPlaneNu>,
-                PotentialScalarIndex>::value(
-                [](auto, auto) { return 0.0; },
-                chain,
-                lower_chain,
-                elem,
-                natural_elem);
+                PotentialScalarIndex>::
+                value([](auto, auto) { return 0.0; }, chain, lower_chain, elem, natural_elem);
         if constexpr (I == 1) {
             stencil *= -1.0;
         }
@@ -99,12 +97,8 @@ public:
             LowerChainType lower_chain,
             Elem elem)
     {
-        sil::exterior::Coboundary<sil::tensor::Covariant<Nu>, MagneticVectorPotentialIndex>::run(
-                magnetic_induction,
-                evaluator,
-                chain,
-                lower_chain,
-                elem);
+        sil::exterior::Coboundary<sil::tensor::Covariant<Nu>, MagneticVectorPotentialIndex>::
+                run(magnetic_induction, evaluator, chain, lower_chain, elem);
     }
 
     [[nodiscard]] KOKKOS_FUNCTION constexpr double forward_value(
@@ -261,16 +255,15 @@ public:
                 MaxwellStressTensorIndex,
                 TensorType,
                 MetricType,
-                PositionType>::run(
-                force_density_tensor,
-                maxwell_stress_tensor,
-                metric,
-                position,
-                chain,
-                lower_chain,
-                elem);
+                PositionType>::
+                run(force_density_tensor,
+                    maxwell_stress_tensor,
+                    metric,
+                    position,
+                    chain,
+                    lower_chain,
+                    elem);
     }
-
 };
 
 } // namespace similie::physics::magnetostatics

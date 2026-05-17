@@ -8,9 +8,9 @@
 #include <similie/physics/hamilton_equations.hpp>
 #include <similie/physics/magnetostatics/linear_magnetostatics.hpp>
 #include <similie/physics/magnetostatics/magnetostatics_quantities.hpp>
-#include <similie/physics/structured_scalar_potential_equations.hpp>
 #include <similie/physics/scalar_field/scalar_field_with_power_coupling.hpp>
 #include <similie/physics/stationary_equations_operator.hpp>
+#include <similie/physics/structured_scalar_potential_equations.hpp>
 
 #include "onelab_interface.hpp"
 

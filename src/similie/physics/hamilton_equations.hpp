@@ -12,7 +12,7 @@ namespace similie::physics {
 
 namespace detail {
 
-struct NoPiComputerValue
+struct NoMomentsComputerValue
 {
 };
 
@@ -35,11 +35,13 @@ template <class T, std::size_t N>
 template <class Hamiltonian, class = void>
 struct HamiltonianValueComputerType
 {
-    using type = NoPiComputerValue;
+    using type = NoMomentsComputerValue;
 };
 
 template <class Hamiltonian>
-struct HamiltonianValueComputerType<Hamiltonian, std::void_t<typename Hamiltonian::value_computer_type>>
+struct HamiltonianValueComputerType<
+        Hamiltonian,
+        std::void_t<typename Hamiltonian::value_computer_type>>
 {
     using type = typename Hamiltonian::value_computer_type;
 };
@@ -48,16 +50,17 @@ struct HamiltonianValueComputerType<Hamiltonian, std::void_t<typename Hamiltonia
 
 template <
         class Hamiltonian,
-        class PiComputerValue = typename detail::HamiltonianValueComputerType<Hamiltonian>::type>
+        class MomentsComputerValue =
+                typename detail::HamiltonianValueComputerType<Hamiltonian>::type>
 class HamiltonEquations
 {
     Hamiltonian m_hamiltonian;
-    PiComputerValue m_pi_computer_value;
+    MomentsComputerValue m_moments_computer_value;
 
 public:
     constexpr explicit HamiltonEquations(Hamiltonian hamiltonian)
         : m_hamiltonian(std::move(hamiltonian))
-        , m_pi_computer_value(PiComputerValue())
+        , m_moments_computer_value(MomentsComputerValue())
     {
     }
 
@@ -75,19 +78,24 @@ public:
     }
 
     template <std::size_t I, class ChainType, class LowerChainType, class Elem>
-    [[nodiscard]] constexpr auto
-    dpotential_dt_value(ChainType chain, LowerChainType lower_chain, Elem elem) const
+    [[nodiscard]] constexpr auto dpotential_dt_value(
+            ChainType chain,
+            LowerChainType lower_chain,
+            Elem elem) const
     {
-        return m_hamiltonian.template dH_dpi_value<I>(chain, lower_chain, elem, m_pi_computer_value);
+        return m_hamiltonian
+                .template dH_dpi_value<I>(chain, lower_chain, elem, m_moments_computer_value);
     }
 
     template <std::size_t I = 0, class ChainType, class LowerChainType, class Elem>
-    [[nodiscard]] constexpr auto
-    dmoments_dt_value(ChainType chain, LowerChainType lower_chain, Elem elem) const
+    [[nodiscard]] constexpr auto dmoments_dt_value(
+            ChainType chain,
+            LowerChainType lower_chain,
+            Elem elem) const
     {
         static_cast<void>(I);
         return detail::negate_value(
-                m_hamiltonian.dH_dphi_value(chain, lower_chain, elem, m_pi_computer_value));
+                m_hamiltonian.dH_dphi_value(chain, lower_chain, elem, m_moments_computer_value));
     }
 };
 
