@@ -6,6 +6,7 @@
 #include <chrono>
 #include <cmath>
 #include <memory>
+#include <iostream>
 #include <stdexcept>
 #include <type_traits>
 
@@ -49,11 +50,17 @@ void apply_operator(
         InputView input,
         OutputView output)
 {
-    Kokkos::parallel_for(
-            "similie_apply_operator",
-            Kokkos::RangePolicy<ExecSpace>(exec_space, 0, operator_model.size()),
-            KOKKOS_LAMBDA(std::size_t row) { operator_model.apply_at(output, input, row); });
-    exec_space.fence();
+    if constexpr (requires(OperatorModel const& model, ExecSpace ex, InputView in, OutputView out) {
+                      model.apply(ex, in, out);
+                  }) {
+        operator_model.apply(exec_space, input, output);
+    } else {
+        Kokkos::parallel_for(
+                "similie_apply_operator",
+                Kokkos::RangePolicy<ExecSpace>(exec_space, 0, operator_model.size()),
+                KOKKOS_LAMBDA(std::size_t row) { operator_model.apply_at(output, input, row); });
+        exec_space.fence();
+    }
 }
 
 template <class ExecSpace, class ViewType1, class ViewType2>
@@ -320,6 +327,12 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
                 = diagnostics.initial_residual_l2 == 0.0
                           ? 0.0
                           : diagnostics.final_residual_l2 / diagnostics.initial_residual_l2;
+        if ((iteration + 1) % 1000 == 0) {
+            std::cout << "SimiLie matrix-free CG iteration " << (iteration + 1)
+                      << ": residual L2=" << diagnostics.final_residual_l2
+                      << ", relative residual=" << diagnostics.final_relative_residual
+                      << std::endl;
+        }
         if (new_residual_norm_sq
             <= settings.relative_tolerance * settings.relative_tolerance * initial_norm_sq) {
             diagnostics.converged = true;

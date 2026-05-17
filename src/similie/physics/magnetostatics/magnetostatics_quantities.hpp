@@ -11,12 +11,42 @@
 #include <similie/exterior/codifferential.hpp>
 #include <similie/misc/specialization.hpp>
 #include <similie/physics/magnetostatics/linear_magnetic_induction_to_magnetic_field.hpp>
-#include <similie/physics/magnetostatics/magnetostatics_indices.hpp>
 #include <similie/tensor/tensor.hpp>
 
 #include <Kokkos_Core.hpp>
 
 namespace similie::physics::magnetostatics {
+
+struct X
+{
+    static constexpr bool PERIODIC = false;
+};
+
+struct Y
+{
+    static constexpr bool PERIODIC = false;
+};
+
+struct Z
+{
+    static constexpr bool PERIODIC = false;
+};
+
+struct Mu : sil::tensor::TensorNaturalIndex<X, Y, Z>
+{
+};
+
+struct Nu : sil::tensor::TensorNaturalIndex<X, Y, Z>
+{
+};
+
+using MagneticVectorPotentialIndex = sil::tensor::Covariant<Mu>;
+using MagneticFieldIndex = sil::tensor::Covariant<Mu>;
+using ForceDensityIndex = sil::tensor::Covariant<Mu>;
+using MagneticInductionIndex = sil::tensor::
+        TensorAntisymmetricIndex<sil::tensor::Covariant<Mu>, sil::tensor::Covariant<Nu>>;
+using MaxwellStressTensorIndex = sil::tensor::
+        TensorSymmetricIndex<sil::tensor::Covariant<Mu>, sil::tensor::Covariant<Nu>>;
 
 namespace detail {
 
@@ -31,16 +61,6 @@ template <class... Tags>
 struct ElementSpatialDomain<ddc::DiscreteElement<Tags...>>
 {
     using type = ddc::DiscreteDomain<Tags...>;
-};
-
-template <class Quantity>
-struct QuantityValueFromPotential
-{
-    template <std::size_t I, class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr auto operator()(Elem elem) const
-    {
-        return Quantity::template forward_value<I>(elem);
-    }
 };
 
 template <class TensorIndex>
@@ -107,54 +127,7 @@ public:
                 run(magnetic_induction, evaluator, chain, lower_chain, elem);
     }
 
-    [[nodiscard]] KOKKOS_FUNCTION constexpr double forward_value(
-            [[maybe_unused]] std::span<double const, 3> magnetic_vector_potential,
-            std::span<double const, 3> dpotential_dx,
-            std::span<double const, 3> dpotential_dy,
-            std::span<double const, 3> dpotential_dz,
-            std::size_t component) const
-    {
-        switch (component) {
-        case 0:
-            return dpotential_dy[2] - dpotential_dz[1];
-        case 1:
-            return dpotential_dz[0] - dpotential_dx[2];
-        default:
-            return dpotential_dx[1] - dpotential_dy[0];
-        }
-    }
-
-    [[nodiscard]] KOKKOS_FUNCTION constexpr std::array<double, 3> forward(
-            [[maybe_unused]] std::span<double const, 3> magnetic_vector_potential,
-            std::span<double const, 3> dpotential_dx,
-            std::span<double const, 3> dpotential_dy,
-            std::span<double const, 3> dpotential_dz) const
-    {
-        return {
-                forward_value(
-                        magnetic_vector_potential,
-                        dpotential_dx,
-                        dpotential_dy,
-                        dpotential_dz,
-                        0),
-                forward_value(
-                        magnetic_vector_potential,
-                        dpotential_dx,
-                        dpotential_dy,
-                        dpotential_dz,
-                        1),
-                forward_value(
-                        magnetic_vector_potential,
-                        dpotential_dx,
-                        dpotential_dy,
-                        dpotential_dz,
-                        2),
-        };
-    }
 };
-
-using MagneticInductionValueFromPotential
-        = detail::QuantityValueFromPotential<MagneticVectorPotentialToMagneticInduction>;
 
 class MaxwellStressTensorToMagneticInductionAndMagneticField
 {

@@ -9,10 +9,9 @@
 #include <similie/physics/magnetostatics/linear_magnetostatics.hpp>
 #include <similie/physics/magnetostatics/magnetostatics_quantities.hpp>
 #include <similie/physics/scalar_field/scalar_field_with_power_coupling.hpp>
-#include <similie/physics/stationary_equations_operator.hpp>
-#include <similie/physics/structured_scalar_potential_equations.hpp>
 
 #include "onelab_interface.hpp"
+#include "magnetostatics_support.hpp"
 
 namespace {
 
@@ -20,22 +19,6 @@ std::filesystem::path test_file(char const* name)
 {
     return std::filesystem::path(SIMILIE_ONELAB_TEST_DIR) / name;
 }
-
-template <class ReferenceOperator, class WrappedOperator, class OutputView, class InputView>
-struct CompareStationaryOperatorsFunctor
-{
-    ReferenceOperator m_reference_operator;
-    WrappedOperator m_wrapped_operator;
-    OutputView m_output_reference;
-    OutputView m_output_wrapped;
-    InputView m_input;
-
-    KOKKOS_FUNCTION void operator()(std::size_t const row) const
-    {
-        m_reference_operator.apply_at(m_output_reference, m_input, row);
-        m_wrapped_operator.apply_at(m_output_wrapped, m_input, row);
-    }
-};
 
 } // namespace
 
@@ -120,8 +103,9 @@ TEST(OnelabInterface, LinearMagneticInductionToMagneticFieldValueAndApplication)
     EXPECT_DOUBLE_EQ(constitutive_law.inverse(3.0, 5.0), 10.0 / 3.0);
 }
 
-TEST(OnelabInterface, StationaryMagnetostaticsOperatorMatchesPrediscretizedForMuOne)
+TEST(OnelabInterface, MagnetostaticsLocalOperatorMatchesItsAssembledMatrix)
 {
+    using namespace similie::onelab_interface::detail::magnetostatics_local;
     using namespace similie::physics::magnetostatics;
 
     Kokkos::View<double*> x_coords("x", 5);
@@ -135,22 +119,15 @@ TEST(OnelabInterface, StationaryMagnetostaticsOperatorMatchesPrediscretizedForMu
     Kokkos::deep_copy(x_coords, x_host);
     Kokkos::deep_copy(y_coords, y_host);
 
-    similie::solvers::StructuredScalarPoissonStrongFormOperator2D<
-            X,
-            Y,
-            typename Kokkos::DefaultExecutionSpace::memory_space>
-            reference_operator(x_coords, y_coords);
     similie::physics::HamiltonEquations equations(LinearMagnetostaticsHamiltonian(1.0));
-    auto wrapped_operator = similie::physics::make_stationary_equations_operator(
+    MagnetostaticsOperator2D<typename Kokkos::DefaultExecutionSpace::memory_space> operator_model(
             equations,
-            similie::solvers::StructuredScalarPoissonStrongFormOperator2D<
-                    X,
-                    Y,
-                    typename Kokkos::DefaultExecutionSpace::memory_space>(x_coords, y_coords));
+            x_coords,
+            y_coords);
+    auto matrix_data = assemble_matrix_data(operator_model);
 
     Kokkos::View<double**> input("input", 25, 1);
-    Kokkos::View<double**> output_reference("output_reference", 25, 1);
-    Kokkos::View<double**> output_wrapped("output_wrapped", 25, 1);
+    Kokkos::View<double**> output("output", 25, 1);
     auto input_host = Kokkos::create_mirror_view(input);
     for (std::size_t j = 0; j < 5; ++j) {
         for (std::size_t i = 0; i < 5; ++i) {
@@ -159,22 +136,48 @@ TEST(OnelabInterface, StationaryMagnetostaticsOperatorMatchesPrediscretizedForMu
     }
     Kokkos::deep_copy(input, input_host);
 
-    Kokkos::parallel_for(
-            Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, 25),
-            CompareStationaryOperatorsFunctor {
-                    reference_operator,
-                    wrapped_operator,
-                    output_reference,
-                    output_wrapped,
-                    input,
-            });
-    auto output_reference_host
-            = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), output_reference);
-    auto output_wrapped_host
-            = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), output_wrapped);
+    operator_model.apply(Kokkos::DefaultExecutionSpace(), input, output);
+    auto output_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), output);
+
+    std::vector<double> matrix_output(25, 0.0);
+    std::vector<std::vector<double>> dense_matrix(25, std::vector<double>(25, 0.0));
+    for (auto const& nz : matrix_data.nonzeros) {
+        matrix_output[static_cast<std::size_t>(nz.row)]
+                += nz.value * input_host(static_cast<std::size_t>(nz.column), 0);
+        dense_matrix[static_cast<std::size_t>(nz.row)][static_cast<std::size_t>(nz.column)]
+                += nz.value;
+    }
 
     for (std::size_t row = 0; row < 25; ++row) {
-        EXPECT_NEAR(output_wrapped_host(row, 0), output_reference_host(row, 0), 1e-12)
-                << "row=" << row;
+        EXPECT_NEAR(output_host(row, 0), matrix_output[row], 1e-12) << "row=" << row;
+    }
+
+    for (std::size_t j = 0; j < 5; ++j) {
+        for (std::size_t i = 0; i < 5; ++i) {
+            std::size_t const row = i + 5 * j;
+            if (i == 0 || j == 0 || i + 1 == 5 || j + 1 == 5) {
+                EXPECT_DOUBLE_EQ(dense_matrix[row][row], 1.0);
+                continue;
+            }
+            EXPECT_GT(dense_matrix[row][row], 0.0) << "row=" << row;
+        }
+    }
+
+    for (std::size_t row = 0; row < 25; ++row) {
+        for (std::size_t column = 0; column < 25; ++column) {
+            std::size_t const row_i = row % 5;
+            std::size_t const row_j = row / 5;
+            std::size_t const column_i = column % 5;
+            std::size_t const column_j = column / 5;
+            bool const row_boundary
+                    = (row_i == 0 || row_j == 0 || row_i + 1 == 5 || row_j + 1 == 5);
+            bool const column_boundary
+                    = (column_i == 0 || column_j == 0 || column_i + 1 == 5 || column_j + 1 == 5);
+            if (row_boundary || column_boundary) {
+                continue;
+            }
+            EXPECT_NEAR(dense_matrix[row][column], dense_matrix[column][row], 1e-12)
+                    << "row=" << row << " col=" << column;
+        }
     }
 }
