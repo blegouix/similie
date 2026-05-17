@@ -98,10 +98,17 @@ TEST(OnelabInterface, HamiltonEquationsStaticPotentialDerivative)
     auto const hamiltonian = LinearMagnetostaticsHamiltonian(mu_tensor);
     auto const equations = HamiltonEquations {hamiltonian};
     auto const elem = ddc::DiscreteElement<DDimX, DDimY>(0, 0);
+    std::array<double, 3> const moments {4.0, 6.0, 8.0};
 
-    EXPECT_DOUBLE_EQ(equations.template dpotential_dt<0>(4.0, elem), 2.0);
-    EXPECT_DOUBLE_EQ(equations.template dpotential_dt<1>(6.0, elem), 3.0);
-    EXPECT_DOUBLE_EQ(equations.template dpotential_dt<2>(8.0, elem), 4.0);
+    EXPECT_DOUBLE_EQ(
+            equations.template dpotential_dt<0>(std::span<double const, 3>(moments), elem),
+            2.0);
+    EXPECT_DOUBLE_EQ(
+            equations.template dpotential_dt<1>(std::span<double const, 3>(moments), elem),
+            3.0);
+    EXPECT_DOUBLE_EQ(
+            equations.template dpotential_dt<2>(std::span<double const, 3>(moments), elem),
+            4.0);
 }
 
 TEST(OnelabInterface, HamiltonEquationsStaticMomentumDerivative)
@@ -110,9 +117,14 @@ TEST(OnelabInterface, HamiltonEquationsStaticMomentumDerivative)
     using similie::physics::scalar_field::ScalarFieldWithPowerCouplingHamiltonian;
 
     HamiltonEquations const equations(ScalarFieldWithPowerCouplingHamiltonian(2.0, 0.0, 4.0));
+    std::array<double, 1> const potential {3.0};
 
-    EXPECT_DOUBLE_EQ(equations.template dmoments_dt<0>(3.0), 12.0);
-    EXPECT_DOUBLE_EQ(equations.template dmoments_dt<1>(3.0), 12.0);
+    EXPECT_DOUBLE_EQ(
+            equations.template dmoments_dt<0>(std::span<double const, 1>(potential)),
+            12.0);
+    EXPECT_DOUBLE_EQ(
+            equations.template dmoments_dt<1>(std::span<double const, 1>(potential)),
+            12.0);
 }
 
 TEST(OnelabInterface, DeDonderWeylEquationsStaticInterfaces)
@@ -121,10 +133,16 @@ TEST(OnelabInterface, DeDonderWeylEquationsStaticInterfaces)
     using similie::physics::scalar_field::ScalarFieldWithPowerCouplingHamiltonian;
 
     DeDonderWeylEquations const equations(ScalarFieldWithPowerCouplingHamiltonian(2.0, 0.0, 4.0));
+    std::array<double, 3> const moments {5.0, 5.0, 5.0};
+    std::array<double, 1> const potential {3.0};
 
-    EXPECT_DOUBLE_EQ(equations.template potential_grad<0>(5.0), -5.0);
-    EXPECT_DOUBLE_EQ(equations.template potential_grad<1>(5.0), 5.0);
-    EXPECT_DOUBLE_EQ(equations.moments_div(3.0), 12.0);
+    EXPECT_DOUBLE_EQ(
+            equations.template potential_grad<0>(std::span<double const, 3>(moments)),
+            -5.0);
+    EXPECT_DOUBLE_EQ(
+            equations.template potential_grad<1>(std::span<double const, 3>(moments)),
+            5.0);
+    EXPECT_DOUBLE_EQ(equations.moments_div(std::span<double const, 1>(potential)), 12.0);
 }
 
 TEST(OnelabInterface, LinearMagneticInductionToMagneticFieldValueAndApplication)
