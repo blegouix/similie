@@ -24,16 +24,22 @@ struct InPlaneNu : sil::tensor::TensorNaturalIndex<X, Y>
 {
 };
 
+template <class Elem>
+struct ElementSpatialDomain;
+
+template <class... Tags>
+struct ElementSpatialDomain<ddc::DiscreteElement<Tags...>>
+{
+    using type = ddc::DiscreteDomain<Tags...>;
+};
+
 template <class Quantity>
 struct QuantityValueFromPotential
 {
-    template <std::size_t I, class ChainType, class LowerChainType, class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr auto operator()(
-            ChainType chain,
-            LowerChainType lower_chain,
-            Elem elem) const
+    template <std::size_t I, class Elem>
+    [[nodiscard]] KOKKOS_FUNCTION constexpr auto operator()(Elem elem) const
     {
-        return Quantity::template forward_value<I>(chain, lower_chain, elem);
+        return Quantity::template forward_value<I>(elem);
     }
 };
 
@@ -55,13 +61,11 @@ KOKKOS_FUNCTION auto make_local_tensor(std::array<double, TensorIndex::access_si
 class MagneticVectorPotentialToMagneticInduction
 {
 public:
-    template <std::size_t I, class ChainType, class LowerChainType, class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION static auto forward_value(
-            ChainType chain,
-            LowerChainType lower_chain,
-            Elem elem)
+    template <std::size_t I, class Elem>
+    [[nodiscard]] KOKKOS_FUNCTION static auto forward_value(Elem elem)
     {
         static_assert(I < 2);
+        using spatial_domain_type = typename detail::ElementSpatialDomain<Elem>::type;
         using PotentialScalarIndex = sil::tensor::ScalarIndex;
         using CoboundaryOutputIndex = sil::exterior::
                 coboundary_index_t<sil::tensor::Covariant<detail::InPlaneNu>, PotentialScalarIndex>;
@@ -73,6 +77,8 @@ public:
                 return accessor.template access_element<X>();
             }
         }();
+        auto const chain = sil::exterior::tangent_basis<1, spatial_domain_type>(elem);
+        auto const lower_chain = sil::exterior::tangent_basis<0, spatial_domain_type>(elem);
 
         auto stencil = sil::exterior::Coboundary<
                 sil::tensor::Covariant<detail::InPlaneNu>,

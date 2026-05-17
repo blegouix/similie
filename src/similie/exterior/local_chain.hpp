@@ -427,7 +427,11 @@ KOKKOS_FUNCTION constexpr auto tangent_basis(Elem elem)
     return detail::TangentBasis<K, Dom>::run(elem);
 }
 
-template <std::size_t K, misc::Specialization<ddc::DiscreteDomain> Dom, class ExecSpace>
+template <
+        std::size_t K,
+        misc::Specialization<ddc::DiscreteDomain> Dom,
+        class ExecSpace>
+    requires(misc::NotSpecialization<ExecSpace, ddc::DiscreteElement>)
 constexpr auto tangent_basis([[maybe_unused]] ExecSpace const& exec_space)
 {
     return detail::TangentBasis<K, Dom>::run(

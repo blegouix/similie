@@ -18,9 +18,8 @@ class HamiltonianDefinition:
     parameters: list[str]
     hamiltonian: object
     variables: list[object]
-    input_variables: list[object] | None = None
     includes: list[str] | None = None
-    value_computer_type: str | None = None
+    moments_computer: str | None = None
 
 
 def _flatten_variable_entries(entries: list[object]) -> list[object]:
@@ -31,6 +30,21 @@ def _flatten_variable_entries(entries: list[object]) -> list[object]:
         else:
             flattened.append(entry)
     return flattened
+
+
+def _entry_symbols(entry: object) -> list[object]:
+    if isinstance(entry, (list, tuple)):
+        return _flatten_variable_entries(list(entry))
+    return [entry]
+
+
+def _entry_name(entry: object) -> str:
+    symbols_ = _entry_symbols(entry)
+    if len(symbols_) == 1:
+        return str(symbols_[0])
+    first_name = str(symbols_[0])
+    prefix = first_name.rstrip("0123456789")
+    return prefix if prefix else first_name
 
 
 def _replace_symbols(expression: str, replacements: dict[str, str]) -> str:
@@ -86,6 +100,36 @@ def _render_indexed_method(
 """
 
 
+def _render_indexed_span_method(
+    method_name: str,
+    argument_name: str,
+    symbols_: list[str],
+    expressions: list,
+    replacements: dict[str, str],
+) -> str:
+    branches: list[str] = []
+    for i, expression in enumerate(expressions):
+        branches.append(
+            f"""        if constexpr (I == {i}) {{
+            return {_replace_symbols(cxxcode(expression), replacements)};
+        }}"""
+        )
+
+    branches.append(
+        """        else {
+            static_assert(I < N, "Hamiltonian component index out of range");
+        }"""
+    )
+
+    return f"""
+    template <std::size_t I>
+    constexpr double {method_name}(std::span<double const, {len(symbols_)}> {argument_name}) const
+    {{
+{chr(10).join(branches)}
+    }}
+"""
+
+
 def _render_indexed_nonlocal_value_method(
     method_name: str,
     symbols_: list[str],
@@ -100,7 +144,7 @@ def _render_indexed_nonlocal_value_method(
     for i, expression in enumerate(differentiated_expressions):
         branches.append(
             f"""        if constexpr (I == {i}) {{
-            auto value = moments_computer_value.template operator()<I>(chain, lower_chain, elem);
+            auto value = MomentsComputer::template forward_value<I>(elem);
             value *= {_replace_symbols(cxxcode(expression), replacements)};
             return value;
         }}"""
@@ -111,8 +155,8 @@ def _render_indexed_nonlocal_value_method(
         }"""
     )
     return f"""
-    template <std::size_t I, class ChainType, class LowerChainType, class Elem, class MomentsComputerValue>
-    constexpr auto {method_name}(ChainType chain, LowerChainType lower_chain, Elem elem, MomentsComputerValue const& moments_computer_value) const
+    template <std::size_t I, class Elem>
+    constexpr auto {method_name}(Elem elem) const
     {{
 {chr(10).join(branches)}
     }}
@@ -125,16 +169,11 @@ def write_cpp_hamiltonian_header(
     struct_name: str,
     parameters: list[tuple[str, str, bool]],
     hamiltonian,
-    derivative_symbols: list[str],
-    derivative_expressions: list,
+    variable_entries: list[dict[str, object]],
     includes: list[str] | None = None,
-    value_computer_type: str | None = None,
-    scalar_argument_name: str | None = None,
-    input_argument_names: list[str] | None = None,
-    scalar_derivative_expression=None,
+    moments_computer: str | None = None,
     inverse_symbols: list[str] | None = None,
     inverse_expressions: list | None = None,
-    nonlocal_pi_value_methods: bool = False,
 ) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -142,41 +181,82 @@ def write_cpp_hamiltonian_header(
         constructor_name: member_name for member_name, constructor_name, _ in parameters
     }
     h_replacements = dict(parameter_replacements)
-    input_argument_names = [] if input_argument_names is None else input_argument_names
-    for i, input_argument_name in enumerate(input_argument_names):
-        h_replacements[input_argument_name] = f"inputs[{i}]"
-    for i, symbol_name in enumerate(derivative_symbols):
-        h_replacements[symbol_name] = f"pi[{i}]"
-
-    scalar_replacements = dict(parameter_replacements)
-    if scalar_argument_name is not None:
-        scalar_replacements[scalar_argument_name] = scalar_argument_name
-    for i, input_argument_name in enumerate(input_argument_names):
-        scalar_replacements[input_argument_name] = f"inputs[{i}]"
-
-    if scalar_argument_name is not None:
-        if input_argument_names:
-            h_signature = (
-                f"    constexpr double H(double {scalar_argument_name}, "
-                f"std::span<double const, {len(input_argument_names)}> inputs, "
-                "std::span<double const, N> pi) const"
-            )
+    argument_signature_parts: list[str] = []
+    arguments_call_parts: list[str] = []
+    for entry in variable_entries:
+        entry_name = entry["name"]
+        entry_symbols = entry["symbols"]
+        if len(entry_symbols) == 1:
+            argument_signature_parts.append(f"double {entry_name}")
+            arguments_call_parts.append(entry_name)
+            h_replacements[str(entry_symbols[0])] = entry_name
         else:
-            h_signature = (
-                f"    constexpr double H(double {scalar_argument_name}, std::span<double const, N> pi) const"
+            argument_signature_parts.append(
+                f"std::span<double const, {len(entry_symbols)}> {entry_name}"
             )
-    else:
-        h_signature = f"    constexpr double H(std::span<double const, N> pi) const"
+            arguments_call_parts.append(entry_name)
+            for i, symbol in enumerate(entry_symbols):
+                h_replacements[str(symbol)] = f"{entry_name}[{i}]"
 
-    scalar_method = ""
-    if scalar_argument_name is not None and scalar_derivative_expression is not None:
-        scalar_signature = f"double {scalar_argument_name}"
-        if input_argument_names:
-            scalar_signature += f", std::span<double const, {len(input_argument_names)}> inputs"
-        scalar_method = f"""
-    constexpr double dH_dphi({scalar_signature}) const
+    h_signature = f"    constexpr double H({', '.join(argument_signature_parts)}) const"
+
+    potential_entry = variable_entries[0]
+    moments_entry = variable_entries[1]
+    potential_name = potential_entry["name"]
+    potential_symbols = potential_entry["symbols"]
+    moments_name = moments_entry["name"]
+    moments_symbols = moments_entry["symbols"]
+
+    potential_replacements = dict(h_replacements)
+    moments_replacements = dict(parameter_replacements)
+
+    potential_derivative_expressions = [diff(hamiltonian, symbol) for symbol in potential_symbols]
+    moments_derivative_expressions = [diff(hamiltonian, symbol) for symbol in moments_symbols]
+
+    potential_argument_entries = [potential_entry, *variable_entries[2:]]
+    potential_signature_parts: list[str] = []
+    for entry in potential_argument_entries:
+        entry_name = entry["name"]
+        entry_symbols = entry["symbols"]
+        if len(entry_symbols) == 1:
+            potential_signature_parts.append(f"double {entry_name}")
+        else:
+            potential_signature_parts.append(
+                f"std::span<double const, {len(entry_symbols)}> {entry_name}"
+            )
+
+    if len(potential_symbols) == 1:
+        potential_method_signature = ", ".join(potential_signature_parts)
+        potential_method = f"""
+    constexpr double dH_d{potential_name}({potential_method_signature}) const
     {{
-        return {_replace_symbols(cxxcode(scalar_derivative_expression), scalar_replacements)};
+        return {_replace_symbols(cxxcode(potential_derivative_expressions[0]), potential_replacements)};
+    }}
+
+    constexpr double dH_dpotential(double potential) const
+    {{
+        return dH_d{potential_name}(potential);
+    }}
+"""
+    else:
+        branches: list[str] = []
+        for i, expression in enumerate(potential_derivative_expressions):
+            branches.append(
+                f"""        if constexpr (I == {i}) {{
+            return {_replace_symbols(cxxcode(expression), potential_replacements)};
+        }}"""
+            )
+        branches.append(
+            """        else {
+            static_assert(I < N, "Hamiltonian component index out of range");
+        }"""
+        )
+        potential_method_signature = ", ".join(potential_signature_parts)
+        potential_method = f"""
+    template <std::size_t I>
+    constexpr double dH_d{potential_name}({potential_method_signature}) const
+    {{
+{chr(10).join(branches)}
     }}
 """
 
@@ -187,62 +267,75 @@ def write_cpp_hamiltonian_header(
             "dphi_dx",
             inverse_symbols,
             inverse_expressions,
-            scalar_replacements,
+            potential_replacements,
         )
 
-    nonlocal_value_methods = ""
-    scalar_nonlocal_value_method = ""
-    if nonlocal_pi_value_methods:
-        nonlocal_value_methods = _render_indexed_nonlocal_value_method(
-            "dH_dpi_value",
-            derivative_symbols,
-            derivative_expressions,
-            scalar_replacements,
+    if len(moments_symbols) == 1 or moments_computer is None:
+        moments_method = _render_indexed_method(
+            f"dH_d{moments_name}",
+            moments_name,
+            [str(symbol) for symbol in moments_symbols],
+            moments_derivative_expressions,
+            moments_replacements,
         )
-        if scalar_argument_name is not None and scalar_derivative_expression is not None:
-            scalar_value_components = []
-            for input_argument_name in input_argument_names:
-                scalar_value_components.append(
-                    _replace_symbols(
-                        cxxcode(diff(scalar_derivative_expression, symbols(input_argument_name))),
-                        scalar_replacements,
-                    )
-                )
-            scalar_value_return_type = (
-                f"std::array<double, {len(input_argument_names)}>"
-                if input_argument_names
-                else "double"
-            )
-            scalar_value_return = (
-                "{"
-                + ", ".join(scalar_value_components)
-                + "}"
-                if input_argument_names
-                else _replace_symbols(
-                    cxxcode(diff(scalar_derivative_expression, symbols(scalar_argument_name))),
-                    scalar_replacements,
-                )
-            )
-            scalar_nonlocal_value_method = f"""
-    template <class ChainType, class LowerChainType, class Elem, class MomentsComputerValue>
-    constexpr {scalar_value_return_type} dH_dphi_value(
-            [[maybe_unused]] ChainType chain,
-            [[maybe_unused]] LowerChainType lower_chain,
-            [[maybe_unused]] Elem elem,
-            [[maybe_unused]] MomentsComputerValue const& moments_computer_value) const
+    else:
+        moments_method = _render_indexed_span_method(
+            f"dH_d{moments_name}",
+            moments_name,
+            [str(symbol) for symbol in moments_symbols],
+            moments_derivative_expressions,
+            h_replacements,
+        )
+    generic_moments_branches: list[str] = []
+    generic_moments_replacements = {
+        **parameter_replacements,
+        **{str(symbol): "moments" for symbol in moments_symbols},
+    }
+    for i, expression in enumerate(moments_derivative_expressions):
+        generic_moments_branches.append(
+            f"""        if constexpr (I == {i}) {{
+            return {_replace_symbols(cxxcode(expression), generic_moments_replacements)};
+        }}"""
+        )
+    generic_moments_branches.append(
+        """        else {
+            static_assert(I < N, "Hamiltonian component index out of range");
+        }"""
+    )
+    generic_moments_method = f"""
+    template <std::size_t I>
+    constexpr double dH_dmoments(double moments) const
     {{
-        return {scalar_value_return};
+{chr(10).join(generic_moments_branches)}
     }}
+"""
+
+    nonlocal_value_methods = ""
+    if moments_computer is not None:
+        nonlocal_value_methods = _render_indexed_nonlocal_value_method(
+            f"dH_d{moments_name}_value",
+            [str(symbol) for symbol in moments_symbols],
+            moments_derivative_expressions,
+            moments_replacements,
+        )
+        nonlocal_value_methods += """
+    template <std::size_t I, class Elem>
+    constexpr auto dH_dmoments_value(Elem elem) const
+    {
+        return dH_d"""
+        nonlocal_value_methods += moments_name
+        nonlocal_value_methods += """_value<I>(elem);
+    }
 """
 
     rendered_includes = ""
     if includes:
-        rendered_includes = "".join(f"#include {header}\n" for header in includes)
+        rendered_includes += "".join(f"#include {header}\n" for header in includes)
 
-    rendered_value_computer_type = ""
-    if value_computer_type is not None:
-        rendered_value_computer_type = (
-            f"    using value_computer_type = {value_computer_type};\n\n"
+    rendered_moments_computer = ""
+    if moments_computer is not None:
+        rendered_moments_computer = (
+            f"    using MomentsComputer = {moments_computer};\n\n"
         )
 
     output_path.write_text(
@@ -256,14 +349,15 @@ def write_cpp_hamiltonian_header(
 #include <cmath>
 #include <cstddef>
 #include <span>
+#include <utility>
 {rendered_includes}
 
 namespace {namespace} {{
 
 struct {struct_name} {{
-    static constexpr std::size_t N = {len(derivative_symbols)};
+    static constexpr std::size_t N = {len(moments_symbols)};
 
-{rendered_value_computer_type}\
+{rendered_moments_computer}\
 {_render_members(parameters)}
 
 {_render_constructor_signature(struct_name, parameters)}
@@ -273,7 +367,7 @@ struct {struct_name} {{
     {{
         return {_replace_symbols(cxxcode(hamiltonian), h_replacements)};
     }}
-{scalar_method}{scalar_nonlocal_value_method}{_render_indexed_method("dH_dpi", "pi", derivative_symbols, derivative_expressions, scalar_replacements)}{nonlocal_value_methods}
+{potential_method}{moments_method}{generic_moments_method}{nonlocal_value_methods}
 {inverse_methods}}};
 }} // namespace {namespace}
 """
@@ -284,49 +378,29 @@ def generate_cpp_hamiltonian(functor_class, output_path: Path, *args, **kwargs) 
     definition = functor_class.__call__(*args, **kwargs)
     parameter_tuples = [(f"m_{name}", name, True) for name in definition.parameters]
 
-    scalar_argument_name = None
-    input_argument_names: list[str] = []
-    scalar_derivative_expression = None
     inverse_symbols = None
     inverse_expressions = None
-    derivative_state_variables = _flatten_variable_entries(list(definition.variables))
-
-    if derivative_state_variables:
-        scalar_state_variable = derivative_state_variables.pop(0)
-        scalar_argument_name = str(scalar_state_variable)
-        scalar_derivative_expression = diff(definition.hamiltonian, scalar_state_variable)
-
-    input_variables = (
-        []
-        if definition.input_variables is None
-        else _flatten_variable_entries(list(definition.input_variables))
-    )
-    input_argument_names = [str(symbol) for symbol in input_variables]
-    if input_variables:
-        derivative_state_variables = [
-            symbol for symbol in derivative_state_variables if symbol not in input_variables
-        ]
-
-    derivative_symbols = [str(symbol) for symbol in derivative_state_variables]
-    derivative_expressions = [
-        diff(definition.hamiltonian, symbol) for symbol in derivative_state_variables
+    variable_entries = [
+        {"name": _entry_name(entry), "symbols": _entry_symbols(entry)}
+        for entry in definition.variables
     ]
 
-    if scalar_argument_name == "phi":
-        dphi_dx_symbols = symbols(f"dphi_dx0:{len(derivative_state_variables)}")
+    flat_variables = _flatten_variable_entries(list(definition.variables))
+    if variable_entries[0]["name"] == "phi":
+        dphi_dx_symbols = symbols(f"dphi_dx0:{len(variable_entries[1]['symbols'])}")
         inverse_solution = solve(
             [
-                dphi_dx_symbols[i] - derivative_expressions[i]
-                for i in range(len(derivative_state_variables))
+                dphi_dx_symbols[i] - diff(definition.hamiltonian, variable_entries[1]["symbols"][i])
+                for i in range(len(variable_entries[1]["symbols"]))
             ],
-            derivative_state_variables,
+            variable_entries[1]["symbols"],
             dict=True,
         )
         if inverse_solution:
             inverse_symbols = [str(symbol) for symbol in dphi_dx_symbols]
             inverse_expressions = [
-                inverse_solution[0][derivative_state_variables[i]]
-                for i in range(len(derivative_state_variables))
+                inverse_solution[0][variable_entries[1]["symbols"][i]]
+                for i in range(len(variable_entries[1]["symbols"]))
             ]
 
     write_cpp_hamiltonian_header(
@@ -335,14 +409,9 @@ def generate_cpp_hamiltonian(functor_class, output_path: Path, *args, **kwargs) 
         struct_name=definition.struct_name,
         parameters=parameter_tuples,
         hamiltonian=definition.hamiltonian,
-        derivative_symbols=derivative_symbols,
-        derivative_expressions=derivative_expressions,
+        variable_entries=variable_entries,
         includes=definition.includes,
-        value_computer_type=definition.value_computer_type,
-        scalar_argument_name=scalar_argument_name,
-        input_argument_names=input_argument_names,
-        scalar_derivative_expression=scalar_derivative_expression,
+        moments_computer=definition.moments_computer,
         inverse_symbols=inverse_symbols,
         inverse_expressions=inverse_expressions,
-        nonlocal_pi_value_methods=(scalar_argument_name is not None and scalar_argument_name != "phi"),
     )

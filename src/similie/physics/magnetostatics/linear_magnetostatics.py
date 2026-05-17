@@ -12,9 +12,11 @@ from sympy import symbols
 class LinearMagnetostaticsHamiltonian:
     @staticmethod
     def __call__() -> HamiltonianDefinition:
-        A, j, mu = symbols("A j mu")
+        A = symbols("A0:3")
         B = symbols("B0:3")
-        hamiltonian = (B[0] ** 2 + B[1] ** 2 + B[2] ** 2) / (2 * mu) - j * A
+        j = symbols("j0:3")
+        mu = symbols("mu")
+        hamiltonian = sum(B[i] ** 2 / (2 * mu) - j[i] * A[i] for i in range(3))
 
         return HamiltonianDefinition(
             namespace="similie::physics::magnetostatics",
@@ -22,9 +24,8 @@ class LinearMagnetostaticsHamiltonian:
             parameters=["mu"],
             hamiltonian=hamiltonian,
             variables=[A, B, j],
-            input_variables=[j],
             includes=["<similie/physics/magnetostatics/magnetostatics_quantities.hpp>"],
-            value_computer_type="MagneticInductionValueFromPotential",
+            moments_computer="MagneticVectorPotentialToMagneticInduction",
         )
 
 
