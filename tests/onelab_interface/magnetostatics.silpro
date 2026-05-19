@@ -1,0 +1,39 @@
+Problem {
+  Name "Test magnetostatics problem";
+  Physics LinearMagnetostatics;
+  Solver MinimizeStrongFormulationResidual;
+}
+
+Solver {
+  MaxIterations 4321;
+  RelativeTolerance 1e-8;
+  JacobiMaxBlockSize 3;
+  UseMatrixFree 0;
+}
+
+Preprocess {
+  Name SingleElectricalConductorMaterialWithSingleLinearMagneticMaterial;
+  CurrentDensityZ "Input/90SimiLie/0Coil current density magnitude z [A/m^2]";
+  MagneticPermeability "Input/90SimiLie/1Core magnetic permeability [H/m]";
+
+  PositiveElectricalConductorTags {
+    Tag0 "Input/90SimiLie/4Left coil physical tag";
+  }
+
+  NegativeElectricalConductorTags {
+    Tag0 "Input/90SimiLie/5Right coil physical tag";
+  }
+
+  LinearMagneticMaterialTags {
+    Tag0 "Input/90SimiLie/2E-core physical tag";
+    Tag1 "Input/90SimiLie/3I-core physical tag";
+  }
+}
+
+PostProcess {
+  Name ForceDensityDiagnostics;
+
+  DiagnosticRegionTags {
+    Tag0 "Input/90SimiLie/6Air-gap physical tag";
+  }
+}

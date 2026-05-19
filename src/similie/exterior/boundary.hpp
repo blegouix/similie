@@ -3,11 +3,14 @@
 
 #pragma once
 
+#include <array>
+
 #include <ddc/ddc.hpp>
 
 #include <similie/misc/specialization.hpp>
 
 #include "chain.hpp"
+#include "local_chain.hpp"
 
 namespace sil {
 
@@ -36,6 +39,30 @@ template <class T>
 using boundary_t = typename detail::BoundaryType<T>::type;
 
 namespace detail {
+
+template <class MemorySpace = Kokkos::HostSpace, class SimplexType>
+KOKKOS_FUNCTION constexpr LocalChain<boundary_t<SimplexType>, Kokkos::LayoutRight, MemorySpace>
+generate_local_half_subchain(
+        typename SimplexType::discrete_element_type elem,
+        typename SimplexType::discrete_vector_type vect,
+        bool negative = false)
+{
+    auto array = ddc::detail::array(vect);
+    LocalChain<boundary_t<SimplexType>, Kokkos::LayoutRight, MemorySpace> chain(elem);
+    auto id_dist = -1;
+    for (std::size_t i = 0; i < SimplexType::dimension(); ++i) {
+        auto array_ = array;
+        auto j = array_.begin() + id_dist + 1;
+        auto id = std::find_if(j, array_.end(), [](int k) { return k != 0; });
+        id_dist = std::distance(array_.begin(), id);
+        *id = 0;
+        typename SimplexType::discrete_vector_type vect_;
+        ddc::detail::array(vect_) = array_;
+        chain += boundary_t<SimplexType>(elem, vect_, (negative + i) % 2);
+        j = id + 1;
+    }
+    return chain;
+}
 
 // TODO Kokkosify
 template <class SimplexType, misc::Specialization<Kokkos::View> AllocationType>
@@ -142,6 +169,23 @@ KOKKOS_FUNCTION Chain<
 boundary(AllocationType allocation, SimplexType simplex)
 {
     return Boundary<AllocationType, SimplexType>::run(allocation, simplex);
+}
+
+template <class MemorySpace = Kokkos::HostSpace, class SimplexType>
+KOKKOS_FUNCTION LocalChain<boundary_t<SimplexType>, Kokkos::LayoutRight, MemorySpace> boundary(
+        SimplexType simplex)
+{
+    LocalChain<boundary_t<SimplexType>, Kokkos::LayoutRight, MemorySpace> chain(
+            simplex.discrete_element());
+    chain += detail::generate_local_half_subchain<MemorySpace, SimplexType>(
+            simplex.discrete_element(),
+            simplex.discrete_vector(),
+            SimplexType::dimension() % 2);
+    chain += detail::generate_local_half_subchain<MemorySpace, SimplexType>(
+            simplex.discrete_element() + simplex.discrete_vector(),
+            -simplex.discrete_vector());
+    chain *= (SimplexType::dimension() % 2 ? 1 : -1) * (simplex.negative() ? -1 : 1);
+    return chain;
 }
 
 template <misc::Specialization<Kokkos::View> AllocationType, class SimplexType>

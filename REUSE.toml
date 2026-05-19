@@ -1,0 +1,39 @@
+version = 1
+
+[[annotations]]
+path = "onelab_interface/GmshSocket.h"
+precedence = "override"
+SPDX-FileCopyrightText = "1997-2026 C. Geuzaine, J.-F. Remacle"
+SPDX-License-Identifier = "MIT"
+SPDX-FileComment = "Forked from the Gmsh ONELAB client sources. This vendored file is not modified in this repository."
+
+[[annotations]]
+path = "onelab_interface/onelab.h"
+precedence = "override"
+SPDX-FileCopyrightText = "2011-2021 Universite de Liege - Universite catholique de Louvain"
+SPDX-License-Identifier = "MIT"
+SPDX-FileComment = "Forked from the Gmsh ONELAB client sources. This vendored file is not modified in this repository."
+
+[[annotations]]
+path = "examples/onelab_inductor/Inductor/**"
+precedence = "override"
+SPDX-FileCopyrightText = "1997-2026 C. Geuzaine, J.-F. Remacle"
+SPDX-License-Identifier = "GPL-2.0-or-later"
+SPDX-FileComment = "Forked ONELAB/Gmsh example files. Those vendored files are not modified in this repository."
+
+[[annotations]]
+path = [
+    "docs/onelab_interface.md",
+    "examples/onelab_inductor/.clang-format-ignore",
+    "examples/onelab_inductor/inductor.geo",
+    "examples/onelab_inductor/inductor.silpro",
+    "examples/onelab_inductor/inductor2d.geo",
+    "examples/onelab_inductor/inductor3d.geo",
+    "examples/onelab_inductor/run_similie_onelab.sh",
+    "onelab_interface/.clang-format-ignore",
+    "tests/onelab_interface/magnetostatics.silpro",
+    "tests/onelab_interface/scalar_field.silpro",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "2026 Baptiste Legouix"
+SPDX-License-Identifier = "MIT"

@@ -21,7 +21,16 @@ target_link_libraries(2d_vector_laplacian
         sil::sil
 )
 
-add_subdirectory(scalar_field)
+add_executable(2d_scalar_field 2d_scalar_field.cpp)
+add_dependencies(2d_scalar_field similie_physics_generated)
+
+target_link_libraries(2d_scalar_field
+    PUBLIC
+        DDC::core
+        DDC::pdi
+        DDC::splines
+        sil::sil
+)
 
 if("${SIMILIE_BUILD_YOUNG_TABLEAU}")
 add_executable(kretschmann_scalar kretschmann_scalar.cpp)

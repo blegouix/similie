@@ -187,6 +187,47 @@ struct Codifferential<
         MetricType,
         PositionType>
 {
+    template <class ChainType, class LowerChainType, class NaturalElem>
+    KOKKOS_FUNCTION static detail::
+            local_operator_value_t<typename TensorType::non_indices_domain_t, CochainTag>
+            value(TensorType tensor,
+                  MetricType metric,
+                  PositionType position,
+                  ChainType chain,
+                  LowerChainType lower_chain,
+                  typename TensorType::non_indices_domain_t::discrete_element_type elem,
+                  NaturalElem natural_elem)
+    {
+        using CodifferentialIndex = codifferential_index_t<TagToRemoveFromCochain, CochainTag>;
+        using SpatialDomain = typename TensorType::non_indices_domain_t;
+        using LocalStencil = detail::local_operator_value_t<SpatialDomain, CochainTag>;
+        using SpatialElem = typename SpatialDomain::discrete_element_type;
+
+        LocalStencil stencil = detail::make_local_operator_value_tensor<CochainTag>(
+                detail::decrement_all(SpatialElem(elem)));
+        ddc::device_for_each(stencil.domain(), [&](auto stencil_elem) {
+            LocalStencil basis = detail::make_local_operator_value_tensor<CochainTag>(
+                    stencil.non_indices_domain().front());
+            basis.mem(stencil_elem) = 1.0;
+
+            [[maybe_unused]] tensor::TensorAccessor<CodifferentialIndex> codifferential_accessor;
+            std::array<double, CodifferentialIndex::access_size()> codifferential_alloc {};
+            ddc::ChunkSpan<
+                    double,
+                    ddc::DiscreteDomain<CodifferentialIndex>,
+                    Kokkos::layout_right,
+                    typename TensorType::memory_space>
+                    codifferential_span(
+                            codifferential_alloc.data(),
+                            codifferential_accessor.domain());
+            sil::tensor::Tensor codifferential_tensor(codifferential_span);
+
+            run(codifferential_tensor, basis, metric, position, chain, lower_chain, elem);
+            stencil.mem(stencil_elem) = codifferential_tensor(natural_elem);
+        });
+        return stencil;
+    }
+
     KOKKOS_FUNCTION static void run(
             auto codifferential_tensor,
             TensorType tensor,
