@@ -278,25 +278,6 @@ inline bool has_tag(std::vector<int> const& tags, int physical_tag)
     return std::find(tags.begin(), tags.end(), physical_tag) != tags.end();
 }
 
-template <class StructuredGrid>
-double centered_first_derivative(
-        std::vector<double> const& coordinates,
-        StructuredGrid&& values,
-        std::size_t index)
-{
-    if (coordinates.size() < 2) {
-        return 0.0;
-    }
-    if (index == 0) {
-        return (values(1) - values(0)) / (coordinates[1] - coordinates[0]);
-    }
-    if (index + 1 == coordinates.size()) {
-        return (values(index) - values(index - 1)) / (coordinates[index] - coordinates[index - 1]);
-    }
-    return (values(index + 1) - values(index - 1))
-           / (coordinates[index + 1] - coordinates[index - 1]);
-}
-
 template <class MemorySpace>
 using coord_view_type = Kokkos::View<double const*, MemorySpace>;
 
@@ -785,6 +766,383 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
 
 } // namespace magnetostatics_local
 
+template <class... CDim>
+using MetricIndex = sil::tensor::TensorSymmetricIndex<
+        sil::tensor::Covariant<sil::tensor::MetricIndex1<CDim...>>,
+        sil::tensor::Covariant<sil::tensor::MetricIndex2<CDim...>>>;
+
+using PositionIndex2D = sil::tensor::
+        Contravariant<sil::tensor::TensorNaturalIndex<
+                physics::magnetostatics::X,
+                physics::magnetostatics::Y>>;
+
+using MetricIndex2D = MetricIndex<
+        physics::magnetostatics::X,
+        physics::magnetostatics::Y>;
+
+using InPlaneMagneticInductionIndex = sil::exterior::coboundary_index_t<
+        sil::tensor::Covariant<magnetostatics_local::InPlaneNu>,
+        magnetostatics_local::ScalarPotentialIndex>;
+
+template <class NodeValueGetter>
+std::array<double, 3> magnetic_induction_moments_from_potential_z(
+        std::size_t i,
+        std::size_t j,
+        NodeValueGetter&& node_value_z)
+{
+    using namespace magnetostatics_local;
+
+    auto const elem = ddc::DiscreteElement<DDimX, DDimY>(i, j);
+    auto apply_stencil = [&](auto stencil) {
+        double value = 0.0;
+        ddc::host_for_each(stencil.domain(), [&](auto stencil_elem) {
+            auto const potential_elem = ddc::DiscreteElement<DDimX, DDimY>(stencil_elem);
+            value += stencil.mem(stencil_elem)
+                     * node_value_z(
+                             static_cast<std::size_t>(
+                                     ddc::DiscreteElement<DDimX>(potential_elem).uid()),
+                             static_cast<std::size_t>(
+                                     ddc::DiscreteElement<DDimY>(potential_elem).uid()));
+        });
+        return value;
+    };
+
+    return {
+            apply_stencil(
+                    physics::magnetostatics::MagneticVectorPotentialToMagneticInduction::
+                            template forward_value<0>(elem)),
+            apply_stencil(
+                    physics::magnetostatics::MagneticVectorPotentialToMagneticInduction::
+                            template forward_value<1>(elem)),
+            0.0,
+    };
+}
+
+template <class FillPosition, class NodeValueGetter, class WriteInduction>
+void fill_magnetic_induction_on_cell_domain(
+        ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY> const& cell_domain,
+        FillPosition&& fill_position,
+        NodeValueGetter&& node_value_z,
+        WriteInduction&& write_induction)
+{
+    [[maybe_unused]] sil::tensor::TensorAccessor<PositionIndex2D> position_accessor;
+    ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY, PositionIndex2D>
+            position_dom(cell_domain, position_accessor.domain());
+    ddc::Chunk position_alloc(position_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor position(position_alloc);
+
+    [[maybe_unused]] sil::tensor::TensorAccessor<InPlaneMagneticInductionIndex>
+            magnetic_induction_accessor;
+    ddc::DiscreteDomain<
+            magnetostatics_local::DDimX,
+            magnetostatics_local::DDimY,
+            InPlaneMagneticInductionIndex>
+            magnetic_induction_dom(cell_domain, magnetic_induction_accessor.domain());
+    ddc::Chunk magnetic_induction_alloc(magnetic_induction_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor magnetic_induction_cochain(magnetic_induction_alloc);
+
+    ddc::Chunk reconstructed_alloc(magnetic_induction_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor magnetic_induction_reconstructed(reconstructed_alloc);
+
+    ddc::host_for_each(cell_domain, [&](auto elem) {
+        std::size_t const i = static_cast<std::size_t>(
+                ddc::DiscreteElement<magnetostatics_local::DDimX>(elem).uid());
+        std::size_t const j = static_cast<std::size_t>(
+                ddc::DiscreteElement<magnetostatics_local::DDimY>(elem).uid());
+        std::array<double, 2> const coordinates = fill_position(elem);
+        std::array<double, 3> const induction_moments
+                = magnetic_induction_moments_from_potential_z(i, j, node_value_z);
+
+        position(elem, position.accessor().template access_element<physics::magnetostatics::X>())
+                = coordinates[0];
+        position(elem, position.accessor().template access_element<physics::magnetostatics::Y>())
+                = coordinates[1];
+
+        magnetic_induction_cochain(
+                elem,
+                magnetic_induction_cochain.accessor()
+                        .template access_element<physics::magnetostatics::Y>())
+                = induction_moments[0];
+        magnetic_induction_cochain(
+                elem,
+                magnetic_induction_cochain.accessor()
+                        .template access_element<physics::magnetostatics::X>())
+                = induction_moments[1];
+    });
+
+    using MagneticInductionIndices = ddc::to_type_seq_t<
+            typename sil::tensor::TensorAccessor<InPlaneMagneticInductionIndex>::natural_domain_t>;
+    ddc::host_for_each(cell_domain, [&](auto elem) {
+        sil::exterior::Reconstruction<
+                MagneticInductionIndices,
+                decltype(position),
+                decltype(elem)>::run(
+                magnetic_induction_reconstructed[elem],
+                magnetic_induction_cochain[elem],
+                position,
+                elem);
+        write_induction(
+                elem,
+                std::array<double, 3> {
+                        magnetic_induction_reconstructed(
+                                elem,
+                                magnetic_induction_reconstructed.accessor()
+                                        .template access_element<physics::magnetostatics::Y>()),
+                        magnetic_induction_reconstructed(
+                                elem,
+                                magnetic_induction_reconstructed.accessor()
+                                        .template access_element<physics::magnetostatics::X>()),
+                        0.0,
+                });
+    });
+}
+
+inline CellPostProcessFields make_cell_post_process_fields(
+        double mu,
+        std::array<double, 3> const& magnetic_induction)
+{
+    physics::magnetostatics::LinearMagneticInductionToMagneticField const constitutive_law(mu);
+    physics::magnetostatics::MaxwellStressTensorToMagneticInductionAndMagneticField const
+            maxwell_stress_operator(constitutive_law);
+
+    CellPostProcessFields cell_output {};
+    cell_output.magnetic_induction = magnetic_induction;
+    cell_output.magnetic_field = {
+            constitutive_law.forward(1.0, magnetic_induction[0]),
+            constitutive_law.forward(1.0, magnetic_induction[1]),
+            constitutive_law.forward(1.0, magnetic_induction[2]),
+    };
+    cell_output.maxwell_stress
+            = maxwell_stress_operator.inverse(cell_output.magnetic_induction, cell_output.magnetic_field);
+    return cell_output;
+}
+
+template <class FillStress, class ReadPosition, class WriteForceDensity>
+void fill_force_density_on_cell_domain(
+        ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY> const& cell_domain,
+        FillStress&& fill_stress,
+        ReadPosition&& read_position,
+        WriteForceDensity&& write_force_density)
+{
+    using InPlaneOneFormIndex = sil::tensor::Covariant<magnetostatics_local::InPlaneNu>;
+    using ForceDensityIndex = physics::magnetostatics::ForceDensityIndex;
+    using ScalarIndex = sil::tensor::Covariant<sil::tensor::ScalarIndex>;
+
+    [[maybe_unused]] sil::tensor::TensorAccessor<ForceDensityIndex> force_density_accessor;
+    ddc::DiscreteDomain<
+            magnetostatics_local::DDimX,
+            magnetostatics_local::DDimY,
+            ForceDensityIndex>
+            force_density_dom(cell_domain, force_density_accessor.domain());
+    ddc::Chunk force_density_alloc(force_density_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor force_density_tensor(force_density_alloc);
+
+    [[maybe_unused]] sil::tensor::TensorAccessor<MetricIndex2D> metric_accessor;
+    ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY, MetricIndex2D>
+            metric_dom(cell_domain, metric_accessor.domain());
+    ddc::Chunk metric_alloc(metric_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor metric(metric_alloc);
+
+    [[maybe_unused]] sil::tensor::TensorAccessor<PositionIndex2D> position_accessor;
+    ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY, PositionIndex2D>
+            position_dom(cell_domain, position_accessor.domain());
+    ddc::Chunk position_alloc(position_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor position(position_alloc);
+
+    [[maybe_unused]] sil::tensor::TensorAccessor<InPlaneOneFormIndex> one_form_accessor;
+    ddc::DiscreteDomain<
+            magnetostatics_local::DDimX,
+            magnetostatics_local::DDimY,
+            InPlaneOneFormIndex>
+            one_form_dom(cell_domain, one_form_accessor.domain());
+    ddc::Chunk one_form_alloc(one_form_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor one_form_tensor(one_form_alloc);
+
+    [[maybe_unused]] sil::tensor::TensorAccessor<ScalarIndex> scalar_accessor;
+    ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY, ScalarIndex>
+            scalar_dom(cell_domain, scalar_accessor.domain());
+    ddc::Chunk scalar_alloc(scalar_dom, ddc::HostAllocator<double>());
+    sil::tensor::Tensor scalar_tensor(scalar_alloc);
+
+    ddc::host_for_each(cell_domain, [&](auto elem) {
+        std::array<double, 2> const coordinates = read_position(elem);
+        position(elem, position.accessor().template access_element<physics::magnetostatics::X>())
+                = coordinates[0];
+        position(elem, position.accessor().template access_element<physics::magnetostatics::Y>())
+                = coordinates[1];
+
+        metric(elem, metric.accessor().template access_element<
+                             physics::magnetostatics::X,
+                             physics::magnetostatics::X>())
+                = 1.0;
+        metric(elem, metric.accessor().template access_element<
+                             physics::magnetostatics::X,
+                             physics::magnetostatics::Y>())
+                = 0.0;
+        metric(elem, metric.accessor().template access_element<
+                             physics::magnetostatics::Y,
+                             physics::magnetostatics::Y>())
+                = 1.0;
+    });
+
+    auto staged_codifferential = sil::exterior::make_staged_codifferential<
+            MetricIndex2D,
+            InPlaneOneFormIndex,
+            InPlaneOneFormIndex>(
+            Kokkos::DefaultHostExecutionSpace(),
+            one_form_tensor,
+            metric,
+            position);
+
+    auto fill_force_component = [&](auto select_components, auto assign_output) {
+        ddc::host_for_each(cell_domain, [&](auto elem) {
+            std::array<double, 6> const stress = fill_stress(elem);
+            std::array<double, 2> const one_form = select_components(stress);
+            one_form_tensor(
+                    elem,
+                    one_form_tensor.accessor().template access_element<physics::magnetostatics::X>())
+                    = one_form[0];
+            one_form_tensor(
+                    elem,
+                    one_form_tensor.accessor().template access_element<physics::magnetostatics::Y>())
+                    = one_form[1];
+        });
+        staged_codifferential.run(scalar_tensor, one_form_tensor);
+        ddc::host_for_each(cell_domain, [&](auto elem) {
+            assign_output(elem, -scalar_tensor(elem, ddc::DiscreteElement<ScalarIndex>(0)));
+        });
+    };
+
+    fill_force_component(
+            [](std::array<double, 6> const& stress) {
+                return std::array<double, 2> {stress[0], stress[3]};
+            },
+            [&](auto elem, double value) {
+                force_density_tensor(
+                        elem,
+                        force_density_tensor.accessor()
+                                .template access_element<physics::magnetostatics::X>())
+                        = value;
+            });
+    fill_force_component(
+            [](std::array<double, 6> const& stress) {
+                return std::array<double, 2> {stress[3], stress[1]};
+            },
+            [&](auto elem, double value) {
+                force_density_tensor(
+                        elem,
+                        force_density_tensor.accessor()
+                                .template access_element<physics::magnetostatics::Y>())
+                        = value;
+            });
+    fill_force_component(
+            [](std::array<double, 6> const& stress) {
+                return std::array<double, 2> {stress[4], stress[5]};
+            },
+            [&](auto elem, double value) {
+                force_density_tensor(
+                        elem,
+                        force_density_tensor.accessor()
+                                .template access_element<physics::magnetostatics::Z>())
+                        = value;
+            });
+
+    ddc::host_for_each(cell_domain, [&](auto elem) {
+        write_force_density(
+                elem,
+                std::array<double, 3> {
+                        force_density_tensor(
+                                elem,
+                                force_density_tensor.accessor()
+                                        .template access_element<physics::magnetostatics::X>()),
+                        force_density_tensor(
+                                elem,
+                                force_density_tensor.accessor()
+                                        .template access_element<physics::magnetostatics::Y>()),
+                        force_density_tensor(
+                                elem,
+                                force_density_tensor.accessor()
+                                        .template access_element<physics::magnetostatics::Z>()),
+                });
+    });
+}
+
+inline void fill_force_density_on_quadrilateral_grid(
+        sil::onelab_interface::gmsh::StructuredGrid2D const& grid,
+        std::vector<CellPostProcessFields>& cell_outputs)
+{
+    auto const cell_domain = ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(
+            ddc::DiscreteElement<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(0, 0),
+            ddc::DiscreteVector<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(
+                    grid.ncell_x(),
+                    grid.ncell_y()));
+    fill_force_density_on_cell_domain(
+            cell_domain,
+            [&](auto elem) {
+                std::size_t const i = static_cast<std::size_t>(
+                        ddc::DiscreteElement<magnetostatics_local::DDimX>(elem).uid());
+                std::size_t const j = static_cast<std::size_t>(
+                        ddc::DiscreteElement<magnetostatics_local::DDimY>(elem).uid());
+                return cell_outputs[grid.cell_index(i, j)].maxwell_stress;
+            },
+            [&](auto elem) {
+                std::size_t const i = static_cast<std::size_t>(
+                        ddc::DiscreteElement<magnetostatics_local::DDimX>(elem).uid());
+                std::size_t const j = static_cast<std::size_t>(
+                        ddc::DiscreteElement<magnetostatics_local::DDimY>(elem).uid());
+                return std::array<double, 2> {
+                        grid.cell_center_x(i),
+                        grid.cell_center_y(j),
+                };
+            },
+            [&](auto elem, std::array<double, 3> const& force_density) {
+                std::size_t const i = static_cast<std::size_t>(
+                        ddc::DiscreteElement<magnetostatics_local::DDimX>(elem).uid());
+                std::size_t const j = static_cast<std::size_t>(
+                        ddc::DiscreteElement<magnetostatics_local::DDimY>(elem).uid());
+                cell_outputs[grid.cell_index(i, j)].force_density = force_density;
+            });
+}
+
+inline void fill_force_density_on_hexahedral_grid_xy_slices(
+        sil::onelab_interface::gmsh::StructuredGrid3D const& grid,
+        std::vector<CellPostProcessFields>& cell_outputs)
+{
+    auto const cell_domain = ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(
+            ddc::DiscreteElement<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(0, 0),
+            ddc::DiscreteVector<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(
+                    grid.ncell_x(),
+                    grid.ncell_y()));
+    for (std::size_t k = 0; k < grid.ncell_z(); ++k) {
+        fill_force_density_on_cell_domain(
+                cell_domain,
+                [&](auto elem) {
+                    std::size_t const i = static_cast<std::size_t>(
+                            ddc::DiscreteElement<magnetostatics_local::DDimX>(elem).uid());
+                    std::size_t const j = static_cast<std::size_t>(
+                            ddc::DiscreteElement<magnetostatics_local::DDimY>(elem).uid());
+                    return cell_outputs[grid.cell_index(i, j, k)].maxwell_stress;
+                },
+                [&](auto elem) {
+                    std::size_t const i = static_cast<std::size_t>(
+                            ddc::DiscreteElement<magnetostatics_local::DDimX>(elem).uid());
+                    std::size_t const j = static_cast<std::size_t>(
+                            ddc::DiscreteElement<magnetostatics_local::DDimY>(elem).uid());
+                    return std::array<double, 2> {
+                            grid.cell_center_x(i),
+                            grid.cell_center_y(j),
+                    };
+                },
+                [&](auto elem, std::array<double, 3> const& force_density) {
+                    std::size_t const i = static_cast<std::size_t>(
+                            ddc::DiscreteElement<magnetostatics_local::DDimX>(elem).uid());
+                    std::size_t const j = static_cast<std::size_t>(
+                            ddc::DiscreteElement<magnetostatics_local::DDimY>(elem).uid());
+                    cell_outputs[grid.cell_index(i, j, k)].force_density = force_density;
+                });
+    }
+}
+
 inline void write_results_view(
         std::filesystem::path const& output_view_file,
         sil::onelab_interface::gmsh::StructuredGrid2D const& grid,
@@ -1009,93 +1367,48 @@ Result run_on_quadrilateral_grid(
     auto node_value_z = [&](std::size_t i, std::size_t j) {
         return magnetic_vector_potential[3 * grid.node_index(i, j) + 2];
     };
-    auto derivative_az_at_cell = [&](std::size_t i, std::size_t j, char axis) {
-        if (axis == 'x') {
-            double const dx = grid.x_coords[i + 1] - grid.x_coords[i];
-            return ((node_value_z(i + 1, j) - node_value_z(i, j))
-                    + (node_value_z(i + 1, j + 1) - node_value_z(i, j + 1)))
-                   / (2.0 * dx);
-        }
-        double const dy = grid.y_coords[j + 1] - grid.y_coords[j];
-        return ((node_value_z(i, j + 1) - node_value_z(i, j))
-                + (node_value_z(i + 1, j + 1) - node_value_z(i + 1, j)))
-               / (2.0 * dy);
-    };
 
+    auto const cell_domain = ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(
+            ddc::DiscreteElement<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(0, 0),
+            ddc::DiscreteVector<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(
+                    grid.ncell_x(),
+                    grid.ncell_y()));
     std::vector<CellPostProcessFields> cell_outputs(result.num_cells);
-    for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
-        for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
-            std::size_t const cell_index = grid.cell_index(i, j);
-            double const d_az_dx = derivative_az_at_cell(i, j, 'x');
-            double const d_az_dy = derivative_az_at_cell(i, j, 'y');
-            double const bx = d_az_dy;
-            double const by = -d_az_dx;
-            double const bz = 0.0;
-            physics::magnetostatics::LinearMagneticInductionToMagneticField constitutive_law(
-                    cell_inputs[cell_index].mu);
-            double const hx = constitutive_law.forward(1.0, bx);
-            double const hy = constitutive_law.forward(1.0, by);
-            double const hz = 0.0;
-
-            CellPostProcessFields cell_output {};
-            cell_output.magnetic_induction = {bx, by, bz};
-            cell_output.magnetic_field = {hx, hy, hz};
-            double const half_trace = 0.5 * (bx * hx + by * hy + bz * hz);
-            cell_output.maxwell_stress = {
-                    bx * hx - half_trace,
-                    by * hy - half_trace,
-                    bz * hz - half_trace,
-                    bx * hy,
-                    bx * hz,
-                    by * hz,
-            };
-            cell_outputs[cell_index] = cell_output;
-
-            for (double value : cell_output.magnetic_induction) {
-                result.max_abs_induction = std::max(result.max_abs_induction, std::abs(value));
-            }
-            for (double value : cell_output.magnetic_field) {
-                result.max_abs_field = std::max(result.max_abs_field, std::abs(value));
-            }
+    fill_magnetic_induction_on_cell_domain(
+            cell_domain,
+            [&](auto elem) {
+                std::size_t const i = static_cast<std::size_t>(
+                        ddc::DiscreteElement<magnetostatics_local::DDimX>(elem).uid());
+                std::size_t const j = static_cast<std::size_t>(
+                        ddc::DiscreteElement<magnetostatics_local::DDimY>(elem).uid());
+                return std::array<double, 2> {
+                        grid.cell_center_x(i),
+                        grid.cell_center_y(j),
+                };
+            },
+            node_value_z,
+            [&](auto elem, std::array<double, 3> const& magnetic_induction) {
+                std::size_t const i = static_cast<std::size_t>(
+                        ddc::DiscreteElement<magnetostatics_local::DDimX>(elem).uid());
+                std::size_t const j = static_cast<std::size_t>(
+                        ddc::DiscreteElement<magnetostatics_local::DDimY>(elem).uid());
+                std::size_t const cell_index = grid.cell_index(i, j);
+                cell_outputs[cell_index]
+                        = make_cell_post_process_fields(cell_inputs[cell_index].mu, magnetic_induction);
+            });
+    for (CellPostProcessFields const& cell_output : cell_outputs) {
+        for (double value : cell_output.magnetic_induction) {
+            result.max_abs_induction = std::max(result.max_abs_induction, std::abs(value));
+        }
+        for (double value : cell_output.magnetic_field) {
+            result.max_abs_field = std::max(result.max_abs_field, std::abs(value));
         }
     }
-
-    std::vector<double> cell_x_coords(grid.ncell_x());
-    std::vector<double> cell_y_coords(grid.ncell_y());
-    for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
-        cell_x_coords[i] = grid.cell_center_x(i);
-    }
-    for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
-        cell_y_coords[j] = grid.cell_center_y(j);
-    }
-    auto stress_component = [&](std::size_t i, std::size_t j, std::size_t component) {
-        return cell_outputs[grid.cell_index(i, j)].maxwell_stress[component];
-    };
+    fill_force_density_on_quadrilateral_grid(grid, cell_outputs);
     for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
         for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
-            auto derivative = [&](std::size_t component, char axis) {
-                if (axis == 'x') {
-                    return detail::centered_first_derivative(
-                            cell_x_coords,
-                            [&](std::size_t index) {
-                                std::size_t const clamped = std::min(index, grid.ncell_x() - 1);
-                                return stress_component(clamped, j, component);
-                            },
-                            i);
-                }
-                return detail::centered_first_derivative(
-                        cell_y_coords,
-                        [&](std::size_t index) {
-                            std::size_t const clamped = std::min(index, grid.ncell_y() - 1);
-                            return stress_component(i, clamped, component);
-                        },
-                        j);
-            };
-            std::array<double, 3>& force_density
+            std::array<double, 3> const& force_density
                     = cell_outputs[grid.cell_index(i, j)].force_density;
-            force_density[0] = derivative(0, 'x') + derivative(3, 'y');
-            force_density[1] = derivative(3, 'x') + derivative(1, 'y');
-            force_density[2] = derivative(4, 'x') + derivative(5, 'y');
             if (has_tag(inputs.diagnostic_region_tags,
                         grid.ordered_cells[grid.cell_index(i, j)].physical_tag)) {
                 result.diagnostic_force_density_magnitude_sum += std::sqrt(
@@ -1362,103 +1675,54 @@ Result run_on_hexahedral_grid(
     }
     log_info(logger, "SimiLie starting magnetostatics post-processing");
 
-    auto node_value_z = [&](std::size_t i, std::size_t j, std::size_t k) {
-        return magnetic_vector_potential[3 * grid.node_index(i, j, k) + 2];
-    };
-    auto derivative_az_at_cell = [&](std::size_t i, std::size_t j, std::size_t k, char axis) {
-        if (axis == 'x') {
-            double const dx = grid.x_coords[i + 1] - grid.x_coords[i];
-            return ((node_value_z(i + 1, j, k) - node_value_z(i, j, k))
-                    + (node_value_z(i + 1, j + 1, k) - node_value_z(i, j + 1, k))
-                    + (node_value_z(i + 1, j, k + 1) - node_value_z(i, j, k + 1))
-                    + (node_value_z(i + 1, j + 1, k + 1) - node_value_z(i, j + 1, k + 1)))
-                   / (4.0 * dx);
-        }
-        double const dy = grid.y_coords[j + 1] - grid.y_coords[j];
-        return ((node_value_z(i, j + 1, k) - node_value_z(i, j, k))
-                + (node_value_z(i + 1, j + 1, k) - node_value_z(i + 1, j, k))
-                + (node_value_z(i, j + 1, k + 1) - node_value_z(i, j, k + 1))
-                + (node_value_z(i + 1, j + 1, k + 1) - node_value_z(i + 1, j, k + 1)))
-               / (4.0 * dy);
-    };
-
+    auto const cell_domain = ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(
+            ddc::DiscreteElement<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(0, 0),
+            ddc::DiscreteVector<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(
+                    grid.ncell_x(),
+                    grid.ncell_y()));
     std::vector<CellPostProcessFields> cell_outputs(result.num_cells);
     for (std::size_t k = 0; k < grid.ncell_z(); ++k) {
-        for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
-            for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
-                std::size_t const cell_index = grid.cell_index(i, j, k);
-                double const d_az_dx = derivative_az_at_cell(i, j, k, 'x');
-                double const d_az_dy = derivative_az_at_cell(i, j, k, 'y');
-                double const bx = d_az_dy;
-                double const by = -d_az_dx;
-                double const bz = 0.0;
-                physics::magnetostatics::LinearMagneticInductionToMagneticField constitutive_law(
-                        cell_inputs_3d[cell_index].mu);
-                double const hx = constitutive_law.forward(1.0, bx);
-                double const hy = constitutive_law.forward(1.0, by);
-                double const hz = 0.0;
-
-                CellPostProcessFields cell_output {};
-                cell_output.magnetic_induction = {bx, by, bz};
-                cell_output.magnetic_field = {hx, hy, hz};
-                double const half_trace = 0.5 * (bx * hx + by * hy + bz * hz);
-                cell_output.maxwell_stress = {
-                        bx * hx - half_trace,
-                        by * hy - half_trace,
-                        bz * hz - half_trace,
-                        bx * hy,
-                        bx * hz,
-                        by * hz,
-                };
-                cell_outputs[cell_index] = cell_output;
-
-                for (double value : cell_output.magnetic_induction) {
-                    result.max_abs_induction = std::max(result.max_abs_induction, std::abs(value));
-                }
-                for (double value : cell_output.magnetic_field) {
-                    result.max_abs_field = std::max(result.max_abs_field, std::abs(value));
-                }
-            }
+        auto node_value_z = [&](std::size_t node_i, std::size_t node_j) {
+            return magnetic_vector_potential[3 * grid.node_index(node_i, node_j, k) + 2];
+        };
+        fill_magnetic_induction_on_cell_domain(
+                cell_domain,
+                [&](auto elem) {
+                    std::size_t const i = static_cast<std::size_t>(
+                            ddc::DiscreteElement<magnetostatics_local::DDimX>(elem).uid());
+                    std::size_t const j = static_cast<std::size_t>(
+                            ddc::DiscreteElement<magnetostatics_local::DDimY>(elem).uid());
+                    return std::array<double, 2> {
+                            grid.cell_center_x(i),
+                            grid.cell_center_y(j),
+                    };
+                },
+                node_value_z,
+                [&](auto elem, std::array<double, 3> const& magnetic_induction) {
+                    std::size_t const i = static_cast<std::size_t>(
+                            ddc::DiscreteElement<magnetostatics_local::DDimX>(elem).uid());
+                    std::size_t const j = static_cast<std::size_t>(
+                            ddc::DiscreteElement<magnetostatics_local::DDimY>(elem).uid());
+                    std::size_t const cell_index = grid.cell_index(i, j, k);
+                    cell_outputs[cell_index] = make_cell_post_process_fields(
+                            cell_inputs_3d[cell_index].mu,
+                            magnetic_induction);
+                });
+    }
+    for (CellPostProcessFields const& cell_output : cell_outputs) {
+        for (double value : cell_output.magnetic_induction) {
+            result.max_abs_induction = std::max(result.max_abs_induction, std::abs(value));
+        }
+        for (double value : cell_output.magnetic_field) {
+            result.max_abs_field = std::max(result.max_abs_field, std::abs(value));
         }
     }
-
-    std::vector<double> cell_x_coords(grid.ncell_x());
-    std::vector<double> cell_y_coords(grid.ncell_y());
-    for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
-        cell_x_coords[i] = grid.cell_center_x(i);
-    }
-    for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
-        cell_y_coords[j] = grid.cell_center_y(j);
-    }
-    auto stress_component = [&](std::size_t i, std::size_t j, std::size_t k, std::size_t component) {
-        return cell_outputs[grid.cell_index(i, j, k)].maxwell_stress[component];
-    };
+    fill_force_density_on_hexahedral_grid_xy_slices(grid, cell_outputs);
     for (std::size_t k = 0; k < grid.ncell_z(); ++k) {
         for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
             for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
-                auto derivative = [&](std::size_t component, char axis) {
-                    if (axis == 'x') {
-                        return detail::centered_first_derivative(
-                                cell_x_coords,
-                                [&](std::size_t index) {
-                                    std::size_t const clamped = std::min(index, grid.ncell_x() - 1);
-                                    return stress_component(clamped, j, k, component);
-                                },
-                                i);
-                    }
-                    return detail::centered_first_derivative(
-                            cell_y_coords,
-                            [&](std::size_t index) {
-                                std::size_t const clamped = std::min(index, grid.ncell_y() - 1);
-                                return stress_component(i, clamped, k, component);
-                            },
-                            j);
-                };
-                std::array<double, 3>& force_density
+                std::array<double, 3> const& force_density
                         = cell_outputs[grid.cell_index(i, j, k)].force_density;
-                force_density[0] = derivative(0, 'x') + derivative(3, 'y');
-                force_density[1] = derivative(3, 'x') + derivative(1, 'y');
-                force_density[2] = derivative(4, 'x') + derivative(5, 'y');
                 if (has_tag(inputs.diagnostic_region_tags,
                             grid.ordered_cells[grid.cell_index(i, j, k)].physical_tag)) {
                     result.diagnostic_force_density_magnitude_sum += std::sqrt(

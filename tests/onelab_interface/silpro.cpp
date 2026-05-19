@@ -158,6 +158,86 @@ TEST(OnelabInterface, LinearMagneticInductionToMagneticFieldValueAndApplication)
     EXPECT_DOUBLE_EQ(constitutive_law.inverse(3.0, 5.0), 10.0 / 3.0);
 }
 
+TEST(OnelabInterface, MagnetostaticsPostProcessInductionUsesLibraryStencil)
+{
+    using namespace similie::onelab_interface::linear_magnetostatics_onelab::detail::
+            magnetostatics_local;
+    using similie::onelab_interface::linear_magnetostatics_onelab::detail::
+            fill_magnetic_induction_on_cell_domain;
+
+    auto const cell_domain = ddc::DiscreteDomain<DDimX, DDimY>(
+            ddc::DiscreteElement<DDimX, DDimY>(0, 0),
+            ddc::DiscreteVector<DDimX, DDimY>(2, 2));
+    std::vector<double> const x_coords {0.0, 1.0, 2.0};
+    std::vector<double> const y_coords {0.0, 1.0, 2.0};
+    auto node_value_z = [&](std::size_t i, std::size_t j) {
+        return 3.0 * x_coords[i] - 2.0 * y_coords[j];
+    };
+
+    std::array<double, 3> induction {};
+    fill_magnetic_induction_on_cell_domain(
+            cell_domain,
+            [&](auto elem) {
+                std::size_t const i = static_cast<std::size_t>(ddc::DiscreteElement<DDimX>(elem).uid());
+                std::size_t const j = static_cast<std::size_t>(ddc::DiscreteElement<DDimY>(elem).uid());
+                return std::array<double, 2> {
+                        0.5 * (x_coords[i] + x_coords[i + 1]),
+                        0.5 * (y_coords[j] + y_coords[j + 1]),
+                };
+            },
+            node_value_z,
+            [&](auto elem, std::array<double, 3> const& value) {
+                if (ddc::DiscreteElement<DDimX>(elem).uid() == 0
+                    && ddc::DiscreteElement<DDimY>(elem).uid() == 0) {
+                    induction = value;
+                }
+            });
+
+    EXPECT_NEAR(induction[0], -2.0, 1e-12);
+    EXPECT_NEAR(induction[1], -3.0, 1e-12);
+    EXPECT_DOUBLE_EQ(induction[2], 0.0);
+}
+
+TEST(OnelabInterface, MagnetostaticsPostProcessForceDensityUsesLibraryCodifferential)
+{
+    using similie::onelab_interface::linear_magnetostatics_onelab::detail::CellPostProcessFields;
+    using similie::onelab_interface::linear_magnetostatics_onelab::detail::
+            fill_force_density_on_quadrilateral_grid;
+
+    sil::onelab_interface::gmsh::StructuredGrid2D grid;
+    grid.x_coords = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0};
+    grid.y_coords = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0};
+    grid.z_value = 0.0;
+
+    std::vector<CellPostProcessFields> cell_outputs(grid.ncell_x() * grid.ncell_y());
+    for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
+        for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
+            double const x = grid.cell_center_x(i);
+            double const y = grid.cell_center_y(j);
+            cell_outputs[grid.cell_index(i, j)].maxwell_stress = {
+                    x,
+                    2.0 * y,
+                    0.0,
+                    0.0,
+                    3.0 * x,
+                    4.0 * y,
+            };
+        }
+    }
+
+    fill_force_density_on_quadrilateral_grid(grid, cell_outputs);
+
+    for (std::size_t j = 1; j + 1 < grid.ncell_y(); ++j) {
+        for (std::size_t i = 1; i + 1 < grid.ncell_x(); ++i) {
+            std::array<double, 3> const& force_density
+                    = cell_outputs[grid.cell_index(i, j)].force_density;
+            EXPECT_NEAR(force_density[0], 1.0, 1e-12);
+            EXPECT_NEAR(force_density[1], 2.0, 1e-12);
+            EXPECT_NEAR(force_density[2], 7.0, 1e-12);
+        }
+    }
+}
+
 TEST(OnelabInterface, MagnetostaticsLocalOperatorMatchesItsAssembledMatrix)
 {
     using namespace similie::onelab_interface::linear_magnetostatics_onelab::detail::
