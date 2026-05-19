@@ -40,14 +40,15 @@ using boundary_t = typename detail::BoundaryType<T>::type;
 
 namespace detail {
 
-template <class SimplexType>
-KOKKOS_FUNCTION constexpr LocalChain<boundary_t<SimplexType>> generate_local_half_subchain(
+template <class MemorySpace = Kokkos::HostSpace, class SimplexType>
+KOKKOS_FUNCTION constexpr LocalChain<boundary_t<SimplexType>, Kokkos::LayoutRight, MemorySpace>
+generate_local_half_subchain(
         typename SimplexType::discrete_element_type elem,
         typename SimplexType::discrete_vector_type vect,
         bool negative = false)
 {
     auto array = ddc::detail::array(vect);
-    LocalChain<boundary_t<SimplexType>> chain(elem);
+    LocalChain<boundary_t<SimplexType>, Kokkos::LayoutRight, MemorySpace> chain(elem);
     auto id_dist = -1;
     for (std::size_t i = 0; i < SimplexType::dimension(); ++i) {
         auto array_ = array;
@@ -170,15 +171,17 @@ boundary(AllocationType allocation, SimplexType simplex)
     return Boundary<AllocationType, SimplexType>::run(allocation, simplex);
 }
 
-template <class SimplexType>
-KOKKOS_FUNCTION LocalChain<boundary_t<SimplexType>> boundary(SimplexType simplex)
+template <class MemorySpace = Kokkos::HostSpace, class SimplexType>
+KOKKOS_FUNCTION LocalChain<boundary_t<SimplexType>, Kokkos::LayoutRight, MemorySpace> boundary(
+        SimplexType simplex)
 {
-    LocalChain<boundary_t<SimplexType>> chain(simplex.discrete_element());
-    chain += detail::generate_local_half_subchain<SimplexType>(
+    LocalChain<boundary_t<SimplexType>, Kokkos::LayoutRight, MemorySpace> chain(
+            simplex.discrete_element());
+    chain += detail::generate_local_half_subchain<MemorySpace, SimplexType>(
             simplex.discrete_element(),
             simplex.discrete_vector(),
             SimplexType::dimension() % 2);
-    chain += detail::generate_local_half_subchain<SimplexType>(
+    chain += detail::generate_local_half_subchain<MemorySpace, SimplexType>(
             simplex.discrete_element() + simplex.discrete_vector(),
             -simplex.discrete_vector());
     chain *= (SimplexType::dimension() % 2 ? 1 : -1) * (simplex.negative() ? -1 : 1);

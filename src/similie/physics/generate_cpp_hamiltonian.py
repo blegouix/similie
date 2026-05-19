@@ -70,7 +70,7 @@ def _render_constructor_signature(
         f"{type_name} {constructor_name}_"
         for _, constructor_name, _, type_name in parameters
     )
-    return f"    constexpr {struct_name}(\n            {params})"
+    return f"    KOKKOS_FUNCTION constexpr {struct_name}(\n            {params})"
 
 
 def _render_constructor_initializers(parameters: list[tuple[str, str, bool, str]]) -> str:
@@ -103,7 +103,7 @@ def _render_indexed_method(
 
     return f"""
     template <std::size_t I>
-    constexpr double {method_name}(double {argument_prefix}) const
+    KOKKOS_FUNCTION constexpr double {method_name}(double {argument_prefix}) const
     {{
 {chr(10).join(branches)}
     }}
@@ -133,7 +133,7 @@ def _render_indexed_span_method(
 
     return f"""
     template <std::size_t I>
-    constexpr double {method_name}(std::span<double const, {len(symbols_)}> {argument_name}) const
+    KOKKOS_FUNCTION constexpr double {method_name}(std::span<double const, {len(symbols_)}> {argument_name}) const
     {{
 {chr(10).join(branches)}
     }}
@@ -166,7 +166,7 @@ def _render_indexed_nonlocal_value_method(
     )
     return f"""
     template <std::size_t I, class Elem>
-    constexpr auto {method_name}(Elem elem) const
+    KOKKOS_FUNCTION constexpr auto {method_name}(Elem elem) const
     {{
 {chr(10).join(branches)}
     }}
@@ -217,10 +217,12 @@ def write_cpp_hamiltonian_header(
     if requires_elem:
         h_signature = (
             f"    template <class Elem>\n"
-            f"    constexpr double H({', '.join(argument_signature_parts)}, Elem elem) const"
+            f"    KOKKOS_FUNCTION constexpr double H({', '.join(argument_signature_parts)}, Elem elem) const"
         )
     else:
-        h_signature = f"    constexpr double H({', '.join(argument_signature_parts)}) const"
+        h_signature = (
+            f"    KOKKOS_FUNCTION constexpr double H({', '.join(argument_signature_parts)}) const"
+        )
 
     potential_entry = variable_entries[0]
     moments_entry = variable_entries[1]
@@ -252,25 +254,25 @@ def write_cpp_hamiltonian_header(
         if requires_elem:
             potential_method = f"""
     template <class Elem>
-    constexpr double dH_d{potential_name}({potential_method_signature}, Elem elem) const
+    KOKKOS_FUNCTION constexpr double dH_d{potential_name}({potential_method_signature}, Elem elem) const
     {{
         return {_replace_symbols(cxxcode(potential_derivative_expressions[0]), potential_replacements)};
     }}
 
     template <class Elem>
-    constexpr double dH_dpotential(double potential, Elem elem) const
+    KOKKOS_FUNCTION constexpr double dH_dpotential(double potential, Elem elem) const
     {{
         return dH_d{potential_name}(potential, elem);
     }}
 """
         else:
             potential_method = f"""
-    constexpr double dH_d{potential_name}({potential_method_signature}) const
+    KOKKOS_FUNCTION constexpr double dH_d{potential_name}({potential_method_signature}) const
     {{
         return {_replace_symbols(cxxcode(potential_derivative_expressions[0]), potential_replacements)};
     }}
 
-    constexpr double dH_dpotential(double potential) const
+    KOKKOS_FUNCTION constexpr double dH_dpotential(double potential) const
     {{
         return dH_d{potential_name}(potential);
     }}
@@ -292,7 +294,7 @@ def write_cpp_hamiltonian_header(
         if requires_elem:
             potential_method = f"""
     template <std::size_t I, class Elem>
-    constexpr double dH_d{potential_name}({potential_method_signature}, Elem elem) const
+    KOKKOS_FUNCTION constexpr double dH_d{potential_name}({potential_method_signature}, Elem elem) const
     {{
 {chr(10).join(branches)}
     }}
@@ -300,7 +302,7 @@ def write_cpp_hamiltonian_header(
         else:
             potential_method = f"""
     template <std::size_t I>
-    constexpr double dH_d{potential_name}({potential_method_signature}) const
+    KOKKOS_FUNCTION constexpr double dH_d{potential_name}({potential_method_signature}) const
     {{
 {chr(10).join(branches)}
     }}
@@ -340,7 +342,7 @@ def write_cpp_hamiltonian_header(
             )
             moments_method = f"""
     template <std::size_t I, class Elem>
-    constexpr double dH_d{moments_name}(std::span<double const, {len(moments_symbols)}> {moments_name}, Elem elem) const
+    KOKKOS_FUNCTION constexpr double dH_d{moments_name}(std::span<double const, {len(moments_symbols)}> {moments_name}, Elem elem) const
     {{
 {chr(10).join(branches)}
     }}
@@ -372,7 +374,7 @@ def write_cpp_hamiltonian_header(
     if requires_elem:
         generic_moments_method = f"""
     template <std::size_t I, class Elem>
-    constexpr double dH_dmoments(double moments, Elem elem) const
+    KOKKOS_FUNCTION constexpr double dH_dmoments(double moments, Elem elem) const
     {{
 {chr(10).join(generic_moments_branches)}
     }}
@@ -380,7 +382,7 @@ def write_cpp_hamiltonian_header(
     else:
         generic_moments_method = f"""
     template <std::size_t I>
-    constexpr double dH_dmoments(double moments) const
+    KOKKOS_FUNCTION constexpr double dH_dmoments(double moments) const
     {{
 {chr(10).join(generic_moments_branches)}
     }}
@@ -396,7 +398,7 @@ def write_cpp_hamiltonian_header(
         )
         nonlocal_value_methods += """
     template <std::size_t I, class Elem>
-    constexpr auto dH_dmoments_value(Elem elem) const
+    KOKKOS_FUNCTION constexpr auto dH_dmoments_value(Elem elem) const
     {
         return dH_d"""
         nonlocal_value_methods += moments_name
@@ -428,6 +430,7 @@ def write_cpp_hamiltonian_header(
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <Kokkos_Core.hpp>
 #include <span>
 #include <utility>
 {rendered_includes}

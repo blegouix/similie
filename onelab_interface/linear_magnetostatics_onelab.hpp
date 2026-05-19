@@ -544,6 +544,22 @@ public:
     template <class ExecSpace, class InputView, class OutputView>
     void apply(ExecSpace exec_space, InputView input, OutputView output) const
     {
+        std::size_t const nx = m_nx;
+        std::size_t const ny = m_ny;
+        auto const moment0_columns = m_moment0_columns;
+        auto const moment0_coefficients = m_moment0_coefficients;
+        auto const moment1_columns = m_moment1_columns;
+        auto const moment1_coefficients = m_moment1_coefficients;
+        auto const moment0_counts = m_moment0_counts;
+        auto const moment1_counts = m_moment1_counts;
+        auto const outer0_columns = m_outer0_columns;
+        auto const outer0_coefficients = m_outer0_coefficients;
+        auto const outer1_columns = m_outer1_columns;
+        auto const outer1_coefficients = m_outer1_coefficients;
+        auto const outer0_counts = m_outer0_counts;
+        auto const outer1_counts = m_outer1_counts;
+        auto const equations = m_equations;
+
         ddc::parallel_for_each(
                 exec_space,
                 m_node_domain,
@@ -552,46 +568,46 @@ public:
                             = static_cast<std::size_t>(ddc::DiscreteElement<DDimX>(elem).uid());
                     std::size_t const j
                             = static_cast<std::size_t>(ddc::DiscreteElement<DDimY>(elem).uid());
-                    std::size_t const row = i + m_nx * j;
-                    if (is_boundary_node(i, j)) {
+                    std::size_t const row = i + nx * j;
+                    if (i == 0 || j == 0 || i + 1 == nx || j + 1 == ny) {
                         output(row, 0) = input(row, 0);
                         return;
                     }
 
                     double residual = 0.0;
-                    for (int slot = 0; slot < m_outer0_counts(row); ++slot) {
-                        double const outer_coefficient = m_outer0_coefficients(row, slot);
+                    for (int slot = 0; slot < outer0_counts(row); ++slot) {
+                        double const outer_coefficient = outer0_coefficients(row, slot);
                         std::size_t const sampled_row
-                                = static_cast<std::size_t>(m_outer0_columns(row, slot));
+                                = static_cast<std::size_t>(outer0_columns(row, slot));
                         auto const sampled_elem = ddc::DiscreteElement<
                                 DDimX,
-                                DDimY>(sampled_row % m_nx, sampled_row / m_nx);
+                                DDimY>(sampled_row % nx, sampled_row / nx);
                         double moment = 0.0;
-                        for (int k = 0; k < m_moment0_counts(sampled_row); ++k) {
-                            moment += m_moment0_coefficients(sampled_row, k)
+                        for (int k = 0; k < moment0_counts(sampled_row); ++k) {
+                            moment += moment0_coefficients(sampled_row, k)
                                       * input(static_cast<std::size_t>(
-                                                      m_moment0_columns(sampled_row, k)),
+                                                      moment0_columns(sampled_row, k)),
                                               0);
                         }
                         residual -= outer_coefficient
-                                    * m_equations.template dpotential_dt<0>(moment, sampled_elem);
+                                    * equations.template dpotential_dt<0>(moment, sampled_elem);
                     }
-                    for (int slot = 0; slot < m_outer1_counts(row); ++slot) {
-                        double const outer_coefficient = m_outer1_coefficients(row, slot);
+                    for (int slot = 0; slot < outer1_counts(row); ++slot) {
+                        double const outer_coefficient = outer1_coefficients(row, slot);
                         std::size_t const sampled_row
-                                = static_cast<std::size_t>(m_outer1_columns(row, slot));
+                                = static_cast<std::size_t>(outer1_columns(row, slot));
                         auto const sampled_elem = ddc::DiscreteElement<
                                 DDimX,
-                                DDimY>(sampled_row % m_nx, sampled_row / m_nx);
+                                DDimY>(sampled_row % nx, sampled_row / nx);
                         double moment = 0.0;
-                        for (int k = 0; k < m_moment1_counts(sampled_row); ++k) {
-                            moment += m_moment1_coefficients(sampled_row, k)
+                        for (int k = 0; k < moment1_counts(sampled_row); ++k) {
+                            moment += moment1_coefficients(sampled_row, k)
                                       * input(static_cast<std::size_t>(
-                                                      m_moment1_columns(sampled_row, k)),
+                                                      moment1_columns(sampled_row, k)),
                                               0);
                         }
                         residual -= outer_coefficient
-                                    * m_equations.template dpotential_dt<1>(moment, sampled_elem);
+                                    * equations.template dpotential_dt<1>(moment, sampled_elem);
                     }
                     output(row, 0) = residual;
                 });

@@ -82,7 +82,7 @@ TEST(OnelabInterface, HamiltonEquationsStaticPotentialDerivative)
     using namespace similie::onelab_interface::linear_magnetostatics_onelab::detail::
             magnetostatics_local;
 
-    using memory_space = typename Kokkos::DefaultExecutionSpace::memory_space;
+    using memory_space = Kokkos::HostSpace;
     scalar_tensor_alloc_type<memory_space> mu_alloc(
             ddc::DiscreteDomain<DDimX, DDimY, ScalarPotentialIndex>(
                     ddc::DiscreteDomain<DDimX, DDimY>(

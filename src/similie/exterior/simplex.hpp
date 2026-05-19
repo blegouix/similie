@@ -200,11 +200,16 @@ public:
         }
     }
 
-    KOKKOS_FUNCTION bool operator==(Simplex<s_k, Tag...> simplex)
+    KOKKOS_FUNCTION bool operator==(Simplex<s_k, Tag...> simplex) const
     {
         return (discrete_element() == simplex.discrete_element()
                 && discrete_vector() == simplex.discrete_vector()
                 && negative() == simplex.negative());
+    }
+
+    KOKKOS_FUNCTION bool operator!=(Simplex<s_k, Tag...> simplex) const
+    {
+        return !(*this == simplex);
     }
 };
 

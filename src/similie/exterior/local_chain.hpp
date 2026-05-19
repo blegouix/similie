@@ -397,10 +397,10 @@ struct TangentBasis;
 template <std::size_t K, class... Tag>
 struct TangentBasis<K, ddc::DiscreteDomain<Tag...>>
 {
-    template <class Elem>
-    KOKKOS_FUNCTION static constexpr auto run(Elem elem)
+    template <class MemorySpace = Kokkos::HostSpace, class Elem>
+    KOKKOS_FUNCTION static constexpr auto run_with_memory_space(Elem elem)
     {
-        using chain_type = LocalChain<Simplex<K, Tag...>>;
+        using chain_type = LocalChain<Simplex<K, Tag...>, Kokkos::LayoutRight, MemorySpace>;
         std::array<std::ptrdiff_t, sizeof...(Tag)> permutation
                 = {0 * ddc::type_seq_rank_v<Tag, ddc::detail::TypeSeq<Tag...>>...};
         for (auto i = permutation.begin(); i < permutation.begin() + K; ++i) {
@@ -413,6 +413,12 @@ struct TangentBasis<K, ddc::DiscreteDomain<Tag...>>
             basis += vect;
         } while (std::prev_permutation(permutation.begin(), permutation.end()));
         return basis;
+    }
+
+    template <class Elem>
+    KOKKOS_FUNCTION static constexpr auto run(Elem elem)
+    {
+        return run_with_memory_space<Kokkos::HostSpace>(elem);
     }
 };
 
@@ -431,7 +437,8 @@ template <std::size_t K, misc::Specialization<ddc::DiscreteDomain> Dom, class Ex
     requires(misc::NotSpecialization<ExecSpace, ddc::DiscreteElement>)
 constexpr auto tangent_basis([[maybe_unused]] ExecSpace const& exec_space)
 {
-    return detail::TangentBasis<K, Dom>::run(
+    return detail::TangentBasis<K, Dom>::template run_with_memory_space<
+            typename ExecSpace::memory_space>(
             misc::filled_struct<typename Dom::discrete_element_type>());
 }
 
