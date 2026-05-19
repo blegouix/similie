@@ -157,6 +157,27 @@ TEST(DiscreteHodgeStar, Metric3D)
                         1.5 * std::sqrt(6. / 19.));
             });
 
+    [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain2>
+            hodge_star_accessor2;
+    ddc::cartesian_prod_t<decltype(metric.non_indices_domain()), HodgeStarDomain2>
+            hodge_star_dom2(metric.non_indices_domain(), hodge_star_accessor2.domain());
+    ddc::Chunk hodge_star_alloc2(hodge_star_dom2, ddc::HostAllocator<double>());
+    sil::tensor::Tensor hodge_star2(hodge_star_alloc2);
+
+    sil::exterior::fill_discrete_hodge_star<
+            ddc::detail::TypeSeq<RhoUp>,
+            ddc::detail::TypeSeq<
+                    MuLow,
+                    NuLow>>(Kokkos::DefaultHostExecutionSpace(), hodge_star2, metric, position);
+
+    ddc::parallel_fill(form, 0.);
+    ddc::host_for_each(
+            metric.non_indices_domain(),
+            [&](ddc::DiscreteElement<DDimX, DDimY, DDimZ> elem) {
+                sil::tensor::tensor_prod(form[elem], hodge_star2[elem], dual_form[elem]);
+                EXPECT_DOUBLE_EQ(form(elem, form.accessor().access_element<X, Y>()), 3.);
+            });
+
     ddc::detail::g_discrete_space_dual<DDimX>.reset();
     ddc::detail::g_discrete_space_dual<DDimY>.reset();
     ddc::detail::g_discrete_space_dual<DDimZ>.reset();

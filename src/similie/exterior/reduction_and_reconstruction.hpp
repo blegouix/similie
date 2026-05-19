@@ -614,37 +614,29 @@ struct Reduction
                 }();
 
                 double reduced_value = 0.;
-                ddc::device_for_each(
-                        form_tensor.accessor().natural_domain(),
-                        [&](auto source_natural_elem) {
-                            std::size_t const source_id = [&]() {
-                                if constexpr (Q == 0) {
-                                    return std::size_t(0);
-                                } else {
-                                    std::array<std::size_t, Q> const source_ids
-                                            = ddc::detail::array(source_natural_elem);
-                                    return detail::combination_rank<N, Q>(source_ids);
-                                }
-                            }();
-                            double dual_reduction_value = 0.;
-                            if (invertible) {
-                                for (std::size_t primal_id = 0; primal_id < NBASIS; ++primal_id) {
-                                    dual_reduction_value
-                                            += old_hodge_alloc[target_id * NBASIS + primal_id]
-                                               * coeff_from_primal_inverse_alloc
-                                                       [primal_id * NBASIS + source_id];
-                                }
-                            }
-
-                            using form_natural_elem_type = typename FormTensorType::accessor_t::
-                                    natural_domain_t::discrete_element_type;
-                            form_natural_elem_type form_natural_elem;
-                            ddc::detail::array(form_natural_elem)
+                ddc::device_for_each(form_tensor.domain(), [&](auto source_mem_elem) {
+                    auto const source_natural_elem
+                            = form_tensor.canonical_natural_element(source_mem_elem);
+                    std::size_t const source_id = [&]() {
+                        if constexpr (Q == 0) {
+                            return std::size_t(0);
+                        } else {
+                            std::array<std::size_t, Q> const source_ids
                                     = ddc::detail::array(source_natural_elem);
-                            reduced_value += dual_reduction_value
-                                             * form_tensor.get(
-                                                     form_tensor.access_element(form_natural_elem));
-                        });
+                            return detail::combination_rank<N, Q>(source_ids);
+                        }
+                    }();
+                    double dual_reduction_value = 0.;
+                    if (invertible) {
+                        for (std::size_t primal_id = 0; primal_id < NBASIS; ++primal_id) {
+                            dual_reduction_value += old_hodge_alloc[target_id * NBASIS + primal_id]
+                                                    * coeff_from_primal_inverse_alloc
+                                                            [primal_id * NBASIS + source_id];
+                        }
+                    }
+
+                    reduced_value += dual_reduction_value * form_tensor.mem(source_mem_elem);
+                });
                 reduced_tensor.mem(target_mem_elem) = reduced_value;
             });
         }
