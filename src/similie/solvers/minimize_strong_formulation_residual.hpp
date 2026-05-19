@@ -7,6 +7,7 @@
 #include <cmath>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <type_traits>
 
@@ -144,21 +145,56 @@ void axpy_inplace(ExecSpace exec_space, ViewType1 destination, double alpha, Vie
 }
 
 template <class KokkosViewType>
-auto to_gko_dense(std::shared_ptr<gko::Executor const> const& gko_exec, KokkosViewType const& view)
+struct GkoDenseHandle
+{
+    std::shared_ptr<gko::matrix::Dense<typename KokkosViewType::non_const_value_type>> dense;
+    std::optional<Kokkos::View<
+            typename KokkosViewType::non_const_value_type**,
+            Kokkos::LayoutRight,
+            typename KokkosViewType::memory_space>>
+            owned_view;
+};
+
+template <class KokkosViewType>
+auto to_gko_dense(
+        std::shared_ptr<gko::Executor const> const& gko_exec,
+        KokkosViewType const& view)
 {
     static_assert(Kokkos::is_view_v<KokkosViewType> && KokkosViewType::rank == 2);
     using value_type = typename KokkosViewType::traits::value_type;
+    using non_const_value_type = typename KokkosViewType::non_const_value_type;
+    using owning_view_type
+            = Kokkos::View<non_const_value_type**, Kokkos::LayoutRight, typename KokkosViewType::memory_space>;
 
-    if (view.stride(1) != 1) {
-        throw std::runtime_error(
-                "The Kokkos view passed to Ginkgo must be contiguous in the second dimension");
+    GkoDenseHandle<KokkosViewType> handle;
+    if (view.stride(1) == 1) {
+        handle.dense = gko::matrix::Dense<value_type>::
+                create(gko_exec,
+                       gko::dim<2>(view.extent(0), view.extent(1)),
+                       gko::array<value_type>::view(gko_exec, view.span(), view.data()),
+                       view.stride(0));
+        return handle;
     }
 
-    return gko::matrix::Dense<value_type>::
+    handle.owned_view.emplace("similie_gko_dense_bridge", view.extent(0), view.extent(1));
+    Kokkos::deep_copy(*handle.owned_view, view);
+    handle.dense = gko::matrix::Dense<value_type>::
             create(gko_exec,
-                   gko::dim<2>(view.extent(0), view.extent(1)),
-                   gko::array<value_type>::view(gko_exec, view.span(), view.data()),
-                   view.stride(0));
+                   gko::dim<2>(handle.owned_view->extent(0), handle.owned_view->extent(1)),
+                   gko::array<value_type>::view(
+                           gko_exec,
+                           handle.owned_view->span(),
+                           handle.owned_view->data()),
+                   handle.owned_view->stride(0));
+    return handle;
+}
+
+template <class DestinationView, class KokkosViewType>
+void copy_back_from_gko_dense_bridge(DestinationView destination, GkoDenseHandle<KokkosViewType> const& handle)
+{
+    if (handle.owned_view.has_value()) {
+        Kokkos::deep_copy(destination, *handle.owned_view);
+    }
 }
 
 template <class OperatorModel>
@@ -250,8 +286,9 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
         auto rhs_gko = detail::to_gko_dense(gko_exec, rhs);
         auto solution_gko = detail::to_gko_dense(gko_exec, solution);
         auto const optimization_start = std::chrono::steady_clock::now();
-        solver->apply(rhs_gko, solution_gko);
+        solver->apply(rhs_gko.dense, solution_gko.dense);
         gko_exec->synchronize();
+        detail::copy_back_from_gko_dense_bridge(solution, solution_gko);
         auto const optimization_end = std::chrono::steady_clock::now();
         solver->remove_logger(convergence_logger);
         diagnostics.optimization_wall_seconds
@@ -293,8 +330,11 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
     {
         auto residual_gko = detail::to_gko_dense(gko_exec, residual);
         auto preconditioned_residual_gko = detail::to_gko_dense(gko_exec, preconditioned_residual);
-        preconditioner->apply(residual_gko, preconditioned_residual_gko);
+        preconditioner->apply(residual_gko.dense, preconditioned_residual_gko.dense);
         gko_exec->synchronize();
+        detail::copy_back_from_gko_dense_bridge(
+                preconditioned_residual,
+                preconditioned_residual_gko);
     }
     detail::copy(exec_space, search_direction, preconditioned_residual);
 
@@ -342,8 +382,11 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
             auto residual_gko = detail::to_gko_dense(gko_exec, residual);
             auto preconditioned_residual_gko
                     = detail::to_gko_dense(gko_exec, preconditioned_residual);
-            preconditioner->apply(residual_gko, preconditioned_residual_gko);
+            preconditioner->apply(residual_gko.dense, preconditioned_residual_gko.dense);
             gko_exec->synchronize();
+            detail::copy_back_from_gko_dense_bridge(
+                    preconditioned_residual,
+                    preconditioned_residual_gko);
         }
         double const new_rz_dot = detail::dot(exec_space, residual, preconditioned_residual);
         if (std::abs(rz_dot) < 1.0e-30) {
