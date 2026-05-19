@@ -215,14 +215,14 @@ struct LocalOperatorValueTraits<ddc::DiscreteDomain<DDims...>, TensorIndex, Memo
     static constexpr std::size_t SIZE
             = (sizeof...(DDims) == 0 ? 1UL : (1UL << sizeof...(DDims))) * TensorIndex::mem_size();
     using storage_type = std::array<double, SIZE>;
-    using tensor_type
-            = sil::tensor::Tensor<double, domain_type, Kokkos::layout_right, MemorySpace>;
+    using tensor_type = sil::tensor::Tensor<double, domain_type, Kokkos::layout_right, MemorySpace>;
     using owning_tensor_type = sil::tensor::OwningTensor<tensor_type, storage_type>;
 };
 
 template <class SpatialDomain, class TensorIndex, class MemorySpace = Kokkos::HostSpace>
 using local_operator_value_t =
-        typename LocalOperatorValueTraits<SpatialDomain, TensorIndex, MemorySpace>::owning_tensor_type;
+        typename LocalOperatorValueTraits<SpatialDomain, TensorIndex, MemorySpace>::
+                owning_tensor_type;
 
 template <class MemorySpace = Kokkos::HostSpace, class TensorIndex, class... DDims>
 KOKKOS_FUNCTION local_operator_value_t<ddc::DiscreteDomain<DDims...>, TensorIndex, MemorySpace>
@@ -239,11 +239,7 @@ make_local_operator_value_tensor(ddc::DiscreteElement<DDims...> front)
                    ddc::DiscreteDomain<TensorIndex>(
                            ddc::DiscreteElement<TensorIndex>(0),
                            ddc::DiscreteVector<TensorIndex>(TensorIndex::mem_size())));
-    ddc::ChunkSpan<
-            double,
-            typename traits_type::domain_type,
-            Kokkos::layout_right,
-            MemorySpace>
+    ddc::ChunkSpan<double, typename traits_type::domain_type, Kokkos::layout_right, MemorySpace>
             span(storage.data(), domain);
     typename traits_type::tensor_type tensor(span);
     return typename traits_type::owning_tensor_type(tensor, std::move(storage));
@@ -294,7 +290,8 @@ struct Coboundary<TagToAddToCochain, CochainTag>
         using SpatialDomain = ddc::detail::convert_type_seq_to_discrete_domain_t<
                 ddc::to_type_seq_t<SpatialElem>>;
         using memory_space = typename ChainType::memory_space;
-        using LocalStencil = detail::local_operator_value_t<SpatialDomain, CochainTag, memory_space>;
+        using LocalStencil
+                = detail::local_operator_value_t<SpatialDomain, CochainTag, memory_space>;
 
         typename ChainType::simplex_type
                 simplex(std::integral_constant<std::size_t, CochainTag::rank() + 1> {},
@@ -313,7 +310,8 @@ struct Coboundary<TagToAddToCochain, CochainTag>
             }
         }
 
-        LocalStencil stencil = detail::make_local_operator_value_tensor<memory_space, CochainTag>(front);
+        LocalStencil stencil
+                = detail::make_local_operator_value_tensor<memory_space, CochainTag>(front);
         ddc::device_for_each(stencil.domain(), [&](auto stencil_elem) {
             LocalStencil basis
                     = detail::make_local_operator_value_tensor<memory_space, CochainTag>(front);
@@ -432,7 +430,8 @@ struct TransposedCoboundary<TagToAddToCochain, CochainTag>
         using SpatialDomain = ddc::detail::convert_type_seq_to_discrete_domain_t<
                 ddc::to_type_seq_t<SpatialElem>>;
         using memory_space = typename ChainType::memory_space;
-        using LocalStencil = detail::local_operator_value_t<SpatialDomain, CochainTag, memory_space>;
+        using LocalStencil
+                = detail::local_operator_value_t<SpatialDomain, CochainTag, memory_space>;
 
         constexpr std::size_t BOUNDARY_SIZE = 2 * (CochainTag::rank() + 1);
         typename ChainType::simplex_type
@@ -469,7 +468,8 @@ struct TransposedCoboundary<TagToAddToCochain, CochainTag>
             }
         }
 
-        LocalStencil stencil = detail::make_local_operator_value_tensor<memory_space, CochainTag>(front);
+        LocalStencil stencil
+                = detail::make_local_operator_value_tensor<memory_space, CochainTag>(front);
         ddc::device_for_each(stencil.domain(), [&](auto stencil_elem) {
             LocalStencil basis
                     = detail::make_local_operator_value_tensor<memory_space, CochainTag>(front);

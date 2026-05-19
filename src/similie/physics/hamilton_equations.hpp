@@ -4,46 +4,41 @@
 #pragma once
 
 #include <cstddef>
-#include <Kokkos_Core.hpp>
 #include <span>
 #include <type_traits>
 #include <utility>
 
 #include <ddc/ddc.hpp>
 
+#include <Kokkos_Core.hpp>
+
 namespace similie::physics {
 
 namespace detail {
 
 template <class Hamiltonian, std::size_t I>
-inline constexpr bool has_component_dmoments_v = requires(Hamiltonian const& h) {
-    h.template dH_dmoments<I>(0.0);
-};
+inline constexpr bool has_component_dmoments_v
+        = requires(Hamiltonian const& h) { h.template dH_dmoments<I>(0.0); };
 
 template <class Hamiltonian, std::size_t I>
-inline constexpr bool has_span_db_v = requires(
-        Hamiltonian const& h,
-        std::span<double const, Hamiltonian::N> moments) {
-    h.template dH_dB<I>(moments);
-};
+inline constexpr bool has_span_db_v
+        = requires(Hamiltonian const& h, std::span<double const, Hamiltonian::N> moments) {
+              h.template dH_dB<I>(moments);
+          };
 
 template <class Hamiltonian, std::size_t I, class Elem>
-inline constexpr bool has_elem_dmoments_v = requires(Hamiltonian const& h, Elem elem) {
-    h.template dH_dmoments<I>(0.0, elem);
-};
+inline constexpr bool has_elem_dmoments_v
+        = requires(Hamiltonian const& h, Elem elem) { h.template dH_dmoments<I>(0.0, elem); };
 
 template <class Hamiltonian, std::size_t I, class Elem>
 inline constexpr bool has_elem_db_v = requires(
         Hamiltonian const& h,
         std::span<double const, Hamiltonian::N> moments,
-        Elem elem) {
-    h.template dH_dB<I>(moments, elem);
-};
+        Elem elem) { h.template dH_dB<I>(moments, elem); };
 
 template <class Hamiltonian, class Elem>
-inline constexpr bool has_elem_dpotential_v = requires(Hamiltonian const& h, Elem elem) {
-    h.dH_dpotential(0.0, elem);
-};
+inline constexpr bool has_elem_dpotential_v
+        = requires(Hamiltonian const& h, Elem elem) { h.dH_dpotential(0.0, elem); };
 
 } // namespace detail
 
