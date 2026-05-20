@@ -3,6 +3,8 @@
 
 #include <filesystem>
 #include <cmath>
+#include <fstream>
+#include <string>
 
 #include <gtest/gtest.h>
 #include <similie/physics/dedonder_weyl_equations.hpp>
@@ -198,6 +200,86 @@ TEST(OnelabInterface, MagnetostaticsPostProcessInductionUsesLibraryStencil)
     EXPECT_DOUBLE_EQ(induction[2], 0.0);
 }
 
+TEST(OnelabInterface, MagnetostaticsPostProcessInductionIsCellCentered)
+{
+    using namespace similie::onelab_interface::linear_magnetostatics_onelab::detail::
+            magnetostatics_local;
+    using similie::onelab_interface::linear_magnetostatics_onelab::detail::
+            fill_magnetic_induction_on_cell_domain;
+
+    auto const cell_domain = ddc::DiscreteDomain<DDimX, DDimY>(
+            ddc::DiscreteElement<DDimX, DDimY>(0, 0),
+            ddc::DiscreteVector<DDimX, DDimY>(2, 2));
+    std::vector<double> const x_coords {0.0, 1.0, 2.0};
+    std::vector<double> const y_coords {0.0, 1.0, 2.0};
+    auto node_value_z = [&](std::size_t i, std::size_t j) {
+        return x_coords[i] * x_coords[i] - y_coords[j] * y_coords[j];
+    };
+
+    std::array<double, 3> induction {};
+    fill_magnetic_induction_on_cell_domain(
+            cell_domain,
+            [&](auto elem) {
+                std::size_t const i = static_cast<std::size_t>(ddc::DiscreteElement<DDimX>(elem).uid());
+                std::size_t const j = static_cast<std::size_t>(ddc::DiscreteElement<DDimY>(elem).uid());
+                return std::array<double, 2> {
+                        0.5 * (x_coords[i] + x_coords[i + 1]),
+                        0.5 * (y_coords[j] + y_coords[j + 1]),
+                };
+            },
+            node_value_z,
+            [&](auto elem, std::array<double, 3> const& value) {
+                if (ddc::DiscreteElement<DDimX>(elem).uid() == 0
+                    && ddc::DiscreteElement<DDimY>(elem).uid() == 0) {
+                    induction = value;
+                }
+            });
+
+    EXPECT_NEAR(induction[0], -2.0, 1e-12);
+    EXPECT_NEAR(induction[1], -2.0, 1e-12);
+    EXPECT_DOUBLE_EQ(induction[2], 0.0);
+}
+
+TEST(OnelabInterface, MagnetostaticsPostProcessInductionCentersEachComponentOnItsOwnFaces)
+{
+    using namespace similie::onelab_interface::linear_magnetostatics_onelab::detail::
+            magnetostatics_local;
+    using similie::onelab_interface::linear_magnetostatics_onelab::detail::
+            fill_magnetic_induction_on_cell_domain;
+
+    auto const cell_domain = ddc::DiscreteDomain<DDimX, DDimY>(
+            ddc::DiscreteElement<DDimX, DDimY>(0, 0),
+            ddc::DiscreteVector<DDimX, DDimY>(2, 2));
+    std::vector<double> const x_coords {0.0, 1.0, 2.0};
+    std::vector<double> const y_coords {0.0, 1.0, 2.0};
+    auto node_value_z = [&](std::size_t i, std::size_t j) {
+        return x_coords[i] * x_coords[i] + 2.0 * y_coords[j] * y_coords[j];
+    };
+
+    std::array<double, 3> induction {};
+    fill_magnetic_induction_on_cell_domain(
+            cell_domain,
+            [&](auto elem) {
+                std::size_t const i = static_cast<std::size_t>(ddc::DiscreteElement<DDimX>(elem).uid());
+                std::size_t const j = static_cast<std::size_t>(ddc::DiscreteElement<DDimY>(elem).uid());
+                return std::array<double, 2> {
+                        0.5 * (x_coords[i] + x_coords[i + 1]),
+                        0.5 * (y_coords[j] + y_coords[j + 1]),
+                };
+            },
+            node_value_z,
+            [&](auto elem, std::array<double, 3> const& value) {
+                if (ddc::DiscreteElement<DDimX>(elem).uid() == 0
+                    && ddc::DiscreteElement<DDimY>(elem).uid() == 0) {
+                    induction = value;
+                }
+            });
+
+    EXPECT_NEAR(induction[0], 4.0, 1e-12);
+    EXPECT_NEAR(induction[1], -2.0, 1e-12);
+    EXPECT_DOUBLE_EQ(induction[2], 0.0);
+}
+
 TEST(OnelabInterface, MagnetostaticsPostProcessForceDensityUsesLibraryCodifferential)
 {
     using similie::onelab_interface::linear_magnetostatics_onelab::detail::CellPostProcessFields;
@@ -236,6 +318,62 @@ TEST(OnelabInterface, MagnetostaticsPostProcessForceDensityUsesLibraryCodifferen
             EXPECT_NEAR(force_density[2], 7.0, 1e-12);
         }
     }
+}
+
+TEST(OnelabInterface, MagnetostaticsResultViewExportsDirectPostProcessedFields)
+{
+    using similie::onelab_interface::linear_magnetostatics_onelab::detail::CellInputFields;
+    using similie::onelab_interface::linear_magnetostatics_onelab::detail::CellPostProcessFields;
+    using similie::onelab_interface::linear_magnetostatics_onelab::detail::write_results_view;
+
+    sil::onelab_interface::gmsh::StructuredGrid2D grid;
+    grid.x_coords = {0.0, 1.0};
+    grid.y_coords = {0.0, 1.0};
+    grid.z_value = 0.0;
+
+    std::vector<CellInputFields> cell_inputs(1);
+    cell_inputs[0].mu = 2.0;
+    cell_inputs[0].current_density = {0.0, 0.0, 3.0};
+
+    std::vector<CellPostProcessFields> cell_outputs(1);
+    cell_outputs[0].magnetic_induction = {4.0, 5.0, 6.0};
+    cell_outputs[0].magnetic_field = {7.0, 8.0, 9.0};
+    cell_outputs[0].maxwell_stress = {10.0, 11.0, 12.0, 13.0, 14.0, 15.0};
+    cell_outputs[0].force_density = {16.0, 17.0, 18.0};
+
+    std::vector<double> magnetic_vector_potential = {
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            3.0,
+            0.0,
+            0.0,
+            4.0,
+    };
+
+    std::filesystem::path const output_file
+            = std::filesystem::temp_directory_path() / "similie_onelab_result_view_test.pos";
+    write_results_view(output_file, grid, cell_inputs, cell_outputs, magnetic_vector_potential);
+
+    std::ifstream input(output_file);
+    ASSERT_TRUE(input.is_open());
+    std::string const contents((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
+
+    EXPECT_NE(contents.find("View \"SimiLie linear magnetostatics magnetic induction\""), std::string::npos);
+    EXPECT_NE(contents.find("View \"SimiLie linear magnetostatics magnetic field\""), std::string::npos);
+    EXPECT_NE(contents.find("View \"SimiLie linear magnetostatics Maxwell stress xx\""), std::string::npos);
+    EXPECT_NE(contents.find("View \"SimiLie linear magnetostatics force density\""), std::string::npos);
+    EXPECT_NE(contents.find("VP(0.5,0.5,0){4,5,6};"), std::string::npos);
+    EXPECT_NE(contents.find("VP(0.5,0.5,0){7,8,9};"), std::string::npos);
+    EXPECT_NE(contents.find("SP(0.5,0.5,0){13};"), std::string::npos);
+    EXPECT_NE(contents.find("VP(0.5,0.5,0){16,17,18};"), std::string::npos);
+
+    std::filesystem::remove(output_file);
 }
 
 TEST(OnelabInterface, MagnetostaticsLocalOperatorMatchesItsAssembledMatrix)

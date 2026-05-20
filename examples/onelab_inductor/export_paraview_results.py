@@ -19,7 +19,18 @@ TOL = 1.0e-6
 
 PERMEABILITY_VIEW = "SimiLie linear magnetostatics permeability"
 CURRENT_DENSITY_VIEW = "SimiLie linear magnetostatics current density"
-MAGNETIC_VECTOR_POTENTIAL_VIEW = "SimiLie linear magnetostatics magnetic vector potential"
+MAGNETIC_VECTOR_POTENTIAL_VIEW = (
+    "SimiLie linear magnetostatics magnetic vector potential"
+)
+MAGNETIC_INDUCTION_VIEW = "SimiLie linear magnetostatics magnetic induction"
+MAGNETIC_FIELD_VIEW = "SimiLie linear magnetostatics magnetic field"
+FORCE_DENSITY_VIEW = "SimiLie linear magnetostatics force density"
+MAXWELL_STRESS_XX_VIEW = "SimiLie linear magnetostatics Maxwell stress xx"
+MAXWELL_STRESS_YY_VIEW = "SimiLie linear magnetostatics Maxwell stress yy"
+MAXWELL_STRESS_ZZ_VIEW = "SimiLie linear magnetostatics Maxwell stress zz"
+MAXWELL_STRESS_XY_VIEW = "SimiLie linear magnetostatics Maxwell stress xy"
+MAXWELL_STRESS_XZ_VIEW = "SimiLie linear magnetostatics Maxwell stress xz"
+MAXWELL_STRESS_YZ_VIEW = "SimiLie linear magnetostatics Maxwell stress yz"
 
 
 def parse_args() -> argparse.Namespace:
@@ -63,7 +74,9 @@ def parse_msh2_structured_mesh(
             count = int(lines[i + 1].strip())
             for row in lines[i + 2 : i + 2 + count]:
                 parts = row.split()
-                nodes.append((int(parts[0]), float(parts[1]), float(parts[2]), float(parts[3])))
+                nodes.append(
+                    (int(parts[0]), float(parts[1]), float(parts[2]), float(parts[3]))
+                )
             i += count + 2
         elif token == "$Elements":
             count = int(lines[i + 1].strip())
@@ -98,14 +111,41 @@ def parse_result_views(
     list[tuple[tuple[float, float, float], float]],
     list[tuple[tuple[float, float, float], tuple[float, float, float]]],
     list[tuple[tuple[float, float, float], tuple[float, float, float]]],
+    list[tuple[tuple[float, float, float], tuple[float, float, float]]],
+    list[tuple[tuple[float, float, float], tuple[float, float, float]]],
+    list[tuple[tuple[float, float, float], tuple[float, float, float]]],
+    dict[str, list[tuple[tuple[float, float, float], float]]],
 ]:
-    scalar_pattern = re.compile(r'SP\(([^,]+),([^,]+),([^)]+)\)\{([^}]+)\};')
-    vector_pattern = re.compile(r'VP\(([^,]+),([^,]+),([^)]+)\)\{([^,]+),([^,]+),([^}]+)\};')
+    scalar_pattern = re.compile(r"SP\(([^,]+),([^,]+),([^)]+)\)\{([^}]+)\};")
+    vector_pattern = re.compile(
+        r"VP\(([^,]+),([^,]+),([^)]+)\)\{([^,]+),([^,]+),([^}]+)\};"
+    )
     view_pattern = re.compile(r'^View "([^"]+)" \{$')
 
     permeability: list[tuple[tuple[float, float, float], float]] = []
-    current_density: list[tuple[tuple[float, float, float], tuple[float, float, float]]] = []
-    magnetic_vector_potential: list[tuple[tuple[float, float, float], tuple[float, float, float]]] = []
+    current_density: list[
+        tuple[tuple[float, float, float], tuple[float, float, float]]
+    ] = []
+    magnetic_vector_potential: list[
+        tuple[tuple[float, float, float], tuple[float, float, float]]
+    ] = []
+    magnetic_induction: list[
+        tuple[tuple[float, float, float], tuple[float, float, float]]
+    ] = []
+    magnetic_field: list[
+        tuple[tuple[float, float, float], tuple[float, float, float]]
+    ] = []
+    force_density: list[
+        tuple[tuple[float, float, float], tuple[float, float, float]]
+    ] = []
+    maxwell_stress = {
+        MAXWELL_STRESS_XX_VIEW: [],
+        MAXWELL_STRESS_YY_VIEW: [],
+        MAXWELL_STRESS_ZZ_VIEW: [],
+        MAXWELL_STRESS_XY_VIEW: [],
+        MAXWELL_STRESS_XZ_VIEW: [],
+        MAXWELL_STRESS_YZ_VIEW: [],
+    }
 
     current_view: str | None = None
     for raw_line in pos_file.read_text().splitlines():
@@ -161,8 +201,51 @@ def parse_result_views(
                 float(vector_match.group(6)),
             )
             magnetic_vector_potential.append((xyz, value))
+        elif current_view in (
+            MAGNETIC_INDUCTION_VIEW,
+            MAGNETIC_FIELD_VIEW,
+            FORCE_DENSITY_VIEW,
+        ):
+            vector_match = vector_pattern.search(line)
+            if not vector_match:
+                continue
+            xyz = (
+                float(vector_match.group(1)),
+                float(vector_match.group(2)),
+                float(vector_match.group(3)),
+            )
+            value = (
+                float(vector_match.group(4)),
+                float(vector_match.group(5)),
+                float(vector_match.group(6)),
+            )
+            if current_view == MAGNETIC_INDUCTION_VIEW:
+                magnetic_induction.append((xyz, value))
+            elif current_view == MAGNETIC_FIELD_VIEW:
+                magnetic_field.append((xyz, value))
+            else:
+                force_density.append((xyz, value))
+        elif current_view in maxwell_stress:
+            scalar_match = scalar_pattern.search(line)
+            if not scalar_match:
+                continue
+            xyz = (
+                float(scalar_match.group(1)),
+                float(scalar_match.group(2)),
+                float(scalar_match.group(3)),
+            )
+            value = float(scalar_match.group(4))
+            maxwell_stress[current_view].append((xyz, value))
 
-    return permeability, current_density, magnetic_vector_potential
+    return (
+        permeability,
+        current_density,
+        magnetic_vector_potential,
+        magnetic_induction,
+        magnetic_field,
+        force_density,
+        maxwell_stress,
+    )
 
 
 def build_structured_arrays(
@@ -170,9 +253,34 @@ def build_structured_arrays(
     cells: list[tuple[int, list[int]]],
     topology_dimension: int,
     permeability_values: list[tuple[tuple[float, float, float], float]],
-    current_density_values: list[tuple[tuple[float, float, float], tuple[float, float, float]]],
-    magnetic_vector_potential_values: list[tuple[tuple[float, float, float], tuple[float, float, float]]],
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    current_density_values: list[
+        tuple[tuple[float, float, float], tuple[float, float, float]]
+    ],
+    magnetic_vector_potential_values: list[
+        tuple[tuple[float, float, float], tuple[float, float, float]]
+    ],
+    magnetic_induction_values: list[
+        tuple[tuple[float, float, float], tuple[float, float, float]]
+    ],
+    magnetic_field_values: list[
+        tuple[tuple[float, float, float], tuple[float, float, float]]
+    ],
+    force_density_values: list[
+        tuple[tuple[float, float, float], tuple[float, float, float]]
+    ],
+    maxwell_stress_values: dict[str, list[tuple[tuple[float, float, float], float]]],
+) -> tuple[
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray | None,
+    np.ndarray | None,
+    np.ndarray | None,
+    np.ndarray | None,
+]:
     x_coords = unique_sorted([node[1] for node in nodes])
     y_coords = unique_sorted([node[2] for node in nodes])
     z_coords = unique_sorted([node[3] for node in nodes])
@@ -196,11 +304,18 @@ def build_structured_arrays(
 
         num_cells = (nx - 1) * (ny - 1)
         if len(cells) != num_cells:
-            raise RuntimeError("the number of cells does not match the expected structured grid size")
-        if len(permeability_values) != num_cells or len(current_density_values) != num_cells:
+            raise RuntimeError(
+                "the number of cells does not match the expected structured grid size"
+            )
+        if (
+            len(permeability_values) != num_cells
+            or len(current_density_values) != num_cells
+        ):
             raise RuntimeError("the input field views do not match the cell count")
         if len(magnetic_vector_potential_values) != len(nodes):
-            raise RuntimeError("the magnetic vector potential view does not match the node count")
+            raise RuntimeError(
+                "the magnetic vector potential view does not match the node count"
+            )
 
         magnetic_vector_potential = np.zeros((nx, ny, 3), dtype=np.float64)
         for xyz, value in magnetic_vector_potential_values:
@@ -218,7 +333,9 @@ def build_structured_arrays(
             max_x = max(index[0] for index in cell_indices)
             max_y = max(index[1] for index in cell_indices)
             if (max_x, max_y) != (min_x + 1, min_y + 1):
-                raise RuntimeError("a quadrilateral does not match a single structured grid cell")
+                raise RuntimeError(
+                    "a quadrilateral does not match a single structured grid cell"
+                )
             key = (min_x, min_y)
             if key in occupied_cells:
                 raise RuntimeError("duplicated structured cell")
@@ -236,6 +353,46 @@ def build_structured_arrays(
         for xyz, value in current_density_values:
             ix, iy = cell_key_from_xyz(xyz)
             current_density[ix, iy, :] = value
+
+        def build_optional_vector_field(
+            values: list[tuple[tuple[float, float, float], tuple[float, float, float]]],
+        ) -> np.ndarray | None:
+            if not values:
+                return None
+            if len(values) != num_cells:
+                raise RuntimeError(
+                    "the optional cell vector views do not match the cell count"
+                )
+            field = np.zeros((nx - 1, ny - 1, 3), dtype=np.float64)
+            for xyz, value in values:
+                ix, iy = cell_key_from_xyz(xyz)
+                field[ix, iy, :] = value
+            return field
+
+        def build_optional_stress_tensor() -> np.ndarray | None:
+            if not any(maxwell_stress_values.values()):
+                return None
+            for values in maxwell_stress_values.values():
+                if len(values) != num_cells:
+                    raise RuntimeError(
+                        "the optional Maxwell stress views do not match the cell count"
+                    )
+            stress = np.zeros((nx - 1, ny - 1, 3, 3), dtype=np.float64)
+            components = (
+                (MAXWELL_STRESS_XX_VIEW, (0, 0)),
+                (MAXWELL_STRESS_YY_VIEW, (1, 1)),
+                (MAXWELL_STRESS_ZZ_VIEW, (2, 2)),
+                (MAXWELL_STRESS_XY_VIEW, (0, 1)),
+                (MAXWELL_STRESS_XZ_VIEW, (0, 2)),
+                (MAXWELL_STRESS_YZ_VIEW, (1, 2)),
+            )
+            for view_name, (row, column) in components:
+                for xyz, value in maxwell_stress_values[view_name]:
+                    ix, iy = cell_key_from_xyz(xyz)
+                    stress[ix, iy, row, column] = value
+                    stress[ix, iy, column, row] = value
+            return stress
+
         return (
             np.asarray(x_coords),
             np.asarray(y_coords),
@@ -243,12 +400,20 @@ def build_structured_arrays(
             permeability,
             current_density,
             magnetic_vector_potential,
+            build_optional_vector_field(magnetic_induction_values),
+            build_optional_vector_field(magnetic_field_values),
+            build_optional_vector_field(force_density_values),
+            build_optional_stress_tensor(),
         )
 
     node_to_indices_3d: dict[int, tuple[int, int, int]] = {}
     occupied_nodes_3d: set[tuple[int, int, int]] = set()
     for tag, x, y, z in nodes:
-        key = (nearest_index(x_coords, x), nearest_index(y_coords, y), nearest_index(z_coords, z))
+        key = (
+            nearest_index(x_coords, x),
+            nearest_index(y_coords, y),
+            nearest_index(z_coords, z),
+        )
         if key in occupied_nodes_3d:
             raise RuntimeError("duplicated nodes on the structured grid")
         occupied_nodes_3d.add(key)
@@ -256,11 +421,18 @@ def build_structured_arrays(
 
     num_cells = (nx - 1) * (ny - 1) * (nz - 1)
     if len(cells) != num_cells:
-        raise RuntimeError("the number of cells does not match the expected structured grid size")
-    if len(permeability_values) != num_cells or len(current_density_values) != num_cells:
+        raise RuntimeError(
+            "the number of cells does not match the expected structured grid size"
+        )
+    if (
+        len(permeability_values) != num_cells
+        or len(current_density_values) != num_cells
+    ):
         raise RuntimeError("the input field views do not match the cell count")
     if len(magnetic_vector_potential_values) != len(nodes):
-        raise RuntimeError("the magnetic vector potential view does not match the node count")
+        raise RuntimeError(
+            "the magnetic vector potential view does not match the node count"
+        )
 
     magnetic_vector_potential = np.zeros((nx, ny, nz, 3), dtype=np.float64)
     for xyz, value in magnetic_vector_potential_values:
@@ -281,7 +453,9 @@ def build_structured_arrays(
         max_y = max(index[1] for index in cell_indices)
         max_z = max(index[2] for index in cell_indices)
         if (max_x, max_y, max_z) != (min_x + 1, min_y + 1, min_z + 1):
-            raise RuntimeError("a hexahedron does not match a single structured grid cell")
+            raise RuntimeError(
+                "a hexahedron does not match a single structured grid cell"
+            )
         key = (min_x, min_y, min_z)
         if key in occupied_cells_3d:
             raise RuntimeError("duplicated structured cell")
@@ -292,7 +466,11 @@ def build_structured_arrays(
     z_mid = [(z_coords[i] + z_coords[i + 1]) / 2.0 for i in range(nz - 1)]
 
     def cell_key_from_xyz_3d(xyz: tuple[float, float, float]) -> tuple[int, int, int]:
-        return (nearest_index(x_mid, xyz[0]), nearest_index(y_mid, xyz[1]), nearest_index(z_mid, xyz[2]))
+        return (
+            nearest_index(x_mid, xyz[0]),
+            nearest_index(y_mid, xyz[1]),
+            nearest_index(z_mid, xyz[2]),
+        )
 
     for xyz, value in permeability_values:
         ix, iy, iz = cell_key_from_xyz_3d(xyz)
@@ -300,6 +478,46 @@ def build_structured_arrays(
     for xyz, value in current_density_values:
         ix, iy, iz = cell_key_from_xyz_3d(xyz)
         current_density[ix, iy, iz, :] = value
+
+    def build_optional_vector_field_3d(
+        values: list[tuple[tuple[float, float, float], tuple[float, float, float]]],
+    ) -> np.ndarray | None:
+        if not values:
+            return None
+        if len(values) != num_cells:
+            raise RuntimeError(
+                "the optional cell vector views do not match the cell count"
+            )
+        field = np.zeros((nx - 1, ny - 1, nz - 1, 3), dtype=np.float64)
+        for xyz, value in values:
+            ix, iy, iz = cell_key_from_xyz_3d(xyz)
+            field[ix, iy, iz, :] = value
+        return field
+
+    def build_optional_stress_tensor_3d() -> np.ndarray | None:
+        if not any(maxwell_stress_values.values()):
+            return None
+        for values in maxwell_stress_values.values():
+            if len(values) != num_cells:
+                raise RuntimeError(
+                    "the optional Maxwell stress views do not match the cell count"
+                )
+        stress = np.zeros((nx - 1, ny - 1, nz - 1, 3, 3), dtype=np.float64)
+        components = (
+            (MAXWELL_STRESS_XX_VIEW, (0, 0)),
+            (MAXWELL_STRESS_YY_VIEW, (1, 1)),
+            (MAXWELL_STRESS_ZZ_VIEW, (2, 2)),
+            (MAXWELL_STRESS_XY_VIEW, (0, 1)),
+            (MAXWELL_STRESS_XZ_VIEW, (0, 2)),
+            (MAXWELL_STRESS_YZ_VIEW, (1, 2)),
+        )
+        for view_name, (row, column) in components:
+            for xyz, value in maxwell_stress_values[view_name]:
+                ix, iy, iz = cell_key_from_xyz_3d(xyz)
+                stress[ix, iy, iz, row, column] = value
+                stress[ix, iy, iz, column, row] = value
+        return stress
+
     return (
         np.asarray(x_coords),
         np.asarray(y_coords),
@@ -307,6 +525,10 @@ def build_structured_arrays(
         permeability,
         current_density,
         magnetic_vector_potential,
+        build_optional_vector_field_3d(magnetic_induction_values),
+        build_optional_vector_field_3d(magnetic_field_values),
+        build_optional_vector_field_3d(force_density_values),
+        build_optional_stress_tensor_3d(),
     )
 
 
@@ -329,8 +551,12 @@ def derive_cell_fields(
             for i in range(nx - 1):
                 dy = y_coords[j + 1] - y_coords[j]
                 dx = x_coords[i + 1] - x_coords[i]
-                d_az_dy = ((az[i, j + 1] - az[i, j]) + (az[i + 1, j + 1] - az[i + 1, j])) / (2.0 * dy)
-                d_az_dx = ((az[i + 1, j] - az[i, j]) + (az[i + 1, j + 1] - az[i, j + 1])) / (2.0 * dx)
+                d_az_dy = (
+                    (az[i, j + 1] - az[i, j]) + (az[i + 1, j + 1] - az[i + 1, j])
+                ) / (2.0 * dy)
+                d_az_dx = (
+                    (az[i + 1, j] - az[i, j]) + (az[i + 1, j + 1] - az[i, j + 1])
+                ) / (2.0 * dx)
                 magnetic_induction[i, j, 0] = d_az_dy
                 magnetic_induction[i, j, 1] = -d_az_dx
 
@@ -353,33 +579,39 @@ def derive_cell_fields(
         maxwell_stress[..., 1, 2] = by * hz
         maxwell_stress[..., 2, 1] = maxwell_stress[..., 1, 2]
 
-        def centered_derivative_2d(values: np.ndarray, coords: np.ndarray, axis: int) -> np.ndarray:
+        def centered_derivative_2d(
+            values: np.ndarray, coords: np.ndarray, axis: int
+        ) -> np.ndarray:
             result = np.zeros_like(values)
             if axis == 0:
                 result[1:-1, :] = (values[2:, :] - values[:-2, :]) / (
                     coords[2:, np.newaxis] - coords[:-2, np.newaxis]
                 )
                 result[0, :] = (values[1, :] - values[0, :]) / (coords[1] - coords[0])
-                result[-1, :] = (values[-1, :] - values[-2, :]) / (coords[-1] - coords[-2])
+                result[-1, :] = (values[-1, :] - values[-2, :]) / (
+                    coords[-1] - coords[-2]
+                )
             else:
                 result[:, 1:-1] = (values[:, 2:] - values[:, :-2]) / (
                     coords[np.newaxis, 2:] - coords[np.newaxis, :-2]
                 )
                 result[:, 0] = (values[:, 1] - values[:, 0]) / (coords[1] - coords[0])
-                result[:, -1] = (values[:, -1] - values[:, -2]) / (coords[-1] - coords[-2])
+                result[:, -1] = (values[:, -1] - values[:, -2]) / (
+                    coords[-1] - coords[-2]
+                )
             return result
 
         x_mid = 0.5 * (x_coords[:-1] + x_coords[1:])
         y_mid = 0.5 * (y_coords[:-1] + y_coords[1:])
-        force_density[..., 0] = centered_derivative_2d(maxwell_stress[..., 0, 0], x_mid, 0) + centered_derivative_2d(
-            maxwell_stress[..., 0, 1], y_mid, 1
-        )
-        force_density[..., 1] = centered_derivative_2d(maxwell_stress[..., 1, 0], x_mid, 0) + centered_derivative_2d(
-            maxwell_stress[..., 1, 1], y_mid, 1
-        )
-        force_density[..., 2] = centered_derivative_2d(maxwell_stress[..., 2, 0], x_mid, 0) + centered_derivative_2d(
-            maxwell_stress[..., 2, 1], y_mid, 1
-        )
+        force_density[..., 0] = centered_derivative_2d(
+            maxwell_stress[..., 0, 0], x_mid, 0
+        ) + centered_derivative_2d(maxwell_stress[..., 0, 1], y_mid, 1)
+        force_density[..., 1] = centered_derivative_2d(
+            maxwell_stress[..., 1, 0], x_mid, 0
+        ) + centered_derivative_2d(maxwell_stress[..., 1, 1], y_mid, 1)
+        force_density[..., 2] = centered_derivative_2d(
+            maxwell_stress[..., 2, 0], x_mid, 0
+        ) + centered_derivative_2d(maxwell_stress[..., 2, 1], y_mid, 1)
         return magnetic_induction, magnetic_field, maxwell_stress, force_density
 
     nx, ny, nz, _ = magnetic_vector_potential.shape
@@ -395,12 +627,32 @@ def derive_cell_fields(
                 dy = y_coords[j + 1] - y_coords[j]
                 dx = x_coords[i + 1] - x_coords[i]
                 d_az_dy = (
-                    (az[i, j + 1, k] + az[i + 1, j + 1, k] + az[i, j + 1, k + 1] + az[i + 1, j + 1, k + 1])
-                    - (az[i, j, k] + az[i + 1, j, k] + az[i, j, k + 1] + az[i + 1, j, k + 1])
+                    (
+                        az[i, j + 1, k]
+                        + az[i + 1, j + 1, k]
+                        + az[i, j + 1, k + 1]
+                        + az[i + 1, j + 1, k + 1]
+                    )
+                    - (
+                        az[i, j, k]
+                        + az[i + 1, j, k]
+                        + az[i, j, k + 1]
+                        + az[i + 1, j, k + 1]
+                    )
                 ) / (4.0 * dy)
                 d_az_dx = (
-                    (az[i + 1, j, k] + az[i + 1, j + 1, k] + az[i + 1, j, k + 1] + az[i + 1, j + 1, k + 1])
-                    - (az[i, j, k] + az[i, j + 1, k] + az[i, j, k + 1] + az[i, j + 1, k + 1])
+                    (
+                        az[i + 1, j, k]
+                        + az[i + 1, j + 1, k]
+                        + az[i + 1, j, k + 1]
+                        + az[i + 1, j + 1, k + 1]
+                    )
+                    - (
+                        az[i, j, k]
+                        + az[i, j + 1, k]
+                        + az[i, j, k + 1]
+                        + az[i, j + 1, k + 1]
+                    )
                 ) / (4.0 * dx)
                 magnetic_induction[i, j, k, 0] = d_az_dy
                 magnetic_induction[i, j, k, 1] = -d_az_dx
@@ -424,26 +676,40 @@ def derive_cell_fields(
     maxwell_stress[..., 1, 2] = by * hz
     maxwell_stress[..., 2, 1] = maxwell_stress[..., 1, 2]
 
-    def centered_derivative_3d(values: np.ndarray, coords: np.ndarray, axis: int) -> np.ndarray:
+    def centered_derivative_3d(
+        values: np.ndarray, coords: np.ndarray, axis: int
+    ) -> np.ndarray:
         result = np.zeros_like(values)
         if axis == 0:
             result[1:-1, :, :] = (values[2:, :, :] - values[:-2, :, :]) / (
                 coords[2:, np.newaxis, np.newaxis] - coords[:-2, np.newaxis, np.newaxis]
             )
-            result[0, :, :] = (values[1, :, :] - values[0, :, :]) / (coords[1] - coords[0])
-            result[-1, :, :] = (values[-1, :, :] - values[-2, :, :]) / (coords[-1] - coords[-2])
+            result[0, :, :] = (values[1, :, :] - values[0, :, :]) / (
+                coords[1] - coords[0]
+            )
+            result[-1, :, :] = (values[-1, :, :] - values[-2, :, :]) / (
+                coords[-1] - coords[-2]
+            )
         elif axis == 1:
             result[:, 1:-1, :] = (values[:, 2:, :] - values[:, :-2, :]) / (
                 coords[np.newaxis, 2:, np.newaxis] - coords[np.newaxis, :-2, np.newaxis]
             )
-            result[:, 0, :] = (values[:, 1, :] - values[:, 0, :]) / (coords[1] - coords[0])
-            result[:, -1, :] = (values[:, -1, :] - values[:, -2, :]) / (coords[-1] - coords[-2])
+            result[:, 0, :] = (values[:, 1, :] - values[:, 0, :]) / (
+                coords[1] - coords[0]
+            )
+            result[:, -1, :] = (values[:, -1, :] - values[:, -2, :]) / (
+                coords[-1] - coords[-2]
+            )
         else:
             result[:, :, 1:-1] = (values[:, :, 2:] - values[:, :, :-2]) / (
                 coords[np.newaxis, np.newaxis, 2:] - coords[np.newaxis, np.newaxis, :-2]
             )
-            result[:, :, 0] = (values[:, :, 1] - values[:, :, 0]) / (coords[1] - coords[0])
-            result[:, :, -1] = (values[:, :, -1] - values[:, :, -2]) / (coords[-1] - coords[-2])
+            result[:, :, 0] = (values[:, :, 1] - values[:, :, 0]) / (
+                coords[1] - coords[0]
+            )
+            result[:, :, -1] = (values[:, :, -1] - values[:, :, -2]) / (
+                coords[-1] - coords[-2]
+            )
         return result
 
     x_mid = 0.5 * (x_coords[:-1] + x_coords[1:])
@@ -467,6 +733,30 @@ def derive_cell_fields(
     return magnetic_induction, magnetic_field, maxwell_stress, force_density
 
 
+def maxwell_stress_from_field(
+    magnetic_induction: np.ndarray,
+    magnetic_field: np.ndarray,
+) -> np.ndarray:
+    maxwell_stress = np.zeros(magnetic_induction.shape[:-1] + (3, 3), dtype=np.float64)
+    bx = magnetic_induction[..., 0]
+    by = magnetic_induction[..., 1]
+    bz = magnetic_induction[..., 2]
+    hx = magnetic_field[..., 0]
+    hy = magnetic_field[..., 1]
+    hz = magnetic_field[..., 2]
+    half_trace = 0.5 * (bx * hx + by * hy + bz * hz)
+    maxwell_stress[..., 0, 0] = bx * hx - half_trace
+    maxwell_stress[..., 1, 1] = by * hy - half_trace
+    maxwell_stress[..., 2, 2] = bz * hz - half_trace
+    maxwell_stress[..., 0, 1] = bx * hy
+    maxwell_stress[..., 1, 0] = maxwell_stress[..., 0, 1]
+    maxwell_stress[..., 0, 2] = bx * hz
+    maxwell_stress[..., 2, 0] = maxwell_stress[..., 0, 2]
+    maxwell_stress[..., 1, 2] = by * hz
+    maxwell_stress[..., 2, 1] = maxwell_stress[..., 1, 2]
+    return maxwell_stress
+
+
 def build_position_dataset(
     x_coords: np.ndarray,
     y_coords: np.ndarray,
@@ -481,7 +771,9 @@ def build_position_dataset(
         position[:, :, 2] = z_coords[0]
         return position
 
-    position = np.zeros((x_coords.size, y_coords.size, z_coords.size, 3), dtype=np.float64)
+    position = np.zeros(
+        (x_coords.size, y_coords.size, z_coords.size, 3), dtype=np.float64
+    )
     for ix, x in enumerate(x_coords):
         position[ix, :, :, 0] = x
     for iy, y in enumerate(y_coords):
@@ -510,11 +802,17 @@ def write_hdf5(
         handle.create_dataset("position", data=position)
         handle.create_dataset("magnetic_permeability", data=permeability)
         handle.create_dataset("current_density", data=current_density)
-        handle.create_dataset("magnetic_vector_potential", data=magnetic_vector_potential)
+        handle.create_dataset(
+            "magnetic_vector_potential", data=magnetic_vector_potential
+        )
         handle.create_dataset("magnetic_induction", data=magnetic_induction)
         handle.create_dataset("magnetic_field", data=magnetic_field)
         principal = np.stack(
-            [maxwell_stress[..., 0, 0], maxwell_stress[..., 1, 1], maxwell_stress[..., 2, 2]],
+            [
+                maxwell_stress[..., 0, 0],
+                maxwell_stress[..., 1, 1],
+                maxwell_stress[..., 2, 2],
+            ],
             axis=-1,
         )
         vorticity = np.stack(
@@ -676,7 +974,15 @@ def main() -> int:
     xmf_file = Path(args.xmf_output)
 
     nodes, cells, topology_dimension = parse_msh2_structured_mesh(mesh_file)
-    permeability_values, current_density_values, magnetic_vector_potential_values = parse_result_views(pos_file)
+    (
+        permeability_values,
+        current_density_values,
+        magnetic_vector_potential_values,
+        magnetic_induction_values,
+        magnetic_field_values,
+        force_density_values,
+        maxwell_stress_values,
+    ) = parse_result_views(pos_file)
     (
         x_coords,
         y_coords,
@@ -684,6 +990,10 @@ def main() -> int:
         permeability,
         current_density,
         magnetic_vector_potential,
+        magnetic_induction,
+        magnetic_field,
+        force_density,
+        maxwell_stress,
     ) = build_structured_arrays(
         nodes,
         cells,
@@ -691,14 +1001,36 @@ def main() -> int:
         permeability_values,
         current_density_values,
         magnetic_vector_potential_values,
+        magnetic_induction_values,
+        magnetic_field_values,
+        force_density_values,
+        maxwell_stress_values,
     )
-    magnetic_induction, magnetic_field, maxwell_stress, force_density = derive_cell_fields(
-        x_coords,
-        y_coords,
-        z_coords,
-        permeability,
-        magnetic_vector_potential,
-    )
+    if magnetic_induction is None or magnetic_field is None:
+        magnetic_induction, magnetic_field, derived_stress, derived_force_density = (
+            derive_cell_fields(
+                x_coords,
+                y_coords,
+                z_coords,
+                permeability,
+                magnetic_vector_potential,
+            )
+        )
+        if maxwell_stress is None:
+            maxwell_stress = derived_stress
+        if force_density is None:
+            force_density = derived_force_density
+    elif maxwell_stress is None:
+        maxwell_stress = maxwell_stress_from_field(magnetic_induction, magnetic_field)
+
+    if force_density is None:
+        _, _, _, force_density = derive_cell_fields(
+            x_coords,
+            y_coords,
+            z_coords,
+            permeability,
+            magnetic_vector_potential,
+        )
     write_hdf5(
         h5_file,
         x_coords,

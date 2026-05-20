@@ -784,15 +784,13 @@ using InPlaneMagneticInductionIndex = sil::exterior::coboundary_index_t<
         sil::tensor::Covariant<magnetostatics_local::InPlaneNu>,
         magnetostatics_local::ScalarPotentialIndex>;
 
-template <class NodeValueGetter>
-std::array<double, 3> magnetic_induction_moments_from_potential_z(
-        std::size_t i,
-        std::size_t j,
+template <std::size_t I, class NodeValueGetter>
+double magnetic_induction_moment_from_potential_z(
+        ddc::DiscreteElement<magnetostatics_local::DDimX, magnetostatics_local::DDimY> elem,
         NodeValueGetter&& node_value_z)
 {
     using namespace magnetostatics_local;
 
-    auto const elem = ddc::DiscreteElement<DDimX, DDimY>(i, j);
     auto apply_stencil = [&](auto stencil) {
         double value = 0.0;
         ddc::host_for_each(stencil.domain(), [&](auto stencil_elem) {
@@ -807,15 +805,9 @@ std::array<double, 3> magnetic_induction_moments_from_potential_z(
         return value;
     };
 
-    return {
-            apply_stencil(
-                    physics::magnetostatics::MagneticVectorPotentialToMagneticInduction::
-                            template forward_value<0>(elem)),
-            apply_stencil(
-                    physics::magnetostatics::MagneticVectorPotentialToMagneticInduction::
-                            template forward_value<1>(elem)),
-            0.0,
-    };
+    return apply_stencil(
+            physics::magnetostatics::MagneticVectorPotentialToMagneticInduction::
+                    template forward_value<I>(elem));
 }
 
 template <class FillPosition, class NodeValueGetter, class WriteInduction>
@@ -825,75 +817,36 @@ void fill_magnetic_induction_on_cell_domain(
         NodeValueGetter&& node_value_z,
         WriteInduction&& write_induction)
 {
-    [[maybe_unused]] sil::tensor::TensorAccessor<PositionIndex2D> position_accessor;
-    ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY, PositionIndex2D>
-            position_dom(cell_domain, position_accessor.domain());
-    ddc::Chunk position_alloc(position_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor position(position_alloc);
-
-    [[maybe_unused]] sil::tensor::TensorAccessor<InPlaneMagneticInductionIndex>
-            magnetic_induction_accessor;
-    ddc::DiscreteDomain<
-            magnetostatics_local::DDimX,
-            magnetostatics_local::DDimY,
-            InPlaneMagneticInductionIndex>
-            magnetic_induction_dom(cell_domain, magnetic_induction_accessor.domain());
-    ddc::Chunk magnetic_induction_alloc(magnetic_induction_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor magnetic_induction_cochain(magnetic_induction_alloc);
-
-    ddc::Chunk reconstructed_alloc(magnetic_induction_dom, ddc::HostAllocator<double>());
-    sil::tensor::Tensor magnetic_induction_reconstructed(reconstructed_alloc);
+    static_cast<void>(fill_position);
 
     ddc::host_for_each(cell_domain, [&](auto elem) {
         std::size_t const i = static_cast<std::size_t>(
                 ddc::DiscreteElement<magnetostatics_local::DDimX>(elem).uid());
         std::size_t const j = static_cast<std::size_t>(
                 ddc::DiscreteElement<magnetostatics_local::DDimY>(elem).uid());
-        std::array<double, 2> const coordinates = fill_position(elem);
-        std::array<double, 3> const induction_moments
-                = magnetic_induction_moments_from_potential_z(i, j, node_value_z);
-
-        position(elem, position.accessor().template access_element<physics::magnetostatics::X>())
-                = coordinates[0];
-        position(elem, position.accessor().template access_element<physics::magnetostatics::Y>())
-                = coordinates[1];
-
-        magnetic_induction_cochain(
-                elem,
-                magnetic_induction_cochain.accessor()
-                        .template access_element<physics::magnetostatics::Y>())
-                = induction_moments[0];
-        magnetic_induction_cochain(
-                elem,
-                magnetic_induction_cochain.accessor()
-                        .template access_element<physics::magnetostatics::X>())
-                = induction_moments[1];
-    });
-
-    using MagneticInductionIndices = ddc::to_type_seq_t<
-            typename sil::tensor::TensorAccessor<InPlaneMagneticInductionIndex>::natural_domain_t>;
-    ddc::host_for_each(cell_domain, [&](auto elem) {
-        sil::exterior::Reconstruction<
-                MagneticInductionIndices,
-                decltype(position),
-                decltype(elem)>::run(
-                magnetic_induction_reconstructed[elem],
-                magnetic_induction_cochain[elem],
-                position,
-                elem);
+        auto const lower_edge = ddc::DiscreteElement<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(
+                i,
+                j);
+        auto const upper_edge = ddc::DiscreteElement<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(
+                i,
+                j + 1);
+        auto const left_edge = ddc::DiscreteElement<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(
+                i,
+                j);
+        auto const right_edge = ddc::DiscreteElement<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(
+                i + 1,
+                j);
+        double const magnetic_induction_x
+                = 0.5
+                  * (magnetic_induction_moment_from_potential_z<0>(lower_edge, node_value_z)
+                     + magnetic_induction_moment_from_potential_z<0>(upper_edge, node_value_z));
+        double const magnetic_induction_y
+                = 0.5
+                  * (magnetic_induction_moment_from_potential_z<1>(left_edge, node_value_z)
+                     + magnetic_induction_moment_from_potential_z<1>(right_edge, node_value_z));
         write_induction(
                 elem,
-                std::array<double, 3> {
-                        magnetic_induction_reconstructed(
-                                elem,
-                                magnetic_induction_reconstructed.accessor()
-                                        .template access_element<physics::magnetostatics::Y>()),
-                        magnetic_induction_reconstructed(
-                                elem,
-                                magnetic_induction_reconstructed.accessor()
-                                        .template access_element<physics::magnetostatics::X>()),
-                        0.0,
-                });
+                std::array<double, 3> {magnetic_induction_x, magnetic_induction_y, 0.0});
     });
 }
 
@@ -1147,6 +1100,7 @@ inline void write_results_view(
         std::filesystem::path const& output_view_file,
         sil::onelab_interface::gmsh::StructuredGrid2D const& grid,
         std::vector<CellInputFields> const& cell_inputs,
+        std::vector<CellPostProcessFields> const& cell_outputs,
         std::vector<double> const& magnetic_vector_potential)
 {
     std::ofstream stream(output_view_file);
@@ -1171,6 +1125,61 @@ inline void write_results_view(
             stream << "VP(" << grid.cell_center_x(i) << "," << grid.cell_center_y(j) << ","
                    << grid.z_value << "){" << cell_input.current_density[0] << ","
                    << cell_input.current_density[1] << "," << cell_input.current_density[2]
+                   << "};\n";
+        }
+    }
+    stream << "};\n";
+
+    stream << "View \"SimiLie linear magnetostatics magnetic induction\" {\n";
+    for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
+        for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
+            auto const& cell_output = cell_outputs[grid.cell_index(i, j)];
+            stream << "VP(" << grid.cell_center_x(i) << "," << grid.cell_center_y(j) << ","
+                   << grid.z_value << "){" << cell_output.magnetic_induction[0] << ","
+                   << cell_output.magnetic_induction[1] << ","
+                   << cell_output.magnetic_induction[2] << "};\n";
+        }
+    }
+    stream << "};\n";
+
+    stream << "View \"SimiLie linear magnetostatics magnetic field\" {\n";
+    for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
+        for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
+            auto const& cell_output = cell_outputs[grid.cell_index(i, j)];
+            stream << "VP(" << grid.cell_center_x(i) << "," << grid.cell_center_y(j) << ","
+                   << grid.z_value << "){" << cell_output.magnetic_field[0] << ","
+                   << cell_output.magnetic_field[1] << "," << cell_output.magnetic_field[2]
+                   << "};\n";
+        }
+    }
+    stream << "};\n";
+
+    auto write_stress_view = [&](std::string_view view_name, std::size_t component) {
+        stream << "View \"" << view_name << "\" {\n";
+        for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
+            for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
+                auto const& cell_output = cell_outputs[grid.cell_index(i, j)];
+                stream << "SP(" << grid.cell_center_x(i) << "," << grid.cell_center_y(j) << ","
+                       << grid.z_value << "){" << cell_output.maxwell_stress[component]
+                       << "};\n";
+            }
+        }
+        stream << "};\n";
+    };
+    write_stress_view("SimiLie linear magnetostatics Maxwell stress xx", 0);
+    write_stress_view("SimiLie linear magnetostatics Maxwell stress yy", 1);
+    write_stress_view("SimiLie linear magnetostatics Maxwell stress zz", 2);
+    write_stress_view("SimiLie linear magnetostatics Maxwell stress xy", 3);
+    write_stress_view("SimiLie linear magnetostatics Maxwell stress xz", 4);
+    write_stress_view("SimiLie linear magnetostatics Maxwell stress yz", 5);
+
+    stream << "View \"SimiLie linear magnetostatics force density\" {\n";
+    for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
+        for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
+            auto const& cell_output = cell_outputs[grid.cell_index(i, j)];
+            stream << "VP(" << grid.cell_center_x(i) << "," << grid.cell_center_y(j) << ","
+                   << grid.z_value << "){" << cell_output.force_density[0] << ","
+                   << cell_output.force_density[1] << "," << cell_output.force_density[2]
                    << "};\n";
         }
     }
@@ -1419,7 +1428,7 @@ Result run_on_quadrilateral_grid(
         }
     }
 
-    write_results_view(output_view_file, grid, cell_inputs, magnetic_vector_potential);
+    write_results_view(output_view_file, grid, cell_inputs, cell_outputs, magnetic_vector_potential);
     log_info(logger, "SimiLie magnetostatics post-processing exported");
     return result;
 }
@@ -1428,6 +1437,7 @@ inline void write_results_view(
         std::filesystem::path const& output_view_file,
         sil::onelab_interface::gmsh::StructuredGrid3D const& grid,
         std::vector<CellInputFields> const& cell_inputs,
+        std::vector<CellPostProcessFields> const& cell_outputs,
         std::vector<double> const& magnetic_vector_potential)
 {
     std::ofstream stream(output_view_file);
@@ -1455,6 +1465,69 @@ inline void write_results_view(
                 stream << "VP(" << grid.cell_center_x(i) << "," << grid.cell_center_y(j) << ","
                        << grid.cell_center_z(k) << "){" << cell_input.current_density[0] << ","
                        << cell_input.current_density[1] << "," << cell_input.current_density[2]
+                       << "};\n";
+            }
+        }
+    }
+    stream << "};\n";
+
+    stream << "View \"SimiLie linear magnetostatics magnetic induction\" {\n";
+    for (std::size_t k = 0; k < grid.ncell_z(); ++k) {
+        for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
+            for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
+                auto const& cell_output = cell_outputs[grid.cell_index(i, j, k)];
+                stream << "VP(" << grid.cell_center_x(i) << "," << grid.cell_center_y(j) << ","
+                       << grid.cell_center_z(k) << "){" << cell_output.magnetic_induction[0]
+                       << "," << cell_output.magnetic_induction[1] << ","
+                       << cell_output.magnetic_induction[2] << "};\n";
+            }
+        }
+    }
+    stream << "};\n";
+
+    stream << "View \"SimiLie linear magnetostatics magnetic field\" {\n";
+    for (std::size_t k = 0; k < grid.ncell_z(); ++k) {
+        for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
+            for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
+                auto const& cell_output = cell_outputs[grid.cell_index(i, j, k)];
+                stream << "VP(" << grid.cell_center_x(i) << "," << grid.cell_center_y(j) << ","
+                       << grid.cell_center_z(k) << "){" << cell_output.magnetic_field[0] << ","
+                       << cell_output.magnetic_field[1] << "," << cell_output.magnetic_field[2]
+                       << "};\n";
+            }
+        }
+    }
+    stream << "};\n";
+
+    auto write_stress_view = [&](std::string_view view_name, std::size_t component) {
+        stream << "View \"" << view_name << "\" {\n";
+        for (std::size_t k = 0; k < grid.ncell_z(); ++k) {
+            for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
+                for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
+                    auto const& cell_output = cell_outputs[grid.cell_index(i, j, k)];
+                    stream << "SP(" << grid.cell_center_x(i) << "," << grid.cell_center_y(j)
+                           << "," << grid.cell_center_z(k) << "){"
+                           << cell_output.maxwell_stress[component] << "};\n";
+                }
+            }
+        }
+        stream << "};\n";
+    };
+    write_stress_view("SimiLie linear magnetostatics Maxwell stress xx", 0);
+    write_stress_view("SimiLie linear magnetostatics Maxwell stress yy", 1);
+    write_stress_view("SimiLie linear magnetostatics Maxwell stress zz", 2);
+    write_stress_view("SimiLie linear magnetostatics Maxwell stress xy", 3);
+    write_stress_view("SimiLie linear magnetostatics Maxwell stress xz", 4);
+    write_stress_view("SimiLie linear magnetostatics Maxwell stress yz", 5);
+
+    stream << "View \"SimiLie linear magnetostatics force density\" {\n";
+    for (std::size_t k = 0; k < grid.ncell_z(); ++k) {
+        for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
+            for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
+                auto const& cell_output = cell_outputs[grid.cell_index(i, j, k)];
+                stream << "VP(" << grid.cell_center_x(i) << "," << grid.cell_center_y(j) << ","
+                       << grid.cell_center_z(k) << "){" << cell_output.force_density[0] << ","
+                       << cell_output.force_density[1] << "," << cell_output.force_density[2]
                        << "};\n";
             }
         }
@@ -1735,7 +1808,12 @@ Result run_on_hexahedral_grid(
         }
     }
 
-    write_results_view(output_view_file, grid, cell_inputs_3d, magnetic_vector_potential);
+    write_results_view(
+            output_view_file,
+            grid,
+            cell_inputs_3d,
+            cell_outputs,
+            magnetic_vector_potential);
     log_info(logger, "SimiLie magnetostatics post-processing exported");
     return result;
 }
