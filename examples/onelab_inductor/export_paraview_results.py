@@ -783,6 +783,89 @@ def build_position_dataset(
     return position
 
 
+def coordinates_from_position_dataset(
+    position: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    if position.ndim == 3:
+        return position[:, 0, 0], position[0, :, 1], np.asarray([position[0, 0, 2]])
+    if position.ndim == 4:
+        return position[:, 0, 0, 0], position[0, :, 0, 1], position[0, 0, :, 2]
+    raise RuntimeError("unsupported position dataset rank")
+
+
+def maxwell_stress_from_principal_and_vorticity(
+    principal: np.ndarray,
+    vorticity: np.ndarray,
+) -> np.ndarray:
+    maxwell_stress = np.zeros(principal.shape[:-1] + (3, 3), dtype=np.float64)
+    maxwell_stress[..., 0, 0] = principal[..., 0]
+    maxwell_stress[..., 1, 1] = principal[..., 1]
+    maxwell_stress[..., 2, 2] = principal[..., 2]
+    maxwell_stress[..., 1, 2] = 0.5 * vorticity[..., 0]
+    maxwell_stress[..., 2, 1] = maxwell_stress[..., 1, 2]
+    maxwell_stress[..., 0, 2] = -0.5 * vorticity[..., 1]
+    maxwell_stress[..., 2, 0] = maxwell_stress[..., 0, 2]
+    maxwell_stress[..., 0, 1] = 0.5 * vorticity[..., 2]
+    maxwell_stress[..., 1, 0] = maxwell_stress[..., 0, 1]
+    return maxwell_stress
+
+
+def load_direct_hdf5_result(
+    h5_file: Path,
+) -> tuple[
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+]:
+    with h5py.File(h5_file, "r") as handle:
+        position = handle["position"][...]
+        x_coords, y_coords, z_coords = coordinates_from_position_dataset(position)
+        permeability = handle["magnetic_permeability"][...]
+        current_density = handle["current_density"][...]
+        magnetic_vector_potential = handle["magnetic_vector_potential"][...]
+        magnetic_induction = handle["magnetic_induction"][...]
+        magnetic_field = handle["magnetic_field"][...]
+        force_density = handle["force_density"][...]
+        if "maxwell_stress_tensor_principal" in handle:
+            maxwell_stress = maxwell_stress_from_principal_and_vorticity(
+                handle["maxwell_stress_tensor_principal"][...],
+                handle["maxwell_stress_tensor_vorticity"][...],
+            )
+        else:
+            maxwell_stress = np.zeros(
+                magnetic_induction.shape[:-1] + (3, 3),
+                dtype=np.float64,
+            )
+            maxwell_stress[..., 0, 0] = handle["maxwell_stress_xx"][...]
+            maxwell_stress[..., 1, 1] = handle["maxwell_stress_yy"][...]
+            maxwell_stress[..., 2, 2] = handle["maxwell_stress_zz"][...]
+            maxwell_stress[..., 0, 1] = handle["maxwell_stress_xy"][...]
+            maxwell_stress[..., 1, 0] = maxwell_stress[..., 0, 1]
+            maxwell_stress[..., 0, 2] = handle["maxwell_stress_xz"][...]
+            maxwell_stress[..., 2, 0] = maxwell_stress[..., 0, 2]
+            maxwell_stress[..., 1, 2] = handle["maxwell_stress_yz"][...]
+            maxwell_stress[..., 2, 1] = maxwell_stress[..., 1, 2]
+    return (
+        x_coords,
+        y_coords,
+        z_coords,
+        permeability,
+        current_density,
+        magnetic_vector_potential,
+        magnetic_induction,
+        magnetic_field,
+        maxwell_stress,
+        force_density,
+    )
+
+
 def write_hdf5(
     h5_file: Path,
     x_coords: np.ndarray,
@@ -972,6 +1055,51 @@ def main() -> int:
     pos_file = Path(args.input_fields_pos)
     h5_file = Path(args.h5_output)
     xmf_file = Path(args.xmf_output)
+
+    direct_h5_file = pos_file.with_name("similie_linear_magnetostatics.h5")
+    if direct_h5_file.exists() and direct_h5_file.resolve() != h5_file.resolve():
+        (
+            x_coords,
+            y_coords,
+            z_coords,
+            permeability,
+            current_density,
+            magnetic_vector_potential,
+            magnetic_induction,
+            magnetic_field,
+            maxwell_stress,
+            force_density,
+        ) = load_direct_hdf5_result(direct_h5_file)
+        write_hdf5(
+            h5_file,
+            x_coords,
+            y_coords,
+            z_coords,
+            permeability,
+            current_density,
+            magnetic_vector_potential,
+            magnetic_induction,
+            magnetic_field,
+            maxwell_stress,
+            force_density,
+        )
+        write_xmf(
+            xmf_file,
+            h5_file,
+            x_coords,
+            y_coords,
+            z_coords,
+            permeability,
+            current_density,
+            magnetic_vector_potential,
+            magnetic_induction,
+            magnetic_field,
+            maxwell_stress,
+            force_density,
+        )
+        print(f"Paraview HDF5 result exported in {h5_file}.")
+        print(f"Paraview XDMF model exported in {xmf_file}.")
+        return 0
 
     nodes, cells, topology_dimension = parse_msh2_structured_mesh(mesh_file)
     (

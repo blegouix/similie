@@ -280,6 +280,30 @@ TEST(OnelabInterface, MagnetostaticsPostProcessInductionCentersEachComponentOnIt
     EXPECT_DOUBLE_EQ(induction[2], 0.0);
 }
 
+TEST(OnelabInterface, MagnetostaticsInductionMomentLocationOnQuadraticField)
+{
+    using similie::onelab_interface::linear_magnetostatics_onelab::detail::
+            magnetic_induction_moment_from_potential_z;
+    using namespace similie::onelab_interface::linear_magnetostatics_onelab::detail::
+            magnetostatics_local;
+
+    std::vector<double> const x_coords {0.0, 1.0, 2.0};
+    std::vector<double> const y_coords {0.0, 1.0, 2.0};
+    auto node_value_z = [&](std::size_t i, std::size_t j) {
+        return x_coords[i] * x_coords[i] + 2.0 * y_coords[j] * y_coords[j];
+    };
+
+    auto const elem00 = ddc::DiscreteElement<DDimX, DDimY>(0, 0);
+    EXPECT_NEAR(magnetic_induction_moment_from_potential_z<0>(elem00, node_value_z), 2.0, 1e-12);
+    EXPECT_NEAR(magnetic_induction_moment_from_potential_z<1>(elem00, node_value_z), -1.0, 1e-12);
+
+    auto const elem10 = ddc::DiscreteElement<DDimX, DDimY>(1, 0);
+    EXPECT_NEAR(magnetic_induction_moment_from_potential_z<1>(elem10, node_value_z), -3.0, 1e-12);
+
+    auto const elem01 = ddc::DiscreteElement<DDimX, DDimY>(0, 1);
+    EXPECT_NEAR(magnetic_induction_moment_from_potential_z<0>(elem01, node_value_z), 6.0, 1e-12);
+}
+
 TEST(OnelabInterface, MagnetostaticsPostProcessForceDensityUsesLibraryCodifferential)
 {
     using similie::onelab_interface::linear_magnetostatics_onelab::detail::CellPostProcessFields;
