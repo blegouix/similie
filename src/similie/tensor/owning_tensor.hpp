@@ -27,8 +27,8 @@ class OwningTensor<Tensor<ElementType, DomainType, LayoutStridedPolicy, MemorySp
 
     KOKKOS_FUNCTION void rebind_to_owned_storage(DomainType const& domain)
     {
-        static_cast<Base&>(*this) = Base(
-                ddc::ChunkSpan<
+        static_cast<Base&>(*this)
+                = Base(ddc::ChunkSpan<
                         ElementType,
                         DomainType,
                         LayoutStridedPolicy,

@@ -11,6 +11,7 @@
 #include <stdexcept>
 #include <type_traits>
 
+#include <ginkgo/core/base/lin_op.hpp>
 #include <ginkgo/core/log/convergence.hpp>
 #include <ginkgo/core/matrix/csr.hpp>
 #include <ginkgo/core/matrix/dense.hpp>
@@ -163,15 +164,15 @@ struct GkoDenseHandle
 };
 
 template <class KokkosViewType>
-auto to_gko_dense(
-        std::shared_ptr<gko::Executor const> const& gko_exec,
-        KokkosViewType const& view)
+auto to_gko_dense(std::shared_ptr<gko::Executor const> const& gko_exec, KokkosViewType const& view)
 {
     static_assert(Kokkos::is_view_v<KokkosViewType> && KokkosViewType::rank == 2);
     using value_type = typename KokkosViewType::traits::value_type;
     using non_const_value_type = typename KokkosViewType::non_const_value_type;
-    using owning_view_type
-            = Kokkos::View<non_const_value_type**, Kokkos::LayoutRight, typename KokkosViewType::memory_space>;
+    using owning_view_type = Kokkos::View<
+            non_const_value_type**,
+            Kokkos::LayoutRight,
+            typename KokkosViewType::memory_space>;
 
     GkoDenseHandle<KokkosViewType> handle;
     if (view.stride(1) == 1) {
@@ -188,16 +189,16 @@ auto to_gko_dense(
     handle.dense = gko::matrix::Dense<value_type>::
             create(gko_exec,
                    gko::dim<2>(handle.owned_view->extent(0), handle.owned_view->extent(1)),
-                   gko::array<value_type>::view(
-                           gko_exec,
-                           handle.owned_view->span(),
-                           handle.owned_view->data()),
+                   gko::array<value_type>::
+                           view(gko_exec, handle.owned_view->span(), handle.owned_view->data()),
                    handle.owned_view->stride(0));
     return handle;
 }
 
 template <class DestinationView, class KokkosViewType>
-void copy_back_from_gko_dense_bridge(DestinationView destination, GkoDenseHandle<KokkosViewType> const& handle)
+void copy_back_from_gko_dense_bridge(
+        DestinationView destination,
+        GkoDenseHandle<KokkosViewType> const& handle)
 {
     if (handle.owned_view.has_value()) {
         Kokkos::deep_copy(destination, *handle.owned_view);
@@ -217,6 +218,85 @@ std::shared_ptr<gko::matrix::Csr<double, gko::int32>> build_matrix(
     matrix->read(matrix_data);
     return matrix;
 }
+
+template <class ExecSpace, class OperatorModel>
+class MatrixFreeLinOp : public gko::EnableLinOp<MatrixFreeLinOp<ExecSpace, OperatorModel>>
+{
+    using value_type = double;
+    using dense_type = gko::matrix::Dense<value_type>;
+    using memory_space = typename ExecSpace::memory_space;
+    using base_type = gko::EnableLinOp<MatrixFreeLinOp<ExecSpace, OperatorModel>>;
+
+    ExecSpace m_exec_space;
+    std::shared_ptr<OperatorModel const> m_operator_model;
+
+public:
+    explicit MatrixFreeLinOp(std::shared_ptr<gko::Executor const> exec)
+        : base_type(std::move(exec))
+        , m_exec_space()
+        , m_operator_model()
+    {
+    }
+
+    MatrixFreeLinOp(
+            std::shared_ptr<gko::Executor const> exec,
+            ExecSpace exec_space,
+            std::shared_ptr<OperatorModel const> operator_model)
+        : base_type(exec, gko::dim<2>(operator_model->size(), operator_model->size()))
+        , m_exec_space(exec_space)
+        , m_operator_model(std::move(operator_model))
+    {
+    }
+
+protected:
+    void apply_impl(gko::LinOp const* b, gko::LinOp* x) const override
+    {
+        auto const* b_dense = dynamic_cast<dense_type const*>(b);
+        auto* x_dense = dynamic_cast<dense_type*>(x);
+        if (b_dense == nullptr || x_dense == nullptr) {
+            throw std::invalid_argument("MatrixFreeLinOp expects dense inputs and outputs");
+        }
+        auto b_view = gko::ext::kokkos::map_data<memory_space>(*b_dense);
+        auto x_view = gko::ext::kokkos::map_data<memory_space>(*x_dense);
+        apply_operator(m_exec_space, *m_operator_model, b_view, x_view);
+    }
+
+    void apply_impl(
+            gko::LinOp const* alpha,
+            gko::LinOp const* b,
+            gko::LinOp const* beta,
+            gko::LinOp* x) const override
+    {
+        auto const* alpha_dense = dynamic_cast<dense_type const*>(alpha);
+        auto const* b_dense = dynamic_cast<dense_type const*>(b);
+        auto const* beta_dense = dynamic_cast<dense_type const*>(beta);
+        auto* x_dense = dynamic_cast<dense_type*>(x);
+        if (alpha_dense == nullptr || b_dense == nullptr || beta_dense == nullptr
+            || x_dense == nullptr) {
+            throw std::invalid_argument(
+                    "MatrixFreeLinOp expects dense alpha, beta, input, and output");
+        }
+
+        auto alpha_view = gko::ext::kokkos::map_data<memory_space>(*alpha_dense);
+        auto b_view = gko::ext::kokkos::map_data<memory_space>(*b_dense);
+        auto beta_view = gko::ext::kokkos::map_data<memory_space>(*beta_dense);
+        auto x_view = gko::ext::kokkos::map_data<memory_space>(*x_dense);
+        Kokkos::View<double**, Kokkos::LayoutRight, memory_space>
+                applied("similie_matrix_free_linop_apply", x_view.extent(0), x_view.extent(1));
+        apply_operator(m_exec_space, *m_operator_model, b_view, applied);
+        Kokkos::parallel_for(
+                "similie_matrix_free_linop_advanced_apply",
+                Kokkos::MDRangePolicy<
+                        ExecSpace,
+                        Kokkos::Rank<
+                                2>>(m_exec_space, {0, 0}, {x_view.extent(0), x_view.extent(1)}),
+                KOKKOS_LAMBDA(std::size_t row, std::size_t column) {
+                    x_view(row, column) = alpha_view(0, 0) * applied(row, column)
+                                          + beta_view(0, 0) * x_view(row, column);
+                });
+        m_exec_space.fence();
+    }
+};
 
 inline auto build_jacobi_preconditioner_factory(
         std::shared_ptr<gko::Executor const> const& gko_exec,
@@ -268,152 +348,57 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
             gko_exec,
             std::static_pointer_cast<gko::LinOp const>(matrix),
             settings);
-
-    if (!settings.use_matrix_free) {
-        using solver_type = gko::solver::Cg<double>;
-        auto residual_criterion = gko::stop::ResidualNorm<double>::build()
-                                          .with_reduction_factor(settings.relative_tolerance)
-                                          .on(gko_exec);
-        auto iterations_criterion = gko::stop::Iteration::build()
-                                            .with_max_iters(settings.max_iterations)
-                                            .on(gko_exec);
-        auto preconditioner_factory
-                = detail::build_jacobi_preconditioner_factory(gko_exec, settings);
-        auto solver_factory = solver_type::build()
-                                      .with_preconditioner(std::move(preconditioner_factory))
-                                      .with_criteria(
-                                              std::move(residual_criterion),
-                                              std::move(iterations_criterion))
+    using solver_type = gko::solver::Cg<double>;
+    auto residual_criterion = gko::stop::ResidualNorm<double>::build()
+                                      .with_reduction_factor(settings.relative_tolerance)
                                       .on(gko_exec);
-        auto solver = solver_factory->generate(std::static_pointer_cast<gko::LinOp const>(matrix));
-        auto convergence_logger = std::shared_ptr<gko::log::Convergence<double>>(
-                gko::log::Convergence<double>::create().release());
-        solver->add_logger(convergence_logger);
-
-        auto rhs_gko = detail::to_gko_dense(gko_exec, rhs);
-        auto solution_gko = detail::to_gko_dense(gko_exec, solution);
-        auto const optimization_start = std::chrono::steady_clock::now();
-        solver->apply(rhs_gko.dense, solution_gko.dense);
-        gko_exec->synchronize();
-        detail::copy_back_from_gko_dense_bridge(solution, solution_gko);
-        auto const optimization_end = std::chrono::steady_clock::now();
-        solver->remove_logger(convergence_logger);
-        diagnostics.duration
-                = std::chrono::duration<double>(optimization_end - optimization_start).count();
-
-        diagnostics.iterations
-                = static_cast<unsigned int>(convergence_logger->get_num_iterations());
-        diagnostics.converged = convergence_logger->has_converged();
-        auto residual_norm_dense = dynamic_cast<gko::matrix::Dense<double> const*>(
-                convergence_logger->get_residual_norm());
-        if (residual_norm_dense != nullptr) {
-            auto host_dense = gko::matrix::Dense<
-                    double>::create(gko_exec->get_master(), residual_norm_dense->get_size());
-            residual_norm_dense->convert_to(host_dense.get());
-            diagnostics.final_residual_l2 = host_dense->at(0, 0);
-        }
-        diagnostics.final_relative_residual
-                = diagnostics.initial_residual_l2 == 0.0
-                          ? 0.0
-                          : diagnostics.final_residual_l2 / diagnostics.initial_residual_l2;
-        return diagnostics;
+    auto iterations_criterion
+            = gko::stop::Iteration::build().with_max_iters(settings.max_iterations).on(gko_exec);
+    auto solver_factory
+            = solver_type::build()
+                      .with_generated_preconditioner(preconditioner)
+                      .with_criteria(std::move(residual_criterion), std::move(iterations_criterion))
+                      .on(gko_exec);
+    std::shared_ptr<gko::LinOp const> system_matrix;
+    if (settings.use_matrix_free) {
+        auto operator_model_ptr = std::make_shared<OperatorModel>(operator_model);
+        system_matrix = std::shared_ptr<gko::LinOp const>(
+                std::make_shared<detail::MatrixFreeLinOp<
+                        ExecSpace,
+                        OperatorModel>>(gko_exec, exec_space, std::move(operator_model_ptr)));
+    } else {
+        system_matrix = std::static_pointer_cast<gko::LinOp const>(matrix);
     }
+    auto solver = solver_factory->generate(system_matrix);
+    auto convergence_logger = std::shared_ptr<gko::log::Convergence<double>>(
+            gko::log::Convergence<double>::create().release());
+    solver->add_logger(convergence_logger);
 
-    using memory_space = typename SolutionViewType::memory_space;
-    Kokkos::View<double**, memory_space> residual("similie_residual", rhs.extent(0), rhs.extent(1));
-    Kokkos::View<double**, memory_space> preconditioned_residual(
-            "similie_preconditioned_residual",
-            rhs.extent(0),
-            rhs.extent(1));
-    Kokkos::View<double**, memory_space>
-            search_direction("similie_search_direction", rhs.extent(0), rhs.extent(1));
-    Kokkos::View<double**, memory_space> operator_search_direction(
-            "similie_operator_search_direction",
-            rhs.extent(0),
-            rhs.extent(1));
-
-    detail::copy(exec_space, residual, rhs);
+    auto rhs_gko = detail::to_gko_dense(gko_exec, rhs);
+    auto solution_gko = detail::to_gko_dense(gko_exec, solution);
     auto const optimization_start = std::chrono::steady_clock::now();
-    {
-        auto residual_gko = detail::to_gko_dense(gko_exec, residual);
-        auto preconditioned_residual_gko = detail::to_gko_dense(gko_exec, preconditioned_residual);
-        preconditioner->apply(residual_gko.dense, preconditioned_residual_gko.dense);
-        gko_exec->synchronize();
-        detail::copy_back_from_gko_dense_bridge(
-                preconditioned_residual,
-                preconditioned_residual_gko);
-    }
-    detail::copy(exec_space, search_direction, preconditioned_residual);
-
-    double residual_norm_sq = detail::dot(exec_space, residual, residual);
-    double rz_dot = detail::dot(exec_space, residual, preconditioned_residual);
-    diagnostics.converged = false;
-    double const initial_norm_sq = residual_norm_sq;
-
-    for (unsigned int iteration = 0; iteration < settings.max_iterations; ++iteration) {
-        diagnostics.iterations = iteration + 1;
-        detail::apply_operator(
-                exec_space,
-                operator_model,
-                search_direction,
-                operator_search_direction);
-
-        double const denominator
-                = detail::dot(exec_space, search_direction, operator_search_direction);
-        if (std::abs(denominator) < 1.0e-30) {
-            break;
-        }
-
-        double const alpha = rz_dot / denominator;
-        detail::axpy_inplace(exec_space, solution, alpha, search_direction);
-        detail::axpy_inplace(exec_space, residual, -alpha, operator_search_direction);
-
-        double const new_residual_norm_sq = detail::dot(exec_space, residual, residual);
-        diagnostics.final_residual_l2 = std::sqrt(new_residual_norm_sq);
-        diagnostics.final_relative_residual
-                = diagnostics.initial_residual_l2 == 0.0
-                          ? 0.0
-                          : diagnostics.final_residual_l2 / diagnostics.initial_residual_l2;
-        if ((iteration + 1) % 1000 == 0) {
-            std::cout << "SimiLie matrix-free CG iteration " << (iteration + 1)
-                      << ": residual L2=" << diagnostics.final_residual_l2
-                      << ", relative residual=" << diagnostics.final_relative_residual << std::endl;
-        }
-        if (new_residual_norm_sq
-            <= settings.relative_tolerance * settings.relative_tolerance * initial_norm_sq) {
-            diagnostics.converged = true;
-            break;
-        }
-
-        {
-            auto residual_gko = detail::to_gko_dense(gko_exec, residual);
-            auto preconditioned_residual_gko
-                    = detail::to_gko_dense(gko_exec, preconditioned_residual);
-            preconditioner->apply(residual_gko.dense, preconditioned_residual_gko.dense);
-            gko_exec->synchronize();
-            detail::copy_back_from_gko_dense_bridge(
-                    preconditioned_residual,
-                    preconditioned_residual_gko);
-        }
-        double const new_rz_dot = detail::dot(exec_space, residual, preconditioned_residual);
-        if (std::abs(rz_dot) < 1.0e-30) {
-            break;
-        }
-        double const beta = new_rz_dot / rz_dot;
-        detail::update_axpby(
-                exec_space,
-                search_direction,
-                1.0,
-                preconditioned_residual,
-                beta,
-                search_direction);
-        residual_norm_sq = new_residual_norm_sq;
-        rz_dot = new_rz_dot;
-    }
+    solver->apply(rhs_gko.dense, solution_gko.dense);
+    gko_exec->synchronize();
+    detail::copy_back_from_gko_dense_bridge(solution, solution_gko);
     auto const optimization_end = std::chrono::steady_clock::now();
+    solver->remove_logger(convergence_logger);
     diagnostics.duration
             = std::chrono::duration<double>(optimization_end - optimization_start).count();
 
+    diagnostics.iterations = static_cast<unsigned int>(convergence_logger->get_num_iterations());
+    diagnostics.converged = convergence_logger->has_converged();
+    auto residual_norm_dense = dynamic_cast<gko::matrix::Dense<double> const*>(
+            convergence_logger->get_residual_norm());
+    if (residual_norm_dense != nullptr) {
+        auto host_dense = gko::matrix::Dense<
+                double>::create(gko_exec->get_master(), residual_norm_dense->get_size());
+        residual_norm_dense->convert_to(host_dense.get());
+        diagnostics.final_residual_l2 = host_dense->at(0, 0);
+    }
+    diagnostics.final_relative_residual
+            = diagnostics.initial_residual_l2 == 0.0
+                      ? 0.0
+                      : diagnostics.final_residual_l2 / diagnostics.initial_residual_l2;
     return diagnostics;
 }
 

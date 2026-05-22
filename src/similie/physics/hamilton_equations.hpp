@@ -27,10 +27,9 @@ inline constexpr bool has_span_dmoments_v
           };
 
 template <class Hamiltonian, std::size_t I, class Elem>
-inline constexpr bool has_elem_dmoments_v
-        = requires(Hamiltonian const& h, Elem elem) {
-              h.template dhamiltonian_dmoments<I>(0.0, elem);
-          };
+inline constexpr bool has_elem_dmoments_v = requires(Hamiltonian const& h, Elem elem) {
+    h.template dhamiltonian_dmoments<I>(0.0, elem);
+};
 
 template <class Hamiltonian, std::size_t I, class Elem>
 inline constexpr bool has_elem_span_dmoments_v = requires(

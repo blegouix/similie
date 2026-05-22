@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Baptiste Legouix
 // SPDX-License-Identifier: MIT
 
-#include <filesystem>
 #include <cmath>
+#include <filesystem>
 #include <fstream>
 #include <string>
 
@@ -181,19 +181,18 @@ TEST(OnelabInterface, MagnetostaticsPostProcessInductionUsesLibraryStencil)
             ddc::DiscreteVector<DDimX, DDimY>(2, 2));
     std::vector<double> const x_coords {0.0, 1.0, 2.0};
     std::vector<double> const y_coords {0.0, 1.0, 2.0};
-    auto node_value_z = [&](std::size_t i, std::size_t j) {
-        return 3.0 * x_coords[i] - 2.0 * y_coords[j];
-    };
+    auto node_value_z
+            = [&](std::size_t i, std::size_t j) { return 3.0 * x_coords[i] - 2.0 * y_coords[j]; };
 
     std::array<double, 3> induction {};
     fill_post_process_fields_on_cell_domain(
             cell_domain,
             node_domain,
             [&](auto node_elem) {
-                std::size_t const i = static_cast<std::size_t>(
-                        ddc::DiscreteElement<DDimX>(node_elem).uid());
-                std::size_t const j = static_cast<std::size_t>(
-                        ddc::DiscreteElement<DDimY>(node_elem).uid());
+                std::size_t const i
+                        = static_cast<std::size_t>(ddc::DiscreteElement<DDimX>(node_elem).uid());
+                std::size_t const j
+                        = static_cast<std::size_t>(ddc::DiscreteElement<DDimY>(node_elem).uid());
                 return std::array<double, 2> {
                         x_coords[i],
                         y_coords[j],
@@ -237,10 +236,10 @@ TEST(OnelabInterface, MagnetostaticsPostProcessInductionIsCellCentered)
             cell_domain,
             node_domain,
             [&](auto node_elem) {
-                std::size_t const i = static_cast<std::size_t>(
-                        ddc::DiscreteElement<DDimX>(node_elem).uid());
-                std::size_t const j = static_cast<std::size_t>(
-                        ddc::DiscreteElement<DDimY>(node_elem).uid());
+                std::size_t const i
+                        = static_cast<std::size_t>(ddc::DiscreteElement<DDimX>(node_elem).uid());
+                std::size_t const j
+                        = static_cast<std::size_t>(ddc::DiscreteElement<DDimY>(node_elem).uid());
                 return std::array<double, 2> {
                         x_coords[i],
                         y_coords[j],
@@ -284,10 +283,10 @@ TEST(OnelabInterface, MagnetostaticsPostProcessInductionCentersEachComponentOnIt
             cell_domain,
             node_domain,
             [&](auto node_elem) {
-                std::size_t const i = static_cast<std::size_t>(
-                        ddc::DiscreteElement<DDimX>(node_elem).uid());
-                std::size_t const j = static_cast<std::size_t>(
-                        ddc::DiscreteElement<DDimY>(node_elem).uid());
+                std::size_t const i
+                        = static_cast<std::size_t>(ddc::DiscreteElement<DDimX>(node_elem).uid());
+                std::size_t const j
+                        = static_cast<std::size_t>(ddc::DiscreteElement<DDimY>(node_elem).uid());
                 return std::array<double, 2> {
                         x_coords[i],
                         y_coords[j],
@@ -413,12 +412,21 @@ TEST(OnelabInterface, MagnetostaticsResultViewExportsDirectPostProcessedFields)
 
     std::ifstream input(output_file);
     ASSERT_TRUE(input.is_open());
-    std::string const contents((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
+    std::string const
+            contents((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
 
-    EXPECT_NE(contents.find("View \"SimiLie linear magnetostatics magnetic induction\""), std::string::npos);
-    EXPECT_NE(contents.find("View \"SimiLie linear magnetostatics magnetic field\""), std::string::npos);
-    EXPECT_NE(contents.find("View \"SimiLie linear magnetostatics Maxwell stress xx\""), std::string::npos);
-    EXPECT_NE(contents.find("View \"SimiLie linear magnetostatics force density\""), std::string::npos);
+    EXPECT_NE(
+            contents.find("View \"SimiLie linear magnetostatics magnetic induction\""),
+            std::string::npos);
+    EXPECT_NE(
+            contents.find("View \"SimiLie linear magnetostatics magnetic field\""),
+            std::string::npos);
+    EXPECT_NE(
+            contents.find("View \"SimiLie linear magnetostatics Maxwell stress xx\""),
+            std::string::npos);
+    EXPECT_NE(
+            contents.find("View \"SimiLie linear magnetostatics force density\""),
+            std::string::npos);
     EXPECT_NE(contents.find("VP(0.5,0.5,0){4,5,6};"), std::string::npos);
     EXPECT_NE(contents.find("VP(0.5,0.5,0){7,8,9};"), std::string::npos);
     EXPECT_NE(contents.find("SP(0.5,0.5,0){13};"), std::string::npos);
@@ -463,62 +471,72 @@ TEST(OnelabInterface, MagnetostaticsLocalOperatorMatchesItsAssembledMatrix)
 
     auto const hamiltonian = LinearMagnetostaticsHamiltonian(mu_tensor);
     auto const equations = similie::physics::HamiltonEquations {hamiltonian};
-    MagnetostaticsOperator2D<memory_space, decltype(equations)>
-            operator_model(equations, x_coords, y_coords);
-    auto matrix_data = assemble_matrix_data(operator_model);
+    {
+        MagnetostaticsOperator2D<memory_space, decltype(equations)> operator_model(
+                equations,
+                x_coords,
+                y_coords,
+                similie::solvers::Criterion::MomentsTemporalDerivative);
+        {
+            auto matrix_data = assemble_matrix_data(operator_model);
 
-    Kokkos::View<double**> input("input", 25, 1);
-    Kokkos::View<double**> output("output", 25, 1);
-    auto input_host = Kokkos::create_mirror_view(input);
-    for (std::size_t j = 0; j < 5; ++j) {
-        for (std::size_t i = 0; i < 5; ++i) {
-            input_host(i + 5 * j, 0) = static_cast<double>(i * i + 2 * j);
-        }
-    }
-    Kokkos::deep_copy(input, input_host);
-
-    operator_model.apply(Kokkos::DefaultExecutionSpace(), input, output);
-    auto output_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), output);
-
-    std::vector<double> matrix_output(25, 0.0);
-    std::vector<std::vector<double>> dense_matrix(25, std::vector<double>(25, 0.0));
-    for (auto const& nz : matrix_data.nonzeros) {
-        matrix_output[static_cast<std::size_t>(nz.row)]
-                += nz.value * input_host(static_cast<std::size_t>(nz.column), 0);
-        dense_matrix[static_cast<std::size_t>(nz.row)][static_cast<std::size_t>(nz.column)]
-                += nz.value;
-    }
-
-    for (std::size_t row = 0; row < 25; ++row) {
-        EXPECT_NEAR(output_host(row, 0), matrix_output[row], 1e-12) << "row=" << row;
-    }
-
-    for (std::size_t j = 0; j < 5; ++j) {
-        for (std::size_t i = 0; i < 5; ++i) {
-            std::size_t const row = i + 5 * j;
-            if (i == 0 || j == 0 || i + 1 == 5 || j + 1 == 5) {
-                EXPECT_DOUBLE_EQ(dense_matrix[row][row], 1.0);
-                continue;
+            Kokkos::View<double**> input("input", 25, 1);
+            Kokkos::View<double**> output("output", 25, 1);
+            auto input_host = Kokkos::create_mirror_view(input);
+            for (std::size_t j = 0; j < 5; ++j) {
+                for (std::size_t i = 0; i < 5; ++i) {
+                    input_host(i + 5 * j, 0) = static_cast<double>(i * i + 2 * j);
+                }
             }
-            EXPECT_GT(dense_matrix[row][row], 0.0) << "row=" << row;
-        }
-    }
+            Kokkos::deep_copy(input, input_host);
 
-    for (std::size_t row = 0; row < 25; ++row) {
-        for (std::size_t column = 0; column < 25; ++column) {
-            std::size_t const row_i = row % 5;
-            std::size_t const row_j = row / 5;
-            std::size_t const column_i = column % 5;
-            std::size_t const column_j = column / 5;
-            bool const row_boundary
-                    = (row_i == 0 || row_j == 0 || row_i + 1 == 5 || row_j + 1 == 5);
-            bool const column_boundary
-                    = (column_i == 0 || column_j == 0 || column_i + 1 == 5 || column_j + 1 == 5);
-            if (row_boundary || column_boundary) {
-                continue;
+            operator_model.apply(Kokkos::DefaultExecutionSpace(), input, output);
+            auto output_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), output);
+
+            std::vector<double> matrix_output(25, 0.0);
+            std::vector<std::vector<double>> dense_matrix(25, std::vector<double>(25, 0.0));
+            for (auto const& nz : matrix_data.nonzeros) {
+                ASSERT_LT(static_cast<std::size_t>(nz.row), 25U);
+                ASSERT_LT(static_cast<std::size_t>(nz.column), 25U);
+                matrix_output[static_cast<std::size_t>(nz.row)]
+                        += nz.value * input_host(static_cast<std::size_t>(nz.column), 0);
+                dense_matrix[static_cast<std::size_t>(nz.row)][static_cast<std::size_t>(nz.column)]
+                        += nz.value;
             }
-            EXPECT_NEAR(dense_matrix[row][column], dense_matrix[column][row], 1e-12)
-                    << "row=" << row << " col=" << column;
+
+            for (std::size_t row = 0; row < 25; ++row) {
+                EXPECT_NEAR(output_host(row, 0), matrix_output[row], 1e-12) << "row=" << row;
+            }
+
+            for (std::size_t j = 0; j < 5; ++j) {
+                for (std::size_t i = 0; i < 5; ++i) {
+                    std::size_t const row = i + 5 * j;
+                    if (i == 0 || j == 0 || i + 1 == 5 || j + 1 == 5) {
+                        EXPECT_DOUBLE_EQ(dense_matrix[row][row], 1.0);
+                        continue;
+                    }
+                    EXPECT_GT(dense_matrix[row][row], 0.0) << "row=" << row;
+                }
+            }
+
+            for (std::size_t row = 0; row < 25; ++row) {
+                for (std::size_t column = 0; column < 25; ++column) {
+                    std::size_t const row_i = row % 5;
+                    std::size_t const row_j = row / 5;
+                    std::size_t const column_i = column % 5;
+                    std::size_t const column_j = column / 5;
+                    bool const row_boundary
+                            = (row_i == 0 || row_j == 0 || row_i + 1 == 5 || row_j + 1 == 5);
+                    bool const column_boundary
+                            = (column_i == 0 || column_j == 0 || column_i + 1 == 5
+                               || column_j + 1 == 5);
+                    if (row_boundary || column_boundary) {
+                        continue;
+                    }
+                    EXPECT_NEAR(dense_matrix[row][column], dense_matrix[column][row], 1e-12)
+                            << "row=" << row << " col=" << column;
+                }
+            }
         }
     }
 }
@@ -559,8 +577,11 @@ TEST(OnelabInterface, MagnetostaticsMatrixFreeSolverAcceptsDefaultKokkosLayout)
 
     auto const hamiltonian = LinearMagnetostaticsHamiltonian(mu_tensor);
     auto const equations = similie::physics::HamiltonEquations {hamiltonian};
-    MagnetostaticsOperator2D<memory_space, decltype(equations)>
-            operator_model(equations, x_coords, y_coords);
+    MagnetostaticsOperator2D<memory_space, decltype(equations)> operator_model(
+            equations,
+            x_coords,
+            y_coords,
+            similie::solvers::Criterion::MomentsTemporalDerivative);
 
     Kokkos::View<double**> rhs("rhs", 25, 1);
     Kokkos::View<double**> solution("solution", 25, 1);
@@ -568,8 +589,7 @@ TEST(OnelabInterface, MagnetostaticsMatrixFreeSolverAcceptsDefaultKokkosLayout)
     for (std::size_t j = 0; j < 5; ++j) {
         for (std::size_t i = 0; i < 5; ++i) {
             std::size_t const row = i + 5 * j;
-            rhs_host(row, 0)
-                    = (i == 0 || j == 0 || i + 1 == 5 || j + 1 == 5) ? 0.0 : 1.0;
+            rhs_host(row, 0) = (i == 0 || j == 0 || i + 1 == 5 || j + 1 == 5) ? 0.0 : 1.0;
         }
     }
     Kokkos::deep_copy(rhs, rhs_host);
