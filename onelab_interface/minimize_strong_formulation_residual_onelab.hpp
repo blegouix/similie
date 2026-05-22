@@ -5,10 +5,41 @@
 
 #include <map>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
+#include <similie/solvers/minimize_strong_formulation_residual.hpp>
+
 namespace similie::onelab_interface::minimize_strong_formulation_residual_onelab {
+
+inline double criterion_to_control_value(solvers::Criterion criterion)
+{
+    switch (criterion) {
+    case solvers::Criterion::PotentialTemporalDerivative:
+        return 0.0;
+    case solvers::Criterion::MomentsTemporalDerivative:
+        return 1.0;
+    case solvers::Criterion::PotentialAndMomentsTemporalDerivative:
+        return 2.0;
+    }
+    return 1.0;
+}
+
+inline solvers::Criterion criterion_from_control_value(double value)
+{
+    int const rounded = static_cast<int>(value + 0.5);
+    switch (rounded) {
+    case 0:
+        return solvers::Criterion::PotentialTemporalDerivative;
+    case 1:
+        return solvers::Criterion::MomentsTemporalDerivative;
+    case 2:
+        return solvers::Criterion::PotentialAndMomentsTemporalDerivative;
+    default:
+        throw std::runtime_error("invalid strong-formulation solver criterion control value");
+    }
+}
 
 template <class SolverSettings, class ProblemParameterName, class PublishNumber>
 void synchronize_controls(
@@ -51,6 +82,20 @@ void synchronize_controls(
             1.0,
             std::vector<double> {0.0, 1.0},
             std::map<double, std::string> {{0.0, "No"}, {1.0, "Yes"}});
+    publish_or_sync_number(
+            problem_parameter_name("1Solver", "4Criterion"),
+            "Criterion",
+            "Stationary strong-formulation criterion used to define the residual equation set.",
+            criterion_to_control_value(solver_settings.criterion),
+            0.0,
+            2.0,
+            1.0,
+            std::vector<double> {0.0, 1.0, 2.0},
+            std::map<double, std::string> {
+                    {0.0, "PotentialTemporalDerivative"},
+                    {1.0, "MomentsTemporalDerivative"},
+                    {2.0, "PotentialAndMomentsTemporalDerivative"},
+            });
 }
 
 template <class SolverSettings, class ProblemParameterName, class GetFirstNumberValue>
@@ -73,6 +118,9 @@ SolverSettings apply_control_overrides(
                        problem_parameter_name("1Solver", "3Use matrix-free"),
                        solver_settings.use_matrix_free ? 1.0 : 0.0)
                != 0.0);
+    solver_settings.criterion = criterion_from_control_value(get_first_number_value(
+            problem_parameter_name("1Solver", "4Criterion"),
+            criterion_to_control_value(solver_settings.criterion)));
     return solver_settings;
 }
 

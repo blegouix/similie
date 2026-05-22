@@ -27,8 +27,12 @@ def _replace_symbols(expression: str, replacements: dict[str, str]) -> str:
     return expression
 
 
-def _render_expression(expression, symbol, rendered_symbol: str, replacements: dict[str, str]) -> str:
-    return _replace_symbols(cxxcode(expression.subs(symbol, symbols(rendered_symbol))), replacements)
+def _render_expression(
+    expression, symbol, rendered_symbol: str, replacements: dict[str, str]
+) -> str:
+    return _replace_symbols(
+        cxxcode(expression.subs(symbol, symbols(rendered_symbol))), replacements
+    )
 
 
 def write_cpp_constitutive_law_header(
@@ -59,7 +63,9 @@ def write_cpp_constitutive_law_header(
     state_variable_symbol = constitutive_law_symbols[state_variable_name]
     constitutive_law_replacements = dict(parameter_replacements)
     output_symbol = symbols(output_variable)
-    inverse_solution = solve(output_symbol - constitutive_law, state_variable_symbol, dict=True)
+    inverse_solution = solve(
+        output_symbol - constitutive_law, state_variable_symbol, dict=True
+    )
     if not inverse_solution:
         raise ValueError("Unable to invert constitutive law")
     inverse_expression = inverse_solution[0][state_variable_symbol]
@@ -75,12 +81,16 @@ def write_cpp_constitutive_law_header(
         f"double {constructor_name}_" for _, constructor_name, _ in parameters
     )
     constructor_initializers = ", ".join(
-        f"{member_name}({constructor_name}_)" for member_name, constructor_name, _ in parameters
+        f"{member_name}({constructor_name}_)"
+        for member_name, constructor_name, _ in parameters
     )
     forward_arguments = ", ".join(f"double {name}" for name in variables)
     inverse_output_name = state_variable_name
     inverse_arguments = ", ".join(
-        [*[f"double {name}" for name in variables if name != inverse_output_name], f"double {output_variable}"]
+        [
+            *[f"double {name}" for name in variables if name != inverse_output_name],
+            f"double {output_variable}",
+        ]
     )
 
     output_path.write_text(
@@ -105,12 +115,12 @@ public:
     {{
     }}
 
-    KOKKOS_FUNCTION constexpr double forward_value({forward_arguments}) const
+    KOKKOS_FUNCTION constexpr double value({forward_arguments}) const
     {{
         return {_render_expression(forward_value_expression, state_variable_symbol, inverse_output_name, constitutive_law_replacements)};
     }}
 
-    KOKKOS_FUNCTION constexpr double forward({forward_arguments}) const
+    KOKKOS_FUNCTION constexpr double operator()({forward_arguments}) const
     {{
         return {_render_expression(constitutive_law, state_variable_symbol, inverse_output_name, constitutive_law_replacements)};
     }}
@@ -131,7 +141,9 @@ public:
     )
 
 
-def generate_cpp_constitutive_law(functor_class, output_path: Path, *args, **kwargs) -> None:
+def generate_cpp_constitutive_law(
+    functor_class, output_path: Path, *args, **kwargs
+) -> None:
     definition = functor_class.__call__(*args, **kwargs)
     parameter_tuples = [(f"m_{name}", name, True) for name in definition.parameters]
     write_cpp_constitutive_law_header(

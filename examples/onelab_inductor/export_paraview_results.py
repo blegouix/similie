@@ -833,7 +833,12 @@ def load_direct_hdf5_result(
         magnetic_induction = handle["magnetic_induction"][...]
         magnetic_field = handle["magnetic_field"][...]
         force_density = handle["force_density"][...]
-        if "maxwell_stress_tensor_principal" in handle:
+        if "MaxwellStressTensorPrincipal" in handle:
+            maxwell_stress = maxwell_stress_from_principal_and_vorticity(
+                handle["MaxwellStressTensorPrincipal"][...],
+                handle["MaxwellStressTensorVorticity"][...],
+            )
+        elif "maxwell_stress_tensor_principal" in handle:
             maxwell_stress = maxwell_stress_from_principal_and_vorticity(
                 handle["maxwell_stress_tensor_principal"][...],
                 handle["maxwell_stress_tensor_vorticity"][...],
@@ -906,8 +911,8 @@ def write_hdf5(
             ],
             axis=-1,
         )
-        handle.create_dataset("maxwell_stress_tensor_principal", data=principal)
-        handle.create_dataset("maxwell_stress_tensor_vorticity", data=vorticity)
+        handle.create_dataset("MaxwellStressTensorPrincipal", data=principal)
+        handle.create_dataset("MaxwellStressTensorVorticity", data=vorticity)
         handle.create_dataset("force_density", data=force_density)
 
 
@@ -968,14 +973,14 @@ def write_xmf(
         {h5_file.name}:/magnetic_field
        </DataItem>
      </Attribute>
-     <Attribute Name="maxwell_stress_tensor_principal" AttributeType="Vector" Center="Cell">
+     <Attribute Name="MaxwellStressTensorPrincipal" AttributeType="Vector" Center="Cell">
        <DataItem Dimensions="{nx - 1} {ny - 1} 3" NumberType="Float" Precision="8" Format="HDF">
-        {h5_file.name}:/maxwell_stress_tensor_principal
+        {h5_file.name}:/MaxwellStressTensorPrincipal
        </DataItem>
      </Attribute>
-     <Attribute Name="maxwell_stress_tensor_vorticity" AttributeType="Vector" Center="Cell">
+     <Attribute Name="MaxwellStressTensorVorticity" AttributeType="Vector" Center="Cell">
        <DataItem Dimensions="{nx - 1} {ny - 1} 3" NumberType="Float" Precision="8" Format="HDF">
-        {h5_file.name}:/maxwell_stress_tensor_vorticity
+        {h5_file.name}:/MaxwellStressTensorVorticity
        </DataItem>
      </Attribute>
      <Attribute Name="ForceDensity" AttributeType="Vector" Center="Cell">
@@ -1027,14 +1032,14 @@ def write_xmf(
         {h5_file.name}:/magnetic_field
        </DataItem>
      </Attribute>
-     <Attribute Name="maxwell_stress_tensor_principal" AttributeType="Vector" Center="Cell">
+     <Attribute Name="MaxwellStressTensorPrincipal" AttributeType="Vector" Center="Cell">
        <DataItem Dimensions="{nx - 1} {ny - 1} {nz - 1} 3" NumberType="Float" Precision="8" Format="HDF">
-        {h5_file.name}:/maxwell_stress_tensor_principal
+        {h5_file.name}:/MaxwellStressTensorPrincipal
        </DataItem>
      </Attribute>
-     <Attribute Name="maxwell_stress_tensor_vorticity" AttributeType="Vector" Center="Cell">
+     <Attribute Name="MaxwellStressTensorVorticity" AttributeType="Vector" Center="Cell">
        <DataItem Dimensions="{nx - 1} {ny - 1} {nz - 1} 3" NumberType="Float" Precision="8" Format="HDF">
-        {h5_file.name}:/maxwell_stress_tensor_vorticity
+        {h5_file.name}:/MaxwellStressTensorVorticity
        </DataItem>
      </Attribute>
      <Attribute Name="ForceDensity" AttributeType="Vector" Center="Cell">

@@ -563,8 +563,9 @@ int main(int argc, char** argv)
                                    spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(1))};
                         hamiltonian(elem)
                                 = hamiltonian_model
-                                          .H(potential(elem, ddc::DiscreteElement<DummyIndex>()),
-                                             pi);
+                                          .hamiltonian(
+                                                  potential(elem, ddc::DiscreteElement<DummyIndex>()),
+                                                  pi);
                     });
             ddc::parallel_deepcopy(h_hamiltonian, hamiltonian);
 

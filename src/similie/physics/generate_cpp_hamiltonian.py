@@ -73,7 +73,9 @@ def _render_constructor_signature(
     return f"    KOKKOS_FUNCTION constexpr {struct_name}(\n            {params})"
 
 
-def _render_constructor_initializers(parameters: list[tuple[str, str, bool, str]]) -> str:
+def _render_constructor_initializers(
+    parameters: list[tuple[str, str, bool, str]],
+) -> str:
     return ", ".join(
         f"{name}({constructor_name}_)" for name, constructor_name, _, _ in parameters
     )
@@ -87,7 +89,9 @@ def _render_indexed_method(
     replacements: dict[str, str],
 ) -> str:
     branches: list[str] = []
-    for i, (symbol_name, expression) in enumerate(zip(symbols_, expressions, strict=True)):
+    for i, (symbol_name, expression) in enumerate(
+        zip(symbols_, expressions, strict=True)
+    ):
         branches.append(
             f"""        if constexpr (I == {i}) {{
             double const {symbol_name} = {argument_prefix};
@@ -196,7 +200,9 @@ def write_cpp_hamiltonian_header(
             constructor_name, member_name
         )
     h_replacements = dict(parameter_replacements)
-    requires_elem = any("elem" in replacement for replacement in parameter_replacements.values())
+    requires_elem = any(
+        "elem" in replacement for replacement in parameter_replacements.values()
+    )
     argument_signature_parts: list[str] = []
     arguments_call_parts: list[str] = []
     for entry in variable_entries:
@@ -217,25 +223,25 @@ def write_cpp_hamiltonian_header(
     if requires_elem:
         h_signature = (
             f"    template <class Elem>\n"
-            f"    KOKKOS_FUNCTION constexpr double H({', '.join(argument_signature_parts)}, Elem elem) const"
+            f"    KOKKOS_FUNCTION constexpr double hamiltonian({', '.join(argument_signature_parts)}, Elem elem) const"
         )
     else:
-        h_signature = (
-            f"    KOKKOS_FUNCTION constexpr double H({', '.join(argument_signature_parts)}) const"
-        )
+        h_signature = f"    KOKKOS_FUNCTION constexpr double hamiltonian({', '.join(argument_signature_parts)}) const"
 
     potential_entry = variable_entries[0]
     moments_entry = variable_entries[1]
-    potential_name = potential_entry["name"]
     potential_symbols = potential_entry["symbols"]
-    moments_name = moments_entry["name"]
     moments_symbols = moments_entry["symbols"]
 
     potential_replacements = dict(h_replacements)
     moments_replacements = dict(parameter_replacements)
 
-    potential_derivative_expressions = [diff(hamiltonian, symbol) for symbol in potential_symbols]
-    moments_derivative_expressions = [diff(hamiltonian, symbol) for symbol in moments_symbols]
+    potential_derivative_expressions = [
+        diff(hamiltonian, symbol) for symbol in potential_symbols
+    ]
+    moments_derivative_expressions = [
+        diff(hamiltonian, symbol) for symbol in moments_symbols
+    ]
 
     potential_argument_entries = [potential_entry, *variable_entries[2:]]
     potential_signature_parts: list[str] = []
@@ -254,27 +260,16 @@ def write_cpp_hamiltonian_header(
         if requires_elem:
             potential_method = f"""
     template <class Elem>
-    KOKKOS_FUNCTION constexpr double dH_d{potential_name}({potential_method_signature}, Elem elem) const
+    KOKKOS_FUNCTION constexpr double dhamiltonian_dpotential({potential_method_signature}, Elem elem) const
     {{
         return {_replace_symbols(cxxcode(potential_derivative_expressions[0]), potential_replacements)};
-    }}
-
-    template <class Elem>
-    KOKKOS_FUNCTION constexpr double dH_dpotential(double potential, Elem elem) const
-    {{
-        return dH_d{potential_name}(potential, elem);
     }}
 """
         else:
             potential_method = f"""
-    KOKKOS_FUNCTION constexpr double dH_d{potential_name}({potential_method_signature}) const
+    KOKKOS_FUNCTION constexpr double dhamiltonian_dpotential({potential_method_signature}) const
     {{
         return {_replace_symbols(cxxcode(potential_derivative_expressions[0]), potential_replacements)};
-    }}
-
-    KOKKOS_FUNCTION constexpr double dH_dpotential(double potential) const
-    {{
-        return dH_d{potential_name}(potential);
     }}
 """
     else:
@@ -294,7 +289,7 @@ def write_cpp_hamiltonian_header(
         if requires_elem:
             potential_method = f"""
     template <std::size_t I, class Elem>
-    KOKKOS_FUNCTION constexpr double dH_d{potential_name}({potential_method_signature}, Elem elem) const
+    KOKKOS_FUNCTION constexpr double dhamiltonian_dpotential({potential_method_signature}, Elem elem) const
     {{
 {chr(10).join(branches)}
     }}
@@ -302,7 +297,7 @@ def write_cpp_hamiltonian_header(
         else:
             potential_method = f"""
     template <std::size_t I>
-    KOKKOS_FUNCTION constexpr double dH_d{potential_name}({potential_method_signature}) const
+    KOKKOS_FUNCTION constexpr double dhamiltonian_dpotential({potential_method_signature}) const
     {{
 {chr(10).join(branches)}
     }}
@@ -311,8 +306,8 @@ def write_cpp_hamiltonian_header(
     inverse_methods = ""
     if inverse_symbols is not None and inverse_expressions is not None:
         inverse_methods = _render_indexed_method(
-            "pi",
-            "dphi_dx",
+            "moments",
+            "dpotential_dx",
             inverse_symbols,
             inverse_expressions,
             potential_replacements,
@@ -320,19 +315,25 @@ def write_cpp_hamiltonian_header(
 
     if len(moments_symbols) == 1 or moments_computer is None:
         moments_method = _render_indexed_method(
-            f"dH_d{moments_name}",
-            moments_name,
+            "dhamiltonian_dmoments",
+            "moments",
             [str(symbol) for symbol in moments_symbols],
             moments_derivative_expressions,
             moments_replacements,
         )
     else:
+        span_moments_replacements = {
+            **parameter_replacements,
+            **{
+                str(symbol): f"moments[{i}]" for i, symbol in enumerate(moments_symbols)
+            },
+        }
         if requires_elem:
             branches: list[str] = []
             for i, expression in enumerate(moments_derivative_expressions):
                 branches.append(
                     f"""        if constexpr (I == {i}) {{
-            return {_replace_symbols(cxxcode(expression), h_replacements)};
+            return {_replace_symbols(cxxcode(expression), span_moments_replacements)};
         }}"""
                 )
             branches.append(
@@ -342,47 +343,49 @@ def write_cpp_hamiltonian_header(
             )
             moments_method = f"""
     template <std::size_t I, class Elem>
-    KOKKOS_FUNCTION constexpr double dH_d{moments_name}(std::span<double const, {len(moments_symbols)}> {moments_name}, Elem elem) const
+    KOKKOS_FUNCTION constexpr double dhamiltonian_dmoments(std::span<double const, {len(moments_symbols)}> moments, Elem elem) const
     {{
 {chr(10).join(branches)}
     }}
 """
         else:
             moments_method = _render_indexed_span_method(
-                f"dH_d{moments_name}",
-                moments_name,
+                "dhamiltonian_dmoments",
+                "moments",
                 [str(symbol) for symbol in moments_symbols],
                 moments_derivative_expressions,
-                h_replacements,
+                span_moments_replacements,
             )
-    generic_moments_branches: list[str] = []
-    generic_moments_replacements = {
-        **parameter_replacements,
-        **{str(symbol): "moments" for symbol in moments_symbols},
-    }
-    for i, expression in enumerate(moments_derivative_expressions):
-        generic_moments_branches.append(
-            f"""        if constexpr (I == {i}) {{
+    generic_moments_method = ""
+    if len(moments_symbols) > 1 and moments_computer is not None:
+        generic_moments_branches: list[str] = []
+        generic_moments_replacements = {
+            **parameter_replacements,
+            **{str(symbol): "moments" for symbol in moments_symbols},
+        }
+        for i, expression in enumerate(moments_derivative_expressions):
+            generic_moments_branches.append(
+                f"""        if constexpr (I == {i}) {{
             return {_replace_symbols(cxxcode(expression), generic_moments_replacements)};
         }}"""
-        )
-    generic_moments_branches.append(
-        """        else {
+            )
+        generic_moments_branches.append(
+            """        else {
             static_assert(I < N, "Hamiltonian component index out of range");
         }"""
-    )
-    if requires_elem:
-        generic_moments_method = f"""
+        )
+        if requires_elem:
+            generic_moments_method = f"""
     template <std::size_t I, class Elem>
-    KOKKOS_FUNCTION constexpr double dH_dmoments(double moments, Elem elem) const
+    KOKKOS_FUNCTION constexpr double dhamiltonian_dmoments(double moments, Elem elem) const
     {{
 {chr(10).join(generic_moments_branches)}
     }}
 """
-    else:
-        generic_moments_method = f"""
+        else:
+            generic_moments_method = f"""
     template <std::size_t I>
-    KOKKOS_FUNCTION constexpr double dH_dmoments(double moments) const
+    KOKKOS_FUNCTION constexpr double dhamiltonian_dmoments(double moments) const
     {{
 {chr(10).join(generic_moments_branches)}
     }}
@@ -391,20 +394,11 @@ def write_cpp_hamiltonian_header(
     nonlocal_value_methods = ""
     if moments_computer is not None:
         nonlocal_value_methods = _render_indexed_nonlocal_value_method(
-            f"dH_d{moments_name}_value",
+            "dhamiltonian_dmoments_value",
             [str(symbol) for symbol in moments_symbols],
             moments_derivative_expressions,
             moments_replacements,
         )
-        nonlocal_value_methods += """
-    template <std::size_t I, class Elem>
-    KOKKOS_FUNCTION constexpr auto dH_dmoments_value(Elem elem) const
-    {
-        return dH_d"""
-        nonlocal_value_methods += moments_name
-        nonlocal_value_methods += """_value<I>(elem);
-    }
-"""
 
     rendered_includes = ""
     if includes:
@@ -477,7 +471,8 @@ def generate_cpp_hamiltonian(functor_class, output_path: Path, *args, **kwargs) 
         dphi_dx_symbols = symbols(f"dphi_dx0:{len(variable_entries[1]['symbols'])}")
         inverse_solution = solve(
             [
-                dphi_dx_symbols[i] - diff(definition.hamiltonian, variable_entries[1]["symbols"][i])
+                dphi_dx_symbols[i]
+                - diff(definition.hamiltonian, variable_entries[1]["symbols"][i])
                 for i in range(len(variable_entries[1]["symbols"]))
             ],
             variable_entries[1]["symbols"],

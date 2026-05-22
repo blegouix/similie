@@ -18,27 +18,29 @@ namespace detail {
 
 template <class Hamiltonian, std::size_t I>
 inline constexpr bool has_component_dmoments_v
-        = requires(Hamiltonian const& h) { h.template dH_dmoments<I>(0.0); };
+        = requires(Hamiltonian const& h) { h.template dhamiltonian_dmoments<I>(0.0); };
 
 template <class Hamiltonian, std::size_t I>
-inline constexpr bool has_span_db_v
+inline constexpr bool has_span_dmoments_v
         = requires(Hamiltonian const& h, std::span<double const, Hamiltonian::N> moments) {
-              h.template dH_dB<I>(moments);
+              h.template dhamiltonian_dmoments<I>(moments);
           };
 
 template <class Hamiltonian, std::size_t I, class Elem>
 inline constexpr bool has_elem_dmoments_v
-        = requires(Hamiltonian const& h, Elem elem) { h.template dH_dmoments<I>(0.0, elem); };
+        = requires(Hamiltonian const& h, Elem elem) {
+              h.template dhamiltonian_dmoments<I>(0.0, elem);
+          };
 
 template <class Hamiltonian, std::size_t I, class Elem>
-inline constexpr bool has_elem_db_v = requires(
+inline constexpr bool has_elem_span_dmoments_v = requires(
         Hamiltonian const& h,
         std::span<double const, Hamiltonian::N> moments,
-        Elem elem) { h.template dH_dB<I>(moments, elem); };
+        Elem elem) { h.template dhamiltonian_dmoments<I>(moments, elem); };
 
 template <class Hamiltonian, class Elem>
 inline constexpr bool has_elem_dpotential_v
-        = requires(Hamiltonian const& h, Elem elem) { h.dH_dpotential(0.0, elem); };
+        = requires(Hamiltonian const& h, Elem elem) { h.dhamiltonian_dpotential(0.0, elem); };
 
 } // namespace detail
 
@@ -58,9 +60,9 @@ public:
             std::span<double const, Hamiltonian::N> spatial_moments) const
     {
         if constexpr (detail::has_component_dmoments_v<Hamiltonian, I>) {
-            return m_hamiltonian.template dH_dmoments<I>(spatial_moments[I]);
+            return m_hamiltonian.template dhamiltonian_dmoments<I>(spatial_moments[I]);
         } else {
-            return m_hamiltonian.template dH_dB<I>(spatial_moments);
+            return m_hamiltonian.template dhamiltonian_dmoments<I>(spatial_moments);
         }
     }
 
@@ -70,9 +72,9 @@ public:
             Elem elem) const
     {
         if constexpr (detail::has_elem_dmoments_v<Hamiltonian, I, Elem>) {
-            return m_hamiltonian.template dH_dmoments<I>(spatial_moments[I], elem);
+            return m_hamiltonian.template dhamiltonian_dmoments<I>(spatial_moments[I], elem);
         } else {
-            return m_hamiltonian.template dH_dB<I>(spatial_moments, elem);
+            return m_hamiltonian.template dhamiltonian_dmoments<I>(spatial_moments, elem);
         }
     }
 
@@ -80,7 +82,7 @@ public:
     [[nodiscard]] KOKKOS_FUNCTION constexpr double dpotential_dt(
             double spatial_moments_component) const
     {
-        return m_hamiltonian.template dH_dmoments<I>(spatial_moments_component);
+        return m_hamiltonian.template dhamiltonian_dmoments<I>(spatial_moments_component);
     }
 
     template <std::size_t I, class Elem>
@@ -89,9 +91,9 @@ public:
             Elem elem) const
     {
         if constexpr (detail::has_elem_dmoments_v<Hamiltonian, I, Elem>) {
-            return m_hamiltonian.template dH_dmoments<I>(spatial_moments_component, elem);
+            return m_hamiltonian.template dhamiltonian_dmoments<I>(spatial_moments_component, elem);
         } else {
-            return m_hamiltonian.template dH_dmoments<I>(spatial_moments_component);
+            return m_hamiltonian.template dhamiltonian_dmoments<I>(spatial_moments_component);
         }
     }
 
@@ -100,7 +102,7 @@ public:
             std::span<double const, 1> potential) const
     {
         static_cast<void>(I);
-        return -m_hamiltonian.dH_dpotential(potential[0]);
+        return -m_hamiltonian.dhamiltonian_dpotential(potential[0]);
     }
 
     template <std::size_t I, class Elem>
@@ -110,7 +112,7 @@ public:
     {
         static_cast<void>(I);
         if constexpr (detail::has_elem_dpotential_v<Hamiltonian, Elem>) {
-            return -m_hamiltonian.dH_dpotential(potential[0], elem);
+            return -m_hamiltonian.dhamiltonian_dpotential(potential[0], elem);
         } else {
             static_cast<void>(elem);
             return dmoments_dt<I>(potential);
@@ -121,7 +123,7 @@ public:
     [[nodiscard]] KOKKOS_FUNCTION constexpr double dmoments_dt(double potential) const
     {
         static_cast<void>(I);
-        return -m_hamiltonian.dH_dpotential(potential);
+        return -m_hamiltonian.dhamiltonian_dpotential(potential);
     }
 
     template <std::size_t I, class Elem>
@@ -129,25 +131,25 @@ public:
     {
         static_cast<void>(I);
         if constexpr (detail::has_elem_dpotential_v<Hamiltonian, Elem>) {
-            return -m_hamiltonian.dH_dpotential(potential, elem);
+            return -m_hamiltonian.dhamiltonian_dpotential(potential, elem);
         } else {
             static_cast<void>(elem);
-            return -m_hamiltonian.dH_dpotential(potential);
+            return -m_hamiltonian.dhamiltonian_dpotential(potential);
         }
     }
 
     template <std::size_t I, class Elem>
     [[nodiscard]] KOKKOS_FUNCTION constexpr auto dpotential_dt_value(Elem elem) const
     {
-        return m_hamiltonian.template dH_dmoments_value<I>(elem);
+        return m_hamiltonian.template dhamiltonian_dmoments_value<I>(elem);
     }
 
     template <std::size_t I = 0, class Elem>
-        requires requires(Hamiltonian const& h, Elem e) { h.dH_dpotential_value(e); }
+        requires requires(Hamiltonian const& h, Elem e) { h.dhamiltonian_dpotential_value(e); }
     [[nodiscard]] KOKKOS_FUNCTION constexpr auto dmoments_dt_value(Elem elem) const
     {
         static_cast<void>(I);
-        auto value = m_hamiltonian.dH_dpotential_value(elem);
+        auto value = m_hamiltonian.dhamiltonian_dpotential_value(elem);
         if constexpr (std::is_same_v<std::remove_cvref_t<decltype(value)>, double>) {
             return -value;
         } else {

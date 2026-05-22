@@ -9,6 +9,7 @@ geometry_file="${script_dir}/inductor.geo"
 problem_file="${SIMILIE_ONELAB_PROBLEM_FILE:-${script_dir}/inductor.silpro}"
 output_dir="$(pwd)"
 model_dimension=2
+use_bool_test=0
 
 gmsh_executable="${GMSH_EXECUTABLE:-gmsh}"
 build_dir="${SIMILIE_ONELAB_BUILD_DIR:-${repo_root}/build}"
@@ -60,11 +61,19 @@ for arg in "$@"; do
         --dim=3)
             model_dimension=3
             ;;
+        --bool)
+            use_bool_test=1
+            model_dimension=3
+            ;;
         *)
             gmsh_args+=("${arg}")
             ;;
     esac
 done
+
+if [[ "${use_bool_test}" -eq 1 ]]; then
+    geometry_file="${script_dir}/inductor3d_bool.geo"
+fi
 
 case "${model_dimension}" in
     2)

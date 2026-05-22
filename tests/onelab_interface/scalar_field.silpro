@@ -9,6 +9,7 @@ Solver {
   RelativeTolerance 1e-6;
   JacobiMaxBlockSize 1;
   UseMatrixFree 1;
+  Criterion MomentsTemporalDerivative;
 }
 
 ScalarFieldWithPowerCoupling {

@@ -42,6 +42,9 @@ TEST(OnelabInterface, ParseLinearMagnetostaticsSilpro)
     EXPECT_EQ(problem.solver_settings.jacobi_max_block_size, 3U);
     EXPECT_FALSE(problem.solver_settings.use_matrix_free);
     EXPECT_EQ(
+            problem.solver_settings.criterion,
+            similie::solvers::Criterion::MomentsTemporalDerivative);
+    EXPECT_EQ(
             problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
                     .name,
             "SingleElectricalConductorMaterialWithSingleLinearMagneticMaterial");
@@ -74,6 +77,9 @@ TEST(OnelabInterface, ParseScalarFieldSilpro)
     EXPECT_EQ(problem.solver_settings.max_iterations, 250U);
     EXPECT_DOUBLE_EQ(problem.solver_settings.relative_tolerance, 1e-6);
     EXPECT_TRUE(problem.solver_settings.use_matrix_free);
+    EXPECT_EQ(
+            problem.solver_settings.criterion,
+            similie::solvers::Criterion::MomentsTemporalDerivative);
     EXPECT_DOUBLE_EQ(problem.scalar_field.mass, 2.5);
     EXPECT_DOUBLE_EQ(problem.scalar_field.coupling_constant, 3.25);
     EXPECT_DOUBLE_EQ(problem.scalar_field.coupling_power, 6.0);
@@ -154,8 +160,8 @@ TEST(OnelabInterface, LinearMagneticInductionToMagneticFieldValueAndApplication)
     using similie::physics::magnetostatics::LinearMagneticInductionToMagneticField;
 
     LinearMagneticInductionToMagneticField const constitutive_law(2.0);
-    EXPECT_DOUBLE_EQ(constitutive_law.forward_value(3.0, 4.0), 1.5);
-    EXPECT_DOUBLE_EQ(constitutive_law.forward(3.0, 4.0), 6.0);
+    EXPECT_DOUBLE_EQ(constitutive_law.value(3.0, 4.0), 1.5);
+    EXPECT_DOUBLE_EQ(constitutive_law(3.0, 4.0), 6.0);
     EXPECT_DOUBLE_EQ(constitutive_law.inverse_value(3.0, 5.0), 2.0 / 3.0);
     EXPECT_DOUBLE_EQ(constitutive_law.inverse(3.0, 5.0), 10.0 / 3.0);
 }
@@ -165,8 +171,11 @@ TEST(OnelabInterface, MagnetostaticsPostProcessInductionUsesLibraryStencil)
     using namespace similie::onelab_interface::linear_magnetostatics_onelab::detail::
             magnetostatics_local;
     using similie::onelab_interface::linear_magnetostatics_onelab::detail::
-            fill_magnetic_induction_on_cell_domain;
+            fill_post_process_fields_on_cell_domain;
 
+    auto const node_domain = ddc::DiscreteDomain<DDimX, DDimY>(
+            ddc::DiscreteElement<DDimX, DDimY>(0, 0),
+            ddc::DiscreteVector<DDimX, DDimY>(3, 3));
     auto const cell_domain = ddc::DiscreteDomain<DDimX, DDimY>(
             ddc::DiscreteElement<DDimX, DDimY>(0, 0),
             ddc::DiscreteVector<DDimX, DDimY>(2, 2));
@@ -177,18 +186,22 @@ TEST(OnelabInterface, MagnetostaticsPostProcessInductionUsesLibraryStencil)
     };
 
     std::array<double, 3> induction {};
-    fill_magnetic_induction_on_cell_domain(
+    fill_post_process_fields_on_cell_domain(
             cell_domain,
-            [&](auto elem) {
-                std::size_t const i = static_cast<std::size_t>(ddc::DiscreteElement<DDimX>(elem).uid());
-                std::size_t const j = static_cast<std::size_t>(ddc::DiscreteElement<DDimY>(elem).uid());
+            node_domain,
+            [&](auto node_elem) {
+                std::size_t const i = static_cast<std::size_t>(
+                        ddc::DiscreteElement<DDimX>(node_elem).uid());
+                std::size_t const j = static_cast<std::size_t>(
+                        ddc::DiscreteElement<DDimY>(node_elem).uid());
                 return std::array<double, 2> {
-                        0.5 * (x_coords[i] + x_coords[i + 1]),
-                        0.5 * (y_coords[j] + y_coords[j + 1]),
+                        x_coords[i],
+                        y_coords[j],
                 };
             },
+            [](auto) { return 1.0; },
             node_value_z,
-            [&](auto elem, std::array<double, 3> const& value) {
+            [&](auto elem, std::array<double, 3> const& value, std::array<double, 3> const&) {
                 if (ddc::DiscreteElement<DDimX>(elem).uid() == 0
                     && ddc::DiscreteElement<DDimY>(elem).uid() == 0) {
                     induction = value;
@@ -205,8 +218,11 @@ TEST(OnelabInterface, MagnetostaticsPostProcessInductionIsCellCentered)
     using namespace similie::onelab_interface::linear_magnetostatics_onelab::detail::
             magnetostatics_local;
     using similie::onelab_interface::linear_magnetostatics_onelab::detail::
-            fill_magnetic_induction_on_cell_domain;
+            fill_post_process_fields_on_cell_domain;
 
+    auto const node_domain = ddc::DiscreteDomain<DDimX, DDimY>(
+            ddc::DiscreteElement<DDimX, DDimY>(0, 0),
+            ddc::DiscreteVector<DDimX, DDimY>(3, 3));
     auto const cell_domain = ddc::DiscreteDomain<DDimX, DDimY>(
             ddc::DiscreteElement<DDimX, DDimY>(0, 0),
             ddc::DiscreteVector<DDimX, DDimY>(2, 2));
@@ -217,26 +233,30 @@ TEST(OnelabInterface, MagnetostaticsPostProcessInductionIsCellCentered)
     };
 
     std::array<double, 3> induction {};
-    fill_magnetic_induction_on_cell_domain(
+    fill_post_process_fields_on_cell_domain(
             cell_domain,
-            [&](auto elem) {
-                std::size_t const i = static_cast<std::size_t>(ddc::DiscreteElement<DDimX>(elem).uid());
-                std::size_t const j = static_cast<std::size_t>(ddc::DiscreteElement<DDimY>(elem).uid());
+            node_domain,
+            [&](auto node_elem) {
+                std::size_t const i = static_cast<std::size_t>(
+                        ddc::DiscreteElement<DDimX>(node_elem).uid());
+                std::size_t const j = static_cast<std::size_t>(
+                        ddc::DiscreteElement<DDimY>(node_elem).uid());
                 return std::array<double, 2> {
-                        0.5 * (x_coords[i] + x_coords[i + 1]),
-                        0.5 * (y_coords[j] + y_coords[j + 1]),
+                        x_coords[i],
+                        y_coords[j],
                 };
             },
+            [](auto) { return 1.0; },
             node_value_z,
-            [&](auto elem, std::array<double, 3> const& value) {
+            [&](auto elem, std::array<double, 3> const& value, std::array<double, 3> const&) {
                 if (ddc::DiscreteElement<DDimX>(elem).uid() == 0
                     && ddc::DiscreteElement<DDimY>(elem).uid() == 0) {
                     induction = value;
                 }
             });
 
-    EXPECT_NEAR(induction[0], -2.0, 1e-12);
-    EXPECT_NEAR(induction[1], -2.0, 1e-12);
+    EXPECT_NEAR(induction[0], -1.0, 1e-12);
+    EXPECT_NEAR(induction[1], -1.0, 1e-12);
     EXPECT_DOUBLE_EQ(induction[2], 0.0);
 }
 
@@ -245,8 +265,11 @@ TEST(OnelabInterface, MagnetostaticsPostProcessInductionCentersEachComponentOnIt
     using namespace similie::onelab_interface::linear_magnetostatics_onelab::detail::
             magnetostatics_local;
     using similie::onelab_interface::linear_magnetostatics_onelab::detail::
-            fill_magnetic_induction_on_cell_domain;
+            fill_post_process_fields_on_cell_domain;
 
+    auto const node_domain = ddc::DiscreteDomain<DDimX, DDimY>(
+            ddc::DiscreteElement<DDimX, DDimY>(0, 0),
+            ddc::DiscreteVector<DDimX, DDimY>(3, 3));
     auto const cell_domain = ddc::DiscreteDomain<DDimX, DDimY>(
             ddc::DiscreteElement<DDimX, DDimY>(0, 0),
             ddc::DiscreteVector<DDimX, DDimY>(2, 2));
@@ -257,26 +280,30 @@ TEST(OnelabInterface, MagnetostaticsPostProcessInductionCentersEachComponentOnIt
     };
 
     std::array<double, 3> induction {};
-    fill_magnetic_induction_on_cell_domain(
+    fill_post_process_fields_on_cell_domain(
             cell_domain,
-            [&](auto elem) {
-                std::size_t const i = static_cast<std::size_t>(ddc::DiscreteElement<DDimX>(elem).uid());
-                std::size_t const j = static_cast<std::size_t>(ddc::DiscreteElement<DDimY>(elem).uid());
+            node_domain,
+            [&](auto node_elem) {
+                std::size_t const i = static_cast<std::size_t>(
+                        ddc::DiscreteElement<DDimX>(node_elem).uid());
+                std::size_t const j = static_cast<std::size_t>(
+                        ddc::DiscreteElement<DDimY>(node_elem).uid());
                 return std::array<double, 2> {
-                        0.5 * (x_coords[i] + x_coords[i + 1]),
-                        0.5 * (y_coords[j] + y_coords[j + 1]),
+                        x_coords[i],
+                        y_coords[j],
                 };
             },
+            [](auto) { return 1.0; },
             node_value_z,
-            [&](auto elem, std::array<double, 3> const& value) {
+            [&](auto elem, std::array<double, 3> const& value, std::array<double, 3> const&) {
                 if (ddc::DiscreteElement<DDimX>(elem).uid() == 0
                     && ddc::DiscreteElement<DDimY>(elem).uid() == 0) {
                     induction = value;
                 }
             });
 
-    EXPECT_NEAR(induction[0], 4.0, 1e-12);
-    EXPECT_NEAR(induction[1], -2.0, 1e-12);
+    EXPECT_NEAR(induction[0], 2.0, 1e-12);
+    EXPECT_NEAR(induction[1], -1.0, 1e-12);
     EXPECT_DOUBLE_EQ(induction[2], 0.0);
 }
 

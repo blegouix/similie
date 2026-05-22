@@ -146,7 +146,6 @@ TEST(DiscreteHodgeStar, Metric3D)
             dual_form_dom(metric.non_indices_domain(), dual_form_accessor.domain());
     ddc::Chunk dual_form_alloc(dual_form_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor dual_form(dual_form_alloc);
-    ddc::parallel_fill(dual_form, 0.);
 
     ddc::host_for_each(
             metric.non_indices_domain(),
@@ -248,7 +247,6 @@ TEST(ContinuousHodgeStar, Metric3D)
             dual_form_dom(metric.non_indices_domain(), dual_form_accessor.domain());
     ddc::Chunk dual_form_alloc(dual_form_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor dual_form(dual_form_alloc);
-    ddc::parallel_fill(dual_form, 0.);
 
     ddc::host_for_each(
             metric.non_indices_domain(),

@@ -9,6 +9,7 @@ Solver {
   RelativeTolerance 1e-8;
   JacobiMaxBlockSize 3;
   UseMatrixFree 0;
+  Criterion MomentsTemporalDerivative;
 }
 
 Preprocess {

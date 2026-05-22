@@ -184,9 +184,9 @@ public:
             std::size_t component) const
     {
         std::array<double, 3> const magnetic_field = {
-                m_constitutive_law.forward(hodge_star[0], magnetic_induction[0]),
-                m_constitutive_law.forward(hodge_star[1], magnetic_induction[1]),
-                m_constitutive_law.forward(hodge_star[2], magnetic_induction[2]),
+                m_constitutive_law(hodge_star[0], magnetic_induction[0]),
+                m_constitutive_law(hodge_star[1], magnetic_induction[1]),
+                m_constitutive_law(hodge_star[2], magnetic_induction[2]),
         };
         return inverse_value(magnetic_induction, magnetic_field, component);
     }

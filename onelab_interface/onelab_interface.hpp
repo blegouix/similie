@@ -64,6 +64,7 @@ struct MinimizeStrongFormulationResidualProblem
     double relative_tolerance = 1.0e-10;
     unsigned int jacobi_max_block_size = 1U;
     bool use_matrix_free = true;
+    solvers::Criterion criterion = solvers::Criterion::MomentsTemporalDerivative;
 };
 
 struct SingleElectricalConductorMaterialWithSingleLinearMagneticMaterialPreprocess
@@ -375,6 +376,20 @@ inline SupportedSolver parse_solver_kind(std::string const& value)
     throw std::runtime_error("unsupported solver '" + value + "' in .silpro file");
 }
 
+inline solvers::Criterion parse_solver_criterion(std::string const& value)
+{
+    if (value == "PotentialTemporalDerivative") {
+        return solvers::Criterion::PotentialTemporalDerivative;
+    }
+    if (value == "MomentsTemporalDerivative") {
+        return solvers::Criterion::MomentsTemporalDerivative;
+    }
+    if (value == "PotentialAndMomentsTemporalDerivative") {
+        return solvers::Criterion::PotentialAndMomentsTemporalDerivative;
+    }
+    throw std::runtime_error("unsupported solver criterion '" + value + "' in .silpro file");
+}
+
 inline SilproProblem parse_silpro_problem(std::filesystem::path const& file)
 {
     SilproSection const root = parse_silpro_tree(file);
@@ -422,6 +437,10 @@ inline SilproProblem parse_silpro_problem(std::filesystem::path const& file)
             solver_section,
             "UseMatrixFree",
             problem.solver_settings.use_matrix_free ? "1" : "0"));
+    problem.solver_settings.criterion = parse_solver_criterion(get_value_or(
+            solver_section,
+            "Criterion",
+            "MomentsTemporalDerivative"));
 
     if (problem.physics == SupportedPhysics::ScalarFieldWithPowerCoupling) {
         SilproSection const& section
@@ -1116,6 +1135,7 @@ private:
                 .relative_tolerance = problem.solver_settings.relative_tolerance,
                 .jacobi_max_block_size = problem.solver_settings.jacobi_max_block_size,
                 .use_matrix_free = problem.solver_settings.use_matrix_free,
+                .criterion = problem.solver_settings.criterion,
         };
         auto const result = linear_magnetostatics_onelab::
                 run(mesh_file,
@@ -1147,8 +1167,8 @@ private:
                            << ", final residual L2=" << result.solver_diagnostics.final_residual_l2
                            << ", final relative residual="
                            << result.solver_diagnostics.final_relative_residual
-                           << ", optimization wall time="
-                           << result.solver_diagnostics.optimization_wall_seconds << " s, mean |f|="
+                           << ", duration="
+                           << result.solver_diagnostics.duration << " s, mean |f|="
                            << (result.num_diagnostic_cells == 0
                                        ? 0.0
                                        : result.diagnostic_force_density_magnitude_sum

@@ -24,12 +24,19 @@
 
 namespace similie::solvers {
 
+enum class Criterion {
+    PotentialTemporalDerivative,
+    MomentsTemporalDerivative,
+    PotentialAndMomentsTemporalDerivative,
+};
+
 struct StrongFormulationSolverSettings
 {
     unsigned int max_iterations = 2000U;
     double relative_tolerance = 1.0e-12;
     unsigned int jacobi_max_block_size = 1U;
     bool use_matrix_free = true;
+    Criterion criterion = Criterion::MomentsTemporalDerivative;
 };
 
 struct StrongFormulationSolverDiagnostics
@@ -38,7 +45,7 @@ struct StrongFormulationSolverDiagnostics
     double initial_residual_l2 = 0.0;
     double final_residual_l2 = 0.0;
     double final_relative_residual = 0.0;
-    double optimization_wall_seconds = 0.0;
+    double duration = 0.0;
     bool converged = true;
 };
 
@@ -291,7 +298,7 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
         detail::copy_back_from_gko_dense_bridge(solution, solution_gko);
         auto const optimization_end = std::chrono::steady_clock::now();
         solver->remove_logger(convergence_logger);
-        diagnostics.optimization_wall_seconds
+        diagnostics.duration
                 = std::chrono::duration<double>(optimization_end - optimization_start).count();
 
         diagnostics.iterations
@@ -404,7 +411,7 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
         rz_dot = new_rz_dot;
     }
     auto const optimization_end = std::chrono::steady_clock::now();
-    diagnostics.optimization_wall_seconds
+    diagnostics.duration
             = std::chrono::duration<double>(optimization_end - optimization_start).count();
 
     return diagnostics;
