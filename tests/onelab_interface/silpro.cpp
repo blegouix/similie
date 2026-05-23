@@ -33,9 +33,7 @@ TEST(OnelabInterface, ParseLinearMagnetostaticsSilpro)
                     test_file("magnetostatics.silpro"));
 
     EXPECT_EQ(problem.name, "Test magnetostatics problem");
-    EXPECT_EQ(
-            problem.physics,
-            similie::onelab_interface::SupportedPhysics::LinearMagnetostatics);
+    EXPECT_EQ(problem.physics, similie::onelab_interface::SupportedPhysics::LinearMagnetostatics);
     EXPECT_EQ(
             problem.solver,
             similie::onelab_interface::SupportedSolver::MinimizeStrongFormulationResidual);
@@ -92,8 +90,8 @@ TEST(OnelabInterface, ParseScalarFieldSilpro)
 
 TEST(OnelabInterface, ParseNonLinearMagnetostaticsSilpro)
 {
-    std::filesystem::path const file
-            = std::filesystem::temp_directory_path() / "similie_nonlinear_magnetostatics_test.silpro";
+    std::filesystem::path const file = std::filesystem::temp_directory_path()
+                                       / "similie_nonlinear_magnetostatics_test.silpro";
     {
         std::ofstream output(file);
         output << "Problem {\n"

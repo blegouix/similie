@@ -145,55 +145,6 @@ def _render_indexed_span_method(
 """
 
 
-def _render_second_derivative_method(
-    moments_symbols: list[str],
-    hamiltonian,
-    replacements: dict[str, str],
-    requires_elem: bool,
-) -> str:
-    branches: list[str] = []
-    for i, symbol_i in enumerate(moments_symbols):
-        inner_branches: list[str] = []
-        for j, symbol_j in enumerate(moments_symbols):
-            expression = diff(diff(hamiltonian, symbols(symbol_i)), symbols(symbol_j))
-            inner_branches.append(
-                f"""            if constexpr (J == {j}) {{
-                return {_replace_symbols(cxxcode(expression), replacements)};
-            }}"""
-            )
-        inner_branches.append(
-            """            else {
-                static_assert(J < N, "Hamiltonian component index out of range");
-            }"""
-        )
-        branches.append(
-            f"""        if constexpr (I == {i}) {{
-{chr(10).join(inner_branches)}
-        }}"""
-        )
-    branches.append(
-        """        else {
-            static_assert(I < N, "Hamiltonian component index out of range");
-        }"""
-    )
-    if requires_elem:
-        signature = (
-            f"    template <std::size_t I, std::size_t J, class Elem>\n"
-            f"    KOKKOS_FUNCTION constexpr double d2hamiltonian_dmoments2(std::span<double const, {len(moments_symbols)}> moments, Elem elem) const"
-        )
-    else:
-        signature = (
-            f"    template <std::size_t I, std::size_t J>\n"
-            f"    KOKKOS_FUNCTION constexpr double d2hamiltonian_dmoments2(std::span<double const, {len(moments_symbols)}> moments) const"
-        )
-    return f"""
-{signature}
-    {{
-{chr(10).join(branches)}
-    }}
-"""
-
-
 def _render_indexed_nonlocal_value_method(
     method_name: str,
     symbols_: list[str],
@@ -450,18 +401,6 @@ def write_cpp_hamiltonian_header(
             moments_derivative_expressions,
             moments_replacements,
         )
-    second_derivative_method = _render_second_derivative_method(
-        [str(symbol) for symbol in moments_symbols],
-        hamiltonian,
-        {
-            **parameter_replacements,
-            **{
-                str(symbol): f"moments[{i}]" for i, symbol in enumerate(moments_symbols)
-            },
-        },
-        requires_elem,
-    )
-
     rendered_includes = ""
     if includes:
         rendered_includes += "".join(f"#include {header}\n" for header in includes)
@@ -509,7 +448,7 @@ namespace {namespace} {{
     {{
         return {_replace_symbols(cxxcode(hamiltonian), h_replacements)};
     }}
-{potential_method}{moments_method}{generic_moments_method}{nonlocal_value_methods}{second_derivative_method}
+{potential_method}{moments_method}{generic_moments_method}{nonlocal_value_methods}
 {inverse_methods}}};
 }} // namespace {namespace}
 """

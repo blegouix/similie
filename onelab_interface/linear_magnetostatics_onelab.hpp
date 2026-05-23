@@ -379,7 +379,6 @@ namespace magnetostatics_local {
 
 using physics::magnetostatics::LinearMagnetostaticsHamiltonian;
 using physics::magnetostatics::MagneticVectorPotentialToMagneticInduction;
-using physics::magnetostatics::NonlinearMagnetostaticsHamiltonian;
 using physics::magnetostatics::X;
 using physics::magnetostatics::Y;
 using physics::magnetostatics::detail::InPlaneNu;
@@ -439,7 +438,7 @@ class MixedMaterialMagnetostaticsEquations
 {
     LinearPermeabilityTensor m_linear_permeability;
     NonlinearMaskTensor m_nonlinear_mask;
-    NonlinearMagnetostaticsHamiltonian<Curve> m_nonlinear_hamiltonian;
+    Curve m_nonlinear_bh_curve;
 
 public:
     static constexpr bool IS_LINEAR = false;
@@ -450,7 +449,7 @@ public:
             Curve nonlinear_bh_curve)
         : m_linear_permeability(linear_permeability)
         , m_nonlinear_mask(nonlinear_mask)
-        , m_nonlinear_hamiltonian(nonlinear_bh_curve)
+        , m_nonlinear_bh_curve(nonlinear_bh_curve)
     {
     }
 
@@ -477,13 +476,15 @@ public:
             Elem elem) const
     {
         if (is_nonlinear(elem)) {
-            return m_nonlinear_hamiltonian.template dhamiltonian_dmoments<I>(moments, elem);
+            double const q
+                    = moments[0] * moments[0] + moments[1] * moments[1] + moments[2] * moments[2];
+            return m_nonlinear_bh_curve.nu_from_q(q) * moments[I];
         }
         return moments[I] / linear_mu(elem);
     }
 
     template <std::size_t I, std::size_t J, class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION double dpotential_dt_tangent(
+    [[nodiscard]] KOKKOS_FUNCTION double tangent(
             std::span<double const, 3> moments,
             Elem elem) const
     {
@@ -491,8 +492,8 @@ public:
             return I == J ? 1.0 / linear_mu(elem) : 0.0;
         }
         double const q = moments[0] * moments[0] + moments[1] * moments[1] + moments[2] * moments[2];
-        double const nu = m_nonlinear_hamiltonian.m_bh_curve.nu_from_q(q);
-        double const dnu = m_nonlinear_hamiltonian.m_bh_curve.dnu_dq(q);
+        double const nu = m_nonlinear_bh_curve.nu_from_q(q);
+        double const dnu = m_nonlinear_bh_curve.dnu_dq(q);
         return (I == J ? nu : 0.0) + 2.0 * dnu * moments[I] * moments[J];
     }
 };
@@ -1113,16 +1114,16 @@ void apply_jacobian(
                         delta_moment1 += moment1_coefficients(sampled_row, k) * input(column, 0);
                     }
                     std::array<double, 3> const moments {state_moment0, state_moment1, 0.0};
-                    double const h00 = equations.template dpotential_dt_tangent<0, 0>(
+                    double const h00 = equations.template tangent<0, 0>(
                             std::span<double const, 3>(moments.data(), moments.size()),
                             sampled_elem);
-                    double const h01 = equations.template dpotential_dt_tangent<0, 1>(
+                    double const h01 = equations.template tangent<0, 1>(
                             std::span<double const, 3>(moments.data(), moments.size()),
                             sampled_elem);
-                    double const h10 = equations.template dpotential_dt_tangent<1, 0>(
+                    double const h10 = equations.template tangent<1, 0>(
                             std::span<double const, 3>(moments.data(), moments.size()),
                             sampled_elem);
-                    double const h11 = equations.template dpotential_dt_tangent<1, 1>(
+                    double const h11 = equations.template tangent<1, 1>(
                             std::span<double const, 3>(moments.data(), moments.size()),
                             sampled_elem);
                     residual += row_coefficient
@@ -1253,16 +1254,16 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                                          * state(static_cast<std::size_t>(moment1_columns(sampled_row, k)), 0);
                     }
                     std::array<double, 3> const moments {state_moment0, state_moment1, 0.0};
-                    double const h00 = equations.template dpotential_dt_tangent<0, 0>(
+                    double const h00 = equations.template tangent<0, 0>(
                             std::span<double const, 3>(moments.data(), moments.size()),
                             sampled_elem);
-                    double const h01 = equations.template dpotential_dt_tangent<0, 1>(
+                    double const h01 = equations.template tangent<0, 1>(
                             std::span<double const, 3>(moments.data(), moments.size()),
                             sampled_elem);
-                    double const h10 = equations.template dpotential_dt_tangent<1, 0>(
+                    double const h10 = equations.template tangent<1, 0>(
                             std::span<double const, 3>(moments.data(), moments.size()),
                             sampled_elem);
-                    double const h11 = equations.template dpotential_dt_tangent<1, 1>(
+                    double const h11 = equations.template tangent<1, 1>(
                             std::span<double const, 3>(moments.data(), moments.size()),
                             sampled_elem);
                     for (int k = 0; k < moment0_counts(sampled_row); ++k) {
