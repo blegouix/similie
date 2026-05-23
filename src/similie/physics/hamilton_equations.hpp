@@ -49,6 +49,8 @@ class HamiltonEquations
     Hamiltonian m_hamiltonian;
 
 public:
+    static constexpr bool IS_LINEAR = Hamiltonian::IS_LINEAR;
+
     KOKKOS_FUNCTION constexpr explicit HamiltonEquations(Hamiltonian hamiltonian)
         : m_hamiltonian(std::move(hamiltonian))
     {
@@ -141,6 +143,14 @@ public:
     [[nodiscard]] KOKKOS_FUNCTION constexpr auto dpotential_dt_value(Elem elem) const
     {
         return m_hamiltonian.template dhamiltonian_dmoments_value<I>(elem);
+    }
+
+    template <std::size_t I, std::size_t J, class Elem>
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double dpotential_dt_tangent(
+            std::span<double const, Hamiltonian::N> moments,
+            Elem elem) const
+    {
+        return m_hamiltonian.template d2hamiltonian_dmoments2<I, J>(moments, elem);
     }
 
     template <std::size_t I = 0, class Elem>

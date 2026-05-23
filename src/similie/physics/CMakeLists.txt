@@ -46,6 +46,10 @@ set(LINEAR_MAGNETOSTATICS_HEADER
     "${SIMILIE_GENERATED_PHYSICS_DIR}/magnetostatics/linear_magnetostatics.hpp")
 set(LINEAR_MAGNETIC_INDUCTION_TO_MAGNETIC_FIELD_HEADER
     "${SIMILIE_GENERATED_PHYSICS_DIR}/magnetostatics/linear_magnetic_induction_to_magnetic_field.hpp")
+set(NONLINEAR_MAGNETOSTATICS_GENERATOR
+    "${CMAKE_CURRENT_SOURCE_DIR}/magnetostatics/nonlinear_magnetostatics.py")
+set(NONLINEAR_MAGNETOSTATICS_HEADER
+    "${SIMILIE_GENERATED_PHYSICS_DIR}/magnetostatics/nonlinear_magnetostatics.hpp")
 string(CONCAT LINEAR_MAGNETOSTATICS_GENERATION_CODE
     "import importlib.util; import sys; "
     "from pathlib import Path; "
@@ -68,6 +72,16 @@ string(CONCAT LINEAR_MAGNETOSTATICS_GENERATION_CODE
     "output_dir = Path(r\"${SIMILIE_GENERATED_PHYSICS_DIR}/magnetostatics\"); "
     "hamiltonian_generator_module.generate_cpp_hamiltonian(magnetostatics_module.LinearMagnetostaticsHamiltonian, output_dir / \"linear_magnetostatics.hpp\"); "
     "constitutive_law_generator_module.generate_cpp_constitutive_law(magnetostatics_module.LinearMagneticInductionToMagneticFieldConstitutiveLaw, output_dir / \"linear_magnetic_induction_to_magnetic_field.hpp\")")
+string(CONCAT NONLINEAR_MAGNETOSTATICS_GENERATION_CODE
+    "import importlib.util; import sys; "
+    "from pathlib import Path; "
+    "root = Path(r\"${CMAKE_CURRENT_SOURCE_DIR}\"); "
+    "magnetostatics_path = root / \"magnetostatics\" / \"nonlinear_magnetostatics.py\"; "
+    "magnetostatics_spec = importlib.util.spec_from_file_location(\"similie_nonlinear_magnetostatics\", magnetostatics_path); "
+    "magnetostatics_module = importlib.util.module_from_spec(magnetostatics_spec); "
+    "sys.modules[magnetostatics_spec.name] = magnetostatics_module; "
+    "magnetostatics_spec.loader.exec_module(magnetostatics_module); "
+    "magnetostatics_module.write_cpp_nonlinear_magnetostatics_header(Path(r\"${NONLINEAR_MAGNETOSTATICS_HEADER}\"))")
 
 add_custom_command(
     OUTPUT
@@ -84,11 +98,22 @@ add_custom_command(
     VERBATIM
 )
 
+add_custom_command(
+    OUTPUT "${NONLINEAR_MAGNETOSTATICS_HEADER}"
+    COMMAND "${CMAKE_COMMAND}" -E make_directory
+            "${SIMILIE_GENERATED_PHYSICS_DIR}/magnetostatics"
+    COMMAND "${Python3_EXECUTABLE}" -c "${NONLINEAR_MAGNETOSTATICS_GENERATION_CODE}"
+    DEPENDS "${NONLINEAR_MAGNETOSTATICS_GENERATOR}"
+    COMMENT "Generating nonlinear magnetostatics functors"
+    VERBATIM
+)
+
 add_custom_target(similie_physics_generated
     DEPENDS
         "${SCALAR_FIELD_HEADER}"
         "${LINEAR_MAGNETOSTATICS_HEADER}"
         "${LINEAR_MAGNETIC_INDUCTION_TO_MAGNETIC_FIELD_HEADER}"
+        "${NONLINEAR_MAGNETOSTATICS_HEADER}"
 )
 
 add_library(physics INTERFACE)

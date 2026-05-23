@@ -31,6 +31,7 @@ class LinearMagnetostaticsHamiltonian:
             parameter_value_expressions={
                 "mu": "m_mu(elem, ddc::DiscreteElement<sil::tensor::Covariant<sil::tensor::ScalarIndex>>(0))"
             },
+            is_linear=True,
         )
 
 

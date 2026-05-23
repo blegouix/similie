@@ -33,7 +33,9 @@ TEST(OnelabInterface, ParseLinearMagnetostaticsSilpro)
                     test_file("magnetostatics.silpro"));
 
     EXPECT_EQ(problem.name, "Test magnetostatics problem");
-    EXPECT_EQ(problem.physics, similie::onelab_interface::SupportedPhysics::LinearMagnetostatics);
+    EXPECT_EQ(
+            problem.physics,
+            similie::onelab_interface::SupportedPhysics::LinearMagnetostatics);
     EXPECT_EQ(
             problem.solver,
             similie::onelab_interface::SupportedSolver::MinimizeStrongFormulationResidual);
@@ -58,8 +60,11 @@ TEST(OnelabInterface, ParseLinearMagnetostaticsSilpro)
             1U);
     EXPECT_EQ(
             problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
-                    .linear_magnetic_material_tags.size(),
+                    .magnetic_material_tags.size(),
             2U);
+    EXPECT_FALSE(
+            problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+                    .use_nonlinear_magnetic_material);
     EXPECT_EQ(problem.force_density_diagnostics_postprocess.name, "ForceDensityDiagnostics");
     EXPECT_EQ(problem.force_density_diagnostics_postprocess.diagnostic_region_tags.size(), 1U);
 }
@@ -83,6 +88,38 @@ TEST(OnelabInterface, ParseScalarFieldSilpro)
     EXPECT_DOUBLE_EQ(problem.scalar_field.mass, 2.5);
     EXPECT_DOUBLE_EQ(problem.scalar_field.coupling_constant, 3.25);
     EXPECT_DOUBLE_EQ(problem.scalar_field.coupling_power, 6.0);
+}
+
+TEST(OnelabInterface, ParseNonLinearMagnetostaticsSilpro)
+{
+    std::filesystem::path const file
+            = std::filesystem::temp_directory_path() / "similie_nonlinear_magnetostatics_test.silpro";
+    {
+        std::ofstream output(file);
+        output << "Problem {\n"
+                  "  Name \"Nonlinear magnetostatics\";\n"
+                  "  Physics NonLinearMagnetostatics;\n"
+                  "  Solver MinimizeStrongFormulationResidual;\n"
+                  "}\n"
+                  "Solver {\n"
+                  "  Criterion MomentsTemporalDerivative;\n"
+                  "}\n"
+                  "Preprocess {\n"
+                  "  NonlinearBHCurve EIcore;\n"
+                  "}\n";
+    }
+
+    similie::onelab_interface::SilproProblem const problem
+            = similie::onelab_interface::OnelabInterface::parse_silpro_file(file);
+    EXPECT_EQ(
+            problem.physics,
+            similie::onelab_interface::SupportedPhysics::NonLinearMagnetostatics);
+    EXPECT_EQ(
+            problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+                    .nonlinear_bh_curve,
+            "EIcore");
+
+    std::filesystem::remove(file);
 }
 
 TEST(OnelabInterface, HamiltonEquationsStaticPotentialDerivative)
@@ -199,6 +236,8 @@ TEST(OnelabInterface, MagnetostaticsPostProcessInductionUsesLibraryStencil)
                 };
             },
             [](auto) { return 1.0; },
+            [](auto) { return false; },
+            [](auto, auto) { return std::array<double, 3> {0.0, 0.0, 0.0}; },
             node_value_z,
             [&](auto elem, std::array<double, 3> const& value, std::array<double, 3> const&) {
                 if (ddc::DiscreteElement<DDimX>(elem).uid() == 0
@@ -246,6 +285,8 @@ TEST(OnelabInterface, MagnetostaticsPostProcessInductionIsCellCentered)
                 };
             },
             [](auto) { return 1.0; },
+            [](auto) { return false; },
+            [](auto, auto) { return std::array<double, 3> {0.0, 0.0, 0.0}; },
             node_value_z,
             [&](auto elem, std::array<double, 3> const& value, std::array<double, 3> const&) {
                 if (ddc::DiscreteElement<DDimX>(elem).uid() == 0
@@ -293,6 +334,8 @@ TEST(OnelabInterface, MagnetostaticsPostProcessInductionCentersEachComponentOnIt
                 };
             },
             [](auto) { return 1.0; },
+            [](auto) { return false; },
+            [](auto, auto) { return std::array<double, 3> {0.0, 0.0, 0.0}; },
             node_value_z,
             [&](auto elem, std::array<double, 3> const& value, std::array<double, 3> const&) {
                 if (ddc::DiscreteElement<DDimX>(elem).uid() == 0

@@ -45,6 +45,7 @@ namespace similie::onelab_interface {
 enum class SupportedPhysics {
     ScalarFieldWithPowerCoupling,
     LinearMagnetostatics,
+    NonLinearMagnetostatics,
 };
 
 enum class SupportedSolver {
@@ -72,9 +73,11 @@ struct SingleElectricalConductorMaterialWithSingleLinearMagneticMaterialPreproce
     std::string name;
     std::vector<std::string> positive_electrical_conductor_tags;
     std::vector<std::string> negative_electrical_conductor_tags;
-    std::vector<std::string> linear_magnetic_material_tags;
+    std::vector<std::string> magnetic_material_tags;
     std::string current_density_z_parameter;
     std::string magnetic_permeability_parameter;
+    bool use_nonlinear_magnetic_material = false;
+    std::string nonlinear_bh_curve = "EIcore";
 };
 
 struct ForceDensityDiagnosticsPostprocess
@@ -362,6 +365,9 @@ inline SupportedPhysics parse_physics_kind(std::string const& value)
     if (value == "LinearMagnetostatics") {
         return SupportedPhysics::LinearMagnetostatics;
     }
+    if (value == "NonLinearMagnetostatics") {
+        return SupportedPhysics::NonLinearMagnetostatics;
+    }
     if (value == "ScalarFieldWithPowerCoupling") {
         return SupportedPhysics::ScalarFieldWithPowerCoupling;
     }
@@ -409,11 +415,13 @@ inline SilproProblem parse_silpro_problem(std::filesystem::path const& file)
                     .name = "SingleElectricalConductorMaterialWithSingleLinearMagneticMaterial",
                     .positive_electrical_conductor_tags = {},
                     .negative_electrical_conductor_tags = {},
-                    .linear_magnetic_material_tags = {},
+                    .magnetic_material_tags = {},
                     .current_density_z_parameter
                     = "Input/90SimiLie/0Coil current density magnitude z [A/m^2]",
                     .magnetic_permeability_parameter
                     = "Input/90SimiLie/1Core magnetic permeability [H/m]",
+                    .use_nonlinear_magnetic_material = false,
+                    .nonlinear_bh_curve = "EIcore",
             },
             .force_density_diagnostics_postprocess
             = {
@@ -455,7 +463,8 @@ inline SilproProblem parse_silpro_problem(std::filesystem::path const& file)
                 section,
                 "CouplingPower",
                 std::to_string(problem.scalar_field.coupling_power)));
-    } else if (problem.physics == SupportedPhysics::LinearMagnetostatics) {
+    } else if (problem.physics == SupportedPhysics::LinearMagnetostatics
+               || problem.physics == SupportedPhysics::NonLinearMagnetostatics) {
         if (auto preprocess_it = root.sections.find("Preprocess");
             preprocess_it != root.sections.end()) {
             SilproSection const& preprocess = preprocess_it->second;
@@ -478,10 +487,15 @@ inline SilproProblem parse_silpro_problem(std::filesystem::path const& file)
                         .negative_electrical_conductor_tags
                         = collect_values(it->second);
             }
-            if (auto it = preprocess.sections.find("LinearMagneticMaterialTags");
+            if (auto it = preprocess.sections.find("MagneticMaterialTags");
                 it != preprocess.sections.end()) {
                 problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
-                        .linear_magnetic_material_tags
+                        .magnetic_material_tags
+                        = collect_values(it->second);
+            } else if (auto it = preprocess.sections.find("LinearMagneticMaterialTags");
+                       it != preprocess.sections.end()) {
+                problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+                        .magnetic_material_tags
                         = collect_values(it->second);
             }
             problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
@@ -498,6 +512,22 @@ inline SilproProblem parse_silpro_problem(std::filesystem::path const& file)
                             "MagneticPermeability",
                             problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
                                     .magnetic_permeability_parameter);
+            problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+                    .use_nonlinear_magnetic_material
+                    = parse_bool(get_value_or(
+                            preprocess,
+                            "UseNonlinearMagneticMaterial",
+                            problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+                                            .use_nonlinear_magnetic_material
+                                    ? "1"
+                                    : "0"));
+            problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+                    .nonlinear_bh_curve
+                    = get_value_or(
+                            preprocess,
+                            "NonlinearBHCurve",
+                            problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+                                    .nonlinear_bh_curve);
         }
         if (auto postprocess_it = root.sections.find("PostProcess");
             postprocess_it != root.sections.end()) {
@@ -976,7 +1006,9 @@ private:
                 "Physics selected in the .silpro file.",
                 problem.physics == SupportedPhysics::LinearMagnetostatics
                         ? "LinearMagnetostatics"
-                        : "ScalarFieldWithPowerCoupling",
+                        : problem.physics == SupportedPhysics::NonLinearMagnetostatics
+                                  ? "NonLinearMagnetostatics"
+                                  : "ScalarFieldWithPowerCoupling",
                 true);
         publish_or_sync_string(
                 problem_parameter_name("0Problem", "2Solver"),
@@ -1001,7 +1033,8 @@ private:
                     publish_or_sync_number);
         }
 
-        if (problem.physics == SupportedPhysics::LinearMagnetostatics) {
+        if (problem.physics == SupportedPhysics::LinearMagnetostatics
+            || problem.physics == SupportedPhysics::NonLinearMagnetostatics) {
             linear_magnetostatics_onelab::synchronize_controls(
                     problem,
                     [&](std::string const& section, std::string const& name) {
@@ -1066,7 +1099,9 @@ private:
                 "Physics",
                 problem.physics == SupportedPhysics::LinearMagnetostatics
                         ? "LinearMagnetostatics"
-                        : "ScalarFieldWithPowerCoupling",
+                        : problem.physics == SupportedPhysics::NonLinearMagnetostatics
+                                  ? "NonLinearMagnetostatics"
+                                  : "ScalarFieldWithPowerCoupling",
                 "Physics",
                 "Physics selected by the .silpro file.");
         publish_output_string(
@@ -1094,7 +1129,7 @@ private:
             return;
         }
 
-        run_linear_magnetostatics_problem(problem);
+        run_linear_magnetostatics_problem(problem, silpro_file);
     }
 
     [[nodiscard]] int read_required_integer_parameter(std::string const& parameter_name)
@@ -1109,14 +1144,21 @@ private:
         return static_cast<int>(std::lround(value));
     }
 
-    void run_linear_magnetostatics_problem(SilproProblem const& problem)
+    void run_linear_magnetostatics_problem(
+            SilproProblem const& problem,
+            std::filesystem::path const& silpro_file)
     {
         client().sendProgress(
                 module_name() + " ONELAB interface: exporting mesh for problem '" + problem.name
                 + "'");
         std::filesystem::path const mesh_file = export_input_mesh_from_gmsh();
+        SilproProblem problem_for_inputs = problem;
+        problem_for_inputs
+                .single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+                .use_nonlinear_magnetic_material
+                = problem.physics == SupportedPhysics::NonLinearMagnetostatics;
         auto const inputs = linear_magnetostatics_onelab::read_inputs(
-                problem,
+                problem_for_inputs,
                 [&](std::string const& preferred_parameter,
                     std::optional<std::string> const& fallback_parameter,
                     double fallback_value) {
@@ -1128,6 +1170,14 @@ private:
                 [&](std::string const& parameter_name) {
                     return read_required_integer_parameter(parameter_name);
                 });
+        auto mutable_inputs = inputs;
+        if (mutable_inputs.use_nonlinear_magnetic_material) {
+            linear_magnetostatics_onelab::detail::validate_nonlinear_bh_curve(
+                    mutable_inputs.nonlinear_bh_curve);
+            linear_magnetostatics_onelab::detail::load_bh_curve_from_bh_pro(
+                    mutable_inputs,
+                    silpro_file.parent_path() / "Inductor" / "BH.pro");
+        }
         std::filesystem::path const output_view_file
                 = mesh_file.parent_path() / "similie_linear_magnetostatics_inputs.pos";
         solvers::StrongFormulationSolverSettings const solver_settings {
@@ -1140,13 +1190,13 @@ private:
         auto const result = linear_magnetostatics_onelab::
                 run(mesh_file,
                     output_view_file,
-                    inputs,
+                    mutable_inputs,
                     solver_settings,
                     [&](std::string const& message) { client().sendInfo(message); });
         client().sendMergeFileRequest(std::filesystem::absolute(output_view_file).string());
         linear_magnetostatics_onelab::publish_outputs(
                 mesh_file,
-                inputs,
+                mutable_inputs,
                 solver_settings,
                 result,
                 [&](std::string const& name,
