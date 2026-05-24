@@ -2282,7 +2282,6 @@ Result run_on_quadrilateral_grid(
                 continue;
             }
             double accumulated_current_density_z = 0.0;
-            std::size_t count = 0;
             for (int dj = -1; dj <= 0; ++dj) {
                 for (int di = -1; di <= 0; ++di) {
                     std::ptrdiff_t const ci = static_cast<std::ptrdiff_t>(i) + di;
@@ -2291,17 +2290,16 @@ Result run_on_quadrilateral_grid(
                         || cj >= static_cast<std::ptrdiff_t>(grid.ncell_y())) {
                         continue;
                     }
+                    std::size_t const cell_i = static_cast<std::size_t>(ci);
+                    std::size_t const cell_j = static_cast<std::size_t>(cj);
+                    double const cell_area = (grid.x_coords[cell_i + 1] - grid.x_coords[cell_i])
+                                             * (grid.y_coords[cell_j + 1] - grid.y_coords[cell_j]);
                     accumulated_current_density_z
-                            += cell_inputs[grid.cell_index(
-                                                   static_cast<std::size_t>(ci),
-                                                   static_cast<std::size_t>(cj))]
-                                       .current_density[2];
-                    ++count;
+                            += 0.25 * cell_area
+                               * cell_inputs[grid.cell_index(cell_i, cell_j)].current_density[2];
                 }
             }
-            rhs_host(node_index, 0) = count == 0 ? 0.0
-                                                 : inputs.mu0 * accumulated_current_density_z
-                                                           / static_cast<double>(count);
+            rhs_host(node_index, 0) = inputs.mu0 * accumulated_current_density_z;
         }
     }
     Kokkos::deep_copy(rhs, rhs_host);
@@ -2790,7 +2788,6 @@ Result run_on_hexahedral_grid(
                 continue;
             }
             double accumulated_current_density_z = 0.0;
-            std::size_t count = 0;
             for (int dj = -1; dj <= 0; ++dj) {
                 for (int di = -1; di <= 0; ++di) {
                     std::ptrdiff_t const ci = static_cast<std::ptrdiff_t>(i) + di;
@@ -2799,16 +2796,16 @@ Result run_on_hexahedral_grid(
                         || cj >= static_cast<std::ptrdiff_t>(grid.ncell_y())) {
                         continue;
                     }
-                    accumulated_current_density_z
-                            += cell_inputs_2d[static_cast<std::size_t>(ci)
-                                              + grid.ncell_x() * static_cast<std::size_t>(cj)]
-                                       .current_density[2];
-                    ++count;
+                    std::size_t const cell_i = static_cast<std::size_t>(ci);
+                    std::size_t const cell_j = static_cast<std::size_t>(cj);
+                    double const cell_area = (grid.x_coords[cell_i + 1] - grid.x_coords[cell_i])
+                                             * (grid.y_coords[cell_j + 1] - grid.y_coords[cell_j]);
+                    accumulated_current_density_z += 0.25 * cell_area
+                                                    * cell_inputs_2d[cell_i + grid.ncell_x() * cell_j]
+                                                              .current_density[2];
                 }
             }
-            rhs_host(node_index, 0) = count == 0 ? 0.0
-                                                 : inputs.mu0 * accumulated_current_density_z
-                                                           / static_cast<double>(count);
+            rhs_host(node_index, 0) = inputs.mu0 * accumulated_current_density_z;
         }
     }
     Kokkos::deep_copy(rhs, rhs_host);
