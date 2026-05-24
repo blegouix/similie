@@ -10,15 +10,17 @@ problem_file="${SIMILIE_ONELAB_PROBLEM_FILE:-${script_dir}/inductor.silpro}"
 output_dir="$(pwd)"
 model_dimension=2
 use_bool_test=0
+physics_mode=""
 
 gmsh_executable="${GMSH_EXECUTABLE:-gmsh}"
 build_dir="${SIMILIE_ONELAB_BUILD_DIR:-${repo_root}/build}"
 onelab_client="${SIMILIE_ONELAB_BINARY:-${build_dir}/onelab_interface/similie_onelab}"
 mesh_file="${SIMILIE_ONELAB_MESH_FILE:-${output_dir}/inductor.msh}"
-result_file="${SIMILIE_ONELAB_RESULT_FILE:-${output_dir}/similie_linear_magnetostatics_inputs.pos}"
+result_file="${SIMILIE_ONELAB_RESULT_FILE:-${output_dir}/similie_magnetostatics_inputs.pos}"
 paraview_h5_file="${SIMILIE_PARAVIEW_H5_FILE:-${output_dir}/inductor.h5}"
 paraview_xmf_file="${SIMILIE_PARAVIEW_XMF_FILE:-${output_dir}/inductor.xmf}"
 paraview_export_script="${script_dir}/export_paraview_results.py"
+direct_h5_file="${output_dir}/similie_linear_magnetostatics.h5"
 
 if [[ ! -d "${inductor_dir}" ]]; then
     echo "missing Inductor example directory: ${inductor_dir}" >&2
@@ -65,6 +67,12 @@ for arg in "$@"; do
             use_bool_test=1
             model_dimension=3
             ;;
+        --linear)
+            physics_mode="LinearMagnetostatics"
+            ;;
+        --nonlinear)
+            physics_mode="NonLinearMagnetostatics"
+            ;;
         *)
             gmsh_args+=("${arg}")
             ;;
@@ -91,10 +99,19 @@ case "${model_dimension}" in
         ;;
 esac
 
-rm -f "${mesh_file}" "${result_file}" "${paraview_h5_file}" "${paraview_xmf_file}"
+rm -f "${mesh_file}" "${result_file}" "${paraview_h5_file}" "${paraview_xmf_file}" "${direct_h5_file}"
 
 control_file="$(mktemp "${script_dir}/.run_similie_onelab_XXXXXX.geo")"
-trap 'rm -f "${control_file}"' EXIT
+effective_problem_file="${problem_file}"
+patched_problem_file=""
+if [[ -n "${physics_mode}" ]]; then
+    patched_problem_file="$(mktemp "${script_dir}/.run_similie_onelab_XXXXXX.silpro")"
+    sed \
+        "s/^[[:space:]]*Physics[[:space:]].*;/  Physics ${physics_mode};/" \
+        "${problem_file}" > "${patched_problem_file}"
+    effective_problem_file="${patched_problem_file}"
+fi
+trap 'rm -f "${control_file}" "${patched_problem_file}"' EXIT
 
 cat > "${control_file}" <<EOF
 Mesh ${gmsh_mesh_dimension};
@@ -109,7 +126,7 @@ EOF
     -setnumber Mesh.Binary 0 \
     -setnumber Mesh.MshFileVersion 2.2 \
     -setnumber "Input/00FE model" "${fe_model_dimension}" \
-    -setstring "0Modules/SimiLie/0Control/Problem file" "${problem_file}" \
+    -setstring "0Modules/SimiLie/0Control/Problem file" "${effective_problem_file}" \
     -setstring "0Modules/SimiLie/0Control/Mesh file" "${mesh_file}" \
     "${geometry_file}" \
     "${control_file}" \

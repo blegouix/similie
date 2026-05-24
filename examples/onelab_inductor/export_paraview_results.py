@@ -1062,7 +1062,11 @@ def main() -> int:
     xmf_file = Path(args.xmf_output)
 
     direct_h5_file = pos_file.with_name("similie_linear_magnetostatics.h5")
-    if direct_h5_file.exists() and direct_h5_file.resolve() != h5_file.resolve():
+    if (
+        direct_h5_file.exists()
+        and direct_h5_file.resolve() != h5_file.resolve()
+        and direct_h5_file.stat().st_mtime >= pos_file.stat().st_mtime
+    ):
         (
             x_coords,
             y_coords,

@@ -12,6 +12,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <iomanip>
 #include <iterator>
 #include <limits>
 #include <map>
@@ -1179,7 +1180,7 @@ private:
                     silpro_file.parent_path() / "BH.pro");
         }
         std::filesystem::path const output_view_file
-                = mesh_file.parent_path() / "similie_linear_magnetostatics_inputs.pos";
+                = mesh_file.parent_path() / "similie_magnetostatics_inputs.pos";
         solvers::StrongFormulationSolverSettings const solver_settings {
                 .max_iterations = problem.solver_settings.max_iterations,
                 .relative_tolerance = problem.solver_settings.relative_tolerance,
@@ -1218,12 +1219,24 @@ private:
                            << ", final relative residual="
                            << result.solver_diagnostics.final_relative_residual
                            << ", duration="
-                           << result.solver_diagnostics.duration << " s, mean |f|="
-                           << (result.num_diagnostic_cells == 0
+                           << result.solver_diagnostics.duration << " s, diagnostic faces="
+                           << result.num_diagnostic_faces << ", mean |Tn|="
+                           << std::scientific << std::setprecision(6)
+                           << (result.diagnostic_surface_measure == 0.0
                                        ? 0.0
-                                       : result.diagnostic_force_density_magnitude_sum
-                                                 / static_cast<double>(result.num_diagnostic_cells))
-                           << " N/m^3";
+                                       : result.diagnostic_traction_magnitude_integral
+                                                 / result.diagnostic_surface_measure)
+                           << " Pa, Phi=" << result.diagnostic_flux_integral << " Wb, I="
+                           << result.diagnostic_current_integral << " A, L="
+                           << (result.diagnostic_current_integral == 0.0
+                                       ? 0.0
+                                       : result.diagnostic_flux_integral
+                                                 / result.diagnostic_current_integral)
+                           << " H, "
+                           << "integrated Tn=("
+                           << result.diagnostic_traction_integral[0] << ", "
+                           << result.diagnostic_traction_integral[1] << ", "
+                           << result.diagnostic_traction_integral[2] << ")" << std::defaultfloat;
         client().sendInfo(diagnostics_stream.str());
     }
 

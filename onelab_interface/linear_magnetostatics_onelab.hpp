@@ -62,11 +62,16 @@ struct Result
     std::size_t num_air_cells = 0;
     std::size_t num_core_cells = 0;
     std::size_t num_coil_cells = 0;
-    std::size_t num_diagnostic_cells = 0;
+    std::size_t num_diagnostic_faces = 0;
+    std::size_t num_current_cells = 0;
     double max_abs_potential = 0.0;
     double max_abs_induction = 0.0;
     double max_abs_field = 0.0;
-    double diagnostic_force_density_magnitude_sum = 0.0;
+    double diagnostic_surface_measure = 0.0;
+    double diagnostic_traction_magnitude_integral = 0.0;
+    double diagnostic_flux_integral = 0.0;
+    double diagnostic_current_integral = 0.0;
+    std::array<double, 3> diagnostic_traction_integral {0.0, 0.0, 0.0};
     solvers::StrongFormulationSolverDiagnostics solver_diagnostics;
 };
 
@@ -263,13 +268,60 @@ void publish_outputs(
             "Maximum magnetic field [A/m]",
             "Maximum absolute value of the computed magnetic field.");
     publish_output_number(
-            "Mean force density magnitude [N/m^3]",
-            result.num_diagnostic_cells == 0
+            "Upper air-gap flux integral [Wb]",
+            result.diagnostic_flux_integral,
+            "Upper air-gap flux integral [Wb]",
+            "Integral of the normal magnetic induction over the detected upper air-gap surface.");
+    publish_output_number(
+            "Positive-conductor current integral [A]",
+            result.diagnostic_current_integral,
+            "Positive-conductor current integral [A]",
+            "Integral of the current density over the positively oriented conductor region.");
+    publish_output_number(
+            "Inductance from upper air-gap flux [H]",
+            result.diagnostic_current_integral == 0.0
                     ? 0.0
-                    : result.diagnostic_force_density_magnitude_sum
-                              / static_cast<double>(result.num_diagnostic_cells),
-            "Mean force density magnitude [N/m^3]",
-            "Mean magnitude of the force density over the configured diagnostic regions.");
+                    : result.diagnostic_flux_integral / result.diagnostic_current_integral,
+            "Inductance from upper air-gap flux [H]",
+            "Inductance estimated as L = Phi / I with Phi the upper air-gap flux integral and "
+            "I the numerically integrated positive-conductor current.");
+    std::string const integrated_traction_unit
+            = result.topology == "quadrilateral" ? "N/m" : "N";
+    publish_output_number(
+            "Number of upper air-gap faces",
+            static_cast<double>(result.num_diagnostic_faces),
+            "Number of upper air-gap faces",
+            "Number of air-gap faces detected on the upper boundary of the configured "
+            "diagnostic region.");
+    publish_output_number(
+            "Upper air-gap surface measure",
+            result.diagnostic_surface_measure,
+            "Upper air-gap surface measure",
+            "Total length in 2D or area in 3D of the detected upper air-gap surface.");
+    publish_output_number(
+            "Integrated upper air-gap traction x [" + integrated_traction_unit + "]",
+            result.diagnostic_traction_integral[0],
+            "Integrated upper air-gap traction x [" + integrated_traction_unit + "]",
+            "Integral of the Maxwell traction T n over the upper air-gap surface, x component.");
+    publish_output_number(
+            "Integrated upper air-gap traction y [" + integrated_traction_unit + "]",
+            result.diagnostic_traction_integral[1],
+            "Integrated upper air-gap traction y [" + integrated_traction_unit + "]",
+            "Integral of the Maxwell traction T n over the upper air-gap surface, y component.");
+    publish_output_number(
+            "Integrated upper air-gap traction z [" + integrated_traction_unit + "]",
+            result.diagnostic_traction_integral[2],
+            "Integrated upper air-gap traction z [" + integrated_traction_unit + "]",
+            "Integral of the Maxwell traction T n over the upper air-gap surface, z component.");
+    publish_output_number(
+            "Mean upper air-gap traction magnitude [Pa]",
+            result.diagnostic_surface_measure == 0.0
+                    ? 0.0
+                    : result.diagnostic_traction_magnitude_integral
+                              / result.diagnostic_surface_measure,
+            "Mean upper air-gap traction magnitude [Pa]",
+            "Mean magnitude of the Maxwell traction T n over the detected upper air-gap "
+            "surface.");
     publish_status(
             inputs.use_nonlinear_magnetic_material ? "Nonlinear magnetostatics solve completed"
                                                    : "Linear magnetostatics solve completed");
@@ -292,6 +344,14 @@ struct CellPostProcessFields
     std::array<double, 3> force_density {0.0, 0.0, 0.0};
 };
 
+struct DiagnosticFaceSample
+{
+    double x = 0.0;
+    double z = 0.0;
+    double measure = 0.0;
+    std::array<double, 3> traction {0.0, 0.0, 0.0};
+};
+
 template <class Logger>
 void log_info(Logger&& logger, std::string const& message)
 {
@@ -303,6 +363,72 @@ void log_info(Logger&& logger, std::string const& message)
 inline bool has_tag(std::vector<int> const& tags, int physical_tag)
 {
     return std::find(tags.begin(), tags.end(), physical_tag) != tags.end();
+}
+
+[[nodiscard]] inline std::array<double, 3> traction_on_positive_y_face(
+        std::array<double, 3> const& magnetic_induction,
+        std::array<double, 3> const& magnetic_field)
+{
+    double const half_trace = 0.5
+                              * (magnetic_induction[0] * magnetic_field[0]
+                                 + magnetic_induction[1] * magnetic_field[1]
+                                 + magnetic_induction[2] * magnetic_field[2]);
+    return {
+            magnetic_induction[0] * magnetic_field[1],
+            magnetic_induction[1] * magnetic_field[1] - half_trace,
+            magnetic_induction[2] * magnetic_field[1],
+    };
+}
+
+inline void apply_x_mirror_symmetry_projection_to_traction_integral(
+        std::vector<DiagnosticFaceSample> const& face_samples,
+        Result& result)
+{
+    if (face_samples.empty()) {
+        return;
+    }
+
+    constexpr double tol = 1.0e-12;
+    std::vector<DiagnosticFaceSample> sorted_samples(face_samples);
+    std::sort(
+            sorted_samples.begin(),
+            sorted_samples.end(),
+            [](DiagnosticFaceSample const& lhs, DiagnosticFaceSample const& rhs) {
+                if (std::abs(lhs.z - rhs.z) > tol) {
+                    return lhs.z < rhs.z;
+                }
+                return lhs.x < rhs.x;
+            });
+
+    std::array<double, 3> projected_integral {0.0, 0.0, 0.0};
+    std::size_t left = 0;
+    std::size_t right = sorted_samples.size();
+    while (left < right) {
+        --right;
+        DiagnosticFaceSample const& left_face = sorted_samples[left];
+        DiagnosticFaceSample const& right_face = sorted_samples[right];
+        if (left == right) {
+            if (std::abs(left_face.x) > tol) {
+                return;
+            }
+            projected_integral[1] += left_face.measure * left_face.traction[1];
+            projected_integral[2] += left_face.measure * left_face.traction[2];
+            break;
+        }
+
+        if (std::abs(left_face.z - right_face.z) > tol || std::abs(left_face.x + right_face.x) > tol
+            || std::abs(left_face.measure - right_face.measure) > tol) {
+            return;
+        }
+
+        projected_integral[1]
+                += left_face.measure * (left_face.traction[1] + right_face.traction[1]);
+        projected_integral[2]
+                += left_face.measure * (left_face.traction[2] + right_face.traction[2]);
+        ++left;
+    }
+
+    result.diagnostic_traction_integral = projected_integral;
 }
 
 inline void validate_nonlinear_bh_curve(std::string const& nonlinear_bh_curve)
@@ -1697,106 +1823,37 @@ void fill_post_process_fields_on_cell_domain(
                 ddc::DiscreteElement<magnetostatics_local::DDimX, magnetostatics_local::DDimY>>::
                 run(reconstructed_induction, reduced_induction, position, elem);
 
-        [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<
-                sil::exterior::hodge_star_domain_t<
-                        InPlaneInductionIndexSeq,
-                        InPlaneFieldHodgeOutputIndexSeq>>
-                hodge_accessor;
-        std::vector<double> hodge_alloc(hodge_accessor.domain().size());
-        ddc::ChunkSpan<
-                double,
-                sil::exterior::
-                        hodge_star_domain_t<InPlaneInductionIndexSeq, InPlaneFieldHodgeOutputIndexSeq>,
-                Kokkos::layout_right,
-                Kokkos::HostSpace>
-                hodge_span(hodge_alloc.data(), hodge_accessor.domain());
-        sil::tensor::Tensor hodge_star(hodge_span);
-        ddc::host_for_each(hodge_star.domain(), [&](auto hodge_elem) {
-            hodge_star.mem(hodge_elem) = sil::exterior::DiscreteHodgeStar<
-                    sil::exterior::CellComplex::CircumcentricDual,
-                    InPlaneInductionIndexSeq,
-                    InPlaneFieldHodgeOutputIndexSeq,
-                    decltype(metric),
-                    decltype(position),
-                    ddc::DiscreteElement<magnetostatics_local::DDimX, magnetostatics_local::DDimY>>::
-                    value(metric, position, elem, hodge_star.canonical_natural_element(hodge_elem));
-        });
-
-        std::array<double, InPlaneFieldIndex::access_size()> reduced_field_alloc {};
-        auto reduced_field = physics::magnetostatics::detail::make_local_tensor<InPlaneFieldIndex>(
-                reduced_field_alloc);
-        std::array<double, 3> const reduced_induction_components {
-                reduced_induction(
-                        reduced_induction.accessor()
-                                .template access_element<physics::magnetostatics::X>()),
-                reduced_induction(
-                        reduced_induction.accessor()
+        std::array<double, 3> const magnetic_induction {
+                reconstructed_induction(
+                        reconstructed_induction.accessor()
                                 .template access_element<physics::magnetostatics::Y>()),
+                reconstructed_induction(
+                        reconstructed_induction.accessor()
+                                .template access_element<physics::magnetostatics::X>()),
                 0.0,
         };
-        std::array<double, 3> hodge_diagonal {0.0, 0.0, 1.0};
-        hodge_diagonal[0] = hodge_star(
-                hodge_star.accessor().template access_element<
-                        physics::magnetostatics::X,
-                        physics::magnetostatics::X>());
-        hodge_diagonal[1] = hodge_star(
-                hodge_star.accessor().template access_element<
-                        physics::magnetostatics::Y,
-                        physics::magnetostatics::Y>());
+        std::array<double, 3> magnetic_field {0.0, 0.0, 0.0};
+        std::array<double, 3> const unit_hodge {1.0, 1.0, 1.0};
         if (read_nonlinear_material(elem)) {
-            std::array<double, 3> const reduced_field_components = nonlinear_constitutive_law(
-                    std::span<double const, 3>(hodge_diagonal.data(), hodge_diagonal.size()),
+            magnetic_field = nonlinear_constitutive_law(
+                    std::span<double const, 3>(unit_hodge.data(), unit_hodge.size()),
                     std::span<double const, 3>(
-                            reduced_induction_components.data(),
-                            reduced_induction_components.size()));
-            reduced_field(
-                    reduced_field.accessor().template access_element<physics::magnetostatics::X>())
-                    = reduced_field_components[0];
-            reduced_field(
-                    reduced_field.accessor().template access_element<physics::magnetostatics::Y>())
-                    = reduced_field_components[1];
+                            magnetic_induction.data(),
+                            magnetic_induction.size()));
         } else {
             physics::magnetostatics::LinearMagneticInductionToMagneticField const constitutive_law(
                     read_mu(elem));
-            reduced_field(
-                    reduced_field.accessor().template access_element<physics::magnetostatics::X>())
-                    = constitutive_law(hodge_diagonal[0], reduced_induction_components[0]);
-            reduced_field(
-                    reduced_field.accessor().template access_element<physics::magnetostatics::Y>())
-                    = constitutive_law(hodge_diagonal[1], reduced_induction_components[1]);
+            magnetic_field = {
+                    constitutive_law(unit_hodge[0], magnetic_induction[0]),
+                    constitutive_law(unit_hodge[1], magnetic_induction[1]),
+                    0.0,
+            };
         }
-
-        std::array<double, InPlaneFieldIndex::access_size()> reconstructed_field_alloc {};
-        auto reconstructed_field
-                = physics::magnetostatics::detail::make_local_tensor<InPlaneFieldIndex>(
-                        reconstructed_field_alloc);
-        sil::exterior::Reconstruction<
-                InPlaneFieldIndexSeq,
-                decltype(position),
-                ddc::DiscreteElement<magnetostatics_local::DDimX, magnetostatics_local::DDimY>,
-                sil::exterior::CellComplex::CircumcentricDual>::
-                run(reconstructed_field, reduced_field, position, elem);
 
         write_cell_output(
                 elem,
-                std::array<double, 3> {
-                        reconstructed_induction(
-                                reconstructed_induction.accessor()
-                                        .template access_element<physics::magnetostatics::Y>()),
-                        reconstructed_induction(
-                                reconstructed_induction.accessor()
-                                        .template access_element<physics::magnetostatics::X>()),
-                        0.0,
-                },
-                std::array<double, 3> {
-                        reconstructed_field(
-                                reconstructed_field.accessor()
-                                        .template access_element<physics::magnetostatics::Y>()),
-                        reconstructed_field(
-                                reconstructed_field.accessor()
-                                        .template access_element<physics::magnetostatics::X>()),
-                        0.0,
-                });
+                magnetic_induction,
+                magnetic_field);
     });
 }
 
@@ -2460,19 +2517,52 @@ Result run_on_quadrilateral_grid(
         }
     }
     fill_force_density_on_quadrilateral_grid(grid, cell_outputs);
+    std::vector<DiagnosticFaceSample> diagnostic_face_samples;
+    diagnostic_face_samples.reserve(grid.ncell_x());
     for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
         for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
-            std::array<double, 3> const& force_density
-                    = cell_outputs[grid.cell_index(i, j)].force_density;
-            if (has_tag(inputs.diagnostic_region_tags,
-                        grid.ordered_cells[grid.cell_index(i, j)].physical_tag)) {
-                result.diagnostic_force_density_magnitude_sum += std::sqrt(
-                        force_density[0] * force_density[0] + force_density[1] * force_density[1]
-                        + force_density[2] * force_density[2]);
-                ++result.num_diagnostic_cells;
+            std::size_t const cell_index = grid.cell_index(i, j);
+            int const physical_tag = grid.ordered_cells[cell_index].physical_tag;
+            double const cell_area
+                    = (grid.x_coords[i + 1] - grid.x_coords[i]) * (grid.y_coords[j + 1] - grid.y_coords[j]);
+            if (has_tag(inputs.positive_electrical_conductor_tags, physical_tag)) {
+                result.diagnostic_current_integral += cell_area * cell_inputs[cell_index].current_density[2];
+                ++result.num_current_cells;
             }
+            if (!has_tag(inputs.diagnostic_region_tags, physical_tag)) {
+                continue;
+            }
+            bool const has_upper_neighbor = j + 1 < grid.ncell_y();
+            bool const upper_neighbor_in_region
+                    = has_upper_neighbor
+                      && has_tag(inputs.diagnostic_region_tags,
+                                 grid.ordered_cells[grid.cell_index(i, j + 1)].physical_tag);
+            if (upper_neighbor_in_region) {
+                continue;
+            }
+            double const face_measure = grid.x_coords[i + 1] - grid.x_coords[i];
+            result.diagnostic_flux_integral += face_measure * cell_outputs[cell_index].magnetic_induction[1];
+            std::array<double, 3> const traction
+                    = traction_on_positive_y_face(
+                            cell_outputs[cell_index].magnetic_induction,
+                            cell_outputs[cell_index].magnetic_field);
+            result.diagnostic_surface_measure += face_measure;
+            result.diagnostic_traction_integral[0] += face_measure * traction[0];
+            result.diagnostic_traction_integral[1] += face_measure * traction[1];
+            result.diagnostic_traction_integral[2] += face_measure * traction[2];
+            result.diagnostic_traction_magnitude_integral += face_measure * std::sqrt(
+                    traction[0] * traction[0] + traction[1] * traction[1]
+                    + traction[2] * traction[2]);
+            diagnostic_face_samples.push_back(DiagnosticFaceSample {
+                    .x = grid.cell_center_x(i),
+                    .z = grid.z_value,
+                    .measure = face_measure,
+                    .traction = traction,
+            });
+            ++result.num_diagnostic_faces;
         }
     }
+    apply_x_mirror_symmetry_projection_to_traction_integral(diagnostic_face_samples, result);
 
     write_results_view(output_view_file, grid, cell_inputs, cell_outputs, magnetic_vector_potential);
     log_info(logger, "SimiLie magnetostatics post-processing exported");
@@ -2936,22 +3026,59 @@ Result run_on_hexahedral_grid(
         }
     }
     fill_force_density_on_hexahedral_grid_xy_slices(grid, cell_outputs);
+    std::vector<DiagnosticFaceSample> diagnostic_face_samples;
+    diagnostic_face_samples.reserve(grid.ncell_x() * grid.ncell_z());
     for (std::size_t k = 0; k < grid.ncell_z(); ++k) {
         for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
             for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
-                std::array<double, 3> const& force_density
-                        = cell_outputs[grid.cell_index(i, j, k)].force_density;
-                if (has_tag(inputs.diagnostic_region_tags,
-                            grid.ordered_cells[grid.cell_index(i, j, k)].physical_tag)) {
-                    result.diagnostic_force_density_magnitude_sum += std::sqrt(
-                            force_density[0] * force_density[0]
-                            + force_density[1] * force_density[1]
-                            + force_density[2] * force_density[2]);
-                    ++result.num_diagnostic_cells;
+                std::size_t const cell_index = grid.cell_index(i, j, k);
+                int const physical_tag = grid.ordered_cells[cell_index].physical_tag;
+                double const cell_volume
+                        = (grid.x_coords[i + 1] - grid.x_coords[i])
+                          * (grid.y_coords[j + 1] - grid.y_coords[j])
+                          * (grid.z_coords[k + 1] - grid.z_coords[k]);
+                if (has_tag(inputs.positive_electrical_conductor_tags, physical_tag)) {
+                    result.diagnostic_current_integral
+                            += cell_volume * cell_inputs_3d[cell_index].current_density[2];
+                    ++result.num_current_cells;
                 }
+                if (!has_tag(inputs.diagnostic_region_tags, physical_tag)) {
+                    continue;
+                }
+                bool const has_upper_neighbor = j + 1 < grid.ncell_y();
+                bool const upper_neighbor_in_region
+                        = has_upper_neighbor
+                          && has_tag(inputs.diagnostic_region_tags,
+                                     grid.ordered_cells[grid.cell_index(i, j + 1, k)].physical_tag);
+                if (upper_neighbor_in_region) {
+                    continue;
+                }
+                double const face_measure
+                        = (grid.x_coords[i + 1] - grid.x_coords[i])
+                          * (grid.z_coords[k + 1] - grid.z_coords[k]);
+                result.diagnostic_flux_integral += face_measure * cell_outputs[cell_index].magnetic_induction[1];
+                std::array<double, 3> const traction
+                        = traction_on_positive_y_face(
+                                cell_outputs[cell_index].magnetic_induction,
+                                cell_outputs[cell_index].magnetic_field);
+                result.diagnostic_surface_measure += face_measure;
+                result.diagnostic_traction_integral[0] += face_measure * traction[0];
+                result.diagnostic_traction_integral[1] += face_measure * traction[1];
+                result.diagnostic_traction_integral[2] += face_measure * traction[2];
+                result.diagnostic_traction_magnitude_integral += face_measure * std::sqrt(
+                        traction[0] * traction[0] + traction[1] * traction[1]
+                        + traction[2] * traction[2]);
+                diagnostic_face_samples.push_back(DiagnosticFaceSample {
+                        .x = grid.cell_center_x(i),
+                        .z = grid.cell_center_z(k),
+                        .measure = face_measure,
+                        .traction = traction,
+                });
+                ++result.num_diagnostic_faces;
             }
         }
     }
+    apply_x_mirror_symmetry_projection_to_traction_integral(diagnostic_face_samples, result);
 
     write_results_view(
             output_view_file,
