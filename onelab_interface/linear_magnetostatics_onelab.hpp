@@ -27,7 +27,6 @@
 #include <similie/exterior/reduction_and_reconstruction.hpp>
 #include <similie/misc/macros.hpp>
 #include <similie/physics/hamilton_equations.hpp>
-#include <similie/physics/magnetostatics/linear_magnetic_induction_to_magnetic_field.hpp>
 #include <similie/physics/magnetostatics/linear_magnetostatics.hpp>
 #include <similie/physics/magnetostatics/magnetostatics_quantities.hpp>
 #include <similie/physics/magnetostatics/nonlinear_magnetostatics.hpp>
@@ -484,7 +483,7 @@ public:
     }
 
     template <std::size_t I, std::size_t J, class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION double tangent(
+    [[nodiscard]] KOKKOS_FUNCTION double jacobian(
             std::span<double const, 3> moments,
             Elem elem) const
     {
@@ -1114,16 +1113,16 @@ void apply_jacobian(
                         delta_moment1 += moment1_coefficients(sampled_row, k) * input(column, 0);
                     }
                     std::array<double, 3> const moments {state_moment0, state_moment1, 0.0};
-                    double const h00 = equations.template tangent<0, 0>(
+                    double const h00 = equations.template jacobian<0, 0>(
                             std::span<double const, 3>(moments.data(), moments.size()),
                             sampled_elem);
-                    double const h01 = equations.template tangent<0, 1>(
+                    double const h01 = equations.template jacobian<0, 1>(
                             std::span<double const, 3>(moments.data(), moments.size()),
                             sampled_elem);
-                    double const h10 = equations.template tangent<1, 0>(
+                    double const h10 = equations.template jacobian<1, 0>(
                             std::span<double const, 3>(moments.data(), moments.size()),
                             sampled_elem);
-                    double const h11 = equations.template tangent<1, 1>(
+                    double const h11 = equations.template jacobian<1, 1>(
                             std::span<double const, 3>(moments.data(), moments.size()),
                             sampled_elem);
                     residual += row_coefficient
@@ -1254,16 +1253,16 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                                          * state(static_cast<std::size_t>(moment1_columns(sampled_row, k)), 0);
                     }
                     std::array<double, 3> const moments {state_moment0, state_moment1, 0.0};
-                    double const h00 = equations.template tangent<0, 0>(
+                    double const h00 = equations.template jacobian<0, 0>(
                             std::span<double const, 3>(moments.data(), moments.size()),
                             sampled_elem);
-                    double const h01 = equations.template tangent<0, 1>(
+                    double const h01 = equations.template jacobian<0, 1>(
                             std::span<double const, 3>(moments.data(), moments.size()),
                             sampled_elem);
-                    double const h10 = equations.template tangent<1, 0>(
+                    double const h10 = equations.template jacobian<1, 0>(
                             std::span<double const, 3>(moments.data(), moments.size()),
                             sampled_elem);
-                    double const h11 = equations.template tangent<1, 1>(
+                    double const h11 = equations.template jacobian<1, 1>(
                             std::span<double const, 3>(moments.data(), moments.size()),
                             sampled_elem);
                     for (int k = 0; k < moment0_counts(sampled_row); ++k) {

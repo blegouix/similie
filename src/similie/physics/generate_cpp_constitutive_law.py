@@ -120,6 +120,11 @@ public:
         return {_render_expression(forward_value_expression, state_variable_symbol, inverse_output_name, constitutive_law_replacements)};
     }}
 
+    KOKKOS_FUNCTION constexpr double jacobian({forward_arguments}) const
+    {{
+        return value({", ".join(variables)});
+    }}
+
     KOKKOS_FUNCTION constexpr double operator()({forward_arguments}) const
     {{
         return {_render_expression(constitutive_law, state_variable_symbol, inverse_output_name, constitutive_law_replacements)};

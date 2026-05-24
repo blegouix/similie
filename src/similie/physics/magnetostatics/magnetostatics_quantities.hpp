@@ -10,7 +10,6 @@
 #include <similie/exterior/coboundary.hpp>
 #include <similie/exterior/codifferential.hpp>
 #include <similie/misc/specialization.hpp>
-#include <similie/physics/magnetostatics/linear_magnetic_induction_to_magnetic_field.hpp>
 #include <similie/tensor/tensor.hpp>
 
 #include <Kokkos_Core.hpp>
@@ -130,12 +129,10 @@ public:
 
 class MaxwellStressTensorToMagneticInductionAndMagneticField
 {
-    LinearMagneticInductionToMagneticField m_constitutive_law;
+    double m_mu;
 
 public:
-    explicit constexpr MaxwellStressTensorToMagneticInductionAndMagneticField(
-            LinearMagneticInductionToMagneticField constitutive_law)
-        : m_constitutive_law(constitutive_law)
+    explicit constexpr MaxwellStressTensorToMagneticInductionAndMagneticField(double mu) : m_mu(mu)
     {
     }
 
@@ -184,9 +181,9 @@ public:
             std::size_t component) const
     {
         std::array<double, 3> const magnetic_field = {
-                m_constitutive_law(hodge_star[0], magnetic_induction[0]),
-                m_constitutive_law(hodge_star[1], magnetic_induction[1]),
-                m_constitutive_law(hodge_star[2], magnetic_induction[2]),
+                hodge_star[0] * magnetic_induction[0] / m_mu,
+                hodge_star[1] * magnetic_induction[1] / m_mu,
+                hodge_star[2] * magnetic_induction[2] / m_mu,
         };
         return inverse_value(magnetic_induction, magnetic_field, component);
     }

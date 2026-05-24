@@ -196,6 +196,7 @@ TEST(OnelabInterface, LinearMagneticInductionToMagneticFieldValueAndApplication)
 
     LinearMagneticInductionToMagneticField const constitutive_law(2.0);
     EXPECT_DOUBLE_EQ(constitutive_law.value(3.0, 4.0), 1.5);
+    EXPECT_DOUBLE_EQ(constitutive_law.jacobian(3.0, 4.0), 1.5);
     EXPECT_DOUBLE_EQ(constitutive_law(3.0, 4.0), 6.0);
     EXPECT_DOUBLE_EQ(constitutive_law.inverse_value(3.0, 5.0), 2.0 / 3.0);
     EXPECT_DOUBLE_EQ(constitutive_law.inverse(3.0, 5.0), 10.0 / 3.0);

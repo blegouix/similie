@@ -1176,7 +1176,7 @@ private:
                     mutable_inputs.nonlinear_bh_curve);
             linear_magnetostatics_onelab::detail::load_bh_curve_from_bh_pro(
                     mutable_inputs,
-                    silpro_file.parent_path() / "Inductor" / "BH.pro");
+                    silpro_file.parent_path() / "BH.pro");
         }
         std::filesystem::path const output_view_file
                 = mesh_file.parent_path() / "similie_linear_magnetostatics_inputs.pos";
