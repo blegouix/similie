@@ -43,6 +43,7 @@ struct Inputs
     double current_density_magnitude = 0.0;
     double core_mu = 0.0;
     double mu0 = 0.0;
+    double length_z = 1.0;
     std::vector<int> positive_electrical_conductor_tags;
     std::vector<int> negative_electrical_conductor_tags;
     std::vector<int> magnetic_material_tags;
@@ -113,6 +114,10 @@ Inputs read_inputs(
                     .magnetic_permeability_parameter,
             std::nullopt,
             std::numeric_limits<double>::quiet_NaN());
+    double const length_z = read_number_parameter(
+            "Input/10Geometric dimensions/00Length along z-axis [m]",
+            std::nullopt,
+            1.0);
     double const mu0 = 4.e-7 * std::numbers::pi_v<double>;
 
     if (!(current_density_magnitude > 0.0)) {
@@ -132,6 +137,7 @@ Inputs read_inputs(
     inputs.current_density_magnitude = current_density_magnitude;
     inputs.core_mu = core_mu > 0.0 ? core_mu : mu0;
     inputs.mu0 = mu0;
+    inputs.length_z = length_z > 0.0 ? length_z : 1.0;
     inputs.use_nonlinear_magnetic_material
             = problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
                       .use_nonlinear_magnetic_material;
@@ -285,8 +291,7 @@ void publish_outputs(
             "Inductance from upper air-gap flux [H]",
             "Inductance estimated as L = Phi / I with Phi the upper air-gap flux integral and "
             "I the numerically integrated positive-conductor current.");
-    std::string const integrated_traction_unit
-            = result.topology == "quadrilateral" ? "N/m" : "N";
+    std::string const integrated_traction_unit = "N";
     publish_output_number(
             "Number of upper air-gap faces",
             static_cast<double>(result.num_diagnostic_faces),
@@ -297,7 +302,8 @@ void publish_outputs(
             "Upper air-gap surface measure",
             result.diagnostic_surface_measure,
             "Upper air-gap surface measure",
-            "Total length in 2D or area in 3D of the detected upper air-gap surface.");
+            "Effective surface area of the detected upper air-gap surface. In 2D this uses the "
+            "configured extrusion length along z.");
     publish_output_number(
             "Integrated upper air-gap traction x [" + integrated_traction_unit + "]",
             result.diagnostic_traction_integral[0],
@@ -2299,7 +2305,7 @@ Result run_on_quadrilateral_grid(
                                * cell_inputs[grid.cell_index(cell_i, cell_j)].current_density[2];
                 }
             }
-            rhs_host(node_index, 0) = inputs.mu0 * accumulated_current_density_z;
+            rhs_host(node_index, 0) = accumulated_current_density_z;
         }
     }
     Kokkos::deep_copy(rhs, rhs_host);
@@ -2355,17 +2361,11 @@ Result run_on_quadrilateral_grid(
                         || cj >= static_cast<std::ptrdiff_t>(grid.ncell_y())) {
                         continue;
                     }
-                    accumulated_mu += cell_inputs[grid.cell_index(
-                                                          static_cast<std::size_t>(ci),
-                                                          static_cast<std::size_t>(cj))]
-                                              .mu;
-                    accumulated_nonlinear_mask += (
-                            cell_inputs[grid.cell_index(
-                                                static_cast<std::size_t>(ci),
-                                                static_cast<std::size_t>(cj))]
-                                            .nonlinear_material
-                                    ? 1.0
-                                    : 0.0);
+                    CellInputFields const& cell_input = cell_inputs[grid.cell_index(
+                            static_cast<std::size_t>(ci),
+                            static_cast<std::size_t>(cj))];
+                    accumulated_mu += cell_input.mu;
+                    accumulated_nonlinear_mask += (cell_input.nonlinear_material ? 1.0 : 0.0);
                     ++count;
                 }
             }
@@ -2538,7 +2538,7 @@ Result run_on_quadrilateral_grid(
             if (upper_neighbor_in_region) {
                 continue;
             }
-            double const face_measure = grid.x_coords[i + 1] - grid.x_coords[i];
+            double const face_measure = (grid.x_coords[i + 1] - grid.x_coords[i]) * inputs.length_z;
             result.diagnostic_flux_integral += face_measure * cell_outputs[cell_index].magnetic_induction[1];
             std::array<double, 3> const traction
                     = traction_on_positive_y_face(
@@ -2805,7 +2805,7 @@ Result run_on_hexahedral_grid(
                                                               .current_density[2];
                 }
             }
-            rhs_host(node_index, 0) = inputs.mu0 * accumulated_current_density_z;
+            rhs_host(node_index, 0) = accumulated_current_density_z;
         }
     }
     Kokkos::deep_copy(rhs, rhs_host);
@@ -2861,15 +2861,11 @@ Result run_on_hexahedral_grid(
                         || cj >= static_cast<std::ptrdiff_t>(grid.ncell_y())) {
                         continue;
                     }
-                    accumulated_mu += cell_inputs_2d[static_cast<std::size_t>(ci)
-                                                     + grid.ncell_x() * static_cast<std::size_t>(cj)]
-                                              .mu;
-                    accumulated_nonlinear_mask += (
-                            cell_inputs_2d[static_cast<std::size_t>(ci)
-                                           + grid.ncell_x() * static_cast<std::size_t>(cj)]
-                                            .nonlinear_material
-                                    ? 1.0
-                                    : 0.0);
+                    CellInputFields const& cell_input = cell_inputs_2d[static_cast<std::size_t>(ci)
+                                                                       + grid.ncell_x()
+                                                                                 * static_cast<std::size_t>(cj)];
+                    accumulated_mu += cell_input.mu;
+                    accumulated_nonlinear_mask += (cell_input.nonlinear_material ? 1.0 : 0.0);
                     ++count;
                 }
             }

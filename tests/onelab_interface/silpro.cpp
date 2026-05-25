@@ -654,3 +654,190 @@ TEST(OnelabInterface, MagnetostaticsMatrixFreeSolverAcceptsDefaultKokkosLayout)
     EXPECT_TRUE(std::isfinite(diagnostics.final_relative_residual));
     EXPECT_TRUE(diagnostics.converged);
 }
+
+TEST(OnelabInterface, MagnetostaticsMatrixFreeAndAssembledSolvesMatch)
+{
+    using namespace similie::onelab_interface::linear_magnetostatics_onelab::detail::
+            magnetostatics_local;
+    using namespace similie::physics::magnetostatics;
+
+    Kokkos::View<double*> x_coords("x", 5);
+    Kokkos::View<double*> y_coords("y", 5);
+    auto x_host = Kokkos::create_mirror_view(x_coords);
+    auto y_host = Kokkos::create_mirror_view(y_coords);
+    for (std::size_t i = 0; i < 5; ++i) {
+        x_host(i) = static_cast<double>(i);
+        y_host(i) = static_cast<double>(i);
+    }
+    Kokkos::deep_copy(x_coords, x_host);
+    Kokkos::deep_copy(y_coords, y_host);
+
+    using memory_space = typename Kokkos::DefaultExecutionSpace::memory_space;
+    scalar_tensor_alloc_type<memory_space> mu_alloc(
+            ddc::DiscreteDomain<DDimX, DDimY, ScalarPotentialIndex>(
+                    ddc::DiscreteDomain<DDimX, DDimY>(
+                            ddc::DiscreteElement<DDimX, DDimY>(0, 0),
+                            ddc::DiscreteVector<DDimX, DDimY>(5, 5)),
+                    sil::tensor::TensorAccessor<ScalarPotentialIndex>().domain()),
+            ddc::KokkosAllocator<double, memory_space>());
+    ScalarPotentialTensor2D<memory_space> mu_tensor(mu_alloc);
+    auto mu_host = Kokkos::create_mirror_view(mu_alloc.allocation_kokkos_view());
+    for (std::size_t j = 0; j < 5; ++j) {
+        for (std::size_t i = 0; i < 5; ++i) {
+            mu_host(i, j, 0) = 2.0;
+        }
+    }
+    Kokkos::deep_copy(mu_alloc.allocation_kokkos_view(), mu_host);
+
+    auto const hamiltonian = LinearMagnetostaticsHamiltonian(mu_tensor);
+    auto const equations = similie::physics::HamiltonEquations {hamiltonian};
+    MagnetostaticsOperator2D<memory_space, decltype(equations)> operator_model(
+            equations,
+            x_coords,
+            y_coords,
+            similie::solvers::Criterion::MomentsTemporalDerivative);
+
+    Kokkos::View<double**> rhs("rhs", 25, 1);
+    Kokkos::View<double**> solution_matrix_free("solution_matrix_free", 25, 1);
+    Kokkos::View<double**> solution_assembled("solution_assembled", 25, 1);
+    auto rhs_host = Kokkos::create_mirror_view(rhs);
+    for (std::size_t j = 0; j < 5; ++j) {
+        for (std::size_t i = 0; i < 5; ++i) {
+            std::size_t const row = i + 5 * j;
+            rhs_host(row, 0) = (i == 0 || j == 0 || i + 1 == 5 || j + 1 == 5)
+                                       ? 0.0
+                                       : static_cast<double>(1 + i + 2 * j);
+        }
+    }
+    Kokkos::deep_copy(rhs, rhs_host);
+
+    similie::solvers::StrongFormulationSolverSettings matrix_free_settings;
+    matrix_free_settings.max_iterations = 200;
+    matrix_free_settings.relative_tolerance = 1.0e-12;
+    matrix_free_settings.jacobi_max_block_size = 1;
+    matrix_free_settings.use_matrix_free = true;
+
+    similie::solvers::StrongFormulationSolverSettings assembled_settings = matrix_free_settings;
+    assembled_settings.use_matrix_free = false;
+
+    auto const matrix_free_diagnostics = similie::solvers::minimize_strong_formulation_residual(
+            Kokkos::DefaultExecutionSpace(),
+            operator_model,
+            rhs,
+            solution_matrix_free,
+            matrix_free_settings);
+    auto const assembled_diagnostics = similie::solvers::minimize_strong_formulation_residual(
+            Kokkos::DefaultExecutionSpace(),
+            operator_model,
+            rhs,
+            solution_assembled,
+            assembled_settings);
+
+    auto matrix_free_host = Kokkos::create_mirror_view_and_copy(
+            Kokkos::HostSpace(),
+            solution_matrix_free);
+    auto assembled_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), solution_assembled);
+
+    EXPECT_TRUE(matrix_free_diagnostics.converged);
+    EXPECT_TRUE(assembled_diagnostics.converged);
+    for (std::size_t row = 0; row < 25; ++row) {
+        EXPECT_NEAR(matrix_free_host(row, 0), assembled_host(row, 0), 1e-10) << "row=" << row;
+    }
+}
+
+TEST(OnelabInterface, MagnetostaticsMatrixFreeAndAssembledSolvesMatchOnNonuniformVariableMu)
+{
+    using namespace similie::onelab_interface::linear_magnetostatics_onelab::detail::
+            magnetostatics_local;
+    using namespace similie::physics::magnetostatics;
+
+    Kokkos::View<double*> x_coords("x", 7);
+    Kokkos::View<double*> y_coords("y", 6);
+    auto x_host = Kokkos::create_mirror_view(x_coords);
+    auto y_host = Kokkos::create_mirror_view(y_coords);
+    double const x_values[7] = {0.0, 0.3, 0.9, 1.0, 1.8, 2.7, 4.0};
+    double const y_values[6] = {0.0, 0.2, 0.6, 1.5, 1.7, 3.0};
+    for (std::size_t i = 0; i < 7; ++i) {
+        x_host(i) = x_values[i];
+    }
+    for (std::size_t j = 0; j < 6; ++j) {
+        y_host(j) = y_values[j];
+    }
+    Kokkos::deep_copy(x_coords, x_host);
+    Kokkos::deep_copy(y_coords, y_host);
+
+    using memory_space = typename Kokkos::DefaultExecutionSpace::memory_space;
+    scalar_tensor_alloc_type<memory_space> mu_alloc(
+            ddc::DiscreteDomain<DDimX, DDimY, ScalarPotentialIndex>(
+                    ddc::DiscreteDomain<DDimX, DDimY>(
+                            ddc::DiscreteElement<DDimX, DDimY>(0, 0),
+                            ddc::DiscreteVector<DDimX, DDimY>(7, 6)),
+                    sil::tensor::TensorAccessor<ScalarPotentialIndex>().domain()),
+            ddc::KokkosAllocator<double, memory_space>());
+    ScalarPotentialTensor2D<memory_space> mu_tensor(mu_alloc);
+    auto mu_host = Kokkos::create_mirror_view(mu_alloc.allocation_kokkos_view());
+    for (std::size_t j = 0; j < 6; ++j) {
+        for (std::size_t i = 0; i < 7; ++i) {
+            mu_host(i, j, 0) = 1.0 + 0.1 * static_cast<double>(i) + 0.2 * static_cast<double>(j);
+        }
+    }
+    Kokkos::deep_copy(mu_alloc.allocation_kokkos_view(), mu_host);
+
+    auto const hamiltonian = LinearMagnetostaticsHamiltonian(mu_tensor);
+    auto const equations = similie::physics::HamiltonEquations {hamiltonian};
+    MagnetostaticsOperator2D<memory_space, decltype(equations)> operator_model(
+            equations,
+            x_coords,
+            y_coords,
+            similie::solvers::Criterion::MomentsTemporalDerivative);
+
+    Kokkos::View<double**> rhs("rhs", 42, 1);
+    Kokkos::View<double**> solution_matrix_free("solution_matrix_free", 42, 1);
+    Kokkos::View<double**> solution_assembled("solution_assembled", 42, 1);
+    auto rhs_host = Kokkos::create_mirror_view(rhs);
+    for (std::size_t j = 0; j < 6; ++j) {
+        for (std::size_t i = 0; i < 7; ++i) {
+            std::size_t const row = i + 7 * j;
+            rhs_host(row, 0) = (i == 0 || j == 0 || i + 1 == 7 || j + 1 == 6)
+                                       ? 0.0
+                                       : static_cast<double>(1 + 3 * i - 2 * j);
+        }
+    }
+    Kokkos::deep_copy(rhs, rhs_host);
+
+    similie::solvers::StrongFormulationSolverSettings matrix_free_settings;
+    matrix_free_settings.max_iterations = 400;
+    matrix_free_settings.relative_tolerance = 1.0e-12;
+    matrix_free_settings.jacobi_max_block_size = 1;
+    matrix_free_settings.use_matrix_free = true;
+
+    similie::solvers::StrongFormulationSolverSettings assembled_settings = matrix_free_settings;
+    assembled_settings.use_matrix_free = false;
+
+    auto const matrix_free_diagnostics = similie::solvers::minimize_strong_formulation_residual(
+            Kokkos::DefaultExecutionSpace(),
+            operator_model,
+            rhs,
+            solution_matrix_free,
+            matrix_free_settings);
+    auto const assembled_diagnostics = similie::solvers::minimize_strong_formulation_residual(
+            Kokkos::DefaultExecutionSpace(),
+            operator_model,
+            rhs,
+            solution_assembled,
+            assembled_settings);
+
+    auto matrix_free_host = Kokkos::create_mirror_view_and_copy(
+            Kokkos::HostSpace(),
+            solution_matrix_free);
+    auto assembled_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), solution_assembled);
+
+    EXPECT_TRUE(matrix_free_diagnostics.converged);
+    EXPECT_TRUE(assembled_diagnostics.converged);
+    for (std::size_t row = 0; row < 42; ++row) {
+        double const matrix_free_value = matrix_free_host(row, 0);
+        double const assembled_value = assembled_host(row, 0);
+        double const scale = std::max({1.0, std::abs(matrix_free_value), std::abs(assembled_value)});
+        EXPECT_LE(std::abs(matrix_free_value - assembled_value) / scale, 1e-12) << "row=" << row;
+    }
+}

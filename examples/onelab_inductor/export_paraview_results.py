@@ -1143,7 +1143,17 @@ def main() -> int:
         force_density_values,
         maxwell_stress_values,
     )
-    if magnetic_induction is None or magnetic_field is None:
+    if topology_dimension == 2:
+        magnetic_induction, magnetic_field, maxwell_stress, force_density = (
+            derive_cell_fields(
+                x_coords,
+                y_coords,
+                z_coords,
+                permeability,
+                magnetic_vector_potential,
+            )
+        )
+    elif magnetic_induction is None or magnetic_field is None:
         magnetic_induction, magnetic_field, derived_stress, derived_force_density = (
             derive_cell_fields(
                 x_coords,
