@@ -2524,7 +2524,8 @@ Result run_on_quadrilateral_grid(
             double const cell_area
                     = (grid.x_coords[i + 1] - grid.x_coords[i]) * (grid.y_coords[j + 1] - grid.y_coords[j]);
             if (has_tag(inputs.positive_electrical_conductor_tags, physical_tag)) {
-                result.diagnostic_current_integral += cell_area * cell_inputs[cell_index].current_density[2];
+                result.diagnostic_current_integral
+                        += inputs.length_z * cell_area * cell_inputs[cell_index].current_density[2];
                 ++result.num_current_cells;
             }
             if (!has_tag(inputs.diagnostic_region_tags, physical_tag)) {

@@ -11,6 +11,7 @@ output_dir="$(pwd)"
 model_dimension=2
 use_bool_test=0
 physics_mode=""
+open_cascade_model=0
 
 gmsh_executable="${GMSH_EXECUTABLE:-gmsh}"
 build_dir="${SIMILIE_ONELAB_BUILD_DIR:-${repo_root}/build}"
@@ -66,6 +67,7 @@ for arg in "$@"; do
         --bool)
             use_bool_test=1
             model_dimension=3
+            open_cascade_model=1
             ;;
         --linear)
             physics_mode="LinearMagnetostatics"
@@ -78,10 +80,6 @@ for arg in "$@"; do
             ;;
     esac
 done
-
-if [[ "${use_bool_test}" -eq 1 ]]; then
-    geometry_file="${script_dir}/inductor3d_bool.geo"
-fi
 
 case "${model_dimension}" in
     2)
@@ -126,6 +124,7 @@ EOF
     -setnumber Mesh.Binary 0 \
     -setnumber Mesh.MshFileVersion 2.2 \
     -setnumber "Input/00FE model" "${fe_model_dimension}" \
+    -setnumber "Input/00OpenCASCADE model?" "${open_cascade_model}" \
     -setstring "0Modules/SimiLie/0Control/Problem file" "${effective_problem_file}" \
     -setstring "0Modules/SimiLie/0Control/Mesh file" "${mesh_file}" \
     "${geometry_file}" \
