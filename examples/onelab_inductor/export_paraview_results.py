@@ -148,96 +148,382 @@ def parse_result_views(
     }
 
     current_view: str | None = None
-    for raw_line in pos_file.read_text().splitlines():
-        line = raw_line.strip()
-        view_match = view_pattern.match(line)
-        if view_match:
-            current_view = view_match.group(1)
-            continue
-        if line == "};":
-            current_view = None
-            continue
-        if current_view is None:
-            continue
+    with pos_file.open() as stream:
+        for raw_line in stream:
+            line = raw_line.strip()
+            view_match = view_pattern.match(line)
+            if view_match:
+                current_view = view_match.group(1)
+                continue
+            if line == "};":
+                current_view = None
+                continue
+            if current_view is None:
+                continue
 
-        if current_view == PERMEABILITY_VIEW:
-            scalar_match = scalar_pattern.search(line)
-            if not scalar_match:
-                continue
-            xyz = (
-                float(scalar_match.group(1)),
-                float(scalar_match.group(2)),
-                float(scalar_match.group(3)),
-            )
-            value = float(scalar_match.group(4))
-            permeability.append((xyz, value))
-        elif current_view == CURRENT_DENSITY_VIEW:
-            vector_match = vector_pattern.search(line)
-            if not vector_match:
-                continue
-            xyz = (
-                float(vector_match.group(1)),
-                float(vector_match.group(2)),
-                float(vector_match.group(3)),
-            )
-            value = (
-                float(vector_match.group(4)),
-                float(vector_match.group(5)),
-                float(vector_match.group(6)),
-            )
-            current_density.append((xyz, value))
-        elif current_view == MAGNETIC_VECTOR_POTENTIAL_VIEW:
-            vector_match = vector_pattern.search(line)
-            if not vector_match:
-                continue
-            xyz = (
-                float(vector_match.group(1)),
-                float(vector_match.group(2)),
-                float(vector_match.group(3)),
-            )
-            value = (
-                float(vector_match.group(4)),
-                float(vector_match.group(5)),
-                float(vector_match.group(6)),
-            )
-            magnetic_vector_potential.append((xyz, value))
-        elif current_view in (
-            MAGNETIC_INDUCTION_VIEW,
-            MAGNETIC_FIELD_VIEW,
-            FORCE_DENSITY_VIEW,
-        ):
-            vector_match = vector_pattern.search(line)
-            if not vector_match:
-                continue
-            xyz = (
-                float(vector_match.group(1)),
-                float(vector_match.group(2)),
-                float(vector_match.group(3)),
-            )
-            value = (
-                float(vector_match.group(4)),
-                float(vector_match.group(5)),
-                float(vector_match.group(6)),
-            )
-            if current_view == MAGNETIC_INDUCTION_VIEW:
-                magnetic_induction.append((xyz, value))
-            elif current_view == MAGNETIC_FIELD_VIEW:
-                magnetic_field.append((xyz, value))
-            else:
-                force_density.append((xyz, value))
-        elif current_view in maxwell_stress:
-            scalar_match = scalar_pattern.search(line)
-            if not scalar_match:
-                continue
-            xyz = (
-                float(scalar_match.group(1)),
-                float(scalar_match.group(2)),
-                float(scalar_match.group(3)),
-            )
-            value = float(scalar_match.group(4))
-            maxwell_stress[current_view].append((xyz, value))
+            if current_view == PERMEABILITY_VIEW:
+                scalar_match = scalar_pattern.search(line)
+                if not scalar_match:
+                    continue
+                xyz = (
+                    float(scalar_match.group(1)),
+                    float(scalar_match.group(2)),
+                    float(scalar_match.group(3)),
+                )
+                value = float(scalar_match.group(4))
+                permeability.append((xyz, value))
+            elif current_view == CURRENT_DENSITY_VIEW:
+                vector_match = vector_pattern.search(line)
+                if not vector_match:
+                    continue
+                xyz = (
+                    float(vector_match.group(1)),
+                    float(vector_match.group(2)),
+                    float(vector_match.group(3)),
+                )
+                value = (
+                    float(vector_match.group(4)),
+                    float(vector_match.group(5)),
+                    float(vector_match.group(6)),
+                )
+                current_density.append((xyz, value))
+            elif current_view == MAGNETIC_VECTOR_POTENTIAL_VIEW:
+                vector_match = vector_pattern.search(line)
+                if not vector_match:
+                    continue
+                xyz = (
+                    float(vector_match.group(1)),
+                    float(vector_match.group(2)),
+                    float(vector_match.group(3)),
+                )
+                value = (
+                    float(vector_match.group(4)),
+                    float(vector_match.group(5)),
+                    float(vector_match.group(6)),
+                )
+                magnetic_vector_potential.append((xyz, value))
+            elif current_view in (
+                MAGNETIC_INDUCTION_VIEW,
+                MAGNETIC_FIELD_VIEW,
+                FORCE_DENSITY_VIEW,
+            ):
+                vector_match = vector_pattern.search(line)
+                if not vector_match:
+                    continue
+                xyz = (
+                    float(vector_match.group(1)),
+                    float(vector_match.group(2)),
+                    float(vector_match.group(3)),
+                )
+                value = (
+                    float(vector_match.group(4)),
+                    float(vector_match.group(5)),
+                    float(vector_match.group(6)),
+                )
+                if current_view == MAGNETIC_INDUCTION_VIEW:
+                    magnetic_induction.append((xyz, value))
+                elif current_view == MAGNETIC_FIELD_VIEW:
+                    magnetic_field.append((xyz, value))
+                else:
+                    force_density.append((xyz, value))
+            elif current_view in maxwell_stress:
+                scalar_match = scalar_pattern.search(line)
+                if not scalar_match:
+                    continue
+                xyz = (
+                    float(scalar_match.group(1)),
+                    float(scalar_match.group(2)),
+                    float(scalar_match.group(3)),
+                )
+                value = float(scalar_match.group(4))
+                maxwell_stress[current_view].append((xyz, value))
 
     return (
+        permeability,
+        current_density,
+        magnetic_vector_potential,
+        magnetic_induction,
+        magnetic_field,
+        force_density,
+        maxwell_stress,
+    )
+
+
+def build_structured_arrays_from_pos(
+    nodes: list[tuple[int, float, float, float]],
+    cells: list[tuple[int, list[int]]],
+    topology_dimension: int,
+    pos_file: Path,
+) -> tuple[
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray | None,
+    np.ndarray | None,
+    np.ndarray | None,
+    np.ndarray | None,
+]:
+    x_coords = unique_sorted([node[1] for node in nodes])
+    y_coords = unique_sorted([node[2] for node in nodes])
+    z_coords = unique_sorted([node[3] for node in nodes])
+    if topology_dimension == 2 and len(z_coords) != 1:
+        raise RuntimeError("2D mesh nodes are not coplanar")
+
+    nx, ny, nz = len(x_coords), len(y_coords), len(z_coords)
+    x_mid = [(x_coords[i] + x_coords[i + 1]) / 2.0 for i in range(nx - 1)]
+    y_mid = [(y_coords[i] + y_coords[i + 1]) / 2.0 for i in range(ny - 1)]
+
+    if topology_dimension == 2:
+        node_to_indices: dict[int, tuple[int, int]] = {}
+        occupied_nodes: set[tuple[int, int]] = set()
+        for tag, x, y, _ in nodes:
+            key = (nearest_index(x_coords, x), nearest_index(y_coords, y))
+            occupied_nodes.add(key)
+            node_to_indices[tag] = key
+        if len(occupied_nodes) != nx * ny:
+            raise RuntimeError("the mesh nodes do not form a full structured grid")
+
+        num_cells = (nx - 1) * (ny - 1)
+        if len(cells) != num_cells:
+            raise RuntimeError(
+                "the number of cells does not match the expected structured grid size"
+            )
+
+        occupied_cells: set[tuple[int, int]] = set()
+        for _, node_tags in cells:
+            cell_indices = [node_to_indices[tag] for tag in node_tags]
+            min_x = min(index[0] for index in cell_indices)
+            min_y = min(index[1] for index in cell_indices)
+            max_x = max(index[0] for index in cell_indices)
+            max_y = max(index[1] for index in cell_indices)
+            if (max_x, max_y) != (min_x + 1, min_y + 1):
+                raise RuntimeError(
+                    "a quadrilateral does not match a single structured grid cell"
+                )
+            key = (min_x, min_y)
+            if key in occupied_cells:
+                raise RuntimeError("duplicated structured cell")
+            occupied_cells.add(key)
+
+        permeability = np.zeros((nx - 1, ny - 1), dtype=np.float64)
+        current_density = np.zeros((nx - 1, ny - 1, 3), dtype=np.float64)
+        magnetic_vector_potential = np.zeros((nx, ny, 3), dtype=np.float64)
+        magnetic_induction: np.ndarray | None = None
+        magnetic_field: np.ndarray | None = None
+        force_density: np.ndarray | None = None
+        maxwell_stress: np.ndarray | None = None
+
+        def cell_key_from_xyz_2d(xyz: tuple[float, float, float]) -> tuple[int, int]:
+            return (nearest_index(x_mid, xyz[0]), nearest_index(y_mid, xyz[1]))
+    else:
+        node_to_indices_3d: dict[int, tuple[int, int, int]] = {}
+        occupied_nodes_3d: set[tuple[int, int, int]] = set()
+        for tag, x, y, z in nodes:
+            key = (
+                nearest_index(x_coords, x),
+                nearest_index(y_coords, y),
+                nearest_index(z_coords, z),
+            )
+            occupied_nodes_3d.add(key)
+            node_to_indices_3d[tag] = key
+        if len(occupied_nodes_3d) != nx * ny * nz:
+            raise RuntimeError("the mesh nodes do not form a full structured grid")
+
+        num_cells = (nx - 1) * (ny - 1) * (nz - 1)
+        if len(cells) != num_cells:
+            raise RuntimeError(
+                "the number of cells does not match the expected structured grid size"
+            )
+        z_mid = [(z_coords[i] + z_coords[i + 1]) / 2.0 for i in range(nz - 1)]
+        occupied_cells_3d: set[tuple[int, int, int]] = set()
+        for _, node_tags in cells:
+            cell_indices = [node_to_indices_3d[tag] for tag in node_tags]
+            min_x = min(index[0] for index in cell_indices)
+            min_y = min(index[1] for index in cell_indices)
+            min_z = min(index[2] for index in cell_indices)
+            max_x = max(index[0] for index in cell_indices)
+            max_y = max(index[1] for index in cell_indices)
+            max_z = max(index[2] for index in cell_indices)
+            if (max_x, max_y, max_z) != (min_x + 1, min_y + 1, min_z + 1):
+                raise RuntimeError(
+                    "a hexahedron does not match a single structured grid cell"
+                )
+            key = (min_x, min_y, min_z)
+            if key in occupied_cells_3d:
+                raise RuntimeError("duplicated structured cell")
+            occupied_cells_3d.add(key)
+
+        permeability = np.zeros((nx - 1, ny - 1, nz - 1), dtype=np.float64)
+        current_density = np.zeros((nx - 1, ny - 1, nz - 1, 3), dtype=np.float64)
+        magnetic_vector_potential = np.zeros((nx, ny, nz, 3), dtype=np.float64)
+        magnetic_induction = None
+        magnetic_field = None
+        force_density = None
+        maxwell_stress = None
+
+        def cell_key_from_xyz_3d(
+            xyz: tuple[float, float, float],
+        ) -> tuple[int, int, int]:
+            return (
+                nearest_index(x_mid, xyz[0]),
+                nearest_index(y_mid, xyz[1]),
+                nearest_index(z_mid, xyz[2]),
+            )
+
+    scalar_pattern = re.compile(r"SP\(([^,]+),([^,]+),([^)]+)\)\{([^}]+)\};")
+    vector_pattern = re.compile(
+        r"VP\(([^,]+),([^,]+),([^)]+)\)\{([^,]+),([^,]+),([^}]+)\};"
+    )
+    view_pattern = re.compile(r'^View "([^"]+)" \{$')
+    current_view: str | None = None
+
+    with pos_file.open() as stream:
+        for raw_line in stream:
+            line = raw_line.strip()
+            view_match = view_pattern.match(line)
+            if view_match:
+                current_view = view_match.group(1)
+                continue
+            if line == "};":
+                current_view = None
+                continue
+            if current_view is None:
+                continue
+
+            if current_view in (
+                PERMEABILITY_VIEW,
+                MAXWELL_STRESS_XX_VIEW,
+                MAXWELL_STRESS_YY_VIEW,
+                MAXWELL_STRESS_ZZ_VIEW,
+                MAXWELL_STRESS_XY_VIEW,
+                MAXWELL_STRESS_XZ_VIEW,
+                MAXWELL_STRESS_YZ_VIEW,
+            ):
+                scalar_match = scalar_pattern.search(line)
+                if not scalar_match:
+                    continue
+                xyz = (
+                    float(scalar_match.group(1)),
+                    float(scalar_match.group(2)),
+                    float(scalar_match.group(3)),
+                )
+                value = float(scalar_match.group(4))
+                if current_view == PERMEABILITY_VIEW:
+                    if topology_dimension == 2:
+                        ix, iy = cell_key_from_xyz_2d(xyz)
+                        permeability[ix, iy] = value
+                    else:
+                        ix, iy, iz = cell_key_from_xyz_3d(xyz)
+                        permeability[ix, iy, iz] = value
+                else:
+                    if maxwell_stress is None:
+                        shape = (
+                            (nx - 1, ny - 1, 3, 3)
+                            if topology_dimension == 2
+                            else (nx - 1, ny - 1, nz - 1, 3, 3)
+                        )
+                        maxwell_stress = np.zeros(shape, dtype=np.float64)
+                    component_map = {
+                        MAXWELL_STRESS_XX_VIEW: (0, 0),
+                        MAXWELL_STRESS_YY_VIEW: (1, 1),
+                        MAXWELL_STRESS_ZZ_VIEW: (2, 2),
+                        MAXWELL_STRESS_XY_VIEW: (0, 1),
+                        MAXWELL_STRESS_XZ_VIEW: (0, 2),
+                        MAXWELL_STRESS_YZ_VIEW: (1, 2),
+                    }
+                    row, column = component_map[current_view]
+                    if topology_dimension == 2:
+                        ix, iy = cell_key_from_xyz_2d(xyz)
+                        maxwell_stress[ix, iy, row, column] = value
+                        maxwell_stress[ix, iy, column, row] = value
+                    else:
+                        ix, iy, iz = cell_key_from_xyz_3d(xyz)
+                        maxwell_stress[ix, iy, iz, row, column] = value
+                        maxwell_stress[ix, iy, iz, column, row] = value
+                continue
+
+            vector_match = vector_pattern.search(line)
+            if not vector_match:
+                continue
+            xyz = (
+                float(vector_match.group(1)),
+                float(vector_match.group(2)),
+                float(vector_match.group(3)),
+            )
+            value = (
+                float(vector_match.group(4)),
+                float(vector_match.group(5)),
+                float(vector_match.group(6)),
+            )
+
+            if current_view == MAGNETIC_VECTOR_POTENTIAL_VIEW:
+                if topology_dimension == 2:
+                    ix = nearest_index(x_coords, xyz[0])
+                    iy = nearest_index(y_coords, xyz[1])
+                    magnetic_vector_potential[ix, iy, :] = value
+                else:
+                    ix = nearest_index(x_coords, xyz[0])
+                    iy = nearest_index(y_coords, xyz[1])
+                    iz = nearest_index(z_coords, xyz[2])
+                    magnetic_vector_potential[ix, iy, iz, :] = value
+            elif current_view == CURRENT_DENSITY_VIEW:
+                if topology_dimension == 2:
+                    ix, iy = cell_key_from_xyz_2d(xyz)
+                    current_density[ix, iy, :] = value
+                else:
+                    ix, iy, iz = cell_key_from_xyz_3d(xyz)
+                    current_density[ix, iy, iz, :] = value
+            elif current_view in (
+                MAGNETIC_INDUCTION_VIEW,
+                MAGNETIC_FIELD_VIEW,
+                FORCE_DENSITY_VIEW,
+            ):
+                if current_view == MAGNETIC_INDUCTION_VIEW and magnetic_induction is None:
+                    shape = (
+                        (nx - 1, ny - 1, 3)
+                        if topology_dimension == 2
+                        else (nx - 1, ny - 1, nz - 1, 3)
+                    )
+                    magnetic_induction = np.zeros(shape, dtype=np.float64)
+                elif current_view == MAGNETIC_FIELD_VIEW and magnetic_field is None:
+                    shape = (
+                        (nx - 1, ny - 1, 3)
+                        if topology_dimension == 2
+                        else (nx - 1, ny - 1, nz - 1, 3)
+                    )
+                    magnetic_field = np.zeros(shape, dtype=np.float64)
+                elif current_view == FORCE_DENSITY_VIEW and force_density is None:
+                    shape = (
+                        (nx - 1, ny - 1, 3)
+                        if topology_dimension == 2
+                        else (nx - 1, ny - 1, nz - 1, 3)
+                    )
+                    force_density = np.zeros(shape, dtype=np.float64)
+
+                if topology_dimension == 2:
+                    ix, iy = cell_key_from_xyz_2d(xyz)
+                    if current_view == MAGNETIC_INDUCTION_VIEW:
+                        magnetic_induction[ix, iy, :] = value
+                    elif current_view == MAGNETIC_FIELD_VIEW:
+                        magnetic_field[ix, iy, :] = value
+                    else:
+                        force_density[ix, iy, :] = value
+                else:
+                    ix, iy, iz = cell_key_from_xyz_3d(xyz)
+                    if current_view == MAGNETIC_INDUCTION_VIEW:
+                        magnetic_induction[ix, iy, iz, :] = value
+                    elif current_view == MAGNETIC_FIELD_VIEW:
+                        magnetic_field[ix, iy, iz, :] = value
+                    else:
+                        force_density[ix, iy, iz, :] = value
+
+    return (
+        np.asarray(x_coords),
+        np.asarray(y_coords),
+        np.asarray(z_coords),
         permeability,
         current_density,
         magnetic_vector_potential,
@@ -288,9 +574,6 @@ def build_structured_arrays(
         raise RuntimeError("2D mesh nodes are not coplanar")
 
     nx, ny, nz = len(x_coords), len(y_coords), len(z_coords)
-    expected_num_nodes = nx * ny * nz
-    if expected_num_nodes != len(nodes):
-        raise RuntimeError("the mesh nodes do not form a full structured grid")
 
     if topology_dimension == 2:
         node_to_indices: dict[int, tuple[int, int]] = {}
@@ -298,9 +581,13 @@ def build_structured_arrays(
         for tag, x, y, _ in nodes:
             key = (nearest_index(x_coords, x), nearest_index(y_coords, y))
             if key in occupied_nodes:
-                raise RuntimeError("duplicated nodes on the structured grid")
+                node_to_indices[tag] = key
+                continue
             occupied_nodes.add(key)
             node_to_indices[tag] = key
+
+        if len(occupied_nodes) != nx * ny:
+            raise RuntimeError("the mesh nodes do not form a full structured grid")
 
         num_cells = (nx - 1) * (ny - 1)
         if len(cells) != num_cells:
@@ -312,11 +599,6 @@ def build_structured_arrays(
             or len(current_density_values) != num_cells
         ):
             raise RuntimeError("the input field views do not match the cell count")
-        if len(magnetic_vector_potential_values) != len(nodes):
-            raise RuntimeError(
-                "the magnetic vector potential view does not match the node count"
-            )
-
         magnetic_vector_potential = np.zeros((nx, ny, 3), dtype=np.float64)
         for xyz, value in magnetic_vector_potential_values:
             ix = nearest_index(x_coords, xyz[0])
@@ -415,9 +697,13 @@ def build_structured_arrays(
             nearest_index(z_coords, z),
         )
         if key in occupied_nodes_3d:
-            raise RuntimeError("duplicated nodes on the structured grid")
+            node_to_indices_3d[tag] = key
+            continue
         occupied_nodes_3d.add(key)
         node_to_indices_3d[tag] = key
+
+    if len(occupied_nodes_3d) != nx * ny * nz:
+        raise RuntimeError("the mesh nodes do not form a full structured grid")
 
     num_cells = (nx - 1) * (ny - 1) * (nz - 1)
     if len(cells) != num_cells:
@@ -429,11 +715,6 @@ def build_structured_arrays(
         or len(current_density_values) != num_cells
     ):
         raise RuntimeError("the input field views do not match the cell count")
-    if len(magnetic_vector_potential_values) != len(nodes):
-        raise RuntimeError(
-            "the magnetic vector potential view does not match the node count"
-        )
-
     magnetic_vector_potential = np.zeros((nx, ny, nz, 3), dtype=np.float64)
     for xyz, value in magnetic_vector_potential_values:
         ix = nearest_index(x_coords, xyz[0])
@@ -1062,11 +1343,14 @@ def main() -> int:
     xmf_file = Path(args.xmf_output)
 
     direct_h5_file = pos_file.with_name("similie_linear_magnetostatics.h5")
-    if (
-        direct_h5_file.exists()
-        and direct_h5_file.resolve() != h5_file.resolve()
-        and direct_h5_file.stat().st_mtime >= pos_file.stat().st_mtime
-    ):
+    direct_h5_is_fresh = False
+    if direct_h5_file.exists() and direct_h5_file.resolve() != h5_file.resolve():
+        if not pos_file.exists():
+            direct_h5_is_fresh = True
+        else:
+            direct_h5_is_fresh = direct_h5_file.stat().st_mtime >= pos_file.stat().st_mtime
+
+    if direct_h5_is_fresh:
         (
             x_coords,
             y_coords,
@@ -1112,15 +1396,6 @@ def main() -> int:
 
     nodes, cells, topology_dimension = parse_msh2_structured_mesh(mesh_file)
     (
-        permeability_values,
-        current_density_values,
-        magnetic_vector_potential_values,
-        magnetic_induction_values,
-        magnetic_field_values,
-        force_density_values,
-        maxwell_stress_values,
-    ) = parse_result_views(pos_file)
-    (
         x_coords,
         y_coords,
         z_coords,
@@ -1131,17 +1406,11 @@ def main() -> int:
         magnetic_field,
         force_density,
         maxwell_stress,
-    ) = build_structured_arrays(
+    ) = build_structured_arrays_from_pos(
         nodes,
         cells,
         topology_dimension,
-        permeability_values,
-        current_density_values,
-        magnetic_vector_potential_values,
-        magnetic_induction_values,
-        magnetic_field_values,
-        force_density_values,
-        maxwell_stress_values,
+        pos_file,
     )
     if topology_dimension == 2:
         magnetic_induction, magnetic_field, maxwell_stress, force_density = (

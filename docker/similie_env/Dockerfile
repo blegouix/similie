@@ -84,10 +84,19 @@ RUN if [ "${BACKEND}" = "cpu" ]; then \
 RUN cmake --build ginkgo/build -j 4
 RUN cmake --install ginkgo/build
 
+# OpenCASCADE
+RUN apt update && apt install -y \
+  libfreetype-dev \
+  libocct-foundation-dev \
+  libocct-modeling-data-dev \
+  libocct-modeling-algorithms-dev \
+  libocct-data-exchange-dev \
+  libocct-ocaf-dev
+
 # gmsh
 RUN apt update && apt install -y libfltk-dev
 RUN git clone https://gitlab.onelab.info/gmsh/gmsh.git
-RUN cmake -B gmsh/build -S gmsh
+RUN cmake -DENABLE_OCC=ON -DENABLE_OCC_CAF=ON -B gmsh/build -S gmsh
 RUN cmake --build gmsh/build -j 4
 RUN cmake --install gmsh/build
 

@@ -381,12 +381,8 @@ inline StructuredGrid2D build_structured_grid(QuadrilateralMesh const& mesh)
     }
     grid.z_value = z_coords.front();
 
-    if (grid.nx() * grid.ny() != mesh.nodes.size()) {
-        throw std::runtime_error("the mesh nodes do not form a full rectilinear grid");
-    }
-
     std::vector<bool> occupied_nodes(grid.nx() * grid.ny(), false);
-    grid.ordered_nodes.resize(mesh.nodes.size());
+    grid.ordered_nodes.resize(grid.nx() * grid.ny());
     for (MeshNode const& node : mesh.nodes) {
         std::array<std::size_t, 2> const index {
                 nearest_index(grid.x_coords, node.x),
@@ -394,11 +390,23 @@ inline StructuredGrid2D build_structured_grid(QuadrilateralMesh const& mesh)
         };
         std::size_t const linear_index = grid.node_index(index[0], index[1]);
         if (occupied_nodes[linear_index]) {
-            throw std::runtime_error("duplicated nodes on the detected rectilinear grid");
+            MeshNode const& reference = grid.ordered_nodes[linear_index];
+            if (!nearly_equal(reference.x, node.x) || !nearly_equal(reference.y, node.y)
+                || !nearly_equal(reference.z, node.z)) {
+                throw std::runtime_error("duplicated nodes on the detected rectilinear grid");
+            }
+            grid.node_indices_by_tag.emplace(node.tag, index);
+            continue;
         }
         occupied_nodes[linear_index] = true;
         grid.node_indices_by_tag.emplace(node.tag, index);
         grid.ordered_nodes[linear_index] = node;
+    }
+
+    for (bool occupied_node : occupied_nodes) {
+        if (!occupied_node) {
+            throw std::runtime_error("the mesh nodes do not form a full rectilinear grid");
+        }
     }
 
     std::size_t const num_cells = grid.ncell_x() * grid.ncell_y();
@@ -464,12 +472,8 @@ inline StructuredGrid3D build_structured_grid(HexahedralMesh const& mesh)
     grid.y_coords = unique_sorted(std::move(grid.y_coords));
     grid.z_coords = unique_sorted(std::move(grid.z_coords));
 
-    if (grid.nx() * grid.ny() * grid.nz() != mesh.nodes.size()) {
-        throw std::runtime_error("the mesh nodes do not form a full rectilinear grid");
-    }
-
     std::vector<bool> occupied_nodes(grid.nx() * grid.ny() * grid.nz(), false);
-    grid.ordered_nodes.resize(mesh.nodes.size());
+    grid.ordered_nodes.resize(grid.nx() * grid.ny() * grid.nz());
     for (MeshNode const& node : mesh.nodes) {
         std::array<std::size_t, 3> const index {
                 nearest_index(grid.x_coords, node.x),
@@ -478,11 +482,23 @@ inline StructuredGrid3D build_structured_grid(HexahedralMesh const& mesh)
         };
         std::size_t const linear_index = grid.node_index(index[0], index[1], index[2]);
         if (occupied_nodes[linear_index]) {
-            throw std::runtime_error("duplicated nodes on the detected rectilinear grid");
+            MeshNode const& reference = grid.ordered_nodes[linear_index];
+            if (!nearly_equal(reference.x, node.x) || !nearly_equal(reference.y, node.y)
+                || !nearly_equal(reference.z, node.z)) {
+                throw std::runtime_error("duplicated nodes on the detected rectilinear grid");
+            }
+            grid.node_indices_by_tag.emplace(node.tag, index);
+            continue;
         }
         occupied_nodes[linear_index] = true;
         grid.node_indices_by_tag.emplace(node.tag, index);
         grid.ordered_nodes[linear_index] = node;
+    }
+
+    for (bool occupied_node : occupied_nodes) {
+        if (!occupied_node) {
+            throw std::runtime_error("the mesh nodes do not form a full rectilinear grid");
+        }
     }
 
     std::size_t const num_cells = grid.ncell_x() * grid.ncell_y() * grid.ncell_z();

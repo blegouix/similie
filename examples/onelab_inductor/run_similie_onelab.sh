@@ -21,7 +21,10 @@ result_file="${SIMILIE_ONELAB_RESULT_FILE:-${output_dir}/similie_magnetostatics_
 paraview_h5_file="${SIMILIE_PARAVIEW_H5_FILE:-${output_dir}/inductor.h5}"
 paraview_xmf_file="${SIMILIE_PARAVIEW_XMF_FILE:-${output_dir}/inductor.xmf}"
 paraview_export_script="${script_dir}/export_paraview_results.py"
-direct_h5_file="${output_dir}/similie_linear_magnetostatics.h5"
+mesh_output_dir="$(dirname "${mesh_file}")"
+direct_h5_file="${mesh_output_dir}/similie_linear_magnetostatics.h5"
+default_result_file="${mesh_output_dir}/similie_magnetostatics_inputs.pos"
+legacy_result_file="${mesh_output_dir}/similie_linear_magnetostatics_inputs.pos"
 
 if [[ ! -d "${inductor_dir}" ]]; then
     echo "missing Inductor example directory: ${inductor_dir}" >&2
@@ -131,8 +134,17 @@ EOF
     "${control_file}" \
     "${gmsh_args[@]}"
 
+actual_result_file="${result_file}"
+if [[ ! -f "${actual_result_file}" ]]; then
+    if [[ -f "${default_result_file}" ]]; then
+        actual_result_file="${default_result_file}"
+    elif [[ -f "${legacy_result_file}" ]]; then
+        actual_result_file="${legacy_result_file}"
+    fi
+fi
+
 python3 "${paraview_export_script}" \
     --mesh "${mesh_file}" \
-    --input-fields-pos "${result_file}" \
+    --input-fields-pos "${actual_result_file}" \
     --h5-output "${paraview_h5_file}" \
     --xmf-output "${paraview_xmf_file}"

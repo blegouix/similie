@@ -2209,6 +2209,7 @@ inline void write_results_view(
         }
     }
     stream << "};\n";
+
 }
 
 template <class Logger>
@@ -2681,6 +2682,7 @@ inline void write_results_view(
         }
     }
     stream << "};\n";
+
 }
 
 template <class Logger>
