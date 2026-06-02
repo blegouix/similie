@@ -19,7 +19,8 @@ class ScalarFieldHamiltonian:
 
         metric_sign = [-1] + [1] * (dimension - 1)
         hamiltonian = 0.5 * (
-            -(mass**2) * phi**2 + sum(metric_sign[i] * pi[i] ** 2 for i in range(dimension))
+            -(mass**2) * phi**2
+            + sum(metric_sign[i] * pi[i] ** 2 for i in range(dimension))
         ) - coupling_constant * phi**coupling_power / gamma(coupling_power + 1)
 
         return HamiltonianDefinition(

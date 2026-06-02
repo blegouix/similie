@@ -11,8 +11,8 @@
 #include <exception>
 #include <filesystem>
 #include <fstream>
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 #include <iterator>
 #include <limits>
 #include <map>
@@ -446,10 +446,8 @@ inline SilproProblem parse_silpro_problem(std::filesystem::path const& file)
             solver_section,
             "UseMatrixFree",
             problem.solver_settings.use_matrix_free ? "1" : "0"));
-    problem.solver_settings.criterion = parse_solver_criterion(get_value_or(
-            solver_section,
-            "Criterion",
-            "MomentsTemporalDerivative"));
+    problem.solver_settings.criterion = parse_solver_criterion(
+            get_value_or(solver_section, "Criterion", "MomentsTemporalDerivative"));
 
     if (problem.physics == SupportedPhysics::ScalarFieldWithPowerCoupling) {
         SilproSection const& section
@@ -464,8 +462,9 @@ inline SilproProblem parse_silpro_problem(std::filesystem::path const& file)
                 section,
                 "CouplingPower",
                 std::to_string(problem.scalar_field.coupling_power)));
-    } else if (problem.physics == SupportedPhysics::LinearMagnetostatics
-               || problem.physics == SupportedPhysics::NonLinearMagnetostatics) {
+    } else if (
+            problem.physics == SupportedPhysics::LinearMagnetostatics
+            || problem.physics == SupportedPhysics::NonLinearMagnetostatics) {
         if (auto preprocess_it = root.sections.find("Preprocess");
             preprocess_it != root.sections.end()) {
             SilproSection const& preprocess = preprocess_it->second;
@@ -1005,11 +1004,10 @@ private:
                 problem_parameter_name("0Problem", "1Physics"),
                 "Physics",
                 "Physics selected in the .silpro file.",
-                problem.physics == SupportedPhysics::LinearMagnetostatics
-                        ? "LinearMagnetostatics"
-                        : problem.physics == SupportedPhysics::NonLinearMagnetostatics
-                                  ? "NonLinearMagnetostatics"
-                                  : "ScalarFieldWithPowerCoupling",
+                problem.physics == SupportedPhysics::LinearMagnetostatics ? "LinearMagnetostatics"
+                : problem.physics == SupportedPhysics::NonLinearMagnetostatics
+                        ? "NonLinearMagnetostatics"
+                        : "ScalarFieldWithPowerCoupling",
                 true);
         publish_or_sync_string(
                 problem_parameter_name("0Problem", "2Solver"),
@@ -1098,11 +1096,10 @@ private:
                 "Problem name declared in the .silpro file.");
         publish_output_string(
                 "Physics",
-                problem.physics == SupportedPhysics::LinearMagnetostatics
-                        ? "LinearMagnetostatics"
-                        : problem.physics == SupportedPhysics::NonLinearMagnetostatics
-                                  ? "NonLinearMagnetostatics"
-                                  : "ScalarFieldWithPowerCoupling",
+                problem.physics == SupportedPhysics::LinearMagnetostatics ? "LinearMagnetostatics"
+                : problem.physics == SupportedPhysics::NonLinearMagnetostatics
+                        ? "NonLinearMagnetostatics"
+                        : "ScalarFieldWithPowerCoupling",
                 "Physics",
                 "Physics selected by the .silpro file.");
         publish_output_string(
@@ -1175,9 +1172,8 @@ private:
         if (mutable_inputs.use_nonlinear_magnetic_material) {
             linear_magnetostatics_onelab::detail::validate_nonlinear_bh_curve(
                     mutable_inputs.nonlinear_bh_curve);
-            linear_magnetostatics_onelab::detail::load_bh_curve_from_bh_pro(
-                    mutable_inputs,
-                    silpro_file.parent_path() / "BH.pro");
+            linear_magnetostatics_onelab::detail::
+                    load_bh_curve_from_bh_pro(mutable_inputs, silpro_file.parent_path() / "BH.pro");
         }
         std::filesystem::path const output_view_file
                 = mesh_file.parent_path() / "similie_magnetostatics_inputs.pos";
@@ -1218,26 +1214,24 @@ private:
                            << ", final residual L2=" << result.solver_diagnostics.final_residual_l2
                            << ", final relative residual="
                            << result.solver_diagnostics.final_relative_residual
-                           << ", duration="
-                           << result.solver_diagnostics.duration << " s, diagnostic faces="
-                           << result.num_diagnostic_faces << ", mean |Tn|="
-                           << std::scientific << std::setprecision(6)
+                           << ", duration=" << result.solver_diagnostics.duration
+                           << " s, diagnostic faces=" << result.num_diagnostic_faces
+                           << ", mean |Tn|=" << std::scientific << std::setprecision(6)
                            << (result.diagnostic_surface_measure == 0.0
                                        ? 0.0
                                        : result.diagnostic_traction_magnitude_integral
                                                  / result.diagnostic_surface_measure)
-                           << " Pa, Phi=" << result.diagnostic_flux_integral << " Wb, I="
-                           << result.diagnostic_current_integral << " A, N="
-                           << mutable_inputs.num_turns << ", Lz=" << mutable_inputs.length_z
-                           << " m, L="
+                           << " Pa, Phi=" << result.diagnostic_flux_integral
+                           << " Wb, I=" << result.diagnostic_current_integral
+                           << " A, N=" << mutable_inputs.num_turns
+                           << ", Lz=" << mutable_inputs.length_z << " m, L="
                            << (result.diagnostic_current_integral == 0.0
                                        ? 0.0
                                        : result.diagnostic_flux_integral
                                                  / (result.diagnostic_current_integral
                                                     * mutable_inputs.num_turns))
                            << " H, "
-                           << "integrated Tn=("
-                           << result.diagnostic_traction_integral[0] << ", "
+                           << "integrated Tn=(" << result.diagnostic_traction_integral[0] << ", "
                            << result.diagnostic_traction_integral[1] << ", "
                            << result.diagnostic_traction_integral[2] << ")" << std::defaultfloat;
         client().sendInfo(diagnostics_stream.str());

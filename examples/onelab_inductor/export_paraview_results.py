@@ -481,7 +481,10 @@ def build_structured_arrays_from_pos(
                 MAGNETIC_FIELD_VIEW,
                 FORCE_DENSITY_VIEW,
             ):
-                if current_view == MAGNETIC_INDUCTION_VIEW and magnetic_induction is None:
+                if (
+                    current_view == MAGNETIC_INDUCTION_VIEW
+                    and magnetic_induction is None
+                ):
                     shape = (
                         (nx - 1, ny - 1, 3)
                         if topology_dimension == 2
@@ -1348,7 +1351,9 @@ def main() -> int:
         if not pos_file.exists():
             direct_h5_is_fresh = True
         else:
-            direct_h5_is_fresh = direct_h5_file.stat().st_mtime >= pos_file.stat().st_mtime
+            direct_h5_is_fresh = (
+                direct_h5_file.stat().st_mtime >= pos_file.stat().st_mtime
+            )
 
     if direct_h5_is_fresh:
         (

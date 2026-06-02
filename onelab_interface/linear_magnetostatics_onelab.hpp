@@ -169,8 +169,7 @@ Inputs read_inputs(
     for (std::string const& parameter_name :
          problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
                  .magnetic_material_tags) {
-        inputs.magnetic_material_tags.push_back(
-                read_required_integer_parameter(parameter_name));
+        inputs.magnetic_material_tags.push_back(read_required_integer_parameter(parameter_name));
     }
     for (std::string const& parameter_name :
          problem.force_density_diagnostics_postprocess.diagnostic_region_tags) {
@@ -214,12 +213,14 @@ void publish_outputs(
             "Core permeability [H/m]",
             inputs.core_mu,
             "Core permeability [H/m]",
-            inputs.use_nonlinear_magnetic_material
-                    ? "Reference linear permeability used outside the nonlinear constitutive update."
-                    : "Magnetic permeability read from the ONELAB model inputs and used in core cells.");
+            inputs.use_nonlinear_magnetic_material ? "Reference linear permeability used outside "
+                                                     "the nonlinear constitutive update."
+                                                   : "Magnetic permeability read from the ONELAB "
+                                                     "model inputs and used in core cells.");
     publish_output_string(
             "Core constitutive law",
-            inputs.use_nonlinear_magnetic_material ? inputs.nonlinear_bh_curve : "LinearPermeability",
+            inputs.use_nonlinear_magnetic_material ? inputs.nonlinear_bh_curve
+                                                   : "LinearPermeability",
             "Core constitutive law",
             "Core constitutive law selected for the magnetostatics solve.",
             "generic");
@@ -343,10 +344,9 @@ void publish_outputs(
             "Integral of the Maxwell traction T n over the upper air-gap surface, z component.");
     publish_output_number(
             "Mean upper air-gap traction magnitude [Pa]",
-            result.diagnostic_surface_measure == 0.0
-                    ? 0.0
-                    : result.diagnostic_traction_magnitude_integral
-                              / result.diagnostic_surface_measure,
+            result.diagnostic_surface_measure == 0.0 ? 0.0
+                                                     : result.diagnostic_traction_magnitude_integral
+                                                               / result.diagnostic_surface_measure,
             "Mean upper air-gap traction magnitude [Pa]",
             "Mean magnitude of the Maxwell traction T n over the detected upper air-gap "
             "surface.");
@@ -418,15 +418,15 @@ inline void apply_x_mirror_symmetry_projection_to_traction_integral(
 
     constexpr double tol = 1.0e-12;
     std::vector<DiagnosticFaceSample> sorted_samples(face_samples);
-    std::sort(
-            sorted_samples.begin(),
-            sorted_samples.end(),
-            [](DiagnosticFaceSample const& lhs, DiagnosticFaceSample const& rhs) {
-                if (std::abs(lhs.z - rhs.z) > tol) {
-                    return lhs.z < rhs.z;
-                }
-                return lhs.x < rhs.x;
-            });
+    std::
+            sort(sorted_samples.begin(),
+                 sorted_samples.end(),
+                 [](DiagnosticFaceSample const& lhs, DiagnosticFaceSample const& rhs) {
+                     if (std::abs(lhs.z - rhs.z) > tol) {
+                         return lhs.z < rhs.z;
+                     }
+                     return lhs.x < rhs.x;
+                 });
 
     std::array<double, 3> projected_integral {0.0, 0.0, 0.0};
     std::size_t left = 0;
@@ -507,15 +507,14 @@ inline std::vector<double> read_bh_curve_component(
     return parse_number_list(bh_pro_content.substr(open_brace + 1, close_brace - open_brace - 1));
 }
 
-inline void load_bh_curve_from_bh_pro(
-        Inputs& inputs,
-        std::filesystem::path const& bh_pro_file)
+inline void load_bh_curve_from_bh_pro(Inputs& inputs, std::filesystem::path const& bh_pro_file)
 {
     std::ifstream stream(bh_pro_file);
     if (!stream.is_open()) {
         throw std::runtime_error("failed to open nonlinear B-H file: " + bh_pro_file.string());
     }
-    std::string const content((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
+    std::string const
+            content((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
     inputs.nonlinear_h_samples = read_bh_curve_component(content, inputs.nonlinear_bh_curve, 'h');
     inputs.nonlinear_b_samples = read_bh_curve_component(content, inputs.nonlinear_bh_curve, 'b');
     if (inputs.nonlinear_h_samples.size() != inputs.nonlinear_b_samples.size()
@@ -637,14 +636,14 @@ public:
     }
 
     template <std::size_t I, std::size_t J, class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION double jacobian(
-            std::span<double const, 3> moments,
-            Elem elem) const
+    [[nodiscard]] KOKKOS_FUNCTION double jacobian(std::span<double const, 3> moments, Elem elem)
+            const
     {
         if (!is_nonlinear(elem)) {
             return I == J ? 1.0 / linear_mu(elem) : 0.0;
         }
-        double const q = moments[0] * moments[0] + moments[1] * moments[1] + moments[2] * moments[2];
+        double const q
+                = moments[0] * moments[0] + moments[1] * moments[1] + moments[2] * moments[2];
         double const nu = m_nonlinear_bh_curve.nu_from_q(q);
         double const dnu = m_nonlinear_bh_curve.dnu_dq(q);
         return (I == J ? nu : 0.0) + 2.0 * dnu * moments[I] * moments[J];
@@ -676,11 +675,9 @@ private:
     Kokkos::View<int*, MemorySpace> m_moment0_counts;
     Kokkos::View<int*, MemorySpace> m_moment1_counts;
     Kokkos::View<int**, Kokkos::LayoutRight, MemorySpace> m_transposed_moment0_columns;
-    Kokkos::View<double**, Kokkos::LayoutRight, MemorySpace>
-            m_transposed_moment0_coefficients;
+    Kokkos::View<double**, Kokkos::LayoutRight, MemorySpace> m_transposed_moment0_coefficients;
     Kokkos::View<int**, Kokkos::LayoutRight, MemorySpace> m_transposed_moment1_columns;
-    Kokkos::View<double**, Kokkos::LayoutRight, MemorySpace>
-            m_transposed_moment1_coefficients;
+    Kokkos::View<double**, Kokkos::LayoutRight, MemorySpace> m_transposed_moment1_coefficients;
     Kokkos::View<int*, MemorySpace> m_transposed_moment0_counts;
     Kokkos::View<int*, MemorySpace> m_transposed_moment1_counts;
     Kokkos::View<int* [OUTER_STENCIL_MAX_SIZE], MemorySpace> m_outer0_columns;
@@ -742,14 +739,18 @@ public:
         auto moment1_coefficients_host = Kokkos::create_mirror_view(m_moment1_coefficients);
         auto moment0_counts_host = Kokkos::create_mirror_view(m_moment0_counts);
         auto moment1_counts_host = Kokkos::create_mirror_view(m_moment1_counts);
-        auto transposed_moment0_columns_host = Kokkos::create_mirror_view(m_transposed_moment0_columns);
-        auto transposed_moment0_coefficients_host = Kokkos::create_mirror_view(
-                m_transposed_moment0_coefficients);
-        auto transposed_moment1_columns_host = Kokkos::create_mirror_view(m_transposed_moment1_columns);
-        auto transposed_moment1_coefficients_host = Kokkos::create_mirror_view(
-                m_transposed_moment1_coefficients);
-        auto transposed_moment0_counts_host = Kokkos::create_mirror_view(m_transposed_moment0_counts);
-        auto transposed_moment1_counts_host = Kokkos::create_mirror_view(m_transposed_moment1_counts);
+        auto transposed_moment0_columns_host
+                = Kokkos::create_mirror_view(m_transposed_moment0_columns);
+        auto transposed_moment0_coefficients_host
+                = Kokkos::create_mirror_view(m_transposed_moment0_coefficients);
+        auto transposed_moment1_columns_host
+                = Kokkos::create_mirror_view(m_transposed_moment1_columns);
+        auto transposed_moment1_coefficients_host
+                = Kokkos::create_mirror_view(m_transposed_moment1_coefficients);
+        auto transposed_moment0_counts_host
+                = Kokkos::create_mirror_view(m_transposed_moment0_counts);
+        auto transposed_moment1_counts_host
+                = Kokkos::create_mirror_view(m_transposed_moment1_counts);
         auto outer0_columns_host = Kokkos::create_mirror_view(m_outer0_columns);
         auto outer0_coefficients_host = Kokkos::create_mirror_view(m_outer0_coefficients);
         auto outer1_columns_host = Kokkos::create_mirror_view(m_outer1_columns);
@@ -882,11 +883,13 @@ public:
         for (std::size_t sampled_row = 0; sampled_row < m_nx * m_ny; ++sampled_row) {
             std::size_t const sampled_i = sampled_row % m_nx;
             std::size_t const sampled_j = sampled_row / m_nx;
-            if (sampled_i == 0 || sampled_j == 0 || sampled_i + 1 == m_nx || sampled_j + 1 == m_ny) {
+            if (sampled_i == 0 || sampled_j == 0 || sampled_i + 1 == m_nx
+                || sampled_j + 1 == m_ny) {
                 continue;
             }
             for (int slot = 0; slot < moment0_counts_host(sampled_row); ++slot) {
-                std::size_t const row = static_cast<std::size_t>(moment0_columns_host(sampled_row, slot));
+                std::size_t const row
+                        = static_cast<std::size_t>(moment0_columns_host(sampled_row, slot));
                 if (row >= m_nx * m_ny) {
                     continue;
                 }
@@ -900,7 +903,8 @@ public:
                 transposed_moment0_counts_host(row) = count + 1;
             }
             for (int slot = 0; slot < moment1_counts_host(sampled_row); ++slot) {
-                std::size_t const row = static_cast<std::size_t>(moment1_columns_host(sampled_row, slot));
+                std::size_t const row
+                        = static_cast<std::size_t>(moment1_columns_host(sampled_row, slot));
                 if (row >= m_nx * m_ny) {
                     continue;
                 }
@@ -986,8 +990,7 @@ public:
 
                     double residual = 0.0;
                     if (criterion == solvers::Criterion::PotentialTemporalDerivative
-                        || criterion
-                                   == solvers::Criterion::PotentialAndMomentsTemporalDerivative) {
+                        || criterion == solvers::Criterion::PotentialAndMomentsTemporalDerivative) {
                         for (int slot = 0; slot < transposed_moment0_counts(row); ++slot) {
                             double const transpose_coefficient
                                     = transposed_moment0_coefficients(row, slot);
@@ -1013,7 +1016,9 @@ public:
                             std::array<double, 3> const moments {moment0, moment1, 0.0};
                             residual += transpose_coefficient
                                         * equations.template dpotential_dt<0>(
-                                                std::span<double const, 3>(moments.data(), moments.size()),
+                                                std::span<
+                                                        double const,
+                                                        3>(moments.data(), moments.size()),
                                                 sampled_elem);
                         }
                         for (int slot = 0; slot < transposed_moment1_counts(row); ++slot) {
@@ -1041,13 +1046,14 @@ public:
                             std::array<double, 3> const moments {moment0, moment1, 0.0};
                             residual += transpose_coefficient
                                         * equations.template dpotential_dt<1>(
-                                                std::span<double const, 3>(moments.data(), moments.size()),
+                                                std::span<
+                                                        double const,
+                                                        3>(moments.data(), moments.size()),
                                                 sampled_elem);
                         }
                     }
                     if (criterion == solvers::Criterion::MomentsTemporalDerivative
-                        || criterion
-                                   == solvers::Criterion::PotentialAndMomentsTemporalDerivative) {
+                        || criterion == solvers::Criterion::PotentialAndMomentsTemporalDerivative) {
                         for (int slot = 0; slot < outer0_counts(row); ++slot) {
                             double const outer_coefficient = outer0_coefficients(row, slot);
                             std::size_t const sampled_row
@@ -1072,7 +1078,9 @@ public:
                             std::array<double, 3> const moments {moment0, moment1, 0.0};
                             residual -= outer_coefficient
                                         * equations.template dpotential_dt<0>(
-                                                std::span<double const, 3>(moments.data(), moments.size()),
+                                                std::span<
+                                                        double const,
+                                                        3>(moments.data(), moments.size()),
                                                 sampled_elem);
                         }
                         for (int slot = 0; slot < outer1_counts(row); ++slot) {
@@ -1099,7 +1107,9 @@ public:
                             std::array<double, 3> const moments {moment0, moment1, 0.0};
                             residual -= outer_coefficient
                                         * equations.template dpotential_dt<1>(
-                                                std::span<double const, 3>(moments.data(), moments.size()),
+                                                std::span<
+                                                        double const,
+                                                        3>(moments.data(), moments.size()),
                                                 sampled_elem);
                         }
                     }
@@ -1203,7 +1213,13 @@ private:
     }
 };
 
-template <class ExecSpace, class MemorySpace, class Equations, class StateView, class InputView, class OutputView>
+template <
+        class ExecSpace,
+        class MemorySpace,
+        class Equations,
+        class StateView,
+        class InputView,
+        class OutputView>
 void apply_jacobian(
         ExecSpace exec_space,
         MagnetostaticsOperator2D<MemorySpace, Equations> const& operator_model,
@@ -1241,8 +1257,10 @@ void apply_jacobian(
             exec_space,
             node_domain,
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
-                std::size_t const i = static_cast<std::size_t>(ddc::DiscreteElement<DDimX>(elem).uid());
-                std::size_t const j = static_cast<std::size_t>(ddc::DiscreteElement<DDimY>(elem).uid());
+                std::size_t const i
+                        = static_cast<std::size_t>(ddc::DiscreteElement<DDimX>(elem).uid());
+                std::size_t const j
+                        = static_cast<std::size_t>(ddc::DiscreteElement<DDimY>(elem).uid());
                 std::size_t const row = i + nx * j;
                 if (i == 0 || j == 0 || i + 1 == nx || j + 1 == ny) {
                     output(row, 0) = input(row, 0);
@@ -1250,19 +1268,24 @@ void apply_jacobian(
                 }
 
                 double residual = 0.0;
-                auto add_sampled_contribution = [&](double row_coefficient, std::size_t sampled_row, bool use_first_component) {
-                    auto const sampled_elem = ddc::DiscreteElement<DDimX, DDimY>(sampled_row % nx, sampled_row / nx);
+                auto add_sampled_contribution = [&](double row_coefficient,
+                                                    std::size_t sampled_row,
+                                                    bool use_first_component) {
+                    auto const sampled_elem = ddc::
+                            DiscreteElement<DDimX, DDimY>(sampled_row % nx, sampled_row / nx);
                     double state_moment0 = 0.0;
                     double delta_moment0 = 0.0;
                     for (int k = 0; k < moment0_counts(sampled_row); ++k) {
-                        std::size_t const column = static_cast<std::size_t>(moment0_columns(sampled_row, k));
+                        std::size_t const column
+                                = static_cast<std::size_t>(moment0_columns(sampled_row, k));
                         state_moment0 += moment0_coefficients(sampled_row, k) * state(column, 0);
                         delta_moment0 += moment0_coefficients(sampled_row, k) * input(column, 0);
                     }
                     double state_moment1 = 0.0;
                     double delta_moment1 = 0.0;
                     for (int k = 0; k < moment1_counts(sampled_row); ++k) {
-                        std::size_t const column = static_cast<std::size_t>(moment1_columns(sampled_row, k));
+                        std::size_t const column
+                                = static_cast<std::size_t>(moment1_columns(sampled_row, k));
                         state_moment1 += moment1_coefficients(sampled_row, k) * state(column, 0);
                         delta_moment1 += moment1_coefficients(sampled_row, k) * input(column, 0);
                     }
@@ -1280,8 +1303,9 @@ void apply_jacobian(
                             std::span<double const, 3>(moments.data(), moments.size()),
                             sampled_elem);
                     residual += row_coefficient
-                                * (use_first_component ? (h00 * delta_moment0 + h01 * delta_moment1)
-                                                       : (h10 * delta_moment0 + h11 * delta_moment1));
+                                * (use_first_component
+                                           ? (h00 * delta_moment0 + h01 * delta_moment1)
+                                           : (h10 * delta_moment0 + h11 * delta_moment1));
                 };
 
                 if (criterion == solvers::Criterion::PotentialTemporalDerivative
@@ -1360,8 +1384,10 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
             exec_space,
             node_domain,
             KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
-                std::size_t const i = static_cast<std::size_t>(ddc::DiscreteElement<DDimX>(elem).uid());
-                std::size_t const j = static_cast<std::size_t>(ddc::DiscreteElement<DDimY>(elem).uid());
+                std::size_t const i
+                        = static_cast<std::size_t>(ddc::DiscreteElement<DDimX>(elem).uid());
+                std::size_t const j
+                        = static_cast<std::size_t>(ddc::DiscreteElement<DDimY>(elem).uid());
                 std::size_t const row = i + nx * j;
 
                 auto set_entry = [&](int slot, std::size_t column, double value) {
@@ -1394,17 +1420,24 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                 }
 
                 int count = 0;
-                auto add_sampled_block = [&](double row_coefficient, std::size_t sampled_row, bool use_first_component) {
-                    auto const sampled_elem = ddc::DiscreteElement<DDimX, DDimY>(sampled_row % nx, sampled_row / nx);
+                auto add_sampled_block = [&](double row_coefficient,
+                                             std::size_t sampled_row,
+                                             bool use_first_component) {
+                    auto const sampled_elem = ddc::
+                            DiscreteElement<DDimX, DDimY>(sampled_row % nx, sampled_row / nx);
                     double state_moment0 = 0.0;
                     for (int k = 0; k < moment0_counts(sampled_row); ++k) {
                         state_moment0 += moment0_coefficients(sampled_row, k)
-                                         * state(static_cast<std::size_t>(moment0_columns(sampled_row, k)), 0);
+                                         * state(static_cast<std::size_t>(
+                                                         moment0_columns(sampled_row, k)),
+                                                 0);
                     }
                     double state_moment1 = 0.0;
                     for (int k = 0; k < moment1_counts(sampled_row); ++k) {
                         state_moment1 += moment1_coefficients(sampled_row, k)
-                                         * state(static_cast<std::size_t>(moment1_columns(sampled_row, k)), 0);
+                                         * state(static_cast<std::size_t>(
+                                                         moment1_columns(sampled_row, k)),
+                                                 0);
                     }
                     std::array<double, 3> const moments {state_moment0, state_moment1, 0.0};
                     double const h00 = equations.template jacobian<0, 0>(
@@ -1420,21 +1453,25 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                             std::span<double const, 3>(moments.data(), moments.size()),
                             sampled_elem);
                     for (int k = 0; k < moment0_counts(sampled_row); ++k) {
-                        std::size_t const column = static_cast<std::size_t>(moment0_columns(sampled_row, k));
-                        double const value = row_coefficient
-                                             * (use_first_component
-                                                        ? h00 * moment0_coefficients(sampled_row, k)
-                                                        : h10 * moment0_coefficients(sampled_row, k));
+                        std::size_t const column
+                                = static_cast<std::size_t>(moment0_columns(sampled_row, k));
+                        double const value
+                                = row_coefficient
+                                  * (use_first_component
+                                             ? h00 * moment0_coefficients(sampled_row, k)
+                                             : h10 * moment0_coefficients(sampled_row, k));
                         if (value != 0.0) {
                             add_entry(count, column, value);
                         }
                     }
                     for (int k = 0; k < moment1_counts(sampled_row); ++k) {
-                        std::size_t const column = static_cast<std::size_t>(moment1_columns(sampled_row, k));
-                        double const value = row_coefficient
-                                             * (use_first_component
-                                                        ? h01 * moment1_coefficients(sampled_row, k)
-                                                        : h11 * moment1_coefficients(sampled_row, k));
+                        std::size_t const column
+                                = static_cast<std::size_t>(moment1_columns(sampled_row, k));
+                        double const value
+                                = row_coefficient
+                                  * (use_first_component
+                                             ? h01 * moment1_coefficients(sampled_row, k)
+                                             : h11 * moment1_coefficients(sampled_row, k));
                         if (value != 0.0) {
                             add_entry(count, column, value);
                         }
@@ -1487,7 +1524,10 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
             if (coefficient == 0.0) {
                 continue;
             }
-            matrix_data.nonzeros.emplace_back(row, static_cast<std::size_t>(columns_host(row, slot)), coefficient);
+            matrix_data.nonzeros.emplace_back(
+                    row,
+                    static_cast<std::size_t>(columns_host(row, slot)),
+                    coefficient);
         }
     }
     return matrix_data;
@@ -1569,23 +1609,24 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
 
                 int count = 0;
                 if (criterion == solvers::Criterion::PotentialTemporalDerivative
-                    || criterion
-                               == solvers::Criterion::PotentialAndMomentsTemporalDerivative) {
+                    || criterion == solvers::Criterion::PotentialAndMomentsTemporalDerivative) {
                     for (int slot = 0; slot < transposed_moment0_counts(row); ++slot) {
                         double const transpose_coefficient
                                 = transposed_moment0_coefficients(row, slot);
                         std::size_t const sampled_row
                                 = static_cast<std::size_t>(transposed_moment0_columns(row, slot));
-                        auto const sampled_elem = ddc::DiscreteElement<DDimX, DDimY>(
-                                sampled_row % nx,
-                                sampled_row / nx);
-                        auto moments_stencil = equations.template dpotential_dt_value<0>(sampled_elem);
+                        auto const sampled_elem = ddc::
+                                DiscreteElement<DDimX, DDimY>(sampled_row % nx, sampled_row / nx);
+                        auto moments_stencil
+                                = equations.template dpotential_dt_value<0>(sampled_elem);
                         ddc::device_for_each(moments_stencil.domain(), [&](auto moments_elem) {
-                            double const value = transpose_coefficient * moments_stencil.mem(moments_elem);
+                            double const value
+                                    = transpose_coefficient * moments_stencil.mem(moments_elem);
                             if (value == 0.0) {
                                 return;
                             }
-                            auto const potential_elem = ddc::DiscreteElement<DDimX, DDimY>(moments_elem);
+                            auto const potential_elem
+                                    = ddc::DiscreteElement<DDimX, DDimY>(moments_elem);
                             std::size_t const column
                                     = static_cast<std::size_t>(
                                               ddc::DiscreteElement<DDimX>(potential_elem).uid())
@@ -1601,16 +1642,18 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                                 = transposed_moment1_coefficients(row, slot);
                         std::size_t const sampled_row
                                 = static_cast<std::size_t>(transposed_moment1_columns(row, slot));
-                        auto const sampled_elem = ddc::DiscreteElement<DDimX, DDimY>(
-                                sampled_row % nx,
-                                sampled_row / nx);
-                        auto moments_stencil = equations.template dpotential_dt_value<1>(sampled_elem);
+                        auto const sampled_elem = ddc::
+                                DiscreteElement<DDimX, DDimY>(sampled_row % nx, sampled_row / nx);
+                        auto moments_stencil
+                                = equations.template dpotential_dt_value<1>(sampled_elem);
                         ddc::device_for_each(moments_stencil.domain(), [&](auto moments_elem) {
-                            double const value = transpose_coefficient * moments_stencil.mem(moments_elem);
+                            double const value
+                                    = transpose_coefficient * moments_stencil.mem(moments_elem);
                             if (value == 0.0) {
                                 return;
                             }
-                            auto const potential_elem = ddc::DiscreteElement<DDimX, DDimY>(moments_elem);
+                            auto const potential_elem
+                                    = ddc::DiscreteElement<DDimX, DDimY>(moments_elem);
                             std::size_t const column
                                     = static_cast<std::size_t>(
                                               ddc::DiscreteElement<DDimX>(potential_elem).uid())
@@ -1623,8 +1666,7 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                     }
                 }
                 if (criterion == solvers::Criterion::MomentsTemporalDerivative
-                    || criterion
-                               == solvers::Criterion::PotentialAndMomentsTemporalDerivative) {
+                    || criterion == solvers::Criterion::PotentialAndMomentsTemporalDerivative) {
                     auto outer_chain = sil::exterior::tangent_basis<1, NodeDomain2D>(elem);
                     auto outer_lower_chain = sil::exterior::tangent_basis<0, NodeDomain2D>(elem);
                     auto outer0_stencil = sil::exterior::TransposedCoboundary<
@@ -1641,13 +1683,15 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                             return;
                         }
                         auto const sampled_elem = ddc::DiscreteElement<DDimX, DDimY>(stencil_elem);
-                        auto moments_stencil = equations.template dpotential_dt_value<0>(sampled_elem);
+                        auto moments_stencil
+                                = equations.template dpotential_dt_value<0>(sampled_elem);
                         ddc::device_for_each(moments_stencil.domain(), [&](auto moments_elem) {
                             double const value = -outer_coeff * moments_stencil.mem(moments_elem);
                             if (value == 0.0) {
                                 return;
                             }
-                            auto const potential_elem = ddc::DiscreteElement<DDimX, DDimY>(moments_elem);
+                            auto const potential_elem
+                                    = ddc::DiscreteElement<DDimX, DDimY>(moments_elem);
                             std::size_t const column
                                     = static_cast<std::size_t>(
                                               ddc::DiscreteElement<DDimX>(potential_elem).uid())
@@ -1672,13 +1716,15 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                             return;
                         }
                         auto const sampled_elem = ddc::DiscreteElement<DDimX, DDimY>(stencil_elem);
-                        auto moments_stencil = equations.template dpotential_dt_value<1>(sampled_elem);
+                        auto moments_stencil
+                                = equations.template dpotential_dt_value<1>(sampled_elem);
                         ddc::device_for_each(moments_stencil.domain(), [&](auto moments_elem) {
                             double const value = -outer_coeff * moments_stencil.mem(moments_elem);
                             if (value == 0.0) {
                                 return;
                             }
-                            auto const potential_elem = ddc::DiscreteElement<DDimX, DDimY>(moments_elem);
+                            auto const potential_elem
+                                    = ddc::DiscreteElement<DDimX, DDimY>(moments_elem);
                             std::size_t const column
                                     = static_cast<std::size_t>(
                                               ddc::DiscreteElement<DDimX>(potential_elem).uid())
@@ -1721,39 +1767,33 @@ using MetricIndex = sil::tensor::TensorSymmetricIndex<
         sil::tensor::Covariant<sil::tensor::MetricIndex1<CDim...>>,
         sil::tensor::Covariant<sil::tensor::MetricIndex2<CDim...>>>;
 
-using PositionIndex2D = sil::tensor::
-        Contravariant<sil::tensor::TensorNaturalIndex<
-                physics::magnetostatics::X,
-                physics::magnetostatics::Y>>;
+using PositionIndex2D = sil::tensor::Contravariant<
+        sil::tensor::TensorNaturalIndex<physics::magnetostatics::X, physics::magnetostatics::Y>>;
 
-using MetricIndex2D = MetricIndex<
-        physics::magnetostatics::X,
-        physics::magnetostatics::Y>;
+using MetricIndex2D = MetricIndex<physics::magnetostatics::X, physics::magnetostatics::Y>;
 
 using InPlaneMagneticInductionIndex = sil::exterior::coboundary_index_t<
         sil::tensor::Covariant<magnetostatics_local::InPlaneNu>,
         magnetostatics_local::ScalarPotentialIndex>;
 
-struct InPlaneInductionNatural : sil::tensor::TensorNaturalIndex<
-        physics::magnetostatics::X,
-        physics::magnetostatics::Y>
+struct InPlaneInductionNatural
+    : sil::tensor::TensorNaturalIndex<physics::magnetostatics::X, physics::magnetostatics::Y>
 {
 };
 
-struct InPlaneFieldNatural : sil::tensor::TensorNaturalIndex<
-        physics::magnetostatics::X,
-        physics::magnetostatics::Y>
+struct InPlaneFieldNatural
+    : sil::tensor::TensorNaturalIndex<physics::magnetostatics::X, physics::magnetostatics::Y>
 {
 };
 
 using InPlaneInductionFormIndex = sil::tensor::Covariant<InPlaneInductionNatural>;
 using InPlaneFieldIndex = sil::tensor::Covariant<InPlaneFieldNatural>;
-using InPlaneInductionIndexSeq = sil::tensor::
-        upper_t<ddc::to_type_seq_t<sil::tensor::natural_domain_t<InPlaneInductionFormIndex>>>;
-using InPlaneFieldIndexSeq
-        = sil::tensor::upper_t<ddc::to_type_seq_t<sil::tensor::natural_domain_t<InPlaneFieldIndex>>>;
-using InPlaneFieldHodgeOutputIndexSeq
-        = sil::tensor::lower_t<ddc::to_type_seq_t<sil::tensor::natural_domain_t<InPlaneFieldIndex>>>;
+using InPlaneInductionIndexSeq = sil::tensor::upper_t<
+        ddc::to_type_seq_t<sil::tensor::natural_domain_t<InPlaneInductionFormIndex>>>;
+using InPlaneFieldIndexSeq = sil::tensor::upper_t<
+        ddc::to_type_seq_t<sil::tensor::natural_domain_t<InPlaneFieldIndex>>>;
+using InPlaneFieldHodgeOutputIndexSeq = sil::tensor::lower_t<
+        ddc::to_type_seq_t<sil::tensor::natural_domain_t<InPlaneFieldIndex>>>;
 
 template <std::size_t I, class NodeValueGetter>
 double magnetic_induction_moment_from_potential_z(
@@ -1789,8 +1829,10 @@ template <
         class NodeValueGetter,
         class WriteCellOutput>
 void fill_post_process_fields_on_cell_domain(
-        ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY> const& cell_domain,
-        ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY> const& node_domain,
+        ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY> const&
+                cell_domain,
+        ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY> const&
+                node_domain,
         ReadNodePosition&& read_node_position,
         ReadMu&& read_mu,
         ReadNonlinearMaterial&& read_nonlinear_material,
@@ -1812,22 +1854,32 @@ void fill_post_process_fields_on_cell_domain(
 
     ddc::host_for_each(node_domain, [&](auto node_elem) {
         std::array<double, 2> const coordinates = read_node_position(node_elem);
-        position(node_elem, position.accessor().template access_element<physics::magnetostatics::X>())
+        position(
+                node_elem,
+                position.accessor().template access_element<physics::magnetostatics::X>())
                 = coordinates[0];
-        position(node_elem, position.accessor().template access_element<physics::magnetostatics::Y>())
+        position(
+                node_elem,
+                position.accessor().template access_element<physics::magnetostatics::Y>())
                 = coordinates[1];
 
-        metric(node_elem, metric.accessor().template access_element<
-                                physics::magnetostatics::X,
-                                physics::magnetostatics::X>())
+        metric(node_elem,
+               metric.accessor()
+                       .template access_element<
+                               physics::magnetostatics::X,
+                               physics::magnetostatics::X>())
                 = 1.0;
-        metric(node_elem, metric.accessor().template access_element<
-                                physics::magnetostatics::X,
-                                physics::magnetostatics::Y>())
+        metric(node_elem,
+               metric.accessor()
+                       .template access_element<
+                               physics::magnetostatics::X,
+                               physics::magnetostatics::Y>())
                 = 0.0;
-        metric(node_elem, metric.accessor().template access_element<
-                                physics::magnetostatics::Y,
-                                physics::magnetostatics::Y>())
+        metric(node_elem,
+               metric.accessor()
+                       .template access_element<
+                               physics::magnetostatics::Y,
+                               physics::magnetostatics::Y>())
                 = 1.0;
     });
 
@@ -1836,12 +1888,15 @@ void fill_post_process_fields_on_cell_domain(
         auto reduced_induction
                 = physics::magnetostatics::detail::make_local_tensor<InPlaneInductionFormIndex>(
                         reduced_induction_alloc);
-        reduced_induction(reduced_induction.accessor().template access_element<physics::magnetostatics::X>())
+        reduced_induction(
+                reduced_induction.accessor().template access_element<physics::magnetostatics::X>())
                 = magnetic_induction_moment_from_potential_z<1>(elem, node_value_z);
-        reduced_induction(reduced_induction.accessor().template access_element<physics::magnetostatics::Y>())
+        reduced_induction(
+                reduced_induction.accessor().template access_element<physics::magnetostatics::Y>())
                 = magnetic_induction_moment_from_potential_z<0>(elem, node_value_z);
 
-        std::array<double, InPlaneInductionFormIndex::access_size()> reconstructed_induction_alloc {};
+        std::array<double, InPlaneInductionFormIndex::access_size()>
+                reconstructed_induction_alloc {};
         auto reconstructed_induction
                 = physics::magnetostatics::detail::make_local_tensor<InPlaneInductionFormIndex>(
                         reconstructed_induction_alloc);
@@ -1865,9 +1920,9 @@ void fill_post_process_fields_on_cell_domain(
         if (read_nonlinear_material(elem)) {
             magnetic_field = nonlinear_constitutive_law(
                     std::span<double const, 3>(unit_hodge.data(), unit_hodge.size()),
-                    std::span<double const, 3>(
-                            magnetic_induction.data(),
-                            magnetic_induction.size()));
+                    std::span<
+                            double const,
+                            3>(magnetic_induction.data(), magnetic_induction.size()));
         } else {
             physics::magnetostatics::LinearMagneticInductionToMagneticField const constitutive_law(
                     read_mu(elem));
@@ -1878,10 +1933,7 @@ void fill_post_process_fields_on_cell_domain(
             };
         }
 
-        write_cell_output(
-                elem,
-                magnetic_induction,
-                magnetic_field);
+        write_cell_output(elem, magnetic_induction, magnetic_field);
     });
 }
 
@@ -1909,7 +1961,8 @@ inline CellPostProcessFields make_cell_post_process_fields(
 
 template <class FillStress, class ReadPosition, class WriteForceDensity>
 void fill_force_density_on_cell_domain(
-        ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY> const& cell_domain,
+        ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY> const&
+                cell_domain,
         FillStress&& fill_stress,
         ReadPosition&& read_position,
         WriteForceDensity&& write_force_density)
@@ -1919,10 +1972,7 @@ void fill_force_density_on_cell_domain(
     using ScalarIndex = sil::tensor::Covariant<sil::tensor::ScalarIndex>;
 
     [[maybe_unused]] sil::tensor::TensorAccessor<ForceDensityIndex> force_density_accessor;
-    ddc::DiscreteDomain<
-            magnetostatics_local::DDimX,
-            magnetostatics_local::DDimY,
-            ForceDensityIndex>
+    ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY, ForceDensityIndex>
             force_density_dom(cell_domain, force_density_accessor.domain());
     ddc::Chunk force_density_alloc(force_density_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor force_density_tensor(force_density_alloc);
@@ -1961,28 +2011,32 @@ void fill_force_density_on_cell_domain(
         position(elem, position.accessor().template access_element<physics::magnetostatics::Y>())
                 = coordinates[1];
 
-        metric(elem, metric.accessor().template access_element<
-                             physics::magnetostatics::X,
-                             physics::magnetostatics::X>())
+        metric(elem,
+               metric.accessor()
+                       .template access_element<
+                               physics::magnetostatics::X,
+                               physics::magnetostatics::X>())
                 = 1.0;
-        metric(elem, metric.accessor().template access_element<
-                             physics::magnetostatics::X,
-                             physics::magnetostatics::Y>())
+        metric(elem,
+               metric.accessor()
+                       .template access_element<
+                               physics::magnetostatics::X,
+                               physics::magnetostatics::Y>())
                 = 0.0;
-        metric(elem, metric.accessor().template access_element<
-                             physics::magnetostatics::Y,
-                             physics::magnetostatics::Y>())
+        metric(elem,
+               metric.accessor()
+                       .template access_element<
+                               physics::magnetostatics::Y,
+                               physics::magnetostatics::Y>())
                 = 1.0;
     });
 
-    auto staged_codifferential = sil::exterior::make_staged_codifferential<
-            MetricIndex2D,
-            InPlaneOneFormIndex,
-            InPlaneOneFormIndex>(
-            Kokkos::DefaultHostExecutionSpace(),
-            one_form_tensor,
-            metric,
-            position);
+    auto staged_codifferential = sil::exterior::
+            make_staged_codifferential<MetricIndex2D, InPlaneOneFormIndex, InPlaneOneFormIndex>(
+                    Kokkos::DefaultHostExecutionSpace(),
+                    one_form_tensor,
+                    metric,
+                    position);
 
     auto fill_force_component = [&](auto select_components, auto assign_output) {
         ddc::host_for_each(cell_domain, [&](auto elem) {
@@ -1990,11 +2044,13 @@ void fill_force_density_on_cell_domain(
             std::array<double, 2> const one_form = select_components(stress);
             one_form_tensor(
                     elem,
-                    one_form_tensor.accessor().template access_element<physics::magnetostatics::X>())
+                    one_form_tensor.accessor()
+                            .template access_element<physics::magnetostatics::X>())
                     = one_form[0];
             one_form_tensor(
                     elem,
-                    one_form_tensor.accessor().template access_element<physics::magnetostatics::Y>())
+                    one_form_tensor.accessor()
+                            .template access_element<physics::magnetostatics::Y>())
                     = one_form[1];
         });
         staged_codifferential.run(scalar_tensor, one_form_tensor);
@@ -2061,11 +2117,13 @@ inline void fill_force_density_on_quadrilateral_grid(
         sil::onelab_interface::gmsh::StructuredGrid2D const& grid,
         std::vector<CellPostProcessFields>& cell_outputs)
 {
-    auto const cell_domain = ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(
+    auto const cell_domain = ddc::DiscreteDomain<
+            magnetostatics_local::DDimX,
+            magnetostatics_local::DDimY>(
             ddc::DiscreteElement<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(0, 0),
-            ddc::DiscreteVector<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(
-                    grid.ncell_x(),
-                    grid.ncell_y()));
+            ddc::DiscreteVector<
+                    magnetostatics_local::DDimX,
+                    magnetostatics_local::DDimY>(grid.ncell_x(), grid.ncell_y()));
     fill_force_density_on_cell_domain(
             cell_domain,
             [&](auto elem) {
@@ -2098,11 +2156,13 @@ inline void fill_force_density_on_hexahedral_grid_xy_slices(
         sil::onelab_interface::gmsh::StructuredGrid3D const& grid,
         std::vector<CellPostProcessFields>& cell_outputs)
 {
-    auto const cell_domain = ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(
+    auto const cell_domain = ddc::DiscreteDomain<
+            magnetostatics_local::DDimX,
+            magnetostatics_local::DDimY>(
             ddc::DiscreteElement<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(0, 0),
-            ddc::DiscreteVector<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(
-                    grid.ncell_x(),
-                    grid.ncell_y()));
+            ddc::DiscreteVector<
+                    magnetostatics_local::DDimX,
+                    magnetostatics_local::DDimY>(grid.ncell_x(), grid.ncell_y()));
     for (std::size_t k = 0; k < grid.ncell_z(); ++k) {
         fill_force_density_on_cell_domain(
                 cell_domain,
@@ -2173,8 +2233,8 @@ inline void write_results_view(
             auto const& cell_output = cell_outputs[grid.cell_index(i, j)];
             stream << "VP(" << grid.cell_center_x(i) << "," << grid.cell_center_y(j) << ","
                    << grid.z_value << "){" << cell_output.magnetic_induction[0] << ","
-                   << cell_output.magnetic_induction[1] << ","
-                   << cell_output.magnetic_induction[2] << "};\n";
+                   << cell_output.magnetic_induction[1] << "," << cell_output.magnetic_induction[2]
+                   << "};\n";
         }
     }
     stream << "};\n";
@@ -2197,8 +2257,7 @@ inline void write_results_view(
             for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
                 auto const& cell_output = cell_outputs[grid.cell_index(i, j)];
                 stream << "SP(" << grid.cell_center_x(i) << "," << grid.cell_center_y(j) << ","
-                       << grid.z_value << "){" << cell_output.maxwell_stress[component]
-                       << "};\n";
+                       << grid.z_value << "){" << cell_output.maxwell_stress[component] << "};\n";
             }
         }
         stream << "};\n";
@@ -2216,8 +2275,7 @@ inline void write_results_view(
             auto const& cell_output = cell_outputs[grid.cell_index(i, j)];
             stream << "VP(" << grid.cell_center_x(i) << "," << grid.cell_center_y(j) << ","
                    << grid.z_value << "){" << cell_output.force_density[0] << ","
-                   << cell_output.force_density[1] << "," << cell_output.force_density[2]
-                   << "};\n";
+                   << cell_output.force_density[1] << "," << cell_output.force_density[2] << "};\n";
         }
     }
     stream << "};\n";
@@ -2231,7 +2289,6 @@ inline void write_results_view(
         }
     }
     stream << "};\n";
-
 }
 
 template <class Logger>
@@ -2410,7 +2467,8 @@ Result run_on_quadrilateral_grid(
                 logger,
                 solver_settings.use_matrix_free
                         ? "SimiLie starting matrix-free preconditioned conjugate-gradient solve"
-                        : "SimiLie starting assembled-matrix Ginkgo preconditioned conjugate-gradient "
+                        : "SimiLie starting assembled-matrix Ginkgo preconditioned "
+                          "conjugate-gradient "
                           "solve");
         result.solver_diagnostics = solvers::minimize_strong_formulation_residual(
                 Kokkos::DefaultExecutionSpace(),
@@ -2462,16 +2520,20 @@ Result run_on_quadrilateral_grid(
         return magnetic_vector_potential[3 * grid.node_index(i, j) + 2];
     };
 
-    auto const node_domain = ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(
+    auto const node_domain = ddc::DiscreteDomain<
+            magnetostatics_local::DDimX,
+            magnetostatics_local::DDimY>(
             ddc::DiscreteElement<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(0, 0),
-            ddc::DiscreteVector<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(
-                    grid.nx(),
-                    grid.ny()));
-    auto const cell_domain = ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(
+            ddc::DiscreteVector<
+                    magnetostatics_local::DDimX,
+                    magnetostatics_local::DDimY>(grid.nx(), grid.ny()));
+    auto const cell_domain = ddc::DiscreteDomain<
+            magnetostatics_local::DDimX,
+            magnetostatics_local::DDimY>(
             ddc::DiscreteElement<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(0, 0),
-            ddc::DiscreteVector<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(
-                    grid.ncell_x(),
-                    grid.ncell_y()));
+            ddc::DiscreteVector<
+                    magnetostatics_local::DDimX,
+                    magnetostatics_local::DDimY>(grid.ncell_x(), grid.ncell_y()));
     std::vector<CellPostProcessFields> cell_outputs(result.num_cells);
     auto fill_cell_outputs = [&](auto const& nonlinear_constitutive_law) {
         fill_post_process_fields_on_cell_domain(
@@ -2516,17 +2578,18 @@ Result run_on_quadrilateral_grid(
                 });
     };
     if (inputs.use_nonlinear_magnetic_material) {
-        auto const nonlinear_constitutive_law = physics::magnetostatics::
-                NonlinearMagneticInductionToMagneticField(
+        auto const nonlinear_constitutive_law
+                = physics::magnetostatics::NonlinearMagneticInductionToMagneticField(
                         physics::magnetostatics::InterpolatedNonlinearBHCurve<64>(
-                                magnetostatics_local::to_padded_std_array<64>(inputs.nonlinear_b_samples),
-                                magnetostatics_local::to_padded_std_array<64>(inputs.nonlinear_h_samples),
+                                magnetostatics_local::to_padded_std_array<64>(
+                                        inputs.nonlinear_b_samples),
+                                magnetostatics_local::to_padded_std_array<64>(
+                                        inputs.nonlinear_h_samples),
                                 inputs.nonlinear_b_samples.size()));
         fill_cell_outputs(nonlinear_constitutive_law);
     } else {
-        auto const dummy_nonlinear_constitutive_law = [](auto, auto) {
-            return std::array<double, 3> {0.0, 0.0, 0.0};
-        };
+        auto const dummy_nonlinear_constitutive_law
+                = [](auto, auto) { return std::array<double, 3> {0.0, 0.0, 0.0}; };
         fill_cell_outputs(dummy_nonlinear_constitutive_law);
     }
     for (CellPostProcessFields const& cell_output : cell_outputs) {
@@ -2544,10 +2607,11 @@ Result run_on_quadrilateral_grid(
         for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
             std::size_t const cell_index = grid.cell_index(i, j);
             int const physical_tag = grid.ordered_cells[cell_index].physical_tag;
-            double const cell_area
-                    = (grid.x_coords[i + 1] - grid.x_coords[i]) * (grid.y_coords[j + 1] - grid.y_coords[j]);
+            double const cell_area = (grid.x_coords[i + 1] - grid.x_coords[i])
+                                     * (grid.y_coords[j + 1] - grid.y_coords[j]);
             if (has_tag(inputs.positive_electrical_conductor_tags, physical_tag)) {
-                result.diagnostic_current_integral += cell_area * cell_inputs[cell_index].current_density[2];
+                result.diagnostic_current_integral
+                        += cell_area * cell_inputs[cell_index].current_density[2];
                 ++result.num_current_cells;
             }
             if (!has_tag(inputs.diagnostic_region_tags, physical_tag)) {
@@ -2556,36 +2620,45 @@ Result run_on_quadrilateral_grid(
             bool const has_upper_neighbor = j + 1 < grid.ncell_y();
             bool const upper_neighbor_in_region
                     = has_upper_neighbor
-                      && has_tag(inputs.diagnostic_region_tags,
-                                 grid.ordered_cells[grid.cell_index(i, j + 1)].physical_tag);
+                      && has_tag(
+                              inputs.diagnostic_region_tags,
+                              grid.ordered_cells[grid.cell_index(i, j + 1)].physical_tag);
             if (upper_neighbor_in_region) {
                 continue;
             }
             double const face_measure = (grid.x_coords[i + 1] - grid.x_coords[i]) * inputs.length_z;
-            result.diagnostic_flux_integral += face_measure * cell_outputs[cell_index].magnetic_induction[1];
-            std::array<double, 3> const traction
-                    = traction_on_positive_y_face(
-                            cell_outputs[cell_index].magnetic_induction,
-                            cell_outputs[cell_index].magnetic_field);
+            result.diagnostic_flux_integral
+                    += face_measure * cell_outputs[cell_index].magnetic_induction[1];
+            std::array<double, 3> const traction = traction_on_positive_y_face(
+                    cell_outputs[cell_index].magnetic_induction,
+                    cell_outputs[cell_index].magnetic_field);
             result.diagnostic_surface_measure += face_measure;
             result.diagnostic_traction_integral[0] += face_measure * traction[0];
             result.diagnostic_traction_integral[1] += face_measure * traction[1];
             result.diagnostic_traction_integral[2] += face_measure * traction[2];
-            result.diagnostic_traction_magnitude_integral += face_measure * std::sqrt(
-                    traction[0] * traction[0] + traction[1] * traction[1]
-                    + traction[2] * traction[2]);
-            diagnostic_face_samples.push_back(DiagnosticFaceSample {
-                    .x = grid.cell_center_x(i),
-                    .z = grid.z_value,
-                    .measure = face_measure,
-                    .traction = traction,
-            });
+            result.diagnostic_traction_magnitude_integral
+                    += face_measure
+                       * std::sqrt(
+                               traction[0] * traction[0] + traction[1] * traction[1]
+                               + traction[2] * traction[2]);
+            diagnostic_face_samples.push_back(
+                    DiagnosticFaceSample {
+                            .x = grid.cell_center_x(i),
+                            .z = grid.z_value,
+                            .measure = face_measure,
+                            .traction = traction,
+                    });
             ++result.num_diagnostic_faces;
         }
     }
     apply_x_mirror_symmetry_projection_to_traction_integral(diagnostic_face_samples, result);
 
-    write_results_view(output_view_file, grid, cell_inputs, cell_outputs, magnetic_vector_potential);
+    write_results_view(
+            output_view_file,
+            grid,
+            cell_inputs,
+            cell_outputs,
+            magnetic_vector_potential);
     log_info(logger, "SimiLie magnetostatics post-processing exported");
     return result;
 }
@@ -2634,8 +2707,8 @@ inline void write_results_view(
             for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
                 auto const& cell_output = cell_outputs[grid.cell_index(i, j, k)];
                 stream << "VP(" << grid.cell_center_x(i) << "," << grid.cell_center_y(j) << ","
-                       << grid.cell_center_z(k) << "){" << cell_output.magnetic_induction[0]
-                       << "," << cell_output.magnetic_induction[1] << ","
+                       << grid.cell_center_z(k) << "){" << cell_output.magnetic_induction[0] << ","
+                       << cell_output.magnetic_induction[1] << ","
                        << cell_output.magnetic_induction[2] << "};\n";
             }
         }
@@ -2662,9 +2735,9 @@ inline void write_results_view(
             for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
                 for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
                     auto const& cell_output = cell_outputs[grid.cell_index(i, j, k)];
-                    stream << "SP(" << grid.cell_center_x(i) << "," << grid.cell_center_y(j)
-                           << "," << grid.cell_center_z(k) << "){"
-                           << cell_output.maxwell_stress[component] << "};\n";
+                    stream << "SP(" << grid.cell_center_x(i) << "," << grid.cell_center_y(j) << ","
+                           << grid.cell_center_z(k) << "){" << cell_output.maxwell_stress[component]
+                           << "};\n";
                 }
             }
         }
@@ -2703,7 +2776,6 @@ inline void write_results_view(
         }
     }
     stream << "};\n";
-
 }
 
 template <class Logger>
@@ -2720,9 +2792,9 @@ Result run_on_hexahedral_grid(
     log_info(
             logger,
             "SimiLie structured rectilinear hexahedral mesh validated ("
-                    + std::to_string(grid.ordered_nodes.size()) + " nodes, dimensions="
-                    + std::to_string(grid.nx()) + "x" + std::to_string(grid.ny()) + "x"
-                    + std::to_string(grid.nz()) + ")");
+                    + std::to_string(grid.ordered_nodes.size())
+                    + " nodes, dimensions=" + std::to_string(grid.nx()) + "x"
+                    + std::to_string(grid.ny()) + "x" + std::to_string(grid.nz()) + ")");
 
     Result result;
     result.topology = "hexahedral";
@@ -2824,9 +2896,10 @@ Result run_on_hexahedral_grid(
                     std::size_t const cell_j = static_cast<std::size_t>(cj);
                     double const cell_area = (grid.x_coords[cell_i + 1] - grid.x_coords[cell_i])
                                              * (grid.y_coords[cell_j + 1] - grid.y_coords[cell_j]);
-                    accumulated_current_density_z += 0.25 * cell_area
-                                                    * cell_inputs_2d[cell_i + grid.ncell_x() * cell_j]
-                                                              .current_density[2];
+                    accumulated_current_density_z
+                            += 0.25 * cell_area
+                               * cell_inputs_2d[cell_i + grid.ncell_x() * cell_j]
+                                         .current_density[2];
                 }
             }
             rhs_host(node_index, 0) = accumulated_current_density_z;
@@ -2885,9 +2958,9 @@ Result run_on_hexahedral_grid(
                         || cj >= static_cast<std::ptrdiff_t>(grid.ncell_y())) {
                         continue;
                     }
-                    CellInputFields const& cell_input = cell_inputs_2d[static_cast<std::size_t>(ci)
-                                                                       + grid.ncell_x()
-                                                                                 * static_cast<std::size_t>(cj)];
+                    CellInputFields const& cell_input = cell_inputs_2d
+                            [static_cast<std::size_t>(ci)
+                             + grid.ncell_x() * static_cast<std::size_t>(cj)];
                     accumulated_mu += cell_input.mu;
                     accumulated_nonlinear_mask += (cell_input.nonlinear_material ? 1.0 : 0.0);
                     ++count;
@@ -2911,7 +2984,8 @@ Result run_on_hexahedral_grid(
                 logger,
                 solver_settings.use_matrix_free
                         ? "SimiLie starting matrix-free preconditioned conjugate-gradient solve"
-                        : "SimiLie starting assembled-matrix Ginkgo preconditioned conjugate-gradient "
+                        : "SimiLie starting assembled-matrix Ginkgo preconditioned "
+                          "conjugate-gradient "
                           "solve");
         result.solver_diagnostics = solvers::minimize_strong_formulation_residual(
                 Kokkos::DefaultExecutionSpace(),
@@ -2962,16 +3036,20 @@ Result run_on_hexahedral_grid(
     }
     log_info(logger, "SimiLie starting magnetostatics post-processing");
 
-    auto const node_domain = ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(
+    auto const node_domain = ddc::DiscreteDomain<
+            magnetostatics_local::DDimX,
+            magnetostatics_local::DDimY>(
             ddc::DiscreteElement<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(0, 0),
-            ddc::DiscreteVector<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(
-                    grid.nx(),
-                    grid.ny()));
-    auto const cell_domain = ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(
+            ddc::DiscreteVector<
+                    magnetostatics_local::DDimX,
+                    magnetostatics_local::DDimY>(grid.nx(), grid.ny()));
+    auto const cell_domain = ddc::DiscreteDomain<
+            magnetostatics_local::DDimX,
+            magnetostatics_local::DDimY>(
             ddc::DiscreteElement<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(0, 0),
-            ddc::DiscreteVector<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(
-                    grid.ncell_x(),
-                    grid.ncell_y()));
+            ddc::DiscreteVector<
+                    magnetostatics_local::DDimX,
+                    magnetostatics_local::DDimY>(grid.ncell_x(), grid.ncell_y()));
     std::vector<CellPostProcessFields> cell_outputs(result.num_cells);
     auto fill_slice_outputs = [&](auto const& nonlinear_constitutive_law) {
         for (std::size_t k = 0; k < grid.ncell_z(); ++k) {
@@ -3021,17 +3099,18 @@ Result run_on_hexahedral_grid(
         }
     };
     if (inputs.use_nonlinear_magnetic_material) {
-        auto const nonlinear_constitutive_law = physics::magnetostatics::
-                NonlinearMagneticInductionToMagneticField(
+        auto const nonlinear_constitutive_law
+                = physics::magnetostatics::NonlinearMagneticInductionToMagneticField(
                         physics::magnetostatics::InterpolatedNonlinearBHCurve<64>(
-                                magnetostatics_local::to_padded_std_array<64>(inputs.nonlinear_b_samples),
-                                magnetostatics_local::to_padded_std_array<64>(inputs.nonlinear_h_samples),
+                                magnetostatics_local::to_padded_std_array<64>(
+                                        inputs.nonlinear_b_samples),
+                                magnetostatics_local::to_padded_std_array<64>(
+                                        inputs.nonlinear_h_samples),
                                 inputs.nonlinear_b_samples.size()));
         fill_slice_outputs(nonlinear_constitutive_law);
     } else {
-        auto const dummy_nonlinear_constitutive_law = [](auto, auto) {
-            return std::array<double, 3> {0.0, 0.0, 0.0};
-        };
+        auto const dummy_nonlinear_constitutive_law
+                = [](auto, auto) { return std::array<double, 3> {0.0, 0.0, 0.0}; };
         fill_slice_outputs(dummy_nonlinear_constitutive_law);
     }
     for (CellPostProcessFields const& cell_output : cell_outputs) {
@@ -3053,9 +3132,8 @@ Result run_on_hexahedral_grid(
             if (!has_tag(inputs.positive_electrical_conductor_tags, physical_tag)) {
                 continue;
             }
-            double const cell_cross_section_area
-                    = (grid.x_coords[i + 1] - grid.x_coords[i])
-                      * (grid.y_coords[j + 1] - grid.y_coords[j]);
+            double const cell_cross_section_area = (grid.x_coords[i + 1] - grid.x_coords[i])
+                                                   * (grid.y_coords[j + 1] - grid.y_coords[j]);
             result.diagnostic_current_integral
                     += cell_cross_section_area * cell_inputs_2d[cell_index_xy].current_density[2];
             ++result.num_current_cells;
@@ -3066,42 +3144,44 @@ Result run_on_hexahedral_grid(
             for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
                 std::size_t const cell_index = grid.cell_index(i, j, k);
                 int const physical_tag = grid.ordered_cells[cell_index].physical_tag;
-                double const cell_volume
-                        = (grid.x_coords[i + 1] - grid.x_coords[i])
-                          * (grid.y_coords[j + 1] - grid.y_coords[j])
-                          * (grid.z_coords[k + 1] - grid.z_coords[k]);
+                double const cell_volume = (grid.x_coords[i + 1] - grid.x_coords[i])
+                                           * (grid.y_coords[j + 1] - grid.y_coords[j])
+                                           * (grid.z_coords[k + 1] - grid.z_coords[k]);
                 if (!has_tag(inputs.diagnostic_region_tags, physical_tag)) {
                     continue;
                 }
                 bool const has_upper_neighbor = j + 1 < grid.ncell_y();
                 bool const upper_neighbor_in_region
                         = has_upper_neighbor
-                          && has_tag(inputs.diagnostic_region_tags,
-                                     grid.ordered_cells[grid.cell_index(i, j + 1, k)].physical_tag);
+                          && has_tag(
+                                  inputs.diagnostic_region_tags,
+                                  grid.ordered_cells[grid.cell_index(i, j + 1, k)].physical_tag);
                 if (upper_neighbor_in_region) {
                     continue;
                 }
-                double const face_measure
-                        = (grid.x_coords[i + 1] - grid.x_coords[i])
-                          * (grid.z_coords[k + 1] - grid.z_coords[k]);
-                result.diagnostic_flux_integral += face_measure * cell_outputs[cell_index].magnetic_induction[1];
-                std::array<double, 3> const traction
-                        = traction_on_positive_y_face(
-                                cell_outputs[cell_index].magnetic_induction,
-                                cell_outputs[cell_index].magnetic_field);
+                double const face_measure = (grid.x_coords[i + 1] - grid.x_coords[i])
+                                            * (grid.z_coords[k + 1] - grid.z_coords[k]);
+                result.diagnostic_flux_integral
+                        += face_measure * cell_outputs[cell_index].magnetic_induction[1];
+                std::array<double, 3> const traction = traction_on_positive_y_face(
+                        cell_outputs[cell_index].magnetic_induction,
+                        cell_outputs[cell_index].magnetic_field);
                 result.diagnostic_surface_measure += face_measure;
                 result.diagnostic_traction_integral[0] += face_measure * traction[0];
                 result.diagnostic_traction_integral[1] += face_measure * traction[1];
                 result.diagnostic_traction_integral[2] += face_measure * traction[2];
-                result.diagnostic_traction_magnitude_integral += face_measure * std::sqrt(
-                        traction[0] * traction[0] + traction[1] * traction[1]
-                        + traction[2] * traction[2]);
-                diagnostic_face_samples.push_back(DiagnosticFaceSample {
-                        .x = grid.cell_center_x(i),
-                        .z = grid.cell_center_z(k),
-                        .measure = face_measure,
-                        .traction = traction,
-                });
+                result.diagnostic_traction_magnitude_integral
+                        += face_measure
+                           * std::sqrt(
+                                   traction[0] * traction[0] + traction[1] * traction[1]
+                                   + traction[2] * traction[2]);
+                diagnostic_face_samples.push_back(
+                        DiagnosticFaceSample {
+                                .x = grid.cell_center_x(i),
+                                .z = grid.cell_center_z(k),
+                                .measure = face_measure,
+                                .traction = traction,
+                        });
                 ++result.num_diagnostic_faces;
             }
         }
