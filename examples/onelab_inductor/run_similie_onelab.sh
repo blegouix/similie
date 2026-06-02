@@ -4,8 +4,8 @@ set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "${script_dir}/../.." && pwd)"
-inductor_dir="${script_dir}/Inductor"
 geometry_file="${script_dir}/inductor.geo"
+model_data_file="${script_dir}/inductor_data.geo"
 problem_file="${SIMILIE_ONELAB_PROBLEM_FILE:-${script_dir}/inductor.silpro}"
 output_dir="$(pwd)"
 model_dimension=2
@@ -27,13 +27,13 @@ default_result_file="${mesh_output_dir}/similie_magnetostatics_inputs.pos"
 legacy_result_file="${mesh_output_dir}/similie_linear_magnetostatics_inputs.pos"
 analytical_l_rel_tolerance="${SIMILIE_ONELAB_ANALYTICAL_L_REL_TOLERANCE:-0.1}"
 
-if [[ ! -d "${inductor_dir}" ]]; then
-    echo "missing Inductor example directory: ${inductor_dir}" >&2
+if [[ ! -f "${geometry_file}" ]]; then
+    echo "missing inductor geometry file: ${geometry_file}" >&2
     exit 1
 fi
 
-if [[ ! -f "${geometry_file}" ]]; then
-    echo "missing Inductor geometry file: ${geometry_file}" >&2
+if [[ ! -f "${model_data_file}" ]]; then
+    echo "missing inductor model data file: ${model_data_file}" >&2
     exit 1
 fi
 
@@ -152,7 +152,7 @@ python3 "${paraview_export_script}" \
     --h5-output "${paraview_h5_file}" \
     --xmf-output "${paraview_xmf_file}"
 
-python3 - "${log_file}" "${mesh_file}" "${inductor_dir}/inductor_data.geo" "${analytical_l_rel_tolerance}" <<'PY'
+python3 - "${log_file}" "${mesh_file}" "${model_data_file}" "${analytical_l_rel_tolerance}" <<'PY'
 import math
 import re
 import sys
@@ -294,7 +294,7 @@ surface_measure, gap_length, length_z = parse_mesh_airgap_geometry(
 mu0 = 4.0e-7 * math.pi
 # The structured example models the complete EI magnetic circuit. Its upper
 # air-gap flux traverses four equivalent circuit sections. The inherited
-# ONELAB SymmetryFactor describes the original GetDP geometry reduction and is
+# ONELAB SymmetryFactor describes the selected geometry reduction and is
 # intentionally reported below, but it is not used by this full-grid estimate.
 magnetic_circuit_factor = 4.0
 analytical_l = mu0 * surface_measure / (

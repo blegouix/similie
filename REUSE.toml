@@ -15,11 +15,14 @@ SPDX-License-Identifier = "MIT"
 SPDX-FileComment = "Forked from the Gmsh ONELAB client sources. This vendored file is not modified in this repository."
 
 [[annotations]]
-path = "examples/onelab_inductor/Inductor/**"
+path = [
+    "examples/onelab_inductor/BH.pro",
+    "examples/onelab_inductor/inductor_data.geo",
+]
 precedence = "override"
 SPDX-FileCopyrightText = "1997-2026 C. Geuzaine, J.-F. Remacle"
 SPDX-License-Identifier = "GPL-2.0-or-later"
-SPDX-FileComment = "Forked ONELAB/Gmsh example files. Those vendored files are not modified in this repository."
+SPDX-FileComment = "Forked ONELAB/Gmsh example data retained by the standalone SimiLie example."
 
 [[annotations]]
 path = [
@@ -31,8 +34,6 @@ path = [
     "examples/onelab_inductor/inductor3d.geo",
     "examples/onelab_inductor/run_similie_onelab.sh",
     "onelab_interface/.clang-format-ignore",
-    "tests/onelab_interface/magnetostatics.silpro",
-    "tests/onelab_interface/scalar_field.silpro",
 ]
 precedence = "override"
 SPDX-FileCopyrightText = "2026 Baptiste Legouix"

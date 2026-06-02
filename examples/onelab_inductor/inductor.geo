@@ -1,4 +1,4 @@
-Include "Inductor/inductor_data.geo";
+Include "inductor_data.geo";
 
 If(Flag_3Dmodel == 0)
   Include "inductor2d.geo";
