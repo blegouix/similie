@@ -41,6 +41,7 @@ namespace similie::onelab_interface::linear_magnetostatics_onelab {
 struct Inputs
 {
     double current_density_magnitude = 0.0;
+    double num_turns = 1.0;
     double core_mu = 0.0;
     double mu0 = 0.0;
     double length_z = 1.0;
@@ -114,6 +115,10 @@ Inputs read_inputs(
                     .magnetic_permeability_parameter,
             std::nullopt,
             std::numeric_limits<double>::quiet_NaN());
+    double const num_turns = read_number_parameter(
+            "Input/4Coil Parameters/1Number of turns",
+            std::nullopt,
+            std::numeric_limits<double>::quiet_NaN());
     double const length_z = read_number_parameter(
             "Input/10Geometric dimensions/00Length along z-axis [m]",
             std::nullopt,
@@ -125,6 +130,10 @@ Inputs read_inputs(
                 "missing or invalid 'Input/90SimiLie/0Coil current density magnitude z [A/m^2]' "
                 "ONELAB parameter");
     }
+    if (!(num_turns > 0.0)) {
+        throw std::runtime_error(
+                "missing or invalid 'Input/4Coil Parameters/1Number of turns' ONELAB parameter");
+    }
     if (!problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
                  .use_nonlinear_magnetic_material
         && !(core_mu > 0.0)) {
@@ -135,6 +144,7 @@ Inputs read_inputs(
 
     Inputs inputs;
     inputs.current_density_magnitude = current_density_magnitude;
+    inputs.num_turns = num_turns;
     inputs.core_mu = core_mu > 0.0 ? core_mu : mu0;
     inputs.mu0 = mu0;
     inputs.length_z = length_z > 0.0 ? length_z : 1.0;
@@ -190,6 +200,11 @@ void publish_outputs(
             inputs.current_density_magnitude,
             "Coil current density magnitude [A/m^2]",
             "Current density magnitude read from the ONELAB model inputs.");
+    publish_output_number(
+            "Number of turns",
+            inputs.num_turns,
+            "Number of turns",
+            "Number of conductor turns used by the homogenized winding source.");
     publish_output_number(
             "Air permeability [H/m]",
             inputs.mu0,
@@ -282,15 +297,22 @@ void publish_outputs(
             "Positive-conductor current integral [A]",
             result.diagnostic_current_integral,
             "Positive-conductor current integral [A]",
-            "Integral of the current density over the positively oriented conductor region.");
+            "Integral of the homogenized current density over the positively oriented conductor "
+            "region.");
+    publish_output_number(
+            "Positive-conductor terminal current [A]",
+            result.diagnostic_current_integral / inputs.num_turns,
+            "Positive-conductor terminal current [A]",
+            "Positive-conductor current integral divided by the number of turns.");
     publish_output_number(
             "Inductance from upper air-gap flux [H]",
             result.diagnostic_current_integral == 0.0
                     ? 0.0
-                    : result.diagnostic_flux_integral / result.diagnostic_current_integral,
+                    : result.diagnostic_flux_integral
+                              / (result.diagnostic_current_integral * inputs.num_turns),
             "Inductance from upper air-gap flux [H]",
-            "Inductance estimated as L = Phi / I with Phi the upper air-gap flux integral and "
-            "I the numerically integrated positive-conductor current.");
+            "Inductance estimated as L = Phi / (N I) with Phi the upper air-gap flux integral, "
+            "I the numerically integrated positive-conductor current, and N the number of turns.");
     std::string const integrated_traction_unit = "N";
     publish_output_number(
             "Number of upper air-gap faces",
@@ -2525,8 +2547,7 @@ Result run_on_quadrilateral_grid(
             double const cell_area
                     = (grid.x_coords[i + 1] - grid.x_coords[i]) * (grid.y_coords[j + 1] - grid.y_coords[j]);
             if (has_tag(inputs.positive_electrical_conductor_tags, physical_tag)) {
-                result.diagnostic_current_integral
-                        += inputs.length_z * cell_area * cell_inputs[cell_index].current_density[2];
+                result.diagnostic_current_integral += cell_area * cell_inputs[cell_index].current_density[2];
                 ++result.num_current_cells;
             }
             if (!has_tag(inputs.diagnostic_region_tags, physical_tag)) {
@@ -3024,6 +3045,22 @@ Result run_on_hexahedral_grid(
     fill_force_density_on_hexahedral_grid_xy_slices(grid, cell_outputs);
     std::vector<DiagnosticFaceSample> diagnostic_face_samples;
     diagnostic_face_samples.reserve(grid.ncell_x() * grid.ncell_z());
+    for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
+        for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
+            std::size_t const cell_index_xy = i + grid.ncell_x() * j;
+            std::size_t const cell_index_3d = grid.cell_index(i, j, 0);
+            int const physical_tag = grid.ordered_cells[cell_index_3d].physical_tag;
+            if (!has_tag(inputs.positive_electrical_conductor_tags, physical_tag)) {
+                continue;
+            }
+            double const cell_cross_section_area
+                    = (grid.x_coords[i + 1] - grid.x_coords[i])
+                      * (grid.y_coords[j + 1] - grid.y_coords[j]);
+            result.diagnostic_current_integral
+                    += cell_cross_section_area * cell_inputs_2d[cell_index_xy].current_density[2];
+            ++result.num_current_cells;
+        }
+    }
     for (std::size_t k = 0; k < grid.ncell_z(); ++k) {
         for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
             for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
@@ -3033,11 +3070,6 @@ Result run_on_hexahedral_grid(
                         = (grid.x_coords[i + 1] - grid.x_coords[i])
                           * (grid.y_coords[j + 1] - grid.y_coords[j])
                           * (grid.z_coords[k + 1] - grid.z_coords[k]);
-                if (has_tag(inputs.positive_electrical_conductor_tags, physical_tag)) {
-                    result.diagnostic_current_integral
-                            += cell_volume * cell_inputs_3d[cell_index].current_density[2];
-                    ++result.num_current_cells;
-                }
                 if (!has_tag(inputs.diagnostic_region_tags, physical_tag)) {
                     continue;
                 }

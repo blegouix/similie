@@ -27,9 +27,9 @@ Should detect the presence of a GPU, build the corresponding docker image, compi
 ## Development plan
 
 1. Short term: simulate electromagnetism on manifold.
-2. Mid term (months): simulate geometrodynamics.
+2. Mid term: simulate geometrodynamics.
 3. Long term: generalize to all kinds of *classical* gauge theories.
-4. Extra-long term (years): quantization.
+4. Extra-long term (several years): quantization.
 
 ## Initial roadmap
 

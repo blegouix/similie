@@ -1227,11 +1227,14 @@ private:
                                        : result.diagnostic_traction_magnitude_integral
                                                  / result.diagnostic_surface_measure)
                            << " Pa, Phi=" << result.diagnostic_flux_integral << " Wb, I="
-                           << result.diagnostic_current_integral << " A, L="
+                           << result.diagnostic_current_integral << " A, N="
+                           << mutable_inputs.num_turns << ", Lz=" << mutable_inputs.length_z
+                           << " m, L="
                            << (result.diagnostic_current_integral == 0.0
                                        ? 0.0
                                        : result.diagnostic_flux_integral
-                                                 / result.diagnostic_current_integral)
+                                                 / (result.diagnostic_current_integral
+                                                    * mutable_inputs.num_turns))
                            << " H, "
                            << "integrated Tn=("
                            << result.diagnostic_traction_integral[0] << ", "

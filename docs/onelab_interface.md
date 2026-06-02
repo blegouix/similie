@@ -1,64 +1,15 @@
-# ONELAB `.silpro` Interface
+# The ONELAB interface {#onelab_interface}
+<!--
+SPDX-FileCopyrightText: 2026 Baptiste Legouix
+SPDX-License-Identifier: MIT
+-->
 
-`similie_onelab` now uses a SimiLie-specific problem description file with extension `.silpro`.
-The syntax is intentionally close to GetDP `.pro` files:
+[ONELAB](https://onelab.info/) is a standard interface specification that allows [Gmsh](https://gmsh.info/) to control external PDE solvers. SimiLie provides an ONELAB interface for several standard physics problems, including scalar field and magnetostatic physics.
 
-- named sections
-- brace-delimited blocks
-- `Key Value;` assignments
-- quoted strings for paths and ONELAB parameter names
-- `#` and `//` comments
+\important The ONELAB interface in SimiLie is mostly AI-generated and has received very limited testing. Unfortunately, I do not have the resources to do better. Please keep in mind that, without AI assistance, this interface would not exist at all. Contributions would of course be greatly appreciated.
 
-## Supported structure
+The geometry is defined in a `.geo` file, which is interpreted entirely by Gmsh. Gmsh then communicates with SimiLie through the ONELAB interface. The physical problem definition and numerical solver configuration are specified in a `.silpro` file, which can be viewed as the SimiLie counterpart of [GetDP](https://getdp.info/) `.pro` files. Of course, `.silpro` files do not follow the same specification as `.pro` files, since SimiLie is far for being able to claim having capabilities comparable to GetDP.
 
-```text
-Problem {
-  Name "Problem name";
-  Physics Magnetostatics;
-  Solver MinimizeStrongFormulationResidual;
-}
+\important Because the ONELAB interface is evolving rapidly, the `.silpro` format is currently undocumented. For a basic introduction, please refer to the [onelab_inductor](https://github.com/blegouix/similie/tree/main/examples/onelab_inductor) example.
 
-Solver {
-  MaxIterations 10000;
-  RelativeTolerance 1e-10;
-  JacobiMaxBlockSize 1;
-  UseMatrixFree 1;
-}
-```
-
-For magnetostatics, the `.silpro` file currently only selects the physics and solver settings.
-Problem-specific input quantities must come from the driving ONELAB model itself.
-
-For the structured inductor example, the `.geo` file publishes:
-
-- `Input/90SimiLie/0Coil current density magnitude z [A/m^2]`
-- `Input/90SimiLie/1Core magnetic permeability [H/m]`
-
-Semantics:
-
-- `UseMatrixFree 1` keeps the matrix-free operator as the default backend.
-- the ONELAB interface always checks hexahedricity and rectilinearity before solving.
-- the ONELAB interface always exports its internal `.pos` view to the mesh output directory.
-
-## Scalar Field
-
-```text
-ScalarFieldWithPowerCoupling {
-  Mass 1.0;
-  CouplingConstant 0.0;
-  CouplingPower 4.0;
-}
-```
-
-This physics is parsed and assembled by the interface, but the current ONELAB runtime path is still focused on the structured magnetostatics workflow.
-
-## Example
-
-The inductor example uses:
-
-- [inductor.silpro](/home/cart3sianbear/similie/examples/onelab_inductor/inductor.silpro)
-- [run_similie_onelab.sh](/home/cart3sianbear/similie/examples/onelab_inductor/run_similie_onelab.sh)
-
-The shell script passes the `.silpro` file through:
-
-`0Modules/SimiLie/0Control/Problem file`
+A key limitation of using SimiLie through its ONELAB interface is that SimiLie only supports rectilinear hexahedral grids. If Gmsh requests SimiLie to process a mesh containing non-hexahedral elements, it should trigger an assertion.
