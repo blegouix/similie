@@ -266,7 +266,7 @@ public:
     {
     }
 
-protected:
+public:
     void apply_impl(gko::LinOp const* b, gko::LinOp* x) const override
     {
         auto const* b_dense = dynamic_cast<dense_type const*>(b);
@@ -351,7 +351,7 @@ public:
     {
     }
 
-protected:
+public:
     void apply_impl(gko::LinOp const* b, gko::LinOp* x) const override
     {
         auto const* b_dense = dynamic_cast<dense_type const*>(b);
@@ -410,13 +410,13 @@ inline auto build_jacobi_preconditioner_factory(
             .on(gko_exec);
 }
 
-inline std::shared_ptr<gko::LinOp> build_jacobi_preconditioner(
+inline std::shared_ptr<gko::LinOp const> build_jacobi_preconditioner(
         std::shared_ptr<gko::Executor const> const& gko_exec,
         std::shared_ptr<gko::LinOp const> const& matrix,
         StrongFormulationSolverSettings const& settings)
 {
     auto preconditioner_factory = build_jacobi_preconditioner_factory(gko_exec, settings);
-    return std::shared_ptr<gko::LinOp>(preconditioner_factory->generate(matrix).release());
+    return std::shared_ptr<gko::LinOp const>(preconditioner_factory->generate(matrix).release());
 }
 
 template <class ExecSpace, class OperatorModel, class RHSViewType, class SolutionViewType>
@@ -428,7 +428,7 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
         SolutionViewType solution,
         StrongFormulationSolverSettings const& settings,
         std::shared_ptr<gko::LinOp const> const& assembled_matrix,
-        std::shared_ptr<gko::LinOp> const& preconditioner)
+        std::shared_ptr<gko::LinOp const> const& preconditioner)
 {
     using solver_type = gko::solver::Cg<double>;
     StrongFormulationSolverDiagnostics diagnostics;
