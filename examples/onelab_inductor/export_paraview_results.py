@@ -1417,8 +1417,8 @@ def main() -> int:
         topology_dimension,
         pos_file,
     )
-    if topology_dimension == 2:
-        magnetic_induction, magnetic_field, maxwell_stress, force_density = (
+    if magnetic_induction is None or magnetic_field is None or force_density is None:
+        derived_induction, derived_field, derived_stress, derived_force_density = (
             derive_cell_fields(
                 x_coords,
                 y_coords,
@@ -1427,31 +1427,16 @@ def main() -> int:
                 magnetic_vector_potential,
             )
         )
-    elif magnetic_induction is None or magnetic_field is None:
-        magnetic_induction, magnetic_field, derived_stress, derived_force_density = (
-            derive_cell_fields(
-                x_coords,
-                y_coords,
-                z_coords,
-                permeability,
-                magnetic_vector_potential,
-            )
-        )
-        if maxwell_stress is None:
-            maxwell_stress = derived_stress
+        if magnetic_induction is None:
+            magnetic_induction = derived_induction
+        if magnetic_field is None:
+            magnetic_field = derived_field
         if force_density is None:
             force_density = derived_force_density
+        if maxwell_stress is None:
+            maxwell_stress = derived_stress
     elif maxwell_stress is None:
         maxwell_stress = maxwell_stress_from_field(magnetic_induction, magnetic_field)
-
-    if force_density is None:
-        _, _, _, force_density = derive_cell_fields(
-            x_coords,
-            y_coords,
-            z_coords,
-            permeability,
-            magnetic_vector_potential,
-        )
     write_hdf5(
         h5_file,
         x_coords,
