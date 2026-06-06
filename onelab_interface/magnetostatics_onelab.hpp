@@ -549,7 +549,9 @@ struct Z
 template <class MuTensor>
 using LinearMagnetostaticsHamiltonian
         = physics::magnetostatics::LinearMagnetostaticsHamiltonian<MuTensor, X, Y, Z>;
-using MagneticVectorPotentialToMagneticInduction
+using MagneticVectorPotentialToMagneticInduction2D
+        = physics::magnetostatics::MagneticVectorPotentialToMagneticInduction<X, Y>;
+using MagneticVectorPotentialToMagneticInduction3D
         = physics::magnetostatics::MagneticVectorPotentialToMagneticInduction<X, Y, Z>;
 using InPlaneIndex = sil::tensor::TensorNaturalIndex<X, Y>;
 
@@ -591,6 +593,12 @@ struct DDimX
 struct DDimY
 {
     using continuous_dimension_type = Y;
+    static constexpr bool PERIODIC = false;
+};
+
+struct DDimZ
+{
+    using continuous_dimension_type = Z;
     static constexpr bool PERIODIC = false;
 };
 
@@ -692,7 +700,7 @@ public:
     }
 };
 
-template <class MemorySpace, class Equations>
+template <class MemorySpace, class Equations, class MagneticVectorPotentialToMagneticInduction>
 class MagnetostaticsOperator2D
 {
 public:
@@ -1283,12 +1291,14 @@ template <
         class ExecSpace,
         class MemorySpace,
         class Equations,
+        class MagneticVectorPotentialToMagneticInduction,
         class StateView,
         class InputView,
         class OutputView>
 void apply_jacobian(
         ExecSpace exec_space,
-        MagnetostaticsOperator2D<MemorySpace, Equations> const& operator_model,
+        MagnetostaticsOperator2D<MemorySpace, Equations, MagneticVectorPotentialToMagneticInduction>
+                const& operator_model,
         StateView state,
         InputView input,
         OutputView output)
@@ -1400,9 +1410,14 @@ void apply_jacobian(
             });
 }
 
-template <class MemorySpace, class Equations, class StateView>
+template <
+        class MemorySpace,
+        class Equations,
+        class MagneticVectorPotentialToMagneticInduction,
+        class StateView>
 gko::matrix_data<double, gko::int32> assemble_matrix_data(
-        MagnetostaticsOperator2D<MemorySpace, Equations> const& operator_model,
+        MagnetostaticsOperator2D<MemorySpace, Equations, MagneticVectorPotentialToMagneticInduction>
+                const& operator_model,
         StateView state)
 {
     std::size_t const size = operator_model.size();
@@ -1583,9 +1598,10 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
     return matrix_data;
 }
 
-template <class MemorySpace, class Equations>
+template <class MemorySpace, class Equations, class MagneticVectorPotentialToMagneticInduction>
 gko::matrix_data<double, gko::int32> assemble_matrix_data(
-        MagnetostaticsOperator2D<MemorySpace, Equations> const& operator_model)
+        MagnetostaticsOperator2D<MemorySpace, Equations, MagneticVectorPotentialToMagneticInduction>
+                const& operator_model)
 {
     std::size_t const size = operator_model.size();
     Kokkos::DefaultExecutionSpace exec_space;
@@ -1829,7 +1845,7 @@ using InPlaneInductionFormIndex = sil::tensor::Covariant<magnetostatics_local::I
 using InPlaneInductionIndexSeq = sil::tensor::upper_t<
         ddc::to_type_seq_t<sil::tensor::natural_domain_t<InPlaneInductionFormIndex>>>;
 
-template <class Index, class NodeValueGetter>
+template <class MagneticVectorPotentialToMagneticInduction, class Index, class NodeValueGetter>
 double magnetic_induction_moment_from_potential_z(
         ddc::DiscreteElement<magnetostatics_local::DDimX, magnetostatics_local::DDimY> elem,
         NodeValueGetter&& node_value_z)
@@ -1850,9 +1866,38 @@ double magnetic_induction_moment_from_potential_z(
         return value;
     };
 
+    return apply_stencil(MagneticVectorPotentialToMagneticInduction::template forward_value<Index>(
+            elem));
+}
+
+template <class Index, class NodeValueGetter>
+double magnetic_induction_moment_from_potential_z_3d(
+        ddc::DiscreteElement<
+                magnetostatics_local::DDimX,
+                magnetostatics_local::DDimY,
+                magnetostatics_local::DDimZ> elem,
+        NodeValueGetter&& node_value_z)
+{
+    using namespace magnetostatics_local;
+
+    auto apply_stencil = [&](auto stencil) {
+        double value = 0.0;
+        ddc::host_for_each(stencil.domain(), [&](auto stencil_elem) {
+            auto const potential_elem = ddc::DiscreteElement<DDimX, DDimY, DDimZ>(stencil_elem);
+            value += stencil.mem(stencil_elem)
+                     * node_value_z(
+                             static_cast<std::size_t>(
+                                     ddc::DiscreteElement<DDimX>(potential_elem).uid()),
+                             static_cast<std::size_t>(
+                                     ddc::DiscreteElement<DDimY>(potential_elem).uid()),
+                             static_cast<std::size_t>(
+                                     ddc::DiscreteElement<DDimZ>(potential_elem).uid()));
+        });
+        return value;
+    };
+
     return apply_stencil(
-            magnetostatics_local::MagneticVectorPotentialToMagneticInduction::
-                    template forward_value<Index>(elem));
+            MagneticVectorPotentialToMagneticInduction3D::template forward_value<Index>(elem));
 }
 
 template <
@@ -1910,9 +1955,13 @@ void fill_post_process_fields_on_cell_domain(
                         reduced_induction_accessor.domain());
         sil::tensor::Tensor reduced_induction(reduced_induction_span);
         reduced_induction(reduced_induction.accessor().template access_element<X>())
-                = magnetic_induction_moment_from_potential_z<Y>(elem, node_value_z);
+                = magnetic_induction_moment_from_potential_z<
+                        magnetostatics_local::MagneticVectorPotentialToMagneticInduction2D,
+                        Y>(elem, node_value_z);
         reduced_induction(reduced_induction.accessor().template access_element<Y>())
-                = magnetic_induction_moment_from_potential_z<X>(elem, node_value_z);
+                = magnetic_induction_moment_from_potential_z<
+                        magnetostatics_local::MagneticVectorPotentialToMagneticInduction2D,
+                        X>(elem, node_value_z);
 
         std::array<double, InPlaneInductionFormIndex::access_size()>
                 reconstructed_induction_alloc {};
@@ -1955,6 +2004,57 @@ void fill_post_process_fields_on_cell_domain(
                     constitutive_law(unit_hodge[0], magnetic_induction[0]),
                     constitutive_law(unit_hodge[1], magnetic_induction[1]),
                     0.0,
+            };
+        }
+
+        write_cell_output(elem, magnetic_induction, magnetic_field);
+    });
+}
+
+template <
+        class ReadCellWidths,
+        class ReadMu,
+        class ReadNonlinearMaterial,
+        class NonlinearConstitutiveLaw,
+        class NodeValueGetter,
+        class WriteCellOutput>
+void fill_post_process_fields_on_cell_domain_3d(
+        ddc::DiscreteDomain<
+                magnetostatics_local::DDimX,
+                magnetostatics_local::DDimY,
+                magnetostatics_local::DDimZ> const& cell_domain,
+        ReadCellWidths&& read_cell_widths,
+        ReadMu&& read_mu,
+        ReadNonlinearMaterial&& read_nonlinear_material,
+        NonlinearConstitutiveLaw const& nonlinear_constitutive_law,
+        NodeValueGetter&& node_value_z,
+        WriteCellOutput&& write_cell_output)
+{
+    ddc::host_for_each(cell_domain, [&](auto elem) {
+        std::array<double, 3> const cell_widths = read_cell_widths(elem);
+
+        std::array<double, 3> const magnetic_induction {
+                magnetic_induction_moment_from_potential_z_3d<X>(elem, node_value_z)
+                        / cell_widths[1],
+                magnetic_induction_moment_from_potential_z_3d<Y>(elem, node_value_z)
+                        / cell_widths[0],
+                0.0,
+        };
+        std::array<double, 3> magnetic_field {0.0, 0.0, 0.0};
+        std::array<double, 3> const unit_hodge {1.0, 1.0, 1.0};
+        if (read_nonlinear_material(elem)) {
+            magnetic_field = nonlinear_constitutive_law(
+                    std::span<double const, 3>(unit_hodge.data(), unit_hodge.size()),
+                    std::span<
+                            double const,
+                            3>(magnetic_induction.data(), magnetic_induction.size()));
+        } else {
+            physics::magnetostatics::LinearMagneticInductionToMagneticField const constitutive_law(
+                    read_mu(elem));
+            magnetic_field = {
+                    constitutive_law(unit_hodge[0], magnetic_induction[0]),
+                    constitutive_law(unit_hodge[1], magnetic_induction[1]),
+                    constitutive_law(unit_hodge[2], magnetic_induction[2]),
             };
         }
 
@@ -2458,7 +2558,12 @@ Result run_on_quadrilateral_grid(
         SIMILIE_DEBUG_LOG("similie_onelab_linear_magnetostatics_build_operator_2d");
         auto const operator_model = magnetostatics_local::MagnetostaticsOperator2D<
                 memory_space,
-                decltype(equations)>(equations, x_coords, y_coords, solver_settings.criterion);
+                decltype(equations),
+                magnetostatics_local::MagneticVectorPotentialToMagneticInduction2D>(
+                equations,
+                x_coords,
+                y_coords,
+                solver_settings.criterion);
         log_info(
                 logger,
                 solver_settings.use_matrix_free
@@ -2977,7 +3082,12 @@ Result run_on_hexahedral_grid(
         SIMILIE_DEBUG_LOG("similie_onelab_linear_magnetostatics_build_operator_3d_reduced_to_2d");
         auto const operator_model = magnetostatics_local::MagnetostaticsOperator2D<
                 memory_space,
-                decltype(equations)>(equations, x_coords, y_coords, solver_settings.criterion);
+                decltype(equations),
+                magnetostatics_local::MagneticVectorPotentialToMagneticInduction2D>(
+                equations,
+                x_coords,
+                y_coords,
+                solver_settings.criterion);
         log_info(
                 logger,
                 solver_settings.use_matrix_free
@@ -3036,67 +3146,76 @@ Result run_on_hexahedral_grid(
     }
     log_info(logger, "SimiLie starting magnetostatics post-processing");
 
-    auto const node_domain = ddc::DiscreteDomain<
-            magnetostatics_local::DDimX,
-            magnetostatics_local::DDimY>(
-            ddc::DiscreteElement<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(0, 0),
-            ddc::DiscreteVector<
-                    magnetostatics_local::DDimX,
-                    magnetostatics_local::DDimY>(grid.nx(), grid.ny()));
     auto const cell_domain = ddc::DiscreteDomain<
             magnetostatics_local::DDimX,
-            magnetostatics_local::DDimY>(
-            ddc::DiscreteElement<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(0, 0),
+            magnetostatics_local::DDimY,
+            magnetostatics_local::DDimZ>(
+            ddc::DiscreteElement<
+                    magnetostatics_local::DDimX,
+                    magnetostatics_local::DDimY,
+                    magnetostatics_local::DDimZ>(0, 0, 0),
             ddc::DiscreteVector<
                     magnetostatics_local::DDimX,
-                    magnetostatics_local::DDimY>(grid.ncell_x(), grid.ncell_y()));
+                    magnetostatics_local::DDimY,
+                    magnetostatics_local::DDimZ>(
+                    grid.ncell_x(),
+                    grid.ncell_y(),
+                    grid.ncell_z()));
     std::vector<CellPostProcessFields> cell_outputs(result.num_cells);
-    auto fill_slice_outputs = [&](auto const& nonlinear_constitutive_law) {
-        for (std::size_t k = 0; k < grid.ncell_z(); ++k) {
-            auto node_value_z = [&](std::size_t node_i, std::size_t node_j) {
-                return magnetic_vector_potential[3 * grid.node_index(node_i, node_j, k) + 2];
-            };
-            fill_post_process_fields_on_cell_domain(
-                    cell_domain,
-                    node_domain,
-                    [&](auto node_elem) {
-                        std::size_t const i = static_cast<std::size_t>(
-                                ddc::DiscreteElement<magnetostatics_local::DDimX>(node_elem).uid());
-                        std::size_t const j = static_cast<std::size_t>(
-                                ddc::DiscreteElement<magnetostatics_local::DDimY>(node_elem).uid());
-                        return std::array<double, 2> {
-                                grid.x_coords[i],
-                                grid.y_coords[j],
-                        };
-                    },
-                    [&](auto elem) {
-                        std::size_t const i = static_cast<std::size_t>(
-                                ddc::DiscreteElement<magnetostatics_local::DDimX>(elem).uid());
-                        std::size_t const j = static_cast<std::size_t>(
-                                ddc::DiscreteElement<magnetostatics_local::DDimY>(elem).uid());
-                        return cell_inputs_3d[grid.cell_index(i, j, k)].mu;
-                    },
-                    [&](auto elem) {
-                        std::size_t const i = static_cast<std::size_t>(
-                                ddc::DiscreteElement<magnetostatics_local::DDimX>(elem).uid());
-                        std::size_t const j = static_cast<std::size_t>(
-                                ddc::DiscreteElement<magnetostatics_local::DDimY>(elem).uid());
-                        return cell_inputs_3d[grid.cell_index(i, j, k)].nonlinear_material;
-                    },
-                    nonlinear_constitutive_law,
-                    node_value_z,
-                    [&](auto elem,
-                        std::array<double, 3> const& magnetic_induction,
-                        std::array<double, 3> const& magnetic_field) {
-                        std::size_t const i = static_cast<std::size_t>(
-                                ddc::DiscreteElement<magnetostatics_local::DDimX>(elem).uid());
-                        std::size_t const j = static_cast<std::size_t>(
-                                ddc::DiscreteElement<magnetostatics_local::DDimY>(elem).uid());
-                        std::size_t const cell_index = grid.cell_index(i, j, k);
-                        cell_outputs[cell_index]
-                                = make_cell_post_process_fields(magnetic_induction, magnetic_field);
-                    });
-        }
+    auto fill_cell_outputs = [&](auto const& nonlinear_constitutive_law) {
+        auto node_value_z
+                = [&](std::size_t node_i, std::size_t node_j, std::size_t node_k) {
+                      return magnetic_vector_potential
+                              [3 * grid.node_index(node_i, node_j, node_k) + 2];
+                  };
+        fill_post_process_fields_on_cell_domain_3d(
+                cell_domain,
+                [&](auto elem) {
+                    std::size_t const i = static_cast<std::size_t>(
+                            ddc::DiscreteElement<magnetostatics_local::DDimX>(elem).uid());
+                    std::size_t const j = static_cast<std::size_t>(
+                            ddc::DiscreteElement<magnetostatics_local::DDimY>(elem).uid());
+                    std::size_t const k = static_cast<std::size_t>(
+                            ddc::DiscreteElement<magnetostatics_local::DDimZ>(elem).uid());
+                    return std::array<double, 3> {
+                            grid.x_coords[i + 1] - grid.x_coords[i],
+                            grid.y_coords[j + 1] - grid.y_coords[j],
+                            grid.z_coords[k + 1] - grid.z_coords[k],
+                    };
+                },
+                [&](auto elem) {
+                    std::size_t const i = static_cast<std::size_t>(
+                            ddc::DiscreteElement<magnetostatics_local::DDimX>(elem).uid());
+                    std::size_t const j = static_cast<std::size_t>(
+                            ddc::DiscreteElement<magnetostatics_local::DDimY>(elem).uid());
+                    std::size_t const k = static_cast<std::size_t>(
+                            ddc::DiscreteElement<magnetostatics_local::DDimZ>(elem).uid());
+                    return cell_inputs_3d[grid.cell_index(i, j, k)].mu;
+                },
+                [&](auto elem) {
+                    std::size_t const i = static_cast<std::size_t>(
+                            ddc::DiscreteElement<magnetostatics_local::DDimX>(elem).uid());
+                    std::size_t const j = static_cast<std::size_t>(
+                            ddc::DiscreteElement<magnetostatics_local::DDimY>(elem).uid());
+                    std::size_t const k = static_cast<std::size_t>(
+                            ddc::DiscreteElement<magnetostatics_local::DDimZ>(elem).uid());
+                    return cell_inputs_3d[grid.cell_index(i, j, k)].nonlinear_material;
+                },
+                nonlinear_constitutive_law,
+                node_value_z,
+                [&](auto elem,
+                    std::array<double, 3> const& magnetic_induction,
+                    std::array<double, 3> const& magnetic_field) {
+                    std::size_t const i = static_cast<std::size_t>(
+                            ddc::DiscreteElement<magnetostatics_local::DDimX>(elem).uid());
+                    std::size_t const j = static_cast<std::size_t>(
+                            ddc::DiscreteElement<magnetostatics_local::DDimY>(elem).uid());
+                    std::size_t const k = static_cast<std::size_t>(
+                            ddc::DiscreteElement<magnetostatics_local::DDimZ>(elem).uid());
+                    std::size_t const cell_index = grid.cell_index(i, j, k);
+                    cell_outputs[cell_index]
+                            = make_cell_post_process_fields(magnetic_induction, magnetic_field);
+                });
     };
     if (inputs.use_nonlinear_magnetic_material) {
         auto const nonlinear_constitutive_law
@@ -3107,11 +3226,11 @@ Result run_on_hexahedral_grid(
                                 magnetostatics_local::to_padded_std_array<64>(
                                         inputs.nonlinear_h_samples),
                                 inputs.nonlinear_b_samples.size()));
-        fill_slice_outputs(nonlinear_constitutive_law);
+        fill_cell_outputs(nonlinear_constitutive_law);
     } else {
         auto const dummy_nonlinear_constitutive_law
                 = [](auto, auto) { return std::array<double, 3> {0.0, 0.0, 0.0}; };
-        fill_slice_outputs(dummy_nonlinear_constitutive_law);
+        fill_cell_outputs(dummy_nonlinear_constitutive_law);
     }
     for (CellPostProcessFields const& cell_output : cell_outputs) {
         for (double value : cell_output.magnetic_induction) {
