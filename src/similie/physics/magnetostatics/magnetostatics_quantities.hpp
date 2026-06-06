@@ -62,19 +62,6 @@ struct ElementSpatialDomain<ddc::DiscreteElement<Tags...>>
     using type = ddc::DiscreteDomain<Tags...>;
 };
 
-template <class TensorIndex>
-KOKKOS_FUNCTION auto make_local_tensor(std::array<double, TensorIndex::access_size()>& storage)
-{
-    [[maybe_unused]] sil::tensor::TensorAccessor<TensorIndex> accessor;
-    ddc::ChunkSpan<
-            double,
-            ddc::DiscreteDomain<TensorIndex>,
-            Kokkos::layout_right,
-            Kokkos::HostSpace>
-            span(storage.data(), accessor.domain());
-    return sil::tensor::Tensor(span);
-}
-
 } // namespace detail
 
 class MagneticVectorPotentialToMagneticInduction

@@ -1886,9 +1886,17 @@ void fill_post_process_fields_on_cell_domain(
 
     ddc::host_for_each(cell_domain, [&](auto elem) {
         std::array<double, InPlaneInductionFormIndex::access_size()> reduced_induction_alloc {};
-        auto reduced_induction
-                = physics::magnetostatics::detail::make_local_tensor<InPlaneInductionFormIndex>(
-                        reduced_induction_alloc);
+        [[maybe_unused]] sil::tensor::TensorAccessor<InPlaneInductionFormIndex>
+                reduced_induction_accessor;
+        ddc::ChunkSpan<
+                double,
+                ddc::DiscreteDomain<InPlaneInductionFormIndex>,
+                Kokkos::layout_right,
+                Kokkos::HostSpace>
+                reduced_induction_span(
+                        reduced_induction_alloc.data(),
+                        reduced_induction_accessor.domain());
+        sil::tensor::Tensor reduced_induction(reduced_induction_span);
         reduced_induction(
                 reduced_induction.accessor().template access_element<physics::magnetostatics::X>())
                 = magnetic_induction_moment_from_potential_z<1>(elem, node_value_z);
@@ -1898,9 +1906,17 @@ void fill_post_process_fields_on_cell_domain(
 
         std::array<double, InPlaneInductionFormIndex::access_size()>
                 reconstructed_induction_alloc {};
-        auto reconstructed_induction
-                = physics::magnetostatics::detail::make_local_tensor<InPlaneInductionFormIndex>(
-                        reconstructed_induction_alloc);
+        [[maybe_unused]] sil::tensor::TensorAccessor<InPlaneInductionFormIndex>
+                reconstructed_induction_accessor;
+        ddc::ChunkSpan<
+                double,
+                ddc::DiscreteDomain<InPlaneInductionFormIndex>,
+                Kokkos::layout_right,
+                Kokkos::HostSpace>
+                reconstructed_induction_span(
+                        reconstructed_induction_alloc.data(),
+                        reconstructed_induction_accessor.domain());
+        sil::tensor::Tensor reconstructed_induction(reconstructed_induction_span);
         sil::exterior::Reconstruction<
                 InPlaneInductionIndexSeq,
                 decltype(position),
