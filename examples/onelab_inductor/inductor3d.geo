@@ -1,5 +1,10 @@
 SetFactory("Built-in");
 
+If(!Exists(SimiLieInductorDataIncluded))
+  Flag_3Dmodel = 1;
+  Include "inductor_data.geo";
+EndIf
+
 Mesh.Binary = 0;
 Mesh.MshFileVersion = 2.2;
 Mesh.RecombineAll = 1;

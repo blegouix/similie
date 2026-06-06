@@ -3,6 +3,9 @@
 
 cm = 1e-2;
 
+If(!Exists(SimiLieInductorDataIncluded))
+SimiLieInductorDataIncluded = 1;
+
 DefineConstant[
   Flag_3Dmodel = {0, Choices{0="2D",1="3D"},
     Name "Input/00FE model", Highlight "Blue"},
@@ -52,3 +55,5 @@ ICORE = 1100;
 COIL = 2000;
 AIR = 3000;
 AIRGAP = 3200;
+
+EndIf
