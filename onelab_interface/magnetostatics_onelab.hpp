@@ -27,6 +27,7 @@
 #include <similie/exterior/reduction_and_reconstruction.hpp>
 #include <similie/misc/macros.hpp>
 #include <similie/physics/hamilton_equations.hpp>
+#include <similie/physics/magnetostatics/linear_magnetostatics_constitutive_law.hpp>
 #include <similie/physics/magnetostatics/linear_magnetostatics.hpp>
 #include <similie/physics/magnetostatics/magnetostatics_quantities.hpp>
 #include <similie/physics/magnetostatics/nonlinear_magnetostatics.hpp>

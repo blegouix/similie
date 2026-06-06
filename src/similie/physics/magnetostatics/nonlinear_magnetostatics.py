@@ -4,14 +4,8 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 
-
-def write_cpp_nonlinear_magnetostatics_header(output_path: Path) -> None:
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-
-    output_path.write_text(
-        """\
+NONLINEAR_MAGNETOSTATICS_HEADER = """\
 // SPDX-FileCopyrightText: 2026 Baptiste Legouix
 // SPDX-License-Identifier: MIT
 
@@ -275,8 +269,3 @@ public:
 
 } // namespace similie::physics::magnetostatics
 """
-    )
-
-
-if __name__ == "__main__":
-    write_cpp_nonlinear_magnetostatics_header(Path("nonlinear_magnetostatics.hpp"))
