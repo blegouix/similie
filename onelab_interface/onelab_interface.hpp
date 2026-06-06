@@ -37,7 +37,7 @@
 #include <onelab.h>
 
 #include "gmsh_structured_grid.hpp"
-#include "linear_magnetostatics_onelab.hpp"
+#include "magnetostatics_onelab.hpp"
 #include "minimize_strong_formulation_residual_onelab.hpp"
 #include "scalar_field_with_power_coupling_onelab.hpp"
 
@@ -1034,7 +1034,7 @@ private:
 
         if (problem.physics == SupportedPhysics::LinearMagnetostatics
             || problem.physics == SupportedPhysics::NonLinearMagnetostatics) {
-            linear_magnetostatics_onelab::synchronize_controls(
+            magnetostatics_onelab::synchronize_controls(
                     problem,
                     [&](std::string const& section, std::string const& name) {
                         return problem_parameter_name(section, name);
@@ -1155,7 +1155,7 @@ private:
                 .single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
                 .use_nonlinear_magnetic_material
                 = problem.physics == SupportedPhysics::NonLinearMagnetostatics;
-        auto const inputs = linear_magnetostatics_onelab::read_inputs(
+        auto const inputs = magnetostatics_onelab::read_inputs(
                 problem_for_inputs,
                 [&](std::string const& preferred_parameter,
                     std::optional<std::string> const& fallback_parameter,
@@ -1170,9 +1170,9 @@ private:
                 });
         auto mutable_inputs = inputs;
         if (mutable_inputs.use_nonlinear_magnetic_material) {
-            linear_magnetostatics_onelab::detail::validate_nonlinear_bh_curve(
+            magnetostatics_onelab::detail::validate_nonlinear_bh_curve(
                     mutable_inputs.nonlinear_bh_curve);
-            linear_magnetostatics_onelab::detail::
+            magnetostatics_onelab::detail::
                     load_bh_curve_from_bh_pro(mutable_inputs, silpro_file.parent_path() / "BH.pro");
         }
         std::filesystem::path const output_view_file
@@ -1184,14 +1184,14 @@ private:
                 .use_matrix_free = problem.solver_settings.use_matrix_free,
                 .criterion = problem.solver_settings.criterion,
         };
-        auto const result = linear_magnetostatics_onelab::
+        auto const result = magnetostatics_onelab::
                 run(mesh_file,
                     output_view_file,
                     mutable_inputs,
                     solver_settings,
                     [&](std::string const& message) { client().sendInfo(message); });
         client().sendMergeFileRequest(std::filesystem::absolute(output_view_file).string());
-        linear_magnetostatics_onelab::publish_outputs(
+        magnetostatics_onelab::publish_outputs(
                 mesh_file,
                 mutable_inputs,
                 solver_settings,
