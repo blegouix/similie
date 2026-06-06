@@ -10,6 +10,21 @@
 
 namespace similie::onelab_interface::scalar_field_with_power_coupling_onelab {
 
+struct T
+{
+    static constexpr bool PERIODIC = false;
+};
+
+struct X
+{
+    static constexpr bool PERIODIC = false;
+};
+
+struct Y
+{
+    static constexpr bool PERIODIC = false;
+};
+
 template <class Problem, class ProblemParameterName, class PublishNumber>
 void synchronize_controls(
         Problem const& problem,
@@ -63,7 +78,7 @@ Problem apply_control_overrides(
 template <class Problem>
 auto assemble_hamiltonian(Problem const& problem)
 {
-    return physics::scalar_field::ScalarFieldWithPowerCouplingHamiltonian(
+    return physics::scalar_field::ScalarFieldWithPowerCouplingHamiltonian<T, X, Y>(
             problem.scalar_field.mass,
             problem.scalar_field.coupling_constant,
             problem.scalar_field.coupling_power);

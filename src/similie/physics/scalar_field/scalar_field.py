@@ -29,4 +29,5 @@ class ScalarFieldHamiltonian:
             parameters=["mass", "coupling_constant", "coupling_power"],
             hamiltonian=hamiltonian,
             variables=[phi, pi],
+            template_parameters=["class TemporalIndex", "class... SpatialIndex"],
         )

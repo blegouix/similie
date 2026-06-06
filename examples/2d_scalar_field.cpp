@@ -490,7 +490,7 @@ int main(int argc, char** argv)
      *
      * We implement mid-point explicit temporal integration scheme.
      */
-    similie::physics::scalar_field::ScalarFieldWithPowerCouplingHamiltonian const
+    similie::physics::scalar_field::ScalarFieldWithPowerCouplingHamiltonian<T, X, Y> const
             hamiltonian_model(mass, coupling_constant, coupling_power);
     similie::physics::DeDonderWeylEquations equations(hamiltonian_model);
     for (int i = 0; i < nb_iter; i++) {
@@ -505,7 +505,7 @@ int main(int argc, char** argv)
                 KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
                     half_step_potential(elem)
                             = potential(elem)
-                              - equations.template potential_grad<0>(temporal_moment(elem)) * dt
+                              - equations.template potential_grad<T>(temporal_moment(elem)) * dt
                                         / 2.;
                 });
 
@@ -541,7 +541,7 @@ int main(int argc, char** argv)
 
                     // Whole-step advection of field state
                     potential(elem)
-                            -= equations.template potential_grad<0>(half_step_temporal_moment_)
+                            -= equations.template potential_grad<T>(half_step_temporal_moment_)
                                * dt;
                     temporal_moment(elem) -= (equations.moments_div(half_step_potential_)
                                               + minus_spatial_moments_div_)

@@ -6,6 +6,7 @@
 #include <array>
 #include <cstddef>
 #include <span>
+#include <type_traits>
 
 #include <similie/exterior/coboundary.hpp>
 #include <similie/exterior/codifferential.hpp>
@@ -16,40 +17,35 @@
 
 namespace similie::physics::magnetostatics {
 
-struct X
-{
-    static constexpr bool PERIODIC = false;
-};
-
-struct Y
-{
-    static constexpr bool PERIODIC = false;
-};
-
-struct Z
-{
-    static constexpr bool PERIODIC = false;
-};
-
-struct Mu : sil::tensor::TensorNaturalIndex<X, Y, Z>
+template <class... SpatialIndex>
+struct Mu : sil::tensor::TensorNaturalIndex<SpatialIndex...>
 {
 };
 
-struct Nu : sil::tensor::TensorNaturalIndex<X, Y, Z>
+template <class... SpatialIndex>
+struct Nu : sil::tensor::TensorNaturalIndex<SpatialIndex...>
 {
 };
 
-using MagneticVectorPotentialIndex = sil::tensor::Covariant<Mu>;
-using MagneticFieldIndex = sil::tensor::Covariant<Mu>;
-using ForceDensityIndex = sil::tensor::Covariant<Mu>;
-using MagneticInductionIndex = sil::tensor::
-        TensorAntisymmetricIndex<sil::tensor::Covariant<Mu>, sil::tensor::Covariant<Nu>>;
-using MaxwellStressTensorIndex
-        = sil::tensor::TensorSymmetricIndex<sil::tensor::Covariant<Mu>, sil::tensor::Covariant<Nu>>;
+template <class... SpatialIndex>
+using MagneticVectorPotentialIndex = sil::tensor::Covariant<Mu<SpatialIndex...>>;
+template <class... SpatialIndex>
+using MagneticFieldIndex = sil::tensor::Covariant<Mu<SpatialIndex...>>;
+template <class... SpatialIndex>
+using ForceDensityIndex = sil::tensor::Covariant<Mu<SpatialIndex...>>;
+template <class... SpatialIndex>
+using MagneticInductionIndex = sil::tensor::TensorAntisymmetricIndex<
+        sil::tensor::Covariant<Mu<SpatialIndex...>>,
+        sil::tensor::Covariant<Nu<SpatialIndex...>>>;
+template <class... SpatialIndex>
+using MaxwellStressTensorIndex = sil::tensor::TensorSymmetricIndex<
+        sil::tensor::Covariant<Mu<SpatialIndex...>>,
+        sil::tensor::Covariant<Nu<SpatialIndex...>>>;
 
 namespace detail {
 
-struct InPlaneNu : sil::tensor::TensorNaturalIndex<X, Y>
+template <class... SpatialIndex>
+struct InPlaneNu : sil::tensor::TensorNaturalIndex<SpatialIndex...>
 {
 };
 
@@ -64,33 +60,37 @@ struct ElementSpatialDomain<ddc::DiscreteElement<Tags...>>
 
 } // namespace detail
 
+template <class XIndex, class YIndex, class... OtherSpatialIndex>
 class MagneticVectorPotentialToMagneticInduction
 {
 public:
-    template <std::size_t I, class Elem>
+    template <class Index, class Elem>
     [[nodiscard]] KOKKOS_FUNCTION static auto forward_value(Elem elem)
     {
-        static_assert(I < 2);
+        static_assert(
+                std::is_same_v<Index, XIndex> || std::is_same_v<Index, YIndex>,
+                "Magnetic induction component tag must be one of the two in-plane spatial tags");
         using spatial_domain_type = typename detail::ElementSpatialDomain<Elem>::type;
         using PotentialScalarIndex = sil::tensor::ScalarIndex;
-        using CoboundaryOutputIndex = sil::exterior::
-                coboundary_index_t<sil::tensor::Covariant<detail::InPlaneNu>, PotentialScalarIndex>;
+        using CoboundaryOutputIndex = sil::exterior::coboundary_index_t<
+                sil::tensor::Covariant<detail::InPlaneNu<XIndex, YIndex, OtherSpatialIndex...>>,
+                PotentialScalarIndex>;
         [[maybe_unused]] sil::tensor::TensorAccessor<CoboundaryOutputIndex> accessor;
         auto const natural_elem = [&]() {
-            if constexpr (I == 0) {
-                return accessor.template access_element<Y>();
+            if constexpr (std::is_same_v<Index, XIndex>) {
+                return accessor.template access_element<YIndex>();
             } else {
-                return accessor.template access_element<X>();
+                return accessor.template access_element<XIndex>();
             }
         }();
         auto const chain = sil::exterior::tangent_basis<1, spatial_domain_type>(elem);
         auto const lower_chain = sil::exterior::tangent_basis<0, spatial_domain_type>(elem);
 
         auto stencil = sil::exterior::Coboundary<
-                sil::tensor::Covariant<detail::InPlaneNu>,
+                sil::tensor::Covariant<detail::InPlaneNu<XIndex, YIndex, OtherSpatialIndex...>>,
                 PotentialScalarIndex>::
                 value([](auto, auto) { return 0.0; }, chain, lower_chain, elem, natural_elem);
-        if constexpr (I == 1) {
+        if constexpr (std::is_same_v<Index, YIndex>) {
             stencil *= -1.0;
         }
         return stencil;
@@ -109,7 +109,9 @@ public:
             LowerChainType lower_chain,
             Elem elem)
     {
-        sil::exterior::Coboundary<sil::tensor::Covariant<Nu>, MagneticVectorPotentialIndex>::
+        sil::exterior::Coboundary<
+                sil::tensor::Covariant<Nu<XIndex, YIndex, OtherSpatialIndex...>>,
+                MagneticVectorPotentialIndex<XIndex, YIndex, OtherSpatialIndex...>>::
                 run(magnetic_induction, evaluator, chain, lower_chain, elem);
     }
 };
@@ -190,6 +192,7 @@ public:
     }
 };
 
+template <class... SpatialIndex>
 class ForceDensityToMaxwellStressTensor
 {
 public:
@@ -213,8 +216,8 @@ public:
     {
         sil::exterior::Codifferential<
                 MetricIndex,
-                sil::tensor::Covariant<Nu>,
-                MaxwellStressTensorIndex,
+                sil::tensor::Covariant<Nu<SpatialIndex...>>,
+                MaxwellStressTensorIndex<SpatialIndex...>,
                 TensorType,
                 MetricType,
                 PositionType>::

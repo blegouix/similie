@@ -20,23 +20,23 @@ public:
     {
     }
 
-    template <std::size_t I>
+    template <class Index>
     [[nodiscard]] constexpr double potential_grad(
             std::span<double const, Hamiltonian::N> moments) const
     {
-        return m_hamiltonian.template dhamiltonian_dmoments<I>(moments[I]);
+        return m_hamiltonian.template dhamiltonian_dmoments<Index>(moments);
     }
 
-    template <std::size_t I>
+    template <class Index>
     [[nodiscard]] constexpr double potential_grad(double moments_component) const
     {
-        return m_hamiltonian.template dhamiltonian_dmoments<I>(moments_component);
+        return m_hamiltonian.template dhamiltonian_dmoments<Index>(moments_component);
     }
 
-    template <std::size_t I = 0>
+    template <class Index>
     [[nodiscard]] constexpr double moments_div(std::span<double const, 1> potential) const
     {
-        static_cast<void>(I);
+        static_cast<void>(sizeof(Index));
         return -m_hamiltonian.dhamiltonian_dpotential(potential[0]);
     }
 

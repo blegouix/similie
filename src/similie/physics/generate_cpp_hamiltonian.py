@@ -82,65 +82,96 @@ def _render_constructor_initializers(
     )
 
 
+def _generalize_component_expression(
+    symbol_name: str,
+    expression,
+    replacements: dict[str, str],
+    component_argument_name: str,
+) -> str:
+    return _replace_symbols(
+        cxxcode(expression),
+        {**replacements, symbol_name: component_argument_name},
+    )
+
+
+def _all_same(expressions: list[str]) -> bool:
+    return all(expression == expressions[0] for expression in expressions)
+
+
+def _has_temporal_index(template_parameters: list[str] | None) -> bool:
+    return template_parameters is not None and "class TemporalIndex" in template_parameters
+
+
 def _render_indexed_method(
     method_name: str,
     argument_prefix: str,
     symbols_: list[str],
     expressions: list,
     replacements: dict[str, str],
+    template_parameters: list[str] | None,
 ) -> str:
-    branches: list[str] = []
-    for i, (symbol_name, expression) in enumerate(
-        zip(symbols_, expressions, strict=True)
-    ):
-        branches.append(
-            f"""        if constexpr (I == {i}) {{
-            double const {symbol_name} = {argument_prefix};
-            return {_replace_symbols(cxxcode(expression), replacements)};
+    component_expressions = [
+        _generalize_component_expression(
+            symbol_name, expression, replacements, argument_prefix
+        )
+        for symbol_name, expression in zip(symbols_, expressions, strict=True)
+    ]
+    if _all_same(component_expressions):
+        body = f"        return {component_expressions[0]};"
+    elif _has_temporal_index(template_parameters):
+        body = f"""        if constexpr (std::is_same_v<Index, TemporalIndex>) {{
+            return {component_expressions[0]};
+        }} else {{
+            return {component_expressions[1]};
         }}"""
+    else:
+        raise ValueError(
+            f"{method_name} cannot be generated from a scalar component without tag-specific "
+            "expressions"
         )
 
-    branches.append(
-        """        else {
-            static_assert(I < N, "Hamiltonian component index out of range");
-        }"""
-    )
-
     return f"""
-    template <std::size_t I>
+    template <class Index>
     KOKKOS_FUNCTION constexpr double {method_name}(double {argument_prefix}) const
     {{
-{chr(10).join(branches)}
+{body}
     }}
 """
 
 
-def _render_indexed_span_method(
+def _render_indexed_elem_method(
     method_name: str,
-    argument_name: str,
+    argument_prefix: str,
     symbols_: list[str],
     expressions: list,
     replacements: dict[str, str],
+    template_parameters: list[str] | None,
 ) -> str:
-    branches: list[str] = []
-    for i, expression in enumerate(expressions):
-        branches.append(
-            f"""        if constexpr (I == {i}) {{
-            return {_replace_symbols(cxxcode(expression), replacements)};
+    component_expressions = [
+        _generalize_component_expression(
+            symbol_name, expression, replacements, argument_prefix
+        )
+        for symbol_name, expression in zip(symbols_, expressions, strict=True)
+    ]
+    if _all_same(component_expressions):
+        body = f"        return {component_expressions[0]};"
+    elif _has_temporal_index(template_parameters):
+        body = f"""        if constexpr (std::is_same_v<Index, TemporalIndex>) {{
+            return {component_expressions[0]};
+        }} else {{
+            return {component_expressions[1]};
         }}"""
+    else:
+        raise ValueError(
+            f"{method_name} cannot be generated from a scalar component without tag-specific "
+            "expressions"
         )
 
-    branches.append(
-        """        else {
-            static_assert(I < N, "Hamiltonian component index out of range");
-        }"""
-    )
-
     return f"""
-    template <std::size_t I>
-    KOKKOS_FUNCTION constexpr double {method_name}(std::span<double const, {len(symbols_)}> {argument_name}) const
+    template <class Index, class Elem>
+    KOKKOS_FUNCTION constexpr double {method_name}(double {argument_prefix}, Elem elem) const
     {{
-{chr(10).join(branches)}
+{body}
     }}
 """
 
@@ -155,25 +186,24 @@ def _render_indexed_nonlocal_value_method(
         diff(expression, symbols(symbol_name))
         for symbol_name, expression in zip(symbols_, expressions, strict=True)
     ]
-    branches: list[str] = []
-    for i, expression in enumerate(differentiated_expressions):
-        branches.append(
-            f"""        if constexpr (I == {i}) {{
-            auto value = MomentsComputer::template forward_value<I>(elem);
-            value *= {_replace_symbols(cxxcode(expression), replacements)};
-            return value;
-        }}"""
+    generalized_expressions = [
+        _replace_symbols(cxxcode(expression), replacements)
+        for expression in differentiated_expressions
+    ]
+    if _all_same(generalized_expressions):
+        body = f"""        auto value = MomentsComputer::template forward_value<Index>(elem);
+        value *= {generalized_expressions[0]};
+        return value;"""
+    else:
+        raise ValueError(
+            f"{method_name} cannot be generated without tag-specific nonlocal expressions"
         )
-    branches.append(
-        """        else {
-            static_assert(I < N, "Hamiltonian component index out of range");
-        }"""
-    )
+
     return f"""
-    template <std::size_t I, class Elem>
+    template <class Index, class Elem>
     KOKKOS_FUNCTION constexpr auto {method_name}(Elem elem) const
     {{
-{chr(10).join(branches)}
+{body}
     }}
 """
 
@@ -275,35 +305,7 @@ def write_cpp_hamiltonian_header(
     }}
 """
     else:
-        branches: list[str] = []
-        for i, expression in enumerate(potential_derivative_expressions):
-            branches.append(
-                f"""        if constexpr (I == {i}) {{
-            return {_replace_symbols(cxxcode(expression), potential_replacements)};
-        }}"""
-            )
-        branches.append(
-            """        else {
-            static_assert(I < N, "Hamiltonian component index out of range");
-        }"""
-        )
-        potential_method_signature = ", ".join(potential_signature_parts)
-        if requires_elem:
-            potential_method = f"""
-    template <std::size_t I, class Elem>
-    KOKKOS_FUNCTION constexpr double dhamiltonian_dpotential({potential_method_signature}, Elem elem) const
-    {{
-{chr(10).join(branches)}
-    }}
-"""
-        else:
-            potential_method = f"""
-    template <std::size_t I>
-    KOKKOS_FUNCTION constexpr double dhamiltonian_dpotential({potential_method_signature}) const
-    {{
-{chr(10).join(branches)}
-    }}
-"""
+        potential_method = ""
 
     inverse_methods = ""
     if inverse_symbols is not None and inverse_expressions is not None:
@@ -313,6 +315,7 @@ def write_cpp_hamiltonian_header(
             inverse_symbols,
             inverse_expressions,
             potential_replacements,
+            template_parameters,
         )
 
     if len(moments_symbols) == 1 or moments_computer is None:
@@ -322,76 +325,34 @@ def write_cpp_hamiltonian_header(
             [str(symbol) for symbol in moments_symbols],
             moments_derivative_expressions,
             moments_replacements,
+            template_parameters,
         )
     else:
-        span_moments_replacements = {
-            **parameter_replacements,
-            **{
-                str(symbol): f"moments[{i}]" for i, symbol in enumerate(moments_symbols)
-            },
-        }
-        if requires_elem:
-            branches: list[str] = []
-            for i, expression in enumerate(moments_derivative_expressions):
-                branches.append(
-                    f"""        if constexpr (I == {i}) {{
-            return {_replace_symbols(cxxcode(expression), span_moments_replacements)};
-        }}"""
-                )
-            branches.append(
-                """        else {
-            static_assert(I < N, "Hamiltonian component index out of range");
-        }"""
-            )
-            moments_method = f"""
-    template <std::size_t I, class Elem>
-    KOKKOS_FUNCTION constexpr double dhamiltonian_dmoments(std::span<double const, {len(moments_symbols)}> moments, Elem elem) const
-    {{
-{chr(10).join(branches)}
-    }}
-"""
-        else:
-            moments_method = _render_indexed_span_method(
-                "dhamiltonian_dmoments",
-                "moments",
-                [str(symbol) for symbol in moments_symbols],
-                moments_derivative_expressions,
-                span_moments_replacements,
-            )
+        moments_method = ""
     generic_moments_method = ""
     if len(moments_symbols) > 1 and moments_computer is not None:
-        generic_moments_branches: list[str] = []
         generic_moments_replacements = {
             **parameter_replacements,
             **{str(symbol): "moments" for symbol in moments_symbols},
         }
-        for i, expression in enumerate(moments_derivative_expressions):
-            generic_moments_branches.append(
-                f"""        if constexpr (I == {i}) {{
-            return {_replace_symbols(cxxcode(expression), generic_moments_replacements)};
-        }}"""
-            )
-        generic_moments_branches.append(
-            """        else {
-            static_assert(I < N, "Hamiltonian component index out of range");
-        }"""
-        )
         if requires_elem:
-            generic_moments_method = f"""
-    template <std::size_t I, class Elem>
-    KOKKOS_FUNCTION constexpr double dhamiltonian_dmoments(double moments, Elem elem) const
-    {{
-{chr(10).join(generic_moments_branches)}
-    }}
-"""
+            generic_moments_method = _render_indexed_elem_method(
+                "dhamiltonian_dmoments",
+                "moments",
+                [str(symbol) for symbol in moments_symbols],
+                moments_derivative_expressions,
+                generic_moments_replacements,
+                template_parameters,
+            )
         else:
-            generic_moments_method = f"""
-    template <std::size_t I>
-    KOKKOS_FUNCTION constexpr double dhamiltonian_dmoments(double moments) const
-    {{
-{chr(10).join(generic_moments_branches)}
-    }}
-"""
+            generic_moments_method = _render_indexed_method(
+                "dhamiltonian_dmoments",
+                "moments",
+                [str(symbol) for symbol in moments_symbols],
+                moments_derivative_expressions,
+                generic_moments_replacements,
+                template_parameters,
+            )
 
     nonlocal_value_methods = ""
     if moments_computer is not None:
@@ -410,7 +371,6 @@ def write_cpp_hamiltonian_header(
         rendered_moments_computer = (
             f"    using MomentsComputer = {moments_computer};\n\n"
         )
-
     template_prefix = ""
     if template_parameters:
         template_prefix = "template <" + ", ".join(template_parameters) + ">\n"
@@ -429,6 +389,7 @@ def write_cpp_hamiltonian_header(
 #include <cstddef>
 #include <Kokkos_Core.hpp>
 #include <span>
+#include <type_traits>
 #include <utility>
 {rendered_includes}
 
