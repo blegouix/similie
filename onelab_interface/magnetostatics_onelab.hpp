@@ -23,6 +23,7 @@
 
 #include <ginkgo/core/base/matrix_data.hpp>
 #include <similie/exterior/coboundary.hpp>
+#include <similie/exterior/codifferential.hpp>
 #include <similie/exterior/hodge_star.hpp>
 #include <similie/exterior/reduction_and_reconstruction.hpp>
 #include <similie/misc/macros.hpp>
@@ -550,7 +551,7 @@ using LinearMagnetostaticsHamiltonian
         = physics::magnetostatics::LinearMagnetostaticsHamiltonian<MuTensor, X, Y, Z>;
 using MagneticVectorPotentialToMagneticInduction
         = physics::magnetostatics::MagneticVectorPotentialToMagneticInduction<X, Y, Z>;
-using InPlaneNu = physics::magnetostatics::detail::InPlaneNu<X, Y>;
+using InPlaneIndex = sil::tensor::TensorNaturalIndex<X, Y>;
 
 struct MagneticMoments
 {
@@ -799,7 +800,7 @@ public:
         auto outer0_counts_host = Kokkos::create_mirror_view(m_outer0_counts);
         auto outer1_counts_host = Kokkos::create_mirror_view(m_outer1_counts);
         using OutputIndex = sil::exterior::
-                coboundary_index_t<sil::tensor::Covariant<InPlaneNu>, ScalarPotentialIndex>;
+                coboundary_index_t<sil::tensor::Covariant<InPlaneIndex>, ScalarPotentialIndex>;
         auto const output_y
                 = sil::tensor::TensorAccessor<OutputIndex>().template access_element<Y>();
         auto const output_x
@@ -872,7 +873,7 @@ public:
                 auto outer_lower_chain = sil::exterior::tangent_basis<0, NodeDomain2D>(elem);
                 int outer0_count = 0;
                 auto outer0_stencil = sil::exterior::TransposedCoboundary<
-                        sil::tensor::Covariant<InPlaneNu>,
+                        sil::tensor::Covariant<InPlaneIndex>,
                         ScalarPotentialIndex>::
                         value([](auto, auto) { return 0.0; },
                               outer_chain,
@@ -897,7 +898,7 @@ public:
 
                 int outer1_count = 0;
                 auto outer1_stencil = sil::exterior::TransposedCoboundary<
-                        sil::tensor::Covariant<InPlaneNu>,
+                        sil::tensor::Covariant<InPlaneIndex>,
                         ScalarPotentialIndex>::
                         value([](auto, auto) { return 0.0; },
                               outer_chain,
@@ -1612,7 +1613,7 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
             ddc::DiscreteElement<DDimX, DDimY>(0, 0),
             ddc::DiscreteVector<DDimX, DDimY>(nx, ny));
     using OutputIndex = sil::exterior::
-            coboundary_index_t<sil::tensor::Covariant<InPlaneNu>, ScalarPotentialIndex>;
+            coboundary_index_t<sil::tensor::Covariant<InPlaneIndex>, ScalarPotentialIndex>;
     auto const output_y = sil::tensor::TensorAccessor<OutputIndex>().template access_element<Y>();
     auto const output_x = sil::tensor::TensorAccessor<OutputIndex>().template access_element<X>();
 
@@ -1719,7 +1720,7 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                     auto outer_chain = sil::exterior::tangent_basis<1, NodeDomain2D>(elem);
                     auto outer_lower_chain = sil::exterior::tangent_basis<0, NodeDomain2D>(elem);
                     auto outer0_stencil = sil::exterior::TransposedCoboundary<
-                            sil::tensor::Covariant<InPlaneNu>,
+                            sil::tensor::Covariant<InPlaneIndex>,
                             ScalarPotentialIndex>::
                             value([](auto, auto) { return 0.0; },
                                   outer_chain,
@@ -1752,7 +1753,7 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                         });
                     });
                     auto outer1_stencil = sil::exterior::TransposedCoboundary<
-                            sil::tensor::Covariant<InPlaneNu>,
+                            sil::tensor::Covariant<InPlaneIndex>,
                             ScalarPotentialIndex>::
                             value([](auto, auto) { return 0.0; },
                                   outer_chain,
@@ -1824,26 +1825,9 @@ using PositionIndex2D = sil::tensor::Contravariant<sil::tensor::TensorNaturalInd
 
 using MetricIndex2D = MetricIndex<X, Y>;
 
-using InPlaneMagneticInductionIndex = sil::exterior::coboundary_index_t<
-        sil::tensor::Covariant<magnetostatics_local::InPlaneNu>,
-        magnetostatics_local::ScalarPotentialIndex>;
-
-struct InPlaneInductionNatural : sil::tensor::TensorNaturalIndex<X, Y>
-{
-};
-
-struct InPlaneFieldNatural : sil::tensor::TensorNaturalIndex<X, Y>
-{
-};
-
-using InPlaneInductionFormIndex = sil::tensor::Covariant<InPlaneInductionNatural>;
-using InPlaneFieldIndex = sil::tensor::Covariant<InPlaneFieldNatural>;
+using InPlaneInductionFormIndex = sil::tensor::Covariant<magnetostatics_local::InPlaneIndex>;
 using InPlaneInductionIndexSeq = sil::tensor::upper_t<
         ddc::to_type_seq_t<sil::tensor::natural_domain_t<InPlaneInductionFormIndex>>>;
-using InPlaneFieldIndexSeq = sil::tensor::upper_t<
-        ddc::to_type_seq_t<sil::tensor::natural_domain_t<InPlaneFieldIndex>>>;
-using InPlaneFieldHodgeOutputIndexSeq = sil::tensor::lower_t<
-        ddc::to_type_seq_t<sil::tensor::natural_domain_t<InPlaneFieldIndex>>>;
 
 template <class Index, class NodeValueGetter>
 double magnetic_induction_moment_from_potential_z(
@@ -2008,7 +1992,7 @@ void fill_force_density_on_cell_domain(
         ReadPosition&& read_position,
         WriteForceDensity&& write_force_density)
 {
-    using InPlaneOneFormIndex = sil::tensor::Covariant<magnetostatics_local::InPlaneNu>;
+    using InPlaneOneFormIndex = sil::tensor::Covariant<magnetostatics_local::InPlaneIndex>;
     using ForceDensityIndex = physics::magnetostatics::ForceDensityIndex<X, Y, Z>;
     using ScalarIndex = sil::tensor::Covariant<sil::tensor::ScalarIndex>;
 
