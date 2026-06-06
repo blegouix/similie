@@ -31,7 +31,6 @@ SPDX-FileComment = "Forked ONELAB/Gmsh example data used by the SimiLie example.
 [[annotations]]
 path = [
     "onelab_interface/.clang-format-ignore",
-    "examples/onelab_inductor/.clang-format-ignore",
 ]
 precedence = "override"
 SPDX-FileCopyrightText = "2026 Baptiste Legouix"
