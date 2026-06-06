@@ -1,6 +1,3 @@
-// SPDX-FileCopyrightText: 1997-2026 C. Geuzaine, J.-F. Remacle
-// SPDX-License-Identifier: GPL-2.0-or-later
-
 cm = 1e-2;
 
 If(!Exists(SimiLieInductorDataIncluded))
