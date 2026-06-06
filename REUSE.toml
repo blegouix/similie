@@ -26,4 +26,13 @@ path = [
 precedence = "override"
 SPDX-FileCopyrightText = "1997-2026 C. Geuzaine, J.-F. Remacle"
 SPDX-License-Identifier = "GPL-2.0-or-later"
-SPDX-FileComment = "Forked ONELAB/Gmsh example data retained by the standalone SimiLie example."
+SPDX-FileComment = "Forked ONELAB/Gmsh example data used by the SimiLie example. Modified to suit SimiLie specifications."
+
+[[annotations]]
+path = [
+    "onelab_interface/.clang-format-ignore",
+    "examples/onelab_inductor/.clang-format-ignore",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "2026 Baptiste Legouix"
+SPDX-License-Identifier = "MIT"
