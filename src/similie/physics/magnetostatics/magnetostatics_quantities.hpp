@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <algorithm>
+#include <array>
 #include <type_traits>
 
 #include <similie/exterior/coboundary.hpp>
@@ -133,9 +135,10 @@ template <class... SpatialIndex>
 class MagneticVectorPotentialToMagneticInduction<SpatialIndex...>
 {
     using SpatialIndexSeq = ddc::detail::TypeSeq<SpatialIndex...>;
-    using CoboundaryIndex = sil::tensor::Covariant<detail::CoboundarySpatialIndex<SpatialIndex...>>;
+    using SpatialNaturalIndex = sil::tensor::TensorNaturalIndex<SpatialIndex...>;
+    using CoboundaryIndex = sil::tensor::Contravariant<SpatialNaturalIndex>;
     using VectorPotentialIndex
-            = sil::tensor::Covariant<detail::VectorPotentialSpatialIndex<SpatialIndex...>>;
+            = sil::tensor::Covariant<SpatialNaturalIndex>;
     using MagneticInductionIndex
             = sil::exterior::coboundary_index_t<CoboundaryIndex, VectorPotentialIndex>;
 
@@ -159,8 +162,11 @@ class MagneticVectorPotentialToMagneticInduction<SpatialIndex...>
     }
 
 public:
+    using vector_potential_index = VectorPotentialIndex;
+    using magnetic_induction_index = MagneticInductionIndex;
+
     template <class Index, class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION static auto forward_value(Elem elem)
+    [[nodiscard]] KOKKOS_FUNCTION static auto forward_vector_value(Elem elem)
     {
         static_assert(
                 std::is_same_v<Index, ddc::type_seq_element_t<0, SpatialIndexSeq>>
@@ -171,21 +177,76 @@ public:
         auto const chain = sil::exterior::tangent_basis<2, spatial_domain_type>(elem);
         auto const lower_chain = sil::exterior::tangent_basis<1, spatial_domain_type>(elem);
 
-        auto stencil = sil::exterior::Coboundary<CoboundaryIndex, VectorPotentialIndex>::
-                value([](auto, auto) { return 0.0; },
-                      chain,
-                      lower_chain,
-                      elem,
-                      magnetic_induction_component<Index>());
+        auto const output_component = magnetic_induction_component<Index>();
+        std::size_t const stored_component_id = MagneticInductionIndex::access_id_to_mem_id(
+                output_component.template uid<MagneticInductionIndex>());
+        using memory_space = typename decltype(chain)::memory_space;
+        typename decltype(chain)::simplex_type
+                simplex(std::integral_constant<std::size_t, VectorPotentialIndex::rank() + 1> {},
+                        typename decltype(chain)::simplex_type::discrete_element_type(elem),
+                        chain[stored_component_id].discrete_vector());
+        auto boundary_chain = sil::exterior::boundary<memory_space>(simplex);
+
+        typename decltype(lower_chain)::simplex_type::discrete_element_type
+                front((*boundary_chain.begin()).discrete_element());
+        for (auto j = boundary_chain.begin(); j < boundary_chain.end(); ++j) {
+            for (std::size_t dim_id = 0;
+                 dim_id
+                 < ddc::type_seq_size_v<ddc::to_type_seq_t<decltype(front)>>;
+                 ++dim_id) {
+                ddc::detail::array(front)[dim_id] = std::
+                        min(ddc::detail::array(front)[dim_id],
+                            ddc::detail::array((*j).discrete_element())[dim_id]);
+            }
+        }
+
+        auto stencil = sil::exterior::detail::
+                make_local_operator_value_tensor<memory_space, VectorPotentialIndex>(front);
+        ddc::device_for_each(stencil.domain(), [&](auto stencil_elem) {
+            auto basis = sil::exterior::detail::
+                    make_local_operator_value_tensor<memory_space, VectorPotentialIndex>(front);
+            basis.mem(stencil_elem) = 1.0;
+
+            [[maybe_unused]] sil::tensor::TensorAccessor<MagneticInductionIndex> accessor;
+            std::array<double, MagneticInductionIndex::access_size()> output_storage {};
+            ddc::ChunkSpan<
+                    double,
+                    ddc::DiscreteDomain<MagneticInductionIndex>,
+                    Kokkos::layout_right,
+                    memory_space>
+                    output_span(output_storage.data(), accessor.domain());
+            sil::tensor::Tensor output_tensor(output_span);
+
+            auto basis_evaluator = [&](auto sampled_elem, auto cochain_elem) {
+                if (!basis.non_indices_domain().contains(sampled_elem)) {
+                    return 0.0;
+                }
+                return basis(basis.access_element(sampled_elem, cochain_elem));
+            };
+            sil::exterior::Coboundary<CoboundaryIndex, VectorPotentialIndex>::run(
+                    output_tensor,
+                    basis_evaluator,
+                    chain,
+                    lower_chain,
+                    elem);
+            stencil.mem(stencil_elem) = output_tensor(output_component);
+        });
+        if constexpr (std::is_same_v<Index, ddc::type_seq_element_t<1, SpatialIndexSeq>>) {
+            stencil *= -1.0;
+        }
+        return stencil;
+    }
+
+    template <class Index, class Elem>
+    [[nodiscard]] KOKKOS_FUNCTION static auto forward_value(Elem elem)
+    {
+        auto stencil = forward_vector_value<Index>(elem);
         [[maybe_unused]] sil::tensor::TensorAccessor<VectorPotentialIndex> potential_accessor;
         auto projected = detail::project_to_scalar_potential_stencil(
                 stencil,
                 elem,
                 potential_accessor
                         .template access_element<ddc::type_seq_element_t<2, SpatialIndexSeq>>());
-        if constexpr (std::is_same_v<Index, ddc::type_seq_element_t<1, SpatialIndexSeq>>) {
-            projected *= -1.0;
-        }
         if constexpr (std::is_same_v<Index, ddc::type_seq_element_t<2, SpatialIndexSeq>>) {
             projected *= 0.0;
         }

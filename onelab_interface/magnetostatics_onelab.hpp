@@ -584,6 +584,42 @@ struct MagneticMoments
     }
 };
 
+template <class Index, class Equations, class Elem>
+[[nodiscard]] KOKKOS_FUNCTION double dpotential_dt_component(
+        Equations const& equations,
+        MagneticMoments moments,
+        Elem elem)
+{
+    if constexpr (requires { equations.template dpotential_dt<Index>(moments, elem); }) {
+        return equations.template dpotential_dt<Index>(moments, elem);
+    } else if constexpr (requires { equations.template dpotential_dt<Index>(0.0, elem); }) {
+        return equations.template dpotential_dt<Index>(moments.template get<Index>(), elem);
+    } else {
+        std::array<double, 3> const values {moments.x, moments.y, moments.z};
+        return equations.template dpotential_dt<Index>(
+                std::span<double const, 3>(values.data(), values.size()),
+                elem);
+    }
+}
+
+template <class RowIndex, class ColumnIndex, class Equations, class Elem>
+[[nodiscard]] KOKKOS_FUNCTION double jacobian_component(
+        Equations const& equations,
+        MagneticMoments moments,
+        Elem elem)
+{
+    if constexpr (requires { equations.template jacobian<RowIndex, ColumnIndex>(moments, elem); }) {
+        return equations.template jacobian<RowIndex, ColumnIndex>(moments, elem);
+    } else {
+        static_cast<void>(moments);
+        if constexpr (std::is_same_v<RowIndex, ColumnIndex>) {
+            return equations.template dpotential_dt<RowIndex>(1.0, elem);
+        } else {
+            return 0.0;
+        }
+    }
+}
+
 struct DDimX
 {
     using continuous_dimension_type = X;
@@ -603,6 +639,7 @@ struct DDimZ
 };
 
 using NodeDomain2D = ddc::DiscreteDomain<DDimX, DDimY>;
+using NodeDomain3D = ddc::DiscreteDomain<DDimX, DDimY, DDimZ>;
 using ScalarPotentialIndex = sil::tensor::Covariant<sil::tensor::ScalarIndex>;
 
 template <class MemorySpace>
@@ -617,6 +654,85 @@ using ScalarPotentialTensor2D = sil::tensor::Tensor<
         ddc::DiscreteDomain<DDimX, DDimY, ScalarPotentialIndex>,
         Kokkos::layout_right,
         MemorySpace>;
+
+template <class MemorySpace>
+using scalar_tensor_alloc_type_3d = ddc::Chunk<
+        double,
+        ddc::DiscreteDomain<DDimX, DDimY, DDimZ, ScalarPotentialIndex>,
+        ddc::KokkosAllocator<double, MemorySpace>>;
+
+template <class MemorySpace>
+using ScalarPotentialTensor3D = sil::tensor::Tensor<
+        double,
+        ddc::DiscreteDomain<DDimX, DDimY, DDimZ, ScalarPotentialIndex>,
+        Kokkos::layout_right,
+        MemorySpace>;
+
+inline constexpr double VECTOR_POTENTIAL_GAUGE_PENALTY_3D = 1400.0;
+
+template <class Index>
+[[nodiscard]] KOKKOS_FUNCTION constexpr int component_id()
+{
+    if constexpr (std::is_same_v<Index, X>) {
+        return 0;
+    } else if constexpr (std::is_same_v<Index, Y>) {
+        return 1;
+    } else {
+        static_assert(std::is_same_v<Index, Z>, "unsupported magnetostatics component tag");
+        return 2;
+    }
+}
+
+template <class VectorPotentialIndex, class PotentialComponentElem>
+[[nodiscard]] KOKKOS_FUNCTION int potential_component_id(PotentialComponentElem potential_component)
+{
+    [[maybe_unused]] sil::tensor::TensorAccessor<VectorPotentialIndex> accessor;
+    if (potential_component == accessor.template access_element<X>()) {
+        return 0;
+    }
+    if (potential_component == accessor.template access_element<Y>()) {
+        return 1;
+    }
+    return 2;
+}
+
+template <class CoordView>
+[[nodiscard]] KOKKOS_FUNCTION double local_spacing(CoordView coords, std::size_t index)
+{
+    std::size_t const n = coords.extent(0);
+    if (n < 2) {
+        return 1.0;
+    }
+    if (index == 0) {
+        return coords(1) - coords(0);
+    }
+    if (index + 1 == n) {
+        return coords(n - 1) - coords(n - 2);
+    }
+    return 0.5 * (coords(index + 1) - coords(index - 1));
+}
+
+template <class Index, class XCoordView, class YCoordView, class ZCoordView>
+[[nodiscard]] KOKKOS_FUNCTION double magnetic_induction_hodge_factor(
+        XCoordView x_coords,
+        YCoordView y_coords,
+        ZCoordView z_coords,
+        std::size_t i,
+        std::size_t j,
+        std::size_t k)
+{
+    double const dx = local_spacing(x_coords, i);
+    double const dy = local_spacing(y_coords, j);
+    double const dz = local_spacing(z_coords, k);
+    if constexpr (std::is_same_v<Index, X>) {
+        return dx / (dy * dz);
+    } else if constexpr (std::is_same_v<Index, Y>) {
+        return dy / (dx * dz);
+    } else {
+        static_assert(std::is_same_v<Index, Z>, "unsupported magnetic induction component tag");
+        return dz / (dx * dy);
+    }
+}
 
 template <std::size_t NumSamples>
 std::array<double, NumSamples> to_std_array(std::vector<double> const& values)
@@ -807,12 +923,6 @@ public:
         auto outer1_coefficients_host = Kokkos::create_mirror_view(m_outer1_coefficients);
         auto outer0_counts_host = Kokkos::create_mirror_view(m_outer0_counts);
         auto outer1_counts_host = Kokkos::create_mirror_view(m_outer1_counts);
-        using OutputIndex = sil::exterior::
-                coboundary_index_t<sil::tensor::Covariant<InPlaneIndex>, ScalarPotentialIndex>;
-        auto const output_y
-                = sil::tensor::TensorAccessor<OutputIndex>().template access_element<Y>();
-        auto const output_x
-                = sil::tensor::TensorAccessor<OutputIndex>().template access_element<X>();
         for (std::size_t j = 0; j < m_ny; ++j) {
             for (std::size_t i = 0; i < m_nx; ++i) {
                 std::size_t const row = flat_index(i, j);
@@ -876,58 +986,8 @@ public:
                 moment1_counts_host(row) = moment1_count;
                 transposed_moment0_counts_host(row) = 0;
                 transposed_moment1_counts_host(row) = 0;
-
-                auto outer_chain = sil::exterior::tangent_basis<1, NodeDomain2D>(elem);
-                auto outer_lower_chain = sil::exterior::tangent_basis<0, NodeDomain2D>(elem);
-                int outer0_count = 0;
-                auto outer0_stencil = sil::exterior::TransposedCoboundary<
-                        sil::tensor::Covariant<InPlaneIndex>,
-                        ScalarPotentialIndex>::
-                        value([](auto, auto) { return 0.0; },
-                              outer_chain,
-                              outer_lower_chain,
-                              elem,
-                              output_y);
-                ddc::device_for_each(outer0_stencil.domain(), [&](auto stencil_elem) {
-                    double const coeff = outer0_stencil.mem(stencil_elem);
-                    if (coeff == 0.0) {
-                        return;
-                    }
-                    auto const potential_elem = ddc::DiscreteElement<DDimX, DDimY>(stencil_elem);
-                    outer0_columns_host(row, outer0_count) = static_cast<int>(flat_index(
-                            static_cast<std::size_t>(
-                                    ddc::DiscreteElement<DDimX>(potential_elem).uid()),
-                            static_cast<std::size_t>(
-                                    ddc::DiscreteElement<DDimY>(potential_elem).uid())));
-                    outer0_coefficients_host(row, outer0_count) = coeff;
-                    ++outer0_count;
-                });
-                outer0_counts_host(row) = outer0_count;
-
-                int outer1_count = 0;
-                auto outer1_stencil = sil::exterior::TransposedCoboundary<
-                        sil::tensor::Covariant<InPlaneIndex>,
-                        ScalarPotentialIndex>::
-                        value([](auto, auto) { return 0.0; },
-                              outer_chain,
-                              outer_lower_chain,
-                              elem,
-                              output_x);
-                ddc::device_for_each(outer1_stencil.domain(), [&](auto stencil_elem) {
-                    double const coeff = -outer1_stencil.mem(stencil_elem);
-                    if (coeff == 0.0) {
-                        return;
-                    }
-                    auto const potential_elem = ddc::DiscreteElement<DDimX, DDimY>(stencil_elem);
-                    outer1_columns_host(row, outer1_count) = static_cast<int>(flat_index(
-                            static_cast<std::size_t>(
-                                    ddc::DiscreteElement<DDimX>(potential_elem).uid()),
-                            static_cast<std::size_t>(
-                                    ddc::DiscreteElement<DDimY>(potential_elem).uid())));
-                    outer1_coefficients_host(row, outer1_count) = coeff;
-                    ++outer1_count;
-                });
-                outer1_counts_host(row) = outer1_count;
+                outer0_counts_host(row) = 0;
+                outer1_counts_host(row) = 0;
             }
         }
         for (std::size_t sampled_row = 0; sampled_row < m_nx * m_ny; ++sampled_row) {
@@ -951,6 +1011,14 @@ public:
                 transposed_moment0_coefficients_host(row, count)
                         = moment0_coefficients_host(sampled_row, slot);
                 transposed_moment0_counts_host(row) = count + 1;
+                int const outer_count = outer0_counts_host(row);
+                if (outer_count >= OUTER_STENCIL_MAX_SIZE) {
+                    throw std::runtime_error("outer moment0 stencil capacity exceeded");
+                }
+                outer0_columns_host(row, outer_count) = static_cast<int>(sampled_row);
+                outer0_coefficients_host(row, outer_count)
+                        = -moment0_coefficients_host(sampled_row, slot);
+                outer0_counts_host(row) = outer_count + 1;
             }
             for (int slot = 0; slot < moment1_counts_host(sampled_row); ++slot) {
                 std::size_t const row
@@ -966,6 +1034,14 @@ public:
                 transposed_moment1_coefficients_host(row, count)
                         = moment1_coefficients_host(sampled_row, slot);
                 transposed_moment1_counts_host(row) = count + 1;
+                int const outer_count = outer1_counts_host(row);
+                if (outer_count >= OUTER_STENCIL_MAX_SIZE) {
+                    throw std::runtime_error("outer moment1 stencil capacity exceeded");
+                }
+                outer1_columns_host(row, outer_count) = static_cast<int>(sampled_row);
+                outer1_coefficients_host(row, outer_count)
+                        = -moment1_coefficients_host(sampled_row, slot);
+                outer1_counts_host(row) = outer_count + 1;
             }
         }
         Kokkos::deep_copy(m_moment0_columns, moment0_columns_host);
@@ -1287,6 +1363,373 @@ private:
     }
 };
 
+template <class MemorySpace, class Equations, class MagneticVectorPotentialToMagneticInduction>
+class MagnetostaticsOperator3D
+{
+public:
+    using coord_view_type = detail::coord_view_type<MemorySpace>;
+    using vector_potential_index =
+            typename MagneticVectorPotentialToMagneticInduction::vector_potential_index;
+    using magnetic_induction_index =
+            typename MagneticVectorPotentialToMagneticInduction::magnetic_induction_index;
+    static constexpr bool IS_LINEAR = Equations::IS_LINEAR;
+    static constexpr int MOMENT_STENCIL_MAX_SIZE = 24;
+    static constexpr int TRANSPOSED_MOMENT_STENCIL_MAX_SIZE = 128;
+
+private:
+    Equations m_equations;
+    coord_view_type m_x_coords;
+    coord_view_type m_y_coords;
+    coord_view_type m_z_coords;
+    std::size_t m_nx;
+    std::size_t m_ny;
+    std::size_t m_nz;
+    NodeDomain3D m_node_domain;
+    Kokkos::View<int* [MOMENT_STENCIL_MAX_SIZE], MemorySpace> m_moment_columns;
+    Kokkos::View<double* [MOMENT_STENCIL_MAX_SIZE], MemorySpace> m_moment_coefficients;
+    Kokkos::View<int*, MemorySpace> m_moment_counts;
+    Kokkos::View<int**, Kokkos::LayoutRight, MemorySpace> m_transposed_moment_rows;
+    Kokkos::View<double**, Kokkos::LayoutRight, MemorySpace> m_transposed_moment_coefficients;
+    Kokkos::View<int*, MemorySpace> m_transposed_moment_counts;
+
+public:
+    MagnetostaticsOperator3D(
+            Equations equations,
+            coord_view_type x_coords,
+            coord_view_type y_coords,
+            coord_view_type z_coords)
+        : m_equations(std::move(equations))
+        , m_x_coords(x_coords)
+        , m_y_coords(y_coords)
+        , m_z_coords(z_coords)
+        , m_nx(x_coords.extent(0))
+        , m_ny(y_coords.extent(0))
+        , m_nz(z_coords.extent(0))
+        , m_node_domain(
+                  ddc::DiscreteElement<DDimX, DDimY, DDimZ>(0, 0, 0),
+                  ddc::DiscreteVector<DDimX, DDimY, DDimZ>(m_nx, m_ny, m_nz))
+        , m_moment_columns("similie_3d_moment_columns", 3 * m_nx * m_ny * m_nz)
+        , m_moment_coefficients("similie_3d_moment_coefficients", 3 * m_nx * m_ny * m_nz)
+        , m_moment_counts("similie_3d_moment_counts", 3 * m_nx * m_ny * m_nz)
+        , m_transposed_moment_rows(
+                  "similie_3d_transposed_moment_rows",
+                  3 * m_nx * m_ny * m_nz,
+                  TRANSPOSED_MOMENT_STENCIL_MAX_SIZE)
+        , m_transposed_moment_coefficients(
+                  "similie_3d_transposed_moment_coefficients",
+                  3 * m_nx * m_ny * m_nz,
+                  TRANSPOSED_MOMENT_STENCIL_MAX_SIZE)
+        , m_transposed_moment_counts(
+                  "similie_3d_transposed_moment_counts",
+                  3 * m_nx * m_ny * m_nz)
+    {
+        auto moment_columns_host = Kokkos::create_mirror_view(m_moment_columns);
+        auto moment_coefficients_host = Kokkos::create_mirror_view(m_moment_coefficients);
+        auto moment_counts_host = Kokkos::create_mirror_view(m_moment_counts);
+        auto transposed_moment_rows_host = Kokkos::create_mirror_view(m_transposed_moment_rows);
+        auto transposed_moment_coefficients_host
+                = Kokkos::create_mirror_view(m_transposed_moment_coefficients);
+        auto transposed_moment_counts_host
+                = Kokkos::create_mirror_view(m_transposed_moment_counts);
+
+        for (std::size_t row = 0; row < size(); ++row) {
+            moment_counts_host(row) = 0;
+            transposed_moment_counts_host(row) = 0;
+            for (int slot = 0; slot < MOMENT_STENCIL_MAX_SIZE; ++slot) {
+                moment_columns_host(row, slot) = 0;
+                moment_coefficients_host(row, slot) = 0.0;
+            }
+            for (int slot = 0; slot < TRANSPOSED_MOMENT_STENCIL_MAX_SIZE; ++slot) {
+                transposed_moment_rows_host(row, slot) = 0;
+                transposed_moment_coefficients_host(row, slot) = 0.0;
+            }
+        }
+
+        auto fill_component = [&](auto index_tag, auto elem) {
+            using index_type = decltype(index_tag);
+            std::size_t const i = static_cast<std::size_t>(ddc::DiscreteElement<DDimX>(elem).uid());
+            std::size_t const j = static_cast<std::size_t>(ddc::DiscreteElement<DDimY>(elem).uid());
+            std::size_t const k = static_cast<std::size_t>(ddc::DiscreteElement<DDimZ>(elem).uid());
+            std::size_t const moment_row = dof_index(i, j, k, component_id<index_type>());
+            int count = 0;
+            auto stencil
+                    = MagneticVectorPotentialToMagneticInduction::template forward_vector_value<
+                            index_type>(elem);
+            ddc::device_for_each(stencil.domain(), [&](auto stencil_elem) {
+                double const coeff = stencil.mem(stencil_elem);
+                if (coeff == 0.0) {
+                    return;
+                }
+                auto const potential_elem = ddc::DiscreteElement<DDimX, DDimY, DDimZ>(
+                        stencil_elem);
+                std::size_t const potential_i = static_cast<std::size_t>(
+                        ddc::DiscreteElement<DDimX>(potential_elem).uid());
+                std::size_t const potential_j = static_cast<std::size_t>(
+                        ddc::DiscreteElement<DDimY>(potential_elem).uid());
+                std::size_t const potential_k = static_cast<std::size_t>(
+                        ddc::DiscreteElement<DDimZ>(potential_elem).uid());
+                if (is_boundary_node(potential_i, potential_j, potential_k)) {
+                    return;
+                }
+                int const component = potential_component_id<vector_potential_index>(
+                        ddc::DiscreteElement<vector_potential_index>(stencil_elem));
+                moment_columns_host(moment_row, count) = static_cast<int>(dof_index(
+                        potential_i,
+                        potential_j,
+                        potential_k,
+                        component));
+                moment_coefficients_host(moment_row, count) = coeff;
+                ++count;
+                if (count > MOMENT_STENCIL_MAX_SIZE) {
+                    throw std::runtime_error("3D moment stencil capacity exceeded");
+                }
+            });
+            moment_counts_host(moment_row) = count;
+        };
+
+        for (std::size_t k = 0; k < m_nz; ++k) {
+            for (std::size_t j = 0; j < m_ny; ++j) {
+                for (std::size_t i = 0; i < m_nx; ++i) {
+                    auto const elem = ddc::DiscreteElement<DDimX, DDimY, DDimZ>(i, j, k);
+                    fill_component(X {}, elem);
+                    fill_component(Y {}, elem);
+                    fill_component(Z {}, elem);
+                }
+            }
+        }
+
+        for (std::size_t sampled_node = 0; sampled_node < m_nx * m_ny * m_nz; ++sampled_node) {
+            std::size_t const sampled_i = sampled_node % m_nx;
+            std::size_t const sampled_j = (sampled_node / m_nx) % m_ny;
+            std::size_t const sampled_k = sampled_node / (m_nx * m_ny);
+            if (is_boundary_node(sampled_i, sampled_j, sampled_k)) {
+                continue;
+            }
+            for (int moment_component = 0; moment_component < 3; ++moment_component) {
+                std::size_t const moment_row = dof_index(
+                        sampled_i,
+                        sampled_j,
+                        sampled_k,
+                        moment_component);
+                for (int slot = 0; slot < moment_counts_host(moment_row); ++slot) {
+                    std::size_t const potential_row
+                            = static_cast<std::size_t>(moment_columns_host(moment_row, slot));
+                    int const count = transposed_moment_counts_host(potential_row);
+                    if (count >= TRANSPOSED_MOMENT_STENCIL_MAX_SIZE) {
+                        throw std::runtime_error("3D transposed moment stencil capacity exceeded");
+                    }
+                    transposed_moment_rows_host(potential_row, count)
+                            = static_cast<int>(moment_row);
+                    transposed_moment_coefficients_host(potential_row, count)
+                            = moment_coefficients_host(moment_row, slot);
+                    transposed_moment_counts_host(potential_row) = count + 1;
+                }
+            }
+        }
+
+        Kokkos::deep_copy(m_moment_columns, moment_columns_host);
+        Kokkos::deep_copy(m_moment_coefficients, moment_coefficients_host);
+        Kokkos::deep_copy(m_moment_counts, moment_counts_host);
+        Kokkos::deep_copy(m_transposed_moment_rows, transposed_moment_rows_host);
+        Kokkos::deep_copy(m_transposed_moment_coefficients, transposed_moment_coefficients_host);
+        Kokkos::deep_copy(m_transposed_moment_counts, transposed_moment_counts_host);
+    }
+
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION std::size_t size() const
+    {
+        return 3 * m_nx * m_ny * m_nz;
+    }
+
+    template <class ExecSpace, class InputView, class OutputView>
+    void apply(ExecSpace exec_space, InputView input, OutputView output) const
+    {
+        std::size_t const nx = m_nx;
+        std::size_t const ny = m_ny;
+        std::size_t const nz = m_nz;
+        auto const x_coords = m_x_coords;
+        auto const y_coords = m_y_coords;
+        auto const z_coords = m_z_coords;
+        auto const equations = m_equations;
+        auto const moment_columns = m_moment_columns;
+        auto const moment_coefficients = m_moment_coefficients;
+        auto const moment_counts = m_moment_counts;
+        auto const transposed_moment_rows = m_transposed_moment_rows;
+        auto const transposed_moment_coefficients = m_transposed_moment_coefficients;
+        auto const transposed_moment_counts = m_transposed_moment_counts;
+        ddc::parallel_for_each(
+                exec_space,
+                m_node_domain,
+                KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DDimZ> elem) {
+                    std::size_t const i = static_cast<std::size_t>(
+                            ddc::DiscreteElement<DDimX>(elem).uid());
+                    std::size_t const j = static_cast<std::size_t>(
+                            ddc::DiscreteElement<DDimY>(elem).uid());
+                    std::size_t const k = static_cast<std::size_t>(
+                            ddc::DiscreteElement<DDimZ>(elem).uid());
+                    for (int component = 0; component < 3; ++component) {
+                        std::size_t const row = dof_index_static(nx, ny, i, j, k, component);
+                        if (i == 0 || j == 0 || k == 0 || i + 1 == nx || j + 1 == ny
+                            || k + 1 == nz) {
+                            output(row, 0) = input(row, 0);
+                            continue;
+                        }
+                        double residual = 0.0;
+                        for (int slot = 0; slot < transposed_moment_counts(row); ++slot) {
+                            std::size_t const moment_row
+                                    = static_cast<std::size_t>(transposed_moment_rows(row, slot));
+                            double const row_coefficient
+                                    = transposed_moment_coefficients(row, slot);
+                            std::size_t const sampled_node = moment_row / 3;
+                            auto const sampled_elem = ddc::DiscreteElement<DDimX, DDimY, DDimZ>(
+                                    sampled_node % nx,
+                                    (sampled_node / nx) % ny,
+                                    sampled_node / (nx * ny));
+                            MagneticMoments moments {
+                                    compute_moment(moment_columns,
+                                                   moment_coefficients,
+                                                   moment_counts,
+                                                   input,
+                                                   3 * sampled_node),
+                                    compute_moment(moment_columns,
+                                                   moment_coefficients,
+                                                   moment_counts,
+                                                   input,
+                                                   3 * sampled_node + 1),
+                                    compute_moment(moment_columns,
+                                                   moment_coefficients,
+                                                   moment_counts,
+                                                   input,
+                                                   3 * sampled_node + 2),
+                            };
+                            if (moment_row % 3 == 0) {
+                                residual += row_coefficient
+                                            * magnetic_induction_hodge_factor<X>(
+                                                    x_coords,
+                                                    y_coords,
+                                                    z_coords,
+                                                    sampled_node % nx,
+                                                    (sampled_node / nx) % ny,
+                                                    sampled_node / (nx * ny))
+                                            * dpotential_dt_component<X>(
+                                                    equations,
+                                                    moments,
+                                                    sampled_elem);
+                            } else if (moment_row % 3 == 1) {
+                                residual += row_coefficient
+                                            * magnetic_induction_hodge_factor<Y>(
+                                                    x_coords,
+                                                    y_coords,
+                                                    z_coords,
+                                                    sampled_node % nx,
+                                                    (sampled_node / nx) % ny,
+                                                    sampled_node / (nx * ny))
+                                            * dpotential_dt_component<Y>(
+                                                    equations,
+                                                    moments,
+                                                    sampled_elem);
+                            } else {
+                                residual += row_coefficient
+                                            * magnetic_induction_hodge_factor<Z>(
+                                                    x_coords,
+                                                    y_coords,
+                                                    z_coords,
+                                                    sampled_node % nx,
+                                                    (sampled_node / nx) % ny,
+                                                    sampled_node / (nx * ny))
+                                            * dpotential_dt_component<Z>(
+                                                    equations,
+                                                    moments,
+                                                    sampled_elem);
+                            }
+                        }
+                        output(row, 0) = residual
+                                         + VECTOR_POTENTIAL_GAUGE_PENALTY_3D * input(row, 0);
+                    }
+                });
+    }
+
+    [[nodiscard]] Equations const& equations() const
+    {
+        return m_equations;
+    }
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION coord_view_type x_coords() const
+    {
+        return m_x_coords;
+    }
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION coord_view_type y_coords() const
+    {
+        return m_y_coords;
+    }
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION coord_view_type z_coords() const
+    {
+        return m_z_coords;
+    }
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto moment_columns() const
+    {
+        return m_moment_columns;
+    }
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto moment_coefficients() const
+    {
+        return m_moment_coefficients;
+    }
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto moment_counts() const
+    {
+        return m_moment_counts;
+    }
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto transposed_moment_rows() const
+    {
+        return m_transposed_moment_rows;
+    }
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto transposed_moment_coefficients() const
+    {
+        return m_transposed_moment_coefficients;
+    }
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto transposed_moment_counts() const
+    {
+        return m_transposed_moment_counts;
+    }
+
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION bool
+    is_boundary_node(std::size_t i, std::size_t j, std::size_t k) const
+    {
+        return i == 0 || j == 0 || k == 0 || i + 1 == m_nx || j + 1 == m_ny || k + 1 == m_nz;
+    }
+
+private:
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION std::size_t
+    dof_index(std::size_t i, std::size_t j, std::size_t k, int component) const
+    {
+        return dof_index_static(m_nx, m_ny, i, j, k, component);
+    }
+
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION static std::size_t dof_index_static(
+            std::size_t nx,
+            std::size_t ny,
+            std::size_t i,
+            std::size_t j,
+            std::size_t k,
+            int component)
+    {
+        return 3 * (i + nx * (j + ny * k)) + static_cast<std::size_t>(component);
+    }
+
+    template <class Columns, class Coefficients, class Counts, class View>
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION static double compute_moment(
+            Columns columns,
+            Coefficients coefficients,
+            Counts counts,
+            View values,
+            std::size_t moment_row)
+    {
+        double moment = 0.0;
+        for (int slot = 0; slot < counts(moment_row); ++slot) {
+            moment += coefficients(moment_row, slot)
+                      * values(static_cast<std::size_t>(columns(moment_row, slot)), 0);
+        }
+        return moment;
+    }
+};
+
 template <
         class ExecSpace,
         class MemorySpace,
@@ -1366,10 +1809,10 @@ void apply_jacobian(
                         delta_moment1 += moment1_coefficients(sampled_row, k) * input(column, 0);
                     }
                     MagneticMoments const moments {state_moment0, state_moment1, 0.0};
-                    double const h00 = equations.template jacobian<X, X>(moments, sampled_elem);
-                    double const h01 = equations.template jacobian<X, Y>(moments, sampled_elem);
-                    double const h10 = equations.template jacobian<Y, X>(moments, sampled_elem);
-                    double const h11 = equations.template jacobian<Y, Y>(moments, sampled_elem);
+                    double const h00 = jacobian_component<X, X>(equations, moments, sampled_elem);
+                    double const h01 = jacobian_component<X, Y>(equations, moments, sampled_elem);
+                    double const h10 = jacobian_component<Y, X>(equations, moments, sampled_elem);
+                    double const h11 = jacobian_component<Y, Y>(equations, moments, sampled_elem);
                     residual += row_coefficient
                                 * (use_first_component
                                            ? (h00 * delta_moment0 + h01 * delta_moment1)
@@ -1408,6 +1851,386 @@ void apply_jacobian(
                 }
                 output(row, 0) = residual;
             });
+}
+
+template <
+        class ExecSpace,
+        class MemorySpace,
+        class Equations,
+        class MagneticVectorPotentialToMagneticInduction,
+        class StateView,
+        class InputView,
+        class OutputView>
+void apply_jacobian(
+        ExecSpace exec_space,
+        MagnetostaticsOperator3D<MemorySpace, Equations, MagneticVectorPotentialToMagneticInduction>
+                const& operator_model,
+        StateView state,
+        InputView input,
+        OutputView output)
+{
+    std::size_t const nx = operator_model.x_coords().extent(0);
+    std::size_t const ny = operator_model.y_coords().extent(0);
+    std::size_t const nz = operator_model.z_coords().extent(0);
+    auto const x_coords = operator_model.x_coords();
+    auto const y_coords = operator_model.y_coords();
+    auto const z_coords = operator_model.z_coords();
+    auto const equations = operator_model.equations();
+    auto const moment_columns = operator_model.moment_columns();
+    auto const moment_coefficients = operator_model.moment_coefficients();
+    auto const moment_counts = operator_model.moment_counts();
+    auto const transposed_moment_rows = operator_model.transposed_moment_rows();
+    auto const transposed_moment_coefficients = operator_model.transposed_moment_coefficients();
+    auto const transposed_moment_counts = operator_model.transposed_moment_counts();
+    auto node_domain = ddc::DiscreteDomain<DDimX, DDimY, DDimZ>(
+            ddc::DiscreteElement<DDimX, DDimY, DDimZ>(0, 0, 0),
+            ddc::DiscreteVector<DDimX, DDimY, DDimZ>(nx, ny, nz));
+
+    ddc::parallel_for_each(
+            exec_space,
+            node_domain,
+            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DDimZ> elem) {
+                std::size_t const i
+                        = static_cast<std::size_t>(ddc::DiscreteElement<DDimX>(elem).uid());
+                std::size_t const j
+                        = static_cast<std::size_t>(ddc::DiscreteElement<DDimY>(elem).uid());
+                std::size_t const k
+                        = static_cast<std::size_t>(ddc::DiscreteElement<DDimZ>(elem).uid());
+                for (int component = 0; component < 3; ++component) {
+                    std::size_t const row = 3 * (i + nx * (j + ny * k))
+                                            + static_cast<std::size_t>(component);
+                    if (i == 0 || j == 0 || k == 0 || i + 1 == nx || j + 1 == ny
+                        || k + 1 == nz) {
+                        output(row, 0) = input(row, 0);
+                        continue;
+                    }
+                    double residual = 0.0;
+                    for (int slot = 0; slot < transposed_moment_counts(row); ++slot) {
+                        std::size_t const moment_row
+                                = static_cast<std::size_t>(transposed_moment_rows(row, slot));
+                        double const row_coefficient = transposed_moment_coefficients(row, slot);
+                        std::size_t const sampled_node = moment_row / 3;
+                        auto const sampled_elem = ddc::DiscreteElement<DDimX, DDimY, DDimZ>(
+                                sampled_node % nx,
+                                (sampled_node / nx) % ny,
+                                sampled_node / (nx * ny));
+                        std::array<double, 3> state_moments {};
+                        std::array<double, 3> delta_moments {};
+                        for (int moment_component = 0; moment_component < 3; ++moment_component) {
+                            std::size_t const current_moment_row
+                                    = 3 * sampled_node
+                                      + static_cast<std::size_t>(moment_component);
+                            for (int moment_slot = 0; moment_slot < moment_counts(current_moment_row);
+                                 ++moment_slot) {
+                                std::size_t const column = static_cast<std::size_t>(
+                                        moment_columns(current_moment_row, moment_slot));
+                                double const coefficient
+                                        = moment_coefficients(current_moment_row, moment_slot);
+                                state_moments[moment_component] += coefficient * state(column, 0);
+                                delta_moments[moment_component] += coefficient * input(column, 0);
+                            }
+                        }
+                        MagneticMoments const moments {
+                                state_moments[0],
+                                state_moments[1],
+                                state_moments[2],
+                        };
+                        if (moment_row % 3 == 0) {
+                            residual += row_coefficient
+                                        * magnetic_induction_hodge_factor<X>(
+                                                x_coords,
+                                                y_coords,
+                                                z_coords,
+                                                sampled_node % nx,
+                                                (sampled_node / nx) % ny,
+                                                sampled_node / (nx * ny))
+                                        * (jacobian_component<X, X>(
+                                                   equations,
+                                                   moments,
+                                                   sampled_elem)
+                                                   * delta_moments[0]
+                                           + jacobian_component<X, Y>(
+                                                     equations,
+                                                     moments,
+                                                     sampled_elem)
+                                                     * delta_moments[1]
+                                           + jacobian_component<X, Z>(
+                                                     equations,
+                                                     moments,
+                                                     sampled_elem)
+                                                     * delta_moments[2]);
+                        } else if (moment_row % 3 == 1) {
+                            residual += row_coefficient
+                                        * magnetic_induction_hodge_factor<Y>(
+                                                x_coords,
+                                                y_coords,
+                                                z_coords,
+                                                sampled_node % nx,
+                                                (sampled_node / nx) % ny,
+                                                sampled_node / (nx * ny))
+                                        * (jacobian_component<Y, X>(
+                                                   equations,
+                                                   moments,
+                                                   sampled_elem)
+                                                   * delta_moments[0]
+                                           + jacobian_component<Y, Y>(
+                                                     equations,
+                                                     moments,
+                                                     sampled_elem)
+                                                     * delta_moments[1]
+                                           + jacobian_component<Y, Z>(
+                                                     equations,
+                                                     moments,
+                                                     sampled_elem)
+                                                     * delta_moments[2]);
+                        } else {
+                            residual += row_coefficient
+                                        * magnetic_induction_hodge_factor<Z>(
+                                                x_coords,
+                                                y_coords,
+                                                z_coords,
+                                                sampled_node % nx,
+                                                (sampled_node / nx) % ny,
+                                                sampled_node / (nx * ny))
+                                        * (jacobian_component<Z, X>(
+                                                   equations,
+                                                   moments,
+                                                   sampled_elem)
+                                                   * delta_moments[0]
+                                           + jacobian_component<Z, Y>(
+                                                     equations,
+                                                     moments,
+                                                     sampled_elem)
+                                                     * delta_moments[1]
+                                           + jacobian_component<Z, Z>(
+                                                     equations,
+                                                     moments,
+                                                     sampled_elem)
+                                                     * delta_moments[2]);
+                        }
+                    }
+                    output(row, 0) = residual
+                                     + VECTOR_POTENTIAL_GAUGE_PENALTY_3D * input(row, 0);
+                }
+            });
+}
+
+template <
+        class MemorySpace,
+        class Equations,
+        class MagneticVectorPotentialToMagneticInduction,
+        class StateView>
+gko::matrix_data<double, gko::int32> assemble_matrix_data(
+        MagnetostaticsOperator3D<MemorySpace, Equations, MagneticVectorPotentialToMagneticInduction>
+                const& operator_model,
+        StateView state)
+{
+    std::size_t const size = operator_model.size();
+    std::size_t const nx = operator_model.x_coords().extent(0);
+    std::size_t const ny = operator_model.y_coords().extent(0);
+    std::size_t const nz = operator_model.z_coords().extent(0);
+    auto const equations = operator_model.equations();
+    auto const moment_columns = Kokkos::create_mirror_view_and_copy(
+            Kokkos::HostSpace(),
+            operator_model.moment_columns());
+    auto const moment_coefficients = Kokkos::create_mirror_view_and_copy(
+            Kokkos::HostSpace(),
+            operator_model.moment_coefficients());
+    auto const moment_counts = Kokkos::create_mirror_view_and_copy(
+            Kokkos::HostSpace(),
+            operator_model.moment_counts());
+    auto const transposed_moment_rows = Kokkos::create_mirror_view_and_copy(
+            Kokkos::HostSpace(),
+            operator_model.transposed_moment_rows());
+    auto const transposed_moment_coefficients = Kokkos::create_mirror_view_and_copy(
+            Kokkos::HostSpace(),
+            operator_model.transposed_moment_coefficients());
+    auto const transposed_moment_counts = Kokkos::create_mirror_view_and_copy(
+            Kokkos::HostSpace(),
+            operator_model.transposed_moment_counts());
+    auto const state_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), state);
+    auto const x_coords = Kokkos::create_mirror_view_and_copy(
+            Kokkos::HostSpace(),
+            operator_model.x_coords());
+    auto const y_coords = Kokkos::create_mirror_view_and_copy(
+            Kokkos::HostSpace(),
+            operator_model.y_coords());
+    auto const z_coords = Kokkos::create_mirror_view_and_copy(
+            Kokkos::HostSpace(),
+            operator_model.z_coords());
+
+    std::vector<std::vector<std::pair<gko::int32, double>>> matrix_rows(size);
+    auto add_entry = [&](std::size_t row, std::size_t column, double value) {
+        if (value == 0.0) {
+            return;
+        }
+        auto& entries = matrix_rows[row];
+        for (auto& entry : entries) {
+            if (entry.first == static_cast<gko::int32>(column)) {
+                entry.second += value;
+                return;
+            }
+        }
+        entries.emplace_back(static_cast<gko::int32>(column), value);
+    };
+    auto dof_index = [nx, ny](std::size_t i,
+                             std::size_t j,
+                             std::size_t k,
+                             int component) -> std::size_t {
+        return 3 * (i + nx * (j + ny * k)) + static_cast<std::size_t>(component);
+    };
+    auto is_boundary_node = [nx, ny, nz](std::size_t i, std::size_t j, std::size_t k) {
+        return i == 0 || j == 0 || k == 0 || i + 1 == nx || j + 1 == ny || k + 1 == nz;
+    };
+
+    for (std::size_t k = 0; k < nz; ++k) {
+        for (std::size_t j = 0; j < ny; ++j) {
+            for (std::size_t i = 0; i < nx; ++i) {
+                if (!is_boundary_node(i, j, k)) {
+                    continue;
+                }
+                for (int component = 0; component < 3; ++component) {
+                    std::size_t const row = dof_index(i, j, k, component);
+                    add_entry(row, row, 1.0);
+                }
+            }
+        }
+    }
+
+    for (std::size_t k = 1; k + 1 < nz; ++k) {
+        for (std::size_t j = 1; j + 1 < ny; ++j) {
+            for (std::size_t i = 1; i + 1 < nx; ++i) {
+                for (int component = 0; component < 3; ++component) {
+                    std::size_t const row = dof_index(i, j, k, component);
+                    add_entry(row, row, VECTOR_POTENTIAL_GAUGE_PENALTY_3D);
+                    for (int slot = 0; slot < transposed_moment_counts(row); ++slot) {
+                        std::size_t const moment_row
+                                = static_cast<std::size_t>(transposed_moment_rows(row, slot));
+                        double const row_coefficient
+                                = transposed_moment_coefficients(row, slot);
+                        std::size_t const sampled_node = moment_row / 3;
+                        std::size_t const sampled_i = sampled_node % nx;
+                        std::size_t const sampled_j = (sampled_node / nx) % ny;
+                        std::size_t const sampled_k = sampled_node / (nx * ny);
+                        auto const sampled_elem = ddc::DiscreteElement<DDimX, DDimY, DDimZ>(
+                                sampled_i,
+                                sampled_j,
+                                sampled_k);
+                        std::array<double, 3> state_moments {};
+                        for (int moment_component = 0; moment_component < 3; ++moment_component) {
+                            std::size_t const current_moment_row
+                                    = 3 * sampled_node
+                                      + static_cast<std::size_t>(moment_component);
+                            for (int moment_slot = 0; moment_slot < moment_counts(current_moment_row);
+                                 ++moment_slot) {
+                                state_moments[moment_component]
+                                        += moment_coefficients(current_moment_row, moment_slot)
+                                           * state_host(
+                                                   static_cast<std::size_t>(moment_columns(
+                                                           current_moment_row,
+                                                           moment_slot)),
+                                                   0);
+                            }
+                        }
+                        MagneticMoments const moments {
+                                state_moments[0],
+                                state_moments[1],
+                                state_moments[2],
+                        };
+                        std::array<double, 3> jacobian_row {};
+                        double hodge_factor = 1.0;
+                        if (moment_row % 3 == 0) {
+                            jacobian_row = {
+                                    jacobian_component<X, X>(equations, moments, sampled_elem),
+                                    jacobian_component<X, Y>(equations, moments, sampled_elem),
+                                    jacobian_component<X, Z>(equations, moments, sampled_elem)};
+                            hodge_factor = magnetic_induction_hodge_factor<X>(
+                                    x_coords,
+                                    y_coords,
+                                    z_coords,
+                                    sampled_i,
+                                    sampled_j,
+                                    sampled_k);
+                        } else if (moment_row % 3 == 1) {
+                            jacobian_row = {
+                                    jacobian_component<Y, X>(equations, moments, sampled_elem),
+                                    jacobian_component<Y, Y>(equations, moments, sampled_elem),
+                                    jacobian_component<Y, Z>(equations, moments, sampled_elem)};
+                            hodge_factor = magnetic_induction_hodge_factor<Y>(
+                                    x_coords,
+                                    y_coords,
+                                    z_coords,
+                                    sampled_i,
+                                    sampled_j,
+                                    sampled_k);
+                        } else {
+                            jacobian_row = {
+                                    jacobian_component<Z, X>(equations, moments, sampled_elem),
+                                    jacobian_component<Z, Y>(equations, moments, sampled_elem),
+                                    jacobian_component<Z, Z>(equations, moments, sampled_elem)};
+                            hodge_factor = magnetic_induction_hodge_factor<Z>(
+                                    x_coords,
+                                    y_coords,
+                                    z_coords,
+                                    sampled_i,
+                                    sampled_j,
+                                    sampled_k);
+                        }
+                        for (int moment_component = 0; moment_component < 3; ++moment_component) {
+                            double const jacobian_coefficient
+                                    = hodge_factor * jacobian_row[moment_component];
+                            if (jacobian_coefficient == 0.0) {
+                                continue;
+                            }
+                            std::size_t const current_moment_row
+                                    = 3 * sampled_node
+                                      + static_cast<std::size_t>(moment_component);
+                            for (int moment_slot = 0; moment_slot < moment_counts(current_moment_row);
+                                 ++moment_slot) {
+                                add_entry(
+                                        row,
+                                        static_cast<std::size_t>(
+                                                moment_columns(current_moment_row, moment_slot)),
+                                        row_coefficient * jacobian_coefficient
+                                                * moment_coefficients(
+                                                        current_moment_row,
+                                                        moment_slot));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    gko::matrix_data<double, gko::int32> matrix_data(gko::dim<2>(size, size));
+    std::size_t nonzeros = 0;
+    for (auto const& entries : matrix_rows) {
+        nonzeros += entries.size();
+    }
+    matrix_data.nonzeros.reserve(nonzeros);
+    for (std::size_t row = 0; row < size; ++row) {
+        for (auto const& [column, coefficient] : matrix_rows[row]) {
+            if (coefficient == 0.0) {
+                continue;
+            }
+            matrix_data.nonzeros.emplace_back(
+                    static_cast<gko::int32>(row),
+                    column,
+                    coefficient);
+        }
+    }
+    return matrix_data;
+}
+
+template <class MemorySpace, class Equations, class MagneticVectorPotentialToMagneticInduction>
+gko::matrix_data<double, gko::int32> assemble_matrix_data(
+        MagnetostaticsOperator3D<MemorySpace, Equations, MagneticVectorPotentialToMagneticInduction>
+                const& operator_model)
+{
+    Kokkos::View<double**> state("similie_3d_linear_state", operator_model.size(), 1);
+    Kokkos::deep_copy(state, 0.0);
+    return assemble_matrix_data(operator_model, state);
 }
 
 template <
@@ -1513,10 +2336,10 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                                                  0);
                     }
                     MagneticMoments const moments {state_moment0, state_moment1, 0.0};
-                    double const h00 = equations.template jacobian<X, X>(moments, sampled_elem);
-                    double const h01 = equations.template jacobian<X, Y>(moments, sampled_elem);
-                    double const h10 = equations.template jacobian<Y, X>(moments, sampled_elem);
-                    double const h11 = equations.template jacobian<Y, Y>(moments, sampled_elem);
+                    double const h00 = jacobian_component<X, X>(equations, moments, sampled_elem);
+                    double const h01 = jacobian_component<X, Y>(equations, moments, sampled_elem);
+                    double const h10 = jacobian_component<Y, X>(equations, moments, sampled_elem);
+                    double const h11 = jacobian_component<Y, Y>(equations, moments, sampled_elem);
                     for (int k = 0; k < moment0_counts(sampled_row); ++k) {
                         std::size_t const column
                                 = static_cast<std::size_t>(moment0_columns(sampled_row, k));
@@ -1603,227 +2426,9 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
         MagnetostaticsOperator2D<MemorySpace, Equations, MagneticVectorPotentialToMagneticInduction>
                 const& operator_model)
 {
-    std::size_t const size = operator_model.size();
-    Kokkos::DefaultExecutionSpace exec_space;
-    Kokkos::View<double* [64]> coefficients("similie_magnetostatics_matrix_coefficients", size);
-    Kokkos::View<int* [64]> columns("similie_magnetostatics_matrix_columns", size);
-    Kokkos::View<int*> counts("similie_magnetostatics_matrix_counts", size);
-
-    auto equations = operator_model.equations();
-    auto const criterion = operator_model.criterion();
-    std::size_t const nx = operator_model.x_coords().extent(0);
-    std::size_t const ny = operator_model.y_coords().extent(0);
-    auto const transposed_moment0_columns = operator_model.transposed_moment0_columns();
-    auto const transposed_moment0_coefficients = operator_model.transposed_moment0_coefficients();
-    auto const transposed_moment1_columns = operator_model.transposed_moment1_columns();
-    auto const transposed_moment1_coefficients = operator_model.transposed_moment1_coefficients();
-    auto const transposed_moment0_counts = operator_model.transposed_moment0_counts();
-    auto const transposed_moment1_counts = operator_model.transposed_moment1_counts();
-    auto const moment0_columns = operator_model.moment0_columns();
-    auto const moment0_coefficients = operator_model.moment0_coefficients();
-    auto const moment1_columns = operator_model.moment1_columns();
-    auto const moment1_coefficients = operator_model.moment1_coefficients();
-    auto const moment0_counts = operator_model.moment0_counts();
-    auto const moment1_counts = operator_model.moment1_counts();
-    auto node_domain = ddc::DiscreteDomain<DDimX, DDimY>(
-            ddc::DiscreteElement<DDimX, DDimY>(0, 0),
-            ddc::DiscreteVector<DDimX, DDimY>(nx, ny));
-    using OutputIndex = sil::exterior::
-            coboundary_index_t<sil::tensor::Covariant<InPlaneIndex>, ScalarPotentialIndex>;
-    auto const output_y = sil::tensor::TensorAccessor<OutputIndex>().template access_element<Y>();
-    auto const output_x = sil::tensor::TensorAccessor<OutputIndex>().template access_element<X>();
-
-    ddc::parallel_for_each(
-            "similie_assemble_magnetostatics_matrix",
-            exec_space,
-            node_domain,
-            KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY> elem) {
-                std::size_t const i
-                        = static_cast<std::size_t>(ddc::DiscreteElement<DDimX>(elem).uid());
-                std::size_t const j
-                        = static_cast<std::size_t>(ddc::DiscreteElement<DDimY>(elem).uid());
-                std::size_t const row = i + nx * j;
-
-                auto set_entry = [&](int slot, std::size_t column, double value) {
-                    columns(row, slot) = static_cast<int>(column);
-                    coefficients(row, slot) = value;
-                };
-                auto add_entry = [&](int& count, std::size_t column, double value) {
-                    for (int slot = 0; slot < count; ++slot) {
-                        if (columns(row, slot) == static_cast<int>(column)) {
-                            coefficients(row, slot) += value;
-                            return;
-                        }
-                    }
-                    if (count >= 64) {
-                        Kokkos::abort("magnetostatics matrix row capacity exceeded");
-                    }
-                    columns(row, count) = static_cast<int>(column);
-                    coefficients(row, count) = value;
-                    ++count;
-                };
-
-                for (int slot = 0; slot < 64; ++slot) {
-                    set_entry(slot, row, 0.0);
-                }
-
-                if (i == 0 || j == 0 || i + 1 == nx || j + 1 == ny) {
-                    counts(row) = 1;
-                    set_entry(0, row, 1.0);
-                    return;
-                }
-
-                int count = 0;
-                if (criterion == solvers::Criterion::PotentialTemporalDerivative
-                    || criterion == solvers::Criterion::PotentialAndMomentsTemporalDerivative) {
-                    for (int slot = 0; slot < transposed_moment0_counts(row); ++slot) {
-                        double const transpose_coefficient
-                                = transposed_moment0_coefficients(row, slot);
-                        std::size_t const sampled_row
-                                = static_cast<std::size_t>(transposed_moment0_columns(row, slot));
-                        auto const sampled_elem = ddc::
-                                DiscreteElement<DDimX, DDimY>(sampled_row % nx, sampled_row / nx);
-                        auto moments_stencil
-                                = equations.template dpotential_dt_value<X>(sampled_elem);
-                        ddc::device_for_each(moments_stencil.domain(), [&](auto moments_elem) {
-                            double const value
-                                    = transpose_coefficient * moments_stencil.mem(moments_elem);
-                            if (value == 0.0) {
-                                return;
-                            }
-                            auto const potential_elem
-                                    = ddc::DiscreteElement<DDimX, DDimY>(moments_elem);
-                            std::size_t const column
-                                    = static_cast<std::size_t>(
-                                              ddc::DiscreteElement<DDimX>(potential_elem).uid())
-                                      + nx
-                                                * static_cast<std::size_t>(
-                                                        ddc::DiscreteElement<DDimY>(potential_elem)
-                                                                .uid());
-                            add_entry(count, column, value);
-                        });
-                    }
-                    for (int slot = 0; slot < transposed_moment1_counts(row); ++slot) {
-                        double const transpose_coefficient
-                                = transposed_moment1_coefficients(row, slot);
-                        std::size_t const sampled_row
-                                = static_cast<std::size_t>(transposed_moment1_columns(row, slot));
-                        auto const sampled_elem = ddc::
-                                DiscreteElement<DDimX, DDimY>(sampled_row % nx, sampled_row / nx);
-                        auto moments_stencil
-                                = equations.template dpotential_dt_value<Y>(sampled_elem);
-                        ddc::device_for_each(moments_stencil.domain(), [&](auto moments_elem) {
-                            double const value
-                                    = transpose_coefficient * moments_stencil.mem(moments_elem);
-                            if (value == 0.0) {
-                                return;
-                            }
-                            auto const potential_elem
-                                    = ddc::DiscreteElement<DDimX, DDimY>(moments_elem);
-                            std::size_t const column
-                                    = static_cast<std::size_t>(
-                                              ddc::DiscreteElement<DDimX>(potential_elem).uid())
-                                      + nx
-                                                * static_cast<std::size_t>(
-                                                        ddc::DiscreteElement<DDimY>(potential_elem)
-                                                                .uid());
-                            add_entry(count, column, value);
-                        });
-                    }
-                }
-                if (criterion == solvers::Criterion::MomentsTemporalDerivative
-                    || criterion == solvers::Criterion::PotentialAndMomentsTemporalDerivative) {
-                    auto outer_chain = sil::exterior::tangent_basis<1, NodeDomain2D>(elem);
-                    auto outer_lower_chain = sil::exterior::tangent_basis<0, NodeDomain2D>(elem);
-                    auto outer0_stencil = sil::exterior::TransposedCoboundary<
-                            sil::tensor::Covariant<InPlaneIndex>,
-                            ScalarPotentialIndex>::
-                            value([](auto, auto) { return 0.0; },
-                                  outer_chain,
-                                  outer_lower_chain,
-                                  elem,
-                                  output_y);
-                    ddc::device_for_each(outer0_stencil.domain(), [&](auto stencil_elem) {
-                        double const outer_coeff = outer0_stencil.mem(stencil_elem);
-                        if (outer_coeff == 0.0) {
-                            return;
-                        }
-                        auto const sampled_elem = ddc::DiscreteElement<DDimX, DDimY>(stencil_elem);
-                        auto moments_stencil
-                                = equations.template dpotential_dt_value<X>(sampled_elem);
-                        ddc::device_for_each(moments_stencil.domain(), [&](auto moments_elem) {
-                            double const value = -outer_coeff * moments_stencil.mem(moments_elem);
-                            if (value == 0.0) {
-                                return;
-                            }
-                            auto const potential_elem
-                                    = ddc::DiscreteElement<DDimX, DDimY>(moments_elem);
-                            std::size_t const column
-                                    = static_cast<std::size_t>(
-                                              ddc::DiscreteElement<DDimX>(potential_elem).uid())
-                                      + nx
-                                                * static_cast<std::size_t>(
-                                                        ddc::DiscreteElement<DDimY>(potential_elem)
-                                                                .uid());
-                            add_entry(count, column, value);
-                        });
-                    });
-                    auto outer1_stencil = sil::exterior::TransposedCoboundary<
-                            sil::tensor::Covariant<InPlaneIndex>,
-                            ScalarPotentialIndex>::
-                            value([](auto, auto) { return 0.0; },
-                                  outer_chain,
-                                  outer_lower_chain,
-                                  elem,
-                                  output_x);
-                    ddc::device_for_each(outer1_stencil.domain(), [&](auto stencil_elem) {
-                        double const outer_coeff = -outer1_stencil.mem(stencil_elem);
-                        if (outer_coeff == 0.0) {
-                            return;
-                        }
-                        auto const sampled_elem = ddc::DiscreteElement<DDimX, DDimY>(stencil_elem);
-                        auto moments_stencil
-                                = equations.template dpotential_dt_value<Y>(sampled_elem);
-                        ddc::device_for_each(moments_stencil.domain(), [&](auto moments_elem) {
-                            double const value = -outer_coeff * moments_stencil.mem(moments_elem);
-                            if (value == 0.0) {
-                                return;
-                            }
-                            auto const potential_elem
-                                    = ddc::DiscreteElement<DDimX, DDimY>(moments_elem);
-                            std::size_t const column
-                                    = static_cast<std::size_t>(
-                                              ddc::DiscreteElement<DDimX>(potential_elem).uid())
-                                      + nx
-                                                * static_cast<std::size_t>(
-                                                        ddc::DiscreteElement<DDimY>(potential_elem)
-                                                                .uid());
-                            add_entry(count, column, value);
-                        });
-                    });
-                }
-                counts(row) = count;
-            });
-    exec_space.fence();
-
-    auto coefficients_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), coefficients);
-    auto columns_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), columns);
-    auto counts_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), counts);
-
-    gko::matrix_data<double, gko::int32> matrix_data(gko::dim<2>(size, size));
-    matrix_data.nonzeros.reserve(size * 64);
-    for (std::size_t row = 0; row < size; ++row) {
-        for (int slot = 0; slot < counts_host(row); ++slot) {
-            double const coefficient = coefficients_host(row, slot);
-            if (coefficient != 0.0) {
-                matrix_data.nonzeros.emplace_back(
-                        static_cast<gko::int32>(row),
-                        static_cast<gko::int32>(columns_host(row, slot)),
-                        coefficient);
-            }
-        }
-    }
-    return matrix_data;
+    Kokkos::View<double**> state("similie_2d_linear_state", operator_model.size(), 1);
+    Kokkos::deep_copy(state, 0.0);
+    return assemble_matrix_data(operator_model, state);
 }
 
 } // namespace magnetostatics_local
@@ -1898,6 +2503,47 @@ double magnetic_induction_moment_from_potential_z_3d(
 
     return apply_stencil(
             MagneticVectorPotentialToMagneticInduction3D::template forward_value<Index>(elem));
+}
+
+template <class Index, class NodeValueGetter>
+double magnetic_induction_moment_from_vector_potential_3d(
+        ddc::DiscreteElement<
+                magnetostatics_local::DDimX,
+                magnetostatics_local::DDimY,
+                magnetostatics_local::DDimZ> elem,
+        NodeValueGetter&& node_value)
+{
+    using namespace magnetostatics_local;
+    using VectorPotentialIndex =
+            typename MagneticVectorPotentialToMagneticInduction3D::vector_potential_index;
+
+    [[maybe_unused]] sil::tensor::TensorAccessor<VectorPotentialIndex> potential_accessor;
+    auto const potential_x = potential_accessor.template access_element<X>();
+    auto const potential_y = potential_accessor.template access_element<Y>();
+
+    double value = 0.0;
+    auto stencil = MagneticVectorPotentialToMagneticInduction3D::template forward_vector_value<Index>(
+            elem);
+    ddc::host_for_each(stencil.domain(), [&](auto stencil_elem) {
+        auto const potential_elem = ddc::DiscreteElement<DDimX, DDimY, DDimZ>(stencil_elem);
+        auto const potential_component = ddc::DiscreteElement<VectorPotentialIndex>(stencil_elem);
+        int component = 2;
+        if (potential_component == potential_x) {
+            component = 0;
+        } else if (potential_component == potential_y) {
+            component = 1;
+        }
+        value += stencil.mem(stencil_elem)
+                 * node_value(
+                         static_cast<std::size_t>(
+                                 ddc::DiscreteElement<DDimX>(potential_elem).uid()),
+                         static_cast<std::size_t>(
+                                 ddc::DiscreteElement<DDimY>(potential_elem).uid()),
+                         static_cast<std::size_t>(
+                                 ddc::DiscreteElement<DDimZ>(potential_elem).uid()),
+                         component);
+    });
+    return value;
 }
 
 template <
@@ -2027,18 +2673,19 @@ void fill_post_process_fields_on_cell_domain_3d(
         ReadMu&& read_mu,
         ReadNonlinearMaterial&& read_nonlinear_material,
         NonlinearConstitutiveLaw const& nonlinear_constitutive_law,
-        NodeValueGetter&& node_value_z,
+        NodeValueGetter&& node_value,
         WriteCellOutput&& write_cell_output)
 {
     ddc::host_for_each(cell_domain, [&](auto elem) {
         std::array<double, 3> const cell_widths = read_cell_widths(elem);
 
         std::array<double, 3> const magnetic_induction {
-                magnetic_induction_moment_from_potential_z_3d<X>(elem, node_value_z)
-                        / cell_widths[1],
-                magnetic_induction_moment_from_potential_z_3d<Y>(elem, node_value_z)
-                        / cell_widths[0],
-                0.0,
+                magnetic_induction_moment_from_vector_potential_3d<X>(elem, node_value)
+                        / (cell_widths[1] * cell_widths[2]),
+                magnetic_induction_moment_from_vector_potential_3d<Y>(elem, node_value)
+                        / (cell_widths[0] * cell_widths[2]),
+                magnetic_induction_moment_from_vector_potential_3d<Z>(elem, node_value)
+                        / (cell_widths[0] * cell_widths[1]),
         };
         std::array<double, 3> magnetic_field {0.0, 0.0, 0.0};
         std::array<double, 3> const unit_hodge {1.0, 1.0, 1.0};
@@ -2873,7 +3520,9 @@ inline void write_results_view(
             for (std::size_t i = 0; i < grid.nx(); ++i) {
                 std::size_t const node_index = grid.node_index(i, j, k);
                 stream << "VP(" << grid.x_coords[i] << "," << grid.y_coords[j] << ","
-                       << grid.z_coords[k] << "){0,0,"
+                       << grid.z_coords[k] << "){"
+                       << magnetic_vector_potential[3 * node_index] << ","
+                       << magnetic_vector_potential[3 * node_index + 1] << ","
                        << magnetic_vector_potential[3 * node_index + 2] << "};\n";
             }
         }
@@ -2929,165 +3578,178 @@ Result run_on_hexahedral_grid(
         cell_inputs_3d[cell_index] = field;
     }
 
-    std::size_t const num_cells_xy = grid.ncell_x() * grid.ncell_y();
-    std::vector<CellInputFields> cell_inputs_2d(num_cells_xy);
-    for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
-        for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
-            CellInputFields averaged {
-                    .mu = 0.0,
-                    .current_density = {0.0, 0.0, 0.0},
-                    .nonlinear_material = false,
-            };
-            std::size_t nonlinear_count = 0;
-            for (std::size_t k = 0; k < grid.ncell_z(); ++k) {
-                CellInputFields const& current = cell_inputs_3d[grid.cell_index(i, j, k)];
-                averaged.mu += current.mu;
-                averaged.current_density[0] += current.current_density[0];
-                averaged.current_density[1] += current.current_density[1];
-                averaged.current_density[2] += current.current_density[2];
-                nonlinear_count += current.nonlinear_material ? 1U : 0U;
-            }
-            double const scale = 1.0 / static_cast<double>(grid.ncell_z());
-            averaged.mu *= scale;
-            averaged.current_density[0] *= scale;
-            averaged.current_density[1] *= scale;
-            averaged.current_density[2] *= scale;
-            averaged.nonlinear_material = 2 * nonlinear_count >= grid.ncell_z();
-            cell_inputs_2d[i + grid.ncell_x() * j] = averaged;
-        }
-    }
-
     Kokkos::View<double*> x_coords("similie_x_coords", grid.nx());
     Kokkos::View<double*> y_coords("similie_y_coords", grid.ny());
+    Kokkos::View<double*> z_coords("similie_z_coords", grid.nz());
     auto x_coords_host = Kokkos::create_mirror_view(x_coords);
     auto y_coords_host = Kokkos::create_mirror_view(y_coords);
+    auto z_coords_host = Kokkos::create_mirror_view(z_coords);
     for (std::size_t i = 0; i < grid.nx(); ++i) {
         x_coords_host(i) = grid.x_coords[i];
     }
     for (std::size_t j = 0; j < grid.ny(); ++j) {
         y_coords_host(j) = grid.y_coords[j];
     }
+    for (std::size_t k = 0; k < grid.nz(); ++k) {
+        z_coords_host(k) = grid.z_coords[k];
+    }
     Kokkos::deep_copy(x_coords, x_coords_host);
     Kokkos::deep_copy(y_coords, y_coords_host);
+    Kokkos::deep_copy(z_coords, z_coords_host);
 
-    std::size_t const num_nodes_xy = grid.nx() * grid.ny();
-    Kokkos::View<double**> rhs("similie_rhs", num_nodes_xy, 1);
-    Kokkos::View<double**> magnetic_vector_potential_z_view("similie_Az", num_nodes_xy, 1);
+    std::size_t const num_nodes = grid.nx() * grid.ny() * grid.nz();
+    Kokkos::View<double**> rhs("similie_rhs", 3 * num_nodes, 1);
+    Kokkos::View<double**> magnetic_vector_potential_view("similie_A", 3 * num_nodes, 1);
     auto rhs_host = Kokkos::create_mirror_view(rhs);
-    for (std::size_t j = 0; j < grid.ny(); ++j) {
-        for (std::size_t i = 0; i < grid.nx(); ++i) {
-            std::size_t const node_index = i + grid.nx() * j;
-            bool const boundary = (i == 0 || j == 0 || i + 1 == grid.nx() || j + 1 == grid.ny());
-            if (boundary) {
-                rhs_host(node_index, 0) = 0.0;
-                continue;
-            }
-            if (solver_settings.criterion == solvers::Criterion::PotentialTemporalDerivative) {
-                rhs_host(node_index, 0) = 0.0;
-                continue;
-            }
-            double accumulated_current_density_z = 0.0;
-            for (int dj = -1; dj <= 0; ++dj) {
-                for (int di = -1; di <= 0; ++di) {
-                    std::ptrdiff_t const ci = static_cast<std::ptrdiff_t>(i) + di;
-                    std::ptrdiff_t const cj = static_cast<std::ptrdiff_t>(j) + dj;
-                    if (ci < 0 || cj < 0 || ci >= static_cast<std::ptrdiff_t>(grid.ncell_x())
-                        || cj >= static_cast<std::ptrdiff_t>(grid.ncell_y())) {
+    for (std::size_t k = 0; k < grid.nz(); ++k) {
+        for (std::size_t j = 0; j < grid.ny(); ++j) {
+            for (std::size_t i = 0; i < grid.nx(); ++i) {
+                std::size_t const node_index = i + grid.nx() * (j + grid.ny() * k);
+                bool const boundary = i == 0 || j == 0 || k == 0 || i + 1 == grid.nx()
+                                      || j + 1 == grid.ny() || k + 1 == grid.nz();
+                for (int component = 0; component < 3; ++component) {
+                    std::size_t const row = 3 * node_index + static_cast<std::size_t>(component);
+                    rhs_host(row, 0) = 0.0;
+                    if (boundary
+                        || solver_settings.criterion
+                                   == solvers::Criterion::PotentialTemporalDerivative) {
                         continue;
                     }
-                    std::size_t const cell_i = static_cast<std::size_t>(ci);
-                    std::size_t const cell_j = static_cast<std::size_t>(cj);
-                    double const cell_area = (grid.x_coords[cell_i + 1] - grid.x_coords[cell_i])
-                                             * (grid.y_coords[cell_j + 1] - grid.y_coords[cell_j]);
-                    accumulated_current_density_z
-                            += 0.25 * cell_area
-                               * cell_inputs_2d[cell_i + grid.ncell_x() * cell_j]
-                                         .current_density[2];
+                    for (int dk = -1; dk <= 0; ++dk) {
+                        for (int dj = -1; dj <= 0; ++dj) {
+                            for (int di = -1; di <= 0; ++di) {
+                                std::ptrdiff_t const ci = static_cast<std::ptrdiff_t>(i) + di;
+                                std::ptrdiff_t const cj = static_cast<std::ptrdiff_t>(j) + dj;
+                                std::ptrdiff_t const ck = static_cast<std::ptrdiff_t>(k) + dk;
+                                if (ci < 0 || cj < 0 || ck < 0
+                                    || ci >= static_cast<std::ptrdiff_t>(grid.ncell_x())
+                                    || cj >= static_cast<std::ptrdiff_t>(grid.ncell_y())
+                                    || ck >= static_cast<std::ptrdiff_t>(grid.ncell_z())) {
+                                    continue;
+                                }
+                                std::size_t const cell_i = static_cast<std::size_t>(ci);
+                                std::size_t const cell_j = static_cast<std::size_t>(cj);
+                                std::size_t const cell_k = static_cast<std::size_t>(ck);
+                                double const cell_volume
+                                        = (grid.x_coords[cell_i + 1] - grid.x_coords[cell_i])
+                                          * (grid.y_coords[cell_j + 1] - grid.y_coords[cell_j])
+                                          * (grid.z_coords[cell_k + 1] - grid.z_coords[cell_k]);
+                                rhs_host(row, 0)
+                                        += 0.125 * cell_volume
+                                           * cell_inputs_3d[grid.cell_index(
+                                                                    cell_i,
+                                                                    cell_j,
+                                                                    cell_k)]
+                                                     .current_density[component];
+                            }
+                        }
+                    }
                 }
             }
-            rhs_host(node_index, 0) = accumulated_current_density_z;
         }
     }
     Kokkos::deep_copy(rhs, rhs_host);
     log_info(logger, "SimiLie right-hand side assembled on rectilinear nodes");
 
     using memory_space = typename Kokkos::DefaultExecutionSpace::memory_space;
-    magnetostatics_local::scalar_tensor_alloc_type<memory_space> mu_alloc(
+    magnetostatics_local::scalar_tensor_alloc_type_3d<memory_space> mu_alloc(
             ddc::DiscreteDomain<
                     magnetostatics_local::DDimX,
                     magnetostatics_local::DDimY,
+                    magnetostatics_local::DDimZ,
                     magnetostatics_local::ScalarPotentialIndex>(
-                    ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(
+                    ddc::DiscreteDomain<
+                            magnetostatics_local::DDimX,
+                            magnetostatics_local::DDimY,
+                            magnetostatics_local::DDimZ>(
                             ddc::DiscreteElement<
                                     magnetostatics_local::DDimX,
-                                    magnetostatics_local::DDimY>(0, 0),
+                                    magnetostatics_local::DDimY,
+                                    magnetostatics_local::DDimZ>(0, 0, 0),
                             ddc::DiscreteVector<
                                     magnetostatics_local::DDimX,
-                                    magnetostatics_local::DDimY>(grid.nx(), grid.ny())),
+                                    magnetostatics_local::DDimY,
+                                    magnetostatics_local::DDimZ>(grid.nx(), grid.ny(), grid.nz())),
                     sil::tensor::TensorAccessor<magnetostatics_local::ScalarPotentialIndex>()
                             .domain()),
             ddc::KokkosAllocator<double, memory_space>());
-    magnetostatics_local::ScalarPotentialTensor2D<memory_space> mu_tensor(mu_alloc);
-    magnetostatics_local::scalar_tensor_alloc_type<memory_space> nonlinear_mask_alloc(
+    magnetostatics_local::ScalarPotentialTensor3D<memory_space> mu_tensor(mu_alloc);
+    magnetostatics_local::scalar_tensor_alloc_type_3d<memory_space> nonlinear_mask_alloc(
             ddc::DiscreteDomain<
                     magnetostatics_local::DDimX,
                     magnetostatics_local::DDimY,
+                    magnetostatics_local::DDimZ,
                     magnetostatics_local::ScalarPotentialIndex>(
-                    ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(
+                    ddc::DiscreteDomain<
+                            magnetostatics_local::DDimX,
+                            magnetostatics_local::DDimY,
+                            magnetostatics_local::DDimZ>(
                             ddc::DiscreteElement<
                                     magnetostatics_local::DDimX,
-                                    magnetostatics_local::DDimY>(0, 0),
+                                    magnetostatics_local::DDimY,
+                                    magnetostatics_local::DDimZ>(0, 0, 0),
                             ddc::DiscreteVector<
                                     magnetostatics_local::DDimX,
-                                    magnetostatics_local::DDimY>(grid.nx(), grid.ny())),
+                                    magnetostatics_local::DDimY,
+                                    magnetostatics_local::DDimZ>(grid.nx(), grid.ny(), grid.nz())),
                     sil::tensor::TensorAccessor<magnetostatics_local::ScalarPotentialIndex>()
                             .domain()),
             ddc::KokkosAllocator<double, memory_space>());
-    magnetostatics_local::ScalarPotentialTensor2D<memory_space> nonlinear_mask_tensor(
+    magnetostatics_local::ScalarPotentialTensor3D<memory_space> nonlinear_mask_tensor(
             nonlinear_mask_alloc);
     auto mu_host = Kokkos::create_mirror_view(mu_alloc.allocation_kokkos_view());
     auto nonlinear_mask_host
             = Kokkos::create_mirror_view(nonlinear_mask_alloc.allocation_kokkos_view());
-    for (std::size_t j = 0; j < grid.ny(); ++j) {
-        for (std::size_t i = 0; i < grid.nx(); ++i) {
-            double accumulated_mu = 0.0;
-            double accumulated_nonlinear_mask = 0.0;
-            std::size_t count = 0;
-            for (int dj = -1; dj <= 0; ++dj) {
-                for (int di = -1; di <= 0; ++di) {
-                    std::ptrdiff_t const ci = static_cast<std::ptrdiff_t>(i) + di;
-                    std::ptrdiff_t const cj = static_cast<std::ptrdiff_t>(j) + dj;
-                    if (ci < 0 || cj < 0 || ci >= static_cast<std::ptrdiff_t>(grid.ncell_x())
-                        || cj >= static_cast<std::ptrdiff_t>(grid.ncell_y())) {
-                        continue;
+    for (std::size_t k = 0; k < grid.nz(); ++k) {
+        for (std::size_t j = 0; j < grid.ny(); ++j) {
+            for (std::size_t i = 0; i < grid.nx(); ++i) {
+                double accumulated_mu = 0.0;
+                double accumulated_nonlinear_mask = 0.0;
+                std::size_t count = 0;
+                for (int dk = -1; dk <= 0; ++dk) {
+                    for (int dj = -1; dj <= 0; ++dj) {
+                        for (int di = -1; di <= 0; ++di) {
+                            std::ptrdiff_t const ci = static_cast<std::ptrdiff_t>(i) + di;
+                            std::ptrdiff_t const cj = static_cast<std::ptrdiff_t>(j) + dj;
+                            std::ptrdiff_t const ck = static_cast<std::ptrdiff_t>(k) + dk;
+                            if (ci < 0 || cj < 0 || ck < 0
+                                || ci >= static_cast<std::ptrdiff_t>(grid.ncell_x())
+                                || cj >= static_cast<std::ptrdiff_t>(grid.ncell_y())
+                                || ck >= static_cast<std::ptrdiff_t>(grid.ncell_z())) {
+                                continue;
+                            }
+                            CellInputFields const& cell_input = cell_inputs_3d[grid.cell_index(
+                                    static_cast<std::size_t>(ci),
+                                    static_cast<std::size_t>(cj),
+                                    static_cast<std::size_t>(ck))];
+                            accumulated_mu += cell_input.mu;
+                            accumulated_nonlinear_mask
+                                    += (cell_input.nonlinear_material ? 1.0 : 0.0);
+                            ++count;
+                        }
                     }
-                    CellInputFields const& cell_input = cell_inputs_2d
-                            [static_cast<std::size_t>(ci)
-                             + grid.ncell_x() * static_cast<std::size_t>(cj)];
-                    accumulated_mu += cell_input.mu;
-                    accumulated_nonlinear_mask += (cell_input.nonlinear_material ? 1.0 : 0.0);
-                    ++count;
                 }
+                mu_host(i, j, k, 0)
+                        = count == 0 ? inputs.mu0 : accumulated_mu / static_cast<double>(count);
+                nonlinear_mask_host(i, j, k, 0)
+                        = count == 0 ? 0.0
+                                     : accumulated_nonlinear_mask / static_cast<double>(count);
             }
-            mu_host(i, j, 0)
-                    = count == 0 ? inputs.mu0 : accumulated_mu / static_cast<double>(count);
-            nonlinear_mask_host(i, j, 0)
-                    = count == 0 ? 0.0 : accumulated_nonlinear_mask / static_cast<double>(count);
         }
     }
     Kokkos::deep_copy(mu_alloc.allocation_kokkos_view(), mu_host);
     Kokkos::deep_copy(nonlinear_mask_alloc.allocation_kokkos_view(), nonlinear_mask_host);
 
     auto solve_with_equations = [&](auto equations) {
-        SIMILIE_DEBUG_LOG("similie_onelab_linear_magnetostatics_build_operator_3d_reduced_to_2d");
-        auto const operator_model = magnetostatics_local::MagnetostaticsOperator2D<
+        SIMILIE_DEBUG_LOG("similie_onelab_linear_magnetostatics_build_operator_3d");
+        auto const operator_model = magnetostatics_local::MagnetostaticsOperator3D<
                 memory_space,
                 decltype(equations),
-                magnetostatics_local::MagneticVectorPotentialToMagneticInduction2D>(
+                magnetostatics_local::MagneticVectorPotentialToMagneticInduction3D>(
                 equations,
                 x_coords,
                 y_coords,
-                solver_settings.criterion);
+                z_coords);
         log_info(
                 logger,
                 solver_settings.use_matrix_free
@@ -3099,7 +3761,7 @@ Result run_on_hexahedral_grid(
                 Kokkos::DefaultExecutionSpace(),
                 operator_model,
                 rhs,
-                magnetic_vector_potential_z_view,
+                magnetic_vector_potential_view,
                 solver_settings);
         log_info(
                 logger,
@@ -3127,16 +3789,20 @@ Result run_on_hexahedral_grid(
         solve_with_equations(physics::HamiltonEquations {hamiltonian});
     }
 
-    auto magnetic_vector_potential_z_host = Kokkos::
-            create_mirror_view_and_copy(Kokkos::HostSpace(), magnetic_vector_potential_z_view);
+    auto magnetic_vector_potential_host = Kokkos::
+            create_mirror_view_and_copy(Kokkos::HostSpace(), magnetic_vector_potential_view);
     std::vector<double> magnetic_vector_potential(3 * grid.ordered_nodes.size(), 0.0);
     for (std::size_t k = 0; k < grid.nz(); ++k) {
         for (std::size_t j = 0; j < grid.ny(); ++j) {
             for (std::size_t i = 0; i < grid.nx(); ++i) {
-                std::size_t const node_index_2d = i + grid.nx() * j;
-                std::size_t const node_index_3d = grid.node_index(i, j, k);
-                magnetic_vector_potential[3 * node_index_3d + 2]
-                        = magnetic_vector_potential_z_host(node_index_2d, 0);
+                std::size_t const solver_node_index = i + grid.nx() * (j + grid.ny() * k);
+                std::size_t const grid_node_index = grid.node_index(i, j, k);
+                for (int component = 0; component < 3; ++component) {
+                    magnetic_vector_potential[3 * grid_node_index + static_cast<std::size_t>(component)]
+                            = magnetic_vector_potential_host(
+                                    3 * solver_node_index + static_cast<std::size_t>(component),
+                                    0);
+                }
             }
         }
     }
@@ -3163,11 +3829,14 @@ Result run_on_hexahedral_grid(
                     grid.ncell_z()));
     std::vector<CellPostProcessFields> cell_outputs(result.num_cells);
     auto fill_cell_outputs = [&](auto const& nonlinear_constitutive_law) {
-        auto node_value_z
-                = [&](std::size_t node_i, std::size_t node_j, std::size_t node_k) {
-                      return magnetic_vector_potential
-                              [3 * grid.node_index(node_i, node_j, node_k) + 2];
-                  };
+        auto node_value = [&](std::size_t node_i,
+                              std::size_t node_j,
+                              std::size_t node_k,
+                              int component) {
+            return magnetic_vector_potential
+                    [3 * grid.node_index(node_i, node_j, node_k)
+                     + static_cast<std::size_t>(component)];
+        };
         fill_post_process_fields_on_cell_domain_3d(
                 cell_domain,
                 [&](auto elem) {
@@ -3202,7 +3871,7 @@ Result run_on_hexahedral_grid(
                     return cell_inputs_3d[grid.cell_index(i, j, k)].nonlinear_material;
                 },
                 nonlinear_constitutive_law,
-                node_value_z,
+                node_value,
                 [&](auto elem,
                     std::array<double, 3> const& magnetic_induction,
                     std::array<double, 3> const& magnetic_field) {
@@ -3245,7 +3914,6 @@ Result run_on_hexahedral_grid(
     diagnostic_face_samples.reserve(grid.ncell_x() * grid.ncell_z());
     for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
         for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
-            std::size_t const cell_index_xy = i + grid.ncell_x() * j;
             std::size_t const cell_index_3d = grid.cell_index(i, j, 0);
             int const physical_tag = grid.ordered_cells[cell_index_3d].physical_tag;
             if (!has_tag(inputs.positive_electrical_conductor_tags, physical_tag)) {
@@ -3254,7 +3922,7 @@ Result run_on_hexahedral_grid(
             double const cell_cross_section_area = (grid.x_coords[i + 1] - grid.x_coords[i])
                                                    * (grid.y_coords[j + 1] - grid.y_coords[j]);
             result.diagnostic_current_integral
-                    += cell_cross_section_area * cell_inputs_2d[cell_index_xy].current_density[2];
+                    += cell_cross_section_area * cell_inputs_3d[cell_index_3d].current_density[2];
             ++result.num_current_cells;
         }
     }
@@ -3263,9 +3931,6 @@ Result run_on_hexahedral_grid(
             for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
                 std::size_t const cell_index = grid.cell_index(i, j, k);
                 int const physical_tag = grid.ordered_cells[cell_index].physical_tag;
-                double const cell_volume = (grid.x_coords[i + 1] - grid.x_coords[i])
-                                           * (grid.y_coords[j + 1] - grid.y_coords[j])
-                                           * (grid.z_coords[k + 1] - grid.z_coords[k]);
                 if (!has_tag(inputs.diagnostic_region_tags, physical_tag)) {
                     continue;
                 }

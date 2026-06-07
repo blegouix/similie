@@ -293,10 +293,12 @@ struct Coboundary<TagToAddToCochain, CochainTag>
         using LocalStencil
                 = detail::local_operator_value_t<SpatialDomain, CochainTag, memory_space>;
 
+        std::size_t const stored_component_id
+                = OutputIndex::access_id_to_mem_id(natural_elem.template uid<OutputIndex>());
         typename ChainType::simplex_type
                 simplex(std::integral_constant<std::size_t, CochainTag::rank() + 1> {},
                         typename ChainType::simplex_type::discrete_element_type(elem),
-                        chain[natural_elem.template uid<OutputIndex>()].discrete_vector());
+                        chain[stored_component_id].discrete_vector());
         auto boundary_chain = boundary<memory_space>(simplex);
 
         SpatialElem front((*boundary_chain.begin()).discrete_element());
@@ -434,10 +436,12 @@ struct TransposedCoboundary<TagToAddToCochain, CochainTag>
                 = detail::local_operator_value_t<SpatialDomain, CochainTag, memory_space>;
 
         constexpr std::size_t BOUNDARY_SIZE = 2 * (CochainTag::rank() + 1);
+        std::size_t const stored_component_id
+                = OutputIndex::access_id_to_mem_id(natural_elem.template uid<OutputIndex>());
         typename ChainType::simplex_type
                 simplex(std::integral_constant<std::size_t, CochainTag::rank() + 1> {},
                         typename ChainType::simplex_type::discrete_element_type(elem),
-                        chain[natural_elem.template uid<OutputIndex>()].discrete_vector());
+                        chain[stored_component_id].discrete_vector());
         auto boundary_chain = boundary<memory_space>(simplex);
 
         SpatialElem front((*boundary_chain.begin()).discrete_element());
@@ -446,8 +450,7 @@ struct TransposedCoboundary<TagToAddToCochain, CochainTag>
             std::size_t const boundary_id
                     = Kokkos::Experimental::distance(boundary_chain.begin(), j);
             if (boundary_id >= CochainTag::rank() + 1) {
-                auto simplex_vector
-                        = chain[natural_elem.template uid<OutputIndex>()].discrete_vector();
+                auto simplex_vector = chain[stored_component_id].discrete_vector();
                 auto sampled_face_vector = (*j).discrete_vector();
                 for (std::size_t dim_id = 0;
                      dim_id < ddc::type_seq_size_v<ddc::to_type_seq_t<SpatialElem>>;
