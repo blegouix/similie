@@ -7,8 +7,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from sympy import diff, solve, symbols
+from sympy import Derivative, Subs, Symbol, diff, solve, symbols
 from sympy.printing.codeprinter import cxxcode
+
+
+@dataclass(frozen=True)
+class SymbolicFunctionDefinition:
+    value_expression: str
+    derivative_expressions: dict[int, str]
 
 
 @dataclass(frozen=True)
@@ -23,6 +29,12 @@ class HamiltonianDefinition:
     template_parameters: list[str] | None = None
     parameter_types: dict[str, str] | None = None
     parameter_value_expressions: dict[str, str] | None = None
+    symbolic_functions: dict[str, SymbolicFunctionDefinition] | None = None
+    moments_object_component_expression: str | None = None
+    moments_object_norm2_expression: str | None = None
+    generate_moments_jacobian: bool = False
+    namespace_preamble: str = ""
+    namespace_epilogue: str = ""
     is_linear: bool = False
 
 
@@ -52,9 +64,71 @@ def _entry_name(entry: object) -> str:
 
 
 def _replace_symbols(expression: str, replacements: dict[str, str]) -> str:
-    for source, target in replacements.items():
+    for source, target in sorted(
+        replacements.items(), key=lambda replacement: len(replacement[0]), reverse=True
+    ):
         expression = expression.replace(source, target)
     return expression
+
+
+def _render_cxx_expression(
+    expression,
+    replacements: dict[str, str],
+    symbolic_functions: dict[str, SymbolicFunctionDefinition] | None = None,
+    expression_replacements: dict[object, str] | None = None,
+) -> str:
+    symbolic_functions = symbolic_functions or {}
+    expression_replacements = expression_replacements or {}
+    placeholder_replacements: dict[str, str] = {}
+
+    def render_subexpression(subexpression) -> str:
+        for source_expression, target_expression in expression_replacements.items():
+            if subexpression == source_expression:
+                return target_expression
+        return _render_cxx_expression(
+            subexpression,
+            replacements,
+            symbolic_functions,
+            expression_replacements,
+        )
+
+    def placeholder(rendered_expression: str) -> Symbol:
+        symbol = Symbol(f"__similie_symbolic_function_{len(placeholder_replacements)}")
+        placeholder_replacements[str(symbol)] = rendered_expression
+        return symbol
+
+    for function_name, function_definition in symbolic_functions.items():
+        expression = expression.replace(
+            lambda node, name=function_name: (
+                isinstance(node, Subs)
+                and isinstance(node.expr, Derivative)
+                and node.expr.expr.func.__name__ == name
+            ),
+            lambda node, definition=function_definition: placeholder(
+                definition.derivative_expressions[node.expr.derivative_count].format(
+                    argument=render_subexpression(node.point[0])
+                )
+            ),
+        )
+        expression = expression.replace(
+            lambda node, name=function_name: node.func.__name__ == name,
+            lambda node, definition=function_definition: placeholder(
+                definition.value_expression.format(
+                    argument=render_subexpression(node.args[0])
+                )
+            ),
+        )
+
+    for source_expression, target_expression in expression_replacements.items():
+        expression = expression.replace(
+            lambda node, source=source_expression: node == source,
+            lambda node, target=target_expression: placeholder(target),
+        )
+
+    return _replace_symbols(
+        _replace_symbols(cxxcode(expression), replacements),
+        placeholder_replacements,
+    )
 
 
 def _render_members(parameters: list[tuple[str, str, bool, str]]) -> str:
@@ -87,10 +161,14 @@ def _generalize_component_expression(
     expression,
     replacements: dict[str, str],
     component_argument_name: str,
+    symbolic_functions: dict[str, SymbolicFunctionDefinition] | None = None,
+    expression_replacements: dict[object, str] | None = None,
 ) -> str:
-    return _replace_symbols(
-        cxxcode(expression),
+    return _render_cxx_expression(
+        expression,
         {**replacements, symbol_name: component_argument_name},
+        symbolic_functions,
+        expression_replacements,
     )
 
 
@@ -99,7 +177,9 @@ def _all_same(expressions: list[str]) -> bool:
 
 
 def _has_temporal_index(template_parameters: list[str] | None) -> bool:
-    return template_parameters is not None and "class TemporalIndex" in template_parameters
+    return (
+        template_parameters is not None and "class TemporalIndex" in template_parameters
+    )
 
 
 def _render_indexed_method(
@@ -109,10 +189,17 @@ def _render_indexed_method(
     expressions: list,
     replacements: dict[str, str],
     template_parameters: list[str] | None,
+    symbolic_functions: dict[str, SymbolicFunctionDefinition] | None = None,
+    expression_replacements: dict[object, str] | None = None,
 ) -> str:
     component_expressions = [
         _generalize_component_expression(
-            symbol_name, expression, replacements, argument_prefix
+            symbol_name,
+            expression,
+            replacements,
+            argument_prefix,
+            symbolic_functions,
+            expression_replacements,
         )
         for symbol_name, expression in zip(symbols_, expressions, strict=True)
     ]
@@ -146,10 +233,17 @@ def _render_indexed_elem_method(
     expressions: list,
     replacements: dict[str, str],
     template_parameters: list[str] | None,
+    symbolic_functions: dict[str, SymbolicFunctionDefinition] | None = None,
+    expression_replacements: dict[object, str] | None = None,
 ) -> str:
     component_expressions = [
         _generalize_component_expression(
-            symbol_name, expression, replacements, argument_prefix
+            symbol_name,
+            expression,
+            replacements,
+            argument_prefix,
+            symbolic_functions,
+            expression_replacements,
         )
         for symbol_name, expression in zip(symbols_, expressions, strict=True)
     ]
@@ -181,13 +275,14 @@ def _render_indexed_nonlocal_value_method(
     symbols_: list[str],
     expressions: list,
     replacements: dict[str, str],
+    symbolic_functions: dict[str, SymbolicFunctionDefinition] | None = None,
 ) -> str:
     differentiated_expressions = [
         diff(expression, symbols(symbol_name))
         for symbol_name, expression in zip(symbols_, expressions, strict=True)
     ]
     generalized_expressions = [
-        _replace_symbols(cxxcode(expression), replacements)
+        _render_cxx_expression(expression, replacements, symbolic_functions)
         for expression in differentiated_expressions
     ]
     if _all_same(generalized_expressions):
@@ -204,6 +299,100 @@ def _render_indexed_nonlocal_value_method(
     KOKKOS_FUNCTION constexpr auto {method_name}(Elem elem) const
     {{
 {body}
+    }}
+"""
+
+
+def _render_moments_object_method(
+    symbols_: list[str],
+    expressions: list,
+    replacements: dict[str, str],
+    symbolic_functions: dict[str, SymbolicFunctionDefinition],
+    expression_replacements: dict[object, str],
+    component_expression: str,
+) -> str:
+    component_expressions = [
+        _generalize_component_expression(
+            symbol_name,
+            expression,
+            replacements,
+            component_expression.format(index="Index", moments="moments"),
+            symbolic_functions,
+            expression_replacements,
+        )
+        for symbol_name, expression in zip(symbols_, expressions, strict=True)
+    ]
+    if not _all_same(component_expressions):
+        raise ValueError(
+            "dhamiltonian_dmoments object method cannot be generated without "
+            "tag-independent component expressions"
+        )
+
+    return f"""
+    template <class Index, class Moments, class Elem>
+    KOKKOS_FUNCTION constexpr double dhamiltonian_dmoments(Moments moments, Elem elem) const
+    {{
+        static_cast<void>(elem);
+        return {component_expressions[0]};
+    }}
+
+    template <class Index, class Moments, class Elem>
+    KOKKOS_FUNCTION constexpr double dpotential_dt(Moments moments, Elem elem) const
+    {{
+        return dhamiltonian_dmoments<Index>(moments, elem);
+    }}
+"""
+
+
+def _render_moments_object_jacobian_method(
+    symbols_: list[str],
+    hamiltonian,
+    replacements: dict[str, str],
+    symbolic_functions: dict[str, SymbolicFunctionDefinition],
+    expression_replacements: dict[object, str],
+    component_expression: str,
+) -> str:
+    row_component = component_expression.format(index="RowIndex", moments="moments")
+    column_component = component_expression.format(
+        index="ColumnIndex", moments="moments"
+    )
+    diagonal_expressions = [
+        _render_cxx_expression(
+            diff(diff(hamiltonian, symbol), symbol),
+            {**replacements, str(symbol): row_component},
+            symbolic_functions,
+            expression_replacements,
+        )
+        for symbol in symbols_
+    ]
+    off_diagonal_expressions = [
+        _render_cxx_expression(
+            diff(diff(hamiltonian, symbols_[0]), symbol),
+            {
+                **replacements,
+                str(symbols_[0]): row_component,
+                str(symbol): column_component,
+            },
+            symbolic_functions,
+            expression_replacements,
+        )
+        for symbol in symbols_[1:]
+    ]
+    if not _all_same(diagonal_expressions) or not _all_same(off_diagonal_expressions):
+        raise ValueError(
+            "moments jacobian cannot be generated without tag-independent expressions"
+        )
+
+    return f"""
+    template <class RowIndex, class ColumnIndex, class Moments, class Elem>
+    KOKKOS_FUNCTION constexpr double jacobian(Moments moments, Elem elem) const
+    {{
+        static_cast<void>(elem);
+        if constexpr (std::is_same_v<RowIndex, ColumnIndex>) {{
+            return {diagonal_expressions[0]};
+        }} else {{
+            return {off_diagonal_expressions[0]};
+        }}
     }}
 """
 
@@ -226,6 +415,9 @@ def write_cpp_hamiltonian_header(
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     parameter_value_expressions = parameter_value_expressions or {}
+    symbolic_functions = (
+        {} if definition is None else (definition.symbolic_functions or {})
+    )
     parameter_replacements = {}
     for member_name, constructor_name, _, _ in parameters:
         parameter_replacements[constructor_name] = parameter_value_expressions.get(
@@ -294,14 +486,14 @@ def write_cpp_hamiltonian_header(
     template <class Elem>
     KOKKOS_FUNCTION constexpr double dhamiltonian_dpotential({potential_method_signature}, Elem elem) const
     {{
-        return {_replace_symbols(cxxcode(potential_derivative_expressions[0]), potential_replacements)};
+        return {_render_cxx_expression(potential_derivative_expressions[0], potential_replacements, symbolic_functions)};
     }}
 """
         else:
             potential_method = f"""
     KOKKOS_FUNCTION constexpr double dhamiltonian_dpotential({potential_method_signature}) const
     {{
-        return {_replace_symbols(cxxcode(potential_derivative_expressions[0]), potential_replacements)};
+        return {_render_cxx_expression(potential_derivative_expressions[0], potential_replacements, symbolic_functions)};
     }}
 """
     else:
@@ -316,9 +508,18 @@ def write_cpp_hamiltonian_header(
             inverse_expressions,
             potential_replacements,
             template_parameters,
+            symbolic_functions,
         )
 
-    if len(moments_symbols) == 1 or moments_computer is None:
+    use_moments_object = (
+        len(moments_symbols) > 1
+        and definition is not None
+        and definition.moments_object_component_expression is not None
+    )
+
+    if not use_moments_object and (
+        len(moments_symbols) == 1 or moments_computer is None
+    ):
         moments_method = _render_indexed_method(
             "dhamiltonian_dmoments",
             "moments",
@@ -326,6 +527,7 @@ def write_cpp_hamiltonian_header(
             moments_derivative_expressions,
             moments_replacements,
             template_parameters,
+            symbolic_functions,
         )
     else:
         moments_method = ""
@@ -343,6 +545,7 @@ def write_cpp_hamiltonian_header(
                 moments_derivative_expressions,
                 generic_moments_replacements,
                 template_parameters,
+                symbolic_functions,
             )
         else:
             generic_moments_method = _render_indexed_method(
@@ -352,6 +555,33 @@ def write_cpp_hamiltonian_header(
                 moments_derivative_expressions,
                 generic_moments_replacements,
                 template_parameters,
+                symbolic_functions,
+            )
+
+    moments_object_method = ""
+    moments_jacobian_method = ""
+    if use_moments_object:
+        object_expression_replacements = {}
+        if definition.moments_object_norm2_expression is not None:
+            object_expression_replacements[
+                sum(symbol**2 for symbol in moments_symbols)
+            ] = definition.moments_object_norm2_expression.format(moments="moments")
+        moments_object_method = _render_moments_object_method(
+            [str(symbol) for symbol in moments_symbols],
+            moments_derivative_expressions,
+            moments_replacements,
+            symbolic_functions,
+            object_expression_replacements,
+            definition.moments_object_component_expression,
+        )
+        if definition.generate_moments_jacobian:
+            moments_jacobian_method = _render_moments_object_jacobian_method(
+                moments_symbols,
+                hamiltonian,
+                moments_replacements,
+                symbolic_functions,
+                object_expression_replacements,
+                definition.moments_object_component_expression,
             )
 
     nonlocal_value_methods = ""
@@ -361,6 +591,7 @@ def write_cpp_hamiltonian_header(
             [str(symbol) for symbol in moments_symbols],
             moments_derivative_expressions,
             moments_replacements,
+            symbolic_functions,
         )
     rendered_includes = ""
     if includes:
@@ -395,6 +626,8 @@ def write_cpp_hamiltonian_header(
 
 namespace {namespace} {{
 
+{"" if definition is None else definition.namespace_preamble}
+
 {template_prefix}struct {struct_name} {{
     static constexpr std::size_t N = {len(moments_symbols)};
     static constexpr bool IS_LINEAR = {"true" if is_linear else "false"};
@@ -407,10 +640,12 @@ namespace {namespace} {{
 
 {h_signature}
     {{
-        return {_replace_symbols(cxxcode(hamiltonian), h_replacements)};
+        return {_render_cxx_expression(hamiltonian, h_replacements, symbolic_functions)};
     }}
-{potential_method}{moments_method}{generic_moments_method}{nonlocal_value_methods}
+{potential_method}{moments_method}{generic_moments_method}{moments_object_method}{moments_jacobian_method}{nonlocal_value_methods}
 {inverse_methods}}};
+
+{"" if definition is None else definition.namespace_epilogue}
 }} // namespace {namespace}
 """
     )

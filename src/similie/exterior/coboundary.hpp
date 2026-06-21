@@ -629,12 +629,12 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
             exec_space,
             batch_dom,
             KOKKOS_LAMBDA(typename decltype(batch_dom)::discrete_element_type elem) {
-                Coboundary<TagToAddToCochain, CochainTag>::run(
-                        coboundary_tensor[elem],
-                        detail::ClampedTensorEvaluator<TensorType> {tensor},
-                        chain,
-                        lower_chain,
-                        elem);
+                Coboundary<TagToAddToCochain, CochainTag>::
+                        run(coboundary_tensor[elem],
+                            detail::ClampedTensorEvaluator<TensorType> {tensor},
+                            chain,
+                            lower_chain,
+                            elem);
             });
 
     return coboundary_tensor;
@@ -671,12 +671,12 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> transposed_coboun
             exec_space,
             batch_dom,
             KOKKOS_LAMBDA(typename decltype(batch_dom)::discrete_element_type elem) {
-                TransposedCoboundary<TagToAddToCochain, CochainTag>::run(
-                        coboundary_tensor[elem],
-                        detail::ZeroOutsideTensorEvaluator<TensorType> {tensor},
-                        chain,
-                        lower_chain,
-                        elem);
+                TransposedCoboundary<TagToAddToCochain, CochainTag>::
+                        run(coboundary_tensor[elem],
+                            detail::ZeroOutsideTensorEvaluator<TensorType> {tensor},
+                            chain,
+                            lower_chain,
+                            elem);
             });
 
     return coboundary_tensor;

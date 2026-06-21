@@ -3,10 +3,10 @@
 
 #pragma once
 
-#include <Kokkos_Core.hpp>
-
 #include <similie/misc/clamp_to_domain.hpp>
 #include <similie/misc/domain_contains.hpp>
+
+#include <Kokkos_Core.hpp>
 
 namespace sil {
 
@@ -34,15 +34,13 @@ struct ClampedTensorEvaluator
 
     KOKKOS_FUNCTION double operator()(auto sampled_elem, auto cochain_elem) const
     {
-        auto const clamped_elem
-                = misc::clamp_to_domain(tensor.non_indices_domain(), sampled_elem);
+        auto const clamped_elem = misc::clamp_to_domain(tensor.non_indices_domain(), sampled_elem);
         return tensor.mem(clamped_elem, cochain_elem);
     }
 
     KOKKOS_FUNCTION double value(auto sampler, auto sampled_elem, auto cochain_elem) const
     {
-        auto const clamped_elem
-                = misc::clamp_to_domain(tensor.non_indices_domain(), sampled_elem);
+        auto const clamped_elem = misc::clamp_to_domain(tensor.non_indices_domain(), sampled_elem);
         return sampler(clamped_elem, cochain_elem);
     }
 };

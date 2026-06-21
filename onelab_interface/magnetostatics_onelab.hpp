@@ -756,66 +756,6 @@ std::array<double, MaxSamples> to_padded_std_array(std::vector<double> const& va
     return array;
 }
 
-template <class LinearPermeabilityTensor, class NonlinearMaskTensor, class Curve>
-class MixedMaterialMagnetostaticsEquations
-{
-    LinearPermeabilityTensor m_linear_permeability;
-    NonlinearMaskTensor m_nonlinear_mask;
-    Curve m_nonlinear_bh_curve;
-
-public:
-    static constexpr bool IS_LINEAR = false;
-
-    MixedMaterialMagnetostaticsEquations(
-            LinearPermeabilityTensor linear_permeability,
-            NonlinearMaskTensor nonlinear_mask,
-            Curve nonlinear_bh_curve)
-        : m_linear_permeability(linear_permeability)
-        , m_nonlinear_mask(nonlinear_mask)
-        , m_nonlinear_bh_curve(nonlinear_bh_curve)
-    {
-    }
-
-    template <class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION bool is_nonlinear(Elem elem) const
-    {
-        return m_nonlinear_mask(
-                       elem,
-                       ddc::DiscreteElement<sil::tensor::Covariant<sil::tensor::ScalarIndex>>(0))
-               > 0.5;
-    }
-
-    template <class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION double linear_mu(Elem elem) const
-    {
-        return m_linear_permeability(
-                elem,
-                ddc::DiscreteElement<sil::tensor::Covariant<sil::tensor::ScalarIndex>>(0));
-    }
-
-    template <class Index, class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION double dpotential_dt(MagneticMoments moments, Elem elem) const
-    {
-        if (is_nonlinear(elem)) {
-            return m_nonlinear_bh_curve.nu_from_q(moments.norm2()) * moments.template get<Index>();
-        }
-        return moments.template get<Index>() / linear_mu(elem);
-    }
-
-    template <class RowIndex, class ColumnIndex, class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION double jacobian(MagneticMoments moments, Elem elem) const
-    {
-        if (!is_nonlinear(elem)) {
-            return std::is_same_v<RowIndex, ColumnIndex> ? 1.0 / linear_mu(elem) : 0.0;
-        }
-        double const q = moments.norm2();
-        double const nu = m_nonlinear_bh_curve.nu_from_q(q);
-        double const dnu = m_nonlinear_bh_curve.dnu_dq(q);
-        return (std::is_same_v<RowIndex, ColumnIndex> ? nu : 0.0)
-               + 2.0 * dnu * moments.template get<RowIndex>() * moments.template get<ColumnIndex>();
-    }
-};
-
 template <class MemorySpace, class Equations, class MagneticVectorPotentialToMagneticInduction>
 class MagnetostaticsOperator2D
 {
@@ -3151,30 +3091,10 @@ Result run_on_quadrilateral_grid(
                             .domain()),
             ddc::KokkosAllocator<double, memory_space>());
     magnetostatics_local::ScalarPotentialTensor2D<memory_space> mu_tensor(mu_alloc);
-    magnetostatics_local::scalar_tensor_alloc_type<memory_space> nonlinear_mask_alloc(
-            ddc::DiscreteDomain<
-                    magnetostatics_local::DDimX,
-                    magnetostatics_local::DDimY,
-                    magnetostatics_local::ScalarPotentialIndex>(
-                    ddc::DiscreteDomain<magnetostatics_local::DDimX, magnetostatics_local::DDimY>(
-                            ddc::DiscreteElement<
-                                    magnetostatics_local::DDimX,
-                                    magnetostatics_local::DDimY>(0, 0),
-                            ddc::DiscreteVector<
-                                    magnetostatics_local::DDimX,
-                                    magnetostatics_local::DDimY>(grid.nx(), grid.ny())),
-                    sil::tensor::TensorAccessor<magnetostatics_local::ScalarPotentialIndex>()
-                            .domain()),
-            ddc::KokkosAllocator<double, memory_space>());
-    magnetostatics_local::ScalarPotentialTensor2D<memory_space> nonlinear_mask_tensor(
-            nonlinear_mask_alloc);
     auto mu_host = Kokkos::create_mirror_view(mu_alloc.allocation_kokkos_view());
-    auto nonlinear_mask_host
-            = Kokkos::create_mirror_view(nonlinear_mask_alloc.allocation_kokkos_view());
     for (std::size_t j = 0; j < grid.ny(); ++j) {
         for (std::size_t i = 0; i < grid.nx(); ++i) {
             double accumulated_mu = 0.0;
-            double accumulated_nonlinear_mask = 0.0;
             std::size_t count = 0;
             for (int dj = -1; dj <= 0; ++dj) {
                 for (int di = -1; di <= 0; ++di) {
@@ -3188,18 +3108,14 @@ Result run_on_quadrilateral_grid(
                             static_cast<std::size_t>(ci),
                             static_cast<std::size_t>(cj))];
                     accumulated_mu += cell_input.mu;
-                    accumulated_nonlinear_mask += (cell_input.nonlinear_material ? 1.0 : 0.0);
                     ++count;
                 }
             }
             mu_host(i, j, 0)
                     = count == 0 ? inputs.mu0 : accumulated_mu / static_cast<double>(count);
-            nonlinear_mask_host(i, j, 0)
-                    = count == 0 ? 0.0 : accumulated_nonlinear_mask / static_cast<double>(count);
         }
     }
     Kokkos::deep_copy(mu_alloc.allocation_kokkos_view(), mu_host);
-    Kokkos::deep_copy(nonlinear_mask_alloc.allocation_kokkos_view(), nonlinear_mask_host);
 
     auto solve_with_equations = [&](auto equations) {
         SIMILIE_DEBUG_LOG("similie_onelab_linear_magnetostatics_build_operator_2d");
@@ -3238,11 +3154,10 @@ Result run_on_quadrilateral_grid(
                 magnetostatics_local::to_padded_std_array<64>(inputs.nonlinear_b_samples),
                 magnetostatics_local::to_padded_std_array<64>(inputs.nonlinear_h_samples),
                 inputs.nonlinear_b_samples.size());
-        auto const equations = magnetostatics_local::MixedMaterialMagnetostaticsEquations(
-                mu_tensor,
-                nonlinear_mask_tensor,
-                nonlinear_bh_curve);
-        solve_with_equations(equations);
+        auto const hamiltonian
+                = physics::magnetostatics::NonlinearMagnetostaticsHamiltonian<curve_type>(
+                        nonlinear_bh_curve);
+        solve_with_equations(hamiltonian);
     } else {
         auto const hamiltonian
                 = magnetostatics_local::LinearMagnetostaticsHamiltonian<decltype(mu_tensor)>(
@@ -3674,37 +3589,11 @@ Result run_on_hexahedral_grid(
                             .domain()),
             ddc::KokkosAllocator<double, memory_space>());
     magnetostatics_local::ScalarPotentialTensor3D<memory_space> mu_tensor(mu_alloc);
-    magnetostatics_local::scalar_tensor_alloc_type_3d<memory_space> nonlinear_mask_alloc(
-            ddc::DiscreteDomain<
-                    magnetostatics_local::DDimX,
-                    magnetostatics_local::DDimY,
-                    magnetostatics_local::DDimZ,
-                    magnetostatics_local::ScalarPotentialIndex>(
-                    ddc::DiscreteDomain<
-                            magnetostatics_local::DDimX,
-                            magnetostatics_local::DDimY,
-                            magnetostatics_local::DDimZ>(
-                            ddc::DiscreteElement<
-                                    magnetostatics_local::DDimX,
-                                    magnetostatics_local::DDimY,
-                                    magnetostatics_local::DDimZ>(0, 0, 0),
-                            ddc::DiscreteVector<
-                                    magnetostatics_local::DDimX,
-                                    magnetostatics_local::DDimY,
-                                    magnetostatics_local::DDimZ>(grid.nx(), grid.ny(), grid.nz())),
-                    sil::tensor::TensorAccessor<magnetostatics_local::ScalarPotentialIndex>()
-                            .domain()),
-            ddc::KokkosAllocator<double, memory_space>());
-    magnetostatics_local::ScalarPotentialTensor3D<memory_space> nonlinear_mask_tensor(
-            nonlinear_mask_alloc);
     auto mu_host = Kokkos::create_mirror_view(mu_alloc.allocation_kokkos_view());
-    auto nonlinear_mask_host
-            = Kokkos::create_mirror_view(nonlinear_mask_alloc.allocation_kokkos_view());
     for (std::size_t k = 0; k < grid.nz(); ++k) {
         for (std::size_t j = 0; j < grid.ny(); ++j) {
             for (std::size_t i = 0; i < grid.nx(); ++i) {
                 double accumulated_mu = 0.0;
-                double accumulated_nonlinear_mask = 0.0;
                 std::size_t count = 0;
                 for (int dk = -1; dk <= 0; ++dk) {
                     for (int dj = -1; dj <= 0; ++dj) {
@@ -3723,22 +3612,16 @@ Result run_on_hexahedral_grid(
                                     static_cast<std::size_t>(cj),
                                     static_cast<std::size_t>(ck))];
                             accumulated_mu += cell_input.mu;
-                            accumulated_nonlinear_mask
-                                    += (cell_input.nonlinear_material ? 1.0 : 0.0);
                             ++count;
                         }
                     }
                 }
                 mu_host(i, j, k, 0)
                         = count == 0 ? inputs.mu0 : accumulated_mu / static_cast<double>(count);
-                nonlinear_mask_host(i, j, k, 0)
-                        = count == 0 ? 0.0
-                                     : accumulated_nonlinear_mask / static_cast<double>(count);
             }
         }
     }
     Kokkos::deep_copy(mu_alloc.allocation_kokkos_view(), mu_host);
-    Kokkos::deep_copy(nonlinear_mask_alloc.allocation_kokkos_view(), nonlinear_mask_host);
 
     auto solve_with_equations = [&](auto equations) {
         SIMILIE_DEBUG_LOG("similie_onelab_linear_magnetostatics_build_operator_3d");
@@ -3777,11 +3660,10 @@ Result run_on_hexahedral_grid(
                 magnetostatics_local::to_padded_std_array<64>(inputs.nonlinear_b_samples),
                 magnetostatics_local::to_padded_std_array<64>(inputs.nonlinear_h_samples),
                 inputs.nonlinear_b_samples.size());
-        auto const equations = magnetostatics_local::MixedMaterialMagnetostaticsEquations(
-                mu_tensor,
-                nonlinear_mask_tensor,
-                nonlinear_bh_curve);
-        solve_with_equations(equations);
+        auto const hamiltonian
+                = physics::magnetostatics::NonlinearMagnetostaticsHamiltonian<curve_type>(
+                        nonlinear_bh_curve);
+        solve_with_equations(hamiltonian);
     } else {
         auto const hamiltonian
                 = magnetostatics_local::LinearMagnetostaticsHamiltonian<decltype(mu_tensor)>(

@@ -76,13 +76,16 @@ string(CONCAT NONLINEAR_MAGNETOSTATICS_GENERATION_CODE
     "from pathlib import Path; "
     "root = Path(r\"${CMAKE_CURRENT_SOURCE_DIR}\"); "
     "magnetostatics_path = root / \"magnetostatics\" / \"nonlinear_magnetostatics.py\"; "
+    "hamiltonian_generator_path = root / \"generate_cpp_hamiltonian.py\"; "
+    "hamiltonian_generator_spec = importlib.util.spec_from_file_location(\"similie_generate_cpp_hamiltonian\", hamiltonian_generator_path); "
+    "hamiltonian_generator_module = importlib.util.module_from_spec(hamiltonian_generator_spec); "
+    "sys.modules[hamiltonian_generator_spec.name] = hamiltonian_generator_module; "
+    "hamiltonian_generator_spec.loader.exec_module(hamiltonian_generator_module); "
     "magnetostatics_spec = importlib.util.spec_from_file_location(\"similie_nonlinear_magnetostatics\", magnetostatics_path); "
     "magnetostatics_module = importlib.util.module_from_spec(magnetostatics_spec); "
     "sys.modules[magnetostatics_spec.name] = magnetostatics_module; "
     "magnetostatics_spec.loader.exec_module(magnetostatics_module); "
-    "output_path = Path(r\"${NONLINEAR_MAGNETOSTATICS_HEADER}\"); "
-    "output_path.parent.mkdir(parents=True, exist_ok=True); "
-    "output_path.write_text(magnetostatics_module.NONLINEAR_MAGNETOSTATICS_HEADER)")
+    "hamiltonian_generator_module.generate_cpp_hamiltonian(magnetostatics_module.NonlinearMagnetostaticsHamiltonian, Path(r\"${NONLINEAR_MAGNETOSTATICS_HEADER}\"))")
 
 add_custom_command(
     OUTPUT
@@ -104,7 +107,7 @@ add_custom_command(
     COMMAND "${CMAKE_COMMAND}" -E make_directory
             "${SIMILIE_GENERATED_PHYSICS_DIR}/magnetostatics"
     COMMAND "${Python3_EXECUTABLE}" -c "${NONLINEAR_MAGNETOSTATICS_GENERATION_CODE}"
-    DEPENDS "${NONLINEAR_MAGNETOSTATICS_GENERATOR}"
+    DEPENDS "${NONLINEAR_MAGNETOSTATICS_GENERATOR}" "${GENERIC_HAMILTONIAN_GENERATOR}"
     COMMENT "Generating nonlinear magnetostatics functors"
     VERBATIM
 )

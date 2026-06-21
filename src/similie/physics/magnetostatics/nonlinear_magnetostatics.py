@@ -4,25 +4,14 @@
 
 from __future__ import annotations
 
+from similie_generate_cpp_hamiltonian import (
+    HamiltonianDefinition,
+    SymbolicFunctionDefinition,
+)
+from sympy import Function, simplify, sqrt, symbols
 
-NONLINEAR_MAGNETOSTATICS_HEADER = """\
-// SPDX-FileCopyrightText: 2026 Baptiste Legouix
-// SPDX-License-Identifier: MIT
 
-#pragma once
-
-#include <array>
-#include <cmath>
-#include <cstddef>
-#include <span>
-#include <stdexcept>
-
-#include <Kokkos_Core.hpp>
-
-#include <similie/physics/magnetostatics/magnetostatics_quantities.hpp>
-
-namespace similie::physics::magnetostatics {
-
+INTERPOLATED_BH_CURVE_HEADER = """\
 template <std::size_t MaxSamples>
 struct InterpolatedNonlinearBHCurve
 {
@@ -33,7 +22,6 @@ struct InterpolatedNonlinearBHCurve
     std::array<double, MAX_SAMPLES> m_h {};
     std::array<double, MAX_SAMPLES> m_q {};
     std::array<double, MAX_SAMPLES> m_nu {};
-    std::array<double, MAX_SAMPLES> m_energy {};
     std::array<double, MAX_SAMPLES - 1> m_dnu_dq {};
     std::array<double, MAX_SAMPLES - 1> m_dh_db {};
 
@@ -62,12 +50,6 @@ struct InterpolatedNonlinearBHCurve
         for (std::size_t i = 0; i + 1 < m_num_samples; ++i) {
             m_dnu_dq[i] = (m_nu[i + 1] - m_nu[i]) / (m_q[i + 1] - m_q[i]);
             m_dh_db[i] = (m_h[i + 1] - m_h[i]) / (m_b[i + 1] - m_b[i]);
-        }
-
-        m_energy[0] = 0.0;
-        for (std::size_t i = 0; i + 1 < m_num_samples; ++i) {
-            double const dq = m_q[i + 1] - m_q[i];
-            m_energy[i + 1] = m_energy[i] + 0.5 * m_nu[i] * dq + 0.25 * m_dnu_dq[i] * dq * dq;
         }
     }
 
@@ -121,6 +103,17 @@ struct InterpolatedNonlinearBHCurve
         return m_h[interval] + m_dh_db[interval] * (b_value - m_b[interval]);
     }
 
+    [[nodiscard]] KOKKOS_FUNCTION double dh_db_from_b(double b_value) const
+    {
+        if (b_value <= m_b[0]) {
+            return m_dh_db[0];
+        }
+        if (b_value >= m_b[m_num_samples - 1]) {
+            return m_dh_db[m_num_samples - 2];
+        }
+        return m_dh_db[bracket_q(b_value * b_value)];
+    }
+
     [[nodiscard]] KOKKOS_FUNCTION double b_from_h(double h_value) const
     {
         if (h_value <= m_h[0]) {
@@ -135,14 +128,11 @@ struct InterpolatedNonlinearBHCurve
         return 1.0 / m_dh_db[bracket_h(h_value)];
     }
 
-    [[nodiscard]] KOKKOS_FUNCTION double energy_from_q(double q_value) const
-    {
-        std::size_t const interval = bracket_q(q_value);
-        double const dq = q_value - m_q[interval];
-        return m_energy[interval] + 0.5 * m_nu[interval] * dq + 0.25 * m_dnu_dq[interval] * dq * dq;
-    }
 };
+"""
 
+
+CONSTITUTIVE_LAW_HEADER = """\
 template <class BHCurve>
 class NonlinearMagneticInductionToMagneticField
 {
@@ -155,14 +145,32 @@ class NonlinearMagneticInductionToMagneticField
         double const q = magnetic_induction[0] * magnetic_induction[0]
                          + magnetic_induction[1] * magnetic_induction[1]
                          + magnetic_induction[2] * magnetic_induction[2];
-        double const nu = m_bh_curve.nu_from_q(q);
-        double const dnu = m_bh_curve.dnu_dq(q);
+        double const b_norm = std::sqrt(q);
+        if (b_norm == 0.0) {
+            double const dh_db = m_bh_curve.dh_db_from_b(0.0);
+            return {
+                    hodge_star[0] * dh_db,
+                    0.0,
+                    0.0,
+                    0.0,
+                    hodge_star[1] * dh_db,
+                    0.0,
+                    0.0,
+                    0.0,
+                    hodge_star[2] * dh_db,
+            };
+        }
+        double const h_norm = m_bh_curve.h_from_b(b_norm);
+        double const dh_db = m_bh_curve.dh_db_from_b(b_norm);
+        double const scale = h_norm / b_norm;
+        double const radial_scale = (dh_db - scale) / q;
         std::array<double, 9> jacobian {};
-        for (std::size_t i = 0; i < 3; ++i) {
-            for (std::size_t j = 0; j < 3; ++j) {
-                jacobian[3 * i + j] = hodge_star[i]
-                                      * ((i == j ? nu : 0.0)
-                                         + 2.0 * dnu * magnetic_induction[i] * magnetic_induction[j]);
+        for (std::size_t row = 0; row < 3; ++row) {
+            for (std::size_t column = 0; column < 3; ++column) {
+                jacobian[3 * row + column]
+                        = hodge_star[row]
+                          * ((row == column ? scale : 0.0)
+                             + radial_scale * magnetic_induction[row] * magnetic_induction[column]);
             }
         }
         return jacobian;
@@ -215,11 +223,15 @@ public:
         double const q = magnetic_induction[0] * magnetic_induction[0]
                          + magnetic_induction[1] * magnetic_induction[1]
                          + magnetic_induction[2] * magnetic_induction[2];
-        double const nu = m_bh_curve.nu_from_q(q);
+        double const b_norm = std::sqrt(q);
+        if (b_norm == 0.0) {
+            return {0.0, 0.0, 0.0};
+        }
+        double const scale = m_bh_curve.h_from_b(b_norm) / b_norm;
         return {
-                hodge_star[0] * nu * magnetic_induction[0],
-                hodge_star[1] * nu * magnetic_induction[1],
-                hodge_star[2] * nu * magnetic_induction[2],
+                hodge_star[0] * scale * magnetic_induction[0],
+                hodge_star[1] * scale * magnetic_induction[1],
+                hodge_star[2] * scale * magnetic_induction[2],
         };
     }
 
@@ -266,6 +278,44 @@ public:
         return jacobian_from_magnetic_induction(hodge_star, magnetic_induction);
     }
 };
-
-} // namespace similie::physics::magnetostatics
 """
+
+
+class NonlinearMagnetostaticsHamiltonian:
+    @staticmethod
+    def __call__() -> HamiltonianDefinition:
+        a = symbols("A0:3")
+        b = symbols("B0:3")
+        j = symbols("j0:3")
+        magnetic_field = Function("magnetic_field")
+        q = sum(component**2 for component in b)
+        b_norm = sqrt(q)
+        h = [b[i] * magnetic_field(b_norm) / b_norm for i in range(3)]
+        hamiltonian = simplify(sum(b[i] * h[i] / 2 for i in range(3))) - sum(
+            a[i] * j[i] for i in range(3)
+        )
+
+        return HamiltonianDefinition(
+            namespace="similie::physics::magnetostatics",
+            struct_name="NonlinearMagnetostaticsHamiltonian",
+            parameters=["bh_curve"],
+            hamiltonian=hamiltonian,
+            variables=[a, b, j],
+            includes=["<similie/physics/magnetostatics/magnetostatics_quantities.hpp>"],
+            template_parameters=["class BHCurve"],
+            parameter_types={"bh_curve": "BHCurve"},
+            symbolic_functions={
+                "magnetic_field": SymbolicFunctionDefinition(
+                    value_expression="m_bh_curve.h_from_b({argument})",
+                    derivative_expressions={
+                        1: "m_bh_curve.dh_db_from_b({argument})",
+                        2: "0.0",
+                    },
+                )
+            },
+            moments_object_component_expression="{moments}.template get<{index}>()",
+            moments_object_norm2_expression="{moments}.norm2()",
+            generate_moments_jacobian=True,
+            namespace_preamble=INTERPOLATED_BH_CURVE_HEADER,
+            namespace_epilogue=CONSTITUTIVE_LAW_HEADER,
+        )

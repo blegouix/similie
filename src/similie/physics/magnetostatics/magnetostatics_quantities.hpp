@@ -135,8 +135,7 @@ class MagneticVectorPotentialToMagneticInduction<SpatialIndex...>
     using SpatialIndexSeq = ddc::detail::TypeSeq<SpatialIndex...>;
     using SpatialNaturalIndex = sil::tensor::TensorNaturalIndex<SpatialIndex...>;
     using CoboundaryIndex = sil::tensor::Contravariant<SpatialNaturalIndex>;
-    using VectorPotentialIndex
-            = sil::tensor::Covariant<SpatialNaturalIndex>;
+    using VectorPotentialIndex = sil::tensor::Covariant<SpatialNaturalIndex>;
     using MagneticInductionIndex
             = sil::exterior::coboundary_index_t<CoboundaryIndex, VectorPotentialIndex>;
 
@@ -176,12 +175,12 @@ public:
         auto const lower_chain = sil::exterior::tangent_basis<1, spatial_domain_type>(elem);
 
         auto const output_component = magnetic_induction_component<Index>();
-        auto stencil = sil::exterior::Coboundary<CoboundaryIndex, VectorPotentialIndex>::value(
-                sil::exterior::detail::IdentityStencilEvaluator {},
-                chain,
-                lower_chain,
-                elem,
-                output_component);
+        auto stencil = sil::exterior::Coboundary<CoboundaryIndex, VectorPotentialIndex>::
+                value(sil::exterior::detail::IdentityStencilEvaluator {},
+                      chain,
+                      lower_chain,
+                      elem,
+                      output_component);
         if constexpr (std::is_same_v<Index, ddc::type_seq_element_t<1, SpatialIndexSeq>>) {
             stencil *= -1.0;
         }
