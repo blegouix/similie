@@ -81,7 +81,7 @@ jobs:
             esac
             cmake \
               -DCMAKE_CXX_COMPILER="${PWD}/vendor/ddc/vendor/kokkos/bin/nvcc_wrapper" \
-              -DCMAKE_BUILD_TYPE=Debug \
+              -DCMAKE_BUILD_TYPE=Release \
               -DKokkos_ENABLE_CUDA=ON \
               -DKokkos_ARCH_${kokkos_arch}=ON \
               -DKokkos_ENABLE_DEPRECATION_WARNINGS=OFF \
