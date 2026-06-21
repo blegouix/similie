@@ -6,6 +6,7 @@ on:
   push:
     branches: [ main ]
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
   workflow_dispatch:
 
 concurrency:
@@ -37,7 +38,7 @@ jobs:
           docker/similie_env
 
   run-similie-env-gpu:
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref_name == 'main')
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref_name == 'main') || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'run-gpu-env'))
     runs-on: [self-hosted, linux]
     needs: docker-build-gpu
     steps:
