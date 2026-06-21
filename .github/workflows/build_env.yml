@@ -5,8 +5,6 @@ name: build_env
 on:
   push:
     branches: [ main ]
-  pull_request:
-    types: [opened, synchronize, reopened]
   workflow_dispatch:
 
 concurrency:
@@ -20,7 +18,7 @@ jobs:
   docker-build-gpu:
     runs-on: [self-hosted, linux]
     environment:
-      name: ${{ github.event_name == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run' }}
+      name: automatic-ci-run
     steps:
     - name: Checkout built branch
       uses: actions/checkout@v4

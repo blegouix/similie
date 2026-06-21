@@ -1,0 +1,242 @@
+# SPDX-FileCopyrightText: 2026 Baptiste Legouix
+# SPDX-License-Identifier: MIT
+
+name: pr_gpu
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  IMAGE_TAG: similie_env:${{ github.sha }}
+  CACHE_DIR: similie-gpu-workspace-${{ github.sha }}
+
+jobs:
+  docker-build-gpu:
+    runs-on: [self-hosted, linux]
+    environment:
+      name: manual-ci-run
+    steps:
+    - name: Checkout built branch
+      uses: actions/checkout@v4
+    - name: Check GPU visibility on runner
+      run: |
+        if command -v nvidia-smi; then
+          nvidia-smi
+        else
+          /usr/lib/wsl/lib/nvidia-smi
+        fi
+    - name: Build CUDA similie_env image
+      run: |
+        DOCKER_BUILDKIT=1 docker build \
+          --build-arg BACKEND=cuda \
+          -t "${IMAGE_TAG}" \
+          -t similie_env:latest \
+          docker/similie_env
+
+  compile-gpu:
+    needs: docker-build-gpu
+    runs-on: [self-hosted, linux]
+    environment:
+      name: manual-ci-run
+    steps:
+    - name: Checkout built branch
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - name: Clear temporary workspace path
+      run: rm -rf "${RUNNER_TEMP}/${CACHE_DIR}"
+    - name: Restore commit workspace
+      id: restore-workspace
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ runner.temp }}/similie-gpu-workspace-${{ github.sha }}
+        key: similie-gpu-workspace-${{ runner.os }}-${{ github.sha }}
+    - name: Populate commit workspace
+      run: |
+        mkdir -p "${RUNNER_TEMP}/${CACHE_DIR}/src" "${RUNNER_TEMP}/${CACHE_DIR}/agent_build" "${RUNNER_TEMP}/${CACHE_DIR}/home"
+        rsync -a --delete "${GITHUB_WORKSPACE}/" "${RUNNER_TEMP}/${CACHE_DIR}/src/"
+    - name: Configure and compile on GPU
+      run: |
+        docker image inspect "${IMAGE_TAG}" >/dev/null
+        docker run --rm --gpus all \
+          --user "$(id -u):$(id -g)" \
+          -e HOME="${RUNNER_TEMP}/${CACHE_DIR}/home" \
+          -e CACHE_ROOT="${RUNNER_TEMP}/${CACHE_DIR}" \
+          -v "${RUNNER_TEMP}/${CACHE_DIR}:${RUNNER_TEMP}/${CACHE_DIR}" \
+          -w "${RUNNER_TEMP}/${CACHE_DIR}/src" \
+          "${IMAGE_TAG}" \
+          bash -lc '
+            set -euo pipefail
+            export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
+            git config --global --add safe.directory "*"
+            nvidia-smi
+            cap="$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader | head -n1 | tr -d "[:space:]")"
+            case "${cap}" in
+              7.0) kokkos_arch=VOLTA70 ;;
+              7.2) kokkos_arch=VOLTA72 ;;
+              7.5) kokkos_arch=TURING75 ;;
+              8.0) kokkos_arch=AMPERE80 ;;
+              8.6) kokkos_arch=AMPERE86 ;;
+              8.9) kokkos_arch=ADA89 ;;
+              9.0) kokkos_arch=HOPPER90 ;;
+              *) echo "Unsupported NVIDIA compute capability for Kokkos: ${cap}" >&2; exit 1 ;;
+            esac
+            cmake \
+              -DCMAKE_CXX_COMPILER="${PWD}/vendor/ddc/vendor/kokkos/bin/nvcc_wrapper" \
+              -DCMAKE_BUILD_TYPE=Release \
+              -DKokkos_ENABLE_CUDA=ON \
+              -DKokkos_ARCH_${kokkos_arch}=ON \
+              -DKokkos_ENABLE_DEPRECATION_WARNINGS=OFF \
+              -DSIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS=ON \
+              -B "${RUNNER_TEMP}/${CACHE_DIR}/agent_build" \
+              -S .
+            cmake --build "${RUNNER_TEMP}/${CACHE_DIR}/agent_build" --parallel 8
+          '
+    - name: Save commit workspace
+      if: steps.restore-workspace.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: ${{ runner.temp }}/similie-gpu-workspace-${{ github.sha }}
+        key: similie-gpu-workspace-${{ runner.os }}-${{ github.sha }}
+
+  test-gpu:
+    needs: compile-gpu
+    runs-on: [self-hosted, linux]
+    environment:
+      name: manual-ci-run
+    steps:
+    - name: Restore commit workspace
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ runner.temp }}/similie-gpu-workspace-${{ github.sha }}
+        key: similie-gpu-workspace-${{ runner.os }}-${{ github.sha }}
+        fail-on-cache-miss: true
+    - name: Recompile and run tests on GPU
+      run: |
+        docker image inspect "${IMAGE_TAG}" >/dev/null
+        docker run --rm --gpus all \
+          --user "$(id -u):$(id -g)" \
+          -e HOME="${RUNNER_TEMP}/${CACHE_DIR}/home" \
+          -e CACHE_ROOT="${RUNNER_TEMP}/${CACHE_DIR}" \
+          -v "${RUNNER_TEMP}/${CACHE_DIR}:${RUNNER_TEMP}/${CACHE_DIR}" \
+          -w "${RUNNER_TEMP}/${CACHE_DIR}/agent_build" \
+          "${IMAGE_TAG}" \
+          bash -lc '
+            set -euo pipefail
+            export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
+            git config --global --add safe.directory "*"
+            nvidia-smi
+            cmake --build . --parallel 8
+            ctest --output-on-failure
+          '
+
+  run-similie-env-gpu:
+    needs: docker-build-gpu
+    runs-on: [self-hosted, linux]
+    environment:
+      name: manual-ci-run
+    steps:
+    - name: Run similie_env on GPU
+      run: |
+        docker image inspect "${IMAGE_TAG}" >/dev/null
+        docker run --rm --gpus all --user "$(id -u):$(id -g)" "${IMAGE_TAG}" \
+          bash -lc 'export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"; nvidia-smi'
+
+  laplacian-gpu:
+    needs: compile-gpu
+    runs-on: [self-hosted, linux]
+    environment:
+      name: manual-ci-run
+    steps:
+    - name: Restore commit workspace
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ runner.temp }}/similie-gpu-workspace-${{ github.sha }}
+        key: similie-gpu-workspace-${{ runner.os }}-${{ github.sha }}
+        fail-on-cache-miss: true
+    - name: Run 2d_laplacian on GPU
+      run: |
+        docker image inspect "${IMAGE_TAG}" >/dev/null
+        docker run --rm --gpus all \
+          --user "$(id -u):$(id -g)" \
+          -e HOME="${RUNNER_TEMP}/${CACHE_DIR}/home" \
+          -e CACHE_ROOT="${RUNNER_TEMP}/${CACHE_DIR}" \
+          -v "${RUNNER_TEMP}/${CACHE_DIR}:${RUNNER_TEMP}/${CACHE_DIR}" \
+          -w "${RUNNER_TEMP}/${CACHE_DIR}/agent_build" \
+          "${IMAGE_TAG}" \
+          bash -lc '
+            set -euo pipefail
+            export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
+            git config --global --add safe.directory "*"
+            nvidia-smi
+            cmake --build . --parallel 8 --target 2d_laplacian
+            ./examples/2d_laplacian
+          '
+
+  laplacian-vector-gpu:
+    needs: compile-gpu
+    runs-on: [self-hosted, linux]
+    environment:
+      name: manual-ci-run
+    steps:
+    - name: Restore commit workspace
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ runner.temp }}/similie-gpu-workspace-${{ github.sha }}
+        key: similie-gpu-workspace-${{ runner.os }}-${{ github.sha }}
+        fail-on-cache-miss: true
+    - name: Run 2d_vector_laplacian on GPU
+      run: |
+        docker image inspect "${IMAGE_TAG}" >/dev/null
+        docker run --rm --gpus all \
+          --user "$(id -u):$(id -g)" \
+          -e HOME="${RUNNER_TEMP}/${CACHE_DIR}/home" \
+          -e CACHE_ROOT="${RUNNER_TEMP}/${CACHE_DIR}" \
+          -v "${RUNNER_TEMP}/${CACHE_DIR}:${RUNNER_TEMP}/${CACHE_DIR}" \
+          -w "${RUNNER_TEMP}/${CACHE_DIR}/agent_build" \
+          "${IMAGE_TAG}" \
+          bash -lc '
+            set -euo pipefail
+            export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
+            git config --global --add safe.directory "*"
+            nvidia-smi
+            cmake --build . --parallel 8 --target 2d_vector_laplacian
+            ./examples/2d_vector_laplacian
+          '
+
+  scalar-field-gpu:
+    needs: compile-gpu
+    runs-on: [self-hosted, linux]
+    environment:
+      name: manual-ci-run
+    steps:
+    - name: Restore commit workspace
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ runner.temp }}/similie-gpu-workspace-${{ github.sha }}
+        key: similie-gpu-workspace-${{ runner.os }}-${{ github.sha }}
+        fail-on-cache-miss: true
+    - name: Run 2d_scalar_field on GPU
+      run: |
+        docker image inspect "${IMAGE_TAG}" >/dev/null
+        docker run --rm --gpus all \
+          --user "$(id -u):$(id -g)" \
+          -e HOME="${RUNNER_TEMP}/${CACHE_DIR}/home" \
+          -e CACHE_ROOT="${RUNNER_TEMP}/${CACHE_DIR}" \
+          -v "${RUNNER_TEMP}/${CACHE_DIR}:${RUNNER_TEMP}/${CACHE_DIR}" \
+          -w "${RUNNER_TEMP}/${CACHE_DIR}/agent_build" \
+          "${IMAGE_TAG}" \
+          bash -lc '
+            set -euo pipefail
+            export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
+            git config --global --add safe.directory "*"
+            nvidia-smi
+            cmake --build . --parallel 8 --target 2d_scalar_field
+            ./examples/scalar_field/2d_scalar_field
+          '
