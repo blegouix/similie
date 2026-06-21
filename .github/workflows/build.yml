@@ -1,0 +1,97 @@
+# SPDX-FileCopyrightText: 2026 Baptiste Legouix
+# SPDX-License-Identifier: MIT
+
+name: build
+on:
+  workflow_run:
+    workflows: [ build_env ]
+    types: [ completed ]
+    branches: [ main ]
+  pull_request:
+    types: [labeled, synchronize, reopened]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.workflow_run.head_sha || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  compile-gpu:
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'run-gpu-build')) || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main')
+    runs-on: [self-hosted, linux]
+    steps:
+    - name: Select target commit
+      id: target
+      run: |
+        if [ "${GITHUB_EVENT_NAME}" = "workflow_run" ]; then
+          target_sha="${{ github.event.workflow_run.head_sha }}"
+          target_ref="${{ github.event.workflow_run.head_branch }}"
+        else
+          target_sha="${GITHUB_SHA}"
+          target_ref="${GITHUB_REF_NAME}"
+        fi
+        echo "TARGET_SHA=${target_sha}" >> "${GITHUB_ENV}"
+        echo "TARGET_REF=${target_ref}" >> "${GITHUB_ENV}"
+        echo "target_sha=${target_sha}" >> "${GITHUB_OUTPUT}"
+    - name: Checkout built branch
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ steps.target.outputs.target_sha }}
+        submodules: recursive
+        fetch-depth: 0
+    - name: Clear temporary workspace path
+      run: |
+        echo "IMAGE_TAG=similie_env:${TARGET_SHA}" >> "${GITHUB_ENV}"
+        echo "CACHE_ROOT=${RUNNER_TEMP}/similie-gpu-workspace-${TARGET_SHA}" >> "${GITHUB_ENV}"
+        rm -rf "${RUNNER_TEMP}/similie-gpu-workspace-${TARGET_SHA}"
+    - name: Restore commit workspace
+      id: restore-workspace
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ runner.temp }}/similie-gpu-workspace-${{ steps.target.outputs.target_sha }}
+        key: similie-gpu-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
+    - name: Populate commit workspace
+      run: |
+        mkdir -p "${CACHE_ROOT}/src" "${CACHE_ROOT}/agent_build" "${CACHE_ROOT}/home"
+        rsync -a --delete "${GITHUB_WORKSPACE}/" "${CACHE_ROOT}/src/"
+    - name: Configure and compile on GPU
+      run: |
+        docker image inspect "${IMAGE_TAG}" >/dev/null
+        docker run --rm --gpus all \
+          --user "$(id -u):$(id -g)" \
+          -e HOME="${CACHE_ROOT}/home" \
+          -v "${CACHE_ROOT}:${CACHE_ROOT}" \
+          -w "${CACHE_ROOT}/src" \
+          "${IMAGE_TAG}" \
+          bash -lc '
+            set -euo pipefail
+            export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
+            git config --global --add safe.directory "*"
+            nvidia-smi
+            cap="$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader | head -n1 | tr -d "[:space:]")"
+            case "${cap}" in
+              7.0) kokkos_arch=VOLTA70 ;;
+              7.2) kokkos_arch=VOLTA72 ;;
+              7.5) kokkos_arch=TURING75 ;;
+              8.0) kokkos_arch=AMPERE80 ;;
+              8.6) kokkos_arch=AMPERE86 ;;
+              8.9) kokkos_arch=ADA89 ;;
+              9.0) kokkos_arch=HOPPER90 ;;
+              *) echo "Unsupported NVIDIA compute capability for Kokkos: ${cap}" >&2; exit 1 ;;
+            esac
+            cmake \
+              -DCMAKE_CXX_COMPILER="${PWD}/vendor/ddc/vendor/kokkos/bin/nvcc_wrapper" \
+              -DCMAKE_BUILD_TYPE=Release \
+              -DKokkos_ENABLE_CUDA=ON \
+              -DKokkos_ARCH_${kokkos_arch}=ON \
+              -DKokkos_ENABLE_DEPRECATION_WARNINGS=OFF \
+              -B "${CACHE_ROOT}/agent_build" \
+              -S .
+            cmake --build "${CACHE_ROOT}/agent_build" --parallel 8
+          '
+    - name: Save commit workspace
+      if: steps.restore-workspace.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: ${{ runner.temp }}/similie-gpu-workspace-${{ steps.target.outputs.target_sha }}
+        key: similie-gpu-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
