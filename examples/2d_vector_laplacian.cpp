@@ -236,7 +236,7 @@ int main(int argc, char** argv)
     auto laplacian_host = ddc::
             create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), laplacian_tensor);
 
-#ifdef SIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS
+#if defined(SIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS)
     bool example_results_are_correct = true;
     auto const check_laplacian_magnitude = [&](double const x_fraction,
                                                double const expected_value,

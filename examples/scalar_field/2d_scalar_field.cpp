@@ -465,7 +465,7 @@ int main(int argc, char** argv)
     ddc::expose_to_pdi("Nt", (nb_iter - 1) / nb_iter_between_exports + 1);
     std::remove("2d_scalar_field.h5");
 
-#ifdef SIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS
+#if defined(SIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS)
     std::array<double, 100> central_potential_values;
     central_potential_values.fill(std::numeric_limits<double>::quiet_NaN());
     std::array<double, 100> const expected_central_potential_values = [] {
@@ -584,7 +584,7 @@ int main(int argc, char** argv)
                                          potential.extent<DDimY>() / 2,
                                          0))
                       << std::endl;
-#ifdef SIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS
+#if defined(SIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS)
             if (central_potential_values_count < central_potential_values.size()) {
                 central_potential_values[central_potential_values_count] = potential_host(
                         ddc::DiscreteElement<DDimX, DDimY, DummyIndex>(
@@ -617,7 +617,7 @@ int main(int argc, char** argv)
         }
     }
 
-#ifdef SIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS
+#if defined(SIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS)
     std::cout << "Recorded central potential values for non-regression reference:" << std::endl;
     std::cout << "std::array<double, 100> const expected_central_potential_values = {";
     for (std::size_t i = 0; i < central_potential_values.size(); i++) {

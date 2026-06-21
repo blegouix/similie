@@ -23,8 +23,7 @@ jobs:
       uses: actions/checkout@v4
     - name: Check GPU visibility on runner
       run: |
-        export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
-        nvidia-smi
+        bash -lc 'command -v nvidia-smi && nvidia-smi'
     - name: Build CUDA similie_env image
       run: |
         DOCKER_BUILDKIT=1 docker build \
