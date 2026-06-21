@@ -86,6 +86,7 @@ jobs:
               -DKokkos_ENABLE_CUDA=ON \
               -DKokkos_ARCH_${kokkos_arch}=ON \
               -DKokkos_ENABLE_DEPRECATION_WARNINGS=OFF \
+              -DSIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS=ON \
               -B "${CACHE_ROOT}/agent_build" \
               -S .
             cmake --build "${CACHE_ROOT}/agent_build" --parallel 8
