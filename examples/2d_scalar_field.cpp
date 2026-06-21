@@ -14,9 +14,8 @@
 #include <ddc/kernels/splines.hpp>
 #include <ddc/pdi.hpp>
 
+#include <similie/physics/scalar_field/scalar_field_with_power_coupling.hpp>
 #include <similie/similie.hpp>
-
-#include "scalar_field_hamiltonian.hpp"
 
 // PDI config
 constexpr char const* const PDI_CFG = R"PDI_CFG(
@@ -48,7 +47,7 @@ data:
     type: array
     subtype: double
     size: [ '$Nx', '$Ny', 2 ]
-  spatial_moments_minus_div:
+  minus_spatial_moments_div:
     type: array
     subtype: double
     size: [ '$Nx', '$Ny' ]
@@ -79,7 +78,7 @@ plugins:
           type: array
           subtype: double
           size: [ '$Nt', '$Nx', '$Ny', 2 ]
-        spatial_moments_minus_div:
+        minus_spatial_moments_div:
           type: array
           subtype: double
           size: [ '$Nt', '$Nx', '$Ny' ]
@@ -106,7 +105,7 @@ plugins:
           dataset_selection:
             start: [ '$export_id', 0, 0, 0 ]
             size: [ 1, '$Nx', '$Ny', 2 ]
-        spatial_moments_minus_div:
+        minus_spatial_moments_div:
           dataset_selection:
             start: [ '$export_id', 0, 0 ]
             size: [ 1, '$Nx', '$Ny' ]
@@ -194,7 +193,7 @@ int write_xdmf(int Nx, int Ny, int total_steps, int exported_ids, double export_
     </Attribute>
 )XMF";
 
-        write_scalar_attribute("Spatial moments divergency", "spatial_moments_minus_div");
+        write_scalar_attribute("Minus spatial moments divergence", "minus_spatial_moments_div");
         write_scalar_attribute("Hamiltonian", "hamiltonian");
 
         file << "   </Grid>\n";
@@ -408,17 +407,17 @@ int main(int argc, char** argv)
     auto spatial_moments_host = ddc::
             create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), spatial_moments);
 
-    // Spatial moments divergence
-    [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> spatial_moments_minus_div_accessor;
+    // Minus spatial moments divergence
+    [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> minus_spatial_moments_div_accessor;
     ddc::DiscreteDomain<DDimX, DDimY, DummyIndex>
-            spatial_moments_minus_div_dom(mesh_xy, spatial_moments_minus_div_accessor.domain());
-    ddc::Chunk spatial_moments_minus_div_alloc(
-            spatial_moments_minus_div_dom,
+            minus_spatial_moments_div_dom(mesh_xy, minus_spatial_moments_div_accessor.domain());
+    ddc::Chunk minus_spatial_moments_div_alloc(
+            minus_spatial_moments_div_dom,
             ddc::DeviceAllocator<double>());
-    sil::tensor::Tensor spatial_moments_minus_div(spatial_moments_minus_div_alloc);
-    auto h_spatial_moments_minus_div = ddc::create_mirror_view_and_copy(
+    sil::tensor::Tensor minus_spatial_moments_div(minus_spatial_moments_div_alloc);
+    auto h_minus_spatial_moments_div = ddc::create_mirror_view_and_copy(
             Kokkos::DefaultHostExecutionSpace(),
-            spatial_moments_minus_div);
+            minus_spatial_moments_div);
 
     // Temporal moment
     [[maybe_unused]] sil::tensor::TensorAccessor<DummyIndex> temporal_moment_accessor;
@@ -491,7 +490,9 @@ int main(int argc, char** argv)
      *
      * We implement mid-point explicit temporal integration scheme.
      */
-    ScalarFieldHamiltonian const hamiltonian_model(mass, coupling_constant, coupling_power);
+    similie::physics::scalar_field::ScalarFieldWithPowerCouplingHamiltonian<T, X, Y> const
+            hamiltonian_model(mass, coupling_constant, coupling_power);
+    similie::physics::DeDonderWeylEquations equations(hamiltonian_model);
     for (int i = 0; i < nb_iter; i++) {
         if (i % nb_iter_between_exports == 0) {
             std::cout << "Start iteration " << i << std::endl;
@@ -504,7 +505,8 @@ int main(int argc, char** argv)
                 KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
                     half_step_potential(elem)
                             = potential(elem)
-                              - hamiltonian_model.dH_dpi0(temporal_moment(elem)) * dt / 2.;
+                              - equations.template potential_grad<T>(temporal_moment(elem)) * dt
+                                        / 2.;
                 });
 
         // Compute the potential gradient
@@ -512,42 +514,44 @@ int main(int argc, char** argv)
                 AlphaLow,
                 DummyIndex>(Kokkos::DefaultExecutionSpace(), potential_grad, half_step_potential);
 
-        // For this scalar model, the spatial momentum cochain is exactly dphi.
+        // For this scalar model, the spatial moments cochain is exactly dphi.
         ddc::parallel_deepcopy(spatial_moments, potential_grad);
         if (i % nb_iter_between_exports == 0) {
             ddc::parallel_deepcopy(spatial_moments_host, spatial_moments);
         }
 
         // Compute minus the divergence \delta \pi of the spatial moments
-        codifferential.run(spatial_moments_minus_div, spatial_moments);
+        codifferential.run(minus_spatial_moments_div, spatial_moments);
 
         // Compute dpi_0/dx^0 = dH/dphi - \delta \pi from the DeDonder-Weyl equation then perform the whole-step advection
         ddc::parallel_for_each(
                 Kokkos::DefaultExecutionSpace(),
-                spatial_moments_minus_div.domain(),
+                minus_spatial_moments_div.domain(),
                 KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
                     const double half_step_potential_ = half_step_potential(elem);
                     const double temporal_moment_ = temporal_moment(elem);
-                    const double spatial_moments_minus_div_ = spatial_moments_minus_div(elem);
+                    const double minus_spatial_moments_div_ = minus_spatial_moments_div(elem);
 
                     // Advect temporal moment by half-step, this is what is needed to perform the whole-step potential advection
                     const double half_step_temporal_moment_
                             = temporal_moment_
-                              + (hamiltonian_model.dH_dphi(half_step_potential_)
-                                 - spatial_moments_minus_div_)
+                              - (equations.moments_div(half_step_potential_)
+                                 + minus_spatial_moments_div_)
                                         * dt / 2;
 
                     // Whole-step advection of field state
-                    potential(elem) -= hamiltonian_model.dH_dpi0(half_step_temporal_moment_) * dt;
-                    temporal_moment(elem) += (hamiltonian_model.dH_dphi(half_step_potential_)
-                                              - spatial_moments_minus_div_)
+                    potential(elem)
+                            -= equations.template potential_grad<T>(half_step_temporal_moment_)
+                               * dt;
+                    temporal_moment(elem) -= (equations.moments_div(half_step_potential_)
+                                              + minus_spatial_moments_div_)
                                              * dt;
                 });
 
         if (i % nb_iter_between_exports == 0) {
             ddc::parallel_deepcopy(temporal_moment_host, temporal_moment);
             ddc::parallel_deepcopy(potential_host, potential);
-            ddc::parallel_deepcopy(h_spatial_moments_minus_div, spatial_moments_minus_div);
+            ddc::parallel_deepcopy(h_minus_spatial_moments_div, minus_spatial_moments_div);
 
             ddc::parallel_for_each(
                     Kokkos::DefaultExecutionSpace(),
@@ -557,10 +561,9 @@ int main(int argc, char** argv)
                                 = {temporal_moment(elem, ddc::DiscreteElement<DummyIndex>()),
                                    spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(0)),
                                    spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(1))};
-                        hamiltonian(elem)
-                                = hamiltonian_model
-                                          .H(potential(elem, ddc::DiscreteElement<DummyIndex>()),
-                                             pi);
+                        hamiltonian(elem) = hamiltonian_model.hamiltonian(
+                                potential(elem, ddc::DiscreteElement<DummyIndex>()),
+                                pi);
                     });
             ddc::parallel_deepcopy(h_hamiltonian, hamiltonian);
 
@@ -581,7 +584,7 @@ int main(int argc, char** argv)
                     .with("potential", potential_host)
                     .with("temporal_moment", temporal_moment_host)
                     .with("spatial_moments", spatial_moments_host)
-                    .with("spatial_moments_minus_div", h_spatial_moments_minus_div)
+                    .with("minus_spatial_moments_div", h_minus_spatial_moments_div)
                     .with("hamiltonian", h_hamiltonian);
             std::cout << "Computation result exported in 2d_scalar_field.h5." << std::endl;
 

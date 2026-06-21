@@ -191,7 +191,7 @@ public:
             if constexpr (misc::Specialization<chain_type, Chain>) {
                 out += ((*i).negative() ? -1 : 1) * (*i).value();
             } else if constexpr (misc::Specialization<chain_type, LocalChain>) {
-                out += (m_chain.negative() ? -1 : 1) * (*i).value(); // always false
+                out += ((*i).negative() ? -1 : 1) * (*i).value();
             }
         }
         return out;
@@ -204,7 +204,7 @@ public:
             if constexpr (misc::Specialization<chain_type, Chain>) {
                 out += ((*i).negative() ? -1 : 1) * (*i).value();
             } else if constexpr (misc::Specialization<chain_type, LocalChain>) {
-                out += (m_chain.negative() ? -1 : 1) * (*i).value(); // always false
+                out += ((*i).negative() ? -1 : 1) * (*i).value();
             }
         }
         return out;
@@ -253,11 +253,7 @@ public:
         if constexpr (!CochainType::chain_type::is_local()) {
             return cosimplex_type(*m_chain, *m_values);
         } else {
-            return cosimplex_type(
-                    Simplex(std::integral_constant<std::size_t, CochainType::dimension()> {},
-                            misc::filled_struct<typename CochainType::discrete_element_type>(),
-                            *m_chain),
-                    *m_values);
+            return cosimplex_type(*m_chain, *m_values);
         }
     }
 
