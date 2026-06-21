@@ -8,7 +8,7 @@ from similie_generate_cpp_hamiltonian import (
     HamiltonianDefinition,
     SymbolicFunctionDefinition,
 )
-from sympy import Function, simplify, sqrt, symbols
+from sympy import Function, simplify, symbols
 
 
 INTERPOLATED_BH_CURVE_HEADER = """\
@@ -112,6 +112,55 @@ struct InterpolatedNonlinearBHCurve
             return m_dh_db[m_num_samples - 2];
         }
         return m_dh_db[bracket_q(b_value * b_value)];
+    }
+
+    [[nodiscard]] KOKKOS_FUNCTION double h_over_b_from_b(double b_value) const
+    {
+        if (b_value == 0.0) {
+            return dh_db_from_b(0.0);
+        }
+        return h_from_b(b_value) / b_value;
+    }
+
+    [[nodiscard]] KOKKOS_FUNCTION double d_h_over_b_db_from_b(double b_value) const
+    {
+        if (b_value == 0.0) {
+            return 0.0;
+        }
+        return (dh_db_from_b(b_value) * b_value - h_from_b(b_value)) / (b_value * b_value);
+    }
+
+    [[nodiscard]] KOKKOS_FUNCTION double d2_h_over_b_db2_from_b(double b_value) const
+    {
+        if (b_value == 0.0) {
+            return 0.0;
+        }
+        double const intercept = h_from_b(b_value) - dh_db_from_b(b_value) * b_value;
+        return 2.0 * intercept / (b_value * b_value * b_value);
+    }
+
+    [[nodiscard]] KOKKOS_FUNCTION double h_over_b_from_q(double q_value) const
+    {
+        return h_over_b_from_b(std::sqrt(q_value));
+    }
+
+    [[nodiscard]] KOKKOS_FUNCTION double d_h_over_b_dq_from_q(double q_value) const
+    {
+        if (q_value == 0.0) {
+            return 0.0;
+        }
+        double const b_value = std::sqrt(q_value);
+        return d_h_over_b_db_from_b(b_value) / (2.0 * b_value);
+    }
+
+    [[nodiscard]] KOKKOS_FUNCTION double d2_h_over_b_dq2_from_q(double q_value) const
+    {
+        if (q_value == 0.0) {
+            return 0.0;
+        }
+        double const b_value = std::sqrt(q_value);
+        return d2_h_over_b_db2_from_b(b_value) / (4.0 * q_value)
+               - d_h_over_b_db_from_b(b_value) / (4.0 * q_value * b_value);
     }
 
     [[nodiscard]] KOKKOS_FUNCTION double b_from_h(double h_value) const
@@ -287,10 +336,9 @@ class NonlinearMagnetostaticsHamiltonian:
         a = symbols("A0:3")
         b = symbols("B0:3")
         j = symbols("j0:3")
-        magnetic_field = Function("magnetic_field")
+        magnetic_field_over_induction = Function("magnetic_field_over_induction")
         q = sum(component**2 for component in b)
-        b_norm = sqrt(q)
-        h = [b[i] * magnetic_field(b_norm) / b_norm for i in range(3)]
+        h = [b[i] * magnetic_field_over_induction(q) for i in range(3)]
         hamiltonian = simplify(sum(b[i] * h[i] / 2 for i in range(3))) - sum(
             a[i] * j[i] for i in range(3)
         )
@@ -305,11 +353,11 @@ class NonlinearMagnetostaticsHamiltonian:
             template_parameters=["class BHCurve"],
             parameter_types={"bh_curve": "BHCurve"},
             symbolic_functions={
-                "magnetic_field": SymbolicFunctionDefinition(
-                    value_expression="m_bh_curve.h_from_b({argument})",
+                "magnetic_field_over_induction": SymbolicFunctionDefinition(
+                    value_expression="m_bh_curve.h_over_b_from_q({argument})",
                     derivative_expressions={
-                        1: "m_bh_curve.dh_db_from_b({argument})",
-                        2: "0.0",
+                        1: "m_bh_curve.d_h_over_b_dq_from_q({argument})",
+                        2: "m_bh_curve.d2_h_over_b_dq2_from_q({argument})",
                     },
                 )
             },
