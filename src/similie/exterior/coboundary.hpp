@@ -269,6 +269,61 @@ KOKKOS_FUNCTION std::size_t find_vector_index(
     return lower_chain.size();
 }
 
+struct IdentityStencilEvaluator
+{
+    KOKKOS_FUNCTION double operator()(auto, auto) const
+    {
+        return 0.0;
+    }
+
+    KOKKOS_FUNCTION double value(auto sampler, auto sampled_elem, auto cochain_elem) const
+    {
+        return sampler(sampled_elem, cochain_elem);
+    }
+};
+
+template <class TensorType>
+struct ClampedTensorEvaluator
+{
+    TensorType tensor;
+
+    KOKKOS_FUNCTION double operator()(auto sampled_elem, auto cochain_elem) const
+    {
+        auto const clamped_elem
+                = misc::clamp_to_domain(tensor.non_indices_domain(), sampled_elem);
+        return tensor.mem(clamped_elem, cochain_elem);
+    }
+
+    KOKKOS_FUNCTION double value(auto sampler, auto sampled_elem, auto cochain_elem) const
+    {
+        auto const clamped_elem
+                = misc::clamp_to_domain(tensor.non_indices_domain(), sampled_elem);
+        return sampler(clamped_elem, cochain_elem);
+    }
+};
+
+template <class TensorType>
+struct ZeroOutsideTensorEvaluator
+{
+    TensorType tensor;
+
+    KOKKOS_FUNCTION double operator()(auto sampled_elem, auto cochain_elem) const
+    {
+        if (!misc::domain_contains(tensor.non_indices_domain(), sampled_elem)) {
+            return 0.0;
+        }
+        return tensor.mem(sampled_elem, cochain_elem);
+    }
+
+    KOKKOS_FUNCTION double value(auto sampler, auto sampled_elem, auto cochain_elem) const
+    {
+        if (!misc::domain_contains(tensor.non_indices_domain(), sampled_elem)) {
+            return 0.0;
+        }
+        return sampler(sampled_elem, cochain_elem);
+    }
+};
+
 } // namespace detail
 
 template <tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag>
@@ -279,7 +334,7 @@ struct Coboundary<TagToAddToCochain, CochainTag>
             ddc::detail::convert_type_seq_to_discrete_domain_t<ddc::to_type_seq_t<
                     typename LowerChainType::simplex_type::discrete_element_type>>,
             CochainTag>
-    value([[maybe_unused]] Evaluator evaluator,
+    value(Evaluator evaluator,
           ChainType chain,
           LowerChainType lower_chain,
           Elem elem,
@@ -330,10 +385,13 @@ struct Coboundary<TagToAddToCochain, CochainTag>
             sil::tensor::Tensor output_tensor(output_span);
 
             auto basis_evaluator = [&](auto sampled_elem, auto cochain_elem) {
-                if (!basis.non_indices_domain().contains(sampled_elem)) {
-                    return 0.0;
-                }
-                return basis(basis.access_element(sampled_elem, cochain_elem));
+                auto basis_sampler = [&](auto basis_elem, auto basis_cochain_elem) {
+                    if (!basis.non_indices_domain().contains(basis_elem)) {
+                        return 0.0;
+                    }
+                    return basis(basis.access_element(basis_elem, basis_cochain_elem));
+                };
+                return evaluator.value(basis_sampler, sampled_elem, cochain_elem);
             };
 
             run(output_tensor, basis_evaluator, chain, lower_chain, elem);
@@ -421,7 +479,7 @@ struct TransposedCoboundary<TagToAddToCochain, CochainTag>
             ddc::detail::convert_type_seq_to_discrete_domain_t<ddc::to_type_seq_t<
                     typename LowerChainType::simplex_type::discrete_element_type>>,
             CochainTag>
-    value([[maybe_unused]] Evaluator evaluator,
+    value(Evaluator evaluator,
           ChainType chain,
           LowerChainType lower_chain,
           Elem elem,
@@ -489,10 +547,13 @@ struct TransposedCoboundary<TagToAddToCochain, CochainTag>
             sil::tensor::Tensor output_tensor(output_span);
 
             auto basis_evaluator = [&](auto sampled_elem, auto cochain_elem) {
-                if (!basis.non_indices_domain().contains(sampled_elem)) {
-                    return 0.0;
-                }
-                return basis(basis.access_element(sampled_elem, cochain_elem));
+                auto basis_sampler = [&](auto basis_elem, auto basis_cochain_elem) {
+                    if (!basis.non_indices_domain().contains(basis_elem)) {
+                        return 0.0;
+                    }
+                    return basis(basis.access_element(basis_elem, basis_cochain_elem));
+                };
+                return evaluator.value(basis_sampler, sampled_elem, cochain_elem);
             };
 
             run(output_tensor, basis_evaluator, chain, lower_chain, elem);
@@ -626,12 +687,7 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
             KOKKOS_LAMBDA(typename decltype(batch_dom)::discrete_element_type elem) {
                 Coboundary<TagToAddToCochain, CochainTag>::run(
                         coboundary_tensor[elem],
-                        // TODO this is an assumption on boundary condition (free boundary), needs to be generalized.
-                        [&](auto sampled_elem, auto cochain_elem) {
-                            auto const clamped_elem = misc::
-                                    clamp_to_domain(tensor.non_indices_domain(), sampled_elem);
-                            return tensor.mem(clamped_elem, cochain_elem);
-                        },
+                        detail::ClampedTensorEvaluator<TensorType> {tensor},
                         chain,
                         lower_chain,
                         elem);
@@ -673,12 +729,7 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> transposed_coboun
             KOKKOS_LAMBDA(typename decltype(batch_dom)::discrete_element_type elem) {
                 TransposedCoboundary<TagToAddToCochain, CochainTag>::run(
                         coboundary_tensor[elem],
-                        [&](auto sampled_elem, auto cochain_elem) {
-                            if (!misc::domain_contains(tensor.non_indices_domain(), sampled_elem)) {
-                                return 0.0;
-                            }
-                            return tensor.mem(sampled_elem, cochain_elem);
-                        },
+                        detail::ZeroOutsideTensorEvaluator<TensorType> {tensor},
                         chain,
                         lower_chain,
                         elem);
