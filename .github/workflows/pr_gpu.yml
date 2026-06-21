@@ -94,9 +94,9 @@ jobs:
               -DKokkos_ARCH_${kokkos_arch}=ON \
               -DKokkos_ENABLE_DEPRECATION_WARNINGS=OFF \
               -DSIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS=ON \
-              -B "${RUNNER_TEMP}/${CACHE_DIR}/agent_build" \
+              -B "${CACHE_ROOT}/agent_build" \
               -S .
-            cmake --build "${RUNNER_TEMP}/${CACHE_DIR}/agent_build" --parallel 8
+            cmake --build "${CACHE_ROOT}/agent_build" --parallel 8
           '
     - name: Save commit workspace
       if: steps.restore-workspace.outputs.cache-hit != 'true'
