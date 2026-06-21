@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <fstream>
 #include <iomanip>
+#include <limits>
 #include <sstream>
 #include <string>
 
@@ -464,6 +465,17 @@ int main(int argc, char** argv)
     ddc::expose_to_pdi("Nt", (nb_iter - 1) / nb_iter_between_exports + 1);
     std::remove("2d_scalar_field.h5");
 
+#ifdef SIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS
+    std::array<double, 100> central_potential_values;
+    central_potential_values.fill(std::numeric_limits<double>::quiet_NaN());
+    std::array<double, 100> const expected_central_potential_values = [] {
+        std::array<double, 100> values;
+        values.fill(std::numeric_limits<double>::quiet_NaN());
+        return values;
+    }();
+    std::size_t central_potential_values_count = 0;
+#endif
+
     /*
      * DeDonder-Weyl equations are commonly written:
      * dpi^\mu/dx^\mu = -dH/dphi
@@ -572,6 +584,16 @@ int main(int argc, char** argv)
                                          potential.extent<DDimY>() / 2,
                                          0))
                       << std::endl;
+#ifdef SIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS
+            if (central_potential_values_count < central_potential_values.size()) {
+                central_potential_values[central_potential_values_count] = potential_host(
+                        ddc::DiscreteElement<DDimX, DDimY, DummyIndex>(
+                                potential.extent<DDimX>() / 2,
+                                potential.extent<DDimY>() / 2,
+                                0));
+                central_potential_values_count++;
+            }
+#endif
             double const time = i * dt;
             ddc::PdiEvent("export")
                     .with("export_id", i / nb_iter_between_exports)
@@ -594,6 +616,33 @@ int main(int argc, char** argv)
             std::cout << "XDMF model exported in 2d_scalar_field.xmf." << std::endl;
         }
     }
+
+#ifdef SIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS
+    std::cout << "Recorded central potential values for non-regression reference:" << std::endl;
+    std::cout << "std::array<double, 100> const expected_central_potential_values = {";
+    for (std::size_t i = 0; i < central_potential_values.size(); i++) {
+        if (i % 4 == 0) {
+            std::cout << "\n    ";
+        }
+        std::cout << std::setprecision(17) << central_potential_values[i];
+        if (i + 1 < central_potential_values.size()) {
+            std::cout << ", ";
+        }
+    }
+    std::cout << "\n};" << std::endl;
+
+    double constexpr tolerance = 1.e-12;
+    for (std::size_t i = 0; i < central_potential_values.size(); i++) {
+        if (std::isfinite(expected_central_potential_values[i])
+            && std::abs(central_potential_values[i] - expected_central_potential_values[i])
+                       > tolerance) {
+            std::cerr << "ERROR: central potential non-regression value " << i << " expected "
+                      << expected_central_potential_values[i] << " +/- " << tolerance << ", got "
+                      << central_potential_values[i] << std::endl;
+            return EXIT_FAILURE;
+        }
+    }
+#endif
 
     return EXIT_SUCCESS;
 }

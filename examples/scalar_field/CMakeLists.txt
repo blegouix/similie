@@ -24,6 +24,7 @@ add_custom_target(scalar_field_hamiltonian
 )
 
 add_executable(2d_scalar_field 2d_scalar_field.cpp)
+similie_configure_example_correctness(2d_scalar_field)
 add_dependencies(2d_scalar_field scalar_field_hamiltonian)
 target_sources(2d_scalar_field PRIVATE "${SCALAR_FIELD_HAMILTONIAN}")
 

@@ -1,6 +1,10 @@
 // SPDX-FileCopyrightText: 2024 Baptiste Legouix
 // SPDX-License-Identifier: MIT
 
+#include <cmath>
+#include <cstdlib>
+#include <iostream>
+
 #include <ddc/ddc.hpp>
 #include <ddc/kernels/splines.hpp>
 #include <ddc/pdi.hpp>
@@ -219,6 +223,38 @@ int main(int argc, char** argv)
             = ddc::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), position);
     auto laplacian_host = ddc::
             create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), laplacian_tensor);
+
+#ifdef SIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS
+    bool example_results_are_correct = true;
+    auto const check_laplacian_value = [&](double const x_fraction,
+                                           double const expected_value,
+                                           char const* label) {
+        std::size_t const ix = static_cast<std::size_t>(std::llround(
+                x_fraction * static_cast<double>(laplacian_dom.template extent<DDimX>() - 1)));
+        std::size_t const iy = static_cast<std::size_t>(std::llround(
+                (0. - ddc::get<Y>(lower_bounds))
+                / (ddc::get<Y>(upper_bounds) - ddc::get<Y>(lower_bounds))
+                * static_cast<double>(laplacian_dom.template extent<DDimY>() - 1)));
+        ddc::DiscreteElement<DDimX, DDimY, DummyIndex> const
+                elem(static_cast<int>(ix), static_cast<int>(iy), 0);
+        double const value = laplacian_host(elem);
+        double constexpr tolerance = 5.e-2;
+        std::cout << "Correctness check " << label << ": laplacian = " << value
+                  << ", expected = " << expected_value << std::endl;
+        if (std::abs(value - expected_value) > tolerance) {
+            std::cerr << "ERROR: " << label << " expected " << expected_value << " +/- "
+                      << tolerance << ", got " << value << std::endl;
+            example_results_are_correct = false;
+        }
+    };
+    check_laplacian_value(5. / 8., 1., "near (5/8*Lx, 0)");
+    check_laplacian_value(7. / 8., 0., "near (7/8*Lx, 0)");
+    if (!example_results_are_correct) {
+        PC_tree_destroy(&conf_pdi);
+        PDI_finalize();
+        return EXIT_FAILURE;
+    }
+#endif
 
     // Export HDF5 and XDMF
     ddc::PdiEvent("export")
