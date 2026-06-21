@@ -1,0 +1,42 @@
+# SPDX-FileCopyrightText: 2026 Baptiste Legouix
+# SPDX-License-Identifier: MIT
+
+name: build_env
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref == github.ref_protected && github.run_id || github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  IMAGE_TAG: similie_env:${{ github.sha }}
+
+jobs:
+  docker-build-gpu:
+    runs-on: [self-hosted, linux]
+    steps:
+    - name: Checkout built branch
+      uses: actions/checkout@v4
+    - name: Check GPU visibility on runner
+      run: nvidia-smi
+    - name: Build CUDA similie_env image
+      run: |
+        DOCKER_BUILDKIT=1 docker build \
+          --build-arg BACKEND=cuda \
+          -t "${IMAGE_TAG}" \
+          -t similie_env:latest \
+          docker/similie_env
+
+  run-similie-env-gpu:
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref_name == 'main')
+    runs-on: [self-hosted, linux]
+    needs: docker-build-gpu
+    steps:
+    - name: Run similie_env on GPU
+      run: |
+        docker image inspect "${IMAGE_TAG}" >/dev/null
+        docker run --rm --gpus all --user "$(id -u):$(id -g)" "${IMAGE_TAG}" nvidia-smi
