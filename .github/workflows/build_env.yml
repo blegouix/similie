@@ -19,6 +19,8 @@ env:
 jobs:
   docker-build-gpu:
     runs-on: [self-hosted, linux]
+    environment:
+      name: ${{ github.event_name == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run' }}
     steps:
     - name: Checkout built branch
       uses: actions/checkout@v4
