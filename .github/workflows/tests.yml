@@ -56,6 +56,7 @@ jobs:
           "${IMAGE_TAG}" \
           bash -lc '
             set -euo pipefail
+            export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
             git config --global --add safe.directory "*"
             nvidia-smi
             cmake --build . --parallel 8

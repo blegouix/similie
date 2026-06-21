@@ -22,7 +22,9 @@ jobs:
     - name: Checkout built branch
       uses: actions/checkout@v4
     - name: Check GPU visibility on runner
-      run: nvidia-smi
+      run: |
+        export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
+        nvidia-smi
     - name: Build CUDA similie_env image
       run: |
         DOCKER_BUILDKIT=1 docker build \
@@ -39,4 +41,5 @@ jobs:
     - name: Run similie_env on GPU
       run: |
         docker image inspect "${IMAGE_TAG}" >/dev/null
-        docker run --rm --gpus all --user "$(id -u):$(id -g)" "${IMAGE_TAG}" nvidia-smi
+        docker run --rm --gpus all --user "$(id -u):$(id -g)" "${IMAGE_TAG}" \
+          bash -lc 'export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"; nvidia-smi'
