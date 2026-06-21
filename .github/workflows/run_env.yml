@@ -1,0 +1,41 @@
+# SPDX-FileCopyrightText: 2026 Baptiste Legouix
+# SPDX-License-Identifier: MIT
+
+name: run_env
+on:
+  workflow_run:
+    workflows: [ build_env ]
+    types: [ completed ]
+    branches: [ main ]
+  pull_request:
+    types: [labeled, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      target_sha:
+        description: Commit SHA whose similie_env image should run
+        required: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.target_sha || github.event.workflow_run.head_sha || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  run-similie-env-gpu:
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'run-gpu-env')) || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main')
+    runs-on: [self-hosted, linux]
+    steps:
+    - name: Select target commit
+      run: |
+        if [ -n "${{ inputs.target_sha }}" ]; then
+          target_sha="${{ inputs.target_sha }}"
+        elif [ "${GITHUB_EVENT_NAME}" = "workflow_run" ]; then
+          target_sha="${{ github.event.workflow_run.head_sha }}"
+        else
+          target_sha="${GITHUB_SHA}"
+        fi
+        echo "IMAGE_TAG=similie_env:${target_sha}" >> "${GITHUB_ENV}"
+    - name: Run similie_env on GPU
+      run: |
+        docker image inspect "${IMAGE_TAG}" >/dev/null
+        docker run --rm --gpus all --user "$(id -u):$(id -g)" "${IMAGE_TAG}" \
+          bash -lc 'export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"; nvidia-smi'

@@ -36,14 +36,3 @@ jobs:
           -t "${IMAGE_TAG}" \
           -t similie_env:latest \
           docker/similie_env
-
-  run-similie-env-gpu:
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref_name == 'main') || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'run-gpu-env'))
-    runs-on: [self-hosted, linux]
-    needs: docker-build-gpu
-    steps:
-    - name: Run similie_env on GPU
-      run: |
-        docker image inspect "${IMAGE_TAG}" >/dev/null
-        docker run --rm --gpus all --user "$(id -u):$(id -g)" "${IMAGE_TAG}" \
-          bash -lc 'export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"; nvidia-smi'
