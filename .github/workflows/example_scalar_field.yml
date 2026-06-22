@@ -38,13 +38,13 @@ jobs:
     - name: Set build paths
       run: |
         echo "IMAGE_TAG=similie_env:${TARGET_SHA}" >> "${GITHUB_ENV}"
-        echo "CACHE_ROOT=${RUNNER_TEMP}/similie-gpu-workspace-${TARGET_SHA}" >> "${GITHUB_ENV}"
-        rm -rf "${RUNNER_TEMP}/similie-gpu-workspace-${TARGET_SHA}"
+        echo "CACHE_ROOT=${RUNNER_TEMP}/similie-cuda-workspace-${TARGET_SHA}" >> "${GITHUB_ENV}"
+        rm -rf "${RUNNER_TEMP}/similie-cuda-workspace-${TARGET_SHA}"
     - name: Restore commit workspace
       uses: actions/cache/restore@v4
       with:
-        path: ${{ runner.temp }}/similie-gpu-workspace-${{ steps.target.outputs.target_sha }}
-        key: similie-gpu-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
+        path: ${{ runner.temp }}/similie-cuda-workspace-${{ steps.target.outputs.target_sha }}
+        key: similie-cuda-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
         fail-on-cache-miss: true
     - name: Run 2d_scalar_field on GPU
       run: |

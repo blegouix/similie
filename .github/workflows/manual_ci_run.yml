@@ -13,7 +13,8 @@ concurrency:
 
 env:
   IMAGE_TAG: similie_env:${{ github.sha }}
-  CACHE_DIR: similie-gpu-workspace-${{ github.sha }}
+  CUDA_CACHE_DIR: similie-cuda-workspace-${{ github.sha }}
+  OMP_CACHE_DIR: similie-omp-workspace-${{ github.sha }}
 
 jobs:
   build-docker-env:
@@ -39,7 +40,7 @@ jobs:
           -t similie_env:latest \
           docker/similie_env
 
-  build:
+  build-cuda:
     needs: build-docker-env
     runs-on: [self-hosted, linux]
     timeout-minutes: 60
@@ -50,26 +51,26 @@ jobs:
         submodules: recursive
         fetch-depth: 0
     - name: Clear temporary workspace path
-      run: rm -rf "${RUNNER_TEMP}/${CACHE_DIR}"
-    - name: Restore commit workspace
+      run: rm -rf "${RUNNER_TEMP}/${CUDA_CACHE_DIR}"
+    - name: Restore CUDA commit workspace
       id: restore-workspace
       uses: actions/cache/restore@v4
       with:
-        path: ${{ runner.temp }}/similie-gpu-workspace-${{ github.sha }}
-        key: similie-gpu-workspace-${{ runner.os }}-${{ github.sha }}
-    - name: Populate commit workspace
+        path: ${{ runner.temp }}/similie-cuda-workspace-${{ github.sha }}
+        key: similie-cuda-workspace-${{ runner.os }}-${{ github.sha }}
+    - name: Populate CUDA commit workspace
       run: |
-        mkdir -p "${RUNNER_TEMP}/${CACHE_DIR}/src" "${RUNNER_TEMP}/${CACHE_DIR}/agent_build" "${RUNNER_TEMP}/${CACHE_DIR}/home"
-        rsync -a --delete "${GITHUB_WORKSPACE}/" "${RUNNER_TEMP}/${CACHE_DIR}/src/"
+        mkdir -p "${RUNNER_TEMP}/${CUDA_CACHE_DIR}/src" "${RUNNER_TEMP}/${CUDA_CACHE_DIR}/agent_build" "${RUNNER_TEMP}/${CUDA_CACHE_DIR}/home"
+        rsync -a --delete "${GITHUB_WORKSPACE}/" "${RUNNER_TEMP}/${CUDA_CACHE_DIR}/src/"
     - name: Configure and compile on GPU
       run: |
         docker image inspect "${IMAGE_TAG}" >/dev/null
         docker run --rm --gpus all \
           --user "$(id -u):$(id -g)" \
-          -e HOME="${RUNNER_TEMP}/${CACHE_DIR}/home" \
-          -e CACHE_ROOT="${RUNNER_TEMP}/${CACHE_DIR}" \
-          -v "${RUNNER_TEMP}/${CACHE_DIR}:${RUNNER_TEMP}/${CACHE_DIR}" \
-          -w "${RUNNER_TEMP}/${CACHE_DIR}/src" \
+          -e HOME="${RUNNER_TEMP}/${CUDA_CACHE_DIR}/home" \
+          -e CACHE_ROOT="${RUNNER_TEMP}/${CUDA_CACHE_DIR}" \
+          -v "${RUNNER_TEMP}/${CUDA_CACHE_DIR}:${RUNNER_TEMP}/${CUDA_CACHE_DIR}" \
+          -w "${RUNNER_TEMP}/${CUDA_CACHE_DIR}/src" \
           "${IMAGE_TAG}" \
           bash -lc '
             set -euo pipefail
@@ -98,33 +99,86 @@ jobs:
               -S .
             cmake --build "${CACHE_ROOT}/agent_build" --parallel 8
           '
-    - name: Save commit workspace
+    - name: Save CUDA commit workspace
       if: steps.restore-workspace.outputs.cache-hit != 'true'
       uses: actions/cache/save@v4
       with:
-        path: ${{ runner.temp }}/similie-gpu-workspace-${{ github.sha }}
-        key: similie-gpu-workspace-${{ runner.os }}-${{ github.sha }}
+        path: ${{ runner.temp }}/similie-cuda-workspace-${{ github.sha }}
+        key: similie-cuda-workspace-${{ runner.os }}-${{ github.sha }}
+
+  build-omp:
+    needs: build-docker-env
+    runs-on: [self-hosted, linux]
+    timeout-minutes: 60
+    steps:
+    - name: Checkout built branch
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - name: Clear temporary workspace path
+      run: rm -rf "${RUNNER_TEMP}/${OMP_CACHE_DIR}"
+    - name: Restore OpenMP commit workspace
+      id: restore-workspace
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ runner.temp }}/similie-omp-workspace-${{ github.sha }}
+        key: similie-omp-workspace-${{ runner.os }}-${{ github.sha }}
+    - name: Populate OpenMP commit workspace
+      run: |
+        mkdir -p "${RUNNER_TEMP}/${OMP_CACHE_DIR}/src" "${RUNNER_TEMP}/${OMP_CACHE_DIR}/agent_build_omp" "${RUNNER_TEMP}/${OMP_CACHE_DIR}/home"
+        rsync -a --delete "${GITHUB_WORKSPACE}/" "${RUNNER_TEMP}/${OMP_CACHE_DIR}/src/"
+    - name: Configure and compile with OpenMP
+      run: |
+        docker image inspect "${IMAGE_TAG}" >/dev/null
+        docker run --rm \
+          --user "$(id -u):$(id -g)" \
+          -e HOME="${RUNNER_TEMP}/${OMP_CACHE_DIR}/home" \
+          -e CACHE_ROOT="${RUNNER_TEMP}/${OMP_CACHE_DIR}" \
+          -v "${RUNNER_TEMP}/${OMP_CACHE_DIR}:${RUNNER_TEMP}/${OMP_CACHE_DIR}" \
+          -w "${RUNNER_TEMP}/${OMP_CACHE_DIR}/src" \
+          "${IMAGE_TAG}" \
+          bash -lc '
+            set -euo pipefail
+            git config --global --add safe.directory "*"
+            g++-15 --version
+            cmake \
+              -DCMAKE_CXX_COMPILER=g++-15 \
+              -DCMAKE_BUILD_TYPE=Release \
+              -DKokkos_ENABLE_OPENMP=ON \
+              -DKokkos_ENABLE_DEPRECATION_WARNINGS=OFF \
+              -DSIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS=ON \
+              -B "${CACHE_ROOT}/agent_build_omp" \
+              -S .
+            cmake --build "${CACHE_ROOT}/agent_build_omp" --parallel 8
+          '
+    - name: Save OpenMP commit workspace
+      if: steps.restore-workspace.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: ${{ runner.temp }}/similie-omp-workspace-${{ github.sha }}
+        key: similie-omp-workspace-${{ runner.os }}-${{ github.sha }}
 
   tests:
-    needs: build
+    needs: build-cuda
     runs-on: [self-hosted, linux]
     timeout-minutes: 20
     steps:
     - name: Restore commit workspace
       uses: actions/cache/restore@v4
       with:
-        path: ${{ runner.temp }}/similie-gpu-workspace-${{ github.sha }}
-        key: similie-gpu-workspace-${{ runner.os }}-${{ github.sha }}
+        path: ${{ runner.temp }}/similie-cuda-workspace-${{ github.sha }}
+        key: similie-cuda-workspace-${{ runner.os }}-${{ github.sha }}
         fail-on-cache-miss: true
     - name: Recompile and run tests on GPU
       run: |
         docker image inspect "${IMAGE_TAG}" >/dev/null
         docker run --rm --gpus all \
           --user "$(id -u):$(id -g)" \
-          -e HOME="${RUNNER_TEMP}/${CACHE_DIR}/home" \
-          -e CACHE_ROOT="${RUNNER_TEMP}/${CACHE_DIR}" \
-          -v "${RUNNER_TEMP}/${CACHE_DIR}:${RUNNER_TEMP}/${CACHE_DIR}" \
-          -w "${RUNNER_TEMP}/${CACHE_DIR}/agent_build" \
+          -e HOME="${RUNNER_TEMP}/${CUDA_CACHE_DIR}/home" \
+          -e CACHE_ROOT="${RUNNER_TEMP}/${CUDA_CACHE_DIR}" \
+          -v "${RUNNER_TEMP}/${CUDA_CACHE_DIR}:${RUNNER_TEMP}/${CUDA_CACHE_DIR}" \
+          -w "${RUNNER_TEMP}/${CUDA_CACHE_DIR}/agent_build" \
           "${IMAGE_TAG}" \
           bash -lc '
             set -euo pipefail
@@ -136,25 +190,25 @@ jobs:
           '
 
   example-2d_laplacian:
-    needs: build
+    needs: build-cuda
     runs-on: [self-hosted, linux]
     timeout-minutes: 10
     steps:
     - name: Restore commit workspace
       uses: actions/cache/restore@v4
       with:
-        path: ${{ runner.temp }}/similie-gpu-workspace-${{ github.sha }}
-        key: similie-gpu-workspace-${{ runner.os }}-${{ github.sha }}
+        path: ${{ runner.temp }}/similie-cuda-workspace-${{ github.sha }}
+        key: similie-cuda-workspace-${{ runner.os }}-${{ github.sha }}
         fail-on-cache-miss: true
     - name: Run 2d_laplacian on GPU
       run: |
         docker image inspect "${IMAGE_TAG}" >/dev/null
         docker run --rm --gpus all \
           --user "$(id -u):$(id -g)" \
-          -e HOME="${RUNNER_TEMP}/${CACHE_DIR}/home" \
-          -e CACHE_ROOT="${RUNNER_TEMP}/${CACHE_DIR}" \
-          -v "${RUNNER_TEMP}/${CACHE_DIR}:${RUNNER_TEMP}/${CACHE_DIR}" \
-          -w "${RUNNER_TEMP}/${CACHE_DIR}/agent_build" \
+          -e HOME="${RUNNER_TEMP}/${CUDA_CACHE_DIR}/home" \
+          -e CACHE_ROOT="${RUNNER_TEMP}/${CUDA_CACHE_DIR}" \
+          -v "${RUNNER_TEMP}/${CUDA_CACHE_DIR}:${RUNNER_TEMP}/${CUDA_CACHE_DIR}" \
+          -w "${RUNNER_TEMP}/${CUDA_CACHE_DIR}/agent_build" \
           "${IMAGE_TAG}" \
           bash -lc '
             set -euo pipefail
@@ -166,25 +220,25 @@ jobs:
           '
 
   example-2d_vector_laplacian:
-    needs: build
+    needs: build-cuda
     runs-on: [self-hosted, linux]
     timeout-minutes: 10
     steps:
     - name: Restore commit workspace
       uses: actions/cache/restore@v4
       with:
-        path: ${{ runner.temp }}/similie-gpu-workspace-${{ github.sha }}
-        key: similie-gpu-workspace-${{ runner.os }}-${{ github.sha }}
+        path: ${{ runner.temp }}/similie-cuda-workspace-${{ github.sha }}
+        key: similie-cuda-workspace-${{ runner.os }}-${{ github.sha }}
         fail-on-cache-miss: true
     - name: Run 2d_vector_laplacian on GPU
       run: |
         docker image inspect "${IMAGE_TAG}" >/dev/null
         docker run --rm --gpus all \
           --user "$(id -u):$(id -g)" \
-          -e HOME="${RUNNER_TEMP}/${CACHE_DIR}/home" \
-          -e CACHE_ROOT="${RUNNER_TEMP}/${CACHE_DIR}" \
-          -v "${RUNNER_TEMP}/${CACHE_DIR}:${RUNNER_TEMP}/${CACHE_DIR}" \
-          -w "${RUNNER_TEMP}/${CACHE_DIR}/agent_build" \
+          -e HOME="${RUNNER_TEMP}/${CUDA_CACHE_DIR}/home" \
+          -e CACHE_ROOT="${RUNNER_TEMP}/${CUDA_CACHE_DIR}" \
+          -v "${RUNNER_TEMP}/${CUDA_CACHE_DIR}:${RUNNER_TEMP}/${CUDA_CACHE_DIR}" \
+          -w "${RUNNER_TEMP}/${CUDA_CACHE_DIR}/agent_build" \
           "${IMAGE_TAG}" \
           bash -lc '
             set -euo pipefail
@@ -196,25 +250,25 @@ jobs:
           '
 
   example-2d_scalar_field:
-    needs: build
+    needs: build-cuda
     runs-on: [self-hosted, linux]
     timeout-minutes: 60
     steps:
     - name: Restore commit workspace
       uses: actions/cache/restore@v4
       with:
-        path: ${{ runner.temp }}/similie-gpu-workspace-${{ github.sha }}
-        key: similie-gpu-workspace-${{ runner.os }}-${{ github.sha }}
+        path: ${{ runner.temp }}/similie-cuda-workspace-${{ github.sha }}
+        key: similie-cuda-workspace-${{ runner.os }}-${{ github.sha }}
         fail-on-cache-miss: true
     - name: Run 2d_scalar_field on GPU
       run: |
         docker image inspect "${IMAGE_TAG}" >/dev/null
         docker run --rm --gpus all \
           --user "$(id -u):$(id -g)" \
-          -e HOME="${RUNNER_TEMP}/${CACHE_DIR}/home" \
-          -e CACHE_ROOT="${RUNNER_TEMP}/${CACHE_DIR}" \
-          -v "${RUNNER_TEMP}/${CACHE_DIR}:${RUNNER_TEMP}/${CACHE_DIR}" \
-          -w "${RUNNER_TEMP}/${CACHE_DIR}/agent_build" \
+          -e HOME="${RUNNER_TEMP}/${CUDA_CACHE_DIR}/home" \
+          -e CACHE_ROOT="${RUNNER_TEMP}/${CUDA_CACHE_DIR}" \
+          -v "${RUNNER_TEMP}/${CUDA_CACHE_DIR}:${RUNNER_TEMP}/${CUDA_CACHE_DIR}" \
+          -w "${RUNNER_TEMP}/${CUDA_CACHE_DIR}/agent_build" \
           "${IMAGE_TAG}" \
           bash -lc '
             set -euo pipefail
@@ -223,4 +277,32 @@ jobs:
             nvidia-smi
             cmake --build . --parallel 8 --target 2d_scalar_field
             ./examples/scalar_field/2d_scalar_field
+          '
+
+  example-kretschmann_scalar:
+    needs: build-omp
+    runs-on: [self-hosted, linux]
+    timeout-minutes: 10
+    steps:
+    - name: Restore OpenMP commit workspace
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ runner.temp }}/similie-omp-workspace-${{ github.sha }}
+        key: similie-omp-workspace-${{ runner.os }}-${{ github.sha }}
+        fail-on-cache-miss: true
+    - name: Run kretschmann_scalar with OpenMP
+      run: |
+        docker image inspect "${IMAGE_TAG}" >/dev/null
+        docker run --rm \
+          --user "$(id -u):$(id -g)" \
+          -e HOME="${RUNNER_TEMP}/${OMP_CACHE_DIR}/home" \
+          -e CACHE_ROOT="${RUNNER_TEMP}/${OMP_CACHE_DIR}" \
+          -v "${RUNNER_TEMP}/${OMP_CACHE_DIR}:${RUNNER_TEMP}/${OMP_CACHE_DIR}" \
+          -w "${RUNNER_TEMP}/${OMP_CACHE_DIR}/agent_build_omp" \
+          "${IMAGE_TAG}" \
+          bash -lc '
+            set -euo pipefail
+            git config --global --add safe.directory "*"
+            cmake --build . --parallel 8 --target kretschmann_scalar
+            ./examples/kretschmann_scalar
           '

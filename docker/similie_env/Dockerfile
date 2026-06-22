@@ -13,7 +13,7 @@ FROM $BASE_IMAGE
 # git config --global url."https://github.com/".insteadOf git@github.com:
 # git clone --recurse-submodules https://github.com/blegouix/similie.git
 # for cpu:
-# cmake -DCMAKE_CXX_COMPILER=g++-13 -DCMAKE_BUILD_TYPE=Release -DKokkos_ENABLE_OPENMP=ON -B similie/build -S similie
+# cmake -DCMAKE_CXX_COMPILER=g++-15 -DCMAKE_BUILD_TYPE=Release -DKokkos_ENABLE_OPENMP=ON -B similie/build -S similie
 # for cuda:
 # cmake -DCMAKE_CXX_COMPILER=$PWD/similie/vendor/ddc/vendor/kokkos/bin/nvcc_wrapper -DCMAKE_BUILD_TYPE=RELEASE -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_<YOUR_ARCH_NAMECODE>=ON -B similie/build -S similie
 # cmake --build similie/build -j 8
@@ -41,7 +41,14 @@ RUN apt install -y git
 RUN apt install  -y cmake cmake-curses-gui
 
 # gcc
-RUN apt install -y gcc g++
+RUN apt install -y software-properties-common
+RUN add-apt-repository -y ppa:ubuntu-toolchain-r/test
+RUN apt update
+RUN apt install -y gcc-15 g++-15
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-15 100 \
+ && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-15 100 \
+ && update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-15 100 \
+ && update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-15 100
 
 # OpenMPI
 RUN apt install -y libopenmpi-dev

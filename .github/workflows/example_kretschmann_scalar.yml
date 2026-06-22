@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Baptiste Legouix
 # SPDX-License-Identifier: MIT
 
-name: tests
+name: example_kretschmann_scalar
 on:
   workflow_run:
     workflows: [ build ]
@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       target_sha:
-        description: Commit SHA to test
+        description: Commit SHA to run the example from
         required: false
 
 concurrency:
@@ -17,7 +17,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  tests:
+  example-kretschmann_scalar:
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: [self-hosted, linux]
     environment:
@@ -38,29 +38,27 @@ jobs:
     - name: Set build paths
       run: |
         echo "IMAGE_TAG=similie_env:${TARGET_SHA}" >> "${GITHUB_ENV}"
-        echo "CACHE_ROOT=${RUNNER_TEMP}/similie-cuda-workspace-${TARGET_SHA}" >> "${GITHUB_ENV}"
-        rm -rf "${RUNNER_TEMP}/similie-cuda-workspace-${TARGET_SHA}"
-    - name: Restore commit workspace
+        echo "CACHE_ROOT=${RUNNER_TEMP}/similie-omp-workspace-${TARGET_SHA}" >> "${GITHUB_ENV}"
+        rm -rf "${RUNNER_TEMP}/similie-omp-workspace-${TARGET_SHA}"
+    - name: Restore OpenMP commit workspace
       uses: actions/cache/restore@v4
       with:
-        path: ${{ runner.temp }}/similie-cuda-workspace-${{ steps.target.outputs.target_sha }}
-        key: similie-cuda-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
+        path: ${{ runner.temp }}/similie-omp-workspace-${{ steps.target.outputs.target_sha }}
+        key: similie-omp-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
         fail-on-cache-miss: true
-    - name: Recompile and run tests on GPU
+    - name: Run kretschmann_scalar with OpenMP
       run: |
         docker image inspect "${IMAGE_TAG}" >/dev/null
-        docker run --rm --gpus all \
+        docker run --rm \
           --user "$(id -u):$(id -g)" \
           -e HOME="${CACHE_ROOT}/home" \
           -e CACHE_ROOT="${CACHE_ROOT}" \
           -v "${CACHE_ROOT}:${CACHE_ROOT}" \
-          -w "${CACHE_ROOT}/agent_build" \
+          -w "${CACHE_ROOT}/agent_build_omp" \
           "${IMAGE_TAG}" \
           bash -lc '
             set -euo pipefail
-            export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
             git config --global --add safe.directory "*"
-            nvidia-smi
-            cmake --build . --parallel 8
-            ctest --output-on-failure
+            cmake --build . --parallel 8 --target kretschmann_scalar
+            ./examples/kretschmann_scalar
           '

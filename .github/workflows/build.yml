@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  build-cuda:
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: [self-hosted, linux]
     environment:
@@ -41,15 +41,15 @@ jobs:
     - name: Clear temporary workspace path
       run: |
         echo "IMAGE_TAG=similie_env:${TARGET_SHA}" >> "${GITHUB_ENV}"
-        echo "CACHE_ROOT=${RUNNER_TEMP}/similie-gpu-workspace-${TARGET_SHA}" >> "${GITHUB_ENV}"
-        rm -rf "${RUNNER_TEMP}/similie-gpu-workspace-${TARGET_SHA}"
-    - name: Restore commit workspace
+        echo "CACHE_ROOT=${RUNNER_TEMP}/similie-cuda-workspace-${TARGET_SHA}" >> "${GITHUB_ENV}"
+        rm -rf "${RUNNER_TEMP}/similie-cuda-workspace-${TARGET_SHA}"
+    - name: Restore CUDA commit workspace
       id: restore-workspace
       uses: actions/cache/restore@v4
       with:
-        path: ${{ runner.temp }}/similie-gpu-workspace-${{ steps.target.outputs.target_sha }}
-        key: similie-gpu-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
-    - name: Populate commit workspace
+        path: ${{ runner.temp }}/similie-cuda-workspace-${{ steps.target.outputs.target_sha }}
+        key: similie-cuda-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
+    - name: Populate CUDA commit workspace
       run: |
         mkdir -p "${CACHE_ROOT}/src" "${CACHE_ROOT}/agent_build" "${CACHE_ROOT}/home"
         rsync -a --delete "${GITHUB_WORKSPACE}/" "${CACHE_ROOT}/src/"
@@ -90,9 +90,80 @@ jobs:
               -S .
             cmake --build "${CACHE_ROOT}/agent_build" --parallel 8
           '
-    - name: Save commit workspace
+    - name: Save CUDA commit workspace
       if: steps.restore-workspace.outputs.cache-hit != 'true'
       uses: actions/cache/save@v4
       with:
-        path: ${{ runner.temp }}/similie-gpu-workspace-${{ steps.target.outputs.target_sha }}
-        key: similie-gpu-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
+        path: ${{ runner.temp }}/similie-cuda-workspace-${{ steps.target.outputs.target_sha }}
+        key: similie-cuda-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
+
+  build-omp:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: [self-hosted, linux]
+    environment:
+      name: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run' }}
+    steps:
+    - name: Select target commit
+      id: target
+      run: |
+        if [ "${GITHUB_EVENT_NAME}" = "workflow_run" ]; then
+          target_sha="${{ github.event.workflow_run.head_sha }}"
+          target_ref="${{ github.event.workflow_run.head_branch }}"
+        else
+          target_sha="${GITHUB_SHA}"
+          target_ref="${GITHUB_REF_NAME}"
+        fi
+        echo "TARGET_SHA=${target_sha}" >> "${GITHUB_ENV}"
+        echo "TARGET_REF=${target_ref}" >> "${GITHUB_ENV}"
+        echo "target_sha=${target_sha}" >> "${GITHUB_OUTPUT}"
+    - name: Checkout built branch
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ steps.target.outputs.target_sha }}
+        submodules: recursive
+        fetch-depth: 0
+    - name: Clear temporary workspace path
+      run: |
+        echo "IMAGE_TAG=similie_env:${TARGET_SHA}" >> "${GITHUB_ENV}"
+        echo "CACHE_ROOT=${RUNNER_TEMP}/similie-omp-workspace-${TARGET_SHA}" >> "${GITHUB_ENV}"
+        rm -rf "${RUNNER_TEMP}/similie-omp-workspace-${TARGET_SHA}"
+    - name: Restore OpenMP commit workspace
+      id: restore-workspace
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ runner.temp }}/similie-omp-workspace-${{ steps.target.outputs.target_sha }}
+        key: similie-omp-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
+    - name: Populate OpenMP commit workspace
+      run: |
+        mkdir -p "${CACHE_ROOT}/src" "${CACHE_ROOT}/agent_build_omp" "${CACHE_ROOT}/home"
+        rsync -a --delete "${GITHUB_WORKSPACE}/" "${CACHE_ROOT}/src/"
+    - name: Configure and compile with OpenMP
+      run: |
+        docker image inspect "${IMAGE_TAG}" >/dev/null
+        docker run --rm \
+          --user "$(id -u):$(id -g)" \
+          -e HOME="${CACHE_ROOT}/home" \
+          -e CACHE_ROOT="${CACHE_ROOT}" \
+          -v "${CACHE_ROOT}:${CACHE_ROOT}" \
+          -w "${CACHE_ROOT}/src" \
+          "${IMAGE_TAG}" \
+          bash -lc '
+            set -euo pipefail
+            git config --global --add safe.directory "*"
+            g++-15 --version
+            cmake \
+              -DCMAKE_CXX_COMPILER=g++-15 \
+              -DCMAKE_BUILD_TYPE=Release \
+              -DKokkos_ENABLE_OPENMP=ON \
+              -DKokkos_ENABLE_DEPRECATION_WARNINGS=OFF \
+              -DSIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS=ON \
+              -B "${CACHE_ROOT}/agent_build_omp" \
+              -S .
+            cmake --build "${CACHE_ROOT}/agent_build_omp" --parallel 8
+          '
+    - name: Save OpenMP commit workspace
+      if: steps.restore-workspace.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: ${{ runner.temp }}/similie-omp-workspace-${{ steps.target.outputs.target_sha }}
+        key: similie-omp-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
