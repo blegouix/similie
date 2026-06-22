@@ -43,8 +43,6 @@ jobs:
     needs: docker-build-gpu
     runs-on: [self-hosted, linux]
     timeout-minutes: 60
-    environment:
-      name: manual-ci-run
     steps:
     - name: Checkout built branch
       uses: actions/checkout@v4
@@ -111,8 +109,6 @@ jobs:
     needs: compile-gpu
     runs-on: [self-hosted, linux]
     timeout-minutes: 20
-    environment:
-      name: manual-ci-run
     steps:
     - name: Restore commit workspace
       uses: actions/cache/restore@v4
@@ -143,8 +139,6 @@ jobs:
     needs: docker-build-gpu
     runs-on: [self-hosted, linux]
     timeout-minutes: 10
-    environment:
-      name: manual-ci-run
     steps:
     - name: Run similie_env on GPU
       run: |
@@ -156,8 +150,6 @@ jobs:
     needs: compile-gpu
     runs-on: [self-hosted, linux]
     timeout-minutes: 10
-    environment:
-      name: manual-ci-run
     steps:
     - name: Restore commit workspace
       uses: actions/cache/restore@v4
@@ -188,8 +180,6 @@ jobs:
     needs: compile-gpu
     runs-on: [self-hosted, linux]
     timeout-minutes: 10
-    environment:
-      name: manual-ci-run
     steps:
     - name: Restore commit workspace
       uses: actions/cache/restore@v4
@@ -220,8 +210,6 @@ jobs:
     needs: compile-gpu
     runs-on: [self-hosted, linux]
     timeout-minutes: 20
-    environment:
-      name: manual-ci-run
     steps:
     - name: Restore commit workspace
       uses: actions/cache/restore@v4
