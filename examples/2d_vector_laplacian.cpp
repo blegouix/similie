@@ -248,9 +248,9 @@ int main(int argc, char** argv)
                 / (ddc::get<Y>(upper_bounds) - ddc::get<Y>(lower_bounds))
                 * static_cast<double>(laplacian_dom.template extent<DDimY>() - 1)));
         ddc::DiscreteElement<DDimX, DDimY, MuLow> const
-                elem_x(static_cast<int>(ix), static_cast<int>(iy), ddc::DiscreteElement<MuLow>(0));
+                elem_x(static_cast<int>(ix), static_cast<int>(iy), 0);
         ddc::DiscreteElement<DDimX, DDimY, MuLow> const
-                elem_y(static_cast<int>(ix), static_cast<int>(iy), ddc::DiscreteElement<MuLow>(1));
+                elem_y(static_cast<int>(ix), static_cast<int>(iy), 1);
         double const value_x = laplacian_host(elem_x);
         double const value_y = laplacian_host(elem_y);
         double const magnitude = std::sqrt(value_x * value_x + value_y * value_y);
