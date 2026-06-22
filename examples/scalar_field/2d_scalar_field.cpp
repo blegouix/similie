@@ -466,10 +466,10 @@ int main(int argc, char** argv)
     std::remove("2d_scalar_field.h5");
 
 #if defined(SIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS)
-    std::array<double, 100> central_potential_values;
+    std::array<double, 200> central_potential_values;
     central_potential_values.fill(std::numeric_limits<double>::quiet_NaN());
-    std::array<double, 100> const expected_central_potential_values = [] {
-        std::array<double, 100> values;
+    std::array<double, 200> const expected_central_potential_values = [] {
+        std::array<double, 200> values;
         values.fill(std::numeric_limits<double>::quiet_NaN());
         return values;
     }();
@@ -619,7 +619,7 @@ int main(int argc, char** argv)
 
 #if defined(SIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS)
     std::cout << "Recorded central potential values for non-regression reference:" << std::endl;
-    std::cout << "std::array<double, 100> const expected_central_potential_values = {";
+    std::cout << "std::array<double, 200> const expected_central_potential_values = {";
     for (std::size_t i = 0; i < central_potential_values.size(); i++) {
         if (i % 4 == 0) {
             std::cout << "\n    ";
