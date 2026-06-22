@@ -41,7 +41,7 @@ RUN apt install -y git
 RUN apt install  -y cmake cmake-curses-gui
 
 # gcc
-RUN apt install -y software-properties-common
+RUN apt update && apt install -y software-properties-common
 RUN add-apt-repository -y ppa:ubuntu-toolchain-r/test
 RUN apt update
 RUN apt install -y gcc-15 g++-15
