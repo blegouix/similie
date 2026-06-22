@@ -147,6 +147,7 @@ TEST(DiscreteHodgeStar, Metric3D)
     ddc::Chunk dual_form_alloc(dual_form_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor dual_form(dual_form_alloc);
 
+    ddc::parallel_fill(dual_form, 0.);
     ddc::host_for_each(
             metric.non_indices_domain(),
             [&](ddc::DiscreteElement<DDimX, DDimY, DDimZ> elem) {

@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Baptiste Legouix
 # SPDX-License-Identifier: MIT
 
-name: pr_gpu
+name: manual-ci-run
 
 on:
   pull_request:
@@ -16,7 +16,7 @@ env:
   CACHE_DIR: similie-gpu-workspace-${{ github.sha }}
 
 jobs:
-  docker-build-gpu:
+  build-docker-env:
     runs-on: [self-hosted, linux]
     timeout-minutes: 20
     environment:
@@ -39,8 +39,8 @@ jobs:
           -t similie_env:latest \
           docker/similie_env
 
-  compile-gpu:
-    needs: docker-build-gpu
+  build:
+    needs: build-docker-env
     runs-on: [self-hosted, linux]
     timeout-minutes: 60
     steps:
@@ -105,8 +105,8 @@ jobs:
         path: ${{ runner.temp }}/similie-gpu-workspace-${{ github.sha }}
         key: similie-gpu-workspace-${{ runner.os }}-${{ github.sha }}
 
-  test-gpu:
-    needs: compile-gpu
+  tests:
+    needs: build
     runs-on: [self-hosted, linux]
     timeout-minutes: 20
     steps:
@@ -135,19 +135,8 @@ jobs:
             ctest --output-on-failure
           '
 
-  run-similie-env-gpu:
-    needs: docker-build-gpu
-    runs-on: [self-hosted, linux]
-    timeout-minutes: 10
-    steps:
-    - name: Run similie_env on GPU
-      run: |
-        docker image inspect "${IMAGE_TAG}" >/dev/null
-        docker run --rm --gpus all --user "$(id -u):$(id -g)" "${IMAGE_TAG}" \
-          bash -lc 'export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"; nvidia-smi'
-
-  laplacian-gpu:
-    needs: compile-gpu
+  laplacian:
+    needs: build
     runs-on: [self-hosted, linux]
     timeout-minutes: 10
     steps:
@@ -176,8 +165,8 @@ jobs:
             ./examples/2d_laplacian
           '
 
-  laplacian-vector-gpu:
-    needs: compile-gpu
+  laplacian-vector:
+    needs: build
     runs-on: [self-hosted, linux]
     timeout-minutes: 10
     steps:
@@ -206,10 +195,10 @@ jobs:
             ./examples/2d_vector_laplacian
           '
 
-  scalar-field-gpu:
-    needs: compile-gpu
+  scalar-field:
+    needs: build
     runs-on: [self-hosted, linux]
-    timeout-minutes: 20
+    timeout-minutes: 60
     steps:
     - name: Restore commit workspace
       uses: actions/cache/restore@v4

@@ -15,7 +15,7 @@ env:
   IMAGE_TAG: similie_env:${{ github.sha }}
 
 jobs:
-  docker-build-gpu:
+  build-docker-env:
     runs-on: [self-hosted, linux]
     environment:
       name: automatic-ci-run
