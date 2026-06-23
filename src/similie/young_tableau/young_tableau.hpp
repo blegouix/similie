@@ -504,12 +504,66 @@ public:
     template <class BasisId, class... Id>
         requires(tensor::TensorIndex<BasisId> && (... && tensor::TensorNatIndex<Id>))
     static constexpr csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...> u(
-            ddc::DiscreteDomain<Id...> restricted_domain);
+            ddc::DiscreteDomain<Id...> restricted_domain)
+    {
+        if constexpr (n_nonzeros_in_irrep() != 0) {
+            ddc::DiscreteDomain<BasisId, Id...>
+                    domain(ddc::DiscreteDomain<BasisId>(
+                                   ddc::DiscreteElement<BasisId>(0),
+                                   ddc::DiscreteVector<BasisId>(n_nonzeros_in_irrep())),
+                           restricted_domain);
+
+            return csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...>(
+                    domain,
+                    std::get<0>(std::get<0>(s_irrep)),
+                    std::get<1>(std::get<0>(s_irrep)),
+                    std::get<2>(std::get<0>(s_irrep)));
+        } else {
+            ddc::DiscreteDomain<BasisId, Id...>
+                    domain(ddc::DiscreteDomain<BasisId>(
+                                   ddc::DiscreteElement<BasisId>(0),
+                                   ddc::DiscreteVector<BasisId>(0)),
+                           restricted_domain);
+
+            return csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...>(
+                    domain,
+                    std::array<std::size_t, BasisId::mem_size() + 1> {},
+                    std::get<1>(std::get<0>(s_irrep)),
+                    std::get<2>(std::get<0>(s_irrep)));
+        }
+    }
 
     template <class BasisId, class... Id>
         requires(tensor::TensorIndex<BasisId> && (... && tensor::TensorNatIndex<Id>))
     static constexpr csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...> v(
-            ddc::DiscreteDomain<Id...> restricted_domain);
+            ddc::DiscreteDomain<Id...> restricted_domain)
+    {
+        if constexpr (n_nonzeros_in_irrep() != 0) {
+            ddc::DiscreteDomain<BasisId, Id...>
+                    domain(ddc::DiscreteDomain<BasisId>(
+                                   ddc::DiscreteElement<BasisId>(0),
+                                   ddc::DiscreteVector<BasisId>(n_nonzeros_in_irrep())),
+                           restricted_domain);
+
+            return csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...>(
+                    domain,
+                    std::get<0>(std::get<1>(s_irrep)),
+                    std::get<1>(std::get<1>(s_irrep)),
+                    std::get<2>(std::get<1>(s_irrep)));
+        } else {
+            ddc::DiscreteDomain<BasisId, Id...>
+                    domain(ddc::DiscreteDomain<BasisId>(
+                                   ddc::DiscreteElement<BasisId>(0),
+                                   ddc::DiscreteVector<BasisId>(0)),
+                           restricted_domain);
+
+            return csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...>(
+                    domain,
+                    std::array<std::size_t, BasisId::mem_size() + 1> {},
+                    std::get<1>(std::get<1>(s_irrep)),
+                    std::get<2>(std::get<1>(s_irrep)));
+        }
+    }
 };
 
 namespace detail {
@@ -934,73 +988,6 @@ auto YoungTableau<Dimension, TableauSeq>::projector()
     detail::Projector<tableau_seq, s_d>::run(proj);
     detail::Projector<typename dual::tableau_seq, s_d, true>::run(proj);
     return std::make_tuple(std::move(proj_alloc), proj);
-}
-
-// Access to u and v Csr, allowing to ie. compress or uncompress a tensor with internal symmetries
-template <std::size_t Dimension, misc::Specialization<YoungTableauSeq> TableauSeq>
-template <class BasisId, class... Id>
-    requires(tensor::TensorIndex<BasisId> && (... && tensor::TensorNatIndex<Id>))
-constexpr csr::Csr<YoungTableau<Dimension, TableauSeq>::n_nonzeros_in_irrep(), BasisId, Id...>
-YoungTableau<Dimension, TableauSeq>::u(ddc::DiscreteDomain<Id...> restricted_domain)
-{
-    if constexpr (n_nonzeros_in_irrep() != 0) {
-        ddc::DiscreteDomain<BasisId, Id...>
-                domain(ddc::DiscreteDomain<BasisId>(
-                               ddc::DiscreteElement<BasisId>(0),
-                               ddc::DiscreteVector<BasisId>(n_nonzeros_in_irrep())),
-                       restricted_domain);
-
-        return csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...>(
-                domain,
-                std::get<0>(std::get<0>(s_irrep)),
-                std::get<1>(std::get<0>(s_irrep)),
-                std::get<2>(std::get<0>(s_irrep)));
-    } else {
-        ddc::DiscreteDomain<BasisId, Id...>
-                domain(ddc::DiscreteDomain<BasisId>(
-                               ddc::DiscreteElement<BasisId>(0),
-                               ddc::DiscreteVector<BasisId>(0)),
-                       restricted_domain);
-
-        return csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...>(
-                domain,
-                std::array<std::size_t, BasisId::mem_size() + 1> {},
-                std::get<1>(std::get<0>(s_irrep)),
-                std::get<2>(std::get<0>(s_irrep)));
-    }
-}
-
-template <std::size_t Dimension, misc::Specialization<YoungTableauSeq> TableauSeq>
-template <class BasisId, class... Id>
-    requires(tensor::TensorIndex<BasisId> && (... && tensor::TensorNatIndex<Id>))
-constexpr csr::Csr<YoungTableau<Dimension, TableauSeq>::n_nonzeros_in_irrep(), BasisId, Id...>
-YoungTableau<Dimension, TableauSeq>::v(ddc::DiscreteDomain<Id...> restricted_domain)
-{
-    if constexpr (n_nonzeros_in_irrep() != 0) {
-        ddc::DiscreteDomain<BasisId, Id...>
-                domain(ddc::DiscreteDomain<BasisId>(
-                               ddc::DiscreteElement<BasisId>(0),
-                               ddc::DiscreteVector<BasisId>(n_nonzeros_in_irrep())),
-                       restricted_domain);
-
-        return csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...>(
-                domain,
-                std::get<0>(std::get<1>(s_irrep)),
-                std::get<1>(std::get<1>(s_irrep)),
-                std::get<2>(std::get<1>(s_irrep)));
-    } else {
-        ddc::DiscreteDomain<BasisId, Id...>
-                domain(ddc::DiscreteDomain<BasisId>(
-                               ddc::DiscreteElement<BasisId>(0),
-                               ddc::DiscreteVector<BasisId>(0)),
-                       restricted_domain);
-
-        return csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...>(
-                domain,
-                std::array<std::size_t, BasisId::mem_size() + 1> {},
-                std::get<1>(std::get<1>(s_irrep)),
-                std::get<2>(std::get<1>(s_irrep)));
-    }
 }
 
 // Load binary files and build u and v static constexpr Csr at compile-time
