@@ -600,7 +600,6 @@ public:
     using discrete_element_type = base_type::discrete_element_type;
 
     using base_type::domain;
-    using base_type::operator();
 
     KOKKOS_FUNCTION constexpr explicit Tensor(
             ddc::ChunkSpan<
