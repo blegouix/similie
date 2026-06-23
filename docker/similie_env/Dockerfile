@@ -31,14 +31,20 @@ RUN apt update
 RUN apt install -y vim
 ENV EDITOR=vim
 
-# wget
-RUN apt install -y wget
+# apt helpers
+RUN apt install -y ca-certificates gpg wget
 
 # git
 RUN apt install -y git
 
-# CMake 
-RUN apt install  -y cmake cmake-curses-gui
+# CMake
+RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null \
+  | gpg --dearmor -o /usr/share/keyrings/kitware-archive-keyring.gpg \
+  && echo 'deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ noble main' \
+       > /etc/apt/sources.list.d/kitware.list \
+  && apt update \
+  && apt install -y cmake cmake-curses-gui \
+  && cmake --version
 
 # gcc
 RUN apt update && apt install -y software-properties-common
