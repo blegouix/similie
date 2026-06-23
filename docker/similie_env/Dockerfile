@@ -25,17 +25,15 @@ FROM $BASE_IMAGE
 
 ARG BACKEND=cuda
 
-RUN apt update
-
 # vim
-RUN apt install -y vim
+RUN apt update && apt install -y vim
 ENV EDITOR=vim
 
 # apt helpers
-RUN apt install -y ca-certificates gpg wget
+RUN apt update && apt install -y ca-certificates gpg wget
 
 # git
-RUN apt install -y git
+RUN apt update && apt install -y git
 
 # CMake
 RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null \
@@ -49,25 +47,24 @@ RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/nul
 # gcc
 RUN apt update && apt install -y software-properties-common
 RUN add-apt-repository -y ppa:ubuntu-toolchain-r/test
-RUN apt update
-RUN apt install -y gcc-15 g++-15
+RUN apt update && apt install -y gcc-15 g++-15
 RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-15 100 \
  && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-15 100 \
  && update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-15 100 \
  && update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-15 100
 
 # OpenMPI
-RUN apt install -y libopenmpi-dev
+RUN apt update && apt install -y libopenmpi-dev
 
 # FFTW3
-RUN apt install -y libfftw3-dev
+RUN apt update && apt install -y libfftw3-dev
 
 # LAPACKE
-RUN apt install -y liblapacke-dev
+RUN apt update && apt install -y liblapacke-dev
 
 # Thrust
 RUN if [ "${BACKEND}" = "cuda" ]; then \
-  apt install -y libthrust-dev; \
+  apt update && apt install -y libthrust-dev; \
 fi
 
 # Ginkgo
@@ -107,8 +104,7 @@ Architectures: amd64
 Signed-By: /usr/share/keyrings/pdidev-archive-automatic.gpg
 EOF
 RUN wget -O /usr/share/keyrings/pdidev-archive-automatic.gpg https://repo.pdi.dev/ubuntu/pdidev-archive-keyring.gpg
-RUN apt update
-RUN apt install -y libpdi-dev pdiplugin-all
+RUN apt update && apt install -y libpdi-dev pdiplugin-all
 
 # Sympy
 RUN apt update && apt install -y python3-sympy python3-h5py
