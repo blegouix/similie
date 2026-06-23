@@ -156,6 +156,7 @@ jobs:
               -DCMAKE_BUILD_TYPE=Release \
               -DKokkos_ENABLE_OPENMP=ON \
               -DKokkos_ENABLE_DEPRECATION_WARNINGS=OFF \
+              -DSIMILIE_BUILD_YOUNG_TABLEAU=ON \
               -DSIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS=ON \
               -B "${CACHE_ROOT}/agent_build_omp" \
               -S .

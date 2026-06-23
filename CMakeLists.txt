@@ -21,7 +21,7 @@ option(DDC_BUILD_TESTS            "Build DDC tests if BUILD_TESTING is enabled" 
 
 # Custom variables
 if("${SIMILIE_BUILD_YOUNG_TABLEAU}")
-  set(CMAKE_CXX_STANDARD 23 CACHE INTERNAL "The C++ standard whose features are requested to build this project.")
+  set(CMAKE_CXX_STANDARD 26 CACHE INTERNAL "The C++ standard whose features are requested to build this project.")
   add_compile_definitions("BUILD_YOUNG_TABLEAU")
   if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/irreps_dict.bin)
     file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/irreps_dict.bin "")
