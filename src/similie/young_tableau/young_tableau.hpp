@@ -501,11 +501,13 @@ public:
     template <tensor::TensorNatIndex... Id>
     static auto projector();
 
-    template <tensor::TensorIndex BasisId, tensor::TensorNatIndex... Id>
+    template <class BasisId, class... Id>
+        requires(tensor::TensorIndex<BasisId> && (... && tensor::TensorNatIndex<Id>))
     static constexpr csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...> u(
             ddc::DiscreteDomain<Id...> restricted_domain);
 
-    template <tensor::TensorIndex BasisId, tensor::TensorNatIndex... Id>
+    template <class BasisId, class... Id>
+        requires(tensor::TensorIndex<BasisId> && (... && tensor::TensorNatIndex<Id>))
     static constexpr csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...> v(
             ddc::DiscreteDomain<Id...> restricted_domain);
 };
@@ -936,7 +938,8 @@ auto YoungTableau<Dimension, TableauSeq>::projector()
 
 // Access to u and v Csr, allowing to ie. compress or uncompress a tensor with internal symmetries
 template <std::size_t Dimension, misc::Specialization<YoungTableauSeq> TableauSeq>
-template <tensor::TensorIndex BasisId, tensor::TensorNatIndex... Id>
+template <class BasisId, class... Id>
+    requires(tensor::TensorIndex<BasisId> && (... && tensor::TensorNatIndex<Id>))
 constexpr csr::Csr<YoungTableau<Dimension, TableauSeq>::n_nonzeros_in_irrep(), BasisId, Id...>
 YoungTableau<Dimension, TableauSeq>::u(ddc::DiscreteDomain<Id...> restricted_domain)
 {
@@ -968,7 +971,8 @@ YoungTableau<Dimension, TableauSeq>::u(ddc::DiscreteDomain<Id...> restricted_dom
 }
 
 template <std::size_t Dimension, misc::Specialization<YoungTableauSeq> TableauSeq>
-template <tensor::TensorIndex BasisId, tensor::TensorNatIndex... Id>
+template <class BasisId, class... Id>
+    requires(tensor::TensorIndex<BasisId> && (... && tensor::TensorNatIndex<Id>))
 constexpr csr::Csr<YoungTableau<Dimension, TableauSeq>::n_nonzeros_in_irrep(), BasisId, Id...>
 YoungTableau<Dimension, TableauSeq>::v(ddc::DiscreteDomain<Id...> restricted_domain)
 {
