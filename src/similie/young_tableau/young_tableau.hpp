@@ -990,14 +990,15 @@ auto YoungTableau<Dimension, TableauSeq>::projector()
 // Load binary files and build u and v static constexpr Csr at compile-time
 namespace detail {
 
-template <std::size_t Line>
-consteval std::string_view load_irrep_line_for_tag(std::string_view const tag)
+template <auto Tag, std::size_t Line>
+consteval std::string_view load_irrep_line_for_tag()
 {
     constexpr static char raw[] = {
 #embed IRREPS_DICT_PATH
     };
 
     constexpr static std::string_view str(raw, sizeof(raw));
+    constexpr std::string_view tag(Tag.data(), Tag.size());
 
     size_t tagPos = str.find(tag);
 
@@ -1023,18 +1024,16 @@ struct LoadIrrepIdxForTag;
 template <std::size_t... I, std::size_t Offset>
 struct LoadIrrepIdxForTag<std::index_sequence<I...>, Offset>
 {
-    static consteval std::array<std::string_view, sizeof...(I)> run(std::string_view const tag)
+    template <auto Tag>
+    static consteval std::array<std::string_view, sizeof...(I)> run()
     {
         return std::array<std::string_view, sizeof...(I)> {
-                load_irrep_line_for_tag<I + Offset>(tag)...};
+                load_irrep_line_for_tag<Tag, I + Offset>()...};
     }
 };
 
 template <class T, std::size_t N, std::size_t I = 0>
-consteval std::array<T, N> bit_cast_array(
-        std::array<T, N> vec,
-        std::string_view const str,
-        std::string_view const tag)
+consteval std::array<T, N> bit_cast_array(std::array<T, N> vec, std::string_view const str)
 {
     if constexpr (I == N) {
         return vec;
@@ -1046,15 +1045,15 @@ consteval std::array<T, N> bit_cast_array(
 
         vec[I] = std::bit_cast<T>(
                 chars); // We rely on std::bit_cast because std::reinterprest_cast is not constexpr
-        return bit_cast_array<T, N, I + 1>(vec, str, tag);
+        return bit_cast_array<T, N, I + 1>(vec, str);
     }
 }
 
 template <class T, std::size_t N, std::size_t I = 0>
-consteval std::array<T, N> bit_cast_array(std::string_view const str, std::string_view const tag)
+consteval std::array<T, N> bit_cast_array(std::string_view const str)
 {
     std::array<T, N> vec {};
-    return bit_cast_array<T, N>(vec, str, tag);
+    return bit_cast_array<T, N>(vec, str);
 }
 
 template <class T, std::size_t N, class Ids>
@@ -1064,10 +1063,9 @@ template <class T, std::size_t N, std::size_t... I>
 struct BitCastArrayOfArrays<T, N, std::index_sequence<I...>>
 {
     static consteval std::array<std::array<T, N>, sizeof...(I)> run(
-            std::array<std::string_view, sizeof...(I)> const str,
-            std::string_view const tag)
+            std::array<std::string_view, sizeof...(I)> const str)
     {
-        return std::array<std::array<T, N>, sizeof...(I)> {bit_cast_array<T, N>(str[I], tag)...};
+        return std::array<std::array<T, N>, sizeof...(I)> {bit_cast_array<T, N>(str[I])...};
     }
 };
 
@@ -1190,37 +1188,40 @@ template <std::size_t Dimension, misc::Specialization<YoungTableauSeq> TableauSe
 consteval auto YoungTableau<Dimension, TableauSeq>::load_irrep()
 {
     constexpr auto tag_array = generate_tag_array();
-    constexpr std::string_view tag(tag_array.data(), tag_array.size());
-    static constexpr std::string_view str_u_coalesc_idx(detail::load_irrep_line_for_tag<0>(tag));
+    static constexpr std::string_view str_u_coalesc_idx(
+            detail::load_irrep_line_for_tag<tag_array, 0>());
     static constexpr std::array<std::string_view, s_r> str_u_idx(
-            detail::LoadIrrepIdxForTag<std::make_index_sequence<s_r>, 1>::run(tag));
-    static constexpr std::string_view str_u_values(detail::load_irrep_line_for_tag<s_r + 1>(tag));
+            detail::LoadIrrepIdxForTag<std::make_index_sequence<s_r>, 1>::
+                    template run<tag_array>());
+    static constexpr std::string_view str_u_values(
+            detail::load_irrep_line_for_tag<tag_array, s_r + 1>());
     static constexpr std::string_view str_v_coalesc_idx(
-            detail::load_irrep_line_for_tag<s_r + 2>(tag));
+            detail::load_irrep_line_for_tag<tag_array, s_r + 2>());
     static constexpr std::array<std::string_view, s_r> str_v_idx(
-            detail::LoadIrrepIdxForTag<std::make_index_sequence<s_r>, s_r + 3>::run(tag));
+            detail::LoadIrrepIdxForTag<std::make_index_sequence<s_r>, s_r + 3>::
+                    template run<tag_array>());
     static constexpr std::string_view str_v_values(
-            detail::load_irrep_line_for_tag<2 * s_r + 3>(tag));
+            detail::load_irrep_line_for_tag<tag_array, 2 * s_r + 3>());
 
     if constexpr (str_u_values.size() != 0) {
         static constexpr std::array u_coalesc_idx = detail::bit_cast_array<
                 std::size_t,
-                str_u_coalesc_idx.size() / sizeof(std::size_t)>(str_u_coalesc_idx, tag);
+                str_u_coalesc_idx.size() / sizeof(std::size_t)>(str_u_coalesc_idx);
         static constexpr std::array u_idx = detail::BitCastArrayOfArrays<
                 std::size_t,
                 str_u_idx[0].size() / sizeof(std::size_t),
-                std::make_index_sequence<s_r>>::run(str_u_idx, tag);
+                std::make_index_sequence<s_r>>::run(str_u_idx);
         static constexpr std::array u_values = detail::
-                bit_cast_array<double, str_u_values.size() / sizeof(double)>(str_u_values, tag);
+                bit_cast_array<double, str_u_values.size() / sizeof(double)>(str_u_values);
         static constexpr std::array v_coalesc_idx = detail::bit_cast_array<
                 std::size_t,
-                str_v_coalesc_idx.size() / sizeof(std::size_t)>(str_v_coalesc_idx, tag);
+                str_v_coalesc_idx.size() / sizeof(std::size_t)>(str_v_coalesc_idx);
         static constexpr std::array v_idx = detail::BitCastArrayOfArrays<
                 std::size_t,
                 str_v_idx[0].size() / sizeof(std::size_t),
-                std::make_index_sequence<s_r>>::run(str_v_idx, tag);
+                std::make_index_sequence<s_r>>::run(str_v_idx);
         static constexpr std::array v_values = detail::
-                bit_cast_array<double, str_v_values.size() / sizeof(double)>(str_v_values, tag);
+                bit_cast_array<double, str_v_values.size() / sizeof(double)>(str_v_values);
         return std::make_pair(
                 std::make_tuple(u_coalesc_idx, u_idx, u_values),
                 std::make_tuple(v_coalesc_idx, v_idx, v_values));
