@@ -457,9 +457,7 @@ public:
 private:
     static constexpr std::size_t s_irrep_dim = detail::IrrepDim<s_d, hook_lengths, 0, 0>::run(1);
 
-    static constexpr std::string generate_tag();
-
-    static constexpr std::string s_tag = generate_tag();
+    static constexpr auto generate_tag_array();
 
     static consteval auto load_irrep();
 
@@ -483,10 +481,7 @@ public:
         return s_irrep_dim;
     }
 
-    static constexpr std::string tag()
-    {
-        return s_tag;
-    }
+    static std::string tag();
 
 private:
     static constexpr std::size_t n_nonzeros_in_irrep()
@@ -737,16 +732,18 @@ struct OrthonormalBasisSubspaceEigenvalueOne<tensor::TensorFullIndex<Id...>>
 template <std::size_t Dimension, misc::Specialization<YoungTableauSeq> TableauSeq>
 YoungTableau<Dimension, TableauSeq>::YoungTableau()
 {
+    std::string const tag_str = tag();
+
     // Check if the irrep is available in the dictionnary
     {
         std::ifstream file(IRREPS_DICT_PATH, std::ios::out | std::ios::binary);
         std::string line;
         while (!file.eof()) {
             getline(file, line);
-            if (line == s_tag) {
+            if (line == tag_str) {
                 file.close();
                 if (n_nonzeros_in_irrep() == 0) {
-                    std::cout << "\033[1;31mIrrep " << s_tag << " in dimension " << s_d
+                    std::cout << "\033[1;31mIrrep " << tag_str << " in dimension " << s_d
                               << " required and found in dictionnary " << IRREPS_DICT_PATH
                               << " but the executable has been compiled without it. Please "
                                  "recompile.\033[0m"
@@ -758,7 +755,7 @@ YoungTableau<Dimension, TableauSeq>::YoungTableau()
     }
 
     // If the current irrep is not found in the dictionnary, compute and dump it
-    std::cout << "\033[1;31mIrrep " << s_tag << " corresponding to the Young Tableau:\033[0m\n"
+    std::cout << "\033[1;31mIrrep " << tag_str << " corresponding to the Young Tableau:\033[0m\n"
               << *this << "\n\033[1;31min dimension " << s_d
               << " required but not found in dictionnary " << IRREPS_DICT_PATH
               << ". It will be computed, and you will have to recompile once it is done.\033[0m"
@@ -773,17 +770,18 @@ YoungTableau<Dimension, TableauSeq>::YoungTableau()
         std::cerr << "Error opening file: " << IRREPS_DICT_PATH << std::endl;
         return;
     }
-    file << s_tag << "\n";
+    file << tag_str << "\n";
     u.write(file);
     v.write(file);
     file << "\n";
     file.close();
     if (!file.good()) {
         std::cerr << "Error occurred while writing to file " << IRREPS_DICT_PATH
-                  << " while adding irrep " << s_tag << std::endl;
+                  << " while adding irrep " << tag_str << std::endl;
     } else {
-        std::cout << "\033[1;32mIrrep " << s_tag << " added to the dictionnary " << IRREPS_DICT_PATH
-                  << ".\033[0m \033[1;31mPlease recompile.\033[0m" << std::endl;
+        std::cout << "\033[1;32mIrrep " << tag_str << " added to the dictionnary "
+                  << IRREPS_DICT_PATH << ".\033[0m \033[1;31mPlease recompile.\033[0m"
+                  << std::endl;
     }
 }
 
@@ -1077,10 +1075,20 @@ struct BitCastArrayOfArrays<T, N, std::index_sequence<I...>>
 } // namespace detail
 
 template <std::size_t Dimension, misc::Specialization<YoungTableauSeq> TableauSeq>
+constexpr auto YoungTableau<Dimension, TableauSeq>::generate_tag_array()
+{
+    static constexpr std::tuple tableau = detail::YoungTableauToArray<tableau_seq>::run();
+    constexpr auto row_str_wo_dimension
+            = detail::ArrayToString<std::make_index_sequence<tableau_seq::shape::size()>>::run(
+                    tableau);
+    return detail::add_dimension(row_str_wo_dimension, s_d);
+}
+
+template <std::size_t Dimension, misc::Specialization<YoungTableauSeq> TableauSeq>
 consteval auto YoungTableau<Dimension, TableauSeq>::load_irrep()
 {
-    constexpr std::string tag_string = generate_tag();
-    constexpr std::string_view tag(tag_string.data(), tag_string.size());
+    constexpr auto tag_array = generate_tag_array();
+    constexpr std::string_view tag(tag_array.data(), tag_array.size());
     static constexpr std::string_view str_u_coalesc_idx(detail::load_irrep_line_for_tag<0>(tag));
     static constexpr std::array<std::string_view, s_r> str_u_idx(
             detail::LoadIrrepIdxForTag<std::make_index_sequence<s_r>, 1>::run(tag));
@@ -1231,14 +1239,10 @@ constexpr auto add_dimension(const std::array<char, size>& array, std::size_t d)
 } // namespace detail
 
 template <std::size_t Dimension, misc::Specialization<YoungTableauSeq> TableauSeq>
-constexpr std::string YoungTableau<Dimension, TableauSeq>::generate_tag()
+std::string YoungTableau<Dimension, TableauSeq>::tag()
 {
-    static constexpr std::tuple tableau = detail::YoungTableauToArray<tableau_seq>::run();
-    constexpr auto row_str_wo_dimension
-            = detail::ArrayToString<std::make_index_sequence<tableau_seq::shape::size()>>::run(
-                    tableau);
-    constexpr auto row_str = detail::add_dimension(row_str_wo_dimension, s_d);
-    return std::string(row_str.begin(), row_str.end());
+    static constexpr auto tag_array = generate_tag_array();
+    return std::string(tag_array.begin(), tag_array.end());
 }
 
 namespace detail {
