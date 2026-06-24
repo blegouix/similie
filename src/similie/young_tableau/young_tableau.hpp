@@ -1191,37 +1191,39 @@ consteval auto YoungTableau<Dimension, TableauSeq>::load_irrep()
     static constexpr std::string_view str_u_coalesc_idx(
             detail::load_irrep_line_for_tag<tag_array, 0>());
     static constexpr std::array<std::string_view, s_r> str_u_idx(
-            detail::LoadIrrepIdxForTag<std::make_index_sequence<s_r>, 1>::
-                    template run<tag_array>());
+            detail::LoadIrrepIdxForTag<std::make_index_sequence<s_r>, 1>::template run<
+                    tag_array>());
     static constexpr std::string_view str_u_values(
             detail::load_irrep_line_for_tag<tag_array, s_r + 1>());
     static constexpr std::string_view str_v_coalesc_idx(
             detail::load_irrep_line_for_tag<tag_array, s_r + 2>());
     static constexpr std::array<std::string_view, s_r> str_v_idx(
-            detail::LoadIrrepIdxForTag<std::make_index_sequence<s_r>, s_r + 3>::
-                    template run<tag_array>());
+            detail::LoadIrrepIdxForTag<std::make_index_sequence<s_r>, s_r + 3>::template run<
+                    tag_array>());
     static constexpr std::string_view str_v_values(
             detail::load_irrep_line_for_tag<tag_array, 2 * s_r + 3>());
 
     if constexpr (str_u_values.size() != 0) {
-        static constexpr std::array u_coalesc_idx = detail::bit_cast_array<
-                std::size_t,
-                str_u_coalesc_idx.size() / sizeof(std::size_t)>(str_u_coalesc_idx);
+        static constexpr std::array u_coalesc_idx = detail::
+                bit_cast_array<std::size_t, str_u_coalesc_idx.size() / sizeof(std::size_t)>(
+                        str_u_coalesc_idx);
         static constexpr std::array u_idx = detail::BitCastArrayOfArrays<
                 std::size_t,
                 str_u_idx[0].size() / sizeof(std::size_t),
                 std::make_index_sequence<s_r>>::run(str_u_idx);
-        static constexpr std::array u_values = detail::
-                bit_cast_array<double, str_u_values.size() / sizeof(double)>(str_u_values);
-        static constexpr std::array v_coalesc_idx = detail::bit_cast_array<
-                std::size_t,
-                str_v_coalesc_idx.size() / sizeof(std::size_t)>(str_v_coalesc_idx);
+        static constexpr std::array u_values
+                = detail::bit_cast_array<double, str_u_values.size() / sizeof(double)>(
+                        str_u_values);
+        static constexpr std::array v_coalesc_idx = detail::
+                bit_cast_array<std::size_t, str_v_coalesc_idx.size() / sizeof(std::size_t)>(
+                        str_v_coalesc_idx);
         static constexpr std::array v_idx = detail::BitCastArrayOfArrays<
                 std::size_t,
                 str_v_idx[0].size() / sizeof(std::size_t),
                 std::make_index_sequence<s_r>>::run(str_v_idx);
-        static constexpr std::array v_values = detail::
-                bit_cast_array<double, str_v_values.size() / sizeof(double)>(str_v_values);
+        static constexpr std::array v_values
+                = detail::bit_cast_array<double, str_v_values.size() / sizeof(double)>(
+                        str_v_values);
         return std::make_pair(
                 std::make_tuple(u_coalesc_idx, u_idx, u_values),
                 std::make_tuple(v_coalesc_idx, v_idx, v_values));
