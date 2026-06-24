@@ -306,13 +306,43 @@ jobs:
             git config --global --add safe.directory "*"
             cmake --build . --parallel 8 --target kretschmann_scalar
             first_run_log="$(mktemp)"
-            set +e
-            timeout --kill-after=30s 20m ./examples/kretschmann_scalar 2>&1 | tee "${first_run_log}"
-            first_run_status="${PIPESTATUS[0]}"
-            set -e
-            if [ "${first_run_status}" -ne 0 ] && [ "${first_run_status}" -ne 124 ]; then
-              exit "${first_run_status}"
+            stdbuf -oL -eL ./examples/kretschmann_scalar > "${first_run_log}" 2>&1 &
+            first_run_pid="$!"
+            first_run_deadline=$((SECONDS + 20 * 60))
+            first_run_stopped_for_recompile=0
+            while true; do
+              if grep -q "Please recompile" "${first_run_log}" && [ -s irreps_dict.bin ]; then
+                first_run_stopped_for_recompile=1
+                kill "${first_run_pid}" 2>/dev/null || true
+                wait "${first_run_pid}" 2>/dev/null || true
+                break
+              fi
+              if [ -r "/proc/${first_run_pid}/stat" ] && awk '\''{ exit ($3 == "Z") ? 0 : 1 }'\'' "/proc/${first_run_pid}/stat"; then
+                break
+              fi
+              if ! kill -0 "${first_run_pid}" 2>/dev/null; then
+                break
+              fi
+              if [ "${SECONDS}" -ge "${first_run_deadline}" ]; then
+                cat "${first_run_log}"
+                echo "kretschmann_scalar first run timed out before requesting recompilation" >&2
+                kill "${first_run_pid}" 2>/dev/null || true
+                wait "${first_run_pid}" 2>/dev/null || true
+                exit 124
+              fi
+              sleep 1
+            done
+            if [ "${first_run_stopped_for_recompile}" -eq 0 ]; then
+              set +e
+              wait "${first_run_pid}"
+              first_run_status="$?"
+              set -e
+              if [ "${first_run_status}" -ne 0 ]; then
+                cat "${first_run_log}"
+                exit "${first_run_status}"
+              fi
             fi
+            cat "${first_run_log}"
             if ! grep -q "Please recompile" "${first_run_log}"; then
               echo "kretschmann_scalar first run did not request recompilation" >&2
               exit 1
