@@ -60,5 +60,7 @@ jobs:
             set -euo pipefail
             git config --global --add safe.directory "*"
             cmake --build . --parallel 8 --target kretschmann_scalar
-            ./examples/kretschmann_scalar
+            ./examples/kretschmann_scalar # export irreps
+            cmake --build . --parallel 8 --target kretschmann_scalar # recompile to use irreps at compile time
+            ./examples/kretschmann_scalar # perform actual kretschmann scalar computation
           '
