@@ -60,7 +60,22 @@ jobs:
             set -euo pipefail
             git config --global --add safe.directory "*"
             cmake --build . --parallel 8 --target kretschmann_scalar
-            ./examples/kretschmann_scalar # export irreps
+            first_run_log="$(mktemp)"
+            set +e
+            timeout --kill-after=30s 20m ./examples/kretschmann_scalar 2>&1 | tee "${first_run_log}"
+            first_run_status="${PIPESTATUS[0]}"
+            set -e
+            if [ "${first_run_status}" -ne 0 ] && [ "${first_run_status}" -ne 124 ]; then
+              exit "${first_run_status}"
+            fi
+            if ! grep -q "Please recompile" "${first_run_log}"; then
+              echo "kretschmann_scalar first run did not request recompilation" >&2
+              exit 1
+            fi
+            if [ ! -s irreps_dict.bin ]; then
+              echo "kretschmann_scalar first run did not generate irreps_dict.bin" >&2
+              exit 1
+            fi
             cmake --build . --parallel 8 --target kretschmann_scalar # recompile to use irreps at compile time
             ./examples/kretschmann_scalar # perform actual kretschmann scalar computation
           '
