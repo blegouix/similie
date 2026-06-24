@@ -990,32 +990,72 @@ auto YoungTableau<Dimension, TableauSeq>::projector()
 // Load binary files and build u and v static constexpr Csr at compile-time
 namespace detail {
 
-template <auto Tag, std::size_t Line>
-consteval std::string_view load_irrep_line_for_tag()
+using IrrepByteView = std::basic_string_view<unsigned char>;
+
+template <std::size_t N>
+consteval std::size_t find_ascii(
+        IrrepByteView const str,
+        std::array<char, N> const pattern,
+        std::size_t const pos = 0)
 {
-    constexpr static char raw[] = {
+    if constexpr (N == 0) {
+        return pos <= str.size() ? pos : IrrepByteView::npos;
+    } else {
+        if (pattern.size() > str.size() || pos > str.size() - pattern.size()) {
+            return IrrepByteView::npos;
+        }
+        for (std::size_t i = pos; i <= str.size() - pattern.size(); ++i) {
+            bool match = true;
+            for (std::size_t j = 0; j < pattern.size(); ++j) {
+                match &= str[i + j] == static_cast<unsigned char>(pattern[j]);
+            }
+            if (match) {
+                return i;
+            }
+        }
+        return IrrepByteView::npos;
+    }
+}
+
+consteval std::size_t find_ascii(
+        IrrepByteView const str,
+        char const c,
+        std::size_t const pos = 0)
+{
+    for (std::size_t i = pos; i < str.size(); ++i) {
+        if (str[i] == static_cast<unsigned char>(c)) {
+            return i;
+        }
+    }
+    return IrrepByteView::npos;
+}
+
+template <auto Tag, std::size_t Line>
+consteval IrrepByteView load_irrep_line_for_tag()
+{
+    constexpr static unsigned char raw[] = {
 #embed IRREPS_DICT_PATH
     };
 
-    constexpr static std::string_view str(raw, sizeof(raw));
-    constexpr std::string_view tag(Tag.data(), Tag.size());
+    constexpr static IrrepByteView str(raw, sizeof(raw));
+    constexpr std::array<char, 6> break_marker {'b', 'r', 'e', 'a', 'k', '\n'};
 
-    size_t tagPos = str.find(tag);
+    size_t tagPos = find_ascii(str, Tag);
 
-    if (tagPos != std::string::npos) {
-        std::size_t endOfTagLine = str.find('\n', tagPos);
-        if (endOfTagLine != std::string::npos) {
+    if (tagPos != IrrepByteView::npos) {
+        std::size_t endOfTagLine = find_ascii(str, '\n', tagPos);
+        if (endOfTagLine != IrrepByteView::npos) {
             std::size_t nextLineStart = endOfTagLine + 1;
             for (std::size_t i = 0; i < Line; ++i) {
-                nextLineStart = str.find("break\n", nextLineStart) + 6;
+                nextLineStart = find_ascii(str, break_marker, nextLineStart) + break_marker.size();
             }
-            std::size_t nextLineEnd = str.find("break\n", nextLineStart);
+            std::size_t nextLineEnd = find_ascii(str, break_marker, nextLineStart);
 
-            return std::string_view(str.data() + nextLineStart, nextLineEnd - nextLineStart);
+            return IrrepByteView(str.data() + nextLineStart, nextLineEnd - nextLineStart);
         }
     }
 
-    return "";
+    return IrrepByteView();
 }
 
 template <class Ids, std::size_t Offset>
@@ -1025,22 +1065,21 @@ template <std::size_t... I, std::size_t Offset>
 struct LoadIrrepIdxForTag<std::index_sequence<I...>, Offset>
 {
     template <auto Tag>
-    static consteval std::array<std::string_view, sizeof...(I)> run()
+    static consteval std::array<IrrepByteView, sizeof...(I)> run()
     {
-        return std::array<std::string_view, sizeof...(I)> {
-                load_irrep_line_for_tag<Tag, I + Offset>()...};
+        return std::array<IrrepByteView, sizeof...(I)> {load_irrep_line_for_tag<Tag, I + Offset>()...};
     }
 };
 
 template <class T, std::size_t N, std::size_t I = 0>
-consteval std::array<T, N> bit_cast_array(std::array<T, N> vec, std::string_view const str)
+consteval std::array<T, N> bit_cast_array(std::array<T, N> vec, IrrepByteView const str)
 {
     if constexpr (I == N) {
         return vec;
     } else {
-        std::array<char, sizeof(T) / sizeof(char)> chars = {};
-        for (std::size_t j = 0; j < sizeof(T) / sizeof(char); ++j) {
-            chars[j] = str[sizeof(T) / sizeof(char) * I + j];
+        std::array<unsigned char, sizeof(T)> chars = {};
+        for (std::size_t j = 0; j < sizeof(T); ++j) {
+            chars[j] = str[sizeof(T) * I + j];
         }
 
         vec[I] = std::bit_cast<T>(
@@ -1050,7 +1089,7 @@ consteval std::array<T, N> bit_cast_array(std::array<T, N> vec, std::string_view
 }
 
 template <class T, std::size_t N, std::size_t I = 0>
-consteval std::array<T, N> bit_cast_array(std::string_view const str)
+consteval std::array<T, N> bit_cast_array(IrrepByteView const str)
 {
     std::array<T, N> vec {};
     return bit_cast_array<T, N>(vec, str);
@@ -1063,7 +1102,7 @@ template <class T, std::size_t N, std::size_t... I>
 struct BitCastArrayOfArrays<T, N, std::index_sequence<I...>>
 {
     static consteval std::array<std::array<T, N>, sizeof...(I)> run(
-            std::array<std::string_view, sizeof...(I)> const str)
+            std::array<IrrepByteView, sizeof...(I)> const str)
     {
         return std::array<std::array<T, N>, sizeof...(I)> {bit_cast_array<T, N>(str[I])...};
     }
@@ -1188,19 +1227,19 @@ template <std::size_t Dimension, misc::Specialization<YoungTableauSeq> TableauSe
 consteval auto YoungTableau<Dimension, TableauSeq>::load_irrep()
 {
     constexpr auto tag_array = generate_tag_array();
-    static constexpr std::string_view str_u_coalesc_idx(
+    static constexpr detail::IrrepByteView str_u_coalesc_idx(
             detail::load_irrep_line_for_tag<tag_array, 0>());
-    static constexpr std::array<std::string_view, s_r> str_u_idx(
+    static constexpr std::array<detail::IrrepByteView, s_r> str_u_idx(
             detail::LoadIrrepIdxForTag<std::make_index_sequence<s_r>, 1>::template run<
                     tag_array>());
-    static constexpr std::string_view str_u_values(
+    static constexpr detail::IrrepByteView str_u_values(
             detail::load_irrep_line_for_tag<tag_array, s_r + 1>());
-    static constexpr std::string_view str_v_coalesc_idx(
+    static constexpr detail::IrrepByteView str_v_coalesc_idx(
             detail::load_irrep_line_for_tag<tag_array, s_r + 2>());
-    static constexpr std::array<std::string_view, s_r> str_v_idx(
+    static constexpr std::array<detail::IrrepByteView, s_r> str_v_idx(
             detail::LoadIrrepIdxForTag<std::make_index_sequence<s_r>, s_r + 3>::template run<
                     tag_array>());
-    static constexpr std::string_view str_v_values(
+    static constexpr detail::IrrepByteView str_v_values(
             detail::load_irrep_line_for_tag<tag_array, 2 * s_r + 3>());
 
     if constexpr (str_u_values.size() != 0) {
