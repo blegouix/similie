@@ -122,7 +122,8 @@ public:
     void write(std::ofstream& file)
     {
         auto const write_block = [&file](auto const& values) {
-            std::size_t const byte_size = values.size() * sizeof(typename std::decay_t<decltype(values)>::value_type);
+            std::size_t const byte_size
+                    = values.size() * sizeof(typename std::decay_t<decltype(values)>::value_type);
             file.write(reinterpret_cast<const char*>(&byte_size), sizeof(byte_size));
             file.write(reinterpret_cast<const char*>(values.data()), byte_size);
         };

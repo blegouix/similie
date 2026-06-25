@@ -1017,10 +1017,7 @@ consteval std::size_t find_ascii(
     }
 }
 
-consteval std::size_t find_ascii(
-        IrrepByteView const str,
-        char const c,
-        std::size_t const pos = 0)
+consteval std::size_t find_ascii(IrrepByteView const str, char const c, std::size_t const pos = 0)
 {
     for (std::size_t i = pos; i < str.size(); ++i) {
         if (str[i] == static_cast<unsigned char>(c)) {
@@ -1077,7 +1074,8 @@ struct LoadIrrepIdxForTag<std::index_sequence<I...>, Offset>
     template <auto Tag>
     static consteval std::array<IrrepByteView, sizeof...(I)> run()
     {
-        return std::array<IrrepByteView, sizeof...(I)> {load_irrep_block_for_tag<Tag, I + Offset>()...};
+        return std::array<IrrepByteView, sizeof...(I)> {
+                load_irrep_block_for_tag<Tag, I + Offset>()...};
     }
 };
 
