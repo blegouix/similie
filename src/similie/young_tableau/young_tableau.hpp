@@ -736,7 +736,7 @@ YoungTableau<Dimension, TableauSeq>::YoungTableau()
 
     // Check if the irrep is available in the dictionnary
     {
-        std::ifstream file(IRREPS_DICT_PATH, std::ios::out | std::ios::binary);
+        std::ifstream file(IRREPS_DICT_PATH, std::ios::in | std::ios::binary);
         std::string line;
         while (!file.eof()) {
             getline(file, line);
@@ -1030,28 +1030,38 @@ consteval std::size_t find_ascii(
     return IrrepByteView::npos;
 }
 
-template <auto Tag, std::size_t Line>
-consteval IrrepByteView load_irrep_line_for_tag()
+consteval std::size_t read_size_t(IrrepByteView const str, std::size_t const pos)
+{
+    std::array<unsigned char, sizeof(std::size_t)> chars = {};
+    for (std::size_t i = 0; i < sizeof(std::size_t); ++i) {
+        chars[i] = str[pos + i];
+    }
+    return std::bit_cast<std::size_t>(chars);
+}
+
+template <auto Tag, std::size_t Block>
+consteval IrrepByteView load_irrep_block_for_tag()
 {
     constexpr static unsigned char raw[] = {
 #embed IRREPS_DICT_PATH
     };
 
     constexpr static IrrepByteView str(raw, sizeof(raw));
-    constexpr std::array<char, 6> break_marker {'b', 'r', 'e', 'a', 'k', '\n'};
 
     size_t tagPos = find_ascii(str, Tag);
 
     if (tagPos != IrrepByteView::npos) {
         std::size_t endOfTagLine = find_ascii(str, '\n', tagPos);
         if (endOfTagLine != IrrepByteView::npos) {
-            std::size_t nextLineStart = endOfTagLine + 1;
-            for (std::size_t i = 0; i < Line; ++i) {
-                nextLineStart = find_ascii(str, break_marker, nextLineStart) + break_marker.size();
+            std::size_t blockStart = endOfTagLine + 1;
+            for (std::size_t i = 0; i < Block; ++i) {
+                std::size_t const blockSize = read_size_t(str, blockStart);
+                blockStart += sizeof(std::size_t) + blockSize;
             }
-            std::size_t nextLineEnd = find_ascii(str, break_marker, nextLineStart);
+            std::size_t const blockSize = read_size_t(str, blockStart);
+            blockStart += sizeof(std::size_t);
 
-            return IrrepByteView(str.data() + nextLineStart, nextLineEnd - nextLineStart);
+            return IrrepByteView(str.data() + blockStart, blockSize);
         }
     }
 
@@ -1067,7 +1077,7 @@ struct LoadIrrepIdxForTag<std::index_sequence<I...>, Offset>
     template <auto Tag>
     static consteval std::array<IrrepByteView, sizeof...(I)> run()
     {
-        return std::array<IrrepByteView, sizeof...(I)> {load_irrep_line_for_tag<Tag, I + Offset>()...};
+        return std::array<IrrepByteView, sizeof...(I)> {load_irrep_block_for_tag<Tag, I + Offset>()...};
     }
 };
 
@@ -1228,19 +1238,19 @@ consteval auto YoungTableau<Dimension, TableauSeq>::load_irrep()
 {
     constexpr auto tag_array = generate_tag_array();
     static constexpr detail::IrrepByteView str_u_coalesc_idx(
-            detail::load_irrep_line_for_tag<tag_array, 0>());
+            detail::load_irrep_block_for_tag<tag_array, 0>());
     static constexpr std::array<detail::IrrepByteView, s_r> str_u_idx(
             detail::LoadIrrepIdxForTag<std::make_index_sequence<s_r>, 1>::template run<
                     tag_array>());
     static constexpr detail::IrrepByteView str_u_values(
-            detail::load_irrep_line_for_tag<tag_array, s_r + 1>());
+            detail::load_irrep_block_for_tag<tag_array, s_r + 1>());
     static constexpr detail::IrrepByteView str_v_coalesc_idx(
-            detail::load_irrep_line_for_tag<tag_array, s_r + 2>());
+            detail::load_irrep_block_for_tag<tag_array, s_r + 2>());
     static constexpr std::array<detail::IrrepByteView, s_r> str_v_idx(
             detail::LoadIrrepIdxForTag<std::make_index_sequence<s_r>, s_r + 3>::template run<
                     tag_array>());
     static constexpr detail::IrrepByteView str_v_values(
-            detail::load_irrep_line_for_tag<tag_array, 2 * s_r + 3>());
+            detail::load_irrep_block_for_tag<tag_array, 2 * s_r + 3>());
 
     if constexpr (str_u_values.size() != 0) {
         static constexpr std::array u_coalesc_idx = detail::

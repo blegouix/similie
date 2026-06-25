@@ -107,5 +107,5 @@ jobs:
               exit 1
             fi
             cmake --build . --parallel 8 --target kretschmann_scalar # recompile to use irreps at compile time
-            ./examples/kretschmann_scalar # perform actual kretschmann scalar computation
+            timeout --kill-after=30s 20m ./examples/kretschmann_scalar # perform actual kretschmann scalar computation
           '

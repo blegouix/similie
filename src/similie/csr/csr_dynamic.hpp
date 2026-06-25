@@ -4,6 +4,7 @@
 #pragma once
 
 #include <fstream>
+#include <type_traits>
 
 #include <ddc/ddc.hpp>
 
@@ -120,20 +121,17 @@ public:
 
     void write(std::ofstream& file)
     {
-        file
-                .write(reinterpret_cast<const char*>(coalesc_idx().data()),
-                       coalesc_idx().size() * sizeof(std::size_t));
-        file << "break\n";
+        auto const write_block = [&file](auto const& values) {
+            std::size_t const byte_size = values.size() * sizeof(typename std::decay_t<decltype(values)>::value_type);
+            file.write(reinterpret_cast<const char*>(&byte_size), sizeof(byte_size));
+            file.write(reinterpret_cast<const char*>(values.data()), byte_size);
+        };
+
+        write_block(coalesc_idx());
         for (std::size_t i = 0; i < sizeof...(TailTensorIndex); ++i) {
-            file
-                    .write(reinterpret_cast<const char*>(idx()[i].data()),
-                           idx()[i].size() * sizeof(std::size_t));
-            file << "break\n";
+            write_block(idx()[i]);
         }
-        file
-                .write(reinterpret_cast<const char*>(values().data()),
-                       m_values.size() * sizeof(double));
-        file << "break\n";
+        write_block(values());
     }
 };
 
