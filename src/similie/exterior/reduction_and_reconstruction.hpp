@@ -719,18 +719,24 @@ struct Reduction
             source_natural_elem_type source_natural_elem;
             ddc::detail::array(source_natural_elem)
                     = ddc::detail::array(source_natural_elem_type(natural_elem));
+            if constexpr (source_index_type::rank() > 1) {
+                if (!detail::has_unique_reduction_ids(ddc::detail::array(source_natural_elem))) {
+                    return 0.;
+                }
+            }
             source_tensor(source_tensor.accessor().access_element(source_natural_elem)) = 1.;
 
             run(target_tensor, source_tensor, metric, position, elem);
 
             if constexpr (target_index_type::rank() == 0) {
-                return target_tensor(
+                return target_tensor.get(
                         target_tensor.accessor().access_element(target_natural_elem_type()));
             } else {
                 target_natural_elem_type target_natural_elem;
                 ddc::detail::array(target_natural_elem)
                         = ddc::detail::array(target_natural_elem_type(natural_elem));
-                return target_tensor(target_tensor.accessor().access_element(target_natural_elem));
+                return target_tensor.get(
+                        target_tensor.accessor().access_element(target_natural_elem));
             }
         }
     }
