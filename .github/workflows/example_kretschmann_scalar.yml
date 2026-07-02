@@ -62,5 +62,7 @@ jobs:
             cmake --build . --parallel 8 --target kretschmann_scalar
             ./examples/kretschmann_scalar
             cmake --build . --parallel 8 --target kretschmann_scalar
-            ./examples/kretschmann_scalar
+            output="$(./examples/kretschmann_scalar)"
+            printf "%s\n" "${output}"
+            grep -Fx "Kreschmann scalar = 12" <<< "${output}"
           '
