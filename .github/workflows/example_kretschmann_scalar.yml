@@ -11,6 +11,15 @@ on:
       target_sha:
         description: Commit SHA to run the example from
         required: false
+  workflow_call:
+    inputs:
+      target_sha:
+        required: true
+        type: string
+      ci_environment:
+        required: false
+        type: string
+        default: automatic-ci-run
 
 concurrency:
   group: ${{ github.workflow }}-${{ inputs.target_sha || github.event.workflow_run.head_sha || github.sha }}
@@ -18,10 +27,10 @@ concurrency:
 
 jobs:
   example-kretschmann_scalar:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: github.event_name == 'workflow_call' || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: [self-hosted, linux]
     environment:
-      name: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run' }}
+      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run') }}
     steps:
     - name: Select target commit
       id: target

@@ -7,22 +7,38 @@ on:
     workflows: [ build_env ]
     types: [ completed ]
   workflow_dispatch:
+    inputs:
+      target_sha:
+        description: Commit SHA to build
+        required: false
+  workflow_call:
+    inputs:
+      target_sha:
+        required: true
+        type: string
+      ci_environment:
+        required: false
+        type: string
+        default: automatic-ci-run
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.workflow_run.head_sha || github.sha }}
+  group: ${{ github.workflow }}-${{ inputs.target_sha || github.event.workflow_run.head_sha || github.sha }}
   cancel-in-progress: true
 
 jobs:
   build-cuda:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: github.event_name == 'workflow_call' || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: [self-hosted, linux]
     environment:
-      name: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run' }}
+      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run') }}
     steps:
     - name: Select target commit
       id: target
       run: |
-        if [ "${GITHUB_EVENT_NAME}" = "workflow_run" ]; then
+        if [ -n "${{ inputs.target_sha }}" ]; then
+          target_sha="${{ inputs.target_sha }}"
+          target_ref="${{ inputs.target_sha }}"
+        elif [ "${GITHUB_EVENT_NAME}" = "workflow_run" ]; then
           target_sha="${{ github.event.workflow_run.head_sha }}"
           target_ref="${{ github.event.workflow_run.head_branch }}"
         else
@@ -98,15 +114,18 @@ jobs:
         key: similie-cuda-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
 
   build-omp:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: github.event_name == 'workflow_call' || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: [self-hosted, linux]
     environment:
-      name: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run' }}
+      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run') }}
     steps:
     - name: Select target commit
       id: target
       run: |
-        if [ "${GITHUB_EVENT_NAME}" = "workflow_run" ]; then
+        if [ -n "${{ inputs.target_sha }}" ]; then
+          target_sha="${{ inputs.target_sha }}"
+          target_ref="${{ inputs.target_sha }}"
+        elif [ "${GITHUB_EVENT_NAME}" = "workflow_run" ]; then
           target_sha="${{ github.event.workflow_run.head_sha }}"
           target_ref="${{ github.event.workflow_run.head_branch }}"
         else

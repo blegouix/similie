@@ -6,22 +6,33 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      target_sha:
+        required: true
+        type: string
+      ci_environment:
+        required: false
+        type: string
+        default: automatic-ci-run
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref == github.ref_protected && github.run_id || github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ inputs.target_sha || (github.ref == github.ref_protected && github.run_id || github.event.pull_request.number || github.ref) }}
   cancel-in-progress: true
 
 env:
-  IMAGE_TAG: similie_env:${{ github.sha }}
+  IMAGE_TAG: similie_env:${{ inputs.target_sha || github.sha }}
 
 jobs:
   build-docker-env:
     runs-on: [self-hosted, linux]
     environment:
-      name: automatic-ci-run
+      name: ${{ inputs.ci_environment || 'automatic-ci-run' }}
     steps:
     - name: Checkout built branch
       uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.target_sha || github.sha }}
     - name: Check GPU visibility on runner
       run: |
         if command -v nvidia-smi; then
