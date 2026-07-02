@@ -425,24 +425,146 @@ template <
 struct TensorProdYoungAnyAny;
 
 template <
-        class... ProdDDim,
+        class ProdDDim,
         class... Index1,
         class... Index2,
         class... HeadDDim1,
         class... ContractDDim,
         class... TailDDim2>
 struct TensorProdYoungAnyAny<
-        ddc::detail::TypeSeq<ProdDDim...>,
+        ddc::detail::TypeSeq<ProdDDim>,
         ddc::detail::TypeSeq<Index1...>,
         ddc::detail::TypeSeq<Index2...>,
         ddc::detail::TypeSeq<HeadDDim1...>,
         ddc::detail::TypeSeq<ContractDDim...>,
         ddc::detail::TypeSeq<TailDDim2...>>
 {
+    template <class Indices>
+    struct YoungIndexIn;
+
+    template <class Fallback, class... TensorIndex>
+    struct FirstYoungIndex
+    {
+        using type = Fallback;
+    };
+
+    template <class Fallback, class HeadIndex, class... TailIndex>
+    struct FirstYoungIndex<Fallback, HeadIndex, TailIndex...>
+    {
+        using tail_type = typename FirstYoungIndex<Fallback, TailIndex...>::type;
+        using type = std::conditional_t<
+                misc::Specialization<HeadIndex, TensorYoungTableauIndex>,
+                HeadIndex,
+                tail_type>;
+    };
+
+    template <class... TensorIndex>
+    struct YoungIndexIn<ddc::detail::TypeSeq<TensorIndex...>>
+    {
+        using type = typename FirstYoungIndex<void, TensorIndex...>::type;
+    };
+
+    template <class NaturalIndices>
+    struct NaturalElementFromCsr;
+
+    template <class... NaturalIndex>
+    struct NaturalElementFromCsr<ddc::detail::TypeSeq<NaturalIndex...>>
+    {
+        template <class CsrType>
+        KOKKOS_FUNCTION static ddc::DiscreteElement<NaturalIndex...> run(
+                CsrType const& csr,
+                std::size_t j)
+        {
+            return ddc::DiscreteElement<NaturalIndex...>(csr.idx()[ddc::type_seq_rank_v<
+                    NaturalIndex,
+                    ddc::detail::TypeSeq<NaturalIndex...>>][j]...);
+        }
+    };
+
+    template <class TensorIndex, class YoungIndex, class Elem>
+    KOKKOS_FUNCTION static std::size_t mem_uid(Elem elem, std::size_t young_mem_uid)
+    {
+        if constexpr (std::is_same_v<TensorIndex, YoungIndex>) {
+            return young_mem_uid;
+        } else {
+            static_assert(TensorNatIndex<TensorIndex>);
+            return elem.template uid<TensorIndex>();
+        }
+    }
+
+    template <class... TensorIndex, class TensorType, class Elem, class YoungIndex>
+    KOKKOS_FUNCTION static typename TensorType::element_type tensor_mem(
+            TensorType tensor,
+            Elem elem,
+            std::size_t young_mem_uid,
+            std::type_identity<ddc::detail::TypeSeq<TensorIndex...>>,
+            YoungIndex)
+    {
+        return tensor.mem(
+                ddc::DiscreteElement<TensorIndex...>(ddc::DiscreteElement<TensorIndex>(
+                        mem_uid<TensorIndex, YoungIndex>(elem, young_mem_uid))...));
+    }
+
+    template <class TensorType, class Elem, class YoungIndex, class... NaturalIndex>
+    KOKKOS_FUNCTION static typename TensorType::element_type young_tensor_value_impl(
+            TensorType tensor,
+            Elem elem,
+            YoungIndex,
+            std::type_identity<ddc::detail::TypeSeq<NaturalIndex...>>)
+    {
+        constexpr csr::Csr v = YoungIndex::young_tableau::template v<YoungIndex>(
+                YoungIndex::subindices_domain());
+        typename TensorType::element_type tensor_value = 0.;
+        for (std::size_t j = 0; j < v.values().size(); ++j) {
+            if (((v.idx()[ddc::type_seq_rank_v<NaturalIndex, ddc::detail::TypeSeq<NaturalIndex...>>]
+                         [j]
+                  == elem.template uid<NaturalIndex>())
+                 && ...)) {
+                std::size_t young_mem_uid = 0;
+                while (young_mem_uid < v.coalesc_idx().size() - 1
+                       && v.coalesc_idx()[young_mem_uid + 1] <= j) {
+                    ++young_mem_uid;
+                }
+                tensor_value += v.values()[j]
+                                * tensor_mem(
+                                        tensor,
+                                        elem,
+                                        young_mem_uid,
+                                        std::type_identity<ddc::to_type_seq_t<
+                                                typename TensorType::indices_domain_t>>(),
+                                        YoungIndex());
+            }
+        }
+        return tensor_value;
+    }
+
+    template <class TensorType, class Elem, class Indices>
+    KOKKOS_FUNCTION static typename TensorType::element_type tensor_value(
+            TensorType tensor,
+            Elem elem,
+            std::type_identity<Indices>)
+    {
+        using young_index = typename YoungIndexIn<Indices>::type;
+        if constexpr (std::is_void_v<young_index>) {
+            return tensor.get(tensor.access_element(elem));
+        } else {
+            return young_tensor_value_impl(
+                    tensor,
+                    elem,
+                    young_index(),
+                    std::type_identity<
+                            ddc::to_type_seq_t<typename young_index::subindices_domain_t>>());
+        }
+    }
+
     template <class ElementType, class LayoutStridedPolicy, class MemorySpace>
-    static Tensor<ElementType, ddc::DiscreteDomain<ProdDDim...>, LayoutStridedPolicy, MemorySpace>
+    KOKKOS_FUNCTION static Tensor<
+            ElementType,
+            ddc::DiscreteDomain<ProdDDim>,
+            LayoutStridedPolicy,
+            MemorySpace>
     run(Tensor<ElementType,
-               ddc::DiscreteDomain<ProdDDim...>,
+               ddc::DiscreteDomain<ProdDDim>,
                Kokkos::layout_right,
                Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
         Tensor<ElementType, ddc::DiscreteDomain<Index1...>, LayoutStridedPolicy, MemorySpace>
@@ -450,40 +572,52 @@ struct TensorProdYoungAnyAny<
         Tensor<ElementType, ddc::DiscreteDomain<Index2...>, LayoutStridedPolicy, MemorySpace>
                 tensor2)
     {
-        /*
-    typename TensorYoungTableauIndex<DDim1...>::young_tableau young_tableau;
-    csr::Csr u = young_tableau.template u<YoungTableauIndex, DDim2...>(tensor2.domain());
-*/
-        ddc::Chunk uncompressed_prod_alloc(
-                ddc::DiscreteDomain(ProdDDim::subindices_domain()...),
-                ddc::HostAllocator<double>());
-        tensor::Tensor uncompressed_prod(uncompressed_prod_alloc);
-
+        constexpr csr::Csr u
+                = ProdDDim::young_tableau::template u<ProdDDim>(ProdDDim::subindices_domain());
         tensor::TensorAccessor<ContractDDim...> contract_accessor;
         ddc::DiscreteDomain<ContractDDim...> contract_dom = contract_accessor.natural_domain();
 
-        ddc::host_for_each(
-                uncompressed_prod.domain(),
-                [&](ddc::cartesian_prod_t<
-                        typename ProdDDim::subindices_domain_t...>::discrete_element_type elem) {
-                    uncompressed_prod(elem) = ddc::host_transform_reduce(
-                            contract_dom,
-                            0.,
-                            ddc::reducer::sum<ElementType>(),
-                            [&](ddc::DiscreteElement<ContractDDim...> contract_elem) {
-                                return tensor1.get(tensor1.access_element(
-                                               ddc::DiscreteElement<HeadDDim1..., ContractDDim...>(
-                                                       ddc::select<HeadDDim1...>(elem),
-                                                       contract_accessor.access_element(
-                                                               contract_elem))))
-                                       * tensor2.get(tensor2.access_element(
-                                               ddc::DiscreteElement<ContractDDim..., TailDDim2...>(
-                                                       contract_accessor.access_element(
-                                                               contract_elem),
-                                                       ddc::select<TailDDim2...>(elem))));
-                            });
+        using natural_indices = ddc::to_type_seq_t<typename ProdDDim::subindices_domain_t>;
+        ddc::device_for_each(
+                prod_tensor.domain(),
+                [&](ddc::DiscreteElement<ProdDDim> prod_mem_elem) {
+                    ElementType prod_value = 0.;
+                    std::size_t const j_begin
+                            = u.coalesc_idx()[prod_mem_elem.template uid<ProdDDim>()];
+                    std::size_t const j_end
+                            = u.coalesc_idx()[prod_mem_elem.template uid<ProdDDim>() + 1];
+                    for (std::size_t j = j_begin; j < j_end; ++j) {
+                        auto const elem = NaturalElementFromCsr<natural_indices>::run(u, j);
+                        ElementType const uncompressed_value = ddc::device_transform_reduce(
+                                contract_dom,
+                                0.,
+                                ddc::reducer::sum<ElementType>(),
+                                [&](ddc::DiscreteElement<ContractDDim...> contract_elem) {
+                                    return tensor_value(
+                                                   tensor1,
+                                                   ddc::DiscreteElement<
+                                                           HeadDDim1...,
+                                                           ContractDDim...>(
+                                                           ddc::select<HeadDDim1...>(elem),
+                                                           contract_accessor.access_element(
+                                                                   contract_elem)),
+                                                   std::type_identity<
+                                                           ddc::detail::TypeSeq<Index1...>>())
+                                           * tensor_value(
+                                                   tensor2,
+                                                   ddc::DiscreteElement<
+                                                           ContractDDim...,
+                                                           TailDDim2...>(
+                                                           contract_accessor.access_element(
+                                                                   contract_elem),
+                                                           ddc::select<TailDDim2...>(elem)),
+                                                   std::type_identity<
+                                                           ddc::detail::TypeSeq<Index2...>>());
+                                });
+                        prod_value += u.values()[j] * uncompressed_value;
+                    }
+                    prod_tensor.mem(prod_mem_elem) = prod_value;
                 });
-        tensor::compress(prod_tensor, uncompressed_prod);
         return prod_tensor;
     }
 };

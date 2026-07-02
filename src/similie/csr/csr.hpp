@@ -72,22 +72,26 @@ public:
         std::copy_n(csr_dyn.values().begin(), N, m_values.begin());
     }
 
-    ddc::DiscreteDomain<HeadTensorIndex, TailTensorIndex...> domain()
+    KOKKOS_FUNCTION constexpr ddc::DiscreteDomain<HeadTensorIndex, TailTensorIndex...> domain()
+            const
     {
         return m_domain;
     }
 
-    constexpr std::array<std::size_t, HeadTensorIndex::mem_size() + 1> coalesc_idx() const
+    KOKKOS_FUNCTION constexpr std::array<std::size_t, HeadTensorIndex::mem_size() + 1> const&
+    coalesc_idx() const
     {
         return m_coalesc_idx;
     }
 
-    constexpr std::array<std::array<std::size_t, N>, sizeof...(TailTensorIndex)> idx() const
+    KOKKOS_FUNCTION constexpr std::
+            array<std::array<std::size_t, N>, sizeof...(TailTensorIndex)> const&
+            idx() const
     {
         return m_idx;
     }
 
-    constexpr std::array<double, N> values() const
+    KOKKOS_FUNCTION constexpr std::array<double, N> const& values() const
     {
         return m_values;
     }

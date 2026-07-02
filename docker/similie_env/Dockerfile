@@ -13,7 +13,7 @@ FROM $BASE_IMAGE
 # git config --global url."https://github.com/".insteadOf git@github.com:
 # git clone --recurse-submodules https://github.com/blegouix/similie.git
 # for cpu:
-# cmake -DCMAKE_CXX_COMPILER=g++-13 -DCMAKE_BUILD_TYPE=Release -DKokkos_ENABLE_OPENMP=ON -B similie/build -S similie
+# cmake -DCMAKE_CXX_COMPILER=g++-15 -DCMAKE_BUILD_TYPE=Release -DKokkos_ENABLE_OPENMP=ON -B similie/build -S similie
 # for cuda:
 # cmake -DCMAKE_CXX_COMPILER=$PWD/similie/vendor/ddc/vendor/kokkos/bin/nvcc_wrapper -DCMAKE_BUILD_TYPE=RELEASE -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_<YOUR_ARCH_NAMECODE>=ON -B similie/build -S similie
 # cmake --build similie/build -j 8
@@ -25,36 +25,40 @@ FROM $BASE_IMAGE
 
 ARG BACKEND=cuda
 
-RUN apt update
-
 # vim
-RUN apt install -y vim
+RUN apt update && apt install -y vim
 ENV EDITOR=vim
 
-# wget
-RUN apt install -y wget
+# apt helpers
+RUN apt update && apt install -y ca-certificates gpg lsb-release wget
 
 # git
-RUN apt install -y git
+RUN apt update && apt install -y git
 
-# CMake 
-RUN apt install  -y cmake cmake-curses-gui
+# CMake
+RUN apt update \
+  && apt install -y cmake cmake-curses-gui \
+  && cmake --version
 
 # gcc
-RUN apt install -y gcc g++
+RUN apt update && apt install -y gcc-15 g++-15
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-15 100 \
+ && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-15 100 \
+ && update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-15 100 \
+ && update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-15 100
 
 # OpenMPI
-RUN apt install -y libopenmpi-dev
+RUN apt update && apt install -y libopenmpi-dev
 
 # FFTW3
-RUN apt install -y libfftw3-dev
+RUN apt update && apt install -y libfftw3-dev
 
 # LAPACKE
-RUN apt install -y liblapacke-dev
+RUN apt update && apt install -y liblapacke-dev
 
 # Thrust
 RUN if [ "${BACKEND}" = "cuda" ]; then \
-  apt install -y libthrust-dev; \
+  apt update && apt install -y libthrust-dev; \
 fi
 
 # Ginkgo
@@ -81,21 +85,22 @@ RUN if [ "${BACKEND}" = "cpu" ]; then \
       echo "ERROR: BACKEND must be 'cpu' or 'cuda' (got: '${BACKEND}')" >&2; \
       exit 1; \
     fi
-RUN cmake --build ginkgo/build -j 4
+RUN cmake --build ginkgo/build
 RUN cmake --install ginkgo/build
 
-# PDI 
-RUN cat > /etc/apt/sources.list.d/pdi.sources <<'EOF'
-Types: deb deb-src
-URIs: https://repo.pdi.dev/ubuntu
-Suites: noble
-Components: main
-Architectures: amd64
-Signed-By: /usr/share/keyrings/pdidev-archive-automatic.gpg
-EOF
-RUN wget -O /usr/share/keyrings/pdidev-archive-automatic.gpg https://repo.pdi.dev/ubuntu/pdidev-archive-keyring.gpg
-RUN apt update
-RUN apt install -y libpdi-dev pdiplugin-all
+# PDI
+RUN update-ca-certificates
+RUN printf '%s\n' \
+  'Types: deb deb-src' \
+  'URIs: https://repo.pdi.dev/ubuntu' \
+  "Suites: $(lsb_release -cs)" \
+  'Components: main' \
+  'Architectures: amd64' \
+  'Signed-By: /usr/share/keyrings/pdidev-archive-automatic.gpg' \
+  > /etc/apt/sources.list.d/pdi.sources
+RUN wget -O /usr/share/keyrings/pdidev-archive-automatic.gpg https://repo.pdi.dev/ubuntu/pdidev-archive-keyring.gpg \
+  && chmod a+r /usr/share/keyrings/pdidev-archive-automatic.gpg
+RUN apt update && apt install -y libpdi-dev pdiplugin-all
 
 # Sympy
 RUN apt update && apt install -y python3-sympy python3-h5py

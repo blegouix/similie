@@ -1,0 +1,61 @@
+# SPDX-FileCopyrightText: 2026 Baptiste Legouix
+# SPDX-License-Identifier: MIT
+
+name: manual-ci-run
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  build-docker-env:
+    uses: ./.github/workflows/build_env.yml
+    with:
+      target_sha: ${{ github.sha }}
+      ci_environment: manual-ci-run
+
+  build:
+    needs: build-docker-env
+    uses: ./.github/workflows/build.yml
+    with:
+      target_sha: ${{ github.sha }}
+      ci_environment: manual-ci-run
+
+  tests:
+    needs: build
+    uses: ./.github/workflows/tests.yml
+    with:
+      target_sha: ${{ github.sha }}
+      ci_environment: manual-ci-run
+
+  example-2d_laplacian:
+    needs: build
+    uses: ./.github/workflows/example_laplacian.yml
+    with:
+      target_sha: ${{ github.sha }}
+      ci_environment: manual-ci-run
+
+  example-2d_vector_laplacian:
+    needs: build
+    uses: ./.github/workflows/example_laplacian_vector.yml
+    with:
+      target_sha: ${{ github.sha }}
+      ci_environment: manual-ci-run
+
+  example-2d_scalar_field:
+    needs: build
+    uses: ./.github/workflows/example_scalar_field.yml
+    with:
+      target_sha: ${{ github.sha }}
+      ci_environment: manual-ci-run
+
+  example-kretschmann_scalar:
+    needs: build
+    uses: ./.github/workflows/example_kretschmann_scalar.yml
+    with:
+      target_sha: ${{ github.sha }}
+      ci_environment: manual-ci-run

@@ -122,6 +122,7 @@ TEST(DiscreteHodgeStar, Metric3D)
     ddc::Chunk hodge_star_alloc(hodge_star_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor hodge_star(hodge_star_alloc);
 
+    ddc::host_for_each(hodge_star.domain(), [&](auto elem) { hodge_star.mem(elem) = 0.; });
     sil::exterior::fill_discrete_hodge_star<
             ddc::detail::TypeSeq<MuUp, NuUp>,
             ddc::detail::TypeSeq<
@@ -134,7 +135,7 @@ TEST(DiscreteHodgeStar, Metric3D)
     ddc::Chunk form_alloc(form_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor form(form_alloc);
 
-    ddc::parallel_fill(form, 0.);
+    ddc::host_for_each(form.domain(), [&](auto elem) { form.mem(elem) = 0.; });
     ddc::host_for_each(
             metric.non_indices_domain(),
             [&](ddc::DiscreteElement<DDimX, DDimY, DDimZ> elem) {
@@ -147,6 +148,7 @@ TEST(DiscreteHodgeStar, Metric3D)
     ddc::Chunk dual_form_alloc(dual_form_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor dual_form(dual_form_alloc);
 
+    ddc::host_for_each(dual_form.domain(), [&](auto elem) { dual_form.mem(elem) = 0.; });
     ddc::host_for_each(
             metric.non_indices_domain(),
             [&](ddc::DiscreteElement<DDimX, DDimY, DDimZ> elem) {
@@ -163,13 +165,14 @@ TEST(DiscreteHodgeStar, Metric3D)
     ddc::Chunk hodge_star_alloc2(hodge_star_dom2, ddc::HostAllocator<double>());
     sil::tensor::Tensor hodge_star2(hodge_star_alloc2);
 
+    ddc::host_for_each(hodge_star2.domain(), [&](auto elem) { hodge_star2.mem(elem) = 0.; });
     sil::exterior::fill_discrete_hodge_star<
             ddc::detail::TypeSeq<RhoUp>,
             ddc::detail::TypeSeq<
                     MuLow,
                     NuLow>>(Kokkos::DefaultHostExecutionSpace(), hodge_star2, metric, position);
 
-    ddc::parallel_fill(form, 0.);
+    ddc::host_for_each(form.domain(), [&](auto elem) { form.mem(elem) = 0.; });
     ddc::host_for_each(
             metric.non_indices_domain(),
             [&](ddc::DiscreteElement<DDimX, DDimY, DDimZ> elem) {
