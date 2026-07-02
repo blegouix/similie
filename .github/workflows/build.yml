@@ -113,7 +113,7 @@ jobs:
         path: ${{ runner.temp }}/similie-cuda-workspace-${{ steps.target.outputs.target_sha }}
         key: similie-cuda-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
 
-  build-omp:
+  build-omp-debug:
     if: github.event_name == 'workflow_call' || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: [self-hosted, linux]
     environment:
@@ -172,7 +172,7 @@ jobs:
             g++-15 --version
             cmake \
               -DCMAKE_CXX_COMPILER=g++-15 \
-              -DCMAKE_BUILD_TYPE=Release \
+              -DCMAKE_BUILD_TYPE=Debug \
               -DKokkos_ENABLE_OPENMP=ON \
               -DKokkos_ENABLE_DEPRECATION_WARNINGS=OFF \
               -DSIMILIE_BUILD_YOUNG_TABLEAU=ON \
