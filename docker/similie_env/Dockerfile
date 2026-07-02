@@ -41,6 +41,11 @@ RUN apt update \
   && cmake --version
 
 # gcc
+RUN if [ "${BACKEND}" = "cuda" ]; then \
+      apt update \
+      && apt install -y software-properties-common \
+      && add-apt-repository -y ppa:ubuntu-toolchain-r/test; \
+    fi
 RUN apt update && apt install -y gcc-15 g++-15
 RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-15 100 \
  && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-15 100 \
