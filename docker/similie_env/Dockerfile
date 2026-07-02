@@ -30,23 +30,17 @@ RUN apt update && apt install -y vim
 ENV EDITOR=vim
 
 # apt helpers
-RUN apt update && apt install -y ca-certificates gpg wget
+RUN apt update && apt install -y ca-certificates gpg lsb-release wget
 
 # git
 RUN apt update && apt install -y git
 
 # CMake
-RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null \
-  | gpg --dearmor -o /usr/share/keyrings/kitware-archive-keyring.gpg \
-  && echo 'deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ noble main' \
-       > /etc/apt/sources.list.d/kitware.list \
-  && apt update \
+RUN apt update \
   && apt install -y cmake cmake-curses-gui \
   && cmake --version
 
 # gcc
-RUN apt update && apt install -y software-properties-common
-RUN add-apt-repository -y ppa:ubuntu-toolchain-r/test
 RUN apt update && apt install -y gcc-15 g++-15
 RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-15 100 \
  && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-15 100 \
@@ -91,19 +85,21 @@ RUN if [ "${BACKEND}" = "cpu" ]; then \
       echo "ERROR: BACKEND must be 'cpu' or 'cuda' (got: '${BACKEND}')" >&2; \
       exit 1; \
     fi
-RUN cmake --build ginkgo/build -j 4
+RUN cmake --build ginkgo/build
 RUN cmake --install ginkgo/build
 
-# PDI 
-RUN cat > /etc/apt/sources.list.d/pdi.sources <<'EOF'
-Types: deb deb-src
-URIs: https://repo.pdi.dev/ubuntu
-Suites: noble
-Components: main
-Architectures: amd64
-Signed-By: /usr/share/keyrings/pdidev-archive-automatic.gpg
-EOF
-RUN wget -O /usr/share/keyrings/pdidev-archive-automatic.gpg https://repo.pdi.dev/ubuntu/pdidev-archive-keyring.gpg
+# PDI
+RUN update-ca-certificates
+RUN printf '%s\n' \
+  'Types: deb deb-src' \
+  'URIs: https://repo.pdi.dev/ubuntu' \
+  "Suites: $(lsb_release -cs)" \
+  'Components: main' \
+  'Architectures: amd64' \
+  'Signed-By: /usr/share/keyrings/pdidev-archive-automatic.gpg' \
+  > /etc/apt/sources.list.d/pdi.sources
+RUN wget -O /usr/share/keyrings/pdidev-archive-automatic.gpg https://repo.pdi.dev/ubuntu/pdidev-archive-keyring.gpg \
+  && chmod a+r /usr/share/keyrings/pdidev-archive-automatic.gpg
 RUN apt update && apt install -y libpdi-dev pdiplugin-all
 
 # Sympy
