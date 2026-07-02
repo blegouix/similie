@@ -615,8 +615,10 @@ struct Reduction
 
                 double reduced_value = 0.;
                 ddc::device_for_each(
-                        form_tensor.accessor().natural_domain(),
-                        [&](auto source_natural_elem) {
+                        form_tensor.domain(),
+                        [&](auto source_mem_elem) {
+                            auto const source_natural_elem
+                                    = form_tensor.canonical_natural_element(source_mem_elem);
                             std::size_t const source_id = [&]() {
                                 if constexpr (Q == 0) {
                                     return std::size_t(0);
@@ -642,8 +644,7 @@ struct Reduction
                             ddc::detail::array(form_natural_elem)
                                     = ddc::detail::array(source_natural_elem);
                             reduced_value += dual_reduction_value
-                                             * form_tensor.get(
-                                                     form_tensor.access_element(form_natural_elem));
+                                             * form_tensor.mem(source_mem_elem);
                         });
                 reduced_tensor.mem(target_mem_elem) = reduced_value;
             });
