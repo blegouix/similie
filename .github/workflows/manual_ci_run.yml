@@ -148,12 +148,76 @@ jobs:
         path: ${{ runner.temp }}/similie-omp-workspace-${{ github.sha }}
         key: similie-omp-workspace-${{ runner.os }}-${{ github.sha }}
 
-  tests:
-    needs: [build-cuda, build-omp-debug]
-    uses: ./.github/workflows/tests.yml
-    with:
-      target_sha: ${{ github.sha }}
-      ci_environment: manual-ci-run
+  tests-cuda:
+    needs: build-cuda
+    runs-on: [self-hosted, linux]
+    environment:
+      name: manual-ci-run
+    steps:
+    - name: Set build paths
+      run: |
+        echo "IMAGE_TAG=similie_env:${GITHUB_SHA}" >> "${GITHUB_ENV}"
+        echo "CACHE_ROOT=${RUNNER_TEMP}/similie-cuda-workspace-${GITHUB_SHA}" >> "${GITHUB_ENV}"
+        rm -rf "${RUNNER_TEMP}/similie-cuda-workspace-${GITHUB_SHA}"
+    - name: Restore CUDA commit workspace
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ runner.temp }}/similie-cuda-workspace-${{ github.sha }}
+        key: similie-cuda-workspace-${{ runner.os }}-${{ github.sha }}
+        fail-on-cache-miss: true
+    - name: Recompile and run CUDA tests
+      run: |
+        docker image inspect "${IMAGE_TAG}" >/dev/null
+        docker run --rm --gpus all \
+          --user "$(id -u):$(id -g)" \
+          -e HOME="${CACHE_ROOT}/home" \
+          -e CACHE_ROOT="${CACHE_ROOT}" \
+          -v "${CACHE_ROOT}:${CACHE_ROOT}" \
+          -w "${CACHE_ROOT}/agent_build" \
+          "${IMAGE_TAG}" \
+          bash -lc '
+            set -euo pipefail
+            export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
+            git config --global --add safe.directory "*"
+            nvidia-smi
+            cmake --build . --parallel 8
+            ctest --output-on-failure
+          '
+
+  tests-omp-debug:
+    needs: build-omp-debug
+    runs-on: [self-hosted, linux]
+    environment:
+      name: manual-ci-run
+    steps:
+    - name: Set build paths
+      run: |
+        echo "IMAGE_TAG=similie_env:${GITHUB_SHA}" >> "${GITHUB_ENV}"
+        echo "CACHE_ROOT=${RUNNER_TEMP}/similie-omp-workspace-${GITHUB_SHA}" >> "${GITHUB_ENV}"
+        rm -rf "${RUNNER_TEMP}/similie-omp-workspace-${GITHUB_SHA}"
+    - name: Restore OpenMP commit workspace
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ runner.temp }}/similie-omp-workspace-${{ github.sha }}
+        key: similie-omp-workspace-${{ runner.os }}-${{ github.sha }}
+        fail-on-cache-miss: true
+    - name: Pre-run YoungTableau tests, recompile, and run OpenMP tests
+      run: |
+        docker image inspect "${IMAGE_TAG}" >/dev/null
+        docker run --rm \
+          --user "$(id -u):$(id -g)" \
+          -e HOME="${CACHE_ROOT}/home" \
+          -e CACHE_ROOT="${CACHE_ROOT}" \
+          -v "${CACHE_ROOT}:${CACHE_ROOT}" \
+          -w "${CACHE_ROOT}/agent_build_omp" \
+          "${IMAGE_TAG}" \
+          bash -lc '
+            set -euo pipefail
+            git config --global --add safe.directory "*"
+            ctest --output-on-failure -R YoungTableau
+            cmake --build . --clean-first --parallel 8
+            ctest --output-on-failure
+          '
 
   example-2d_laplacian:
     needs: build-cuda
