@@ -46,7 +46,7 @@ jobs:
         echo "target_sha=${target_sha}" >> "${GITHUB_OUTPUT}"
     - name: Set build paths
       run: |
-        echo "IMAGE_TAG=similie_env:${TARGET_SHA}" >> "${GITHUB_ENV}"
+        echo "IMAGE_TAG=similie_env_cpu:${TARGET_SHA}" >> "${GITHUB_ENV}"
         echo "CACHE_ROOT=${RUNNER_TEMP}/similie-omp-workspace-${TARGET_SHA}" >> "${GITHUB_ENV}"
         rm -rf "${RUNNER_TEMP}/similie-omp-workspace-${TARGET_SHA}"
     - name: Restore OpenMP commit workspace

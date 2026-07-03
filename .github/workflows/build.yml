@@ -147,7 +147,7 @@ jobs:
         fetch-depth: 0
     - name: Clear temporary workspace path
       run: |
-        echo "IMAGE_TAG=similie_env:${TARGET_SHA}" >> "${GITHUB_ENV}"
+        echo "IMAGE_TAG=similie_env_cpu:${TARGET_SHA}" >> "${GITHUB_ENV}"
         echo "CACHE_ROOT=${RUNNER_TEMP}/similie-omp-workspace-${TARGET_SHA}" >> "${GITHUB_ENV}"
         rm -rf "${RUNNER_TEMP}/similie-omp-workspace-${TARGET_SHA}"
     - name: Restore OpenMP commit workspace
