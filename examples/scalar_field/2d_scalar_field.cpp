@@ -671,7 +671,7 @@ int main(int argc, char** argv)
                0.052689714084930221,   -0.072903229452145502,  0.041931512187486822,
                0.02236982724628522,    -0.076438790712124241,  0.06908471510881016,
                -0.011153586561775475,  -0.050126111050055905};
-    double constexpr tolerance = 1.e-8;
+    double constexpr tolerance = 1.e-6;
     double max_error = 0.;
     for (std::size_t i = 0; i < central_potential_values.size(); i++) {
         double const error

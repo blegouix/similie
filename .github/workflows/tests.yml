@@ -120,7 +120,7 @@ jobs:
           bash -lc '
             set -euo pipefail
             git config --global --add safe.directory "*"
-            ctest --output-on-failure -R YoungTableau
+            ctest --output-on-failure -R '^YoungTableau\.'
             cmake --build . --clean-first --parallel 8
             ctest --output-on-failure
           '
