@@ -18,43 +18,61 @@ jobs:
       target_sha: ${{ github.sha }}
       ci_environment: manual-ci-run
 
-  build:
+  build-cuda:
     needs: build-docker-env
     uses: ./.github/workflows/build.yml
     with:
       target_sha: ${{ github.sha }}
+      build_target: cuda
       ci_environment: manual-ci-run
 
-  tests:
-    needs: build
+  build-omp-debug:
+    needs: build-docker-env
+    uses: ./.github/workflows/build.yml
+    with:
+      target_sha: ${{ github.sha }}
+      build_target: omp
+      ci_environment: manual-ci-run
+
+  tests-cuda:
+    needs: build-cuda
     uses: ./.github/workflows/tests.yml
     with:
       target_sha: ${{ github.sha }}
+      test_target: cuda
+      ci_environment: manual-ci-run
+
+  tests-omp:
+    needs: build-omp-debug
+    uses: ./.github/workflows/tests.yml
+    with:
+      target_sha: ${{ github.sha }}
+      test_target: omp
       ci_environment: manual-ci-run
 
   example-2d_laplacian:
-    needs: build
+    needs: build-cuda
     uses: ./.github/workflows/example_laplacian.yml
     with:
       target_sha: ${{ github.sha }}
       ci_environment: manual-ci-run
 
   example-2d_vector_laplacian:
-    needs: build
+    needs: build-cuda
     uses: ./.github/workflows/example_laplacian_vector.yml
     with:
       target_sha: ${{ github.sha }}
       ci_environment: manual-ci-run
 
   example-2d_scalar_field:
-    needs: build
+    needs: build-cuda
     uses: ./.github/workflows/example_scalar_field.yml
     with:
       target_sha: ${{ github.sha }}
       ci_environment: manual-ci-run
 
   example-kretschmann_scalar:
-    needs: build
+    needs: build-omp-debug
     uses: ./.github/workflows/example_kretschmann_scalar.yml
     with:
       target_sha: ${{ github.sha }}

@@ -16,18 +16,22 @@ on:
       target_sha:
         required: true
         type: string
+      build_target:
+        required: false
+        type: string
+        default: all
       ci_environment:
         required: false
         type: string
         default: automatic-ci-run
 
 concurrency:
-  group: ${{ github.workflow }}-${{ inputs.target_sha || github.event.workflow_run.head_sha || github.sha }}
+  group: build-${{ inputs.build_target || 'all' }}-${{ inputs.target_sha || github.event.workflow_run.head_sha || github.sha }}
   cancel-in-progress: true
 
 jobs:
   build-cuda:
-    if: github.event_name == 'workflow_call' || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: (inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') && (!inputs.build_target || inputs.build_target == 'all' || inputs.build_target == 'cuda')
     runs-on: [self-hosted, linux]
     environment:
       name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run') }}
@@ -114,7 +118,7 @@ jobs:
         key: similie-cuda-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
 
   build-omp-debug:
-    if: github.event_name == 'workflow_call' || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: (inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') && (!inputs.build_target || inputs.build_target == 'all' || inputs.build_target == 'omp')
     runs-on: [self-hosted, linux]
     environment:
       name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run') }}

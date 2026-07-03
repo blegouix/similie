@@ -16,18 +16,22 @@ on:
       target_sha:
         required: true
         type: string
+      test_target:
+        required: false
+        type: string
+        default: all
       ci_environment:
         required: false
         type: string
         default: automatic-ci-run
 
 concurrency:
-  group: ${{ github.workflow }}-${{ inputs.target_sha || github.event.workflow_run.head_sha || github.sha }}
+  group: tests-${{ inputs.test_target || 'all' }}-${{ inputs.target_sha || github.event.workflow_run.head_sha || github.sha }}
   cancel-in-progress: true
 
 jobs:
   tests-cuda:
-    if: github.event_name == 'workflow_call' || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: (inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') && (!inputs.test_target || inputs.test_target == 'all' || inputs.test_target == 'cuda')
     runs-on: [self-hosted, linux]
     environment:
       name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run') }}
@@ -75,7 +79,7 @@ jobs:
           '
 
   tests-omp:
-    if: github.event_name == 'workflow_call' || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: (inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') && (!inputs.test_target || inputs.test_target == 'all' || inputs.test_target == 'omp')
     runs-on: [self-hosted, linux]
     environment:
       name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run') }}
@@ -117,6 +121,6 @@ jobs:
             set -euo pipefail
             git config --global --add safe.directory "*"
             ctest --output-on-failure -R YoungTableau
-            cmake --build . --parallel 8
+            cmake --build . --clean-first --parallel 8
             ctest --output-on-failure
           '
