@@ -78,7 +78,7 @@ jobs:
             ctest --output-on-failure
           '
 
-  tests-omp:
+  tests-omp-debug:
     if: (inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') && (!inputs.test_target || inputs.test_target == 'all' || inputs.test_target == 'omp')
     runs-on: [self-hosted, linux]
     environment:

@@ -148,20 +148,11 @@ jobs:
         path: ${{ runner.temp }}/similie-omp-workspace-${{ github.sha }}
         key: similie-omp-workspace-${{ runner.os }}-${{ github.sha }}
 
-  tests-cuda:
-    needs: build-cuda
+  tests:
+    needs: [build-cuda, build-omp-debug]
     uses: ./.github/workflows/tests.yml
     with:
       target_sha: ${{ github.sha }}
-      test_target: cuda
-      ci_environment: manual-ci-run
-
-  tests-omp:
-    needs: build-omp-debug
-    uses: ./.github/workflows/tests.yml
-    with:
-      target_sha: ${{ github.sha }}
-      test_target: omp
       ci_environment: manual-ci-run
 
   example-2d_laplacian:
