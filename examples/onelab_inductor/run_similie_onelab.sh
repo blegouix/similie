@@ -14,6 +14,7 @@ output_dir="$(pwd)"
 model_dimension=2
 use_bool_test=0
 physics_mode=""
+use_matrix_free=""
 open_cascade_model=0
 
 gmsh_executable="${GMSH_EXECUTABLE:-gmsh}"
@@ -82,6 +83,12 @@ for arg in "$@"; do
         --nonlinear)
             physics_mode="NonLinearMagnetostatics"
             ;;
+        --matrix-free)
+            use_matrix_free=1
+            ;;
+        --assembled-matrix)
+            use_matrix_free=0
+            ;;
         *)
             gmsh_args+=("${arg}")
             ;;
@@ -110,10 +117,21 @@ control_file="$(mktemp "${script_dir}/.run_similie_onelab_XXXXXX.geo")"
 log_file="$(mktemp "${TMPDIR:-/tmp}/run_similie_onelab_XXXXXX.log")"
 effective_problem_file="${problem_file}"
 patched_problem_file=""
-if [[ -n "${physics_mode}" ]]; then
+if [[ -n "${physics_mode}" || -n "${use_matrix_free}" ]]; then
     patched_problem_file="$(mktemp "${script_dir}/.run_similie_onelab_XXXXXX.silpro")"
+    sed_expressions=()
+    if [[ -n "${physics_mode}" ]]; then
+        sed_expressions+=(
+            -e "s/^[[:space:]]*Physics[[:space:]].*;/  Physics ${physics_mode};/"
+        )
+    fi
+    if [[ -n "${use_matrix_free}" ]]; then
+        sed_expressions+=(
+            -e "s/^[[:space:]]*UseMatrixFree[[:space:]].*;/  UseMatrixFree ${use_matrix_free};/"
+        )
+    fi
     sed \
-        "s/^[[:space:]]*Physics[[:space:]].*;/  Physics ${physics_mode};/" \
+        "${sed_expressions[@]}" \
         "${problem_file}" > "${patched_problem_file}"
     effective_problem_file="${patched_problem_file}"
 fi
@@ -154,6 +172,17 @@ python3 "${paraview_export_script}" \
     --input-fields-pos "${actual_result_file}" \
     --h5-output "${paraview_h5_file}" \
     --xmf-output "${paraview_xmf_file}"
+
+assert_example_results=0
+if [[ -f "${build_dir}/CMakeCache.txt" ]] && grep -Eq \
+    "^SIMILIE_ASSERT_EXAMPLE_RESULTS(_CORRECTNESS)?:BOOL=ON$" \
+    "${build_dir}/CMakeCache.txt"; then
+    assert_example_results=1
+fi
+
+if [[ "${assert_example_results}" -eq 0 ]]; then
+    exit 0
+fi
 
 python3 - "${log_file}" "${mesh_file}" "${model_data_file}" "${analytical_l_rel_tolerance}" <<'PY'
 import math

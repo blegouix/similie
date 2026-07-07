@@ -13,6 +13,8 @@ option(SIMILIE_BUILD_DOCUMENTATION "Build SimiLie documentation/website" OFF)
 option(SIMILIE_BUILD_YOUNG_TABLEAU "Build module dedicated to Young tableau indexing" OFF) # Requires compiler supporting #embed directive
 option(SIMILIE_BUILD_ONELAB_INTERFACE "Build the ONELAB interface executable" ON)
 option(SIMILIE_DEBUG_LOG "Enable logging of SimiLie internal kernels" OFF)
+option(SIMILIE_ASSERT_EXAMPLE_RESULTS "Assert example result correctness at runtime" OFF)
+option(SIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS "Assert example result correctness at runtime" ${SIMILIE_ASSERT_EXAMPLE_RESULTS})
 
 # Set default DDC options when included
 option(DDC_BUILD_BENCHMARKS       "Build DDC benchmarks." OFF)

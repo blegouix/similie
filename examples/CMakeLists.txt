@@ -1,10 +1,8 @@
 # SPDX-FileCopyrightText: 2024 Baptiste Legouix
 # SPDX-License-Identifier: MIT
 
-option(SIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS "Assert example result correctness at runtime" OFF)
-
 function(similie_configure_example_correctness target)
-    if("${SIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS}")
+    if("${SIMILIE_ASSERT_EXAMPLE_RESULTS}" OR "${SIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS}")
         target_compile_definitions("${target}" PRIVATE SIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS)
     endif()
 endfunction()

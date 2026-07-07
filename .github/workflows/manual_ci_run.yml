@@ -113,7 +113,7 @@ jobs:
               -DKokkos_ENABLE_CUDA=ON \
               -DKokkos_ARCH_${kokkos_arch}=ON \
               -DKokkos_ENABLE_DEPRECATION_WARNINGS=OFF \
-              -DSIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS=ON \
+              -DSIMILIE_ASSERT_EXAMPLE_RESULTS=ON \
               -B "${CACHE_ROOT}/agent_build" \
               -S .
             cmake --build "${CACHE_ROOT}/agent_build" --parallel 8
@@ -172,7 +172,7 @@ jobs:
               -DKokkos_ENABLE_OPENMP=ON \
               -DKokkos_ENABLE_DEPRECATION_WARNINGS=OFF \
               -DSIMILIE_BUILD_YOUNG_TABLEAU=ON \
-              -DSIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS=ON \
+              -DSIMILIE_ASSERT_EXAMPLE_RESULTS=ON \
               -B "${CACHE_ROOT}/agent_build_omp" \
               -S .
             cmake --build "${CACHE_ROOT}/agent_build_omp" --parallel 8
@@ -272,6 +272,13 @@ jobs:
   example-2d_scalar_field:
     needs: build-cuda
     uses: ./.github/workflows/example_scalar_field.yml
+    with:
+      target_sha: ${{ github.sha }}
+      ci_environment: manual-ci-run
+
+  example-onelab_inductor:
+    needs: build-cuda
+    uses: ./.github/workflows/example_onelab_inductor.yml
     with:
       target_sha: ${{ github.sha }}
       ci_environment: manual-ci-run
