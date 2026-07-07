@@ -110,6 +110,8 @@ jobs:
             nvidia-smi
             cmake --build . --parallel 8 --target similie_onelab
 
+            export HOME=/similie-ci/home
+            mkdir -p "${HOME}"
             case_name="${{ matrix.case.name }}"
             cd /similie-ci/build
             output_dir="${PWD}/onelab_inductor_cases/${case_name}"
