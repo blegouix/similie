@@ -18,7 +18,7 @@ var searchData=
   ['discretehodgestar_15',['DiscreteHodgeStar',['../structsil_1_1exterior_1_1DiscreteHodgeStar.html',1,'sil::exterior']]],
   ['do_20in_20addition_16',['Do Kokkos and DDC support tensor fields ? What can SimiLie do in addition ?',['../tensor_module.html#autotoc_md8',1,'']]],
   ['do_20kokkos_20and_20ddc_20support_20tensor_20fields_20what_20can_20similie_20do_20in_20addition_17',['Do Kokkos and DDC support tensor fields ? What can SimiLie do in addition ?',['../tensor_module.html#autotoc_md8',1,'']]],
-  ['domain_18',['domain',['../classsil_1_1csr_1_1Csr.html#acb8b632c585d2858e03c487e204df473',1,'sil::csr::Csr::domain()'],['../classsil_1_1csr_1_1CsrDynamic.html#a93929456578d9c57d1e47ebe92793374',1,'sil::csr::CsrDynamic::domain()'],['../classsil_1_1tensor_1_1TensorAccessor.html#a826ab69e3d61498116052144b967f0d1',1,'sil::tensor::TensorAccessor::domain()']]],
+  ['domain_18',['domain',['../classsil_1_1csr_1_1Csr.html#abe97dcc3e36c0b463fdac5984b33f685',1,'sil::csr::Csr::domain()'],['../classsil_1_1csr_1_1CsrDynamic.html#a93929456578d9c57d1e47ebe92793374',1,'sil::csr::CsrDynamic::domain()'],['../classsil_1_1tensor_1_1TensorAccessor.html#a826ab69e3d61498116052144b967f0d1',1,'sil::tensor::TensorAccessor::domain()']]],
   ['domain_5fcontains_19',['domain_contains',['../namespacesil_1_1misc.html#a3972a6165c52a1398ca03e1b4ef8d993',1,'sil::misc']]],
   ['dual_20cell_20complexes_20',['Primal and dual cell complexes',['../exterior_module.html#autotoc_md24',1,'']]],
   ['dualsimplexvolume_21',['DualSimplexVolume',['../structsil_1_1exterior_1_1DualSimplexVolume.html',1,'sil::exterior']]],

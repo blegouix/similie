@@ -748,380 +748,382 @@ $(function(){initNavTree('reduction__and__reconstruction_8hpp_source.html',''); 
 <div class="line"><a id="l00614" name="l00614"></a><span class="lineno">  614</span>                }();</div>
 <div class="line"><a id="l00615" name="l00615"></a><span class="lineno">  615</span> </div>
 <div class="line"><a id="l00616" name="l00616"></a><span class="lineno">  616</span>                <span class="keywordtype">double</span> reduced_value = 0.;</div>
-<div class="line"><a id="l00617" name="l00617"></a><span class="lineno">  617</span>                ddc::device_for_each(</div>
-<div class="line"><a id="l00618" name="l00618"></a><span class="lineno">  618</span>                        form_tensor.accessor().natural_domain(),</div>
-<div class="line"><a id="l00619" name="l00619"></a><span class="lineno">  619</span>                        [&amp;](<span class="keyword">auto</span> source_natural_elem) {</div>
-<div class="line"><a id="l00620" name="l00620"></a><span class="lineno">  620</span>                            std::size_t const source_id = [&amp;]() {</div>
-<div class="line"><a id="l00621" name="l00621"></a><span class="lineno">  621</span>                                if constexpr (Q == 0) {</div>
-<div class="line"><a id="l00622" name="l00622"></a><span class="lineno">  622</span>                                    return std::size_t(0);</div>
-<div class="line"><a id="l00623" name="l00623"></a><span class="lineno">  623</span>                                } else {</div>
-<div class="line"><a id="l00624" name="l00624"></a><span class="lineno">  624</span>                                    std::array&lt;std::size_t, Q&gt; const source_ids</div>
-<div class="line"><a id="l00625" name="l00625"></a><span class="lineno">  625</span>                                            = ddc::detail::array(source_natural_elem);</div>
-<div class="line"><a id="l00626" name="l00626"></a><span class="lineno">  626</span>                                    return detail::combination_rank&lt;N, Q&gt;(source_ids);</div>
-<div class="line"><a id="l00627" name="l00627"></a><span class="lineno">  627</span>                                }</div>
-<div class="line"><a id="l00628" name="l00628"></a><span class="lineno">  628</span>                            }();</div>
-<div class="line"><a id="l00629" name="l00629"></a><span class="lineno">  629</span>                            <span class="keywordtype">double</span> dual_reduction_value = 0.;</div>
-<div class="line"><a id="l00630" name="l00630"></a><span class="lineno">  630</span>                            if (invertible) {</div>
-<div class="line"><a id="l00631" name="l00631"></a><span class="lineno">  631</span>                                <span class="keywordflow">for</span> (std::size_t primal_id = 0; primal_id &lt; NBASIS; ++primal_id) {</div>
-<div class="line"><a id="l00632" name="l00632"></a><span class="lineno">  632</span>                                    dual_reduction_value</div>
-<div class="line"><a id="l00633" name="l00633"></a><span class="lineno">  633</span>                                            += old_hodge_alloc[target_id * NBASIS + primal_id]</div>
-<div class="line"><a id="l00634" name="l00634"></a><span class="lineno">  634</span>                                               * coeff_from_primal_inverse_alloc</div>
-<div class="line"><a id="l00635" name="l00635"></a><span class="lineno">  635</span>                                                       [primal_id * NBASIS + source_id];</div>
-<div class="line"><a id="l00636" name="l00636"></a><span class="lineno">  636</span>                                }</div>
-<div class="line"><a id="l00637" name="l00637"></a><span class="lineno">  637</span>                            }</div>
-<div class="line"><a id="l00638" name="l00638"></a><span class="lineno">  638</span> </div>
-<div class="line"><a id="l00639" name="l00639"></a><span class="lineno">  639</span>                            <span class="keyword">using </span>form_natural_elem_type = <span class="keyword">typename</span> FormTensorType::accessor_t::</div>
-<div class="line"><a id="l00640" name="l00640"></a><span class="lineno">  640</span>                                    natural_domain_t::discrete_element_type;</div>
-<div class="line"><a id="l00641" name="l00641"></a><span class="lineno">  641</span>                            form_natural_elem_type form_natural_elem;</div>
-<div class="line"><a id="l00642" name="l00642"></a><span class="lineno">  642</span>                            ddc::detail::array(form_natural_elem)</div>
-<div class="line"><a id="l00643" name="l00643"></a><span class="lineno">  643</span>                                    = ddc::detail::array(source_natural_elem);</div>
-<div class="line"><a id="l00644" name="l00644"></a><span class="lineno">  644</span>                            reduced_value += dual_reduction_value</div>
-<div class="line"><a id="l00645" name="l00645"></a><span class="lineno">  645</span>                                             * form_tensor.get(</div>
-<div class="line"><a id="l00646" name="l00646"></a><span class="lineno">  646</span>                                                     form_tensor.access_element(form_natural_elem));</div>
-<div class="line"><a id="l00647" name="l00647"></a><span class="lineno">  647</span>                        });</div>
-<div class="line"><a id="l00648" name="l00648"></a><span class="lineno">  648</span>                reduced_tensor.mem(target_mem_elem) = reduced_value;</div>
-<div class="line"><a id="l00649" name="l00649"></a><span class="lineno">  649</span>            });</div>
-<div class="line"><a id="l00650" name="l00650"></a><span class="lineno">  650</span>        }</div>
+<div class="line"><a id="l00617" name="l00617"></a><span class="lineno">  617</span>                ddc::device_for_each(form_tensor.domain(), [&amp;](<span class="keyword">auto</span> source_mem_elem) {</div>
+<div class="line"><a id="l00618" name="l00618"></a><span class="lineno">  618</span>                    auto const source_natural_elem</div>
+<div class="line"><a id="l00619" name="l00619"></a><span class="lineno">  619</span>                            = form_tensor.canonical_natural_element(source_mem_elem);</div>
+<div class="line"><a id="l00620" name="l00620"></a><span class="lineno">  620</span>                    std::size_t const source_id = [&amp;]() {</div>
+<div class="line"><a id="l00621" name="l00621"></a><span class="lineno">  621</span>                        if constexpr (Q == 0) {</div>
+<div class="line"><a id="l00622" name="l00622"></a><span class="lineno">  622</span>                            return std::size_t(0);</div>
+<div class="line"><a id="l00623" name="l00623"></a><span class="lineno">  623</span>                        } else {</div>
+<div class="line"><a id="l00624" name="l00624"></a><span class="lineno">  624</span>                            std::array&lt;std::size_t, Q&gt; const source_ids</div>
+<div class="line"><a id="l00625" name="l00625"></a><span class="lineno">  625</span>                                    = ddc::detail::array(source_natural_elem);</div>
+<div class="line"><a id="l00626" name="l00626"></a><span class="lineno">  626</span>                            return detail::combination_rank&lt;N, Q&gt;(source_ids);</div>
+<div class="line"><a id="l00627" name="l00627"></a><span class="lineno">  627</span>                        }</div>
+<div class="line"><a id="l00628" name="l00628"></a><span class="lineno">  628</span>                    }();</div>
+<div class="line"><a id="l00629" name="l00629"></a><span class="lineno">  629</span>                    <span class="keywordtype">double</span> dual_reduction_value = 0.;</div>
+<div class="line"><a id="l00630" name="l00630"></a><span class="lineno">  630</span>                    if (invertible) {</div>
+<div class="line"><a id="l00631" name="l00631"></a><span class="lineno">  631</span>                        <span class="keywordflow">for</span> (std::size_t primal_id = 0; primal_id &lt; NBASIS; ++primal_id) {</div>
+<div class="line"><a id="l00632" name="l00632"></a><span class="lineno">  632</span>                            dual_reduction_value += old_hodge_alloc[target_id * NBASIS + primal_id]</div>
+<div class="line"><a id="l00633" name="l00633"></a><span class="lineno">  633</span>                                                    * coeff_from_primal_inverse_alloc</div>
+<div class="line"><a id="l00634" name="l00634"></a><span class="lineno">  634</span>                                                            [primal_id * NBASIS + source_id];</div>
+<div class="line"><a id="l00635" name="l00635"></a><span class="lineno">  635</span>                        }</div>
+<div class="line"><a id="l00636" name="l00636"></a><span class="lineno">  636</span>                    }</div>
+<div class="line"><a id="l00637" name="l00637"></a><span class="lineno">  637</span> </div>
+<div class="line"><a id="l00638" name="l00638"></a><span class="lineno">  638</span>                    <span class="keyword">using </span>form_natural_elem_type = <span class="keyword">typename</span> FormTensorType::accessor_t::</div>
+<div class="line"><a id="l00639" name="l00639"></a><span class="lineno">  639</span>                            natural_domain_t::discrete_element_type;</div>
+<div class="line"><a id="l00640" name="l00640"></a><span class="lineno">  640</span>                    form_natural_elem_type form_natural_elem;</div>
+<div class="line"><a id="l00641" name="l00641"></a><span class="lineno">  641</span>                    ddc::detail::array(form_natural_elem) = ddc::detail::array(source_natural_elem);</div>
+<div class="line"><a id="l00642" name="l00642"></a><span class="lineno">  642</span>                    reduced_value += dual_reduction_value * form_tensor.mem(source_mem_elem);</div>
+<div class="line"><a id="l00643" name="l00643"></a><span class="lineno">  643</span>                });</div>
+<div class="line"><a id="l00644" name="l00644"></a><span class="lineno">  644</span>                reduced_tensor.mem(target_mem_elem) = reduced_value;</div>
+<div class="line"><a id="l00645" name="l00645"></a><span class="lineno">  645</span>            });</div>
+<div class="line"><a id="l00646" name="l00646"></a><span class="lineno">  646</span>        }</div>
 </div>
-<div class="line"><a id="l00651" name="l00651"></a><span class="lineno">  651</span>    }</div>
-<div class="foldopen" id="foldopen00652" data-start="{" data-end="}">
-<div class="line"><a id="l00652" name="l00652"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1Reduction.html#af3f5c0eeda19013e9cadbde2aa0dbbc0">  652</a></span> </div>
-<div class="line"><a id="l00653" name="l00653"></a><span class="lineno">  653</span>    KOKKOS_FUNCTION <span class="keyword">static</span> <span class="keywordtype">double</span> value(PositionType position, BatchElem elem, <span class="keyword">auto</span> natural_elem)</div>
-<div class="line"><a id="l00654" name="l00654"></a><span class="lineno">  654</span>    {</div>
-<div class="line"><a id="l00655" name="l00655"></a><span class="lineno">  655</span>        <span class="keyword">constexpr</span> std::size_t K = target_index_type::rank();</div>
-<div class="line"><a id="l00656" name="l00656"></a><span class="lineno">  656</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (K == 0) {</div>
-<div class="line"><a id="l00657" name="l00657"></a><span class="lineno">  657</span>            <span class="keywordflow">return</span> 1.;</div>
-<div class="line"><a id="l00658" name="l00658"></a><span class="lineno">  658</span>        } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00659" name="l00659"></a><span class="lineno">  659</span>            std::array <span class="keyword">const</span> source_ids</div>
-<div class="line"><a id="l00660" name="l00660"></a><span class="lineno">  660</span>                    = ddc::detail::array(<a class="code hl_typedef" href="structsil_1_1exterior_1_1Reduction.html#af7a2b0fa491f854893d5043a196b3323">source_natural_elem_type</a>(natural_elem));</div>
-<div class="line"><a id="l00661" name="l00661"></a><span class="lineno">  661</span>            std::array <span class="keyword">const</span> target_ids</div>
-<div class="line"><a id="l00662" name="l00662"></a><span class="lineno">  662</span>                    = ddc::detail::array(<a class="code hl_typedef" href="structsil_1_1exterior_1_1Reduction.html#a57df5c981f3f9831b038f73d67979971">target_natural_elem_type</a>(natural_elem));</div>
-<div class="line"><a id="l00663" name="l00663"></a><span class="lineno">  663</span>            <span class="keywordflow">if</span> (!detail::has_unique_reduction_ids&lt;K&gt;(source_ids)</div>
-<div class="line"><a id="l00664" name="l00664"></a><span class="lineno">  664</span>                || !detail::has_unique_reduction_ids&lt;K&gt;(target_ids)) {</div>
-<div class="line"><a id="l00665" name="l00665"></a><span class="lineno">  665</span>                <span class="keywordflow">return</span> 0.;</div>
-<div class="line"><a id="l00666" name="l00666"></a><span class="lineno">  666</span>            }</div>
-<div class="line"><a id="l00667" name="l00667"></a><span class="lineno">  667</span> </div>
-<div class="line"><a id="l00668" name="l00668"></a><span class="lineno">  668</span>            std::array&lt;double, K * K&gt; jacobian_matrix {};</div>
-<div class="line"><a id="l00669" name="l00669"></a><span class="lineno">  669</span>            <span class="keywordflow">for</span> (std::size_t row = 0; row &lt; K; ++row) {</div>
-<div class="line"><a id="l00670" name="l00670"></a><span class="lineno">  670</span>                <span class="keywordflow">for</span> (std::size_t col = 0; col &lt; K; ++col) {</div>
-<div class="line"><a id="l00671" name="l00671"></a><span class="lineno">  671</span>                    std::array&lt;double, position_index_type::size()&gt; <span class="keyword">const</span> edge</div>
-<div class="line"><a id="l00672" name="l00672"></a><span class="lineno">  672</span>                            = sil::exterior::detail::edge_vector&lt;</div>
-<div class="line"><a id="l00673" name="l00673"></a><span class="lineno">  673</span>                                    <a class="code hl_typedef" href="structsil_1_1exterior_1_1Reduction.html#af415650ccc90ec899ca9fd17152f70ae">position_index_type</a>&gt;(position, elem, target_ids[col]);</div>
-<div class="line"><a id="l00674" name="l00674"></a><span class="lineno">  674</span>                    jacobian_matrix[row * K + col] = edge[source_ids[row]];</div>
-<div class="line"><a id="l00675" name="l00675"></a><span class="lineno">  675</span>                }</div>
-<div class="line"><a id="l00676" name="l00676"></a><span class="lineno">  676</span>            }</div>
-<div class="line"><a id="l00677" name="l00677"></a><span class="lineno">  677</span>            <span class="keywordflow">return</span> detail::reduction_determinant&lt;K&gt;(jacobian_matrix)</div>
-<div class="line"><a id="l00678" name="l00678"></a><span class="lineno">  678</span>                   * detail::complex_volume_factor&lt;Complex, source_index_type::size()&gt;(K)</div>
-<div class="line"><a id="l00679" name="l00679"></a><span class="lineno">  679</span>                   / misc::factorial(K);</div>
-<div class="line"><a id="l00680" name="l00680"></a><span class="lineno">  680</span>        }</div>
+<div class="line"><a id="l00647" name="l00647"></a><span class="lineno">  647</span>    }</div>
+<div class="foldopen" id="foldopen00648" data-start="{" data-end="}">
+<div class="line"><a id="l00648" name="l00648"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1Reduction.html#af3f5c0eeda19013e9cadbde2aa0dbbc0">  648</a></span> </div>
+<div class="line"><a id="l00649" name="l00649"></a><span class="lineno">  649</span>    KOKKOS_FUNCTION <span class="keyword">static</span> <span class="keywordtype">double</span> value(PositionType position, BatchElem elem, <span class="keyword">auto</span> natural_elem)</div>
+<div class="line"><a id="l00650" name="l00650"></a><span class="lineno">  650</span>    {</div>
+<div class="line"><a id="l00651" name="l00651"></a><span class="lineno">  651</span>        <span class="keyword">constexpr</span> std::size_t K = target_index_type::rank();</div>
+<div class="line"><a id="l00652" name="l00652"></a><span class="lineno">  652</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (K == 0) {</div>
+<div class="line"><a id="l00653" name="l00653"></a><span class="lineno">  653</span>            <span class="keywordflow">return</span> 1.;</div>
+<div class="line"><a id="l00654" name="l00654"></a><span class="lineno">  654</span>        } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00655" name="l00655"></a><span class="lineno">  655</span>            std::array <span class="keyword">const</span> source_ids</div>
+<div class="line"><a id="l00656" name="l00656"></a><span class="lineno">  656</span>                    = ddc::detail::array(<a class="code hl_typedef" href="structsil_1_1exterior_1_1Reduction.html#af7a2b0fa491f854893d5043a196b3323">source_natural_elem_type</a>(natural_elem));</div>
+<div class="line"><a id="l00657" name="l00657"></a><span class="lineno">  657</span>            std::array <span class="keyword">const</span> target_ids</div>
+<div class="line"><a id="l00658" name="l00658"></a><span class="lineno">  658</span>                    = ddc::detail::array(<a class="code hl_typedef" href="structsil_1_1exterior_1_1Reduction.html#a57df5c981f3f9831b038f73d67979971">target_natural_elem_type</a>(natural_elem));</div>
+<div class="line"><a id="l00659" name="l00659"></a><span class="lineno">  659</span>            <span class="keywordflow">if</span> (!detail::has_unique_reduction_ids&lt;K&gt;(source_ids)</div>
+<div class="line"><a id="l00660" name="l00660"></a><span class="lineno">  660</span>                || !detail::has_unique_reduction_ids&lt;K&gt;(target_ids)) {</div>
+<div class="line"><a id="l00661" name="l00661"></a><span class="lineno">  661</span>                <span class="keywordflow">return</span> 0.;</div>
+<div class="line"><a id="l00662" name="l00662"></a><span class="lineno">  662</span>            }</div>
+<div class="line"><a id="l00663" name="l00663"></a><span class="lineno">  663</span> </div>
+<div class="line"><a id="l00664" name="l00664"></a><span class="lineno">  664</span>            std::array&lt;double, K * K&gt; jacobian_matrix {};</div>
+<div class="line"><a id="l00665" name="l00665"></a><span class="lineno">  665</span>            <span class="keywordflow">for</span> (std::size_t row = 0; row &lt; K; ++row) {</div>
+<div class="line"><a id="l00666" name="l00666"></a><span class="lineno">  666</span>                <span class="keywordflow">for</span> (std::size_t col = 0; col &lt; K; ++col) {</div>
+<div class="line"><a id="l00667" name="l00667"></a><span class="lineno">  667</span>                    std::array&lt;double, position_index_type::size()&gt; <span class="keyword">const</span> edge</div>
+<div class="line"><a id="l00668" name="l00668"></a><span class="lineno">  668</span>                            = sil::exterior::detail::edge_vector&lt;</div>
+<div class="line"><a id="l00669" name="l00669"></a><span class="lineno">  669</span>                                    <a class="code hl_typedef" href="structsil_1_1exterior_1_1Reduction.html#af415650ccc90ec899ca9fd17152f70ae">position_index_type</a>&gt;(position, elem, target_ids[col]);</div>
+<div class="line"><a id="l00670" name="l00670"></a><span class="lineno">  670</span>                    jacobian_matrix[row * K + col] = edge[source_ids[row]];</div>
+<div class="line"><a id="l00671" name="l00671"></a><span class="lineno">  671</span>                }</div>
+<div class="line"><a id="l00672" name="l00672"></a><span class="lineno">  672</span>            }</div>
+<div class="line"><a id="l00673" name="l00673"></a><span class="lineno">  673</span>            <span class="keywordflow">return</span> detail::reduction_determinant&lt;K&gt;(jacobian_matrix)</div>
+<div class="line"><a id="l00674" name="l00674"></a><span class="lineno">  674</span>                   * detail::complex_volume_factor&lt;Complex, source_index_type::size()&gt;(K)</div>
+<div class="line"><a id="l00675" name="l00675"></a><span class="lineno">  675</span>                   / misc::factorial(K);</div>
+<div class="line"><a id="l00676" name="l00676"></a><span class="lineno">  676</span>        }</div>
 </div>
-<div class="line"><a id="l00681" name="l00681"></a><span class="lineno">  681</span>    }</div>
-<div class="line"><a id="l00682" name="l00682"></a><span class="lineno">  682</span> </div>
-<div class="foldopen" id="foldopen00683" data-start="{" data-end="}">
-<div class="line"><a id="l00683" name="l00683"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1Reduction.html#afe4f8ac6f10f13654c4f81b305a52642">  683</a></span>    <span class="keyword">template</span> &lt;misc::Specialization&lt;tensor::Tensor&gt; MetricType&gt;</div>
-<div class="line"><a id="l00684" name="l00684"></a><span class="lineno">  684</span>    KOKKOS_FUNCTION <span class="keyword">static</span> <span class="keywordtype">double</span> value(</div>
-<div class="line"><a id="l00685" name="l00685"></a><span class="lineno">  685</span>            MetricType metric,</div>
-<div class="line"><a id="l00686" name="l00686"></a><span class="lineno">  686</span>            PositionType position,</div>
-<div class="line"><a id="l00687" name="l00687"></a><span class="lineno">  687</span>            BatchElem elem,</div>
-<div class="line"><a id="l00688" name="l00688"></a><span class="lineno">  688</span>            <span class="keyword">auto</span> natural_elem)</div>
-<div class="line"><a id="l00689" name="l00689"></a><span class="lineno">  689</span>    {</div>
-<div class="line"><a id="l00690" name="l00690"></a><span class="lineno">  690</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (Complex == CellComplex::Primal) {</div>
-<div class="line"><a id="l00691" name="l00691"></a><span class="lineno">  691</span>            <span class="keywordflow">return</span> value(position, elem, natural_elem);</div>
-<div class="line"><a id="l00692" name="l00692"></a><span class="lineno">  692</span>        } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00693" name="l00693"></a><span class="lineno">  693</span>            [[maybe_unused]] <a class="code hl_class" href="classsil_1_1tensor_1_1TensorAccessor.html">sil::tensor::TensorAccessor&lt;source_index_type&gt;</a> source_accessor;</div>
-<div class="line"><a id="l00694" name="l00694"></a><span class="lineno">  694</span>            std::array&lt;double, source_index_type::access_size()&gt; source_alloc {};</div>
-<div class="line"><a id="l00695" name="l00695"></a><span class="lineno">  695</span>            ddc::ChunkSpan&lt;</div>
-<div class="line"><a id="l00696" name="l00696"></a><span class="lineno">  696</span>                    double,</div>
-<div class="line"><a id="l00697" name="l00697"></a><span class="lineno">  697</span>                    ddc::DiscreteDomain&lt;source_index_type&gt;,</div>
-<div class="line"><a id="l00698" name="l00698"></a><span class="lineno">  698</span>                    Kokkos::layout_right,</div>
-<div class="line"><a id="l00699" name="l00699"></a><span class="lineno">  699</span>                    <span class="keyword">typename</span> MetricType::memory_space&gt;</div>
-<div class="line"><a id="l00700" name="l00700"></a><span class="lineno">  700</span>                    source_span(source_alloc.data(), source_accessor.<a class="code hl_function" href="classsil_1_1tensor_1_1TensorAccessor.html#a826ab69e3d61498116052144b967f0d1">domain</a>());</div>
-<div class="line"><a id="l00701" name="l00701"></a><span class="lineno">  701</span>            <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">sil::tensor::Tensor</a> source_tensor(source_span);</div>
-<div class="line"><a id="l00702" name="l00702"></a><span class="lineno">  702</span>            ddc::device_for_each(source_tensor.domain(), [&amp;](<span class="keyword">auto</span> source_mem_elem) {</div>
-<div class="line"><a id="l00703" name="l00703"></a><span class="lineno">  703</span>                source_tensor.mem(source_mem_elem) = 0.;</div>
-<div class="line"><a id="l00704" name="l00704"></a><span class="lineno">  704</span>            });</div>
-<div class="line"><a id="l00705" name="l00705"></a><span class="lineno">  705</span> </div>
-<div class="line"><a id="l00706" name="l00706"></a><span class="lineno">  706</span>            [[maybe_unused]] <a class="code hl_class" href="classsil_1_1tensor_1_1TensorAccessor.html">sil::tensor::TensorAccessor&lt;target_index_type&gt;</a> target_accessor;</div>
-<div class="line"><a id="l00707" name="l00707"></a><span class="lineno">  707</span>            std::array&lt;double, target_index_type::access_size()&gt; target_alloc {};</div>
-<div class="line"><a id="l00708" name="l00708"></a><span class="lineno">  708</span>            ddc::ChunkSpan&lt;</div>
-<div class="line"><a id="l00709" name="l00709"></a><span class="lineno">  709</span>                    double,</div>
-<div class="line"><a id="l00710" name="l00710"></a><span class="lineno">  710</span>                    ddc::DiscreteDomain&lt;target_index_type&gt;,</div>
-<div class="line"><a id="l00711" name="l00711"></a><span class="lineno">  711</span>                    Kokkos::layout_right,</div>
-<div class="line"><a id="l00712" name="l00712"></a><span class="lineno">  712</span>                    <span class="keyword">typename</span> MetricType::memory_space&gt;</div>
-<div class="line"><a id="l00713" name="l00713"></a><span class="lineno">  713</span>                    target_span(target_alloc.data(), target_accessor.<a class="code hl_function" href="classsil_1_1tensor_1_1TensorAccessor.html#a826ab69e3d61498116052144b967f0d1">domain</a>());</div>
-<div class="line"><a id="l00714" name="l00714"></a><span class="lineno">  714</span>            <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">sil::tensor::Tensor</a> target_tensor(target_span);</div>
-<div class="line"><a id="l00715" name="l00715"></a><span class="lineno">  715</span>            ddc::device_for_each(target_tensor.domain(), [&amp;](<span class="keyword">auto</span> target_mem_elem) {</div>
-<div class="line"><a id="l00716" name="l00716"></a><span class="lineno">  716</span>                target_tensor.mem(target_mem_elem) = 0.;</div>
-<div class="line"><a id="l00717" name="l00717"></a><span class="lineno">  717</span>            });</div>
-<div class="line"><a id="l00718" name="l00718"></a><span class="lineno">  718</span> </div>
-<div class="line"><a id="l00719" name="l00719"></a><span class="lineno">  719</span>            <a class="code hl_typedef" href="structsil_1_1exterior_1_1Reduction.html#af7a2b0fa491f854893d5043a196b3323">source_natural_elem_type</a> source_natural_elem;</div>
-<div class="line"><a id="l00720" name="l00720"></a><span class="lineno">  720</span>            ddc::detail::array(source_natural_elem)</div>
-<div class="line"><a id="l00721" name="l00721"></a><span class="lineno">  721</span>                    = ddc::detail::array(<a class="code hl_typedef" href="structsil_1_1exterior_1_1Reduction.html#af7a2b0fa491f854893d5043a196b3323">source_natural_elem_type</a>(natural_elem));</div>
-<div class="line"><a id="l00722" name="l00722"></a><span class="lineno">  722</span>            source_tensor(source_tensor.accessor().access_element(source_natural_elem)) = 1.;</div>
-<div class="line"><a id="l00723" name="l00723"></a><span class="lineno">  723</span> </div>
-<div class="line"><a id="l00724" name="l00724"></a><span class="lineno">  724</span>            run(target_tensor, source_tensor, metric, position, elem);</div>
-<div class="line"><a id="l00725" name="l00725"></a><span class="lineno">  725</span> </div>
-<div class="line"><a id="l00726" name="l00726"></a><span class="lineno">  726</span>            <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (target_index_type::rank() == 0) {</div>
-<div class="line"><a id="l00727" name="l00727"></a><span class="lineno">  727</span>                <span class="keywordflow">return</span> target_tensor(</div>
-<div class="line"><a id="l00728" name="l00728"></a><span class="lineno">  728</span>                        target_tensor.accessor().access_element(<a class="code hl_typedef" href="structsil_1_1exterior_1_1Reduction.html#a57df5c981f3f9831b038f73d67979971">target_natural_elem_type</a>()));</div>
-<div class="line"><a id="l00729" name="l00729"></a><span class="lineno">  729</span>            } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00730" name="l00730"></a><span class="lineno">  730</span>                <a class="code hl_typedef" href="structsil_1_1exterior_1_1Reduction.html#a57df5c981f3f9831b038f73d67979971">target_natural_elem_type</a> target_natural_elem;</div>
-<div class="line"><a id="l00731" name="l00731"></a><span class="lineno">  731</span>                ddc::detail::array(target_natural_elem)</div>
-<div class="line"><a id="l00732" name="l00732"></a><span class="lineno">  732</span>                        = ddc::detail::array(<a class="code hl_typedef" href="structsil_1_1exterior_1_1Reduction.html#a57df5c981f3f9831b038f73d67979971">target_natural_elem_type</a>(natural_elem));</div>
-<div class="line"><a id="l00733" name="l00733"></a><span class="lineno">  733</span>                <span class="keywordflow">return</span> target_tensor(target_tensor.accessor().access_element(target_natural_elem));</div>
-<div class="line"><a id="l00734" name="l00734"></a><span class="lineno">  734</span>            }</div>
-<div class="line"><a id="l00735" name="l00735"></a><span class="lineno">  735</span>        }</div>
+<div class="line"><a id="l00677" name="l00677"></a><span class="lineno">  677</span>    }</div>
+<div class="line"><a id="l00678" name="l00678"></a><span class="lineno">  678</span> </div>
+<div class="foldopen" id="foldopen00679" data-start="{" data-end="}">
+<div class="line"><a id="l00679" name="l00679"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1Reduction.html#afe4f8ac6f10f13654c4f81b305a52642">  679</a></span>    <span class="keyword">template</span> &lt;misc::Specialization&lt;tensor::Tensor&gt; MetricType&gt;</div>
+<div class="line"><a id="l00680" name="l00680"></a><span class="lineno">  680</span>    KOKKOS_FUNCTION <span class="keyword">static</span> <span class="keywordtype">double</span> value(</div>
+<div class="line"><a id="l00681" name="l00681"></a><span class="lineno">  681</span>            MetricType metric,</div>
+<div class="line"><a id="l00682" name="l00682"></a><span class="lineno">  682</span>            PositionType position,</div>
+<div class="line"><a id="l00683" name="l00683"></a><span class="lineno">  683</span>            BatchElem elem,</div>
+<div class="line"><a id="l00684" name="l00684"></a><span class="lineno">  684</span>            <span class="keyword">auto</span> natural_elem)</div>
+<div class="line"><a id="l00685" name="l00685"></a><span class="lineno">  685</span>    {</div>
+<div class="line"><a id="l00686" name="l00686"></a><span class="lineno">  686</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (Complex == CellComplex::Primal) {</div>
+<div class="line"><a id="l00687" name="l00687"></a><span class="lineno">  687</span>            <span class="keywordflow">return</span> value(position, elem, natural_elem);</div>
+<div class="line"><a id="l00688" name="l00688"></a><span class="lineno">  688</span>        } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00689" name="l00689"></a><span class="lineno">  689</span>            [[maybe_unused]] <a class="code hl_class" href="classsil_1_1tensor_1_1TensorAccessor.html">sil::tensor::TensorAccessor&lt;source_index_type&gt;</a> source_accessor;</div>
+<div class="line"><a id="l00690" name="l00690"></a><span class="lineno">  690</span>            std::array&lt;double, source_index_type::access_size()&gt; source_alloc {};</div>
+<div class="line"><a id="l00691" name="l00691"></a><span class="lineno">  691</span>            ddc::ChunkSpan&lt;</div>
+<div class="line"><a id="l00692" name="l00692"></a><span class="lineno">  692</span>                    double,</div>
+<div class="line"><a id="l00693" name="l00693"></a><span class="lineno">  693</span>                    ddc::DiscreteDomain&lt;source_index_type&gt;,</div>
+<div class="line"><a id="l00694" name="l00694"></a><span class="lineno">  694</span>                    Kokkos::layout_right,</div>
+<div class="line"><a id="l00695" name="l00695"></a><span class="lineno">  695</span>                    <span class="keyword">typename</span> MetricType::memory_space&gt;</div>
+<div class="line"><a id="l00696" name="l00696"></a><span class="lineno">  696</span>                    source_span(source_alloc.data(), source_accessor.<a class="code hl_function" href="classsil_1_1tensor_1_1TensorAccessor.html#a826ab69e3d61498116052144b967f0d1">domain</a>());</div>
+<div class="line"><a id="l00697" name="l00697"></a><span class="lineno">  697</span>            <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">sil::tensor::Tensor</a> source_tensor(source_span);</div>
+<div class="line"><a id="l00698" name="l00698"></a><span class="lineno">  698</span>            ddc::device_for_each(source_tensor.domain(), [&amp;](<span class="keyword">auto</span> source_mem_elem) {</div>
+<div class="line"><a id="l00699" name="l00699"></a><span class="lineno">  699</span>                source_tensor.mem(source_mem_elem) = 0.;</div>
+<div class="line"><a id="l00700" name="l00700"></a><span class="lineno">  700</span>            });</div>
+<div class="line"><a id="l00701" name="l00701"></a><span class="lineno">  701</span> </div>
+<div class="line"><a id="l00702" name="l00702"></a><span class="lineno">  702</span>            [[maybe_unused]] <a class="code hl_class" href="classsil_1_1tensor_1_1TensorAccessor.html">sil::tensor::TensorAccessor&lt;target_index_type&gt;</a> target_accessor;</div>
+<div class="line"><a id="l00703" name="l00703"></a><span class="lineno">  703</span>            std::array&lt;double, target_index_type::access_size()&gt; target_alloc {};</div>
+<div class="line"><a id="l00704" name="l00704"></a><span class="lineno">  704</span>            ddc::ChunkSpan&lt;</div>
+<div class="line"><a id="l00705" name="l00705"></a><span class="lineno">  705</span>                    double,</div>
+<div class="line"><a id="l00706" name="l00706"></a><span class="lineno">  706</span>                    ddc::DiscreteDomain&lt;target_index_type&gt;,</div>
+<div class="line"><a id="l00707" name="l00707"></a><span class="lineno">  707</span>                    Kokkos::layout_right,</div>
+<div class="line"><a id="l00708" name="l00708"></a><span class="lineno">  708</span>                    <span class="keyword">typename</span> MetricType::memory_space&gt;</div>
+<div class="line"><a id="l00709" name="l00709"></a><span class="lineno">  709</span>                    target_span(target_alloc.data(), target_accessor.<a class="code hl_function" href="classsil_1_1tensor_1_1TensorAccessor.html#a826ab69e3d61498116052144b967f0d1">domain</a>());</div>
+<div class="line"><a id="l00710" name="l00710"></a><span class="lineno">  710</span>            <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">sil::tensor::Tensor</a> target_tensor(target_span);</div>
+<div class="line"><a id="l00711" name="l00711"></a><span class="lineno">  711</span>            ddc::device_for_each(target_tensor.domain(), [&amp;](<span class="keyword">auto</span> target_mem_elem) {</div>
+<div class="line"><a id="l00712" name="l00712"></a><span class="lineno">  712</span>                target_tensor.mem(target_mem_elem) = 0.;</div>
+<div class="line"><a id="l00713" name="l00713"></a><span class="lineno">  713</span>            });</div>
+<div class="line"><a id="l00714" name="l00714"></a><span class="lineno">  714</span> </div>
+<div class="line"><a id="l00715" name="l00715"></a><span class="lineno">  715</span>            <a class="code hl_typedef" href="structsil_1_1exterior_1_1Reduction.html#af7a2b0fa491f854893d5043a196b3323">source_natural_elem_type</a> source_natural_elem;</div>
+<div class="line"><a id="l00716" name="l00716"></a><span class="lineno">  716</span>            ddc::detail::array(source_natural_elem)</div>
+<div class="line"><a id="l00717" name="l00717"></a><span class="lineno">  717</span>                    = ddc::detail::array(<a class="code hl_typedef" href="structsil_1_1exterior_1_1Reduction.html#af7a2b0fa491f854893d5043a196b3323">source_natural_elem_type</a>(natural_elem));</div>
+<div class="line"><a id="l00718" name="l00718"></a><span class="lineno">  718</span>            <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (source_index_type::rank() &gt; 1) {</div>
+<div class="line"><a id="l00719" name="l00719"></a><span class="lineno">  719</span>                <span class="keywordflow">if</span> (!detail::has_unique_reduction_ids(ddc::detail::array(source_natural_elem))) {</div>
+<div class="line"><a id="l00720" name="l00720"></a><span class="lineno">  720</span>                    <span class="keywordflow">return</span> 0.;</div>
+<div class="line"><a id="l00721" name="l00721"></a><span class="lineno">  721</span>                }</div>
+<div class="line"><a id="l00722" name="l00722"></a><span class="lineno">  722</span>            }</div>
+<div class="line"><a id="l00723" name="l00723"></a><span class="lineno">  723</span>            source_tensor(source_tensor.accessor().access_element(source_natural_elem)) = 1.;</div>
+<div class="line"><a id="l00724" name="l00724"></a><span class="lineno">  724</span> </div>
+<div class="line"><a id="l00725" name="l00725"></a><span class="lineno">  725</span>            run(target_tensor, source_tensor, metric, position, elem);</div>
+<div class="line"><a id="l00726" name="l00726"></a><span class="lineno">  726</span> </div>
+<div class="line"><a id="l00727" name="l00727"></a><span class="lineno">  727</span>            <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (target_index_type::rank() == 0) {</div>
+<div class="line"><a id="l00728" name="l00728"></a><span class="lineno">  728</span>                <span class="keywordflow">return</span> target_tensor.get(</div>
+<div class="line"><a id="l00729" name="l00729"></a><span class="lineno">  729</span>                        target_tensor.accessor().access_element(<a class="code hl_typedef" href="structsil_1_1exterior_1_1Reduction.html#a57df5c981f3f9831b038f73d67979971">target_natural_elem_type</a>()));</div>
+<div class="line"><a id="l00730" name="l00730"></a><span class="lineno">  730</span>            } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00731" name="l00731"></a><span class="lineno">  731</span>                <a class="code hl_typedef" href="structsil_1_1exterior_1_1Reduction.html#a57df5c981f3f9831b038f73d67979971">target_natural_elem_type</a> target_natural_elem;</div>
+<div class="line"><a id="l00732" name="l00732"></a><span class="lineno">  732</span>                ddc::detail::array(target_natural_elem)</div>
+<div class="line"><a id="l00733" name="l00733"></a><span class="lineno">  733</span>                        = ddc::detail::array(<a class="code hl_typedef" href="structsil_1_1exterior_1_1Reduction.html#a57df5c981f3f9831b038f73d67979971">target_natural_elem_type</a>(natural_elem));</div>
+<div class="line"><a id="l00734" name="l00734"></a><span class="lineno">  734</span>                <span class="keywordflow">return</span> target_tensor.get(</div>
+<div class="line"><a id="l00735" name="l00735"></a><span class="lineno">  735</span>                        target_tensor.accessor().access_element(target_natural_elem));</div>
+<div class="line"><a id="l00736" name="l00736"></a><span class="lineno">  736</span>            }</div>
+<div class="line"><a id="l00737" name="l00737"></a><span class="lineno">  737</span>        }</div>
 </div>
-<div class="line"><a id="l00736" name="l00736"></a><span class="lineno">  736</span>    }</div>
+<div class="line"><a id="l00738" name="l00738"></a><span class="lineno">  738</span>    }</div>
 </div>
-<div class="line"><a id="l00737" name="l00737"></a><span class="lineno">  737</span>};</div>
-<div class="line"><a id="l00738" name="l00738"></a><span class="lineno">  738</span> </div>
-<div class="line"><a id="l00739" name="l00739"></a><span class="lineno">  739</span><span class="keyword">template</span> &lt;</div>
-<div class="line"><a id="l00740" name="l00740"></a><span class="lineno">  740</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;ddc::detail::TypeSeq&gt;</a> Indices,</div>
-<div class="line"><a id="l00741" name="l00741"></a><span class="lineno">  741</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> ReductionTensorType,</div>
-<div class="line"><a id="l00742" name="l00742"></a><span class="lineno">  742</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> PositionType,</div>
-<div class="line"><a id="l00743" name="l00743"></a><span class="lineno">  743</span>        CellComplex Complex,</div>
-<div class="foldopen" id="foldopen00744" data-start="{" data-end="};">
-<div class="line"><a id="l00744" name="l00744"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1FillReductionOperatorMem.html">  744</a></span>        <span class="keyword">class </span>BatchElem&gt;</div>
-<div class="line"><a id="l00745" name="l00745"></a><span class="lineno">  745</span><span class="keyword">struct </span><a class="code hl_struct" href="structsil_1_1exterior_1_1FillReductionOperatorMem.html">FillReductionOperatorMem</a></div>
-<div class="line"><a id="l00746" name="l00746"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1FillReductionOperatorMem.html#acd1f56b2fd731373f6413247f5c8f09f">  746</a></span>{</div>
-<div class="line"><a id="l00747" name="l00747"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1FillReductionOperatorMem.html#abeeae2a611d7a813cfff4f53e38b5ce5">  747</a></span>    ReductionTensorType m_reduction_tensor;</div>
-<div class="line"><a id="l00748" name="l00748"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1FillReductionOperatorMem.html#a42ffe54a2034c522f05a200507b88b1f">  748</a></span>    PositionType m_position;</div>
-<div class="line"><a id="l00749" name="l00749"></a><span class="lineno">  749</span>    BatchElem m_elem;</div>
-<div class="line"><a id="l00750" name="l00750"></a><span class="lineno">  750</span> </div>
-<div class="foldopen" id="foldopen00751" data-start="{" data-end="}">
-<div class="line"><a id="l00751" name="l00751"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1FillReductionOperatorMem.html#a1a95426c20f928ecb2e1f6e44115476a">  751</a></span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> MemElem&gt;</div>
-<div class="line"><a id="l00752" name="l00752"></a><span class="lineno">  752</span>    KOKKOS_FUNCTION <span class="keywordtype">void</span> operator()(MemElem mem_elem)<span class="keyword"> const</span></div>
-<div class="line"><a id="l00753" name="l00753"></a><span class="lineno">  753</span><span class="keyword">    </span>{</div>
-<div class="line"><a id="l00754" name="l00754"></a><span class="lineno">  754</span>        m_reduction_tensor.mem(</div>
-<div class="line"><a id="l00755" name="l00755"></a><span class="lineno">  755</span>                <span class="keyword">typename</span> ReductionTensorType::discrete_element_type(m_elem, mem_elem))</div>
-<div class="line"><a id="l00756" name="l00756"></a><span class="lineno">  756</span>                = <a class="code hl_struct" href="structsil_1_1exterior_1_1Reduction.html">Reduction&lt;Indices, PositionType, BatchElem, Complex&gt;::</a></div>
-<div class="line"><a id="l00757" name="l00757"></a><span class="lineno">  757</span><a class="code hl_struct" href="structsil_1_1exterior_1_1Reduction.html">                        value</a>(m_position,</div>
-<div class="line"><a id="l00758" name="l00758"></a><span class="lineno">  758</span>                              m_elem,</div>
-<div class="line"><a id="l00759" name="l00759"></a><span class="lineno">  759</span>                              m_reduction_tensor.accessor().canonical_natural_element(mem_elem));</div>
+<div class="line"><a id="l00739" name="l00739"></a><span class="lineno">  739</span>};</div>
+<div class="line"><a id="l00740" name="l00740"></a><span class="lineno">  740</span> </div>
+<div class="line"><a id="l00741" name="l00741"></a><span class="lineno">  741</span><span class="keyword">template</span> &lt;</div>
+<div class="line"><a id="l00742" name="l00742"></a><span class="lineno">  742</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;ddc::detail::TypeSeq&gt;</a> Indices,</div>
+<div class="line"><a id="l00743" name="l00743"></a><span class="lineno">  743</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> ReductionTensorType,</div>
+<div class="line"><a id="l00744" name="l00744"></a><span class="lineno">  744</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> PositionType,</div>
+<div class="line"><a id="l00745" name="l00745"></a><span class="lineno">  745</span>        CellComplex Complex,</div>
+<div class="foldopen" id="foldopen00746" data-start="{" data-end="};">
+<div class="line"><a id="l00746" name="l00746"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1FillReductionOperatorMem.html">  746</a></span>        <span class="keyword">class </span>BatchElem&gt;</div>
+<div class="line"><a id="l00747" name="l00747"></a><span class="lineno">  747</span><span class="keyword">struct </span><a class="code hl_struct" href="structsil_1_1exterior_1_1FillReductionOperatorMem.html">FillReductionOperatorMem</a></div>
+<div class="line"><a id="l00748" name="l00748"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1FillReductionOperatorMem.html#acd1f56b2fd731373f6413247f5c8f09f">  748</a></span>{</div>
+<div class="line"><a id="l00749" name="l00749"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1FillReductionOperatorMem.html#abeeae2a611d7a813cfff4f53e38b5ce5">  749</a></span>    ReductionTensorType m_reduction_tensor;</div>
+<div class="line"><a id="l00750" name="l00750"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1FillReductionOperatorMem.html#a42ffe54a2034c522f05a200507b88b1f">  750</a></span>    PositionType m_position;</div>
+<div class="line"><a id="l00751" name="l00751"></a><span class="lineno">  751</span>    BatchElem m_elem;</div>
+<div class="line"><a id="l00752" name="l00752"></a><span class="lineno">  752</span> </div>
+<div class="foldopen" id="foldopen00753" data-start="{" data-end="}">
+<div class="line"><a id="l00753" name="l00753"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1FillReductionOperatorMem.html#a1a95426c20f928ecb2e1f6e44115476a">  753</a></span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> MemElem&gt;</div>
+<div class="line"><a id="l00754" name="l00754"></a><span class="lineno">  754</span>    KOKKOS_FUNCTION <span class="keywordtype">void</span> operator()(MemElem mem_elem)<span class="keyword"> const</span></div>
+<div class="line"><a id="l00755" name="l00755"></a><span class="lineno">  755</span><span class="keyword">    </span>{</div>
+<div class="line"><a id="l00756" name="l00756"></a><span class="lineno">  756</span>        m_reduction_tensor.mem(</div>
+<div class="line"><a id="l00757" name="l00757"></a><span class="lineno">  757</span>                <span class="keyword">typename</span> ReductionTensorType::discrete_element_type(m_elem, mem_elem))</div>
+<div class="line"><a id="l00758" name="l00758"></a><span class="lineno">  758</span>                = <a class="code hl_struct" href="structsil_1_1exterior_1_1Reduction.html">Reduction&lt;Indices, PositionType, BatchElem, Complex&gt;::</a></div>
+<div class="line"><a id="l00759" name="l00759"></a><span class="lineno">  759</span><a class="code hl_struct" href="structsil_1_1exterior_1_1Reduction.html">                        value</a>(m_position,</div>
+<div class="line"><a id="l00760" name="l00760"></a><span class="lineno">  760</span>                              m_elem,</div>
+<div class="line"><a id="l00761" name="l00761"></a><span class="lineno">  761</span>                              m_reduction_tensor.accessor().canonical_natural_element(mem_elem));</div>
 </div>
-<div class="line"><a id="l00760" name="l00760"></a><span class="lineno">  760</span>    }</div>
+<div class="line"><a id="l00762" name="l00762"></a><span class="lineno">  762</span>    }</div>
 </div>
-<div class="line"><a id="l00761" name="l00761"></a><span class="lineno">  761</span>};</div>
-<div class="line"><a id="l00762" name="l00762"></a><span class="lineno">  762</span> </div>
-<div class="line"><a id="l00763" name="l00763"></a><span class="lineno">  763</span><span class="keyword">template</span> &lt;</div>
-<div class="line"><a id="l00764" name="l00764"></a><span class="lineno">  764</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;ddc::detail::TypeSeq&gt;</a> Indices,</div>
-<div class="line"><a id="l00765" name="l00765"></a><span class="lineno">  765</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> ReductionTensorType,</div>
-<div class="line"><a id="l00766" name="l00766"></a><span class="lineno">  766</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> PositionType,</div>
-<div class="line"><a id="l00767" name="l00767"></a><span class="lineno">  767</span>        <span class="keyword">class </span>ExecSpace,</div>
-<div class="foldopen" id="foldopen00768" data-start="{" data-end="}">
-<div class="line"><a id="l00768" name="l00768"></a><span class="lineno"><a class="line" href="namespacesil_1_1exterior.html#acb3e789973d4eb8b21ff313eb02fc8c1">  768</a></span>        <a class="code hl_enumeration" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a> Complex = CellComplex::Primal&gt;</div>
-<div class="line"><a id="l00769" name="l00769"></a><span class="lineno">  769</span>ReductionTensorType <a class="code hl_function" href="namespacesil_1_1exterior.html#acb3e789973d4eb8b21ff313eb02fc8c1">fill_reduction_operator</a>(</div>
-<div class="line"><a id="l00770" name="l00770"></a><span class="lineno">  770</span>        ExecSpace <span class="keyword">const</span>&amp; exec_space,</div>
-<div class="line"><a id="l00771" name="l00771"></a><span class="lineno">  771</span>        ReductionTensorType reduction_tensor,</div>
-<div class="line"><a id="l00772" name="l00772"></a><span class="lineno">  772</span>        PositionType position)</div>
-<div class="line"><a id="l00773" name="l00773"></a><span class="lineno">  773</span>{</div>
-<div class="line"><a id="l00774" name="l00774"></a><span class="lineno">  774</span>    SIMILIE_DEBUG_LOG(<span class="stringliteral">&quot;similie_compute_reduction_operator&quot;</span>);</div>
-<div class="line"><a id="l00775" name="l00775"></a><span class="lineno">  775</span>    ddc::parallel_for_each(</div>
-<div class="line"><a id="l00776" name="l00776"></a><span class="lineno">  776</span>            <span class="stringliteral">&quot;similie_compute_reduction_operator&quot;</span>,</div>
-<div class="line"><a id="l00777" name="l00777"></a><span class="lineno">  777</span>            exec_space,</div>
-<div class="line"><a id="l00778" name="l00778"></a><span class="lineno">  778</span>            reduction_tensor.non_indices_domain(),</div>
-<div class="line"><a id="l00779" name="l00779"></a><span class="lineno">  779</span>            KOKKOS_LAMBDA(</div>
-<div class="line"><a id="l00780" name="l00780"></a><span class="lineno">  780</span>                    <span class="keyword">typename</span> ReductionTensorType::non_indices_domain_t::discrete_element_type</div>
-<div class="line"><a id="l00781" name="l00781"></a><span class="lineno">  781</span>                            elem) {</div>
-<div class="line"><a id="l00782" name="l00782"></a><span class="lineno">  782</span>                ddc::device_for_each(</div>
-<div class="line"><a id="l00783" name="l00783"></a><span class="lineno">  783</span>                        reduction_tensor.accessor().domain(),</div>
-<div class="line"><a id="l00784" name="l00784"></a><span class="lineno">  784</span>                        <a class="code hl_struct" href="structsil_1_1exterior_1_1FillReductionOperatorMem.html">FillReductionOperatorMem</a>&lt;</div>
-<div class="line"><a id="l00785" name="l00785"></a><span class="lineno">  785</span>                                Indices,</div>
-<div class="line"><a id="l00786" name="l00786"></a><span class="lineno">  786</span>                                ReductionTensorType,</div>
-<div class="line"><a id="l00787" name="l00787"></a><span class="lineno">  787</span>                                PositionType,</div>
-<div class="line"><a id="l00788" name="l00788"></a><span class="lineno">  788</span>                                Complex,</div>
-<div class="line"><a id="l00789" name="l00789"></a><span class="lineno">  789</span>                                <span class="keyword">typename</span> ReductionTensorType::non_indices_domain_t::</div>
-<div class="line"><a id="l00790" name="l00790"></a><span class="lineno">  790</span>                                        discrete_element_type&gt; {reduction_tensor, position, elem});</div>
-<div class="line"><a id="l00791" name="l00791"></a><span class="lineno">  791</span>            });</div>
-<div class="line"><a id="l00792" name="l00792"></a><span class="lineno">  792</span>    <span class="keywordflow">return</span> reduction_tensor;</div>
+<div class="line"><a id="l00763" name="l00763"></a><span class="lineno">  763</span>};</div>
+<div class="line"><a id="l00764" name="l00764"></a><span class="lineno">  764</span> </div>
+<div class="line"><a id="l00765" name="l00765"></a><span class="lineno">  765</span><span class="keyword">template</span> &lt;</div>
+<div class="line"><a id="l00766" name="l00766"></a><span class="lineno">  766</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;ddc::detail::TypeSeq&gt;</a> Indices,</div>
+<div class="line"><a id="l00767" name="l00767"></a><span class="lineno">  767</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> ReductionTensorType,</div>
+<div class="line"><a id="l00768" name="l00768"></a><span class="lineno">  768</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> PositionType,</div>
+<div class="line"><a id="l00769" name="l00769"></a><span class="lineno">  769</span>        <span class="keyword">class </span>ExecSpace,</div>
+<div class="foldopen" id="foldopen00770" data-start="{" data-end="}">
+<div class="line"><a id="l00770" name="l00770"></a><span class="lineno"><a class="line" href="namespacesil_1_1exterior.html#acb3e789973d4eb8b21ff313eb02fc8c1">  770</a></span>        <a class="code hl_enumeration" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a> Complex = CellComplex::Primal&gt;</div>
+<div class="line"><a id="l00771" name="l00771"></a><span class="lineno">  771</span>ReductionTensorType <a class="code hl_function" href="namespacesil_1_1exterior.html#acb3e789973d4eb8b21ff313eb02fc8c1">fill_reduction_operator</a>(</div>
+<div class="line"><a id="l00772" name="l00772"></a><span class="lineno">  772</span>        ExecSpace <span class="keyword">const</span>&amp; exec_space,</div>
+<div class="line"><a id="l00773" name="l00773"></a><span class="lineno">  773</span>        ReductionTensorType reduction_tensor,</div>
+<div class="line"><a id="l00774" name="l00774"></a><span class="lineno">  774</span>        PositionType position)</div>
+<div class="line"><a id="l00775" name="l00775"></a><span class="lineno">  775</span>{</div>
+<div class="line"><a id="l00776" name="l00776"></a><span class="lineno">  776</span>    SIMILIE_DEBUG_LOG(<span class="stringliteral">&quot;similie_compute_reduction_operator&quot;</span>);</div>
+<div class="line"><a id="l00777" name="l00777"></a><span class="lineno">  777</span>    ddc::parallel_for_each(</div>
+<div class="line"><a id="l00778" name="l00778"></a><span class="lineno">  778</span>            <span class="stringliteral">&quot;similie_compute_reduction_operator&quot;</span>,</div>
+<div class="line"><a id="l00779" name="l00779"></a><span class="lineno">  779</span>            exec_space,</div>
+<div class="line"><a id="l00780" name="l00780"></a><span class="lineno">  780</span>            reduction_tensor.non_indices_domain(),</div>
+<div class="line"><a id="l00781" name="l00781"></a><span class="lineno">  781</span>            KOKKOS_LAMBDA(</div>
+<div class="line"><a id="l00782" name="l00782"></a><span class="lineno">  782</span>                    <span class="keyword">typename</span> ReductionTensorType::non_indices_domain_t::discrete_element_type</div>
+<div class="line"><a id="l00783" name="l00783"></a><span class="lineno">  783</span>                            elem) {</div>
+<div class="line"><a id="l00784" name="l00784"></a><span class="lineno">  784</span>                ddc::device_for_each(</div>
+<div class="line"><a id="l00785" name="l00785"></a><span class="lineno">  785</span>                        reduction_tensor.accessor().domain(),</div>
+<div class="line"><a id="l00786" name="l00786"></a><span class="lineno">  786</span>                        <a class="code hl_struct" href="structsil_1_1exterior_1_1FillReductionOperatorMem.html">FillReductionOperatorMem</a>&lt;</div>
+<div class="line"><a id="l00787" name="l00787"></a><span class="lineno">  787</span>                                Indices,</div>
+<div class="line"><a id="l00788" name="l00788"></a><span class="lineno">  788</span>                                ReductionTensorType,</div>
+<div class="line"><a id="l00789" name="l00789"></a><span class="lineno">  789</span>                                PositionType,</div>
+<div class="line"><a id="l00790" name="l00790"></a><span class="lineno">  790</span>                                Complex,</div>
+<div class="line"><a id="l00791" name="l00791"></a><span class="lineno">  791</span>                                <span class="keyword">typename</span> ReductionTensorType::non_indices_domain_t::</div>
+<div class="line"><a id="l00792" name="l00792"></a><span class="lineno">  792</span>                                        discrete_element_type&gt; {reduction_tensor, position, elem});</div>
+<div class="line"><a id="l00793" name="l00793"></a><span class="lineno">  793</span>            });</div>
+<div class="line"><a id="l00794" name="l00794"></a><span class="lineno">  794</span>    <span class="keywordflow">return</span> reduction_tensor;</div>
 </div>
-<div class="line"><a id="l00793" name="l00793"></a><span class="lineno">  793</span>}</div>
-<div class="line"><a id="l00794" name="l00794"></a><span class="lineno">  794</span> </div>
-<div class="line"><a id="l00795" name="l00795"></a><span class="lineno">  795</span><span class="keyword">template</span> &lt;</div>
-<div class="line"><a id="l00796" name="l00796"></a><span class="lineno">  796</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;ddc::detail::TypeSeq&gt;</a> Indices,</div>
-<div class="line"><a id="l00797" name="l00797"></a><span class="lineno">  797</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> PositionType,</div>
-<div class="line"><a id="l00798" name="l00798"></a><span class="lineno">  798</span>        <span class="keyword">class </span>BatchElem,</div>
-<div class="foldopen" id="foldopen00799" data-start="{" data-end="};">
-<div class="line"><a id="l00799" name="l00799"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1Reconstruction.html">  799</a></span>        <a class="code hl_enumeration" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a> Complex = CellComplex::Primal&gt;</div>
-<div class="line"><a id="l00800" name="l00800"></a><span class="lineno">  800</span><span class="keyword">struct </span><a class="code hl_struct" href="structsil_1_1exterior_1_1Reconstruction.html">Reconstruction</a></div>
-<div class="line"><a id="l00801" name="l00801"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1Reconstruction.html#a645faba94d43ae5e1cf51920faa40ca1">  801</a></span>{</div>
-<div class="line"><a id="l00802" name="l00802"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1Reconstruction.html#a86d293a07043fe1efd4ece7cefea3677">  802</a></span>    <span class="keyword">using </span><a class="code hl_typedef" href="structsil_1_1exterior_1_1Reconstruction.html#a645faba94d43ae5e1cf51920faa40ca1">source_index_type</a> = <a class="code hl_typedef" href="namespacesil_1_1exterior.html#a7f4162fd50b1c01db82d03934600fced">reduction_index_t&lt;Indices&gt;</a>;</div>
-<div class="line"><a id="l00803" name="l00803"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1Reconstruction.html#ab6a9c7c7a1881066b1b7a9fdf5250a1f">  803</a></span>    <span class="keyword">using </span><a class="code hl_typedef" href="structsil_1_1exterior_1_1Reconstruction.html#a86d293a07043fe1efd4ece7cefea3677">target_index_type</a> = <a class="code hl_typedef" href="namespacesil_1_1exterior.html#a7f4162fd50b1c01db82d03934600fced">reduction_index_t&lt;tensor::primes&lt;Indices&gt;</a>&gt;;</div>
-<div class="line"><a id="l00804" name="l00804"></a><span class="lineno">  804</span>    <span class="keyword">using </span><a class="code hl_typedef" href="structsil_1_1exterior_1_1Reconstruction.html#ab6a9c7c7a1881066b1b7a9fdf5250a1f">source_natural_elem_type</a> =</div>
-<div class="line"><a id="l00805" name="l00805"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1Reconstruction.html#aab4447dfb86aee837c9381e2944a1b95">  805</a></span>            <span class="keyword">typename</span> <a class="code hl_typedef" href="namespacesil_1_1tensor.html#ad931792b69b009623e283e74cdb06076">tensor::natural_domain_t&lt;source_index_type&gt;::discrete_element_type</a>;</div>
-<div class="line"><a id="l00806" name="l00806"></a><span class="lineno">  806</span>    <span class="keyword">using </span><a class="code hl_typedef" href="structsil_1_1exterior_1_1Reconstruction.html#aab4447dfb86aee837c9381e2944a1b95">target_natural_elem_type</a> =</div>
-<div class="line"><a id="l00807" name="l00807"></a><span class="lineno">  807</span>            <span class="keyword">typename</span> <a class="code hl_typedef" href="namespacesil_1_1tensor.html#ad931792b69b009623e283e74cdb06076">tensor::natural_domain_t&lt;target_index_type&gt;::discrete_element_type</a>;</div>
-<div class="line"><a id="l00808" name="l00808"></a><span class="lineno">  808</span> </div>
-<div class="line"><a id="l00809" name="l00809"></a><span class="lineno">  809</span>    <span class="keyword">template</span> &lt;</div>
-<div class="line"><a id="l00810" name="l00810"></a><span class="lineno">  810</span>            <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> ReconstructedTensorType,</div>
-<div class="foldopen" id="foldopen00811" data-start="{" data-end="}">
-<div class="line"><a id="l00811" name="l00811"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1Reconstruction.html#a057cd3419051519b736916f6651a1220">  811</a></span>            <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> CochainTensorType&gt;</div>
-<div class="line"><a id="l00812" name="l00812"></a><span class="lineno">  812</span>    KOKKOS_FUNCTION <span class="keyword">static</span> <span class="keywordtype">void</span> run(</div>
-<div class="line"><a id="l00813" name="l00813"></a><span class="lineno">  813</span>            ReconstructedTensorType reconstructed_tensor,</div>
-<div class="line"><a id="l00814" name="l00814"></a><span class="lineno">  814</span>            CochainTensorType cochain_tensor,</div>
-<div class="line"><a id="l00815" name="l00815"></a><span class="lineno">  815</span>            PositionType position,</div>
-<div class="line"><a id="l00816" name="l00816"></a><span class="lineno">  816</span>            BatchElem elem)</div>
-<div class="line"><a id="l00817" name="l00817"></a><span class="lineno">  817</span>    {</div>
-<div class="line"><a id="l00818" name="l00818"></a><span class="lineno">  818</span>        <span class="keyword">using </span>reconstruction_accessor_t</div>
-<div class="line"><a id="l00819" name="l00819"></a><span class="lineno">  819</span>                = <a class="code hl_typedef" href="namespacesil_1_1tensor.html#aeada71b3699ecf64d8d6cbfc44bf6a8c">sil::tensor::tensor_accessor_for_domain_t&lt;reconstruction_domain_t&lt;Indices&gt;</a>&gt;;</div>
-<div class="line"><a id="l00820" name="l00820"></a><span class="lineno">  820</span>        <span class="keyword">using </span>reconstruction_natural_elem_type =</div>
-<div class="line"><a id="l00821" name="l00821"></a><span class="lineno">  821</span>                <span class="keyword">typename</span> reconstruction_accessor_t::natural_domain_t::discrete_element_type;</div>
-<div class="line"><a id="l00822" name="l00822"></a><span class="lineno">  822</span>        <span class="keyword">using </span>cochain_natural_elem_type =</div>
-<div class="line"><a id="l00823" name="l00823"></a><span class="lineno">  823</span>                <span class="keyword">typename</span> CochainTensorType::accessor_t::natural_domain_t::discrete_element_type;</div>
-<div class="line"><a id="l00824" name="l00824"></a><span class="lineno">  824</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (source_index_type::rank() == 0) {</div>
-<div class="line"><a id="l00825" name="l00825"></a><span class="lineno">  825</span>            reconstructed_tensor.mem(ddc::DiscreteElement&lt;source_index_type&gt;(0))</div>
-<div class="line"><a id="l00826" name="l00826"></a><span class="lineno">  826</span>                    = cochain_tensor.get(</div>
-<div class="line"><a id="l00827" name="l00827"></a><span class="lineno">  827</span>                            cochain_tensor.access_element(cochain_natural_elem_type()));</div>
-<div class="line"><a id="l00828" name="l00828"></a><span class="lineno">  828</span>        } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00829" name="l00829"></a><span class="lineno">  829</span>            [[maybe_unused]] <a class="code hl_class" href="classsil_1_1tensor_1_1TensorAccessor.html">sil::tensor::TensorAccessor&lt;source_index_type&gt;</a> source_accessor;</div>
-<div class="line"><a id="l00830" name="l00830"></a><span class="lineno">  830</span>            ddc::device_for_each(reconstructed_tensor.domain(), [&amp;](<span class="keyword">auto</span> target_mem_elem) {</div>
-<div class="line"><a id="l00831" name="l00831"></a><span class="lineno">  831</span>                auto const target_natural_elem</div>
-<div class="line"><a id="l00832" name="l00832"></a><span class="lineno">  832</span>                        = reconstructed_tensor.canonical_natural_element(target_mem_elem);</div>
-<div class="line"><a id="l00833" name="l00833"></a><span class="lineno">  833</span>                double reconstructed_value = 0.;</div>
-<div class="line"><a id="l00834" name="l00834"></a><span class="lineno">  834</span>                ddc::device_for_each(source_accessor.domain(), [&amp;](auto source_mem_elem) {</div>
-<div class="line"><a id="l00835" name="l00835"></a><span class="lineno">  835</span>                    auto const source_natural_elem</div>
-<div class="line"><a id="l00836" name="l00836"></a><span class="lineno">  836</span>                            = source_accessor.canonical_natural_element(source_mem_elem);</div>
-<div class="line"><a id="l00837" name="l00837"></a><span class="lineno">  837</span>                    reconstruction_natural_elem_type reconstruction_natural_elem;</div>
-<div class="line"><a id="l00838" name="l00838"></a><span class="lineno">  838</span>                    reconstruction_natural_elem = detail::merge_reduction_natural_elems&lt;</div>
-<div class="line"><a id="l00839" name="l00839"></a><span class="lineno">  839</span>                            reconstruction_natural_elem_type&gt;(</div>
-<div class="line"><a id="l00840" name="l00840"></a><span class="lineno">  840</span>                            ddc::detail::array(source_natural_elem),</div>
-<div class="line"><a id="l00841" name="l00841"></a><span class="lineno">  841</span>                            ddc::detail::array(target_natural_elem));</div>
-<div class="line"><a id="l00842" name="l00842"></a><span class="lineno">  842</span> </div>
-<div class="line"><a id="l00843" name="l00843"></a><span class="lineno">  843</span>                    cochain_natural_elem_type cochain_natural_elem;</div>
-<div class="line"><a id="l00844" name="l00844"></a><span class="lineno">  844</span>                    ddc::detail::array(cochain_natural_elem)</div>
-<div class="line"><a id="l00845" name="l00845"></a><span class="lineno">  845</span>                            = ddc::detail::array(source_natural_elem);</div>
-<div class="line"><a id="l00846" name="l00846"></a><span class="lineno">  846</span> </div>
-<div class="line"><a id="l00847" name="l00847"></a><span class="lineno">  847</span>                    reconstructed_value += value(position, elem, reconstruction_natural_elem)</div>
-<div class="line"><a id="l00848" name="l00848"></a><span class="lineno">  848</span>                                           * cochain_tensor.get(cochain_tensor.access_element(</div>
-<div class="line"><a id="l00849" name="l00849"></a><span class="lineno">  849</span>                                                   cochain_natural_elem));</div>
-<div class="line"><a id="l00850" name="l00850"></a><span class="lineno">  850</span>                });</div>
-<div class="line"><a id="l00851" name="l00851"></a><span class="lineno">  851</span>                reconstructed_tensor.mem(target_mem_elem) = reconstructed_value;</div>
-<div class="line"><a id="l00852" name="l00852"></a><span class="lineno">  852</span>            });</div>
-<div class="line"><a id="l00853" name="l00853"></a><span class="lineno">  853</span>        }</div>
+<div class="line"><a id="l00795" name="l00795"></a><span class="lineno">  795</span>}</div>
+<div class="line"><a id="l00796" name="l00796"></a><span class="lineno">  796</span> </div>
+<div class="line"><a id="l00797" name="l00797"></a><span class="lineno">  797</span><span class="keyword">template</span> &lt;</div>
+<div class="line"><a id="l00798" name="l00798"></a><span class="lineno">  798</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;ddc::detail::TypeSeq&gt;</a> Indices,</div>
+<div class="line"><a id="l00799" name="l00799"></a><span class="lineno">  799</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> PositionType,</div>
+<div class="line"><a id="l00800" name="l00800"></a><span class="lineno">  800</span>        <span class="keyword">class </span>BatchElem,</div>
+<div class="foldopen" id="foldopen00801" data-start="{" data-end="};">
+<div class="line"><a id="l00801" name="l00801"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1Reconstruction.html">  801</a></span>        <a class="code hl_enumeration" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a> Complex = CellComplex::Primal&gt;</div>
+<div class="line"><a id="l00802" name="l00802"></a><span class="lineno">  802</span><span class="keyword">struct </span><a class="code hl_struct" href="structsil_1_1exterior_1_1Reconstruction.html">Reconstruction</a></div>
+<div class="line"><a id="l00803" name="l00803"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1Reconstruction.html#a645faba94d43ae5e1cf51920faa40ca1">  803</a></span>{</div>
+<div class="line"><a id="l00804" name="l00804"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1Reconstruction.html#a86d293a07043fe1efd4ece7cefea3677">  804</a></span>    <span class="keyword">using </span><a class="code hl_typedef" href="structsil_1_1exterior_1_1Reconstruction.html#a645faba94d43ae5e1cf51920faa40ca1">source_index_type</a> = <a class="code hl_typedef" href="namespacesil_1_1exterior.html#a7f4162fd50b1c01db82d03934600fced">reduction_index_t&lt;Indices&gt;</a>;</div>
+<div class="line"><a id="l00805" name="l00805"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1Reconstruction.html#ab6a9c7c7a1881066b1b7a9fdf5250a1f">  805</a></span>    <span class="keyword">using </span><a class="code hl_typedef" href="structsil_1_1exterior_1_1Reconstruction.html#a86d293a07043fe1efd4ece7cefea3677">target_index_type</a> = <a class="code hl_typedef" href="namespacesil_1_1exterior.html#a7f4162fd50b1c01db82d03934600fced">reduction_index_t&lt;tensor::primes&lt;Indices&gt;</a>&gt;;</div>
+<div class="line"><a id="l00806" name="l00806"></a><span class="lineno">  806</span>    <span class="keyword">using </span><a class="code hl_typedef" href="structsil_1_1exterior_1_1Reconstruction.html#ab6a9c7c7a1881066b1b7a9fdf5250a1f">source_natural_elem_type</a> =</div>
+<div class="line"><a id="l00807" name="l00807"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1Reconstruction.html#aab4447dfb86aee837c9381e2944a1b95">  807</a></span>            <span class="keyword">typename</span> <a class="code hl_typedef" href="namespacesil_1_1tensor.html#ad931792b69b009623e283e74cdb06076">tensor::natural_domain_t&lt;source_index_type&gt;::discrete_element_type</a>;</div>
+<div class="line"><a id="l00808" name="l00808"></a><span class="lineno">  808</span>    <span class="keyword">using </span><a class="code hl_typedef" href="structsil_1_1exterior_1_1Reconstruction.html#aab4447dfb86aee837c9381e2944a1b95">target_natural_elem_type</a> =</div>
+<div class="line"><a id="l00809" name="l00809"></a><span class="lineno">  809</span>            <span class="keyword">typename</span> <a class="code hl_typedef" href="namespacesil_1_1tensor.html#ad931792b69b009623e283e74cdb06076">tensor::natural_domain_t&lt;target_index_type&gt;::discrete_element_type</a>;</div>
+<div class="line"><a id="l00810" name="l00810"></a><span class="lineno">  810</span> </div>
+<div class="line"><a id="l00811" name="l00811"></a><span class="lineno">  811</span>    <span class="keyword">template</span> &lt;</div>
+<div class="line"><a id="l00812" name="l00812"></a><span class="lineno">  812</span>            <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> ReconstructedTensorType,</div>
+<div class="foldopen" id="foldopen00813" data-start="{" data-end="}">
+<div class="line"><a id="l00813" name="l00813"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1Reconstruction.html#a057cd3419051519b736916f6651a1220">  813</a></span>            <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> CochainTensorType&gt;</div>
+<div class="line"><a id="l00814" name="l00814"></a><span class="lineno">  814</span>    KOKKOS_FUNCTION <span class="keyword">static</span> <span class="keywordtype">void</span> run(</div>
+<div class="line"><a id="l00815" name="l00815"></a><span class="lineno">  815</span>            ReconstructedTensorType reconstructed_tensor,</div>
+<div class="line"><a id="l00816" name="l00816"></a><span class="lineno">  816</span>            CochainTensorType cochain_tensor,</div>
+<div class="line"><a id="l00817" name="l00817"></a><span class="lineno">  817</span>            PositionType position,</div>
+<div class="line"><a id="l00818" name="l00818"></a><span class="lineno">  818</span>            BatchElem elem)</div>
+<div class="line"><a id="l00819" name="l00819"></a><span class="lineno">  819</span>    {</div>
+<div class="line"><a id="l00820" name="l00820"></a><span class="lineno">  820</span>        <span class="keyword">using </span>reconstruction_accessor_t</div>
+<div class="line"><a id="l00821" name="l00821"></a><span class="lineno">  821</span>                = <a class="code hl_typedef" href="namespacesil_1_1tensor.html#aeada71b3699ecf64d8d6cbfc44bf6a8c">sil::tensor::tensor_accessor_for_domain_t&lt;reconstruction_domain_t&lt;Indices&gt;</a>&gt;;</div>
+<div class="line"><a id="l00822" name="l00822"></a><span class="lineno">  822</span>        <span class="keyword">using </span>reconstruction_natural_elem_type =</div>
+<div class="line"><a id="l00823" name="l00823"></a><span class="lineno">  823</span>                <span class="keyword">typename</span> reconstruction_accessor_t::natural_domain_t::discrete_element_type;</div>
+<div class="line"><a id="l00824" name="l00824"></a><span class="lineno">  824</span>        <span class="keyword">using </span>cochain_natural_elem_type =</div>
+<div class="line"><a id="l00825" name="l00825"></a><span class="lineno">  825</span>                <span class="keyword">typename</span> CochainTensorType::accessor_t::natural_domain_t::discrete_element_type;</div>
+<div class="line"><a id="l00826" name="l00826"></a><span class="lineno">  826</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (source_index_type::rank() == 0) {</div>
+<div class="line"><a id="l00827" name="l00827"></a><span class="lineno">  827</span>            reconstructed_tensor.mem(ddc::DiscreteElement&lt;source_index_type&gt;(0))</div>
+<div class="line"><a id="l00828" name="l00828"></a><span class="lineno">  828</span>                    = cochain_tensor.get(</div>
+<div class="line"><a id="l00829" name="l00829"></a><span class="lineno">  829</span>                            cochain_tensor.access_element(cochain_natural_elem_type()));</div>
+<div class="line"><a id="l00830" name="l00830"></a><span class="lineno">  830</span>        } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00831" name="l00831"></a><span class="lineno">  831</span>            [[maybe_unused]] <a class="code hl_class" href="classsil_1_1tensor_1_1TensorAccessor.html">sil::tensor::TensorAccessor&lt;source_index_type&gt;</a> source_accessor;</div>
+<div class="line"><a id="l00832" name="l00832"></a><span class="lineno">  832</span>            ddc::device_for_each(reconstructed_tensor.domain(), [&amp;](<span class="keyword">auto</span> target_mem_elem) {</div>
+<div class="line"><a id="l00833" name="l00833"></a><span class="lineno">  833</span>                auto const target_natural_elem</div>
+<div class="line"><a id="l00834" name="l00834"></a><span class="lineno">  834</span>                        = reconstructed_tensor.canonical_natural_element(target_mem_elem);</div>
+<div class="line"><a id="l00835" name="l00835"></a><span class="lineno">  835</span>                double reconstructed_value = 0.;</div>
+<div class="line"><a id="l00836" name="l00836"></a><span class="lineno">  836</span>                ddc::device_for_each(source_accessor.domain(), [&amp;](auto source_mem_elem) {</div>
+<div class="line"><a id="l00837" name="l00837"></a><span class="lineno">  837</span>                    auto const source_natural_elem</div>
+<div class="line"><a id="l00838" name="l00838"></a><span class="lineno">  838</span>                            = source_accessor.canonical_natural_element(source_mem_elem);</div>
+<div class="line"><a id="l00839" name="l00839"></a><span class="lineno">  839</span>                    reconstruction_natural_elem_type reconstruction_natural_elem;</div>
+<div class="line"><a id="l00840" name="l00840"></a><span class="lineno">  840</span>                    reconstruction_natural_elem = detail::merge_reduction_natural_elems&lt;</div>
+<div class="line"><a id="l00841" name="l00841"></a><span class="lineno">  841</span>                            reconstruction_natural_elem_type&gt;(</div>
+<div class="line"><a id="l00842" name="l00842"></a><span class="lineno">  842</span>                            ddc::detail::array(source_natural_elem),</div>
+<div class="line"><a id="l00843" name="l00843"></a><span class="lineno">  843</span>                            ddc::detail::array(target_natural_elem));</div>
+<div class="line"><a id="l00844" name="l00844"></a><span class="lineno">  844</span> </div>
+<div class="line"><a id="l00845" name="l00845"></a><span class="lineno">  845</span>                    cochain_natural_elem_type cochain_natural_elem;</div>
+<div class="line"><a id="l00846" name="l00846"></a><span class="lineno">  846</span>                    ddc::detail::array(cochain_natural_elem)</div>
+<div class="line"><a id="l00847" name="l00847"></a><span class="lineno">  847</span>                            = ddc::detail::array(source_natural_elem);</div>
+<div class="line"><a id="l00848" name="l00848"></a><span class="lineno">  848</span> </div>
+<div class="line"><a id="l00849" name="l00849"></a><span class="lineno">  849</span>                    reconstructed_value += value(position, elem, reconstruction_natural_elem)</div>
+<div class="line"><a id="l00850" name="l00850"></a><span class="lineno">  850</span>                                           * cochain_tensor.get(cochain_tensor.access_element(</div>
+<div class="line"><a id="l00851" name="l00851"></a><span class="lineno">  851</span>                                                   cochain_natural_elem));</div>
+<div class="line"><a id="l00852" name="l00852"></a><span class="lineno">  852</span>                });</div>
+<div class="line"><a id="l00853" name="l00853"></a><span class="lineno">  853</span>                reconstructed_tensor.mem(target_mem_elem) = reconstructed_value;</div>
+<div class="line"><a id="l00854" name="l00854"></a><span class="lineno">  854</span>            });</div>
+<div class="line"><a id="l00855" name="l00855"></a><span class="lineno">  855</span>        }</div>
 </div>
-<div class="line"><a id="l00854" name="l00854"></a><span class="lineno">  854</span>    }</div>
-<div class="foldopen" id="foldopen00855" data-start="{" data-end="}">
-<div class="line"><a id="l00855" name="l00855"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1Reconstruction.html#a054cf29cb8c68bc43c4c09e5b7c95ea2">  855</a></span> </div>
-<div class="line"><a id="l00856" name="l00856"></a><span class="lineno">  856</span>    KOKKOS_FUNCTION <span class="keyword">static</span> <span class="keywordtype">double</span> value(PositionType position, BatchElem elem, <span class="keyword">auto</span> natural_elem)</div>
-<div class="line"><a id="l00857" name="l00857"></a><span class="lineno">  857</span>    {</div>
-<div class="line"><a id="l00858" name="l00858"></a><span class="lineno">  858</span>        <span class="keyword">static_assert</span>(</div>
-<div class="line"><a id="l00859" name="l00859"></a><span class="lineno">  859</span>                Complex != CellComplex::BarycentricDual,</div>
-<div class="line"><a id="l00860" name="l00860"></a><span class="lineno">  860</span>                <span class="stringliteral">&quot;Reconstruction is not implemented for the barycentric dual complex.&quot;</span>);</div>
-<div class="line"><a id="l00861" name="l00861"></a><span class="lineno">  861</span>        <span class="keyword">constexpr</span> std::size_t K = source_index_type::rank();</div>
-<div class="line"><a id="l00862" name="l00862"></a><span class="lineno">  862</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (K == 0) {</div>
-<div class="line"><a id="l00863" name="l00863"></a><span class="lineno">  863</span>            <span class="keywordflow">return</span> 1.;</div>
-<div class="line"><a id="l00864" name="l00864"></a><span class="lineno">  864</span>        } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00865" name="l00865"></a><span class="lineno">  865</span>            std::array <span class="keyword">const</span> source_ids</div>
-<div class="line"><a id="l00866" name="l00866"></a><span class="lineno">  866</span>                    = ddc::detail::array(<a class="code hl_typedef" href="structsil_1_1exterior_1_1Reconstruction.html#ab6a9c7c7a1881066b1b7a9fdf5250a1f">source_natural_elem_type</a>(natural_elem));</div>
-<div class="line"><a id="l00867" name="l00867"></a><span class="lineno">  867</span>            std::array <span class="keyword">const</span> target_ids</div>
-<div class="line"><a id="l00868" name="l00868"></a><span class="lineno">  868</span>                    = ddc::detail::array(<a class="code hl_typedef" href="structsil_1_1exterior_1_1Reconstruction.html#aab4447dfb86aee837c9381e2944a1b95">target_natural_elem_type</a>(natural_elem));</div>
-<div class="line"><a id="l00869" name="l00869"></a><span class="lineno">  869</span>            <span class="keyword">using </span>reduction_accessor_t</div>
-<div class="line"><a id="l00870" name="l00870"></a><span class="lineno">  870</span>                    = <a class="code hl_typedef" href="namespacesil_1_1tensor.html#aeada71b3699ecf64d8d6cbfc44bf6a8c">sil::tensor::tensor_accessor_for_domain_t&lt;reduction_domain_t&lt;Indices&gt;</a>&gt;;</div>
-<div class="line"><a id="l00871" name="l00871"></a><span class="lineno">  871</span>            <span class="keyword">using </span>reduction_natural_elem_type =</div>
-<div class="line"><a id="l00872" name="l00872"></a><span class="lineno">  872</span>                    <span class="keyword">typename</span> reduction_accessor_t::natural_domain_t::discrete_element_type;</div>
-<div class="line"><a id="l00873" name="l00873"></a><span class="lineno">  873</span>            reduction_natural_elem_type reduction_natural_elem</div>
-<div class="line"><a id="l00874" name="l00874"></a><span class="lineno">  874</span>                    = detail::merge_reduction_natural_elems&lt;</div>
-<div class="line"><a id="l00875" name="l00875"></a><span class="lineno">  875</span>                            reduction_natural_elem_type&gt;(source_ids, target_ids);</div>
-<div class="line"><a id="l00876" name="l00876"></a><span class="lineno">  876</span>            <span class="keywordtype">double</span> <span class="keyword">const</span> reduction_value = <a class="code hl_struct" href="structsil_1_1exterior_1_1Reduction.html">Reduction&lt;Indices, PositionType, BatchElem, Complex&gt;::</a></div>
-<div class="line"><a id="l00877" name="l00877"></a><span class="lineno">  877</span><a class="code hl_struct" href="structsil_1_1exterior_1_1Reduction.html">                    value</a>(position, elem, reduction_natural_elem);</div>
-<div class="line"><a id="l00878" name="l00878"></a><span class="lineno">  878</span> </div>
-<div class="line"><a id="l00879" name="l00879"></a><span class="lineno">  879</span>            <span class="keywordflow">if</span> (!detail::have_same_reduction_ids&lt;K&gt;(source_ids, target_ids)) {</div>
-<div class="line"><a id="l00880" name="l00880"></a><span class="lineno">  880</span>                assert(Kokkos::abs(reduction_value) &lt; 1e-14</div>
-<div class="line"><a id="l00881" name="l00881"></a><span class="lineno">  881</span>                       &amp;&amp; <span class="stringliteral">&quot;Reconstruction assumes a diagonal local reduction operator.&quot;</span>);</div>
-<div class="line"><a id="l00882" name="l00882"></a><span class="lineno">  882</span>                <span class="keywordflow">return</span> 0.;</div>
-<div class="line"><a id="l00883" name="l00883"></a><span class="lineno">  883</span>            }</div>
-<div class="line"><a id="l00884" name="l00884"></a><span class="lineno">  884</span> </div>
-<div class="line"><a id="l00885" name="l00885"></a><span class="lineno">  885</span>            <span class="keywordflow">if</span> (Kokkos::abs(reduction_value) &lt; 1e-14) {</div>
-<div class="line"><a id="l00886" name="l00886"></a><span class="lineno">  886</span>                <span class="keywordflow">return</span> 0.;</div>
-<div class="line"><a id="l00887" name="l00887"></a><span class="lineno">  887</span>            }</div>
-<div class="line"><a id="l00888" name="l00888"></a><span class="lineno">  888</span>            <span class="keywordflow">return</span> 1. / (misc::factorial(K) * reduction_value);</div>
-<div class="line"><a id="l00889" name="l00889"></a><span class="lineno">  889</span>        }</div>
+<div class="line"><a id="l00856" name="l00856"></a><span class="lineno">  856</span>    }</div>
+<div class="foldopen" id="foldopen00857" data-start="{" data-end="}">
+<div class="line"><a id="l00857" name="l00857"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1Reconstruction.html#a054cf29cb8c68bc43c4c09e5b7c95ea2">  857</a></span> </div>
+<div class="line"><a id="l00858" name="l00858"></a><span class="lineno">  858</span>    KOKKOS_FUNCTION <span class="keyword">static</span> <span class="keywordtype">double</span> value(PositionType position, BatchElem elem, <span class="keyword">auto</span> natural_elem)</div>
+<div class="line"><a id="l00859" name="l00859"></a><span class="lineno">  859</span>    {</div>
+<div class="line"><a id="l00860" name="l00860"></a><span class="lineno">  860</span>        <span class="keyword">static_assert</span>(</div>
+<div class="line"><a id="l00861" name="l00861"></a><span class="lineno">  861</span>                Complex != CellComplex::BarycentricDual,</div>
+<div class="line"><a id="l00862" name="l00862"></a><span class="lineno">  862</span>                <span class="stringliteral">&quot;Reconstruction is not implemented for the barycentric dual complex.&quot;</span>);</div>
+<div class="line"><a id="l00863" name="l00863"></a><span class="lineno">  863</span>        <span class="keyword">constexpr</span> std::size_t K = source_index_type::rank();</div>
+<div class="line"><a id="l00864" name="l00864"></a><span class="lineno">  864</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (K == 0) {</div>
+<div class="line"><a id="l00865" name="l00865"></a><span class="lineno">  865</span>            <span class="keywordflow">return</span> 1.;</div>
+<div class="line"><a id="l00866" name="l00866"></a><span class="lineno">  866</span>        } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00867" name="l00867"></a><span class="lineno">  867</span>            std::array <span class="keyword">const</span> source_ids</div>
+<div class="line"><a id="l00868" name="l00868"></a><span class="lineno">  868</span>                    = ddc::detail::array(<a class="code hl_typedef" href="structsil_1_1exterior_1_1Reconstruction.html#ab6a9c7c7a1881066b1b7a9fdf5250a1f">source_natural_elem_type</a>(natural_elem));</div>
+<div class="line"><a id="l00869" name="l00869"></a><span class="lineno">  869</span>            std::array <span class="keyword">const</span> target_ids</div>
+<div class="line"><a id="l00870" name="l00870"></a><span class="lineno">  870</span>                    = ddc::detail::array(<a class="code hl_typedef" href="structsil_1_1exterior_1_1Reconstruction.html#aab4447dfb86aee837c9381e2944a1b95">target_natural_elem_type</a>(natural_elem));</div>
+<div class="line"><a id="l00871" name="l00871"></a><span class="lineno">  871</span>            <span class="keyword">using </span>reduction_accessor_t</div>
+<div class="line"><a id="l00872" name="l00872"></a><span class="lineno">  872</span>                    = <a class="code hl_typedef" href="namespacesil_1_1tensor.html#aeada71b3699ecf64d8d6cbfc44bf6a8c">sil::tensor::tensor_accessor_for_domain_t&lt;reduction_domain_t&lt;Indices&gt;</a>&gt;;</div>
+<div class="line"><a id="l00873" name="l00873"></a><span class="lineno">  873</span>            <span class="keyword">using </span>reduction_natural_elem_type =</div>
+<div class="line"><a id="l00874" name="l00874"></a><span class="lineno">  874</span>                    <span class="keyword">typename</span> reduction_accessor_t::natural_domain_t::discrete_element_type;</div>
+<div class="line"><a id="l00875" name="l00875"></a><span class="lineno">  875</span>            reduction_natural_elem_type reduction_natural_elem</div>
+<div class="line"><a id="l00876" name="l00876"></a><span class="lineno">  876</span>                    = detail::merge_reduction_natural_elems&lt;</div>
+<div class="line"><a id="l00877" name="l00877"></a><span class="lineno">  877</span>                            reduction_natural_elem_type&gt;(source_ids, target_ids);</div>
+<div class="line"><a id="l00878" name="l00878"></a><span class="lineno">  878</span>            <span class="keywordtype">double</span> <span class="keyword">const</span> reduction_value = <a class="code hl_struct" href="structsil_1_1exterior_1_1Reduction.html">Reduction&lt;Indices, PositionType, BatchElem, Complex&gt;::</a></div>
+<div class="line"><a id="l00879" name="l00879"></a><span class="lineno">  879</span><a class="code hl_struct" href="structsil_1_1exterior_1_1Reduction.html">                    value</a>(position, elem, reduction_natural_elem);</div>
+<div class="line"><a id="l00880" name="l00880"></a><span class="lineno">  880</span> </div>
+<div class="line"><a id="l00881" name="l00881"></a><span class="lineno">  881</span>            <span class="keywordflow">if</span> (!detail::have_same_reduction_ids&lt;K&gt;(source_ids, target_ids)) {</div>
+<div class="line"><a id="l00882" name="l00882"></a><span class="lineno">  882</span>                assert(Kokkos::abs(reduction_value) &lt; 1e-14</div>
+<div class="line"><a id="l00883" name="l00883"></a><span class="lineno">  883</span>                       &amp;&amp; <span class="stringliteral">&quot;Reconstruction assumes a diagonal local reduction operator.&quot;</span>);</div>
+<div class="line"><a id="l00884" name="l00884"></a><span class="lineno">  884</span>                <span class="keywordflow">return</span> 0.;</div>
+<div class="line"><a id="l00885" name="l00885"></a><span class="lineno">  885</span>            }</div>
+<div class="line"><a id="l00886" name="l00886"></a><span class="lineno">  886</span> </div>
+<div class="line"><a id="l00887" name="l00887"></a><span class="lineno">  887</span>            <span class="keywordflow">if</span> (Kokkos::abs(reduction_value) &lt; 1e-14) {</div>
+<div class="line"><a id="l00888" name="l00888"></a><span class="lineno">  888</span>                <span class="keywordflow">return</span> 0.;</div>
+<div class="line"><a id="l00889" name="l00889"></a><span class="lineno">  889</span>            }</div>
+<div class="line"><a id="l00890" name="l00890"></a><span class="lineno">  890</span>            <span class="keywordflow">return</span> 1. / (misc::factorial(K) * reduction_value);</div>
+<div class="line"><a id="l00891" name="l00891"></a><span class="lineno">  891</span>        }</div>
 </div>
-<div class="line"><a id="l00890" name="l00890"></a><span class="lineno">  890</span>    }</div>
+<div class="line"><a id="l00892" name="l00892"></a><span class="lineno">  892</span>    }</div>
 </div>
-<div class="line"><a id="l00891" name="l00891"></a><span class="lineno">  891</span>};</div>
-<div class="line"><a id="l00892" name="l00892"></a><span class="lineno">  892</span> </div>
-<div class="line"><a id="l00893" name="l00893"></a><span class="lineno">  893</span><span class="keyword">template</span> &lt;</div>
-<div class="line"><a id="l00894" name="l00894"></a><span class="lineno">  894</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;ddc::detail::TypeSeq&gt;</a> Indices,</div>
-<div class="line"><a id="l00895" name="l00895"></a><span class="lineno">  895</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> ReconstructionTensorType,</div>
-<div class="line"><a id="l00896" name="l00896"></a><span class="lineno">  896</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> PositionType,</div>
-<div class="line"><a id="l00897" name="l00897"></a><span class="lineno">  897</span>        CellComplex Complex,</div>
-<div class="foldopen" id="foldopen00898" data-start="{" data-end="};">
-<div class="line"><a id="l00898" name="l00898"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1FillReconstructionOperatorMem.html">  898</a></span>        <span class="keyword">class </span>BatchElem&gt;</div>
-<div class="line"><a id="l00899" name="l00899"></a><span class="lineno">  899</span><span class="keyword">struct </span><a class="code hl_struct" href="structsil_1_1exterior_1_1FillReconstructionOperatorMem.html">FillReconstructionOperatorMem</a></div>
-<div class="line"><a id="l00900" name="l00900"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1FillReconstructionOperatorMem.html#a3b59917c4faba6264dc49d05d4a518a1">  900</a></span>{</div>
-<div class="line"><a id="l00901" name="l00901"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1FillReconstructionOperatorMem.html#a14ba4bc3183ee13040f301a64a3eb09c">  901</a></span>    ReconstructionTensorType m_reconstruction_tensor;</div>
-<div class="line"><a id="l00902" name="l00902"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1FillReconstructionOperatorMem.html#aa8f17a7ceb0370bfdfa4ba4aad6e34a1">  902</a></span>    PositionType m_position;</div>
-<div class="line"><a id="l00903" name="l00903"></a><span class="lineno">  903</span>    BatchElem m_elem;</div>
-<div class="line"><a id="l00904" name="l00904"></a><span class="lineno">  904</span> </div>
-<div class="foldopen" id="foldopen00905" data-start="{" data-end="}">
-<div class="line"><a id="l00905" name="l00905"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1FillReconstructionOperatorMem.html#af500d939837297037a58457430a6c1e1">  905</a></span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> MemElem&gt;</div>
-<div class="line"><a id="l00906" name="l00906"></a><span class="lineno">  906</span>    KOKKOS_FUNCTION <span class="keywordtype">void</span> operator()(MemElem mem_elem)<span class="keyword"> const</span></div>
-<div class="line"><a id="l00907" name="l00907"></a><span class="lineno">  907</span><span class="keyword">    </span>{</div>
-<div class="line"><a id="l00908" name="l00908"></a><span class="lineno">  908</span>        m_reconstruction_tensor.mem(</div>
-<div class="line"><a id="l00909" name="l00909"></a><span class="lineno">  909</span>                <span class="keyword">typename</span> ReconstructionTensorType::discrete_element_type(m_elem, mem_elem))</div>
-<div class="line"><a id="l00910" name="l00910"></a><span class="lineno">  910</span>                = <a class="code hl_struct" href="structsil_1_1exterior_1_1Reconstruction.html">Reconstruction&lt;Indices, PositionType, BatchElem, Complex&gt;::</a></div>
-<div class="line"><a id="l00911" name="l00911"></a><span class="lineno">  911</span><a class="code hl_struct" href="structsil_1_1exterior_1_1Reconstruction.html">                        value</a>(m_position,</div>
-<div class="line"><a id="l00912" name="l00912"></a><span class="lineno">  912</span>                              m_elem,</div>
-<div class="line"><a id="l00913" name="l00913"></a><span class="lineno">  913</span>                              m_reconstruction_tensor.accessor().canonical_natural_element(</div>
-<div class="line"><a id="l00914" name="l00914"></a><span class="lineno">  914</span>                                      mem_elem));</div>
+<div class="line"><a id="l00893" name="l00893"></a><span class="lineno">  893</span>};</div>
+<div class="line"><a id="l00894" name="l00894"></a><span class="lineno">  894</span> </div>
+<div class="line"><a id="l00895" name="l00895"></a><span class="lineno">  895</span><span class="keyword">template</span> &lt;</div>
+<div class="line"><a id="l00896" name="l00896"></a><span class="lineno">  896</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;ddc::detail::TypeSeq&gt;</a> Indices,</div>
+<div class="line"><a id="l00897" name="l00897"></a><span class="lineno">  897</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> ReconstructionTensorType,</div>
+<div class="line"><a id="l00898" name="l00898"></a><span class="lineno">  898</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> PositionType,</div>
+<div class="line"><a id="l00899" name="l00899"></a><span class="lineno">  899</span>        CellComplex Complex,</div>
+<div class="foldopen" id="foldopen00900" data-start="{" data-end="};">
+<div class="line"><a id="l00900" name="l00900"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1FillReconstructionOperatorMem.html">  900</a></span>        <span class="keyword">class </span>BatchElem&gt;</div>
+<div class="line"><a id="l00901" name="l00901"></a><span class="lineno">  901</span><span class="keyword">struct </span><a class="code hl_struct" href="structsil_1_1exterior_1_1FillReconstructionOperatorMem.html">FillReconstructionOperatorMem</a></div>
+<div class="line"><a id="l00902" name="l00902"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1FillReconstructionOperatorMem.html#a3b59917c4faba6264dc49d05d4a518a1">  902</a></span>{</div>
+<div class="line"><a id="l00903" name="l00903"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1FillReconstructionOperatorMem.html#a14ba4bc3183ee13040f301a64a3eb09c">  903</a></span>    ReconstructionTensorType m_reconstruction_tensor;</div>
+<div class="line"><a id="l00904" name="l00904"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1FillReconstructionOperatorMem.html#aa8f17a7ceb0370bfdfa4ba4aad6e34a1">  904</a></span>    PositionType m_position;</div>
+<div class="line"><a id="l00905" name="l00905"></a><span class="lineno">  905</span>    BatchElem m_elem;</div>
+<div class="line"><a id="l00906" name="l00906"></a><span class="lineno">  906</span> </div>
+<div class="foldopen" id="foldopen00907" data-start="{" data-end="}">
+<div class="line"><a id="l00907" name="l00907"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1FillReconstructionOperatorMem.html#af500d939837297037a58457430a6c1e1">  907</a></span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> MemElem&gt;</div>
+<div class="line"><a id="l00908" name="l00908"></a><span class="lineno">  908</span>    KOKKOS_FUNCTION <span class="keywordtype">void</span> operator()(MemElem mem_elem)<span class="keyword"> const</span></div>
+<div class="line"><a id="l00909" name="l00909"></a><span class="lineno">  909</span><span class="keyword">    </span>{</div>
+<div class="line"><a id="l00910" name="l00910"></a><span class="lineno">  910</span>        m_reconstruction_tensor.mem(</div>
+<div class="line"><a id="l00911" name="l00911"></a><span class="lineno">  911</span>                <span class="keyword">typename</span> ReconstructionTensorType::discrete_element_type(m_elem, mem_elem))</div>
+<div class="line"><a id="l00912" name="l00912"></a><span class="lineno">  912</span>                = <a class="code hl_struct" href="structsil_1_1exterior_1_1Reconstruction.html">Reconstruction&lt;Indices, PositionType, BatchElem, Complex&gt;::</a></div>
+<div class="line"><a id="l00913" name="l00913"></a><span class="lineno">  913</span><a class="code hl_struct" href="structsil_1_1exterior_1_1Reconstruction.html">                        value</a>(m_position,</div>
+<div class="line"><a id="l00914" name="l00914"></a><span class="lineno">  914</span>                              m_elem,</div>
+<div class="line"><a id="l00915" name="l00915"></a><span class="lineno">  915</span>                              m_reconstruction_tensor.accessor().canonical_natural_element(</div>
+<div class="line"><a id="l00916" name="l00916"></a><span class="lineno">  916</span>                                      mem_elem));</div>
 </div>
-<div class="line"><a id="l00915" name="l00915"></a><span class="lineno">  915</span>    }</div>
+<div class="line"><a id="l00917" name="l00917"></a><span class="lineno">  917</span>    }</div>
 </div>
-<div class="line"><a id="l00916" name="l00916"></a><span class="lineno">  916</span>};</div>
-<div class="line"><a id="l00917" name="l00917"></a><span class="lineno">  917</span> </div>
-<div class="line"><a id="l00918" name="l00918"></a><span class="lineno">  918</span><span class="keyword">template</span> &lt;</div>
-<div class="line"><a id="l00919" name="l00919"></a><span class="lineno">  919</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;ddc::detail::TypeSeq&gt;</a> Indices,</div>
-<div class="line"><a id="l00920" name="l00920"></a><span class="lineno">  920</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> ReconstructionTensorType,</div>
-<div class="line"><a id="l00921" name="l00921"></a><span class="lineno">  921</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> PositionType,</div>
-<div class="line"><a id="l00922" name="l00922"></a><span class="lineno">  922</span>        <span class="keyword">class </span>ExecSpace,</div>
-<div class="foldopen" id="foldopen00923" data-start="{" data-end="}">
-<div class="line"><a id="l00923" name="l00923"></a><span class="lineno"><a class="line" href="namespacesil_1_1exterior.html#a216f5722aaceadf494ab8406ab3a4e11">  923</a></span>        <a class="code hl_enumeration" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a> Complex = CellComplex::Primal&gt;</div>
-<div class="line"><a id="l00924" name="l00924"></a><span class="lineno">  924</span>ReconstructionTensorType <a class="code hl_function" href="namespacesil_1_1exterior.html#a216f5722aaceadf494ab8406ab3a4e11">fill_reconstruction_operator</a>(</div>
-<div class="line"><a id="l00925" name="l00925"></a><span class="lineno">  925</span>        ExecSpace <span class="keyword">const</span>&amp; exec_space,</div>
-<div class="line"><a id="l00926" name="l00926"></a><span class="lineno">  926</span>        ReconstructionTensorType reconstruction_tensor,</div>
-<div class="line"><a id="l00927" name="l00927"></a><span class="lineno">  927</span>        PositionType position)</div>
-<div class="line"><a id="l00928" name="l00928"></a><span class="lineno">  928</span>{</div>
-<div class="line"><a id="l00929" name="l00929"></a><span class="lineno">  929</span>    SIMILIE_DEBUG_LOG(<span class="stringliteral">&quot;similie_compute_reconstruction_operator&quot;</span>);</div>
-<div class="line"><a id="l00930" name="l00930"></a><span class="lineno">  930</span>    ddc::parallel_for_each(</div>
-<div class="line"><a id="l00931" name="l00931"></a><span class="lineno">  931</span>            <span class="stringliteral">&quot;similie_compute_reconstruction_operator&quot;</span>,</div>
-<div class="line"><a id="l00932" name="l00932"></a><span class="lineno">  932</span>            exec_space,</div>
-<div class="line"><a id="l00933" name="l00933"></a><span class="lineno">  933</span>            reconstruction_tensor.non_indices_domain(),</div>
-<div class="line"><a id="l00934" name="l00934"></a><span class="lineno">  934</span>            KOKKOS_LAMBDA(</div>
-<div class="line"><a id="l00935" name="l00935"></a><span class="lineno">  935</span>                    <span class="keyword">typename</span> ReconstructionTensorType::non_indices_domain_t::discrete_element_type</div>
-<div class="line"><a id="l00936" name="l00936"></a><span class="lineno">  936</span>                            elem) {</div>
-<div class="line"><a id="l00937" name="l00937"></a><span class="lineno">  937</span>                ddc::device_for_each(</div>
-<div class="line"><a id="l00938" name="l00938"></a><span class="lineno">  938</span>                        reconstruction_tensor.accessor().domain(),</div>
-<div class="line"><a id="l00939" name="l00939"></a><span class="lineno">  939</span>                        <a class="code hl_struct" href="structsil_1_1exterior_1_1FillReconstructionOperatorMem.html">FillReconstructionOperatorMem</a>&lt;</div>
-<div class="line"><a id="l00940" name="l00940"></a><span class="lineno">  940</span>                                Indices,</div>
-<div class="line"><a id="l00941" name="l00941"></a><span class="lineno">  941</span>                                ReconstructionTensorType,</div>
-<div class="line"><a id="l00942" name="l00942"></a><span class="lineno">  942</span>                                PositionType,</div>
-<div class="line"><a id="l00943" name="l00943"></a><span class="lineno">  943</span>                                Complex,</div>
-<div class="line"><a id="l00944" name="l00944"></a><span class="lineno">  944</span>                                <span class="keyword">typename</span> ReconstructionTensorType::non_indices_domain_t::</div>
-<div class="line"><a id="l00945" name="l00945"></a><span class="lineno">  945</span>                                        discrete_element_type&gt; {</div>
-<div class="line"><a id="l00946" name="l00946"></a><span class="lineno">  946</span>                                reconstruction_tensor,</div>
-<div class="line"><a id="l00947" name="l00947"></a><span class="lineno">  947</span>                                position,</div>
-<div class="line"><a id="l00948" name="l00948"></a><span class="lineno">  948</span>                                elem});</div>
-<div class="line"><a id="l00949" name="l00949"></a><span class="lineno">  949</span>            });</div>
-<div class="line"><a id="l00950" name="l00950"></a><span class="lineno">  950</span>    <span class="keywordflow">return</span> reconstruction_tensor;</div>
+<div class="line"><a id="l00918" name="l00918"></a><span class="lineno">  918</span>};</div>
+<div class="line"><a id="l00919" name="l00919"></a><span class="lineno">  919</span> </div>
+<div class="line"><a id="l00920" name="l00920"></a><span class="lineno">  920</span><span class="keyword">template</span> &lt;</div>
+<div class="line"><a id="l00921" name="l00921"></a><span class="lineno">  921</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;ddc::detail::TypeSeq&gt;</a> Indices,</div>
+<div class="line"><a id="l00922" name="l00922"></a><span class="lineno">  922</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> ReconstructionTensorType,</div>
+<div class="line"><a id="l00923" name="l00923"></a><span class="lineno">  923</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> PositionType,</div>
+<div class="line"><a id="l00924" name="l00924"></a><span class="lineno">  924</span>        <span class="keyword">class </span>ExecSpace,</div>
+<div class="foldopen" id="foldopen00925" data-start="{" data-end="}">
+<div class="line"><a id="l00925" name="l00925"></a><span class="lineno"><a class="line" href="namespacesil_1_1exterior.html#a216f5722aaceadf494ab8406ab3a4e11">  925</a></span>        <a class="code hl_enumeration" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a> Complex = CellComplex::Primal&gt;</div>
+<div class="line"><a id="l00926" name="l00926"></a><span class="lineno">  926</span>ReconstructionTensorType <a class="code hl_function" href="namespacesil_1_1exterior.html#a216f5722aaceadf494ab8406ab3a4e11">fill_reconstruction_operator</a>(</div>
+<div class="line"><a id="l00927" name="l00927"></a><span class="lineno">  927</span>        ExecSpace <span class="keyword">const</span>&amp; exec_space,</div>
+<div class="line"><a id="l00928" name="l00928"></a><span class="lineno">  928</span>        ReconstructionTensorType reconstruction_tensor,</div>
+<div class="line"><a id="l00929" name="l00929"></a><span class="lineno">  929</span>        PositionType position)</div>
+<div class="line"><a id="l00930" name="l00930"></a><span class="lineno">  930</span>{</div>
+<div class="line"><a id="l00931" name="l00931"></a><span class="lineno">  931</span>    SIMILIE_DEBUG_LOG(<span class="stringliteral">&quot;similie_compute_reconstruction_operator&quot;</span>);</div>
+<div class="line"><a id="l00932" name="l00932"></a><span class="lineno">  932</span>    ddc::parallel_for_each(</div>
+<div class="line"><a id="l00933" name="l00933"></a><span class="lineno">  933</span>            <span class="stringliteral">&quot;similie_compute_reconstruction_operator&quot;</span>,</div>
+<div class="line"><a id="l00934" name="l00934"></a><span class="lineno">  934</span>            exec_space,</div>
+<div class="line"><a id="l00935" name="l00935"></a><span class="lineno">  935</span>            reconstruction_tensor.non_indices_domain(),</div>
+<div class="line"><a id="l00936" name="l00936"></a><span class="lineno">  936</span>            KOKKOS_LAMBDA(</div>
+<div class="line"><a id="l00937" name="l00937"></a><span class="lineno">  937</span>                    <span class="keyword">typename</span> ReconstructionTensorType::non_indices_domain_t::discrete_element_type</div>
+<div class="line"><a id="l00938" name="l00938"></a><span class="lineno">  938</span>                            elem) {</div>
+<div class="line"><a id="l00939" name="l00939"></a><span class="lineno">  939</span>                ddc::device_for_each(</div>
+<div class="line"><a id="l00940" name="l00940"></a><span class="lineno">  940</span>                        reconstruction_tensor.accessor().domain(),</div>
+<div class="line"><a id="l00941" name="l00941"></a><span class="lineno">  941</span>                        <a class="code hl_struct" href="structsil_1_1exterior_1_1FillReconstructionOperatorMem.html">FillReconstructionOperatorMem</a>&lt;</div>
+<div class="line"><a id="l00942" name="l00942"></a><span class="lineno">  942</span>                                Indices,</div>
+<div class="line"><a id="l00943" name="l00943"></a><span class="lineno">  943</span>                                ReconstructionTensorType,</div>
+<div class="line"><a id="l00944" name="l00944"></a><span class="lineno">  944</span>                                PositionType,</div>
+<div class="line"><a id="l00945" name="l00945"></a><span class="lineno">  945</span>                                Complex,</div>
+<div class="line"><a id="l00946" name="l00946"></a><span class="lineno">  946</span>                                <span class="keyword">typename</span> ReconstructionTensorType::non_indices_domain_t::</div>
+<div class="line"><a id="l00947" name="l00947"></a><span class="lineno">  947</span>                                        discrete_element_type&gt; {</div>
+<div class="line"><a id="l00948" name="l00948"></a><span class="lineno">  948</span>                                reconstruction_tensor,</div>
+<div class="line"><a id="l00949" name="l00949"></a><span class="lineno">  949</span>                                position,</div>
+<div class="line"><a id="l00950" name="l00950"></a><span class="lineno">  950</span>                                elem});</div>
+<div class="line"><a id="l00951" name="l00951"></a><span class="lineno">  951</span>            });</div>
+<div class="line"><a id="l00952" name="l00952"></a><span class="lineno">  952</span>    <span class="keywordflow">return</span> reconstruction_tensor;</div>
 </div>
-<div class="line"><a id="l00951" name="l00951"></a><span class="lineno">  951</span>}</div>
-<div class="line"><a id="l00952" name="l00952"></a><span class="lineno">  952</span> </div>
-<div class="line"><a id="l00953" name="l00953"></a><span class="lineno">  953</span>} <span class="comment">// namespace exterior</span></div>
+<div class="line"><a id="l00953" name="l00953"></a><span class="lineno">  953</span>}</div>
 <div class="line"><a id="l00954" name="l00954"></a><span class="lineno">  954</span> </div>
-<div class="line"><a id="l00955" name="l00955"></a><span class="lineno">  955</span>} <span class="comment">// namespace sil</span></div>
+<div class="line"><a id="l00955" name="l00955"></a><span class="lineno">  955</span>} <span class="comment">// namespace exterior</span></div>
+<div class="line"><a id="l00956" name="l00956"></a><span class="lineno">  956</span> </div>
+<div class="line"><a id="l00957" name="l00957"></a><span class="lineno">  957</span>} <span class="comment">// namespace sil</span></div>
 <div class="ttc" id="aclasssil_1_1tensor_1_1TensorAccessor_html"><div class="ttname"><a href="classsil_1_1tensor_1_1TensorAccessor.html">sil::tensor::TensorAccessor</a></div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00273">tensor_impl.hpp:274</a></div></div>
 <div class="ttc" id="aclasssil_1_1tensor_1_1TensorAccessor_html_a826ab69e3d61498116052144b967f0d1"><div class="ttname"><a href="classsil_1_1tensor_1_1TensorAccessor.html#a826ab69e3d61498116052144b967f0d1">sil::tensor::TensorAccessor::domain</a></div><div class="ttdeci">static constexpr discrete_domain_type domain()</div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00359">tensor_impl.hpp:359</a></div></div>
 <div class="ttc" id="aconceptsil_1_1misc_1_1Specialization_html"><div class="ttname"><a href="conceptsil_1_1misc_1_1Specialization.html">sil::misc::Specialization</a></div><div class="ttdef"><b>Definition</b> <a href="specialization_8hpp_source.html#l00023">specialization.hpp:23</a></div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html_a0f14b6579b8587a6d0e54359d6492140"><div class="ttname"><a href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">sil::exterior::CellComplex</a></div><div class="ttdeci">CellComplex</div><div class="ttdef"><b>Definition</b> <a href="volume_8hpp_source.html#l00021">volume.hpp:21</a></div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html_a0f14b6579b8587a6d0e54359d6492140a68123c95275511243def4b27f64f4d97"><div class="ttname"><a href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140a68123c95275511243def4b27f64f4d97">sil::exterior::CellComplex::Primal</a></div><div class="ttdeci">@ Primal</div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html_a0f14b6579b8587a6d0e54359d6492140abe68b0fe2e1e14c37aecac2f8fc76aec"><div class="ttname"><a href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140abe68b0fe2e1e14c37aecac2f8fc76aec">sil::exterior::CellComplex::CircumcentricDual</a></div><div class="ttdeci">@ CircumcentricDual</div></div>
-<div class="ttc" id="anamespacesil_1_1exterior_html_a216f5722aaceadf494ab8406ab3a4e11"><div class="ttname"><a href="namespacesil_1_1exterior.html#a216f5722aaceadf494ab8406ab3a4e11">sil::exterior::fill_reconstruction_operator</a></div><div class="ttdeci">ReconstructionTensorType fill_reconstruction_operator(ExecSpace const &amp;exec_space, ReconstructionTensorType reconstruction_tensor, PositionType position)</div><div class="ttdef"><b>Definition</b> <a href="#l00923">reduction_and_reconstruction.hpp:923</a></div></div>
+<div class="ttc" id="anamespacesil_1_1exterior_html_a216f5722aaceadf494ab8406ab3a4e11"><div class="ttname"><a href="namespacesil_1_1exterior.html#a216f5722aaceadf494ab8406ab3a4e11">sil::exterior::fill_reconstruction_operator</a></div><div class="ttdeci">ReconstructionTensorType fill_reconstruction_operator(ExecSpace const &amp;exec_space, ReconstructionTensorType reconstruction_tensor, PositionType position)</div><div class="ttdef"><b>Definition</b> <a href="#l00925">reduction_and_reconstruction.hpp:925</a></div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html_a6ad5633fdd73bcbaf91998217ce5a257"><div class="ttname"><a href="namespacesil_1_1exterior.html#a6ad5633fdd73bcbaf91998217ce5a257">sil::exterior::reconstruction_domain_t</a></div><div class="ttdeci">ddc::detail::convert_type_seq_to_discrete_domain_t&lt; ddc::type_seq_merge_t&lt; ddc::detail::TypeSeq&lt; reduction_index_t&lt; Indices &gt; &gt;, ddc::detail::TypeSeq&lt; reduction_index_t&lt; tensor::primes&lt; Indices &gt; &gt; &gt; &gt; &gt; reconstruction_domain_t</div><div class="ttdef"><b>Definition</b> <a href="#l00462">reduction_and_reconstruction.hpp:462</a></div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html_a7f4162fd50b1c01db82d03934600fced"><div class="ttname"><a href="namespacesil_1_1exterior.html#a7f4162fd50b1c01db82d03934600fced">sil::exterior::reduction_index_t</a></div><div class="ttdeci">typename detail::ReductionTargetIndex&lt; Indices &gt;::type reduction_index_t</div><div class="ttdef"><b>Definition</b> <a href="#l00452">reduction_and_reconstruction.hpp:452</a></div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html_a9efb81bdf89eacb506f032e59ce50e9f"><div class="ttname"><a href="namespacesil_1_1exterior.html#a9efb81bdf89eacb506f032e59ce50e9f">sil::exterior::reduction_domain_t</a></div><div class="ttdeci">ddc::detail::convert_type_seq_to_discrete_domain_t&lt; ddc::type_seq_merge_t&lt; ddc::detail::TypeSeq&lt; misc::convert_type_seq_to_t&lt; tensor::TensorFullIndex, tensor::primes&lt; tensor::upper_t&lt; Indices &gt; &gt; &gt; &gt;, ddc::detail::TypeSeq&lt; reduction_index_t&lt; Indices &gt; &gt; &gt; &gt; reduction_domain_t</div><div class="ttdef"><b>Definition</b> <a href="#l00455">reduction_and_reconstruction.hpp:455</a></div></div>
-<div class="ttc" id="anamespacesil_1_1exterior_html_acb3e789973d4eb8b21ff313eb02fc8c1"><div class="ttname"><a href="namespacesil_1_1exterior.html#acb3e789973d4eb8b21ff313eb02fc8c1">sil::exterior::fill_reduction_operator</a></div><div class="ttdeci">ReductionTensorType fill_reduction_operator(ExecSpace const &amp;exec_space, ReductionTensorType reduction_tensor, PositionType position)</div><div class="ttdef"><b>Definition</b> <a href="#l00768">reduction_and_reconstruction.hpp:768</a></div></div>
+<div class="ttc" id="anamespacesil_1_1exterior_html_acb3e789973d4eb8b21ff313eb02fc8c1"><div class="ttname"><a href="namespacesil_1_1exterior.html#acb3e789973d4eb8b21ff313eb02fc8c1">sil::exterior::fill_reduction_operator</a></div><div class="ttdeci">ReductionTensorType fill_reduction_operator(ExecSpace const &amp;exec_space, ReductionTensorType reduction_tensor, PositionType position)</div><div class="ttdef"><b>Definition</b> <a href="#l00770">reduction_and_reconstruction.hpp:770</a></div></div>
 <div class="ttc" id="anamespacesil_1_1misc_1_1math_html_a3d2a269ec93521400e05150df356f7d4"><div class="ttname"><a href="namespacesil_1_1misc_1_1math.html#a3d2a269ec93521400e05150df356f7d4">sil::misc::math::invert</a></div><div class="ttdeci">KOKKOS_FUNCTION bool invert(InverseView inverse, MatrixView matrix, WorkspaceView workspace)</div><div class="ttdef"><b>Definition</b> <a href="small__matrix_8hpp_source.html#l00120">small_matrix.hpp:120</a></div></div>
 <div class="ttc" id="anamespacesil_1_1misc_1_1math_html_a57b504ec3990fa45394704d444631f7b"><div class="ttname"><a href="namespacesil_1_1misc_1_1math.html#a57b504ec3990fa45394704d444631f7b">sil::misc::math::vector_view</a></div><div class="ttdeci">KOKKOS_FUNCTION unmanaged_vector_view_t&lt; Scalar, MemorySpace &gt; vector_view(Scalar *data, std::size_t n)</div><div class="ttdef"><b>Definition</b> <a href="small__matrix_8hpp_source.html#l00031">small_matrix.hpp:31</a></div></div>
 <div class="ttc" id="anamespacesil_1_1misc_1_1math_html_a865eb72f2a72d1f7f557a6b51046bc71"><div class="ttname"><a href="namespacesil_1_1misc_1_1math.html#a865eb72f2a72d1f7f557a6b51046bc71">sil::misc::math::submatrix_determinant</a></div><div class="ttdeci">KOKKOS_FUNCTION double submatrix_determinant(MatrixView matrix, RowIds const &amp;row_ids, ColIds const &amp;col_ids, std::array&lt; double, N *N &gt; &amp;submatrix_alloc)</div><div class="ttdef"><b>Definition</b> <a href="small__matrix_8hpp_source.html#l00183">small_matrix.hpp:183</a></div></div>
@@ -1137,13 +1139,13 @@ $(function(){initNavTree('reduction__and__reconstruction_8hpp_source.html',''); 
 <div class="ttc" id="anamespacesil_1_1tensor_html_ad931792b69b009623e283e74cdb06076"><div class="ttname"><a href="namespacesil_1_1tensor.html#ad931792b69b009623e283e74cdb06076">sil::tensor::natural_domain_t</a></div><div class="ttdeci">typename detail::NaturalDomainType&lt; Index &gt;::type natural_domain_t</div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00141">tensor_impl.hpp:141</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_aeada71b3699ecf64d8d6cbfc44bf6a8c"><div class="ttname"><a href="namespacesil_1_1tensor.html#aeada71b3699ecf64d8d6cbfc44bf6a8c">sil::tensor::tensor_accessor_for_domain_t</a></div><div class="ttdeci">detail::TensorAccessorForDomain&lt; Dom &gt;::type tensor_accessor_for_domain_t</div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00332">tensor_impl.hpp:332</a></div></div>
 <div class="ttc" id="anamespacesil_html"><div class="ttname"><a href="namespacesil.html">sil</a></div><div class="ttdoc">The top-level namespace of SimiLie.</div><div class="ttdef"><b>Definition</b> <a href="csr_8hpp_source.html#l00015">csr.hpp:15</a></div></div>
-<div class="ttc" id="astructsil_1_1exterior_1_1FillReconstructionOperatorMem_html"><div class="ttname"><a href="structsil_1_1exterior_1_1FillReconstructionOperatorMem.html">sil::exterior::FillReconstructionOperatorMem</a></div><div class="ttdef"><b>Definition</b> <a href="#l00898">reduction_and_reconstruction.hpp:899</a></div></div>
-<div class="ttc" id="astructsil_1_1exterior_1_1FillReductionOperatorMem_html"><div class="ttname"><a href="structsil_1_1exterior_1_1FillReductionOperatorMem.html">sil::exterior::FillReductionOperatorMem</a></div><div class="ttdef"><b>Definition</b> <a href="#l00744">reduction_and_reconstruction.hpp:745</a></div></div>
-<div class="ttc" id="astructsil_1_1exterior_1_1Reconstruction_html"><div class="ttname"><a href="structsil_1_1exterior_1_1Reconstruction.html">sil::exterior::Reconstruction</a></div><div class="ttdef"><b>Definition</b> <a href="#l00799">reduction_and_reconstruction.hpp:800</a></div></div>
-<div class="ttc" id="astructsil_1_1exterior_1_1Reconstruction_html_a645faba94d43ae5e1cf51920faa40ca1"><div class="ttname"><a href="structsil_1_1exterior_1_1Reconstruction.html#a645faba94d43ae5e1cf51920faa40ca1">sil::exterior::Reconstruction::source_index_type</a></div><div class="ttdeci">reduction_index_t&lt; Indices &gt; source_index_type</div><div class="ttdef"><b>Definition</b> <a href="#l00801">reduction_and_reconstruction.hpp:801</a></div></div>
-<div class="ttc" id="astructsil_1_1exterior_1_1Reconstruction_html_a86d293a07043fe1efd4ece7cefea3677"><div class="ttname"><a href="structsil_1_1exterior_1_1Reconstruction.html#a86d293a07043fe1efd4ece7cefea3677">sil::exterior::Reconstruction::target_index_type</a></div><div class="ttdeci">reduction_index_t&lt; tensor::primes&lt; Indices &gt; &gt; target_index_type</div><div class="ttdef"><b>Definition</b> <a href="#l00802">reduction_and_reconstruction.hpp:802</a></div></div>
-<div class="ttc" id="astructsil_1_1exterior_1_1Reconstruction_html_aab4447dfb86aee837c9381e2944a1b95"><div class="ttname"><a href="structsil_1_1exterior_1_1Reconstruction.html#aab4447dfb86aee837c9381e2944a1b95">sil::exterior::Reconstruction::target_natural_elem_type</a></div><div class="ttdeci">typename tensor::natural_domain_t&lt; target_index_type &gt;::discrete_element_type target_natural_elem_type</div><div class="ttdef"><b>Definition</b> <a href="#l00805">reduction_and_reconstruction.hpp:805</a></div></div>
-<div class="ttc" id="astructsil_1_1exterior_1_1Reconstruction_html_ab6a9c7c7a1881066b1b7a9fdf5250a1f"><div class="ttname"><a href="structsil_1_1exterior_1_1Reconstruction.html#ab6a9c7c7a1881066b1b7a9fdf5250a1f">sil::exterior::Reconstruction::source_natural_elem_type</a></div><div class="ttdeci">typename tensor::natural_domain_t&lt; source_index_type &gt;::discrete_element_type source_natural_elem_type</div><div class="ttdef"><b>Definition</b> <a href="#l00803">reduction_and_reconstruction.hpp:803</a></div></div>
+<div class="ttc" id="astructsil_1_1exterior_1_1FillReconstructionOperatorMem_html"><div class="ttname"><a href="structsil_1_1exterior_1_1FillReconstructionOperatorMem.html">sil::exterior::FillReconstructionOperatorMem</a></div><div class="ttdef"><b>Definition</b> <a href="#l00900">reduction_and_reconstruction.hpp:901</a></div></div>
+<div class="ttc" id="astructsil_1_1exterior_1_1FillReductionOperatorMem_html"><div class="ttname"><a href="structsil_1_1exterior_1_1FillReductionOperatorMem.html">sil::exterior::FillReductionOperatorMem</a></div><div class="ttdef"><b>Definition</b> <a href="#l00746">reduction_and_reconstruction.hpp:747</a></div></div>
+<div class="ttc" id="astructsil_1_1exterior_1_1Reconstruction_html"><div class="ttname"><a href="structsil_1_1exterior_1_1Reconstruction.html">sil::exterior::Reconstruction</a></div><div class="ttdef"><b>Definition</b> <a href="#l00801">reduction_and_reconstruction.hpp:802</a></div></div>
+<div class="ttc" id="astructsil_1_1exterior_1_1Reconstruction_html_a645faba94d43ae5e1cf51920faa40ca1"><div class="ttname"><a href="structsil_1_1exterior_1_1Reconstruction.html#a645faba94d43ae5e1cf51920faa40ca1">sil::exterior::Reconstruction::source_index_type</a></div><div class="ttdeci">reduction_index_t&lt; Indices &gt; source_index_type</div><div class="ttdef"><b>Definition</b> <a href="#l00803">reduction_and_reconstruction.hpp:803</a></div></div>
+<div class="ttc" id="astructsil_1_1exterior_1_1Reconstruction_html_a86d293a07043fe1efd4ece7cefea3677"><div class="ttname"><a href="structsil_1_1exterior_1_1Reconstruction.html#a86d293a07043fe1efd4ece7cefea3677">sil::exterior::Reconstruction::target_index_type</a></div><div class="ttdeci">reduction_index_t&lt; tensor::primes&lt; Indices &gt; &gt; target_index_type</div><div class="ttdef"><b>Definition</b> <a href="#l00804">reduction_and_reconstruction.hpp:804</a></div></div>
+<div class="ttc" id="astructsil_1_1exterior_1_1Reconstruction_html_aab4447dfb86aee837c9381e2944a1b95"><div class="ttname"><a href="structsil_1_1exterior_1_1Reconstruction.html#aab4447dfb86aee837c9381e2944a1b95">sil::exterior::Reconstruction::target_natural_elem_type</a></div><div class="ttdeci">typename tensor::natural_domain_t&lt; target_index_type &gt;::discrete_element_type target_natural_elem_type</div><div class="ttdef"><b>Definition</b> <a href="#l00807">reduction_and_reconstruction.hpp:807</a></div></div>
+<div class="ttc" id="astructsil_1_1exterior_1_1Reconstruction_html_ab6a9c7c7a1881066b1b7a9fdf5250a1f"><div class="ttname"><a href="structsil_1_1exterior_1_1Reconstruction.html#ab6a9c7c7a1881066b1b7a9fdf5250a1f">sil::exterior::Reconstruction::source_natural_elem_type</a></div><div class="ttdeci">typename tensor::natural_domain_t&lt; source_index_type &gt;::discrete_element_type source_natural_elem_type</div><div class="ttdef"><b>Definition</b> <a href="#l00805">reduction_and_reconstruction.hpp:805</a></div></div>
 <div class="ttc" id="astructsil_1_1exterior_1_1Reduction_html"><div class="ttname"><a href="structsil_1_1exterior_1_1Reduction.html">sil::exterior::Reduction</a></div><div class="ttdef"><b>Definition</b> <a href="#l00471">reduction_and_reconstruction.hpp:472</a></div></div>
 <div class="ttc" id="astructsil_1_1exterior_1_1Reduction_html_a0b1963dc5d0edb7b18f3491d54d23765"><div class="ttname"><a href="structsil_1_1exterior_1_1Reduction.html#a0b1963dc5d0edb7b18f3491d54d23765">sil::exterior::Reduction::target_index_type</a></div><div class="ttdeci">reduction_index_t&lt; Indices &gt; target_index_type</div><div class="ttdef"><b>Definition</b> <a href="#l00476">reduction_and_reconstruction.hpp:476</a></div></div>
 <div class="ttc" id="astructsil_1_1exterior_1_1Reduction_html_a48eda402754058b4567f4ad238966364"><div class="ttname"><a href="structsil_1_1exterior_1_1Reduction.html#a48eda402754058b4567f4ad238966364">sil::exterior::Reduction::source_index_type</a></div><div class="ttdeci">misc::convert_type_seq_to_t&lt; tensor::TensorFullIndex, tensor::primes&lt; tensor::upper_t&lt; Indices &gt; &gt; &gt; source_index_type</div><div class="ttdef"><b>Definition</b> <a href="#l00473">reduction_and_reconstruction.hpp:473</a></div></div>

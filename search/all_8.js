@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['idx_0',['idx',['../classsil_1_1csr_1_1Csr.html#a0e3de7c3271e9cdf7cbaa7aa9209b77d',1,'sil::csr::Csr::idx()'],['../classsil_1_1csr_1_1CsrDynamic.html#a55117e034496388c0a1ea3cb833a1d3d',1,'sil::csr::CsrDynamic::idx()']]],
+  ['idx_0',['idx',['../classsil_1_1csr_1_1Csr.html#a8cb79708353dd96b867e3630130ddc27',1,'sil::csr::Csr::idx()'],['../classsil_1_1csr_1_1CsrDynamic.html#a55117e034496388c0a1ea3cb833a1d3d',1,'sil::csr::CsrDynamic::idx()']]],
   ['important_20for_20physics_1',['Why integro-differential calculus is important for physics ?',['../exterior_module.html#autotoc_md15',1,'']]],
   ['importants_20for_20physics_2',['Why tensors are importants for physics ?',['../tensor_module.html#autotoc_md7',1,'']]],
   ['in_20addition_3',['Do Kokkos and DDC support tensor fields ? What can SimiLie do in addition ?',['../tensor_module.html#autotoc_md8',1,'']]],

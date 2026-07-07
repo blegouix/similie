@@ -18,7 +18,7 @@ var searchData=
   ['circumcentricdual_15',['CircumcentricDual',['../namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140abe68b0fe2e1e14c37aecac2f8fc76aec',1,'sil::exterior']]],
   ['clamp_5fto_5fdomain_16',['clamp_to_domain',['../namespacesil_1_1misc.html#a0c5c59c51d124f3937f0349afde6eb03',1,'sil::misc']]],
   ['class_17',['Tensor class',['../tensor_module.html#autotoc_md12',1,'']]],
-  ['coalesc_5fidx_18',['coalesc_idx',['../classsil_1_1csr_1_1Csr.html#a50973b1c3c3eeab6ea8dda4c9c2913c2',1,'sil::csr::Csr::coalesc_idx()'],['../classsil_1_1csr_1_1CsrDynamic.html#afa9a92dc8ad80a4945ee871d08955640',1,'sil::csr::CsrDynamic::coalesc_idx()']]],
+  ['coalesc_5fidx_18',['coalesc_idx',['../classsil_1_1csr_1_1Csr.html#a768be36eb4397add505d495623969da1',1,'sil::csr::Csr::coalesc_idx()'],['../classsil_1_1csr_1_1CsrDynamic.html#afa9a92dc8ad80a4945ee871d08955640',1,'sil::csr::CsrDynamic::coalesc_idx()']]],
   ['coboundary_19',['Coboundary',['../namespacesil_1_1exterior.html#structsil_1_1exterior_1_1Coboundary',1,'sil::exterior']]],
   ['coboundary_20',['coboundary',['../namespacesil_1_1exterior.html#a3ac9f6a5916d6d2a26961706f2e33ec3',1,'sil::exterior::coboundary(CochainType cochain)'],['../namespacesil_1_1exterior.html#adcce2d0c1e414dabb34ef6ce72539c0b',1,'sil::exterior::coboundary(ExecSpace const &amp;exec_space, coboundary_tensor_t&lt; TagToAddToCochain, CochainTag, TensorType &gt; coboundary_tensor, TensorType tensor)']]],
   ['coboundary_20operator_21',['Coboundary operator',['../exterior_module.html#autotoc_md22',1,'']]],

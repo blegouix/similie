@@ -1,5 +1,6 @@
 var NAVTREEINDEX3 =
 {
+"structsil_1_1exterior_1_1DiscreteHodgeStar.html":[4,0,0,1,11],
 "structsil_1_1exterior_1_1DiscreteHodgeStar.html":[6,0,0,1,11],
 "structsil_1_1exterior_1_1DualSimplexVolume.html":[4,0,0,1,12],
 "structsil_1_1exterior_1_1DualSimplexVolume.html":[6,0,0,1,12],
