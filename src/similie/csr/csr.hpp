@@ -123,21 +123,20 @@ tensor_prod(
         Csr<N, HeadTensorIndex, TailTensorIndex...> csr)
 {
     SIMILIE_DEBUG_LOG("similie_compute_vector_dense_multiplication");
-    ddc::parallel_fill(prod, 0.);
+    ddc::host_for_each(prod.domain(), [&](const ddc::DiscreteElement<TailTensorIndex...> elem) {
+        prod.mem(elem) = 0.;
+    });
     for (std::size_t i = 0; i < csr.coalesc_idx().size() - 1;
          ++i) { // TODO base on iterator ? Kokkosify ?
         double const dense_value = dense.mem(ddc::DiscreteElement<HeadTensorIndex>(i));
         std::size_t const j_begin = csr.coalesc_idx()[i];
         std::size_t const j_end = csr.coalesc_idx()[i + 1];
-        Kokkos::parallel_for(
-                "similie_compute_vector_dense_multiplication",
-                Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(j_begin, j_end),
-                [&](const int j) {
-                    prod(ddc::DiscreteElement<TailTensorIndex...>(csr.idx()[ddc::type_seq_rank_v<
-                            TailTensorIndex,
-                            ddc::detail::TypeSeq<TailTensorIndex...>>][j]...))
-                            += dense_value * csr.values()[j];
-                });
+        for (int j = j_begin; j < j_end; j++) {
+            prod(ddc::DiscreteElement<TailTensorIndex...>(csr.idx()[ddc::type_seq_rank_v<
+                    TailTensorIndex,
+                    ddc::detail::TypeSeq<TailTensorIndex...>>][j]...))
+                    += dense_value * csr.values()[j];
+        };
     }
     return prod;
 }
@@ -168,22 +167,22 @@ tensor_prod(
                 Kokkos::DefaultHostExecutionSpace::memory_space> dense)
 {
     SIMILIE_DEBUG_LOG("similie_compute_csr_dense_multiplication");
-    ddc::parallel_fill(prod, 0.);
+    ddc::host_for_each(prod.domain(), [&](const ddc::DiscreteElement<HeadTensorIndex> elem) {
+        prod.mem(elem) = 0.;
+    });
     for (std::size_t i = 0; i < csr.coalesc_idx().size() - 1;
          ++i) { // TODO base on iterator ? Kokkosify ?
         std::size_t const j_begin = csr.coalesc_idx()[i];
         std::size_t const j_end = csr.coalesc_idx()[i + 1];
-        Kokkos::parallel_reduce(
-                "similie_compute_csr_dense_multiplication",
-                Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(j_begin, j_end),
-                [&](const int j, double& lsum) {
-                    double const dense_value = dense(
-                            ddc::DiscreteElement<TailTensorIndex...>(csr.idx()[ddc::type_seq_rank_v<
-                                    TailTensorIndex,
-                                    ddc::detail::TypeSeq<TailTensorIndex...>>][j]...));
-                    lsum += dense_value * csr.values()[j];
-                },
-                prod.mem(ddc::DiscreteElement<HeadTensorIndex>(i)));
+        float lsum = 0;
+        for (int j = j_begin; j < j_end; j++) {
+            double const dense_value
+                    = dense(ddc::DiscreteElement<TailTensorIndex...>(csr.idx()[ddc::type_seq_rank_v<
+                            TailTensorIndex,
+                            ddc::detail::TypeSeq<TailTensorIndex...>>][j]...));
+            lsum += dense_value * csr.values()[j];
+        }
+        prod.mem(ddc::DiscreteElement<HeadTensorIndex>(i)) = lsum;
     }
     return prod;
 }

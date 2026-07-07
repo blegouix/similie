@@ -594,7 +594,7 @@ protected:
             ChunkSpan<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>;
 
 public:
-    using base_type::ChunkSpan;
+    using base_type::base_type;
     using reference = base_type::reference;
     using discrete_domain_type = base_type::discrete_domain_type;
     using discrete_element_type = base_type::discrete_element_type;
@@ -775,6 +775,13 @@ Tensor(ddc::Chunk<ElementType, SupportType, Allocator>)
 template <class ElementType, class SupportType, class LayoutStridedPolicy, class MemorySpace>
 Tensor(ddc::ChunkSpan<ElementType, SupportType, LayoutStridedPolicy, MemorySpace>)
         -> Tensor<ElementType, SupportType, LayoutStridedPolicy, MemorySpace>;
+
+template <class ElementType, class SupportType>
+Tensor(ElementType*, SupportType) -> Tensor<
+        ElementType,
+        SupportType,
+        Kokkos::layout_right,
+        Kokkos::DefaultHostExecutionSpace::memory_space>;
 
 namespace detail {
 
