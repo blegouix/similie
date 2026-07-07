@@ -34,7 +34,7 @@ jobs:
     if: (inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') && (!inputs.build_target || inputs.build_target == 'all' || inputs.build_target == 'cuda')
     runs-on: [self-hosted, linux]
     environment:
-      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run') }}
+      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'build-cuda' || 'automatic-ci-run') }}
     steps:
     - name: Select target commit
       id: target
@@ -121,7 +121,7 @@ jobs:
     if: (inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') && (!inputs.build_target || inputs.build_target == 'all' || inputs.build_target == 'omp')
     runs-on: [self-hosted, linux]
     environment:
-      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run') }}
+      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'build-omp-debug' || 'automatic-ci-run') }}
     steps:
     - name: Select target commit
       id: target

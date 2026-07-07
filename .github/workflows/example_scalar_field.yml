@@ -31,7 +31,7 @@ jobs:
     runs-on: [self-hosted, linux]
     timeout-minutes: 90
     environment:
-      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run') }}
+      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'examples-cuda' || 'automatic-ci-run') }}
     steps:
     - name: Select target commit
       id: target
