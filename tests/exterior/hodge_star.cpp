@@ -134,7 +134,6 @@ TEST(DiscreteHodgeStar, Metric3D)
     ddc::Chunk form_alloc(form_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor form(form_alloc);
 
-    ddc::parallel_fill(form, 0.);
     ddc::host_for_each(
             metric.non_indices_domain(),
             [&](ddc::DiscreteElement<DDimX, DDimY, DDimZ> elem) {
@@ -169,7 +168,6 @@ TEST(DiscreteHodgeStar, Metric3D)
                     MuLow,
                     NuLow>>(Kokkos::DefaultHostExecutionSpace(), hodge_star2, metric, position);
 
-    ddc::parallel_fill(form, 0.);
     ddc::host_for_each(
             metric.non_indices_domain(),
             [&](ddc::DiscreteElement<DDimX, DDimY, DDimZ> elem) {
@@ -235,7 +233,6 @@ TEST(ContinuousHodgeStar, Metric3D)
     ddc::Chunk form_alloc(form_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor form(form_alloc);
 
-    ddc::parallel_fill(form, 0.);
     ddc::host_for_each(
             metric.non_indices_domain(),
             [&](ddc::DiscreteElement<DDimX, DDimY, DDimZ> elem) {

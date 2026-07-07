@@ -133,7 +133,7 @@ int main(int argc, char** argv)
 
     /*
     for (std::size_t i = 0; i < 20; ++i) {
-        std::cout << riemann_up.mem(ddc::DiscreteElement<RiemannTensorIndex>(i)) << "\n";
+        std::cout << riemann_up.mem(ddc::DiscreteElement<RiemannUpTensorIndex>(i)) << "\n";
     }
     */
 

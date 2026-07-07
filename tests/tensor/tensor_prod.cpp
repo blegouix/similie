@@ -580,14 +580,14 @@ TEST(TensorProd, DoubleContractionYoungIndexedxNaturalIndex)
 
     sil::tensor::tensor_prod(prod_tensor, tensor1, tensor2);
 
-    EXPECT_DOUBLE_EQ(prod_tensor.get(prod_tensor.access_element<X, X>()), 360.);
-    EXPECT_DOUBLE_EQ(prod_tensor.get(prod_tensor.access_element<X, Y>()), 382.);
-    EXPECT_DOUBLE_EQ(prod_tensor.get(prod_tensor.access_element<X, Z>()), 404.);
-    EXPECT_DOUBLE_EQ(prod_tensor.get(prod_tensor.access_element<Y, X>()), 648.);
-    EXPECT_DOUBLE_EQ(prod_tensor.get(prod_tensor.access_element<Y, Y>()), 691.);
-    EXPECT_DOUBLE_EQ(prod_tensor.get(prod_tensor.access_element<Y, Z>()), 734.);
-    EXPECT_DOUBLE_EQ(prod_tensor.get(prod_tensor.access_element<Z, X>()), 756.);
-    EXPECT_DOUBLE_EQ(prod_tensor.get(prod_tensor.access_element<Z, Y>()), 808.);
-    EXPECT_DOUBLE_EQ(prod_tensor.get(prod_tensor.access_element<Z, Z>()), 860.);
+    EXPECT_FLOAT_EQ(prod_tensor.get(prod_tensor.access_element<X, X>()), 360.);
+    EXPECT_FLOAT_EQ(prod_tensor.get(prod_tensor.access_element<X, Y>()), 382.);
+    EXPECT_FLOAT_EQ(prod_tensor.get(prod_tensor.access_element<X, Z>()), 404.);
+    EXPECT_FLOAT_EQ(prod_tensor.get(prod_tensor.access_element<Y, X>()), 648.);
+    EXPECT_FLOAT_EQ(prod_tensor.get(prod_tensor.access_element<Y, Y>()), 691.);
+    EXPECT_FLOAT_EQ(prod_tensor.get(prod_tensor.access_element<Y, Z>()), 734.);
+    EXPECT_FLOAT_EQ(prod_tensor.get(prod_tensor.access_element<Z, X>()), 756.);
+    EXPECT_FLOAT_EQ(prod_tensor.get(prod_tensor.access_element<Z, Y>()), 808.);
+    EXPECT_FLOAT_EQ(prod_tensor.get(prod_tensor.access_element<Z, Z>()), 860.);
 }
 #endif
