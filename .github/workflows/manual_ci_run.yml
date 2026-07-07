@@ -81,7 +81,7 @@ jobs:
         key: similie-cuda-workspace-${{ runner.os }}-${{ github.sha }}
     - name: Populate CUDA commit workspace
       run: |
-        mkdir -p "${CACHE_ROOT}/src" "${CACHE_ROOT}/agent_build" "${CACHE_ROOT}/home"
+        mkdir -p "${CACHE_ROOT}/src" "${CACHE_ROOT}/build" "${CACHE_ROOT}/home"
         rsync -a --delete "${GITHUB_WORKSPACE}/" "${CACHE_ROOT}/src/"
     - name: Configure and compile on GPU
       run: |
@@ -116,9 +116,9 @@ jobs:
               -DKokkos_ARCH_${kokkos_arch}=ON \
               -DKokkos_ENABLE_DEPRECATION_WARNINGS=OFF \
               -DSIMILIE_ASSERT_EXAMPLE_RESULTS=ON \
-              -B "${CACHE_ROOT}/agent_build" \
+              -B "${CACHE_ROOT}/build" \
               -S .
-            cmake --build "${CACHE_ROOT}/agent_build" --parallel 8
+            cmake --build "${CACHE_ROOT}/build" --parallel 8
           '
     - name: Save CUDA commit workspace
       if: steps.restore-workspace.outputs.cache-hit != 'true'
@@ -152,7 +152,7 @@ jobs:
         key: similie-omp-workspace-${{ runner.os }}-${{ github.sha }}
     - name: Populate OpenMP commit workspace
       run: |
-        mkdir -p "${CACHE_ROOT}/src" "${CACHE_ROOT}/agent_build_omp" "${CACHE_ROOT}/home"
+        mkdir -p "${CACHE_ROOT}/src" "${CACHE_ROOT}/build_omp" "${CACHE_ROOT}/home"
         rsync -a --delete "${GITHUB_WORKSPACE}/" "${CACHE_ROOT}/src/"
     - name: Configure and compile with OpenMP
       run: |
@@ -175,9 +175,9 @@ jobs:
               -DKokkos_ENABLE_DEPRECATION_WARNINGS=OFF \
               -DSIMILIE_BUILD_YOUNG_TABLEAU=ON \
               -DSIMILIE_ASSERT_EXAMPLE_RESULTS=ON \
-              -B "${CACHE_ROOT}/agent_build_omp" \
+              -B "${CACHE_ROOT}/build_omp" \
               -S .
-            cmake --build "${CACHE_ROOT}/agent_build_omp" --parallel 8
+            cmake --build "${CACHE_ROOT}/build_omp" --parallel 8
           '
     - name: Save OpenMP commit workspace
       if: steps.restore-workspace.outputs.cache-hit != 'true'
@@ -211,7 +211,7 @@ jobs:
           -e HOME="${CACHE_ROOT}/home" \
           -e CACHE_ROOT="${CACHE_ROOT}" \
           -v "${CACHE_ROOT}:${CACHE_ROOT}" \
-          -w "${CACHE_ROOT}/agent_build" \
+          -w "${CACHE_ROOT}/build" \
           "${IMAGE_TAG}" \
           bash -lc '
             set -euo pipefail
@@ -247,7 +247,7 @@ jobs:
           -e HOME="${CACHE_ROOT}/home" \
           -e CACHE_ROOT="${CACHE_ROOT}" \
           -v "${CACHE_ROOT}:${CACHE_ROOT}" \
-          -w "${CACHE_ROOT}/agent_build_omp" \
+          -w "${CACHE_ROOT}/build_omp" \
           "${IMAGE_TAG}" \
           bash -lc '
             set -euo pipefail

@@ -101,7 +101,7 @@ jobs:
           -e CACHE_ROOT="${CACHE_ROOT}" \
           -v "${CACHE_ROOT}:/similie-ci" \
           -v "${CACHE_ROOT}:${CACHE_ROOT}" \
-          -w "${CACHE_ROOT}/agent_build" \
+          -w "${CACHE_ROOT}/build" \
           "${IMAGE_TAG}" \
           bash -lc '
             set -euo pipefail
@@ -111,7 +111,7 @@ jobs:
             cmake --build . --parallel 8 --target similie_onelab
 
             case_name="${{ matrix.case.name }}"
-            cd /similie-ci/agent_build
+            cd /similie-ci/build
             output_dir="${PWD}/onelab_inductor_cases/${case_name}"
             mkdir -p "${output_dir}"
             SIMILIE_ONELAB_BUILD_DIR="${PWD}" \
