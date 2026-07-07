@@ -457,7 +457,14 @@ public:
 private:
     static constexpr std::size_t s_irrep_dim = detail::IrrepDim<s_d, hook_lengths, 0, 0>::run(1);
 
-    static constexpr auto generate_tag_array();
+    static constexpr std::array<char, 64> generate_tag_array();
+
+    static constexpr std::array<char, 64> s_tag_array = generate_tag_array();
+
+    static constexpr std::size_t s_tag_size
+            = std::find(s_tag_array.begin(), s_tag_array.end(), '\0') - s_tag_array.begin();
+
+    static constexpr std::string_view s_tag = {s_tag_array.data(), s_tag_size};
 
     static consteval auto load_irrep();
 
@@ -481,7 +488,10 @@ public:
         return s_irrep_dim;
     }
 
-    static std::string tag();
+    static std::string tag()
+    {
+        return std::string(s_tag);
+    }
 
 private:
     static constexpr std::size_t n_nonzeros_in_irrep()
@@ -497,7 +507,6 @@ public:
     static auto projector();
 
     template <class BasisId, class... Id>
-        requires(tensor::TensorIndex<BasisId> && (... && tensor::TensorNatIndex<Id>))
     static constexpr csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...> u(
             ddc::DiscreteDomain<Id...> restricted_domain)
     {
@@ -529,7 +538,6 @@ public:
     }
 
     template <class BasisId, class... Id>
-        requires(tensor::TensorIndex<BasisId> && (... && tensor::TensorNatIndex<Id>))
     static constexpr csr::Csr<n_nonzeros_in_irrep(), BasisId, Id...> v(
             ddc::DiscreteDomain<Id...> restricted_domain)
     {
@@ -732,18 +740,16 @@ struct OrthonormalBasisSubspaceEigenvalueOne<tensor::TensorFullIndex<Id...>>
 template <std::size_t Dimension, misc::Specialization<YoungTableauSeq> TableauSeq>
 YoungTableau<Dimension, TableauSeq>::YoungTableau()
 {
-    std::string const tag_str = tag();
-
     // Check if the irrep is available in the dictionnary
     {
-        std::ifstream file(IRREPS_DICT_PATH, std::ios::in | std::ios::binary);
+        std::ifstream file(IRREPS_DICT_PATH, std::ios::out | std::ios::binary);
         std::string line;
         while (!file.eof()) {
             getline(file, line);
-            if (line == tag_str) {
+            if (line == s_tag) {
                 file.close();
                 if (n_nonzeros_in_irrep() == 0) {
-                    std::cout << "\033[1;31mIrrep " << tag_str << " in dimension " << s_d
+                    std::cout << "\033[1;31mIrrep " << s_tag << " in dimension " << s_d
                               << " required and found in dictionnary " << IRREPS_DICT_PATH
                               << " but the executable has been compiled without it. Please "
                                  "recompile.\033[0m"
@@ -755,7 +761,7 @@ YoungTableau<Dimension, TableauSeq>::YoungTableau()
     }
 
     // If the current irrep is not found in the dictionnary, compute and dump it
-    std::cout << "\033[1;31mIrrep " << tag_str << " corresponding to the Young Tableau:\033[0m\n"
+    std::cout << "\033[1;31mIrrep " << s_tag << " corresponding to the Young Tableau:\033[0m\n"
               << *this << "\n\033[1;31min dimension " << s_d
               << " required but not found in dictionnary " << IRREPS_DICT_PATH
               << ". It will be computed, and you will have to recompile once it is done.\033[0m"
@@ -770,17 +776,17 @@ YoungTableau<Dimension, TableauSeq>::YoungTableau()
         std::cerr << "Error opening file: " << IRREPS_DICT_PATH << std::endl;
         return;
     }
-    file << tag_str << "\n";
+    file << s_tag << "\n";
     u.write(file);
     v.write(file);
     file << "\n";
     file.close();
     if (!file.good()) {
         std::cerr << "Error occurred while writing to file " << IRREPS_DICT_PATH
-                  << " while adding irrep " << tag_str << std::endl;
+                  << " while adding irrep " << s_tag << std::endl;
     } else {
-        std::cout << "\033[1;32mIrrep " << tag_str << " added to the dictionnary "
-                  << IRREPS_DICT_PATH << ".\033[0m \033[1;31mPlease recompile.\033[0m" << std::endl;
+        std::cout << "\033[1;32mIrrep " << s_tag << " added to the dictionnary " << IRREPS_DICT_PATH
+                  << ".\033[0m \033[1;31mPlease recompile.\033[0m" << std::endl;
     }
 }
 
@@ -990,79 +996,58 @@ auto YoungTableau<Dimension, TableauSeq>::projector()
 // Load binary files and build u and v static constexpr Csr at compile-time
 namespace detail {
 
-using IrrepByteView = std::basic_string_view<unsigned char>;
-
-template <std::size_t N>
-consteval std::size_t find_ascii(
-        IrrepByteView const str,
-        std::array<char, N> const pattern,
-        std::size_t const pos = 0)
-{
-    if constexpr (N == 0) {
-        return pos <= str.size() ? pos : IrrepByteView::npos;
-    } else {
-        if (pattern.size() > str.size() || pos > str.size() - pattern.size()) {
-            return IrrepByteView::npos;
-        }
-        for (std::size_t i = pos; i <= str.size() - pattern.size(); ++i) {
-            bool match = true;
-            for (std::size_t j = 0; j < pattern.size(); ++j) {
-                match &= str[i + j] == static_cast<unsigned char>(pattern[j]);
-            }
-            if (match) {
-                return i;
-            }
-        }
-        return IrrepByteView::npos;
-    }
-}
-
-consteval std::size_t find_ascii(IrrepByteView const str, char const c, std::size_t const pos = 0)
-{
-    for (std::size_t i = pos; i < str.size(); ++i) {
-        if (str[i] == static_cast<unsigned char>(c)) {
-            return i;
-        }
-    }
-    return IrrepByteView::npos;
-}
-
-consteval std::size_t read_size_t(IrrepByteView const str, std::size_t const pos)
-{
-    std::array<unsigned char, sizeof(std::size_t)> chars = {};
-    for (std::size_t i = 0; i < sizeof(std::size_t); ++i) {
-        chars[i] = str[pos + i];
-    }
-    return std::bit_cast<std::size_t>(chars);
-}
-
-template <auto Tag, std::size_t Block>
-consteval IrrepByteView load_irrep_block_for_tag()
+template <std::size_t Line>
+consteval std::string_view load_irrep_line_for_tag(std::string_view const tag)
 {
     constexpr static unsigned char raw[] = {
 #embed IRREPS_DICT_PATH
     };
 
-    constexpr static IrrepByteView str(raw, sizeof(raw));
+    constexpr static auto raw_chars = []() consteval {
+        std::array<char, sizeof(raw)> chars {};
+        for (std::size_t i = 0; i < sizeof(raw); ++i) {
+            chars[i] = static_cast<char>(raw[i]);
+        }
+        return chars;
+    }();
 
-    size_t tagPos = find_ascii(str, Tag);
+    constexpr static std::string_view str(raw_chars.data(), raw_chars.size());
 
-    if (tagPos != IrrepByteView::npos) {
-        std::size_t endOfTagLine = find_ascii(str, '\n', tagPos);
-        if (endOfTagLine != IrrepByteView::npos) {
-            std::size_t blockStart = endOfTagLine + 1;
-            for (std::size_t i = 0; i < Block; ++i) {
-                std::size_t const blockSize = read_size_t(str, blockStart);
-                blockStart += sizeof(std::size_t) + blockSize;
+    size_t tagPos = str.find(tag);
+
+    if (tagPos != std::string::npos) {
+        std::size_t endOfTagLine = str.find('\n', tagPos);
+        if (endOfTagLine != std::string::npos) {
+            std::size_t block_size_pos = endOfTagLine + 1;
+            for (std::size_t i = 0; i < Line; ++i) {
+                if (block_size_pos + sizeof(std::size_t) > str.size()) {
+                    return "";
+                }
+                std::array<char, sizeof(std::size_t)> size_chars {};
+                for (std::size_t j = 0; j < size_chars.size(); ++j) {
+                    size_chars[j] = str[block_size_pos + j];
+                }
+                std::size_t const block_size = std::bit_cast<std::size_t>(size_chars);
+                block_size_pos += sizeof(std::size_t) + block_size;
             }
-            std::size_t const blockSize = read_size_t(str, blockStart);
-            blockStart += sizeof(std::size_t);
+            if (block_size_pos + sizeof(std::size_t) > str.size()) {
+                return "";
+            }
+            std::array<char, sizeof(std::size_t)> size_chars {};
+            for (std::size_t j = 0; j < size_chars.size(); ++j) {
+                size_chars[j] = str[block_size_pos + j];
+            }
+            std::size_t const block_size = std::bit_cast<std::size_t>(size_chars);
+            std::size_t const block_start = block_size_pos + sizeof(std::size_t);
+            if (block_start + block_size > str.size()) {
+                return "";
+            }
 
-            return IrrepByteView(str.data() + blockStart, blockSize);
+            return std::string_view(str.data() + block_start, block_size);
         }
     }
 
-    return IrrepByteView();
+    return "";
 }
 
 template <class Ids, std::size_t Offset>
@@ -1071,36 +1056,38 @@ struct LoadIrrepIdxForTag;
 template <std::size_t... I, std::size_t Offset>
 struct LoadIrrepIdxForTag<std::index_sequence<I...>, Offset>
 {
-    template <auto Tag>
-    static consteval std::array<IrrepByteView, sizeof...(I)> run()
+    static consteval std::array<std::string_view, sizeof...(I)> run(std::string_view const tag)
     {
-        return std::array<IrrepByteView, sizeof...(I)> {
-                load_irrep_block_for_tag<Tag, I + Offset>()...};
+        return std::array<std::string_view, sizeof...(I)> {
+                load_irrep_line_for_tag<I + Offset>(tag)...};
     }
 };
 
 template <class T, std::size_t N, std::size_t I = 0>
-consteval std::array<T, N> bit_cast_array(std::array<T, N> vec, IrrepByteView const str)
+consteval std::array<T, N> bit_cast_array(
+        std::array<T, N> vec,
+        std::string_view const str,
+        std::string_view const tag)
 {
     if constexpr (I == N) {
         return vec;
     } else {
-        std::array<unsigned char, sizeof(T)> chars = {};
-        for (std::size_t j = 0; j < sizeof(T); ++j) {
-            chars[j] = str[sizeof(T) * I + j];
+        std::array<char, sizeof(T) / sizeof(char)> chars = {};
+        for (std::size_t j = 0; j < sizeof(T) / sizeof(char); ++j) {
+            chars[j] = str[sizeof(T) / sizeof(char) * I + j];
         }
 
         vec[I] = std::bit_cast<T>(
                 chars); // We rely on std::bit_cast because std::reinterprest_cast is not constexpr
-        return bit_cast_array<T, N, I + 1>(vec, str);
+        return bit_cast_array<T, N, I + 1>(vec, str, tag);
     }
 }
 
 template <class T, std::size_t N, std::size_t I = 0>
-consteval std::array<T, N> bit_cast_array(IrrepByteView const str)
+consteval std::array<T, N> bit_cast_array(std::string_view const str, std::string_view const tag)
 {
     std::array<T, N> vec {};
-    return bit_cast_array<T, N>(vec, str);
+    return bit_cast_array<T, N>(vec, str, tag);
 }
 
 template <class T, std::size_t N, class Ids>
@@ -1110,13 +1097,63 @@ template <class T, std::size_t N, std::size_t... I>
 struct BitCastArrayOfArrays<T, N, std::index_sequence<I...>>
 {
     static consteval std::array<std::array<T, N>, sizeof...(I)> run(
-            std::array<IrrepByteView, sizeof...(I)> const str)
+            std::array<std::string_view, sizeof...(I)> const str,
+            std::string_view const tag)
     {
-        return std::array<std::array<T, N>, sizeof...(I)> {bit_cast_array<T, N>(str[I])...};
+        return std::array<std::array<T, N>, sizeof...(I)> {bit_cast_array<T, N>(str[I], tag)...};
     }
 };
 
 } // namespace detail
+
+template <std::size_t Dimension, misc::Specialization<YoungTableauSeq> TableauSeq>
+consteval auto YoungTableau<Dimension, TableauSeq>::load_irrep()
+{
+    static constexpr std::string_view str_u_coalesc_idx(detail::load_irrep_line_for_tag<0>(s_tag));
+    static constexpr std::array<std::string_view, s_r> str_u_idx(
+            detail::LoadIrrepIdxForTag<std::make_index_sequence<s_r>, 1>::run(s_tag));
+    static constexpr std::string_view str_u_values(detail::load_irrep_line_for_tag<s_r + 1>(s_tag));
+    static constexpr std::string_view str_v_coalesc_idx(
+            detail::load_irrep_line_for_tag<s_r + 2>(s_tag));
+    static constexpr std::array<std::string_view, s_r> str_v_idx(
+            detail::LoadIrrepIdxForTag<std::make_index_sequence<s_r>, s_r + 3>::run(s_tag));
+    static constexpr std::string_view str_v_values(
+            detail::load_irrep_line_for_tag<2 * s_r + 3>(s_tag));
+
+    if constexpr (str_u_values.size() != 0) {
+        static constexpr std::array u_coalesc_idx = detail::bit_cast_array<
+                std::size_t,
+                str_u_coalesc_idx.size() / sizeof(std::size_t)>(str_u_coalesc_idx, s_tag);
+        static constexpr std::array u_idx = detail::BitCastArrayOfArrays<
+                std::size_t,
+                str_u_idx[0].size() / sizeof(std::size_t),
+                std::make_index_sequence<s_r>>::run(str_u_idx, s_tag);
+        static constexpr std::array u_values = detail::
+                bit_cast_array<double, str_u_values.size() / sizeof(double)>(str_u_values, s_tag);
+        static constexpr std::array v_coalesc_idx = detail::bit_cast_array<
+                std::size_t,
+                str_v_coalesc_idx.size() / sizeof(std::size_t)>(str_v_coalesc_idx, s_tag);
+        static constexpr std::array v_idx = detail::BitCastArrayOfArrays<
+                std::size_t,
+                str_v_idx[0].size() / sizeof(std::size_t),
+                std::make_index_sequence<s_r>>::run(str_v_idx, s_tag);
+        static constexpr std::array v_values = detail::
+                bit_cast_array<double, str_v_values.size() / sizeof(double)>(str_v_values, s_tag);
+        return std::make_pair(
+                std::make_tuple(u_coalesc_idx, u_idx, u_values),
+                std::make_tuple(v_coalesc_idx, v_idx, v_values));
+    } else {
+        return std::make_pair(
+                std::make_tuple(
+                        std::array<std::size_t, 1> {0},
+                        std::array<std::array<std::size_t, 0>, s_r> {},
+                        std::array<double, 0> {}),
+                std::make_tuple(
+                        std::array<std::size_t, 1> {0},
+                        std::array<std::array<std::size_t, 0>, s_r> {},
+                        std::array<double, 0> {}));
+    }
+}
 
 namespace detail {
 
@@ -1222,76 +1259,17 @@ constexpr auto add_dimension(const std::array<char, size>& array, std::size_t d)
 } // namespace detail
 
 template <std::size_t Dimension, misc::Specialization<YoungTableauSeq> TableauSeq>
-constexpr auto YoungTableau<Dimension, TableauSeq>::generate_tag_array()
+constexpr std::array<char, 64> YoungTableau<Dimension, TableauSeq>::generate_tag_array()
 {
     static constexpr std::tuple tableau = detail::YoungTableauToArray<tableau_seq>::run();
     constexpr auto row_str_wo_dimension
             = detail::ArrayToString<std::make_index_sequence<tableau_seq::shape::size()>>::run(
                     tableau);
-    return detail::add_dimension(row_str_wo_dimension, s_d);
-}
-
-template <std::size_t Dimension, misc::Specialization<YoungTableauSeq> TableauSeq>
-consteval auto YoungTableau<Dimension, TableauSeq>::load_irrep()
-{
-    constexpr auto tag_array = generate_tag_array();
-    static constexpr detail::IrrepByteView str_u_coalesc_idx(
-            detail::load_irrep_block_for_tag<tag_array, 0>());
-    static constexpr std::array<detail::IrrepByteView, s_r> str_u_idx(
-            detail::LoadIrrepIdxForTag<std::make_index_sequence<s_r>, 1>::template run<
-                    tag_array>());
-    static constexpr detail::IrrepByteView str_u_values(
-            detail::load_irrep_block_for_tag<tag_array, s_r + 1>());
-    static constexpr detail::IrrepByteView str_v_coalesc_idx(
-            detail::load_irrep_block_for_tag<tag_array, s_r + 2>());
-    static constexpr std::array<detail::IrrepByteView, s_r> str_v_idx(
-            detail::LoadIrrepIdxForTag<std::make_index_sequence<s_r>, s_r + 3>::template run<
-                    tag_array>());
-    static constexpr detail::IrrepByteView str_v_values(
-            detail::load_irrep_block_for_tag<tag_array, 2 * s_r + 3>());
-
-    if constexpr (str_u_values.size() != 0) {
-        static constexpr std::array u_coalesc_idx = detail::
-                bit_cast_array<std::size_t, str_u_coalesc_idx.size() / sizeof(std::size_t)>(
-                        str_u_coalesc_idx);
-        static constexpr std::array u_idx = detail::BitCastArrayOfArrays<
-                std::size_t,
-                str_u_idx[0].size() / sizeof(std::size_t),
-                std::make_index_sequence<s_r>>::run(str_u_idx);
-        static constexpr std::array u_values
-                = detail::bit_cast_array<double, str_u_values.size() / sizeof(double)>(
-                        str_u_values);
-        static constexpr std::array v_coalesc_idx = detail::
-                bit_cast_array<std::size_t, str_v_coalesc_idx.size() / sizeof(std::size_t)>(
-                        str_v_coalesc_idx);
-        static constexpr std::array v_idx = detail::BitCastArrayOfArrays<
-                std::size_t,
-                str_v_idx[0].size() / sizeof(std::size_t),
-                std::make_index_sequence<s_r>>::run(str_v_idx);
-        static constexpr std::array v_values
-                = detail::bit_cast_array<double, str_v_values.size() / sizeof(double)>(
-                        str_v_values);
-        return std::make_pair(
-                std::make_tuple(u_coalesc_idx, u_idx, u_values),
-                std::make_tuple(v_coalesc_idx, v_idx, v_values));
-    } else {
-        return std::make_pair(
-                std::make_tuple(
-                        std::array<std::size_t, 1> {0},
-                        std::array<std::array<std::size_t, 0>, s_r> {},
-                        std::array<double, 0> {}),
-                std::make_tuple(
-                        std::array<std::size_t, 1> {0},
-                        std::array<std::array<std::size_t, 0>, s_r> {},
-                        std::array<double, 0> {}));
-    }
-}
-
-template <std::size_t Dimension, misc::Specialization<YoungTableauSeq> TableauSeq>
-std::string YoungTableau<Dimension, TableauSeq>::tag()
-{
-    static constexpr auto tag_array = generate_tag_array();
-    return std::string(tag_array.begin(), tag_array.end());
+    constexpr auto row_str = detail::add_dimension(row_str_wo_dimension, s_d);
+    std::array<char, 64> tag {};
+    static_assert(row_str.size() < tag.size());
+    std::copy_n(row_str.begin(), row_str.size(), tag.begin());
+    return tag;
 }
 
 namespace detail {
