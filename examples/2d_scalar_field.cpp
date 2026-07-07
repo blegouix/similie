@@ -19,8 +19,6 @@
 #include <similie/physics/scalar_field/scalar_field_with_power_coupling.hpp>
 #include <similie/similie.hpp>
 
-#include "scalar_field_hamiltonian.hpp"
-
 #if defined(SIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS)
 void print_expected_central_potential_values(std::vector<double> const& central_potential_values)
 {
