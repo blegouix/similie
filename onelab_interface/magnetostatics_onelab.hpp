@@ -1135,18 +1135,9 @@ public:
                                                    0);
                             }
                             MagneticMoments const moments {moment0, moment1, 0.0};
-                            residual += transpose_coefficient * [&]() {
-                                if constexpr (requires {
-                                                  equations.template dpotential_dt<
-                                                          X>(moments, sampled_elem);
-                                              }) {
-                                    return equations
-                                            .template dpotential_dt<X>(moments, sampled_elem);
-                                } else {
-                                    return equations
-                                            .template dpotential_dt<X>(moment0, sampled_elem);
-                                }
-                            }();
+                            residual += transpose_coefficient
+                                        * dpotential_dt_component<
+                                                X>(equations, moments, sampled_elem);
                         }
                         for (int slot = 0; slot < transposed_moment1_counts(row); ++slot) {
                             double const transpose_coefficient
@@ -1171,18 +1162,9 @@ public:
                                                    0);
                             }
                             MagneticMoments const moments {moment0, moment1, 0.0};
-                            residual += transpose_coefficient * [&]() {
-                                if constexpr (requires {
-                                                  equations.template dpotential_dt<
-                                                          Y>(moments, sampled_elem);
-                                              }) {
-                                    return equations
-                                            .template dpotential_dt<Y>(moments, sampled_elem);
-                                } else {
-                                    return equations
-                                            .template dpotential_dt<Y>(moment1, sampled_elem);
-                                }
-                            }();
+                            residual += transpose_coefficient
+                                        * dpotential_dt_component<
+                                                Y>(equations, moments, sampled_elem);
                         }
                     }
                     if (criterion == solvers::Criterion::MomentsTemporalDerivative
@@ -1209,18 +1191,9 @@ public:
                                                    0);
                             }
                             MagneticMoments const moments {moment0, moment1, 0.0};
-                            residual -= outer_coefficient * [&]() {
-                                if constexpr (requires {
-                                                  equations.template dpotential_dt<
-                                                          X>(moments, sampled_elem);
-                                              }) {
-                                    return equations
-                                            .template dpotential_dt<X>(moments, sampled_elem);
-                                } else {
-                                    return equations
-                                            .template dpotential_dt<X>(moment0, sampled_elem);
-                                }
-                            }();
+                            residual -= outer_coefficient
+                                        * dpotential_dt_component<
+                                                X>(equations, moments, sampled_elem);
                         }
                         for (int slot = 0; slot < outer1_counts(row); ++slot) {
                             double const outer_coefficient = outer1_coefficients(row, slot);
@@ -1244,18 +1217,9 @@ public:
                                                    0);
                             }
                             MagneticMoments const moments {moment0, moment1, 0.0};
-                            residual -= outer_coefficient * [&]() {
-                                if constexpr (requires {
-                                                  equations.template dpotential_dt<
-                                                          Y>(moments, sampled_elem);
-                                              }) {
-                                    return equations
-                                            .template dpotential_dt<Y>(moments, sampled_elem);
-                                } else {
-                                    return equations
-                                            .template dpotential_dt<Y>(moment1, sampled_elem);
-                                }
-                            }();
+                            residual -= outer_coefficient
+                                        * dpotential_dt_component<
+                                                Y>(equations, moments, sampled_elem);
                         }
                     }
                     output(row, 0) = residual;
