@@ -4,18 +4,20 @@
 name: manual-ci-run
 
 on:
+  push:
+    branches: [ main ]
   pull_request:
     types: [opened, synchronize, reopened]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   build-cuda-docker-env:
     runs-on: [self-hosted, linux]
     environment:
-      name: manual-ci-run
+      name: ${{ github.event_name == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run' }}
     steps:
     - name: Checkout built branch
       uses: actions/checkout@v4
@@ -39,7 +41,7 @@ jobs:
   build-cpu-docker-env:
     runs-on: [self-hosted, linux]
     environment:
-      name: manual-ci-run
+      name: ${{ github.event_name == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run' }}
     steps:
     - name: Checkout built branch
       uses: actions/checkout@v4
@@ -58,7 +60,7 @@ jobs:
     needs: build-cuda-docker-env
     runs-on: [self-hosted, linux]
     environment:
-      name: manual-ci-run
+      name: ${{ github.event_name == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run' }}
     steps:
     - name: Checkout built branch
       uses: actions/checkout@v4
@@ -129,7 +131,7 @@ jobs:
     needs: build-cpu-docker-env
     runs-on: [self-hosted, linux]
     environment:
-      name: manual-ci-run
+      name: ${{ github.event_name == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run' }}
     steps:
     - name: Checkout built branch
       uses: actions/checkout@v4
@@ -188,7 +190,7 @@ jobs:
     needs: build-cuda
     runs-on: [self-hosted, linux]
     environment:
-      name: manual-ci-run
+      name: ${{ github.event_name == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run' }}
     steps:
     - name: Set build paths
       run: |
@@ -224,7 +226,7 @@ jobs:
     needs: build-omp-debug
     runs-on: [self-hosted, linux]
     environment:
-      name: manual-ci-run
+      name: ${{ github.event_name == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run' }}
     steps:
     - name: Set build paths
       run: |
@@ -260,25 +262,25 @@ jobs:
     uses: ./.github/workflows/example_laplacian.yml
     with:
       target_sha: ${{ github.sha }}
-      ci_environment: manual-ci-run
+      ci_environment: ${{ github.event_name == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run' }}
 
   example-2d_vector_laplacian:
     needs: build-cuda
     uses: ./.github/workflows/example_laplacian_vector.yml
     with:
       target_sha: ${{ github.sha }}
-      ci_environment: manual-ci-run
+      ci_environment: ${{ github.event_name == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run' }}
 
   example-2d_scalar_field:
     needs: build-cuda
     uses: ./.github/workflows/example_scalar_field.yml
     with:
       target_sha: ${{ github.sha }}
-      ci_environment: manual-ci-run
+      ci_environment: ${{ github.event_name == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run' }}
 
   example-kretschmann_scalar:
     needs: build-omp-debug
     uses: ./.github/workflows/example_kretschmann_scalar.yml
     with:
       target_sha: ${{ github.sha }}
-      ci_environment: manual-ci-run
+      ci_environment: ${{ github.event_name == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run' }}
