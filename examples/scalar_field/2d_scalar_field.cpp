@@ -10,6 +10,7 @@
 #include <limits>
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include <ddc/ddc.hpp>
 #include <ddc/kernels/splines.hpp>
@@ -18,6 +19,26 @@
 #include <similie/similie.hpp>
 
 #include "scalar_field_hamiltonian.hpp"
+
+#if defined(SIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS)
+void print_expected_central_potential_values(std::vector<double> const& central_potential_values)
+{
+    std::cerr << "std::array<double, " << central_potential_values.size()
+              << "> const central_potential_values\n        = {";
+    for (std::size_t i = 0; i < central_potential_values.size(); ++i) {
+        if (i != 0) {
+            std::cerr << ",";
+        }
+        if (i % 3 == 0) {
+            std::cerr << "\n           ";
+        } else {
+            std::cerr << " ";
+        }
+        std::cerr << std::setprecision(17) << central_potential_values[i];
+    }
+    std::cerr << "};\n";
+}
+#endif
 
 // PDI config
 constexpr char const* const PDI_CFG = R"PDI_CFG(
@@ -681,6 +702,7 @@ int main(int argc, char** argv)
             std::cerr << "ERROR: central potential non-regression value " << i << " expected "
                       << expected_central_potential_values[i] << " +/- " << tolerance << ", got "
                       << central_potential_values[i] << std::endl;
+            print_expected_central_potential_values(central_potential_values);
             return EXIT_FAILURE;
         }
     }
