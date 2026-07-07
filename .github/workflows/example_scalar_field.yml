@@ -72,5 +72,5 @@ jobs:
             git config --global --add safe.directory "*"
             nvidia-smi
             cmake --build . --parallel 8 --target 2d_scalar_field
-            ./examples/scalar_field/2d_scalar_field
+            ./examples/2d_scalar_field
           '

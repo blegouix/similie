@@ -97,10 +97,10 @@ jobs:
         docker image inspect "${IMAGE_TAG}" >/dev/null
         docker run --rm --gpus all \
           --user "$(id -u):$(id -g)" \
-          -e HOME="${CACHE_ROOT}/home" \
-          -e CACHE_ROOT="${CACHE_ROOT}" \
-          -v "${CACHE_ROOT}:${CACHE_ROOT}" \
-          -w "${CACHE_ROOT}/agent_build" \
+          -e HOME="/similie-ci/home" \
+          -e CACHE_ROOT="/similie-ci" \
+          -v "${CACHE_ROOT}:/similie-ci" \
+          -w "/similie-ci/agent_build" \
           "${IMAGE_TAG}" \
           bash -lc '
             set -euo pipefail
@@ -117,7 +117,7 @@ jobs:
             SIMILIE_ONELAB_RESULT_FILE="${output_dir}/similie_magnetostatics_inputs.pos" \
             SIMILIE_PARAVIEW_H5_FILE="${output_dir}/inductor.h5" \
             SIMILIE_PARAVIEW_XMF_FILE="${output_dir}/inductor.xmf" \
-              "${CACHE_ROOT}/src/examples/onelab_inductor/run_similie_onelab.sh" \
+              "/similie-ci/src/examples/onelab_inductor/run_similie_onelab.sh" \
               "--dim=${{ matrix.case.dimension }}" \
               "--${{ matrix.case.physics }}" \
               "--${{ matrix.case.backend }}"
