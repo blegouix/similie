@@ -251,13 +251,13 @@ struct TensorProdNatYoungNat<
                MemorySpace> tensor2)
     {
         /*
-    typename TensorYoungTableauIndex<DDim1...>::young_tableau young_tableau;
-    csr::Csr u = young_tableau.template u<YoungTableauIndex, DDim2...>(tensor2.domain());
-*/
-        ddc::Chunk uncompressed_tensor1_alloc(
-                Index1::subindices_domain(),
-                ddc::HostAllocator<double>());
-        tensor::Tensor uncompressed_tensor1(uncompressed_tensor1_alloc);
+        typename TensorYoungTableauIndex<DDim1...>::young_tableau young_tableau;
+        csr::Csr u = young_tableau.template u<YoungTableauIndex, DDim2...>(tensor2.domain());
+	 */
+        std::array<ElementType, Index1::subindices_domain().size()> uncompressed_tensor1_alloc;
+        tensor::Tensor uncompressed_tensor1(
+                uncompressed_tensor1_alloc.data(),
+                Index1::subindices_domain());
 
         tensor::uncompress(uncompressed_tensor1, tensor1);
 
@@ -341,18 +341,18 @@ struct TensorProdNatYoungYoung<
         Tensor<ElementType, ddc::DiscreteDomain<Index2>, LayoutStridedPolicy, MemorySpace> tensor2)
     {
         /*
-    typename TensorYoungTableauIndex<DDim1...>::young_tableau young_tableau;
-    csr::Csr u = young_tableau.template u<YoungTableauIndex, DDim2...>(tensor2.domain());
-*/
-        ddc::Chunk uncompressed_tensor1_alloc(
-                Index1::subindices_domain(),
-                ddc::HostAllocator<double>());
-        tensor::Tensor uncompressed_tensor1(uncompressed_tensor1_alloc);
+        typename TensorYoungTableauIndex<DDim1...>::young_tableau young_tableau;
+        csr::Csr u = young_tableau.template u<YoungTableauIndex, DDim2...>(tensor2.domain());
+	 */
+        std::array<ElementType, Index1::subindices_domain().size()> uncompressed_tensor1_alloc;
+        tensor::Tensor uncompressed_tensor1(
+                uncompressed_tensor1_alloc.data(),
+                Index1::subindices_domain());
 
-        ddc::Chunk uncompressed_tensor2_alloc(
-                Index2::subindices_domain(),
-                ddc::HostAllocator<double>());
-        tensor::Tensor uncompressed_tensor2(uncompressed_tensor2_alloc);
+        std::array<ElementType, Index2::subindices_domain().size()> uncompressed_tensor2_alloc;
+        tensor::Tensor uncompressed_tensor2(
+                uncompressed_tensor2_alloc.data(),
+                Index2::subindices_domain());
 
         tensor::uncompress(uncompressed_tensor1, tensor1);
         tensor::uncompress(uncompressed_tensor2, tensor2);
@@ -451,13 +451,14 @@ struct TensorProdYoungAnyAny<
                 tensor2)
     {
         /*
-    typename TensorYoungTableauIndex<DDim1...>::young_tableau young_tableau;
-    csr::Csr u = young_tableau.template u<YoungTableauIndex, DDim2...>(tensor2.domain());
-*/
-        ddc::Chunk uncompressed_prod_alloc(
-                ddc::DiscreteDomain(ProdDDim::subindices_domain()...),
-                ddc::HostAllocator<double>());
-        tensor::Tensor uncompressed_prod(uncompressed_prod_alloc);
+        typename TensorYoungTableauIndex<DDim1...>::young_tableau young_tableau;
+        csr::Csr u = young_tableau.template u<YoungTableauIndex, DDim2...>(tensor2.domain());
+         */
+        std::array<ElementType, ddc::DiscreteDomain(ProdDDim::subindices_domain()...).size()>
+                uncompressed_prod_alloc;
+        tensor::Tensor uncompressed_prod(
+                uncompressed_prod_alloc.data(),
+                ddc::DiscreteDomain(ProdDDim::subindices_domain()...));
 
         tensor::TensorAccessor<ContractDDim...> contract_accessor;
         ddc::DiscreteDomain<ContractDDim...> contract_dom = contract_accessor.natural_domain();

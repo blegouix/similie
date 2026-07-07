@@ -352,7 +352,8 @@ struct DiscreteHodgeStar
             ddc::detail::array(target_natural_elem)
                     = ddc::detail::array(TargetFullElem(natural_elem));
             return source_factor
-                   * target_tensor(target_tensor.accessor().access_element(target_natural_elem));
+                   * target_tensor.get(
+                           target_tensor.accessor().access_element(target_natural_elem));
         }
     }
 };

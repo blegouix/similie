@@ -1,0 +1,284 @@
+# SPDX-FileCopyrightText: 2026 Baptiste Legouix
+# SPDX-License-Identifier: MIT
+
+name: manual-ci-run
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  build-cuda-docker-env:
+    runs-on: [self-hosted, linux]
+    environment:
+      name: manual-ci-run
+    steps:
+    - name: Checkout built branch
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.sha }}
+    - name: Check GPU visibility on runner
+      run: |
+        if command -v nvidia-smi; then
+          nvidia-smi
+        else
+          /usr/lib/wsl/lib/nvidia-smi
+        fi
+    - name: Build CUDA similie_env image
+      run: |
+        DOCKER_BUILDKIT=1 docker build \
+          --build-arg BACKEND=cuda \
+          -t "similie_env:${GITHUB_SHA}" \
+          -t similie_env:latest \
+          docker/similie_env
+
+  build-cpu-docker-env:
+    runs-on: [self-hosted, linux]
+    environment:
+      name: manual-ci-run
+    steps:
+    - name: Checkout built branch
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.sha }}
+    - name: Build CPU similie_env_cpu image
+      run: |
+        DOCKER_BUILDKIT=1 docker build \
+          --build-arg BACKEND=cpu \
+          --build-arg BASE_IMAGE=ubuntu:26.04 \
+          -t "similie_env_cpu:${GITHUB_SHA}" \
+          -t similie_env_cpu:latest \
+          docker/similie_env
+
+  build-cuda:
+    needs: build-cuda-docker-env
+    runs-on: [self-hosted, linux]
+    environment:
+      name: manual-ci-run
+    steps:
+    - name: Checkout built branch
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.sha }}
+        submodules: recursive
+        fetch-depth: 0
+    - name: Clear temporary workspace path
+      run: |
+        echo "IMAGE_TAG=similie_env:${GITHUB_SHA}" >> "${GITHUB_ENV}"
+        echo "CACHE_ROOT=${RUNNER_TEMP}/similie-cuda-workspace-${GITHUB_SHA}" >> "${GITHUB_ENV}"
+        rm -rf "${RUNNER_TEMP}/similie-cuda-workspace-${GITHUB_SHA}"
+    - name: Restore CUDA commit workspace
+      id: restore-workspace
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ runner.temp }}/similie-cuda-workspace-${{ github.sha }}
+        key: similie-cuda-workspace-${{ runner.os }}-${{ github.sha }}
+    - name: Populate CUDA commit workspace
+      run: |
+        mkdir -p "${CACHE_ROOT}/src" "${CACHE_ROOT}/agent_build" "${CACHE_ROOT}/home"
+        rsync -a --delete "${GITHUB_WORKSPACE}/" "${CACHE_ROOT}/src/"
+    - name: Configure and compile on GPU
+      run: |
+        docker image inspect "${IMAGE_TAG}" >/dev/null
+        docker run --rm --gpus all \
+          --user "$(id -u):$(id -g)" \
+          -e HOME="${CACHE_ROOT}/home" \
+          -e CACHE_ROOT="${CACHE_ROOT}" \
+          -v "${CACHE_ROOT}:${CACHE_ROOT}" \
+          -w "${CACHE_ROOT}/src" \
+          "${IMAGE_TAG}" \
+          bash -lc '
+            set -euo pipefail
+            export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
+            git config --global --add safe.directory "*"
+            nvidia-smi
+            cap="$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader | head -n1 | tr -d "[:space:]")"
+            case "${cap}" in
+              7.0) kokkos_arch=VOLTA70 ;;
+              7.2) kokkos_arch=VOLTA72 ;;
+              7.5) kokkos_arch=TURING75 ;;
+              8.0) kokkos_arch=AMPERE80 ;;
+              8.6) kokkos_arch=AMPERE86 ;;
+              8.9) kokkos_arch=ADA89 ;;
+              9.0) kokkos_arch=HOPPER90 ;;
+              *) echo "Unsupported NVIDIA compute capability for Kokkos: ${cap}" >&2; exit 1 ;;
+            esac
+            cmake \
+              -DCMAKE_CXX_COMPILER="${PWD}/vendor/ddc/vendor/kokkos/bin/nvcc_wrapper" \
+              -DCMAKE_BUILD_TYPE=Release \
+              -DKokkos_ENABLE_CUDA=ON \
+              -DKokkos_ARCH_${kokkos_arch}=ON \
+              -DKokkos_ENABLE_DEPRECATION_WARNINGS=OFF \
+              -DSIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS=ON \
+              -B "${CACHE_ROOT}/agent_build" \
+              -S .
+            cmake --build "${CACHE_ROOT}/agent_build" --parallel 8
+          '
+    - name: Save CUDA commit workspace
+      if: steps.restore-workspace.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: ${{ runner.temp }}/similie-cuda-workspace-${{ github.sha }}
+        key: similie-cuda-workspace-${{ runner.os }}-${{ github.sha }}
+
+  build-omp-debug:
+    needs: build-cpu-docker-env
+    runs-on: [self-hosted, linux]
+    environment:
+      name: manual-ci-run
+    steps:
+    - name: Checkout built branch
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.sha }}
+        submodules: recursive
+        fetch-depth: 0
+    - name: Clear temporary workspace path
+      run: |
+        echo "IMAGE_TAG=similie_env_cpu:${GITHUB_SHA}" >> "${GITHUB_ENV}"
+        echo "CACHE_ROOT=${RUNNER_TEMP}/similie-omp-workspace-${GITHUB_SHA}" >> "${GITHUB_ENV}"
+        rm -rf "${RUNNER_TEMP}/similie-omp-workspace-${GITHUB_SHA}"
+    - name: Restore OpenMP commit workspace
+      id: restore-workspace
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ runner.temp }}/similie-omp-workspace-${{ github.sha }}
+        key: similie-omp-workspace-${{ runner.os }}-${{ github.sha }}
+    - name: Populate OpenMP commit workspace
+      run: |
+        mkdir -p "${CACHE_ROOT}/src" "${CACHE_ROOT}/agent_build_omp" "${CACHE_ROOT}/home"
+        rsync -a --delete "${GITHUB_WORKSPACE}/" "${CACHE_ROOT}/src/"
+    - name: Configure and compile with OpenMP
+      run: |
+        docker image inspect "${IMAGE_TAG}" >/dev/null
+        docker run --rm \
+          --user "$(id -u):$(id -g)" \
+          -e HOME="${CACHE_ROOT}/home" \
+          -e CACHE_ROOT="${CACHE_ROOT}" \
+          -v "${CACHE_ROOT}:${CACHE_ROOT}" \
+          -w "${CACHE_ROOT}/src" \
+          "${IMAGE_TAG}" \
+          bash -lc '
+            set -euo pipefail
+            git config --global --add safe.directory "*"
+            g++-15 --version
+            cmake \
+              -DCMAKE_CXX_COMPILER=g++-15 \
+              -DCMAKE_BUILD_TYPE=Debug \
+              -DKokkos_ENABLE_OPENMP=ON \
+              -DKokkos_ENABLE_DEPRECATION_WARNINGS=OFF \
+              -DSIMILIE_BUILD_YOUNG_TABLEAU=ON \
+              -DSIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS=ON \
+              -B "${CACHE_ROOT}/agent_build_omp" \
+              -S .
+            cmake --build "${CACHE_ROOT}/agent_build_omp" --parallel 8
+          '
+    - name: Save OpenMP commit workspace
+      if: steps.restore-workspace.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: ${{ runner.temp }}/similie-omp-workspace-${{ github.sha }}
+        key: similie-omp-workspace-${{ runner.os }}-${{ github.sha }}
+
+  tests-cuda:
+    needs: build-cuda
+    runs-on: [self-hosted, linux]
+    environment:
+      name: manual-ci-run
+    steps:
+    - name: Set build paths
+      run: |
+        echo "IMAGE_TAG=similie_env:${GITHUB_SHA}" >> "${GITHUB_ENV}"
+        echo "CACHE_ROOT=${RUNNER_TEMP}/similie-cuda-workspace-${GITHUB_SHA}" >> "${GITHUB_ENV}"
+        rm -rf "${RUNNER_TEMP}/similie-cuda-workspace-${GITHUB_SHA}"
+    - name: Restore CUDA commit workspace
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ runner.temp }}/similie-cuda-workspace-${{ github.sha }}
+        key: similie-cuda-workspace-${{ runner.os }}-${{ github.sha }}
+        fail-on-cache-miss: true
+    - name: Recompile and run CUDA tests
+      run: |
+        docker image inspect "${IMAGE_TAG}" >/dev/null
+        docker run --rm --gpus all \
+          --user "$(id -u):$(id -g)" \
+          -e HOME="${CACHE_ROOT}/home" \
+          -e CACHE_ROOT="${CACHE_ROOT}" \
+          -v "${CACHE_ROOT}:${CACHE_ROOT}" \
+          -w "${CACHE_ROOT}/agent_build" \
+          "${IMAGE_TAG}" \
+          bash -lc '
+            set -euo pipefail
+            export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
+            git config --global --add safe.directory "*"
+            nvidia-smi
+            cmake --build . --parallel 8
+            ctest --output-on-failure
+          '
+
+  tests-omp-debug:
+    needs: build-omp-debug
+    runs-on: [self-hosted, linux]
+    environment:
+      name: manual-ci-run
+    steps:
+    - name: Set build paths
+      run: |
+        echo "IMAGE_TAG=similie_env_cpu:${GITHUB_SHA}" >> "${GITHUB_ENV}"
+        echo "CACHE_ROOT=${RUNNER_TEMP}/similie-omp-workspace-${GITHUB_SHA}" >> "${GITHUB_ENV}"
+        rm -rf "${RUNNER_TEMP}/similie-omp-workspace-${GITHUB_SHA}"
+    - name: Restore OpenMP commit workspace
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ runner.temp }}/similie-omp-workspace-${{ github.sha }}
+        key: similie-omp-workspace-${{ runner.os }}-${{ github.sha }}
+        fail-on-cache-miss: true
+    - name: Pre-run YoungTableau tests, recompile, and run OpenMP tests
+      run: |
+        docker image inspect "${IMAGE_TAG}" >/dev/null
+        docker run --rm \
+          --user "$(id -u):$(id -g)" \
+          -e HOME="${CACHE_ROOT}/home" \
+          -e CACHE_ROOT="${CACHE_ROOT}" \
+          -v "${CACHE_ROOT}:${CACHE_ROOT}" \
+          -w "${CACHE_ROOT}/agent_build_omp" \
+          "${IMAGE_TAG}" \
+          bash -lc '
+            set -euo pipefail
+            git config --global --add safe.directory "*"
+            ctest --output-on-failure -R '^YoungTableau\.'
+            cmake --build . --clean-first --parallel 8
+            ctest --output-on-failure
+          '
+
+  example-2d_laplacian:
+    needs: build-cuda
+    uses: ./.github/workflows/example_laplacian.yml
+    with:
+      target_sha: ${{ github.sha }}
+      ci_environment: manual-ci-run
+
+  example-2d_vector_laplacian:
+    needs: build-cuda
+    uses: ./.github/workflows/example_laplacian_vector.yml
+    with:
+      target_sha: ${{ github.sha }}
+      ci_environment: manual-ci-run
+
+  example-2d_scalar_field:
+    needs: build-cuda
+    uses: ./.github/workflows/example_scalar_field.yml
+    with:
+      target_sha: ${{ github.sha }}
+      ci_environment: manual-ci-run
+
+  example-kretschmann_scalar:
+    needs: build-omp-debug
+    uses: ./.github/workflows/example_kretschmann_scalar.yml
+    with:
+      target_sha: ${{ github.sha }}
+      ci_environment: manual-ci-run

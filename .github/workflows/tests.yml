@@ -1,28 +1,126 @@
-# SPDX-FileCopyrightText: 2024 Baptiste Legouix
+# SPDX-FileCopyrightText: 2026 Baptiste Legouix
 # SPDX-License-Identifier: MIT
 
-name: test
+name: tests
 on:
-  push: { branches: [ main ] }
-  pull_request:
+  workflow_run:
+    workflows: [ build ]
+    types: [ completed ]
+  workflow_dispatch:
+    inputs:
+      target_sha:
+        description: Commit SHA to test
+        required: false
+  workflow_call:
+    inputs:
+      target_sha:
+        required: true
+        type: string
+      test_target:
+        required: false
+        type: string
+        default: all
+      ci_environment:
+        required: false
+        type: string
+        default: automatic-ci-run
+
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref == github.ref_protected && github.run_id || github.event.pull_request.number || github.ref }}
+  group: tests-${{ inputs.test_target || 'all' }}-${{ inputs.target_sha || github.event.workflow_run.head_sha || github.sha }}
   cancel-in-progress: true
+
 jobs:
-  lint:
-    runs-on: ubuntu-latest
+  tests-cuda:
+    if: (inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') && (!inputs.test_target || inputs.test_target == 'all' || inputs.test_target == 'cuda')
+    runs-on: [self-hosted, linux]
+    environment:
+      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run') }}
     steps:
-    - uses: actions/checkout@v4
-    - uses: DoozyX/clang-format-lint-action@v0.20
+    - name: Select target commit
+      id: target
+      run: |
+        if [ -n "${{ inputs.target_sha }}" ]; then
+          target_sha="${{ inputs.target_sha }}"
+        elif [ "${GITHUB_EVENT_NAME}" = "workflow_run" ]; then
+          target_sha="${{ github.event.workflow_run.head_sha }}"
+        else
+          target_sha="${GITHUB_SHA}"
+        fi
+        echo "TARGET_SHA=${target_sha}" >> "${GITHUB_ENV}"
+        echo "target_sha=${target_sha}" >> "${GITHUB_OUTPUT}"
+    - name: Set build paths
+      run: |
+        echo "IMAGE_TAG=similie_env:${TARGET_SHA}" >> "${GITHUB_ENV}"
+        echo "CACHE_ROOT=${RUNNER_TEMP}/similie-cuda-workspace-${TARGET_SHA}" >> "${GITHUB_ENV}"
+        rm -rf "${RUNNER_TEMP}/similie-cuda-workspace-${TARGET_SHA}"
+    - name: Restore commit workspace
+      uses: actions/cache/restore@v4
       with:
-        source: 'examples/ src/similie/ tests/'
-        exclude: ''
-        extensions: 'hpp,cpp'
-        clangFormatVersion: 20
-    - name: Prefer 'if defined' over 'ifdef'
-      run: if grep -R "ifdef" examples/ src/similie/ tests/; then exit 1; fi
-    - name: Find modifications of Kokkos reserved macros
-      run: if grep -RE "(define|undef) KOKKOS_" examples/ src/similie/ tests/; then exit 1; fi
-    - name: REUSE Compliance Check
-      if: always()
-      uses: fsfe/reuse-action@v6
+        path: ${{ runner.temp }}/similie-cuda-workspace-${{ steps.target.outputs.target_sha }}
+        key: similie-cuda-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
+        fail-on-cache-miss: true
+    - name: Recompile and run CUDA tests
+      run: |
+        docker image inspect "${IMAGE_TAG}" >/dev/null
+        docker run --rm --gpus all \
+          --user "$(id -u):$(id -g)" \
+          -e HOME="${CACHE_ROOT}/home" \
+          -e CACHE_ROOT="${CACHE_ROOT}" \
+          -v "${CACHE_ROOT}:${CACHE_ROOT}" \
+          -w "${CACHE_ROOT}/agent_build" \
+          "${IMAGE_TAG}" \
+          bash -lc '
+            set -euo pipefail
+            export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
+            git config --global --add safe.directory "*"
+            nvidia-smi
+            cmake --build . --parallel 8
+            ctest --output-on-failure
+          '
+
+  tests-omp-debug:
+    if: (inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') && (!inputs.test_target || inputs.test_target == 'all' || inputs.test_target == 'omp')
+    runs-on: [self-hosted, linux]
+    environment:
+      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run') }}
+    steps:
+    - name: Select target commit
+      id: target
+      run: |
+        if [ -n "${{ inputs.target_sha }}" ]; then
+          target_sha="${{ inputs.target_sha }}"
+        elif [ "${GITHUB_EVENT_NAME}" = "workflow_run" ]; then
+          target_sha="${{ github.event.workflow_run.head_sha }}"
+        else
+          target_sha="${GITHUB_SHA}"
+        fi
+        echo "TARGET_SHA=${target_sha}" >> "${GITHUB_ENV}"
+        echo "target_sha=${target_sha}" >> "${GITHUB_OUTPUT}"
+    - name: Set build paths
+      run: |
+        echo "IMAGE_TAG=similie_env_cpu:${TARGET_SHA}" >> "${GITHUB_ENV}"
+        echo "CACHE_ROOT=${RUNNER_TEMP}/similie-omp-workspace-${TARGET_SHA}" >> "${GITHUB_ENV}"
+        rm -rf "${RUNNER_TEMP}/similie-omp-workspace-${TARGET_SHA}"
+    - name: Restore OpenMP commit workspace
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ runner.temp }}/similie-omp-workspace-${{ steps.target.outputs.target_sha }}
+        key: similie-omp-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
+        fail-on-cache-miss: true
+    - name: Pre-run YoungTableau tests, recompile, and run OpenMP tests
+      run: |
+        docker image inspect "${IMAGE_TAG}" >/dev/null
+        docker run --rm \
+          --user "$(id -u):$(id -g)" \
+          -e HOME="${CACHE_ROOT}/home" \
+          -e CACHE_ROOT="${CACHE_ROOT}" \
+          -v "${CACHE_ROOT}:${CACHE_ROOT}" \
+          -w "${CACHE_ROOT}/agent_build_omp" \
+          "${IMAGE_TAG}" \
+          bash -lc '
+            set -euo pipefail
+            git config --global --add safe.directory "*"
+            ctest --output-on-failure -R '^YoungTableau\.'
+            cmake --build . --clean-first --parallel 8
+            ctest --output-on-failure
+          '
