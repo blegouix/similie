@@ -103,7 +103,7 @@ RUN apt update && apt install -y \
   libocct-ocaf-dev
 
 # gmsh
-RUN apt update && apt install -y libfltk-dev
+RUN apt update && apt install -y libfltk1.3-dev
 RUN git clone https://gitlab.onelab.info/gmsh/gmsh.git
 RUN cmake -DENABLE_OCC=ON -DENABLE_OCC_CAF=ON -B gmsh/build -S gmsh
 RUN cmake --build gmsh/build -j 4
