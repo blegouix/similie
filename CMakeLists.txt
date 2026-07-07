@@ -24,7 +24,6 @@ option(DDC_BUILD_TESTS            "Build DDC tests if BUILD_TESTING is enabled" 
 
 # Custom variables
 if("${SIMILIE_BUILD_YOUNG_TABLEAU}")
-  set(CMAKE_CXX_STANDARD 26 CACHE INTERNAL "The C++ standard whose features are requested to build this project.")
   add_compile_definitions("BUILD_YOUNG_TABLEAU")
   if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/irreps_dict.bin)
     file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/irreps_dict.bin "")
@@ -57,6 +56,10 @@ endif()
 
 ## Use the discrete domain computation library (ddc) from `vendor/`
 add_subdirectory("vendor/ddc/" "ddc") # SYSTEM)
+
+if("${SIMILIE_BUILD_YOUNG_TABLEAU}")
+  set(CMAKE_CXX_STANDARD 26 CACHE INTERNAL "The C++ standard whose features are requested to build this project.")
+endif()
 
 ## Doxygen
 if("${SIMILIE_BUILD_DOCUMENTATION}")
