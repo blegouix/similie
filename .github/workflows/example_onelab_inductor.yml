@@ -97,10 +97,11 @@ jobs:
         docker image inspect "${IMAGE_TAG}" >/dev/null
         docker run --rm --gpus all \
           --user "$(id -u):$(id -g)" \
-          -e HOME="/similie-ci/home" \
-          -e CACHE_ROOT="/similie-ci" \
+          -e HOME="${CACHE_ROOT}/home" \
+          -e CACHE_ROOT="${CACHE_ROOT}" \
           -v "${CACHE_ROOT}:/similie-ci" \
-          -w "/similie-ci/agent_build" \
+          -v "${CACHE_ROOT}:${CACHE_ROOT}" \
+          -w "${CACHE_ROOT}/agent_build" \
           "${IMAGE_TAG}" \
           bash -lc '
             set -euo pipefail
@@ -110,6 +111,7 @@ jobs:
             cmake --build . --parallel 8 --target similie_onelab
 
             case_name="${{ matrix.case.name }}"
+            cd /similie-ci/agent_build
             output_dir="${PWD}/onelab_inductor_cases/${case_name}"
             mkdir -p "${output_dir}"
             SIMILIE_ONELAB_BUILD_DIR="${PWD}" \
