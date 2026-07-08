@@ -5,7 +5,9 @@
 
 #include <chrono>
 #include <cmath>
+#include <cstdlib>
 #include <iostream>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <stdexcept>
@@ -54,6 +56,122 @@ namespace detail {
 
 template <class ExecSpace, class ViewType>
 double residual_norm_l2(ExecSpace exec_space, ViewType residual);
+
+inline unsigned int solver_progress_stride()
+{
+    char const* const value = std::getenv("SIMILIE_SOLVER_PROGRESS_STRIDE");
+    if (value == nullptr || value[0] == '\0') {
+        return 0U;
+    }
+
+    char* parse_end = nullptr;
+    unsigned long const parsed = std::strtoul(value, &parse_end, 10);
+    if (parse_end == value || parsed == 0UL) {
+        return 1U;
+    }
+    if (parsed > std::numeric_limits<unsigned int>::max()) {
+        return std::numeric_limits<unsigned int>::max();
+    }
+    return static_cast<unsigned int>(parsed);
+}
+
+inline bool solver_progress_enabled()
+{
+    return solver_progress_stride() != 0U;
+}
+
+class SolverProgressLogger final : public gko::log::Logger
+{
+public:
+    SolverProgressLogger(
+            std::shared_ptr<gko::Executor const> master_executor,
+            double initial_residual_l2,
+            unsigned int stride)
+        : Logger(gko::log::Logger::iteration_complete_mask)
+        , m_master_executor(std::move(master_executor))
+        , m_initial_residual_l2(initial_residual_l2)
+        , m_stride(stride)
+    {
+    }
+
+protected:
+    void on_iteration_complete(
+            gko::LinOp const*,
+            gko::LinOp const*,
+            gko::LinOp const*,
+            gko::size_type const& num_iterations,
+            gko::LinOp const* residual,
+            gko::LinOp const* residual_norm,
+            gko::LinOp const*,
+            gko::array<gko::stopping_status> const*,
+            bool) const override
+    {
+        if (m_stride == 0U || num_iterations % m_stride != 0U) {
+            return;
+        }
+        std::optional<double> residual_l2 = residual_norm_value(residual_norm);
+        if (!residual_l2.has_value()) {
+            residual_l2 = residual_vector_l2(residual);
+        }
+        if (!residual_l2.has_value()) {
+            return;
+        }
+        double const relative_residual
+                = m_initial_residual_l2 == 0.0 ? 0.0 : *residual_l2 / m_initial_residual_l2;
+        std::cout << "SimiLie solver progress: iteration=" << num_iterations
+                  << " residual_l2=" << *residual_l2 << " relative_residual=" << relative_residual
+                  << std::endl;
+    }
+
+private:
+    std::optional<double> residual_norm_value(gko::LinOp const* residual_norm) const
+    {
+        auto const* residual_norm_dense
+                = dynamic_cast<gko::matrix::Dense<double> const*>(residual_norm);
+        if (residual_norm_dense == nullptr) {
+            return std::nullopt;
+        }
+        auto host_dense = gko::matrix::Dense<
+                double>::create(m_master_executor, residual_norm_dense->get_size());
+        residual_norm_dense->convert_to(host_dense.get());
+        return host_dense->at(0, 0);
+    }
+
+    std::optional<double> residual_vector_l2(gko::LinOp const* residual) const
+    {
+        auto const* residual_dense = dynamic_cast<gko::matrix::Dense<double> const*>(residual);
+        if (residual_dense == nullptr) {
+            return std::nullopt;
+        }
+        auto host_dense
+                = gko::matrix::Dense<double>::create(m_master_executor, residual_dense->get_size());
+        residual_dense->convert_to(host_dense.get());
+        double squared_norm = 0.0;
+        for (gko::size_type row = 0; row < host_dense->get_size()[0]; ++row) {
+            for (gko::size_type column = 0; column < host_dense->get_size()[1]; ++column) {
+                double const value = host_dense->at(row, column);
+                squared_norm += value * value;
+            }
+        }
+        return std::sqrt(squared_norm);
+    }
+
+    std::shared_ptr<gko::Executor const> m_master_executor;
+    double m_initial_residual_l2;
+    unsigned int m_stride;
+};
+
+inline void log_nonlinear_progress(
+        unsigned int iteration,
+        StrongFormulationSolverDiagnostics const& diagnostics)
+{
+    if (!solver_progress_enabled()) {
+        return;
+    }
+    std::cout << "SimiLie nonlinear progress: iteration=" << iteration
+              << " residual_l2=" << diagnostics.final_residual_l2
+              << " relative_residual=" << diagnostics.final_relative_residual << std::endl;
+}
 
 template <class ExecSpace, class OperatorModel, class InputView, class OutputView>
 void apply_operator(
@@ -464,6 +582,14 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
     auto convergence_logger = std::shared_ptr<gko::log::Convergence<double>>(
             gko::log::Convergence<double>::create().release());
     solver->add_logger(convergence_logger);
+    std::shared_ptr<SolverProgressLogger> progress_logger;
+    if (unsigned int const progress_stride = solver_progress_stride(); progress_stride != 0U) {
+        progress_logger = std::make_shared<SolverProgressLogger>(
+                gko_exec->get_master(),
+                diagnostics.initial_residual_l2,
+                progress_stride);
+        solver->add_logger(progress_logger);
+    }
 
     fill(exec_space, solution, 0.0);
     auto rhs_gko = to_gko_dense(gko_exec, rhs);
@@ -473,6 +599,9 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
     gko_exec->synchronize();
     copy_back_from_gko_dense_bridge(solution, solution_gko);
     auto const optimization_end = std::chrono::steady_clock::now();
+    if (progress_logger != nullptr) {
+        solver->remove_logger(progress_logger);
+    }
     solver->remove_logger(convergence_logger);
     diagnostics.duration
             = std::chrono::duration<double>(optimization_end - optimization_start).count();
@@ -565,6 +694,7 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
                     = diagnostics.initial_residual_l2 == 0.0
                               ? 0.0
                               : diagnostics.final_residual_l2 / diagnostics.initial_residual_l2;
+            detail::log_nonlinear_progress(iteration, diagnostics);
             if (diagnostics.final_relative_residual <= settings.relative_tolerance) {
                 diagnostics.converged = true;
                 break;
@@ -606,12 +736,24 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
                 auto convergence_logger = std::shared_ptr<gko::log::Convergence<double>>(
                         gko::log::Convergence<double>::create().release());
                 solver->add_logger(convergence_logger);
+                std::shared_ptr<detail::SolverProgressLogger> progress_logger;
+                if (unsigned int const progress_stride = detail::solver_progress_stride();
+                    progress_stride != 0U) {
+                    progress_logger = std::make_shared<detail::SolverProgressLogger>(
+                            gko_exec->get_master(),
+                            detail::residual_norm_l2(exec_space, correction_rhs),
+                            progress_stride);
+                    solver->add_logger(progress_logger);
+                }
                 detail::fill(exec_space, delta, 0.0);
                 auto rhs_gko = detail::to_gko_dense(gko_exec, correction_rhs);
                 auto delta_gko = detail::to_gko_dense(gko_exec, delta);
                 solver->apply(rhs_gko.dense, delta_gko.dense);
                 gko_exec->synchronize();
                 detail::copy_back_from_gko_dense_bridge(delta, delta_gko);
+                if (progress_logger != nullptr) {
+                    solver->remove_logger(progress_logger);
+                }
                 solver->remove_logger(convergence_logger);
                 diagnostics.iterations
                         += static_cast<unsigned int>(convergence_logger->get_num_iterations());
