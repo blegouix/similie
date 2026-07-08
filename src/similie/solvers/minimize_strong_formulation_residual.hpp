@@ -419,120 +419,6 @@ inline std::shared_ptr<gko::LinOp const> build_jacobi_preconditioner(
     return std::shared_ptr<gko::LinOp const>(preconditioner_factory->generate(matrix).release());
 }
 
-template <class KokkosViewType>
-void apply_preconditioner(
-        std::shared_ptr<gko::Executor const> const& gko_exec,
-        std::shared_ptr<gko::LinOp const> const& preconditioner,
-        KokkosViewType rhs,
-        KokkosViewType solution)
-{
-    auto rhs_gko = to_gko_dense(gko_exec, rhs);
-    auto solution_gko = to_gko_dense(gko_exec, solution);
-    preconditioner->apply(rhs_gko.dense, solution_gko.dense);
-    gko_exec->synchronize();
-    copy_back_from_gko_dense_bridge(solution, solution_gko);
-}
-
-template <class OperatorModel, class StateView>
-struct LinearizedOperatorModel
-{
-    OperatorModel const* operator_model;
-    StateView state;
-
-    [[nodiscard]] std::size_t size() const
-    {
-        return operator_model->size();
-    }
-
-    template <class ExecSpace, class InputView, class OutputView>
-    void apply(ExecSpace exec_space, InputView input, OutputView output) const
-    {
-        apply_jacobian(exec_space, *operator_model, state, input, output);
-    }
-};
-
-template <class ExecSpace, class OperatorModel, class RHSViewType, class SolutionViewType>
-StrongFormulationSolverDiagnostics solve_matrix_free_linearized_system(
-        ExecSpace exec_space,
-        std::shared_ptr<gko::Executor const> const& gko_exec,
-        OperatorModel const& operator_model,
-        RHSViewType rhs,
-        SolutionViewType solution,
-        StrongFormulationSolverSettings const& settings,
-        std::shared_ptr<gko::LinOp const> const& preconditioner)
-{
-    using memory_space = typename SolutionViewType::memory_space;
-    StrongFormulationSolverDiagnostics diagnostics;
-    diagnostics.initial_residual_l2 = residual_norm_l2(exec_space, rhs);
-    diagnostics.final_residual_l2 = diagnostics.initial_residual_l2;
-    diagnostics.final_relative_residual = diagnostics.initial_residual_l2 == 0.0 ? 0.0 : 1.0;
-    if (diagnostics.initial_residual_l2 == 0.0) {
-        fill(exec_space, solution, 0.0);
-        return diagnostics;
-    }
-
-    Kokkos::View<double**, memory_space>
-            residual("similie_matrix_free_cg_residual", rhs.extent(0), rhs.extent(1));
-    Kokkos::View<double**, memory_space>
-            preconditioned("similie_matrix_free_cg_preconditioned", rhs.extent(0), rhs.extent(1));
-    Kokkos::View<double**, memory_space>
-            direction("similie_matrix_free_cg_direction", rhs.extent(0), rhs.extent(1));
-    Kokkos::View<double**, memory_space> operator_direction(
-            "similie_matrix_free_cg_operator_direction",
-            rhs.extent(0),
-            rhs.extent(1));
-
-    fill(exec_space, solution, 0.0);
-    copy(exec_space, residual, rhs);
-    auto const optimization_start = std::chrono::steady_clock::now();
-    apply_preconditioner(gko_exec, preconditioner, residual, preconditioned);
-    copy(exec_space, direction, preconditioned);
-    double rho = dot(exec_space, residual, preconditioned);
-    if (!std::isfinite(rho) || rho <= 0.0) {
-        diagnostics.converged = false;
-        auto const optimization_end = std::chrono::steady_clock::now();
-        diagnostics.duration
-                = std::chrono::duration<double>(optimization_end - optimization_start).count();
-        return diagnostics;
-    }
-
-    diagnostics.converged = false;
-    for (unsigned int iteration = 0; iteration < settings.max_iterations; ++iteration) {
-        apply_operator(exec_space, operator_model, direction, operator_direction);
-        double const denominator = dot(exec_space, direction, operator_direction);
-        if (!std::isfinite(denominator) || denominator == 0.0) {
-            break;
-        }
-
-        double const alpha = rho / denominator;
-        axpy_inplace(exec_space, solution, alpha, direction);
-        axpy_inplace(exec_space, residual, -alpha, operator_direction);
-
-        diagnostics.iterations = iteration + 1U;
-        diagnostics.final_residual_l2 = residual_norm_l2(exec_space, residual);
-        diagnostics.final_relative_residual
-                = diagnostics.final_residual_l2 / diagnostics.initial_residual_l2;
-        if (diagnostics.final_relative_residual <= settings.relative_tolerance) {
-            diagnostics.converged = true;
-            break;
-        }
-
-        apply_preconditioner(gko_exec, preconditioner, residual, preconditioned);
-        double const next_rho = dot(exec_space, residual, preconditioned);
-        if (!std::isfinite(next_rho) || next_rho <= 0.0) {
-            break;
-        }
-        double const beta = next_rho / rho;
-        update_axpby(exec_space, direction, 1.0, preconditioned, beta, direction);
-        rho = next_rho;
-    }
-
-    auto const optimization_end = std::chrono::steady_clock::now();
-    diagnostics.duration
-            = std::chrono::duration<double>(optimization_end - optimization_start).count();
-    return diagnostics;
-}
-
 template <class ExecSpace, class OperatorModel, class RHSViewType, class SolutionViewType>
 StrongFormulationSolverDiagnostics solve_linearized_system(
         ExecSpace exec_space,
@@ -553,16 +439,6 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
         fill(exec_space, solution, 0.0);
         return diagnostics;
     }
-    if (settings.use_matrix_free) {
-        return solve_matrix_free_linearized_system(
-                exec_space,
-                gko_exec,
-                operator_model,
-                rhs,
-                solution,
-                settings,
-                preconditioner);
-    }
 
     auto residual_criterion = gko::stop::ResidualNorm<double>::build()
                                       .with_reduction_factor(settings.relative_tolerance)
@@ -574,7 +450,17 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
                       .with_generated_preconditioner(preconditioner)
                       .with_criteria(std::move(residual_criterion), std::move(iterations_criterion))
                       .on(gko_exec);
-    auto solver = solver_factory->generate(assembled_matrix);
+    std::shared_ptr<gko::LinOp const> system_matrix;
+    if (settings.use_matrix_free) {
+        auto operator_model_ptr = std::make_shared<OperatorModel>(operator_model);
+        system_matrix = std::shared_ptr<gko::LinOp const>(
+                std::make_shared<MatrixFreeLinOp<
+                        ExecSpace,
+                        OperatorModel>>(gko_exec, exec_space, std::move(operator_model_ptr)));
+    } else {
+        system_matrix = assembled_matrix;
+    }
+    auto solver = solver_factory->generate(system_matrix);
     auto convergence_logger = std::shared_ptr<gko::log::Convergence<double>>(
             gko::log::Convergence<double>::create().release());
     solver->add_logger(convergence_logger);
@@ -692,17 +578,43 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
 
             detail::copy(exec_space, correction_rhs, residual);
             if (settings.use_matrix_free) {
-                detail::LinearizedOperatorModel<OperatorModel, SolutionViewType>
-                        linearized_operator {&operator_model, solution};
-                auto inner = detail::solve_matrix_free_linearized_system(
-                        exec_space,
-                        gko_exec,
-                        linearized_operator,
-                        correction_rhs,
-                        delta,
-                        settings,
-                        preconditioner);
-                diagnostics.iterations += inner.iterations;
+                using solver_type = gko::solver::Cg<double>;
+                auto residual_criterion
+                        = gko::stop::ResidualNorm<double>::build()
+                                  .with_reduction_factor(settings.relative_tolerance)
+                                  .on(gko_exec);
+                auto iterations_criterion = gko::stop::Iteration::build()
+                                                    .with_max_iters(settings.max_iterations)
+                                                    .on(gko_exec);
+                auto solver_factory = solver_type::build()
+                                              .with_generated_preconditioner(preconditioner)
+                                              .with_criteria(
+                                                      std::move(residual_criterion),
+                                                      std::move(iterations_criterion))
+                                              .on(gko_exec);
+                auto operator_model_ptr = std::make_shared<OperatorModel>(operator_model);
+                auto system_matrix = std::shared_ptr<gko::LinOp const>(
+                        std::make_shared<detail::StateDependentMatrixFreeLinOp<
+                                ExecSpace,
+                                OperatorModel,
+                                SolutionViewType>>(
+                                gko_exec,
+                                exec_space,
+                                operator_model_ptr,
+                                solution));
+                auto solver = solver_factory->generate(system_matrix);
+                auto convergence_logger = std::shared_ptr<gko::log::Convergence<double>>(
+                        gko::log::Convergence<double>::create().release());
+                solver->add_logger(convergence_logger);
+                detail::fill(exec_space, delta, 0.0);
+                auto rhs_gko = detail::to_gko_dense(gko_exec, correction_rhs);
+                auto delta_gko = detail::to_gko_dense(gko_exec, delta);
+                solver->apply(rhs_gko.dense, delta_gko.dense);
+                gko_exec->synchronize();
+                detail::copy_back_from_gko_dense_bridge(delta, delta_gko);
+                solver->remove_logger(convergence_logger);
+                diagnostics.iterations
+                        += static_cast<unsigned int>(convergence_logger->get_num_iterations());
             } else {
                 auto inner = detail::solve_linearized_system(
                         exec_space,
