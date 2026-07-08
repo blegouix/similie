@@ -11,10 +11,12 @@
 #include <filesystem>
 #include <fstream>
 #include <functional>
+#include <iomanip>
 #include <iterator>
 #include <limits>
 #include <numbers>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -388,6 +390,30 @@ void log_info(Logger&& logger, std::string const& message)
     if constexpr (std::is_invocable_v<Logger, std::string const&>) {
         logger(message);
     }
+}
+
+inline std::string format_seconds(double seconds)
+{
+    std::ostringstream output;
+    output << std::fixed << std::setprecision(2) << seconds;
+    return output.str();
+}
+
+inline std::string solve_backend_description(bool use_matrix_free)
+{
+    return use_matrix_free ? "matrix-free preconditioned conjugate-gradient"
+                           : "assembled-matrix Ginkgo preconditioned conjugate-gradient";
+}
+
+inline std::string solve_start_message(bool use_matrix_free)
+{
+    return "SimiLie starting " + solve_backend_description(use_matrix_free) + " solve";
+}
+
+inline std::string solve_finished_message(bool use_matrix_free, double duration_seconds)
+{
+    return "SimiLie " + solve_backend_description(use_matrix_free) + " solve finished in "
+           + format_seconds(duration_seconds) + " seconds";
 }
 
 inline bool has_tag(std::vector<int> const& tags, int physical_tag)
@@ -3153,13 +3179,7 @@ Result run_on_quadrilateral_grid(
                 x_coords,
                 y_coords,
                 solver_settings.criterion);
-        log_info(
-                logger,
-                solver_settings.use_matrix_free
-                        ? "SimiLie starting matrix-free preconditioned conjugate-gradient solve"
-                        : "SimiLie starting assembled-matrix Ginkgo preconditioned "
-                          "conjugate-gradient "
-                          "solve");
+        log_info(logger, solve_start_message(solver_settings.use_matrix_free));
         result.solver_diagnostics = solvers::minimize_strong_formulation_residual(
                 Kokkos::DefaultExecutionSpace(),
                 operator_model,
@@ -3168,10 +3188,9 @@ Result run_on_quadrilateral_grid(
                 solver_settings);
         log_info(
                 logger,
-                solver_settings.use_matrix_free
-                        ? "SimiLie matrix-free preconditioned conjugate-gradient solve finished"
-                        : "SimiLie assembled-matrix Ginkgo preconditioned conjugate-gradient solve "
-                          "finished");
+                solve_finished_message(
+                        solver_settings.use_matrix_free,
+                        result.solver_diagnostics.duration));
     };
     if (inputs.use_nonlinear_magnetic_material) {
         validate_nonlinear_bh_curve(inputs.nonlinear_bh_curve);
@@ -3691,13 +3710,7 @@ Result run_on_hexahedral_grid(
                 x_coords,
                 y_coords,
                 z_coords);
-        log_info(
-                logger,
-                solver_settings.use_matrix_free
-                        ? "SimiLie starting matrix-free preconditioned conjugate-gradient solve"
-                        : "SimiLie starting assembled-matrix Ginkgo preconditioned "
-                          "conjugate-gradient "
-                          "solve");
+        log_info(logger, solve_start_message(solver_settings.use_matrix_free));
         result.solver_diagnostics = solvers::minimize_strong_formulation_residual(
                 Kokkos::DefaultExecutionSpace(),
                 operator_model,
@@ -3706,10 +3719,9 @@ Result run_on_hexahedral_grid(
                 solver_settings);
         log_info(
                 logger,
-                solver_settings.use_matrix_free
-                        ? "SimiLie matrix-free preconditioned conjugate-gradient solve finished"
-                        : "SimiLie assembled-matrix Ginkgo preconditioned conjugate-gradient solve "
-                          "finished");
+                solve_finished_message(
+                        solver_settings.use_matrix_free,
+                        result.solver_diagnostics.duration));
     };
     if (inputs.use_nonlinear_magnetic_material) {
         validate_nonlinear_bh_curve(inputs.nonlinear_bh_curve);
