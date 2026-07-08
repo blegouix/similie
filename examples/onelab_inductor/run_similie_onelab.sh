@@ -156,7 +156,9 @@ EOF
     "${geometry_file}" \
     "${control_file}" \
     "${gmsh_args[@]}" \
-    2>&1 | tee "${log_file}"
+    2>&1 \
+    | sed -u '/^Info[[:space:]]*: SimiLie -[[:space:]]*$/d' \
+    | tee "${log_file}"
 
 actual_result_file="${result_file}"
 if [[ ! -f "${actual_result_file}" ]]; then

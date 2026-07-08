@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <cctype>
 #include <cmath>
 #include <cstddef>
@@ -414,6 +415,11 @@ inline std::string solve_finished_message(bool use_matrix_free, double duration_
 {
     return "SimiLie " + solve_backend_description(use_matrix_free) + " solve finished in "
            + format_seconds(duration_seconds) + " seconds";
+}
+
+inline std::string phase_finished_message(std::string const& phase, double duration_seconds)
+{
+    return "SimiLie " + phase + " finished in " + format_seconds(duration_seconds) + " seconds";
 }
 
 inline bool has_tag(std::vector<int> const& tags, int physical_tag)
@@ -1359,7 +1365,7 @@ public:
             typename MagneticVectorPotentialToMagneticInduction::magnetic_induction_index;
     static constexpr bool IS_LINEAR = Equations::IS_LINEAR;
     static constexpr int MOMENT_STENCIL_MAX_SIZE = 24;
-    static constexpr int TRANSPOSED_MOMENT_STENCIL_MAX_SIZE = 128;
+    static constexpr int TRANSPOSED_MOMENT_STENCIL_MAX_SIZE = 24;
 
 private:
     Equations m_equations;
@@ -1393,18 +1399,32 @@ public:
         , m_node_domain(
                   ddc::DiscreteElement<DDimX, DDimY, DDimZ>(0, 0, 0),
                   ddc::DiscreteVector<DDimX, DDimY, DDimZ>(m_nx, m_ny, m_nz))
-        , m_moment_columns("similie_3d_moment_columns", 3 * m_nx * m_ny * m_nz)
-        , m_moment_coefficients("similie_3d_moment_coefficients", 3 * m_nx * m_ny * m_nz)
-        , m_moment_counts("similie_3d_moment_counts", 3 * m_nx * m_ny * m_nz)
+        , m_moment_columns(
+                  Kokkos::view_alloc(Kokkos::WithoutInitializing, "similie_3d_moment_columns"),
+                  3 * m_nx * m_ny * m_nz)
+        , m_moment_coefficients(
+                  Kokkos::view_alloc(Kokkos::WithoutInitializing, "similie_3d_moment_coefficients"),
+                  3 * m_nx * m_ny * m_nz)
+        , m_moment_counts(
+                  Kokkos::view_alloc(Kokkos::WithoutInitializing, "similie_3d_moment_counts"),
+                  3 * m_nx * m_ny * m_nz)
         , m_transposed_moment_rows(
-                  "similie_3d_transposed_moment_rows",
+                  Kokkos::view_alloc(
+                          Kokkos::WithoutInitializing,
+                          "similie_3d_transposed_moment_rows"),
                   3 * m_nx * m_ny * m_nz,
                   TRANSPOSED_MOMENT_STENCIL_MAX_SIZE)
         , m_transposed_moment_coefficients(
-                  "similie_3d_transposed_moment_coefficients",
+                  Kokkos::view_alloc(
+                          Kokkos::WithoutInitializing,
+                          "similie_3d_transposed_moment_coefficients"),
                   3 * m_nx * m_ny * m_nz,
                   TRANSPOSED_MOMENT_STENCIL_MAX_SIZE)
-        , m_transposed_moment_counts("similie_3d_transposed_moment_counts", 3 * m_nx * m_ny * m_nz)
+        , m_transposed_moment_counts(
+                  Kokkos::view_alloc(
+                          Kokkos::WithoutInitializing,
+                          "similie_3d_transposed_moment_counts"),
+                  3 * m_nx * m_ny * m_nz)
     {
         auto moment_columns_host = Kokkos::create_mirror_view(m_moment_columns);
         auto moment_coefficients_host = Kokkos::create_mirror_view(m_moment_coefficients);
@@ -1417,14 +1437,6 @@ public:
         for (std::size_t row = 0; row < size(); ++row) {
             moment_counts_host(row) = 0;
             transposed_moment_counts_host(row) = 0;
-            for (int slot = 0; slot < MOMENT_STENCIL_MAX_SIZE; ++slot) {
-                moment_columns_host(row, slot) = 0;
-                moment_coefficients_host(row, slot) = 0.0;
-            }
-            for (int slot = 0; slot < TRANSPOSED_MOMENT_STENCIL_MAX_SIZE; ++slot) {
-                transposed_moment_rows_host(row, slot) = 0;
-                transposed_moment_coefficients_host(row, slot) = 0.0;
-            }
         }
 
         auto fill_component = [&](auto index_tag, auto elem) {
@@ -3608,6 +3620,8 @@ Result run_on_hexahedral_grid(
     Kokkos::deep_copy(rhs, rhs_host);
     log_info(logger, "SimiLie right-hand side assembled on rectilinear nodes");
 
+    auto const material_preparation_start = std::chrono::steady_clock::now();
+    log_info(logger, "SimiLie starting 3D material field preparation");
     using memory_space = typename Kokkos::DefaultExecutionSpace::memory_space;
     magnetostatics_local::scalar_tensor_alloc_type_3d<memory_space> mu_alloc(
             ddc::DiscreteDomain<
@@ -3699,9 +3713,18 @@ Result run_on_hexahedral_grid(
     Kokkos::deep_copy(
             ferromagnetic_material_alloc.allocation_kokkos_view(),
             ferromagnetic_material_host);
+    auto const material_preparation_duration = std::chrono::duration<double>(
+            std::chrono::steady_clock::now() - material_preparation_start);
+    log_info(
+            logger,
+            phase_finished_message(
+                    "3D material field preparation",
+                    material_preparation_duration.count()));
 
     auto solve_with_equations = [&](auto equations) {
         SIMILIE_DEBUG_LOG("similie_onelab_linear_magnetostatics_build_operator_3d");
+        auto const operator_setup_start = std::chrono::steady_clock::now();
+        log_info(logger, "SimiLie starting 3D operator setup");
         auto const operator_model = magnetostatics_local::MagnetostaticsOperator3D<
                 memory_space,
                 decltype(equations),
@@ -3710,6 +3733,11 @@ Result run_on_hexahedral_grid(
                 x_coords,
                 y_coords,
                 z_coords);
+        auto const operator_setup_duration = std::chrono::duration<double>(
+                std::chrono::steady_clock::now() - operator_setup_start);
+        log_info(
+                logger,
+                phase_finished_message("3D operator setup", operator_setup_duration.count()));
         log_info(logger, solve_start_message(solver_settings.use_matrix_free));
         result.solver_diagnostics = solvers::minimize_strong_formulation_residual(
                 Kokkos::DefaultExecutionSpace(),
