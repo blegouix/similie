@@ -203,11 +203,13 @@ struct Codifferential<
         using LocalStencil = detail::local_operator_value_t<SpatialDomain, CochainTag>;
         using SpatialElem = typename SpatialDomain::discrete_element_type;
 
-        LocalStencil stencil = detail::make_local_operator_value_tensor<CochainTag>(
-                detail::decrement_all(SpatialElem(elem)));
+        LocalStencil stencil = detail::
+                make_local_operator_value_tensor<typename TensorType::memory_space, CochainTag>(
+                        detail::decrement_all(SpatialElem(elem)));
         ddc::device_for_each(stencil.domain(), [&](auto stencil_elem) {
-            LocalStencil basis = detail::make_local_operator_value_tensor<CochainTag>(
-                    stencil.non_indices_domain().front());
+            LocalStencil basis = detail::
+                    make_local_operator_value_tensor<typename TensorType::memory_space, CochainTag>(
+                            stencil.non_indices_domain().front());
             basis.mem(stencil_elem) = 1.0;
 
             [[maybe_unused]] tensor::TensorAccessor<CodifferentialIndex> codifferential_accessor;

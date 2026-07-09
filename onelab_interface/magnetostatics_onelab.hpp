@@ -9,6 +9,7 @@
 #include <cctype>
 #include <cmath>
 #include <cstddef>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <functional>
@@ -673,6 +674,16 @@ using NodeDomain2D = ddc::DiscreteDomain<DDimX, DDimY>;
 using NodeDomain3D = ddc::DiscreteDomain<DDimX, DDimY, DDimZ>;
 using ScalarPotentialIndex = sil::tensor::Covariant<sil::tensor::ScalarIndex>;
 
+template <class... CDim>
+using MetricIndex = sil::tensor::TensorSymmetricIndex<
+        sil::tensor::Covariant<sil::tensor::MetricIndex1<CDim...>>,
+        sil::tensor::Covariant<sil::tensor::MetricIndex2<CDim...>>>;
+
+using PositionIndex2D = sil::tensor::Contravariant<sil::tensor::TensorNaturalIndex<X, Y>>;
+using PositionIndex3D = sil::tensor::Contravariant<sil::tensor::TensorNaturalIndex<X, Y, Z>>;
+using MetricIndex2D = MetricIndex<X, Y>;
+using MetricIndex3D = MetricIndex<X, Y, Z>;
+
 template <class MemorySpace>
 using scalar_tensor_alloc_type = ddc::Chunk<
         double,
@@ -699,7 +710,27 @@ using ScalarPotentialTensor3D = sil::tensor::Tensor<
         Kokkos::layout_right,
         MemorySpace>;
 
-inline constexpr double VECTOR_POTENTIAL_GAUGE_PENALTY_3D = 1400.0;
+inline constexpr double DEFAULT_VECTOR_POTENTIAL_GAUGE_PENALTY_3D = 1400.0;
+
+inline double vector_potential_gauge_penalty_3d()
+{
+    char const* const value = std::getenv("SIMILIE_VECTOR_POTENTIAL_GAUGE_PENALTY_3D");
+    if (value == nullptr || value[0] == '\0') {
+        return DEFAULT_VECTOR_POTENTIAL_GAUGE_PENALTY_3D;
+    }
+    char* parse_end = nullptr;
+    double const parsed = std::strtod(value, &parse_end);
+    if (parse_end == value) {
+        return DEFAULT_VECTOR_POTENTIAL_GAUGE_PENALTY_3D;
+    }
+    return parsed;
+}
+
+inline bool use_divergence_gauge_3d()
+{
+    char const* const value = std::getenv("SIMILIE_DIVERGENCE_GAUGE_3D");
+    return value != nullptr && value[0] != '\0' && value[0] != '0';
+}
 
 template <class Index>
 [[nodiscard]] KOKKOS_FUNCTION constexpr int component_id()
@@ -1366,6 +1397,8 @@ public:
     static constexpr bool IS_LINEAR = Equations::IS_LINEAR;
     static constexpr int MOMENT_STENCIL_MAX_SIZE = 24;
     static constexpr int TRANSPOSED_MOMENT_STENCIL_MAX_SIZE = 24;
+    static constexpr int CODIFFERENTIAL_STENCIL_MAX_SIZE = 24;
+    static constexpr int TRANSPOSED_CODIFFERENTIAL_STENCIL_MAX_SIZE = 32;
 
 private:
     Equations m_equations;
@@ -1382,6 +1415,15 @@ private:
     Kokkos::View<int**, Kokkos::LayoutRight, MemorySpace> m_transposed_moment_rows;
     Kokkos::View<double**, Kokkos::LayoutRight, MemorySpace> m_transposed_moment_coefficients;
     Kokkos::View<int*, MemorySpace> m_transposed_moment_counts;
+    Kokkos::View<int* [CODIFFERENTIAL_STENCIL_MAX_SIZE], MemorySpace> m_codifferential_columns;
+    Kokkos::View<double* [CODIFFERENTIAL_STENCIL_MAX_SIZE], MemorySpace>
+            m_codifferential_coefficients;
+    Kokkos::View<int*, MemorySpace> m_codifferential_counts;
+    Kokkos::View<double*, MemorySpace> m_codifferential_weights;
+    Kokkos::View<int**, Kokkos::LayoutRight, MemorySpace> m_transposed_codifferential_rows;
+    Kokkos::View<double**, Kokkos::LayoutRight, MemorySpace>
+            m_transposed_codifferential_coefficients;
+    Kokkos::View<int*, MemorySpace> m_transposed_codifferential_counts;
 
 public:
     MagnetostaticsOperator3D(
@@ -1425,6 +1467,43 @@ public:
                           Kokkos::WithoutInitializing,
                           "similie_3d_transposed_moment_counts"),
                   3 * m_nx * m_ny * m_nz)
+        , m_codifferential_columns(
+                  Kokkos::view_alloc(
+                          Kokkos::WithoutInitializing,
+                          "similie_3d_codifferential_columns"),
+                  m_nx * m_ny * m_nz)
+        , m_codifferential_coefficients(
+                  Kokkos::view_alloc(
+                          Kokkos::WithoutInitializing,
+                          "similie_3d_codifferential_coefficients"),
+                  m_nx * m_ny * m_nz)
+        , m_codifferential_counts(
+                  Kokkos::view_alloc(
+                          Kokkos::WithoutInitializing,
+                          "similie_3d_codifferential_counts"),
+                  m_nx * m_ny * m_nz)
+        , m_codifferential_weights(
+                  Kokkos::view_alloc(
+                          Kokkos::WithoutInitializing,
+                          "similie_3d_codifferential_weights"),
+                  m_nx * m_ny * m_nz)
+        , m_transposed_codifferential_rows(
+                  Kokkos::view_alloc(
+                          Kokkos::WithoutInitializing,
+                          "similie_3d_transposed_codifferential_rows"),
+                  3 * m_nx * m_ny * m_nz,
+                  TRANSPOSED_CODIFFERENTIAL_STENCIL_MAX_SIZE)
+        , m_transposed_codifferential_coefficients(
+                  Kokkos::view_alloc(
+                          Kokkos::WithoutInitializing,
+                          "similie_3d_transposed_codifferential_coefficients"),
+                  3 * m_nx * m_ny * m_nz,
+                  TRANSPOSED_CODIFFERENTIAL_STENCIL_MAX_SIZE)
+        , m_transposed_codifferential_counts(
+                  Kokkos::view_alloc(
+                          Kokkos::WithoutInitializing,
+                          "similie_3d_transposed_codifferential_counts"),
+                  3 * m_nx * m_ny * m_nz)
     {
         auto moment_columns_host = Kokkos::create_mirror_view(m_moment_columns);
         auto moment_coefficients_host = Kokkos::create_mirror_view(m_moment_coefficients);
@@ -1433,10 +1512,25 @@ public:
         auto transposed_moment_coefficients_host
                 = Kokkos::create_mirror_view(m_transposed_moment_coefficients);
         auto transposed_moment_counts_host = Kokkos::create_mirror_view(m_transposed_moment_counts);
+        auto codifferential_columns_host = Kokkos::create_mirror_view(m_codifferential_columns);
+        auto codifferential_coefficients_host
+                = Kokkos::create_mirror_view(m_codifferential_coefficients);
+        auto codifferential_counts_host = Kokkos::create_mirror_view(m_codifferential_counts);
+        auto codifferential_weights_host = Kokkos::create_mirror_view(m_codifferential_weights);
+        auto transposed_codifferential_rows_host
+                = Kokkos::create_mirror_view(m_transposed_codifferential_rows);
+        auto transposed_codifferential_coefficients_host
+                = Kokkos::create_mirror_view(m_transposed_codifferential_coefficients);
+        auto transposed_codifferential_counts_host
+                = Kokkos::create_mirror_view(m_transposed_codifferential_counts);
 
         for (std::size_t row = 0; row < size(); ++row) {
             moment_counts_host(row) = 0;
             transposed_moment_counts_host(row) = 0;
+            transposed_codifferential_counts_host(row) = 0;
+        }
+        for (std::size_t row = 0; row < m_nx * m_ny * m_nz; ++row) {
+            codifferential_counts_host(row) = 0;
         }
 
         auto fill_component = [&](auto index_tag, auto elem) {
@@ -1477,6 +1571,62 @@ public:
             moment_counts_host(moment_row) = count;
         };
 
+        [[maybe_unused]] sil::tensor::TensorAccessor<vector_potential_index>
+                vector_potential_accessor;
+        ddc::DiscreteDomain<DDimX, DDimY, DDimZ, vector_potential_index>
+                vector_potential_dom(m_node_domain, vector_potential_accessor.domain());
+        ddc::Chunk vector_potential_alloc(vector_potential_dom, ddc::HostAllocator<double>());
+        sil::tensor::Tensor vector_potential_tensor(vector_potential_alloc);
+
+        [[maybe_unused]] sil::tensor::TensorAccessor<MetricIndex3D> metric_accessor;
+        ddc::DiscreteDomain<DDimX, DDimY, DDimZ, MetricIndex3D>
+                metric_dom(m_node_domain, metric_accessor.domain());
+        ddc::Chunk metric_alloc(metric_dom, ddc::HostAllocator<double>());
+        sil::tensor::Tensor metric(metric_alloc);
+
+        [[maybe_unused]] sil::tensor::TensorAccessor<PositionIndex3D> position_accessor;
+        ddc::DiscreteDomain<DDimX, DDimY, DDimZ, PositionIndex3D>
+                position_dom(m_node_domain, position_accessor.domain());
+        ddc::Chunk position_alloc(position_dom, ddc::HostAllocator<double>());
+        sil::tensor::Tensor position(position_alloc);
+
+        auto x_coords_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), m_x_coords);
+        auto y_coords_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), m_y_coords);
+        auto z_coords_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), m_z_coords);
+        ddc::host_for_each(m_node_domain, [&](auto elem) {
+            vector_potential_tensor(elem, vector_potential_accessor.template access_element<X>())
+                    = 0.0;
+            vector_potential_tensor(elem, vector_potential_accessor.template access_element<Y>())
+                    = 0.0;
+            vector_potential_tensor(elem, vector_potential_accessor.template access_element<Z>())
+                    = 0.0;
+            std::size_t const i = static_cast<std::size_t>(ddc::DiscreteElement<DDimX>(elem).uid());
+            std::size_t const j = static_cast<std::size_t>(ddc::DiscreteElement<DDimY>(elem).uid());
+            std::size_t const k = static_cast<std::size_t>(ddc::DiscreteElement<DDimZ>(elem).uid());
+            position(elem, position_accessor.template access_element<X>()) = x_coords_host(i);
+            position(elem, position_accessor.template access_element<Y>()) = y_coords_host(j);
+            position(elem, position_accessor.template access_element<Z>()) = z_coords_host(k);
+            metric(elem, metric_accessor.template access_element<X, X>()) = 1.0;
+            metric(elem, metric_accessor.template access_element<X, Y>()) = 0.0;
+            metric(elem, metric_accessor.template access_element<X, Z>()) = 0.0;
+            metric(elem, metric_accessor.template access_element<Y, Y>()) = 1.0;
+            metric(elem, metric_accessor.template access_element<Y, Z>()) = 0.0;
+            metric(elem, metric_accessor.template access_element<Z, Z>()) = 1.0;
+        });
+
+        using DualVectorPotentialIndex = sil::misc::convert_type_seq_to_t<
+                sil::tensor::TensorAntisymmetricIndex,
+                sil::exterior::codifferential_hodge_output_indices_t<
+                        vector_potential_index::size() - vector_potential_index::rank(),
+                        vector_potential_index>>;
+        auto codifferential_chain = sil::exterior::tangent_basis<
+                DualVectorPotentialIndex::rank() + 1,
+                NodeDomain3D>(Kokkos::DefaultHostExecutionSpace());
+        auto lower_codifferential_chain
+                = sil::exterior::tangent_basis<DualVectorPotentialIndex::rank(), NodeDomain3D>(
+                        Kokkos::DefaultHostExecutionSpace());
+        auto const scalar_elem = ddc::DiscreteElement<ScalarPotentialIndex>(0);
+
         for (std::size_t k = 0; k < m_nz; ++k) {
             for (std::size_t j = 0; j < m_ny; ++j) {
                 for (std::size_t i = 0; i < m_nx; ++i) {
@@ -1484,6 +1634,53 @@ public:
                     fill_component(X {}, elem);
                     fill_component(Y {}, elem);
                     fill_component(Z {}, elem);
+
+                    std::size_t const codifferential_row = flat_node_index(i, j, k);
+                    codifferential_weights_host(codifferential_row)
+                            = local_spacing(x_coords_host, i) * local_spacing(y_coords_host, j)
+                              * local_spacing(z_coords_host, k);
+                    int count = 0;
+                    auto const stencil = sil::exterior::Codifferential<
+                            MetricIndex3D,
+                            vector_potential_index,
+                            vector_potential_index,
+                            std::decay_t<decltype(vector_potential_tensor)>,
+                            std::decay_t<decltype(metric)>,
+                            std::decay_t<decltype(position)>>::
+                            value(vector_potential_tensor,
+                                  metric,
+                                  position,
+                                  codifferential_chain,
+                                  lower_codifferential_chain,
+                                  elem,
+                                  scalar_elem);
+                    ddc::device_for_each(stencil.domain(), [&](auto stencil_elem) {
+                        double const coeff = stencil.mem(stencil_elem);
+                        if (coeff == 0.0) {
+                            return;
+                        }
+                        auto const potential_elem
+                                = ddc::DiscreteElement<DDimX, DDimY, DDimZ>(stencil_elem);
+                        std::size_t const potential_i = static_cast<std::size_t>(
+                                ddc::DiscreteElement<DDimX>(potential_elem).uid());
+                        std::size_t const potential_j = static_cast<std::size_t>(
+                                ddc::DiscreteElement<DDimY>(potential_elem).uid());
+                        std::size_t const potential_k = static_cast<std::size_t>(
+                                ddc::DiscreteElement<DDimZ>(potential_elem).uid());
+                        if (is_boundary_node(potential_i, potential_j, potential_k)) {
+                            return;
+                        }
+                        int const component = potential_component_id<vector_potential_index>(
+                                ddc::DiscreteElement<vector_potential_index>(stencil_elem));
+                        if (count >= CODIFFERENTIAL_STENCIL_MAX_SIZE) {
+                            throw std::runtime_error("3D codifferential stencil capacity exceeded");
+                        }
+                        codifferential_columns_host(codifferential_row, count) = static_cast<int>(
+                                dof_index(potential_i, potential_j, potential_k, component));
+                        codifferential_coefficients_host(codifferential_row, count) = coeff;
+                        ++count;
+                    });
+                    codifferential_counts_host(codifferential_row) = count;
                 }
             }
         }
@@ -1514,12 +1711,41 @@ public:
             }
         }
 
+        for (std::size_t codifferential_row = 0; codifferential_row < m_nx * m_ny * m_nz;
+             ++codifferential_row) {
+            for (int slot = 0; slot < codifferential_counts_host(codifferential_row); ++slot) {
+                std::size_t const potential_row
+                        = static_cast<std::size_t>(codifferential_columns_host(
+                                codifferential_row,
+                                slot));
+                int const count = transposed_codifferential_counts_host(potential_row);
+                if (count >= TRANSPOSED_CODIFFERENTIAL_STENCIL_MAX_SIZE) {
+                    throw std::runtime_error(
+                            "3D transposed codifferential stencil capacity exceeded");
+                }
+                transposed_codifferential_rows_host(potential_row, count)
+                        = static_cast<int>(codifferential_row);
+                transposed_codifferential_coefficients_host(potential_row, count)
+                        = codifferential_coefficients_host(codifferential_row, slot);
+                transposed_codifferential_counts_host(potential_row) = count + 1;
+            }
+        }
+
         Kokkos::deep_copy(m_moment_columns, moment_columns_host);
         Kokkos::deep_copy(m_moment_coefficients, moment_coefficients_host);
         Kokkos::deep_copy(m_moment_counts, moment_counts_host);
         Kokkos::deep_copy(m_transposed_moment_rows, transposed_moment_rows_host);
         Kokkos::deep_copy(m_transposed_moment_coefficients, transposed_moment_coefficients_host);
         Kokkos::deep_copy(m_transposed_moment_counts, transposed_moment_counts_host);
+        Kokkos::deep_copy(m_codifferential_columns, codifferential_columns_host);
+        Kokkos::deep_copy(m_codifferential_coefficients, codifferential_coefficients_host);
+        Kokkos::deep_copy(m_codifferential_counts, codifferential_counts_host);
+        Kokkos::deep_copy(m_codifferential_weights, codifferential_weights_host);
+        Kokkos::deep_copy(m_transposed_codifferential_rows, transposed_codifferential_rows_host);
+        Kokkos::deep_copy(
+                m_transposed_codifferential_coefficients,
+                transposed_codifferential_coefficients_host);
+        Kokkos::deep_copy(m_transposed_codifferential_counts, transposed_codifferential_counts_host);
     }
 
     [[nodiscard]] KOKKOS_INLINE_FUNCTION std::size_t size() const
@@ -1543,6 +1769,16 @@ public:
         auto const transposed_moment_rows = m_transposed_moment_rows;
         auto const transposed_moment_coefficients = m_transposed_moment_coefficients;
         auto const transposed_moment_counts = m_transposed_moment_counts;
+        auto const codifferential_columns = m_codifferential_columns;
+        auto const codifferential_coefficients = m_codifferential_coefficients;
+        auto const codifferential_counts = m_codifferential_counts;
+        auto const codifferential_weights = m_codifferential_weights;
+        auto const transposed_codifferential_rows = m_transposed_codifferential_rows;
+        auto const transposed_codifferential_coefficients
+                = m_transposed_codifferential_coefficients;
+        auto const transposed_codifferential_counts = m_transposed_codifferential_counts;
+        double const gauge_penalty = vector_potential_gauge_penalty_3d();
+        bool const use_divergence_gauge = use_divergence_gauge_3d();
         ddc::parallel_for_each(
                 exec_space,
                 m_node_domain,
@@ -1626,8 +1862,39 @@ public:
                                                     Z>(equations, moments, sampled_elem);
                             }
                         }
-                        output(row, 0)
-                                = residual + VECTOR_POTENTIAL_GAUGE_PENALTY_3D * input(row, 0);
+                        double gauge_residual = gauge_penalty * input(row, 0);
+                        if (use_divergence_gauge) {
+                            gauge_residual = 0.0;
+                            for (int transposed_slot = 0;
+                                 transposed_slot < transposed_codifferential_counts(row);
+                                 ++transposed_slot) {
+                                std::size_t const codifferential_row = static_cast<std::size_t>(
+                                        transposed_codifferential_rows(row, transposed_slot));
+                                double const row_coefficient
+                                        = transposed_codifferential_coefficients(
+                                                row,
+                                                transposed_slot);
+                                double codifferential_value = 0.0;
+                                for (int column_slot = 0;
+                                     column_slot < codifferential_counts(codifferential_row);
+                                     ++column_slot) {
+                                    codifferential_value
+                                            += codifferential_coefficients(
+                                                       codifferential_row,
+                                                       column_slot)
+                                               * input(static_cast<std::size_t>(
+                                                               codifferential_columns(
+                                                                       codifferential_row,
+                                                                       column_slot)),
+                                                       0);
+                                }
+                                gauge_residual
+                                        += gauge_penalty * codifferential_weights(
+                                                                  codifferential_row)
+                                           * row_coefficient * codifferential_value;
+                            }
+                        }
+                        output(row, 0) = residual + gauge_residual;
                     }
                 });
     }
@@ -1672,6 +1939,34 @@ public:
     {
         return m_transposed_moment_counts;
     }
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto codifferential_columns() const
+    {
+        return m_codifferential_columns;
+    }
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto codifferential_coefficients() const
+    {
+        return m_codifferential_coefficients;
+    }
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto codifferential_counts() const
+    {
+        return m_codifferential_counts;
+    }
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto codifferential_weights() const
+    {
+        return m_codifferential_weights;
+    }
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto transposed_codifferential_rows() const
+    {
+        return m_transposed_codifferential_rows;
+    }
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto transposed_codifferential_coefficients() const
+    {
+        return m_transposed_codifferential_coefficients;
+    }
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto transposed_codifferential_counts() const
+    {
+        return m_transposed_codifferential_counts;
+    }
 
     [[nodiscard]] KOKKOS_INLINE_FUNCTION bool is_boundary_node(
             std::size_t i,
@@ -1689,6 +1984,14 @@ private:
             int component) const
     {
         return dof_index_static(m_nx, m_ny, i, j, k, component);
+    }
+
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION std::size_t flat_node_index(
+            std::size_t i,
+            std::size_t j,
+            std::size_t k) const
+    {
+        return i + m_nx * (j + m_ny * k);
     }
 
     [[nodiscard]] KOKKOS_INLINE_FUNCTION static std::size_t dof_index_static(
@@ -1875,6 +2178,7 @@ void apply_jacobian(
     auto const transposed_moment_rows = operator_model.transposed_moment_rows();
     auto const transposed_moment_coefficients = operator_model.transposed_moment_coefficients();
     auto const transposed_moment_counts = operator_model.transposed_moment_counts();
+    double const gauge_penalty = vector_potential_gauge_penalty_3d();
     auto node_domain = ddc::DiscreteDomain<DDimX, DDimY, DDimZ>(
             ddc::DiscreteElement<DDimX, DDimY, DDimZ>(0, 0, 0),
             ddc::DiscreteVector<DDimX, DDimY, DDimZ>(nx, ny, nz));
@@ -1989,7 +2293,7 @@ void apply_jacobian(
                                                     * delta_moments[2]);
                         }
                     }
-                    output(row, 0) = residual + VECTOR_POTENTIAL_GAUGE_PENALTY_3D * input(row, 0);
+                    output(row, 0) = residual + gauge_penalty * input(row, 0);
                 }
             });
 }
@@ -2026,6 +2330,27 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
     auto const transposed_moment_counts = Kokkos::create_mirror_view_and_copy(
             Kokkos::HostSpace(),
             operator_model.transposed_moment_counts());
+    auto const codifferential_columns = Kokkos::create_mirror_view_and_copy(
+            Kokkos::HostSpace(),
+            operator_model.codifferential_columns());
+    auto const codifferential_coefficients = Kokkos::create_mirror_view_and_copy(
+            Kokkos::HostSpace(),
+            operator_model.codifferential_coefficients());
+    auto const codifferential_counts = Kokkos::create_mirror_view_and_copy(
+            Kokkos::HostSpace(),
+            operator_model.codifferential_counts());
+    auto const codifferential_weights = Kokkos::create_mirror_view_and_copy(
+            Kokkos::HostSpace(),
+            operator_model.codifferential_weights());
+    auto const transposed_codifferential_rows = Kokkos::create_mirror_view_and_copy(
+            Kokkos::HostSpace(),
+            operator_model.transposed_codifferential_rows());
+    auto const transposed_codifferential_coefficients = Kokkos::create_mirror_view_and_copy(
+            Kokkos::HostSpace(),
+            operator_model.transposed_codifferential_coefficients());
+    auto const transposed_codifferential_counts = Kokkos::create_mirror_view_and_copy(
+            Kokkos::HostSpace(),
+            operator_model.transposed_codifferential_counts());
     auto const state_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), state);
     auto const x_coords
             = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), operator_model.x_coords());
@@ -2033,6 +2358,8 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
             = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), operator_model.y_coords());
     auto const z_coords
             = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), operator_model.z_coords());
+    double const gauge_penalty = vector_potential_gauge_penalty_3d();
+    bool const use_divergence_gauge = use_divergence_gauge_3d();
 
     std::vector<std::vector<std::pair<gko::int32, double>>> matrix_rows(size);
     auto add_entry = [&](std::size_t row, std::size_t column, double value) {
@@ -2075,7 +2402,32 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
             for (std::size_t i = 1; i + 1 < nx; ++i) {
                 for (int component = 0; component < 3; ++component) {
                     std::size_t const row = dof_index(i, j, k, component);
-                    add_entry(row, row, VECTOR_POTENTIAL_GAUGE_PENALTY_3D);
+                    if (use_divergence_gauge) {
+                        for (int transposed_slot = 0;
+                             transposed_slot < transposed_codifferential_counts(row);
+                             ++transposed_slot) {
+                            std::size_t const codifferential_row = static_cast<std::size_t>(
+                                    transposed_codifferential_rows(row, transposed_slot));
+                            double const row_coefficient
+                                    = transposed_codifferential_coefficients(row, transposed_slot);
+                            for (int column_slot = 0;
+                                 column_slot < codifferential_counts(codifferential_row);
+                                 ++column_slot) {
+                                add_entry(
+                                        row,
+                                        static_cast<std::size_t>(codifferential_columns(
+                                                codifferential_row,
+                                                column_slot)),
+                                        gauge_penalty * codifferential_weights(codifferential_row)
+                                                * row_coefficient
+                                                * codifferential_coefficients(
+                                                        codifferential_row,
+                                                        column_slot));
+                            }
+                        }
+                    } else {
+                        add_entry(row, row, gauge_penalty);
+                    }
                     for (int slot = 0; slot < transposed_moment_counts(row); ++slot) {
                         std::size_t const moment_row
                                 = static_cast<std::size_t>(transposed_moment_rows(row, slot));

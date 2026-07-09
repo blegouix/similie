@@ -3,22 +3,33 @@
 
 #pragma once
 
+#include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <cstdint>
 #include <cstdlib>
 #include <iostream>
 #include <limits>
 #include <memory>
 #include <optional>
 #include <stdexcept>
+#include <string_view>
 #include <type_traits>
+#include <unordered_map>
+#include <vector>
 
 #include <ginkgo/core/base/lin_op.hpp>
 #include <ginkgo/core/log/convergence.hpp>
 #include <ginkgo/core/matrix/csr.hpp>
 #include <ginkgo/core/matrix/dense.hpp>
+#include <ginkgo/core/matrix/identity.hpp>
+#include <ginkgo/core/preconditioner/gauss_seidel.hpp>
+#include <ginkgo/core/preconditioner/isai.hpp>
 #include <ginkgo/core/preconditioner/jacobi.hpp>
+#include <ginkgo/core/preconditioner/sor.hpp>
 #include <ginkgo/core/solver/cg.hpp>
+#include <ginkgo/core/solver/chebyshev.hpp>
+#include <ginkgo/core/solver/minres.hpp>
 #include <ginkgo/core/stop/iteration.hpp>
 #include <ginkgo/core/stop/residual_norm.hpp>
 #include <ginkgo/extensions/kokkos.hpp>
@@ -33,6 +44,58 @@ enum class Criterion {
     PotentialAndMomentsTemporalDerivative,
 };
 
+enum class PreconditionerType {
+    Identity,
+    Jacobi,
+    SpdIsai,
+    SymmetricGaussSeidel,
+    Ssor,
+    ChebyshevJacobi,
+};
+
+inline constexpr std::string_view preconditioner_name(PreconditionerType preconditioner)
+{
+    switch (preconditioner) {
+    case PreconditionerType::Identity:
+        return "Identity";
+    case PreconditionerType::Jacobi:
+        return "Jacobi";
+    case PreconditionerType::SpdIsai:
+        return "SpdIsai";
+    case PreconditionerType::SymmetricGaussSeidel:
+        return "SymmetricGaussSeidel";
+    case PreconditionerType::Ssor:
+        return "Ssor";
+    case PreconditionerType::ChebyshevJacobi:
+        return "ChebyshevJacobi";
+    }
+    return "Jacobi";
+}
+
+inline PreconditionerType parse_preconditioner(std::string_view name)
+{
+    if (name == "Identity" || name == "identity") {
+        return PreconditionerType::Identity;
+    }
+    if (name == "Jacobi" || name == "jacobi") {
+        return PreconditionerType::Jacobi;
+    }
+    if (name == "SpdIsai" || name == "spd-isai" || name == "spd_isai") {
+        return PreconditionerType::SpdIsai;
+    }
+    if (name == "SymmetricGaussSeidel" || name == "symmetric-gauss-seidel"
+        || name == "symmetric_gauss_seidel") {
+        return PreconditionerType::SymmetricGaussSeidel;
+    }
+    if (name == "Ssor" || name == "SSOR" || name == "ssor") {
+        return PreconditionerType::Ssor;
+    }
+    if (name == "ChebyshevJacobi" || name == "chebyshev-jacobi" || name == "chebyshev_jacobi") {
+        return PreconditionerType::ChebyshevJacobi;
+    }
+    throw std::runtime_error("unknown strong-formulation preconditioner: " + std::string(name));
+}
+
 struct StrongFormulationSolverSettings
 {
     unsigned int max_iterations = 2000U;
@@ -40,6 +103,11 @@ struct StrongFormulationSolverSettings
     unsigned int jacobi_max_block_size = 1U;
     bool use_matrix_free = true;
     Criterion criterion = Criterion::MomentsTemporalDerivative;
+    PreconditionerType preconditioner = PreconditionerType::Jacobi;
+    double sor_relaxation_factor = 1.2;
+    unsigned int chebyshev_iterations = 8U;
+    double chebyshev_lower_bound = 0.05;
+    double chebyshev_upper_bound = 1.5;
 };
 
 struct StrongFormulationSolverDiagnostics
@@ -78,6 +146,114 @@ inline unsigned int solver_progress_stride()
 inline bool solver_progress_enabled()
 {
     return solver_progress_stride() != 0U;
+}
+
+inline bool env_flag_enabled(char const* name)
+{
+    char const* const value = std::getenv(name);
+    return value != nullptr && value[0] != '\0' && value[0] != '0';
+}
+
+inline bool env_value_equals(char const* name, char const* expected)
+{
+    char const* const value = std::getenv(name);
+    return value != nullptr && std::string_view(value) == expected;
+}
+
+inline double env_double_or(char const* name, double default_value)
+{
+    char const* const value = std::getenv(name);
+    if (value == nullptr || value[0] == '\0') {
+        return default_value;
+    }
+    char* parse_end = nullptr;
+    double const parsed = std::strtod(value, &parse_end);
+    if (parse_end == value) {
+        return default_value;
+    }
+    return parsed;
+}
+
+template <class MatrixData>
+void log_matrix_diagnostics(MatrixData const& matrix_data)
+{
+    std::size_t const size = matrix_data.size[0];
+    std::vector<double> diagonal(size, 0.0);
+    std::size_t negative_diagonal_count = 0;
+    std::size_t zero_diagonal_count = 0;
+    double min_diagonal = std::numeric_limits<double>::infinity();
+    double max_diagonal = -std::numeric_limits<double>::infinity();
+    std::vector<double> off_diagonal_abs_row_sum(size, 0.0);
+    for (auto const& entry : matrix_data.nonzeros) {
+        if (entry.row == entry.column) {
+            diagonal[static_cast<std::size_t>(entry.row)] += entry.value;
+        } else {
+            off_diagonal_abs_row_sum[static_cast<std::size_t>(entry.row)] += std::abs(entry.value);
+        }
+    }
+    double jacobi_gershgorin_lower = std::numeric_limits<double>::infinity();
+    double jacobi_gershgorin_upper = -std::numeric_limits<double>::infinity();
+    double jacobi_max_abs_off_diagonal_row_sum = 0.0;
+    for (double const value : diagonal) {
+        if (value < 0.0) {
+            ++negative_diagonal_count;
+        }
+        if (value == 0.0) {
+            ++zero_diagonal_count;
+        }
+        min_diagonal = std::min(min_diagonal, value);
+        max_diagonal = std::max(max_diagonal, value);
+    }
+    for (std::size_t row = 0; row < size; ++row) {
+        if (diagonal[row] == 0.0) {
+            continue;
+        }
+        double const scaled_radius = off_diagonal_abs_row_sum[row] / std::abs(diagonal[row]);
+        jacobi_max_abs_off_diagonal_row_sum
+                = std::max(jacobi_max_abs_off_diagonal_row_sum, scaled_radius);
+        jacobi_gershgorin_lower = std::min(jacobi_gershgorin_lower, 1.0 - scaled_radius);
+        jacobi_gershgorin_upper = std::max(jacobi_gershgorin_upper, 1.0 + scaled_radius);
+    }
+
+    auto matrix_entries = std::unordered_map<std::uint64_t, double>();
+    matrix_entries.reserve(matrix_data.nonzeros.size());
+    auto const entry_key = [size](std::size_t row, std::size_t column) {
+        return static_cast<std::uint64_t>(row) * static_cast<std::uint64_t>(size)
+               + static_cast<std::uint64_t>(column);
+    };
+    for (auto const& entry : matrix_data.nonzeros) {
+        matrix_entries[entry_key(
+                static_cast<std::size_t>(entry.row),
+                static_cast<std::size_t>(entry.column))]
+                += entry.value;
+    }
+    double max_abs_asymmetry = 0.0;
+    std::size_t asymmetric_entry_count = 0;
+    for (auto const& [key, value] : matrix_entries) {
+        std::size_t const row = static_cast<std::size_t>(key / static_cast<std::uint64_t>(size));
+        std::size_t const column = static_cast<std::size_t>(key % static_cast<std::uint64_t>(size));
+        double transposed_value = 0.0;
+        if (auto const transposed = matrix_entries.find(entry_key(column, row));
+            transposed != matrix_entries.end()) {
+            transposed_value = transposed->second;
+        }
+        double const asymmetry = std::abs(value - transposed_value);
+        if (asymmetry > 1.0e-10 * std::max({1.0, std::abs(value), std::abs(transposed_value)})) {
+            ++asymmetric_entry_count;
+        }
+        max_abs_asymmetry = std::max(max_abs_asymmetry, asymmetry);
+    }
+
+    std::cout << "SimiLie matrix diagnostics: size=" << size
+              << " nonzeros=" << matrix_data.nonzeros.size() << " diagonal_min=" << min_diagonal
+              << " diagonal_max=" << max_diagonal
+              << " diagonal_negative_count=" << negative_diagonal_count
+              << " diagonal_zero_count=" << zero_diagonal_count
+              << " jacobi_gershgorin_lower=" << jacobi_gershgorin_lower
+              << " jacobi_gershgorin_upper=" << jacobi_gershgorin_upper
+              << " jacobi_max_abs_off_diagonal_row_sum=" << jacobi_max_abs_off_diagonal_row_sum
+              << " asymmetric_entry_count=" << asymmetric_entry_count
+              << " max_abs_asymmetry=" << max_abs_asymmetry << '\n';
 }
 
 class SolverProgressLogger final : public gko::log::Logger
@@ -336,6 +512,9 @@ std::shared_ptr<gko::matrix::Csr<double, gko::int32>> build_matrix(
             matrix_type::create(gko_exec, gko::dim<2>(operator_model.size(), operator_model.size()))
                     .release());
     auto matrix_data = assemble_matrix_data(operator_model);
+    if (env_flag_enabled("SIMILIE_MATRIX_DIAGNOSTICS")) {
+        log_matrix_diagnostics(matrix_data);
+    }
     matrix->read(matrix_data);
     return matrix;
 }
@@ -351,6 +530,9 @@ std::shared_ptr<gko::matrix::Csr<double, gko::int32>> build_matrix(
             matrix_type::create(gko_exec, gko::dim<2>(operator_model.size(), operator_model.size()))
                     .release());
     auto matrix_data = assemble_matrix_data(operator_model, state);
+    if (env_flag_enabled("SIMILIE_MATRIX_DIAGNOSTICS")) {
+        log_matrix_diagnostics(matrix_data);
+    }
     matrix->read(matrix_data);
     return matrix;
 }
@@ -528,13 +710,73 @@ inline auto build_jacobi_preconditioner_factory(
             .on(gko_exec);
 }
 
-inline std::shared_ptr<gko::LinOp const> build_jacobi_preconditioner(
+inline PreconditionerType selected_preconditioner(StrongFormulationSolverSettings const& settings)
+{
+    char const* const value = std::getenv("SIMILIE_PRECONDITIONER");
+    if (value == nullptr || value[0] == '\0') {
+        if (env_flag_enabled("SIMILIE_DISABLE_JACOBI_PRECONDITIONER")) {
+            return PreconditionerType::Identity;
+        }
+        return settings.preconditioner;
+    }
+    return parse_preconditioner(value);
+}
+
+inline std::shared_ptr<gko::LinOp const> build_preconditioner(
         std::shared_ptr<gko::Executor const> const& gko_exec,
         std::shared_ptr<gko::LinOp const> const& matrix,
         StrongFormulationSolverSettings const& settings)
 {
-    auto preconditioner_factory = build_jacobi_preconditioner_factory(gko_exec, settings);
-    return std::shared_ptr<gko::LinOp const>(preconditioner_factory->generate(matrix).release());
+    PreconditionerType const preconditioner = selected_preconditioner(settings);
+    std::cout << "SimiLie Ginkgo preconditioner: " << preconditioner_name(preconditioner) << '\n';
+    switch (preconditioner) {
+    case PreconditionerType::Identity:
+        return gko::matrix::Identity<double>::create(gko_exec, matrix->get_size()[0]);
+    case PreconditionerType::Jacobi: {
+        auto preconditioner_factory = build_jacobi_preconditioner_factory(gko_exec, settings);
+        return std::shared_ptr<gko::LinOp const>(
+                preconditioner_factory->generate(matrix).release());
+    }
+    case PreconditionerType::SpdIsai: {
+        auto preconditioner_factory
+                = gko::preconditioner::SpdIsai<double, gko::int32>::build().on(gko_exec);
+        return std::shared_ptr<gko::LinOp const>(
+                preconditioner_factory->generate(matrix).release());
+    }
+    case PreconditionerType::SymmetricGaussSeidel: {
+        auto preconditioner_factory = gko::preconditioner::GaussSeidel<double, gko::int32>::build()
+                                              .with_symmetric(true)
+                                              .on(gko_exec);
+        return std::shared_ptr<gko::LinOp const>(
+                preconditioner_factory->generate(matrix).release());
+    }
+    case PreconditionerType::Ssor: {
+        auto preconditioner_factory = gko::preconditioner::Sor<double, gko::int32>::build()
+                                              .with_symmetric(true)
+                                              .with_relaxation_factor(env_double_or(
+                                                      "SIMILIE_SOR_RELAXATION_FACTOR",
+                                                      settings.sor_relaxation_factor))
+                                              .on(gko_exec);
+        return std::shared_ptr<gko::LinOp const>(
+                preconditioner_factory->generate(matrix).release());
+    }
+    case PreconditionerType::ChebyshevJacobi: {
+        auto jacobi_factory = build_jacobi_preconditioner_factory(gko_exec, settings);
+        auto iterations_criterion = gko::stop::Iteration::build()
+                                            .with_max_iters(settings.chebyshev_iterations)
+                                            .on(gko_exec);
+        auto preconditioner_factory
+                = gko::solver::Chebyshev<double>::build()
+                          .with_criteria(std::move(iterations_criterion))
+                          .with_preconditioner(std::move(jacobi_factory))
+                          .with_foci(settings.chebyshev_lower_bound, settings.chebyshev_upper_bound)
+                          .with_default_initial_guess(gko::solver::initial_guess_mode::zero)
+                          .on(gko_exec);
+        return std::shared_ptr<gko::LinOp const>(
+                preconditioner_factory->generate(matrix).release());
+    }
+    }
+    throw std::runtime_error("unsupported strong-formulation preconditioner");
 }
 
 template <class ExecSpace, class OperatorModel, class RHSViewType, class SolutionViewType>
@@ -548,7 +790,6 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
         std::shared_ptr<gko::LinOp const> const& assembled_matrix,
         std::shared_ptr<gko::LinOp const> const& preconditioner)
 {
-    using solver_type = gko::solver::Cg<double>;
     StrongFormulationSolverDiagnostics diagnostics;
     diagnostics.initial_residual_l2 = residual_norm_l2(exec_space, rhs);
     diagnostics.final_residual_l2 = diagnostics.initial_residual_l2;
@@ -563,11 +804,22 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
                                       .on(gko_exec);
     auto iterations_criterion
             = gko::stop::Iteration::build().with_max_iters(settings.max_iterations).on(gko_exec);
-    auto solver_factory
-            = solver_type::build()
-                      .with_generated_preconditioner(preconditioner)
-                      .with_criteria(std::move(residual_criterion), std::move(iterations_criterion))
-                      .on(gko_exec);
+    std::unique_ptr<gko::LinOpFactory> solver_factory;
+    if (detail::env_value_equals("SIMILIE_SOLVER", "minres")) {
+        solver_factory = gko::solver::Minres<double>::build()
+                                 .with_generated_preconditioner(preconditioner)
+                                 .with_criteria(
+                                         std::move(residual_criterion),
+                                         std::move(iterations_criterion))
+                                 .on(gko_exec);
+    } else {
+        solver_factory = gko::solver::Cg<double>::build()
+                                 .with_generated_preconditioner(preconditioner)
+                                 .with_criteria(
+                                         std::move(residual_criterion),
+                                         std::move(iterations_criterion))
+                                 .on(gko_exec);
+    }
     std::shared_ptr<gko::LinOp const> system_matrix;
     if (settings.use_matrix_free) {
         auto operator_model_ptr = std::make_shared<OperatorModel>(operator_model);
@@ -619,6 +871,23 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
             = diagnostics.initial_residual_l2 == 0.0
                       ? 0.0
                       : diagnostics.final_residual_l2 / diagnostics.initial_residual_l2;
+    if (env_flag_enabled("SIMILIE_TRUE_RESIDUAL_DIAGNOSTICS")) {
+        using memory_space = typename SolutionViewType::memory_space;
+        Kokkos::View<double**, memory_space>
+                applied("similie_true_residual_applied", rhs.extent(0), rhs.extent(1));
+        Kokkos::View<double**, memory_space>
+                true_residual("similie_true_residual", rhs.extent(0), rhs.extent(1));
+        apply_operator(exec_space, operator_model, solution, applied);
+        copy(exec_space, true_residual, rhs);
+        axpy_inplace(exec_space, true_residual, -1.0, applied);
+        double const true_residual_l2 = residual_norm_l2(exec_space, true_residual);
+        double const true_relative_residual
+                = diagnostics.initial_residual_l2 == 0.0
+                          ? 0.0
+                          : true_residual_l2 / diagnostics.initial_residual_l2;
+        std::cout << "SimiLie true residual diagnostics: residual_l2=" << true_residual_l2
+                  << " relative_residual=" << true_relative_residual << '\n';
+    }
     return diagnostics;
 }
 
@@ -650,7 +919,7 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
             return diagnostics;
         }
         auto matrix = detail::build_matrix(gko_exec, operator_model);
-        auto preconditioner = detail::build_jacobi_preconditioner(
+        auto preconditioner = detail::build_preconditioner(
                 gko_exec,
                 std::static_pointer_cast<gko::LinOp const>(matrix),
                 settings);
@@ -701,7 +970,7 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
             }
 
             auto matrix = detail::build_matrix(gko_exec, operator_model, solution);
-            auto preconditioner = detail::build_jacobi_preconditioner(
+            auto preconditioner = detail::build_preconditioner(
                     gko_exec,
                     std::static_pointer_cast<gko::LinOp const>(matrix),
                     settings);

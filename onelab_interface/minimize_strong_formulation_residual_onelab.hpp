@@ -41,6 +41,46 @@ inline solvers::Criterion criterion_from_control_value(double value)
     }
 }
 
+inline double preconditioner_to_control_value(solvers::PreconditionerType preconditioner)
+{
+    switch (preconditioner) {
+    case solvers::PreconditionerType::Identity:
+        return 0.0;
+    case solvers::PreconditionerType::Jacobi:
+        return 1.0;
+    case solvers::PreconditionerType::SpdIsai:
+        return 2.0;
+    case solvers::PreconditionerType::SymmetricGaussSeidel:
+        return 3.0;
+    case solvers::PreconditionerType::Ssor:
+        return 4.0;
+    case solvers::PreconditionerType::ChebyshevJacobi:
+        return 5.0;
+    }
+    return 1.0;
+}
+
+inline solvers::PreconditionerType preconditioner_from_control_value(double value)
+{
+    int const rounded = static_cast<int>(value + 0.5);
+    switch (rounded) {
+    case 0:
+        return solvers::PreconditionerType::Identity;
+    case 1:
+        return solvers::PreconditionerType::Jacobi;
+    case 2:
+        return solvers::PreconditionerType::SpdIsai;
+    case 3:
+        return solvers::PreconditionerType::SymmetricGaussSeidel;
+    case 4:
+        return solvers::PreconditionerType::Ssor;
+    case 5:
+        return solvers::PreconditionerType::ChebyshevJacobi;
+    default:
+        throw std::runtime_error("invalid strong-formulation preconditioner control value");
+    }
+}
+
 template <class SolverSettings, class ProblemParameterName, class PublishNumber>
 void synchronize_controls(
         SolverSettings const& solver_settings,
@@ -96,6 +136,55 @@ void synchronize_controls(
                     {1.0, "MomentsTemporalDerivative"},
                     {2.0, "PotentialAndMomentsTemporalDerivative"},
             });
+    publish_or_sync_number(
+            problem_parameter_name("1Solver", "5Preconditioner"),
+            "Preconditioner",
+            "Ginkgo preconditioner used by the stationary strong-formulation solver.",
+            preconditioner_to_control_value(solver_settings.preconditioner),
+            0.0,
+            5.0,
+            1.0,
+            std::vector<double> {0.0, 1.0, 2.0, 3.0, 4.0, 5.0},
+            std::map<double, std::string> {
+                    {0.0, "Identity"},
+                    {1.0, "Jacobi"},
+                    {2.0, "SpdIsai"},
+                    {3.0, "SymmetricGaussSeidel"},
+                    {4.0, "Ssor"},
+                    {5.0, "ChebyshevJacobi"},
+            });
+    publish_or_sync_number(
+            problem_parameter_name("1Solver", "6SOR relaxation factor"),
+            "SOR relaxation factor",
+            "Relaxation factor used by the SSOR preconditioner.",
+            solver_settings.sor_relaxation_factor,
+            1.e-6,
+            1.999999,
+            0.1);
+    publish_or_sync_number(
+            problem_parameter_name("1Solver", "7Chebyshev iterations"),
+            "Chebyshev iterations",
+            "Maximum inner Chebyshev iterations used by the Chebyshev-Jacobi preconditioner.",
+            static_cast<double>(solver_settings.chebyshev_iterations),
+            1.0,
+            1.e6,
+            1.0);
+    publish_or_sync_number(
+            problem_parameter_name("1Solver", "8Chebyshev lower bound"),
+            "Chebyshev lower bound",
+            "Lower spectral focus used by the Chebyshev-Jacobi preconditioner.",
+            solver_settings.chebyshev_lower_bound,
+            1.e-12,
+            1.e12,
+            0.1);
+    publish_or_sync_number(
+            problem_parameter_name("1Solver", "9Chebyshev upper bound"),
+            "Chebyshev upper bound",
+            "Upper spectral focus used by the Chebyshev-Jacobi preconditioner.",
+            solver_settings.chebyshev_upper_bound,
+            1.e-12,
+            1.e12,
+            0.1);
 }
 
 template <class SolverSettings, class ProblemParameterName, class GetFirstNumberValue>
@@ -121,6 +210,21 @@ SolverSettings apply_control_overrides(
     solver_settings.criterion = criterion_from_control_value(get_first_number_value(
             problem_parameter_name("1Solver", "4Criterion"),
             criterion_to_control_value(solver_settings.criterion)));
+    solver_settings.preconditioner = preconditioner_from_control_value(get_first_number_value(
+            problem_parameter_name("1Solver", "5Preconditioner"),
+            preconditioner_to_control_value(solver_settings.preconditioner)));
+    solver_settings.sor_relaxation_factor = get_first_number_value(
+            problem_parameter_name("1Solver", "6SOR relaxation factor"),
+            solver_settings.sor_relaxation_factor);
+    solver_settings.chebyshev_iterations = static_cast<unsigned int>(get_first_number_value(
+            problem_parameter_name("1Solver", "7Chebyshev iterations"),
+            static_cast<double>(solver_settings.chebyshev_iterations)));
+    solver_settings.chebyshev_lower_bound = get_first_number_value(
+            problem_parameter_name("1Solver", "8Chebyshev lower bound"),
+            solver_settings.chebyshev_lower_bound);
+    solver_settings.chebyshev_upper_bound = get_first_number_value(
+            problem_parameter_name("1Solver", "9Chebyshev upper bound"),
+            solver_settings.chebyshev_upper_bound);
     return solver_settings;
 }
 

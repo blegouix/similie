@@ -67,6 +67,11 @@ struct MinimizeStrongFormulationResidualProblem
     unsigned int jacobi_max_block_size = 1U;
     bool use_matrix_free = true;
     solvers::Criterion criterion = solvers::Criterion::MomentsTemporalDerivative;
+    solvers::PreconditionerType preconditioner = solvers::PreconditionerType::Jacobi;
+    double sor_relaxation_factor = 1.2;
+    unsigned int chebyshev_iterations = 8U;
+    double chebyshev_lower_bound = 0.05;
+    double chebyshev_upper_bound = 1.5;
 };
 
 struct SingleElectricalConductorMaterialWithSingleLinearMagneticMaterialPreprocess
@@ -448,6 +453,26 @@ inline SilproProblem parse_silpro_problem(std::filesystem::path const& file)
             problem.solver_settings.use_matrix_free ? "1" : "0"));
     problem.solver_settings.criterion = parse_solver_criterion(
             get_value_or(solver_section, "Criterion", "MomentsTemporalDerivative"));
+    problem.solver_settings.preconditioner = solvers::parse_preconditioner(get_value_or(
+            solver_section,
+            "Preconditioner",
+            std::string(solvers::preconditioner_name(problem.solver_settings.preconditioner))));
+    problem.solver_settings.sor_relaxation_factor = parse_number<double>(get_value_or(
+            solver_section,
+            "SorRelaxationFactor",
+            std::to_string(problem.solver_settings.sor_relaxation_factor)));
+    problem.solver_settings.chebyshev_iterations = parse_number<unsigned int>(get_value_or(
+            solver_section,
+            "ChebyshevIterations",
+            std::to_string(problem.solver_settings.chebyshev_iterations)));
+    problem.solver_settings.chebyshev_lower_bound = parse_number<double>(get_value_or(
+            solver_section,
+            "ChebyshevLowerBound",
+            std::to_string(problem.solver_settings.chebyshev_lower_bound)));
+    problem.solver_settings.chebyshev_upper_bound = parse_number<double>(get_value_or(
+            solver_section,
+            "ChebyshevUpperBound",
+            std::to_string(problem.solver_settings.chebyshev_upper_bound)));
 
     if (problem.physics == SupportedPhysics::ScalarFieldWithPowerCoupling) {
         SilproSection const& section
@@ -1183,6 +1208,11 @@ private:
                 .jacobi_max_block_size = problem.solver_settings.jacobi_max_block_size,
                 .use_matrix_free = problem.solver_settings.use_matrix_free,
                 .criterion = problem.solver_settings.criterion,
+                .preconditioner = problem.solver_settings.preconditioner,
+                .sor_relaxation_factor = problem.solver_settings.sor_relaxation_factor,
+                .chebyshev_iterations = problem.solver_settings.chebyshev_iterations,
+                .chebyshev_lower_bound = problem.solver_settings.chebyshev_lower_bound,
+                .chebyshev_upper_bound = problem.solver_settings.chebyshev_upper_bound,
         };
         auto const result = magnetostatics_onelab::
                 run(mesh_file,
