@@ -448,11 +448,12 @@ void apply_operator(
         OutputView output,
         Workspace& workspace)
 {
-    if constexpr (requires(OperatorModel const& model,
-                           ExecSpace ex,
-                           InputView in,
-                           OutputView out,
-                           Workspace& work) { model.apply(ex, in, out, work); }) {
+    if constexpr (requires(
+                          OperatorModel const& model,
+                          ExecSpace ex,
+                          InputView in,
+                          OutputView out,
+                          Workspace& work) { model.apply(ex, in, out, work); }) {
         operator_model.apply(exec_space, input, output, workspace);
     } else {
         apply_operator(exec_space, operator_model, input, output);
@@ -737,8 +738,7 @@ public:
         m_exec_space.fence();
         auto const apply_end = std::chrono::steady_clock::now();
         ++m_advanced_apply_count;
-        m_advanced_apply_duration
-                += std::chrono::duration<double>(apply_end - apply_start).count();
+        m_advanced_apply_duration += std::chrono::duration<double>(apply_end - apply_start).count();
     }
 
     void log_timing() const
@@ -927,9 +927,8 @@ inline std::shared_ptr<gko::LinOp const> build_preconditioner(
     }
     case PreconditionerType::IrJacobi: {
         auto jacobi_factory = build_jacobi_preconditioner_factory(gko_exec, settings);
-        auto iterations_criterion = gko::stop::Iteration::build()
-                                            .with_max_iters(settings.ir_iterations)
-                                            .on(gko_exec);
+        auto iterations_criterion
+                = gko::stop::Iteration::build().with_max_iters(settings.ir_iterations).on(gko_exec);
         auto preconditioner_factory
                 = gko::solver::Ir<double>::build()
                           .with_criteria(std::move(iterations_criterion))
@@ -990,8 +989,9 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
                                  .with_criteria(
                                          std::move(residual_criterion),
                                          std::move(iterations_criterion))
-                                 .with_krylov_dim(static_cast<gko::size_type>(
-                                         env_int_or("SIMILIE_GMRES_KRYLOV_DIM", 100)))
+                                 .with_krylov_dim(
+                                         static_cast<gko::size_type>(
+                                                 env_int_or("SIMILIE_GMRES_KRYLOV_DIM", 100)))
                                  .on(gko_exec);
     } else if (detail::env_value_equals("SIMILIE_SOLVER", "bicgstab")) {
         solver_factory = gko::solver::Bicgstab<double>::build()
@@ -1001,24 +1001,28 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
                                          std::move(iterations_criterion))
                                  .on(gko_exec);
     } else if (detail::env_value_equals("SIMILIE_SOLVER", "gcr")) {
-        solver_factory = gko::solver::Gcr<double>::build()
-                                 .with_generated_preconditioner(preconditioner)
-                                 .with_criteria(
-                                         std::move(residual_criterion),
-                                         std::move(iterations_criterion))
-                                 .with_krylov_dim(static_cast<gko::size_type>(
-                                         std::max(1, env_int_or("SIMILIE_GCR_KRYLOV_DIM", 100))))
-                                 .on(gko_exec);
+        solver_factory
+                = gko::solver::Gcr<double>::build()
+                          .with_generated_preconditioner(preconditioner)
+                          .with_criteria(
+                                  std::move(residual_criterion),
+                                  std::move(iterations_criterion))
+                          .with_krylov_dim(
+                                  static_cast<gko::size_type>(
+                                          std::max(1, env_int_or("SIMILIE_GCR_KRYLOV_DIM", 100))))
+                          .on(gko_exec);
     } else if (detail::env_value_equals("SIMILIE_SOLVER", "idr")) {
-        solver_factory = gko::solver::Idr<double>::build()
-                                 .with_generated_preconditioner(preconditioner)
-                                 .with_criteria(
-                                         std::move(residual_criterion),
-                                         std::move(iterations_criterion))
-                                 .with_subspace_dim(static_cast<gko::size_type>(
-                                         std::max(1, env_int_or("SIMILIE_IDR_SUBSPACE_DIM", 8))))
-                                 .with_deterministic(true)
-                                 .on(gko_exec);
+        solver_factory
+                = gko::solver::Idr<double>::build()
+                          .with_generated_preconditioner(preconditioner)
+                          .with_criteria(
+                                  std::move(residual_criterion),
+                                  std::move(iterations_criterion))
+                          .with_subspace_dim(
+                                  static_cast<gko::size_type>(
+                                          std::max(1, env_int_or("SIMILIE_IDR_SUBSPACE_DIM", 8))))
+                          .with_deterministic(true)
+                          .on(gko_exec);
     } else {
         solver_factory = gko::solver::Cg<double>::build()
                                  .with_generated_preconditioner(preconditioner)
@@ -1030,13 +1034,12 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
     std::shared_ptr<MatrixFreeLinOp<ExecSpace, OperatorModel> const> matrix_free_system_matrix;
     std::shared_ptr<gko::LinOp const> system_matrix;
     if (settings.use_matrix_free) {
-        auto operator_model_ptr = std::shared_ptr<OperatorModel const>(
-                &operator_model,
-                [](OperatorModel const*) {});
-        matrix_free_system_matrix = std::make_shared<MatrixFreeLinOp<ExecSpace, OperatorModel>>(
-                gko_exec,
-                exec_space,
-                std::move(operator_model_ptr));
+        auto operator_model_ptr
+                = std::shared_ptr<OperatorModel const>(&operator_model, [](OperatorModel const*) {
+                  });
+        matrix_free_system_matrix = std::make_shared<MatrixFreeLinOp<
+                ExecSpace,
+                OperatorModel>>(gko_exec, exec_space, std::move(operator_model_ptr));
         system_matrix = matrix_free_system_matrix;
     } else {
         system_matrix = assembled_matrix;
@@ -1044,10 +1047,14 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
     if (settings.use_matrix_free && matrix_free_system_matrix != nullptr
         && assembled_matrix != nullptr && env_flag_enabled("SIMILIE_COMPARE_MATRIX_FREE_APPLY")) {
         using memory_space = typename RHSViewType::memory_space;
-        Kokkos::View<double**, memory_space>
-                matrix_free_applied("similie_compare_matrix_free_applied", rhs.extent(0), rhs.extent(1));
-        Kokkos::View<double**, memory_space>
-                assembled_applied("similie_compare_assembled_applied", rhs.extent(0), rhs.extent(1));
+        Kokkos::View<double**, memory_space> matrix_free_applied(
+                "similie_compare_matrix_free_applied",
+                rhs.extent(0),
+                rhs.extent(1));
+        Kokkos::View<double**, memory_space> assembled_applied(
+                "similie_compare_assembled_applied",
+                rhs.extent(0),
+                rhs.extent(1));
         Kokkos::View<double**, memory_space>
                 difference("similie_compare_apply_difference", rhs.extent(0), rhs.extent(1));
         auto probe_gko = to_gko_dense(gko_exec, rhs);
@@ -1063,16 +1070,13 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
         double const difference_norm = residual_norm_l2(exec_space, difference);
         double const assembled_norm = residual_norm_l2(exec_space, assembled_applied);
         std::cout << "SimiLie matrix-free apply comparison: difference_l2=" << difference_norm
-                  << " assembled_l2=" << assembled_norm
-                  << " relative_difference="
+                  << " assembled_l2=" << assembled_norm << " relative_difference="
                   << (assembled_norm == 0.0 ? 0.0 : difference_norm / assembled_norm) << '\n';
         if (rhs.extent(1) == 1 && rhs.extent(0) % 3 == 0) {
-            auto const difference_host = Kokkos::create_mirror_view_and_copy(
-                    Kokkos::HostSpace(),
-                    difference);
-            auto const assembled_host = Kokkos::create_mirror_view_and_copy(
-                    Kokkos::HostSpace(),
-                    assembled_applied);
+            auto const difference_host
+                    = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), difference);
+            auto const assembled_host
+                    = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), assembled_applied);
             std::array<double, 3> component_difference_norms {};
             std::array<double, 3> component_assembled_norms {};
             for (std::size_t row = 0; row < rhs.extent(0); ++row) {
@@ -1084,14 +1088,11 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
             }
             std::cout << "SimiLie matrix-free apply component comparison:";
             for (std::size_t component = 0; component < 3; ++component) {
-                double const component_difference = std::sqrt(
-                        component_difference_norms[component]);
-                double const component_assembled = std::sqrt(
-                        component_assembled_norms[component]);
-                std::cout << " component" << component
-                          << "_difference_l2=" << component_difference
-                          << " component" << component
-                          << "_relative_difference="
+                double const component_difference
+                        = std::sqrt(component_difference_norms[component]);
+                double const component_assembled = std::sqrt(component_assembled_norms[component]);
+                std::cout << " component" << component << "_difference_l2=" << component_difference
+                          << " component" << component << "_relative_difference="
                           << (component_assembled == 0.0
                                       ? 0.0
                                       : component_difference / component_assembled);
@@ -1150,9 +1151,8 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
         if (settings.use_matrix_free && matrix_free_system_matrix != nullptr) {
             auto solution_gko_for_residual = to_gko_dense(gko_exec, solution);
             auto applied_gko_for_residual = to_gko_dense(gko_exec, applied);
-            matrix_free_system_matrix->apply(
-                    solution_gko_for_residual.dense,
-                    applied_gko_for_residual.dense);
+            matrix_free_system_matrix
+                    ->apply(solution_gko_for_residual.dense, applied_gko_for_residual.dense);
             gko_exec->synchronize();
             copy_back_from_gko_dense_bridge(applied, applied_gko_for_residual);
         } else {
@@ -1241,8 +1241,7 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
                       << std::chrono::duration<double>(matrix_build_end - matrix_build_start)
                                  .count()
                       << " preconditioner_build_duration="
-                      << std::chrono::duration<double>(
-                                 preconditioner_build_end - matrix_build_end)
+                      << std::chrono::duration<double>(preconditioner_build_end - matrix_build_end)
                                  .count()
                       << '\n';
         }
@@ -1314,9 +1313,8 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
                                                       std::move(residual_criterion),
                                                       std::move(iterations_criterion))
                                               .on(gko_exec);
-                auto operator_model_ptr = std::shared_ptr<OperatorModel const>(
-                        &operator_model,
-                        [](OperatorModel const*) {});
+                auto operator_model_ptr = std::shared_ptr<
+                        OperatorModel const>(&operator_model, [](OperatorModel const*) {});
                 auto system_matrix = std::shared_ptr<gko::LinOp const>(
                         std::make_shared<detail::StateDependentMatrixFreeLinOp<
                                 ExecSpace,
