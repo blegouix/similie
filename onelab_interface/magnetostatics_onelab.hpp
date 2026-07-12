@@ -764,7 +764,7 @@ using PositionTensor3D = sil::tensor::Tensor<
         Kokkos::layout_right,
         MemorySpace>;
 
-inline constexpr double DEFAULT_VECTOR_POTENTIAL_GAUGE_PENALTY_3D = 1400.0;
+inline constexpr double DEFAULT_VECTOR_POTENTIAL_GAUGE_PENALTY_3D = 20.0;
 
 inline double vector_potential_gauge_penalty_3d()
 {
@@ -2154,7 +2154,7 @@ public:
         apply_with_precomputed_stencils(exec_space, input, output);
     }
 
-private:
+public:
     template <class ExecSpace, class InputView, class OutputView>
     void apply_with_precomputed_stencils(ExecSpace exec_space, InputView input, OutputView output)
             const
@@ -2497,20 +2497,14 @@ private:
                         || k + 1 == nz) {
                         return;
                     }
-                    auto scatter_component = [&](auto index_tag) {
+                    auto const x_response_component
+                            = magnetic_induction_accessor.template access_element<Y, Z>();
+                    auto const y_response_component
+                            = magnetic_induction_accessor.template access_element<X, Z>();
+                    auto const z_response_component
+                            = magnetic_induction_accessor.template access_element<X, Y>();
+                    auto scatter_component = [&](auto index_tag, auto response_component) {
                         using index_type = decltype(index_tag);
-                        auto const response_component = [&]() {
-                            if constexpr (std::is_same_v<index_type, X>) {
-                                return magnetic_induction_accessor.template access_element<Y, Z>();
-                            } else if constexpr (std::is_same_v<index_type, Y>) {
-                                return magnetic_induction_accessor.template access_element<X, Z>();
-                            } else {
-                                static_assert(
-                                        std::is_same_v<index_type, Z>,
-                                        "unsupported magnetic induction component tag");
-                                return magnetic_induction_accessor.template access_element<X, Y>();
-                            }
-                        }();
                         double const response = magnetic_response_tensor(elem, response_component);
                         if (response == 0.0) {
                             return;
@@ -2549,9 +2543,9 @@ private:
                             Kokkos::atomic_add(&output(row, 0), coefficient * response);
                         });
                     };
-                    scatter_component(X {});
-                    scatter_component(Y {});
-                    scatter_component(Z {});
+                    scatter_component(X {}, x_response_component);
+                    scatter_component(Y {}, y_response_component);
+                    scatter_component(Z {}, z_response_component);
                 });
         exec_space.fence();
     }

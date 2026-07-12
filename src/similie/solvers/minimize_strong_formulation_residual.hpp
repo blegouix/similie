@@ -1121,6 +1121,8 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
     gko_exec->synchronize();
     copy_back_from_gko_dense_bridge(solution, solution_gko);
     auto const optimization_end = std::chrono::steady_clock::now();
+    diagnostics.duration
+            = std::chrono::duration<double>(optimization_end - optimization_start).count();
     if (matrix_free_system_matrix != nullptr) {
         matrix_free_system_matrix->log_timing();
     }
