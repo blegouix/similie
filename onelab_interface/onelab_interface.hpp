@@ -72,6 +72,8 @@ struct MinimizeStrongFormulationResidualProblem
     unsigned int chebyshev_iterations = 8U;
     double chebyshev_lower_bound = 0.05;
     double chebyshev_upper_bound = 1.5;
+    unsigned int ir_iterations = 8U;
+    double ir_relaxation_factor = 1.0;
 };
 
 struct SingleElectricalConductorMaterialWithSingleLinearMagneticMaterialPreprocess
@@ -473,6 +475,14 @@ inline SilproProblem parse_silpro_problem(std::filesystem::path const& file)
             solver_section,
             "ChebyshevUpperBound",
             std::to_string(problem.solver_settings.chebyshev_upper_bound)));
+    problem.solver_settings.ir_iterations = parse_number<unsigned int>(get_value_or(
+            solver_section,
+            "IrIterations",
+            std::to_string(problem.solver_settings.ir_iterations)));
+    problem.solver_settings.ir_relaxation_factor = parse_number<double>(get_value_or(
+            solver_section,
+            "IrRelaxationFactor",
+            std::to_string(problem.solver_settings.ir_relaxation_factor)));
 
     if (problem.physics == SupportedPhysics::ScalarFieldWithPowerCoupling) {
         SilproSection const& section
@@ -1213,6 +1223,8 @@ private:
                 .chebyshev_iterations = problem.solver_settings.chebyshev_iterations,
                 .chebyshev_lower_bound = problem.solver_settings.chebyshev_lower_bound,
                 .chebyshev_upper_bound = problem.solver_settings.chebyshev_upper_bound,
+                .ir_iterations = problem.solver_settings.ir_iterations,
+                .ir_relaxation_factor = problem.solver_settings.ir_relaxation_factor,
         };
         auto const result = magnetostatics_onelab::
                 run(mesh_file,

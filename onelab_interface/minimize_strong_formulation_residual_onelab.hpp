@@ -56,6 +56,10 @@ inline double preconditioner_to_control_value(solvers::PreconditionerType precon
         return 4.0;
     case solvers::PreconditionerType::ChebyshevJacobi:
         return 5.0;
+    case solvers::PreconditionerType::IrJacobi:
+        return 6.0;
+    case solvers::PreconditionerType::GeneralIsai:
+        return 7.0;
     }
     return 1.0;
 }
@@ -76,6 +80,10 @@ inline solvers::PreconditionerType preconditioner_from_control_value(double valu
         return solvers::PreconditionerType::Ssor;
     case 5:
         return solvers::PreconditionerType::ChebyshevJacobi;
+    case 6:
+        return solvers::PreconditionerType::IrJacobi;
+    case 7:
+        return solvers::PreconditionerType::GeneralIsai;
     default:
         throw std::runtime_error("invalid strong-formulation preconditioner control value");
     }
@@ -142,9 +150,9 @@ void synchronize_controls(
             "Ginkgo preconditioner used by the stationary strong-formulation solver.",
             preconditioner_to_control_value(solver_settings.preconditioner),
             0.0,
-            5.0,
+            7.0,
             1.0,
-            std::vector<double> {0.0, 1.0, 2.0, 3.0, 4.0, 5.0},
+            std::vector<double> {0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0},
             std::map<double, std::string> {
                     {0.0, "Identity"},
                     {1.0, "Jacobi"},
@@ -152,6 +160,8 @@ void synchronize_controls(
                     {3.0, "SymmetricGaussSeidel"},
                     {4.0, "Ssor"},
                     {5.0, "ChebyshevJacobi"},
+                    {6.0, "IrJacobi"},
+                    {7.0, "GeneralIsai"},
             });
     publish_or_sync_number(
             problem_parameter_name("1Solver", "6SOR relaxation factor"),
@@ -184,6 +194,22 @@ void synchronize_controls(
             solver_settings.chebyshev_upper_bound,
             1.e-12,
             1.e12,
+            0.1);
+    publish_or_sync_number(
+            problem_parameter_name("1Solver", "10IR iterations"),
+            "IR iterations",
+            "Maximum inner iterations used by the IR-Jacobi preconditioner.",
+            static_cast<double>(solver_settings.ir_iterations),
+            1.0,
+            1.e6,
+            1.0);
+    publish_or_sync_number(
+            problem_parameter_name("1Solver", "11IR relaxation factor"),
+            "IR relaxation factor",
+            "Relaxation factor used by the IR-Jacobi preconditioner.",
+            solver_settings.ir_relaxation_factor,
+            1.e-12,
+            2.0,
             0.1);
 }
 
@@ -225,6 +251,12 @@ SolverSettings apply_control_overrides(
     solver_settings.chebyshev_upper_bound = get_first_number_value(
             problem_parameter_name("1Solver", "9Chebyshev upper bound"),
             solver_settings.chebyshev_upper_bound);
+    solver_settings.ir_iterations = static_cast<unsigned int>(get_first_number_value(
+            problem_parameter_name("1Solver", "10IR iterations"),
+            static_cast<double>(solver_settings.ir_iterations)));
+    solver_settings.ir_relaxation_factor = get_first_number_value(
+            problem_parameter_name("1Solver", "11IR relaxation factor"),
+            solver_settings.ir_relaxation_factor);
     return solver_settings;
 }
 
