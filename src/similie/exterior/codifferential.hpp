@@ -188,19 +188,24 @@ struct Codifferential<
         PositionType>
 {
     template <class ChainType, class LowerChainType, class NaturalElem>
-    KOKKOS_FUNCTION static detail::
-            local_operator_value_t<typename TensorType::non_indices_domain_t, CochainTag>
-            value(TensorType tensor,
-                  MetricType metric,
-                  PositionType position,
-                  ChainType chain,
-                  LowerChainType lower_chain,
-                  typename TensorType::non_indices_domain_t::discrete_element_type elem,
-                  NaturalElem natural_elem)
+    KOKKOS_FUNCTION static detail::local_operator_value_t<
+            typename TensorType::non_indices_domain_t,
+            CochainTag,
+            typename TensorType::memory_space>
+    value(TensorType tensor,
+          MetricType metric,
+          PositionType position,
+          ChainType chain,
+          LowerChainType lower_chain,
+          typename TensorType::non_indices_domain_t::discrete_element_type elem,
+          NaturalElem natural_elem)
     {
         using CodifferentialIndex = codifferential_index_t<TagToRemoveFromCochain, CochainTag>;
         using SpatialDomain = typename TensorType::non_indices_domain_t;
-        using LocalStencil = detail::local_operator_value_t<SpatialDomain, CochainTag>;
+        using LocalStencil = detail::local_operator_value_t<
+                SpatialDomain,
+                CochainTag,
+                typename TensorType::memory_space>;
         using SpatialElem = typename SpatialDomain::discrete_element_type;
 
         LocalStencil stencil = detail::
