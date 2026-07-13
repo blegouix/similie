@@ -359,6 +359,7 @@ struct Coboundary<TagToAddToCochain, CochainTag>
             Elem elem)
     {
         constexpr std::size_t BOUNDARY_SIZE = 2 * (CochainTag::rank() + 1);
+        using MemorySpace = typename CoboundaryTensorType::memory_space;
         std::array<double, BOUNDARY_SIZE> boundary_values_alloc {};
         ddc::DiscreteDomain<detail::CoboundaryDummyIndex> const boundary_domain(
                 ddc::DiscreteElement<detail::CoboundaryDummyIndex>(0),
@@ -367,7 +368,7 @@ struct Coboundary<TagToAddToCochain, CochainTag>
                 double,
                 ddc::DiscreteDomain<detail::CoboundaryDummyIndex>,
                 Kokkos::layout_right,
-                typename ChainType::memory_space>
+                MemorySpace>
                 boundary_values(boundary_values_alloc.data(), boundary_domain);
 
         using OutputIndex = coboundary_index_t<TagToAddToCochain, CochainTag>;
@@ -380,7 +381,7 @@ struct Coboundary<TagToAddToCochain, CochainTag>
                     simplex(std::integral_constant<std::size_t, CochainTag::rank() + 1> {},
                             elem_on_chain,
                             chain[cochain_id].discrete_vector());
-            auto boundary_chain = boundary<typename ChainType::memory_space>(simplex);
+            auto boundary_chain = boundary<MemorySpace>(simplex);
             for (std::size_t boundary_id = 0; boundary_id < boundary_chain.size(); ++boundary_id) {
                 auto const boundary_simplex = boundary_chain[boundary_id];
                 if constexpr (
@@ -530,6 +531,7 @@ struct TransposedCoboundary<TagToAddToCochain, CochainTag>
             Elem elem)
     {
         constexpr std::size_t BOUNDARY_SIZE = 2 * (CochainTag::rank() + 1);
+        using MemorySpace = typename CoboundaryTensorType::memory_space;
         std::array<double, BOUNDARY_SIZE> boundary_values_alloc {};
         ddc::DiscreteDomain<detail::CoboundaryDummyIndex> const boundary_domain(
                 ddc::DiscreteElement<detail::CoboundaryDummyIndex>(0),
@@ -538,7 +540,7 @@ struct TransposedCoboundary<TagToAddToCochain, CochainTag>
                 double,
                 ddc::DiscreteDomain<detail::CoboundaryDummyIndex>,
                 Kokkos::layout_right,
-                typename ChainType::memory_space>
+                MemorySpace>
                 boundary_values(boundary_values_alloc.data(), boundary_domain);
 
         using OutputIndex = coboundary_index_t<TagToAddToCochain, CochainTag>;
@@ -551,7 +553,7 @@ struct TransposedCoboundary<TagToAddToCochain, CochainTag>
                     simplex(std::integral_constant<std::size_t, CochainTag::rank() + 1> {},
                             elem_on_chain,
                             chain[cochain_id].discrete_vector());
-            auto boundary_chain = boundary<typename ChainType::memory_space>(simplex);
+            auto boundary_chain = boundary<MemorySpace>(simplex);
             for (std::size_t boundary_id = 0; boundary_id < boundary_chain.size(); ++boundary_id) {
                 auto const boundary_simplex = boundary_chain[boundary_id];
                 auto sampled_face_vector = boundary_simplex.discrete_vector();
