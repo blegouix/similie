@@ -1266,6 +1266,18 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
                 correction_rhs("similie_nonlinear_correction_rhs", rhs.extent(0), rhs.extent(1));
         Kokkos::View<double**, memory_space>
                 delta("similie_nonlinear_delta", rhs.extent(0), rhs.extent(1));
+        Kokkos::View<double**, memory_space> candidate_solution(
+                "similie_nonlinear_candidate_solution",
+                rhs.extent(0),
+                rhs.extent(1));
+        Kokkos::View<double**, memory_space> candidate_residual(
+                "similie_nonlinear_candidate_residual",
+                rhs.extent(0),
+                rhs.extent(1));
+        Kokkos::View<double**, memory_space> candidate_operator_value(
+                "similie_nonlinear_candidate_operator_value",
+                rhs.extent(0),
+                rhs.extent(1));
         auto const optimization_start = std::chrono::steady_clock::now();
         diagnostics.converged = false;
 
@@ -1363,10 +1375,67 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
                         preconditioner);
                 diagnostics.iterations += inner.iterations;
             }
-            detail::axpy_inplace(exec_space, solution, 1.0, delta);
-            detail::apply_operator(exec_space, operator_model, solution, operator_value);
-            detail::copy(exec_space, residual, rhs);
-            detail::axpy_inplace(exec_space, residual, -1.0, operator_value);
+            double const current_residual_l2 = detail::residual_norm_l2(exec_space, residual);
+            double alpha = 1.0;
+            double best_alpha = 0.0;
+            double best_residual_l2 = std::numeric_limits<double>::infinity();
+            unsigned int const max_line_search_steps = static_cast<unsigned int>(
+                    std::max(1, detail::env_int_or("SIMILIE_NONLINEAR_LINE_SEARCH_STEPS", 8)));
+            double const line_search_reduction = std::
+                    clamp(detail::env_double_or("SIMILIE_NONLINEAR_LINE_SEARCH_REDUCTION", 0.5),
+                          1.0e-3,
+                          0.99);
+            for (unsigned int line_search_step = 0; line_search_step < max_line_search_steps;
+                 ++line_search_step) {
+                detail::copy(exec_space, candidate_solution, solution);
+                detail::axpy_inplace(exec_space, candidate_solution, alpha, delta);
+                detail::apply_operator(
+                        exec_space,
+                        operator_model,
+                        candidate_solution,
+                        candidate_operator_value);
+                detail::copy(exec_space, candidate_residual, rhs);
+                detail::axpy_inplace(
+                        exec_space,
+                        candidate_residual,
+                        -1.0,
+                        candidate_operator_value);
+                double const candidate_residual_l2
+                        = detail::residual_norm_l2(exec_space, candidate_residual);
+                if (candidate_residual_l2 < best_residual_l2) {
+                    best_alpha = alpha;
+                    best_residual_l2 = candidate_residual_l2;
+                }
+                if (candidate_residual_l2 < current_residual_l2) {
+                    break;
+                }
+                alpha *= line_search_reduction;
+            }
+            if (best_alpha != alpha) {
+                alpha = best_alpha;
+                detail::copy(exec_space, candidate_solution, solution);
+                detail::axpy_inplace(exec_space, candidate_solution, alpha, delta);
+                detail::apply_operator(
+                        exec_space,
+                        operator_model,
+                        candidate_solution,
+                        candidate_operator_value);
+                detail::copy(exec_space, candidate_residual, rhs);
+                detail::axpy_inplace(
+                        exec_space,
+                        candidate_residual,
+                        -1.0,
+                        candidate_operator_value);
+                best_residual_l2 = detail::residual_norm_l2(exec_space, candidate_residual);
+            }
+            if (detail::solver_progress_enabled()) {
+                std::cout << "SimiLie nonlinear line search: iteration=" << iteration
+                          << " alpha=" << alpha << " residual_l2=" << best_residual_l2
+                          << " previous_residual_l2=" << current_residual_l2 << std::endl;
+            }
+            detail::copy(exec_space, solution, candidate_solution);
+            detail::copy(exec_space, operator_value, candidate_operator_value);
+            detail::copy(exec_space, residual, candidate_residual);
         }
         auto const optimization_end = std::chrono::steady_clock::now();
         diagnostics.duration

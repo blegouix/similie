@@ -2841,8 +2841,17 @@ void apply_jacobian(
     auto const transposed_moment_rows = operator_model.transposed_moment_rows();
     auto const transposed_moment_coefficients = operator_model.transposed_moment_coefficients();
     auto const transposed_moment_counts = operator_model.transposed_moment_counts();
+    auto const codifferential_columns = operator_model.codifferential_columns();
+    auto const codifferential_coefficients = operator_model.codifferential_coefficients();
+    auto const codifferential_counts = operator_model.codifferential_counts();
+    auto const codifferential_weights = operator_model.codifferential_weights();
+    auto const transposed_codifferential_rows = operator_model.transposed_codifferential_rows();
+    auto const transposed_codifferential_coefficients
+            = operator_model.transposed_codifferential_coefficients();
+    auto const transposed_codifferential_counts = operator_model.transposed_codifferential_counts();
     double const gauge_penalty = vector_potential_gauge_penalty_3d();
     double const divergence_gauge_factor = gauge_penalty * vector_potential_gauge_sign_3d();
+    bool const use_divergence_gauge = use_divergence_gauge_3d();
     auto node_domain = ddc::DiscreteDomain<DDimX, DDimY, DDimZ>(
             ddc::DiscreteElement<DDimX, DDimY, DDimZ>(0, 0, 0),
             ddc::DiscreteVector<DDimX, DDimY, DDimZ>(nx, ny, nz));
@@ -2958,7 +2967,38 @@ void apply_jacobian(
                                                     * delta_moments[2]);
                         }
                     }
-                    output(row, 0) = residual + gauge_penalty * input(row, 0);
+                    double gauge_residual = gauge_penalty * input(row, 0);
+                    if (use_divergence_gauge) {
+                        gauge_residual = 0.0;
+                        for (int transposed_slot = 0;
+                             transposed_slot < transposed_codifferential_counts(row);
+                             ++transposed_slot) {
+                            std::size_t const codifferential_row = static_cast<std::size_t>(
+                                    transposed_codifferential_rows(row, transposed_slot));
+                            double const row_coefficient = transposed_codifferential_coefficients(
+                                    row,
+                                    transposed_slot);
+                            double codifferential_value = 0.0;
+                            for (int column_slot = 0;
+                                 column_slot < codifferential_counts(codifferential_row);
+                                 ++column_slot) {
+                                codifferential_value
+                                        += codifferential_coefficients(
+                                                   codifferential_row,
+                                                   column_slot)
+                                           * input(static_cast<std::size_t>(
+                                                           codifferential_columns(
+                                                                   codifferential_row,
+                                                                   column_slot)),
+                                                   0);
+                            }
+                            gauge_residual
+                                    += divergence_gauge_factor
+                                       * codifferential_weights(codifferential_row)
+                                       * row_coefficient * codifferential_value;
+                        }
+                    }
+                    output(row, 0) = residual + gauge_residual;
                 }
             });
 }
@@ -4757,6 +4797,8 @@ Result run_on_hexahedral_grid(
         SIMILIE_DEBUG_LOG("similie_onelab_linear_magnetostatics_build_operator_3d");
         auto const operator_setup_start = std::chrono::steady_clock::now();
         log_info(logger, "SimiLie starting 3D operator setup");
+        bool const precompute_operator_stencils
+                = !solver_settings.use_matrix_free || !std::decay_t<decltype(equations)>::IS_LINEAR;
         auto const operator_model = magnetostatics_local::MagnetostaticsOperator3D<
                 memory_space,
                 decltype(equations),
@@ -4765,7 +4807,7 @@ Result run_on_hexahedral_grid(
                 x_coords,
                 y_coords,
                 z_coords,
-                !solver_settings.use_matrix_free);
+                precompute_operator_stencils);
         auto const operator_setup_duration = std::chrono::duration<double>(
                 std::chrono::steady_clock::now() - operator_setup_start);
         log_info(
