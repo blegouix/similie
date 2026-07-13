@@ -321,6 +321,8 @@ public:
     }
 
 protected:
+    using gko::log::Logger::on_iteration_complete;
+
     void on_iteration_complete(
             gko::LinOp const*,
             gko::LinOp const*,

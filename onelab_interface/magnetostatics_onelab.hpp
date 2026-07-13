@@ -2412,7 +2412,8 @@ public:
                               * dpotential_dt_component<Z>(equations, moments, elem);
                 });
 
-        if (use_divergence_gauge_3d()) {
+        bool const use_divergence_gauge = use_divergence_gauge_3d();
+        if (use_divergence_gauge) {
             workspace.staged_codifferential->run(divergence_tensor, potential_tensor);
         }
 
@@ -2437,7 +2438,7 @@ public:
                             continue;
                         }
                         double gauge_value = gauge_penalty * input(row, 0);
-                        if (use_divergence_gauge_3d()) {
+                        if (use_divergence_gauge) {
                             gauge_value = 0.0;
                         }
                         output(row, 0) = gauge_value;
@@ -2445,7 +2446,7 @@ public:
                 });
 
         exec_space.fence();
-        if (use_divergence_gauge_3d()) {
+        if (use_divergence_gauge) {
             ddc::parallel_for_each(
                     "similie_3d_matrix_free_scatter_divergence_gauge",
                     exec_space,
