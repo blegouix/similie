@@ -1689,7 +1689,6 @@ public:
         initialize_precomputed_stencils();
     }
 
-private:
     void initialize_precomputed_stencils()
     {
         if (!m_has_precomputed_stencils) {
@@ -1952,7 +1951,6 @@ private:
         exec_space.fence();
     }
 
-public:
     [[nodiscard]] KOKKOS_INLINE_FUNCTION std::size_t size() const
     {
         return 3 * m_nx * m_ny * m_nz;
