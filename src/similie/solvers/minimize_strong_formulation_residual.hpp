@@ -151,13 +151,16 @@ inline unsigned int solver_progress_stride()
 {
     char const* const value = std::getenv("SIMILIE_SOLVER_PROGRESS_STRIDE");
     if (value == nullptr || value[0] == '\0') {
-        return 0U;
+        return 1000U;
     }
 
     char* parse_end = nullptr;
     unsigned long const parsed = std::strtoul(value, &parse_end, 10);
-    if (parse_end == value || parsed == 0UL) {
+    if (parse_end == value) {
         return 1U;
+    }
+    if (parsed == 0UL) {
+        return 0U;
     }
     if (parsed > std::numeric_limits<unsigned int>::max()) {
         return std::numeric_limits<unsigned int>::max();
