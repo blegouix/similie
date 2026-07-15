@@ -764,22 +764,6 @@ using PositionTensor3D = sil::tensor::Tensor<
         Kokkos::layout_right,
         MemorySpace>;
 
-inline constexpr double DEFAULT_VECTOR_POTENTIAL_GAUGE_PENALTY_3D = 20.0;
-
-inline double vector_potential_gauge_penalty_3d()
-{
-    char const* const value = std::getenv("SIMILIE_VECTOR_POTENTIAL_GAUGE_PENALTY_3D");
-    if (value == nullptr || value[0] == '\0') {
-        return DEFAULT_VECTOR_POTENTIAL_GAUGE_PENALTY_3D;
-    }
-    char* parse_end = nullptr;
-    double const parsed = std::strtod(value, &parse_end);
-    if (parse_end == value) {
-        return DEFAULT_VECTOR_POTENTIAL_GAUGE_PENALTY_3D;
-    }
-    return parsed;
-}
-
 inline double vector_potential_gauge_sign_3d()
 {
     char const* const value = std::getenv("SIMILIE_VECTOR_POTENTIAL_GAUGE_SIGN_3D");
@@ -876,6 +860,47 @@ template <class Index, class XCoordView, class YCoordView, class ZCoordView>
         static_assert(std::is_same_v<Index, Z>, "unsupported magnetic induction component tag");
         return dz / (dx * dy);
     }
+}
+
+template <class Index, class XCoordView, class YCoordView, class ZCoordView>
+[[nodiscard]] KOKKOS_FUNCTION double vector_potential_hodge_factor(
+        XCoordView x_coords,
+        YCoordView y_coords,
+        ZCoordView z_coords,
+        std::size_t i,
+        std::size_t j,
+        std::size_t k)
+{
+    double const dx = local_spacing(x_coords, i);
+    double const dy = local_spacing(y_coords, j);
+    double const dz = local_spacing(z_coords, k);
+    if constexpr (std::is_same_v<Index, X>) {
+        return dy * dz / dx;
+    } else if constexpr (std::is_same_v<Index, Y>) {
+        return dx * dz / dy;
+    } else {
+        static_assert(std::is_same_v<Index, Z>, "unsupported vector potential component tag");
+        return dx * dy / dz;
+    }
+}
+
+template <class XCoordView, class YCoordView, class ZCoordView>
+[[nodiscard]] KOKKOS_FUNCTION double vector_potential_hodge_factor(
+        int component,
+        XCoordView x_coords,
+        YCoordView y_coords,
+        ZCoordView z_coords,
+        std::size_t i,
+        std::size_t j,
+        std::size_t k)
+{
+    if (component == 0) {
+        return vector_potential_hodge_factor<X>(x_coords, y_coords, z_coords, i, j, k);
+    }
+    if (component == 1) {
+        return vector_potential_hodge_factor<Y>(x_coords, y_coords, z_coords, i, j, k);
+    }
+    return vector_potential_hodge_factor<Z>(x_coords, y_coords, z_coords, i, j, k);
 }
 
 template <std::size_t NumSamples>
@@ -1583,6 +1608,7 @@ private:
     coord_view_type m_x_coords;
     coord_view_type m_y_coords;
     coord_view_type m_z_coords;
+    double m_gauge_penalty;
     std::size_t m_nx;
     std::size_t m_ny;
     std::size_t m_nz;
@@ -1610,11 +1636,13 @@ public:
             coord_view_type x_coords,
             coord_view_type y_coords,
             coord_view_type z_coords,
+            double gauge_penalty,
             bool precompute_stencils = true)
         : m_equations(std::move(equations))
         , m_x_coords(x_coords)
         , m_y_coords(y_coords)
         , m_z_coords(z_coords)
+        , m_gauge_penalty(gauge_penalty)
         , m_nx(x_coords.extent(0))
         , m_ny(y_coords.extent(0))
         , m_nz(z_coords.extent(0))
@@ -2206,7 +2234,7 @@ public:
         auto const transposed_codifferential_coefficients
                 = m_transposed_codifferential_coefficients;
         auto const transposed_codifferential_counts = m_transposed_codifferential_counts;
-        double const gauge_penalty = vector_potential_gauge_penalty_3d();
+        double const gauge_penalty = m_gauge_penalty;
         double const divergence_gauge_factor = gauge_penalty * vector_potential_gauge_sign_3d();
         double const magnetic_y_response_sign = magnetic_y_response_sign_3d();
         bool const use_divergence_gauge = use_divergence_gauge_3d();
@@ -2293,7 +2321,16 @@ public:
                                                     Z>(equations, moments, sampled_elem);
                             }
                         }
-                        double gauge_residual = gauge_penalty * input(row, 0);
+                        double gauge_residual = gauge_penalty
+                                                * vector_potential_hodge_factor(
+                                                        component,
+                                                        x_coords,
+                                                        y_coords,
+                                                        z_coords,
+                                                        i,
+                                                        j,
+                                                        k)
+                                                * input(row, 0);
                         if (use_divergence_gauge) {
                             gauge_residual = 0.0;
                             for (int transposed_slot = 0;
@@ -2441,7 +2478,7 @@ public:
             workspace.staged_codifferential->run(divergence_tensor, potential_tensor);
         }
 
-        double const gauge_penalty = vector_potential_gauge_penalty_3d();
+        double const gauge_penalty = m_gauge_penalty;
         double const divergence_gauge_factor = gauge_penalty * vector_potential_gauge_sign_3d();
         ddc::parallel_for_each(
                 "similie_3d_matrix_free_initialize_output",
@@ -2461,7 +2498,16 @@ public:
                             output(row, 0) = input(row, 0);
                             continue;
                         }
-                        double gauge_value = gauge_penalty * input(row, 0);
+                        double gauge_value = gauge_penalty
+                                             * vector_potential_hodge_factor(
+                                                     component,
+                                                     x_coords,
+                                                     y_coords,
+                                                     z_coords,
+                                                     i,
+                                                     j,
+                                                     k)
+                                             * input(row, 0);
                         if (use_divergence_gauge) {
                             gauge_value = 0.0;
                         }
@@ -2591,6 +2637,10 @@ public:
     [[nodiscard]] KOKKOS_INLINE_FUNCTION coord_view_type z_coords() const
     {
         return m_z_coords;
+    }
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION double gauge_penalty() const
+    {
+        return m_gauge_penalty;
     }
     [[nodiscard]] KOKKOS_INLINE_FUNCTION auto moment_columns() const
     {
@@ -2874,7 +2924,7 @@ void apply_jacobian(
     auto const transposed_codifferential_coefficients
             = operator_model.transposed_codifferential_coefficients();
     auto const transposed_codifferential_counts = operator_model.transposed_codifferential_counts();
-    double const gauge_penalty = vector_potential_gauge_penalty_3d();
+    double const gauge_penalty = operator_model.gauge_penalty();
     double const divergence_gauge_factor = gauge_penalty * vector_potential_gauge_sign_3d();
     bool const use_divergence_gauge = use_divergence_gauge_3d();
     auto node_domain = ddc::DiscreteDomain<DDimX, DDimY, DDimZ>(
@@ -2991,7 +3041,16 @@ void apply_jacobian(
                                                     * delta_moments[2]);
                         }
                     }
-                    double gauge_residual = gauge_penalty * input(row, 0);
+                    double gauge_residual = gauge_penalty
+                                            * vector_potential_hodge_factor(
+                                                    component,
+                                                    x_coords,
+                                                    y_coords,
+                                                    z_coords,
+                                                    i,
+                                                    j,
+                                                    k)
+                                            * input(row, 0);
                     if (use_divergence_gauge) {
                         gauge_residual = 0.0;
                         for (int transposed_slot = 0;
@@ -3045,6 +3104,7 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                 operator_model.x_coords(),
                 operator_model.y_coords(),
                 operator_model.z_coords(),
+                operator_model.gauge_penalty(),
                 true);
         return assemble_matrix_data(stencil_operator, state);
     }
@@ -3075,7 +3135,7 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
     auto const y_coords = operator_model.y_coords();
     auto const z_coords = operator_model.z_coords();
     double const magnetic_y_response_sign = magnetic_y_response_sign_3d();
-    double const gauge_penalty = vector_potential_gauge_penalty_3d();
+    double const gauge_penalty = operator_model.gauge_penalty();
     double const divergence_gauge_factor = gauge_penalty * vector_potential_gauge_sign_3d();
     bool const use_divergence_gauge = use_divergence_gauge_3d();
 
@@ -3138,7 +3198,18 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                         }
                     }
                 } else {
-                    add_entry(count, row, gauge_penalty);
+                    add_entry(
+                            count,
+                            row,
+                            gauge_penalty
+                                    * vector_potential_hodge_factor(
+                                            static_cast<int>(row % 3),
+                                            x_coords,
+                                            y_coords,
+                                            z_coords,
+                                            i,
+                                            j,
+                                            k));
                 }
                 for (int slot = 0; slot < transposed_moment_counts(row); ++slot) {
                     std::size_t const moment_row
@@ -3302,7 +3373,18 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                         }
                     }
                 } else {
-                    add_entry(count, row, gauge_penalty);
+                    add_entry(
+                            count,
+                            row,
+                            gauge_penalty
+                                    * vector_potential_hodge_factor(
+                                            static_cast<int>(row % 3),
+                                            x_coords,
+                                            y_coords,
+                                            z_coords,
+                                            i,
+                                            j,
+                                            k));
                 }
                 for (int slot = 0; slot < transposed_moment_counts(row); ++slot) {
                     std::size_t const moment_row
@@ -4757,16 +4839,6 @@ Result run_on_hexahedral_grid(
     result.mesh_dimensions = {grid.nx(), grid.ny(), grid.nz()};
     result.num_cells = grid.ncell_x() * grid.ncell_y() * grid.ncell_z();
 
-    auto effective_solver_settings = solver_settings;
-    if (effective_solver_settings.use_matrix_free
-        && effective_solver_settings.preconditioner != solvers::PreconditionerType::Identity) {
-        log_info(
-                logger,
-                "SimiLie using identity preconditioner for 3D matrix-free solve to avoid "
-                "auxiliary matrix assembly");
-        effective_solver_settings.preconditioner = solvers::PreconditionerType::Identity;
-    }
-
     std::vector<CellInputFields> cell_inputs_3d(result.num_cells);
     for (std::size_t cell_index = 0; cell_index < result.num_cells; ++cell_index) {
         CellInputFields field {
@@ -4824,7 +4896,7 @@ Result run_on_hexahedral_grid(
                     std::size_t const row = 3 * node_index + static_cast<std::size_t>(component);
                     rhs_host(row, 0) = 0.0;
                     if (boundary
-                        || effective_solver_settings.criterion
+                        || solver_settings.criterion
                                    == solvers::Criterion::PotentialTemporalDerivative) {
                         continue;
                     }
@@ -4843,12 +4915,20 @@ Result run_on_hexahedral_grid(
                                 std::size_t const cell_i = static_cast<std::size_t>(ci);
                                 std::size_t const cell_j = static_cast<std::size_t>(cj);
                                 std::size_t const cell_k = static_cast<std::size_t>(ck);
-                                double const cell_volume
-                                        = (grid.x_coords[cell_i + 1] - grid.x_coords[cell_i])
-                                          * (grid.y_coords[cell_j + 1] - grid.y_coords[cell_j])
-                                          * (grid.z_coords[cell_k + 1] - grid.z_coords[cell_k]);
+                                double const cell_width_x
+                                        = grid.x_coords[cell_i + 1] - grid.x_coords[cell_i];
+                                double const cell_width_y
+                                        = grid.y_coords[cell_j + 1] - grid.y_coords[cell_j];
+                                double const cell_width_z
+                                        = grid.z_coords[cell_k + 1] - grid.z_coords[cell_k];
+                                double cell_dual_face_measure = cell_width_x * cell_width_y;
+                                if (component == 0) {
+                                    cell_dual_face_measure = cell_width_y * cell_width_z;
+                                } else if (component == 1) {
+                                    cell_dual_face_measure = cell_width_x * cell_width_z;
+                                }
                                 rhs_host(row, 0)
-                                        += 0.125 * cell_volume
+                                        += 0.125 * cell_dual_face_measure
                                            * cell_inputs_3d[grid.cell_index(cell_i, cell_j, cell_k)]
                                                      .current_density[component];
                             }
@@ -4973,23 +5053,24 @@ Result run_on_hexahedral_grid(
                 equations,
                 x_coords,
                 y_coords,
-                z_coords);
+                z_coords,
+                solver_settings.vector_potential_gauge_penalty);
         auto const operator_setup_duration = std::chrono::duration<double>(
                 std::chrono::steady_clock::now() - operator_setup_start);
         log_info(
                 logger,
                 phase_finished_message("3D operator setup", operator_setup_duration.count()));
-        log_info(logger, solve_start_message(effective_solver_settings.use_matrix_free));
+        log_info(logger, solve_start_message(solver_settings.use_matrix_free));
         result.solver_diagnostics = solvers::minimize_strong_formulation_residual(
                 Kokkos::DefaultExecutionSpace(),
                 operator_model,
                 rhs,
                 magnetic_vector_potential_view,
-                effective_solver_settings);
+                solver_settings);
         log_info(
                 logger,
                 solve_finished_message(
-                        effective_solver_settings.use_matrix_free,
+                        solver_settings.use_matrix_free,
                         result.solver_diagnostics.duration));
     };
     if (inputs.use_nonlinear_magnetic_material) {

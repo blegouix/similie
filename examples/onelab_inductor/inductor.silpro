@@ -13,6 +13,8 @@ Solver {
   JacobiMaxBlockSize 1;
   UseMatrixFree 1;
   Criterion MomentsTemporalDerivative;
+  Preconditioner SpdIsai;
+  VectorPotentialGaugePenalty 1e8;
 }
 
 Preprocess {

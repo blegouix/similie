@@ -101,6 +101,7 @@ struct MinimizeStrongFormulationResidualProblem
     bool use_matrix_free = true;
     solvers::Criterion criterion = solvers::Criterion::MomentsTemporalDerivative;
     solvers::PreconditionerType preconditioner = solvers::PreconditionerType::Jacobi;
+    double vector_potential_gauge_penalty = 20.0;
     double sor_relaxation_factor = 1.2;
     unsigned int chebyshev_iterations = 8U;
     double chebyshev_lower_bound = 0.05;
@@ -492,6 +493,10 @@ inline SilproProblem parse_silpro_problem(std::filesystem::path const& file)
             solver_section,
             "Preconditioner",
             std::string(solvers::preconditioner_name(problem.solver_settings.preconditioner))));
+    problem.solver_settings.vector_potential_gauge_penalty = parse_number<double>(get_value_or(
+            solver_section,
+            "VectorPotentialGaugePenalty",
+            std::to_string(problem.solver_settings.vector_potential_gauge_penalty)));
     problem.solver_settings.sor_relaxation_factor = parse_number<double>(get_value_or(
             solver_section,
             "SorRelaxationFactor",
@@ -1253,6 +1258,8 @@ private:
                 .use_matrix_free = problem.solver_settings.use_matrix_free,
                 .criterion = problem.solver_settings.criterion,
                 .preconditioner = problem.solver_settings.preconditioner,
+                .vector_potential_gauge_penalty
+                = problem.solver_settings.vector_potential_gauge_penalty,
                 .sor_relaxation_factor = problem.solver_settings.sor_relaxation_factor,
                 .chebyshev_iterations = problem.solver_settings.chebyshev_iterations,
                 .chebyshev_lower_bound = problem.solver_settings.chebyshev_lower_bound,

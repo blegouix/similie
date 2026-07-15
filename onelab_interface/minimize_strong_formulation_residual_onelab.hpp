@@ -172,7 +172,15 @@ void synchronize_controls(
             1.999999,
             0.1);
     publish_or_sync_number(
-            problem_parameter_name("1Solver", "7Chebyshev iterations"),
+            problem_parameter_name("1Solver", "7Vector potential gauge penalty"),
+            "Vector potential gauge penalty",
+            "Gauge penalty used by the 3D vector-potential solver.",
+            solver_settings.vector_potential_gauge_penalty,
+            0.0,
+            1.e12,
+            1.0);
+    publish_or_sync_number(
+            problem_parameter_name("1Solver", "8Chebyshev iterations"),
             "Chebyshev iterations",
             "Maximum inner Chebyshev iterations used by the Chebyshev-Jacobi preconditioner.",
             static_cast<double>(solver_settings.chebyshev_iterations),
@@ -180,7 +188,7 @@ void synchronize_controls(
             1.e6,
             1.0);
     publish_or_sync_number(
-            problem_parameter_name("1Solver", "8Chebyshev lower bound"),
+            problem_parameter_name("1Solver", "9Chebyshev lower bound"),
             "Chebyshev lower bound",
             "Lower spectral focus used by the Chebyshev-Jacobi preconditioner.",
             solver_settings.chebyshev_lower_bound,
@@ -188,7 +196,7 @@ void synchronize_controls(
             1.e12,
             0.1);
     publish_or_sync_number(
-            problem_parameter_name("1Solver", "9Chebyshev upper bound"),
+            problem_parameter_name("1Solver", "10Chebyshev upper bound"),
             "Chebyshev upper bound",
             "Upper spectral focus used by the Chebyshev-Jacobi preconditioner.",
             solver_settings.chebyshev_upper_bound,
@@ -196,7 +204,7 @@ void synchronize_controls(
             1.e12,
             0.1);
     publish_or_sync_number(
-            problem_parameter_name("1Solver", "10IR iterations"),
+            problem_parameter_name("1Solver", "11IR iterations"),
             "IR iterations",
             "Maximum inner iterations used by the IR-Jacobi preconditioner.",
             static_cast<double>(solver_settings.ir_iterations),
@@ -204,7 +212,7 @@ void synchronize_controls(
             1.e6,
             1.0);
     publish_or_sync_number(
-            problem_parameter_name("1Solver", "11IR relaxation factor"),
+            problem_parameter_name("1Solver", "12IR relaxation factor"),
             "IR relaxation factor",
             "Relaxation factor used by the IR-Jacobi preconditioner.",
             solver_settings.ir_relaxation_factor,
@@ -242,20 +250,23 @@ SolverSettings apply_control_overrides(
     solver_settings.sor_relaxation_factor = get_first_number_value(
             problem_parameter_name("1Solver", "6SOR relaxation factor"),
             solver_settings.sor_relaxation_factor);
+    solver_settings.vector_potential_gauge_penalty = get_first_number_value(
+            problem_parameter_name("1Solver", "7Vector potential gauge penalty"),
+            solver_settings.vector_potential_gauge_penalty);
     solver_settings.chebyshev_iterations = static_cast<unsigned int>(get_first_number_value(
-            problem_parameter_name("1Solver", "7Chebyshev iterations"),
+            problem_parameter_name("1Solver", "8Chebyshev iterations"),
             static_cast<double>(solver_settings.chebyshev_iterations)));
     solver_settings.chebyshev_lower_bound = get_first_number_value(
-            problem_parameter_name("1Solver", "8Chebyshev lower bound"),
+            problem_parameter_name("1Solver", "9Chebyshev lower bound"),
             solver_settings.chebyshev_lower_bound);
     solver_settings.chebyshev_upper_bound = get_first_number_value(
-            problem_parameter_name("1Solver", "9Chebyshev upper bound"),
+            problem_parameter_name("1Solver", "10Chebyshev upper bound"),
             solver_settings.chebyshev_upper_bound);
     solver_settings.ir_iterations = static_cast<unsigned int>(get_first_number_value(
-            problem_parameter_name("1Solver", "10IR iterations"),
+            problem_parameter_name("1Solver", "11IR iterations"),
             static_cast<double>(solver_settings.ir_iterations)));
     solver_settings.ir_relaxation_factor = get_first_number_value(
-            problem_parameter_name("1Solver", "11IR relaxation factor"),
+            problem_parameter_name("1Solver", "12IR relaxation factor"),
             solver_settings.ir_relaxation_factor);
     return solver_settings;
 }

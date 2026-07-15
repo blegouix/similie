@@ -124,6 +124,7 @@ struct StrongFormulationSolverSettings
     bool use_matrix_free = true;
     Criterion criterion = Criterion::MomentsTemporalDerivative;
     PreconditionerType preconditioner = PreconditionerType::Jacobi;
+    double vector_potential_gauge_penalty = 20.0;
     double sor_relaxation_factor = 1.2;
     unsigned int chebyshev_iterations = 8U;
     double chebyshev_lower_bound = 0.05;
