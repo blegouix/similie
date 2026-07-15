@@ -5,8 +5,8 @@
 
 #include <algorithm>
 #include <array>
-#include <chrono>
 #include <cctype>
+#include <chrono>
 #include <cmath>
 #include <cstddef>
 #include <cstdlib>
@@ -1492,11 +1492,11 @@ public:
     using matrix_free_position_tensor_type = PositionTensor3D<MemorySpace>;
     static constexpr int MATRIX_FREE_CODIFFERENTIAL_STENCIL_MAX_SIZE = 24;
     template <class ExecSpace>
-    using matrix_free_staged_codifferential_type = decltype(
-            sil::exterior::make_staged_codifferential<
-                    MetricIndex3D,
-                    vector_potential_index,
-                    vector_potential_index>(
+    using matrix_free_staged_codifferential_type
+            = decltype(sil::exterior::make_staged_codifferential<
+                       MetricIndex3D,
+                       vector_potential_index,
+                       vector_potential_index>(
                     std::declval<ExecSpace const&>(),
                     std::declval<matrix_free_vector_potential_tensor_type>(),
                     std::declval<matrix_free_metric_tensor_type>(),
@@ -1689,148 +1689,159 @@ public:
         if (!m_has_precomputed_stencils) {
             return;
         }
-        auto moment_columns_host = Kokkos::create_mirror_view(m_moment_columns);
-        auto moment_coefficients_host = Kokkos::create_mirror_view(m_moment_coefficients);
-        auto moment_counts_host = Kokkos::create_mirror_view(m_moment_counts);
-        auto transposed_moment_rows_host = Kokkos::create_mirror_view(m_transposed_moment_rows);
-        auto transposed_moment_coefficients_host
-                = Kokkos::create_mirror_view(m_transposed_moment_coefficients);
-        auto transposed_moment_counts_host = Kokkos::create_mirror_view(m_transposed_moment_counts);
-        auto codifferential_columns_host = Kokkos::create_mirror_view(m_codifferential_columns);
-        auto codifferential_coefficients_host
-                = Kokkos::create_mirror_view(m_codifferential_coefficients);
-        auto codifferential_counts_host = Kokkos::create_mirror_view(m_codifferential_counts);
-        auto codifferential_weights_host = Kokkos::create_mirror_view(m_codifferential_weights);
-        auto transposed_codifferential_rows_host
-                = Kokkos::create_mirror_view(m_transposed_codifferential_rows);
-        auto transposed_codifferential_coefficients_host
-                = Kokkos::create_mirror_view(m_transposed_codifferential_coefficients);
-        auto transposed_codifferential_counts_host
-                = Kokkos::create_mirror_view(m_transposed_codifferential_counts);
-
-        for (std::size_t row = 0; row < size(); ++row) {
-            moment_counts_host(row) = 0;
-            transposed_moment_counts_host(row) = 0;
-            transposed_codifferential_counts_host(row) = 0;
-        }
-        for (std::size_t row = 0; row < m_nx * m_ny * m_nz; ++row) {
-            codifferential_counts_host(row) = 0;
-        }
-
-        auto fill_component = [&](auto index_tag, auto elem) {
-            using index_type = decltype(index_tag);
-            std::size_t const i = static_cast<std::size_t>(ddc::DiscreteElement<DDimX>(elem).uid());
-            std::size_t const j = static_cast<std::size_t>(ddc::DiscreteElement<DDimY>(elem).uid());
-            std::size_t const k = static_cast<std::size_t>(ddc::DiscreteElement<DDimZ>(elem).uid());
-            std::size_t const moment_row = dof_index(i, j, k, component_id<index_type>());
-            int count = 0;
-            auto stencil
-                    = MagneticVectorPotentialToMagneticInduction::template forward_vector_value<
-                            index_type>(elem);
-            ddc::device_for_each(stencil.domain(), [&](auto stencil_elem) {
-                double const coeff = stencil.mem(stencil_elem);
-                if (coeff == 0.0) {
-                    return;
-                }
-                auto const potential_elem = ddc::DiscreteElement<DDimX, DDimY, DDimZ>(stencil_elem);
-                std::size_t const potential_i = static_cast<std::size_t>(
-                        ddc::DiscreteElement<DDimX>(potential_elem).uid());
-                std::size_t const potential_j = static_cast<std::size_t>(
-                        ddc::DiscreteElement<DDimY>(potential_elem).uid());
-                std::size_t const potential_k = static_cast<std::size_t>(
-                        ddc::DiscreteElement<DDimZ>(potential_elem).uid());
-                if (is_boundary_node(potential_i, potential_j, potential_k)) {
-                    return;
-                }
-                int const component = potential_component_id<vector_potential_index>(
-                        ddc::DiscreteElement<vector_potential_index>(stencil_elem));
-                moment_columns_host(moment_row, count) = static_cast<int>(
-                        dof_index(potential_i, potential_j, potential_k, component));
-                moment_coefficients_host(moment_row, count) = coeff;
-                ++count;
-                if (count > MOMENT_STENCIL_MAX_SIZE) {
-                    throw std::runtime_error("3D moment stencil capacity exceeded");
-                }
-            });
-            moment_counts_host(moment_row) = count;
-        };
+        Kokkos::DefaultExecutionSpace exec_space;
+        Kokkos::deep_copy(exec_space, m_moment_counts, 0);
+        Kokkos::deep_copy(exec_space, m_transposed_moment_counts, 0);
+        Kokkos::deep_copy(exec_space, m_codifferential_counts, 0);
+        Kokkos::deep_copy(exec_space, m_transposed_codifferential_counts, 0);
 
         [[maybe_unused]] sil::tensor::TensorAccessor<vector_potential_index>
                 vector_potential_accessor;
-        ddc::DiscreteDomain<DDimX, DDimY, DDimZ, vector_potential_index>
-                vector_potential_dom(m_node_domain, vector_potential_accessor.domain());
-        ddc::Chunk vector_potential_alloc(vector_potential_dom, ddc::HostAllocator<double>());
-        sil::tensor::Tensor vector_potential_tensor(vector_potential_alloc);
-
         [[maybe_unused]] sil::tensor::TensorAccessor<MetricIndex3D> metric_accessor;
-        ddc::DiscreteDomain<DDimX, DDimY, DDimZ, MetricIndex3D>
-                metric_dom(m_node_domain, metric_accessor.domain());
-        ddc::Chunk metric_alloc(metric_dom, ddc::HostAllocator<double>());
-        sil::tensor::Tensor metric(metric_alloc);
-
         [[maybe_unused]] sil::tensor::TensorAccessor<PositionIndex3D> position_accessor;
-        ddc::DiscreteDomain<DDimX, DDimY, DDimZ, PositionIndex3D>
-                position_dom(m_node_domain, position_accessor.domain());
-        ddc::Chunk position_alloc(position_dom, ddc::HostAllocator<double>());
-        sil::tensor::Tensor position(position_alloc);
+        using allocator_type = ddc::KokkosAllocator<double, MemorySpace>;
+        matrix_free_vector_potential_alloc_type vector_potential_alloc(
+                ddc::DiscreteDomain<
+                        DDimX,
+                        DDimY,
+                        DDimZ,
+                        vector_potential_index>(m_node_domain, vector_potential_accessor.domain()),
+                allocator_type());
+        matrix_free_metric_alloc_type metric_alloc(
+                ddc::DiscreteDomain<
+                        DDimX,
+                        DDimY,
+                        DDimZ,
+                        MetricIndex3D>(m_node_domain, metric_accessor.domain()),
+                allocator_type());
+        matrix_free_position_alloc_type position_alloc(
+                ddc::DiscreteDomain<
+                        DDimX,
+                        DDimY,
+                        DDimZ,
+                        PositionIndex3D>(m_node_domain, position_accessor.domain()),
+                allocator_type());
+        matrix_free_vector_potential_tensor_type vector_potential_tensor(vector_potential_alloc);
+        matrix_free_metric_tensor_type metric(metric_alloc);
+        matrix_free_position_tensor_type position(position_alloc);
 
-        auto x_coords_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), m_x_coords);
-        auto y_coords_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), m_y_coords);
-        auto z_coords_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), m_z_coords);
-        ddc::host_for_each(m_node_domain, [&](auto elem) {
-            vector_potential_tensor(elem, vector_potential_accessor.template access_element<X>())
-                    = 0.0;
-            vector_potential_tensor(elem, vector_potential_accessor.template access_element<Y>())
-                    = 0.0;
-            vector_potential_tensor(elem, vector_potential_accessor.template access_element<Z>())
-                    = 0.0;
-            std::size_t const i = static_cast<std::size_t>(ddc::DiscreteElement<DDimX>(elem).uid());
-            std::size_t const j = static_cast<std::size_t>(ddc::DiscreteElement<DDimY>(elem).uid());
-            std::size_t const k = static_cast<std::size_t>(ddc::DiscreteElement<DDimZ>(elem).uid());
-            position(elem, position_accessor.template access_element<X>()) = x_coords_host(i);
-            position(elem, position_accessor.template access_element<Y>()) = y_coords_host(j);
-            position(elem, position_accessor.template access_element<Z>()) = z_coords_host(k);
-            metric(elem, metric_accessor.template access_element<X, X>()) = 1.0;
-            metric(elem, metric_accessor.template access_element<X, Y>()) = 0.0;
-            metric(elem, metric_accessor.template access_element<X, Z>()) = 0.0;
-            metric(elem, metric_accessor.template access_element<Y, Y>()) = 1.0;
-            metric(elem, metric_accessor.template access_element<Y, Z>()) = 0.0;
-            metric(elem, metric_accessor.template access_element<Z, Z>()) = 1.0;
-        });
+        auto const x_coords_view = m_x_coords;
+        auto const y_coords_view = m_y_coords;
+        auto const z_coords_view = m_z_coords;
+        auto const moment_columns = m_moment_columns;
+        auto const moment_coefficients = m_moment_coefficients;
+        auto const moment_counts = m_moment_counts;
+        auto const codifferential_columns = m_codifferential_columns;
+        auto const codifferential_coefficients = m_codifferential_coefficients;
+        auto const codifferential_counts = m_codifferential_counts;
+        auto const codifferential_weights = m_codifferential_weights;
+        std::size_t const nx = m_nx;
+        std::size_t const ny = m_ny;
+        std::size_t const nz = m_nz;
+        auto const node_domain = m_node_domain;
+        ddc::parallel_for_each(
+                "similie_3d_precompute_direct_stencils",
+                exec_space,
+                node_domain,
+                KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DDimZ> elem) {
+                    std::size_t const i
+                            = static_cast<std::size_t>(ddc::DiscreteElement<DDimX>(elem).uid());
+                    std::size_t const j
+                            = static_cast<std::size_t>(ddc::DiscreteElement<DDimY>(elem).uid());
+                    std::size_t const k
+                            = static_cast<std::size_t>(ddc::DiscreteElement<DDimZ>(elem).uid());
+                    vector_potential_tensor(
+                            elem,
+                            vector_potential_accessor.template access_element<X>())
+                            = 0.0;
+                    vector_potential_tensor(
+                            elem,
+                            vector_potential_accessor.template access_element<Y>())
+                            = 0.0;
+                    vector_potential_tensor(
+                            elem,
+                            vector_potential_accessor.template access_element<Z>())
+                            = 0.0;
+                    position(elem, position_accessor.template access_element<X>())
+                            = x_coords_view(i);
+                    position(elem, position_accessor.template access_element<Y>())
+                            = y_coords_view(j);
+                    position(elem, position_accessor.template access_element<Z>())
+                            = z_coords_view(k);
+                    metric(elem, metric_accessor.template access_element<X, X>()) = 1.0;
+                    metric(elem, metric_accessor.template access_element<X, Y>()) = 0.0;
+                    metric(elem, metric_accessor.template access_element<X, Z>()) = 0.0;
+                    metric(elem, metric_accessor.template access_element<Y, Y>()) = 1.0;
+                    metric(elem, metric_accessor.template access_element<Y, Z>()) = 0.0;
+                    metric(elem, metric_accessor.template access_element<Z, Z>()) = 1.0;
 
-        using DualVectorPotentialIndex = sil::misc::convert_type_seq_to_t<
-                sil::tensor::TensorAntisymmetricIndex,
-                sil::exterior::codifferential_hodge_output_indices_t<
-                        vector_potential_index::size() - vector_potential_index::rank(),
-                        vector_potential_index>>;
-        auto codifferential_chain = sil::exterior::tangent_basis<
-                DualVectorPotentialIndex::rank() + 1,
-                NodeDomain3D>(Kokkos::DefaultHostExecutionSpace());
-        auto lower_codifferential_chain
-                = sil::exterior::tangent_basis<DualVectorPotentialIndex::rank(), NodeDomain3D>(
-                        Kokkos::DefaultHostExecutionSpace());
-        auto const scalar_elem = ddc::DiscreteElement<ScalarPotentialIndex>(0);
+                    auto fill_component = [&](auto index_tag) {
+                        using index_type = decltype(index_tag);
+                        std::size_t const moment_row
+                                = 3 * (i + nx * (j + ny * k))
+                                  + static_cast<std::size_t>(component_id<index_type>());
+                        int count = 0;
+                        auto stencil = MagneticVectorPotentialToMagneticInduction::
+                                template forward_vector_value<index_type>(elem);
+                        ddc::device_for_each(stencil.domain(), [&](auto stencil_elem) {
+                            double const coeff = stencil.mem(stencil_elem);
+                            if (coeff == 0.0) {
+                                return;
+                            }
+                            auto const potential_elem
+                                    = ddc::DiscreteElement<DDimX, DDimY, DDimZ>(stencil_elem);
+                            std::size_t const potential_i = static_cast<std::size_t>(
+                                    ddc::DiscreteElement<DDimX>(potential_elem).uid());
+                            std::size_t const potential_j = static_cast<std::size_t>(
+                                    ddc::DiscreteElement<DDimY>(potential_elem).uid());
+                            std::size_t const potential_k = static_cast<std::size_t>(
+                                    ddc::DiscreteElement<DDimZ>(potential_elem).uid());
+                            if (potential_i == 0 || potential_j == 0 || potential_k == 0
+                                || potential_i + 1 == nx || potential_j + 1 == ny
+                                || potential_k + 1 == nz) {
+                                return;
+                            }
+                            if (count >= MOMENT_STENCIL_MAX_SIZE) {
+                                Kokkos::abort("3D moment stencil capacity exceeded");
+                            }
+                            int const component = potential_component_id<vector_potential_index>(
+                                    ddc::DiscreteElement<vector_potential_index>(stencil_elem));
+                            moment_columns(moment_row, count) = static_cast<int>(
+                                    3 * (potential_i + nx * (potential_j + ny * potential_k))
+                                    + static_cast<std::size_t>(component));
+                            moment_coefficients(moment_row, count) = coeff;
+                            ++count;
+                        });
+                        moment_counts(moment_row) = count;
+                    };
+                    fill_component(X {});
+                    fill_component(Y {});
+                    fill_component(Z {});
 
-        for (std::size_t k = 0; k < m_nz; ++k) {
-            for (std::size_t j = 0; j < m_ny; ++j) {
-                for (std::size_t i = 0; i < m_nx; ++i) {
-                    auto const elem = ddc::DiscreteElement<DDimX, DDimY, DDimZ>(i, j, k);
-                    fill_component(X {}, elem);
-                    fill_component(Y {}, elem);
-                    fill_component(Z {}, elem);
-
-                    std::size_t const codifferential_row = flat_node_index(i, j, k);
-                    codifferential_weights_host(codifferential_row)
-                            = local_spacing(x_coords_host, i) * local_spacing(y_coords_host, j)
-                              * local_spacing(z_coords_host, k);
+                    using DualVectorPotentialIndex = sil::misc::convert_type_seq_to_t<
+                            sil::tensor::TensorAntisymmetricIndex,
+                            sil::exterior::codifferential_hodge_output_indices_t<
+                                    vector_potential_index::size() - vector_potential_index::rank(),
+                                    vector_potential_index>>;
+                    auto const codifferential_chain = sil::exterior::
+                            tangent_basis<DualVectorPotentialIndex::rank() + 1, NodeDomain3D>(
+                                    exec_space);
+                    auto const lower_codifferential_chain = sil::exterior::
+                            tangent_basis<DualVectorPotentialIndex::rank(), NodeDomain3D>(
+                                    exec_space);
+                    auto const scalar_elem = ddc::DiscreteElement<ScalarPotentialIndex>(0);
+                    std::size_t const codifferential_row = i + nx * (j + ny * k);
+                    codifferential_weights(codifferential_row) = local_spacing(x_coords_view, i)
+                                                                 * local_spacing(y_coords_view, j)
+                                                                 * local_spacing(z_coords_view, k);
                     int count = 0;
                     auto const stencil = sil::exterior::Codifferential<
                             MetricIndex3D,
                             vector_potential_index,
                             vector_potential_index,
-                            std::decay_t<decltype(vector_potential_tensor)>,
-                            std::decay_t<decltype(metric)>,
-                            std::decay_t<decltype(position)>>::
+                            matrix_free_vector_potential_tensor_type,
+                            matrix_free_metric_tensor_type,
+                            matrix_free_position_tensor_type>::
                             value(vector_potential_tensor,
                                   metric,
                                   position,
@@ -1851,85 +1862,88 @@ public:
                                 ddc::DiscreteElement<DDimY>(potential_elem).uid());
                         std::size_t const potential_k = static_cast<std::size_t>(
                                 ddc::DiscreteElement<DDimZ>(potential_elem).uid());
-                        if (is_boundary_node(potential_i, potential_j, potential_k)) {
+                        if (potential_i == 0 || potential_j == 0 || potential_k == 0
+                            || potential_i + 1 == nx || potential_j + 1 == ny
+                            || potential_k + 1 == nz) {
                             return;
+                        }
+                        if (count >= CODIFFERENTIAL_STENCIL_MAX_SIZE) {
+                            Kokkos::abort("3D codifferential stencil capacity exceeded");
                         }
                         int const component = potential_component_id<vector_potential_index>(
                                 ddc::DiscreteElement<vector_potential_index>(stencil_elem));
-                        if (count >= CODIFFERENTIAL_STENCIL_MAX_SIZE) {
-                            throw std::runtime_error("3D codifferential stencil capacity exceeded");
-                        }
-                        codifferential_columns_host(codifferential_row, count) = static_cast<int>(
-                                dof_index(potential_i, potential_j, potential_k, component));
-                        codifferential_coefficients_host(codifferential_row, count) = coeff;
+                        codifferential_columns(codifferential_row, count) = static_cast<int>(
+                                3 * (potential_i + nx * (potential_j + ny * potential_k))
+                                + static_cast<std::size_t>(component));
+                        codifferential_coefficients(codifferential_row, count) = coeff;
                         ++count;
                     });
-                    codifferential_counts_host(codifferential_row) = count;
-                }
-            }
-        }
+                    codifferential_counts(codifferential_row) = count;
+                });
+        exec_space.fence();
 
-        for (std::size_t sampled_node = 0; sampled_node < m_nx * m_ny * m_nz; ++sampled_node) {
-            std::size_t const sampled_i = sampled_node % m_nx;
-            std::size_t const sampled_j = (sampled_node / m_nx) % m_ny;
-            std::size_t const sampled_k = sampled_node / (m_nx * m_ny);
-            if (is_boundary_node(sampled_i, sampled_j, sampled_k)) {
-                continue;
-            }
-            for (int moment_component = 0; moment_component < 3; ++moment_component) {
-                std::size_t const moment_row
-                        = dof_index(sampled_i, sampled_j, sampled_k, moment_component);
-                for (int slot = 0; slot < moment_counts_host(moment_row); ++slot) {
-                    std::size_t const potential_row
-                            = static_cast<std::size_t>(moment_columns_host(moment_row, slot));
-                    int const count = transposed_moment_counts_host(potential_row);
-                    if (count >= TRANSPOSED_MOMENT_STENCIL_MAX_SIZE) {
-                        throw std::runtime_error("3D transposed moment stencil capacity exceeded");
+        auto const transposed_moment_rows = m_transposed_moment_rows;
+        auto const transposed_moment_coefficients = m_transposed_moment_coefficients;
+        auto const transposed_moment_counts = m_transposed_moment_counts;
+        Kokkos::parallel_for(
+                "similie_3d_precompute_transposed_moments",
+                Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(
+                        exec_space,
+                        0,
+                        static_cast<Kokkos::DefaultExecutionSpace::size_type>(m_nx * m_ny * m_nz)),
+                KOKKOS_LAMBDA(std::size_t sampled_node) {
+                    std::size_t const sampled_i = sampled_node % nx;
+                    std::size_t const sampled_j = (sampled_node / nx) % ny;
+                    std::size_t const sampled_k = sampled_node / (nx * ny);
+                    if (sampled_i == 0 || sampled_j == 0 || sampled_k == 0 || sampled_i + 1 == nx
+                        || sampled_j + 1 == ny || sampled_k + 1 == nz) {
+                        return;
                     }
-                    transposed_moment_rows_host(potential_row, count)
-                            = static_cast<int>(moment_row);
-                    transposed_moment_coefficients_host(potential_row, count)
-                            = moment_coefficients_host(moment_row, slot);
-                    transposed_moment_counts_host(potential_row) = count + 1;
-                }
-            }
-        }
-
-        for (std::size_t codifferential_row = 0; codifferential_row < m_nx * m_ny * m_nz;
-             ++codifferential_row) {
-            for (int slot = 0; slot < codifferential_counts_host(codifferential_row); ++slot) {
-                std::size_t const potential_row
-                        = static_cast<std::size_t>(codifferential_columns_host(
-                                codifferential_row,
-                                slot));
-                int const count = transposed_codifferential_counts_host(potential_row);
-                if (count >= TRANSPOSED_CODIFFERENTIAL_STENCIL_MAX_SIZE) {
-                    throw std::runtime_error(
-                            "3D transposed codifferential stencil capacity exceeded");
-                }
-                transposed_codifferential_rows_host(potential_row, count)
-                        = static_cast<int>(codifferential_row);
-                transposed_codifferential_coefficients_host(potential_row, count)
-                        = codifferential_coefficients_host(codifferential_row, slot);
-                transposed_codifferential_counts_host(potential_row) = count + 1;
-            }
-        }
-
-        Kokkos::deep_copy(m_moment_columns, moment_columns_host);
-        Kokkos::deep_copy(m_moment_coefficients, moment_coefficients_host);
-        Kokkos::deep_copy(m_moment_counts, moment_counts_host);
-        Kokkos::deep_copy(m_transposed_moment_rows, transposed_moment_rows_host);
-        Kokkos::deep_copy(m_transposed_moment_coefficients, transposed_moment_coefficients_host);
-        Kokkos::deep_copy(m_transposed_moment_counts, transposed_moment_counts_host);
-        Kokkos::deep_copy(m_codifferential_columns, codifferential_columns_host);
-        Kokkos::deep_copy(m_codifferential_coefficients, codifferential_coefficients_host);
-        Kokkos::deep_copy(m_codifferential_counts, codifferential_counts_host);
-        Kokkos::deep_copy(m_codifferential_weights, codifferential_weights_host);
-        Kokkos::deep_copy(m_transposed_codifferential_rows, transposed_codifferential_rows_host);
-        Kokkos::deep_copy(
-                m_transposed_codifferential_coefficients,
-                transposed_codifferential_coefficients_host);
-        Kokkos::deep_copy(m_transposed_codifferential_counts, transposed_codifferential_counts_host);
+                    for (int moment_component = 0; moment_component < 3; ++moment_component) {
+                        std::size_t const moment_row
+                                = 3 * sampled_node + static_cast<std::size_t>(moment_component);
+                        for (int slot = 0; slot < moment_counts(moment_row); ++slot) {
+                            std::size_t const potential_row
+                                    = static_cast<std::size_t>(moment_columns(moment_row, slot));
+                            int const count = Kokkos::
+                                    atomic_fetch_add(&transposed_moment_counts(potential_row), 1);
+                            if (count >= TRANSPOSED_MOMENT_STENCIL_MAX_SIZE) {
+                                Kokkos::abort("3D transposed moment stencil capacity exceeded");
+                            }
+                            transposed_moment_rows(potential_row, count)
+                                    = static_cast<int>(moment_row);
+                            transposed_moment_coefficients(potential_row, count)
+                                    = moment_coefficients(moment_row, slot);
+                        }
+                    }
+                });
+        auto const transposed_codifferential_rows = m_transposed_codifferential_rows;
+        auto const transposed_codifferential_coefficients
+                = m_transposed_codifferential_coefficients;
+        auto const transposed_codifferential_counts = m_transposed_codifferential_counts;
+        Kokkos::parallel_for(
+                "similie_3d_precompute_transposed_codifferential",
+                Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(
+                        exec_space,
+                        0,
+                        static_cast<Kokkos::DefaultExecutionSpace::size_type>(m_nx * m_ny * m_nz)),
+                KOKKOS_LAMBDA(std::size_t codifferential_row) {
+                    for (int slot = 0; slot < codifferential_counts(codifferential_row); ++slot) {
+                        std::size_t const potential_row = static_cast<std::size_t>(
+                                codifferential_columns(codifferential_row, slot));
+                        int const count = Kokkos::atomic_fetch_add(
+                                &transposed_codifferential_counts(potential_row),
+                                1);
+                        if (count >= TRANSPOSED_CODIFFERENTIAL_STENCIL_MAX_SIZE) {
+                            Kokkos::abort("3D transposed codifferential stencil capacity exceeded");
+                        }
+                        transposed_codifferential_rows(potential_row, count)
+                                = static_cast<int>(codifferential_row);
+                        transposed_codifferential_coefficients(potential_row, count)
+                                = codifferential_coefficients(codifferential_row, slot);
+                    }
+                });
+        exec_space.fence();
     }
 
     [[nodiscard]] KOKKOS_INLINE_FUNCTION std::size_t size() const
@@ -1958,14 +1972,18 @@ public:
         [[maybe_unused]] sil::tensor::TensorAccessor<PositionIndex3D> position_accessor;
 
         matrix_free_vector_potential_alloc_type potential_alloc(
-                ddc::DiscreteDomain<DDimX, DDimY, DDimZ, vector_potential_index>(
-                        node_domain,
-                        vector_potential_accessor.domain()),
+                ddc::DiscreteDomain<
+                        DDimX,
+                        DDimY,
+                        DDimZ,
+                        vector_potential_index>(node_domain, vector_potential_accessor.domain()),
                 allocator_type());
         matrix_free_vector_potential_alloc_type gauge_output_alloc(
-                ddc::DiscreteDomain<DDimX, DDimY, DDimZ, vector_potential_index>(
-                        node_domain,
-                        vector_potential_accessor.domain()),
+                ddc::DiscreteDomain<
+                        DDimX,
+                        DDimY,
+                        DDimZ,
+                        vector_potential_index>(node_domain, vector_potential_accessor.domain()),
                 allocator_type());
         matrix_free_magnetic_induction_alloc_type magnetic_induction_alloc(
                 ddc::DiscreteDomain<DDimX, DDimY, DDimZ, magnetic_induction_index>(
@@ -1978,19 +1996,25 @@ public:
                         magnetic_induction_accessor.domain()),
                 allocator_type());
         matrix_free_scalar_alloc_type divergence_alloc(
-                ddc::DiscreteDomain<DDimX, DDimY, DDimZ, ScalarPotentialIndex>(
-                        node_domain,
-                        scalar_accessor.domain()),
+                ddc::DiscreteDomain<
+                        DDimX,
+                        DDimY,
+                        DDimZ,
+                        ScalarPotentialIndex>(node_domain, scalar_accessor.domain()),
                 allocator_type());
         matrix_free_metric_alloc_type metric_alloc(
-                ddc::DiscreteDomain<DDimX, DDimY, DDimZ, MetricIndex3D>(
-                        node_domain,
-                        metric_accessor.domain()),
+                ddc::DiscreteDomain<
+                        DDimX,
+                        DDimY,
+                        DDimZ,
+                        MetricIndex3D>(node_domain, metric_accessor.domain()),
                 allocator_type());
         matrix_free_position_alloc_type position_alloc(
-                ddc::DiscreteDomain<DDimX, DDimY, DDimZ, PositionIndex3D>(
-                        node_domain,
-                        position_accessor.domain()),
+                ddc::DiscreteDomain<
+                        DDimX,
+                        DDimY,
+                        DDimZ,
+                        PositionIndex3D>(node_domain, position_accessor.domain()),
                 allocator_type());
 
         MatrixFreeWorkspace<ExecSpace> workspace(
@@ -2060,9 +2084,9 @@ public:
                 sil::exterior::codifferential_hodge_output_indices_t<
                         vector_potential_index::size() - vector_potential_index::rank(),
                         vector_potential_index>>;
-        auto codifferential_chain = sil::exterior::tangent_basis<
-                DualVectorPotentialIndex::rank() + 1,
-                NodeDomain3D>(Kokkos::DefaultHostExecutionSpace());
+        auto codifferential_chain
+                = sil::exterior::tangent_basis<DualVectorPotentialIndex::rank() + 1, NodeDomain3D>(
+                        Kokkos::DefaultHostExecutionSpace());
         auto lower_codifferential_chain
                 = sil::exterior::tangent_basis<DualVectorPotentialIndex::rank(), NodeDomain3D>(
                         Kokkos::DefaultHostExecutionSpace());
@@ -2122,9 +2146,7 @@ public:
             }
         }
         Kokkos::deep_copy(workspace.codifferential_columns, codifferential_columns_host);
-        Kokkos::deep_copy(
-                workspace.codifferential_coefficients,
-                codifferential_coefficients_host);
+        Kokkos::deep_copy(workspace.codifferential_coefficients, codifferential_coefficients_host);
         Kokkos::deep_copy(workspace.codifferential_counts, codifferential_counts_host);
         Kokkos::deep_copy(workspace.codifferential_weights, codifferential_weights_host);
         return workspace;
@@ -2134,8 +2156,7 @@ public:
     void apply(ExecSpace exec_space, InputView input, OutputView output) const
     {
         if (!m_has_precomputed_stencils) {
-            throw std::logic_error(
-                    "3D matrix-free apply requires an explicit MatrixFreeWorkspace");
+            throw std::logic_error("3D matrix-free apply requires an explicit MatrixFreeWorkspace");
         }
         apply_with_precomputed_stencils(exec_space, input, output);
     }
@@ -2244,8 +2265,7 @@ public:
                                             * dpotential_dt_component<
                                                     X>(equations, moments, sampled_elem);
                             } else if (moment_row % 3 == 1) {
-                                residual += row_coefficient
-                                            * magnetic_y_response_sign
+                                residual += row_coefficient * magnetic_y_response_sign
                                             * magnetic_induction_hodge_factor<Y>(
                                                     x_coords,
                                                     y_coords,
@@ -2294,10 +2314,9 @@ public:
                                                                        column_slot)),
                                                        0);
                                 }
-                                gauge_residual
-                                        += divergence_gauge_factor * codifferential_weights(
-                                                                          codifferential_row)
-                                           * row_coefficient * codifferential_value;
+                                gauge_residual += divergence_gauge_factor
+                                                  * codifferential_weights(codifferential_row)
+                                                  * row_coefficient * codifferential_value;
                             }
                         }
                         output(row, 0) = residual + gauge_residual;
@@ -2352,25 +2371,23 @@ public:
                             = static_cast<std::size_t>(ddc::DiscreteElement<DDimY>(elem).uid());
                     std::size_t const k
                             = static_cast<std::size_t>(ddc::DiscreteElement<DDimZ>(elem).uid());
-                    bool const boundary = i == 0 || j == 0 || k == 0 || i + 1 == nx
-                                          || j + 1 == ny || k + 1 == nz;
+                    bool const boundary = i == 0 || j == 0 || k == 0 || i + 1 == nx || j + 1 == ny
+                                          || k + 1 == nz;
                     for (int component = 0; component < 3; ++component) {
-                        auto potential_component = vector_potential_accessor.domain().front()
-                                                   + ddc::DiscreteVector<vector_potential_index>(
-                                                           component);
+                        auto potential_component
+                                = vector_potential_accessor.domain().front()
+                                  + ddc::DiscreteVector<vector_potential_index>(component);
                         potential_tensor(elem, potential_component)
-                                = boundary
-                                          ? 0.0
-                                          : input(dof_index_static(nx, ny, i, j, k, component), 0);
+                                = boundary ? 0.0
+                                           : input(dof_index_static(nx, ny, i, j, k, component), 0);
                         gauge_output_tensor(elem, potential_component) = 0.0;
                     }
                     divergence_tensor(elem, scalar_accessor.domain().front()) = 0.0;
                 });
 
-        sil::exterior::coboundary<CoboundaryIndex3D, vector_potential_index>(
-                exec_space,
-                magnetic_induction_tensor,
-                potential_tensor);
+        sil::exterior::coboundary<
+                CoboundaryIndex3D,
+                vector_potential_index>(exec_space, magnetic_induction_tensor, potential_tensor);
 
         ddc::parallel_for_each(
                 "similie_3d_matrix_free_magnetic_response",
@@ -2389,8 +2406,7 @@ public:
                             = magnetic_induction_accessor.template access_element<X, Z>();
                     auto const z_component
                             = magnetic_induction_accessor.template access_element<X, Y>();
-                    if (i == 0 || j == 0 || k == 0 || i + 1 == nx || j + 1 == ny
-                        || k + 1 == nz) {
+                    if (i == 0 || j == 0 || k == 0 || i + 1 == nx || j + 1 == ny || k + 1 == nz) {
                         magnetic_response_tensor(elem, x_component) = 0.0;
                         magnetic_response_tensor(elem, y_component) = 0.0;
                         magnetic_response_tensor(elem, z_component) = 0.0;
@@ -2401,14 +2417,17 @@ public:
                             -magnetic_induction_tensor(elem, y_component),
                             magnetic_induction_tensor(elem, z_component)};
                     magnetic_response_tensor(elem, x_component)
-                            = magnetic_induction_hodge_factor<X>(x_coords, y_coords, z_coords, i, j, k)
+                            = magnetic_induction_hodge_factor<
+                                      X>(x_coords, y_coords, z_coords, i, j, k)
                               * dpotential_dt_component<X>(equations, moments, elem);
                     magnetic_response_tensor(elem, y_component)
                             = magnetic_y_response_sign
-                              * magnetic_induction_hodge_factor<Y>(x_coords, y_coords, z_coords, i, j, k)
+                              * magnetic_induction_hodge_factor<
+                                      Y>(x_coords, y_coords, z_coords, i, j, k)
                               * dpotential_dt_component<Y>(equations, moments, elem);
                     magnetic_response_tensor(elem, z_component)
-                            = magnetic_induction_hodge_factor<Z>(x_coords, y_coords, z_coords, i, j, k)
+                            = magnetic_induction_hodge_factor<
+                                      Z>(x_coords, y_coords, z_coords, i, j, k)
                               * dpotential_dt_component<Z>(equations, moments, elem);
                 });
 
@@ -2452,18 +2471,19 @@ public:
                     exec_space,
                     node_domain,
                     KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DDimZ> elem) {
-                        std::size_t const i = static_cast<std::size_t>(
-                                ddc::DiscreteElement<DDimX>(elem).uid());
-                        std::size_t const j = static_cast<std::size_t>(
-                                ddc::DiscreteElement<DDimY>(elem).uid());
-                        std::size_t const k = static_cast<std::size_t>(
-                                ddc::DiscreteElement<DDimZ>(elem).uid());
+                        std::size_t const i
+                                = static_cast<std::size_t>(ddc::DiscreteElement<DDimX>(elem).uid());
+                        std::size_t const j
+                                = static_cast<std::size_t>(ddc::DiscreteElement<DDimY>(elem).uid());
+                        std::size_t const k
+                                = static_cast<std::size_t>(ddc::DiscreteElement<DDimZ>(elem).uid());
                         double const divergence_value
                                 = divergence_tensor(elem, scalar_accessor.domain().front());
                         if (divergence_value == 0.0) {
                             return;
                         }
-                        std::size_t const codifferential_row = flat_node_index_static(nx, ny, i, j, k);
+                        std::size_t const codifferential_row
+                                = flat_node_index_static(nx, ny, i, j, k);
                         double const codifferential_weight
                                 = codifferential_weights(codifferential_row);
                         for (int slot = 0; slot < codifferential_counts(codifferential_row);
@@ -2494,8 +2514,7 @@ public:
                             = static_cast<std::size_t>(ddc::DiscreteElement<DDimY>(elem).uid());
                     std::size_t const k
                             = static_cast<std::size_t>(ddc::DiscreteElement<DDimZ>(elem).uid());
-                    if (i == 0 || j == 0 || k == 0 || i + 1 == nx || j + 1 == ny
-                        || k + 1 == nz) {
+                    if (i == 0 || j == 0 || k == 0 || i + 1 == nx || j + 1 == ny || k + 1 == nz) {
                         return;
                     }
                     auto const x_response_component
@@ -2927,8 +2946,7 @@ void apply_jacobian(
                                                     * delta_moments[2]);
                         } else if (moment_row % 3 == 1) {
                             residual
-                                    += row_coefficient
-                                       * magnetic_y_response_sign
+                                    += row_coefficient * magnetic_y_response_sign
                                        * magnetic_induction_hodge_factor<Y>(
                                                x_coords,
                                                y_coords,
@@ -2976,9 +2994,8 @@ void apply_jacobian(
                              ++transposed_slot) {
                             std::size_t const codifferential_row = static_cast<std::size_t>(
                                     transposed_codifferential_rows(row, transposed_slot));
-                            double const row_coefficient = transposed_codifferential_coefficients(
-                                    row,
-                                    transposed_slot);
+                            double const row_coefficient
+                                    = transposed_codifferential_coefficients(row, transposed_slot);
                             double codifferential_value = 0.0;
                             for (int column_slot = 0;
                                  column_slot < codifferential_counts(codifferential_row);
@@ -2987,16 +3004,14 @@ void apply_jacobian(
                                         += codifferential_coefficients(
                                                    codifferential_row,
                                                    column_slot)
-                                           * input(static_cast<std::size_t>(
-                                                           codifferential_columns(
-                                                                   codifferential_row,
-                                                                   column_slot)),
+                                           * input(static_cast<std::size_t>(codifferential_columns(
+                                                           codifferential_row,
+                                                           column_slot)),
                                                    0);
                             }
-                            gauge_residual
-                                    += divergence_gauge_factor
-                                       * codifferential_weights(codifferential_row)
-                                       * row_coefficient * codifferential_value;
+                            gauge_residual += divergence_gauge_factor
+                                              * codifferential_weights(codifferential_row)
+                                              * row_coefficient * codifferential_value;
                         }
                     }
                     output(row, 0) = residual + gauge_residual;
@@ -3201,13 +3216,14 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                                     = {jacobian_component<Y, X>(equations, moments, sampled_elem),
                                        jacobian_component<Y, Y>(equations, moments, sampled_elem),
                                        jacobian_component<Y, Z>(equations, moments, sampled_elem)};
-                            hodge_factor = magnetic_y_response_sign * magnetic_induction_hodge_factor<Y>(
-                                    x_coords,
-                                    y_coords,
-                                    z_coords,
-                                    sampled_i,
-                                    sampled_j,
-                                    sampled_k);
+                            hodge_factor = magnetic_y_response_sign
+                                           * magnetic_induction_hodge_factor<Y>(
+                                                   x_coords,
+                                                   y_coords,
+                                                   z_coords,
+                                                   sampled_i,
+                                                   sampled_j,
+                                                   sampled_k);
                         } else {
                             jacobian_row
                                     = {jacobian_component<Z, X>(equations, moments, sampled_elem),
