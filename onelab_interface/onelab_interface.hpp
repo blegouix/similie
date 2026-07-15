@@ -8,6 +8,7 @@
 #include <cctype>
 #include <chrono>
 #include <cmath>
+#include <cstdlib>
 #include <exception>
 #include <filesystem>
 #include <fstream>
@@ -36,6 +37,10 @@
 
 #include <onelab.h>
 
+#ifdef KOKKOS_ENABLE_CUDA
+#include <cuda_runtime_api.h>
+#endif
+
 #include "gmsh_structured_grid.hpp"
 #include "magnetostatics_onelab.hpp"
 #include "minimize_strong_formulation_residual_onelab.hpp"
@@ -52,6 +57,34 @@ enum class SupportedPhysics {
 enum class SupportedSolver {
     MinimizeStrongFormulationResidual,
 };
+
+#ifdef KOKKOS_ENABLE_CUDA
+inline std::size_t cuda_stack_size()
+{
+    char const* const value = std::getenv("SIMILIE_CUDA_STACK_SIZE");
+    if (value == nullptr || value[0] == '\0') {
+        return 64U * 1024U;
+    }
+    char* parse_end = nullptr;
+    unsigned long long const parsed = std::strtoull(value, &parse_end, 10);
+    if (parse_end == value || parsed == 0ULL) {
+        return 64U * 1024U;
+    }
+    return static_cast<std::size_t>(parsed);
+}
+
+inline void configure_cuda_stack_size()
+{
+    cudaError_t const error = cudaDeviceSetLimit(cudaLimitStackSize, cuda_stack_size());
+    if (error != cudaSuccess) {
+        throw std::runtime_error(
+                std::string("failed to configure CUDA device stack size: ")
+                + cudaGetErrorString(error));
+    }
+}
+#else
+inline void configure_cuda_stack_size() {}
+#endif
 
 struct ScalarFieldWithPowerCouplingProblem
 {
@@ -615,6 +648,7 @@ public:
 
         Kokkos::ScopeGuard const kokkos_scope(argc, argv);
         ddc::ScopeGuard const ddc_scope(argc, argv);
+        configure_cuda_stack_size();
 
         try {
             connect(parsed_arguments.client_name, parsed_arguments.socket_address);

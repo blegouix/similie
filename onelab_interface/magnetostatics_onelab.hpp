@@ -4757,6 +4757,16 @@ Result run_on_hexahedral_grid(
     result.mesh_dimensions = {grid.nx(), grid.ny(), grid.nz()};
     result.num_cells = grid.ncell_x() * grid.ncell_y() * grid.ncell_z();
 
+    auto effective_solver_settings = solver_settings;
+    if (effective_solver_settings.use_matrix_free
+        && effective_solver_settings.preconditioner != solvers::PreconditionerType::Identity) {
+        log_info(
+                logger,
+                "SimiLie using identity preconditioner for 3D matrix-free solve to avoid "
+                "auxiliary matrix assembly");
+        effective_solver_settings.preconditioner = solvers::PreconditionerType::Identity;
+    }
+
     std::vector<CellInputFields> cell_inputs_3d(result.num_cells);
     for (std::size_t cell_index = 0; cell_index < result.num_cells; ++cell_index) {
         CellInputFields field {
@@ -4814,7 +4824,7 @@ Result run_on_hexahedral_grid(
                     std::size_t const row = 3 * node_index + static_cast<std::size_t>(component);
                     rhs_host(row, 0) = 0.0;
                     if (boundary
-                        || solver_settings.criterion
+                        || effective_solver_settings.criterion
                                    == solvers::Criterion::PotentialTemporalDerivative) {
                         continue;
                     }
@@ -4969,17 +4979,17 @@ Result run_on_hexahedral_grid(
         log_info(
                 logger,
                 phase_finished_message("3D operator setup", operator_setup_duration.count()));
-        log_info(logger, solve_start_message(solver_settings.use_matrix_free));
+        log_info(logger, solve_start_message(effective_solver_settings.use_matrix_free));
         result.solver_diagnostics = solvers::minimize_strong_formulation_residual(
                 Kokkos::DefaultExecutionSpace(),
                 operator_model,
                 rhs,
                 magnetic_vector_potential_view,
-                solver_settings);
+                effective_solver_settings);
         log_info(
                 logger,
                 solve_finished_message(
-                        solver_settings.use_matrix_free,
+                        effective_solver_settings.use_matrix_free,
                         result.solver_diagnostics.duration));
     };
     if (inputs.use_nonlinear_magnetic_material) {
