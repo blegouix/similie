@@ -1744,6 +1744,17 @@ public:
         std::size_t const ny = m_ny;
         std::size_t const nz = m_nz;
         auto const node_domain = m_node_domain;
+        using DualVectorPotentialIndex = sil::misc::convert_type_seq_to_t<
+                sil::tensor::TensorAntisymmetricIndex,
+                sil::exterior::codifferential_hodge_output_indices_t<
+                        vector_potential_index::size() - vector_potential_index::rank(),
+                        vector_potential_index>>;
+        auto const codifferential_chain
+                = sil::exterior::tangent_basis<DualVectorPotentialIndex::rank() + 1, NodeDomain3D>(
+                        exec_space);
+        auto const lower_codifferential_chain
+                = sil::exterior::tangent_basis<DualVectorPotentialIndex::rank(), NodeDomain3D>(
+                        exec_space);
         ddc::parallel_for_each(
                 "similie_3d_precompute_direct_stencils",
                 exec_space,
@@ -1823,17 +1834,6 @@ public:
                     fill_component(Y {});
                     fill_component(Z {});
 
-                    using DualVectorPotentialIndex = sil::misc::convert_type_seq_to_t<
-                            sil::tensor::TensorAntisymmetricIndex,
-                            sil::exterior::codifferential_hodge_output_indices_t<
-                                    vector_potential_index::size() - vector_potential_index::rank(),
-                                    vector_potential_index>>;
-                    auto const codifferential_chain = sil::exterior::
-                            tangent_basis<DualVectorPotentialIndex::rank() + 1, NodeDomain3D>(
-                                    exec_space);
-                    auto const lower_codifferential_chain = sil::exterior::
-                            tangent_basis<DualVectorPotentialIndex::rank(), NodeDomain3D>(
-                                    exec_space);
                     auto const scalar_elem = ddc::DiscreteElement<ScalarPotentialIndex>(0);
                     std::size_t const codifferential_row = i + nx * (j + ny * k);
                     codifferential_weights(codifferential_row) = local_spacing(x_coords_view, i)
