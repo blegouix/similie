@@ -445,6 +445,15 @@ struct MatrixFreeWorkspaceTraits<
             std::declval<ExecSpace>()));
 };
 
+template <class OperatorModel>
+bool uses_precomputed_matrix_free_stencils(OperatorModel const& operator_model)
+{
+    if constexpr (requires(OperatorModel const& model) { model.has_precomputed_stencils(); }) {
+        return operator_model.has_precomputed_stencils();
+    }
+    return false;
+}
+
 template <class ExecSpace, class OperatorModel, class InputView, class OutputView, class Workspace>
 void apply_operator(
         ExecSpace exec_space,
@@ -598,21 +607,66 @@ void copy_back_from_gko_dense_bridge(
     }
 }
 
+inline std::shared_ptr<gko::matrix::Csr<double, gko::int32>> csr_from_matrix_data(
+        std::shared_ptr<gko::Executor const> const& gko_exec,
+        gko::matrix_data<double, gko::int32> const& matrix_data)
+{
+    using matrix_type = gko::matrix::Csr<double, gko::int32>;
+    std::vector<double> values(matrix_data.nonzeros.size());
+    std::vector<gko::int32> columns(matrix_data.nonzeros.size());
+    std::vector<gko::int32> row_ptrs(matrix_data.size[0] + 1, 0);
+    for (auto const& nonzero : matrix_data.nonzeros) {
+        ++row_ptrs[static_cast<std::size_t>(nonzero.row) + 1];
+    }
+    for (std::size_t row = 0; row < matrix_data.size[0]; ++row) {
+        row_ptrs[row + 1] += row_ptrs[row];
+    }
+
+    auto next_offsets = row_ptrs;
+    auto const next_offsets_view = Kokkos::
+            View<gko::int32*, Kokkos::HostSpace>(next_offsets.data(), next_offsets.size());
+    auto const nonzeros_view = Kokkos::View<
+            gko::matrix_data<double, gko::int32>::nonzero_type const*,
+            Kokkos::HostSpace>(matrix_data.nonzeros.data(), matrix_data.nonzeros.size());
+    auto const columns_view
+            = Kokkos::View<gko::int32*, Kokkos::HostSpace>(columns.data(), columns.size());
+    auto const values_view = Kokkos::View<double*, Kokkos::HostSpace>(values.data(), values.size());
+    Kokkos::parallel_for(
+            "similie_pack_ginkgo_csr_arrays",
+            Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(
+                    Kokkos::DefaultHostExecutionSpace(),
+                    0,
+                    static_cast<Kokkos::DefaultHostExecutionSpace::size_type>(
+                            matrix_data.nonzeros.size())),
+            KOKKOS_LAMBDA(std::size_t nonzero_index) {
+                auto const nonzero = nonzeros_view(nonzero_index);
+                gko::int32 const output_index
+                        = Kokkos::atomic_fetch_add(&next_offsets_view(nonzero.row), 1);
+                columns_view(static_cast<std::size_t>(output_index)) = nonzero.column;
+                values_view(static_cast<std::size_t>(output_index)) = nonzero.value;
+            });
+    Kokkos::DefaultHostExecutionSpace().fence();
+
+    return std::shared_ptr<matrix_type>(
+            matrix_type::
+                    create(gko_exec,
+                           matrix_data.size,
+                           gko::array<double>(gko_exec, values.begin(), values.end()),
+                           gko::array<gko::int32>(gko_exec, columns.begin(), columns.end()),
+                           gko::array<gko::int32>(gko_exec, row_ptrs.begin(), row_ptrs.end()))
+                            .release());
+}
+
 template <class OperatorModel>
 std::shared_ptr<gko::matrix::Csr<double, gko::int32>> build_matrix(
         std::shared_ptr<gko::Executor const> const& gko_exec,
         OperatorModel const& operator_model)
 {
-    using matrix_type = gko::matrix::Csr<double, gko::int32>;
-    auto matrix = std::shared_ptr<matrix_type>(
-            matrix_type::create(gko_exec, gko::dim<2>(operator_model.size(), operator_model.size()))
-                    .release());
     auto matrix_data = assemble_matrix_data(operator_model);
     if (env_flag_enabled("SIMILIE_MATRIX_DIAGNOSTICS")) {
         log_matrix_diagnostics(matrix_data);
     }
-    matrix->read(matrix_data);
-    return matrix;
+    return csr_from_matrix_data(gko_exec, matrix_data);
 }
 
 template <class OperatorModel, class StateView>
@@ -621,16 +675,11 @@ std::shared_ptr<gko::matrix::Csr<double, gko::int32>> build_matrix(
         OperatorModel const& operator_model,
         StateView state)
 {
-    using matrix_type = gko::matrix::Csr<double, gko::int32>;
-    auto matrix = std::shared_ptr<matrix_type>(
-            matrix_type::create(gko_exec, gko::dim<2>(operator_model.size(), operator_model.size()))
-                    .release());
     auto matrix_data = assemble_matrix_data(operator_model, state);
     if (env_flag_enabled("SIMILIE_MATRIX_DIAGNOSTICS")) {
         log_matrix_diagnostics(matrix_data);
     }
-    matrix->read(matrix_data);
-    return matrix;
+    return csr_from_matrix_data(gko_exec, matrix_data);
 }
 
 template <class ExecSpace, class OperatorModel>
@@ -668,14 +717,17 @@ public:
         , m_operator_model(std::move(operator_model))
     {
         if constexpr (workspace_traits::enabled) {
-            m_workspace = std::make_shared<workspace_type>(
-                    m_operator_model->create_matrix_free_workspace(m_exec_space));
+            if (!uses_precomputed_matrix_free_stencils(*m_operator_model)) {
+                m_workspace = std::make_shared<workspace_type>(
+                        m_operator_model->create_matrix_free_workspace(m_exec_space));
+            }
         }
     }
 
 public:
     void apply_impl(gko::LinOp const* b, gko::LinOp* x) const override
     {
+        log_apply_start("simple", m_apply_count + 1);
         auto const apply_start = std::chrono::steady_clock::now();
         auto const* b_dense = dynamic_cast<dense_type const*>(b);
         auto* x_dense = dynamic_cast<dense_type*>(x);
@@ -685,17 +737,23 @@ public:
         auto b_view = gko::ext::kokkos::map_data<memory_space>(*b_dense);
         auto x_view = gko::ext::kokkos::map_data<memory_space>(*x_dense);
         if constexpr (workspace_traits::enabled) {
-            if (m_workspace == nullptr) {
+            if (uses_precomputed_matrix_free_stencils(*m_operator_model)) {
+                apply_operator(m_exec_space, *m_operator_model, b_view, x_view);
+            } else if (m_workspace == nullptr) {
                 m_workspace = std::make_shared<workspace_type>(
                         m_operator_model->create_matrix_free_workspace(m_exec_space));
+                apply_operator(m_exec_space, *m_operator_model, b_view, x_view, *m_workspace);
+            } else {
+                apply_operator(m_exec_space, *m_operator_model, b_view, x_view, *m_workspace);
             }
-            apply_operator(m_exec_space, *m_operator_model, b_view, x_view, *m_workspace);
         } else {
             apply_operator(m_exec_space, *m_operator_model, b_view, x_view);
         }
+        m_exec_space.fence();
         auto const apply_end = std::chrono::steady_clock::now();
         ++m_apply_count;
         m_apply_duration += std::chrono::duration<double>(apply_end - apply_start).count();
+        log_apply_progress("simple", m_apply_count, m_apply_duration);
     }
 
     void apply_impl(
@@ -704,6 +762,7 @@ public:
             gko::LinOp const* beta,
             gko::LinOp* x) const override
     {
+        log_apply_start("advanced", m_advanced_apply_count + 1);
         auto const apply_start = std::chrono::steady_clock::now();
         auto const* alpha_dense = dynamic_cast<dense_type const*>(alpha);
         auto const* b_dense = dynamic_cast<dense_type const*>(b);
@@ -722,11 +781,15 @@ public:
         Kokkos::View<double**, Kokkos::LayoutRight, memory_space>
                 applied("similie_matrix_free_linop_apply", x_view.extent(0), x_view.extent(1));
         if constexpr (workspace_traits::enabled) {
-            if (m_workspace == nullptr) {
+            if (uses_precomputed_matrix_free_stencils(*m_operator_model)) {
+                apply_operator(m_exec_space, *m_operator_model, b_view, applied);
+            } else if (m_workspace == nullptr) {
                 m_workspace = std::make_shared<workspace_type>(
                         m_operator_model->create_matrix_free_workspace(m_exec_space));
+                apply_operator(m_exec_space, *m_operator_model, b_view, applied, *m_workspace);
+            } else {
+                apply_operator(m_exec_space, *m_operator_model, b_view, applied, *m_workspace);
             }
-            apply_operator(m_exec_space, *m_operator_model, b_view, applied, *m_workspace);
         } else {
             apply_operator(m_exec_space, *m_operator_model, b_view, applied);
         }
@@ -744,6 +807,34 @@ public:
         auto const apply_end = std::chrono::steady_clock::now();
         ++m_advanced_apply_count;
         m_advanced_apply_duration += std::chrono::duration<double>(apply_end - apply_start).count();
+        log_apply_progress("advanced", m_advanced_apply_count, m_advanced_apply_duration);
+    }
+
+    void log_apply_start(char const* apply_kind, std::size_t apply_count) const
+    {
+        if (!env_flag_enabled("SIMILIE_MATRIX_FREE_APPLY_PROGRESS")) {
+            return;
+        }
+        std::size_t const stride = static_cast<std::size_t>(
+                std::max(1, env_int_or("SIMILIE_MATRIX_FREE_APPLY_PROGRESS_STRIDE", 10)));
+        if (apply_count == 1 || apply_count % stride == 0) {
+            std::cout << "SimiLie matrix-free apply start: kind=" << apply_kind
+                      << " count=" << apply_count << std::endl;
+        }
+    }
+
+    void log_apply_progress(char const* apply_kind, std::size_t apply_count, double duration) const
+    {
+        if (!env_flag_enabled("SIMILIE_MATRIX_FREE_APPLY_PROGRESS")) {
+            return;
+        }
+        std::size_t const stride = static_cast<std::size_t>(
+                std::max(1, env_int_or("SIMILIE_MATRIX_FREE_APPLY_PROGRESS_STRIDE", 10)));
+        if (apply_count == 1 || apply_count % stride == 0) {
+            std::cout << "SimiLie matrix-free apply progress: kind=" << apply_kind
+                      << " count=" << apply_count << " cumulative_duration=" << duration
+                      << std::endl;
+        }
     }
 
     void log_timing() const
@@ -960,7 +1051,18 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
         std::shared_ptr<gko::LinOp const> const& preconditioner)
 {
     StrongFormulationSolverDiagnostics diagnostics;
+    if (env_flag_enabled("SIMILIE_SOLVER_TIMING")) {
+        std::cout << "SimiLie linear solve stage: computing initial residual norm" << std::endl;
+    }
+    auto const initial_residual_start = std::chrono::steady_clock::now();
     diagnostics.initial_residual_l2 = residual_norm_l2(exec_space, rhs);
+    auto const initial_residual_end = std::chrono::steady_clock::now();
+    if (env_flag_enabled("SIMILIE_SOLVER_TIMING")) {
+        std::cout << "SimiLie linear solve stage: initial residual norm computed duration="
+                  << std::chrono::duration<double>(initial_residual_end - initial_residual_start)
+                             .count()
+                  << std::endl;
+    }
     diagnostics.final_residual_l2 = diagnostics.initial_residual_l2;
     diagnostics.final_relative_residual = diagnostics.initial_residual_l2 == 0.0 ? 0.0 : 1.0;
     if (diagnostics.initial_residual_l2 == 0.0) {
@@ -968,6 +1070,10 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
         return diagnostics;
     }
 
+    if (env_flag_enabled("SIMILIE_SOLVER_TIMING")) {
+        std::cout << "SimiLie linear solve stage: building solver factory" << std::endl;
+    }
+    auto const solver_factory_start = std::chrono::steady_clock::now();
     auto residual_criterion = gko::stop::ResidualNorm<double>::build()
                                       .with_reduction_factor(settings.relative_tolerance)
                                       .on(gko_exec);
@@ -1036,15 +1142,34 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
                                          std::move(iterations_criterion))
                                  .on(gko_exec);
     }
+    auto const solver_factory_end = std::chrono::steady_clock::now();
+    if (env_flag_enabled("SIMILIE_SOLVER_TIMING")) {
+        std::cout << "SimiLie linear solve stage: solver factory built duration="
+                  << std::chrono::duration<double>(solver_factory_end - solver_factory_start)
+                             .count()
+                  << std::endl;
+    }
     std::shared_ptr<MatrixFreeLinOp<ExecSpace, OperatorModel> const> matrix_free_system_matrix;
     std::shared_ptr<gko::LinOp const> system_matrix;
     if (settings.use_matrix_free) {
+        if (env_flag_enabled("SIMILIE_SOLVER_TIMING")) {
+            std::cout << "SimiLie linear solve stage: constructing matrix-free LinOp" << std::endl;
+        }
+        auto const matrix_free_linop_start = std::chrono::steady_clock::now();
         auto operator_model_ptr
                 = std::shared_ptr<OperatorModel const>(&operator_model, [](OperatorModel const*) {
                   });
         matrix_free_system_matrix = std::make_shared<MatrixFreeLinOp<
                 ExecSpace,
                 OperatorModel>>(gko_exec, exec_space, std::move(operator_model_ptr));
+        auto const matrix_free_linop_end = std::chrono::steady_clock::now();
+        if (env_flag_enabled("SIMILIE_SOLVER_TIMING")) {
+            std::cout << "SimiLie linear solve stage: matrix-free LinOp constructed duration="
+                      << std::chrono::duration<double>(
+                                 matrix_free_linop_end - matrix_free_linop_start)
+                                 .count()
+                      << std::endl;
+        }
         system_matrix = matrix_free_system_matrix;
     } else {
         system_matrix = assembled_matrix;
@@ -1105,7 +1230,18 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
             std::cout << '\n';
         }
     }
+    if (env_flag_enabled("SIMILIE_SOLVER_TIMING")) {
+        std::cout << "SimiLie linear solve stage: generating solver" << std::endl;
+    }
+    auto const solver_generate_start = std::chrono::steady_clock::now();
     auto solver = solver_factory->generate(system_matrix);
+    auto const solver_generate_end = std::chrono::steady_clock::now();
+    if (env_flag_enabled("SIMILIE_SOLVER_TIMING")) {
+        std::cout << "SimiLie linear solve stage: solver generated duration="
+                  << std::chrono::duration<double>(solver_generate_end - solver_generate_start)
+                             .count()
+                  << std::endl;
+    }
     auto convergence_logger = std::shared_ptr<gko::log::Convergence<double>>(
             gko::log::Convergence<double>::create().release());
     solver->add_logger(convergence_logger);
@@ -1122,6 +1258,9 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
     auto rhs_gko = to_gko_dense(gko_exec, rhs);
     auto solution_gko = to_gko_dense(gko_exec, solution);
     auto const optimization_start = std::chrono::steady_clock::now();
+    if (env_flag_enabled("SIMILIE_SOLVER_TIMING")) {
+        std::cout << "SimiLie linear solve stage: applying solver" << std::endl;
+    }
     solver->apply(rhs_gko.dense, solution_gko.dense);
     gko_exec->synchronize();
     copy_back_from_gko_dense_bridge(solution, solution_gko);
@@ -1359,6 +1498,10 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
                 detail::fill(exec_space, delta, 0.0);
                 auto rhs_gko = detail::to_gko_dense(gko_exec, correction_rhs);
                 auto delta_gko = detail::to_gko_dense(gko_exec, delta);
+                if (detail::env_flag_enabled("SIMILIE_SOLVER_TIMING")) {
+                    std::cout << "SimiLie nonlinear linear solve stage: applying solver"
+                              << std::endl;
+                }
                 solver->apply(rhs_gko.dense, delta_gko.dense);
                 gko_exec->synchronize();
                 detail::copy_back_from_gko_dense_bridge(delta, delta_gko);

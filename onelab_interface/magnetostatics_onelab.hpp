@@ -3052,237 +3052,374 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
     std::size_t const nx = operator_model.x_coords().extent(0);
     std::size_t const ny = operator_model.y_coords().extent(0);
     std::size_t const nz = operator_model.z_coords().extent(0);
+    Kokkos::DefaultExecutionSpace exec_space;
+    static constexpr int MATRIX_ROW_MAX_SIZE = 128;
+    Kokkos::View<int*> counts("similie_3d_magnetostatics_matrix_counts", size);
+
     auto const equations = operator_model.equations();
-    auto const moment_columns = Kokkos::
-            create_mirror_view_and_copy(Kokkos::HostSpace(), operator_model.moment_columns());
-    auto const moment_coefficients = Kokkos::
-            create_mirror_view_and_copy(Kokkos::HostSpace(), operator_model.moment_coefficients());
-    auto const moment_counts = Kokkos::
-            create_mirror_view_and_copy(Kokkos::HostSpace(), operator_model.moment_counts());
-    auto const transposed_moment_rows = Kokkos::create_mirror_view_and_copy(
-            Kokkos::HostSpace(),
-            operator_model.transposed_moment_rows());
-    auto const transposed_moment_coefficients = Kokkos::create_mirror_view_and_copy(
-            Kokkos::HostSpace(),
-            operator_model.transposed_moment_coefficients());
-    auto const transposed_moment_counts = Kokkos::create_mirror_view_and_copy(
-            Kokkos::HostSpace(),
-            operator_model.transposed_moment_counts());
-    auto const codifferential_columns = Kokkos::create_mirror_view_and_copy(
-            Kokkos::HostSpace(),
-            operator_model.codifferential_columns());
-    auto const codifferential_coefficients = Kokkos::create_mirror_view_and_copy(
-            Kokkos::HostSpace(),
-            operator_model.codifferential_coefficients());
-    auto const codifferential_counts = Kokkos::create_mirror_view_and_copy(
-            Kokkos::HostSpace(),
-            operator_model.codifferential_counts());
-    auto const codifferential_weights = Kokkos::create_mirror_view_and_copy(
-            Kokkos::HostSpace(),
-            operator_model.codifferential_weights());
-    auto const transposed_codifferential_rows = Kokkos::create_mirror_view_and_copy(
-            Kokkos::HostSpace(),
-            operator_model.transposed_codifferential_rows());
-    auto const transposed_codifferential_coefficients = Kokkos::create_mirror_view_and_copy(
-            Kokkos::HostSpace(),
-            operator_model.transposed_codifferential_coefficients());
-    auto const transposed_codifferential_counts = Kokkos::create_mirror_view_and_copy(
-            Kokkos::HostSpace(),
-            operator_model.transposed_codifferential_counts());
-    auto const state_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), state);
-    auto const x_coords
-            = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), operator_model.x_coords());
-    auto const y_coords
-            = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), operator_model.y_coords());
-    auto const z_coords
-            = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), operator_model.z_coords());
+    auto const moment_columns = operator_model.moment_columns();
+    auto const moment_coefficients = operator_model.moment_coefficients();
+    auto const moment_counts = operator_model.moment_counts();
+    auto const transposed_moment_rows = operator_model.transposed_moment_rows();
+    auto const transposed_moment_coefficients = operator_model.transposed_moment_coefficients();
+    auto const transposed_moment_counts = operator_model.transposed_moment_counts();
+    auto const codifferential_columns = operator_model.codifferential_columns();
+    auto const codifferential_coefficients = operator_model.codifferential_coefficients();
+    auto const codifferential_counts = operator_model.codifferential_counts();
+    auto const codifferential_weights = operator_model.codifferential_weights();
+    auto const transposed_codifferential_rows = operator_model.transposed_codifferential_rows();
+    auto const transposed_codifferential_coefficients
+            = operator_model.transposed_codifferential_coefficients();
+    auto const transposed_codifferential_counts = operator_model.transposed_codifferential_counts();
+    auto const x_coords = operator_model.x_coords();
+    auto const y_coords = operator_model.y_coords();
+    auto const z_coords = operator_model.z_coords();
     double const magnetic_y_response_sign = magnetic_y_response_sign_3d();
     double const gauge_penalty = vector_potential_gauge_penalty_3d();
     double const divergence_gauge_factor = gauge_penalty * vector_potential_gauge_sign_3d();
     bool const use_divergence_gauge = use_divergence_gauge_3d();
 
-    std::vector<std::vector<std::pair<gko::int32, double>>> matrix_rows(size);
-    auto add_entry = [&](std::size_t row, std::size_t column, double value) {
-        if (value == 0.0) {
-            return;
-        }
-        auto& entries = matrix_rows[row];
-        for (auto& entry : entries) {
-            if (entry.first == static_cast<gko::int32>(column)) {
-                entry.second += value;
-                return;
-            }
-        }
-        entries.emplace_back(static_cast<gko::int32>(column), value);
-    };
-    auto dof_index
-            = [nx, ny](std::size_t i, std::size_t j, std::size_t k, int component) -> std::size_t {
-        return 3 * (i + nx * (j + ny * k)) + static_cast<std::size_t>(component);
-    };
-    auto is_boundary_node = [nx, ny, nz](std::size_t i, std::size_t j, std::size_t k) {
-        return i == 0 || j == 0 || k == 0 || i + 1 == nx || j + 1 == ny || k + 1 == nz;
-    };
-
-    for (std::size_t k = 0; k < nz; ++k) {
-        for (std::size_t j = 0; j < ny; ++j) {
-            for (std::size_t i = 0; i < nx; ++i) {
-                if (!is_boundary_node(i, j, k)) {
-                    continue;
-                }
-                for (int component = 0; component < 3; ++component) {
-                    std::size_t const row = dof_index(i, j, k, component);
-                    add_entry(row, row, 1.0);
-                }
-            }
-        }
-    }
-
-    for (std::size_t k = 1; k + 1 < nz; ++k) {
-        for (std::size_t j = 1; j + 1 < ny; ++j) {
-            for (std::size_t i = 1; i + 1 < nx; ++i) {
-                for (int component = 0; component < 3; ++component) {
-                    std::size_t const row = dof_index(i, j, k, component);
-                    if (use_divergence_gauge) {
-                        for (int transposed_slot = 0;
-                             transposed_slot < transposed_codifferential_counts(row);
-                             ++transposed_slot) {
-                            std::size_t const codifferential_row = static_cast<std::size_t>(
-                                    transposed_codifferential_rows(row, transposed_slot));
-                            double const row_coefficient
-                                    = transposed_codifferential_coefficients(row, transposed_slot);
-                            for (int column_slot = 0;
-                                 column_slot < codifferential_counts(codifferential_row);
-                                 ++column_slot) {
-                                add_entry(
-                                        row,
-                                        static_cast<std::size_t>(codifferential_columns(
-                                                codifferential_row,
-                                                column_slot)),
-                                        divergence_gauge_factor
-                                                * codifferential_weights(codifferential_row)
-                                                * row_coefficient
-                                                * codifferential_coefficients(
-                                                        codifferential_row,
-                                                        column_slot));
-                            }
+    Kokkos::parallel_for(
+            "similie_count_3d_magnetostatics_jacobian",
+            Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(
+                    exec_space,
+                    0,
+                    static_cast<Kokkos::DefaultExecutionSpace::size_type>(size)),
+            KOKKOS_LAMBDA(std::size_t row) {
+                int local_columns[MATRIX_ROW_MAX_SIZE] {};
+                auto add_entry = [&](int& count, std::size_t column, double value) {
+                    if (value == 0.0) {
+                        return;
+                    }
+                    for (int slot = 0; slot < count; ++slot) {
+                        if (local_columns[slot] == static_cast<int>(column)) {
+                            return;
                         }
+                    }
+                    if (count >= MATRIX_ROW_MAX_SIZE) {
+                        Kokkos::abort("3D magnetostatics matrix row capacity exceeded");
+                    }
+                    local_columns[count] = static_cast<int>(column);
+                    ++count;
+                };
+
+                std::size_t const node = row / 3;
+                std::size_t const i = node % nx;
+                std::size_t const j = (node / nx) % ny;
+                std::size_t const k = node / (nx * ny);
+                if (i == 0 || j == 0 || k == 0 || i + 1 == nx || j + 1 == ny || k + 1 == nz) {
+                    counts(row) = 1;
+                    return;
+                }
+
+                int count = 0;
+                if (use_divergence_gauge) {
+                    for (int transposed_slot = 0;
+                         transposed_slot < transposed_codifferential_counts(row);
+                         ++transposed_slot) {
+                        std::size_t const codifferential_row = static_cast<std::size_t>(
+                                transposed_codifferential_rows(row, transposed_slot));
+                        double const row_coefficient
+                                = transposed_codifferential_coefficients(row, transposed_slot);
+                        for (int column_slot = 0;
+                             column_slot < codifferential_counts(codifferential_row);
+                             ++column_slot) {
+                            add_entry(
+                                    count,
+                                    static_cast<std::size_t>(codifferential_columns(
+                                            codifferential_row,
+                                            column_slot)),
+                                    divergence_gauge_factor
+                                            * codifferential_weights(codifferential_row)
+                                            * row_coefficient
+                                            * codifferential_coefficients(
+                                                    codifferential_row,
+                                                    column_slot));
+                        }
+                    }
+                } else {
+                    add_entry(count, row, gauge_penalty);
+                }
+                for (int slot = 0; slot < transposed_moment_counts(row); ++slot) {
+                    std::size_t const moment_row
+                            = static_cast<std::size_t>(transposed_moment_rows(row, slot));
+                    double const row_coefficient = transposed_moment_coefficients(row, slot);
+                    std::size_t const sampled_node = moment_row / 3;
+                    std::size_t const sampled_i = sampled_node % nx;
+                    std::size_t const sampled_j = (sampled_node / nx) % ny;
+                    std::size_t const sampled_k = sampled_node / (nx * ny);
+                    auto const sampled_elem = ddc::
+                            DiscreteElement<DDimX, DDimY, DDimZ>(sampled_i, sampled_j, sampled_k);
+                    std::array<double, 3> state_moments {};
+                    for (int moment_component = 0; moment_component < 3; ++moment_component) {
+                        std::size_t const current_moment_row
+                                = 3 * sampled_node + static_cast<std::size_t>(moment_component);
+                        for (int moment_slot = 0; moment_slot < moment_counts(current_moment_row);
+                             ++moment_slot) {
+                            state_moments[moment_component]
+                                    += moment_coefficients(current_moment_row, moment_slot)
+                                       * state(static_cast<std::size_t>(moment_columns(
+                                                       current_moment_row,
+                                                       moment_slot)),
+                                               0);
+                        }
+                    }
+                    MagneticMoments const moments {
+                            state_moments[0],
+                            state_moments[1],
+                            state_moments[2],
+                    };
+                    std::array<double, 3> jacobian_row {};
+                    double hodge_factor = 1.0;
+                    if (moment_row % 3 == 0) {
+                        jacobian_row
+                                = {jacobian_component<X, X>(equations, moments, sampled_elem),
+                                   jacobian_component<X, Y>(equations, moments, sampled_elem),
+                                   jacobian_component<X, Z>(equations, moments, sampled_elem)};
+                        hodge_factor = magnetic_induction_hodge_factor<
+                                X>(x_coords, y_coords, z_coords, sampled_i, sampled_j, sampled_k);
+                    } else if (moment_row % 3 == 1) {
+                        jacobian_row
+                                = {jacobian_component<Y, X>(equations, moments, sampled_elem),
+                                   jacobian_component<Y, Y>(equations, moments, sampled_elem),
+                                   jacobian_component<Y, Z>(equations, moments, sampled_elem)};
+                        hodge_factor = magnetic_y_response_sign
+                                       * magnetic_induction_hodge_factor<Y>(
+                                               x_coords,
+                                               y_coords,
+                                               z_coords,
+                                               sampled_i,
+                                               sampled_j,
+                                               sampled_k);
                     } else {
-                        add_entry(row, row, gauge_penalty);
+                        jacobian_row
+                                = {jacobian_component<Z, X>(equations, moments, sampled_elem),
+                                   jacobian_component<Z, Y>(equations, moments, sampled_elem),
+                                   jacobian_component<Z, Z>(equations, moments, sampled_elem)};
+                        hodge_factor = magnetic_induction_hodge_factor<
+                                Z>(x_coords, y_coords, z_coords, sampled_i, sampled_j, sampled_k);
                     }
-                    for (int slot = 0; slot < transposed_moment_counts(row); ++slot) {
-                        std::size_t const moment_row
-                                = static_cast<std::size_t>(transposed_moment_rows(row, slot));
-                        double const row_coefficient = transposed_moment_coefficients(row, slot);
-                        std::size_t const sampled_node = moment_row / 3;
-                        std::size_t const sampled_i = sampled_node % nx;
-                        std::size_t const sampled_j = (sampled_node / nx) % ny;
-                        std::size_t const sampled_k = sampled_node / (nx * ny);
-                        auto const sampled_elem = ddc::DiscreteElement<
-                                DDimX,
-                                DDimY,
-                                DDimZ>(sampled_i, sampled_j, sampled_k);
-                        std::array<double, 3> state_moments {};
-                        for (int moment_component = 0; moment_component < 3; ++moment_component) {
-                            std::size_t const current_moment_row
-                                    = 3 * sampled_node + static_cast<std::size_t>(moment_component);
-                            for (int moment_slot = 0;
-                                 moment_slot < moment_counts(current_moment_row);
-                                 ++moment_slot) {
-                                state_moments[moment_component]
-                                        += moment_coefficients(current_moment_row, moment_slot)
-                                           * state_host(
-                                                   static_cast<std::size_t>(moment_columns(
-                                                           current_moment_row,
-                                                           moment_slot)),
-                                                   0);
-                            }
+                    for (int moment_component = 0; moment_component < 3; ++moment_component) {
+                        double const jacobian_coefficient
+                                = hodge_factor * jacobian_row[moment_component];
+                        if (jacobian_coefficient == 0.0) {
+                            continue;
                         }
-                        MagneticMoments const moments {
-                                state_moments[0],
-                                state_moments[1],
-                                state_moments[2],
-                        };
-                        std::array<double, 3> jacobian_row {};
-                        double hodge_factor = 1.0;
-                        if (moment_row % 3 == 0) {
-                            jacobian_row
-                                    = {jacobian_component<X, X>(equations, moments, sampled_elem),
-                                       jacobian_component<X, Y>(equations, moments, sampled_elem),
-                                       jacobian_component<X, Z>(equations, moments, sampled_elem)};
-                            hodge_factor = magnetic_induction_hodge_factor<X>(
-                                    x_coords,
-                                    y_coords,
-                                    z_coords,
-                                    sampled_i,
-                                    sampled_j,
-                                    sampled_k);
-                        } else if (moment_row % 3 == 1) {
-                            jacobian_row
-                                    = {jacobian_component<Y, X>(equations, moments, sampled_elem),
-                                       jacobian_component<Y, Y>(equations, moments, sampled_elem),
-                                       jacobian_component<Y, Z>(equations, moments, sampled_elem)};
-                            hodge_factor = magnetic_y_response_sign
-                                           * magnetic_induction_hodge_factor<Y>(
-                                                   x_coords,
-                                                   y_coords,
-                                                   z_coords,
-                                                   sampled_i,
-                                                   sampled_j,
-                                                   sampled_k);
-                        } else {
-                            jacobian_row
-                                    = {jacobian_component<Z, X>(equations, moments, sampled_elem),
-                                       jacobian_component<Z, Y>(equations, moments, sampled_elem),
-                                       jacobian_component<Z, Z>(equations, moments, sampled_elem)};
-                            hodge_factor = magnetic_induction_hodge_factor<Z>(
-                                    x_coords,
-                                    y_coords,
-                                    z_coords,
-                                    sampled_i,
-                                    sampled_j,
-                                    sampled_k);
-                        }
-                        for (int moment_component = 0; moment_component < 3; ++moment_component) {
-                            double const jacobian_coefficient
-                                    = hodge_factor * jacobian_row[moment_component];
-                            if (jacobian_coefficient == 0.0) {
-                                continue;
-                            }
-                            std::size_t const current_moment_row
-                                    = 3 * sampled_node + static_cast<std::size_t>(moment_component);
-                            for (int moment_slot = 0;
-                                 moment_slot < moment_counts(current_moment_row);
-                                 ++moment_slot) {
-                                add_entry(
-                                        row,
-                                        static_cast<std::size_t>(
-                                                moment_columns(current_moment_row, moment_slot)),
-                                        row_coefficient * jacobian_coefficient
-                                                * moment_coefficients(
-                                                        current_moment_row,
-                                                        moment_slot));
-                            }
+                        std::size_t const current_moment_row
+                                = 3 * sampled_node + static_cast<std::size_t>(moment_component);
+                        for (int moment_slot = 0; moment_slot < moment_counts(current_moment_row);
+                             ++moment_slot) {
+                            add_entry(
+                                    count,
+                                    static_cast<std::size_t>(
+                                            moment_columns(current_moment_row, moment_slot)),
+                                    row_coefficient * jacobian_coefficient
+                                            * moment_coefficients(current_moment_row, moment_slot));
                         }
                     }
                 }
-            }
-        }
+                counts(row) = count;
+            });
+    exec_space.fence();
+
+    auto counts_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), counts);
+
+    std::vector<std::size_t> row_offsets(size + 1, 0);
+    for (std::size_t row = 0; row < size; ++row) {
+        row_offsets[row + 1] = row_offsets[row] + static_cast<std::size_t>(counts_host(row));
     }
+    std::size_t const nonzeros = row_offsets.back();
+    Kokkos::View<std::size_t*>
+            row_offsets_device("similie_3d_magnetostatics_matrix_row_offsets", row_offsets.size());
+    auto row_offsets_device_host = Kokkos::create_mirror_view(row_offsets_device);
+    for (std::size_t row = 0; row < row_offsets.size(); ++row) {
+        row_offsets_device_host(row) = row_offsets[row];
+    }
+    Kokkos::deep_copy(row_offsets_device, row_offsets_device_host);
+    Kokkos::View<double*> coefficients("similie_3d_magnetostatics_matrix_coefficients", nonzeros);
+    Kokkos::View<int*> columns("similie_3d_magnetostatics_matrix_columns", nonzeros);
+    Kokkos::parallel_for(
+            "similie_fill_3d_magnetostatics_jacobian",
+            Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(
+                    exec_space,
+                    0,
+                    static_cast<Kokkos::DefaultExecutionSpace::size_type>(size)),
+            KOKKOS_LAMBDA(std::size_t row) {
+                int local_columns[MATRIX_ROW_MAX_SIZE] {};
+                double local_coefficients[MATRIX_ROW_MAX_SIZE] {};
+                auto add_entry = [&](int& count, std::size_t column, double value) {
+                    if (value == 0.0) {
+                        return;
+                    }
+                    for (int slot = 0; slot < count; ++slot) {
+                        if (local_columns[slot] == static_cast<int>(column)) {
+                            local_coefficients[slot] += value;
+                            return;
+                        }
+                    }
+                    if (count >= MATRIX_ROW_MAX_SIZE) {
+                        Kokkos::abort("3D magnetostatics matrix row capacity exceeded");
+                    }
+                    local_columns[count] = static_cast<int>(column);
+                    local_coefficients[count] = value;
+                    ++count;
+                };
+
+                std::size_t const node = row / 3;
+                std::size_t const i = node % nx;
+                std::size_t const j = (node / nx) % ny;
+                std::size_t const k = node / (nx * ny);
+                if (i == 0 || j == 0 || k == 0 || i + 1 == nx || j + 1 == ny || k + 1 == nz) {
+                    std::size_t const offset = row_offsets_device(row);
+                    columns(offset) = static_cast<int>(row);
+                    coefficients(offset) = 1.0;
+                    return;
+                }
+
+                int count = 0;
+                if (use_divergence_gauge) {
+                    for (int transposed_slot = 0;
+                         transposed_slot < transposed_codifferential_counts(row);
+                         ++transposed_slot) {
+                        std::size_t const codifferential_row = static_cast<std::size_t>(
+                                transposed_codifferential_rows(row, transposed_slot));
+                        double const row_coefficient
+                                = transposed_codifferential_coefficients(row, transposed_slot);
+                        for (int column_slot = 0;
+                             column_slot < codifferential_counts(codifferential_row);
+                             ++column_slot) {
+                            add_entry(
+                                    count,
+                                    static_cast<std::size_t>(codifferential_columns(
+                                            codifferential_row,
+                                            column_slot)),
+                                    divergence_gauge_factor
+                                            * codifferential_weights(codifferential_row)
+                                            * row_coefficient
+                                            * codifferential_coefficients(
+                                                    codifferential_row,
+                                                    column_slot));
+                        }
+                    }
+                } else {
+                    add_entry(count, row, gauge_penalty);
+                }
+                for (int slot = 0; slot < transposed_moment_counts(row); ++slot) {
+                    std::size_t const moment_row
+                            = static_cast<std::size_t>(transposed_moment_rows(row, slot));
+                    double const row_coefficient = transposed_moment_coefficients(row, slot);
+                    std::size_t const sampled_node = moment_row / 3;
+                    std::size_t const sampled_i = sampled_node % nx;
+                    std::size_t const sampled_j = (sampled_node / nx) % ny;
+                    std::size_t const sampled_k = sampled_node / (nx * ny);
+                    auto const sampled_elem = ddc::
+                            DiscreteElement<DDimX, DDimY, DDimZ>(sampled_i, sampled_j, sampled_k);
+                    std::array<double, 3> state_moments {};
+                    for (int moment_component = 0; moment_component < 3; ++moment_component) {
+                        std::size_t const current_moment_row
+                                = 3 * sampled_node + static_cast<std::size_t>(moment_component);
+                        for (int moment_slot = 0; moment_slot < moment_counts(current_moment_row);
+                             ++moment_slot) {
+                            state_moments[moment_component]
+                                    += moment_coefficients(current_moment_row, moment_slot)
+                                       * state(static_cast<std::size_t>(moment_columns(
+                                                       current_moment_row,
+                                                       moment_slot)),
+                                               0);
+                        }
+                    }
+                    MagneticMoments const moments {
+                            state_moments[0],
+                            state_moments[1],
+                            state_moments[2],
+                    };
+                    std::array<double, 3> jacobian_row {};
+                    double hodge_factor = 1.0;
+                    if (moment_row % 3 == 0) {
+                        jacobian_row
+                                = {jacobian_component<X, X>(equations, moments, sampled_elem),
+                                   jacobian_component<X, Y>(equations, moments, sampled_elem),
+                                   jacobian_component<X, Z>(equations, moments, sampled_elem)};
+                        hodge_factor = magnetic_induction_hodge_factor<
+                                X>(x_coords, y_coords, z_coords, sampled_i, sampled_j, sampled_k);
+                    } else if (moment_row % 3 == 1) {
+                        jacobian_row
+                                = {jacobian_component<Y, X>(equations, moments, sampled_elem),
+                                   jacobian_component<Y, Y>(equations, moments, sampled_elem),
+                                   jacobian_component<Y, Z>(equations, moments, sampled_elem)};
+                        hodge_factor = magnetic_y_response_sign
+                                       * magnetic_induction_hodge_factor<Y>(
+                                               x_coords,
+                                               y_coords,
+                                               z_coords,
+                                               sampled_i,
+                                               sampled_j,
+                                               sampled_k);
+                    } else {
+                        jacobian_row
+                                = {jacobian_component<Z, X>(equations, moments, sampled_elem),
+                                   jacobian_component<Z, Y>(equations, moments, sampled_elem),
+                                   jacobian_component<Z, Z>(equations, moments, sampled_elem)};
+                        hodge_factor = magnetic_induction_hodge_factor<
+                                Z>(x_coords, y_coords, z_coords, sampled_i, sampled_j, sampled_k);
+                    }
+                    for (int moment_component = 0; moment_component < 3; ++moment_component) {
+                        double const jacobian_coefficient
+                                = hodge_factor * jacobian_row[moment_component];
+                        if (jacobian_coefficient == 0.0) {
+                            continue;
+                        }
+                        std::size_t const current_moment_row
+                                = 3 * sampled_node + static_cast<std::size_t>(moment_component);
+                        for (int moment_slot = 0; moment_slot < moment_counts(current_moment_row);
+                             ++moment_slot) {
+                            add_entry(
+                                    count,
+                                    static_cast<std::size_t>(
+                                            moment_columns(current_moment_row, moment_slot)),
+                                    row_coefficient * jacobian_coefficient
+                                            * moment_coefficients(current_moment_row, moment_slot));
+                        }
+                    }
+                }
+                std::size_t const offset = row_offsets_device(row);
+                for (int slot = 0; slot < count; ++slot) {
+                    columns(offset + static_cast<std::size_t>(slot)) = local_columns[slot];
+                    coefficients(offset + static_cast<std::size_t>(slot))
+                            = local_coefficients[slot];
+                }
+            });
+    exec_space.fence();
+
+    auto coefficients_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), coefficients);
+    auto columns_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), columns);
 
     gko::matrix_data<double, gko::int32> matrix_data(gko::dim<2>(size, size));
-    std::size_t nonzeros = 0;
-    for (auto const& entries : matrix_rows) {
-        nonzeros += entries.size();
-    }
     matrix_data.nonzeros.reserve(nonzeros);
-    for (std::size_t row = 0; row < size; ++row) {
-        for (auto const& [column, coefficient] : matrix_rows[row]) {
-            if (coefficient == 0.0) {
-                continue;
-            }
-            matrix_data.nonzeros.emplace_back(static_cast<gko::int32>(row), column, coefficient);
-        }
-    }
+    matrix_data.nonzeros.resize(nonzeros);
+    using nonzero_type = typename decltype(matrix_data.nonzeros)::value_type;
+    auto const row_offsets_view = Kokkos::
+            View<std::size_t const*, Kokkos::HostSpace>(row_offsets.data(), row_offsets.size());
+    auto* const nonzeros_data = matrix_data.nonzeros.data();
+    Kokkos::parallel_for(
+            "similie_pack_3d_magnetostatics_matrix_data",
+            Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(
+                    Kokkos::DefaultHostExecutionSpace(),
+                    0,
+                    static_cast<Kokkos::DefaultHostExecutionSpace::size_type>(size)),
+            KOKKOS_LAMBDA(std::size_t row) {
+                for (int slot = 0; slot < counts_host(row); ++slot) {
+                    std::size_t const nonzero_index
+                            = row_offsets_view(row) + static_cast<std::size_t>(slot);
+                    double const coefficient = coefficients_host(nonzero_index);
+                    nonzeros_data[row_offsets_view(row) + static_cast<std::size_t>(slot)]
+                            = nonzero_type(
+                                    static_cast<gko::int32>(row),
+                                    static_cast<gko::int32>(columns_host(nonzero_index)),
+                                    coefficient);
+                }
+            });
+    Kokkos::DefaultHostExecutionSpace().fence();
     return matrix_data;
 }
 
@@ -3293,7 +3430,7 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                 Equations,
                 MagneticVectorPotentialToMagneticInduction> const& operator_model)
 {
-    Kokkos::View<double**> state("similie_3d_linear_state", operator_model.size(), 1);
+    Kokkos::View<double**, MemorySpace> state("similie_3d_linear_state", operator_model.size(), 1);
     Kokkos::deep_copy(state, 0.0);
     return assemble_matrix_data(operator_model, state);
 }
@@ -4819,8 +4956,6 @@ Result run_on_hexahedral_grid(
         SIMILIE_DEBUG_LOG("similie_onelab_linear_magnetostatics_build_operator_3d");
         auto const operator_setup_start = std::chrono::steady_clock::now();
         log_info(logger, "SimiLie starting 3D operator setup");
-        bool const precompute_operator_stencils
-                = !solver_settings.use_matrix_free || !std::decay_t<decltype(equations)>::IS_LINEAR;
         auto const operator_model = magnetostatics_local::MagnetostaticsOperator3D<
                 memory_space,
                 decltype(equations),
@@ -4828,8 +4963,7 @@ Result run_on_hexahedral_grid(
                 equations,
                 x_coords,
                 y_coords,
-                z_coords,
-                precompute_operator_stencils);
+                z_coords);
         auto const operator_setup_duration = std::chrono::duration<double>(
                 std::chrono::steady_clock::now() - operator_setup_start);
         log_info(
