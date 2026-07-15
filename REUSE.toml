@@ -1,0 +1,42 @@
+# SPDX-FileCopyrightText: 2026 Baptiste Legouix
+# SPDX-License-Identifier: MIT
+
+version = 1
+
+[[annotations]]
+path = [
+    ".gitattributes",
+    "docs/similie_talk/.gitignore",
+    "docs/similie_talk/imgs/2d_laplacian.png",
+    "docs/similie_talk/imgs/2d_vector_laplacian.png",
+    "docs/similie_talk/imgs/bg-main.png",
+    "docs/similie_talk/imgs/bg-title.png",
+    "docs/similie_talk/imgs/bg-toc.png",
+    "docs/similie_talk/imgs/birdtracks.png",
+    "docs/similie_talk/imgs/ddc.png",
+    "docs/similie_talk/imgs/dependencies.png",
+    "docs/similie_talk/imgs/dependencies.svg",
+    "docs/similie_talk/imgs/hamiltonian.avi",
+    "docs/similie_talk/imgs/icon.png",
+    "docs/similie_talk/imgs/inductor.png",
+    "docs/similie_talk/imgs/inductor_2d.png",
+    "docs/similie_talk/imgs/inductor_2d_permability.png",
+    "docs/similie_talk/imgs/inductor_3d.png",
+    "docs/similie_talk/imgs/landscape.png",
+    "docs/similie_talk/imgs/landscape.svg",
+    "docs/similie_talk/imgs/logo-CEA-IRFM.png",
+    "docs/similie_talk/imgs/logo-CEA-mini.png",
+    "docs/similie_talk/imgs/logo-CEA.png",
+    "docs/similie_talk/imgs/logo.png",
+    "docs/similie_talk/imgs/mdls.png",
+    "docs/similie_talk/imgs/memory_access.png",
+    "docs/similie_talk/imgs/potential.avi",
+    "docs/similie_talk/imgs/scalar_field.png",
+    "docs/similie_talk/imgs/scalar_field_small.png",
+    "docs/similie_talk/imgs/torus_grid.png",
+    "docs/similie_talk/slides.pdf",
+    "docs/similie_talk/slides.tex",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Baptiste Legouix"
+SPDX-License-Identifier = "MIT"
