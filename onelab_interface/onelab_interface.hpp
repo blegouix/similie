@@ -115,7 +115,10 @@ struct SingleElectricalConductorMaterialWithSingleLinearMagneticMaterialPreproce
     std::string name;
     std::vector<std::string> positive_electrical_conductor_tags;
     std::vector<std::string> negative_electrical_conductor_tags;
+    std::vector<std::string> positive_electrical_conductor_x_tags;
+    std::vector<std::string> negative_electrical_conductor_x_tags;
     std::vector<std::string> magnetic_material_tags;
+    std::string current_density_x_parameter;
     std::string current_density_z_parameter;
     std::string magnetic_permeability_parameter;
     bool use_nonlinear_magnetic_material = false;
@@ -457,7 +460,10 @@ inline SilproProblem parse_silpro_problem(std::filesystem::path const& file)
                     .name = "SingleElectricalConductorMaterialWithSingleLinearMagneticMaterial",
                     .positive_electrical_conductor_tags = {},
                     .negative_electrical_conductor_tags = {},
+                    .positive_electrical_conductor_x_tags = {},
+                    .negative_electrical_conductor_x_tags = {},
                     .magnetic_material_tags = {},
+                    .current_density_x_parameter = "",
                     .current_density_z_parameter
                     = "Input/90SimiLie/0Coil current density magnitude z [A/m^2]",
                     .magnetic_permeability_parameter
@@ -560,6 +566,18 @@ inline SilproProblem parse_silpro_problem(std::filesystem::path const& file)
                         .negative_electrical_conductor_tags
                         = collect_values(it->second);
             }
+            if (auto it = preprocess.sections.find("PositiveElectricalConductorXTags");
+                it != preprocess.sections.end()) {
+                problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+                        .positive_electrical_conductor_x_tags
+                        = collect_values(it->second);
+            }
+            if (auto it = preprocess.sections.find("NegativeElectricalConductorXTags");
+                it != preprocess.sections.end()) {
+                problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+                        .negative_electrical_conductor_x_tags
+                        = collect_values(it->second);
+            }
             if (auto it = preprocess.sections.find("MagneticMaterialTags");
                 it != preprocess.sections.end()) {
                 problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
@@ -571,6 +589,13 @@ inline SilproProblem parse_silpro_problem(std::filesystem::path const& file)
                         .magnetic_material_tags
                         = collect_values(it->second);
             }
+            problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+                    .current_density_x_parameter
+                    = get_value_or(
+                            preprocess,
+                            "CurrentDensityX",
+                            problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+                                    .current_density_x_parameter);
             problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
                     .current_density_z_parameter
                     = get_value_or(

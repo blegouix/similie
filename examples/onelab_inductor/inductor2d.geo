@@ -23,10 +23,14 @@ DefineConstant[
 
 jcoil = Sqrt[2] * Irms * NbWires / (wcoil * hcoil);
 mu_fe = 4.e-7 * Pi * mur_fe;
+COIL_X_POS = COIL + 2;
+COIL_X_NEG = COIL + 3;
 
 DefineConstant[
   SimiLieJz = {jcoil,
     Name "Input/90SimiLie/0Coil current density magnitude z [A/m^2]", Highlight "Ivory"},
+  SimiLieJxEndTurn = {0,
+    Name "Input/90SimiLie/7Coil end-turn current density magnitude x [A/m^2]", Highlight "Ivory"},
   SimiLieMuCore = {mu_fe,
     Name "Input/90SimiLie/1Core magnetic permeability [H/m]", Highlight "Ivory"},
   SimiLieECoreTag = {ECORE,
@@ -38,7 +42,11 @@ DefineConstant[
   SimiLieCoilRightTag = {COIL + 1,
     Name "Input/90SimiLie/5Right coil physical tag", Highlight "Ivory"},
   SimiLieAirGapTag = {AIRGAP,
-    Name "Input/90SimiLie/6Air-gap physical tag", Highlight "Ivory"}
+    Name "Input/90SimiLie/6Air-gap physical tag", Highlight "Ivory"},
+  SimiLieCoilXPositiveTag = {COIL_X_POS,
+    Name "Input/90SimiLie/8Positive x end-turn physical tag", Highlight "Ivory"},
+  SimiLieCoilXNegativeTag = {COIL_X_NEG,
+    Name "Input/90SimiLie/9Negative x end-turn physical tag", Highlight "Ivory"}
 ];
 
 x1 = wcoreE;

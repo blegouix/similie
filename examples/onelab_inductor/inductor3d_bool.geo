@@ -24,10 +24,18 @@ DefineConstant[
 
 jcoil = Sqrt[2] * Irms * NbWires / (wcoil * hcoil);
 mu_fe = 4.e-7 * Pi * mur_fe;
+COIL_X_POS = COIL + 2;
+COIL_X_NEG = COIL + 3;
+lc0 = wcoil / nn_wcore;
+refinement_factor = 8;
+hcoil_div = refinement_factor * Ceil[hcoil / lc0];
+nz_layers = refinement_factor * Ceil[Lz / lc0];
 
 DefineConstant[
   SimiLieJz = {jcoil,
     Name "Input/90SimiLie/0Coil current density magnitude z [A/m^2]", Highlight "Ivory"},
+  SimiLieJxEndTurn = {jcoil * wcoil * nz_layers / Lz,
+    Name "Input/90SimiLie/7Coil end-turn current density magnitude x [A/m^2]", Highlight "Ivory"},
   SimiLieMuCore = {mu_fe,
     Name "Input/90SimiLie/1Core magnetic permeability [H/m]", Highlight "Ivory"},
   SimiLieECoreTag = {ECORE,
@@ -39,7 +47,11 @@ DefineConstant[
   SimiLieCoilRightTag = {COIL + 1,
     Name "Input/90SimiLie/5Right coil physical tag", Highlight "Ivory"},
   SimiLieAirGapTag = {AIRGAP,
-    Name "Input/90SimiLie/6Air-gap physical tag", Highlight "Ivory"}
+    Name "Input/90SimiLie/6Air-gap physical tag", Highlight "Ivory"},
+  SimiLieCoilXPositiveTag = {COIL_X_POS,
+    Name "Input/90SimiLie/8Positive x end-turn physical tag", Highlight "Ivory"},
+  SimiLieCoilXNegativeTag = {COIL_X_NEG,
+    Name "Input/90SimiLie/9Negative x end-turn physical tag", Highlight "Ivory"}
 ];
 
 x1 = wcoreE;
@@ -51,11 +63,6 @@ y1 = htot / 2 - hcoreE - ag;
 y2 = htot / 2 - hcoreE;
 y3 = htot / 2 - hcoreE + hcoil;
 y4 = htot / 2 - hcoreE + hcoil + wcoreE;
-
-lc0 = wcoil / nn_wcore;
-refinement_factor = 8;
-hcoil_div = refinement_factor * Ceil[hcoil / lc0];
-nz_layers = refinement_factor * Ceil[Lz / lc0];
 
 x_coords[] = {-Rext, -x3, -x2, -x1, 0, x1, x2, x3, Rext};
 x_divisions[] = {refinement_factor * nn_ro,
@@ -115,6 +122,8 @@ For j In {0:num_y - 2}
     Plane Surface(surface_id) = {newll - 1};
     Transfinite Surface {surface_id};
     Recombine Surface {surface_id};
+    surface_i_indices[] += i;
+    surface_j_indices[] += j;
 
     region_tag = AIR;
     If(i == 0 || i == num_x - 2 || j == 0 || j == num_y - 2)
@@ -146,28 +155,90 @@ For j In {0:num_y - 2}
   EndFor
 EndFor
 
+end_turn_layers = 1;
+middle_layers = nz_layers - 2 * end_turn_layers;
+end_turn_depth = Lz * end_turn_layers / nz_layers;
+middle_depth = Lz - 2 * end_turn_depth;
+
 For s In {0:#surfaces[] - 1}
-  out[] = Extrude {0, 0, Lz} {
-    Surface{surfaces[s]};
-    Layers{nz_layers};
+  original_surface = surfaces[s];
+  region_tag = surface_region_tags[s];
+  surface_i = surface_i_indices[s];
+  surface_j = surface_j_indices[s];
+  is_end_turn_bridge = (surface_j == 3 && surface_i >= 2 && surface_i <= 5);
+
+  out_front[] = Extrude {0, 0, end_turn_depth} {
+    Surface{original_surface};
+    Layers{end_turn_layers};
     Recombine;
   };
-  volumes[] += out[1];
-  Transfinite Volume {out[1]};
+  front_volume = out_front[1];
+  Transfinite Volume {front_volume};
 
-  region_tag = surface_region_tags[s];
-  If(region_tag == ECORE)
-    ecore_volumes[] += out[1];
+  out_middle[] = Extrude {0, 0, middle_depth} {
+    Surface{out_front[0]};
+    Layers{middle_layers};
+    Recombine;
+  };
+  middle_volume = out_middle[1];
+  Transfinite Volume {middle_volume};
+
+  out_back[] = Extrude {0, 0, end_turn_depth} {
+    Surface{out_middle[0]};
+    Layers{end_turn_layers};
+    Recombine;
+  };
+  back_volume = out_back[1];
+  Transfinite Volume {back_volume};
+
+  volumes[] += front_volume;
+  volumes[] += middle_volume;
+  volumes[] += back_volume;
+
+  If(is_end_turn_bridge)
+    coil_x_negative_volumes[] += front_volume;
+  ElseIf(region_tag == ECORE)
+    ecore_volumes[] += front_volume;
   ElseIf(region_tag == ICORE)
-    icore_volumes[] += out[1];
+    icore_volumes[] += front_volume;
   ElseIf(region_tag == AIRGAP)
-    airgap_volumes[] += out[1];
+    airgap_volumes[] += front_volume;
   ElseIf(region_tag == COIL)
-    coil_left_volumes[] += out[1];
+    coil_left_volumes[] += front_volume;
   ElseIf(region_tag == COIL + 1)
-    coil_right_volumes[] += out[1];
+    coil_right_volumes[] += front_volume;
   Else
-    air_volumes[] += out[1];
+    air_volumes[] += front_volume;
+  EndIf
+
+  If(region_tag == ECORE)
+    ecore_volumes[] += middle_volume;
+  ElseIf(region_tag == ICORE)
+    icore_volumes[] += middle_volume;
+  ElseIf(region_tag == AIRGAP)
+    airgap_volumes[] += middle_volume;
+  ElseIf(region_tag == COIL)
+    coil_left_volumes[] += middle_volume;
+  ElseIf(region_tag == COIL + 1)
+    coil_right_volumes[] += middle_volume;
+  Else
+    air_volumes[] += middle_volume;
+  EndIf
+
+  If(is_end_turn_bridge)
+    coil_x_positive_volumes[] += back_volume;
+  ElseIf(region_tag == ECORE)
+    ecore_volumes[] += back_volume;
+  ElseIf(region_tag == ICORE)
+    icore_volumes[] += back_volume;
+  ElseIf(region_tag == AIRGAP)
+    airgap_volumes[] += back_volume;
+  ElseIf(region_tag == COIL)
+    coil_left_volumes[] += back_volume;
+  ElseIf(region_tag == COIL + 1)
+    coil_right_volumes[] += back_volume;
+  Else
+    air_volumes[] += back_volume;
   EndIf
 EndFor
 
@@ -176,4 +247,6 @@ Physical Volume(ICORE) = {icore_volumes[]};
 Physical Volume(AIRGAP) = {airgap_volumes[]};
 Physical Volume(COIL) = {coil_left_volumes[]};
 Physical Volume(COIL + 1) = {coil_right_volumes[]};
+Physical Volume(COIL_X_POS) = {coil_x_positive_volumes[]};
+Physical Volume(COIL_X_NEG) = {coil_x_negative_volumes[]};
 Physical Volume(AIR) = {air_volumes[]};

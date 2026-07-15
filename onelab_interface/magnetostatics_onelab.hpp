@@ -46,13 +46,16 @@ namespace similie::onelab_interface::magnetostatics_onelab {
 
 struct Inputs
 {
-    double current_density_magnitude = 0.0;
+    double current_density_magnitude_x = 0.0;
+    double current_density_magnitude_z = 0.0;
     double num_turns = 1.0;
     double core_mu = 0.0;
     double mu0 = 0.0;
     double length_z = 1.0;
     std::vector<int> positive_electrical_conductor_tags;
     std::vector<int> negative_electrical_conductor_tags;
+    std::vector<int> positive_electrical_conductor_x_tags;
+    std::vector<int> negative_electrical_conductor_x_tags;
     std::vector<int> magnetic_material_tags;
     std::vector<int> diagnostic_region_tags;
     bool use_nonlinear_magnetic_material = false;
@@ -111,11 +114,19 @@ Inputs read_inputs(
         ReadNumberParameter&& read_number_parameter,
         ReadRequiredIntegerParameter&& read_required_integer_parameter)
 {
-    double const current_density_magnitude = read_number_parameter(
+    auto const& preprocess
+            = problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess;
+    double const current_density_magnitude_z = read_number_parameter(
             problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
                     .current_density_z_parameter,
             std::nullopt,
             std::numeric_limits<double>::quiet_NaN());
+    double const current_density_magnitude_x = preprocess.current_density_x_parameter.empty()
+                                                       ? 0.0
+                                                       : read_number_parameter(
+                                                                 preprocess.current_density_x_parameter,
+                                                                 std::nullopt,
+                                                                 0.0);
     double const core_mu = read_number_parameter(
             problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
                     .magnetic_permeability_parameter,
@@ -131,7 +142,7 @@ Inputs read_inputs(
             1.0);
     double const mu0 = 4.e-7 * std::numbers::pi_v<double>;
 
-    if (!(current_density_magnitude > 0.0)) {
+    if (!(current_density_magnitude_z > 0.0)) {
         throw std::runtime_error(
                 "missing or invalid 'Input/90SimiLie/0Coil current density magnitude z [A/m^2]' "
                 "ONELAB parameter");
@@ -149,7 +160,8 @@ Inputs read_inputs(
     }
 
     Inputs inputs;
-    inputs.current_density_magnitude = current_density_magnitude;
+    inputs.current_density_magnitude_x = current_density_magnitude_x;
+    inputs.current_density_magnitude_z = current_density_magnitude_z;
     inputs.num_turns = num_turns;
     inputs.core_mu = core_mu > 0.0 ? core_mu : mu0;
     inputs.mu0 = mu0;
@@ -170,6 +182,18 @@ Inputs read_inputs(
          problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
                  .negative_electrical_conductor_tags) {
         inputs.negative_electrical_conductor_tags.push_back(
+                read_required_integer_parameter(parameter_name));
+    }
+    for (std::string const& parameter_name :
+         problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+                 .positive_electrical_conductor_x_tags) {
+        inputs.positive_electrical_conductor_x_tags.push_back(
+                read_required_integer_parameter(parameter_name));
+    }
+    for (std::string const& parameter_name :
+         problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
+                 .negative_electrical_conductor_x_tags) {
+        inputs.negative_electrical_conductor_x_tags.push_back(
                 read_required_integer_parameter(parameter_name));
     }
     for (std::string const& parameter_name :
@@ -202,9 +226,14 @@ void publish_outputs(
             "file");
     publish_output_number(
             "Coil current density magnitude [A/m^2]",
-            inputs.current_density_magnitude,
+            inputs.current_density_magnitude_z,
             "Coil current density magnitude [A/m^2]",
             "Current density magnitude read from the ONELAB model inputs.");
+    publish_output_number(
+            "Coil end-turn current density magnitude x [A/m^2]",
+            inputs.current_density_magnitude_x,
+            "Coil end-turn current density magnitude x [A/m^2]",
+            "X-directed current density magnitude read from the ONELAB model inputs.");
     publish_output_number(
             "Number of turns",
             inputs.num_turns,
@@ -4359,10 +4388,10 @@ Result run_on_quadrilateral_grid(
             field.nonlinear_material = inputs.use_nonlinear_magnetic_material;
             ++result.num_core_cells;
         } else if (has_tag(inputs.positive_electrical_conductor_tags, physical_tag)) {
-            field.current_density[2] = inputs.current_density_magnitude;
+            field.current_density[2] = inputs.current_density_magnitude_z;
             ++result.num_coil_cells;
         } else if (has_tag(inputs.negative_electrical_conductor_tags, physical_tag)) {
-            field.current_density[2] = -inputs.current_density_magnitude;
+            field.current_density[2] = -inputs.current_density_magnitude_z;
             ++result.num_coil_cells;
         } else {
             ++result.num_air_cells;
@@ -4851,11 +4880,17 @@ Result run_on_hexahedral_grid(
             field.mu = inputs.core_mu;
             field.nonlinear_material = inputs.use_nonlinear_magnetic_material;
             ++result.num_core_cells;
+        } else if (has_tag(inputs.positive_electrical_conductor_x_tags, physical_tag)) {
+            field.current_density[0] = inputs.current_density_magnitude_x;
+            ++result.num_coil_cells;
+        } else if (has_tag(inputs.negative_electrical_conductor_x_tags, physical_tag)) {
+            field.current_density[0] = -inputs.current_density_magnitude_x;
+            ++result.num_coil_cells;
         } else if (has_tag(inputs.positive_electrical_conductor_tags, physical_tag)) {
-            field.current_density[2] = inputs.current_density_magnitude;
+            field.current_density[2] = inputs.current_density_magnitude_z;
             ++result.num_coil_cells;
         } else if (has_tag(inputs.negative_electrical_conductor_tags, physical_tag)) {
-            field.current_density[2] = -inputs.current_density_magnitude;
+            field.current_density[2] = -inputs.current_density_magnitude_z;
             ++result.num_coil_cells;
         } else {
             ++result.num_air_cells;
@@ -5211,9 +5246,10 @@ Result run_on_hexahedral_grid(
     fill_force_density_on_hexahedral_grid_xy_slices(grid, cell_outputs);
     std::vector<DiagnosticFaceSample> diagnostic_face_samples;
     diagnostic_face_samples.reserve(grid.ncell_x() * grid.ncell_z());
+    std::size_t const current_diagnostic_k = grid.ncell_z() / 2;
     for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
         for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
-            std::size_t const cell_index_3d = grid.cell_index(i, j, 0);
+            std::size_t const cell_index_3d = grid.cell_index(i, j, current_diagnostic_k);
             int const physical_tag = grid.ordered_cells[cell_index_3d].physical_tag;
             if (!has_tag(inputs.positive_electrical_conductor_tags, physical_tag)) {
                 continue;
