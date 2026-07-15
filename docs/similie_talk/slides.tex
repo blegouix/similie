@@ -1,0 +1,572 @@
+\documentclass[9pt, svgnames, aspectratio=32, handout]{beamer}
+
+
+
+%===============================================================================
+%=== PACKAGES ==================================================================
+%===============================================================================
+
+\usetheme{default}
+\usecolortheme[RGB={229,0,25}]{structure}
+\usefonttheme[onlymath]{serif}
+\usepackage[english]{babel}
+\usepackage{adjustbox}
+%\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{framed}
+\usepackage{bm}
+\usepackage{ulem}
+\usepackage{xcolor}
+\usepackage{ragged2e}
+\usepackage{etoolbox}
+\usepackage{appendixnumberbeamer}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{listings}
+
+\lstset{language=C++,
+  basicstyle=\ttfamily,
+  keywordstyle=\color{blue}\ttfamily,
+  stringstyle=\color{red}\ttfamily,
+  commentstyle=\color{green}\ttfamily,
+}
+
+
+
+\definecolor{ColorCEA}{RGB}{229,0,25}
+\newcommand{\colorCEA}[1]{\textcolor{ColorCEA}{#1}}
+
+\newcommand{\black}[1]{\textcolor{Black}{#1}}
+\newcommand{\grey}[1]{\textcolor{Grey}{#1}}
+\newcommand{\red}[1]{\textcolor{Red}{#1}}
+\newcommand{\orange}[1]{\textcolor{DarkOrange}{#1}}
+\newcommand{\blue}[1]{\textcolor{Blue}{#1}}
+\newcommand{\green}[1]{\textcolor{DarkGreen}{#1}}
+\newcommand{\purple}[1]{\textcolor{Purple}{#1}}
+\newcommand{\brown}[1]{\textcolor{Sienna}{#1}}
+
+
+% TOC slide between sections, not tested in new template
+%\AtBeginSection[]
+%{
+  %\ifnum \value{framenumber}>3
+    %\begin{frame}
+    %% \frametitle{Section outline}
+      %\centering
+      %\begin{minipage}[t]{0.8\linewidth}
+        %\tableofcontents[currentsection,currentsubsection,hideothersubsections,subsectionstyle=show/show/shaded]
+      %\end{minipage}
+    %\end{frame}
+  %\else
+  %\fi
+%}
+
+
+
+%===============================================================================
+%=== BEAMER TEMPLATES ==========================================================
+%===============================================================================
+
+%=====================================================================
+%=== Title plage
+
+\defbeamertemplate*{title page}{customized}[1][]
+{
+  \includegraphics[height=3.5cm]{imgs/icon.png}\hspace{0.2cm}
+  % \includegraphics[height=2.5cm]{imgs/logo-CEA-IRFM.png}\hspace{0.2cm}
+  % \includegraphics[height=2.5cm]{imgs/mdls.png}
+  \vspace{0.7cm}
+
+  \Large{\bfseries \inserttitle}\par
+  \large{\insertsubtitle}\par
+  \bigskip
+  \normalsize{\insertauthor}\par
+  \medskip
+  \scriptsize{\insertinstitute}\par
+  \bigskip
+  \small{\insertdate\par}
+  \usebeamercolor[fg]{titlegraphic}\inserttitlegraphic
+}
+
+%=====================================================================
+%=== Table of Contents
+
+\setbeamertemplate{section in toc}{%
+    \leavevmode\leftskip=2.5ex%
+    \normalsize{\bfseries%
+      \colorCEA{\inserttocsectionnumber}.$\ $%
+      \black{\inserttocsection}
+    }\par
+}
+
+\setbeamertemplate{subsection in toc}{%
+    \leavevmode\leftskip=7.5ex%
+    \small{\black{\inserttocsubsection}}\par
+}
+
+%=====================================================================
+%=== Footline for main slides
+
+\setbeamerfont{footline}{size=\fontsize{7}{9}\selectfont}
+
+\setbeamertemplate{footline}
+{
+  \leavevmode%
+  \hbox{%
+  \begin{beamercolorbox}[wd=.05\paperwidth,ht=0.4cm,dp=2ex,center]{}%
+  \raisebox{-.4\dimexpr\height-\ht\strutbox+\dp\strutbox}{\includegraphics[height=0.4cm]{imgs/icon.png}}%
+  \end{beamercolorbox}%
+  %\begin{beamercolorbox}[wd=.05\paperwidth,ht=0.4cm,dp=2ex,center]{}%
+  %\raisebox{-.4\dimexpr\height-\ht\strutbox+\dp\strutbox}{\includegraphics[height=0.4cm]{imgs/mdls.png}}%
+  %\end{beamercolorbox}%
+  \begin{beamercolorbox}[wd=.25\paperwidth,ht=0.4cm,dp=1ex,left]{}%
+    \grey{\insertshortauthor}
+  \end{beamercolorbox}%
+  \begin{beamercolorbox}[wd=.58\paperwidth,ht=0.4cm,dp=1ex,left]{}%
+    \grey{\insertshorttitle}
+  \end{beamercolorbox}%
+  \begin{beamercolorbox}[wd=.12\paperwidth,ht=0.4cm,dp=1ex,left]{}%
+    \colorCEA{\insertframenumber{} / \inserttotalframenumber}\hspace*{2ex}
+  \end{beamercolorbox}}%
+  \vskip0pt%
+}
+
+%=====================================================================
+%=== Frame environment
+
+\newenvironment{tframe}[1][]{%
+  \begin{frame}[fragile,environment=tframe]{%
+    \normalsize{{\bfseries \secname} --- \small{\subsecname} #1}%
+  }%
+}{%
+  \end{frame}%
+}
+
+%=====================================================================
+%=== Misc.
+
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{items}[square]
+\setbeamercolor{itemize subitem}{fg=black}
+\apptocmd{\frame}{}{\justifying}{}
+\apptocmd{\itemize}{}{\justifying}{}
+\setlength{\leftmargini}{2em}
+\setlength{\leftmarginii}{1em}
+
+
+
+%===============================================================================
+%=== COMMANDS/COUNTERS =========================================================
+%===============================================================================
+
+\newcommand{\gysela}{\textsc{Gysela }}
+\newcommand{\gyselaxpp}{\textsc{GyselaX++ }}
+\newcommand{\ddc}{\textsc{DDC }}
+\newcommand{\paper}[1]{\textcolor{SteelBlue}{\footnotesize[#1]}}
+\newcommand{\spaper}[1]{\hspace{\stretch{1}}\paper{#1}}
+
+
+
+%===============================================================================
+%=== DOCUMENT ==================================================================
+%===============================================================================
+
+\title[\textcolor{red}{SimiLie: a performance-portable library for physics build upon DDC}]{SimiLie: a performance-portable library for physics build upon DDC}
+
+\author[Baptiste Legouix]{
+LEGOUIX Baptiste
+}
+
+\institute[]{GPL-A License}
+	
+\date{15/07/2026}
+
+\begin{document}
+
+%===============================================================================
+%=== TITLE PAGE / TOC ==========================================================
+%===============================================================================
+
+% Background for title page
+\setbeamertemplate{background}{
+  \begin{adjustbox}{raise=0mm,right=\paperwidth}
+  % \includegraphics[height=3cm]{imgs/bg-title.png}
+  \end{adjustbox}
+}
+{
+  \setbeamertemplate{footline}{}
+  \frame[noframenumbering]{\titlepage}
+}
+
+% Background for TOC
+\setbeamertemplate{background}{
+  \begin{adjustbox}{raise=0mm,right=\paperwidth}
+  % \includegraphics[height=\paperheight]{imgs/bg-toc.png}
+  \end{adjustbox}
+}
+\setcounter{tocdepth}{2}
+\begin{frame}[noframenumbering]
+  \colorCEA{\large{\bfseries\inserttitle}}
+
+  \bigskip
+
+  \tableofcontents
+\end{frame}
+
+% Background for main slides
+\setbeamertemplate{background}{
+  \begin{adjustbox}{raise=0mm,right=\paperwidth}
+  % \includegraphics[height=1cm]{imgs/bg-main.png}
+  \end{adjustbox}
+}
+
+
+
+
+%===============================================================================
+%=== SECTION ===================================================================
+%===============================================================================
+
+\section{Context}
+
+\subsection{Overview of HPC numerical simulation landscape}
+
+\begin{tframe}
+The current state of the HPC numerical simulation landscape can be summarized as follow:
+
+\vspace{0.1cm}
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=.9\textwidth]{imgs/landscape.png}
+\end{center}
+\label{fig:landscape}
+\end{figure}
+
+There is a \textcolor{red}{huge variability in design choices of user codes}, depending on the developers backgrounds. Nowadays, there is \textbf{no well-identified solution} which is simultaneously \textcolor{red}{performant (and portable)}, which \textcolor{red}{suits the expectations of most users} (highly flexible, open-source, not too hard to configure for specialists of non-computing-science fields and ready for industry) and which has a \textcolor{red}{high level of generality} to cover a huge area of applications.
+\end{tframe}
+
+\subsection{The DDC ecosystem for HPC numerical simulation}
+
+\begin{tframe}
+\textbf{\href{https://ddc.mdls.fr/}{DDC}} (for \emph{the Discrete Domain Decomposition library}), is a C++20 library maintained by \textcolor{red}{\textit{CEA/Maison de la simulation}} that aims to offer to the C++/MPI world an equivalent to the \textit{\href{https://docs.xarray.dev/en/stable/generated/xarray.DataArray.html}{xarray.DataArray}}/\textit{\href{https://docs.dask.org/en/stable/array.html}{dask.Array}} python environment.
+
+Where these two libraries are based on \textit{\href{https://numpy.org/}{numpy}}, DDC relies on \textit{\href{https://github.com/kokkos/kokkos}{Kokkos}} and \textit{\href{https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p0009r10.html}{mdspan}} to offer CPU/GPU performance-portable multi-dimensional arrays and iterators.
+
+DDC also provides \textcolor{red}{kernels dedicated to FFT and splines methods}. 
+
+The exascale gyrokinetic plasma simulation code \href{https://github.com/gyselax/gyselalibxx}{Gysela} maintained by \textit{CEA/IRFM} relies on DDC to implement it's numerical methods.
+
+\vspace{0.1cm}
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=.9\textwidth]{imgs/dependencies.png}
+\end{center}
+\label{fig:dependencies}
+\end{figure}
+\end{tframe}
+
+\subsection{DDC in action in Gysela}
+
+\begin{tframe}
+Gysela is a gyrokinetic code, whose most central physical object is the so-called five-dimensional ``distribution function''. It can be described as a multidimensional array (ie. a \texttt{mdspan}) with order-determined indexing:
+
+\begin{lstlisting}
+const double value = distribution_function(i_r, i_theta,
+					   i_phi, i_vpar,
+					   i_mu);
+\end{lstlisting}
+
+But DDC allows to access its elements via tagged dimensions (ordering of the discrete elements passed to the \texttt{ddc::ChunkSpan::operator()} call becomes irrelevant):
+
+\begin{lstlisting}
+const double value = distribution_function(
+	ddc::DiscreteElement<RDim>(i_r), 
+	ddc::DiscreteElement<ThetaDim>(i_theta), 
+	ddc::DiscreteElement<PhiDim>(i_phi), 
+	ddc::DiscreteElement<VParDim>(i_vpar), 
+	ddc::DiscreteElement<MuDim>(i_mu)
+);
+\end{lstlisting}
+
+The tagging of the dimensions greatly clarifies the data accesses, with zero-overhead (entirely determined at compile-time). 
+\end{tframe}
+
+\begin{tframe}
+This approach can be generalized to vector or tensor fields, by adding indices exactly like new dimensions. Ie. the electric field:
+
+\begin{lstlisting}
+const double value = electric_field(
+	ddc::DiscreteElement<RDim>(i_r), 
+	ddc::DiscreteElement<ThetaDim>(i_theta), 
+	ddc::DiscreteElement<PhiDim>(i_phi), 
+	ddc::DiscreteElement<XYZIndex>(i_xyz), 
+);
+\end{lstlisting}
+
+Where \texttt{i\_xyz} can only take three values corresponding to the X, Y and Z dimensions.
+\end{tframe}
+
+\subsection{SimiLie pitch: a physics simulation engine running efficiently on GPU}
+
+\begin{tframe}
+Nowadays, \textbf{Graphical processor units} (GPU) are widely recognized to constitute the backend hardware to process futur high-performance numerical simulations. Their specificity is to rely on an high number of threads able to process data in parallel with high bandwidth. This has important consequences for the design of numerical simulation codes, as \textcolor{red}{performance is maximized by coalesced memory accesses}. It implies that \textbf{designing solvers which act on hexahedric, rectilinear grids}, instead of relying on non-structured meshes whose topology is described by adjacency matrices becomes highly beneficial, but it prevents existing CPU-only solutions to be ported easily on GPU without deep restructuration.
+
+\vspace{0.1cm}
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=.8\textwidth]{imgs/memory_access.png}
+\end{center}
+\label{fig:memory_access}
+\end{figure}
+\end{tframe}
+
+\begin{tframe}
+This observation led to the development of SimiLie, which aims to propose a hexaedric-only (or - to address homology problems - multi-domains, almost-hexaedric-only) generic solution to \textcolor{red}{perform efficient numerical simulation for physics on GPU}. DDC was a very natural starting point for that, as iterating in the multidimensional domain (ie. with \textit{ddc::parallel\_for\_each}) supporting a multidimensional array naturally aligns threads indexing with data structure, leading to coalesced memory accesses and thus maximal performance. \textbf{That is why SimiLie is an extension of DDC}.
+
+\vspace{0.2cm}
+
+The desired final state of SimiLie is to \textbf{allow users to describe their problems and configure their solvers} according to an API similar to what is done in FEniCS or GetDP (let them write directly PDE and boundary conditions in a symbolic formulation), but \textcolor{red}{following the DDC philosophy} (named dimensions, most things determined at compile-time...) and intrinsic GPU-specific optimizations. For compatibility purpose SimiLie stays compatible with \textit{OpenMP} backend but it is not it's main target.
+
+\vspace{0.2cm}
+
+\begin{center}
+\textbf{\textcolor{red}{Equations + BC + Solver configuration $\Rightarrow$ Efficient problem solver on GPU}}
+\end{center}
+\end{tframe}
+
+\section{Tensor module}
+
+\subsection{Internal-symmetries storage model}
+
+\begin{tframe}
+\textbf{DDC provides no tensor field storage other than ``full''}. For example, if we have some code that compute a tensor product $A\times B$, and we suddently realize we can optimize this code because $A$ or $B$ has some internal symmetries (diagonal, symmetric, antisymmetric...), the data representation and tensor product completly have to be rewritten, which is symptomatic of a lack of modularity.
+
+On the opposite, \textbf{SimiLie implements a tensor internal-symmetries representation system}, \textcolor{red}{mostly determined at compile-time} which allows to interchange tensor representations without changing the tensor product code, while guaranting minimal memory footprint and decent (ideally, maximal) performance.
+
+\small
+This system relies on three kind of indices, and \textit{constexpr} functions providing kind-of-converters between them:
+
+\begin{itemize}
+\item The \textit{natural\_ids} are the most intuitive, ie. $(1, 2)$ identifies the tensor element at index $1$ along the rows and at index $2$ along the columns, \textcolor{red}{regardless of the eventual symmetries of the tensor}.
+\item The \textit{access\_id} gives a way to \textcolor{red}{benefit from internal symmetries when trying to access to an element of a tensor}. Ie. all the non-diagonal elements of a diagonal tensor share the same value $0$ and are thus accessed using the same \textit{access\_id} (which is also $0$) while diagonal terms are accessed starting from $1$.
+\item The \textit{mem\_id} corresponds to the \textcolor{red}{location in the memory}, ie. the non-diagonal elements of a diagonal tensor are known to be $0$ so they do not need to be stored, thus only the diagonal is stored starting from $0$.
+\end{itemize}
+\normalsize
+
+\end{tframe}
+
+\subsection{Young tableau representations}
+
+\begin{tframe}
+
+\begin{minipage}[t]{0.47\linewidth}\vspace{0cm}
+SimiLie provides most usual classes to describe tensor fields with internal symmetries, including identity, diagonal, symmetric and anti-symmetric, Levi-Civita, Lorentzian signature...
+
+However, \textbf{there is a general theory for Lie groups representations} (that is to say, tensor fields internal symmetries) based on the so-called ``\textbf{Young tableaux}''. SimiLie provides an \textcolor{red}{experimental feature which allows to represent any kind of tensor field with internal symmetries} using Young tableaux. However, it relies on the \textit{\#embed} directive from C++26, which makes it currently unusable on GPU as \textit{nvcc} does not support C++26.
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.48\linewidth}\vspace{0cm}\centering
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=.9\textwidth]{imgs/birdtracks.png}
+\end{center}
+\label{fig:birdtracks}
+\end{figure}
+
+\end{minipage}
+
+\end{tframe}
+
+\subsection{Describing geometry}
+
+\begin{tframe}
+
+\textbf{SimiLie provides tools to encode geometry}, in particular \textcolor{red}{type traits for contravariant and covariant tensor indices}, \textcolor{red}{classes dedicated to metrics} (stored as a rank-$2$ symmetric tensor in the general cases) and \textcolor{red}{tools to raise or lower tensor indices}.
+
+There is also an external function dedicated to \textcolor{red}{metric inversion} which relies on a \textit{kokkos-kernels} \textit{KokkosBatched::SerialInverseLU} call.
+
+\vspace{15pt}
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=.5\textwidth]{imgs/torus_grid.png}
+\end{center}
+\label{fig:torus_grid}
+\end{figure}
+\end{tframe}
+
+\section{Exterior module}
+
+\subsection{Differential calculus}
+
+\begin{tframe}
+\textbf{SimiLie provides a module dedicated to differential calculus}. It is based on the Discrete Exterior Calculus (DEC) theory, whose building block is the differential form, that is stored as scalar, vector, or rank-$n$ antisymmetric tensor field. It aims to mostly reproduce the algorithms implemented in GetDP, but for a GPU-oriented, structured-grid optimized implementation.
+
+Most operators (ie. \textit{Coboundary}, \textit{DiscreteHodgeStar}, \textit{Codifferential}...) are linear and have API standardized according to two key \textit{\_\_device\_\_}-annotated member functions:
+
+\begin{itemize}
+\item \textit{value()}, which builds and returns the operator itself, evaluated at a given node, which can be a scalar for pointwise operators or a stencil (containing the coefficients of the linear combination to perform on the neighbor nodes values) allocated with a static array by the thread for differential operators.
+\item \textit{operator()}, which applies the operator on actual data and returns the result for the given node. Most of the time it relies internally on \textit{value()}.
+\end{itemize}
+
+In the context of a real, production solver, \textit{value()} can be used to assemble a matrix (by converting the stencils to lines of a CSR storage matrix) while \textit{operator()} is the building block of a matrix-free approach (but assembling the matrix may be useful even in matrix-free approaches to build preconditioners).
+
+\end{tframe}
+
+\section{Physics modules}
+
+\subsection{Hamiltonian C++ code generation}
+
+\begin{tframe}
+\begin{center}
+\textbf{\textcolor{red}{This part of the code is very WIP and may change substantially in the futur.}}
+\end{center}
+
+\textbf{SimiLie expects user to provide a \textit{sympy} formula encoding an Hamiltonian}. Non-Hamiltonian physics is currently not supported.
+
+SimiLie will internally perform the symbolic operations to \textcolor{red}{build differential equations} from it (using the Hamilton's or the DeDonder-Weyl equations). The intention is to provide a \textcolor{red}{general API covering any Hamiltonian physics}.
+
+This operation is called by a Python call made by CMake before the compilation. \textcolor{red}{The generated code is mostly \textit{constexpr}}, such that the compiler can afterward aggressively optimize it's calls.
+
+\end{tframe}
+
+\section{Solver module}
+
+\subsection{Solve stationnary equation}
+
+\begin{tframe}
+\begin{center}
+\textbf{\textcolor{red}{This part of the code is very WIP and may change substantially in the futur.}}
+\end{center}
+
+There are two kind of differential equations: the stationnary and transcient ones. The second case has not been treated yet (but simple cases like scalar field can already be dealt with). Stationnary case is addressed using \textit{Ginkgo}, which is the state-of-the-art sparse optimizer running on GPU. Two paths are available:
+
+\begin{itemize}
+\item The \textbf{matrix-assembly} path, which preassembles a CSR matrix using the \textit{value()} member functions of the differential operators.
+\item The \textbf{matrix-free} path, which exclusively relies on the \textit{operator()} the differential operators. Matrix assembly can thus be required (but we avoid doing it at every iteration) to build preconditionners.
+\end{itemize}
+
+Because \textit{operator()} implementations are GPU-oriented (coalesced memory accesses...), the matrix-free path is expected to be more efficient. 
+
+The optimizer minimizes the $L2$ norm of the residual between left-hand-side and right-hand-side of the partial differential equation strong form. Note that this approach is considered worst than finite-elements (which minimizes the energy norm), so building proper finite-elements (exterior) method is planned.
+
+\end{tframe}
+
+\section{Examples}
+
+\subsection{The 2D Laplacian examples}
+
+\begin{tframe}
+
+\textbf{SimiLie provides two examples dedicated to the computation of 2D Laplacians}, one for the scalar Laplacian and one for the vector one. They rely on the instantiation of 2D tensor fields whose Laplacians are analytically known to be gate functions (with a fixed radius).
+
+It permits to verify the consistency of the implementation of differential operators in a study case which exhibits a discontinuity.
+
+\vspace{15pt}
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=.8\textwidth]{imgs/2d_vector_laplacian.png}
+\end{center}
+\label{fig:2d_vector_laplacian}
+\end{figure}
+\end{tframe}
+
+\subsection{The Kretschmann scalar example}
+
+\begin{tframe}
+
+\textbf{The Kretschmann scalar is - in the theory of general relativity applied to black holes - a scalar invariant computed by contracting the Riemann tensor field with himself}. The dedicated examples in SimiLie allow to \textcolor{red}{check the consistency of the implementation of the Riemann tensor's optimal storage which relies on Young Tableaux} (requires C++26, CPU only). 
+
+The Riemann tensor is numerically instantiated as a full dense tensor with 256 components, then ``compressed'' into the optimal storage with 20 components, and from there contracted with itself to evaluate the Kretschmann scalar on the horizon of the black hole, which is known to be $12$.
+
+\end{tframe}
+
+\subsection{The 2D scalar field example}
+
+\begin{tframe}
+
+\textbf{The 2D scalar field example is the most advanced simulation currently implemented in SimiLie}. It is a demonstration which combines most features provided by the different modules of SimiLie. We start by writing with \textit{sympy} the ``Klein-Gordon with power coupling'' Hamiltonian:
+
+\[
+\mathcal{H} = \frac{1}{2}\left(-m^2 \phi^2 + \pi_\mu\pi^\mu\right) - \alpha\; \frac{\phi^\beta}{\Gamma(\beta + 1)}
+\]
+
+The internal routine of SimiLie generates C++ code which exposes operators allowing to compute the quantities required to build a generic temporal explicit mid-point solver, on a $2000\times2000$ grid.
+
+\vspace{15pt}
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=.5\textwidth]{imgs/scalar_field_small.png}
+\end{center}
+\label{fig:scalar_field}
+\end{figure}
+\end{tframe}
+
+\subsection{The ONELAB inductor example}
+
+\begin{tframe}
+
+\begin{center}
+\textbf{\textcolor{red}{This part of the code is very WIP and may change substantially in the futur.}}
+\end{center}
+
+ONELAB is an API provided in the CAD software/mesher \textit{gmsh} to control any PDE solver. It is already used to interface with GetDP or Elmer. An AI has be used to build a proof-of-concept interface with ONELAB from the SimiLie side (this is non-reviewed, pure AI code but isolated in a particular folder), taking \textit{.silpro} configuration files. \textbf{A clone of the Inductor example provided by GetDP} has been build upon it. \textbf{It solves the magnetostatics physics for a 2D or 3D inductor}, computing quantities of interest such as inductance or stress. Every combinations of 2D/3D, linear/non-linear, assembled-matrix/matrix-free cases are tested. 
+
+\vspace{15pt}
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=\textwidth]{imgs/inductor.png}
+\end{center}
+\label{fig:inductor}
+\end{figure}
+\end{tframe}
+
+\section{Perspectives}
+
+\subsection{Perspectives}
+
+\begin{tframe}
+
+\textbf{SimiLie is still at a very early phase of it's development}, but essential building blocks are in place. If it's level of generality will allow to go toward efficient solvers for very advanced physics, like covering geometrodynamics, I believe the single-maintener, no-user, no-funding situation cannot last indefinitely, and finding some simple but concrete application to start building a community should be the main focus for growth perspective. Here is a proposal of short-term roadmap:
+
+\begin{itemize}
+\item Generalize the ONELAB interface to cover more physics (solid mechanics, fluid mechanics).
+\item Implement Finite Elements Exterior Calculus which is a way more recognized solution than minimizing L2 residual between left-hand-side and right-hand-side to find stationnary state.
+\item Evaluate the performance on GPU through a benchmark which can be compared to other solutions (from both the precision and computation time perspectives).
+\end{itemize}
+
+I believe that if the versatility, the precision of the results and the performance on a big, recognized case are proven, SimiLie may become interesting for industrials.
+
+\end{tframe}
+
+\appendix
+
+\section{References}
+
+\subsection*{References}
+
+\begin{tframe}
+\begin{itemize}
+\item Desbrun, M., Kanso, E., Tong, Y. (2008). \href{https://link.springer.com/chapter/10.1007/978-3-7643-8621-4\_16}{Discrete Differential Forms for Computational Modeling}. In: Bobenko, A.I., Sullivan, J.M., Schröder, P., Ziegler, G.M. (eds) Discrete Differential Geometry. Oberwolfach Seminars, vol 38. Birkhäuser Basel.
+\item \href{https://doi.org/10.1137/1.9781611975543}{Finite element exterior calculus}. Douglas N. Arnold. CBMS-NSF Regional Conference Series in Applied Mathematics. SIAM 2018.
+\item \href{https://ui.adsabs.harvard.edu/abs/1973grav.book.....M/abstract}{Gravitation}. By C.W. Misner, K.S. Thorne and J.A. Wheeler. ISBN 0-7167-0334-3, ISBN 0-7167-0344-0 (pbk). San Francisco: W.H. Freeman and Company, 1973
+\item Celada, M., González, D., \& Montesinos, M. (2016). \href{https://arxiv.org/abs/1610.02020}{BF gravity}. Classical and Quantum Gravity, 33(21), 213001.
+\item \href{https://birdtracks.eu/}{Group Theory, Birdtracks, Lie’s, and Exceptional Groups}, Predrag Cvitanović, Princeton University Press July 2008.
+\end{itemize}
+\end{tframe}
+
+\iffalse
+
+\section*{Backup slides}
+
+\subsection*{AYA}
+
+\begin{tframe}
+
+AYA
+
+\end{tframe}
+
+\fi
+
+\end{document}
