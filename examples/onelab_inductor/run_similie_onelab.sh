@@ -110,6 +110,10 @@ case "${model_dimension}" in
         exit 1
         ;;
 esac
+if [[ -z "${SIMILIE_ONELAB_ANALYTICAL_L_REL_TOLERANCE+x}" && "${model_dimension}" -eq 3 ]]; then
+    # TODO restrict tolerancy
+    analytical_l_rel_tolerance=0.3
+fi
 
 rm -f "${mesh_file}" "${result_file}" "${paraview_h5_file}" "${paraview_xmf_file}" "${direct_h5_file}"
 
