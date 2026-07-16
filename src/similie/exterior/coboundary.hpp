@@ -418,20 +418,11 @@ struct Coboundary<TagToAddToCochain, CochainTag>
                                                     (*j).discrete_vector()))));
                 }
             }
-            double integrated_boundary = 0.0;
-            for (auto j = boundary_chain.begin(); j < boundary_chain.end(); ++j) {
-                std::size_t const boundary_id
-                        = Kokkos::Experimental::distance(boundary_chain.begin(), j);
-                double const sign = (*j).negative() ? -1.0 : 1.0;
-                integrated_boundary
-                        += sign
-                           * boundary_values(
-                                   ddc::DiscreteElement<detail::CoboundaryDummyIndex>(boundary_id));
-            }
+            Cochain cochain_boundary(boundary_chain, boundary_values.allocation_kokkos_view());
             coboundary_tensor.mem(
                     ddc::DiscreteElement<coboundary_index_t<TagToAddToCochain, CochainTag>>(
                             chain_id))
-                    = integrated_boundary;
+                    = cochain_boundary.integrate();
         }
     }
 };
@@ -605,20 +596,11 @@ struct TransposedCoboundary<TagToAddToCochain, CochainTag>
                                                     (*j).discrete_vector()))));
                 }
             }
-            double integrated_boundary = 0.0;
-            for (auto j = boundary_chain.begin(); j < boundary_chain.end(); ++j) {
-                std::size_t const boundary_id
-                        = Kokkos::Experimental::distance(boundary_chain.begin(), j);
-                double const sign = (*j).negative() ? -1.0 : 1.0;
-                integrated_boundary
-                        += sign
-                           * boundary_values(
-                                   ddc::DiscreteElement<detail::CoboundaryDummyIndex>(boundary_id));
-            }
+            Cochain cochain_boundary(boundary_chain, boundary_values.allocation_kokkos_view());
             coboundary_tensor.mem(
                     ddc::DiscreteElement<coboundary_index_t<TagToAddToCochain, CochainTag>>(
                             chain_id))
-                    = -integrated_boundary;
+                    = -cochain_boundary.integrate();
         }
     }
 };
