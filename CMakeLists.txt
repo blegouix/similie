@@ -32,6 +32,8 @@ endif()
 
 # Dependencies
 
+set(SIMILIE_DEPENDENCY_POLICIES "AUTO" "EMBEDDED" "INSTALLED" "SUBPROJECT")
+
 ## Use CTest for running tests
 include(CTest)
 
