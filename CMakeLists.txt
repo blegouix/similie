@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: 2024 Baptiste Legouix
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: AGPL-3.0-or-later
 
 cmake_minimum_required(VERSION 3.22)
 project(SimiLie VERSION 0.0.0 LANGUAGES C CXX) # C is required because PDI::PDI_C propagates C compile features to consumers.

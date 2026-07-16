@@ -1,7 +1,7 @@
 # The ONELAB interface {#onelab_interface}
 <!--
 SPDX-FileCopyrightText: 2026 Baptiste Legouix
-SPDX-License-Identifier: MIT
+SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
 [ONELAB](https://onelab.info/) is a standard interface specification that allows [Gmsh](https://gmsh.info/) to control external PDE solvers. SimiLie provides an ONELAB interface for several standard physics problems, including scalar field and magnetostatic physics.

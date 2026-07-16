@@ -1,4 +1,4 @@
 # SPDX-FileCopyrightText: 2026 Baptiste Legouix
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: AGPL-3.0-or-later
 
 add_library(solvers INTERFACE)

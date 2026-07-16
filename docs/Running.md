@@ -1,7 +1,7 @@
 # Running SimiLie {#Running}
 <!--
 SPDX-FileCopyrightText: 2024 Baptiste Legouix
-SPDX-License-Identifier: MIT
+SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
 ## Dependencies
