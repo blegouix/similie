@@ -1,6 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2024 Baptiste Legouix
-SPDX-License-Identifier: MIT
+SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 <!-- HTML header for doxygen 1.9.8-->
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -221,8 +221,8 @@ requires (sizeof...(T) &gt;= 1)</td></tr>
 <tr class="separator:a88a994bfd9e82eccb766a290657d54d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae3dc3dfa22d1489d9c08fea15663b322" id="r_ae3dc3dfa22d1489d9c08fea15663b322"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr <a class="el" href="#a63f2bcf1cff69168ee6f394db9ce0787">const_iterator_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae3dc3dfa22d1489d9c08fea15663b322">cend</a> () const noexcept</td></tr>
 <tr class="separator:ae3dc3dfa22d1489d9c08fea15663b322"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7c2a3a281d88b6072a5ae9566749f586" id="r_a7c2a3a281d88b6072a5ae9566749f586"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr <a class="el" href="#a27403190b80058e1a50c6c7f13b34528">simplex_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7c2a3a281d88b6072a5ae9566749f586">operator[]</a> (std::size_t i) const noexcept</td></tr>
-<tr class="separator:a7c2a3a281d88b6072a5ae9566749f586"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8d8a430a6f3b06ddd98aed4fd37ff2d3" id="r_a8d8a430a6f3b06ddd98aed4fd37ff2d3"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr <a class="el" href="#a27403190b80058e1a50c6c7f13b34528">simplex_type</a> const &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8d8a430a6f3b06ddd98aed4fd37ff2d3">operator[]</a> (std::size_t i) const noexcept</td></tr>
+<tr class="separator:a8d8a430a6f3b06ddd98aed4fd37ff2d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad3fe6002f62cd58e728e39c28a655dab" id="r_ad3fe6002f62cd58e728e39c28a655dab"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr <a class="el" href="classsil_1_1exterior_1_1LocalChain.html">LocalChain</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad3fe6002f62cd58e728e39c28a655dab">operator++</a> ()</td></tr>
 <tr class="separator:ad3fe6002f62cd58e728e39c28a655dab"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1c40a883aab123c6dca10de57d670dd6" id="r_a1c40a883aab123c6dca10de57d670dd6"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr <a class="el" href="classsil_1_1exterior_1_1LocalChain.html">LocalChain</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1c40a883aab123c6dca10de57d670dd6">operator+=</a> (std::size_t n)</td></tr>
@@ -263,7 +263,7 @@ Static Public Attributes</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;class SimplexType, class LayoutStridedPolicy, class MemorySpace&gt;<br />
 class sil::exterior::LocalChain&lt; SimplexType, LayoutStridedPolicy, MemorySpace &gt;</div>
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00116">116</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00124">124</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
 <a id="af3d8866ae4b402a8bcb9673418f79528" name="af3d8866ae4b402a8bcb9673418f79528"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af3d8866ae4b402a8bcb9673418f79528">&#9670;&#160;</a></span>memory_space</h2>
@@ -279,7 +279,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00119">119</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00127">127</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -297,7 +297,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00120">120</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00128">128</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -315,7 +315,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00121">121</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00129">129</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -333,7 +333,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00122">122</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00130">130</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -351,7 +351,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00125">125</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00133">133</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -369,7 +369,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00127">127</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00135">135</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -387,7 +387,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00128">128</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00136">136</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -529,7 +529,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00145">145</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00153">153</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -564,7 +564,7 @@ template&lt;misc::Specialization&lt; Kokkos::View &gt; AllocationType&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00155">155</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00163">163</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -599,7 +599,7 @@ template&lt;misc::NotSpecialization&lt; ddc::DiscreteVector &gt;... T&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00163">163</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00171">171</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -639,7 +639,7 @@ template&lt;misc::Specialization&lt; Kokkos::View &gt; AllocationType, misc::Not
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00185">185</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00193">193</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -675,7 +675,7 @@ requires (sizeof...(T) &gt;= 1)</div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00195">195</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00203">203</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -716,7 +716,7 @@ requires (sizeof...(T) &gt;= 1)</div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00209">209</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00217">217</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -800,7 +800,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00217">217</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00225">225</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -829,7 +829,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00222">222</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00230">230</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -858,7 +858,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00227">227</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00235">235</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -887,7 +887,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00232">232</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00240">240</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -916,7 +916,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00237">237</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00245">245</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -945,7 +945,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00242">242</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00250">250</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -974,7 +974,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00247">247</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00255">255</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -1003,7 +1003,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00252">252</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00260">260</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -1032,7 +1032,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00257">257</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00265">265</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -1061,7 +1061,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00263">263</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00271">271</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -1090,7 +1090,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00275">275</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00283">283</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -1119,7 +1119,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00280">280</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00288">288</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -1148,7 +1148,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00285">285</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00293">293</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -1177,7 +1177,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00290">290</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00298">298</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -1206,7 +1206,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00295">295</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00303">303</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -1235,12 +1235,12 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00300">300</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00308">308</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a7c2a3a281d88b6072a5ae9566749f586" name="a7c2a3a281d88b6072a5ae9566749f586"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7c2a3a281d88b6072a5ae9566749f586">&#9670;&#160;</a></span>operator[]()</h2>
+<a id="a8d8a430a6f3b06ddd98aed4fd37ff2d3" name="a8d8a430a6f3b06ddd98aed4fd37ff2d3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8d8a430a6f3b06ddd98aed4fd37ff2d3">&#9670;&#160;</a></span>operator[]()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1251,7 +1251,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION constexpr <a class="el" href="#a27403190b80058e1a50c6c7f13b34528">simplex_type</a> <a class="el" href="classsil_1_1exterior_1_1LocalChain.html">sil::exterior::LocalChain</a>&lt; SimplexType, LayoutStridedPolicy, MemorySpace &gt;::operator[] </td>
+          <td class="memname">KOKKOS_FUNCTION constexpr <a class="el" href="#a27403190b80058e1a50c6c7f13b34528">simplex_type</a> const  &amp; <a class="el" href="classsil_1_1exterior_1_1LocalChain.html">sil::exterior::LocalChain</a>&lt; SimplexType, LayoutStridedPolicy, MemorySpace &gt;::operator[] </td>
           <td>(</td>
           <td class="paramtype">std::size_t</td>          <td class="paramname"><span class="paramname"><em>i</em></span></td><td>)</td>
           <td> const</td>
@@ -1264,7 +1264,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00305">305</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00313">313</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -1293,7 +1293,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00311">311</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00319">319</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -1322,7 +1322,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00318">318</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00326">326</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -1351,7 +1351,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00325">325</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00333">333</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -1380,7 +1380,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00332">332</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00340">340</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -1409,7 +1409,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00339">339</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00347">347</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -1438,7 +1438,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00350">350</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00358">358</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -1467,7 +1467,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00357">357</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00365">365</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -1498,7 +1498,7 @@ template&lt;class T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00365">365</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00373">373</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -1529,7 +1529,7 @@ template&lt;class T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00379">379</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00387">387</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -1558,7 +1558,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00386">386</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00394">394</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -1585,7 +1585,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00123">123</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00131">131</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -1596,7 +1596,7 @@ template&lt;class SimplexType , class LayoutStridedPolicy , class MemorySpace &g
 </div><!-- doc-content -->
 <!--
 SPDX-FileCopyrightText: 2024 Baptiste Legouix
-SPDX-License-Identifier: MIT
+SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 <!-- HTML footer for doxygen 1.9.8-->
 <!-- start footer part -->

@@ -1,6 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2024 Baptiste Legouix
-SPDX-License-Identifier: MIT
+SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 <!-- HTML header for doxygen 1.9.8-->
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -129,7 +129,7 @@ $(function(){initNavTree('laplacian_8hpp_source.html',''); initResizable(true); 
 </div><!--header-->
 <div class="contents">
 <div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="comment">// SPDX-FileCopyrightText: 2024 Baptiste Legouix</span></div>
-<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="comment">// SPDX-License-Identifier: MIT</span></div>
+<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="comment">// SPDX-License-Identifier: AGPL-3.0-or-later</span></div>
 <div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span> </div>
 <div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#pragma once</span></div>
 <div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span> </div>
@@ -1121,7 +1121,7 @@ $(function(){initNavTree('laplacian_8hpp_source.html',''); initResizable(true); 
 <div class="ttc" id="aconceptsil_1_1tensor_1_1TensorNatIndex_html"><div class="ttname"><a href="conceptsil_1_1tensor_1_1TensorNatIndex.html">sil::tensor::TensorNatIndex</a></div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00110">tensor_impl.hpp:110</a></div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html_a21ac9e4c43191a7cf20b30d28e46a305"><div class="ttname"><a href="namespacesil_1_1exterior.html#a21ac9e4c43191a7cf20b30d28e46a305">sil::exterior::hodge_star_domain_t</a></div><div class="ttdeci">ddc::detail::convert_type_seq_to_discrete_domain_t&lt; ddc::type_seq_merge_t&lt; ddc::detail::TypeSeq&lt; misc::convert_type_seq_to_t&lt; tensor::TensorFullIndex, Indices1 &gt; &gt;, std::conditional_t&lt;(ddc::type_seq_size_v&lt; Indices2 &gt;==0), ddc::detail::TypeSeq&lt;&gt;, ddc::detail::TypeSeq&lt; misc::convert_type_seq_to_t&lt; tensor::TensorAntisymmetricIndex, Indices2 &gt; &gt; &gt; &gt; &gt; hodge_star_domain_t</div><div class="ttdef"><b>Definition</b> <a href="hodge__star_8hpp_source.html#l00030">hodge_star.hpp:30</a></div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html_a22856c3296327971c70adb2aa1ee88a5"><div class="ttname"><a href="namespacesil_1_1exterior.html#a22856c3296327971c70adb2aa1ee88a5">sil::exterior::laplacian</a></div><div class="ttdeci">TensorType laplacian(ExecSpace const &amp;exec_space, TensorType laplacian_tensor, TensorType tensor, DerivativeHodgeStarType hodge_star, DualDerivativeHodgeStarType dual_hodge_star, DerivativeDualTensorBufferType dual_tensor_buffer)</div><div class="ttdef"><b>Definition</b> <a href="#l00824">laplacian.hpp:824</a></div></div>
-<div class="ttc" id="anamespacesil_1_1exterior_html_a2f6077271f607d9959b484603cd7216e"><div class="ttname"><a href="namespacesil_1_1exterior.html#a2f6077271f607d9959b484603cd7216e">sil::exterior::tangent_basis</a></div><div class="ttdeci">KOKKOS_FUNCTION constexpr auto tangent_basis(Elem elem)</div><div class="ttdef"><b>Definition</b> <a href="local__chain_8hpp_source.html#l00435">local_chain.hpp:435</a></div></div>
+<div class="ttc" id="anamespacesil_1_1exterior_html_a2f6077271f607d9959b484603cd7216e"><div class="ttname"><a href="namespacesil_1_1exterior.html#a2f6077271f607d9959b484603cd7216e">sil::exterior::tangent_basis</a></div><div class="ttdeci">KOKKOS_FUNCTION constexpr auto tangent_basis(Elem elem)</div><div class="ttdef"><b>Definition</b> <a href="local__chain_8hpp_source.html#l00443">local_chain.hpp:443</a></div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html_a37ccb3dcf40ba5b14f2704d3559b2a04"><div class="ttname"><a href="namespacesil_1_1exterior.html#a37ccb3dcf40ba5b14f2704d3559b2a04">sil::exterior::make_staged_laplacian</a></div><div class="ttdeci">StagedLaplacian&lt; MetricIndex, LaplacianDummyIndex, CochainTag, TensorType, MetricType, PositionType, ExecSpace &gt; make_staged_laplacian(ExecSpace const &amp;exec_space, TensorType laplacian_tensor, TensorType tensor, MetricType metric, PositionType position)</div><div class="ttdef"><b>Definition</b> <a href="#l00343">laplacian.hpp:343</a></div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html_a76eff1470caed08ad176c575149ca560"><div class="ttname"><a href="namespacesil_1_1exterior.html#a76eff1470caed08ad176c575149ca560">sil::exterior::deriv</a></div><div class="ttdeci">coboundary_tensor_t&lt; TagToAddToCochain, CochainTag, TensorType &gt; deriv(ExecSpace const &amp;exec_space, coboundary_tensor_t&lt; TagToAddToCochain, CochainTag, TensorType &gt; coboundary_tensor, TensorType tensor)</div><div class="ttdef"><b>Definition</b> <a href="coboundary_8hpp_source.html#l00703">coboundary.hpp:703</a></div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html_a985e5f2d21f672dde6b75d610b27f6a2"><div class="ttname"><a href="namespacesil_1_1exterior.html#a985e5f2d21f672dde6b75d610b27f6a2">sil::exterior::fill_discrete_hodge_star</a></div><div class="ttdeci">HodgeStarType fill_discrete_hodge_star(ExecSpace const &amp;exec_space, HodgeStarType hodge_star, MetricType metric, PositionType position)</div><div class="ttdef"><b>Definition</b> <a href="hodge__star_8hpp_source.html#l00460">hodge_star.hpp:460</a></div></div>
@@ -1147,7 +1147,7 @@ $(function(){initNavTree('laplacian_8hpp_source.html',''); initResizable(true); 
 </div><!-- doc-content -->
 <!--
 SPDX-FileCopyrightText: 2024 Baptiste Legouix
-SPDX-License-Identifier: MIT
+SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 <!-- HTML footer for doxygen 1.9.8-->
 <!-- start footer part -->

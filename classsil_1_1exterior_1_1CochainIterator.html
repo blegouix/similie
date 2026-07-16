@@ -1,6 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2024 Baptiste Legouix
-SPDX-License-Identifier: MIT
+SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 <!-- HTML header for doxygen 1.9.8-->
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -140,7 +140,7 @@ Collaboration diagram for sil::exterior::CochainIterator&lt; CochainType &gt;:</
 <div class="dyncontent">
 <div class="center"><img src="classsil_1_1exterior_1_1CochainIterator__coll__graph.png" border="0" usemap="#asil_1_1exterior_1_1CochainIterator_3_01CochainType_01_4_coll__map" alt="Collaboration graph"/></div>
 <map name="asil_1_1exterior_1_1CochainIterator_3_01CochainType_01_4_coll__map" id="asil_1_1exterior_1_1CochainIterator_3_01CochainType_01_4_coll__map">
-<area shape="rect" title=" " alt="" coords="5,5,201,245"/>
+<area shape="rect" title=" " alt="" coords="5,5,201,265"/>
 </map>
 </div>
 <table class="memberdecls">
@@ -152,10 +152,10 @@ Public Types</h2></td></tr>
 <tr class="separator:a5c40f91ad4a601595c3a4cbed8860ebe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae42dd60031a3f0828f80844f83f6c64f" id="r_ae42dd60031a3f0828f80844f83f6c64f"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae42dd60031a3f0828f80844f83f6c64f">difference_type</a> = std::ptrdiff_t</td></tr>
 <tr class="separator:ae42dd60031a3f0828f80844f83f6c64f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4879a47ad0a06ec00e51e0a693c5f6d6" id="r_a4879a47ad0a06ec00e51e0a693c5f6d6"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a4879a47ad0a06ec00e51e0a693c5f6d6">pointer</a> = <a class="el" href="#a5c40f91ad4a601595c3a4cbed8860ebe">value_type</a>*</td></tr>
-<tr class="separator:a4879a47ad0a06ec00e51e0a693c5f6d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae43321b03719cc0dd0b869645a8f9499" id="r_ae43321b03719cc0dd0b869645a8f9499"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae43321b03719cc0dd0b869645a8f9499">reference</a> = <a class="el" href="#a5c40f91ad4a601595c3a4cbed8860ebe">value_type</a>&amp;</td></tr>
-<tr class="separator:ae43321b03719cc0dd0b869645a8f9499"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad51e514068dec8bdef9a9fcf2b3085f4" id="r_ad51e514068dec8bdef9a9fcf2b3085f4"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad51e514068dec8bdef9a9fcf2b3085f4">pointer</a> = <a class="el" href="#a5c40f91ad4a601595c3a4cbed8860ebe">value_type</a></td></tr>
+<tr class="separator:ad51e514068dec8bdef9a9fcf2b3085f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa1cc0642863bfa3ffeac17dc0bc57576" id="r_aa1cc0642863bfa3ffeac17dc0bc57576"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa1cc0642863bfa3ffeac17dc0bc57576">reference</a> = <a class="el" href="#a5c40f91ad4a601595c3a4cbed8860ebe">value_type</a></td></tr>
+<tr class="separator:aa1cc0642863bfa3ffeac17dc0bc57576"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a51e8030f9c4f2453d7b195ad6c5fe5e0" id="r_a51e8030f9c4f2453d7b195ad6c5fe5e0"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a51e8030f9c4f2453d7b195ad6c5fe5e0">cosimplex_type</a> = typename CochainType::cosimplex_type</td></tr>
 <tr class="separator:a51e8030f9c4f2453d7b195ad6c5fe5e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acfc7730dd6d27a731aa0d42b4147d43e" id="r_acfc7730dd6d27a731aa0d42b4147d43e"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#acfc7730dd6d27a731aa0d42b4147d43e">chain_iterator</a> = typename CochainType::chain_type::iterator_type</td></tr>
@@ -169,8 +169,10 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:accfa2f96fd8a102079455b4923974027"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae0dcd6f825065154b2407f0aaa5205dd" id="r_ae0dcd6f825065154b2407f0aaa5205dd"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae0dcd6f825065154b2407f0aaa5205dd">CochainIterator</a> (<a class="el" href="#acfc7730dd6d27a731aa0d42b4147d43e">chain_iterator</a> chain_it, <a class="el" href="#adbbc691b78b43e75c7710be3dec32995">values_iterator</a> values_it)</td></tr>
 <tr class="separator:ae0dcd6f825065154b2407f0aaa5205dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af93af6d97bd143b0860c5b4993bdbcee" id="r_af93af6d97bd143b0860c5b4993bdbcee"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr <a class="el" href="#a5c40f91ad4a601595c3a4cbed8860ebe">value_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af93af6d97bd143b0860c5b4993bdbcee">operator*</a> () const noexcept</td></tr>
-<tr class="separator:af93af6d97bd143b0860c5b4993bdbcee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a27a61e7f3e57ece3278676a7faef8ad2" id="r_a27a61e7f3e57ece3278676a7faef8ad2"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr <a class="el" href="#aa1cc0642863bfa3ffeac17dc0bc57576">reference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a27a61e7f3e57ece3278676a7faef8ad2">operator*</a> () const noexcept</td></tr>
+<tr class="separator:a27a61e7f3e57ece3278676a7faef8ad2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac3977ee3eb2c40a4e0fea155bad38cee" id="r_ac3977ee3eb2c40a4e0fea155bad38cee"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr <a class="el" href="#ad51e514068dec8bdef9a9fcf2b3085f4">pointer</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac3977ee3eb2c40a4e0fea155bad38cee">operator-&gt;</a> () const noexcept</td></tr>
+<tr class="separator:ac3977ee3eb2c40a4e0fea155bad38cee"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a86e061ecafc43bd8f052367caf668cf0" id="r_a86e061ecafc43bd8f052367caf668cf0"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr <a class="el" href="classsil_1_1exterior_1_1CochainIterator.html">CochainIterator</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a86e061ecafc43bd8f052367caf668cf0">operator++</a> ()</td></tr>
 <tr class="separator:a86e061ecafc43bd8f052367caf668cf0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a504c60aa64ce3f8315628c8d19f85784" id="r_a504c60aa64ce3f8315628c8d19f85784"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr <a class="el" href="classsil_1_1exterior_1_1CochainIterator.html">CochainIterator</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a504c60aa64ce3f8315628c8d19f85784">operator++</a> (int)</td></tr>
@@ -264,8 +266,8 @@ template&lt;typename CochainType &gt; </div>
 
 </div>
 </div>
-<a id="a4879a47ad0a06ec00e51e0a693c5f6d6" name="a4879a47ad0a06ec00e51e0a693c5f6d6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4879a47ad0a06ec00e51e0a693c5f6d6">&#9670;&#160;</a></span>pointer</h2>
+<a id="ad51e514068dec8bdef9a9fcf2b3085f4" name="ad51e514068dec8bdef9a9fcf2b3085f4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad51e514068dec8bdef9a9fcf2b3085f4">&#9670;&#160;</a></span>pointer</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -273,7 +275,7 @@ template&lt;typename CochainType &gt; </div>
 template&lt;typename CochainType &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1CochainIterator.html">sil::exterior::CochainIterator</a>&lt; CochainType &gt;::pointer = <a class="el" href="#a5c40f91ad4a601595c3a4cbed8860ebe">value_type</a>*</td>
+          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1CochainIterator.html">sil::exterior::CochainIterator</a>&lt; CochainType &gt;::pointer = <a class="el" href="#a5c40f91ad4a601595c3a4cbed8860ebe">value_type</a></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -282,8 +284,8 @@ template&lt;typename CochainType &gt; </div>
 
 </div>
 </div>
-<a id="ae43321b03719cc0dd0b869645a8f9499" name="ae43321b03719cc0dd0b869645a8f9499"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae43321b03719cc0dd0b869645a8f9499">&#9670;&#160;</a></span>reference</h2>
+<a id="aa1cc0642863bfa3ffeac17dc0bc57576" name="aa1cc0642863bfa3ffeac17dc0bc57576"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa1cc0642863bfa3ffeac17dc0bc57576">&#9670;&#160;</a></span>reference</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -291,7 +293,7 @@ template&lt;typename CochainType &gt; </div>
 template&lt;typename CochainType &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1CochainIterator.html">sil::exterior::CochainIterator</a>&lt; CochainType &gt;::reference = <a class="el" href="#a5c40f91ad4a601595c3a4cbed8860ebe">value_type</a>&amp;</td>
+          <td class="memname">using <a class="el" href="classsil_1_1exterior_1_1CochainIterator.html">sil::exterior::CochainIterator</a>&lt; CochainType &gt;::reference = <a class="el" href="#a5c40f91ad4a601595c3a4cbed8860ebe">value_type</a></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -416,8 +418,8 @@ template&lt;typename CochainType &gt; </div>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="af93af6d97bd143b0860c5b4993bdbcee" name="af93af6d97bd143b0860c5b4993bdbcee"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af93af6d97bd143b0860c5b4993bdbcee">&#9670;&#160;</a></span>operator*()</h2>
+<a id="a27a61e7f3e57ece3278676a7faef8ad2" name="a27a61e7f3e57ece3278676a7faef8ad2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a27a61e7f3e57ece3278676a7faef8ad2">&#9670;&#160;</a></span>operator*()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -428,7 +430,7 @@ template&lt;typename CochainType &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION constexpr <a class="el" href="#a5c40f91ad4a601595c3a4cbed8860ebe">value_type</a> <a class="el" href="classsil_1_1exterior_1_1CochainIterator.html">sil::exterior::CochainIterator</a>&lt; CochainType &gt;::operator* </td>
+          <td class="memname">KOKKOS_FUNCTION constexpr <a class="el" href="#aa1cc0642863bfa3ffeac17dc0bc57576">reference</a> <a class="el" href="classsil_1_1exterior_1_1CochainIterator.html">sil::exterior::CochainIterator</a>&lt; CochainType &gt;::operator* </td>
           <td>(</td>
           <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
           <td> const</td>
@@ -442,6 +444,35 @@ template&lt;typename CochainType &gt; </div>
 </div><div class="memdoc">
 
 <p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00250">250</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+
+</div>
+</div>
+<a id="ac3977ee3eb2c40a4e0fea155bad38cee" name="ac3977ee3eb2c40a4e0fea155bad38cee"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac3977ee3eb2c40a4e0fea155bad38cee">&#9670;&#160;</a></span>operator-&gt;()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename CochainType &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION constexpr <a class="el" href="#ad51e514068dec8bdef9a9fcf2b3085f4">pointer</a> <a class="el" href="classsil_1_1exterior_1_1CochainIterator.html">sil::exterior::CochainIterator</a>&lt; CochainType &gt;::operator-&gt; </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00255">255</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
@@ -470,7 +501,7 @@ template&lt;typename CochainType &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00259">259</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00260">260</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
@@ -499,7 +530,7 @@ template&lt;typename CochainType &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00266">266</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00267">267</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
@@ -528,7 +559,7 @@ template&lt;typename CochainType &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00273">273</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00274">274</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
@@ -557,7 +588,7 @@ template&lt;typename CochainType &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00280">280</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00281">281</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
@@ -586,7 +617,7 @@ template&lt;typename CochainType &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00287">287</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00288">288</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
@@ -615,7 +646,7 @@ template&lt;typename CochainType &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00294">294</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00295">295</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
@@ -649,7 +680,7 @@ template&lt;typename CochainType &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00308">308</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00302">302</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
@@ -682,7 +713,7 @@ template&lt;typename CochainType &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00315">315</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00309">309</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
@@ -715,7 +746,7 @@ template&lt;typename CochainType &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00322">322</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00316">316</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
@@ -748,7 +779,7 @@ template&lt;typename CochainType &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00329">329</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00323">323</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
@@ -781,7 +812,7 @@ template&lt;typename CochainType &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00336">336</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00330">330</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
@@ -814,7 +845,7 @@ template&lt;typename CochainType &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00343">343</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00337">337</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
@@ -847,7 +878,7 @@ template&lt;typename CochainType &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00348">348</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00342">342</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
@@ -880,7 +911,7 @@ template&lt;typename CochainType &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00353">353</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00347">347</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
@@ -913,7 +944,7 @@ template&lt;typename CochainType &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00358">358</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00352">352</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
@@ -924,7 +955,7 @@ template&lt;typename CochainType &gt; </div>
 </div><!-- doc-content -->
 <!--
 SPDX-FileCopyrightText: 2024 Baptiste Legouix
-SPDX-License-Identifier: MIT
+SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 <!-- HTML footer for doxygen 1.9.8-->
 <!-- start footer part -->

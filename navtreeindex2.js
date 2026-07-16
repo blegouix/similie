@@ -1,5 +1,15 @@
 var NAVTREEINDEX2 =
 {
+"classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html#a847b8f7cb1026f95b7b5a6be3d90dbd9":[5,0,5,1,24,3],
+"classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html#a847b8f7cb1026f95b7b5a6be3d90dbd9":[7,0,5,1,24,3],
+"classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html#a930f1bab61f94d801c9e469436f38f12":[5,0,5,1,24,4],
+"classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html#a930f1bab61f94d801c9e469436f38f12":[7,0,5,1,24,4],
+"classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html#aac5a3a4de96851fbe0f8de59e2c3fec5":[5,0,5,1,24,0],
+"classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html#aac5a3a4de96851fbe0f8de59e2c3fec5":[7,0,5,1,24,0],
+"classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html#ac97c63d4dee356a1c23f1bed1d005a4b":[5,0,5,1,24,6],
+"classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html#ac97c63d4dee356a1c23f1bed1d005a4b":[5,0,5,1,24,7],
+"classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html#ac97c63d4dee356a1c23f1bed1d005a4b":[5,0,5,1,24,8],
+"classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html#ac97c63d4dee356a1c23f1bed1d005a4b":[7,0,5,1,24,6],
 "classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html#ac97c63d4dee356a1c23f1bed1d005a4b":[7,0,5,1,24,7],
 "classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html#ac97c63d4dee356a1c23f1bed1d005a4b":[7,0,5,1,24,8],
 "classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html#af14cf6577112a6f9a51f2aa10fdbfbd0":[5,0,5,1,24,2],
@@ -239,15 +249,5 @@ var NAVTREEINDEX2 =
 "namespacelinear__magnetostatics.html":[5,0,2],
 "namespacemembers.html":[5,1,0],
 "namespacemembers_enum.html":[5,1,4],
-"namespacemembers_func.html":[5,1,1],
-"namespacemembers_type.html":[5,1,3],
-"namespacemembers_vars.html":[5,1,2],
-"namespacenonlinear__magnetostatics.html":[5,0,3],
-"namespacenonlinear__magnetostatics.html#a5781314a81e746deaf0143a0a639737c":[5,0,3,1],
-"namespacenonlinear__magnetostatics.html#a5c6c0ba19e98ffadc991bd2645d38939":[5,0,3,2],
-"namespaces.html":[5,0],
-"namespacescalar__field.html":[5,0,4],
-"namespacesil.html":[5,0,5],
-"namespacesil_1_1csr.html":[5,0,5,0],
-"namespacesil_1_1csr.html#a05e8868bc08795c94b3d5abe8fe9d1a8":[5,0,5,0,6]
+"namespacemembers_func.html":[5,1,1]
 };

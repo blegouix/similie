@@ -1,6 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2024 Baptiste Legouix
-SPDX-License-Identifier: MIT
+SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 <!-- HTML header for doxygen 1.9.8-->
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -129,7 +129,7 @@ $(function(){initNavTree('codifferential_8hpp_source.html',''); initResizable(tr
 </div><!--header-->
 <div class="contents">
 <div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="comment">// SPDX-FileCopyrightText: 2024 Baptiste Legouix</span></div>
-<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="comment">// SPDX-License-Identifier: MIT</span></div>
+<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="comment">// SPDX-License-Identifier: AGPL-3.0-or-later</span></div>
 <div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span> </div>
 <div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#pragma once</span></div>
 <div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span> </div>
@@ -818,7 +818,7 @@ $(function(){initNavTree('codifferential_8hpp_source.html',''); initResizable(tr
 <div class="ttc" id="anamespacesil_1_1exterior_html_a154a8b2931e477c4b3dc2b9f23068699"><div class="ttname"><a href="namespacesil_1_1exterior.html#a154a8b2931e477c4b3dc2b9f23068699">sil::exterior::Cochain</a></div><div class="ttdeci">Cochain(ChainType, TensorType) -&gt; Cochain&lt; ChainType, typename TensorType::value_type, ddc::detail::mdspan_to_kokkos_layout_t&lt; typename TensorType::layout_type &gt; &gt;</div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html_a19dd94e9180327a407f012154b3c2bc4"><div class="ttname"><a href="namespacesil_1_1exterior.html#a19dd94e9180327a407f012154b3c2bc4">sil::exterior::Simplex</a></div><div class="ttdeci">Simplex(ddc::DiscreteElement&lt; Tag... &gt;, ddc::DiscreteVector&lt; T... &gt;) -&gt; Simplex&lt; sizeof...(T), Tag... &gt;</div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html_a21ac9e4c43191a7cf20b30d28e46a305"><div class="ttname"><a href="namespacesil_1_1exterior.html#a21ac9e4c43191a7cf20b30d28e46a305">sil::exterior::hodge_star_domain_t</a></div><div class="ttdeci">ddc::detail::convert_type_seq_to_discrete_domain_t&lt; ddc::type_seq_merge_t&lt; ddc::detail::TypeSeq&lt; misc::convert_type_seq_to_t&lt; tensor::TensorFullIndex, Indices1 &gt; &gt;, std::conditional_t&lt;(ddc::type_seq_size_v&lt; Indices2 &gt;==0), ddc::detail::TypeSeq&lt;&gt;, ddc::detail::TypeSeq&lt; misc::convert_type_seq_to_t&lt; tensor::TensorAntisymmetricIndex, Indices2 &gt; &gt; &gt; &gt; &gt; hodge_star_domain_t</div><div class="ttdef"><b>Definition</b> <a href="hodge__star_8hpp_source.html#l00030">hodge_star.hpp:30</a></div></div>
-<div class="ttc" id="anamespacesil_1_1exterior_html_a2f6077271f607d9959b484603cd7216e"><div class="ttname"><a href="namespacesil_1_1exterior.html#a2f6077271f607d9959b484603cd7216e">sil::exterior::tangent_basis</a></div><div class="ttdeci">KOKKOS_FUNCTION constexpr auto tangent_basis(Elem elem)</div><div class="ttdef"><b>Definition</b> <a href="local__chain_8hpp_source.html#l00435">local_chain.hpp:435</a></div></div>
+<div class="ttc" id="anamespacesil_1_1exterior_html_a2f6077271f607d9959b484603cd7216e"><div class="ttname"><a href="namespacesil_1_1exterior.html#a2f6077271f607d9959b484603cd7216e">sil::exterior::tangent_basis</a></div><div class="ttdeci">KOKKOS_FUNCTION constexpr auto tangent_basis(Elem elem)</div><div class="ttdef"><b>Definition</b> <a href="local__chain_8hpp_source.html#l00443">local_chain.hpp:443</a></div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html_a3da5f6d818417a943e98321a4f70d534"><div class="ttname"><a href="namespacesil_1_1exterior.html#a3da5f6d818417a943e98321a4f70d534">sil::exterior::codifferential_tensor_t</a></div><div class="ttdeci">typename detail:: CodifferentialTensorType&lt; TagToRemoveFromCochain, CochainTag, TensorType &gt;::type codifferential_tensor_t</div><div class="ttdef"><b>Definition</b> <a href="#l00129">codifferential.hpp:129</a></div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html_a44d7a21937a15c4687c17dbb94778c2f"><div class="ttname"><a href="namespacesil_1_1exterior.html#a44d7a21937a15c4687c17dbb94778c2f">sil::exterior::Chain</a></div><div class="ttdeci">Chain(Head, Tail...) -&gt; Chain&lt; typename Head::value_type, typename Head::array_layout, typename Head::memory_space &gt;</div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html_a62bd8e53a500dc2dbb201d51f09c56a9"><div class="ttname"><a href="namespacesil_1_1exterior.html#a62bd8e53a500dc2dbb201d51f09c56a9">sil::exterior::make_staged_codifferential</a></div><div class="ttdeci">StagedCodifferential&lt; MetricIndex, TagToRemoveFromCochain, CochainTag, TensorType, MetricType, PositionType, ExecSpace &gt; make_staged_codifferential(ExecSpace const &amp;exec_space, TensorType tensor, MetricType metric, PositionType position)</div><div class="ttdef"><b>Definition</b> <a href="#l00526">codifferential.hpp:526</a></div></div>
@@ -848,7 +848,7 @@ $(function(){initNavTree('codifferential_8hpp_source.html',''); initResizable(tr
 </div><!-- doc-content -->
 <!--
 SPDX-FileCopyrightText: 2024 Baptiste Legouix
-SPDX-License-Identifier: MIT
+SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 <!-- HTML footer for doxygen 1.9.8-->
 <!-- start footer part -->

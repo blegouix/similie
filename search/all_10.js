@@ -8,7 +8,7 @@ var searchData=
   ['permutation_5fparity_5',['permutation_parity',['../namespacesil_1_1misc.html#a9350273fed3e9b0c5ac7f0cb4b85a649',1,'sil::misc']]],
   ['physics_6',['physics',['../exterior_module.html#autotoc_md15',1,'Why integro-differential calculus is important for physics ?'],['../tensor_module.html#autotoc_md7',1,'Why tensors are importants for physics ?']]],
   ['plan_7',['Development plan',['../index.html#autotoc_md2',1,'']]],
-  ['pointer_8',['pointer',['../classsil_1_1exterior_1_1CochainIterator.html#a4879a47ad0a06ec00e51e0a693c5f6d6',1,'sil::exterior::CochainIterator']]],
+  ['pointer_8',['pointer',['../classsil_1_1exterior_1_1CochainIterator.html#ad51e514068dec8bdef9a9fcf2b3085f4',1,'sil::exterior::CochainIterator::pointer'],['../classsil_1_1exterior_1_1LocalChainIterator.html#afecdc1cd84da08292946941a3a9520b0',1,'sil::exterior::LocalChainIterator::pointer']]],
   ['position_5findex_5ftype_9',['position_index_type',['../structsil_1_1exterior_1_1Reduction.html#af415650ccc90ec899ca9fd17152f70ae',1,'sil::exterior::Reduction']]],
   ['potential_5fgrad_10',['potential_grad',['../classsimilie_1_1physics_1_1DeDonderWeylEquations.html#aeaad572d407bc20bf785d959460000c4',1,'similie::physics::DeDonderWeylEquations::potential_grad(std::span&lt; double const, Hamiltonian::N &gt; moments) const'],['../classsimilie_1_1physics_1_1DeDonderWeylEquations.html#a63ad507c54e2a9c04113a2b9fd906091',1,'similie::physics::DeDonderWeylEquations::potential_grad(double moments_component) const']]],
   ['potentialandmomentstemporalderivative_11',['PotentialAndMomentsTemporalDerivative',['../namespacesimilie_1_1solvers.html#a4df37a982e48eea8d30f72d4cbad61c2a1a5f908574ab41634a61e159b4d89220',1,'similie::solvers']]],

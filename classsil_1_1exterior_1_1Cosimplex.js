@@ -20,5 +20,6 @@ var classsil_1_1exterior_1_1Cosimplex =
     [ "negative", "classsil_1_1exterior_1_1Cosimplex.html#a7db3c12b0d00a1ebe17cbbbdf1a3b479", null ],
     [ "negative", "classsil_1_1exterior_1_1Cosimplex.html#aa08c8fe4f5ca71c073722334ce058de7", null ],
     [ "value", "classsil_1_1exterior_1_1Cosimplex.html#a018af9b7f01871dd43bd5112d3ab2626", null ],
-    [ "value", "classsil_1_1exterior_1_1Cosimplex.html#a33e32a66d3f517286bcb11c6b6e191b4", null ]
+    [ "value", "classsil_1_1exterior_1_1Cosimplex.html#a33e32a66d3f517286bcb11c6b6e191b4", null ],
+    [ "operator->", "classsil_1_1exterior_1_1Cosimplex.html#ac7efcbf22dd87d25e2c77dc28967528e", null ]
 ];
