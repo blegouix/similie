@@ -197,23 +197,25 @@ struct Codifferential<
             typename TensorType::non_indices_domain_t::discrete_element_type elem,
             NaturalElem natural_elem)
     {
-        using CodifferentialIndex = codifferential_index_t<TagToRemoveFromCochain, CochainTag>;
-        using SpatialDomain = typename TensorType::non_indices_domain_t;
-        using SpatialElem = typename SpatialDomain::discrete_element_type;
-
         auto stencil = detail::make_stencil<typename TensorType::memory_space, CochainTag>(
-                detail::decrement_all(SpatialElem(elem)));
+                detail::decrement_all(
+                        typename TensorType::non_indices_domain_t::discrete_element_type(elem)));
         ddc::device_for_each(stencil.domain(), [&](auto stencil_elem) {
             auto basis_stencil
                     = detail::make_stencil<typename TensorType::memory_space, CochainTag>(
                             stencil.non_indices_domain().front());
             basis_stencil.mem(stencil_elem) = 1.0;
 
-            [[maybe_unused]] tensor::TensorAccessor<CodifferentialIndex> codifferential_accessor;
-            std::array<double, CodifferentialIndex::access_size()> codifferential_alloc {};
+            [[maybe_unused]] tensor::TensorAccessor<
+                    codifferential_index_t<TagToRemoveFromCochain, CochainTag>>
+                    codifferential_accessor;
+            std::array<
+                    double,
+                    codifferential_index_t<TagToRemoveFromCochain, CochainTag>::access_size()>
+                    codifferential_alloc {};
             ddc::ChunkSpan<
                     double,
-                    ddc::DiscreteDomain<CodifferentialIndex>,
+                    ddc::DiscreteDomain<codifferential_index_t<TagToRemoveFromCochain, CochainTag>>,
                     Kokkos::layout_right,
                     typename TensorType::memory_space>
                     codifferential_span(

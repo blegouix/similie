@@ -54,7 +54,7 @@ KOKKOS_FUNCTION void copy_flat_natural_elem_ids(
     } else {
         using EntryType = std::remove_cvref_t<decltype(entries[0])>;
         if constexpr (std::is_same_v<EntryType, std::size_t>) {
-            for (auto entry : entries) {
+            for (auto const& entry : entries) {
                 ids[offset++] = entry;
             }
         } else {
