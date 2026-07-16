@@ -1,7 +1,7 @@
 FROM ubuntu:noble
 
 # SPDX-FileCopyrightText: 2024 Baptiste Legouix
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: AGPL-3.0-or-later
 
 COPY bash_run /bin/
 ENV BASH_ENV=/etc/profile

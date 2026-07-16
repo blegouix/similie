@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: 2026 Baptiste Legouix
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: AGPL-3.0-or-later
 
 set(Python3_EXECUTABLE "/usr/bin/python3" CACHE FILEPATH "Python interpreter used for symbolic calculus" FORCE)
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
