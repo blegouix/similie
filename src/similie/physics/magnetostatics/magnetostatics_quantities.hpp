@@ -47,10 +47,6 @@ struct ElementSpatialDomain<ddc::DiscreteElement<Tags...>>
     using type = ddc::DiscreteDomain<Tags...>;
 };
 
-template <class Elem, class TensorIndex>
-using local_scalar_stencil_t = sil::exterior::detail::
-        local_operator_value_t<typename ElementSpatialDomain<Elem>::type, TensorIndex>;
-
 template <class CochainIndex, class VectorStencil, class Elem>
 [[nodiscard]] KOKKOS_FUNCTION auto project_to_scalar_potential_stencil(
         VectorStencil vector_stencil,
@@ -60,9 +56,8 @@ template <class CochainIndex, class VectorStencil, class Elem>
     using spatial_domain_type = typename ElementSpatialDomain<Elem>::type;
     using ScalarPotentialIndex = sil::tensor::Covariant<sil::tensor::ScalarIndex>;
 
-    auto projected = sil::exterior::detail::
-            make_local_operator_value_tensor<Kokkos::HostSpace, ScalarPotentialIndex>(
-                    vector_stencil.non_indices_domain().front());
+    auto projected = sil::exterior::detail::make_stencil<Kokkos::HostSpace, ScalarPotentialIndex>(
+            vector_stencil.non_indices_domain().front());
     ddc::device_for_each(projected.domain(), [&](auto projected_elem) {
         auto const spatial_elem =
                 typename spatial_domain_type::discrete_element_type(projected_elem);
@@ -126,6 +121,19 @@ public:
         }
         return stencil;
     }
+
+    template <class TensorType, class Evaluator, class ChainType, class LowerChainType, class Elem>
+    KOKKOS_FUNCTION static void forward(
+            TensorType magnetic_induction,
+            Evaluator evaluator,
+            ChainType chain,
+            LowerChainType lower_chain,
+            Elem elem)
+    {
+        sil::exterior::Coboundary<
+                sil::tensor::Covariant<sil::tensor::TensorNaturalIndex<SpatialIndex...>>,
+                PotentialScalarIndex>::run(magnetic_induction, evaluator, chain, lower_chain, elem);
+    }
 };
 
 template <class... SpatialIndex>
@@ -163,7 +171,7 @@ public:
     using magnetic_induction_index = MagneticInductionIndex;
 
     template <class Index, class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION static auto forward_vector_value(Elem elem)
+    [[nodiscard]] KOKKOS_FUNCTION static auto forward_value(Elem elem)
     {
         static_assert(
                 std::is_same_v<Index, ddc::type_seq_element_t<0, SpatialIndexSeq>>
@@ -187,10 +195,22 @@ public:
         return stencil;
     }
 
-    template <class Index, class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION static auto forward_value(Elem elem)
+    template <class TensorType, class Evaluator, class ChainType, class LowerChainType, class Elem>
+    KOKKOS_FUNCTION static void forward(
+            TensorType magnetic_induction,
+            Evaluator evaluator,
+            ChainType chain,
+            LowerChainType lower_chain,
+            Elem elem)
     {
-        auto stencil = forward_vector_value<Index>(elem);
+        sil::exterior::Coboundary<CoboundaryIndex, VectorPotentialIndex>::
+                run(magnetic_induction, evaluator, chain, lower_chain, elem);
+    }
+
+    template <class Index, class Elem>
+    [[nodiscard]] KOKKOS_FUNCTION static auto scalar_forward_value(Elem elem)
+    {
+        auto stencil = forward_value<Index>(elem);
         [[maybe_unused]] sil::tensor::TensorAccessor<VectorPotentialIndex> potential_accessor;
         auto projected = detail::project_to_scalar_potential_stencil(
                 stencil,

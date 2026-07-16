@@ -1855,7 +1855,7 @@ public:
                                   + static_cast<std::size_t>(component_id<index_type>());
                         int count = 0;
                         auto stencil = MagneticVectorPotentialToMagneticInduction::
-                                template forward_vector_value<index_type>(elem);
+                                template forward_value<index_type>(elem);
                         ddc::device_for_each(stencil.domain(), [&](auto stencil_elem) {
                             double const coeff = stencil.mem(stencil_elem);
                             if (coeff == 0.0) {
@@ -2610,7 +2610,7 @@ public:
                             return;
                         }
                         auto const stencil = MagneticVectorPotentialToMagneticInduction::
-                                template forward_vector_value<index_type>(elem);
+                                template forward_value<index_type>(elem);
                         ddc::device_for_each(stencil.domain(), [&](auto stencil_elem) {
                             double const coefficient = stencil.mem(stencil_elem);
                             if (coefficient == 0.0) {
@@ -3840,8 +3840,7 @@ double magnetic_induction_moment_from_vector_potential_3d(
 
     double value = 0.0;
     auto stencil
-            = MagneticVectorPotentialToMagneticInduction3D::template forward_vector_value<Index>(
-                    elem);
+            = MagneticVectorPotentialToMagneticInduction3D::template forward_value<Index>(elem);
     ddc::host_for_each(stencil.domain(), [&](auto stencil_elem) {
         auto const potential_elem = ddc::DiscreteElement<DDimX, DDimY, DDimZ>(stencil_elem);
         auto const potential_component = ddc::DiscreteElement<VectorPotentialIndex>(stencil_elem);

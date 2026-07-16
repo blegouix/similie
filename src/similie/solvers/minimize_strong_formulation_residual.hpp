@@ -145,9 +145,6 @@ struct StrongFormulationSolverDiagnostics
 
 namespace detail {
 
-template <class ExecSpace, class ViewType>
-double residual_norm_l2(ExecSpace exec_space, ViewType residual);
-
 inline unsigned int solver_progress_stride()
 {
     char const* const value = std::getenv("SIMILIE_SOLVER_PROGRESS_STRIDE");
@@ -417,11 +414,11 @@ void apply_operator(
                   }) {
         operator_model.apply(exec_space, input, output);
     } else {
-        Kokkos::parallel_for(
-                "similie_apply_operator",
-                Kokkos::RangePolicy<ExecSpace>(exec_space, 0, operator_model.size()),
-                KOKKOS_LAMBDA(std::size_t row) { operator_model.apply_at(output, input, row); });
-        exec_space.fence();
+        static_assert(
+                requires(OperatorModel const& model, ExecSpace ex, InputView in, OutputView out) {
+                    model.apply(ex, in, out);
+                },
+                "OperatorModel must provide apply(exec_space, input, output)");
     }
 }
 
@@ -490,6 +487,12 @@ double dot(ExecSpace exec_space, ViewType1 lhs, ViewType2 rhs)
             result);
     exec_space.fence();
     return result;
+}
+
+template <class ExecSpace, class ViewType>
+double residual_norm_l2(ExecSpace exec_space, ViewType residual)
+{
+    return std::sqrt(dot(exec_space, residual, residual));
 }
 
 template <class ExecSpace, class ViewType>
@@ -1316,12 +1319,6 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
                   << " relative_residual=" << true_relative_residual << '\n';
     }
     return diagnostics;
-}
-
-template <class ExecSpace, class ViewType>
-double residual_norm_l2(ExecSpace exec_space, ViewType residual)
-{
-    return std::sqrt(dot(exec_space, residual, residual));
 }
 
 } // namespace detail

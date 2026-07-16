@@ -188,34 +188,26 @@ struct Codifferential<
         PositionType>
 {
     template <class ChainType, class LowerChainType, class NaturalElem>
-    KOKKOS_FUNCTION static detail::local_operator_value_t<
-            typename TensorType::non_indices_domain_t,
-            CochainTag,
-            typename TensorType::memory_space>
-    value(TensorType tensor,
-          MetricType metric,
-          PositionType position,
-          ChainType chain,
-          LowerChainType lower_chain,
-          typename TensorType::non_indices_domain_t::discrete_element_type elem,
-          NaturalElem natural_elem)
+    KOKKOS_FUNCTION static auto value(
+            TensorType tensor,
+            MetricType metric,
+            PositionType position,
+            ChainType chain,
+            LowerChainType lower_chain,
+            typename TensorType::non_indices_domain_t::discrete_element_type elem,
+            NaturalElem natural_elem)
     {
         using CodifferentialIndex = codifferential_index_t<TagToRemoveFromCochain, CochainTag>;
         using SpatialDomain = typename TensorType::non_indices_domain_t;
-        using LocalStencil = detail::local_operator_value_t<
-                SpatialDomain,
-                CochainTag,
-                typename TensorType::memory_space>;
         using SpatialElem = typename SpatialDomain::discrete_element_type;
 
-        LocalStencil stencil = detail::
-                make_local_operator_value_tensor<typename TensorType::memory_space, CochainTag>(
-                        detail::decrement_all(SpatialElem(elem)));
+        auto stencil = detail::make_stencil<typename TensorType::memory_space, CochainTag>(
+                detail::decrement_all(SpatialElem(elem)));
         ddc::device_for_each(stencil.domain(), [&](auto stencil_elem) {
-            LocalStencil basis = detail::
-                    make_local_operator_value_tensor<typename TensorType::memory_space, CochainTag>(
+            auto basis_stencil
+                    = detail::make_stencil<typename TensorType::memory_space, CochainTag>(
                             stencil.non_indices_domain().front());
-            basis.mem(stencil_elem) = 1.0;
+            basis_stencil.mem(stencil_elem) = 1.0;
 
             [[maybe_unused]] tensor::TensorAccessor<CodifferentialIndex> codifferential_accessor;
             std::array<double, CodifferentialIndex::access_size()> codifferential_alloc {};
@@ -229,7 +221,7 @@ struct Codifferential<
                             codifferential_accessor.domain());
             sil::tensor::Tensor codifferential_tensor(codifferential_span);
 
-            run(codifferential_tensor, basis, metric, position, chain, lower_chain, elem);
+            run(codifferential_tensor, basis_stencil, metric, position, chain, lower_chain, elem);
             stencil.mem(stencil_elem) = codifferential_tensor(natural_elem);
         });
         return stencil;
