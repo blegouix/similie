@@ -115,7 +115,7 @@ jobs:
               -DKokkos_ENABLE_CUDA=ON \
               -DKokkos_ARCH_${kokkos_arch}=ON \
               -DKokkos_ENABLE_DEPRECATION_WARNINGS=OFF \
-              -DSIMILIE_ASSERT_EXAMPLE_RESULTS=ON \
+              -DSIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS=ON \
               -B "${CACHE_ROOT}/build" \
               -S .
             cmake --build "${CACHE_ROOT}/build" --parallel 8
@@ -174,7 +174,7 @@ jobs:
               -DKokkos_ENABLE_OPENMP=ON \
               -DKokkos_ENABLE_DEPRECATION_WARNINGS=OFF \
               -DSIMILIE_BUILD_YOUNG_TABLEAU=ON \
-              -DSIMILIE_ASSERT_EXAMPLE_RESULTS=ON \
+              -DSIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS=ON \
               -B "${CACHE_ROOT}/build_omp" \
               -S .
             cmake --build "${CACHE_ROOT}/build_omp" --parallel 8

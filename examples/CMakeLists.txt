@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 function(similie_configure_example_correctness target)
-    if("${SIMILIE_ASSERT_EXAMPLE_RESULTS}" OR "${SIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS}")
+    if("${SIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS}")
         target_compile_definitions("${target}" PRIVATE SIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS)
     endif()
 endfunction()

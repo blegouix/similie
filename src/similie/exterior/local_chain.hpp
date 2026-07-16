@@ -26,6 +26,93 @@ template <
         class SimplexType,
         class LayoutStridedPolicy = Kokkos::LayoutRight,
         class MemorySpace = Kokkos::HostSpace>
+class LocalChain;
+
+template <class SimplexType, class LayoutStridedPolicy, class MemorySpace>
+class LocalChainIterator
+{
+    using chain_type = LocalChain<SimplexType, LayoutStridedPolicy, MemorySpace>;
+
+    chain_type const* m_chain;
+    std::size_t m_index;
+
+public:
+    using difference_type = std::ptrdiff_t;
+    using value_type = SimplexType;
+    using reference = value_type;
+    using iterator_category = std::random_access_iterator_tag;
+
+    KOKKOS_FUNCTION constexpr LocalChainIterator(
+            chain_type const* chain,
+            std::size_t index) noexcept
+        : m_chain(chain)
+        , m_index(index)
+    {
+    }
+
+    KOKKOS_FUNCTION constexpr value_type operator*() const noexcept
+    {
+        return (*m_chain)[m_index];
+    }
+
+    KOKKOS_FUNCTION constexpr LocalChainIterator& operator++() noexcept
+    {
+        ++m_index;
+        return *this;
+    }
+
+    KOKKOS_FUNCTION constexpr LocalChainIterator operator++(int) noexcept
+    {
+        LocalChainIterator tmp = *this;
+        ++(*this);
+        return tmp;
+    }
+
+    KOKKOS_FUNCTION constexpr LocalChainIterator& operator--() noexcept
+    {
+        --m_index;
+        return *this;
+    }
+
+    KOKKOS_FUNCTION constexpr LocalChainIterator operator+(difference_type n) const noexcept
+    {
+        return LocalChainIterator(m_chain, m_index + n);
+    }
+
+    KOKKOS_FUNCTION constexpr LocalChainIterator& operator+=(difference_type n) noexcept
+    {
+        m_index += n;
+        return *this;
+    }
+
+    KOKKOS_FUNCTION constexpr LocalChainIterator operator-(difference_type n) const noexcept
+    {
+        return LocalChainIterator(m_chain, m_index - n);
+    }
+
+    KOKKOS_FUNCTION constexpr difference_type operator-(
+            LocalChainIterator const& other) const noexcept
+    {
+        return static_cast<difference_type>(m_index) - static_cast<difference_type>(other.m_index);
+    }
+
+    KOKKOS_FUNCTION constexpr bool operator==(LocalChainIterator const& other) const noexcept
+    {
+        return m_index == other.m_index;
+    }
+
+    KOKKOS_FUNCTION constexpr bool operator!=(LocalChainIterator const& other) const noexcept
+    {
+        return !(*this == other);
+    }
+
+    KOKKOS_FUNCTION constexpr bool operator<(LocalChainIterator const& other) const noexcept
+    {
+        return m_index < other.m_index;
+    }
+};
+
+template <class SimplexType, class LayoutStridedPolicy, class MemorySpace>
 class LocalChain
 {
 public:
@@ -38,86 +125,7 @@ public:
     static constexpr std::size_t MAX_SIZE = 1UL << AMBIENT_DIM;
     using storage_type = std::array<simplex_type, MAX_SIZE>;
 
-    class iterator_type
-    {
-        LocalChain const* m_chain;
-        std::size_t m_index;
-
-    public:
-        using difference_type = std::ptrdiff_t;
-        using value_type = simplex_type;
-        using reference = value_type;
-        using iterator_category = std::random_access_iterator_tag;
-
-        KOKKOS_FUNCTION constexpr iterator_type(LocalChain const* chain, std::size_t index) noexcept
-            : m_chain(chain)
-            , m_index(index)
-        {
-        }
-
-        KOKKOS_FUNCTION constexpr value_type operator*() const noexcept
-        {
-            return (*m_chain)[m_index];
-        }
-
-        KOKKOS_FUNCTION constexpr iterator_type& operator++() noexcept
-        {
-            ++m_index;
-            return *this;
-        }
-
-        KOKKOS_FUNCTION constexpr iterator_type operator++(int) noexcept
-        {
-            iterator_type tmp = *this;
-            ++(*this);
-            return tmp;
-        }
-
-        KOKKOS_FUNCTION constexpr iterator_type& operator--() noexcept
-        {
-            --m_index;
-            return *this;
-        }
-
-        KOKKOS_FUNCTION constexpr iterator_type operator+(difference_type n) const noexcept
-        {
-            return iterator_type(m_chain, m_index + n);
-        }
-
-        KOKKOS_FUNCTION constexpr iterator_type& operator+=(difference_type n) noexcept
-        {
-            m_index += n;
-            return *this;
-        }
-
-        KOKKOS_FUNCTION constexpr iterator_type operator-(difference_type n) const noexcept
-        {
-            return iterator_type(m_chain, m_index - n);
-        }
-
-        KOKKOS_FUNCTION constexpr difference_type operator-(
-                iterator_type const& other) const noexcept
-        {
-            return static_cast<difference_type>(m_index)
-                   - static_cast<difference_type>(other.m_index);
-        }
-
-        KOKKOS_FUNCTION constexpr bool operator==(iterator_type const& other) const noexcept
-        {
-            return m_index == other.m_index;
-        }
-
-        KOKKOS_FUNCTION constexpr bool operator!=(iterator_type const& other) const noexcept
-        {
-            return !(*this == other);
-        }
-
-        KOKKOS_FUNCTION constexpr bool operator<(iterator_type const& other) const noexcept
-        {
-            return m_index < other.m_index;
-        }
-    };
-
+    using iterator_type = LocalChainIterator<SimplexType, LayoutStridedPolicy, MemorySpace>;
     using const_iterator_type = iterator_type;
 
 private:
@@ -398,7 +406,7 @@ template <std::size_t K, class... Tag>
 struct TangentBasis<K, ddc::DiscreteDomain<Tag...>>
 {
     template <class MemorySpace = Kokkos::HostSpace, class Elem>
-    KOKKOS_FUNCTION static constexpr auto run_with_memory_space(Elem elem)
+    KOKKOS_FUNCTION static constexpr auto run(Elem elem)
     {
         using chain_type = LocalChain<Simplex<K, Tag...>, Kokkos::LayoutRight, MemorySpace>;
         std::array<std::ptrdiff_t, sizeof...(Tag)> permutation
@@ -414,12 +422,6 @@ struct TangentBasis<K, ddc::DiscreteDomain<Tag...>>
         } while (std::prev_permutation(permutation.begin(), permutation.end()));
         return basis;
     }
-
-    template <class Elem>
-    KOKKOS_FUNCTION static constexpr auto run(Elem elem)
-    {
-        return run_with_memory_space<Kokkos::HostSpace>(elem);
-    }
 };
 
 } // namespace detail
@@ -430,15 +432,14 @@ template <
         misc::Specialization<ddc::DiscreteElement> Elem>
 KOKKOS_FUNCTION constexpr auto tangent_basis(Elem elem)
 {
-    return detail::TangentBasis<K, Dom>::run(elem);
+    return detail::TangentBasis<K, Dom>::template run<Kokkos::HostSpace>(elem);
 }
 
 template <std::size_t K, misc::Specialization<ddc::DiscreteDomain> Dom, class ExecSpace>
     requires(misc::NotSpecialization<ExecSpace, ddc::DiscreteElement>)
 constexpr auto tangent_basis([[maybe_unused]] ExecSpace const& exec_space)
 {
-    return detail::TangentBasis<K, Dom>::template run_with_memory_space<
-            typename ExecSpace::memory_space>(
+    return detail::TangentBasis<K, Dom>::template run<typename ExecSpace::memory_space>(
             misc::filled_struct<typename Dom::discrete_element_type>());
 }
 
@@ -446,7 +447,7 @@ template <misc::Specialization<LocalChain> ChainType>
 std::ostream& operator<<(std::ostream& out, ChainType const& chain)
 {
     out << "[\n";
-    for (auto simplex : chain) {
+    for (auto const& simplex : chain) {
         out << " -> " << simplex << "\n";
     }
     out << "]";
