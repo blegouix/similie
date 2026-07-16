@@ -150,7 +150,7 @@ struct ComputeSimplex<Chain<Simplex<K, Tag...>, LayoutStridedPolicy, ExecSpace>>
         // This assumes that the chain has been produced using boundary().
         return Simplex(
                 std::integral_constant<std::size_t, K + 1> {},
-                (*chain.begin()).discrete_element(),
+                (*chain.begin()).discrete_element(), // This is an assumption on the structure of the chain, which is satisfied if it has been produced using boundary()
                 vect);
     }
 };
