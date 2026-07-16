@@ -8,13 +8,13 @@ Problem {
 }
 
 Solver {
-  MaxIterations 10000;
+  MaxIterations 15000;
   RelativeTolerance 1e-8;
   JacobiMaxBlockSize 1;
   UseMatrixFree 1;
   Criterion MomentsTemporalDerivative;
-  Preconditioner Identity;
-  VectorPotentialGaugePenalty 1e8;
+  Preconditioner SpdIsai;
+  VectorPotentialGaugePenalty 3e7;
 }
 
 Preprocess {

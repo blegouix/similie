@@ -29,11 +29,15 @@ lc0 = wcoil / nn_wcore;
 refinement_factor = 8;
 hcoil_div = refinement_factor * Ceil[hcoil / lc0];
 nz_layers = refinement_factor * Ceil[Lz / lc0];
+end_turn_layers = 1;
+end_turn_depth = wcoil;
+middle_layers = nz_layers;
+middle_depth = Lz;
 
 DefineConstant[
   SimiLieJz = {jcoil,
     Name "Input/90SimiLie/0Coil current density magnitude z [A/m^2]", Highlight "Ivory"},
-  SimiLieJxEndTurn = {jcoil * wcoil * nz_layers / Lz,
+  SimiLieJxEndTurn = {jcoil,
     Name "Input/90SimiLie/7Coil end-turn current density magnitude x [A/m^2]", Highlight "Ivory"},
   SimiLieMuCore = {mu_fe,
     Name "Input/90SimiLie/1Core magnetic permeability [H/m]", Highlight "Ivory"},
@@ -87,7 +91,7 @@ num_y = #y_coords[];
 For j In {0:num_y - 1}
   For i In {0:num_x - 1}
     points[] += newp;
-    Point(newp) = {x_coords[i], y_coords[j], -Lz / 2, lc0};
+    Point(newp) = {x_coords[i], y_coords[j], -Lz / 2 - end_turn_depth, lc0};
   EndFor
 EndFor
 
@@ -154,11 +158,6 @@ For j In {0:num_y - 2}
   EndFor
 EndFor
 
-end_turn_layers = 1;
-middle_layers = nz_layers - 2 * end_turn_layers;
-end_turn_depth = Lz * end_turn_layers / nz_layers;
-middle_depth = Lz - 2 * end_turn_depth;
-
 For s In {0:#surfaces[] - 1}
   original_surface = surfaces[s];
   region_tag = surface_region_tags[s];
@@ -196,16 +195,6 @@ For s In {0:#surfaces[] - 1}
 
   If(is_end_turn_bridge)
     coil_x_negative_volumes[] += front_volume;
-  ElseIf(region_tag == ECORE)
-    ecore_volumes[] += front_volume;
-  ElseIf(region_tag == ICORE)
-    icore_volumes[] += front_volume;
-  ElseIf(region_tag == AIRGAP)
-    airgap_volumes[] += front_volume;
-  ElseIf(region_tag == COIL)
-    coil_left_volumes[] += front_volume;
-  ElseIf(region_tag == COIL + 1)
-    coil_right_volumes[] += front_volume;
   Else
     air_volumes[] += front_volume;
   EndIf
@@ -226,16 +215,6 @@ For s In {0:#surfaces[] - 1}
 
   If(is_end_turn_bridge)
     coil_x_positive_volumes[] += back_volume;
-  ElseIf(region_tag == ECORE)
-    ecore_volumes[] += back_volume;
-  ElseIf(region_tag == ICORE)
-    icore_volumes[] += back_volume;
-  ElseIf(region_tag == AIRGAP)
-    airgap_volumes[] += back_volume;
-  ElseIf(region_tag == COIL)
-    coil_left_volumes[] += back_volume;
-  ElseIf(region_tag == COIL + 1)
-    coil_right_volumes[] += back_volume;
   Else
     air_volumes[] += back_volume;
   EndIf
