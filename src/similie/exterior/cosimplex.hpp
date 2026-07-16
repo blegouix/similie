@@ -101,6 +101,11 @@ public:
     {
         return m_value;
     }
+
+    KOKKOS_FUNCTION Cosimplex const* operator->() const noexcept
+    {
+        return this;
+    }
 };
 
 template <misc::Specialization<Cosimplex> CosimplexType>

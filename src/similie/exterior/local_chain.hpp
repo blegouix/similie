@@ -33,14 +33,17 @@ class LocalChainIterator
 {
     using chain_type = LocalChain<SimplexType, LayoutStridedPolicy, MemorySpace>;
 
-    chain_type const* m_chain;
-    std::size_t m_index;
+    chain_type const* m_chain = nullptr;
+    std::size_t m_index = 0;
 
 public:
     using difference_type = std::ptrdiff_t;
     using value_type = SimplexType;
-    using reference = value_type;
+    using pointer = value_type const*;
+    using reference = value_type const&;
     using iterator_category = std::random_access_iterator_tag;
+
+    KOKKOS_DEFAULTED_FUNCTION constexpr LocalChainIterator() = default;
 
     KOKKOS_FUNCTION constexpr LocalChainIterator(
             chain_type const* chain,
@@ -50,9 +53,14 @@ public:
     {
     }
 
-    KOKKOS_FUNCTION constexpr value_type operator*() const noexcept
+    KOKKOS_FUNCTION constexpr reference operator*() const noexcept
     {
         return (*m_chain)[m_index];
+    }
+
+    KOKKOS_FUNCTION constexpr pointer operator->() const noexcept
+    {
+        return &**this;
     }
 
     KOKKOS_FUNCTION constexpr LocalChainIterator& operator++() noexcept
@@ -302,7 +310,7 @@ public:
         return const_iterator_type(this, m_size);
     }
 
-    KOKKOS_FUNCTION constexpr simplex_type operator[](std::size_t i) const noexcept
+    KOKKOS_FUNCTION constexpr simplex_type const& operator[](std::size_t i) const noexcept
     {
         assert(i < m_size);
         return m_vects[i];

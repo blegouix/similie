@@ -189,9 +189,9 @@ public:
         element_type out = 0;
         for (auto i = begin(); i < end(); ++i) {
             if constexpr (misc::Specialization<chain_type, Chain>) {
-                out += ((*i).negative() ? -1 : 1) * (*i).value();
+                out += (i->negative() ? -1 : 1) * i->value();
             } else if constexpr (misc::Specialization<chain_type, LocalChain>) {
-                out += ((*i).negative() ? -1 : 1) * (*i).value();
+                out += (i->negative() ? -1 : 1) * i->value();
             }
         }
         return out;
@@ -202,9 +202,9 @@ public:
         element_type out = 0;
         for (auto i = begin(); i < end(); ++i) {
             if constexpr (misc::Specialization<chain_type, Chain>) {
-                out += ((*i).negative() ? -1 : 1) * (*i).value();
+                out += (i->negative() ? -1 : 1) * i->value();
             } else if constexpr (misc::Specialization<chain_type, LocalChain>) {
-                out += ((*i).negative() ? -1 : 1) * (*i).value();
+                out += (i->negative() ? -1 : 1) * i->value();
             }
         }
         return out;
@@ -224,8 +224,8 @@ public:
     using iterator_category = std::random_access_iterator_tag;
     using value_type = typename CochainType::cosimplex_type;
     using difference_type = std::ptrdiff_t;
-    using pointer = value_type*;
-    using reference = value_type&;
+    using pointer = value_type;
+    using reference = value_type;
 
     using cosimplex_type = typename CochainType::cosimplex_type;
 
@@ -248,13 +248,14 @@ public:
     {
     }
 
-    KOKKOS_FUNCTION constexpr value_type operator*() const noexcept
+    KOKKOS_FUNCTION constexpr reference operator*() const noexcept
     {
-        if constexpr (!CochainType::chain_type::is_local()) {
-            return cosimplex_type(*m_chain, *m_values);
-        } else {
-            return cosimplex_type(*m_chain, *m_values);
-        }
+        return cosimplex_type(*m_chain, *m_values);
+    }
+
+    KOKKOS_FUNCTION constexpr pointer operator->() const noexcept
+    {
+        return **this;
     }
 
     KOKKOS_FUNCTION constexpr CochainIterator& operator++()
@@ -298,13 +299,6 @@ public:
         m_values -= n;
         return *this;
     }
-
-    /*
-    KOKKOS_FUNCTION constexpr value_type operator[](difference_type n) const
-    {
-        return m_value + n;
-    }
-    */
 
     friend KOKKOS_FUNCTION constexpr bool operator==(
             CochainIterator const& xx,
@@ -370,9 +364,9 @@ std::ostream& operator<<(std::ostream& out, CochainType const& cochain)
     out << "[\n";
     for (auto i = cochain.begin(); i < cochain.end(); ++i) {
         if constexpr (!cochain.is_local()) {
-            out << " " << (*i).simplex() << " : " << (*i).value() << "\n";
+            out << " " << i->simplex() << " : " << i->value() << "\n";
         } else {
-            out << " -> " << (*i).discrete_vector() << " : " << (*i).value() << "\n";
+            out << " -> " << i->discrete_vector() << " : " << i->value() << "\n";
         }
     }
 
