@@ -26,8 +26,8 @@ SPDX-License-Identifier: MIT
 - Running `free_scalar_field` example in Debug mode on CPU can be very long (on GPU this can be ok though). By default (no particular contradictory instruction), if you have to run it on CPU, first recompile in Release mode.
 
 ## Coding
-- `clang-format 20` is used to format C++, `ruff format` is used to format python.
-- Avoid introducing unecessary constexpr aliases (like, using the `using` keyword for type aliases of `constexpr` for variables aliases). It can be used but not just for readability purpose, except is explicity asked.
+- `clang-format` is used to format C++, `ruff format` is used to format python.
+- Avoid introducing unecessary constexpr aliases (like, using the `using` keyword for type aliases of `constexpr` for variables aliases). It can be used but not just for readability purpose, except if explicity asked. In general, if such an alias is used only once it should not be declared and inlined.
 
 ## ONELAB interface
 - `onelab_interface/GmshSocket.h` and `onelab_interface/onelab.h` are forks from existing repos, you will never modify them.

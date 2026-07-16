@@ -263,9 +263,9 @@ public:
 
     KOKKOS_FUNCTION constexpr int check() const noexcept
     {
-        for (std::size_t i = 0; i + 1 < m_size; ++i) {
-            for (std::size_t j = i + 1; j < m_size; ++j) {
-                if (m_vects[i] == m_vects[j]) {
+        for (auto i = begin(); i + 1 < end(); ++i) {
+            for (auto j = i + 1; j < end(); ++j) {
+                if (*i == *j) {
                     return -1;
                 }
             }
@@ -340,8 +340,9 @@ public:
     KOKKOS_FUNCTION constexpr LocalChain& operator+=(LocalChain const& simplices_to_add)
     {
         assert(m_size + simplices_to_add.size() <= MAX_SIZE);
-        for (std::size_t i = 0; i < simplices_to_add.size(); ++i) {
-            m_vects[m_size + i] = simplices_to_add.m_vects[i];
+        std::size_t const old_size = m_size;
+        for (auto i = simplices_to_add.begin(); i < simplices_to_add.end(); ++i) {
+            m_vects[old_size + Kokkos::Experimental::distance(simplices_to_add.begin(), i)] = *i;
         }
         m_size += simplices_to_add.size();
         return *this;
@@ -388,8 +389,10 @@ public:
         if (m_size != simplices.m_size) {
             return false;
         }
-        for (std::size_t i = 0; i < m_size; ++i) {
-            if (m_vects[i] != simplices.m_vects[i]) {
+        auto simplex = begin();
+        auto other_simplex = simplices.begin();
+        for (; simplex < end(); ++simplex, ++other_simplex) {
+            if (*simplex != *other_simplex) {
                 return false;
             }
         }

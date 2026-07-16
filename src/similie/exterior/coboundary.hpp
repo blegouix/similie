@@ -147,10 +147,9 @@ struct ComputeSimplex<Chain<Simplex<K, Tag...>, LayoutStridedPolicy, ExecSpace>>
                     (static_cast<bool>(vect.template get<Tag>())
                      || static_cast<bool>((*i).discrete_vector().template get<Tag>()))...};
         }
-        return Simplex(
-                std::integral_constant<std::size_t, K + 1> {},
-                chain[0].discrete_element(), // This is an assumption on the structure of the chain, which is satisfied if it has been produced using boundary()
-                vect);
+        // This assumes that the chain has been produced using boundary().
+        auto const elem = (*chain.begin()).discrete_element();
+        return Simplex(std::integral_constant<std::size_t, K + 1> {}, elem, vect);
     }
 };
 
@@ -361,11 +360,12 @@ struct Coboundary<TagToAddToCochain, CochainTag>
 
         SpatialElem const elem_on_chain
                 = misc::select_from_type_seq<ddc::to_type_seq_t<SpatialElem>>(elem);
-        for (std::size_t cochain_id = 0; cochain_id < chain.size(); ++cochain_id) {
+        for (auto cochain = chain.begin(); cochain < chain.end(); ++cochain) {
+            std::size_t const cochain_id = Kokkos::Experimental::distance(chain.begin(), cochain);
             typename ChainType::simplex_type
                     simplex(std::integral_constant<std::size_t, CochainTag::rank() + 1> {},
                             elem_on_chain,
-                            chain[cochain_id].discrete_vector());
+                            (*cochain).discrete_vector());
             auto boundary_chain = boundary<MemorySpace>(simplex);
             for (auto j = boundary_chain.begin(); j < boundary_chain.end(); ++j) {
                 std::size_t const boundary_id
@@ -531,11 +531,13 @@ struct TransposedCoboundary<TagToAddToCochain, CochainTag>
 
         SpatialElem const elem_on_chain
                 = misc::select_from_type_seq<ddc::to_type_seq_t<SpatialElem>>(elem);
-        for (std::size_t cochain_id = 0; cochain_id < chain.size(); ++cochain_id) {
+        for (auto cochain = chain.begin(); cochain < chain.end(); ++cochain) {
+            std::size_t const cochain_id = Kokkos::Experimental::distance(chain.begin(), cochain);
+            auto cochain_vector = (*cochain).discrete_vector();
             typename ChainType::simplex_type
                     simplex(std::integral_constant<std::size_t, CochainTag::rank() + 1> {},
                             elem_on_chain,
-                            chain[cochain_id].discrete_vector());
+                            cochain_vector);
             auto boundary_chain = boundary<MemorySpace>(simplex);
             for (auto j = boundary_chain.begin(); j < boundary_chain.end(); ++j) {
                 std::size_t const boundary_id
@@ -546,7 +548,7 @@ struct TransposedCoboundary<TagToAddToCochain, CochainTag>
                          dim_id < ddc::type_seq_size_v<ddc::to_type_seq_t<
                                  typename ChainType::simplex_type::discrete_element_type>>;
                          ++dim_id) {
-                        if (ddc::detail::array(chain[cochain_id].discrete_vector())[dim_id] != 0
+                        if (ddc::detail::array(cochain_vector)[dim_id] != 0
                             && ddc::detail::array((*j).discrete_vector())[dim_id] == 0) {
                             ddc::detail::array(sampled_face_elem)[dim_id] -= 2;
                             break;
