@@ -1,7 +1,7 @@
 var searchData=
 [
-  ['mesher_0',['Mesher',['../classsil_1_1mesher_1_1Mesher.html',1,'sil::mesher']]],
-  ['metricindex1_1',['MetricIndex1',['../structsil_1_1tensor_1_1MetricIndex1.html',1,'sil::tensor']]],
-  ['metricindex2_2',['MetricIndex2',['../structsil_1_1tensor_1_1MetricIndex2.html',1,'sil::tensor']]],
-  ['metricprod_3',['MetricProd',['../structsil_1_1tensor_1_1MetricProd.html',1,'sil::tensor']]]
+  ['linearmagneticinductiontomagneticfield_0',['LinearMagneticInductionToMagneticField',['../classlinear__magnetostatics_1_1LinearMagneticInductionToMagneticField.html',1,'linear_magnetostatics']]],
+  ['linearmagnetostaticshamiltonian_1',['LinearMagnetostaticsHamiltonian',['../classlinear__magnetostatics_1_1LinearMagnetostaticsHamiltonian.html',1,'linear_magnetostatics']]],
+  ['localchain_2',['LocalChain',['../classsil_1_1exterior_1_1LocalChain.html',1,'sil::exterior']]],
+  ['localchainiterator_3',['LocalChainIterator',['../classsil_1_1exterior_1_1LocalChainIterator.html',1,'sil::exterior']]]
 ];

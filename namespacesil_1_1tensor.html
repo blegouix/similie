@@ -155,6 +155,10 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1tensor_1_1MetricProd.html">MetricProd</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:classsil_1_1tensor_1_1OwningTensor" id="r_classsil_1_1tensor_1_1OwningTensor"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#classsil_1_1tensor_1_1OwningTensor">OwningTensor</a></td></tr>
+<tr class="separator:classsil_1_1tensor_1_1OwningTensor"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1tensor_1_1OwningTensor_3_01Tensor_3_01ElementType_00_01DomainType_00_01LayoutStridede8c6ac86c910712a64335c9c13c9211e.html">OwningTensor&lt; Tensor&lt; ElementType, DomainType, LayoutStridedPolicy, MemorySpace &gt;, Storage &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1tensor_1_1prime.html">prime</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1tensor_1_1ScalarIndex.html">ScalarIndex</a></td></tr>
@@ -297,6 +301,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a573c0c94d3d5df6eefc212984a7757d8" id="r_a573c0c94d3d5df6eefc212984a7757d8"><td class="memTemplParams" colspan="2">template&lt;TensorIndex MetricIndex, misc::Specialization&lt; <a class="el" href="#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a> &gt; MetricType, class ExecSpace &gt; </td></tr>
 <tr class="memitem:a573c0c94d3d5df6eefc212984a7757d8"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="#a2aeefba03f422e9e851e0fd04eedace8">invert_metric_t</a>&lt; MetricType &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a573c0c94d3d5df6eefc212984a7757d8">fill_inverse_metric</a> (ExecSpace const &amp;exec_space, <a class="el" href="#a2aeefba03f422e9e851e0fd04eedace8">invert_metric_t</a>&lt; MetricType &gt; inv_metric, MetricType metric)</td></tr>
 <tr class="separator:a573c0c94d3d5df6eefc212984a7757d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a45d21a81b98f0dd79377f2c01b011317" id="r_a45d21a81b98f0dd79377f2c01b011317"><td class="memTemplParams" colspan="2">template&lt;class TensorType , class Storage &gt; </td></tr>
+<tr class="memitem:a45d21a81b98f0dd79377f2c01b011317"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a45d21a81b98f0dd79377f2c01b011317">OwningTensor</a> (TensorType, Storage &amp;&amp;) -&gt; OwningTensor&lt; TensorType, Storage &gt;</td></tr>
+<tr class="separator:a45d21a81b98f0dd79377f2c01b011317"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7a0abe122166bba6ee4509805a3946e9" id="r_a7a0abe122166bba6ee4509805a3946e9"><td class="memTemplParams" colspan="2">template&lt;class OldIndex , class NewIndex , class T &gt; </td></tr>
 <tr class="memitem:a7a0abe122166bba6ee4509805a3946e9"><td class="memTemplItemLeft" align="right" valign="top">constexpr <a class="el" href="#a67195c6cc192c638d6c3fcf777b3aa07">relabelize_index_in_t</a>&lt; T, OldIndex, NewIndex &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a7a0abe122166bba6ee4509805a3946e9">relabelize_index_in</a> (T t)</td></tr>
 <tr class="separator:a7a0abe122166bba6ee4509805a3946e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -434,6 +441,31 @@ Collaboration diagram for sil::tensor::Dummy&lt; I &gt;:</div>
 <div class="center"><img src="structsil_1_1tensor_1_1Dummy__coll__graph.png" border="0" usemap="#asil_1_1tensor_1_1Dummy_3_01I_01_4_coll__map" alt="Collaboration graph"/></div>
 <map name="asil_1_1tensor_1_1Dummy_3_01I_01_4_coll__map" id="asil_1_1tensor_1_1Dummy_3_01I_01_4_coll__map">
 <area shape="rect" title=" " alt="" coords="5,5,177,71"/>
+</map>
+</div>
+
+</div>
+</div>
+<a name="classsil_1_1tensor_1_1OwningTensor" id="classsil_1_1tensor_1_1OwningTensor"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#classsil_1_1tensor_1_1OwningTensor">&#9670;&#160;</a></span>sil::tensor::OwningTensor</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">class sil::tensor::OwningTensor</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<div class="textblock"><div class="compoundTemplParams">template&lt;class TensorType, class Storage&gt;<br />
+class sil::tensor::OwningTensor&lt; TensorType, Storage &gt;</div>
+<p class="definition">Definition at line <a class="el" href="owning__tensor_8hpp_source.html#l00013">13</a> of file <a class="el" href="owning__tensor_8hpp_source.html">owning_tensor.hpp</a>.</p>
+</div><div class="dynheader">
+Collaboration diagram for sil::tensor::OwningTensor&lt; TensorType, Storage &gt;:</div>
+<div class="dyncontent">
+<div class="center"><img src="classsil_1_1tensor_1_1OwningTensor__coll__graph.png" border="0" usemap="#asil_1_1tensor_1_1OwningTensor_3_01TensorType_00_01Storage_01_4_coll__map" alt="Collaboration graph"/></div>
+<map name="asil_1_1tensor_1_1OwningTensor_3_01TensorType_00_01Storage_01_4_coll__map" id="asil_1_1tensor_1_1OwningTensor_3_01TensorType_00_01Storage_01_4_coll__map">
+<area shape="rect" title=" " alt="" coords="5,5,183,85"/>
 </map>
 </div>
 
@@ -1176,6 +1208,29 @@ template&lt;TensorIndex MetricIndex, misc::Specialization&lt; <a class="el" href
 </div><div class="memdoc">
 
 <p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00493">493</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a45d21a81b98f0dd79377f2c01b011317" name="a45d21a81b98f0dd79377f2c01b011317"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a45d21a81b98f0dd79377f2c01b011317">&#9670;&#160;</a></span>OwningTensor()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class TensorType , class Storage &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">sil::tensor::OwningTensor </td>
+          <td>(</td>
+          <td class="paramtype">TensorType</td>          <td class="paramname"><span class="paramname"><em></em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Storage &amp;&amp;</td>          <td class="paramname"><span class="paramname"><em></em></span>&#160;) -&gt;  OwningTensor&lt; TensorType, Storage &gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
 
 </div>
 </div>

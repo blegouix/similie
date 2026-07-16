@@ -19,5 +19,6 @@ var classsil_1_1exterior_1_1Simplex =
     [ "negative", "classsil_1_1exterior_1_1Simplex.html#a32028f1bc13920283b810d4e0e456314", null ],
     [ "operator-", "classsil_1_1exterior_1_1Simplex.html#afcceeeff18a384b810d14ec4f519b621", null ],
     [ "operator*", "classsil_1_1exterior_1_1Simplex.html#a65b8873160ee7d26cf1da0163c8fd322", null ],
-    [ "operator==", "classsil_1_1exterior_1_1Simplex.html#a157ab6368968069562863032c047176d", null ]
+    [ "operator==", "classsil_1_1exterior_1_1Simplex.html#a53c0898e83be61f596f97c6fdcd5371b", null ],
+    [ "operator!=", "classsil_1_1exterior_1_1Simplex.html#ac14c8a168f5ba055c16b1c58b3a51ef1", null ]
 ];

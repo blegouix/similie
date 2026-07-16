@@ -1,0 +1,5 @@
+var classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4 =
+[
+    [ "vector_potential_index", "classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4.html#a6d406ef23de99f869b1d63a5db559c5b", null ],
+    [ "magnetic_induction_index", "classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4.html#ab1ff65fcee0b293487e488eb860f494f", null ]
+];

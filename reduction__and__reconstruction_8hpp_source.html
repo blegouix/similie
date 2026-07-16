@@ -184,12 +184,12 @@ $(function(){initNavTree('reduction__and__reconstruction_8hpp_source.html',''); 
 <div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>    } <span class="keywordflow">else</span> {</div>
 <div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>        <span class="keyword">using </span>EntryType = std::remove_cvref_t&lt;<span class="keyword">decltype</span>(entries[0])&gt;;</div>
 <div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::is_same_v&lt;EntryType, std::size_t&gt;) {</div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>            <span class="keywordflow">for</span> (std::size_t i = 0; i &lt; entries.size(); ++i) {</div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>                ids[offset++] = entries[i];</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>            <span class="keywordflow">for</span> (<span class="keyword">auto</span> <span class="keyword">const</span>&amp; entry : entries) {</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>                ids[offset++] = entry;</div>
 <div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>            }</div>
 <div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>        } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>            <span class="keywordflow">for</span> (std::size_t i = 0; i &lt; entries.size(); ++i) {</div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>                copy_flat_natural_elem_ids(ids, offset, entries[i]);</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>            <span class="keywordflow">for</span> (<span class="keyword">auto</span> <span class="keyword">const</span>&amp; entry : entries) {</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>                copy_flat_natural_elem_ids(ids, offset, entry);</div>
 <div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>            }</div>
 <div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>        }</div>
 <div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>    }</div>
@@ -216,13 +216,13 @@ $(function(){initNavTree('reduction__and__reconstruction_8hpp_source.html',''); 
 <div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>    } <span class="keywordflow">else</span> {</div>
 <div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>        <span class="keyword">using </span>EntryType = std::remove_cvref_t&lt;<span class="keyword">decltype</span>(entries[0])&gt;;</div>
 <div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::is_same_v&lt;EntryType, std::size_t&gt;) {</div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>            <span class="keywordflow">for</span> (std::size_t i = 0; i &lt; entries.size(); ++i) {</div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>                entries[i] = ids[offset++];</div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>            <span class="keywordflow">for</span> (<span class="keyword">auto</span>&amp; entry : entries) {</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>                entry = ids[offset++];</div>
 <div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>            }</div>
 <div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>            ddc::detail::array(elem) = entries;</div>
 <div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>        } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>            <span class="keywordflow">for</span> (std::size_t i = 0; i &lt; entries.size(); ++i) {</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>                assign_flat_natural_elem_ids(entries[i], ids, offset);</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>            <span class="keywordflow">for</span> (<span class="keyword">auto</span>&amp; entry : entries) {</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>                assign_flat_natural_elem_ids(entry, ids, offset);</div>
 <div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>            }</div>
 <div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>            ddc::detail::array(elem) = entries;</div>
 <div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>        }</div>

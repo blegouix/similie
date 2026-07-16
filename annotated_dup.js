@@ -1,5 +1,22 @@
 var annotated_dup =
 [
+    [ "generate_cpp_constitutive_law", "namespacegenerate__cpp__constitutive__law.html", [
+      [ "ConstitutiveLawDefinition", "classgenerate__cpp__constitutive__law_1_1ConstitutiveLawDefinition.html", null ]
+    ] ],
+    [ "generate_cpp_hamiltonian", "namespacegenerate__cpp__hamiltonian.html", [
+      [ "HamiltonianDefinition", "classgenerate__cpp__hamiltonian_1_1HamiltonianDefinition.html", null ],
+      [ "SymbolicFunctionDefinition", "classgenerate__cpp__hamiltonian_1_1SymbolicFunctionDefinition.html", null ]
+    ] ],
+    [ "linear_magnetostatics", "namespacelinear__magnetostatics.html", [
+      [ "LinearMagneticInductionToMagneticField", "classlinear__magnetostatics_1_1LinearMagneticInductionToMagneticField.html", null ],
+      [ "LinearMagnetostaticsHamiltonian", "classlinear__magnetostatics_1_1LinearMagnetostaticsHamiltonian.html", null ]
+    ] ],
+    [ "nonlinear_magnetostatics", "namespacenonlinear__magnetostatics.html", [
+      [ "NonlinearMagnetostaticsHamiltonian", "classnonlinear__magnetostatics_1_1NonlinearMagnetostaticsHamiltonian.html", null ]
+    ] ],
+    [ "scalar_field", "namespacescalar__field.html", [
+      [ "ScalarFieldHamiltonian", "classscalar__field_1_1ScalarFieldHamiltonian.html", null ]
+    ] ],
     [ "sil", "namespacesil.html", [
       [ "csr", "namespacesil_1_1csr.html", [
         [ "Csr", "classsil_1_1csr_1_1Csr.html", "classsil_1_1csr_1_1Csr" ],
@@ -23,6 +40,7 @@ var annotated_dup =
         [ "FillReductionOperatorMem", "structsil_1_1exterior_1_1FillReductionOperatorMem.html", "structsil_1_1exterior_1_1FillReductionOperatorMem" ],
         [ "IndexForCodifferentialOfCoboundaryInLaplacian", "structsil_1_1exterior_1_1IndexForCodifferentialOfCoboundaryInLaplacian.html", null ],
         [ "LocalChain", "classsil_1_1exterior_1_1LocalChain.html", "classsil_1_1exterior_1_1LocalChain" ],
+        [ "LocalChainIterator", "classsil_1_1exterior_1_1LocalChainIterator.html", "classsil_1_1exterior_1_1LocalChainIterator" ],
         [ "Reconstruction", "structsil_1_1exterior_1_1Reconstruction.html", "structsil_1_1exterior_1_1Reconstruction" ],
         [ "Reduction", "structsil_1_1exterior_1_1Reduction.html", "structsil_1_1exterior_1_1Reduction" ],
         [ "Simplex", "classsil_1_1exterior_1_1Simplex.html", "classsil_1_1exterior_1_1Simplex" ],
@@ -50,6 +68,8 @@ var annotated_dup =
         [ "MetricIndex1", "structsil_1_1tensor_1_1MetricIndex1.html", null ],
         [ "MetricIndex2", "structsil_1_1tensor_1_1MetricIndex2.html", null ],
         [ "MetricProd", "structsil_1_1tensor_1_1MetricProd.html", null ],
+        [ "OwningTensor", "namespacesil_1_1tensor.html#classsil_1_1tensor_1_1OwningTensor", null ],
+        [ "OwningTensor< Tensor< ElementType, DomainType, LayoutStridedPolicy, MemorySpace >, Storage >", "classsil_1_1tensor_1_1OwningTensor_3_01Tensor_3_01ElementType_00_01DomainType_00_01LayoutStridede8c6ac86c910712a64335c9c13c9211e.html", "classsil_1_1tensor_1_1OwningTensor_3_01Tensor_3_01ElementType_00_01DomainType_00_01LayoutStridede8c6ac86c910712a64335c9c13c9211e" ],
         [ "prime", "structsil_1_1tensor_1_1prime.html", null ],
         [ "ScalarIndex", "structsil_1_1tensor_1_1ScalarIndex.html", null ],
         [ "Tensor< ElementType, ddc::DiscreteDomain< DDim... >, LayoutStridedPolicy, MemorySpace >", "classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html", "classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c" ],
@@ -63,6 +83,21 @@ var annotated_dup =
         [ "TensorNaturalIndex", "structsil_1_1tensor_1_1TensorNaturalIndex.html", "structsil_1_1tensor_1_1TensorNaturalIndex" ],
         [ "TensorSymmetricIndex", "structsil_1_1tensor_1_1TensorSymmetricIndex.html", "structsil_1_1tensor_1_1TensorSymmetricIndex" ],
         [ "TensorYoungTableauIndex", "structsil_1_1tensor_1_1TensorYoungTableauIndex.html", "structsil_1_1tensor_1_1TensorYoungTableauIndex" ]
+      ] ]
+    ] ],
+    [ "similie", "namespacesimilie.html", [
+      [ "physics", "namespacesimilie_1_1physics.html", [
+        [ "magnetostatics", "namespacesimilie_1_1physics_1_1magnetostatics.html", [
+          [ "MagneticVectorPotentialToMagneticInduction", "namespacesimilie_1_1physics_1_1magnetostatics.html#classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction", null ],
+          [ "MagneticVectorPotentialToMagneticInduction< SpatialIndex... >", "classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4.html", "classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4" ],
+          [ "OrthogonalPlaneIndex", "structsimilie_1_1physics_1_1magnetostatics_1_1OrthogonalPlaneIndex.html", null ]
+        ] ],
+        [ "DeDonderWeylEquations", "classsimilie_1_1physics_1_1DeDonderWeylEquations.html", "classsimilie_1_1physics_1_1DeDonderWeylEquations" ],
+        [ "HamiltonEquations", "classsimilie_1_1physics_1_1HamiltonEquations.html", "classsimilie_1_1physics_1_1HamiltonEquations" ]
+      ] ],
+      [ "solvers", "namespacesimilie_1_1solvers.html", [
+        [ "StrongFormulationSolverDiagnostics", "namespacesimilie_1_1solvers.html#structsimilie_1_1solvers_1_1StrongFormulationSolverDiagnostics", "namespacesimilie_1_1solvers_structsimilie_1_1solvers_1_1StrongFormulationSolverDiagnostics_dup" ],
+        [ "StrongFormulationSolverSettings", "namespacesimilie_1_1solvers.html#structsimilie_1_1solvers_1_1StrongFormulationSolverSettings", "namespacesimilie_1_1solvers_structsimilie_1_1solvers_1_1StrongFormulationSolverSettings_dup" ]
       ] ]
     ] ]
 ];

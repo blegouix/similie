@@ -31,7 +31,7 @@ var NAVTREE =
       [ "Compilation", "Running.html#autotoc_md5", null ],
       [ "Usage", "Running.html#autotoc_md6", null ]
     ] ],
-    [ "Tensor module", "tensor_module.html", [
+    [ "The tensor module", "tensor_module.html", [
       [ "Why tensors are importants for physics ?", "tensor_module.html#autotoc_md7", null ],
       [ "Do Kokkos and DDC support tensor fields ? What can SimiLie do in addition ?", "tensor_module.html#autotoc_md8", null ],
       [ "Tensor indices", "tensor_module.html#autotoc_md9", null ],
@@ -41,7 +41,7 @@ var NAVTREE =
       [ "Metric", "tensor_module.html#autotoc_md13", null ],
       [ "Tensor product", "tensor_module.html#autotoc_md14", null ]
     ] ],
-    [ "Exterior module", "exterior_module.html", [
+    [ "The exterior module", "exterior_module.html", [
       [ "Why integro-differential calculus is important for physics ?", "exterior_module.html#autotoc_md15", null ],
       [ "Discrete exterior calculus", "exterior_module.html#autotoc_md16", [
         [ "Simplex", "exterior_module.html#autotoc_md17", null ],
@@ -59,6 +59,7 @@ var NAVTREE =
         [ "Laplacian", "exterior_module.html#autotoc_md29", null ]
       ] ]
     ] ],
+    [ "The ONELAB interface", "onelab_interface.html", null ],
     [ "Namespaces", "namespaces.html", [
       [ "Namespace List", "namespaces.html", "namespaces_dup" ],
       [ "Namespace Members", "namespacemembers.html", [
@@ -88,9 +89,10 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "Running.html",
-"classsil_1_1exterior_1_1CochainIterator.html#af93af6d97bd143b0860c5b4993bdbcee",
-"classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html#a88bac7ee9eefe9f6ef53ab92abf9e133",
-"structsil_1_1exterior_1_1DiscreteHodgeStar.html"
+"classsil_1_1exterior_1_1CochainIterator.html#ade259bd5308e40242111897e0a2de32c",
+"classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html#ac97c63d4dee356a1c23f1bed1d005a4b",
+"namespacesil_1_1csr.html#a28bba2cd919d48fc70bdb9ed8092b8b3",
+"structsil_1_1tensor_1_1TensorDiagonalIndex.html#a9571f6176d63e05725d28a8eeb7ef008"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

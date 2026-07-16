@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['primal_0',['Primal',['../namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140a68123c95275511243def4b27f64f4d97',1,'sil::exterior']]]
+  ['generalisai_0',['GeneralIsai',['../namespacesimilie_1_1solvers.html#abe2dd397f1ada9f78cdbf2166698ab4dabff129ee7f9ba359bd78e0867d94e5ca',1,'similie::solvers']]]
 ];

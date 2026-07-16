@@ -233,11 +233,11 @@ $(function(){initNavTree('relabelization_8hpp_source.html',''); initResizable(tr
 <div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>        <span class="keyword">class </span>LayoutStridedPolicy,</div>
 <div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>        <span class="keyword">class </span>MemorySpace&gt;</div>
 <div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span><span class="keyword">struct </span>RelabelizeIndexOfType&lt;</div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>        <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>&lt;ElementType, Dom, LayoutStridedPolicy, MemorySpace&gt;,</div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>        Tensor&lt;ElementType, Dom, LayoutStridedPolicy, MemorySpace&gt;,</div>
 <div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>        OldIndex,</div>
 <div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>        NewIndex&gt;</div>
 <div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>{</div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>    <span class="keyword">using </span>type = <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>&lt;</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>    <span class="keyword">using </span>type = Tensor&lt;</div>
 <div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>            ElementType,</div>
 <div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>            <span class="keyword">typename</span> RelabelizeIndexInType&lt;Dom, OldIndex, NewIndex&gt;::type,</div>
 <div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>            LayoutStridedPolicy,</div>
@@ -257,16 +257,16 @@ $(function(){initNavTree('relabelization_8hpp_source.html',''); initResizable(tr
 <div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>        <span class="keyword">class </span>LayoutStridedPolicy,</div>
 <div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>        <span class="keyword">class </span>MemorySpace&gt;</div>
 <div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span><span class="keyword">constexpr</span> <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a848522a446c67d9c927f2cfbe93ffcb4">relabelize_index_of_t</a>&lt;</div>
-<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>        <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>&lt;ElementType, ddc::DiscreteDomain&lt;DDim...&gt;, LayoutStridedPolicy, MemorySpace&gt;,</div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>        Tensor&lt;ElementType, ddc::DiscreteDomain&lt;DDim...&gt;, LayoutStridedPolicy, MemorySpace&gt;,</div>
 <div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>        OldIndex,</div>
 <div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>        NewIndex&gt;</div>
 <div class="foldopen" id="foldopen00131" data-start="{" data-end="}">
 <div class="line"><a id="l00131" name="l00131"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#a895db197dc74117c7a4b5aab298d2973">  131</a></span><a class="code hl_function" href="namespacesil_1_1tensor.html#a895db197dc74117c7a4b5aab298d2973">relabelize_index_of</a>(</div>
-<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>        <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>&lt;ElementType, ddc::DiscreteDomain&lt;DDim...&gt;, LayoutStridedPolicy, MemorySpace&gt;</div>
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>        Tensor&lt;ElementType, ddc::DiscreteDomain&lt;DDim...&gt;, LayoutStridedPolicy, MemorySpace&gt;</div>
 <div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>                old_tensor)</div>
 <div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>{</div>
 <div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>    <span class="keywordflow">return</span> <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a848522a446c67d9c927f2cfbe93ffcb4">relabelize_index_of_t</a>&lt;</div>
-<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>            <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>&lt;ElementType, ddc::DiscreteDomain&lt;DDim...&gt;, LayoutStridedPolicy, MemorySpace&gt;,</div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>            Tensor&lt;ElementType, ddc::DiscreteDomain&lt;DDim...&gt;, LayoutStridedPolicy, MemorySpace&gt;,</div>
 <div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>            OldIndex,</div>
 <div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>            NewIndex&gt;(</div>
 <div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span>            old_tensor.data_handle(),</div>
@@ -419,12 +419,12 @@ $(function(){initNavTree('relabelization_8hpp_source.html',''); initResizable(tr
 <div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span>        <span class="keyword">class </span>LayoutStridedPolicy,</div>
 <div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span>        <span class="keyword">class </span>MemorySpace&gt;</div>
 <div class="line"><a id="l00285" name="l00285"></a><span class="lineno">  285</span><span class="keyword">struct </span>RelabelizeIndicesOfType&lt;</div>
-<div class="line"><a id="l00286" name="l00286"></a><span class="lineno">  286</span>        <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>&lt;ElementType, Dom, LayoutStridedPolicy, MemorySpace&gt;,</div>
+<div class="line"><a id="l00286" name="l00286"></a><span class="lineno">  286</span>        Tensor&lt;ElementType, Dom, LayoutStridedPolicy, MemorySpace&gt;,</div>
 <div class="line"><a id="l00287" name="l00287"></a><span class="lineno">  287</span>        OldIndices,</div>
 <div class="line"><a id="l00288" name="l00288"></a><span class="lineno">  288</span>        NewIndices&gt;</div>
 <div class="line"><a id="l00289" name="l00289"></a><span class="lineno">  289</span>{</div>
 <div class="line"><a id="l00290" name="l00290"></a><span class="lineno">  290</span>    <span class="keyword">static_assert</span>(ddc::type_seq_size_v&lt;OldIndices&gt; == ddc::type_seq_size_v&lt;NewIndices&gt;);</div>
-<div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span>    <span class="keyword">using </span>type = <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>&lt;</div>
+<div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span>    <span class="keyword">using </span>type = Tensor&lt;</div>
 <div class="line"><a id="l00292" name="l00292"></a><span class="lineno">  292</span>            ElementType,</div>
 <div class="line"><a id="l00293" name="l00293"></a><span class="lineno">  293</span>            <span class="keyword">typename</span> RelabelizeIndicesInType&lt;Dom, OldIndices, NewIndices&gt;::type,</div>
 <div class="line"><a id="l00294" name="l00294"></a><span class="lineno">  294</span>            LayoutStridedPolicy,</div>
@@ -440,7 +440,7 @@ $(function(){initNavTree('relabelization_8hpp_source.html',''); initResizable(tr
 <div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span>        <span class="keyword">class </span>LayoutStridedPolicy,</div>
 <div class="line"><a id="l00305" name="l00305"></a><span class="lineno">  305</span>        <span class="keyword">class </span>MemorySpace&gt;</div>
 <div class="line"><a id="l00306" name="l00306"></a><span class="lineno">  306</span><span class="keyword">constexpr</span> <span class="keyword">auto</span> RelabelizeIndicesOf(</div>
-<div class="line"><a id="l00307" name="l00307"></a><span class="lineno">  307</span>        <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>&lt;ElementType, ddc::DiscreteDomain&lt;DDim...&gt;, LayoutStridedPolicy, MemorySpace&gt;</div>
+<div class="line"><a id="l00307" name="l00307"></a><span class="lineno">  307</span>        Tensor&lt;ElementType, ddc::DiscreteDomain&lt;DDim...&gt;, LayoutStridedPolicy, MemorySpace&gt;</div>
 <div class="line"><a id="l00308" name="l00308"></a><span class="lineno">  308</span>                old_tensor)</div>
 <div class="line"><a id="l00309" name="l00309"></a><span class="lineno">  309</span>{</div>
 <div class="line"><a id="l00310" name="l00310"></a><span class="lineno">  310</span>    <span class="keyword">static_assert</span>(ddc::type_seq_size_v&lt;OldIndices&gt; == ddc::type_seq_size_v&lt;NewIndices&gt;);</div>
@@ -452,7 +452,7 @@ $(function(){initNavTree('relabelization_8hpp_source.html',''); initResizable(tr
 <div class="line"><a id="l00316" name="l00316"></a><span class="lineno">  316</span>                        ddc::detail::TypeSeq&lt;ddc::type_seq_element_t&lt;I, NewIndices&gt;&gt;&gt;,</div>
 <div class="line"><a id="l00317" name="l00317"></a><span class="lineno">  317</span>                NewIndices,</div>
 <div class="line"><a id="l00318" name="l00318"></a><span class="lineno">  318</span>                I + 1&gt;(<a class="code hl_typedef" href="namespacesil_1_1tensor.html#a848522a446c67d9c927f2cfbe93ffcb4">relabelize_index_of_t</a>&lt;</div>
-<div class="line"><a id="l00319" name="l00319"></a><span class="lineno">  319</span>                       <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>&lt;ElementType,</div>
+<div class="line"><a id="l00319" name="l00319"></a><span class="lineno">  319</span>                       Tensor&lt;ElementType,</div>
 <div class="line"><a id="l00320" name="l00320"></a><span class="lineno">  320</span>                              ddc::DiscreteDomain&lt;DDim...&gt;,</div>
 <div class="line"><a id="l00321" name="l00321"></a><span class="lineno">  321</span>                              LayoutStridedPolicy,</div>
 <div class="line"><a id="l00322" name="l00322"></a><span class="lineno">  322</span>                              MemorySpace&gt;,</div>
@@ -496,9 +496,9 @@ $(function(){initNavTree('relabelization_8hpp_source.html',''); initResizable(tr
 <div class="line"><a id="l00360" name="l00360"></a><span class="lineno">  360</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;ddc::detail::TypeSeq&gt;</a> OldIndices,</div>
 <div class="line"><a id="l00361" name="l00361"></a><span class="lineno">  361</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;ddc::detail::TypeSeq&gt;</a> NewIndices,</div>
 <div class="foldopen" id="foldopen00362" data-start="{" data-end="}">
-<div class="line"><a id="l00362" name="l00362"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#ad550ba4fb8a3062a3cec97a08e31ee44">  362</a></span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;Tensor&gt;</a> <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>&gt;</div>
+<div class="line"><a id="l00362" name="l00362"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#ad550ba4fb8a3062a3cec97a08e31ee44">  362</a></span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;Tensor&gt;</a> Tensor&gt;</div>
 <div class="line"><a id="l00363" name="l00363"></a><span class="lineno">  363</span><span class="keyword">constexpr</span> <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a3318cc0d5802ebbef660dc7d3d4044d0">relabelize_indices_of_t&lt;Tensor, OldIndices, NewIndices&gt;</a> <a class="code hl_function" href="namespacesil_1_1tensor.html#ad550ba4fb8a3062a3cec97a08e31ee44">relabelize_indices_of</a>(</div>
-<div class="line"><a id="l00364" name="l00364"></a><span class="lineno">  364</span>        <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a> tensor)</div>
+<div class="line"><a id="l00364" name="l00364"></a><span class="lineno">  364</span>        Tensor tensor)</div>
 <div class="line"><a id="l00365" name="l00365"></a><span class="lineno">  365</span>{</div>
 <div class="line"><a id="l00366" name="l00366"></a><span class="lineno">  366</span>    <span class="keyword">static_assert</span>(ddc::type_seq_size_v&lt;OldIndices&gt; == ddc::type_seq_size_v&lt;NewIndices&gt;);</div>
 <div class="line"><a id="l00367" name="l00367"></a><span class="lineno">  367</span>    <span class="keywordflow">return</span> detail::RelabelizeIndicesOf&lt;OldIndices, NewIndices, 0&gt;(tensor);</div>
@@ -510,7 +510,6 @@ $(function(){initNavTree('relabelization_8hpp_source.html',''); initResizable(tr
 <div class="line"><a id="l00372" name="l00372"></a><span class="lineno">  372</span>} <span class="comment">// namespace sil</span></div>
 <div class="ttc" id="aconceptsil_1_1misc_1_1Specialization_html"><div class="ttname"><a href="conceptsil_1_1misc_1_1Specialization.html">sil::misc::Specialization</a></div><div class="ttdef"><b>Definition</b> <a href="specialization_8hpp_source.html#l00023">specialization.hpp:23</a></div></div>
 <div class="ttc" id="aconceptsil_1_1tensor_1_1TensorIndex_html"><div class="ttname"><a href="conceptsil_1_1tensor_1_1TensorIndex.html">sil::tensor::TensorIndex</a></div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00105">tensor_impl.hpp:105</a></div></div>
-<div class="ttc" id="anamespacesil_1_1tensor_html_a164aa1d6ecb53a91d54f7158f7b0bcb7"><div class="ttname"><a href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">sil::tensor::Tensor</a></div><div class="ttdeci">Tensor(ddc::Chunk&lt; ElementType, SupportType, Allocator &gt;) -&gt; Tensor&lt; ElementType, SupportType, Kokkos::layout_right, typename Allocator::memory_space &gt;</div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_a3318cc0d5802ebbef660dc7d3d4044d0"><div class="ttname"><a href="namespacesil_1_1tensor.html#a3318cc0d5802ebbef660dc7d3d4044d0">sil::tensor::relabelize_indices_of_t</a></div><div class="ttdeci">detail::RelabelizeIndicesOfType&lt; TensorType, OldIndices, NewIndices &gt;::type relabelize_indices_of_t</div><div class="ttdef"><b>Definition</b> <a href="#l00356">relabelization.hpp:356</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_a5457e355452eb5f3df771ad43eafcd5d"><div class="ttname"><a href="namespacesil_1_1tensor.html#a5457e355452eb5f3df771ad43eafcd5d">sil::tensor::relabelize_indices_in</a></div><div class="ttdeci">constexpr relabelize_indices_in_t&lt; T, OldIndices, NewIndices &gt; relabelize_indices_in(T t)</div><div class="ttdef"><b>Definition</b> <a href="#l00267">relabelization.hpp:267</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_a67195c6cc192c638d6c3fcf777b3aa07"><div class="ttname"><a href="namespacesil_1_1tensor.html#a67195c6cc192c638d6c3fcf777b3aa07">sil::tensor::relabelize_index_in_t</a></div><div class="ttdeci">detail::RelabelizeIndexInType&lt; T, OldIndex, NewIndex &gt;::type relabelize_index_in_t</div><div class="ttdef"><b>Definition</b> <a href="#l00052">relabelization.hpp:52</a></div></div>

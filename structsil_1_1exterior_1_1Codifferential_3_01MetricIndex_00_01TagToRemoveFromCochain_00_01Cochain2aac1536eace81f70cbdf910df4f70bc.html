@@ -138,12 +138,15 @@ Collaboration diagram for sil::exterior::Codifferential&lt; MetricIndex, TagToRe
 <div class="dyncontent">
 <div class="center"><img src="structsil_1_1exterior_1_1Codifferential_3_01MetricIndex_00_01TagToRemoveFromCochain_00_01Cochaindcbf51d0cd0983665940d132b729c593.png" border="0" usemap="#asil_1_1exterior_1_1Codifferential_3_01MetricIndex_00_01TagToRemoveFromCochain_00_01CochainTag_00_01TensorType_00_01MetricType_00_01PositionType_01_4_coll__map" alt="Collaboration graph"/></div>
 <map name="asil_1_1exterior_1_1Codifferential_3_01MetricIndex_00_01TagToRemoveFromCochain_00_01CochainTag_00_01TensorType_00_01MetricType_00_01PositionType_01_4_coll__map" id="asil_1_1exterior_1_1Codifferential_3_01MetricIndex_00_01TagToRemoveFromCochain_00_01CochainTag_00_01TensorType_00_01MetricType_00_01PositionType_01_4_coll__map">
-<area shape="rect" title=" " alt="" coords="5,5,299,115"/>
+<area shape="rect" title=" " alt="" coords="5,5,299,135"/>
 </map>
 </div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
+<tr class="memitem:aefe4e882e3d5c6168fe2973538ea2204" id="r_aefe4e882e3d5c6168fe2973538ea2204"><td class="memTemplParams" colspan="2">template&lt;class ChainType , class LowerChainType , class NaturalElem &gt; </td></tr>
+<tr class="memitem:aefe4e882e3d5c6168fe2973538ea2204"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#aefe4e882e3d5c6168fe2973538ea2204">value</a> (TensorType tensor, MetricType metric, PositionType position, ChainType chain, LowerChainType lower_chain, typename TensorType::non_indices_domain_t::discrete_element_type elem, NaturalElem natural_elem)</td></tr>
+<tr class="separator:aefe4e882e3d5c6168fe2973538ea2204"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8d5150a8d62100af02ccc58aaae31167" id="r_a8d5150a8d62100af02ccc58aaae31167"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8d5150a8d62100af02ccc58aaae31167">run</a> (auto codifferential_tensor, TensorType tensor, MetricType metric, PositionType position, auto chain, auto lower_chain, typename TensorType::non_indices_domain_t::discrete_element_type elem)</td></tr>
 <tr class="separator:a8d5150a8d62100af02ccc58aaae31167"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -152,6 +155,66 @@ Static Public Member Functions</h2></td></tr>
 struct sil::exterior::Codifferential&lt; MetricIndex, TagToRemoveFromCochain, CochainTag, TensorType, MetricType, PositionType &gt;</div>
 <p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00182">182</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="aefe4e882e3d5c6168fe2973538ea2204" name="aefe4e882e3d5c6168fe2973538ea2204"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aefe4e882e3d5c6168fe2973538ea2204">&#9670;&#160;</a></span>value()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor</a> &gt; TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor</a> &gt; MetricType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor</a> &gt; PositionType&gt; </div>
+<div class="memtemplate">
+template&lt;class ChainType , class LowerChainType , class NaturalElem &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static KOKKOS_FUNCTION auto <a class="el" href="namespacesil_1_1exterior.html#structsil_1_1exterior_1_1Codifferential">sil::exterior::Codifferential</a>&lt; MetricIndex, TagToRemoveFromCochain, CochainTag, TensorType, MetricType, PositionType &gt;::value </td>
+          <td>(</td>
+          <td class="paramtype">TensorType</td>          <td class="paramname"><span class="paramname"><em>tensor</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">MetricType</td>          <td class="paramname"><span class="paramname"><em>metric</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">PositionType</td>          <td class="paramname"><span class="paramname"><em>position</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">ChainType</td>          <td class="paramname"><span class="paramname"><em>chain</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">LowerChainType</td>          <td class="paramname"><span class="paramname"><em>lower_chain</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">typename TensorType::non_indices_domain_t::discrete_element_type</td>          <td class="paramname"><span class="paramname"><em>elem</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">NaturalElem</td>          <td class="paramname"><span class="paramname"><em>natural_elem</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00191">191</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+
+</div>
+</div>
 <a id="a8d5150a8d62100af02ccc58aaae31167" name="a8d5150a8d62100af02ccc58aaae31167"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a8d5150a8d62100af02ccc58aaae31167">&#9670;&#160;</a></span>run()</h2>
 
@@ -206,7 +269,7 @@ template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveF
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00190">190</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00232">232</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
 
 </div>
 </div>

@@ -172,7 +172,8 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1exterior_1_1IndexForCodifferentialOfCoboundaryInLaplacian.html">IndexForCodifferentialOfCoboundaryInLaplacian</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1LocalChain.html">LocalChain</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classsil_1_1exterior_1_1LocalChain.html" title="LocalChain class.">LocalChain</a> class.  <a href="classsil_1_1exterior_1_1LocalChain.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1exterior_1_1LocalChainIterator.html">LocalChainIterator</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1exterior_1_1Reconstruction.html">Reconstruction</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -256,6 +257,9 @@ Functions</h2></td></tr>
 <tr class="memitem:ab67124170cc5aa39c400687dc9e9e439" id="r_ab67124170cc5aa39c400687dc9e9e439"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; Kokkos::View &gt; AllocationType, class SimplexType &gt; </td></tr>
 <tr class="memitem:ab67124170cc5aa39c400687dc9e9e439"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt; <a class="el" href="#a52bc67c02d8ba34a3eeb34de1dd21df8">boundary_t</a>&lt; SimplexType &gt;, typename AllocationType::array_layout, typename AllocationType::memory_space &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ab67124170cc5aa39c400687dc9e9e439">boundary</a> (AllocationType allocation, SimplexType simplex)</td></tr>
 <tr class="separator:ab67124170cc5aa39c400687dc9e9e439"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaba7ef9ca3ba7d6e87059e0ad7de1643" id="r_aaba7ef9ca3ba7d6e87059e0ad7de1643"><td class="memTemplParams" colspan="2">template&lt;class MemorySpace  = Kokkos::HostSpace, class SimplexType &gt; </td></tr>
+<tr class="memitem:aaba7ef9ca3ba7d6e87059e0ad7de1643"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1LocalChain.html">LocalChain</a>&lt; <a class="el" href="#a52bc67c02d8ba34a3eeb34de1dd21df8">boundary_t</a>&lt; SimplexType &gt;, Kokkos::LayoutRight, MemorySpace &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#aaba7ef9ca3ba7d6e87059e0ad7de1643">boundary</a> (SimplexType simplex)</td></tr>
+<tr class="separator:aaba7ef9ca3ba7d6e87059e0ad7de1643"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5c98c080f983d9b2020d6b0f13598044" id="r_a5c98c080f983d9b2020d6b0f13598044"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; Kokkos::View &gt; AllocationType, class SimplexType &gt; </td></tr>
 <tr class="memitem:a5c98c080f983d9b2020d6b0f13598044"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt; <a class="el" href="#a52bc67c02d8ba34a3eeb34de1dd21df8">boundary_t</a>&lt; SimplexType &gt;, typename AllocationType::array_layout, typename AllocationType::memory_space &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a5c98c080f983d9b2020d6b0f13598044">boundary</a> (AllocationType allocation, <a class="el" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt; SimplexType, typename AllocationType::array_layout, typename AllocationType::memory_space &gt; chain)</td></tr>
 <tr class="separator:a5c98c080f983d9b2020d6b0f13598044"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -316,12 +320,16 @@ requires (detail::IntermediateRankLaplacianCochain&lt;LaplacianDummyIndex, Cocha
 requires (detail::TopRankLaplacianCochain&lt;LaplacianDummyIndex, CochainTag&gt;)</td></tr>
 <tr class="memitem:aed6715b5204a0ffdb220d8351655d05a"><td class="memTemplItemLeft" align="right" valign="top">TensorType&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#aed6715b5204a0ffdb220d8351655d05a">laplacian</a> (ExecSpace const &amp;exec_space, TensorType laplacian_tensor, TensorType tensor, HodgeStarType hodge_star, DualHodgeStarType dual_hodge_star, DualTensorBufferType dual_tensor_buffer, CodifferentialTensorBufferType codifferential_tensor_buffer)</td></tr>
 <tr class="separator:aed6715b5204a0ffdb220d8351655d05a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab438931846b5b39c2e5424037b5b32d9" id="r_ab438931846b5b39c2e5424037b5b32d9"><td class="memTemplParams" colspan="2">template&lt;class Head , misc::NotSpecialization&lt; ddc::DiscreteVector &gt;... Tail&gt; </td></tr>
-<tr class="memitem:ab438931846b5b39c2e5424037b5b32d9"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ab438931846b5b39c2e5424037b5b32d9">LocalChain</a> (Head, Tail...) -&gt; LocalChain&lt; ddc::type_seq_element_t&lt; 0, ddc::detail::TypeSeq&lt; Tail... &gt; &gt;, typename Head::array_layout, typename Head::memory_space &gt;</td></tr>
-<tr class="separator:ab438931846b5b39c2e5424037b5b32d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0a55f67a65dbd21a2155b6a1e4853367" id="r_a0a55f67a65dbd21a2155b6a1e4853367"><td class="memTemplParams" colspan="2">template&lt;std::size_t K, misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom, class ExecSpace &gt; </td></tr>
-<tr class="memitem:a0a55f67a65dbd21a2155b6a1e4853367"><td class="memTemplItemLeft" align="right" valign="top">constexpr auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a0a55f67a65dbd21a2155b6a1e4853367">tangent_basis</a> (ExecSpace const &amp;exec_space)</td></tr>
-<tr class="separator:a0a55f67a65dbd21a2155b6a1e4853367"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2f6077271f607d9959b484603cd7216e" id="r_a2f6077271f607d9959b484603cd7216e"><td class="memTemplParams" colspan="2">template&lt;std::size_t K, misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom, misc::Specialization&lt; ddc::DiscreteElement &gt; Elem&gt; </td></tr>
+<tr class="memitem:a2f6077271f607d9959b484603cd7216e"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a2f6077271f607d9959b484603cd7216e">tangent_basis</a> (Elem elem)</td></tr>
+<tr class="separator:a2f6077271f607d9959b484603cd7216e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0523d7030a15afff58c1d1ffebeebfba" id="r_a0523d7030a15afff58c1d1ffebeebfba"><td class="memTemplParams" colspan="2">template&lt;std::size_t K, misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom, class ExecSpace &gt; <br />
+requires (misc::NotSpecialization&lt;ExecSpace, ddc::DiscreteElement&gt;)</td></tr>
+<tr class="memitem:a0523d7030a15afff58c1d1ffebeebfba"><td class="memTemplItemLeft" align="right" valign="top">constexpr auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a0523d7030a15afff58c1d1ffebeebfba">tangent_basis</a> (ExecSpace const &amp;exec_space)</td></tr>
+<tr class="separator:a0523d7030a15afff58c1d1ffebeebfba"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad77d98f0d2f2ef2be8fe604aca0a1fc1" id="r_ad77d98f0d2f2ef2be8fe604aca0a1fc1"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; Kokkos::View &gt; AllocationType, class SimplexType , class... T&gt; </td></tr>
+<tr class="memitem:ad77d98f0d2f2ef2be8fe604aca0a1fc1"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ad77d98f0d2f2ef2be8fe604aca0a1fc1">LocalChain</a> (AllocationType, SimplexType, T...) -&gt; LocalChain&lt; std::remove_cvref_t&lt; SimplexType &gt;, typename AllocationType::array_layout, typename AllocationType::memory_space &gt;</td></tr>
+<tr class="separator:ad77d98f0d2f2ef2be8fe604aca0a1fc1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acb3e789973d4eb8b21ff313eb02fc8c1" id="r_acb3e789973d4eb8b21ff313eb02fc8c1"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; ddc::detail::TypeSeq &gt; Indices, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor</a> &gt; ReductionTensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor</a> &gt; PositionType, class ExecSpace , <a class="el" href="#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a> Complex = CellComplex::Primal&gt; </td></tr>
 <tr class="memitem:acb3e789973d4eb8b21ff313eb02fc8c1"><td class="memTemplItemLeft" align="right" valign="top">ReductionTensorType&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#acb3e789973d4eb8b21ff313eb02fc8c1">fill_reduction_operator</a> (ExecSpace const &amp;exec_space, ReductionTensorType reduction_tensor, PositionType position)</td></tr>
 <tr class="separator:acb3e789973d4eb8b21ff313eb02fc8c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -352,7 +360,7 @@ requires (detail::TopRankLaplacianCochain&lt;LaplacianDummyIndex, CochainTag&gt;
 </div><div class="memdoc">
 <div class="textblock"><div class="compoundTemplParams">template&lt;class... Args&gt;<br />
 struct sil::exterior::Coboundary&lt; Args &gt;</div>
-<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00158">158</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00162">162</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
 </div><div class="dynheader">
 Collaboration diagram for sil::exterior::Coboundary&lt; Args &gt;:</div>
 <div class="dyncontent">
@@ -427,7 +435,7 @@ Collaboration diagram for sil::exterior::StagedLaplacian&lt; Args &gt;:</div>
 </div><div class="memdoc">
 <div class="textblock"><div class="compoundTemplParams">template&lt;class... Args&gt;<br />
 struct sil::exterior::TransposedCoboundary&lt; Args &gt;</div>
-<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00161">161</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00165">165</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
 </div><div class="dynheader">
 Collaboration diagram for sil::exterior::TransposedCoboundary&lt; Args &gt;:</div>
 <div class="dyncontent">
@@ -454,7 +462,7 @@ template&lt;class T &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="boundary_8hpp_source.html#l00036">36</a> of file <a class="el" href="boundary_8hpp_source.html">boundary.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="boundary_8hpp_source.html#l00039">39</a> of file <a class="el" href="boundary_8hpp_source.html">boundary.hpp</a>.</p>
 
 </div>
 </div>
@@ -472,7 +480,7 @@ template&lt;misc::Specialization&lt; <a class="el" href="classsil_1_1exterior_1_
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00056">56</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00058">58</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
 
 </div>
 </div>
@@ -490,7 +498,7 @@ template&lt;class TagToAddToCochain , class CochainTag &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00086">86</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00088">88</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
 
 </div>
 </div>
@@ -510,7 +518,7 @@ template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex Cochai
 <b>Initial value:</b><div class="fragment"><div class="line"> </div>
 <div class="line">        <span class="keyword">typename</span> detail::CoboundaryTensorType&lt;TagToAddToCochain, CochainTag, TensorType&gt;::type</div>
 </div><!-- fragment -->
-<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00127">127</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00129">129</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
 
 </div>
 </div>
@@ -713,7 +721,7 @@ template&lt;std::size_t K, class Dom &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="simplex_8hpp_source.html#l00232">232</a> of file <a class="el" href="simplex_8hpp_source.html">simplex.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="simplex_8hpp_source.html#l00237">237</a> of file <a class="el" href="simplex_8hpp_source.html">simplex.hpp</a>.</p>
 
 </div>
 </div>
@@ -749,7 +757,7 @@ template&lt;std::size_t K, class Dom &gt; </div>
 </div>
 <h2 class="groupheader">Function Documentation</h2>
 <a id="ab67124170cc5aa39c400687dc9e9e439" name="ab67124170cc5aa39c400687dc9e9e439"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab67124170cc5aa39c400687dc9e9e439">&#9670;&#160;</a></span>boundary() <span class="overload">[1/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ab67124170cc5aa39c400687dc9e9e439">&#9670;&#160;</a></span>boundary() <span class="overload">[1/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -769,12 +777,33 @@ template&lt;misc::Specialization&lt; Kokkos::View &gt; AllocationType, class Sim
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="boundary_8hpp_source.html#l00142">142</a> of file <a class="el" href="boundary_8hpp_source.html">boundary.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="boundary_8hpp_source.html#l00169">169</a> of file <a class="el" href="boundary_8hpp_source.html">boundary.hpp</a>.</p>
+
+</div>
+</div>
+<a id="aaba7ef9ca3ba7d6e87059e0ad7de1643" name="aaba7ef9ca3ba7d6e87059e0ad7de1643"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaba7ef9ca3ba7d6e87059e0ad7de1643">&#9670;&#160;</a></span>boundary() <span class="overload">[2/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class MemorySpace  = Kokkos::HostSpace, class SimplexType &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION <a class="el" href="classsil_1_1exterior_1_1LocalChain.html">LocalChain</a>&lt; <a class="el" href="#a52bc67c02d8ba34a3eeb34de1dd21df8">boundary_t</a>&lt; SimplexType &gt;, Kokkos::LayoutRight, MemorySpace &gt; sil::exterior::boundary </td>
+          <td>(</td>
+          <td class="paramtype">SimplexType</td>          <td class="paramname"><span class="paramname"><em>simplex</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="boundary_8hpp_source.html#l00175">175</a> of file <a class="el" href="boundary_8hpp_source.html">boundary.hpp</a>.</p>
 
 </div>
 </div>
 <a id="a5c98c080f983d9b2020d6b0f13598044" name="a5c98c080f983d9b2020d6b0f13598044"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5c98c080f983d9b2020d6b0f13598044">&#9670;&#160;</a></span>boundary() <span class="overload">[2/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a5c98c080f983d9b2020d6b0f13598044">&#9670;&#160;</a></span>boundary() <span class="overload">[3/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -794,7 +823,7 @@ template&lt;misc::Specialization&lt; Kokkos::View &gt; AllocationType, class Sim
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="boundary_8hpp_source.html#l00152">152</a> of file <a class="el" href="boundary_8hpp_source.html">boundary.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="boundary_8hpp_source.html#l00196">196</a> of file <a class="el" href="boundary_8hpp_source.html">boundary.hpp</a>.</p>
 
 </div>
 </div>
@@ -863,7 +892,7 @@ template&lt;misc::Specialization&lt; <a class="el" href="classsil_1_1exterior_1_
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00394">394</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00609">609</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
 
 </div>
 </div>
@@ -893,7 +922,7 @@ template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex Cochai
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00404">404</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00619">619</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
 
 </div>
 </div>
@@ -923,7 +952,7 @@ template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex Cochai
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00451">451</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00661">661</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
 
 </div>
 </div>
@@ -953,7 +982,7 @@ template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex Cochai
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00498">498</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00703">703</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
 
 </div>
 </div>
@@ -1001,7 +1030,7 @@ template&lt;misc::Specialization&lt; <a class="el" href="classsil_1_1exterior_1_
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00372">372</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00368">368</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
@@ -1036,7 +1065,7 @@ template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveF
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00484">484</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00526">526</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
 
 </div>
 </div>
@@ -1081,7 +1110,7 @@ template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveF
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00509">509</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00551">551</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
 
 </div>
 </div>
@@ -1121,7 +1150,7 @@ template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveF
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00600">600</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00642">642</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
 
 </div>
 </div>
@@ -1423,36 +1452,43 @@ requires (detail::TopRankLaplacianCochain&lt;LaplacianDummyIndex, CochainTag&gt;
 
 </div>
 </div>
-<a id="ab438931846b5b39c2e5424037b5b32d9" name="ab438931846b5b39c2e5424037b5b32d9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab438931846b5b39c2e5424037b5b32d9">&#9670;&#160;</a></span>LocalChain()</h2>
+<a id="a2f6077271f607d9959b484603cd7216e" name="a2f6077271f607d9959b484603cd7216e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2f6077271f607d9959b484603cd7216e">&#9670;&#160;</a></span>tangent_basis() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Head , misc::NotSpecialization&lt; ddc::DiscreteVector &gt;... Tail&gt; </div>
+template&lt;std::size_t K, misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom, misc::Specialization&lt; ddc::DiscreteElement &gt; Elem&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">sil::exterior::LocalChain </td>
+          <td class="memname">KOKKOS_FUNCTION constexpr auto sil::exterior::tangent_basis </td>
           <td>(</td>
-          <td class="paramtype">Head</td>          <td class="paramname"><span class="paramname"><em></em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
+          <td class="paramtype">Elem</td>          <td class="paramname"><span class="paramname"><em>elem</em></span></td><td>)</td>
           <td></td>
-          <td class="paramtype">Tail...</td>          <td class="paramname"><span class="paramname"><em></em></span>&#160;) -&gt;  LocalChain&lt; ddc::type_seq_element_t&lt; 0, ddc::detail::TypeSeq&lt; Tail... &gt; &gt;, typename Head::array_layout, typename Head::memory_space &gt;</td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00435">435</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a0a55f67a65dbd21a2155b6a1e4853367" name="a0a55f67a65dbd21a2155b6a1e4853367"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0a55f67a65dbd21a2155b6a1e4853367">&#9670;&#160;</a></span>tangent_basis()</h2>
+<a id="a0523d7030a15afff58c1d1ffebeebfba" name="a0523d7030a15afff58c1d1ffebeebfba"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0523d7030a15afff58c1d1ffebeebfba">&#9670;&#160;</a></span>tangent_basis() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;std::size_t K, misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom, class ExecSpace &gt; </div>
+template&lt;std::size_t K, misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom, class ExecSpace &gt; <br />
+requires (misc::NotSpecialization&lt;ExecSpace, ddc::DiscreteElement&gt;)</div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1471,7 +1507,35 @@ template&lt;std::size_t K, misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00410">410</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00442">442</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+
+</div>
+</div>
+<a id="ad77d98f0d2f2ef2be8fe604aca0a1fc1" name="ad77d98f0d2f2ef2be8fe604aca0a1fc1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad77d98f0d2f2ef2be8fe604aca0a1fc1">&#9670;&#160;</a></span>LocalChain()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;misc::Specialization&lt; Kokkos::View &gt; AllocationType, class SimplexType , class... T&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">sil::exterior::LocalChain </td>
+          <td>(</td>
+          <td class="paramtype">AllocationType</td>          <td class="paramname"><span class="paramname"><em></em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">SimplexType</td>          <td class="paramname"><span class="paramname"><em></em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">T...</td>          <td class="paramname"><span class="paramname"><em></em></span>&#160;) -&gt;  LocalChain&lt; std::remove_cvref_t&lt; SimplexType &gt;, typename AllocationType::array_layout, typename AllocationType::memory_space &gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -1607,7 +1671,7 @@ template&lt;std::size_t K, class... Tag&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="simplex_8hpp_source.html#l00235">235</a> of file <a class="el" href="simplex_8hpp_source.html">simplex.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="simplex_8hpp_source.html#l00240">240</a> of file <a class="el" href="simplex_8hpp_source.html">simplex.hpp</a>.</p>
 
 </div>
 </div>

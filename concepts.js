@@ -9,5 +9,13 @@ var concepts =
         [ "TensorIndex", "conceptsil_1_1tensor_1_1TensorIndex.html", null ],
         [ "TensorNatIndex", "conceptsil_1_1tensor_1_1TensorNatIndex.html", null ]
       ] ]
+    ] ],
+    [ "similie", "namespacesimilie.html", [
+      [ "physics", "namespacesimilie_1_1physics.html", [
+        [ "magnetostatics", "namespacesimilie_1_1physics_1_1magnetostatics.html", [
+          [ "TwoDimensional", "conceptsimilie_1_1physics_1_1magnetostatics_1_1TwoDimensional.html", null ],
+          [ "ThreeDimensional", "conceptsimilie_1_1physics_1_1magnetostatics_1_1ThreeDimensional.html", null ]
+        ] ]
+      ] ]
     ] ]
 ];

@@ -1,9 +1,6 @@
 var searchData=
 [
-  ['scalarindex_0',['ScalarIndex',['../structsil_1_1tensor_1_1ScalarIndex.html',1,'sil::tensor']]],
-  ['simplex_1',['Simplex',['../classsil_1_1exterior_1_1Simplex.html',1,'sil::exterior']]],
-  ['simplexvolume_2',['SimplexVolume',['../structsil_1_1exterior_1_1SimplexVolume.html',1,'sil::exterior']]],
-  ['stagedcodifferential_3',['StagedCodifferential',['../classsil_1_1exterior_1_1StagedCodifferential.html',1,'sil::exterior']]],
-  ['stagedlaplacian_4',['StagedLaplacian',['../namespacesil_1_1exterior.html#classsil_1_1exterior_1_1StagedLaplacian',1,'sil::exterior']]],
-  ['stagedlaplacian_3c_20metricindex_2c_20laplaciandummyindex_2c_20cochaintag_2c_20tensortype_2c_20metrictype_2c_20positiontype_2c_20execspace_20_3e_5',['StagedLaplacian&lt; MetricIndex, LaplacianDummyIndex, CochainTag, TensorType, MetricType, PositionType, ExecSpace &gt;',['../classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html',1,'sil::exterior']]]
+  ['orthogonalplaneindex_0',['OrthogonalPlaneIndex',['../structsimilie_1_1physics_1_1magnetostatics_1_1OrthogonalPlaneIndex.html',1,'similie::physics::magnetostatics']]],
+  ['owningtensor_1',['OwningTensor',['../namespacesil_1_1tensor.html#classsil_1_1tensor_1_1OwningTensor',1,'sil::tensor']]],
+  ['owningtensor_3c_20tensor_3c_20elementtype_2c_20domaintype_2c_20layoutstridedpolicy_2c_20memoryspace_20_3e_2c_20storage_20_3e_2',['OwningTensor&lt; Tensor&lt; ElementType, DomainType, LayoutStridedPolicy, MemorySpace &gt;, Storage &gt;',['../classsil_1_1tensor_1_1OwningTensor_3_01Tensor_3_01ElementType_00_01DomainType_00_01LayoutStridede8c6ac86c910712a64335c9c13c9211e.html',1,'sil::tensor']]]
 ];
