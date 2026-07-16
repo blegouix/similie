@@ -148,8 +148,10 @@ struct ComputeSimplex<Chain<Simplex<K, Tag...>, LayoutStridedPolicy, ExecSpace>>
                      || static_cast<bool>((*i).discrete_vector().template get<Tag>()))...};
         }
         // This assumes that the chain has been produced using boundary().
-        auto const elem = (*chain.begin()).discrete_element();
-        return Simplex(std::integral_constant<std::size_t, K + 1> {}, elem, vect);
+        return Simplex(
+                std::integral_constant<std::size_t, K + 1> {},
+                (*chain.begin()).discrete_element(),
+                vect);
     }
 };
 
@@ -215,25 +217,40 @@ KOKKOS_FUNCTION auto make_stencil(ddc::DiscreteElement<DDims...> front)
                         (sizeof...(DDims) == 0 ? 1UL : (1UL << sizeof...(DDims)))
                                 * TensorIndex::mem_size()>>
 {
-    using spatial_domain_type = ddc::DiscreteDomain<DDims...>;
-    using domain_type = ddc::DiscreteDomain<DDims..., TensorIndex>;
-    using storage_type = std::array<
+    std::array<
             double,
-            (sizeof...(DDims) == 0 ? 1UL : (1UL << sizeof...(DDims))) * TensorIndex::mem_size()>;
-    using tensor_type = sil::tensor::Tensor<double, domain_type, Kokkos::layout_right, MemorySpace>;
-    storage_type storage {};
-    domain_type const
-            domain(spatial_domain_type(
+            (sizeof...(DDims) == 0 ? 1UL : (1UL << sizeof...(DDims))) * TensorIndex::mem_size()>
+            storage {};
+    ddc::DiscreteDomain<DDims..., TensorIndex> const
+            domain(ddc::DiscreteDomain<DDims...>(
                            front,
-                           typename spatial_domain_type::discrete_vector_type(
+                           typename ddc::DiscreteDomain<DDims...>::discrete_vector_type(
                                    ddc::DiscreteVector<DDims>(2)...)),
                    ddc::DiscreteDomain<TensorIndex>(
                            ddc::DiscreteElement<TensorIndex>(0),
                            ddc::DiscreteVector<TensorIndex>(TensorIndex::mem_size())));
-    ddc::ChunkSpan<double, domain_type, Kokkos::layout_right, MemorySpace>
+    ddc::ChunkSpan<
+            double,
+            ddc::DiscreteDomain<DDims..., TensorIndex>,
+            Kokkos::layout_right,
+            MemorySpace>
             span(storage.data(), domain);
-    tensor_type tensor(span);
-    return sil::tensor::OwningTensor<tensor_type, storage_type>(tensor, std::move(storage));
+    sil::tensor::Tensor<
+            double,
+            ddc::DiscreteDomain<DDims..., TensorIndex>,
+            Kokkos::layout_right,
+            MemorySpace>
+            tensor(span);
+    return sil::tensor::OwningTensor<
+            sil::tensor::Tensor<
+                    double,
+                    ddc::DiscreteDomain<DDims..., TensorIndex>,
+                    Kokkos::layout_right,
+                    MemorySpace>,
+            std::array<
+                    double,
+                    (sizeof...(DDims) == 0 ? 1UL : (1UL << sizeof...(DDims)))
+                            * TensorIndex::mem_size()>>(tensor, std::move(storage));
 }
 
 template <class Elem>
@@ -446,13 +463,12 @@ struct TransposedCoboundary<TagToAddToCochain, CochainTag>
             std::size_t const boundary_id
                     = Kokkos::Experimental::distance(boundary_chain.begin(), j);
             if (boundary_id >= CochainTag::rank() + 1) {
-                auto simplex_vector = chain[stored_component_id].discrete_vector();
-                auto sampled_face_vector = (*j).discrete_vector();
                 for (std::size_t dim_id = 0;
                      dim_id < ddc::type_seq_size_v<ddc::to_type_seq_t<SpatialElem>>;
                      ++dim_id) {
-                    if (ddc::detail::array(simplex_vector)[dim_id] != 0
-                        && ddc::detail::array(sampled_face_vector)[dim_id] == 0) {
+                    if (ddc::detail::array(chain[stored_component_id].discrete_vector())[dim_id]
+                                != 0
+                        && ddc::detail::array((*j).discrete_vector())[dim_id] == 0) {
                         ddc::detail::array(sampled_face_elem)[dim_id] -= 2;
                         break;
                     }

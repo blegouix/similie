@@ -402,26 +402,6 @@ inline void log_nonlinear_progress(
               << " relative_residual=" << diagnostics.final_relative_residual << std::endl;
 }
 
-template <class ExecSpace, class OperatorModel, class InputView, class OutputView>
-void apply_operator(
-        ExecSpace exec_space,
-        OperatorModel const& operator_model,
-        InputView input,
-        OutputView output)
-{
-    if constexpr (requires(OperatorModel const& model, ExecSpace ex, InputView in, OutputView out) {
-                      model.apply(ex, in, out);
-                  }) {
-        operator_model.apply(exec_space, input, output);
-    } else {
-        static_assert(
-                requires(OperatorModel const& model, ExecSpace ex, InputView in, OutputView out) {
-                    model.apply(ex, in, out);
-                },
-                "OperatorModel must provide apply(exec_space, input, output)");
-    }
-}
-
 template <class ExecSpace, class OperatorModel, class = void>
 struct MatrixFreeWorkspaceTraits
 {
@@ -450,26 +430,6 @@ bool uses_precomputed_matrix_free_stencils(OperatorModel const& operator_model)
         return operator_model.has_precomputed_stencils();
     }
     return false;
-}
-
-template <class ExecSpace, class OperatorModel, class InputView, class OutputView, class Workspace>
-void apply_operator(
-        ExecSpace exec_space,
-        OperatorModel const& operator_model,
-        InputView input,
-        OutputView output,
-        Workspace& workspace)
-{
-    if constexpr (requires(
-                          OperatorModel const& model,
-                          ExecSpace ex,
-                          InputView in,
-                          OutputView out,
-                          Workspace& work) { model.apply(ex, in, out, work); }) {
-        operator_model.apply(exec_space, input, output, workspace);
-    } else {
-        apply_operator(exec_space, operator_model, input, output);
-    }
 }
 
 template <class ExecSpace, class ViewType1, class ViewType2>
@@ -741,17 +701,28 @@ public:
         auto b_view = gko::ext::kokkos::map_data<memory_space>(*b_dense);
         auto x_view = gko::ext::kokkos::map_data<memory_space>(*x_dense);
         if constexpr (workspace_traits::enabled) {
-            if (uses_precomputed_matrix_free_stencils(*m_operator_model)) {
-                apply_operator(m_exec_space, *m_operator_model, b_view, x_view);
-            } else if (m_workspace == nullptr) {
-                m_workspace = std::make_shared<workspace_type>(
-                        m_operator_model->create_matrix_free_workspace(m_exec_space));
-                apply_operator(m_exec_space, *m_operator_model, b_view, x_view, *m_workspace);
+            if constexpr (requires(
+                                  OperatorModel const& model,
+                                  ExecSpace ex,
+                                  decltype(b_view) input,
+                                  decltype(x_view) output,
+                                  workspace_type& workspace) {
+                              model.apply(ex, input, output, workspace);
+                          }) {
+                if (uses_precomputed_matrix_free_stencils(*m_operator_model)) {
+                    m_operator_model->apply(m_exec_space, b_view, x_view);
+                } else {
+                    if (m_workspace == nullptr) {
+                        m_workspace = std::make_shared<workspace_type>(
+                                m_operator_model->create_matrix_free_workspace(m_exec_space));
+                    }
+                    m_operator_model->apply(m_exec_space, b_view, x_view, *m_workspace);
+                }
             } else {
-                apply_operator(m_exec_space, *m_operator_model, b_view, x_view, *m_workspace);
+                m_operator_model->apply(m_exec_space, b_view, x_view);
             }
         } else {
-            apply_operator(m_exec_space, *m_operator_model, b_view, x_view);
+            m_operator_model->apply(m_exec_space, b_view, x_view);
         }
         m_exec_space.fence();
         auto const apply_end = std::chrono::steady_clock::now();
@@ -785,17 +756,28 @@ public:
         Kokkos::View<double**, Kokkos::LayoutRight, memory_space>
                 applied("similie_matrix_free_linop_apply", x_view.extent(0), x_view.extent(1));
         if constexpr (workspace_traits::enabled) {
-            if (uses_precomputed_matrix_free_stencils(*m_operator_model)) {
-                apply_operator(m_exec_space, *m_operator_model, b_view, applied);
-            } else if (m_workspace == nullptr) {
-                m_workspace = std::make_shared<workspace_type>(
-                        m_operator_model->create_matrix_free_workspace(m_exec_space));
-                apply_operator(m_exec_space, *m_operator_model, b_view, applied, *m_workspace);
+            if constexpr (requires(
+                                  OperatorModel const& model,
+                                  ExecSpace ex,
+                                  decltype(b_view) input,
+                                  decltype(applied) output,
+                                  workspace_type& workspace) {
+                              model.apply(ex, input, output, workspace);
+                          }) {
+                if (uses_precomputed_matrix_free_stencils(*m_operator_model)) {
+                    m_operator_model->apply(m_exec_space, b_view, applied);
+                } else {
+                    if (m_workspace == nullptr) {
+                        m_workspace = std::make_shared<workspace_type>(
+                                m_operator_model->create_matrix_free_workspace(m_exec_space));
+                    }
+                    m_operator_model->apply(m_exec_space, b_view, applied, *m_workspace);
+                }
             } else {
-                apply_operator(m_exec_space, *m_operator_model, b_view, applied, *m_workspace);
+                m_operator_model->apply(m_exec_space, b_view, applied);
             }
         } else {
-            apply_operator(m_exec_space, *m_operator_model, b_view, applied);
+            m_operator_model->apply(m_exec_space, b_view, applied);
         }
         Kokkos::parallel_for(
                 "similie_matrix_free_linop_advanced_apply",
@@ -1306,7 +1288,7 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
             gko_exec->synchronize();
             copy_back_from_gko_dense_bridge(applied, applied_gko_for_residual);
         } else {
-            apply_operator(exec_space, operator_model, solution, applied);
+            operator_model.apply(exec_space, solution, applied);
         }
         copy(exec_space, true_residual, rhs);
         axpy_inplace(exec_space, true_residual, -1.0, applied);
@@ -1423,7 +1405,7 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
         auto const optimization_start = std::chrono::steady_clock::now();
         diagnostics.converged = false;
 
-        detail::apply_operator(exec_space, operator_model, solution, operator_value);
+        operator_model.apply(exec_space, solution, operator_value);
         detail::copy(exec_space, residual, rhs);
         detail::axpy_inplace(exec_space, residual, -1.0, operator_value);
         diagnostics.initial_residual_l2 = detail::residual_norm_l2(exec_space, residual);
@@ -1535,11 +1517,7 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
                  ++line_search_step) {
                 detail::copy(exec_space, candidate_solution, solution);
                 detail::axpy_inplace(exec_space, candidate_solution, alpha, delta);
-                detail::apply_operator(
-                        exec_space,
-                        operator_model,
-                        candidate_solution,
-                        candidate_operator_value);
+                operator_model.apply(exec_space, candidate_solution, candidate_operator_value);
                 detail::copy(exec_space, candidate_residual, rhs);
                 detail::axpy_inplace(
                         exec_space,
@@ -1561,11 +1539,7 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
                 alpha = best_alpha;
                 detail::copy(exec_space, candidate_solution, solution);
                 detail::axpy_inplace(exec_space, candidate_solution, alpha, delta);
-                detail::apply_operator(
-                        exec_space,
-                        operator_model,
-                        candidate_solution,
-                        candidate_operator_value);
+                operator_model.apply(exec_space, candidate_solution, candidate_operator_value);
                 detail::copy(exec_space, candidate_residual, rhs);
                 detail::axpy_inplace(
                         exec_space,

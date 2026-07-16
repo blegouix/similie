@@ -120,9 +120,8 @@ public:
     using simplex_type = SimplexType;
     using discrete_element_type = typename simplex_type::discrete_element_type;
     using discrete_vector_type = typename simplex_type::discrete_vector_type;
-    static constexpr std::size_t AMBIENT_DIM
-            = ddc::type_seq_size_v<ddc::to_type_seq_t<discrete_vector_type>>;
-    static constexpr std::size_t MAX_SIZE = 1UL << AMBIENT_DIM;
+    static constexpr std::size_t MAX_SIZE
+            = 1UL << ddc::type_seq_size_v<ddc::to_type_seq_t<discrete_vector_type>>;
     using storage_type = std::array<simplex_type, MAX_SIZE>;
 
     using iterator_type = LocalChainIterator<SimplexType, LayoutStridedPolicy, MemorySpace>;
