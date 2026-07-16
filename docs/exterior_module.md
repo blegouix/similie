@@ -1,4 +1,4 @@
-# Exterior module {#exterior_module}
+# The exterior module {#exterior_module}
 <!--
 SPDX-FileCopyrightText: 2024 Baptiste Legouix
 SPDX-License-Identifier: MIT

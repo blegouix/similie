@@ -54,12 +54,12 @@ KOKKOS_FUNCTION void copy_flat_natural_elem_ids(
     } else {
         using EntryType = std::remove_cvref_t<decltype(entries[0])>;
         if constexpr (std::is_same_v<EntryType, std::size_t>) {
-            for (std::size_t i = 0; i < entries.size(); ++i) {
-                ids[offset++] = entries[i];
+            for (auto const& entry : entries) {
+                ids[offset++] = entry;
             }
         } else {
-            for (std::size_t i = 0; i < entries.size(); ++i) {
-                copy_flat_natural_elem_ids(ids, offset, entries[i]);
+            for (auto const& entry : entries) {
+                copy_flat_natural_elem_ids(ids, offset, entry);
             }
         }
     }
@@ -86,13 +86,13 @@ KOKKOS_FUNCTION void assign_flat_natural_elem_ids(
     } else {
         using EntryType = std::remove_cvref_t<decltype(entries[0])>;
         if constexpr (std::is_same_v<EntryType, std::size_t>) {
-            for (std::size_t i = 0; i < entries.size(); ++i) {
-                entries[i] = ids[offset++];
+            for (auto& entry : entries) {
+                entry = ids[offset++];
             }
             ddc::detail::array(elem) = entries;
         } else {
-            for (std::size_t i = 0; i < entries.size(); ++i) {
-                assign_flat_natural_elem_ids(entries[i], ids, offset);
+            for (auto& entry : entries) {
+                assign_flat_natural_elem_ids(entry, ids, offset);
             }
             ddc::detail::array(elem) = entries;
         }

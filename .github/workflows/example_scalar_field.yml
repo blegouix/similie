@@ -31,7 +31,7 @@ jobs:
     runs-on: [self-hosted, linux]
     timeout-minutes: 90
     environment:
-      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run') }}
+      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'examples-cuda' || 'automatic-ci-run') }}
     steps:
     - name: Select target commit
       id: target
@@ -64,7 +64,7 @@ jobs:
           -e HOME="${CACHE_ROOT}/home" \
           -e CACHE_ROOT="${CACHE_ROOT}" \
           -v "${CACHE_ROOT}:${CACHE_ROOT}" \
-          -w "${CACHE_ROOT}/agent_build" \
+          -w "${CACHE_ROOT}/build" \
           "${IMAGE_TAG}" \
           bash -lc '
             set -euo pipefail
@@ -72,5 +72,5 @@ jobs:
             git config --global --add safe.directory "*"
             nvidia-smi
             cmake --build . --parallel 8 --target 2d_scalar_field
-            ./examples/scalar_field/2d_scalar_field
+            ./examples/2d_scalar_field
           '

@@ -4,12 +4,11 @@
 #pragma once
 
 #include <array>
+#include <utility>
 
 #include <ddc/ddc.hpp>
 
 #include <similie/misc/are_all_same.hpp>
-#include <similie/misc/clamp_to_domain.hpp>
-#include <similie/misc/domain_contains.hpp>
 #include <similie/misc/filled_struct.hpp>
 #include <similie/misc/macros.hpp>
 #include <similie/misc/portable_stl.hpp>
@@ -18,12 +17,15 @@
 #include <similie/misc/type_seq_conversion.hpp>
 #include <similie/tensor/antisymmetric_tensor.hpp>
 #include <similie/tensor/dummy_index.hpp>
+#include <similie/tensor/owning_tensor.hpp>
 #include <similie/tensor/tensor_impl.hpp>
 
 #include <Kokkos_StdAlgorithms.hpp>
 
+#include "boundary.hpp"
 #include "cochain.hpp"
 #include "cosimplex.hpp"
+#include "evaluators.hpp"
 
 
 namespace sil {
@@ -145,9 +147,11 @@ struct ComputeSimplex<Chain<Simplex<K, Tag...>, LayoutStridedPolicy, ExecSpace>>
                     (static_cast<bool>(vect.template get<Tag>())
                      || static_cast<bool>((*i).discrete_vector().template get<Tag>()))...};
         }
+        // This assumes that the chain has been produced using boundary().
         return Simplex(
                 std::integral_constant<std::size_t, K + 1> {},
-                chain[0].discrete_element(), // This is an assumption on the structure of the chain, which is satisfied if it has been produced using boundary()
+                (*chain.begin())
+                        .discrete_element(), // This is an assumption on the structure of the chain, which is satisfied if it has been produced using boundary()
                 vect);
     }
 };
@@ -201,11 +205,151 @@ struct CoboundaryDummyIndex
 {
 };
 
+template <class MemorySpace = Kokkos::HostSpace, class TensorIndex, class... DDims>
+KOKKOS_FUNCTION auto make_stencil(ddc::DiscreteElement<DDims...> front)
+        -> sil::tensor::OwningTensor<
+                sil::tensor::Tensor<
+                        double,
+                        ddc::DiscreteDomain<DDims..., TensorIndex>,
+                        Kokkos::layout_right,
+                        MemorySpace>,
+                std::array<
+                        double,
+                        (sizeof...(DDims) == 0 ? 1UL : (1UL << sizeof...(DDims)))
+                                * TensorIndex::mem_size()>>
+{
+    std::array<
+            double,
+            (sizeof...(DDims) == 0 ? 1UL : (1UL << sizeof...(DDims))) * TensorIndex::mem_size()>
+            storage {};
+    ddc::DiscreteDomain<DDims..., TensorIndex> const
+            domain(ddc::DiscreteDomain<DDims...>(
+                           front,
+                           typename ddc::DiscreteDomain<DDims...>::discrete_vector_type(
+                                   ddc::DiscreteVector<DDims>(2)...)),
+                   ddc::DiscreteDomain<TensorIndex>(
+                           ddc::DiscreteElement<TensorIndex>(0),
+                           ddc::DiscreteVector<TensorIndex>(TensorIndex::mem_size())));
+    ddc::ChunkSpan<
+            double,
+            ddc::DiscreteDomain<DDims..., TensorIndex>,
+            Kokkos::layout_right,
+            MemorySpace>
+            span(storage.data(), domain);
+    sil::tensor::Tensor<
+            double,
+            ddc::DiscreteDomain<DDims..., TensorIndex>,
+            Kokkos::layout_right,
+            MemorySpace>
+            tensor(span);
+    return sil::tensor::OwningTensor<
+            sil::tensor::Tensor<
+                    double,
+                    ddc::DiscreteDomain<DDims..., TensorIndex>,
+                    Kokkos::layout_right,
+                    MemorySpace>,
+            std::array<
+                    double,
+                    (sizeof...(DDims) == 0 ? 1UL : (1UL << sizeof...(DDims)))
+                            * TensorIndex::mem_size()>>(tensor, std::move(storage));
+}
+
+template <class Elem>
+KOKKOS_FUNCTION Elem decrement_all(Elem elem)
+{
+    Elem shifted = elem;
+    constexpr std::size_t RANK = ddc::type_seq_size_v<ddc::to_type_seq_t<Elem>>;
+    for (std::size_t dim_id = 0; dim_id < RANK; ++dim_id) {
+        ddc::detail::array(shifted)[dim_id] -= 1;
+    }
+    return shifted;
+}
+
+template <class LowerChainType, class VectorType>
+KOKKOS_FUNCTION auto find_discrete_vector(
+        LowerChainType const& lower_chain,
+        VectorType const& vector)
+{
+    for (auto i = lower_chain.begin(); i < lower_chain.end(); ++i) {
+        if ((*i).discrete_vector() == vector) {
+            return i;
+        }
+    }
+    return lower_chain.end();
+}
+
 } // namespace detail
 
 template <tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag>
 struct Coboundary<TagToAddToCochain, CochainTag>
 {
+    template <class Evaluator, class ChainType, class LowerChainType, class Elem, class NaturalElem>
+    KOKKOS_FUNCTION static auto value(
+            Evaluator evaluator,
+            ChainType chain,
+            LowerChainType lower_chain,
+            Elem elem,
+            NaturalElem natural_elem)
+    {
+        std::size_t const stored_component_id
+                = coboundary_index_t<TagToAddToCochain, CochainTag>::access_id_to_mem_id(
+                        natural_elem
+                                .template uid<coboundary_index_t<TagToAddToCochain, CochainTag>>());
+        typename ChainType::simplex_type
+                simplex(std::integral_constant<std::size_t, CochainTag::rank() + 1> {},
+                        typename ChainType::simplex_type::discrete_element_type(elem),
+                        chain[stored_component_id].discrete_vector());
+        auto boundary_chain = boundary<typename ChainType::memory_space>(simplex);
+
+        typename LowerChainType::simplex_type::discrete_element_type front(
+                (*boundary_chain.begin()).discrete_element());
+        for (auto j = boundary_chain.begin(); j < boundary_chain.end(); ++j) {
+            for (std::size_t dim_id = 0;
+                 dim_id < ddc::type_seq_size_v<ddc::to_type_seq_t<
+                         typename LowerChainType::simplex_type::discrete_element_type>>;
+                 ++dim_id) {
+                ddc::detail::array(front)[dim_id] = std::
+                        min(ddc::detail::array(front)[dim_id],
+                            ddc::detail::array((*j).discrete_element())[dim_id]);
+            }
+        }
+
+        auto stencil = detail::make_stencil<typename ChainType::memory_space, CochainTag>(front);
+        ddc::device_for_each(stencil.domain(), [&](auto stencil_elem) {
+            auto basis_stencil
+                    = detail::make_stencil<typename ChainType::memory_space, CochainTag>(front);
+            basis_stencil.mem(stencil_elem) = 1.0;
+
+            [[maybe_unused]] sil::tensor::TensorAccessor<
+                    coboundary_index_t<TagToAddToCochain, CochainTag>> accessor;
+            std::array<double, coboundary_index_t<TagToAddToCochain, CochainTag>::access_size()>
+                    output_storage {};
+            ddc::ChunkSpan<
+                    double,
+                    ddc::DiscreteDomain<coboundary_index_t<TagToAddToCochain, CochainTag>>,
+                    Kokkos::layout_right,
+                    typename ChainType::memory_space>
+                    output_span(output_storage.data(), accessor.domain());
+            sil::tensor::Tensor output_tensor(output_span);
+
+            auto basis_evaluator = [&](auto sampled_elem, auto cochain_elem) {
+                auto basis_sampler = [&](auto basis_elem, auto basis_cochain_elem) {
+                    if (!basis_stencil.non_indices_domain().contains(basis_elem)) {
+                        return 0.0;
+                    }
+                    return basis_stencil(
+                            basis_stencil.access_element(basis_elem, basis_cochain_elem));
+                };
+                return evaluator.value(basis_sampler, sampled_elem, cochain_elem);
+            };
+
+            run(output_tensor, basis_evaluator, chain, lower_chain, elem);
+            stencil.mem(stencil_elem) = output_tensor(natural_elem);
+        });
+
+        return stencil;
+    }
+
     template <
             class CoboundaryTensorType,
             class Evaluator,
@@ -220,17 +364,10 @@ struct Coboundary<TagToAddToCochain, CochainTag>
             Elem elem)
     {
         constexpr std::size_t BOUNDARY_SIZE = 2 * (CochainTag::rank() + 1);
-        std::array<typename LowerChainType::simplex_type, BOUNDARY_SIZE> simplex_boundary_alloc {};
         std::array<double, BOUNDARY_SIZE> boundary_values_alloc {};
         ddc::DiscreteDomain<detail::CoboundaryDummyIndex> const boundary_domain(
                 ddc::DiscreteElement<detail::CoboundaryDummyIndex>(0),
                 ddc::DiscreteVector<detail::CoboundaryDummyIndex>(BOUNDARY_SIZE));
-        ddc::ChunkSpan<
-                typename LowerChainType::simplex_type,
-                ddc::DiscreteDomain<detail::CoboundaryDummyIndex>,
-                Kokkos::layout_right,
-                typename CoboundaryTensorType::memory_space>
-                simplex_boundary(simplex_boundary_alloc.data(), boundary_domain);
         ddc::ChunkSpan<
                 double,
                 ddc::DiscreteDomain<detail::CoboundaryDummyIndex>,
@@ -238,13 +375,16 @@ struct Coboundary<TagToAddToCochain, CochainTag>
                 typename CoboundaryTensorType::memory_space>
                 boundary_values(boundary_values_alloc.data(), boundary_domain);
 
-        auto cochain = Cochain(chain, coboundary_tensor);
-        for (auto i = cochain.begin(); i < cochain.end(); ++i) {
+        typename ChainType::simplex_type::discrete_element_type const elem_on_chain
+                = misc::select_from_type_seq<ddc::to_type_seq_t<
+                        typename ChainType::simplex_type::discrete_element_type>>(elem);
+        for (auto i = chain.begin(); i < chain.end(); ++i) {
+            std::size_t const chain_id = Kokkos::Experimental::distance(chain.begin(), i);
             typename ChainType::simplex_type
                     simplex(std::integral_constant<std::size_t, CochainTag::rank() + 1> {},
-                            typename ChainType::simplex_type::discrete_element_type(elem),
+                            elem_on_chain,
                             (*i).discrete_vector());
-            auto boundary_chain = boundary(simplex_boundary.allocation_kokkos_view(), simplex);
+            auto boundary_chain = boundary<typename CoboundaryTensorType::memory_space>(simplex);
             for (auto j = boundary_chain.begin(); j < boundary_chain.end(); ++j) {
                 std::size_t const boundary_id
                         = Kokkos::Experimental::distance(boundary_chain.begin(), j);
@@ -259,10 +399,9 @@ struct Coboundary<TagToAddToCochain, CochainTag>
                                     Elem((*j).discrete_element()),
                                     ddc::DiscreteElement<CochainTag>(Kokkos::Experimental::distance(
                                             lower_chain.begin(),
-                                            misc::detail::
-                                                    find(lower_chain.begin(),
-                                                         lower_chain.end(),
-                                                         (*j).discrete_vector()))));
+                                            detail::find_discrete_vector(
+                                                    lower_chain,
+                                                    (*j).discrete_vector()))));
                 } else {
                     boundary_values(ddc::DiscreteElement<detail::CoboundaryDummyIndex>(boundary_id))
                             = evaluator(
@@ -274,16 +413,15 @@ struct Coboundary<TagToAddToCochain, CochainTag>
                                                                  discrete_element_type>>>(elem)),
                                     ddc::DiscreteElement<CochainTag>(Kokkos::Experimental::distance(
                                             lower_chain.begin(),
-                                            misc::detail::
-                                                    find(lower_chain.begin(),
-                                                         lower_chain.end(),
-                                                         (*j).discrete_vector()))));
+                                            detail::find_discrete_vector(
+                                                    lower_chain,
+                                                    (*j).discrete_vector()))));
                 }
             }
             Cochain cochain_boundary(boundary_chain, boundary_values.allocation_kokkos_view());
             coboundary_tensor.mem(
                     ddc::DiscreteElement<coboundary_index_t<TagToAddToCochain, CochainTag>>(
-                            Kokkos::Experimental::distance(cochain.begin(), i)))
+                            chain_id))
                     = cochain_boundary.integrate();
         }
     }
@@ -292,6 +430,90 @@ struct Coboundary<TagToAddToCochain, CochainTag>
 template <tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag>
 struct TransposedCoboundary<TagToAddToCochain, CochainTag>
 {
+    template <class Evaluator, class ChainType, class LowerChainType, class Elem, class NaturalElem>
+    KOKKOS_FUNCTION static auto value(
+            Evaluator evaluator,
+            ChainType chain,
+            LowerChainType lower_chain,
+            Elem elem,
+            NaturalElem natural_elem)
+    {
+        constexpr std::size_t BOUNDARY_SIZE = 2 * (CochainTag::rank() + 1);
+        std::size_t const stored_component_id
+                = coboundary_index_t<TagToAddToCochain, CochainTag>::access_id_to_mem_id(
+                        natural_elem
+                                .template uid<coboundary_index_t<TagToAddToCochain, CochainTag>>());
+        typename ChainType::simplex_type
+                simplex(std::integral_constant<std::size_t, CochainTag::rank() + 1> {},
+                        typename ChainType::simplex_type::discrete_element_type(elem),
+                        chain[stored_component_id].discrete_vector());
+        auto boundary_chain = boundary<typename ChainType::memory_space>(simplex);
+
+        typename LowerChainType::simplex_type::discrete_element_type front(
+                (*boundary_chain.begin()).discrete_element());
+        for (auto j = boundary_chain.begin(); j < boundary_chain.end(); ++j) {
+            auto sampled_face_elem = (*j).discrete_element();
+            std::size_t const boundary_id
+                    = Kokkos::Experimental::distance(boundary_chain.begin(), j);
+            if (boundary_id >= CochainTag::rank() + 1) {
+                for (std::size_t dim_id = 0;
+                     dim_id < ddc::type_seq_size_v<ddc::to_type_seq_t<
+                             typename LowerChainType::simplex_type::discrete_element_type>>;
+                     ++dim_id) {
+                    if (ddc::detail::array(chain[stored_component_id].discrete_vector())[dim_id]
+                                != 0
+                        && ddc::detail::array((*j).discrete_vector())[dim_id] == 0) {
+                        ddc::detail::array(sampled_face_elem)[dim_id] -= 2;
+                        break;
+                    }
+                }
+            }
+            for (std::size_t dim_id = 0;
+                 dim_id < ddc::type_seq_size_v<ddc::to_type_seq_t<
+                         typename LowerChainType::simplex_type::discrete_element_type>>;
+                 ++dim_id) {
+                ddc::detail::array(front)[dim_id] = std::
+                        min(ddc::detail::array(front)[dim_id],
+                            ddc::detail::array(sampled_face_elem)[dim_id]);
+            }
+        }
+
+        auto stencil = detail::make_stencil<typename ChainType::memory_space, CochainTag>(front);
+        ddc::device_for_each(stencil.domain(), [&](auto stencil_elem) {
+            auto basis_stencil
+                    = detail::make_stencil<typename ChainType::memory_space, CochainTag>(front);
+            basis_stencil.mem(stencil_elem) = 1.0;
+
+            [[maybe_unused]] sil::tensor::TensorAccessor<
+                    coboundary_index_t<TagToAddToCochain, CochainTag>> accessor;
+            std::array<double, coboundary_index_t<TagToAddToCochain, CochainTag>::access_size()>
+                    output_storage {};
+            ddc::ChunkSpan<
+                    double,
+                    ddc::DiscreteDomain<coboundary_index_t<TagToAddToCochain, CochainTag>>,
+                    Kokkos::layout_right,
+                    typename ChainType::memory_space>
+                    output_span(output_storage.data(), accessor.domain());
+            sil::tensor::Tensor output_tensor(output_span);
+
+            auto basis_evaluator = [&](auto sampled_elem, auto cochain_elem) {
+                auto basis_sampler = [&](auto basis_elem, auto basis_cochain_elem) {
+                    if (!basis_stencil.non_indices_domain().contains(basis_elem)) {
+                        return 0.0;
+                    }
+                    return basis_stencil(
+                            basis_stencil.access_element(basis_elem, basis_cochain_elem));
+                };
+                return evaluator.value(basis_sampler, sampled_elem, cochain_elem);
+            };
+
+            run(output_tensor, basis_evaluator, chain, lower_chain, elem);
+            stencil.mem(stencil_elem) = output_tensor(natural_elem);
+        });
+
+        return stencil;
+    }
+
     template <
             class CoboundaryTensorType,
             class Evaluator,
@@ -306,17 +528,10 @@ struct TransposedCoboundary<TagToAddToCochain, CochainTag>
             Elem elem)
     {
         constexpr std::size_t BOUNDARY_SIZE = 2 * (CochainTag::rank() + 1);
-        std::array<typename LowerChainType::simplex_type, BOUNDARY_SIZE> simplex_boundary_alloc {};
         std::array<double, BOUNDARY_SIZE> boundary_values_alloc {};
         ddc::DiscreteDomain<detail::CoboundaryDummyIndex> const boundary_domain(
                 ddc::DiscreteElement<detail::CoboundaryDummyIndex>(0),
                 ddc::DiscreteVector<detail::CoboundaryDummyIndex>(BOUNDARY_SIZE));
-        ddc::ChunkSpan<
-                typename LowerChainType::simplex_type,
-                ddc::DiscreteDomain<detail::CoboundaryDummyIndex>,
-                Kokkos::layout_right,
-                typename CoboundaryTensorType::memory_space>
-                simplex_boundary(simplex_boundary_alloc.data(), boundary_domain);
         ddc::ChunkSpan<
                 double,
                 ddc::DiscreteDomain<detail::CoboundaryDummyIndex>,
@@ -324,26 +539,28 @@ struct TransposedCoboundary<TagToAddToCochain, CochainTag>
                 typename CoboundaryTensorType::memory_space>
                 boundary_values(boundary_values_alloc.data(), boundary_domain);
 
-        auto cochain = Cochain(chain, coboundary_tensor);
-        for (auto i = cochain.begin(); i < cochain.end(); ++i) {
+        typename ChainType::simplex_type::discrete_element_type const elem_on_chain
+                = misc::select_from_type_seq<ddc::to_type_seq_t<
+                        typename ChainType::simplex_type::discrete_element_type>>(elem);
+        for (auto i = chain.begin(); i < chain.end(); ++i) {
+            std::size_t const chain_id = Kokkos::Experimental::distance(chain.begin(), i);
+            auto simplex_vector = (*i).discrete_vector();
             typename ChainType::simplex_type
                     simplex(std::integral_constant<std::size_t, CochainTag::rank() + 1> {},
-                            typename ChainType::simplex_type::discrete_element_type(elem),
-                            (*i).discrete_vector());
-            auto boundary_chain = boundary(simplex_boundary.allocation_kokkos_view(), simplex);
+                            elem_on_chain,
+                            simplex_vector);
+            auto boundary_chain = boundary<typename CoboundaryTensorType::memory_space>(simplex);
             for (auto j = boundary_chain.begin(); j < boundary_chain.end(); ++j) {
                 std::size_t const boundary_id
                         = Kokkos::Experimental::distance(boundary_chain.begin(), j);
-                auto sampled_face_vector = (*j).discrete_vector();
                 auto sampled_face_elem = (*j).discrete_element();
                 if (boundary_id >= CochainTag::rank() + 1) {
-                    auto simplex_vector = (*i).discrete_vector();
                     for (std::size_t dim_id = 0;
                          dim_id < ddc::type_seq_size_v<ddc::to_type_seq_t<
                                  typename ChainType::simplex_type::discrete_element_type>>;
                          ++dim_id) {
                         if (ddc::detail::array(simplex_vector)[dim_id] != 0
-                            && ddc::detail::array(sampled_face_vector)[dim_id] == 0) {
+                            && ddc::detail::array((*j).discrete_vector())[dim_id] == 0) {
                             ddc::detail::array(sampled_face_elem)[dim_id] -= 2;
                             break;
                         }
@@ -360,10 +577,9 @@ struct TransposedCoboundary<TagToAddToCochain, CochainTag>
                                     Elem(sampled_face_elem),
                                     ddc::DiscreteElement<CochainTag>(Kokkos::Experimental::distance(
                                             lower_chain.begin(),
-                                            misc::detail::
-                                                    find(lower_chain.begin(),
-                                                         lower_chain.end(),
-                                                         sampled_face_vector))));
+                                            detail::find_discrete_vector(
+                                                    lower_chain,
+                                                    (*j).discrete_vector()))));
                 } else {
                     boundary_values(ddc::DiscreteElement<detail::CoboundaryDummyIndex>(boundary_id))
                             = evaluator(
@@ -375,16 +591,15 @@ struct TransposedCoboundary<TagToAddToCochain, CochainTag>
                                                                  discrete_element_type>>>(elem)),
                                     ddc::DiscreteElement<CochainTag>(Kokkos::Experimental::distance(
                                             lower_chain.begin(),
-                                            misc::detail::
-                                                    find(lower_chain.begin(),
-                                                         lower_chain.end(),
-                                                         sampled_face_vector))));
+                                            detail::find_discrete_vector(
+                                                    lower_chain,
+                                                    (*j).discrete_vector()))));
                 }
             }
             Cochain cochain_boundary(boundary_chain, boundary_values.allocation_kokkos_view());
             coboundary_tensor.mem(
                     ddc::DiscreteElement<coboundary_index_t<TagToAddToCochain, CochainTag>>(
-                            Kokkos::Experimental::distance(cochain.begin(), i)))
+                            chain_id))
                     = -cochain_boundary.integrate();
         }
     }
@@ -427,17 +642,12 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
             exec_space,
             batch_dom,
             KOKKOS_LAMBDA(typename decltype(batch_dom)::discrete_element_type elem) {
-                Coboundary<TagToAddToCochain, CochainTag>::run(
-                        coboundary_tensor[elem],
-                        // TODO this is an assumption on boundary condition (free boundary), needs to be generalized.
-                        [&](auto sampled_elem, auto cochain_elem) {
-                            auto const clamped_elem = misc::
-                                    clamp_to_domain(tensor.non_indices_domain(), sampled_elem);
-                            return tensor.mem(clamped_elem, cochain_elem);
-                        },
-                        chain,
-                        lower_chain,
-                        elem);
+                Coboundary<TagToAddToCochain, CochainTag>::
+                        run(coboundary_tensor[elem],
+                            detail::ClampedTensorEvaluator<TensorType> {tensor},
+                            chain,
+                            lower_chain,
+                            elem);
             });
 
     return coboundary_tensor;
@@ -474,17 +684,12 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> transposed_coboun
             exec_space,
             batch_dom,
             KOKKOS_LAMBDA(typename decltype(batch_dom)::discrete_element_type elem) {
-                TransposedCoboundary<TagToAddToCochain, CochainTag>::run(
-                        coboundary_tensor[elem],
-                        [&](auto sampled_elem, auto cochain_elem) {
-                            if (!misc::domain_contains(tensor.non_indices_domain(), sampled_elem)) {
-                                return 0.0;
-                            }
-                            return tensor.mem(sampled_elem, cochain_elem);
-                        },
-                        chain,
-                        lower_chain,
-                        elem);
+                TransposedCoboundary<TagToAddToCochain, CochainTag>::
+                        run(coboundary_tensor[elem],
+                            detail::ZeroOutsideTensorEvaluator<TensorType> {tensor},
+                            chain,
+                            lower_chain,
+                            elem);
             });
 
     return coboundary_tensor;

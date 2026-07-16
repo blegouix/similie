@@ -17,7 +17,7 @@ jobs:
   build-cuda-docker-env:
     runs-on: [self-hosted, linux]
     environment:
-      name: ${{ github.event_name == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run' }}
+      name: automatic-ci-run
     steps:
     - name: Checkout built branch
       uses: actions/checkout@v4
@@ -41,7 +41,7 @@ jobs:
   build-cpu-docker-env:
     runs-on: [self-hosted, linux]
     environment:
-      name: ${{ github.event_name == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run' }}
+      name: automatic-ci-run
     steps:
     - name: Checkout built branch
       uses: actions/checkout@v4
@@ -60,7 +60,7 @@ jobs:
     needs: build-cuda-docker-env
     runs-on: [self-hosted, linux]
     environment:
-      name: ${{ github.event_name == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run' }}
+      name: ${{ github.event_name == 'pull_request' && 'build-cuda' || 'automatic-ci-run' }}
     steps:
     - name: Checkout built branch
       uses: actions/checkout@v4
@@ -81,7 +81,7 @@ jobs:
         key: similie-cuda-workspace-${{ runner.os }}-${{ github.sha }}
     - name: Populate CUDA commit workspace
       run: |
-        mkdir -p "${CACHE_ROOT}/src" "${CACHE_ROOT}/agent_build" "${CACHE_ROOT}/home"
+        mkdir -p "${CACHE_ROOT}/src" "${CACHE_ROOT}/build" "${CACHE_ROOT}/home"
         rsync -a --delete "${GITHUB_WORKSPACE}/" "${CACHE_ROOT}/src/"
     - name: Configure and compile on GPU
       run: |
@@ -116,9 +116,9 @@ jobs:
               -DKokkos_ARCH_${kokkos_arch}=ON \
               -DKokkos_ENABLE_DEPRECATION_WARNINGS=OFF \
               -DSIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS=ON \
-              -B "${CACHE_ROOT}/agent_build" \
+              -B "${CACHE_ROOT}/build" \
               -S .
-            cmake --build "${CACHE_ROOT}/agent_build" --parallel 8
+            cmake --build "${CACHE_ROOT}/build" --parallel 8
           '
     - name: Save CUDA commit workspace
       if: steps.restore-workspace.outputs.cache-hit != 'true'
@@ -131,7 +131,7 @@ jobs:
     needs: build-cpu-docker-env
     runs-on: [self-hosted, linux]
     environment:
-      name: ${{ github.event_name == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run' }}
+      name: ${{ github.event_name == 'pull_request' && 'build-omp-debug' || 'automatic-ci-run' }}
     steps:
     - name: Checkout built branch
       uses: actions/checkout@v4
@@ -152,7 +152,7 @@ jobs:
         key: similie-omp-workspace-${{ runner.os }}-${{ github.sha }}
     - name: Populate OpenMP commit workspace
       run: |
-        mkdir -p "${CACHE_ROOT}/src" "${CACHE_ROOT}/agent_build_omp" "${CACHE_ROOT}/home"
+        mkdir -p "${CACHE_ROOT}/src" "${CACHE_ROOT}/build_omp" "${CACHE_ROOT}/home"
         rsync -a --delete "${GITHUB_WORKSPACE}/" "${CACHE_ROOT}/src/"
     - name: Configure and compile with OpenMP
       run: |
@@ -175,9 +175,9 @@ jobs:
               -DKokkos_ENABLE_DEPRECATION_WARNINGS=OFF \
               -DSIMILIE_BUILD_YOUNG_TABLEAU=ON \
               -DSIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS=ON \
-              -B "${CACHE_ROOT}/agent_build_omp" \
+              -B "${CACHE_ROOT}/build_omp" \
               -S .
-            cmake --build "${CACHE_ROOT}/agent_build_omp" --parallel 8
+            cmake --build "${CACHE_ROOT}/build_omp" --parallel 8
           '
     - name: Save OpenMP commit workspace
       if: steps.restore-workspace.outputs.cache-hit != 'true'
@@ -190,7 +190,7 @@ jobs:
     needs: build-cuda
     runs-on: [self-hosted, linux]
     environment:
-      name: ${{ github.event_name == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run' }}
+      name: ${{ github.event_name == 'pull_request' && 'tests-cuda' || 'automatic-ci-run' }}
     steps:
     - name: Set build paths
       run: |
@@ -211,7 +211,7 @@ jobs:
           -e HOME="${CACHE_ROOT}/home" \
           -e CACHE_ROOT="${CACHE_ROOT}" \
           -v "${CACHE_ROOT}:${CACHE_ROOT}" \
-          -w "${CACHE_ROOT}/agent_build" \
+          -w "${CACHE_ROOT}/build" \
           "${IMAGE_TAG}" \
           bash -lc '
             set -euo pipefail
@@ -226,7 +226,7 @@ jobs:
     needs: build-omp-debug
     runs-on: [self-hosted, linux]
     environment:
-      name: ${{ github.event_name == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run' }}
+      name: ${{ github.event_name == 'pull_request' && 'tests-omp-debug' || 'automatic-ci-run' }}
     steps:
     - name: Set build paths
       run: |
@@ -247,7 +247,7 @@ jobs:
           -e HOME="${CACHE_ROOT}/home" \
           -e CACHE_ROOT="${CACHE_ROOT}" \
           -v "${CACHE_ROOT}:${CACHE_ROOT}" \
-          -w "${CACHE_ROOT}/agent_build_omp" \
+          -w "${CACHE_ROOT}/build_omp" \
           "${IMAGE_TAG}" \
           bash -lc '
             set -euo pipefail
@@ -262,25 +262,32 @@ jobs:
     uses: ./.github/workflows/example_laplacian.yml
     with:
       target_sha: ${{ github.sha }}
-      ci_environment: ${{ github.event_name == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run' }}
+      ci_environment: ${{ github.event_name == 'pull_request' && 'examples-cuda' || 'automatic-ci-run' }}
 
   example-2d_vector_laplacian:
     needs: build-cuda
     uses: ./.github/workflows/example_laplacian_vector.yml
     with:
       target_sha: ${{ github.sha }}
-      ci_environment: ${{ github.event_name == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run' }}
+      ci_environment: ${{ github.event_name == 'pull_request' && 'examples-cuda' || 'automatic-ci-run' }}
 
   example-2d_scalar_field:
     needs: build-cuda
     uses: ./.github/workflows/example_scalar_field.yml
     with:
       target_sha: ${{ github.sha }}
-      ci_environment: ${{ github.event_name == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run' }}
+      ci_environment: ${{ github.event_name == 'pull_request' && 'examples-cuda' || 'automatic-ci-run' }}
+
+  example-onelab_inductor:
+    needs: build-cuda
+    uses: ./.github/workflows/example_onelab_inductor.yml
+    with:
+      target_sha: ${{ github.sha }}
+      ci_environment: ${{ github.event_name == 'pull_request' && 'onelab_inductor-cuda' || 'automatic-ci-run' }}
 
   example-kretschmann_scalar:
     needs: build-omp-debug
     uses: ./.github/workflows/example_kretschmann_scalar.yml
     with:
       target_sha: ${{ github.sha }}
-      ci_environment: ${{ github.event_name == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run' }}
+      ci_environment: ${{ github.event_name == 'pull_request' && 'examples-omp-debug' || 'automatic-ci-run' }}

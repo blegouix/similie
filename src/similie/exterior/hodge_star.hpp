@@ -320,17 +320,17 @@ struct DiscreteHodgeStar
             }
         }
         bool odd = false;
-        for (std::size_t i = 0; i < source_ids.size(); ++i) {
-            for (std::size_t j = i + 1; j < source_ids.size(); ++j) {
-                odd = (source_ids[i] > source_ids[j]) != odd;
+        for (auto i = source_ids.begin(); i < source_ids.end(); ++i) {
+            for (auto j = i + 1; j < source_ids.end(); ++j) {
+                odd = (*i > *j) != odd;
             }
         }
         std::array canonical_source_ids(source_ids);
         if constexpr (source_ids.size() > 1) {
-            for (std::size_t i = 0; i < canonical_source_ids.size(); ++i) {
-                for (std::size_t j = i + 1; j < canonical_source_ids.size(); ++j) {
-                    if (canonical_source_ids[j] < canonical_source_ids[i]) {
-                        Kokkos::kokkos_swap(canonical_source_ids[i], canonical_source_ids[j]);
+            for (auto i = canonical_source_ids.begin(); i < canonical_source_ids.end(); ++i) {
+                for (auto j = i + 1; j < canonical_source_ids.end(); ++j) {
+                    if (*j < *i) {
+                        Kokkos::kokkos_swap(*i, *j);
                     }
                 }
             }

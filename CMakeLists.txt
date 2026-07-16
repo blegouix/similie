@@ -9,9 +9,11 @@ set_property(GLOBAL PROPERTY GLOBAL_DEPENDS_NO_CYCLES ON)
 set(CMAKE_CXX_STANDARD 20 CACHE INTERNAL "The C++ standard whose features are requested to build this project.")
 
 # List of options
-option(SIMILIE_BUILD_YOUNG_TABLEAU "Build module dedicated to Young tableau indexing" OFF) # Requires compiler supporting #embed directive
 option(SIMILIE_BUILD_DOCUMENTATION "Build SimiLie documentation/website" OFF)
+option(SIMILIE_BUILD_YOUNG_TABLEAU "Build module dedicated to Young tableau indexing" OFF) # Requires compiler supporting #embed directive
+option(SIMILIE_BUILD_ONELAB_INTERFACE "Build the ONELAB interface executable" ON)
 option(SIMILIE_DEBUG_LOG "Enable logging of SimiLie internal kernels" OFF)
+option(SIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS "Assert example result correctness at runtime" OFF)
 
 # Set default DDC options when included
 option(DDC_BUILD_BENCHMARKS       "Build DDC benchmarks." OFF)
@@ -80,6 +82,7 @@ target_include_directories(
     similie
     INTERFACE
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>"
+        "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/src>"
         "$<INSTALL_INTERFACE:src>"
 )
 target_link_libraries(similie INTERFACE
@@ -91,6 +94,9 @@ if("${SIMILIE_DEBUG_LOG}")
 endif()
 
 add_subdirectory(src/similie)
+if("${SIMILIE_BUILD_ONELAB_INTERFACE}")
+  add_subdirectory(onelab_interface)
+endif()
 add_subdirectory(tests)
 add_subdirectory(examples)
 if("${SIMILIE_BUILD_DOCUMENTATION}")
@@ -102,6 +108,8 @@ set(SIMILIE_INTERNAL_TARGETS
     exterior
     mesher
     misc
+    physics
+    solvers
     tensor
 )
 if("${SIMILIE_BUILD_YOUNG_TABLEAU}")

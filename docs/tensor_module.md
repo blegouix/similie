@@ -1,4 +1,4 @@
-# Tensor module {#tensor_module}
+# The tensor module {#tensor_module}
 <!--
 SPDX-FileCopyrightText: 2024 Baptiste Legouix
 SPDX-License-Identifier: MIT

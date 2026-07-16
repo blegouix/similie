@@ -93,6 +93,22 @@ RUN if [ "${BACKEND}" = "cpu" ]; then \
 RUN cmake --build ginkgo/build
 RUN cmake --install ginkgo/build
 
+# OpenCASCADE
+RUN apt update && apt install -y \
+  libfreetype-dev \
+  libocct-foundation-dev \
+  libocct-modeling-data-dev \
+  libocct-modeling-algorithms-dev \
+  libocct-data-exchange-dev \
+  libocct-ocaf-dev
+
+# gmsh
+RUN apt update && apt install -y libfltk1.3-dev
+RUN git clone https://gitlab.onelab.info/gmsh/gmsh.git
+RUN cmake -DENABLE_OCC=ON -DENABLE_OCC_CAF=ON -B gmsh/build -S gmsh
+RUN cmake --build gmsh/build -j 4
+RUN cmake --install gmsh/build
+
 # PDI
 RUN update-ca-certificates
 RUN printf '%s\n' \
@@ -108,4 +124,4 @@ RUN wget -O /usr/share/keyrings/pdidev-archive-automatic.gpg https://repo.pdi.de
 RUN apt update && apt install -y libpdi-dev pdiplugin-all
 
 # Sympy
-RUN apt update && apt install -y python3-sympy python3-h5py
+RUN apt install -y python3-sympy python3-h5py

@@ -9,6 +9,7 @@
 #include "cochain.hpp"
 #include "codifferential.hpp"
 #include "cosimplex.hpp"
+#include "evaluators.hpp"
 #include "form.hpp"
 #include "hodge_star.hpp"
 #include "laplacian.hpp"

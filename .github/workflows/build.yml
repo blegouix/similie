@@ -34,7 +34,7 @@ jobs:
     if: (inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') && (!inputs.build_target || inputs.build_target == 'all' || inputs.build_target == 'cuda')
     runs-on: [self-hosted, linux]
     environment:
-      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run') }}
+      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'build-cuda' || 'automatic-ci-run') }}
     steps:
     - name: Select target commit
       id: target
@@ -71,7 +71,7 @@ jobs:
         key: similie-cuda-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
     - name: Populate CUDA commit workspace
       run: |
-        mkdir -p "${CACHE_ROOT}/src" "${CACHE_ROOT}/agent_build" "${CACHE_ROOT}/home"
+        mkdir -p "${CACHE_ROOT}/src" "${CACHE_ROOT}/build" "${CACHE_ROOT}/home"
         rsync -a --delete "${GITHUB_WORKSPACE}/" "${CACHE_ROOT}/src/"
     - name: Configure and compile on GPU
       run: |
@@ -106,9 +106,9 @@ jobs:
               -DKokkos_ARCH_${kokkos_arch}=ON \
               -DKokkos_ENABLE_DEPRECATION_WARNINGS=OFF \
               -DSIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS=ON \
-              -B "${CACHE_ROOT}/agent_build" \
+              -B "${CACHE_ROOT}/build" \
               -S .
-            cmake --build "${CACHE_ROOT}/agent_build" --parallel 8
+            cmake --build "${CACHE_ROOT}/build" --parallel 8
           '
     - name: Save CUDA commit workspace
       if: steps.restore-workspace.outputs.cache-hit != 'true'
@@ -121,7 +121,7 @@ jobs:
     if: (inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') && (!inputs.build_target || inputs.build_target == 'all' || inputs.build_target == 'omp')
     runs-on: [self-hosted, linux]
     environment:
-      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'manual-ci-run' || 'automatic-ci-run') }}
+      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'build-omp-debug' || 'automatic-ci-run') }}
     steps:
     - name: Select target commit
       id: target
@@ -158,7 +158,7 @@ jobs:
         key: similie-omp-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
     - name: Populate OpenMP commit workspace
       run: |
-        mkdir -p "${CACHE_ROOT}/src" "${CACHE_ROOT}/agent_build_omp" "${CACHE_ROOT}/home"
+        mkdir -p "${CACHE_ROOT}/src" "${CACHE_ROOT}/build_omp" "${CACHE_ROOT}/home"
         rsync -a --delete "${GITHUB_WORKSPACE}/" "${CACHE_ROOT}/src/"
     - name: Configure and compile with OpenMP
       run: |
@@ -181,9 +181,9 @@ jobs:
               -DKokkos_ENABLE_DEPRECATION_WARNINGS=OFF \
               -DSIMILIE_BUILD_YOUNG_TABLEAU=ON \
               -DSIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS=ON \
-              -B "${CACHE_ROOT}/agent_build_omp" \
+              -B "${CACHE_ROOT}/build_omp" \
               -S .
-            cmake --build "${CACHE_ROOT}/agent_build_omp" --parallel 8
+            cmake --build "${CACHE_ROOT}/build_omp" --parallel 8
           '
     - name: Save OpenMP commit workspace
       if: steps.restore-workspace.outputs.cache-hit != 'true'

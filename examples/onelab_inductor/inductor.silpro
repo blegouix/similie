@@ -1,0 +1,55 @@
+# SPDX-FileCopyrightText: 2026 Baptiste Legouix
+# SPDX-License-Identifier: MIT
+
+Problem {
+  Name "Structured inductor magnetostatics";
+  Physics NonLinearMagnetostatics;
+  Solver MinimizeStrongFormulationResidual;
+}
+
+Solver {
+  MaxIterations 100000;
+  RelativeTolerance 1e-8;
+  JacobiMaxBlockSize 1;
+  UseMatrixFree 1;
+  Criterion MomentsTemporalDerivative;
+  Preconditioner SpdIsai;
+  VectorPotentialGaugePenalty 1e7;
+}
+
+Preprocess {
+  Name SingleElectricalConductorMaterialWithSingleLinearMagneticMaterial;
+  CurrentDensityX "Input/90SimiLie/7Coil end-turn current density magnitude x [A/m^2]";
+  CurrentDensityZ "Input/90SimiLie/0Coil current density magnitude z [A/m^2]";
+  MagneticPermeability "Input/90SimiLie/1Core magnetic permeability [H/m]";
+  NonlinearBHCurve EIcore;
+
+  PositiveElectricalConductorTags {
+    Tag0 "Input/90SimiLie/4Left coil physical tag";
+  }
+
+  NegativeElectricalConductorTags {
+    Tag0 "Input/90SimiLie/5Right coil physical tag";
+  }
+
+  PositiveElectricalConductorXTags {
+    Tag0 "Input/90SimiLie/8Positive x end-turn physical tag";
+  }
+
+  NegativeElectricalConductorXTags {
+    Tag0 "Input/90SimiLie/9Negative x end-turn physical tag";
+  }
+
+  MagneticMaterialTags {
+    Tag0 "Input/90SimiLie/2E-core physical tag";
+    Tag1 "Input/90SimiLie/3I-core physical tag";
+  }
+}
+
+PostProcess {
+  Name ForceDensityDiagnostics;
+
+  DiagnosticRegionTags {
+    Tag0 "Input/90SimiLie/6Air-gap physical tag";
+  }
+}
