@@ -89,7 +89,7 @@ jobs:
             output_dir="${PWD}/onelab_elasticity_cases/${case_name}"
             mkdir -p "${output_dir}"
             SIMILIE_ONELAB_BUILD_DIR="${PWD}" \
-            SIMILIE_ONELAB_MESH_FILE="${output_dir}/wrench_structured.msh" \
+            SIMILIE_ONELAB_MESH_FILE="${output_dir}/wrench2D.msh" \
             SIMILIE_ONELAB_RESULT_FILE="${output_dir}/similie_elasticity_inputs.pos" \
               "/similie-ci/src/examples/onelab_elasticity/run_similie_onelab.sh" \
               "--${{ matrix.case.backend }}"

@@ -33,6 +33,15 @@ SPDX-FileComment = "Forked ONELAB/Gmsh example data used by the SimiLie example.
 
 [[annotations]]
 path = [
+    "examples/onelab_elasticity/wrench2D_common.pro",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "1997-2026 C. Geuzaine, J.-F. Remacle"
+SPDX-License-Identifier = "GPL-2.0-or-later"
+SPDX-FileComment = "Forked ONELAB/Gmsh example data used by the SimiLie example. Modified to suit SimiLie specifications."
+
+[[annotations]]
+path = [
     "onelab_interface/.clang-format-ignore",
 ]
 precedence = "override"

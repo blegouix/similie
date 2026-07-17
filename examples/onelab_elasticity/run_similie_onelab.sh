@@ -7,7 +7,7 @@ set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "${script_dir}/../.." && pwd)"
-geometry_file="${script_dir}/wrench_structured.geo"
+geometry_file="${script_dir}/wrench2D.geo"
 problem_file="${SIMILIE_ONELAB_PROBLEM_FILE:-${script_dir}/elasticity.silpro}"
 output_dir="$(pwd)"
 use_matrix_free=""
@@ -15,7 +15,7 @@ use_matrix_free=""
 gmsh_executable="${GMSH_EXECUTABLE:-gmsh}"
 build_dir="${SIMILIE_ONELAB_BUILD_DIR:-${repo_root}/build}"
 onelab_client="${SIMILIE_ONELAB_BINARY:-${build_dir}/onelab_interface/similie_onelab}"
-mesh_file="${SIMILIE_ONELAB_MESH_FILE:-${output_dir}/wrench_structured.msh}"
+mesh_file="${SIMILIE_ONELAB_MESH_FILE:-${output_dir}/wrench2D.msh}"
 result_file="${SIMILIE_ONELAB_RESULT_FILE:-${output_dir}/similie_elasticity_inputs.pos}"
 
 if [[ ! -f "${geometry_file}" ]]; then

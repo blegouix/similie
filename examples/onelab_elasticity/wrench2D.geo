@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Baptiste Legouix
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-Include "original/wrench2D_common.pro";
+Include "wrench2D_common.pro";
 
 Solver.AutoMesh = 2;
 
