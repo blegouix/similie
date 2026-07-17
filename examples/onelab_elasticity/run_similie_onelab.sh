@@ -10,6 +10,7 @@ repo_root="$(cd "${script_dir}/../.." && pwd)"
 geometry_file="${script_dir}/wrench_structured.geo"
 problem_file="${SIMILIE_ONELAB_PROBLEM_FILE:-${script_dir}/elasticity.silpro}"
 output_dir="$(pwd)"
+use_matrix_free=""
 
 gmsh_executable="${GMSH_EXECUTABLE:-gmsh}"
 build_dir="${SIMILIE_ONELAB_BUILD_DIR:-${repo_root}/build}"
@@ -39,10 +40,34 @@ if ! command -v "${gmsh_executable}" >/dev/null 2>&1; then
     exit 1
 fi
 
+gmsh_args=()
+for arg in "$@"; do
+    case "${arg}" in
+        --matrix-free)
+            use_matrix_free=1
+            ;;
+        --assembled-matrix)
+            use_matrix_free=0
+            ;;
+        *)
+            gmsh_args+=("${arg}")
+            ;;
+    esac
+done
+
 rm -f "${mesh_file}" "${result_file}"
 
 control_file="$(mktemp "${script_dir}/.run_similie_onelab_XXXXXX.geo")"
-trap 'rm -f "${control_file}"' EXIT
+effective_problem_file="${problem_file}"
+patched_problem_file=""
+if [[ -n "${use_matrix_free}" ]]; then
+    patched_problem_file="$(mktemp "${script_dir}/.run_similie_onelab_XXXXXX.silpro")"
+    sed \
+        -e "s/^[[:space:]]*UseMatrixFree[[:space:]].*;/  UseMatrixFree ${use_matrix_free};/" \
+        "${problem_file}" > "${patched_problem_file}"
+    effective_problem_file="${patched_problem_file}"
+fi
+trap 'rm -f "${control_file}" "${patched_problem_file}"' EXIT
 
 cat > "${control_file}" <<EOF
 Mesh 2;
@@ -56,10 +81,10 @@ EOF
     -setnumber General.Terminal 1 \
     -setnumber Mesh.Binary 0 \
     -setnumber Mesh.MshFileVersion 2.2 \
-    -setstring "0Modules/SimiLie/0Control/Problem file" "${problem_file}" \
+    -setstring "0Modules/SimiLie/0Control/Problem file" "${effective_problem_file}" \
     -setstring "0Modules/SimiLie/0Control/Mesh file" "${mesh_file}" \
     "${geometry_file}" \
     "${control_file}" \
-    "$@" \
+    "${gmsh_args[@]}" \
     2>&1 \
     | sed -u '/^Info[[:space:]]*: SimiLie -[[:space:]]*$/d'
