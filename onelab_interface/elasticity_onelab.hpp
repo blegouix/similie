@@ -1,0 +1,815 @@
+// SPDX-FileCopyrightText: 2026 Baptiste Legouix
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+#pragma once
+
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstddef>
+#include <filesystem>
+#include <fstream>
+#include <limits>
+#include <optional>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <type_traits>
+#include <vector>
+
+#include <ginkgo/core/base/matrix_data.hpp>
+#include <similie/physics/elasticity/linear_elasticity.hpp>
+#include <similie/solvers/minimize_strong_formulation_residual.hpp>
+
+#include <Kokkos_Core.hpp>
+
+#include "gmsh_structured_grid.hpp"
+
+namespace similie::onelab_interface::elasticity_onelab {
+
+struct Inputs
+{
+    double young_modulus = 200.0e9;
+    double poisson_ratio = 0.3;
+    double thickness = 0.01;
+    double applied_force = 100.0;
+    double void_stiffness_ratio = 1.0e-8;
+    std::vector<int> material_tags;
+    std::vector<int> void_tags;
+};
+
+struct Result
+{
+    std::size_t node_count = 0;
+    std::array<std::size_t, 3> mesh_dimensions {0, 0, 0};
+    std::size_t num_cells = 0;
+    std::size_t num_material_cells = 0;
+    std::size_t num_void_cells = 0;
+    std::size_t num_clamped_nodes = 0;
+    std::size_t num_loaded_nodes = 0;
+    double max_displacement = 0.0;
+    double probe_displacement_y = 0.0;
+    double max_von_mises = 0.0;
+    solvers::StrongFormulationSolverDiagnostics solver_diagnostics;
+};
+
+template <class Problem, class ProblemParameterName, class PublishString, class PublishNumber>
+void synchronize_controls(
+        Problem const&,
+        ProblemParameterName&& problem_parameter_name,
+        PublishString&& publish_or_sync_string,
+        PublishNumber&& publish_or_sync_number)
+{
+    publish_or_sync_string(
+            problem_parameter_name("2LinearElasticity", "0Preprocess"),
+            "Preprocess",
+            "Linear elasticity preprocessing strategy selected in the .silpro file.",
+            "StructuredWrenchImmersedDomain",
+            true);
+    publish_or_sync_number(
+            problem_parameter_name("2LinearElasticity", "1Void stiffness ratio"),
+            "Void stiffness ratio",
+            "Relative stiffness assigned outside the wrench mask to keep a full structured grid.",
+            1.0e-8,
+            1.0e-12,
+            1.0e-2,
+            0.0,
+            std::nullopt,
+            std::nullopt);
+}
+
+template <class Problem, class ReadNumberParameter, class ReadRequiredIntegerParameter>
+Inputs read_inputs(
+        Problem const& problem,
+        ReadNumberParameter&& read_number_parameter,
+        ReadRequiredIntegerParameter&& read_required_integer_parameter)
+{
+    Inputs inputs;
+    inputs.young_modulus = read_number_parameter(
+            problem.linear_elasticity.young_modulus_parameter,
+            std::nullopt,
+            inputs.young_modulus);
+    if (inputs.young_modulus < 1.0e7) {
+        inputs.young_modulus *= 1.0e9;
+    }
+    inputs.poisson_ratio = read_number_parameter(
+            problem.linear_elasticity.poisson_ratio_parameter,
+            std::nullopt,
+            inputs.poisson_ratio);
+    inputs.thickness = read_number_parameter(
+            problem.linear_elasticity.thickness_parameter,
+            std::nullopt,
+            inputs.thickness);
+    if (inputs.thickness > 1.0) {
+        inputs.thickness *= 1.0e-3;
+    }
+    inputs.applied_force = read_number_parameter(
+            problem.linear_elasticity.applied_force_parameter,
+            std::nullopt,
+            inputs.applied_force);
+    inputs.void_stiffness_ratio = read_number_parameter(
+            "0Modules/SimiLie/2LinearElasticity/1Void stiffness ratio",
+            std::nullopt,
+            inputs.void_stiffness_ratio);
+
+    for (std::string const& parameter_name : problem.linear_elasticity.material_tags) {
+        inputs.material_tags.push_back(read_required_integer_parameter(parameter_name));
+    }
+    for (std::string const& parameter_name : problem.linear_elasticity.void_tags) {
+        inputs.void_tags.push_back(read_required_integer_parameter(parameter_name));
+    }
+    if (!(inputs.young_modulus > 0.0)) {
+        throw std::runtime_error("missing or invalid Young modulus ONELAB parameter");
+    }
+    if (!(inputs.poisson_ratio > -1.0 && inputs.poisson_ratio < 0.5)) {
+        throw std::runtime_error("invalid Poisson coefficient for linear elasticity");
+    }
+    if (!(inputs.thickness > 0.0)) {
+        throw std::runtime_error("missing or invalid wrench thickness ONELAB parameter");
+    }
+    if (inputs.material_tags.empty()) {
+        inputs.material_tags.push_back(1);
+    }
+    return inputs;
+}
+
+template <class PublishOutputString, class PublishOutputNumber, class PublishStatus>
+void publish_outputs(
+        std::filesystem::path const& mesh_file,
+        Inputs const& inputs,
+        solvers::StrongFormulationSolverSettings const& solver_settings,
+        Result const& result,
+        PublishOutputString&& publish_output_string,
+        PublishOutputNumber&& publish_output_number,
+        PublishStatus&& publish_status)
+{
+    publish_output_string(
+            "Mesh file",
+            mesh_file.string(),
+            "Mesh file",
+            "Mesh file exported by Gmsh for the linear elasticity interface.",
+            "file");
+    publish_output_number(
+            "Young modulus [Pa]",
+            inputs.young_modulus,
+            "Young modulus [Pa]",
+            "Young modulus used by the plane-stress Hooke law.");
+    publish_output_number(
+            "Poisson coefficient",
+            inputs.poisson_ratio,
+            "Poisson coefficient",
+            "Poisson coefficient used by the plane-stress Hooke law.");
+    publish_output_number(
+            "Applied force [N]",
+            inputs.applied_force,
+            "Applied force [N]",
+            "Total downward force applied to the handle end.");
+    publish_output_number(
+            "Material cells",
+            static_cast<double>(result.num_material_cells),
+            "Material cells",
+            "Number of structured cells inside the immersed wrench mask.");
+    publish_output_number(
+            "Void cells",
+            static_cast<double>(result.num_void_cells),
+            "Void cells",
+            "Number of structured cells outside the immersed wrench mask.");
+    publish_output_number(
+            "Loaded nodes",
+            static_cast<double>(result.num_loaded_nodes),
+            "Loaded nodes",
+            "Number of active nodes receiving the end load.");
+    publish_output_number(
+            "Solver iterations",
+            static_cast<double>(result.solver_diagnostics.iterations),
+            "Solver iterations",
+            "Number of iterations performed by the strong-formulation solver.");
+    publish_output_string(
+            "Solver backend",
+            solver_settings.use_matrix_free ? "matrix-free" : "assembled-matrix",
+            "Solver backend",
+            "Backend used by the stationary strong-formulation solver.",
+            "generic");
+    publish_output_number(
+            "Final relative residual",
+            result.solver_diagnostics.final_relative_residual,
+            "Final relative residual",
+            "Final residual divided by the initial residual.");
+    publish_output_number(
+            "Probe displacement y [mm]",
+            1.0e3 * result.probe_displacement_y,
+            "Probe displacement y [mm]",
+            "Vertical displacement at the active node closest to the original wrench probe.");
+    publish_output_number(
+            "Maximum displacement [mm]",
+            1.0e3 * result.max_displacement,
+            "Maximum displacement [mm]",
+            "Maximum displacement magnitude on active wrench nodes.");
+    publish_output_number(
+            "Maximum von Mises stress [Pa]",
+            result.max_von_mises,
+            "Maximum von Mises stress [Pa]",
+            "Maximum plane-stress von Mises value on active wrench cells.");
+    publish_status("Linear elasticity solve completed");
+}
+
+namespace detail {
+
+inline bool has_tag(std::vector<int> const& tags, int physical_tag)
+{
+    return std::find(tags.begin(), tags.end(), physical_tag) != tags.end();
+}
+
+template <class Logger>
+void log_info(Logger&& logger, std::string const& message)
+{
+    if constexpr (std::is_invocable_v<Logger, std::string const&>) {
+        logger(message);
+    }
+}
+
+struct CellFields
+{
+    double density = 0.0;
+    physics::elasticity::SmallStrain2D strain;
+    physics::elasticity::CauchyStress2D stress;
+};
+
+template <class MemorySpace>
+class ElasticityOperator2D
+{
+    using view_type = Kokkos::View<double*, MemorySpace>;
+    using int_view_type = Kokkos::View<int*, MemorySpace>;
+
+    std::size_t m_nx = 0;
+    std::size_t m_ny = 0;
+    double m_hx = 1.0;
+    double m_hy = 1.0;
+    double m_c11 = 1.0;
+    double m_c12_plus_c66 = 1.0;
+    double m_c66 = 1.0;
+    int_view_type m_active;
+    int_view_type m_dirichlet;
+    view_type m_density;
+
+public:
+    static constexpr bool IS_LINEAR = true;
+
+    ElasticityOperator2D(
+            std::size_t nx,
+            std::size_t ny,
+            double hx,
+            double hy,
+            physics::elasticity::PlaneStressMaterial material,
+            int_view_type active,
+            int_view_type dirichlet,
+            view_type density)
+        : m_nx(nx)
+        , m_ny(ny)
+        , m_hx(hx)
+        , m_hy(hy)
+        , m_c11(material.c11())
+        , m_c12_plus_c66(material.c12() + material.mu())
+        , m_c66(material.mu())
+        , m_active(active)
+        , m_dirichlet(dirichlet)
+        , m_density(density)
+    {
+    }
+
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION std::size_t size() const
+    {
+        return 2 * m_nx * m_ny;
+    }
+
+    template <class ExecSpace, class InputView, class OutputView>
+    void apply(ExecSpace exec_space, InputView input, OutputView output) const
+    {
+        std::size_t const nx = m_nx;
+        std::size_t const ny = m_ny;
+        double const inv_hx2 = 1.0 / (m_hx * m_hx);
+        double const inv_hy2 = 1.0 / (m_hy * m_hy);
+        double const inv_4hxhy = 1.0 / (4.0 * m_hx * m_hy);
+        double const c11 = m_c11;
+        double const c66 = m_c66;
+        double const c12_plus_c66 = m_c12_plus_c66;
+        auto const active = m_active;
+        auto const dirichlet = m_dirichlet;
+        auto const density = m_density;
+
+        Kokkos::parallel_for(
+                "similie_elasticity_operator_apply",
+                Kokkos::RangePolicy<ExecSpace>(exec_space, 0, nx * ny),
+                KOKKOS_LAMBDA(std::size_t node) {
+                    std::size_t const i = node % nx;
+                    std::size_t const j = node / nx;
+                    std::size_t const row_x = 2 * node;
+                    std::size_t const row_y = row_x + 1;
+                    if (active(node) == 0 || dirichlet(node) != 0) {
+                        output(row_x, 0) = input(row_x, 0);
+                        output(row_y, 0) = input(row_y, 0);
+                        return;
+                    }
+
+                    double ux = 0.0;
+                    double uy = 0.0;
+                    auto add_same = [&](std::ptrdiff_t ii,
+                                        std::ptrdiff_t jj,
+                                        double coeff_x,
+                                        double coeff_y) {
+                        if (ii < 0 || jj < 0 || ii >= static_cast<std::ptrdiff_t>(nx)
+                            || jj >= static_cast<std::ptrdiff_t>(ny)) {
+                            ux += coeff_x * input(row_x, 0);
+                            uy += coeff_y * input(row_y, 0);
+                            return;
+                        }
+                        std::size_t const neighbor
+                                = static_cast<std::size_t>(ii) + nx * static_cast<std::size_t>(jj);
+                        if (active(neighbor) == 0) {
+                            return;
+                        }
+                        ux += coeff_x * input(2 * neighbor, 0);
+                        uy += coeff_y * input(2 * neighbor + 1, 0);
+                    };
+                    auto add_cross = [&](std::ptrdiff_t ii,
+                                         std::ptrdiff_t jj,
+                                         double coeff_for_x_row,
+                                         double coeff_for_y_row) {
+                        if (ii < 0 || jj < 0 || ii >= static_cast<std::ptrdiff_t>(nx)
+                            || jj >= static_cast<std::ptrdiff_t>(ny)) {
+                            return;
+                        }
+                        std::size_t const neighbor
+                                = static_cast<std::size_t>(ii) + nx * static_cast<std::size_t>(jj);
+                        if (active(neighbor) == 0) {
+                            return;
+                        }
+                        ux += coeff_for_x_row * input(2 * neighbor + 1, 0);
+                        uy += coeff_for_y_row * input(2 * neighbor, 0);
+                    };
+
+                    double const w = density(node);
+                    double const ax = w * c11 * inv_hx2;
+                    double const ay = w * c66 * inv_hy2;
+                    double const bx = w * c66 * inv_hx2;
+                    double const by = w * c11 * inv_hy2;
+                    ux += 2.0 * (ax + ay) * input(row_x, 0);
+                    uy += 2.0 * (bx + by) * input(row_y, 0);
+                    add_same(static_cast<std::ptrdiff_t>(i) - 1, j, -ax, -bx);
+                    add_same(static_cast<std::ptrdiff_t>(i) + 1, j, -ax, -bx);
+                    add_same(i, static_cast<std::ptrdiff_t>(j) - 1, -ay, -by);
+                    add_same(i, static_cast<std::ptrdiff_t>(j) + 1, -ay, -by);
+
+                    double const cross = -w * c12_plus_c66 * inv_4hxhy;
+                    add_cross(
+                            static_cast<std::ptrdiff_t>(i) + 1,
+                            static_cast<std::ptrdiff_t>(j) + 1,
+                            cross,
+                            cross);
+                    add_cross(
+                            static_cast<std::ptrdiff_t>(i) - 1,
+                            static_cast<std::ptrdiff_t>(j) - 1,
+                            cross,
+                            cross);
+                    add_cross(
+                            static_cast<std::ptrdiff_t>(i) - 1,
+                            static_cast<std::ptrdiff_t>(j) + 1,
+                            -cross,
+                            -cross);
+                    add_cross(
+                            static_cast<std::ptrdiff_t>(i) + 1,
+                            static_cast<std::ptrdiff_t>(j) - 1,
+                            -cross,
+                            -cross);
+
+                    output(row_x, 0) = ux;
+                    output(row_y, 0) = uy;
+                });
+        exec_space.fence();
+    }
+
+    [[nodiscard]] auto active() const
+    {
+        return m_active;
+    }
+
+    [[nodiscard]] auto dirichlet() const
+    {
+        return m_dirichlet;
+    }
+
+    [[nodiscard]] auto density() const
+    {
+        return m_density;
+    }
+
+    [[nodiscard]] double hx() const
+    {
+        return m_hx;
+    }
+
+    [[nodiscard]] double hy() const
+    {
+        return m_hy;
+    }
+
+    [[nodiscard]] double c11() const
+    {
+        return m_c11;
+    }
+
+    [[nodiscard]] double c66() const
+    {
+        return m_c66;
+    }
+
+    [[nodiscard]] double c12_plus_c66() const
+    {
+        return m_c12_plus_c66;
+    }
+
+    [[nodiscard]] std::size_t nx() const
+    {
+        return m_nx;
+    }
+
+    [[nodiscard]] std::size_t ny() const
+    {
+        return m_ny;
+    }
+};
+
+template <class MemorySpace>
+gko::matrix_data<double, gko::int32> assemble_matrix_data(
+        ElasticityOperator2D<MemorySpace> const& operator_model)
+{
+    gko::matrix_data<double, gko::int32> matrix_data(
+            gko::dim<2>(operator_model.size(), operator_model.size()));
+    auto const active_host
+            = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), operator_model.active());
+    auto const dirichlet_host
+            = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), operator_model.dirichlet());
+    auto const density_host
+            = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), operator_model.density());
+    double const inv_hx2 = 1.0 / (operator_model.hx() * operator_model.hx());
+    double const inv_hy2 = 1.0 / (operator_model.hy() * operator_model.hy());
+    double const inv_4hxhy = 1.0 / (4.0 * operator_model.hx() * operator_model.hy());
+    for (std::size_t j = 0; j < operator_model.ny(); ++j) {
+        for (std::size_t i = 0; i < operator_model.nx(); ++i) {
+            std::size_t const node = i + operator_model.nx() * j;
+            std::size_t const row_x = 2 * node;
+            std::size_t const row_y = row_x + 1;
+            if (active_host(node) == 0 || dirichlet_host(node) != 0) {
+                matrix_data.nonzeros.emplace_back(row_x, row_x, 1.0);
+                matrix_data.nonzeros.emplace_back(row_y, row_y, 1.0);
+                continue;
+            }
+            double const w = density_host(node);
+            double const ax = w * operator_model.c11() * inv_hx2;
+            double const ay = w * operator_model.c66() * inv_hy2;
+            double const bx = w * operator_model.c66() * inv_hx2;
+            double const by = w * operator_model.c11() * inv_hy2;
+            matrix_data.nonzeros.emplace_back(row_x, row_x, 2.0 * (ax + ay));
+            matrix_data.nonzeros.emplace_back(row_y, row_y, 2.0 * (bx + by));
+
+            auto add_same = [&](std::ptrdiff_t ii, std::ptrdiff_t jj, double cx, double cy) {
+                if (ii < 0 || jj < 0 || ii >= static_cast<std::ptrdiff_t>(operator_model.nx())
+                    || jj >= static_cast<std::ptrdiff_t>(operator_model.ny())) {
+                    return;
+                }
+                std::size_t const neighbor = static_cast<std::size_t>(ii)
+                                             + operator_model.nx() * static_cast<std::size_t>(jj);
+                if (active_host(neighbor) == 0) {
+                    return;
+                }
+                matrix_data.nonzeros.emplace_back(row_x, 2 * neighbor, cx);
+                matrix_data.nonzeros.emplace_back(row_y, 2 * neighbor + 1, cy);
+            };
+            auto add_cross = [&](std::ptrdiff_t ii, std::ptrdiff_t jj, double coeff) {
+                if (ii < 0 || jj < 0 || ii >= static_cast<std::ptrdiff_t>(operator_model.nx())
+                    || jj >= static_cast<std::ptrdiff_t>(operator_model.ny())) {
+                    return;
+                }
+                std::size_t const neighbor = static_cast<std::size_t>(ii)
+                                             + operator_model.nx() * static_cast<std::size_t>(jj);
+                if (active_host(neighbor) == 0) {
+                    return;
+                }
+                matrix_data.nonzeros.emplace_back(row_x, 2 * neighbor + 1, coeff);
+                matrix_data.nonzeros.emplace_back(row_y, 2 * neighbor, coeff);
+            };
+
+            add_same(static_cast<std::ptrdiff_t>(i) - 1, j, -ax, -bx);
+            add_same(static_cast<std::ptrdiff_t>(i) + 1, j, -ax, -bx);
+            add_same(i, static_cast<std::ptrdiff_t>(j) - 1, -ay, -by);
+            add_same(i, static_cast<std::ptrdiff_t>(j) + 1, -ay, -by);
+            double const cross = -w * operator_model.c12_plus_c66() * inv_4hxhy;
+            add_cross(
+                    static_cast<std::ptrdiff_t>(i) + 1,
+                    static_cast<std::ptrdiff_t>(j) + 1,
+                    cross);
+            add_cross(
+                    static_cast<std::ptrdiff_t>(i) - 1,
+                    static_cast<std::ptrdiff_t>(j) - 1,
+                    cross);
+            add_cross(
+                    static_cast<std::ptrdiff_t>(i) - 1,
+                    static_cast<std::ptrdiff_t>(j) + 1,
+                    -cross);
+            add_cross(
+                    static_cast<std::ptrdiff_t>(i) + 1,
+                    static_cast<std::ptrdiff_t>(j) - 1,
+                    -cross);
+        }
+    }
+    return matrix_data;
+}
+
+inline void write_results_view(
+        std::filesystem::path const& output_view_file,
+        sil::onelab_interface::gmsh::StructuredGrid2D const& grid,
+        std::vector<CellFields> const& cell_fields,
+        std::vector<double> const& displacement)
+{
+    std::ofstream stream(output_view_file);
+    if (!stream.is_open()) {
+        throw std::runtime_error("failed to open output view file: " + output_view_file.string());
+    }
+    stream << "View \"SimiLie linear elasticity displacement\" {\n";
+    for (std::size_t j = 0; j < grid.ny(); ++j) {
+        for (std::size_t i = 0; i < grid.nx(); ++i) {
+            std::size_t const node = grid.node_index(i, j);
+            stream << "VP(" << grid.x_coords[i] << "," << grid.y_coords[j] << "," << grid.z_value
+                   << "){" << displacement[2 * node] << "," << displacement[2 * node + 1]
+                   << ",0};\n";
+        }
+    }
+    stream << "};\n";
+
+    auto write_scalar_cell_view = [&](std::string const& name, auto value) {
+        stream << "View \"" << name << "\" {\n";
+        for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
+            for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
+                CellFields const& fields = cell_fields[grid.cell_index(i, j)];
+                stream << "SP(" << grid.cell_center_x(i) << "," << grid.cell_center_y(j) << ","
+                       << grid.z_value << "){" << value(fields) << "};\n";
+            }
+        }
+        stream << "};\n";
+    };
+    write_scalar_cell_view("SimiLie linear elasticity material density", [](CellFields const& f) {
+        return f.density;
+    });
+    write_scalar_cell_view("SimiLie linear elasticity stress xx", [](CellFields const& f) {
+        return f.stress.xx;
+    });
+    write_scalar_cell_view("SimiLie linear elasticity stress yy", [](CellFields const& f) {
+        return f.stress.yy;
+    });
+    write_scalar_cell_view("SimiLie linear elasticity stress xy", [](CellFields const& f) {
+        return f.stress.xy;
+    });
+    write_scalar_cell_view("SimiLie linear elasticity von Mises", [](CellFields const& f) {
+        return f.stress.von_mises();
+    });
+}
+
+} // namespace detail
+
+template <class Logger>
+Result run_on_quadrilateral_grid(
+        std::filesystem::path const& output_view_file,
+        Inputs const& inputs,
+        solvers::StrongFormulationSolverSettings const& solver_settings,
+        sil::onelab_interface::gmsh::QuadrilateralMesh const& mesh,
+        Logger&& logger)
+{
+    auto const grid = sil::onelab_interface::gmsh::build_structured_grid(mesh);
+    detail::log_info(
+            logger,
+            "SimiLie structured rectilinear quadrilateral mesh validated for elasticity ("
+                    + std::to_string(grid.ordered_nodes.size()) + " nodes, dimensions="
+                    + std::to_string(grid.nx()) + "x" + std::to_string(grid.ny()) + ")");
+
+    Result result;
+    result.node_count = grid.ordered_nodes.size();
+    result.mesh_dimensions = {grid.nx(), grid.ny(), 1};
+    result.num_cells = grid.ncell_x() * grid.ncell_y();
+
+    std::vector<detail::CellFields> cell_fields(result.num_cells);
+    for (std::size_t cell_index = 0; cell_index < result.num_cells; ++cell_index) {
+        int const tag = grid.ordered_cells[cell_index].physical_tag;
+        bool const material = detail::has_tag(inputs.material_tags, tag);
+        bool const void_cell = !inputs.void_tags.empty() && detail::has_tag(inputs.void_tags, tag);
+        cell_fields[cell_index].density
+                = material && !void_cell ? 1.0 : inputs.void_stiffness_ratio;
+        if (cell_fields[cell_index].density > 0.5) {
+            ++result.num_material_cells;
+        } else {
+            ++result.num_void_cells;
+        }
+    }
+
+    std::vector<double> node_density(grid.nx() * grid.ny(), 0.0);
+    std::vector<int> node_count(grid.nx() * grid.ny(), 0);
+    for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
+        for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
+            double const density = cell_fields[grid.cell_index(i, j)].density;
+            for (std::size_t dj = 0; dj <= 1; ++dj) {
+                for (std::size_t di = 0; di <= 1; ++di) {
+                    std::size_t const node = grid.node_index(i + di, j + dj);
+                    node_density[node] += density;
+                    ++node_count[node];
+                }
+            }
+        }
+    }
+    for (std::size_t node = 0; node < node_density.size(); ++node) {
+        node_density[node] = node_count[node] == 0
+                                     ? inputs.void_stiffness_ratio
+                                     : node_density[node] / static_cast<double>(node_count[node]);
+    }
+
+    double const material_threshold = 0.1;
+    double active_min_x = std::numeric_limits<double>::infinity();
+    double active_max_x = -std::numeric_limits<double>::infinity();
+    double active_min_y = std::numeric_limits<double>::infinity();
+    double active_max_y = -std::numeric_limits<double>::infinity();
+    for (std::size_t j = 0; j < grid.ny(); ++j) {
+        for (std::size_t i = 0; i < grid.nx(); ++i) {
+            if (node_density[grid.node_index(i, j)] <= material_threshold) {
+                continue;
+            }
+            active_min_x = std::min(active_min_x, grid.x_coords[i]);
+            active_max_x = std::max(active_max_x, grid.x_coords[i]);
+            active_min_y = std::min(active_min_y, grid.y_coords[j]);
+            active_max_y = std::max(active_max_y, grid.y_coords[j]);
+        }
+    }
+    if (!(active_min_x < active_max_x && active_min_y < active_max_y)) {
+        throw std::runtime_error("failed to detect the active wrench mask in the structured grid");
+    }
+    double const active_width_x = active_max_x - active_min_x;
+    double const active_width_y = active_max_y - active_min_y;
+    double const clamp_limit_x = active_min_x + 0.08 * active_width_x;
+    double const force_start_x = active_max_x - 0.05 * active_width_x;
+    double const force_band_half_height = 0.55 * active_width_y;
+
+    using memory_space = typename Kokkos::DefaultExecutionSpace::memory_space;
+    Kokkos::View<int*, memory_space> active("similie_elasticity_active", grid.nx() * grid.ny());
+    Kokkos::View<int*, memory_space>
+            dirichlet("similie_elasticity_dirichlet", grid.nx() * grid.ny());
+    Kokkos::View<double*, memory_space>
+            density("similie_elasticity_density", grid.nx() * grid.ny());
+    auto active_host = Kokkos::create_mirror_view(active);
+    auto dirichlet_host = Kokkos::create_mirror_view(dirichlet);
+    auto density_host = Kokkos::create_mirror_view(density);
+    std::vector<std::size_t> loaded_nodes;
+    loaded_nodes.reserve(grid.ny());
+    for (std::size_t j = 0; j < grid.ny(); ++j) {
+        for (std::size_t i = 0; i < grid.nx(); ++i) {
+            std::size_t const node = grid.node_index(i, j);
+            bool const active_node = node_density[node] > material_threshold;
+            active_host(node) = active_node ? 1 : 0;
+            density_host(node) = std::max(node_density[node], inputs.void_stiffness_ratio);
+            bool const clamped = active_node && grid.x_coords[i] <= clamp_limit_x
+                                 && std::abs(grid.y_coords[j]) <= 0.36 * active_width_y;
+            dirichlet_host(node) = clamped ? 1 : 0;
+            if (clamped) {
+                ++result.num_clamped_nodes;
+            }
+            bool const loaded = active_node && grid.x_coords[i] >= force_start_x
+                                && std::abs(grid.y_coords[j]) <= force_band_half_height;
+            if (loaded) {
+                loaded_nodes.push_back(node);
+            }
+        }
+    }
+    result.num_loaded_nodes = loaded_nodes.size();
+    if (result.num_clamped_nodes == 0 || result.num_loaded_nodes == 0) {
+        throw std::runtime_error(
+                "failed to detect clamped or loaded active nodes in the structured wrench grid");
+    }
+    Kokkos::deep_copy(active, active_host);
+    Kokkos::deep_copy(dirichlet, dirichlet_host);
+    Kokkos::deep_copy(density, density_host);
+
+    physics::elasticity::PlaneStressMaterial const material {
+            .young_modulus = inputs.young_modulus,
+            .poisson_ratio = inputs.poisson_ratio,
+    };
+    double const hx
+            = (grid.x_coords.back() - grid.x_coords.front()) / static_cast<double>(grid.ncell_x());
+    double const hy
+            = (grid.y_coords.back() - grid.y_coords.front()) / static_cast<double>(grid.ncell_y());
+
+    Kokkos::View<double**> rhs("similie_elasticity_rhs", 2 * grid.nx() * grid.ny(), 1);
+    Kokkos::View<double**>
+            displacement_view("similie_elasticity_displacement", 2 * grid.nx() * grid.ny(), 1);
+    auto rhs_host = Kokkos::create_mirror_view(rhs);
+    double const nodal_force_density
+            = -inputs.applied_force
+              / (inputs.thickness * hx * hy * static_cast<double>(loaded_nodes.size()));
+    for (std::size_t node : loaded_nodes) {
+        rhs_host(2 * node + 1, 0) = nodal_force_density;
+    }
+    Kokkos::deep_copy(rhs, rhs_host);
+
+    detail::ElasticityOperator2D<memory_space> const
+            operator_model(grid.nx(), grid.ny(), hx, hy, material, active, dirichlet, density);
+
+    detail::log_info(logger, "SimiLie starting linear elasticity solve");
+    result.solver_diagnostics = solvers::minimize_strong_formulation_residual(
+            Kokkos::DefaultExecutionSpace(),
+            operator_model,
+            rhs,
+            displacement_view,
+            solver_settings);
+    detail::log_info(logger, "SimiLie linear elasticity solve finished");
+
+    auto displacement_host
+            = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), displacement_view);
+    std::vector<double> displacement(2 * grid.nx() * grid.ny(), 0.0);
+    for (std::size_t node = 0; node < grid.nx() * grid.ny(); ++node) {
+        displacement[2 * node] = displacement_host(2 * node, 0);
+        displacement[2 * node + 1] = displacement_host(2 * node + 1, 0);
+        if (active_host(node) != 0) {
+            result.max_displacement = std::
+                    max(result.max_displacement,
+                        std::hypot(displacement[2 * node], displacement[2 * node + 1]));
+        }
+    }
+
+    std::size_t probe_node = loaded_nodes.front();
+    for (std::size_t node : loaded_nodes) {
+        if (grid.x_coords[node % grid.nx()] > grid.x_coords[probe_node % grid.nx()]) {
+            probe_node = node;
+        }
+    }
+    result.probe_displacement_y = displacement[2 * probe_node + 1];
+
+    for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
+        for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
+            std::size_t const n00 = grid.node_index(i, j);
+            std::size_t const n10 = grid.node_index(i + 1, j);
+            std::size_t const n01 = grid.node_index(i, j + 1);
+            std::size_t const n11 = grid.node_index(i + 1, j + 1);
+            double const dux_dx = 0.5
+                                  * ((displacement[2 * n10] - displacement[2 * n00])
+                                     + (displacement[2 * n11] - displacement[2 * n01]))
+                                  / hx;
+            double const duy_dy = 0.5
+                                  * ((displacement[2 * n01 + 1] - displacement[2 * n00 + 1])
+                                     + (displacement[2 * n11 + 1] - displacement[2 * n10 + 1]))
+                                  / hy;
+            double const dux_dy = 0.5
+                                  * ((displacement[2 * n01] - displacement[2 * n00])
+                                     + (displacement[2 * n11] - displacement[2 * n10]))
+                                  / hy;
+            double const duy_dx = 0.5
+                                  * ((displacement[2 * n10 + 1] - displacement[2 * n00 + 1])
+                                     + (displacement[2 * n11 + 1] - displacement[2 * n01 + 1]))
+                                  / hx;
+            detail::CellFields& fields = cell_fields[grid.cell_index(i, j)];
+            fields.strain = {
+                    .xx = dux_dx,
+                    .yy = duy_dy,
+                    .xy = 0.5 * (dux_dy + duy_dx),
+            };
+            fields.stress = physics::elasticity::hooke_plane_stress(material, fields.strain);
+            fields.stress.xx *= fields.density;
+            fields.stress.yy *= fields.density;
+            fields.stress.xy *= fields.density;
+            if (fields.density > material_threshold) {
+                result.max_von_mises = std::max(result.max_von_mises, fields.stress.von_mises());
+            }
+        }
+    }
+
+    detail::write_results_view(output_view_file, grid, cell_fields, displacement);
+    detail::log_info(logger, "SimiLie linear elasticity post-processing exported");
+    return result;
+}
+
+template <class Logger>
+Result run(
+        std::filesystem::path const& mesh_file,
+        std::filesystem::path const& output_view_file,
+        Inputs const& inputs,
+        solvers::StrongFormulationSolverSettings const& solver_settings,
+        Logger&& logger)
+{
+    auto const mesh = sil::onelab_interface::gmsh::parse_supported_msh2_mesh(mesh_file);
+    if (!std::holds_alternative<sil::onelab_interface::gmsh::QuadrilateralMesh>(mesh)) {
+        throw std::runtime_error(
+                "the current linear elasticity example expects a 2D quadrilateral grid");
+    }
+    return run_on_quadrilateral_grid(
+            output_view_file,
+            inputs,
+            solver_settings,
+            std::get<sil::onelab_interface::gmsh::QuadrilateralMesh>(mesh),
+            std::forward<Logger>(logger));
+}
+
+} // namespace similie::onelab_interface::elasticity_onelab

@@ -41,6 +41,7 @@
 #include <cuda_runtime_api.h>
 #endif
 
+#include "elasticity_onelab.hpp"
 #include "gmsh_structured_grid.hpp"
 #include "magnetostatics_onelab.hpp"
 #include "minimize_strong_formulation_residual_onelab.hpp"
@@ -52,6 +53,7 @@ enum class SupportedPhysics {
     ScalarFieldWithPowerCoupling,
     LinearMagnetostatics,
     NonLinearMagnetostatics,
+    LinearElasticity,
 };
 
 enum class SupportedSolver {
@@ -131,12 +133,23 @@ struct ForceDensityDiagnosticsPostprocess
     std::vector<std::string> diagnostic_region_tags;
 };
 
+struct LinearElasticityProblem
+{
+    std::vector<std::string> material_tags;
+    std::vector<std::string> void_tags;
+    std::string young_modulus_parameter = "Material/Young modulus [GPa]";
+    std::string poisson_ratio_parameter = "Material/Poisson coefficient []";
+    std::string thickness_parameter = "Geometry/4Thickness (mm)";
+    std::string applied_force_parameter = "Material/Applied force [N]";
+};
+
 struct SilproProblem
 {
     std::string name;
     SupportedPhysics physics;
     SupportedSolver solver;
     ScalarFieldWithPowerCouplingProblem scalar_field;
+    LinearElasticityProblem linear_elasticity;
     MinimizeStrongFormulationResidualProblem solver_settings;
     SingleElectricalConductorMaterialWithSingleLinearMagneticMaterialPreprocess
             single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess;
@@ -416,6 +429,9 @@ inline SupportedPhysics parse_physics_kind(std::string const& value)
     if (value == "ScalarFieldWithPowerCoupling") {
         return SupportedPhysics::ScalarFieldWithPowerCoupling;
     }
+    if (value == "LinearElasticity") {
+        return SupportedPhysics::LinearElasticity;
+    }
     throw std::runtime_error("unsupported physics '" + value + "' in .silpro file");
 }
 
@@ -454,6 +470,7 @@ inline SilproProblem parse_silpro_problem(std::filesystem::path const& file)
             .solver = parse_solver_kind(
                     get_value_or(problem_section, "Solver", "MinimizeStrongFormulationResidual")),
             .scalar_field = {},
+            .linear_elasticity = {},
             .solver_settings = {},
             .single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
             = {
@@ -639,6 +656,34 @@ inline SilproProblem parse_silpro_problem(std::filesystem::path const& file)
                 problem.force_density_diagnostics_postprocess.diagnostic_region_tags
                         = collect_values(it->second);
             }
+        }
+    } else if (problem.physics == SupportedPhysics::LinearElasticity) {
+        if (auto preprocess_it = root.sections.find("Preprocess");
+            preprocess_it != root.sections.end()) {
+            SilproSection const& preprocess = preprocess_it->second;
+            if (auto it = preprocess.sections.find("MaterialTags");
+                it != preprocess.sections.end()) {
+                problem.linear_elasticity.material_tags = collect_values(it->second);
+            }
+            if (auto it = preprocess.sections.find("VoidTags"); it != preprocess.sections.end()) {
+                problem.linear_elasticity.void_tags = collect_values(it->second);
+            }
+            problem.linear_elasticity.young_modulus_parameter = get_value_or(
+                    preprocess,
+                    "YoungModulus",
+                    problem.linear_elasticity.young_modulus_parameter);
+            problem.linear_elasticity.poisson_ratio_parameter = get_value_or(
+                    preprocess,
+                    "PoissonRatio",
+                    problem.linear_elasticity.poisson_ratio_parameter);
+            problem.linear_elasticity.thickness_parameter = get_value_or(
+                    preprocess,
+                    "Thickness",
+                    problem.linear_elasticity.thickness_parameter);
+            problem.linear_elasticity.applied_force_parameter = get_value_or(
+                    preprocess,
+                    "AppliedForce",
+                    problem.linear_elasticity.applied_force_parameter);
         }
     }
 
@@ -1106,6 +1151,8 @@ private:
                 problem.physics == SupportedPhysics::LinearMagnetostatics ? "LinearMagnetostatics"
                 : problem.physics == SupportedPhysics::NonLinearMagnetostatics
                         ? "NonLinearMagnetostatics"
+                : problem.physics == SupportedPhysics::LinearElasticity
+                        ? "LinearElasticity"
                         : "ScalarFieldWithPowerCoupling",
                 true);
         publish_or_sync_string(
@@ -1134,6 +1181,15 @@ private:
         if (problem.physics == SupportedPhysics::LinearMagnetostatics
             || problem.physics == SupportedPhysics::NonLinearMagnetostatics) {
             magnetostatics_onelab::synchronize_controls(
+                    problem,
+                    [&](std::string const& section, std::string const& name) {
+                        return problem_parameter_name(section, name);
+                    },
+                    publish_or_sync_string,
+                    publish_or_sync_number);
+        }
+        if (problem.physics == SupportedPhysics::LinearElasticity) {
+            elasticity_onelab::synchronize_controls(
                     problem,
                     [&](std::string const& section, std::string const& name) {
                         return problem_parameter_name(section, name);
@@ -1198,6 +1254,8 @@ private:
                 problem.physics == SupportedPhysics::LinearMagnetostatics ? "LinearMagnetostatics"
                 : problem.physics == SupportedPhysics::NonLinearMagnetostatics
                         ? "NonLinearMagnetostatics"
+                : problem.physics == SupportedPhysics::LinearElasticity
+                        ? "LinearElasticity"
                         : "ScalarFieldWithPowerCoupling",
                 "Physics",
                 "Physics selected by the .silpro file.");
@@ -1223,6 +1281,10 @@ private:
             [[maybe_unused]] auto const physics
                     = scalar_field_with_power_coupling_onelab::assemble_hamiltonian(problem);
             scalar_field_with_power_coupling_onelab::run();
+            return;
+        }
+        if (problem.physics == SupportedPhysics::LinearElasticity) {
+            run_linear_elasticity_problem(problem);
             return;
         }
 
@@ -1338,10 +1400,83 @@ private:
                                        : result.diagnostic_flux_integral
                                                  / (result.diagnostic_current_integral
                                                     * mutable_inputs.num_turns))
-                           << " H, "
-                           << "integrated Tn=(" << result.diagnostic_traction_integral[0] << ", "
-                           << result.diagnostic_traction_integral[1] << ", "
+                           << " H, " << "integrated Tn=(" << result.diagnostic_traction_integral[0]
+                           << ", " << result.diagnostic_traction_integral[1] << ", "
                            << result.diagnostic_traction_integral[2] << ")" << std::defaultfloat;
+        client().sendInfo(diagnostics_stream.str());
+    }
+
+    void run_linear_elasticity_problem(SilproProblem const& problem)
+    {
+        client().sendProgress(
+                module_name() + " ONELAB interface: exporting mesh for problem '" + problem.name
+                + "'");
+        std::filesystem::path const mesh_file = export_input_mesh_from_gmsh();
+        auto const inputs = elasticity_onelab::read_inputs(
+                problem,
+                [&](std::string const& preferred_parameter,
+                    std::optional<std::string> const& fallback_parameter,
+                    double fallback_value) {
+                    return read_number_parameter(
+                            preferred_parameter,
+                            fallback_parameter,
+                            fallback_value);
+                },
+                [&](std::string const& parameter_name) {
+                    return read_required_integer_parameter(parameter_name);
+                });
+        std::filesystem::path const output_view_file
+                = mesh_file.parent_path() / "similie_elasticity_inputs.pos";
+        solvers::StrongFormulationSolverSettings const solver_settings {
+                .max_iterations = problem.solver_settings.max_iterations,
+                .relative_tolerance = problem.solver_settings.relative_tolerance,
+                .jacobi_max_block_size = problem.solver_settings.jacobi_max_block_size,
+                .use_matrix_free = problem.solver_settings.use_matrix_free,
+                .criterion = problem.solver_settings.criterion,
+                .preconditioner = problem.solver_settings.preconditioner,
+                .vector_potential_gauge_penalty
+                = problem.solver_settings.vector_potential_gauge_penalty,
+                .sor_relaxation_factor = problem.solver_settings.sor_relaxation_factor,
+                .chebyshev_iterations = problem.solver_settings.chebyshev_iterations,
+                .chebyshev_lower_bound = problem.solver_settings.chebyshev_lower_bound,
+                .chebyshev_upper_bound = problem.solver_settings.chebyshev_upper_bound,
+                .ir_iterations = problem.solver_settings.ir_iterations,
+                .ir_relaxation_factor = problem.solver_settings.ir_relaxation_factor,
+        };
+        auto const result = elasticity_onelab::
+                run(mesh_file,
+                    output_view_file,
+                    inputs,
+                    solver_settings,
+                    [&](std::string const& message) { client().sendInfo(message); });
+        client().sendMergeFileRequest(std::filesystem::absolute(output_view_file).string());
+        elasticity_onelab::publish_outputs(
+                mesh_file,
+                inputs,
+                solver_settings,
+                result,
+                [&](std::string const& name,
+                    std::string const& value,
+                    std::string const& label,
+                    std::string const& help,
+                    std::string const& kind) {
+                    publish_output_string(name, value, label, help, kind);
+                },
+                [&](std::string const& name,
+                    double value,
+                    std::string const& label,
+                    std::string const& help) { publish_output_number(name, value, label, help); },
+                [&](std::string const& status) { publish_status(status); });
+        std::ostringstream diagnostics_stream;
+        diagnostics_stream << "SimiLie elasticity diagnostics: iterations="
+                           << result.solver_diagnostics.iterations
+                           << ", final residual L2=" << result.solver_diagnostics.final_residual_l2
+                           << ", final relative residual="
+                           << result.solver_diagnostics.final_relative_residual
+                           << ", duration=" << result.solver_diagnostics.duration
+                           << " s, uy_probe=" << result.probe_displacement_y
+                           << " m, max|u|=" << result.max_displacement
+                           << " m, max_vm=" << result.max_von_mises << " Pa";
         client().sendInfo(diagnostics_stream.str());
     }
 

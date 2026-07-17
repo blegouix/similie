@@ -1,0 +1,33 @@
+# SPDX-FileCopyrightText: 2026 Baptiste Legouix
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+Problem {
+  Name "Structured wrench linear elasticity";
+  Physics LinearElasticity;
+  Solver MinimizeStrongFormulationResidual;
+}
+
+Solver {
+  MaxIterations 50000;
+  RelativeTolerance 1e-8;
+  JacobiMaxBlockSize 1;
+  UseMatrixFree 1;
+  Criterion MomentsTemporalDerivative;
+  Preconditioner Identity;
+}
+
+Preprocess {
+  Name StructuredWrenchImmersedDomain;
+  YoungModulus "Material/Young modulus [GPa]";
+  PoissonRatio "Material/Poisson coefficient []";
+  Thickness "Geometry/4Thickness (mm)";
+  AppliedForce "Material/Applied force [N]";
+
+  MaterialTags {
+    Tag0 "Input/90SimiLie/0Wrench material physical tag";
+  }
+
+  VoidTags {
+    Tag0 "Input/90SimiLie/1Void physical tag";
+  }
+}
