@@ -17,7 +17,7 @@ Solver {
 }
 
 Preprocess {
-  Name StructuredWrenchImmersedDomain;
+  Name TwoDomainTransfiniteWrenchInterior;
   YoungModulus "Material/Young modulus [GPa]";
   PoissonRatio "Material/Poisson coefficient []";
   Thickness "Geometry/4Thickness (mm)";
@@ -25,9 +25,5 @@ Preprocess {
 
   MaterialTags {
     Tag0 "Input/90SimiLie/0Wrench material physical tag";
-  }
-
-  VoidTags {
-    Tag0 "Input/90SimiLie/1Void physical tag";
   }
 }

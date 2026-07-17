@@ -10,11 +10,13 @@
 #include <filesystem>
 #include <fstream>
 #include <limits>
+#include <map>
 #include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 #include <ginkgo/core/base/matrix_data.hpp>
@@ -33,9 +35,7 @@ struct Inputs
     double poisson_ratio = 0.3;
     double thickness = 0.01;
     double applied_force = 100.0;
-    double void_stiffness_ratio = 1.0e-8;
     std::vector<int> material_tags;
-    std::vector<int> void_tags;
 };
 
 struct Result
@@ -44,7 +44,6 @@ struct Result
     std::array<std::size_t, 3> mesh_dimensions {0, 0, 0};
     std::size_t num_cells = 0;
     std::size_t num_material_cells = 0;
-    std::size_t num_void_cells = 0;
     std::size_t num_clamped_nodes = 0;
     std::size_t num_loaded_nodes = 0;
     double max_displacement = 0.0;
@@ -64,18 +63,9 @@ void synchronize_controls(
             problem_parameter_name("2LinearElasticity", "0Preprocess"),
             "Preprocess",
             "Linear elasticity preprocessing strategy selected in the .silpro file.",
-            "StructuredWrenchImmersedDomain",
+            "TwoDomainTransfiniteWrenchInterior",
             true);
-    publish_or_sync_number(
-            problem_parameter_name("2LinearElasticity", "1Void stiffness ratio"),
-            "Void stiffness ratio",
-            "Relative stiffness assigned outside the wrench mask to keep a full structured grid.",
-            1.0e-8,
-            1.0e-12,
-            1.0e-2,
-            0.0,
-            std::nullopt,
-            std::nullopt);
+    (void)publish_or_sync_number;
 }
 
 template <class Problem, class ReadNumberParameter, class ReadRequiredIntegerParameter>
@@ -107,16 +97,9 @@ Inputs read_inputs(
             problem.linear_elasticity.applied_force_parameter,
             std::nullopt,
             inputs.applied_force);
-    inputs.void_stiffness_ratio = read_number_parameter(
-            "0Modules/SimiLie/2LinearElasticity/1Void stiffness ratio",
-            std::nullopt,
-            inputs.void_stiffness_ratio);
 
     for (std::string const& parameter_name : problem.linear_elasticity.material_tags) {
         inputs.material_tags.push_back(read_required_integer_parameter(parameter_name));
-    }
-    for (std::string const& parameter_name : problem.linear_elasticity.void_tags) {
-        inputs.void_tags.push_back(read_required_integer_parameter(parameter_name));
     }
     if (!(inputs.young_modulus > 0.0)) {
         throw std::runtime_error("missing or invalid Young modulus ONELAB parameter");
@@ -168,12 +151,7 @@ void publish_outputs(
             "Material cells",
             static_cast<double>(result.num_material_cells),
             "Material cells",
-            "Number of structured cells inside the immersed wrench mask.");
-    publish_output_number(
-            "Void cells",
-            static_cast<double>(result.num_void_cells),
-            "Void cells",
-            "Number of structured cells outside the immersed wrench mask.");
+            "Number of structured cells in the meshed wrench interior.");
     publish_output_number(
             "Loaded nodes",
             static_cast<double>(result.num_loaded_nodes),
@@ -234,6 +212,188 @@ struct CellFields
     physics::elasticity::SmallStrain2D strain;
     physics::elasticity::CauchyStress2D stress;
 };
+
+struct CurvilinearStructuredGrid2D
+{
+    std::size_t ncell_x = 0;
+    std::size_t ncell_y = 0;
+    std::vector<sil::onelab_interface::gmsh::MeshNode> ordered_nodes;
+    std::vector<sil::onelab_interface::gmsh::QuadrilateralCell> ordered_cells;
+    std::vector<int> active_nodes;
+    std::vector<int> active_cells;
+
+    [[nodiscard]] std::size_t nx() const
+    {
+        return ncell_x + 1;
+    }
+
+    [[nodiscard]] std::size_t ny() const
+    {
+        return ncell_y + 1;
+    }
+
+    [[nodiscard]] std::size_t node_index(std::size_t i, std::size_t j) const
+    {
+        return i + nx() * j;
+    }
+
+    [[nodiscard]] std::size_t cell_index(std::size_t i, std::size_t j) const
+    {
+        return i + ncell_x * j;
+    }
+
+    [[nodiscard]] double node_x(std::size_t i, std::size_t j) const
+    {
+        return ordered_nodes[node_index(i, j)].x;
+    }
+
+    [[nodiscard]] double node_y(std::size_t i, std::size_t j) const
+    {
+        return ordered_nodes[node_index(i, j)].y;
+    }
+
+    [[nodiscard]] double cell_center_x(std::size_t i, std::size_t j) const
+    {
+        return 0.25 * (node_x(i, j) + node_x(i + 1, j) + node_x(i, j + 1) + node_x(i + 1, j + 1));
+    }
+
+    [[nodiscard]] double cell_center_y(std::size_t i, std::size_t j) const
+    {
+        return 0.25 * (node_y(i, j) + node_y(i + 1, j) + node_y(i, j + 1) + node_y(i + 1, j + 1));
+    }
+
+    [[nodiscard]] bool has_node(std::size_t index) const
+    {
+        return active_nodes.empty() || active_nodes[index] != 0;
+    }
+
+    [[nodiscard]] bool has_cell(std::size_t index) const
+    {
+        return active_cells.empty() || active_cells[index] != 0;
+    }
+};
+
+inline std::vector<std::pair<std::size_t, std::size_t>> structured_cell_dimension_candidates(
+        std::size_t node_count,
+        std::size_t cell_count)
+{
+    std::vector<std::pair<std::size_t, std::size_t>> candidates;
+    for (std::size_t ncell_x = 1; ncell_x <= cell_count; ++ncell_x) {
+        if (cell_count % ncell_x != 0) {
+            continue;
+        }
+        std::size_t const ncell_y = cell_count / ncell_x;
+        if ((ncell_x + 1) * (ncell_y + 1) == node_count) {
+            candidates.emplace_back(ncell_x, ncell_y);
+        }
+    }
+    if (candidates.empty()) {
+        throw std::runtime_error(
+                "failed to infer structured quadrilateral dimensions from the mesh");
+    }
+    return candidates;
+}
+
+inline CurvilinearStructuredGrid2D build_curvilinear_structured_grid(
+        sil::onelab_interface::gmsh::QuadrilateralMesh const& mesh)
+{
+    std::map<std::size_t, sil::onelab_interface::gmsh::MeshNode> nodes_by_tag;
+    for (auto const& node : mesh.nodes) {
+        nodes_by_tag.emplace(node.tag, node);
+    }
+    std::map<std::size_t, bool> referenced_node_tags;
+    for (auto const& cell : mesh.cells) {
+        for (std::size_t node_tag : cell.node_tags) {
+            referenced_node_tags[node_tag] = true;
+        }
+    }
+
+    auto const candidates
+            = structured_cell_dimension_candidates(referenced_node_tags.size(), mesh.cells.size());
+    for (auto const& [ncell_x, ncell_y] : candidates) {
+        CurvilinearStructuredGrid2D grid;
+        grid.ncell_x = ncell_x;
+        grid.ncell_y = ncell_y;
+        grid.ordered_nodes.resize((ncell_x + 1) * (ncell_y + 1));
+        grid.ordered_cells = mesh.cells;
+        grid.active_nodes.assign(grid.ordered_nodes.size(), 1);
+        grid.active_cells.assign(grid.ordered_cells.size(), 1);
+        std::vector<std::size_t> assigned_node_tags(grid.ordered_nodes.size(), 0);
+
+        bool consistent = true;
+        auto assign_node = [&](std::size_t i, std::size_t j, std::size_t node_tag) {
+            std::size_t const index = grid.node_index(i, j);
+            if (assigned_node_tags[index] != 0 && assigned_node_tags[index] != node_tag) {
+                consistent = false;
+                return;
+            }
+            auto const node_it = nodes_by_tag.find(node_tag);
+            if (node_it == nodes_by_tag.end()) {
+                consistent = false;
+                return;
+            }
+            assigned_node_tags[index] = node_tag;
+            grid.ordered_nodes[index] = node_it->second;
+        };
+
+        for (std::size_t j = 0; consistent && j < ncell_y; ++j) {
+            for (std::size_t i = 0; consistent && i < ncell_x; ++i) {
+                auto const& cell = mesh.cells[grid.cell_index(i, j)];
+                assign_node(i, j, cell.node_tags[0]);
+                assign_node(i, j + 1, cell.node_tags[1]);
+                assign_node(i + 1, j + 1, cell.node_tags[2]);
+                assign_node(i + 1, j, cell.node_tags[3]);
+            }
+        }
+        if (!consistent) {
+            continue;
+        }
+        for (std::size_t tag : assigned_node_tags) {
+            if (tag == 0) {
+                consistent = false;
+                break;
+            }
+        }
+        if (consistent) {
+            return grid;
+        }
+    }
+    throw std::runtime_error("the quadrilateral mesh does not form a full transfinite grid");
+}
+
+inline double distance(
+        sil::onelab_interface::gmsh::MeshNode const& lhs,
+        sil::onelab_interface::gmsh::MeshNode const& rhs)
+{
+    double const dx = lhs.x - rhs.x;
+    double const dy = lhs.y - rhs.y;
+    double const dz = lhs.z - rhs.z;
+    return std::sqrt(dx * dx + dy * dy + dz * dz);
+}
+
+inline std::pair<double, double> average_logical_spacings(CurvilinearStructuredGrid2D const& grid)
+{
+    double sum_x = 0.0;
+    double sum_y = 0.0;
+    for (std::size_t j = 0; j < grid.ny(); ++j) {
+        for (std::size_t i = 0; i < grid.ncell_x; ++i) {
+            sum_x += distance(
+                    grid.ordered_nodes[grid.node_index(i, j)],
+                    grid.ordered_nodes[grid.node_index(i + 1, j)]);
+        }
+    }
+    for (std::size_t j = 0; j < grid.ncell_y; ++j) {
+        for (std::size_t i = 0; i < grid.nx(); ++i) {
+            sum_y += distance(
+                    grid.ordered_nodes[grid.node_index(i, j)],
+                    grid.ordered_nodes[grid.node_index(i, j + 1)]);
+        }
+    }
+    return {
+            sum_x / static_cast<double>(grid.ncell_x * grid.ny()),
+            sum_y / static_cast<double>(grid.nx() * grid.ncell_y),
+    };
+}
 
 template <class MemorySpace>
 class ElasticityOperator2D
@@ -527,7 +687,7 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
 
 inline void write_results_view(
         std::filesystem::path const& output_view_file,
-        sil::onelab_interface::gmsh::StructuredGrid2D const& grid,
+        CurvilinearStructuredGrid2D const& grid,
         std::vector<CellFields> const& cell_fields,
         std::vector<double> const& displacement)
 {
@@ -539,20 +699,19 @@ inline void write_results_view(
     for (std::size_t j = 0; j < grid.ny(); ++j) {
         for (std::size_t i = 0; i < grid.nx(); ++i) {
             std::size_t const node = grid.node_index(i, j);
-            stream << "VP(" << grid.x_coords[i] << "," << grid.y_coords[j] << "," << grid.z_value
-                   << "){" << displacement[2 * node] << "," << displacement[2 * node + 1]
-                   << ",0};\n";
+            stream << "VP(" << grid.node_x(i, j) << "," << grid.node_y(i, j) << ",0" << "){"
+                   << displacement[2 * node] << "," << displacement[2 * node + 1] << ",0};\n";
         }
     }
     stream << "};\n";
 
     auto write_scalar_cell_view = [&](std::string const& name, auto value) {
         stream << "View \"" << name << "\" {\n";
-        for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
-            for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
+        for (std::size_t j = 0; j < grid.ncell_y; ++j) {
+            for (std::size_t i = 0; i < grid.ncell_x; ++i) {
                 CellFields const& fields = cell_fields[grid.cell_index(i, j)];
-                stream << "SP(" << grid.cell_center_x(i) << "," << grid.cell_center_y(j) << ","
-                       << grid.z_value << "){" << value(fields) << "};\n";
+                stream << "SP(" << grid.cell_center_x(i, j) << "," << grid.cell_center_y(i, j)
+                       << ",0){" << value(fields) << "};\n";
             }
         }
         stream << "};\n";
@@ -584,70 +743,43 @@ Result run_on_quadrilateral_grid(
         sil::onelab_interface::gmsh::QuadrilateralMesh const& mesh,
         Logger&& logger)
 {
-    auto const grid = sil::onelab_interface::gmsh::build_structured_grid(mesh);
+    auto const grid = detail::build_curvilinear_structured_grid(mesh);
     detail::log_info(
             logger,
-            "SimiLie structured rectilinear quadrilateral mesh validated for elasticity ("
+            "SimiLie transfinite quadrilateral wrench mesh validated for elasticity ("
                     + std::to_string(grid.ordered_nodes.size()) + " nodes, dimensions="
                     + std::to_string(grid.nx()) + "x" + std::to_string(grid.ny()) + ")");
 
     Result result;
     result.node_count = grid.ordered_nodes.size();
     result.mesh_dimensions = {grid.nx(), grid.ny(), 1};
-    result.num_cells = grid.ncell_x() * grid.ncell_y();
+    result.num_cells = grid.ncell_x * grid.ncell_y;
 
     std::vector<detail::CellFields> cell_fields(result.num_cells);
     for (std::size_t cell_index = 0; cell_index < result.num_cells; ++cell_index) {
         int const tag = grid.ordered_cells[cell_index].physical_tag;
         bool const material = detail::has_tag(inputs.material_tags, tag);
-        bool const void_cell = !inputs.void_tags.empty() && detail::has_tag(inputs.void_tags, tag);
-        cell_fields[cell_index].density
-                = material && !void_cell ? 1.0 : inputs.void_stiffness_ratio;
-        if (cell_fields[cell_index].density > 0.5) {
-            ++result.num_material_cells;
-        } else {
-            ++result.num_void_cells;
+        if (!material) {
+            throw std::runtime_error("the wrench interior mesh contains a non-material cell");
         }
+        cell_fields[cell_index].density = 1.0;
+        ++result.num_material_cells;
     }
 
-    std::vector<double> node_density(grid.nx() * grid.ny(), 0.0);
-    std::vector<int> node_count(grid.nx() * grid.ny(), 0);
-    for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
-        for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
-            double const density = cell_fields[grid.cell_index(i, j)].density;
-            for (std::size_t dj = 0; dj <= 1; ++dj) {
-                for (std::size_t di = 0; di <= 1; ++di) {
-                    std::size_t const node = grid.node_index(i + di, j + dj);
-                    node_density[node] += density;
-                    ++node_count[node];
-                }
-            }
-        }
-    }
-    for (std::size_t node = 0; node < node_density.size(); ++node) {
-        node_density[node] = node_count[node] == 0
-                                     ? inputs.void_stiffness_ratio
-                                     : node_density[node] / static_cast<double>(node_count[node]);
-    }
-
-    double const material_threshold = 0.1;
     double active_min_x = std::numeric_limits<double>::infinity();
     double active_max_x = -std::numeric_limits<double>::infinity();
     double active_min_y = std::numeric_limits<double>::infinity();
     double active_max_y = -std::numeric_limits<double>::infinity();
     for (std::size_t j = 0; j < grid.ny(); ++j) {
         for (std::size_t i = 0; i < grid.nx(); ++i) {
-            if (node_density[grid.node_index(i, j)] <= material_threshold) {
-                continue;
-            }
-            active_min_x = std::min(active_min_x, grid.x_coords[i]);
-            active_max_x = std::max(active_max_x, grid.x_coords[i]);
-            active_min_y = std::min(active_min_y, grid.y_coords[j]);
-            active_max_y = std::max(active_max_y, grid.y_coords[j]);
+            active_min_x = std::min(active_min_x, grid.node_x(i, j));
+            active_max_x = std::max(active_max_x, grid.node_x(i, j));
+            active_min_y = std::min(active_min_y, grid.node_y(i, j));
+            active_max_y = std::max(active_max_y, grid.node_y(i, j));
         }
     }
     if (!(active_min_x < active_max_x && active_min_y < active_max_y)) {
-        throw std::runtime_error("failed to detect the active wrench mask in the structured grid");
+        throw std::runtime_error("failed to detect the wrench bounds in the structured grid");
     }
     double const active_width_x = active_max_x - active_min_x;
     double const active_width_y = active_max_y - active_min_y;
@@ -669,17 +801,16 @@ Result run_on_quadrilateral_grid(
     for (std::size_t j = 0; j < grid.ny(); ++j) {
         for (std::size_t i = 0; i < grid.nx(); ++i) {
             std::size_t const node = grid.node_index(i, j);
-            bool const active_node = node_density[node] > material_threshold;
-            active_host(node) = active_node ? 1 : 0;
-            density_host(node) = std::max(node_density[node], inputs.void_stiffness_ratio);
-            bool const clamped = active_node && grid.x_coords[i] <= clamp_limit_x
-                                 && std::abs(grid.y_coords[j]) <= 0.36 * active_width_y;
+            active_host(node) = 1;
+            density_host(node) = 1.0;
+            double const x = grid.node_x(i, j);
+            double const y = grid.node_y(i, j);
+            bool const clamped = x <= clamp_limit_x && std::abs(y) <= 0.36 * active_width_y;
             dirichlet_host(node) = clamped ? 1 : 0;
             if (clamped) {
                 ++result.num_clamped_nodes;
             }
-            bool const loaded = active_node && grid.x_coords[i] >= force_start_x
-                                && std::abs(grid.y_coords[j]) <= force_band_half_height;
+            bool const loaded = x >= force_start_x && std::abs(y) <= force_band_half_height;
             if (loaded) {
                 loaded_nodes.push_back(node);
             }
@@ -698,10 +829,7 @@ Result run_on_quadrilateral_grid(
             .young_modulus = inputs.young_modulus,
             .poisson_ratio = inputs.poisson_ratio,
     };
-    double const hx
-            = (grid.x_coords.back() - grid.x_coords.front()) / static_cast<double>(grid.ncell_x());
-    double const hy
-            = (grid.y_coords.back() - grid.y_coords.front()) / static_cast<double>(grid.ncell_y());
+    auto const [hx, hy] = detail::average_logical_spacings(grid);
 
     Kokkos::View<double**> rhs("similie_elasticity_rhs", 2 * grid.nx() * grid.ny(), 1);
     Kokkos::View<double**>
@@ -742,14 +870,15 @@ Result run_on_quadrilateral_grid(
 
     std::size_t probe_node = loaded_nodes.front();
     for (std::size_t node : loaded_nodes) {
-        if (grid.x_coords[node % grid.nx()] > grid.x_coords[probe_node % grid.nx()]) {
+        if (grid.ordered_nodes[node].x > grid.ordered_nodes[probe_node].x) {
             probe_node = node;
         }
     }
     result.probe_displacement_y = displacement[2 * probe_node + 1];
 
-    for (std::size_t j = 0; j < grid.ncell_y(); ++j) {
-        for (std::size_t i = 0; i < grid.ncell_x(); ++i) {
+    double constexpr material_threshold = 0.1;
+    for (std::size_t j = 0; j < grid.ncell_y; ++j) {
+        for (std::size_t i = 0; i < grid.ncell_x; ++i) {
             std::size_t const n00 = grid.node_index(i, j);
             std::size_t const n10 = grid.node_index(i + 1, j);
             std::size_t const n01 = grid.node_index(i, j + 1);
