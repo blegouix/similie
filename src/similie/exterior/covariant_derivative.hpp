@@ -55,26 +55,12 @@ public:
             class DerivativeIndex,
             class InputComponentIndex = OutputComponentIndex,
             class Elem,
-            class PositionType>
-    [[nodiscard]] KOKKOS_FUNCTION static auto value(Elem elem, PositionType position)
-    {
-        return value<
-                OutputComponentIndex,
-                DerivativeIndex,
-                InputComponentIndex>(elem, position, ZeroConnection {});
-    }
-
-    template <
-            class OutputComponentIndex,
-            class DerivativeIndex,
-            class InputComponentIndex = OutputComponentIndex,
-            class Elem,
             class PositionType,
-            class Connection>
+            class Connection = ZeroConnection>
     [[nodiscard]] KOKKOS_FUNCTION static auto value(
             Elem elem,
             PositionType position,
-            Connection connection)
+            Connection connection = ZeroConnection {})
     {
         using first_spatial_index = ddc::type_seq_element_t<0, spatial_index_seq>;
         auto stencil = reduced_derivative_stencil_<first_spatial_index>(elem);
@@ -99,23 +85,12 @@ public:
             class DerivativeIndex,
             class InputComponentIndex = OutputComponentIndex,
             class Elem,
-            class PositionType>
-    [[nodiscard]] KOKKOS_FUNCTION auto operator()(Elem elem, PositionType position) const
-    {
-        return value<OutputComponentIndex, DerivativeIndex, InputComponentIndex>(elem, position);
-    }
-
-    template <
-            class OutputComponentIndex,
-            class DerivativeIndex,
-            class InputComponentIndex = OutputComponentIndex,
-            class Elem,
             class PositionType,
-            class Connection>
+            class Connection = ZeroConnection>
     [[nodiscard]] KOKKOS_FUNCTION auto operator()(
             Elem elem,
             PositionType position,
-            Connection connection) const
+            Connection connection = ZeroConnection {}) const
     {
         return value<
                 OutputComponentIndex,
