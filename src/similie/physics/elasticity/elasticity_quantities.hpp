@@ -8,27 +8,12 @@
 #include <type_traits>
 
 #include <ddc/ddc.hpp>
-#include <similie/exterior/coboundary.hpp>
-#include <similie/exterior/reduction_and_reconstruction.hpp>
-#include <similie/tensor/character.hpp>
-#include <similie/tensor/tensor.hpp>
+
+#include <similie/exterior/covariant_derivative.hpp>
 
 #include <Kokkos_Core.hpp>
 
 namespace similie::physics::elasticity {
-
-namespace detail {
-
-template <class Elem>
-struct ElementSpatialDomain;
-
-template <class... Tags>
-struct ElementSpatialDomain<ddc::DiscreteElement<Tags...>>
-{
-    using type = ddc::DiscreteDomain<Tags...>;
-};
-
-} // namespace detail
 
 template <std::size_t I, std::size_t J>
 struct StrainTensorIndex
@@ -89,9 +74,10 @@ struct DisplacementToStrain
         using SpatialIndexSeq = ddc::detail::TypeSeq<SpatialIndex...>;
         using X = ddc::type_seq_element_t<0, SpatialIndexSeq>;
         using Y = ddc::type_seq_element_t<1, SpatialIndexSeq>;
+        using Derivative = sil::exterior::CovariantDerivative<SpatialIndex...>;
 
         if constexpr (std::is_same_v<StrainIndex, StrainXX>) {
-            auto stencil = derivative_stencil_<X, SpatialIndex...>(elem);
+            auto stencil = Derivative::template reduced_value<X>(elem);
             if constexpr (std::is_same_v<DisplacementComponent, X>) {
                 stencil *= inverse_spacing_x;
             } else {
@@ -99,7 +85,7 @@ struct DisplacementToStrain
             }
             return stencil;
         } else if constexpr (std::is_same_v<StrainIndex, StrainYY>) {
-            auto stencil = derivative_stencil_<Y, SpatialIndex...>(elem);
+            auto stencil = Derivative::template reduced_value<Y>(elem);
             if constexpr (std::is_same_v<DisplacementComponent, Y>) {
                 stencil *= inverse_spacing_y;
             } else {
@@ -108,11 +94,11 @@ struct DisplacementToStrain
             return stencil;
         } else if constexpr (std::is_same_v<StrainIndex, StrainXY>) {
             if constexpr (std::is_same_v<DisplacementComponent, X>) {
-                auto stencil = derivative_stencil_<Y, SpatialIndex...>(elem);
+                auto stencil = Derivative::template reduced_value<Y>(elem);
                 stencil *= 0.5 * inverse_spacing_y;
                 return stencil;
             } else {
-                auto stencil = derivative_stencil_<X, SpatialIndex...>(elem);
+                auto stencil = Derivative::template reduced_value<X>(elem);
                 if constexpr (std::is_same_v<DisplacementComponent, Y>) {
                     stencil *= 0.5 * inverse_spacing_x;
                 } else {
@@ -139,35 +125,22 @@ struct DisplacementToStrain
         using SpatialIndexSeq = ddc::detail::TypeSeq<SpatialIndex...>;
         using X = ddc::type_seq_element_t<0, SpatialIndexSeq>;
         using Y = ddc::type_seq_element_t<1, SpatialIndexSeq>;
+        using Derivative = sil::exterior::CovariantDerivative<SpatialIndex...>;
 
         if constexpr (std::is_same_v<StrainIndex, StrainXX>) {
-            auto stencil = reconstructed_derivative_stencil_<X, X, SpatialIndex...>(
-                    elem, position);
-            if constexpr (!std::is_same_v<DisplacementComponent, X>) {
-                stencil *= 0.0;
-            }
-            return stencil;
+            return Derivative::template value<X, X, DisplacementComponent>(elem, position);
         } else if constexpr (std::is_same_v<StrainIndex, StrainYY>) {
-            auto stencil = reconstructed_derivative_stencil_<Y, Y, SpatialIndex...>(
-                    elem, position);
-            if constexpr (!std::is_same_v<DisplacementComponent, Y>) {
-                stencil *= 0.0;
-            }
-            return stencil;
+            return Derivative::template value<Y, Y, DisplacementComponent>(elem, position);
         } else if constexpr (std::is_same_v<StrainIndex, StrainXY>) {
             if constexpr (std::is_same_v<DisplacementComponent, X>) {
-                auto stencil = reconstructed_derivative_stencil_<Y, Y, SpatialIndex...>(
-                        elem, position);
+                auto stencil
+                        = Derivative::template value<X, Y, DisplacementComponent>(elem, position);
                 stencil *= 0.5;
                 return stencil;
             } else {
-                auto stencil = reconstructed_derivative_stencil_<X, X, SpatialIndex...>(
-                        elem, position);
-                if constexpr (std::is_same_v<DisplacementComponent, Y>) {
-                    stencil *= 0.5;
-                } else {
-                    stencil *= 0.0;
-                }
+                auto stencil
+                        = Derivative::template value<Y, X, DisplacementComponent>(elem, position);
+                stencil *= 0.5;
                 return stencil;
             }
         } else {
@@ -176,62 +149,6 @@ struct DisplacementToStrain
                             || std::is_same_v<StrainIndex, StrainXY>,
                     "unsupported elasticity strain component index");
         }
-    }
-
-private:
-    template <class DerivativeIndex, class... SpatialIndex, class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION static auto derivative_stencil_(Elem elem)
-    {
-        using spatial_domain_type = typename detail::ElementSpatialDomain<Elem>::type;
-        using DerivativeTensorIndex =
-                sil::tensor::Covariant<sil::tensor::TensorNaturalIndex<SpatialIndex...>>;
-        using DisplacementScalarIndex = sil::tensor::ScalarIndex;
-
-        auto const chain = sil::exterior::tangent_basis<1, spatial_domain_type>(elem);
-        auto const lower_chain = sil::exterior::tangent_basis<0, spatial_domain_type>(elem);
-        [[maybe_unused]] sil::tensor::TensorAccessor<DerivativeTensorIndex> accessor;
-        return sil::exterior::Coboundary<DerivativeTensorIndex, DisplacementScalarIndex>::value(
-                sil::exterior::detail::IdentityStencilEvaluator {},
-                chain,
-                lower_chain,
-                elem,
-                accessor.template access_element<DerivativeIndex>());
-    }
-
-    template <
-            class ReducedDerivativeIndex,
-            class ReconstructedDerivativeIndex,
-            class... SpatialIndex,
-            class Elem,
-            class PositionType>
-    [[nodiscard]] KOKKOS_FUNCTION static auto reconstructed_derivative_stencil_(
-            Elem elem,
-            PositionType position)
-    {
-        using SpatialIndexSeq = ddc::detail::TypeSeq<SpatialIndex...>;
-        using GradientFormIndex =
-                sil::tensor::Covariant<sil::tensor::TensorNaturalIndex<SpatialIndex...>>;
-        using GradientIndexSeq = sil::tensor::upper_t<
-                ddc::to_type_seq_t<sil::tensor::natural_domain_t<GradientFormIndex>>>;
-        using ReconstructionType =
-                sil::exterior::Reconstruction<GradientIndexSeq, PositionType, Elem>;
-        using ReconstructionAccessor = sil::tensor::tensor_accessor_for_domain_t<
-                sil::exterior::reconstruction_domain_t<GradientIndexSeq>>;
-        using ReconstructionNaturalElem =
-                typename ReconstructionAccessor::natural_domain_t::discrete_element_type;
-
-        auto stencil = derivative_stencil_<ReducedDerivativeIndex, SpatialIndex...>(elem);
-        constexpr std::size_t source_id
-                = ddc::type_seq_rank_v<ReducedDerivativeIndex, SpatialIndexSeq>;
-        constexpr std::size_t target_id
-                = ddc::type_seq_rank_v<ReconstructedDerivativeIndex, SpatialIndexSeq>;
-        auto const reconstruction_natural_elem =
-                sil::exterior::detail::natural_elem_from_flat_ids<ReconstructionNaturalElem>(
-                        std::array<std::size_t, 2> {source_id, target_id});
-        double const reconstruction_coefficient
-                = ReconstructionType::value(position, elem, reconstruction_natural_elem);
-        stencil *= reconstruction_coefficient;
-        return stencil;
     }
 };
 

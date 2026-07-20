@@ -20,6 +20,7 @@
 #include <vector>
 
 #include <ddc/ddc.hpp>
+
 #include <ginkgo/core/base/matrix_data.hpp>
 #include <similie/physics/elasticity/linear_elasticity.hpp>
 #include <similie/physics/hamilton_equations.hpp>
@@ -482,12 +483,12 @@ class ElasticityOperator2D
     using view_type = Kokkos::View<double*, MemorySpace>;
     using int_view_type = Kokkos::View<int*, MemorySpace>;
     using stencil_columns_view_type = Kokkos::View<int****, Kokkos::LayoutRight, MemorySpace>;
-    using stencil_coefficients_view_type =
-            Kokkos::View<double****, Kokkos::LayoutRight, MemorySpace>;
+    using stencil_coefficients_view_type
+            = Kokkos::View<double****, Kokkos::LayoutRight, MemorySpace>;
     using stencil_counts_view_type = Kokkos::View<int***, Kokkos::LayoutRight, MemorySpace>;
     using transposed_columns_view_type = Kokkos::View<int***, Kokkos::LayoutRight, MemorySpace>;
-    using transposed_coefficients_view_type =
-            Kokkos::View<double***, Kokkos::LayoutRight, MemorySpace>;
+    using transposed_coefficients_view_type
+            = Kokkos::View<double***, Kokkos::LayoutRight, MemorySpace>;
     using transposed_counts_view_type = Kokkos::View<int**, Kokkos::LayoutRight, MemorySpace>;
 
     static constexpr int NUM_STRAIN_COMPONENTS = 3;
@@ -501,7 +502,6 @@ class ElasticityOperator2D
     int_view_type m_active;
     int_view_type m_dirichlet;
     view_type m_density;
-    view_type m_cell_measure;
     stencil_columns_view_type m_strain_columns;
     stencil_coefficients_view_type m_strain_coefficients;
     stencil_counts_view_type m_strain_counts;
@@ -527,70 +527,55 @@ public:
         , m_active(active)
         , m_dirichlet(dirichlet)
         , m_density(density)
-        , m_cell_measure("similie_elasticity_cell_measure", nx * ny)
-        , m_strain_columns("similie_elasticity_strain_columns",
-                           NUM_STRAIN_COMPONENTS,
-                           NUM_DISPLACEMENT_COMPONENTS,
-                           nx * ny,
-                           STRAIN_STENCIL_MAX_SIZE)
-        , m_strain_coefficients("similie_elasticity_strain_coefficients",
-                                NUM_STRAIN_COMPONENTS,
-                                NUM_DISPLACEMENT_COMPONENTS,
-                                nx * ny,
-                                STRAIN_STENCIL_MAX_SIZE)
-        , m_strain_counts("similie_elasticity_strain_counts",
-                          NUM_STRAIN_COMPONENTS,
-                          NUM_DISPLACEMENT_COMPONENTS,
-                          nx * ny)
-        , m_transposed_strain_columns("similie_elasticity_transposed_strain_columns",
-                                      NUM_STRAIN_COMPONENTS,
-                                      2 * nx * ny,
-                                      TRANSPOSED_STRAIN_STENCIL_MAX_SIZE)
-        , m_transposed_strain_coefficients("similie_elasticity_transposed_strain_coefficients",
-                                           NUM_STRAIN_COMPONENTS,
-                                           2 * nx * ny,
-                                           TRANSPOSED_STRAIN_STENCIL_MAX_SIZE)
-        , m_transposed_strain_counts("similie_elasticity_transposed_strain_counts",
-                                     NUM_STRAIN_COMPONENTS,
-                                     2 * nx * ny)
+        , m_strain_columns(
+                  "similie_elasticity_strain_columns",
+                  NUM_STRAIN_COMPONENTS,
+                  NUM_DISPLACEMENT_COMPONENTS,
+                  nx * ny,
+                  STRAIN_STENCIL_MAX_SIZE)
+        , m_strain_coefficients(
+                  "similie_elasticity_strain_coefficients",
+                  NUM_STRAIN_COMPONENTS,
+                  NUM_DISPLACEMENT_COMPONENTS,
+                  nx * ny,
+                  STRAIN_STENCIL_MAX_SIZE)
+        , m_strain_counts(
+                  "similie_elasticity_strain_counts",
+                  NUM_STRAIN_COMPONENTS,
+                  NUM_DISPLACEMENT_COMPONENTS,
+                  nx * ny)
+        , m_transposed_strain_columns(
+                  "similie_elasticity_transposed_strain_columns",
+                  NUM_STRAIN_COMPONENTS,
+                  2 * nx * ny,
+                  TRANSPOSED_STRAIN_STENCIL_MAX_SIZE)
+        , m_transposed_strain_coefficients(
+                  "similie_elasticity_transposed_strain_coefficients",
+                  NUM_STRAIN_COMPONENTS,
+                  2 * nx * ny,
+                  TRANSPOSED_STRAIN_STENCIL_MAX_SIZE)
+        , m_transposed_strain_counts(
+                  "similie_elasticity_transposed_strain_counts",
+                  NUM_STRAIN_COMPONENTS,
+                  2 * nx * ny)
     {
         auto const node_x_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), node_x);
         auto const node_y_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), node_y);
-        auto cell_measure_host = Kokkos::create_mirror_view(m_cell_measure);
         auto const node_domain = ddc::DiscreteDomain<DDimX, DDimY>(
                 ddc::DiscreteElement<DDimX, DDimY>(0, 0),
                 ddc::DiscreteVector<DDimX, DDimY>(nx, ny));
         [[maybe_unused]] sil::tensor::TensorAccessor<PositionIndex2D> position_accessor;
-        ddc::DiscreteDomain<DDimX, DDimY, PositionIndex2D> const position_domain(
-                node_domain,
-                position_accessor.domain());
+        ddc::DiscreteDomain<DDimX, DDimY, PositionIndex2D> const
+                position_domain(node_domain, position_accessor.domain());
         ddc::Chunk position_alloc(position_domain, ddc::HostAllocator<double>());
         sil::tensor::Tensor position(position_alloc);
         ddc::host_for_each(node_domain, [&](auto elem) {
-            std::size_t const i
-                    = static_cast<std::size_t>(ddc::DiscreteElement<DDimX>(elem).uid());
-            std::size_t const j
-                    = static_cast<std::size_t>(ddc::DiscreteElement<DDimY>(elem).uid());
+            std::size_t const i = static_cast<std::size_t>(ddc::DiscreteElement<DDimX>(elem).uid());
+            std::size_t const j = static_cast<std::size_t>(ddc::DiscreteElement<DDimY>(elem).uid());
             std::size_t const node = i + nx * j;
             position(elem, position_accessor.template access_element<X>()) = node_x_host(node);
             position(elem, position_accessor.template access_element<Y>()) = node_y_host(node);
         });
-        for (std::size_t j = 0; j < ny; ++j) {
-            for (std::size_t i = 0; i < nx; ++i) {
-                std::size_t const row = i + nx * j;
-                cell_measure_host(row) = 0.0;
-                if (i + 1 < nx && j + 1 < ny) {
-                    std::size_t const n00 = i + nx * j;
-                    std::size_t const n10 = i + 1 + nx * j;
-                    std::size_t const n01 = i + nx * (j + 1);
-                    double const dx_i = node_x_host(n10) - node_x_host(n00);
-                    double const dy_i = node_y_host(n10) - node_y_host(n00);
-                    double const dx_j = node_x_host(n01) - node_x_host(n00);
-                    double const dy_j = node_y_host(n01) - node_y_host(n00);
-                    cell_measure_host(row) = std::abs(dx_i * dy_j - dx_j * dy_i);
-                }
-            }
-        }
 
         auto strain_columns_host = Kokkos::create_mirror_view(m_strain_columns);
         auto strain_coefficients_host = Kokkos::create_mirror_view(m_strain_coefficients);
@@ -601,8 +586,7 @@ public:
         auto transposed_counts_host = Kokkos::create_mirror_view(m_transposed_strain_counts);
 
         for (int strain_id = 0; strain_id < NUM_STRAIN_COMPONENTS; ++strain_id) {
-            for (int component_id = 0; component_id < NUM_DISPLACEMENT_COMPONENTS;
-                 ++component_id) {
+            for (int component_id = 0; component_id < NUM_DISPLACEMENT_COMPONENTS; ++component_id) {
                 for (std::size_t row = 0; row < nx * ny; ++row) {
                     strain_counts_host(strain_id, component_id, row) = 0;
                     for (int slot = 0; slot < STRAIN_STENCIL_MAX_SIZE; ++slot) {
@@ -629,9 +613,11 @@ public:
             using StrainIndex = decltype(strain_tag);
             using DisplacementComponent = decltype(displacement_tag);
             int count = 0;
-            auto stencil = physics::elasticity::DisplacementToStrain::
-                    template forward_value<StrainIndex, DisplacementComponent, X, Y>(
-                            elem, position);
+            auto stencil = physics::elasticity::DisplacementToStrain::template forward_value<
+                    StrainIndex,
+                    DisplacementComponent,
+                    X,
+                    Y>(elem, position);
             ddc::device_for_each(stencil.domain(), [&](auto stencil_elem) {
                 double const coefficient = stencil.mem(stencil_elem);
                 if (coefficient == 0.0) {
@@ -662,17 +648,47 @@ public:
                 std::size_t const sample_row = i + nx * j;
                 auto const elem = ddc::DiscreteElement<DDimX, DDimY>(i, j);
                 fill_forward_stencil(
-                        physics::elasticity::StrainXX {}, X {}, 0, 0, sample_row, elem);
+                        physics::elasticity::StrainXX {},
+                        X {},
+                        0,
+                        0,
+                        sample_row,
+                        elem);
                 fill_forward_stencil(
-                        physics::elasticity::StrainXX {}, Y {}, 0, 1, sample_row, elem);
+                        physics::elasticity::StrainXX {},
+                        Y {},
+                        0,
+                        1,
+                        sample_row,
+                        elem);
                 fill_forward_stencil(
-                        physics::elasticity::StrainYY {}, X {}, 1, 0, sample_row, elem);
+                        physics::elasticity::StrainYY {},
+                        X {},
+                        1,
+                        0,
+                        sample_row,
+                        elem);
                 fill_forward_stencil(
-                        physics::elasticity::StrainYY {}, Y {}, 1, 1, sample_row, elem);
+                        physics::elasticity::StrainYY {},
+                        Y {},
+                        1,
+                        1,
+                        sample_row,
+                        elem);
                 fill_forward_stencil(
-                        physics::elasticity::StrainXY {}, X {}, 2, 0, sample_row, elem);
+                        physics::elasticity::StrainXY {},
+                        X {},
+                        2,
+                        0,
+                        sample_row,
+                        elem);
                 fill_forward_stencil(
-                        physics::elasticity::StrainXY {}, Y {}, 2, 1, sample_row, elem);
+                        physics::elasticity::StrainXY {},
+                        Y {},
+                        2,
+                        1,
+                        sample_row,
+                        elem);
             }
         }
 
@@ -687,14 +703,16 @@ public:
                                 strain_columns_host(strain_id, component_id, sample_row, slot));
                         int const count = transposed_counts_host(strain_id, row);
                         if (count >= TRANSPOSED_STRAIN_STENCIL_MAX_SIZE) {
-                            throw std::runtime_error(
-                                    "transposed strain stencil capacity exceeded");
+                            throw std::runtime_error("transposed strain stencil capacity exceeded");
                         }
                         transposed_columns_host(strain_id, row, count)
                                 = static_cast<int>(sample_row);
                         transposed_coefficients_host(strain_id, row, count)
                                 = strain_coefficients_host(
-                                        strain_id, component_id, sample_row, slot);
+                                        strain_id,
+                                        component_id,
+                                        sample_row,
+                                        slot);
                         transposed_counts_host(strain_id, row) = count + 1;
                     }
                 }
@@ -707,7 +725,6 @@ public:
         Kokkos::deep_copy(m_transposed_strain_columns, transposed_columns_host);
         Kokkos::deep_copy(m_transposed_strain_coefficients, transposed_coefficients_host);
         Kokkos::deep_copy(m_transposed_strain_counts, transposed_counts_host);
-        Kokkos::deep_copy(m_cell_measure, cell_measure_host);
     }
 
     [[nodiscard]] KOKKOS_INLINE_FUNCTION std::size_t size() const
@@ -724,7 +741,6 @@ public:
         auto const active = m_active;
         auto const dirichlet = m_dirichlet;
         auto const density = m_density;
-        auto const cell_measure = m_cell_measure;
         auto const strain_columns = m_strain_columns;
         auto const strain_coefficients = m_strain_coefficients;
         auto const strain_counts = m_strain_counts;
@@ -751,11 +767,9 @@ public:
                             physics::elasticity::Strain2D strain;
                             for (int component_id = 0; component_id < NUM_DISPLACEMENT_COMPONENTS;
                                  ++component_id) {
-                                for (int k = 0;
-                                     k < strain_counts(0, component_id, sample_row);
+                                for (int k = 0; k < strain_counts(0, component_id, sample_row);
                                      ++k) {
-                                    strain.xx += strain_coefficients(
-                                                         0, component_id, sample_row, k)
+                                    strain.xx += strain_coefficients(0, component_id, sample_row, k)
                                                  * input(static_cast<std::size_t>(strain_columns(
                                                                  0,
                                                                  component_id,
@@ -763,11 +777,9 @@ public:
                                                                  k)),
                                                          0);
                                 }
-                                for (int k = 0;
-                                     k < strain_counts(1, component_id, sample_row);
+                                for (int k = 0; k < strain_counts(1, component_id, sample_row);
                                      ++k) {
-                                    strain.yy += strain_coefficients(
-                                                         1, component_id, sample_row, k)
+                                    strain.yy += strain_coefficients(1, component_id, sample_row, k)
                                                  * input(static_cast<std::size_t>(strain_columns(
                                                                  1,
                                                                  component_id,
@@ -775,11 +787,9 @@ public:
                                                                  k)),
                                                          0);
                                 }
-                                for (int k = 0;
-                                     k < strain_counts(2, component_id, sample_row);
+                                for (int k = 0; k < strain_counts(2, component_id, sample_row);
                                      ++k) {
-                                    strain.xy += strain_coefficients(
-                                                         2, component_id, sample_row, k)
+                                    strain.xy += strain_coefficients(2, component_id, sample_row, k)
                                                  * input(static_cast<std::size_t>(strain_columns(
                                                                  2,
                                                                  component_id,
@@ -789,8 +799,8 @@ public:
                                 }
                             }
                             double stress = 0.0;
-                            auto const elem = ddc::DiscreteElement<DDimX, DDimY>(
-                                    sample_row % nx, sample_row / nx);
+                            auto const elem = ddc::
+                                    DiscreteElement<DDimX, DDimY>(sample_row % nx, sample_row / nx);
                             if (stress_id == 0) {
                                 stress = equations.template dpotential_dt<
                                         physics::elasticity::StrainXX>(strain, elem);
@@ -802,7 +812,7 @@ public:
                                         physics::elasticity::StrainXY>(strain, elem);
                             }
                             residual += transposed_strain_coefficients(stress_id, row, slot)
-                                        * density(sample_row) * cell_measure(sample_row) * stress;
+                                        * density(sample_row) * stress;
                         }
                     }
                     output(row, 0) = residual;
@@ -823,11 +833,6 @@ public:
     [[nodiscard]] auto density() const
     {
         return m_density;
-    }
-
-    [[nodiscard]] auto cell_measure() const
-    {
-        return m_cell_measure;
     }
 
     [[nodiscard]] auto equations() const
@@ -888,21 +893,21 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
             = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), operator_model.dirichlet());
     auto const density_host
             = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), operator_model.density());
-    auto const cell_measure_host = Kokkos::create_mirror_view_and_copy(
-            Kokkos::HostSpace(),
-            operator_model.cell_measure());
-    auto const strain_columns_host = Kokkos::create_mirror_view_and_copy(
-            Kokkos::HostSpace(), operator_model.strain_columns());
-    auto const strain_coefficients_host = Kokkos::create_mirror_view_and_copy(
-            Kokkos::HostSpace(), operator_model.strain_coefficients());
-    auto const strain_counts_host = Kokkos::create_mirror_view_and_copy(
-            Kokkos::HostSpace(), operator_model.strain_counts());
+    auto const strain_columns_host = Kokkos::
+            create_mirror_view_and_copy(Kokkos::HostSpace(), operator_model.strain_columns());
+    auto const strain_coefficients_host = Kokkos::
+            create_mirror_view_and_copy(Kokkos::HostSpace(), operator_model.strain_coefficients());
+    auto const strain_counts_host = Kokkos::
+            create_mirror_view_and_copy(Kokkos::HostSpace(), operator_model.strain_counts());
     auto const transposed_columns_host = Kokkos::create_mirror_view_and_copy(
-            Kokkos::HostSpace(), operator_model.transposed_strain_columns());
+            Kokkos::HostSpace(),
+            operator_model.transposed_strain_columns());
     auto const transposed_coefficients_host = Kokkos::create_mirror_view_and_copy(
-            Kokkos::HostSpace(), operator_model.transposed_strain_coefficients());
+            Kokkos::HostSpace(),
+            operator_model.transposed_strain_coefficients());
     auto const transposed_counts_host = Kokkos::create_mirror_view_and_copy(
-            Kokkos::HostSpace(), operator_model.transposed_strain_counts());
+            Kokkos::HostSpace(),
+            operator_model.transposed_strain_counts());
 
     auto coefficient = [&](int stress_id, int strain_id) {
         auto const equations = operator_model.equations();
@@ -964,7 +969,7 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                         transposed_columns_host(stress_id, row, transpose_slot));
                 double const transpose_coefficient
                         = transposed_coefficients_host(stress_id, row, transpose_slot);
-                double const weight = density_host(sample_row) * cell_measure_host(sample_row);
+                double const weight = density_host(sample_row);
                 for (int strain_id = 0; strain_id < 3; ++strain_id) {
                     double const material_coefficient = coefficient(stress_id, strain_id);
                     if (material_coefficient == 0.0) {
@@ -985,7 +990,10 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                                     static_cast<gko::int32>(column),
                                     weight * transpose_coefficient * material_coefficient
                                             * strain_coefficients_host(
-                                                    strain_id, component_id, sample_row, slot));
+                                                    strain_id,
+                                                    component_id,
+                                                    sample_row,
+                                                    slot));
                         }
                     }
                 }
@@ -1103,10 +1111,8 @@ Result run_on_quadrilateral_grid(
             dirichlet("similie_elasticity_dirichlet", grid.nx() * grid.ny());
     Kokkos::View<double*, memory_space>
             density("similie_elasticity_density", grid.nx() * grid.ny());
-    Kokkos::View<double*, memory_space>
-            node_x("similie_elasticity_node_x", grid.nx() * grid.ny());
-    Kokkos::View<double*, memory_space>
-            node_y("similie_elasticity_node_y", grid.nx() * grid.ny());
+    Kokkos::View<double*, memory_space> node_x("similie_elasticity_node_x", grid.nx() * grid.ny());
+    Kokkos::View<double*, memory_space> node_y("similie_elasticity_node_y", grid.nx() * grid.ny());
     auto active_host = Kokkos::create_mirror_view(active);
     auto dirichlet_host = Kokkos::create_mirror_view(dirichlet);
     auto density_host = Kokkos::create_mirror_view(density);
@@ -1162,8 +1168,15 @@ Result run_on_quadrilateral_grid(
     }
     Kokkos::deep_copy(rhs, rhs_host);
 
-    detail::ElasticityOperator2D<memory_space, decltype(equations)> const
-            operator_model(grid.nx(), grid.ny(), node_x, node_y, equations, active, dirichlet, density);
+    detail::ElasticityOperator2D<memory_space, decltype(equations)> const operator_model(
+            grid.nx(),
+            grid.ny(),
+            node_x,
+            node_y,
+            equations,
+            active,
+            dirichlet,
+            density);
 
     detail::log_info(logger, "SimiLie starting linear elasticity solve");
     result.solver_diagnostics = solvers::minimize_strong_formulation_residual(
@@ -1208,40 +1221,36 @@ Result run_on_quadrilateral_grid(
                 = static_cast<std::size_t>(ddc::DiscreteElement<detail::DDimX>(elem).uid());
         std::size_t const j
                 = static_cast<std::size_t>(ddc::DiscreteElement<detail::DDimY>(elem).uid());
-        position(elem, position_accessor.template access_element<detail::X>())
-                = grid.node_x(i, j);
-        position(elem, position_accessor.template access_element<detail::Y>())
-                = grid.node_y(i, j);
+        position(elem, position_accessor.template access_element<detail::X>()) = grid.node_x(i, j);
+        position(elem, position_accessor.template access_element<detail::Y>()) = grid.node_y(i, j);
     });
 
-    auto strain_component_from_displacement = [&](auto strain_tag,
-                                                 auto displacement_component_tag,
-                                                 auto elem) {
-        using StrainIndex = decltype(strain_tag);
-        using DisplacementComponent = decltype(displacement_component_tag);
-        auto stencil = physics::elasticity::DisplacementToStrain::
-                template forward_value<
+    auto strain_component_from_displacement =
+            [&](auto strain_tag, auto displacement_component_tag, auto elem) {
+                using StrainIndex = decltype(strain_tag);
+                using DisplacementComponent = decltype(displacement_component_tag);
+                auto stencil = physics::elasticity::DisplacementToStrain::template forward_value<
                         StrainIndex,
                         DisplacementComponent,
                         detail::X,
                         detail::Y>(elem, position);
-        double value = 0.0;
-        ddc::host_for_each(stencil.domain(), [&](auto stencil_elem) {
-            auto const displacement_elem
-                    = ddc::DiscreteElement<detail::DDimX, detail::DDimY>(stencil_elem);
-            std::size_t const i = static_cast<std::size_t>(
-                    ddc::DiscreteElement<detail::DDimX>(displacement_elem).uid());
-            std::size_t const j = static_cast<std::size_t>(
-                    ddc::DiscreteElement<detail::DDimY>(displacement_elem).uid());
-            if (i >= grid.nx() || j >= grid.ny()) {
-                return;
-            }
-            std::size_t const node = grid.node_index(i, j);
-            int const component = std::is_same_v<DisplacementComponent, detail::X> ? 0 : 1;
-            value += stencil.mem(stencil_elem) * displacement[2 * node + component];
-        });
-        return value;
-    };
+                double value = 0.0;
+                ddc::host_for_each(stencil.domain(), [&](auto stencil_elem) {
+                    auto const displacement_elem
+                            = ddc::DiscreteElement<detail::DDimX, detail::DDimY>(stencil_elem);
+                    std::size_t const i = static_cast<std::size_t>(
+                            ddc::DiscreteElement<detail::DDimX>(displacement_elem).uid());
+                    std::size_t const j = static_cast<std::size_t>(
+                            ddc::DiscreteElement<detail::DDimY>(displacement_elem).uid());
+                    if (i >= grid.nx() || j >= grid.ny()) {
+                        return;
+                    }
+                    std::size_t const node = grid.node_index(i, j);
+                    int const component = std::is_same_v<DisplacementComponent, detail::X> ? 0 : 1;
+                    value += stencil.mem(stencil_elem) * displacement[2 * node + component];
+                });
+                return value;
+            };
 
     double constexpr material_threshold = 0.1;
     for (std::size_t j = 0; j < grid.ncell_y; ++j) {
@@ -1250,13 +1259,21 @@ Result run_on_quadrilateral_grid(
             detail::CellFields& fields = cell_fields[grid.cell_index(i, j)];
             fields.strain = {
                     .xx = strain_component_from_displacement(
-                            physics::elasticity::StrainXX {}, detail::X {}, elem),
+                            physics::elasticity::StrainXX {},
+                            detail::X {},
+                            elem),
                     .yy = strain_component_from_displacement(
-                            physics::elasticity::StrainYY {}, detail::Y {}, elem),
+                            physics::elasticity::StrainYY {},
+                            detail::Y {},
+                            elem),
                     .xy = strain_component_from_displacement(
-                                  physics::elasticity::StrainXY {}, detail::X {}, elem)
+                                  physics::elasticity::StrainXY {},
+                                  detail::X {},
+                                  elem)
                           + strain_component_from_displacement(
-                                  physics::elasticity::StrainXY {}, detail::Y {}, elem),
+                                  physics::elasticity::StrainXY {},
+                                  detail::Y {},
+                                  elem),
             };
             fields.stress = detail::linear_elasticity_stress(equations, fields.strain);
             fields.stress.xx *= fields.density;

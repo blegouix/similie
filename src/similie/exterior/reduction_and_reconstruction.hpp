@@ -880,17 +880,15 @@ struct Reconstruction
             std::array<double, matrix_size * matrix_size> reduction_alloc {};
             std::array<double, matrix_size * matrix_size> inverse_alloc {};
             std::array<double, matrix_size * matrix_size> workspace_alloc {};
-            auto reduction_matrix = misc::math::matrix_view<double, memory_space>(
-                    reduction_alloc.data(),
-                    matrix_size,
-                    matrix_size);
-            auto inverse_matrix = misc::math::matrix_view<double, memory_space>(
-                    inverse_alloc.data(),
-                    matrix_size,
-                    matrix_size);
-            auto workspace = misc::math::vector_view<double, memory_space>(
-                    workspace_alloc.data(),
-                    matrix_size * matrix_size);
+            auto reduction_matrix = misc::math::matrix_view<
+                    double,
+                    memory_space>(reduction_alloc.data(), matrix_size, matrix_size);
+            auto inverse_matrix = misc::math::matrix_view<
+                    double,
+                    memory_space>(inverse_alloc.data(), matrix_size, matrix_size);
+            auto workspace = misc::math::vector_view<
+                    double,
+                    memory_space>(workspace_alloc.data(), matrix_size * matrix_size);
 
             ddc::device_for_each(source_accessor.domain(), [&](auto source_mem_elem) {
                 auto const source_natural_elem
@@ -924,8 +922,7 @@ struct Reconstruction
             std::size_t const source_mem_id = source_index_type::access_id_to_mem_id(
                     source_accessor.access_element(source_natural_elem_type(natural_elem))
                             .template uid<source_index_type>());
-            return inverse_matrix(target_mem_id, source_mem_id)
-                   / misc::factorial(K);
+            return inverse_matrix(source_mem_id, target_mem_id) / misc::factorial(K);
         }
     }
 };
