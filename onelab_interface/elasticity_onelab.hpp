@@ -21,6 +21,7 @@
 
 #include <ginkgo/core/base/matrix_data.hpp>
 #include <similie/physics/elasticity/linear_elasticity.hpp>
+#include <similie/physics/elasticity/linear_elasticity_constitutive_law.hpp>
 #include <similie/solvers/minimize_strong_formulation_residual.hpp>
 
 #include <Kokkos_Core.hpp>
@@ -212,6 +213,52 @@ struct CellFields
     physics::elasticity::SmallStrain2D strain;
     physics::elasticity::CauchyStress2D stress;
 };
+
+struct ElasticityMaterialCoefficients
+{
+    double c11 = 1.0;
+    double c12 = 0.0;
+    double c66 = 1.0;
+};
+
+[[nodiscard]] inline ElasticityMaterialCoefficients material_coefficients(
+        double young_modulus,
+        double poisson_ratio)
+{
+    physics::elasticity::LinearElasticityHamiltonian<> const
+            hamiltonian(young_modulus, poisson_ratio);
+    physics::elasticity::SmallStrain2D const zero_strain {};
+    int const elem = 0;
+    return {
+            .c11 = hamiltonian.template jacobian<
+                    physics::elasticity::StrainXX,
+                    physics::elasticity::StrainXX>(zero_strain, elem),
+            .c12 = hamiltonian.template jacobian<
+                    physics::elasticity::StrainXX,
+                    physics::elasticity::StrainYY>(zero_strain, elem),
+            .c66 = 0.25
+                   * hamiltonian.template jacobian<
+                           physics::elasticity::StrainXY,
+                           physics::elasticity::StrainXY>(zero_strain, elem),
+    };
+}
+
+[[nodiscard]] inline physics::elasticity::CauchyStress2D hooke_plane_stress(
+        ElasticityMaterialCoefficients coefficients,
+        physics::elasticity::SmallStrain2D strain)
+{
+    physics::elasticity::LinearElasticStrainToStress const
+            normal_x(2.0 * coefficients.c66, coefficients.c12);
+    physics::elasticity::LinearElasticStrainToStress const
+            normal_y(2.0 * coefficients.c66, coefficients.c12);
+    physics::elasticity::LinearElasticStrainToStress const shear(2.0 * coefficients.c66, 0.0);
+    double const trace_strain = strain.xx + strain.yy;
+    return {
+            .xx = normal_x(trace_strain, strain.xx),
+            .yy = normal_y(trace_strain, strain.yy),
+            .xy = shear(trace_strain, strain.xy),
+    };
+}
 
 struct CurvilinearStructuredGrid2D
 {
@@ -420,7 +467,7 @@ public:
             std::size_t ny,
             double hx,
             double hy,
-            physics::elasticity::PlaneStressMaterial material,
+            ElasticityMaterialCoefficients material,
             int_view_type active,
             int_view_type dirichlet,
             view_type density)
@@ -428,9 +475,9 @@ public:
         , m_ny(ny)
         , m_hx(hx)
         , m_hy(hy)
-        , m_c11(material.c11())
-        , m_c12_plus_c66(material.c12() + material.mu())
-        , m_c66(material.mu())
+        , m_c11(material.c11)
+        , m_c12_plus_c66(material.c12 + material.c66)
+        , m_c66(material.c66)
         , m_active(active)
         , m_dirichlet(dirichlet)
         , m_density(density)
@@ -825,10 +872,8 @@ Result run_on_quadrilateral_grid(
     Kokkos::deep_copy(dirichlet, dirichlet_host);
     Kokkos::deep_copy(density, density_host);
 
-    physics::elasticity::PlaneStressMaterial const material {
-            .young_modulus = inputs.young_modulus,
-            .poisson_ratio = inputs.poisson_ratio,
-    };
+    detail::ElasticityMaterialCoefficients const material
+            = detail::material_coefficients(inputs.young_modulus, inputs.poisson_ratio);
     auto const [hx, hy] = detail::average_logical_spacings(grid);
 
     Kokkos::View<double**> rhs("similie_elasticity_rhs", 2 * grid.nx() * grid.ny(), 1);
@@ -905,7 +950,7 @@ Result run_on_quadrilateral_grid(
                     .yy = duy_dy,
                     .xy = 0.5 * (dux_dy + duy_dx),
             };
-            fields.stress = physics::elasticity::hooke_plane_stress(material, fields.strain);
+            fields.stress = detail::hooke_plane_stress(material, fields.strain);
             fields.stress.xx *= fields.density;
             fields.stress.yy *= fields.density;
             fields.stress.xy *= fields.density;

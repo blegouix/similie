@@ -50,6 +50,12 @@ set(NONLINEAR_MAGNETOSTATICS_GENERATOR
     "${CMAKE_CURRENT_SOURCE_DIR}/magnetostatics/nonlinear_magnetostatics.py")
 set(NONLINEAR_MAGNETOSTATICS_HEADER
     "${SIMILIE_GENERATED_PHYSICS_DIR}/magnetostatics/nonlinear_magnetostatics.hpp")
+set(LINEAR_ELASTICITY_GENERATOR
+    "${CMAKE_CURRENT_SOURCE_DIR}/elasticity/linear_elasticity.py")
+set(LINEAR_ELASTICITY_HEADER
+    "${SIMILIE_GENERATED_PHYSICS_DIR}/elasticity/linear_elasticity.hpp")
+set(LINEAR_ELASTICITY_CONSTITUTIVE_LAW_HEADER
+    "${SIMILIE_GENERATED_PHYSICS_DIR}/elasticity/linear_elasticity_constitutive_law.hpp")
 string(CONCAT LINEAR_MAGNETOSTATICS_GENERATION_CODE
     "import importlib.util; import sys; "
     "from pathlib import Path; "
@@ -86,6 +92,27 @@ string(CONCAT NONLINEAR_MAGNETOSTATICS_GENERATION_CODE
     "sys.modules[magnetostatics_spec.name] = magnetostatics_module; "
     "magnetostatics_spec.loader.exec_module(magnetostatics_module); "
     "hamiltonian_generator_module.generate_cpp_hamiltonian(magnetostatics_module.NonlinearMagnetostaticsHamiltonian, Path(r\"${NONLINEAR_MAGNETOSTATICS_HEADER}\"))")
+string(CONCAT LINEAR_ELASTICITY_GENERATION_CODE
+    "import importlib.util; import sys; "
+    "from pathlib import Path; "
+    "root = Path(r\"${CMAKE_CURRENT_SOURCE_DIR}\"); "
+    "elasticity_path = root / \"elasticity\" / \"linear_elasticity.py\"; "
+    "hamiltonian_generator_path = root / \"generate_cpp_hamiltonian.py\"; "
+    "hamiltonian_generator_spec = importlib.util.spec_from_file_location(\"similie_generate_cpp_hamiltonian\", hamiltonian_generator_path); "
+    "hamiltonian_generator_module = importlib.util.module_from_spec(hamiltonian_generator_spec); "
+    "sys.modules[hamiltonian_generator_spec.name] = hamiltonian_generator_module; "
+    "hamiltonian_generator_spec.loader.exec_module(hamiltonian_generator_module); "
+    "constitutive_generator_path = root / \"generate_cpp_constitutive_law.py\"; "
+    "constitutive_generator_spec = importlib.util.spec_from_file_location(\"similie_generate_cpp_constitutive_law\", constitutive_generator_path); "
+    "constitutive_generator_module = importlib.util.module_from_spec(constitutive_generator_spec); "
+    "sys.modules[constitutive_generator_spec.name] = constitutive_generator_module; "
+    "constitutive_generator_spec.loader.exec_module(constitutive_generator_module); "
+    "elasticity_spec = importlib.util.spec_from_file_location(\"similie_linear_elasticity\", elasticity_path); "
+    "elasticity_module = importlib.util.module_from_spec(elasticity_spec); "
+    "sys.modules[elasticity_spec.name] = elasticity_module; "
+    "elasticity_spec.loader.exec_module(elasticity_module); "
+    "hamiltonian_generator_module.generate_cpp_hamiltonian(elasticity_module.LinearElasticityHamiltonian, Path(r\"${LINEAR_ELASTICITY_HEADER}\"), 2); "
+    "constitutive_generator_module.generate_cpp_constitutive_law(elasticity_module.LinearElasticStrainToStress, Path(r\"${LINEAR_ELASTICITY_CONSTITUTIVE_LAW_HEADER}\"))")
 
 add_custom_command(
     OUTPUT
@@ -112,12 +139,29 @@ add_custom_command(
     VERBATIM
 )
 
+add_custom_command(
+    OUTPUT
+        "${LINEAR_ELASTICITY_HEADER}"
+        "${LINEAR_ELASTICITY_CONSTITUTIVE_LAW_HEADER}"
+    COMMAND "${CMAKE_COMMAND}" -E make_directory
+            "${SIMILIE_GENERATED_PHYSICS_DIR}/elasticity"
+    COMMAND "${Python3_EXECUTABLE}" -c "${LINEAR_ELASTICITY_GENERATION_CODE}"
+    DEPENDS
+        "${LINEAR_ELASTICITY_GENERATOR}"
+        "${GENERIC_HAMILTONIAN_GENERATOR}"
+        "${GENERIC_CONSTITUTIVE_LAW_GENERATOR}"
+    COMMENT "Generating linear elasticity functors"
+    VERBATIM
+)
+
 add_custom_target(similie_physics_generated
     DEPENDS
         "${SCALAR_FIELD_HEADER}"
         "${LINEAR_MAGNETOSTATICS_HEADER}"
         "${LINEAR_MAGNETOSTATICS_CONSTITUTIVE_LAW_HEADER}"
         "${NONLINEAR_MAGNETOSTATICS_HEADER}"
+        "${LINEAR_ELASTICITY_HEADER}"
+        "${LINEAR_ELASTICITY_CONSTITUTIVE_LAW_HEADER}"
 )
 
 add_library(physics INTERFACE)
