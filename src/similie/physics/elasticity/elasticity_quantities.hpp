@@ -65,55 +65,6 @@ struct DisplacementToStrain
         };
     }
 
-    template <class StrainIndex, class DisplacementComponent, class... SpatialIndex, class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION static auto forward_value(
-            Elem elem,
-            double inverse_spacing_x,
-            double inverse_spacing_y)
-    {
-        using SpatialIndexSeq = ddc::detail::TypeSeq<SpatialIndex...>;
-        using X = ddc::type_seq_element_t<0, SpatialIndexSeq>;
-        using Y = ddc::type_seq_element_t<1, SpatialIndexSeq>;
-        using Derivative = sil::exterior::CovariantDerivative<SpatialIndex...>;
-
-        if constexpr (std::is_same_v<StrainIndex, StrainXX>) {
-            auto stencil = Derivative::template reduced_value<X>(elem);
-            if constexpr (std::is_same_v<DisplacementComponent, X>) {
-                stencil *= inverse_spacing_x;
-            } else {
-                stencil *= 0.0;
-            }
-            return stencil;
-        } else if constexpr (std::is_same_v<StrainIndex, StrainYY>) {
-            auto stencil = Derivative::template reduced_value<Y>(elem);
-            if constexpr (std::is_same_v<DisplacementComponent, Y>) {
-                stencil *= inverse_spacing_y;
-            } else {
-                stencil *= 0.0;
-            }
-            return stencil;
-        } else if constexpr (std::is_same_v<StrainIndex, StrainXY>) {
-            if constexpr (std::is_same_v<DisplacementComponent, X>) {
-                auto stencil = Derivative::template reduced_value<Y>(elem);
-                stencil *= 0.5 * inverse_spacing_y;
-                return stencil;
-            } else {
-                auto stencil = Derivative::template reduced_value<X>(elem);
-                if constexpr (std::is_same_v<DisplacementComponent, Y>) {
-                    stencil *= 0.5 * inverse_spacing_x;
-                } else {
-                    stencil *= 0.0;
-                }
-                return stencil;
-            }
-        } else {
-            static_assert(
-                    std::is_same_v<StrainIndex, StrainXX> || std::is_same_v<StrainIndex, StrainYY>
-                            || std::is_same_v<StrainIndex, StrainXY>,
-                    "unsupported elasticity strain component index");
-        }
-    }
-
     template <
             class StrainIndex,
             class DisplacementComponent,

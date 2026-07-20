@@ -50,22 +50,6 @@ class CovariantDerivative
     using scalar_component_index = tensor::ScalarIndex;
 
 public:
-    template <class DerivativeIndex, class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION static auto reduced_value(Elem elem)
-    {
-        using spatial_domain_type = typename detail::ElementSpatialDomain<Elem>::type;
-
-        auto const chain = tangent_basis<1, spatial_domain_type>(elem);
-        auto const lower_chain = tangent_basis<0, spatial_domain_type>(elem);
-        [[maybe_unused]] tensor::TensorAccessor<gradient_form_index> accessor;
-        return Coboundary<gradient_form_index, scalar_component_index>::
-                value(detail::IdentityStencilEvaluator {},
-                      chain,
-                      lower_chain,
-                      elem,
-                      accessor.template access_element<DerivativeIndex>());
-    }
-
     template <
             class OutputComponentIndex,
             class DerivativeIndex,
@@ -93,7 +77,7 @@ public:
             Connection connection)
     {
         using first_spatial_index = ddc::type_seq_element_t<0, spatial_index_seq>;
-        auto stencil = reduced_value<first_spatial_index>(elem);
+        auto stencil = reduced_derivative_stencil_<first_spatial_index>(elem);
         stencil *= 0.0;
         if constexpr (std::is_same_v<OutputComponentIndex, InputComponentIndex>) {
             ((stencil += reconstructed_value_<SpatialIndex, DerivativeIndex>(elem, position)), ...);
@@ -140,6 +124,22 @@ public:
     }
 
 private:
+    template <class DerivativeIndex, class Elem>
+    [[nodiscard]] KOKKOS_FUNCTION static auto reduced_derivative_stencil_(Elem elem)
+    {
+        using spatial_domain_type = typename detail::ElementSpatialDomain<Elem>::type;
+
+        auto const chain = tangent_basis<1, spatial_domain_type>(elem);
+        auto const lower_chain = tangent_basis<0, spatial_domain_type>(elem);
+        [[maybe_unused]] tensor::TensorAccessor<gradient_form_index> accessor;
+        return Coboundary<gradient_form_index, scalar_component_index>::
+                value(detail::IdentityStencilEvaluator {},
+                      chain,
+                      lower_chain,
+                      elem,
+                      accessor.template access_element<DerivativeIndex>());
+    }
+
     template <
             class ReducedDerivativeIndex,
             class ReconstructedDerivativeIndex,
@@ -153,7 +153,7 @@ private:
         using ReconstructionNaturalElem =
                 typename ReconstructionAccessor::natural_domain_t::discrete_element_type;
 
-        auto stencil = reduced_value<ReducedDerivativeIndex>(elem);
+        auto stencil = reduced_derivative_stencil_<ReducedDerivativeIndex>(elem);
         constexpr std::size_t reduced_derivative_id
                 = ddc::type_seq_rank_v<ReducedDerivativeIndex, spatial_index_seq>;
         constexpr std::size_t reconstructed_derivative_id
