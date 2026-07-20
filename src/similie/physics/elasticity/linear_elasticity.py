@@ -73,7 +73,6 @@ class LinearElasticityHamiltonian:
             component_indices=[
                 _strain_component_index(strain_index) for strain_index in strain_indices
             ],
-            generate_moments_jacobian=True,
             is_linear=True,
         )
 

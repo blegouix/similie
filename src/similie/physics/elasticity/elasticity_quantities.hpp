@@ -22,7 +22,7 @@ using StrainXX = StrainTensorIndex<0, 0>;
 using StrainXY = StrainTensorIndex<0, 1>;
 using StrainYY = StrainTensorIndex<1, 1>;
 
-struct SmallStrain2D
+struct Strain2D
 {
     double xx = 0.0;
     double yy = 0.0;
@@ -43,6 +43,22 @@ struct SmallStrain2D
                             || std::is_same_v<Index, StrainXY>,
                     "unsupported elasticity strain component index");
         }
+    }
+};
+
+struct DisplacementToStrain
+{
+    [[nodiscard]] KOKKOS_FUNCTION static constexpr Strain2D from_gradient(
+            double dux_dx,
+            double duy_dy,
+            double dux_dy,
+            double duy_dx)
+    {
+        return {
+                .xx = dux_dx,
+                .yy = duy_dy,
+                .xy = 0.5 * (dux_dy + duy_dx),
+        };
     }
 };
 

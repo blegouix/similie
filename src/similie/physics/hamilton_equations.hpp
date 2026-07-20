@@ -155,15 +155,6 @@ public:
         return m_hamiltonian.template dhamiltonian_dmoments_value<Index>(elem);
     }
 
-    template <class RowIndex, class ColumnIndex, class Moments, class Elem>
-        requires requires(Hamiltonian const& h, Moments moments, Elem elem) {
-            h.template jacobian<RowIndex, ColumnIndex>(moments, elem);
-        }
-    [[nodiscard]] KOKKOS_FUNCTION constexpr double jacobian(Moments moments, Elem elem) const
-    {
-        return m_hamiltonian.template jacobian<RowIndex, ColumnIndex>(moments, elem);
-    }
-
     template <class Index, class Elem>
         requires requires(Hamiltonian const& h, Elem e) { h.dhamiltonian_dpotential_value(e); }
     [[nodiscard]] KOKKOS_FUNCTION constexpr auto dmoments_dt_value(Elem elem) const

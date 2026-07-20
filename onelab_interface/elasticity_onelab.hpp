@@ -210,45 +210,39 @@ void log_info(Logger&& logger, std::string const& message)
 struct CellFields
 {
     double density = 0.0;
-    physics::elasticity::SmallStrain2D strain;
+    physics::elasticity::Strain2D strain;
     physics::elasticity::CauchyStress2D stress;
 };
 
 template <class Equations>
 [[nodiscard]] KOKKOS_FUNCTION double elasticity_c11(Equations equations)
 {
-    physics::elasticity::SmallStrain2D const zero_strain {};
+    physics::elasticity::Strain2D const unit_strain {.xx = 1.0};
     int const elem = 0;
-    return equations.template jacobian<
-            physics::elasticity::StrainXX,
-            physics::elasticity::StrainXX>(zero_strain, elem);
+    return equations.template dpotential_dt<physics::elasticity::StrainXX>(unit_strain, elem);
 }
 
 template <class Equations>
 [[nodiscard]] KOKKOS_FUNCTION double elasticity_c12(Equations equations)
 {
-    physics::elasticity::SmallStrain2D const zero_strain {};
+    physics::elasticity::Strain2D const unit_strain {.yy = 1.0};
     int const elem = 0;
-    return equations.template jacobian<
-            physics::elasticity::StrainXX,
-            physics::elasticity::StrainYY>(zero_strain, elem);
+    return equations.template dpotential_dt<physics::elasticity::StrainXX>(unit_strain, elem);
 }
 
 template <class Equations>
 [[nodiscard]] KOKKOS_FUNCTION double elasticity_c66(Equations equations)
 {
-    physics::elasticity::SmallStrain2D const zero_strain {};
+    physics::elasticity::Strain2D const unit_strain {.xy = 1.0};
     int const elem = 0;
     return 0.25
-           * equations.template jacobian<
-                   physics::elasticity::StrainXY,
-                   physics::elasticity::StrainXY>(zero_strain, elem);
+           * equations.template dpotential_dt<physics::elasticity::StrainXY>(unit_strain, elem);
 }
 
 template <class Equations>
 [[nodiscard]] inline physics::elasticity::CauchyStress2D hooke_plane_stress(
         Equations equations,
-        physics::elasticity::SmallStrain2D strain)
+        physics::elasticity::Strain2D strain)
 {
     int const elem = 0;
     return {
@@ -947,11 +941,8 @@ Result run_on_quadrilateral_grid(
                                      + (displacement[2 * n11 + 1] - displacement[2 * n01 + 1]))
                                   / hx;
             detail::CellFields& fields = cell_fields[grid.cell_index(i, j)];
-            fields.strain = {
-                    .xx = dux_dx,
-                    .yy = duy_dy,
-                    .xy = 0.5 * (dux_dy + duy_dx),
-            };
+            fields.strain = physics::elasticity::DisplacementToStrain::
+                    from_gradient(dux_dx, duy_dy, dux_dy, duy_dx);
             fields.stress = detail::hooke_plane_stress(equations, fields.strain);
             fields.stress.xx *= fields.density;
             fields.stress.yy *= fields.density;
