@@ -21,7 +21,7 @@
 
 #include <ginkgo/core/base/matrix_data.hpp>
 #include <similie/physics/elasticity/linear_elasticity.hpp>
-#include <similie/physics/elasticity/linear_elasticity_constitutive_law.hpp>
+#include <similie/physics/hamilton_equations.hpp>
 #include <similie/solvers/minimize_strong_formulation_residual.hpp>
 
 #include <Kokkos_Core.hpp>
@@ -214,49 +214,48 @@ struct CellFields
     physics::elasticity::CauchyStress2D stress;
 };
 
-struct ElasticityMaterialCoefficients
+template <class Equations>
+[[nodiscard]] KOKKOS_FUNCTION double elasticity_c11(Equations equations)
 {
-    double c11 = 1.0;
-    double c12 = 0.0;
-    double c66 = 1.0;
-};
-
-[[nodiscard]] inline ElasticityMaterialCoefficients material_coefficients(
-        double young_modulus,
-        double poisson_ratio)
-{
-    physics::elasticity::LinearElasticityHamiltonian<> const
-            hamiltonian(young_modulus, poisson_ratio);
     physics::elasticity::SmallStrain2D const zero_strain {};
     int const elem = 0;
-    return {
-            .c11 = hamiltonian.template jacobian<
-                    physics::elasticity::StrainXX,
-                    physics::elasticity::StrainXX>(zero_strain, elem),
-            .c12 = hamiltonian.template jacobian<
-                    physics::elasticity::StrainXX,
-                    physics::elasticity::StrainYY>(zero_strain, elem),
-            .c66 = 0.25
-                   * hamiltonian.template jacobian<
-                           physics::elasticity::StrainXY,
-                           physics::elasticity::StrainXY>(zero_strain, elem),
-    };
+    return equations.template jacobian<
+            physics::elasticity::StrainXX,
+            physics::elasticity::StrainXX>(zero_strain, elem);
 }
 
+template <class Equations>
+[[nodiscard]] KOKKOS_FUNCTION double elasticity_c12(Equations equations)
+{
+    physics::elasticity::SmallStrain2D const zero_strain {};
+    int const elem = 0;
+    return equations.template jacobian<
+            physics::elasticity::StrainXX,
+            physics::elasticity::StrainYY>(zero_strain, elem);
+}
+
+template <class Equations>
+[[nodiscard]] KOKKOS_FUNCTION double elasticity_c66(Equations equations)
+{
+    physics::elasticity::SmallStrain2D const zero_strain {};
+    int const elem = 0;
+    return 0.25
+           * equations.template jacobian<
+                   physics::elasticity::StrainXY,
+                   physics::elasticity::StrainXY>(zero_strain, elem);
+}
+
+template <class Equations>
 [[nodiscard]] inline physics::elasticity::CauchyStress2D hooke_plane_stress(
-        ElasticityMaterialCoefficients coefficients,
+        Equations equations,
         physics::elasticity::SmallStrain2D strain)
 {
-    physics::elasticity::LinearElasticStrainToStress const
-            normal_x(2.0 * coefficients.c66, coefficients.c12);
-    physics::elasticity::LinearElasticStrainToStress const
-            normal_y(2.0 * coefficients.c66, coefficients.c12);
-    physics::elasticity::LinearElasticStrainToStress const shear(2.0 * coefficients.c66, 0.0);
-    double const trace_strain = strain.xx + strain.yy;
+    int const elem = 0;
     return {
-            .xx = normal_x(trace_strain, strain.xx),
-            .yy = normal_y(trace_strain, strain.yy),
-            .xy = shear(trace_strain, strain.xy),
+            .xx = equations.template dpotential_dt<physics::elasticity::StrainXX>(strain, elem),
+            .yy = equations.template dpotential_dt<physics::elasticity::StrainYY>(strain, elem),
+            .xy
+            = 0.5 * equations.template dpotential_dt<physics::elasticity::StrainXY>(strain, elem),
     };
 }
 
@@ -442,7 +441,7 @@ inline std::pair<double, double> average_logical_spacings(CurvilinearStructuredG
     };
 }
 
-template <class MemorySpace>
+template <class MemorySpace, class Equations>
 class ElasticityOperator2D
 {
     using view_type = Kokkos::View<double*, MemorySpace>;
@@ -452,9 +451,7 @@ class ElasticityOperator2D
     std::size_t m_ny = 0;
     double m_hx = 1.0;
     double m_hy = 1.0;
-    double m_c11 = 1.0;
-    double m_c12_plus_c66 = 1.0;
-    double m_c66 = 1.0;
+    Equations m_equations;
     int_view_type m_active;
     int_view_type m_dirichlet;
     view_type m_density;
@@ -467,7 +464,7 @@ public:
             std::size_t ny,
             double hx,
             double hy,
-            ElasticityMaterialCoefficients material,
+            Equations equations,
             int_view_type active,
             int_view_type dirichlet,
             view_type density)
@@ -475,9 +472,7 @@ public:
         , m_ny(ny)
         , m_hx(hx)
         , m_hy(hy)
-        , m_c11(material.c11)
-        , m_c12_plus_c66(material.c12 + material.c66)
-        , m_c66(material.c66)
+        , m_equations(std::move(equations))
         , m_active(active)
         , m_dirichlet(dirichlet)
         , m_density(density)
@@ -497,9 +492,7 @@ public:
         double const inv_hx2 = 1.0 / (m_hx * m_hx);
         double const inv_hy2 = 1.0 / (m_hy * m_hy);
         double const inv_4hxhy = 1.0 / (4.0 * m_hx * m_hy);
-        double const c11 = m_c11;
-        double const c66 = m_c66;
-        double const c12_plus_c66 = m_c12_plus_c66;
+        auto const equations = m_equations;
         auto const active = m_active;
         auto const dirichlet = m_dirichlet;
         auto const density = m_density;
@@ -556,6 +549,9 @@ public:
                     };
 
                     double const w = density(node);
+                    double const c11 = elasticity_c11(equations);
+                    double const c66 = elasticity_c66(equations);
+                    double const c12_plus_c66 = elasticity_c12(equations) + c66;
                     double const ax = w * c11 * inv_hx2;
                     double const ay = w * c66 * inv_hy2;
                     double const bx = w * c66 * inv_hx2;
@@ -610,6 +606,11 @@ public:
         return m_density;
     }
 
+    [[nodiscard]] auto equations() const
+    {
+        return m_equations;
+    }
+
     [[nodiscard]] double hx() const
     {
         return m_hx;
@@ -622,17 +623,17 @@ public:
 
     [[nodiscard]] double c11() const
     {
-        return m_c11;
+        return elasticity_c11(m_equations);
     }
 
     [[nodiscard]] double c66() const
     {
-        return m_c66;
+        return elasticity_c66(m_equations);
     }
 
     [[nodiscard]] double c12_plus_c66() const
     {
-        return m_c12_plus_c66;
+        return elasticity_c12(m_equations) + elasticity_c66(m_equations);
     }
 
     [[nodiscard]] std::size_t nx() const
@@ -646,9 +647,9 @@ public:
     }
 };
 
-template <class MemorySpace>
+template <class MemorySpace, class Equations>
 gko::matrix_data<double, gko::int32> assemble_matrix_data(
-        ElasticityOperator2D<MemorySpace> const& operator_model)
+        ElasticityOperator2D<MemorySpace, Equations> const& operator_model)
 {
     gko::matrix_data<double, gko::int32> matrix_data(
             gko::dim<2>(operator_model.size(), operator_model.size()));
@@ -872,8 +873,9 @@ Result run_on_quadrilateral_grid(
     Kokkos::deep_copy(dirichlet, dirichlet_host);
     Kokkos::deep_copy(density, density_host);
 
-    detail::ElasticityMaterialCoefficients const material
-            = detail::material_coefficients(inputs.young_modulus, inputs.poisson_ratio);
+    physics::elasticity::LinearElasticityHamiltonian<> const
+            hamiltonian(inputs.young_modulus, inputs.poisson_ratio);
+    auto const equations = physics::HamiltonEquations {hamiltonian};
     auto const [hx, hy] = detail::average_logical_spacings(grid);
 
     Kokkos::View<double**> rhs("similie_elasticity_rhs", 2 * grid.nx() * grid.ny(), 1);
@@ -888,8 +890,8 @@ Result run_on_quadrilateral_grid(
     }
     Kokkos::deep_copy(rhs, rhs_host);
 
-    detail::ElasticityOperator2D<memory_space> const
-            operator_model(grid.nx(), grid.ny(), hx, hy, material, active, dirichlet, density);
+    detail::ElasticityOperator2D<memory_space, decltype(equations)> const
+            operator_model(grid.nx(), grid.ny(), hx, hy, equations, active, dirichlet, density);
 
     detail::log_info(logger, "SimiLie starting linear elasticity solve");
     result.solver_diagnostics = solvers::minimize_strong_formulation_residual(
@@ -950,7 +952,7 @@ Result run_on_quadrilateral_grid(
                     .yy = duy_dy,
                     .xy = 0.5 * (dux_dy + duy_dx),
             };
-            fields.stress = detail::hooke_plane_stress(material, fields.strain);
+            fields.stress = detail::hooke_plane_stress(equations, fields.strain);
             fields.stress.xx *= fields.density;
             fields.stress.yy *= fields.density;
             fields.stress.xy *= fields.density;
