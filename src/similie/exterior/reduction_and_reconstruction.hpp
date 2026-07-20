@@ -872,22 +872,60 @@ struct Reconstruction
                     = sil::tensor::tensor_accessor_for_domain_t<reduction_domain_t<Indices>>;
             using reduction_natural_elem_type =
                     typename reduction_accessor_t::natural_domain_t::discrete_element_type;
-            reduction_natural_elem_type reduction_natural_elem
-                    = detail::merge_reduction_natural_elems<
-                            reduction_natural_elem_type>(source_ids, target_ids);
-            double const reduction_value = Reduction<Indices, PositionType, BatchElem, Complex>::
-                    value(position, elem, reduction_natural_elem);
+            constexpr std::size_t matrix_size = source_index_type::mem_size();
+            using memory_space = typename PositionType::memory_space;
+            [[maybe_unused]] tensor::TensorAccessor<source_index_type> source_accessor;
+            [[maybe_unused]] tensor::TensorAccessor<target_index_type> target_accessor;
 
-            if (!detail::have_same_reduction_ids<K>(source_ids, target_ids)) {
-                assert(Kokkos::abs(reduction_value) < 1e-14
-                       && "Reconstruction assumes a diagonal local reduction operator.");
+            std::array<double, matrix_size * matrix_size> reduction_alloc {};
+            std::array<double, matrix_size * matrix_size> inverse_alloc {};
+            std::array<double, matrix_size * matrix_size> workspace_alloc {};
+            auto reduction_matrix = misc::math::matrix_view<double, memory_space>(
+                    reduction_alloc.data(),
+                    matrix_size,
+                    matrix_size);
+            auto inverse_matrix = misc::math::matrix_view<double, memory_space>(
+                    inverse_alloc.data(),
+                    matrix_size,
+                    matrix_size);
+            auto workspace = misc::math::vector_view<double, memory_space>(
+                    workspace_alloc.data(),
+                    matrix_size * matrix_size);
+
+            ddc::device_for_each(source_accessor.domain(), [&](auto source_mem_elem) {
+                auto const source_natural_elem
+                        = source_accessor.canonical_natural_element(source_mem_elem);
+                ddc::device_for_each(target_accessor.domain(), [&](auto target_mem_elem) {
+                    auto const target_natural_elem
+                            = target_accessor.canonical_natural_element(target_mem_elem);
+                    reduction_natural_elem_type reduction_natural_elem
+                            = detail::merge_reduction_natural_elems<reduction_natural_elem_type>(
+                                    ddc::detail::array(source_natural_elem),
+                                    ddc::detail::array(target_natural_elem));
+                    reduction_matrix(
+                            source_mem_elem.template uid<source_index_type>(),
+                            target_mem_elem.template uid<target_index_type>())
+                            = Reduction<Indices, PositionType, BatchElem, Complex>::
+                                    value(position, elem, reduction_natural_elem);
+                });
+            });
+
+            bool const success = misc::math::invert(inverse_matrix, reduction_matrix, workspace);
+            if (!success) {
                 return 0.;
             }
-
-            if (Kokkos::abs(reduction_value) < 1e-14) {
+            if (!detail::has_unique_reduction_ids<K>(source_ids)
+                || !detail::has_unique_reduction_ids<K>(target_ids)) {
                 return 0.;
             }
-            return 1. / (misc::factorial(K) * reduction_value);
+            std::size_t const target_mem_id = target_index_type::access_id_to_mem_id(
+                    target_accessor.access_element(target_natural_elem_type(natural_elem))
+                            .template uid<target_index_type>());
+            std::size_t const source_mem_id = source_index_type::access_id_to_mem_id(
+                    source_accessor.access_element(source_natural_elem_type(natural_elem))
+                            .template uid<source_index_type>());
+            return inverse_matrix(target_mem_id, source_mem_id)
+                   / misc::factorial(K);
         }
     }
 };
