@@ -109,6 +109,12 @@ RUN cmake -DENABLE_OCC=ON -DENABLE_OCC_CAF=ON -B gmsh/build -S gmsh
 RUN cmake --build gmsh/build -j 4
 RUN cmake --install gmsh/build
 
+# GetDP
+RUN git clone https://gitlab.onelab.info/getdp/getdp.git
+RUN cmake -B getdp/build -S getdp
+RUN cmake --build getdp/build -j 4
+RUN cmake --install getdp/build
+
 # PDI
 RUN update-ca-certificates
 RUN printf '%s\n' \
