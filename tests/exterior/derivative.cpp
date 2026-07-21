@@ -180,6 +180,92 @@ struct Mu2 : sil::tensor::TensorNaturalIndex<X, Y>
 {
 };
 
+using PositionIndex2D = sil::tensor::Contravariant<Mu2>;
+
+struct ConstantTestConnection
+{
+    template <class OutputComponentIndex, class DerivativeIndex, class InputComponentIndex>
+    [[nodiscard]] KOKKOS_FUNCTION double value(auto, auto) const
+    {
+        if constexpr (
+                std::is_same_v<OutputComponentIndex, X> && std::is_same_v<DerivativeIndex, Y>
+                && std::is_same_v<InputComponentIndex, Y>) {
+            return 4.0;
+        } else {
+            return 0.0;
+        }
+    }
+};
+
+template <class Stencil, class Position>
+double apply_stencil_to_linear_field(
+        Stencil stencil,
+        Position position,
+        double grad_x,
+        double grad_y)
+{
+    double value = 0.0;
+    ddc::host_for_each(stencil.domain(), [&](auto stencil_elem) {
+        auto const elem = ddc::DiscreteElement<DDimX, DDimY>(stencil_elem);
+        double const x = position(elem, position.accessor().template access_element<X>());
+        double const y = position(elem, position.accessor().template access_element<Y>());
+        value += stencil.mem(stencil_elem) * (grad_x * x + grad_y * y);
+    });
+    return value;
+}
+
+TEST(ExteriorDerivative, CovariantDerivative2DSkewGeometry)
+{
+    auto const node_domain = ddc::DiscreteDomain<DDimX, DDimY>(
+            ddc::DiscreteElement<DDimX, DDimY>(0, 0),
+            ddc::DiscreteVector<DDimX, DDimY>(3, 3));
+    [[maybe_unused]] sil::tensor::TensorAccessor<PositionIndex2D> position_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, PositionIndex2D> const
+            position_domain(node_domain, position_accessor.domain());
+    ddc::Chunk position_alloc(position_domain, ddc::HostAllocator<double>());
+    sil::tensor::Tensor position(position_alloc);
+
+    ddc::host_for_each(node_domain, [&](auto elem) {
+        double const xi = static_cast<double>(ddc::DiscreteElement<DDimX>(elem).uid());
+        double const eta = static_cast<double>(ddc::DiscreteElement<DDimY>(elem).uid());
+        position(elem, position_accessor.template access_element<X>()) = xi + 0.25 * eta;
+        position(elem, position_accessor.template access_element<Y>()) = 2.0 * eta;
+    });
+
+    auto const elem = ddc::DiscreteElement<DDimX, DDimY>(0, 0);
+    auto d_dx = sil::exterior::CovariantDerivative<X, Y>::template value<X, X>(elem, position);
+    auto d_dy
+            = sil::exterior::CovariantDerivative<X, Y> {}.template operator()<X, Y>(elem, position);
+
+    EXPECT_DOUBLE_EQ(apply_stencil_to_linear_field(d_dx, position, 3.0, -2.0), 3.0);
+    EXPECT_DOUBLE_EQ(apply_stencil_to_linear_field(d_dy, position, 3.0, -2.0), -2.0);
+}
+
+TEST(ExteriorDerivative, CovariantDerivativeConnectionTerm)
+{
+    auto const node_domain = ddc::DiscreteDomain<DDimX, DDimY>(
+            ddc::DiscreteElement<DDimX, DDimY>(0, 0),
+            ddc::DiscreteVector<DDimX, DDimY>(3, 3));
+    [[maybe_unused]] sil::tensor::TensorAccessor<PositionIndex2D> position_accessor;
+    ddc::DiscreteDomain<DDimX, DDimY, PositionIndex2D> const
+            position_domain(node_domain, position_accessor.domain());
+    ddc::Chunk position_alloc(position_domain, ddc::HostAllocator<double>());
+    sil::tensor::Tensor position(position_alloc);
+
+    ddc::host_for_each(node_domain, [&](auto elem) {
+        double const xi = static_cast<double>(ddc::DiscreteElement<DDimX>(elem).uid());
+        double const eta = static_cast<double>(ddc::DiscreteElement<DDimY>(elem).uid());
+        position(elem, position_accessor.template access_element<X>()) = xi + 0.25 * eta;
+        position(elem, position_accessor.template access_element<Y>()) = 2.0 * eta;
+    });
+
+    auto const elem = ddc::DiscreteElement<DDimX, DDimY>(1, 1);
+    auto covariant_term = sil::exterior::CovariantDerivative<X, Y>::
+            template value<X, Y, Y>(elem, position, ConstantTestConnection {});
+
+    EXPECT_DOUBLE_EQ(apply_stencil_to_linear_field(covariant_term, position, 3.0, -2.0), -1.0);
+}
+
 TEST(ExteriorDerivative, 2DGradient)
 {
     auto [alloc, derivative] = test_derivative<

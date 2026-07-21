@@ -10,14 +10,17 @@ repo_root="$(cd "${script_dir}/../.." && pwd)"
 geometry_file="${script_dir}/inductor.geo"
 model_data_file="${script_dir}/inductor_data.geo"
 problem_file="${SIMILIE_ONELAB_PROBLEM_FILE:-${script_dir}/inductor.silpro}"
+getdp_problem_file="${SIMILIE_GETDP_PROBLEM_FILE:-${script_dir}/getdp_ref/inductor.pro}"
 output_dir="$(pwd)"
 model_dimension=2
 use_bool_test=0
 physics_mode=""
 use_matrix_free=""
 open_cascade_model=0
+solver="similie"
 
 gmsh_executable="${GMSH_EXECUTABLE:-gmsh}"
+getdp_executable="${GETDP_EXECUTABLE:-getdp}"
 build_dir="${SIMILIE_ONELAB_BUILD_DIR:-${repo_root}/build}"
 onelab_client="${SIMILIE_ONELAB_BINARY:-${build_dir}/onelab_interface/similie_onelab}"
 mesh_file="${SIMILIE_ONELAB_MESH_FILE:-${output_dir}/inductor.msh}"
@@ -41,22 +44,6 @@ if [[ ! -f "${model_data_file}" ]]; then
     exit 1
 fi
 
-if [[ ! -f "${problem_file}" ]]; then
-    echo "missing SimiLie .silpro problem file: ${problem_file}" >&2
-    exit 1
-fi
-
-if [[ ! -x "${onelab_client}" ]]; then
-    echo "missing SimiLie ONELAB client executable: ${onelab_client}" >&2
-    echo "build the project first, e.g. in ${build_dir}" >&2
-    exit 1
-fi
-
-if [[ ! -f "${paraview_export_script}" ]]; then
-    echo "missing Paraview export script: ${paraview_export_script}" >&2
-    exit 1
-fi
-
 if ! command -v "${gmsh_executable}" >/dev/null 2>&1; then
     echo "gmsh executable not found: ${gmsh_executable}" >&2
     echo "set GMSH_EXECUTABLE if gmsh is installed under a different name or path" >&2
@@ -66,6 +53,12 @@ fi
 gmsh_args=()
 for arg in "$@"; do
     case "${arg}" in
+        --solver=similie|--similie)
+            solver="similie"
+            ;;
+        --solver=getdp|--solver=gmsh|--getdp|--gmsh)
+            solver="getdp"
+            ;;
         --dim=2)
             model_dimension=2
             ;;
@@ -95,6 +88,35 @@ for arg in "$@"; do
     esac
 done
 
+if [[ "${solver}" == "similie" ]]; then
+    if [[ ! -f "${problem_file}" ]]; then
+        echo "missing SimiLie .silpro problem file: ${problem_file}" >&2
+        exit 1
+    fi
+
+    if [[ ! -x "${onelab_client}" ]]; then
+        echo "missing SimiLie ONELAB client executable: ${onelab_client}" >&2
+        echo "build the project first, e.g. in ${build_dir}" >&2
+        exit 1
+    fi
+
+    if [[ ! -f "${paraview_export_script}" ]]; then
+        echo "missing Paraview export script: ${paraview_export_script}" >&2
+        exit 1
+    fi
+else
+    if [[ ! -f "${getdp_problem_file}" ]]; then
+        echo "missing GetDP reference problem file: ${getdp_problem_file}" >&2
+        exit 1
+    fi
+
+    if ! command -v "${getdp_executable}" >/dev/null 2>&1; then
+        echo "getdp executable not found: ${getdp_executable}" >&2
+        echo "set GETDP_EXECUTABLE if getdp is installed under a different name or path" >&2
+        exit 1
+    fi
+fi
+
 case "${model_dimension}" in
     2)
         gmsh_mesh_dimension=2
@@ -116,6 +138,39 @@ if [[ -z "${SIMILIE_ONELAB_ANALYTICAL_L_REL_TOLERANCE+x}" && "${model_dimension}
 fi
 
 rm -f "${mesh_file}" "${result_file}" "${paraview_h5_file}" "${paraview_xmf_file}" "${direct_h5_file}"
+
+if [[ "${solver}" == "getdp" ]]; then
+    getdp_flag_nl=1
+    if [[ "${physics_mode}" == "LinearMagnetostatics" ]]; then
+        getdp_flag_nl=0
+    elif [[ "${physics_mode}" == "NonLinearMagnetostatics" ]]; then
+        getdp_flag_nl=1
+    fi
+
+    "${gmsh_executable}" \
+        "-${gmsh_mesh_dimension}" \
+        -nopopup \
+        -v 3 \
+        -format msh2 \
+        -o "${mesh_file}" \
+        -setnumber "Input/00FE model" "${fe_model_dimension}" \
+        -setnumber "Input/00OpenCASCADE model?" "${open_cascade_model}" \
+        "${geometry_file}" \
+        "${gmsh_args[@]}"
+
+    "${getdp_executable}" \
+        "${getdp_problem_file}" \
+        -msh "${mesh_file}" \
+        -name "${output_dir}/inductor" \
+        -solver "${script_dir}/getdp_ref/solver.par" \
+        -setstring "GetDPOutputDir" "${output_dir}/res${model_dimension}d" \
+        -setnumber "Input/00FE model" "${fe_model_dimension}" \
+        -setnumber "Input/00OpenCASCADE model?" "${open_cascade_model}" \
+        -setnumber "Flag_NL" "${getdp_flag_nl}" \
+        -solve Analysis \
+        -v2
+    exit 0
+fi
 
 control_file="$(mktemp "${script_dir}/.run_similie_onelab_XXXXXX.geo")"
 log_file="$(mktemp "${TMPDIR:-/tmp}/run_similie_onelab_XXXXXX.log")"

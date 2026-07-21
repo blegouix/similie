@@ -1,0 +1,96 @@
+# SPDX-FileCopyrightText: 2026 Baptiste Legouix
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+name: example_onelab_elasticity
+on:
+  workflow_run:
+    workflows: [ build ]
+    types: [ completed ]
+  workflow_dispatch:
+    inputs:
+      target_sha:
+        description: Commit SHA to run the example from
+        required: false
+  workflow_call:
+    inputs:
+      target_sha:
+        required: true
+        type: string
+      ci_environment:
+        required: false
+        type: string
+        default: automatic-ci-run
+
+concurrency:
+  group: example-onelab_elasticity-${{ inputs.target_sha || github.event.workflow_run.head_sha || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  example-onelab_elasticity:
+    if: inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: [self-hosted, linux]
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        case:
+        - name: assembled-matrix
+          backend: assembled-matrix
+        - name: matrix-free
+          backend: matrix-free
+    environment:
+      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'onelab_elasticity-cuda' || 'automatic-ci-run') }}
+    steps:
+    - name: Select target commit
+      id: target
+      run: |
+        if [ -n "${{ inputs.target_sha }}" ]; then
+          target_sha="${{ inputs.target_sha }}"
+        elif [ "${GITHUB_EVENT_NAME}" = "workflow_run" ]; then
+          target_sha="${{ github.event.workflow_run.head_sha }}"
+        else
+          target_sha="${GITHUB_SHA}"
+        fi
+        echo "TARGET_SHA=${target_sha}" >> "${GITHUB_ENV}"
+        echo "target_sha=${target_sha}" >> "${GITHUB_OUTPUT}"
+    - name: Set build paths
+      run: |
+        echo "IMAGE_TAG=similie_env:${TARGET_SHA}" >> "${GITHUB_ENV}"
+        echo "CACHE_ROOT=${RUNNER_TEMP}/similie-cuda-workspace-${TARGET_SHA}" >> "${GITHUB_ENV}"
+        rm -rf "${RUNNER_TEMP}/similie-cuda-workspace-${TARGET_SHA}"
+    - name: Restore commit workspace
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ runner.temp }}/similie-cuda-workspace-${{ steps.target.outputs.target_sha }}
+        key: similie-cuda-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
+        fail-on-cache-miss: true
+    - name: Run ONELAB elasticity ${{ matrix.case.name }} on GPU
+      run: |
+        docker image inspect "${IMAGE_TAG}" >/dev/null
+        docker run --rm --gpus all \
+          --user "$(id -u):$(id -g)" \
+          -e HOME="${CACHE_ROOT}/home" \
+          -e CACHE_ROOT="${CACHE_ROOT}" \
+          -v "${CACHE_ROOT}:/similie-ci" \
+          -v "${CACHE_ROOT}:${CACHE_ROOT}" \
+          -w "${CACHE_ROOT}/build" \
+          "${IMAGE_TAG}" \
+          bash -lc '
+            set -euo pipefail
+            export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
+            git config --global --add safe.directory "*"
+            nvidia-smi
+            cmake --build . --parallel 8 --target similie_onelab
+
+            export HOME=/similie-ci/home
+            mkdir -p "${HOME}"
+            case_name="${{ matrix.case.name }}"
+            cd /similie-ci/build
+            output_dir="${PWD}/onelab_elasticity_cases/${case_name}"
+            mkdir -p "${output_dir}"
+            SIMILIE_ONELAB_BUILD_DIR="${PWD}" \
+            SIMILIE_ONELAB_MESH_FILE="${output_dir}/wrench2D.msh" \
+            SIMILIE_ONELAB_RESULT_FILE="${output_dir}/similie_elasticity_inputs.pos" \
+              "/similie-ci/src/examples/onelab_elasticity/run_similie_onelab.sh" \
+              "--${{ matrix.case.backend }}"
+          '

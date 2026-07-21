@@ -99,6 +99,15 @@ public:
         }
     }
 
+    template <class Index, class Moments, class Elem>
+        requires requires(Hamiltonian const& h, Moments moments, Elem elem) {
+            h.template dhamiltonian_dmoments<Index>(moments, elem);
+        }
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double dpotential_dt(Moments moments, Elem elem) const
+    {
+        return m_hamiltonian.template dhamiltonian_dmoments<Index>(moments, elem);
+    }
+
     template <class Index>
     [[nodiscard]] KOKKOS_FUNCTION constexpr double dmoments_dt(
             std::span<double const, 1> potential) const
