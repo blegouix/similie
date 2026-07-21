@@ -1,13 +1,27 @@
+// SPDX-FileCopyrightText: 1997-2026 C. Geuzaine, J.-F. Remacle
+// SPDX-License-Identifier: GPL-2.0-or-later
+//
+// Adapted from the GetDP inductor ONELAB example for the SimiLie geometry.
 // Common to 2D and 3D
 
-Include "inductor_data.geo";
+Include "../inductor_data.geo";
 
-If(Flag_3Dmodel==0)
-  Dir="res/";
-EndIf
-If(Flag_3Dmodel==1)
-  Dir="res3d/";
-EndIf
+Flag_Infinity = 0;
+AIRINF = 0;
+SKINCOIL = 0;
+SKINECORE = 0;
+SKINICORE = 0;
+SURF_AIROUT = 0;
+AXIS_Y = 0;
+CUT_YZ = 0;
+CUT_XY = 0;
+SURF_ELEC0 = 0;
+sigma_cu = 5.8e7;
+
+DefineConstant[
+  GetDPOutputDir = {"res", Name "GetDP/0Output directory"}
+];
+Dir=StrCat[GetDPOutputDir, "/"];
 
 ExtGmsh     = ".pos";
 ExtGnuplot  = ".dat";
@@ -65,6 +79,7 @@ Group {
   If (Flag_3Dmodel==0)
     Inds += Region[{(COIL+1)}] ;
   Else
+    Inds += Region[{COIL+1, COIL+2, COIL+3}] ;
     If(Flag_ConductingCore)
       Skin_ECore = Region[ {SKINECORE} ];
       Skin_ICore = Region[ {SKINICORE} ];
@@ -116,7 +131,7 @@ Function {
     Idir[#{(COIL+1)}] = -1. ;
     vDir[]   = Vector[ 0, 0, Idir[]] ;
   Else
-    SurfCoil[] = (!Flag_boolean) ? SurfaceArea[]{SURF_ELEC0} : hcoil * wcoil ; // second definition is always valid (2D & 3D)
+    SurfCoil[] = hcoil * wcoil ;
     vDir[] = -( // change of sign for coherence with 2D model
       (Fabs[X[]]<=wcoreE && Z[]>= Lz/2) ? Vector[ 1, 0, 0]:
       (Fabs[X[]]<=wcoreE && Z[]<=-Lz/2) ? Vector[-1, 0, 0]:
@@ -153,4 +168,3 @@ Function {
  Else
    Include "magstadyn_av_js0_3d.pro" ;
  EndIf
-

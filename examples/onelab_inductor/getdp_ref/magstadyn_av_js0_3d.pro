@@ -1,3 +1,8 @@
+// SPDX-FileCopyrightText: 1997-2026 C. Geuzaine, J.-F. Remacle
+// SPDX-License-Identifier: GPL-2.0-or-later
+//
+// Adapted from the GetDP inductor ONELAB example for the SimiLie geometry.
+
 Group {
   DefineGroup[
     Domain, DomainCC, DomainC, DomainL, DomainNL,
@@ -35,16 +40,16 @@ Function {
   ] ;
 
 }
-Include "BH.pro"; // nonlinear BH caracteristic of magnetic material
+Include "../BH.pro"; // nonlinear BH caracteristic of magnetic material
 
 Group {
 
 
   If(!Flag_ConductingCore)
-    DomainCC = Region[ {Air, AirInf, Core} ];
+    DomainCC = Region[ {Air, Core} ];
     DomainC  = Region[ { } ];
   Else
-    DomainCC = Region[ {Air, AirInf} ];
+    DomainCC = Region[ {Air} ];
     DomainC  = Region[ {Core} ];
     SkinDomainC = Region[ {SkinCore} ];
   EndIf
@@ -315,7 +320,7 @@ Resolution {
       EndIf
     }
     Operation {
-      CreateDir["res3d/"] ;
+      CreateDir[Dir] ;
 
       If(Flag_DivJ_Zero == DIVJ0_WEAK)
         Generate[Sys_DivJ0] ; Solve[Sys_DivJ0] ; SaveSolution[Sys_DivJ0];
@@ -459,4 +464,3 @@ DefineConstant[
   C_ = {"-solve -v2", Name "GetDP/9ComputeCommand", Visible 0},
   P_ = {"", Name "GetDP/2PostOperationChoices", Visible 0}
 ];
-
