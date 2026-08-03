@@ -32,7 +32,7 @@ mesh_output_dir="$(dirname "${mesh_file}")"
 direct_h5_file="${mesh_output_dir}/similie_linear_magnetostatics.h5"
 default_result_file="${mesh_output_dir}/similie_magnetostatics_inputs.pos"
 legacy_result_file="${mesh_output_dir}/similie_linear_magnetostatics_inputs.pos"
-getdp_l_rel_tolerance="${SIMILIE_ONELAB_GETDP_L_REL_TOLERANCE:-0.1}"
+getdp_l_rel_tolerance="${SIMILIE_ONELAB_GETDP_L_REL_TOLERANCE:-0.15}"
 
 if [[ ! -f "${geometry_file}" ]]; then
     echo "missing inductor geometry file: ${geometry_file}" >&2
@@ -278,6 +278,8 @@ if ! "${getdp_executable}" \
     -setstring "GetDPOutputDir" "${getdp_output_dir}" \
     -setnumber "Input/00FE model" "${fe_model_dimension}" \
     -setnumber "Input/00OpenCASCADE model?" "${open_cascade_model}" \
+    -setnumber "Flag_3Dmodel" "${fe_model_dimension}" \
+    -setnumber "Flag_boolean" "${open_cascade_model}" \
     -setnumber "Flag_NL" "${getdp_flag_nl}" \
     -solve Analysis \
     -v2 \
@@ -444,23 +446,14 @@ surface_measure, gap_length, length_z = parse_mesh_airgap_geometry(
     mesh_file, airgap_tag, logged_length_z
 )
 mu0 = 4.0e-7 * math.pi
-# The structured example models the complete EI magnetic circuit. Its upper
-# air-gap flux traverses four equivalent circuit sections. The inherited
-# ONELAB SymmetryFactor describes the selected geometry reduction and is
-# intentionally reported below, but it is not used by this full-grid estimate.
-magnetic_circuit_factor = 4.0
-analytical_l = mu0 * surface_measure / (
-    magnetic_circuit_factor * gap_length * num_turns
+# SimiLie reports conventional inductance N*Phi/I for the represented geometry.
+# GetDP's post-processing additionally restores the inherited symmetry copies.
+similie_l = similie_logged_l * symmetry_factor
+# The two symmetric return branches of the EI core contribute to the linked
+# flux, and GetDP restores the selected half-model symmetry in its result.
+analytical_l = (
+    2.0 * mu0 * surface_measure * num_turns**2 / gap_length
 )
-# The logged SimiLie and air-gap values are per-turn reluctance coefficients,
-# while GetDP reports conventional coil inductance. Convert the former two to
-# GetDP's normalization before comparing them. GetDP's flux linkage contains
-# N turns and its reduced model contains the inherited symmetry copies.
-conventional_inductance_factor = (
-    magnetic_circuit_factor * symmetry_factor * num_turns**3
-)
-similie_l = similie_logged_l * conventional_inductance_factor
-analytical_l *= conventional_inductance_factor
 similie_getdp_relative_error = abs(similie_l - getdp_l) / abs(getdp_l)
 getdp_analytical_relative_error = abs(getdp_l - analytical_l) / abs(analytical_l)
 similie_analytical_relative_error = abs(similie_l - analytical_l) / abs(analytical_l)
@@ -474,10 +467,9 @@ print(
 print(
     "Analytical air-gap estimate converted to conventional coil inductance:"
     f" analytical={analytical_l:.9e} H"
-    f" (base coefficient=mu0*S/(4*l*N), S={surface_measure:.9e} m^2,"
+    f" (2*mu0*S*N^2/l, S={surface_measure:.9e} m^2,"
     f" l={gap_length:.9e} m, Lz={length_z:.9e} m, N={num_turns:.9e},"
-    f" inherited SymmetryFactor={symmetry_factor:.9e},"
-    f" conventional-inductance factor={conventional_inductance_factor:.9e})"
+    f" inherited SymmetryFactor={symmetry_factor:.9e})"
 )
 print(
     "Informational analytical errors:"

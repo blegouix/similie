@@ -1397,9 +1397,9 @@ private:
                            << ", Lz=" << mutable_inputs.length_z << " m, L="
                            << (result.diagnostic_current_integral == 0.0
                                        ? 0.0
-                                       : result.diagnostic_flux_integral
-                                                 / (result.diagnostic_current_integral
-                                                    * mutable_inputs.num_turns))
+                                       : mutable_inputs.num_turns * mutable_inputs.num_turns
+                                                 * result.diagnostic_flux_integral
+                                                 / result.diagnostic_current_integral)
                            << " H, " << "integrated Tn=(" << result.diagnostic_traction_integral[0]
                            << ", " << result.diagnostic_traction_integral[1] << ", "
                            << result.diagnostic_traction_integral[2] << ")" << std::defaultfloat;

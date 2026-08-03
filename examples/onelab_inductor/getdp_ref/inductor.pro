@@ -79,7 +79,7 @@ Group {
   If (Flag_3Dmodel==0)
     Inds += Region[{(COIL+1)}] ;
   Else
-    Inds += Region[{COIL+1, COIL+2, COIL+3}] ;
+    Inds += Region[{(COIL+1), (COIL+2), (COIL+3)}] ;
     If(Flag_ConductingCore)
       Skin_ECore = Region[ {SKINECORE} ];
       Skin_ICore = Region[ {SKINICORE} ];

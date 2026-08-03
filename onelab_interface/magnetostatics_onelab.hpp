@@ -121,12 +121,13 @@ Inputs read_inputs(
                     .current_density_z_parameter,
             std::nullopt,
             std::numeric_limits<double>::quiet_NaN());
-    double const current_density_magnitude_x = preprocess.current_density_x_parameter.empty()
-                                                       ? 0.0
-                                                       : read_number_parameter(
-                                                                 preprocess.current_density_x_parameter,
-                                                                 std::nullopt,
-                                                                 0.0);
+    double const current_density_magnitude_x
+            = preprocess.current_density_x_parameter.empty()
+                      ? 0.0
+                      : read_number_parameter(
+                                preprocess.current_density_x_parameter,
+                                std::nullopt,
+                                0.0);
     double const core_mu = read_number_parameter(
             problem.single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
                     .magnetic_permeability_parameter,
@@ -344,11 +345,11 @@ void publish_outputs(
             "Inductance from upper air-gap flux [H]",
             result.diagnostic_current_integral == 0.0
                     ? 0.0
-                    : result.diagnostic_flux_integral
-                              / (result.diagnostic_current_integral * inputs.num_turns),
+                    : inputs.num_turns * inputs.num_turns * result.diagnostic_flux_integral
+                              / result.diagnostic_current_integral,
             "Inductance from upper air-gap flux [H]",
-            "Inductance estimated as L = Phi / (N I) with Phi the upper air-gap flux integral, "
-            "I the numerically integrated positive-conductor current, and N the number of turns.");
+            "Inductance estimated as L = N Phi / I_terminal = N^2 Phi / integral(J dS), "
+            "with Phi the upper air-gap flux integral and N the number of turns.");
     std::string const integrated_traction_unit = "N";
     publish_output_number(
             "Number of upper air-gap faces",
@@ -869,6 +870,39 @@ template <class CoordView>
     return 0.5 * (coords(index + 1) - coords(index - 1));
 }
 
+template <class Index, class XCoordView, class YCoordView>
+[[nodiscard]] KOKKOS_FUNCTION double magnetic_induction_primal_edge_length_2d(
+        XCoordView x_coords,
+        YCoordView y_coords,
+        std::size_t i,
+        std::size_t j)
+{
+    if constexpr (std::is_same_v<Index, X>) {
+        return y_coords(j + 1) - y_coords(j);
+    } else {
+        static_assert(std::is_same_v<Index, Y>, "unsupported 2D magnetic induction component");
+        return x_coords(i + 1) - x_coords(i);
+    }
+}
+
+template <class Index, class XCoordView, class YCoordView>
+[[nodiscard]] KOKKOS_FUNCTION double magnetic_field_dual_edge_length_2d(
+        XCoordView x_coords,
+        YCoordView y_coords,
+        std::size_t i,
+        std::size_t j)
+{
+    double const dual_cell_measure = local_spacing(x_coords, i) * local_spacing(y_coords, j);
+    if constexpr (std::is_same_v<Index, X>) {
+        return dual_cell_measure
+               / magnetic_induction_primal_edge_length_2d<X>(x_coords, y_coords, i, j);
+    } else {
+        static_assert(std::is_same_v<Index, Y>, "unsupported 2D magnetic field component");
+        return dual_cell_measure
+               / magnetic_induction_primal_edge_length_2d<Y>(x_coords, y_coords, i, j);
+    }
+}
+
 template <class Index, class XCoordView, class YCoordView, class ZCoordView>
 [[nodiscard]] KOKKOS_FUNCTION double magnetic_induction_hodge_factor(
         XCoordView x_coords,
@@ -1293,6 +1327,8 @@ public:
         auto const outer1_counts = m_outer1_counts;
         auto const equations = m_equations;
         auto const criterion = m_criterion;
+        auto const x_coords = m_x_coords;
+        auto const y_coords = m_y_coords;
 
         ddc::parallel_for_each(
                 exec_space,
@@ -1334,9 +1370,32 @@ public:
                                                    0);
                             }
                             MagneticMoments const moments {moment0, moment1, 0.0};
-                            residual += transpose_coefficient
-                                        * dpotential_dt_component<
-                                                X>(equations, moments, sampled_elem);
+                            residual
+                                    += transpose_coefficient
+                                       * magnetic_field_dual_edge_length_2d<X>(
+                                               x_coords,
+                                               y_coords,
+                                               sampled_row % nx,
+                                               sampled_row / nx)
+                                       * dpotential_dt_component<X>(
+                                               equations,
+                                               MagneticMoments {
+                                                       moments.x
+                                                               / magnetic_induction_primal_edge_length_2d<
+                                                                       X>(
+                                                                       x_coords,
+                                                                       y_coords,
+                                                                       sampled_row % nx,
+                                                                       sampled_row / nx),
+                                                       moments.y
+                                                               / magnetic_induction_primal_edge_length_2d<
+                                                                       Y>(
+                                                                       x_coords,
+                                                                       y_coords,
+                                                                       sampled_row % nx,
+                                                                       sampled_row / nx),
+                                                       0.0},
+                                               sampled_elem);
                         }
                         for (int slot = 0; slot < transposed_moment1_counts(row); ++slot) {
                             double const transpose_coefficient
@@ -1361,9 +1420,32 @@ public:
                                                    0);
                             }
                             MagneticMoments const moments {moment0, moment1, 0.0};
-                            residual += transpose_coefficient
-                                        * dpotential_dt_component<
-                                                Y>(equations, moments, sampled_elem);
+                            residual
+                                    += transpose_coefficient
+                                       * magnetic_field_dual_edge_length_2d<Y>(
+                                               x_coords,
+                                               y_coords,
+                                               sampled_row % nx,
+                                               sampled_row / nx)
+                                       * dpotential_dt_component<Y>(
+                                               equations,
+                                               MagneticMoments {
+                                                       moments.x
+                                                               / magnetic_induction_primal_edge_length_2d<
+                                                                       X>(
+                                                                       x_coords,
+                                                                       y_coords,
+                                                                       sampled_row % nx,
+                                                                       sampled_row / nx),
+                                                       moments.y
+                                                               / magnetic_induction_primal_edge_length_2d<
+                                                                       Y>(
+                                                                       x_coords,
+                                                                       y_coords,
+                                                                       sampled_row % nx,
+                                                                       sampled_row / nx),
+                                                       0.0},
+                                               sampled_elem);
                         }
                     }
                     if (criterion == solvers::Criterion::MomentsTemporalDerivative
@@ -1390,9 +1472,32 @@ public:
                                                    0);
                             }
                             MagneticMoments const moments {moment0, moment1, 0.0};
-                            residual -= outer_coefficient
-                                        * dpotential_dt_component<
-                                                X>(equations, moments, sampled_elem);
+                            residual
+                                    -= outer_coefficient
+                                       * magnetic_field_dual_edge_length_2d<X>(
+                                               x_coords,
+                                               y_coords,
+                                               sampled_row % nx,
+                                               sampled_row / nx)
+                                       * dpotential_dt_component<X>(
+                                               equations,
+                                               MagneticMoments {
+                                                       moments.x
+                                                               / magnetic_induction_primal_edge_length_2d<
+                                                                       X>(
+                                                                       x_coords,
+                                                                       y_coords,
+                                                                       sampled_row % nx,
+                                                                       sampled_row / nx),
+                                                       moments.y
+                                                               / magnetic_induction_primal_edge_length_2d<
+                                                                       Y>(
+                                                                       x_coords,
+                                                                       y_coords,
+                                                                       sampled_row % nx,
+                                                                       sampled_row / nx),
+                                                       0.0},
+                                               sampled_elem);
                         }
                         for (int slot = 0; slot < outer1_counts(row); ++slot) {
                             double const outer_coefficient = outer1_coefficients(row, slot);
@@ -1416,9 +1521,32 @@ public:
                                                    0);
                             }
                             MagneticMoments const moments {moment0, moment1, 0.0};
-                            residual -= outer_coefficient
-                                        * dpotential_dt_component<
-                                                Y>(equations, moments, sampled_elem);
+                            residual
+                                    -= outer_coefficient
+                                       * magnetic_field_dual_edge_length_2d<Y>(
+                                               x_coords,
+                                               y_coords,
+                                               sampled_row % nx,
+                                               sampled_row / nx)
+                                       * dpotential_dt_component<Y>(
+                                               equations,
+                                               MagneticMoments {
+                                                       moments.x
+                                                               / magnetic_induction_primal_edge_length_2d<
+                                                                       X>(
+                                                                       x_coords,
+                                                                       y_coords,
+                                                                       sampled_row % nx,
+                                                                       sampled_row / nx),
+                                                       moments.y
+                                                               / magnetic_induction_primal_edge_length_2d<
+                                                                       Y>(
+                                                                       x_coords,
+                                                                       y_coords,
+                                                                       sampled_row % nx,
+                                                                       sampled_row / nx),
+                                                       0.0},
+                                               sampled_elem);
                         }
                     }
                     output(row, 0) = residual;
@@ -2828,6 +2956,8 @@ void apply_jacobian(
     auto const outer1_counts = operator_model.outer1_counts();
     auto const equations = operator_model.equations();
     auto const criterion = operator_model.criterion();
+    auto const x_coords = operator_model.x_coords();
+    auto const y_coords = operator_model.y_coords();
     auto const node_domain = ddc::DiscreteDomain<DDimX, DDimY>(
             ddc::DiscreteElement<DDimX, DDimY>(0, 0),
             ddc::DiscreteVector<DDimX, DDimY>(nx, ny));
@@ -2868,15 +2998,29 @@ void apply_jacobian(
                         state_moment1 += moment1_coefficients(sampled_row, k) * state(column, 0);
                         delta_moment1 += moment1_coefficients(sampled_row, k) * input(column, 0);
                     }
-                    MagneticMoments const moments {state_moment0, state_moment1, 0.0};
+                    std::size_t const sampled_i = sampled_row % nx;
+                    std::size_t const sampled_j = sampled_row / nx;
+                    double const primal0 = magnetic_induction_primal_edge_length_2d<
+                            X>(x_coords, y_coords, sampled_i, sampled_j);
+                    double const primal1 = magnetic_induction_primal_edge_length_2d<
+                            Y>(x_coords, y_coords, sampled_i, sampled_j);
+                    MagneticMoments const
+                            moments {state_moment0 / primal0, state_moment1 / primal1, 0.0};
                     double const h00 = jacobian_component<X, X>(equations, moments, sampled_elem);
                     double const h01 = jacobian_component<X, Y>(equations, moments, sampled_elem);
                     double const h10 = jacobian_component<Y, X>(equations, moments, sampled_elem);
                     double const h11 = jacobian_component<Y, Y>(equations, moments, sampled_elem);
-                    residual += row_coefficient
-                                * (use_first_component
-                                           ? (h00 * delta_moment0 + h01 * delta_moment1)
-                                           : (h10 * delta_moment0 + h11 * delta_moment1));
+                    double const dual_length
+                            = use_first_component
+                                      ? magnetic_field_dual_edge_length_2d<
+                                                X>(x_coords, y_coords, sampled_i, sampled_j)
+                                      : magnetic_field_dual_edge_length_2d<
+                                                Y>(x_coords, y_coords, sampled_i, sampled_j);
+                    residual += row_coefficient * dual_length
+                                * (use_first_component ? (h00 * delta_moment0 / primal0
+                                                          + h01 * delta_moment1 / primal1)
+                                                       : (h10 * delta_moment0 / primal0
+                                                          + h11 * delta_moment1 / primal1));
                 };
 
                 if (criterion == solvers::Criterion::PotentialTemporalDerivative
@@ -3586,6 +3730,8 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
     auto const outer1_coefficients = operator_model.outer1_coefficients();
     auto const outer0_counts = operator_model.outer0_counts();
     auto const outer1_counts = operator_model.outer1_counts();
+    auto const x_coords = operator_model.x_coords();
+    auto const y_coords = operator_model.y_coords();
     auto node_domain = ddc::DiscreteDomain<DDimX, DDimY>(
             ddc::DiscreteElement<DDimX, DDimY>(0, 0),
             ddc::DiscreteVector<DDimX, DDimY>(nx, ny));
@@ -3650,7 +3796,20 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                                                          moment1_columns(sampled_row, k)),
                                                  0);
                     }
-                    MagneticMoments const moments {state_moment0, state_moment1, 0.0};
+                    std::size_t const sampled_i = sampled_row % nx;
+                    std::size_t const sampled_j = sampled_row / nx;
+                    double const primal0 = magnetic_induction_primal_edge_length_2d<
+                            X>(x_coords, y_coords, sampled_i, sampled_j);
+                    double const primal1 = magnetic_induction_primal_edge_length_2d<
+                            Y>(x_coords, y_coords, sampled_i, sampled_j);
+                    double const dual_length
+                            = use_first_component
+                                      ? magnetic_field_dual_edge_length_2d<
+                                                X>(x_coords, y_coords, sampled_i, sampled_j)
+                                      : magnetic_field_dual_edge_length_2d<
+                                                Y>(x_coords, y_coords, sampled_i, sampled_j);
+                    MagneticMoments const
+                            moments {state_moment0 / primal0, state_moment1 / primal1, 0.0};
                     double const h00 = jacobian_component<X, X>(equations, moments, sampled_elem);
                     double const h01 = jacobian_component<X, Y>(equations, moments, sampled_elem);
                     double const h10 = jacobian_component<Y, X>(equations, moments, sampled_elem);
@@ -3659,7 +3818,7 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                         std::size_t const column
                                 = static_cast<std::size_t>(moment0_columns(sampled_row, k));
                         double const value
-                                = row_coefficient
+                                = row_coefficient * dual_length / primal0
                                   * (use_first_component
                                              ? h00 * moment0_coefficients(sampled_row, k)
                                              : h10 * moment0_coefficients(sampled_row, k));
@@ -3671,7 +3830,7 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                         std::size_t const column
                                 = static_cast<std::size_t>(moment1_columns(sampled_row, k));
                         double const value
-                                = row_coefficient
+                                = row_coefficient * dual_length / primal1
                                   * (use_first_component
                                              ? h01 * moment1_coefficients(sampled_row, k)
                                              : h11 * moment1_coefficients(sampled_row, k));

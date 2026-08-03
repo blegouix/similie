@@ -22,6 +22,7 @@ struct InterpolatedNonlinearBHCurve
     std::array<double, MAX_SAMPLES> m_h {};
     std::array<double, MAX_SAMPLES> m_q {};
     std::array<double, MAX_SAMPLES> m_nu {};
+    std::array<double, MAX_SAMPLES> m_energy {};
     std::array<double, MAX_SAMPLES - 1> m_dnu_dq {};
     std::array<double, MAX_SAMPLES - 1> m_dh_db {};
 
@@ -50,6 +51,12 @@ struct InterpolatedNonlinearBHCurve
         for (std::size_t i = 0; i + 1 < m_num_samples; ++i) {
             m_dnu_dq[i] = (m_nu[i + 1] - m_nu[i]) / (m_q[i + 1] - m_q[i]);
             m_dh_db[i] = (m_h[i + 1] - m_h[i]) / (m_b[i + 1] - m_b[i]);
+        }
+        m_energy[0] = 0.5 * m_dh_db[0] * m_b[0] * m_b[0];
+        for (std::size_t i = 0; i + 1 < m_num_samples; ++i) {
+            double const delta_b = m_b[i + 1] - m_b[i];
+            m_energy[i + 1]
+                    = m_energy[i] + 0.5 * (m_h[i] + m_h[i + 1]) * delta_b;
         }
     }
 
@@ -161,6 +168,15 @@ struct InterpolatedNonlinearBHCurve
         double const b_value = std::sqrt(q_value);
         return d2_h_over_b_db2_from_b(b_value) / (4.0 * q_value)
                - d_h_over_b_db_from_b(b_value) / (4.0 * q_value * b_value);
+    }
+
+    [[nodiscard]] KOKKOS_FUNCTION double magnetic_energy_from_q(double q_value) const
+    {
+        double const b_value = std::sqrt(q_value);
+        std::size_t const interval = bracket_q(q_value);
+        double const delta_b = b_value - m_b[interval];
+        return m_energy[interval] + m_h[interval] * delta_b
+               + 0.5 * m_dh_db[interval] * delta_b * delta_b;
     }
 
     [[nodiscard]] KOKKOS_FUNCTION double b_from_h(double h_value) const
@@ -336,12 +352,9 @@ class NonlinearMagnetostaticsHamiltonian:
         a = symbols("A0:3")
         b = symbols("B0:3")
         j = symbols("j0:3")
-        magnetic_field_over_induction = Function("magnetic_field_over_induction")
+        magnetic_energy = Function("magnetic_energy")
         q = sum(component**2 for component in b)
-        h = [b[i] * magnetic_field_over_induction(q) for i in range(3)]
-        hamiltonian = simplify(sum(b[i] * h[i] / 2 for i in range(3))) - sum(
-            a[i] * j[i] for i in range(3)
-        )
+        hamiltonian = simplify(magnetic_energy(q)) - sum(a[i] * j[i] for i in range(3))
 
         return HamiltonianDefinition(
             namespace="similie::physics::magnetostatics",
@@ -353,11 +366,11 @@ class NonlinearMagnetostaticsHamiltonian:
             template_parameters=["class BHCurve"],
             parameter_types={"bh_curve": "BHCurve"},
             symbolic_functions={
-                "magnetic_field_over_induction": SymbolicFunctionDefinition(
-                    value_expression="m_bh_curve.h_over_b_from_q({argument})",
+                "magnetic_energy": SymbolicFunctionDefinition(
+                    value_expression="m_bh_curve.magnetic_energy_from_q({argument})",
                     derivative_expressions={
-                        1: "m_bh_curve.d_h_over_b_dq_from_q({argument})",
-                        2: "m_bh_curve.d2_h_over_b_dq2_from_q({argument})",
+                        1: "0.5 * m_bh_curve.h_over_b_from_q({argument})",
+                        2: "0.5 * m_bh_curve.d_h_over_b_dq_from_q({argument})",
                     },
                 )
             },
