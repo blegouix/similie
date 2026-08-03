@@ -41,6 +41,12 @@ template <class Hamiltonian, class Elem>
 inline constexpr bool has_elem_dpotential_v
         = requires(Hamiltonian const& h, Elem elem) { h.dhamiltonian_dpotential(0.0, elem); };
 
+template <class Hamiltonian, class Index, class Moments, class Elem>
+inline constexpr bool has_object_dpotential_v
+        = requires(Hamiltonian const& h, Moments moments, Elem elem) {
+              h.template dpotential_dt<Index>(moments, elem);
+          };
+
 } // namespace detail
 
 template <class Hamiltonian>
@@ -100,12 +106,18 @@ public:
     }
 
     template <class Index, class Moments, class Elem>
-        requires requires(Hamiltonian const& h, Moments moments, Elem elem) {
-            h.template dhamiltonian_dmoments<Index>(moments, elem);
-        }
+        requires(!std::is_arithmetic_v<Moments>)
     [[nodiscard]] KOKKOS_FUNCTION constexpr double dpotential_dt(Moments moments, Elem elem) const
     {
-        return m_hamiltonian.template dhamiltonian_dmoments<Index>(moments, elem);
+        if constexpr (detail::has_object_dpotential_v<Hamiltonian, Index, Moments, Elem>) {
+            return m_hamiltonian.template dpotential_dt<Index>(moments, elem);
+        } else if constexpr (requires {
+                                 m_hamiltonian.template dhamiltonian_dmoments<Index>(moments, elem);
+                             }) {
+            return m_hamiltonian.template dhamiltonian_dmoments<Index>(moments, elem);
+        } else {
+            return dpotential_dt<Index>(moments.template get<Index>(), elem);
+        }
     }
 
     template <class Index>
