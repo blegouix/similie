@@ -32,7 +32,7 @@ mesh_output_dir="$(dirname "${mesh_file}")"
 direct_h5_file="${mesh_output_dir}/similie_linear_magnetostatics.h5"
 default_result_file="${mesh_output_dir}/similie_magnetostatics_inputs.pos"
 legacy_result_file="${mesh_output_dir}/similie_linear_magnetostatics_inputs.pos"
-analytical_l_rel_tolerance="${SIMILIE_ONELAB_ANALYTICAL_L_REL_TOLERANCE:-0.1}"
+getdp_l_rel_tolerance="${SIMILIE_ONELAB_GETDP_L_REL_TOLERANCE:-0.1}"
 
 if [[ ! -f "${geometry_file}" ]]; then
     echo "missing inductor geometry file: ${geometry_file}" >&2
@@ -132,9 +132,9 @@ case "${model_dimension}" in
         exit 1
         ;;
 esac
-if [[ -z "${SIMILIE_ONELAB_ANALYTICAL_L_REL_TOLERANCE+x}" && "${model_dimension}" -eq 3 ]]; then
-    # TODO restrict tolerancy
-    analytical_l_rel_tolerance=0.3
+if [[ -z "${SIMILIE_ONELAB_GETDP_L_REL_TOLERANCE+x}" && "${model_dimension}" -eq 3 ]]; then
+    # TODO restrict tolerance
+    getdp_l_rel_tolerance=0.3
 fi
 
 rm -f "${mesh_file}" "${result_file}" "${paraview_h5_file}" "${paraview_xmf_file}" "${direct_h5_file}"
@@ -176,6 +176,8 @@ control_file="$(mktemp "${script_dir}/.run_similie_onelab_XXXXXX.geo")"
 log_file="$(mktemp "${TMPDIR:-/tmp}/run_similie_onelab_XXXXXX.log")"
 effective_problem_file="${problem_file}"
 patched_problem_file=""
+getdp_output_dir=""
+getdp_log_file=""
 if [[ -n "${physics_mode}" || -n "${use_matrix_free}" ]]; then
     patched_problem_file="$(mktemp "${script_dir}/.run_similie_onelab_XXXXXX.silpro")"
     sed_expressions=()
@@ -194,7 +196,13 @@ if [[ -n "${physics_mode}" || -n "${use_matrix_free}" ]]; then
         "${problem_file}" > "${patched_problem_file}"
     effective_problem_file="${patched_problem_file}"
 fi
-trap 'rm -f "${control_file}" "${patched_problem_file}" "${log_file}"' EXIT
+cleanup() {
+    rm -f "${control_file}" "${patched_problem_file}" "${log_file}" "${getdp_log_file}"
+    if [[ -n "${getdp_output_dir}" && -d "${getdp_output_dir}" ]]; then
+        rm -rf "${getdp_output_dir}"
+    fi
+}
+trap cleanup EXIT
 
 cat > "${control_file}" <<EOF
 Mesh ${gmsh_mesh_dimension};
@@ -245,7 +253,46 @@ if [[ "${assert_example_results}" -eq 0 ]]; then
     exit 0
 fi
 
-python3 - "${log_file}" "${mesh_file}" "${model_data_file}" "${analytical_l_rel_tolerance}" <<'PY'
+if [[ ! -f "${getdp_problem_file}" ]]; then
+    echo "missing GetDP reference problem file: ${getdp_problem_file}" >&2
+    exit 1
+fi
+if ! command -v "${getdp_executable}" >/dev/null 2>&1; then
+    echo "getdp executable not found: ${getdp_executable}" >&2
+    exit 1
+fi
+
+getdp_flag_nl=1
+if grep -Eq \
+    '^[[:space:]]*Physics[[:space:]]+LinearMagnetostatics[[:space:]]*;' \
+    "${effective_problem_file}"; then
+    getdp_flag_nl=0
+fi
+getdp_output_dir="$(mktemp -d "${TMPDIR:-/tmp}/similie_inductor_getdp_XXXXXX")"
+getdp_log_file="$(mktemp "${TMPDIR:-/tmp}/similie_inductor_getdp_XXXXXX.log")"
+if ! "${getdp_executable}" \
+    "${getdp_problem_file}" \
+    -msh "${mesh_file}" \
+    -name "${getdp_output_dir}/inductor" \
+    -solver "${script_dir}/getdp_ref/solver.par" \
+    -setstring "GetDPOutputDir" "${getdp_output_dir}" \
+    -setnumber "Input/00FE model" "${fe_model_dimension}" \
+    -setnumber "Input/00OpenCASCADE model?" "${open_cascade_model}" \
+    -setnumber "Flag_NL" "${getdp_flag_nl}" \
+    -solve Analysis \
+    -v2 \
+    >"${getdp_log_file}" 2>&1; then
+    cat "${getdp_log_file}" >&2
+    echo "GetDP reference solve failed" >&2
+    exit 1
+fi
+
+python3 - \
+    "${log_file}" \
+    "${mesh_file}" \
+    "${model_data_file}" \
+    "${getdp_output_dir}/InductanceF.dat" \
+    "${getdp_l_rel_tolerance}" <<'PY'
 import math
 import re
 import sys
@@ -297,6 +344,14 @@ def parse_log(log_file: Path) -> tuple[float, float, float, float]:
     if numerical_l is None:
         raise RuntimeError("failed to parse numerical inductance from ONELAB log")
     return symmetry_factor, num_turns, length_z, numerical_l
+
+
+def parse_getdp_inductance(inductance_file: Path) -> float:
+    rows = [line.split() for line in inductance_file.read_text().splitlines() if line.strip()]
+    if not rows or len(rows[-1]) < 2:
+        raise RuntimeError(f"invalid GetDP inductance data in {inductance_file}")
+    # The GetDP post-operation reports inductance in mH.
+    return float(rows[-1][-1]) * 1.0e-3
 
 
 def parse_mesh_airgap_geometry(
@@ -377,9 +432,13 @@ def parse_mesh_airgap_geometry(
 log_file = Path(sys.argv[1])
 mesh_file = Path(sys.argv[2])
 inductor_data_geo = Path(sys.argv[3])
-relative_tolerance = float(sys.argv[4])
+getdp_inductance_file = Path(sys.argv[4])
+relative_tolerance = float(sys.argv[5])
 
-symmetry_factor, num_turns, logged_length_z, numerical_l = parse_log(log_file)
+symmetry_factor, num_turns, logged_length_z, similie_logged_l = parse_log(log_file)
+getdp_l = parse_getdp_inductance(getdp_inductance_file)
+if getdp_l == 0.0:
+    raise RuntimeError("GetDP returned zero inductance")
 airgap_tag = parse_airgap_tag(inductor_data_geo)
 surface_measure, gap_length, length_z = parse_mesh_airgap_geometry(
     mesh_file, airgap_tag, logged_length_z
@@ -393,21 +452,43 @@ magnetic_circuit_factor = 4.0
 analytical_l = mu0 * surface_measure / (
     magnetic_circuit_factor * gap_length * num_turns
 )
-relative_error = abs(numerical_l - analytical_l) / analytical_l
+# The logged SimiLie and air-gap values are per-turn reluctance coefficients,
+# while GetDP reports conventional coil inductance. Convert the former two to
+# GetDP's normalization before comparing them. GetDP's flux linkage contains
+# N turns and its reduced model contains the inherited symmetry copies.
+conventional_inductance_factor = (
+    magnetic_circuit_factor * symmetry_factor * num_turns**3
+)
+similie_l = similie_logged_l * conventional_inductance_factor
+analytical_l *= conventional_inductance_factor
+similie_getdp_relative_error = abs(similie_l - getdp_l) / abs(getdp_l)
+getdp_analytical_relative_error = abs(getdp_l - analytical_l) / abs(analytical_l)
+similie_analytical_relative_error = abs(similie_l - analytical_l) / abs(analytical_l)
 
 print(
-    "Analytical air-gap estimate for logged L=Phi/(N*integral(J_z dS)):"
-    f" L_ana={analytical_l:.9e} H"
-    f" (mu0*S/(4*l*N), S={surface_measure:.9e} m^2,"
+    "Inductance comparison:"
+    f" SimiLie={similie_l:.9e} H,"
+    f" GetDP={getdp_l:.9e} H,"
+    f" relative error={similie_getdp_relative_error:.3%}"
+)
+print(
+    "Analytical air-gap estimate converted to conventional coil inductance:"
+    f" analytical={analytical_l:.9e} H"
+    f" (base coefficient=mu0*S/(4*l*N), S={surface_measure:.9e} m^2,"
     f" l={gap_length:.9e} m, Lz={length_z:.9e} m, N={num_turns:.9e},"
-    f" inherited SymmetryFactor={symmetry_factor:.9e}),"
-    f" numerical L={numerical_l:.9e} H,"
-    f" relative error={relative_error:.3%}"
+    f" inherited SymmetryFactor={symmetry_factor:.9e},"
+    f" conventional-inductance factor={conventional_inductance_factor:.9e})"
+)
+print(
+    "Informational analytical errors:"
+    f" GetDP={getdp_analytical_relative_error:.3%},"
+    f" SimiLie={similie_analytical_relative_error:.3%}"
 )
 
-if relative_error > relative_tolerance:
+if similie_getdp_relative_error > relative_tolerance:
     raise SystemExit(
-        f"Analytical logged-L check failed: relative error {relative_error:.3%} "
+        "SimiLie/GetDP inductance check failed: "
+        f"relative error {similie_getdp_relative_error:.3%} "
         f"exceeds tolerance {relative_tolerance:.3%}"
     )
 PY

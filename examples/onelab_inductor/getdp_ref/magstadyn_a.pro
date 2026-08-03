@@ -424,10 +424,10 @@ PostOperation Get_GlobalQuantities UsingPost MagStaDyn_a_2D {
     SendToServer StrCat[po,"41Magnetic Energy [W]"],  Color "LightYellow" ];
 
   Print[ Inductance_from_Flux, OnRegion DomainDummy, Format Table, LastTimeStepOnly,
-    File StrCat[Dir,"Inductance",ExtGnuplot],
+    File StrCat[Dir,"InductanceF",ExtGnuplot],
     SendToServer StrCat[po,"50Inductance from Flux [mH]"], Color "LightYellow" ];
   Print[ Inductance_from_MagEnergy, OnRegion DomainDummy, Format Table, LastTimeStepOnly,
-    File StrCat[Dir,"Inductance",ExtGnuplot],
+    File StrCat[Dir,"InductanceE",ExtGnuplot],
     SendToServer StrCat[po,"51Inductance from Magnetic Energy [mH]"], Color "LightYellow" ];
 }
 
