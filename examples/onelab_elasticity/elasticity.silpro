@@ -13,7 +13,7 @@ Solver {
   JacobiMaxBlockSize 1;
   UseMatrixFree 1;
   Criterion MomentsTemporalDerivative;
-  Preconditioner Identity;
+  Preconditioner Jacobi;
 }
 
 Preprocess {

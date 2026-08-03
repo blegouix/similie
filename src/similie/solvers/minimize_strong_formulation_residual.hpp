@@ -627,6 +627,7 @@ std::shared_ptr<gko::matrix::Csr<double, gko::int32>> build_matrix(
         OperatorModel const& operator_model)
 {
     auto matrix_data = assemble_matrix_data(operator_model);
+    matrix_data.sum_duplicates();
     if (env_flag_enabled("SIMILIE_MATRIX_DIAGNOSTICS")) {
         log_matrix_diagnostics(matrix_data);
     }
@@ -640,6 +641,7 @@ std::shared_ptr<gko::matrix::Csr<double, gko::int32>> build_matrix(
         StateView state)
 {
     auto matrix_data = assemble_matrix_data(operator_model, state);
+    matrix_data.sum_duplicates();
     if (env_flag_enabled("SIMILIE_MATRIX_DIAGNOSTICS")) {
         log_matrix_diagnostics(matrix_data);
     }

@@ -769,33 +769,42 @@ public:
                                  ++component_id) {
                                 for (int k = 0; k < strain_counts(0, component_id, sample_row);
                                      ++k) {
-                                    strain.xx += strain_coefficients(0, component_id, sample_row, k)
-                                                 * input(static_cast<std::size_t>(strain_columns(
-                                                                 0,
-                                                                 component_id,
-                                                                 sample_row,
-                                                                 k)),
-                                                         0);
+                                    std::size_t const column = static_cast<std::size_t>(
+                                            strain_columns(0, component_id, sample_row, k));
+                                    if (dirichlet(column / 2) == 0) {
+                                        strain.xx += strain_coefficients(
+                                                             0,
+                                                             component_id,
+                                                             sample_row,
+                                                             k)
+                                                     * input(column, 0);
+                                    }
                                 }
                                 for (int k = 0; k < strain_counts(1, component_id, sample_row);
                                      ++k) {
-                                    strain.yy += strain_coefficients(1, component_id, sample_row, k)
-                                                 * input(static_cast<std::size_t>(strain_columns(
-                                                                 1,
-                                                                 component_id,
-                                                                 sample_row,
-                                                                 k)),
-                                                         0);
+                                    std::size_t const column = static_cast<std::size_t>(
+                                            strain_columns(1, component_id, sample_row, k));
+                                    if (dirichlet(column / 2) == 0) {
+                                        strain.yy += strain_coefficients(
+                                                             1,
+                                                             component_id,
+                                                             sample_row,
+                                                             k)
+                                                     * input(column, 0);
+                                    }
                                 }
                                 for (int k = 0; k < strain_counts(2, component_id, sample_row);
                                      ++k) {
-                                    strain.xy += strain_coefficients(2, component_id, sample_row, k)
-                                                 * input(static_cast<std::size_t>(strain_columns(
-                                                                 2,
-                                                                 component_id,
-                                                                 sample_row,
-                                                                 k)),
-                                                         0);
+                                    std::size_t const column = static_cast<std::size_t>(
+                                            strain_columns(2, component_id, sample_row, k));
+                                    if (dirichlet(column / 2) == 0) {
+                                        strain.xy += strain_coefficients(
+                                                             2,
+                                                             component_id,
+                                                             sample_row,
+                                                             k)
+                                                     * input(column, 0);
+                                    }
                                 }
                             }
                             double stress = 0.0;
@@ -982,7 +991,7 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                             std::size_t const column = static_cast<std::size_t>(
                                     strain_columns_host(strain_id, component_id, sample_row, slot));
                             std::size_t const column_node = column / 2;
-                            if (active_host(column_node) == 0) {
+                            if (active_host(column_node) == 0 || dirichlet_host(column_node) != 0) {
                                 continue;
                             }
                             matrix_data.nonzeros.emplace_back(
