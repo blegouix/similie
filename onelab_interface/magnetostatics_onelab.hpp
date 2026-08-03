@@ -926,6 +926,67 @@ template <class Index, class XCoordView, class YCoordView, class ZCoordView>
 }
 
 template <class Index, class XCoordView, class YCoordView, class ZCoordView>
+[[nodiscard]] KOKKOS_FUNCTION double magnetic_induction_primal_face_measure_3d(
+        XCoordView x_coords,
+        YCoordView y_coords,
+        ZCoordView z_coords,
+        std::size_t i,
+        std::size_t j,
+        std::size_t k)
+{
+    double const dx = x_coords(i + 1) - x_coords(i);
+    double const dy = y_coords(j + 1) - y_coords(j);
+    double const dz = z_coords(k + 1) - z_coords(k);
+    if constexpr (std::is_same_v<Index, X>) {
+        return dy * dz;
+    } else if constexpr (std::is_same_v<Index, Y>) {
+        return dx * dz;
+    } else {
+        static_assert(std::is_same_v<Index, Z>, "unsupported 3D magnetic induction component");
+        return dx * dy;
+    }
+}
+
+template <class Index, class XCoordView, class YCoordView, class ZCoordView>
+[[nodiscard]] KOKKOS_FUNCTION double magnetic_field_dual_edge_measure_3d(
+        XCoordView x_coords,
+        YCoordView y_coords,
+        ZCoordView z_coords,
+        std::size_t i,
+        std::size_t j,
+        std::size_t k)
+{
+    double const dual_cell_measure
+            = local_spacing(x_coords, i) * local_spacing(y_coords, j) * local_spacing(z_coords, k);
+    return dual_cell_measure
+           / magnetic_induction_primal_face_measure_3d<
+                   Index>(x_coords, y_coords, z_coords, i, j, k);
+}
+
+template <class XCoordView, class YCoordView, class ZCoordView>
+[[nodiscard]] KOKKOS_FUNCTION MagneticMoments reconstruct_magnetic_induction_3d(
+        MagneticMoments moments,
+        XCoordView x_coords,
+        YCoordView y_coords,
+        ZCoordView z_coords,
+        std::size_t i,
+        std::size_t j,
+        std::size_t k)
+{
+    return {
+            moments.x
+                    / magnetic_induction_primal_face_measure_3d<
+                            X>(x_coords, y_coords, z_coords, i, j, k),
+            moments.y
+                    / magnetic_induction_primal_face_measure_3d<
+                            Y>(x_coords, y_coords, z_coords, i, j, k),
+            moments.z
+                    / magnetic_induction_primal_face_measure_3d<
+                            Z>(x_coords, y_coords, z_coords, i, j, k),
+    };
+}
+
+template <class Index, class XCoordView, class YCoordView, class ZCoordView>
 [[nodiscard]] KOKKOS_FUNCTION double vector_potential_hodge_factor(
         XCoordView x_coords,
         YCoordView y_coords,
@@ -2419,11 +2480,14 @@ public:
                             double const row_coefficient
                                     = transposed_moment_coefficients(row, slot);
                             std::size_t const sampled_node = moment_row / 3;
-                            auto const sampled_elem = ddc::DiscreteElement<DDimX, DDimY, DDimZ>(
-                                    sampled_node % nx,
-                                    (sampled_node / nx) % ny,
-                                    sampled_node / (nx * ny));
-                            MagneticMoments moments {
+                            std::size_t const sampled_i = sampled_node % nx;
+                            std::size_t const sampled_j = (sampled_node / nx) % ny;
+                            std::size_t const sampled_k = sampled_node / (nx * ny);
+                            auto const sampled_elem = ddc::DiscreteElement<
+                                    DDimX,
+                                    DDimY,
+                                    DDimZ>(sampled_i, sampled_j, sampled_k);
+                            MagneticMoments const cochain_moments {
                                     compute_moment(
                                             moment_columns,
                                             moment_coefficients,
@@ -2443,37 +2507,45 @@ public:
                                             input,
                                             3 * sampled_node + 2),
                             };
+                            MagneticMoments const moments = reconstruct_magnetic_induction_3d(
+                                    cochain_moments,
+                                    x_coords,
+                                    y_coords,
+                                    z_coords,
+                                    sampled_i,
+                                    sampled_j,
+                                    sampled_k);
                             if (moment_row % 3 == 0) {
                                 residual += row_coefficient
-                                            * magnetic_induction_hodge_factor<X>(
+                                            * magnetic_field_dual_edge_measure_3d<X>(
                                                     x_coords,
                                                     y_coords,
                                                     z_coords,
-                                                    sampled_node % nx,
-                                                    (sampled_node / nx) % ny,
-                                                    sampled_node / (nx * ny))
+                                                    sampled_i,
+                                                    sampled_j,
+                                                    sampled_k)
                                             * dpotential_dt_component<
                                                     X>(equations, moments, sampled_elem);
                             } else if (moment_row % 3 == 1) {
                                 residual += row_coefficient * magnetic_y_response_sign
-                                            * magnetic_induction_hodge_factor<Y>(
+                                            * magnetic_field_dual_edge_measure_3d<Y>(
                                                     x_coords,
                                                     y_coords,
                                                     z_coords,
-                                                    sampled_node % nx,
-                                                    (sampled_node / nx) % ny,
-                                                    sampled_node / (nx * ny))
+                                                    sampled_i,
+                                                    sampled_j,
+                                                    sampled_k)
                                             * dpotential_dt_component<
                                                     Y>(equations, moments, sampled_elem);
                             } else {
                                 residual += row_coefficient
-                                            * magnetic_induction_hodge_factor<Z>(
+                                            * magnetic_field_dual_edge_measure_3d<Z>(
                                                     x_coords,
                                                     y_coords,
                                                     z_coords,
-                                                    sampled_node % nx,
-                                                    (sampled_node / nx) % ny,
-                                                    sampled_node / (nx * ny))
+                                                    sampled_i,
+                                                    sampled_j,
+                                                    sampled_k)
                                             * dpotential_dt_component<
                                                     Z>(equations, moments, sampled_elem);
                             }
@@ -2611,21 +2683,29 @@ public:
                         magnetic_response_tensor(elem, z_component) = 0.0;
                         return;
                     }
-                    MagneticMoments const moments {
+                    MagneticMoments const cochain_moments {
                             magnetic_induction_tensor(elem, x_component),
                             -magnetic_induction_tensor(elem, y_component),
                             magnetic_induction_tensor(elem, z_component)};
+                    MagneticMoments const moments = reconstruct_magnetic_induction_3d(
+                            cochain_moments,
+                            x_coords,
+                            y_coords,
+                            z_coords,
+                            i,
+                            j,
+                            k);
                     magnetic_response_tensor(elem, x_component)
-                            = magnetic_induction_hodge_factor<
+                            = magnetic_field_dual_edge_measure_3d<
                                       X>(x_coords, y_coords, z_coords, i, j, k)
                               * dpotential_dt_component<X>(equations, moments, elem);
                     magnetic_response_tensor(elem, y_component)
                             = magnetic_y_response_sign
-                              * magnetic_induction_hodge_factor<
+                              * magnetic_field_dual_edge_measure_3d<
                                       Y>(x_coords, y_coords, z_coords, i, j, k)
                               * dpotential_dt_component<Y>(equations, moments, elem);
                     magnetic_response_tensor(elem, z_component)
-                            = magnetic_induction_hodge_factor<
+                            = magnetic_field_dual_edge_measure_3d<
                                       Z>(x_coords, y_coords, z_coords, i, j, k)
                               * dpotential_dt_component<Z>(equations, moments, elem);
                 });
@@ -3127,10 +3207,13 @@ void apply_jacobian(
                                 = static_cast<std::size_t>(transposed_moment_rows(row, slot));
                         double const row_coefficient = transposed_moment_coefficients(row, slot);
                         std::size_t const sampled_node = moment_row / 3;
-                        auto const sampled_elem = ddc::DiscreteElement<DDimX, DDimY, DDimZ>(
-                                sampled_node % nx,
-                                (sampled_node / nx) % ny,
-                                sampled_node / (nx * ny));
+                        std::size_t const sampled_i = sampled_node % nx;
+                        std::size_t const sampled_j = (sampled_node / nx) % ny;
+                        std::size_t const sampled_k = sampled_node / (nx * ny);
+                        auto const sampled_elem = ddc::DiscreteElement<
+                                DDimX,
+                                DDimY,
+                                DDimZ>(sampled_i, sampled_j, sampled_k);
                         std::array<double, 3> state_moments {};
                         std::array<double, 3> delta_moments {};
                         for (int moment_component = 0; moment_component < 3; ++moment_component) {
@@ -3147,21 +3230,34 @@ void apply_jacobian(
                                 delta_moments[moment_component] += coefficient * input(column, 0);
                             }
                         }
-                        MagneticMoments const moments {
-                                state_moments[0],
-                                state_moments[1],
-                                state_moments[2],
-                        };
+                        MagneticMoments const moments = reconstruct_magnetic_induction_3d(
+                                MagneticMoments {
+                                        state_moments[0],
+                                        state_moments[1],
+                                        state_moments[2],
+                                },
+                                x_coords,
+                                y_coords,
+                                z_coords,
+                                sampled_i,
+                                sampled_j,
+                                sampled_k);
+                        delta_moments[0] /= magnetic_induction_primal_face_measure_3d<
+                                X>(x_coords, y_coords, z_coords, sampled_i, sampled_j, sampled_k);
+                        delta_moments[1] /= magnetic_induction_primal_face_measure_3d<
+                                Y>(x_coords, y_coords, z_coords, sampled_i, sampled_j, sampled_k);
+                        delta_moments[2] /= magnetic_induction_primal_face_measure_3d<
+                                Z>(x_coords, y_coords, z_coords, sampled_i, sampled_j, sampled_k);
                         if (moment_row % 3 == 0) {
                             residual
                                     += row_coefficient
-                                       * magnetic_induction_hodge_factor<X>(
+                                       * magnetic_field_dual_edge_measure_3d<X>(
                                                x_coords,
                                                y_coords,
                                                z_coords,
-                                               sampled_node % nx,
-                                               (sampled_node / nx) % ny,
-                                               sampled_node / (nx * ny))
+                                               sampled_i,
+                                               sampled_j,
+                                               sampled_k)
                                        * (jacobian_component<X, X>(equations, moments, sampled_elem)
                                                   * delta_moments[0]
                                           + jacobian_component<
@@ -3175,13 +3271,13 @@ void apply_jacobian(
                         } else if (moment_row % 3 == 1) {
                             residual
                                     += row_coefficient * magnetic_y_response_sign
-                                       * magnetic_induction_hodge_factor<Y>(
+                                       * magnetic_field_dual_edge_measure_3d<Y>(
                                                x_coords,
                                                y_coords,
                                                z_coords,
-                                               sampled_node % nx,
-                                               (sampled_node / nx) % ny,
-                                               sampled_node / (nx * ny))
+                                               sampled_i,
+                                               sampled_j,
+                                               sampled_k)
                                        * (jacobian_component<Y, X>(equations, moments, sampled_elem)
                                                   * delta_moments[0]
                                           + jacobian_component<
@@ -3195,13 +3291,13 @@ void apply_jacobian(
                         } else {
                             residual
                                     += row_coefficient
-                                       * magnetic_induction_hodge_factor<Z>(
+                                       * magnetic_field_dual_edge_measure_3d<Z>(
                                                x_coords,
                                                y_coords,
                                                z_coords,
-                                               sampled_node % nx,
-                                               (sampled_node / nx) % ny,
-                                               sampled_node / (nx * ny))
+                                               sampled_i,
+                                               sampled_j,
+                                               sampled_k)
                                        * (jacobian_component<Z, X>(equations, moments, sampled_elem)
                                                   * delta_moments[0]
                                           + jacobian_component<
@@ -3408,10 +3504,40 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                                                0);
                         }
                     }
-                    MagneticMoments const moments {
-                            state_moments[0],
-                            state_moments[1],
-                            state_moments[2],
+                    MagneticMoments const moments = reconstruct_magnetic_induction_3d(
+                            MagneticMoments {
+                                    state_moments[0],
+                                    state_moments[1],
+                                    state_moments[2],
+                            },
+                            x_coords,
+                            y_coords,
+                            z_coords,
+                            sampled_i,
+                            sampled_j,
+                            sampled_k);
+                    std::array<double, 3> const primal_face_measures {
+                            magnetic_induction_primal_face_measure_3d<X>(
+                                    x_coords,
+                                    y_coords,
+                                    z_coords,
+                                    sampled_i,
+                                    sampled_j,
+                                    sampled_k),
+                            magnetic_induction_primal_face_measure_3d<Y>(
+                                    x_coords,
+                                    y_coords,
+                                    z_coords,
+                                    sampled_i,
+                                    sampled_j,
+                                    sampled_k),
+                            magnetic_induction_primal_face_measure_3d<Z>(
+                                    x_coords,
+                                    y_coords,
+                                    z_coords,
+                                    sampled_i,
+                                    sampled_j,
+                                    sampled_k),
                     };
                     std::array<double, 3> jacobian_row {};
                     double hodge_factor = 1.0;
@@ -3420,7 +3546,7 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                                 = {jacobian_component<X, X>(equations, moments, sampled_elem),
                                    jacobian_component<X, Y>(equations, moments, sampled_elem),
                                    jacobian_component<X, Z>(equations, moments, sampled_elem)};
-                        hodge_factor = magnetic_induction_hodge_factor<
+                        hodge_factor = magnetic_field_dual_edge_measure_3d<
                                 X>(x_coords, y_coords, z_coords, sampled_i, sampled_j, sampled_k);
                     } else if (moment_row % 3 == 1) {
                         jacobian_row
@@ -3428,7 +3554,7 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                                    jacobian_component<Y, Y>(equations, moments, sampled_elem),
                                    jacobian_component<Y, Z>(equations, moments, sampled_elem)};
                         hodge_factor = magnetic_y_response_sign
-                                       * magnetic_induction_hodge_factor<Y>(
+                                       * magnetic_field_dual_edge_measure_3d<Y>(
                                                x_coords,
                                                y_coords,
                                                z_coords,
@@ -3440,12 +3566,13 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                                 = {jacobian_component<Z, X>(equations, moments, sampled_elem),
                                    jacobian_component<Z, Y>(equations, moments, sampled_elem),
                                    jacobian_component<Z, Z>(equations, moments, sampled_elem)};
-                        hodge_factor = magnetic_induction_hodge_factor<
+                        hodge_factor = magnetic_field_dual_edge_measure_3d<
                                 Z>(x_coords, y_coords, z_coords, sampled_i, sampled_j, sampled_k);
                     }
                     for (int moment_component = 0; moment_component < 3; ++moment_component) {
                         double const jacobian_coefficient
-                                = hodge_factor * jacobian_row[moment_component];
+                                = hodge_factor * jacobian_row[moment_component]
+                                  / primal_face_measures[moment_component];
                         if (jacobian_coefficient == 0.0) {
                             continue;
                         }
@@ -3583,10 +3710,40 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                                                0);
                         }
                     }
-                    MagneticMoments const moments {
-                            state_moments[0],
-                            state_moments[1],
-                            state_moments[2],
+                    MagneticMoments const moments = reconstruct_magnetic_induction_3d(
+                            MagneticMoments {
+                                    state_moments[0],
+                                    state_moments[1],
+                                    state_moments[2],
+                            },
+                            x_coords,
+                            y_coords,
+                            z_coords,
+                            sampled_i,
+                            sampled_j,
+                            sampled_k);
+                    std::array<double, 3> const primal_face_measures {
+                            magnetic_induction_primal_face_measure_3d<X>(
+                                    x_coords,
+                                    y_coords,
+                                    z_coords,
+                                    sampled_i,
+                                    sampled_j,
+                                    sampled_k),
+                            magnetic_induction_primal_face_measure_3d<Y>(
+                                    x_coords,
+                                    y_coords,
+                                    z_coords,
+                                    sampled_i,
+                                    sampled_j,
+                                    sampled_k),
+                            magnetic_induction_primal_face_measure_3d<Z>(
+                                    x_coords,
+                                    y_coords,
+                                    z_coords,
+                                    sampled_i,
+                                    sampled_j,
+                                    sampled_k),
                     };
                     std::array<double, 3> jacobian_row {};
                     double hodge_factor = 1.0;
@@ -3595,7 +3752,7 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                                 = {jacobian_component<X, X>(equations, moments, sampled_elem),
                                    jacobian_component<X, Y>(equations, moments, sampled_elem),
                                    jacobian_component<X, Z>(equations, moments, sampled_elem)};
-                        hodge_factor = magnetic_induction_hodge_factor<
+                        hodge_factor = magnetic_field_dual_edge_measure_3d<
                                 X>(x_coords, y_coords, z_coords, sampled_i, sampled_j, sampled_k);
                     } else if (moment_row % 3 == 1) {
                         jacobian_row
@@ -3603,7 +3760,7 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                                    jacobian_component<Y, Y>(equations, moments, sampled_elem),
                                    jacobian_component<Y, Z>(equations, moments, sampled_elem)};
                         hodge_factor = magnetic_y_response_sign
-                                       * magnetic_induction_hodge_factor<Y>(
+                                       * magnetic_field_dual_edge_measure_3d<Y>(
                                                x_coords,
                                                y_coords,
                                                z_coords,
@@ -3615,12 +3772,13 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                                 = {jacobian_component<Z, X>(equations, moments, sampled_elem),
                                    jacobian_component<Z, Y>(equations, moments, sampled_elem),
                                    jacobian_component<Z, Z>(equations, moments, sampled_elem)};
-                        hodge_factor = magnetic_induction_hodge_factor<
+                        hodge_factor = magnetic_field_dual_edge_measure_3d<
                                 Z>(x_coords, y_coords, z_coords, sampled_i, sampled_j, sampled_k);
                     }
                     for (int moment_component = 0; moment_component < 3; ++moment_component) {
                         double const jacobian_coefficient
-                                = hodge_factor * jacobian_row[moment_component];
+                                = hodge_factor * jacobian_row[moment_component]
+                                  / primal_face_measures[moment_component];
                         if (jacobian_coefficient == 0.0) {
                             continue;
                         }
