@@ -344,6 +344,20 @@ struct CurvilinearStructuredGrid2D
         return 0.25 * (node_y(i, j) + node_y(i + 1, j) + node_y(i, j + 1) + node_y(i + 1, j + 1));
     }
 
+    [[nodiscard]] double cell_area(std::size_t i, std::size_t j) const
+    {
+        // The structured cell is ordered counter-clockwise as
+        // (i,j), (i+1,j), (i+1,j+1), (i,j+1).
+        double const twice_signed_area
+                = node_x(i, j) * node_y(i + 1, j) - node_y(i, j) * node_x(i + 1, j)
+                  + node_x(i + 1, j) * node_y(i + 1, j + 1)
+                  - node_y(i + 1, j) * node_x(i + 1, j + 1)
+                  + node_x(i + 1, j + 1) * node_y(i, j + 1)
+                  - node_y(i + 1, j + 1) * node_x(i, j + 1) + node_x(i, j + 1) * node_y(i, j)
+                  - node_y(i, j + 1) * node_x(i, j);
+        return 0.5 * std::abs(twice_signed_area);
+    }
+
     [[nodiscard]] bool has_node(std::size_t index) const
     {
         return active_nodes.empty() || active_nodes[index] != 0;
@@ -443,40 +457,6 @@ inline CurvilinearStructuredGrid2D build_curvilinear_structured_grid(
     throw std::runtime_error("the quadrilateral mesh does not form a full transfinite grid");
 }
 
-inline double distance(
-        sil::onelab_interface::gmsh::MeshNode const& lhs,
-        sil::onelab_interface::gmsh::MeshNode const& rhs)
-{
-    double const dx = lhs.x - rhs.x;
-    double const dy = lhs.y - rhs.y;
-    double const dz = lhs.z - rhs.z;
-    return std::sqrt(dx * dx + dy * dy + dz * dz);
-}
-
-inline std::pair<double, double> average_logical_spacings(CurvilinearStructuredGrid2D const& grid)
-{
-    double sum_x = 0.0;
-    double sum_y = 0.0;
-    for (std::size_t j = 0; j < grid.ny(); ++j) {
-        for (std::size_t i = 0; i < grid.ncell_x; ++i) {
-            sum_x += distance(
-                    grid.ordered_nodes[grid.node_index(i, j)],
-                    grid.ordered_nodes[grid.node_index(i + 1, j)]);
-        }
-    }
-    for (std::size_t j = 0; j < grid.ncell_y; ++j) {
-        for (std::size_t i = 0; i < grid.nx(); ++i) {
-            sum_y += distance(
-                    grid.ordered_nodes[grid.node_index(i, j)],
-                    grid.ordered_nodes[grid.node_index(i, j + 1)]);
-        }
-    }
-    return {
-            sum_x / static_cast<double>(grid.ncell_x * grid.ny()),
-            sum_y / static_cast<double>(grid.nx() * grid.ncell_y),
-    };
-}
-
 template <class MemorySpace, class Equations>
 class ElasticityOperator2D
 {
@@ -501,7 +481,7 @@ class ElasticityOperator2D
     Equations m_equations;
     int_view_type m_active;
     int_view_type m_dirichlet;
-    view_type m_density;
+    view_type m_integration_weights;
     stencil_columns_view_type m_strain_columns;
     stencil_coefficients_view_type m_strain_coefficients;
     stencil_counts_view_type m_strain_counts;
@@ -520,13 +500,13 @@ public:
             Equations equations,
             int_view_type active,
             int_view_type dirichlet,
-            view_type density)
+            view_type integration_weights)
         : m_nx(nx)
         , m_ny(ny)
         , m_equations(std::move(equations))
         , m_active(active)
         , m_dirichlet(dirichlet)
-        , m_density(density)
+        , m_integration_weights(integration_weights)
         , m_strain_columns(
                   "similie_elasticity_strain_columns",
                   NUM_STRAIN_COMPONENTS,
@@ -740,7 +720,7 @@ public:
         auto const equations = m_equations;
         auto const active = m_active;
         auto const dirichlet = m_dirichlet;
-        auto const density = m_density;
+        auto const integration_weights = m_integration_weights;
         auto const strain_columns = m_strain_columns;
         auto const strain_coefficients = m_strain_coefficients;
         auto const strain_counts = m_strain_counts;
@@ -821,7 +801,7 @@ public:
                                         physics::elasticity::StrainXY>(strain, elem);
                             }
                             residual += transposed_strain_coefficients(stress_id, row, slot)
-                                        * density(sample_row) * stress;
+                                        * integration_weights(sample_row) * stress;
                         }
                     }
                     output(row, 0) = residual;
@@ -839,9 +819,9 @@ public:
         return m_dirichlet;
     }
 
-    [[nodiscard]] auto density() const
+    [[nodiscard]] auto integration_weights() const
     {
-        return m_density;
+        return m_integration_weights;
     }
 
     [[nodiscard]] auto equations() const
@@ -900,8 +880,8 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
             = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), operator_model.active());
     auto const dirichlet_host
             = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), operator_model.dirichlet());
-    auto const density_host
-            = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), operator_model.density());
+    auto const integration_weights_host = Kokkos::
+            create_mirror_view_and_copy(Kokkos::HostSpace(), operator_model.integration_weights());
     auto const strain_columns_host = Kokkos::
             create_mirror_view_and_copy(Kokkos::HostSpace(), operator_model.strain_columns());
     auto const strain_coefficients_host = Kokkos::
@@ -978,7 +958,7 @@ gko::matrix_data<double, gko::int32> assemble_matrix_data(
                         transposed_columns_host(stress_id, row, transpose_slot));
                 double const transpose_coefficient
                         = transposed_coefficients_host(stress_id, row, transpose_slot);
-                double const weight = density_host(sample_row);
+                double const weight = integration_weights_host(sample_row);
                 for (int strain_id = 0; strain_id < 3; ++strain_id) {
                     double const material_coefficient = coefficient(stress_id, strain_id);
                     if (material_coefficient == 0.0) {
@@ -1119,12 +1099,12 @@ Result run_on_quadrilateral_grid(
     Kokkos::View<int*, memory_space>
             dirichlet("similie_elasticity_dirichlet", grid.nx() * grid.ny());
     Kokkos::View<double*, memory_space>
-            density("similie_elasticity_density", grid.nx() * grid.ny());
+            integration_weights("similie_elasticity_integration_weights", grid.nx() * grid.ny());
     Kokkos::View<double*, memory_space> node_x("similie_elasticity_node_x", grid.nx() * grid.ny());
     Kokkos::View<double*, memory_space> node_y("similie_elasticity_node_y", grid.nx() * grid.ny());
     auto active_host = Kokkos::create_mirror_view(active);
     auto dirichlet_host = Kokkos::create_mirror_view(dirichlet);
-    auto density_host = Kokkos::create_mirror_view(density);
+    auto integration_weights_host = Kokkos::create_mirror_view(integration_weights);
     auto node_x_host = Kokkos::create_mirror_view(node_x);
     auto node_y_host = Kokkos::create_mirror_view(node_y);
     std::vector<std::size_t> loaded_nodes;
@@ -1133,7 +1113,7 @@ Result run_on_quadrilateral_grid(
         for (std::size_t i = 0; i < grid.nx(); ++i) {
             std::size_t const node = grid.node_index(i, j);
             active_host(node) = 1;
-            density_host(node) = 1.0;
+            integration_weights_host(node) = 0.0;
             double const x = grid.node_x(i, j);
             double const y = grid.node_y(i, j);
             node_x_host(node) = x;
@@ -1149,6 +1129,15 @@ Result run_on_quadrilateral_grid(
             }
         }
     }
+    for (std::size_t j = 0; j < grid.ncell_y; ++j) {
+        for (std::size_t i = 0; i < grid.ncell_x; ++i) {
+            double const area = grid.cell_area(i, j);
+            if (!(area > 0.0)) {
+                throw std::runtime_error("the wrench mesh contains a degenerate quadrilateral");
+            }
+            integration_weights_host(grid.node_index(i, j)) = area;
+        }
+    }
     result.num_loaded_nodes = loaded_nodes.size();
     if (result.num_clamped_nodes == 0 || result.num_loaded_nodes == 0) {
         throw std::runtime_error(
@@ -1156,24 +1145,25 @@ Result run_on_quadrilateral_grid(
     }
     Kokkos::deep_copy(active, active_host);
     Kokkos::deep_copy(dirichlet, dirichlet_host);
-    Kokkos::deep_copy(density, density_host);
+    Kokkos::deep_copy(integration_weights, integration_weights_host);
     Kokkos::deep_copy(node_x, node_x_host);
     Kokkos::deep_copy(node_y, node_y_host);
 
     physics::elasticity::LinearElasticityHamiltonian<> const
             hamiltonian(inputs.young_modulus, inputs.poisson_ratio);
     auto const equations = physics::HamiltonEquations {hamiltonian};
-    auto const [hx, hy] = detail::average_logical_spacings(grid);
 
     Kokkos::View<double**> rhs("similie_elasticity_rhs", 2 * grid.nx() * grid.ny(), 1);
     Kokkos::View<double**>
             displacement_view("similie_elasticity_displacement", 2 * grid.nx() * grid.ny(), 1);
     auto rhs_host = Kokkos::create_mirror_view(rhs);
-    double const nodal_force_density
-            = -inputs.applied_force
-              / (inputs.thickness * hx * hy * static_cast<double>(loaded_nodes.size()));
+    // The stiffness is assembled from the energy integrated over the 2D
+    // cross-section. It is therefore a per-unit-thickness stiffness, and the
+    // matching right-hand side is the applied force divided by the thickness.
+    double const nodal_force_per_thickness
+            = -inputs.applied_force / (inputs.thickness * static_cast<double>(loaded_nodes.size()));
     for (std::size_t node : loaded_nodes) {
-        rhs_host(2 * node + 1, 0) = nodal_force_density;
+        rhs_host(2 * node + 1, 0) = nodal_force_per_thickness;
     }
     Kokkos::deep_copy(rhs, rhs_host);
 
@@ -1185,7 +1175,7 @@ Result run_on_quadrilateral_grid(
             equations,
             active,
             dirichlet,
-            density);
+            integration_weights);
 
     detail::log_info(logger, "SimiLie starting linear elasticity solve");
     result.solver_diagnostics = solvers::minimize_strong_formulation_residual(
@@ -1209,12 +1199,7 @@ Result run_on_quadrilateral_grid(
         }
     }
 
-    std::size_t probe_node = loaded_nodes.front();
-    for (std::size_t node : loaded_nodes) {
-        if (grid.ordered_nodes[node].x > grid.ordered_nodes[probe_node].x) {
-            probe_node = node;
-        }
-    }
+    std::size_t const probe_node = grid.node_index(grid.ncell_x / 2, grid.ncell_y);
     result.probe_displacement_y = displacement[2 * probe_node + 1];
 
     auto const node_domain = ddc::DiscreteDomain<detail::DDimX, detail::DDimY>(
