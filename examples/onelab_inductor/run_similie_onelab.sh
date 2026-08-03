@@ -235,8 +235,8 @@ python3 "${paraview_export_script}" \
     --xmf-output "${paraview_xmf_file}"
 
 assert_example_results=0
-if [[ -f "${build_dir}/CMakeCache.txt" ]] && grep -Eq \
-    "^SIMILIE_ASSERT_EXAMPLE_RESULTS(_CORRECTNESS)?:BOOL=ON$" \
+if [[ -f "${build_dir}/CMakeCache.txt" ]] && grep -Fqx \
+    "SIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS:BOOL=ON" \
     "${build_dir}/CMakeCache.txt"; then
     assert_example_results=1
 fi

@@ -20,6 +20,7 @@ build_dir="${SIMILIE_ONELAB_BUILD_DIR:-${repo_root}/build}"
 onelab_client="${SIMILIE_ONELAB_BINARY:-${build_dir}/onelab_interface/similie_onelab}"
 mesh_file="${SIMILIE_ONELAB_MESH_FILE:-${output_dir}/wrench2D.msh}"
 result_file="${SIMILIE_ONELAB_RESULT_FILE:-${output_dir}/similie_elasticity_inputs.pos}"
+deflection_rel_tolerance="${SIMILIE_ONELAB_GETDP_DEFLECTION_REL_TOLERANCE:-0.15}"
 
 if [[ ! -f "${geometry_file}" ]]; then
     echo "missing elasticity geometry file: ${geometry_file}" >&2
@@ -107,8 +108,10 @@ if [[ "${solver}" == "getdp" ]]; then
 fi
 
 control_file="$(mktemp "${script_dir}/.run_similie_onelab_XXXXXX.geo")"
+log_file="$(mktemp "${TMPDIR:-/tmp}/run_similie_onelab_elasticity_XXXXXX.log")"
 effective_problem_file="${problem_file}"
 patched_problem_file=""
+getdp_output_dir=""
 if [[ -n "${use_matrix_free}" ]]; then
     patched_problem_file="$(mktemp "${script_dir}/.run_similie_onelab_XXXXXX.silpro")"
     sed \
@@ -116,7 +119,21 @@ if [[ -n "${use_matrix_free}" ]]; then
         "${problem_file}" > "${patched_problem_file}"
     effective_problem_file="${patched_problem_file}"
 fi
-trap 'rm -f "${control_file}" "${patched_problem_file}"' EXIT
+cleanup() {
+    rm -f "${control_file}" "${patched_problem_file}" "${log_file}"
+    if [[ -n "${getdp_output_dir}" && -d "${getdp_output_dir}" ]]; then
+        rm -f \
+            "${getdp_output_dir}/u.pos" \
+            "${getdp_output_dir}/sig_xx.pos" \
+            "${getdp_output_dir}/sig_xy.pos" \
+            "${getdp_output_dir}/sig_yy.pos" \
+            "${getdp_output_dir}/u_probe.txt" \
+            "${getdp_output_dir}/wrench2D.pre" \
+            "${getdp_output_dir}/wrench2D.res"
+        rmdir "${getdp_output_dir}"
+    fi
+}
+trap cleanup EXIT
 
 cat > "${control_file}" <<EOF
 Mesh 2;
@@ -136,4 +153,87 @@ EOF
     "${control_file}" \
     "${gmsh_args[@]}" \
     2>&1 \
-    | sed -u '/^Info[[:space:]]*: SimiLie -[[:space:]]*$/d'
+    | sed -u '/^Info[[:space:]]*: SimiLie -[[:space:]]*$/d' \
+    | tee "${log_file}"
+
+if [[ ! -f "${build_dir}/CMakeCache.txt" ]] || ! grep -Fqx \
+    "SIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS:BOOL=ON" \
+    "${build_dir}/CMakeCache.txt"; then
+    exit 0
+fi
+
+if [[ ! -f "${getdp_problem_file}" ]]; then
+    echo "missing GetDP reference problem file: ${getdp_problem_file}" >&2
+    exit 1
+fi
+if ! command -v "${getdp_executable}" >/dev/null 2>&1; then
+    echo "getdp executable not found: ${getdp_executable}" >&2
+    exit 1
+fi
+
+getdp_output_dir="$(mktemp -d "${TMPDIR:-/tmp}/similie_elasticity_getdp_XXXXXX")"
+set +e
+"${getdp_executable}" \
+    "${getdp_problem_file}" \
+    -msh "${mesh_file}" \
+    -name "${getdp_output_dir}/wrench2D" \
+    -solver "${script_dir}/getdp_ref/solver.par" \
+    -Scaling 1 \
+    -Algorithm 8 \
+    -Krylov_Size 200 \
+    -Nb_Iter_Max 100000 \
+    -Stopping_Test 1e-10 \
+    -setstring "GetDPOutputDir" "${getdp_output_dir}" \
+    -solve Elast_u \
+    -pos Get_Probe_Displacement
+getdp_status=$?
+set -e
+if [[ "${getdp_status}" -ne 0 ]]; then
+    if [[ "${getdp_status}" -ne 134 || ! -s "${getdp_output_dir}/u_probe.txt" ]]; then
+        echo "GetDP reference solve failed with exit status ${getdp_status}" >&2
+        exit "${getdp_status}"
+    fi
+    echo "warning: GetDP aborted during final cleanup after writing u_probe.txt" >&2
+fi
+
+python3 - "${log_file}" "${getdp_output_dir}/u_probe.txt" "${deflection_rel_tolerance}" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+
+def parse_similie_probe_displacement(log_file: Path) -> float:
+    pattern = re.compile(r"SimiLie elasticity diagnostics:.*uy_probe=([0-9.eE+-]+)\s+m")
+    for line in log_file.read_text().splitlines():
+        match = pattern.search(line)
+        if match:
+            return float(match.group(1))
+    raise RuntimeError("failed to parse uy_probe from SimiLie elasticity diagnostics")
+
+
+def parse_getdp_probe_displacement(displacement_file: Path) -> float:
+    rows = [line.split() for line in displacement_file.read_text().splitlines() if line.strip()]
+    if len(rows) != 1 or len(rows[0]) < 10:
+        raise RuntimeError(f"invalid GetDP point-probe data in {displacement_file}")
+    return float(rows[0][9])
+
+
+similie_displacement = parse_similie_probe_displacement(Path(sys.argv[1]))
+getdp_displacement = parse_getdp_probe_displacement(Path(sys.argv[2]))
+relative_tolerance = float(sys.argv[3])
+if getdp_displacement == 0.0:
+    raise RuntimeError("GetDP returned a zero probe displacement")
+relative_error = abs(similie_displacement - getdp_displacement) / abs(getdp_displacement)
+
+print(
+    "SimiLie/GetDP probe-deflection consistency:"
+    f" SimiLie={similie_displacement:.9e} m,"
+    f" GetDP={getdp_displacement:.9e} m,"
+    f" relative error={relative_error:.3%}"
+)
+if relative_error > relative_tolerance:
+    raise SystemExit(
+        "SimiLie/GetDP probe-deflection consistency check failed: "
+        f"relative error {relative_error:.3%} exceeds tolerance {relative_tolerance:.3%}"
+    )
+PY

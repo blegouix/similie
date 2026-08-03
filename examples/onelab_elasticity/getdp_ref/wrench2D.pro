@@ -35,7 +35,7 @@ Function {
   nu[Vol_Elast~{iP}] = Poisson;
 
   pressure_x[Sur_Force~{iP}] = 0;
-  pressure_y[Sur_Force~{iP}] = -AppliedForce / (Width * Thickness);
+  pressure_y[Sur_Force~{iP}] = -AppliedForce / Width;
   pressure_z[Sur_Force~{iP}] = 0;
 
   force_x[Vol_Force~{iP}] = 0;
@@ -55,4 +55,10 @@ PostOperation Get_LocalFields UsingPost Elast_u {
   Print[sig_xx, OnElementsOf Vol_Elast~{iP}, File StrCat[GetDPOutputDir, "/sig_xx.pos"], LastTimeStepOnly];
   Print[sig_xy, OnElementsOf Vol_Elast~{iP}, File StrCat[GetDPOutputDir, "/sig_xy.pos"], LastTimeStepOnly];
   Print[sig_yy, OnElementsOf Vol_Elast~{iP}, File StrCat[GetDPOutputDir, "/sig_yy.pos"], LastTimeStepOnly];
+}
+
+PostOperation Get_Probe_Displacement UsingPost Elast_u {
+  CreateDir[GetDPOutputDir];
+  Print[u, OnPoint {probe_x, probe_y, 0}, Format Table,
+    File StrCat[GetDPOutputDir, "/u_probe.txt"], LastTimeStepOnly];
 }
