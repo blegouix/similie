@@ -94,6 +94,11 @@ if [[ "${solver}" == "getdp" ]]; then
         -msh "${mesh_file}" \
         -name "${output_dir}/wrench2D" \
         -solver "${script_dir}/getdp_ref/solver.par" \
+        -Scaling 1 \
+        -Algorithm 8 \
+        -Krylov_Size 200 \
+        -Nb_Iter_Max 100000 \
+        -Stopping_Test 1e-10 \
         -setstring "GetDPOutputDir" "${output_dir}/res_elasticity" \
         -solve Elast_u \
         -pos Get_LocalFields \
