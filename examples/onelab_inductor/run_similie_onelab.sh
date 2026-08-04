@@ -294,6 +294,8 @@ python3 - \
     "${mesh_file}" \
     "${model_data_file}" \
     "${getdp_output_dir}/InductanceF.dat" \
+    "${getdp_output_dir}/InductanceE.dat" \
+    "${model_dimension}" \
     "${getdp_l_rel_tolerance}" <<'PY'
 import math
 import re
@@ -434,13 +436,18 @@ def parse_mesh_airgap_geometry(
 log_file = Path(sys.argv[1])
 mesh_file = Path(sys.argv[2])
 inductor_data_geo = Path(sys.argv[3])
-getdp_inductance_file = Path(sys.argv[4])
-relative_tolerance = float(sys.argv[5])
+getdp_flux_inductance_file = Path(sys.argv[4])
+getdp_energy_inductance_file = Path(sys.argv[5])
+model_dimension = int(sys.argv[6])
+relative_tolerance = float(sys.argv[7])
 
 symmetry_factor, num_turns, logged_length_z, similie_logged_l = parse_log(log_file)
-getdp_l = parse_getdp_inductance(getdp_inductance_file)
+getdp_flux_l = parse_getdp_inductance(getdp_flux_inductance_file)
+getdp_energy_l = parse_getdp_inductance(getdp_energy_inductance_file)
+getdp_l = getdp_flux_l if model_dimension == 2 else getdp_energy_l
 if getdp_l == 0.0:
-    raise RuntimeError("GetDP returned zero inductance")
+    reference = "flux" if model_dimension == 2 else "magnetic energy"
+    raise RuntimeError(f"GetDP returned zero {reference} inductance")
 airgap_tag = parse_airgap_tag(inductor_data_geo)
 surface_measure, gap_length, length_z = parse_mesh_airgap_geometry(
     mesh_file, airgap_tag, logged_length_z
@@ -461,8 +468,14 @@ similie_analytical_relative_error = abs(similie_l - analytical_l) / abs(analytic
 print(
     "Inductance comparison:"
     f" SimiLie={similie_l:.9e} H,"
-    f" GetDP={getdp_l:.9e} H,"
+    f" GetDP reference={getdp_l:.9e} H,"
     f" relative error={similie_getdp_relative_error:.3%}"
+)
+print(
+    "GetDP inductance diagnostics:"
+    f" flux={getdp_flux_l:.9e} H,"
+    f" magnetic energy={getdp_energy_l:.9e} H,"
+    f" selected={'flux' if model_dimension == 2 else 'magnetic energy'}"
 )
 print(
     "Analytical air-gap estimate converted to conventional coil inductance:"

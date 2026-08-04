@@ -184,17 +184,26 @@ set +e
     -Nb_Iter_Max 100000 \
     -Stopping_Test 1e-10 \
     -setstring "GetDPOutputDir" "${getdp_output_dir}" \
-    -solve Elast_u \
-    -pos Get_Probe_Displacement
-getdp_status=$?
+    -solve Elast_u
+getdp_solve_status=$?
 set -e
-if [[ "${getdp_status}" -ne 0 ]]; then
-    if [[ "${getdp_status}" -ne 134 || ! -s "${getdp_output_dir}/u_probe.txt" ]]; then
-        echo "GetDP reference solve failed with exit status ${getdp_status}" >&2
-        exit "${getdp_status}"
+if [[ "${getdp_solve_status}" -ne 0 ]]; then
+    if [[ "${getdp_solve_status}" -ne 134 \
+          || ! -s "${getdp_output_dir}/wrench2D.pre" \
+          || ! -s "${getdp_output_dir}/wrench2D.res" ]]; then
+        echo "GetDP reference solve failed with exit status ${getdp_solve_status}" >&2
+        exit "${getdp_solve_status}"
     fi
-    echo "warning: GetDP aborted during final cleanup after writing u_probe.txt" >&2
+    echo "warning: GetDP aborted during final cleanup after saving its solution" >&2
 fi
+
+"${getdp_executable}" \
+    "${getdp_problem_file}" \
+    -msh "${mesh_file}" \
+    -name "${getdp_output_dir}/wrench2D" \
+    -solver "${script_dir}/getdp_ref/solver.par" \
+    -setstring "GetDPOutputDir" "${getdp_output_dir}" \
+    -pos Get_Probe_Displacement
 
 python3 - "${log_file}" "${getdp_output_dir}/u_probe.txt" "${deflection_rel_tolerance}" <<'PY'
 import re
