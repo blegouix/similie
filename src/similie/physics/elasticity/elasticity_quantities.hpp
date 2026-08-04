@@ -83,28 +83,20 @@ struct DisplacementToStrain
         using Derivative = sil::exterior::CovariantDerivative<SpatialIndex...>;
 
         if constexpr (std::is_same_v<StrainIndex, StrainXX>) {
-            return Derivative {}.template operator()<X, X, DisplacementComponent>(
-                    displacement,
-                    elem,
-                    position);
+            return Derivative {}
+                    .template operator()<X, X, DisplacementComponent>(displacement, elem, position);
         } else if constexpr (std::is_same_v<StrainIndex, StrainYY>) {
-            return Derivative {}.template operator()<Y, Y, DisplacementComponent>(
-                    displacement,
-                    elem,
-                    position);
+            return Derivative {}
+                    .template operator()<Y, Y, DisplacementComponent>(displacement, elem, position);
         } else if constexpr (std::is_same_v<StrainIndex, StrainXY>) {
             if constexpr (std::is_same_v<DisplacementComponent, X>) {
                 return 0.5
-                       * Derivative {}.template operator()<X, Y, DisplacementComponent>(
-                               displacement,
-                               elem,
-                               position);
+                       * Derivative {}.template
+                         operator()<X, Y, DisplacementComponent>(displacement, elem, position);
             } else {
                 return 0.5
-                       * Derivative {}.template operator()<Y, X, DisplacementComponent>(
-                               displacement,
-                               elem,
-                               position);
+                       * Derivative {}.template
+                         operator()<Y, X, DisplacementComponent>(displacement, elem, position);
             }
         } else {
             static_assert(
