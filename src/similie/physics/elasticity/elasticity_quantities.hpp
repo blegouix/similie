@@ -69,6 +69,55 @@ struct DisplacementToStrain
             class StrainIndex,
             class DisplacementComponent,
             class... SpatialIndex,
+            class DisplacementType,
+            class Elem,
+            class PositionType>
+    [[nodiscard]] KOKKOS_FUNCTION static double forward(
+            DisplacementType displacement,
+            Elem elem,
+            PositionType position)
+    {
+        using SpatialIndexSeq = ddc::detail::TypeSeq<SpatialIndex...>;
+        using X = ddc::type_seq_element_t<0, SpatialIndexSeq>;
+        using Y = ddc::type_seq_element_t<1, SpatialIndexSeq>;
+        using Derivative = sil::exterior::CovariantDerivative<SpatialIndex...>;
+
+        if constexpr (std::is_same_v<StrainIndex, StrainXX>) {
+            return Derivative {}.template operator()<X, X, DisplacementComponent>(
+                    displacement,
+                    elem,
+                    position);
+        } else if constexpr (std::is_same_v<StrainIndex, StrainYY>) {
+            return Derivative {}.template operator()<Y, Y, DisplacementComponent>(
+                    displacement,
+                    elem,
+                    position);
+        } else if constexpr (std::is_same_v<StrainIndex, StrainXY>) {
+            if constexpr (std::is_same_v<DisplacementComponent, X>) {
+                return 0.5
+                       * Derivative {}.template operator()<X, Y, DisplacementComponent>(
+                               displacement,
+                               elem,
+                               position);
+            } else {
+                return 0.5
+                       * Derivative {}.template operator()<Y, X, DisplacementComponent>(
+                               displacement,
+                               elem,
+                               position);
+            }
+        } else {
+            static_assert(
+                    std::is_same_v<StrainIndex, StrainXX> || std::is_same_v<StrainIndex, StrainYY>
+                            || std::is_same_v<StrainIndex, StrainXY>,
+                    "unsupported elasticity strain component index");
+        }
+    }
+
+    template <
+            class StrainIndex,
+            class DisplacementComponent,
+            class... SpatialIndex,
             class Elem,
             class PositionType>
     [[nodiscard]] KOKKOS_FUNCTION static auto forward_value(Elem elem, PositionType position)

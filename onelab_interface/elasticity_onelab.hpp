@@ -1210,6 +1210,8 @@ Result run_on_quadrilateral_grid(
             position_domain(node_domain, position_accessor.domain());
     ddc::Chunk position_alloc(position_domain, ddc::HostAllocator<double>());
     sil::tensor::Tensor position(position_alloc);
+    ddc::Chunk displacement_alloc(position_domain, ddc::HostAllocator<double>());
+    sil::tensor::Tensor displacement_tensor(displacement_alloc);
     ddc::host_for_each(node_domain, [&](auto elem) {
         std::size_t const i
                 = static_cast<std::size_t>(ddc::DiscreteElement<detail::DDimX>(elem).uid());
@@ -1217,33 +1219,22 @@ Result run_on_quadrilateral_grid(
                 = static_cast<std::size_t>(ddc::DiscreteElement<detail::DDimY>(elem).uid());
         position(elem, position_accessor.template access_element<detail::X>()) = grid.node_x(i, j);
         position(elem, position_accessor.template access_element<detail::Y>()) = grid.node_y(i, j);
+        std::size_t const node = grid.node_index(i, j);
+        displacement_tensor(elem, position_accessor.template access_element<detail::X>())
+                = displacement[2 * node];
+        displacement_tensor(elem, position_accessor.template access_element<detail::Y>())
+                = displacement[2 * node + 1];
     });
 
     auto strain_component_from_displacement =
             [&](auto strain_tag, auto displacement_component_tag, auto elem) {
                 using StrainIndex = decltype(strain_tag);
                 using DisplacementComponent = decltype(displacement_component_tag);
-                auto stencil = physics::elasticity::DisplacementToStrain::template forward_value<
+                return physics::elasticity::DisplacementToStrain::template forward<
                         StrainIndex,
                         DisplacementComponent,
                         detail::X,
-                        detail::Y>(elem, position);
-                double value = 0.0;
-                ddc::host_for_each(stencil.domain(), [&](auto stencil_elem) {
-                    auto const displacement_elem
-                            = ddc::DiscreteElement<detail::DDimX, detail::DDimY>(stencil_elem);
-                    std::size_t const i = static_cast<std::size_t>(
-                            ddc::DiscreteElement<detail::DDimX>(displacement_elem).uid());
-                    std::size_t const j = static_cast<std::size_t>(
-                            ddc::DiscreteElement<detail::DDimY>(displacement_elem).uid());
-                    if (i >= grid.nx() || j >= grid.ny()) {
-                        return;
-                    }
-                    std::size_t const node = grid.node_index(i, j);
-                    int const component = std::is_same_v<DisplacementComponent, detail::X> ? 0 : 1;
-                    value += stencil.mem(stencil_elem) * displacement[2 * node + component];
-                });
-                return value;
+                        detail::Y>(displacement_tensor, elem, position);
             };
 
     double constexpr material_threshold = 0.1;

@@ -84,18 +84,31 @@ public:
             class OutputComponentIndex,
             class DerivativeIndex,
             class InputComponentIndex = OutputComponentIndex,
+            class TensorType,
             class Elem,
             class PositionType,
             class Connection = ZeroConnection>
-    [[nodiscard]] KOKKOS_FUNCTION auto operator()(
+    [[nodiscard]] KOKKOS_FUNCTION double operator()(
+            TensorType tensor,
             Elem elem,
             PositionType position,
             Connection connection = ZeroConnection {}) const
     {
-        return value<
+        auto const stencil = value<
                 OutputComponentIndex,
                 DerivativeIndex,
                 InputComponentIndex>(elem, position, connection);
+        auto const input_component
+                = tensor.accessor().template access_element<InputComponentIndex>();
+        double result = 0.0;
+        ddc::device_for_each(stencil.domain(), [&](auto stencil_elem) {
+            result += stencil.mem(stencil_elem)
+                      * tensor.mem(
+                              typename TensorType::non_indices_domain_t::discrete_element_type(
+                                      stencil_elem),
+                              input_component);
+        });
+        return result;
     }
 
 private:
