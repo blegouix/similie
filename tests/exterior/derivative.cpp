@@ -232,19 +232,16 @@ TEST(ExteriorDerivative, CovariantDerivative2DSkewGeometry)
         double const eta = static_cast<double>(ddc::DiscreteElement<DDimY>(elem).uid());
         position(elem, position_accessor.template access_element<X>()) = xi + 0.25 * eta;
         position(elem, position_accessor.template access_element<Y>()) = 2.0 * eta;
-        double const value
-                = 3.0 * position(elem, position_accessor.template access_element<X>())
-                  - 2.0 * position(elem, position_accessor.template access_element<Y>());
+        double const value = 3.0 * position(elem, position_accessor.template access_element<X>())
+                             - 2.0 * position(elem, position_accessor.template access_element<Y>());
         field(elem, position_accessor.template access_element<X>()) = value;
         field(elem, position_accessor.template access_element<Y>()) = value;
     });
 
     auto const elem = ddc::DiscreteElement<DDimX, DDimY>(0, 0);
     auto d_dx = sil::exterior::CovariantDerivative<X, Y>::template value<X, X>(elem, position);
-    double const d_dy = sil::exterior::CovariantDerivative<X, Y> {}.template operator()<X, Y>(
-            field,
-            elem,
-            position);
+    double const d_dy = sil::exterior::CovariantDerivative<X, Y> {}
+                                .template operator()<X, Y>(field, elem, position);
 
     EXPECT_DOUBLE_EQ(apply_stencil_to_linear_field(d_dx, position, 3.0, -2.0), 3.0);
     EXPECT_DOUBLE_EQ(d_dy, -2.0);

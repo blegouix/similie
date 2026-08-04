@@ -94,19 +94,19 @@ public:
             PositionType position,
             Connection connection = ZeroConnection {}) const
     {
-        auto const stencil = value<
-                OutputComponentIndex,
-                DerivativeIndex,
-                InputComponentIndex>(elem, position, connection);
+        auto const stencil
+                = value<OutputComponentIndex,
+                        DerivativeIndex,
+                        InputComponentIndex>(elem, position, connection);
         auto const input_component
                 = tensor.accessor().template access_element<InputComponentIndex>();
         double result = 0.0;
         ddc::device_for_each(stencil.domain(), [&](auto stencil_elem) {
             result += stencil.mem(stencil_elem)
-                      * tensor.mem(
-                              typename TensorType::non_indices_domain_t::discrete_element_type(
-                                      stencil_elem),
-                              input_component);
+                      * tensor
+                                .mem(typename TensorType::non_indices_domain_t::
+                                             discrete_element_type(stencil_elem),
+                                     input_component);
         });
         return result;
     }
