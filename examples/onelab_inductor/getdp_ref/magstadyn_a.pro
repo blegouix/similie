@@ -375,8 +375,8 @@ PostProcessing {
         }
       }
 
-      { Name Inductance_from_Flux ; Value { Term { Type Global; [ $Flux * 1e3/II ] ; In DomainDummy ; } } }
-      { Name Inductance_from_MagEnergy ; Value { Term { Type Global; [ 2 * $MagEnergy * 1e3/(II*II) ] ; In DomainDummy ; } } }
+      { Name Inductance_from_Flux ; Value { Term { Type Global; [ #11 * 1e3/II ] ; In DomainDummy ; } } }
+      { Name Inductance_from_MagEnergy ; Value { Term { Type Global; [ 2 * #22 * 1e3/(II*II) ] ; In DomainDummy ; } } }
 
     }
   }
@@ -416,11 +416,11 @@ PostOperation Get_GlobalQuantities UsingPost MagStaDyn_a_2D {
     SendToServer StrCat[po,"30U [V]"], Color "LightYellow" ];
 
   Print[ Flux[Inds], OnGlobal, Format TimeTable,
-    File > StrCat[Dir,"Flux",ExtGnuplot], LastTimeStepOnly, StoreInVariable $Flux,
+    File > StrCat[Dir,"Flux",ExtGnuplot], LastTimeStepOnly, Store 11,
     SendToServer StrCat[po,"40Flux [Wb]"],  Color "LightYellow" ];
 
   Print[ MagEnergy[Domain], OnGlobal, Format TimeTable,
-    File > StrCat[Dir,"ME",ExtGnuplot], LastTimeStepOnly, StoreInVariable $MagEnergy,
+    File > StrCat[Dir,"ME",ExtGnuplot], LastTimeStepOnly, Store 22,
     SendToServer StrCat[po,"41Magnetic Energy [W]"],  Color "LightYellow" ];
 
   Print[ Inductance_from_Flux, OnRegion DomainDummy, Format Table, LastTimeStepOnly,
