@@ -29,15 +29,6 @@ ExtGnuplot  = ".dat";
 TREE_COTREE_GAUGE = 0;
 COULOMB_GAUGE = 1;
 
-DIVJ0_NONE = 0;
-DIVJ0_WEAK = 1;
-// DIVJ0_STRONG = 2; // Not in this file
-
-
-DIVJ0_NONE   = 0;
-DIVJ0_WEAK   = 1;
-DIVJ0_STRONG = 2; // Not in this file
-
 DefineConstant[
   Flag_AnalysisType = { 0,  Choices{0="Static",  1="Time domain", 2="Frequency domain"},
     Name "Input/20Type of analysis",  Highlight "Blue",
@@ -54,15 +45,8 @@ DefineConstant[
   Flag_ConductingCore = { (Flag_AnalysisType==2), Choices{0,1},
     Name "Input/40Conducting core", ReadOnly (Flag_AnalysisType==0)}
 
-  Flag_GaugeType = { TREE_COTREE_GAUGE, Choices{TREE_COTREE_GAUGE="Tree-cotree gauge", COULOMB_GAUGE="Coulomb gauge"},
+  Flag_GaugeType = { COULOMB_GAUGE, Choices{TREE_COTREE_GAUGE="Tree-cotree gauge", COULOMB_GAUGE="Coulomb gauge"},
     Name "Input/30Type of gauge", Highlight "Blue", Visible (Flag_3Dmodel==1) }
-
-  Flag_DivJ_Zero = { DIVJ0_WEAK, Choices{ DIVJ0_NONE = "None", DIVJ0_WEAK = "Weak"},
-    Name "Input/30Constraint div j = 0",
-    Help Str["None: direct interpolation of js0[]",
-      "Weak: Use scalar potential xis for weakly ensuring div j = 0.",
-      "Strong: Use Hcurl source field hs with curl hs = j, for div j = 0;"],
-    Highlight "Blue", Visible (Flag_3Dmodel==1) }
 ];
 
 Group {

@@ -187,10 +187,8 @@ FunctionSpace {
       { NameOfCoef ae  ; EntityType EdgesOf ; NameOfConstraint MVP_3D ; }
       { NameOfCoef ae2 ; EntityType EdgesOf ; NameOfConstraint MVP_3D ; }
 
-      If(Flag_GaugeType==TREE_COTREE_GAUGE)
-        { NameOfCoef ae  ; EntityType EdgesOfTreeIn ; EntitySubType StartingOn ;
-          NameOfConstraint GaugeCondition_a ; }
-      EndIf
+      { NameOfCoef ae  ; EntityType EdgesOfTreeIn ; EntitySubType StartingOn ;
+        NameOfConstraint GaugeCondition_a ; }
     }
   }
 
@@ -221,42 +219,16 @@ FunctionSpace {
     }
   }
 
-
-  // correcting source interpolation js0[] so that (weakly) div j = 0
-  { Name H_xi_divj0 ; Type Form0 ;
-    BasisFunction {
-      { Name sn ; NameOfCoef an ; Function BF_Node ;
-        Support Region[{DomainS, SkinDomainS}] ; Entity NodesOf[ All ] ; }
-    }
-    Constraint {
-      { NameOfCoef an ; EntityType NodesOf ; NameOfConstraint xi_fixed ; }
-    }
-  }
-
 }
 
 //---------------------------------------------------------------------------------------------
 
 Formulation {
 
-  { Name DivJ0 ; Type FemEquation ;
-    Quantity {
-      { Name xi; Type Local ; NameOfSpace H_xi_divj0 ; }
-    }
-    Equation {
-      Galerkin { [ js0[] , {d xi} ] ;
-        In Domain ; Jacobian Vol ; Integration II ; }
-      Galerkin { [ -Dof{d xi} , {d xi} ] ;
-        In Domain ; Jacobian Vol ; Integration II ; }
-    }
-  }
-
   { Name MagStaDyn_av_js0_3D ; Type FemEquation ;
     Quantity {
       { Name a  ; Type Local ; NameOfSpace Hcurl_a_3D ; }
       { Name xi ; Type Local ; NameOfSpace H_xi ; } // Coulomb gauge
-      { Name xis ; Type Local ; NameOfSpace H_xi_divj0 ; } // div j=0
-
       { Name v  ; Type Local ; NameOfSpace Hregion_u_3D ; } //Massive conductor
       { Name U  ; Type Global ; NameOfSpace Hregion_u_3D [U] ; }
       { Name I  ; Type Global ; NameOfSpace Hregion_u_3D [I] ; }
@@ -285,11 +257,6 @@ Formulation {
       Galerkin { [ -js0[], {a} ] ;
         In DomainS ; Jacobian Vol ; Integration II ; }
 
-      If(Flag_DivJ_Zero == DIVJ0_WEAK)
-        Galerkin { [ {d xis}, {a} ] ;
-          In Domain ; Jacobian Vol ; Integration II ; }
-      EndIf
-
       If(Flag_GaugeType==COULOMB_GAUGE)
         Galerkin { [ Dof{a}, {d xi} ] ;
           In Domain ; Jacobian Vol ; Integration II ; }
@@ -308,23 +275,13 @@ Resolution {
     System {
       If(Flag_AnalysisType==2)
          { Name Sys ; NameOfFormulation MagStaDyn_av_js0_3D ; Type ComplexValue ; Frequency Freq ; }
-         If(Flag_DivJ_Zero == DIVJ0_WEAK)
-           { Name Sys_DivJ0 ; NameOfFormulation DivJ0 ; Type ComplexValue ; Frequency Freq ; }
-         EndIf
       EndIf
       If(Flag_AnalysisType<2)
         { Name Sys ; NameOfFormulation MagStaDyn_av_js0_3D ; }
-        If(Flag_DivJ_Zero == DIVJ0_WEAK)
-          { Name Sys_DivJ0 ; NameOfFormulation DivJ0 ; }
-        EndIf
       EndIf
     }
     Operation {
       CreateDir[Dir] ;
-
-      If(Flag_DivJ_Zero == DIVJ0_WEAK)
-        Generate[Sys_DivJ0] ; Solve[Sys_DivJ0] ; SaveSolution[Sys_DivJ0];
-      EndIf
 
       InitSolution[Sys] ;
       If(Flag_AnalysisType==0 || Flag_AnalysisType==2) // Static or Frequency-domain
@@ -412,9 +369,6 @@ PostProcessing {
       { Name Inductance_from_MagEnergy ; Value { Term { Type Global; [ 2 * #22 * 1e3/(II*II) ] ; In DomainDummy ; } } }
 
       { Name xi ; Value { Term { [ {xi} ] ; In Domain ; Jacobian Vol ; } } }
-      { Name xis ; Value { Term { [ {xis} ] ; In Domain ; Jacobian Vol ; } } }
-      { Name dxis ; Value { Term { [ {d xis} ] ; In Domain ; Jacobian Vol ; } } }
-      { Name js0_dxis ; Value { Term { [ js0[]-{d xis} ] ; In Domain ; Jacobian Vol ; } } }
 
     }
   }
@@ -424,12 +378,6 @@ PostProcessing {
  PostOperation Get_LocalFields UsingPost MagStaDyn_av_js0_3D {
    Print[ js, OnElementsOf DomainS, File StrCat[Dir, "js", ExtGmsh], LastTimeStepOnly ] ;
    Print[ a, OnElementsOf Domain, File StrCat[Dir, "a", ExtGmsh], LastTimeStepOnly ] ;
-
-   If(Flag_DivJ_Zero == DIVJ0_WEAK)
-     Print[ xis, OnElementsOf DomainS, File StrCat[Dir, "xis",ExtGmsh ], LastTimeStepOnly ] ;
-     Print[ dxis, OnElementsOf DomainS, File StrCat[Dir, "grad_xis",ExtGmsh ], LastTimeStepOnly ] ;
-     Print[ js0_dxis, OnElementsOf DomainS, File StrCat[Dir, "js0_corrected",ExtGmsh ], LastTimeStepOnly ] ;
-   EndIf
 
    If(Flag_GaugeType==COULOMB_GAUGE)
      Print[ xi, OnElementsOf Domain, File StrCat[Dir, "xi",ExtGmsh ], LastTimeStepOnly ] ;
