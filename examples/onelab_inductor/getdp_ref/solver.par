@@ -1,0 +1,24 @@
+/*
+SPDX-FileCopyrightText: 2026 Baptiste Legouix
+SPDX-License-Identifier: AGPL-3.0-or-later
+*/
+
+            Matrix_Format            1
+          Matrix_Printing            0
+           Matrix_Storage            0
+                  Scaling            0
+    Renumbering_Technique            1
+           Preconditioner            2
+  Preconditioner_Position            2
+                  Nb_Fill           20
+    Permutation_Tolerance         0.05
+       Dropping_Tolerance            0
+    Diagonal_Compensation            0
+               Re_Use_ILU            0
+                Algorithm            8
+              Krylov_Size           40
+          IC_Acceleration            1
+                Re_Use_LU            0
+    Iterative_Improvement            0
+              Nb_Iter_Max         1000
+            Stopping_Test        1e-10
