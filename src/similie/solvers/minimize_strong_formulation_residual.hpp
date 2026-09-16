@@ -1320,6 +1320,8 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
     detail::fill(exec_space, solution, 0.0);
     auto const gko_exec = gko::ext::kokkos::create_executor(exec_space);
     if constexpr (OperatorModel::IS_LINEAR) {
+        std::cout << "SimiLie linear system mode: "
+                  << (settings.use_matrix_free ? "matrix-free" : "assembled") << '\n';
         diagnostics.initial_residual_l2 = detail::residual_norm_l2(exec_space, rhs);
         diagnostics.final_residual_l2 = diagnostics.initial_residual_l2;
         diagnostics.final_relative_residual = diagnostics.initial_residual_l2 == 0.0 ? 0.0 : 1.0;
