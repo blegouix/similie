@@ -270,6 +270,9 @@ TEST(ExteriorDerivative, CovariantDerivativeConnectionTerm)
             template value<X, Y, Y>(elem, position, ConstantTestConnection {});
 
     EXPECT_DOUBLE_EQ(apply_stencil_to_linear_field(covariant_term, position, 3.0, -2.0), -1.0);
+    auto const interior_term = sil::exterior::CovariantDerivative<X, Y>::
+            template value<X, Y, Y>(elem, position, ConstantTestConnection {}, {0.4, 0.6});
+    EXPECT_NEAR(apply_stencil_to_linear_field(interior_term, position, 3.0, -2.0), -4.0, 1e-14);
 }
 
 TEST(ExteriorDerivative, 2DGradient)

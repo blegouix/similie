@@ -3,7 +3,6 @@
 
 #pragma once
 
-#include "bilinear_quadrilateral_gradient.hpp"
 #include "boundary.hpp"
 #include "chain.hpp"
 #include "coboundary.hpp"
@@ -11,6 +10,7 @@
 #include "codifferential.hpp"
 #include "cosimplex.hpp"
 #include "covariant_derivative.hpp"
+#include "cubical_reconstruction.hpp"
 #include "evaluators.hpp"
 #include "form.hpp"
 #include "hodge_star.hpp"

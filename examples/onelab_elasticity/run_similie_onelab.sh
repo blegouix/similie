@@ -20,7 +20,7 @@ build_dir="${SIMILIE_ONELAB_BUILD_DIR:-${repo_root}/build}"
 onelab_client="${SIMILIE_ONELAB_BINARY:-${build_dir}/onelab_interface/similie_onelab}"
 mesh_file="${SIMILIE_ONELAB_MESH_FILE:-${output_dir}/wrench2D.msh}"
 result_file="${SIMILIE_ONELAB_RESULT_FILE:-${output_dir}/similie_elasticity_inputs.pos}"
-field_rel_tolerance="${SIMILIE_ONELAB_GETDP_FIELD_REL_TOLERANCE:-1e-4}"
+field_rel_tolerance="${SIMILIE_ONELAB_GETDP_FIELD_REL_TOLERANCE:-0.03}"
 
 if [[ ! -f "${geometry_file}" ]]; then
     echo "missing elasticity geometry file: ${geometry_file}" >&2

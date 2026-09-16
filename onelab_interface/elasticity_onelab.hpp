@@ -23,7 +23,7 @@
 #include <ddc/ddc.hpp>
 
 #include <ginkgo/core/base/matrix_data.hpp>
-#include <similie/exterior/bilinear_quadrilateral_gradient.hpp>
+#include <similie/exterior/covariant_derivative.hpp>
 #include <similie/physics/elasticity/linear_elasticity.hpp>
 #include <similie/physics/hamilton_equations.hpp>
 #include <similie/solvers/minimize_strong_formulation_residual.hpp>
@@ -541,21 +541,25 @@ public:
                 for (int a = 0; a < 4; ++a) {
                     positions[a] = {node_x_host(nodes[a]), node_y_host(nodes[a])};
                 }
+                sil::exterior::CubicalReconstruction<2>::check_orientation(positions);
                 for (int q = 0; q < 4; ++q) {
                     std::size_t const sample = 4 * (i + nx * j) + q;
-                    sil::exterior::BilinearQuadrilateralGradient2D const derivative(
+                    sil::exterior::CubicalReconstruction<2> const reconstruction(
                             positions,
-                            0.5 + (q % 2 == 0 ? -1 : 1) / std::sqrt(12.0),
-                            0.5 + (q / 2 == 0 ? -1 : 1) / std::sqrt(12.0));
-                    weights_host(sample) = 0.25 * derivative.measure;
+                            {0.5 + (q % 2 == 0 ? -1 : 1) / std::sqrt(12.0),
+                             0.5 + (q / 2 == 0 ? -1 : 1) / std::sqrt(12.0)});
+                    auto const derivative
+                            = sil::exterior::CovariantDerivative<X, Y>::cell_stencil<2>(
+                                    reconstruction);
+                    weights_host(sample) = 0.25 * reconstruction.measure();
                     for (int a = 0; a < 4; ++a) {
                         for (int c = 0; c < 2; ++c) {
                             auto const strain
                                     = physics::elasticity::DisplacementToStrain::from_gradient(
-                                            c == 0 ? derivative.gradient[a][0] : 0.0,
-                                            c == 1 ? derivative.gradient[a][1] : 0.0,
-                                            c == 0 ? derivative.gradient[a][1] : 0.0,
-                                            c == 1 ? derivative.gradient[a][0] : 0.0);
+                                            derivative[a][0][0][c],
+                                            derivative[a][1][1][c],
+                                            derivative[a][1][0][c],
+                                            derivative[a][0][1][c]);
                             std::array<double, 3> const
                                     coefficients {strain.xx, strain.yy, strain.xy};
                             for (int k = 0; k < 3; ++k) {
@@ -1068,13 +1072,17 @@ Result run_on_quadrilateral_grid(
             for (int a = 0; a < 4; ++a) {
                 positions[a] = {grid.ordered_nodes[nodes[a]].x, grid.ordered_nodes[nodes[a]].y};
             }
-            sil::exterior::BilinearQuadrilateralGradient2D const derivative(positions, 0.5, 0.5);
+            auto const derivative
+                    = sil::exterior::CovariantDerivative<detail::X, detail::Y>::cell_stencil<2>(
+                            sil::exterior::CubicalReconstruction<2>(positions, {0.5, 0.5}));
             std::array<std::array<double, 2>, 2> gradient {};
             for (int a = 0; a < 4; ++a) {
                 for (int c = 0; c < 2; ++c) {
                     for (int d = 0; d < 2; ++d) {
-                        gradient[c][d]
-                                += displacement[2 * nodes[a] + c] * derivative.gradient[a][d];
+                        for (int b = 0; b < 2; ++b) {
+                            gradient[c][d]
+                                    += displacement[2 * nodes[a] + b] * derivative[a][d][c][b];
+                        }
                     }
                 }
             }

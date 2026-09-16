@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Baptiste Legouix
-// AI-GENERATED
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// AI-GENERATED
 
 #include <gtest/gtest.h>
 #include <similie/physics/magnetostatics/nonlinear_magnetostatics.hpp>
@@ -84,20 +84,36 @@ TEST(Elasticity, EnergyAdjointAndBackendAgreement)
             for (int a = 0; a < 4; ++a)
                 positions[a] = {xh(nodes[a]), yh(nodes[a])};
             for (int q = 0; q < 4; ++q) {
-                sil::exterior::BilinearQuadrilateralGradient2D const
-                        d(positions,
-                          0.5 + (q % 2 ? 1 : -1) / std::sqrt(12.0),
-                          0.5 + (q / 2 ? 1 : -1) / std::sqrt(12.0));
+                // Independent differentiation of interpolating shape functions;
+                // do not use the operator/reconstruction under test here.
+                double const xi = 0.5 + (q % 2 ? 1 : -1) / std::sqrt(12.0);
+                double const eta = 0.5 + (q / 2 ? 1 : -1) / std::sqrt(12.0);
+                std::array<std::array<double, 2>, 4> reference {
+                        {{eta - 1, xi - 1}, {1 - eta, -xi}, {-eta, 1 - xi}, {eta, xi}}};
+                double j00 = 0, j01 = 0, j10 = 0, j11 = 0;
+                for (int a = 0; a < 4; ++a) {
+                    j00 += positions[a][0] * reference[a][0];
+                    j01 += positions[a][0] * reference[a][1];
+                    j10 += positions[a][1] * reference[a][0];
+                    j11 += positions[a][1] * reference[a][1];
+                }
+                double const det = j00 * j11 - j01 * j10;
+                std::array<std::array<double, 2>, 4> gradient {};
+                for (int a = 0; a < 4; ++a) {
+                    gradient[a]
+                            = {(reference[a][0] * j11 - reference[a][1] * j10) / det,
+                               (-reference[a][0] * j01 + reference[a][1] * j00) / det};
+                }
                 double xx = 0, yy = 0, xy = 0;
                 for (int a = 0; a < 4; ++a) {
-                    xx += uh(2 * nodes[a], 0) * d.gradient[a][0];
-                    yy += uh(2 * nodes[a] + 1, 0) * d.gradient[a][1];
+                    xx += uh(2 * nodes[a], 0) * gradient[a][0];
+                    yy += uh(2 * nodes[a] + 1, 0) * gradient[a][1];
                     xy += 0.5
-                          * (uh(2 * nodes[a], 0) * d.gradient[a][1]
-                             + uh(2 * nodes[a] + 1, 0) * d.gradient[a][0]);
+                          * (uh(2 * nodes[a], 0) * gradient[a][1]
+                             + uh(2 * nodes[a] + 1, 0) * gradient[a][0]);
                 }
                 integrated_energy
-                        += 0.25 * d.measure
+                        += 0.25 * std::abs(det)
                            * (200 / (2 * 1.3) * (xx * xx + yy * yy + 2 * xy * xy)
                               + 0.5 * 200 * 0.3 / (1 - 0.3 * 0.3) * (xx + yy) * (xx + yy));
             }
