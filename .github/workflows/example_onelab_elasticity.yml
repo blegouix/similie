@@ -36,8 +36,18 @@ jobs:
         case:
         - name: assembled-matrix
           backend: assembled-matrix
+          arguments: ""
         - name: matrix-free
           backend: matrix-free
+          arguments: ""
+        - name: scaled-thin-wrench
+          backend: assembled-matrix
+          arguments: >-
+            -setnumber "Material/Young modulus [GPa]" 70
+            -setnumber "Material/Poisson coefficient []" 0.2
+            -setnumber "Material/Applied force [N]" 3
+            -setnumber "Geometry/4Thickness (mm)" 0.5
+            -setnumber "Geometry/2Main characteristic length" 4
     environment:
       name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'onelab_elasticity-cuda' || 'automatic-ci-run') }}
     steps:
@@ -92,5 +102,5 @@ jobs:
             SIMILIE_ONELAB_MESH_FILE="${output_dir}/wrench2D.msh" \
             SIMILIE_ONELAB_RESULT_FILE="${output_dir}/similie_elasticity_inputs.pos" \
               "/similie-ci/src/examples/onelab_elasticity/run_similie_onelab.sh" \
-              "--${{ matrix.case.backend }}"
+              "--${{ matrix.case.backend }}" ${{ matrix.case.arguments }}
           '

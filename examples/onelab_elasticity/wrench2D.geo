@@ -59,13 +59,15 @@ lA3 = newl; Line(lA3) = {12, 13};
 lA4 = newl; Circle(lA4) = {13, 2, 1};
 lH = newl; Line(lH) = {6, 10};
 
-Transfinite Curve {lB2, lD2} = 17;
-Transfinite Curve {lH, lC1} = 65;
-Transfinite Curve {lB3} = 41;
-Transfinite Curve {lB4, lA2, lB1, lD3, lA3} = 9;
-Transfinite Curve {lD1} = 49;
-Transfinite Curve {lA1} = 25;
-Transfinite Curve {lA4} = 9;
+// Keep opposite transfinite boundaries compatible while honoring refinement.
+n = Max[1, Round[16 * mm / Refine]];
+Transfinite Curve {lB2, lD2} = 2 * n + 1;
+Transfinite Curve {lH, lC1} = 8 * n + 1;
+Transfinite Curve {lB3} = 5 * n + 1;
+Transfinite Curve {lB4, lA2, lB1, lD3, lA3} = n + 1;
+Transfinite Curve {lD1} = 6 * n + 1;
+Transfinite Curve {lA1} = 3 * n + 1;
+Transfinite Curve {lA4} = n + 1;
 
 llHead = newll;
 Curve Loop(llHead) = {lB2, lH, lD2, lD3, lA3, lA4, lA1, lA2, lB1};

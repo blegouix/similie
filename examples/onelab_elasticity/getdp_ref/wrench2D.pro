@@ -5,6 +5,8 @@
 
 Include "../wrench2D_common.pro";
 
+// Thin wrench: use the same plane-stress reduction as SimiLie.
+Flag_EPC = 1;
 iP = 1;
 WRENCH = 1;
 CLAMP = 2;
@@ -14,7 +16,9 @@ DefineConstant[
   GetDPOutputDir = {StrCat[CurrentDirectory, "res_elasticity"], Name "GetDP/0Output directory"},
   Young = {200e9, Name "Material/Young modulus [Pa]"},
   Poisson = {0.3, Name "Material/Poisson coefficient []"},
-  AppliedForce = {100, Name "Material/Applied force [N]"}
+  AppliedForce = {100, Name "Material/Applied force [N]"},
+  WrenchThickness = {Thickness},
+  LoadWidth = {Width}
 ];
 
 Group {
@@ -29,13 +33,13 @@ Group {
 }
 
 Function {
-  CoefJac~{iP}[] = Thickness;
+  CoefJac~{iP}[] = WrenchThickness;
 
   E[Vol_Elast~{iP}] = Young;
   nu[Vol_Elast~{iP}] = Poisson;
 
   pressure_x[Sur_Force~{iP}] = 0;
-  pressure_y[Sur_Force~{iP}] = -AppliedForce / Width;
+  pressure_y[Sur_Force~{iP}] = -AppliedForce / LoadWidth;
   pressure_z[Sur_Force~{iP}] = 0;
 
   force_x[Vol_Force~{iP}] = 0;
@@ -52,9 +56,9 @@ Include "Lib_Elast_u.pro";
 PostOperation Get_LocalFields UsingPost Elast_u {
   CreateDir[GetDPOutputDir];
   Print[u, OnElementsOf Vol_Elast~{iP}, File StrCat[GetDPOutputDir, "/u.pos"], LastTimeStepOnly];
-  Print[sig_xx, OnElementsOf Vol_Elast~{iP}, File StrCat[GetDPOutputDir, "/sig_xx.pos"], LastTimeStepOnly];
-  Print[sig_xy, OnElementsOf Vol_Elast~{iP}, File StrCat[GetDPOutputDir, "/sig_xy.pos"], LastTimeStepOnly];
-  Print[sig_yy, OnElementsOf Vol_Elast~{iP}, File StrCat[GetDPOutputDir, "/sig_yy.pos"], LastTimeStepOnly];
+  Print[sig_xx, OnElementsOf Vol_Elast~{iP}, Depth 0, File StrCat[GetDPOutputDir, "/sig_xx.pos"], LastTimeStepOnly];
+  Print[sig_xy, OnElementsOf Vol_Elast~{iP}, Depth 0, File StrCat[GetDPOutputDir, "/sig_xy.pos"], LastTimeStepOnly];
+  Print[sig_yy, OnElementsOf Vol_Elast~{iP}, Depth 0, File StrCat[GetDPOutputDir, "/sig_yy.pos"], LastTimeStepOnly];
 }
 
 PostOperation Get_Probe_Displacement UsingPost Elast_u {

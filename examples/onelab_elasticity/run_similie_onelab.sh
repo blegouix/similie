@@ -20,7 +20,7 @@ build_dir="${SIMILIE_ONELAB_BUILD_DIR:-${repo_root}/build}"
 onelab_client="${SIMILIE_ONELAB_BINARY:-${build_dir}/onelab_interface/similie_onelab}"
 mesh_file="${SIMILIE_ONELAB_MESH_FILE:-${output_dir}/wrench2D.msh}"
 result_file="${SIMILIE_ONELAB_RESULT_FILE:-${output_dir}/similie_elasticity_inputs.pos}"
-deflection_rel_tolerance="${SIMILIE_ONELAB_GETDP_DEFLECTION_REL_TOLERANCE:-0.15}"
+field_rel_tolerance="${SIMILIE_ONELAB_GETDP_FIELD_REL_TOLERANCE:-1e-4}"
 
 if [[ ! -f "${geometry_file}" ]]; then
     echo "missing elasticity geometry file: ${geometry_file}" >&2
@@ -78,6 +78,25 @@ else
     fi
 fi
 
+# GetDP has its own parameter database. Convert the geometry UI units once
+# and pass identical physical data to both solvers.
+getdp_args=()
+for ((i=0; i<${#gmsh_args[@]}; ++i)); do
+    if [[ "${gmsh_args[i]}" != "-setnumber" ]]; then continue; fi
+    name="${gmsh_args[i+1]}"
+    value="${gmsh_args[i+2]}"
+    case "${name}" in
+        "Material/Young modulus [GPa]") variable=Young; scale=1e9 ;;
+        "Material/Poisson coefficient []") variable=Poisson; scale=1 ;;
+        "Material/Applied force [N]") variable=AppliedForce; scale=1 ;;
+        "Geometry/4Thickness (mm)") variable=WrenchThickness; scale=1e-3 ;;
+        "Geometry/5Arm Width (mm)") variable=LoadWidth; scale=1e-3 ;;
+        *) continue ;;
+    esac
+    converted="$(python3 -c 'import sys; print(float(sys.argv[1])*float(sys.argv[2]))' "${value}" "${scale}")"
+    getdp_args+=(-setnumber "${variable}" "${converted}")
+done
+
 rm -f "${mesh_file}" "${result_file}"
 
 if [[ "${solver}" == "getdp" ]]; then
@@ -94,13 +113,8 @@ if [[ "${solver}" == "getdp" ]]; then
         "${getdp_problem_file}" \
         -msh "${mesh_file}" \
         -name "${output_dir}/wrench2D" \
-        -solver "${script_dir}/getdp_ref/solver.par" \
-        -Scaling 1 \
-        -Algorithm 8 \
-        -Krylov_Size 200 \
-        -Nb_Iter_Max 100000 \
-        -Stopping_Test 1e-10 \
         -setstring "GetDPOutputDir" "${output_dir}/res_elasticity" \
+        "${getdp_args[@]}" \
         -solve Elast_u \
         -pos Get_LocalFields \
         -v2
@@ -111,7 +125,6 @@ control_file="$(mktemp "${script_dir}/.run_similie_onelab_XXXXXX.geo")"
 log_file="$(mktemp "${TMPDIR:-/tmp}/run_similie_onelab_elasticity_XXXXXX.log")"
 effective_problem_file="${problem_file}"
 patched_problem_file=""
-getdp_output_dir=""
 if [[ -n "${use_matrix_free}" ]]; then
     patched_problem_file="$(mktemp "${script_dir}/.run_similie_onelab_XXXXXX.silpro")"
     sed \
@@ -121,17 +134,6 @@ if [[ -n "${use_matrix_free}" ]]; then
 fi
 cleanup() {
     rm -f "${control_file}" "${patched_problem_file}" "${log_file}"
-    if [[ -n "${getdp_output_dir}" && -d "${getdp_output_dir}" ]]; then
-        rm -f \
-            "${getdp_output_dir}/u.pos" \
-            "${getdp_output_dir}/sig_xx.pos" \
-            "${getdp_output_dir}/sig_xy.pos" \
-            "${getdp_output_dir}/sig_yy.pos" \
-            "${getdp_output_dir}/u_probe.txt" \
-            "${getdp_output_dir}/wrench2D.pre" \
-            "${getdp_output_dir}/wrench2D.res"
-        rmdir "${getdp_output_dir}"
-    fi
 }
 trap cleanup EXIT
 
@@ -156,6 +158,16 @@ EOF
     | sed -u '/^Info[[:space:]]*: SimiLie -[[:space:]]*$/d' \
     | tee "${log_file}"
 
+# Gmsh can return success even when its ONELAB client failed.
+if ! grep -q "SimiLie elasticity diagnostics:" "${log_file}"; then
+    echo "SimiLie elasticity solve did not complete" >&2
+    exit 1
+fi
+actual_result="$(dirname "${mesh_file}")/similie_elasticity_inputs.pos"
+if [[ "${actual_result}" != "${result_file}" ]]; then
+    cp "${actual_result}" "${result_file}"
+fi
+
 if [[ ! -f "${build_dir}/CMakeCache.txt" ]] || ! grep -Fqx \
     "SIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS:BOOL=ON" \
     "${build_dir}/CMakeCache.txt"; then
@@ -171,78 +183,16 @@ if ! command -v "${getdp_executable}" >/dev/null 2>&1; then
     exit 1
 fi
 
-getdp_output_dir="$(mktemp -d "${TMPDIR:-/tmp}/similie_elasticity_getdp_XXXXXX")"
-set +e
+getdp_output_dir="$(dirname "${mesh_file}")/getdp_reference"
+mkdir -p "${getdp_output_dir}"
 "${getdp_executable}" \
     "${getdp_problem_file}" \
     -msh "${mesh_file}" \
     -name "${getdp_output_dir}/wrench2D" \
-    -solver "${script_dir}/getdp_ref/solver.par" \
-    -Scaling 1 \
-    -Algorithm 8 \
-    -Krylov_Size 200 \
-    -Nb_Iter_Max 100000 \
-    -Stopping_Test 1e-10 \
     -setstring "GetDPOutputDir" "${getdp_output_dir}" \
-    -solve Elast_u
-getdp_solve_status=$?
-set -e
-if [[ "${getdp_solve_status}" -ne 0 ]]; then
-    if [[ "${getdp_solve_status}" -ne 134 \
-          || ! -s "${getdp_output_dir}/wrench2D.pre" \
-          || ! -s "${getdp_output_dir}/wrench2D.res" ]]; then
-        echo "GetDP reference solve failed with exit status ${getdp_solve_status}" >&2
-        exit "${getdp_solve_status}"
-    fi
-    echo "warning: GetDP aborted during final cleanup after saving its solution" >&2
-fi
+    "${getdp_args[@]}" \
+    -solve Elast_u \
+    -pos Get_LocalFields
 
-"${getdp_executable}" \
-    "${getdp_problem_file}" \
-    -msh "${mesh_file}" \
-    -name "${getdp_output_dir}/wrench2D" \
-    -solver "${script_dir}/getdp_ref/solver.par" \
-    -setstring "GetDPOutputDir" "${getdp_output_dir}" \
-    -pos Get_Probe_Displacement
-
-python3 - "${log_file}" "${getdp_output_dir}/u_probe.txt" "${deflection_rel_tolerance}" <<'PY'
-import re
-import sys
-from pathlib import Path
-
-
-def parse_similie_probe_displacement(log_file: Path) -> float:
-    pattern = re.compile(r"SimiLie elasticity diagnostics:.*uy_probe=([0-9.eE+-]+)\s+m")
-    for line in log_file.read_text().splitlines():
-        match = pattern.search(line)
-        if match:
-            return float(match.group(1))
-    raise RuntimeError("failed to parse uy_probe from SimiLie elasticity diagnostics")
-
-
-def parse_getdp_probe_displacement(displacement_file: Path) -> float:
-    rows = [line.split() for line in displacement_file.read_text().splitlines() if line.strip()]
-    if len(rows) != 1 or len(rows[0]) < 10:
-        raise RuntimeError(f"invalid GetDP point-probe data in {displacement_file}")
-    return float(rows[0][9])
-
-
-similie_displacement = parse_similie_probe_displacement(Path(sys.argv[1]))
-getdp_displacement = parse_getdp_probe_displacement(Path(sys.argv[2]))
-relative_tolerance = float(sys.argv[3])
-if getdp_displacement == 0.0:
-    raise RuntimeError("GetDP returned a zero probe displacement")
-relative_error = abs(similie_displacement - getdp_displacement) / abs(getdp_displacement)
-
-print(
-    "SimiLie/GetDP probe-deflection consistency:"
-    f" SimiLie={similie_displacement:.9e} m,"
-    f" GetDP={getdp_displacement:.9e} m,"
-    f" relative error={relative_error:.3%}"
-)
-if relative_error > relative_tolerance:
-    raise SystemExit(
-        "SimiLie/GetDP probe-deflection consistency check failed: "
-        f"relative error {relative_error:.3%} exceeds tolerance {relative_tolerance:.3%}"
-    )
-PY
+python3 "${script_dir}/compare_getdp.py" \
+    "${result_file}" "${getdp_output_dir}" --tolerance "${field_rel_tolerance}"

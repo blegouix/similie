@@ -922,7 +922,20 @@ struct Reconstruction
             std::size_t const source_mem_id = source_index_type::access_id_to_mem_id(
                     source_accessor.access_element(source_natural_elem_type(natural_elem))
                             .template uid<source_index_type>());
-            return inverse_matrix(source_mem_id, target_mem_id) / misc::factorial(K);
+            // The inverse is stored in canonical wedge bases. Restore the
+            // orientation of each requested (possibly permuted) multi-index.
+            int sign = 1;
+            for (std::size_t i = 0; i < K; ++i) {
+                for (std::size_t j = i + 1; j < K; ++j) {
+                    if (source_ids[i] > source_ids[j]) {
+                        sign = -sign;
+                    }
+                    if (target_ids[i] > target_ids[j]) {
+                        sign = -sign;
+                    }
+                }
+            }
+            return sign * inverse_matrix(source_mem_id, target_mem_id) / misc::factorial(K);
         }
     }
 };

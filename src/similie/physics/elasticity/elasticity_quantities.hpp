@@ -26,6 +26,9 @@ using StrainXX = StrainTensorIndex<0, 0>;
 using StrainXY = StrainTensorIndex<0, 1>;
 using StrainYY = StrainTensorIndex<1, 1>;
 
+// Packed tensorial shear: xy = epsilon_xy, not engineering shear gamma_xy.
+// Hence dW/d(xy) = 2 sigma_xy; B^T dW/d(strain) already includes this
+// multiplicity. Only stress output divides the shear derivative by two.
 struct Strain2D
 {
     double xx = 0.0;
@@ -77,6 +80,7 @@ struct DisplacementToStrain
             Elem elem,
             PositionType position)
     {
+        static_assert(sizeof...(SpatialIndex) == 2, "Strain2D requires two spatial dimensions");
         using SpatialIndexSeq = ddc::detail::TypeSeq<SpatialIndex...>;
         using X = ddc::type_seq_element_t<0, SpatialIndexSeq>;
         using Y = ddc::type_seq_element_t<1, SpatialIndexSeq>;
@@ -114,6 +118,7 @@ struct DisplacementToStrain
             class PositionType>
     [[nodiscard]] KOKKOS_FUNCTION static auto forward_value(Elem elem, PositionType position)
     {
+        static_assert(sizeof...(SpatialIndex) == 2, "Strain2D requires two spatial dimensions");
         using SpatialIndexSeq = ddc::detail::TypeSeq<SpatialIndex...>;
         using X = ddc::type_seq_element_t<0, SpatialIndexSeq>;
         using Y = ddc::type_seq_element_t<1, SpatialIndexSeq>;

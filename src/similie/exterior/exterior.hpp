@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "bilinear_quadrilateral_gradient.hpp"
 #include "boundary.hpp"
 #include "chain.hpp"
 #include "coboundary.hpp"

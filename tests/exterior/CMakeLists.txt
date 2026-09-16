@@ -68,3 +68,7 @@ target_link_libraries(unit_tests_laplacian
 )
 
 gtest_discover_tests(unit_tests_laplacian DISCOVERY_MODE PRE_TEST)
+
+add_executable(unit_tests_bilinear_quadrilateral_gradient bilinear_quadrilateral_gradient.cpp ../main.cpp)
+target_link_libraries(unit_tests_bilinear_quadrilateral_gradient PUBLIC GTest::gtest DDC::core sil::exterior)
+gtest_discover_tests(unit_tests_bilinear_quadrilateral_gradient DISCOVERY_MODE PRE_TEST)

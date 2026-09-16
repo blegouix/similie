@@ -12,8 +12,12 @@ from sympy import symbols
 def _lame_coefficients(dimension: int):
     young_modulus, poisson_ratio = symbols("young_modulus poisson_ratio")
     shear_modulus = young_modulus / (2 * (1 + poisson_ratio))
-    lame_lambda = young_modulus * poisson_ratio / (
-        (1 + poisson_ratio) * (1 - (dimension - 1) * poisson_ratio)
+    # dimension=2 is the plane-stress reduction of 3D isotropic elasticity;
+    # dimension=3 uses the three-dimensional Lame coefficient.
+    lame_lambda = (
+        young_modulus
+        * poisson_ratio
+        / ((1 + poisson_ratio) * (1 - (dimension - 1) * poisson_ratio))
     )
     return young_modulus, poisson_ratio, shear_modulus, lame_lambda
 

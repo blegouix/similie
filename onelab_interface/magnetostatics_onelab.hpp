@@ -2002,7 +2002,7 @@ public:
                 = sil::exterior::tangent_basis<DualVectorPotentialIndex::rank(), NodeDomain3D>(
                         exec_space);
         ddc::parallel_for_each(
-                "similie_3d_precompute_direct_stencils",
+                "similie_3d_initialize_geometry",
                 exec_space,
                 node_domain,
                 KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DDimZ> elem) {
@@ -2036,7 +2036,18 @@ public:
                     metric(elem, metric_accessor.template access_element<Y, Y>()) = 1.0;
                     metric(elem, metric_accessor.template access_element<Y, Z>()) = 0.0;
                     metric(elem, metric_accessor.template access_element<Z, Z>()) = 1.0;
-
+                });
+        // Stencils read neighboring geometry. All nodes must be initialized
+        // before any worker starts constructing an operator row.
+        exec_space.fence();
+        ddc::parallel_for_each(
+                "similie_3d_precompute_direct_stencils",
+                exec_space,
+                node_domain,
+                KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DDimZ> elem) {
+                    std::size_t const i = ddc::DiscreteElement<DDimX>(elem).uid();
+                    std::size_t const j = ddc::DiscreteElement<DDimY>(elem).uid();
+                    std::size_t const k = ddc::DiscreteElement<DDimZ>(elem).uid();
                     auto fill_component = [&](auto index_tag) {
                         using index_type = decltype(index_tag);
                         std::size_t const moment_row

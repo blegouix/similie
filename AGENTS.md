@@ -28,6 +28,8 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 ## Coding
 - `clang-format` is used to format C++, `ruff format` is used to format python.
 - Avoid introducing unecessary constexpr aliases (like, using the `using` keyword for type aliases of `constexpr` for variables aliases). It can be used but not just for readability purpose, except if explicity asked. In general, if such an alias is used only once it should not be declared and inlined.
+- Any fully AI-generated file has to be annotated with a "// AI-GENERATED" tag just below the copyright.
+- Never merge by yourself, let human review.
 
 ## ONELAB interface
 - `onelab_interface/GmshSocket.h` and `onelab_interface/onelab.h` are forks from existing repos, you will never modify them.
