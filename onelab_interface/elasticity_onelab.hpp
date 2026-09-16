@@ -453,6 +453,23 @@ class ElasticityOperator2D
     transposed_counts_view_type m_transposed_strain_counts;
 
 public:
+    template <class ExecSpace>
+    struct MatrixFreeWorkspace
+    {
+        Kokkos::View<double**, Kokkos::LayoutRight, MemorySpace> stress;
+
+        MatrixFreeWorkspace(std::size_t nx, std::size_t ny)
+            : stress("similie_elasticity_matrix_free_stress_workspace", 4 * nx * ny, 3)
+        {
+        }
+    };
+
+    template <class ExecSpace>
+    MatrixFreeWorkspace<ExecSpace> create_matrix_free_workspace(ExecSpace) const
+    {
+        return MatrixFreeWorkspace<ExecSpace>(m_nx, m_ny);
+    }
+
     static constexpr bool IS_LINEAR = true;
 
     ElasticityOperator2D(
@@ -684,6 +701,80 @@ public:
                             auto const sample = transposed_strain_columns(k, row, slot);
                             residual += transposed_strain_coefficients(k, row, slot)
                                         * stress(sample, k);
+                        }
+                    }
+                    output(row, 0) = residual;
+                });
+        exec_space.fence();
+    }
+
+    template <class ExecSpace, class InputView, class OutputView>
+    void apply(
+            ExecSpace exec_space,
+            InputView input,
+            OutputView output,
+            MatrixFreeWorkspace<ExecSpace>& workspace) const
+    {
+        // The workspace is allocated by MatrixFreeLinOp before Krylov iteration.
+        // Keep this overload separate so the ordinary public apply remains useful
+        // for callers that do not use the solver wrapper.
+        auto const stress = workspace.stress;
+        std::size_t const nx = m_nx;
+        std::size_t const ny = m_ny;
+        auto const strain_columns = m_strain_columns;
+        auto const strain_coefficients = m_strain_coefficients;
+        auto const strain_counts = m_strain_counts;
+        auto const transposed_strain_columns = m_transposed_strain_columns;
+        auto const transposed_strain_coefficients = m_transposed_strain_coefficients;
+        auto const transposed_strain_counts = m_transposed_strain_counts;
+        auto const integration_weights = m_integration_weights;
+        auto const dirichlet = m_dirichlet;
+        auto const active = m_active;
+        auto const equations = m_equations;
+        Kokkos::parallel_for(
+                "similie_elasticity_quadrature_stress",
+                Kokkos::RangePolicy<ExecSpace>(exec_space, 0, 4 * nx * ny),
+                KOKKOS_LAMBDA(std::size_t sample) {
+                    std::array<double, 3> components {};
+                    for (int k = 0; k < NUM_STRAIN_COMPONENTS; ++k) {
+                        for (int c = 0; c < NUM_DISPLACEMENT_COMPONENTS; ++c) {
+                            for (int slot = 0; slot < strain_counts(k, c, sample); ++slot) {
+                                auto const column = strain_columns(k, c, sample, slot);
+                                if (dirichlet(column / 2) == 0) {
+                                    components[k] += strain_coefficients(k, c, sample, slot)
+                                                     * input(column, 0);
+                                }
+                            }
+                        }
+                    }
+                    physics::elasticity::Strain2D const
+                            strain {.xx = components[0], .yy = components[1], .xy = components[2]};
+                    auto const elem = ddc::
+                            DiscreteElement<DDimX, DDimY>((sample / 4) % nx, sample / (4 * nx));
+                    stress(sample, 0) = integration_weights(sample)
+                                        * equations.template dpotential_dt<
+                                                physics::elasticity::StrainXX>(strain, elem);
+                    stress(sample, 1) = integration_weights(sample)
+                                        * equations.template dpotential_dt<
+                                                physics::elasticity::StrainYY>(strain, elem);
+                    stress(sample, 2) = integration_weights(sample)
+                                        * equations.template dpotential_dt<
+                                                physics::elasticity::StrainXY>(strain, elem);
+                });
+        Kokkos::parallel_for(
+                "similie_elasticity_operator_apply",
+                Kokkos::RangePolicy<ExecSpace>(exec_space, 0, 2 * nx * ny),
+                KOKKOS_LAMBDA(std::size_t row) {
+                    std::size_t const node = row / 2;
+                    if (active(node) == 0 || dirichlet(node) != 0) {
+                        output(row, 0) = input(row, 0);
+                        return;
+                    }
+                    double residual = 0.0;
+                    for (int k = 0; k < NUM_STRAIN_COMPONENTS; ++k) {
+                        for (int slot = 0; slot < transposed_strain_counts(k, row); ++slot) {
+                            residual += transposed_strain_coefficients(k, row, slot)
+                                        * stress(transposed_strain_columns(k, row, slot), k);
                         }
                     }
                     output(row, 0) = residual;
