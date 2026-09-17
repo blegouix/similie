@@ -67,6 +67,19 @@ struct FrameTransport
                  {Kokkos::sin(angle), Kokkos::cos(angle)}}};
     }
 };
+
+struct ExecutionSpaceEvaluation
+{
+    Kokkos::View<double*> output;
+
+    KOKKOS_FUNCTION void operator()(int) const
+    {
+        std::array<std::array<double, 1>, 2> const positions {{{0}, {2}}};
+        auto const stencil = sil::exterior::CovariantDerivative<X>::cell_stencil<1>(
+                sil::exterior::CubicalReconstruction<1>(positions, {0.3}));
+        output(0) = stencil[1][0][0][0];
+    }
+};
 } // namespace
 
 TEST(CovariantDerivative, Affine1D)
@@ -251,15 +264,7 @@ TEST(CovariantDerivative, FormOrientationAndDegenerateGeometry)
 TEST(CovariantDerivative, ExecutionSpaceEvaluation)
 {
     Kokkos::View<double*> output("covariant_derivative", 1);
-    Kokkos::parallel_for(
-            "covariant_derivative",
-            1,
-            KOKKOS_LAMBDA(int) {
-                std::array<std::array<double, 1>, 2> const positions {{{0}, {2}}};
-                auto const stencil = sil::exterior::CovariantDerivative<X>::cell_stencil<1>(
-                        sil::exterior::CubicalReconstruction<1>(positions, {0.3}));
-                output(0) = stencil[1][0][0][0];
-            });
+    Kokkos::parallel_for("covariant_derivative", 1, ExecutionSpaceEvaluation {output});
     auto host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), output);
     EXPECT_DOUBLE_EQ(host(0), 0.5);
 }
