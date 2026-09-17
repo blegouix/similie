@@ -109,9 +109,11 @@ RUN cmake -DENABLE_BUILD_LIB=ON -DENABLE_BUILD_SHARED=ON -DENABLE_PRIVATE_API=ON
 RUN cmake --build gmsh/build -j 4
 RUN cmake --install gmsh/build
 
-# GetDP with PETSc: use the distribution build for reproducible reference solves.
-# The source build without PETSc falls back to the legacy Sparskit solver.
-RUN apt update && apt install -y getdp
+# GetDP
+RUN git clone https://gitlab.onelab.info/getdp/getdp.git
+RUN cmake -B getdp/build -S getdp
+RUN cmake --build getdp/build -j 4
+RUN cmake --install getdp/build
 
 # PDI
 RUN update-ca-certificates
