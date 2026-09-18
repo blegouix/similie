@@ -18,7 +18,9 @@ DefineConstant[
   NbWires = {Nw,
     Name "Input/4Coil Parameters/1Number of turns", Highlight "AliceBlue"},
   mur_fe = {2000., Min 100, Max 2000, Step 100,
-    Name "Input/42Core relative permeability", Highlight "AliceBlue"}
+    Name "Input/42Core relative permeability", Highlight "AliceBlue"},
+  refinement_factor = {8, Min 1, Step 1,
+    Name "Input/11Mesh control (Nbr of divisions)/4Refinement factor"}
 ];
 
 jcoil = Sqrt[2] * Irms * NbWires / (wcoil * hcoil);
@@ -26,7 +28,6 @@ mu_fe = 4.e-7 * Pi * mur_fe;
 COIL_X_POS = COIL + 2;
 COIL_X_NEG = COIL + 3;
 lc0 = wcoil / nn_wcore;
-refinement_factor = 8;
 hcoil_div = refinement_factor * Ceil[hcoil / lc0];
 nz_layers = refinement_factor * Ceil[Lz / lc0];
 end_turn_layers = 1;

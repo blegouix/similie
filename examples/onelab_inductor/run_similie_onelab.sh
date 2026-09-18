@@ -137,6 +137,14 @@ if [[ -z "${SIMILIE_ONELAB_GETDP_L_REL_TOLERANCE+x}" && "${model_dimension}" -eq
     getdp_l_rel_tolerance=0.3
 fi
 
+getdp_solver_args=()
+if [[ "${model_dimension}" -eq 3 ]]; then
+    # Avoid the Coulomb saddle-point system's ILUTP breakdown in the 3D reference.
+    # The tree-cotree gauge removes the gradient nullspace; extra fill is needed
+    # for the high-permeability core.
+    getdp_solver_args=(-setnumber Flag_GaugeType 0 -Nb_Fill 200)
+fi
+
 rm -f "${mesh_file}" "${result_file}" "${paraview_h5_file}" "${paraview_xmf_file}" "${direct_h5_file}"
 
 if [[ "${solver}" == "getdp" ]]; then
@@ -163,6 +171,7 @@ if [[ "${solver}" == "getdp" ]]; then
         -msh "${mesh_file}" \
         -name "${output_dir}/inductor" \
         -solver "${script_dir}/getdp_ref/solver.par" \
+        "${getdp_solver_args[@]}" \
         -setstring "GetDPOutputDir" "${output_dir}/res${model_dimension}d" \
         -setnumber "Input/00FE model" "${fe_model_dimension}" \
         -setnumber "Input/00OpenCASCADE model?" "${open_cascade_model}" \
@@ -275,6 +284,7 @@ if ! "${getdp_executable}" \
     -msh "${mesh_file}" \
     -name "${getdp_output_dir}/inductor" \
     -solver "${script_dir}/getdp_ref/solver.par" \
+    "${getdp_solver_args[@]}" \
     -setstring "GetDPOutputDir" "${getdp_output_dir}" \
     -setnumber "Input/00FE model" "${fe_model_dimension}" \
     -setnumber "Input/00OpenCASCADE model?" "${open_cascade_model}" \

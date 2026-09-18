@@ -116,6 +116,11 @@ jobs:
             cd /similie-ci/build
             output_dir="${PWD}/onelab_inductor_cases/${case_name}"
             mkdir -p "${output_dir}"
+            # Keep the 3D GetDP reference system small enough for the CI runner.
+            mesh_args=()
+            if [ "${{ matrix.case.dimension }}" = 3 ]; then
+              mesh_args=(-setnumber "Input/11Mesh control (Nbr of divisions)/4Refinement factor" 1)
+            fi
             SIMILIE_ONELAB_BUILD_DIR="${PWD}" \
             SIMILIE_ONELAB_MESH_FILE="${output_dir}/inductor.msh" \
             SIMILIE_ONELAB_RESULT_FILE="${output_dir}/similie_magnetostatics_inputs.pos" \
@@ -124,5 +129,6 @@ jobs:
               "/similie-ci/src/examples/onelab_inductor/run_similie_onelab.sh" \
               "--dim=${{ matrix.case.dimension }}" \
               "--${{ matrix.case.physics }}" \
-              "--${{ matrix.case.backend }}"
+              "--${{ matrix.case.backend }}" \
+              "${mesh_args[@]}"
           '
