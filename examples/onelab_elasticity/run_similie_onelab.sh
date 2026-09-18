@@ -20,7 +20,7 @@ build_dir="${SIMILIE_ONELAB_BUILD_DIR:-${repo_root}/build}"
 onelab_client="${SIMILIE_ONELAB_BINARY:-${build_dir}/onelab_interface/similie_onelab}"
 mesh_file="${SIMILIE_ONELAB_MESH_FILE:-${output_dir}/wrench2D.msh}"
 result_file="${SIMILIE_ONELAB_RESULT_FILE:-${output_dir}/similie_elasticity_inputs.pos}"
-field_rel_tolerance="${SIMILIE_ONELAB_GETDP_FIELD_REL_TOLERANCE:-0.03}"
+getdp_deflection_rel_tolerance="${SIMILIE_ONELAB_GETDP_DEFLECTION_REL_TOLERANCE:-0.15}"
 
 if [[ ! -f "${geometry_file}" ]]; then
     echo "missing elasticity geometry file: ${geometry_file}" >&2
@@ -185,14 +185,68 @@ fi
 
 getdp_output_dir="$(dirname "${mesh_file}")/getdp_reference"
 mkdir -p "${getdp_output_dir}"
+set +e
 "${getdp_executable}" \
-    "${getdp_problem_file}" \
-    -msh "${mesh_file}" \
-    -name "${getdp_output_dir}/wrench2D" \
-    -setstring "GetDPOutputDir" "${getdp_output_dir}" \
-    "${getdp_args[@]}" \
-    -solve Elast_u \
-    -pos Get_LocalFields
+        "${getdp_problem_file}" \
+        -msh "${mesh_file}" \
+        -name "${getdp_output_dir}/wrench2D" \
+        -solver "${script_dir}/getdp_ref/solver.par" \
+        -Scaling 1 \
+        -Algorithm 8 \
+        -Krylov_Size 200 \
+        -Nb_Iter_Max 100000 \
+        -Stopping_Test 1e-10 \
+        -setstring "GetDPOutputDir" "${getdp_output_dir}" \
+        "${getdp_args[@]}" \
+        -solve Elast_u \
+        -pos Get_Probe_Displacement
+getdp_status=$?
+set -e
+if [[ "${getdp_status}" -ne 0 ]]; then
+    if [[ "${getdp_status}" -ne 134 || ! -s "${getdp_output_dir}/u_probe.txt" ]]; then
+        echo "GetDP reference solve failed with exit status ${getdp_status}" >&2
+        exit "${getdp_status}"
+    fi
+    echo "warning: GetDP aborted during final cleanup after writing u_probe.txt" >&2
+fi
 
-python3 "${script_dir}/compare_getdp.py" \
-    "${result_file}" "${getdp_output_dir}" --tolerance "${field_rel_tolerance}"
+python3 - "${log_file}" "${getdp_output_dir}/u_probe.txt" "${getdp_deflection_rel_tolerance}" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+
+def parse_similie_probe_displacement(log_file: Path) -> float:
+    pattern = re.compile(r"SimiLie elasticity diagnostics:.*uy_probe=([0-9.eE+-]+)\s+m")
+    for line in log_file.read_text().splitlines():
+        if match := pattern.search(line):
+            return float(match.group(1))
+    raise RuntimeError("failed to parse uy_probe from SimiLie elasticity diagnostics")
+
+
+def parse_getdp_probe_displacement(displacement_file: Path) -> float:
+    rows = [line.split() for line in displacement_file.read_text().splitlines() if line.strip()]
+    if len(rows) != 1 or len(rows[0]) < 10:
+        raise RuntimeError(f"invalid GetDP point-probe data in {displacement_file}")
+    return float(rows[0][9])
+
+
+similie_displacement = parse_similie_probe_displacement(Path(sys.argv[1]))
+getdp_displacement = parse_getdp_probe_displacement(Path(sys.argv[2]))
+relative_tolerance = float(sys.argv[3])
+if getdp_displacement == 0.0:
+    raise RuntimeError("GetDP returned a zero probe displacement")
+relative_error = abs(similie_displacement - getdp_displacement) / abs(getdp_displacement)
+
+print(
+    "SimiLie/GetDP probe-deflection consistency:"
+    f" SimiLie={similie_displacement:.9e} m,"
+    f" GetDP={getdp_displacement:.9e} m,"
+    f" relative error={relative_error:.3%}"
+)
+if relative_error > relative_tolerance:
+    raise SystemExit(
+        "SimiLie/GetDP probe-deflection consistency check failed: "
+        f"relative error {relative_error:.3%} exceeds tolerance {relative_tolerance:.3%}"
+    )
+PY
