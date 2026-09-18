@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Baptiste Legouix
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-name: example_onelab_inductor
+name: example_onelab_elasticity
 on:
   workflow_run:
     workflows: [ build ]
@@ -22,11 +22,11 @@ on:
         default: automatic-ci-run
 
 concurrency:
-  group: example-onelab_inductor-${{ inputs.target_sha || github.event.workflow_run.head_sha || github.sha }}
+  group: example-onelab_elasticity-${{ inputs.target_sha || github.event.workflow_run.head_sha || github.sha }}
   cancel-in-progress: true
 
 jobs:
-  example-onelab_inductor:
+  example-onelab_elasticity:
     if: inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: [self-hosted, linux]
     timeout-minutes: 120
@@ -34,40 +34,22 @@ jobs:
       fail-fast: false
       matrix:
         case:
-        - name: 2d-linear-assembled-matrix
-          dimension: 2
-          physics: linear
+        - name: assembled-matrix
           backend: assembled-matrix
-        - name: 2d-linear-matrix-free
-          dimension: 2
-          physics: linear
+          arguments: ""
+        - name: matrix-free
           backend: matrix-free
-        - name: 2d-nonlinear-assembled-matrix
-          dimension: 2
-          physics: nonlinear
+          arguments: ""
+        - name: scaled-thin-wrench
           backend: assembled-matrix
-        - name: 2d-nonlinear-matrix-free
-          dimension: 2
-          physics: nonlinear
-          backend: matrix-free
-        - name: 3d-linear-assembled-matrix
-          dimension: 3
-          physics: linear
-          backend: assembled-matrix
-        - name: 3d-linear-matrix-free
-          dimension: 3
-          physics: linear
-          backend: matrix-free
-        - name: 3d-nonlinear-assembled-matrix
-          dimension: 3
-          physics: nonlinear
-          backend: assembled-matrix
-        - name: 3d-nonlinear-matrix-free
-          dimension: 3
-          physics: nonlinear
-          backend: matrix-free
+          arguments: >-
+            -setnumber "Material/Young modulus [GPa]" 70
+            -setnumber "Material/Poisson coefficient []" 0.2
+            -setnumber "Material/Applied force [N]" 3
+            -setnumber "Geometry/4Thickness (mm)" 0.5
+            -setnumber "Geometry/2Main characteristic length" 4
     environment:
-      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'onelab_inductor-cuda' || 'automatic-ci-run') }}
+      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'onelab_elasticity-cuda' || 'automatic-ci-run') }}
     steps:
     - name: Select target commit
       id: target
@@ -92,7 +74,7 @@ jobs:
         path: ${{ runner.temp }}/similie-cuda-workspace-${{ steps.target.outputs.target_sha }}
         key: similie-cuda-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
         fail-on-cache-miss: true
-    - name: Run ONELAB inductor ${{ matrix.case.name }} on GPU
+    - name: Run ONELAB elasticity ${{ matrix.case.name }} on GPU
       run: |
         docker image inspect "${IMAGE_TAG}" >/dev/null
         docker run --rm --gpus all \
@@ -114,21 +96,11 @@ jobs:
             mkdir -p "${HOME}"
             case_name="${{ matrix.case.name }}"
             cd /similie-ci/build
-            output_dir="${PWD}/onelab_inductor_cases/${case_name}"
+            output_dir="${PWD}/onelab_elasticity_cases/${case_name}"
             mkdir -p "${output_dir}"
-            # Keep the 3D GetDP reference system small enough for the CI runner.
-            mesh_args=()
-            if [ "${{ matrix.case.dimension }}" = 3 ]; then
-              mesh_args=(-setnumber "Input/11Mesh control (Nbr of divisions)/4Refinement factor" 1)
-            fi
             SIMILIE_ONELAB_BUILD_DIR="${PWD}" \
-            SIMILIE_ONELAB_MESH_FILE="${output_dir}/inductor.msh" \
-            SIMILIE_ONELAB_RESULT_FILE="${output_dir}/similie_magnetostatics_inputs.pos" \
-            SIMILIE_PARAVIEW_H5_FILE="${output_dir}/inductor.h5" \
-            SIMILIE_PARAVIEW_XMF_FILE="${output_dir}/inductor.xmf" \
-              "/similie-ci/src/examples/onelab_inductor/run_similie_onelab.sh" \
-              "--dim=${{ matrix.case.dimension }}" \
-              "--${{ matrix.case.physics }}" \
-              "--${{ matrix.case.backend }}" \
-              "${mesh_args[@]}"
+            SIMILIE_ONELAB_MESH_FILE="${output_dir}/wrench2D.msh" \
+            SIMILIE_ONELAB_RESULT_FILE="${output_dir}/similie_elasticity_inputs.pos" \
+              "/similie-ci/src/examples/onelab_elasticity/run_similie_onelab.sh" \
+              "--${{ matrix.case.backend }}" ${{ matrix.case.arguments }}
           '

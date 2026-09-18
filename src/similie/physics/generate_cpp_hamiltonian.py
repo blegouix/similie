@@ -32,6 +32,7 @@ class HamiltonianDefinition:
     symbolic_functions: dict[str, SymbolicFunctionDefinition] | None = None
     moments_object_component_expression: str | None = None
     moments_object_norm2_expression: str | None = None
+    component_indices: list[str] | None = None
     generate_moments_jacobian: bool = False
     namespace_preamble: str = ""
     namespace_epilogue: str = ""
@@ -176,6 +177,14 @@ def _all_same(expressions: list[str]) -> bool:
     return all(expression == expressions[0] for expression in expressions)
 
 
+def _component_static_assert(index_name: str, component_indices: list[str]) -> str:
+    return (
+        f"std::is_same_v<{index_name}, "
+        + f"> || std::is_same_v<{index_name}, ".join(component_indices)
+        + ">"
+    )
+
+
 def _has_temporal_index(template_parameters: list[str] | None) -> bool:
     return (
         template_parameters is not None and "class TemporalIndex" in template_parameters
@@ -310,30 +319,72 @@ def _render_moments_object_method(
     symbolic_functions: dict[str, SymbolicFunctionDefinition],
     expression_replacements: dict[object, str],
     component_expression: str,
+    component_indices: list[str] | None = None,
 ) -> str:
-    component_expressions = [
-        _generalize_component_expression(
-            symbol_name,
-            expression,
-            replacements,
-            component_expression.format(index="Index", moments="moments"),
-            symbolic_functions,
-            expression_replacements,
+    if component_indices is not None:
+        if len(component_indices) != len(symbols_):
+            raise ValueError("component_indices must match moments symbols")
+        object_replacements = {
+            **replacements,
+            **{
+                symbol_name: component_expression.format(
+                    index=component_index, moments="moments"
+                )
+                for symbol_name, component_index in zip(
+                    symbols_, component_indices, strict=True
+                )
+            },
+        }
+        component_expressions = [
+            _render_cxx_expression(
+                expression,
+                object_replacements,
+                symbolic_functions,
+                expression_replacements,
+            )
+            for expression in expressions
+        ]
+        cases = "\n".join(
+            [
+                f"""        {"if" if i == 0 else "else if"} constexpr (std::is_same_v<Index, {component_index}>) {{
+            return {component_expression_};
+        }}"""
+                for i, (component_index, component_expression_) in enumerate(
+                    zip(component_indices, component_expressions, strict=True)
+                )
+            ]
         )
-        for symbol_name, expression in zip(symbols_, expressions, strict=True)
-    ]
-    if not _all_same(component_expressions):
-        raise ValueError(
-            "dhamiltonian_dmoments object method cannot be generated without "
-            "tag-independent component expressions"
-        )
+        fallback = _component_static_assert("Index", component_indices)
+        body = f"""{cases}
+        else {{
+            static_assert({fallback}, "unsupported moments component index");
+            return 0.0;
+        }}"""
+    else:
+        component_expressions = [
+            _generalize_component_expression(
+                symbol_name,
+                expression,
+                replacements,
+                component_expression.format(index="Index", moments="moments"),
+                symbolic_functions,
+                expression_replacements,
+            )
+            for symbol_name, expression in zip(symbols_, expressions, strict=True)
+        ]
+        if not _all_same(component_expressions):
+            raise ValueError(
+                "dhamiltonian_dmoments object method cannot be generated without "
+                "tag-independent component expressions"
+            )
+        body = f"        return {component_expressions[0]};"
 
     return f"""
     template <class Index, class Moments, class Elem>
     KOKKOS_FUNCTION constexpr double dhamiltonian_dmoments(Moments moments, Elem elem) const
     {{
         static_cast<void>(elem);
-        return {component_expressions[0]};
+{body}
     }}
 
     template <class Index, class Moments, class Elem>
@@ -344,14 +395,87 @@ def _render_moments_object_method(
 """
 
 
+def _render_tagged_jacobian_cases(
+    component_indices: list[str],
+    component_expressions: list[list[str]],
+) -> str:
+    row_cases: list[str] = []
+    for row_index, row_component in enumerate(component_indices):
+        column_cases = "\n".join(
+            [
+                f"""            {"if" if column_index == 0 else "else if"} constexpr (std::is_same_v<ColumnIndex, {column_component}>) {{
+                return {component_expressions[row_index][column_index]};
+            }}"""
+                for column_index, column_component in enumerate(component_indices)
+            ]
+        )
+        column_fallback = _component_static_assert("ColumnIndex", component_indices)
+        row_cases.append(
+            f"""        {"if" if row_index == 0 else "else if"} constexpr (std::is_same_v<RowIndex, {row_component}>) {{
+{column_cases}
+            else {{
+                static_assert({column_fallback}, "unsupported moments column index");
+                return 0.0;
+            }}
+        }}"""
+        )
+    row_fallback = _component_static_assert("RowIndex", component_indices)
+    return (
+        "\n".join(row_cases)
+        + f"""
+        else {{
+            static_assert({row_fallback}, "unsupported moments row index");
+            return 0.0;
+        }}"""
+    )
+
+
 def _render_moments_object_jacobian_method(
-    symbols_: list[str],
+    symbols_: list,
     hamiltonian,
     replacements: dict[str, str],
     symbolic_functions: dict[str, SymbolicFunctionDefinition],
     expression_replacements: dict[object, str],
     component_expression: str,
+    component_indices: list[str] | None = None,
 ) -> str:
+    if component_indices is not None:
+        if len(component_indices) != len(symbols_):
+            raise ValueError("component_indices must match moments symbols")
+        object_replacements = {
+            **replacements,
+            **{
+                str(symbol): component_expression.format(
+                    index=component_index, moments="moments"
+                )
+                for symbol, component_index in zip(
+                    symbols_, component_indices, strict=True
+                )
+            },
+        }
+        component_expressions = [
+            [
+                _render_cxx_expression(
+                    diff(diff(hamiltonian, row_symbol), column_symbol),
+                    object_replacements,
+                    symbolic_functions,
+                    expression_replacements,
+                )
+                for column_symbol in symbols_
+            ]
+            for row_symbol in symbols_
+        ]
+        body = _render_tagged_jacobian_cases(component_indices, component_expressions)
+        return f"""
+    template <class RowIndex, class ColumnIndex, class Moments, class Elem>
+    KOKKOS_FUNCTION constexpr double jacobian(Moments moments, Elem elem) const
+    {{
+        static_cast<void>(moments);
+        static_cast<void>(elem);
+{body}
+    }}
+"""
+
     row_component = component_expression.format(index="RowIndex", moments="moments")
     column_component = component_expression.format(
         index="ColumnIndex", moments="moments"
@@ -387,6 +511,7 @@ def _render_moments_object_jacobian_method(
     template <class RowIndex, class ColumnIndex, class Moments, class Elem>
     KOKKOS_FUNCTION constexpr double jacobian(Moments moments, Elem elem) const
     {{
+        static_cast<void>(moments);
         static_cast<void>(elem);
         if constexpr (std::is_same_v<RowIndex, ColumnIndex>) {{
             return {diagonal_expressions[0]};
@@ -573,6 +698,7 @@ def write_cpp_hamiltonian_header(
             symbolic_functions,
             object_expression_replacements,
             definition.moments_object_component_expression,
+            definition.component_indices,
         )
         if definition.generate_moments_jacobian:
             moments_jacobian_method = _render_moments_object_jacobian_method(
@@ -582,6 +708,7 @@ def write_cpp_hamiltonian_header(
                 symbolic_functions,
                 object_expression_replacements,
                 definition.moments_object_component_expression,
+                definition.component_indices,
             )
 
     nonlocal_value_methods = ""

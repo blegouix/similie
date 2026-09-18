@@ -627,6 +627,7 @@ std::shared_ptr<gko::matrix::Csr<double, gko::int32>> build_matrix(
         OperatorModel const& operator_model)
 {
     auto matrix_data = assemble_matrix_data(operator_model);
+    matrix_data.sum_duplicates();
     if (env_flag_enabled("SIMILIE_MATRIX_DIAGNOSTICS")) {
         log_matrix_diagnostics(matrix_data);
     }
@@ -640,6 +641,7 @@ std::shared_ptr<gko::matrix::Csr<double, gko::int32>> build_matrix(
         StateView state)
 {
     auto matrix_data = assemble_matrix_data(operator_model, state);
+    matrix_data.sum_duplicates();
     if (env_flag_enabled("SIMILIE_MATRIX_DIAGNOSTICS")) {
         log_matrix_diagnostics(matrix_data);
     }
@@ -659,6 +661,7 @@ class MatrixFreeLinOp : public gko::EnableLinOp<MatrixFreeLinOp<ExecSpace, Opera
     ExecSpace m_exec_space;
     std::shared_ptr<OperatorModel const> m_operator_model;
     mutable std::shared_ptr<workspace_type> m_workspace;
+    mutable Kokkos::View<double**, Kokkos::LayoutRight, memory_space> m_advanced_applied;
     mutable std::size_t m_apply_count = 0;
     mutable std::size_t m_advanced_apply_count = 0;
     mutable double m_apply_duration = 0.0;
@@ -679,6 +682,10 @@ public:
         : base_type(exec, gko::dim<2>(operator_model->size(), operator_model->size()))
         , m_exec_space(exec_space)
         , m_operator_model(std::move(operator_model))
+        , m_advanced_applied(
+                  "similie_matrix_free_linop_advanced_workspace",
+                  m_operator_model->size(),
+                  1)
     {
         if constexpr (workspace_traits::enabled) {
             if (!uses_precomputed_matrix_free_stencils(*m_operator_model)) {
@@ -753,8 +760,11 @@ public:
         auto b_view = gko::ext::kokkos::map_data<memory_space>(*b_dense);
         auto beta_view = gko::ext::kokkos::map_data<memory_space>(*beta_dense);
         auto x_view = gko::ext::kokkos::map_data<memory_space>(*x_dense);
-        Kokkos::View<double**, Kokkos::LayoutRight, memory_space>
-                applied("similie_matrix_free_linop_apply", x_view.extent(0), x_view.extent(1));
+        if (x_view.extent(0) != m_advanced_applied.extent(0)
+            || x_view.extent(1) != m_advanced_applied.extent(1)) {
+            throw std::invalid_argument("MatrixFreeLinOp received an unsupported dense shape");
+        }
+        auto const applied = m_advanced_applied;
         if constexpr (workspace_traits::enabled) {
             if constexpr (requires(
                                   OperatorModel const& model,
@@ -848,6 +858,7 @@ class StateDependentMatrixFreeLinOp
     ExecSpace m_exec_space;
     std::shared_ptr<OperatorModel const> m_operator_model;
     StateView m_state;
+    mutable Kokkos::View<double**, Kokkos::LayoutRight, memory_space> m_advanced_applied;
 
 public:
     explicit StateDependentMatrixFreeLinOp(std::shared_ptr<gko::Executor const> exec)
@@ -867,6 +878,10 @@ public:
         , m_exec_space(exec_space)
         , m_operator_model(std::move(operator_model))
         , m_state(state)
+        , m_advanced_applied(
+                  "similie_state_dependent_linop_advanced_workspace",
+                  m_operator_model->size(),
+                  1)
     {
     }
 
@@ -903,8 +918,12 @@ public:
         auto b_view = gko::ext::kokkos::map_data<memory_space>(*b_dense);
         auto beta_view = gko::ext::kokkos::map_data<memory_space>(*beta_dense);
         auto x_view = gko::ext::kokkos::map_data<memory_space>(*x_dense);
-        Kokkos::View<double**, Kokkos::LayoutRight, memory_space>
-                applied("similie_state_dependent_linop_apply", x_view.extent(0), x_view.extent(1));
+        if (x_view.extent(0) != m_advanced_applied.extent(0)
+            || x_view.extent(1) != m_advanced_applied.extent(1)) {
+            throw std::invalid_argument(
+                    "StateDependentMatrixFreeLinOp received an unsupported dense shape");
+        }
+        auto const applied = m_advanced_applied;
         apply_jacobian(m_exec_space, *m_operator_model, m_state, b_view, applied);
         Kokkos::parallel_for(
                 "similie_state_dependent_linop_advanced_apply",
@@ -1318,6 +1337,8 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
     detail::fill(exec_space, solution, 0.0);
     auto const gko_exec = gko::ext::kokkos::create_executor(exec_space);
     if constexpr (OperatorModel::IS_LINEAR) {
+        std::cout << "SimiLie linear system mode: "
+                  << (settings.use_matrix_free ? "matrix-free" : "assembled") << '\n';
         diagnostics.initial_residual_l2 = detail::residual_norm_l2(exec_space, rhs);
         diagnostics.final_residual_l2 = diagnostics.initial_residual_l2;
         diagnostics.final_relative_residual = diagnostics.initial_residual_l2 == 0.0 ? 0.0 : 1.0;
