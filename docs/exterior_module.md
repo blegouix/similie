@@ -257,6 +257,8 @@ The generic DEC Laplacian combines the exterior derivative and the codifferentia
 
 ### Bundle-valued exterior covariant derivative
 
+\important This operator and documentation is fully AI-generated.
+
 `CovariantDerivative<SpatialIndex...>` separates a topological covariant
 coboundary from reconstruction. The dimension and the bundle rank are independent.
 Its `cochain_value<k, rank>` accepts a cubical k-cochain sampler and parallel
