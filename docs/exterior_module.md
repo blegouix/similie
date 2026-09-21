@@ -39,6 +39,57 @@ An important relation is the Poincarré Lemma \f$dd = 0\f$. It leads to the very
 
 \important A key paradigm of SimiLie is the exclusive support of structured meshes to avoid sparse linear algebra and produce mostly-embarrassingly parallel code. It implies that the main difference between the theory described in [Discrete Differential Forms for Computational Modeling](http://www.geometry.caltech.edu/pubs/DKT05.pdf) and the implementation in SimiLie is that the discrete exterior derivative is not built upon a sparse adjacency matrix, but directly computed locally for each node of the mesh (matrix-free approach). Otherwise, SimiLie follows quite closely the construction presented in the document.
 
+### Exterior covariant derivative
+
+`CovariantDerivative<SpatialIndex...>` extends the cubical exterior derivative
+to cochains with values in a vector bundle. Spatial dimension, form degree and
+fibre rank are independent: a scalar, vector or flattened tensor may be the
+value of a face cochain.
+
+For a cell \f$c\f$, let \f$b(c)\f$ denote its lower vertex. The discrete operation is
+
+\f[
+(d^\nabla u)(c) = \sum_{f\subset\partial c}
+    [c:f]\,P_{b(c)\leftarrow b(f)}u(f).
+\f]
+
+Here \f$[c:f]\f$ is the oriented incidence number and \f$P\f$ transports a face
+value into the fibre at the cell's lower vertex. Values already in that fibre
+are used directly. `transport(to, from)` returns the matrix with output fibre
+components as rows and input components as columns.
+
+The implementation converts the vertex masks accepted by `cochain_value()`
+into a SimiLie `Simplex`, obtains its oriented faces with `boundary()`, and
+integrates each transported component using `Cochain::integrate()`. These are
+the same boundary and pairing operations used by `Coboundary::run()`; there
+is no separate formula for incidence signs in the covariant derivative.
+It shares these algebraic primitives rather than dispatching to the global
+tensor `coboundary()` wrapper, whose evaluator also supplies a mesh boundary
+policy.
+
+With `IdentityTransport<Rank>`, this construction is the ordinary coboundary
+component by component, and its square vanishes. General transports need not
+give a square-zero operator: compositions along different paths can differ,
+representing discrete curvature. No metric, material law or quadrature rule
+enters this incidence operation.
+
+`cell_stencil()` applies this operation to nodal basis cochains and reconstructs
+the resulting edge cochain with `CubicalReconstruction::basis<1>()`. Edge
+values are transported to cell vertex zero before summation. For identity
+transport this is \f$R_1d\f$, with the commuting relation
+\f$dR_0=R_1d\f$. Geometry enters through reconstruction, separately from incidence.
+
+The tensor-facing `value()` adapter adds the differential connection term
+\f$A_iR_0u\f$ to the reconstructed derivative; `operator()` applies that same
+stencil to a tensor. `ZeroConnection` removes this term. This adapter currently
+acts on nodal 0-cochains; the general-degree interface is `cochain_value()`.
+Finite transport matrices and differential connection coefficients are distinct
+inputs; the adapter does not exponentiate connection coefficients into transport.
+
+Cells are anchored at their lower vertex and extend forward. The caller must
+provide all cell corners to `value()` and `operator()`; these local APIs do not
+choose a mesh boundary condition or automatically move a cell at an upper boundary.
+
 ### Simplex
 
 A \f$k-\f$simplex is an oriented discrete element of dimension \f$k\f$ belonging to the discrete manifold. Ie. a \f$0\f$-simplex is a node, a \f$1\f$-simplex is an edge, a \f$2\f$-simplex is a face and a \f$3\f$-simplex is a cell. It can be defined for any dimension \f$n\f$ of the discrete manifold.

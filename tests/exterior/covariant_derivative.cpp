@@ -148,6 +148,24 @@ TEST(CovariantDerivative, CubicalStokesAndFlatSquareZero)
     EXPECT_DOUBLE_EQ((D::cochain_value<1, 1>({0, 1}, 0, linear)[0]), 1);
 }
 
+TEST(CovariantDerivative, OrientedFaceValuesForTwoComponentBundle)
+{
+    auto sampler = [](std::size_t mask, std::size_t vertex) {
+        return std::array<double, 2> {double(mask * vertex * vertex), double((mask + 1) * vertex)};
+    };
+    // Boundary of xyz: +yz at x=1, -xz at y=1, +xy at z=1,
+    // with the opposite signs on the three lower faces.
+    auto const volume = sil::exterior::CovariantDerivative<X, Y, Z>::
+            cochain_value<2, 2>({0, 1, 2}, 0, sampler);
+    EXPECT_DOUBLE_EQ(volume[0], 6 - 5 * 4 + 3 * 16);
+    EXPECT_DOUBLE_EQ(volume[1], 7 - 6 * 2 + 4 * 4);
+    // A yz face based at x=1 also exercises nonzero base vertices.
+    auto const face
+            = sil::exterior::CovariantDerivative<X, Y, Z>::cochain_value<1, 2>({1, 2}, 1, sampler);
+    EXPECT_DOUBLE_EQ(face[0], 4 * (9 - 1) - 2 * (25 - 1));
+    EXPECT_DOUBLE_EQ(face[1], 5 * (3 - 1) - 3 * (5 - 1));
+}
+
 TEST(CovariantDerivative, ChangeOfFrameAndParallelSection)
 {
     std::array<std::array<double, 2>, 4> const positions {{{0, 0}, {2, 0}, {0, 3}, {2, 3}}};
