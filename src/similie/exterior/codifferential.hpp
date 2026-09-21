@@ -197,16 +197,8 @@ struct Codifferential<
             typename TensorType::non_indices_domain_t::discrete_element_type elem,
             NaturalElem natural_elem)
     {
-        auto front = elem;
-        auto const domain_front = tensor.non_indices_domain().front();
-        // DiscreteElement IDs are unsigned: a backward stencil must not wrap
-        // from a lower boundary at zero to SIZE_MAX. Outside values are absent.
-        for (std::size_t d = 0; d < ddc::type_seq_size_v<ddc::to_type_seq_t<decltype(elem)>>; ++d) {
-            if (ddc::detail::array(front)[d] > ddc::detail::array(domain_front)[d]) {
-                --ddc::detail::array(front)[d];
-            }
-        }
-        auto stencil = detail::make_stencil<typename TensorType::memory_space, CochainTag>(front);
+        auto stencil = detail::make_stencil<typename TensorType::memory_space, CochainTag>(
+                detail::forward_stencil_front(elem, tensor.non_indices_domain()));
         ddc::device_for_each(stencil.domain(), [&](auto stencil_elem) {
             auto basis_stencil
                     = detail::make_stencil<typename TensorType::memory_space, CochainTag>(
@@ -299,7 +291,11 @@ struct Codifferential<
         };
 
         TransposedCoboundary<TagToRemoveFromCochain, dual_tensor_index>::
-                run(dual_codifferential, dual_evaluator, chain, lower_chain, elem);
+                run(dual_codifferential,
+                    dual_evaluator,
+                    chain,
+                    lower_chain,
+                    detail::forward_stencil_front(elem, tensor.non_indices_domain()));
 
         DiscreteHodgeStar<
                 CellComplex::CircumcentricDual,
@@ -497,7 +493,9 @@ public:
                             },
                             chain,
                             lower_chain,
-                            elem);
+                            detail::forward_stencil_front(
+                                    elem,
+                                    dual_tensor_buffer.non_indices_domain()));
 
                     sil::tensor::tensor_prod(
                             codifferential_tensor[elem],
@@ -623,7 +621,9 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
                         },
                         chain,
                         lower_chain,
-                        elem);
+                        detail::forward_stencil_front(
+                                elem,
+                                dual_tensor_buffer.non_indices_domain()));
 
                 sil::tensor::tensor_prod(
                         codifferential_tensor[elem],

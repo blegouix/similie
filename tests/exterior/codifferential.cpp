@@ -148,8 +148,6 @@ TEST(Codifferential, NonStaged2D1Form)
                                 chain,
                                 lower_chain,
                                 elem);
-                    // Include the lower boundary at ID zero: a backward local
-                    // stencil must not wrap its unsigned domain coordinates.
                     auto const output_elem = codifferential_tensor.accessor().domain().front();
                     auto const stencil = sil::exterior::Codifferential<
                             MetricIndex<X, Y>,
@@ -159,6 +157,10 @@ TEST(Codifferential, NonStaged2D1Form)
                             std::decay_t<decltype(metric)>,
                             std::decay_t<decltype(position)>>::
                             value(tensor, metric, position, chain, lower_chain, elem, output_elem);
+                    EXPECT_EQ(
+                            stencil.non_indices_domain().front(),
+                            sil::exterior::detail::
+                                    forward_stencil_front(elem, tensor.non_indices_domain()));
                     double value = 0.0;
                     ddc::host_for_each(stencil.domain(), [&](auto sampled_elem) {
                         if (sil::misc::domain_contains(tensor.domain(), sampled_elem)) {
