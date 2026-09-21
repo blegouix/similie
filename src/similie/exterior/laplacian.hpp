@@ -139,7 +139,9 @@ TensorType codifferential_of_coboundary(
                         },
                         dual_chain,
                         dual_lower_chain,
-                        elem);
+                        detail::forward_stencil_front(
+                                elem,
+                                dual_tensor_buffer.non_indices_domain()));
 
                 sil::tensor::
                         tensor_prod(out_tensor[elem], dual_codifferential, dual_hodge_star[elem]);

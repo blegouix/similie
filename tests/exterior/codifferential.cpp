@@ -148,6 +148,26 @@ TEST(Codifferential, NonStaged2D1Form)
                                 chain,
                                 lower_chain,
                                 elem);
+                    auto const output_elem = codifferential_tensor.accessor().domain().front();
+                    auto const stencil = sil::exterior::Codifferential<
+                            MetricIndex<X, Y>,
+                            TensorIndex,
+                            TensorIndex,
+                            std::decay_t<decltype(tensor)>,
+                            std::decay_t<decltype(metric)>,
+                            std::decay_t<decltype(position)>>::
+                            value(tensor, metric, position, chain, lower_chain, elem, output_elem);
+                    EXPECT_EQ(
+                            stencil.non_indices_domain().front(),
+                            sil::exterior::detail::
+                                    forward_stencil_front(elem, tensor.non_indices_domain()));
+                    double value = 0.0;
+                    ddc::host_for_each(stencil.domain(), [&](auto sampled_elem) {
+                        if (sil::misc::domain_contains(tensor.domain(), sampled_elem)) {
+                            value += stencil.mem(sampled_elem) * tensor.mem(sampled_elem);
+                        }
+                    });
+                    EXPECT_NEAR(value, codifferential_tensor(elem, output_elem), 1e-12);
                 });
             });
 }

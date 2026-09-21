@@ -28,6 +28,13 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 ## Coding
 - `clang-format` is used to format C++, `ruff format` is used to format python.
 - Avoid introducing unecessary constexpr aliases (like, using the `using` keyword for type aliases of `constexpr` for variables aliases). It can be used but not just for readability purpose, except if explicity asked. In general, if such an alias is used only once it should not be declared and inlined.
+- Whenever possible, avoid using `auto`, `decltype`, etc...
+- Try to mimic the coding style of human-made code in the project as much as possible.
+- Any fully AI-generated file has to be annotated with a "// AI-GENERATED" tag just below the copyright and license.
+- Never merge by yourself, let human review.
+
+## Subagents
+- Simple works such as building Docker image, compiling, running things, monitoring CI activity, etc... can be delegated to light subagents while general reasonning and implementation has to be performed by root, powerful agent.
 
 ## ONELAB interface
 - `onelab_interface/GmshSocket.h` and `onelab_interface/onelab.h` are forks from existing repos, you will never modify them.

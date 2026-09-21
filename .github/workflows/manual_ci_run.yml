@@ -285,6 +285,13 @@ jobs:
       target_sha: ${{ github.sha }}
       ci_environment: ${{ github.event_name == 'pull_request' && 'onelab_inductor-cuda' || 'automatic-ci-run' }}
 
+  example-onelab_elasticity:
+    needs: build-cuda
+    uses: ./.github/workflows/example_onelab_elasticity.yml
+    with:
+      target_sha: ${{ github.sha }}
+      ci_environment: ${{ github.event_name == 'pull_request' && 'onelab_elasticity-cuda' || 'automatic-ci-run' }}
+
   example-kretschmann_scalar:
     needs: build-omp-debug
     uses: ./.github/workflows/example_kretschmann_scalar.yml
