@@ -1086,6 +1086,16 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
     auto iterations_criterion
             = gko::stop::Iteration::build().with_max_iters(settings.max_iterations).on(gko_exec);
     std::unique_ptr<gko::LinOpFactory> solver_factory;
+    bool const nonsymmetric_operator = [] {
+        if constexpr (requires { OperatorModel::IS_SYMMETRIC; }) {
+            return !OperatorModel::IS_SYMMETRIC;
+        }
+        return false;
+    }();
+    bool const default_to_gmres = nonsymmetric_operator && std::getenv("SIMILIE_SOLVER") == nullptr;
+    gko::size_type const gmres_krylov_dim = static_cast<gko::size_type>(std::max(
+            1,
+            env_int_or("SIMILIE_GMRES_KRYLOV_DIM", nonsymmetric_operator ? 1500 : 100)));
     if (detail::env_value_equals("SIMILIE_SOLVER", "minres")) {
         solver_factory = gko::solver::Minres<double>::build()
                                  .with_generated_preconditioner(preconditioner)
@@ -1100,15 +1110,13 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
                                          std::move(residual_criterion),
                                          std::move(iterations_criterion))
                                  .on(gko_exec);
-    } else if (detail::env_value_equals("SIMILIE_SOLVER", "gmres")) {
+    } else if (detail::env_value_equals("SIMILIE_SOLVER", "gmres") || default_to_gmres) {
         solver_factory = gko::solver::Gmres<double>::build()
                                  .with_generated_preconditioner(preconditioner)
                                  .with_criteria(
                                          std::move(residual_criterion),
                                          std::move(iterations_criterion))
-                                 .with_krylov_dim(
-                                         static_cast<gko::size_type>(
-                                                 env_int_or("SIMILIE_GMRES_KRYLOV_DIM", 100)))
+                                 .with_krylov_dim(gmres_krylov_dim)
                                  .on(gko_exec);
     } else if (detail::env_value_equals("SIMILIE_SOLVER", "bicgstab")) {
         solver_factory = gko::solver::Bicgstab<double>::build()

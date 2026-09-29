@@ -20,7 +20,7 @@ TEST(Elasticity, PlaneStressAndTensorialShear)
     EXPECT_NEAR(stress.xy, 200.0 / (1 + 0.3) * 0.03, 1e-13);
 }
 
-TEST(Elasticity, EnergyAdjointAndBackendAgreement)
+TEST(Elasticity, FluxBalanceAndBackendAgreement)
 {
     using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
     Kokkos::View<double*, memory_space> x("x", 9), y("y", 9);
@@ -63,62 +63,33 @@ TEST(Elasticity, EnergyAdjointAndBackendAgreement)
     Kokkos::deep_copy(u, uh);
     op.apply(Kokkos::DefaultExecutionSpace(), u, residual);
     Kokkos::deep_copy(rh, residual);
-    double energy = 0;
+    double total_force_x = 0.0;
+    double total_force_y = 0.0;
     for (int r = 0; r < 18; ++r) {
-        double expected = 0;
-        for (int c = 0; c < 18; ++c) {
-            EXPECT_NEAR(matrix[r][c], matrix[c][r], 1e-12);
+        double expected = 0.0;
+        for (int c = 0; c < 18; ++c)
             expected += matrix[r][c] * uh(c, 0);
-        }
         EXPECT_NEAR(rh(r, 0), expected, 1e-11);
-        energy += 0.5 * uh(r, 0) * rh(r, 0);
+        if (r % 2 == 0)
+            total_force_x += rh(r, 0);
+        else
+            total_force_y += rh(r, 0);
     }
-    EXPECT_GT(energy, 0);
-    // Independent quadrature of W = mu eps:eps + lambda/2 tr(eps)^2.
-    double integrated_energy = 0;
-    for (int j = 0; j < 2; ++j)
-        for (int i = 0; i < 2; ++i) {
-            std::array<int, 4> const
-                    nodes {i + 3 * j, i + 1 + 3 * j, i + 3 * (j + 1), i + 1 + 3 * (j + 1)};
-            std::array<std::array<double, 2>, 4> positions;
-            for (int a = 0; a < 4; ++a)
-                positions[a] = {xh(nodes[a]), yh(nodes[a])};
-            for (int q = 0; q < 4; ++q) {
-                // Independent differentiation of interpolating shape functions;
-                // do not use the operator/reconstruction under test here.
-                double const xi = 0.5 + (q % 2 ? 1 : -1) / std::sqrt(12.0);
-                double const eta = 0.5 + (q / 2 ? 1 : -1) / std::sqrt(12.0);
-                std::array<std::array<double, 2>, 4> reference {
-                        {{eta - 1, xi - 1}, {1 - eta, -xi}, {-eta, 1 - xi}, {eta, xi}}};
-                double j00 = 0, j01 = 0, j10 = 0, j11 = 0;
-                for (int a = 0; a < 4; ++a) {
-                    j00 += positions[a][0] * reference[a][0];
-                    j01 += positions[a][0] * reference[a][1];
-                    j10 += positions[a][1] * reference[a][0];
-                    j11 += positions[a][1] * reference[a][1];
-                }
-                double const det = j00 * j11 - j01 * j10;
-                std::array<std::array<double, 2>, 4> gradient {};
-                for (int a = 0; a < 4; ++a) {
-                    gradient[a]
-                            = {(reference[a][0] * j11 - reference[a][1] * j10) / det,
-                               (-reference[a][0] * j01 + reference[a][1] * j00) / det};
-                }
-                double xx = 0, yy = 0, xy = 0;
-                for (int a = 0; a < 4; ++a) {
-                    xx += uh(2 * nodes[a], 0) * gradient[a][0];
-                    yy += uh(2 * nodes[a] + 1, 0) * gradient[a][1];
-                    xy += 0.5
-                          * (uh(2 * nodes[a], 0) * gradient[a][1]
-                             + uh(2 * nodes[a] + 1, 0) * gradient[a][0]);
-                }
-                integrated_energy
-                        += 0.25 * std::abs(det)
-                           * (200 / (2 * 1.3) * (xx * xx + yy * yy + 2 * xy * xy)
-                              + 0.5 * 200 * 0.3 / (1 - 0.3 * 0.3) * (xx + yy) * (xx + yy));
-            }
-        }
-    EXPECT_NEAR(energy, integrated_energy, 1e-10);
+    // Every internal dual face contributes equal and opposite nodal forces.
+    EXPECT_NEAR(total_force_x, 0.0, 1e-11);
+    EXPECT_NEAR(total_force_y, 0.0, 1e-11);
+
+    // A homogeneous affine displacement gives constant stress and therefore
+    // zero integrated divergence in the interior control volume.
+    for (int a = 0; a < 9; ++a) {
+        uh(2 * a, 0) = 0.02 * xh(a) + 0.03 * yh(a);
+        uh(2 * a + 1, 0) = -0.01 * xh(a) + 0.04 * yh(a);
+    }
+    Kokkos::deep_copy(u, uh);
+    op.apply(Kokkos::DefaultExecutionSpace(), u, residual);
+    Kokkos::deep_copy(rh, residual);
+    EXPECT_NEAR(rh(2 * 4, 0), 0.0, 1e-11);
+    EXPECT_NEAR(rh(2 * 4 + 1, 0), 0.0, 1e-11);
 }
 
 TEST(MagneticEnergy, DerivativeMatchesNonlinearConstitutiveLaw)

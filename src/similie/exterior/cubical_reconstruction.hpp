@@ -38,15 +38,9 @@ public:
     {
         std::array<double, Dimension * Dimension> jacobian {};
         for (std::size_t d = 0; d < Dimension; ++d) {
-            for (std::size_t v = 0; v < vertex_count; ++v) {
-                if (v & (std::size_t(1) << d))
-                    continue;
-                double const weight = reference_basis(std::size_t(1) << d, v);
-                for (std::size_t i = 0; i < Dimension; ++i) {
-                    jacobian[i * Dimension + d]
-                            += weight * (positions[v | (std::size_t(1) << d)][i] - positions[v][i]);
-                }
-            }
+            std::array<double, Dimension> const column = tangent(positions, d);
+            for (std::size_t i = 0; i < Dimension; ++i)
+                jacobian[i * Dimension + d] = column[i];
         }
         auto determinant_work = jacobian;
         m_determinant = misc::math::determinant(
@@ -80,6 +74,25 @@ public:
     [[nodiscard]] KOKKOS_FUNCTION double measure() const
     {
         return Kokkos::abs(m_determinant);
+    }
+
+    /** Physical tangent to a reference coordinate line at the evaluation point. */
+    [[nodiscard]] KOKKOS_FUNCTION std::array<double, Dimension> tangent(
+            std::array<std::array<double, Dimension>, vertex_count> const& positions,
+            std::size_t direction) const
+    {
+        assert(direction < Dimension);
+        std::array<double, Dimension> result {};
+        for (std::size_t v = 0; v < vertex_count; ++v) {
+            if (v & (std::size_t(1) << direction))
+                continue;
+            double const weight = reference_basis(std::size_t(1) << direction, v);
+            for (std::size_t i = 0; i < Dimension; ++i) {
+                result[i] += weight
+                             * (positions[v | (std::size_t(1) << direction)][i] - positions[v][i]);
+            }
+        }
+        return result;
     }
 
     /** Reference Whitney basis: constant in tangent directions, linear in
