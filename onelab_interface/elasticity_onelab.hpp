@@ -23,7 +23,7 @@
 #include <ddc/ddc.hpp>
 
 #include <ginkgo/core/base/matrix_data.hpp>
-#include <similie/exterior/covariant_derivative.hpp>
+#include <similie/physics/elasticity/elastic_material_hodge_2d.hpp>
 #include <similie/physics/elasticity/linear_elasticity.hpp>
 #include <similie/physics/hamilton_equations.hpp>
 #include <similie/solvers/minimize_strong_formulation_residual.hpp>
@@ -423,7 +423,7 @@ class ElasticityOperator2D
 
 public:
     static constexpr bool IS_LINEAR = true;
-    static constexpr bool IS_SYMMETRIC = false;
+    static constexpr bool IS_SYMMETRIC = true;
 
     ElasticityOperator2D(
             std::size_t nx,
@@ -445,6 +445,15 @@ public:
         auto const dirichlet_host
                 = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), dirichlet);
         std::vector<std::map<std::size_t, double>> rows(2 * nx * ny);
+        std::array<std::array<double, 8>, 8> incidence {};
+        for (int input = 0; input < 8; ++input) {
+            std::array<std::array<double, 2>, 4> basis {};
+            basis[input / 2][input % 2] = 1.0;
+            std::array<double, 8> const differences
+                    = physics::elasticity::ElasticMaterialHodge2D::edge_differences<X, Y>(basis);
+            for (int edge_component = 0; edge_component < 8; ++edge_component)
+                incidence[edge_component][input] = differences[edge_component];
+        }
 
         // Each mapped quadrilateral is split into four vertex control volumes.
         // The four internal half-faces carry one traction with opposite signs
@@ -457,60 +466,26 @@ public:
                 std::array<std::array<double, 2>, 4> positions {};
                 for (std::size_t a = 0; a < 4; ++a)
                     positions[a] = {x(nodes[a]), y(nodes[a])};
-                sil::exterior::CubicalReconstruction<2>::check_orientation(positions);
-
-                for (int face = 0; face < 4; ++face) {
-                    int const lower_node = face == 0 || face == 2 ? 0 : face == 1 ? 2 : 1;
-                    int const upper_node = face == 0 ? 1 : face == 1 ? 3 : face == 2 ? 2 : 3;
-                    bool const vertical = face < 2;
-                    double const center = face == 0 || face == 2 ? 0.25 : 0.75;
-                    for (int q = 0; q < 2; ++q) {
-                        double const coordinate
-                                = center + (q == 0 ? -1.0 : 1.0) / (4.0 * std::sqrt(3.0));
-                        std::array<double, 2> const point
-                                = vertical ? std::array<double, 2> {0.5, coordinate}
-                                           : std::array<double, 2> {coordinate, 0.5};
-                        sil::exterior::CubicalReconstruction<2> const
-                                reconstruction(positions, point);
-                        auto const derivative
-                                = sil::exterior::CovariantDerivative<X, Y>::cell_stencil<2>(
-                                        reconstruction);
-                        std::array<double, 2> const tangent
-                                = reconstruction.tangent(positions, vertical ? 1 : 0);
-                        double const orientation
-                                = reconstruction.signed_measure() > 0.0 ? 1.0 : -1.0;
-                        std::array<double, 2> const normal
-                                = vertical
-                                          ? std::array<
-                                                    double,
-                                                    2> {orientation * tangent[1], -orientation * tangent[0]}
-                                          : std::array<double, 2> {
-                                                    -orientation * tangent[1],
-                                                    orientation * tangent[0]};
-                        for (int a = 0; a < 4; ++a) {
-                            for (int component = 0; component < 2; ++component) {
-                                physics::elasticity::Strain2D const strain
-                                        = physics::elasticity::DisplacementToStrain::from_gradient(
-                                                derivative[a][0][0][component],
-                                                derivative[a][1][1][component],
-                                                derivative[a][1][0][component],
-                                                derivative[a][0][1][component]);
-                                physics::elasticity::CauchyStress2D const stress
-                                        = linear_elasticity_stress(equations, strain);
-                                std::array<double, 2> const traction {
-                                        0.25 * (stress.xx * normal[0] + stress.xy * normal[1]),
-                                        0.25 * (stress.xy * normal[0] + stress.yy * normal[1])};
-                                std::size_t const column = 2 * nodes[a] + component;
-                                for (int output = 0; output < 2; ++output) {
-                                    rows[2 * nodes[lower_node] + output][column]
-                                            -= traction[output];
-                                    rows[2 * nodes[upper_node] + output][column]
-                                            += traction[output];
-                                }
-                            }
-                        }
+                physics::elasticity::ElasticMaterialHodge2D const
+                        material(positions, [&](physics::elasticity::Strain2D strain) {
+                            return linear_elasticity_stress(equations, strain);
+                        });
+                std::array<std::array<double, 8>, 8> force_from_nodal {};
+                for (int output_edge = 0; output_edge < 8; ++output_edge)
+                    for (int input = 0; input < 8; ++input)
+                        for (int input_edge = 0; input_edge < 8; ++input_edge)
+                            force_from_nodal[output_edge][input]
+                                    += material.matrix()[output_edge][input_edge]
+                                       * incidence[input_edge][input];
+                for (int output = 0; output < 8; ++output)
+                    for (int input = 0; input < 8; ++input) {
+                        double coefficient = 0.0;
+                        for (int output_edge = 0; output_edge < 8; ++output_edge)
+                            coefficient += incidence[output_edge][output]
+                                           * force_from_nodal[output_edge][input];
+                        rows[2 * nodes[output / 2] + output % 2][2 * nodes[input / 2] + input % 2]
+                                += coefficient;
                     }
-                }
             }
         }
 
@@ -796,22 +771,19 @@ Result run_on_quadrilateral_grid(
             for (int a = 0; a < 4; ++a) {
                 positions[a] = {grid.ordered_nodes[nodes[a]].x, grid.ordered_nodes[nodes[a]].y};
             }
-            auto const derivative
-                    = sil::exterior::CovariantDerivative<detail::X, detail::Y>::cell_stencil<2>(
-                            sil::exterior::CubicalReconstruction<2>(positions, {0.5, 0.5}));
-            std::array<std::array<double, 2>, 2> gradient {};
-            for (int a = 0; a < 4; ++a) {
-                for (int c = 0; c < 2; ++c) {
-                    for (int d = 0; d < 2; ++d) {
-                        for (int b = 0; b < 2; ++b) {
-                            gradient[c][d]
-                                    += displacement[2 * nodes[a] + b] * derivative[a][d][c][b];
-                        }
-                    }
-                }
-            }
+            physics::elasticity::ElasticMaterialHodge2D const
+                    material(positions, [&](physics::elasticity::Strain2D strain) {
+                        return detail::linear_elasticity_stress(equations, strain);
+                    });
+            std::array<std::array<double, 2>, 4> nodal_displacement {};
+            for (int a = 0; a < 4; ++a)
+                nodal_displacement[a]
+                        = {displacement[2 * nodes[a]], displacement[2 * nodes[a] + 1]};
+            std::array<double, 4> const gradient = material.recover_gradient(
+                    physics::elasticity::ElasticMaterialHodge2D::
+                            edge_differences<detail::X, detail::Y>(nodal_displacement));
             fields.strain = physics::elasticity::DisplacementToStrain::
-                    from_gradient(gradient[0][0], gradient[1][1], gradient[0][1], gradient[1][0]);
+                    from_gradient(gradient[0], gradient[3], gradient[1], gradient[2]);
             fields.stress = detail::linear_elasticity_stress(equations, fields.strain);
             fields.stress.xx *= fields.density;
             fields.stress.yy *= fields.density;

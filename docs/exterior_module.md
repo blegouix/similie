@@ -73,23 +73,6 @@ give a square-zero operator: compositions along different paths can differ,
 representing discrete curvature. No metric, material law or quadrature rule
 enters this incidence operation.
 
-`cell_stencil()` applies this operation to nodal basis cochains and reconstructs
-the resulting edge cochain with `CubicalReconstruction::basis<1>()`. Edge
-values are transported to cell vertex zero before summation. For identity
-transport this is \f$R_1d\f$, with the commuting relation
-\f$dR_0=R_1d\f$. Geometry enters through reconstruction, separately from incidence.
-
-The tensor-facing `value()` adapter adds the differential connection term
-\f$A_iR_0u\f$ to the reconstructed derivative; `operator()` applies that same
-stencil to a tensor. `ZeroConnection` removes this term. This adapter currently
-acts on nodal 0-cochains; the general-degree interface is `cochain_value()`.
-Finite transport matrices and differential connection coefficients are distinct
-inputs; the adapter does not exponentiate connection coefficients into transport.
-
-Cells are anchored at their lower vertex and extend forward. The caller must
-provide all cell corners to `value()` and `operator()`; these local APIs do not
-choose a mesh boundary condition or automatically move a cell at an upper boundary.
-
 ### Simplex
 
 A \f$k-\f$simplex is an oriented discrete element of dimension \f$k\f$ belonging to the discrete manifold. Ie. a \f$0\f$-simplex is a node, a \f$1\f$-simplex is an edge, a \f$2\f$-simplex is a face and a \f$3\f$-simplex is a cell. It can be defined for any dimension \f$n\f$ of the discrete manifold.
@@ -259,8 +242,8 @@ The generic DEC Laplacian combines the exterior derivative and the codifferentia
 
 \important This operator and documentation is fully AI-generated.
 
-`CovariantDerivative<SpatialIndex...>` separates a topological covariant
-coboundary from reconstruction. The dimension and the bundle rank are independent.
+`CovariantDerivative<SpatialIndex...>` computes a topological covariant
+coboundary. The dimension and the bundle rank are independent.
 Its `cochain_value<k, rank>` accepts a cubical k-cochain sampler and parallel
 transport matrices `T(to, from)`. Cochain components live in the fibre at the
 lower vertex of their cell. For increasing directions I, the operator is
@@ -282,44 +265,8 @@ This is a based cubical construction; it does not claim the simplicial averaging
 or all the Bianchi identities of
 [Braune et al., A Discrete Exterior Calculus of Bundle-valued Forms](https://arxiv.org/abs/2406.05383).
 
-`CubicalReconstruction<n>` implements the lowest-order tensor-product form
-spaces on a mapped n-cube. For a k-cell with direction set I and lower vertex v,
-its reference basis is
-
-\f\[
-\widehat W_{I,v}(\xi)=
-\prod_{j\notin I}\big(v_j\xi_j+(1-v_j)(1-\xi_j)\big)
-\,d\xi_{I_1}\wedge\cdots\wedge d\xi_{I_k}.
-\f\]
-
-Coordinate 0-cochains define the multilinear geometry map. The k-form basis is
-transformed using k-by-k minors of the inverse Jacobian. Thus scalar, edge, face,
-and volume cochains share one reconstruction, including orientation signs.
-This is the lowest-order tensor-product de Rham construction, described in
-[Arnold, Boffi and Bonizzoni, Finite element differential forms on curvilinear cubic meshes](https://arxiv.org/abs/1212.6559).
-For the flat connection it obeys `d R_k = R_(k+1) d`; in particular all cell
-edges contribute to a reconstructed derivative, not only those leaving one corner.
-
-`cell_stencil<rank>(reconstruction, transport)` reconstructs `D_T` of a 0-cochain
-and returns coefficients indexed by `[vertex][physical derivative][output fibre][input fibre]`.
-Edge contributions are transported to the fibre at vertex 0 before summation.
-It works for scalar fields, vector fields, and tensor bundles represented through
-their induced transport. It contains no constitutive law or quadrature rule.
-The tensor `value`/`operator()` interface uses the same reconstruction with the
-local differential-connection expression `d u + A u`. Its optional reference
-point defaults to the lower corner for compatibility; the connection callback
-must evaluate A at that point. These differential coefficients and finite edge
-transports are distinct inputs and are not interchangeable.
-
-The caller supplies a regular, injective cell map. `valid()` checks the Jacobian
-at the evaluation point. `check_orientation()` checks its sign at all corners;
-this certifies a nonvanishing Jacobian throughout a 2D bilinear cell, but is only
-a necessary check in higher dimensions. Embedded manifolds require a separate
-metric/frame reconstruction and are not handled by this square-Jacobian map.
-
-For small-strain Euclidean elasticity the displacement is a tangent-vector-valued
-0-form, the Cartesian connection is flat, and strain is `sym(R_1 D u)`.
-The weak residual is the transpose of this same strain map applied to the
-integrated constitutive energy derivative. This is why elasticity needs no new
-gradient operator and why an ordinary scalar-form Hodge star cannot by itself
-encode the symmetric strain tensor and its constitutive inner product.
+For the 2D vertex-centred elasticity example, a local material Hodge maps
+primal vector edge differences to integrated forces on dual half-segments.
+Its affine part is exact for constant strain and its complementary part is
+stabilized. The dual incidence then sums those forces into nodal balances.
+The recovered constant strain used for visualization is a separate diagnostic.

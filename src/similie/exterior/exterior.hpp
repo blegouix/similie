@@ -10,7 +10,6 @@
 #include "codifferential.hpp"
 #include "cosimplex.hpp"
 #include "covariant_derivative.hpp"
-#include "cubical_reconstruction.hpp"
 #include "evaluators.hpp"
 #include "form.hpp"
 #include "hodge_star.hpp"

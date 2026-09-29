@@ -20,6 +20,82 @@ TEST(Elasticity, PlaneStressAndTensorialShear)
     EXPECT_NEAR(stress.xy, 200.0 / (1 + 0.3) * 0.03, 1e-13);
 }
 
+TEST(Elasticity, MaterialHodgeAffineTractionAndStability)
+{
+    using similie::physics::elasticity::ElasticMaterialHodge2D;
+    ElasticMaterialHodge2D::Positions const positions {
+            {{0.0, 0.0}, {2.0, 0.2}, {0.4, 3.0}, {2.5, 3.4}}};
+    auto const equations = similie::physics::HamiltonEquations {
+            similie::physics::elasticity::LinearElasticityHamiltonian<>(200.0, 0.3)};
+    ElasticMaterialHodge2D const
+            material(positions, [&](similie::physics::elasticity::Strain2D strain) {
+                return elasticity::detail::linear_elasticity_stress(equations, strain);
+            });
+    ElasticMaterialHodge2D::Matrix const& hodge = material.matrix();
+    for (int i = 0; i < 8; ++i)
+        for (int j = 0; j < 8; ++j)
+            EXPECT_NEAR(hodge[i][j], hodge[j][i], 1e-10);
+
+    std::array<std::array<double, 2>, 4> nodal {};
+    for (int a = 0; a < 4; ++a)
+        nodal[a]
+                = {0.02 * positions[a][0] + 0.03 * positions[a][1],
+                   -0.01 * positions[a][0] + 0.04 * positions[a][1]};
+    auto const differences = ElasticMaterialHodge2D::
+            edge_differences<elasticity::detail::X, elasticity::detail::Y>(nodal);
+    auto const gradient = material.recover_gradient(differences);
+    EXPECT_NEAR(gradient[0], 0.02, 1e-14);
+    EXPECT_NEAR(gradient[1], 0.03, 1e-14);
+    EXPECT_NEAR(gradient[2], -0.01, 1e-14);
+    EXPECT_NEAR(gradient[3], 0.04, 1e-14);
+    std::array<double, 8> traction {};
+    for (int i = 0; i < 8; ++i)
+        for (int j = 0; j < 8; ++j)
+            traction[i] += hodge[i][j] * differences[j];
+    auto const stress = elasticity::detail::linear_elasticity_stress(
+            equations,
+            similie::physics::elasticity::Strain2D {.xx = 0.02, .yy = 0.04, .xy = 0.01});
+    std::array<double, 2> centre {};
+    for (auto const& point : positions) {
+        centre[0] += 0.25 * point[0];
+        centre[1] += 0.25 * point[1];
+    }
+    constexpr std::array<std::array<int, 2>, 4> endpoints {{{0, 1}, {2, 3}, {0, 2}, {1, 3}}};
+    for (int edge = 0; edge < 4; ++edge) {
+        double const mx
+                = 0.5 * (positions[endpoints[edge][0]][0] + positions[endpoints[edge][1]][0]);
+        double const my
+                = 0.5 * (positions[endpoints[edge][0]][1] + positions[endpoints[edge][1]][1]);
+        double const vx = (edge == 0 || edge == 2 ? 1.0 : -1.0) * (centre[0] - mx);
+        double const vy = (edge == 0 || edge == 2 ? 1.0 : -1.0) * (centre[1] - my);
+        double const nx = edge < 2 ? vy : -vy;
+        double const ny = edge < 2 ? -vx : vx;
+        EXPECT_NEAR(traction[2 * edge], stress.xx * nx + stress.xy * ny, 1e-11);
+        EXPECT_NEAR(traction[2 * edge + 1], stress.xy * nx + stress.yy * ny, 1e-11);
+    }
+
+    std::array<std::array<double, 2>, 4> rotation {};
+    for (int a = 0; a < 4; ++a)
+        rotation[a] = {-positions[a][1], positions[a][0]};
+    auto const rotational_differences = ElasticMaterialHodge2D::
+            edge_differences<elasticity::detail::X, elasticity::detail::Y>(rotation);
+    for (int i = 0; i < 8; ++i) {
+        double force = 0.0;
+        for (int j = 0; j < 8; ++j)
+            force += hodge[i][j] * rotational_differences[j];
+        EXPECT_NEAR(force, 0.0, 1e-10);
+    }
+    std::array<std::array<double, 2>, 4> nonaffine {};
+    nonaffine[3] = {1.0, -0.7};
+    auto const nonaffine_differences = ElasticMaterialHodge2D::
+            edge_differences<elasticity::detail::X, elasticity::detail::Y>(nonaffine);
+    double energy = 0.0;
+    for (int i = 0; i < 8; ++i)
+        for (int j = 0; j < 8; ++j)
+            energy += nonaffine_differences[i] * hodge[i][j] * nonaffine_differences[j];
+    EXPECT_GT(energy, 0.0);
+}
+
 TEST(Elasticity, FluxBalanceAndBackendAgreement)
 {
     using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
