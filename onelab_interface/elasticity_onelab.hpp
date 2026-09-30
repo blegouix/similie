@@ -800,25 +800,30 @@ Result run_on_quadrilateral_grid(
     return result;
 }
 
-template <class Logger>
-Result run(
-        std::filesystem::path const& mesh_file,
-        std::filesystem::path const& output_view_file,
-        Inputs const& inputs,
-        solvers::StrongFormulationSolverSettings const& solver_settings,
-        Logger&& logger)
+struct Run
 {
-    auto const mesh = sil::onelab_interface::gmsh::parse_supported_msh2_mesh(mesh_file);
-    if (!std::holds_alternative<sil::onelab_interface::gmsh::QuadrilateralMesh>(mesh)) {
-        throw std::runtime_error(
-                "the current linear elasticity example expects a 2D quadrilateral grid");
+    template <class Logger>
+    Result operator()(
+            std::filesystem::path const& mesh_file,
+            std::filesystem::path const& output_view_file,
+            Inputs const& inputs,
+            solvers::StrongFormulationSolverSettings const& solver_settings,
+            Logger&& logger) const
+    {
+        auto const mesh = sil::onelab_interface::gmsh::parse_supported_msh2_mesh(mesh_file);
+        if (!std::holds_alternative<sil::onelab_interface::gmsh::QuadrilateralMesh>(mesh)) {
+            throw std::runtime_error(
+                    "the current linear elasticity example expects a 2D quadrilateral grid");
+        }
+        return run_on_quadrilateral_grid(
+                output_view_file,
+                inputs,
+                solver_settings,
+                std::get<sil::onelab_interface::gmsh::QuadrilateralMesh>(mesh),
+                std::forward<Logger>(logger));
     }
-    return run_on_quadrilateral_grid(
-            output_view_file,
-            inputs,
-            solver_settings,
-            std::get<sil::onelab_interface::gmsh::QuadrilateralMesh>(mesh),
-            std::forward<Logger>(logger));
-}
+};
+
+inline constexpr Run run {};
 
 } // namespace similie::onelab_interface::elasticity_onelab

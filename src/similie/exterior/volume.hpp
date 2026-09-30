@@ -102,7 +102,7 @@ template <CellComplex Complex, std::size_t N, class MetricType, class PositionTy
 struct SimplexVolume
 {
     template <std::size_t K>
-    KOKKOS_FUNCTION static double run(
+    KOKKOS_FUNCTION static double operator()(
             MetricType metric,
             PositionType position,
             BatchElem elem,
@@ -158,7 +158,7 @@ template <CellComplex Complex, std::size_t N, class MetricType, class PositionTy
 struct DualSimplexVolume
 {
     template <std::size_t K>
-    KOKKOS_FUNCTION static double run(
+    KOKKOS_FUNCTION static double operator()(
             MetricType metric,
             PositionType position,
             BatchElem elem,
@@ -167,8 +167,8 @@ struct DualSimplexVolume
         static_assert(
                 Complex != CellComplex::Primal,
                 "DualSimplexVolume must use a dual cell complex.");
-        return SimplexVolume<Complex, N, MetricType, PositionType, BatchElem>::template run<
-                N - K>(metric, position, elem, detail::complement<N>(ids));
+        return SimplexVolume<Complex, N, MetricType, PositionType, BatchElem>::template
+        operator()<N - K>(metric, position, elem, detail::complement<N>(ids));
     }
 };
 

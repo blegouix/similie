@@ -6,7 +6,7 @@ project(SimiLie VERSION 0.0.0 LANGUAGES C CXX) # C is required because PDI::PDI_
 
 set_property(GLOBAL PROPERTY GLOBAL_DEPENDS_NO_CYCLES ON)
 
-set(CMAKE_CXX_STANDARD 20 CACHE INTERNAL "The C++ standard whose features are requested to build this project.")
+set(CMAKE_CXX_STANDARD 23 CACHE INTERNAL "The C++ standard whose features are requested to build this project.")
 
 # List of options
 option(SIMILIE_BUILD_DOCUMENTATION "Build SimiLie documentation/website" OFF)
@@ -75,11 +75,7 @@ endif()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_library(similie INTERFACE)
 add_library(sil::sil ALIAS similie)
-if("${SIMILIE_BUILD_YOUNG_TABLEAU}")
-  target_compile_features(similie INTERFACE cxx_std_23)
-else()
-  target_compile_features(similie INTERFACE cxx_std_20)
-endif()
+target_compile_features(similie INTERFACE cxx_std_23)
 target_include_directories(
     similie
     INTERFACE

@@ -414,20 +414,20 @@ struct IrrepDim<
         I,
         J>
 {
-    static consteval std::size_t run(double prod)
+    static consteval std::size_t operator()(double prod)
     {
         prod *= Dimension + J - I;
         prod /= HeadElemOfHeadRow;
         if constexpr (sizeof...(TailRow) == 0 && sizeof...(TailElemOfHeadRow) == 0) {
             return prod;
         } else if constexpr (sizeof...(TailElemOfHeadRow) == 0) {
-            return IrrepDim<Dimension, YoungTableauSeq<TailRow...>, I + 1, 0>::run(prod);
+            return IrrepDim<Dimension, YoungTableauSeq<TailRow...>, I + 1, 0>::operator()(prod);
         } else {
             return IrrepDim<
                     Dimension,
                     YoungTableauSeq<std::index_sequence<TailElemOfHeadRow...>, TailRow...>,
                     I,
-                    J + 1>::run(prod);
+                    J + 1>::operator()(prod);
         }
     }
 };
@@ -455,7 +455,8 @@ public:
             detail::dual_t<detail::hooks_t<detail::dual_t<tableau_seq>>>>;
 
 private:
-    static constexpr std::size_t s_irrep_dim = detail::IrrepDim<s_d, hook_lengths, 0, 0>::run(1);
+    static constexpr std::size_t s_irrep_dim
+            = detail::IrrepDim<s_d, hook_lengths, 0, 0>::operator()(1);
 
     static constexpr std::array<char, 64> generate_tag_array();
 
@@ -574,7 +575,7 @@ namespace detail {
 template <std::size_t Dimension, class... TailRow, std::size_t I, std::size_t J>
 struct IrrepDim<Dimension, YoungTableauSeq<std::index_sequence<>, TailRow...>, I, J>
 {
-    static consteval std::size_t run(double prod)
+    static consteval std::size_t operator()(double prod)
     {
         return prod;
     }
@@ -583,7 +584,7 @@ struct IrrepDim<Dimension, YoungTableauSeq<std::index_sequence<>, TailRow...>, I
 template <std::size_t Dimension, std::size_t I, std::size_t J>
 struct IrrepDim<Dimension, YoungTableauSeq<>, I, J>
 {
-    static consteval std::size_t run(double prod)
+    static consteval std::size_t operator()(double prod)
     {
         return prod;
     }
@@ -657,7 +658,7 @@ template <class... Id>
 struct OrthonormalBasisSubspaceEigenvalueOne<tensor::TensorFullIndex<Id...>>
 {
     template <class YoungTableau>
-    static std::pair<csr::CsrDynamic<BasisId, Id...>, csr::CsrDynamic<BasisId, Id...>> run(
+    static std::pair<csr::CsrDynamic<BasisId, Id...>, csr::CsrDynamic<BasisId, Id...>> operator()(
             YoungTableau tableau)
     {
         auto [proj_alloc, proj] = tableau.template projector<Id...>();
@@ -767,9 +768,8 @@ YoungTableau<Dimension, TableauSeq>::YoungTableau()
               << ". It will be computed, and you will have to recompile once it is done.\033[0m"
               << std::endl;
 
-    auto [u, v]
-            = detail::OrthonormalBasisSubspaceEigenvalueOne<tensor::dummy_index_t<s_d, s_r>>::run(
-                    *this);
+    auto [u, v] = detail::OrthonormalBasisSubspaceEigenvalueOne<
+            tensor::dummy_index_t<s_d, s_r>>::operator()(*this);
 
     std::ofstream file(IRREPS_DICT_PATH, std::ios::app | std::ios::binary);
     if (!file) {
@@ -918,11 +918,11 @@ struct Projector<
             ddc::DiscreteDomain<Id...>,
             Kokkos::layout_right,
             Kokkos::DefaultHostExecutionSpace::memory_space>
-    run(tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<Id...>,
-            Kokkos::layout_right,
-            Kokkos::DefaultHostExecutionSpace::memory_space> proj)
+    operator()(tensor::Tensor<
+               double,
+               ddc::DiscreteDomain<Id...>,
+               Kokkos::layout_right,
+               Kokkos::DefaultHostExecutionSpace::memory_space> proj)
     {
         if constexpr (sizeof...(ElemOfHeadRow) >= 2) {
             // Allocate & build a symmetric projector for the row
@@ -960,7 +960,7 @@ struct Projector<
         if constexpr (sizeof...(TailRow) == 0) {
             return proj;
         } else {
-            return Projector<YoungTableauSeq<TailRow...>, Dimension, AntiSym>::run(proj);
+            return Projector<YoungTableauSeq<TailRow...>, Dimension, AntiSym>::operator()(proj);
         }
     }
 };
@@ -988,8 +988,8 @@ auto YoungTableau<Dimension, TableauSeq>::projector()
             detail::TrFunctor<s_d, s_r, tensor::prime<Id>..., Id...>(proj, idx_to_permute));
 
     // Build the projector
-    detail::Projector<tableau_seq, s_d>::run(proj);
-    detail::Projector<typename dual::tableau_seq, s_d, true>::run(proj);
+    detail::Projector<tableau_seq, s_d>::operator()(proj);
+    detail::Projector<typename dual::tableau_seq, s_d, true>::operator()(proj);
     return std::make_tuple(std::move(proj_alloc), proj);
 }
 
@@ -1056,7 +1056,8 @@ struct LoadIrrepIdxForTag;
 template <std::size_t... I, std::size_t Offset>
 struct LoadIrrepIdxForTag<std::index_sequence<I...>, Offset>
 {
-    static consteval std::array<std::string_view, sizeof...(I)> run(std::string_view const tag)
+    static consteval std::array<std::string_view, sizeof...(I)> operator()(
+            std::string_view const tag)
     {
         return std::array<std::string_view, sizeof...(I)> {
                 load_irrep_line_for_tag<I + Offset>(tag)...};
@@ -1096,7 +1097,7 @@ struct BitCastArrayOfArrays;
 template <class T, std::size_t N, std::size_t... I>
 struct BitCastArrayOfArrays<T, N, std::index_sequence<I...>>
 {
-    static consteval std::array<std::array<T, N>, sizeof...(I)> run(
+    static consteval std::array<std::array<T, N>, sizeof...(I)> operator()(
             std::array<std::string_view, sizeof...(I)> const str,
             std::string_view const tag)
     {
@@ -1111,12 +1112,12 @@ consteval auto YoungTableau<Dimension, TableauSeq>::load_irrep()
 {
     static constexpr std::string_view str_u_coalesc_idx(detail::load_irrep_line_for_tag<0>(s_tag));
     static constexpr std::array<std::string_view, s_r> str_u_idx(
-            detail::LoadIrrepIdxForTag<std::make_index_sequence<s_r>, 1>::run(s_tag));
+            detail::LoadIrrepIdxForTag<std::make_index_sequence<s_r>, 1>::operator()(s_tag));
     static constexpr std::string_view str_u_values(detail::load_irrep_line_for_tag<s_r + 1>(s_tag));
     static constexpr std::string_view str_v_coalesc_idx(
             detail::load_irrep_line_for_tag<s_r + 2>(s_tag));
     static constexpr std::array<std::string_view, s_r> str_v_idx(
-            detail::LoadIrrepIdxForTag<std::make_index_sequence<s_r>, s_r + 3>::run(s_tag));
+            detail::LoadIrrepIdxForTag<std::make_index_sequence<s_r>, s_r + 3>::operator()(s_tag));
     static constexpr std::string_view str_v_values(
             detail::load_irrep_line_for_tag<2 * s_r + 3>(s_tag));
 
@@ -1127,7 +1128,7 @@ consteval auto YoungTableau<Dimension, TableauSeq>::load_irrep()
         static constexpr std::array u_idx = detail::BitCastArrayOfArrays<
                 std::size_t,
                 str_u_idx[0].size() / sizeof(std::size_t),
-                std::make_index_sequence<s_r>>::run(str_u_idx, s_tag);
+                std::make_index_sequence<s_r>>::operator()(str_u_idx, s_tag);
         static constexpr std::array u_values = detail::
                 bit_cast_array<double, str_u_values.size() / sizeof(double)>(str_u_values, s_tag);
         static constexpr std::array v_coalesc_idx = detail::bit_cast_array<
@@ -1136,7 +1137,7 @@ consteval auto YoungTableau<Dimension, TableauSeq>::load_irrep()
         static constexpr std::array v_idx = detail::BitCastArrayOfArrays<
                 std::size_t,
                 str_v_idx[0].size() / sizeof(std::size_t),
-                std::make_index_sequence<s_r>>::run(str_v_idx, s_tag);
+                std::make_index_sequence<s_r>>::operator()(str_v_idx, s_tag);
         static constexpr std::array v_values = detail::
                 bit_cast_array<double, str_v_values.size() / sizeof(double)>(str_v_values, s_tag);
         return std::make_pair(
@@ -1164,7 +1165,7 @@ struct YoungTableauRowToArray;
 template <std::size_t... RowElement>
 struct YoungTableauRowToArray<std::index_sequence<RowElement...>>
 {
-    static constexpr auto run()
+    static constexpr auto operator()()
     {
         static constexpr std::array row = {RowElement...};
         return row;
@@ -1177,9 +1178,9 @@ struct YoungTableauToArray;
 template <class... Row>
 struct YoungTableauToArray<YoungTableauSeq<Row...>>
 {
-    static constexpr auto run()
+    static constexpr auto operator()()
     {
-        static constexpr std::tuple tableau = {YoungTableauRowToArray<Row>::run()...};
+        static constexpr std::tuple tableau = { YoungTableauRowToArray<Row>::operator()()... };
         return tableau;
     }
 };
@@ -1188,7 +1189,7 @@ template <bool RowDelimiter>
 struct RowToString
 {
     template <std::size_t N>
-    static constexpr std::array<char, 2 * N - !RowDelimiter> run(
+    static constexpr std::array<char, 2 * N - !RowDelimiter> operator()(
             const std::array<std::size_t, N>& array)
     {
         std::array<char, 2 * N - !RowDelimiter> buf = {};
@@ -1236,10 +1237,11 @@ template <std::size_t... RowId>
 struct ArrayToString<std::index_sequence<RowId...>>
 {
     template <class Tuple>
-    static constexpr auto run(Tuple const tableau)
+    static constexpr auto operator()(Tuple const tableau)
     {
         return concatenate(
-                RowToString < RowId != sizeof...(RowId) - 1 > ::run(std::get<RowId>(tableau))...);
+                RowToString < RowId
+                != sizeof...(RowId) - 1 > ::operator()(std::get<RowId>(tableau))...);
     }
 };
 
@@ -1261,10 +1263,9 @@ constexpr auto add_dimension(const std::array<char, size>& array, std::size_t d)
 template <std::size_t Dimension, misc::Specialization<YoungTableauSeq> TableauSeq>
 constexpr std::array<char, 64> YoungTableau<Dimension, TableauSeq>::generate_tag_array()
 {
-    static constexpr std::tuple tableau = detail::YoungTableauToArray<tableau_seq>::run();
-    constexpr auto row_str_wo_dimension
-            = detail::ArrayToString<std::make_index_sequence<tableau_seq::shape::size()>>::run(
-                    tableau);
+    static constexpr std::tuple tableau = detail::YoungTableauToArray<tableau_seq>::operator()();
+    constexpr auto row_str_wo_dimension = detail::ArrayToString<
+            std::make_index_sequence<tableau_seq::shape::size()>>::operator()(tableau);
     constexpr auto row_str = detail::add_dimension(row_str_wo_dimension, s_d);
     std::array<char, 64> tag {};
     static_assert(row_str.size() < tag.size());
@@ -1282,17 +1283,17 @@ template <std::size_t HeadRowHeadElement, std::size_t... HeadRowTailElement, cla
 struct PrintYoungTableauSeq<
         YoungTableauSeq<std::index_sequence<HeadRowHeadElement, HeadRowTailElement...>, TailRow...>>
 {
-    static std::string run(std::string str)
+    static std::string operator()(std::string str)
     {
         str += std::to_string(HeadRowHeadElement) + " ";
         if constexpr (sizeof...(TailRow) == 0 && sizeof...(HeadRowTailElement) == 0) {
         } else if constexpr (sizeof...(HeadRowTailElement) == 0) {
             str += "\n";
-            str = PrintYoungTableauSeq<YoungTableauSeq<TailRow...>>::run(str);
+            str = PrintYoungTableauSeq<YoungTableauSeq<TailRow...>>::operator()(str);
         } else {
             str = PrintYoungTableauSeq<
                     YoungTableauSeq<std::index_sequence<HeadRowTailElement...>, TailRow...>>::
-                    run(str);
+            operator()(str);
         }
         return str;
     }
@@ -1301,7 +1302,7 @@ struct PrintYoungTableauSeq<
 template <>
 struct PrintYoungTableauSeq<YoungTableauSeq<>>
 {
-    static std::string run(std::string str)
+    static std::string operator()(std::string str)
     {
         return str;
     }
@@ -1313,7 +1314,7 @@ template <std::size_t Dimension, misc::Specialization<YoungTableauSeq> TableauSe
 std::ostream& operator<<(std::ostream& os, YoungTableau<Dimension, TableauSeq> const& tableau)
 {
     std::string str = "";
-    os << detail::PrintYoungTableauSeq<TableauSeq>::run(str);
+    os << detail::PrintYoungTableauSeq<TableauSeq>::operator()(str);
     return os;
 }
 

@@ -188,7 +188,7 @@ struct MetricProdValue;
 template <class MetricType, class BatchElem>
 struct MetricProdValue<MetricType, BatchElem, ddc::detail::TypeSeq<>, ddc::detail::TypeSeq<>>
 {
-    KOKKOS_FUNCTION static double run(
+    KOKKOS_FUNCTION static double operator()(
             [[maybe_unused]] MetricType metric,
             [[maybe_unused]] BatchElem elem,
             [[maybe_unused]] auto natural_elem)
@@ -210,7 +210,7 @@ struct MetricProdValue<
         ddc::detail::TypeSeq<HeadIndex1, TailIndex1...>,
         ddc::detail::TypeSeq<HeadIndex2, TailIndex2...>>
 {
-    KOKKOS_FUNCTION static double run(MetricType metric, BatchElem elem, auto natural_elem)
+    KOKKOS_FUNCTION static double operator()(MetricType metric, BatchElem elem, auto natural_elem)
     {
         auto const relabeled_metric = relabelize_metric<HeadIndex1, HeadIndex2>(metric);
         using metric_natural_elem_type = typename decltype(relabeled_metric)::accessor_t::
@@ -221,7 +221,7 @@ struct MetricProdValue<
                        MetricType,
                        BatchElem,
                        ddc::detail::TypeSeq<TailIndex1...>,
-                       ddc::detail::TypeSeq<TailIndex2...>>::run(metric, elem, natural_elem);
+                       ddc::detail::TypeSeq<TailIndex2...>>::operator()(metric, elem, natural_elem);
     }
 };
 
@@ -251,7 +251,10 @@ template <
 struct MetricProd
 {
     template <misc::Specialization<Tensor> MetricProdType_>
-    KOKKOS_FUNCTION static void run(MetricProdType_ metric_prod, MetricType metric, BatchElem elem)
+    KOKKOS_FUNCTION static void operator()(
+            MetricProdType_ metric_prod,
+            MetricType metric,
+            BatchElem elem)
     {
         ddc::device_for_each(metric_prod.domain(), [&](auto mem_elem) {
             metric_prod.mem(mem_elem)
@@ -262,7 +265,7 @@ struct MetricProd
     KOKKOS_FUNCTION static double value(MetricType metric, BatchElem elem, auto natural_elem)
     {
         return detail::MetricProdValue<MetricType, BatchElem, Indices1, Indices2>::
-                run(metric, elem, natural_elem);
+        operator()(metric, elem, natural_elem);
     }
 };
 
@@ -299,7 +302,7 @@ fill_metric_prod(
                     typename decltype(metric_prod)::non_indices_domain_t::discrete_element_type
                             elem) {
                 MetricProd<MetricIndex, Indices1, Indices2, MetricType, decltype(elem)>::
-                        run(metric_prod[elem], metric, elem);
+                operator()(metric_prod[elem], metric, elem);
             });
     return metric_prod;
 }
@@ -406,7 +409,10 @@ struct InverseMetric
     using output_tensor_type = invert_metric_t<MetricType>;
 
     template <misc::Specialization<Tensor> OutputTensorType>
-    KOKKOS_FUNCTION static void run(OutputTensorType inv_metric, MetricType metric, BatchElem elem)
+    KOKKOS_FUNCTION static void operator()(
+            OutputTensorType inv_metric,
+            MetricType metric,
+            BatchElem elem)
     {
         if constexpr (
                 misc::Specialization<MetricIndex, TensorIdentityIndex>
@@ -482,7 +488,7 @@ struct InverseMetric
                     typename MetricType::memory_space>
                     span(alloc.data(), accessor.domain());
             tensor::Tensor local_inverse(span);
-            run(local_inverse, metric, elem);
+            operator()(local_inverse, metric, elem);
             return local_inverse.get(local_inverse.access_element(natural_elem));
         } else {
             return 0.;
@@ -506,7 +512,7 @@ invert_metric_t<MetricType> fill_inverse_metric(
                     typename invert_metric_t<
                             MetricType>::non_indices_domain_t::discrete_element_type elem) {
                 InverseMetric<MetricIndex, MetricType, decltype(elem)>::
-                        run(inv_metric[elem], metric, elem);
+                operator()(inv_metric[elem], metric, elem);
             });
 
     return inv_metric;

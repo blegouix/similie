@@ -224,7 +224,7 @@ struct DiscreteHodgeStar
     template <
             misc::Specialization<tensor::Tensor> HodgeTensorType,
             misc::Specialization<tensor::Tensor> FormTensorType>
-    KOKKOS_FUNCTION static void run(
+    KOKKOS_FUNCTION static void operator()(
             HodgeTensorType hodge_tensor,
             FormTensorType form_tensor,
             MetricType metric,
@@ -265,11 +265,11 @@ struct DiscreteHodgeStar
         sil::tensor::Tensor continuous_output(continuous_output_span);
 
         Reconstruction<InputIndexSeq, PositionType, BatchElem, CellComplex::Primal>::
-                run(reconstructed_form, form_tensor, position, elem);
+        operator()(reconstructed_form, form_tensor, position, elem);
         ContinuousHodgeStar<Indices1, Indices2, MetricType, BatchElem>::
-                run(continuous_output, reconstructed_form, metric, elem);
+        operator()(continuous_output, reconstructed_form, metric, elem);
         Reduction<OutputIndexSeq, PositionType, BatchElem, Complex>::
-                run(hodge_tensor, continuous_output, metric, position, elem);
+        operator()(hodge_tensor, continuous_output, metric, position, elem);
     }
 
     KOKKOS_FUNCTION static double value(
@@ -340,7 +340,7 @@ struct DiscreteHodgeStar
         ddc::detail::array(source_natural_elem) = canonical_source_ids;
         source_tensor(source_tensor.accessor().access_element(source_natural_elem)) = 1.;
 
-        run(target_tensor, source_tensor, metric, position, elem);
+        operator()(target_tensor, source_tensor, metric, position, elem);
 
         double const source_factor
                 = (odd ? -1. : 1.) / misc::factorial(ddc::type_seq_size_v<Indices1>);
@@ -368,7 +368,7 @@ struct ContinuousHodgeStar
     template <
             misc::Specialization<tensor::Tensor> HodgeTensorType,
             misc::Specialization<tensor::Tensor> FormTensorType>
-    KOKKOS_FUNCTION static void run(
+    KOKKOS_FUNCTION static void operator()(
             HodgeTensorType hodge_tensor,
             FormTensorType form_tensor,
             MetricType metric,

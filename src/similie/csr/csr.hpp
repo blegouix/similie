@@ -25,7 +25,7 @@ template <std::size_t... I>
 struct ArrayOfVectorsToArrayOfArrays<std::index_sequence<I...>>
 {
     template <std::size_t N>
-    static void run(
+    static void operator()(
             std::array<std::array<std::size_t, N>, sizeof...(I)>& arr,
             std::array<std::vector<std::size_t>, sizeof...(I)> const& vec)
     {
@@ -67,8 +67,8 @@ public:
                 copy_n(csr_dyn.coalesc_idx().begin(),
                        HeadTensorIndex::mem_size() + 1,
                        m_coalesc_idx.begin());
-        detail::ArrayOfVectorsToArrayOfArrays<
-                std::make_index_sequence<sizeof...(TailTensorIndex)>>::run(m_idx, csr_dyn.idx());
+        detail::ArrayOfVectorsToArrayOfArrays<std::make_index_sequence<sizeof...(
+                TailTensorIndex)>>::operator()(m_idx, csr_dyn.idx());
         std::copy_n(csr_dyn.values().begin(), N, m_values.begin());
     }
 

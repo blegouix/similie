@@ -216,7 +216,7 @@ int main(int argc, char** argv)
             potential,
             metric,
             position);
-    laplacian.run(laplacian_tensor, potential);
+    laplacian(laplacian_tensor, potential);
     Kokkos::fence();
 
     auto position_host

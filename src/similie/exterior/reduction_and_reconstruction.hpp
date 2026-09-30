@@ -419,15 +419,15 @@ KOKKOS_FUNCTION double legacy_discrete_hodge_value_from_ids(
         return 0.;
     }
     double const primal_volume
-            = SimplexVolume<CellComplex::Primal, N, MetricType, PositionType, BatchElem>::
-                    template run<K>(metric, position, elem, source_ids);
+            = SimplexVolume<CellComplex::Primal, N, MetricType, PositionType, BatchElem>::template
+            operator()<K>(metric, position, elem, source_ids);
     if (primal_volume == 0.) {
         return 0.;
     }
 
     return static_cast<double>(hodge_permutation_sign<N>(source_ids, target_ids))
-           * DualSimplexVolume<Complex, N, MetricType, PositionType, BatchElem>::template run<
-                   K>(metric, position, elem, source_ids)
+           * DualSimplexVolume<Complex, N, MetricType, PositionType, BatchElem>::template
+           operator()<K>(metric, position, elem, source_ids)
            / (primal_volume * misc::factorial(K));
 }
 
@@ -485,7 +485,7 @@ struct Reduction
     template <
             misc::Specialization<tensor::Tensor> ReductionTensorType,
             misc::Specialization<tensor::Tensor> FormTensorType>
-    KOKKOS_FUNCTION static void run(
+    KOKKOS_FUNCTION static void operator()(
             ReductionTensorType reduced_tensor,
             FormTensorType form_tensor,
             PositionType position,
@@ -532,7 +532,7 @@ struct Reduction
             misc::Specialization<tensor::Tensor> ReductionTensorType,
             misc::Specialization<tensor::Tensor> FormTensorType,
             misc::Specialization<tensor::Tensor> MetricType>
-    KOKKOS_FUNCTION static void run(
+    KOKKOS_FUNCTION static void operator()(
             ReductionTensorType reduced_tensor,
             FormTensorType form_tensor,
             MetricType metric,
@@ -540,7 +540,7 @@ struct Reduction
             BatchElem elem)
     {
         if constexpr (Complex == CellComplex::Primal) {
-            run(reduced_tensor, form_tensor, position, elem);
+            operator()(reduced_tensor, form_tensor, position, elem);
         } else {
             static_assert(
                     Complex == CellComplex::CircumcentricDual,
@@ -722,7 +722,7 @@ struct Reduction
             }
             source_tensor(source_tensor.accessor().access_element(source_natural_elem)) = 1.;
 
-            run(target_tensor, source_tensor, metric, position, elem);
+            operator()(target_tensor, source_tensor, metric, position, elem);
 
             if constexpr (target_index_type::rank() == 0) {
                 return target_tensor.get(
@@ -811,7 +811,7 @@ struct Reconstruction
     template <
             misc::Specialization<tensor::Tensor> ReconstructedTensorType,
             misc::Specialization<tensor::Tensor> CochainTensorType>
-    KOKKOS_FUNCTION static void run(
+    KOKKOS_FUNCTION static void operator()(
             ReconstructedTensorType reconstructed_tensor,
             CochainTensorType cochain_tensor,
             PositionType position,

@@ -133,7 +133,8 @@ public:
     {
         sil::exterior::Coboundary<
                 sil::tensor::Covariant<sil::tensor::TensorNaturalIndex<SpatialIndex...>>,
-                PotentialScalarIndex>::run(magnetic_induction, evaluator, chain, lower_chain, elem);
+                PotentialScalarIndex>::
+        operator()(magnetic_induction, evaluator, chain, lower_chain, elem);
     }
 };
 
@@ -205,7 +206,7 @@ public:
             Elem elem)
     {
         sil::exterior::Coboundary<CoboundaryIndex, VectorPotentialIndex>::
-                run(magnetic_induction, evaluator, chain, lower_chain, elem);
+        operator()(magnetic_induction, evaluator, chain, lower_chain, elem);
     }
 
     template <class Index, class Elem>

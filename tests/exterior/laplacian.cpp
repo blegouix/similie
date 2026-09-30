@@ -705,7 +705,7 @@ TEST(Laplacian, Staged2D1Form)
                     potential,
                     metric,
                     position);
-    staged_laplacian.run(laplacian, potential);
+    staged_laplacian(laplacian, potential);
 
     ddc::host_for_each(
             laplacian.template domain<DDimX>()

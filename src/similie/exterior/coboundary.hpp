@@ -137,7 +137,7 @@ struct ComputeSimplex;
 template <std::size_t K, class... Tag, class LayoutStridedPolicy, class ExecSpace>
 struct ComputeSimplex<Chain<Simplex<K, Tag...>, LayoutStridedPolicy, ExecSpace>>
 {
-    KOKKOS_FUNCTION static Simplex<K + 1, Tag...> run(
+    KOKKOS_FUNCTION static Simplex<K + 1, Tag...> operator()(
             Chain<Simplex<K, Tag...>, LayoutStridedPolicy, ExecSpace> const& chain)
     {
         ddc::DiscreteVector<Tag...> vect {
@@ -167,9 +167,9 @@ struct TransposedCoboundary;
 template <misc::Specialization<Cochain> CochainType>
 struct Coboundary<CochainType>
 {
-    KOKKOS_FUNCTION static coboundary_t<CochainType>
-    run(CochainType
-                cochain) // Warning: only cochain.chain() produced using boundary() are supported
+    KOKKOS_FUNCTION static coboundary_t<CochainType> operator()(
+            CochainType
+                    cochain) // Warning: only cochain.chain() produced using boundary() are supported
     {
         assert(cochain.size() == 2 * (cochain.dimension() + 1)
                && "only cochain over the boundary of a single simplex is supported");
@@ -180,7 +180,8 @@ struct Coboundary<CochainType>
          */
 
         return coboundary_t<CochainType>(
-                detail::ComputeSimplex<typename CochainType::chain_type>::run(cochain.chain()),
+                detail::ComputeSimplex<typename CochainType::chain_type>::operator()(
+                        cochain.chain()),
                 cochain.integrate());
     }
 };
@@ -350,7 +351,7 @@ struct Coboundary<TagToAddToCochain, CochainTag>
                 return evaluator.value(basis_sampler, sampled_elem, cochain_elem);
             };
 
-            run(output_tensor, basis_evaluator, chain, lower_chain, elem);
+            operator()(output_tensor, basis_evaluator, chain, lower_chain, elem);
             stencil.mem(stencil_elem) = output_tensor(natural_elem);
         });
 
@@ -363,7 +364,7 @@ struct Coboundary<TagToAddToCochain, CochainTag>
             class ChainType,
             class LowerChainType,
             class Elem>
-    KOKKOS_FUNCTION static void run(
+    KOKKOS_FUNCTION static void operator()(
             CoboundaryTensorType coboundary_tensor,
             Evaluator evaluator,
             ChainType chain,
@@ -498,7 +499,7 @@ struct TransposedCoboundary<TagToAddToCochain, CochainTag>
                 return evaluator.value(basis_sampler, sampled_elem, cochain_elem);
             };
 
-            run(output_tensor, basis_evaluator, chain, lower_chain, elem);
+            operator()(output_tensor, basis_evaluator, chain, lower_chain, elem);
             stencil.mem(stencil_elem) = output_tensor(natural_elem);
         });
 
@@ -511,7 +512,7 @@ struct TransposedCoboundary<TagToAddToCochain, CochainTag>
             class ChainType,
             class LowerChainType,
             class Elem>
-    KOKKOS_FUNCTION static void run(
+    KOKKOS_FUNCTION static void operator()(
             CoboundaryTensorType coboundary_tensor,
             Evaluator evaluator,
             ChainType chain,
@@ -586,7 +587,7 @@ struct TransposedCoboundary<TagToAddToCochain, CochainTag>
 template <misc::Specialization<Cochain> CochainType>
 KOKKOS_FUNCTION coboundary_t<CochainType> coboundary(CochainType cochain)
 {
-    return Coboundary<CochainType>::run(cochain);
+    return Coboundary<CochainType>::operator()(cochain);
 }
 
 template <
@@ -620,12 +621,12 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
             exec_space,
             batch_dom,
             KOKKOS_LAMBDA(typename decltype(batch_dom)::discrete_element_type elem) {
-                Coboundary<TagToAddToCochain, CochainTag>::
-                        run(coboundary_tensor[elem],
-                            detail::ClampedTensorEvaluator<TensorType> {tensor},
-                            chain,
-                            lower_chain,
-                            elem);
+                Coboundary<TagToAddToCochain, CochainTag>::operator()(
+                        coboundary_tensor[elem],
+                        detail::ClampedTensorEvaluator<TensorType> {tensor},
+                        chain,
+                        lower_chain,
+                        elem);
             });
 
     return coboundary_tensor;
@@ -662,12 +663,12 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> transposed_coboun
             exec_space,
             batch_dom,
             KOKKOS_LAMBDA(typename decltype(batch_dom)::discrete_element_type elem) {
-                TransposedCoboundary<TagToAddToCochain, CochainTag>::
-                        run(coboundary_tensor[elem],
-                            detail::ZeroOutsideTensorEvaluator<TensorType> {tensor},
-                            chain,
-                            lower_chain,
-                            detail::forward_stencil_front(elem, tensor.non_indices_domain()));
+                TransposedCoboundary<TagToAddToCochain, CochainTag>::operator()(
+                        coboundary_tensor[elem],
+                        detail::ZeroOutsideTensorEvaluator<TensorType> {tensor},
+                        chain,
+                        lower_chain,
+                        detail::forward_stencil_front(elem, tensor.non_indices_domain()));
             });
 
     return coboundary_tensor;

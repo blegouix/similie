@@ -2724,7 +2724,7 @@ public:
 
         bool const use_divergence_gauge = use_divergence_gauge_3d();
         if (use_divergence_gauge) {
-            workspace.staged_codifferential->run(divergence_tensor, potential_tensor);
+            (*workspace.staged_codifferential)(divergence_tensor, potential_tensor);
         }
 
         double const gauge_penalty = m_gauge_penalty;
@@ -4272,7 +4272,7 @@ void fill_post_process_fields_on_cell_domain(
                 InPlaneInductionIndexSeq,
                 decltype(position),
                 ddc::DiscreteElement<magnetostatics_local::DDimX, magnetostatics_local::DDimY>>::
-                run(reconstructed_induction, reduced_induction, position, elem);
+        operator()(reconstructed_induction, reduced_induction, position, elem);
 
         std::array<double, 3> const magnetic_induction {
                 reconstructed_induction(
@@ -4448,7 +4448,7 @@ void fill_force_density_on_cell_domain(
             one_form_tensor(elem, one_form_tensor.accessor().template access_element<Y>())
                     = one_form[1];
         });
-        staged_codifferential.run(scalar_tensor, one_form_tensor);
+        staged_codifferential(scalar_tensor, one_form_tensor);
         ddc::host_for_each(cell_domain, [&](auto elem) {
             assign_output(elem, -scalar_tensor(elem, ddc::DiscreteElement<ScalarIndex>(0)));
         });
@@ -5647,29 +5647,34 @@ Result run_on_hexahedral_grid(
 
 } // namespace detail
 
-template <class Logger>
-Result run(
-        std::filesystem::path const& mesh_file,
-        std::filesystem::path const& output_view_file,
-        Inputs const& inputs,
-        solvers::StrongFormulationSolverSettings const& solver_settings,
-        Logger&& logger)
+struct Run
 {
-    auto const mesh = sil::onelab_interface::gmsh::parse_supported_msh2_mesh(mesh_file);
-    if (std::holds_alternative<sil::onelab_interface::gmsh::QuadrilateralMesh>(mesh)) {
-        return detail::run_on_quadrilateral_grid(
+    template <class Logger>
+    Result operator()(
+            std::filesystem::path const& mesh_file,
+            std::filesystem::path const& output_view_file,
+            Inputs const& inputs,
+            solvers::StrongFormulationSolverSettings const& solver_settings,
+            Logger&& logger) const
+    {
+        auto const mesh = sil::onelab_interface::gmsh::parse_supported_msh2_mesh(mesh_file);
+        if (std::holds_alternative<sil::onelab_interface::gmsh::QuadrilateralMesh>(mesh)) {
+            return detail::run_on_quadrilateral_grid(
+                    output_view_file,
+                    inputs,
+                    solver_settings,
+                    std::get<sil::onelab_interface::gmsh::QuadrilateralMesh>(mesh),
+                    std::forward<Logger>(logger));
+        }
+        return detail::run_on_hexahedral_grid(
                 output_view_file,
                 inputs,
                 solver_settings,
-                std::get<sil::onelab_interface::gmsh::QuadrilateralMesh>(mesh),
+                std::get<sil::onelab_interface::gmsh::HexahedralMesh>(mesh),
                 std::forward<Logger>(logger));
     }
-    return detail::run_on_hexahedral_grid(
-            output_view_file,
-            inputs,
-            solver_settings,
-            std::get<sil::onelab_interface::gmsh::HexahedralMesh>(mesh),
-            std::forward<Logger>(logger));
-}
+};
+
+inline constexpr Run run {};
 
 } // namespace similie::onelab_interface::magnetostatics_onelab

@@ -18,7 +18,7 @@ template <class... DDim>
 struct SelectFromTypeSeq<ddc::detail::TypeSeq<DDim...>>
 {
     template <class T>
-    static KOKKOS_FUNCTION auto run(T t)
+    static KOKKOS_FUNCTION auto operator()(T t)
     {
         return ddc::select<DDim...>(t);
     }
@@ -29,7 +29,7 @@ struct SelectFromTypeSeq<ddc::detail::TypeSeq<DDim...>>
 template <class Seq, class T>
 KOKKOS_FUNCTION auto select_from_type_seq(T t)
 {
-    return detail::SelectFromTypeSeq<Seq>::run(t);
+    return detail::SelectFromTypeSeq<Seq>::operator()(t);
 }
 
 } // namespace misc

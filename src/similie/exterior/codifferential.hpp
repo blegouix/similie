@@ -222,13 +222,20 @@ struct Codifferential<
                             codifferential_accessor.domain());
             sil::tensor::Tensor codifferential_tensor(codifferential_span);
 
-            run(codifferential_tensor, basis_stencil, metric, position, chain, lower_chain, elem);
+            operator()(
+                    codifferential_tensor,
+                    basis_stencil,
+                    metric,
+                    position,
+                    chain,
+                    lower_chain,
+                    elem);
             stencil.mem(stencil_elem) = codifferential_tensor(natural_elem);
         });
         return stencil;
     }
 
-    KOKKOS_FUNCTION static void run(
+    KOKKOS_FUNCTION static void operator()(
             auto codifferential_tensor,
             TensorType tensor,
             MetricType metric,
@@ -286,16 +293,16 @@ struct Codifferential<
                     MetricType,
                     PositionType,
                     typename TensorType::non_indices_domain_t::discrete_element_type>::
-                    run(dual_tensor, tensor[sampled_elem], metric, position, sampled_elem);
+            operator()(dual_tensor, tensor[sampled_elem], metric, position, sampled_elem);
             return dual_tensor.mem(dual_elem);
         };
 
-        TransposedCoboundary<TagToRemoveFromCochain, dual_tensor_index>::
-                run(dual_codifferential,
-                    dual_evaluator,
-                    chain,
-                    lower_chain,
-                    detail::forward_stencil_front(elem, tensor.non_indices_domain()));
+        TransposedCoboundary<TagToRemoveFromCochain, dual_tensor_index>::operator()(
+                dual_codifferential,
+                dual_evaluator,
+                chain,
+                lower_chain,
+                detail::forward_stencil_front(elem, tensor.non_indices_domain()));
 
         DiscreteHodgeStar<
                 CellComplex::CircumcentricDual,
@@ -306,7 +313,7 @@ struct Codifferential<
                 MetricType,
                 PositionType,
                 typename TensorType::non_indices_domain_t::discrete_element_type>::
-                run(codifferential_tensor, dual_codifferential, metric, position, elem);
+        operator()(codifferential_tensor, dual_codifferential, metric, position, elem);
         if constexpr ((TagToRemoveFromCochain::size() * (CochainTag::rank() + 1) + 1) % 2 == 1) {
             codifferential_tensor *= -1;
         }
@@ -439,8 +446,9 @@ public:
                 TargetHodgeOutputIndices>(exec_space, *m_dual_hodge_star, metric, position);
     }
 
-    CodifferentialTensorType run(CodifferentialTensorType codifferential_tensor, TensorType tensor)
-            const
+    CodifferentialTensorType operator()(
+            CodifferentialTensorType codifferential_tensor,
+            TensorType tensor) const
     {
         auto exec_space = m_exec_space;
         auto hodge_star = *m_hodge_star;
@@ -481,7 +489,7 @@ public:
                                     dual_codifferential_accessor.domain());
                     sil::tensor::Tensor dual_codifferential(dual_codifferential_span);
 
-                    TransposedCoboundary<TagToRemoveFromCochain, DualTensorIndex>::run(
+                    TransposedCoboundary<TagToRemoveFromCochain, DualTensorIndex>::operator()(
                             dual_codifferential,
                             [&](auto sampled_elem, auto dual_elem) {
                                 if (!misc::domain_contains(
@@ -609,7 +617,7 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
                                 dual_codifferential_accessor.domain());
                 sil::tensor::Tensor dual_codifferential(dual_codifferential_span);
 
-                TransposedCoboundary<TagToRemoveFromCochain, dual_tensor_index>::run(
+                TransposedCoboundary<TagToRemoveFromCochain, dual_tensor_index>::operator()(
                         dual_codifferential,
                         [&](auto sampled_elem, auto dual_elem) {
                             if (!misc::domain_contains(
@@ -656,10 +664,9 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
 {
     static_assert(tensor::is_covariant_v<TagToRemoveFromCochain>);
     return make_staged_codifferential<
-                   MetricIndex,
-                   TagToRemoveFromCochain,
-                   CochainTag>(exec_space, tensor, metric, position)
-            .run(codifferential_tensor, tensor);
+            MetricIndex,
+            TagToRemoveFromCochain,
+            CochainTag>(exec_space, tensor, metric, position)(codifferential_tensor, tensor);
 }
 
 } // namespace exterior

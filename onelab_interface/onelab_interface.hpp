@@ -714,7 +714,7 @@ public:
     {
     }
 
-    int run(int argc, char** argv)
+    int operator()(int argc, char** argv)
     {
         OnelabArguments parsed_arguments;
         if (!parse_onelab_arguments(argc, argv, parsed_arguments)) {

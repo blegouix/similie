@@ -7,5 +7,5 @@
 int main(int argc, char** argv)
 {
     similie::onelab_interface::OnelabInterface interface;
-    return interface.run(argc, argv);
+    return interface(argc, argv);
 }

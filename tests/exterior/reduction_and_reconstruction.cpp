@@ -111,7 +111,7 @@ void run_reduction_test(
             = ddc::to_type_seq_t<typename sil::tensor::TensorAccessor<FormIndex>::natural_domain_t>;
     ddc::host_for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
         sil::exterior::Reduction<IndexSeq, decltype(position), ddc::DiscreteElement<DDimX, DDimY>>::
-                run(reduced[elem], form[elem], position, elem);
+        operator()(reduced[elem], form[elem], position, elem);
     });
 
     [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<
@@ -190,10 +190,10 @@ void run_reconstruction_test(SetupForm&& setup_form, CheckValue&& check_value)
             = ddc::to_type_seq_t<typename sil::tensor::TensorAccessor<FormIndex>::natural_domain_t>;
     ddc::host_for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
         sil::exterior::Reduction<IndexSeq, decltype(position), ddc::DiscreteElement<DDimX, DDimY>>::
-                run(reduced[elem], form[elem], position, elem);
+        operator()(reduced[elem], form[elem], position, elem);
         sil::exterior::
                 Reconstruction<IndexSeq, decltype(position), ddc::DiscreteElement<DDimX, DDimY>>::
-                        run(reconstructed[elem], reduced[elem], position, elem);
+                operator()(reconstructed[elem], reduced[elem], position, elem);
     });
 
     [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<

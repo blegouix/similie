@@ -85,11 +85,16 @@ auto assemble_hamiltonian(Problem const& problem)
             problem.scalar_field.coupling_power);
 }
 
-inline void run()
+struct Run
 {
-    throw std::runtime_error(
-            "ScalarFieldWithPowerCoupling .silpro files are parsed successfully, but ONELAB "
-            "execution is not implemented yet in this interface");
-}
+    void operator()() const
+    {
+        throw std::runtime_error(
+                "ScalarFieldWithPowerCoupling .silpro files are parsed successfully, but ONELAB "
+                "execution is not implemented yet in this interface");
+    }
+};
+
+inline constexpr Run run {};
 
 } // namespace similie::onelab_interface::scalar_field_with_power_coupling_onelab

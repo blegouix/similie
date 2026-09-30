@@ -21,7 +21,7 @@ template <class... CommonDDim>
 struct ClampToDomain<ddc::detail::TypeSeq<CommonDDim...>>
 {
     template <class BatchDomain, class Elem>
-    KOKKOS_FUNCTION static Elem run(BatchDomain const& batch_domain, Elem elem)
+    KOKKOS_FUNCTION static Elem operator()(BatchDomain const& batch_domain, Elem elem)
     {
         ddc::DiscreteDomain<CommonDDim...> const common_domain
                 = select_from_type_seq<ddc::detail::TypeSeq<CommonDDim...>>(batch_domain);
@@ -43,7 +43,7 @@ KOKKOS_FUNCTION Elem clamp_to_domain(BatchDomain const& batch_domain, Elem const
 {
     using CommonSeq
             = misc::type_seq_intersect_t<ddc::to_type_seq_t<Elem>, ddc::to_type_seq_t<BatchDomain>>;
-    return detail::ClampToDomain<CommonSeq>::run(batch_domain, elem);
+    return detail::ClampToDomain<CommonSeq>::operator()(batch_domain, elem);
 }
 
 } // namespace misc

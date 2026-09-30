@@ -92,7 +92,7 @@ TensorType codifferential_of_coboundary(
                         derivative_span(derivative_alloc.data(), derivative_accessor.domain());
                 sil::tensor::Tensor derivative_tensor(derivative_span);
 
-                Coboundary<LaplacianDummyIndex, CochainTag>::run(
+                Coboundary<LaplacianDummyIndex, CochainTag>::operator()(
                         derivative_tensor,
                         [&](auto sampled_elem, auto cochain_elem) {
                             auto const clamped_elem = misc::
@@ -127,7 +127,7 @@ TensorType codifferential_of_coboundary(
                                 dual_codifferential_accessor.domain());
                 sil::tensor::Tensor dual_codifferential(dual_codifferential_span);
 
-                TransposedCoboundary<LaplacianDummyIndex, coboundary_dual_tensor_index>::run(
+                TransposedCoboundary<LaplacianDummyIndex, coboundary_dual_tensor_index>::operator()(
                         dual_codifferential,
                         [&](auto sampled_elem, auto dual_elem) {
                             if (!misc::domain_contains(
@@ -311,7 +311,7 @@ public:
                 position);
     }
 
-    TensorType run(TensorType laplacian_tensor, TensorType tensor)
+    TensorType operator()(TensorType laplacian_tensor, TensorType tensor)
     {
         return detail::codifferential_of_coboundary<
                 MetricIndex,
@@ -598,7 +598,7 @@ public:
                 position);
     }
 
-    TensorType run(TensorType laplacian_tensor, TensorType tensor)
+    TensorType operator()(TensorType laplacian_tensor, TensorType tensor)
     {
         auto exec_spaces = Kokkos::Experimental::partition_space(m_exec_space, 1, 1);
 
@@ -624,8 +624,7 @@ public:
                 exec_spaces[1],
                 std::move(*m_hodge_star),
                 std::move(*m_dual_hodge_star),
-                std::move(*m_dual_tensor_buffer))
-                .run(*m_codifferential_tensor_buffer, tensor);
+                std::move(*m_dual_tensor_buffer))(*m_codifferential_tensor_buffer, tensor);
         sil::exterior::
                 deriv<LaplacianDummyIndex, codifferential_index_t<LaplacianDummyIndex, CochainTag>>(
                         exec_spaces[1],
@@ -790,7 +789,7 @@ public:
                 position);
     }
 
-    TensorType run(TensorType laplacian_tensor, TensorType tensor)
+    TensorType operator()(TensorType laplacian_tensor, TensorType tensor)
     {
         StagedCodifferential<
                 MetricIndex,
@@ -803,8 +802,7 @@ public:
                 m_exec_space,
                 std::move(*m_hodge_star),
                 std::move(*m_dual_hodge_star),
-                std::move(*m_dual_tensor_buffer))
-                .run(*m_codifferential_tensor_buffer, tensor);
+                std::move(*m_dual_tensor_buffer))(*m_codifferential_tensor_buffer, tensor);
         return sil::exterior::
                 deriv<LaplacianDummyIndex, codifferential_index_t<LaplacianDummyIndex, CochainTag>>(
                         m_exec_space,

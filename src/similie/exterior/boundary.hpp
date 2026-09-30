@@ -105,7 +105,7 @@ struct Boundary
             boundary_t<SimplexType>,
             typename AllocationType::array_layout,
             typename AllocationType::memory_space>
-    run(AllocationType allocation, SimplexType simplex)
+    operator()(AllocationType allocation, SimplexType simplex)
     {
         Chain<boundary_t<SimplexType>,
               typename AllocationType::array_layout,
@@ -136,10 +136,11 @@ struct Boundary
             boundary_t<SimplexType>,
             typename AllocationType::array_layout,
             typename AllocationType::memory_space>
-    run(AllocationType allocation,
-        Chain<SimplexType,
-              typename AllocationType::array_layout,
-              typename AllocationType::memory_space> chain)
+    operator()(
+            AllocationType allocation,
+            Chain<SimplexType,
+                  typename AllocationType::array_layout,
+                  typename AllocationType::memory_space> chain)
     {
         Chain<boundary_t<SimplexType>,
               typename AllocationType::array_layout,
@@ -147,13 +148,13 @@ struct Boundary
                 boundary_chain(allocation);
         for (auto i = chain.begin(); i < chain.end(); ++i) {
             std::size_t const distance = Kokkos::Experimental::distance(chain.begin(), i);
-            Boundary::
-                    run(Kokkos::
-                                subview(allocation,
-                                        std::pair<std::size_t, std::size_t>(
-                                                2 * SimplexType::dimension() * distance,
-                                                2 * SimplexType::dimension() * (distance + 1))),
-                        *i);
+            Boundary::operator()(
+                    Kokkos::
+                            subview(allocation,
+                                    std::pair<std::size_t, std::size_t>(
+                                            2 * SimplexType::dimension() * distance,
+                                            2 * SimplexType::dimension() * (distance + 1))),
+                    *i);
             boundary_chain += 2 * SimplexType::dimension();
         }
         boundary_chain.optimize();
@@ -168,7 +169,7 @@ KOKKOS_FUNCTION Chain<
         typename AllocationType::memory_space>
 boundary(AllocationType allocation, SimplexType simplex)
 {
-    return Boundary<AllocationType, SimplexType>::run(allocation, simplex);
+    return Boundary<AllocationType, SimplexType>::operator()(allocation, simplex);
 }
 
 template <class MemorySpace = Kokkos::HostSpace, class SimplexType>
@@ -199,7 +200,7 @@ boundary(
               typename AllocationType::array_layout,
               typename AllocationType::memory_space> chain)
 {
-    return Boundary<AllocationType, SimplexType>::run(allocation, chain);
+    return Boundary<AllocationType, SimplexType>::operator()(allocation, chain);
 }
 
 } // namespace exterior

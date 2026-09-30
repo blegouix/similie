@@ -141,13 +141,14 @@ TEST(Codifferential, NonStaged2D1Form)
                             std::decay_t<decltype(tensor)>,
                             std::decay_t<decltype(metric)>,
                             std::decay_t<decltype(position)>>::
-                            run(codifferential_tensor[elem],
-                                tensor,
-                                metric,
-                                position,
-                                chain,
-                                lower_chain,
-                                elem);
+                    operator()(
+                            codifferential_tensor[elem],
+                            tensor,
+                            metric,
+                            position,
+                            chain,
+                            lower_chain,
+                            elem);
                     auto const output_elem = codifferential_tensor.accessor().domain().front();
                     auto const stencil = sil::exterior::Codifferential<
                             MetricIndex<X, Y>,
@@ -260,6 +261,6 @@ TEST(Codifferential, Staged2D1Form)
                 sil::tensor::Covariant<Mu2>,
                 sil::tensor::Covariant<
                         Mu2>>(Kokkos::DefaultHostExecutionSpace(), tensor, metric, position);
-        staged_codifferential.run(codifferential_tensor, tensor);
+        staged_codifferential(codifferential_tensor, tensor);
     });
 }

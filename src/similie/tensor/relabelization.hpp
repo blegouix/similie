@@ -57,7 +57,7 @@ template <class OldIndex, class NewIndex>
 struct RelabelizeIndexIn
 {
     template <class... DDim>
-    static constexpr auto run(ddc::DiscreteElement<DDim...> elem)
+    static constexpr auto operator()(ddc::DiscreteElement<DDim...> elem)
     {
         return ddc::DiscreteElement<
                 typename detail::RelabelizeIndex<DDim, OldIndex, NewIndex>::type...>(
@@ -65,7 +65,7 @@ struct RelabelizeIndexIn
     }
 
     template <class... DDim>
-    static constexpr auto run(ddc::DiscreteVector<DDim...> vect)
+    static constexpr auto operator()(ddc::DiscreteVector<DDim...> vect)
     {
         return ddc::DiscreteVector<
                 typename detail::RelabelizeIndex<DDim, OldIndex, NewIndex>::type...>(
@@ -73,7 +73,7 @@ struct RelabelizeIndexIn
     }
 
     template <class... DDim>
-    static constexpr auto run(ddc::DiscreteDomain<DDim...> dom)
+    static constexpr auto operator()(ddc::DiscreteDomain<DDim...> dom)
     {
         return relabelize_index_in_t<ddc::DiscreteDomain<DDim...>, OldIndex, NewIndex>(
                 relabelize_index_in<OldIndex, NewIndex>(dom.front()),
@@ -86,7 +86,7 @@ struct RelabelizeIndexIn
 template <class OldIndex, class NewIndex, class T>
 constexpr relabelize_index_in_t<T, OldIndex, NewIndex> relabelize_index_in(T t)
 {
-    return detail::RelabelizeIndexIn<OldIndex, NewIndex>::run(t);
+    return detail::RelabelizeIndexIn<OldIndex, NewIndex>::operator()(t);
 }
 
 namespace detail {
@@ -222,10 +222,10 @@ template <class OldIndices, class NewIndices, std::size_t I = 0>
 struct RelabelizeIndicesIn
 {
     template <class... DDim>
-    static constexpr auto run(ddc::DiscreteElement<DDim...> elem)
+    static constexpr auto operator()(ddc::DiscreteElement<DDim...> elem)
     {
         if constexpr (I != ddc::type_seq_size_v<OldIndices>) {
-            return RelabelizeIndicesIn<OldIndices, NewIndices, I + 1>::run(
+            return RelabelizeIndicesIn<OldIndices, NewIndices, I + 1>::operator()(
                     relabelize_index_in<
                             ddc::type_seq_element_t<I, OldIndices>,
                             ddc::type_seq_element_t<I, NewIndices>>(elem));
@@ -235,10 +235,10 @@ struct RelabelizeIndicesIn
     }
 
     template <class... DDim>
-    static constexpr auto run(ddc::DiscreteVector<DDim...> vect)
+    static constexpr auto operator()(ddc::DiscreteVector<DDim...> vect)
     {
         if constexpr (I != ddc::type_seq_size_v<OldIndices>) {
-            return RelabelizeIndicesIn<OldIndices, NewIndices, I + 1>::run(
+            return RelabelizeIndicesIn<OldIndices, NewIndices, I + 1>::operator()(
                     relabelize_index_in<
                             ddc::type_seq_element_t<I, OldIndices>,
                             ddc::type_seq_element_t<I, NewIndices>>(vect));
@@ -248,10 +248,10 @@ struct RelabelizeIndicesIn
     }
 
     template <class... DDim>
-    static constexpr auto run(ddc::DiscreteDomain<DDim...> dom)
+    static constexpr auto operator()(ddc::DiscreteDomain<DDim...> dom)
     {
         if constexpr (I != ddc::type_seq_size_v<OldIndices>) {
-            return RelabelizeIndicesIn<OldIndices, NewIndices, I + 1>::run(
+            return RelabelizeIndicesIn<OldIndices, NewIndices, I + 1>::operator()(
                     relabelize_index_in<
                             ddc::type_seq_element_t<I, OldIndices>,
                             ddc::type_seq_element_t<I, NewIndices>>(dom));
@@ -267,7 +267,7 @@ template <class OldIndices, class NewIndices, class T>
 constexpr relabelize_indices_in_t<T, OldIndices, NewIndices> relabelize_indices_in(T t)
 {
     static_assert(ddc::type_seq_size_v<OldIndices> == ddc::type_seq_size_v<NewIndices>);
-    return detail::RelabelizeIndicesIn<OldIndices, NewIndices>::run(t);
+    return detail::RelabelizeIndicesIn<OldIndices, NewIndices>::operator()(t);
 }
 
 namespace detail {

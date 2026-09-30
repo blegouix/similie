@@ -547,7 +547,7 @@ int main(int argc, char** argv)
         }
 
         // Compute minus the divergence \delta \pi of the spatial moments
-        codifferential.run(minus_spatial_moments_div, spatial_moments);
+        codifferential(minus_spatial_moments_div, spatial_moments);
 
         // Compute dpi_0/dx^0 = dH/dphi - \delta \pi from the DeDonder-Weyl equation then perform the whole-step advection
         ddc::parallel_for_each(

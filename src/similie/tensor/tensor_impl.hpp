@@ -149,12 +149,12 @@ struct NbDimsBeforeIndex;
 template <class Index, class IndexHead, class... IndexTail>
 struct NbDimsBeforeIndex<Index, ddc::detail::TypeSeq<IndexHead, IndexTail...>>
 {
-    static constexpr std::size_t run(std::size_t nb_dims_before_index)
+    static constexpr std::size_t operator()(std::size_t nb_dims_before_index)
     {
         if constexpr (std::is_same_v<IndexHead, Index>) {
             return nb_dims_before_index;
         } else {
-            return NbDimsBeforeIndex<Index, ddc::detail::TypeSeq<IndexTail...>>::run(
+            return NbDimsBeforeIndex<Index, ddc::detail::TypeSeq<IndexTail...>>::operator()(
                     nb_dims_before_index + IndexHead::rank());
         }
     }
@@ -193,7 +193,7 @@ struct IdFromTypeSeqDims;
 template <class Index, class... Subindex, class... CDim>
 struct IdFromTypeSeqDims<Index, ddc::DiscreteDomain<Subindex...>, ddc::detail::TypeSeq<CDim...>>
 {
-    static constexpr std::size_t run()
+    static constexpr std::size_t operator()()
     {
         static_assert(sizeof...(Subindex) == sizeof...(CDim));
         if constexpr (TensorNatIndex<Index>) {
@@ -223,8 +223,9 @@ static constexpr std::size_t access_id()
                 type_seq_dims_at_ints_t<
                         ddc::detail::TypeSeq<CDim...>,
                         offset_index_seq_t<
-                                NbDimsBeforeIndex<Index, IndicesTypeSeq>::run(0),
-                                std::make_integer_sequence<std::size_t, Index::rank()>>>>::run();
+                                NbDimsBeforeIndex<Index, IndicesTypeSeq>::operator()(0),
+                                std::make_integer_sequence<std::size_t, Index::rank()>>>>::
+        operator()();
     } else {
         return IdFromTypeSeqDims<
                 Index,
@@ -232,8 +233,9 @@ static constexpr std::size_t access_id()
                 type_seq_dims_at_ints_t<
                         ddc::detail::TypeSeq<CDim...>,
                         offset_index_seq_t<
-                                NbDimsBeforeIndex<Index, IndicesTypeSeq>::run(0),
-                                std::make_integer_sequence<std::size_t, Index::rank()>>>>::run();
+                                NbDimsBeforeIndex<Index, IndicesTypeSeq>::operator()(0),
+                                std::make_integer_sequence<std::size_t, Index::rank()>>>>::
+        operator()();
     }
 }
 
@@ -244,7 +246,7 @@ template <class Index, class... Subindex>
 struct IdFromElem<Index, ddc::DiscreteDomain<Subindex...>>
 {
     template <class Elem>
-    static constexpr std::size_t run(Elem natural_elem)
+    static constexpr std::size_t operator()(Elem natural_elem)
     {
         if constexpr (TensorNatIndex<Index>) {
             return Index::access_id(natural_elem.template uid<Index>());
@@ -260,9 +262,9 @@ template <class Index, class IndicesTypeSeq, class... NaturalIndex>
 static constexpr std::size_t access_id(ddc::DiscreteElement<NaturalIndex...> natural_elem)
 {
     if constexpr (TensorNatIndex<Index>) {
-        return IdFromElem<Index, ddc::DiscreteDomain<Index>>::run(natural_elem);
+        return IdFromElem<Index, ddc::DiscreteDomain<Index>>::operator()(natural_elem);
     } else {
-        return IdFromElem<Index, typename Index::subindices_domain_t>::run(natural_elem);
+        return IdFromElem<Index, typename Index::subindices_domain_t>::operator()(natural_elem);
     }
 }
 
@@ -429,7 +431,9 @@ template <
 struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInterest, IndexTail...>
 {
     template <class Elem>
-    KOKKOS_FUNCTION static TensorField::element_type run(TensorField tensor_field, Elem const& elem)
+    KOKKOS_FUNCTION static TensorField::element_type operator()(
+            TensorField tensor_field,
+            Elem const& elem)
     {
         /*
          ----- Important warning -----
@@ -446,7 +450,7 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
                                             TensorField,
                                             Element,
                                             ddc::detail::TypeSeq<IndexHead..., IndexInterest>,
-                                            IndexTail...>::run(tensor_field_, elem_);
+                                            IndexTail...>::operator()(tensor_field_, elem_);
                                 },
                         tensor_field,
                         elem);
@@ -455,7 +459,7 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
                         TensorField,
                         Element,
                         ddc::detail::TypeSeq<IndexHead..., IndexInterest>,
-                        IndexTail...>::run(tensor_field, elem);
+                        IndexTail...>::operator()(tensor_field, elem);
             }
         } else {
             if constexpr (TensorIndex<IndexInterest>) {
@@ -519,7 +523,7 @@ template <class InterestDim>
 struct LambdaMemElem
 {
     template <class Elem>
-    KOKKOS_FUNCTION static ddc::DiscreteElement<InterestDim> run(Elem elem)
+    KOKKOS_FUNCTION static ddc::DiscreteElement<InterestDim> operator()(Elem elem)
     {
         return ddc::DiscreteElement<InterestDim>(elem);
     }
@@ -529,7 +533,7 @@ template <TensorIndex InterestDim>
 struct LambdaMemElem<InterestDim>
 {
     template <class Elem>
-    KOKKOS_FUNCTION static ddc::DiscreteElement<InterestDim> run(Elem elem)
+    KOKKOS_FUNCTION static ddc::DiscreteElement<InterestDim> operator()(Elem elem)
     {
         if constexpr (InterestDim::is_explicitely_stored_tensor) {
             std::size_t const mem_id
@@ -697,7 +701,7 @@ public:
                 LayoutStridedPolicy,
                 MemorySpace>::
         operator()(ddc::DiscreteElement<DDim...>(
-                detail::LambdaMemElem<DDim>::run(ddc::DiscreteElement<DDim>(delems...))...));
+                detail::LambdaMemElem<DDim>::operator()(ddc::DiscreteElement<DDim>(delems...))...));
     }
 
     template <class... ODDim>
@@ -709,8 +713,8 @@ public:
                 ddc::DiscreteDomain<DDim...>,
                 LayoutStridedPolicy,
                 MemorySpace>::
-        operator[](
-                ddc::DiscreteElement<ODDim...>(detail::LambdaMemElem<ODDim>::run(slice_spec)...));
+        operator[](ddc::DiscreteElement<ODDim...>(
+                detail::LambdaMemElem<ODDim>::operator()(slice_spec)...));
         return Tensor<
                 ElementType,
                 ddc::detail::convert_type_seq_to_discrete_domain_t<ddc::type_seq_remove_t<
@@ -733,7 +737,7 @@ public:
                            MemorySpace>,
                     ddc::DiscreteElement<DDim...>,
                     ddc::detail::TypeSeq<>,
-                    DDim...>::run(*this, ddc::DiscreteElement<DDim...>(delems...));
+                    DDim...>::operator()(*this, ddc::DiscreteElement<DDim...>(delems...));
         }
     }
 
@@ -832,18 +836,19 @@ struct NaturalTensorProd<
             ddc::DiscreteDomain<HeadDDim1..., TailDDim2...>,
             LayoutStridedPolicy,
             MemorySpace>
-    run(Tensor<ElementType,
-               ddc::DiscreteDomain<HeadDDim1..., TailDDim2...>,
-               LayoutStridedPolicy,
-               MemorySpace> prod_tensor,
-        Tensor<ElementType,
-               ddc::DiscreteDomain<HeadDDim1..., ContractDDim...>,
-               LayoutStridedPolicy,
-               MemorySpace> tensor1,
-        Tensor<ElementType,
-               ddc::DiscreteDomain<ContractDDim..., TailDDim2...>,
-               LayoutStridedPolicy,
-               MemorySpace> tensor2)
+    operator()(
+            Tensor<ElementType,
+                   ddc::DiscreteDomain<HeadDDim1..., TailDDim2...>,
+                   LayoutStridedPolicy,
+                   MemorySpace> prod_tensor,
+            Tensor<ElementType,
+                   ddc::DiscreteDomain<HeadDDim1..., ContractDDim...>,
+                   LayoutStridedPolicy,
+                   MemorySpace> tensor1,
+            Tensor<ElementType,
+                   ddc::DiscreteDomain<ContractDDim..., TailDDim2...>,
+                   LayoutStridedPolicy,
+                   MemorySpace> tensor2)
     {
         ddc::device_for_each(
                 prod_tensor.domain(),
@@ -894,7 +899,7 @@ Tensor<ElementType, ddc::DiscreteDomain<ProdDDim...>, LayoutStridedPolicy, Memor
                     ddc::detail::TypeSeq<ProdDDim...>>,
             ddc::type_seq_remove_t<
                     ddc::detail::TypeSeq<ProdDDim...>,
-                    ddc::detail::TypeSeq<DDim1...>>>::run(prod_tensor, tensor1, tensor2);
+                    ddc::detail::TypeSeq<DDim1...>>>::operator()(prod_tensor, tensor1, tensor2);
 }
 
 namespace detail {
@@ -909,7 +914,7 @@ struct PrintTensor<
         ddc::DiscreteDomain<>>
 {
     template <class TensorType>
-    static std::string run(
+    static std::string operator()(
             std::string& str,
             TensorType const& tensor,
             ddc::DiscreteElement<HeadDDim...> i)
@@ -932,7 +937,7 @@ struct PrintTensor<
         ddc::DiscreteDomain<HeadOfTailDDim, TailOfTailDDim...>>
 {
     template <class TensorType>
-    static std::string run(
+    static std::string operator()(
             std::string& str,
             TensorType const& tensor,
             ddc::DiscreteElement<HeadDDim...> i)
@@ -944,7 +949,7 @@ struct PrintTensor<
                     ddc::DiscreteDomain<HeadDDim..., InterestDDim>,
                     ddc::DiscreteDomain<HeadOfTailDDim>,
                     ddc::DiscreteDomain<TailOfTailDDim...>>::
-                    run(str, tensor, ddc::DiscreteElement<HeadDDim..., InterestDDim>(i, elem));
+            operator()(str, tensor, ddc::DiscreteElement<HeadDDim..., InterestDDim>(i, elem));
         }
         str += "]\n";
         return str;
@@ -967,7 +972,7 @@ std::ostream& operator<<(std::ostream& os, TensorType const& tensor)
                     ddc::detail::TypeSeq<ddc::type_seq_element_t<
                             0,
                             ddc::to_type_seq_t<typename TensorType::natural_domain_t>>>>>>::
-                    run(str, tensor, ddc::DiscreteElement<>());
+            operator()(str, tensor, ddc::DiscreteElement<>());
     return os;
 }
 

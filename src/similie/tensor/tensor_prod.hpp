@@ -26,7 +26,7 @@ struct SubindicesDomain<T<SubIndex...>>
 {
     using type = ddc::DiscreteDomain<SubIndex...>;
 
-    static constexpr type run()
+    static constexpr type operator()()
     {
         return ddc::DiscreteDomain<SubIndex...>(
                 ddc::DiscreteElement<SubIndex...>(ddc::DiscreteElement<SubIndex>(0)...),
@@ -43,7 +43,7 @@ using subindices_domain_t = detail::SubindicesDomain<T>::type;
 template <class T>
 static constexpr subindices_domain_t<T> subindices_domain()
 {
-    return detail::SubindicesDomain<T>::run();
+    return detail::SubindicesDomain<T>::operator()();
 };
 
 // Check tensor compatibility
@@ -58,7 +58,7 @@ struct CheckTensorsCompatibility<
         ddc::detail::TypeSeq<Index1...>,
         ddc::detail::TypeSeq<Index2...>>
 {
-    KOKKOS_FUNCTION static constexpr void run()
+    KOKKOS_FUNCTION static constexpr void operator()()
     {
         static_assert(std::is_same_v<
                       ddc::type_seq_remove_t<
@@ -90,7 +90,7 @@ struct CheckTensorsCompatibility<
 template <class ProdDDims, class Indices1, class Indices2>
 constexpr void check_tensors_compatibility()
 {
-    return detail::CheckTensorsCompatibility<ProdDDims, Indices1, Indices2>::run();
+    return detail::CheckTensorsCompatibility<ProdDDims, Indices1, Indices2>::operator()();
 }
 
 // Any-any product into Any (general case not optimized)
@@ -126,12 +126,13 @@ struct TensorProdAnyAnyAny<
             ddc::DiscreteDomain<ProdDDim...>,
             LayoutStridedPolicy,
             MemorySpace>
-    run(Tensor<ElementType, ddc::DiscreteDomain<ProdDDim...>, LayoutStridedPolicy, MemorySpace>
-                prod_tensor,
-        Tensor<ElementType, ddc::DiscreteDomain<Index1...>, LayoutStridedPolicy, MemorySpace>
-                tensor1,
-        Tensor<ElementType, ddc::DiscreteDomain<Index2...>, LayoutStridedPolicy, MemorySpace>
-                tensor2)
+    operator()(
+            Tensor<ElementType, ddc::DiscreteDomain<ProdDDim...>, LayoutStridedPolicy, MemorySpace>
+                    prod_tensor,
+            Tensor<ElementType, ddc::DiscreteDomain<Index1...>, LayoutStridedPolicy, MemorySpace>
+                    tensor1,
+            Tensor<ElementType, ddc::DiscreteDomain<Index2...>, LayoutStridedPolicy, MemorySpace>
+                    tensor2)
     {
         tensor::TensorAccessor<ContractDDim...> contract_accessor;
         ddc::DiscreteDomain<ContractDDim...> contract_dom = contract_accessor.natural_domain();
@@ -214,9 +215,10 @@ Tensor<ElementType, ddc::DiscreteDomain<ProdDDim...>, LayoutStridedPolicy, Memor
                             ddc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>,
                     uncharacterize_t<ddc::to_type_seq_t<
                             ddc::cartesian_prod_t<natural_domain_t<Index1>...>>>>>::
-            run(uncharacterize_tensor(prod_tensor),
-                uncharacterize_tensor(tensor1),
-                uncharacterize_tensor(tensor2));
+    operator()(
+            uncharacterize_tensor(prod_tensor),
+            uncharacterize_tensor(tensor1),
+            uncharacterize_tensor(tensor2));
     return prod_tensor;
 }
 
@@ -240,15 +242,17 @@ struct TensorProdNatYoungNat<
             ddc::DiscreteDomain<HeadDDim1..., TailDDim2...>,
             LayoutStridedPolicy,
             MemorySpace>
-    run(Tensor<ElementType,
-               ddc::DiscreteDomain<HeadDDim1..., TailDDim2...>,
-               Kokkos::layout_right,
-               Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
-        Tensor<ElementType, ddc::DiscreteDomain<Index1>, LayoutStridedPolicy, MemorySpace> tensor1,
-        Tensor<ElementType,
-               ddc::DiscreteDomain<ContractDDim..., TailDDim2...>,
-               LayoutStridedPolicy,
-               MemorySpace> tensor2)
+    operator()(
+            Tensor<ElementType,
+                   ddc::DiscreteDomain<HeadDDim1..., TailDDim2...>,
+                   Kokkos::layout_right,
+                   Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
+            Tensor<ElementType, ddc::DiscreteDomain<Index1>, LayoutStridedPolicy, MemorySpace>
+                    tensor1,
+            Tensor<ElementType,
+                   ddc::DiscreteDomain<ContractDDim..., TailDDim2...>,
+                   LayoutStridedPolicy,
+                   MemorySpace> tensor2)
     {
         /*
         typename TensorYoungTableauIndex<DDim1...>::young_tableau young_tableau;
@@ -305,7 +309,7 @@ tensor_prod(
             ddc::type_seq_remove_t<
                     ddc::detail::TypeSeq<ProdDDim...>,
                     ddc::to_type_seq_t<typename Index1::subindices_domain_t>>>::
-            run(prod_tensor, tensor1, tensor2);
+    operator()(prod_tensor, tensor1, tensor2);
 }
 
 // Young-young product
@@ -333,12 +337,15 @@ struct TensorProdNatYoungYoung<
             ddc::DiscreteDomain<HeadDDim1..., TailDDim2...>,
             LayoutStridedPolicy,
             MemorySpace>
-    run(Tensor<ElementType,
-               ddc::DiscreteDomain<HeadDDim1..., TailDDim2...>,
-               Kokkos::layout_right,
-               Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
-        Tensor<ElementType, ddc::DiscreteDomain<Index1>, LayoutStridedPolicy, MemorySpace> tensor1,
-        Tensor<ElementType, ddc::DiscreteDomain<Index2>, LayoutStridedPolicy, MemorySpace> tensor2)
+    operator()(
+            Tensor<ElementType,
+                   ddc::DiscreteDomain<HeadDDim1..., TailDDim2...>,
+                   Kokkos::layout_right,
+                   Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
+            Tensor<ElementType, ddc::DiscreteDomain<Index1>, LayoutStridedPolicy, MemorySpace>
+                    tensor1,
+            Tensor<ElementType, ddc::DiscreteDomain<Index2>, LayoutStridedPolicy, MemorySpace>
+                    tensor2)
     {
         /*
         typename TensorYoungTableauIndex<DDim1...>::young_tableau young_tableau;
@@ -405,9 +412,10 @@ tensor_prod(
                             ddc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>,
                     uncharacterize_t<
                             ddc::to_type_seq_t<ddc::cartesian_prod_t<natural_domain_t<Index1>>>>>>::
-            run(uncharacterize_tensor(prod_tensor),
-                uncharacterize_tensor(tensor1),
-                uncharacterize_tensor(tensor2));
+    operator()(
+            uncharacterize_tensor(prod_tensor),
+            uncharacterize_tensor(tensor1),
+            uncharacterize_tensor(tensor2));
 
     return prod_tensor;
 }
@@ -441,14 +449,15 @@ struct TensorProdYoungAnyAny<
 {
     template <class ElementType, class LayoutStridedPolicy, class MemorySpace>
     static Tensor<ElementType, ddc::DiscreteDomain<ProdDDim...>, LayoutStridedPolicy, MemorySpace>
-    run(Tensor<ElementType,
-               ddc::DiscreteDomain<ProdDDim...>,
-               Kokkos::layout_right,
-               Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
-        Tensor<ElementType, ddc::DiscreteDomain<Index1...>, LayoutStridedPolicy, MemorySpace>
-                tensor1,
-        Tensor<ElementType, ddc::DiscreteDomain<Index2...>, LayoutStridedPolicy, MemorySpace>
-                tensor2)
+    operator()(
+            Tensor<ElementType,
+                   ddc::DiscreteDomain<ProdDDim...>,
+                   Kokkos::layout_right,
+                   Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
+            Tensor<ElementType, ddc::DiscreteDomain<Index1...>, LayoutStridedPolicy, MemorySpace>
+                    tensor1,
+            Tensor<ElementType, ddc::DiscreteDomain<Index2...>, LayoutStridedPolicy, MemorySpace>
+                    tensor2)
     {
         /*
         typename TensorYoungTableauIndex<DDim1...>::young_tableau young_tableau;
@@ -536,9 +545,10 @@ tensor_prod(
                             ddc::to_type_seq_t<ddc::cartesian_prod_t<natural_domain_t<ProdDDim>>>>,
                     uncharacterize_t<ddc::to_type_seq_t<
                             ddc::cartesian_prod_t<natural_domain_t<Index1>...>>>>>::
-            run(uncharacterize_tensor(prod_tensor),
-                uncharacterize_tensor(tensor1),
-                uncharacterize_tensor(tensor2));
+    operator()(
+            uncharacterize_tensor(prod_tensor),
+            uncharacterize_tensor(tensor1),
+            uncharacterize_tensor(tensor2));
     return prod_tensor;
 }
 #endif

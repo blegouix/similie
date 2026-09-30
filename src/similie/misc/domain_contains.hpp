@@ -20,7 +20,7 @@ struct IsInDomain;
 template <class... DDim>
 struct IsInDomain<ddc::detail::TypeSeq<DDim...>>
 {
-    static KOKKOS_FUNCTION bool run(
+    static KOKKOS_FUNCTION bool operator()(
             ddc::DiscreteDomain<DDim...> dom,
             ddc::DiscreteElement<DDim...> elem)
     {
@@ -39,12 +39,13 @@ KOKKOS_FUNCTION bool domain_contains(
     return detail::IsInDomain<misc::type_seq_intersect_t<
             ddc::detail::TypeSeq<DDim...>,
             ddc::detail::TypeSeq<ODDim...>>>::
-            run(select_from_type_seq<misc::type_seq_intersect_t<
-                        ddc::detail::TypeSeq<ODDim...>,
-                        ddc::detail::TypeSeq<DDim...>>>(dom),
-                select_from_type_seq<misc::type_seq_intersect_t<
-                        ddc::detail::TypeSeq<ODDim...>,
-                        ddc::detail::TypeSeq<DDim...>>>(elem));
+    operator()(
+            select_from_type_seq<misc::type_seq_intersect_t<
+                    ddc::detail::TypeSeq<ODDim...>,
+                    ddc::detail::TypeSeq<DDim...>>>(dom),
+            select_from_type_seq<misc::type_seq_intersect_t<
+                    ddc::detail::TypeSeq<ODDim...>,
+                    ddc::detail::TypeSeq<DDim...>>>(elem));
 }
 
 } // namespace misc
