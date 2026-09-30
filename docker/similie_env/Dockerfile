@@ -68,6 +68,13 @@ fi
 
 # Ginkgo
 RUN git clone -b v1.11.0 --depth 1 https://github.com/ginkgo-project/ginkgo.git
+# FIXME Workaround, CUDA 13.4 misparses the dependent element_type in Ginkgo's factory macro.
+# Dereferencing the shared_ptr yields the same type without a dependent scope.
+RUN if [ "${BACKEND}" = "cuda" ]; then \
+      grep -Fq 'typename decltype(_name)::element_type' ginkgo/include/ginkgo/core/base/abstract_factory.hpp \
+      && sed -i 's/typename decltype(_name)::element_type/std::remove_reference_t<decltype(*_name)>/' \
+           ginkgo/include/ginkgo/core/base/abstract_factory.hpp; \
+    fi
 RUN if [ "${BACKEND}" = "cpu" ]; then \
       cmake -DCMAKE_BUILD_TYPE=Release \
             -DGINKGO_BUILD_OMP=ON \
