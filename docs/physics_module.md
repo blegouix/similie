@@ -61,7 +61,7 @@ from a displacement gradient. `Strain2D::xy` stores tensorial shear strain,
 \f[
 \mathcal H(u,\varepsilon)
 = \mu\,\varepsilon:\varepsilon
-  + \frac{\lambda}{2}(\operatorname{tr}\varepsilon)^2-f\cdot u,
+  + \frac{\lambda}{2}(\mathrm{tr}\,\varepsilon)^2-f\cdot u,
 \qquad
 \mu=\frac{E}{2(1+\nu)},\quad
 \lambda=\frac{E\nu}{(1+\nu)(1-(d-1)\nu)}.
@@ -71,7 +71,7 @@ from a displacement gradient. `Strain2D::xy` stores tensorial shear strain,
 the body force. The generated 2D form uses plane stress; the 3D form uses the
 three-dimensional Lamé coefficient. The generated
 `LinearElasticStrainToStress` law has the component form
-\f$\sigma_{ij}=2\mu\varepsilon_{ij}+\lambda\operatorname{tr}(\varepsilon)\delta_{ij}\f$;
+\f$\sigma_{ij}=2\mu\varepsilon_{ij}+\lambda\mathrm{tr}(\varepsilon)\delta_{ij}\f$;
 its `stiffness` and `trace_coupling` parameters represent \f$2\mu\f$ and
 \f$\lambda\f$. `CauchyStress2D` stores the resulting stress and provides
 `von_mises()`.

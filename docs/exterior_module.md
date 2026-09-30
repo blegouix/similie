@@ -41,7 +41,9 @@ An important relation is the Poincarré Lemma \f$dd = 0\f$. It leads to the very
 
 ### Exterior covariant derivative
 
-`CovariantDerivative<SpatialIndex...>` extends the cubical exterior derivative
+\important This operator and documentation is fully AI-generated.
+
+`CovariantDerivative<SpatialIndex...>` extends the discrete exterior derivative
 to cochains with values in a vector bundle. Spatial dimension, form degree and
 fibre rank are independent: a scalar, vector or flattened tensor may be the
 value of a face cochain.
@@ -72,6 +74,9 @@ component by component, and its square vanishes. General transports need not
 give a square-zero operator: compositions along different paths can differ,
 representing discrete curvature. No metric, material law or quadrature rule
 enters this incidence operation.
+
+The 2D elasticity use of this derivative is described in the
+\ref physics_module "physics module".
 
 ### Simplex
 
@@ -163,7 +168,7 @@ This is exactly what `SimplexVolume` computes: it first extracts the local edge 
 
 ### Reduction and reconstruction
 
-Reduction and reconstruction are the bridges between pointwise differential-form coefficients and geometric cochains. Schematically, reduction is the same as integrating a density field along simplices, providing a natural way to encode a differential form on a mesh so that the geometric measures are already absorbed into the cochain values. Reconstruction is the inverse operation. They always act on a chosen cell complex, selected by the `CellComplex` tag. The reduction maps a coefficient \f$k\f$-form to the cochain obtained by integrating it on the corresponding \f$k\f$-cell:
+Reduction and reconstruction connect pointwise differential-form coefficients and geometric cochains. Reduction integrates a piecewise-constant coefficient form over mesh cells, absorbing their geometry into the cochain values. Primal reconstruction recovers the coefficients by inverting this cell-local map. The `CellComplex` tag selects the cells used for reduction:
 
 \f\[
 R_k(\omega, \sigma^k) = \int_{\sigma^k} \omega
@@ -174,18 +179,19 @@ Depending on the chosen `CellComplex`, \f$\sigma^k\f$ is interpreted as:
 - a circumcentric dual \f$k\f$-cell for `CellComplex::CircumcentricDual`,
 - a barycentric dual \f$k\f$-cell for `CellComplex::BarycentricDual`.
 
-The reconstruction is the inverse map assuming a piecewise-constant ansatz:
+For a fixed cell, the reduction of a piecewise-constant form is a linear map between its coefficient basis and the cochain basis. Primal reconstruction inverts that local matrix:
 
 \f\[
-Q_k(c, \sigma^k) = \frac{c(\sigma^k)}{|\sigma^k|}
+c_I = \sum_J R_{IJ}\,\omega_J,\qquad
+\omega_J = \sum_I (R^{-1})_{JI}\,c_I.
 \f\]
 
-Here again, the meaning of \f$\sigma^k\f$ depends on the selected cell complex. For `CellComplex::Primal`, reduction and reconstruction only need the position field because the required measure is purely primal. No metric needs to be passed. For dual cell complexes, the dual volumes depend on the metric, so dual reduction needs both the position and the metric.
+For orthogonal cells this can reduce to division by a cell measure, but a skew geometry can couple different coefficient components. Primal reduction and reconstruction use the position field without a metric. Circumcentric-dual reduction also uses the metric.
 
 In the current implementation:
-- primal reduction/reconstruction are diagonal local operators based on primal simplex volumes;
+- primal reduction assembles a local matrix from edge vectors, and primal reconstruction inverts it;
 - circumcentric-dual reduction is the metric-dependent dual geometric map used by the discrete Hodge star;
-- reconstruction is currently only implemented where the piecewise-constant inverse is well defined locally. Unsupported `CellComplex` choices are rejected with `static_assert`.
+- barycentric-dual reconstruction is rejected with `static_assert`.
 
 ### Hodge star operator
 
@@ -206,7 +212,7 @@ The discrete Hodge star acts on cochains. For a \f$k\f$-simplex \f$\sigma\f$ in 
 - Application of the continuous Hodge star,
 - Reduction of the resulting \f$(n-k)\f$-form onto the chosen dual cell complex.
 
-This composition reproduces exactly the usual diagonal DEC factor:
+For an orthogonal primal and dual pair, this composition gives the usual diagonal DEC factor:
 
 \f\[
 \star_\sigma = \frac{|\star \sigma|}{|\sigma|}
@@ -237,33 +243,3 @@ The generic DEC Laplacian combines the exterior derivative and the codifferentia
 \f\[
 \Delta = \delta d + d \delta
 \f\]
-
-### Bundle-valued exterior covariant derivative
-
-\important This operator and documentation is fully AI-generated.
-
-`CovariantDerivative<SpatialIndex...>` computes a topological covariant
-coboundary. The dimension and the bundle rank are independent.
-Its `cochain_value<k, rank>` accepts a cubical k-cochain sampler and parallel
-transport matrices `T(to, from)`. Cochain components live in the fibre at the
-lower vertex of their cell. For increasing directions I, the operator is
-
-\f\[
-(D_T c)_I(v)=\sum_{j=0}^{k}(-1)^j
-\left[T(v,v+e_{I_j})c_{I\setminus I_j}(v+e_{I_j})
-      -c_{I\setminus I_j}(v)\right].
-\f\]
-
-Here vertex numbers are reference-cell bit masks and the sampler receives a
-direction mask and a lower vertex. The callback must provide invertible
-transport with `T(v,v)=Id`, reverse transport the inverse, and explicitly chosen
-paths when more than one edge is traversed. Identity transport gives the ordinary
-cubical coboundary. In a curved connection `D_T D_T` generally is nonzero.
-Under a fibre basis change G(v), cochains transform by G(v) and transport by
-`G(to) T(to,from) G(from)^(-1)`, so the result transforms in its base fibre.
-This is a based cubical construction; it does not claim the simplicial averaging
-or all the Bianchi identities of
-[Braune et al., A Discrete Exterior Calculus of Bundle-valued Forms](https://arxiv.org/abs/2406.05383).
-
-The 2D elasticity use of this derivative is described in the
-\ref physics_module "physics module".
