@@ -44,19 +44,28 @@ var NAVTREE =
     [ "The exterior module", "exterior_module.html", [
       [ "Why integro-differential calculus is important for physics ?", "exterior_module.html#autotoc_md15", null ],
       [ "Discrete exterior calculus", "exterior_module.html#autotoc_md16", [
-        [ "Simplex", "exterior_module.html#autotoc_md17", null ],
-        [ "Chain", "exterior_module.html#autotoc_md18", null ],
-        [ "Boundary operator", "exterior_module.html#autotoc_md19", null ],
-        [ "Cosimplex", "exterior_module.html#autotoc_md20", null ],
-        [ "Cochain", "exterior_module.html#autotoc_md21", null ],
-        [ "Coboundary operator", "exterior_module.html#autotoc_md22", null ],
-        [ "Transposed coboundary operator", "exterior_module.html#autotoc_md23", null ],
-        [ "Primal and dual cell complexes", "exterior_module.html#autotoc_md24", null ],
-        [ "Volume operator", "exterior_module.html#autotoc_md25", null ],
-        [ "Reduction and reconstruction", "exterior_module.html#autotoc_md26", null ],
-        [ "Hodge star operator", "exterior_module.html#autotoc_md27", null ],
-        [ "Codifferential", "exterior_module.html#autotoc_md28", null ],
-        [ "Laplacian", "exterior_module.html#autotoc_md29", null ]
+        [ "Exterior covariant derivative", "exterior_module.html#autotoc_md17", null ],
+        [ "Simplex", "exterior_module.html#autotoc_md18", null ],
+        [ "Chain", "exterior_module.html#autotoc_md19", null ],
+        [ "Boundary operator", "exterior_module.html#autotoc_md20", null ],
+        [ "Cosimplex", "exterior_module.html#autotoc_md21", null ],
+        [ "Cochain", "exterior_module.html#autotoc_md22", null ],
+        [ "Coboundary operator", "exterior_module.html#autotoc_md23", null ],
+        [ "Transposed coboundary operator", "exterior_module.html#autotoc_md24", null ],
+        [ "Primal and dual cell complexes", "exterior_module.html#autotoc_md25", null ],
+        [ "Volume operator", "exterior_module.html#autotoc_md26", null ],
+        [ "Reduction and reconstruction", "exterior_module.html#autotoc_md27", null ],
+        [ "Hodge star operator", "exterior_module.html#autotoc_md28", null ],
+        [ "Codifferential", "exterior_module.html#autotoc_md29", null ],
+        [ "Laplacian", "exterior_module.html#autotoc_md30", null ],
+        [ "Bundle-valued exterior covariant derivative", "exterior_module.html#autotoc_md31", null ]
+      ] ]
+    ] ],
+    [ "The physics module", "physics_module.html", [
+      [ "Scalar field", "physics_module.html#autotoc_md32", null ],
+      [ "Magnetostatics", "physics_module.html#autotoc_md33", null ],
+      [ "Elasticity", "physics_module.html#autotoc_md34", [
+        [ "Local material Hodge in 2D", "physics_module.html#autotoc_md35", null ]
       ] ]
     ] ],
     [ "The ONELAB interface", "onelab_interface.html", null ],
@@ -89,10 +98,10 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "Running.html",
-"classsil_1_1exterior_1_1CochainIterator.html#ad51e514068dec8bdef9a9fcf2b3085f4",
-"classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html#a847b8f7cb1026f95b7b5a6be3d90dbd9",
-"namespacemembers_type.html",
-"structsil_1_1tensor_1_1MetricProd.html"
+"classsil_1_1exterior_1_1CochainIterator.html#accfa2f96fd8a102079455b4923974027",
+"classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html",
+"namespacegenerate__cpp__constitutive__law.html#a8b30a1fb9e6951c6a808f79626737fab",
+"structsil_1_1exterior_1_1Reconstruction.html#a645faba94d43ae5e1cf51920faa40ca1"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

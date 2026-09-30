@@ -7,6 +7,10 @@ var annotated_dup =
       [ "HamiltonianDefinition", "classgenerate__cpp__hamiltonian_1_1HamiltonianDefinition.html", null ],
       [ "SymbolicFunctionDefinition", "classgenerate__cpp__hamiltonian_1_1SymbolicFunctionDefinition.html", null ]
     ] ],
+    [ "linear_elasticity", "namespacelinear__elasticity.html", [
+      [ "LinearElasticityHamiltonian", "classlinear__elasticity_1_1LinearElasticityHamiltonian.html", null ],
+      [ "LinearElasticStrainToStress", "classlinear__elasticity_1_1LinearElasticStrainToStress.html", null ]
+    ] ],
     [ "linear_magnetostatics", "namespacelinear__magnetostatics.html", [
       [ "LinearMagneticInductionToMagneticField", "classlinear__magnetostatics_1_1LinearMagneticInductionToMagneticField.html", null ],
       [ "LinearMagnetostaticsHamiltonian", "classlinear__magnetostatics_1_1LinearMagnetostaticsHamiltonian.html", null ]
@@ -34,10 +38,12 @@ var annotated_dup =
         [ "Codifferential< MetricIndex, TagToRemoveFromCochain, CochainTag, TensorType, MetricType, PositionType >", "structsil_1_1exterior_1_1Codifferential_3_01MetricIndex_00_01TagToRemoveFromCochain_00_01Cochain2aac1536eace81f70cbdf910df4f70bc.html", null ],
         [ "ContinuousHodgeStar", "structsil_1_1exterior_1_1ContinuousHodgeStar.html", null ],
         [ "Cosimplex", "classsil_1_1exterior_1_1Cosimplex.html", "classsil_1_1exterior_1_1Cosimplex" ],
+        [ "CovariantDerivative", "classsil_1_1exterior_1_1CovariantDerivative.html", null ],
         [ "DiscreteHodgeStar", "structsil_1_1exterior_1_1DiscreteHodgeStar.html", null ],
         [ "DualSimplexVolume", "structsil_1_1exterior_1_1DualSimplexVolume.html", null ],
         [ "FillReconstructionOperatorMem", "structsil_1_1exterior_1_1FillReconstructionOperatorMem.html", "structsil_1_1exterior_1_1FillReconstructionOperatorMem" ],
         [ "FillReductionOperatorMem", "structsil_1_1exterior_1_1FillReductionOperatorMem.html", "structsil_1_1exterior_1_1FillReductionOperatorMem" ],
+        [ "IdentityTransport", "structsil_1_1exterior_1_1IdentityTransport.html", "structsil_1_1exterior_1_1IdentityTransport" ],
         [ "IndexForCodifferentialOfCoboundaryInLaplacian", "structsil_1_1exterior_1_1IndexForCodifferentialOfCoboundaryInLaplacian.html", null ],
         [ "LocalChain", "classsil_1_1exterior_1_1LocalChain.html", "classsil_1_1exterior_1_1LocalChain" ],
         [ "LocalChainIterator", "classsil_1_1exterior_1_1LocalChainIterator.html", "classsil_1_1exterior_1_1LocalChainIterator" ],
@@ -87,6 +93,13 @@ var annotated_dup =
     ] ],
     [ "similie", "namespacesimilie.html", [
       [ "physics", "namespacesimilie_1_1physics.html", [
+        [ "elasticity", "namespacesimilie_1_1physics_1_1elasticity.html", [
+          [ "CauchyStress2D", "structsimilie_1_1physics_1_1elasticity_1_1CauchyStress2D.html", "structsimilie_1_1physics_1_1elasticity_1_1CauchyStress2D" ],
+          [ "DisplacementToStrain", "structsimilie_1_1physics_1_1elasticity_1_1DisplacementToStrain.html", null ],
+          [ "ElasticMaterialHodge2D", "classsimilie_1_1physics_1_1elasticity_1_1ElasticMaterialHodge2D.html", "classsimilie_1_1physics_1_1elasticity_1_1ElasticMaterialHodge2D" ],
+          [ "Strain2D", "structsimilie_1_1physics_1_1elasticity_1_1Strain2D.html", "structsimilie_1_1physics_1_1elasticity_1_1Strain2D" ],
+          [ "StrainTensorIndex", "structsimilie_1_1physics_1_1elasticity_1_1StrainTensorIndex.html", null ]
+        ] ],
         [ "magnetostatics", "namespacesimilie_1_1physics_1_1magnetostatics.html", [
           [ "MagneticVectorPotentialToMagneticInduction", "namespacesimilie_1_1physics_1_1magnetostatics.html#classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction", null ],
           [ "MagneticVectorPotentialToMagneticInduction< SpatialIndex... >", "classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4.html", "classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4" ],

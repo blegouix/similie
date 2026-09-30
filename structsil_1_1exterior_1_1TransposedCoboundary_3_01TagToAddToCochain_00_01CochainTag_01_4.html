@@ -147,14 +147,14 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a38a1831b5b872974989efada3c150c07" id="r_a38a1831b5b872974989efada3c150c07"><td class="memTemplParams" colspan="2">template&lt;class Evaluator , class ChainType , class LowerChainType , class Elem , class NaturalElem &gt; </td></tr>
 <tr class="memitem:a38a1831b5b872974989efada3c150c07"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a38a1831b5b872974989efada3c150c07">value</a> (Evaluator evaluator, ChainType chain, LowerChainType lower_chain, Elem elem, NaturalElem natural_elem)</td></tr>
 <tr class="separator:a38a1831b5b872974989efada3c150c07"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7b6128263c583b9fee51dff5da8874f1" id="r_a7b6128263c583b9fee51dff5da8874f1"><td class="memTemplParams" colspan="2">template&lt;class CoboundaryTensorType , class Evaluator , class ChainType , class LowerChainType , class Elem &gt; </td></tr>
-<tr class="memitem:a7b6128263c583b9fee51dff5da8874f1"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a7b6128263c583b9fee51dff5da8874f1">run</a> (CoboundaryTensorType coboundary_tensor, Evaluator evaluator, ChainType chain, LowerChainType lower_chain, Elem elem)</td></tr>
-<tr class="separator:a7b6128263c583b9fee51dff5da8874f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a952fb7d47c411df4faa3aa4a240d0d8e" id="r_a952fb7d47c411df4faa3aa4a240d0d8e"><td class="memTemplParams" colspan="2">template&lt;class CoboundaryTensorType , class Evaluator , class ChainType , class LowerChainType , class Elem &gt; </td></tr>
+<tr class="memitem:a952fb7d47c411df4faa3aa4a240d0d8e"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a952fb7d47c411df4faa3aa4a240d0d8e">operator()</a> (CoboundaryTensorType coboundary_tensor, Evaluator evaluator, ChainType chain, LowerChainType lower_chain, Elem elem)</td></tr>
+<tr class="separator:a952fb7d47c411df4faa3aa4a240d0d8e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag&gt;<br />
 struct sil::exterior::TransposedCoboundary&lt; TagToAddToCochain, CochainTag &gt;</div>
-<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00431">431</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00439">439</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a38a1831b5b872974989efada3c150c07" name="a38a1831b5b872974989efada3c150c07"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a38a1831b5b872974989efada3c150c07">&#9670;&#160;</a></span>value()</h2>
@@ -202,12 +202,12 @@ template&lt;class Evaluator , class ChainType , class LowerChainType , class Ele
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00434">434</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00442">442</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a7b6128263c583b9fee51dff5da8874f1" name="a7b6128263c583b9fee51dff5da8874f1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7b6128263c583b9fee51dff5da8874f1">&#9670;&#160;</a></span>run()</h2>
+<a id="a952fb7d47c411df4faa3aa4a240d0d8e" name="a952fb7d47c411df4faa3aa4a240d0d8e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a952fb7d47c411df4faa3aa4a240d0d8e">&#9670;&#160;</a></span>operator()()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -220,7 +220,7 @@ template&lt;class CoboundaryTensorType , class Evaluator , class ChainType , cla
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">static KOKKOS_FUNCTION void <a class="el" href="namespacesil_1_1exterior.html#structsil_1_1exterior_1_1TransposedCoboundary">sil::exterior::TransposedCoboundary</a>&lt; TagToAddToCochain, CochainTag &gt;::run </td>
+          <td class="memname">static KOKKOS_FUNCTION void <a class="el" href="namespacesil_1_1exterior.html#structsil_1_1exterior_1_1TransposedCoboundary">sil::exterior::TransposedCoboundary</a>&lt; TagToAddToCochain, CochainTag &gt;::operator() </td>
           <td>(</td>
           <td class="paramtype">CoboundaryTensorType</td>          <td class="paramname"><span class="paramname"><em>coboundary_tensor</em></span>, </td>
         </tr>
@@ -252,7 +252,7 @@ template&lt;class CoboundaryTensorType , class Evaluator , class ChainType , cla
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00523">523</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="coboundary_8hpp_source.html#l00515">515</a> of file <a class="el" href="coboundary_8hpp_source.html">coboundary.hpp</a>.</p>
 
 </div>
 </div>

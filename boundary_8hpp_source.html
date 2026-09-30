@@ -238,7 +238,7 @@ $(function(){initNavTree('boundary_8hpp_source.html',''); initResizable(true); }
 <div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>            <span class="keyword">typename</span> AllocationType::array_layout,</div>
 <div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>            <span class="keyword">typename</span> AllocationType::memory_space&gt;</div>
 <div class="foldopen" id="foldopen00108" data-start="{" data-end="}">
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1Boundary.html#aab04aedaba1fc15a74d1d454c5a86b50">  108</a></span>    <a class="code hl_function" href="structsil_1_1exterior_1_1Boundary.html#aab04aedaba1fc15a74d1d454c5a86b50">run</a>(AllocationType allocation, SimplexType simplex)</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1Boundary.html#a14d7d8fde6fa411828a66e34446eacb4">  108</a></span>    <a class="code hl_function" href="structsil_1_1exterior_1_1Boundary.html#a14d7d8fde6fa411828a66e34446eacb4">operator()</a>(AllocationType allocation, SimplexType simplex)</div>
 <div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>    {</div>
 <div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>        <a class="code hl_class" href="classsil_1_1exterior_1_1Chain.html">Chain&lt;boundary_t&lt;SimplexType&gt;</a>,</div>
 <div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>              <span class="keyword">typename</span> AllocationType::array_layout,</div>
@@ -271,95 +271,96 @@ $(function(){initNavTree('boundary_8hpp_source.html',''); initResizable(true); }
 <div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>            <span class="keyword">typename</span> AllocationType::array_layout,</div>
 <div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>            <span class="keyword">typename</span> AllocationType::memory_space&gt;</div>
 <div class="foldopen" id="foldopen00139" data-start="{" data-end="}">
-<div class="line"><a id="l00139" name="l00139"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1Boundary.html#a2139f43c6b8a6ce7fdc243f1d6a89ec1">  139</a></span>    <a class="code hl_function" href="structsil_1_1exterior_1_1Boundary.html#a2139f43c6b8a6ce7fdc243f1d6a89ec1">run</a>(AllocationType allocation,</div>
-<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span>        <a class="code hl_class" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt;SimplexType,</div>
-<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>              <span class="keyword">typename</span> AllocationType::array_layout,</div>
-<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>              <span class="keyword">typename</span> AllocationType::memory_space&gt; chain)</div>
-<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>    {</div>
-<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>        <a class="code hl_class" href="classsil_1_1exterior_1_1Chain.html">Chain&lt;boundary_t&lt;SimplexType&gt;</a>,</div>
-<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>              <span class="keyword">typename</span> AllocationType::array_layout,</div>
-<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>              <span class="keyword">typename</span> AllocationType::memory_space&gt;</div>
-<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>                boundary_chain(allocation);</div>
-<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>        <span class="keywordflow">for</span> (<span class="keyword">auto</span> i = chain.begin(); i &lt; chain.end(); ++i) {</div>
-<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>            std::size_t <span class="keyword">const</span> distance = Kokkos::Experimental::distance(chain.begin(), i);</div>
-<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>            <a class="code hl_function" href="structsil_1_1exterior_1_1Boundary.html#aab04aedaba1fc15a74d1d454c5a86b50">Boundary::</a></div>
-<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span><a class="code hl_function" href="structsil_1_1exterior_1_1Boundary.html#aab04aedaba1fc15a74d1d454c5a86b50">                    run</a>(Kokkos::</div>
-<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>                                subview(allocation,</div>
-<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>                                        std::pair&lt;std::size_t, std::size_t&gt;(</div>
-<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>                                                2 * SimplexType::dimension() * distance,</div>
-<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>                                                2 * SimplexType::dimension() * (distance + 1))),</div>
-<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>                        *i);</div>
-<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>            boundary_chain += 2 * SimplexType::dimension();</div>
-<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>        }</div>
-<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>        boundary_chain.<a class="code hl_function" href="classsil_1_1exterior_1_1Chain.html#a7f05af158ce6268c3ce5a401bd7925a1">optimize</a>();</div>
-<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>        <span class="keywordflow">return</span> boundary_chain;</div>
-<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>    }</div>
+<div class="line"><a id="l00139" name="l00139"></a><span class="lineno"><a class="line" href="structsil_1_1exterior_1_1Boundary.html#a219efa8a3c3bcd529584f1ffefe69c8e">  139</a></span>    <a class="code hl_function" href="structsil_1_1exterior_1_1Boundary.html#a219efa8a3c3bcd529584f1ffefe69c8e">operator()</a>(</div>
+<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span>            AllocationType allocation,</div>
+<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>            <a class="code hl_class" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt;SimplexType,</div>
+<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>                  <span class="keyword">typename</span> AllocationType::array_layout,</div>
+<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>                  <span class="keyword">typename</span> AllocationType::memory_space&gt; chain)</div>
+<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>    {</div>
+<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>        <a class="code hl_class" href="classsil_1_1exterior_1_1Chain.html">Chain&lt;boundary_t&lt;SimplexType&gt;</a>,</div>
+<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>              <span class="keyword">typename</span> AllocationType::array_layout,</div>
+<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>              <span class="keyword">typename</span> AllocationType::memory_space&gt;</div>
+<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>                boundary_chain(allocation);</div>
+<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>        <span class="keywordflow">for</span> (<span class="keyword">auto</span> i = chain.begin(); i &lt; chain.end(); ++i) {</div>
+<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>            std::size_t <span class="keyword">const</span> distance = Kokkos::Experimental::distance(chain.begin(), i);</div>
+<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>            <a class="code hl_function" href="structsil_1_1exterior_1_1Boundary.html#a14d7d8fde6fa411828a66e34446eacb4">Boundary::operator()</a>(</div>
+<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>                    Kokkos::</div>
+<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>                            subview(allocation,</div>
+<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>                                    std::pair&lt;std::size_t, std::size_t&gt;(</div>
+<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>                                            2 * SimplexType::dimension() * distance,</div>
+<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>                                            2 * SimplexType::dimension() * (distance + 1))),</div>
+<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>                    *i);</div>
+<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>            boundary_chain += 2 * SimplexType::dimension();</div>
+<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>        }</div>
+<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>        boundary_chain.<a class="code hl_function" href="classsil_1_1exterior_1_1Chain.html#a7f05af158ce6268c3ce5a401bd7925a1">optimize</a>();</div>
+<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>        <span class="keywordflow">return</span> boundary_chain;</div>
+<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>    }</div>
 </div>
-<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>};</div>
+<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>};</div>
 </div>
-<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span> </div>
-<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span><span class="keyword">template</span> &lt;misc::Specialization&lt;Kokkos::View&gt; AllocationType, <span class="keyword">class</span> SimplexType&gt;</div>
-<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>KOKKOS_FUNCTION <a class="code hl_function" href="namespacesil_1_1exterior.html#a44d7a21937a15c4687c17dbb94778c2f">Chain</a>&lt;</div>
-<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>        <a class="code hl_typedef" href="namespacesil_1_1exterior.html#a52bc67c02d8ba34a3eeb34de1dd21df8">boundary_t&lt;SimplexType&gt;</a>,</div>
-<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>        <span class="keyword">typename</span> AllocationType::array_layout,</div>
-<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>        <span class="keyword">typename</span> AllocationType::memory_space&gt;</div>
-<div class="foldopen" id="foldopen00169" data-start="{" data-end="}">
-<div class="line"><a id="l00169" name="l00169"></a><span class="lineno"><a class="line" href="namespacesil_1_1exterior.html#ab67124170cc5aa39c400687dc9e9e439">  169</a></span><a class="code hl_function" href="namespacesil_1_1exterior.html#ab67124170cc5aa39c400687dc9e9e439">boundary</a>(AllocationType allocation, SimplexType simplex)</div>
-<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span>{</div>
-<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="structsil_1_1exterior_1_1Boundary.html#aab04aedaba1fc15a74d1d454c5a86b50">Boundary&lt;AllocationType, SimplexType&gt;::run</a>(allocation, simplex);</div>
-<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>}</div>
+<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span> </div>
+<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span><span class="keyword">template</span> &lt;misc::Specialization&lt;Kokkos::View&gt; AllocationType, <span class="keyword">class</span> SimplexType&gt;</div>
+<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>KOKKOS_FUNCTION <a class="code hl_function" href="namespacesil_1_1exterior.html#a44d7a21937a15c4687c17dbb94778c2f">Chain</a>&lt;</div>
+<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>        <a class="code hl_typedef" href="namespacesil_1_1exterior.html#a52bc67c02d8ba34a3eeb34de1dd21df8">boundary_t&lt;SimplexType&gt;</a>,</div>
+<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>        <span class="keyword">typename</span> AllocationType::array_layout,</div>
+<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>        <span class="keyword">typename</span> AllocationType::memory_space&gt;</div>
+<div class="foldopen" id="foldopen00170" data-start="{" data-end="}">
+<div class="line"><a id="l00170" name="l00170"></a><span class="lineno"><a class="line" href="namespacesil_1_1exterior.html#ab67124170cc5aa39c400687dc9e9e439">  170</a></span><a class="code hl_function" href="namespacesil_1_1exterior.html#ab67124170cc5aa39c400687dc9e9e439">boundary</a>(AllocationType allocation, SimplexType simplex)</div>
+<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>{</div>
+<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="structsil_1_1exterior_1_1Boundary.html#a14d7d8fde6fa411828a66e34446eacb4">Boundary&lt;AllocationType, SimplexType&gt;::operator()</a>(allocation, simplex);</div>
+<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>}</div>
 </div>
-<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span> </div>
-<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> MemorySpace = Kokkos::HostSpace, <span class="keyword">class</span> SimplexType&gt;</div>
-<div class="foldopen" id="foldopen00175" data-start="{" data-end="}">
-<div class="line"><a id="l00175" name="l00175"></a><span class="lineno"><a class="line" href="namespacesil_1_1exterior.html#aaba7ef9ca3ba7d6e87059e0ad7de1643">  175</a></span>KOKKOS_FUNCTION <a class="code hl_class" href="classsil_1_1exterior_1_1LocalChain.html">LocalChain&lt;boundary_t&lt;SimplexType&gt;</a>, Kokkos::LayoutRight, MemorySpace&gt; <a class="code hl_function" href="namespacesil_1_1exterior.html#ab67124170cc5aa39c400687dc9e9e439">boundary</a>(</div>
-<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span>        SimplexType simplex)</div>
-<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>{</div>
-<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>    <a class="code hl_class" href="classsil_1_1exterior_1_1LocalChain.html">LocalChain&lt;boundary_t&lt;SimplexType&gt;</a>, Kokkos::LayoutRight, MemorySpace&gt; chain(</div>
-<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>            simplex.discrete_element());</div>
-<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>    chain += detail::generate_local_half_subchain&lt;MemorySpace, SimplexType&gt;(</div>
-<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>            simplex.discrete_element(),</div>
-<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>            simplex.discrete_vector(),</div>
-<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>            SimplexType::dimension() % 2);</div>
-<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>    chain += detail::generate_local_half_subchain&lt;MemorySpace, SimplexType&gt;(</div>
-<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>            simplex.discrete_element() + simplex.discrete_vector(),</div>
-<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>            -simplex.discrete_vector());</div>
-<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>    chain *= (SimplexType::dimension() % 2 ? 1 : -1) * (simplex.negative() ? -1 : 1);</div>
-<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>    <span class="keywordflow">return</span> chain;</div>
-<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>}</div>
+<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span> </div>
+<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> MemorySpace = Kokkos::HostSpace, <span class="keyword">class</span> SimplexType&gt;</div>
+<div class="foldopen" id="foldopen00176" data-start="{" data-end="}">
+<div class="line"><a id="l00176" name="l00176"></a><span class="lineno"><a class="line" href="namespacesil_1_1exterior.html#aaba7ef9ca3ba7d6e87059e0ad7de1643">  176</a></span>KOKKOS_FUNCTION <a class="code hl_class" href="classsil_1_1exterior_1_1LocalChain.html">LocalChain&lt;boundary_t&lt;SimplexType&gt;</a>, Kokkos::LayoutRight, MemorySpace&gt; <a class="code hl_function" href="namespacesil_1_1exterior.html#ab67124170cc5aa39c400687dc9e9e439">boundary</a>(</div>
+<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>        SimplexType simplex)</div>
+<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>{</div>
+<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>    <a class="code hl_class" href="classsil_1_1exterior_1_1LocalChain.html">LocalChain&lt;boundary_t&lt;SimplexType&gt;</a>, Kokkos::LayoutRight, MemorySpace&gt; chain(</div>
+<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>            simplex.discrete_element());</div>
+<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>    chain += detail::generate_local_half_subchain&lt;MemorySpace, SimplexType&gt;(</div>
+<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>            simplex.discrete_element(),</div>
+<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>            simplex.discrete_vector(),</div>
+<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>            SimplexType::dimension() % 2);</div>
+<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>    chain += detail::generate_local_half_subchain&lt;MemorySpace, SimplexType&gt;(</div>
+<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>            simplex.discrete_element() + simplex.discrete_vector(),</div>
+<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>            -simplex.discrete_vector());</div>
+<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>    chain *= (SimplexType::dimension() % 2 ? 1 : -1) * (simplex.negative() ? -1 : 1);</div>
+<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>    <span class="keywordflow">return</span> chain;</div>
+<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>}</div>
 </div>
-<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span> </div>
-<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span><span class="keyword">template</span> &lt;misc::Specialization&lt;Kokkos::View&gt; AllocationType, <span class="keyword">class</span> SimplexType&gt;</div>
-<div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>KOKKOS_FUNCTION <a class="code hl_function" href="namespacesil_1_1exterior.html#a44d7a21937a15c4687c17dbb94778c2f">Chain</a>&lt;</div>
-<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>        <a class="code hl_typedef" href="namespacesil_1_1exterior.html#a52bc67c02d8ba34a3eeb34de1dd21df8">boundary_t&lt;SimplexType&gt;</a>,</div>
-<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>        <span class="keyword">typename</span> AllocationType::array_layout,</div>
-<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>        <span class="keyword">typename</span> AllocationType::memory_space&gt;</div>
-<div class="foldopen" id="foldopen00196" data-start="{" data-end="}">
-<div class="line"><a id="l00196" name="l00196"></a><span class="lineno"><a class="line" href="namespacesil_1_1exterior.html#a5c98c080f983d9b2020d6b0f13598044">  196</a></span><a class="code hl_function" href="namespacesil_1_1exterior.html#ab67124170cc5aa39c400687dc9e9e439">boundary</a>(</div>
-<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span>        AllocationType allocation,</div>
-<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>        <a class="code hl_class" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt;SimplexType,</div>
-<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>              <span class="keyword">typename</span> AllocationType::array_layout,</div>
-<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>              <span class="keyword">typename</span> AllocationType::memory_space&gt; chain)</div>
-<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>{</div>
-<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="structsil_1_1exterior_1_1Boundary.html#aab04aedaba1fc15a74d1d454c5a86b50">Boundary&lt;AllocationType, SimplexType&gt;::run</a>(allocation, chain);</div>
-<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>}</div>
+<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span> </div>
+<div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span><span class="keyword">template</span> &lt;misc::Specialization&lt;Kokkos::View&gt; AllocationType, <span class="keyword">class</span> SimplexType&gt;</div>
+<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>KOKKOS_FUNCTION <a class="code hl_function" href="namespacesil_1_1exterior.html#a44d7a21937a15c4687c17dbb94778c2f">Chain</a>&lt;</div>
+<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>        <a class="code hl_typedef" href="namespacesil_1_1exterior.html#a52bc67c02d8ba34a3eeb34de1dd21df8">boundary_t&lt;SimplexType&gt;</a>,</div>
+<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>        <span class="keyword">typename</span> AllocationType::array_layout,</div>
+<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>        <span class="keyword">typename</span> AllocationType::memory_space&gt;</div>
+<div class="foldopen" id="foldopen00197" data-start="{" data-end="}">
+<div class="line"><a id="l00197" name="l00197"></a><span class="lineno"><a class="line" href="namespacesil_1_1exterior.html#a5c98c080f983d9b2020d6b0f13598044">  197</a></span><a class="code hl_function" href="namespacesil_1_1exterior.html#ab67124170cc5aa39c400687dc9e9e439">boundary</a>(</div>
+<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>        AllocationType allocation,</div>
+<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>        <a class="code hl_class" href="classsil_1_1exterior_1_1Chain.html">Chain</a>&lt;SimplexType,</div>
+<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>              <span class="keyword">typename</span> AllocationType::array_layout,</div>
+<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>              <span class="keyword">typename</span> AllocationType::memory_space&gt; chain)</div>
+<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>{</div>
+<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="structsil_1_1exterior_1_1Boundary.html#a14d7d8fde6fa411828a66e34446eacb4">Boundary&lt;AllocationType, SimplexType&gt;::operator()</a>(allocation, chain);</div>
+<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>}</div>
 </div>
-<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span> </div>
-<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span>} <span class="comment">// namespace exterior</span></div>
+<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span> </div>
+<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>} <span class="comment">// namespace exterior</span></div>
 </div>
-<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span> </div>
-<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span>} <span class="comment">// namespace sil</span></div>
+<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span> </div>
+<div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span>} <span class="comment">// namespace sil</span></div>
 <div class="ttc" id="aclasssil_1_1exterior_1_1Chain_html"><div class="ttname"><a href="classsil_1_1exterior_1_1Chain.html">sil::exterior::Chain</a></div><div class="ttdoc">Chain class.</div><div class="ttdef"><b>Definition</b> <a href="chain_8hpp_source.html#l00025">chain.hpp:26</a></div></div>
 <div class="ttc" id="aclasssil_1_1exterior_1_1Chain_html_a7f05af158ce6268c3ce5a401bd7925a1"><div class="ttname"><a href="classsil_1_1exterior_1_1Chain.html#a7f05af158ce6268c3ce5a401bd7925a1">sil::exterior::Chain::optimize</a></div><div class="ttdeci">KOKKOS_FUNCTION void optimize()</div><div class="ttdef"><b>Definition</b> <a href="chain_8hpp_source.html#l00132">chain.hpp:132</a></div></div>
 <div class="ttc" id="aclasssil_1_1exterior_1_1LocalChain_html"><div class="ttname"><a href="classsil_1_1exterior_1_1LocalChain.html">sil::exterior::LocalChain</a></div><div class="ttdef"><b>Definition</b> <a href="local__chain_8hpp_source.html#l00124">local_chain.hpp:125</a></div></div>
 <div class="ttc" id="aclasssil_1_1exterior_1_1Simplex_html"><div class="ttname"><a href="classsil_1_1exterior_1_1Simplex.html">sil::exterior::Simplex</a></div><div class="ttdoc">Simplex class.</div><div class="ttdef"><b>Definition</b> <a href="simplex_8hpp_source.html#l00074">simplex.hpp:75</a></div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html_a44d7a21937a15c4687c17dbb94778c2f"><div class="ttname"><a href="namespacesil_1_1exterior.html#a44d7a21937a15c4687c17dbb94778c2f">sil::exterior::Chain</a></div><div class="ttdeci">Chain(Head, Tail...) -&gt; Chain&lt; typename Head::value_type, typename Head::array_layout, typename Head::memory_space &gt;</div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html_a52bc67c02d8ba34a3eeb34de1dd21df8"><div class="ttname"><a href="namespacesil_1_1exterior.html#a52bc67c02d8ba34a3eeb34de1dd21df8">sil::exterior::boundary_t</a></div><div class="ttdeci">typename detail::BoundaryType&lt; T &gt;::type boundary_t</div><div class="ttdef"><b>Definition</b> <a href="#l00039">boundary.hpp:39</a></div></div>
-<div class="ttc" id="anamespacesil_1_1exterior_html_ab67124170cc5aa39c400687dc9e9e439"><div class="ttname"><a href="namespacesil_1_1exterior.html#ab67124170cc5aa39c400687dc9e9e439">sil::exterior::boundary</a></div><div class="ttdeci">KOKKOS_FUNCTION Chain&lt; boundary_t&lt; SimplexType &gt;, typename AllocationType::array_layout, typename AllocationType::memory_space &gt; boundary(AllocationType allocation, SimplexType simplex)</div><div class="ttdef"><b>Definition</b> <a href="#l00169">boundary.hpp:169</a></div></div>
+<div class="ttc" id="anamespacesil_1_1exterior_html_ab67124170cc5aa39c400687dc9e9e439"><div class="ttname"><a href="namespacesil_1_1exterior.html#ab67124170cc5aa39c400687dc9e9e439">sil::exterior::boundary</a></div><div class="ttdeci">KOKKOS_FUNCTION Chain&lt; boundary_t&lt; SimplexType &gt;, typename AllocationType::array_layout, typename AllocationType::memory_space &gt; boundary(AllocationType allocation, SimplexType simplex)</div><div class="ttdef"><b>Definition</b> <a href="#l00170">boundary.hpp:170</a></div></div>
 <div class="ttc" id="anamespacesil_html"><div class="ttname"><a href="namespacesil.html">sil</a></div><div class="ttdoc">The top-level namespace of SimiLie.</div><div class="ttdef"><b>Definition</b> <a href="csr_8hpp_source.html#l00015">csr.hpp:15</a></div></div>
 <div class="ttc" id="astructsil_1_1exterior_1_1Boundary_html"><div class="ttname"><a href="structsil_1_1exterior_1_1Boundary.html">sil::exterior::Boundary</a></div><div class="ttdef"><b>Definition</b> <a href="#l00102">boundary.hpp:103</a></div></div>
-<div class="ttc" id="astructsil_1_1exterior_1_1Boundary_html_a2139f43c6b8a6ce7fdc243f1d6a89ec1"><div class="ttname"><a href="structsil_1_1exterior_1_1Boundary.html#a2139f43c6b8a6ce7fdc243f1d6a89ec1">sil::exterior::Boundary::run</a></div><div class="ttdeci">static KOKKOS_FUNCTION Chain&lt; boundary_t&lt; SimplexType &gt;, typename AllocationType::array_layout, typename AllocationType::memory_space &gt; run(AllocationType allocation, Chain&lt; SimplexType, typename AllocationType::array_layout, typename AllocationType::memory_space &gt; chain)</div><div class="ttdef"><b>Definition</b> <a href="#l00139">boundary.hpp:139</a></div></div>
-<div class="ttc" id="astructsil_1_1exterior_1_1Boundary_html_aab04aedaba1fc15a74d1d454c5a86b50"><div class="ttname"><a href="structsil_1_1exterior_1_1Boundary.html#aab04aedaba1fc15a74d1d454c5a86b50">sil::exterior::Boundary::run</a></div><div class="ttdeci">static KOKKOS_FUNCTION Chain&lt; boundary_t&lt; SimplexType &gt;, typename AllocationType::array_layout, typename AllocationType::memory_space &gt; run(AllocationType allocation, SimplexType simplex)</div><div class="ttdef"><b>Definition</b> <a href="#l00108">boundary.hpp:108</a></div></div>
+<div class="ttc" id="astructsil_1_1exterior_1_1Boundary_html_a14d7d8fde6fa411828a66e34446eacb4"><div class="ttname"><a href="structsil_1_1exterior_1_1Boundary.html#a14d7d8fde6fa411828a66e34446eacb4">sil::exterior::Boundary::operator()</a></div><div class="ttdeci">static KOKKOS_FUNCTION Chain&lt; boundary_t&lt; SimplexType &gt;, typename AllocationType::array_layout, typename AllocationType::memory_space &gt; operator()(AllocationType allocation, SimplexType simplex)</div><div class="ttdef"><b>Definition</b> <a href="#l00108">boundary.hpp:108</a></div></div>
+<div class="ttc" id="astructsil_1_1exterior_1_1Boundary_html_a219efa8a3c3bcd529584f1ffefe69c8e"><div class="ttname"><a href="structsil_1_1exterior_1_1Boundary.html#a219efa8a3c3bcd529584f1ffefe69c8e">sil::exterior::Boundary::operator()</a></div><div class="ttdeci">static KOKKOS_FUNCTION Chain&lt; boundary_t&lt; SimplexType &gt;, typename AllocationType::array_layout, typename AllocationType::memory_space &gt; operator()(AllocationType allocation, Chain&lt; SimplexType, typename AllocationType::array_layout, typename AllocationType::memory_space &gt; chain)</div><div class="ttdef"><b>Definition</b> <a href="#l00139">boundary.hpp:139</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!--

@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['similie_0',['Running SimiLie',['../Running.html',1,'']]]
+  ['running_20similie_0',['Running SimiLie',['../Running.html',1,'']]]
 ];

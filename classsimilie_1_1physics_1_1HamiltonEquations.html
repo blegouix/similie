@@ -139,7 +139,7 @@ Collaboration diagram for similie::physics::HamiltonEquations&lt; Hamiltonian &g
 <div class="dyncontent">
 <div class="center"><img src="classsimilie_1_1physics_1_1HamiltonEquations__coll__graph.png" border="0" usemap="#asimilie_1_1physics_1_1HamiltonEquations_3_01Hamiltonian_01_4_coll__map" alt="Collaboration graph"/></div>
 <map name="asimilie_1_1physics_1_1HamiltonEquations_3_01Hamiltonian_01_4_coll__map" id="asimilie_1_1physics_1_1HamiltonEquations_3_01Hamiltonian_01_4_coll__map">
-<area shape="rect" title=" " alt="" coords="5,5,193,285"/>
+<area shape="rect" title=" " alt="" coords="5,5,193,305"/>
 </map>
 </div>
 <table class="memberdecls">
@@ -159,6 +159,10 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a28624fa7f47ab714253f64867c0660bf" id="r_a28624fa7f47ab714253f64867c0660bf"><td class="memTemplParams" colspan="2">template&lt;class Index , class Elem &gt; </td></tr>
 <tr class="memitem:a28624fa7f47ab714253f64867c0660bf"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr double&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a28624fa7f47ab714253f64867c0660bf">dpotential_dt</a> (double spatial_moments_component, Elem elem) const</td></tr>
 <tr class="separator:a28624fa7f47ab714253f64867c0660bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9017b867c69acb4297877025cc00b5d1" id="r_a9017b867c69acb4297877025cc00b5d1"><td class="memTemplParams" colspan="2">template&lt;class Index , class Moments , class Elem &gt; <br />
+requires (!std::is_arithmetic_v&lt;Moments&gt;)</td></tr>
+<tr class="memitem:a9017b867c69acb4297877025cc00b5d1"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr double&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a9017b867c69acb4297877025cc00b5d1">dpotential_dt</a> (Moments moments, Elem elem) const</td></tr>
+<tr class="separator:a9017b867c69acb4297877025cc00b5d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a944df4bd317fd7707f4cb39233ede2ba" id="r_a944df4bd317fd7707f4cb39233ede2ba"><td class="memTemplParams" colspan="2">template&lt;class Index &gt; </td></tr>
 <tr class="memitem:a944df4bd317fd7707f4cb39233ede2ba"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr double&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a944df4bd317fd7707f4cb39233ede2ba">dmoments_dt</a> (std::span&lt; double const, 1 &gt; potential) const</td></tr>
 <tr class="separator:a944df4bd317fd7707f4cb39233ede2ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -187,7 +191,7 @@ Static Public Attributes</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;class Hamiltonian&gt;<br />
 class similie::physics::HamiltonEquations&lt; Hamiltonian &gt;</div>
-<p class="definition">Definition at line <a class="el" href="hamilton__equations_8hpp_source.html#l00047">47</a> of file <a class="el" href="hamilton__equations_8hpp_source.html">hamilton_equations.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="hamilton__equations_8hpp_source.html#l00053">53</a> of file <a class="el" href="hamilton__equations_8hpp_source.html">hamilton_equations.hpp</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a85604f1e0a6ea50b67377d9e03042d19" name="a85604f1e0a6ea50b67377d9e03042d19"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a85604f1e0a6ea50b67377d9e03042d19">&#9670;&#160;</a></span>HamiltonEquations()</h2>
@@ -214,13 +218,13 @@ template&lt;class Hamiltonian &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="hamilton__equations_8hpp_source.html#l00054">54</a> of file <a class="el" href="hamilton__equations_8hpp_source.html">hamilton_equations.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="hamilton__equations_8hpp_source.html#l00060">60</a> of file <a class="el" href="hamilton__equations_8hpp_source.html">hamilton_equations.hpp</a>.</p>
 
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
 <a id="a9d615744a10f618cf473502716bd79dc" name="a9d615744a10f618cf473502716bd79dc"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9d615744a10f618cf473502716bd79dc">&#9670;&#160;</a></span>dpotential_dt() <span class="overload">[1/4]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a9d615744a10f618cf473502716bd79dc">&#9670;&#160;</a></span>dpotential_dt() <span class="overload">[1/5]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -246,12 +250,12 @@ template&lt;class Index &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="hamilton__equations_8hpp_source.html#l00060">60</a> of file <a class="el" href="hamilton__equations_8hpp_source.html">hamilton_equations.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="hamilton__equations_8hpp_source.html#l00066">66</a> of file <a class="el" href="hamilton__equations_8hpp_source.html">hamilton_equations.hpp</a>.</p>
 
 </div>
 </div>
 <a id="a35035bc7f33d424120e74c0ebf5e3e98" name="a35035bc7f33d424120e74c0ebf5e3e98"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a35035bc7f33d424120e74c0ebf5e3e98">&#9670;&#160;</a></span>dpotential_dt() <span class="overload">[2/4]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a35035bc7f33d424120e74c0ebf5e3e98">&#9670;&#160;</a></span>dpotential_dt() <span class="overload">[2/5]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -281,12 +285,12 @@ template&lt;class Index , class Elem &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="hamilton__equations_8hpp_source.html#l00071">71</a> of file <a class="el" href="hamilton__equations_8hpp_source.html">hamilton_equations.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="hamilton__equations_8hpp_source.html#l00077">77</a> of file <a class="el" href="hamilton__equations_8hpp_source.html">hamilton_equations.hpp</a>.</p>
 
 </div>
 </div>
 <a id="a7ddde3da182041d3156b02f49c0a385b" name="a7ddde3da182041d3156b02f49c0a385b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7ddde3da182041d3156b02f49c0a385b">&#9670;&#160;</a></span>dpotential_dt() <span class="overload">[3/4]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a7ddde3da182041d3156b02f49c0a385b">&#9670;&#160;</a></span>dpotential_dt() <span class="overload">[3/5]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -312,12 +316,12 @@ template&lt;class Index &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="hamilton__equations_8hpp_source.html#l00083">83</a> of file <a class="el" href="hamilton__equations_8hpp_source.html">hamilton_equations.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="hamilton__equations_8hpp_source.html#l00089">89</a> of file <a class="el" href="hamilton__equations_8hpp_source.html">hamilton_equations.hpp</a>.</p>
 
 </div>
 </div>
 <a id="a28624fa7f47ab714253f64867c0660bf" name="a28624fa7f47ab714253f64867c0660bf"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a28624fa7f47ab714253f64867c0660bf">&#9670;&#160;</a></span>dpotential_dt() <span class="overload">[4/4]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a28624fa7f47ab714253f64867c0660bf">&#9670;&#160;</a></span>dpotential_dt() <span class="overload">[4/5]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -347,7 +351,43 @@ template&lt;class Index , class Elem &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="hamilton__equations_8hpp_source.html#l00090">90</a> of file <a class="el" href="hamilton__equations_8hpp_source.html">hamilton_equations.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="hamilton__equations_8hpp_source.html#l00096">96</a> of file <a class="el" href="hamilton__equations_8hpp_source.html">hamilton_equations.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a9017b867c69acb4297877025cc00b5d1" name="a9017b867c69acb4297877025cc00b5d1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9017b867c69acb4297877025cc00b5d1">&#9670;&#160;</a></span>dpotential_dt() <span class="overload">[5/5]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Hamiltonian &gt; </div>
+<div class="memtemplate">
+template&lt;class Index , class Moments , class Elem &gt; <br />
+requires (!std::is_arithmetic_v&lt;Moments&gt;)</div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION constexpr double <a class="el" href="classsimilie_1_1physics_1_1HamiltonEquations.html">similie::physics::HamiltonEquations</a>&lt; Hamiltonian &gt;::dpotential_dt </td>
+          <td>(</td>
+          <td class="paramtype">Moments</td>          <td class="paramname"><span class="paramname"><em>moments</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Elem</td>          <td class="paramname"><span class="paramname"><em>elem</em></span>&#160;) const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">nodiscard</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="hamilton__equations_8hpp_source.html#l00110">110</a> of file <a class="el" href="hamilton__equations_8hpp_source.html">hamilton_equations.hpp</a>.</p>
 
 </div>
 </div>
@@ -378,7 +418,7 @@ template&lt;class Index &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="hamilton__equations_8hpp_source.html#l00103">103</a> of file <a class="el" href="hamilton__equations_8hpp_source.html">hamilton_equations.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="hamilton__equations_8hpp_source.html#l00124">124</a> of file <a class="el" href="hamilton__equations_8hpp_source.html">hamilton_equations.hpp</a>.</p>
 
 </div>
 </div>
@@ -413,7 +453,7 @@ template&lt;class Index , class Elem &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="hamilton__equations_8hpp_source.html#l00111">111</a> of file <a class="el" href="hamilton__equations_8hpp_source.html">hamilton_equations.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="hamilton__equations_8hpp_source.html#l00132">132</a> of file <a class="el" href="hamilton__equations_8hpp_source.html">hamilton_equations.hpp</a>.</p>
 
 </div>
 </div>
@@ -444,7 +484,7 @@ template&lt;class Index &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="hamilton__equations_8hpp_source.html#l00125">125</a> of file <a class="el" href="hamilton__equations_8hpp_source.html">hamilton_equations.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="hamilton__equations_8hpp_source.html#l00146">146</a> of file <a class="el" href="hamilton__equations_8hpp_source.html">hamilton_equations.hpp</a>.</p>
 
 </div>
 </div>
@@ -479,7 +519,7 @@ template&lt;class Index , class Elem &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="hamilton__equations_8hpp_source.html#l00132">132</a> of file <a class="el" href="hamilton__equations_8hpp_source.html">hamilton_equations.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="hamilton__equations_8hpp_source.html#l00153">153</a> of file <a class="el" href="hamilton__equations_8hpp_source.html">hamilton_equations.hpp</a>.</p>
 
 </div>
 </div>
@@ -510,7 +550,7 @@ template&lt;class Index , class Elem &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="hamilton__equations_8hpp_source.html#l00144">144</a> of file <a class="el" href="hamilton__equations_8hpp_source.html">hamilton_equations.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="hamilton__equations_8hpp_source.html#l00165">165</a> of file <a class="el" href="hamilton__equations_8hpp_source.html">hamilton_equations.hpp</a>.</p>
 
 </div>
 </div>
@@ -542,7 +582,7 @@ requires requires(Hamiltonian const&amp; h, Elem e) { h.dhamiltonian_dpotential_
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="hamilton__equations_8hpp_source.html#l00151">151</a> of file <a class="el" href="hamilton__equations_8hpp_source.html">hamilton_equations.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="hamilton__equations_8hpp_source.html#l00172">172</a> of file <a class="el" href="hamilton__equations_8hpp_source.html">hamilton_equations.hpp</a>.</p>
 
 </div>
 </div>
@@ -569,7 +609,7 @@ template&lt;class Hamiltonian &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="hamilton__equations_8hpp_source.html#l00052">52</a> of file <a class="el" href="hamilton__equations_8hpp_source.html">hamilton_equations.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="hamilton__equations_8hpp_source.html#l00058">58</a> of file <a class="el" href="hamilton__equations_8hpp_source.html">hamilton_equations.hpp</a>.</p>
 
 </div>
 </div>

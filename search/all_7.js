@@ -1,8 +1,25 @@
 var searchData=
 [
-  ['generalisai_0',['GeneralIsai',['../namespacesimilie_1_1solvers.html#abe2dd397f1ada9f78cdbf2166698ab4dabff129ee7f9ba359bd78e0867d94e5ca',1,'similie::solvers']]],
-  ['generate_5fcpp_5fconstitutive_5flaw_1',['generate_cpp_constitutive_law',['../namespacegenerate__cpp__constitutive__law.html',1,'generate_cpp_constitutive_law'],['../namespacegenerate__cpp__constitutive__law.html#a8b30a1fb9e6951c6a808f79626737fab',1,'generate_cpp_constitutive_law.generate_cpp_constitutive_law()']]],
-  ['generate_5fcpp_5fhamiltonian_2',['generate_cpp_hamiltonian',['../namespacegenerate__cpp__hamiltonian.html',1,'generate_cpp_hamiltonian'],['../namespacegenerate__cpp__hamiltonian.html#a89d80d2090308b4525a4349e10876f02',1,'generate_cpp_hamiltonian.generate_cpp_hamiltonian()']]],
-  ['generate_5fmoments_5fjacobian_3',['generate_moments_jacobian',['../classgenerate__cpp__hamiltonian_1_1HamiltonianDefinition.html#aa4f0102af388ceb8c66c9fec975c7f49',1,'generate_cpp_hamiltonian::HamiltonianDefinition']]],
-  ['get_4',['get',['../classsil_1_1csr_1_1CsrDynamic.html#a8f9ad7cd07c0ee80b96aae078317306b',1,'sil::csr::CsrDynamic::get()'],['../classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html#aab7c4cab0617cded338679477d335e97',1,'sil::tensor::Tensor&lt; ElementType, ddc::DiscreteDomain&lt; DDim... &gt;, LayoutStridedPolicy, MemorySpace &gt;::get()']]]
+  ['factorial_0',['factorial',['../namespacesil_1_1misc.html#a36a53a5b4de947314917a5d09fc314b8',1,'sil::misc']]],
+  ['field_1',['Scalar field',['../physics_module.html#autotoc_md32',1,'']]],
+  ['fields_20what_20can_20similie_20do_20in_20addition_2',['Do Kokkos and DDC support tensor fields ? What can SimiLie do in addition ?',['../tensor_module.html#autotoc_md8',1,'']]],
+  ['fill_5fcontinuous_5fhodge_5fstar_3',['fill_continuous_hodge_star',['../namespacesil_1_1exterior.html#a665a653ef4a38ca8d600fabf22a05505',1,'sil::exterior']]],
+  ['fill_5fdiscrete_5fhodge_5fstar_4',['fill_discrete_hodge_star',['../namespacesil_1_1exterior.html#a985e5f2d21f672dde6b75d610b27f6a2',1,'sil::exterior']]],
+  ['fill_5fidentity_5',['fill_identity',['../namespacesil_1_1misc_1_1math.html#a55e9f71fa9670da956aa63ada8d96079',1,'sil::misc::math']]],
+  ['fill_5finverse_5fmetric_6',['fill_inverse_metric',['../namespacesil_1_1tensor.html#a573c0c94d3d5df6eefc212984a7757d8',1,'sil::tensor']]],
+  ['fill_5fmetric_5fprod_7',['fill_metric_prod',['../namespacesil_1_1tensor.html#aa0e394fc0f36443ff452393cfa95c8d0',1,'sil::tensor']]],
+  ['fill_5freconstruction_5foperator_8',['fill_reconstruction_operator',['../namespacesil_1_1exterior.html#a216f5722aaceadf494ab8406ab3a4e11',1,'sil::exterior']]],
+  ['fill_5freduction_5foperator_9',['fill_reduction_operator',['../namespacesil_1_1exterior.html#acb3e789973d4eb8b21ff313eb02fc8c1',1,'sil::exterior']]],
+  ['filled_5fstruct_10',['filled_struct',['../namespacesil_1_1misc.html#ab627aa8f81b5446714d73f76e87e5533',1,'sil::misc']]],
+  ['fillreconstructionoperatormem_11',['FillReconstructionOperatorMem',['../structsil_1_1exterior_1_1FillReconstructionOperatorMem.html',1,'sil::exterior']]],
+  ['fillreductionoperatormem_12',['FillReductionOperatorMem',['../structsil_1_1exterior_1_1FillReductionOperatorMem.html',1,'sil::exterior']]],
+  ['final_5frelative_5fresidual_13',['final_relative_residual',['../namespacesimilie_1_1solvers.html#a1310dfbf1d5b0656e7362612a6f1e584',1,'similie::solvers::StrongFormulationSolverDiagnostics']]],
+  ['final_5fresidual_5fl2_14',['final_residual_l2',['../namespacesimilie_1_1solvers.html#aa5af6d5f08dacb85bfe077e3e062a1e7',1,'similie::solvers::StrongFormulationSolverDiagnostics']]],
+  ['first_15',['FIRST',['../structsimilie_1_1physics_1_1elasticity_1_1StrainTensorIndex.html#a8b05da0f773f6e25be34cb2a9e3f8892',1,'similie::physics::elasticity::StrainTensorIndex']]],
+  ['for_20physics_16',['for physics',['../exterior_module.html#autotoc_md15',1,'Why integro-differential calculus is important for physics ?'],['../tensor_module.html#autotoc_md7',1,'Why tensors are importants for physics ?']]],
+  ['forcedensityindex_17',['ForceDensityIndex',['../namespacesimilie_1_1physics_1_1magnetostatics.html#a15ad76d80743ccbf3ee2ba0f4def119e',1,'similie::physics::magnetostatics']]],
+  ['form_18',['Form',['../namespacesil_1_1exterior.html#a04a63056a25815fe3b4e94eddd7dbede',1,'sil::exterior']]],
+  ['forward_19',['forward',['../classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4.html#ae801de735ea002445e4989e99fdf0b00',1,'similie::physics::magnetostatics::MagneticVectorPotentialToMagneticInduction&lt; SpatialIndex... &gt;::forward(TensorType magnetic_induction, Evaluator evaluator, ChainType chain, LowerChainType lower_chain, Elem elem)'],['../classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4.html#ae801de735ea002445e4989e99fdf0b00',1,'similie::physics::magnetostatics::MagneticVectorPotentialToMagneticInduction&lt; SpatialIndex... &gt;::forward(TensorType magnetic_induction, Evaluator evaluator, ChainType chain, LowerChainType lower_chain, Elem elem)']]],
+  ['forward_5fvalue_20',['forward_value',['../classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4.html#a3f9c1c2cbf604327346623ecc68da9e8',1,'similie::physics::magnetostatics::MagneticVectorPotentialToMagneticInduction&lt; SpatialIndex... &gt;::forward_value(Elem elem)'],['../classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4.html#a3f9c1c2cbf604327346623ecc68da9e8',1,'similie::physics::magnetostatics::MagneticVectorPotentialToMagneticInduction&lt; SpatialIndex... &gt;::forward_value(Elem elem)']]],
+  ['from_5fgradient_21',['from_gradient',['../structsimilie_1_1physics_1_1elasticity_1_1DisplacementToStrain.html#a1ec14e0e4b35cbd71214d6a9a405cc95',1,'similie::physics::elasticity::DisplacementToStrain']]]
 ];

@@ -1,6 +1,7 @@
 var hierarchy =
 [
     [ "sil::exterior::Boundary< AllocationType, SimplexType >", "structsil_1_1exterior_1_1Boundary.html", null ],
+    [ "similie::physics::elasticity::CauchyStress2D", "structsimilie_1_1physics_1_1elasticity_1_1CauchyStress2D.html", null ],
     [ "sil::exterior::Chain< SimplexType, LayoutStridedPolicy, MemorySpace >", "classsil_1_1exterior_1_1Chain.html", null ],
     [ "ddc::ChunkSpan", null, [
       [ "sil::tensor::Tensor< ElementType, ddc::DiscreteDomain< DDim... >, LayoutStridedPolicy, MemorySpace >", "classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html", null ]
@@ -17,6 +18,7 @@ var hierarchy =
     [ "sil::tensor::ContravariantCharacter", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1ContravariantCharacter", null ],
     [ "sil::exterior::Cosimplex< SimplexType, ElementType >", "classsil_1_1exterior_1_1Cosimplex.html", null ],
     [ "sil::tensor::CovariantCharacter", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1CovariantCharacter", null ],
+    [ "sil::exterior::CovariantDerivative< SpatialIndex >", "classsil_1_1exterior_1_1CovariantDerivative.html", null ],
     [ "sil::csr::Csr< N, HeadTensorIndex, TailTensorIndex >", "classsil_1_1csr_1_1Csr.html", null ],
     [ "sil::csr::CsrDynamic< HeadTensorIndex, TailTensorIndex >", "classsil_1_1csr_1_1CsrDynamic.html", null ],
     [ "similie::physics::DeDonderWeylEquations< Hamiltonian >", "classsimilie_1_1physics_1_1DeDonderWeylEquations.html", null ],
@@ -24,8 +26,10 @@ var hierarchy =
       [ "sil::exterior::Simplex< K, Tag >", "classsil_1_1exterior_1_1Simplex.html", null ]
     ] ],
     [ "sil::exterior::DiscreteHodgeStar< Complex, Indices1, Indices2, MetricType, PositionType, BatchElem >", "structsil_1_1exterior_1_1DiscreteHodgeStar.html", null ],
+    [ "similie::physics::elasticity::DisplacementToStrain", "structsimilie_1_1physics_1_1elasticity_1_1DisplacementToStrain.html", null ],
     [ "sil::exterior::DualSimplexVolume< Complex, N, MetricType, PositionType, BatchElem >", "structsil_1_1exterior_1_1DualSimplexVolume.html", null ],
     [ "sil::tensor::Dummy< I >", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Dummy", null ],
+    [ "similie::physics::elasticity::ElasticMaterialHodge2D", "classsimilie_1_1physics_1_1elasticity_1_1ElasticMaterialHodge2D.html", null ],
     [ "std::false_type", null, [
       [ "sil::misc::is_specialization_of< T, U >", "structsil_1_1misc_1_1is__specialization__of.html", null ]
     ] ],
@@ -33,7 +37,10 @@ var hierarchy =
     [ "sil::exterior::FillReductionOperatorMem< Indices, ReductionTensorType, PositionType, Complex, BatchElem >", "structsil_1_1exterior_1_1FillReductionOperatorMem.html", null ],
     [ "similie::physics::HamiltonEquations< Hamiltonian >", "classsimilie_1_1physics_1_1HamiltonEquations.html", null ],
     [ "generate_cpp_hamiltonian.HamiltonianDefinition", "classgenerate__cpp__hamiltonian_1_1HamiltonianDefinition.html", null ],
+    [ "sil::exterior::IdentityTransport< Rank >", "structsil_1_1exterior_1_1IdentityTransport.html", null ],
     [ "sil::tensor::InverseMetric< MetricIndex, MetricType, BatchElem >", "structsil_1_1tensor_1_1InverseMetric.html", null ],
+    [ "linear_elasticity.LinearElasticityHamiltonian", "classlinear__elasticity_1_1LinearElasticityHamiltonian.html", null ],
+    [ "linear_elasticity.LinearElasticStrainToStress", "classlinear__elasticity_1_1LinearElasticStrainToStress.html", null ],
     [ "linear_magnetostatics.LinearMagneticInductionToMagneticField", "classlinear__magnetostatics_1_1LinearMagneticInductionToMagneticField.html", null ],
     [ "linear_magnetostatics.LinearMagnetostaticsHamiltonian", "classlinear__magnetostatics_1_1LinearMagnetostaticsHamiltonian.html", null ],
     [ "sil::exterior::LocalChain< SimplexType, LayoutStridedPolicy, MemorySpace >", "classsil_1_1exterior_1_1LocalChain.html", null ],
@@ -52,6 +59,8 @@ var hierarchy =
     [ "sil::exterior::StagedCodifferential< MetricIndex, TagToRemoveFromCochain, CochainTag, TensorType, MetricType, PositionType, ExecSpace >", "classsil_1_1exterior_1_1StagedCodifferential.html", null ],
     [ "sil::exterior::StagedLaplacian< Args >", "namespacesil_1_1exterior.html#classsil_1_1exterior_1_1StagedLaplacian", null ],
     [ "sil::exterior::StagedLaplacian< MetricIndex, LaplacianDummyIndex, CochainTag, TensorType, MetricType, PositionType, ExecSpace >", "classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html", null ],
+    [ "similie::physics::elasticity::Strain2D", "structsimilie_1_1physics_1_1elasticity_1_1Strain2D.html", null ],
+    [ "similie::physics::elasticity::StrainTensorIndex< I, J >", "structsimilie_1_1physics_1_1elasticity_1_1StrainTensorIndex.html", null ],
     [ "similie::solvers::StrongFormulationSolverDiagnostics", "namespacesimilie_1_1solvers.html#structsimilie_1_1solvers_1_1StrongFormulationSolverDiagnostics", null ],
     [ "similie::solvers::StrongFormulationSolverSettings", "namespacesimilie_1_1solvers.html#structsimilie_1_1solvers_1_1StrongFormulationSolverSettings", null ],
     [ "generate_cpp_hamiltonian.SymbolicFunctionDefinition", "classgenerate__cpp__hamiltonian_1_1SymbolicFunctionDefinition.html", null ],

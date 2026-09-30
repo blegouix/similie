@@ -1,20 +1,15 @@
 var searchData=
 [
-  ['tensor_3c_20elementtype_2c_20ddc_3a_3adiscretedomain_3c_20ddim_2e_2e_2e_20_3e_2c_20layoutstridedpolicy_2c_20memoryspace_20_3e_0',['Tensor&lt; ElementType, ddc::DiscreteDomain&lt; DDim... &gt;, LayoutStridedPolicy, MemorySpace &gt;',['../classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html',1,'sil::tensor']]],
-  ['tensoraccessor_1',['TensorAccessor',['../classsil_1_1tensor_1_1TensorAccessor.html',1,'sil::tensor']]],
-  ['tensorantisymmetricindex_2',['TensorAntisymmetricIndex',['../structsil_1_1tensor_1_1TensorAntisymmetricIndex.html',1,'sil::tensor']]],
-  ['tensordiagonalindex_3',['TensorDiagonalIndex',['../structsil_1_1tensor_1_1TensorDiagonalIndex.html',1,'sil::tensor']]],
-  ['tensorfullindex_4',['TensorFullIndex',['../structsil_1_1tensor_1_1TensorFullIndex.html',1,'sil::tensor']]],
-  ['tensoridentityindex_5',['TensorIdentityIndex',['../structsil_1_1tensor_1_1TensorIdentityIndex.html',1,'sil::tensor']]],
-  ['tensorlevicivitaindex_6',['TensorLeviCivitaIndex',['../structsil_1_1tensor_1_1TensorLeviCivitaIndex.html',1,'sil::tensor']]],
-  ['tensorlorentziansignindex_7',['TensorLorentzianSignIndex',['../structsil_1_1tensor_1_1TensorLorentzianSignIndex.html',1,'sil::tensor']]],
-  ['tensornaturalindex_8',['TensorNaturalIndex',['../structsil_1_1tensor_1_1TensorNaturalIndex.html',1,'sil::tensor']]],
-  ['tensornaturalindex_3c_20cdim_2e_2e_2e_20_3e_9',['TensorNaturalIndex&lt; CDim... &gt;',['../structsil_1_1tensor_1_1TensorNaturalIndex.html',1,'sil::tensor']]],
-  ['tensornaturalindex_3c_20dummy_3c_20id_20_3e_2e_2e_2e_20_3e_10',['TensorNaturalIndex&lt; Dummy&lt; Id &gt;... &gt;',['../structsil_1_1tensor_1_1TensorNaturalIndex.html',1,'sil::tensor']]],
-  ['tensornaturalindex_3c_20spatialindex_2e_2e_2e_20_3e_11',['TensorNaturalIndex&lt; SpatialIndex... &gt;',['../structsil_1_1tensor_1_1TensorNaturalIndex.html',1,'sil::tensor']]],
-  ['tensornaturalindex_3c_3e_12',['TensorNaturalIndex&lt;&gt;',['../structsil_1_1tensor_1_1TensorNaturalIndex.html',1,'sil::tensor']]],
-  ['tensorsymmetricindex_13',['TensorSymmetricIndex',['../structsil_1_1tensor_1_1TensorSymmetricIndex.html',1,'sil::tensor']]],
-  ['tensoryoungtableauindex_14',['TensorYoungTableauIndex',['../structsil_1_1tensor_1_1TensorYoungTableauIndex.html',1,'sil::tensor']]],
-  ['transposedcoboundary_15',['TransposedCoboundary',['../namespacesil_1_1exterior.html#structsil_1_1exterior_1_1TransposedCoboundary',1,'sil::exterior']]],
-  ['transposedcoboundary_3c_20tagtoaddtocochain_2c_20cochaintag_20_3e_16',['TransposedCoboundary&lt; TagToAddToCochain, CochainTag &gt;',['../structsil_1_1exterior_1_1TransposedCoboundary_3_01TagToAddToCochain_00_01CochainTag_01_4.html',1,'sil::exterior']]]
+  ['scalarfieldhamiltonian_0',['ScalarFieldHamiltonian',['../classscalar__field_1_1ScalarFieldHamiltonian.html',1,'scalar_field']]],
+  ['scalarindex_1',['ScalarIndex',['../structsil_1_1tensor_1_1ScalarIndex.html',1,'sil::tensor']]],
+  ['simplex_2',['Simplex',['../classsil_1_1exterior_1_1Simplex.html',1,'sil::exterior']]],
+  ['simplexvolume_3',['SimplexVolume',['../structsil_1_1exterior_1_1SimplexVolume.html',1,'sil::exterior']]],
+  ['stagedcodifferential_4',['StagedCodifferential',['../classsil_1_1exterior_1_1StagedCodifferential.html',1,'sil::exterior']]],
+  ['stagedlaplacian_5',['StagedLaplacian',['../namespacesil_1_1exterior.html#classsil_1_1exterior_1_1StagedLaplacian',1,'sil::exterior']]],
+  ['stagedlaplacian_3c_20metricindex_2c_20laplaciandummyindex_2c_20cochaintag_2c_20tensortype_2c_20metrictype_2c_20positiontype_2c_20execspace_20_3e_6',['StagedLaplacian&lt; MetricIndex, LaplacianDummyIndex, CochainTag, TensorType, MetricType, PositionType, ExecSpace &gt;',['../classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html',1,'sil::exterior']]],
+  ['strain2d_7',['Strain2D',['../structsimilie_1_1physics_1_1elasticity_1_1Strain2D.html',1,'similie::physics::elasticity']]],
+  ['straintensorindex_8',['StrainTensorIndex',['../structsimilie_1_1physics_1_1elasticity_1_1StrainTensorIndex.html',1,'similie::physics::elasticity']]],
+  ['strongformulationsolverdiagnostics_9',['StrongFormulationSolverDiagnostics',['../namespacesimilie_1_1solvers.html#structsimilie_1_1solvers_1_1StrongFormulationSolverDiagnostics',1,'similie::solvers']]],
+  ['strongformulationsolversettings_10',['StrongFormulationSolverSettings',['../namespacesimilie_1_1solvers.html#structsimilie_1_1solvers_1_1StrongFormulationSolverSettings',1,'similie::solvers']]],
+  ['symbolicfunctiondefinition_11',['SymbolicFunctionDefinition',['../classgenerate__cpp__hamiltonian_1_1SymbolicFunctionDefinition.html',1,'generate_cpp_hamiltonian']]]
 ];

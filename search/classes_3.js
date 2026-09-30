@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['fillreconstructionoperatormem_0',['FillReconstructionOperatorMem',['../structsil_1_1exterior_1_1FillReconstructionOperatorMem.html',1,'sil::exterior']]],
-  ['fillreductionoperatormem_1',['FillReductionOperatorMem',['../structsil_1_1exterior_1_1FillReductionOperatorMem.html',1,'sil::exterior']]]
+  ['elasticmaterialhodge2d_0',['ElasticMaterialHodge2D',['../classsimilie_1_1physics_1_1elasticity_1_1ElasticMaterialHodge2D.html',1,'similie::physics::elasticity']]]
 ];

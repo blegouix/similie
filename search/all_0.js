@@ -1,21 +1,4 @@
 var searchData=
 [
-  ['_5f_5fcall_5f_5f_0',['__call__',['../classlinear__magnetostatics_1_1LinearMagnetostaticsHamiltonian.html#a9bfeb2d7b4627d79d864d1c3c9e4d8c9',1,'linear_magnetostatics.LinearMagnetostaticsHamiltonian.__call__()'],['../classlinear__magnetostatics_1_1LinearMagneticInductionToMagneticField.html#a5187fb2623cf792e7d664074a7ccc4af',1,'linear_magnetostatics.LinearMagneticInductionToMagneticField.__call__()'],['../classnonlinear__magnetostatics_1_1NonlinearMagnetostaticsHamiltonian.html#a2dbf48e064d68dd75e2716b2955d741f',1,'nonlinear_magnetostatics.NonlinearMagnetostaticsHamiltonian.__call__()'],['../classscalar__field_1_1ScalarFieldHamiltonian.html#a17252c2718380655ffbf86f196a0902e',1,'scalar_field.ScalarFieldHamiltonian.__call__()']]],
-  ['_5fall_5fsame_1',['_all_same',['../namespacegenerate__cpp__hamiltonian.html#a9d73dc50762feb1a505ad6c7afc96334',1,'generate_cpp_hamiltonian']]],
-  ['_5fentry_5fname_2',['_entry_name',['../namespacegenerate__cpp__hamiltonian.html#ac76b18e7ca44017cf6ad1c95fff94de8',1,'generate_cpp_hamiltonian']]],
-  ['_5fentry_5fsymbols_3',['_entry_symbols',['../namespacegenerate__cpp__hamiltonian.html#a005746563d0ffd90cadfc160b735c8af',1,'generate_cpp_hamiltonian']]],
-  ['_5fflatten_5fvariable_5fentries_4',['_flatten_variable_entries',['../namespacegenerate__cpp__hamiltonian.html#ab319c17f0de3b9761c0ea1bceaeab174',1,'generate_cpp_hamiltonian']]],
-  ['_5fgeneralize_5fcomponent_5fexpression_5',['_generalize_component_expression',['../namespacegenerate__cpp__hamiltonian.html#a0c12a7de1cafdcd4a1120a11193e2b6c',1,'generate_cpp_hamiltonian']]],
-  ['_5fhas_5ftemporal_5findex_6',['_has_temporal_index',['../namespacegenerate__cpp__hamiltonian.html#ae6156a2bb9150e311cf1c11877101de5',1,'generate_cpp_hamiltonian']]],
-  ['_5frender_5fconstructor_5finitializers_7',['_render_constructor_initializers',['../namespacegenerate__cpp__hamiltonian.html#a4e9df2b5a1984e3b053f902b29fb6f61',1,'generate_cpp_hamiltonian']]],
-  ['_5frender_5fconstructor_5fsignature_8',['_render_constructor_signature',['../namespacegenerate__cpp__hamiltonian.html#a5301af1851edc655dfe79bdc9bc529b8',1,'generate_cpp_hamiltonian']]],
-  ['_5frender_5fcxx_5fexpression_9',['_render_cxx_expression',['../namespacegenerate__cpp__hamiltonian.html#a0a59ade12bb7a4ae3f11fc2ab74cfe6c',1,'generate_cpp_hamiltonian']]],
-  ['_5frender_5fexpression_10',['_render_expression',['../namespacegenerate__cpp__constitutive__law.html#ac7e0b042ac6fbb9b6a47ed6e26a6a3d8',1,'generate_cpp_constitutive_law']]],
-  ['_5frender_5findexed_5felem_5fmethod_11',['_render_indexed_elem_method',['../namespacegenerate__cpp__hamiltonian.html#a14abc15c1ce1250104fe3e9abe7b6d59',1,'generate_cpp_hamiltonian']]],
-  ['_5frender_5findexed_5fmethod_12',['_render_indexed_method',['../namespacegenerate__cpp__hamiltonian.html#ac1da5460f9a2263dce2e6a00e8ef9d29',1,'generate_cpp_hamiltonian']]],
-  ['_5frender_5findexed_5fnonlocal_5fvalue_5fmethod_13',['_render_indexed_nonlocal_value_method',['../namespacegenerate__cpp__hamiltonian.html#ac52f999b9b932a924a2a6226b7987a74',1,'generate_cpp_hamiltonian']]],
-  ['_5frender_5fmembers_14',['_render_members',['../namespacegenerate__cpp__hamiltonian.html#a9f78e70e0da0f55485abeb14cab05136',1,'generate_cpp_hamiltonian']]],
-  ['_5frender_5fmoments_5fobject_5fjacobian_5fmethod_15',['_render_moments_object_jacobian_method',['../namespacegenerate__cpp__hamiltonian.html#a8fd851c7718c2be25c6f47b94b22a606',1,'generate_cpp_hamiltonian']]],
-  ['_5frender_5fmoments_5fobject_5fmethod_16',['_render_moments_object_method',['../namespacegenerate__cpp__hamiltonian.html#a2667842a9e9629a38cdd198ea34dd8cc',1,'generate_cpp_hamiltonian']]],
-  ['_5freplace_5fsymbols_17',['_replace_symbols',['../namespacegenerate__cpp__constitutive__law.html#a0dac0c38bfa6bf7669d5fad94810b4a0',1,'generate_cpp_constitutive_law._replace_symbols()'],['../namespacegenerate__cpp__hamiltonian.html#a7b91892e2d0365077d91ceb648df863a',1,'generate_cpp_hamiltonian._replace_symbols()']]]
+  ['2d_0',['Local material Hodge in 2D',['../physics_module.html#autotoc_md35',1,'']]]
 ];

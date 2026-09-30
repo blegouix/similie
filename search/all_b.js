@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['kokkos_20and_20ddc_20support_20tensor_20fields_20what_20can_20similie_20do_20in_20addition_0',['Do Kokkos and DDC support tensor fields ? What can SimiLie do in addition ?',['../tensor_module.html#autotoc_md8',1,'']]]
+  ['jacobi_0',['Jacobi',['../namespacesimilie_1_1solvers.html#abe2dd397f1ada9f78cdbf2166698ab4da2ba38a7b398cfd9360591c3a1a25ba39',1,'similie::solvers']]],
+  ['jacobi_5fmax_5fblock_5fsize_1',['jacobi_max_block_size',['../namespacesimilie_1_1solvers.html#ade8d928c1534d50e44daa06bf13c4fe1',1,'similie::solvers::StrongFormulationSolverSettings']]]
 ];

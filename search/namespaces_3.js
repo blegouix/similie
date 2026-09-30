@@ -10,6 +10,7 @@ var searchData=
   ['sil_3a_3atensor_7',['tensor',['../namespacesil_1_1tensor.html',1,'sil']]],
   ['similie_8',['similie',['../namespacesimilie.html',1,'']]],
   ['similie_3a_3aphysics_9',['physics',['../namespacesimilie_1_1physics.html',1,'similie']]],
-  ['similie_3a_3aphysics_3a_3amagnetostatics_10',['magnetostatics',['../namespacesimilie_1_1physics_1_1magnetostatics.html',1,'similie::physics']]],
-  ['similie_3a_3asolvers_11',['solvers',['../namespacesimilie_1_1solvers.html',1,'similie']]]
+  ['similie_3a_3aphysics_3a_3aelasticity_10',['elasticity',['../namespacesimilie_1_1physics_1_1elasticity.html',1,'similie::physics']]],
+  ['similie_3a_3aphysics_3a_3amagnetostatics_11',['magnetostatics',['../namespacesimilie_1_1physics_1_1magnetostatics.html',1,'similie::physics']]],
+  ['similie_3a_3asolvers_12',['solvers',['../namespacesimilie_1_1solvers.html',1,'similie']]]
 ];
