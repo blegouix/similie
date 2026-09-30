@@ -265,8 +265,5 @@ This is a based cubical construction; it does not claim the simplicial averaging
 or all the Bianchi identities of
 [Braune et al., A Discrete Exterior Calculus of Bundle-valued Forms](https://arxiv.org/abs/2406.05383).
 
-For the 2D vertex-centred elasticity example, a local material Hodge maps
-primal vector edge differences to integrated forces on dual half-segments.
-Its affine part is exact for constant strain and its complementary part is
-stabilized. The dual incidence then sums those forces into nodal balances.
-The recovered constant strain used for visualization is a separate diagnostic.
+The 2D elasticity use of this derivative is described in the
+\ref physics_module "physics module".

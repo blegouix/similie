@@ -185,13 +185,15 @@ fi
 
 getdp_output_dir="$(dirname "${mesh_file}")/getdp_reference"
 mkdir -p "${getdp_output_dir}"
+# Source-built GetDP's Sparskit scaling mode 1 aliases the row and column
+# buffers, then frees both. Mode 2 uses separate buffers.
 set +e
 "${getdp_executable}" \
         "${getdp_problem_file}" \
         -msh "${mesh_file}" \
         -name "${getdp_output_dir}/wrench2D" \
         -solver "${script_dir}/getdp_ref/solver.par" \
-        -Scaling 1 \
+        -Scaling 2 \
         -Algorithm 8 \
         -Krylov_Size 200 \
         -Nb_Iter_Max 100000 \
@@ -203,11 +205,8 @@ set +e
 getdp_status=$?
 set -e
 if [[ "${getdp_status}" -ne 0 ]]; then
-    if [[ "${getdp_status}" -ne 134 || ! -s "${getdp_output_dir}/u_probe.txt" ]]; then
-        echo "GetDP reference solve failed with exit status ${getdp_status}" >&2
-        exit "${getdp_status}"
-    fi
-    echo "warning: GetDP aborted during final cleanup after writing u_probe.txt" >&2
+    echo "GetDP reference solve failed with exit status ${getdp_status}" >&2
+    exit "${getdp_status}"
 fi
 
 python3 - "${log_file}" "${getdp_output_dir}/u_probe.txt" "${getdp_deflection_rel_tolerance}" <<'PY'

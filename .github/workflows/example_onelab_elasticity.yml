@@ -48,6 +48,7 @@ jobs:
             -setnumber "Material/Applied force [N]" 3
             -setnumber "Geometry/4Thickness (mm)" 0.5
             -setnumber "Geometry/2Main characteristic length" 4
+    # PR runs require approval in the onelab_elasticity-cuda GitHub environment.
     environment:
       name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'onelab_elasticity-cuda' || 'automatic-ci-run') }}
     steps:
