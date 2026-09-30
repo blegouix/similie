@@ -12,6 +12,8 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 SimiLie is a performance-portable (CPU & GPU) C++20 library aiming to extent the capabilities of [Kokkos](https://github.com/kokkos/kokkos) and [DDC](https://github.com/CExA-project/ddc) to offer a complete toolkit able to perform tensor calculus, differential calculus and solving PDE. A key paradigm is the exclusive support of structured meshes to avoid sparse linear algebra and produce mostly-embarrassing parallel code. It should be able to address any multiphysical problem on fixed grid from eventually-relativistic classical field theory (in particular: solid & fluid mechanics, electromagnetism and gravitation).
 
+The \ref physics_module "physics module" contains the available physical models and local material operators.
+
 \important Absolute WIP, there is no guarantee for proper working. Only OPENMP and CUDA backends have been tested.
 
 ## AI-operability

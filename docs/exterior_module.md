@@ -39,6 +39,40 @@ An important relation is the Poincarré Lemma \f$dd = 0\f$. It leads to the very
 
 \important A key paradigm of SimiLie is the exclusive support of structured meshes to avoid sparse linear algebra and produce mostly-embarrassingly parallel code. It implies that the main difference between the theory described in [Discrete Differential Forms for Computational Modeling](http://www.geometry.caltech.edu/pubs/DKT05.pdf) and the implementation in SimiLie is that the discrete exterior derivative is not built upon a sparse adjacency matrix, but directly computed locally for each node of the mesh (matrix-free approach). Otherwise, SimiLie follows quite closely the construction presented in the document.
 
+### Exterior covariant derivative
+
+`CovariantDerivative<SpatialIndex...>` extends the cubical exterior derivative
+to cochains with values in a vector bundle. Spatial dimension, form degree and
+fibre rank are independent: a scalar, vector or flattened tensor may be the
+value of a face cochain.
+
+For a cell \f$c\f$, let \f$b(c)\f$ denote its lower vertex. The discrete operation is
+
+\f[
+(d^\nabla u)(c) = \sum_{f\subset\partial c}
+    [c:f]\,P_{b(c)\leftarrow b(f)}u(f).
+\f]
+
+Here \f$[c:f]\f$ is the oriented incidence number and \f$P\f$ transports a face
+value into the fibre at the cell's lower vertex. Values already in that fibre
+are used directly. `transport(to, from)` returns the matrix with output fibre
+components as rows and input components as columns.
+
+The implementation converts the vertex masks accepted by `cochain_value()`
+into a SimiLie `Simplex`, obtains its oriented faces with `boundary()`, and
+integrates each transported component using `Cochain::integrate()`. These are
+the same boundary and pairing operations used by `Coboundary::run()`; there
+is no separate formula for incidence signs in the covariant derivative.
+It shares these algebraic primitives rather than dispatching to the global
+tensor `coboundary()` wrapper, whose evaluator also supplies a mesh boundary
+policy.
+
+With `IdentityTransport<Rank>`, this construction is the ordinary coboundary
+component by component, and its square vanishes. General transports need not
+give a square-zero operator: compositions along different paths can differ,
+representing discrete curvature. No metric, material law or quadrature rule
+enters this incidence operation.
+
 ### Simplex
 
 A \f$k-\f$simplex is an oriented discrete element of dimension \f$k\f$ belonging to the discrete manifold. Ie. a \f$0\f$-simplex is a node, a \f$1\f$-simplex is an edge, a \f$2\f$-simplex is a face and a \f$3\f$-simplex is a cell. It can be defined for any dimension \f$n\f$ of the discrete manifold.
@@ -203,3 +237,33 @@ The generic DEC Laplacian combines the exterior derivative and the codifferentia
 \f\[
 \Delta = \delta d + d \delta
 \f\]
+
+### Bundle-valued exterior covariant derivative
+
+\important This operator and documentation is fully AI-generated.
+
+`CovariantDerivative<SpatialIndex...>` computes a topological covariant
+coboundary. The dimension and the bundle rank are independent.
+Its `cochain_value<k, rank>` accepts a cubical k-cochain sampler and parallel
+transport matrices `T(to, from)`. Cochain components live in the fibre at the
+lower vertex of their cell. For increasing directions I, the operator is
+
+\f\[
+(D_T c)_I(v)=\sum_{j=0}^{k}(-1)^j
+\left[T(v,v+e_{I_j})c_{I\setminus I_j}(v+e_{I_j})
+      -c_{I\setminus I_j}(v)\right].
+\f\]
+
+Here vertex numbers are reference-cell bit masks and the sampler receives a
+direction mask and a lower vertex. The callback must provide invertible
+transport with `T(v,v)=Id`, reverse transport the inverse, and explicitly chosen
+paths when more than one edge is traversed. Identity transport gives the ordinary
+cubical coboundary. In a curved connection `D_T D_T` generally is nonzero.
+Under a fibre basis change G(v), cochains transform by G(v) and transport by
+`G(to) T(to,from) G(from)^(-1)`, so the result transforms in its base fibre.
+This is a based cubical construction; it does not claim the simplicial averaging
+or all the Bianchi identities of
+[Braune et al., A Discrete Exterior Calculus of Bundle-valued Forms](https://arxiv.org/abs/2406.05383).
+
+The 2D elasticity use of this derivative is described in the
+\ref physics_module "physics module".

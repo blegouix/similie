@@ -33,6 +33,37 @@ SPDX-FileComment = "Forked ONELAB/Gmsh example data used by the SimiLie example.
 
 [[annotations]]
 path = [
+    "examples/onelab_elasticity/wrench2D_common.pro",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "1997-2026 C. Geuzaine, J.-F. Remacle"
+SPDX-License-Identifier = "GPL-2.0-or-later"
+SPDX-FileComment = "Forked ONELAB/Gmsh example data used by the SimiLie example. Modified to suit SimiLie specifications."
+
+[[annotations]]
+path = [
+    "examples/onelab_inductor/getdp_ref/inductor.pro",
+    "examples/onelab_inductor/getdp_ref/magstadyn_a.pro",
+    "examples/onelab_inductor/getdp_ref/magstadyn_av_js0_3d.pro",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "1997-2026 C. Geuzaine, J.-F. Remacle"
+SPDX-License-Identifier = "GPL-2.0-or-later"
+SPDX-FileComment = "Adapted from the GetDP inductor ONELAB example for the SimiLie geometry."
+
+[[annotations]]
+path = [
+    "examples/onelab_elasticity/getdp_ref/Lib_Elast_u.pro",
+    "examples/onelab_elasticity/getdp_ref/Lib_JacInt.pro",
+    "examples/onelab_elasticity/getdp_ref/wrench2D.pro",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "1997-2026 C. Geuzaine, J.-F. Remacle"
+SPDX-License-Identifier = "GPL-2.0-or-later"
+SPDX-FileComment = "Adapted from GetDP ONELAB example files for the SimiLie wrench geometry."
+
+[[annotations]]
+path = [
     "onelab_interface/.clang-format-ignore",
 ]
 precedence = "override"

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Baptiste Legouix
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// AI-GENERATED
 
 #pragma once
 
@@ -627,6 +628,7 @@ std::shared_ptr<gko::matrix::Csr<double, gko::int32>> build_matrix(
         OperatorModel const& operator_model)
 {
     auto matrix_data = assemble_matrix_data(operator_model);
+    matrix_data.sum_duplicates();
     if (env_flag_enabled("SIMILIE_MATRIX_DIAGNOSTICS")) {
         log_matrix_diagnostics(matrix_data);
     }
@@ -640,6 +642,7 @@ std::shared_ptr<gko::matrix::Csr<double, gko::int32>> build_matrix(
         StateView state)
 {
     auto matrix_data = assemble_matrix_data(operator_model, state);
+    matrix_data.sum_duplicates();
     if (env_flag_enabled("SIMILIE_MATRIX_DIAGNOSTICS")) {
         log_matrix_diagnostics(matrix_data);
     }
@@ -659,6 +662,7 @@ class MatrixFreeLinOp : public gko::EnableLinOp<MatrixFreeLinOp<ExecSpace, Opera
     ExecSpace m_exec_space;
     std::shared_ptr<OperatorModel const> m_operator_model;
     mutable std::shared_ptr<workspace_type> m_workspace;
+    mutable Kokkos::View<double**, Kokkos::LayoutRight, memory_space> m_advanced_applied;
     mutable std::size_t m_apply_count = 0;
     mutable std::size_t m_advanced_apply_count = 0;
     mutable double m_apply_duration = 0.0;
@@ -679,6 +683,10 @@ public:
         : base_type(exec, gko::dim<2>(operator_model->size(), operator_model->size()))
         , m_exec_space(exec_space)
         , m_operator_model(std::move(operator_model))
+        , m_advanced_applied(
+                  "similie_matrix_free_linop_advanced_workspace",
+                  m_operator_model->size(),
+                  1)
     {
         if constexpr (workspace_traits::enabled) {
             if (!uses_precomputed_matrix_free_stencils(*m_operator_model)) {
@@ -753,8 +761,11 @@ public:
         auto b_view = gko::ext::kokkos::map_data<memory_space>(*b_dense);
         auto beta_view = gko::ext::kokkos::map_data<memory_space>(*beta_dense);
         auto x_view = gko::ext::kokkos::map_data<memory_space>(*x_dense);
-        Kokkos::View<double**, Kokkos::LayoutRight, memory_space>
-                applied("similie_matrix_free_linop_apply", x_view.extent(0), x_view.extent(1));
+        if (x_view.extent(0) != m_advanced_applied.extent(0)
+            || x_view.extent(1) != m_advanced_applied.extent(1)) {
+            throw std::invalid_argument("MatrixFreeLinOp received an unsupported dense shape");
+        }
+        auto const applied = m_advanced_applied;
         if constexpr (workspace_traits::enabled) {
             if constexpr (requires(
                                   OperatorModel const& model,
@@ -848,6 +859,7 @@ class StateDependentMatrixFreeLinOp
     ExecSpace m_exec_space;
     std::shared_ptr<OperatorModel const> m_operator_model;
     StateView m_state;
+    mutable Kokkos::View<double**, Kokkos::LayoutRight, memory_space> m_advanced_applied;
 
 public:
     explicit StateDependentMatrixFreeLinOp(std::shared_ptr<gko::Executor const> exec)
@@ -867,6 +879,10 @@ public:
         , m_exec_space(exec_space)
         , m_operator_model(std::move(operator_model))
         , m_state(state)
+        , m_advanced_applied(
+                  "similie_state_dependent_linop_advanced_workspace",
+                  m_operator_model->size(),
+                  1)
     {
     }
 
@@ -903,8 +919,12 @@ public:
         auto b_view = gko::ext::kokkos::map_data<memory_space>(*b_dense);
         auto beta_view = gko::ext::kokkos::map_data<memory_space>(*beta_dense);
         auto x_view = gko::ext::kokkos::map_data<memory_space>(*x_dense);
-        Kokkos::View<double**, Kokkos::LayoutRight, memory_space>
-                applied("similie_state_dependent_linop_apply", x_view.extent(0), x_view.extent(1));
+        if (x_view.extent(0) != m_advanced_applied.extent(0)
+            || x_view.extent(1) != m_advanced_applied.extent(1)) {
+            throw std::invalid_argument(
+                    "StateDependentMatrixFreeLinOp received an unsupported dense shape");
+        }
+        auto const applied = m_advanced_applied;
         apply_jacobian(m_exec_space, *m_operator_model, m_state, b_view, applied);
         Kokkos::parallel_for(
                 "similie_state_dependent_linop_advanced_apply",
@@ -1066,6 +1086,16 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
     auto iterations_criterion
             = gko::stop::Iteration::build().with_max_iters(settings.max_iterations).on(gko_exec);
     std::unique_ptr<gko::LinOpFactory> solver_factory;
+    bool const nonsymmetric_operator = [] {
+        if constexpr (requires { OperatorModel::IS_SYMMETRIC; }) {
+            return !OperatorModel::IS_SYMMETRIC;
+        }
+        return false;
+    }();
+    bool const default_to_gmres = nonsymmetric_operator && std::getenv("SIMILIE_SOLVER") == nullptr;
+    gko::size_type const gmres_krylov_dim = static_cast<gko::size_type>(std::max(
+            1,
+            env_int_or("SIMILIE_GMRES_KRYLOV_DIM", nonsymmetric_operator ? 1500 : 100)));
     if (detail::env_value_equals("SIMILIE_SOLVER", "minres")) {
         solver_factory = gko::solver::Minres<double>::build()
                                  .with_generated_preconditioner(preconditioner)
@@ -1080,15 +1110,13 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
                                          std::move(residual_criterion),
                                          std::move(iterations_criterion))
                                  .on(gko_exec);
-    } else if (detail::env_value_equals("SIMILIE_SOLVER", "gmres")) {
+    } else if (detail::env_value_equals("SIMILIE_SOLVER", "gmres") || default_to_gmres) {
         solver_factory = gko::solver::Gmres<double>::build()
                                  .with_generated_preconditioner(preconditioner)
                                  .with_criteria(
                                          std::move(residual_criterion),
                                          std::move(iterations_criterion))
-                                 .with_krylov_dim(
-                                         static_cast<gko::size_type>(
-                                                 env_int_or("SIMILIE_GMRES_KRYLOV_DIM", 100)))
+                                 .with_krylov_dim(gmres_krylov_dim)
                                  .on(gko_exec);
     } else if (detail::env_value_equals("SIMILIE_SOLVER", "bicgstab")) {
         solver_factory = gko::solver::Bicgstab<double>::build()
@@ -1318,6 +1346,8 @@ StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
     detail::fill(exec_space, solution, 0.0);
     auto const gko_exec = gko::ext::kokkos::create_executor(exec_space);
     if constexpr (OperatorModel::IS_LINEAR) {
+        std::cout << "SimiLie linear system mode: "
+                  << (settings.use_matrix_free ? "matrix-free" : "assembled") << '\n';
         diagnostics.initial_residual_l2 = detail::residual_norm_l2(exec_space, rhs);
         diagnostics.final_residual_l2 = diagnostics.initial_residual_l2;
         diagnostics.final_relative_residual = diagnostics.initial_residual_l2 == 0.0 ? 0.0 : 1.0;

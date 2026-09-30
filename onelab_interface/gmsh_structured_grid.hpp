@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Baptiste Legouix
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// AI-GENERATED
 
 #pragma once
 
@@ -41,10 +42,17 @@ struct QuadrilateralCell
     std::array<std::size_t, 4> node_tags;
 };
 
+struct BoundaryEdge
+{
+    int physical_tag;
+    std::array<std::size_t, 2> node_tags;
+};
+
 struct QuadrilateralMesh
 {
     std::vector<MeshNode> nodes;
     std::vector<QuadrilateralCell> cells;
+    std::vector<BoundaryEdge> boundary_edges;
 };
 
 struct HexahedralMesh
@@ -245,6 +253,7 @@ inline SupportedMesh parse_supported_msh2_mesh(std::filesystem::path const& mesh
 
     std::vector<MeshNode> nodes;
     std::vector<QuadrilateralCell> quadrilateral_cells;
+    std::vector<BoundaryEdge> boundary_edges;
     std::vector<HexahedralCell> hexahedral_cells;
     std::string token;
     bool saw_elements_section = false;
@@ -318,6 +327,11 @@ inline SupportedMesh parse_supported_msh2_mesh(std::filesystem::path const& mesh
                         stream >> cell.node_tags[k];
                     }
                     hexahedral_cells.push_back(cell);
+                } else if (element_type == 1) {
+                    BoundaryEdge edge;
+                    edge.physical_tag = tags.empty() ? 0 : tags[0];
+                    stream >> edge.node_tags[0] >> edge.node_tags[1];
+                    boundary_edges.push_back(edge);
                 } else if (is_supported_boundary_element(element_type)) {
                     int const nodes_to_skip = nodes_per_element_type(element_type);
                     for (int k = 0; k < nodes_to_skip; ++k) {
@@ -351,6 +365,7 @@ inline SupportedMesh parse_supported_msh2_mesh(std::filesystem::path const& mesh
         return QuadrilateralMesh {
                 .nodes = std::move(nodes),
                 .cells = std::move(quadrilateral_cells),
+                .boundary_edges = std::move(boundary_edges),
         };
     }
     return HexahedralMesh {

@@ -171,7 +171,7 @@ void run_reconstruction_test(SetupForm&& setup_form, CheckValue&& check_value)
     ddc::host_for_each(mesh_xy, [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
         double const xi = static_cast<double>(ddc::coordinate(ddc::DiscreteElement<DDimX>(elem)));
         double const eta = static_cast<double>(ddc::coordinate(ddc::DiscreteElement<DDimY>(elem)));
-        position(elem, position.accessor().template access_element<X>()) = 2. * xi;
+        position(elem, position.accessor().template access_element<X>()) = 2. * xi + eta;
         position(elem, position.accessor().template access_element<Y>()) = 3. * eta;
     });
 
@@ -209,6 +209,24 @@ void run_reconstruction_test(SetupForm&& setup_form, CheckValue&& check_value)
             mesh_xy.remove_last(ddc::DiscreteVector<DDimX, DDimY>(1, 1)),
             [&](ddc::DiscreteElement<DDimX, DDimY> elem) {
                 check_value(reconstructed, elem);
+                if constexpr (FormIndex::rank() == 2) {
+                    using NaturalElement = typename decltype(reconstruction_accessor)::
+                            natural_domain_t::discrete_element_type;
+                    auto value = [&](std::array<std::size_t, 4> ids) {
+                        return sil::exterior::
+                                Reconstruction<IndexSeq, decltype(position), decltype(elem)>::
+                                        value(position,
+                                              elem,
+                                              sil::exterior::detail::natural_elem_from_flat_ids<
+                                                      NaturalElement>(ids));
+                    };
+                    double const canonical = value({0, 1, 0, 1});
+                    EXPECT_GT(canonical, 0.0);
+                    EXPECT_DOUBLE_EQ(value({1, 0, 0, 1}), -canonical);
+                    EXPECT_DOUBLE_EQ(value({0, 1, 1, 0}), -canonical);
+                    EXPECT_DOUBLE_EQ(value({1, 0, 1, 0}), canonical);
+                    EXPECT_DOUBLE_EQ(value({0, 0, 0, 1}), 0.0);
+                }
                 ddc::host_for_each(reconstruction_operator.accessor().domain(), [&](auto mem_elem) {
                     double const expected_operator_value = sil::exterior::Reconstruction<
                             IndexSeq,
