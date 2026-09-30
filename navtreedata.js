@@ -57,15 +57,14 @@ var NAVTREE =
         [ "Reduction and reconstruction", "exterior_module.html#autotoc_md27", null ],
         [ "Hodge star operator", "exterior_module.html#autotoc_md28", null ],
         [ "Codifferential", "exterior_module.html#autotoc_md29", null ],
-        [ "Laplacian", "exterior_module.html#autotoc_md30", null ],
-        [ "Bundle-valued exterior covariant derivative", "exterior_module.html#autotoc_md31", null ]
+        [ "Laplacian", "exterior_module.html#autotoc_md30", null ]
       ] ]
     ] ],
     [ "The physics module", "physics_module.html", [
-      [ "Scalar field", "physics_module.html#autotoc_md32", null ],
-      [ "Magnetostatics", "physics_module.html#autotoc_md33", null ],
-      [ "Elasticity", "physics_module.html#autotoc_md34", [
-        [ "Local material Hodge in 2D", "physics_module.html#autotoc_md35", null ]
+      [ "Scalar field", "physics_module.html#autotoc_md31", null ],
+      [ "Magnetostatics", "physics_module.html#autotoc_md32", null ],
+      [ "Elasticity", "physics_module.html#autotoc_md33", [
+        [ "Local material Hodge in 2D", "physics_module.html#autotoc_md34", null ]
       ] ]
     ] ],
     [ "The ONELAB interface", "onelab_interface.html", null ],
@@ -100,7 +99,7 @@ var NAVTREEINDEX =
 "Running.html",
 "classsil_1_1exterior_1_1CochainIterator.html#accfa2f96fd8a102079455b4923974027",
 "classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html",
-"namespacegenerate__cpp__constitutive__law.html#a8b30a1fb9e6951c6a808f79626737fab",
+"namespacegenerate__cpp__constitutive__law.html#ac7e0b042ac6fbb9b6a47ed6e26a6a3d8",
 "structsil_1_1exterior_1_1Reconstruction.html#a645faba94d43ae5e1cf51920faa40ca1"
 ];
 

@@ -159,7 +159,8 @@ Discrete exterior calculus</h1>
 <dl class="section important"><dt>Important</dt><dd>A key paradigm of SimiLie is the exclusive support of structured meshes to avoid sparse linear algebra and produce mostly-embarrassingly parallel code. It implies that the main difference between the theory described in <a href="http://www.geometry.caltech.edu/pubs/DKT05.pdf">Discrete Differential Forms for Computational Modeling</a> and the implementation in SimiLie is that the discrete exterior derivative is not built upon a sparse adjacency matrix, but directly computed locally for each node of the mesh (matrix-free approach). Otherwise, SimiLie follows quite closely the construction presented in the document.</dd></dl>
 <h2><a class="anchor" id="autotoc_md17"></a>
 Exterior covariant derivative</h2>
-<p><code>CovariantDerivative&lt;SpatialIndex...&gt;</code> extends the cubical exterior derivative to cochains with values in a vector bundle. Spatial dimension, form degree and fibre rank are independent: a scalar, vector or flattened tensor may be the value of a face cochain.</p>
+<dl class="section important"><dt>Important</dt><dd>This operator and documentation is fully AI-generated.</dd></dl>
+<p><code>CovariantDerivative&lt;SpatialIndex...&gt;</code> extends the discrete exterior derivative to cochains with values in a vector bundle. Spatial dimension, form degree and fibre rank are independent: a scalar, vector or flattened tensor may be the value of a face cochain.</p>
 <p>For a cell \(c\), let \(b(c)\) denote its lower vertex. The discrete operation is</p>
 <p class="formulaDsp">
 \[
@@ -170,6 +171,7 @@ Exterior covariant derivative</h2>
 <p>Here \([c:f]\) is the oriented incidence number and \(P\) transports a face value into the fibre at the cell's lower vertex. Values already in that fibre are used directly. <code>transport(to, from)</code> returns the matrix with output fibre components as rows and input components as columns.</p>
 <p>The implementation converts the vertex masks accepted by <code>cochain_value()</code> into a SimiLie <code>Simplex</code>, obtains its oriented faces with <code>boundary()</code>, and integrates each transported component using <code>Cochain::integrate()</code>. These are the same boundary and pairing operations used by <code>Coboundary::run()</code>; there is no separate formula for incidence signs in the covariant derivative. It shares these algebraic primitives rather than dispatching to the global tensor <code>coboundary()</code> wrapper, whose evaluator also supplies a mesh boundary policy.</p>
 <p>With <code>IdentityTransport&lt;Rank&gt;</code>, this construction is the ordinary coboundary component by component, and its square vanishes. General transports need not give a square-zero operator: compositions along different paths can differ, representing discrete curvature. No metric, material law or quadrature rule enters this incidence operation.</p>
+<p>The 2D elasticity use of this derivative is described in the <a class="el" href="physics_module.html">physics module</a>.</p>
 <h2><a class="anchor" id="autotoc_md18"></a>
 Simplex</h2>
 <p>A \(k-\)simplex is an oriented discrete element of dimension \(k\) belonging to the discrete manifold. Ie. a \(0\)-simplex is a node, a \(1\)-simplex is an edge, a \(2\)-simplex is a face and a \(3\)-simplex is a cell. It can be defined for any dimension \(n\) of the discrete manifold.</p>
@@ -248,7 +250,7 @@ G_{\mu\nu} = g_{\rho\sigma} e_\mu^\rho e_\nu^\sigma
 <p>This is exactly what <code>SimplexVolume</code> computes: it first extracts the local edge vectors from the position field, assembles the Gram matrix, and finally takes the square root of its determinant. <code>DualSimplexVolume</code> applies the same formula to the complementary \((n-k)\) directions. The associated dual cell complex is selected through the <code>CellComplex</code> tag, typically circumcentric or barycentric.</p>
 <h2><a class="anchor" id="autotoc_md27"></a>
 Reduction and reconstruction</h2>
-<p>Reduction and reconstruction are the bridges between pointwise differential-form coefficients and geometric cochains. Schematically, reduction is the same as integrating a density field along simplices, providing a natural way to encode a differential form on a mesh so that the geometric measures are already absorbed into the cochain values. Reconstruction is the inverse operation. They always act on a chosen cell complex, selected by the <code>CellComplex</code> tag. The reduction maps a coefficient \(k\)-form to the cochain obtained by integrating it on the corresponding \(k\)-cell:</p>
+<p>Reduction and reconstruction connect pointwise differential-form coefficients and geometric cochains. Reduction integrates a piecewise-constant coefficient form over mesh cells, absorbing their geometry into the cochain values. Primal reconstruction recovers the coefficients by inverting this cell-local map. The <code>CellComplex</code> tag selects the cells used for reduction:</p>
 <p class="formulaDsp">
 \[
 R_k(\omega, \sigma^k) = \int_{\sigma^k} \omega
@@ -259,17 +261,18 @@ R_k(\omega, \sigma^k) = \int_{\sigma^k} \omega
 <li>a circumcentric dual \(k\)-cell for <code>CellComplex::CircumcentricDual</code>,</li>
 <li>a barycentric dual \(k\)-cell for <code>CellComplex::BarycentricDual</code>.</li>
 </ul>
-<p>The reconstruction is the inverse map assuming a piecewise-constant ansatz:</p>
+<p>For a fixed cell, the reduction of a piecewise-constant form is a linear map between its coefficient basis and the cochain basis. Primal reconstruction inverts that local matrix:</p>
 <p class="formulaDsp">
 \[
-Q_k(c, \sigma^k) = \frac{c(\sigma^k)}{|\sigma^k|}
+c_I = \sum_J R_{IJ}\,\omega_J,\qquad
+\omega_J = \sum_I (R^{-1})_{JI}\,c_I.
 \]
 </p>
-<p>Here again, the meaning of \(\sigma^k\) depends on the selected cell complex. For <code>CellComplex::Primal</code>, reduction and reconstruction only need the position field because the required measure is purely primal. No metric needs to be passed. For dual cell complexes, the dual volumes depend on the metric, so dual reduction needs both the position and the metric.</p>
+<p>For orthogonal cells this can reduce to division by a cell measure, but a skew geometry can couple different coefficient components. Primal reduction and reconstruction use the position field without a metric. Circumcentric-dual reduction also uses the metric.</p>
 <p>In the current implementation:</p><ul>
-<li>primal reduction/reconstruction are diagonal local operators based on primal simplex volumes;</li>
+<li>primal reduction assembles a local matrix from edge vectors, and primal reconstruction inverts it;</li>
 <li>circumcentric-dual reduction is the metric-dependent dual geometric map used by the discrete Hodge star;</li>
-<li>reconstruction is currently only implemented where the piecewise-constant inverse is well defined locally. Unsupported <code>CellComplex</code> choices are rejected with <code>static_assert</code>.</li>
+<li>barycentric-dual reconstruction is rejected with <code>static_assert</code>.</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md28"></a>
 Hodge star operator</h2>
@@ -289,7 +292,7 @@ g^{i_1 \ell_1} \dots g^{i_k \ell_k}
 <li>Application of the continuous Hodge star,</li>
 <li>Reduction of the resulting \((n-k)\)-form onto the chosen dual cell complex.</li>
 </ul>
-<p>This composition reproduces exactly the usual diagonal DEC factor:</p>
+<p>For an orthogonal primal and dual pair, this composition gives the usual diagonal DEC factor:</p>
 <p class="formulaDsp">
 \[
 \star_\sigma = \frac{|\star \sigma|}{|\sigma|}
@@ -319,20 +322,7 @@ Laplacian</h2>
 \Delta = \delta d + d \delta
 \]
 </p>
-<h2><a class="anchor" id="autotoc_md31"></a>
-Bundle-valued exterior covariant derivative</h2>
-<dl class="section important"><dt>Important</dt><dd>This operator and documentation is fully AI-generated.</dd></dl>
-<p><code>CovariantDerivative&lt;SpatialIndex...&gt;</code> computes a topological covariant coboundary. The dimension and the bundle rank are independent. Its <code>cochain_value&lt;k, rank&gt;</code> accepts a cubical k-cochain sampler and parallel transport matrices <code>T(to, from)</code>. Cochain components live in the fibre at the lower vertex of their cell. For increasing directions I, the operator is</p>
-<p class="formulaDsp">
-\[
-(D_T c)_I(v)=\sum_{j=0}^{k}(-1)^j
-\left[T(v,v+e_{I_j})c_{I\setminus I_j}(v+e_{I_j})
-      -c_{I\setminus I_j}(v)\right].
-\]
-</p>
-<p>Here vertex numbers are reference-cell bit masks and the sampler receives a direction mask and a lower vertex. The callback must provide invertible transport with <code>T(v,v)=Id</code>, reverse transport the inverse, and explicitly chosen paths when more than one edge is traversed. Identity transport gives the ordinary cubical coboundary. In a curved connection <code>D_T D_T</code> generally is nonzero. Under a fibre basis change G(v), cochains transform by G(v) and transport by <code>G(to) T(to,from) G(from)^(-1)</code>, so the result transforms in its base fibre. This is a based cubical construction; it does not claim the simplicial averaging or all the Bianchi identities of <a href="https://arxiv.org/abs/2406.05383">Braune et al., A Discrete Exterior Calculus of Bundle-valued Forms</a>.</p>
-<p>The 2D elasticity use of this derivative is described in the <a class="el" href="physics_module.html">physics module</a>. </p>
-</div></div><!-- contents -->
+ </div></div><!-- contents -->
 </div><!-- PageDoc -->
 </div><!-- doc-content -->
 <!--
