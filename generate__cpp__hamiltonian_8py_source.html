@@ -138,7 +138,7 @@ $(function(){initNavTree('generate__cpp__hamiltonian_8py_source.html',''); initR
 <div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="keyword">from</span> dataclasses <span class="keyword">import</span> dataclass</div>
 <div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="keyword">from</span> pathlib <span class="keyword">import</span> Path</div>
 <div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span> </div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="keyword">from</span> sympy <span class="keyword">import</span> Derivative, Subs, Symbol, diff, solve, symbols</div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="keyword">from</span> sympy <span class="keyword">import</span> Derivative, Subs, Symbol, diff, powsimp, solve, symbols</div>
 <div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="keyword">from</span> sympy.printing.codeprinter <span class="keyword">import</span> cxxcode</div>
 <div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
 <div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span> </div>
@@ -758,10 +758,10 @@ $(function(){initNavTree('generate__cpp__hamiltonian_8py_source.html',''); initR
 <div class="line"><a id="l00587" name="l00587"></a><span class="lineno">  587</span>    moments_replacements = dict(parameter_replacements)</div>
 <div class="line"><a id="l00588" name="l00588"></a><span class="lineno">  588</span> </div>
 <div class="line"><a id="l00589" name="l00589"></a><span class="lineno">  589</span>    potential_derivative_expressions = [</div>
-<div class="line"><a id="l00590" name="l00590"></a><span class="lineno">  590</span>        diff(hamiltonian, symbol) <span class="keywordflow">for</span> symbol <span class="keywordflow">in</span> potential_symbols</div>
+<div class="line"><a id="l00590" name="l00590"></a><span class="lineno">  590</span>        powsimp(diff(hamiltonian, symbol)) <span class="keywordflow">for</span> symbol <span class="keywordflow">in</span> potential_symbols</div>
 <div class="line"><a id="l00591" name="l00591"></a><span class="lineno">  591</span>    ]</div>
 <div class="line"><a id="l00592" name="l00592"></a><span class="lineno">  592</span>    moments_derivative_expressions = [</div>
-<div class="line"><a id="l00593" name="l00593"></a><span class="lineno">  593</span>        diff(hamiltonian, symbol) <span class="keywordflow">for</span> symbol <span class="keywordflow">in</span> moments_symbols</div>
+<div class="line"><a id="l00593" name="l00593"></a><span class="lineno">  593</span>        powsimp(diff(hamiltonian, symbol)) <span class="keywordflow">for</span> symbol <span class="keywordflow">in</span> moments_symbols</div>
 <div class="line"><a id="l00594" name="l00594"></a><span class="lineno">  594</span>    ]</div>
 <div class="line"><a id="l00595" name="l00595"></a><span class="lineno">  595</span> </div>
 <div class="line"><a id="l00596" name="l00596"></a><span class="lineno">  596</span>    potential_argument_entries = [potential_entry, *variable_entries[2:]]</div>
