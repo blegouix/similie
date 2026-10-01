@@ -594,8 +594,8 @@ int main(int argc, char** argv)
             ddc::parallel_deepcopy(h_hamiltonian, hamiltonian);
 
             // Export HDF5 and XDMF
-            const float central_potential_value
-                    = potential_host(ddc::DiscreteElement<DDimX, DDimY, DummyIndex>(
+            const float central_potential_value = potential_host(
+                    ddc::DiscreteElement<DDimX, DDimY, DummyIndex>(
                             potential.extent<DDimX>() / 2,
                             potential.extent<DDimY>() / 2,
                             0));
