@@ -222,7 +222,7 @@ $(function(){initNavTree('laplacian_8hpp_source.html',''); initResizable(true); 
 <div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>                        derivative_span(derivative_alloc.data(), derivative_accessor.domain());</div>
 <div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>                <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">sil::tensor::Tensor</a> derivative_tensor(derivative_span);</div>
 <div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span> </div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>                Coboundary&lt;LaplacianDummyIndex, CochainTag&gt;::operator()(</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>                Coboundary&lt;LaplacianDummyIndex, CochainTag&gt;::run(</div>
 <div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>                        derivative_tensor,</div>
 <div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>                        [&amp;](<span class="keyword">auto</span> sampled_elem, <span class="keyword">auto</span> cochain_elem) {</div>
 <div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>                            <span class="keyword">auto</span> <span class="keyword">const</span> clamped_elem = <a class="code hl_function" href="namespacesil_1_1misc.html#a0c5c59c51d124f3937f0349afde6eb03">misc::</a></div>
@@ -257,7 +257,7 @@ $(function(){initNavTree('laplacian_8hpp_source.html',''); initResizable(true); 
 <div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>                                dual_codifferential_accessor.domain());</div>
 <div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>                <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">sil::tensor::Tensor</a> dual_codifferential(dual_codifferential_span);</div>
 <div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span> </div>
-<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>                TransposedCoboundary&lt;LaplacianDummyIndex, coboundary_dual_tensor_index&gt;::operator()(</div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>                TransposedCoboundary&lt;LaplacianDummyIndex, coboundary_dual_tensor_index&gt;::run(</div>
 <div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>                        dual_codifferential,</div>
 <div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>                        [&amp;](<span class="keyword">auto</span> sampled_elem, <span class="keyword">auto</span> dual_elem) {</div>
 <div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>                            <span class="keywordflow">if</span> (!<a class="code hl_function" href="namespacesil_1_1misc.html#a3972a6165c52a1398ca03e1b4ef8d993">misc::domain_contains</a>(</div>
@@ -443,12 +443,12 @@ $(function(){initNavTree('laplacian_8hpp_source.html',''); initResizable(true); 
 </div>
 <div class="line"><a id="l00308" name="l00308"></a><span class="lineno">  308</span>                exec_space,</div>
 <div class="foldopen" id="foldopen00309" data-start="{" data-end="}">
-<div class="line"><a id="l00309" name="l00309"></a><span class="lineno"><a class="line" href="classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html#ac14e3aa185ecc75b4d292c525cbc891f">  309</a></span>                *m_dual_derivative_hodge_star,</div>
+<div class="line"><a id="l00309" name="l00309"></a><span class="lineno"><a class="line" href="classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html#ac97c63d4dee356a1c23f1bed1d005a4b">  309</a></span>                *m_dual_derivative_hodge_star,</div>
 <div class="line"><a id="l00310" name="l00310"></a><span class="lineno">  310</span>                metric,</div>
 <div class="line"><a id="l00311" name="l00311"></a><span class="lineno">  311</span>                position);</div>
 <div class="line"><a id="l00312" name="l00312"></a><span class="lineno">  312</span>    }</div>
 <div class="line"><a id="l00313" name="l00313"></a><span class="lineno">  313</span> </div>
-<div class="line"><a id="l00314" name="l00314"></a><span class="lineno">  314</span>    TensorType operator()(TensorType laplacian_tensor, TensorType tensor)</div>
+<div class="line"><a id="l00314" name="l00314"></a><span class="lineno">  314</span>    TensorType run(TensorType laplacian_tensor, TensorType tensor)</div>
 <div class="line"><a id="l00315" name="l00315"></a><span class="lineno">  315</span>    {</div>
 <div class="line"><a id="l00316" name="l00316"></a><span class="lineno">  316</span>        <span class="keywordflow">return</span> detail::codifferential_of_coboundary&lt;</div>
 <div class="line"><a id="l00317" name="l00317"></a><span class="lineno">  317</span>                MetricIndex,</div>
@@ -732,7 +732,7 @@ $(function(){initNavTree('laplacian_8hpp_source.html',''); initResizable(true); 
 </div>
 <div class="line"><a id="l00589" name="l00589"></a><span class="lineno">  589</span>        <a class="code hl_function" href="namespacesil_1_1exterior.html#a985e5f2d21f672dde6b75d610b27f6a2">fill_discrete_hodge_star</a>&lt;</div>
 <div class="foldopen" id="foldopen00590" data-start="{" data-end="}">
-<div class="line"><a id="l00590" name="l00590"></a><span class="lineno"><a class="line" href="classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html#ac14e3aa185ecc75b4d292c525cbc891f">  590</a></span>                CodifferentialHodgeInputIndices,</div>
+<div class="line"><a id="l00590" name="l00590"></a><span class="lineno"><a class="line" href="classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html#ac97c63d4dee356a1c23f1bed1d005a4b">  590</a></span>                CodifferentialHodgeInputIndices,</div>
 <div class="line"><a id="l00591" name="l00591"></a><span class="lineno">  591</span>                CodifferentialHodgeOutputIndices&gt;(exec_space, *m_hodge_star, metric, position);</div>
 <div class="line"><a id="l00592" name="l00592"></a><span class="lineno">  592</span>        <a class="code hl_function" href="namespacesil_1_1exterior.html#a985e5f2d21f672dde6b75d610b27f6a2">fill_discrete_hodge_star</a>&lt;</div>
 <div class="line"><a id="l00593" name="l00593"></a><span class="lineno">  593</span>                <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a3e2f32622aaafaa7ee4402aba31f1e9c">tensor::upper_t&lt;DualCodifferentialHodgeInputIndices&gt;</a>,</div>
@@ -743,7 +743,7 @@ $(function(){initNavTree('laplacian_8hpp_source.html',''); initResizable(true); 
 <div class="line"><a id="l00598" name="l00598"></a><span class="lineno">  598</span>                position);</div>
 <div class="line"><a id="l00599" name="l00599"></a><span class="lineno">  599</span>    }</div>
 <div class="line"><a id="l00600" name="l00600"></a><span class="lineno">  600</span> </div>
-<div class="line"><a id="l00601" name="l00601"></a><span class="lineno">  601</span>    TensorType operator()(TensorType laplacian_tensor, TensorType tensor)</div>
+<div class="line"><a id="l00601" name="l00601"></a><span class="lineno">  601</span>    TensorType run(TensorType laplacian_tensor, TensorType tensor)</div>
 <div class="line"><a id="l00602" name="l00602"></a><span class="lineno">  602</span>    {</div>
 <div class="line"><a id="l00603" name="l00603"></a><span class="lineno">  603</span>        <span class="keyword">auto</span> exec_spaces = Kokkos::Experimental::partition_space(m_exec_space, 1, 1);</div>
 <div class="line"><a id="l00604" name="l00604"></a><span class="lineno">  604</span> </div>
@@ -769,363 +769,365 @@ $(function(){initNavTree('laplacian_8hpp_source.html',''); initResizable(true); 
 <div class="line"><a id="l00624" name="l00624"></a><span class="lineno">  624</span>                exec_spaces[1],</div>
 <div class="line"><a id="l00625" name="l00625"></a><span class="lineno">  625</span>                std::move(*m_hodge_star),</div>
 <div class="line"><a id="l00626" name="l00626"></a><span class="lineno">  626</span>                std::move(*m_dual_hodge_star),</div>
-<div class="line"><a id="l00627" name="l00627"></a><span class="lineno">  627</span>                std::move(*m_dual_tensor_buffer))(*m_codifferential_tensor_buffer, tensor);</div>
-<div class="line"><a id="l00628" name="l00628"></a><span class="lineno">  628</span>        sil::exterior::</div>
-<div class="line"><a id="l00629" name="l00629"></a><span class="lineno">  629</span>                deriv&lt;LaplacianDummyIndex, codifferential_index_t&lt;LaplacianDummyIndex, CochainTag&gt;&gt;(</div>
-<div class="line"><a id="l00630" name="l00630"></a><span class="lineno">  630</span>                        exec_spaces[1],</div>
-<div class="line"><a id="l00631" name="l00631"></a><span class="lineno">  631</span>                        *m_coboundary_of_codifferential_buffer,</div>
-<div class="line"><a id="l00632" name="l00632"></a><span class="lineno">  632</span>                        *m_codifferential_tensor_buffer);</div>
-<div class="line"><a id="l00633" name="l00633"></a><span class="lineno">  633</span> </div>
-<div class="line"><a id="l00634" name="l00634"></a><span class="lineno">  634</span>        exec_spaces[0].fence();</div>
-<div class="line"><a id="l00635" name="l00635"></a><span class="lineno">  635</span>        exec_spaces[1].fence();</div>
-<div class="line"><a id="l00636" name="l00636"></a><span class="lineno">  636</span> </div>
-<div class="line"><a id="l00637" name="l00637"></a><span class="lineno">  637</span>        <span class="keyword">auto</span> coboundary_of_codifferential_buffer = *m_coboundary_of_codifferential_buffer;</div>
+<div class="line"><a id="l00627" name="l00627"></a><span class="lineno">  627</span>                std::move(*m_dual_tensor_buffer))</div>
+<div class="line"><a id="l00628" name="l00628"></a><span class="lineno">  628</span>                .run(*m_codifferential_tensor_buffer, tensor);</div>
+<div class="line"><a id="l00629" name="l00629"></a><span class="lineno">  629</span>        sil::exterior::</div>
+<div class="line"><a id="l00630" name="l00630"></a><span class="lineno">  630</span>                deriv&lt;LaplacianDummyIndex, codifferential_index_t&lt;LaplacianDummyIndex, CochainTag&gt;&gt;(</div>
+<div class="line"><a id="l00631" name="l00631"></a><span class="lineno">  631</span>                        exec_spaces[1],</div>
+<div class="line"><a id="l00632" name="l00632"></a><span class="lineno">  632</span>                        *m_coboundary_of_codifferential_buffer,</div>
+<div class="line"><a id="l00633" name="l00633"></a><span class="lineno">  633</span>                        *m_codifferential_tensor_buffer);</div>
+<div class="line"><a id="l00634" name="l00634"></a><span class="lineno">  634</span> </div>
+<div class="line"><a id="l00635" name="l00635"></a><span class="lineno">  635</span>        exec_spaces[0].fence();</div>
+<div class="line"><a id="l00636" name="l00636"></a><span class="lineno">  636</span>        exec_spaces[1].fence();</div>
+<div class="line"><a id="l00637" name="l00637"></a><span class="lineno">  637</span> </div>
+<div class="line"><a id="l00638" name="l00638"></a><span class="lineno">  638</span>        <span class="keyword">auto</span> coboundary_of_codifferential_buffer = *m_coboundary_of_codifferential_buffer;</div>
 </div>
-<div class="line"><a id="l00638" name="l00638"></a><span class="lineno">  638</span>        SIMILIE_DEBUG_LOG(<span class="stringliteral">&quot;similie_add_coboundary_of_codifferential_contribution_to_laplacian&quot;</span>);</div>
-<div class="line"><a id="l00639" name="l00639"></a><span class="lineno">  639</span>        ddc::parallel_for_each(</div>
-<div class="line"><a id="l00640" name="l00640"></a><span class="lineno">  640</span>                <span class="stringliteral">&quot;similie_add_coboundary_of_codifferential_contribution_to_laplacian&quot;</span>,</div>
-<div class="line"><a id="l00641" name="l00641"></a><span class="lineno">  641</span>                m_exec_space,</div>
-<div class="line"><a id="l00642" name="l00642"></a><span class="lineno">  642</span>                laplacian_tensor.domain(),</div>
-<div class="line"><a id="l00643" name="l00643"></a><span class="lineno">  643</span>                KOKKOS_LAMBDA(<span class="keyword">typename</span> TensorType::discrete_element_type elem) {</div>
-<div class="line"><a id="l00644" name="l00644"></a><span class="lineno">  644</span>                    laplacian_tensor.mem(elem) += coboundary_of_codifferential_buffer.mem(elem);</div>
-<div class="line"><a id="l00645" name="l00645"></a><span class="lineno">  645</span>                });</div>
-<div class="line"><a id="l00646" name="l00646"></a><span class="lineno">  646</span> </div>
-<div class="line"><a id="l00647" name="l00647"></a><span class="lineno">  647</span>        <span class="keywordflow">return</span> laplacian_tensor;</div>
-<div class="line"><a id="l00648" name="l00648"></a><span class="lineno">  648</span>    }</div>
-<div class="line"><a id="l00649" name="l00649"></a><span class="lineno">  649</span>};</div>
-<div class="line"><a id="l00650" name="l00650"></a><span class="lineno">  650</span> </div>
-<div class="line"><a id="l00651" name="l00651"></a><span class="lineno">  651</span><span class="keyword">template</span> &lt;</div>
-<div class="line"><a id="l00652" name="l00652"></a><span class="lineno">  652</span>        tensor::TensorIndex MetricIndex,</div>
-<div class="line"><a id="l00653" name="l00653"></a><span class="lineno">  653</span>        tensor::TensorNatIndex LaplacianDummyIndex,</div>
-<div class="line"><a id="l00654" name="l00654"></a><span class="lineno">  654</span>        tensor::TensorIndex CochainTag,</div>
-<div class="line"><a id="l00655" name="l00655"></a><span class="lineno">  655</span>        misc::Specialization&lt;tensor::Tensor&gt; TensorType,</div>
-<div class="line"><a id="l00656" name="l00656"></a><span class="lineno">  656</span>        misc::Specialization&lt;tensor::Tensor&gt; MetricType,</div>
-<div class="line"><a id="l00657" name="l00657"></a><span class="lineno">  657</span>        misc::Specialization&lt;tensor::Tensor&gt; PositionType,</div>
-<div class="line"><a id="l00658" name="l00658"></a><span class="lineno">  658</span>        <span class="keyword">class </span>ExecSpace&gt;</div>
-<div class="line"><a id="l00659" name="l00659"></a><span class="lineno">  659</span>    <span class="keyword">requires</span>(detail::TopRankLaplacianCochain&lt;LaplacianDummyIndex, CochainTag&gt;)</div>
-<div class="foldopen" id="foldopen00660" data-start="{" data-end="};">
-<div class="line"><a id="l00660" name="l00660"></a><span class="lineno"><a class="line" href="classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html">  660</a></span><span class="keyword">class</span> <a class="code hl_class" href="namespacesil_1_1exterior.html#classsil_1_1exterior_1_1StagedLaplacian">StagedLaplacian</a>&lt;</div>
-<div class="line"><a id="l00661" name="l00661"></a><span class="lineno">  661</span>        MetricIndex,</div>
-<div class="line"><a id="l00662" name="l00662"></a><span class="lineno">  662</span>        LaplacianDummyIndex,</div>
-<div class="line"><a id="l00663" name="l00663"></a><span class="lineno">  663</span>        CochainTag,</div>
-<div class="line"><a id="l00664" name="l00664"></a><span class="lineno">  664</span>        TensorType,</div>
-<div class="line"><a id="l00665" name="l00665"></a><span class="lineno">  665</span>        MetricType,</div>
-<div class="line"><a id="l00666" name="l00666"></a><span class="lineno">  666</span>        PositionType,</div>
-<div class="line"><a id="l00667" name="l00667"></a><span class="lineno">  667</span>        ExecSpace&gt;</div>
-<div class="line"><a id="l00668" name="l00668"></a><span class="lineno">  668</span>{</div>
-<div class="line"><a id="l00669" name="l00669"></a><span class="lineno">  669</span><span class="keyword">private</span>:</div>
-<div class="line"><a id="l00670" name="l00670"></a><span class="lineno">  670</span>    <span class="keyword">using </span>MemorySpace = <span class="keyword">typename</span> TensorType::memory_space;</div>
-<div class="line"><a id="l00671" name="l00671"></a><span class="lineno">  671</span>    <span class="keyword">using </span>AllocatorType = ddc::KokkosAllocator&lt;double, MemorySpace&gt;;</div>
-<div class="line"><a id="l00672" name="l00672"></a><span class="lineno">  672</span>    <span class="keyword">using </span>CodifferentialHodgeInputIndices</div>
-<div class="line"><a id="l00673" name="l00673"></a><span class="lineno">  673</span>            = <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a3e2f32622aaafaa7ee4402aba31f1e9c">tensor::upper_t&lt;ddc::to_type_seq_t&lt;tensor::natural_domain_t&lt;CochainTag&gt;</a>&gt;&gt;;</div>
-<div class="line"><a id="l00674" name="l00674"></a><span class="lineno">  674</span>    <span class="keyword">using </span>CodifferentialHodgeOutputIndices = <a class="code hl_typedef" href="namespacesil_1_1exterior.html#acf9d9ac240de3edfc4e9bbcac31cd300">codifferential_hodge_output_indices_t</a>&lt;</div>
-<div class="line"><a id="l00675" name="l00675"></a><span class="lineno">  675</span>            LaplacianDummyIndex::size() - CochainTag::rank(),</div>
-<div class="line"><a id="l00676" name="l00676"></a><span class="lineno">  676</span>            LaplacianDummyIndex&gt;;</div>
-<div class="line"><a id="l00677" name="l00677"></a><span class="lineno">  677</span>    <span class="keyword">using </span>DualCodifferentialHodgeInputIndices = ddc::type_seq_merge_t&lt;</div>
-<div class="line"><a id="l00678" name="l00678"></a><span class="lineno">  678</span>            ddc::detail::TypeSeq&lt;LaplacianDummyIndex&gt;,</div>
-<div class="line"><a id="l00679" name="l00679"></a><span class="lineno">  679</span>            CodifferentialHodgeOutputIndices&gt;;</div>
-<div class="line"><a id="l00680" name="l00680"></a><span class="lineno">  680</span>    <span class="keyword">using </span>DualCodifferentialHodgeOutputIndices = ddc::type_seq_remove_t&lt;</div>
-<div class="line"><a id="l00681" name="l00681"></a><span class="lineno">  681</span>            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#ad1b951f27338222afe0730eda16f06db">tensor::lower_t&lt;CodifferentialHodgeInputIndices&gt;</a>,</div>
-<div class="line"><a id="l00682" name="l00682"></a><span class="lineno">  682</span>            ddc::detail::TypeSeq&lt;LaplacianDummyIndex&gt;&gt;;</div>
-<div class="line"><a id="l00683" name="l00683"></a><span class="lineno">  683</span>    <span class="keyword">using </span>CodifferentialDualTensorIndex = <a class="code hl_typedef" href="namespacesil_1_1misc.html#af83a849e8c4a2149160bd276d3e445c1">misc::convert_type_seq_to_t</a>&lt;</div>
-<div class="line"><a id="l00684" name="l00684"></a><span class="lineno">  684</span>            <a class="code hl_struct" href="structsil_1_1tensor_1_1TensorAntisymmetricIndex.html">tensor::TensorAntisymmetricIndex</a>,</div>
-<div class="line"><a id="l00685" name="l00685"></a><span class="lineno">  685</span>            CodifferentialHodgeOutputIndices&gt;;</div>
-<div class="line"><a id="l00686" name="l00686"></a><span class="lineno">  686</span>    <span class="keyword">using </span>CodifferentialOutputIndex = <a class="code hl_typedef" href="namespacesil_1_1exterior.html#aab91885c880898f8e30304a22b965a22">codifferential_index_t&lt;LaplacianDummyIndex, CochainTag&gt;</a>;</div>
-<div class="line"><a id="l00687" name="l00687"></a><span class="lineno">  687</span> </div>
-<div class="line"><a id="l00688" name="l00688"></a><span class="lineno">  688</span>    <span class="keyword">using </span>HodgeStarDomainType = ddc::cartesian_prod_t&lt;</div>
-<div class="line"><a id="l00689" name="l00689"></a><span class="lineno">  689</span>            <span class="keyword">typename</span> MetricType::non_indices_domain_t,</div>
-<div class="line"><a id="l00690" name="l00690"></a><span class="lineno">  690</span>            <a class="code hl_typedef" href="namespacesil_1_1exterior.html#a21ac9e4c43191a7cf20b30d28e46a305">hodge_star_domain_t&lt;CodifferentialHodgeInputIndices, CodifferentialHodgeOutputIndices&gt;</a>&gt;;</div>
-<div class="line"><a id="l00691" name="l00691"></a><span class="lineno">  691</span>    <span class="keyword">using </span>DualHodgeStarDomainType = ddc::cartesian_prod_t&lt;</div>
-<div class="line"><a id="l00692" name="l00692"></a><span class="lineno">  692</span>            <span class="keyword">typename</span> MetricType::non_indices_domain_t,</div>
-<div class="line"><a id="l00693" name="l00693"></a><span class="lineno">  693</span>            <a class="code hl_typedef" href="namespacesil_1_1exterior.html#a21ac9e4c43191a7cf20b30d28e46a305">hodge_star_domain_t</a>&lt;</div>
-<div class="line"><a id="l00694" name="l00694"></a><span class="lineno">  694</span>                    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a3e2f32622aaafaa7ee4402aba31f1e9c">tensor::upper_t&lt;DualCodifferentialHodgeInputIndices&gt;</a>,</div>
-<div class="line"><a id="l00695" name="l00695"></a><span class="lineno">  695</span>                    DualCodifferentialHodgeOutputIndices&gt;&gt;;</div>
-<div class="line"><a id="l00696" name="l00696"></a><span class="lineno">  696</span>    <span class="keyword">using </span>DualTensorDomainType = ddc::cartesian_prod_t&lt;</div>
-<div class="line"><a id="l00697" name="l00697"></a><span class="lineno">  697</span>            <span class="keyword">typename</span> TensorType::non_indices_domain_t,</div>
-<div class="line"><a id="l00698" name="l00698"></a><span class="lineno">  698</span>            ddc::DiscreteDomain&lt;CodifferentialDualTensorIndex&gt;&gt;;</div>
-<div class="line"><a id="l00699" name="l00699"></a><span class="lineno">  699</span>    <span class="keyword">using </span>CodifferentialDomainType = ddc::cartesian_prod_t&lt;</div>
-<div class="line"><a id="l00700" name="l00700"></a><span class="lineno">  700</span>            <span class="keyword">typename</span> TensorType::non_indices_domain_t,</div>
-<div class="line"><a id="l00701" name="l00701"></a><span class="lineno">  701</span>            ddc::DiscreteDomain&lt;CodifferentialOutputIndex&gt;&gt;;</div>
-<div class="line"><a id="l00702" name="l00702"></a><span class="lineno">  702</span> </div>
-<div class="line"><a id="l00703" name="l00703"></a><span class="lineno">  703</span>    <span class="keyword">using </span>HodgeStarAllocType = ddc::Chunk&lt;double, HodgeStarDomainType, AllocatorType&gt;;</div>
-<div class="line"><a id="l00704" name="l00704"></a><span class="lineno">  704</span>    <span class="keyword">using </span>DualHodgeStarAllocType = ddc::Chunk&lt;double, DualHodgeStarDomainType, AllocatorType&gt;;</div>
-<div class="line"><a id="l00705" name="l00705"></a><span class="lineno">  705</span>    <span class="keyword">using </span>DualTensorAllocType = ddc::Chunk&lt;double, DualTensorDomainType, AllocatorType&gt;;</div>
-<div class="line"><a id="l00706" name="l00706"></a><span class="lineno">  706</span>    <span class="keyword">using </span>CodifferentialAllocType = ddc::Chunk&lt;double, CodifferentialDomainType, AllocatorType&gt;;</div>
-<div class="line"><a id="l00707" name="l00707"></a><span class="lineno">  707</span> </div>
-<div class="line"><a id="l00708" name="l00708"></a><span class="lineno">  708</span>    <span class="keyword">using </span>HodgeStarTensorType</div>
-<div class="line"><a id="l00709" name="l00709"></a><span class="lineno">  709</span>            = <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor&lt;double, HodgeStarDomainType, Kokkos::layout_right, MemorySpace&gt;</a>;</div>
-<div class="line"><a id="l00710" name="l00710"></a><span class="lineno">  710</span>    <span class="keyword">using </span>DualHodgeStarTensorType</div>
-<div class="line"><a id="l00711" name="l00711"></a><span class="lineno">  711</span>            = <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor&lt;double, DualHodgeStarDomainType, Kokkos::layout_right, MemorySpace&gt;</a>;</div>
-<div class="line"><a id="l00712" name="l00712"></a><span class="lineno">  712</span>    <span class="keyword">using </span>DualTensorType</div>
-<div class="line"><a id="l00713" name="l00713"></a><span class="lineno">  713</span>            = <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor&lt;double, DualTensorDomainType, Kokkos::layout_right, MemorySpace&gt;</a>;</div>
-<div class="line"><a id="l00714" name="l00714"></a><span class="lineno">  714</span>    <span class="keyword">using </span>CodifferentialTensorType</div>
-<div class="line"><a id="l00715" name="l00715"></a><span class="lineno">  715</span>            = <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor&lt;double, CodifferentialDomainType, Kokkos::layout_right, MemorySpace&gt;</a>;</div>
-<div class="line"><a id="l00716" name="l00716"></a><span class="lineno">  716</span>    ExecSpace m_exec_space;</div>
-<div class="line"><a id="l00717" name="l00717"></a><span class="lineno">  717</span>    std::optional&lt;HodgeStarAllocType&gt; m_hodge_star_alloc;</div>
-<div class="line"><a id="l00718" name="l00718"></a><span class="lineno">  718</span>    std::optional&lt;DualHodgeStarAllocType&gt; m_dual_hodge_star_alloc;</div>
-<div class="line"><a id="l00719" name="l00719"></a><span class="lineno">  719</span>    std::optional&lt;DualTensorAllocType&gt; m_dual_tensor_alloc;</div>
-<div class="line"><a id="l00720" name="l00720"></a><span class="lineno">  720</span>    std::optional&lt;CodifferentialAllocType&gt; m_codifferential_alloc;</div>
-<div class="line"><a id="l00721" name="l00721"></a><span class="lineno">  721</span>    std::optional&lt;HodgeStarTensorType&gt; m_hodge_star;</div>
-<div class="foldopen" id="foldopen00722" data-start="{" data-end="}">
-<div class="line"><a id="l00722" name="l00722"></a><span class="lineno"><a class="line" href="classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html#a930f1bab61f94d801c9e469436f38f12">  722</a></span>    std::optional&lt;DualHodgeStarTensorType&gt; m_dual_hodge_star;</div>
-<div class="line"><a id="l00723" name="l00723"></a><span class="lineno">  723</span>    std::optional&lt;DualTensorType&gt; m_dual_tensor_buffer;</div>
-<div class="line"><a id="l00724" name="l00724"></a><span class="lineno">  724</span>    std::optional&lt;CodifferentialTensorType&gt; m_codifferential_tensor_buffer;</div>
-<div class="line"><a id="l00725" name="l00725"></a><span class="lineno">  725</span> </div>
-<div class="line"><a id="l00726" name="l00726"></a><span class="lineno">  726</span><span class="keyword">public</span>:</div>
-<div class="line"><a id="l00727" name="l00727"></a><span class="lineno">  727</span>    <a class="code hl_class" href="namespacesil_1_1exterior.html#classsil_1_1exterior_1_1StagedLaplacian">StagedLaplacian</a>(</div>
-<div class="line"><a id="l00728" name="l00728"></a><span class="lineno">  728</span>            ExecSpace <span class="keyword">const</span>&amp; exec_space,</div>
-<div class="line"><a id="l00729" name="l00729"></a><span class="lineno">  729</span>            HodgeStarTensorType&amp;&amp; hodge_star,</div>
-<div class="line"><a id="l00730" name="l00730"></a><span class="lineno">  730</span>            DualHodgeStarTensorType&amp;&amp; dual_hodge_star,</div>
-<div class="line"><a id="l00731" name="l00731"></a><span class="lineno">  731</span>            DualTensorType&amp;&amp; dual_tensor_buffer,</div>
-<div class="line"><a id="l00732" name="l00732"></a><span class="lineno">  732</span>            CodifferentialTensorType&amp;&amp; codifferential_tensor_buffer)</div>
-<div class="line"><a id="l00733" name="l00733"></a><span class="lineno">  733</span>        : m_exec_space(exec_space)</div>
-<div class="line"><a id="l00734" name="l00734"></a><span class="lineno">  734</span>        , m_hodge_star(std::move(hodge_star))</div>
+<div class="line"><a id="l00639" name="l00639"></a><span class="lineno">  639</span>        SIMILIE_DEBUG_LOG(<span class="stringliteral">&quot;similie_add_coboundary_of_codifferential_contribution_to_laplacian&quot;</span>);</div>
+<div class="line"><a id="l00640" name="l00640"></a><span class="lineno">  640</span>        ddc::parallel_for_each(</div>
+<div class="line"><a id="l00641" name="l00641"></a><span class="lineno">  641</span>                <span class="stringliteral">&quot;similie_add_coboundary_of_codifferential_contribution_to_laplacian&quot;</span>,</div>
+<div class="line"><a id="l00642" name="l00642"></a><span class="lineno">  642</span>                m_exec_space,</div>
+<div class="line"><a id="l00643" name="l00643"></a><span class="lineno">  643</span>                laplacian_tensor.domain(),</div>
+<div class="line"><a id="l00644" name="l00644"></a><span class="lineno">  644</span>                KOKKOS_LAMBDA(<span class="keyword">typename</span> TensorType::discrete_element_type elem) {</div>
+<div class="line"><a id="l00645" name="l00645"></a><span class="lineno">  645</span>                    laplacian_tensor.mem(elem) += coboundary_of_codifferential_buffer.mem(elem);</div>
+<div class="line"><a id="l00646" name="l00646"></a><span class="lineno">  646</span>                });</div>
+<div class="line"><a id="l00647" name="l00647"></a><span class="lineno">  647</span> </div>
+<div class="line"><a id="l00648" name="l00648"></a><span class="lineno">  648</span>        <span class="keywordflow">return</span> laplacian_tensor;</div>
+<div class="line"><a id="l00649" name="l00649"></a><span class="lineno">  649</span>    }</div>
+<div class="line"><a id="l00650" name="l00650"></a><span class="lineno">  650</span>};</div>
+<div class="line"><a id="l00651" name="l00651"></a><span class="lineno">  651</span> </div>
+<div class="line"><a id="l00652" name="l00652"></a><span class="lineno">  652</span><span class="keyword">template</span> &lt;</div>
+<div class="line"><a id="l00653" name="l00653"></a><span class="lineno">  653</span>        tensor::TensorIndex MetricIndex,</div>
+<div class="line"><a id="l00654" name="l00654"></a><span class="lineno">  654</span>        tensor::TensorNatIndex LaplacianDummyIndex,</div>
+<div class="line"><a id="l00655" name="l00655"></a><span class="lineno">  655</span>        tensor::TensorIndex CochainTag,</div>
+<div class="line"><a id="l00656" name="l00656"></a><span class="lineno">  656</span>        misc::Specialization&lt;tensor::Tensor&gt; TensorType,</div>
+<div class="line"><a id="l00657" name="l00657"></a><span class="lineno">  657</span>        misc::Specialization&lt;tensor::Tensor&gt; MetricType,</div>
+<div class="line"><a id="l00658" name="l00658"></a><span class="lineno">  658</span>        misc::Specialization&lt;tensor::Tensor&gt; PositionType,</div>
+<div class="line"><a id="l00659" name="l00659"></a><span class="lineno">  659</span>        <span class="keyword">class </span>ExecSpace&gt;</div>
+<div class="line"><a id="l00660" name="l00660"></a><span class="lineno">  660</span>    <span class="keyword">requires</span>(detail::TopRankLaplacianCochain&lt;LaplacianDummyIndex, CochainTag&gt;)</div>
+<div class="foldopen" id="foldopen00661" data-start="{" data-end="};">
+<div class="line"><a id="l00661" name="l00661"></a><span class="lineno"><a class="line" href="classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html">  661</a></span><span class="keyword">class</span> <a class="code hl_class" href="namespacesil_1_1exterior.html#classsil_1_1exterior_1_1StagedLaplacian">StagedLaplacian</a>&lt;</div>
+<div class="line"><a id="l00662" name="l00662"></a><span class="lineno">  662</span>        MetricIndex,</div>
+<div class="line"><a id="l00663" name="l00663"></a><span class="lineno">  663</span>        LaplacianDummyIndex,</div>
+<div class="line"><a id="l00664" name="l00664"></a><span class="lineno">  664</span>        CochainTag,</div>
+<div class="line"><a id="l00665" name="l00665"></a><span class="lineno">  665</span>        TensorType,</div>
+<div class="line"><a id="l00666" name="l00666"></a><span class="lineno">  666</span>        MetricType,</div>
+<div class="line"><a id="l00667" name="l00667"></a><span class="lineno">  667</span>        PositionType,</div>
+<div class="line"><a id="l00668" name="l00668"></a><span class="lineno">  668</span>        ExecSpace&gt;</div>
+<div class="line"><a id="l00669" name="l00669"></a><span class="lineno">  669</span>{</div>
+<div class="line"><a id="l00670" name="l00670"></a><span class="lineno">  670</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00671" name="l00671"></a><span class="lineno">  671</span>    <span class="keyword">using </span>MemorySpace = <span class="keyword">typename</span> TensorType::memory_space;</div>
+<div class="line"><a id="l00672" name="l00672"></a><span class="lineno">  672</span>    <span class="keyword">using </span>AllocatorType = ddc::KokkosAllocator&lt;double, MemorySpace&gt;;</div>
+<div class="line"><a id="l00673" name="l00673"></a><span class="lineno">  673</span>    <span class="keyword">using </span>CodifferentialHodgeInputIndices</div>
+<div class="line"><a id="l00674" name="l00674"></a><span class="lineno">  674</span>            = <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a3e2f32622aaafaa7ee4402aba31f1e9c">tensor::upper_t&lt;ddc::to_type_seq_t&lt;tensor::natural_domain_t&lt;CochainTag&gt;</a>&gt;&gt;;</div>
+<div class="line"><a id="l00675" name="l00675"></a><span class="lineno">  675</span>    <span class="keyword">using </span>CodifferentialHodgeOutputIndices = <a class="code hl_typedef" href="namespacesil_1_1exterior.html#acf9d9ac240de3edfc4e9bbcac31cd300">codifferential_hodge_output_indices_t</a>&lt;</div>
+<div class="line"><a id="l00676" name="l00676"></a><span class="lineno">  676</span>            LaplacianDummyIndex::size() - CochainTag::rank(),</div>
+<div class="line"><a id="l00677" name="l00677"></a><span class="lineno">  677</span>            LaplacianDummyIndex&gt;;</div>
+<div class="line"><a id="l00678" name="l00678"></a><span class="lineno">  678</span>    <span class="keyword">using </span>DualCodifferentialHodgeInputIndices = ddc::type_seq_merge_t&lt;</div>
+<div class="line"><a id="l00679" name="l00679"></a><span class="lineno">  679</span>            ddc::detail::TypeSeq&lt;LaplacianDummyIndex&gt;,</div>
+<div class="line"><a id="l00680" name="l00680"></a><span class="lineno">  680</span>            CodifferentialHodgeOutputIndices&gt;;</div>
+<div class="line"><a id="l00681" name="l00681"></a><span class="lineno">  681</span>    <span class="keyword">using </span>DualCodifferentialHodgeOutputIndices = ddc::type_seq_remove_t&lt;</div>
+<div class="line"><a id="l00682" name="l00682"></a><span class="lineno">  682</span>            <a class="code hl_typedef" href="namespacesil_1_1tensor.html#ad1b951f27338222afe0730eda16f06db">tensor::lower_t&lt;CodifferentialHodgeInputIndices&gt;</a>,</div>
+<div class="line"><a id="l00683" name="l00683"></a><span class="lineno">  683</span>            ddc::detail::TypeSeq&lt;LaplacianDummyIndex&gt;&gt;;</div>
+<div class="line"><a id="l00684" name="l00684"></a><span class="lineno">  684</span>    <span class="keyword">using </span>CodifferentialDualTensorIndex = <a class="code hl_typedef" href="namespacesil_1_1misc.html#af83a849e8c4a2149160bd276d3e445c1">misc::convert_type_seq_to_t</a>&lt;</div>
+<div class="line"><a id="l00685" name="l00685"></a><span class="lineno">  685</span>            <a class="code hl_struct" href="structsil_1_1tensor_1_1TensorAntisymmetricIndex.html">tensor::TensorAntisymmetricIndex</a>,</div>
+<div class="line"><a id="l00686" name="l00686"></a><span class="lineno">  686</span>            CodifferentialHodgeOutputIndices&gt;;</div>
+<div class="line"><a id="l00687" name="l00687"></a><span class="lineno">  687</span>    <span class="keyword">using </span>CodifferentialOutputIndex = <a class="code hl_typedef" href="namespacesil_1_1exterior.html#aab91885c880898f8e30304a22b965a22">codifferential_index_t&lt;LaplacianDummyIndex, CochainTag&gt;</a>;</div>
+<div class="line"><a id="l00688" name="l00688"></a><span class="lineno">  688</span> </div>
+<div class="line"><a id="l00689" name="l00689"></a><span class="lineno">  689</span>    <span class="keyword">using </span>HodgeStarDomainType = ddc::cartesian_prod_t&lt;</div>
+<div class="line"><a id="l00690" name="l00690"></a><span class="lineno">  690</span>            <span class="keyword">typename</span> MetricType::non_indices_domain_t,</div>
+<div class="line"><a id="l00691" name="l00691"></a><span class="lineno">  691</span>            <a class="code hl_typedef" href="namespacesil_1_1exterior.html#a21ac9e4c43191a7cf20b30d28e46a305">hodge_star_domain_t&lt;CodifferentialHodgeInputIndices, CodifferentialHodgeOutputIndices&gt;</a>&gt;;</div>
+<div class="line"><a id="l00692" name="l00692"></a><span class="lineno">  692</span>    <span class="keyword">using </span>DualHodgeStarDomainType = ddc::cartesian_prod_t&lt;</div>
+<div class="line"><a id="l00693" name="l00693"></a><span class="lineno">  693</span>            <span class="keyword">typename</span> MetricType::non_indices_domain_t,</div>
+<div class="line"><a id="l00694" name="l00694"></a><span class="lineno">  694</span>            <a class="code hl_typedef" href="namespacesil_1_1exterior.html#a21ac9e4c43191a7cf20b30d28e46a305">hodge_star_domain_t</a>&lt;</div>
+<div class="line"><a id="l00695" name="l00695"></a><span class="lineno">  695</span>                    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a3e2f32622aaafaa7ee4402aba31f1e9c">tensor::upper_t&lt;DualCodifferentialHodgeInputIndices&gt;</a>,</div>
+<div class="line"><a id="l00696" name="l00696"></a><span class="lineno">  696</span>                    DualCodifferentialHodgeOutputIndices&gt;&gt;;</div>
+<div class="line"><a id="l00697" name="l00697"></a><span class="lineno">  697</span>    <span class="keyword">using </span>DualTensorDomainType = ddc::cartesian_prod_t&lt;</div>
+<div class="line"><a id="l00698" name="l00698"></a><span class="lineno">  698</span>            <span class="keyword">typename</span> TensorType::non_indices_domain_t,</div>
+<div class="line"><a id="l00699" name="l00699"></a><span class="lineno">  699</span>            ddc::DiscreteDomain&lt;CodifferentialDualTensorIndex&gt;&gt;;</div>
+<div class="line"><a id="l00700" name="l00700"></a><span class="lineno">  700</span>    <span class="keyword">using </span>CodifferentialDomainType = ddc::cartesian_prod_t&lt;</div>
+<div class="line"><a id="l00701" name="l00701"></a><span class="lineno">  701</span>            <span class="keyword">typename</span> TensorType::non_indices_domain_t,</div>
+<div class="line"><a id="l00702" name="l00702"></a><span class="lineno">  702</span>            ddc::DiscreteDomain&lt;CodifferentialOutputIndex&gt;&gt;;</div>
+<div class="line"><a id="l00703" name="l00703"></a><span class="lineno">  703</span> </div>
+<div class="line"><a id="l00704" name="l00704"></a><span class="lineno">  704</span>    <span class="keyword">using </span>HodgeStarAllocType = ddc::Chunk&lt;double, HodgeStarDomainType, AllocatorType&gt;;</div>
+<div class="line"><a id="l00705" name="l00705"></a><span class="lineno">  705</span>    <span class="keyword">using </span>DualHodgeStarAllocType = ddc::Chunk&lt;double, DualHodgeStarDomainType, AllocatorType&gt;;</div>
+<div class="line"><a id="l00706" name="l00706"></a><span class="lineno">  706</span>    <span class="keyword">using </span>DualTensorAllocType = ddc::Chunk&lt;double, DualTensorDomainType, AllocatorType&gt;;</div>
+<div class="line"><a id="l00707" name="l00707"></a><span class="lineno">  707</span>    <span class="keyword">using </span>CodifferentialAllocType = ddc::Chunk&lt;double, CodifferentialDomainType, AllocatorType&gt;;</div>
+<div class="line"><a id="l00708" name="l00708"></a><span class="lineno">  708</span> </div>
+<div class="line"><a id="l00709" name="l00709"></a><span class="lineno">  709</span>    <span class="keyword">using </span>HodgeStarTensorType</div>
+<div class="line"><a id="l00710" name="l00710"></a><span class="lineno">  710</span>            = <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor&lt;double, HodgeStarDomainType, Kokkos::layout_right, MemorySpace&gt;</a>;</div>
+<div class="line"><a id="l00711" name="l00711"></a><span class="lineno">  711</span>    <span class="keyword">using </span>DualHodgeStarTensorType</div>
+<div class="line"><a id="l00712" name="l00712"></a><span class="lineno">  712</span>            = <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor&lt;double, DualHodgeStarDomainType, Kokkos::layout_right, MemorySpace&gt;</a>;</div>
+<div class="line"><a id="l00713" name="l00713"></a><span class="lineno">  713</span>    <span class="keyword">using </span>DualTensorType</div>
+<div class="line"><a id="l00714" name="l00714"></a><span class="lineno">  714</span>            = <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor&lt;double, DualTensorDomainType, Kokkos::layout_right, MemorySpace&gt;</a>;</div>
+<div class="line"><a id="l00715" name="l00715"></a><span class="lineno">  715</span>    <span class="keyword">using </span>CodifferentialTensorType</div>
+<div class="line"><a id="l00716" name="l00716"></a><span class="lineno">  716</span>            = <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor&lt;double, CodifferentialDomainType, Kokkos::layout_right, MemorySpace&gt;</a>;</div>
+<div class="line"><a id="l00717" name="l00717"></a><span class="lineno">  717</span>    ExecSpace m_exec_space;</div>
+<div class="line"><a id="l00718" name="l00718"></a><span class="lineno">  718</span>    std::optional&lt;HodgeStarAllocType&gt; m_hodge_star_alloc;</div>
+<div class="line"><a id="l00719" name="l00719"></a><span class="lineno">  719</span>    std::optional&lt;DualHodgeStarAllocType&gt; m_dual_hodge_star_alloc;</div>
+<div class="line"><a id="l00720" name="l00720"></a><span class="lineno">  720</span>    std::optional&lt;DualTensorAllocType&gt; m_dual_tensor_alloc;</div>
+<div class="line"><a id="l00721" name="l00721"></a><span class="lineno">  721</span>    std::optional&lt;CodifferentialAllocType&gt; m_codifferential_alloc;</div>
+<div class="line"><a id="l00722" name="l00722"></a><span class="lineno">  722</span>    std::optional&lt;HodgeStarTensorType&gt; m_hodge_star;</div>
+<div class="foldopen" id="foldopen00723" data-start="{" data-end="}">
+<div class="line"><a id="l00723" name="l00723"></a><span class="lineno"><a class="line" href="classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html#a930f1bab61f94d801c9e469436f38f12">  723</a></span>    std::optional&lt;DualHodgeStarTensorType&gt; m_dual_hodge_star;</div>
+<div class="line"><a id="l00724" name="l00724"></a><span class="lineno">  724</span>    std::optional&lt;DualTensorType&gt; m_dual_tensor_buffer;</div>
+<div class="line"><a id="l00725" name="l00725"></a><span class="lineno">  725</span>    std::optional&lt;CodifferentialTensorType&gt; m_codifferential_tensor_buffer;</div>
+<div class="line"><a id="l00726" name="l00726"></a><span class="lineno">  726</span> </div>
+<div class="line"><a id="l00727" name="l00727"></a><span class="lineno">  727</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00728" name="l00728"></a><span class="lineno">  728</span>    <a class="code hl_class" href="namespacesil_1_1exterior.html#classsil_1_1exterior_1_1StagedLaplacian">StagedLaplacian</a>(</div>
+<div class="line"><a id="l00729" name="l00729"></a><span class="lineno">  729</span>            ExecSpace <span class="keyword">const</span>&amp; exec_space,</div>
+<div class="line"><a id="l00730" name="l00730"></a><span class="lineno">  730</span>            HodgeStarTensorType&amp;&amp; hodge_star,</div>
+<div class="line"><a id="l00731" name="l00731"></a><span class="lineno">  731</span>            DualHodgeStarTensorType&amp;&amp; dual_hodge_star,</div>
+<div class="line"><a id="l00732" name="l00732"></a><span class="lineno">  732</span>            DualTensorType&amp;&amp; dual_tensor_buffer,</div>
+<div class="line"><a id="l00733" name="l00733"></a><span class="lineno">  733</span>            CodifferentialTensorType&amp;&amp; codifferential_tensor_buffer)</div>
+<div class="line"><a id="l00734" name="l00734"></a><span class="lineno">  734</span>        : m_exec_space(exec_space)</div>
+<div class="line"><a id="l00735" name="l00735"></a><span class="lineno">  735</span>        , m_hodge_star(std::move(hodge_star))</div>
 </div>
-<div class="line"><a id="l00735" name="l00735"></a><span class="lineno">  735</span>        , m_dual_hodge_star(std::move(dual_hodge_star))</div>
-<div class="foldopen" id="foldopen00736" data-start="{" data-end="}">
-<div class="line"><a id="l00736" name="l00736"></a><span class="lineno"><a class="line" href="classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html#a124d96bbecbb1933b5d894daf2d31e18">  736</a></span>        , m_dual_tensor_buffer(std::move(dual_tensor_buffer))</div>
-<div class="line"><a id="l00737" name="l00737"></a><span class="lineno">  737</span>        , m_codifferential_tensor_buffer(std::move(codifferential_tensor_buffer))</div>
-<div class="line"><a id="l00738" name="l00738"></a><span class="lineno">  738</span>    {</div>
-<div class="line"><a id="l00739" name="l00739"></a><span class="lineno">  739</span>    }</div>
-<div class="line"><a id="l00740" name="l00740"></a><span class="lineno">  740</span> </div>
-<div class="line"><a id="l00741" name="l00741"></a><span class="lineno">  741</span>    <a class="code hl_class" href="namespacesil_1_1exterior.html#classsil_1_1exterior_1_1StagedLaplacian">StagedLaplacian</a>(</div>
-<div class="line"><a id="l00742" name="l00742"></a><span class="lineno">  742</span>            ExecSpace <span class="keyword">const</span>&amp; exec_space,</div>
-<div class="line"><a id="l00743" name="l00743"></a><span class="lineno">  743</span>            TensorType,</div>
-<div class="line"><a id="l00744" name="l00744"></a><span class="lineno">  744</span>            TensorType tensor,</div>
-<div class="line"><a id="l00745" name="l00745"></a><span class="lineno">  745</span>            MetricType metric,</div>
-<div class="line"><a id="l00746" name="l00746"></a><span class="lineno">  746</span>            PositionType position)</div>
-<div class="line"><a id="l00747" name="l00747"></a><span class="lineno">  747</span>        : m_exec_space(exec_space)</div>
-<div class="line"><a id="l00748" name="l00748"></a><span class="lineno">  748</span>    {</div>
-<div class="line"><a id="l00749" name="l00749"></a><span class="lineno">  749</span>        [[maybe_unused]] <a class="code hl_typedef" href="namespacesil_1_1tensor.html#aeada71b3699ecf64d8d6cbfc44bf6a8c">tensor::tensor_accessor_for_domain_t</a>&lt;<a class="code hl_typedef" href="namespacesil_1_1exterior.html#a21ac9e4c43191a7cf20b30d28e46a305">hodge_star_domain_t</a>&lt;</div>
-<div class="line"><a id="l00750" name="l00750"></a><span class="lineno">  750</span>                CodifferentialHodgeInputIndices,</div>
-<div class="line"><a id="l00751" name="l00751"></a><span class="lineno">  751</span>                CodifferentialHodgeOutputIndices&gt;&gt; hodge_star_accessor;</div>
-<div class="line"><a id="l00752" name="l00752"></a><span class="lineno">  752</span>        [[maybe_unused]] <a class="code hl_typedef" href="namespacesil_1_1tensor.html#aeada71b3699ecf64d8d6cbfc44bf6a8c">tensor::tensor_accessor_for_domain_t</a>&lt;<a class="code hl_typedef" href="namespacesil_1_1exterior.html#a21ac9e4c43191a7cf20b30d28e46a305">hodge_star_domain_t</a>&lt;</div>
-<div class="line"><a id="l00753" name="l00753"></a><span class="lineno">  753</span>                <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a3e2f32622aaafaa7ee4402aba31f1e9c">tensor::upper_t&lt;DualCodifferentialHodgeInputIndices&gt;</a>,</div>
-<div class="line"><a id="l00754" name="l00754"></a><span class="lineno">  754</span>                DualCodifferentialHodgeOutputIndices&gt;&gt; dual_hodge_star_accessor;</div>
-<div class="line"><a id="l00755" name="l00755"></a><span class="lineno">  755</span>        [[maybe_unused]] <a class="code hl_class" href="classsil_1_1tensor_1_1TensorAccessor.html">tensor::TensorAccessor&lt;CodifferentialDualTensorIndex&gt;</a> dual_tensor_accessor;</div>
-<div class="line"><a id="l00756" name="l00756"></a><span class="lineno">  756</span>        [[maybe_unused]] <a class="code hl_class" href="classsil_1_1tensor_1_1TensorAccessor.html">tensor::TensorAccessor&lt;CodifferentialOutputIndex&gt;</a> codifferential_accessor;</div>
-<div class="line"><a id="l00757" name="l00757"></a><span class="lineno">  757</span> </div>
-<div class="line"><a id="l00758" name="l00758"></a><span class="lineno">  758</span>        m_hodge_star_alloc.emplace(</div>
-<div class="line"><a id="l00759" name="l00759"></a><span class="lineno">  759</span>                HodgeStarDomainType(metric.non_indices_domain(), hodge_star_accessor.domain()),</div>
-<div class="line"><a id="l00760" name="l00760"></a><span class="lineno">  760</span>                AllocatorType());</div>
-<div class="line"><a id="l00761" name="l00761"></a><span class="lineno">  761</span>        m_dual_hodge_star_alloc.emplace(</div>
-<div class="line"><a id="l00762" name="l00762"></a><span class="lineno">  762</span>                DualHodgeStarDomainType(</div>
-<div class="line"><a id="l00763" name="l00763"></a><span class="lineno">  763</span>                        metric.non_indices_domain(),</div>
-<div class="line"><a id="l00764" name="l00764"></a><span class="lineno">  764</span>                        dual_hodge_star_accessor.domain()),</div>
-<div class="line"><a id="l00765" name="l00765"></a><span class="lineno">  765</span>                AllocatorType());</div>
-<div class="line"><a id="l00766" name="l00766"></a><span class="lineno">  766</span>        m_dual_tensor_alloc.emplace(</div>
-<div class="line"><a id="l00767" name="l00767"></a><span class="lineno">  767</span>                DualTensorDomainType(tensor.non_indices_domain(), dual_tensor_accessor.<a class="code hl_function" href="classsil_1_1tensor_1_1TensorAccessor.html#a826ab69e3d61498116052144b967f0d1">domain</a>()),</div>
-<div class="line"><a id="l00768" name="l00768"></a><span class="lineno">  768</span>                AllocatorType());</div>
-<div class="line"><a id="l00769" name="l00769"></a><span class="lineno">  769</span>        m_codifferential_alloc.emplace(</div>
-<div class="line"><a id="l00770" name="l00770"></a><span class="lineno">  770</span>                CodifferentialDomainType(</div>
-<div class="line"><a id="l00771" name="l00771"></a><span class="lineno">  771</span>                        tensor.non_indices_domain(),</div>
-<div class="line"><a id="l00772" name="l00772"></a><span class="lineno">  772</span>                        codifferential_accessor.<a class="code hl_function" href="classsil_1_1tensor_1_1TensorAccessor.html#a826ab69e3d61498116052144b967f0d1">domain</a>()),</div>
-<div class="line"><a id="l00773" name="l00773"></a><span class="lineno">  773</span>                AllocatorType());</div>
-<div class="line"><a id="l00774" name="l00774"></a><span class="lineno">  774</span> </div>
-<div class="line"><a id="l00775" name="l00775"></a><span class="lineno">  775</span>        m_hodge_star.emplace(*m_hodge_star_alloc);</div>
-<div class="line"><a id="l00776" name="l00776"></a><span class="lineno">  776</span>        m_dual_hodge_star.emplace(*m_dual_hodge_star_alloc);</div>
-<div class="line"><a id="l00777" name="l00777"></a><span class="lineno">  777</span>        m_dual_tensor_buffer.emplace(*m_dual_tensor_alloc);</div>
-<div class="line"><a id="l00778" name="l00778"></a><span class="lineno">  778</span>        m_codifferential_tensor_buffer.emplace(*m_codifferential_alloc);</div>
-<div class="line"><a id="l00779" name="l00779"></a><span class="lineno">  779</span> </div>
-<div class="line"><a id="l00780" name="l00780"></a><span class="lineno">  780</span>        <a class="code hl_function" href="namespacesil_1_1exterior.html#a985e5f2d21f672dde6b75d610b27f6a2">fill_discrete_hodge_star</a>&lt;</div>
-<div class="line"><a id="l00781" name="l00781"></a><span class="lineno">  781</span>                CodifferentialHodgeInputIndices,</div>
-<div class="line"><a id="l00782" name="l00782"></a><span class="lineno">  782</span>                CodifferentialHodgeOutputIndices&gt;(exec_space, *m_hodge_star, metric, position);</div>
-<div class="line"><a id="l00783" name="l00783"></a><span class="lineno">  783</span>        <a class="code hl_function" href="namespacesil_1_1exterior.html#a985e5f2d21f672dde6b75d610b27f6a2">fill_discrete_hodge_star</a>&lt;</div>
-<div class="line"><a id="l00784" name="l00784"></a><span class="lineno">  784</span>                <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a3e2f32622aaafaa7ee4402aba31f1e9c">tensor::upper_t&lt;DualCodifferentialHodgeInputIndices&gt;</a>,</div>
-<div class="line"><a id="l00785" name="l00785"></a><span class="lineno">  785</span>                DualCodifferentialHodgeOutputIndices&gt;(</div>
+<div class="line"><a id="l00736" name="l00736"></a><span class="lineno">  736</span>        , m_dual_hodge_star(std::move(dual_hodge_star))</div>
+<div class="foldopen" id="foldopen00737" data-start="{" data-end="}">
+<div class="line"><a id="l00737" name="l00737"></a><span class="lineno"><a class="line" href="classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html#a124d96bbecbb1933b5d894daf2d31e18">  737</a></span>        , m_dual_tensor_buffer(std::move(dual_tensor_buffer))</div>
+<div class="line"><a id="l00738" name="l00738"></a><span class="lineno">  738</span>        , m_codifferential_tensor_buffer(std::move(codifferential_tensor_buffer))</div>
+<div class="line"><a id="l00739" name="l00739"></a><span class="lineno">  739</span>    {</div>
+<div class="line"><a id="l00740" name="l00740"></a><span class="lineno">  740</span>    }</div>
+<div class="line"><a id="l00741" name="l00741"></a><span class="lineno">  741</span> </div>
+<div class="line"><a id="l00742" name="l00742"></a><span class="lineno">  742</span>    <a class="code hl_class" href="namespacesil_1_1exterior.html#classsil_1_1exterior_1_1StagedLaplacian">StagedLaplacian</a>(</div>
+<div class="line"><a id="l00743" name="l00743"></a><span class="lineno">  743</span>            ExecSpace <span class="keyword">const</span>&amp; exec_space,</div>
+<div class="line"><a id="l00744" name="l00744"></a><span class="lineno">  744</span>            TensorType,</div>
+<div class="line"><a id="l00745" name="l00745"></a><span class="lineno">  745</span>            TensorType tensor,</div>
+<div class="line"><a id="l00746" name="l00746"></a><span class="lineno">  746</span>            MetricType metric,</div>
+<div class="line"><a id="l00747" name="l00747"></a><span class="lineno">  747</span>            PositionType position)</div>
+<div class="line"><a id="l00748" name="l00748"></a><span class="lineno">  748</span>        : m_exec_space(exec_space)</div>
+<div class="line"><a id="l00749" name="l00749"></a><span class="lineno">  749</span>    {</div>
+<div class="line"><a id="l00750" name="l00750"></a><span class="lineno">  750</span>        [[maybe_unused]] <a class="code hl_typedef" href="namespacesil_1_1tensor.html#aeada71b3699ecf64d8d6cbfc44bf6a8c">tensor::tensor_accessor_for_domain_t</a>&lt;<a class="code hl_typedef" href="namespacesil_1_1exterior.html#a21ac9e4c43191a7cf20b30d28e46a305">hodge_star_domain_t</a>&lt;</div>
+<div class="line"><a id="l00751" name="l00751"></a><span class="lineno">  751</span>                CodifferentialHodgeInputIndices,</div>
+<div class="line"><a id="l00752" name="l00752"></a><span class="lineno">  752</span>                CodifferentialHodgeOutputIndices&gt;&gt; hodge_star_accessor;</div>
+<div class="line"><a id="l00753" name="l00753"></a><span class="lineno">  753</span>        [[maybe_unused]] <a class="code hl_typedef" href="namespacesil_1_1tensor.html#aeada71b3699ecf64d8d6cbfc44bf6a8c">tensor::tensor_accessor_for_domain_t</a>&lt;<a class="code hl_typedef" href="namespacesil_1_1exterior.html#a21ac9e4c43191a7cf20b30d28e46a305">hodge_star_domain_t</a>&lt;</div>
+<div class="line"><a id="l00754" name="l00754"></a><span class="lineno">  754</span>                <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a3e2f32622aaafaa7ee4402aba31f1e9c">tensor::upper_t&lt;DualCodifferentialHodgeInputIndices&gt;</a>,</div>
+<div class="line"><a id="l00755" name="l00755"></a><span class="lineno">  755</span>                DualCodifferentialHodgeOutputIndices&gt;&gt; dual_hodge_star_accessor;</div>
+<div class="line"><a id="l00756" name="l00756"></a><span class="lineno">  756</span>        [[maybe_unused]] <a class="code hl_class" href="classsil_1_1tensor_1_1TensorAccessor.html">tensor::TensorAccessor&lt;CodifferentialDualTensorIndex&gt;</a> dual_tensor_accessor;</div>
+<div class="line"><a id="l00757" name="l00757"></a><span class="lineno">  757</span>        [[maybe_unused]] <a class="code hl_class" href="classsil_1_1tensor_1_1TensorAccessor.html">tensor::TensorAccessor&lt;CodifferentialOutputIndex&gt;</a> codifferential_accessor;</div>
+<div class="line"><a id="l00758" name="l00758"></a><span class="lineno">  758</span> </div>
+<div class="line"><a id="l00759" name="l00759"></a><span class="lineno">  759</span>        m_hodge_star_alloc.emplace(</div>
+<div class="line"><a id="l00760" name="l00760"></a><span class="lineno">  760</span>                HodgeStarDomainType(metric.non_indices_domain(), hodge_star_accessor.domain()),</div>
+<div class="line"><a id="l00761" name="l00761"></a><span class="lineno">  761</span>                AllocatorType());</div>
+<div class="line"><a id="l00762" name="l00762"></a><span class="lineno">  762</span>        m_dual_hodge_star_alloc.emplace(</div>
+<div class="line"><a id="l00763" name="l00763"></a><span class="lineno">  763</span>                DualHodgeStarDomainType(</div>
+<div class="line"><a id="l00764" name="l00764"></a><span class="lineno">  764</span>                        metric.non_indices_domain(),</div>
+<div class="line"><a id="l00765" name="l00765"></a><span class="lineno">  765</span>                        dual_hodge_star_accessor.domain()),</div>
+<div class="line"><a id="l00766" name="l00766"></a><span class="lineno">  766</span>                AllocatorType());</div>
+<div class="line"><a id="l00767" name="l00767"></a><span class="lineno">  767</span>        m_dual_tensor_alloc.emplace(</div>
+<div class="line"><a id="l00768" name="l00768"></a><span class="lineno">  768</span>                DualTensorDomainType(tensor.non_indices_domain(), dual_tensor_accessor.<a class="code hl_function" href="classsil_1_1tensor_1_1TensorAccessor.html#a826ab69e3d61498116052144b967f0d1">domain</a>()),</div>
+<div class="line"><a id="l00769" name="l00769"></a><span class="lineno">  769</span>                AllocatorType());</div>
+<div class="line"><a id="l00770" name="l00770"></a><span class="lineno">  770</span>        m_codifferential_alloc.emplace(</div>
+<div class="line"><a id="l00771" name="l00771"></a><span class="lineno">  771</span>                CodifferentialDomainType(</div>
+<div class="line"><a id="l00772" name="l00772"></a><span class="lineno">  772</span>                        tensor.non_indices_domain(),</div>
+<div class="line"><a id="l00773" name="l00773"></a><span class="lineno">  773</span>                        codifferential_accessor.<a class="code hl_function" href="classsil_1_1tensor_1_1TensorAccessor.html#a826ab69e3d61498116052144b967f0d1">domain</a>()),</div>
+<div class="line"><a id="l00774" name="l00774"></a><span class="lineno">  774</span>                AllocatorType());</div>
+<div class="line"><a id="l00775" name="l00775"></a><span class="lineno">  775</span> </div>
+<div class="line"><a id="l00776" name="l00776"></a><span class="lineno">  776</span>        m_hodge_star.emplace(*m_hodge_star_alloc);</div>
+<div class="line"><a id="l00777" name="l00777"></a><span class="lineno">  777</span>        m_dual_hodge_star.emplace(*m_dual_hodge_star_alloc);</div>
+<div class="line"><a id="l00778" name="l00778"></a><span class="lineno">  778</span>        m_dual_tensor_buffer.emplace(*m_dual_tensor_alloc);</div>
+<div class="line"><a id="l00779" name="l00779"></a><span class="lineno">  779</span>        m_codifferential_tensor_buffer.emplace(*m_codifferential_alloc);</div>
+<div class="line"><a id="l00780" name="l00780"></a><span class="lineno">  780</span> </div>
+<div class="line"><a id="l00781" name="l00781"></a><span class="lineno">  781</span>        <a class="code hl_function" href="namespacesil_1_1exterior.html#a985e5f2d21f672dde6b75d610b27f6a2">fill_discrete_hodge_star</a>&lt;</div>
+<div class="line"><a id="l00782" name="l00782"></a><span class="lineno">  782</span>                CodifferentialHodgeInputIndices,</div>
+<div class="line"><a id="l00783" name="l00783"></a><span class="lineno">  783</span>                CodifferentialHodgeOutputIndices&gt;(exec_space, *m_hodge_star, metric, position);</div>
+<div class="line"><a id="l00784" name="l00784"></a><span class="lineno">  784</span>        <a class="code hl_function" href="namespacesil_1_1exterior.html#a985e5f2d21f672dde6b75d610b27f6a2">fill_discrete_hodge_star</a>&lt;</div>
+<div class="line"><a id="l00785" name="l00785"></a><span class="lineno">  785</span>                <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a3e2f32622aaafaa7ee4402aba31f1e9c">tensor::upper_t&lt;DualCodifferentialHodgeInputIndices&gt;</a>,</div>
+<div class="line"><a id="l00786" name="l00786"></a><span class="lineno">  786</span>                DualCodifferentialHodgeOutputIndices&gt;(</div>
 </div>
-<div class="line"><a id="l00786" name="l00786"></a><span class="lineno">  786</span>                exec_space,</div>
-<div class="foldopen" id="foldopen00787" data-start="{" data-end="}">
-<div class="line"><a id="l00787" name="l00787"></a><span class="lineno"><a class="line" href="classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html#ac14e3aa185ecc75b4d292c525cbc891f">  787</a></span>                *m_dual_hodge_star,</div>
-<div class="line"><a id="l00788" name="l00788"></a><span class="lineno">  788</span>                metric,</div>
-<div class="line"><a id="l00789" name="l00789"></a><span class="lineno">  789</span>                position);</div>
-<div class="line"><a id="l00790" name="l00790"></a><span class="lineno">  790</span>    }</div>
-<div class="line"><a id="l00791" name="l00791"></a><span class="lineno">  791</span> </div>
-<div class="line"><a id="l00792" name="l00792"></a><span class="lineno">  792</span>    TensorType operator()(TensorType laplacian_tensor, TensorType tensor)</div>
-<div class="line"><a id="l00793" name="l00793"></a><span class="lineno">  793</span>    {</div>
-<div class="line"><a id="l00794" name="l00794"></a><span class="lineno">  794</span>        <a class="code hl_class" href="classsil_1_1exterior_1_1StagedCodifferential.html">StagedCodifferential</a>&lt;</div>
-<div class="line"><a id="l00795" name="l00795"></a><span class="lineno">  795</span>                MetricIndex,</div>
-<div class="line"><a id="l00796" name="l00796"></a><span class="lineno">  796</span>                LaplacianDummyIndex,</div>
-<div class="line"><a id="l00797" name="l00797"></a><span class="lineno">  797</span>                CochainTag,</div>
-<div class="line"><a id="l00798" name="l00798"></a><span class="lineno">  798</span>                TensorType,</div>
-<div class="line"><a id="l00799" name="l00799"></a><span class="lineno">  799</span>                MetricType,</div>
-<div class="line"><a id="l00800" name="l00800"></a><span class="lineno">  800</span>                PositionType,</div>
-<div class="line"><a id="l00801" name="l00801"></a><span class="lineno">  801</span>                ExecSpace&gt;(</div>
-<div class="line"><a id="l00802" name="l00802"></a><span class="lineno">  802</span>                m_exec_space,</div>
-<div class="line"><a id="l00803" name="l00803"></a><span class="lineno">  803</span>                std::move(*m_hodge_star),</div>
-<div class="line"><a id="l00804" name="l00804"></a><span class="lineno">  804</span>                std::move(*m_dual_hodge_star),</div>
-<div class="line"><a id="l00805" name="l00805"></a><span class="lineno">  805</span>                std::move(*m_dual_tensor_buffer))(*m_codifferential_tensor_buffer, tensor);</div>
-<div class="line"><a id="l00806" name="l00806"></a><span class="lineno">  806</span>        <span class="keywordflow">return</span> sil::exterior::</div>
+<div class="line"><a id="l00787" name="l00787"></a><span class="lineno">  787</span>                exec_space,</div>
+<div class="foldopen" id="foldopen00788" data-start="{" data-end="}">
+<div class="line"><a id="l00788" name="l00788"></a><span class="lineno"><a class="line" href="classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html#ac97c63d4dee356a1c23f1bed1d005a4b">  788</a></span>                *m_dual_hodge_star,</div>
+<div class="line"><a id="l00789" name="l00789"></a><span class="lineno">  789</span>                metric,</div>
+<div class="line"><a id="l00790" name="l00790"></a><span class="lineno">  790</span>                position);</div>
+<div class="line"><a id="l00791" name="l00791"></a><span class="lineno">  791</span>    }</div>
+<div class="line"><a id="l00792" name="l00792"></a><span class="lineno">  792</span> </div>
+<div class="line"><a id="l00793" name="l00793"></a><span class="lineno">  793</span>    TensorType run(TensorType laplacian_tensor, TensorType tensor)</div>
+<div class="line"><a id="l00794" name="l00794"></a><span class="lineno">  794</span>    {</div>
+<div class="line"><a id="l00795" name="l00795"></a><span class="lineno">  795</span>        <a class="code hl_class" href="classsil_1_1exterior_1_1StagedCodifferential.html">StagedCodifferential</a>&lt;</div>
+<div class="line"><a id="l00796" name="l00796"></a><span class="lineno">  796</span>                MetricIndex,</div>
+<div class="line"><a id="l00797" name="l00797"></a><span class="lineno">  797</span>                LaplacianDummyIndex,</div>
+<div class="line"><a id="l00798" name="l00798"></a><span class="lineno">  798</span>                CochainTag,</div>
+<div class="line"><a id="l00799" name="l00799"></a><span class="lineno">  799</span>                TensorType,</div>
+<div class="line"><a id="l00800" name="l00800"></a><span class="lineno">  800</span>                MetricType,</div>
+<div class="line"><a id="l00801" name="l00801"></a><span class="lineno">  801</span>                PositionType,</div>
+<div class="line"><a id="l00802" name="l00802"></a><span class="lineno">  802</span>                ExecSpace&gt;(</div>
+<div class="line"><a id="l00803" name="l00803"></a><span class="lineno">  803</span>                m_exec_space,</div>
+<div class="line"><a id="l00804" name="l00804"></a><span class="lineno">  804</span>                std::move(*m_hodge_star),</div>
+<div class="line"><a id="l00805" name="l00805"></a><span class="lineno">  805</span>                std::move(*m_dual_hodge_star),</div>
+<div class="line"><a id="l00806" name="l00806"></a><span class="lineno">  806</span>                std::move(*m_dual_tensor_buffer))</div>
+<div class="line"><a id="l00807" name="l00807"></a><span class="lineno">  807</span>                .run(*m_codifferential_tensor_buffer, tensor);</div>
+<div class="line"><a id="l00808" name="l00808"></a><span class="lineno">  808</span>        <span class="keywordflow">return</span> sil::exterior::</div>
 </div>
-<div class="line"><a id="l00807" name="l00807"></a><span class="lineno">  807</span>                deriv&lt;LaplacianDummyIndex, codifferential_index_t&lt;LaplacianDummyIndex, CochainTag&gt;&gt;(</div>
-<div class="line"><a id="l00808" name="l00808"></a><span class="lineno">  808</span>                        m_exec_space,</div>
-<div class="line"><a id="l00809" name="l00809"></a><span class="lineno">  809</span>                        laplacian_tensor,</div>
-<div class="line"><a id="l00810" name="l00810"></a><span class="lineno">  810</span>                        *m_codifferential_tensor_buffer);</div>
-<div class="line"><a id="l00811" name="l00811"></a><span class="lineno">  811</span>    }</div>
-<div class="line"><a id="l00812" name="l00812"></a><span class="lineno">  812</span>};</div>
+<div class="line"><a id="l00809" name="l00809"></a><span class="lineno">  809</span>                deriv&lt;LaplacianDummyIndex, codifferential_index_t&lt;LaplacianDummyIndex, CochainTag&gt;&gt;(</div>
+<div class="line"><a id="l00810" name="l00810"></a><span class="lineno">  810</span>                        m_exec_space,</div>
+<div class="line"><a id="l00811" name="l00811"></a><span class="lineno">  811</span>                        laplacian_tensor,</div>
+<div class="line"><a id="l00812" name="l00812"></a><span class="lineno">  812</span>                        *m_codifferential_tensor_buffer);</div>
+<div class="line"><a id="l00813" name="l00813"></a><span class="lineno">  813</span>    }</div>
+<div class="line"><a id="l00814" name="l00814"></a><span class="lineno">  814</span>};</div>
 </div>
-<div class="line"><a id="l00813" name="l00813"></a><span class="lineno">  813</span> </div>
-<div class="line"><a id="l00814" name="l00814"></a><span class="lineno">  814</span><span class="keyword">template</span> &lt;</div>
-<div class="line"><a id="l00815" name="l00815"></a><span class="lineno">  815</span>        tensor::TensorIndex MetricIndex,</div>
-<div class="line"><a id="l00816" name="l00816"></a><span class="lineno">  816</span>        tensor::TensorNatIndex LaplacianDummyIndex,</div>
-<div class="line"><a id="l00817" name="l00817"></a><span class="lineno">  817</span>        tensor::TensorIndex CochainTag,</div>
-<div class="line"><a id="l00818" name="l00818"></a><span class="lineno">  818</span>        misc::Specialization&lt;tensor::Tensor&gt; TensorType,</div>
-<div class="line"><a id="l00819" name="l00819"></a><span class="lineno">  819</span>        misc::Specialization&lt;tensor::Tensor&gt; DerivativeHodgeStarType,</div>
-<div class="line"><a id="l00820" name="l00820"></a><span class="lineno">  820</span>        misc::Specialization&lt;tensor::Tensor&gt; DualDerivativeHodgeStarType,</div>
-<div class="line"><a id="l00821" name="l00821"></a><span class="lineno">  821</span>        misc::Specialization&lt;tensor::Tensor&gt; DerivativeDualTensorBufferType,</div>
-<div class="line"><a id="l00822" name="l00822"></a><span class="lineno">  822</span>        <span class="keyword">class </span>ExecSpace&gt;</div>
-<div class="line"><a id="l00823" name="l00823"></a><span class="lineno">  823</span>    <span class="keyword">requires</span>(detail::ZeroRankLaplacianCochain&lt;LaplacianDummyIndex, CochainTag&gt;)</div>
-<div class="foldopen" id="foldopen00824" data-start="{" data-end="}">
-<div class="line"><a id="l00824" name="l00824"></a><span class="lineno"><a class="line" href="namespacesil_1_1exterior.html#a22856c3296327971c70adb2aa1ee88a5">  824</a></span>TensorType <a class="code hl_function" href="namespacesil_1_1exterior.html#a22856c3296327971c70adb2aa1ee88a5">laplacian</a>(</div>
-<div class="line"><a id="l00825" name="l00825"></a><span class="lineno">  825</span>        ExecSpace <span class="keyword">const</span>&amp; exec_space,</div>
-<div class="line"><a id="l00826" name="l00826"></a><span class="lineno">  826</span>        TensorType laplacian_tensor,</div>
-<div class="line"><a id="l00827" name="l00827"></a><span class="lineno">  827</span>        TensorType tensor,</div>
-<div class="line"><a id="l00828" name="l00828"></a><span class="lineno">  828</span>        DerivativeHodgeStarType hodge_star,</div>
-<div class="line"><a id="l00829" name="l00829"></a><span class="lineno">  829</span>        DualDerivativeHodgeStarType dual_hodge_star,</div>
-<div class="line"><a id="l00830" name="l00830"></a><span class="lineno">  830</span>        DerivativeDualTensorBufferType dual_tensor_buffer)</div>
-<div class="line"><a id="l00831" name="l00831"></a><span class="lineno">  831</span>{</div>
-<div class="line"><a id="l00832" name="l00832"></a><span class="lineno">  832</span>    <span class="keyword">using </span>codifferential_of_coboundary_index</div>
-<div class="line"><a id="l00833" name="l00833"></a><span class="lineno">  833</span>            = <a class="code hl_struct" href="structsil_1_1tensor_1_1Covariant.html">tensor::Covariant</a>&lt;<a class="code hl_struct" href="structsil_1_1exterior_1_1IndexForCodifferentialOfCoboundaryInLaplacian.html">IndexForCodifferentialOfCoboundaryInLaplacian</a>&lt;</div>
-<div class="line"><a id="l00834" name="l00834"></a><span class="lineno">  834</span>                    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#ab7e663826196ec03f2eec4be87ffa4cf">tensor::uncharacterize_t&lt;LaplacianDummyIndex&gt;</a>&gt;&gt;;</div>
-<div class="line"><a id="l00835" name="l00835"></a><span class="lineno">  835</span>    <span class="keywordflow">return</span> detail::codifferential_of_coboundary&lt;</div>
-<div class="line"><a id="l00836" name="l00836"></a><span class="lineno">  836</span>            MetricIndex,</div>
-<div class="line"><a id="l00837" name="l00837"></a><span class="lineno">  837</span>            codifferential_of_coboundary_index,</div>
-<div class="line"><a id="l00838" name="l00838"></a><span class="lineno">  838</span>            CochainTag&gt;(</div>
-<div class="line"><a id="l00839" name="l00839"></a><span class="lineno">  839</span>            exec_space,</div>
-<div class="line"><a id="l00840" name="l00840"></a><span class="lineno">  840</span>            laplacian_tensor,</div>
-<div class="line"><a id="l00841" name="l00841"></a><span class="lineno">  841</span>            tensor,</div>
-<div class="line"><a id="l00842" name="l00842"></a><span class="lineno">  842</span>            hodge_star,</div>
-<div class="line"><a id="l00843" name="l00843"></a><span class="lineno">  843</span>            dual_hodge_star,</div>
-<div class="line"><a id="l00844" name="l00844"></a><span class="lineno">  844</span>            dual_tensor_buffer);</div>
-<div class="line"><a id="l00845" name="l00845"></a><span class="lineno">  845</span>}</div>
+<div class="line"><a id="l00815" name="l00815"></a><span class="lineno">  815</span> </div>
+<div class="line"><a id="l00816" name="l00816"></a><span class="lineno">  816</span><span class="keyword">template</span> &lt;</div>
+<div class="line"><a id="l00817" name="l00817"></a><span class="lineno">  817</span>        tensor::TensorIndex MetricIndex,</div>
+<div class="line"><a id="l00818" name="l00818"></a><span class="lineno">  818</span>        tensor::TensorNatIndex LaplacianDummyIndex,</div>
+<div class="line"><a id="l00819" name="l00819"></a><span class="lineno">  819</span>        tensor::TensorIndex CochainTag,</div>
+<div class="line"><a id="l00820" name="l00820"></a><span class="lineno">  820</span>        misc::Specialization&lt;tensor::Tensor&gt; TensorType,</div>
+<div class="line"><a id="l00821" name="l00821"></a><span class="lineno">  821</span>        misc::Specialization&lt;tensor::Tensor&gt; DerivativeHodgeStarType,</div>
+<div class="line"><a id="l00822" name="l00822"></a><span class="lineno">  822</span>        misc::Specialization&lt;tensor::Tensor&gt; DualDerivativeHodgeStarType,</div>
+<div class="line"><a id="l00823" name="l00823"></a><span class="lineno">  823</span>        misc::Specialization&lt;tensor::Tensor&gt; DerivativeDualTensorBufferType,</div>
+<div class="line"><a id="l00824" name="l00824"></a><span class="lineno">  824</span>        <span class="keyword">class </span>ExecSpace&gt;</div>
+<div class="line"><a id="l00825" name="l00825"></a><span class="lineno">  825</span>    <span class="keyword">requires</span>(detail::ZeroRankLaplacianCochain&lt;LaplacianDummyIndex, CochainTag&gt;)</div>
+<div class="foldopen" id="foldopen00826" data-start="{" data-end="}">
+<div class="line"><a id="l00826" name="l00826"></a><span class="lineno"><a class="line" href="namespacesil_1_1exterior.html#a22856c3296327971c70adb2aa1ee88a5">  826</a></span>TensorType <a class="code hl_function" href="namespacesil_1_1exterior.html#a22856c3296327971c70adb2aa1ee88a5">laplacian</a>(</div>
+<div class="line"><a id="l00827" name="l00827"></a><span class="lineno">  827</span>        ExecSpace <span class="keyword">const</span>&amp; exec_space,</div>
+<div class="line"><a id="l00828" name="l00828"></a><span class="lineno">  828</span>        TensorType laplacian_tensor,</div>
+<div class="line"><a id="l00829" name="l00829"></a><span class="lineno">  829</span>        TensorType tensor,</div>
+<div class="line"><a id="l00830" name="l00830"></a><span class="lineno">  830</span>        DerivativeHodgeStarType hodge_star,</div>
+<div class="line"><a id="l00831" name="l00831"></a><span class="lineno">  831</span>        DualDerivativeHodgeStarType dual_hodge_star,</div>
+<div class="line"><a id="l00832" name="l00832"></a><span class="lineno">  832</span>        DerivativeDualTensorBufferType dual_tensor_buffer)</div>
+<div class="line"><a id="l00833" name="l00833"></a><span class="lineno">  833</span>{</div>
+<div class="line"><a id="l00834" name="l00834"></a><span class="lineno">  834</span>    <span class="keyword">using </span>codifferential_of_coboundary_index</div>
+<div class="line"><a id="l00835" name="l00835"></a><span class="lineno">  835</span>            = <a class="code hl_struct" href="structsil_1_1tensor_1_1Covariant.html">tensor::Covariant</a>&lt;<a class="code hl_struct" href="structsil_1_1exterior_1_1IndexForCodifferentialOfCoboundaryInLaplacian.html">IndexForCodifferentialOfCoboundaryInLaplacian</a>&lt;</div>
+<div class="line"><a id="l00836" name="l00836"></a><span class="lineno">  836</span>                    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#ab7e663826196ec03f2eec4be87ffa4cf">tensor::uncharacterize_t&lt;LaplacianDummyIndex&gt;</a>&gt;&gt;;</div>
+<div class="line"><a id="l00837" name="l00837"></a><span class="lineno">  837</span>    <span class="keywordflow">return</span> detail::codifferential_of_coboundary&lt;</div>
+<div class="line"><a id="l00838" name="l00838"></a><span class="lineno">  838</span>            MetricIndex,</div>
+<div class="line"><a id="l00839" name="l00839"></a><span class="lineno">  839</span>            codifferential_of_coboundary_index,</div>
+<div class="line"><a id="l00840" name="l00840"></a><span class="lineno">  840</span>            CochainTag&gt;(</div>
+<div class="line"><a id="l00841" name="l00841"></a><span class="lineno">  841</span>            exec_space,</div>
+<div class="line"><a id="l00842" name="l00842"></a><span class="lineno">  842</span>            laplacian_tensor,</div>
+<div class="line"><a id="l00843" name="l00843"></a><span class="lineno">  843</span>            tensor,</div>
+<div class="line"><a id="l00844" name="l00844"></a><span class="lineno">  844</span>            hodge_star,</div>
+<div class="line"><a id="l00845" name="l00845"></a><span class="lineno">  845</span>            dual_hodge_star,</div>
+<div class="line"><a id="l00846" name="l00846"></a><span class="lineno">  846</span>            dual_tensor_buffer);</div>
+<div class="line"><a id="l00847" name="l00847"></a><span class="lineno">  847</span>}</div>
 </div>
-<div class="line"><a id="l00846" name="l00846"></a><span class="lineno">  846</span> </div>
-<div class="line"><a id="l00847" name="l00847"></a><span class="lineno">  847</span><span class="keyword">template</span> &lt;</div>
-<div class="line"><a id="l00848" name="l00848"></a><span class="lineno">  848</span>        <a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndex.html">tensor::TensorIndex</a> MetricIndex,</div>
-<div class="line"><a id="l00849" name="l00849"></a><span class="lineno">  849</span>        <a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorNatIndex.html">tensor::TensorNatIndex</a> LaplacianDummyIndex,</div>
-<div class="line"><a id="l00850" name="l00850"></a><span class="lineno">  850</span>        <a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndex.html">tensor::TensorIndex</a> CochainTag,</div>
-<div class="line"><a id="l00851" name="l00851"></a><span class="lineno">  851</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> TensorType,</div>
-<div class="line"><a id="l00852" name="l00852"></a><span class="lineno">  852</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> DerivativeHodgeStarType,</div>
-<div class="line"><a id="l00853" name="l00853"></a><span class="lineno">  853</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> DualDerivativeHodgeStarType,</div>
-<div class="line"><a id="l00854" name="l00854"></a><span class="lineno">  854</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> DerivativeDualTensorBufferType,</div>
-<div class="line"><a id="l00855" name="l00855"></a><span class="lineno">  855</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> HodgeStarType,</div>
-<div class="line"><a id="l00856" name="l00856"></a><span class="lineno">  856</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> DualHodgeStarType,</div>
-<div class="line"><a id="l00857" name="l00857"></a><span class="lineno">  857</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> DualTensorBufferType,</div>
-<div class="line"><a id="l00858" name="l00858"></a><span class="lineno">  858</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> CodifferentialTensorBufferType,</div>
-<div class="line"><a id="l00859" name="l00859"></a><span class="lineno">  859</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> CoboundaryOfCodifferentialBufferType,</div>
-<div class="line"><a id="l00860" name="l00860"></a><span class="lineno">  860</span>        <span class="keyword">class </span>ExecSpace&gt;</div>
-<div class="line"><a id="l00861" name="l00861"></a><span class="lineno">  861</span>    <span class="keyword">requires</span>(detail::IntermediateRankLaplacianCochain&lt;LaplacianDummyIndex, CochainTag&gt;)</div>
-<div class="foldopen" id="foldopen00862" data-start="{" data-end="}">
-<div class="line"><a id="l00862" name="l00862"></a><span class="lineno"><a class="line" href="namespacesil_1_1exterior.html#a4d2bf9d85477ba4ca93acab67df2d77f">  862</a></span>TensorType <a class="code hl_function" href="namespacesil_1_1exterior.html#a22856c3296327971c70adb2aa1ee88a5">laplacian</a>(</div>
-<div class="line"><a id="l00863" name="l00863"></a><span class="lineno">  863</span>        ExecSpace <span class="keyword">const</span>&amp; exec_space,</div>
-<div class="line"><a id="l00864" name="l00864"></a><span class="lineno">  864</span>        TensorType laplacian_tensor,</div>
-<div class="line"><a id="l00865" name="l00865"></a><span class="lineno">  865</span>        TensorType tensor,</div>
-<div class="line"><a id="l00866" name="l00866"></a><span class="lineno">  866</span>        DerivativeHodgeStarType derivative_hodge_star,</div>
-<div class="line"><a id="l00867" name="l00867"></a><span class="lineno">  867</span>        DualDerivativeHodgeStarType dual_derivative_hodge_star,</div>
-<div class="line"><a id="l00868" name="l00868"></a><span class="lineno">  868</span>        DerivativeDualTensorBufferType derivative_dual_tensor_buffer,</div>
-<div class="line"><a id="l00869" name="l00869"></a><span class="lineno">  869</span>        HodgeStarType hodge_star,</div>
-<div class="line"><a id="l00870" name="l00870"></a><span class="lineno">  870</span>        DualHodgeStarType dual_hodge_star,</div>
-<div class="line"><a id="l00871" name="l00871"></a><span class="lineno">  871</span>        DualTensorBufferType dual_tensor_buffer,</div>
-<div class="line"><a id="l00872" name="l00872"></a><span class="lineno">  872</span>        CodifferentialTensorBufferType codifferential_tensor_buffer,</div>
-<div class="line"><a id="l00873" name="l00873"></a><span class="lineno">  873</span>        CoboundaryOfCodifferentialBufferType coboundary_of_codifferential_buffer)</div>
-<div class="line"><a id="l00874" name="l00874"></a><span class="lineno">  874</span>{</div>
-<div class="line"><a id="l00875" name="l00875"></a><span class="lineno">  875</span>    <span class="keyword">using </span>codifferential_of_coboundary_index</div>
-<div class="line"><a id="l00876" name="l00876"></a><span class="lineno">  876</span>            = <a class="code hl_struct" href="structsil_1_1tensor_1_1Covariant.html">tensor::Covariant</a>&lt;<a class="code hl_struct" href="structsil_1_1exterior_1_1IndexForCodifferentialOfCoboundaryInLaplacian.html">IndexForCodifferentialOfCoboundaryInLaplacian</a>&lt;</div>
-<div class="line"><a id="l00877" name="l00877"></a><span class="lineno">  877</span>                    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#ab7e663826196ec03f2eec4be87ffa4cf">tensor::uncharacterize_t&lt;LaplacianDummyIndex&gt;</a>&gt;&gt;;</div>
-<div class="line"><a id="l00878" name="l00878"></a><span class="lineno">  878</span>    <span class="keyword">auto</span> exec_spaces = Kokkos::Experimental::partition_space(exec_space, 1, 1);</div>
-<div class="line"><a id="l00879" name="l00879"></a><span class="lineno">  879</span> </div>
-<div class="line"><a id="l00880" name="l00880"></a><span class="lineno">  880</span>    detail::codifferential_of_coboundary&lt;</div>
-<div class="line"><a id="l00881" name="l00881"></a><span class="lineno">  881</span>            MetricIndex,</div>
-<div class="line"><a id="l00882" name="l00882"></a><span class="lineno">  882</span>            codifferential_of_coboundary_index,</div>
-<div class="line"><a id="l00883" name="l00883"></a><span class="lineno">  883</span>            CochainTag&gt;(</div>
-<div class="line"><a id="l00884" name="l00884"></a><span class="lineno">  884</span>            exec_spaces[0],</div>
-<div class="line"><a id="l00885" name="l00885"></a><span class="lineno">  885</span>            laplacian_tensor,</div>
-<div class="line"><a id="l00886" name="l00886"></a><span class="lineno">  886</span>            tensor,</div>
-<div class="line"><a id="l00887" name="l00887"></a><span class="lineno">  887</span>            derivative_hodge_star,</div>
-<div class="line"><a id="l00888" name="l00888"></a><span class="lineno">  888</span>            dual_derivative_hodge_star,</div>
-<div class="line"><a id="l00889" name="l00889"></a><span class="lineno">  889</span>            derivative_dual_tensor_buffer);</div>
-<div class="line"><a id="l00890" name="l00890"></a><span class="lineno">  890</span> </div>
-<div class="line"><a id="l00891" name="l00891"></a><span class="lineno">  891</span>    <a class="code hl_function" href="namespacesil_1_1exterior.html#aa76c4a4263aa2619f7be73eb380aa226">sil::exterior::codifferential&lt;MetricIndex, LaplacianDummyIndex, CochainTag&gt;</a>(</div>
-<div class="line"><a id="l00892" name="l00892"></a><span class="lineno">  892</span>            exec_spaces[1],</div>
-<div class="line"><a id="l00893" name="l00893"></a><span class="lineno">  893</span>            codifferential_tensor_buffer,</div>
-<div class="line"><a id="l00894" name="l00894"></a><span class="lineno">  894</span>            tensor,</div>
-<div class="line"><a id="l00895" name="l00895"></a><span class="lineno">  895</span>            hodge_star,</div>
-<div class="line"><a id="l00896" name="l00896"></a><span class="lineno">  896</span>            dual_hodge_star,</div>
-<div class="line"><a id="l00897" name="l00897"></a><span class="lineno">  897</span>            dual_tensor_buffer);</div>
-<div class="line"><a id="l00898" name="l00898"></a><span class="lineno">  898</span>    sil::exterior::</div>
-<div class="line"><a id="l00899" name="l00899"></a><span class="lineno">  899</span>            deriv&lt;LaplacianDummyIndex, codifferential_index_t&lt;LaplacianDummyIndex, CochainTag&gt;&gt;(</div>
-<div class="line"><a id="l00900" name="l00900"></a><span class="lineno">  900</span>                    exec_spaces[1],</div>
-<div class="line"><a id="l00901" name="l00901"></a><span class="lineno">  901</span>                    coboundary_of_codifferential_buffer,</div>
-<div class="line"><a id="l00902" name="l00902"></a><span class="lineno">  902</span>                    codifferential_tensor_buffer);</div>
-<div class="line"><a id="l00903" name="l00903"></a><span class="lineno">  903</span> </div>
-<div class="line"><a id="l00904" name="l00904"></a><span class="lineno">  904</span>    exec_spaces[0].fence();</div>
-<div class="line"><a id="l00905" name="l00905"></a><span class="lineno">  905</span>    exec_spaces[1].fence();</div>
-<div class="line"><a id="l00906" name="l00906"></a><span class="lineno">  906</span> </div>
-<div class="line"><a id="l00907" name="l00907"></a><span class="lineno">  907</span>    SIMILIE_DEBUG_LOG(<span class="stringliteral">&quot;similie_add_coboundary_of_codifferential_contribution_to_laplacian&quot;</span>);</div>
-<div class="line"><a id="l00908" name="l00908"></a><span class="lineno">  908</span>    ddc::parallel_for_each(</div>
-<div class="line"><a id="l00909" name="l00909"></a><span class="lineno">  909</span>            <span class="stringliteral">&quot;similie_add_coboundary_of_codifferential_contribution_to_laplacian&quot;</span>,</div>
-<div class="line"><a id="l00910" name="l00910"></a><span class="lineno">  910</span>            exec_space,</div>
-<div class="line"><a id="l00911" name="l00911"></a><span class="lineno">  911</span>            laplacian_tensor.domain(),</div>
-<div class="line"><a id="l00912" name="l00912"></a><span class="lineno">  912</span>            KOKKOS_LAMBDA(<span class="keyword">typename</span> TensorType::discrete_element_type elem) {</div>
-<div class="line"><a id="l00913" name="l00913"></a><span class="lineno">  913</span>                laplacian_tensor.mem(elem) += coboundary_of_codifferential_buffer.mem(elem);</div>
-<div class="line"><a id="l00914" name="l00914"></a><span class="lineno">  914</span>            });</div>
-<div class="line"><a id="l00915" name="l00915"></a><span class="lineno">  915</span> </div>
-<div class="line"><a id="l00916" name="l00916"></a><span class="lineno">  916</span>    <span class="keywordflow">return</span> laplacian_tensor;</div>
-<div class="line"><a id="l00917" name="l00917"></a><span class="lineno">  917</span>}</div>
+<div class="line"><a id="l00848" name="l00848"></a><span class="lineno">  848</span> </div>
+<div class="line"><a id="l00849" name="l00849"></a><span class="lineno">  849</span><span class="keyword">template</span> &lt;</div>
+<div class="line"><a id="l00850" name="l00850"></a><span class="lineno">  850</span>        <a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndex.html">tensor::TensorIndex</a> MetricIndex,</div>
+<div class="line"><a id="l00851" name="l00851"></a><span class="lineno">  851</span>        <a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorNatIndex.html">tensor::TensorNatIndex</a> LaplacianDummyIndex,</div>
+<div class="line"><a id="l00852" name="l00852"></a><span class="lineno">  852</span>        <a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndex.html">tensor::TensorIndex</a> CochainTag,</div>
+<div class="line"><a id="l00853" name="l00853"></a><span class="lineno">  853</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> TensorType,</div>
+<div class="line"><a id="l00854" name="l00854"></a><span class="lineno">  854</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> DerivativeHodgeStarType,</div>
+<div class="line"><a id="l00855" name="l00855"></a><span class="lineno">  855</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> DualDerivativeHodgeStarType,</div>
+<div class="line"><a id="l00856" name="l00856"></a><span class="lineno">  856</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> DerivativeDualTensorBufferType,</div>
+<div class="line"><a id="l00857" name="l00857"></a><span class="lineno">  857</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> HodgeStarType,</div>
+<div class="line"><a id="l00858" name="l00858"></a><span class="lineno">  858</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> DualHodgeStarType,</div>
+<div class="line"><a id="l00859" name="l00859"></a><span class="lineno">  859</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> DualTensorBufferType,</div>
+<div class="line"><a id="l00860" name="l00860"></a><span class="lineno">  860</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> CodifferentialTensorBufferType,</div>
+<div class="line"><a id="l00861" name="l00861"></a><span class="lineno">  861</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> CoboundaryOfCodifferentialBufferType,</div>
+<div class="line"><a id="l00862" name="l00862"></a><span class="lineno">  862</span>        <span class="keyword">class </span>ExecSpace&gt;</div>
+<div class="line"><a id="l00863" name="l00863"></a><span class="lineno">  863</span>    <span class="keyword">requires</span>(detail::IntermediateRankLaplacianCochain&lt;LaplacianDummyIndex, CochainTag&gt;)</div>
+<div class="foldopen" id="foldopen00864" data-start="{" data-end="}">
+<div class="line"><a id="l00864" name="l00864"></a><span class="lineno"><a class="line" href="namespacesil_1_1exterior.html#a4d2bf9d85477ba4ca93acab67df2d77f">  864</a></span>TensorType <a class="code hl_function" href="namespacesil_1_1exterior.html#a22856c3296327971c70adb2aa1ee88a5">laplacian</a>(</div>
+<div class="line"><a id="l00865" name="l00865"></a><span class="lineno">  865</span>        ExecSpace <span class="keyword">const</span>&amp; exec_space,</div>
+<div class="line"><a id="l00866" name="l00866"></a><span class="lineno">  866</span>        TensorType laplacian_tensor,</div>
+<div class="line"><a id="l00867" name="l00867"></a><span class="lineno">  867</span>        TensorType tensor,</div>
+<div class="line"><a id="l00868" name="l00868"></a><span class="lineno">  868</span>        DerivativeHodgeStarType derivative_hodge_star,</div>
+<div class="line"><a id="l00869" name="l00869"></a><span class="lineno">  869</span>        DualDerivativeHodgeStarType dual_derivative_hodge_star,</div>
+<div class="line"><a id="l00870" name="l00870"></a><span class="lineno">  870</span>        DerivativeDualTensorBufferType derivative_dual_tensor_buffer,</div>
+<div class="line"><a id="l00871" name="l00871"></a><span class="lineno">  871</span>        HodgeStarType hodge_star,</div>
+<div class="line"><a id="l00872" name="l00872"></a><span class="lineno">  872</span>        DualHodgeStarType dual_hodge_star,</div>
+<div class="line"><a id="l00873" name="l00873"></a><span class="lineno">  873</span>        DualTensorBufferType dual_tensor_buffer,</div>
+<div class="line"><a id="l00874" name="l00874"></a><span class="lineno">  874</span>        CodifferentialTensorBufferType codifferential_tensor_buffer,</div>
+<div class="line"><a id="l00875" name="l00875"></a><span class="lineno">  875</span>        CoboundaryOfCodifferentialBufferType coboundary_of_codifferential_buffer)</div>
+<div class="line"><a id="l00876" name="l00876"></a><span class="lineno">  876</span>{</div>
+<div class="line"><a id="l00877" name="l00877"></a><span class="lineno">  877</span>    <span class="keyword">using </span>codifferential_of_coboundary_index</div>
+<div class="line"><a id="l00878" name="l00878"></a><span class="lineno">  878</span>            = <a class="code hl_struct" href="structsil_1_1tensor_1_1Covariant.html">tensor::Covariant</a>&lt;<a class="code hl_struct" href="structsil_1_1exterior_1_1IndexForCodifferentialOfCoboundaryInLaplacian.html">IndexForCodifferentialOfCoboundaryInLaplacian</a>&lt;</div>
+<div class="line"><a id="l00879" name="l00879"></a><span class="lineno">  879</span>                    <a class="code hl_typedef" href="namespacesil_1_1tensor.html#ab7e663826196ec03f2eec4be87ffa4cf">tensor::uncharacterize_t&lt;LaplacianDummyIndex&gt;</a>&gt;&gt;;</div>
+<div class="line"><a id="l00880" name="l00880"></a><span class="lineno">  880</span>    <span class="keyword">auto</span> exec_spaces = Kokkos::Experimental::partition_space(exec_space, 1, 1);</div>
+<div class="line"><a id="l00881" name="l00881"></a><span class="lineno">  881</span> </div>
+<div class="line"><a id="l00882" name="l00882"></a><span class="lineno">  882</span>    detail::codifferential_of_coboundary&lt;</div>
+<div class="line"><a id="l00883" name="l00883"></a><span class="lineno">  883</span>            MetricIndex,</div>
+<div class="line"><a id="l00884" name="l00884"></a><span class="lineno">  884</span>            codifferential_of_coboundary_index,</div>
+<div class="line"><a id="l00885" name="l00885"></a><span class="lineno">  885</span>            CochainTag&gt;(</div>
+<div class="line"><a id="l00886" name="l00886"></a><span class="lineno">  886</span>            exec_spaces[0],</div>
+<div class="line"><a id="l00887" name="l00887"></a><span class="lineno">  887</span>            laplacian_tensor,</div>
+<div class="line"><a id="l00888" name="l00888"></a><span class="lineno">  888</span>            tensor,</div>
+<div class="line"><a id="l00889" name="l00889"></a><span class="lineno">  889</span>            derivative_hodge_star,</div>
+<div class="line"><a id="l00890" name="l00890"></a><span class="lineno">  890</span>            dual_derivative_hodge_star,</div>
+<div class="line"><a id="l00891" name="l00891"></a><span class="lineno">  891</span>            derivative_dual_tensor_buffer);</div>
+<div class="line"><a id="l00892" name="l00892"></a><span class="lineno">  892</span> </div>
+<div class="line"><a id="l00893" name="l00893"></a><span class="lineno">  893</span>    <a class="code hl_function" href="namespacesil_1_1exterior.html#aa76c4a4263aa2619f7be73eb380aa226">sil::exterior::codifferential&lt;MetricIndex, LaplacianDummyIndex, CochainTag&gt;</a>(</div>
+<div class="line"><a id="l00894" name="l00894"></a><span class="lineno">  894</span>            exec_spaces[1],</div>
+<div class="line"><a id="l00895" name="l00895"></a><span class="lineno">  895</span>            codifferential_tensor_buffer,</div>
+<div class="line"><a id="l00896" name="l00896"></a><span class="lineno">  896</span>            tensor,</div>
+<div class="line"><a id="l00897" name="l00897"></a><span class="lineno">  897</span>            hodge_star,</div>
+<div class="line"><a id="l00898" name="l00898"></a><span class="lineno">  898</span>            dual_hodge_star,</div>
+<div class="line"><a id="l00899" name="l00899"></a><span class="lineno">  899</span>            dual_tensor_buffer);</div>
+<div class="line"><a id="l00900" name="l00900"></a><span class="lineno">  900</span>    sil::exterior::</div>
+<div class="line"><a id="l00901" name="l00901"></a><span class="lineno">  901</span>            deriv&lt;LaplacianDummyIndex, codifferential_index_t&lt;LaplacianDummyIndex, CochainTag&gt;&gt;(</div>
+<div class="line"><a id="l00902" name="l00902"></a><span class="lineno">  902</span>                    exec_spaces[1],</div>
+<div class="line"><a id="l00903" name="l00903"></a><span class="lineno">  903</span>                    coboundary_of_codifferential_buffer,</div>
+<div class="line"><a id="l00904" name="l00904"></a><span class="lineno">  904</span>                    codifferential_tensor_buffer);</div>
+<div class="line"><a id="l00905" name="l00905"></a><span class="lineno">  905</span> </div>
+<div class="line"><a id="l00906" name="l00906"></a><span class="lineno">  906</span>    exec_spaces[0].fence();</div>
+<div class="line"><a id="l00907" name="l00907"></a><span class="lineno">  907</span>    exec_spaces[1].fence();</div>
+<div class="line"><a id="l00908" name="l00908"></a><span class="lineno">  908</span> </div>
+<div class="line"><a id="l00909" name="l00909"></a><span class="lineno">  909</span>    SIMILIE_DEBUG_LOG(<span class="stringliteral">&quot;similie_add_coboundary_of_codifferential_contribution_to_laplacian&quot;</span>);</div>
+<div class="line"><a id="l00910" name="l00910"></a><span class="lineno">  910</span>    ddc::parallel_for_each(</div>
+<div class="line"><a id="l00911" name="l00911"></a><span class="lineno">  911</span>            <span class="stringliteral">&quot;similie_add_coboundary_of_codifferential_contribution_to_laplacian&quot;</span>,</div>
+<div class="line"><a id="l00912" name="l00912"></a><span class="lineno">  912</span>            exec_space,</div>
+<div class="line"><a id="l00913" name="l00913"></a><span class="lineno">  913</span>            laplacian_tensor.domain(),</div>
+<div class="line"><a id="l00914" name="l00914"></a><span class="lineno">  914</span>            KOKKOS_LAMBDA(<span class="keyword">typename</span> TensorType::discrete_element_type elem) {</div>
+<div class="line"><a id="l00915" name="l00915"></a><span class="lineno">  915</span>                laplacian_tensor.mem(elem) += coboundary_of_codifferential_buffer.mem(elem);</div>
+<div class="line"><a id="l00916" name="l00916"></a><span class="lineno">  916</span>            });</div>
+<div class="line"><a id="l00917" name="l00917"></a><span class="lineno">  917</span> </div>
+<div class="line"><a id="l00918" name="l00918"></a><span class="lineno">  918</span>    <span class="keywordflow">return</span> laplacian_tensor;</div>
+<div class="line"><a id="l00919" name="l00919"></a><span class="lineno">  919</span>}</div>
 </div>
-<div class="line"><a id="l00918" name="l00918"></a><span class="lineno">  918</span> </div>
-<div class="line"><a id="l00919" name="l00919"></a><span class="lineno">  919</span><span class="keyword">template</span> &lt;</div>
-<div class="line"><a id="l00920" name="l00920"></a><span class="lineno">  920</span>        <a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndex.html">tensor::TensorIndex</a> MetricIndex,</div>
-<div class="line"><a id="l00921" name="l00921"></a><span class="lineno">  921</span>        <a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorNatIndex.html">tensor::TensorNatIndex</a> LaplacianDummyIndex,</div>
-<div class="line"><a id="l00922" name="l00922"></a><span class="lineno">  922</span>        <a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndex.html">tensor::TensorIndex</a> CochainTag,</div>
-<div class="line"><a id="l00923" name="l00923"></a><span class="lineno">  923</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> TensorType,</div>
-<div class="line"><a id="l00924" name="l00924"></a><span class="lineno">  924</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> HodgeStarType,</div>
-<div class="line"><a id="l00925" name="l00925"></a><span class="lineno">  925</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> DualHodgeStarType,</div>
-<div class="line"><a id="l00926" name="l00926"></a><span class="lineno">  926</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> DualTensorBufferType,</div>
-<div class="line"><a id="l00927" name="l00927"></a><span class="lineno">  927</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> CodifferentialTensorBufferType,</div>
-<div class="line"><a id="l00928" name="l00928"></a><span class="lineno">  928</span>        <span class="keyword">class </span>ExecSpace&gt;</div>
-<div class="line"><a id="l00929" name="l00929"></a><span class="lineno">  929</span>    <span class="keyword">requires</span>(detail::TopRankLaplacianCochain&lt;LaplacianDummyIndex, CochainTag&gt;)</div>
-<div class="foldopen" id="foldopen00930" data-start="{" data-end="}">
-<div class="line"><a id="l00930" name="l00930"></a><span class="lineno"><a class="line" href="namespacesil_1_1exterior.html#aed6715b5204a0ffdb220d8351655d05a">  930</a></span>TensorType <a class="code hl_function" href="namespacesil_1_1exterior.html#a22856c3296327971c70adb2aa1ee88a5">laplacian</a>(</div>
-<div class="line"><a id="l00931" name="l00931"></a><span class="lineno">  931</span>        ExecSpace <span class="keyword">const</span>&amp; exec_space,</div>
-<div class="line"><a id="l00932" name="l00932"></a><span class="lineno">  932</span>        TensorType laplacian_tensor,</div>
-<div class="line"><a id="l00933" name="l00933"></a><span class="lineno">  933</span>        TensorType tensor,</div>
-<div class="line"><a id="l00934" name="l00934"></a><span class="lineno">  934</span>        HodgeStarType hodge_star,</div>
-<div class="line"><a id="l00935" name="l00935"></a><span class="lineno">  935</span>        DualHodgeStarType dual_hodge_star,</div>
-<div class="line"><a id="l00936" name="l00936"></a><span class="lineno">  936</span>        DualTensorBufferType dual_tensor_buffer,</div>
-<div class="line"><a id="l00937" name="l00937"></a><span class="lineno">  937</span>        CodifferentialTensorBufferType codifferential_tensor_buffer)</div>
-<div class="line"><a id="l00938" name="l00938"></a><span class="lineno">  938</span>{</div>
-<div class="line"><a id="l00939" name="l00939"></a><span class="lineno">  939</span>    <a class="code hl_function" href="namespacesil_1_1exterior.html#aa76c4a4263aa2619f7be73eb380aa226">sil::exterior::codifferential&lt;MetricIndex, LaplacianDummyIndex, CochainTag&gt;</a>(</div>
-<div class="line"><a id="l00940" name="l00940"></a><span class="lineno">  940</span>            exec_space,</div>
-<div class="line"><a id="l00941" name="l00941"></a><span class="lineno">  941</span>            codifferential_tensor_buffer,</div>
-<div class="line"><a id="l00942" name="l00942"></a><span class="lineno">  942</span>            tensor,</div>
-<div class="line"><a id="l00943" name="l00943"></a><span class="lineno">  943</span>            hodge_star,</div>
-<div class="line"><a id="l00944" name="l00944"></a><span class="lineno">  944</span>            dual_hodge_star,</div>
-<div class="line"><a id="l00945" name="l00945"></a><span class="lineno">  945</span>            dual_tensor_buffer);</div>
-<div class="line"><a id="l00946" name="l00946"></a><span class="lineno">  946</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="namespacesil_1_1exterior.html#a76eff1470caed08ad176c575149ca560">sil::exterior::deriv</a>&lt;</div>
-<div class="line"><a id="l00947" name="l00947"></a><span class="lineno">  947</span>            LaplacianDummyIndex,</div>
-<div class="line"><a id="l00948" name="l00948"></a><span class="lineno">  948</span>            <a class="code hl_typedef" href="namespacesil_1_1exterior.html#aab91885c880898f8e30304a22b965a22">codifferential_index_t</a>&lt;</div>
-<div class="line"><a id="l00949" name="l00949"></a><span class="lineno">  949</span>                    LaplacianDummyIndex,</div>
-<div class="line"><a id="l00950" name="l00950"></a><span class="lineno">  950</span>                    CochainTag&gt;&gt;(exec_space, laplacian_tensor, codifferential_tensor_buffer);</div>
-<div class="line"><a id="l00951" name="l00951"></a><span class="lineno">  951</span>}</div>
+<div class="line"><a id="l00920" name="l00920"></a><span class="lineno">  920</span> </div>
+<div class="line"><a id="l00921" name="l00921"></a><span class="lineno">  921</span><span class="keyword">template</span> &lt;</div>
+<div class="line"><a id="l00922" name="l00922"></a><span class="lineno">  922</span>        <a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndex.html">tensor::TensorIndex</a> MetricIndex,</div>
+<div class="line"><a id="l00923" name="l00923"></a><span class="lineno">  923</span>        <a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorNatIndex.html">tensor::TensorNatIndex</a> LaplacianDummyIndex,</div>
+<div class="line"><a id="l00924" name="l00924"></a><span class="lineno">  924</span>        <a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndex.html">tensor::TensorIndex</a> CochainTag,</div>
+<div class="line"><a id="l00925" name="l00925"></a><span class="lineno">  925</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> TensorType,</div>
+<div class="line"><a id="l00926" name="l00926"></a><span class="lineno">  926</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> HodgeStarType,</div>
+<div class="line"><a id="l00927" name="l00927"></a><span class="lineno">  927</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> DualHodgeStarType,</div>
+<div class="line"><a id="l00928" name="l00928"></a><span class="lineno">  928</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> DualTensorBufferType,</div>
+<div class="line"><a id="l00929" name="l00929"></a><span class="lineno">  929</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;tensor::Tensor&gt;</a> CodifferentialTensorBufferType,</div>
+<div class="line"><a id="l00930" name="l00930"></a><span class="lineno">  930</span>        <span class="keyword">class </span>ExecSpace&gt;</div>
+<div class="line"><a id="l00931" name="l00931"></a><span class="lineno">  931</span>    <span class="keyword">requires</span>(detail::TopRankLaplacianCochain&lt;LaplacianDummyIndex, CochainTag&gt;)</div>
+<div class="foldopen" id="foldopen00932" data-start="{" data-end="}">
+<div class="line"><a id="l00932" name="l00932"></a><span class="lineno"><a class="line" href="namespacesil_1_1exterior.html#aed6715b5204a0ffdb220d8351655d05a">  932</a></span>TensorType <a class="code hl_function" href="namespacesil_1_1exterior.html#a22856c3296327971c70adb2aa1ee88a5">laplacian</a>(</div>
+<div class="line"><a id="l00933" name="l00933"></a><span class="lineno">  933</span>        ExecSpace <span class="keyword">const</span>&amp; exec_space,</div>
+<div class="line"><a id="l00934" name="l00934"></a><span class="lineno">  934</span>        TensorType laplacian_tensor,</div>
+<div class="line"><a id="l00935" name="l00935"></a><span class="lineno">  935</span>        TensorType tensor,</div>
+<div class="line"><a id="l00936" name="l00936"></a><span class="lineno">  936</span>        HodgeStarType hodge_star,</div>
+<div class="line"><a id="l00937" name="l00937"></a><span class="lineno">  937</span>        DualHodgeStarType dual_hodge_star,</div>
+<div class="line"><a id="l00938" name="l00938"></a><span class="lineno">  938</span>        DualTensorBufferType dual_tensor_buffer,</div>
+<div class="line"><a id="l00939" name="l00939"></a><span class="lineno">  939</span>        CodifferentialTensorBufferType codifferential_tensor_buffer)</div>
+<div class="line"><a id="l00940" name="l00940"></a><span class="lineno">  940</span>{</div>
+<div class="line"><a id="l00941" name="l00941"></a><span class="lineno">  941</span>    <a class="code hl_function" href="namespacesil_1_1exterior.html#aa76c4a4263aa2619f7be73eb380aa226">sil::exterior::codifferential&lt;MetricIndex, LaplacianDummyIndex, CochainTag&gt;</a>(</div>
+<div class="line"><a id="l00942" name="l00942"></a><span class="lineno">  942</span>            exec_space,</div>
+<div class="line"><a id="l00943" name="l00943"></a><span class="lineno">  943</span>            codifferential_tensor_buffer,</div>
+<div class="line"><a id="l00944" name="l00944"></a><span class="lineno">  944</span>            tensor,</div>
+<div class="line"><a id="l00945" name="l00945"></a><span class="lineno">  945</span>            hodge_star,</div>
+<div class="line"><a id="l00946" name="l00946"></a><span class="lineno">  946</span>            dual_hodge_star,</div>
+<div class="line"><a id="l00947" name="l00947"></a><span class="lineno">  947</span>            dual_tensor_buffer);</div>
+<div class="line"><a id="l00948" name="l00948"></a><span class="lineno">  948</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="namespacesil_1_1exterior.html#a76eff1470caed08ad176c575149ca560">sil::exterior::deriv</a>&lt;</div>
+<div class="line"><a id="l00949" name="l00949"></a><span class="lineno">  949</span>            LaplacianDummyIndex,</div>
+<div class="line"><a id="l00950" name="l00950"></a><span class="lineno">  950</span>            <a class="code hl_typedef" href="namespacesil_1_1exterior.html#aab91885c880898f8e30304a22b965a22">codifferential_index_t</a>&lt;</div>
+<div class="line"><a id="l00951" name="l00951"></a><span class="lineno">  951</span>                    LaplacianDummyIndex,</div>
+<div class="line"><a id="l00952" name="l00952"></a><span class="lineno">  952</span>                    CochainTag&gt;&gt;(exec_space, laplacian_tensor, codifferential_tensor_buffer);</div>
+<div class="line"><a id="l00953" name="l00953"></a><span class="lineno">  953</span>}</div>
 </div>
-<div class="line"><a id="l00952" name="l00952"></a><span class="lineno">  952</span> </div>
-<div class="line"><a id="l00953" name="l00953"></a><span class="lineno">  953</span>} <span class="comment">// namespace exterior</span></div>
 <div class="line"><a id="l00954" name="l00954"></a><span class="lineno">  954</span> </div>
-<div class="line"><a id="l00955" name="l00955"></a><span class="lineno">  955</span>} <span class="comment">// namespace sil</span></div>
-<div class="ttc" id="aclasssil_1_1exterior_1_1StagedCodifferential_html"><div class="ttname"><a href="classsil_1_1exterior_1_1StagedCodifferential.html">sil::exterior::StagedCodifferential</a></div><div class="ttdef"><b>Definition</b> <a href="codifferential_8hpp_source.html#l00331">codifferential.hpp:332</a></div></div>
-<div class="ttc" id="aclasssil_1_1tensor_1_1TensorAccessor_html"><div class="ttname"><a href="classsil_1_1tensor_1_1TensorAccessor.html">sil::tensor::TensorAccessor</a></div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00275">tensor_impl.hpp:276</a></div></div>
-<div class="ttc" id="aclasssil_1_1tensor_1_1TensorAccessor_html_a826ab69e3d61498116052144b967f0d1"><div class="ttname"><a href="classsil_1_1tensor_1_1TensorAccessor.html#a826ab69e3d61498116052144b967f0d1">sil::tensor::TensorAccessor::domain</a></div><div class="ttdeci">static constexpr discrete_domain_type domain()</div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00361">tensor_impl.hpp:361</a></div></div>
+<div class="line"><a id="l00955" name="l00955"></a><span class="lineno">  955</span>} <span class="comment">// namespace exterior</span></div>
+<div class="line"><a id="l00956" name="l00956"></a><span class="lineno">  956</span> </div>
+<div class="line"><a id="l00957" name="l00957"></a><span class="lineno">  957</span>} <span class="comment">// namespace sil</span></div>
+<div class="ttc" id="aclasssil_1_1exterior_1_1StagedCodifferential_html"><div class="ttname"><a href="classsil_1_1exterior_1_1StagedCodifferential.html">sil::exterior::StagedCodifferential</a></div><div class="ttdef"><b>Definition</b> <a href="codifferential_8hpp_source.html#l00324">codifferential.hpp:325</a></div></div>
+<div class="ttc" id="aclasssil_1_1tensor_1_1TensorAccessor_html"><div class="ttname"><a href="classsil_1_1tensor_1_1TensorAccessor.html">sil::tensor::TensorAccessor</a></div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00273">tensor_impl.hpp:274</a></div></div>
+<div class="ttc" id="aclasssil_1_1tensor_1_1TensorAccessor_html_a826ab69e3d61498116052144b967f0d1"><div class="ttname"><a href="classsil_1_1tensor_1_1TensorAccessor.html#a826ab69e3d61498116052144b967f0d1">sil::tensor::TensorAccessor::domain</a></div><div class="ttdeci">static constexpr discrete_domain_type domain()</div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00359">tensor_impl.hpp:359</a></div></div>
 <div class="ttc" id="aconceptsil_1_1misc_1_1Specialization_html"><div class="ttname"><a href="conceptsil_1_1misc_1_1Specialization.html">sil::misc::Specialization</a></div><div class="ttdef"><b>Definition</b> <a href="specialization_8hpp_source.html#l00023">specialization.hpp:23</a></div></div>
 <div class="ttc" id="aconceptsil_1_1tensor_1_1TensorIndex_html"><div class="ttname"><a href="conceptsil_1_1tensor_1_1TensorIndex.html">sil::tensor::TensorIndex</a></div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00105">tensor_impl.hpp:105</a></div></div>
 <div class="ttc" id="aconceptsil_1_1tensor_1_1TensorNatIndex_html"><div class="ttname"><a href="conceptsil_1_1tensor_1_1TensorNatIndex.html">sil::tensor::TensorNatIndex</a></div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00110">tensor_impl.hpp:110</a></div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html_a21ac9e4c43191a7cf20b30d28e46a305"><div class="ttname"><a href="namespacesil_1_1exterior.html#a21ac9e4c43191a7cf20b30d28e46a305">sil::exterior::hodge_star_domain_t</a></div><div class="ttdeci">ddc::detail::convert_type_seq_to_discrete_domain_t&lt; ddc::type_seq_merge_t&lt; ddc::detail::TypeSeq&lt; misc::convert_type_seq_to_t&lt; tensor::TensorFullIndex, Indices1 &gt; &gt;, std::conditional_t&lt;(ddc::type_seq_size_v&lt; Indices2 &gt;==0), ddc::detail::TypeSeq&lt;&gt;, ddc::detail::TypeSeq&lt; misc::convert_type_seq_to_t&lt; tensor::TensorAntisymmetricIndex, Indices2 &gt; &gt; &gt; &gt; &gt; hodge_star_domain_t</div><div class="ttdef"><b>Definition</b> <a href="hodge__star_8hpp_source.html#l00030">hodge_star.hpp:30</a></div></div>
-<div class="ttc" id="anamespacesil_1_1exterior_html_a22856c3296327971c70adb2aa1ee88a5"><div class="ttname"><a href="namespacesil_1_1exterior.html#a22856c3296327971c70adb2aa1ee88a5">sil::exterior::laplacian</a></div><div class="ttdeci">TensorType laplacian(ExecSpace const &amp;exec_space, TensorType laplacian_tensor, TensorType tensor, DerivativeHodgeStarType hodge_star, DualDerivativeHodgeStarType dual_hodge_star, DerivativeDualTensorBufferType dual_tensor_buffer)</div><div class="ttdef"><b>Definition</b> <a href="#l00824">laplacian.hpp:824</a></div></div>
+<div class="ttc" id="anamespacesil_1_1exterior_html_a22856c3296327971c70adb2aa1ee88a5"><div class="ttname"><a href="namespacesil_1_1exterior.html#a22856c3296327971c70adb2aa1ee88a5">sil::exterior::laplacian</a></div><div class="ttdeci">TensorType laplacian(ExecSpace const &amp;exec_space, TensorType laplacian_tensor, TensorType tensor, DerivativeHodgeStarType hodge_star, DualDerivativeHodgeStarType dual_hodge_star, DerivativeDualTensorBufferType dual_tensor_buffer)</div><div class="ttdef"><b>Definition</b> <a href="#l00826">laplacian.hpp:826</a></div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html_a2f6077271f607d9959b484603cd7216e"><div class="ttname"><a href="namespacesil_1_1exterior.html#a2f6077271f607d9959b484603cd7216e">sil::exterior::tangent_basis</a></div><div class="ttdeci">KOKKOS_FUNCTION constexpr auto tangent_basis(Elem elem)</div><div class="ttdef"><b>Definition</b> <a href="local__chain_8hpp_source.html#l00443">local_chain.hpp:443</a></div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html_a37ccb3dcf40ba5b14f2704d3559b2a04"><div class="ttname"><a href="namespacesil_1_1exterior.html#a37ccb3dcf40ba5b14f2704d3559b2a04">sil::exterior::make_staged_laplacian</a></div><div class="ttdeci">StagedLaplacian&lt; MetricIndex, LaplacianDummyIndex, CochainTag, TensorType, MetricType, PositionType, ExecSpace &gt; make_staged_laplacian(ExecSpace const &amp;exec_space, TensorType laplacian_tensor, TensorType tensor, MetricType metric, PositionType position)</div><div class="ttdef"><b>Definition</b> <a href="#l00345">laplacian.hpp:345</a></div></div>
-<div class="ttc" id="anamespacesil_1_1exterior_html_a76eff1470caed08ad176c575149ca560"><div class="ttname"><a href="namespacesil_1_1exterior.html#a76eff1470caed08ad176c575149ca560">sil::exterior::deriv</a></div><div class="ttdeci">coboundary_tensor_t&lt; TagToAddToCochain, CochainTag, TensorType &gt; deriv(ExecSpace const &amp;exec_space, coboundary_tensor_t&lt; TagToAddToCochain, CochainTag, TensorType &gt; coboundary_tensor, TensorType tensor)</div><div class="ttdef"><b>Definition</b> <a href="coboundary_8hpp_source.html#l00682">coboundary.hpp:682</a></div></div>
+<div class="ttc" id="anamespacesil_1_1exterior_html_a76eff1470caed08ad176c575149ca560"><div class="ttname"><a href="namespacesil_1_1exterior.html#a76eff1470caed08ad176c575149ca560">sil::exterior::deriv</a></div><div class="ttdeci">coboundary_tensor_t&lt; TagToAddToCochain, CochainTag, TensorType &gt; deriv(ExecSpace const &amp;exec_space, coboundary_tensor_t&lt; TagToAddToCochain, CochainTag, TensorType &gt; coboundary_tensor, TensorType tensor)</div><div class="ttdef"><b>Definition</b> <a href="coboundary_8hpp_source.html#l00681">coboundary.hpp:681</a></div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html_a985e5f2d21f672dde6b75d610b27f6a2"><div class="ttname"><a href="namespacesil_1_1exterior.html#a985e5f2d21f672dde6b75d610b27f6a2">sil::exterior::fill_discrete_hodge_star</a></div><div class="ttdeci">HodgeStarType fill_discrete_hodge_star(ExecSpace const &amp;exec_space, HodgeStarType hodge_star, MetricType metric, PositionType position)</div><div class="ttdef"><b>Definition</b> <a href="hodge__star_8hpp_source.html#l00460">hodge_star.hpp:460</a></div></div>
-<div class="ttc" id="anamespacesil_1_1exterior_html_aa76c4a4263aa2619f7be73eb380aa226"><div class="ttname"><a href="namespacesil_1_1exterior.html#aa76c4a4263aa2619f7be73eb380aa226">sil::exterior::codifferential</a></div><div class="ttdeci">codifferential_tensor_t&lt; TagToRemoveFromCochain, CochainTag, TensorType &gt; codifferential(ExecSpace const &amp;exec_space, codifferential_tensor_t&lt; TagToRemoveFromCochain, CochainTag, TensorType &gt; codifferential_tensor, TensorType tensor, HodgeStarType hodge_star, DualHodgeStarType dual_hodge_star, DualTensorType dual_tensor_buffer)</div><div class="ttdef"><b>Definition</b> <a href="codifferential_8hpp_source.html#l00564">codifferential.hpp:564</a></div></div>
+<div class="ttc" id="anamespacesil_1_1exterior_html_aa76c4a4263aa2619f7be73eb380aa226"><div class="ttname"><a href="namespacesil_1_1exterior.html#aa76c4a4263aa2619f7be73eb380aa226">sil::exterior::codifferential</a></div><div class="ttdeci">codifferential_tensor_t&lt; TagToRemoveFromCochain, CochainTag, TensorType &gt; codifferential(ExecSpace const &amp;exec_space, codifferential_tensor_t&lt; TagToRemoveFromCochain, CochainTag, TensorType &gt; codifferential_tensor, TensorType tensor, HodgeStarType hodge_star, DualHodgeStarType dual_hodge_star, DualTensorType dual_tensor_buffer)</div><div class="ttdef"><b>Definition</b> <a href="codifferential_8hpp_source.html#l00556">codifferential.hpp:556</a></div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html_aab91885c880898f8e30304a22b965a22"><div class="ttname"><a href="namespacesil_1_1exterior.html#aab91885c880898f8e30304a22b965a22">sil::exterior::codifferential_index_t</a></div><div class="ttdeci">typename detail::CodifferentialIndex&lt; TagToRemoveFromCochain, CochainTag &gt;::type codifferential_index_t</div><div class="ttdef"><b>Definition</b> <a href="codifferential_8hpp_source.html#l00087">codifferential.hpp:87</a></div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html_acf9d9ac240de3edfc4e9bbcac31cd300"><div class="ttname"><a href="namespacesil_1_1exterior.html#acf9d9ac240de3edfc4e9bbcac31cd300">sil::exterior::codifferential_hodge_output_indices_t</a></div><div class="ttdeci">typename detail::CodifferentialHodgeOutputIndexSeq&lt; EndId, T &gt;::type codifferential_hodge_output_indices_t</div><div class="ttdef"><b>Definition</b> <a href="codifferential_8hpp_source.html#l00169">codifferential.hpp:169</a></div></div>
 <div class="ttc" id="anamespacesil_1_1exterior_html_ad9397455da98fe2a3f15d1f9ebeebd8c"><div class="ttname"><a href="namespacesil_1_1exterior.html#ad9397455da98fe2a3f15d1f9ebeebd8c">sil::exterior::coboundary_index_t</a></div><div class="ttdeci">typename detail::CoboundaryIndex&lt; TagToAddToCochain, CochainTag &gt;::type coboundary_index_t</div><div class="ttdef"><b>Definition</b> <a href="coboundary_8hpp_source.html#l00088">coboundary.hpp:88</a></div></div>
@@ -1135,10 +1137,10 @@ $(function(){initNavTree('laplacian_8hpp_source.html',''); initResizable(true); 
 <div class="ttc" id="anamespacesil_1_1misc_html_af83a849e8c4a2149160bd276d3e445c1"><div class="ttname"><a href="namespacesil_1_1misc.html#af83a849e8c4a2149160bd276d3e445c1">sil::misc::convert_type_seq_to_t</a></div><div class="ttdeci">typename detail::ConvertTypeSeqTo&lt; T, Seq &gt;::type convert_type_seq_to_t</div><div class="ttdef"><b>Definition</b> <a href="type__seq__conversion_8hpp_source.html#l00045">type_seq_conversion.hpp:45</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_a164aa1d6ecb53a91d54f7158f7b0bcb7"><div class="ttname"><a href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">sil::tensor::Tensor</a></div><div class="ttdeci">Tensor(ddc::Chunk&lt; ElementType, SupportType, Allocator &gt;) -&gt; Tensor&lt; ElementType, SupportType, Kokkos::layout_right, typename Allocator::memory_space &gt;</div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_a3e2f32622aaafaa7ee4402aba31f1e9c"><div class="ttname"><a href="namespacesil_1_1tensor.html#a3e2f32622aaafaa7ee4402aba31f1e9c">sil::tensor::upper_t</a></div><div class="ttdeci">detail::Upper&lt; T &gt;::type upper_t</div><div class="ttdef"><b>Definition</b> <a href="character_8hpp_source.html#l00108">character.hpp:108</a></div></div>
-<div class="ttc" id="anamespacesil_1_1tensor_html_aa7e70ef3014d5865f10f7427d6be216d"><div class="ttname"><a href="namespacesil_1_1tensor.html#aa7e70ef3014d5865f10f7427d6be216d">sil::tensor::tensor_prod</a></div><div class="ttdeci">Tensor&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim... &gt;, LayoutStridedPolicy, MemorySpace &gt; tensor_prod(Tensor&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim... &gt;, LayoutStridedPolicy, MemorySpace &gt; prod_tensor, Tensor&lt; ElementType, ddc::DiscreteDomain&lt; DDim1... &gt;, LayoutStridedPolicy, MemorySpace &gt; tensor1, Tensor&lt; ElementType, ddc::DiscreteDomain&lt; DDim2... &gt;, LayoutStridedPolicy, MemorySpace &gt; tensor2)</div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00878">tensor_impl.hpp:878</a></div></div>
+<div class="ttc" id="anamespacesil_1_1tensor_html_aa7e70ef3014d5865f10f7427d6be216d"><div class="ttname"><a href="namespacesil_1_1tensor.html#aa7e70ef3014d5865f10f7427d6be216d">sil::tensor::tensor_prod</a></div><div class="ttdeci">Tensor&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim... &gt;, LayoutStridedPolicy, MemorySpace &gt; tensor_prod(Tensor&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim... &gt;, LayoutStridedPolicy, MemorySpace &gt; prod_tensor, Tensor&lt; ElementType, ddc::DiscreteDomain&lt; DDim1... &gt;, LayoutStridedPolicy, MemorySpace &gt; tensor1, Tensor&lt; ElementType, ddc::DiscreteDomain&lt; DDim2... &gt;, LayoutStridedPolicy, MemorySpace &gt; tensor2)</div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00873">tensor_impl.hpp:873</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_ab7e663826196ec03f2eec4be87ffa4cf"><div class="ttname"><a href="namespacesil_1_1tensor.html#ab7e663826196ec03f2eec4be87ffa4cf">sil::tensor::uncharacterize_t</a></div><div class="ttdeci">detail::Uncharacterize&lt; Index &gt;::type uncharacterize_t</div><div class="ttdef"><b>Definition</b> <a href="character_8hpp_source.html#l00174">character.hpp:174</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_ad1b951f27338222afe0730eda16f06db"><div class="ttname"><a href="namespacesil_1_1tensor.html#ad1b951f27338222afe0730eda16f06db">sil::tensor::lower_t</a></div><div class="ttdeci">detail::Lower&lt; T &gt;::type lower_t</div><div class="ttdef"><b>Definition</b> <a href="character_8hpp_source.html#l00080">character.hpp:80</a></div></div>
-<div class="ttc" id="anamespacesil_1_1tensor_html_aeada71b3699ecf64d8d6cbfc44bf6a8c"><div class="ttname"><a href="namespacesil_1_1tensor.html#aeada71b3699ecf64d8d6cbfc44bf6a8c">sil::tensor::tensor_accessor_for_domain_t</a></div><div class="ttdeci">detail::TensorAccessorForDomain&lt; Dom &gt;::type tensor_accessor_for_domain_t</div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00334">tensor_impl.hpp:334</a></div></div>
+<div class="ttc" id="anamespacesil_1_1tensor_html_aeada71b3699ecf64d8d6cbfc44bf6a8c"><div class="ttname"><a href="namespacesil_1_1tensor.html#aeada71b3699ecf64d8d6cbfc44bf6a8c">sil::tensor::tensor_accessor_for_domain_t</a></div><div class="ttdeci">detail::TensorAccessorForDomain&lt; Dom &gt;::type tensor_accessor_for_domain_t</div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00332">tensor_impl.hpp:332</a></div></div>
 <div class="ttc" id="anamespacesil_html"><div class="ttname"><a href="namespacesil.html">sil</a></div><div class="ttdoc">The top-level namespace of SimiLie.</div><div class="ttdef"><b>Definition</b> <a href="csr_8hpp_source.html#l00015">csr.hpp:15</a></div></div>
 <div class="ttc" id="astructsil_1_1exterior_1_1IndexForCodifferentialOfCoboundaryInLaplacian_html"><div class="ttname"><a href="structsil_1_1exterior_1_1IndexForCodifferentialOfCoboundaryInLaplacian.html">sil::exterior::IndexForCodifferentialOfCoboundaryInLaplacian</a></div><div class="ttdef"><b>Definition</b> <a href="#l00172">laplacian.hpp:173</a></div></div>
 <div class="ttc" id="astructsil_1_1tensor_1_1Covariant_html"><div class="ttname"><a href="structsil_1_1tensor_1_1Covariant.html">sil::tensor::Covariant</a></div><div class="ttdef"><b>Definition</b> <a href="character_8hpp_source.html#l00040">character.hpp:42</a></div></div>

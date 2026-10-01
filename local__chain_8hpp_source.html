@@ -642,7 +642,7 @@ $(function(){initNavTree('local__chain_8hpp_source.html',''); initResizable(true
 <div class="line"><a id="l00416" name="l00416"></a><span class="lineno">  416</span><span class="keyword">struct </span>TangentBasis&lt;K, ddc::DiscreteDomain&lt;Tag...&gt;&gt;</div>
 <div class="line"><a id="l00417" name="l00417"></a><span class="lineno">  417</span>{</div>
 <div class="line"><a id="l00418" name="l00418"></a><span class="lineno">  418</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> MemorySpace = Kokkos::HostSpace, <span class="keyword">class</span> Elem&gt;</div>
-<div class="line"><a id="l00419" name="l00419"></a><span class="lineno">  419</span>    KOKKOS_FUNCTION <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword">auto</span> operator()(Elem elem)</div>
+<div class="line"><a id="l00419" name="l00419"></a><span class="lineno">  419</span>    KOKKOS_FUNCTION <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword">auto</span> run(Elem elem)</div>
 <div class="line"><a id="l00420" name="l00420"></a><span class="lineno">  420</span>    {</div>
 <div class="line"><a id="l00421" name="l00421"></a><span class="lineno">  421</span>        <span class="keyword">using </span>chain_type = <a class="code hl_function" href="namespacesil_1_1exterior.html#ad77d98f0d2f2ef2be8fe604aca0a1fc1">LocalChain</a>&lt;<a class="code hl_function" href="namespacesil_1_1exterior.html#a19dd94e9180327a407f012154b3c2bc4">Simplex</a>&lt;K, Tag...&gt;, Kokkos::LayoutRight, MemorySpace&gt;;</div>
 <div class="line"><a id="l00422" name="l00422"></a><span class="lineno">  422</span>        std::array&lt;std::ptrdiff_t, <span class="keyword">sizeof</span>...(Tag)&gt; permutation</div>
@@ -669,7 +669,7 @@ $(function(){initNavTree('local__chain_8hpp_source.html',''); initResizable(true
 <div class="foldopen" id="foldopen00443" data-start="{" data-end="}">
 <div class="line"><a id="l00443" name="l00443"></a><span class="lineno"><a class="line" href="namespacesil_1_1exterior.html#a2f6077271f607d9959b484603cd7216e">  443</a></span>KOKKOS_FUNCTION <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="namespacesil_1_1exterior.html#a2f6077271f607d9959b484603cd7216e">tangent_basis</a>(Elem elem)</div>
 <div class="line"><a id="l00444" name="l00444"></a><span class="lineno">  444</span>{</div>
-<div class="line"><a id="l00445" name="l00445"></a><span class="lineno">  445</span>    <span class="keywordflow">return</span> detail::TangentBasis&lt;K, Dom&gt;::template operator()&lt;Kokkos::HostSpace&gt;(elem);</div>
+<div class="line"><a id="l00445" name="l00445"></a><span class="lineno">  445</span>    <span class="keywordflow">return</span> detail::TangentBasis&lt;K, Dom&gt;::template run&lt;Kokkos::HostSpace&gt;(elem);</div>
 <div class="line"><a id="l00446" name="l00446"></a><span class="lineno">  446</span>}</div>
 </div>
 <div class="line"><a id="l00447" name="l00447"></a><span class="lineno">  447</span> </div>
@@ -678,7 +678,7 @@ $(function(){initNavTree('local__chain_8hpp_source.html',''); initResizable(true
 <div class="foldopen" id="foldopen00450" data-start="{" data-end="}">
 <div class="line"><a id="l00450" name="l00450"></a><span class="lineno"><a class="line" href="namespacesil_1_1exterior.html#a0523d7030a15afff58c1d1ffebeebfba">  450</a></span><span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="namespacesil_1_1exterior.html#a2f6077271f607d9959b484603cd7216e">tangent_basis</a>([[maybe_unused]] ExecSpace <span class="keyword">const</span>&amp; exec_space)</div>
 <div class="line"><a id="l00451" name="l00451"></a><span class="lineno">  451</span>{</div>
-<div class="line"><a id="l00452" name="l00452"></a><span class="lineno">  452</span>    <span class="keywordflow">return</span> detail::TangentBasis&lt;K, Dom&gt;::template operator()&lt;<span class="keyword">typename</span> ExecSpace::memory_space&gt;(</div>
+<div class="line"><a id="l00452" name="l00452"></a><span class="lineno">  452</span>    <span class="keywordflow">return</span> detail::TangentBasis&lt;K, Dom&gt;::template run&lt;typename ExecSpace::memory_space&gt;(</div>
 <div class="line"><a id="l00453" name="l00453"></a><span class="lineno">  453</span>            <a class="code hl_function" href="namespacesil_1_1misc.html#ab627aa8f81b5446714d73f76e87e5533">misc::filled_struct&lt;typename Dom::discrete_element_type&gt;</a>());</div>
 <div class="line"><a id="l00454" name="l00454"></a><span class="lineno">  454</span>}</div>
 </div>

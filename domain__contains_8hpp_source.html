@@ -150,7 +150,7 @@ $(function(){initNavTree('domain__contains_8hpp_source.html',''); initResizable(
 <div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="keyword">template</span> &lt;<span class="keyword">class</span>... DDim&gt;</div>
 <div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="keyword">struct </span>IsInDomain&lt;ddc::detail::TypeSeq&lt;DDim...&gt;&gt;</div>
 <div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>{</div>
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>    <span class="keyword">static</span> KOKKOS_FUNCTION <span class="keywordtype">bool</span> operator()(</div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>    <span class="keyword">static</span> KOKKOS_FUNCTION <span class="keywordtype">bool</span> run(</div>
 <div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>            ddc::DiscreteDomain&lt;DDim...&gt; dom,</div>
 <div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>            ddc::DiscreteElement&lt;DDim...&gt; elem)</div>
 <div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>    {</div>
@@ -170,19 +170,18 @@ $(function(){initNavTree('domain__contains_8hpp_source.html',''); initResizable(
 <div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    <span class="keywordflow">return</span> detail::IsInDomain&lt;<a class="code hl_typedef" href="namespacesil_1_1misc.html#a7a2bf2edd109e79ed82bc877725c4840">misc::type_seq_intersect_t</a>&lt;</div>
 <div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>            ddc::detail::TypeSeq&lt;DDim...&gt;,</div>
 <div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>            ddc::detail::TypeSeq&lt;ODDim...&gt;&gt;&gt;::</div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    operator()(</div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>            <a class="code hl_function" href="namespacesil_1_1misc.html#ac4920dd15665754dd8afd25c431036c5">select_from_type_seq</a>&lt;<a class="code hl_typedef" href="namespacesil_1_1misc.html#a7a2bf2edd109e79ed82bc877725c4840">misc::type_seq_intersect_t</a>&lt;</div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>                    ddc::detail::TypeSeq&lt;ODDim...&gt;,</div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>                    ddc::detail::TypeSeq&lt;DDim...&gt;&gt;&gt;(dom),</div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>            <a class="code hl_function" href="namespacesil_1_1misc.html#ac4920dd15665754dd8afd25c431036c5">select_from_type_seq</a>&lt;<a class="code hl_typedef" href="namespacesil_1_1misc.html#a7a2bf2edd109e79ed82bc877725c4840">misc::type_seq_intersect_t</a>&lt;</div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>                    ddc::detail::TypeSeq&lt;ODDim...&gt;,</div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>                    ddc::detail::TypeSeq&lt;DDim...&gt;&gt;&gt;(elem));</div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>}</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>            run(<a class="code hl_function" href="namespacesil_1_1misc.html#ac4920dd15665754dd8afd25c431036c5">select_from_type_seq</a>&lt;<a class="code hl_typedef" href="namespacesil_1_1misc.html#a7a2bf2edd109e79ed82bc877725c4840">misc::type_seq_intersect_t</a>&lt;</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>                        ddc::detail::TypeSeq&lt;ODDim...&gt;,</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>                        ddc::detail::TypeSeq&lt;DDim...&gt;&gt;&gt;(dom),</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>                <a class="code hl_function" href="namespacesil_1_1misc.html#ac4920dd15665754dd8afd25c431036c5">select_from_type_seq</a>&lt;<a class="code hl_typedef" href="namespacesil_1_1misc.html#a7a2bf2edd109e79ed82bc877725c4840">misc::type_seq_intersect_t</a>&lt;</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>                        ddc::detail::TypeSeq&lt;ODDim...&gt;,</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>                        ddc::detail::TypeSeq&lt;DDim...&gt;&gt;&gt;(elem));</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>}</div>
 </div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span> </div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>} <span class="comment">// namespace misc</span></div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span> </div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>} <span class="comment">// namespace sil</span></div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span> </div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>} <span class="comment">// namespace misc</span></div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span> </div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>} <span class="comment">// namespace sil</span></div>
 <div class="ttc" id="anamespacesil_1_1misc_html_a3972a6165c52a1398ca03e1b4ef8d993"><div class="ttname"><a href="namespacesil_1_1misc.html#a3972a6165c52a1398ca03e1b4ef8d993">sil::misc::domain_contains</a></div><div class="ttdeci">KOKKOS_FUNCTION bool domain_contains(ddc::DiscreteDomain&lt; DDim... &gt; dom, ddc::DiscreteElement&lt; ODDim... &gt; elem)</div><div class="ttdef"><b>Definition</b> <a href="#l00035">domain_contains.hpp:35</a></div></div>
 <div class="ttc" id="anamespacesil_1_1misc_html_a7a2bf2edd109e79ed82bc877725c4840"><div class="ttname"><a href="namespacesil_1_1misc.html#a7a2bf2edd109e79ed82bc877725c4840">sil::misc::type_seq_intersect_t</a></div><div class="ttdeci">ddc::type_seq_remove_t&lt; TagSeqA, ddc::type_seq_remove_t&lt; TagSeqA, TagSeqB &gt; &gt; type_seq_intersect_t</div><div class="ttdef"><b>Definition</b> <a href="type__seq__ext_8hpp_source.html#l00013">type_seq_ext.hpp:13</a></div></div>
 <div class="ttc" id="anamespacesil_1_1misc_html_ac4920dd15665754dd8afd25c431036c5"><div class="ttname"><a href="namespacesil_1_1misc.html#ac4920dd15665754dd8afd25c431036c5">sil::misc::select_from_type_seq</a></div><div class="ttdeci">KOKKOS_FUNCTION auto select_from_type_seq(T t)</div><div class="ttdef"><b>Definition</b> <a href="select__from__type__seq_8hpp_source.html#l00030">select_from_type_seq.hpp:30</a></div></div>

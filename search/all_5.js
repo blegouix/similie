@@ -4,7 +4,7 @@ var searchData=
   ['dedonderweylequations_1',['DeDonderWeylEquations',['../classsimilie_1_1physics_1_1DeDonderWeylEquations.html',1,'similie::physics::DeDonderWeylEquations&lt; Hamiltonian &gt;'],['../classsimilie_1_1physics_1_1DeDonderWeylEquations.html#ac31a74430e40dfffefab61030a376575',1,'similie::physics::DeDonderWeylEquations::DeDonderWeylEquations()']]],
   ['dependencies_2',['Dependencies',['../Running.html#autotoc_md4',1,'']]],
   ['deriv_3',['deriv',['../namespacesil_1_1exterior.html#a76eff1470caed08ad176c575149ca560',1,'sil::exterior']]],
-  ['derivative_4',['Exterior covariant derivative',['../exterior_module.html#autotoc_md17',1,'']]],
+  ['derivative_4',['derivative',['../exterior_module.html#autotoc_md31',1,'Bundle-valued exterior covariant derivative'],['../exterior_module.html#autotoc_md17',1,'Exterior covariant derivative']]],
   ['derivative_5fexpressions_5',['derivative_expressions',['../classgenerate__cpp__hamiltonian_1_1SymbolicFunctionDefinition.html#a540e01145a381882f9f4e341383d6d55',1,'generate_cpp_hamiltonian::SymbolicFunctionDefinition']]],
   ['determinant_6',['determinant',['../namespacesil_1_1misc_1_1math.html#aea8f8a7b33c75c74f3f9f5b31beb123b',1,'sil::misc::math::determinant()'],['../namespacesil_1_1tensor.html#a61fe8bf1b3d411f3d86fdef8beaafc06',1,'sil::tensor::determinant(const ViewType &amp;matrix)'],['../namespacesil_1_1tensor.html#a6049da34dd9724305cd77d3e3733bb82',1,'sil::tensor::determinant(TensorType tensor)']]],
   ['development_20plan_7',['Development plan',['../index.html#autotoc_md2',1,'']]],

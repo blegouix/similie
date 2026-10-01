@@ -148,7 +148,7 @@ $(function(){initNavTree('select__from__type__seq_8hpp_source.html',''); initRes
 <div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="keyword">struct </span>SelectFromTypeSeq&lt;ddc::detail::TypeSeq&lt;DDim...&gt;&gt;</div>
 <div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span>{</div>
 <div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> T&gt;</div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>    <span class="keyword">static</span> KOKKOS_FUNCTION <span class="keyword">auto</span> operator()(T t)</div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>    <span class="keyword">static</span> KOKKOS_FUNCTION <span class="keyword">auto</span> run(T t)</div>
 <div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>    {</div>
 <div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>        <span class="keywordflow">return</span> ddc::select&lt;DDim...&gt;(t);</div>
 <div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>    }</div>
@@ -160,7 +160,7 @@ $(function(){initNavTree('select__from__type__seq_8hpp_source.html',''); initRes
 <div class="foldopen" id="foldopen00030" data-start="{" data-end="}">
 <div class="line"><a id="l00030" name="l00030"></a><span class="lineno"><a class="line" href="namespacesil_1_1misc.html#ac4920dd15665754dd8afd25c431036c5">   30</a></span>KOKKOS_FUNCTION <span class="keyword">auto</span> <a class="code hl_function" href="namespacesil_1_1misc.html#ac4920dd15665754dd8afd25c431036c5">select_from_type_seq</a>(T t)</div>
 <div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>{</div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>    <span class="keywordflow">return</span> detail::SelectFromTypeSeq&lt;Seq&gt;::operator()(t);</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>    <span class="keywordflow">return</span> detail::SelectFromTypeSeq&lt;Seq&gt;::run(t);</div>
 <div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>}</div>
 </div>
 <div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span> </div>

@@ -5,7 +5,7 @@ var searchData=
   ['idx_2',['idx',['../classsil_1_1csr_1_1Csr.html#a8cb79708353dd96b867e3630130ddc27',1,'sil::csr::Csr::idx()'],['../classsil_1_1csr_1_1CsrDynamic.html#a55117e034496388c0a1ea3cb833a1d3d',1,'sil::csr::CsrDynamic::idx()']]],
   ['important_20for_20physics_3',['Why integro-differential calculus is important for physics ?',['../exterior_module.html#autotoc_md15',1,'']]],
   ['importants_20for_20physics_4',['Why tensors are importants for physics ?',['../tensor_module.html#autotoc_md7',1,'']]],
-  ['in_202d_5',['Local material Hodge in 2D',['../physics_module.html#autotoc_md34',1,'']]],
+  ['in_202d_5',['Local material Hodge in 2D',['../physics_module.html#autotoc_md35',1,'']]],
   ['in_20addition_6',['Do Kokkos and DDC support tensor fields ? What can SimiLie do in addition ?',['../tensor_module.html#autotoc_md8',1,'']]],
   ['includes_7',['includes',['../classgenerate__cpp__hamiltonian_1_1HamiltonianDefinition.html#a943e5c7bf62f74ebc70565eca556fdf8',1,'generate_cpp_hamiltonian::HamiltonianDefinition']]],
   ['indexforcodifferentialofcoboundaryinlaplacian_8',['IndexForCodifferentialOfCoboundaryInLaplacian',['../structsil_1_1exterior_1_1IndexForCodifferentialOfCoboundaryInLaplacian.html',1,'sil::exterior']]],

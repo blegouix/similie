@@ -269,113 +269,112 @@ $(function(){initNavTree('magnetostatics__quantities_8hpp_source.html',''); init
 <div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>    {</div>
 <div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>        <a class="code hl_struct" href="namespacesil_1_1exterior.html#structsil_1_1exterior_1_1Coboundary">sil::exterior::Coboundary</a>&lt;</div>
 <div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>                <a class="code hl_struct" href="structsil_1_1tensor_1_1Covariant.html">sil::tensor::Covariant</a>&lt;<a class="code hl_struct" href="structsil_1_1tensor_1_1TensorNaturalIndex.html">sil::tensor::TensorNaturalIndex</a>&lt;SpatialIndex...&gt;&gt;,</div>
-<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>                <a class="code hl_struct" href="structsil_1_1tensor_1_1ScalarIndex.html">PotentialScalarIndex</a>&gt;::</div>
-<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>        operator()(magnetic_induction, evaluator, chain, lower_chain, elem);</div>
-<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>    }</div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>                <a class="code hl_struct" href="structsil_1_1tensor_1_1ScalarIndex.html">PotentialScalarIndex</a>&gt;::run(magnetic_induction, evaluator, chain, lower_chain, elem);</div>
+<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>    }</div>
 </div>
-<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span>};</div>
-<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span> </div>
-<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span><span class="keyword">template</span> &lt;<span class="keyword">class</span>... SpatialIndex&gt;</div>
-<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>    <span class="keyword">requires</span> ThreeDimensional&lt;SpatialIndex...&gt;</div>
-<div class="foldopen" id="foldopen00143" data-start="{" data-end="};">
-<div class="line"><a id="l00143" name="l00143"></a><span class="lineno"><a class="line" href="classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4.html">  143</a></span><span class="keyword">class </span><a class="code hl_class" href="namespacesimilie_1_1physics_1_1magnetostatics.html#classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction">MagneticVectorPotentialToMagneticInduction</a>&lt;SpatialIndex...&gt;</div>
-<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>{</div>
-<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>    <span class="keyword">using </span>SpatialIndexSeq = ddc::detail::TypeSeq&lt;SpatialIndex...&gt;;</div>
-<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>    <span class="keyword">using </span><a class="code hl_class" href="structsil_1_1tensor_1_1TensorNaturalIndex.html">SpatialNaturalIndex</a> = <a class="code hl_struct" href="structsil_1_1tensor_1_1TensorNaturalIndex.html">sil::tensor::TensorNaturalIndex</a>&lt;SpatialIndex...&gt;;</div>
-<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>    <span class="keyword">using </span><a class="code hl_struct" href="structsil_1_1tensor_1_1Contravariant.html">CoboundaryIndex</a> = <a class="code hl_struct" href="structsil_1_1tensor_1_1Contravariant.html">sil::tensor::Contravariant&lt;SpatialNaturalIndex&gt;</a>;</div>
-<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>    <span class="keyword">using </span><a class="code hl_struct" href="structsil_1_1tensor_1_1Covariant.html">VectorPotentialIndex</a> = <a class="code hl_struct" href="structsil_1_1tensor_1_1Covariant.html">sil::tensor::Covariant&lt;SpatialNaturalIndex&gt;</a>;</div>
-<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>    <span class="keyword">using </span>MagneticInductionIndex</div>
-<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>            = <a class="code hl_typedef" href="namespacesil_1_1exterior.html#ad9397455da98fe2a3f15d1f9ebeebd8c">sil::exterior::coboundary_index_t&lt;CoboundaryIndex, VectorPotentialIndex&gt;</a>;</div>
-<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span> </div>
-<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> Index&gt;</div>
-<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>    [[nodiscard]] KOKKOS_FUNCTION <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword">auto</span> magnetic_induction_component()</div>
-<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>    {</div>
-<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>        [[maybe_unused]] <a class="code hl_class" href="classsil_1_1tensor_1_1TensorAccessor.html">sil::tensor::TensorAccessor&lt;MagneticInductionIndex&gt;</a> accessor;</div>
-<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::is_same_v&lt;Index, ddc::type_seq_element_t&lt;0, SpatialIndexSeq&gt;&gt;) {</div>
-<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>            <span class="keywordflow">return</span> accessor.template access_element&lt;</div>
-<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>                    ddc::type_seq_element_t&lt;1, SpatialIndexSeq&gt;,</div>
-<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>                    ddc::type_seq_element_t&lt;2, SpatialIndexSeq&gt;&gt;();</div>
-<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>        } <span class="keywordflow">else</span> <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::is_same_v&lt;Index, ddc::type_seq_element_t&lt;1, SpatialIndexSeq&gt;&gt;) {</div>
-<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>            <span class="keywordflow">return</span> accessor.template access_element&lt;</div>
-<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>                    ddc::type_seq_element_t&lt;0, SpatialIndexSeq&gt;,</div>
-<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>                    ddc::type_seq_element_t&lt;2, SpatialIndexSeq&gt;&gt;();</div>
-<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>        } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>            <span class="keywordflow">return</span> accessor.template access_element&lt;</div>
-<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>                    ddc::type_seq_element_t&lt;0, SpatialIndexSeq&gt;,</div>
-<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>                    ddc::type_seq_element_t&lt;1, SpatialIndexSeq&gt;&gt;();</div>
-<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>        }</div>
-<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>    }</div>
-<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span> </div>
-<div class="line"><a id="l00171" name="l00171"></a><span class="lineno"><a class="line" href="classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4.html#a6d406ef23de99f869b1d63a5db559c5b">  171</a></span><span class="keyword">public</span>:</div>
-<div class="line"><a id="l00172" name="l00172"></a><span class="lineno"><a class="line" href="classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4.html#ab1ff65fcee0b293487e488eb860f494f">  172</a></span>    <span class="keyword">using </span><a class="code hl_struct" href="structsil_1_1tensor_1_1Covariant.html">vector_potential_index</a> = <a class="code hl_struct" href="structsil_1_1tensor_1_1Covariant.html">VectorPotentialIndex</a>;</div>
-<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>    <span class="keyword">using </span><a class="code hl_typedef" href="classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4.html#ab1ff65fcee0b293487e488eb860f494f">magnetic_induction_index</a> = MagneticInductionIndex;</div>
-<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span> </div>
-<div class="foldopen" id="foldopen00175" data-start="{" data-end="}">
-<div class="line"><a id="l00175" name="l00175"></a><span class="lineno"><a class="line" href="classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4.html#a3f9c1c2cbf604327346623ecc68da9e8">  175</a></span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> Index, <span class="keyword">class</span> Elem&gt;</div>
-<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span>    [[nodiscard]] KOKKOS_FUNCTION <span class="keyword">static</span> <span class="keyword">auto</span> forward_value(Elem elem)</div>
-<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>    {</div>
-<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>        <span class="keyword">static_assert</span>(</div>
-<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>                std::is_same_v&lt;Index, ddc::type_seq_element_t&lt;0, SpatialIndexSeq&gt;&gt;</div>
-<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>                        || std::is_same_v&lt;Index, ddc::type_seq_element_t&lt;1, SpatialIndexSeq&gt;&gt;</div>
-<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>                        || std::is_same_v&lt;Index, ddc::type_seq_element_t&lt;2, SpatialIndexSeq&gt;&gt;,</div>
-<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>                <span class="stringliteral">&quot;3D magnetic induction component tag must be one of the spatial tags&quot;</span>);</div>
-<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>        <span class="keyword">using </span>spatial_domain_type = <span class="keyword">typename</span> detail::ElementSpatialDomain&lt;Elem&gt;::type;</div>
-<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>        <span class="keyword">auto</span> <span class="keyword">const</span> chain = <a class="code hl_function" href="namespacesil_1_1exterior.html#a2f6077271f607d9959b484603cd7216e">sil::exterior::tangent_basis&lt;2, spatial_domain_type&gt;</a>(elem);</div>
-<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>        <span class="keyword">auto</span> <span class="keyword">const</span> lower_chain = <a class="code hl_function" href="namespacesil_1_1exterior.html#a2f6077271f607d9959b484603cd7216e">sil::exterior::tangent_basis&lt;1, spatial_domain_type&gt;</a>(elem);</div>
-<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span> </div>
-<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>        <span class="keyword">auto</span> <span class="keyword">const</span> output_component = magnetic_induction_component&lt;Index&gt;();</div>
-<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>        <span class="keyword">auto</span> stencil = <a class="code hl_struct" href="namespacesil_1_1exterior.html#structsil_1_1exterior_1_1Coboundary">sil::exterior::Coboundary&lt;CoboundaryIndex, VectorPotentialIndex&gt;::</a></div>
-<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span><a class="code hl_struct" href="namespacesil_1_1exterior.html#structsil_1_1exterior_1_1Coboundary">                value</a>(sil::exterior::detail::IdentityStencilEvaluator {},</div>
-<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>                      chain,</div>
-<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span>                      lower_chain,</div>
-<div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>                      elem,</div>
-<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>                      output_component);</div>
-<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::is_same_v&lt;Index, ddc::type_seq_element_t&lt;1, SpatialIndexSeq&gt;&gt;) {</div>
-<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>            stencil *= -1.0;</div>
-<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>        }</div>
-<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span>        <span class="keywordflow">return</span> stencil;</div>
+<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>};</div>
+<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span> </div>
+<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span><span class="keyword">template</span> &lt;<span class="keyword">class</span>... SpatialIndex&gt;</div>
+<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>    <span class="keyword">requires</span> ThreeDimensional&lt;SpatialIndex...&gt;</div>
+<div class="foldopen" id="foldopen00142" data-start="{" data-end="};">
+<div class="line"><a id="l00142" name="l00142"></a><span class="lineno"><a class="line" href="classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4.html">  142</a></span><span class="keyword">class </span><a class="code hl_class" href="namespacesimilie_1_1physics_1_1magnetostatics.html#classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction">MagneticVectorPotentialToMagneticInduction</a>&lt;SpatialIndex...&gt;</div>
+<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>{</div>
+<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>    <span class="keyword">using </span>SpatialIndexSeq = ddc::detail::TypeSeq&lt;SpatialIndex...&gt;;</div>
+<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>    <span class="keyword">using </span><a class="code hl_class" href="structsil_1_1tensor_1_1TensorNaturalIndex.html">SpatialNaturalIndex</a> = <a class="code hl_struct" href="structsil_1_1tensor_1_1TensorNaturalIndex.html">sil::tensor::TensorNaturalIndex</a>&lt;SpatialIndex...&gt;;</div>
+<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>    <span class="keyword">using </span><a class="code hl_struct" href="structsil_1_1tensor_1_1Contravariant.html">CoboundaryIndex</a> = <a class="code hl_struct" href="structsil_1_1tensor_1_1Contravariant.html">sil::tensor::Contravariant&lt;SpatialNaturalIndex&gt;</a>;</div>
+<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>    <span class="keyword">using </span><a class="code hl_struct" href="structsil_1_1tensor_1_1Covariant.html">VectorPotentialIndex</a> = <a class="code hl_struct" href="structsil_1_1tensor_1_1Covariant.html">sil::tensor::Covariant&lt;SpatialNaturalIndex&gt;</a>;</div>
+<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>    <span class="keyword">using </span>MagneticInductionIndex</div>
+<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>            = <a class="code hl_typedef" href="namespacesil_1_1exterior.html#ad9397455da98fe2a3f15d1f9ebeebd8c">sil::exterior::coboundary_index_t&lt;CoboundaryIndex, VectorPotentialIndex&gt;</a>;</div>
+<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span> </div>
+<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> Index&gt;</div>
+<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>    [[nodiscard]] KOKKOS_FUNCTION <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword">auto</span> magnetic_induction_component()</div>
+<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>    {</div>
+<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>        [[maybe_unused]] <a class="code hl_class" href="classsil_1_1tensor_1_1TensorAccessor.html">sil::tensor::TensorAccessor&lt;MagneticInductionIndex&gt;</a> accessor;</div>
+<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::is_same_v&lt;Index, ddc::type_seq_element_t&lt;0, SpatialIndexSeq&gt;&gt;) {</div>
+<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>            <span class="keywordflow">return</span> accessor.template access_element&lt;</div>
+<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>                    ddc::type_seq_element_t&lt;1, SpatialIndexSeq&gt;,</div>
+<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>                    ddc::type_seq_element_t&lt;2, SpatialIndexSeq&gt;&gt;();</div>
+<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>        } <span class="keywordflow">else</span> <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::is_same_v&lt;Index, ddc::type_seq_element_t&lt;1, SpatialIndexSeq&gt;&gt;) {</div>
+<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>            <span class="keywordflow">return</span> accessor.template access_element&lt;</div>
+<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>                    ddc::type_seq_element_t&lt;0, SpatialIndexSeq&gt;,</div>
+<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>                    ddc::type_seq_element_t&lt;2, SpatialIndexSeq&gt;&gt;();</div>
+<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>        } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>            <span class="keywordflow">return</span> accessor.template access_element&lt;</div>
+<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>                    ddc::type_seq_element_t&lt;0, SpatialIndexSeq&gt;,</div>
+<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>                    ddc::type_seq_element_t&lt;1, SpatialIndexSeq&gt;&gt;();</div>
+<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>        }</div>
+<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>    }</div>
+<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span> </div>
+<div class="line"><a id="l00170" name="l00170"></a><span class="lineno"><a class="line" href="classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4.html#a6d406ef23de99f869b1d63a5db559c5b">  170</a></span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00171" name="l00171"></a><span class="lineno"><a class="line" href="classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4.html#ab1ff65fcee0b293487e488eb860f494f">  171</a></span>    <span class="keyword">using </span><a class="code hl_struct" href="structsil_1_1tensor_1_1Covariant.html">vector_potential_index</a> = <a class="code hl_struct" href="structsil_1_1tensor_1_1Covariant.html">VectorPotentialIndex</a>;</div>
+<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>    <span class="keyword">using </span><a class="code hl_typedef" href="classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4.html#ab1ff65fcee0b293487e488eb860f494f">magnetic_induction_index</a> = MagneticInductionIndex;</div>
+<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span> </div>
+<div class="foldopen" id="foldopen00174" data-start="{" data-end="}">
+<div class="line"><a id="l00174" name="l00174"></a><span class="lineno"><a class="line" href="classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4.html#a3f9c1c2cbf604327346623ecc68da9e8">  174</a></span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> Index, <span class="keyword">class</span> Elem&gt;</div>
+<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>    [[nodiscard]] KOKKOS_FUNCTION <span class="keyword">static</span> <span class="keyword">auto</span> forward_value(Elem elem)</div>
+<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span>    {</div>
+<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>        <span class="keyword">static_assert</span>(</div>
+<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>                std::is_same_v&lt;Index, ddc::type_seq_element_t&lt;0, SpatialIndexSeq&gt;&gt;</div>
+<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>                        || std::is_same_v&lt;Index, ddc::type_seq_element_t&lt;1, SpatialIndexSeq&gt;&gt;</div>
+<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>                        || std::is_same_v&lt;Index, ddc::type_seq_element_t&lt;2, SpatialIndexSeq&gt;&gt;,</div>
+<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>                <span class="stringliteral">&quot;3D magnetic induction component tag must be one of the spatial tags&quot;</span>);</div>
+<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>        <span class="keyword">using </span>spatial_domain_type = <span class="keyword">typename</span> detail::ElementSpatialDomain&lt;Elem&gt;::type;</div>
+<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>        <span class="keyword">auto</span> <span class="keyword">const</span> chain = <a class="code hl_function" href="namespacesil_1_1exterior.html#a2f6077271f607d9959b484603cd7216e">sil::exterior::tangent_basis&lt;2, spatial_domain_type&gt;</a>(elem);</div>
+<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>        <span class="keyword">auto</span> <span class="keyword">const</span> lower_chain = <a class="code hl_function" href="namespacesil_1_1exterior.html#a2f6077271f607d9959b484603cd7216e">sil::exterior::tangent_basis&lt;1, spatial_domain_type&gt;</a>(elem);</div>
+<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span> </div>
+<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>        <span class="keyword">auto</span> <span class="keyword">const</span> output_component = magnetic_induction_component&lt;Index&gt;();</div>
+<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>        <span class="keyword">auto</span> stencil = <a class="code hl_struct" href="namespacesil_1_1exterior.html#structsil_1_1exterior_1_1Coboundary">sil::exterior::Coboundary&lt;CoboundaryIndex, VectorPotentialIndex&gt;::</a></div>
+<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span><a class="code hl_struct" href="namespacesil_1_1exterior.html#structsil_1_1exterior_1_1Coboundary">                value</a>(sil::exterior::detail::IdentityStencilEvaluator {},</div>
+<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>                      chain,</div>
+<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>                      lower_chain,</div>
+<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span>                      elem,</div>
+<div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>                      output_component);</div>
+<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::is_same_v&lt;Index, ddc::type_seq_element_t&lt;1, SpatialIndexSeq&gt;&gt;) {</div>
+<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>            stencil *= -1.0;</div>
+<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>        }</div>
+<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>        <span class="keywordflow">return</span> stencil;</div>
 </div>
-<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>    }</div>
-<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span> </div>
-<div class="foldopen" id="foldopen00200" data-start="{" data-end="}">
-<div class="line"><a id="l00200" name="l00200"></a><span class="lineno"><a class="line" href="classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4.html#ae801de735ea002445e4989e99fdf0b00">  200</a></span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> TensorType, <span class="keyword">class</span> Evaluator, <span class="keyword">class</span> ChainType, <span class="keyword">class</span> LowerChainType, <span class="keyword">class</span> Elem&gt;</div>
-<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>    KOKKOS_FUNCTION <span class="keyword">static</span> <span class="keywordtype">void</span> forward(</div>
-<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>            TensorType magnetic_induction,</div>
-<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>            Evaluator evaluator,</div>
-<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>            ChainType chain,</div>
-<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span>            LowerChainType lower_chain,</div>
-<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>            Elem elem)</div>
-<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span>    {</div>
-<div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span>        <a class="code hl_struct" href="namespacesil_1_1exterior.html#structsil_1_1exterior_1_1Coboundary">sil::exterior::Coboundary&lt;CoboundaryIndex, VectorPotentialIndex&gt;::</a></div>
-<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span><a class="code hl_struct" href="namespacesil_1_1exterior.html#structsil_1_1exterior_1_1Coboundary">        operator()</a>(magnetic_induction, evaluator, chain, lower_chain, elem);</div>
+<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span>    }</div>
+<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span> </div>
+<div class="foldopen" id="foldopen00199" data-start="{" data-end="}">
+<div class="line"><a id="l00199" name="l00199"></a><span class="lineno"><a class="line" href="classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4.html#ae801de735ea002445e4989e99fdf0b00">  199</a></span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> TensorType, <span class="keyword">class</span> Evaluator, <span class="keyword">class</span> ChainType, <span class="keyword">class</span> LowerChainType, <span class="keyword">class</span> Elem&gt;</div>
+<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>    KOKKOS_FUNCTION <span class="keyword">static</span> <span class="keywordtype">void</span> forward(</div>
+<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>            TensorType magnetic_induction,</div>
+<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>            Evaluator evaluator,</div>
+<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>            ChainType chain,</div>
+<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>            LowerChainType lower_chain,</div>
+<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span>            Elem elem)</div>
+<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>    {</div>
+<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span>        <a class="code hl_struct" href="namespacesil_1_1exterior.html#structsil_1_1exterior_1_1Coboundary">sil::exterior::Coboundary&lt;CoboundaryIndex, VectorPotentialIndex&gt;::</a></div>
+<div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span><a class="code hl_struct" href="namespacesil_1_1exterior.html#structsil_1_1exterior_1_1Coboundary">                run</a>(magnetic_induction, evaluator, chain, lower_chain, elem);</div>
 </div>
-<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>    }</div>
-<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span> </div>
-<div class="foldopen" id="foldopen00212" data-start="{" data-end="}">
-<div class="line"><a id="l00212" name="l00212"></a><span class="lineno"><a class="line" href="classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4.html#a185efca41d4b9dd2b2ef44db5f5884e3">  212</a></span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> Index, <span class="keyword">class</span> Elem&gt;</div>
-<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>    [[nodiscard]] KOKKOS_FUNCTION <span class="keyword">static</span> <span class="keyword">auto</span> scalar_forward_value(Elem elem)</div>
-<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span>    {</div>
-<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>        <span class="keyword">auto</span> stencil = forward_value&lt;Index&gt;(elem);</div>
-<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span>        [[maybe_unused]] <a class="code hl_class" href="classsil_1_1tensor_1_1TensorAccessor.html">sil::tensor::TensorAccessor&lt;VectorPotentialIndex&gt;</a> potential_accessor;</div>
-<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span>        <span class="keyword">auto</span> projected = detail::project_to_scalar_potential_stencil(</div>
-<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span>                stencil,</div>
-<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span>                elem,</div>
-<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span>                potential_accessor</div>
-<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span>                        .<span class="keyword">template</span> access_element&lt;ddc::type_seq_element_t&lt;2, SpatialIndexSeq&gt;&gt;());</div>
-<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::is_same_v&lt;Index, ddc::type_seq_element_t&lt;2, SpatialIndexSeq&gt;&gt;) {</div>
-<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span>            projected *= 0.0;</div>
-<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span>        }</div>
-<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span>        <span class="keywordflow">return</span> projected;</div>
+<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>    }</div>
+<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span> </div>
+<div class="foldopen" id="foldopen00211" data-start="{" data-end="}">
+<div class="line"><a id="l00211" name="l00211"></a><span class="lineno"><a class="line" href="classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4.html#a185efca41d4b9dd2b2ef44db5f5884e3">  211</a></span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> Index, <span class="keyword">class</span> Elem&gt;</div>
+<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>    [[nodiscard]] KOKKOS_FUNCTION <span class="keyword">static</span> <span class="keyword">auto</span> scalar_forward_value(Elem elem)</div>
+<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>    {</div>
+<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span>        <span class="keyword">auto</span> stencil = forward_value&lt;Index&gt;(elem);</div>
+<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>        [[maybe_unused]] <a class="code hl_class" href="classsil_1_1tensor_1_1TensorAccessor.html">sil::tensor::TensorAccessor&lt;VectorPotentialIndex&gt;</a> potential_accessor;</div>
+<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span>        <span class="keyword">auto</span> projected = detail::project_to_scalar_potential_stencil(</div>
+<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span>                stencil,</div>
+<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span>                elem,</div>
+<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span>                potential_accessor</div>
+<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span>                        .<span class="keyword">template</span> access_element&lt;ddc::type_seq_element_t&lt;2, SpatialIndexSeq&gt;&gt;());</div>
+<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::is_same_v&lt;Index, ddc::type_seq_element_t&lt;2, SpatialIndexSeq&gt;&gt;) {</div>
+<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span>            projected *= 0.0;</div>
+<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span>        }</div>
+<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span>        <span class="keywordflow">return</span> projected;</div>
 </div>
-<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span>    }</div>
-<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span>};</div>
+<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span>    }</div>
+<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span>};</div>
 </div>
-<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span> </div>
-<div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span>} <span class="comment">// namespace similie::physics::magnetostatics</span></div>
+<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span> </div>
+<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span>} <span class="comment">// namespace similie::physics::magnetostatics</span></div>
 </div>
-<div class="ttc" id="aclasssil_1_1tensor_1_1TensorAccessor_html"><div class="ttname"><a href="classsil_1_1tensor_1_1TensorAccessor.html">sil::tensor::TensorAccessor</a></div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00275">tensor_impl.hpp:276</a></div></div>
+<div class="ttc" id="aclasssil_1_1tensor_1_1TensorAccessor_html"><div class="ttname"><a href="classsil_1_1tensor_1_1TensorAccessor.html">sil::tensor::TensorAccessor</a></div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00273">tensor_impl.hpp:274</a></div></div>
 <div class="ttc" id="aclasssimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4_html_a3f9c1c2cbf604327346623ecc68da9e8"><div class="ttname"><a href="classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4.html#a3f9c1c2cbf604327346623ecc68da9e8">similie::physics::magnetostatics::MagneticVectorPotentialToMagneticInduction&lt; SpatialIndex... &gt;::forward_value</a></div><div class="ttdeci">static KOKKOS_FUNCTION auto forward_value(Elem elem)</div><div class="ttdef"><b>Definition</b> <a href="#l00102">magnetostatics_quantities.hpp:102</a></div></div>
-<div class="ttc" id="aclasssimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4_html_ab1ff65fcee0b293487e488eb860f494f"><div class="ttname"><a href="classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4.html#ab1ff65fcee0b293487e488eb860f494f">similie::physics::magnetostatics::MagneticVectorPotentialToMagneticInduction&lt; SpatialIndex... &gt;::magnetic_induction_index</a></div><div class="ttdeci">MagneticInductionIndex magnetic_induction_index</div><div class="ttdef"><b>Definition</b> <a href="#l00172">magnetostatics_quantities.hpp:172</a></div></div>
+<div class="ttc" id="aclasssimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4_html_ab1ff65fcee0b293487e488eb860f494f"><div class="ttname"><a href="classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4.html#ab1ff65fcee0b293487e488eb860f494f">similie::physics::magnetostatics::MagneticVectorPotentialToMagneticInduction&lt; SpatialIndex... &gt;::magnetic_induction_index</a></div><div class="ttdeci">MagneticInductionIndex magnetic_induction_index</div><div class="ttdef"><b>Definition</b> <a href="#l00171">magnetostatics_quantities.hpp:171</a></div></div>
 <div class="ttc" id="aclasssimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4_html_ae801de735ea002445e4989e99fdf0b00"><div class="ttname"><a href="classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4.html#ae801de735ea002445e4989e99fdf0b00">similie::physics::magnetostatics::MagneticVectorPotentialToMagneticInduction&lt; SpatialIndex... &gt;::forward</a></div><div class="ttdeci">static KOKKOS_FUNCTION void forward(TensorType magnetic_induction, Evaluator evaluator, ChainType chain, LowerChainType lower_chain, Elem elem)</div><div class="ttdef"><b>Definition</b> <a href="#l00127">magnetostatics_quantities.hpp:127</a></div></div>
 <div class="ttc" id="aconceptsimilie_1_1physics_1_1magnetostatics_1_1ThreeDimensional_html"><div class="ttname"><a href="conceptsimilie_1_1physics_1_1magnetostatics_1_1ThreeDimensional.html">similie::physics::magnetostatics::ThreeDimensional</a></div><div class="ttdef"><b>Definition</b> <a href="#l00028">magnetostatics_quantities.hpp:28</a></div></div>
 <div class="ttc" id="aconceptsimilie_1_1physics_1_1magnetostatics_1_1TwoDimensional_html"><div class="ttname"><a href="conceptsimilie_1_1physics_1_1magnetostatics_1_1TwoDimensional.html">similie::physics::magnetostatics::TwoDimensional</a></div><div class="ttdef"><b>Definition</b> <a href="#l00025">magnetostatics_quantities.hpp:25</a></div></div>

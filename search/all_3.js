@@ -9,5 +9,6 @@ var searchData=
   ['boundary_20operator_6',['Boundary operator',['../exterior_module.html#autotoc_md20',1,'']]],
   ['boundary_5ft_7',['boundary_t',['../namespacesil_1_1exterior.html#a52bc67c02d8ba34a3eeb34de1dd21df8',1,'sil::exterior']]],
   ['boundcond_8',['BoundCond',['../classsil_1_1mesher_1_1Mesher.html#ac3f9204e172f1ff8c7e8390351e12c95',1,'sil::mesher::Mesher']]],
-  ['bsplines_5ftype_9',['bsplines_type',['../classsil_1_1mesher_1_1Mesher.html#a1161cee72ecbc8cbcb8df18fc5892899',1,'sil::mesher::Mesher']]]
+  ['bsplines_5ftype_9',['bsplines_type',['../classsil_1_1mesher_1_1Mesher.html#a1161cee72ecbc8cbcb8df18fc5892899',1,'sil::mesher::Mesher']]],
+  ['bundle_20valued_20exterior_20covariant_20derivative_10',['Bundle-valued exterior covariant derivative',['../exterior_module.html#autotoc_md31',1,'']]]
 ];

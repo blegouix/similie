@@ -144,9 +144,9 @@ Collaboration diagram for sil::tensor::MetricProd&lt; MetricIndex, Indices1, Ind
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a18f2e147696327e1dddfdfb648a2d00d" id="r_a18f2e147696327e1dddfdfb648a2d00d"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a> &gt; MetricProdType_&gt; </td></tr>
-<tr class="memitem:a18f2e147696327e1dddfdfb648a2d00d"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a18f2e147696327e1dddfdfb648a2d00d">operator()</a> (MetricProdType_ metric_prod, MetricType metric, BatchElem elem)</td></tr>
-<tr class="separator:a18f2e147696327e1dddfdfb648a2d00d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aff4a4f4b63a2b6d22aa6dc365371e7ea" id="r_aff4a4f4b63a2b6d22aa6dc365371e7ea"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a> &gt; MetricProdType_&gt; </td></tr>
+<tr class="memitem:aff4a4f4b63a2b6d22aa6dc365371e7ea"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#aff4a4f4b63a2b6d22aa6dc365371e7ea">run</a> (MetricProdType_ metric_prod, MetricType metric, BatchElem elem)</td></tr>
+<tr class="separator:aff4a4f4b63a2b6d22aa6dc365371e7ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af1fb2d47039a2e9bbc299419972bbab4" id="r_af1fb2d47039a2e9bbc299419972bbab4"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af1fb2d47039a2e9bbc299419972bbab4">value</a> (MetricType metric, BatchElem elem, auto natural_elem)</td></tr>
 <tr class="separator:af1fb2d47039a2e9bbc299419972bbab4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -155,8 +155,8 @@ Static Public Member Functions</h2></td></tr>
 struct sil::tensor::MetricProd&lt; MetricIndex, Indices1, Indices2, MetricType, BatchElem &gt;</div>
 <p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00249">249</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="a18f2e147696327e1dddfdfb648a2d00d" name="a18f2e147696327e1dddfdfb648a2d00d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a18f2e147696327e1dddfdfb648a2d00d">&#9670;&#160;</a></span>operator()()</h2>
+<a id="aff4a4f4b63a2b6d22aa6dc365371e7ea" name="aff4a4f4b63a2b6d22aa6dc365371e7ea"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aff4a4f4b63a2b6d22aa6dc365371e7ea">&#9670;&#160;</a></span>run()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -169,7 +169,7 @@ template&lt;misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">static KOKKOS_FUNCTION void <a class="el" href="structsil_1_1tensor_1_1MetricProd.html">sil::tensor::MetricProd</a>&lt; MetricIndex, Indices1, Indices2, MetricType, BatchElem &gt;::operator() </td>
+          <td class="memname">static KOKKOS_FUNCTION void <a class="el" href="structsil_1_1tensor_1_1MetricProd.html">sil::tensor::MetricProd</a>&lt; MetricIndex, Indices1, Indices2, MetricType, BatchElem &gt;::run </td>
           <td>(</td>
           <td class="paramtype">MetricProdType_</td>          <td class="paramname"><span class="paramname"><em>metric_prod</em></span>, </td>
         </tr>
@@ -229,7 +229,7 @@ template&lt;TensorIndex MetricIndex, misc::Specialization&lt; ddc::detail::TypeS
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00263">263</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="metric_8hpp_source.html#l00260">260</a> of file <a class="el" href="metric_8hpp_source.html">metric.hpp</a>.</p>
 
 </div>
 </div>

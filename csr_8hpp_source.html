@@ -157,7 +157,7 @@ $(function(){initNavTree('csr_8hpp_source.html',''); initResizable(true); });
 <div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="keyword">struct </span>ArrayOfVectorsToArrayOfArrays&lt;std::index_sequence&lt;I...&gt;&gt;</div>
 <div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>{</div>
 <div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>    <span class="keyword">template</span> &lt;std::<span class="keywordtype">size_t</span> N&gt;</div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>    <span class="keyword">static</span> <span class="keywordtype">void</span> operator()(</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>    <span class="keyword">static</span> <span class="keywordtype">void</span> run(</div>
 <div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>            std::array&lt;std::array&lt;std::size_t, N&gt;, <span class="keyword">sizeof</span>...(I)&gt;&amp; arr,</div>
 <div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>            std::array&lt;std::vector&lt;std::size_t&gt;, <span class="keyword">sizeof</span>...(I)&gt; <span class="keyword">const</span>&amp; vec)</div>
 <div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>    {</div>
@@ -203,8 +203,8 @@ $(function(){initNavTree('csr_8hpp_source.html',''); initResizable(true); });
 <div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>                copy_n(csr_dyn.<a class="code hl_function" href="classsil_1_1csr_1_1CsrDynamic.html#afa9a92dc8ad80a4945ee871d08955640">coalesc_idx</a>().begin(),</div>
 <div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>                       HeadTensorIndex::mem_size() + 1,</div>
 <div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>                       m_coalesc_idx.begin());</div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>        detail::ArrayOfVectorsToArrayOfArrays&lt;std::make_index_sequence&lt;<span class="keyword">sizeof</span>...(</div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>                TailTensorIndex)&gt;&gt;::operator()(m_idx, csr_dyn.<a class="code hl_function" href="classsil_1_1csr_1_1CsrDynamic.html#a55117e034496388c0a1ea3cb833a1d3d">idx</a>());</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>        detail::ArrayOfVectorsToArrayOfArrays&lt;</div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>                std::make_index_sequence&lt;<span class="keyword">sizeof</span>...(TailTensorIndex)&gt;&gt;::run(m_idx, csr_dyn.<a class="code hl_function" href="classsil_1_1csr_1_1CsrDynamic.html#a55117e034496388c0a1ea3cb833a1d3d">idx</a>());</div>
 <div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>        std::copy_n(csr_dyn.<a class="code hl_function" href="classsil_1_1csr_1_1CsrDynamic.html#a8ac270f06ec1fdd3225b974494682997">values</a>().begin(), N, m_values.begin());</div>
 <div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>    }</div>
 </div>
