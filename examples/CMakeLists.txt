@@ -30,6 +30,7 @@ target_link_libraries(2d_vector_laplacian
 )
 
 add_executable(2d_scalar_field 2d_scalar_field.cpp)
+similie_configure_example_correctness(2d_scalar_field)
 add_dependencies(2d_scalar_field similie_physics_generated)
 
 target_link_libraries(2d_scalar_field

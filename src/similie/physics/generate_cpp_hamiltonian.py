@@ -8,7 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from sympy import Derivative, Subs, Symbol, diff, solve, symbols
+from sympy import Derivative, Subs, Symbol, diff, powsimp, solve, symbols
 from sympy.printing.codeprinter import cxxcode
 
 
@@ -587,10 +587,10 @@ def write_cpp_hamiltonian_header(
     moments_replacements = dict(parameter_replacements)
 
     potential_derivative_expressions = [
-        diff(hamiltonian, symbol) for symbol in potential_symbols
+        powsimp(diff(hamiltonian, symbol)) for symbol in potential_symbols
     ]
     moments_derivative_expressions = [
-        diff(hamiltonian, symbol) for symbol in moments_symbols
+        powsimp(diff(hamiltonian, symbol)) for symbol in moments_symbols
     ]
 
     potential_argument_entries = [potential_entry, *variable_entries[2:]]

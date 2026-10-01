@@ -523,7 +523,7 @@ template <class KokkosViewType>
 struct GkoDenseHandle
 {
     std::shared_ptr<gko::matrix::Dense<typename KokkosViewType::non_const_value_type>> dense;
-    std::optional<Kokkos::View<
+    std::unique_ptr<Kokkos::View<
             typename KokkosViewType::non_const_value_type**,
             Kokkos::LayoutRight,
             typename KokkosViewType::memory_space>>
@@ -551,7 +551,8 @@ auto to_gko_dense(std::shared_ptr<gko::Executor const> const& gko_exec, KokkosVi
         return handle;
     }
 
-    handle.owned_view.emplace("similie_gko_dense_bridge", view.extent(0), view.extent(1));
+    handle.owned_view = std::make_unique<
+            owning_view_type>("similie_gko_dense_bridge", view.extent(0), view.extent(1));
     Kokkos::deep_copy(*handle.owned_view, view);
     handle.dense = gko::matrix::Dense<value_type>::
             create(gko_exec,
@@ -567,7 +568,7 @@ void copy_back_from_gko_dense_bridge(
         DestinationView destination,
         GkoDenseHandle<KokkosViewType> const& handle)
 {
-    if (handle.owned_view.has_value()) {
+    if (handle.owned_view) {
         Kokkos::deep_copy(destination, *handle.owned_view);
     }
 }
@@ -650,12 +651,14 @@ std::shared_ptr<gko::matrix::Csr<double, gko::int32>> build_matrix(
 }
 
 template <class ExecSpace, class OperatorModel>
-class MatrixFreeLinOp : public gko::EnableLinOp<MatrixFreeLinOp<ExecSpace, OperatorModel>>
+class MatrixFreeLinOp
+    : public gko::LinOp
+    , public gko::EnableCloneable<MatrixFreeLinOp<ExecSpace, OperatorModel>>
 {
     using value_type = double;
     using dense_type = gko::matrix::Dense<value_type>;
     using memory_space = typename ExecSpace::memory_space;
-    using base_type = gko::EnableLinOp<MatrixFreeLinOp<ExecSpace, OperatorModel>>;
+    using base_type = gko::LinOp;
     using workspace_traits = MatrixFreeWorkspaceTraits<ExecSpace, OperatorModel>;
     using workspace_type = typename workspace_traits::type;
 
@@ -848,13 +851,14 @@ public:
 
 template <class ExecSpace, class OperatorModel, class StateView>
 class StateDependentMatrixFreeLinOp
-    : public gko::EnableLinOp<StateDependentMatrixFreeLinOp<ExecSpace, OperatorModel, StateView>>
+    : public gko::LinOp
+    , public gko::EnableCloneable<
+              StateDependentMatrixFreeLinOp<ExecSpace, OperatorModel, StateView>>
 {
     using value_type = double;
     using dense_type = gko::matrix::Dense<value_type>;
     using memory_space = typename ExecSpace::memory_space;
-    using base_type
-            = gko::EnableLinOp<StateDependentMatrixFreeLinOp<ExecSpace, OperatorModel, StateView>>;
+    using base_type = gko::LinOp;
 
     ExecSpace m_exec_space;
     std::shared_ptr<OperatorModel const> m_operator_model;

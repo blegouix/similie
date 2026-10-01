@@ -594,13 +594,18 @@ int main(int argc, char** argv)
             ddc::parallel_deepcopy(h_hamiltonian, hamiltonian);
 
             // Export HDF5 and XDMF
-            const float central_potential_value = potential_host(
-                    ddc::DiscreteElement<DDimX, DDimY, DummyIndex>(
+            const float central_potential_value
+                    = potential_host(ddc::DiscreteElement<DDimX, DDimY, DummyIndex>(
                             potential.extent<DDimX>() / 2,
                             potential.extent<DDimY>() / 2,
                             0));
             std::cout << "Potential center = " << central_potential_value << std::endl;
 #if defined(SIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS)
+            if (!std::isfinite(central_potential_value)) {
+                std::cerr << "ERROR: central potential is not finite at iteration " << i
+                          << std::endl;
+                return EXIT_FAILURE;
+            }
             central_potential_values.push_back(central_potential_value);
 #endif
             double const time = i * dt;
@@ -701,7 +706,7 @@ int main(int argc, char** argv)
         double const error
                 = std::abs(central_potential_values[i] - expected_central_potential_values[i]);
         max_error = std::max(max_error, error);
-        if (error > tolerance) {
+        if (!std::isfinite(error) || error > tolerance) {
             std::cerr << "ERROR: central potential non-regression value " << i << " expected "
                       << expected_central_potential_values[i] << " +/- " << tolerance << ", got "
                       << central_potential_values[i] << std::endl;

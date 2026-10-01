@@ -551,7 +551,7 @@ TEST(Coboundary, Test)
                     Kokkos::LayoutRight,
                     Kokkos::HostSpace>("", 4),
             simplex);
-    sil::exterior::Cochain cochain_boundary(
+    sil::exterior::Cochain<decltype(simplex_boundary)> cochain_boundary(
             simplex_boundary,
             Kokkos::View<double*, Kokkos::LayoutRight, Kokkos::HostSpace>("", 4),
             5.,
@@ -623,7 +623,7 @@ TEST(LocalCochain, Test)
                   sil::exterior::
                           Simplex(ddc::DiscreteElement<DDimT, DDimX, DDimY, DDimZ> {0, 0, 0, 0},
                                   ddc::DiscreteVector<DDimY> {1}));
-    sil::exterior::Cochain
+    sil::exterior::Cochain<decltype(chain)>
             cochain(chain,
                     Kokkos::View<double*, Kokkos::LayoutRight, Kokkos::HostSpace>("", 2),
                     1.,
