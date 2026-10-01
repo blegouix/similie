@@ -90,6 +90,7 @@ jobs:
           cmake \
               -DSIMILIE_BUILD_YOUNG_TABLEAU=ON \
               -DSIMILIE_BUILD_DOCUMENTATION=ON \
+              -DSIMILIE_BUILD_ONLY_DOCUMENTATION=ON \
               -DCMAKE_CXX_STANDARD=23 \
               -DDOXYGEN_EXTRACT_ALL=YES \
               -DDOXYGEN_WARN_IF_UNDOCUMENTED=YES \
@@ -152,6 +153,7 @@ jobs:
           cmake \
               -DSIMILIE_BUILD_YOUNG_TABLEAU=ON \
               -DSIMILIE_BUILD_DOCUMENTATION=ON \
+              -DSIMILIE_BUILD_ONLY_DOCUMENTATION=ON \
               -DCMAKE_CXX_FLAGS="-Wno-unused-command-line-argument" \
               -DCMAKE_CXX_STANDARD=23 \
               -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
