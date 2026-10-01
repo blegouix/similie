@@ -151,7 +151,7 @@ $(function(){initNavTree('clamp__to__domain_8hpp_source.html',''); initResizable
 <div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="keyword">struct </span>ClampToDomain&lt;ddc::detail::TypeSeq&lt;CommonDDim...&gt;&gt;</div>
 <div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>{</div>
 <div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> BatchDomain, <span class="keyword">class</span> Elem&gt;</div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>    KOKKOS_FUNCTION <span class="keyword">static</span> Elem run(BatchDomain <span class="keyword">const</span>&amp; batch_domain, Elem elem)</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>    KOKKOS_FUNCTION <span class="keyword">static</span> Elem operator()(BatchDomain <span class="keyword">const</span>&amp; batch_domain, Elem elem)</div>
 <div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>    {</div>
 <div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>        ddc::DiscreteDomain&lt;CommonDDim...&gt; <span class="keyword">const</span> common_domain</div>
 <div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>                = <a class="code hl_function" href="namespacesil_1_1misc.html#ac4920dd15665754dd8afd25c431036c5">select_from_type_seq</a>&lt;ddc::detail::TypeSeq&lt;CommonDDim...&gt;&gt;(batch_domain);</div>
@@ -174,7 +174,7 @@ $(function(){initNavTree('clamp__to__domain_8hpp_source.html',''); initResizable
 <div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>{</div>
 <div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    <span class="keyword">using </span>CommonSeq</div>
 <div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>            = <a class="code hl_typedef" href="namespacesil_1_1misc.html#a7a2bf2edd109e79ed82bc877725c4840">misc::type_seq_intersect_t&lt;ddc::to_type_seq_t&lt;Elem&gt;</a>, ddc::to_type_seq_t&lt;BatchDomain&gt;&gt;;</div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    <span class="keywordflow">return</span> detail::ClampToDomain&lt;CommonSeq&gt;::run(batch_domain, elem);</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    <span class="keywordflow">return</span> detail::ClampToDomain&lt;CommonSeq&gt;::operator()(batch_domain, elem);</div>
 <div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>}</div>
 </div>
 <div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span> </div>

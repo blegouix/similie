@@ -148,13 +148,13 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a6489f0cea1720de8ec05d16a18ee5074"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a11bc9443f6777526aa7acacaa928d23a" id="r_a11bc9443f6777526aa7acacaa928d23a"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a11bc9443f6777526aa7acacaa928d23a">StagedCodifferential</a> (ExecSpace const &amp;exec_space, TensorType tensor, MetricType metric, PositionType position)</td></tr>
 <tr class="separator:a11bc9443f6777526aa7acacaa928d23a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a444663039eeea07821b772d8f38cb08a" id="r_a444663039eeea07821b772d8f38cb08a"><td class="memItemLeft" align="right" valign="top">CodifferentialTensorType&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a444663039eeea07821b772d8f38cb08a">run</a> (CodifferentialTensorType codifferential_tensor, TensorType tensor) const</td></tr>
-<tr class="separator:a444663039eeea07821b772d8f38cb08a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa6f105961681b37d512d5a84697aebec" id="r_aa6f105961681b37d512d5a84697aebec"><td class="memItemLeft" align="right" valign="top">CodifferentialTensorType&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa6f105961681b37d512d5a84697aebec">operator()</a> (CodifferentialTensorType codifferential_tensor, TensorType tensor) const</td></tr>
+<tr class="separator:aa6f105961681b37d512d5a84697aebec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor</a> &gt; TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor</a> &gt; MetricType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor</a> &gt; PositionType, class ExecSpace&gt;<br />
 class sil::exterior::StagedCodifferential&lt; MetricIndex, TagToRemoveFromCochain, CochainTag, TensorType, MetricType, PositionType, ExecSpace &gt;</div>
-<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00324">324</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00331">331</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a6489f0cea1720de8ec05d16a18ee5074" name="a6489f0cea1720de8ec05d16a18ee5074"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a6489f0cea1720de8ec05d16a18ee5074">&#9670;&#160;</a></span>StagedCodifferential() <span class="overload">[1/2]</span></h2>
@@ -195,7 +195,7 @@ template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveF
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00382">382</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00389">389</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
 
 </div>
 </div>
@@ -238,13 +238,13 @@ template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveF
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00396">396</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00403">403</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
 
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a444663039eeea07821b772d8f38cb08a" name="a444663039eeea07821b772d8f38cb08a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a444663039eeea07821b772d8f38cb08a">&#9670;&#160;</a></span>run()</h2>
+<a id="aa6f105961681b37d512d5a84697aebec" name="aa6f105961681b37d512d5a84697aebec"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa6f105961681b37d512d5a84697aebec">&#9670;&#160;</a></span>operator()()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -255,7 +255,7 @@ template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveF
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">CodifferentialTensorType <a class="el" href="classsil_1_1exterior_1_1StagedCodifferential.html">sil::exterior::StagedCodifferential</a>&lt; MetricIndex, TagToRemoveFromCochain, CochainTag, TensorType, MetricType, PositionType, ExecSpace &gt;::run </td>
+          <td class="memname">CodifferentialTensorType <a class="el" href="classsil_1_1exterior_1_1StagedCodifferential.html">sil::exterior::StagedCodifferential</a>&lt; MetricIndex, TagToRemoveFromCochain, CochainTag, TensorType, MetricType, PositionType, ExecSpace &gt;::operator() </td>
           <td>(</td>
           <td class="paramtype">CodifferentialTensorType</td>          <td class="paramname"><span class="paramname"><em>codifferential_tensor</em></span>, </td>
         </tr>
@@ -272,7 +272,7 @@ template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveF
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00437">437</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00444">444</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
 
 </div>
 </div>

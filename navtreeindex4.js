@@ -1,6 +1,5 @@
 var NAVTREEINDEX4 =
 {
-"structsil_1_1exterior_1_1Reconstruction.html#a645faba94d43ae5e1cf51920faa40ca1":[6,0,6,1,20,0],
 "structsil_1_1exterior_1_1Reconstruction.html#a645faba94d43ae5e1cf51920faa40ca1":[8,0,6,1,20,0],
 "structsil_1_1exterior_1_1Reconstruction.html#a86d293a07043fe1efd4ece7cefea3677":[6,0,6,1,20,1],
 "structsil_1_1exterior_1_1Reconstruction.html#a86d293a07043fe1efd4ece7cefea3677":[8,0,6,1,20,1],

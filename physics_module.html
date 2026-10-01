@@ -131,7 +131,7 @@ $(function(){initNavTree('physics_module.html',''); initResizable(true); });
 <div class="textblock"><p><a class="anchor" id="md_physics__module"></a></p>
 <dl class="section important"><dt>Important</dt><dd>This documentation is fully AI-generated.</dd></dl>
 <p>The <code><a class="el" href="namespacesimilie_1_1physics.html">similie::physics</a></code> module provides Hamiltonian equations, constitutive laws, and quantities for scalar fields, magnetostatics, and elasticity. SymPy definitions in <code>src/similie/physics/</code> generate C++ functors during the CMake build. The elasticity and magnetostatics directories also contain their physical quantities and constitutive laws.</p>
-<h1><a class="anchor" id="autotoc_md32"></a>
+<h1><a class="anchor" id="autotoc_md31"></a>
 Scalar field</h1>
 <p><code>scalar_field::ScalarFieldWithPowerCouplingHamiltonian</code> is generated from the scalar field \(\phi\) and its moment components \(\pi_i\):</p>
 <p class="formulaDsp">
@@ -142,7 +142,7 @@ Scalar field</h1>
 \]
 </p>
 <p>Here \(d\) is the number of dimensions, \(m\) is <code>mass</code>, \(g\) is <code>coupling_constant</code>, and \(p\) is <code>coupling_power</code>. The generator uses a negative sign for the first moment component and positive signs for the others. There is no separate scalar-field constitutive-law class. The generated Hamiltonian supplies \(\partial\mathcal H/\partial\pi_0=-\pi_0\), \(\partial\mathcal H/\partial\pi_i=\pi_i\) for \(i&gt;0\), and \(\partial\mathcal H/\partial\phi=-m^2\phi-gp\phi^{p-1}/\Gamma(p+1)\).</p>
-<h1><a class="anchor" id="autotoc_md33"></a>
+<h1><a class="anchor" id="autotoc_md32"></a>
 Magnetostatics</h1>
 <p>For magnetic vector potential \(A\), induction \(B\), current density \(j\), and permeability \(\mu\), <code>magnetostatics::LinearMagnetostaticsHamiltonian</code> implements</p>
 <p class="formulaDsp">
@@ -151,21 +151,21 @@ Magnetostatics</h1>
 \]
 </p>
 <p><code>LinearMagneticInductionToMagneticField</code> implements the corresponding discrete constitutive map \(H_i=(\star_i/\mu)B_i\), where \(\star_i\) is the supplied Hodge-star factor. The nonlinear model instead uses an interpolated \(B\)– \(H\) curve. <code>NonlinearMagnetostaticsHamiltonian</code> has \(\mathcal H(A,B)=W(|B|^2)-j\cdot A\), with \(W\) obtained by integrating the curve. <code>NonlinearMagneticInductionToMagneticField</code> applies its radial law \(H_i=\star_i\,h(|B|)B_i/|B|\) (with a zero-field limit). The curve also provides derivatives used by the nonlinear solver.</p>
-<h1><a class="anchor" id="autotoc_md34"></a>
+<h1><a class="anchor" id="autotoc_md33"></a>
 Elasticity</h1>
 <p><code>elasticity::DisplacementToStrain::from_gradient</code> computes the symmetric strain from a displacement gradient. <code>Strain2D::xy</code> stores tensorial shear strain, \(\varepsilon_{xy}=(\partial_y u_x+\partial_x u_y)/2\). The generated <code>LinearElasticityHamiltonian</code> describes isotropic linear elasticity:</p>
 <p class="formulaDsp">
 \[
 \mathcal H(u,\varepsilon)
 = \mu\,\varepsilon:\varepsilon
-  + \frac{\lambda}{2}(\operatorname{tr}\varepsilon)^2-f\cdot u,
+  + \frac{\lambda}{2}(\mathrm{tr}\,\varepsilon)^2-f\cdot u,
 \qquad
 \mu=\frac{E}{2(1+\nu)},\quad
 \lambda=\frac{E\nu}{(1+\nu)(1-(d-1)\nu)}.
 \]
 </p>
-<p>\(E\) is Young's modulus, \(\nu\) is Poisson's ratio, and \(f\) is the body force. The generated 2D form uses plane stress; the 3D form uses the three-dimensional Lamé coefficient. The generated <code>LinearElasticStrainToStress</code> law has the component form \(\sigma_{ij}=2\mu\varepsilon_{ij}+\lambda\operatorname{tr}(\varepsilon)\delta_{ij}\); its <code>stiffness</code> and <code>trace_coupling</code> parameters represent \(2\mu\) and \(\lambda\). <code>CauchyStress2D</code> stores the resulting stress and provides <code>von_mises()</code>.</p>
-<h2><a class="anchor" id="autotoc_md35"></a>
+<p>\(E\) is Young's modulus, \(\nu\) is Poisson's ratio, and \(f\) is the body force. The generated 2D form uses plane stress; the 3D form uses the three-dimensional Lamé coefficient. The generated <code>LinearElasticStrainToStress</code> law has the component form \(\sigma_{ij}=2\mu\varepsilon_{ij}+\lambda\mathrm{tr}(\varepsilon)\delta_{ij}\); its <code>stiffness</code> and <code>trace_coupling</code> parameters represent \(2\mu\) and \(\lambda\). <code>CauchyStress2D</code> stores the resulting stress and provides <code>von_mises()</code>.</p>
+<h2><a class="anchor" id="autotoc_md34"></a>
 Local material Hodge in 2D</h2>
 <dl class="section important"><dt>Important</dt><dd>This operator and documentation is fully AI-generated.</dd></dl>
 <p><code>elasticity::ElasticMaterialHodge2D</code> is a local map for one oriented quadrilateral cell. Construct it from four vertex positions in bit-mask order <code>(0, 1, 2, 3)</code> and a callable <code>stress_law(Strain2D)</code> returning <code>CauchyStress2D</code>. <code>edge_differences&lt;SpatialX, SpatialY&gt;(nodal)</code> uses the exterior covariant derivative with identity transport to collect both displacement components on the four edges <code>0→1</code>, <code>2→3</code>, <code>0→2</code>, and <code>1→3</code>. <code>matrix()</code> returns the 8×8 material map from these edge differences to integrated forces on the corresponding dual half-segments. Its affine part reproduces constant-strain tractions, while a complementary term stabilizes the remaining edge modes. The constructor rejects folded or degenerate cells and a material law with nonpositive shear modulus.</p>
