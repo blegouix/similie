@@ -10,10 +10,16 @@ set(CMAKE_CXX_STANDARD 23 CACHE INTERNAL "The C++ standard whose features are re
 
 # List of options
 option(SIMILIE_BUILD_DOCUMENTATION "Build SimiLie documentation/website" OFF)
+option(SIMILIE_BUILD_ONLY_DOCUMENTATION "Build only documentation, skip all other targets and dependencies. Requires SIMILIE_BUILD_DOCUMENTATION=ON" OFF)
 option(SIMILIE_BUILD_YOUNG_TABLEAU "Build module dedicated to Young tableau indexing" OFF) # Requires compiler supporting #embed directive
 option(SIMILIE_BUILD_ONELAB_INTERFACE "Build the ONELAB interface executable" ON)
 option(SIMILIE_DEBUG_LOG "Enable logging of SimiLie internal kernels" OFF)
 option(SIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS "Assert example result correctness at runtime" OFF)
+
+# Validate SIMILIE_BUILD_ONLY_DOCUMENTATION option
+if("${SIMILIE_BUILD_ONLY_DOCUMENTATION}" AND NOT "${SIMILIE_BUILD_DOCUMENTATION}")
+  message(FATAL_ERROR "SIMILIE_BUILD_ONLY_DOCUMENTATION requires SIMILIE_BUILD_DOCUMENTATION=ON")
+endif()
 
 # Set default DDC options when included
 option(DDC_BUILD_BENCHMARKS       "Build DDC benchmarks." OFF)
@@ -56,7 +62,9 @@ if("${BUILD_TESTING}")
 endif()
 
 ## Use the discrete domain computation library (ddc) from `vendor/`
-add_subdirectory("vendor/ddc/" "ddc") # SYSTEM)
+if(NOT "${SIMILIE_BUILD_ONLY_DOCUMENTATION}")
+  add_subdirectory("vendor/ddc/" "ddc") # SYSTEM)
+endif()
 
 if("${SIMILIE_BUILD_YOUNG_TABLEAU}")
   set(CMAKE_CXX_STANDARD 26 CACHE INTERNAL "The C++ standard whose features are requested to build this project.")
@@ -72,54 +80,57 @@ endif()
 ###############################################################################################
 # Our project code
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
-add_library(similie INTERFACE)
-add_library(sil::sil ALIAS similie)
-target_compile_features(similie INTERFACE cxx_std_23)
-target_include_directories(
-    similie
-    INTERFACE
-        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>"
-        "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/src>"
-        "$<INSTALL_INTERFACE:src>"
-)
-target_link_libraries(similie INTERFACE
-    DDC::core
-    DDC::splines
-)
-if("${SIMILIE_DEBUG_LOG}")
-  target_compile_definitions(similie INTERFACE SIMILIE_DEBUG_LOG_)
+if(NOT "${SIMILIE_BUILD_ONLY_DOCUMENTATION}")
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
+  add_library(similie INTERFACE)
+  add_library(sil::sil ALIAS similie)
+  target_compile_features(similie INTERFACE cxx_std_23)
+  target_include_directories(
+      similie
+      INTERFACE
+          "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>"
+          "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/src>"
+          "$<INSTALL_INTERFACE:src>"
+  )
+  target_link_libraries(similie INTERFACE
+      DDC::core
+      DDC::splines
+  )
+  if("${SIMILIE_DEBUG_LOG}")
+    target_compile_definitions(similie INTERFACE SIMILIE_DEBUG_LOG_)
+  endif()
+
+  add_subdirectory(src/similie)
+  if("${SIMILIE_BUILD_ONELAB_INTERFACE}")
+    add_subdirectory(onelab_interface)
+  endif()
+  add_subdirectory(tests)
+  add_subdirectory(examples)
+
+  set(SIMILIE_INTERNAL_TARGETS
+      csr
+      exterior
+      mesher
+      misc
+      physics
+      solvers
+      tensor
+  )
+  if("${SIMILIE_BUILD_YOUNG_TABLEAU}")
+    list(APPEND SIMILIE_INTERNAL_TARGETS young_tableau)
+  endif()
+
+  if("${SIMILIE_DEBUG_LOG}")
+    foreach(similie_target IN LISTS SIMILIE_INTERNAL_TARGETS)
+      if(TARGET ${similie_target})
+        target_compile_definitions(${similie_target} INTERFACE SIMILIE_DEBUG_LOG_)
+      endif()
+    endforeach()
+  endif()
+
+  target_link_libraries(similie INTERFACE ${SIMILIE_INTERNAL_TARGETS})
 endif()
 
-add_subdirectory(src/similie)
-if("${SIMILIE_BUILD_ONELAB_INTERFACE}")
-  add_subdirectory(onelab_interface)
-endif()
-add_subdirectory(tests)
-add_subdirectory(examples)
 if("${SIMILIE_BUILD_DOCUMENTATION}")
     add_subdirectory(docs/)
 endif()
-
-set(SIMILIE_INTERNAL_TARGETS
-    csr
-    exterior
-    mesher
-    misc
-    physics
-    solvers
-    tensor
-)
-if("${SIMILIE_BUILD_YOUNG_TABLEAU}")
-  list(APPEND SIMILIE_INTERNAL_TARGETS young_tableau)
-endif()
-
-if("${SIMILIE_DEBUG_LOG}")
-  foreach(similie_target IN LISTS SIMILIE_INTERNAL_TARGETS)
-    if(TARGET ${similie_target})
-      target_compile_definitions(${similie_target} INTERFACE SIMILIE_DEBUG_LOG_)
-    endif()
-  endforeach()
-endif()
-
-target_link_libraries(similie INTERFACE ${SIMILIE_INTERNAL_TARGETS})
