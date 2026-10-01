@@ -70,27 +70,30 @@ fi
 RUN git clone https://github.com/ginkgo-project/ginkgo.git \
  && git -C ginkgo checkout --detach 527f52e1f6de69b6a5ef81c4c2e61144c53e5131 # Contains fixes for CUDA 13.4
 RUN if [ "${BACKEND}" = "cpu" ]; then \
-      cmake -DCMAKE_BUILD_TYPE=Release \
-            -DGINKGO_BUILD_OMP=ON \
-            -DGINKGO_BUILD_TESTS=OFF \
-            -DGINKGO_BUILD_EXAMPLES=OFF \
-            -DGINKGO_BUILD_BENCHMARKS=OFF \
-            -B ginkgo/build -S ginkgo; \
-    elif [ "${BACKEND}" = "cuda" ]; then \
-      cmake -DCMAKE_C_COMPILER=gcc \
-            -DCMAKE_CXX_COMPILER=g++ \
-            -DCMAKE_CUDA_HOST_COMPILER=g++ \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DGINKGO_BUILD_CUDA=ON \
-            -DGINKGO_CUDA_ARCHITECTURES=89 \
-            -DGINKGO_BUILD_TESTS=OFF \
-            -DGINKGO_BUILD_EXAMPLES=OFF \
-            -DGINKGO_BUILD_BENCHMARKS=OFF \
-            -B ginkgo/build -S ginkgo; \
-    else \
-      echo "ERROR: BACKEND must be 'cpu' or 'cuda' (got: '${BACKEND}')" >&2; \
-      exit 1; \
-    fi
+  cmake -DCMAKE_BUILD_TYPE=Release \
+        -DGINKGO_BUILD_OMP=ON \
+        -DGINKGO_BUILD_TESTS=OFF \
+        -DGINKGO_BUILD_EXAMPLES=OFF \
+        -DGINKGO_BUILD_BENCHMARKS=OFF \
+        -B ginkgo/build -S ginkgo; \
+elif [ "${BACKEND}" = "cuda" ]; then \
+  # WORKAROUND FOR CUDA 13.4: Thrust reduce_by_key fails to compile for Ginkgo's half and bfloat16 types, which are thus disabled.
+  cmake -DCMAKE_C_COMPILER=gcc \
+        -DCMAKE_CXX_COMPILER=g++ \
+        -DCMAKE_CUDA_HOST_COMPILER=g++ \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DGINKGO_BUILD_CUDA=ON \
+        -DGINKGO_CUDA_ARCHITECTURES=89 \
+        -DGINKGO_ENABLE_HALF=OFF \
+        -DGINKGO_ENABLE_BFLOAT16=OFF \
+        -DGINKGO_BUILD_TESTS=OFF \
+        -DGINKGO_BUILD_EXAMPLES=OFF \
+        -DGINKGO_BUILD_BENCHMARKS=OFF \
+        -B ginkgo/build -S ginkgo; \
+else \
+  echo "ERROR: BACKEND must be 'cpu' or 'cuda' (got: '${BACKEND}')" >&2; \
+  exit 1; \
+fi
 RUN cmake --build ginkgo/build
 RUN cmake --install ginkgo/build
 
