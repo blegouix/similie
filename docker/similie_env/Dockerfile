@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=nvidia/cuda:13.4.1-cudnn-devel-ubuntu24.04
+ARG BASE_IMAGE=nvidia/cuda:13.4.1-cudnn-devel-ubuntu26.04
 FROM $BASE_IMAGE
 
 # SPDX-FileCopyrightText: 2026 Baptiste Legouix
@@ -15,7 +15,7 @@ FROM $BASE_IMAGE
 # for cpu:
 # cmake -DCMAKE_CXX_COMPILER=g++-15 -DCMAKE_BUILD_TYPE=Release -DKokkos_ENABLE_OPENMP=ON -B similie/build -S similie
 # for cuda:
-# cmake -DCMAKE_CXX_COMPILER=$PWD/similie/vendor/ddc/vendor/kokkos/bin/nvcc_wrapper -DCMAKE_BUILD_TYPE=RELEASE -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_<YOUR_ARCH_NAMECODE>=ON -B similie/build -S similie
+# cmake -DCMAKE_CXX_COMPILER=$PWD/similie/vendor/ddc/vendor/kokkos/bin/nvcc_wrapper -DCMAKE_BUILD_TYPE=RELEASE -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_<YOUR_ARCH_NAMECODE>=ON -B similie/build -S sim[...]
 # cmake --build similie/build -j 8
 # ctest --test-dir similie/build
 
@@ -35,9 +35,12 @@ RUN apt update && apt install -y ca-certificates gpg lsb-release wget
 # git
 RUN apt update && apt install -y git
 
-# CMake
-RUN apt update \
-  && apt install -y cmake cmake-curses-gui \
+# CMake 4.4
+RUN apt update && apt install -y ca-certificates gpg wget \
+  && wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor | tee /usr/share/keyrings/kitware-archive-keyring.gpg >/dev/null \
+  && echo 'deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ resolute main' | tee /etc/apt/sources.list.d/kitware.list >/dev/null \
+  && apt update \
+  && apt install -y kitware-archive-keyring cmake cmake-curses-gui \
   && cmake --version
 
 # gcc
