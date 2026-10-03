@@ -116,7 +116,7 @@ public:
     KOKKOS_DEFAULTED_FUNCTION constexpr Simplex(Simplex&&) = default;
 
     template <misc::Specialization<ddc::DiscreteVector> T>
-    KOKKOS_FUNCTION constexpr explicit Simplex(
+    constexpr explicit Simplex(
             discrete_element_type elem,
             T vect = ddc::DiscreteVector<> {},
             bool negative = false) noexcept
@@ -129,7 +129,7 @@ public:
     }
 
     template <misc::Specialization<ddc::DiscreteVector> T = ddc::DiscreteVector<>>
-    KOKKOS_FUNCTION constexpr explicit Simplex(
+    constexpr explicit Simplex(
             std::integral_constant<std::size_t, K>,
             discrete_element_type elem,
             T vect = ddc::DiscreteVector<> {},
@@ -148,7 +148,7 @@ public:
 
     KOKKOS_DEFAULTED_FUNCTION Simplex& operator=(Simplex&& other) = default;
 
-    static KOKKOS_FUNCTION constexpr std::size_t dimension() noexcept
+    static constexpr std::size_t dimension() noexcept
     {
         return s_k;
     }

@@ -59,7 +59,7 @@ struct CheckTensorsCompatibility<
         ddc::TypeSeq<Index1...>,
         ddc::TypeSeq<Index2...>>
 {
-    KOKKOS_FUNCTION static constexpr void operator()()
+    static constexpr void operator()()
     {
         static_assert(std::is_same_v<
                       ddc::type_seq_remove_t<

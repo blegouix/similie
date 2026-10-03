@@ -33,7 +33,7 @@ struct Strain2D
     double xy = 0.0;
 
     template <class Index>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr double get() const
+    [[nodiscard]] constexpr double get() const
     {
         if constexpr (std::is_same_v<Index, StrainXX>) {
             return xx;
@@ -52,7 +52,7 @@ struct Strain2D
 
 struct DisplacementToStrain
 {
-    [[nodiscard]] KOKKOS_FUNCTION static constexpr Strain2D from_gradient(
+    [[nodiscard]] static constexpr Strain2D from_gradient(
             double dux_dx,
             double duy_dy,
             double dux_dy,

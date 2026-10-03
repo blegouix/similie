@@ -11,9 +11,8 @@ namespace misc {
 
 namespace detail {
 
-// Not sure why KOKKOS_FUNCTION is required despite constexpr
 template <class InputIt, class T = typename std::iterator_traits<InputIt>::value_type>
-KOKKOS_FUNCTION constexpr InputIt find(InputIt first, InputIt last, const T& value)
+constexpr InputIt find(InputIt first, InputIt last, const T& value)
 {
     for (; first != last; ++first)
         if (*first == value)
@@ -24,7 +23,7 @@ KOKKOS_FUNCTION constexpr InputIt find(InputIt first, InputIt last, const T& val
 
 /*
 template <class InputIt, class UnaryPred>
-KOKKOS_FUNCTION constexpr InputIt find_if(InputIt first, InputIt last, UnaryPred p)
+constexpr InputIt find_if(InputIt first, InputIt last, UnaryPred p)
 {
     for (; first != last; ++first)
         if (p(*first))
@@ -34,7 +33,7 @@ KOKKOS_FUNCTION constexpr InputIt find_if(InputIt first, InputIt last, UnaryPred
 }
 
 template <class InputIt, class UnaryPred>
-KOKKOS_FUNCTION constexpr InputIt find_if_not(InputIt first, InputIt last, UnaryPred q)
+constexpr InputIt find_if_not(InputIt first, InputIt last, UnaryPred q)
 {
     for (; first != last; ++first)
         if (!q(*first))
@@ -44,7 +43,7 @@ KOKKOS_FUNCTION constexpr InputIt find_if_not(InputIt first, InputIt last, Unary
 }
 
 template <class InputIt, class UnaryPred>
-KOKKOS_FUNCTION constexpr bool all_of(InputIt first, InputIt last, UnaryPred p)
+constexpr bool all_of(InputIt first, InputIt last, UnaryPred p)
 {
     return find_if_not(first, last, p) == last;
 }
@@ -66,7 +65,7 @@ KOKKOS_FUNCTION OutputIt move(InputIt first, InputIt last, OutputIt d_first)
 }
 
 template <class I>
-KOKKOS_FUNCTION constexpr std::size_t bounded_advance(I& i, std::size_t n, I const bound)
+constexpr std::size_t bounded_advance(I& i, std::size_t n, I const bound)
 {
     for (; n > 0 && i != bound; --n, void(++i)) {
         ;

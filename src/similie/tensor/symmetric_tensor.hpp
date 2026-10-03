@@ -23,7 +23,7 @@ struct TensorSymmetricIndex
 
     using subindices_domain_t = ddc::DiscreteDomain<TensorIndex...>;
 
-    KOKKOS_FUNCTION static constexpr subindices_domain_t subindices_domain()
+    static constexpr subindices_domain_t subindices_domain()
     {
         return ddc::DiscreteDomain<TensorIndex...>(
                 ddc::DiscreteElement<TensorIndex...>(ddc::DiscreteElement<TensorIndex>(0)...),
@@ -31,30 +31,29 @@ struct TensorSymmetricIndex
                         ddc::DiscreteVector<TensorIndex>(TensorIndex::size())...));
     }
 
-    KOKKOS_FUNCTION static constexpr std::size_t rank()
+    static constexpr std::size_t rank()
     {
         return (TensorIndex::rank() + ...);
     }
 
-    KOKKOS_FUNCTION static constexpr std::size_t size()
+    static constexpr std::size_t size()
     {
         return (TensorIndex::size() * ...);
     }
 
-    KOKKOS_FUNCTION static constexpr std::size_t mem_size()
+    static constexpr std::size_t mem_size()
     {
         return misc::binomial_coefficient(
                 ddc::type_seq_element_t<0, ddc::TypeSeq<TensorIndex...>>::mem_size() + rank() - 1,
                 rank());
     }
 
-    KOKKOS_FUNCTION static constexpr std::size_t access_size()
+    static constexpr std::size_t access_size()
     {
         return mem_size();
     }
 
-    KOKKOS_FUNCTION static constexpr std::size_t mem_id(
-            std::array<std::size_t, rank()> const natural_ids)
+    static constexpr std::size_t mem_id(std::array<std::size_t, rank()> const natural_ids)
     {
         std::array<std::size_t, rank()> sorted_ids(natural_ids);
         misc::detail::sort(sorted_ids.begin(), sorted_ids.end());
@@ -83,19 +82,18 @@ struct TensorSymmetricIndex
                - 1;
     }
 
-    KOKKOS_FUNCTION static constexpr std::size_t access_id(
-            std::array<std::size_t, rank()> const natural_ids)
+    static constexpr std::size_t access_id(std::array<std::size_t, rank()> const natural_ids)
     {
         return mem_id(natural_ids);
     }
 
-    KOKKOS_FUNCTION static constexpr std::size_t access_id_to_mem_id(std::size_t access_id)
+    static constexpr std::size_t access_id_to_mem_id(std::size_t access_id)
     {
         return access_id;
     }
 
     template <class Tensor, class Elem, class Id, class FunctorType>
-    KOKKOS_FUNCTION static constexpr Tensor::element_type process_access(
+    static constexpr Tensor::element_type process_access(
             const FunctorType& access,
             Tensor tensor,
             Elem elem)
@@ -103,8 +101,8 @@ struct TensorSymmetricIndex
         return access(tensor, elem);
     }
 
-    KOKKOS_FUNCTION static constexpr std::array<std::size_t, rank()>
-    mem_id_to_canonical_natural_ids(std::size_t mem_id)
+    static constexpr std::array<std::size_t, rank()> mem_id_to_canonical_natural_ids(
+            std::size_t mem_id)
     {
         assert(mem_id < mem_size());
         if constexpr (rank() == 0) {
