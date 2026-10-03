@@ -19,6 +19,7 @@ var namespacesil_1_1misc =
     [ "to_type_seq_t", "namespacesil_1_1misc.html#a0f31a0b3b9517ab930673de3be192d65", null ],
     [ "convert_type_seq_to_t", "namespacesil_1_1misc.html#af83a849e8c4a2149160bd276d3e445c1", null ],
     [ "type_seq_intersect_t", "namespacesil_1_1misc.html#a7a2bf2edd109e79ed82bc877725c4840", null ],
+    [ "cartesian_prod_t", "namespacesil_1_1misc.html#a77a9a68a30b01dd41dcaa84fada239d2", null ],
     [ "are_all_equal", "namespacesil_1_1misc.html#a9be032ba1e7bb2c1c931d858a2ab90f2", null ],
     [ "are_all_equal", "namespacesil_1_1misc.html#a5a1751c14a48bdc336c6ff27d10b1041", null ],
     [ "binomial_coefficient", "namespacesil_1_1misc.html#aea35c72a0b5289f6bef175d41e5001d1", null ],

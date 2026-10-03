@@ -8,6 +8,6 @@ var searchData=
   ['boundary_5',['boundary',['../namespacesil_1_1exterior.html#ab67124170cc5aa39c400687dc9e9e439',1,'sil::exterior::boundary(AllocationType allocation, SimplexType simplex)'],['../namespacesil_1_1exterior.html#aaba7ef9ca3ba7d6e87059e0ad7de1643',1,'sil::exterior::boundary(SimplexType simplex)'],['../namespacesil_1_1exterior.html#a5c98c080f983d9b2020d6b0f13598044',1,'sil::exterior::boundary(AllocationType allocation, Chain&lt; SimplexType, typename AllocationType::array_layout, typename AllocationType::memory_space &gt; chain)']]],
   ['boundary_20operator_6',['Boundary operator',['../exterior_module.html#autotoc_md20',1,'']]],
   ['boundary_5ft_7',['boundary_t',['../namespacesil_1_1exterior.html#a52bc67c02d8ba34a3eeb34de1dd21df8',1,'sil::exterior']]],
-  ['boundcond_8',['BoundCond',['../classsil_1_1mesher_1_1Mesher.html#ac3f9204e172f1ff8c7e8390351e12c95',1,'sil::mesher::Mesher']]],
-  ['bsplines_5ftype_9',['bsplines_type',['../classsil_1_1mesher_1_1Mesher.html#a1161cee72ecbc8cbcb8df18fc5892899',1,'sil::mesher::Mesher']]]
+  ['boundcond_8',['BoundCond',['../classsil_1_1mesher_1_1Mesher.html#aaba154fa4e1e00ac26f528c072bc9020',1,'sil::mesher::Mesher']]],
+  ['bsplines_5ftype_9',['bsplines_type',['../classsil_1_1mesher_1_1Mesher.html#a021e832865364bc927526e4cacc7de6f',1,'sil::mesher::Mesher']]]
 ];

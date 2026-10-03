@@ -148,9 +148,9 @@ $(function(){initNavTree('mesher_8hpp_source.html',''); initResizable(true); });
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="keyword">class </span>Mesher1D</div>
 <div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span>{</div>
 <div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="keyword">public</span>:</div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>    <span class="keyword">static</span> <span class="keyword">constexpr</span> ddc::BoundCond BoundCond = ddc::BoundCond::GREVILLE;</div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>    <span class="keyword">static</span> <span class="keyword">constexpr</span> ddc::SplineBuilderClosure BoundCond = ddc::SplineBuilderClosure::GREVILLE;</div>
 <div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span> </div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>    <span class="keyword">using </span>bsplines_type = ddc::UniformBSplines&lt;CDim, D&gt;;</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>    <span class="keyword">using </span>bsplines_type = ddc::UniformBSplines&lt;CDim, D, CDim::PERIODIC&gt;;</div>
 <div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span> </div>
 <div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span><span class="keyword">private</span>:</div>
 <div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> T&gt;</div>
@@ -183,10 +183,10 @@ $(function(){initNavTree('mesher_8hpp_source.html',''); initResizable(true); });
 <div class="line"><a id="l00051" name="l00051"></a><span class="lineno"><a class="line" href="classsil_1_1mesher_1_1Mesher.html">   51</a></span><span class="keyword">class </span><a class="code hl_class" href="classsil_1_1mesher_1_1Mesher.html">Mesher</a></div>
 <div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>{</div>
 <div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span><span class="keyword">public</span>:</div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno"><a class="line" href="classsil_1_1mesher_1_1Mesher.html#ac3f9204e172f1ff8c7e8390351e12c95">   54</a></span>    <span class="keyword">static</span> <span class="keyword">constexpr</span> ddc::BoundCond <a class="code hl_variable" href="classsil_1_1mesher_1_1Mesher.html#ac3f9204e172f1ff8c7e8390351e12c95">BoundCond</a> = ddc::BoundCond::GREVILLE;</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno"><a class="line" href="classsil_1_1mesher_1_1Mesher.html#aaba154fa4e1e00ac26f528c072bc9020">   54</a></span>    <span class="keyword">static</span> <span class="keyword">constexpr</span> ddc::SplineBuilderClosure <a class="code hl_variable" href="classsil_1_1mesher_1_1Mesher.html#aaba154fa4e1e00ac26f528c072bc9020">BoundCond</a> = ddc::SplineBuilderClosure::GREVILLE;</div>
 <div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span> </div>
 <div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> T&gt;</div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno"><a class="line" href="classsil_1_1mesher_1_1Mesher.html#a1161cee72ecbc8cbcb8df18fc5892899">   57</a></span>    <span class="keyword">using </span><a class="code hl_typedef" href="classsil_1_1mesher_1_1Mesher.html#a1161cee72ecbc8cbcb8df18fc5892899">bsplines_type</a> = ddc::UniformBSplines&lt;T, D&gt;;</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno"><a class="line" href="classsil_1_1mesher_1_1Mesher.html#a021e832865364bc927526e4cacc7de6f">   57</a></span>    <span class="keyword">using </span><a class="code hl_typedef" href="classsil_1_1mesher_1_1Mesher.html#a021e832865364bc927526e4cacc7de6f">bsplines_type</a> = ddc::UniformBSplines&lt;T, D, T::PERIODIC&gt;;</div>
 <div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span> </div>
 <div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span><span class="keyword">private</span>:</div>
 <div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> T&gt;</div>
@@ -195,7 +195,7 @@ $(function(){initNavTree('mesher_8hpp_source.html',''); initResizable(true); });
 <div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span><span class="keyword">public</span>:</div>
 <div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> T&gt;</div>
 <div class="line"><a id="l00065" name="l00065"></a><span class="lineno"><a class="line" href="classsil_1_1mesher_1_1Mesher.html#a16d13ec3131b5d8b5a838f7054cc1801">   65</a></span>    <span class="keyword">using </span><a class="code hl_typedef" href="classsil_1_1mesher_1_1Mesher.html#a16d13ec3131b5d8b5a838f7054cc1801">discrete_dimension_type</a> =</div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>            <span class="keyword">typename</span> greville_points_type&lt;<span class="keyword">typename</span> <a class="code hl_class" href="classsil_1_1mesher_1_1Mesher.html">Mesher</a>&lt;D, CDim...&gt;::template <a class="code hl_typedef" href="classsil_1_1mesher_1_1Mesher.html#a1161cee72ecbc8cbcb8df18fc5892899">bsplines_type&lt;T&gt;</a>&gt;::</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>            <span class="keyword">typename</span> greville_points_type&lt;<span class="keyword">typename</span> <a class="code hl_class" href="classsil_1_1mesher_1_1Mesher.html">Mesher</a>&lt;D, CDim...&gt;::template <a class="code hl_typedef" href="classsil_1_1mesher_1_1Mesher.html#a021e832865364bc927526e4cacc7de6f">bsplines_type&lt;T&gt;</a>&gt;::</div>
 <div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>                    interpolation_discrete_dimension_type;</div>
 <div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span> </div>
 <div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> TypeSeqDDim, <span class="keyword">class</span> TypeSeqBSplines&gt;</div>
@@ -218,28 +218,28 @@ $(function(){initNavTree('mesher_8hpp_source.html',''); initResizable(true); });
 <div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>{</div>
 <div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>    std::tuple&lt;detail::Mesher1D&lt;D, CDim&gt;...&gt; meshers;</div>
 <div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>    std::tuple&lt;ddc::DiscreteDomain&lt;ddc::type_seq_element_t&lt;</div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>            ddc::type_seq_rank_v&lt;CDim, ddc::detail::TypeSeq&lt;CDim...&gt;&gt;,</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>            ddc::type_seq_rank_v&lt;CDim, ddc::TypeSeq&lt;CDim...&gt;&gt;,</div>
 <div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>            TypeSeqDDim&gt;&gt;...&gt;</div>
 <div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>            meshs;</div>
 <div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span> </div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>    ((std ::get&lt;ddc::type_seq_rank_v&lt;CDim, ddc::detail::TypeSeq&lt;CDim...&gt;&gt;&gt;(meshs)</div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>      = std ::get&lt;ddc::type_seq_rank_v&lt;CDim, ddc::detail::TypeSeq&lt;CDim...&gt;&gt;&gt;(meshers)</div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>    ((std ::get&lt;ddc::type_seq_rank_v&lt;CDim, ddc::TypeSeq&lt;CDim...&gt;&gt;&gt;(meshs)</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>      = std ::get&lt;ddc::type_seq_rank_v&lt;CDim, ddc::TypeSeq&lt;CDim...&gt;&gt;&gt;(meshers)</div>
 <div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>                .template mesh&lt;</div>
 <div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>                        ddc::type_seq_element_t&lt;</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>                                ddc::type_seq_rank_v&lt;CDim, ddc::detail::TypeSeq&lt;CDim...&gt;&gt;,</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>                                ddc::type_seq_rank_v&lt;CDim, ddc::TypeSeq&lt;CDim...&gt;&gt;,</div>
 <div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>                                TypeSeqDDim&gt;,</div>
 <div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>                        ddc::type_seq_element_t&lt;</div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>                                ddc::type_seq_rank_v&lt;CDim, ddc::detail::TypeSeq&lt;CDim...&gt;&gt;,</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>                                ddc::type_seq_rank_v&lt;CDim, ddc::TypeSeq&lt;CDim...&gt;&gt;,</div>
 <div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>                                TypeSeqBSplines&gt;&gt;(</div>
 <div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>                        ddc::select&lt;CDim&gt;(lower_boundaries),</div>
 <div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>                        ddc::select&lt;CDim&gt;(upper_boundaries),</div>
 <div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>                        ddc::select&lt;ddc::type_seq_element_t&lt;</div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>                                ddc::type_seq_rank_v&lt;CDim, ddc::detail::TypeSeq&lt;CDim...&gt;&gt;,</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>                                ddc::type_seq_rank_v&lt;CDim, ddc::TypeSeq&lt;CDim...&gt;&gt;,</div>
 <div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>                                TypeSeqDDim&gt;&gt;(nb_cells))),</div>
 <div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>     ...);</div>
 <div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span> </div>
 <div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>    <span class="keywordflow">return</span> ddc::detail::convert_type_seq_to_discrete_domain_t&lt;TypeSeqDDim&gt;(</div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>            std::get&lt;ddc::type_seq_rank_v&lt;CDim, ddc::detail::TypeSeq&lt;CDim...&gt;&gt;&gt;(meshs)...);</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>            std::get&lt;ddc::type_seq_rank_v&lt;CDim, ddc::TypeSeq&lt;CDim...&gt;&gt;&gt;(meshs)...);</div>
 <div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>}</div>
 </div>
 <div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span> </div>
@@ -248,9 +248,9 @@ $(function(){initNavTree('mesher_8hpp_source.html',''); initResizable(true); });
 <div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span> </div>
 <div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>} <span class="comment">// namespace sil</span></div>
 <div class="ttc" id="aclasssil_1_1mesher_1_1Mesher_html"><div class="ttname"><a href="classsil_1_1mesher_1_1Mesher.html">sil::mesher::Mesher</a></div><div class="ttdef"><b>Definition</b> <a href="#l00051">mesher.hpp:52</a></div></div>
-<div class="ttc" id="aclasssil_1_1mesher_1_1Mesher_html_a1161cee72ecbc8cbcb8df18fc5892899"><div class="ttname"><a href="classsil_1_1mesher_1_1Mesher.html#a1161cee72ecbc8cbcb8df18fc5892899">sil::mesher::Mesher::bsplines_type</a></div><div class="ttdeci">ddc::UniformBSplines&lt; T, D &gt; bsplines_type</div><div class="ttdef"><b>Definition</b> <a href="#l00057">mesher.hpp:57</a></div></div>
+<div class="ttc" id="aclasssil_1_1mesher_1_1Mesher_html_a021e832865364bc927526e4cacc7de6f"><div class="ttname"><a href="classsil_1_1mesher_1_1Mesher.html#a021e832865364bc927526e4cacc7de6f">sil::mesher::Mesher::bsplines_type</a></div><div class="ttdeci">ddc::UniformBSplines&lt; T, D, T::PERIODIC &gt; bsplines_type</div><div class="ttdef"><b>Definition</b> <a href="#l00057">mesher.hpp:57</a></div></div>
 <div class="ttc" id="aclasssil_1_1mesher_1_1Mesher_html_a16d13ec3131b5d8b5a838f7054cc1801"><div class="ttname"><a href="classsil_1_1mesher_1_1Mesher.html#a16d13ec3131b5d8b5a838f7054cc1801">sil::mesher::Mesher::discrete_dimension_type</a></div><div class="ttdeci">typename greville_points_type&lt; typename Mesher&lt; D, CDim... &gt;::template bsplines_type&lt; T &gt; &gt;:: interpolation_discrete_dimension_type discrete_dimension_type</div><div class="ttdef"><b>Definition</b> <a href="#l00065">mesher.hpp:65</a></div></div>
-<div class="ttc" id="aclasssil_1_1mesher_1_1Mesher_html_ac3f9204e172f1ff8c7e8390351e12c95"><div class="ttname"><a href="classsil_1_1mesher_1_1Mesher.html#ac3f9204e172f1ff8c7e8390351e12c95">sil::mesher::Mesher::BoundCond</a></div><div class="ttdeci">static constexpr ddc::BoundCond BoundCond</div><div class="ttdef"><b>Definition</b> <a href="#l00054">mesher.hpp:54</a></div></div>
+<div class="ttc" id="aclasssil_1_1mesher_1_1Mesher_html_aaba154fa4e1e00ac26f528c072bc9020"><div class="ttname"><a href="classsil_1_1mesher_1_1Mesher.html#aaba154fa4e1e00ac26f528c072bc9020">sil::mesher::Mesher::BoundCond</a></div><div class="ttdeci">static constexpr ddc::SplineBuilderClosure BoundCond</div><div class="ttdef"><b>Definition</b> <a href="#l00054">mesher.hpp:54</a></div></div>
 <div class="ttc" id="aclasssil_1_1mesher_1_1Mesher_html_aceb024ed661bc4274401e0b711d95129"><div class="ttname"><a href="classsil_1_1mesher_1_1Mesher.html#aceb024ed661bc4274401e0b711d95129">sil::mesher::Mesher::mesh</a></div><div class="ttdeci">constexpr ddc::detail::convert_type_seq_to_discrete_domain_t&lt; TypeSeqDDim &gt; mesh(ddc::Coordinate&lt; CDim... &gt; lower_boundaries, ddc::Coordinate&lt; CDim... &gt; upper_boundaries, ddc::detail::convert_type_seq_to_discrete_domain_t&lt; TypeSeqDDim &gt;::discrete_vector_type nb_cells)</div><div class="ttdef"><b>Definition</b> <a href="#l00079">mesher.hpp:79</a></div></div>
 <div class="ttc" id="anamespacesil_html"><div class="ttname"><a href="namespacesil.html">sil</a></div><div class="ttdoc">The top-level namespace of SimiLie.</div><div class="ttdef"><b>Definition</b> <a href="csr_8hpp_source.html#l00015">csr.hpp:15</a></div></div>
 </div><!-- fragment --></div><!-- contents -->

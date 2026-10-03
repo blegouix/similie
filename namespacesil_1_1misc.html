@@ -166,6 +166,9 @@ Typedefs</h2></td></tr>
 <tr class="memitem:a7a2bf2edd109e79ed82bc877725c4840" id="r_a7a2bf2edd109e79ed82bc877725c4840"><td class="memTemplParams" colspan="2">template&lt;class TagSeqA , class TagSeqB &gt; </td></tr>
 <tr class="memitem:a7a2bf2edd109e79ed82bc877725c4840"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a7a2bf2edd109e79ed82bc877725c4840">type_seq_intersect_t</a> = ddc::type_seq_remove_t&lt;TagSeqA, ddc::type_seq_remove_t&lt;TagSeqA, TagSeqB&gt;&gt;</td></tr>
 <tr class="separator:a7a2bf2edd109e79ed82bc877725c4840"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a77a9a68a30b01dd41dcaa84fada239d2" id="r_a77a9a68a30b01dd41dcaa84fada239d2"><td class="memTemplParams" colspan="2">template&lt;class... Domains&gt; </td></tr>
+<tr class="memitem:a77a9a68a30b01dd41dcaa84fada239d2"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a77a9a68a30b01dd41dcaa84fada239d2">cartesian_prod_t</a></td></tr>
+<tr class="separator:a77a9a68a30b01dd41dcaa84fada239d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
@@ -252,7 +255,29 @@ template&lt;class TagSeqA , class TagSeqB &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="type__seq__ext_8hpp_source.html#l00013">13</a> of file <a class="el" href="type__seq__ext_8hpp_source.html">type_seq_ext.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="type__seq__ext_8hpp_source.html#l00015">15</a> of file <a class="el" href="type__seq__ext_8hpp_source.html">type_seq_ext.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a77a9a68a30b01dd41dcaa84fada239d2" name="a77a9a68a30b01dd41dcaa84fada239d2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a77a9a68a30b01dd41dcaa84fada239d2">&#9670;&#160;</a></span>cartesian_prod_t</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class... Domains&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="#a77a9a68a30b01dd41dcaa84fada239d2">sil::misc::cartesian_prod_t</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line"> <a class="code hl_typedef" href="#af83a849e8c4a2149160bd276d3e445c1">convert_type_seq_to_t</a>&lt;</div>
+<div class="line">        ddc::DiscreteDomain,</div>
+<div class="line">        <span class="keyword">typename</span> detail::CartesianProd&lt;Domains...&gt;::type&gt;</div>
+<div class="ttc" id="anamespacesil_1_1misc_html_af83a849e8c4a2149160bd276d3e445c1"><div class="ttname"><a href="#af83a849e8c4a2149160bd276d3e445c1">sil::misc::convert_type_seq_to_t</a></div><div class="ttdeci">typename detail::ConvertTypeSeqTo&lt; T, Seq &gt;::type convert_type_seq_to_t</div><div class="ttdef"><b>Definition</b> <a href="type__seq__conversion_8hpp_source.html#l00045">type_seq_conversion.hpp:45</a></div></div>
+</div><!-- fragment -->
+<p class="definition">Definition at line <a class="el" href="type__seq__ext_8hpp_source.html#l00040">40</a> of file <a class="el" href="type__seq__ext_8hpp_source.html">type_seq_ext.hpp</a>.</p>
 
 </div>
 </div>

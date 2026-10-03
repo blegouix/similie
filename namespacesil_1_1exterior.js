@@ -38,10 +38,10 @@ var namespacesil_1_1exterior =
     [ "codifferential_tensor_t", "namespacesil_1_1exterior.html#a3da5f6d818417a943e98321a4f70d534", null ],
     [ "codifferential_hodge_output_indices_t", "namespacesil_1_1exterior.html#acf9d9ac240de3edfc4e9bbcac31cd300", null ],
     [ "Form", "namespacesil_1_1exterior.html#a04a63056a25815fe3b4e94eddd7dbede", null ],
-    [ "hodge_star_domain_t", "namespacesil_1_1exterior.html#a21ac9e4c43191a7cf20b30d28e46a305", null ],
+    [ "hodge_star_domain_t", "namespacesil_1_1exterior.html#a95193dca73b2dc48ff0df2902b65609d", null ],
     [ "reduction_index_t", "namespacesil_1_1exterior.html#a7f4162fd50b1c01db82d03934600fced", null ],
-    [ "reduction_domain_t", "namespacesil_1_1exterior.html#a9efb81bdf89eacb506f032e59ce50e9f", null ],
-    [ "reconstruction_domain_t", "namespacesil_1_1exterior.html#a6ad5633fdd73bcbaf91998217ce5a257", null ],
+    [ "reduction_domain_t", "namespacesil_1_1exterior.html#a3573d343cfbc77a96eb5eaa02ee68b1c", null ],
+    [ "reconstruction_domain_t", "namespacesil_1_1exterior.html#acc46809dd9e1dbb32e7d9ce4b94571d0", null ],
     [ "simplex_for_domain_t", "namespacesil_1_1exterior.html#abaced41367e3e156dc7d8467022b3b94", null ],
     [ "CellComplex", "namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140", [
       [ "Primal", "namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140a68123c95275511243def4b27f64f4d97", null ],

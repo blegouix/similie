@@ -146,9 +146,9 @@ Collaboration diagram for sil::mesher::Mesher&lt; D, CDim &gt;:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a1161cee72ecbc8cbcb8df18fc5892899" id="r_a1161cee72ecbc8cbcb8df18fc5892899"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
-<tr class="memitem:a1161cee72ecbc8cbcb8df18fc5892899"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a1161cee72ecbc8cbcb8df18fc5892899">bsplines_type</a> = ddc::UniformBSplines&lt;T, D&gt;</td></tr>
-<tr class="separator:a1161cee72ecbc8cbcb8df18fc5892899"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a021e832865364bc927526e4cacc7de6f" id="r_a021e832865364bc927526e4cacc7de6f"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
+<tr class="memitem:a021e832865364bc927526e4cacc7de6f"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a021e832865364bc927526e4cacc7de6f">bsplines_type</a> = ddc::UniformBSplines&lt;T, D, T::PERIODIC&gt;</td></tr>
+<tr class="separator:a021e832865364bc927526e4cacc7de6f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a16d13ec3131b5d8b5a838f7054cc1801" id="r_a16d13ec3131b5d8b5a838f7054cc1801"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
 <tr class="memitem:a16d13ec3131b5d8b5a838f7054cc1801"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a16d13ec3131b5d8b5a838f7054cc1801">discrete_dimension_type</a></td></tr>
 <tr class="separator:a16d13ec3131b5d8b5a838f7054cc1801"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -161,16 +161,16 @@ Public Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
-<tr class="memitem:ac3f9204e172f1ff8c7e8390351e12c95" id="r_ac3f9204e172f1ff8c7e8390351e12c95"><td class="memItemLeft" align="right" valign="top">static constexpr ddc::BoundCond&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac3f9204e172f1ff8c7e8390351e12c95">BoundCond</a> = ddc::BoundCond::GREVILLE</td></tr>
-<tr class="separator:ac3f9204e172f1ff8c7e8390351e12c95"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaba154fa4e1e00ac26f528c072bc9020" id="r_aaba154fa4e1e00ac26f528c072bc9020"><td class="memItemLeft" align="right" valign="top">static constexpr ddc::SplineBuilderClosure&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aaba154fa4e1e00ac26f528c072bc9020">BoundCond</a> = ddc::SplineBuilderClosure::GREVILLE</td></tr>
+<tr class="separator:aaba154fa4e1e00ac26f528c072bc9020"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;std::size_t D, class... CDim&gt;<br />
 class sil::mesher::Mesher&lt; D, CDim &gt;</div>
 <p class="definition">Definition at line <a class="el" href="mesher_8hpp_source.html#l00051">51</a> of file <a class="el" href="mesher_8hpp_source.html">mesher.hpp</a>.</p>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
-<a id="a1161cee72ecbc8cbcb8df18fc5892899" name="a1161cee72ecbc8cbcb8df18fc5892899"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1161cee72ecbc8cbcb8df18fc5892899">&#9670;&#160;</a></span>bsplines_type</h2>
+<a id="a021e832865364bc927526e4cacc7de6f" name="a021e832865364bc927526e4cacc7de6f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a021e832865364bc927526e4cacc7de6f">&#9670;&#160;</a></span>bsplines_type</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -180,7 +180,7 @@ template&lt;std::size_t D, class... CDim&gt; </div>
 template&lt;class T &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="classsil_1_1mesher_1_1Mesher.html">sil::mesher::Mesher</a>&lt; D, CDim &gt;::bsplines_type = ddc::UniformBSplines&lt;T, D&gt;</td>
+          <td class="memname">using <a class="el" href="classsil_1_1mesher_1_1Mesher.html">sil::mesher::Mesher</a>&lt; D, CDim &gt;::bsplines_type = ddc::UniformBSplines&lt;T, D, T::PERIODIC&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -205,9 +205,9 @@ template&lt;class T &gt; </div>
       </table>
 </div><div class="memdoc">
 <b>Initial value:</b><div class="fragment"><div class="line"> </div>
-<div class="line">            <span class="keyword">typename</span> greville_points_type&lt;<span class="keyword">typename</span> Mesher&lt;D, CDim...&gt;::template <a class="code hl_typedef" href="#a1161cee72ecbc8cbcb8df18fc5892899">bsplines_type&lt;T&gt;</a>&gt;::</div>
+<div class="line">            <span class="keyword">typename</span> greville_points_type&lt;<span class="keyword">typename</span> Mesher&lt;D, CDim...&gt;::template <a class="code hl_typedef" href="#a021e832865364bc927526e4cacc7de6f">bsplines_type&lt;T&gt;</a>&gt;::</div>
 <div class="line">                    interpolation_discrete_dimension_type</div>
-<div class="ttc" id="aclasssil_1_1mesher_1_1Mesher_html_a1161cee72ecbc8cbcb8df18fc5892899"><div class="ttname"><a href="#a1161cee72ecbc8cbcb8df18fc5892899">sil::mesher::Mesher::bsplines_type</a></div><div class="ttdeci">ddc::UniformBSplines&lt; T, D &gt; bsplines_type</div><div class="ttdef"><b>Definition</b> <a href="mesher_8hpp_source.html#l00057">mesher.hpp:57</a></div></div>
+<div class="ttc" id="aclasssil_1_1mesher_1_1Mesher_html_a021e832865364bc927526e4cacc7de6f"><div class="ttname"><a href="#a021e832865364bc927526e4cacc7de6f">sil::mesher::Mesher::bsplines_type</a></div><div class="ttdeci">ddc::UniformBSplines&lt; T, D, T::PERIODIC &gt; bsplines_type</div><div class="ttdef"><b>Definition</b> <a href="mesher_8hpp_source.html#l00057">mesher.hpp:57</a></div></div>
 </div><!-- fragment -->
 <p class="definition">Definition at line <a class="el" href="mesher_8hpp_source.html#l00065">65</a> of file <a class="el" href="mesher_8hpp_source.html">mesher.hpp</a>.</p>
 
@@ -255,8 +255,8 @@ template&lt;class TypeSeqDDim , class TypeSeqBSplines &gt; </div>
 </div>
 </div>
 <h2 class="groupheader">Member Data Documentation</h2>
-<a id="ac3f9204e172f1ff8c7e8390351e12c95" name="ac3f9204e172f1ff8c7e8390351e12c95"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac3f9204e172f1ff8c7e8390351e12c95">&#9670;&#160;</a></span>BoundCond</h2>
+<a id="aaba154fa4e1e00ac26f528c072bc9020" name="aaba154fa4e1e00ac26f528c072bc9020"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaba154fa4e1e00ac26f528c072bc9020">&#9670;&#160;</a></span>BoundCond</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -267,7 +267,7 @@ template&lt;std::size_t D, class... CDim&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">ddc::BoundCond <a class="el" href="classsil_1_1mesher_1_1Mesher.html">sil::mesher::Mesher</a>&lt; D, CDim &gt;::BoundCond = ddc::BoundCond::GREVILLE</td>
+          <td class="memname">ddc::SplineBuilderClosure <a class="el" href="classsil_1_1mesher_1_1Mesher.html">sil::mesher::Mesher</a>&lt; D, CDim &gt;::BoundCond = ddc::SplineBuilderClosure::GREVILLE</td>
         </tr>
       </table>
   </td>

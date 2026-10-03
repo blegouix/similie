@@ -922,16 +922,16 @@ $(function(){initNavTree('young__tableau_8hpp_source.html',''); initResizable(tr
 <div class="line"><a id="l00795" name="l00795"></a><span class="lineno">  795</span><span class="comment">// Build index for symmetrizer (such that sym*proj is properly defined)</span></div>
 <div class="line"><a id="l00796" name="l00796"></a><span class="lineno">  796</span><span class="keyword">template</span> &lt;<span class="keyword">class </span>OId, <span class="keyword">class</span>... Id&gt;</div>
 <div class="line"><a id="l00797" name="l00797"></a><span class="lineno">  797</span><span class="keyword">using </span>symmetrizer_index_t = std::conditional_t&lt;</div>
-<div class="line"><a id="l00798" name="l00798"></a><span class="lineno">  798</span>        (ddc::type_seq_rank_v&lt;OId, ddc::detail::TypeSeq&lt;Id...&gt;&gt; &lt; (<span class="keyword">sizeof</span>...(Id) / 2)),</div>
+<div class="line"><a id="l00798" name="l00798"></a><span class="lineno">  798</span>        (ddc::type_seq_rank_v&lt;OId, ddc::TypeSeq&lt;Id...&gt;&gt; &lt; (<span class="keyword">sizeof</span>...(Id) / 2)),</div>
 <div class="line"><a id="l00799" name="l00799"></a><span class="lineno">  799</span>        tensor::prime&lt;OId&gt;,</div>
 <div class="line"><a id="l00800" name="l00800"></a><span class="lineno">  800</span>        ddc::type_seq_element_t&lt;</div>
 <div class="line"><a id="l00801" name="l00801"></a><span class="lineno">  801</span>                <span class="keyword">static_cast&lt;</span>std::size_t<span class="keyword">&gt;</span>(</div>
 <div class="line"><a id="l00802" name="l00802"></a><span class="lineno">  802</span>                        std::</div>
 <div class="line"><a id="l00803" name="l00803"></a><span class="lineno">  803</span>                                max(<span class="keyword">static_cast&lt;</span>std::ptrdiff_t<span class="keyword">&gt;</span>(0),</div>
 <div class="line"><a id="l00804" name="l00804"></a><span class="lineno">  804</span>                                    <span class="keyword">static_cast&lt;</span>std::ptrdiff_t<span class="keyword">&gt;</span>(</div>
-<div class="line"><a id="l00805" name="l00805"></a><span class="lineno">  805</span>                                            ddc::type_seq_rank_v&lt;OId, ddc::detail::TypeSeq&lt;Id...&gt;&gt;</div>
+<div class="line"><a id="l00805" name="l00805"></a><span class="lineno">  805</span>                                            ddc::type_seq_rank_v&lt;OId, ddc::TypeSeq&lt;Id...&gt;&gt;</div>
 <div class="line"><a id="l00806" name="l00806"></a><span class="lineno">  806</span>                                            - (<span class="keyword">sizeof</span>...(Id) / 2)))),</div>
-<div class="line"><a id="l00807" name="l00807"></a><span class="lineno">  807</span>                ddc::detail::TypeSeq&lt;Id...&gt;&gt;&gt;;</div>
+<div class="line"><a id="l00807" name="l00807"></a><span class="lineno">  807</span>                ddc::TypeSeq&lt;Id...&gt;&gt;&gt;;</div>
 <div class="line"><a id="l00808" name="l00808"></a><span class="lineno">  808</span> </div>
 <div class="line"><a id="l00809" name="l00809"></a><span class="lineno">  809</span><span class="comment">// Functor to fill identity or transpose projectors</span></div>
 <div class="line"><a id="l00810" name="l00810"></a><span class="lineno">  810</span><span class="keyword">template</span> &lt;std::size_t Dimension, std::size_t Rank, <span class="keyword">class</span>... NaturalId&gt;</div>
@@ -1451,7 +1451,7 @@ $(function(){initNavTree('young__tableau_8hpp_source.html',''); initResizable(tr
 <div class="line"><a id="l01324" name="l01324"></a><span class="lineno"> 1324</span> </div>
 <div class="line"><a id="l01325" name="l01325"></a><span class="lineno"> 1325</span><span class="preprocessor">#endif</span></div>
 <div class="ttc" id="anamespacesil_1_1csr_html_ac09df9011d1db18630182a3e1047a5c7"><div class="ttname"><a href="namespacesil_1_1csr.html#ac09df9011d1db18630182a3e1047a5c7">sil::csr::operator&lt;&lt;</a></div><div class="ttdeci">std::ostream &amp; operator&lt;&lt;(std::ostream &amp;os, Csr&lt; N, TensorIndex... &gt; const &amp;csr)</div><div class="ttdef"><b>Definition</b> <a href="csr_8hpp_source.html#l00191">csr.hpp:191</a></div></div>
-<div class="ttc" id="anamespacesil_1_1tensor_html_ac265afa3e78c715cbb7f64f9ace68f9d"><div class="ttname"><a href="namespacesil_1_1tensor.html#ac265afa3e78c715cbb7f64f9ace68f9d">sil::tensor::natural_tensor_prod_domain</a></div><div class="ttdeci">natural_tensor_prod_domain_t&lt; Dom1, Dom2 &gt; natural_tensor_prod_domain(Dom1 dom1, Dom2 dom2)</div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00816">tensor_impl.hpp:816</a></div></div>
+<div class="ttc" id="anamespacesil_1_1tensor_html_ac265afa3e78c715cbb7f64f9ace68f9d"><div class="ttname"><a href="namespacesil_1_1tensor.html#ac265afa3e78c715cbb7f64f9ace68f9d">sil::tensor::natural_tensor_prod_domain</a></div><div class="ttdeci">natural_tensor_prod_domain_t&lt; Dom1, Dom2 &gt; natural_tensor_prod_domain(Dom1 dom1, Dom2 dom2)</div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00812">tensor_impl.hpp:812</a></div></div>
 <div class="ttc" id="anamespacesil_html"><div class="ttname"><a href="namespacesil.html">sil</a></div><div class="ttdoc">The top-level namespace of SimiLie.</div><div class="ttdef"><b>Definition</b> <a href="csr_8hpp_source.html#l00015">csr.hpp:15</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->

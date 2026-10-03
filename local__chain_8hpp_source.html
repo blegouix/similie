@@ -646,7 +646,7 @@ $(function(){initNavTree('local__chain_8hpp_source.html',''); initResizable(true
 <div class="line"><a id="l00420" name="l00420"></a><span class="lineno">  420</span>    {</div>
 <div class="line"><a id="l00421" name="l00421"></a><span class="lineno">  421</span>        <span class="keyword">using </span>chain_type = <a class="code hl_function" href="namespacesil_1_1exterior.html#ad77d98f0d2f2ef2be8fe604aca0a1fc1">LocalChain</a>&lt;<a class="code hl_function" href="namespacesil_1_1exterior.html#a19dd94e9180327a407f012154b3c2bc4">Simplex</a>&lt;K, Tag...&gt;, Kokkos::LayoutRight, MemorySpace&gt;;</div>
 <div class="line"><a id="l00422" name="l00422"></a><span class="lineno">  422</span>        std::array&lt;std::ptrdiff_t, <span class="keyword">sizeof</span>...(Tag)&gt; permutation</div>
-<div class="line"><a id="l00423" name="l00423"></a><span class="lineno">  423</span>                = {0 * ddc::type_seq_rank_v&lt;Tag, ddc::detail::TypeSeq&lt;Tag...&gt;&gt;...};</div>
+<div class="line"><a id="l00423" name="l00423"></a><span class="lineno">  423</span>                = {0 * ddc::type_seq_rank_v&lt;Tag, ddc::TypeSeq&lt;Tag...&gt;&gt;...};</div>
 <div class="line"><a id="l00424" name="l00424"></a><span class="lineno">  424</span>        <span class="keywordflow">for</span> (<span class="keyword">auto</span> i = permutation.begin(); i &lt; permutation.begin() + K; ++i) {</div>
 <div class="line"><a id="l00425" name="l00425"></a><span class="lineno">  425</span>            *i = 1;</div>
 <div class="line"><a id="l00426" name="l00426"></a><span class="lineno">  426</span>        }</div>
