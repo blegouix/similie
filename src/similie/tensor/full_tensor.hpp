@@ -77,7 +77,7 @@ struct TensorFullIndex
             return ((misc::detail::stride<TensorIndex, TensorIndex...>()
                      * natural_ids[ddc::type_seq_rank_v<
                              TensorIndex,
-                             ddc::detail::TypeSeq<TensorIndex...>>])
+                             ddc::TypeSeq<TensorIndex...>>])
                     + ...);
         }
     }

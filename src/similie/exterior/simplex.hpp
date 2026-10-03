@@ -87,7 +87,7 @@ private:
     bool m_negative;
 
     template <class Tag_, class... T>
-        requires(!ddc::type_seq_contains_v<ddc::detail::TypeSeq<Tag_>, ddc::detail::TypeSeq<T...>>)
+        requires(!ddc::type_seq_contains_v<ddc::TypeSeq<Tag_>, ddc::TypeSeq<T...>>)
     static constexpr ddc::DiscreteVector<Tag_> add_eventually_null_dimensions_(
             [[maybe_unused]] ddc::DiscreteVector<T...> vect)
     {
@@ -95,7 +95,7 @@ private:
     }
 
     template <class Tag_, class... T>
-        requires(ddc::type_seq_contains_v<ddc::detail::TypeSeq<Tag_>, ddc::detail::TypeSeq<T...>>)
+        requires(ddc::type_seq_contains_v<ddc::TypeSeq<Tag_>, ddc::TypeSeq<T...>>)
     static constexpr ddc::DiscreteVector<Tag_> add_eventually_null_dimensions_(
             ddc::DiscreteVector<T...> vect)
     {

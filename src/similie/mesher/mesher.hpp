@@ -17,9 +17,9 @@ template <std::size_t D, class CDim>
 class Mesher1D
 {
 public:
-    static constexpr ddc::BoundCond BoundCond = ddc::BoundCond::GREVILLE;
+    static constexpr ddc::SplineBuilderClosure BoundCond = ddc::SplineBuilderClosure::GREVILLE;
 
-    using bsplines_type = ddc::UniformBSplines<CDim, D>;
+    using bsplines_type = ddc::UniformBSplines<CDim, D, CDim::PERIODIC>;
 
 private:
     template <class T>
@@ -51,10 +51,10 @@ template <std::size_t D, class... CDim>
 class Mesher
 {
 public:
-    static constexpr ddc::BoundCond BoundCond = ddc::BoundCond::GREVILLE;
+    static constexpr ddc::SplineBuilderClosure BoundCond = ddc::SplineBuilderClosure::GREVILLE;
 
     template <class T>
-    using bsplines_type = ddc::UniformBSplines<T, D>;
+    using bsplines_type = ddc::UniformBSplines<T, D, T::PERIODIC>;
 
 private:
     template <class T>
@@ -84,28 +84,28 @@ constexpr ddc::detail::convert_type_seq_to_discrete_domain_t<TypeSeqDDim> Mesher
 {
     std::tuple<detail::Mesher1D<D, CDim>...> meshers;
     std::tuple<ddc::DiscreteDomain<ddc::type_seq_element_t<
-            ddc::type_seq_rank_v<CDim, ddc::detail::TypeSeq<CDim...>>,
+            ddc::type_seq_rank_v<CDim, ddc::TypeSeq<CDim...>>,
             TypeSeqDDim>>...>
             meshs;
 
-    ((std ::get<ddc::type_seq_rank_v<CDim, ddc::detail::TypeSeq<CDim...>>>(meshs)
-      = std ::get<ddc::type_seq_rank_v<CDim, ddc::detail::TypeSeq<CDim...>>>(meshers)
+    ((std ::get<ddc::type_seq_rank_v<CDim, ddc::TypeSeq<CDim...>>>(meshs)
+      = std ::get<ddc::type_seq_rank_v<CDim, ddc::TypeSeq<CDim...>>>(meshers)
                 .template mesh<
                         ddc::type_seq_element_t<
-                                ddc::type_seq_rank_v<CDim, ddc::detail::TypeSeq<CDim...>>,
+                                ddc::type_seq_rank_v<CDim, ddc::TypeSeq<CDim...>>,
                                 TypeSeqDDim>,
                         ddc::type_seq_element_t<
-                                ddc::type_seq_rank_v<CDim, ddc::detail::TypeSeq<CDim...>>,
+                                ddc::type_seq_rank_v<CDim, ddc::TypeSeq<CDim...>>,
                                 TypeSeqBSplines>>(
                         ddc::select<CDim>(lower_boundaries),
                         ddc::select<CDim>(upper_boundaries),
                         ddc::select<ddc::type_seq_element_t<
-                                ddc::type_seq_rank_v<CDim, ddc::detail::TypeSeq<CDim...>>,
+                                ddc::type_seq_rank_v<CDim, ddc::TypeSeq<CDim...>>,
                                 TypeSeqDDim>>(nb_cells))),
      ...);
 
     return ddc::detail::convert_type_seq_to_discrete_domain_t<TypeSeqDDim>(
-            std::get<ddc::type_seq_rank_v<CDim, ddc::detail::TypeSeq<CDim...>>>(meshs)...);
+            std::get<ddc::type_seq_rank_v<CDim, ddc::TypeSeq<CDim...>>>(meshs)...);
 }
 
 } // namespace mesher

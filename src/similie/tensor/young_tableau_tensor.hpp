@@ -65,7 +65,7 @@ struct TensorYoungTableauIndex
                 ddc::DiscreteVector<TensorIndex...>(
                         ddc::DiscreteVector<TensorIndex>(TensorIndex::size())...)));
         for (std::size_t j = 0; j < v.values().size(); ++j) {
-            if (((v.idx()[ddc::type_seq_rank_v<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>>]
+            if (((v.idx()[ddc::type_seq_rank_v<TensorIndex, ddc::TypeSeq<TensorIndex...>>]
                          [j]
                   == TensorIndex::access_id(natural_ids))
                  && ...)) {
@@ -85,7 +85,7 @@ struct TensorYoungTableauIndex
     {
         return ((misc::detail::stride<TensorIndex, TensorIndex...>()
                  * natural_ids
-                         [ddc::type_seq_rank_v<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>>])
+                         [ddc::type_seq_rank_v<TensorIndex, ddc::TypeSeq<TensorIndex...>>])
                 + ...);
     }
 
@@ -100,7 +100,7 @@ struct TensorYoungTableauIndex
                 ddc::DiscreteVector<TensorIndex...>(
                         ddc::DiscreteVector<TensorIndex>(TensorIndex::size())...)));
         for (std::size_t j = 0; j < v.values().size(); ++j) {
-            if (((v.idx()[ddc::type_seq_rank_v<TensorIndex, ddc::detail::TypeSeq<TensorIndex...>>]
+            if (((v.idx()[ddc::type_seq_rank_v<TensorIndex, ddc::TypeSeq<TensorIndex...>>]
                          [j]
                   == ((access_id % misc::detail::next_stride<TensorIndex, TensorIndex...>())
                       / misc::detail::stride<TensorIndex, TensorIndex...>()))

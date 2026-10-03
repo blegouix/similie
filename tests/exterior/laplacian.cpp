@@ -8,6 +8,8 @@
 
 #include <ddc/ddc.hpp>
 
+#include <similie/misc/type_seq_ext.hpp>
+
 #include <gtest/gtest.h>
 #include <similie/tensor/identity_tensor.hpp>
 
@@ -71,19 +73,19 @@ static auto test_derivative(auto potential)
                 CodifferentialOfCoboundaryIndex::size() - DerivativeIndex::rank(),
                 CodifferentialOfCoboundaryIndex>;
         using DerivativeRhoLowSeq = ddc::type_seq_merge_t<
-                ddc::detail::TypeSeq<CodifferentialOfCoboundaryIndex>,
+                ddc::TypeSeq<CodifferentialOfCoboundaryIndex>,
                 DerivativeNuLowSeq>;
         using DerivativeRhoUpSeq = sil::tensor::upper_t<DerivativeRhoLowSeq>;
         using DerivativeSigmaLowSeq = ddc::type_seq_remove_t<
                 sil::tensor::lower_t<DerivativeMuUpSeq>,
-                ddc::detail::TypeSeq<CodifferentialOfCoboundaryIndex>>;
+                ddc::TypeSeq<CodifferentialOfCoboundaryIndex>>;
         using DerivativeDualIndex = sil::misc::
                 convert_type_seq_to_t<sil::tensor::TensorAntisymmetricIndex, DerivativeNuLowSeq>;
 
         [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<
                 sil::exterior::hodge_star_domain_t<DerivativeMuUpSeq, DerivativeNuLowSeq>>
                 derivative_hodge_star_accessor;
-        ddc::cartesian_prod_t<
+        sil::misc::cartesian_prod_t<
                 typename TensorType::non_indices_domain_t,
                 sil::exterior::hodge_star_domain_t<DerivativeMuUpSeq, DerivativeNuLowSeq>>
                 derivative_hodge_star_dom(
@@ -97,7 +99,7 @@ static auto test_derivative(auto potential)
         [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<
                 sil::exterior::hodge_star_domain_t<DerivativeRhoUpSeq, DerivativeSigmaLowSeq>>
                 dual_derivative_hodge_star_accessor;
-        ddc::cartesian_prod_t<
+        sil::misc::cartesian_prod_t<
                 typename TensorType::non_indices_domain_t,
                 sil::exterior::hodge_star_domain_t<DerivativeRhoUpSeq, DerivativeSigmaLowSeq>>
                 dual_derivative_hodge_star_dom(
@@ -110,7 +112,7 @@ static auto test_derivative(auto potential)
 
         [[maybe_unused]] sil::tensor::TensorAccessor<DerivativeDualIndex>
                 derivative_dual_tensor_accessor;
-        ddc::cartesian_prod_t<
+        sil::misc::cartesian_prod_t<
                 typename TensorType::non_indices_domain_t,
                 ddc::DiscreteDomain<DerivativeDualIndex>>
                 derivative_dual_tensor_dom(
@@ -148,12 +150,12 @@ static auto test_derivative(auto potential)
                 CodifferentialOfCoboundaryIndex::size() - DerivativeIndex::rank(),
                 CodifferentialOfCoboundaryIndex>;
         using DerivativeRhoLowSeq = ddc::type_seq_merge_t<
-                ddc::detail::TypeSeq<CodifferentialOfCoboundaryIndex>,
+                ddc::TypeSeq<CodifferentialOfCoboundaryIndex>,
                 DerivativeNuLowSeq>;
         using DerivativeRhoUpSeq = sil::tensor::upper_t<DerivativeRhoLowSeq>;
         using DerivativeSigmaLowSeq = ddc::type_seq_remove_t<
                 sil::tensor::lower_t<DerivativeMuUpSeq>,
-                ddc::detail::TypeSeq<CodifferentialOfCoboundaryIndex>>;
+                ddc::TypeSeq<CodifferentialOfCoboundaryIndex>>;
         using DerivativeDualIndex = sil::misc::
                 convert_type_seq_to_t<sil::tensor::TensorAntisymmetricIndex, DerivativeNuLowSeq>;
         using MuUpSeq
@@ -161,11 +163,11 @@ static auto test_derivative(auto potential)
         using NuLowSeq = sil::exterior::codifferential_hodge_output_indices_t<
                 InterestIndex::size() - Index::rank(),
                 InterestIndex>;
-        using RhoLowSeq = ddc::type_seq_merge_t<ddc::detail::TypeSeq<InterestIndex>, NuLowSeq>;
+        using RhoLowSeq = ddc::type_seq_merge_t<ddc::TypeSeq<InterestIndex>, NuLowSeq>;
         using RhoUpSeq = sil::tensor::upper_t<RhoLowSeq>;
         using SigmaLowSeq = ddc::type_seq_remove_t<
                 sil::tensor::lower_t<MuUpSeq>,
-                ddc::detail::TypeSeq<InterestIndex>>;
+                ddc::TypeSeq<InterestIndex>>;
         using DualIndex
                 = sil::misc::convert_type_seq_to_t<sil::tensor::TensorAntisymmetricIndex, NuLowSeq>;
         using CodifferentialIndex = sil::exterior::codifferential_index_t<InterestIndex, Index>;
@@ -173,7 +175,7 @@ static auto test_derivative(auto potential)
         [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<
                 sil::exterior::hodge_star_domain_t<DerivativeMuUpSeq, DerivativeNuLowSeq>>
                 derivative_hodge_star_accessor;
-        ddc::cartesian_prod_t<
+        sil::misc::cartesian_prod_t<
                 typename TensorType::non_indices_domain_t,
                 sil::exterior::hodge_star_domain_t<DerivativeMuUpSeq, DerivativeNuLowSeq>>
                 derivative_hodge_star_dom(
@@ -187,7 +189,7 @@ static auto test_derivative(auto potential)
         [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<
                 sil::exterior::hodge_star_domain_t<DerivativeRhoUpSeq, DerivativeSigmaLowSeq>>
                 dual_derivative_hodge_star_accessor;
-        ddc::cartesian_prod_t<
+        sil::misc::cartesian_prod_t<
                 typename TensorType::non_indices_domain_t,
                 sil::exterior::hodge_star_domain_t<DerivativeRhoUpSeq, DerivativeSigmaLowSeq>>
                 dual_derivative_hodge_star_dom(
@@ -200,7 +202,7 @@ static auto test_derivative(auto potential)
 
         [[maybe_unused]] sil::tensor::TensorAccessor<DerivativeDualIndex>
                 derivative_dual_tensor_accessor;
-        ddc::cartesian_prod_t<
+        sil::misc::cartesian_prod_t<
                 typename TensorType::non_indices_domain_t,
                 ddc::DiscreteDomain<DerivativeDualIndex>>
                 derivative_dual_tensor_dom(
@@ -213,7 +215,7 @@ static auto test_derivative(auto potential)
 
         [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<
                 sil::exterior::hodge_star_domain_t<MuUpSeq, NuLowSeq>> hodge_star_accessor;
-        ddc::cartesian_prod_t<
+        sil::misc::cartesian_prod_t<
                 typename TensorType::non_indices_domain_t,
                 sil::exterior::hodge_star_domain_t<MuUpSeq, NuLowSeq>>
                 hodge_star_dom(metric.non_indices_domain(), hodge_star_accessor.domain());
@@ -222,7 +224,7 @@ static auto test_derivative(auto potential)
 
         [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<
                 sil::exterior::hodge_star_domain_t<RhoUpSeq, SigmaLowSeq>> dual_hodge_star_accessor;
-        ddc::cartesian_prod_t<
+        sil::misc::cartesian_prod_t<
                 typename TensorType::non_indices_domain_t,
                 sil::exterior::hodge_star_domain_t<RhoUpSeq, SigmaLowSeq>>
                 dual_hodge_star_dom(metric.non_indices_domain(), dual_hodge_star_accessor.domain());
@@ -230,7 +232,7 @@ static auto test_derivative(auto potential)
         sil::tensor::Tensor dual_hodge_star(dual_hodge_star_alloc);
 
         [[maybe_unused]] sil::tensor::TensorAccessor<DualIndex> dual_tensor_accessor;
-        ddc::cartesian_prod_t<
+        sil::misc::cartesian_prod_t<
                 typename TensorType::non_indices_domain_t,
                 ddc::DiscreteDomain<DualIndex>>
                 dual_tensor_dom(potential.non_indices_domain(), dual_tensor_accessor.domain());
@@ -284,18 +286,18 @@ static auto test_derivative(auto potential)
         using NuLowSeq = sil::exterior::codifferential_hodge_output_indices_t<
                 InterestIndex::size() - Index::rank(),
                 InterestIndex>;
-        using RhoLowSeq = ddc::type_seq_merge_t<ddc::detail::TypeSeq<InterestIndex>, NuLowSeq>;
+        using RhoLowSeq = ddc::type_seq_merge_t<ddc::TypeSeq<InterestIndex>, NuLowSeq>;
         using RhoUpSeq = sil::tensor::upper_t<RhoLowSeq>;
         using SigmaLowSeq = ddc::type_seq_remove_t<
                 sil::tensor::lower_t<MuUpSeq>,
-                ddc::detail::TypeSeq<InterestIndex>>;
+                ddc::TypeSeq<InterestIndex>>;
         using DualIndex
                 = sil::misc::convert_type_seq_to_t<sil::tensor::TensorAntisymmetricIndex, NuLowSeq>;
         using CodifferentialIndex = sil::exterior::codifferential_index_t<InterestIndex, Index>;
 
         [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<
                 sil::exterior::hodge_star_domain_t<MuUpSeq, NuLowSeq>> hodge_star_accessor;
-        ddc::cartesian_prod_t<
+        sil::misc::cartesian_prod_t<
                 typename TensorType::non_indices_domain_t,
                 sil::exterior::hodge_star_domain_t<MuUpSeq, NuLowSeq>>
                 hodge_star_dom(metric.non_indices_domain(), hodge_star_accessor.domain());
@@ -304,7 +306,7 @@ static auto test_derivative(auto potential)
 
         [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<
                 sil::exterior::hodge_star_domain_t<RhoUpSeq, SigmaLowSeq>> dual_hodge_star_accessor;
-        ddc::cartesian_prod_t<
+        sil::misc::cartesian_prod_t<
                 typename TensorType::non_indices_domain_t,
                 sil::exterior::hodge_star_domain_t<RhoUpSeq, SigmaLowSeq>>
                 dual_hodge_star_dom(metric.non_indices_domain(), dual_hodge_star_accessor.domain());
@@ -312,7 +314,7 @@ static auto test_derivative(auto potential)
         sil::tensor::Tensor dual_hodge_star(dual_hodge_star_alloc);
 
         [[maybe_unused]] sil::tensor::TensorAccessor<DualIndex> dual_tensor_accessor;
-        ddc::cartesian_prod_t<
+        sil::misc::cartesian_prod_t<
                 typename TensorType::non_indices_domain_t,
                 ddc::DiscreteDomain<DualIndex>>
                 dual_tensor_dom(potential.non_indices_domain(), dual_tensor_accessor.domain());

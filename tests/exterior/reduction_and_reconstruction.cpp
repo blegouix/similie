@@ -3,6 +3,8 @@
 
 #include <ddc/ddc.hpp>
 
+#include <similie/misc/type_seq_ext.hpp>
+
 #include <gtest/gtest.h>
 
 #include "exterior.hpp"
@@ -116,7 +118,7 @@ void run_reduction_test(
 
     [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<
             sil::exterior::reduction_domain_t<IndexSeq>> reduction_accessor;
-    ddc::cartesian_prod_t<decltype(mesh_xy), sil::exterior::reduction_domain_t<IndexSeq>>
+    sil::misc::cartesian_prod_t<decltype(mesh_xy), sil::exterior::reduction_domain_t<IndexSeq>>
             reduction_dom(mesh_xy, reduction_accessor.domain());
     ddc::Chunk reduction_alloc(reduction_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor reduction_operator(reduction_alloc);
@@ -198,7 +200,7 @@ void run_reconstruction_test(SetupForm&& setup_form, CheckValue&& check_value)
 
     [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<
             sil::exterior::reconstruction_domain_t<IndexSeq>> reconstruction_accessor;
-    ddc::cartesian_prod_t<decltype(mesh_xy), sil::exterior::reconstruction_domain_t<IndexSeq>>
+    sil::misc::cartesian_prod_t<decltype(mesh_xy), sil::exterior::reconstruction_domain_t<IndexSeq>>
             reconstruction_dom(mesh_xy, reconstruction_accessor.domain());
     ddc::Chunk reconstruction_alloc(reconstruction_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor reconstruction_operator(reconstruction_alloc);

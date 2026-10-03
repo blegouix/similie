@@ -45,8 +45,8 @@ TEST(Mesher, 2D)
     ddc::Coordinate<X, Y> upper_bounds(1., 1.);
     ddc::DiscreteVector<DDimX, DDimY> nb_cells(10, 10);
     ddc::DiscreteDomain<DDimX, DDimY> mesh_xy = mesher.template mesh<
-            ddc::detail::TypeSeq<DDimX, DDimY>,
-            ddc::detail::TypeSeq<BSplinesX, BSplinesY>>(lower_bounds, upper_bounds, nb_cells);
+            ddc::TypeSeq<DDimX, DDimY>,
+            ddc::TypeSeq<BSplinesX, BSplinesY>>(lower_bounds, upper_bounds, nb_cells);
 
     EXPECT_TRUE(
             (mesh_xy

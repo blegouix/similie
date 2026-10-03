@@ -25,30 +25,30 @@ namespace sil {
 namespace exterior {
 
 template <
-        misc::Specialization<ddc::detail::TypeSeq> Indices1,
-        misc::Specialization<ddc::detail::TypeSeq> Indices2>
+        misc::Specialization<ddc::TypeSeq> Indices1,
+        misc::Specialization<ddc::TypeSeq> Indices2>
 using hodge_star_domain_t
         = ddc::detail::convert_type_seq_to_discrete_domain_t<ddc::type_seq_merge_t<
-                ddc::detail::TypeSeq<
+                ddc::TypeSeq<
                         misc::convert_type_seq_to_t<tensor::TensorFullIndex, Indices1>>,
                 std::conditional_t<
                         (ddc::type_seq_size_v<Indices2> == 0),
-                        ddc::detail::TypeSeq<>,
-                        ddc::detail::TypeSeq<misc::convert_type_seq_to_t<
+                        ddc::TypeSeq<>,
+                        ddc::TypeSeq<misc::convert_type_seq_to_t<
                                 tensor::TensorAntisymmetricIndex,
                                 Indices2>>>>>;
 
 template <
-        misc::Specialization<ddc::detail::TypeSeq> Indices1,
-        misc::Specialization<ddc::detail::TypeSeq> Indices2,
+        misc::Specialization<ddc::TypeSeq> Indices1,
+        misc::Specialization<ddc::TypeSeq> Indices2,
         class MetricType,
         class BatchElem>
 struct ContinuousHodgeStar;
 
 template <
         CellComplex Complex,
-        misc::Specialization<ddc::detail::TypeSeq> Indices1,
-        misc::Specialization<ddc::detail::TypeSeq> Indices2,
+        misc::Specialization<ddc::TypeSeq> Indices1,
+        misc::Specialization<ddc::TypeSeq> Indices2,
         class MetricType,
         class PositionType,
         class BatchElem>
@@ -141,7 +141,7 @@ KOKKOS_FUNCTION std::array<std::size_t, N - M> complement_ids(std::array<std::si
     return complement;
 }
 
-template <misc::Specialization<ddc::detail::TypeSeq> Indices>
+template <misc::Specialization<ddc::TypeSeq> Indices>
 struct HodgeStarTargetSize
 {
     static constexpr std::size_t value
@@ -149,15 +149,15 @@ struct HodgeStarTargetSize
 };
 
 template <>
-struct HodgeStarTargetSize<ddc::detail::TypeSeq<>>
+struct HodgeStarTargetSize<ddc::TypeSeq<>>
 {
     static constexpr std::size_t value = 1;
 };
 
 template <
         CellComplex Complex,
-        misc::Specialization<ddc::detail::TypeSeq> Indices1,
-        misc::Specialization<ddc::detail::TypeSeq> Indices2,
+        misc::Specialization<ddc::TypeSeq> Indices1,
+        misc::Specialization<ddc::TypeSeq> Indices2,
         misc::Specialization<tensor::Tensor> HodgeStarType,
         misc::Specialization<tensor::Tensor> MetricType,
         misc::Specialization<tensor::Tensor> PositionType,
@@ -188,8 +188,8 @@ struct FillDiscreteHodgeStarMem
 };
 
 template <
-        misc::Specialization<ddc::detail::TypeSeq> Indices1,
-        misc::Specialization<ddc::detail::TypeSeq> Indices2,
+        misc::Specialization<ddc::TypeSeq> Indices1,
+        misc::Specialization<ddc::TypeSeq> Indices2,
         misc::Specialization<tensor::Tensor> HodgeStarType,
         misc::Specialization<tensor::Tensor> MetricType,
         class BatchElem>
@@ -214,8 +214,8 @@ struct FillContinuousHodgeStarMem
 
 template <
         CellComplex Complex,
-        misc::Specialization<ddc::detail::TypeSeq> Indices1,
-        misc::Specialization<ddc::detail::TypeSeq> Indices2,
+        misc::Specialization<ddc::TypeSeq> Indices1,
+        misc::Specialization<ddc::TypeSeq> Indices2,
         class MetricType,
         class PositionType,
         class BatchElem>
@@ -359,8 +359,8 @@ struct DiscreteHodgeStar
 };
 
 template <
-        misc::Specialization<ddc::detail::TypeSeq> Indices1,
-        misc::Specialization<ddc::detail::TypeSeq> Indices2,
+        misc::Specialization<ddc::TypeSeq> Indices1,
+        misc::Specialization<ddc::TypeSeq> Indices2,
         class MetricType,
         class BatchElem>
 struct ContinuousHodgeStar
@@ -451,8 +451,8 @@ struct ContinuousHodgeStar
 };
 
 template <
-        misc::Specialization<ddc::detail::TypeSeq> Indices1,
-        misc::Specialization<ddc::detail::TypeSeq> Indices2,
+        misc::Specialization<ddc::TypeSeq> Indices1,
+        misc::Specialization<ddc::TypeSeq> Indices2,
         CellComplex Complex = CellComplex::CircumcentricDual,
         misc::Specialization<tensor::Tensor> HodgeStarType,
         misc::Specialization<tensor::Tensor> MetricType,
@@ -494,8 +494,8 @@ HodgeStarType fill_discrete_hodge_star(
 }
 
 template <
-        misc::Specialization<ddc::detail::TypeSeq> Indices1,
-        misc::Specialization<ddc::detail::TypeSeq> Indices2,
+        misc::Specialization<ddc::TypeSeq> Indices1,
+        misc::Specialization<ddc::TypeSeq> Indices2,
         misc::Specialization<tensor::Tensor> HodgeStarType,
         misc::Specialization<tensor::Tensor> MetricType,
         class ExecSpace>

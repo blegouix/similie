@@ -315,8 +315,8 @@ int main(int argc, char** argv)
     /*
     MesherXY mesher;
     ddc::DiscreteDomain<DDimX, DDimY> mesh_xy = mesher.template mesh<
-            ddc::detail::TypeSeq<DDimX, DDimY>,
-            ddc::detail::TypeSeq<BSplinesX, BSplinesY>>(lower_bounds, upper_bounds, nb_cells);
+            ddc::TypeSeq<DDimX, DDimY>,
+            ddc::TypeSeq<BSplinesX, BSplinesY>>(lower_bounds, upper_bounds, nb_cells);
      */
     auto const x_dom = ddc::init_discrete_space<DDimX>(DDimX::init<DDimX>(
             ddc::select<X>(lower_bounds),

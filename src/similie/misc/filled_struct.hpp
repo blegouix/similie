@@ -20,8 +20,8 @@ struct FilledStruct<T<Arg...>>
     static constexpr T<Arg...> operator()(auto const n)
     {
         return T<Arg...> {
-                n * (ddc::type_seq_rank_v<Arg, ddc::detail::TypeSeq<Arg...>> + 42)
-                / (ddc::type_seq_rank_v<Arg, ddc::detail::TypeSeq<Arg...>> + 42)...};
+                n * (ddc::type_seq_rank_v<Arg, ddc::TypeSeq<Arg...>> + 42)
+                / (ddc::type_seq_rank_v<Arg, ddc::TypeSeq<Arg...>> + 42)...};
     }
 };
 

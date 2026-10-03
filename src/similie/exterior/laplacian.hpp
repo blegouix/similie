@@ -8,6 +8,8 @@
 
 #include <ddc/ddc.hpp>
 
+#include <similie/misc/type_seq_ext.hpp>
+
 #include <similie/misc/domain_contains.hpp>
 #include <similie/misc/macros.hpp>
 #include <similie/misc/specialization.hpp>
@@ -49,7 +51,7 @@ TensorType codifferential_of_coboundary(
             tensor::TensorAntisymmetricIndex,
             codifferential_hodge_output_indices>;
     using dual_codifferential_hodge_input_indices = ddc::type_seq_merge_t<
-            ddc::detail::TypeSeq<LaplacianDummyIndex>,
+            ddc::TypeSeq<LaplacianDummyIndex>,
             codifferential_hodge_output_indices>;
     using dual_codifferential_index = misc::convert_type_seq_to_t<
             tensor::TensorAntisymmetricIndex,
@@ -206,23 +208,23 @@ class StagedLaplacian<
             CodifferentialOfCoboundaryIndex::size() - CoboundaryOutputIndex::rank(),
             CodifferentialOfCoboundaryIndex>;
     using DualCoboundaryHodgeInputIndices = ddc::type_seq_merge_t<
-            ddc::detail::TypeSeq<CodifferentialOfCoboundaryIndex>,
+            ddc::TypeSeq<CodifferentialOfCoboundaryIndex>,
             CoboundaryHodgeOutputIndices>;
     using DualCoboundaryHodgeOutputIndices = ddc::type_seq_remove_t<
             tensor::lower_t<CoboundaryHodgeInputIndices>,
-            ddc::detail::TypeSeq<CodifferentialOfCoboundaryIndex>>;
+            ddc::TypeSeq<CodifferentialOfCoboundaryIndex>>;
     using CoboundaryDualTensorIndex = misc::
             convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, CoboundaryHodgeOutputIndices>;
 
-    using DerivativeHodgeStarDomainType = ddc::cartesian_prod_t<
+    using DerivativeHodgeStarDomainType = sil::misc::cartesian_prod_t<
             typename MetricType::non_indices_domain_t,
             hodge_star_domain_t<CoboundaryHodgeInputIndices, CoboundaryHodgeOutputIndices>>;
-    using DualDerivativeHodgeStarDomainType = ddc::cartesian_prod_t<
+    using DualDerivativeHodgeStarDomainType = sil::misc::cartesian_prod_t<
             typename MetricType::non_indices_domain_t,
             hodge_star_domain_t<
                     tensor::upper_t<DualCoboundaryHodgeInputIndices>,
                     DualCoboundaryHodgeOutputIndices>>;
-    using DerivativeDualTensorDomainType = ddc::cartesian_prod_t<
+    using DerivativeDualTensorDomainType = sil::misc::cartesian_prod_t<
             typename TensorType::non_indices_domain_t,
             ddc::DiscreteDomain<CoboundaryDualTensorIndex>>;
 
@@ -389,11 +391,11 @@ class StagedLaplacian<
             CodifferentialOfCoboundaryIndex::size() - CoboundaryOutputIndex::rank(),
             CodifferentialOfCoboundaryIndex>;
     using DualCoboundaryHodgeInputIndices = ddc::type_seq_merge_t<
-            ddc::detail::TypeSeq<CodifferentialOfCoboundaryIndex>,
+            ddc::TypeSeq<CodifferentialOfCoboundaryIndex>,
             CoboundaryHodgeOutputIndices>;
     using DualCoboundaryHodgeOutputIndices = ddc::type_seq_remove_t<
             tensor::lower_t<CoboundaryHodgeInputIndices>,
-            ddc::detail::TypeSeq<CodifferentialOfCoboundaryIndex>>;
+            ddc::TypeSeq<CodifferentialOfCoboundaryIndex>>;
     using CoboundaryDualTensorIndex = misc::
             convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, CoboundaryHodgeOutputIndices>;
 
@@ -403,39 +405,39 @@ class StagedLaplacian<
             LaplacianDummyIndex::size() - CochainTag::rank(),
             LaplacianDummyIndex>;
     using DualCodifferentialHodgeInputIndices = ddc::type_seq_merge_t<
-            ddc::detail::TypeSeq<LaplacianDummyIndex>,
+            ddc::TypeSeq<LaplacianDummyIndex>,
             CodifferentialHodgeOutputIndices>;
     using DualCodifferentialHodgeOutputIndices = ddc::type_seq_remove_t<
             tensor::lower_t<CodifferentialHodgeInputIndices>,
-            ddc::detail::TypeSeq<LaplacianDummyIndex>>;
+            ddc::TypeSeq<LaplacianDummyIndex>>;
     using CodifferentialDualTensorIndex = misc::convert_type_seq_to_t<
             tensor::TensorAntisymmetricIndex,
             CodifferentialHodgeOutputIndices>;
     using CodifferentialOutputIndex = codifferential_index_t<LaplacianDummyIndex, CochainTag>;
 
-    using DerivativeHodgeStarDomainType = ddc::cartesian_prod_t<
+    using DerivativeHodgeStarDomainType = sil::misc::cartesian_prod_t<
             typename MetricType::non_indices_domain_t,
             hodge_star_domain_t<CoboundaryHodgeInputIndices, CoboundaryHodgeOutputIndices>>;
-    using DualDerivativeHodgeStarDomainType = ddc::cartesian_prod_t<
+    using DualDerivativeHodgeStarDomainType = sil::misc::cartesian_prod_t<
             typename MetricType::non_indices_domain_t,
             hodge_star_domain_t<
                     tensor::upper_t<DualCoboundaryHodgeInputIndices>,
                     DualCoboundaryHodgeOutputIndices>>;
-    using DerivativeDualTensorDomainType = ddc::cartesian_prod_t<
+    using DerivativeDualTensorDomainType = sil::misc::cartesian_prod_t<
             typename TensorType::non_indices_domain_t,
             ddc::DiscreteDomain<CoboundaryDualTensorIndex>>;
-    using HodgeStarDomainType = ddc::cartesian_prod_t<
+    using HodgeStarDomainType = sil::misc::cartesian_prod_t<
             typename MetricType::non_indices_domain_t,
             hodge_star_domain_t<CodifferentialHodgeInputIndices, CodifferentialHodgeOutputIndices>>;
-    using DualHodgeStarDomainType = ddc::cartesian_prod_t<
+    using DualHodgeStarDomainType = sil::misc::cartesian_prod_t<
             typename MetricType::non_indices_domain_t,
             hodge_star_domain_t<
                     tensor::upper_t<DualCodifferentialHodgeInputIndices>,
                     DualCodifferentialHodgeOutputIndices>>;
-    using DualTensorDomainType = ddc::cartesian_prod_t<
+    using DualTensorDomainType = sil::misc::cartesian_prod_t<
             typename TensorType::non_indices_domain_t,
             ddc::DiscreteDomain<CodifferentialDualTensorIndex>>;
-    using CodifferentialDomainType = ddc::cartesian_prod_t<
+    using CodifferentialDomainType = sil::misc::cartesian_prod_t<
             typename TensorType::non_indices_domain_t,
             ddc::DiscreteDomain<CodifferentialOutputIndex>>;
 
@@ -675,28 +677,28 @@ private:
             LaplacianDummyIndex::size() - CochainTag::rank(),
             LaplacianDummyIndex>;
     using DualCodifferentialHodgeInputIndices = ddc::type_seq_merge_t<
-            ddc::detail::TypeSeq<LaplacianDummyIndex>,
+            ddc::TypeSeq<LaplacianDummyIndex>,
             CodifferentialHodgeOutputIndices>;
     using DualCodifferentialHodgeOutputIndices = ddc::type_seq_remove_t<
             tensor::lower_t<CodifferentialHodgeInputIndices>,
-            ddc::detail::TypeSeq<LaplacianDummyIndex>>;
+            ddc::TypeSeq<LaplacianDummyIndex>>;
     using CodifferentialDualTensorIndex = misc::convert_type_seq_to_t<
             tensor::TensorAntisymmetricIndex,
             CodifferentialHodgeOutputIndices>;
     using CodifferentialOutputIndex = codifferential_index_t<LaplacianDummyIndex, CochainTag>;
 
-    using HodgeStarDomainType = ddc::cartesian_prod_t<
+    using HodgeStarDomainType = sil::misc::cartesian_prod_t<
             typename MetricType::non_indices_domain_t,
             hodge_star_domain_t<CodifferentialHodgeInputIndices, CodifferentialHodgeOutputIndices>>;
-    using DualHodgeStarDomainType = ddc::cartesian_prod_t<
+    using DualHodgeStarDomainType = sil::misc::cartesian_prod_t<
             typename MetricType::non_indices_domain_t,
             hodge_star_domain_t<
                     tensor::upper_t<DualCodifferentialHodgeInputIndices>,
                     DualCodifferentialHodgeOutputIndices>>;
-    using DualTensorDomainType = ddc::cartesian_prod_t<
+    using DualTensorDomainType = sil::misc::cartesian_prod_t<
             typename TensorType::non_indices_domain_t,
             ddc::DiscreteDomain<CodifferentialDualTensorIndex>>;
-    using CodifferentialDomainType = ddc::cartesian_prod_t<
+    using CodifferentialDomainType = sil::misc::cartesian_prod_t<
             typename TensorType::non_indices_domain_t,
             ddc::DiscreteDomain<CodifferentialOutputIndex>>;
 

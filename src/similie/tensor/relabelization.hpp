@@ -157,7 +157,7 @@ template <class IndexToRelabelize, class OldIndices, class NewIndices>
 struct RelabelizeIndices;
 
 template <class IndexToRelabelize>
-struct RelabelizeIndices<IndexToRelabelize, ddc::detail::TypeSeq<>, ddc::detail::TypeSeq<>>
+struct RelabelizeIndices<IndexToRelabelize, ddc::TypeSeq<>, ddc::TypeSeq<>>
 {
     using type = IndexToRelabelize;
 };
@@ -170,16 +170,16 @@ template <
         class... TailNewIndex>
 struct RelabelizeIndices<
         IndexToRelabelize,
-        ddc::detail::TypeSeq<HeadOldIndex, TailOldIndex...>,
-        ddc::detail::TypeSeq<HeadNewIndex, TailNewIndex...>>
+        ddc::TypeSeq<HeadOldIndex, TailOldIndex...>,
+        ddc::TypeSeq<HeadNewIndex, TailNewIndex...>>
 {
     static_assert(sizeof...(TailOldIndex) == sizeof...(TailNewIndex));
     using type = std::conditional_t<
             (sizeof...(TailOldIndex) > 0),
             typename RelabelizeIndices<
                     typename RelabelizeIndex<IndexToRelabelize, HeadOldIndex, HeadNewIndex>::type,
-                    ddc::detail::TypeSeq<TailOldIndex...>,
-                    ddc::detail::TypeSeq<TailNewIndex...>>::type,
+                    ddc::TypeSeq<TailOldIndex...>,
+                    ddc::TypeSeq<TailNewIndex...>>::type,
             typename RelabelizeIndex<IndexToRelabelize, HeadOldIndex, HeadNewIndex>::type>;
 };
 
@@ -187,7 +187,7 @@ template <class T, class OldIndices, class NewIndices>
 struct RelabelizeIndicesInType;
 
 template <class T>
-struct RelabelizeIndicesInType<T, ddc::detail::TypeSeq<>, ddc::detail::TypeSeq<>>
+struct RelabelizeIndicesInType<T, ddc::TypeSeq<>, ddc::TypeSeq<>>
 {
     using type = T;
 };
@@ -200,14 +200,14 @@ template <
         class... TailNewIndex>
 struct RelabelizeIndicesInType<
         T,
-        ddc::detail::TypeSeq<HeadOldIndex, TailOldIndex...>,
-        ddc::detail::TypeSeq<HeadNewIndex, TailNewIndex...>>
+        ddc::TypeSeq<HeadOldIndex, TailOldIndex...>,
+        ddc::TypeSeq<HeadNewIndex, TailNewIndex...>>
 {
     static_assert(sizeof...(TailOldIndex) == sizeof...(TailNewIndex));
     using type = typename RelabelizeIndicesInType<
             relabelize_index_in_t<T, HeadOldIndex, HeadNewIndex>,
-            ddc::detail::TypeSeq<TailOldIndex...>,
-            ddc::detail::TypeSeq<TailNewIndex...>>::type;
+            ddc::TypeSeq<TailOldIndex...>,
+            ddc::TypeSeq<TailNewIndex...>>::type;
 };
 
 } // namespace detail
@@ -312,8 +312,8 @@ constexpr auto RelabelizeIndicesOf(
         return RelabelizeIndicesOf<
                 ddc::type_seq_replace_t<
                         OldIndices,
-                        ddc::detail::TypeSeq<ddc::type_seq_element_t<I, OldIndices>>,
-                        ddc::detail::TypeSeq<ddc::type_seq_element_t<I, NewIndices>>>,
+                        ddc::TypeSeq<ddc::type_seq_element_t<I, OldIndices>>,
+                        ddc::TypeSeq<ddc::type_seq_element_t<I, NewIndices>>>,
                 NewIndices,
                 I + 1>(relabelize_index_of_t<
                        Tensor<ElementType,
@@ -351,14 +351,14 @@ constexpr auto RelabelizeIndicesOf(
 
 template <
         misc::Specialization<Tensor> TensorType,
-        misc::Specialization<ddc::detail::TypeSeq> OldIndices,
-        misc::Specialization<ddc::detail::TypeSeq> NewIndices>
+        misc::Specialization<ddc::TypeSeq> OldIndices,
+        misc::Specialization<ddc::TypeSeq> NewIndices>
 using relabelize_indices_of_t
         = detail::RelabelizeIndicesOfType<TensorType, OldIndices, NewIndices>::type;
 
 template <
-        misc::Specialization<ddc::detail::TypeSeq> OldIndices,
-        misc::Specialization<ddc::detail::TypeSeq> NewIndices,
+        misc::Specialization<ddc::TypeSeq> OldIndices,
+        misc::Specialization<ddc::TypeSeq> NewIndices,
         misc::Specialization<Tensor> Tensor>
 constexpr relabelize_indices_of_t<Tensor, OldIndices, NewIndices> relabelize_indices_of(
         Tensor tensor)

@@ -420,7 +420,7 @@ struct TangentBasis<K, ddc::DiscreteDomain<Tag...>>
     {
         using chain_type = LocalChain<Simplex<K, Tag...>, Kokkos::LayoutRight, MemorySpace>;
         std::array<std::ptrdiff_t, sizeof...(Tag)> permutation
-                = {0 * ddc::type_seq_rank_v<Tag, ddc::detail::TypeSeq<Tag...>>...};
+                = {0 * ddc::type_seq_rank_v<Tag, ddc::TypeSeq<Tag...>>...};
         for (auto i = permutation.begin(); i < permutation.begin() + K; ++i) {
             *i = 1;
         }

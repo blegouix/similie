@@ -42,7 +42,7 @@ struct TensorDiagonalIndex
 
     KOKKOS_FUNCTION static constexpr std::size_t mem_size()
     {
-        return ddc::type_seq_element_t<0, ddc::detail::TypeSeq<TensorIndex...>>::mem_size();
+        return ddc::type_seq_element_t<0, ddc::TypeSeq<TensorIndex...>>::mem_size();
     }
 
     KOKKOS_FUNCTION static constexpr std::size_t access_size()

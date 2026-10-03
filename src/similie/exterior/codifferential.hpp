@@ -9,6 +9,8 @@
 
 #include <ddc/ddc.hpp>
 
+#include <similie/misc/type_seq_ext.hpp>
+
 #include <similie/exterior/hodge_star.hpp>
 #include <similie/misc/domain_contains.hpp>
 #include <similie/misc/macros.hpp>
@@ -103,8 +105,8 @@ template <
         class SupportType,
         class MemorySpace>
     requires(ddc::type_seq_contains_v<
-             ddc::detail::TypeSeq<CochainIndex>,
-             ddc::detail::TypeSeq<DDim...>>)
+             ddc::TypeSeq<CochainIndex>,
+             ddc::TypeSeq<DDim...>>)
 struct CodifferentialTensorType<
         TagToRemoveFromCochain,
         CochainIndex,
@@ -142,7 +144,7 @@ struct CodifferentialHodgeOutputIndexSeq_;
 template <std::size_t... Id, class T>
 struct CodifferentialHodgeOutputIndexSeq_<std::index_sequence<Id...>, T>
 {
-    using type = ddc::detail::TypeSeq<tensor::Covariant<CodifferentialHodgeOutputIndex<Id, T>>...>;
+    using type = ddc::TypeSeq<tensor::Covariant<CodifferentialHodgeOutputIndex<Id, T>>...>;
 };
 
 template <std::size_t EndId, class T>
@@ -152,7 +154,7 @@ template <std::size_t EndId, class T>
     requires(EndId == 0)
 struct CodifferentialHodgeOutputIndexSeq<EndId, T>
 {
-    using type = ddc::detail::TypeSeq<>;
+    using type = ddc::TypeSeq<>;
 };
 
 template <std::size_t EndId, class T>
@@ -250,7 +252,7 @@ struct Codifferential<
                 TagToRemoveFromCochain::size() - CochainTag::rank(),
                 TagToRemoveFromCochain>;
         using target_hodge_input_indices = ddc::type_seq_merge_t<
-                ddc::detail::TypeSeq<TagToRemoveFromCochain>,
+                ddc::TypeSeq<TagToRemoveFromCochain>,
                 source_hodge_output_indices>;
         using dual_tensor_index = misc::convert_type_seq_to_t<
                 tensor::TensorAntisymmetricIndex,
@@ -309,7 +311,7 @@ struct Codifferential<
                 tensor::upper_t<target_hodge_input_indices>,
                 ddc::type_seq_remove_t<
                         tensor::lower_t<source_hodge_input_indices>,
-                        ddc::detail::TypeSeq<TagToRemoveFromCochain>>,
+                        ddc::TypeSeq<TagToRemoveFromCochain>>,
                 MetricType,
                 PositionType,
                 typename TensorType::non_indices_domain_t::discrete_element_type>::
@@ -340,11 +342,11 @@ class StagedCodifferential
             TagToRemoveFromCochain::size() - CochainTag::rank(),
             TagToRemoveFromCochain>;
     using TargetHodgeInputIndices = ddc::type_seq_merge_t<
-            ddc::detail::TypeSeq<TagToRemoveFromCochain>,
+            ddc::TypeSeq<TagToRemoveFromCochain>,
             SourceHodgeOutputIndices>;
     using TargetHodgeOutputIndices = ddc::type_seq_remove_t<
             tensor::lower_t<SourceHodgeInputIndices>,
-            ddc::detail::TypeSeq<TagToRemoveFromCochain>>;
+            ddc::TypeSeq<TagToRemoveFromCochain>>;
     using DualTensorIndex = misc::
             convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, SourceHodgeOutputIndices>;
     using DualCodifferentialIndex = misc::
@@ -357,15 +359,15 @@ class StagedCodifferential
     using LowerChainType = decltype(tangent_basis<DualTensorIndex::rank(), NonSpectatorDimensions>(
             std::declval<ExecSpace const&>()));
 
-    using HodgeStarDomainType = ddc::cartesian_prod_t<
+    using HodgeStarDomainType = sil::misc::cartesian_prod_t<
             typename MetricType::non_indices_domain_t,
             hodge_star_domain_t<SourceHodgeInputIndices, SourceHodgeOutputIndices>>;
-    using DualHodgeStarDomainType = ddc::cartesian_prod_t<
+    using DualHodgeStarDomainType = sil::misc::cartesian_prod_t<
             typename MetricType::non_indices_domain_t,
             hodge_star_domain_t<
                     tensor::upper_t<TargetHodgeInputIndices>,
                     TargetHodgeOutputIndices>>;
-    using DualTensorDomainType = ddc::cartesian_prod_t<
+    using DualTensorDomainType = sil::misc::cartesian_prod_t<
             typename TensorType::non_indices_domain_t,
             ddc::DiscreteDomain<DualTensorIndex>>;
 
@@ -577,7 +579,7 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
     using dual_tensor_index = misc::
             convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, source_hodge_output_indices>;
     using target_hodge_input_indices = ddc::type_seq_merge_t<
-            ddc::detail::TypeSeq<TagToRemoveFromCochain>,
+            ddc::TypeSeq<TagToRemoveFromCochain>,
             source_hodge_output_indices>;
     using dual_codifferential_index = misc::
             convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, target_hodge_input_indices>;

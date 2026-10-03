@@ -8,6 +8,8 @@
 
 #include <ddc/ddc.hpp>
 
+#include <similie/misc/type_seq_ext.hpp>
+
 #include <similie/misc/are_all_same.hpp>
 #include <similie/misc/filled_struct.hpp>
 #include <similie/misc/macros.hpp>
@@ -108,8 +110,8 @@ struct CoboundaryTensorType<
         tensor::Tensor<ElementType, ddc::DiscreteDomain<DDim...>, SupportType, MemorySpace>>
 {
     static_assert(ddc::type_seq_contains_v<
-                  ddc::detail::TypeSeq<CochainIndex>,
-                  ddc::detail::TypeSeq<DDim...>>);
+                  ddc::TypeSeq<CochainIndex>,
+                  ddc::TypeSeq<DDim...>>);
     using type = tensor::Tensor<
             ElementType,
             ddc::replace_dim_of_t<
@@ -141,7 +143,7 @@ struct ComputeSimplex<Chain<Simplex<K, Tag...>, LayoutStridedPolicy, ExecSpace>>
             Chain<Simplex<K, Tag...>, LayoutStridedPolicy, ExecSpace> const& chain)
     {
         ddc::DiscreteVector<Tag...> vect {
-                0 * ddc::type_seq_rank_v<Tag, ddc::detail::TypeSeq<Tag...>>...};
+                0 * ddc::type_seq_rank_v<Tag, ddc::TypeSeq<Tag...>>...};
         for (auto i = chain.begin(); i < chain.end(); ++i) {
             vect = ddc::DiscreteVector<Tag...> {
                     (static_cast<bool>(vect.template get<Tag>())
@@ -194,9 +196,9 @@ struct NonSpectatorDimension;
 template <tensor::TensorNatIndex Index, class... DDim>
 struct NonSpectatorDimension<Index, ddc::DiscreteDomain<DDim...>>
 {
-    using type = ddc::cartesian_prod_t<std::conditional_t<
+    using type = sil::misc::cartesian_prod_t<std::conditional_t<
             ddc::type_seq_contains_v<
-                    ddc::detail::TypeSeq<typename DDim::continuous_dimension_type>,
+                    ddc::TypeSeq<typename DDim::continuous_dimension_type>,
                     typename Index::type_seq_dimensions>,
             ddc::DiscreteDomain<DDim>,
             ddc::DiscreteDomain<>>...>;
