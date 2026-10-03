@@ -146,7 +146,7 @@ RUN git clone --depth 1 --branch v1.9.5 https://github.com/google/benchmark.git 
  && cmake --install /opt/benchmark/build
 
 # Kokkos
-RUN git clone --depth 1 --branch 5.1.1 https://github.com/kokkos/kokkos.git /opt/kokkos
+RUN git clone --depth 1 --branch 5.2.2 https://github.com/kokkos/kokkos.git /opt/kokkos
 RUN if [ "${BACKEND}" = "cpu" ]; then \
       cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Release -DKokkos_ENABLE_OPENMP=ON \
         -B /opt/kokkos/build -S /opt/kokkos; \
@@ -167,7 +167,7 @@ RUN git clone --depth 1 --branch v1.1.0 https://github.com/kokkos/kokkos-fft.git
  && cmake --install /opt/kokkos-fft/build
 
 # Kokkos Kernels
-RUN git clone --depth 1 --branch 5.1.1 https://github.com/kokkos/kokkos-kernels.git /opt/kokkos-kernels \
+RUN git clone --depth 1 --branch 5.2.2 https://github.com/kokkos/kokkos-kernels.git /opt/kokkos-kernels \
  && cmake -DCMAKE_CXX_COMPILER=$(if [ "${BACKEND}" = "cpu" ]; then echo g++; else echo /usr/local/bin/nvcc_wrapper; fi) \
       -DCMAKE_BUILD_TYPE=Release -B /opt/kokkos-kernels/build -S /opt/kokkos-kernels \
  && cmake --build /opt/kokkos-kernels/build -j 4 \
