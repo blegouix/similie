@@ -116,27 +116,27 @@ public:
     {{
     }}
 
-    KOKKOS_FUNCTION constexpr double value({forward_arguments}) const
+    constexpr double value({forward_arguments}) const
     {{
         return {_render_expression(forward_value_expression, state_variable_symbol, inverse_output_name, constitutive_law_replacements)};
     }}
 
-    KOKKOS_FUNCTION constexpr double jacobian({forward_arguments}) const
+    constexpr double jacobian({forward_arguments}) const
     {{
         return value({", ".join(variables)});
     }}
 
-    KOKKOS_FUNCTION constexpr double operator()({forward_arguments}) const
+    constexpr double operator()({forward_arguments}) const
     {{
         return {_render_expression(constitutive_law, state_variable_symbol, inverse_output_name, constitutive_law_replacements)};
     }}
 
-    KOKKOS_FUNCTION constexpr double inverse_value({inverse_arguments}) const
+    constexpr double inverse_value({inverse_arguments}) const
     {{
         return {_render_expression(inverse_value_expression, output_symbol, output_variable, inverse_replacements)};
     }}
 
-    KOKKOS_FUNCTION constexpr double inverse({inverse_arguments}) const
+    constexpr double inverse({inverse_arguments}) const
     {{
         return {_render_expression(inverse_expression, output_symbol, output_variable, inverse_replacements)};
     }}
