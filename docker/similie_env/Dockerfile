@@ -138,3 +138,37 @@ RUN apt update && apt install -y libpdi-dev pdiplugin-all
 
 # Sympy
 RUN apt install -y python3-sympy python3-h5py
+
+# Google Benchmark /!\ TODO move to the top of the Dockerfile
+RUN git clone --depth 1 --branch v1.9.5 https://github.com/google/benchmark.git /opt/benchmark \
+ && cmake -DCMAKE_BUILD_TYPE=Release -DBENCHMARK_ENABLE_TESTING=OFF -B /opt/benchmark/build -S /opt/benchmark \
+ && cmake --build /opt/benchmark/build -j 4 \
+ && cmake --install /opt/benchmark/build
+
+# Kokkos
+RUN git clone --depth 1 --branch 5.1.1 https://github.com/kokkos/kokkos.git /opt/kokkos
+RUN if [ "${BACKEND}" = "cpu" ]; then \
+      cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Release -DKokkos_ENABLE_OPENMP=ON \
+        -B /opt/kokkos/build -S /opt/kokkos; \
+    else \
+      cmake -DCMAKE_CXX_COMPILER=/opt/kokkos/bin/nvcc_wrapper -DCMAKE_BUILD_TYPE=Release \
+        -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_ADA89=ON \
+        -DKokkos_ENABLE_CUDA_CONSTEXPR=ON -DKokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE=ON \
+        -B /opt/kokkos/build -S /opt/kokkos; \
+    fi
+RUN cmake --build /opt/kokkos/build -j 4 && cmake --install /opt/kokkos/build
+
+# Kokkos FFT
+RUN git clone --depth 1 --branch v1.1.0 https://github.com/kokkos/kokkos-fft.git /opt/kokkos-fft \
+ && cmake -DCMAKE_CXX_COMPILER=$(if [ "${BACKEND}" = "cpu" ]; then echo g++; else echo /usr/local/bin/nvcc_wrapper; fi) \
+      -DCMAKE_BUILD_TYPE=Release -DKokkosFFT_ENABLE_FFTW=ON \
+      -B /opt/kokkos-fft/build -S /opt/kokkos-fft \
+ && cmake --build /opt/kokkos-fft/build -j 4 \
+ && cmake --install /opt/kokkos-fft/build
+
+# Kokkos Kernels
+RUN git clone --depth 1 --branch 5.1.1 https://github.com/kokkos/kokkos-kernels.git /opt/kokkos-kernels \
+ && cmake -DCMAKE_CXX_COMPILER=$(if [ "${BACKEND}" = "cpu" ]; then echo g++; else echo /usr/local/bin/nvcc_wrapper; fi) \
+      -DCMAKE_BUILD_TYPE=Release -B /opt/kokkos-kernels/build -S /opt/kokkos-kernels \
+ && cmake --build /opt/kokkos-kernels/build -j 4 \
+ && cmake --install /opt/kokkos-kernels/build
