@@ -28,9 +28,7 @@ template <class OTensorNaturalIndex, class... TensorNaturalIndex>
 static constexpr std::size_t stride()
 {
     return (stride_factor<
-                    ddc::type_seq_rank_v<
-                            OTensorNaturalIndex,
-                            ddc::TypeSeq<TensorNaturalIndex...>>,
+                    ddc::type_seq_rank_v<OTensorNaturalIndex, ddc::TypeSeq<TensorNaturalIndex...>>,
                     TensorNaturalIndex,
                     TensorNaturalIndex...>()
             * ...);
@@ -40,8 +38,7 @@ template <class OTensorNaturalIndex, class... TensorNaturalIndex>
 static constexpr std::size_t next_stride()
 {
     if constexpr (
-            ddc::type_seq_rank_v<OTensorNaturalIndex, ddc::TypeSeq<TensorNaturalIndex...>>
-            == 0) {
+            ddc::type_seq_rank_v<OTensorNaturalIndex, ddc::TypeSeq<TensorNaturalIndex...>> == 0) {
         return std::numeric_limits<std::size_t>::max();
     } else {
         return (stride_factor<

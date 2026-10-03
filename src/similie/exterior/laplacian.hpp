@@ -8,11 +8,10 @@
 
 #include <ddc/ddc.hpp>
 
-#include <similie/misc/type_seq_ext.hpp>
-
 #include <similie/misc/domain_contains.hpp>
 #include <similie/misc/macros.hpp>
 #include <similie/misc/specialization.hpp>
+#include <similie/misc/type_seq_ext.hpp>
 #include <similie/tensor/character.hpp>
 #include <similie/tensor/tensor_impl.hpp>
 
@@ -404,9 +403,8 @@ class StagedLaplacian<
     using CodifferentialHodgeOutputIndices = codifferential_hodge_output_indices_t<
             LaplacianDummyIndex::size() - CochainTag::rank(),
             LaplacianDummyIndex>;
-    using DualCodifferentialHodgeInputIndices = ddc::type_seq_merge_t<
-            ddc::TypeSeq<LaplacianDummyIndex>,
-            CodifferentialHodgeOutputIndices>;
+    using DualCodifferentialHodgeInputIndices = ddc::
+            type_seq_merge_t<ddc::TypeSeq<LaplacianDummyIndex>, CodifferentialHodgeOutputIndices>;
     using DualCodifferentialHodgeOutputIndices = ddc::type_seq_remove_t<
             tensor::lower_t<CodifferentialHodgeInputIndices>,
             ddc::TypeSeq<LaplacianDummyIndex>>;
@@ -676,9 +674,8 @@ private:
     using CodifferentialHodgeOutputIndices = codifferential_hodge_output_indices_t<
             LaplacianDummyIndex::size() - CochainTag::rank(),
             LaplacianDummyIndex>;
-    using DualCodifferentialHodgeInputIndices = ddc::type_seq_merge_t<
-            ddc::TypeSeq<LaplacianDummyIndex>,
-            CodifferentialHodgeOutputIndices>;
+    using DualCodifferentialHodgeInputIndices = ddc::
+            type_seq_merge_t<ddc::TypeSeq<LaplacianDummyIndex>, CodifferentialHodgeOutputIndices>;
     using DualCodifferentialHodgeOutputIndices = ddc::type_seq_remove_t<
             tensor::lower_t<CodifferentialHodgeInputIndices>,
             ddc::TypeSeq<LaplacianDummyIndex>>;

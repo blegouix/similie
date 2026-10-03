@@ -5,10 +5,9 @@
 
 #include <ddc/ddc.hpp>
 
-#include <similie/misc/type_seq_ext.hpp>
-
 #include <gtest/gtest.h>
 #include <similie/exterior/hodge_star.hpp>
+#include <similie/misc/type_seq_ext.hpp>
 #include <similie/tensor/symmetric_tensor.hpp>
 
 struct X
@@ -60,10 +59,10 @@ using MetricIndex = sil::tensor::TensorSymmetricIndex<
 
 using PositionIndex = sil::tensor::Contravariant<sil::tensor::TensorNaturalIndex<X, Y, Z>>;
 
-using HodgeStarDomain = sil::exterior::
-        hodge_star_domain_t<ddc::TypeSeq<MuUp, NuUp>, ddc::TypeSeq<RhoLow>>;
-using HodgeStarDomain2 = sil::exterior::
-        hodge_star_domain_t<ddc::TypeSeq<RhoUp>, ddc::TypeSeq<MuLow, NuLow>>;
+using HodgeStarDomain
+        = sil::exterior::hodge_star_domain_t<ddc::TypeSeq<MuUp, NuUp>, ddc::TypeSeq<RhoLow>>;
+using HodgeStarDomain2
+        = sil::exterior::hodge_star_domain_t<ddc::TypeSeq<RhoUp>, ddc::TypeSeq<MuLow, NuLow>>;
 
 TEST(DiscreteHodgeStar, Metric3D)
 {

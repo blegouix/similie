@@ -44,8 +44,7 @@ struct TensorSymmetricIndex
     KOKKOS_FUNCTION static constexpr std::size_t mem_size()
     {
         return misc::binomial_coefficient(
-                ddc::type_seq_element_t<0, ddc::TypeSeq<TensorIndex...>>::mem_size()
-                        + rank() - 1,
+                ddc::type_seq_element_t<0, ddc::TypeSeq<TensorIndex...>>::mem_size() + rank() - 1,
                 rank());
     }
 
@@ -60,12 +59,10 @@ struct TensorSymmetricIndex
         std::array<std::size_t, rank()> sorted_ids(natural_ids);
         misc::detail::sort(sorted_ids.begin(), sorted_ids.end());
         return misc::binomial_coefficient(
-                       ddc::type_seq_element_t<0, ddc::TypeSeq<TensorIndex...>>::mem_size()
-                               + rank() - 1,
+                       ddc::type_seq_element_t<0, ddc::TypeSeq<TensorIndex...>>::mem_size() + rank()
+                               - 1,
                        rank())
-               - ((sorted_ids[ddc::type_seq_rank_v<
-                           TensorIndex,
-                           ddc::TypeSeq<TensorIndex...>>]
+               - ((sorted_ids[ddc::type_seq_rank_v<TensorIndex, ddc::TypeSeq<TensorIndex...>>]
                                    == TensorIndex::mem_size() - 1
                            ? 0
                            : misc::binomial_coefficient(
@@ -114,8 +111,7 @@ struct TensorSymmetricIndex
             return std::array<std::size_t, rank()> {};
         } else {
             std::array<std::size_t, rank()> ids;
-            std::size_t d
-                    = ddc::type_seq_element_t<0, ddc::TypeSeq<TensorIndex...>>::mem_size();
+            std::size_t d = ddc::type_seq_element_t<0, ddc::TypeSeq<TensorIndex...>>::mem_size();
             std::size_t r = rank();
             for (std::size_t i = 0; i < rank(); ++i) {
                 const std::size_t triangle_size = misc::binomial_coefficient(d + r - i - 1, r - i);

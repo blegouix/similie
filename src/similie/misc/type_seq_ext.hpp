@@ -31,16 +31,16 @@ struct CartesianProd<>
 template <class Domain, class... Domains>
 struct CartesianProd<Domain, Domains...>
 {
-    using type = ddc::type_seq_cat_t<
-            ddc::to_type_seq_t<Domain>,
-            typename CartesianProd<Domains...>::type>;
+    using type = ddc::
+            type_seq_cat_t<ddc::to_type_seq_t<Domain>, typename CartesianProd<Domains...>::type>;
 };
 
 } // namespace detail
 
 template <class... Domains>
-using cartesian_prod_t
-        = convert_type_seq_to_t<ddc::DiscreteDomain, typename detail::CartesianProd<Domains...>::type>;
+using cartesian_prod_t = convert_type_seq_to_t<
+        ddc::DiscreteDomain,
+        typename detail::CartesianProd<Domains...>::type>;
 
 } // namespace misc
 

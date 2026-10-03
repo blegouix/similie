@@ -8,9 +8,8 @@
 
 #include <ddc/ddc.hpp>
 
-#include <similie/misc/type_seq_ext.hpp>
-
 #include <gtest/gtest.h>
+#include <similie/misc/type_seq_ext.hpp>
 #include <similie/tensor/identity_tensor.hpp>
 
 #include "exterior.hpp"
@@ -72,9 +71,8 @@ static auto test_derivative(auto potential)
         using DerivativeNuLowSeq = sil::exterior::codifferential_hodge_output_indices_t<
                 CodifferentialOfCoboundaryIndex::size() - DerivativeIndex::rank(),
                 CodifferentialOfCoboundaryIndex>;
-        using DerivativeRhoLowSeq = ddc::type_seq_merge_t<
-                ddc::TypeSeq<CodifferentialOfCoboundaryIndex>,
-                DerivativeNuLowSeq>;
+        using DerivativeRhoLowSeq = ddc::
+                type_seq_merge_t<ddc::TypeSeq<CodifferentialOfCoboundaryIndex>, DerivativeNuLowSeq>;
         using DerivativeRhoUpSeq = sil::tensor::upper_t<DerivativeRhoLowSeq>;
         using DerivativeSigmaLowSeq = ddc::type_seq_remove_t<
                 sil::tensor::lower_t<DerivativeMuUpSeq>,
@@ -149,9 +147,8 @@ static auto test_derivative(auto potential)
         using DerivativeNuLowSeq = sil::exterior::codifferential_hodge_output_indices_t<
                 CodifferentialOfCoboundaryIndex::size() - DerivativeIndex::rank(),
                 CodifferentialOfCoboundaryIndex>;
-        using DerivativeRhoLowSeq = ddc::type_seq_merge_t<
-                ddc::TypeSeq<CodifferentialOfCoboundaryIndex>,
-                DerivativeNuLowSeq>;
+        using DerivativeRhoLowSeq = ddc::
+                type_seq_merge_t<ddc::TypeSeq<CodifferentialOfCoboundaryIndex>, DerivativeNuLowSeq>;
         using DerivativeRhoUpSeq = sil::tensor::upper_t<DerivativeRhoLowSeq>;
         using DerivativeSigmaLowSeq = ddc::type_seq_remove_t<
                 sil::tensor::lower_t<DerivativeMuUpSeq>,
@@ -165,9 +162,8 @@ static auto test_derivative(auto potential)
                 InterestIndex>;
         using RhoLowSeq = ddc::type_seq_merge_t<ddc::TypeSeq<InterestIndex>, NuLowSeq>;
         using RhoUpSeq = sil::tensor::upper_t<RhoLowSeq>;
-        using SigmaLowSeq = ddc::type_seq_remove_t<
-                sil::tensor::lower_t<MuUpSeq>,
-                ddc::TypeSeq<InterestIndex>>;
+        using SigmaLowSeq = ddc::
+                type_seq_remove_t<sil::tensor::lower_t<MuUpSeq>, ddc::TypeSeq<InterestIndex>>;
         using DualIndex
                 = sil::misc::convert_type_seq_to_t<sil::tensor::TensorAntisymmetricIndex, NuLowSeq>;
         using CodifferentialIndex = sil::exterior::codifferential_index_t<InterestIndex, Index>;
@@ -288,9 +284,8 @@ static auto test_derivative(auto potential)
                 InterestIndex>;
         using RhoLowSeq = ddc::type_seq_merge_t<ddc::TypeSeq<InterestIndex>, NuLowSeq>;
         using RhoUpSeq = sil::tensor::upper_t<RhoLowSeq>;
-        using SigmaLowSeq = ddc::type_seq_remove_t<
-                sil::tensor::lower_t<MuUpSeq>,
-                ddc::TypeSeq<InterestIndex>>;
+        using SigmaLowSeq = ddc::
+                type_seq_remove_t<sil::tensor::lower_t<MuUpSeq>, ddc::TypeSeq<InterestIndex>>;
         using DualIndex
                 = sil::misc::convert_type_seq_to_t<sil::tensor::TensorAntisymmetricIndex, NuLowSeq>;
         using CodifferentialIndex = sil::exterior::codifferential_index_t<InterestIndex, Index>;

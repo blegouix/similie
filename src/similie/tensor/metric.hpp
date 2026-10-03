@@ -5,10 +5,9 @@
 
 #include <ddc/ddc.hpp>
 
-#include <similie/misc/type_seq_ext.hpp>
-
 #include <similie/misc/macros.hpp>
 #include <similie/misc/small_matrix.hpp>
+#include <similie/misc/type_seq_ext.hpp>
 #include <similie/misc/unsecure_parallel_deepcopy.hpp>
 
 #include "character.hpp"
@@ -122,10 +121,7 @@ template <class MetricIndex, class Indices1, class Indices2>
 struct MetricProdDomainType;
 
 template <class MetricIndex, class... Index1, class... Index2>
-struct MetricProdDomainType<
-        MetricIndex,
-        ddc::TypeSeq<Index1...>,
-        ddc::TypeSeq<Index2...>>
+struct MetricProdDomainType<MetricIndex, ddc::TypeSeq<Index1...>, ddc::TypeSeq<Index2...>>
 {
     static_assert(sizeof...(Index1) == sizeof...(Index2));
     using type = sil::misc::cartesian_prod_t<relabelize_metric_in_domain_t<

@@ -36,16 +36,14 @@ KOKKOS_FUNCTION bool domain_contains(
         ddc::DiscreteDomain<DDim...> dom,
         ddc::DiscreteElement<ODDim...> elem)
 {
-    return detail::IsInDomain<misc::type_seq_intersect_t<
-            ddc::TypeSeq<DDim...>,
-            ddc::TypeSeq<ODDim...>>>::
+    return detail::IsInDomain<
+            misc::type_seq_intersect_t<ddc::TypeSeq<DDim...>, ddc::TypeSeq<ODDim...>>>::
     operator()(
-            select_from_type_seq<misc::type_seq_intersect_t<
-                    ddc::TypeSeq<ODDim...>,
-                    ddc::TypeSeq<DDim...>>>(dom),
-            select_from_type_seq<misc::type_seq_intersect_t<
-                    ddc::TypeSeq<ODDim...>,
-                    ddc::TypeSeq<DDim...>>>(elem));
+            select_from_type_seq<
+                    misc::type_seq_intersect_t<ddc::TypeSeq<ODDim...>, ddc::TypeSeq<DDim...>>>(dom),
+            select_from_type_seq<
+                    misc::type_seq_intersect_t<ddc::TypeSeq<ODDim...>, ddc::TypeSeq<DDim...>>>(
+                    elem));
 }
 
 } // namespace misc

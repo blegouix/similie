@@ -3,9 +3,8 @@
 
 #include <ddc/ddc.hpp>
 
-#include <similie/misc/type_seq_ext.hpp>
-
 #include <gtest/gtest.h>
+#include <similie/misc/type_seq_ext.hpp>
 
 #include "exterior.hpp"
 

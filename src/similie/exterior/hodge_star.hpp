@@ -24,13 +24,10 @@ namespace sil {
 
 namespace exterior {
 
-template <
-        misc::Specialization<ddc::TypeSeq> Indices1,
-        misc::Specialization<ddc::TypeSeq> Indices2>
+template <misc::Specialization<ddc::TypeSeq> Indices1, misc::Specialization<ddc::TypeSeq> Indices2>
 using hodge_star_domain_t
         = ddc::detail::convert_type_seq_to_discrete_domain_t<ddc::type_seq_merge_t<
-                ddc::TypeSeq<
-                        misc::convert_type_seq_to_t<tensor::TensorFullIndex, Indices1>>,
+                ddc::TypeSeq<misc::convert_type_seq_to_t<tensor::TensorFullIndex, Indices1>>,
                 std::conditional_t<
                         (ddc::type_seq_size_v<Indices2> == 0),
                         ddc::TypeSeq<>,

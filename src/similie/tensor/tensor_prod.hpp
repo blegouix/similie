@@ -5,9 +5,8 @@
 
 #include <ddc/ddc.hpp>
 
-#include <similie/misc/type_seq_ext.hpp>
-
 #include <similie/misc/specialization.hpp>
+#include <similie/misc/type_seq_ext.hpp>
 
 #include "character.hpp"
 #if defined BUILD_YOUNG_TABLEAU
@@ -71,8 +70,8 @@ struct CheckTensorsCompatibility<
                       ddc::type_seq_remove_t<
                               uncharacterize_t<ddc::to_type_seq_t<
                                       sil::misc::cartesian_prod_t<natural_domain_t<Index2>...>>>,
-                              uncharacterize_t<ddc::to_type_seq_t<
-                                      sil::misc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>>>);
+                              uncharacterize_t<ddc::to_type_seq_t<sil::misc::cartesian_prod_t<
+                                      natural_domain_t<ProdDDim>...>>>>>);
         static_assert(are_different_characters_v<
                       ddc::type_seq_remove_t<
                               ddc::to_type_seq_t<
@@ -82,8 +81,8 @@ struct CheckTensorsCompatibility<
                       ddc::type_seq_remove_t<
                               ddc::to_type_seq_t<
                                       sil::misc::cartesian_prod_t<natural_domain_t<Index2>...>>,
-                              ddc::to_type_seq_t<
-                                      sil::misc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>>);
+                              ddc::to_type_seq_t<sil::misc::cartesian_prod_t<
+                                      natural_domain_t<ProdDDim>...>>>>);
     }
 };
 
@@ -208,8 +207,8 @@ Tensor<ElementType, ddc::DiscreteDomain<ProdDDim...>, LayoutStridedPolicy, Memor
                     uncharacterize_t<ddc::to_type_seq_t<
                             sil::misc::cartesian_prod_t<natural_domain_t<Index2>...>>>>,
             ddc::type_seq_remove_t<
-                    uncharacterize_t<
-                            ddc::to_type_seq_t<sil::misc::cartesian_prod_t<natural_domain_t<Index1>...>>>,
+                    uncharacterize_t<ddc::to_type_seq_t<
+                            sil::misc::cartesian_prod_t<natural_domain_t<Index1>...>>>,
                     uncharacterize_t<ddc::to_type_seq_t<
                             sil::misc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>>,
             ddc::type_seq_remove_t<
@@ -302,9 +301,7 @@ tensor_prod(
     // TODO DDim2 -> Index2, characterize
     return detail::TensorProdNatYoungNat<
             Index1,
-            ddc::type_seq_remove_t<
-                    ddc::TypeSeq<ProdDDim...>,
-                    ddc::TypeSeq<DDim2...>>,
+            ddc::type_seq_remove_t<ddc::TypeSeq<ProdDDim...>, ddc::TypeSeq<DDim2...>>,
             ddc::type_seq_remove_t<
                     ddc::to_type_seq_t<typename Index1::subindices_domain_t>,
                     ddc::TypeSeq<ProdDDim...>>,
@@ -402,18 +399,18 @@ tensor_prod(
             ddc::type_seq_remove_t<
                     uncharacterize_t<ddc::to_type_seq_t<
                             sil::misc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>,
-                    uncharacterize_t<
-                            ddc::to_type_seq_t<sil::misc::cartesian_prod_t<natural_domain_t<Index2>>>>>,
+                    uncharacterize_t<ddc::to_type_seq_t<
+                            sil::misc::cartesian_prod_t<natural_domain_t<Index2>>>>>,
             ddc::type_seq_remove_t<
-                    uncharacterize_t<
-                            ddc::to_type_seq_t<sil::misc::cartesian_prod_t<natural_domain_t<Index1>>>>,
+                    uncharacterize_t<ddc::to_type_seq_t<
+                            sil::misc::cartesian_prod_t<natural_domain_t<Index1>>>>,
                     uncharacterize_t<ddc::to_type_seq_t<
                             sil::misc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>>,
             ddc::type_seq_remove_t<
                     uncharacterize_t<ddc::to_type_seq_t<
                             sil::misc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>,
-                    uncharacterize_t<
-                            ddc::to_type_seq_t<sil::misc::cartesian_prod_t<natural_domain_t<Index1>>>>>>::
+                    uncharacterize_t<ddc::to_type_seq_t<
+                            sil::misc::cartesian_prod_t<natural_domain_t<Index1>>>>>>::
     operator()(
             uncharacterize_tensor(prod_tensor),
             uncharacterize_tensor(tensor1),
@@ -533,18 +530,18 @@ tensor_prod(
             uncharacterize_t<ddc::TypeSeq<Index1...>>,
             uncharacterize_t<ddc::TypeSeq<Index2...>>,
             ddc::type_seq_remove_t<
-                    uncharacterize_t<
-                            ddc::to_type_seq_t<sil::misc::cartesian_prod_t<natural_domain_t<ProdDDim>>>>,
+                    uncharacterize_t<ddc::to_type_seq_t<
+                            sil::misc::cartesian_prod_t<natural_domain_t<ProdDDim>>>>,
                     uncharacterize_t<ddc::to_type_seq_t<
                             sil::misc::cartesian_prod_t<natural_domain_t<Index2>...>>>>,
             ddc::type_seq_remove_t<
-                    uncharacterize_t<
-                            ddc::to_type_seq_t<sil::misc::cartesian_prod_t<natural_domain_t<Index1>...>>>,
-                    uncharacterize_t<
-                            ddc::to_type_seq_t<sil::misc::cartesian_prod_t<natural_domain_t<ProdDDim>>>>>,
+                    uncharacterize_t<ddc::to_type_seq_t<
+                            sil::misc::cartesian_prod_t<natural_domain_t<Index1>...>>>,
+                    uncharacterize_t<ddc::to_type_seq_t<
+                            sil::misc::cartesian_prod_t<natural_domain_t<ProdDDim>>>>>,
             ddc::type_seq_remove_t<
-                    uncharacterize_t<
-                            ddc::to_type_seq_t<sil::misc::cartesian_prod_t<natural_domain_t<ProdDDim>>>>,
+                    uncharacterize_t<ddc::to_type_seq_t<
+                            sil::misc::cartesian_prod_t<natural_domain_t<ProdDDim>>>>,
                     uncharacterize_t<ddc::to_type_seq_t<
                             sil::misc::cartesian_prod_t<natural_domain_t<Index1>...>>>>>::
     operator()(

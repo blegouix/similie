@@ -8,8 +8,6 @@
 
 #include <ddc/ddc.hpp>
 
-#include <similie/misc/type_seq_ext.hpp>
-
 #include <similie/misc/are_all_same.hpp>
 #include <similie/misc/filled_struct.hpp>
 #include <similie/misc/macros.hpp>
@@ -17,6 +15,7 @@
 #include <similie/misc/select_from_type_seq.hpp>
 #include <similie/misc/specialization.hpp>
 #include <similie/misc/type_seq_conversion.hpp>
+#include <similie/misc/type_seq_ext.hpp>
 #include <similie/tensor/antisymmetric_tensor.hpp>
 #include <similie/tensor/dummy_index.hpp>
 #include <similie/tensor/owning_tensor.hpp>
@@ -109,9 +108,7 @@ struct CoboundaryTensorType<
         CochainIndex,
         tensor::Tensor<ElementType, ddc::DiscreteDomain<DDim...>, SupportType, MemorySpace>>
 {
-    static_assert(ddc::type_seq_contains_v<
-                  ddc::TypeSeq<CochainIndex>,
-                  ddc::TypeSeq<DDim...>>);
+    static_assert(ddc::type_seq_contains_v<ddc::TypeSeq<CochainIndex>, ddc::TypeSeq<DDim...>>);
     using type = tensor::Tensor<
             ElementType,
             ddc::replace_dim_of_t<
@@ -142,8 +139,7 @@ struct ComputeSimplex<Chain<Simplex<K, Tag...>, LayoutStridedPolicy, ExecSpace>>
     KOKKOS_FUNCTION static Simplex<K + 1, Tag...> operator()(
             Chain<Simplex<K, Tag...>, LayoutStridedPolicy, ExecSpace> const& chain)
     {
-        ddc::DiscreteVector<Tag...> vect {
-                0 * ddc::type_seq_rank_v<Tag, ddc::TypeSeq<Tag...>>...};
+        ddc::DiscreteVector<Tag...> vect {0 * ddc::type_seq_rank_v<Tag, ddc::TypeSeq<Tag...>>...};
         for (auto i = chain.begin(); i < chain.end(); ++i) {
             vect = ddc::DiscreteVector<Tag...> {
                     (static_cast<bool>(vect.template get<Tag>())

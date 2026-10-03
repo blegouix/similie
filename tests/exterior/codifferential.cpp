@@ -5,9 +5,8 @@
 
 #include <ddc/ddc.hpp>
 
-#include <similie/misc/type_seq_ext.hpp>
-
 #include <gtest/gtest.h>
+#include <similie/misc/type_seq_ext.hpp>
 #include <similie/tensor/symmetric_tensor.hpp>
 
 #include "exterior.hpp"
@@ -187,8 +186,8 @@ TEST(Codifferential, Prefilled2D1Form)
         using SourceHodgeOutputIndices = sil::exterior::codifferential_hodge_output_indices_t<
                 TensorIndex::size() - TensorIndex::rank(),
                 TensorIndex>;
-        using TargetHodgeInputIndices = ddc::
-                type_seq_merge_t<ddc::TypeSeq<TensorIndex>, SourceHodgeOutputIndices>;
+        using TargetHodgeInputIndices
+                = ddc::type_seq_merge_t<ddc::TypeSeq<TensorIndex>, SourceHodgeOutputIndices>;
         using TargetHodgeOutputIndices = ddc::type_seq_remove_t<
                 sil::tensor::lower_t<SourceHodgeInputIndices>,
                 ddc::TypeSeq<TensorIndex>>;

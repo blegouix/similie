@@ -7,10 +7,9 @@
 
 #include <ddc/ddc.hpp>
 
-#include <similie/misc/type_seq_ext.hpp>
-
 #include <similie/misc/portable_stl.hpp>
 #include <similie/misc/specialization.hpp>
+#include <similie/misc/type_seq_ext.hpp>
 
 namespace sil {
 
@@ -205,9 +204,7 @@ struct IdFromTypeSeqDims<Index, ddc::DiscreteDomain<Subindex...>, ddc::TypeSeq<C
             return Index::access_id(
                     std::array<std::size_t, sizeof...(Subindex)> {ddc::type_seq_rank_v<
                             typename ddc::type_seq_element_t<
-                                    ddc::type_seq_rank_v<
-                                            Subindex,
-                                            ddc::TypeSeq<Subindex...>>,
+                                    ddc::type_seq_rank_v<Subindex, ddc::TypeSeq<Subindex...>>,
                                     ddc::TypeSeq<CDim...>>,
                             typename Subindex::type_seq_dimensions>...});
         }
@@ -644,8 +641,8 @@ public:
         return non_indices_domain_t(domain());
     }
 
-    using natural_domain_t
-            = sil::misc::cartesian_prod_t<non_indices_domain_t, typename accessor_t::natural_domain_t>;
+    using natural_domain_t = sil::misc::
+            cartesian_prod_t<non_indices_domain_t, typename accessor_t::natural_domain_t>;
 
     KOKKOS_FUNCTION constexpr natural_domain_t natural_domain() const noexcept
     {
@@ -690,8 +687,7 @@ public:
                 ElementType,
                 ddc::DiscreteDomain<DDim...>,
                 LayoutStridedPolicy,
-                MemorySpace>::
-        operator()(delems...);
+                MemorySpace>::operator()(delems...);
     }
 
     template <class... DElems>
@@ -719,9 +715,8 @@ public:
                 detail::LambdaMemElem<ODDim>::operator()(slice_spec)...));
         return Tensor<
                 ElementType,
-                ddc::detail::convert_type_seq_to_discrete_domain_t<ddc::type_seq_remove_t<
-                        ddc::TypeSeq<DDim...>,
-                        ddc::TypeSeq<ODDim...>>>,
+                ddc::detail::convert_type_seq_to_discrete_domain_t<
+                        ddc::type_seq_remove_t<ddc::TypeSeq<DDim...>, ddc::TypeSeq<ODDim...>>>,
                 typename decltype(chunkspan)::layout_type,
                 MemorySpace>(chunkspan);
     }
@@ -800,9 +795,7 @@ struct NaturalTensorProdDomain<ddc::DiscreteDomain<DDim1...>, ddc::DiscreteDomai
 {
     using type = ddc::detail::convert_type_seq_to_discrete_domain_t<ddc::type_seq_merge_t<
             ddc::type_seq_remove_t<ddc::TypeSeq<DDim1...>, ddc::TypeSeq<DDim2...>>,
-            ddc::type_seq_remove_t<
-                    ddc::TypeSeq<DDim2...>,
-                    ddc::TypeSeq<DDim1...>>>>;
+            ddc::type_seq_remove_t<ddc::TypeSeq<DDim2...>, ddc::TypeSeq<DDim1...>>>>;
 };
 
 } // namespace detail
@@ -886,22 +879,13 @@ Tensor<ElementType, ddc::DiscreteDomain<ProdDDim...>, LayoutStridedPolicy, Memor
                 tensor2)
 {
     static_assert(std::is_same_v<
-                  ddc::type_seq_remove_t<
-                          ddc::TypeSeq<DDim1...>,
-                          ddc::TypeSeq<ProdDDim...>>,
-                  ddc::type_seq_remove_t<
-                          ddc::TypeSeq<DDim2...>,
-                          ddc::TypeSeq<ProdDDim...>>>);
+                  ddc::type_seq_remove_t<ddc::TypeSeq<DDim1...>, ddc::TypeSeq<ProdDDim...>>,
+                  ddc::type_seq_remove_t<ddc::TypeSeq<DDim2...>, ddc::TypeSeq<ProdDDim...>>>);
     return detail::NaturalTensorProd<
-            ddc::type_seq_remove_t<
-                    ddc::TypeSeq<ProdDDim...>,
-                    ddc::TypeSeq<DDim2...>>,
-            ddc::type_seq_remove_t<
-                    ddc::TypeSeq<DDim1...>,
-                    ddc::TypeSeq<ProdDDim...>>,
-            ddc::type_seq_remove_t<
-                    ddc::TypeSeq<ProdDDim...>,
-                    ddc::TypeSeq<DDim1...>>>::operator()(prod_tensor, tensor1, tensor2);
+            ddc::type_seq_remove_t<ddc::TypeSeq<ProdDDim...>, ddc::TypeSeq<DDim2...>>,
+            ddc::type_seq_remove_t<ddc::TypeSeq<DDim1...>, ddc::TypeSeq<ProdDDim...>>,
+            ddc::type_seq_remove_t<ddc::TypeSeq<ProdDDim...>, ddc::TypeSeq<DDim1...>>>::
+    operator()(prod_tensor, tensor1, tensor2);
 }
 
 namespace detail {
