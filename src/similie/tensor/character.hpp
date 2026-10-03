@@ -28,7 +28,7 @@ template <class NaturalIndices>
 struct TensorNaturalIndexFromTypeSeqDim;
 
 template <class... CDim>
-struct TensorNaturalIndexFromTypeSeqDim<ddc::detail::TypeSeq<CDim...>>
+struct TensorNaturalIndexFromTypeSeqDim<ddc::TypeSeq<CDim...>>
 {
     using type = TensorNaturalIndex<CDim...>;
 };
@@ -219,14 +219,14 @@ template <class Seq>
 struct AreCovariant;
 
 template <TensorNatIndex... Index>
-struct AreCovariant<ddc::detail::TypeSeq<Index...>>
+struct AreCovariant<ddc::TypeSeq<Index...>>
 {
     static constexpr bool value = (is_covariant_v<Index> && ...);
 };
 
 } // namespace detail
 
-template <misc::Specialization<ddc::detail::TypeSeq> Seq>
+template <misc::Specialization<ddc::TypeSeq> Seq>
 bool constexpr are_covariant_v = detail::AreCovariant<Seq>::value;
 
 // check if index is contravariant
@@ -258,14 +258,14 @@ template <class Seq>
 struct AreContravariant;
 
 template <TensorNatIndex... Index>
-struct AreContravariant<ddc::detail::TypeSeq<Index...>>
+struct AreContravariant<ddc::TypeSeq<Index...>>
 {
     static constexpr bool value = (is_contravariant_v<Index> && ...);
 };
 
 } // namespace detail
 
-template <misc::Specialization<ddc::detail::TypeSeq> Seq>
+template <misc::Specialization<ddc::TypeSeq> Seq>
 bool constexpr are_contravariant_v = detail::AreContravariant<Seq>::value;
 
 // check if characters are equal

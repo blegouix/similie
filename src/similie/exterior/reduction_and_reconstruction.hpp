@@ -111,24 +111,24 @@ KOKKOS_FUNCTION ElemType natural_elem_from_flat_ids(std::array<std::size_t, N> c
     return elem;
 }
 
-template <misc::Specialization<ddc::detail::TypeSeq> Indices>
+template <misc::Specialization<ddc::TypeSeq> Indices>
 struct ReductionTargetIndex;
 
 template <>
-struct ReductionTargetIndex<ddc::detail::TypeSeq<>>
+struct ReductionTargetIndex<ddc::TypeSeq<>>
 {
     using type = tensor::Covariant<tensor::ScalarIndex>;
 };
 
 template <tensor::TensorNatIndex Index>
-struct ReductionTargetIndex<ddc::detail::TypeSeq<Index>>
+struct ReductionTargetIndex<ddc::TypeSeq<Index>>
 {
     using type = Index;
 };
 
 template <tensor::TensorNatIndex... Index>
     requires(sizeof...(Index) > 1)
-struct ReductionTargetIndex<ddc::detail::TypeSeq<Index...>>
+struct ReductionTargetIndex<ddc::TypeSeq<Index...>>
 {
     using type = tensor::TensorAntisymmetricIndex<Index...>;
 };
@@ -448,24 +448,24 @@ KOKKOS_FUNCTION ReductionNaturalElemType merge_reduction_natural_elems(
 
 } // namespace detail
 
-template <misc::Specialization<ddc::detail::TypeSeq> Indices>
+template <misc::Specialization<ddc::TypeSeq> Indices>
 using reduction_index_t = typename detail::ReductionTargetIndex<Indices>::type;
 
-template <misc::Specialization<ddc::detail::TypeSeq> Indices>
+template <misc::Specialization<ddc::TypeSeq> Indices>
 using reduction_domain_t = ddc::detail::convert_type_seq_to_discrete_domain_t<ddc::type_seq_merge_t<
-        ddc::detail::TypeSeq<misc::convert_type_seq_to_t<
+        ddc::TypeSeq<misc::convert_type_seq_to_t<
                 tensor::TensorFullIndex,
                 tensor::primes<tensor::upper_t<Indices>>>>,
-        ddc::detail::TypeSeq<reduction_index_t<Indices>>>>;
+        ddc::TypeSeq<reduction_index_t<Indices>>>>;
 
-template <misc::Specialization<ddc::detail::TypeSeq> Indices>
+template <misc::Specialization<ddc::TypeSeq> Indices>
 using reconstruction_domain_t
         = ddc::detail::convert_type_seq_to_discrete_domain_t<ddc::type_seq_merge_t<
-                ddc::detail::TypeSeq<reduction_index_t<Indices>>,
-                ddc::detail::TypeSeq<reduction_index_t<tensor::primes<Indices>>>>>;
+                ddc::TypeSeq<reduction_index_t<Indices>>,
+                ddc::TypeSeq<reduction_index_t<tensor::primes<Indices>>>>>;
 
 template <
-        misc::Specialization<ddc::detail::TypeSeq> Indices,
+        misc::Specialization<ddc::TypeSeq> Indices,
         misc::Specialization<tensor::Tensor> PositionType,
         class BatchElem,
         CellComplex Complex = CellComplex::Primal>
@@ -739,7 +739,7 @@ struct Reduction
 };
 
 template <
-        misc::Specialization<ddc::detail::TypeSeq> Indices,
+        misc::Specialization<ddc::TypeSeq> Indices,
         misc::Specialization<tensor::Tensor> ReductionTensorType,
         misc::Specialization<tensor::Tensor> PositionType,
         CellComplex Complex,
@@ -763,7 +763,7 @@ struct FillReductionOperatorMem
 };
 
 template <
-        misc::Specialization<ddc::detail::TypeSeq> Indices,
+        misc::Specialization<ddc::TypeSeq> Indices,
         misc::Specialization<tensor::Tensor> ReductionTensorType,
         misc::Specialization<tensor::Tensor> PositionType,
         class ExecSpace,
@@ -795,7 +795,7 @@ ReductionTensorType fill_reduction_operator(
 }
 
 template <
-        misc::Specialization<ddc::detail::TypeSeq> Indices,
+        misc::Specialization<ddc::TypeSeq> Indices,
         misc::Specialization<tensor::Tensor> PositionType,
         class BatchElem,
         CellComplex Complex = CellComplex::Primal>
@@ -941,7 +941,7 @@ struct Reconstruction
 };
 
 template <
-        misc::Specialization<ddc::detail::TypeSeq> Indices,
+        misc::Specialization<ddc::TypeSeq> Indices,
         misc::Specialization<tensor::Tensor> ReconstructionTensorType,
         misc::Specialization<tensor::Tensor> PositionType,
         CellComplex Complex,
@@ -966,7 +966,7 @@ struct FillReconstructionOperatorMem
 };
 
 template <
-        misc::Specialization<ddc::detail::TypeSeq> Indices,
+        misc::Specialization<ddc::TypeSeq> Indices,
         misc::Specialization<tensor::Tensor> ReconstructionTensorType,
         misc::Specialization<tensor::Tensor> PositionType,
         class ExecSpace,

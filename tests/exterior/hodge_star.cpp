@@ -7,6 +7,7 @@
 
 #include <gtest/gtest.h>
 #include <similie/exterior/hodge_star.hpp>
+#include <similie/misc/type_seq_ext.hpp>
 #include <similie/tensor/symmetric_tensor.hpp>
 
 struct X
@@ -58,10 +59,10 @@ using MetricIndex = sil::tensor::TensorSymmetricIndex<
 
 using PositionIndex = sil::tensor::Contravariant<sil::tensor::TensorNaturalIndex<X, Y, Z>>;
 
-using HodgeStarDomain = sil::exterior::
-        hodge_star_domain_t<ddc::detail::TypeSeq<MuUp, NuUp>, ddc::detail::TypeSeq<RhoLow>>;
-using HodgeStarDomain2 = sil::exterior::
-        hodge_star_domain_t<ddc::detail::TypeSeq<RhoUp>, ddc::detail::TypeSeq<MuLow, NuLow>>;
+using HodgeStarDomain
+        = sil::exterior::hodge_star_domain_t<ddc::TypeSeq<MuUp, NuUp>, ddc::TypeSeq<RhoLow>>;
+using HodgeStarDomain2
+        = sil::exterior::hodge_star_domain_t<ddc::TypeSeq<RhoUp>, ddc::TypeSeq<MuLow, NuLow>>;
 
 TEST(DiscreteHodgeStar, Metric3D)
 {
@@ -117,14 +118,14 @@ TEST(DiscreteHodgeStar, Metric3D)
             });
 
     [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain> hodge_star_accessor;
-    ddc::cartesian_prod_t<decltype(metric.non_indices_domain()), HodgeStarDomain>
+    sil::misc::cartesian_prod_t<decltype(metric.non_indices_domain()), HodgeStarDomain>
             hodge_star_dom(metric.non_indices_domain(), hodge_star_accessor.domain());
     ddc::Chunk hodge_star_alloc(hodge_star_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor hodge_star(hodge_star_alloc);
 
     sil::exterior::fill_discrete_hodge_star<
-            ddc::detail::TypeSeq<MuUp, NuUp>,
-            ddc::detail::TypeSeq<
+            ddc::TypeSeq<MuUp, NuUp>,
+            ddc::TypeSeq<
                     RhoLow>>(Kokkos::DefaultHostExecutionSpace(), hodge_star, metric, position);
 
     [[maybe_unused]] sil::tensor::TensorAccessor<
@@ -157,14 +158,14 @@ TEST(DiscreteHodgeStar, Metric3D)
 
     [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain2>
             hodge_star_accessor2;
-    ddc::cartesian_prod_t<decltype(metric.non_indices_domain()), HodgeStarDomain2>
+    sil::misc::cartesian_prod_t<decltype(metric.non_indices_domain()), HodgeStarDomain2>
             hodge_star_dom2(metric.non_indices_domain(), hodge_star_accessor2.domain());
     ddc::Chunk hodge_star_alloc2(hodge_star_dom2, ddc::HostAllocator<double>());
     sil::tensor::Tensor hodge_star2(hodge_star_alloc2);
 
     sil::exterior::fill_discrete_hodge_star<
-            ddc::detail::TypeSeq<RhoUp>,
-            ddc::detail::TypeSeq<
+            ddc::TypeSeq<RhoUp>,
+            ddc::TypeSeq<
                     MuLow,
                     NuLow>>(Kokkos::DefaultHostExecutionSpace(), hodge_star2, metric, position);
 
@@ -217,14 +218,14 @@ TEST(ContinuousHodgeStar, Metric3D)
             });
 
     [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain> hodge_star_accessor;
-    ddc::cartesian_prod_t<decltype(metric.non_indices_domain()), HodgeStarDomain>
+    sil::misc::cartesian_prod_t<decltype(metric.non_indices_domain()), HodgeStarDomain>
             hodge_star_dom(metric.non_indices_domain(), hodge_star_accessor.domain());
     ddc::Chunk hodge_star_alloc(hodge_star_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor hodge_star(hodge_star_alloc);
 
     sil::exterior::fill_continuous_hodge_star<
-            ddc::detail::TypeSeq<MuUp, NuUp>,
-            ddc::detail::TypeSeq<RhoLow>>(Kokkos::DefaultHostExecutionSpace(), hodge_star, metric);
+            ddc::TypeSeq<MuUp, NuUp>,
+            ddc::TypeSeq<RhoLow>>(Kokkos::DefaultHostExecutionSpace(), hodge_star, metric);
 
     [[maybe_unused]] sil::tensor::TensorAccessor<
             sil::tensor::TensorAntisymmetricIndex<MuLow, NuLow>> form_accessor;

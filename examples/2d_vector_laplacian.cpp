@@ -143,8 +143,8 @@ int main(int argc, char** argv)
     ddc::Coordinate<X, Y> upper_bounds(5., 5.);
     ddc::DiscreteVector<DDimX, DDimY> nb_cells(1000, 1000);
     ddc::DiscreteDomain<DDimX, DDimY> mesh_xy = mesher.template mesh<
-            ddc::detail::TypeSeq<DDimX, DDimY>,
-            ddc::detail::TypeSeq<BSplinesX, BSplinesY>>(lower_bounds, upper_bounds, nb_cells);
+            ddc::TypeSeq<DDimX, DDimY>,
+            ddc::TypeSeq<BSplinesX, BSplinesY>>(lower_bounds, upper_bounds, nb_cells);
     assert(static_cast<std::size_t>(mesh_xy.template extent<DDimX>())
            == static_cast<std::size_t>(mesh_xy.template extent<DDimY>()));
     ddc::expose_to_pdi("Nx", static_cast<int>(mesh_xy.template extent<DDimX>()));

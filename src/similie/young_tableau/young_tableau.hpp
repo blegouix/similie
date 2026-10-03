@@ -795,16 +795,16 @@ namespace detail {
 // Build index for symmetrizer (such that sym*proj is properly defined)
 template <class OId, class... Id>
 using symmetrizer_index_t = std::conditional_t<
-        (ddc::type_seq_rank_v<OId, ddc::detail::TypeSeq<Id...>> < (sizeof...(Id) / 2)),
+        (ddc::type_seq_rank_v<OId, ddc::TypeSeq<Id...>> < (sizeof...(Id) / 2)),
         tensor::prime<OId>,
         ddc::type_seq_element_t<
                 static_cast<std::size_t>(
                         std::
                                 max(static_cast<std::ptrdiff_t>(0),
                                     static_cast<std::ptrdiff_t>(
-                                            ddc::type_seq_rank_v<OId, ddc::detail::TypeSeq<Id...>>
+                                            ddc::type_seq_rank_v<OId, ddc::TypeSeq<Id...>>
                                             - (sizeof...(Id) / 2)))),
-                ddc::detail::TypeSeq<Id...>>>;
+                ddc::TypeSeq<Id...>>>;
 
 // Functor to fill identity or transpose projectors
 template <std::size_t Dimension, std::size_t Rank, class... NaturalId>

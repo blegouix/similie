@@ -6,6 +6,7 @@
 #include <ddc/ddc.hpp>
 
 #include <similie/misc/specialization.hpp>
+#include <similie/misc/type_seq_ext.hpp>
 
 #include "character.hpp"
 #if defined BUILD_YOUNG_TABLEAU
@@ -54,34 +55,34 @@ struct CheckTensorsCompatibility;
 
 template <class... ProdDDim, class... Index1, class... Index2>
 struct CheckTensorsCompatibility<
-        ddc::detail::TypeSeq<ProdDDim...>,
-        ddc::detail::TypeSeq<Index1...>,
-        ddc::detail::TypeSeq<Index2...>>
+        ddc::TypeSeq<ProdDDim...>,
+        ddc::TypeSeq<Index1...>,
+        ddc::TypeSeq<Index2...>>
 {
     KOKKOS_FUNCTION static constexpr void operator()()
     {
         static_assert(std::is_same_v<
                       ddc::type_seq_remove_t<
                               uncharacterize_t<ddc::to_type_seq_t<
-                                      ddc::cartesian_prod_t<natural_domain_t<Index1>...>>>,
+                                      sil::misc::cartesian_prod_t<natural_domain_t<Index1>...>>>,
                               uncharacterize_t<ddc::to_type_seq_t<
-                                      ddc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>>,
+                                      sil::misc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>>,
                       ddc::type_seq_remove_t<
                               uncharacterize_t<ddc::to_type_seq_t<
-                                      ddc::cartesian_prod_t<natural_domain_t<Index2>...>>>,
-                              uncharacterize_t<ddc::to_type_seq_t<
-                                      ddc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>>>);
+                                      sil::misc::cartesian_prod_t<natural_domain_t<Index2>...>>>,
+                              uncharacterize_t<ddc::to_type_seq_t<sil::misc::cartesian_prod_t<
+                                      natural_domain_t<ProdDDim>...>>>>>);
         static_assert(are_different_characters_v<
                       ddc::type_seq_remove_t<
                               ddc::to_type_seq_t<
-                                      ddc::cartesian_prod_t<natural_domain_t<Index1>...>>,
+                                      sil::misc::cartesian_prod_t<natural_domain_t<Index1>...>>,
                               ddc::to_type_seq_t<
-                                      ddc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>,
+                                      sil::misc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>,
                       ddc::type_seq_remove_t<
                               ddc::to_type_seq_t<
-                                      ddc::cartesian_prod_t<natural_domain_t<Index2>...>>,
-                              ddc::to_type_seq_t<
-                                      ddc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>>);
+                                      sil::misc::cartesian_prod_t<natural_domain_t<Index2>...>>,
+                              ddc::to_type_seq_t<sil::misc::cartesian_prod_t<
+                                      natural_domain_t<ProdDDim>...>>>>);
     }
 };
 
@@ -113,12 +114,12 @@ template <
         class... ContractDDim,
         class... TailDDim2>
 struct TensorProdAnyAnyAny<
-        ddc::detail::TypeSeq<ProdDDim...>,
-        ddc::detail::TypeSeq<Index1...>,
-        ddc::detail::TypeSeq<Index2...>,
-        ddc::detail::TypeSeq<HeadDDim1...>,
-        ddc::detail::TypeSeq<ContractDDim...>,
-        ddc::detail::TypeSeq<TailDDim2...>>
+        ddc::TypeSeq<ProdDDim...>,
+        ddc::TypeSeq<Index1...>,
+        ddc::TypeSeq<Index2...>,
+        ddc::TypeSeq<HeadDDim1...>,
+        ddc::TypeSeq<ContractDDim...>,
+        ddc::TypeSeq<TailDDim2...>>
 {
     template <class ElementType, class LayoutStridedPolicy, class MemorySpace>
     KOKKOS_FUNCTION static Tensor<
@@ -192,29 +193,29 @@ Tensor<ElementType, ddc::DiscreteDomain<ProdDDim...>, LayoutStridedPolicy, Memor
                        MemorySpace> tensor2)
 {
     check_tensors_compatibility<
-            ddc::detail::TypeSeq<ProdDDim...>,
-            ddc::detail::TypeSeq<Index1...>,
-            ddc::detail::TypeSeq<Index2...>>();
+            ddc::TypeSeq<ProdDDim...>,
+            ddc::TypeSeq<Index1...>,
+            ddc::TypeSeq<Index2...>>();
 
     detail::TensorProdAnyAnyAny<
-            uncharacterize_t<ddc::detail::TypeSeq<ProdDDim...>>,
-            uncharacterize_t<ddc::detail::TypeSeq<Index1...>>,
-            uncharacterize_t<ddc::detail::TypeSeq<Index2...>>,
+            uncharacterize_t<ddc::TypeSeq<ProdDDim...>>,
+            uncharacterize_t<ddc::TypeSeq<Index1...>>,
+            uncharacterize_t<ddc::TypeSeq<Index2...>>,
             ddc::type_seq_remove_t<
                     uncharacterize_t<ddc::to_type_seq_t<
-                            ddc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>,
+                            sil::misc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>,
                     uncharacterize_t<ddc::to_type_seq_t<
-                            ddc::cartesian_prod_t<natural_domain_t<Index2>...>>>>,
-            ddc::type_seq_remove_t<
-                    uncharacterize_t<
-                            ddc::to_type_seq_t<ddc::cartesian_prod_t<natural_domain_t<Index1>...>>>,
-                    uncharacterize_t<ddc::to_type_seq_t<
-                            ddc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>>,
+                            sil::misc::cartesian_prod_t<natural_domain_t<Index2>...>>>>,
             ddc::type_seq_remove_t<
                     uncharacterize_t<ddc::to_type_seq_t<
-                            ddc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>,
+                            sil::misc::cartesian_prod_t<natural_domain_t<Index1>...>>>,
                     uncharacterize_t<ddc::to_type_seq_t<
-                            ddc::cartesian_prod_t<natural_domain_t<Index1>...>>>>>::
+                            sil::misc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>>,
+            ddc::type_seq_remove_t<
+                    uncharacterize_t<ddc::to_type_seq_t<
+                            sil::misc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>,
+                    uncharacterize_t<ddc::to_type_seq_t<
+                            sil::misc::cartesian_prod_t<natural_domain_t<Index1>...>>>>>::
     operator()(
             uncharacterize_tensor(prod_tensor),
             uncharacterize_tensor(tensor1),
@@ -232,9 +233,9 @@ struct TensorProdNatYoungNat;
 template <class Index1, class... HeadDDim1, class... ContractDDim, class... TailDDim2>
 struct TensorProdNatYoungNat<
         Index1,
-        ddc::detail::TypeSeq<HeadDDim1...>,
-        ddc::detail::TypeSeq<ContractDDim...>,
-        ddc::detail::TypeSeq<TailDDim2...>>
+        ddc::TypeSeq<HeadDDim1...>,
+        ddc::TypeSeq<ContractDDim...>,
+        ddc::TypeSeq<TailDDim2...>>
 {
     template <class ElementType, class LayoutStridedPolicy, class MemorySpace>
     static Tensor<
@@ -293,21 +294,19 @@ tensor_prod(
 {
     /*
     check_tensors_compatibility<
-            ddc::detail::TypeSeq<ProdDDim...>,
-            ddc::detail::TypeSeq<Index1>,
-            ddc::detail::TypeSeq<DDim2...>>();
+            ddc::TypeSeq<ProdDDim...>,
+            ddc::TypeSeq<Index1>,
+            ddc::TypeSeq<DDim2...>>();
     */
     // TODO DDim2 -> Index2, characterize
     return detail::TensorProdNatYoungNat<
             Index1,
-            ddc::type_seq_remove_t<
-                    ddc::detail::TypeSeq<ProdDDim...>,
-                    ddc::detail::TypeSeq<DDim2...>>,
+            ddc::type_seq_remove_t<ddc::TypeSeq<ProdDDim...>, ddc::TypeSeq<DDim2...>>,
             ddc::type_seq_remove_t<
                     ddc::to_type_seq_t<typename Index1::subindices_domain_t>,
-                    ddc::detail::TypeSeq<ProdDDim...>>,
+                    ddc::TypeSeq<ProdDDim...>>,
             ddc::type_seq_remove_t<
-                    ddc::detail::TypeSeq<ProdDDim...>,
+                    ddc::TypeSeq<ProdDDim...>,
                     ddc::to_type_seq_t<typename Index1::subindices_domain_t>>>::
     operator()(prod_tensor, tensor1, tensor2);
 }
@@ -327,9 +326,9 @@ template <class Index1, class Index2, class... HeadDDim1, class... ContractDDim,
 struct TensorProdNatYoungYoung<
         Index1,
         Index2,
-        ddc::detail::TypeSeq<HeadDDim1...>,
-        ddc::detail::TypeSeq<ContractDDim...>,
-        ddc::detail::TypeSeq<TailDDim2...>>
+        ddc::TypeSeq<HeadDDim1...>,
+        ddc::TypeSeq<ContractDDim...>,
+        ddc::TypeSeq<TailDDim2...>>
 {
     template <class ElementType, class LayoutStridedPolicy, class MemorySpace>
     static Tensor<
@@ -390,28 +389,28 @@ tensor_prod(
         Tensor<ElementType, ddc::DiscreteDomain<Index2>, LayoutStridedPolicy, MemorySpace> tensor2)
 {
     check_tensors_compatibility<
-            ddc::detail::TypeSeq<ProdDDim...>,
-            ddc::detail::TypeSeq<Index1>,
-            ddc::detail::TypeSeq<Index2>>();
+            ddc::TypeSeq<ProdDDim...>,
+            ddc::TypeSeq<Index1>,
+            ddc::TypeSeq<Index2>>();
 
     detail::TensorProdNatYoungYoung<
             uncharacterize_t<Index1>,
             uncharacterize_t<Index2>,
             ddc::type_seq_remove_t<
                     uncharacterize_t<ddc::to_type_seq_t<
-                            ddc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>,
-                    uncharacterize_t<
-                            ddc::to_type_seq_t<ddc::cartesian_prod_t<natural_domain_t<Index2>>>>>,
-            ddc::type_seq_remove_t<
-                    uncharacterize_t<
-                            ddc::to_type_seq_t<ddc::cartesian_prod_t<natural_domain_t<Index1>>>>,
+                            sil::misc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>,
                     uncharacterize_t<ddc::to_type_seq_t<
-                            ddc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>>,
+                            sil::misc::cartesian_prod_t<natural_domain_t<Index2>>>>>,
             ddc::type_seq_remove_t<
                     uncharacterize_t<ddc::to_type_seq_t<
-                            ddc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>,
-                    uncharacterize_t<
-                            ddc::to_type_seq_t<ddc::cartesian_prod_t<natural_domain_t<Index1>>>>>>::
+                            sil::misc::cartesian_prod_t<natural_domain_t<Index1>>>>,
+                    uncharacterize_t<ddc::to_type_seq_t<
+                            sil::misc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>>,
+            ddc::type_seq_remove_t<
+                    uncharacterize_t<ddc::to_type_seq_t<
+                            sil::misc::cartesian_prod_t<natural_domain_t<ProdDDim>...>>>,
+                    uncharacterize_t<ddc::to_type_seq_t<
+                            sil::misc::cartesian_prod_t<natural_domain_t<Index1>>>>>>::
     operator()(
             uncharacterize_tensor(prod_tensor),
             uncharacterize_tensor(tensor1),
@@ -440,12 +439,12 @@ template <
         class... ContractDDim,
         class... TailDDim2>
 struct TensorProdYoungAnyAny<
-        ddc::detail::TypeSeq<ProdDDim...>,
-        ddc::detail::TypeSeq<Index1...>,
-        ddc::detail::TypeSeq<Index2...>,
-        ddc::detail::TypeSeq<HeadDDim1...>,
-        ddc::detail::TypeSeq<ContractDDim...>,
-        ddc::detail::TypeSeq<TailDDim2...>>
+        ddc::TypeSeq<ProdDDim...>,
+        ddc::TypeSeq<Index1...>,
+        ddc::TypeSeq<Index2...>,
+        ddc::TypeSeq<HeadDDim1...>,
+        ddc::TypeSeq<ContractDDim...>,
+        ddc::TypeSeq<TailDDim2...>>
 {
     template <class ElementType, class LayoutStridedPolicy, class MemorySpace>
     static Tensor<ElementType, ddc::DiscreteDomain<ProdDDim...>, LayoutStridedPolicy, MemorySpace>
@@ -474,7 +473,7 @@ struct TensorProdYoungAnyAny<
 
         ddc::host_for_each(
                 uncompressed_prod.domain(),
-                [&](ddc::cartesian_prod_t<
+                [&](sil::misc::cartesian_prod_t<
                         typename ProdDDim::subindices_domain_t...>::discrete_element_type elem) {
                     uncompressed_prod(elem) = ddc::host_transform_reduce(
                             contract_dom,
@@ -522,29 +521,29 @@ tensor_prod(
                 tensor2)
 {
     check_tensors_compatibility<
-            ddc::detail::TypeSeq<ProdDDim>,
-            ddc::detail::TypeSeq<Index1...>,
-            ddc::detail::TypeSeq<Index2...>>();
+            ddc::TypeSeq<ProdDDim>,
+            ddc::TypeSeq<Index1...>,
+            ddc::TypeSeq<Index2...>>();
 
     detail::TensorProdYoungAnyAny<
-            uncharacterize_t<ddc::detail::TypeSeq<ProdDDim>>,
-            uncharacterize_t<ddc::detail::TypeSeq<Index1...>>,
-            uncharacterize_t<ddc::detail::TypeSeq<Index2...>>,
+            uncharacterize_t<ddc::TypeSeq<ProdDDim>>,
+            uncharacterize_t<ddc::TypeSeq<Index1...>>,
+            uncharacterize_t<ddc::TypeSeq<Index2...>>,
             ddc::type_seq_remove_t<
-                    uncharacterize_t<
-                            ddc::to_type_seq_t<ddc::cartesian_prod_t<natural_domain_t<ProdDDim>>>>,
                     uncharacterize_t<ddc::to_type_seq_t<
-                            ddc::cartesian_prod_t<natural_domain_t<Index2>...>>>>,
-            ddc::type_seq_remove_t<
-                    uncharacterize_t<
-                            ddc::to_type_seq_t<ddc::cartesian_prod_t<natural_domain_t<Index1>...>>>,
-                    uncharacterize_t<
-                            ddc::to_type_seq_t<ddc::cartesian_prod_t<natural_domain_t<ProdDDim>>>>>,
-            ddc::type_seq_remove_t<
-                    uncharacterize_t<
-                            ddc::to_type_seq_t<ddc::cartesian_prod_t<natural_domain_t<ProdDDim>>>>,
+                            sil::misc::cartesian_prod_t<natural_domain_t<ProdDDim>>>>,
                     uncharacterize_t<ddc::to_type_seq_t<
-                            ddc::cartesian_prod_t<natural_domain_t<Index1>...>>>>>::
+                            sil::misc::cartesian_prod_t<natural_domain_t<Index2>...>>>>,
+            ddc::type_seq_remove_t<
+                    uncharacterize_t<ddc::to_type_seq_t<
+                            sil::misc::cartesian_prod_t<natural_domain_t<Index1>...>>>,
+                    uncharacterize_t<ddc::to_type_seq_t<
+                            sil::misc::cartesian_prod_t<natural_domain_t<ProdDDim>>>>>,
+            ddc::type_seq_remove_t<
+                    uncharacterize_t<ddc::to_type_seq_t<
+                            sil::misc::cartesian_prod_t<natural_domain_t<ProdDDim>>>>,
+                    uncharacterize_t<ddc::to_type_seq_t<
+                            sil::misc::cartesian_prod_t<natural_domain_t<Index1>...>>>>>::
     operator()(
             uncharacterize_tensor(prod_tensor),
             uncharacterize_tensor(tensor1),

@@ -7,6 +7,7 @@
 
 #include <similie/misc/macros.hpp>
 #include <similie/misc/small_matrix.hpp>
+#include <similie/misc/type_seq_ext.hpp>
 #include <similie/misc/unsecure_parallel_deepcopy.hpp>
 
 #include "character.hpp"
@@ -48,7 +49,7 @@ template <class TypeSeqCDim>
 struct ConvertTypeSeqToMetricIndex1;
 
 template <class... CDim>
-struct ConvertTypeSeqToMetricIndex1<ddc::detail::TypeSeq<CDim...>>
+struct ConvertTypeSeqToMetricIndex1<ddc::TypeSeq<CDim...>>
 {
     using type = MetricIndex1<CDim...>;
 };
@@ -57,7 +58,7 @@ template <class TypeSeqCDim>
 struct ConvertTypeSeqToMetricIndex2;
 
 template <class... CDim>
-struct ConvertTypeSeqToMetricIndex2<ddc::detail::TypeSeq<CDim...>>
+struct ConvertTypeSeqToMetricIndex2<ddc::TypeSeq<CDim...>>
 {
     using type = MetricIndex2<CDim...>;
 };
@@ -71,46 +72,46 @@ template <
         TensorNatIndex Index2>
 using relabelize_metric_in_domain_t = relabelize_indices_in_t<
         Dom,
-        ddc::detail::TypeSeq<
+        ddc::TypeSeq<
                 typename detail::ConvertTypeSeqToMetricIndex1<
                         typename Index1::type_seq_dimensions>::type,
                 typename detail::ConvertTypeSeqToMetricIndex2<
                         typename Index2::type_seq_dimensions>::type>,
-        ddc::detail::TypeSeq<uncharacterize_t<Index1>, uncharacterize_t<Index2>>>;
+        ddc::TypeSeq<uncharacterize_t<Index1>, uncharacterize_t<Index2>>>;
 
 template <TensorNatIndex Index1, TensorNatIndex Index2, class Dom>
 constexpr relabelize_metric_in_domain_t<Dom, Index1, Index2> relabelize_metric_in_domain(
         Dom metric_dom)
 {
     return relabelize_indices_in<
-            ddc::detail::TypeSeq<
+            ddc::TypeSeq<
                     typename detail::ConvertTypeSeqToMetricIndex1<
                             typename Index1::type_seq_dimensions>::type,
                     typename detail::ConvertTypeSeqToMetricIndex2<
                             typename Index2::type_seq_dimensions>::type>,
-            ddc::detail::TypeSeq<uncharacterize_t<Index1>, uncharacterize_t<Index2>>>(metric_dom);
+            ddc::TypeSeq<uncharacterize_t<Index1>, uncharacterize_t<Index2>>>(metric_dom);
 }
 
 template <misc::Specialization<Tensor> TensorType, TensorNatIndex Index1, TensorNatIndex Index2>
 using relabelize_metric_t = relabelize_indices_of_t<
         TensorType,
-        ddc::detail::TypeSeq<
+        ddc::TypeSeq<
                 typename detail::ConvertTypeSeqToMetricIndex1<
                         typename Index1::type_seq_dimensions>::type,
                 typename detail::ConvertTypeSeqToMetricIndex2<
                         typename Index2::type_seq_dimensions>::type>,
-        ddc::detail::TypeSeq<uncharacterize_t<Index1>, uncharacterize_t<Index2>>>;
+        ddc::TypeSeq<uncharacterize_t<Index1>, uncharacterize_t<Index2>>>;
 
 template <TensorNatIndex Index1, TensorNatIndex Index2, misc::Specialization<Tensor> TensorType>
 constexpr relabelize_metric_t<TensorType, Index1, Index2> relabelize_metric(TensorType tensor)
 {
     return relabelize_indices_of<
-            ddc::detail::TypeSeq<
+            ddc::TypeSeq<
                     typename detail::ConvertTypeSeqToMetricIndex1<
                             typename Index1::type_seq_dimensions>::type,
                     typename detail::ConvertTypeSeqToMetricIndex2<
                             typename Index2::type_seq_dimensions>::type>,
-            ddc::detail::TypeSeq<uncharacterize_t<Index1>, uncharacterize_t<Index2>>>(tensor);
+            ddc::TypeSeq<uncharacterize_t<Index1>, uncharacterize_t<Index2>>>(tensor);
 }
 
 // Compute domain for a tensor product of metrics (ie. g_mu_muprime*g_nu_nuprime*...)
@@ -120,26 +121,23 @@ template <class MetricIndex, class Indices1, class Indices2>
 struct MetricProdDomainType;
 
 template <class MetricIndex, class... Index1, class... Index2>
-struct MetricProdDomainType<
-        MetricIndex,
-        ddc::detail::TypeSeq<Index1...>,
-        ddc::detail::TypeSeq<Index2...>>
+struct MetricProdDomainType<MetricIndex, ddc::TypeSeq<Index1...>, ddc::TypeSeq<Index2...>>
 {
     static_assert(sizeof...(Index1) == sizeof...(Index2));
-    using type = ddc::cartesian_prod_t<relabelize_metric_in_domain_t<
+    using type = sil::misc::cartesian_prod_t<relabelize_metric_in_domain_t<
             ddc::DiscreteDomain<MetricIndex>,
             Index1,
             ddc::type_seq_element_t<
-                    ddc::type_seq_rank_v<Index1, ddc::detail::TypeSeq<Index1...>>,
-                    ddc::detail::TypeSeq<Index2...>>>...>;
+                    ddc::type_seq_rank_v<Index1, ddc::TypeSeq<Index1...>>,
+                    ddc::TypeSeq<Index2...>>>...>;
 };
 
 } // namespace detail
 
 template <
         TensorIndex MetricIndex,
-        misc::Specialization<ddc::detail::TypeSeq> Indices1,
-        misc::Specialization<ddc::detail::TypeSeq> Indices2>
+        misc::Specialization<ddc::TypeSeq> Indices1,
+        misc::Specialization<ddc::TypeSeq> Indices2>
 using metric_prod_domain_t =
         typename detail::MetricProdDomainType<MetricIndex, Indices1, Indices2>::type;
 
@@ -165,19 +163,19 @@ template <
 struct MetricProdType<
         NonMetricDom,
         MetricIndex,
-        ddc::detail::TypeSeq<Index1...>,
-        ddc::detail::TypeSeq<Index2...>,
+        ddc::TypeSeq<Index1...>,
+        ddc::TypeSeq<Index2...>,
         LayoutStridedPolicy,
         MemorySpace>
 {
     using type = tensor::Tensor<
             double,
-            ddc::cartesian_prod_t<
+            sil::misc::cartesian_prod_t<
                     NonMetricDom,
                     metric_prod_domain_t<
                             MetricIndex,
-                            ddc::detail::TypeSeq<Index1...>,
-                            ddc::detail::TypeSeq<Index2...>>>,
+                            ddc::TypeSeq<Index1...>,
+                            ddc::TypeSeq<Index2...>>>,
             LayoutStridedPolicy,
             MemorySpace>;
 };
@@ -186,7 +184,7 @@ template <class MetricType, class BatchElem, class Indices1, class Indices2>
 struct MetricProdValue;
 
 template <class MetricType, class BatchElem>
-struct MetricProdValue<MetricType, BatchElem, ddc::detail::TypeSeq<>, ddc::detail::TypeSeq<>>
+struct MetricProdValue<MetricType, BatchElem, ddc::TypeSeq<>, ddc::TypeSeq<>>
 {
     KOKKOS_FUNCTION static double operator()(
             [[maybe_unused]] MetricType metric,
@@ -207,8 +205,8 @@ template <
 struct MetricProdValue<
         MetricType,
         BatchElem,
-        ddc::detail::TypeSeq<HeadIndex1, TailIndex1...>,
-        ddc::detail::TypeSeq<HeadIndex2, TailIndex2...>>
+        ddc::TypeSeq<HeadIndex1, TailIndex1...>,
+        ddc::TypeSeq<HeadIndex2, TailIndex2...>>
 {
     KOKKOS_FUNCTION static double operator()(MetricType metric, BatchElem elem, auto natural_elem)
     {
@@ -220,8 +218,8 @@ struct MetricProdValue<
                * MetricProdValue<
                        MetricType,
                        BatchElem,
-                       ddc::detail::TypeSeq<TailIndex1...>,
-                       ddc::detail::TypeSeq<TailIndex2...>>::operator()(metric, elem, natural_elem);
+                       ddc::TypeSeq<TailIndex1...>,
+                       ddc::TypeSeq<TailIndex2...>>::operator()(metric, elem, natural_elem);
     }
 };
 
@@ -230,8 +228,8 @@ struct MetricProdValue<
 template <
         misc::Specialization<ddc::DiscreteDomain> NonMetricDom,
         TensorIndex MetricIndex,
-        misc::Specialization<ddc::detail::TypeSeq> Indices1,
-        misc::Specialization<ddc::detail::TypeSeq> Indices2,
+        misc::Specialization<ddc::TypeSeq> Indices1,
+        misc::Specialization<ddc::TypeSeq> Indices2,
         class LayoutStridedPolicy,
         class MemorySpace>
 using metric_prod_t = typename detail::MetricProdType<
@@ -244,8 +242,8 @@ using metric_prod_t = typename detail::MetricProdType<
 
 template <
         TensorIndex MetricIndex,
-        misc::Specialization<ddc::detail::TypeSeq> Indices1,
-        misc::Specialization<ddc::detail::TypeSeq> Indices2,
+        misc::Specialization<ddc::TypeSeq> Indices1,
+        misc::Specialization<ddc::TypeSeq> Indices2,
         misc::Specialization<Tensor> MetricType,
         class BatchElem>
 struct MetricProd
@@ -271,8 +269,8 @@ struct MetricProd
 
 template <
         TensorIndex MetricIndex,
-        misc::Specialization<ddc::detail::TypeSeq> Indices1,
-        misc::Specialization<ddc::detail::TypeSeq> Indices2,
+        misc::Specialization<ddc::TypeSeq> Indices1,
+        misc::Specialization<ddc::TypeSeq> Indices2,
         misc::Specialization<Tensor> MetricType,
         class ExecSpace>
 metric_prod_t<
@@ -368,22 +366,22 @@ template <
         class ExecSpace>
 relabelize_indices_of_t<
         TensorType,
-        swap_character_t<ddc::detail::TypeSeq<Index1...>>,
-        ddc::detail::TypeSeq<Index1...>>
+        swap_character_t<ddc::TypeSeq<Index1...>>,
+        ddc::TypeSeq<Index1...>>
 inplace_apply_metric(ExecSpace const& exec_space, TensorType tensor, MetricType metric)
 {
     tensor::tensor_accessor_for_domain_t<metric_prod_domain_t<
             MetricIndex,
-            ddc::detail::TypeSeq<Index1...>,
-            primes<ddc::detail::TypeSeq<Index1...>>>>
+            ddc::TypeSeq<Index1...>,
+            primes<ddc::TypeSeq<Index1...>>>>
             metric_prod_accessor;
     ddc::Chunk metric_prod_alloc(
-            ddc::cartesian_prod_t<
+            sil::misc::cartesian_prod_t<
                     typename TensorType::non_indices_domain_t,
                     metric_prod_domain_t<
                             MetricIndex,
-                            ddc::detail::TypeSeq<Index1...>,
-                            primes<ddc::detail::TypeSeq<Index1...>>>>(
+                            ddc::TypeSeq<Index1...>,
+                            primes<ddc::TypeSeq<Index1...>>>>(
                     tensor.non_indices_domain(),
                     metric_prod_accessor.domain()),
             ddc::KokkosAllocator<double, typename ExecSpace::memory_space>());
@@ -391,8 +389,8 @@ inplace_apply_metric(ExecSpace const& exec_space, TensorType tensor, MetricType 
 
     fill_metric_prod<
             MetricIndex,
-            ddc::detail::TypeSeq<Index1...>,
-            primes<ddc::detail::TypeSeq<Index1...>>>(exec_space, metric_prod, metric);
+            ddc::TypeSeq<Index1...>,
+            primes<ddc::TypeSeq<Index1...>>>(exec_space, metric_prod, metric);
 
     return inplace_apply_metric(exec_space, tensor, metric_prod);
 }

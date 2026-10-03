@@ -9,6 +9,7 @@
 
 #include <similie/misc/portable_stl.hpp>
 #include <similie/misc/specialization.hpp>
+#include <similie/misc/type_seq_ext.hpp>
 
 namespace sil {
 
@@ -22,7 +23,7 @@ struct TensorNaturalIndex
     static constexpr bool is_tensor_natural_index = true;
     static constexpr bool is_explicitely_stored_tensor = true;
 
-    using type_seq_dimensions = ddc::detail::TypeSeq<CDim...>;
+    using type_seq_dimensions = ddc::TypeSeq<CDim...>;
 
     using subindices_domain_t = ddc::DiscreteDomain<>;
 
@@ -147,14 +148,14 @@ template <class Index, class...>
 struct NbDimsBeforeIndex;
 
 template <class Index, class IndexHead, class... IndexTail>
-struct NbDimsBeforeIndex<Index, ddc::detail::TypeSeq<IndexHead, IndexTail...>>
+struct NbDimsBeforeIndex<Index, ddc::TypeSeq<IndexHead, IndexTail...>>
 {
     static constexpr std::size_t operator()(std::size_t nb_dims_before_index)
     {
         if constexpr (std::is_same_v<IndexHead, Index>) {
             return nb_dims_before_index;
         } else {
-            return NbDimsBeforeIndex<Index, ddc::detail::TypeSeq<IndexTail...>>::operator()(
+            return NbDimsBeforeIndex<Index, ddc::TypeSeq<IndexTail...>>::operator()(
                     nb_dims_before_index + IndexHead::rank());
         }
     }
@@ -180,7 +181,7 @@ struct TypeSeqDimsAtInts;
 template <class CDimTypeSeq, std::size_t... Is>
 struct TypeSeqDimsAtInts<CDimTypeSeq, std::integer_sequence<std::size_t, Is...>>
 {
-    using type = ddc::detail::TypeSeq<ddc::type_seq_element_t<Is, CDimTypeSeq>...>;
+    using type = ddc::TypeSeq<ddc::type_seq_element_t<Is, CDimTypeSeq>...>;
 };
 
 template <class CDimTypeSeq, class IndexSeq>
@@ -191,7 +192,7 @@ template <class Index, class SubindicesDomain, class TypeSeqDims>
 struct IdFromTypeSeqDims;
 
 template <class Index, class... Subindex, class... CDim>
-struct IdFromTypeSeqDims<Index, ddc::DiscreteDomain<Subindex...>, ddc::detail::TypeSeq<CDim...>>
+struct IdFromTypeSeqDims<Index, ddc::DiscreteDomain<Subindex...>, ddc::TypeSeq<CDim...>>
 {
     static constexpr std::size_t operator()()
     {
@@ -203,10 +204,8 @@ struct IdFromTypeSeqDims<Index, ddc::DiscreteDomain<Subindex...>, ddc::detail::T
             return Index::access_id(
                     std::array<std::size_t, sizeof...(Subindex)> {ddc::type_seq_rank_v<
                             typename ddc::type_seq_element_t<
-                                    ddc::type_seq_rank_v<
-                                            Subindex,
-                                            ddc::detail::TypeSeq<Subindex...>>,
-                                    ddc::detail::TypeSeq<CDim...>>,
+                                    ddc::type_seq_rank_v<Subindex, ddc::TypeSeq<Subindex...>>,
+                                    ddc::TypeSeq<CDim...>>,
                             typename Subindex::type_seq_dimensions>...});
         }
     }
@@ -221,7 +220,7 @@ static constexpr std::size_t access_id()
                 Index,
                 ddc::DiscreteDomain<Index>,
                 type_seq_dims_at_ints_t<
-                        ddc::detail::TypeSeq<CDim...>,
+                        ddc::TypeSeq<CDim...>,
                         offset_index_seq_t<
                                 NbDimsBeforeIndex<Index, IndicesTypeSeq>::operator()(0),
                                 std::make_integer_sequence<std::size_t, Index::rank()>>>>::
@@ -231,7 +230,7 @@ static constexpr std::size_t access_id()
                 Index,
                 typename Index::subindices_domain_t,
                 type_seq_dims_at_ints_t<
-                        ddc::detail::TypeSeq<CDim...>,
+                        ddc::TypeSeq<CDim...>,
                         offset_index_seq_t<
                                 NbDimsBeforeIndex<Index, IndicesTypeSeq>::operator()(0),
                                 std::make_integer_sequence<std::size_t, Index::rank()>>>>::
@@ -281,7 +280,7 @@ public:
 
     using discrete_element_type = ddc::DiscreteElement<Index...>;
 
-    using natural_domain_t = ddc::cartesian_prod_t<std::conditional_t< // TODO natural_domain_type
+    using natural_domain_t = sil::misc::cartesian_prod_t<std::conditional_t< // TODO natural_domain_type
             TensorNatIndex<Index>,
             ddc::DiscreteDomain<Index>,
             typename Index::subindices_domain_t>...>;
@@ -310,7 +309,7 @@ template <class Seq>
 struct TensorAccessorForTypeSeq;
 
 template <TensorIndex... Index>
-struct TensorAccessorForTypeSeq<ddc::detail::TypeSeq<Index...>>
+struct TensorAccessorForTypeSeq<ddc::TypeSeq<Index...>>
 {
     using type = TensorAccessor<Index...>;
 };
@@ -322,7 +321,7 @@ template <class... DDim>
 struct TensorAccessorForDomain<ddc::DiscreteDomain<DDim...>>
 {
     using type = typename TensorAccessorForTypeSeq<
-            ddc::to_type_seq_t<ddc::cartesian_prod_t<std::conditional_t<
+            ddc::to_type_seq_t<sil::misc::cartesian_prod_t<std::conditional_t<
                     TensorIndex<DDim>,
                     ddc::DiscreteDomain<DDim>,
                     ddc::DiscreteDomain<>>...>>>::type;
@@ -378,7 +377,7 @@ template <class... CDim>
 constexpr TensorAccessor<Index...>::discrete_element_type TensorAccessor<Index...>::access_element()
 {
     return ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(
-            detail::access_id<Index, ddc::detail::TypeSeq<Index...>, CDim...>())...);
+            detail::access_id<Index, ddc::TypeSeq<Index...>, CDim...>())...);
 }
 
 template <TensorIndex... Index>
@@ -387,7 +386,7 @@ constexpr TensorAccessor<Index...>::discrete_element_type TensorAccessor<Index..
         [[maybe_unused]] ddc::DiscreteElement<NaturalIndex...> natural_elem)
 {
     return ddc::DiscreteElement<Index...>(
-            ddc::DiscreteElement<Index>(detail::access_id<Index, ddc::detail::TypeSeq<Index...>>(
+            ddc::DiscreteElement<Index>(detail::access_id<Index, ddc::TypeSeq<Index...>>(
                     typename natural_domain_t::discrete_element_type(natural_elem)))...);
 }
 
@@ -428,7 +427,7 @@ template <
         class... IndexHead,
         class IndexInterest,
         class... IndexTail>
-struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInterest, IndexTail...>
+struct Access<TensorField, Element, ddc::TypeSeq<IndexHead...>, IndexInterest, IndexTail...>
 {
     template <class Elem>
     KOKKOS_FUNCTION static TensorField::element_type operator()(
@@ -449,7 +448,7 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
                                     return Access<
                                             TensorField,
                                             Element,
-                                            ddc::detail::TypeSeq<IndexHead..., IndexInterest>,
+                                            ddc::TypeSeq<IndexHead..., IndexInterest>,
                                             IndexTail...>::operator()(tensor_field_, elem_);
                                 },
                         tensor_field,
@@ -458,7 +457,7 @@ struct Access<TensorField, Element, ddc::detail::TypeSeq<IndexHead...>, IndexInt
                 return Access<
                         TensorField,
                         Element,
-                        ddc::detail::TypeSeq<IndexHead..., IndexInterest>,
+                        ddc::TypeSeq<IndexHead..., IndexInterest>,
                         IndexTail...>::operator()(tensor_field, elem);
             }
         } else {
@@ -615,7 +614,7 @@ public:
     {
     }
 
-    using accessor_t = tensor_accessor_for_domain_t<ddc::cartesian_prod_t<std::conditional_t<
+    using accessor_t = tensor_accessor_for_domain_t<sil::misc::cartesian_prod_t<std::conditional_t<
             TensorIndex<DDim>,
             ddc::DiscreteDomain<DDim>,
             ddc::DiscreteDomain<>>...>>;
@@ -642,8 +641,8 @@ public:
         return non_indices_domain_t(domain());
     }
 
-    using natural_domain_t
-            = ddc::cartesian_prod_t<non_indices_domain_t, typename accessor_t::natural_domain_t>;
+    using natural_domain_t = sil::misc::
+            cartesian_prod_t<non_indices_domain_t, typename accessor_t::natural_domain_t>;
 
     KOKKOS_FUNCTION constexpr natural_domain_t natural_domain() const noexcept
     {
@@ -717,9 +716,8 @@ public:
                 detail::LambdaMemElem<ODDim>::operator()(slice_spec)...));
         return Tensor<
                 ElementType,
-                ddc::detail::convert_type_seq_to_discrete_domain_t<ddc::type_seq_remove_t<
-                        ddc::detail::TypeSeq<DDim...>,
-                        ddc::detail::TypeSeq<ODDim...>>>,
+                ddc::detail::convert_type_seq_to_discrete_domain_t<
+                        ddc::type_seq_remove_t<ddc::TypeSeq<DDim...>, ddc::TypeSeq<ODDim...>>>,
                 typename decltype(chunkspan)::layout_type,
                 MemorySpace>(chunkspan);
     }
@@ -736,7 +734,7 @@ public:
                            LayoutStridedPolicy,
                            MemorySpace>,
                     ddc::DiscreteElement<DDim...>,
-                    ddc::detail::TypeSeq<>,
+                    ddc::TypeSeq<>,
                     DDim...>::operator()(*this, ddc::DiscreteElement<DDim...>(delems...));
         }
     }
@@ -797,10 +795,8 @@ template <class... DDim1, class... DDim2>
 struct NaturalTensorProdDomain<ddc::DiscreteDomain<DDim1...>, ddc::DiscreteDomain<DDim2...>>
 {
     using type = ddc::detail::convert_type_seq_to_discrete_domain_t<ddc::type_seq_merge_t<
-            ddc::type_seq_remove_t<ddc::detail::TypeSeq<DDim1...>, ddc::detail::TypeSeq<DDim2...>>,
-            ddc::type_seq_remove_t<
-                    ddc::detail::TypeSeq<DDim2...>,
-                    ddc::detail::TypeSeq<DDim1...>>>>;
+            ddc::type_seq_remove_t<ddc::TypeSeq<DDim1...>, ddc::TypeSeq<DDim2...>>,
+            ddc::type_seq_remove_t<ddc::TypeSeq<DDim2...>, ddc::TypeSeq<DDim1...>>>>;
 };
 
 } // namespace detail
@@ -826,9 +822,9 @@ struct NaturalTensorProd;
 
 template <class... HeadDDim1, class... ContractDDim, class... TailDDim2>
 struct NaturalTensorProd<
-        ddc::detail::TypeSeq<HeadDDim1...>,
-        ddc::detail::TypeSeq<ContractDDim...>,
-        ddc::detail::TypeSeq<TailDDim2...>>
+        ddc::TypeSeq<HeadDDim1...>,
+        ddc::TypeSeq<ContractDDim...>,
+        ddc::TypeSeq<TailDDim2...>>
 {
     template <class ElementType, class LayoutStridedPolicy, class MemorySpace>
     KOKKOS_FUNCTION static Tensor<
@@ -884,22 +880,13 @@ Tensor<ElementType, ddc::DiscreteDomain<ProdDDim...>, LayoutStridedPolicy, Memor
                 tensor2)
 {
     static_assert(std::is_same_v<
-                  ddc::type_seq_remove_t<
-                          ddc::detail::TypeSeq<DDim1...>,
-                          ddc::detail::TypeSeq<ProdDDim...>>,
-                  ddc::type_seq_remove_t<
-                          ddc::detail::TypeSeq<DDim2...>,
-                          ddc::detail::TypeSeq<ProdDDim...>>>);
+                  ddc::type_seq_remove_t<ddc::TypeSeq<DDim1...>, ddc::TypeSeq<ProdDDim...>>,
+                  ddc::type_seq_remove_t<ddc::TypeSeq<DDim2...>, ddc::TypeSeq<ProdDDim...>>>);
     return detail::NaturalTensorProd<
-            ddc::type_seq_remove_t<
-                    ddc::detail::TypeSeq<ProdDDim...>,
-                    ddc::detail::TypeSeq<DDim2...>>,
-            ddc::type_seq_remove_t<
-                    ddc::detail::TypeSeq<DDim1...>,
-                    ddc::detail::TypeSeq<ProdDDim...>>,
-            ddc::type_seq_remove_t<
-                    ddc::detail::TypeSeq<ProdDDim...>,
-                    ddc::detail::TypeSeq<DDim1...>>>::operator()(prod_tensor, tensor1, tensor2);
+            ddc::type_seq_remove_t<ddc::TypeSeq<ProdDDim...>, ddc::TypeSeq<DDim2...>>,
+            ddc::type_seq_remove_t<ddc::TypeSeq<DDim1...>, ddc::TypeSeq<ProdDDim...>>,
+            ddc::type_seq_remove_t<ddc::TypeSeq<ProdDDim...>, ddc::TypeSeq<DDim1...>>>::
+    operator()(prod_tensor, tensor1, tensor2);
 }
 
 namespace detail {
@@ -969,7 +956,7 @@ std::ostream& operator<<(std::ostream& os, TensorType const& tensor)
                     ddc::to_type_seq_t<typename TensorType::natural_domain_t>>>,
             ddc::detail::convert_type_seq_to_discrete_domain_t<ddc::type_seq_remove_t<
                     ddc::to_type_seq_t<typename TensorType::natural_domain_t>,
-                    ddc::detail::TypeSeq<ddc::type_seq_element_t<
+                    ddc::TypeSeq<ddc::type_seq_element_t<
                             0,
                             ddc::to_type_seq_t<typename TensorType::natural_domain_t>>>>>>::
             operator()(str, tensor, ddc::DiscreteElement<>());

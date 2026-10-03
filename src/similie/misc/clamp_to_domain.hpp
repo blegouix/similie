@@ -18,13 +18,13 @@ template <class CommonSeq>
 struct ClampToDomain;
 
 template <class... CommonDDim>
-struct ClampToDomain<ddc::detail::TypeSeq<CommonDDim...>>
+struct ClampToDomain<ddc::TypeSeq<CommonDDim...>>
 {
     template <class BatchDomain, class Elem>
     KOKKOS_FUNCTION static Elem operator()(BatchDomain const& batch_domain, Elem elem)
     {
         ddc::DiscreteDomain<CommonDDim...> const common_domain
-                = select_from_type_seq<ddc::detail::TypeSeq<CommonDDim...>>(batch_domain);
+                = select_from_type_seq<ddc::TypeSeq<CommonDDim...>>(batch_domain);
         ddc::DiscreteElement<CommonDDim...> const front = common_domain.front();
         ddc::DiscreteElement<CommonDDim...> const back = common_domain.back();
 

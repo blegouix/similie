@@ -78,7 +78,7 @@ template <class... SpatialIndex>
     requires TwoDimensional<SpatialIndex...>
 class MagneticVectorPotentialToMagneticInduction<SpatialIndex...>
 {
-    using SpatialIndexSeq = ddc::detail::TypeSeq<SpatialIndex...>;
+    using SpatialIndexSeq = ddc::TypeSeq<SpatialIndex...>;
     using PotentialScalarIndex = sil::tensor::ScalarIndex;
     using MagneticInductionIndex = sil::exterior::coboundary_index_t<
             sil::tensor::Covariant<sil::tensor::TensorNaturalIndex<SpatialIndex...>>,
@@ -142,7 +142,7 @@ template <class... SpatialIndex>
     requires ThreeDimensional<SpatialIndex...>
 class MagneticVectorPotentialToMagneticInduction<SpatialIndex...>
 {
-    using SpatialIndexSeq = ddc::detail::TypeSeq<SpatialIndex...>;
+    using SpatialIndexSeq = ddc::TypeSeq<SpatialIndex...>;
     using SpatialNaturalIndex = sil::tensor::TensorNaturalIndex<SpatialIndex...>;
     using CoboundaryIndex = sil::tensor::Contravariant<SpatialNaturalIndex>;
     using VectorPotentialIndex = sil::tensor::Covariant<SpatialNaturalIndex>;

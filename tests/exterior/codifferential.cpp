@@ -6,6 +6,7 @@
 #include <ddc/ddc.hpp>
 
 #include <gtest/gtest.h>
+#include <similie/misc/type_seq_ext.hpp>
 #include <similie/tensor/symmetric_tensor.hpp>
 
 #include "exterior.hpp"
@@ -185,11 +186,11 @@ TEST(Codifferential, Prefilled2D1Form)
         using SourceHodgeOutputIndices = sil::exterior::codifferential_hodge_output_indices_t<
                 TensorIndex::size() - TensorIndex::rank(),
                 TensorIndex>;
-        using TargetHodgeInputIndices = ddc::
-                type_seq_merge_t<ddc::detail::TypeSeq<TensorIndex>, SourceHodgeOutputIndices>;
+        using TargetHodgeInputIndices
+                = ddc::type_seq_merge_t<ddc::TypeSeq<TensorIndex>, SourceHodgeOutputIndices>;
         using TargetHodgeOutputIndices = ddc::type_seq_remove_t<
                 sil::tensor::lower_t<SourceHodgeInputIndices>,
-                ddc::detail::TypeSeq<TensorIndex>>;
+                ddc::TypeSeq<TensorIndex>>;
         using DualTensorIndex = sil::misc::convert_type_seq_to_t<
                 sil::tensor::TensorAntisymmetricIndex,
                 SourceHodgeOutputIndices>;
@@ -198,7 +199,7 @@ TEST(Codifferential, Prefilled2D1Form)
                 sil::exterior::
                         hodge_star_domain_t<SourceHodgeInputIndices, SourceHodgeOutputIndices>>
                 hodge_star_accessor;
-        ddc::cartesian_prod_t<
+        sil::misc::cartesian_prod_t<
                 typename std::decay_t<decltype(metric)>::non_indices_domain_t,
                 sil::exterior::
                         hodge_star_domain_t<SourceHodgeInputIndices, SourceHodgeOutputIndices>>
@@ -210,7 +211,7 @@ TEST(Codifferential, Prefilled2D1Form)
                 sil::exterior::hodge_star_domain_t<
                         sil::tensor::upper_t<TargetHodgeInputIndices>,
                         TargetHodgeOutputIndices>> dual_hodge_star_accessor;
-        ddc::cartesian_prod_t<
+        sil::misc::cartesian_prod_t<
                 typename std::decay_t<decltype(metric)>::non_indices_domain_t,
                 sil::exterior::hodge_star_domain_t<
                         sil::tensor::upper_t<TargetHodgeInputIndices>,
@@ -220,7 +221,7 @@ TEST(Codifferential, Prefilled2D1Form)
         sil::tensor::Tensor dual_hodge_star(dual_hodge_star_alloc);
 
         [[maybe_unused]] sil::tensor::TensorAccessor<DualTensorIndex> dual_tensor_accessor;
-        ddc::cartesian_prod_t<
+        sil::misc::cartesian_prod_t<
                 typename std::decay_t<decltype(tensor)>::non_indices_domain_t,
                 ddc::DiscreteDomain<DualTensorIndex>>
                 dual_tensor_dom(tensor.non_indices_domain(), dual_tensor_accessor.domain());

@@ -55,7 +55,7 @@ struct TensorAntisymmetricIndex
             return 1;
         } else {
             return misc::binomial_coefficient(
-                    ddc::type_seq_element_t<0, ddc::detail::TypeSeq<TensorIndex...>>::mem_size(),
+                    ddc::type_seq_element_t<0, ddc::TypeSeq<TensorIndex...>>::mem_size(),
                     rank());
         }
     }
@@ -76,24 +76,22 @@ struct TensorAntisymmetricIndex
         misc::detail::sort(sorted_ids.begin(), sorted_ids.end());
         return mem_size()
                - (0 + ...
-                  + (sorted_ids[ddc::type_seq_rank_v<
-                             TensorIndex,
-                             ddc::detail::TypeSeq<TensorIndex...>>]
+                  + (sorted_ids[ddc::type_seq_rank_v<TensorIndex, ddc::TypeSeq<TensorIndex...>>]
                                      == TensorIndex::mem_size() - rank()
                                                 + ddc::type_seq_rank_v<
                                                         TensorIndex,
-                                                        ddc::detail::TypeSeq<TensorIndex...>>
+                                                        ddc::TypeSeq<TensorIndex...>>
                              ? 0
                              : misc::binomial_coefficient(
                                        TensorIndex::mem_size()
                                                - sorted_ids[ddc::type_seq_rank_v<
                                                        TensorIndex,
-                                                       ddc::detail::TypeSeq<TensorIndex...>>]
+                                                       ddc::TypeSeq<TensorIndex...>>]
                                                - 1,
                                        rank()
                                                - ddc::type_seq_rank_v<
                                                        TensorIndex,
-                                                       ddc::detail::TypeSeq<TensorIndex...>>)))
+                                                       ddc::TypeSeq<TensorIndex...>>)))
                - 1;
     }
 
@@ -167,8 +165,7 @@ public:
             return std::array<std::size_t, rank()> {};
         } else {
             std::array<std::size_t, rank()> ids;
-            std::size_t d
-                    = ddc::type_seq_element_t<0, ddc::detail::TypeSeq<TensorIndex...>>::mem_size();
+            std::size_t d = ddc::type_seq_element_t<0, ddc::TypeSeq<TensorIndex...>>::mem_size();
             std::size_t r = rank();
             for (std::size_t i = 0; i < rank(); ++i) {
                 const std::size_t triangle_size = misc::binomial_coefficient(d, r - i);
@@ -176,7 +173,7 @@ public:
                     const std::size_t subtriangle_size
                             = misc::binomial_coefficient(d - j - 1, r - i);
                     if (triangle_size - subtriangle_size > mem_id) {
-                        ids[i] = ddc::type_seq_element_t<0, ddc::detail::TypeSeq<TensorIndex...>>::
+                        ids[i] = ddc::type_seq_element_t<0, ddc::TypeSeq<TensorIndex...>>::
                                          mem_size()
                                  - d + j;
                         mem_id -= triangle_size - misc::binomial_coefficient(d - j, r - i);

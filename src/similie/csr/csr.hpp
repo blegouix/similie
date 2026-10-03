@@ -134,7 +134,7 @@ tensor_prod(
         for (int j = j_begin; j < j_end; j++) {
             prod(ddc::DiscreteElement<TailTensorIndex...>(csr.idx()[ddc::type_seq_rank_v<
                     TailTensorIndex,
-                    ddc::detail::TypeSeq<TailTensorIndex...>>][j]...))
+                    ddc::TypeSeq<TailTensorIndex...>>][j]...))
                     += dense_value * csr.values()[j];
         };
     }
@@ -179,7 +179,7 @@ tensor_prod(
             double const dense_value
                     = dense(ddc::DiscreteElement<TailTensorIndex...>(csr.idx()[ddc::type_seq_rank_v<
                             TailTensorIndex,
-                            ddc::detail::TypeSeq<TailTensorIndex...>>][j]...));
+                            ddc::TypeSeq<TailTensorIndex...>>][j]...));
             lsum += dense_value * csr.values()[j];
         }
         prod.mem(ddc::DiscreteElement<HeadTensorIndex>(i)) = lsum;

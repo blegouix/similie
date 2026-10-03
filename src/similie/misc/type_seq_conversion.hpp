@@ -14,13 +14,13 @@ namespace detail {
 template <class T>
 struct ToTypeSeq
 {
-    using type = ddc::detail::TypeSeq<>;
+    using type = ddc::TypeSeq<>;
 };
 
 template <template <class...> class T, class... Arg>
 struct ToTypeSeq<T<Arg...>>
 {
-    using type = ddc::detail::TypeSeq<Arg...>;
+    using type = ddc::TypeSeq<Arg...>;
 };
 
 } // namespace detail
@@ -34,7 +34,7 @@ template <template <class...> class T, class Seq>
 struct ConvertTypeSeqTo;
 
 template <template <class...> class T, class... Arg>
-struct ConvertTypeSeqTo<T, ddc::detail::TypeSeq<Arg...>>
+struct ConvertTypeSeqTo<T, ddc::TypeSeq<Arg...>>
 {
     using type = T<Arg...>;
 };

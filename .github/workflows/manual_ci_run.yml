@@ -110,7 +110,7 @@ jobs:
               *) echo "Unsupported NVIDIA compute capability for Kokkos: ${cap}" >&2; exit 1 ;;
             esac
             cmake \
-              -DCMAKE_CXX_COMPILER="${PWD}/vendor/ddc/vendor/kokkos/bin/nvcc_wrapper" \
+              -DCMAKE_CXX_COMPILER=/opt/kokkos/bin/nvcc_wrapper \
               -DCMAKE_BUILD_TYPE=Release \
               -DKokkos_ENABLE_CUDA=ON \
               -DKokkos_ARCH_${kokkos_arch}=ON \

@@ -78,9 +78,7 @@ public:
         ddc::host_for_each(dense.domain(), [&](ddc::DiscreteElement<TailTensorIndex...> elem) {
             if (dense(elem) != 0) {
                 m_coalesc_idx.back() += 1;
-                (m_idx[ddc::type_seq_rank_v<
-                               TailTensorIndex,
-                               ddc::detail::TypeSeq<TailTensorIndex...>>]
+                (m_idx[ddc::type_seq_rank_v<TailTensorIndex, ddc::TypeSeq<TailTensorIndex...>>]
                          .push_back(elem.template uid<TailTensorIndex>()),
                  ...);
                 m_values.push_back(dense(elem));
@@ -96,16 +94,12 @@ public:
         const std::size_t id_end = m_coalesc_idx[id.uid() + 1];
         std::vector<std::size_t> new_coalesc_idx {0, id_end - id_begin};
         std::array<std::vector<std::size_t>, sizeof...(TailTensorIndex)> new_idx;
-        ((new_idx[ddc::type_seq_rank_v<TailTensorIndex, ddc::detail::TypeSeq<TailTensorIndex...>>]
+        ((new_idx[ddc::type_seq_rank_v<TailTensorIndex, ddc::TypeSeq<TailTensorIndex...>>]
           = std::vector<std::size_t>(
-                  m_idx[ddc::type_seq_rank_v<
-                                TailTensorIndex,
-                                ddc::detail::TypeSeq<TailTensorIndex...>>]
+                  m_idx[ddc::type_seq_rank_v<TailTensorIndex, ddc::TypeSeq<TailTensorIndex...>>]
                                   .begin()
                           + id_begin,
-                  m_idx[ddc::type_seq_rank_v<
-                                TailTensorIndex,
-                                ddc::detail::TypeSeq<TailTensorIndex...>>]
+                  m_idx[ddc::type_seq_rank_v<TailTensorIndex, ddc::TypeSeq<TailTensorIndex...>>]
                                   .begin()
                           + id_begin + id_end)),
          ...);
@@ -161,9 +155,9 @@ csr2dense(
                 Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(j_begin, j_end),
                 [&](const int j) {
                     dense(ddc::DiscreteElement<HeadId>(i),
-                          ddc::DiscreteElement<TailId...>(csr.idx()[ddc::type_seq_rank_v<
-                                  TailId,
-                                  ddc::detail::TypeSeq<TailId...>>][j]...))
+                          ddc::DiscreteElement<TailId...>(
+                                  csr.idx()[ddc::type_seq_rank_v<TailId, ddc::TypeSeq<TailId...>>]
+                                           [j]...))
                             = csr.values()[j];
                 });
     }

@@ -27,35 +27,35 @@ template <class Indices, std::size_t I>
 struct Primes;
 
 template <std::size_t I>
-struct Primes<ddc::detail::TypeSeq<>, I>
+struct Primes<ddc::TypeSeq<>, I>
 {
-    using type = ddc::detail::TypeSeq<>;
+    using type = ddc::TypeSeq<>;
 };
 
 template <class... Index, std::size_t I>
-struct Primes<ddc::detail::TypeSeq<Index...>, I>
+struct Primes<ddc::TypeSeq<Index...>, I>
 {
-    using type = ddc::detail::TypeSeq<prime<Index, I>...>;
+    using type = ddc::TypeSeq<prime<Index, I>...>;
 };
 
 template <class... Index, std::size_t I>
-struct Primes<ddc::detail::TypeSeq<Contravariant<Index>...>, I>
+struct Primes<ddc::TypeSeq<Contravariant<Index>...>, I>
 {
-    using type = ddc::detail::TypeSeq<Contravariant<prime<Index, I>>...>;
+    using type = ddc::TypeSeq<Contravariant<prime<Index, I>>...>;
 };
 
 template <class... Index, std::size_t I>
-struct Primes<ddc::detail::TypeSeq<Covariant<Index>...>, I>
+struct Primes<ddc::TypeSeq<Covariant<Index>...>, I>
 {
-    using type = ddc::detail::TypeSeq<Covariant<prime<Index, I>>...>;
+    using type = ddc::TypeSeq<Covariant<prime<Index, I>>...>;
 };
 
 } // namespace detail
 
-template <misc::Specialization<ddc::detail::TypeSeq> Indices, std::size_t I = 1>
+template <misc::Specialization<ddc::TypeSeq> Indices, std::size_t I = 1>
 using primes = detail::Primes<Indices, I>::type;
 
-template <misc::Specialization<ddc::detail::TypeSeq> Indices>
+template <misc::Specialization<ddc::TypeSeq> Indices>
 using seconds = primes<Indices, 2>;
 
 } // namespace tensor

@@ -15,13 +15,13 @@ FROM $BASE_IMAGE
 # for cpu:
 # cmake -DCMAKE_CXX_COMPILER=g++-15 -DCMAKE_BUILD_TYPE=Release -DKokkos_ENABLE_OPENMP=ON -B similie/build -S similie
 # for cuda:
-# cmake -DCMAKE_CXX_COMPILER=$PWD/similie/vendor/ddc/vendor/kokkos/bin/nvcc_wrapper -DCMAKE_BUILD_TYPE=RELEASE -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_<YOUR_ARCH_NAMECODE>=ON -B similie/build -S similie
+# cmake -DCMAKE_CXX_COMPILER=/opt/kokkos/bin/nvcc_wrapper -DCMAKE_BUILD_TYPE=RELEASE -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_<YOUR_ARCH_NAMECODE>=ON -B similie/build -S similie
 # cmake --build similie/build -j 8
 # ctest --test-dir similie/build
 
-# -----------------------
-# ----- BUILD CHAIN -----
-# -----------------------
+# ----------------
+# ----- MISC -----
+# ----------------
 
 ARG BACKEND=cuda
 
@@ -34,6 +34,10 @@ RUN apt update && apt install -y ca-certificates gpg lsb-release wget
 
 # git
 RUN apt update && apt install -y git
+
+# ---------------------------
+# ----- BUILD TOOLCHAIN -----
+# ---------------------------
 
 # CMake 4.4
 RUN apt update && apt install -y ca-certificates gpg wget \
@@ -58,6 +62,34 @@ RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-15 100 \
 # OpenMPI
 RUN apt update && apt install -y libopenmpi-dev
 
+# ----------------------------------
+# ----- TESTING & IO LIBRARIES -----
+# ----------------------------------
+
+# Google Benchmark
+RUN git clone --depth 1 --branch v1.9.5 https://github.com/google/benchmark.git /opt/benchmark \
+ && cmake -DCMAKE_BUILD_TYPE=Release -DBENCHMARK_ENABLE_TESTING=OFF -B /opt/benchmark/build -S /opt/benchmark \
+ && cmake --build /opt/benchmark/build \
+ && cmake --install /opt/benchmark/build
+
+# PDI
+RUN update-ca-certificates
+RUN printf '%s\n' \
+  'Types: deb deb-src' \
+  'URIs: https://repo.pdi.dev/ubuntu' \
+  "Suites: $(lsb_release -cs)" \
+  'Components: main' \
+  'Architectures: amd64' \
+  'Signed-By: /usr/share/keyrings/pdidev-archive-automatic.gpg' \
+  > /etc/apt/sources.list.d/pdi.sources
+RUN wget -O /usr/share/keyrings/pdidev-archive-automatic.gpg https://repo.pdi.dev/ubuntu/pdidev-archive-keyring.gpg \
+  && chmod a+r /usr/share/keyrings/pdidev-archive-automatic.gpg
+RUN apt update && apt install -y libpdi-dev pdiplugin-all
+
+# -----------------------------------------
+# ----- REFERENCE COMPUTING LIBRARIES -----
+# -----------------------------------------
+
 # FFTW3
 RUN apt update && apt install -y libfftw3-dev
 
@@ -68,6 +100,36 @@ RUN apt update && apt install -y liblapacke-dev
 RUN if [ "${BACKEND}" = "cuda" ]; then \
   apt update && apt install -y libthrust-dev; \
 fi
+
+# ------------------
+# ----- ONELAB -----
+# ------------------
+
+# OpenCASCADE
+RUN apt update && apt install -y \
+  libfreetype-dev \
+  libocct-foundation-dev \
+  libocct-modeling-data-dev \
+  libocct-modeling-algorithms-dev \
+  libocct-data-exchange-dev \
+  libocct-ocaf-dev
+
+# gmsh
+RUN apt update && apt install -y libfltk1.3-dev
+RUN git clone https://gitlab.onelab.info/gmsh/gmsh.git
+RUN cmake -DENABLE_BUILD_LIB=ON -DENABLE_BUILD_SHARED=ON -DENABLE_PRIVATE_API=ON -DENABLE_OCC=ON -DENABLE_OCC_CAF=ON -B gmsh/build -S gmsh
+RUN cmake --build gmsh/build
+RUN cmake --install gmsh/build
+
+# GetDP
+RUN git clone https://gitlab.onelab.info/getdp/getdp.git
+RUN cmake -B getdp/build -S getdp
+RUN cmake --build getdp/build
+RUN cmake --install getdp/build
+
+# ------------------
+# ----- GINKGO -----
+# ------------------
 
 # Ginkgo
 RUN git clone https://github.com/ginkgo-project/ginkgo.git \
@@ -100,41 +162,41 @@ fi
 RUN cmake --build ginkgo/build
 RUN cmake --install ginkgo/build
 
-# OpenCASCADE
-RUN apt update && apt install -y \
-  libfreetype-dev \
-  libocct-foundation-dev \
-  libocct-modeling-data-dev \
-  libocct-modeling-algorithms-dev \
-  libocct-data-exchange-dev \
-  libocct-ocaf-dev
+# ----------------------
+# ----- KOKKOS-ISH -----
+# ----------------------
 
-# gmsh
-RUN apt update && apt install -y libfltk1.3-dev
-RUN git clone https://gitlab.onelab.info/gmsh/gmsh.git
-RUN cmake -DENABLE_BUILD_LIB=ON -DENABLE_BUILD_SHARED=ON -DENABLE_PRIVATE_API=ON -DENABLE_OCC=ON -DENABLE_OCC_CAF=ON -B gmsh/build -S gmsh
-RUN cmake --build gmsh/build -j 4
-RUN cmake --install gmsh/build
+# Kokkos
+RUN git clone --depth 1 --branch 5.2.2 https://github.com/kokkos/kokkos.git /opt/kokkos
+RUN if [ "${BACKEND}" = "cpu" ]; then \
+      cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Release -DKokkos_ENABLE_OPENMP=ON \
+        -B /opt/kokkos/build -S /opt/kokkos; \
+    else \
+      cmake -DCMAKE_CXX_COMPILER=/opt/kokkos/bin/nvcc_wrapper -DCMAKE_BUILD_TYPE=Release \
+        -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_ADA89=ON \
+        -DKokkos_ENABLE_CUDA_CONSTEXPR=ON -DKokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE=ON \
+        -B /opt/kokkos/build -S /opt/kokkos; \
+    fi
+RUN cmake --build /opt/kokkos/build && cmake --install /opt/kokkos/build
 
-# GetDP
-RUN git clone https://gitlab.onelab.info/getdp/getdp.git
-RUN cmake -B getdp/build -S getdp
-RUN cmake --build getdp/build -j 4
-RUN cmake --install getdp/build
+# Kokkos FFT
+RUN git clone --depth 1 --branch v1.1.0 https://github.com/kokkos/kokkos-fft.git /opt/kokkos-fft \
+ && cmake -DCMAKE_CXX_COMPILER=$(if [ "${BACKEND}" = "cpu" ]; then echo g++; else echo /usr/local/bin/nvcc_wrapper; fi) \
+      -DCMAKE_BUILD_TYPE=Release -DKokkosFFT_ENABLE_FFTW=ON \
+      -B /opt/kokkos-fft/build -S /opt/kokkos-fft \
+ && cmake --build /opt/kokkos-fft/build \
+ && cmake --install /opt/kokkos-fft/build
 
-# PDI
-RUN update-ca-certificates
-RUN printf '%s\n' \
-  'Types: deb deb-src' \
-  'URIs: https://repo.pdi.dev/ubuntu' \
-  "Suites: $(lsb_release -cs)" \
-  'Components: main' \
-  'Architectures: amd64' \
-  'Signed-By: /usr/share/keyrings/pdidev-archive-automatic.gpg' \
-  > /etc/apt/sources.list.d/pdi.sources
-RUN wget -O /usr/share/keyrings/pdidev-archive-automatic.gpg https://repo.pdi.dev/ubuntu/pdidev-archive-keyring.gpg \
-  && chmod a+r /usr/share/keyrings/pdidev-archive-automatic.gpg
-RUN apt update && apt install -y libpdi-dev pdiplugin-all
+# Kokkos Kernels
+RUN git clone --depth 1 --branch 5.2.2 https://github.com/kokkos/kokkos-kernels.git /opt/kokkos-kernels \
+ && cmake -DCMAKE_CXX_COMPILER=$(if [ "${BACKEND}" = "cpu" ]; then echo g++; else echo /usr/local/bin/nvcc_wrapper; fi) \
+      -DCMAKE_BUILD_TYPE=Release -B /opt/kokkos-kernels/build -S /opt/kokkos-kernels \
+ && cmake --build /opt/kokkos-kernels/build \
+ && cmake --install /opt/kokkos-kernels/build
 
-# Sympy
+# ------------------------------
+# ----- PYTHON ENVIRONMENT -----
+# ------------------------------
+
+# Python packages
 RUN apt install -y python3-sympy python3-h5py
