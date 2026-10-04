@@ -295,12 +295,8 @@ struct Codifferential<
             return dual_tensor.mem(dual_elem);
         };
 
-        TransposedCoboundary<TagToRemoveFromCochain, dual_tensor_index>::operator()(
-                dual_codifferential,
-                dual_evaluator,
-                chain,
-                lower_chain,
-                elem);
+        TransposedCoboundary<TagToRemoveFromCochain, dual_tensor_index>::
+        operator()(dual_codifferential, dual_evaluator, chain, lower_chain, elem);
 
         DiscreteHodgeStar<
                 CellComplex::CircumcentricDual,
