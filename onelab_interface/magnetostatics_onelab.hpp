@@ -626,7 +626,7 @@ struct MagneticMoments
     double z;
 
     template <class Index>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr double get() const
+    [[nodiscard]] constexpr double get() const
     {
         if constexpr (std::is_same_v<Index, X>) {
             return x;
@@ -642,7 +642,7 @@ struct MagneticMoments
         }
     }
 
-    [[nodiscard]] KOKKOS_FUNCTION constexpr double norm2() const
+    [[nodiscard]] constexpr double norm2() const
     {
         return x * x + y * y + z * z;
     }
@@ -830,7 +830,7 @@ inline bool use_divergence_gauge_3d()
 }
 
 template <class Index>
-[[nodiscard]] KOKKOS_FUNCTION constexpr int component_id()
+[[nodiscard]] constexpr int component_id()
 {
     if constexpr (std::is_same_v<Index, X>) {
         return 0;

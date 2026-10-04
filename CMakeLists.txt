@@ -62,6 +62,9 @@ if("${BUILD_TESTING}")
 endif()
 
 ## Use the discrete domain computation library (ddc) from `vendor/`
+if(Kokkos_ENABLE_CUDA)
+  set(Kokkos_ENABLE_CUDA_CONSTEXPR ON CACHE BOOL "Enable constexpr calls in CUDA device code" FORCE)
+endif()
 if(NOT "${SIMILIE_BUILD_ONLY_DOCUMENTATION}")
   add_subdirectory("vendor/ddc/" "ddc") # SYSTEM)
 endif()

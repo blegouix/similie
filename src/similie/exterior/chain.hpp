@@ -50,7 +50,7 @@ public:
 
     template <class... T>
         requires(!std::is_convertible_v<T, std::size_t> && ...)
-    KOKKOS_FUNCTION constexpr explicit Chain(simplices_type allocation, T... simplex) noexcept
+    constexpr explicit Chain(simplices_type allocation, T... simplex) noexcept
         : m_simplices(std::move(allocation))
         , m_size(sizeof...(T))
     {
@@ -59,7 +59,7 @@ public:
         assert(check() == 0 && "there are duplicate simplices in the chain");
     }
 
-    KOKKOS_FUNCTION constexpr explicit Chain(simplices_type allocation, std::size_t size) noexcept
+    constexpr explicit Chain(simplices_type allocation, std::size_t size) noexcept
         : m_simplices(std::move(allocation))
         , m_size(size)
     {
@@ -72,12 +72,12 @@ public:
 
     KOKKOS_DEFAULTED_FUNCTION Chain& operator=(Chain&& other) = default;
 
-    static KOKKOS_FUNCTION constexpr bool is_local() noexcept
+    static constexpr bool is_local() noexcept
     {
         return s_is_local;
     }
 
-    static KOKKOS_FUNCTION constexpr std::size_t dimension() noexcept
+    static constexpr std::size_t dimension() noexcept
     {
         return s_k;
     }
