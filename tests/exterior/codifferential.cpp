@@ -162,7 +162,7 @@ TEST(Codifferential, NonStaged2D1Form)
                     EXPECT_EQ(
                             stencil.non_indices_domain().front(),
                             sil::exterior::detail::
-                                    forward_stencil_front(elem, tensor.non_indices_domain()));
+                                    backward_stencil_front(elem, tensor.non_indices_domain()));
                     double value = 0.0;
                     ddc::host_for_each(stencil.domain(), [&](auto sampled_elem) {
                         if (sil::misc::domain_contains(tensor.domain(), sampled_elem)) {
