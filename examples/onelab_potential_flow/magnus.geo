@@ -70,9 +70,9 @@ Plane Surface(25) = { 22 };
 Plane Surface(26) = { 23 };
 Plane Surface(27) = { 24 };
 
-// Two fluid domains meet along the connecting curves 5 and 6. Each domain
-// uses two mapped quadrilateral patches; the obstacle boundary remains a hole.
-// Curve 5 is the cut carrying the potential jump in the DEC 1-cochain.
+// Each fluid domain uses two mapped quadrilateral patches. The obstacle is a
+// hole in both domains. Curve 6 joins the two fluid domains continuously;
+// curve 5 is the circulation cut, where the potential has a prescribed jump.
 CellsAlongObjectPatch = 40;
 CellsAcrossFluidPatch = 24;
 Transfinite Curve {1, 2, 3, 4} = CellsAlongObjectPatch + 1;

@@ -19,13 +19,14 @@
 #include <ddc/ddc.hpp>
 
 #include <ginkgo/core/base/matrix_data.hpp>
-#include <similie/exterior/boundary.hpp>
-#include <similie/exterior/cochain.hpp>
+#include <similie/physics/hamilton_equations.hpp>
+#include <similie/physics/scalar_field/scalar_field_with_power_coupling.hpp>
 #include <similie/solvers/minimize_strong_formulation_residual.hpp>
 
 #include <Kokkos_Core.hpp>
 
 #include "gmsh_structured_grid.hpp"
+#include "potential_flow_tensor_laplacian.hpp"
 
 namespace similie::onelab_interface::potential_flow_onelab {
 
@@ -58,55 +59,11 @@ struct X
 struct Y
 {
 };
-using Vertex = sil::exterior::Simplex<0, X, Y>;
-using PrimalEdge = sil::exterior::Simplex<1, X, Y>;
-
-struct Edge
+struct T
 {
-    std::array<std::size_t, 2> nodes;
-    std::array<double, 2> signs;
-    double cut_value;
 };
-
-struct CellHodge
-{
-    std::array<Edge, 4> edges;
-    std::array<std::array<double, 4>, 4> matrix;
-};
-
-// The primal coboundary is evaluated from exterior::boundary.
-inline Edge make_edge(std::size_t i, std::size_t j, bool along_i, std::size_t ni, double cut_value)
-{
-    ddc::DiscreteElement<X, Y> const
-            origin(static_cast<std::ptrdiff_t>(i), static_cast<std::ptrdiff_t>(j));
-    PrimalEdge const primal(origin, ddc::DiscreteVector<X, Y>(along_i ? 1 : 0, along_i ? 0 : 1));
-    auto incidence = sil::exterior::boundary(primal);
-    Edge edge {{}, {}, cut_value};
-    int k = 0;
-    for (Vertex const& vertex : incidence) {
-        auto const elem = vertex.discrete_element();
-        edge.nodes[k] = static_cast<std::size_t>(elem.uid<Y>()) * ni
-                        + static_cast<std::size_t>(elem.uid<X>()) % ni;
-        edge.signs[k] = vertex.negative() ? -1.0 : 1.0;
-        ++k;
-    }
-    if (k != 2 || edge.nodes[0] == edge.nodes[1])
-        throw std::runtime_error("invalid DEC edge incidence");
-    return edge;
-}
-
-inline double coboundary_value(Edge const& edge, std::vector<double> const& potential)
-{
-    ddc::DiscreteElement<X, Y> const origin(0, 0);
-    PrimalEdge const primal(origin, ddc::DiscreteVector<X>(1));
-    auto incidence = sil::exterior::boundary(primal);
-    Kokkos::View<double*, Kokkos::LayoutRight, Kokkos::HostSpace>
-            values("potential_flow_vertex_cochain", 2);
-    values(0) = potential[edge.nodes[0]];
-    values(1) = potential[edge.nodes[1]];
-    sil::exterior::Cochain<decltype(incidence)> cochain(incidence, values);
-    return cochain.integrate();
-}
+using FreeScalarFieldHamiltonian
+        = physics::scalar_field::ScalarFieldWithPowerCouplingHamiltonian<T, X, Y>;
 
 class SparseDecLaplacian
 {
@@ -117,7 +74,7 @@ class SparseDecLaplacian
 
 public:
     static constexpr bool IS_LINEAR = true;
-    static constexpr bool IS_SYMMETRIC = true;
+    static constexpr bool IS_SYMMETRIC = false;
 
     explicit SparseDecLaplacian(std::vector<std::map<std::size_t, double>> const& rows)
         : m_offsets("potential_flow_dec_offsets", rows.size() + 1)
@@ -292,96 +249,150 @@ inline Result run(
     if (!has_cut || std::find(boundary.begin(), boundary.end(), 10) == boundary.end()
         || std::find(boundary.begin(), boundary.end(), 11) == boundary.end())
         throw std::runtime_error("potential-flow physical boundary is incomplete");
-    std::vector<CellHodge> cells;
-    cells.reserve(ni * cells_per_patch_j);
-    std::array<double, 7> constexpr gauss_points {
-            0.5,
-            0.5 - 0.2029225756886985,
-            0.5 + 0.2029225756886985,
-            0.5 - 0.3707655927996970,
-            0.5 + 0.3707655927996970,
-            0.5 - 0.4745539561713792,
-            0.5 + 0.4745539561713792,
+    // The two sides are independent tensor grids. Their traces share global
+    // degrees of freedom; the left trace at the upper cut has an affine jump.
+    constexpr std::size_t side_cells = 2 * cells_per_patch_i;
+    constexpr std::size_t side_nodes = side_cells + 1;
+    std::array<std::size_t, 2> const side_start {cells_per_patch_i, 3 * cells_per_patch_i};
+    auto side_index = [&](std::size_t side, std::size_t i, std::size_t j) {
+        return index(side_start[side] + i, j);
     };
-    std::array<double, 7> constexpr gauss_weights {
-            0.2089795918367345,
-            0.1909150252525595,
-            0.1909150252525595,
-            0.1398526957446385,
-            0.1398526957446385,
-            0.0647424830844350,
-            0.0647424830844350,
+    auto side_point = [&](std::size_t side, std::size_t i, std::size_t j) {
+        return point(side_start[side] + i, j);
     };
-    for (std::size_t i = 0; i < ni; ++i)
-        for (std::size_t j = 0; j < cells_per_patch_j; ++j) {
-            CellHodge cell {
-                    .edges
-                    = {make_edge(i, j, true, ni, i == 119 ? -1.0 : 0.0),
-                       make_edge(i, j + 1, true, ni, i == 119 ? -1.0 : 0.0),
-                       make_edge(i, j, false, ni, 0.0),
-                       make_edge(i + 1, j, false, ni, 0.0)},
-                    .matrix = {},
-            };
-            auto const a = point(i, j), b = point(i + 1, j);
-            auto const c = point(i + 1, j + 1), d = point(i, j + 1);
-            // The quadrilateral Hodge star couples all four primal edge
-            // cochains. The reconstruction and metric are integrated across
-            // skew mapped quads, retaining their off-diagonal terms.
-            for (std::size_t gi = 0; gi < gauss_points.size(); ++gi)
-                for (std::size_t gj = 0; gj < gauss_points.size(); ++gj) {
-                    double const xi = gauss_points[gi];
-                    double const eta = gauss_points[gj];
-                    double const tx = (1.0 - eta) * (b[0] - a[0]) + eta * (c[0] - d[0]);
-                    double const ty = (1.0 - eta) * (b[1] - a[1]) + eta * (c[1] - d[1]);
-                    double const rx = (1.0 - xi) * (d[0] - a[0]) + xi * (c[0] - b[0]);
-                    double const ry = (1.0 - xi) * (d[1] - a[1]) + xi * (c[1] - b[1]);
-                    double const determinant = tx * ry - ty * rx;
-                    if (std::abs(determinant) <= 1.0e-16)
-                        throw std::runtime_error("degenerate mapped quad");
-                    std::array<double, 4> const dxi {1.0 - eta, eta, 0.0, 0.0};
-                    std::array<double, 4> const deta {0.0, 0.0, 1.0 - xi, xi};
-                    for (int p = 0; p < 4; ++p)
-                        for (int q = 0; q < 4; ++q) {
-                            double const px = (dxi[p] * ry - ty * deta[p]) / determinant;
-                            double const py = (tx * deta[p] - rx * dxi[p]) / determinant;
-                            double const qx = (dxi[q] * ry - ty * deta[q]) / determinant;
-                            double const qy = (tx * deta[q] - rx * dxi[q]) / determinant;
-                            cell.matrix[p][q] += gauss_weights[gi] * gauss_weights[gj]
-                                                 * inputs.density * std::abs(determinant)
-                                                 * (px * qx + py * qy);
-                        }
-                }
-            cells.push_back(cell);
-        }
-    std::vector<std::map<std::size_t, double>> full_rows(node_count);
-    std::vector<double> cut_rhs(node_count, 0.0);
-    for (CellHodge const& cell : cells)
-        for (int p = 0; p < 4; ++p)
-            for (int q = 0; q < 4; ++q)
-                for (int a = 0; a < 2; ++a) {
-                    Edge const& row_edge = cell.edges[p];
-                    Edge const& column_edge = cell.edges[q];
-                    std::size_t const row = row_edge.nodes[a];
-                    double const coefficient = cell.matrix[p][q] * row_edge.signs[a];
-                    cut_rhs[row] -= coefficient * column_edge.cut_value;
-                    for (int b = 0; b < 2; ++b)
-                        full_rows[row][column_edge.nodes[b]] += coefficient * column_edge.signs[b];
-                }
+    auto cut_trace = [](std::size_t side, std::size_t i) {
+        return side == 0 && i == side_cells ? -1.0 : 0.0;
+    };
     std::vector<std::map<std::size_t, double>> rows(node_count);
     std::vector<double> base_rhs(node_count, 0.0);
-    for (std::size_t i = 0; i < node_count; ++i) {
-        if (boundary[i]) {
-            rows[i][i] = 1.0;
-            base_rhs[i] = prescribed[i];
-            cut_rhs[i] = 0.0;
-        } else {
-            for (auto const& [column, value] : full_rows[i]) {
-                if (boundary[column])
-                    base_rhs[i] -= value * prescribed[column];
-                else
-                    rows[i][column] = value;
+    std::vector<double> cut_rhs(node_count, 0.0);
+    auto add = [&](std::size_t row,
+                   std::size_t side,
+                   std::size_t i,
+                   std::size_t j,
+                   double coefficient) {
+        rows[row][side_index(side, i, j)] += coefficient;
+        cut_rhs[row] -= coefficient * cut_trace(side, i);
+    };
+    for (std::size_t side = 0; side < 2; ++side) {
+        std::vector<std::array<double, 2>> positions(side_nodes * nodes_j);
+        for (std::size_t i = 0; i < side_nodes; ++i)
+            for (std::size_t j = 0; j < nodes_j; ++j)
+                positions[j * side_nodes + i] = side_point(side, i, j);
+        auto const local_rows = tensor_laplacian_rows(positions);
+        for (std::size_t i = 1; i < side_cells; ++i)
+            for (std::size_t j = 1; j < cells_per_patch_j; ++j) {
+                std::size_t const row = side_index(side, i, j);
+                for (auto const& [column, coefficient] : local_rows[j * side_nodes + i])
+                    add(row, side, column % side_nodes, column / side_nodes, coefficient);
             }
+    }
+    FreeScalarFieldHamiltonian const hamiltonian(0.0, 0.0, 2.0);
+    physics::HamiltonEquations const equations(hamiltonian);
+    // A normal flux rule reconstructs the gradient from the two primal edge
+    // differences at a boundary node, using the physical mapped edge vectors.
+    auto add_normal_flux = [&](std::size_t row,
+                               std::size_t side,
+                               std::size_t tangent_minus_i,
+                               std::size_t tangent_minus_j,
+                               std::size_t tangent_plus_i,
+                               std::size_t tangent_plus_j,
+                               std::size_t transverse_minus_i,
+                               std::size_t transverse_minus_j,
+                               std::size_t transverse_plus_i,
+                               std::size_t transverse_plus_j,
+                               double sign) {
+        auto const tm = side_point(side, tangent_minus_i, tangent_minus_j);
+        auto const tp = side_point(side, tangent_plus_i, tangent_plus_j);
+        auto const rm = side_point(side, transverse_minus_i, transverse_minus_j);
+        auto const rp = side_point(side, transverse_plus_i, transverse_plus_j);
+        double const tx = tp[0] - tm[0], ty = tp[1] - tm[1];
+        double const rx = rp[0] - rm[0], ry = rp[1] - rm[1];
+        double const determinant = tx * ry - ty * rx;
+        double const tangent_length = std::hypot(tx, ty);
+        if (std::abs(determinant) < 1.0e-14 || tangent_length < 1.0e-14)
+            throw std::runtime_error("degenerate potential-flow boundary frame");
+        double const nx = ty / tangent_length, ny = -tx / tangent_length;
+        double const tangential_weight
+                = sign * inputs.density
+                  * (nx * equations.template dpotential_dt<X>(ry / determinant)
+                     + ny * equations.template dpotential_dt<Y>(-rx / determinant));
+        double const transverse_weight
+                = sign * inputs.density
+                  * (nx * equations.template dpotential_dt<X>(-ty / determinant)
+                     + ny * equations.template dpotential_dt<Y>(tx / determinant));
+        add(row, side, tangent_plus_i, tangent_plus_j, tangential_weight);
+        add(row, side, tangent_minus_i, tangent_minus_j, -tangential_weight);
+        add(row, side, transverse_plus_i, transverse_plus_j, transverse_weight);
+        add(row, side, transverse_minus_i, transverse_minus_j, -transverse_weight);
+    };
+    // The obstacle and the unconstrained outer wall use zero normal flux.
+    // Upstream and downstream take the prescribed potential instead.
+    for (std::size_t side = 0; side < 2; ++side)
+        for (std::size_t i = 1; i < side_cells; ++i)
+            for (std::size_t j : {std::size_t(0), cells_per_patch_j}) {
+                std::size_t const row = side_index(side, i, j);
+                if (boundary[row]) {
+                    rows[row][row] = 1.0;
+                    base_rhs[row] = prescribed[row];
+                    continue;
+                }
+                std::size_t const inner_j = j == 0 ? 1 : j - 1;
+                std::size_t const outer_j = j == 0 ? 0 : j;
+                add_normal_flux(row, side, i - 1, j, i + 1, j, i, inner_j, i, outer_j, 1.0);
+            }
+    // At each shared seam, trace identification supplies potential continuity
+    // (or its affine circulation jump); this equation matches normal flux.
+    auto connect = [&](std::size_t first_side,
+                       std::size_t first_i,
+                       std::size_t second_side,
+                       std::size_t second_i) {
+        for (std::size_t j = 0; j < nodes_j; ++j) {
+            std::size_t const row = side_index(first_side, first_i, j);
+            std::size_t const low_j = j == 0 ? 0 : j - 1;
+            std::size_t const high_j = j == cells_per_patch_j ? j : j + 1;
+            std::size_t const first_inner_i = first_i == 0 ? 1 : first_i - 1;
+            std::size_t const second_inner_i = second_i == 0 ? 1 : second_i - 1;
+            add_normal_flux(
+                    row,
+                    first_side,
+                    first_i,
+                    low_j,
+                    first_i,
+                    high_j,
+                    first_i == 0 ? 0 : first_inner_i,
+                    j,
+                    first_i == 0 ? first_inner_i : first_i,
+                    j,
+                    1.0);
+            add_normal_flux(
+                    row,
+                    second_side,
+                    second_i,
+                    low_j,
+                    second_i,
+                    high_j,
+                    second_i == 0 ? 0 : second_inner_i,
+                    j,
+                    second_i == 0 ? second_inner_i : second_i,
+                    j,
+                    -1.0);
         }
+    };
+    connect(0, side_cells, 1, 0); // upper circulation cut
+    connect(1, side_cells, 0, 0); // lower continuous connection
+    for (std::size_t row = 0; row < node_count; ++row) {
+        if (rows[row].empty())
+            throw std::runtime_error("missing potential-flow equation");
+        double scale = 0.0;
+        for (auto const& [column, coefficient] : rows[row])
+            scale = std::max(scale, std::abs(coefficient));
+        if (scale < 1.0e-16)
+            throw std::runtime_error("zero potential-flow equation");
+        for (auto& [column, coefficient] : rows[row])
+            coefficient /= scale;
+        base_rhs[row] /= scale;
+        cut_rhs[row] /= scale;
     }
     SparseDecLaplacian const matrix(rows);
     Result result;
@@ -391,17 +402,6 @@ inline Result run(
             = solve_system(matrix, base_rhs, settings, result.solver_diagnostics);
     solvers::StrongFormulationSolverDiagnostics cut_diagnostics;
     std::vector<double> const response = solve_system(matrix, cut_rhs, settings, cut_diagnostics);
-    auto mass_flow = [&](std::vector<double> const& potential, double circulation) {
-        double conjugate = 0.0;
-        for (CellHodge const& cell : cells)
-            for (int p = 0; p < 4; ++p)
-                if (cell.edges[p].cut_value != 0.0)
-                    for (int q = 0; q < 4; ++q)
-                        conjugate += cell.edges[p].cut_value * cell.matrix[p][q]
-                                     * (coboundary_value(cell.edges[q], potential)
-                                        + circulation * cell.edges[q].cut_value);
-        return conjugate;
-    };
     auto velocity = [&](std::vector<double> const& potential,
                         double circulation,
                         std::size_t i,
@@ -426,6 +426,15 @@ inline Result run(
         return std::array<
                 double,
                 2> {(dt * ry - ty * dr) / determinant, (tx * dr - dt * rx) / determinant};
+    };
+    auto mass_flow = [&](std::vector<double> const& potential, double circulation) {
+        double flux = 0.0;
+        for (std::size_t j = 0; j < cells_per_patch_j; ++j) {
+            auto const v = velocity(potential, circulation, 119, j, 1.0, 0.5);
+            auto const p0 = point(120, j), p1 = point(120, j + 1);
+            flux -= inputs.density * (v[0] * (p1[1] - p0[1]) - v[1] * (p1[0] - p0[0]));
+        }
+        return flux;
     };
     double const flow0 = mass_flow(base, 0.0);
     double const flow1 = mass_flow(response, 1.0);
