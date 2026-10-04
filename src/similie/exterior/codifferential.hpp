@@ -197,7 +197,7 @@ struct Codifferential<
             NaturalElem natural_elem)
     {
         auto stencil = detail::make_stencil<typename TensorType::memory_space, CochainTag>(
-                detail::forward_stencil_front(elem, tensor.non_indices_domain()));
+                detail::backward_stencil_front(elem));
         ddc::device_for_each(stencil.domain(), [&](auto stencil_elem) {
             auto basis_stencil
                     = detail::make_stencil<typename TensorType::memory_space, CochainTag>(
@@ -300,7 +300,7 @@ struct Codifferential<
                 dual_evaluator,
                 chain,
                 lower_chain,
-                detail::forward_stencil_front(elem, tensor.non_indices_domain()));
+                elem);
 
         DiscreteHodgeStar<
                 CellComplex::CircumcentricDual,
@@ -498,9 +498,7 @@ public:
                             },
                             chain,
                             lower_chain,
-                            detail::forward_stencil_front(
-                                    elem,
-                                    dual_tensor_buffer.non_indices_domain()));
+                            elem);
 
                     sil::tensor::tensor_prod(
                             codifferential_tensor[elem],
@@ -625,9 +623,7 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
                         },
                         chain,
                         lower_chain,
-                        detail::forward_stencil_front(
-                                elem,
-                                dual_tensor_buffer.non_indices_domain()));
+                        elem);
 
                 sil::tensor::tensor_prod(
                         codifferential_tensor[elem],
