@@ -271,12 +271,15 @@ KOKKOS_FUNCTION Elem forward_stencil_front(Elem elem, Domain const& domain)
     return front;
 }
 
-template <class Elem>
-KOKKOS_FUNCTION Elem backward_stencil_front(Elem elem)
+template <class Elem, class Domain>
+KOKKOS_FUNCTION Elem backward_stencil_front(Elem elem, Domain const& domain)
 {
+    Elem const domain_front(domain.front());
     for (std::size_t dim_id = 0; dim_id < ddc::type_seq_size_v<ddc::to_type_seq_t<Elem>>;
          ++dim_id) {
-        --ddc::detail::array(elem)[dim_id];
+        if (ddc::detail::array(elem)[dim_id] > ddc::detail::array(domain_front)[dim_id]) {
+            --ddc::detail::array(elem)[dim_id];
+        }
     }
     return elem;
 }
