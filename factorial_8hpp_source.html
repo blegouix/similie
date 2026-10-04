@@ -141,16 +141,16 @@ $(function(){initNavTree('factorial_8hpp_source.html',''); initResizable(true); 
 <div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
 <div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="comment">// From https://stackoverflow.com/a/44719219</span></div>
 <div class="foldopen" id="foldopen00013" data-start="{" data-end="}">
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno"><a class="line" href="namespacesil_1_1misc.html#a36a53a5b4de947314917a5d09fc314b8">   13</a></span><span class="keyword">constexpr</span> <span class="keyword">inline</span> std::size_t <a class="code hl_function" href="namespacesil_1_1misc.html#a36a53a5b4de947314917a5d09fc314b8">factorial</a>(std::size_t k) <span class="keyword">noexcept</span></div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno"><a class="line" href="namespacesil_1_1misc.html#a94edf431638777006466c9a72d271a21">   13</a></span>KOKKOS_FUNCTION <span class="keyword">constexpr</span> <span class="keyword">inline</span> std::size_t <a class="code hl_function" href="namespacesil_1_1misc.html#a94edf431638777006466c9a72d271a21">factorial</a>(std::size_t k) <span class="keyword">noexcept</span></div>
 <div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span>{</div>
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span>    <span class="keywordflow">return</span> (k &lt;= 1) ? 1 : k * <a class="code hl_function" href="namespacesil_1_1misc.html#a36a53a5b4de947314917a5d09fc314b8">factorial</a>(k - 1);</div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span>    <span class="keywordflow">return</span> (k &lt;= 1) ? 1 : k * <a class="code hl_function" href="namespacesil_1_1misc.html#a94edf431638777006466c9a72d271a21">factorial</a>(k - 1);</div>
 <div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span>}</div>
 </div>
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span> </div>
 <div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span>} <span class="comment">// namespace misc</span></div>
 <div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span> </div>
 <div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>} <span class="comment">// namespace sil</span></div>
-<div class="ttc" id="anamespacesil_1_1misc_html_a36a53a5b4de947314917a5d09fc314b8"><div class="ttname"><a href="namespacesil_1_1misc.html#a36a53a5b4de947314917a5d09fc314b8">sil::misc::factorial</a></div><div class="ttdeci">constexpr std::size_t factorial(std::size_t k) noexcept</div><div class="ttdef"><b>Definition</b> <a href="#l00013">factorial.hpp:13</a></div></div>
+<div class="ttc" id="anamespacesil_1_1misc_html_a94edf431638777006466c9a72d271a21"><div class="ttname"><a href="namespacesil_1_1misc.html#a94edf431638777006466c9a72d271a21">sil::misc::factorial</a></div><div class="ttdeci">KOKKOS_FUNCTION constexpr std::size_t factorial(std::size_t k) noexcept</div><div class="ttdef"><b>Definition</b> <a href="#l00013">factorial.hpp:13</a></div></div>
 <div class="ttc" id="anamespacesil_html"><div class="ttname"><a href="namespacesil.html">sil</a></div><div class="ttdoc">The top-level namespace of SimiLie.</div><div class="ttdef"><b>Definition</b> <a href="csr_8hpp_source.html#l00015">csr.hpp:15</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->

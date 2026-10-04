@@ -147,7 +147,7 @@ $(function(){initNavTree('permutation__parity_8hpp_source.html',''); initResizab
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="comment"> */</span></div>
 <div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="keyword">template</span> &lt;std::<span class="keywordtype">size_t</span> N&gt;</div>
 <div class="foldopen" id="foldopen00019" data-start="{" data-end="}">
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno"><a class="line" href="namespacesil_1_1misc.html#a9350273fed3e9b0c5ac7f0cb4b85a649">   19</a></span><span class="keyword">inline</span> <span class="keyword">constexpr</span> <span class="keywordtype">int</span> <a class="code hl_function" href="namespacesil_1_1misc.html#a9350273fed3e9b0c5ac7f0cb4b85a649">permutation_parity</a>(std::array&lt;std::size_t, N&gt; lst)</div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno"><a class="line" href="namespacesil_1_1misc.html#a2b3ad1f36defe84df9a851364d75775d">   19</a></span>KOKKOS_FUNCTION <span class="keyword">inline</span> <span class="keyword">constexpr</span> <span class="keywordtype">int</span> <a class="code hl_function" href="namespacesil_1_1misc.html#a2b3ad1f36defe84df9a851364d75775d">permutation_parity</a>(std::array&lt;std::size_t, N&gt; lst)</div>
 <div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>{</div>
 <div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>    <span class="keywordtype">int</span> parity = 1;</div>
 <div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>    <span class="keywordflow">for</span> (std::size_t i = 0; i &lt; lst.size() - 1; ++i) {</div>
@@ -172,7 +172,7 @@ $(function(){initNavTree('permutation__parity_8hpp_source.html',''); initResizab
 <div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>} <span class="comment">// namespace misc</span></div>
 <div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span> </div>
 <div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>} <span class="comment">// namespace sil</span></div>
-<div class="ttc" id="anamespacesil_1_1misc_html_a9350273fed3e9b0c5ac7f0cb4b85a649"><div class="ttname"><a href="namespacesil_1_1misc.html#a9350273fed3e9b0c5ac7f0cb4b85a649">sil::misc::permutation_parity</a></div><div class="ttdeci">constexpr int permutation_parity(std::array&lt; std::size_t, N &gt; lst)</div><div class="ttdef"><b>Definition</b> <a href="#l00019">permutation_parity.hpp:19</a></div></div>
+<div class="ttc" id="anamespacesil_1_1misc_html_a2b3ad1f36defe84df9a851364d75775d"><div class="ttname"><a href="namespacesil_1_1misc.html#a2b3ad1f36defe84df9a851364d75775d">sil::misc::permutation_parity</a></div><div class="ttdeci">KOKKOS_FUNCTION constexpr int permutation_parity(std::array&lt; std::size_t, N &gt; lst)</div><div class="ttdef"><b>Definition</b> <a href="#l00019">permutation_parity.hpp:19</a></div></div>
 <div class="ttc" id="anamespacesil_html"><div class="ttname"><a href="namespacesil.html">sil</a></div><div class="ttdoc">The top-level namespace of SimiLie.</div><div class="ttdef"><b>Definition</b> <a href="csr_8hpp_source.html#l00015">csr.hpp:15</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->

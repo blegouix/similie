@@ -325,13 +325,13 @@ requires (detail::IntermediateRankLaplacianCochain&lt;LaplacianDummyIndex, Cocha
 requires (detail::TopRankLaplacianCochain&lt;LaplacianDummyIndex, CochainTag&gt;)</td></tr>
 <tr class="memitem:aed6715b5204a0ffdb220d8351655d05a"><td class="memTemplItemLeft" align="right" valign="top">TensorType&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#aed6715b5204a0ffdb220d8351655d05a">laplacian</a> (ExecSpace const &amp;exec_space, TensorType laplacian_tensor, TensorType tensor, HodgeStarType hodge_star, DualHodgeStarType dual_hodge_star, DualTensorBufferType dual_tensor_buffer, CodifferentialTensorBufferType codifferential_tensor_buffer)</td></tr>
 <tr class="separator:aed6715b5204a0ffdb220d8351655d05a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1d9d91856e829706033b698306233c62" id="r_a1d9d91856e829706033b698306233c62"><td class="memTemplParams" colspan="2">template&lt;std::size_t K, misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom, misc::Specialization&lt; ddc::DiscreteElement &gt; Elem&gt; </td></tr>
-<tr class="memitem:a1d9d91856e829706033b698306233c62"><td class="memTemplItemLeft" align="right" valign="top">constexpr auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a1d9d91856e829706033b698306233c62">tangent_basis</a> (Elem elem)</td></tr>
-<tr class="separator:a1d9d91856e829706033b698306233c62"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0523d7030a15afff58c1d1ffebeebfba" id="r_a0523d7030a15afff58c1d1ffebeebfba"><td class="memTemplParams" colspan="2">template&lt;std::size_t K, misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom, class ExecSpace &gt; <br />
+<tr class="memitem:a2f6077271f607d9959b484603cd7216e" id="r_a2f6077271f607d9959b484603cd7216e"><td class="memTemplParams" colspan="2">template&lt;std::size_t K, misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom, misc::Specialization&lt; ddc::DiscreteElement &gt; Elem&gt; </td></tr>
+<tr class="memitem:a2f6077271f607d9959b484603cd7216e"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a2f6077271f607d9959b484603cd7216e">tangent_basis</a> (Elem elem)</td></tr>
+<tr class="separator:a2f6077271f607d9959b484603cd7216e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0c11c3e8f073cfe109eddbcd271f47b8" id="r_a0c11c3e8f073cfe109eddbcd271f47b8"><td class="memTemplParams" colspan="2">template&lt;std::size_t K, misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom, class ExecSpace &gt; <br />
 requires (misc::NotSpecialization&lt;ExecSpace, ddc::DiscreteElement&gt;)</td></tr>
-<tr class="memitem:a0523d7030a15afff58c1d1ffebeebfba"><td class="memTemplItemLeft" align="right" valign="top">constexpr auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a0523d7030a15afff58c1d1ffebeebfba">tangent_basis</a> (ExecSpace const &amp;exec_space)</td></tr>
-<tr class="separator:a0523d7030a15afff58c1d1ffebeebfba"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0c11c3e8f073cfe109eddbcd271f47b8"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a0c11c3e8f073cfe109eddbcd271f47b8">tangent_basis</a> (ExecSpace const &amp;exec_space)</td></tr>
+<tr class="separator:a0c11c3e8f073cfe109eddbcd271f47b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad77d98f0d2f2ef2be8fe604aca0a1fc1" id="r_ad77d98f0d2f2ef2be8fe604aca0a1fc1"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; Kokkos::View &gt; AllocationType, class SimplexType , class... T&gt; </td></tr>
 <tr class="memitem:ad77d98f0d2f2ef2be8fe604aca0a1fc1"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ad77d98f0d2f2ef2be8fe604aca0a1fc1">LocalChain</a> (AllocationType, SimplexType, T...) -&gt; LocalChain&lt; std::remove_cvref_t&lt; SimplexType &gt;, typename AllocationType::array_layout, typename AllocationType::memory_space &gt;</td></tr>
 <tr class="separator:ad77d98f0d2f2ef2be8fe604aca0a1fc1"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -725,7 +725,7 @@ template&lt;std::size_t K, class Dom &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="simplex_8hpp_source.html#l00237">237</a> of file <a class="el" href="simplex_8hpp_source.html">simplex.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="simplex_8hpp_source.html#l00238">238</a> of file <a class="el" href="simplex_8hpp_source.html">simplex.hpp</a>.</p>
 
 </div>
 </div>
@@ -1034,7 +1034,7 @@ template&lt;misc::Specialization&lt; <a class="el" href="classsil_1_1exterior_1_
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00343">343</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cochain_8hpp_source.html#l00362">362</a> of file <a class="el" href="cochain_8hpp_source.html">cochain.hpp</a>.</p>
 
 </div>
 </div>
@@ -1456,8 +1456,8 @@ requires (detail::TopRankLaplacianCochain&lt;LaplacianDummyIndex, CochainTag&gt;
 
 </div>
 </div>
-<a id="a1d9d91856e829706033b698306233c62" name="a1d9d91856e829706033b698306233c62"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1d9d91856e829706033b698306233c62">&#9670;&#160;</a></span>tangent_basis() <span class="overload">[1/2]</span></h2>
+<a id="a2f6077271f607d9959b484603cd7216e" name="a2f6077271f607d9959b484603cd7216e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2f6077271f607d9959b484603cd7216e">&#9670;&#160;</a></span>tangent_basis() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1468,7 +1468,7 @@ template&lt;std::size_t K, misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">auto sil::exterior::tangent_basis </td>
+          <td class="memname">KOKKOS_FUNCTION constexpr auto sil::exterior::tangent_basis </td>
           <td>(</td>
           <td class="paramtype">Elem</td>          <td class="paramname"><span class="paramname"><em>elem</em></span></td><td>)</td>
           <td></td>
@@ -1481,12 +1481,12 @@ template&lt;std::size_t K, misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00434">434</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00443">443</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a0523d7030a15afff58c1d1ffebeebfba" name="a0523d7030a15afff58c1d1ffebeebfba"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0523d7030a15afff58c1d1ffebeebfba">&#9670;&#160;</a></span>tangent_basis() <span class="overload">[2/2]</span></h2>
+<a id="a0c11c3e8f073cfe109eddbcd271f47b8" name="a0c11c3e8f073cfe109eddbcd271f47b8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0c11c3e8f073cfe109eddbcd271f47b8">&#9670;&#160;</a></span>tangent_basis() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1498,7 +1498,7 @@ requires (misc::NotSpecialization&lt;ExecSpace, ddc::DiscreteElement&gt;)</div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">auto sil::exterior::tangent_basis </td>
+          <td class="memname">KOKKOS_FUNCTION constexpr auto sil::exterior::tangent_basis </td>
           <td>(</td>
           <td class="paramtype">ExecSpace const &amp;</td>          <td class="paramname"><span class="paramname"><em>exec_space</em></span></td><td>)</td>
           <td></td>
@@ -1511,7 +1511,7 @@ requires (misc::NotSpecialization&lt;ExecSpace, ddc::DiscreteElement&gt;)</div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00441">441</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="local__chain_8hpp_source.html#l00450">450</a> of file <a class="el" href="local__chain_8hpp_source.html">local_chain.hpp</a>.</p>
 
 </div>
 </div>
@@ -1675,7 +1675,7 @@ template&lt;std::size_t K, class... Tag&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="simplex_8hpp_source.html#l00240">240</a> of file <a class="el" href="simplex_8hpp_source.html">simplex.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="simplex_8hpp_source.html#l00241">241</a> of file <a class="el" href="simplex_8hpp_source.html">simplex.hpp</a>.</p>
 
 </div>
 </div>

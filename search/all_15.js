@@ -1,7 +1,7 @@
 var searchData=
 [
   ['uncharacterize_5ft_0',['uncharacterize_t',['../namespacesil_1_1tensor.html#ab7e663826196ec03f2eec4be87ffa4cf',1,'sil::tensor']]],
-  ['uncharacterize_5ftensor_1',['uncharacterize_tensor',['../namespacesil_1_1tensor.html#a2107e4ab490e7118ac7bd436225fe2b8',1,'sil::tensor']]],
+  ['uncharacterize_5ftensor_1',['uncharacterize_tensor',['../namespacesil_1_1tensor.html#a831502c46eb089c4b8e8a57d66b51f39',1,'sil::tensor']]],
   ['uncharacterize_5ftensor_5ft_2',['uncharacterize_tensor_t',['../namespacesil_1_1tensor.html#af044abf8628054dbcd228a1922c6837b',1,'sil::tensor']]],
   ['uncompress_3',['uncompress',['../namespacesil_1_1tensor.html#afc897fb906eb5efe172d443f520b5c13',1,'sil::tensor']]],
   ['unmanaged_5fmatrix_5fview_5ft_4',['unmanaged_matrix_view_t',['../namespacesil_1_1misc_1_1math.html#af498e338bc880a7473c4bcf3ead5d5f8',1,'sil::misc::math']]],

@@ -2,7 +2,7 @@ var searchData=
 [
   ['identity_0',['Identity',['../namespacesimilie_1_1solvers.html#abe2dd397f1ada9f78cdbf2166698ab4dac9c5c65fb4af9cf90eb99b3b84424189',1,'similie::solvers']]],
   ['identitytransport_1',['IdentityTransport',['../structsil_1_1exterior_1_1IdentityTransport.html',1,'sil::exterior']]],
-  ['idx_2',['idx',['../classsil_1_1csr_1_1Csr.html#a1ad4c0e34045144cfbf04368b54c429e',1,'sil::csr::Csr::idx()'],['../classsil_1_1csr_1_1CsrDynamic.html#a55117e034496388c0a1ea3cb833a1d3d',1,'sil::csr::CsrDynamic::idx()']]],
+  ['idx_2',['idx',['../classsil_1_1csr_1_1Csr.html#a8cb79708353dd96b867e3630130ddc27',1,'sil::csr::Csr::idx()'],['../classsil_1_1csr_1_1CsrDynamic.html#a55117e034496388c0a1ea3cb833a1d3d',1,'sil::csr::CsrDynamic::idx()']]],
   ['important_20for_20physics_3',['Why integro-differential calculus is important for physics ?',['../exterior_module.html#autotoc_md15',1,'']]],
   ['importants_20for_20physics_4',['Why tensors are importants for physics ?',['../tensor_module.html#autotoc_md7',1,'']]],
   ['in_202d_5',['Local material Hodge in 2D',['../physics_module.html#autotoc_md34',1,'']]],
@@ -10,7 +10,7 @@ var searchData=
   ['includes_7',['includes',['../classgenerate__cpp__hamiltonian_1_1HamiltonianDefinition.html#a943e5c7bf62f74ebc70565eca556fdf8',1,'generate_cpp_hamiltonian::HamiltonianDefinition']]],
   ['indexforcodifferentialofcoboundaryinlaplacian_8',['IndexForCodifferentialOfCoboundaryInLaplacian',['../structsil_1_1exterior_1_1IndexForCodifferentialOfCoboundaryInLaplacian.html',1,'sil::exterior']]],
   ['indices_9',['Tensor indices',['../tensor_module.html#autotoc_md9',1,'']]],
-  ['indices_5fdomain_10',['indices_domain',['../classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html#a6c6f4951093f9e284ff4a920913437c0',1,'sil::tensor::Tensor&lt; ElementType, ddc::DiscreteDomain&lt; DDim... &gt;, LayoutStridedPolicy, MemorySpace &gt;']]],
+  ['indices_5fdomain_10',['indices_domain',['../classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html#aeb762034b5c0d0d6da6b0ba38e156c69',1,'sil::tensor::Tensor&lt; ElementType, ddc::DiscreteDomain&lt; DDim... &gt;, LayoutStridedPolicy, MemorySpace &gt;']]],
   ['indices_5fdomain_5ft_11',['indices_domain_t',['../classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html#af0827abcc0f70a6aac80d7eb4e3c213d',1,'sil::tensor::Tensor&lt; ElementType, ddc::DiscreteDomain&lt; DDim... &gt;, LayoutStridedPolicy, MemorySpace &gt;']]],
   ['initial_5fresidual_5fl2_12',['initial_residual_l2',['../namespacesimilie_1_1solvers.html#a523b4841fee412e86b41f867060fa05a',1,'similie::solvers::StrongFormulationSolverDiagnostics']]],
   ['inplace_5fapply_5fmetric_13',['inplace_apply_metric',['../namespacesil_1_1tensor.html#aae3a4ca28558288dec575e97bb4a2e40',1,'sil::tensor::inplace_apply_metric(ExecSpace const &amp;exec_space, TensorType tensor, MetricType metric_prod)'],['../namespacesil_1_1tensor.html#acb90d6df5f37e666d47e8f96eadfc0d6',1,'sil::tensor::inplace_apply_metric(ExecSpace const &amp;exec_space, TensorType tensor, MetricType metric)']]],

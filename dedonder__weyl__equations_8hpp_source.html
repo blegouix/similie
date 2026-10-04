@@ -137,67 +137,70 @@ $(function(){initNavTree('dedonder__weyl__equations_8hpp_source.html',''); initR
 <div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#include &lt;span&gt;</span></div>
 <div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &lt;utility&gt;</span></div>
 <div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
-<div class="foldopen" id="foldopen00010" data-start="{" data-end="}">
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno"><a class="line" href="namespacesimilie.html">   10</a></span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacesimilie_1_1physics.html">similie::physics</a> {</div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;Kokkos_Core.hpp&gt;</span></div>
 <div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Hamiltonian&gt;</div>
-<div class="foldopen" id="foldopen00013" data-start="{" data-end="};">
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno"><a class="line" href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html">   13</a></span><span class="keyword">class </span><a class="code hl_class" href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html">DeDonderWeylEquations</a></div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span>{</div>
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span>    Hamiltonian m_hamiltonian;</div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span> </div>
-<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="keyword">public</span>:</div>
-<div class="foldopen" id="foldopen00018" data-start="{" data-end="}">
-<div class="line"><a id="l00018" name="l00018"></a><span class="lineno"><a class="line" href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html#ac31a74430e40dfffefab61030a376575">   18</a></span>    <span class="keyword">constexpr</span> <span class="keyword">explicit</span> <a class="code hl_function" href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html#ac31a74430e40dfffefab61030a376575">DeDonderWeylEquations</a>(Hamiltonian hamiltonian)</div>
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span>        : m_hamiltonian(std::move(hamiltonian))</div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>    {</div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>    }</div>
+<div class="foldopen" id="foldopen00012" data-start="{" data-end="}">
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno"><a class="line" href="namespacesimilie.html">   12</a></span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacesimilie_1_1physics.html">similie::physics</a> {</div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Hamiltonian&gt;</div>
+<div class="foldopen" id="foldopen00015" data-start="{" data-end="};">
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno"><a class="line" href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html">   15</a></span><span class="keyword">class </span><a class="code hl_class" href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html">DeDonderWeylEquations</a></div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span>{</div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span>    Hamiltonian m_hamiltonian;</div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span> </div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="keyword">public</span>:</div>
+<div class="foldopen" id="foldopen00020" data-start="{" data-end="}">
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno"><a class="line" href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html#a0aa6a9782e4c764b7a81ebe242993b98">   20</a></span>    KOKKOS_FUNCTION <span class="keyword">constexpr</span> <span class="keyword">explicit</span> <a class="code hl_function" href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html#a0aa6a9782e4c764b7a81ebe242993b98">DeDonderWeylEquations</a>(Hamiltonian hamiltonian)</div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>        : m_hamiltonian(std::move(hamiltonian))</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>    {</div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>    }</div>
 </div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span> </div>
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> Index&gt;</div>
-<div class="foldopen" id="foldopen00024" data-start="{" data-end="}">
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno"><a class="line" href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html#aeaad572d407bc20bf785d959460000c4">   24</a></span>    [[nodiscard]] <span class="keyword">constexpr</span> <span class="keywordtype">double</span> <a class="code hl_function" href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html#aeaad572d407bc20bf785d959460000c4">potential_grad</a>(</div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>            std::span&lt;double const, Hamiltonian::N&gt; moments)<span class="keyword"> const</span></div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="keyword">    </span>{</div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>        <span class="keywordflow">return</span> m_hamiltonian.template dhamiltonian_dmoments&lt;Index&gt;(moments);</div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>    }</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span> </div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> Index&gt;</div>
+<div class="foldopen" id="foldopen00026" data-start="{" data-end="}">
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno"><a class="line" href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html#aa1b99a98e03775f0e75415772f766351">   26</a></span>    [[nodiscard]] KOKKOS_FUNCTION <span class="keyword">constexpr</span> <span class="keywordtype">double</span> <a class="code hl_function" href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html#aa1b99a98e03775f0e75415772f766351">potential_grad</a>(</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>            std::span&lt;double const, Hamiltonian::N&gt; moments)<span class="keyword"> const</span></div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="keyword">    </span>{</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>        <span class="keywordflow">return</span> m_hamiltonian.template dhamiltonian_dmoments&lt;Index&gt;(moments);</div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>    }</div>
 </div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span> </div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> Index&gt;</div>
-<div class="foldopen" id="foldopen00031" data-start="{" data-end="}">
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno"><a class="line" href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html#a63ad507c54e2a9c04113a2b9fd906091">   31</a></span>    [[nodiscard]] <span class="keyword">constexpr</span> <span class="keywordtype">double</span> <a class="code hl_function" href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html#a63ad507c54e2a9c04113a2b9fd906091">potential_grad</a>(<span class="keywordtype">double</span> moments_component)<span class="keyword"> const</span></div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span><span class="keyword">    </span>{</div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>        <span class="keywordflow">return</span> m_hamiltonian.template dhamiltonian_dmoments&lt;Index&gt;(moments_component);</div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>    }</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span> </div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> Index&gt;</div>
+<div class="foldopen" id="foldopen00033" data-start="{" data-end="}">
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno"><a class="line" href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html#ad3f3aa08ac70a407d12bbb3407d9fe3a">   33</a></span>    [[nodiscard]] KOKKOS_FUNCTION <span class="keyword">constexpr</span> <span class="keywordtype">double</span> <a class="code hl_function" href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html#ad3f3aa08ac70a407d12bbb3407d9fe3a">potential_grad</a>(<span class="keywordtype">double</span> moments_component)<span class="keyword"> const</span></div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span><span class="keyword">    </span>{</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>        <span class="keywordflow">return</span> m_hamiltonian.template dhamiltonian_dmoments&lt;Index&gt;(moments_component);</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>    }</div>
 </div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span> </div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> Index&gt;</div>
-<div class="foldopen" id="foldopen00037" data-start="{" data-end="}">
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno"><a class="line" href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html#a60c655bd49d92288a040551cf25bd269">   37</a></span>    [[nodiscard]] <span class="keyword">constexpr</span> <span class="keywordtype">double</span> <a class="code hl_function" href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html#a60c655bd49d92288a040551cf25bd269">moments_div</a>(std::span&lt;double const, 1&gt; potential)<span class="keyword"> const</span></div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span><span class="keyword">    </span>{</div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>        <span class="keyword">static_cast&lt;</span><span class="keywordtype">void</span><span class="keyword">&gt;</span>(<span class="keyword">sizeof</span>(Index));</div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>        <span class="keywordflow">return</span> -m_hamiltonian.dhamiltonian_dpotential(potential[0]);</div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    }</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span> </div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> Index&gt;</div>
+<div class="foldopen" id="foldopen00039" data-start="{" data-end="}">
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno"><a class="line" href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html#ac51e2cc324be91d6d1fdc2e9969aaed9">   39</a></span>    [[nodiscard]] KOKKOS_FUNCTION <span class="keyword">constexpr</span> <span class="keywordtype">double</span> <a class="code hl_function" href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html#ac51e2cc324be91d6d1fdc2e9969aaed9">moments_div</a>(</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>            std::span&lt;double const, 1&gt; potential)<span class="keyword"> const</span></div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span><span class="keyword">    </span>{</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>        <span class="keyword">static_cast&lt;</span><span class="keywordtype">void</span><span class="keyword">&gt;</span>(<span class="keyword">sizeof</span>(Index));</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>        <span class="keywordflow">return</span> -m_hamiltonian.dhamiltonian_dpotential(potential[0]);</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    }</div>
 </div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span> </div>
-<div class="foldopen" id="foldopen00043" data-start="{" data-end="}">
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno"><a class="line" href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html#a6752a04db983df853db892a4831b7a43">   43</a></span>    [[nodiscard]] <span class="keyword">constexpr</span> <span class="keywordtype">double</span> <a class="code hl_function" href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html#a6752a04db983df853db892a4831b7a43">moments_div</a>(<span class="keywordtype">double</span> potential)<span class="keyword"> const</span></div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span><span class="keyword">    </span>{</div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>        <span class="keywordflow">return</span> -m_hamiltonian.dhamiltonian_dpotential(potential);</div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    }</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span> </div>
+<div class="foldopen" id="foldopen00046" data-start="{" data-end="}">
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno"><a class="line" href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html#aa0332f11a1356ae1c7a50793c6be4b8a">   46</a></span>    [[nodiscard]] KOKKOS_FUNCTION <span class="keyword">constexpr</span> <span class="keywordtype">double</span> <a class="code hl_function" href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html#aa0332f11a1356ae1c7a50793c6be4b8a">moments_div</a>(<span class="keywordtype">double</span> potential)<span class="keyword"> const</span></div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span><span class="keyword">    </span>{</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>        <span class="keywordflow">return</span> -m_hamiltonian.dhamiltonian_dpotential(potential);</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    }</div>
 </div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>};</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>};</div>
 </div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span> </div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>} <span class="comment">// namespace similie::physics</span></div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span> </div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>} <span class="comment">// namespace similie::physics</span></div>
 </div>
-<div class="ttc" id="aclasssimilie_1_1physics_1_1DeDonderWeylEquations_html"><div class="ttname"><a href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html">similie::physics::DeDonderWeylEquations</a></div><div class="ttdef"><b>Definition</b> <a href="#l00013">dedonder_weyl_equations.hpp:14</a></div></div>
-<div class="ttc" id="aclasssimilie_1_1physics_1_1DeDonderWeylEquations_html_a60c655bd49d92288a040551cf25bd269"><div class="ttname"><a href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html#a60c655bd49d92288a040551cf25bd269">similie::physics::DeDonderWeylEquations::moments_div</a></div><div class="ttdeci">constexpr double moments_div(std::span&lt; double const, 1 &gt; potential) const</div><div class="ttdef"><b>Definition</b> <a href="#l00037">dedonder_weyl_equations.hpp:37</a></div></div>
-<div class="ttc" id="aclasssimilie_1_1physics_1_1DeDonderWeylEquations_html_a63ad507c54e2a9c04113a2b9fd906091"><div class="ttname"><a href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html#a63ad507c54e2a9c04113a2b9fd906091">similie::physics::DeDonderWeylEquations::potential_grad</a></div><div class="ttdeci">constexpr double potential_grad(double moments_component) const</div><div class="ttdef"><b>Definition</b> <a href="#l00031">dedonder_weyl_equations.hpp:31</a></div></div>
-<div class="ttc" id="aclasssimilie_1_1physics_1_1DeDonderWeylEquations_html_a6752a04db983df853db892a4831b7a43"><div class="ttname"><a href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html#a6752a04db983df853db892a4831b7a43">similie::physics::DeDonderWeylEquations::moments_div</a></div><div class="ttdeci">constexpr double moments_div(double potential) const</div><div class="ttdef"><b>Definition</b> <a href="#l00043">dedonder_weyl_equations.hpp:43</a></div></div>
-<div class="ttc" id="aclasssimilie_1_1physics_1_1DeDonderWeylEquations_html_ac31a74430e40dfffefab61030a376575"><div class="ttname"><a href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html#ac31a74430e40dfffefab61030a376575">similie::physics::DeDonderWeylEquations::DeDonderWeylEquations</a></div><div class="ttdeci">constexpr DeDonderWeylEquations(Hamiltonian hamiltonian)</div><div class="ttdef"><b>Definition</b> <a href="#l00018">dedonder_weyl_equations.hpp:18</a></div></div>
-<div class="ttc" id="aclasssimilie_1_1physics_1_1DeDonderWeylEquations_html_aeaad572d407bc20bf785d959460000c4"><div class="ttname"><a href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html#aeaad572d407bc20bf785d959460000c4">similie::physics::DeDonderWeylEquations::potential_grad</a></div><div class="ttdeci">constexpr double potential_grad(std::span&lt; double const, Hamiltonian::N &gt; moments) const</div><div class="ttdef"><b>Definition</b> <a href="#l00024">dedonder_weyl_equations.hpp:24</a></div></div>
-<div class="ttc" id="anamespacesimilie_1_1physics_html"><div class="ttname"><a href="namespacesimilie_1_1physics.html">similie::physics</a></div><div class="ttdef"><b>Definition</b> <a href="#l00010">dedonder_weyl_equations.hpp:10</a></div></div>
+<div class="ttc" id="aclasssimilie_1_1physics_1_1DeDonderWeylEquations_html"><div class="ttname"><a href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html">similie::physics::DeDonderWeylEquations</a></div><div class="ttdef"><b>Definition</b> <a href="#l00015">dedonder_weyl_equations.hpp:16</a></div></div>
+<div class="ttc" id="aclasssimilie_1_1physics_1_1DeDonderWeylEquations_html_a0aa6a9782e4c764b7a81ebe242993b98"><div class="ttname"><a href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html#a0aa6a9782e4c764b7a81ebe242993b98">similie::physics::DeDonderWeylEquations::DeDonderWeylEquations</a></div><div class="ttdeci">KOKKOS_FUNCTION constexpr DeDonderWeylEquations(Hamiltonian hamiltonian)</div><div class="ttdef"><b>Definition</b> <a href="#l00020">dedonder_weyl_equations.hpp:20</a></div></div>
+<div class="ttc" id="aclasssimilie_1_1physics_1_1DeDonderWeylEquations_html_aa0332f11a1356ae1c7a50793c6be4b8a"><div class="ttname"><a href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html#aa0332f11a1356ae1c7a50793c6be4b8a">similie::physics::DeDonderWeylEquations::moments_div</a></div><div class="ttdeci">KOKKOS_FUNCTION constexpr double moments_div(double potential) const</div><div class="ttdef"><b>Definition</b> <a href="#l00046">dedonder_weyl_equations.hpp:46</a></div></div>
+<div class="ttc" id="aclasssimilie_1_1physics_1_1DeDonderWeylEquations_html_aa1b99a98e03775f0e75415772f766351"><div class="ttname"><a href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html#aa1b99a98e03775f0e75415772f766351">similie::physics::DeDonderWeylEquations::potential_grad</a></div><div class="ttdeci">KOKKOS_FUNCTION constexpr double potential_grad(std::span&lt; double const, Hamiltonian::N &gt; moments) const</div><div class="ttdef"><b>Definition</b> <a href="#l00026">dedonder_weyl_equations.hpp:26</a></div></div>
+<div class="ttc" id="aclasssimilie_1_1physics_1_1DeDonderWeylEquations_html_ac51e2cc324be91d6d1fdc2e9969aaed9"><div class="ttname"><a href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html#ac51e2cc324be91d6d1fdc2e9969aaed9">similie::physics::DeDonderWeylEquations::moments_div</a></div><div class="ttdeci">KOKKOS_FUNCTION constexpr double moments_div(std::span&lt; double const, 1 &gt; potential) const</div><div class="ttdef"><b>Definition</b> <a href="#l00039">dedonder_weyl_equations.hpp:39</a></div></div>
+<div class="ttc" id="aclasssimilie_1_1physics_1_1DeDonderWeylEquations_html_ad3f3aa08ac70a407d12bbb3407d9fe3a"><div class="ttname"><a href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html#ad3f3aa08ac70a407d12bbb3407d9fe3a">similie::physics::DeDonderWeylEquations::potential_grad</a></div><div class="ttdeci">KOKKOS_FUNCTION constexpr double potential_grad(double moments_component) const</div><div class="ttdef"><b>Definition</b> <a href="#l00033">dedonder_weyl_equations.hpp:33</a></div></div>
+<div class="ttc" id="anamespacesimilie_1_1physics_html"><div class="ttname"><a href="namespacesimilie_1_1physics.html">similie::physics</a></div><div class="ttdef"><b>Definition</b> <a href="#l00012">dedonder_weyl_equations.hpp:12</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!--
