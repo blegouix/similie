@@ -108,7 +108,7 @@ jobs:
               -DSIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS=ON \
               -B "${CACHE_ROOT}/build" \
               -S .
-            cmake --build "${CACHE_ROOT}/build" --parallel 8
+            cmake --build "${CACHE_ROOT}/build"
           '
     - name: Save CUDA commit workspace
       if: steps.restore-workspace.outputs.cache-hit != 'true'
@@ -183,7 +183,7 @@ jobs:
               -DSIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS=ON \
               -B "${CACHE_ROOT}/build_omp" \
               -S .
-            cmake --build "${CACHE_ROOT}/build_omp" --parallel 8
+            cmake --build "${CACHE_ROOT}/build_omp"
           '
     - name: Save OpenMP commit workspace
       if: steps.restore-workspace.outputs.cache-hit != 'true'
