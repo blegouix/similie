@@ -182,7 +182,8 @@ using uncharacterize_tensor_t = relabelize_indices_of_t<
         uncharacterize_t<ddc::to_type_seq_t<typename TensorType::accessor_t::natural_domain_t>>>;
 
 template <misc::Specialization<Tensor> TensorType>
-constexpr uncharacterize_tensor_t<TensorType> uncharacterize_tensor(TensorType tensor)
+KOKKOS_FUNCTION constexpr uncharacterize_tensor_t<TensorType> uncharacterize_tensor(
+        TensorType tensor)
 {
     return relabelize_indices_of<
             ddc::to_type_seq_t<typename TensorType::accessor_t::natural_domain_t>,

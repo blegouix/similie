@@ -35,7 +35,7 @@ public:
 
     KOKKOS_DEFAULTED_FUNCTION constexpr Cosimplex(Cosimplex&&) = default;
 
-    constexpr explicit Cosimplex(SimplexType simplex, ElementType value) noexcept
+    KOKKOS_FUNCTION constexpr explicit Cosimplex(SimplexType simplex, ElementType value) noexcept
         : m_simplex(simplex)
         , m_value(value)
     {

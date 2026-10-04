@@ -57,13 +57,13 @@ class HamiltonEquations
 public:
     static constexpr bool IS_LINEAR = Hamiltonian::IS_LINEAR;
 
-    constexpr explicit HamiltonEquations(Hamiltonian hamiltonian)
+    KOKKOS_FUNCTION constexpr explicit HamiltonEquations(Hamiltonian hamiltonian)
         : m_hamiltonian(std::move(hamiltonian))
     {
     }
 
     template <class Index>
-    [[nodiscard]] constexpr double dpotential_dt(
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double dpotential_dt(
             std::span<double const, Hamiltonian::N> spatial_moments) const
     {
         if constexpr (detail::has_span_dmoments_v<Hamiltonian, Index>) {
@@ -74,7 +74,7 @@ public:
     }
 
     template <class Index, class Elem>
-    [[nodiscard]] constexpr double dpotential_dt(
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double dpotential_dt(
             std::span<double const, Hamiltonian::N> spatial_moments,
             Elem elem) const
     {
@@ -86,13 +86,16 @@ public:
     }
 
     template <class Index>
-    [[nodiscard]] constexpr double dpotential_dt(double spatial_moments_component) const
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double dpotential_dt(
+            double spatial_moments_component) const
     {
         return m_hamiltonian.template dhamiltonian_dmoments<Index>(spatial_moments_component);
     }
 
     template <class Index, class Elem>
-    [[nodiscard]] constexpr double dpotential_dt(double spatial_moments_component, Elem elem) const
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double dpotential_dt(
+            double spatial_moments_component,
+            Elem elem) const
     {
         if constexpr (detail::has_elem_dmoments_v<Hamiltonian, Index, Elem>) {
             return m_hamiltonian
@@ -104,7 +107,7 @@ public:
 
     template <class Index, class Moments, class Elem>
         requires(!std::is_arithmetic_v<Moments>)
-    [[nodiscard]] constexpr double dpotential_dt(Moments moments, Elem elem) const
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double dpotential_dt(Moments moments, Elem elem) const
     {
         if constexpr (detail::has_object_dpotential_v<Hamiltonian, Index, Moments, Elem>) {
             return m_hamiltonian.template dpotential_dt<Index>(moments, elem);
@@ -118,15 +121,17 @@ public:
     }
 
     template <class Index>
-    [[nodiscard]] constexpr double dmoments_dt(std::span<double const, 1> potential) const
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double dmoments_dt(
+            std::span<double const, 1> potential) const
     {
         static_cast<void>(sizeof(Index));
         return -m_hamiltonian.dhamiltonian_dpotential(potential[0]);
     }
 
     template <class Index, class Elem>
-    [[nodiscard]] constexpr double dmoments_dt(std::span<double const, 1> potential, Elem elem)
-            const
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double dmoments_dt(
+            std::span<double const, 1> potential,
+            Elem elem) const
     {
         static_cast<void>(sizeof(Index));
         if constexpr (detail::has_elem_dpotential_v<Hamiltonian, Elem>) {
@@ -138,14 +143,14 @@ public:
     }
 
     template <class Index>
-    [[nodiscard]] constexpr double dmoments_dt(double potential) const
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double dmoments_dt(double potential) const
     {
         static_cast<void>(sizeof(Index));
         return -m_hamiltonian.dhamiltonian_dpotential(potential);
     }
 
     template <class Index, class Elem>
-    [[nodiscard]] constexpr double dmoments_dt(double potential, Elem elem) const
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double dmoments_dt(double potential, Elem elem) const
     {
         static_cast<void>(sizeof(Index));
         if constexpr (detail::has_elem_dpotential_v<Hamiltonian, Elem>) {
@@ -157,14 +162,14 @@ public:
     }
 
     template <class Index, class Elem>
-    [[nodiscard]] constexpr auto dpotential_dt_value(Elem elem) const
+    [[nodiscard]] KOKKOS_FUNCTION constexpr auto dpotential_dt_value(Elem elem) const
     {
         return m_hamiltonian.template dhamiltonian_dmoments_value<Index>(elem);
     }
 
     template <class Index, class Elem>
         requires requires(Hamiltonian const& h, Elem e) { h.dhamiltonian_dpotential_value(e); }
-    [[nodiscard]] constexpr auto dmoments_dt_value(Elem elem) const
+    [[nodiscard]] KOKKOS_FUNCTION constexpr auto dmoments_dt_value(Elem elem) const
     {
         static_cast<void>(sizeof(Index));
         auto value = m_hamiltonian.dhamiltonian_dpotential_value(elem);

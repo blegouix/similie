@@ -17,7 +17,7 @@ struct FilledStruct;
 template <template <class...> class T, class... Arg>
 struct FilledStruct<T<Arg...>>
 {
-    static constexpr T<Arg...> operator()(auto const n)
+    KOKKOS_FUNCTION static constexpr T<Arg...> operator()(auto const n)
     {
         return T<Arg...> {
                 n * (ddc::type_seq_rank_v<Arg, ddc::TypeSeq<Arg...>> + 42)
@@ -28,7 +28,7 @@ struct FilledStruct<T<Arg...>>
 } // namespace detail
 
 template <class T, class ElementType = std::size_t>
-inline constexpr T filled_struct(ElementType const n = 0)
+KOKKOS_FUNCTION inline constexpr T filled_struct(ElementType const n = 0)
 {
     return detail::FilledStruct<T>::operator()(n);
 }

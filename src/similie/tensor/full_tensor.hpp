@@ -22,7 +22,7 @@ struct TensorFullIndex
 
     using subindices_domain_t = ddc::DiscreteDomain<TensorIndex...>;
 
-    static constexpr subindices_domain_t subindices_domain()
+    KOKKOS_FUNCTION static constexpr subindices_domain_t subindices_domain()
     {
         return ddc::DiscreteDomain<TensorIndex...>(
                 ddc::DiscreteElement<TensorIndex...>(ddc::DiscreteElement<TensorIndex>(0)...),
@@ -62,13 +62,13 @@ struct TensorFullIndex
         return (TensorIndex::access_size() * ...);
     }
 
-    static constexpr std::size_t mem_id(
+    KOKKOS_FUNCTION static constexpr std::size_t mem_id(
             std::array<std::size_t, sizeof...(TensorIndex)> const natural_ids)
     {
         return access_id(natural_ids);
     }
 
-    static constexpr std::size_t access_id(
+    KOKKOS_FUNCTION static constexpr std::size_t access_id(
             std::array<std::size_t, sizeof...(TensorIndex)> const natural_ids)
     {
         if constexpr (rank() == 0) {
@@ -80,13 +80,13 @@ struct TensorFullIndex
         }
     }
 
-    static constexpr std::size_t access_id_to_mem_id(std::size_t access_id)
+    KOKKOS_FUNCTION static constexpr std::size_t access_id_to_mem_id(std::size_t access_id)
     {
         return access_id;
     }
 
     template <class Tensor, class Elem, class Id, class FunctorType>
-    static constexpr Tensor::element_type process_access(
+    KOKKOS_FUNCTION static constexpr Tensor::element_type process_access(
             const FunctorType& access,
             Tensor tensor,
             Elem elem)
@@ -94,8 +94,8 @@ struct TensorFullIndex
         return access(tensor, elem);
     }
 
-    static constexpr std::array<std::size_t, rank()> mem_id_to_canonical_natural_ids(
-            std::size_t mem_id)
+    KOKKOS_FUNCTION static constexpr std::array<std::size_t, rank()>
+    mem_id_to_canonical_natural_ids(std::size_t mem_id)
     {
         assert(mem_id < mem_size());
         if constexpr (rank() == 0) {

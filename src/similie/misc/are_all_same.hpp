@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <Kokkos_Core.hpp>
+
 #include "specialization.hpp"
 
 namespace sil {
@@ -13,7 +15,7 @@ template <class Head, class... Tail>
 inline constexpr bool are_all_same = (std::is_same_v<Head, Tail> && ...);
 
 template <class Head, class... Tail>
-inline constexpr bool are_all_equal(Head head, Tail... tail)
+KOKKOS_FUNCTION inline constexpr bool are_all_equal(Head head, Tail... tail)
 {
     return ((head == tail) && ...);
 }

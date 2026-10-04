@@ -10,7 +10,9 @@ namespace sil {
 namespace misc {
 
 // From https://stackoverflow.com/a/44719219
-constexpr inline std::size_t binomial_coefficient(std::size_t n, std::size_t k) noexcept
+KOKKOS_FUNCTION constexpr inline std::size_t binomial_coefficient(
+        std::size_t n,
+        std::size_t k) noexcept
 {
     return (k > n) ? 0 : // out of range
                    (k == 0 || k == n) ? 1

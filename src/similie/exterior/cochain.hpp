@@ -53,7 +53,10 @@ public:
 
     template <class... T>
         requires(sizeof...(T) >= 1 && (std::is_convertible_v<T, double> && ...))
-    constexpr explicit Cochain(chain_type chain, values_type allocation, T... value) noexcept
+    KOKKOS_FUNCTION constexpr explicit Cochain(
+            chain_type chain,
+            values_type allocation,
+            T... value) noexcept
         : m_chain(std::move(chain))
         , m_values(std::move(allocation))
     {
@@ -63,7 +66,9 @@ public:
                && "cochain constructor must get as much values as the chain contains simplices");
     }
 
-    constexpr explicit Cochain(chain_type const& chain, values_type const& values) noexcept
+    KOKKOS_FUNCTION constexpr explicit Cochain(
+            chain_type const& chain,
+            values_type const& values) noexcept
         : m_chain(std::move(chain))
         , m_values(std::move(values))
     {
@@ -74,7 +79,7 @@ public:
     template <tensor::TensorIndex Index>
         requires(misc::Specialization<Index, tensor::TensorAntisymmetricIndex>
                  || tensor::TensorNatIndex<Index>)
-    constexpr explicit Cochain(
+    KOKKOS_FUNCTION constexpr explicit Cochain(
             chain_type const& chain,
             tensor::Tensor<
                     element_type,
@@ -235,105 +240,119 @@ private:
 public:
     KOKKOS_DEFAULTED_FUNCTION CochainIterator() = default;
 
-    constexpr explicit CochainIterator(chain_iterator chain_it, values_iterator values_it)
+    KOKKOS_FUNCTION constexpr explicit CochainIterator(
+            chain_iterator chain_it,
+            values_iterator values_it)
         : m_chain(chain_it)
         , m_values(values_it)
     {
     }
 
-    constexpr reference operator*() const noexcept
+    KOKKOS_FUNCTION constexpr reference operator*() const noexcept
     {
         return cosimplex_type(*m_chain, *m_values);
     }
 
-    constexpr pointer operator->() const noexcept
+    KOKKOS_FUNCTION constexpr pointer operator->() const noexcept
     {
         return **this;
     }
 
-    constexpr CochainIterator& operator++()
+    KOKKOS_FUNCTION constexpr CochainIterator& operator++()
     {
         ++m_chain;
         ++m_values;
         return *this;
     }
 
-    constexpr CochainIterator operator++(int)
+    KOKKOS_FUNCTION constexpr CochainIterator operator++(int)
     {
         auto tmp = *this;
         ++*this;
         return tmp;
     }
 
-    constexpr CochainIterator& operator--()
+    KOKKOS_FUNCTION constexpr CochainIterator& operator--()
     {
         --m_chain;
         --m_values;
         return *this;
     }
 
-    constexpr CochainIterator operator--(int)
+    KOKKOS_FUNCTION constexpr CochainIterator operator--(int)
     {
         auto tmp = *this;
         --*this;
         return tmp;
     }
 
-    constexpr CochainIterator& operator+=(difference_type n)
+    KOKKOS_FUNCTION constexpr CochainIterator& operator+=(difference_type n)
     {
         m_chain += n;
         m_values += n;
         return *this;
     }
 
-    constexpr CochainIterator& operator-=(difference_type n)
+    KOKKOS_FUNCTION constexpr CochainIterator& operator-=(difference_type n)
     {
         m_chain -= n;
         m_values -= n;
         return *this;
     }
 
-    friend constexpr bool operator==(CochainIterator const& xx, CochainIterator const& yy)
+    friend KOKKOS_FUNCTION constexpr bool operator==(
+            CochainIterator const& xx,
+            CochainIterator const& yy)
     {
         return xx.m_chain == yy.m_chain && xx.m_values == yy.m_values;
     }
 
-    friend constexpr bool operator<(CochainIterator const& xx, CochainIterator const& yy)
+    friend KOKKOS_FUNCTION constexpr bool operator<(
+            CochainIterator const& xx,
+            CochainIterator const& yy)
     {
         return xx.m_chain < yy.m_chain && xx.m_values < yy.m_values;
     }
 
-    friend constexpr bool operator>(CochainIterator const& xx, CochainIterator const& yy)
+    friend KOKKOS_FUNCTION constexpr bool operator>(
+            CochainIterator const& xx,
+            CochainIterator const& yy)
     {
         return xx.m_chain > yy.m_chain && xx.m_values > yy.m_values;
     }
 
-    friend constexpr bool operator<=(CochainIterator const& xx, CochainIterator const& yy)
+    friend KOKKOS_FUNCTION constexpr bool operator<=(
+            CochainIterator const& xx,
+            CochainIterator const& yy)
     {
         return !(yy < xx);
     }
 
-    friend constexpr bool operator>=(CochainIterator const& xx, CochainIterator const& yy)
+    friend KOKKOS_FUNCTION constexpr bool operator>=(
+            CochainIterator const& xx,
+            CochainIterator const& yy)
     {
         return !(xx < yy);
     }
 
-    friend constexpr CochainIterator operator+(CochainIterator i, difference_type n)
+    friend KOKKOS_FUNCTION constexpr CochainIterator operator+(CochainIterator i, difference_type n)
     {
         return i += n;
     }
 
-    friend constexpr CochainIterator operator+(difference_type n, CochainIterator i)
+    friend KOKKOS_FUNCTION constexpr CochainIterator operator+(difference_type n, CochainIterator i)
     {
         return i += n;
     }
 
-    friend constexpr CochainIterator operator-(CochainIterator i, difference_type n)
+    friend KOKKOS_FUNCTION constexpr CochainIterator operator-(CochainIterator i, difference_type n)
     {
         return i -= n;
     }
 
-    friend constexpr difference_type operator-(CochainIterator const& xx, CochainIterator const& yy)
+    friend KOKKOS_FUNCTION constexpr difference_type operator-(
+            CochainIterator const& xx,
+            CochainIterator const& yy)
     {
         return xx.m_chain - yy.m_chain;
     }

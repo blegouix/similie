@@ -20,19 +20,19 @@ template <>
 struct Reorient<>
 {
     template <class Elem, class Vect>
-    static constexpr Elem run_elem(Elem elem, [[maybe_unused]] Vect)
+    KOKKOS_FUNCTION static constexpr Elem run_elem(Elem elem, [[maybe_unused]] Vect)
     {
         return elem;
     }
 
     template <class Elem, class Vect>
-    static constexpr Vect run_vect([[maybe_unused]] Elem, Vect vect)
+    KOKKOS_FUNCTION static constexpr Vect run_vect([[maybe_unused]] Elem, Vect vect)
     {
         return vect;
     }
 
     template <class Vect>
-    static constexpr bool run_negative([[maybe_unused]] Vect vect, bool negative)
+    KOKKOS_FUNCTION static constexpr bool run_negative([[maybe_unused]] Vect vect, bool negative)
     {
         return negative;
     }
@@ -42,7 +42,7 @@ template <class HeadTag, class... TailTag>
 struct Reorient<HeadTag, TailTag...>
 {
     template <class Elem, class Vect>
-    static constexpr Elem run_elem(Elem elem, Vect vect)
+    KOKKOS_FUNCTION static constexpr Elem run_elem(Elem elem, Vect vect)
     {
         if (vect.template get<HeadTag>() == -1) {
             elem.template uid<HeadTag>()--;
@@ -51,7 +51,7 @@ struct Reorient<HeadTag, TailTag...>
     }
 
     template <class Elem, class Vect>
-    static constexpr Vect run_vect(Elem elem, Vect vect)
+    KOKKOS_FUNCTION static constexpr Vect run_vect(Elem elem, Vect vect)
     {
         if (vect.template get<HeadTag>() == -1) {
             vect.template get<HeadTag>() = 1;
@@ -60,7 +60,7 @@ struct Reorient<HeadTag, TailTag...>
     }
 
     template <class Vect>
-    static constexpr bool run_negative(Vect vect, bool negative)
+    KOKKOS_FUNCTION static constexpr bool run_negative(Vect vect, bool negative)
     {
         return Reorient<
                 TailTag...>::run_negative(vect, (vect.template get<HeadTag>() == -1) != negative);
@@ -88,7 +88,7 @@ private:
 
     template <class Tag_, class... T>
         requires(!ddc::type_seq_contains_v<ddc::TypeSeq<Tag_>, ddc::TypeSeq<T...>>)
-    static constexpr ddc::DiscreteVector<Tag_> add_eventually_null_dimensions_(
+    KOKKOS_FUNCTION static constexpr ddc::DiscreteVector<Tag_> add_eventually_null_dimensions_(
             [[maybe_unused]] ddc::DiscreteVector<T...> vect)
     {
         return ddc::DiscreteVector<Tag_> {0};
@@ -96,14 +96,15 @@ private:
 
     template <class Tag_, class... T>
         requires(ddc::type_seq_contains_v<ddc::TypeSeq<Tag_>, ddc::TypeSeq<T...>>)
-    static constexpr ddc::DiscreteVector<Tag_> add_eventually_null_dimensions_(
+    KOKKOS_FUNCTION static constexpr ddc::DiscreteVector<Tag_> add_eventually_null_dimensions_(
             ddc::DiscreteVector<T...> vect)
     {
         return ddc::DiscreteVector<Tag_>(vect);
     }
 
     template <class... T>
-    static constexpr discrete_vector_type add_null_dimensions(ddc::DiscreteVector<T...> vect)
+    KOKKOS_FUNCTION static constexpr discrete_vector_type add_null_dimensions(
+            ddc::DiscreteVector<T...> vect)
     {
         return discrete_vector_type(add_eventually_null_dimensions_<Tag, T...>(vect)...);
     }
@@ -116,7 +117,7 @@ public:
     KOKKOS_DEFAULTED_FUNCTION constexpr Simplex(Simplex&&) = default;
 
     template <misc::Specialization<ddc::DiscreteVector> T>
-    constexpr explicit Simplex(
+    KOKKOS_FUNCTION constexpr explicit Simplex(
             discrete_element_type elem,
             T vect = ddc::DiscreteVector<> {},
             bool negative = false) noexcept
@@ -129,7 +130,7 @@ public:
     }
 
     template <misc::Specialization<ddc::DiscreteVector> T = ddc::DiscreteVector<>>
-    constexpr explicit Simplex(
+    KOKKOS_FUNCTION constexpr explicit Simplex(
             std::integral_constant<std::size_t, K>,
             discrete_element_type elem,
             T vect = ddc::DiscreteVector<> {},

@@ -50,7 +50,7 @@ public:
 
     template <class... T>
         requires(!std::is_convertible_v<T, std::size_t> && ...)
-    constexpr explicit Chain(simplices_type allocation, T... simplex) noexcept
+    KOKKOS_FUNCTION constexpr explicit Chain(simplices_type allocation, T... simplex) noexcept
         : m_simplices(std::move(allocation))
         , m_size(sizeof...(T))
     {
@@ -59,7 +59,7 @@ public:
         assert(check() == 0 && "there are duplicate simplices in the chain");
     }
 
-    constexpr explicit Chain(simplices_type allocation, std::size_t size) noexcept
+    KOKKOS_FUNCTION constexpr explicit Chain(simplices_type allocation, std::size_t size) noexcept
         : m_simplices(std::move(allocation))
         , m_size(size)
     {
