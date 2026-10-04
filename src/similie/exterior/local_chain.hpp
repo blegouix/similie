@@ -45,73 +45,76 @@ public:
 
     KOKKOS_DEFAULTED_FUNCTION constexpr LocalChainIterator() = default;
 
-    constexpr LocalChainIterator(chain_type const* chain, std::size_t index) noexcept
+    KOKKOS_FUNCTION constexpr LocalChainIterator(
+            chain_type const* chain,
+            std::size_t index) noexcept
         : m_chain(chain)
         , m_index(index)
     {
     }
 
-    constexpr reference operator*() const noexcept
+    KOKKOS_FUNCTION constexpr reference operator*() const noexcept
     {
         return (*m_chain)[m_index];
     }
 
-    constexpr pointer operator->() const noexcept
+    KOKKOS_FUNCTION constexpr pointer operator->() const noexcept
     {
         return &**this;
     }
 
-    constexpr LocalChainIterator& operator++() noexcept
+    KOKKOS_FUNCTION constexpr LocalChainIterator& operator++() noexcept
     {
         ++m_index;
         return *this;
     }
 
-    constexpr LocalChainIterator operator++(int) noexcept
+    KOKKOS_FUNCTION constexpr LocalChainIterator operator++(int) noexcept
     {
         LocalChainIterator tmp = *this;
         ++(*this);
         return tmp;
     }
 
-    constexpr LocalChainIterator& operator--() noexcept
+    KOKKOS_FUNCTION constexpr LocalChainIterator& operator--() noexcept
     {
         --m_index;
         return *this;
     }
 
-    constexpr LocalChainIterator operator+(difference_type n) const noexcept
+    KOKKOS_FUNCTION constexpr LocalChainIterator operator+(difference_type n) const noexcept
     {
         return LocalChainIterator(m_chain, m_index + n);
     }
 
-    constexpr LocalChainIterator& operator+=(difference_type n) noexcept
+    KOKKOS_FUNCTION constexpr LocalChainIterator& operator+=(difference_type n) noexcept
     {
         m_index += n;
         return *this;
     }
 
-    constexpr LocalChainIterator operator-(difference_type n) const noexcept
+    KOKKOS_FUNCTION constexpr LocalChainIterator operator-(difference_type n) const noexcept
     {
         return LocalChainIterator(m_chain, m_index - n);
     }
 
-    constexpr difference_type operator-(LocalChainIterator const& other) const noexcept
+    KOKKOS_FUNCTION constexpr difference_type operator-(
+            LocalChainIterator const& other) const noexcept
     {
         return static_cast<difference_type>(m_index) - static_cast<difference_type>(other.m_index);
     }
 
-    constexpr bool operator==(LocalChainIterator const& other) const noexcept
+    KOKKOS_FUNCTION constexpr bool operator==(LocalChainIterator const& other) const noexcept
     {
         return m_index == other.m_index;
     }
 
-    constexpr bool operator!=(LocalChainIterator const& other) const noexcept
+    KOKKOS_FUNCTION constexpr bool operator!=(LocalChainIterator const& other) const noexcept
     {
         return !(*this == other);
     }
 
-    constexpr bool operator<(LocalChainIterator const& other) const noexcept
+    KOKKOS_FUNCTION constexpr bool operator<(LocalChainIterator const& other) const noexcept
     {
         return m_index < other.m_index;
     }
@@ -147,7 +150,9 @@ public:
     KOKKOS_DEFAULTED_FUNCTION LocalChain& operator=(LocalChain const&) = default;
     KOKKOS_DEFAULTED_FUNCTION LocalChain& operator=(LocalChain&&) = default;
 
-    constexpr explicit LocalChain(discrete_element_type origin, std::size_t size = 0) noexcept
+    KOKKOS_FUNCTION constexpr explicit LocalChain(
+            discrete_element_type origin,
+            std::size_t size = 0) noexcept
         : m_origin(origin)
         , m_size(size)
     {
@@ -155,13 +160,17 @@ public:
     }
 
     template <misc::Specialization<Kokkos::View> AllocationType>
-    constexpr explicit LocalChain(AllocationType const&, discrete_element_type origin)
+    KOKKOS_FUNCTION constexpr explicit LocalChain(
+            AllocationType const&,
+            discrete_element_type origin)
         : LocalChain(origin)
     {
     }
 
     template <misc::NotSpecialization<ddc::DiscreteVector>... T>
-    constexpr explicit LocalChain(discrete_element_type origin, T... simplex) noexcept
+    KOKKOS_FUNCTION constexpr explicit LocalChain(
+            discrete_element_type origin,
+            T... simplex) noexcept
         : m_origin(origin)
         , m_size(sizeof...(T))
     {
@@ -181,7 +190,7 @@ public:
             misc::Specialization<Kokkos::View> AllocationType,
             misc::NotSpecialization<ddc::DiscreteVector> First,
             misc::NotSpecialization<ddc::DiscreteVector>... Rest>
-    constexpr explicit LocalChain(
+    KOKKOS_FUNCTION constexpr explicit LocalChain(
             AllocationType const&,
             First first_simplex,
             Rest... simplices) noexcept
@@ -191,7 +200,7 @@ public:
 
     template <misc::Specialization<ddc::DiscreteVector>... T>
         requires(sizeof...(T) >= 1)
-    constexpr explicit LocalChain(discrete_element_type origin, T... vect) noexcept
+    KOKKOS_FUNCTION constexpr explicit LocalChain(discrete_element_type origin, T... vect) noexcept
         : m_origin(origin)
         , m_size(sizeof...(T))
     {
@@ -205,7 +214,7 @@ public:
             misc::Specialization<Kokkos::View> AllocationType,
             misc::Specialization<ddc::DiscreteVector>... T>
         requires(sizeof...(T) >= 1)
-    constexpr explicit LocalChain(
+    KOKKOS_FUNCTION constexpr explicit LocalChain(
             AllocationType const&,
             discrete_element_type origin,
             T... vect) noexcept
@@ -223,27 +232,27 @@ public:
         return s_k;
     }
 
-    constexpr discrete_element_type origin() const noexcept
+    KOKKOS_FUNCTION constexpr discrete_element_type origin() const noexcept
     {
         return m_origin;
     }
 
-    constexpr storage_type& allocation() noexcept
+    KOKKOS_FUNCTION constexpr storage_type& allocation() noexcept
     {
         return m_vects;
     }
 
-    constexpr storage_type const& allocation() const noexcept
+    KOKKOS_FUNCTION constexpr storage_type const& allocation() const noexcept
     {
         return m_vects;
     }
 
-    constexpr std::size_t size() const noexcept
+    KOKKOS_FUNCTION constexpr std::size_t size() const noexcept
     {
         return m_size;
     }
 
-    constexpr std::size_t allocation_size() const noexcept
+    KOKKOS_FUNCTION constexpr std::size_t allocation_size() const noexcept
     {
         return MAX_SIZE;
     }
@@ -253,13 +262,13 @@ public:
         return false;
     }
 
-    constexpr void resize(std::size_t size) noexcept
+    KOKKOS_FUNCTION constexpr void resize(std::size_t size) noexcept
     {
         assert(size <= MAX_SIZE);
         m_size = size;
     }
 
-    constexpr int check() const noexcept
+    KOKKOS_FUNCTION constexpr int check() const noexcept
     {
         for (auto i = begin(); i + 1 < end(); ++i) {
             for (auto j = i + 1; j < end(); ++j) {
@@ -271,71 +280,71 @@ public:
         return 0;
     }
 
-    constexpr iterator_type begin() noexcept
+    KOKKOS_FUNCTION constexpr iterator_type begin() noexcept
     {
         return iterator_type(this, 0);
     }
 
-    constexpr const_iterator_type begin() const noexcept
+    KOKKOS_FUNCTION constexpr const_iterator_type begin() const noexcept
     {
         return const_iterator_type(this, 0);
     }
 
-    constexpr iterator_type end() noexcept
+    KOKKOS_FUNCTION constexpr iterator_type end() noexcept
     {
         return iterator_type(this, m_size);
     }
 
-    constexpr const_iterator_type end() const noexcept
+    KOKKOS_FUNCTION constexpr const_iterator_type end() const noexcept
     {
         return const_iterator_type(this, m_size);
     }
 
-    constexpr const_iterator_type cbegin() const noexcept
+    KOKKOS_FUNCTION constexpr const_iterator_type cbegin() const noexcept
     {
         return const_iterator_type(this, 0);
     }
 
-    constexpr const_iterator_type cend() const noexcept
+    KOKKOS_FUNCTION constexpr const_iterator_type cend() const noexcept
     {
         return const_iterator_type(this, m_size);
     }
 
-    constexpr simplex_type const& operator[](std::size_t i) const noexcept
+    KOKKOS_FUNCTION constexpr simplex_type const& operator[](std::size_t i) const noexcept
     {
         assert(i < m_size);
         return m_vects[i];
     }
 
-    constexpr LocalChain& operator++()
+    KOKKOS_FUNCTION constexpr LocalChain& operator++()
     {
         assert(m_size < MAX_SIZE);
         ++m_size;
         return *this;
     }
 
-    constexpr LocalChain& operator+=(std::size_t n)
+    KOKKOS_FUNCTION constexpr LocalChain& operator+=(std::size_t n)
     {
         assert(m_size + n <= MAX_SIZE);
         m_size += n;
         return *this;
     }
 
-    constexpr LocalChain& operator+=(discrete_vector_type const& vect)
+    KOKKOS_FUNCTION constexpr LocalChain& operator+=(discrete_vector_type const& vect)
     {
         assert(m_size < MAX_SIZE);
         m_vects[m_size++] = simplex_type(m_origin, vect);
         return *this;
     }
 
-    constexpr LocalChain& operator+=(simplex_type const& simplex)
+    KOKKOS_FUNCTION constexpr LocalChain& operator+=(simplex_type const& simplex)
     {
         assert(m_size < MAX_SIZE);
         m_vects[m_size++] = simplex;
         return *this;
     }
 
-    constexpr LocalChain& operator+=(LocalChain const& simplices_to_add)
+    KOKKOS_FUNCTION constexpr LocalChain& operator+=(LocalChain const& simplices_to_add)
     {
         assert(m_size + simplices_to_add.size() <= MAX_SIZE);
         std::size_t const old_size = m_size;
@@ -346,14 +355,14 @@ public:
         return *this;
     }
 
-    constexpr LocalChain operator+(simplex_type const& simplex) const
+    KOKKOS_FUNCTION constexpr LocalChain operator+(simplex_type const& simplex) const
     {
         LocalChain local_chain = *this;
         local_chain += simplex;
         return local_chain;
     }
 
-    constexpr LocalChain operator+(LocalChain const& simplices_to_add) const
+    KOKKOS_FUNCTION constexpr LocalChain operator+(LocalChain const& simplices_to_add) const
     {
         LocalChain local_chain = *this;
         local_chain += simplices_to_add;
@@ -361,7 +370,7 @@ public:
     }
 
     template <class T>
-    constexpr LocalChain& operator*=(T t)
+    KOKKOS_FUNCTION constexpr LocalChain& operator*=(T t)
     {
         if (t == 1) {
         } else if (t == -1) {
@@ -375,14 +384,14 @@ public:
     }
 
     template <class T>
-    constexpr auto operator*(T t) const
+    KOKKOS_FUNCTION constexpr auto operator*(T t) const
     {
         LocalChain chain = *this;
         chain *= t;
         return chain;
     }
 
-    constexpr bool operator==(LocalChain const& simplices) const
+    KOKKOS_FUNCTION constexpr bool operator==(LocalChain const& simplices) const
     {
         if (m_size != simplices.m_size) {
             return false;
@@ -407,7 +416,7 @@ template <std::size_t K, class... Tag>
 struct TangentBasis<K, ddc::DiscreteDomain<Tag...>>
 {
     template <class MemorySpace = Kokkos::HostSpace, class Elem>
-    static constexpr auto operator()(Elem elem)
+    KOKKOS_FUNCTION static constexpr auto operator()(Elem elem)
     {
         using chain_type = LocalChain<Simplex<K, Tag...>, Kokkos::LayoutRight, MemorySpace>;
         std::array<std::ptrdiff_t, sizeof...(Tag)> permutation
@@ -431,14 +440,14 @@ template <
         std::size_t K,
         misc::Specialization<ddc::DiscreteDomain> Dom,
         misc::Specialization<ddc::DiscreteElement> Elem>
-constexpr auto tangent_basis(Elem elem)
+KOKKOS_FUNCTION constexpr auto tangent_basis(Elem elem)
 {
     return detail::TangentBasis<K, Dom>::template operator()<Kokkos::HostSpace>(elem);
 }
 
 template <std::size_t K, misc::Specialization<ddc::DiscreteDomain> Dom, class ExecSpace>
     requires(misc::NotSpecialization<ExecSpace, ddc::DiscreteElement>)
-constexpr auto tangent_basis([[maybe_unused]] ExecSpace const& exec_space)
+KOKKOS_FUNCTION constexpr auto tangent_basis([[maybe_unused]] ExecSpace const& exec_space)
 {
     return detail::TangentBasis<K, Dom>::template operator()<typename ExecSpace::memory_space>(
             misc::filled_struct<typename Dom::discrete_element_type>());

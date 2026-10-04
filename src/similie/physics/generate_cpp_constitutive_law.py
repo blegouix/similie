@@ -110,33 +110,33 @@ class {class_name}
 {parameter_members}
 
 public:
-    constexpr explicit {class_name}(
+    KOKKOS_FUNCTION constexpr explicit {class_name}(
             {constructor_signature})
         : {constructor_initializers}
     {{
     }}
 
-    constexpr double value({forward_arguments}) const
+    KOKKOS_FUNCTION constexpr double value({forward_arguments}) const
     {{
         return {_render_expression(forward_value_expression, state_variable_symbol, inverse_output_name, constitutive_law_replacements)};
     }}
 
-    constexpr double jacobian({forward_arguments}) const
+    KOKKOS_FUNCTION constexpr double jacobian({forward_arguments}) const
     {{
         return value({", ".join(variables)});
     }}
 
-    constexpr double operator()({forward_arguments}) const
+    KOKKOS_FUNCTION constexpr double operator()({forward_arguments}) const
     {{
         return {_render_expression(constitutive_law, state_variable_symbol, inverse_output_name, constitutive_law_replacements)};
     }}
 
-    constexpr double inverse_value({inverse_arguments}) const
+    KOKKOS_FUNCTION constexpr double inverse_value({inverse_arguments}) const
     {{
         return {_render_expression(inverse_value_expression, output_symbol, output_variable, inverse_replacements)};
     }}
 
-    constexpr double inverse({inverse_arguments}) const
+    KOKKOS_FUNCTION constexpr double inverse({inverse_arguments}) const
     {{
         return {_render_expression(inverse_expression, output_symbol, output_variable, inverse_replacements)};
     }}

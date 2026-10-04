@@ -86,7 +86,7 @@ class MagneticVectorPotentialToMagneticInduction<SpatialIndex...>
     using OrthogonalPotentialComponent = sil::tensor::TensorNaturalIndex<OrthogonalPlaneIndex>;
 
     template <class Index>
-    [[nodiscard]] static constexpr auto magnetic_induction_component()
+    [[nodiscard]] KOKKOS_FUNCTION static constexpr auto magnetic_induction_component()
     {
         [[maybe_unused]] sil::tensor::TensorAccessor<MagneticInductionIndex> accessor;
         static_cast<void>(sizeof(OrthogonalPotentialComponent));
@@ -150,7 +150,7 @@ class MagneticVectorPotentialToMagneticInduction<SpatialIndex...>
             = sil::exterior::coboundary_index_t<CoboundaryIndex, VectorPotentialIndex>;
 
     template <class Index>
-    [[nodiscard]] static constexpr auto magnetic_induction_component()
+    [[nodiscard]] KOKKOS_FUNCTION static constexpr auto magnetic_induction_component()
     {
         [[maybe_unused]] sil::tensor::TensorAccessor<MagneticInductionIndex> accessor;
         if constexpr (std::is_same_v<Index, ddc::type_seq_element_t<0, SpatialIndexSeq>>) {

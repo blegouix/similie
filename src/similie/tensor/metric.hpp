@@ -80,8 +80,8 @@ using relabelize_metric_in_domain_t = relabelize_indices_in_t<
         ddc::TypeSeq<uncharacterize_t<Index1>, uncharacterize_t<Index2>>>;
 
 template <TensorNatIndex Index1, TensorNatIndex Index2, class Dom>
-constexpr relabelize_metric_in_domain_t<Dom, Index1, Index2> relabelize_metric_in_domain(
-        Dom metric_dom)
+KOKKOS_FUNCTION constexpr relabelize_metric_in_domain_t<Dom, Index1, Index2>
+relabelize_metric_in_domain(Dom metric_dom)
 {
     return relabelize_indices_in<
             ddc::TypeSeq<
@@ -103,7 +103,8 @@ using relabelize_metric_t = relabelize_indices_of_t<
         ddc::TypeSeq<uncharacterize_t<Index1>, uncharacterize_t<Index2>>>;
 
 template <TensorNatIndex Index1, TensorNatIndex Index2, misc::Specialization<Tensor> TensorType>
-constexpr relabelize_metric_t<TensorType, Index1, Index2> relabelize_metric(TensorType tensor)
+KOKKOS_FUNCTION constexpr relabelize_metric_t<TensorType, Index1, Index2> relabelize_metric(
+        TensorType tensor)
 {
     return relabelize_indices_of<
             ddc::TypeSeq<

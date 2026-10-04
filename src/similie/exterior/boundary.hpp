@@ -41,7 +41,7 @@ using boundary_t = typename detail::BoundaryType<T>::type;
 namespace detail {
 
 template <class MemorySpace = Kokkos::HostSpace, class SimplexType>
-constexpr LocalChain<boundary_t<SimplexType>, Kokkos::LayoutRight, MemorySpace>
+KOKKOS_FUNCTION constexpr LocalChain<boundary_t<SimplexType>, Kokkos::LayoutRight, MemorySpace>
 generate_local_half_subchain(
         typename SimplexType::discrete_element_type elem,
         typename SimplexType::discrete_vector_type vect,
@@ -66,7 +66,7 @@ generate_local_half_subchain(
 
 // TODO Kokkosify
 template <class SimplexType, misc::Specialization<Kokkos::View> AllocationType>
-constexpr Chain<
+KOKKOS_FUNCTION constexpr Chain<
         boundary_t<SimplexType>,
         typename AllocationType::array_layout,
         typename AllocationType::memory_space>

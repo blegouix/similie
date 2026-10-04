@@ -12,7 +12,7 @@ namespace misc {
 namespace detail {
 
 template <class InputIt, class T = typename std::iterator_traits<InputIt>::value_type>
-constexpr InputIt find(InputIt first, InputIt last, const T& value)
+KOKKOS_FUNCTION constexpr InputIt find(InputIt first, InputIt last, const T& value)
 {
     for (; first != last; ++first)
         if (*first == value)
@@ -50,7 +50,7 @@ constexpr bool all_of(InputIt first, InputIt last, UnaryPred p)
 */
 
 template <class T>
-constexpr std::remove_reference_t<T>&& move(T&& t) noexcept
+KOKKOS_FUNCTION constexpr std::remove_reference_t<T>&& move(T&& t) noexcept
 {
     return static_cast<typename std::remove_reference<T>::type&&>(t);
 }
@@ -65,7 +65,7 @@ KOKKOS_FUNCTION OutputIt move(InputIt first, InputIt last, OutputIt d_first)
 }
 
 template <class I>
-constexpr std::size_t bounded_advance(I& i, std::size_t n, I const bound)
+KOKKOS_FUNCTION constexpr std::size_t bounded_advance(I& i, std::size_t n, I const bound)
 {
     for (; n > 0 && i != bound; --n, void(++i)) {
         ;
@@ -90,7 +90,7 @@ KOKKOS_FUNCTION ForwardIt shift_left(ForwardIt first, ForwardIt last, std::size_
 }
 
 template <class InputIt, class OutputIt>
-constexpr OutputIt copy(InputIt first, InputIt last, OutputIt d_first)
+KOKKOS_FUNCTION constexpr OutputIt copy(InputIt first, InputIt last, OutputIt d_first)
 {
     for (; first != last; (void)++first, (void)++d_first)
         *d_first = *first;
@@ -100,7 +100,7 @@ constexpr OutputIt copy(InputIt first, InputIt last, OutputIt d_first)
 
 
 template <typename It, typename Compare = std::less<>>
-constexpr void sort(It begin, It end, Compare comp = Compare())
+KOKKOS_FUNCTION constexpr void sort(It begin, It end, Compare comp = Compare())
 {
     for (It i = begin; i != end; ++i) {
         for (It j = begin; j < end - 1; ++j) {

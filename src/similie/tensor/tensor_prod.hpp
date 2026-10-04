@@ -27,7 +27,7 @@ struct SubindicesDomain<T<SubIndex...>>
 {
     using type = ddc::DiscreteDomain<SubIndex...>;
 
-    static constexpr type operator()()
+    KOKKOS_FUNCTION static constexpr type operator()()
     {
         return ddc::DiscreteDomain<SubIndex...>(
                 ddc::DiscreteElement<SubIndex...>(ddc::DiscreteElement<SubIndex>(0)...),
@@ -42,7 +42,7 @@ template <class T>
 using subindices_domain_t = detail::SubindicesDomain<T>::type;
 
 template <class T>
-static constexpr subindices_domain_t<T> subindices_domain()
+KOKKOS_FUNCTION static constexpr subindices_domain_t<T> subindices_domain()
 {
     return detail::SubindicesDomain<T>::operator()();
 };

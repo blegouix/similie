@@ -147,7 +147,7 @@ def _render_constructor_signature(
         f"{type_name} {constructor_name}_"
         for _, constructor_name, _, type_name in parameters
     )
-    return f"    constexpr {struct_name}(\n            {params})"
+    return f"    KOKKOS_FUNCTION constexpr {struct_name}(\n            {params})"
 
 
 def _render_constructor_initializers(
@@ -229,7 +229,7 @@ def _render_indexed_method(
 
     return f"""
     template <class Index>
-    constexpr double {method_name}(double {argument_prefix}) const
+    KOKKOS_FUNCTION constexpr double {method_name}(double {argument_prefix}) const
     {{
 {body}
     }}
@@ -273,7 +273,7 @@ def _render_indexed_elem_method(
 
     return f"""
     template <class Index, class Elem>
-    constexpr double {method_name}(double {argument_prefix}, Elem elem) const
+    KOKKOS_FUNCTION constexpr double {method_name}(double {argument_prefix}, Elem elem) const
     {{
 {body}
     }}
@@ -306,7 +306,7 @@ def _render_indexed_nonlocal_value_method(
 
     return f"""
     template <class Index, class Elem>
-    constexpr auto {method_name}(Elem elem) const
+    KOKKOS_FUNCTION constexpr auto {method_name}(Elem elem) const
     {{
 {body}
     }}
@@ -382,14 +382,14 @@ def _render_moments_object_method(
 
     return f"""
     template <class Index, class Moments, class Elem>
-    constexpr double dhamiltonian_dmoments(Moments moments, Elem elem) const
+    KOKKOS_FUNCTION constexpr double dhamiltonian_dmoments(Moments moments, Elem elem) const
     {{
         static_cast<void>(elem);
 {body}
     }}
 
     template <class Index, class Moments, class Elem>
-    constexpr double dpotential_dt(Moments moments, Elem elem) const
+    KOKKOS_FUNCTION constexpr double dpotential_dt(Moments moments, Elem elem) const
     {{
         return dhamiltonian_dmoments<Index>(moments, elem);
     }}
@@ -469,7 +469,7 @@ def _render_moments_object_jacobian_method(
         body = _render_tagged_jacobian_cases(component_indices, component_expressions)
         return f"""
     template <class RowIndex, class ColumnIndex, class Moments, class Elem>
-    constexpr double jacobian(Moments moments, Elem elem) const
+    KOKKOS_FUNCTION constexpr double jacobian(Moments moments, Elem elem) const
     {{
         static_cast<void>(moments);
         static_cast<void>(elem);
@@ -510,7 +510,7 @@ def _render_moments_object_jacobian_method(
 
     return f"""
     template <class RowIndex, class ColumnIndex, class Moments, class Elem>
-    constexpr double jacobian(Moments moments, Elem elem) const
+    KOKKOS_FUNCTION constexpr double jacobian(Moments moments, Elem elem) const
     {{
         static_cast<void>(moments);
         static_cast<void>(elem);
@@ -573,10 +573,10 @@ def write_cpp_hamiltonian_header(
     if requires_elem:
         h_signature = (
             f"    template <class Elem>\n"
-            f"    constexpr double hamiltonian({', '.join(argument_signature_parts)}, Elem elem) const"
+            f"    KOKKOS_FUNCTION constexpr double hamiltonian({', '.join(argument_signature_parts)}, Elem elem) const"
         )
     else:
-        h_signature = f"    constexpr double hamiltonian({', '.join(argument_signature_parts)}) const"
+        h_signature = f"    KOKKOS_FUNCTION constexpr double hamiltonian({', '.join(argument_signature_parts)}) const"
 
     potential_entry = variable_entries[0]
     moments_entry = variable_entries[1]
@@ -610,14 +610,14 @@ def write_cpp_hamiltonian_header(
         if requires_elem:
             potential_method = f"""
     template <class Elem>
-    constexpr double dhamiltonian_dpotential({potential_method_signature}, Elem elem) const
+    KOKKOS_FUNCTION constexpr double dhamiltonian_dpotential({potential_method_signature}, Elem elem) const
     {{
         return {_render_cxx_expression(potential_derivative_expressions[0], potential_replacements, symbolic_functions)};
     }}
 """
         else:
             potential_method = f"""
-    constexpr double dhamiltonian_dpotential({potential_method_signature}) const
+    KOKKOS_FUNCTION constexpr double dhamiltonian_dpotential({potential_method_signature}) const
     {{
         return {_render_cxx_expression(potential_derivative_expressions[0], potential_replacements, symbolic_functions)};
     }}

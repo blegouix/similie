@@ -16,7 +16,7 @@ namespace misc {
  duplicate but is not a permutation of 0...N, this is undetermined.
  */
 template <std::size_t N>
-inline constexpr int permutation_parity(std::array<std::size_t, N> lst)
+KOKKOS_FUNCTION inline constexpr int permutation_parity(std::array<std::size_t, N> lst)
 {
     int parity = 1;
     for (std::size_t i = 0; i < lst.size() - 1; ++i) {

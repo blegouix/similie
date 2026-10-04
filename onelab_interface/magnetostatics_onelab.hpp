@@ -626,7 +626,7 @@ struct MagneticMoments
     double z;
 
     template <class Index>
-    [[nodiscard]] constexpr double get() const
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double get() const
     {
         if constexpr (std::is_same_v<Index, X>) {
             return x;
@@ -642,7 +642,7 @@ struct MagneticMoments
         }
     }
 
-    [[nodiscard]] constexpr double norm2() const
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double norm2() const
     {
         return x * x + y * y + z * z;
     }

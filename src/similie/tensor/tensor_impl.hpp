@@ -27,7 +27,7 @@ struct TensorNaturalIndex
 
     using subindices_domain_t = ddc::DiscreteDomain<>;
 
-    static constexpr subindices_domain_t subindices_domain()
+    KOKKOS_FUNCTION static constexpr subindices_domain_t subindices_domain()
     {
         return ddc::DiscreteDomain<>();
     }
@@ -57,7 +57,7 @@ struct TensorNaturalIndex
     }
 
     template <class ODim>
-    static constexpr std::size_t mem_id()
+    KOKKOS_FUNCTION static constexpr std::size_t mem_id()
     {
         if constexpr (rank() == 0) {
             return 0;
@@ -66,23 +66,23 @@ struct TensorNaturalIndex
         }
     }
 
-    static constexpr std::size_t mem_id(std::size_t const natural_id)
+    KOKKOS_FUNCTION static constexpr std::size_t mem_id(std::size_t const natural_id)
     {
         return natural_id;
     }
 
-    static constexpr std::size_t access_id(std::size_t const natural_id)
+    KOKKOS_FUNCTION static constexpr std::size_t access_id(std::size_t const natural_id)
     {
         return natural_id;
     }
 
-    static constexpr std::size_t access_id_to_mem_id(std::size_t access_id)
+    KOKKOS_FUNCTION static constexpr std::size_t access_id_to_mem_id(std::size_t access_id)
     {
         return access_id;
     }
 
     template <class Tensor, class Elem, class Id, class FunctorType>
-    static constexpr Tensor::element_type process_access(
+    KOKKOS_FUNCTION static constexpr Tensor::element_type process_access(
             const FunctorType& access,
             Tensor tensor,
             Elem elem)
@@ -90,8 +90,8 @@ struct TensorNaturalIndex
         return access(tensor, elem);
     }
 
-    static constexpr std::array<std::size_t, rank()> mem_id_to_canonical_natural_ids(
-            std::size_t mem_id)
+    KOKKOS_FUNCTION static constexpr std::array<std::size_t, rank()>
+    mem_id_to_canonical_natural_ids(std::size_t mem_id)
     {
         assert(mem_id < mem_size());
         if constexpr (rank() == 0) {
@@ -194,7 +194,7 @@ struct IdFromTypeSeqDims;
 template <class Index, class... Subindex, class... CDim>
 struct IdFromTypeSeqDims<Index, ddc::DiscreteDomain<Subindex...>, ddc::TypeSeq<CDim...>>
 {
-    static constexpr std::size_t operator()()
+    KOKKOS_FUNCTION static constexpr std::size_t operator()()
     {
         static_assert(sizeof...(Subindex) == sizeof...(CDim));
         if constexpr (TensorNatIndex<Index>) {
@@ -213,7 +213,7 @@ struct IdFromTypeSeqDims<Index, ddc::DiscreteDomain<Subindex...>, ddc::TypeSeq<C
 
 // Returns Index::access_id for the subindex Index of the IndicesTypeSeq
 template <class Index, class IndicesTypeSeq, class... CDim>
-static constexpr std::size_t access_id()
+KOKKOS_FUNCTION static constexpr std::size_t access_id()
 {
     if constexpr (TensorNatIndex<Index>) {
         return IdFromTypeSeqDims<
@@ -245,7 +245,7 @@ template <class Index, class... Subindex>
 struct IdFromElem<Index, ddc::DiscreteDomain<Subindex...>>
 {
     template <class Elem>
-    static constexpr std::size_t operator()(Elem natural_elem)
+    KOKKOS_FUNCTION static constexpr std::size_t operator()(Elem natural_elem)
     {
         if constexpr (TensorNatIndex<Index>) {
             return Index::access_id(natural_elem.template uid<Index>());
@@ -258,7 +258,8 @@ struct IdFromElem<Index, ddc::DiscreteDomain<Subindex...>>
 };
 
 template <class Index, class IndicesTypeSeq, class... NaturalIndex>
-static constexpr std::size_t access_id(ddc::DiscreteElement<NaturalIndex...> natural_elem)
+KOKKOS_FUNCTION static constexpr std::size_t access_id(
+        ddc::DiscreteElement<NaturalIndex...> natural_elem)
 {
     if constexpr (TensorNatIndex<Index>) {
         return IdFromElem<Index, ddc::DiscreteDomain<Index>>::operator()(natural_elem);
@@ -274,7 +275,7 @@ template <TensorIndex... Index>
 class TensorAccessor
 {
 public:
-    explicit constexpr TensorAccessor();
+    KOKKOS_FUNCTION explicit constexpr TensorAccessor();
 
     using discrete_domain_type = ddc::DiscreteDomain<Index...>;
 
@@ -285,22 +286,22 @@ public:
             ddc::DiscreteDomain<Index>,
             typename Index::subindices_domain_t>...>;
 
-    static constexpr natural_domain_t natural_domain();
+    KOKKOS_FUNCTION static constexpr natural_domain_t natural_domain();
 
-    static constexpr discrete_domain_type domain();
+    KOKKOS_FUNCTION static constexpr discrete_domain_type domain();
 
-    static constexpr discrete_domain_type access_domain();
+    KOKKOS_FUNCTION static constexpr discrete_domain_type access_domain();
 
     template <class... CDim>
-    static constexpr discrete_element_type access_element();
+    KOKKOS_FUNCTION static constexpr discrete_element_type access_element();
 
     template <class... NaturalIndex>
-    static constexpr discrete_element_type access_element(
+    KOKKOS_FUNCTION static constexpr discrete_element_type access_element(
             ddc::DiscreteElement<NaturalIndex...> natural_elem);
 
     template <class... MemIndex>
-    static constexpr natural_domain_t::discrete_element_type canonical_natural_element(
-            ddc::DiscreteElement<MemIndex...> mem_elem);
+    KOKKOS_FUNCTION static constexpr natural_domain_t::discrete_element_type
+    canonical_natural_element(ddc::DiscreteElement<MemIndex...> mem_elem);
 };
 
 namespace detail {
@@ -333,13 +334,13 @@ template <misc::Specialization<ddc::DiscreteDomain> Dom>
 using tensor_accessor_for_domain_t = detail::TensorAccessorForDomain<Dom>::type;
 
 template <TensorIndex... Index>
-constexpr TensorAccessor<Index...>::TensorAccessor()
+KOKKOS_FUNCTION constexpr TensorAccessor<Index...>::TensorAccessor()
 {
 }
 
 namespace detail {
 template <class Index>
-constexpr auto natural_domain()
+KOKKOS_FUNCTION constexpr auto natural_domain()
 {
     if constexpr (TensorNatIndex<Index>) {
         return typename ddc::DiscreteDomain<
@@ -351,13 +352,15 @@ constexpr auto natural_domain()
 } // namespace detail
 
 template <TensorIndex... Index>
-constexpr TensorAccessor<Index...>::natural_domain_t TensorAccessor<Index...>::natural_domain()
+KOKKOS_FUNCTION constexpr TensorAccessor<Index...>::natural_domain_t TensorAccessor<
+        Index...>::natural_domain()
 {
     return natural_domain_t(detail::natural_domain<Index>()...);
 }
 
 template <TensorIndex... Index>
-constexpr TensorAccessor<Index...>::discrete_domain_type TensorAccessor<Index...>::domain()
+KOKKOS_FUNCTION constexpr TensorAccessor<Index...>::discrete_domain_type TensorAccessor<
+        Index...>::domain()
 {
     return ddc::DiscreteDomain<Index...>(
             ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(0)...),
@@ -365,7 +368,8 @@ constexpr TensorAccessor<Index...>::discrete_domain_type TensorAccessor<Index...
 }
 
 template <TensorIndex... Index>
-constexpr TensorAccessor<Index...>::discrete_domain_type TensorAccessor<Index...>::access_domain()
+KOKKOS_FUNCTION constexpr TensorAccessor<Index...>::discrete_domain_type TensorAccessor<
+        Index...>::access_domain()
 {
     return ddc::DiscreteDomain<Index...>(
             ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(0)...),
@@ -374,7 +378,8 @@ constexpr TensorAccessor<Index...>::discrete_domain_type TensorAccessor<Index...
 
 template <TensorIndex... Index>
 template <class... CDim>
-constexpr TensorAccessor<Index...>::discrete_element_type TensorAccessor<Index...>::access_element()
+KOKKOS_FUNCTION constexpr TensorAccessor<Index...>::discrete_element_type TensorAccessor<
+        Index...>::access_element()
 {
     return ddc::DiscreteElement<Index...>(ddc::DiscreteElement<Index>(
             detail::access_id<Index, ddc::TypeSeq<Index...>, CDim...>())...);
@@ -382,8 +387,8 @@ constexpr TensorAccessor<Index...>::discrete_element_type TensorAccessor<Index..
 
 template <TensorIndex... Index>
 template <class... NaturalIndex>
-constexpr TensorAccessor<Index...>::discrete_element_type TensorAccessor<Index...>::access_element(
-        [[maybe_unused]] ddc::DiscreteElement<NaturalIndex...> natural_elem)
+KOKKOS_FUNCTION constexpr TensorAccessor<Index...>::discrete_element_type TensorAccessor<Index...>::
+        access_element([[maybe_unused]] ddc::DiscreteElement<NaturalIndex...> natural_elem)
 {
     return ddc::DiscreteElement<Index...>(
             ddc::DiscreteElement<Index>(detail::access_id<Index, ddc::TypeSeq<Index...>>(
@@ -392,8 +397,8 @@ constexpr TensorAccessor<Index...>::discrete_element_type TensorAccessor<Index..
 
 template <TensorIndex... Index>
 template <class... MemIndex>
-constexpr TensorAccessor<Index...>::natural_domain_t::discrete_element_type TensorAccessor<
-        Index...>::canonical_natural_element(ddc::DiscreteElement<MemIndex...> mem_elem)
+KOKKOS_FUNCTION constexpr TensorAccessor<Index...>::natural_domain_t::discrete_element_type
+TensorAccessor<Index...>::canonical_natural_element(ddc::DiscreteElement<MemIndex...> mem_elem)
 {
     std::array<std::size_t, natural_domain_t::rank()> ids {};
     auto it = ids.begin();
@@ -604,7 +609,7 @@ public:
 
     using base_type::domain;
 
-    constexpr explicit Tensor(
+    KOKKOS_FUNCTION constexpr explicit Tensor(
             ddc::ChunkSpan<
                     ElementType,
                     ddc::DiscreteDomain<DDim...>,
@@ -619,7 +624,7 @@ public:
             ddc::DiscreteDomain<DDim>,
             ddc::DiscreteDomain<>>...>>;
 
-    static constexpr accessor_t accessor()
+    KOKKOS_FUNCTION static constexpr accessor_t accessor()
     {
         return accessor_t();
     }
@@ -631,12 +636,12 @@ public:
                     ddc::to_type_seq_t<discrete_domain_type>,
                     ddc::to_type_seq_t<indices_domain_t>>>;
 
-    constexpr indices_domain_t indices_domain() const noexcept
+    KOKKOS_FUNCTION constexpr indices_domain_t indices_domain() const noexcept
     {
         return indices_domain_t(domain());
     }
 
-    constexpr non_indices_domain_t non_indices_domain() const noexcept
+    KOKKOS_FUNCTION constexpr non_indices_domain_t non_indices_domain() const noexcept
     {
         return non_indices_domain_t(domain());
     }
@@ -644,25 +649,25 @@ public:
     using natural_domain_t = sil::misc::
             cartesian_prod_t<non_indices_domain_t, typename accessor_t::natural_domain_t>;
 
-    constexpr natural_domain_t natural_domain() const noexcept
+    KOKKOS_FUNCTION constexpr natural_domain_t natural_domain() const noexcept
     {
         return natural_domain_t(non_indices_domain(), accessor_t::natural_domain());
     }
 
-    constexpr discrete_domain_type access_domain() const noexcept
+    KOKKOS_FUNCTION constexpr discrete_domain_type access_domain() const noexcept
     {
         return discrete_domain_type(non_indices_domain(), accessor_t::access_domain());
     }
 
     template <class... CDim>
-    constexpr discrete_element_type access_element()
+    KOKKOS_FUNCTION constexpr discrete_element_type access_element()
             const noexcept // TODO merge this with the one below
     {
         return discrete_element_type(accessor_t::template access_element<CDim...>());
     }
 
     template <class... Elem>
-    constexpr discrete_element_type access_element(Elem... elem) const noexcept
+    KOKKOS_FUNCTION constexpr discrete_element_type access_element(Elem... elem) const noexcept
     {
         return discrete_element_type(
                 accessor_t::access_element(
@@ -671,7 +676,7 @@ public:
     }
 
     template <class... Elem>
-    constexpr natural_domain_t::discrete_element_type canonical_natural_element(
+    KOKKOS_FUNCTION constexpr natural_domain_t::discrete_element_type canonical_natural_element(
             Elem... mem_elem) const noexcept
     {
         return typename natural_domain_t::discrete_element_type(
@@ -681,7 +686,7 @@ public:
     }
 
     template <class... DElems>
-    constexpr reference mem(DElems const&... delems) const noexcept
+    KOKKOS_FUNCTION constexpr reference mem(DElems const&... delems) const noexcept
     {
         return ddc::ChunkSpan<
                 ElementType,
@@ -692,7 +697,7 @@ public:
     }
 
     template <class... DElems>
-    constexpr reference operator()(DElems const&... delems) const noexcept
+    KOKKOS_FUNCTION constexpr reference operator()(DElems const&... delems) const noexcept
     {
         return ddc::ChunkSpan<
                 ElementType,
@@ -704,7 +709,8 @@ public:
     }
 
     template <class... ODDim>
-    constexpr auto operator[](ddc::DiscreteElement<ODDim...> const& slice_spec) const noexcept
+    KOKKOS_FUNCTION constexpr auto operator[](
+            ddc::DiscreteElement<ODDim...> const& slice_spec) const noexcept
     {
         ddc::ChunkSpan chunkspan = ddc::ChunkSpan<
                 ElementType,

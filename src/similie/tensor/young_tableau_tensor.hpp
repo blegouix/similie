@@ -26,7 +26,7 @@ struct TensorYoungTableauIndex
 
     using subindices_domain_t = ddc::DiscreteDomain<TensorIndex...>;
 
-    static constexpr subindices_domain_t subindices_domain()
+    KOKKOS_FUNCTION static constexpr subindices_domain_t subindices_domain()
     {
         return ddc::DiscreteDomain<TensorIndex...>(
                 ddc::DiscreteElement<TensorIndex...>(ddc::DiscreteElement<TensorIndex>(0)...),
@@ -79,7 +79,7 @@ struct TensorYoungTableauIndex
         return result;
     }
 
-    static constexpr std::size_t access_id(
+    KOKKOS_FUNCTION static constexpr std::size_t access_id(
             std::array<std::size_t, sizeof...(TensorIndex)> const natural_ids)
     {
         return ((misc::detail::stride<TensorIndex, TensorIndex...>()
@@ -114,7 +114,7 @@ struct TensorYoungTableauIndex
     }
 
     template <class Tensor, class Elem, class Id, class FunctorType>
-    static constexpr Tensor::element_type process_access(
+    KOKKOS_FUNCTION static constexpr Tensor::element_type process_access(
             const FunctorType& access,
             Tensor tensor,
             Elem elem)
