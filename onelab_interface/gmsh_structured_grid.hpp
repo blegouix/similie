@@ -39,14 +39,8 @@ struct HexahedralCell
 struct QuadrilateralCell
 {
     int physical_tag;
-    std::array<std::size_t, 4> node_tags;
-};
-
-struct TriangularCell
-{
-    int physical_tag;
     int elementary_tag;
-    std::array<std::size_t, 3> node_tags;
+    std::array<std::size_t, 4> node_tags;
 };
 
 struct BoundaryEdge
@@ -62,20 +56,13 @@ struct QuadrilateralMesh
     std::vector<BoundaryEdge> boundary_edges;
 };
 
-struct TriangularMesh
-{
-    std::vector<MeshNode> nodes;
-    std::vector<TriangularCell> cells;
-    std::vector<BoundaryEdge> boundary_edges;
-};
-
 struct HexahedralMesh
 {
     std::vector<MeshNode> nodes;
     std::vector<HexahedralCell> cells;
 };
 
-using SupportedMesh = std::variant<TriangularMesh, QuadrilateralMesh, HexahedralMesh>;
+using SupportedMesh = std::variant<QuadrilateralMesh, HexahedralMesh>;
 
 struct StructuredGrid2D
 {
@@ -267,7 +254,6 @@ inline SupportedMesh parse_supported_msh2_mesh(std::filesystem::path const& mesh
 
     std::vector<MeshNode> nodes;
     std::vector<QuadrilateralCell> quadrilateral_cells;
-    std::vector<TriangularCell> triangular_cells;
     std::vector<BoundaryEdge> boundary_edges;
     std::vector<HexahedralCell> hexahedral_cells;
     std::string token;
@@ -314,40 +300,24 @@ inline SupportedMesh parse_supported_msh2_mesh(std::filesystem::path const& mesh
                     throw std::runtime_error(error_stream.str());
                 }
 
-                if (element_type == 2) {
-                    TriangularCell cell;
-                    cell.physical_tag = tags.empty() ? 0 : tags[0];
-                    cell.elementary_tag = tags.size() < 2 ? 0 : tags[1];
-                    for (std::size_t k = 0; k < cell.node_tags.size(); ++k) {
-                        stream >> cell.node_tags[k];
-                    }
-                    if (supported_topology_dimension != 3) {
-                        if (!quadrilateral_cells.empty()) {
-                            throw std::runtime_error(
-                                    "mixed two-dimensional cell types are unsupported");
-                        }
-                        supported_topology_dimension = 2;
-                        triangular_cells.push_back(cell);
-                    }
-                } else if (element_type == 3) {
+                if (element_type == 3) {
                     if (supported_topology_dimension == 0) {
                         supported_topology_dimension = 2;
-                    } else if (supported_topology_dimension != 2 || !triangular_cells.empty()) {
+                    } else if (supported_topology_dimension != 2) {
                         throw std::runtime_error(
                                 "unsupported mesh topology: SimiLie currently requires the whole "
                                 "mesh to be made of quadrilaterals or hexahedra");
                     }
                     QuadrilateralCell cell;
                     cell.physical_tag = tags.empty() ? 0 : tags[0];
+                    cell.elementary_tag = tags.size() < 2 ? 0 : tags[1];
                     for (std::size_t k = 0; k < cell.node_tags.size(); ++k) {
                         stream >> cell.node_tags[k];
                     }
                     quadrilateral_cells.push_back(cell);
                 } else if (element_type == 5) {
-                    if (supported_topology_dimension == 0
-                        || (supported_topology_dimension == 2 && quadrilateral_cells.empty())) {
+                    if (supported_topology_dimension == 0) {
                         supported_topology_dimension = 3;
-                        triangular_cells.clear();
                     } else if (supported_topology_dimension != 3) {
                         throw std::runtime_error(
                                 "unsupported mesh topology: SimiLie currently requires the whole "
@@ -387,20 +357,12 @@ inline SupportedMesh parse_supported_msh2_mesh(std::filesystem::path const& mesh
     if (nodes.empty()) {
         throw std::runtime_error("the provided mesh does not contain any node");
     }
-    if (!saw_elements_section
-        || (triangular_cells.empty() && quadrilateral_cells.empty() && hexahedral_cells.empty())) {
+    if (!saw_elements_section || (quadrilateral_cells.empty() && hexahedral_cells.empty())) {
         throw std::runtime_error(
                 "unsupported mesh topology: SimiLie currently requires the whole mesh to be made "
                 "of quadrilaterals or hexahedra");
     }
 
-    if (!triangular_cells.empty()) {
-        return TriangularMesh {
-                .nodes = std::move(nodes),
-                .cells = std::move(triangular_cells),
-                .boundary_edges = std::move(boundary_edges),
-        };
-    }
     if (!quadrilateral_cells.empty()) {
         return QuadrilateralMesh {
                 .nodes = std::move(nodes),

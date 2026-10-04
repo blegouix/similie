@@ -108,7 +108,7 @@ MassFlowRate = RefMassFlowRate;
 
 Group{
   // Physical regions
-  Fluid     = Region[ 2 ];
+  Fluid     = Region[ { 2, 3 } ];
   GammaUp   = Region[ 10 ];
   GammaDown = Region[ 11 ];
   GammaAirf = Region[ 12 ];
@@ -148,10 +148,7 @@ Integration {
         Case {
           { GeoElement Point       ; NumberOfPoints  1 ; }
           { GeoElement Line        ; NumberOfPoints  4 ; }
-          { GeoElement Triangle    ; NumberOfPoints  6 ; }
           { GeoElement Quadrangle  ; NumberOfPoints  7 ; }
-          { GeoElement Tetrahedron ; NumberOfPoints 15 ; }
-          { GeoElement Hexahedron  ; NumberOfPoints 34 ; }
         }
       }
     }

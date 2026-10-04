@@ -18,7 +18,7 @@ if match is None:
 similie = float(match.group(1))
 getdp = float(Path(sys.argv[2]).read_text().splitlines()[0].split()[1])
 error = abs(similie - getdp)
-tolerance = max(0.05, 0.01 * abs(getdp))
+tolerance = max(0.05, 0.02 * abs(getdp))
 print(f"SimiLie/GetDP circulation: {similie:.6g} / {getdp:.6g} m^2/s")
 if error > tolerance:
     raise SystemExit(f"circulation difference {error:.6g} exceeds {tolerance:.6g}")

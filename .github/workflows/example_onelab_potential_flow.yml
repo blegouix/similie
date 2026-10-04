@@ -1,0 +1,136 @@
+# SPDX-FileCopyrightText: 2026 Baptiste Legouix
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+name: example_onelab_potential_flow
+on:
+  workflow_run:
+    workflows: [ build ]
+    types: [ completed ]
+  workflow_dispatch:
+    inputs:
+      target_sha:
+        description: Commit SHA to run the example from
+        required: false
+  workflow_call:
+    inputs:
+      target_sha:
+        required: true
+        type: string
+      ci_environment:
+        required: false
+        type: string
+        default: automatic-ci-run
+
+concurrency:
+  group: example-onelab_potential_flow-${{ inputs.target_sha || github.event.workflow_run.head_sha || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  example-onelab_potential_flow:
+    if: inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: [self-hosted, linux]
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        case:
+        - name: cylinder-circulation
+          object: 0
+          impose_circulation: 1
+          backend: matrix-free
+          arguments: ""
+        - name: cylinder-assembled
+          object: 0
+          impose_circulation: 1
+          backend: assembled-matrix
+          arguments: ""
+        - name: cylinder-mass-flow
+          object: 0
+          impose_circulation: 0
+          backend: matrix-free
+          arguments: ""
+        - name: airfoil-circulation
+          object: 1
+          impose_circulation: 1
+          backend: matrix-free
+          arguments: ""
+        - name: airfoil-kutta
+          object: 1
+          impose_circulation: 0
+          backend: matrix-free
+          arguments: ""
+        - name: cylinder-custom-controls
+          object: 0
+          impose_circulation: 1
+          backend: matrix-free
+          arguments: >-
+            -setnumber "Model/V" 72
+            -setnumber "Model/Circ" 4
+            -setnumber "Model/Air box size [m]" 8
+    environment:
+      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'examples-cuda' || 'automatic-ci-run') }}
+    steps:
+    - name: Select target commit
+      id: target
+      run: |
+        if [ -n "${{ inputs.target_sha }}" ]; then
+          target_sha="${{ inputs.target_sha }}"
+        elif [ "${GITHUB_EVENT_NAME}" = "workflow_run" ]; then
+          target_sha="${{ github.event.workflow_run.head_sha }}"
+        else
+          target_sha="${GITHUB_SHA}"
+        fi
+        echo "TARGET_SHA=${target_sha}" >> "${GITHUB_ENV}"
+        echo "target_sha=${target_sha}" >> "${GITHUB_OUTPUT}"
+    - name: Set build paths
+      run: |
+        echo "IMAGE_TAG=similie_env:${TARGET_SHA}" >> "${GITHUB_ENV}"
+        echo "CACHE_ROOT=${RUNNER_TEMP}/similie-cuda-workspace-${TARGET_SHA}" >> "${GITHUB_ENV}"
+        rm -rf "${RUNNER_TEMP}/similie-cuda-workspace-${TARGET_SHA}"
+    - name: Restore commit workspace
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ runner.temp }}/similie-cuda-workspace-${{ steps.target.outputs.target_sha }}
+        key: similie-cuda-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
+        fail-on-cache-miss: true
+    - name: Run ONELAB potential flow ${{ matrix.case.name }} on GPU
+      run: |
+        docker image inspect "${IMAGE_TAG}" >/dev/null
+        docker run --rm --gpus all \
+          --user "$(id -u):$(id -g)" \
+          -e HOME="${CACHE_ROOT}/home" \
+          -e CACHE_ROOT="${CACHE_ROOT}" \
+          -v "${CACHE_ROOT}:/similie-ci" \
+          -v "${CACHE_ROOT}:${CACHE_ROOT}" \
+          -w "${CACHE_ROOT}/build" \
+          "${IMAGE_TAG}" \
+          bash -lc '
+            set -euo pipefail
+            export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
+            git config --global --add safe.directory "*"
+            nvidia-smi
+            cmake --build . --parallel 8 --target similie_onelab
+            export HOME=/similie-ci/home
+            mkdir -p "${HOME}"
+            output_dir="${PWD}/onelab_potential_flow_cases/${{ matrix.case.name }}"
+            mkdir -p "${output_dir}"
+            cd "${output_dir}"
+            SIMILIE_ONELAB_BUILD_DIR="${CACHE_ROOT}/build" \
+            SIMILIE_ONELAB_MESH_FILE="${output_dir}/magnus.msh" \
+              "/similie-ci/src/examples/onelab_potential_flow/run_similie_onelab.sh" \
+              "--${{ matrix.case.backend }}" \
+              -setnumber "Model/Object" ${{ matrix.case.object }} \
+              -setnumber "Model/Impose circulation" ${{ matrix.case.impose_circulation }} \
+              ${{ matrix.case.arguments }} \
+              | tee similie.log
+            test -s "${output_dir}/similie_potential_flow.pos"
+            SIMILIE_ONELAB_MESH_FILE="${output_dir}/magnus.msh" \
+              "/similie-ci/src/examples/onelab_potential_flow/run_similie_onelab.sh" \
+              --solver=getdp \
+              -setnumber "Model/Object" ${{ matrix.case.object }} \
+              -setnumber "Model/Impose circulation" ${{ matrix.case.impose_circulation }} \
+              ${{ matrix.case.arguments }}
+            test -s "${output_dir}/output.txt"
+            python3 /similie-ci/src/examples/onelab_potential_flow/check_reference.py \
+              similie.log output.txt
+          '
