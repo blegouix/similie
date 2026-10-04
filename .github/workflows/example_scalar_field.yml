@@ -11,7 +11,7 @@ on:
       target_sha:
         description: Commit SHA to run the example from
         required: false
-   workflow_call:
+  workflow_call:
     inputs:
       target_sha:
         required: true
