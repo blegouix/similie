@@ -69,7 +69,7 @@ var namespacesil_1_1exterior =
     [ "laplacian", "namespacesil_1_1exterior.html#a22856c3296327971c70adb2aa1ee88a5", null ],
     [ "laplacian", "namespacesil_1_1exterior.html#a4d2bf9d85477ba4ca93acab67df2d77f", null ],
     [ "laplacian", "namespacesil_1_1exterior.html#aed6715b5204a0ffdb220d8351655d05a", null ],
-    [ "tangent_basis", "namespacesil_1_1exterior.html#a2f6077271f607d9959b484603cd7216e", null ],
+    [ "tangent_basis", "namespacesil_1_1exterior.html#a1d9d91856e829706033b698306233c62", null ],
     [ "tangent_basis", "namespacesil_1_1exterior.html#a0523d7030a15afff58c1d1ffebeebfba", null ],
     [ "LocalChain", "namespacesil_1_1exterior.html#ad77d98f0d2f2ef2be8fe604aca0a1fc1", null ],
     [ "fill_reduction_operator", "namespacesil_1_1exterior.html#acb3e789973d4eb8b21ff313eb02fc8c1", null ],

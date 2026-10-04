@@ -294,7 +294,7 @@ $(function(){initNavTree('generate__cpp__hamiltonian_8py_source.html',''); initR
 <div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>        f<span class="stringliteral">&quot;{type_name} {constructor_name}_&quot;</span></div>
 <div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>        <span class="keywordflow">for</span> _, constructor_name, _, type_name <span class="keywordflow">in</span> parameters</div>
 <div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>    )</div>
-<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>    <span class="keywordflow">return</span> f<span class="stringliteral">&quot;    KOKKOS_FUNCTION constexpr {struct_name}(\n            {params})&quot;</span></div>
+<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>    <span class="keywordflow">return</span> f<span class="stringliteral">&quot;    constexpr {struct_name}(\n            {params})&quot;</span></div>
 <div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span> </div>
 <div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span> </div>
 </div>
@@ -388,7 +388,7 @@ $(function(){initNavTree('generate__cpp__hamiltonian_8py_source.html',''); initR
 <div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span> </div>
 <div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span>    <span class="keywordflow">return</span> f<span class="stringliteral">&quot;&quot;&quot;</span></div>
 <div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span><span class="stringliteral">    template &lt;class Index&gt;</span></div>
-<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span><span class="stringliteral">    KOKKOS_FUNCTION constexpr double {method_name}(double {argument_prefix}) const</span></div>
+<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span><span class="stringliteral">    constexpr double {method_name}(double {argument_prefix}) const</span></div>
 <div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span><span class="stringliteral">    {{</span></div>
 <div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span><span class="stringliteral">{body}</span></div>
 <div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span><span class="stringliteral">    }}</span></div>
@@ -434,7 +434,7 @@ $(function(){initNavTree('generate__cpp__hamiltonian_8py_source.html',''); initR
 <div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span> </div>
 <div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span>    <span class="keywordflow">return</span> f<span class="stringliteral">&quot;&quot;&quot;</span></div>
 <div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span><span class="stringliteral">    template &lt;class Index, class Elem&gt;</span></div>
-<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span><span class="stringliteral">    KOKKOS_FUNCTION constexpr double {method_name}(double {argument_prefix}, Elem elem) const</span></div>
+<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span><span class="stringliteral">    constexpr double {method_name}(double {argument_prefix}, Elem elem) const</span></div>
 <div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span><span class="stringliteral">    {{</span></div>
 <div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span><span class="stringliteral">{body}</span></div>
 <div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span><span class="stringliteral">    }}</span></div>
@@ -469,7 +469,7 @@ $(function(){initNavTree('generate__cpp__hamiltonian_8py_source.html',''); initR
 <div class="line"><a id="l00306" name="l00306"></a><span class="lineno">  306</span> </div>
 <div class="line"><a id="l00307" name="l00307"></a><span class="lineno">  307</span>    <span class="keywordflow">return</span> f<span class="stringliteral">&quot;&quot;&quot;</span></div>
 <div class="line"><a id="l00308" name="l00308"></a><span class="lineno">  308</span><span class="stringliteral">    template &lt;class Index, class Elem&gt;</span></div>
-<div class="line"><a id="l00309" name="l00309"></a><span class="lineno">  309</span><span class="stringliteral">    KOKKOS_FUNCTION constexpr auto {method_name}(Elem elem) const</span></div>
+<div class="line"><a id="l00309" name="l00309"></a><span class="lineno">  309</span><span class="stringliteral">    constexpr auto {method_name}(Elem elem) const</span></div>
 <div class="line"><a id="l00310" name="l00310"></a><span class="lineno">  310</span><span class="stringliteral">    {{</span></div>
 <div class="line"><a id="l00311" name="l00311"></a><span class="lineno">  311</span><span class="stringliteral">{body}</span></div>
 <div class="line"><a id="l00312" name="l00312"></a><span class="lineno">  312</span><span class="stringliteral">    }}</span></div>
@@ -547,14 +547,14 @@ $(function(){initNavTree('generate__cpp__hamiltonian_8py_source.html',''); initR
 <div class="line"><a id="l00382" name="l00382"></a><span class="lineno">  382</span> </div>
 <div class="line"><a id="l00383" name="l00383"></a><span class="lineno">  383</span>    <span class="keywordflow">return</span> f<span class="stringliteral">&quot;&quot;&quot;</span></div>
 <div class="line"><a id="l00384" name="l00384"></a><span class="lineno">  384</span><span class="stringliteral">    template &lt;class Index, class Moments, class Elem&gt;</span></div>
-<div class="line"><a id="l00385" name="l00385"></a><span class="lineno">  385</span><span class="stringliteral">    KOKKOS_FUNCTION constexpr double dhamiltonian_dmoments(Moments moments, Elem elem) const</span></div>
+<div class="line"><a id="l00385" name="l00385"></a><span class="lineno">  385</span><span class="stringliteral">    constexpr double dhamiltonian_dmoments(Moments moments, Elem elem) const</span></div>
 <div class="line"><a id="l00386" name="l00386"></a><span class="lineno">  386</span><span class="stringliteral">    {{</span></div>
 <div class="line"><a id="l00387" name="l00387"></a><span class="lineno">  387</span><span class="stringliteral">        static_cast&lt;void&gt;(elem);</span></div>
 <div class="line"><a id="l00388" name="l00388"></a><span class="lineno">  388</span><span class="stringliteral">{body}</span></div>
 <div class="line"><a id="l00389" name="l00389"></a><span class="lineno">  389</span><span class="stringliteral">    }}</span></div>
 <div class="line"><a id="l00390" name="l00390"></a><span class="lineno">  390</span><span class="stringliteral"></span> </div>
 <div class="line"><a id="l00391" name="l00391"></a><span class="lineno">  391</span><span class="stringliteral">    template &lt;class Index, class Moments, class Elem&gt;</span></div>
-<div class="line"><a id="l00392" name="l00392"></a><span class="lineno">  392</span><span class="stringliteral">    KOKKOS_FUNCTION constexpr double dpotential_dt(Moments moments, Elem elem) const</span></div>
+<div class="line"><a id="l00392" name="l00392"></a><span class="lineno">  392</span><span class="stringliteral">    constexpr double dpotential_dt(Moments moments, Elem elem) const</span></div>
 <div class="line"><a id="l00393" name="l00393"></a><span class="lineno">  393</span><span class="stringliteral">    {{</span></div>
 <div class="line"><a id="l00394" name="l00394"></a><span class="lineno">  394</span><span class="stringliteral">        return dhamiltonian_dmoments&lt;Index&gt;(moments, elem);</span></div>
 <div class="line"><a id="l00395" name="l00395"></a><span class="lineno">  395</span><span class="stringliteral">    }}</span></div>
@@ -638,7 +638,7 @@ $(function(){initNavTree('generate__cpp__hamiltonian_8py_source.html',''); initR
 <div class="line"><a id="l00469" name="l00469"></a><span class="lineno">  469</span>        body = <a class="code hl_function" href="namespacegenerate__cpp__hamiltonian.html#aa970d39330d8dcec43aca2edb65eeca5">_render_tagged_jacobian_cases</a>(component_indices, component_expressions)</div>
 <div class="line"><a id="l00470" name="l00470"></a><span class="lineno">  470</span>        <span class="keywordflow">return</span> f<span class="stringliteral">&quot;&quot;&quot;</span></div>
 <div class="line"><a id="l00471" name="l00471"></a><span class="lineno">  471</span><span class="stringliteral">    template &lt;class RowIndex, class ColumnIndex, class Moments, class Elem&gt;</span></div>
-<div class="line"><a id="l00472" name="l00472"></a><span class="lineno">  472</span><span class="stringliteral">    KOKKOS_FUNCTION constexpr double jacobian(Moments moments, Elem elem) const</span></div>
+<div class="line"><a id="l00472" name="l00472"></a><span class="lineno">  472</span><span class="stringliteral">    constexpr double jacobian(Moments moments, Elem elem) const</span></div>
 <div class="line"><a id="l00473" name="l00473"></a><span class="lineno">  473</span><span class="stringliteral">    {{</span></div>
 <div class="line"><a id="l00474" name="l00474"></a><span class="lineno">  474</span><span class="stringliteral">        static_cast&lt;void&gt;(moments);</span></div>
 <div class="line"><a id="l00475" name="l00475"></a><span class="lineno">  475</span><span class="stringliteral">        static_cast&lt;void&gt;(elem);</span></div>
@@ -679,7 +679,7 @@ $(function(){initNavTree('generate__cpp__hamiltonian_8py_source.html',''); initR
 <div class="line"><a id="l00510" name="l00510"></a><span class="lineno">  510</span> </div>
 <div class="line"><a id="l00511" name="l00511"></a><span class="lineno">  511</span>    <span class="keywordflow">return</span> f<span class="stringliteral">&quot;&quot;&quot;</span></div>
 <div class="line"><a id="l00512" name="l00512"></a><span class="lineno">  512</span><span class="stringliteral">    template &lt;class RowIndex, class ColumnIndex, class Moments, class Elem&gt;</span></div>
-<div class="line"><a id="l00513" name="l00513"></a><span class="lineno">  513</span><span class="stringliteral">    KOKKOS_FUNCTION constexpr double jacobian(Moments moments, Elem elem) const</span></div>
+<div class="line"><a id="l00513" name="l00513"></a><span class="lineno">  513</span><span class="stringliteral">    constexpr double jacobian(Moments moments, Elem elem) const</span></div>
 <div class="line"><a id="l00514" name="l00514"></a><span class="lineno">  514</span><span class="stringliteral">    {{</span></div>
 <div class="line"><a id="l00515" name="l00515"></a><span class="lineno">  515</span><span class="stringliteral">        static_cast&lt;void&gt;(moments);</span></div>
 <div class="line"><a id="l00516" name="l00516"></a><span class="lineno">  516</span><span class="stringliteral">        static_cast&lt;void&gt;(elem);</span></div>
@@ -744,10 +744,10 @@ $(function(){initNavTree('generate__cpp__hamiltonian_8py_source.html',''); initR
 <div class="line"><a id="l00573" name="l00573"></a><span class="lineno">  573</span>    <span class="keywordflow">if</span> requires_elem:</div>
 <div class="line"><a id="l00574" name="l00574"></a><span class="lineno">  574</span>        h_signature = (</div>
 <div class="line"><a id="l00575" name="l00575"></a><span class="lineno">  575</span>            f<span class="stringliteral">&quot;    template &lt;class Elem&gt;\n&quot;</span></div>
-<div class="line"><a id="l00576" name="l00576"></a><span class="lineno">  576</span>            f<span class="stringliteral">&quot;    KOKKOS_FUNCTION constexpr double hamiltonian({&#39;, &#39;.join(argument_signature_parts)}, Elem elem) const&quot;</span></div>
+<div class="line"><a id="l00576" name="l00576"></a><span class="lineno">  576</span>            f<span class="stringliteral">&quot;    constexpr double hamiltonian({&#39;, &#39;.join(argument_signature_parts)}, Elem elem) const&quot;</span></div>
 <div class="line"><a id="l00577" name="l00577"></a><span class="lineno">  577</span>        )</div>
 <div class="line"><a id="l00578" name="l00578"></a><span class="lineno">  578</span>    <span class="keywordflow">else</span>:</div>
-<div class="line"><a id="l00579" name="l00579"></a><span class="lineno">  579</span>        h_signature = f<span class="stringliteral">&quot;    KOKKOS_FUNCTION constexpr double hamiltonian({&#39;, &#39;.join(argument_signature_parts)}) const&quot;</span></div>
+<div class="line"><a id="l00579" name="l00579"></a><span class="lineno">  579</span>        h_signature = f<span class="stringliteral">&quot;    constexpr double hamiltonian({&#39;, &#39;.join(argument_signature_parts)}) const&quot;</span></div>
 <div class="line"><a id="l00580" name="l00580"></a><span class="lineno">  580</span> </div>
 <div class="line"><a id="l00581" name="l00581"></a><span class="lineno">  581</span>    potential_entry = variable_entries[0]</div>
 <div class="line"><a id="l00582" name="l00582"></a><span class="lineno">  582</span>    moments_entry = variable_entries[1]</div>
@@ -781,14 +781,14 @@ $(function(){initNavTree('generate__cpp__hamiltonian_8py_source.html',''); initR
 <div class="line"><a id="l00610" name="l00610"></a><span class="lineno">  610</span>        <span class="keywordflow">if</span> requires_elem:</div>
 <div class="line"><a id="l00611" name="l00611"></a><span class="lineno">  611</span>            potential_method = f<span class="stringliteral">&quot;&quot;&quot;</span></div>
 <div class="line"><a id="l00612" name="l00612"></a><span class="lineno">  612</span><span class="stringliteral">    template &lt;class Elem&gt;</span></div>
-<div class="line"><a id="l00613" name="l00613"></a><span class="lineno">  613</span><span class="stringliteral">    KOKKOS_FUNCTION constexpr double dhamiltonian_dpotential({potential_method_signature}, Elem elem) const</span></div>
+<div class="line"><a id="l00613" name="l00613"></a><span class="lineno">  613</span><span class="stringliteral">    constexpr double dhamiltonian_dpotential({potential_method_signature}, Elem elem) const</span></div>
 <div class="line"><a id="l00614" name="l00614"></a><span class="lineno">  614</span><span class="stringliteral">    {{</span></div>
 <div class="line"><a id="l00615" name="l00615"></a><span class="lineno">  615</span><span class="stringliteral">        return {_render_cxx_expression(potential_derivative_expressions[0], potential_replacements, symbolic_functions)};</span></div>
 <div class="line"><a id="l00616" name="l00616"></a><span class="lineno">  616</span><span class="stringliteral">    }}</span></div>
 <div class="line"><a id="l00617" name="l00617"></a><span class="lineno">  617</span><span class="stringliteral">&quot;&quot;&quot;</span></div>
 <div class="line"><a id="l00618" name="l00618"></a><span class="lineno">  618</span>        <span class="keywordflow">else</span>:</div>
 <div class="line"><a id="l00619" name="l00619"></a><span class="lineno">  619</span>            potential_method = f<span class="stringliteral">&quot;&quot;&quot;</span></div>
-<div class="line"><a id="l00620" name="l00620"></a><span class="lineno">  620</span><span class="stringliteral">    KOKKOS_FUNCTION constexpr double dhamiltonian_dpotential({potential_method_signature}) const</span></div>
+<div class="line"><a id="l00620" name="l00620"></a><span class="lineno">  620</span><span class="stringliteral">    constexpr double dhamiltonian_dpotential({potential_method_signature}) const</span></div>
 <div class="line"><a id="l00621" name="l00621"></a><span class="lineno">  621</span><span class="stringliteral">    {{</span></div>
 <div class="line"><a id="l00622" name="l00622"></a><span class="lineno">  622</span><span class="stringliteral">        return {_render_cxx_expression(potential_derivative_expressions[0], potential_replacements, symbolic_functions)};</span></div>
 <div class="line"><a id="l00623" name="l00623"></a><span class="lineno">  623</span><span class="stringliteral">    }}</span></div>
