@@ -68,8 +68,22 @@ struct NormalScalarFluxExtrapolationRule
     double value = 0.0;
 };
 
-using ScalarBoundaryExtrapolationRule
-        = std::variant<PrescribedScalarExtrapolationRule, NormalScalarFluxExtrapolationRule>;
+/**
+ * Use the one-sided scalar DEC Laplacian row at a free boundary.
+ * \important This operator and documentation are fully AI-generated.
+ *
+ * This is the natural closure of the discrete bulk equation when no boundary
+ * flux is prescribed. It is useful on smooth boundaries where the variational
+ * zero-flux condition is represented by the exterior Laplacian itself.
+ */
+struct NaturalScalarExtrapolationRule
+{
+};
+
+using ScalarBoundaryExtrapolationRule = std::variant<
+        PrescribedScalarExtrapolationRule,
+        NormalScalarFluxExtrapolationRule,
+        NaturalScalarExtrapolationRule>;
 
 /** Select an x-normal trace of a structured tensor domain. */
 enum class ScalarTraceSide { LowerX, UpperX };

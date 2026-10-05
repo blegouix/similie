@@ -250,26 +250,45 @@ inline Result run(
     if (!has_cut || std::find(boundary.begin(), boundary.end(), 10) == boundary.end()
         || std::find(boundary.begin(), boundary.end(), 11) == boundary.end())
         throw std::runtime_error("potential-flow physical boundary is incomplete");
-    // The two sides are independent tensor grids. Their traces share global
-    // degrees of freedom; the left trace at the upper cut has an affine jump.
-    constexpr std::size_t side_cells = 2 * cells_per_patch_i;
-    constexpr std::size_t side_nodes = side_cells + 1;
-    std::array<std::size_t, 2> const side_start {cells_per_patch_i, 3 * cells_per_patch_i};
+    // Each side has three tensor domains with a uniform outer boundary rule:
+    // zero flux, prescribed potential, and zero flux. The domains at the
+    // circulation cut share trace nodes with an affine potential jump.
+    constexpr std::size_t half_patch_cells = cells_per_patch_i / 2;
+    std::array<std::size_t, 6> const side_start {
+            cells_per_patch_i,
+            cells_per_patch_i + half_patch_cells,
+            2 * cells_per_patch_i + half_patch_cells,
+            3 * cells_per_patch_i,
+            3 * cells_per_patch_i + half_patch_cells,
+            half_patch_cells};
+    std::array<std::size_t, 6> const side_cells {
+            half_patch_cells,
+            cells_per_patch_i,
+            half_patch_cells,
+            half_patch_cells,
+            cells_per_patch_i,
+            half_patch_cells};
     auto side_index = [&](std::size_t side, std::size_t i, std::size_t j) {
         return index(side_start[side] + i, j);
     };
     auto side_point = [&](std::size_t side, std::size_t i, std::size_t j) {
         return point(side_start[side] + i, j);
     };
-    std::vector<sil::exterior::ScalarTensorDomain2D> domains(2);
+    std::vector<sil::exterior::ScalarTensorDomain2D> domains(side_start.size());
     for (std::size_t side = 0; side < domains.size(); ++side) {
         sil::exterior::ScalarTensorDomain2D& domain = domains[side];
+        std::size_t const side_nodes = side_cells[side] + 1;
         domain.nodes_x = side_nodes;
         domain.nodes_y = nodes_j;
         domain.positions.resize(side_nodes * nodes_j);
         domain.ordering_key.resize(side_nodes * nodes_j);
-        domain.lower_y.resize(side_nodes, sil::exterior::NormalScalarFluxExtrapolationRule {});
-        domain.upper_y.resize(side_nodes, sil::exterior::NormalScalarFluxExtrapolationRule {});
+        sil::exterior::ScalarBoundaryExtrapolationRule const free_boundary
+                = inputs.airfoil ? sil::exterior::ScalarBoundaryExtrapolationRule(
+                                           sil::exterior::NormalScalarFluxExtrapolationRule {})
+                                 : sil::exterior::ScalarBoundaryExtrapolationRule(
+                                           sil::exterior::NaturalScalarExtrapolationRule {});
+        domain.lower_y.resize(side_nodes, free_boundary);
+        domain.upper_y.resize(side_nodes, free_boundary);
         for (std::size_t i = 0; i < side_nodes; ++i) {
             for (std::size_t j = 0; j < nodes_j; ++j)
                 domain.positions[j * side_nodes + i] = side_point(side, i, j);
@@ -284,17 +303,41 @@ inline Result run(
                 domain.upper_y[i]
                         = sil::exterior::PrescribedScalarExtrapolationRule {prescribed[outer]};
         }
-        TensorLaplacianStencils const stencils = tensor_laplacian_rows(domain.positions);
+        TensorLaplacianStencils const stencils
+                = tensor_laplacian_rows(domain.positions, side_nodes, nodes_j);
         domain.laplacian_rows = stencils.rows;
-        domain.dual_volumes = stencils.dual_volumes;
+        domain.lower_x_flux_rows = stencils.lower_x_flux_rows;
+        domain.upper_x_flux_rows = stencils.upper_x_flux_rows;
+        domain.lower_y_flux_rows = stencils.lower_y_flux_rows;
+        domain.upper_y_flux_rows = stencils.upper_y_flux_rows;
     }
     std::vector<sil::exterior::ConnectedScalarExtrapolationRule> const connections {
             {0,
              sil::exterior::ScalarTraceSide::UpperX,
              1,
              sil::exterior::ScalarTraceSide::LowerX,
-             -1.0},
+             0.0},
             {1,
+             sil::exterior::ScalarTraceSide::UpperX,
+             2,
+             sil::exterior::ScalarTraceSide::LowerX,
+             0.0},
+            {2,
+             sil::exterior::ScalarTraceSide::UpperX,
+             3,
+             sil::exterior::ScalarTraceSide::LowerX,
+             -1.0},
+            {3,
+             sil::exterior::ScalarTraceSide::UpperX,
+             4,
+             sil::exterior::ScalarTraceSide::LowerX,
+             0.0},
+            {4,
+             sil::exterior::ScalarTraceSide::UpperX,
+             5,
+             sil::exterior::ScalarTraceSide::LowerX,
+             0.0},
+            {5,
              sil::exterior::ScalarTraceSide::UpperX,
              0,
              sil::exterior::ScalarTraceSide::LowerX,
@@ -320,9 +363,9 @@ inline Result run(
     // Recover the display grid ordering from the coupled domain degrees of freedom.
     std::vector<double> base_ring(node_count), response_ring(node_count);
     for (std::size_t side = 0; side < domains.size(); ++side)
-        for (std::size_t i = 0; i < side_nodes; ++i)
+        for (std::size_t i = 0; i < domains[side].nodes_x; ++i)
             for (std::size_t j = 0; j < nodes_j; ++j) {
-                std::size_t const local = j * side_nodes + i;
+                std::size_t const local = j * domains[side].nodes_x + i;
                 std::size_t const display = side_index(side, i, j);
                 std::size_t const unknown = system.global_index[side][local];
                 base_ring[display] = base[unknown];
@@ -349,9 +392,11 @@ inline Result run(
         double const determinant = tx * ry - ty * rx;
         if (std::abs(determinant) < 1.0e-16)
             throw std::runtime_error("degenerate quad metric");
+        double const gradient_x = (dt * ry - ty * dr) / determinant;
+        double const gradient_y = (tx * dr - dt * rx) / determinant;
         return std::array<
                 double,
-                2> {(dt * ry - ty * dr) / determinant, (tx * dr - dt * rx) / determinant};
+                2> {equations.dpotential_dt<X>(gradient_x), equations.dpotential_dt<Y>(gradient_y)};
     };
     auto mass_flow = [&](std::vector<double> const& potential, double circulation) {
         double flux = 0.0;

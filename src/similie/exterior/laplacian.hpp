@@ -245,6 +245,19 @@ class StagedLaplacian<
     std::optional<DerivativeDualTensorType> m_derivative_dual_tensor_buffer;
 
 public:
+    /**
+     * Access the dual one-cochain produced by the first Hodge stage.
+     * \important This operator and documentation are fully AI-generated.
+     *
+     * The buffer contains the constitutive flux after the staged Laplacian
+     * has evaluated a primal scalar cochain. Connected tensor domains can
+     * balance its trace values without constructing a separate Hodge star.
+     */
+    DerivativeDualTensorType derivative_dual_tensor_buffer() const
+    {
+        return *m_derivative_dual_tensor_buffer;
+    }
+
     DualDerivativeHodgeStarTensorType dual_derivative_hodge_star() const
     {
         return *m_dual_derivative_hodge_star;

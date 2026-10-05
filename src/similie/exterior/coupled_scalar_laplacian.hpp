@@ -26,7 +26,10 @@ struct ScalarTensorDomain2D
     std::size_t nodes_y;
     std::vector<std::array<double, 2>> positions;
     std::vector<std::map<std::size_t, double>> laplacian_rows;
-    std::vector<double> dual_volumes;
+    std::vector<std::map<std::size_t, double>> lower_x_flux_rows;
+    std::vector<std::map<std::size_t, double>> upper_x_flux_rows;
+    std::vector<std::map<std::size_t, double>> lower_y_flux_rows;
+    std::vector<std::map<std::size_t, double>> upper_y_flux_rows;
     std::vector<std::size_t> ordering_key;
     std::vector<ScalarBoundaryExtrapolationRule> lower_y;
     std::vector<ScalarBoundaryExtrapolationRule> upper_y;
@@ -39,11 +42,11 @@ struct ScalarTensorDomain2D
  * The bulk rows come from the DEC Laplacian on each tensor domain. Interior
  * trace nodes are identified across a connection, with an affine potential
  * jump if requested. A second equation enforces equality of the normal flux.
- * Boundary extrapolation rules supply prescribed-potential or normal-flux
- * equations on the remaining edges. Zero-flux boundaries use the one-sided
- * DEC row. Connected traces combine their one-sided DEC rows after applying
- * each row's scalar dual-volume weight. The resulting square matrix acts on the identified
- * primal 0-cochain; jump_rhs is its response to a unit potential jump.
+ * Boundary extrapolation rules supply prescribed-potential, normal-flux, or
+ * natural DEC equations on the remaining edges. Connected traces balance the
+ * flux cochains produced by the first Hodge stage on each tensor domain.
+ * The resulting square matrix acts on the identified primal 0-cochain; jump_rhs
+ * is its response to a unit potential jump.
  */
 struct CoupledScalarLaplacian2D
 {
@@ -101,10 +104,11 @@ public:
  * Domain boundaries are not inferred from mesh tags. The caller gives a rule
  * at every lower and upper y-boundary node and explicit connections between
  * x-traces. A connected trace shares one degree of freedom with its partner;
- * its affine offset carries the circulation cut. Zero-flux boundaries and
- * connected traces use the one-sided DEC rows. A prescribed nonzero flux is
- * evaluated from primal edge differences, mapped edge vectors, and the
- * supplied free-scalar constitutive law.
+ * its affine offset carries the circulation cut. Explicit zero-flux
+ * boundaries and connected traces use flux cochains from SimiLie's Hodge
+ * stage. Natural boundaries use one-sided DEC Laplacian rows. A prescribed
+ * nonzero flux is evaluated from primal edge differences, mapped edge vectors,
+ * and the supplied free-scalar constitutive law.
  */
 template <class X, class Y, class FluxLaw>
 CoupledScalarLaplacian2D assemble_coupled_scalar_laplacian(
@@ -122,7 +126,10 @@ CoupledScalarLaplacian2D assemble_coupled_scalar_laplacian(
         if (domain.nodes_x < 2 || domain.nodes_y < 2
             || domain.positions.size() != domain.nodes_x * domain.nodes_y
             || domain.laplacian_rows.size() != domain.nodes_x * domain.nodes_y
-            || domain.dual_volumes.size() != domain.nodes_x * domain.nodes_y
+            || domain.lower_x_flux_rows.size() != domain.nodes_y
+            || domain.upper_x_flux_rows.size() != domain.nodes_y
+            || domain.lower_y_flux_rows.size() != domain.nodes_x
+            || domain.upper_y_flux_rows.size() != domain.nodes_x
             || (!domain.ordering_key.empty()
                 && domain.ordering_key.size() != domain.nodes_x * domain.nodes_y)
             || domain.ordering_key.empty() == keyed_order || domain.lower_y.size() != domain.nodes_x
@@ -219,25 +226,14 @@ CoupledScalarLaplacian2D assemble_coupled_scalar_laplacian(
     auto position = [&](std::size_t side, std::size_t i, std::size_t j) {
         return domains[side].positions[j * domains[side].nodes_x + i];
     };
-    auto add_dec_row = [&](std::size_t row,
-                           std::size_t side,
-                           std::size_t i,
-                           std::size_t j,
-                           double weight) {
+    auto add_dec_row = [&](std::size_t row, std::size_t side, std::size_t i, std::size_t j) {
         ScalarTensorDomain2D const& domain = domains[side];
         std::map<std::size_t, double> const& local_row
                 = domain.laplacian_rows[j * domain.nodes_x + i];
         if (local_row.empty())
             throw std::runtime_error("missing DEC scalar boundary row");
         for (auto const& [column, coefficient] : local_row)
-            add(row, side, column % domain.nodes_x, column / domain.nodes_x, weight * coefficient);
-    };
-    auto dual_volume = [&](std::size_t side, std::size_t i, std::size_t j) {
-        ScalarTensorDomain2D const& domain = domains[side];
-        double const volume = domain.dual_volumes[j * domain.nodes_x + i];
-        if (!(volume > 0.0))
-            throw std::runtime_error("invalid scalar dual volume");
-        return volume;
+            add(row, side, column % domain.nodes_x, column / domain.nodes_x, coefficient);
     };
     auto normal_flux = [&](std::size_t row,
                            std::size_t side,
@@ -296,10 +292,22 @@ CoupledScalarLaplacian2D assemble_coupled_scalar_laplacian(
                     = std::get_if<PrescribedScalarExtrapolationRule>(&rule)) {
                     add(row, side, i, j, 1.0);
                     system.base_rhs[row] = prescribed->value;
+                } else if (std::holds_alternative<NaturalScalarExtrapolationRule>(rule)) {
+                    add_dec_row(row, side, i, j);
                 } else {
                     auto const& flux = std::get<NormalScalarFluxExtrapolationRule>(rule);
                     if (flux.value == 0.0) {
-                        add_dec_row(row, side, i, j, 1.0);
+                        std::map<std::size_t, double> const& flux_row
+                                = boundary_id == 0 ? domain.lower_y_flux_rows[i]
+                                                   : domain.upper_y_flux_rows[i];
+                        if (flux_row.empty())
+                            throw std::runtime_error("missing DEC scalar wall flux row");
+                        for (auto const& [column, coefficient] : flux_row)
+                            add(row,
+                                side,
+                                column % domain.nodes_x,
+                                column / domain.nodes_x,
+                                coefficient);
                     } else {
                         std::size_t const inner_j = j == 0 ? 1 : j - 1;
                         std::size_t const outer_j = j == 0 ? 0 : j;
@@ -312,13 +320,58 @@ CoupledScalarLaplacian2D assemble_coupled_scalar_laplacian(
     for (ConnectedScalarExtrapolationRule const& connection : connections) {
         std::size_t const first = connection.first_domain;
         std::size_t const second = connection.second_domain;
+        if (connection.first_side != ScalarTraceSide::UpperX
+            || connection.second_side != ScalarTraceSide::LowerX)
+            throw std::runtime_error("connected scalar traces must meet upper X to lower X");
         std::size_t const first_i = trace_i(first, connection.first_side);
         std::size_t const second_i = trace_i(second, connection.second_side);
+        for (std::size_t j = 0; j < domains[first].nodes_y; ++j)
+            if (std::
+                        hypot(position(first, first_i, j)[0] - position(second, second_i, j)[0],
+                              position(first, first_i, j)[1] - position(second, second_i, j)[1])
+                > 1.0e-10)
+                throw std::runtime_error("connected scalar traces have different positions");
         for (std::size_t j = 0; j < domains[first].nodes_y; ++j) {
             std::size_t const row = global(first, first_i, j);
             claim(row);
-            add_dec_row(row, first, first_i, j, dual_volume(first, first_i, j));
-            add_dec_row(row, second, second_i, j, dual_volume(second, second_i, j));
+            if (j == 0 || j + 1 == domains[first].nodes_y) {
+                ScalarBoundaryExtrapolationRule const& first_rule
+                        = j == 0 ? domains[first].lower_y[first_i]
+                                 : domains[first].upper_y[first_i];
+                ScalarBoundaryExtrapolationRule const& second_rule
+                        = j == 0 ? domains[second].lower_y[second_i]
+                                 : domains[second].upper_y[second_i];
+                auto const* first_prescribed
+                        = std::get_if<PrescribedScalarExtrapolationRule>(&first_rule);
+                auto const* second_prescribed
+                        = std::get_if<PrescribedScalarExtrapolationRule>(&second_rule);
+                if (first_prescribed != nullptr || second_prescribed != nullptr) {
+                    if (first_prescribed != nullptr && second_prescribed != nullptr
+                        && std::abs(first_prescribed->value - second_prescribed->value) > 1.0e-12)
+                        throw std::runtime_error(
+                                "incompatible prescribed scalar values at connected trace");
+                    if (first_prescribed != nullptr) {
+                        add(row, first, first_i, j, 1.0);
+                        system.base_rhs[row] = first_prescribed->value;
+                    } else {
+                        add(row, second, second_i, j, 1.0);
+                        system.base_rhs[row] = second_prescribed->value;
+                    }
+                    continue;
+                }
+            }
+            for (auto const& [column, coefficient] : domains[first].upper_x_flux_rows[j])
+                add(row,
+                    first,
+                    column % domains[first].nodes_x,
+                    column / domains[first].nodes_x,
+                    coefficient);
+            for (auto const& [column, coefficient] : domains[second].lower_x_flux_rows[j])
+                add(row,
+                    second,
+                    column % domains[second].nodes_x,
+                    column / domains[second].nodes_x,
+                    -coefficient);
         }
     }
     for (std::size_t row = 0; row < global_size; ++row) {

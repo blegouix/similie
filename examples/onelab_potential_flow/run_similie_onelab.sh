@@ -8,13 +8,17 @@ set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "${script_dir}/../.." && pwd)"
-geometry_file="${script_dir}/magnus.geo"
 problem_file="${SIMILIE_ONELAB_PROBLEM_FILE:-${script_dir}/potential_flow.silpro}"
 getdp_problem_file="${SIMILIE_GETDP_PROBLEM_FILE:-${script_dir}/ref/magnus.pro}"
 build_dir="${SIMILIE_ONELAB_BUILD_DIR:-${repo_root}/build}"
 onelab_client="${SIMILIE_ONELAB_BINARY:-${build_dir}/onelab_interface/similie_onelab}"
 mesh_file="${SIMILIE_ONELAB_MESH_FILE:-${PWD}/magnus.msh}"
 result_file="${SIMILIE_ONELAB_RESULT_FILE:-$(dirname "${mesh_file}")/similie_potential_flow.pos}"
+geometry_dir="$(mktemp -d "$(dirname "${mesh_file}")/.run_similie_onelab_geometry_XXXXXX")"
+trap 'rm -rf "${geometry_dir}"' EXIT
+cp "${script_dir}/magnus.geo" "${script_dir}/magnus_common.pro" \
+    "${script_dir}/nacaAirfoil.geo" "${geometry_dir}/"
+geometry_file="${geometry_dir}/magnus.geo"
 gmsh_executable="${GMSH_EXECUTABLE:-gmsh}"
 getdp_executable="${GETDP_EXECUTABLE:-getdp}"
 solver=similie
@@ -72,14 +76,17 @@ if [[ ! -f "${problem_file}" ]]; then
     echo "SimiLie problem file not found: ${problem_file}" >&2
     exit 1
 fi
-control_file="$(mktemp "${script_dir}/.run_similie_onelab_XXXXXX.geo")"
+control_file="$(mktemp "${geometry_dir}/control_XXXXXX.geo")"
 log_file="$(mktemp "${TMPDIR:-/tmp}/run_similie_onelab_potential_flow_XXXXXX.log")"
 effective_problem_file="${problem_file}"
 patched_problem_file=""
-cleanup() { rm -f "${control_file}" "${log_file}" "${patched_problem_file}"; }
+cleanup() {
+    rm -f "${control_file}" "${log_file}" "${patched_problem_file}"
+    rm -rf "${geometry_dir}"
+}
 trap cleanup EXIT
 if [[ -n "${matrix_free}" ]]; then
-    patched_problem_file="$(mktemp "${script_dir}/.run_similie_onelab_XXXXXX.silpro")"
+    patched_problem_file="$(mktemp "${geometry_dir}/problem_XXXXXX.silpro")"
     sed -e "s/^[[:space:]]*UseMatrixFree[[:space:]].*;/  UseMatrixFree ${matrix_free};/" \
         "${problem_file}" > "${patched_problem_file}"
     effective_problem_file="${patched_problem_file}"

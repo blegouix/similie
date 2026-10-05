@@ -47,12 +47,15 @@ using MetricDomain = ddc::DiscreteDomain<GridX, GridY, MetricIndex>;
 struct TensorLaplacianStencils
 {
     std::vector<std::map<std::size_t, double>> rows;
-    std::vector<double> dual_volumes;
+    std::vector<std::map<std::size_t, double>> lower_x_flux_rows;
+    std::vector<std::map<std::size_t, double>> upper_x_flux_rows;
+    std::vector<std::map<std::size_t, double>> lower_y_flux_rows;
+    std::vector<std::map<std::size_t, double>> upper_y_flux_rows;
 };
 
 /**
  * Extract the local stencil of the SimiLie scalar DEC Laplacian on one mapped
- * 80 by 24 cell tensor domain.
+ * structured tensor domain.
  * \important This operator and documentation are fully AI-generated.
  *
  * The potential is a primal 0-cochain. SimiLie's staged Laplacian applies the
@@ -63,16 +66,16 @@ struct TensorLaplacianStencils
  * coupling equations when joining several tensor domains.
  */
 inline TensorLaplacianStencils one_sided_tensor_laplacian_rows(
-        std::vector<std::array<double, 2>> const& positions)
+        std::vector<std::array<double, 2>> const& positions,
+        std::size_t nodes_x,
+        std::size_t nodes_y)
 {
-    constexpr std::size_t cells_x = 80;
-    constexpr std::size_t cells_y = 24;
-    constexpr std::size_t nodes_x = cells_x + 1;
-    constexpr std::size_t nodes_y = cells_y + 1;
     constexpr std::size_t color_period = 7;
     constexpr int stencil_radius = 3;
-    if (positions.size() != nodes_x * nodes_y)
+    if (nodes_x < 2 || nodes_y < 2 || positions.size() != nodes_x * nodes_y)
         throw std::runtime_error("invalid tensor-domain position count");
+    std::size_t const cells_x = nodes_x - 1;
+    std::size_t const cells_y = nodes_y - 1;
 
     GridDomain const
             grid(ddc::DiscreteElement<GridX, GridY>(0, 0),
@@ -143,25 +146,12 @@ inline TensorLaplacianStencils one_sided_tensor_laplacian_rows(
                     potential,
                     metric,
                     position);
-    auto dual_hodge_host_alloc = ddc::create_mirror_view_and_copy(
-            Kokkos::DefaultHostExecutionSpace(),
-            staged_laplacian.dual_derivative_hodge_star());
-    sil::tensor::Tensor dual_hodge_host(dual_hodge_host_alloc);
     TensorLaplacianStencils stencils;
     stencils.rows.resize(nodes_x * nodes_y);
-    stencils.dual_volumes.resize(nodes_x * nodes_y);
-    for (std::size_t i = 0; i < nodes_x; ++i)
-        for (std::size_t j = 0; j < nodes_y; ++j) {
-            ddc::DiscreteElement<GridX, GridY> const elem(i, j);
-            double coefficient = 0.0;
-            ddc::host_for_each(dual_hodge_host.accessor().domain(), [&](auto index) {
-                coefficient += std::abs(dual_hodge_host.mem(
-                        typename decltype(dual_hodge_host)::discrete_element_type(elem, index)));
-            });
-            if (coefficient < 1.0e-14)
-                throw std::runtime_error("degenerate scalar dual Hodge coefficient");
-            stencils.dual_volumes[j * nodes_x + i] = 1.0 / coefficient;
-        }
+    stencils.lower_x_flux_rows.resize(nodes_y);
+    stencils.upper_x_flux_rows.resize(nodes_y);
+    stencils.lower_y_flux_rows.resize(nodes_x);
+    stencils.upper_y_flux_rows.resize(nodes_x);
     for (std::size_t color_x = 0; color_x < color_period; ++color_x)
         for (std::size_t color_y = 0; color_y < color_period; ++color_y) {
             for (std::size_t i = 0; i < nodes_x; ++i)
@@ -173,6 +163,10 @@ inline TensorLaplacianStencils one_sided_tensor_laplacian_rows(
             staged_laplacian(laplacian, potential);
             Kokkos::fence();
             ddc::parallel_deepcopy(laplacian_host, laplacian);
+            auto flux_host_alloc = ddc::create_mirror_view_and_copy(
+                    Kokkos::DefaultHostExecutionSpace(),
+                    staged_laplacian.derivative_dual_tensor_buffer());
+            sil::tensor::Tensor flux_host(flux_host_alloc);
             for (std::size_t i = 0; i < cells_x; ++i)
                 for (std::size_t j = 0; j < cells_y; ++j) {
                     double const value = laplacian_host.mem(
@@ -197,16 +191,87 @@ inline TensorLaplacianStencils one_sided_tensor_laplacian_rows(
                     if (!found)
                         throw std::runtime_error("DEC Laplacian stencil exceeds three cells");
                 }
+            for (std::size_t trace = 0; trace < 2; ++trace) {
+                std::size_t const row_i = trace == 0 ? 0 : nodes_x - 2;
+                std::vector<std::map<std::size_t, double>>& trace_rows
+                        = trace == 0 ? stencils.lower_x_flux_rows : stencils.upper_x_flux_rows;
+                for (std::size_t j = 0; j < nodes_y; ++j) {
+                    ddc::DiscreteElement<GridX, GridY> const elem(row_i, j);
+                    double value = 0.0;
+                    ddc::host_for_each(flux_host.accessor().domain(), [&](auto component) {
+                        auto const natural
+                                = flux_host.accessor().canonical_natural_element(component);
+                        if (ddc::detail::array(natural)[0] == 1)
+                            value = flux_host.mem(typename decltype(flux_host)::
+                                                          discrete_element_type(elem, component));
+                    });
+                    if (std::abs(value) < 1.0e-14)
+                        continue;
+                    bool found = false;
+                    for (int di = -stencil_radius; di <= stencil_radius; ++di)
+                        for (int dj = -stencil_radius; dj <= stencil_radius; ++dj) {
+                            int const column_i = static_cast<int>(row_i) + di;
+                            int const column_j = static_cast<int>(j) + dj;
+                            if (column_i < 0 || column_i >= static_cast<int>(nodes_x)
+                                || column_j < 0 || column_j >= static_cast<int>(nodes_y)
+                                || static_cast<std::size_t>(column_i) % color_period != color_x
+                                || static_cast<std::size_t>(column_j) % color_period != color_y)
+                                continue;
+                            if (found)
+                                throw std::runtime_error("DEC flux stencil coloring is ambiguous");
+                            trace_rows[j][column_j * nodes_x + column_i] = value;
+                            found = true;
+                        }
+                    if (!found)
+                        throw std::runtime_error("DEC flux stencil exceeds three cells");
+                }
+            }
+            for (std::size_t trace = 0; trace < 2; ++trace) {
+                std::size_t const row_j = trace == 0 ? 0 : nodes_y - 2;
+                std::vector<std::map<std::size_t, double>>& trace_rows
+                        = trace == 0 ? stencils.lower_y_flux_rows : stencils.upper_y_flux_rows;
+                for (std::size_t i = 0; i < nodes_x; ++i) {
+                    ddc::DiscreteElement<GridX, GridY> const elem(i, row_j);
+                    double value = 0.0;
+                    ddc::host_for_each(flux_host.accessor().domain(), [&](auto component) {
+                        auto const natural
+                                = flux_host.accessor().canonical_natural_element(component);
+                        if (ddc::detail::array(natural)[0] == 0)
+                            value = flux_host.mem(typename decltype(flux_host)::
+                                                          discrete_element_type(elem, component));
+                    });
+                    if (std::abs(value) < 1.0e-14)
+                        continue;
+                    bool found = false;
+                    for (int di = -stencil_radius; di <= stencil_radius; ++di)
+                        for (int dj = -stencil_radius; dj <= stencil_radius; ++dj) {
+                            int const column_i = static_cast<int>(i) + di;
+                            int const column_j = static_cast<int>(row_j) + dj;
+                            if (column_i < 0 || column_i >= static_cast<int>(nodes_x)
+                                || column_j < 0 || column_j >= static_cast<int>(nodes_y)
+                                || static_cast<std::size_t>(column_i) % color_period != color_x
+                                || static_cast<std::size_t>(column_j) % color_period != color_y)
+                                continue;
+                            if (found)
+                                throw std::runtime_error(
+                                        "DEC wall flux stencil coloring is ambiguous");
+                            trace_rows[i][column_j * nodes_x + column_i] = value;
+                            found = true;
+                        }
+                    if (!found)
+                        throw std::runtime_error("DEC wall flux stencil exceeds three cells");
+                }
+            }
         }
     return stencils;
 }
 
 inline TensorLaplacianStencils tensor_laplacian_rows(
-        std::vector<std::array<double, 2>> const& positions)
+        std::vector<std::array<double, 2>> const& positions,
+        std::size_t nodes_x,
+        std::size_t nodes_y)
 {
-    constexpr std::size_t nodes_x = 81;
-    constexpr std::size_t nodes_y = 25;
-    TensorLaplacianStencils stencils = one_sided_tensor_laplacian_rows(positions);
+    TensorLaplacianStencils stencils = one_sided_tensor_laplacian_rows(positions, nodes_x, nodes_y);
     for (bool const reverse_x : {false, true})
         for (bool const reverse_y : {false, true}) {
             if (!reverse_x && !reverse_y)
@@ -220,7 +285,7 @@ inline TensorLaplacianStencils tensor_laplacian_rows(
                             = positions[original_j * nodes_x + original_i];
                 }
             TensorLaplacianStencils const reversed_stencils
-                    = one_sided_tensor_laplacian_rows(reversed_positions);
+                    = one_sided_tensor_laplacian_rows(reversed_positions, nodes_x, nodes_y);
             for (std::size_t j = 0; j < nodes_y; ++j)
                 for (std::size_t i = 0; i < nodes_x; ++i) {
                     if ((reverse_x ? i != 0 : i == nodes_x - 1)
@@ -230,8 +295,6 @@ inline TensorLaplacianStencils tensor_laplacian_rows(
                     std::size_t const mapped_j = reverse_y ? nodes_y - 1 - j : j;
                     std::map<std::size_t, double>& row
                             = stencils.rows[mapped_j * nodes_x + mapped_i];
-                    stencils.dual_volumes[mapped_j * nodes_x + mapped_i]
-                            = reversed_stencils.dual_volumes[j * nodes_x + i];
                     for (auto const& [column, coefficient] :
                          reversed_stencils.rows[j * nodes_x + i]) {
                         std::size_t const column_i = column % nodes_x;
