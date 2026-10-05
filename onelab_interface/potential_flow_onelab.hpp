@@ -19,6 +19,7 @@
 #include <ddc/ddc.hpp>
 
 #include <ginkgo/core/base/matrix_data.hpp>
+#include <similie/exterior/coupled_scalar_laplacian.hpp>
 #include <similie/physics/hamilton_equations.hpp>
 #include <similie/physics/scalar_field/scalar_field_with_power_coupling.hpp>
 #include <similie/solvers/minimize_strong_formulation_residual.hpp>
@@ -260,148 +261,73 @@ inline Result run(
     auto side_point = [&](std::size_t side, std::size_t i, std::size_t j) {
         return point(side_start[side] + i, j);
     };
-    auto cut_trace = [](std::size_t side, std::size_t i) {
-        return side == 0 && i == side_cells ? -1.0 : 0.0;
-    };
-    std::vector<std::map<std::size_t, double>> rows(node_count);
-    std::vector<double> base_rhs(node_count, 0.0);
-    std::vector<double> cut_rhs(node_count, 0.0);
-    auto add = [&](std::size_t row,
-                   std::size_t side,
-                   std::size_t i,
-                   std::size_t j,
-                   double coefficient) {
-        rows[row][side_index(side, i, j)] += coefficient;
-        cut_rhs[row] -= coefficient * cut_trace(side, i);
-    };
-    for (std::size_t side = 0; side < 2; ++side) {
-        std::vector<std::array<double, 2>> positions(side_nodes * nodes_j);
-        for (std::size_t i = 0; i < side_nodes; ++i)
+    std::vector<sil::exterior::ScalarTensorDomain2D> domains(2);
+    for (std::size_t side = 0; side < domains.size(); ++side) {
+        sil::exterior::ScalarTensorDomain2D& domain = domains[side];
+        domain.nodes_x = side_nodes;
+        domain.nodes_y = nodes_j;
+        domain.positions.resize(side_nodes * nodes_j);
+        domain.ordering_key.resize(side_nodes * nodes_j);
+        domain.lower_y.resize(side_nodes, sil::exterior::NormalScalarFluxExtrapolationRule {});
+        domain.upper_y.resize(side_nodes, sil::exterior::NormalScalarFluxExtrapolationRule {});
+        for (std::size_t i = 0; i < side_nodes; ++i) {
             for (std::size_t j = 0; j < nodes_j; ++j)
-                positions[j * side_nodes + i] = side_point(side, i, j);
-        auto const local_rows = tensor_laplacian_rows(positions);
-        for (std::size_t i = 1; i < side_cells; ++i)
-            for (std::size_t j = 1; j < cells_per_patch_j; ++j) {
-                std::size_t const row = side_index(side, i, j);
-                for (auto const& [column, coefficient] : local_rows[j * side_nodes + i])
-                    add(row, side, column % side_nodes, column / side_nodes, coefficient);
-            }
+                domain.positions[j * side_nodes + i] = side_point(side, i, j);
+            for (std::size_t j = 0; j < nodes_j; ++j)
+                domain.ordering_key[j * side_nodes + i] = side_index(side, i, j);
+            std::size_t const inner = side_index(side, i, 0);
+            if (boundary[inner])
+                domain.lower_y[i]
+                        = sil::exterior::PrescribedScalarExtrapolationRule {prescribed[inner]};
+            std::size_t const outer = side_index(side, i, cells_per_patch_j);
+            if (boundary[outer])
+                domain.upper_y[i]
+                        = sil::exterior::PrescribedScalarExtrapolationRule {prescribed[outer]};
+        }
+        TensorLaplacianStencils const stencils = tensor_laplacian_rows(domain.positions);
+        domain.laplacian_rows = stencils.rows;
+        domain.dual_volumes = stencils.dual_volumes;
     }
+    std::vector<sil::exterior::ConnectedScalarExtrapolationRule> const connections {
+            {0,
+             sil::exterior::ScalarTraceSide::UpperX,
+             1,
+             sil::exterior::ScalarTraceSide::LowerX,
+             -1.0},
+            {1,
+             sil::exterior::ScalarTraceSide::UpperX,
+             0,
+             sil::exterior::ScalarTraceSide::LowerX,
+             0.0},
+    };
     FreeScalarFieldHamiltonian const hamiltonian(0.0, 0.0, 2.0);
     physics::HamiltonEquations const equations(hamiltonian);
-    // A normal flux rule reconstructs the gradient from the two primal edge
-    // differences at a boundary node, using the physical mapped edge vectors.
-    auto add_normal_flux = [&](std::size_t row,
-                               std::size_t side,
-                               std::size_t tangent_minus_i,
-                               std::size_t tangent_minus_j,
-                               std::size_t tangent_plus_i,
-                               std::size_t tangent_plus_j,
-                               std::size_t transverse_minus_i,
-                               std::size_t transverse_minus_j,
-                               std::size_t transverse_plus_i,
-                               std::size_t transverse_plus_j,
-                               double sign) {
-        auto const tm = side_point(side, tangent_minus_i, tangent_minus_j);
-        auto const tp = side_point(side, tangent_plus_i, tangent_plus_j);
-        auto const rm = side_point(side, transverse_minus_i, transverse_minus_j);
-        auto const rp = side_point(side, transverse_plus_i, transverse_plus_j);
-        double const tx = tp[0] - tm[0], ty = tp[1] - tm[1];
-        double const rx = rp[0] - rm[0], ry = rp[1] - rm[1];
-        double const determinant = tx * ry - ty * rx;
-        double const tangent_length = std::hypot(tx, ty);
-        if (std::abs(determinant) < 1.0e-14 || tangent_length < 1.0e-14)
-            throw std::runtime_error("degenerate potential-flow boundary frame");
-        double const nx = ty / tangent_length, ny = -tx / tangent_length;
-        double const tangential_weight
-                = sign * inputs.density
-                  * (nx * equations.template dpotential_dt<X>(ry / determinant)
-                     + ny * equations.template dpotential_dt<Y>(-rx / determinant));
-        double const transverse_weight
-                = sign * inputs.density
-                  * (nx * equations.template dpotential_dt<X>(-ty / determinant)
-                     + ny * equations.template dpotential_dt<Y>(tx / determinant));
-        add(row, side, tangent_plus_i, tangent_plus_j, tangential_weight);
-        add(row, side, tangent_minus_i, tangent_minus_j, -tangential_weight);
-        add(row, side, transverse_plus_i, transverse_plus_j, transverse_weight);
-        add(row, side, transverse_minus_i, transverse_minus_j, -transverse_weight);
-    };
-    // The obstacle and the unconstrained outer wall use zero normal flux.
-    // Upstream and downstream take the prescribed potential instead.
-    for (std::size_t side = 0; side < 2; ++side)
-        for (std::size_t i = 1; i < side_cells; ++i)
-            for (std::size_t j : {std::size_t(0), cells_per_patch_j}) {
-                std::size_t const row = side_index(side, i, j);
-                if (boundary[row]) {
-                    rows[row][row] = 1.0;
-                    base_rhs[row] = prescribed[row];
-                    continue;
-                }
-                std::size_t const inner_j = j == 0 ? 1 : j - 1;
-                std::size_t const outer_j = j == 0 ? 0 : j;
-                add_normal_flux(row, side, i - 1, j, i + 1, j, i, inner_j, i, outer_j, 1.0);
-            }
-    // At each shared seam, trace identification supplies potential continuity
-    // (or its affine circulation jump); this equation matches normal flux.
-    auto connect = [&](std::size_t first_side,
-                       std::size_t first_i,
-                       std::size_t second_side,
-                       std::size_t second_i) {
-        for (std::size_t j = 0; j < nodes_j; ++j) {
-            std::size_t const row = side_index(first_side, first_i, j);
-            std::size_t const low_j = j == 0 ? 0 : j - 1;
-            std::size_t const high_j = j == cells_per_patch_j ? j : j + 1;
-            std::size_t const first_inner_i = first_i == 0 ? 1 : first_i - 1;
-            std::size_t const second_inner_i = second_i == 0 ? 1 : second_i - 1;
-            add_normal_flux(
-                    row,
-                    first_side,
-                    first_i,
-                    low_j,
-                    first_i,
-                    high_j,
-                    first_i == 0 ? 0 : first_inner_i,
-                    j,
-                    first_i == 0 ? first_inner_i : first_i,
-                    j,
-                    1.0);
-            add_normal_flux(
-                    row,
-                    second_side,
-                    second_i,
-                    low_j,
-                    second_i,
-                    high_j,
-                    second_i == 0 ? 0 : second_inner_i,
-                    j,
-                    second_i == 0 ? second_inner_i : second_i,
-                    j,
-                    -1.0);
-        }
-    };
-    connect(0, side_cells, 1, 0); // upper circulation cut
-    connect(1, side_cells, 0, 0); // lower continuous connection
-    for (std::size_t row = 0; row < node_count; ++row) {
-        if (rows[row].empty())
-            throw std::runtime_error("missing potential-flow equation");
-        double scale = 0.0;
-        for (auto const& [column, coefficient] : rows[row])
-            scale = std::max(scale, std::abs(coefficient));
-        if (scale < 1.0e-16)
-            throw std::runtime_error("zero potential-flow equation");
-        for (auto& [column, coefficient] : rows[row])
-            coefficient /= scale;
-        base_rhs[row] /= scale;
-        cut_rhs[row] /= scale;
-    }
-    SparseDecLaplacian const matrix(rows);
+    sil::exterior::CoupledScalarLaplacian2D const system
+            = sil::exterior::assemble_coupled_scalar_laplacian<
+                    X,
+                    Y>(domains, connections, equations, inputs.density);
+    if (system.rows.size() != node_count)
+        throw std::runtime_error("potential-flow trace coupling has unexpected node count");
+    SparseDecLaplacian const matrix(system.rows);
     Result result;
     result.node_count = node_count;
     result.cell_count = mesh.cells.size();
     std::vector<double> const base
-            = solve_system(matrix, base_rhs, settings, result.solver_diagnostics);
+            = solve_system(matrix, system.base_rhs, settings, result.solver_diagnostics);
     solvers::StrongFormulationSolverDiagnostics cut_diagnostics;
-    std::vector<double> const response = solve_system(matrix, cut_rhs, settings, cut_diagnostics);
+    std::vector<double> const response
+            = solve_system(matrix, system.jump_rhs, settings, cut_diagnostics);
+    // Recover the display grid ordering from the coupled domain degrees of freedom.
+    std::vector<double> base_ring(node_count), response_ring(node_count);
+    for (std::size_t side = 0; side < domains.size(); ++side)
+        for (std::size_t i = 0; i < side_nodes; ++i)
+            for (std::size_t j = 0; j < nodes_j; ++j) {
+                std::size_t const local = j * side_nodes + i;
+                std::size_t const display = side_index(side, i, j);
+                std::size_t const unknown = system.global_index[side][local];
+                base_ring[display] = base[unknown];
+                response_ring[display] = response[unknown];
+            }
     auto velocity = [&](std::vector<double> const& potential,
                         double circulation,
                         std::size_t i,
@@ -436,8 +362,8 @@ inline Result run(
         }
         return flux;
     };
-    double const flow0 = mass_flow(base, 0.0);
-    double const flow1 = mass_flow(response, 1.0);
+    double const flow0 = mass_flow(base_ring, 0.0);
+    double const flow1 = mass_flow(response_ring, 1.0);
     if (inputs.impose_circulation)
         result.circulation = inputs.circulation;
     else if (!inputs.airfoil) {
@@ -504,7 +430,7 @@ inline Result run(
             auto const v = velocity(potential, circulation, probe_i, probe_j, probe_xi, probe_eta);
             return v[1] - std::tan(inputs.incidence) * v[0];
         };
-        double const v0 = kutta(base, 0.0), v1 = kutta(response, 1.0);
+        double const v0 = kutta(base_ring, 0.0), v1 = kutta(response_ring, 1.0);
         if (std::abs(v1) < 1.0e-14)
             throw std::runtime_error("zero Kutta response");
         result.circulation = -v0 / v1;
@@ -513,7 +439,7 @@ inline Result run(
     result.lift_kutta_joukowski = -inputs.density * inputs.velocity * result.circulation;
     std::vector<double> potential(node_count);
     for (std::size_t i = 0; i < node_count; ++i)
-        potential[i] = base[i] + result.circulation * response[i];
+        potential[i] = base_ring[i] + result.circulation * response_ring[i];
     std::ofstream output(output_file);
     if (!output)
         throw std::runtime_error("cannot write potential-flow Gmsh view");
