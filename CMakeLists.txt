@@ -43,22 +43,9 @@ set(SIMILIE_DEPENDENCY_POLICIES "AUTO" "EMBEDDED" "INSTALLED" "SUBPROJECT")
 ## Use CTest for running tests
 include(CTest)
 
-## if tests are enabled, use googletest from `vendor/`
-### we use it to write unit tests
+# GTest
 if("${BUILD_TESTING}")
-  set(SIMILIE_GTest_DEPENDENCY_POLICY "AUTO" CACHE STRING "Policy to find the `GTest` package. Options: ${SIMILIE_DEPENDENCY_POLICIES}")
-  set_property(CACHE SIMILIE_GTest_DEPENDENCY_POLICY PROPERTY STRINGS ${SIMILIE_DEPENDENCY_POLICIES})
-
-  if("${SIMILIE_GTest_DEPENDENCY_POLICY}" STREQUAL "AUTO")
-    find_package(GTest "1.15" QUIET)
-    if(NOT "${GTest_FOUND}")
-      add_subdirectory("vendor/googletest/" "googletest") # SYSTEM)
-    endif()
-  elseif("${SIMILIE_GTest_DEPENDENCY_POLICY}" STREQUAL "EMBEDDED")
-    add_subdirectory("vendor/googletest/" "googletest") # SYSTEM)
-  elseif("${SIMILIE_GTest_DEPENDENCY_POLICY}" STREQUAL "INSTALLED")
-    find_package(GTest "1.15" REQUIRED)
-  endif()
+  find_package(GTest 1.14...<2 REQUIRED CONFIG)
 endif()
 
 ## Use the discrete domain computation library (ddc) from `vendor/`
