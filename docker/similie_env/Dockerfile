@@ -62,12 +62,12 @@ RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-15 100 \
 # OpenMPI
 RUN apt update && apt install -y libopenmpi-dev
 
-# ----------------------------------
-# ----- TESTING & IO LIBRARIES -----
-# ----------------------------------
+# -------------------------------------------------
+# ----- TESTING & BENCHMARKING & IO LIBRARIES -----
+# -------------------------------------------------
 
 # GTest & GMock
-RUN apt install libgtest-dev libgmock-dev
+RUN apt update && apt install -y libgtest-dev libgmock-dev
 
 # Google Benchmark
 RUN git clone --depth 1 --branch v1.9.5 https://github.com/google/benchmark.git /opt/benchmark \
