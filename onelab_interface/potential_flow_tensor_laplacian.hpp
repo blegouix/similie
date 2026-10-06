@@ -202,8 +202,9 @@ inline TensorLaplacianStencils one_sided_tensor_laplacian_rows(
                         auto const natural
                                 = flux_host.accessor().canonical_natural_element(component);
                         if (ddc::detail::array(natural)[0] == 1)
-                            value = flux_host.mem(typename decltype(flux_host)::
-                                                          discrete_element_type(elem, component));
+                            value = flux_host.mem(
+                                    typename decltype(flux_host)::
+                                            discrete_element_type(elem, component));
                     });
                     if (std::abs(value) < 1.0e-14)
                         continue;
@@ -237,8 +238,9 @@ inline TensorLaplacianStencils one_sided_tensor_laplacian_rows(
                         auto const natural
                                 = flux_host.accessor().canonical_natural_element(component);
                         if (ddc::detail::array(natural)[0] == 0)
-                            value = flux_host.mem(typename decltype(flux_host)::
-                                                          discrete_element_type(elem, component));
+                            value = flux_host.mem(
+                                    typename decltype(flux_host)::
+                                            discrete_element_type(elem, component));
                     });
                     if (std::abs(value) < 1.0e-14)
                         continue;
