@@ -38,7 +38,7 @@
 
 #include <onelab.h>
 
-#ifdef KOKKOS_ENABLE_CUDA
+#if defined(KOKKOS_ENABLE_CUDA)
 #include <cuda_runtime_api.h>
 #endif
 
@@ -63,7 +63,7 @@ enum class SupportedSolver {
     MinimizeStrongFormulationResidual,
 };
 
-#ifdef KOKKOS_ENABLE_CUDA
+#if defined(KOKKOS_ENABLE_CUDA)
 inline std::size_t cuda_stack_size()
 {
     char const* const value = std::getenv("SIMILIE_CUDA_STACK_SIZE");

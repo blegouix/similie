@@ -13,16 +13,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: DoozyX/clang-format-lint-action@v0.20
+    - uses: actions/setup-python@v5
       with:
-        source: 'examples/ src/similie/ tests/ onelab_interface/'
-        exclude: ''
-        extensions: 'hpp,cpp'
-        clangFormatVersion: 21
+        python-version: '3.12'
+    - name: Install clang-format
+      run: python -m pip install clang-format==21.1.8
+    - name: Check clang-format
+      run: >-
+        git ls-files -z -- 'examples/**/*.hpp' 'examples/**/*.cpp'
+        'src/similie/**/*.hpp' 'src/similie/**/*.cpp' 'tests/**/*.hpp'
+        'tests/**/*.cpp' 'onelab_interface/**/*.hpp' 'onelab_interface/**/*.cpp' |
+        xargs -0 -r clang-format --dry-run --Werror
     - name: Prefer 'if defined' over 'ifdef'
-      run: if grep -R "ifdef" examples/ src/similie/ tests/; then exit 1; fi
+      run: >-
+        if grep -R --include='*.hpp' --include='*.cpp' "ifdef"
+        examples/ src/similie/ tests/ onelab_interface/; then exit 1; fi
     - name: Find modifications of Kokkos reserved macros
-      run: if grep -RE "(define|undef) KOKKOS_" examples/ src/similie/ tests/; then exit 1; fi
+      run: >-
+        if grep -RE --include='*.hpp' --include='*.cpp' "(define|undef) KOKKOS_"
+        examples/ src/similie/ tests/ onelab_interface/; then exit 1; fi
     - name: REUSE Compliance Check
       if: always()
       uses: fsfe/reuse-action@v4
