@@ -188,13 +188,6 @@ inline Result run(
         throw std::runtime_error("potential flow requires structured quadrilaterals");
     auto const& mesh = std::get<sil::onelab_interface::gmsh::QuadrilateralMesh>(parsed);
     constexpr std::size_t patch_count = 4;
-    constexpr std::size_t cells_per_patch_i = 40;
-    constexpr std::size_t cells_per_patch_j = 24;
-    constexpr std::size_t ni = patch_count * cells_per_patch_i;
-    constexpr std::size_t nodes_j = cells_per_patch_j + 1;
-    constexpr std::size_t node_count = ni * nodes_j;
-    if (mesh.cells.size() != ni * cells_per_patch_j || mesh.nodes.size() != node_count)
-        throw std::runtime_error("potential-flow mesh does not match the mapped quad topology");
     std::array<std::vector<sil::onelab_interface::gmsh::QuadrilateralCell const*>, patch_count>
             patches;
     for (auto const& cell : mesh.cells) {
@@ -203,6 +196,22 @@ inline Result run(
             throw std::runtime_error("potential-flow mesh contains a non-fluid quad");
         patches[cell.elementary_tag - 24].push_back(&cell);
     }
+    std::size_t cells_along_outer_boundary = 0;
+    for (auto const& edge : mesh.boundary_edges)
+        if (edge.physical_tag == 10)
+            ++cells_along_outer_boundary;
+    if (cells_along_outer_boundary == 0 || patches[0].size() % cells_along_outer_boundary != 0)
+        throw std::runtime_error("potential-flow mesh does not match the mapped quad topology");
+    std::size_t const cells_per_patch_i = cells_along_outer_boundary;
+    std::size_t const cells_per_patch_j = patches[0].size() / cells_per_patch_i;
+    for (auto const& patch : patches)
+        if (patch.size() != cells_per_patch_i * cells_per_patch_j)
+            throw std::runtime_error("potential-flow quad patch has unexpected dimensions");
+    std::size_t const ni = patch_count * cells_per_patch_i;
+    std::size_t const nodes_j = cells_per_patch_j + 1;
+    std::size_t const node_count = ni * nodes_j;
+    if (mesh.cells.size() != ni * cells_per_patch_j || mesh.nodes.size() != node_count)
+        throw std::runtime_error("potential-flow mesh does not match the mapped quad topology");
     std::map<std::size_t, std::size_t> logical_index;
     auto bind_node = [&](std::size_t tag, std::size_t index) {
         auto const [it, inserted] = logical_index.emplace(tag, index);
@@ -210,8 +219,6 @@ inline Result run(
             throw std::runtime_error("quad patches do not share a consistent structured grid");
     };
     for (std::size_t patch = 0; patch < patch_count; ++patch) {
-        if (patches[patch].size() != cells_per_patch_i * cells_per_patch_j)
-            throw std::runtime_error("potential-flow quad patch has unexpected dimensions");
         for (std::size_t a = 0; a < cells_per_patch_i; ++a)
             for (std::size_t j = 0; j < cells_per_patch_j; ++j) {
                 auto const& cell = *patches[patch][a * cells_per_patch_j + j];
@@ -227,7 +234,7 @@ inline Result run(
     std::vector<sil::onelab_interface::gmsh::MeshNode> nodes(node_count);
     for (auto const& node : mesh.nodes)
         nodes[logical_index.at(node.tag)] = node;
-    auto index = [](std::size_t i, std::size_t j) { return j * ni + i % ni; };
+    auto index = [&](std::size_t i, std::size_t j) { return j * ni + i % ni; };
     auto point = [&](std::size_t i, std::size_t j) {
         auto const& n = nodes[index(i, j)];
         return std::array<double, 2> {n.x, n.y};
@@ -253,7 +260,11 @@ inline Result run(
     // Each side has three tensor domains with a uniform outer boundary rule:
     // zero flux, prescribed potential, and zero flux. The domains at the
     // circulation cut share trace nodes with an affine potential jump.
-    constexpr std::size_t half_patch_cells = cells_per_patch_i / 2;
+    if (cells_per_patch_i % 2 != 0)
+        throw std::runtime_error("potential-flow mesh has an odd number of cells along a patch");
+    std::size_t const half_patch_cells = cells_per_patch_i / 2;
+    std::size_t const cut_cell_i = 3 * cells_per_patch_i - 1;
+    std::size_t const cut_node_i = cut_cell_i + 1;
     std::array<std::size_t, 6> const side_start {
             cells_per_patch_i,
             cells_per_patch_i + half_patch_cells,
@@ -383,7 +394,7 @@ inline Result run(
         double const ty = (1.0 - eta) * (b[1] - a[1]) + eta * (c[1] - d[1]);
         double const rx = (1.0 - xi) * (d[0] - a[0]) + xi * (c[0] - b[0]);
         double const ry = (1.0 - xi) * (d[1] - a[1]) + xi * (c[1] - b[1]);
-        double const cut = i == 119 ? -circulation : 0.0;
+        double const cut = i == cut_cell_i ? -circulation : 0.0;
         double const dt = (1.0 - eta) * (potential[index(i + 1, j)] - potential[index(i, j)])
                           + eta * (potential[index(i + 1, j + 1)] - potential[index(i, j + 1)])
                           + cut;
@@ -401,8 +412,8 @@ inline Result run(
     auto mass_flow = [&](std::vector<double> const& potential, double circulation) {
         double flux = 0.0;
         for (std::size_t j = 0; j < cells_per_patch_j; ++j) {
-            auto const v = velocity(potential, circulation, 119, j, 1.0, 0.5);
-            auto const p0 = point(120, j), p1 = point(120, j + 1);
+            auto const v = velocity(potential, circulation, cut_cell_i, j, 1.0, 0.5);
+            auto const p0 = point(cut_node_i, j), p1 = point(cut_node_i, j + 1);
             flux -= inputs.density * (v[0] * (p1[1] - p0[1]) - v[1] * (p1[0] - p0[0]));
         }
         return flux;
@@ -508,7 +519,8 @@ inline Result run(
             for (int a = 0; a < 4; ++a) {
                 std::size_t const ai = i + ((a == 1 || a == 2) ? 1 : 0);
                 std::size_t const ar = j + ((a == 2 || a == 3) ? 1 : 0);
-                double const jump = i == 119 && (a == 1 || a == 2) ? -result.circulation : 0.0;
+                double const jump
+                        = i == cut_cell_i && (a == 1 || a == 2) ? -result.circulation : 0.0;
                 output << potential[index(ai, ar)] + jump;
                 if (a != 3)
                     output << ',';

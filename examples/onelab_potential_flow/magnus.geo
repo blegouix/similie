@@ -73,8 +73,8 @@ Plane Surface(27) = { 24 };
 // Each fluid domain uses two mapped quadrilateral patches. The obstacle is a
 // hole in both domains. Curve 6 joins the two fluid domains continuously;
 // curve 5 is the circulation cut, where the potential has a prescribed jump.
-CellsAlongObjectPatch = 40;
-CellsAcrossFluidPatch = 24;
+CellsAlongObjectPatch = 400;
+CellsAcrossFluidPatch = 240;
 Transfinite Curve {1, 2, 3, 4} = CellsAlongObjectPatch + 1;
 Transfinite Curve {5, 6, 14, 15} = CellsAcrossFluidPatch + 1;
 Transfinite Curve {7, 8, 9, 10, 11, 12, 16, 17} = CellsAlongObjectPatch/2 + 1;
