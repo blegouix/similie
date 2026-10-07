@@ -3,31 +3,15 @@
 
 name: example_onelab_potential_flow
 on:
-  workflow_run:
-    workflows: [ build ]
-    types: [ completed ]
-  workflow_dispatch:
-    inputs:
-      target_sha:
-        description: Commit SHA to run the example from
-        required: false
-  workflow_call:
-    inputs:
-      target_sha:
-        required: true
-        type: string
-      ci_environment:
-        required: false
-        type: string
-        default: automatic-ci-run
+  deployment:
 
 concurrency:
-  group: example-onelab_potential_flow-${{ inputs.target_sha || github.event.workflow_run.head_sha || github.sha }}
+  group: example-onelab_potential_flow-${{ github.event.deployment.sha || github.sha }}
   cancel-in-progress: true
 
 jobs:
   example-onelab_potential_flow:
-    if: inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: github.event.deployment.environment == 'onelab_potential-flow-onelab-cuda'
     runs-on: [self-hosted, linux]
     timeout-minutes: 120
     strategy:
@@ -67,19 +51,11 @@ jobs:
             -setnumber "Model/V" 72
             -setnumber "Model/Circ" 4
             -setnumber "Model/Air box size [m]" 8
-    environment:
-      name: ${{ inputs.ci_environment || 'onelab_potential-flow-onelab-cuda' }}
     steps:
     - name: Select target commit
       id: target
       run: |
-        if [ -n "${{ inputs.target_sha }}" ]; then
-          target_sha="${{ inputs.target_sha }}"
-        elif [ "${GITHUB_EVENT_NAME}" = "workflow_run" ]; then
-          target_sha="${{ github.event.workflow_run.head_sha }}"
-        else
-          target_sha="${GITHUB_SHA}"
-        fi
+        target_sha="${{ github.event.deployment.sha }}"
         echo "TARGET_SHA=${target_sha}" >> "${GITHUB_ENV}"
         echo "target_sha=${target_sha}" >> "${GITHUB_OUTPUT}"
     - name: Set build paths
