@@ -68,7 +68,7 @@ jobs:
             -setnumber "Model/Circ" 4
             -setnumber "Model/Air box size [m]" 8
     environment:
-      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'onelab_potential-flow-onelab-cuda' || 'automatic-ci-run') }}
+      name: ${{ inputs.ci_environment || 'onelab_potential-flow-onelab-cuda' }}
     steps:
     - name: Select target commit
       id: target
