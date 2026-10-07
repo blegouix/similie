@@ -5,7 +5,6 @@
 #pragma once
 
 #include <cstddef>
-#include <variant>
 
 #include <ddc/ddc.hpp>
 
@@ -56,53 +55,127 @@ struct ZeroCochainExtrapolationRule
     }
 };
 
-/** Prescribe the scalar potential on one boundary node. */
+/**
+ * Extend a primal scalar cochain with a prescribed exterior potential.
+ * Stored samples, including boundary nodes, retain their values. Strong nodal
+ * Dirichlet constraints belong to the solver, independently of this sampler.
+ * \important This operator and documentation is fully AI-generated.
+ */
 struct PrescribedScalarExtrapolationRule
 {
     double value;
+
+    template <class TensorType, class Element, class Component>
+    KOKKOS_FUNCTION double operator()(
+            TensorType tensor,
+            Element sampled_element,
+            Component component) const
+    {
+        if (!sil::misc::domain_contains(tensor.non_indices_domain(), sampled_element))
+            return value;
+        return tensor.mem(sampled_element, component);
+    }
 };
 
-/** Prescribe the normal scalar flux on one boundary node. */
+/**
+ * Extend a dual flux cochain with a prescribed exterior flux sample.
+ * The value is an oriented, integrated cochain value in the same units as the
+ * stored dual field; physical normal flux densities must first be integrated
+ * on the corresponding dual face. Use this rule at the dual derivative stage.
+ * \important This operator and documentation is fully AI-generated.
+ */
 struct NormalScalarFluxExtrapolationRule
 {
     double value = 0.0;
+
+    template <class TensorType, class Element, class Component>
+    KOKKOS_FUNCTION double operator()(
+            TensorType tensor,
+            Element sampled_element,
+            Component component) const
+    {
+        return PrescribedScalarExtrapolationRule {value}(tensor, sampled_element, component);
+    }
 };
 
 /**
- * Use the one-sided scalar DEC Laplacian row at a free boundary.
- * \important This operator and documentation are fully AI-generated.
- *
- * This is the natural closure of the discrete bulk equation when no boundary
- * flux is prescribed. It is useful on smooth boundaries where the variational
- * zero-flux condition is represented by the exterior Laplacian itself.
+ * Continue the nearest one-sided slope in each logical grid direction.
+ * This primal closure preserves affine fields without prescribing a potential
+ * or a normal flux. At corners the directional continuations are added; on
+ * singleton dimensions the continuation is constant.
+ * \important This operator and documentation is fully AI-generated.
  */
 struct NaturalScalarExtrapolationRule
 {
+    template <class TensorType, class Element, class Component>
+    KOKKOS_FUNCTION double operator()(
+            TensorType tensor,
+            Element sampled_element,
+            Component component) const
+    {
+        if (sil::misc::domain_contains(tensor.non_indices_domain(), sampled_element))
+            return tensor.mem(sampled_element, component);
+        Element const front(tensor.non_indices_domain().front());
+        Element const back(tensor.non_indices_domain().back());
+        Element nearest = sampled_element;
+        // Discrete elements store unsigned coordinates, but an exterior sample
+        // below index zero represents a negative logical offset.
+        auto const offset = sampled_element - front;
+        auto const extent = back - front;
+        for (std::size_t dim = 0; dim < ddc::type_seq_size_v<ddc::to_type_seq_t<Element>>; ++dim) {
+            if (ddc::detail::array(offset)[dim] < 0)
+                ddc::detail::array(nearest)[dim] = ddc::detail::array(front)[dim];
+            else if (ddc::detail::array(offset)[dim] > ddc::detail::array(extent)[dim])
+                ddc::detail::array(nearest)[dim] = ddc::detail::array(back)[dim];
+        }
+        double const boundary_value = tensor.mem(nearest, component);
+        double result = boundary_value;
+        for (std::size_t dim = 0; dim < ddc::type_seq_size_v<ddc::to_type_seq_t<Element>>; ++dim) {
+            if (ddc::detail::array(front)[dim] == ddc::detail::array(back)[dim])
+                continue;
+            Element inner = nearest;
+            double distance = 0.0;
+            if (ddc::detail::array(offset)[dim] < 0) {
+                ++ddc::detail::array(inner)[dim];
+                distance = -static_cast<double>(ddc::detail::array(offset)[dim]);
+            } else if (ddc::detail::array(offset)[dim] > ddc::detail::array(extent)[dim]) {
+                --ddc::detail::array(inner)[dim];
+                distance = static_cast<double>(
+                        ddc::detail::array(offset)[dim] - ddc::detail::array(extent)[dim]);
+            }
+            if (distance != 0.0)
+                result += distance * (boundary_value - tensor.mem(inner, component));
+        }
+        return result;
+    }
 };
 
-using ScalarBoundaryExtrapolationRule = std::variant<
-        PrescribedScalarExtrapolationRule,
-        NormalScalarFluxExtrapolationRule,
-        NaturalScalarExtrapolationRule>;
-
-/** Select an x-normal trace of a structured tensor domain. */
-enum class ScalarTraceSide { LowerX, UpperX };
-
 /**
- * Connect two scalar traces with an affine potential jump.
- * \important This operator and documentation are fully AI-generated.
- *
- * For each pair of matching trace nodes, the first potential equals the
- * second potential plus jump_coefficient times the global jump parameter.
- * The coupled Laplacian also matches the physical normal flux on the traces.
+ * Sample a neighboring cochain through a caller-supplied trace map.
+ * The map supplies both the neighboring grid element and the stored component,
+ * so it can account for different origins, axis permutations and orientations.
+ * The signed affine jump is added to exterior samples only. A primal potential
+ * jump and a dual flux connection can therefore use different rule instances.
+ * The neighbor and map must be accessible in the operator's execution space.
+ * \important This operator and documentation is fully AI-generated.
  */
+template <class NeighborTensor, class TraceMap>
 struct ConnectedScalarExtrapolationRule
 {
-    std::size_t first_domain;
-    ScalarTraceSide first_side;
-    std::size_t second_domain;
-    ScalarTraceSide second_side;
-    double jump_coefficient = 0.0;
+    NeighborTensor neighbor;
+    TraceMap trace_map;
+    double jump = 0.0;
+
+    template <class TensorType, class Element, class Component>
+    KOKKOS_FUNCTION double operator()(
+            TensorType tensor,
+            Element sampled_element,
+            Component component) const
+    {
+        if (sil::misc::domain_contains(tensor.non_indices_domain(), sampled_element))
+            return tensor.mem(sampled_element, component);
+        return trace_map(neighbor, sampled_element, component) + jump;
+    }
 };
 
 } // namespace sil::exterior

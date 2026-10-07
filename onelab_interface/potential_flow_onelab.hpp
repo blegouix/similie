@@ -19,7 +19,6 @@
 #include <ddc/ddc.hpp>
 
 #include <ginkgo/core/base/matrix_data.hpp>
-#include <similie/exterior/coupled_scalar_laplacian.hpp>
 #include <similie/physics/hamilton_equations.hpp>
 #include <similie/physics/scalar_field/scalar_field_with_power_coupling.hpp>
 #include <similie/solvers/minimize_strong_formulation_residual.hpp>
@@ -27,6 +26,7 @@
 #include <Kokkos_Core.hpp>
 
 #include "gmsh_structured_grid.hpp"
+#include "potential_flow_system.hpp"
 #include "potential_flow_tensor_laplacian.hpp"
 
 namespace similie::onelab_interface::potential_flow_onelab {
@@ -285,16 +285,15 @@ inline Result run(
     auto side_point = [&](std::size_t side, std::size_t i, std::size_t j) {
         return point(side_start[side] + i, j);
     };
-    std::vector<sil::exterior::ScalarTensorDomain2D> domains(side_start.size());
+    std::vector<PotentialFlowPatch> domains(side_start.size());
     for (std::size_t side = 0; side < domains.size(); ++side) {
-        sil::exterior::ScalarTensorDomain2D& domain = domains[side];
+        PotentialFlowPatch& domain = domains[side];
         std::size_t const side_nodes = side_cells[side] + 1;
         domain.nodes_x = side_nodes;
         domain.nodes_y = nodes_j;
         domain.positions.resize(side_nodes * nodes_j);
         domain.ordering_key.resize(side_nodes * nodes_j);
-        sil::exterior::ScalarBoundaryExtrapolationRule const free_boundary
-                = sil::exterior::NaturalScalarExtrapolationRule {};
+        BoundaryCondition const free_boundary = NaturalBoundary {};
         domain.lower_y.resize(side_nodes, free_boundary);
         domain.upper_y.resize(side_nodes, free_boundary);
         for (std::size_t i = 0; i < side_nodes; ++i) {
@@ -304,12 +303,10 @@ inline Result run(
                 domain.ordering_key[j * side_nodes + i] = side_index(side, i, j);
             std::size_t const inner = side_index(side, i, 0);
             if (boundary[inner])
-                domain.lower_y[i]
-                        = sil::exterior::PrescribedScalarExtrapolationRule {prescribed[inner]};
+                domain.lower_y[i] = PrescribedPotential {prescribed[inner]};
             std::size_t const outer = side_index(side, i, cells_per_patch_j);
             if (boundary[outer])
-                domain.upper_y[i]
-                        = sil::exterior::PrescribedScalarExtrapolationRule {prescribed[outer]};
+                domain.upper_y[i] = PrescribedPotential {prescribed[outer]};
         }
         TensorLaplacianStencils const stencils
                 = conservative_tensor_laplacian_rows(domain.positions, side_nodes, nodes_j);
@@ -320,44 +317,18 @@ inline Result run(
         domain.lower_y_flux_rows = stencils.lower_y_flux_rows;
         domain.upper_y_flux_rows = stencils.upper_y_flux_rows;
     }
-    std::vector<sil::exterior::ConnectedScalarExtrapolationRule> const connections {
-            {0,
-             sil::exterior::ScalarTraceSide::UpperX,
-             1,
-             sil::exterior::ScalarTraceSide::LowerX,
-             0.0},
-            {1,
-             sil::exterior::ScalarTraceSide::UpperX,
-             2,
-             sil::exterior::ScalarTraceSide::LowerX,
-             0.0},
-            {2,
-             sil::exterior::ScalarTraceSide::UpperX,
-             3,
-             sil::exterior::ScalarTraceSide::LowerX,
-             -1.0},
-            {3,
-             sil::exterior::ScalarTraceSide::UpperX,
-             4,
-             sil::exterior::ScalarTraceSide::LowerX,
-             0.0},
-            {4,
-             sil::exterior::ScalarTraceSide::UpperX,
-             5,
-             sil::exterior::ScalarTraceSide::LowerX,
-             0.0},
-            {5,
-             sil::exterior::ScalarTraceSide::UpperX,
-             0,
-             sil::exterior::ScalarTraceSide::LowerX,
-             0.0},
+    std::vector<TraceConnection> const connections {
+            {0, TraceSide::UpperX, 1, TraceSide::LowerX, 0.0},
+            {1, TraceSide::UpperX, 2, TraceSide::LowerX, 0.0},
+            {2, TraceSide::UpperX, 3, TraceSide::LowerX, -1.0},
+            {3, TraceSide::UpperX, 4, TraceSide::LowerX, 0.0},
+            {4, TraceSide::UpperX, 5, TraceSide::LowerX, 0.0},
+            {5, TraceSide::UpperX, 0, TraceSide::LowerX, 0.0},
     };
     FreeScalarFieldHamiltonian const hamiltonian(0.0, 0.0, 2.0);
     physics::HamiltonEquations const equations(hamiltonian);
-    sil::exterior::CoupledScalarLaplacian2D const system
-            = sil::exterior::assemble_coupled_scalar_laplacian<
-                    X,
-                    Y>(domains, connections, equations, inputs.density);
+    PotentialFlowSystem const system
+            = assemble_potential_flow_system<X, Y>(domains, connections, equations, inputs.density);
     if (system.rows.size() != node_count)
         throw std::runtime_error("potential-flow trace coupling has unexpected node count");
     SparseDecLaplacian const matrix(system.rows);

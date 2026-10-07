@@ -27,6 +27,7 @@
 #include "cochain.hpp"
 #include "cosimplex.hpp"
 #include "evaluators.hpp"
+#include "scalar_extrapolation_rules.hpp"
 
 
 namespace sil {
@@ -631,15 +632,27 @@ KOKKOS_FUNCTION coboundary_t<CochainType> coboundary(CochainType cochain)
     return Coboundary<CochainType>::operator()(cochain);
 }
 
+/**
+ * Apply the exterior derivative with a callable cochain sampling rule.
+ * The rule is invoked as rule(tensor, sampled_element, stored_component) for
+ * every stencil sample, including interior samples. It must be copyable and
+ * callable in ExecSpace. The output domain selects where to evaluate d; the
+ * input domain selects which samples require extrapolation. The same contract
+ * applies to deriv(), transposed_coboundary(), and the primal and dual stages
+ * of laplacian(); codifferential() accepts a rule for its dual Hodge field.
+ * \important This documentation is fully AI-generated.
+ */
 template <
         tensor::TensorNatIndex TagToAddToCochain,
         tensor::TensorIndex CochainTag,
         misc::Specialization<tensor::Tensor> TensorType,
-        class ExecSpace>
+        class ExecSpace,
+        class ExtrapolationRule = ClampCochainExtrapolationRule>
 coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
         ExecSpace const& exec_space,
         coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
-        TensorType tensor)
+        TensorType tensor,
+        ExtrapolationRule extrapolation = {})
 {
     ddc::DiscreteDomain batch_dom
             = ddc::remove_dims_of<coboundary_index_t<TagToAddToCochain, CochainTag>>(
@@ -664,7 +677,9 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
             KOKKOS_LAMBDA(typename decltype(batch_dom)::discrete_element_type elem) {
                 Coboundary<TagToAddToCochain, CochainTag>::operator()(
                         coboundary_tensor[elem],
-                        detail::ClampedTensorEvaluator<TensorType> {tensor},
+                        [&](auto sampled_elem, auto component) {
+                            return extrapolation(tensor, sampled_elem, component);
+                        },
                         chain,
                         lower_chain,
                         elem);
@@ -677,11 +692,13 @@ template <
         tensor::TensorNatIndex TagToAddToCochain,
         tensor::TensorIndex CochainTag,
         misc::Specialization<tensor::Tensor> TensorType,
-        class ExecSpace>
+        class ExecSpace,
+        class ExtrapolationRule = ZeroCochainExtrapolationRule>
 coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> transposed_coboundary(
         ExecSpace const& exec_space,
         coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
-        TensorType tensor)
+        TensorType tensor,
+        ExtrapolationRule extrapolation = {})
 {
     ddc::DiscreteDomain batch_dom
             = ddc::remove_dims_of<coboundary_index_t<TagToAddToCochain, CochainTag>>(
@@ -706,7 +723,9 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> transposed_coboun
             KOKKOS_LAMBDA(typename decltype(batch_dom)::discrete_element_type elem) {
                 TransposedCoboundary<TagToAddToCochain, CochainTag>::operator()(
                         coboundary_tensor[elem],
-                        detail::ZeroOutsideTensorEvaluator<TensorType> {tensor},
+                        [&](auto sampled_elem, auto component) {
+                            return extrapolation(tensor, sampled_elem, component);
+                        },
                         chain,
                         lower_chain,
                         elem);
@@ -719,13 +738,17 @@ template <
         tensor::TensorNatIndex TagToAddToCochain,
         tensor::TensorIndex CochainTag,
         misc::Specialization<tensor::Tensor> TensorType,
-        class ExecSpace>
+        class ExecSpace,
+        class ExtrapolationRule = ClampCochainExtrapolationRule>
 coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> deriv(
         ExecSpace const& exec_space,
         coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
-        TensorType tensor)
+        TensorType tensor,
+        ExtrapolationRule extrapolation = {})
 {
-    return coboundary<TagToAddToCochain, CochainTag>(exec_space, coboundary_tensor, tensor);
+    return coboundary<
+            TagToAddToCochain,
+            CochainTag>(exec_space, coboundary_tensor, tensor, extrapolation);
 }
 
 } // namespace exterior

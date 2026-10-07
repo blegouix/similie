@@ -13,14 +13,35 @@
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
+#include <variant>
 #include <vector>
 
-#include "scalar_extrapolation_rules.hpp"
+namespace similie::onelab_interface::potential_flow_onelab {
 
-namespace sil::exterior {
+struct PrescribedPotential
+{
+    double value;
+};
+struct NormalFlux
+{
+    double value = 0.0;
+};
+struct NaturalBoundary
+{
+};
+using BoundaryCondition = std::variant<PrescribedPotential, NormalFlux, NaturalBoundary>;
+enum class TraceSide { LowerX, UpperX };
+struct TraceConnection
+{
+    std::size_t first_domain;
+    TraceSide first_side;
+    std::size_t second_domain;
+    TraceSide second_side;
+    double jump_coefficient = 0.0;
+};
 
 /** Data for one mapped tensor domain carrying a scalar 0-cochain. */
-struct ScalarTensorDomain2D
+struct PotentialFlowPatch
 {
     std::size_t nodes_x;
     std::size_t nodes_y;
@@ -31,8 +52,8 @@ struct ScalarTensorDomain2D
     std::vector<std::map<std::size_t, double>> lower_y_flux_rows;
     std::vector<std::map<std::size_t, double>> upper_y_flux_rows;
     std::vector<std::size_t> ordering_key;
-    std::vector<ScalarBoundaryExtrapolationRule> lower_y;
-    std::vector<ScalarBoundaryExtrapolationRule> upper_y;
+    std::vector<BoundaryCondition> lower_y;
+    std::vector<BoundaryCondition> upper_y;
     bool conservative_laplacian_rows = false;
 };
 
@@ -43,13 +64,13 @@ struct ScalarTensorDomain2D
  * The bulk rows come from the DEC Laplacian on each tensor domain. Interior
  * trace nodes are identified across a connection, with an affine potential
  * jump if requested. A second equation enforces equality of the normal flux.
- * Boundary extrapolation rules supply prescribed-potential, normal-flux, or
+ * Boundary conditions supply prescribed-potential, normal-flux, or
  * natural DEC equations on the remaining edges. Connected traces balance the
  * flux cochains produced by the first Hodge stage on each tensor domain.
  * The resulting square matrix acts on the identified primal 0-cochain; jump_rhs
  * is its response to a unit potential jump.
  */
-struct CoupledScalarLaplacian2D
+struct PotentialFlowSystem
 {
     std::vector<std::map<std::size_t, double>> rows;
     std::vector<double> base_rhs;
@@ -99,10 +120,10 @@ public:
 } // namespace detail
 
 /**
- * Assemble the DEC bulk operator and the specified scalar extrapolation rules.
+ * Assemble the DEC bulk operator and the potential-flow boundary equations.
  * \important This operator and documentation are fully AI-generated.
  *
- * Domain boundaries are not inferred from mesh tags. The caller gives a rule
+ * Domain boundaries are not inferred from mesh tags. The caller gives a condition
  * at every lower and upper y-boundary node and explicit connections between
  * x-traces. A connected trace shares one degree of freedom with its partner;
  * its affine offset carries the circulation cut. Explicit zero-flux
@@ -112,9 +133,9 @@ public:
  * and the supplied free-scalar constitutive law.
  */
 template <class X, class Y, class FluxLaw>
-CoupledScalarLaplacian2D assemble_coupled_scalar_laplacian(
-        std::vector<ScalarTensorDomain2D> const& domains,
-        std::vector<ConnectedScalarExtrapolationRule> const& connections,
+PotentialFlowSystem assemble_potential_flow_system(
+        std::vector<PotentialFlowPatch> const& domains,
+        std::vector<TraceConnection> const& connections,
         FluxLaw const& flux_law,
         double density)
 {
@@ -123,7 +144,7 @@ CoupledScalarLaplacian2D assemble_coupled_scalar_laplacian(
     bool const keyed_order = !domains.front().ordering_key.empty();
     std::vector<std::size_t> starts(domains.size() + 1, 0);
     for (std::size_t side = 0; side < domains.size(); ++side) {
-        ScalarTensorDomain2D const& domain = domains[side];
+        PotentialFlowPatch const& domain = domains[side];
         if (domain.nodes_x < 2 || domain.nodes_y < 2
             || domain.positions.size() != domain.nodes_x * domain.nodes_y
             || domain.laplacian_rows.size() != domain.nodes_x * domain.nodes_y
@@ -141,11 +162,11 @@ CoupledScalarLaplacian2D assemble_coupled_scalar_laplacian(
     auto flat = [&](std::size_t side, std::size_t i, std::size_t j) {
         return starts[side] + j * domains[side].nodes_x + i;
     };
-    auto trace_i = [&](std::size_t side, ScalarTraceSide trace) {
-        return trace == ScalarTraceSide::LowerX ? std::size_t(0) : domains[side].nodes_x - 1;
+    auto trace_i = [&](std::size_t side, TraceSide trace) {
+        return trace == TraceSide::LowerX ? std::size_t(0) : domains[side].nodes_x - 1;
     };
     detail::AffineTraceUnionFind trace_union(starts.back());
-    for (ConnectedScalarExtrapolationRule const& connection : connections) {
+    for (TraceConnection const& connection : connections) {
         if (connection.first_domain >= domains.size() || connection.second_domain >= domains.size()
             || domains[connection.first_domain].nodes_y
                        != domains[connection.second_domain].nodes_y)
@@ -159,7 +180,7 @@ CoupledScalarLaplacian2D assemble_coupled_scalar_laplacian(
                     connection.jump_coefficient);
     }
 
-    CoupledScalarLaplacian2D system;
+    PotentialFlowSystem system;
     system.global_index.resize(domains.size());
     system.jump_offset.resize(domains.size());
     std::vector<std::size_t> root_to_global(starts.back(), starts.back());
@@ -228,7 +249,7 @@ CoupledScalarLaplacian2D assemble_coupled_scalar_laplacian(
         return domains[side].positions[j * domains[side].nodes_x + i];
     };
     auto add_dec_row = [&](std::size_t row, std::size_t side, std::size_t i, std::size_t j) {
-        ScalarTensorDomain2D const& domain = domains[side];
+        PotentialFlowPatch const& domain = domains[side];
         std::map<std::size_t, double> const& local_row
                 = domain.laplacian_rows[j * domain.nodes_x + i];
         if (local_row.empty())
@@ -273,7 +294,7 @@ CoupledScalarLaplacian2D assemble_coupled_scalar_laplacian(
     };
 
     auto wall_flux = [&](std::size_t row, std::size_t side, std::size_t i, std::size_t j) {
-        ScalarTensorDomain2D const& domain = domains[side];
+        PotentialFlowPatch const& domain = domains[side];
         std::size_t const i0 = i == 0 ? 0 : i - 1;
         std::size_t const i1 = i + 1 == domain.nodes_x ? i : i + 1;
         std::size_t const inner_j = j == 0 ? 1 : j - 1;
@@ -287,7 +308,7 @@ CoupledScalarLaplacian2D assemble_coupled_scalar_laplacian(
     };
 
     for (std::size_t side = 0; side < domains.size(); ++side) {
-        ScalarTensorDomain2D const& domain = domains[side];
+        PotentialFlowPatch const& domain = domains[side];
         for (std::size_t i = 1; i + 1 < domain.nodes_x; ++i)
             for (std::size_t j = 1; j + 1 < domain.nodes_y; ++j) {
                 std::size_t const row = global(side, i, j);
@@ -299,28 +320,27 @@ CoupledScalarLaplacian2D assemble_coupled_scalar_laplacian(
         for (std::size_t i = 1; i + 1 < domain.nodes_x; ++i)
             for (std::size_t boundary_id = 0; boundary_id < 2; ++boundary_id) {
                 std::size_t const j = boundary_id == 0 ? 0 : domain.nodes_y - 1;
-                ScalarBoundaryExtrapolationRule const& rule
+                BoundaryCondition const& rule
                         = boundary_id == 0 ? domain.lower_y[i] : domain.upper_y[i];
                 std::size_t const row = global(side, i, j);
                 claim(row);
-                if (auto const* prescribed
-                    = std::get_if<PrescribedScalarExtrapolationRule>(&rule)) {
+                if (auto const* prescribed = std::get_if<PrescribedPotential>(&rule)) {
                     add(row, side, i, j, 1.0);
                     system.base_rhs[row] = prescribed->value;
-                } else if (std::holds_alternative<NaturalScalarExtrapolationRule>(rule)) {
+                } else if (std::holds_alternative<NaturalBoundary>(rule)) {
                     add_dec_row(row, side, i, j);
                 } else {
-                    auto const& flux = std::get<NormalScalarFluxExtrapolationRule>(rule);
+                    auto const& flux = std::get<NormalFlux>(rule);
                     wall_flux(row, side, i, j);
                     system.base_rhs[row] = flux.value;
                 }
             }
     }
-    for (ConnectedScalarExtrapolationRule const& connection : connections) {
+    for (TraceConnection const& connection : connections) {
         std::size_t const first = connection.first_domain;
         std::size_t const second = connection.second_domain;
-        if (connection.first_side != ScalarTraceSide::UpperX
-            || connection.second_side != ScalarTraceSide::LowerX)
+        if (connection.first_side != TraceSide::UpperX
+            || connection.second_side != TraceSide::LowerX)
             throw std::runtime_error("connected scalar traces must meet upper X to lower X");
         if (domains[first].conservative_laplacian_rows
             != domains[second].conservative_laplacian_rows)
@@ -337,16 +357,12 @@ CoupledScalarLaplacian2D assemble_coupled_scalar_laplacian(
             std::size_t const row = global(first, first_i, j);
             claim(row);
             if (j == 0 || j + 1 == domains[first].nodes_y) {
-                ScalarBoundaryExtrapolationRule const& first_rule
-                        = j == 0 ? domains[first].lower_y[first_i]
-                                 : domains[first].upper_y[first_i];
-                ScalarBoundaryExtrapolationRule const& second_rule
-                        = j == 0 ? domains[second].lower_y[second_i]
-                                 : domains[second].upper_y[second_i];
-                auto const* first_prescribed
-                        = std::get_if<PrescribedScalarExtrapolationRule>(&first_rule);
-                auto const* second_prescribed
-                        = std::get_if<PrescribedScalarExtrapolationRule>(&second_rule);
+                BoundaryCondition const& first_rule = j == 0 ? domains[first].lower_y[first_i]
+                                                             : domains[first].upper_y[first_i];
+                BoundaryCondition const& second_rule = j == 0 ? domains[second].lower_y[second_i]
+                                                              : domains[second].upper_y[second_i];
+                auto const* first_prescribed = std::get_if<PrescribedPotential>(&first_rule);
+                auto const* second_prescribed = std::get_if<PrescribedPotential>(&second_rule);
                 if (first_prescribed != nullptr || second_prescribed != nullptr) {
                     if (first_prescribed != nullptr && second_prescribed != nullptr
                         && std::abs(first_prescribed->value - second_prescribed->value) > 1.0e-12)
@@ -365,15 +381,13 @@ CoupledScalarLaplacian2D assemble_coupled_scalar_laplacian(
                 // equation. Matching the interface flux here would drop both
                 // physical boundary rules.
                 for (std::size_t const side : {first, second}) {
-                    ScalarTensorDomain2D const& domain = domains[side];
+                    PotentialFlowPatch const& domain = domains[side];
                     std::size_t const i = side == first ? first_i : second_i;
-                    ScalarBoundaryExtrapolationRule const& rule
-                            = side == first ? first_rule : second_rule;
-                    if (std::holds_alternative<NaturalScalarExtrapolationRule>(rule)) {
+                    BoundaryCondition const& rule = side == first ? first_rule : second_rule;
+                    if (std::holds_alternative<NaturalBoundary>(rule)) {
                         add_dec_row(row, side, i, j);
                     } else {
-                        NormalScalarFluxExtrapolationRule const& flux
-                                = std::get<NormalScalarFluxExtrapolationRule>(rule);
+                        NormalFlux const& flux = std::get<NormalFlux>(rule);
                         wall_flux(row, side, i, j);
                         system.base_rhs[row] += flux.value;
                     }
@@ -427,4 +441,4 @@ CoupledScalarLaplacian2D assemble_coupled_scalar_laplacian(
     return system;
 }
 
-} // namespace sil::exterior
+} // namespace similie::onelab_interface::potential_flow_onelab

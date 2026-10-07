@@ -6,6 +6,8 @@
 
 #include "potential_flow_onelab.hpp"
 
+namespace potential_flow = similie::onelab_interface::potential_flow_onelab;
+
 TEST(PotentialFlow, MappedHarmonicPotential)
 {
     std::size_t const nx = 9;
@@ -14,9 +16,8 @@ TEST(PotentialFlow, MappedHarmonicPotential)
     for (std::size_t j = 0; j < ny; ++j)
         for (std::size_t i = 0; i < nx; ++i)
             positions[j * nx + i] = {static_cast<double>(i) + 0.3 * j, static_cast<double>(j)};
-    similie::onelab_interface::potential_flow_onelab::TensorLaplacianStencils const stencils
-            = similie::onelab_interface::potential_flow_onelab::
-                    conservative_tensor_laplacian_rows(positions, nx, ny);
+    potential_flow::TensorLaplacianStencils const stencils
+            = potential_flow::conservative_tensor_laplacian_rows(positions, nx, ny);
     for (std::size_t j = 1; j + 1 < ny; ++j)
         for (std::size_t i = 1; i + 1 < nx; ++i) {
             double residual = 0.0;
@@ -39,47 +40,36 @@ TEST(PotentialFlow, AffineWallFlux)
 {
     std::size_t const nx = 9;
     std::size_t const ny = 7;
-    std::vector<sil::exterior::ScalarTensorDomain2D> domains(2);
+    std::vector<potential_flow::PotentialFlowPatch> domains(2);
     for (std::size_t side = 0; side < domains.size(); ++side) {
-        sil::exterior::ScalarTensorDomain2D& domain = domains[side];
+        potential_flow::PotentialFlowPatch& domain = domains[side];
         domain.nodes_x = nx;
         domain.nodes_y = ny;
         domain.positions.resize(nx * ny);
-        domain.lower_y.resize(nx, sil::exterior::NormalScalarFluxExtrapolationRule {});
-        domain.upper_y.resize(nx, sil::exterior::NormalScalarFluxExtrapolationRule {});
+        domain.lower_y.resize(nx, potential_flow::NormalFlux {});
+        domain.upper_y.resize(nx, potential_flow::NormalFlux {});
         for (std::size_t j = 0; j < ny; ++j)
             for (std::size_t i = 0; i < nx; ++i)
                 domain.positions[j * nx + i]
                         = {static_cast<double>(side == 0 ? i : nx - 1 - i) + 0.3 * j,
                            static_cast<double>(j)};
-        similie::onelab_interface::potential_flow_onelab::TensorLaplacianStencils const stencils
-                = similie::onelab_interface::potential_flow_onelab::
-                        tensor_laplacian_rows(domain.positions, nx, ny);
+        potential_flow::TensorLaplacianStencils const stencils
+                = potential_flow::tensor_laplacian_rows(domain.positions, nx, ny);
         domain.laplacian_rows = stencils.rows;
         domain.lower_x_flux_rows = stencils.lower_x_flux_rows;
         domain.upper_x_flux_rows = stencils.upper_x_flux_rows;
         domain.lower_y_flux_rows = stencils.lower_y_flux_rows;
         domain.upper_y_flux_rows = stencils.upper_y_flux_rows;
     }
-    std::vector<sil::exterior::ConnectedScalarExtrapolationRule> const connections {
-            {0,
-             sil::exterior::ScalarTraceSide::UpperX,
-             1,
-             sil::exterior::ScalarTraceSide::LowerX,
-             0.0},
-            {1,
-             sil::exterior::ScalarTraceSide::UpperX,
-             0,
-             sil::exterior::ScalarTraceSide::LowerX,
-             0.0}};
-    similie::onelab_interface::potential_flow_onelab::FreeScalarFieldHamiltonian const
-            hamiltonian(0.0, 0.0, 2.0);
+    std::vector<potential_flow::TraceConnection> const connections {
+            {0, potential_flow::TraceSide::UpperX, 1, potential_flow::TraceSide::LowerX, 0.0},
+            {1, potential_flow::TraceSide::UpperX, 0, potential_flow::TraceSide::LowerX, 0.0}};
+    potential_flow::FreeScalarFieldHamiltonian const hamiltonian(0.0, 0.0, 2.0);
     similie::physics::HamiltonEquations const equations(hamiltonian);
-    sil::exterior::CoupledScalarLaplacian2D const system
-            = sil::exterior::assemble_coupled_scalar_laplacian<
-                    similie::onelab_interface::potential_flow_onelab::X,
-                    similie::onelab_interface::potential_flow_onelab::
-                            Y>(domains, connections, equations, 1.0);
+    potential_flow::PotentialFlowSystem const system
+            = potential_flow::assemble_potential_flow_system<
+                    potential_flow::X,
+                    potential_flow::Y>(domains, connections, equations, 1.0);
     std::vector<double> potential(system.rows.size());
     for (std::size_t side = 0; side < domains.size(); ++side)
         for (std::size_t local = 0; local < nx * ny; ++local)
@@ -90,15 +80,14 @@ TEST(PotentialFlow, AffineWallFlux)
             residual += coefficient * potential[column];
         EXPECT_NEAR(residual, system.base_rhs[row], 1.0e-12) << "row=" << row;
     }
-    for (sil::exterior::ScalarTensorDomain2D& domain : domains) {
-        domain.lower_y.assign(nx, sil::exterior::NormalScalarFluxExtrapolationRule {-1.0});
-        domain.upper_y.assign(nx, sil::exterior::NormalScalarFluxExtrapolationRule {1.0});
+    for (potential_flow::PotentialFlowPatch& domain : domains) {
+        domain.lower_y.assign(nx, potential_flow::NormalFlux {-1.0});
+        domain.upper_y.assign(nx, potential_flow::NormalFlux {1.0});
     }
-    sil::exterior::CoupledScalarLaplacian2D const nonzero_flux_system
-            = sil::exterior::assemble_coupled_scalar_laplacian<
-                    similie::onelab_interface::potential_flow_onelab::X,
-                    similie::onelab_interface::potential_flow_onelab::
-                            Y>(domains, connections, equations, 1.0);
+    potential_flow::PotentialFlowSystem const nonzero_flux_system
+            = potential_flow::assemble_potential_flow_system<
+                    potential_flow::X,
+                    potential_flow::Y>(domains, connections, equations, 1.0);
     for (std::size_t side = 0; side < domains.size(); ++side)
         for (std::size_t local = 0; local < nx * ny; ++local)
             potential[nonzero_flux_system.global_index[side][local]]
@@ -117,10 +106,10 @@ class PotentialFlowWallJunctionTest : public ::testing::TestWithParam<bool>
 
 TEST_P(PotentialFlowWallJunctionTest, WallConditionAtConnectedTrace)
 {
-    std::vector<sil::exterior::ScalarTensorDomain2D> domains(4);
-    std::vector<sil::exterior::ConnectedScalarExtrapolationRule> connections;
+    std::vector<potential_flow::PotentialFlowPatch> domains(4);
+    std::vector<potential_flow::TraceConnection> connections;
     for (std::size_t side = 0; side < domains.size(); ++side) {
-        sil::exterior::ScalarTensorDomain2D& domain = domains[side];
+        potential_flow::PotentialFlowPatch& domain = domains[side];
         domain.nodes_x = 3;
         domain.nodes_y = 3;
         domain.positions.resize(9);
@@ -129,12 +118,12 @@ TEST_P(PotentialFlowWallJunctionTest, WallConditionAtConnectedTrace)
         domain.upper_x_flux_rows.resize(3);
         domain.lower_y_flux_rows.resize(3);
         domain.upper_y_flux_rows.resize(3);
-        domain.lower_y.resize(3, sil::exterior::NormalScalarFluxExtrapolationRule {});
-        domain.upper_y.resize(3, sil::exterior::NormalScalarFluxExtrapolationRule {});
+        domain.lower_y.resize(3, potential_flow::NormalFlux {});
+        domain.upper_y.resize(3, potential_flow::NormalFlux {});
         domain.conservative_laplacian_rows = GetParam();
         if (domain.conservative_laplacian_rows) {
-            domain.lower_y.assign(3, sil::exterior::NaturalScalarExtrapolationRule {});
-            domain.upper_y.assign(3, sil::exterior::NaturalScalarExtrapolationRule {});
+            domain.lower_y.assign(3, potential_flow::NaturalBoundary {});
+            domain.upper_y.assign(3, potential_flow::NaturalBoundary {});
         }
         for (std::size_t j = 0; j < 3; ++j) {
             for (std::size_t i = 0; i < 3; ++i) {
@@ -152,19 +141,17 @@ TEST_P(PotentialFlowWallJunctionTest, WallConditionAtConnectedTrace)
         }
         connections.push_back(
                 {side,
-                 sil::exterior::ScalarTraceSide::UpperX,
+                 potential_flow::TraceSide::UpperX,
                  (side + 1) % domains.size(),
-                 sil::exterior::ScalarTraceSide::LowerX,
+                 potential_flow::TraceSide::LowerX,
                  0.0});
     }
-    similie::onelab_interface::potential_flow_onelab::FreeScalarFieldHamiltonian const
-            hamiltonian(0.0, 0.0, 2.0);
+    potential_flow::FreeScalarFieldHamiltonian const hamiltonian(0.0, 0.0, 2.0);
     similie::physics::HamiltonEquations const equations(hamiltonian);
-    sil::exterior::CoupledScalarLaplacian2D const system
-            = sil::exterior::assemble_coupled_scalar_laplacian<
-                    similie::onelab_interface::potential_flow_onelab::X,
-                    similie::onelab_interface::potential_flow_onelab::
-                            Y>(domains, connections, equations, 1.0);
+    potential_flow::PotentialFlowSystem const system
+            = potential_flow::assemble_potential_flow_system<
+                    potential_flow::X,
+                    potential_flow::Y>(domains, connections, equations, 1.0);
     std::vector<double> radial(system.rows.size());
     for (std::size_t side = 0; side < domains.size(); ++side)
         for (std::size_t local = 0; local < 9; ++local)
@@ -180,12 +167,11 @@ TEST_P(PotentialFlowWallJunctionTest, WallConditionAtConnectedTrace)
         }
     // At a Dirichlet/Neumann corner the shared potential is prescribed;
     // the Neumann condition still applies along the neighbouring wall.
-    domains[0].upper_y[2] = sil::exterior::PrescribedScalarExtrapolationRule {7.0};
-    sil::exterior::CoupledScalarLaplacian2D const prescribed_system
-            = sil::exterior::assemble_coupled_scalar_laplacian<
-                    similie::onelab_interface::potential_flow_onelab::X,
-                    similie::onelab_interface::potential_flow_onelab::
-                            Y>(domains, connections, equations, 1.0);
+    domains[0].upper_y[2] = potential_flow::PrescribedPotential {7.0};
+    potential_flow::PotentialFlowSystem const prescribed_system
+            = potential_flow::assemble_potential_flow_system<
+                    potential_flow::X,
+                    potential_flow::Y>(domains, connections, equations, 1.0);
     std::size_t const corner = prescribed_system.global_index[0][8];
     ASSERT_EQ(prescribed_system.rows[corner].size(), 1);
     EXPECT_DOUBLE_EQ(prescribed_system.rows[corner].at(corner), 1.0);

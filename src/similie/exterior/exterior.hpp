@@ -9,7 +9,6 @@
 #include "cochain.hpp"
 #include "codifferential.hpp"
 #include "cosimplex.hpp"
-#include "coupled_scalar_laplacian.hpp"
 #include "covariant_derivative.hpp"
 #include "evaluators.hpp"
 #include "form.hpp"
