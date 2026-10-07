@@ -47,6 +47,12 @@ TensorType codifferential_of_coboundary(
         PrimalExtrapolationRule primal_extrapolation = {},
         DualExtrapolationRule dual_extrapolation = {})
 {
+    auto const primal_extrapolation_rules = make_extrapolation_rules<
+            ddc::type_seq_size_v<ddc::to_type_seq_t<typename TensorType::non_indices_domain_t>>>(
+            primal_extrapolation);
+    auto const dual_extrapolation_rules = make_extrapolation_rules<ddc::type_seq_size_v<
+            ddc::to_type_seq_t<typename DualTensorBufferType::non_indices_domain_t>>>(
+            dual_extrapolation);
     using coboundary_output_index = coboundary_index_t<LaplacianDummyIndex, CochainTag>;
     using codifferential_hodge_output_indices = codifferential_hodge_output_indices_t<
             LaplacianDummyIndex::size() - coboundary_output_index::rank(),
@@ -101,7 +107,7 @@ TensorType codifferential_of_coboundary(
                 Coboundary<LaplacianDummyIndex, CochainTag>::operator()(
                         derivative_tensor,
                         [&](auto sampled_elem, auto cochain_elem) {
-                            return primal_extrapolation(tensor, sampled_elem, cochain_elem);
+                            return primal_extrapolation_rules(tensor, sampled_elem, cochain_elem);
                         },
                         chain,
                         lower_chain,
@@ -134,7 +140,10 @@ TensorType codifferential_of_coboundary(
                 TransposedCoboundary<LaplacianDummyIndex, coboundary_dual_tensor_index>::operator()(
                         dual_codifferential,
                         [&](auto sampled_elem, auto dual_elem) {
-                            return dual_extrapolation(dual_tensor_buffer, sampled_elem, dual_elem);
+                            return dual_extrapolation_rules(
+                                    dual_tensor_buffer,
+                                    sampled_elem,
+                                    dual_elem);
                         },
                         dual_chain,
                         dual_lower_chain,

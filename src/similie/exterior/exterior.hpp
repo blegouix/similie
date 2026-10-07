@@ -11,6 +11,7 @@
 #include "cosimplex.hpp"
 #include "covariant_derivative.hpp"
 #include "evaluators.hpp"
+#include "extrapolation_rules.hpp"
 #include "form.hpp"
 #include "hodge_star.hpp"
 #include "laplacian.hpp"

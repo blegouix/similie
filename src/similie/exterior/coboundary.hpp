@@ -27,6 +27,7 @@
 #include "cochain.hpp"
 #include "cosimplex.hpp"
 #include "evaluators.hpp"
+#include "extrapolation_rules.hpp"
 #include "scalar_extrapolation_rules.hpp"
 
 
@@ -634,9 +635,11 @@ KOKKOS_FUNCTION coboundary_t<CochainType> coboundary(CochainType cochain)
 
 /**
  * Apply the exterior derivative with a callable cochain sampling rule.
- * The rule is invoked as rule(tensor, sampled_element, stored_component) for
- * every stencil sample, including interior samples. It must be copyable and
- * callable in ExecSpace. The output domain selects where to evaluate d; the
+ * A single rule is automatically broadcast to both sides of every non-index
+ * dimension; an ExtrapolationRules policy retains its per-boundary selection.
+ * Exterior rules are invoked as rule(tensor, sampled_element, stored_component),
+ * while interior samples retain their stored values. Rules must be copyable
+ * and callable in ExecSpace. The output domain selects where to evaluate d; the
  * input domain selects which samples require extrapolation. The same contract
  * applies to deriv(), transposed_coboundary(), and the primal and dual stages
  * of laplacian(); codifferential() accepts a rule for its dual Hodge field.
@@ -654,6 +657,9 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
         TensorType tensor,
         ExtrapolationRule extrapolation = {})
 {
+    auto const extrapolation_rules = make_extrapolation_rules<
+            ddc::type_seq_size_v<ddc::to_type_seq_t<typename TensorType::non_indices_domain_t>>>(
+            extrapolation);
     ddc::DiscreteDomain batch_dom
             = ddc::remove_dims_of<coboundary_index_t<TagToAddToCochain, CochainTag>>(
                     coboundary_tensor.domain());
@@ -678,7 +684,7 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
                 Coboundary<TagToAddToCochain, CochainTag>::operator()(
                         coboundary_tensor[elem],
                         [&](auto sampled_elem, auto component) {
-                            return extrapolation(tensor, sampled_elem, component);
+                            return extrapolation_rules(tensor, sampled_elem, component);
                         },
                         chain,
                         lower_chain,
@@ -700,6 +706,9 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> transposed_coboun
         TensorType tensor,
         ExtrapolationRule extrapolation = {})
 {
+    auto const extrapolation_rules = make_extrapolation_rules<
+            ddc::type_seq_size_v<ddc::to_type_seq_t<typename TensorType::non_indices_domain_t>>>(
+            extrapolation);
     ddc::DiscreteDomain batch_dom
             = ddc::remove_dims_of<coboundary_index_t<TagToAddToCochain, CochainTag>>(
                     coboundary_tensor.domain());
@@ -724,7 +733,7 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> transposed_coboun
                 TransposedCoboundary<TagToAddToCochain, CochainTag>::operator()(
                         coboundary_tensor[elem],
                         [&](auto sampled_elem, auto component) {
-                            return extrapolation(tensor, sampled_elem, component);
+                            return extrapolation_rules(tensor, sampled_elem, component);
                         },
                         chain,
                         lower_chain,

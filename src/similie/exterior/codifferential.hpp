@@ -451,6 +451,9 @@ public:
         auto hodge_star = *m_hodge_star;
         auto dual_hodge_star = *m_dual_hodge_star;
         auto dual_tensor_buffer = *m_dual_tensor_buffer;
+        auto const dual_extrapolation_rules = make_extrapolation_rules<ddc::type_seq_size_v<
+                ddc::to_type_seq_t<typename DualTensorType::non_indices_domain_t>>>(
+                dual_extrapolation);
         auto chain = m_chain;
         auto lower_chain = m_lower_chain;
 
@@ -489,7 +492,7 @@ public:
                     TransposedCoboundary<TagToRemoveFromCochain, DualTensorIndex>::operator()(
                             dual_codifferential,
                             [&](auto sampled_elem, auto dual_elem) {
-                                return dual_extrapolation(
+                                return dual_extrapolation_rules(
                                         dual_tensor_buffer,
                                         sampled_elem,
                                         dual_elem);
@@ -566,6 +569,8 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
         DualTensorType dual_tensor_buffer,
         DualExtrapolationRule dual_extrapolation = {})
 {
+    auto const dual_extrapolation_rules = make_extrapolation_rules<ddc::type_seq_size_v<
+            ddc::to_type_seq_t<typename DualTensorType::non_indices_domain_t>>>(dual_extrapolation);
     static_assert(tensor::is_covariant_v<TagToRemoveFromCochain>);
     using source_hodge_output_indices = codifferential_hodge_output_indices_t<
             TagToRemoveFromCochain::size() - CochainTag::rank(),
@@ -615,7 +620,10 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
                 TransposedCoboundary<TagToRemoveFromCochain, dual_tensor_index>::operator()(
                         dual_codifferential,
                         [&](auto sampled_elem, auto dual_elem) {
-                            return dual_extrapolation(dual_tensor_buffer, sampled_elem, dual_elem);
+                            return dual_extrapolation_rules(
+                                    dual_tensor_buffer,
+                                    sampled_elem,
+                                    dual_elem);
                         },
                         chain,
                         lower_chain,
