@@ -297,7 +297,7 @@ jobs:
     uses: ./.github/workflows/example_onelab_potential_flow.yml
     with:
       target_sha: ${{ github.sha }}
-      ci_environment: ${{ github.event_name == 'pull_request' && 'examples-cuda' || 'automatic-ci-run' }}
+      ci_environment: ${{ github.event_name == 'pull_request' && 'onelab_potential-flow-onelab-cuda' || 'automatic-ci-run' }}
 
   example-kretschmann_scalar:
     needs: build-omp-debug
