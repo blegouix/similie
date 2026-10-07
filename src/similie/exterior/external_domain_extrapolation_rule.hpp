@@ -10,6 +10,7 @@
 
 #include <ddc/ddc.hpp>
 
+#include "sampled_cochain.hpp"
 #include "scalar_extrapolation_rules.hpp"
 
 namespace sil::exterior {
@@ -142,6 +143,26 @@ struct ExternalDomainExtrapolationRule
                 neighbor.non_indices_domain(),
                 sampled_element);
         return orientation * target_rule(neighbor, mapped, component) + jump;
+    }
+
+    /** Evaluate a stencil sampler after resolving the donor side and element. */
+    template <class TensorType, class Sampler, class Element, class Component>
+    KOKKOS_FUNCTION double value(
+            TensorType tensor,
+            Sampler sampler,
+            Element sampled_element,
+            Component component) const
+    {
+        if (misc::domain_contains(tensor.non_indices_domain(), sampled_element))
+            return sampler(tensor, sampled_element, component);
+        Element const mapped = boundary_map(
+                tensor.non_indices_domain(),
+                neighbor.non_indices_domain(),
+                sampled_element);
+        return orientation
+                       * detail::EvaluateRuleValue<
+                               Sampler> {sampler}(target_rule, neighbor, mapped, component)
+               + jump;
     }
 };
 

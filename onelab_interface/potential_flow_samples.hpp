@@ -12,8 +12,8 @@
 #include <similie/exterior/coboundary.hpp>
 #include <similie/exterior/external_domain_extrapolation_rule.hpp>
 #include <similie/exterior/extrapolation_rules.hpp>
+#include <similie/multidomains/multidomains.hpp>
 
-#include "potential_flow_connections.hpp"
 #include "potential_flow_grid.hpp"
 
 namespace similie::onelab_interface::potential_flow_onelab {
@@ -36,7 +36,7 @@ struct PotentialFlowSamples
  * one-sided primal continuation supplies the unused outer forward difference.
  * Physical normal flux constraints belong to the assembled nodal balances.
  */
-template <std::size_t PatchCount>
+template <std::size_t PatchCount, class BindDomains>
 PotentialFlowSamples sample_potential_flow_field(
         std::vector<double> const& potential,
         double circulation,
@@ -44,10 +44,9 @@ PotentialFlowSamples sample_potential_flow_field(
         std::size_t radial_nodes,
         std::array<std::size_t, PatchCount> const& starts,
         std::array<std::size_t, PatchCount> const& cells,
-        std::vector<TraceConnection> const& connections)
+        BindDomains bind_domains)
 {
-    if (potential.size() != ring_nodes * radial_nodes || radial_nodes < 2
-        || connections.size() != PatchCount)
+    if (potential.size() != ring_nodes * radial_nodes || radial_nodes < 2)
         throw std::runtime_error("invalid potential-flow sample domains");
     [[maybe_unused]] sil::tensor::TensorAccessor<PotentialIndex> scalar_accessor;
     [[maybe_unused]] sil::tensor::TensorAccessor<GradientIndex> gradient_accessor;
@@ -68,49 +67,20 @@ PotentialFlowSamples sample_potential_flow_field(
                     = potential[elem.uid<GridY>() * ring_nodes + elem.uid<GridX>() % ring_nodes];
         });
     }
-    std::array<std::size_t, PatchCount> lower {}, upper {};
-    std::array<double, PatchCount> lower_jump {}, upper_jump {};
-    std::array<bool, PatchCount> lower_connected {}, upper_connected {};
-    for (TraceConnection const& connection : connections) {
-        if (connection.first_domain >= PatchCount || connection.second_domain >= PatchCount
-            || connection.first_side != TraceSide::UpperX
-            || connection.second_side != TraceSide::LowerX
-            || upper_connected[connection.first_domain]
-            || lower_connected[connection.second_domain])
-            throw std::runtime_error("invalid potential-flow sample connection");
-        upper[connection.first_domain] = connection.second_domain;
-        lower[connection.second_domain] = connection.first_domain;
-        upper_jump[connection.first_domain] = circulation * connection.jump_coefficient;
-        lower_jump[connection.second_domain] = -circulation * connection.jump_coefficient;
-        upper_connected[connection.first_domain] = true;
-        lower_connected[connection.second_domain] = true;
-    }
+    std::vector<
+            sil::tensor::Tensor<double, PotentialDomain, Kokkos::layout_right, Kokkos::HostSpace>>
+            fields;
+    for (std::size_t side = 0; side < PatchCount; ++side)
+        fields.emplace_back(allocations[side]);
+    auto const domains = bind_domains(fields);
     PotentialFlowSamples samples;
     samples.differences.resize(potential.size());
     samples.cell_potentials.resize(potential.size());
-    for (std::size_t side = 0; side < PatchCount; ++side) {
-        if (!lower_connected[side] || !upper_connected[side])
-            throw std::runtime_error("unconnected potential-flow sample trace");
+    domains.for_each_domain([&]<class Node>() {
+        constexpr std::size_t side = Node::id::INDEX;
+        static_assert(side < PatchCount);
         sil::tensor::Tensor field(allocations[side]);
-        sil::exterior::ExtrapolationRules const
-                rules(std::
-                              pair {sil::exterior::ExternalDomainExtrapolationRule {
-                                            sil::tensor::Tensor(allocations[lower[side]]),
-                                            sil::exterior::ExternalDomainBoundaryMap<GridX> {
-                                                    sil::exterior::BoundarySide::Lower,
-                                                    sil::exterior::BoundarySide::Upper,
-                                                    false},
-                                            lower_jump[side]},
-                                    sil::exterior::ExternalDomainExtrapolationRule {
-                                            sil::tensor::Tensor(allocations[upper[side]]),
-                                            sil::exterior::ExternalDomainBoundaryMap<GridX> {
-                                                    sil::exterior::BoundarySide::Upper,
-                                                    sil::exterior::BoundarySide::Lower,
-                                                    false},
-                                            upper_jump[side]}},
-                      std::
-                              pair {sil::exterior::NaturalScalarExtrapolationRule {},
-                                    sil::exterior::NaturalScalarExtrapolationRule {}});
+        auto const rules = domains.template extrapolation_rules<typename Node::id>(circulation);
         ddc::Chunk gradient_allocation(
                 ddc::DiscreteDomain<
                         GridX,
@@ -143,7 +113,7 @@ PotentialFlowSamples sample_potential_flow_field(
                                          elem + ddc::DiscreteVector<GridX, GridY>(0, 1),
                                          ddc::DiscreteElement<PotentialIndex>(0))};
                 });
-    }
+    });
     return samples;
 }
 

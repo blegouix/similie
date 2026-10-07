@@ -20,11 +20,65 @@ TEST(PotentialFlow, ExtrapolatedPatchGradientsAndCirculation)
             potential[j * nx + i] = static_cast<double>(i * i + 2 * j);
     std::array<std::size_t, 2> const starts {0, 3};
     std::array<std::size_t, 2> const cells {3, 3};
-    std::vector<potential_flow::TraceConnection> const connections {
-            {0, potential_flow::TraceSide::UpperX, 1, potential_flow::TraceSide::LowerX, -1.0},
-            {1, potential_flow::TraceSide::UpperX, 0, potential_flow::TraceSide::LowerX, 0.0}};
+    using Graph = sil::multidomains::Topology<
+            ddc::TypeSeq<
+                    sil::multidomains::Domain<
+                            potential_flow::Patch<0>,
+                            potential_flow::PotentialFlowPhysics,
+                            potential_flow::GridX,
+                            potential_flow::GridY>,
+                    sil::multidomains::Domain<
+                            potential_flow::Patch<1>,
+                            potential_flow::PotentialFlowPhysics,
+                            potential_flow::GridX,
+                            potential_flow::GridY>,
+                    sil::multidomains::BoundaryDomain<
+                            potential_flow::Wall,
+                            sil::exterior::NaturalScalarExtrapolationRule>>,
+            sil::multidomains::Connection<
+                    potential_flow::
+                            PatchFace<0, potential_flow::GridX, sil::exterior::BoundarySide::Upper>,
+                    potential_flow::
+                            PatchFace<1, potential_flow::GridX, sil::exterior::BoundarySide::Lower>,
+                    false,
+                    1.0,
+                    -1.0>,
+            sil::multidomains::Connection<
+                    potential_flow::
+                            PatchFace<1, potential_flow::GridX, sil::exterior::BoundarySide::Upper>,
+                    potential_flow::
+                            PatchFace<0, potential_flow::GridX, sil::exterior::BoundarySide::Lower>,
+                    false>,
+            sil::multidomains::BoundaryConnection<
+                    potential_flow::
+                            PatchFace<0, potential_flow::GridY, sil::exterior::BoundarySide::Lower>,
+                    potential_flow::Wall>,
+            sil::multidomains::BoundaryConnection<
+                    potential_flow::
+                            PatchFace<0, potential_flow::GridY, sil::exterior::BoundarySide::Upper>,
+                    potential_flow::Wall>,
+            sil::multidomains::BoundaryConnection<
+                    potential_flow::
+                            PatchFace<1, potential_flow::GridY, sil::exterior::BoundarySide::Lower>,
+                    potential_flow::Wall>,
+            sil::multidomains::BoundaryConnection<
+                    potential_flow::
+                            PatchFace<1, potential_flow::GridY, sil::exterior::BoundarySide::Upper>,
+                    potential_flow::Wall>>;
+    auto bind_domains = [](auto const& fields) {
+        potential_flow::PotentialFlowPhysics const physics(
+                potential_flow::FreeScalarFieldHamiltonian(0.0, 0.0, 2.0));
+        return sil::multidomains::Multidomain(
+                Graph {},
+                sil::multidomains::domain_data<
+                        potential_flow::Patch<0>>(fields[0], fields[0], physics),
+                sil::multidomains::domain_data<
+                        potential_flow::Patch<1>>(fields[1], fields[1], physics),
+                sil::multidomains::boundary_data<potential_flow::Wall>(
+                        sil::exterior::NaturalScalarExtrapolationRule {}));
+    };
     potential_flow::PotentialFlowSamples const samples = potential_flow::
-            sample_potential_flow_field(potential, 5.0, nx, ny, starts, cells, connections);
+            sample_potential_flow_field(potential, 5.0, nx, ny, starts, cells, bind_domains);
     for (std::size_t j = 0; j < ny; ++j)
         for (std::size_t i = 0; i < nx; ++i) {
             std::size_t const next = (i + 1) % nx;

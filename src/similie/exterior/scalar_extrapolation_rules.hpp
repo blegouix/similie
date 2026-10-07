@@ -11,6 +11,8 @@
 #include <similie/misc/clamp_to_domain.hpp>
 #include <similie/misc/domain_contains.hpp>
 
+#include "sampled_cochain.hpp"
+
 namespace sil::exterior {
 
 /**
@@ -31,6 +33,19 @@ struct ClampCochainExtrapolationRule
         return tensor
                 .mem(sil::misc::clamp_to_domain(tensor.non_indices_domain(), sampled_element),
                      component);
+    }
+
+    template <class TensorType, class Sampler, class Element, class Component>
+    KOKKOS_FUNCTION double value(
+            TensorType tensor,
+            Sampler sampler,
+            Element sampled_element,
+            Component component) const
+    {
+        return (*this)(
+                SampledCochain<TensorType, Sampler> {tensor, sampler},
+                sampled_element,
+                component);
     }
 };
 
@@ -53,6 +68,19 @@ struct ZeroCochainExtrapolationRule
             return 0.0;
         return tensor.mem(sampled_element, component);
     }
+
+    template <class TensorType, class Sampler, class Element, class Component>
+    KOKKOS_FUNCTION double value(
+            TensorType tensor,
+            Sampler sampler,
+            Element sampled_element,
+            Component component) const
+    {
+        return (*this)(
+                SampledCochain<TensorType, Sampler> {tensor, sampler},
+                sampled_element,
+                component);
+    }
 };
 
 /**
@@ -64,7 +92,7 @@ struct ZeroCochainExtrapolationRule
 struct PrescribedScalarExtrapolationRule
 {
     static constexpr bool IS_DIRICHLET = true;
-    double value;
+    double prescribed_value;
 
     template <class TensorType, class Element, class Component>
     KOKKOS_FUNCTION double operator()(
@@ -73,8 +101,21 @@ struct PrescribedScalarExtrapolationRule
             Component component) const
     {
         if (!sil::misc::domain_contains(tensor.non_indices_domain(), sampled_element))
-            return value;
+            return prescribed_value;
         return tensor.mem(sampled_element, component);
+    }
+
+    template <class TensorType, class Sampler, class Element, class Component>
+    KOKKOS_FUNCTION double value(
+            TensorType tensor,
+            Sampler sampler,
+            Element sampled_element,
+            Component component) const
+    {
+        return (*this)(
+                SampledCochain<TensorType, Sampler> {tensor, sampler},
+                sampled_element,
+                component);
     }
 };
 
@@ -87,7 +128,7 @@ struct PrescribedScalarExtrapolationRule
  */
 struct NormalScalarFluxExtrapolationRule
 {
-    double value = 0.0;
+    double flux_value = 0.0;
 
     template <class TensorType, class Element, class Component>
     KOKKOS_FUNCTION double operator()(
@@ -95,7 +136,20 @@ struct NormalScalarFluxExtrapolationRule
             Element sampled_element,
             Component component) const
     {
-        return PrescribedScalarExtrapolationRule {value}(tensor, sampled_element, component);
+        return PrescribedScalarExtrapolationRule {flux_value}(tensor, sampled_element, component);
+    }
+
+    template <class TensorType, class Sampler, class Element, class Component>
+    KOKKOS_FUNCTION double value(
+            TensorType tensor,
+            Sampler sampler,
+            Element sampled_element,
+            Component component) const
+    {
+        return (*this)(
+                SampledCochain<TensorType, Sampler> {tensor, sampler},
+                sampled_element,
+                component);
     }
 };
 
@@ -149,6 +203,19 @@ struct NaturalScalarExtrapolationRule
         }
         return result;
     }
+
+    template <class TensorType, class Sampler, class Element, class Component>
+    KOKKOS_FUNCTION double value(
+            TensorType tensor,
+            Sampler sampler,
+            Element sampled_element,
+            Component component) const
+    {
+        return (*this)(
+                SampledCochain<TensorType, Sampler> {tensor, sampler},
+                sampled_element,
+                component);
+    }
 };
 
 /**
@@ -176,6 +243,22 @@ struct ConnectedScalarExtrapolationRule
         if (sil::misc::domain_contains(tensor.non_indices_domain(), sampled_element))
             return tensor.mem(sampled_element, component);
         return trace_map(neighbor, sampled_element, component) + jump;
+    }
+
+    template <class TensorType, class Sampler, class Element, class Component>
+    KOKKOS_FUNCTION double value(
+            TensorType tensor,
+            Sampler sampler,
+            Element sampled_element,
+            Component component) const
+    {
+        if (sil::misc::domain_contains(tensor.non_indices_domain(), sampled_element))
+            return sampler(tensor, sampled_element, component);
+        return trace_map(
+                       SampledCochain<NeighborTensor, Sampler> {neighbor, sampler},
+                       sampled_element,
+                       component)
+               + jump;
     }
 };
 

@@ -24,9 +24,9 @@
 #include <similie/solvers/sparse_linear_operator.hpp>
 
 #include "gmsh_structured_grid.hpp"
-#include "potential_flow_connections.hpp"
 #include "potential_flow_grid.hpp"
 #include "potential_flow_samples.hpp"
+#include "potential_flow_topology.hpp"
 
 namespace similie::onelab_interface::potential_flow_onelab {
 
@@ -52,18 +52,6 @@ struct Result
     std::size_t cell_count = 0;
     solvers::StrongFormulationSolverDiagnostics solver_diagnostics;
 };
-
-struct X
-{
-};
-struct Y
-{
-};
-struct T
-{
-};
-using FreeScalarFieldHamiltonian
-        = physics::scalar_field::ScalarFieldWithPowerCouplingHamiltonian<T, X, Y>;
 
 inline Result run(
         std::filesystem::path const& mesh_file,
@@ -174,14 +162,8 @@ inline Result run(
             half_patch_cells,
             cells_per_patch_i,
             half_patch_cells};
-    std::vector<TraceConnection> const connections {
-            {0, TraceSide::UpperX, 1, TraceSide::LowerX, 0.0},
-            {1, TraceSide::UpperX, 2, TraceSide::LowerX, 0.0},
-            {2, TraceSide::UpperX, 3, TraceSide::LowerX, -1.0},
-            {3, TraceSide::UpperX, 4, TraceSide::LowerX, 0.0},
-            {4, TraceSide::UpperX, 5, TraceSide::LowerX, 0.0},
-            {5, TraceSide::UpperX, 0, TraceSide::LowerX, 0.0},
-    };
+    FreeScalarFieldHamiltonian const hamiltonian(0.0, 0.0, 2.0);
+    PotentialFlowPhysics const equations(hamiltonian);
     [[maybe_unused]] sil::tensor::TensorAccessor<PositionIndex> position_accessor;
     std::vector<ddc::Chunk<double, PositionDomain, ddc::HostAllocator<double>>>
             position_allocations;
@@ -203,76 +185,67 @@ inline Result run(
             global_indices[side].push_back(index(elem.uid<GridX>(), elem.uid<GridY>()));
         });
     }
-    // The example supplies geometry, global numbering, and boundary policies.
-    // All cell equations, affine interface contributions and nodal constraints
-    // are assembled by the library through those policies' operator() calls.
+    std::vector<
+            sil::tensor::Tensor<double, PositionDomain, Kokkos::layout_right, Kokkos::HostSpace>>
+            positions;
+    for (std::size_t side = 0; side < side_start.size(); ++side)
+        positions.emplace_back(position_allocations[side]);
+    // Mesh tags must agree with the boundary nodes declared by the static graph.
+    PotentialFlowTopology::for_each_domain([&]<class Node>() {
+        constexpr std::size_t side = Node::id::INDEX;
+        using Edge = PotentialFlowTopology::connection<
+                PatchFace<side, GridY, sil::exterior::BoundarySide::Upper>>;
+        using BoundaryId = typename Edge::second::domain_id;
+        constexpr int expected = std::is_same_v<BoundaryId, Upstream>
+                                         ? 10
+                                         : (std::is_same_v<BoundaryId, Downstream> ? 11 : 0);
+        for (std::size_t i = 0; i < side_cells[side]; ++i)
+            if (outer_boundary[(side_start[side] + i) % ni] != expected)
+                throw std::runtime_error(
+                        "mesh boundary tags disagree with the potential-flow topology");
+    });
     auto assemble = [&](double jump_scale, double prescribed_scale) {
         solvers::AffineScalarSystem system(node_count);
         std::vector<solvers::IndexedScalarField<GridX, GridY>> fields;
         for (std::size_t side = 0; side < side_start.size(); ++side)
             fields.push_back(
-                    {sil::tensor::Tensor(position_allocations[side]).non_indices_domain(),
+                    {positions[side].non_indices_domain(),
                      global_indices[side].data(),
                      system.probe_state()});
-        for (std::size_t side = 0; side < fields.size(); ++side) {
-            std::size_t const lower = (side + fields.size() - 1) % fields.size();
-            std::size_t const upper = (side + 1) % fields.size();
-            sil::exterior::ExternalDomainBoundaryMap<GridX> const lower_map {
-                    sil::exterior::BoundarySide::Lower,
-                    sil::exterior::BoundarySide::Upper,
-                    false};
-            sil::exterior::ExternalDomainBoundaryMap<GridX> const upper_map {
-                    sil::exterior::BoundarySide::Upper,
-                    sil::exterior::BoundarySide::Lower,
-                    false};
-            sil::tensor::Tensor position(position_allocations[side]);
-            sil::exterior::ExtrapolationRules const geometry_rules(
-                    std::
-                            pair {sil::exterior::ExternalDomainExtrapolationRule {
-                                          sil::tensor::Tensor(position_allocations[lower]),
-                                          lower_map},
-                                  sil::exterior::ExternalDomainExtrapolationRule {
-                                          sil::tensor::Tensor(position_allocations[upper]),
-                                          upper_map}},
-                    std::
-                            pair {sil::exterior::ClampCochainExtrapolationRule {},
-                                  sil::exterior::ClampCochainExtrapolationRule {}});
-            auto append_patch = [&](auto upper_rule) {
-                sil::exterior::ExtrapolationRules const primal_rules(
-                        std::
-                                pair {sil::exterior::ExternalDomainExtrapolationRule {
-                                              fields[lower],
-                                              lower_map,
-                                              -jump_scale * connections[lower].jump_coefficient},
-                                      sil::exterior::ExternalDomainExtrapolationRule {
-                                              fields[upper],
-                                              upper_map,
-                                              jump_scale * connections[side].jump_coefficient}},
-                        std::pair {sil::exterior::NaturalScalarExtrapolationRule {}, upper_rule});
-                solvers::assemble_integrated_laplacian(
-                        system,
-                        fields[side].grid.remove_last(ddc::DiscreteVector<GridX, GridY>(0, 1)),
-                        fields[side],
-                        position,
-                        primal_rules,
-                        geometry_rules,
-                        sil::exterior::NormalScalarFluxExtrapolationRule {},
-                        inputs.density);
-            };
-            int const outer_tag = outer_boundary[side_start[side] % ni];
-            for (std::size_t i = 0; i < side_cells[side]; ++i)
-                if (outer_boundary[(side_start[side] + i) % ni] != outer_tag)
-                    throw std::runtime_error("outer boundary rule is not uniform on a patch");
-            if (outer_tag == 10 || outer_tag == 11)
-                append_patch(
-                        sil::exterior::PrescribedScalarExtrapolationRule {
-                                prescribed_scale
-                                * prescribed[index(side_start[side] + 1, nodes_j - 1)]});
-            else
-                append_patch(sil::exterior::NaturalScalarExtrapolationRule {});
-        }
+        auto const domains = bind_potential_flow_domains(
+                fields,
+                positions,
+                equations,
+                0.0,
+                prescribed_scale * inputs.velocity * inputs.box_size);
+        PotentialFlowTopology::for_each_domain([&]<class Node>() {
+            solvers::assemble_integrated_laplacian(
+                    system,
+                    domains.template field<typename Node::id>().grid.remove_last(
+                            ddc::DiscreteVector<GridX, GridY>(0, 1)),
+                    domains.template field<typename Node::id>(),
+                    domains.template field<
+                            typename Node::id,
+                            sil::multidomains::FieldRole::Geometry>(),
+                    domains.template extrapolation_rules<typename Node::id>(jump_scale),
+                    domains.template extrapolation_rules<
+                            typename Node::id,
+                            sil::multidomains::FieldRole::Geometry>(),
+                    domains.template extrapolation_rules<
+                            typename Node::id,
+                            sil::multidomains::FieldRole::Flux>(),
+                    inputs.density);
+        });
         system.finalize();
         return system;
+    };
+    auto bind_samples = [&](auto const& fields) {
+        return bind_potential_flow_domains(
+                fields,
+                positions,
+                equations,
+                0.0,
+                inputs.velocity * inputs.box_size);
     };
     solvers::AffineScalarSystem const system = assemble(0.0, 1.0);
     std::vector<double> const jump_rhs = [&]() {
@@ -288,8 +261,6 @@ inline Result run(
     solvers::StrongFormulationSolverDiagnostics cut_diagnostics;
     std::vector<double> const response_ring
             = solvers::solve_linear_system(matrix, jump_rhs, settings, cut_diagnostics);
-    FreeScalarFieldHamiltonian const hamiltonian(0.0, 0.0, 2.0);
-    physics::HamiltonEquations const equations(hamiltonian);
     PotentialFlowSamples const base_samples = sample_potential_flow_field(
             base_ring,
             0.0,
@@ -297,7 +268,7 @@ inline Result run(
             nodes_j,
             side_start,
             side_cells,
-            connections);
+            bind_samples);
     PotentialFlowSamples const response_samples = sample_potential_flow_field(
             response_ring,
             1.0,
@@ -305,7 +276,7 @@ inline Result run(
             nodes_j,
             side_start,
             side_cells,
-            connections);
+            bind_samples);
     auto velocity = [&](PotentialFlowSamples const& samples,
                         std::size_t i,
                         std::size_t j,
@@ -424,7 +395,7 @@ inline Result run(
             nodes_j,
             side_start,
             side_cells,
-            connections);
+            bind_samples);
     std::ofstream output(output_file);
     if (!output)
         throw std::runtime_error("cannot write potential-flow Gmsh view");

@@ -14,6 +14,8 @@
 #include <similie/misc/specialization.hpp>
 #include <similie/misc/type_seq_conversion.hpp>
 
+#include "sampled_cochain.hpp"
+
 namespace sil::exterior {
 
 namespace detail {
@@ -27,8 +29,9 @@ class ExtrapolationRulesStorage<Dimension>
 public:
     KOKKOS_DEFAULTED_FUNCTION ExtrapolationRulesStorage() = default;
 
-    template <class TensorType, class Element, class Component>
-    KOKKOS_FUNCTION void accumulate(TensorType, Element, Component, double&, double&) const
+    template <class TensorType, class Element, class Component, class Evaluate>
+    KOKKOS_FUNCTION void accumulate(TensorType, Element, Component, double&, double&, Evaluate)
+            const
     {
     }
 };
@@ -63,13 +66,14 @@ public:
         }
     }
 
-    template <class TensorType, class Element, class Component>
+    template <class TensorType, class Element, class Component, class Evaluate>
     KOKKOS_FUNCTION void accumulate(
             TensorType tensor,
             Element sampled_element,
             Component component,
             double& weighted_value,
-            double& total_distance) const
+            double& total_distance,
+            Evaluate evaluate) const
     {
         using DDim = ddc::type_seq_element_t<
                 Dimension,
@@ -81,16 +85,23 @@ public:
         ddc::DiscreteVector<DDim> const offset = sampled - front;
         if (offset.template get<DDim>() < 0) {
             double const distance = -static_cast<double>(offset.template get<DDim>());
-            weighted_value += distance * m_rules.first(tensor, sampled_element, component);
+            weighted_value
+                    += distance * evaluate(m_rules.first, tensor, sampled_element, component);
             total_distance += distance;
         } else if (sampled.template uid<DDim>() > back.template uid<DDim>()) {
             double const distance
                     = static_cast<double>(sampled.template uid<DDim>() - back.template uid<DDim>());
-            weighted_value += distance * m_rules.second(tensor, sampled_element, component);
+            weighted_value
+                    += distance * evaluate(m_rules.second, tensor, sampled_element, component);
             total_distance += distance;
         }
-        m_other_rules
-                .accumulate(tensor, sampled_element, component, weighted_value, total_distance);
+        m_other_rules.accumulate(
+                tensor,
+                sampled_element,
+                component,
+                weighted_value,
+                total_distance,
+                evaluate);
     }
 };
 
@@ -178,7 +189,45 @@ public:
             return tensor.mem(element, component);
         double weighted_value = 0.0;
         double total_distance = 0.0;
-        m_rules.accumulate(tensor, element, component, weighted_value, total_distance);
+        m_rules.accumulate(
+                tensor,
+                element,
+                component,
+                weighted_value,
+                total_distance,
+                detail::EvaluateRule {});
+        return weighted_value / total_distance;
+    }
+
+    /** Evaluate a basis/stencil sampler through the same face and corner rules.
+     * The sampler receives the mapped donor field, including its domain tag.
+     */
+    template <class TensorType, class Sampler, class Element, class Component>
+    KOKKOS_FUNCTION double value(
+            TensorType tensor,
+            Sampler sampler,
+            Element sampled_element,
+            Component component) const
+    {
+        static_assert(
+                sizeof...(RulePairs)
+                == ddc::type_seq_size_v<
+                        ddc::to_type_seq_t<typename TensorType::non_indices_domain_t>>);
+        misc::convert_type_seq_to_t<
+                ddc::DiscreteElement,
+                ddc::type_seq_remove_t<
+                        ddc::to_type_seq_t<typename TensorType::discrete_domain_type>,
+                        ddc::to_type_seq_t<Component>>> const element(sampled_element);
+        if (misc::domain_contains(tensor.non_indices_domain(), element))
+            return sampler(tensor, element, component);
+        double weighted_value = 0.0, total_distance = 0.0;
+        m_rules.accumulate(
+                tensor,
+                element,
+                component,
+                weighted_value,
+                total_distance,
+                detail::EvaluateRuleValue<Sampler> {sampler});
         return weighted_value / total_distance;
     }
 };
