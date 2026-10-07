@@ -54,6 +54,78 @@ struct TensorLaplacianStencils
 };
 
 /**
+ * Assemble the conservative scalar operator on mapped bilinear quadrilaterals.
+ * \important This operator and documentation are fully AI-generated.
+ *
+ * Each cell contributes the energy integral grad(N_a).grad(N_b), evaluated
+ * with two-point Gauss quadrature in each logical direction. Transforming
+ * both derivatives with the full inverse Jacobian retains the mixed metric
+ * terms on skew cells. The rows are integrated nodal balances: connected
+ * patches must add their rows, and an unforced exterior face has zero normal
+ * flux. Prescribed potentials are imposed separately by the coupled assembler.
+ */
+inline TensorLaplacianStencils conservative_tensor_laplacian_rows(
+        std::vector<std::array<double, 2>> const& positions,
+        std::size_t nodes_x,
+        std::size_t nodes_y)
+{
+    if (nodes_x < 2 || nodes_y < 2 || positions.size() != nodes_x * nodes_y)
+        throw std::runtime_error("invalid tensor-domain position count");
+    TensorLaplacianStencils stencils;
+    stencils.rows.resize(positions.size());
+    stencils.lower_x_flux_rows.resize(nodes_y);
+    stencils.upper_x_flux_rows.resize(nodes_y);
+    stencils.lower_y_flux_rows.resize(nodes_x);
+    stencils.upper_y_flux_rows.resize(nodes_x);
+    double const gauss = 1.0 / std::sqrt(3.0);
+    for (std::size_t j = 0; j + 1 < nodes_y; ++j)
+        for (std::size_t i = 0; i + 1 < nodes_x; ++i) {
+            std::array<std::size_t, 4> const
+                    nodes {j * nodes_x + i,
+                           j * nodes_x + i + 1,
+                           (j + 1) * nodes_x + i + 1,
+                           (j + 1) * nodes_x + i};
+            int orientation = 0;
+            for (double const xi : {-gauss, gauss})
+                for (double const eta : {-gauss, gauss}) {
+                    std::array<double, 4> const
+                            dxi {-(1.0 - eta) / 4.0,
+                                 (1.0 - eta) / 4.0,
+                                 (1.0 + eta) / 4.0,
+                                 -(1.0 + eta) / 4.0};
+                    std::array<double, 4> const
+                            deta {-(1.0 - xi) / 4.0,
+                                  -(1.0 + xi) / 4.0,
+                                  (1.0 + xi) / 4.0,
+                                  (1.0 - xi) / 4.0};
+                    double tx = 0.0, ty = 0.0, rx = 0.0, ry = 0.0;
+                    for (std::size_t a = 0; a < nodes.size(); ++a) {
+                        tx += dxi[a] * positions[nodes[a]][0];
+                        ty += dxi[a] * positions[nodes[a]][1];
+                        rx += deta[a] * positions[nodes[a]][0];
+                        ry += deta[a] * positions[nodes[a]][1];
+                    }
+                    double const determinant = tx * ry - ty * rx;
+                    int const sign = determinant > 0.0 ? 1 : -1;
+                    if (std::abs(determinant) <= 1.0e-14 * std::hypot(tx, ty) * std::hypot(rx, ry)
+                        || (orientation != 0 && orientation != sign))
+                        throw std::runtime_error("degenerate or folded potential-flow quad");
+                    orientation = sign;
+                    std::array<double, 4> gx {}, gy {};
+                    for (std::size_t a = 0; a < nodes.size(); ++a) {
+                        gx[a] = (ry * dxi[a] - ty * deta[a]) / determinant;
+                        gy[a] = (tx * deta[a] - rx * dxi[a]) / determinant;
+                    }
+                    for (std::size_t a = 0; a < nodes.size(); ++a)
+                        for (std::size_t b = 0; b < nodes.size(); ++b)
+                            stencils.rows[nodes[a]][nodes[b]]
+                                    += std::abs(determinant) * (gx[a] * gx[b] + gy[a] * gy[b]);
+                }
+        }
+    return stencils;
+}
+
+/**
  * Extract the local stencil of the SimiLie scalar DEC Laplacian on one mapped
  * structured tensor domain.
  * \important This operator and documentation are fully AI-generated.

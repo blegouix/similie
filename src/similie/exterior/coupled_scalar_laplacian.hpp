@@ -33,6 +33,7 @@ struct ScalarTensorDomain2D
     std::vector<std::size_t> ordering_key;
     std::vector<ScalarBoundaryExtrapolationRule> lower_y;
     std::vector<ScalarBoundaryExtrapolationRule> upper_y;
+    bool conservative_laplacian_rows = false;
 };
 
 /**
@@ -271,6 +272,20 @@ CoupledScalarLaplacian2D assemble_coupled_scalar_laplacian(
         add(row, side, ri0, rj0, -transverse_weight);
     };
 
+    auto wall_flux = [&](std::size_t row, std::size_t side, std::size_t i, std::size_t j) {
+        ScalarTensorDomain2D const& domain = domains[side];
+        std::size_t const i0 = i == 0 ? 0 : i - 1;
+        std::size_t const i1 = i + 1 == domain.nodes_x ? i : i + 1;
+        std::size_t const inner_j = j == 0 ? 1 : j - 1;
+        std::array<double, 2> const p0 = position(side, i0, j);
+        std::array<double, 2> const p1 = position(side, i1, j);
+        std::array<double, 2> const wall = position(side, i, j);
+        std::array<double, 2> const inner = position(side, i, inner_j);
+        double const determinant
+                = (p1[0] - p0[0]) * (inner[1] - wall[1]) - (p1[1] - p0[1]) * (inner[0] - wall[0]);
+        normal_flux(row, side, i0, j, i1, j, i, j, i, inner_j, determinant > 0.0 ? 1.0 : -1.0);
+    };
+
     for (std::size_t side = 0; side < domains.size(); ++side) {
         ScalarTensorDomain2D const& domain = domains[side];
         for (std::size_t i = 1; i + 1 < domain.nodes_x; ++i)
@@ -296,24 +311,8 @@ CoupledScalarLaplacian2D assemble_coupled_scalar_laplacian(
                     add_dec_row(row, side, i, j);
                 } else {
                     auto const& flux = std::get<NormalScalarFluxExtrapolationRule>(rule);
-                    if (flux.value == 0.0) {
-                        std::map<std::size_t, double> const& flux_row
-                                = boundary_id == 0 ? domain.lower_y_flux_rows[i]
-                                                   : domain.upper_y_flux_rows[i];
-                        if (flux_row.empty())
-                            throw std::runtime_error("missing DEC scalar wall flux row");
-                        for (auto const& [column, coefficient] : flux_row)
-                            add(row,
-                                side,
-                                column % domain.nodes_x,
-                                column / domain.nodes_x,
-                                coefficient);
-                    } else {
-                        std::size_t const inner_j = j == 0 ? 1 : j - 1;
-                        std::size_t const outer_j = j == 0 ? 0 : j;
-                        normal_flux(row, side, i - 1, j, i + 1, j, i, inner_j, i, outer_j, 1.0);
-                        system.base_rhs[row] = flux.value;
-                    }
+                    wall_flux(row, side, i, j);
+                    system.base_rhs[row] = flux.value;
                 }
             }
     }
@@ -323,6 +322,9 @@ CoupledScalarLaplacian2D assemble_coupled_scalar_laplacian(
         if (connection.first_side != ScalarTraceSide::UpperX
             || connection.second_side != ScalarTraceSide::LowerX)
             throw std::runtime_error("connected scalar traces must meet upper X to lower X");
+        if (domains[first].conservative_laplacian_rows
+            != domains[second].conservative_laplacian_rows)
+            throw std::runtime_error("connected scalar domains use different row conventions");
         std::size_t const first_i = trace_i(first, connection.first_side);
         std::size_t const second_i = trace_i(second, connection.second_side);
         for (std::size_t j = 0; j < domains[first].nodes_y; ++j)
@@ -359,19 +361,54 @@ CoupledScalarLaplacian2D assemble_coupled_scalar_laplacian(
                     }
                     continue;
                 }
+                // At a wall endpoint the shared unknown still needs a wall
+                // equation. Matching the interface flux here would drop both
+                // physical boundary rules.
+                for (std::size_t const side : {first, second}) {
+                    ScalarTensorDomain2D const& domain = domains[side];
+                    std::size_t const i = side == first ? first_i : second_i;
+                    ScalarBoundaryExtrapolationRule const& rule
+                            = side == first ? first_rule : second_rule;
+                    if (std::holds_alternative<NaturalScalarExtrapolationRule>(rule)) {
+                        add_dec_row(row, side, i, j);
+                    } else {
+                        NormalScalarFluxExtrapolationRule const& flux
+                                = std::get<NormalScalarFluxExtrapolationRule>(rule);
+                        wall_flux(row, side, i, j);
+                        system.base_rhs[row] += flux.value;
+                    }
+                }
+                continue;
             }
-            for (auto const& [column, coefficient] : domains[first].upper_x_flux_rows[j])
-                add(row,
+            if (domains[first].conservative_laplacian_rows) {
+                add_dec_row(row, first, first_i, j);
+                add_dec_row(row, second, second_i, j);
+                continue;
+            }
+            normal_flux(
+                    row,
                     first,
-                    column % domains[first].nodes_x,
-                    column / domains[first].nodes_x,
-                    coefficient);
-            for (auto const& [column, coefficient] : domains[second].lower_x_flux_rows[j])
-                add(row,
+                    first_i,
+                    j - 1,
+                    first_i,
+                    j + 1,
+                    first_i - 1,
+                    j,
+                    first_i,
+                    j,
+                    1.0);
+            normal_flux(
+                    row,
                     second,
-                    column % domains[second].nodes_x,
-                    column / domains[second].nodes_x,
-                    -coefficient);
+                    second_i,
+                    j - 1,
+                    second_i,
+                    j + 1,
+                    second_i,
+                    j,
+                    second_i + 1,
+                    j,
+                    -1.0);
         }
     }
     for (std::size_t row = 0; row < global_size; ++row) {

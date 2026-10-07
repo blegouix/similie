@@ -294,10 +294,7 @@ inline Result run(
         domain.positions.resize(side_nodes * nodes_j);
         domain.ordering_key.resize(side_nodes * nodes_j);
         sil::exterior::ScalarBoundaryExtrapolationRule const free_boundary
-                = inputs.airfoil ? sil::exterior::ScalarBoundaryExtrapolationRule(
-                                           sil::exterior::NormalScalarFluxExtrapolationRule {})
-                                 : sil::exterior::ScalarBoundaryExtrapolationRule(
-                                           sil::exterior::NaturalScalarExtrapolationRule {});
+                = sil::exterior::NaturalScalarExtrapolationRule {};
         domain.lower_y.resize(side_nodes, free_boundary);
         domain.upper_y.resize(side_nodes, free_boundary);
         for (std::size_t i = 0; i < side_nodes; ++i) {
@@ -315,7 +312,8 @@ inline Result run(
                         = sil::exterior::PrescribedScalarExtrapolationRule {prescribed[outer]};
         }
         TensorLaplacianStencils const stencils
-                = tensor_laplacian_rows(domain.positions, side_nodes, nodes_j);
+                = conservative_tensor_laplacian_rows(domain.positions, side_nodes, nodes_j);
+        domain.conservative_laplacian_rows = true;
         domain.laplacian_rows = stencils.rows;
         domain.lower_x_flux_rows = stencils.lower_x_flux_rows;
         domain.upper_x_flux_rows = stencils.upper_x_flux_rows;
