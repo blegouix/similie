@@ -18,17 +18,15 @@
 
 #include <ddc/ddc.hpp>
 
-#include <ginkgo/core/base/matrix_data.hpp>
 #include <similie/physics/hamilton_equations.hpp>
 #include <similie/physics/scalar_field/scalar_field_with_power_coupling.hpp>
-#include <similie/solvers/minimize_strong_formulation_residual.hpp>
-
-#include <Kokkos_Core.hpp>
+#include <similie/solvers/affine_scalar_system.hpp>
+#include <similie/solvers/sparse_linear_operator.hpp>
 
 #include "gmsh_structured_grid.hpp"
+#include "potential_flow_connections.hpp"
+#include "potential_flow_grid.hpp"
 #include "potential_flow_samples.hpp"
-#include "potential_flow_system.hpp"
-#include "potential_flow_tensor_laplacian.hpp"
 
 namespace similie::onelab_interface::potential_flow_onelab {
 
@@ -66,117 +64,6 @@ struct T
 };
 using FreeScalarFieldHamiltonian
         = physics::scalar_field::ScalarFieldWithPowerCouplingHamiltonian<T, X, Y>;
-
-class SparseDecLaplacian
-{
-    Kokkos::View<int*> m_offsets;
-    Kokkos::View<int*> m_columns;
-    Kokkos::View<double*> m_values;
-    std::size_t m_size;
-
-public:
-    static constexpr bool IS_LINEAR = true;
-    static constexpr bool IS_SYMMETRIC = false;
-
-    explicit SparseDecLaplacian(std::vector<std::map<std::size_t, double>> const& rows)
-        : m_offsets("potential_flow_dec_offsets", rows.size() + 1)
-        , m_columns(
-                  "potential_flow_dec_columns",
-                  [&]() {
-                      std::size_t count = 0;
-                      for (auto const& row : rows)
-                          count += row.size();
-                      return count;
-                  }())
-        , m_values("potential_flow_dec_values", m_columns.extent(0))
-        , m_size(rows.size())
-    {
-        auto offsets = Kokkos::create_mirror_view(m_offsets);
-        auto columns = Kokkos::create_mirror_view(m_columns);
-        auto values = Kokkos::create_mirror_view(m_values);
-        std::size_t slot = 0;
-        for (std::size_t row = 0; row < rows.size(); ++row) {
-            offsets(row) = static_cast<int>(slot);
-            for (auto const& [column, value] : rows[row]) {
-                columns(slot) = static_cast<int>(column);
-                values(slot) = value;
-                ++slot;
-            }
-        }
-        offsets(rows.size()) = static_cast<int>(slot);
-        Kokkos::deep_copy(m_offsets, offsets);
-        Kokkos::deep_copy(m_columns, columns);
-        Kokkos::deep_copy(m_values, values);
-    }
-
-    [[nodiscard]] std::size_t size() const
-    {
-        return m_size;
-    }
-
-    template <class ExecSpace, class InputView, class OutputView>
-    void apply(ExecSpace exec_space, InputView input, OutputView output) const
-    {
-        auto const offsets = m_offsets;
-        auto const columns = m_columns;
-        auto const values = m_values;
-        Kokkos::parallel_for(
-                "potential_flow_dec_laplacian",
-                Kokkos::RangePolicy<ExecSpace>(exec_space, 0, m_size),
-                KOKKOS_LAMBDA(std::size_t row) {
-                    double sum = 0.0;
-                    for (int slot = offsets(row); slot < offsets(row + 1); ++slot)
-                        sum += values(slot) * input(columns(slot), 0);
-                    output(row, 0) = sum;
-                });
-        exec_space.fence();
-    }
-
-    friend gko::matrix_data<double, gko::int32> assemble_matrix_data(
-            SparseDecLaplacian const& matrix)
-    {
-        gko::matrix_data<double, gko::int32> data(gko::dim<2>(matrix.m_size, matrix.m_size));
-        auto const offsets
-                = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), matrix.m_offsets);
-        auto const columns
-                = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), matrix.m_columns);
-        auto const values
-                = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), matrix.m_values);
-        for (std::size_t row = 0; row < matrix.m_size; ++row)
-            for (int slot = offsets(row); slot < offsets(row + 1); ++slot)
-                data.nonzeros
-                        .emplace_back(static_cast<gko::int32>(row), columns(slot), values(slot));
-        return data;
-    }
-};
-
-inline std::vector<double> solve_system(
-        SparseDecLaplacian const& matrix,
-        std::vector<double> const& values,
-        solvers::StrongFormulationSolverSettings const& settings,
-        solvers::StrongFormulationSolverDiagnostics& diagnostics)
-{
-    Kokkos::View<double**> rhs("potential_flow_rhs", values.size(), 1);
-    Kokkos::View<double**> solution("potential_flow_solution", values.size(), 1);
-    auto host = Kokkos::create_mirror_view(rhs);
-    for (std::size_t i = 0; i < values.size(); ++i)
-        host(i, 0) = values[i];
-    Kokkos::deep_copy(rhs, host);
-    diagnostics = solvers::minimize_strong_formulation_residual(
-            Kokkos::DefaultExecutionSpace(),
-            matrix,
-            rhs,
-            solution,
-            settings);
-    if (!std::isfinite(diagnostics.final_relative_residual)
-        || diagnostics.final_relative_residual > settings.relative_tolerance * 10.0)
-        throw std::runtime_error("potential-flow DEC solve did not converge");
-    auto const solved = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), solution);
-    std::vector<double> result(values.size());
-    for (std::size_t i = 0; i < values.size(); ++i)
-        result[i] = solved(i, 0);
-    return result;
-}
 
 inline Result run(
         std::filesystem::path const& mesh_file,
@@ -242,11 +129,18 @@ inline Result run(
     };
     std::vector<int> boundary(node_count, 0);
     std::vector<double> prescribed(node_count, 0.0);
+    std::vector<int> outer_boundary(ni, 0);
     bool has_cut = false;
     for (auto const& edge : mesh.boundary_edges) {
         has_cut |= edge.physical_tag == 13;
         if (edge.physical_tag != 10 && edge.physical_tag != 11)
             continue;
+        std::size_t const first = logical_index.at(edge.node_tags[0]);
+        std::size_t const second = logical_index.at(edge.node_tags[1]);
+        if (first / ni == nodes_j - 1 && second / ni == nodes_j - 1) {
+            std::size_t const begin = (first % ni + 1) % ni == second % ni ? first : second;
+            outer_boundary[begin % ni] = edge.physical_tag;
+        }
         for (std::size_t const tag : edge.node_tags) {
             std::size_t const id = logical_index.at(tag);
             if (boundary[id] && boundary[id] != edge.physical_tag)
@@ -280,44 +174,6 @@ inline Result run(
             half_patch_cells,
             cells_per_patch_i,
             half_patch_cells};
-    auto side_index = [&](std::size_t side, std::size_t i, std::size_t j) {
-        return index(side_start[side] + i, j);
-    };
-    auto side_point = [&](std::size_t side, std::size_t i, std::size_t j) {
-        return point(side_start[side] + i, j);
-    };
-    std::vector<PotentialFlowPatch> domains(side_start.size());
-    for (std::size_t side = 0; side < domains.size(); ++side) {
-        PotentialFlowPatch& domain = domains[side];
-        std::size_t const side_nodes = side_cells[side] + 1;
-        domain.nodes_x = side_nodes;
-        domain.nodes_y = nodes_j;
-        domain.positions.resize(side_nodes * nodes_j);
-        domain.ordering_key.resize(side_nodes * nodes_j);
-        BoundaryCondition const free_boundary = NaturalBoundary {};
-        domain.lower_y.resize(side_nodes, free_boundary);
-        domain.upper_y.resize(side_nodes, free_boundary);
-        for (std::size_t i = 0; i < side_nodes; ++i) {
-            for (std::size_t j = 0; j < nodes_j; ++j)
-                domain.positions[j * side_nodes + i] = side_point(side, i, j);
-            for (std::size_t j = 0; j < nodes_j; ++j)
-                domain.ordering_key[j * side_nodes + i] = side_index(side, i, j);
-            std::size_t const inner = side_index(side, i, 0);
-            if (boundary[inner])
-                domain.lower_y[i] = PrescribedPotential {prescribed[inner]};
-            std::size_t const outer = side_index(side, i, cells_per_patch_j);
-            if (boundary[outer])
-                domain.upper_y[i] = PrescribedPotential {prescribed[outer]};
-        }
-        TensorLaplacianStencils const stencils
-                = conservative_tensor_laplacian_rows(domain.positions, side_nodes, nodes_j);
-        domain.conservative_laplacian_rows = true;
-        domain.laplacian_rows = stencils.rows;
-        domain.lower_x_flux_rows = stencils.lower_x_flux_rows;
-        domain.upper_x_flux_rows = stencils.upper_x_flux_rows;
-        domain.lower_y_flux_rows = stencils.lower_y_flux_rows;
-        domain.upper_y_flux_rows = stencils.upper_y_flux_rows;
-    }
     std::vector<TraceConnection> const connections {
             {0, TraceSide::UpperX, 1, TraceSide::LowerX, 0.0},
             {1, TraceSide::UpperX, 2, TraceSide::LowerX, 0.0},
@@ -326,32 +182,114 @@ inline Result run(
             {4, TraceSide::UpperX, 5, TraceSide::LowerX, 0.0},
             {5, TraceSide::UpperX, 0, TraceSide::LowerX, 0.0},
     };
-    FreeScalarFieldHamiltonian const hamiltonian(0.0, 0.0, 2.0);
-    physics::HamiltonEquations const equations(hamiltonian);
-    PotentialFlowSystem const system
-            = assemble_potential_flow_system<X, Y>(domains, connections, equations, inputs.density);
-    if (system.rows.size() != node_count)
-        throw std::runtime_error("potential-flow trace coupling has unexpected node count");
-    SparseDecLaplacian const matrix(system.rows);
+    [[maybe_unused]] sil::tensor::TensorAccessor<PositionIndex> position_accessor;
+    std::vector<ddc::Chunk<double, PositionDomain, ddc::HostAllocator<double>>>
+            position_allocations;
+    std::vector<std::vector<std::size_t>> global_indices(side_start.size());
+    position_allocations.reserve(side_start.size());
+    for (std::size_t side = 0; side < side_start.size(); ++side) {
+        GridDomain const
+                grid(ddc::DiscreteElement<GridX, GridY>(side_start[side], 0),
+                     ddc::DiscreteVector<GridX, GridY>(side_cells[side], nodes_j));
+        position_allocations.emplace_back(
+                PositionDomain(grid, position_accessor.domain()),
+                ddc::HostAllocator<double>());
+        sil::tensor::Tensor position(position_allocations.back());
+        global_indices[side].reserve(grid.size());
+        ddc::host_for_each(grid, [&](ddc::DiscreteElement<GridX, GridY> elem) {
+            std::array<double, 2> const coordinates = point(elem.uid<GridX>(), elem.uid<GridY>());
+            position(elem, position_accessor.access_element<X>()) = coordinates[0];
+            position(elem, position_accessor.access_element<Y>()) = coordinates[1];
+            global_indices[side].push_back(index(elem.uid<GridX>(), elem.uid<GridY>()));
+        });
+    }
+    // The example supplies geometry, global numbering, and boundary policies.
+    // All cell equations, affine interface contributions and nodal constraints
+    // are assembled by the library through those policies' operator() calls.
+    auto assemble = [&](double jump_scale, double prescribed_scale) {
+        solvers::AffineScalarSystem system(node_count);
+        std::vector<solvers::IndexedScalarField<GridX, GridY>> fields;
+        for (std::size_t side = 0; side < side_start.size(); ++side)
+            fields.push_back(
+                    {sil::tensor::Tensor(position_allocations[side]).non_indices_domain(),
+                     global_indices[side].data(),
+                     system.probe_state()});
+        for (std::size_t side = 0; side < fields.size(); ++side) {
+            std::size_t const lower = (side + fields.size() - 1) % fields.size();
+            std::size_t const upper = (side + 1) % fields.size();
+            sil::exterior::ExternalDomainBoundaryMap<GridX> const lower_map {
+                    sil::exterior::BoundarySide::Lower,
+                    sil::exterior::BoundarySide::Upper,
+                    false};
+            sil::exterior::ExternalDomainBoundaryMap<GridX> const upper_map {
+                    sil::exterior::BoundarySide::Upper,
+                    sil::exterior::BoundarySide::Lower,
+                    false};
+            sil::tensor::Tensor position(position_allocations[side]);
+            sil::exterior::ExtrapolationRules const geometry_rules(
+                    std::
+                            pair {sil::exterior::ExternalDomainExtrapolationRule {
+                                          sil::tensor::Tensor(position_allocations[lower]),
+                                          lower_map},
+                                  sil::exterior::ExternalDomainExtrapolationRule {
+                                          sil::tensor::Tensor(position_allocations[upper]),
+                                          upper_map}},
+                    std::
+                            pair {sil::exterior::ClampCochainExtrapolationRule {},
+                                  sil::exterior::ClampCochainExtrapolationRule {}});
+            auto append_patch = [&](auto upper_rule) {
+                sil::exterior::ExtrapolationRules const primal_rules(
+                        std::
+                                pair {sil::exterior::ExternalDomainExtrapolationRule {
+                                              fields[lower],
+                                              lower_map,
+                                              -jump_scale * connections[lower].jump_coefficient},
+                                      sil::exterior::ExternalDomainExtrapolationRule {
+                                              fields[upper],
+                                              upper_map,
+                                              jump_scale * connections[side].jump_coefficient}},
+                        std::pair {sil::exterior::NaturalScalarExtrapolationRule {}, upper_rule});
+                solvers::assemble_integrated_laplacian(
+                        system,
+                        fields[side].grid.remove_last(ddc::DiscreteVector<GridX, GridY>(0, 1)),
+                        fields[side],
+                        position,
+                        primal_rules,
+                        geometry_rules,
+                        sil::exterior::NormalScalarFluxExtrapolationRule {},
+                        inputs.density);
+            };
+            int const outer_tag = outer_boundary[side_start[side] % ni];
+            for (std::size_t i = 0; i < side_cells[side]; ++i)
+                if (outer_boundary[(side_start[side] + i) % ni] != outer_tag)
+                    throw std::runtime_error("outer boundary rule is not uniform on a patch");
+            if (outer_tag == 10 || outer_tag == 11)
+                append_patch(
+                        sil::exterior::PrescribedScalarExtrapolationRule {
+                                prescribed_scale
+                                * prescribed[index(side_start[side] + 1, nodes_j - 1)]});
+            else
+                append_patch(sil::exterior::NaturalScalarExtrapolationRule {});
+        }
+        system.finalize();
+        return system;
+    };
+    solvers::AffineScalarSystem const system = assemble(0.0, 1.0);
+    std::vector<double> const jump_rhs = [&]() {
+        solvers::AffineScalarSystem response = assemble(1.0, 0.0);
+        return std::move(response.rhs);
+    }();
+    solvers::SparseLinearOperator const matrix(system.rows);
     Result result;
     result.node_count = node_count;
     result.cell_count = mesh.cells.size();
-    std::vector<double> const base
-            = solve_system(matrix, system.base_rhs, settings, result.solver_diagnostics);
+    std::vector<double> const base_ring
+            = solvers::solve_linear_system(matrix, system.rhs, settings, result.solver_diagnostics);
     solvers::StrongFormulationSolverDiagnostics cut_diagnostics;
-    std::vector<double> const response
-            = solve_system(matrix, system.jump_rhs, settings, cut_diagnostics);
-    // Recover the display grid ordering from the coupled domain degrees of freedom.
-    std::vector<double> base_ring(node_count), response_ring(node_count);
-    for (std::size_t side = 0; side < domains.size(); ++side)
-        for (std::size_t i = 0; i < domains[side].nodes_x; ++i)
-            for (std::size_t j = 0; j < nodes_j; ++j) {
-                std::size_t const local = j * domains[side].nodes_x + i;
-                std::size_t const display = side_index(side, i, j);
-                std::size_t const unknown = system.global_index[side][local];
-                base_ring[display] = base[unknown];
-                response_ring[display] = response[unknown];
-            }
+    std::vector<double> const response_ring
+            = solvers::solve_linear_system(matrix, jump_rhs, settings, cut_diagnostics);
+    FreeScalarFieldHamiltonian const hamiltonian(0.0, 0.0, 2.0);
+    physics::HamiltonEquations const equations(hamiltonian);
     PotentialFlowSamples const base_samples = sample_potential_flow_field(
             base_ring,
             0.0,

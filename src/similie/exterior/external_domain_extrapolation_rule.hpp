@@ -122,6 +122,7 @@ public:
 template <class Dimension, class NeighborTensor, class TargetRule = ClampCochainExtrapolationRule>
 struct ExternalDomainExtrapolationRule
 {
+    static constexpr bool IS_INTERFACE = true;
     NeighborTensor neighbor;
     ExternalDomainBoundaryMap<Dimension> boundary_map;
     double jump = 0.0;

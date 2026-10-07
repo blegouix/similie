@@ -63,6 +63,7 @@ struct ZeroCochainExtrapolationRule
  */
 struct PrescribedScalarExtrapolationRule
 {
+    static constexpr bool IS_DIRICHLET = true;
     double value;
 
     template <class TensorType, class Element, class Component>

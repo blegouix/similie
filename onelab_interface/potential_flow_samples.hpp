@@ -9,11 +9,12 @@
 #include <stdexcept>
 #include <vector>
 
+#include <similie/exterior/coboundary.hpp>
 #include <similie/exterior/external_domain_extrapolation_rule.hpp>
 #include <similie/exterior/extrapolation_rules.hpp>
 
-#include "potential_flow_system.hpp"
-#include "potential_flow_tensor_laplacian.hpp"
+#include "potential_flow_connections.hpp"
+#include "potential_flow_grid.hpp"
 
 namespace similie::onelab_interface::potential_flow_onelab {
 

@@ -50,6 +50,19 @@ public:
     {
     }
 
+    template <std::size_t Axis, bool Upper>
+    KOKKOS_FUNCTION auto const& boundary_rule() const
+    {
+        if constexpr (Axis == Dimension) {
+            if constexpr (Upper)
+                return m_rules.second;
+            else
+                return m_rules.first;
+        } else {
+            return m_other_rules.template boundary_rule<Axis, Upper>();
+        }
+    }
+
     template <class TensorType, class Element, class Component>
     KOKKOS_FUNCTION void accumulate(
             TensorType tensor,
@@ -135,6 +148,14 @@ public:
                     && ...))
     KOKKOS_FUNCTION ExtrapolationRules(ExtrapolationRule rule) : m_rules(RulePairs {rule, rule}...)
     {
+    }
+
+    /** Access one face policy for boundary integrals and nodal constraints. */
+    template <std::size_t Axis, bool Upper>
+    KOKKOS_FUNCTION auto const& boundary_rule() const
+    {
+        static_assert(Axis < sizeof...(RulePairs));
+        return m_rules.template boundary_rule<Axis, Upper>();
     }
 
     template <class TensorType, class Element, class Component>
