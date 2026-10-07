@@ -16,19 +16,13 @@
 #include <variant>
 #include <vector>
 
+#include <similie/exterior/external_domain_extrapolation_rule.hpp>
+
 namespace similie::onelab_interface::potential_flow_onelab {
 
-struct PrescribedPotential
-{
-    double value;
-};
-struct NormalFlux
-{
-    double value = 0.0;
-};
-struct NaturalBoundary
-{
-};
+using PrescribedPotential = sil::exterior::PrescribedScalarExtrapolationRule;
+using NormalFlux = sil::exterior::NormalScalarFluxExtrapolationRule;
+using NaturalBoundary = sil::exterior::NaturalScalarExtrapolationRule;
 using BoundaryCondition = std::variant<PrescribedPotential, NormalFlux, NaturalBoundary>;
 enum class TraceSide { LowerX, UpperX };
 struct TraceConnection
@@ -80,6 +74,12 @@ struct PotentialFlowSystem
 };
 
 namespace detail {
+
+template <class Dimension>
+struct PotentialFlowTraceGrid
+{
+    using continuous_dimension_type = Dimension;
+};
 
 class AffineTraceUnionFind
 {
@@ -165,6 +165,8 @@ PotentialFlowSystem assemble_potential_flow_system(
     auto trace_i = [&](std::size_t side, TraceSide trace) {
         return trace == TraceSide::LowerX ? std::size_t(0) : domains[side].nodes_x - 1;
     };
+    using TraceGridX = detail::PotentialFlowTraceGrid<X>;
+    using TraceGridY = detail::PotentialFlowTraceGrid<Y>;
     detail::AffineTraceUnionFind trace_union(starts.back());
     for (TraceConnection const& connection : connections) {
         if (connection.first_domain >= domains.size() || connection.second_domain >= domains.size()
@@ -172,12 +174,33 @@ PotentialFlowSystem assemble_potential_flow_system(
                        != domains[connection.second_domain].nodes_y)
             throw std::runtime_error("incompatible connected scalar traces");
         std::size_t const first_i = trace_i(connection.first_domain, connection.first_side);
-        std::size_t const second_i = trace_i(connection.second_domain, connection.second_side);
-        for (std::size_t j = 0; j < domains[connection.first_domain].nodes_y; ++j)
+        ddc::DiscreteDomain<TraceGridX, TraceGridY> const first_grid(
+                ddc::DiscreteElement<TraceGridX, TraceGridY>(0, 0),
+                ddc::DiscreteVector<TraceGridX, TraceGridY>(
+                        domains[connection.first_domain].nodes_x,
+                        domains[connection.first_domain].nodes_y));
+        ddc::DiscreteDomain<TraceGridX, TraceGridY> const second_grid(
+                first_grid.front(),
+                ddc::DiscreteVector<TraceGridX, TraceGridY>(
+                        domains[connection.second_domain].nodes_x,
+                        domains[connection.second_domain].nodes_y));
+        sil::exterior::ExternalDomainBoundaryMap<TraceGridX> const boundary_map {
+                connection.first_side == TraceSide::LowerX ? sil::exterior::BoundarySide::Lower
+                                                           : sil::exterior::BoundarySide::Upper,
+                connection.second_side == TraceSide::LowerX ? sil::exterior::BoundarySide::Lower
+                                                            : sil::exterior::BoundarySide::Upper};
+        for (std::size_t j = 0; j < domains[connection.first_domain].nodes_y; ++j) {
+            ddc::DiscreteElement<TraceGridX, TraceGridY> const mapped = boundary_map.map_boundary(
+                    first_grid,
+                    second_grid,
+                    ddc::DiscreteElement<TraceGridX, TraceGridY>(first_i, j));
             trace_union.connect(
                     flat(connection.first_domain, first_i, j),
-                    flat(connection.second_domain, second_i, j),
+                    flat(connection.second_domain,
+                         mapped.template uid<TraceGridX>(),
+                         mapped.template uid<TraceGridY>()),
                     connection.jump_coefficient);
+        }
     }
 
     PotentialFlowSystem system;

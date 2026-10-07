@@ -26,6 +26,7 @@
 #include <Kokkos_Core.hpp>
 
 #include "gmsh_structured_grid.hpp"
+#include "potential_flow_samples.hpp"
 #include "potential_flow_system.hpp"
 #include "potential_flow_tensor_laplacian.hpp"
 
@@ -351,8 +352,23 @@ inline Result run(
                 base_ring[display] = base[unknown];
                 response_ring[display] = response[unknown];
             }
-    auto velocity = [&](std::vector<double> const& potential,
-                        double circulation,
+    PotentialFlowSamples const base_samples = sample_potential_flow_field(
+            base_ring,
+            0.0,
+            ni,
+            nodes_j,
+            side_start,
+            side_cells,
+            connections);
+    PotentialFlowSamples const response_samples = sample_potential_flow_field(
+            response_ring,
+            1.0,
+            ni,
+            nodes_j,
+            side_start,
+            side_cells,
+            connections);
+    auto velocity = [&](PotentialFlowSamples const& samples,
                         std::size_t i,
                         std::size_t j,
                         double xi,
@@ -363,12 +379,10 @@ inline Result run(
         double const ty = (1.0 - eta) * (b[1] - a[1]) + eta * (c[1] - d[1]);
         double const rx = (1.0 - xi) * (d[0] - a[0]) + xi * (c[0] - b[0]);
         double const ry = (1.0 - xi) * (d[1] - a[1]) + xi * (c[1] - b[1]);
-        double const cut = i == cut_cell_i ? -circulation : 0.0;
-        double const dt = (1.0 - eta) * (potential[index(i + 1, j)] - potential[index(i, j)])
-                          + eta * (potential[index(i + 1, j + 1)] - potential[index(i, j + 1)])
-                          + cut;
-        double const dr = (1.0 - xi) * (potential[index(i, j + 1)] - potential[index(i, j)])
-                          + xi * (potential[index(i + 1, j + 1)] - potential[index(i + 1, j)]);
+        double const dt = (1.0 - eta) * samples.differences[index(i, j)][0]
+                          + eta * samples.differences[index(i, j + 1)][0];
+        double const dr = (1.0 - xi) * samples.differences[index(i, j)][1]
+                          + xi * samples.differences[index(i + 1, j)][1];
         double const determinant = tx * ry - ty * rx;
         if (std::abs(determinant) < 1.0e-16)
             throw std::runtime_error("degenerate quad metric");
@@ -378,17 +392,17 @@ inline Result run(
                 double,
                 2> {equations.dpotential_dt<X>(gradient_x), equations.dpotential_dt<Y>(gradient_y)};
     };
-    auto mass_flow = [&](std::vector<double> const& potential, double circulation) {
+    auto mass_flow = [&](PotentialFlowSamples const& samples) {
         double flux = 0.0;
         for (std::size_t j = 0; j < cells_per_patch_j; ++j) {
-            auto const v = velocity(potential, circulation, cut_cell_i, j, 1.0, 0.5);
+            auto const v = velocity(samples, cut_cell_i, j, 1.0, 0.5);
             auto const p0 = point(cut_node_i, j), p1 = point(cut_node_i, j + 1);
             flux -= inputs.density * (v[0] * (p1[1] - p0[1]) - v[1] * (p1[0] - p0[0]));
         }
         return flux;
     };
-    double const flow0 = mass_flow(base_ring, 0.0);
-    double const flow1 = mass_flow(response_ring, 1.0);
+    double const flow0 = mass_flow(base_samples);
+    double const flow1 = mass_flow(response_samples);
     if (inputs.impose_circulation)
         result.circulation = inputs.circulation;
     else if (!inputs.airfoil) {
@@ -451,11 +465,11 @@ inline Result run(
             }
         if (probe_i == ni)
             throw std::runtime_error("Kutta probe is outside the fluid mesh");
-        auto kutta = [&](std::vector<double> const& potential, double circulation) {
-            auto const v = velocity(potential, circulation, probe_i, probe_j, probe_xi, probe_eta);
+        auto kutta = [&](PotentialFlowSamples const& samples) {
+            auto const v = velocity(samples, probe_i, probe_j, probe_xi, probe_eta);
             return v[1] - std::tan(inputs.incidence) * v[0];
         };
-        double const v0 = kutta(base_ring, 0.0), v1 = kutta(response_ring, 1.0);
+        double const v0 = kutta(base_samples), v1 = kutta(response_samples);
         if (std::abs(v1) < 1.0e-14)
             throw std::runtime_error("zero Kutta response");
         result.circulation = -v0 / v1;
@@ -465,6 +479,14 @@ inline Result run(
     std::vector<double> potential(node_count);
     for (std::size_t i = 0; i < node_count; ++i)
         potential[i] = base_ring[i] + result.circulation * response_ring[i];
+    PotentialFlowSamples const samples = sample_potential_flow_field(
+            potential,
+            result.circulation,
+            ni,
+            nodes_j,
+            side_start,
+            side_cells,
+            connections);
     std::ofstream output(output_file);
     if (!output)
         throw std::runtime_error("cannot write potential-flow Gmsh view");
@@ -486,11 +508,7 @@ inline Result run(
         for (std::size_t j = 0; j < cells_per_patch_j; ++j) {
             write_quad(i, j, "SQ");
             for (int a = 0; a < 4; ++a) {
-                std::size_t const ai = i + ((a == 1 || a == 2) ? 1 : 0);
-                std::size_t const ar = j + ((a == 2 || a == 3) ? 1 : 0);
-                double const jump
-                        = i == cut_cell_i && (a == 1 || a == 2) ? -result.circulation : 0.0;
-                output << potential[index(ai, ar)] + jump;
+                output << samples.cell_potentials[index(i, j)][a];
                 if (a != 3)
                     output << ',';
             }
@@ -499,7 +517,7 @@ inline Result run(
     output << "};\nView \"SimiLie velocity\" {\n";
     for (std::size_t i = 0; i < ni; ++i)
         for (std::size_t j = 0; j < cells_per_patch_j; ++j) {
-            auto const v = velocity(potential, result.circulation, i, j, 0.5, 0.5);
+            auto const v = velocity(samples, i, j, 0.5, 0.5);
             result.max_speed = std::max(result.max_speed, std::hypot(v[0], v[1]));
             write_quad(i, j, "VQ");
             for (int a = 0; a < 4; ++a) {
@@ -512,7 +530,7 @@ inline Result run(
     output << "};\nView \"SimiLie pressure difference\" {\n";
     for (std::size_t i = 0; i < ni; ++i)
         for (std::size_t j = 0; j < cells_per_patch_j; ++j) {
-            auto const v = velocity(potential, result.circulation, i, j, 0.5, 0.5);
+            auto const v = velocity(samples, i, j, 0.5, 0.5);
             double const pressure = -0.5 * inputs.density * (v[0] * v[0] + v[1] * v[1]);
             write_quad(i, j, "SQ");
             output << pressure << ',' << pressure << ',' << pressure << ',' << pressure << " };\n";

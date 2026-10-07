@@ -68,10 +68,14 @@ void test_callable_rules_and_connected_derivative()
                 potential.mem(elem, ddc::DiscreteElement<Scalar>(0)) = x * x;
                 neighbor.mem(elem, ddc::DiscreteElement<Scalar>(0)) = (x + 5) * (x + 5);
             });
-    // A neighbor can have a different logical origin. The map owns the seam
-    // convention, while the operator only invokes the sampling policy.
-    sil::exterior::ConnectedScalarExtrapolationRule const
-            connected {neighbor, ShiftedTraceMap {}, 2.0};
+    // Adjacent half-open domains do not duplicate their interface node.
+    sil::exterior::ExternalDomainExtrapolationRule const connected {
+            neighbor,
+            sil::exterior::ExternalDomainBoundaryMap<Grid> {
+                    sil::exterior::BoundarySide::Upper,
+                    sil::exterior::BoundarySide::Lower,
+                    false},
+            2.0};
     sil::exterior::ExtrapolationRules const connected_rules(
             std::pair {sil::exterior::ZeroCochainExtrapolationRule {}, connected});
     sil::exterior::deriv<
@@ -83,6 +87,14 @@ void test_callable_rules_and_connected_derivative()
     sil::tensor::Tensor host(host_alloc);
     EXPECT_DOUBLE_EQ(host.mem(ddc::DiscreteElement<Grid, Vector>(14, 0)), 11.0);
     EXPECT_DOUBLE_EQ(host.mem(ddc::DiscreteElement<Grid, Vector>(12, 0)), 5.0);
+    // A custom trace map remains available for more general connections.
+    sil::exterior::deriv<Vector, Scalar>(
+            Kokkos::DefaultExecutionSpace(),
+            derivative,
+            potential,
+            sil::exterior::ConnectedScalarExtrapolationRule {neighbor, ShiftedTraceMap {}, 2.0});
+    ddc::parallel_deepcopy(host, derivative);
+    EXPECT_DOUBLE_EQ(host.mem(ddc::DiscreteElement<Grid, Vector>(14, 0)), 11.0);
 
     sil::exterior::deriv<Vector, Scalar>(
             Kokkos::DefaultExecutionSpace(),
@@ -193,6 +205,79 @@ struct GridDimension
     using continuous_dimension_type = Axis<Dimension>;
 };
 
+template <std::size_t... Dimension>
+void test_external_domain_sampling(std::index_sequence<Dimension...>)
+{
+    [[maybe_unused]] sil::tensor::TensorAccessor<Scalar> accessor;
+    ddc::DiscreteDomain<GridDimension<Dimension>...> const source_grid(
+            ddc::DiscreteElement<GridDimension<Dimension>...>((10 * Dimension)...),
+            ddc::DiscreteVector<GridDimension<Dimension>...>((static_cast<void>(Dimension), 4)...));
+    ddc::DiscreteDomain<GridDimension<Dimension>...> const target_grid(
+            ddc::DiscreteElement<GridDimension<Dimension>...>((Dimension == 0 ? 30 : 0)...),
+            ddc::DiscreteVector<GridDimension<Dimension>...>((Dimension == 0 ? 5 : 4)...));
+    ddc::Chunk source_allocation(
+            ddc::DiscreteDomain<
+                    GridDimension<Dimension>...,
+                    Scalar>(source_grid, accessor.domain()),
+            ddc::DeviceAllocator<double>());
+    ddc::Chunk target_allocation(
+            ddc::DiscreteDomain<
+                    GridDimension<Dimension>...,
+                    Scalar>(target_grid, accessor.domain()),
+            ddc::DeviceAllocator<double>());
+    sil::tensor::Tensor source(source_allocation);
+    sil::tensor::Tensor target(target_allocation);
+    ddc::parallel_fill(source, -10.0);
+    ddc::parallel_for_each(
+            Kokkos::DefaultExecutionSpace(),
+            target_grid,
+            KOKKOS_LAMBDA(ddc::DiscreteElement<GridDimension<Dimension>...> elem) {
+                target.mem(elem, ddc::DiscreteElement<Scalar>(0))
+                        = ((static_cast<double>(Dimension + 1)
+                            * (elem.template uid<GridDimension<Dimension>>()
+                               - target_grid.front().template uid<GridDimension<Dimension>>()))
+                           + ...);
+            });
+    Kokkos::View<double*> results("external_domain_results", 16);
+    Kokkos::parallel_for(
+            "external_domain_sampling",
+            Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, 16),
+            KOKKOS_LAMBDA(int index) {
+                bool const source_upper = index & 1;
+                bool const target_upper = index & 2;
+                bool const shared = index & 4;
+                int const depth = index & 8 ? 2 : 1;
+                sil::exterior::ExternalDomainExtrapolationRule const
+                        rule {target,
+                              sil::exterior::ExternalDomainBoundaryMap<GridDimension<0>> {
+                                      source_upper ? sil::exterior::BoundarySide::Upper
+                                                   : sil::exterior::BoundarySide::Lower,
+                                      target_upper ? sil::exterior::BoundarySide::Upper
+                                                   : sil::exterior::BoundarySide::Lower,
+                                      shared},
+                              2.0,
+                              -1.0};
+                ddc::DiscreteElement<GridDimension<Dimension>...> elem
+                        = source_grid.front()
+                          + ddc::DiscreteVector<GridDimension<Dimension>...>(
+                                  (Dimension == 0 ? 0 : 1)...);
+                elem.template uid<GridDimension<0>>()
+                        = (ddc::DiscreteElement<GridDimension<0>>(
+                                   source_upper ? source_grid.back() : source_grid.front())
+                           + ddc::DiscreteVector<GridDimension<0>>(source_upper ? depth : -depth))
+                                  .template uid<GridDimension<0>>();
+                auto const rules
+                        = sil::exterior::make_extrapolation_rules<sizeof...(Dimension)>(rule);
+                results(index) = rules(source, elem, ddc::DiscreteElement<Scalar>(0));
+            });
+    auto const host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), results);
+    for (int index = 0; index < 16; ++index) {
+        int const inward = (index & 8 ? 2 : 1) - (index & 4 ? 0 : 1);
+        double const tangential = ((Dimension == 0 ? 0.0 : Dimension + 1.0) + ...);
+        EXPECT_DOUBLE_EQ(host(index), 2.0 - (index & 2 ? 4 - inward : inward) - tangential);
+    }
+}
+
 struct Sample
 {
 };
@@ -213,12 +298,12 @@ void test_per_boundary_rules(std::index_sequence<Dimension...>)
                     pair {sil::exterior::PrescribedScalarExtrapolationRule {2.0 * Dimension + 1.0},
                           sil::exterior::PrescribedScalarExtrapolationRule {
                                   2.0 * Dimension + 2.0}}...);
-    auto const uniform_rules = sil::exterior::make_extrapolation_rules<sizeof...(Dimension)>(
+    auto const uniform_rules = sil::exterior::make_extrapolation_rules(
+            field,
             sil::exterior::PrescribedScalarExtrapolationRule {17.5});
     decltype(uniform_rules) implicit_rules
             = sil::exterior::PrescribedScalarExtrapolationRule {17.5};
-    auto const preserved_rules
-            = sil::exterior::make_extrapolation_rules<sizeof...(Dimension)>(rules);
+    auto const preserved_rules = sil::exterior::make_extrapolation_rules(field, rules);
     static_assert(std::is_same_v<decltype(preserved_rules), decltype(rules)>);
     ddc::DiscreteDomain<Sample> const
             samples(ddc::DiscreteElement<Sample>(0),
@@ -472,5 +557,65 @@ TEST(Extrapolation, CallableRulesAndConnectedDerivative)
 TEST(Extrapolation, LaplacianAgreesWithComposition)
 {
     test_laplacian_agrees_with_composition();
+}
+
+TEST(Extrapolation, ExternalDomain1D)
+{
+    test_external_domain_sampling(std::make_index_sequence<1>());
+}
+
+TEST(Extrapolation, ExternalDomain2D)
+{
+    test_external_domain_sampling(std::make_index_sequence<2>());
+}
+
+TEST(Extrapolation, ExternalDomain4D)
+{
+    test_external_domain_sampling(std::make_index_sequence<4>());
+}
+
+TEST(Extrapolation, ExternalDomainCornerAndSpectator)
+{
+    using Tangent = GridDimension<1>;
+    [[maybe_unused]] sil::tensor::TensorAccessor<Scalar> scalar_accessor;
+    [[maybe_unused]] sil::tensor::TensorAccessor<Vector> spectator_accessor;
+    ddc::DiscreteDomain<Grid, Tangent> const
+            grid(ddc::DiscreteElement<Grid, Tangent>(0, 0),
+                 ddc::DiscreteVector<Grid, Tangent>(3, 3));
+    ddc::DiscreteDomain<Grid, Vector, Tangent, Scalar> const
+            domain(grid, spectator_accessor.domain(), scalar_accessor.domain());
+    ddc::Chunk source_allocation(domain, ddc::HostAllocator<double>());
+    ddc::Chunk target_allocation(domain, ddc::HostAllocator<double>());
+    sil::tensor::Tensor source(source_allocation);
+    sil::tensor::Tensor target(target_allocation);
+    ddc::parallel_fill(source, 7.0);
+    ddc::host_for_each(domain, [&](ddc::DiscreteElement<Grid, Vector, Tangent, Scalar> elem) {
+        target.mem(elem) = 10.0 * elem.uid<Grid>() + elem.uid<Tangent>();
+    });
+    sil::exterior::ExternalDomainExtrapolationRule const external {
+            target,
+            sil::exterior::ExternalDomainBoundaryMap<
+                    Grid> {sil::exterior::BoundarySide::Lower, sil::exterior::BoundarySide::Upper},
+            3.0};
+    sil::exterior::ExtrapolationRules const
+            rules(std::pair {external, sil::exterior::ClampCochainExtrapolationRule {}},
+                  std::pair {ConstantExteriorRule {20.0}, ConstantExteriorRule {30.0}});
+    ddc::DiscreteElement<Tangent, Vector, Grid> const
+            outside(ddc::DiscreteElement<Tangent>(0) - ddc::DiscreteVector<Tangent>(2),
+                    ddc::DiscreteElement<Vector>(0),
+                    ddc::DiscreteElement<Grid>(0) - ddc::DiscreteVector<Grid>(1));
+    // The donor clamps its tangential coordinate to zero, preserving the spectator.
+    EXPECT_DOUBLE_EQ(rules(source, outside, ddc::DiscreteElement<Scalar>(0)), (13.0 + 40.0) / 3.0);
+    EXPECT_DOUBLE_EQ(
+            rules(source,
+                  ddc::DiscreteElement<Grid, Vector, Tangent>(0, 0, 0),
+                  ddc::DiscreteElement<Scalar>(0)),
+            7.0);
+    EXPECT_DOUBLE_EQ(
+            sil::exterior::ClampCochainExtrapolationRule {}(
+                    source,
+                    outside,
+                    ddc::DiscreteElement<Scalar>(0)),
+            7.0);
 }
 } // namespace

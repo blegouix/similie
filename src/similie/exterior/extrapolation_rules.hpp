@@ -190,6 +190,8 @@ KOKKOS_FUNCTION auto repeat_extrapolation_rule(
  * dimension count. Differential operators call this conversion automatically
  * with N inferred from the cochain tensor domain. An explicitly typed uniform
  * ExtrapolationRules can also be implicitly constructed from its single rule.
+ * The overload make_extrapolation_rules(tensor, rule) infers N directly from
+ * tensor.non_indices_domain_t, and also accepts an existing ExtrapolationRules.
  */
 template <std::size_t N, class ExtrapolationRule>
 KOKKOS_FUNCTION auto make_extrapolation_rules(ExtrapolationRule rule)
@@ -203,6 +205,14 @@ KOKKOS_FUNCTION ExtrapolationRules<RulePairs...> make_extrapolation_rules(
 {
     static_assert(N == sizeof...(RulePairs), "ExtrapolationRules dimension count mismatch");
     return rules;
+}
+
+template <class TensorType, class ExtrapolationRule>
+KOKKOS_FUNCTION auto make_extrapolation_rules(TensorType const&, ExtrapolationRule rule)
+{
+    return make_extrapolation_rules<
+            ddc::type_seq_size_v<ddc::to_type_seq_t<typename TensorType::non_indices_domain_t>>>(
+            rule);
 }
 
 } // namespace sil::exterior
