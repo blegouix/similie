@@ -303,8 +303,9 @@ void test_per_boundary_rules(std::index_sequence<Dimension...>)
             sil::exterior::PrescribedScalarExtrapolationRule {17.5});
     decltype(uniform_rules) implicit_rules
             = sil::exterior::PrescribedScalarExtrapolationRule {17.5};
-    auto const preserved_rules = sil::exterior::make_extrapolation_rules(field, rules);
-    static_assert(std::is_same_v<decltype(preserved_rules), decltype(rules)>);
+    static_assert(
+            !requires { sil::exterior::make_extrapolation_rules<sizeof...(Dimension)>(rules); });
+    static_assert(!requires { sil::exterior::make_extrapolation_rules(field, rules); });
     ddc::DiscreteDomain<Sample> const
             samples(ddc::DiscreteElement<Sample>(0),
                     ddc::DiscreteVector<Sample>(2 * sizeof...(Dimension) + 9));
@@ -362,7 +363,7 @@ void test_per_boundary_rules(std::index_sequence<Dimension...>)
                     ddc::detail::array(elem)[sizeof...(Dimension) - 1]
                             = ddc::detail::array(grid.back())[sizeof...(Dimension) - 1] + 3;
                 }
-                result(sample) = preserved_rules(field, elem, ddc::DiscreteElement<Scalar>(0));
+                result(sample) = rules(field, elem, ddc::DiscreteElement<Scalar>(0));
                 uniform_result(sample)
                         = uniform_rules(field, elem, ddc::DiscreteElement<Scalar>(0));
                 implicit_result(sample)
@@ -372,8 +373,7 @@ void test_per_boundary_rules(std::index_sequence<Dimension...>)
                         // Pair order follows the tensor domain, not these reversed tags.
                         ddc::DiscreteElement<GridDimension<1>, GridDimension<0>> const
                                 reversed(3, 1);
-                        result(sample)
-                                = preserved_rules(field, reversed, ddc::DiscreteElement<Scalar>(0));
+                        result(sample) = rules(field, reversed, ddc::DiscreteElement<Scalar>(0));
                     }
                 }
             });

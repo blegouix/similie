@@ -47,9 +47,18 @@ TensorType codifferential_of_coboundary(
         PrimalExtrapolationRule primal_extrapolation = {},
         DualExtrapolationRule dual_extrapolation = {})
 {
-    auto const primal_extrapolation_rules = make_extrapolation_rules(tensor, primal_extrapolation);
-    auto const dual_extrapolation_rules
-            = make_extrapolation_rules(dual_tensor_buffer, dual_extrapolation);
+    auto const primal_extrapolation_rules = [&]() {
+        if constexpr (misc::Specialization<PrimalExtrapolationRule, ExtrapolationRules>)
+            return primal_extrapolation;
+        else
+            return make_extrapolation_rules(tensor, primal_extrapolation);
+    }();
+    auto const dual_extrapolation_rules = [&]() {
+        if constexpr (misc::Specialization<DualExtrapolationRule, ExtrapolationRules>)
+            return dual_extrapolation;
+        else
+            return make_extrapolation_rules(dual_tensor_buffer, dual_extrapolation);
+    }();
     using coboundary_output_index = coboundary_index_t<LaplacianDummyIndex, CochainTag>;
     using codifferential_hodge_output_indices = codifferential_hodge_output_indices_t<
             LaplacianDummyIndex::size() - coboundary_output_index::rank(),

@@ -185,29 +185,21 @@ KOKKOS_FUNCTION auto repeat_extrapolation_rule(
  * Broadcast a rule to both sides of all N non-index dimensions.
  * \important This operator and documentation is fully AI-generated.
  *
- * Each of the 2*N copies retains the supplied rule's state. Passing an existing
- * ExtrapolationRules preserves its individual boundary policies and checks its
- * dimension count. Differential operators call this conversion automatically
- * with N inferred from the cochain tensor domain. An explicitly typed uniform
+ * Each of the 2*N copies retains the supplied rule's state. This factory only
+ * accepts single rules. Differential operators distinguish single rules from
+ * ExtrapolationRules with if constexpr and only convert the former, with N
+ * inferred from the cochain tensor domain. An explicitly typed uniform
  * ExtrapolationRules can also be implicitly constructed from its single rule.
  * The overload make_extrapolation_rules(tensor, rule) infers N directly from
- * tensor.non_indices_domain_t, and also accepts an existing ExtrapolationRules.
+ * tensor.non_indices_domain_t.
  */
-template <std::size_t N, class ExtrapolationRule>
+template <std::size_t N, misc::NotSpecialization<ExtrapolationRules> ExtrapolationRule>
 KOKKOS_FUNCTION auto make_extrapolation_rules(ExtrapolationRule rule)
 {
     return detail::repeat_extrapolation_rule(rule, std::make_index_sequence<N>());
 }
 
-template <std::size_t N, class... RulePairs>
-KOKKOS_FUNCTION ExtrapolationRules<RulePairs...> make_extrapolation_rules(
-        ExtrapolationRules<RulePairs...> rules)
-{
-    static_assert(N == sizeof...(RulePairs), "ExtrapolationRules dimension count mismatch");
-    return rules;
-}
-
-template <class TensorType, class ExtrapolationRule>
+template <class TensorType, misc::NotSpecialization<ExtrapolationRules> ExtrapolationRule>
 KOKKOS_FUNCTION auto make_extrapolation_rules(TensorType const&, ExtrapolationRule rule)
 {
     return make_extrapolation_rules<

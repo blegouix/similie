@@ -657,7 +657,12 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
         TensorType tensor,
         ExtrapolationRule extrapolation = {})
 {
-    auto const extrapolation_rules = make_extrapolation_rules(tensor, extrapolation);
+    auto const extrapolation_rules = [&]() {
+        if constexpr (misc::Specialization<ExtrapolationRule, ExtrapolationRules>)
+            return extrapolation;
+        else
+            return make_extrapolation_rules(tensor, extrapolation);
+    }();
     ddc::DiscreteDomain batch_dom
             = ddc::remove_dims_of<coboundary_index_t<TagToAddToCochain, CochainTag>>(
                     coboundary_tensor.domain());
@@ -704,7 +709,12 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> transposed_coboun
         TensorType tensor,
         ExtrapolationRule extrapolation = {})
 {
-    auto const extrapolation_rules = make_extrapolation_rules(tensor, extrapolation);
+    auto const extrapolation_rules = [&]() {
+        if constexpr (misc::Specialization<ExtrapolationRule, ExtrapolationRules>)
+            return extrapolation;
+        else
+            return make_extrapolation_rules(tensor, extrapolation);
+    }();
     ddc::DiscreteDomain batch_dom
             = ddc::remove_dims_of<coboundary_index_t<TagToAddToCochain, CochainTag>>(
                     coboundary_tensor.domain());
