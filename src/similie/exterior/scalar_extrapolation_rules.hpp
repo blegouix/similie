@@ -26,7 +26,7 @@ struct ClampCochainExtrapolationRule
 {
     template <class TensorType, class Element, class Component>
     KOKKOS_FUNCTION double operator()(
-            TensorType tensor,
+            TensorType const& tensor,
             Element sampled_element,
             Component component) const
     {
@@ -37,7 +37,7 @@ struct ClampCochainExtrapolationRule
 
     template <class TensorType, class Sampler, class Element, class Component>
     KOKKOS_FUNCTION double value(
-            TensorType tensor,
+            TensorType const& tensor,
             Sampler sampler,
             Element sampled_element,
             Component component) const
@@ -60,7 +60,7 @@ struct ZeroCochainExtrapolationRule
 {
     template <class TensorType, class Element, class Component>
     KOKKOS_FUNCTION double operator()(
-            TensorType tensor,
+            TensorType const& tensor,
             Element sampled_element,
             Component component) const
     {
@@ -71,7 +71,7 @@ struct ZeroCochainExtrapolationRule
 
     template <class TensorType, class Sampler, class Element, class Component>
     KOKKOS_FUNCTION double value(
-            TensorType tensor,
+            TensorType const& tensor,
             Sampler sampler,
             Element sampled_element,
             Component component) const
@@ -96,7 +96,7 @@ struct PrescribedScalarExtrapolationRule
 
     template <class TensorType, class Element, class Component>
     KOKKOS_FUNCTION double operator()(
-            TensorType tensor,
+            TensorType const& tensor,
             Element sampled_element,
             Component component) const
     {
@@ -107,7 +107,7 @@ struct PrescribedScalarExtrapolationRule
 
     template <class TensorType, class Sampler, class Element, class Component>
     KOKKOS_FUNCTION double value(
-            TensorType tensor,
+            TensorType const& tensor,
             Sampler sampler,
             Element sampled_element,
             Component component) const
@@ -132,7 +132,7 @@ struct NormalScalarFluxExtrapolationRule
 
     template <class TensorType, class Element, class Component>
     KOKKOS_FUNCTION double operator()(
-            TensorType tensor,
+            TensorType const& tensor,
             Element sampled_element,
             Component component) const
     {
@@ -141,7 +141,7 @@ struct NormalScalarFluxExtrapolationRule
 
     template <class TensorType, class Sampler, class Element, class Component>
     KOKKOS_FUNCTION double value(
-            TensorType tensor,
+            TensorType const& tensor,
             Sampler sampler,
             Element sampled_element,
             Component component) const
@@ -164,7 +164,7 @@ struct NaturalScalarExtrapolationRule
 {
     template <class TensorType, class Element, class Component>
     KOKKOS_FUNCTION double operator()(
-            TensorType tensor,
+            TensorType const& tensor,
             Element sampled_element,
             Component component) const
     {
@@ -206,7 +206,7 @@ struct NaturalScalarExtrapolationRule
 
     template <class TensorType, class Sampler, class Element, class Component>
     KOKKOS_FUNCTION double value(
-            TensorType tensor,
+            TensorType const& tensor,
             Sampler sampler,
             Element sampled_element,
             Component component) const
@@ -236,7 +236,7 @@ struct ConnectedScalarExtrapolationRule
 
     template <class TensorType, class Element, class Component>
     KOKKOS_FUNCTION double operator()(
-            TensorType tensor,
+            TensorType const& tensor,
             Element sampled_element,
             Component component) const
     {
@@ -247,7 +247,7 @@ struct ConnectedScalarExtrapolationRule
 
     template <class TensorType, class Sampler, class Element, class Component>
     KOKKOS_FUNCTION double value(
-            TensorType tensor,
+            TensorType const& tensor,
             Sampler sampler,
             Element sampled_element,
             Component component) const

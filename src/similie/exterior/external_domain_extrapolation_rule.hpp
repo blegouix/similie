@@ -132,7 +132,7 @@ struct ExternalDomainExtrapolationRule
 
     template <class TensorType, class Element, class Component>
     KOKKOS_FUNCTION double operator()(
-            TensorType tensor,
+            TensorType const& tensor,
             Element sampled_element,
             Component component) const
     {
@@ -148,7 +148,7 @@ struct ExternalDomainExtrapolationRule
     /** Evaluate a stencil sampler after resolving the donor side and element. */
     template <class TensorType, class Sampler, class Element, class Component>
     KOKKOS_FUNCTION double value(
-            TensorType tensor,
+            TensorType const& tensor,
             Sampler sampler,
             Element sampled_element,
             Component component) const

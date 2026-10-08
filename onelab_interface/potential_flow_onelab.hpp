@@ -21,6 +21,7 @@
 #include <similie/physics/hamilton_equations.hpp>
 #include <similie/physics/scalar_field/scalar_field_with_power_coupling.hpp>
 #include <similie/solvers/affine_scalar_system.hpp>
+#include <similie/solvers/multidomain_laplacian.hpp>
 #include <similie/solvers/sparse_linear_operator.hpp>
 
 #include "gmsh_structured_grid.hpp"
@@ -185,11 +186,27 @@ inline Result run(
             global_indices[side].push_back(index(elem.uid<GridX>(), elem.uid<GridY>()));
         });
     }
-    std::vector<
-            sil::tensor::Tensor<double, PositionDomain, Kokkos::layout_right, Kokkos::HostSpace>>
+    std::vector<ddc::Chunk<double, PositionDomain, ddc::DeviceAllocator<double>>>
+            device_position_allocations;
+    std::vector<sil::tensor::Tensor<
+            double,
+            PositionDomain,
+            Kokkos::layout_right,
+            Kokkos::DefaultExecutionSpace::memory_space>>
             positions;
-    for (std::size_t side = 0; side < side_start.size(); ++side)
-        positions.emplace_back(position_allocations[side]);
+    std::vector<Kokkos::View<std::size_t*>> device_indices;
+    device_position_allocations.reserve(side_start.size());
+    for (std::size_t side = 0; side < side_start.size(); ++side) {
+        device_position_allocations
+                .emplace_back(position_allocations[side].domain(), ddc::DeviceAllocator<double>());
+        ddc::parallel_deepcopy(device_position_allocations.back(), position_allocations[side]);
+        positions.emplace_back(device_position_allocations.back());
+        device_indices.emplace_back("potential_global_indices", global_indices[side].size());
+        auto mirror = Kokkos::create_mirror_view(device_indices.back());
+        for (std::size_t i = 0; i < global_indices[side].size(); ++i)
+            mirror(i) = global_indices[side][i];
+        Kokkos::deep_copy(device_indices.back(), mirror);
+    }
     // Mesh tags must agree with the boundary nodes declared by the static graph.
     PotentialFlowTopology::for_each_domain([&]<class Node>() {
         constexpr std::size_t side = Node::id::INDEX;
@@ -205,39 +222,22 @@ inline Result run(
                         "mesh boundary tags disagree with the potential-flow topology");
     });
     auto assemble = [&](double jump_scale, double prescribed_scale) {
-        solvers::AffineScalarSystem system(node_count);
         std::vector<solvers::IndexedScalarField<GridX, GridY>> fields;
         for (std::size_t side = 0; side < side_start.size(); ++side)
             fields.push_back(
-                    {positions[side].non_indices_domain(),
-                     global_indices[side].data(),
-                     system.probe_state()});
+                    {positions[side].non_indices_domain(), device_indices[side].data(), nullptr});
         auto const domains = bind_potential_flow_domains(
                 fields,
                 positions,
                 equations,
                 0.0,
                 prescribed_scale * inputs.velocity * inputs.box_size);
-        PotentialFlowTopology::for_each_domain([&]<class Node>() {
-            solvers::assemble_integrated_laplacian(
-                    system,
-                    domains.template field<typename Node::id>().grid.remove_last(
-                            ddc::DiscreteVector<GridX, GridY>(0, 1)),
-                    domains.template field<typename Node::id>(),
-                    domains.template field<
-                            typename Node::id,
-                            sil::multidomains::FieldRole::Geometry>(),
-                    domains.template extrapolation_rules<typename Node::id>(jump_scale),
-                    domains.template extrapolation_rules<
-                            typename Node::id,
-                            sil::multidomains::FieldRole::Geometry>(),
-                    domains.template extrapolation_rules<
-                            typename Node::id,
-                            sil::multidomains::FieldRole::Flux>(),
-                    inputs.density);
-        });
-        system.finalize();
-        return system;
+        return solvers::assemble_multidomain_laplacian<GradientIndex>(
+                Kokkos::DefaultExecutionSpace {},
+                domains,
+                node_count,
+                [&](PotentialFlowPhysics const&) { return inputs.density; },
+                jump_scale);
     };
     auto bind_samples = [&](auto const& fields) {
         return bind_potential_flow_domains(
@@ -247,20 +247,24 @@ inline Result run(
                 0.0,
                 inputs.velocity * inputs.box_size);
     };
-    solvers::AffineScalarSystem const system = assemble(0.0, 1.0);
-    std::vector<double> const jump_rhs = [&]() {
-        solvers::AffineScalarSystem response = assemble(1.0, 0.0);
-        return std::move(response.rhs);
-    }();
-    solvers::SparseLinearOperator const matrix(system.rows);
+    solvers::DeviceScalarLinearSystem const system = assemble(0.0, 1.0);
+    Kokkos::View<double**> const jump_rhs = assemble(1.0, 0.0).rhs;
     Result result;
     result.node_count = node_count;
     result.cell_count = mesh.cells.size();
-    std::vector<double> const base_ring
-            = solvers::solve_linear_system(matrix, system.rhs, settings, result.solver_diagnostics);
+    Kokkos::View<double**> const base_solution = solvers::
+            solve_linear_system(system.matrix, system.rhs, settings, result.solver_diagnostics);
     solvers::StrongFormulationSolverDiagnostics cut_diagnostics;
-    std::vector<double> const response_ring
-            = solvers::solve_linear_system(matrix, jump_rhs, settings, cut_diagnostics);
+    Kokkos::View<double**> const response_solution
+            = solvers::solve_linear_system(system.matrix, jump_rhs, settings, cut_diagnostics);
+    auto const base_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), base_solution);
+    auto const response_host
+            = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), response_solution);
+    std::vector<double> base_ring(node_count), response_ring(node_count);
+    for (std::size_t i = 0; i < node_count; ++i) {
+        base_ring[i] = base_host(i, 0);
+        response_ring[i] = response_host(i, 0);
+    }
     PotentialFlowSamples const base_samples = sample_potential_flow_field(
             base_ring,
             0.0,

@@ -76,7 +76,3 @@ gtest_discover_tests(unit_tests_covariant_derivative DISCOVERY_MODE PRE_TEST)
 add_executable(unit_tests_extrapolation extrapolation.cpp ../main.cpp)
 target_link_libraries(unit_tests_extrapolation PUBLIC GTest::gtest DDC::core sil::exterior)
 gtest_discover_tests(unit_tests_extrapolation DISCOVERY_MODE PRE_TEST)
-
-add_executable(unit_tests_integrated_laplacian integrated_laplacian.cpp ../main.cpp)
-target_link_libraries(unit_tests_integrated_laplacian PUBLIC GTest::gtest DDC::core sil::exterior)
-gtest_discover_tests(unit_tests_integrated_laplacian DISCOVERY_MODE PRE_TEST)

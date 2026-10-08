@@ -10,6 +10,7 @@
 
 #include <similie/exterior/extrapolation_rules.hpp>
 
+#include "execution.hpp"
 #include "topology.hpp"
 
 namespace sil::multidomains {
@@ -176,6 +177,28 @@ public:
     {
         Graph::for_each_domain(function);
     }
+    /** Submit one domain computation per partition, then join the phase. */
+    template <class ExecSpace, class Function>
+    void for_each_domain(ExecSpace const& exec, Function function) const
+    {
+        DomainExecution<Graph, ExecSpace> partitions(exec);
+        partitions.for_each(function);
+        partitions.fence();
+    }
+
+    /** Transform bound state on the host; kernels capture only the resulting face views. */
+    template <class Function>
+    auto transform_data(Function function) const
+    {
+        return std::apply(
+                [&](auto const&... data) {
+                    return Multidomain<
+                            Graph,
+                            decltype(function(data))...>(Graph {}, function(data)...);
+                },
+                m_data);
+    }
+
     explicit Multidomain(Graph, Data... data) : m_data(std::move(data)...)
     {
         static_assert(

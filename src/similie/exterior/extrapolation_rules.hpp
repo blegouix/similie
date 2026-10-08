@@ -30,8 +30,13 @@ public:
     KOKKOS_DEFAULTED_FUNCTION ExtrapolationRulesStorage() = default;
 
     template <class TensorType, class Element, class Component, class Evaluate>
-    KOKKOS_FUNCTION void accumulate(TensorType, Element, Component, double&, double&, Evaluate)
-            const
+    KOKKOS_FUNCTION void accumulate(
+            TensorType const&,
+            Element,
+            Component,
+            double&,
+            double&,
+            Evaluate) const
     {
     }
 };
@@ -68,7 +73,7 @@ public:
 
     template <class TensorType, class Element, class Component, class Evaluate>
     KOKKOS_FUNCTION void accumulate(
-            TensorType tensor,
+            TensorType const& tensor,
             Element sampled_element,
             Component component,
             double& weighted_value,
@@ -171,7 +176,7 @@ public:
 
     template <class TensorType, class Element, class Component>
     KOKKOS_FUNCTION double operator()(
-            TensorType tensor,
+            TensorType const& tensor,
             Element sampled_element,
             Component component) const
     {
@@ -204,7 +209,7 @@ public:
      */
     template <class TensorType, class Sampler, class Element, class Component>
     KOKKOS_FUNCTION double value(
-            TensorType tensor,
+            TensorType const& tensor,
             Sampler sampler,
             Element sampled_element,
             Component component) const

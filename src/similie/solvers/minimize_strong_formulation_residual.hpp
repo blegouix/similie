@@ -628,12 +628,21 @@ std::shared_ptr<gko::matrix::Csr<double, gko::int32>> build_matrix(
         std::shared_ptr<gko::Executor const> const& gko_exec,
         OperatorModel const& operator_model)
 {
-    auto matrix_data = assemble_matrix_data(operator_model);
-    matrix_data.sum_duplicates();
-    if (env_flag_enabled("SIMILIE_MATRIX_DIAGNOSTICS")) {
-        log_matrix_diagnostics(matrix_data);
+    if constexpr (requires { operator_model.create_matrix(gko_exec); }) {
+        if (env_flag_enabled("SIMILIE_MATRIX_DIAGNOSTICS")) {
+            auto matrix_data = assemble_matrix_data(operator_model);
+            matrix_data.sum_duplicates();
+            log_matrix_diagnostics(matrix_data);
+        }
+        return operator_model.create_matrix(gko_exec);
+    } else {
+        auto matrix_data = assemble_matrix_data(operator_model);
+        matrix_data.sum_duplicates();
+        if (env_flag_enabled("SIMILIE_MATRIX_DIAGNOSTICS")) {
+            log_matrix_diagnostics(matrix_data);
+        }
+        return csr_from_matrix_data(gko_exec, matrix_data);
     }
-    return csr_from_matrix_data(gko_exec, matrix_data);
 }
 
 template <class OperatorModel, class StateView>

@@ -15,7 +15,7 @@
 #include "extrapolation_rules.hpp"
 #include "form.hpp"
 #include "hodge_star.hpp"
-#include "integrated_laplacian.hpp"
+#include "scalar_laplacian.hpp"
 #include "laplacian.hpp"
 #include "local_chain.hpp"
 #include "reduction_and_reconstruction.hpp"
