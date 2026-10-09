@@ -4,6 +4,7 @@
 #pragma once
 
 #include <optional>
+#include <stdexcept>
 #include <utility>
 
 #include <ddc/ddc.hpp>
@@ -17,6 +18,7 @@
 
 #include "coboundary.hpp"
 #include "codifferential.hpp"
+#include "scalar_extrapolation_rules.hpp"
 
 
 namespace sil {
@@ -33,15 +35,31 @@ template <
         misc::Specialization<tensor::Tensor> TensorType,
         misc::Specialization<tensor::Tensor> HodgeStarType,
         misc::Specialization<tensor::Tensor> DualHodgeStarType,
-        class ExecSpace>
+        class ExecSpace,
+        class PrimalExtrapolationRule = ClampCochainExtrapolationRule,
+        class DualExtrapolationRule = ZeroCochainExtrapolationRule>
 TensorType codifferential_of_coboundary(
         ExecSpace const& exec_space,
         TensorType out_tensor,
         TensorType tensor,
         HodgeStarType hodge_star,
         DualHodgeStarType dual_hodge_star,
-        DualTensorBufferType dual_tensor_buffer)
+        DualTensorBufferType dual_tensor_buffer,
+        PrimalExtrapolationRule primal_extrapolation = {},
+        DualExtrapolationRule dual_extrapolation = {})
 {
+    auto const primal_extrapolation_rules = [&]() {
+        if constexpr (misc::Specialization<PrimalExtrapolationRule, ExtrapolationRules>)
+            return primal_extrapolation;
+        else
+            return make_extrapolation_rules(tensor, primal_extrapolation);
+    }();
+    auto const dual_extrapolation_rules = [&]() {
+        if constexpr (misc::Specialization<DualExtrapolationRule, ExtrapolationRules>)
+            return dual_extrapolation;
+        else
+            return make_extrapolation_rules(dual_tensor_buffer, dual_extrapolation);
+    }();
     using coboundary_output_index = coboundary_index_t<LaplacianDummyIndex, CochainTag>;
     using codifferential_hodge_output_indices = codifferential_hodge_output_indices_t<
             LaplacianDummyIndex::size() - coboundary_output_index::rank(),
@@ -96,9 +114,7 @@ TensorType codifferential_of_coboundary(
                 Coboundary<LaplacianDummyIndex, CochainTag>::operator()(
                         derivative_tensor,
                         [&](auto sampled_elem, auto cochain_elem) {
-                            auto const clamped_elem = misc::
-                                    clamp_to_domain(tensor.non_indices_domain(), sampled_elem);
-                            return tensor.mem(clamped_elem, cochain_elem);
+                            return primal_extrapolation_rules(tensor, sampled_elem, cochain_elem);
                         },
                         chain,
                         lower_chain,
@@ -131,12 +147,10 @@ TensorType codifferential_of_coboundary(
                 TransposedCoboundary<LaplacianDummyIndex, coboundary_dual_tensor_index>::operator()(
                         dual_codifferential,
                         [&](auto sampled_elem, auto dual_elem) {
-                            if (!misc::domain_contains(
-                                        dual_tensor_buffer.non_indices_domain(),
-                                        sampled_elem)) {
-                                return 0.0;
-                            }
-                            return dual_tensor_buffer.mem(sampled_elem, dual_elem);
+                            return dual_extrapolation_rules(
+                                    dual_tensor_buffer,
+                                    sampled_elem,
+                                    dual_elem);
                         },
                         dual_chain,
                         dual_lower_chain,
@@ -247,6 +261,24 @@ class StagedLaplacian<
     std::optional<DerivativeDualTensorType> m_derivative_dual_tensor_buffer;
 
 public:
+    /**
+     * Access the dual one-cochain produced by the first Hodge stage.
+     * \important This operator and documentation are fully AI-generated.
+     *
+     * The buffer contains the constitutive flux after the staged Laplacian
+     * has evaluated a primal scalar cochain. Connected tensor domains can
+     * balance its trace values without constructing a separate Hodge star.
+     */
+    DerivativeDualTensorType derivative_dual_tensor_buffer() const
+    {
+        return *m_derivative_dual_tensor_buffer;
+    }
+
+    DualDerivativeHodgeStarTensorType dual_derivative_hodge_star() const
+    {
+        return *m_dual_derivative_hodge_star;
+    }
+
     StagedLaplacian(
             ExecSpace const& exec_space,
             DerivativeHodgeStarTensorType&& derivative_hodge_star,
@@ -310,7 +342,14 @@ public:
                 position);
     }
 
-    TensorType operator()(TensorType laplacian_tensor, TensorType tensor)
+    template <
+            class PrimalExtrapolationRule = ClampCochainExtrapolationRule,
+            class DualExtrapolationRule = ZeroCochainExtrapolationRule>
+    TensorType operator()(
+            TensorType laplacian_tensor,
+            TensorType tensor,
+            PrimalExtrapolationRule primal_extrapolation = {},
+            DualExtrapolationRule dual_extrapolation = {})
     {
         return detail::codifferential_of_coboundary<
                 MetricIndex,
@@ -321,7 +360,9 @@ public:
                 tensor,
                 *m_derivative_hodge_star,
                 *m_dual_derivative_hodge_star,
-                *m_derivative_dual_tensor_buffer);
+                *m_derivative_dual_tensor_buffer,
+                primal_extrapolation,
+                dual_extrapolation);
     }
 };
 
@@ -596,7 +637,14 @@ public:
                 position);
     }
 
-    TensorType operator()(TensorType laplacian_tensor, TensorType tensor)
+    template <
+            class PrimalExtrapolationRule = ClampCochainExtrapolationRule,
+            class DualExtrapolationRule = ZeroCochainExtrapolationRule>
+    TensorType operator()(
+            TensorType laplacian_tensor,
+            TensorType tensor,
+            PrimalExtrapolationRule primal_extrapolation = {},
+            DualExtrapolationRule dual_extrapolation = {})
     {
         auto exec_spaces = Kokkos::Experimental::partition_space(m_exec_space, 1, 1);
 
@@ -609,7 +657,9 @@ public:
                 tensor,
                 *m_derivative_hodge_star,
                 *m_dual_derivative_hodge_star,
-                *m_derivative_dual_tensor_buffer);
+                *m_derivative_dual_tensor_buffer,
+                primal_extrapolation,
+                dual_extrapolation);
 
         StagedCodifferential<
                 MetricIndex,
@@ -622,12 +672,16 @@ public:
                 exec_spaces[1],
                 std::move(*m_hodge_star),
                 std::move(*m_dual_hodge_star),
-                std::move(*m_dual_tensor_buffer))(*m_codifferential_tensor_buffer, tensor);
+                std::move(*m_dual_tensor_buffer))(
+                *m_codifferential_tensor_buffer,
+                tensor,
+                dual_extrapolation);
         sil::exterior::
                 deriv<LaplacianDummyIndex, codifferential_index_t<LaplacianDummyIndex, CochainTag>>(
                         exec_spaces[1],
                         *m_coboundary_of_codifferential_buffer,
-                        *m_codifferential_tensor_buffer);
+                        *m_codifferential_tensor_buffer,
+                        primal_extrapolation);
 
         exec_spaces[0].fence();
         exec_spaces[1].fence();
@@ -786,7 +840,14 @@ public:
                 position);
     }
 
-    TensorType operator()(TensorType laplacian_tensor, TensorType tensor)
+    template <
+            class PrimalExtrapolationRule = ClampCochainExtrapolationRule,
+            class DualExtrapolationRule = ZeroCochainExtrapolationRule>
+    TensorType operator()(
+            TensorType laplacian_tensor,
+            TensorType tensor,
+            PrimalExtrapolationRule primal_extrapolation = {},
+            DualExtrapolationRule dual_extrapolation = {})
     {
         StagedCodifferential<
                 MetricIndex,
@@ -799,12 +860,16 @@ public:
                 m_exec_space,
                 std::move(*m_hodge_star),
                 std::move(*m_dual_hodge_star),
-                std::move(*m_dual_tensor_buffer))(*m_codifferential_tensor_buffer, tensor);
+                std::move(*m_dual_tensor_buffer))(
+                *m_codifferential_tensor_buffer,
+                tensor,
+                dual_extrapolation);
         return sil::exterior::
                 deriv<LaplacianDummyIndex, codifferential_index_t<LaplacianDummyIndex, CochainTag>>(
                         m_exec_space,
                         laplacian_tensor,
-                        *m_codifferential_tensor_buffer);
+                        *m_codifferential_tensor_buffer,
+                        primal_extrapolation);
     }
 };
 
@@ -816,7 +881,9 @@ template <
         misc::Specialization<tensor::Tensor> DerivativeHodgeStarType,
         misc::Specialization<tensor::Tensor> DualDerivativeHodgeStarType,
         misc::Specialization<tensor::Tensor> DerivativeDualTensorBufferType,
-        class ExecSpace>
+        class ExecSpace,
+        class PrimalExtrapolationRule = ClampCochainExtrapolationRule,
+        class DualExtrapolationRule = ZeroCochainExtrapolationRule>
     requires(detail::ZeroRankLaplacianCochain<LaplacianDummyIndex, CochainTag>)
 TensorType laplacian(
         ExecSpace const& exec_space,
@@ -824,7 +891,9 @@ TensorType laplacian(
         TensorType tensor,
         DerivativeHodgeStarType hodge_star,
         DualDerivativeHodgeStarType dual_hodge_star,
-        DerivativeDualTensorBufferType dual_tensor_buffer)
+        DerivativeDualTensorBufferType dual_tensor_buffer,
+        PrimalExtrapolationRule primal_extrapolation = {},
+        DualExtrapolationRule dual_extrapolation = {})
 {
     using codifferential_of_coboundary_index
             = tensor::Covariant<IndexForCodifferentialOfCoboundaryInLaplacian<
@@ -838,7 +907,9 @@ TensorType laplacian(
             tensor,
             hodge_star,
             dual_hodge_star,
-            dual_tensor_buffer);
+            dual_tensor_buffer,
+            primal_extrapolation,
+            dual_extrapolation);
 }
 
 template <
@@ -854,7 +925,9 @@ template <
         misc::Specialization<tensor::Tensor> DualTensorBufferType,
         misc::Specialization<tensor::Tensor> CodifferentialTensorBufferType,
         misc::Specialization<tensor::Tensor> CoboundaryOfCodifferentialBufferType,
-        class ExecSpace>
+        class ExecSpace,
+        class PrimalExtrapolationRule = ClampCochainExtrapolationRule,
+        class DualExtrapolationRule = ZeroCochainExtrapolationRule>
     requires(detail::IntermediateRankLaplacianCochain<LaplacianDummyIndex, CochainTag>)
 TensorType laplacian(
         ExecSpace const& exec_space,
@@ -867,7 +940,9 @@ TensorType laplacian(
         DualHodgeStarType dual_hodge_star,
         DualTensorBufferType dual_tensor_buffer,
         CodifferentialTensorBufferType codifferential_tensor_buffer,
-        CoboundaryOfCodifferentialBufferType coboundary_of_codifferential_buffer)
+        CoboundaryOfCodifferentialBufferType coboundary_of_codifferential_buffer,
+        PrimalExtrapolationRule primal_extrapolation = {},
+        DualExtrapolationRule dual_extrapolation = {})
 {
     using codifferential_of_coboundary_index
             = tensor::Covariant<IndexForCodifferentialOfCoboundaryInLaplacian<
@@ -883,7 +958,9 @@ TensorType laplacian(
             tensor,
             derivative_hodge_star,
             dual_derivative_hodge_star,
-            derivative_dual_tensor_buffer);
+            derivative_dual_tensor_buffer,
+            primal_extrapolation,
+            dual_extrapolation);
 
     sil::exterior::codifferential<MetricIndex, LaplacianDummyIndex, CochainTag>(
             exec_spaces[1],
@@ -891,12 +968,14 @@ TensorType laplacian(
             tensor,
             hodge_star,
             dual_hodge_star,
-            dual_tensor_buffer);
+            dual_tensor_buffer,
+            dual_extrapolation);
     sil::exterior::
             deriv<LaplacianDummyIndex, codifferential_index_t<LaplacianDummyIndex, CochainTag>>(
                     exec_spaces[1],
                     coboundary_of_codifferential_buffer,
-                    codifferential_tensor_buffer);
+                    codifferential_tensor_buffer,
+                    primal_extrapolation);
 
     exec_spaces[0].fence();
     exec_spaces[1].fence();
@@ -922,7 +1001,9 @@ template <
         misc::Specialization<tensor::Tensor> DualHodgeStarType,
         misc::Specialization<tensor::Tensor> DualTensorBufferType,
         misc::Specialization<tensor::Tensor> CodifferentialTensorBufferType,
-        class ExecSpace>
+        class ExecSpace,
+        class PrimalExtrapolationRule = ClampCochainExtrapolationRule,
+        class DualExtrapolationRule = ZeroCochainExtrapolationRule>
     requires(detail::TopRankLaplacianCochain<LaplacianDummyIndex, CochainTag>)
 TensorType laplacian(
         ExecSpace const& exec_space,
@@ -931,7 +1012,9 @@ TensorType laplacian(
         HodgeStarType hodge_star,
         DualHodgeStarType dual_hodge_star,
         DualTensorBufferType dual_tensor_buffer,
-        CodifferentialTensorBufferType codifferential_tensor_buffer)
+        CodifferentialTensorBufferType codifferential_tensor_buffer,
+        PrimalExtrapolationRule primal_extrapolation = {},
+        DualExtrapolationRule dual_extrapolation = {})
 {
     sil::exterior::codifferential<MetricIndex, LaplacianDummyIndex, CochainTag>(
             exec_space,
@@ -939,14 +1022,377 @@ TensorType laplacian(
             tensor,
             hodge_star,
             dual_hodge_star,
-            dual_tensor_buffer);
-    return sil::exterior::deriv<
-            LaplacianDummyIndex,
-            codifferential_index_t<
-                    LaplacianDummyIndex,
-                    CochainTag>>(exec_space, laplacian_tensor, codifferential_tensor_buffer);
+            dual_tensor_buffer,
+            dual_extrapolation);
+    return sil::exterior::
+            deriv<LaplacianDummyIndex, codifferential_index_t<LaplacianDummyIndex, CochainTag>>(
+                    exec_space,
+                    laplacian_tensor,
+                    codifferential_tensor_buffer,
+                    primal_extrapolation);
 }
 
 } // namespace exterior
 
 } // namespace sil
+
+namespace sil::exterior {
+namespace detail {
+template <class Rule>
+inline constexpr bool is_interface_rule_v = [] {
+    if constexpr (requires { Rule::IS_INTERFACE; })
+        return Rule::IS_INTERFACE;
+    else
+        return false;
+}();
+
+template <class Memory>
+struct LocalExecution
+{
+    using memory_space = Memory;
+};
+
+struct ZeroScalarSampler
+{
+    template <class Field, class Element, class Component>
+    KOKKOS_FUNCTION double operator()(Field const&, Element, Component) const
+    {
+        return 0.0;
+    }
+};
+
+template <std::size_t Axis, class Position, class Rules, class Element>
+KOKKOS_FUNCTION void geometry_front(
+        Position const& position,
+        Rules const& rules,
+        Element elem,
+        Element& front)
+{
+    using Upper = std::remove_cvref_t<decltype(rules.template boundary_rule<Axis, true>())>;
+    if constexpr (!is_interface_rule_v<Upper>) {
+        if (ddc::detail::array(elem)[Axis]
+                    == ddc::detail::array(position.non_indices_domain().back())[Axis]
+            && ddc::detail::array(elem)[Axis]
+                       > ddc::detail::array(position.non_indices_domain().front())[Axis])
+            --ddc::detail::array(front)[Axis];
+    }
+}
+
+template <class Position, class Rules, class Element, std::size_t... Axis>
+KOKKOS_FUNCTION auto local_geometry(
+        Position const& position,
+        Rules const& rules,
+        Element elem,
+        std::index_sequence<Axis...>)
+{
+    using Index
+            = ddc::type_seq_element_t<0, ddc::to_type_seq_t<typename Position::indices_domain_t>>;
+    Element front = elem;
+    (geometry_front<Axis>(position, rules, elem, front), ...);
+    auto geometry = make_stencil<typename Position::memory_space, Index>(front);
+    ddc::device_for_each(geometry.domain(), [&](auto sample) {
+        geometry.mem(sample)
+                = rules(position, Element(sample), ddc::DiscreteElement<Index>(sample));
+    });
+    return geometry;
+}
+
+template <class MemorySpace, class... Coordinates>
+KOKKOS_FUNCTION auto euclidean_metric(ddc::TypeSeq<Coordinates...>)
+{
+    using Index = tensor::TensorIdentityIndex<
+            tensor::Covariant<tensor::MetricIndex1<Coordinates...>>,
+            tensor::Covariant<tensor::MetricIndex2<Coordinates...>>>;
+    tensor::TensorAccessor<Index> accessor;
+    // Identity tensors have no stored entries.
+    return tensor::Tensor(
+            ddc::ChunkSpan<
+                    double,
+                    ddc::DiscreteDomain<Index>,
+                    Kokkos::layout_right,
+                    MemorySpace>(nullptr, accessor.domain()));
+}
+
+template <class Sampler>
+struct FluxSampler
+{
+    Sampler primal;
+    template <class Flux, class Element, class Component>
+    KOKKOS_FUNCTION double operator()(Flux const& flux, Element elem, Component component) const
+    {
+        return flux.value(primal, elem, component);
+    }
+};
+} // namespace detail
+
+/** Lazy constitutive dual cochain *d(phi) in Cartesian physical coordinates.
+ * \important This operator and documentation is fully AI-generated.
+ * Uses the ordinary Coboundary and DiscreteHodgeStar operators. Geometry samples
+ * cross interfaces through their rules. At physical upper faces the outgoing
+ * dual sample comes from the physical flux policy, including the zero wall law.
+ */
+template <
+        class Direction,
+        class Field,
+        class Position,
+        class PrimalRules,
+        class GeometryRules,
+        class BoundaryFluxRules>
+struct ScalarLaplacianFlux
+{
+    using source_indices = tensor::upper_t<ddc::to_type_seq_t<tensor::natural_domain_t<Direction>>>;
+    using dual_indices = codifferential_hodge_output_indices_t<Direction::size() - 1, Direction>;
+    using component_type
+            = misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, dual_indices>;
+    using non_indices_domain_t = typename Field::non_indices_domain_t;
+    using discrete_domain_type
+            = misc::cartesian_prod_t<non_indices_domain_t, ddc::DiscreteDomain<component_type>>;
+    Field field;
+    Position position;
+    PrimalRules primal;
+    GeometryRules geometry;
+    BoundaryFluxRules boundary_flux;
+    double diffusivity;
+
+    KOKKOS_FUNCTION non_indices_domain_t non_indices_domain() const
+    {
+        return field.non_indices_domain();
+    }
+
+    template <std::size_t Axis, class Element, class Component>
+    KOKKOS_FUNCTION bool upper_flux(
+            Element elem,
+            Component component,
+            std::size_t normal,
+            double& result) const
+    {
+        using Rule = std::remove_cvref_t<decltype(primal.template boundary_rule<Axis, true>())>;
+        if constexpr (!detail::is_interface_rule_v<Rule>) {
+            if (normal == Axis
+                && ddc::detail::array(elem)[Axis]
+                           == ddc::detail::array(non_indices_domain().back())[Axis]) {
+                ++ddc::detail::array(elem)[Axis];
+                result = detail::EvaluateRuleValue<
+                        detail::ZeroScalarSampler> {detail::ZeroScalarSampler {}}(
+                        boundary_flux.template boundary_rule<Axis, true>(),
+                        *this,
+                        elem,
+                        component);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    template <class Sampler, class Element, class Component, std::size_t... Axis>
+    KOKKOS_FUNCTION double evaluate(
+            Sampler sampler,
+            Element elem,
+            Component component,
+            std::index_sequence<Axis...> axes) const
+    {
+        tensor::TensorAccessor<component_type> dual_accessor;
+        auto const ids
+                = detail::flat_natural_elem_ids(dual_accessor.canonical_natural_element(component));
+        std::size_t normal = 0;
+        for (; normal < Direction::size(); ++normal) {
+            bool found = false;
+            for (std::size_t id : ids)
+                found = found || id == normal;
+            if (!found)
+                break;
+        }
+        double prescribed = 0.0;
+        if ((upper_flux<Axis>(elem, component, normal, prescribed) || ...))
+            return prescribed;
+        auto positions = detail::local_geometry(position, geometry, elem, axes);
+        tensor::Tensor<
+                double,
+                typename Position::discrete_domain_type,
+                Kokkos::layout_right,
+                typename Position::memory_space>
+                local_position(positions);
+        auto metric = detail::euclidean_metric<typename Position::memory_space>(
+                typename tensor::uncharacterize_t<Direction>::type_seq_dimensions {});
+        auto derivative = detail::make_stencil<typename Position::memory_space, Direction>(
+                ddc::DiscreteElement<>());
+        auto flux = detail::make_stencil<typename Position::memory_space, component_type>(
+                ddc::DiscreteElement<>());
+        auto const chain = tangent_basis<1, non_indices_domain_t>(
+                detail::LocalExecution<typename Position::memory_space> {});
+        auto const lower = tangent_basis<0, non_indices_domain_t>(
+                detail::LocalExecution<typename Position::memory_space> {});
+        using Derivative = tensor::Tensor<
+                double,
+                ddc::DiscreteDomain<Direction>,
+                Kokkos::layout_right,
+                typename Position::memory_space>;
+        using Flux = tensor::Tensor<
+                double,
+                ddc::DiscreteDomain<component_type>,
+                Kokkos::layout_right,
+                typename Position::memory_space>;
+        Coboundary<
+                Direction,
+                ddc::type_seq_element_t<0, ddc::to_type_seq_t<typename Field::indices_domain_t>>>::
+        operator()(
+                Derivative(derivative),
+                [&](auto sample, auto index) {
+                    return primal.value(field, sampler, sample, index);
+                },
+                chain,
+                lower,
+                elem);
+        DiscreteHodgeStar<
+                CellComplex::CircumcentricDual,
+                source_indices,
+                dual_indices,
+                decltype(metric),
+                decltype(local_position),
+                Element>::
+        operator()(Flux(flux), Derivative(derivative), metric, local_position, elem);
+        return diffusivity * flux.mem(component);
+    }
+
+    template <class Sampler, class Element, class Component>
+    KOKKOS_FUNCTION double value(Sampler sampler, Element elem, Component component) const
+    {
+        return evaluate(
+                sampler,
+                elem,
+                component,
+                std::make_index_sequence<
+                        ddc::type_seq_size_v<ddc::to_type_seq_t<non_indices_domain_t>>> {});
+    }
+    template <class Element, class Component>
+    KOKKOS_FUNCTION double mem(Element elem, Component component) const
+    {
+        return value(StoredCochainSampler {}, elem, component);
+    }
+};
+
+/** Normalize single policies locally, as for the staged differential operators.
+ * \important This operator and documentation is fully AI-generated.
+ */
+template <class Direction, class Field, class Position, class Primal, class Geometry, class Flux>
+auto make_scalar_laplacian_flux(
+        Field field,
+        Position const& position,
+        Primal primal_rule,
+        Geometry geometry_rule,
+        Flux flux_rule,
+        double diffusivity = 1.0)
+{
+#if defined(KOKKOS_ENABLE_CUDA)
+    if constexpr (Kokkos::SpaceAccessibility<Kokkos::Cuda, typename Position::memory_space>::
+                          accessible) {
+        // Debug builds cannot always infer the full sampling/Hodge call depth.
+        std::size_t stack_size = 0;
+        if (cudaDeviceGetLimit(&stack_size, cudaLimitStackSize) != cudaSuccess
+            || (stack_size < 32768 && cudaDeviceSetLimit(cudaLimitStackSize, 32768) != cudaSuccess))
+            throw std::runtime_error("cannot reserve the CUDA stack for scalar DEC sampling");
+    }
+#endif
+    auto const primal = [&] {
+        if constexpr (misc::Specialization<Primal, ExtrapolationRules>)
+            return primal_rule;
+        else
+            return make_extrapolation_rules(field, primal_rule);
+    }();
+    auto const geometry = [&] {
+        if constexpr (misc::Specialization<Geometry, ExtrapolationRules>)
+            return geometry_rule;
+        else
+            return make_extrapolation_rules(position, geometry_rule);
+    }();
+    auto const flux = [&] {
+        if constexpr (misc::Specialization<Flux, ExtrapolationRules>)
+            return flux_rule;
+        else
+            return make_extrapolation_rules(field, flux_rule);
+    }();
+    return ScalarLaplacianFlux<
+            Direction,
+            Field,
+            Position,
+            std::remove_cvref_t<decltype(primal)>,
+            std::remove_cvref_t<decltype(geometry)>,
+            std::remove_cvref_t<
+                    decltype(flux)>> {field, position, primal, geometry, flux, diffusivity};
+}
+
+/** Point evaluation of the scalar DEC Laplacian, sharing the staged operator's
+ * incidence, Hodge stars and codifferential sign convention.
+ * \important This operator and documentation is fully AI-generated.
+ * value(sampler, element) accepts a global basis sampler for sparse assembly;
+ * operator()(element) evaluates stored cochains through the identical path.
+ * Dual rules map to lazy donor fluxes, whose primal rules resolve donor unknowns
+ * and affine jumps. Thus both stages follow the topology rather than a separate
+ * interface assembly formula.
+ */
+template <class Direction, class Flux, class DualRules>
+struct ScalarLaplacian
+{
+    Flux flux;
+    DualRules dual;
+    template <class Sampler, class Element>
+    KOKKOS_FUNCTION double value(Sampler sampler, Element elem) const
+    {
+        using DualIndex = typename Flux::component_type;
+        using TopIndices
+                = ddc::type_seq_merge_t<ddc::TypeSeq<Direction>, typename Flux::dual_indices>;
+        using TopIndex = misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, TopIndices>;
+        using Scalar = tensor::Covariant<tensor::ScalarIndex>;
+        using Memory = typename decltype(flux.position)::memory_space;
+        auto top = detail::make_stencil<Memory, TopIndex>(ddc::DiscreteElement<>());
+        auto scalar = detail::make_stencil<Memory, Scalar>(ddc::DiscreteElement<>());
+        auto const chain = tangent_basis<Direction::size(), typename Flux::non_indices_domain_t>(
+                detail::LocalExecution<Memory> {});
+        auto const lower
+                = tangent_basis<Direction::size() - 1, typename Flux::non_indices_domain_t>(
+                        detail::LocalExecution<Memory> {});
+        using TopTensor = tensor::
+                Tensor<double, ddc::DiscreteDomain<TopIndex>, Kokkos::layout_right, Memory>;
+        using ScalarTensor
+                = tensor::Tensor<double, ddc::DiscreteDomain<Scalar>, Kokkos::layout_right, Memory>;
+        TransposedCoboundary<Direction, DualIndex>::operator()(
+                TopTensor(top),
+                [&](auto sample, auto component) {
+                    return dual
+                            .value(flux, detail::FluxSampler<Sampler> {sampler}, sample, component);
+                },
+                chain,
+                lower,
+                elem);
+        auto positions = detail::local_geometry(
+                flux.position,
+                flux.geometry,
+                elem,
+                std::make_index_sequence<Direction::size()> {});
+        using Position = std::remove_cvref_t<decltype(flux.position)>;
+        tensor::Tensor<
+                double,
+                typename Position::discrete_domain_type,
+                Kokkos::layout_right,
+                Memory>
+                local_position(positions);
+        auto metric = detail::euclidean_metric<Memory>(
+                typename tensor::uncharacterize_t<Direction>::type_seq_dimensions {});
+        DiscreteHodgeStar<
+                CellComplex::CircumcentricDual,
+                tensor::upper_t<TopIndices>,
+                ddc::TypeSeq<>,
+                decltype(metric),
+                decltype(local_position),
+                Element>::
+        operator()(ScalarTensor(scalar), TopTensor(top), metric, local_position, elem);
+        // The scalar codifferential sign is (-1)^(2*N + 1) in every dimension.
+        return -scalar.mem(ddc::DiscreteElement<Scalar>(0));
+    }
+    template <class Element>
+    KOKKOS_FUNCTION double operator()(Element elem) const
+    {
+        return value(StoredCochainSampler {}, elem);
+    }
+};
+} // namespace sil::exterior

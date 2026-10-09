@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
+#include <utility>
 
 #include <ddc/ddc.hpp>
 #include <ddc/kernels/splines.hpp>
@@ -228,7 +229,19 @@ int main(int argc, char** argv)
             MetricIndex,
             MuLow,
             MuLow>(Kokkos::DefaultExecutionSpace(), laplacian_tensor, potential, metric, position);
-    laplacian(laplacian_tensor, potential);
+    // Pairs follow the (DDimX, DDimY) domain order, with lower then upper side.
+    sil::exterior::ExtrapolationRules const primal_rules(
+            std::
+                    pair {sil::exterior::NaturalScalarExtrapolationRule {},
+                          sil::exterior::NaturalScalarExtrapolationRule {}},
+            std::
+                    pair {sil::exterior::NaturalScalarExtrapolationRule {},
+                          sil::exterior::NaturalScalarExtrapolationRule {}});
+    laplacian(
+            laplacian_tensor,
+            potential,
+            primal_rules,
+            sil::exterior::ZeroCochainExtrapolationRule {});
     Kokkos::fence();
 
     auto position_host

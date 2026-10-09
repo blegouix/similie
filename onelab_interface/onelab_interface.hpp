@@ -38,7 +38,7 @@
 
 #include <onelab.h>
 
-#ifdef KOKKOS_ENABLE_CUDA
+#if defined(KOKKOS_ENABLE_CUDA)
 #include <cuda_runtime_api.h>
 #endif
 
@@ -46,12 +46,14 @@
 #include "gmsh_structured_grid.hpp"
 #include "magnetostatics_onelab.hpp"
 #include "minimize_strong_formulation_residual_onelab.hpp"
+#include "potential_flow_onelab.hpp"
 #include "scalar_field_with_power_coupling_onelab.hpp"
 
 namespace similie::onelab_interface {
 
 enum class SupportedPhysics {
     ScalarFieldWithPowerCoupling,
+    PotentialFlow,
     LinearMagnetostatics,
     NonLinearMagnetostatics,
     LinearElasticity,
@@ -61,7 +63,7 @@ enum class SupportedSolver {
     MinimizeStrongFormulationResidual,
 };
 
-#ifdef KOKKOS_ENABLE_CUDA
+#if defined(KOKKOS_ENABLE_CUDA)
 inline std::size_t cuda_stack_size()
 {
     char const* const value = std::getenv("SIMILIE_CUDA_STACK_SIZE");
@@ -94,6 +96,17 @@ struct ScalarFieldWithPowerCouplingProblem
     double mass = 1.0;
     double coupling_constant = 0.0;
     double coupling_power = 4.0;
+};
+
+struct PotentialFlowProblem
+{
+    std::string velocity_parameter = "Model/V";
+    std::string box_size_parameter = "Model/Air box size [m]";
+    std::string incidence_parameter = "Model/Angle of attack [deg]";
+    std::string circulation_parameter = "Model/Circ";
+    std::string mass_flow_rate_parameter = "Model/Dmdt";
+    std::string impose_circulation_parameter = "Model/Impose circulation";
+    std::string object_parameter = "Model/Object";
 };
 
 struct MinimizeStrongFormulationResidualProblem
@@ -150,6 +163,7 @@ struct SilproProblem
     SupportedPhysics physics;
     SupportedSolver solver;
     ScalarFieldWithPowerCouplingProblem scalar_field;
+    PotentialFlowProblem potential_flow;
     LinearElasticityProblem linear_elasticity;
     MinimizeStrongFormulationResidualProblem solver_settings;
     SingleElectricalConductorMaterialWithSingleLinearMagneticMaterialPreprocess
@@ -430,6 +444,9 @@ inline SupportedPhysics parse_physics_kind(std::string const& value)
     if (value == "ScalarFieldWithPowerCoupling") {
         return SupportedPhysics::ScalarFieldWithPowerCoupling;
     }
+    if (value == "PotentialFlow") {
+        return SupportedPhysics::PotentialFlow;
+    }
     if (value == "LinearElasticity") {
         return SupportedPhysics::LinearElasticity;
     }
@@ -471,6 +488,7 @@ inline SilproProblem parse_silpro_problem(std::filesystem::path const& file)
             .solver = parse_solver_kind(
                     get_value_or(problem_section, "Solver", "MinimizeStrongFormulationResidual")),
             .scalar_field = {},
+            .potential_flow = {},
             .linear_elasticity = {},
             .solver_settings = {},
             .single_electrical_conductor_material_with_single_linear_magnetic_material_preprocess
@@ -546,7 +564,29 @@ inline SilproProblem parse_silpro_problem(std::filesystem::path const& file)
             "IrRelaxationFactor",
             std::to_string(problem.solver_settings.ir_relaxation_factor)));
 
-    if (problem.physics == SupportedPhysics::ScalarFieldWithPowerCoupling) {
+    if (problem.physics == SupportedPhysics::PotentialFlow) {
+        SilproSection const& section = required_section(root, "PotentialFlow", file.string());
+        problem.potential_flow.velocity_parameter
+                = get_value_or(section, "Velocity", problem.potential_flow.velocity_parameter);
+        problem.potential_flow.box_size_parameter
+                = get_value_or(section, "BoxSize", problem.potential_flow.box_size_parameter);
+        problem.potential_flow.incidence_parameter
+                = get_value_or(section, "Incidence", problem.potential_flow.incidence_parameter);
+        problem.potential_flow.circulation_parameter = get_value_or(
+                section,
+                "Circulation",
+                problem.potential_flow.circulation_parameter);
+        problem.potential_flow.mass_flow_rate_parameter = get_value_or(
+                section,
+                "MassFlowRate",
+                problem.potential_flow.mass_flow_rate_parameter);
+        problem.potential_flow.impose_circulation_parameter = get_value_or(
+                section,
+                "ImposeCirculation",
+                problem.potential_flow.impose_circulation_parameter);
+        problem.potential_flow.object_parameter
+                = get_value_or(section, "Object", problem.potential_flow.object_parameter);
+    } else if (problem.physics == SupportedPhysics::ScalarFieldWithPowerCoupling) {
         SilproSection const& section
                 = required_section(root, "ScalarFieldWithPowerCoupling", file.string());
         problem.scalar_field.mass = parse_number<double>(
@@ -1152,8 +1192,9 @@ private:
                 problem.physics == SupportedPhysics::LinearMagnetostatics ? "LinearMagnetostatics"
                 : problem.physics == SupportedPhysics::NonLinearMagnetostatics
                         ? "NonLinearMagnetostatics"
-                : problem.physics == SupportedPhysics::LinearElasticity
-                        ? "LinearElasticity"
+                : problem.physics == SupportedPhysics::LinearElasticity ? "LinearElasticity"
+                : problem.physics == SupportedPhysics::PotentialFlow
+                        ? "PotentialFlow"
                         : "ScalarFieldWithPowerCoupling",
                 true);
         publish_or_sync_string(
@@ -1255,8 +1296,9 @@ private:
                 problem.physics == SupportedPhysics::LinearMagnetostatics ? "LinearMagnetostatics"
                 : problem.physics == SupportedPhysics::NonLinearMagnetostatics
                         ? "NonLinearMagnetostatics"
-                : problem.physics == SupportedPhysics::LinearElasticity
-                        ? "LinearElasticity"
+                : problem.physics == SupportedPhysics::LinearElasticity ? "LinearElasticity"
+                : problem.physics == SupportedPhysics::PotentialFlow
+                        ? "PotentialFlow"
                         : "ScalarFieldWithPowerCoupling",
                 "Physics",
                 "Physics selected by the .silpro file.");
@@ -1286,6 +1328,10 @@ private:
         }
         if (problem.physics == SupportedPhysics::LinearElasticity) {
             run_linear_elasticity_problem(problem);
+            return;
+        }
+        if (problem.physics == SupportedPhysics::PotentialFlow) {
+            run_potential_flow_problem(problem);
             return;
         }
 
@@ -1405,6 +1451,85 @@ private:
                            << ", " << result.diagnostic_traction_integral[1] << ", "
                            << result.diagnostic_traction_integral[2] << ")" << std::defaultfloat;
         client().sendInfo(diagnostics_stream.str());
+    }
+
+    void run_potential_flow_problem(SilproProblem const& problem)
+    {
+        std::filesystem::path const mesh_file = export_input_mesh_from_gmsh();
+        potential_flow_onelab::Inputs inputs;
+        inputs.velocity = read_number_parameter(
+                                  problem.potential_flow.velocity_parameter,
+                                  std::nullopt,
+                                  100.0)
+                          / 3.6;
+        inputs.box_size = read_number_parameter(
+                problem.potential_flow.box_size_parameter,
+                std::nullopt,
+                7.0);
+        inputs.incidence = -read_number_parameter(
+                                   problem.potential_flow.incidence_parameter,
+                                   std::nullopt,
+                                   10.0)
+                           * 3.14159265358979323846 / 180.0;
+        inputs.circulation = -read_number_parameter(
+                problem.potential_flow.circulation_parameter,
+                std::nullopt,
+                10.0);
+        inputs.mass_flow_rate = read_number_parameter(
+                problem.potential_flow.mass_flow_rate_parameter,
+                std::nullopt,
+                -100.0);
+        inputs.impose_circulation = read_number_parameter(
+                                            problem.potential_flow.impose_circulation_parameter,
+                                            std::nullopt,
+                                            0.0)
+                                    != 0.0;
+        inputs.airfoil
+                = read_number_parameter(problem.potential_flow.object_parameter, std::nullopt, 1.0)
+                  != 0.0;
+        if (!(inputs.box_size > 1.0) || !(inputs.velocity > 0.0)) {
+            throw std::runtime_error("invalid potential-flow box size or velocity");
+        }
+        solvers::StrongFormulationSolverSettings const solver_settings {
+                .max_iterations = problem.solver_settings.max_iterations,
+                .relative_tolerance = problem.solver_settings.relative_tolerance,
+                .jacobi_max_block_size = problem.solver_settings.jacobi_max_block_size,
+                .use_matrix_free = problem.solver_settings.use_matrix_free,
+                .criterion = problem.solver_settings.criterion,
+                .preconditioner = problem.solver_settings.preconditioner,
+        };
+        std::filesystem::path const output_file
+                = mesh_file.parent_path() / "similie_potential_flow.pos";
+        potential_flow_onelab::Result const result
+                = potential_flow_onelab::run(mesh_file, output_file, inputs, solver_settings);
+        client().sendMergeFileRequest(std::filesystem::absolute(output_file).string());
+        publish_output_number(
+                "Circulation",
+                result.circulation,
+                "Circulation [m^2/s]",
+                "Potential jump across the wake.");
+        publish_output_number(
+                "Dmdt",
+                result.mass_flow_rate,
+                "Mass flow rate [kg/s]",
+                "Quantity conjugate to circulation.");
+        publish_output_number(
+                "LiftKJ",
+                result.lift_kutta_joukowski,
+                "Kutta-Joukowski lift [N/m]",
+                "Lift per unit span.");
+        publish_output_number(
+                "MaxSpeed",
+                result.max_speed,
+                "Maximum speed [m/s]",
+                "Peak cellwise speed.");
+        publish_status("Potential flow solved");
+        std::ostringstream diagnostics;
+        diagnostics << "SimiLie potential-flow diagnostics: cells=" << result.cell_count
+                    << ", circulation=" << result.circulation
+                    << ", mass flow rate=" << result.mass_flow_rate
+                    << ", max speed=" << result.max_speed;
+        client().sendInfo(diagnostics.str());
     }
 
     void run_linear_elasticity_problem(SilproProblem const& problem)

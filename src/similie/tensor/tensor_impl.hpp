@@ -692,8 +692,7 @@ public:
                 ElementType,
                 ddc::DiscreteDomain<DDim...>,
                 LayoutStridedPolicy,
-                MemorySpace>::
-        operator()(delems...);
+                MemorySpace>::operator()(delems...);
     }
 
     template <class... DElems>

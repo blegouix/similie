@@ -441,14 +441,22 @@ public:
                 TargetHodgeOutputIndices>(exec_space, *m_dual_hodge_star, metric, position);
     }
 
+    template <class DualExtrapolationRule = ZeroCochainExtrapolationRule>
     CodifferentialTensorType operator()(
             CodifferentialTensorType codifferential_tensor,
-            TensorType tensor) const
+            TensorType tensor,
+            DualExtrapolationRule dual_extrapolation = {}) const
     {
         auto exec_space = m_exec_space;
         auto hodge_star = *m_hodge_star;
         auto dual_hodge_star = *m_dual_hodge_star;
         auto dual_tensor_buffer = *m_dual_tensor_buffer;
+        auto const dual_extrapolation_rules = [&]() {
+            if constexpr (misc::Specialization<DualExtrapolationRule, ExtrapolationRules>)
+                return dual_extrapolation;
+            else
+                return make_extrapolation_rules(dual_tensor_buffer, dual_extrapolation);
+        }();
         auto chain = m_chain;
         auto lower_chain = m_lower_chain;
 
@@ -487,12 +495,10 @@ public:
                     TransposedCoboundary<TagToRemoveFromCochain, DualTensorIndex>::operator()(
                             dual_codifferential,
                             [&](auto sampled_elem, auto dual_elem) {
-                                if (!misc::domain_contains(
-                                            dual_tensor_buffer.non_indices_domain(),
-                                            sampled_elem)) {
-                                    return 0.0;
-                                }
-                                return dual_tensor_buffer.mem(sampled_elem, dual_elem);
+                                return dual_extrapolation_rules(
+                                        dual_tensor_buffer,
+                                        sampled_elem,
+                                        dual_elem);
                             },
                             chain,
                             lower_chain,
@@ -553,7 +559,9 @@ template <
         misc::Specialization<tensor::Tensor> TensorType,
         misc::Specialization<tensor::Tensor> HodgeStarType,
         misc::Specialization<tensor::Tensor> DualHodgeStarType,
-        class ExecSpace>
+        class ExecSpace,
+        class DualExtrapolationRule = ZeroCochainExtrapolationRule>
+    requires(misc::NotSpecialization<DualExtrapolationRule, tensor::Tensor>)
 codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codifferential(
         ExecSpace const& exec_space,
         codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType>
@@ -561,8 +569,15 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
         TensorType tensor,
         HodgeStarType hodge_star,
         DualHodgeStarType dual_hodge_star,
-        DualTensorType dual_tensor_buffer)
+        DualTensorType dual_tensor_buffer,
+        DualExtrapolationRule dual_extrapolation = {})
 {
+    auto const dual_extrapolation_rules = [&]() {
+        if constexpr (misc::Specialization<DualExtrapolationRule, ExtrapolationRules>)
+            return dual_extrapolation;
+        else
+            return make_extrapolation_rules(dual_tensor_buffer, dual_extrapolation);
+    }();
     static_assert(tensor::is_covariant_v<TagToRemoveFromCochain>);
     using source_hodge_output_indices = codifferential_hodge_output_indices_t<
             TagToRemoveFromCochain::size() - CochainTag::rank(),
@@ -612,12 +627,10 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
                 TransposedCoboundary<TagToRemoveFromCochain, dual_tensor_index>::operator()(
                         dual_codifferential,
                         [&](auto sampled_elem, auto dual_elem) {
-                            if (!misc::domain_contains(
-                                        dual_tensor_buffer.non_indices_domain(),
-                                        sampled_elem)) {
-                                return 0.0;
-                            }
-                            return dual_tensor_buffer.mem(sampled_elem, dual_elem);
+                            return dual_extrapolation_rules(
+                                    dual_tensor_buffer,
+                                    sampled_elem,
+                                    dual_elem);
                         },
                         chain,
                         lower_chain,
@@ -643,20 +656,24 @@ template <
         misc::Specialization<tensor::Tensor> TensorType,
         misc::Specialization<tensor::Tensor> MetricType,
         misc::Specialization<tensor::Tensor> PositionType,
-        class ExecSpace>
+        class ExecSpace,
+        class DualExtrapolationRule = ZeroCochainExtrapolationRule>
+    requires(misc::NotSpecialization<DualExtrapolationRule, tensor::Tensor>)
 codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codifferential(
         ExecSpace const& exec_space,
         codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType>
                 codifferential_tensor,
         TensorType tensor,
         MetricType metric,
-        PositionType position)
+        PositionType position,
+        DualExtrapolationRule dual_extrapolation = {})
 {
     static_assert(tensor::is_covariant_v<TagToRemoveFromCochain>);
-    return make_staged_codifferential<
-            MetricIndex,
-            TagToRemoveFromCochain,
-            CochainTag>(exec_space, tensor, metric, position)(codifferential_tensor, tensor);
+    return make_staged_codifferential<MetricIndex, TagToRemoveFromCochain, CochainTag>(
+            exec_space,
+            tensor,
+            metric,
+            position)(codifferential_tensor, tensor, dual_extrapolation);
 }
 
 } // namespace exterior

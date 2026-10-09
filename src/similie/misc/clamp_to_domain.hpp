@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <algorithm>
+
 #include <ddc/ddc.hpp>
 
 #include "select_from_type_seq.hpp"
@@ -28,9 +30,13 @@ struct ClampToDomain<ddc::TypeSeq<CommonDDim...>>
         ddc::DiscreteElement<CommonDDim...> const front = common_domain.front();
         ddc::DiscreteElement<CommonDDim...> const back = common_domain.back();
 
-        ((elem.template uid<CommonDDim>() = std::
-                  min(std::max(elem.template uid<CommonDDim>(), front.template uid<CommonDDim>()),
-                      back.template uid<CommonDDim>())),
+        // Signed offsets distinguish a sample below zero from a large upper index.
+        ((elem.template uid<CommonDDim>()
+          = (ddc::DiscreteElement<CommonDDim>(elem) - ddc::DiscreteElement<CommonDDim>(front))
+                                    .template get<CommonDDim>()
+                            < 0
+                    ? front.template uid<CommonDDim>()
+                    : std::min(elem.template uid<CommonDDim>(), back.template uid<CommonDDim>())),
          ...);
         return elem;
     }

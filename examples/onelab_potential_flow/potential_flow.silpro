@@ -1,0 +1,28 @@
+# SPDX-FileCopyrightText: 2026 Baptiste Legouix
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# // AI-GENERATED
+
+Problem {
+  Name "Potential flow around an airfoil or cylinder";
+  Physics PotentialFlow;
+  Solver MinimizeStrongFormulationResidual;
+}
+
+Solver {
+  MaxIterations 100000;
+  RelativeTolerance 1e-9;
+  JacobiMaxBlockSize 1;
+  UseMatrixFree 1;
+  Criterion MomentsTemporalDerivative;
+  Preconditioner Jacobi;
+}
+
+PotentialFlow {
+  Velocity "Model/V";
+  BoxSize "Model/Air box size [m]";
+  Incidence "Model/Angle of attack [deg]";
+  Circulation "Model/Circ";
+  MassFlowRate "Model/Dmdt";
+  ImposeCirculation "Model/Impose circulation";
+  Object "Model/Object";
+}
