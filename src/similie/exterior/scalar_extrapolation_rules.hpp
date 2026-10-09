@@ -11,7 +11,7 @@
 #include <similie/misc/clamp_to_domain.hpp>
 #include <similie/misc/domain_contains.hpp>
 
-#include "sampled_cochain.hpp"
+#include "evaluators.hpp"
 
 namespace sil::exterior {
 
@@ -215,50 +215,6 @@ struct NaturalScalarExtrapolationRule
                 SampledCochain<TensorType, Sampler> {tensor, sampler},
                 sampled_element,
                 component);
-    }
-};
-
-/**
- * Sample a neighboring cochain through a caller-supplied trace map.
- * The map supplies both the neighboring grid element and the stored component,
- * so it can account for different origins, axis permutations and orientations.
- * The signed affine jump is added to exterior samples only. A primal potential
- * jump and a dual flux connection can therefore use different rule instances.
- * The neighbor and map must be accessible in the operator's execution space.
- * \important This operator and documentation is fully AI-generated.
- */
-template <class NeighborTensor, class TraceMap>
-struct ConnectedScalarExtrapolationRule
-{
-    NeighborTensor neighbor;
-    TraceMap trace_map;
-    double jump = 0.0;
-
-    template <class TensorType, class Element, class Component>
-    KOKKOS_FUNCTION double operator()(
-            TensorType const& tensor,
-            Element sampled_element,
-            Component component) const
-    {
-        if (sil::misc::domain_contains(tensor.non_indices_domain(), sampled_element))
-            return tensor.mem(sampled_element, component);
-        return trace_map(neighbor, sampled_element, component) + jump;
-    }
-
-    template <class TensorType, class Sampler, class Element, class Component>
-    KOKKOS_FUNCTION double value(
-            TensorType const& tensor,
-            Sampler sampler,
-            Element sampled_element,
-            Component component) const
-    {
-        if (sil::misc::domain_contains(tensor.non_indices_domain(), sampled_element))
-            return sampler(tensor, sampled_element, component);
-        return trace_map(
-                       SampledCochain<NeighborTensor, Sampler> {neighbor, sampler},
-                       sampled_element,
-                       component)
-               + jump;
     }
 };
 

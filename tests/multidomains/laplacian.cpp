@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // AI-GENERATED
 
+#include <map>
+#include <vector>
+
 #include <gtest/gtest.h>
-#include <similie/solvers/affine_scalar_system.hpp>
 #include <similie/solvers/multidomain_laplacian.hpp>
 
 namespace {
@@ -124,23 +126,16 @@ void check_split(bool normalize)
             second_ids("second_device_ids", 64);
     Kokkos::deep_copy(first_ids, first_numbering);
     Kokkos::deep_copy(second_ids, second_numbering);
-    solvers::IndexedScalarField<GridX> const first {first_grid, first_ids.data(), nullptr},
-            second {second_grid, second_ids.data(), nullptr};
+    solvers::IndexedScalarField<GridX> const first {first_grid, first_ids.data()},
+            second {second_grid, second_ids.data()};
     md::Multidomain const
             domains(Graph {},
                     md::domain_data<A>(first, sil::tensor::Tensor(first_device), Physics {}),
                     md::domain_data<B>(second, sil::tensor::Tensor(second_device), Physics {}),
                     md::boundary_data<Wall>(sil::exterior::NaturalScalarExtrapolationRule {}));
     auto const coefficient = [](Physics physics) { return physics.diffusivity; };
-    // The capacity hint cannot hold this tridiagonal matrix: grow and retry.
-    auto const assembled = solvers::assemble_multidomain_laplacian<Direction>(
-            Kokkos::DefaultExecutionSpace {},
-            domains,
-            128,
-            coefficient,
-            1.0,
-            1,
-            normalize);
+    auto const assembled = solvers::assemble_multidomain_laplacian<
+            Direction>(Kokkos::DefaultExecutionSpace {}, domains, 128, coefficient, 1.0, normalize);
     auto const data = assemble_matrix_data(assembled.matrix);
     auto const rhs = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), assembled.rhs);
     std::vector<std::map<std::size_t, double>> rows(128);
@@ -189,7 +184,7 @@ void check_split(bool normalize)
             EXPECT_NEAR(host_applied(i, 0) - rhs(i, 0), host_direct(i, 0), 1.e-11);
     }
 }
-TEST(MultidomainsLaplacian, DecInterfaceJumpAndCapacityRetry)
+TEST(MultidomainsLaplacian, DecInterfaceJump)
 {
     check_split(false);
 }
@@ -226,32 +221,6 @@ TEST(MultidomainsLaplacian, OneExecutionInstancePerPhysicalDomain)
     EXPECT_EQ(host(1), 2);
 }
 
-void prescribe_on_stream(
-        Kokkos::DefaultExecutionSpace const& exec,
-        solvers::DeviceAffineScalarSystem::View system,
-        double value)
-{
-    Kokkos::parallel_for(
-            "prescribe_on_stream",
-            Kokkos::RangePolicy(exec, 0, 1),
-            KOKKOS_LAMBDA(int) {
-                solvers::DeviceAffineSample<1> sample;
-                sample.count = 1;
-                sample.indices[0] = 0;
-                sample.weights[0] = 1.0;
-                system.prescribe(sample, value);
-            });
-}
-TEST(MultidomainsLaplacian, ConflictingConstraintsAcrossStreamsAreRejected)
-{
-    Kokkos::DefaultExecutionSpace const exec;
-    md::DomainExecution<Graph, Kokkos::DefaultExecutionSpace> partitions(exec);
-    solvers::DeviceAffineScalarSystem system(1, 8);
-    prescribe_on_stream(partitions.space<A>(), system.view(), 2.0);
-    prescribe_on_stream(partitions.space<B>(), system.view(), 3.0);
-    partitions.fence();
-    EXPECT_THROW(system.finalize(exec), std::runtime_error);
-}
 
 struct Bottom
 {
@@ -316,7 +285,7 @@ void check_2d(double shear, double prescribed_flux)
     ddc::parallel_deepcopy(device_potential, host_potential);
     Kokkos::View<std::size_t*> device_ids("device_ids", 25);
     Kokkos::deep_copy(device_ids, ids);
-    solvers::IndexedScalarField<GridX, GridY> const field {grid, device_ids.data(), nullptr};
+    solvers::IndexedScalarField<GridX, GridY> const field {grid, device_ids.data()};
     md::Multidomain const
             domains(Graph2D {},
                     md::domain_data<A>(field, sil::tensor::Tensor(device_position), Physics {}),
@@ -328,7 +297,7 @@ void check_2d(double shear, double prescribed_flux)
                             sil::exterior::NormalScalarFluxExtrapolationRule {prescribed_flux}));
     auto const coefficient = [](Physics physics) { return physics.diffusivity; };
     auto const system = solvers::assemble_multidomain_laplacian<
-            Direction>(Kokkos::DefaultExecutionSpace {}, domains, 25, coefficient, 1.0, 256, false);
+            Direction>(Kokkos::DefaultExecutionSpace {}, domains, 25, coefficient, 1.0, false);
     auto const data = assemble_matrix_data(system.matrix);
     auto const rhs = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), system.rhs);
     std::vector<std::map<std::size_t, double>> rows(25);

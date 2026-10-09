@@ -67,11 +67,6 @@ path = [
     "examples/onelab_potential_flow/magnus.geo",
     "examples/onelab_potential_flow/magnus_common.pro",
     "examples/onelab_potential_flow/nacaAirfoil.geo",
-    "examples/onelab_potential_flow/original/infos.xml",
-    "examples/onelab_potential_flow/original/magnus.geo",
-    "examples/onelab_potential_flow/original/magnus.pro",
-    "examples/onelab_potential_flow/original/magnus_common.pro",
-    "examples/onelab_potential_flow/original/nacaAirfoil.geo",
     "examples/onelab_potential_flow/ref/magnus.pro",
 ]
 precedence = "override"

@@ -10,7 +10,7 @@
 
 #include <ddc/ddc.hpp>
 
-#include "sampled_cochain.hpp"
+#include "evaluators.hpp"
 #include "scalar_extrapolation_rules.hpp"
 
 namespace sil::exterior {
@@ -32,8 +32,8 @@ enum class BoundarySide { Lower, Upper };
  * disjoint stored nodes: one step outside maps to the donor boundary node.
  * map_boundary() identifies the coincident trace nodes in the shared case.
  * Spectator tensor indices pass through unchanged. Axis permutations, reversed
- * tangential coordinates, interpolation, and component frame changes require
- * a custom trace map (see ConnectedScalarExtrapolationRule).
+ * tangential coordinates, interpolation, and component frame changes are not
+ * supported by this aligned map.
  */
 template <class Dimension>
 struct ExternalDomainBoundaryMap

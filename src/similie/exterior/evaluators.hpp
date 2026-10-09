@@ -72,3 +72,75 @@ struct ZeroOutsideTensorEvaluator
 } // namespace exterior
 
 } // namespace sil
+
+namespace sil::exterior {
+
+/** Substitute a sampler for stored cochain values, retaining domain identity.
+ * \important This operator and documentation is fully AI-generated.
+ * A sampler receives (field, element, component), so it can distinguish identical
+ * local coordinates in different domains when evaluating a global basis vector.
+ * The field is borrowed and must outlive this sampling view.
+ */
+template <class Field, class Sampler>
+struct SampledCochain
+{
+    using non_indices_domain_t = typename Field::non_indices_domain_t;
+    using discrete_domain_type = typename Field::discrete_domain_type;
+    Field const& field;
+    Sampler sampler;
+
+    KOKKOS_FUNCTION non_indices_domain_t non_indices_domain() const
+    {
+        return field.non_indices_domain();
+    }
+
+    template <class Element, class Component>
+    KOKKOS_FUNCTION double mem(Element element, Component component) const
+    {
+        return sampler(field, element, component);
+    }
+};
+
+struct StoredCochainSampler
+{
+    template <class Field, class Element, class Component>
+    KOKKOS_FUNCTION double operator()(Field const& field, Element element, Component component)
+            const
+    {
+        return field.mem(element, component);
+    }
+};
+
+namespace detail {
+struct EvaluateRule
+{
+    template <class Rule, class Field, class Element, class Component>
+    KOKKOS_FUNCTION double operator()(
+            Rule const& rule,
+            Field const& field,
+            Element element,
+            Component component) const
+    {
+        return rule(field, element, component);
+    }
+};
+
+template <class Sampler>
+struct EvaluateRuleValue
+{
+    Sampler sampler;
+    template <class Rule, class Field, class Element, class Component>
+    KOKKOS_FUNCTION double operator()(
+            Rule const& rule,
+            Field const& field,
+            Element element,
+            Component component) const
+    {
+        if constexpr (requires { rule.value(field, sampler, element, component); })
+            return rule.value(field, sampler, element, component);
+        else
+            return rule(SampledCochain<Field, Sampler> {field, sampler}, element, component);
+    }
+};
+} // namespace detail
+} // namespace sil::exterior

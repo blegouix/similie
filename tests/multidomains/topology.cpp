@@ -8,7 +8,6 @@
 
 #include <gtest/gtest.h>
 #include <similie/multidomains/multidomains.hpp>
-#include <similie/solvers/affine_scalar_system.hpp>
 #include <similie/tensor/character.hpp>
 #include <similie/tensor/tensor.hpp>
 

@@ -23,18 +23,6 @@ using Metric = sil::tensor::TensorIdentityIndex<
         sil::tensor::Covariant<sil::tensor::MetricIndex1<X>>,
         sil::tensor::Covariant<sil::tensor::MetricIndex2<X>>>;
 
-struct ShiftedTraceMap
-{
-    template <class TensorType>
-    KOKKOS_FUNCTION double operator()(
-            TensorType field,
-            ddc::DiscreteElement<Grid> elem,
-            ddc::DiscreteElement<Scalar> component) const
-    {
-        return field.mem(elem - ddc::DiscreteVector<Grid>(5), component);
-    }
-};
-
 struct ConstantExteriorRule
 {
     double value;
@@ -87,15 +75,6 @@ void test_callable_rules_and_connected_derivative()
     sil::tensor::Tensor host(host_alloc);
     EXPECT_DOUBLE_EQ(host.mem(ddc::DiscreteElement<Grid, Vector>(14, 0)), 11.0);
     EXPECT_DOUBLE_EQ(host.mem(ddc::DiscreteElement<Grid, Vector>(12, 0)), 5.0);
-    // A custom trace map remains available for more general connections.
-    sil::exterior::deriv<Vector, Scalar>(
-            Kokkos::DefaultExecutionSpace(),
-            derivative,
-            potential,
-            sil::exterior::ConnectedScalarExtrapolationRule {neighbor, ShiftedTraceMap {}, 2.0});
-    ddc::parallel_deepcopy(host, derivative);
-    EXPECT_DOUBLE_EQ(host.mem(ddc::DiscreteElement<Grid, Vector>(14, 0)), 11.0);
-
     sil::exterior::deriv<Vector, Scalar>(
             Kokkos::DefaultExecutionSpace(),
             derivative,
