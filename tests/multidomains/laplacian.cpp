@@ -239,7 +239,7 @@ using Graph2D = md::Topology<
         md::BoundaryConnection<md::Face<A, GridY, BoundarySide::Lower>, Bottom>,
         md::BoundaryConnection<md::Face<A, GridY, BoundarySide::Upper>, Value>>;
 
-void check_2d(double shear, double prescribed_flux)
+void check_2d(double shear, double prescribed_flux, double angle = 0.0)
 {
     using Direction = sil::tensor::Covariant<sil::tensor::TensorNaturalIndex<X, Y>>;
     using Scalar = sil::tensor::Covariant<sil::tensor::ScalarIndex>;
@@ -268,8 +268,8 @@ void check_2d(double shear, double prescribed_flux)
     ddc::host_for_each(grid, [&](ddc::DiscreteElement<GridX, GridY> elem) {
         double const y = elem.uid<GridY>() - 10;
         double const x = elem.uid<GridX>() - 10 + shear * y;
-        position(elem, positions.access_element<X>()) = x;
-        position(elem, positions.access_element<Y>()) = y;
+        position(elem, positions.access_element<X>()) = std::cos(angle) * x - std::sin(angle) * y;
+        position(elem, positions.access_element<Y>()) = std::sin(angle) * x + std::cos(angle) * y;
         potential.mem(elem, ddc::DiscreteElement<Scalar>(0)) = x * x + y * y;
         std::size_t const id = 5 * (elem.uid<GridX>() - 10) + elem.uid<GridY>() - 10;
         ids(id) = id;
@@ -358,3 +358,13 @@ TEST(MultidomainsLaplacian, PrescribedDualCochainFlux)
     check_2d(0.0, 1.0);
 }
 } // namespace
+
+TEST(MultidomainsLaplacian, RotatedDecAxialStencil)
+{
+    // Include a quarter turn: Cartesian diagonal projections then vanish,
+    // although the cell Jacobian and the DEC Hodge star remain nonsingular.
+    for (double angle : {0.37, std::acos(-1.0) / 2.0, 2.1}) {
+        check_2d(0.0, 0.0, angle);
+        check_2d(0.3, 0.0, angle);
+    }
+}
