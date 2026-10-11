@@ -32,6 +32,8 @@ struct ScalarField
     using component_type = sil::tensor::Covariant<sil::tensor::ScalarIndex>;
     using non_indices_domain_t = ddc::DiscreteDomain<Dimensions...>;
     using discrete_domain_type = ddc::DiscreteDomain<Dimensions..., component_type>;
+    using indices_domain_t = ddc::DiscreteDomain<component_type>;
+    using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
     non_indices_domain_t grid;
     double* storage;
     KOKKOS_FUNCTION non_indices_domain_t non_indices_domain() const
@@ -108,10 +110,10 @@ TEST(Multidomains, RuntimeDomainCount)
         EXPECT_EQ(domains.domain_count(), count);
         for (std::size_t id = 0; id < count; ++id)
             EXPECT_DOUBLE_EQ(
-                    domains.extrapolation_rules(id)(
-                            domains.field(id),
-                            ddc::DiscreteElement<GridX>(10 * id + 3),
-                            ddc::DiscreteElement<typename ScalarField<GridX>::component_type>(0)),
+                    domains.extrapolation_rules(
+                                   id)(domains.field(id), ddc::DiscreteElement<GridX>(10 * id + 3))
+                            .mem(ddc::DiscreteElement<typename ScalarField<GridX>::component_type>(
+                                    0)),
                     storage[(id + 1) % count][0]);
     }
 }
@@ -156,9 +158,11 @@ void check_periodic_rank(std::index_sequence<Axis...>)
     ddc::DiscreteElement<typename decltype(field)::component_type> const component(0);
     double const expected
             = (field.mem(first, component) + 2.0 * field.mem(second, component)) / 3.0;
-    EXPECT_DOUBLE_EQ(rules(field, exterior, component), expected);
+    EXPECT_DOUBLE_EQ(rules(field, exterior).mem(component), expected);
     EXPECT_DOUBLE_EQ(
-            rules.value(domains.field(0), sil::tensor::StoredTensorSampler {}, exterior, component),
+            rules.value(field.non_indices_domain(), exterior).evaluate([&](auto const& term) {
+                return field.mem(term.element, component);
+            }),
             expected);
 }
 
@@ -184,35 +188,37 @@ TEST(Multidomains, EntrySideAffineInverseAndPhysics)
     auto const rules_a = domains.extrapolation_rules(0);
     auto const rules_b = domains.extrapolation_rules(1);
     ddc::DiscreteElement<typename ScalarField<GridX>::component_type> const component(0);
-    EXPECT_DOUBLE_EQ(rules_a(first, ddc::DiscreteElement<GridX>(13), component), 15.0);
-    EXPECT_DOUBLE_EQ(rules_a(first, ddc::DiscreteElement<GridX>(14), component), 13.0);
-    EXPECT_DOUBLE_EQ(rules_b(second, ddc::DiscreteElement<GridX>(33), component), 0.0);
-    EXPECT_DOUBLE_EQ(rules_b(second, ddc::DiscreteElement<GridX>(29), component), 7.0);
-    EXPECT_DOUBLE_EQ(rules_a(first, ddc::DiscreteElement<GridX>(9), component), 0.0);
+    EXPECT_DOUBLE_EQ(rules_a(first, ddc::DiscreteElement<GridX>(13)).mem(component), 15.0);
+    EXPECT_DOUBLE_EQ(rules_a(first, ddc::DiscreteElement<GridX>(14)).mem(component), 13.0);
+    EXPECT_DOUBLE_EQ(rules_b(second, ddc::DiscreteElement<GridX>(33)).mem(component), 0.0);
+    EXPECT_DOUBLE_EQ(rules_b(second, ddc::DiscreteElement<GridX>(29)).mem(component), 7.0);
+    EXPECT_DOUBLE_EQ(rules_a(first, ddc::DiscreteElement<GridX>(9)).mem(component), 0.0);
     EXPECT_DOUBLE_EQ(domains.data(0).physics.density, 2.0);
     auto const flux = domains.extrapolation_rules<md::FieldRole::Flux>(0, 50.0);
-    EXPECT_DOUBLE_EQ(flux(first, ddc::DiscreteElement<GridX>(13), component), 12.0);
+    EXPECT_DOUBLE_EQ(flux(first, ddc::DiscreteElement<GridX>(13)).mem(component), 12.0);
     md::Multidomain const
             shared(graph(true),
                    std::
                            vector {md::domain_data(first, first, ScalarPhysics {2.0}),
                                    md::domain_data(second, second, ScalarPhysics {4.0})});
     EXPECT_DOUBLE_EQ(
-            shared.extrapolation_rules(0)(first, ddc::DiscreteElement<GridX>(13), component),
+            shared.extrapolation_rules(0)(first, ddc::DiscreteElement<GridX>(13)).mem(component),
             13.0);
     auto const geometry = domains.extrapolation_rules<md::FieldRole::Geometry>(0, 50.0);
-    EXPECT_DOUBLE_EQ(geometry(first, ddc::DiscreteElement<GridX>(13), component), 6.0);
-    auto basis = [](auto field, auto element, auto) {
-        if (field.domain_id == 1)
-            return element.template uid<GridX>() == 31 ? 1.0 : 0.0;
+    EXPECT_DOUBLE_EQ(geometry(first, ddc::DiscreteElement<GridX>(13)).mem(component), 6.0);
+    auto basis = [](auto const& term) {
+        if (term.domain_id == 1)
+            return term.element.template uid<GridX>() == 31 ? 1.0 : 0.0;
         else
             return 0.0;
     };
     EXPECT_DOUBLE_EQ(
-            rules_a.value(domains.field(0), basis, ddc::DiscreteElement<GridX>(14), component),
+            rules_a.value(first.non_indices_domain(), ddc::DiscreteElement<GridX>(14))
+                    .evaluate(basis),
             5.0);
     EXPECT_DOUBLE_EQ(
-            rules_a.value(domains.field(0), basis, ddc::DiscreteElement<GridX>(11), component),
+            rules_a.value(first.non_indices_domain(), ddc::DiscreteElement<GridX>(11))
+                    .evaluate(basis),
             0.0);
 }
 
@@ -238,12 +244,13 @@ void check_generated_rules_on_cuda()
             KOKKOS_LAMBDA(int) {
                 ddc::DiscreteElement<typename ScalarField<GridX>::component_type> const component(
                         0);
-                result(0) = rules(field, ddc::DiscreteElement<GridX>(13), component);
-                result(1) = rules
-                                    .value(field,
-                                           sil::tensor::StoredTensorSampler {},
-                                           ddc::DiscreteElement<GridX>(13),
-                                           component);
+                result(0) = rules(field, ddc::DiscreteElement<GridX>(13)).mem(component);
+                result(1) = rules.value(field.non_indices_domain(), ddc::DiscreteElement<GridX>(13))
+                                    .evaluate([&](auto const& term) {
+                                        return term.domain_id == 1
+                                                       ? second.mem(term.element, component)
+                                                       : first.mem(term.element, component);
+                                    });
             });
     auto const host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), result);
     EXPECT_DOUBLE_EQ(host(0), 11.0);

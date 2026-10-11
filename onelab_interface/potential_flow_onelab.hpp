@@ -19,9 +19,9 @@
 
 #include <ddc/ddc.hpp>
 
+#include <similie/multidomains/laplacian.hpp>
 #include <similie/physics/hamilton_equations.hpp>
 #include <similie/physics/scalar_field/scalar_field_with_power_coupling.hpp>
-#include <similie/solvers/multidomain_laplacian.hpp>
 
 #include "gmsh_structured_grid.hpp"
 #include "potential_flow_topology.hpp"
@@ -76,19 +76,14 @@ void reconstruct_potential_patch(
                 differences(index, 1)
                         = gradient(elem, gradient.accessor().template access_element<Y>());
                 if (elem.uid<GridY>() + 1 < radial_nodes) {
-                    cells(index, 0) = rules(field, elem, ddc::DiscreteElement<PotentialIndex>(0));
-                    cells(index, 1)
-                            = rules(field,
-                                    elem + ddc::DiscreteVector<GridX, GridY>(1, 0),
-                                    ddc::DiscreteElement<PotentialIndex>(0));
-                    cells(index, 2)
-                            = rules(field,
-                                    elem + ddc::DiscreteVector<GridX, GridY>(1, 1),
-                                    ddc::DiscreteElement<PotentialIndex>(0));
-                    cells(index, 3)
-                            = rules(field,
-                                    elem + ddc::DiscreteVector<GridX, GridY>(0, 1),
-                                    ddc::DiscreteElement<PotentialIndex>(0));
+                    cells(index, 0)
+                            = rules(field, elem).mem(ddc::DiscreteElement<PotentialIndex>(0));
+                    cells(index, 1) = rules(field, elem + ddc::DiscreteVector<GridX, GridY>(1, 0))
+                                              .mem(ddc::DiscreteElement<PotentialIndex>(0));
+                    cells(index, 2) = rules(field, elem + ddc::DiscreteVector<GridX, GridY>(1, 1))
+                                              .mem(ddc::DiscreteElement<PotentialIndex>(0));
+                    cells(index, 3) = rules(field, elem + ddc::DiscreteVector<GridX, GridY>(0, 1))
+                                              .mem(ddc::DiscreteElement<PotentialIndex>(0));
                 }
             });
 }
@@ -430,7 +425,7 @@ inline Result run(
         Kokkos::deep_copy(device_indices.back(), mirror);
     }
     auto assemble = [&](double jump_scale, double prescribed_scale) {
-        std::vector<solvers::IndexedScalarField<GridX, GridY>> fields;
+        std::vector<sil::multidomains::IndexedScalarField<GridX, GridY>> fields;
         for (std::size_t side = 0; side < side_start.size(); ++side)
             fields.push_back({positions[side].non_indices_domain(), device_indices[side].data()});
         auto const domains = bind_potential_flow_domains(
@@ -438,7 +433,7 @@ inline Result run(
                 fields,
                 positions,
                 equations);
-        return solvers::assemble_multidomain_laplacian<GradientIndex>(
+        return sil::multidomains::assemble_multidomain_laplacian<GradientIndex>(
                 Kokkos::DefaultExecutionSpace {},
                 domains,
                 node_count,

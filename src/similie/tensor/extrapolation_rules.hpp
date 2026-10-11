@@ -20,6 +20,21 @@ namespace sil::tensor {
 
 namespace detail {
 
+template <class Result, class Contribution>
+KOKKOS_FUNCTION void accumulate_extrapolation(
+        Result& result,
+        Contribution const& contribution,
+        double weight)
+{
+    if constexpr (misc::Specialization<Result, ExtrapolationStencil>)
+        result.accumulate(contribution, weight);
+    else
+        ddc::device_for_each(result.domain(), [&](auto component) {
+            result.mem(component) += weight * contribution.mem(component);
+        });
+}
+
+
 template <std::size_t Dimension, class... RulePairs>
 class ExtrapolationRulesStorage;
 
@@ -29,14 +44,8 @@ class ExtrapolationRulesStorage<Dimension>
 public:
     KOKKOS_DEFAULTED_FUNCTION ExtrapolationRulesStorage() = default;
 
-    template <class TensorType, class Element, class Component, class Evaluate>
-    KOKKOS_FUNCTION void accumulate(
-            TensorType const&,
-            Element,
-            Component,
-            double&,
-            double&,
-            Evaluate) const
+    template <class Domain, class Element, class Result, class Evaluate>
+    KOKKOS_FUNCTION void accumulate(Domain, Element, Result&, double&, Evaluate) const
     {
     }
 };
@@ -71,44 +80,30 @@ public:
         }
     }
 
-    template <class TensorType, class Element, class Component, class Evaluate>
+    template <class Domain, class Element, class Result, class Evaluate>
     KOKKOS_FUNCTION void accumulate(
-            TensorType const& tensor,
-            Element sampled_element,
-            Component component,
-            double& weighted_value,
-            double& total_distance,
+            Domain domain,
+            Element element,
+            Result& result,
+            double& total,
             Evaluate evaluate) const
     {
-        using DDim = ddc::type_seq_element_t<
-                Dimension,
-                ddc::to_type_seq_t<typename TensorType::non_indices_domain_t>>;
-        std::ptrdiff_t const sampled
-                = static_cast<std::ptrdiff_t>(sampled_element.template uid<DDim>());
-        ddc::DiscreteElement<DDim> const front(tensor.non_indices_domain().front());
-        ddc::DiscreteElement<DDim> const back(tensor.non_indices_domain().back());
-        // A negative offset also detects unsigned coordinates wrapping below zero.
-        std::ptrdiff_t const offset
-                = sampled - static_cast<std::ptrdiff_t>(front.template uid<DDim>());
-        if (offset < 0) {
-            double const distance = -static_cast<double>(offset);
-            weighted_value
-                    += distance * evaluate(m_rules.first, tensor, sampled_element, component);
-            total_distance += distance;
-        } else if (sampled > static_cast<std::ptrdiff_t>(back.template uid<DDim>())) {
-            double const distance = static_cast<double>(
-                    sampled - static_cast<std::ptrdiff_t>(back.template uid<DDim>()));
-            weighted_value
-                    += distance * evaluate(m_rules.second, tensor, sampled_element, component);
-            total_distance += distance;
+        using DDim = ddc::type_seq_element_t<Dimension, ddc::to_type_seq_t<Domain>>;
+        std::ptrdiff_t const sampled = static_cast<std::ptrdiff_t>(element.template uid<DDim>());
+        std::ptrdiff_t const front
+                = static_cast<std::ptrdiff_t>(domain.front().template uid<DDim>());
+        std::ptrdiff_t const back = static_cast<std::ptrdiff_t>(domain.back().template uid<DDim>());
+        double const distance = sampled < front  ? double(front - sampled)
+                                : sampled > back ? double(sampled - back)
+                                                 : 0.0;
+        if (distance != 0.0) {
+            if (sampled < front)
+                accumulate_extrapolation(result, evaluate(m_rules.first, element), distance);
+            else
+                accumulate_extrapolation(result, evaluate(m_rules.second, element), distance);
+            total += distance;
         }
-        m_other_rules.accumulate(
-                tensor,
-                sampled_element,
-                component,
-                weighted_value,
-                total_distance,
-                evaluate);
+        m_other_rules.accumulate(domain, element, result, total, evaluate);
     }
 };
 
@@ -127,7 +122,7 @@ public:
  *
  * Outside the domain, blend the selected boundary rules using normalized
  * outward distances in logical grid-index units: the result is
- * sum(distance_i * rule_i(tensor, element, component)) / sum(distance_i).
+ * sum(distance_i * rule_i(tensor, element)) / sum(distance_i).
  * Each selected rule receives the original sample. Dimensions whose bounds
  * are not crossed contribute zero weight and their rules are not evaluated.
  * A sample outside only one dimension therefore uses that boundary rule alone.
@@ -140,7 +135,7 @@ public:
  * Interior samples bypass normalization, including the corner where all
  * outward distances vanish. Each rule and its state must be copyable and
  * accessible in the caller's execution space. This class implements the same
- * (tensor, element, component) sampling interface as individual rules.
+ * (tensor, element) pointwise interface as individual rules.
  */
 template <misc::Specialization<std::pair>... RulePairs>
 class ExtrapolationRules
@@ -174,82 +169,85 @@ public:
         return m_rules.template boundary_rule<Axis, Upper>();
     }
 
-    template <class TensorType, class Element, class Component>
-    KOKKOS_FUNCTION double operator()(
-            TensorType const& tensor,
-            Element sampled_element,
-            Component component) const
+    template <class Domain, class Element>
+    KOKKOS_FUNCTION ExtrapolationStencil<Domain> value(Domain domain, Element sampled_element) const
     {
-        static_assert(
-                sizeof...(RulePairs)
-                == ddc::type_seq_size_v<
-                        ddc::to_type_seq_t<typename TensorType::non_indices_domain_t>>);
-        auto const element = [&] {
-            if constexpr (misc::Specialization<Element, misc::SignedDiscreteElement>)
-                return misc::convert_type_seq_to_t<
-                        misc::SignedDiscreteElement,
-                        ddc::type_seq_remove_t<
-                                ddc::to_type_seq_t<typename TensorType::discrete_domain_type>,
-                                ddc::to_type_seq_t<Component>>>(sampled_element);
-            else
-                return misc::convert_type_seq_to_t<
-                        ddc::DiscreteElement,
-                        ddc::type_seq_remove_t<
-                                ddc::to_type_seq_t<typename TensorType::discrete_domain_type>,
-                                ddc::to_type_seq_t<Component>>>(sampled_element);
-        }();
-        if (misc::domain_contains(tensor.non_indices_domain(), element))
-            return StoredTensorSampler {}(tensor, element, component);
-        double weighted_value = 0.0, total_distance = 0.0;
-        m_rules.accumulate(
-                tensor,
-                element,
-                component,
-                weighted_value,
-                total_distance,
-                detail::EvaluateRule {});
-        return weighted_value / total_distance;
+        static_assert(sizeof...(RulePairs) == ddc::type_seq_size_v<ddc::to_type_seq_t<Domain>>);
+        misc::convert_type_seq_to_t<misc::SignedDiscreteElement, ddc::to_type_seq_t<Domain>> const
+                element(sampled_element);
+        ExtrapolationStencil<Domain> result;
+        if (misc::domain_contains(domain, element)) {
+            result.add(domain, element, 1.0);
+            return result;
+        }
+        double total = 0.0;
+        m_rules.accumulate(domain, element, result, total, [&](auto const& rule, auto sample) {
+            return rule.value(domain, sample);
+        });
+        result.constant /= total;
+        for (std::size_t i = 0; i < result.count; ++i)
+            result.terms[i].weight /= total;
+        return result;
     }
 
-    /** Evaluate a basis/stencil sampler through the same face and corner rules.
-     * The sampler receives the mapped donor field, including its domain tag.
-     */
-    template <class TensorType, class Sampler, class Element, class Component>
-    KOKKOS_FUNCTION double value(
-            TensorType const& tensor,
+    template <class Field, class Element>
+    KOKKOS_FUNCTION auto operator()(Field const& field, Element sampled_element) const
+    {
+        return evaluate(
+                field,
+                sampled_element,
+                [&](auto const& rule, auto element) { return rule(field, element); },
+                [&](auto element) {
+                    return detail::pointwise_tensor<Field>([&](auto component) {
+                        return StoredTensorSampler {}(field, element, component);
+                    });
+                });
+    }
+
+private:
+    template <class R, class F, class S, class E>
+    friend KOKKOS_FUNCTION auto detail::evaluate_rule_basis(R const&, F const&, S, E);
+
+    template <class Field, class Sampler, class Element>
+    KOKKOS_FUNCTION auto evaluate_basis(
+            Field const& field,
             Sampler sampler,
-            Element sampled_element,
-            Component component) const
+            Element sampled_element) const
+    {
+        return evaluate(
+                field,
+                sampled_element,
+                [&](auto const& rule, auto element) {
+                    return detail::evaluate_rule_basis(rule, field, sampler, element);
+                },
+                [&](auto element) {
+                    return detail::pointwise_tensor<Field>([&](auto component) {
+                        return sampler(field, element.storage_element(), component);
+                    });
+                });
+    }
+
+private:
+    template <class Field, class Element, class Evaluate, class Interior>
+    KOKKOS_FUNCTION auto evaluate(
+            Field const& field,
+            Element sample,
+            Evaluate evaluate,
+            Interior interior) const
     {
         static_assert(
                 sizeof...(RulePairs)
-                == ddc::type_seq_size_v<
-                        ddc::to_type_seq_t<typename TensorType::non_indices_domain_t>>);
-        auto const element = [&] {
-            if constexpr (misc::Specialization<Element, misc::SignedDiscreteElement>)
-                return misc::convert_type_seq_to_t<
-                        misc::SignedDiscreteElement,
-                        ddc::type_seq_remove_t<
-                                ddc::to_type_seq_t<typename TensorType::discrete_domain_type>,
-                                ddc::to_type_seq_t<Component>>>(sampled_element);
-            else
-                return misc::convert_type_seq_to_t<
-                        ddc::DiscreteElement,
-                        ddc::type_seq_remove_t<
-                                ddc::to_type_seq_t<typename TensorType::discrete_domain_type>,
-                                ddc::to_type_seq_t<Component>>>(sampled_element);
-        }();
-        if (misc::domain_contains(tensor.non_indices_domain(), element))
-            return sampler(tensor, element, component);
-        double weighted_value = 0.0, total_distance = 0.0;
-        m_rules.accumulate(
-                tensor,
-                element,
-                component,
-                weighted_value,
-                total_distance,
-                detail::EvaluateRuleValue<Sampler> {sampler});
-        return weighted_value / total_distance;
+                == ddc::type_seq_size_v<ddc::to_type_seq_t<typename Field::non_indices_domain_t>>);
+        misc::convert_type_seq_to_t<
+                misc::SignedDiscreteElement,
+                ddc::to_type_seq_t<typename Field::non_indices_domain_t>> const element(sample);
+        if (misc::domain_contains(field.non_indices_domain(), element))
+            return interior(element);
+        auto result = detail::pointwise_tensor<Field>([](auto) { return 0.0; });
+        double total = 0.0;
+        m_rules.accumulate(field.non_indices_domain(), element, result, total, evaluate);
+        result *= 1.0 / total;
+        return result;
     }
 };
 

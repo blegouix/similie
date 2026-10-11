@@ -5,4 +5,5 @@
 #pragma once
 
 #include "multidomain.hpp"
+#include "multidomain_operator.hpp"
 #include "topology.hpp"

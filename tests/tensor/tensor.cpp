@@ -736,15 +736,15 @@ void test_signed_tensor_sampling(std::size_t origin)
                     output(sample) = connected(outside, component);
                     break;
                 case 6:
-                    output(sample) = connected.value(
-                            [&](auto const& sampled_field, auto elem, auto) {
-                                return (sampled_field.data_handle() == donor.data_handle() ? 10000.0
-                                                                                           : 0.0)
-                                       + 10.0 * elem.template uid<SignedGridX>()
-                                       + 100.0 * elem.template uid<SignedGridY>();
-                            },
-                            outside,
-                            component);
+                    output(sample)
+                            = connected.value(field.non_indices_domain(), outside)
+                                      .evaluate([&](auto const& term) {
+                                          return (term.domain == donor.non_indices_domain()
+                                                          ? 10000.0
+                                                          : 0.0)
+                                                 + 10.0 * term.element.template uid<SignedGridX>()
+                                                 + 100.0 * term.element.template uid<SignedGridY>();
+                                      });
                     break;
                 case 7:
                     output(sample) = connected(
@@ -757,13 +757,12 @@ void test_signed_tensor_sampling(std::size_t origin)
                     output(sample) = natural(inside, component);
                     break;
                 case 9:
-                    output(sample) = natural.value(
-                            [](auto const&, auto elem, auto) {
-                                return 10.0 * elem.template uid<SignedGridX>()
-                                       + 100.0 * elem.template uid<SignedGridY>();
-                            },
-                            negative,
-                            component);
+                    output(sample)
+                            = natural.value(field.non_indices_domain(), negative)
+                                      .evaluate([](auto const& term) {
+                                          return 10.0 * term.element.template uid<SignedGridX>()
+                                                 + 100.0 * term.element.template uid<SignedGridY>();
+                                      });
                     break;
                 case 10:
                     output(sample) = natural(
@@ -798,4 +797,122 @@ TEST(Tensor, SignedExtrapolationAtZeroOrigin)
 TEST(Tensor, SignedExtrapolationAtNonzeroOrigin)
 {
     test_signed_tensor_sampling(7);
+}
+
+namespace {
+struct NearestTensorView
+{
+    template <class Field, class Element>
+    KOKKOS_FUNCTION auto operator()(Field const& field, Element element) const
+    {
+        return field[sil::misc::clamp_to_domain(field.non_indices_domain(), element)
+                             .storage_element()];
+    }
+};
+} // namespace
+
+TEST(Tensor, WholeTensorExtrapolationAndSpatialStencil)
+{
+    using Vector = sil::tensor::Covariant<sil::tensor::TensorNaturalIndex<X, Y>>;
+    [[maybe_unused]] sil::tensor::TensorAccessor<Vector> accessor;
+    ddc::DiscreteDomain<SignedGridX, SignedGridY> const
+            grid(ddc::DiscreteElement<SignedGridX, SignedGridY>(0, 0),
+                 ddc::DiscreteVector<SignedGridX, SignedGridY>(3, 3));
+    ddc::Chunk allocation(
+            ddc::DiscreteDomain<SignedGridX, SignedGridY, Vector>(grid, accessor.domain()),
+            ddc::HostAllocator<double>());
+    sil::tensor::Tensor field(allocation);
+    ddc::host_for_each(field.domain(), [&](auto elem) {
+        double const component = elem.template uid<Vector>();
+        field.mem(elem) = 5.0 * component + (component + 1.0) * elem.template uid<SignedGridX>()
+                          - 3.0 * elem.template uid<SignedGridY>();
+    });
+    auto const view = sil::tensor::make_tensor_with_extrapolation_rules(
+            field,
+            sil::tensor::NaturalScalarExtrapolationRule {});
+    sil::misc::SignedDiscreteElement<SignedGridX, SignedGridY> const exterior(-2, -1);
+    auto const point = view[exterior];
+    auto const stencil = view.value(grid, exterior);
+    sil::misc::SignedDiscreteElement<SignedGridY, SignedGridX> const reversed(-1, -2);
+    auto const reversed_point = sil::tensor::NaturalScalarExtrapolationRule {}(field, reversed);
+    EXPECT_DOUBLE_EQ(reversed_point.mem(ddc::DiscreteElement<Vector>(1)), 4.0);
+    sil::tensor::ExtrapolationRules const
+            mixed(std::pair {NearestTensorView {}, sil::tensor::NaturalScalarExtrapolationRule {}},
+                  std::
+                          pair {sil::tensor::NaturalScalarExtrapolationRule {},
+                                sil::tensor::NaturalScalarExtrapolationRule {}});
+    EXPECT_DOUBLE_EQ(mixed(field, exterior).mem(ddc::DiscreteElement<Vector>(1)), 14.0 / 3.0);
+
+    EXPECT_EQ(point.domain(), accessor.domain());
+    EXPECT_EQ(view.domain(), field.domain());
+    EXPECT_EQ(view.access_domain(), field.access_domain());
+    EXPECT_EQ(view.natural_domain(), field.natural_domain());
+    for (std::size_t component = 0; component < 2; ++component) {
+        ddc::DiscreteElement<Vector> const index(component);
+        EXPECT_DOUBLE_EQ(point.mem(index), 3.0 * component + 1.0);
+        EXPECT_DOUBLE_EQ(view.mem(exterior, index), point.mem(index));
+        EXPECT_DOUBLE_EQ(
+                stencil.evaluate([&](auto const& term) { return field.mem(term.element, index); }),
+                point.mem(index));
+    }
+    EXPECT_DOUBLE_EQ(
+            view
+                    .get(ddc::DiscreteElement<SignedGridX, SignedGridY>(1, 2),
+                         accessor.access_element<Y>()),
+            1.0);
+    auto const component_slice
+            = view[ddc::DiscreteElement<SignedGridX, SignedGridY, Vector>(1, 2, 1)];
+    EXPECT_DOUBLE_EQ(component_slice.mem(ddc::DiscreteElement<>()), 1.0);
+    auto const component_field = view[ddc::DiscreteElement<Vector>(1)];
+    EXPECT_EQ(component_field.domain(), grid);
+    EXPECT_DOUBLE_EQ(component_field.mem(exterior), 4.0);
+    auto const row = view[sil::misc::SignedDiscreteElement<SignedGridX>(-2)];
+    EXPECT_DOUBLE_EQ(
+            row.mem(sil::misc::SignedDiscreteElement<SignedGridY>(-1),
+                    ddc::DiscreteElement<Vector>(1)),
+            4.0);
+    EXPECT_DOUBLE_EQ(
+            row[sil::misc::SignedDiscreteElement<SignedGridY>(-1)].mem(
+                    ddc::DiscreteElement<Vector>(1)),
+            4.0);
+
+    // The same domain-only weights remain valid after changing every component.
+    ddc::host_for_each(field.domain(), [&](auto elem) { field.mem(elem) += 11.0; });
+    EXPECT_DOUBLE_EQ(view[exterior].mem(ddc::DiscreteElement<Vector>(1)), 15.0);
+    EXPECT_DOUBLE_EQ(
+            stencil.evaluate([&](auto const& term) {
+                return field.mem(term.element, ddc::DiscreteElement<Vector>(1));
+            }),
+            15.0);
+}
+
+TEST(Tensor, ExtrapolatedAntisymmetricTensorAccessAndSlices)
+{
+    [[maybe_unused]] sil::tensor::TensorAccessor<AntisymIndex> accessor;
+    ddc::DiscreteDomain<SignedGridX> const
+            grid(ddc::DiscreteElement<SignedGridX>(0), ddc::DiscreteVector<SignedGridX>(3));
+    ddc::Chunk allocation(
+            ddc::DiscreteDomain<SignedGridX, AntisymIndex>(grid, accessor.domain()),
+            ddc::HostAllocator<double>());
+    sil::tensor::Tensor field(allocation);
+    ddc::host_for_each(field.domain(), [&](auto elem) {
+        field.mem(elem)
+                = 10.0 * elem.template uid<AntisymIndex>() + elem.template uid<SignedGridX>();
+    });
+    auto const view = sil::tensor::make_tensor_with_extrapolation_rules(
+            field,
+            sil::tensor::NaturalScalarExtrapolationRule {});
+    sil::misc::SignedDiscreteElement<SignedGridX> const exterior(-1);
+    ddc::DiscreteElement<AntisymIndex> const xy = accessor.access_element<X, Y>();
+    EXPECT_DOUBLE_EQ(view.mem(exterior, ddc::DiscreteElement<AntisymIndex>(3)), 29.0);
+    EXPECT_DOUBLE_EQ(view(exterior, xy), 29.0);
+    EXPECT_DOUBLE_EQ(view.get(exterior, xy), 29.0);
+    EXPECT_DOUBLE_EQ(view.get(exterior, accessor.access_element<Y, X>()), -29.0);
+    EXPECT_DOUBLE_EQ(view.get(exterior, accessor.access_element<T, T>()), 0.0);
+    auto const slice = view[xy];
+    EXPECT_DOUBLE_EQ(slice.mem(exterior), 29.0);
+    EXPECT_DOUBLE_EQ(slice(exterior), 29.0);
+    EXPECT_DOUBLE_EQ(slice.get(exterior), 29.0);
+    auto const point = view[ddc::DiscreteElement<SignedGridX, AntisymIndex>(grid.front(), xy)];
+    EXPECT_DOUBLE_EQ(point.mem(ddc::DiscreteElement<>()), 30.0);
 }

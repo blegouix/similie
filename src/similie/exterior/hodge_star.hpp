@@ -650,7 +650,7 @@ KOKKOS_FUNCTION auto local_geometry(
     auto geometry = make_stencil<typename Position::memory_space, Index>(front);
     ddc::device_for_each(geometry.domain(), [&](auto sample) {
         geometry.mem(sample)
-                = rules(position, Element(sample), ddc::DiscreteElement<Index>(sample));
+                = rules(position, Element(sample)).mem(ddc::DiscreteElement<Index>(sample));
     });
     return geometry;
 }
@@ -700,6 +700,8 @@ struct TensorDualHodge
     using component_type
             = misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, dual_indices>;
     using non_indices_domain_t = typename Cochain::non_indices_domain_t;
+    using indices_domain_t = ddc::DiscreteDomain<component_type>;
+    using memory_space = typename Position::memory_space;
     using discrete_domain_type
             = misc::cartesian_prod_t<non_indices_domain_t, ddc::DiscreteDomain<component_type>>;
     Cochain cochain;
@@ -772,8 +774,10 @@ struct TensorDualHodge
                 ++ddc::detail::array(second)[axis];
                 for (std::size_t physical = 0; physical < N; ++physical)
                     jacobian[physical * N + axis]
-                            += (geometry(position, second, ddc::DiscreteElement<Index>(physical))
-                                - geometry(position, first, ddc::DiscreteElement<Index>(physical)))
+                            += (geometry(position, second)
+                                        .mem(ddc::DiscreteElement<Index>(physical))
+                                - geometry(position, first)
+                                          .mem(ddc::DiscreteElement<Index>(physical)))
                                / edge_count;
             }
         }
@@ -890,33 +894,48 @@ struct TensorDualHodge
                     std::size_t const edge = axis * edge_count + edge_id;
                     if (axis == normal && first == elem)
                         selected = edge;
-                    if constexpr (requires { evaluate_cochain.value(cochain, sampler, first); })
-                        differences[edge] = evaluate_cochain.value(cochain, sampler, first)
-                                                    .mem(ddc::DiscreteElement<Direction>(axis));
-                    else if constexpr (requires {
-                                           cochain
-                                                   .value(sampler,
-                                                          first,
-                                                          ddc::DiscreteElement<Direction>(axis));
-                                       })
-                        differences[edge] = cochain
-                                                    .value(sampler,
-                                                           first,
-                                                           ddc::DiscreteElement<Direction>(axis));
-                    else
-                        differences[edge]
-                                = sampler(cochain, first, ddc::DiscreteElement<Direction>(axis));
+                    if constexpr (requires { typename Evaluate::cochain_tag; }) {
+                        using ChainDomain = typename detail::
+                                NonSpectatorDimension<Direction, non_indices_domain_t>::type;
+                        auto const chain = tangent_basis<
+                                Evaluate::cochain_tag::rank() + 1,
+                                ChainDomain,
+                                typename Position::memory_space>(
+                                typename ChainDomain::discrete_element_type {});
+                        auto const lower = tangent_basis<
+                                Evaluate::cochain_tag::rank(),
+                                ChainDomain,
+                                typename Position::memory_space>(
+                                typename ChainDomain::discrete_element_type {});
+                        auto gradient = tensor::detail::pointwise_tensor<
+                                ddc::DiscreteDomain<Direction>,
+                                typename Position::memory_space>([](auto) { return 0.0; });
+                        evaluate_cochain(
+                                tensor::Tensor(gradient.span_view()),
+                                [&](auto sample, auto component) {
+                                    return tensor::detail::evaluate_tensor_basis(
+                                            cochain,
+                                            sampler,
+                                            sample,
+                                            component);
+                                },
+                                chain,
+                                lower,
+                                first);
+                        differences[edge] = gradient.mem(ddc::DiscreteElement<Direction>(axis));
+                    } else
+                        differences[edge] = tensor::detail::evaluate_tensor_basis(
+                                cochain,
+                                sampler,
+                                first,
+                                ddc::DiscreteElement<Direction>(axis));
                     means[axis] += differences[edge] / edge_count;
                     for (std::size_t physical = 0; physical < N; ++physical)
                         edges[edge * N + physical]
-                                = geometry(
-                                          position,
-                                          second,
-                                          ddc::DiscreteElement<PositionIndex>(physical))
-                                  - geometry(
-                                          position,
-                                          first,
-                                          ddc::DiscreteElement<PositionIndex>(physical));
+                                = geometry(position, second)
+                                          .mem(ddc::DiscreteElement<PositionIndex>(physical))
+                                  - geometry(position, first)
+                                            .mem(ddc::DiscreteElement<PositionIndex>(physical));
                     for (std::size_t i = 0; i < N; ++i) {
                         projection[i] += edges[edge * N + i] * differences[edge];
                         for (std::size_t j = 0; j < N; ++j)

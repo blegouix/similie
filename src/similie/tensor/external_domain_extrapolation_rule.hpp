@@ -126,39 +126,62 @@ struct ExternalDomainExtrapolationRule
     double orientation = 1.0;
     TargetRule target_rule = {};
 
-    template <class TensorType, class Element, class Component>
-    KOKKOS_FUNCTION double operator()(
-            TensorType const& tensor,
-            Element sampled_element,
-            Component component) const
+    template <class Domain, class Element>
+    KOKKOS_FUNCTION ExtrapolationStencil<Domain> value(Domain domain, Element element) const
     {
-        if (misc::domain_contains(tensor.non_indices_domain(), sampled_element))
-            return StoredTensorSampler {}(tensor, sampled_element, component);
-        Element const mapped = boundary_map(
-                tensor.non_indices_domain(),
-                neighbor.non_indices_domain(),
-                sampled_element);
-        return orientation * target_rule(neighbor, mapped, component) + jump;
+        if (misc::domain_contains(domain, element)) {
+            ExtrapolationStencil<Domain> result;
+            result.add(domain, element, 1.0);
+            return result;
+        }
+        auto result = target_rule
+                              .value(neighbor.non_indices_domain(),
+                                     boundary_map(domain, neighbor.non_indices_domain(), element));
+        result.constant = orientation * result.constant + jump;
+        for (std::size_t i = 0; i < result.count; ++i) {
+            result.terms[i].weight *= orientation;
+            if (result.terms[i].domain_id == std::numeric_limits<std::size_t>::max()) {
+                if constexpr (requires { neighbor.domain_id; })
+                    result.terms[i].domain_id = neighbor.domain_id;
+                else
+                    result.terms[i].domain_id = 0;
+            }
+        }
+        return result;
     }
 
-    /** Evaluate a stencil sampler after resolving the donor side and element. */
-    template <class TensorType, class Sampler, class Element, class Component>
-    KOKKOS_FUNCTION double value(
-            TensorType const& tensor,
-            Sampler sampler,
-            Element sampled_element,
-            Component component) const
+    template <class Field, class Element>
+    KOKKOS_FUNCTION auto operator()(Field const& field, Element element) const
     {
-        if (misc::domain_contains(tensor.non_indices_domain(), sampled_element))
-            return sampler(tensor, sampled_element, component);
-        Element const mapped = boundary_map(
-                tensor.non_indices_domain(),
-                neighbor.non_indices_domain(),
-                sampled_element);
-        return orientation
-                       * detail::EvaluateRuleValue<
-                               Sampler> {sampler}(target_rule, neighbor, mapped, component)
-               + jump;
+        if (misc::domain_contains(field.non_indices_domain(), element))
+            return detail::pointwise_tensor<Field>([&](auto component) {
+                return StoredTensorSampler {}(field, element, component);
+            });
+        auto const donor = target_rule(
+                neighbor,
+                boundary_map(field.non_indices_domain(), neighbor.non_indices_domain(), element));
+        return detail::pointwise_tensor<Field>(
+                [&](auto component) { return orientation * donor.mem(component) + jump; });
+    }
+
+private:
+    template <class R, class F, class S, class E>
+    friend KOKKOS_FUNCTION auto detail::evaluate_rule_basis(R const&, F const&, S, E);
+
+    template <class Field, class Sampler, class Element>
+    KOKKOS_FUNCTION auto evaluate_basis(Field const& field, Sampler sampler, Element element) const
+    {
+        if (misc::domain_contains(field.non_indices_domain(), element))
+            return detail::pointwise_tensor<Field>([&](auto component) {
+                return sampler(field, detail::storage_element(element), component);
+            });
+        auto const donor = detail::evaluate_rule_basis(
+                target_rule,
+                neighbor,
+                sampler,
+                boundary_map(field.non_indices_domain(), neighbor.non_indices_domain(), element));
+        return detail::pointwise_tensor<Field>(
+                [&](auto component) { return orientation * donor.mem(component) + jump; });
     }
 };
 

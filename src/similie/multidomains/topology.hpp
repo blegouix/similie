@@ -47,30 +47,30 @@ public:
         return m_kind == Kind::Prescribed;
     }
 
-    template <class Field, class Element, class Component>
-    KOKKOS_FUNCTION double operator()(Field const& field, Element elem, Component component) const
+    template <class Domain, class Element>
+    KOKKOS_FUNCTION tensor::ExtrapolationStencil<Domain> value(Domain domain, Element elem) const
     {
         switch (m_kind) {
         case Kind::Zero:
-            return tensor::ZeroExtrapolationRule {}(field, elem, component);
+            return tensor::ZeroExtrapolationRule {}.value(domain, elem);
         case Kind::Natural:
-            return tensor::NaturalScalarExtrapolationRule {}(field, elem, component);
+            return tensor::NaturalScalarExtrapolationRule {}.value(domain, elem);
         case Kind::Flux:
-            return tensor::ConstantScalarExtrapolationRule {m_value}(field, elem, component);
+            return tensor::ConstantScalarExtrapolationRule {m_value}.value(domain, elem);
         case Kind::Prescribed:
-            return tensor::PrescribedScalarExtrapolationRule {m_value}(field, elem, component);
+            return tensor::PrescribedScalarExtrapolationRule {m_value}.value(domain, elem);
         default:
-            return tensor::ClampExtrapolationRule {}(field, elem, component);
+            return tensor::ClampExtrapolationRule {}.value(domain, elem);
         }
     }
-    template <class Field, class Sampler, class Element, class Component>
-    KOKKOS_FUNCTION double value(
-            Field const& field,
-            Sampler sampler,
-            Element elem,
-            Component component) const
+    template <class Field, class Element>
+    KOKKOS_FUNCTION auto operator()(Field const& field, Element elem) const
     {
-        return (*this)(tensor::SampledTensor<Field, Sampler> {field, sampler}, elem, component);
+        auto const stencil = value(field.non_indices_domain(), elem);
+        return tensor::detail::pointwise_tensor<Field>([&](auto component) {
+            return stencil.evaluate(
+                    [&](auto const& term) { return field.mem(term.element, component); });
+        });
     }
 };
 

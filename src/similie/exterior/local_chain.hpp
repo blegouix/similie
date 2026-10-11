@@ -439,10 +439,11 @@ struct TangentBasis<K, ddc::DiscreteDomain<Tag...>>
 template <
         std::size_t K,
         misc::Specialization<ddc::DiscreteDomain> Dom,
+        class MemorySpace = Kokkos::HostSpace,
         misc::Specialization<ddc::DiscreteElement> Elem>
 KOKKOS_FUNCTION constexpr auto tangent_basis(Elem elem)
 {
-    return detail::TangentBasis<K, Dom>::template operator()<Kokkos::HostSpace>(elem);
+    return detail::TangentBasis<K, Dom>::template operator()<MemorySpace>(elem);
 }
 
 template <std::size_t K, misc::Specialization<ddc::DiscreteDomain> Dom, class ExecSpace>

@@ -456,10 +456,8 @@ public:
                     TransposedCoboundary<TagToRemoveFromCochain, DualTensorIndex>::operator()(
                             dual_codifferential,
                             [&](auto sampled_elem, auto dual_elem) {
-                                return dual_extrapolation_rules(
-                                        dual_tensor_buffer,
-                                        sampled_elem,
-                                        dual_elem);
+                                return dual_extrapolation_rules(dual_tensor_buffer, sampled_elem)
+                                        .mem(dual_elem);
                             },
                             chain,
                             lower_chain,
@@ -588,10 +586,8 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
                 TransposedCoboundary<TagToRemoveFromCochain, dual_tensor_index>::operator()(
                         dual_codifferential,
                         [&](auto sampled_elem, auto dual_elem) {
-                            return dual_extrapolation_rules(
-                                    dual_tensor_buffer,
-                                    sampled_elem,
-                                    dual_elem);
+                            return dual_extrapolation_rules(dual_tensor_buffer, sampled_elem)
+                                    .mem(dual_elem);
                         },
                         chain,
                         lower_chain,
@@ -645,7 +641,12 @@ namespace sil::exterior {
 /** Point evaluation of the scalar codifferential from a dual Hodge cochain, using
  * incidence, Hodge stars and codifferential sign convention.
  * \important This operator and documentation is fully AI-generated.
- * value(sampler, element) accepts a sampler for sparse assembly;
+ * This specialization consumes an already assembled tensor-dual Hodge flux.
+ * The metric/position value() overload above constructs simplex Hodge fields;
+ * using it here would replace the tensor-cell pairing and wall truncation.
+ * Incidence is still delegated to TransposedCoboundary, and the final geometric
+ * pairing to the flux's inverse zero-form Hodge.
+ * value(sampler, element) accepts a basis evaluator for sparse assembly;
  * operator()(element) evaluates stored cochains through the identical path.
  * Dual rules map to lazy donor fluxes, whose primal rules resolve donor unknowns
  * and affine jumps. Thus both stages follow the topology rather than a separate
@@ -671,23 +672,21 @@ struct Codifferential<Direction, Flux, DualRules>
         using TopIndex = misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, TopIndices>;
         using Memory = typename decltype(flux.position)::memory_space;
         auto top = detail::make_stencil<Memory, TopIndex>(ddc::DiscreteElement<>());
-        auto const chain = tangent_basis<Direction::size(), typename Flux::non_indices_domain_t>(
-                detail::LocalExecution<Memory> {});
+        auto const chain
+                = tangent_basis<Direction::size(), typename Flux::non_indices_domain_t, Memory>(
+                        typename Flux::non_indices_domain_t::discrete_element_type {});
         auto const lower
-                = tangent_basis<Direction::size() - 1, typename Flux::non_indices_domain_t>(
-                        detail::LocalExecution<Memory> {});
+                = tangent_basis<Direction::size() - 1, typename Flux::non_indices_domain_t, Memory>(
+                        typename Flux::non_indices_domain_t::discrete_element_type {});
         using TopTensor = tensor::
                 Tensor<double, ddc::DiscreteDomain<TopIndex>, Kokkos::layout_right, Memory>;
         TransposedCoboundary<Direction, DualIndex>::operator()(
                 TopTensor(top),
                 [&](auto sample, auto component) {
-                    return dual_rules.value(
-                            flux,
+                    return tensor::detail::EvaluateRuleValue {
                             [&](auto const& donor, auto donor_elem, auto donor_component) {
                                 return donor.value(sampler, donor_elem, donor_component);
-                            },
-                            sample,
-                            component);
+                            }}(dual_rules, flux, sample, component);
                 },
                 chain,
                 lower,

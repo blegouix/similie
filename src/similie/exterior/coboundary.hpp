@@ -202,12 +202,6 @@ struct NonSpectatorDimension<Index, ddc::DiscreteDomain<DDim...>>
             ddc::DiscreteDomain<>>...>;
 };
 
-template <class Memory>
-struct LocalExecution
-{
-    using memory_space = Memory;
-};
-
 struct CoboundaryDummyIndex
 {
 };
@@ -310,6 +304,7 @@ KOKKOS_FUNCTION auto find_discrete_vector(
 template <tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag>
 struct Coboundary<TagToAddToCochain, CochainTag>
 {
+    using cochain_tag = CochainTag;
     template <class Evaluator, class ChainType, class LowerChainType, class Elem, class NaturalElem>
     KOKKOS_FUNCTION static auto value(
             Evaluator evaluator,
@@ -375,39 +370,6 @@ struct Coboundary<TagToAddToCochain, CochainTag>
         });
 
         return stencil;
-    }
-
-    /** Evaluate the complete pointwise coboundary of a sampled tensor view.
-     * \important This operator and documentation is fully AI-generated.
-     * This is the same incidence operator as the output-tensor overload. The
-     * caller can select a tagged component of the returned tensor afterward.
-     */
-    template <class Field, class Sampler, class Elem>
-    KOKKOS_FUNCTION static auto value(Field const& field, Sampler sampler, Elem elem)
-    {
-        using ChainDomain = typename detail::NonSpectatorDimension<
-                TagToAddToCochain,
-                typename Field::non_indices_domain_t>::type;
-        auto result = detail::make_stencil<
-                typename Field::memory_space,
-                coboundary_index_t<TagToAddToCochain, CochainTag>>(ddc::DiscreteElement<>());
-        auto const chain = tangent_basis<CochainTag::rank() + 1, ChainDomain>(
-                detail::LocalExecution<typename Field::memory_space> {});
-        auto const lower = tangent_basis<CochainTag::rank(), ChainDomain>(
-                detail::LocalExecution<typename Field::memory_space> {});
-        operator()(
-                tensor::Tensor<
-                        double,
-                        ddc::DiscreteDomain<coboundary_index_t<TagToAddToCochain, CochainTag>>,
-                        Kokkos::layout_right,
-                        typename Field::memory_space>(result),
-                [&](auto sample, auto component) {
-                    return field.value(sampler, sample, component);
-                },
-                chain,
-                lower,
-                elem);
-        return result;
     }
 
     template <
@@ -675,7 +637,8 @@ KOKKOS_FUNCTION coboundary_t<CochainType> coboundary(CochainType cochain)
  * Apply the exterior derivative with a callable cochain sampling rule.
  * A single rule is automatically broadcast to both sides of every non-index
  * dimension; an ExtrapolationRules policy retains its per-boundary selection.
- * Exterior rules are invoked as rule(tensor, sampled_element, stored_component),
+ * Exterior rules are invoked as rule(tensor, sampled_element) and return a
+ * pointwise Tensor containing every stored component,
  * while interior samples retain their stored values. Rules must be copyable
  * and callable in ExecSpace. The output domain selects where to evaluate d; the
  * input domain selects which samples require extrapolation. The same contract
@@ -688,15 +651,15 @@ template <
         tensor::TensorIndex CochainTag,
         misc::Specialization<tensor::Tensor> TensorType,
         class ExecSpace,
-        class ExtrapolationRule = tensor::ClampExtrapolationRule>
+        class ExtrapolationRules = tensor::ClampExtrapolationRule>
 coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
         ExecSpace const& exec_space,
         coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
         TensorType tensor,
-        ExtrapolationRule extrapolation = {})
+        ExtrapolationRules extrapolation = {})
 {
     auto const extrapolation_rules = [&]() {
-        if constexpr (misc::Specialization<ExtrapolationRule, tensor::ExtrapolationRules>)
+        if constexpr (misc::Specialization<ExtrapolationRules, tensor::ExtrapolationRules>)
             return extrapolation;
         else
             return tensor::make_extrapolation_rules(tensor, extrapolation);
@@ -725,7 +688,9 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
                 Coboundary<TagToAddToCochain, CochainTag>::operator()(
                         coboundary_tensor[elem],
                         [&](auto sampled_elem, auto component) {
-                            return extrapolation_rules(tensor, sampled_elem, component);
+                            return extrapolation_rules(tensor, sampled_elem)
+                                    .mem(typename TensorType::indices_domain_t::
+                                                 discrete_element_type(sampled_elem, component));
                         },
                         chain,
                         lower_chain,
@@ -740,15 +705,15 @@ template <
         tensor::TensorIndex CochainTag,
         misc::Specialization<tensor::Tensor> TensorType,
         class ExecSpace,
-        class ExtrapolationRule = tensor::ZeroExtrapolationRule>
+        class ExtrapolationRules = tensor::ZeroExtrapolationRule>
 coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> transposed_coboundary(
         ExecSpace const& exec_space,
         coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
         TensorType tensor,
-        ExtrapolationRule extrapolation = {})
+        ExtrapolationRules extrapolation = {})
 {
     auto const extrapolation_rules = [&]() {
-        if constexpr (misc::Specialization<ExtrapolationRule, tensor::ExtrapolationRules>)
+        if constexpr (misc::Specialization<ExtrapolationRules, tensor::ExtrapolationRules>)
             return extrapolation;
         else
             return tensor::make_extrapolation_rules(tensor, extrapolation);
@@ -777,7 +742,9 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> transposed_coboun
                 TransposedCoboundary<TagToAddToCochain, CochainTag>::operator()(
                         coboundary_tensor[elem],
                         [&](auto sampled_elem, auto component) {
-                            return extrapolation_rules(tensor, sampled_elem, component);
+                            return extrapolation_rules(tensor, sampled_elem)
+                                    .mem(typename TensorType::indices_domain_t::
+                                                 discrete_element_type(sampled_elem, component));
                         },
                         chain,
                         lower_chain,
@@ -792,12 +759,12 @@ template <
         tensor::TensorIndex CochainTag,
         misc::Specialization<tensor::Tensor> TensorType,
         class ExecSpace,
-        class ExtrapolationRule = tensor::ClampExtrapolationRule>
+        class ExtrapolationRules = tensor::ClampExtrapolationRule>
 coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> deriv(
         ExecSpace const& exec_space,
         coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
         TensorType tensor,
-        ExtrapolationRule extrapolation = {})
+        ExtrapolationRules extrapolation = {})
 {
     return coboundary<
             TagToAddToCochain,

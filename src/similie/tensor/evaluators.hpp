@@ -9,6 +9,8 @@
 
 #include <Kokkos_Core.hpp>
 
+#include "extrapolation_stencil.hpp"
+
 namespace sil {
 
 namespace tensor {
@@ -76,32 +78,6 @@ struct ZeroOutsideTensorEvaluator
 
 namespace sil::tensor {
 
-/** Substitute a sampler for stored tensor values, retaining domain identity.
- * \important This operator and documentation is fully AI-generated.
- * A sampler receives (field, element, component), so it can distinguish identical
- * local coordinates in different domains when evaluating a global basis vector.
- * The field is borrowed and must outlive this sampling view.
- */
-template <class Field, class Sampler>
-struct SampledTensor
-{
-    using non_indices_domain_t = typename Field::non_indices_domain_t;
-    using discrete_domain_type = typename Field::discrete_domain_type;
-    Field const& field;
-    Sampler sampler;
-
-    KOKKOS_FUNCTION non_indices_domain_t non_indices_domain() const
-    {
-        return field.non_indices_domain();
-    }
-
-    template <class Element, class Component>
-    KOKKOS_FUNCTION double mem(Element element, Component component) const
-    {
-        return sampler(field, element, component);
-    }
-};
-
 struct StoredTensorSampler
 {
     template <class Field, class Element, class Component>
@@ -116,19 +92,57 @@ struct StoredTensorSampler
 };
 
 namespace detail {
-struct EvaluateRule
+template <class Element>
+KOKKOS_FUNCTION auto storage_element(Element element)
 {
-    template <class Rule, class Field, class Element, class Component>
-    KOKKOS_FUNCTION double operator()(
-            Rule const& rule,
-            Field const& field,
-            Element element,
-            Component component) const
-    {
-        return rule(field, element, component);
-    }
-};
+    if constexpr (misc::Specialization<Element, misc::SignedDiscreteElement>)
+        return element.storage_element();
+    else
+        return element;
+}
 
+template <class Rule, class Field, class Sampler, class Element>
+KOKKOS_FUNCTION auto evaluate_rule_basis(
+        Rule const& rule,
+        Field const& field,
+        Sampler sampler,
+        Element element)
+{
+    if constexpr (std::is_same_v<Sampler, StoredTensorSampler>)
+        return rule(field, element);
+    else if constexpr (requires { rule.evaluate_basis(field, sampler, element); })
+        return rule.evaluate_basis(field, sampler, element);
+    else {
+        auto const stencil = rule.value(field.non_indices_domain(), element);
+        return pointwise_tensor<Field>([&](auto component) {
+            return stencil.evaluate(
+                    [&](auto const& term) { return sampler(field, term.element, component); });
+        });
+    }
+}
+
+template <class Field, class Sampler, class Element, class Component>
+KOKKOS_FUNCTION double evaluate_tensor_basis(
+        Field const& field,
+        Sampler sampler,
+        Element element,
+        Component component)
+{
+    if constexpr (requires {
+                      field.rules;
+                      field.field;
+                      field.fixed;
+                  }) {
+        misc::convert_type_seq_to_t<
+                misc::SignedDiscreteElement,
+                ddc::to_type_seq_t<typename decltype(field.field)::non_indices_domain_t>> const
+                sample(field.fixed, element);
+        return evaluate_rule_basis(field.rules, field.field, sampler, sample).mem(component);
+    } else
+        return sampler(field, element, component);
+}
+
+// Basis substitution is an assembly detail, not part of the extrapolation API.
 template <class Sampler>
 struct EvaluateRuleValue
 {
@@ -140,10 +154,7 @@ struct EvaluateRuleValue
             Element element,
             Component component) const
     {
-        if constexpr (requires { rule.value(field, sampler, element, component); })
-            return rule.value(field, sampler, element, component);
-        else
-            return rule(SampledTensor<Field, Sampler> {field, sampler}, element, component);
+        return evaluate_rule_basis(rule, field, sampler, element).mem(component);
     }
 };
 } // namespace detail

@@ -115,7 +115,8 @@ TensorType codifferential_of_coboundary(
                 Coboundary<LaplacianDummyIndex, CochainTag>::operator()(
                         derivative_tensor,
                         [&](auto sampled_elem, auto cochain_elem) {
-                            return primal_extrapolation_rules(tensor, sampled_elem, cochain_elem);
+                            return primal_extrapolation_rules(tensor, sampled_elem)
+                                    .mem(cochain_elem);
                         },
                         chain,
                         lower_chain,
@@ -148,10 +149,8 @@ TensorType codifferential_of_coboundary(
                 TransposedCoboundary<LaplacianDummyIndex, coboundary_dual_tensor_index>::operator()(
                         dual_codifferential,
                         [&](auto sampled_elem, auto dual_elem) {
-                            return dual_extrapolation_rules(
-                                    dual_tensor_buffer,
-                                    sampled_elem,
-                                    dual_elem);
+                            return dual_extrapolation_rules(dual_tensor_buffer, sampled_elem)
+                                    .mem(dual_elem);
                         },
                         dual_chain,
                         dual_lower_chain,

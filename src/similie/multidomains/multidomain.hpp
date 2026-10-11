@@ -67,6 +67,8 @@ struct DomainReference
 {
     using non_indices_domain_t = typename Field::non_indices_domain_t;
     using discrete_domain_type = typename Field::discrete_domain_type;
+    using indices_domain_t = typename Field::indices_domain_t;
+    using memory_space = typename Field::memory_space;
     Field const* field;
     std::size_t domain_id;
     KOKKOS_FUNCTION non_indices_domain_t non_indices_domain() const
@@ -131,21 +133,29 @@ struct FaceRule
     {
         return !interface && boundary.is_dirichlet();
     }
-    template <class Source, class Element, class Component>
-    KOKKOS_FUNCTION double operator()(Source const& field, Element elem, Component component) const
+    template <class Source, class Element>
+    KOKKOS_FUNCTION auto operator()(Source const& field, Element elem) const
     {
-        return interface ? external(field, elem, component) : boundary(field, elem, component);
+        return interface ? external(field, elem) : boundary(field, elem);
     }
-    template <class Source, class Sampler, class Element, class Component>
-    KOKKOS_FUNCTION double value(
-            Source const& field,
-            Sampler sampler,
-            Element elem,
-            Component component) const
+    template <class Domain, class Element>
+    KOKKOS_FUNCTION tensor::ExtrapolationStencil<Domain> value(Domain domain, Element elem) const
     {
-        return interface ? external.value(field, sampler, elem, component)
-                         : boundary.value(field, sampler, elem, component);
+        return interface ? external.value(domain, elem) : boundary.value(domain, elem);
     }
+
+private:
+    template <class R, class F, class S, class E>
+    friend KOKKOS_FUNCTION auto tensor::detail::evaluate_rule_basis(R const&, F const&, S, E);
+
+    template <class Source, class Sampler, class Element>
+    KOKKOS_FUNCTION auto evaluate_basis(Source const& field, Sampler sampler, Element elem) const
+    {
+        return interface ? tensor::detail::evaluate_rule_basis(external, field, sampler, elem)
+                         : tensor::detail::evaluate_rule_basis(boundary, field, sampler, elem);
+    }
+
+public:
     KOKKOS_FUNCTION bool shared_boundary() const
     {
         return external.boundary_map.shared_boundary;
@@ -264,6 +274,27 @@ class Multidomain
                                       true>(id, scale)}...);
     }
 
+    template <FieldRole Role, std::size_t... Axis>
+    auto physical_rules(std::size_t id, std::index_sequence<Axis...>) const
+    {
+        using Dimensions
+                = ddc::to_type_seq_t<typename decltype(field<Role>(id))::non_indices_domain_t>;
+        return tensor::ExtrapolationRules(
+                std::
+                        pair {face_rule<
+                                      Role,
+                                      ddc::type_seq_element_t<Axis, Dimensions>,
+                                      Axis,
+                                      false>(id, 1.0)
+                                      .boundary,
+                              face_rule<
+                                      Role,
+                                      ddc::type_seq_element_t<Axis, Dimensions>,
+                                      Axis,
+                                      true>(id, 1.0)
+                                      .boundary}...);
+    }
+
 public:
     using topology_type = Topology<N>;
     Multidomain(Topology<N> topology, std::vector<Data> data)
@@ -323,6 +354,15 @@ public:
     auto extrapolation_rules(std::size_t id, double jump_scale = 1.0) const
     {
         return rules<Role>(id, jump_scale, std::make_index_sequence<N> {});
+    }
+    /** Physical face laws for constitutive flux evaluation.
+     * Interfaces obtain their flux from the donor operator; these closures are
+     * applied only on physical faces, after geometry identifies those faces.
+     */
+    template <FieldRole Role>
+    auto boundary_rules(std::size_t id) const
+    {
+        return physical_rules<Role>(id, std::make_index_sequence<N> {});
     }
     template <class ExecSpace, class Function>
     void for_each_domain(ExecSpace const& exec, Function function) const

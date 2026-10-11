@@ -27,10 +27,10 @@ struct ConstantExteriorRule
 {
     double value;
 
-    template <class TensorType, class Element, class Component>
-    KOKKOS_FUNCTION double operator()(TensorType, Element, Component) const
+    template <class TensorType, class Element>
+    KOKKOS_FUNCTION auto operator()(TensorType const&, Element) const
     {
-        return value;
+        return sil::tensor::detail::pointwise_tensor<TensorType>([&](auto) { return value; });
     }
 };
 
@@ -247,7 +247,7 @@ void test_external_domain_sampling(std::index_sequence<Dimension...>)
                                   .template uid<GridDimension<0>>();
                 auto const rules
                         = sil::tensor::make_extrapolation_rules<sizeof...(Dimension)>(rule);
-                results(index) = rules(source, elem, ddc::DiscreteElement<Scalar>(0));
+                results(index) = rules(source, elem).mem(ddc::DiscreteElement<Scalar>(0));
             });
     auto const host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), results);
     for (int index = 0; index < 16; ++index) {
@@ -340,17 +340,18 @@ void test_per_boundary_rules(std::index_sequence<Dimension...>)
                     ddc::detail::array(elem)[sizeof...(Dimension) - 1]
                             = ddc::detail::array(grid.back())[sizeof...(Dimension) - 1] + 3;
                 }
-                result(sample) = rules(field, elem, ddc::DiscreteElement<Scalar>(0));
+                result(sample) = rules(field, elem).mem(ddc::DiscreteElement<Scalar>(0));
                 uniform_result(sample)
-                        = uniform_rules(field, elem, ddc::DiscreteElement<Scalar>(0));
+                        = uniform_rules(field, elem).mem(ddc::DiscreteElement<Scalar>(0));
                 implicit_result(sample)
-                        = implicit_rules(field, elem, ddc::DiscreteElement<Scalar>(0));
+                        = implicit_rules(field, elem).mem(ddc::DiscreteElement<Scalar>(0));
                 if constexpr (sizeof...(Dimension) == 2) {
                     if (id == 2 * sizeof...(Dimension) + 3) {
                         // Pair order follows the tensor domain, not these reversed tags.
                         ddc::DiscreteElement<GridDimension<1>, GridDimension<0>> const
                                 reversed(3, 1);
-                        result(sample) = rules(field, reversed, ddc::DiscreteElement<Scalar>(0));
+                        result(sample)
+                                = rules(field, reversed).mem(ddc::DiscreteElement<Scalar>(0));
                     }
                 }
             });
@@ -435,7 +436,7 @@ void test_corner_blending_limits()
                           + ddc::DiscreteVector<
                                   GridDimension<0>,
                                   GridDimension<1>>(-left_distances[id], top_distances[id]);
-                result(sample) = rules(field, elem, ddc::DiscreteElement<Scalar>(0));
+                result(sample) = rules(field, elem).mem(ddc::DiscreteElement<Scalar>(0));
             });
     auto host = ddc::create_mirror_view_and_copy(
             Kokkos::DefaultHostExecutionSpace(),
@@ -479,7 +480,9 @@ TEST(Extrapolation, EmptyRulesForScalarDomain)
             sil::tensor::PrescribedScalarExtrapolationRule {17.5});
     static_assert(
             std::is_same_v<std::remove_cv_t<decltype(rules)>, sil::tensor::ExtrapolationRules<>>);
-    EXPECT_DOUBLE_EQ(rules(field, ddc::DiscreteElement<>(), ddc::DiscreteElement<Scalar>(0)), 42.0);
+    EXPECT_DOUBLE_EQ(
+            rules(field, ddc::DiscreteElement<>()).mem(ddc::DiscreteElement<Scalar>(0)),
+            42.0);
 }
 
 TEST(Extrapolation, NaturalCornersAndSingletonDimensions)
@@ -503,14 +506,12 @@ TEST(Extrapolation, NaturalCornersAndSingletonDimensions)
     });
     sil::tensor::NaturalScalarExtrapolationRule const rule;
     EXPECT_DOUBLE_EQ(
-            rule(field,
-                 grid.front() - ddc::DiscreteVector<Grid, GridY>(1, 1),
-                 ddc::DiscreteElement<Scalar>(0)),
+            rule(field, grid.front() - ddc::DiscreteVector<Grid, GridY>(1, 1))
+                    .mem(ddc::DiscreteElement<Scalar>(0)),
             -4.0);
     EXPECT_DOUBLE_EQ(
-            rule(field,
-                 grid.back() + ddc::DiscreteVector<Grid, GridY>(1, 1),
-                 ddc::DiscreteElement<Scalar>(0)),
+            rule(field, grid.back() + ddc::DiscreteVector<Grid, GridY>(1, 1))
+                    .mem(ddc::DiscreteElement<Scalar>(0)),
             13.0);
     ddc::DiscreteDomain<Grid, GridY> const singleton_grid
             = grid.take_first(ddc::DiscreteVector<Grid, GridY>(3, 1));
@@ -520,9 +521,8 @@ TEST(Extrapolation, NaturalCornersAndSingletonDimensions)
     sil::tensor::Tensor singleton(singleton_allocation);
     ddc::parallel_fill(singleton, 4.0);
     EXPECT_DOUBLE_EQ(
-            rule(singleton,
-                 grid.front() - ddc::DiscreteVector<Grid, GridY>(1, 1),
-                 ddc::DiscreteElement<Scalar>(0)),
+            rule(singleton, grid.front() - ddc::DiscreteVector<Grid, GridY>(1, 1))
+                    .mem(ddc::DiscreteElement<Scalar>(0)),
             4.0);
 }
 
@@ -582,15 +582,17 @@ TEST(Extrapolation, ExternalDomainCornerAndSpectator)
                     ddc::DiscreteElement<Vector>(0),
                     ddc::DiscreteElement<Grid>(0) - ddc::DiscreteVector<Grid>(1));
     // The donor clamps its tangential coordinate to zero, preserving the spectator.
-    EXPECT_DOUBLE_EQ(rules(source, outside, ddc::DiscreteElement<Scalar>(0)), (13.0 + 40.0) / 3.0);
     EXPECT_DOUBLE_EQ(
-            rules(source,
-                  ddc::DiscreteElement<Grid, Vector, Tangent>(0, 0, 0),
-                  ddc::DiscreteElement<Scalar>(0)),
+            rules(source, outside)
+                    .mem(ddc::DiscreteElement<Scalar>(0), ddc::DiscreteElement<Vector>(0)),
+            (13.0 + 40.0) / 3.0);
+    EXPECT_DOUBLE_EQ(
+            rules(source, ddc::DiscreteElement<Grid, Vector, Tangent>(0, 0, 0))
+                    .mem(ddc::DiscreteElement<Scalar>(0), ddc::DiscreteElement<Vector>(0)),
             7.0);
     EXPECT_DOUBLE_EQ(
-            sil::tensor::
-                    ClampExtrapolationRule {}(source, outside, ddc::DiscreteElement<Scalar>(0)),
+            sil::tensor::ClampExtrapolationRule {}(source, outside)
+                    .mem(ddc::DiscreteElement<Scalar>(0), ddc::DiscreteElement<Vector>(0)),
             7.0);
 }
 } // namespace
