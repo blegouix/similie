@@ -380,7 +380,7 @@ PostOperation{
       //Print[phi, OnElementsOf Vol_rho, File "phi.pos"];
       //Print[phiDisc, OnElementsOf Vol_rho, File "phiDisc.pos"];
       //Print[phiCont, OnElementsOf Vol_rho, File "phiCont.pos"];
-      //Print[pressure, OnElementsOf Vol_rho, File "p.pos"];
+      Print[pressure, OnElementsOf Vol_rho, File "pressure.pos"];
 
       Print[ velocity, OnElementsOf Vol_rho, File "velocity.pos"];
       Echo[ Str["l=PostProcessing.NbViews-1;",

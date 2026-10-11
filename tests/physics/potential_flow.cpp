@@ -120,6 +120,7 @@ TEST(PotentialFlow, CoupledCylinderSolve)
     EXPECT_GT(std::filesystem::file_size(result_file), 0);
     std::ifstream output(result_file);
     std::string line;
+    std::vector<std::array<double, 4>> cell_potentials;
     std::getline(output, line); // Potential view header.
     for (std::size_t i = 0; i < 8; ++i)
         for (std::size_t j = 0; j < 2; ++j) {
@@ -130,12 +131,82 @@ TEST(PotentialFlow, CoupledCylinderSolve)
             values >> potential[0] >> separator >> potential[1] >> separator >> potential[2]
                     >> separator >> potential[3];
             ASSERT_TRUE(bool(values));
+            cell_potentials.push_back(potential);
             if (j == 1 && (i == 3 || i == 4 || i == 7 || i == 0)) {
                 double const prescribed = i == 3 || i == 4 ? 0.0 : 6.0;
                 EXPECT_NEAR(potential[2], prescribed, 1.0e-8);
                 EXPECT_NEAR(potential[3], prescribed, 1.0e-8);
             }
         }
+    std::getline(output, line); // End of potential view.
+    std::getline(output, line); // Velocity view header.
+    std::vector<std::array<double, 4>> vertex_pressures;
+    bool varying_vertex_velocity = false;
+    for (std::size_t cell = 0; cell < 16; ++cell) {
+        ASSERT_TRUE(bool(std::getline(output, line)));
+        std::istringstream coordinates(line.substr(3, line.find(')') - 3));
+        std::array<std::array<double, 3>, 4> points;
+        char separator;
+        for (std::size_t a = 0; a < 4; ++a)
+            for (std::size_t component = 0; component < 3; ++component) {
+                coordinates >> points[a][component];
+                if (a != 3 || component != 2)
+                    coordinates >> separator;
+            }
+        ASSERT_TRUE(bool(coordinates));
+        std::istringstream values(line.substr(line.find("{ ") + 2));
+        std::array<double, 4> pressures;
+        std::array<double, 2> first_velocity;
+        for (std::size_t a = 0; a < 4; ++a) {
+            double const xi = a == 1 || a == 2 ? 1.0 : 0.0;
+            double const eta = a >= 2 ? 1.0 : 0.0;
+            std::array<double, 2> tangent, radial;
+            for (std::size_t component = 0; component < 2; ++component) {
+                tangent[component] = (1.0 - eta) * (points[1][component] - points[0][component])
+                                     + eta * (points[2][component] - points[3][component]);
+                radial[component] = (1.0 - xi) * (points[3][component] - points[0][component])
+                                    + xi * (points[2][component] - points[1][component]);
+            }
+            std::array<double, 4> const& potential = cell_potentials[cell];
+            double const dt = (1.0 - eta) * (potential[1] - potential[0])
+                              + eta * (potential[2] - potential[3]);
+            double const dr = (1.0 - xi) * (potential[3] - potential[0])
+                              + xi * (potential[2] - potential[1]);
+            double const determinant = tangent[0] * radial[1] - tangent[1] * radial[0];
+            double vx, vy, vz;
+            values >> vx >> separator >> vy >> separator >> vz;
+            ASSERT_TRUE(bool(values));
+            EXPECT_NEAR(vx, (dt * radial[1] - tangent[1] * dr) / determinant, 1.0e-8);
+            EXPECT_NEAR(vy, (tangent[0] * dr - dt * radial[0]) / determinant, 1.0e-8);
+            EXPECT_DOUBLE_EQ(vz, 0.0);
+            pressures[a] = -0.5 * inputs.density * (vx * vx + vy * vy);
+            if (a == 0)
+                first_velocity = {vx, vy};
+            else
+                varying_vertex_velocity
+                        |= std::hypot(vx - first_velocity[0], vy - first_velocity[1]) > 1.0e-6;
+            if (a != 3)
+                values >> separator;
+        }
+        vertex_pressures.push_back(pressures);
+    }
+    EXPECT_TRUE(varying_vertex_velocity);
+    std::getline(output, line); // End of velocity view.
+    std::getline(output, line); // Pressure view header.
+    for (std::array<double, 4> const& pressures : vertex_pressures) {
+        ASSERT_TRUE(bool(std::getline(output, line)));
+        std::istringstream values(line.substr(line.find("{ ") + 2));
+        for (std::size_t a = 0; a < 4; ++a) {
+            double pressure;
+            values >> pressure;
+            ASSERT_TRUE(bool(values));
+            EXPECT_NEAR(pressure, pressures[a], 1.0e-8);
+            if (a != 3) {
+                char separator;
+                values >> separator;
+            }
+        }
+    }
     output.close();
     settings.use_matrix_free = false;
     potential_flow::Result const assembled

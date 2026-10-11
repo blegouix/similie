@@ -627,10 +627,13 @@ inline Result run(
     output << "};\nView \"SimiLie velocity\" {\n";
     for (std::size_t i = 0; i < ni; ++i)
         for (std::size_t j = 0; j < cells_per_patch_j; ++j) {
-            auto const v = velocity(samples, i, j, 0.5, 0.5);
-            result.max_speed = std::max(result.max_speed, std::hypot(v[0], v[1]));
+            std::array<double, 2> const center_velocity = velocity(samples, i, j, 0.5, 0.5);
+            result.max_speed = std::
+                    max(result.max_speed, std::hypot(center_velocity[0], center_velocity[1]));
             write_quad(i, j, "VQ");
             for (int a = 0; a < 4; ++a) {
+                std::array<double, 2> const v
+                        = velocity(samples, i, j, a == 1 || a == 2 ? 1.0 : 0.0, a >= 2 ? 1.0 : 0.0);
                 output << v[0] << ',' << v[1] << ",0";
                 if (a != 3)
                     output << ',';
@@ -640,10 +643,15 @@ inline Result run(
     output << "};\nView \"SimiLie pressure difference\" {\n";
     for (std::size_t i = 0; i < ni; ++i)
         for (std::size_t j = 0; j < cells_per_patch_j; ++j) {
-            auto const v = velocity(samples, i, j, 0.5, 0.5);
-            double const pressure = -0.5 * inputs.density * (v[0] * v[0] + v[1] * v[1]);
             write_quad(i, j, "SQ");
-            output << pressure << ',' << pressure << ',' << pressure << ',' << pressure << " };\n";
+            for (int a = 0; a < 4; ++a) {
+                std::array<double, 2> const v
+                        = velocity(samples, i, j, a == 1 || a == 2 ? 1.0 : 0.0, a >= 2 ? 1.0 : 0.0);
+                output << -0.5 * inputs.density * (v[0] * v[0] + v[1] * v[1]);
+                if (a != 3)
+                    output << ',';
+            }
+            output << " };\n";
         }
     output << "};\n";
     return result;
