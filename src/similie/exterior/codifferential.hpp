@@ -402,7 +402,7 @@ public:
                 TargetHodgeOutputIndices>(exec_space, *m_dual_hodge_star, metric, position);
     }
 
-    template <class DualExtrapolationRule = ZeroCochainExtrapolationRule>
+    template <class DualExtrapolationRule = tensor::ZeroExtrapolationRule>
     CodifferentialTensorType operator()(
             CodifferentialTensorType codifferential_tensor,
             TensorType tensor,
@@ -413,10 +413,10 @@ public:
         auto dual_hodge_star = *m_dual_hodge_star;
         auto dual_tensor_buffer = *m_dual_tensor_buffer;
         auto const dual_extrapolation_rules = [&]() {
-            if constexpr (misc::Specialization<DualExtrapolationRule, ExtrapolationRules>)
+            if constexpr (misc::Specialization<DualExtrapolationRule, tensor::ExtrapolationRules>)
                 return dual_extrapolation;
             else
-                return make_extrapolation_rules(dual_tensor_buffer, dual_extrapolation);
+                return tensor::make_extrapolation_rules(dual_tensor_buffer, dual_extrapolation);
         }();
         auto chain = m_chain;
         auto lower_chain = m_lower_chain;
@@ -521,7 +521,7 @@ template <
         misc::Specialization<tensor::Tensor> HodgeStarType,
         misc::Specialization<tensor::Tensor> DualHodgeStarType,
         class ExecSpace,
-        class DualExtrapolationRule = ZeroCochainExtrapolationRule>
+        class DualExtrapolationRule = tensor::ZeroExtrapolationRule>
     requires(misc::NotSpecialization<DualExtrapolationRule, tensor::Tensor>)
 codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codifferential(
         ExecSpace const& exec_space,
@@ -534,10 +534,10 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
         DualExtrapolationRule dual_extrapolation = {})
 {
     auto const dual_extrapolation_rules = [&]() {
-        if constexpr (misc::Specialization<DualExtrapolationRule, ExtrapolationRules>)
+        if constexpr (misc::Specialization<DualExtrapolationRule, tensor::ExtrapolationRules>)
             return dual_extrapolation;
         else
-            return make_extrapolation_rules(dual_tensor_buffer, dual_extrapolation);
+            return tensor::make_extrapolation_rules(dual_tensor_buffer, dual_extrapolation);
     }();
     static_assert(tensor::is_covariant_v<TagToRemoveFromCochain>);
     using source_hodge_output_indices = codifferential_hodge_output_indices_t<
@@ -618,7 +618,7 @@ template <
         misc::Specialization<tensor::Tensor> MetricType,
         misc::Specialization<tensor::Tensor> PositionType,
         class ExecSpace,
-        class DualExtrapolationRule = ZeroCochainExtrapolationRule>
+        class DualExtrapolationRule = tensor::ZeroExtrapolationRule>
     requires(misc::NotSpecialization<DualExtrapolationRule, tensor::Tensor>)
 codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codifferential(
         ExecSpace const& exec_space,
@@ -642,18 +642,6 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
 } // namespace sil
 
 namespace sil::exterior {
-namespace detail {
-template <class Sampler>
-struct FluxSampler
-{
-    Sampler primal;
-    template <class Flux, class Element, class Component>
-    KOKKOS_FUNCTION double operator()(Flux const& flux, Element elem, Component component) const
-    {
-        return flux.value(primal, elem, component);
-    }
-};
-} // namespace detail
 /** Point evaluation of the scalar codifferential from a dual Hodge cochain, using
  * incidence, Hodge stars and codifferential sign convention.
  * \important This operator and documentation is fully AI-generated.
@@ -672,10 +660,10 @@ struct Codifferential<Direction, Flux, DualRules>
     KOKKOS_FUNCTION double value(Sampler sampler, Element elem) const
     {
         auto const dual_rules = [&] {
-            if constexpr (misc::Specialization<DualRules, ExtrapolationRules>)
+            if constexpr (misc::Specialization<DualRules, tensor::ExtrapolationRules>)
                 return dual;
             else
-                return make_extrapolation_rules(flux, dual);
+                return tensor::make_extrapolation_rules(flux, dual);
         }();
         using DualIndex = typename Flux::component_type;
         using TopIndices
@@ -693,8 +681,13 @@ struct Codifferential<Direction, Flux, DualRules>
         TransposedCoboundary<Direction, DualIndex>::operator()(
                 TopTensor(top),
                 [&](auto sample, auto component) {
-                    return dual_rules
-                            .value(flux, detail::FluxSampler<Sampler> {sampler}, sample, component);
+                    return dual_rules.value(
+                            flux,
+                            [&](auto const& donor, auto donor_elem, auto donor_component) {
+                                return donor.value(sampler, donor_elem, donor_component);
+                            },
+                            sample,
+                            component);
                 },
                 chain,
                 lower,
@@ -705,7 +698,7 @@ struct Codifferential<Direction, Flux, DualRules>
     template <class Element>
     KOKKOS_FUNCTION double operator()(Element elem) const
     {
-        return value(StoredCochainSampler {}, elem);
+        return value(tensor::StoredTensorSampler {}, elem);
     }
 };
 } // namespace sil::exterior

@@ -11,7 +11,7 @@
 #include <stdexcept>
 #include <vector>
 
-#include <similie/exterior/external_domain_extrapolation_rule.hpp>
+#include <similie/tensor/external_domain_extrapolation_rule.hpp>
 
 namespace sil::multidomains {
 
@@ -28,17 +28,17 @@ class BoundaryRule
 
 public:
     BoundaryRule() = default;
-    BoundaryRule(exterior::ClampCochainExtrapolationRule) {}
-    BoundaryRule(exterior::ZeroCochainExtrapolationRule) : m_kind(Kind::Zero) {}
-    BoundaryRule(exterior::NaturalScalarExtrapolationRule) : m_kind(Kind::Natural) {}
-    BoundaryRule(exterior::PrescribedScalarExtrapolationRule rule)
+    BoundaryRule(tensor::ClampExtrapolationRule) {}
+    BoundaryRule(tensor::ZeroExtrapolationRule) : m_kind(Kind::Zero) {}
+    BoundaryRule(tensor::NaturalScalarExtrapolationRule) : m_kind(Kind::Natural) {}
+    BoundaryRule(tensor::PrescribedScalarExtrapolationRule rule)
         : m_kind(Kind::Prescribed)
         , m_value(rule.prescribed_value)
     {
     }
-    BoundaryRule(exterior::NormalScalarFluxExtrapolationRule rule)
+    BoundaryRule(tensor::ConstantScalarExtrapolationRule rule)
         : m_kind(Kind::Flux)
-        , m_value(rule.flux_value)
+        , m_value(rule.exterior_value)
     {
     }
 
@@ -52,15 +52,15 @@ public:
     {
         switch (m_kind) {
         case Kind::Zero:
-            return exterior::ZeroCochainExtrapolationRule {}(field, elem, component);
+            return tensor::ZeroExtrapolationRule {}(field, elem, component);
         case Kind::Natural:
-            return exterior::NaturalScalarExtrapolationRule {}(field, elem, component);
+            return tensor::NaturalScalarExtrapolationRule {}(field, elem, component);
         case Kind::Flux:
-            return exterior::NormalScalarFluxExtrapolationRule {m_value}(field, elem, component);
+            return tensor::ConstantScalarExtrapolationRule {m_value}(field, elem, component);
         case Kind::Prescribed:
-            return exterior::PrescribedScalarExtrapolationRule {m_value}(field, elem, component);
+            return tensor::PrescribedScalarExtrapolationRule {m_value}(field, elem, component);
         default:
-            return exterior::ClampCochainExtrapolationRule {}(field, elem, component);
+            return tensor::ClampExtrapolationRule {}(field, elem, component);
         }
     }
     template <class Field, class Sampler, class Element, class Component>
@@ -70,22 +70,22 @@ public:
             Element elem,
             Component component) const
     {
-        return (*this)(exterior::SampledCochain<Field, Sampler> {field, sampler}, elem, component);
+        return (*this)(tensor::SampledTensor<Field, Sampler> {field, sampler}, elem, component);
     }
 };
 
 struct BoundaryDomain
 {
     BoundaryRule primal;
-    BoundaryRule flux = exterior::ZeroCochainExtrapolationRule {};
-    BoundaryRule geometry = exterior::ClampCochainExtrapolationRule {};
+    BoundaryRule flux = tensor::ZeroExtrapolationRule {};
+    BoundaryRule geometry = tensor::ClampExtrapolationRule {};
 };
 
 struct Face
 {
     std::size_t domain;
     std::size_t axis;
-    exterior::BoundarySide side;
+    tensor::BoundarySide side;
     bool operator==(Face const&) const = default;
 };
 
@@ -93,7 +93,7 @@ struct Connection
 {
     static constexpr std::size_t UNCONNECTED = std::numeric_limits<std::size_t>::max();
     std::size_t domain = UNCONNECTED;
-    exterior::BoundarySide side = exterior::BoundarySide::Lower;
+    tensor::BoundarySide side = tensor::BoundarySide::Lower;
     bool shared_boundary = true;
     double orientation = 1.0;
     double jump = 0.0;
@@ -120,7 +120,7 @@ class Topology
     {
         if (face.domain >= m_faces.size() || face.axis >= N)
             throw std::invalid_argument("invalid physical face");
-        return m_faces[face.domain][2 * face.axis + (face.side == exterior::BoundarySide::Upper)];
+        return m_faces[face.domain][2 * face.axis + (face.side == tensor::BoundarySide::Upper)];
     }
 
 public:
@@ -171,8 +171,7 @@ public:
     {
         if (face.axis >= N)
             throw std::invalid_argument("invalid face axis");
-        return m_faces.at(
-                face.domain)[2 * face.axis + (face.side == exterior::BoundarySide::Upper)];
+        return m_faces.at(face.domain)[2 * face.axis + (face.side == tensor::BoundarySide::Upper)];
     }
     void validate() const
     {

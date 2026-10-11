@@ -540,7 +540,7 @@ int main(int argc, char** argv)
                 Kokkos::DefaultExecutionSpace(),
                 potential_grad,
                 half_step_potential,
-                sil::exterior::ClampCochainExtrapolationRule {});
+                sil::tensor::ClampExtrapolationRule {});
 
         // For this scalar model, the spatial moments cochain is exactly dphi.
         ddc::parallel_deepcopy(spatial_moments, potential_grad);
@@ -553,7 +553,7 @@ int main(int argc, char** argv)
         codifferential(
                 minus_spatial_moments_div,
                 spatial_moments,
-                sil::exterior::NormalScalarFluxExtrapolationRule {});
+                sil::tensor::ConstantScalarExtrapolationRule {});
 
         // Compute dpi_0/dx^0 = dH/dphi - \delta \pi from the DeDonder-Weyl equation then perform the whole-step advection
         ddc::parallel_for_each(

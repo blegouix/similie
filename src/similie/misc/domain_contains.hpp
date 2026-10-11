@@ -6,6 +6,7 @@
 #include <ddc/ddc.hpp>
 
 #include "select_from_type_seq.hpp"
+#include "signed_discrete_element.hpp"
 #include "type_seq_ext.hpp"
 
 namespace sil {
@@ -44,6 +45,20 @@ KOKKOS_FUNCTION bool domain_contains(
             select_from_type_seq<
                     misc::type_seq_intersect_t<ddc::TypeSeq<ODDim...>, ddc::TypeSeq<DDim...>>>(
                     elem));
+}
+
+template <class... DDim, class... ODDim>
+KOKKOS_FUNCTION bool domain_contains(
+        ddc::DiscreteDomain<DDim...> dom,
+        SignedDiscreteElement<ODDim...> elem)
+{
+    return [&]<class... CommonDDim>(ddc::TypeSeq<CommonDDim...>) {
+        return ((elem.template uid<CommonDDim>()
+                         >= static_cast<std::ptrdiff_t>(dom.front().template uid<CommonDDim>())
+                 && elem.template uid<CommonDDim>()
+                            <= static_cast<std::ptrdiff_t>(dom.back().template uid<CommonDDim>()))
+                && ...);
+    }(misc::type_seq_intersect_t<ddc::TypeSeq<DDim...>, ddc::TypeSeq<ODDim...>> {});
 }
 
 } // namespace misc

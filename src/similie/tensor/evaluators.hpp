@@ -5,12 +5,13 @@
 
 #include <similie/misc/clamp_to_domain.hpp>
 #include <similie/misc/domain_contains.hpp>
+#include <similie/misc/specialization.hpp>
 
 #include <Kokkos_Core.hpp>
 
 namespace sil {
 
-namespace exterior {
+namespace tensor {
 
 namespace detail {
 
@@ -21,9 +22,9 @@ struct IdentityStencilEvaluator
         return 0.0;
     }
 
-    KOKKOS_FUNCTION double value(auto sampler, auto sampled_elem, auto cochain_elem) const
+    KOKKOS_FUNCTION double value(auto sampler, auto sampled_elem, auto component) const
     {
-        return sampler(sampled_elem, cochain_elem);
+        return sampler(sampled_elem, component);
     }
 };
 
@@ -32,16 +33,16 @@ struct ClampedTensorEvaluator
 {
     TensorType tensor;
 
-    KOKKOS_FUNCTION double operator()(auto sampled_elem, auto cochain_elem) const
+    KOKKOS_FUNCTION double operator()(auto sampled_elem, auto component) const
     {
         auto const clamped_elem = misc::clamp_to_domain(tensor.non_indices_domain(), sampled_elem);
-        return tensor.mem(clamped_elem, cochain_elem);
+        return tensor.mem(clamped_elem, component);
     }
 
-    KOKKOS_FUNCTION double value(auto sampler, auto sampled_elem, auto cochain_elem) const
+    KOKKOS_FUNCTION double value(auto sampler, auto sampled_elem, auto component) const
     {
         auto const clamped_elem = misc::clamp_to_domain(tensor.non_indices_domain(), sampled_elem);
-        return sampler(clamped_elem, cochain_elem);
+        return sampler(clamped_elem, component);
     }
 };
 
@@ -50,39 +51,39 @@ struct ZeroOutsideTensorEvaluator
 {
     TensorType tensor;
 
-    KOKKOS_FUNCTION double operator()(auto sampled_elem, auto cochain_elem) const
+    KOKKOS_FUNCTION double operator()(auto sampled_elem, auto component) const
     {
         if (!misc::domain_contains(tensor.non_indices_domain(), sampled_elem)) {
             return 0.0;
         }
-        return tensor.mem(sampled_elem, cochain_elem);
+        return tensor.mem(sampled_elem, component);
     }
 
-    KOKKOS_FUNCTION double value(auto sampler, auto sampled_elem, auto cochain_elem) const
+    KOKKOS_FUNCTION double value(auto sampler, auto sampled_elem, auto component) const
     {
         if (!misc::domain_contains(tensor.non_indices_domain(), sampled_elem)) {
             return 0.0;
         }
-        return sampler(sampled_elem, cochain_elem);
+        return sampler(sampled_elem, component);
     }
 };
 
 } // namespace detail
 
-} // namespace exterior
+} // namespace tensor
 
 } // namespace sil
 
-namespace sil::exterior {
+namespace sil::tensor {
 
-/** Substitute a sampler for stored cochain values, retaining domain identity.
+/** Substitute a sampler for stored tensor values, retaining domain identity.
  * \important This operator and documentation is fully AI-generated.
  * A sampler receives (field, element, component), so it can distinguish identical
  * local coordinates in different domains when evaluating a global basis vector.
  * The field is borrowed and must outlive this sampling view.
  */
 template <class Field, class Sampler>
-struct SampledCochain
+struct SampledTensor
 {
     using non_indices_domain_t = typename Field::non_indices_domain_t;
     using discrete_domain_type = typename Field::discrete_domain_type;
@@ -101,13 +102,16 @@ struct SampledCochain
     }
 };
 
-struct StoredCochainSampler
+struct StoredTensorSampler
 {
     template <class Field, class Element, class Component>
     KOKKOS_FUNCTION double operator()(Field const& field, Element element, Component component)
             const
     {
-        return field.mem(element, component);
+        if constexpr (misc::Specialization<Element, misc::SignedDiscreteElement>)
+            return field.mem(element.storage_element(), component);
+        else
+            return field.mem(element, component);
     }
 };
 
@@ -139,13 +143,13 @@ struct EvaluateRuleValue
         if constexpr (requires { rule.value(field, sampler, element, component); })
             return rule.value(field, sampler, element, component);
         else
-            return rule(SampledCochain<Field, Sampler> {field, sampler}, element, component);
+            return rule(SampledTensor<Field, Sampler> {field, sampler}, element, component);
     }
 };
 } // namespace detail
-} // namespace sil::exterior
+} // namespace sil::tensor
 
-namespace sil::exterior::detail {
+namespace sil::tensor::detail {
 template <class Rule>
 KOKKOS_FUNCTION bool is_interface(Rule const& rule)
 {
@@ -176,4 +180,4 @@ KOKKOS_FUNCTION bool shared_boundary(Rule const& rule)
     else
         return true;
 }
-} // namespace sil::exterior::detail
+} // namespace sil::tensor::detail

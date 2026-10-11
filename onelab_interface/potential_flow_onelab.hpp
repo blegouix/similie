@@ -362,24 +362,24 @@ inline Result run(
     auto topology = [&](double prescribed_scale) {
         sil::multidomains::Topology<2> graph(side_start.size());
         std::size_t const wall
-                = graph.add_boundary({sil::exterior::NaturalScalarExtrapolationRule {}});
+                = graph.add_boundary({sil::tensor::NaturalScalarExtrapolationRule {}});
         std::size_t const upstream
-                = graph.add_boundary({sil::exterior::PrescribedScalarExtrapolationRule {0.0}});
+                = graph.add_boundary({sil::tensor::PrescribedScalarExtrapolationRule {0.0}});
         std::size_t const downstream
-                = graph.add_boundary({sil::exterior::PrescribedScalarExtrapolationRule {
+                = graph.add_boundary({sil::tensor::PrescribedScalarExtrapolationRule {
                         prescribed_scale * inputs.velocity * inputs.box_size}});
         for (std::size_t id = 0; id < side_start.size(); ++id) {
             std::size_t const next = (id + 1) % side_start.size();
             graph.connect(
-                    {id, 0, sil::exterior::BoundarySide::Upper},
-                    {next, 0, sil::exterior::BoundarySide::Lower},
+                    {id, 0, sil::tensor::BoundarySide::Upper},
+                    {next, 0, sil::tensor::BoundarySide::Lower},
                     false,
                     1.0,
                     side_start[next] == cut_node_i ? -1.0 : 0.0);
-            graph.connect_boundary({id, 1, sil::exterior::BoundarySide::Lower}, wall);
+            graph.connect_boundary({id, 1, sil::tensor::BoundarySide::Lower}, wall);
             int const tag = outer_boundary[side_start[id]];
             graph.connect_boundary(
-                    {id, 1, sil::exterior::BoundarySide::Upper},
+                    {id, 1, sil::tensor::BoundarySide::Upper},
                     tag == 10 ? upstream : (tag == 11 ? downstream : wall));
         }
         graph.validate();

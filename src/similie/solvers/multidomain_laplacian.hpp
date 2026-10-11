@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstddef>
@@ -25,6 +26,7 @@ namespace similie::solvers {
 template <class... DDim>
 struct IndexedScalarField
 {
+    using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
     using component_type = sil::tensor::Covariant<sil::tensor::ScalarIndex>;
     using non_indices_domain_t = ddc::DiscreteDomain<DDim...>;
     using discrete_domain_type = ddc::DiscreteDomain<DDim..., component_type>;
@@ -411,7 +413,7 @@ void prescribe_face(
         Field field,
         Primal primal)
 {
-    if (sil::exterior::detail::is_dirichlet(primal.template boundary_rule<Axis, Upper>())) {
+    if (sil::tensor::detail::is_dirichlet(primal.template boundary_rule<Axis, Upper>())) {
         auto nodes = field.non_indices_domain();
         auto front = nodes.front();
         auto extent = nodes.extents();
@@ -423,9 +425,9 @@ void prescribe_face(
             (
                     [&] {
                         if constexpr (Tangent != Axis)
-                            if (sil::exterior::detail::is_interface(
+                            if (sil::tensor::detail::is_interface(
                                         primal.template boundary_rule<Tangent, true>())
-                                && !sil::exterior::detail::shared_boundary(
+                                && !sil::tensor::detail::shared_boundary(
                                         primal.template boundary_rule<Tangent, true>()))
                                 ++ddc::detail::array(extent)[Tangent];
                     }(),
@@ -454,7 +456,7 @@ void prescribe_face(
                         ++ddc::detail::array(exterior)[Axis];
                     else
                         --ddc::detail::array(exterior)[Axis];
-                    double const value = sil::exterior::detail::EvaluateRuleValue<
+                    double const value = sil::tensor::detail::EvaluateRuleValue<
                             sil::exterior::detail::
                                     ZeroScalarSampler> {sil::exterior::detail::
                                                                 ZeroScalarSampler {}}(
@@ -532,9 +534,19 @@ ScalarLinearSystem assemble_multidomain_laplacian(
             = make_laplacian_flux_domains<Direction>(domains, diffusivity, jump_scale);
     sil::multidomains::DomainExecution<Kokkos::DefaultExecutionSpace>
             partitions(exec, domains.domain_count());
-    constexpr std::size_t capacity = ProbeCapacity == 0
-                                             ? (2 * Direction::size() + 1) * (Direction::size() + 1)
-                                             : ProbeCapacity;
+    constexpr std::size_t capacity = [] {
+        if constexpr (ProbeCapacity != 0)
+            return ProbeCapacity;
+        // A full gradient at each Hodge edge visits the usual three-point
+        // neighborhood plus one positive-side layer in each direction. These
+        // additional probes are discarded if their assembled coefficient is zero.
+        std::size_t layer = 1;
+        for (std::size_t axis = 1; axis < Direction::size(); ++axis)
+            layer *= 3;
+        return std::
+                max((2 * Direction::size() + 1) * (Direction::size() + 1),
+                    (Direction::size() + 3) * layer);
+    }();
     detail::RowAssembly<capacity> const system(unknowns);
     partitions.for_each([&](std::size_t id, Kokkos::DefaultExecutionSpace const& stream) {
         auto const field = domains.field(id);

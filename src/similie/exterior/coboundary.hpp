@@ -18,7 +18,10 @@
 #include <similie/misc/type_seq_ext.hpp>
 #include <similie/tensor/antisymmetric_tensor.hpp>
 #include <similie/tensor/dummy_index.hpp>
+#include <similie/tensor/evaluators.hpp>
+#include <similie/tensor/extrapolation_rules.hpp>
 #include <similie/tensor/owning_tensor.hpp>
+#include <similie/tensor/scalar_extrapolation_rules.hpp>
 #include <similie/tensor/tensor_impl.hpp>
 
 #include <Kokkos_StdAlgorithms.hpp>
@@ -26,9 +29,6 @@
 #include "boundary.hpp"
 #include "cochain.hpp"
 #include "cosimplex.hpp"
-#include "evaluators.hpp"
-#include "extrapolation_rules.hpp"
-#include "scalar_extrapolation_rules.hpp"
 
 
 namespace sil {
@@ -202,6 +202,12 @@ struct NonSpectatorDimension<Index, ddc::DiscreteDomain<DDim...>>
             ddc::DiscreteDomain<>>...>;
 };
 
+template <class Memory>
+struct LocalExecution
+{
+    using memory_space = Memory;
+};
+
 struct CoboundaryDummyIndex
 {
 };
@@ -371,6 +377,39 @@ struct Coboundary<TagToAddToCochain, CochainTag>
         return stencil;
     }
 
+    /** Evaluate the complete pointwise coboundary of a sampled tensor view.
+     * \important This operator and documentation is fully AI-generated.
+     * This is the same incidence operator as the output-tensor overload. The
+     * caller can select a tagged component of the returned tensor afterward.
+     */
+    template <class Field, class Sampler, class Elem>
+    KOKKOS_FUNCTION static auto value(Field const& field, Sampler sampler, Elem elem)
+    {
+        using ChainDomain = typename detail::NonSpectatorDimension<
+                TagToAddToCochain,
+                typename Field::non_indices_domain_t>::type;
+        auto result = detail::make_stencil<
+                typename Field::memory_space,
+                coboundary_index_t<TagToAddToCochain, CochainTag>>(ddc::DiscreteElement<>());
+        auto const chain = tangent_basis<CochainTag::rank() + 1, ChainDomain>(
+                detail::LocalExecution<typename Field::memory_space> {});
+        auto const lower = tangent_basis<CochainTag::rank(), ChainDomain>(
+                detail::LocalExecution<typename Field::memory_space> {});
+        operator()(
+                tensor::Tensor<
+                        double,
+                        ddc::DiscreteDomain<coboundary_index_t<TagToAddToCochain, CochainTag>>,
+                        Kokkos::layout_right,
+                        typename Field::memory_space>(result),
+                [&](auto sample, auto component) {
+                    return field.value(sampler, sample, component);
+                },
+                chain,
+                lower,
+                elem);
+        return result;
+    }
+
     template <
             class CoboundaryTensorType,
             class Evaluator,
@@ -383,24 +422,6 @@ struct Coboundary<TagToAddToCochain, CochainTag>
             ChainType chain,
             LowerChainType lower_chain,
             Elem elem)
-    {
-        for (std::size_t component = 0; component < chain.size(); ++component)
-            coboundary_tensor.mem(
-                    ddc::DiscreteElement<coboundary_index_t<TagToAddToCochain, CochainTag>>(
-                            component))
-                    = operator()(evaluator, chain, lower_chain, elem, component);
-    }
-
-    /** Evaluate one oriented incidence row without sampling other components.
-     * \important This operator and documentation is fully AI-generated.
-     */
-    template <class Evaluator, class ChainType, class LowerChainType, class Elem>
-    KOKKOS_FUNCTION static double operator()(
-            Evaluator evaluator,
-            ChainType chain,
-            LowerChainType lower_chain,
-            Elem elem,
-            std::size_t component)
     {
         constexpr std::size_t BOUNDARY_SIZE = 2 * (CochainTag::rank() + 1);
         std::array<double, BOUNDARY_SIZE> boundary_values_alloc {};
@@ -417,8 +438,7 @@ struct Coboundary<TagToAddToCochain, CochainTag>
         typename ChainType::simplex_type::discrete_element_type const elem_on_chain
                 = misc::select_from_type_seq<ddc::to_type_seq_t<
                         typename ChainType::simplex_type::discrete_element_type>>(elem);
-        auto const i = chain.begin() + component;
-        {
+        for (auto i = chain.begin(); i < chain.end(); ++i) {
             typename ChainType::simplex_type
                     simplex(std::integral_constant<std::size_t, CochainTag::rank() + 1> {},
                             elem_on_chain,
@@ -458,7 +478,10 @@ struct Coboundary<TagToAddToCochain, CochainTag>
                 }
             }
             Cochain cochain_boundary(boundary_chain, boundary_values.allocation_kokkos_view());
-            return cochain_boundary.integrate();
+            coboundary_tensor.mem(
+                    ddc::DiscreteElement<coboundary_index_t<TagToAddToCochain, CochainTag>>(
+                            Kokkos::Experimental::distance(chain.begin(), i)))
+                    = cochain_boundary.integrate();
         }
     }
 };
@@ -665,7 +688,7 @@ template <
         tensor::TensorIndex CochainTag,
         misc::Specialization<tensor::Tensor> TensorType,
         class ExecSpace,
-        class ExtrapolationRule = ClampCochainExtrapolationRule>
+        class ExtrapolationRule = tensor::ClampExtrapolationRule>
 coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
         ExecSpace const& exec_space,
         coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
@@ -673,10 +696,10 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
         ExtrapolationRule extrapolation = {})
 {
     auto const extrapolation_rules = [&]() {
-        if constexpr (misc::Specialization<ExtrapolationRule, ExtrapolationRules>)
+        if constexpr (misc::Specialization<ExtrapolationRule, tensor::ExtrapolationRules>)
             return extrapolation;
         else
-            return make_extrapolation_rules(tensor, extrapolation);
+            return tensor::make_extrapolation_rules(tensor, extrapolation);
     }();
     ddc::DiscreteDomain batch_dom
             = ddc::remove_dims_of<coboundary_index_t<TagToAddToCochain, CochainTag>>(
@@ -717,7 +740,7 @@ template <
         tensor::TensorIndex CochainTag,
         misc::Specialization<tensor::Tensor> TensorType,
         class ExecSpace,
-        class ExtrapolationRule = ZeroCochainExtrapolationRule>
+        class ExtrapolationRule = tensor::ZeroExtrapolationRule>
 coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> transposed_coboundary(
         ExecSpace const& exec_space,
         coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
@@ -725,10 +748,10 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> transposed_coboun
         ExtrapolationRule extrapolation = {})
 {
     auto const extrapolation_rules = [&]() {
-        if constexpr (misc::Specialization<ExtrapolationRule, ExtrapolationRules>)
+        if constexpr (misc::Specialization<ExtrapolationRule, tensor::ExtrapolationRules>)
             return extrapolation;
         else
-            return make_extrapolation_rules(tensor, extrapolation);
+            return tensor::make_extrapolation_rules(tensor, extrapolation);
     }();
     ddc::DiscreteDomain batch_dom
             = ddc::remove_dims_of<coboundary_index_t<TagToAddToCochain, CochainTag>>(
@@ -769,7 +792,7 @@ template <
         tensor::TensorIndex CochainTag,
         misc::Specialization<tensor::Tensor> TensorType,
         class ExecSpace,
-        class ExtrapolationRule = ClampCochainExtrapolationRule>
+        class ExtrapolationRule = tensor::ClampExtrapolationRule>
 coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> deriv(
         ExecSpace const& exec_space,
         coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
@@ -784,70 +807,3 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> deriv(
 } // namespace exterior
 
 } // namespace sil
-
-namespace sil::exterior {
-namespace detail {
-template <class Memory>
-struct LocalExecution
-{
-    using memory_space = Memory;
-};
-} // namespace detail
-/** Lazy exterior derivative of a scalar cochain using ordinary incidence.
- * \important This operator and documentation is fully AI-generated.
- */
-template <class Direction, class Field, class Rules, class Memory>
-struct CoboundaryCochain
-{
-    using non_indices_domain_t = typename Field::non_indices_domain_t;
-    using component_type = Direction;
-    using discrete_domain_type
-            = misc::cartesian_prod_t<non_indices_domain_t, ddc::DiscreteDomain<Direction>>;
-    Field field;
-    Rules rules;
-    KOKKOS_FUNCTION non_indices_domain_t non_indices_domain() const
-    {
-        return field.non_indices_domain();
-    }
-    template <class Sampler, class Element, class Component>
-    KOKKOS_FUNCTION double value(Sampler sampler, Element elem, Component component) const
-    {
-        auto const chain
-                = tangent_basis<1, non_indices_domain_t>(detail::LocalExecution<Memory> {});
-        auto const lower
-                = tangent_basis<0, non_indices_domain_t>(detail::LocalExecution<Memory> {});
-        return Coboundary<
-                Direction,
-                ddc::type_seq_element_t<0, ddc::to_type_seq_t<typename Field::indices_domain_t>>>::
-        operator()(
-                [&](auto sampled, auto index) {
-                    return rules.value(field, sampler, sampled, index);
-                },
-                chain,
-                lower,
-                elem,
-                component.uid());
-    }
-    template <class Element, class Component>
-    KOKKOS_FUNCTION double mem(Element elem, Component component) const
-    {
-        return value(StoredCochainSampler {}, elem, component);
-    }
-};
-
-template <class Direction, class Memory, class Field, class Rule>
-auto make_coboundary_cochain(Field field, Rule rule)
-{
-    auto const rules = [&] {
-        if constexpr (misc::Specialization<Rule, ExtrapolationRules>)
-            return rule;
-        else
-            return make_extrapolation_rules(field, rule);
-    }();
-    return CoboundaryCochain<
-            Direction,
-            Field,
-            std::remove_cvref_t<decltype(rules)>,
-            Memory> {field, rules};
-}
-} // namespace sil::exterior

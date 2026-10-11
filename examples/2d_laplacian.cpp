@@ -220,8 +220,8 @@ int main(int argc, char** argv)
     laplacian(
             laplacian_tensor,
             potential,
-            sil::exterior::NaturalScalarExtrapolationRule {},
-            sil::exterior::ZeroCochainExtrapolationRule {});
+            sil::tensor::NaturalScalarExtrapolationRule {},
+            sil::tensor::ZeroExtrapolationRule {});
     Kokkos::fence();
 
     auto position_host

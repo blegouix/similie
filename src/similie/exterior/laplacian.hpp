@@ -14,11 +14,12 @@
 #include <similie/misc/specialization.hpp>
 #include <similie/misc/type_seq_ext.hpp>
 #include <similie/tensor/character.hpp>
+#include <similie/tensor/scalar_extrapolation_rules.hpp>
 #include <similie/tensor/tensor_impl.hpp>
+#include <similie/tensor/tensor_with_extrapolation_rules.hpp>
 
 #include "coboundary.hpp"
 #include "codifferential.hpp"
-#include "scalar_extrapolation_rules.hpp"
 
 
 namespace sil {
@@ -36,8 +37,8 @@ template <
         misc::Specialization<tensor::Tensor> HodgeStarType,
         misc::Specialization<tensor::Tensor> DualHodgeStarType,
         class ExecSpace,
-        class PrimalExtrapolationRule = ClampCochainExtrapolationRule,
-        class DualExtrapolationRule = ZeroCochainExtrapolationRule>
+        class PrimalExtrapolationRule = tensor::ClampExtrapolationRule,
+        class DualExtrapolationRule = tensor::ZeroExtrapolationRule>
 TensorType codifferential_of_coboundary(
         ExecSpace const& exec_space,
         TensorType out_tensor,
@@ -49,16 +50,16 @@ TensorType codifferential_of_coboundary(
         DualExtrapolationRule dual_extrapolation = {})
 {
     auto const primal_extrapolation_rules = [&]() {
-        if constexpr (misc::Specialization<PrimalExtrapolationRule, ExtrapolationRules>)
+        if constexpr (misc::Specialization<PrimalExtrapolationRule, tensor::ExtrapolationRules>)
             return primal_extrapolation;
         else
-            return make_extrapolation_rules(tensor, primal_extrapolation);
+            return tensor::make_extrapolation_rules(tensor, primal_extrapolation);
     }();
     auto const dual_extrapolation_rules = [&]() {
-        if constexpr (misc::Specialization<DualExtrapolationRule, ExtrapolationRules>)
+        if constexpr (misc::Specialization<DualExtrapolationRule, tensor::ExtrapolationRules>)
             return dual_extrapolation;
         else
-            return make_extrapolation_rules(dual_tensor_buffer, dual_extrapolation);
+            return tensor::make_extrapolation_rules(dual_tensor_buffer, dual_extrapolation);
     }();
     using coboundary_output_index = coboundary_index_t<LaplacianDummyIndex, CochainTag>;
     using codifferential_hodge_output_indices = codifferential_hodge_output_indices_t<
@@ -343,8 +344,8 @@ public:
     }
 
     template <
-            class PrimalExtrapolationRule = ClampCochainExtrapolationRule,
-            class DualExtrapolationRule = ZeroCochainExtrapolationRule>
+            class PrimalExtrapolationRule = tensor::ClampExtrapolationRule,
+            class DualExtrapolationRule = tensor::ZeroExtrapolationRule>
     TensorType operator()(
             TensorType laplacian_tensor,
             TensorType tensor,
@@ -638,8 +639,8 @@ public:
     }
 
     template <
-            class PrimalExtrapolationRule = ClampCochainExtrapolationRule,
-            class DualExtrapolationRule = ZeroCochainExtrapolationRule>
+            class PrimalExtrapolationRule = tensor::ClampExtrapolationRule,
+            class DualExtrapolationRule = tensor::ZeroExtrapolationRule>
     TensorType operator()(
             TensorType laplacian_tensor,
             TensorType tensor,
@@ -841,8 +842,8 @@ public:
     }
 
     template <
-            class PrimalExtrapolationRule = ClampCochainExtrapolationRule,
-            class DualExtrapolationRule = ZeroCochainExtrapolationRule>
+            class PrimalExtrapolationRule = tensor::ClampExtrapolationRule,
+            class DualExtrapolationRule = tensor::ZeroExtrapolationRule>
     TensorType operator()(
             TensorType laplacian_tensor,
             TensorType tensor,
@@ -882,8 +883,8 @@ template <
         misc::Specialization<tensor::Tensor> DualDerivativeHodgeStarType,
         misc::Specialization<tensor::Tensor> DerivativeDualTensorBufferType,
         class ExecSpace,
-        class PrimalExtrapolationRule = ClampCochainExtrapolationRule,
-        class DualExtrapolationRule = ZeroCochainExtrapolationRule>
+        class PrimalExtrapolationRule = tensor::ClampExtrapolationRule,
+        class DualExtrapolationRule = tensor::ZeroExtrapolationRule>
     requires(detail::ZeroRankLaplacianCochain<LaplacianDummyIndex, CochainTag>)
 TensorType laplacian(
         ExecSpace const& exec_space,
@@ -926,8 +927,8 @@ template <
         misc::Specialization<tensor::Tensor> CodifferentialTensorBufferType,
         misc::Specialization<tensor::Tensor> CoboundaryOfCodifferentialBufferType,
         class ExecSpace,
-        class PrimalExtrapolationRule = ClampCochainExtrapolationRule,
-        class DualExtrapolationRule = ZeroCochainExtrapolationRule>
+        class PrimalExtrapolationRule = tensor::ClampExtrapolationRule,
+        class DualExtrapolationRule = tensor::ZeroExtrapolationRule>
     requires(detail::IntermediateRankLaplacianCochain<LaplacianDummyIndex, CochainTag>)
 TensorType laplacian(
         ExecSpace const& exec_space,
@@ -1002,8 +1003,8 @@ template <
         misc::Specialization<tensor::Tensor> DualTensorBufferType,
         misc::Specialization<tensor::Tensor> CodifferentialTensorBufferType,
         class ExecSpace,
-        class PrimalExtrapolationRule = ClampCochainExtrapolationRule,
-        class DualExtrapolationRule = ZeroCochainExtrapolationRule>
+        class PrimalExtrapolationRule = tensor::ClampExtrapolationRule,
+        class DualExtrapolationRule = tensor::ZeroExtrapolationRule>
     requires(detail::TopRankLaplacianCochain<LaplacianDummyIndex, CochainTag>)
 TensorType laplacian(
         ExecSpace const& exec_space,
@@ -1050,11 +1051,16 @@ auto make_scalar_laplacian_flux(
         double diffusivity = 1.0)
 {
     return make_tensor_dual_hodge<Direction>(
-            make_coboundary_cochain<Direction, typename Position::memory_space>(field, primal),
+            tensor::make_tensor_with_extrapolation_rules(field, primal),
             position,
             geometry,
             flux,
-            diffusivity);
+            diffusivity,
+            Coboundary<
+                    Direction,
+                    ddc::type_seq_element_t<
+                            0,
+                            ddc::to_type_seq_t<typename Field::indices_domain_t>>> {});
 }
 /** Scalar Laplacian delta d: geometric pairing belongs to the Hodge star.
  * \important This operator and documentation is fully AI-generated.
@@ -1072,7 +1078,7 @@ struct ScalarLaplacian
     template <class Element>
     KOKKOS_FUNCTION double operator()(Element elem) const
     {
-        return value(StoredCochainSampler {}, elem);
+        return value(tensor::StoredTensorSampler {}, elem);
     }
 };
 } // namespace sil::exterior

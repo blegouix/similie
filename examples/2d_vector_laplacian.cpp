@@ -230,18 +230,14 @@ int main(int argc, char** argv)
             MuLow,
             MuLow>(Kokkos::DefaultExecutionSpace(), laplacian_tensor, potential, metric, position);
     // Pairs follow the (DDimX, DDimY) domain order, with lower then upper side.
-    sil::exterior::ExtrapolationRules const primal_rules(
+    sil::tensor::ExtrapolationRules const primal_rules(
             std::
-                    pair {sil::exterior::NaturalScalarExtrapolationRule {},
-                          sil::exterior::NaturalScalarExtrapolationRule {}},
+                    pair {sil::tensor::NaturalScalarExtrapolationRule {},
+                          sil::tensor::NaturalScalarExtrapolationRule {}},
             std::
-                    pair {sil::exterior::NaturalScalarExtrapolationRule {},
-                          sil::exterior::NaturalScalarExtrapolationRule {}});
-    laplacian(
-            laplacian_tensor,
-            potential,
-            primal_rules,
-            sil::exterior::ZeroCochainExtrapolationRule {});
+                    pair {sil::tensor::NaturalScalarExtrapolationRule {},
+                          sil::tensor::NaturalScalarExtrapolationRule {}});
+    laplacian(laplacian_tensor, potential, primal_rules, sil::tensor::ZeroExtrapolationRule {});
     Kokkos::fence();
 
     auto position_host

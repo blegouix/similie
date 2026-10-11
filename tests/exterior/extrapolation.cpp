@@ -57,15 +57,15 @@ void test_callable_rules_and_connected_derivative()
                 neighbor.mem(elem, ddc::DiscreteElement<Scalar>(0)) = (x + 5) * (x + 5);
             });
     // Adjacent half-open domains do not duplicate their interface node.
-    sil::exterior::ExternalDomainExtrapolationRule const connected {
+    sil::tensor::ExternalDomainExtrapolationRule const connected {
             neighbor,
-            sil::exterior::ExternalDomainBoundaryMap<Grid> {
-                    sil::exterior::BoundarySide::Upper,
-                    sil::exterior::BoundarySide::Lower,
+            sil::tensor::ExternalDomainBoundaryMap<Grid> {
+                    sil::tensor::BoundarySide::Upper,
+                    sil::tensor::BoundarySide::Lower,
                     false},
             2.0};
-    sil::exterior::ExtrapolationRules const connected_rules(
-            std::pair {sil::exterior::ZeroCochainExtrapolationRule {}, connected});
+    sil::tensor::ExtrapolationRules const connected_rules(
+            std::pair {sil::tensor::ZeroExtrapolationRule {}, connected});
     sil::exterior::deriv<
             Vector,
             Scalar>(Kokkos::DefaultExecutionSpace(), derivative, potential, connected_rules);
@@ -79,7 +79,7 @@ void test_callable_rules_and_connected_derivative()
             Kokkos::DefaultExecutionSpace(),
             derivative,
             potential,
-            sil::exterior::NaturalScalarExtrapolationRule {});
+            sil::tensor::NaturalScalarExtrapolationRule {});
     ddc::parallel_deepcopy(host, derivative);
     EXPECT_DOUBLE_EQ(host.mem(ddc::DiscreteElement<Grid, Vector>(14, 0)), 7.0);
     sil::exterior::deriv<Vector, Scalar>(
@@ -99,7 +99,7 @@ void test_callable_rules_and_connected_derivative()
             Kokkos::DefaultExecutionSpace(),
             derivative,
             potential,
-            sil::exterior::NormalScalarFluxExtrapolationRule {3.0});
+            sil::tensor::ConstantScalarExtrapolationRule {3.0});
     ddc::parallel_deepcopy(host, derivative);
     EXPECT_DOUBLE_EQ(host.mem(ddc::DiscreteElement<Grid, Vector>(10, 0)), -3.0);
 }
@@ -140,14 +140,14 @@ void test_laplacian_agrees_with_composition()
             Metric,
             Vector,
             Scalar>(Kokkos::DefaultExecutionSpace(), result, potential, metric, position);
-    sil::exterior::ExtrapolationRules const primal(
+    sil::tensor::ExtrapolationRules const primal(
             std::
-                    pair {sil::exterior::ZeroCochainExtrapolationRule {},
-                          sil::exterior::NaturalScalarExtrapolationRule {}});
-    sil::exterior::ExtrapolationRules const dual(
+                    pair {sil::tensor::ZeroExtrapolationRule {},
+                          sil::tensor::NaturalScalarExtrapolationRule {}});
+    sil::tensor::ExtrapolationRules const dual(
             std::
-                    pair {sil::exterior::NormalScalarFluxExtrapolationRule {3.0},
-                          sil::exterior::ZeroCochainExtrapolationRule {}});
+                    pair {sil::tensor::ConstantScalarExtrapolationRule {3.0},
+                          sil::tensor::ZeroExtrapolationRule {}});
     laplacian(result, potential, primal, dual);
     sil::exterior::
             deriv<Vector, Scalar>(Kokkos::DefaultExecutionSpace(), derivative, potential, primal);
@@ -226,13 +226,13 @@ void test_external_domain_sampling(std::index_sequence<Dimension...>)
                 bool const target_upper = index & 2;
                 bool const shared = index & 4;
                 int const depth = index & 8 ? 2 : 1;
-                sil::exterior::ExternalDomainExtrapolationRule const
+                sil::tensor::ExternalDomainExtrapolationRule const
                         rule {target,
-                              sil::exterior::ExternalDomainBoundaryMap<GridDimension<0>> {
-                                      source_upper ? sil::exterior::BoundarySide::Upper
-                                                   : sil::exterior::BoundarySide::Lower,
-                                      target_upper ? sil::exterior::BoundarySide::Upper
-                                                   : sil::exterior::BoundarySide::Lower,
+                              sil::tensor::ExternalDomainBoundaryMap<GridDimension<0>> {
+                                      source_upper ? sil::tensor::BoundarySide::Upper
+                                                   : sil::tensor::BoundarySide::Lower,
+                                      target_upper ? sil::tensor::BoundarySide::Upper
+                                                   : sil::tensor::BoundarySide::Lower,
                                       shared},
                               2.0,
                               -1.0};
@@ -246,7 +246,7 @@ void test_external_domain_sampling(std::index_sequence<Dimension...>)
                            + ddc::DiscreteVector<GridDimension<0>>(source_upper ? depth : -depth))
                                   .template uid<GridDimension<0>>();
                 auto const rules
-                        = sil::exterior::make_extrapolation_rules<sizeof...(Dimension)>(rule);
+                        = sil::tensor::make_extrapolation_rules<sizeof...(Dimension)>(rule);
                 results(index) = rules(source, elem, ddc::DiscreteElement<Scalar>(0));
             });
     auto const host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), results);
@@ -272,19 +272,17 @@ void test_per_boundary_rules(std::index_sequence<Dimension...>)
     ddc::Chunk field_alloc(domain, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor field(field_alloc);
     ddc::parallel_fill(field, 42.0);
-    sil::exterior::ExtrapolationRules const rules(
+    sil::tensor::ExtrapolationRules const rules(
             std::
-                    pair {sil::exterior::PrescribedScalarExtrapolationRule {2.0 * Dimension + 1.0},
-                          sil::exterior::PrescribedScalarExtrapolationRule {
+                    pair {sil::tensor::PrescribedScalarExtrapolationRule {2.0 * Dimension + 1.0},
+                          sil::tensor::PrescribedScalarExtrapolationRule {
                                   2.0 * Dimension + 2.0}}...);
-    auto const uniform_rules = sil::exterior::make_extrapolation_rules(
-            field,
-            sil::exterior::PrescribedScalarExtrapolationRule {17.5});
-    decltype(uniform_rules) implicit_rules
-            = sil::exterior::PrescribedScalarExtrapolationRule {17.5};
+    auto const uniform_rules = sil::tensor::
+            make_extrapolation_rules(field, sil::tensor::PrescribedScalarExtrapolationRule {17.5});
+    decltype(uniform_rules) implicit_rules = sil::tensor::PrescribedScalarExtrapolationRule {17.5};
     static_assert(
-            !requires { sil::exterior::make_extrapolation_rules<sizeof...(Dimension)>(rules); });
-    static_assert(!requires { sil::exterior::make_extrapolation_rules(field, rules); });
+            !requires { sil::tensor::make_extrapolation_rules<sizeof...(Dimension)>(rules); });
+    static_assert(!requires { sil::tensor::make_extrapolation_rules(field, rules); });
     ddc::DiscreteDomain<Sample> const
             samples(ddc::DiscreteElement<Sample>(0),
                     ddc::DiscreteVector<Sample>(2 * sizeof...(Dimension) + 9));
@@ -414,13 +412,13 @@ void test_corner_blending_limits()
     ddc::Chunk field_alloc(domain, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor field(field_alloc);
     ddc::parallel_fill(field, 42.0);
-    sil::exterior::ExtrapolationRules const
+    sil::tensor::ExtrapolationRules const
             rules(std::
-                          pair {sil::exterior::PrescribedScalarExtrapolationRule {1.0},
-                                sil::exterior::PrescribedScalarExtrapolationRule {2.0}},
+                          pair {sil::tensor::PrescribedScalarExtrapolationRule {1.0},
+                                sil::tensor::PrescribedScalarExtrapolationRule {2.0}},
                   std::
-                          pair {sil::exterior::PrescribedScalarExtrapolationRule {3.0},
-                                sil::exterior::PrescribedScalarExtrapolationRule {4.0}});
+                          pair {sil::tensor::PrescribedScalarExtrapolationRule {3.0},
+                                sil::tensor::PrescribedScalarExtrapolationRule {4.0}});
     Kokkos::Array<int, 7> const left_distances {0, 1, 1, 1, 3, 1, 1000000};
     Kokkos::Array<int, 7> const top_distances {1, 0, 1, 3, 1, 1000000, 1};
     ddc::DiscreteDomain<Sample> const
@@ -477,10 +475,10 @@ TEST(Extrapolation, EmptyRulesForScalarDomain)
     ddc::Chunk allocation(accessor.domain(), ddc::HostAllocator<double>());
     sil::tensor::Tensor field(allocation);
     field.mem(ddc::DiscreteElement<Scalar>(0)) = 42.0;
-    auto const rules = sil::exterior::make_extrapolation_rules<0>(
-            sil::exterior::PrescribedScalarExtrapolationRule {17.5});
+    auto const rules = sil::tensor::make_extrapolation_rules<0>(
+            sil::tensor::PrescribedScalarExtrapolationRule {17.5});
     static_assert(
-            std::is_same_v<std::remove_cv_t<decltype(rules)>, sil::exterior::ExtrapolationRules<>>);
+            std::is_same_v<std::remove_cv_t<decltype(rules)>, sil::tensor::ExtrapolationRules<>>);
     EXPECT_DOUBLE_EQ(rules(field, ddc::DiscreteElement<>(), ddc::DiscreteElement<Scalar>(0)), 42.0);
 }
 
@@ -503,7 +501,7 @@ TEST(Extrapolation, NaturalCornersAndSingletonDimensions)
         field.mem(elem, ddc::DiscreteElement<Scalar>(0))
                 = 1.0 + 2.0 * elem.uid<Grid>() + 3.0 * elem.uid<GridY>();
     });
-    sil::exterior::NaturalScalarExtrapolationRule const rule;
+    sil::tensor::NaturalScalarExtrapolationRule const rule;
     EXPECT_DOUBLE_EQ(
             rule(field,
                  grid.front() - ddc::DiscreteVector<Grid, GridY>(1, 1),
@@ -571,13 +569,13 @@ TEST(Extrapolation, ExternalDomainCornerAndSpectator)
     ddc::host_for_each(domain, [&](ddc::DiscreteElement<Grid, Vector, Tangent, Scalar> elem) {
         target.mem(elem) = 10.0 * elem.uid<Grid>() + elem.uid<Tangent>();
     });
-    sil::exterior::ExternalDomainExtrapolationRule const external {
+    sil::tensor::ExternalDomainExtrapolationRule const external {
             target,
-            sil::exterior::ExternalDomainBoundaryMap<
-                    Grid> {sil::exterior::BoundarySide::Lower, sil::exterior::BoundarySide::Upper},
+            sil::tensor::ExternalDomainBoundaryMap<
+                    Grid> {sil::tensor::BoundarySide::Lower, sil::tensor::BoundarySide::Upper},
             3.0};
-    sil::exterior::ExtrapolationRules const
-            rules(std::pair {external, sil::exterior::ClampCochainExtrapolationRule {}},
+    sil::tensor::ExtrapolationRules const
+            rules(std::pair {external, sil::tensor::ClampExtrapolationRule {}},
                   std::pair {ConstantExteriorRule {20.0}, ConstantExteriorRule {30.0}});
     ddc::DiscreteElement<Tangent, Vector, Grid> const
             outside(ddc::DiscreteElement<Tangent>(0) - ddc::DiscreteVector<Tangent>(2),
@@ -591,10 +589,8 @@ TEST(Extrapolation, ExternalDomainCornerAndSpectator)
                   ddc::DiscreteElement<Scalar>(0)),
             7.0);
     EXPECT_DOUBLE_EQ(
-            sil::exterior::ClampCochainExtrapolationRule {}(
-                    source,
-                    outside,
-                    ddc::DiscreteElement<Scalar>(0)),
+            sil::tensor::
+                    ClampExtrapolationRule {}(source, outside, ddc::DiscreteElement<Scalar>(0)),
             7.0);
 }
 } // namespace

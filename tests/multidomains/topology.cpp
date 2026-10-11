@@ -13,7 +13,7 @@
 
 namespace {
 namespace md = sil::multidomains;
-using sil::exterior::BoundarySide;
+using sil::tensor::BoundarySide;
 struct X
 {
 };
@@ -53,9 +53,9 @@ md::Topology<1> graph(bool shared = false)
 {
     md::Topology<1> topology(2);
     std::size_t const wall
-            = topology.add_boundary({sil::exterior::NaturalScalarExtrapolationRule {}});
+            = topology.add_boundary({sil::tensor::NaturalScalarExtrapolationRule {}});
     std::size_t const prescribed
-            = topology.add_boundary({sil::exterior::PrescribedScalarExtrapolationRule {7.0}});
+            = topology.add_boundary({sil::tensor::PrescribedScalarExtrapolationRule {7.0}});
     topology.connect({0, 0, BoundarySide::Upper}, {1, 0, BoundarySide::Upper}, shared, 2.0, 3.0);
     topology.connect_boundary({0, 0, BoundarySide::Lower}, wall);
     topology.connect_boundary({1, 0, BoundarySide::Lower}, prescribed);
@@ -83,7 +83,7 @@ TEST(Multidomains, RuntimeValidation)
     EXPECT_THROW(
             complete.connect({0, 0, BoundarySide::Lower}, {1, 0, BoundarySide::Lower}),
             std::invalid_argument);
-    complete.add_boundary({sil::exterior::ZeroCochainExtrapolationRule {}});
+    complete.add_boundary({sil::tensor::ZeroExtrapolationRule {}});
     EXPECT_THROW(complete.validate(), std::invalid_argument);
 }
 
@@ -158,11 +158,7 @@ void check_periodic_rank(std::index_sequence<Axis...>)
             = (field.mem(first, component) + 2.0 * field.mem(second, component)) / 3.0;
     EXPECT_DOUBLE_EQ(rules(field, exterior, component), expected);
     EXPECT_DOUBLE_EQ(
-            rules
-                    .value(domains.field(0),
-                           sil::exterior::StoredCochainSampler {},
-                           exterior,
-                           component),
+            rules.value(domains.field(0), sil::tensor::StoredTensorSampler {}, exterior, component),
             expected);
 }
 
@@ -245,7 +241,7 @@ void check_generated_rules_on_cuda()
                 result(0) = rules(field, ddc::DiscreteElement<GridX>(13), component);
                 result(1) = rules
                                     .value(field,
-                                           sil::exterior::StoredCochainSampler {},
+                                           sil::tensor::StoredTensorSampler {},
                                            ddc::DiscreteElement<GridX>(13),
                                            component);
             });

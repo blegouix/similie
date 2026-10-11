@@ -627,7 +627,7 @@ KOKKOS_FUNCTION void geometry_front(
         Element elem,
         Element& front)
 {
-    if (!is_interface(rules.template boundary_rule<Axis, true>())) {
+    if (!tensor::detail::is_interface(rules.template boundary_rule<Axis, true>())) {
         if (ddc::detail::array(elem)[Axis]
                     == ddc::detail::array(position.non_indices_domain().back())[Axis]
             && ddc::detail::array(elem)[Axis]
@@ -691,7 +691,8 @@ template <
         class Cochain,
         class Position,
         class GeometryRules,
-        class BoundaryFluxRules>
+        class BoundaryFluxRules,
+        class Evaluate>
 struct TensorDualHodge
 {
     using source_indices = tensor::upper_t<ddc::to_type_seq_t<tensor::natural_domain_t<Direction>>>;
@@ -706,6 +707,7 @@ struct TensorDualHodge
     GeometryRules geometry;
     BoundaryFluxRules boundary_flux;
     double diffusivity;
+    Evaluate evaluate_cochain;
 
     KOKKOS_FUNCTION non_indices_domain_t non_indices_domain() const
     {
@@ -719,12 +721,12 @@ struct TensorDualHodge
             std::size_t normal,
             double& result) const
     {
-        if (!detail::is_interface(geometry.template boundary_rule<Axis, true>())) {
+        if (!tensor::detail::is_interface(geometry.template boundary_rule<Axis, true>())) {
             if (normal == Axis
                 && ddc::detail::array(elem)[Axis]
                            == ddc::detail::array(non_indices_domain().back())[Axis]) {
                 ++ddc::detail::array(elem)[Axis];
-                result = detail::EvaluateRuleValue<
+                result = tensor::detail::EvaluateRuleValue<
                         detail::ZeroScalarSampler> {detail::ZeroScalarSampler {}}(
                         boundary_flux.template boundary_rule<Axis, true>(),
                         *this,
@@ -739,11 +741,11 @@ struct TensorDualHodge
     template <std::size_t Axis, class Element>
     KOKKOS_FUNCTION bool physical_cell(Element cell) const
     {
-        if (!detail::is_interface(geometry.template boundary_rule<Axis, false>()))
+        if (!tensor::detail::is_interface(geometry.template boundary_rule<Axis, false>()))
             if (ddc::detail::array(cell)[Axis]
                 < ddc::detail::array(non_indices_domain().front())[Axis])
                 return false;
-        if (!detail::is_interface(geometry.template boundary_rule<Axis, true>()))
+        if (!tensor::detail::is_interface(geometry.template boundary_rule<Axis, true>()))
             if (ddc::detail::array(cell)[Axis]
                 >= ddc::detail::array(non_indices_domain().back())[Axis])
                 return false;
@@ -888,12 +890,15 @@ struct TensorDualHodge
                     std::size_t const edge = axis * edge_count + edge_id;
                     if (axis == normal && first == elem)
                         selected = edge;
-                    if constexpr (requires {
-                                      cochain
-                                              .value(sampler,
-                                                     first,
-                                                     ddc::DiscreteElement<Direction>(axis));
-                                  })
+                    if constexpr (requires { evaluate_cochain.value(cochain, sampler, first); })
+                        differences[edge] = evaluate_cochain.value(cochain, sampler, first)
+                                                    .mem(ddc::DiscreteElement<Direction>(axis));
+                    else if constexpr (requires {
+                                           cochain
+                                                   .value(sampler,
+                                                          first,
+                                                          ddc::DiscreteElement<Direction>(axis));
+                                       })
                         differences[edge] = cochain
                                                     .value(sampler,
                                                            first,
@@ -1017,20 +1022,27 @@ struct TensorDualHodge
     template <class Element, class Component>
     KOKKOS_FUNCTION double mem(Element elem, Component component) const
     {
-        return value(StoredCochainSampler {}, elem, component);
+        return value(tensor::StoredTensorSampler {}, elem, component);
     }
 };
 
 /** Normalize single policies locally, as for the staged differential operators.
  * \important This operator and documentation is fully AI-generated.
  */
-template <class Direction, class Cochain, class Position, class Geometry, class Flux>
+template <
+        class Direction,
+        class Cochain,
+        class Position,
+        class Geometry,
+        class Flux,
+        class Evaluate = tensor::StoredTensorSampler>
 auto make_tensor_dual_hodge(
         Cochain cochain,
         Position const& position,
         Geometry geometry_rule,
         Flux flux_rule,
-        double diffusivity = 1.0)
+        double diffusivity = 1.0,
+        Evaluate evaluate = {})
 {
 #if defined(KOKKOS_ENABLE_CUDA)
     if constexpr (Kokkos::SpaceAccessibility<Kokkos::Cuda, typename Position::memory_space>::
@@ -1043,23 +1055,24 @@ auto make_tensor_dual_hodge(
     }
 #endif
     auto const geometry = [&] {
-        if constexpr (misc::Specialization<Geometry, ExtrapolationRules>)
+        if constexpr (misc::Specialization<Geometry, tensor::ExtrapolationRules>)
             return geometry_rule;
         else
-            return make_extrapolation_rules(position, geometry_rule);
+            return tensor::make_extrapolation_rules(position, geometry_rule);
     }();
     auto const flux = [&] {
-        if constexpr (misc::Specialization<Flux, ExtrapolationRules>)
+        if constexpr (misc::Specialization<Flux, tensor::ExtrapolationRules>)
             return flux_rule;
         else
-            return make_extrapolation_rules(cochain, flux_rule);
+            return tensor::make_extrapolation_rules(cochain, flux_rule);
     }();
     return TensorDualHodge<
             Direction,
             Cochain,
             Position,
             std::remove_cvref_t<decltype(geometry)>,
-            std::remove_cvref_t<decltype(flux)>> {cochain, position, geometry, flux, diffusivity};
+            std::remove_cvref_t<decltype(flux)>,
+            Evaluate> {cochain, position, geometry, flux, diffusivity, evaluate};
 }
 
 

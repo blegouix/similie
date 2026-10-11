@@ -11,7 +11,7 @@
 namespace {
 namespace md = sil::multidomains;
 namespace solvers = similie::solvers;
-using sil::exterior::BoundarySide;
+using sil::tensor::BoundarySide;
 struct X
 {
 };
@@ -33,7 +33,7 @@ struct Physics
 md::Topology<1> split_graph()
 {
     md::Topology<1> graph(2);
-    std::size_t const wall = graph.add_boundary({sil::exterior::NaturalScalarExtrapolationRule {}});
+    std::size_t const wall = graph.add_boundary({sil::tensor::NaturalScalarExtrapolationRule {}});
     graph.connect({0, 0, BoundarySide::Upper}, {1, 0, BoundarySide::Lower}, false, 1.0, 2.5);
     graph.connect_boundary({0, 0, BoundarySide::Lower}, wall);
     graph.connect_boundary({1, 0, BoundarySide::Upper}, wall);
@@ -261,12 +261,12 @@ void check_2d(
     Kokkos::deep_copy(device_ids, ids);
     solvers::IndexedScalarField<GridX, GridY> const field {grid, device_ids.data()};
     md::Topology<2> graph(1);
-    std::size_t const wall = graph.add_boundary({sil::exterior::NaturalScalarExtrapolationRule {}});
+    std::size_t const wall = graph.add_boundary({sil::tensor::NaturalScalarExtrapolationRule {}});
     std::size_t const value
-            = graph.add_boundary({sil::exterior::PrescribedScalarExtrapolationRule {7.0}});
+            = graph.add_boundary({sil::tensor::PrescribedScalarExtrapolationRule {7.0}});
     std::size_t const bottom = graph.add_boundary(
-            {sil::exterior::NaturalScalarExtrapolationRule {},
-             sil::exterior::NormalScalarFluxExtrapolationRule {prescribed_flux}});
+            {sil::tensor::NaturalScalarExtrapolationRule {},
+             sil::tensor::ConstantScalarExtrapolationRule {prescribed_flux}});
     graph.connect_boundary({0, 0, BoundarySide::Lower}, wall);
     graph.connect_boundary({0, 0, BoundarySide::Upper}, wall);
     graph.connect_boundary({0, 1, BoundarySide::Lower}, bottom);
@@ -308,8 +308,8 @@ void check_2d(
             sil::tensor::Tensor(device_position));
     staged(sil::tensor::Tensor(output),
            sil::tensor::Tensor(device_potential),
-           sil::exterior::NaturalScalarExtrapolationRule {},
-           sil::exterior::ZeroCochainExtrapolationRule {});
+           sil::tensor::NaturalScalarExtrapolationRule {},
+           sil::tensor::ZeroExtrapolationRule {});
     auto output_host = ddc::
             create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace {}, output.span_view());
     sil::tensor::Tensor reference(output_host);
@@ -338,14 +338,14 @@ void check_2d(
                 Kokkos::DefaultExecutionSpace {},
                 sil::tensor::Tensor(gradient),
                 sil::tensor::Tensor(device_potential),
-                sil::exterior::NaturalScalarExtrapolationRule {});
+                sil::tensor::NaturalScalarExtrapolationRule {});
         auto const hodge = sil::exterior::make_tensor_dual_hodge<Direction>(
                 sil::tensor::Tensor(gradient),
                 sil::tensor::Tensor(device_position),
-                sil::exterior::NaturalScalarExtrapolationRule {},
-                sil::exterior::ZeroCochainExtrapolationRule {});
-        auto const dual = sil::exterior::
-                make_extrapolation_rules(hodge, sil::exterior::ZeroCochainExtrapolationRule {});
+                sil::tensor::NaturalScalarExtrapolationRule {},
+                sil::tensor::ZeroExtrapolationRule {});
+        auto const dual = sil::tensor::
+                make_extrapolation_rules(hodge, sil::tensor::ZeroExtrapolationRule {});
         sil::exterior::Codifferential<
                 Direction,
                 std::remove_cvref_t<decltype(hodge)>,
@@ -416,7 +416,7 @@ TEST(MultidomainsLaplacian, ThreeDimensionalSkewGrid)
     Kokkos::deep_copy(device_ids, ids);
     solvers::IndexedScalarField<GridX, GridY, GridZ> const field {grid, device_ids.data()};
     md::Topology<3> graph(1);
-    std::size_t const wall = graph.add_boundary({sil::exterior::NaturalScalarExtrapolationRule {}});
+    std::size_t const wall = graph.add_boundary({sil::tensor::NaturalScalarExtrapolationRule {}});
     for (std::size_t axis = 0; axis < 3; ++axis) {
         graph.connect_boundary({0, axis, BoundarySide::Lower}, wall);
         graph.connect_boundary({0, axis, BoundarySide::Upper}, wall);

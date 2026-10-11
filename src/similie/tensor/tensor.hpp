@@ -13,6 +13,7 @@
 #include "character.hpp"
 #include "determinant.hpp"
 #include "diagonal_tensor.hpp"
+#include "external_domain_extrapolation_rule.hpp"
 #include "full_tensor.hpp"
 #include "identity_tensor.hpp"
 #include "levi_civita_tensor.hpp"
@@ -20,9 +21,11 @@
 #include "metric.hpp"
 #include "prime.hpp"
 #include "relabelization.hpp"
+#include "scalar_extrapolation_rules.hpp"
 #include "symmetric_tensor.hpp"
 #include "tensor_impl.hpp"
 #include "tensor_prod.hpp"
+#include "tensor_with_extrapolation_rules.hpp"
 #if defined BUILD_YOUNG_TABLEAU
 #include "young_tableau_tensor.hpp"
 #endif

@@ -13,7 +13,7 @@
 #include "evaluators.hpp"
 #include "scalar_extrapolation_rules.hpp"
 
-namespace sil::exterior {
+namespace sil::tensor {
 
 enum class BoundarySide { Lower, Upper };
 
@@ -55,26 +55,24 @@ private:
                     source_side == BoundarySide::Lower ? source.front() : source.back());
             ddc::DiscreteElement<Dimension> const target_boundary(
                     target_side == BoundarySide::Lower ? target.front() : target.back());
-            ddc::DiscreteVector<Dimension> const offset
-                    = ddc::DiscreteElement<Dimension>(sampled) - source_boundary;
+            std::ptrdiff_t const offset
+                    = static_cast<std::ptrdiff_t>(sampled.template uid<Dimension>())
+                      - static_cast<std::ptrdiff_t>(source_boundary.template uid<Dimension>());
             // Signed differences also handle unsigned elements wrapping below zero.
-            std::ptrdiff_t const distance = source_side == BoundarySide::Lower
-                                                    ? -offset.template get<Dimension>()
-                                                    : offset.template get<Dimension>();
+            std::ptrdiff_t const distance = source_side == BoundarySide::Lower ? -offset : offset;
             assert(distance >= 0);
             std::ptrdiff_t const inward = distance - (shared_boundary ? 0 : 1);
             assert(inward >= 0);
             mapped.template uid<Dimension>()
-                    = (target_boundary
-                       + ddc::DiscreteVector<Dimension>(
-                               target_side == BoundarySide::Lower ? inward : -inward))
-                              .template uid<Dimension>();
+                    = static_cast<std::ptrdiff_t>(target_boundary.template uid<Dimension>())
+                      + (target_side == BoundarySide::Lower ? inward : -inward);
         } else {
             assert(source.template extent<DDim>() == target.template extent<DDim>());
-            ddc::DiscreteVector<DDim> const offset = ddc::DiscreteElement<DDim>(sampled)
-                                                     - ddc::DiscreteElement<DDim>(source.front());
+            std::ptrdiff_t const offset
+                    = static_cast<std::ptrdiff_t>(sampled.template uid<DDim>())
+                      - static_cast<std::ptrdiff_t>(source.front().template uid<DDim>());
             mapped.template uid<DDim>()
-                    = (ddc::DiscreteElement<DDim>(target.front()) + offset).template uid<DDim>();
+                    = static_cast<std::ptrdiff_t>(target.front().template uid<DDim>()) + offset;
         }
     }
 
@@ -103,7 +101,7 @@ public:
 };
 
 /**
- * Continue a cochain into a specified boundary of another tensor domain.
+ * Continue tensor values into a specified boundary of another tensor domain.
  * \important This operator and documentation is fully AI-generated.
  *
  * Install this rule on the corresponding side of ExtrapolationRules. Stored
@@ -112,15 +110,13 @@ public:
  * also cross a tangential donor boundary; another rule can supply that closure.
  * ExtrapolationRules handles corners using its normalized-distance blend.
  *
- * orientation * donor_value + jump expresses an oriented component and an
- * affine potential jump. The reverse connection must use reciprocal orientation
- * and jump -jump/orientation. A scalar circulation cut normally uses orientation
- * 1 and opposite jumps. The tensor view and target rule must be accessible in
- * the execution space; the caller owns the donor allocation and synchronizes
- * donor updates before sampling. This sampler supplies ghost values; a solver
- * must still identify shared trace unknowns and enforce conservative flux balance.
+ * orientation * donor_value + jump applies an affine transformation to sampled
+ * values. The reverse connection must use reciprocal orientation and jump
+ * -jump/orientation. The tensor view and target rule must be accessible in the
+ * execution space; the caller owns the donor allocation and synchronizes donor
+ * updates before sampling. Sampling does not merge the tensor allocations.
  */
-template <class Dimension, class NeighborTensor, class TargetRule = ClampCochainExtrapolationRule>
+template <class Dimension, class NeighborTensor, class TargetRule = ClampExtrapolationRule>
 struct ExternalDomainExtrapolationRule
 {
     static constexpr bool IS_INTERFACE = true;
@@ -137,7 +133,7 @@ struct ExternalDomainExtrapolationRule
             Component component) const
     {
         if (misc::domain_contains(tensor.non_indices_domain(), sampled_element))
-            return tensor.mem(sampled_element, component);
+            return StoredTensorSampler {}(tensor, sampled_element, component);
         Element const mapped = boundary_map(
                 tensor.non_indices_domain(),
                 neighbor.non_indices_domain(),
@@ -181,4 +177,4 @@ ExternalDomainExtrapolationRule(
         double,
         TargetRule) -> ExternalDomainExtrapolationRule<Dimension, NeighborTensor, TargetRule>;
 
-} // namespace sil::exterior
+} // namespace sil::tensor

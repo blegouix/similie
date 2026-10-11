@@ -6,6 +6,9 @@
 #include <ddc/ddc.hpp>
 
 #include <gtest/gtest.h>
+#include <similie/tensor/external_domain_extrapolation_rule.hpp>
+#include <similie/tensor/scalar_extrapolation_rules.hpp>
+#include <similie/tensor/tensor_with_extrapolation_rules.hpp>
 
 #include "tensor.hpp"
 
@@ -616,4 +619,183 @@ TEST(Tensor, Determinant)
     tensor(tensor.access_element<Z, Z>()) = 10.;
 
     EXPECT_EQ(determinant(tensor), -2.);
+}
+
+namespace {
+struct SignedGridX
+{
+    using continuous_dimension_type = X;
+};
+struct SignedGridY
+{
+    using continuous_dimension_type = Y;
+};
+struct SignedSample
+{
+};
+
+void test_signed_tensor_sampling(std::size_t origin)
+{
+    using Scalar = sil::tensor::Covariant<sil::tensor::ScalarIndex>;
+    [[maybe_unused]] sil::tensor::TensorAccessor<Scalar> accessor;
+    ddc::DiscreteDomain<SignedGridX, SignedGridY> const
+            grid(ddc::DiscreteElement<SignedGridX, SignedGridY>(origin, origin),
+                 ddc::DiscreteVector<SignedGridX, SignedGridY>(4, 4));
+    ddc::DiscreteDomain<SignedGridX, SignedGridY> const donor_grid(
+            ddc::DiscreteElement<SignedGridX, SignedGridY>(20, 30),
+            ddc::DiscreteVector<SignedGridX, SignedGridY>(4, 4));
+    ddc::Chunk field_alloc(
+            ddc::DiscreteDomain<SignedGridX, SignedGridY, Scalar>(grid, accessor.domain()),
+            ddc::DeviceAllocator<double>());
+    ddc::Chunk donor_alloc(
+            ddc::DiscreteDomain<SignedGridX, SignedGridY, Scalar>(donor_grid, accessor.domain()),
+            ddc::DeviceAllocator<double>());
+    sil::tensor::Tensor field(field_alloc);
+    sil::tensor::Tensor donor(donor_alloc);
+    ddc::parallel_for_each(
+            Kokkos::DefaultExecutionSpace(),
+            grid,
+            KOKKOS_LAMBDA(ddc::DiscreteElement<SignedGridX, SignedGridY> elem) {
+                field.mem(elem, ddc::DiscreteElement<Scalar>(0))
+                        = 1.0 + 2.0 * elem.uid<SignedGridX>() + 3.0 * elem.uid<SignedGridY>();
+            });
+    ddc::parallel_for_each(
+            Kokkos::DefaultExecutionSpace(),
+            donor_grid,
+            KOKKOS_LAMBDA(ddc::DiscreteElement<SignedGridX, SignedGridY> elem) {
+                donor.mem(elem, ddc::DiscreteElement<Scalar>(0))
+                        = 1.0 + 2.0 * elem.uid<SignedGridX>() + 3.0 * elem.uid<SignedGridY>();
+            });
+    auto const natural = sil::tensor::make_tensor_with_extrapolation_rules(
+            field,
+            sil::tensor::NaturalScalarExtrapolationRule {});
+    auto const clamp = sil::tensor::
+            make_tensor_with_extrapolation_rules(field, sil::tensor::ClampExtrapolationRule {});
+    auto const zero = sil::tensor::
+            make_tensor_with_extrapolation_rules(field, sil::tensor::ZeroExtrapolationRule {});
+    auto const prescribed = sil::tensor::make_tensor_with_extrapolation_rules(
+            field,
+            sil::tensor::PrescribedScalarExtrapolationRule {13.0});
+    auto const blended = sil::tensor::make_tensor_with_extrapolation_rules(
+            field,
+            sil::tensor::ExtrapolationRules(
+                    std::
+                            pair {sil::tensor::PrescribedScalarExtrapolationRule {1.0},
+                                  sil::tensor::PrescribedScalarExtrapolationRule {2.0}},
+                    std::
+                            pair {sil::tensor::PrescribedScalarExtrapolationRule {3.0},
+                                  sil::tensor::PrescribedScalarExtrapolationRule {4.0}}));
+    sil::tensor::ExternalDomainExtrapolationRule const external {
+            donor,
+            sil::tensor::ExternalDomainBoundaryMap<SignedGridX> {
+                    sil::tensor::BoundarySide::Lower,
+                    sil::tensor::BoundarySide::Upper}};
+    auto const connected = sil::tensor::make_tensor_with_extrapolation_rules(
+            field,
+            sil::tensor::ExtrapolationRules(
+                    std::pair {external, sil::tensor::ClampExtrapolationRule {}},
+                    std::
+                            pair {sil::tensor::PrescribedScalarExtrapolationRule {50.0},
+                                  sil::tensor::ClampExtrapolationRule {}}));
+    ddc::DiscreteDomain<SignedSample> const
+            samples(ddc::DiscreteElement<SignedSample>(0), ddc::DiscreteVector<SignedSample>(11));
+    ddc::Chunk results(samples, ddc::DeviceAllocator<double>());
+    ddc::ChunkSpan const output = results.span_view();
+    ddc::parallel_for_each(
+            Kokkos::DefaultExecutionSpace(),
+            samples,
+            KOKKOS_LAMBDA(ddc::DiscreteElement<SignedSample> sample) {
+                sil::misc::SignedDiscreteElement<SignedGridY, SignedGridX> const negative(-2, -1);
+                ddc::DiscreteElement<Scalar> const component(0);
+                sil::misc::SignedDiscreteElement<SignedGridX, SignedGridY> const inside(
+                        grid.front());
+                sil::misc::SignedDiscreteElement<SignedGridX, SignedGridY> const
+                        outside(static_cast<std::ptrdiff_t>(origin) - 1,
+                                static_cast<std::ptrdiff_t>(origin));
+                switch (sample.uid<SignedSample>()) {
+                case 0:
+                    output(sample) = natural(negative, component);
+                    break;
+                case 1:
+                    output(sample) = clamp.mem(negative, component);
+                    break;
+                case 2:
+                    output(sample) = zero(negative, component);
+                    break;
+                case 3:
+                    output(sample) = prescribed(negative, component);
+                    break;
+                case 4:
+                    output(sample) = blended(
+                            sil::misc::SignedDiscreteElement<SignedGridY, SignedGridX>(
+                                    static_cast<std::ptrdiff_t>(origin) - 1,
+                                    static_cast<std::ptrdiff_t>(origin) - 2),
+                            component);
+                    break;
+                case 5:
+                    output(sample) = connected(outside, component);
+                    break;
+                case 6:
+                    output(sample) = connected.value(
+                            [&](auto const& sampled_field, auto elem, auto) {
+                                return (sampled_field.data_handle() == donor.data_handle() ? 10000.0
+                                                                                           : 0.0)
+                                       + 10.0 * elem.template uid<SignedGridX>()
+                                       + 100.0 * elem.template uid<SignedGridY>();
+                            },
+                            outside,
+                            component);
+                    break;
+                case 7:
+                    output(sample) = connected(
+                            sil::misc::SignedDiscreteElement<SignedGridX, SignedGridY>(
+                                    static_cast<std::ptrdiff_t>(origin) - 1,
+                                    static_cast<std::ptrdiff_t>(origin) - 1),
+                            component);
+                    break;
+                case 8:
+                    output(sample) = natural(inside, component);
+                    break;
+                case 9:
+                    output(sample) = natural.value(
+                            [](auto const&, auto elem, auto) {
+                                return 10.0 * elem.template uid<SignedGridX>()
+                                       + 100.0 * elem.template uid<SignedGridY>();
+                            },
+                            negative,
+                            component);
+                    break;
+                case 10:
+                    output(sample) = natural(
+                            sil::misc::SignedDiscreteElement<
+                                    SignedGridY,
+                                    Scalar,
+                                    SignedGridX>(-2, 0, -1));
+                    break;
+                }
+            });
+    auto host = ddc::
+            create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), results.span_view());
+    EXPECT_DOUBLE_EQ(host(ddc::DiscreteElement<SignedSample>(0)), -7.0);
+    EXPECT_DOUBLE_EQ(host(ddc::DiscreteElement<SignedSample>(1)), 1.0 + 5.0 * origin);
+    EXPECT_DOUBLE_EQ(host(ddc::DiscreteElement<SignedSample>(2)), 0.0);
+    EXPECT_DOUBLE_EQ(host(ddc::DiscreteElement<SignedSample>(3)), 13.0);
+    EXPECT_DOUBLE_EQ(host(ddc::DiscreteElement<SignedSample>(4)), 5.0 / 3.0);
+    EXPECT_DOUBLE_EQ(host(ddc::DiscreteElement<SignedSample>(5)), 135.0);
+    EXPECT_DOUBLE_EQ(host(ddc::DiscreteElement<SignedSample>(6)), 13220.0);
+    EXPECT_DOUBLE_EQ(host(ddc::DiscreteElement<SignedSample>(7)), 92.5);
+    EXPECT_DOUBLE_EQ(host(ddc::DiscreteElement<SignedSample>(8)), 1.0 + 5.0 * origin);
+    EXPECT_DOUBLE_EQ(host(ddc::DiscreteElement<SignedSample>(9)), -210.0);
+    EXPECT_DOUBLE_EQ(host(ddc::DiscreteElement<SignedSample>(10)), -7.0);
+}
+} // namespace
+
+TEST(Tensor, SignedExtrapolationAtZeroOrigin)
+{
+    test_signed_tensor_sampling(0);
+}
+
+TEST(Tensor, SignedExtrapolationAtNonzeroOrigin)
+{
+    test_signed_tensor_sampling(7);
 }

@@ -16,7 +16,7 @@
 
 #include "evaluators.hpp"
 
-namespace sil::exterior {
+namespace sil::tensor {
 
 namespace detail {
 
@@ -83,19 +83,21 @@ public:
         using DDim = ddc::type_seq_element_t<
                 Dimension,
                 ddc::to_type_seq_t<typename TensorType::non_indices_domain_t>>;
-        ddc::DiscreteElement<DDim> const sampled(sampled_element);
+        std::ptrdiff_t const sampled
+                = static_cast<std::ptrdiff_t>(sampled_element.template uid<DDim>());
         ddc::DiscreteElement<DDim> const front(tensor.non_indices_domain().front());
         ddc::DiscreteElement<DDim> const back(tensor.non_indices_domain().back());
         // A negative offset also detects unsigned coordinates wrapping below zero.
-        ddc::DiscreteVector<DDim> const offset = sampled - front;
-        if (offset.template get<DDim>() < 0) {
-            double const distance = -static_cast<double>(offset.template get<DDim>());
+        std::ptrdiff_t const offset
+                = sampled - static_cast<std::ptrdiff_t>(front.template uid<DDim>());
+        if (offset < 0) {
+            double const distance = -static_cast<double>(offset);
             weighted_value
                     += distance * evaluate(m_rules.first, tensor, sampled_element, component);
             total_distance += distance;
-        } else if (sampled.template uid<DDim>() > back.template uid<DDim>()) {
-            double const distance
-                    = static_cast<double>(sampled.template uid<DDim>() - back.template uid<DDim>());
+        } else if (sampled > static_cast<std::ptrdiff_t>(back.template uid<DDim>())) {
+            double const distance = static_cast<double>(
+                    sampled - static_cast<std::ptrdiff_t>(back.template uid<DDim>()));
             weighted_value
                     += distance * evaluate(m_rules.second, tensor, sampled_element, component);
             total_distance += distance;
@@ -137,10 +139,8 @@ public:
  * Continuity at the stored corner itself also requires compatible rule limits.
  * Interior samples bypass normalization, including the corner where all
  * outward distances vanish. Each rule and its state must be copyable and
- * accessible in the differential operator's execution space. This class
- * implements the same (tensor, element, component) sampling
- * interface as individual rules and can be passed directly to deriv(),
- * transposed_coboundary(), codifferential(), or either stage of laplacian().
+ * accessible in the caller's execution space. This class implements the same
+ * (tensor, element, component) sampling interface as individual rules.
  */
 template <misc::Specialization<std::pair>... RulePairs>
 class ExtrapolationRules
@@ -182,18 +182,25 @@ public:
     {
         static_assert(
                 sizeof...(RulePairs)
-                        == ddc::type_seq_size_v<
-                                ddc::to_type_seq_t<typename TensorType::non_indices_domain_t>>,
-                "ExtrapolationRules requires one left/right pair per non-index dimension");
-        misc::convert_type_seq_to_t<
-                ddc::DiscreteElement,
-                ddc::type_seq_remove_t<
-                        ddc::to_type_seq_t<typename TensorType::discrete_domain_type>,
-                        ddc::to_type_seq_t<Component>>> const element(sampled_element);
+                == ddc::type_seq_size_v<
+                        ddc::to_type_seq_t<typename TensorType::non_indices_domain_t>>);
+        auto const element = [&] {
+            if constexpr (misc::Specialization<Element, misc::SignedDiscreteElement>)
+                return misc::convert_type_seq_to_t<
+                        misc::SignedDiscreteElement,
+                        ddc::type_seq_remove_t<
+                                ddc::to_type_seq_t<typename TensorType::discrete_domain_type>,
+                                ddc::to_type_seq_t<Component>>>(sampled_element);
+            else
+                return misc::convert_type_seq_to_t<
+                        ddc::DiscreteElement,
+                        ddc::type_seq_remove_t<
+                                ddc::to_type_seq_t<typename TensorType::discrete_domain_type>,
+                                ddc::to_type_seq_t<Component>>>(sampled_element);
+        }();
         if (misc::domain_contains(tensor.non_indices_domain(), element))
-            return tensor.mem(element, component);
-        double weighted_value = 0.0;
-        double total_distance = 0.0;
+            return StoredTensorSampler {}(tensor, element, component);
+        double weighted_value = 0.0, total_distance = 0.0;
         m_rules.accumulate(
                 tensor,
                 element,
@@ -218,11 +225,20 @@ public:
                 sizeof...(RulePairs)
                 == ddc::type_seq_size_v<
                         ddc::to_type_seq_t<typename TensorType::non_indices_domain_t>>);
-        misc::convert_type_seq_to_t<
-                ddc::DiscreteElement,
-                ddc::type_seq_remove_t<
-                        ddc::to_type_seq_t<typename TensorType::discrete_domain_type>,
-                        ddc::to_type_seq_t<Component>>> const element(sampled_element);
+        auto const element = [&] {
+            if constexpr (misc::Specialization<Element, misc::SignedDiscreteElement>)
+                return misc::convert_type_seq_to_t<
+                        misc::SignedDiscreteElement,
+                        ddc::type_seq_remove_t<
+                                ddc::to_type_seq_t<typename TensorType::discrete_domain_type>,
+                                ddc::to_type_seq_t<Component>>>(sampled_element);
+            else
+                return misc::convert_type_seq_to_t<
+                        ddc::DiscreteElement,
+                        ddc::type_seq_remove_t<
+                                ddc::to_type_seq_t<typename TensorType::discrete_domain_type>,
+                                ddc::to_type_seq_t<Component>>>(sampled_element);
+        }();
         if (misc::domain_contains(tensor.non_indices_domain(), element))
             return sampler(tensor, element, component);
         double weighted_value = 0.0, total_distance = 0.0;
@@ -261,9 +277,9 @@ KOKKOS_FUNCTION auto repeat_extrapolation_rule(
  * \important This operator and documentation is fully AI-generated.
  *
  * Each of the 2*N copies retains the supplied rule's state. This factory only
- * accepts single rules. Differential operators distinguish single rules from
+ * accepts single rules. Consumers distinguish single rules from
  * ExtrapolationRules with if constexpr and only convert the former, with N
- * inferred from the cochain tensor domain. An explicitly typed uniform
+ * inferred from the tensor domain. An explicitly typed uniform
  * ExtrapolationRules can also be implicitly constructed from its single rule.
  * The overload make_extrapolation_rules(tensor, rule) infers N directly from
  * tensor.non_indices_domain_t.
@@ -282,4 +298,4 @@ KOKKOS_FUNCTION auto make_extrapolation_rules(TensorType const&, ExtrapolationRu
             rule);
 }
 
-} // namespace sil::exterior
+} // namespace sil::tensor

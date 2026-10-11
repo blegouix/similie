@@ -11,7 +11,7 @@
 #include <utility>
 #include <vector>
 
-#include <similie/exterior/extrapolation_rules.hpp>
+#include <similie/tensor/extrapolation_rules.hpp>
 
 #include "topology.hpp"
 
@@ -120,7 +120,7 @@ auto domain_data(Field field, Geometry geometry, Physics physics, Flux flux)
 template <class Dimension, class Field>
 struct FaceRule
 {
-    exterior::ExternalDomainExtrapolationRule<Dimension, Field> external;
+    tensor::ExternalDomainExtrapolationRule<Dimension, Field> external;
     BoundaryRule boundary;
     bool interface;
     KOKKOS_FUNCTION bool is_interface() const
@@ -214,8 +214,8 @@ class Multidomain
     template <FieldRole Role, class Dimension, std::size_t Axis, bool Upper>
     auto face_rule(std::size_t id, double jump_scale) const
     {
-        constexpr exterior::BoundarySide side
-                = Upper ? exterior::BoundarySide::Upper : exterior::BoundarySide::Lower;
+        constexpr tensor::BoundarySide side
+                = Upper ? tensor::BoundarySide::Upper : tensor::BoundarySide::Lower;
         Connection const& edge = m_topology.connection({id, Axis, side});
         bool const interface = edge.domain < m_data.size();
         auto const donor = reference<Role>(interface ? edge.domain : id);
@@ -250,7 +250,7 @@ class Multidomain
     {
         using Dimensions
                 = ddc::to_type_seq_t<typename decltype(field<Role>(id))::non_indices_domain_t>;
-        return exterior::ExtrapolationRules(
+        return tensor::ExtrapolationRules(
                 std::
                         pair {face_rule<
                                       Role,

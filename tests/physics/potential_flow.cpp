@@ -25,20 +25,20 @@ TEST(PotentialFlow, ExtrapolatedPatchGradientsAndCirculation)
                 potential_flow::FreeScalarFieldHamiltonian(0.0, 0.0, 2.0));
         sil::multidomains::Topology<2> graph(2);
         std::size_t const wall
-                = graph.add_boundary({sil::exterior::NaturalScalarExtrapolationRule {}});
+                = graph.add_boundary({sil::tensor::NaturalScalarExtrapolationRule {}});
         graph.connect(
-                {0, 0, sil::exterior::BoundarySide::Upper},
-                {1, 0, sil::exterior::BoundarySide::Lower},
+                {0, 0, sil::tensor::BoundarySide::Upper},
+                {1, 0, sil::tensor::BoundarySide::Lower},
                 false,
                 1.0,
                 -1.0);
         graph.connect(
-                {1, 0, sil::exterior::BoundarySide::Upper},
-                {0, 0, sil::exterior::BoundarySide::Lower},
+                {1, 0, sil::tensor::BoundarySide::Upper},
+                {0, 0, sil::tensor::BoundarySide::Lower},
                 false);
         for (std::size_t id = 0; id < 2; ++id) {
-            graph.connect_boundary({id, 1, sil::exterior::BoundarySide::Lower}, wall);
-            graph.connect_boundary({id, 1, sil::exterior::BoundarySide::Upper}, wall);
+            graph.connect_boundary({id, 1, sil::tensor::BoundarySide::Lower}, wall);
+            graph.connect_boundary({id, 1, sil::tensor::BoundarySide::Upper}, wall);
         }
         return sil::multidomains::Multidomain(
                 graph,
