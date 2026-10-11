@@ -157,8 +157,7 @@ struct ConstantScalarExtrapolationRule
 /**
  * Continue the nearest one-sided slope in each logical grid direction.
  * This continuation preserves affine fields. At corners the directional
- * continuations are added; on
- * singleton dimensions the continuation is constant.
+ * continuations are added; singleton dimensions use a constant continuation.
  * \important This operator and documentation is fully AI-generated.
  */
 struct NaturalScalarExtrapolationRule

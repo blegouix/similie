@@ -18,7 +18,7 @@ namespace sil::multidomains {
 /** A device-copyable choice of the scalar boundary policies.
  * \important This operator and documentation is fully AI-generated.
  * The selected law and its parameter are runtime data; sampling still invokes
- * the ordinary exterior-library policies. Boundary nodes own no field storage.
+ * the ordinary tensor-library policies. Boundary nodes own no field storage.
  */
 class BoundaryRule
 {
