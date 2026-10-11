@@ -512,8 +512,7 @@ struct Reduction
             PositionType position,
             BatchElem elem)
     {
-        if constexpr (Complex == CellComplex::Primal || Complex == CellComplex::TensorDual) {
-            // A tensor dual face is a translated complementary cell face.
+        if constexpr (Complex == CellComplex::Primal) {
             // Reduce the physical form on its full tangent basis: diagonal
             // volume ratios alone lose the cross terms of an oblique chart.
             operator()(reduced_tensor, form_tensor, position, elem);

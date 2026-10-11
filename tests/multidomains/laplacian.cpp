@@ -50,11 +50,12 @@ struct GlobalSampler
     }
 };
 
-template <class Field, class Operator>
+template <class Direction, class Field, class Flux, class DualRules>
 void evaluate_rows(
         Kokkos::DefaultExecutionSpace const& exec,
         Field field,
-        Operator op,
+        Flux flux,
+        DualRules dual,
         Kokkos::View<double**> input,
         Kokkos::View<double**> output)
 {
@@ -67,7 +68,10 @@ void evaluate_rows(
                                elem,
                                ddc::DiscreteElement<typename Field::component_type>(0)),
                        0)
-                        = op.value(GlobalSampler {input}, elem);
+                        = sil::exterior::Codifferential<Direction, Direction>::
+                                  value(flux, dual, flux, GlobalSampler {input}, elem)
+                                          .mem(ddc::DiscreteElement<typename Field::component_type>(
+                                                  0));
             });
 }
 
@@ -154,11 +158,7 @@ void check_split(bool normalize)
         partitions.for_each([&](std::size_t id, Kokkos::DefaultExecutionSpace const& stream) {
             auto const flux = flux_domains.template field<md::FieldRole::Flux>(id);
             auto const dual = flux_domains.template extrapolation_rules<md::FieldRole::Flux>(id);
-            sil::exterior::ScalarLaplacian<
-                    Direction,
-                    std::remove_cvref_t<decltype(flux)>,
-                    std::remove_cvref_t<decltype(dual)>> const op {flux, dual};
-            evaluate_rows(stream, domains.field(id), op, input, direct);
+            evaluate_rows<Direction>(stream, domains.field(id), flux, dual, input, direct);
         });
         partitions.fence();
         auto const host_applied = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), applied);
@@ -379,23 +379,25 @@ void check_2d(
                 sil::tensor::Tensor(gradient),
                 sil::tensor::Tensor(device_potential),
                 sil::tensor::NaturalScalarExtrapolationRule {});
-        auto const hodge = sil::exterior::make_tensor_dual_hodge<Direction>(
+        auto const hodge = sil::exterior::make_dual_hodge_cochain<Direction>(
                 sil::tensor::Tensor(gradient),
                 sil::tensor::Tensor(device_position),
                 sil::tensor::NaturalScalarExtrapolationRule {},
                 sil::tensor::ZeroExtrapolationRule {});
         auto const dual = sil::tensor::
                 make_extrapolation_rules(hodge, sil::tensor::ZeroExtrapolationRule {});
-        sil::exterior::Codifferential<
-                Direction,
-                std::remove_cvref_t<decltype(hodge)>,
-                std::remove_cvref_t<decltype(dual)>> const delta {hodge, dual};
         Kokkos::View<double*> composed("delta_d", 1);
         Kokkos::parallel_for(
                 "stored_one_cochain_hodge",
                 1,
                 KOKKOS_LAMBDA(int) {
-                    composed(0) = delta(ddc::DiscreteElement<GridX, GridY>(12, 12));
+                    composed(0) = sil::exterior::Codifferential<Direction, Direction>::
+                                          value(hodge,
+                                                dual,
+                                                hodge,
+                                                sil::tensor::StoredTensorSampler {},
+                                                ddc::DiscreteElement<GridX, GridY>(12, 12))
+                                                  .mem(ddc::DiscreteElement<Scalar>(0));
                 });
         auto const result = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), composed);
         EXPECT_NEAR(result(0), 0.0, 1.e-10);

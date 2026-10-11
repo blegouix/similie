@@ -22,7 +22,6 @@ enum class CellComplex {
     Primal,
     CircumcentricDual,
     BarycentricDual,
-    TensorDual, // Translated complementary faces of a tensor cell.
 };
 
 namespace detail {
@@ -46,9 +45,7 @@ KOKKOS_FUNCTION std::array<std::size_t, N - K> complement(std::array<std::size_t
 template <CellComplex Complex, std::size_t N>
 KOKKOS_FUNCTION double complex_volume_factor(std::size_t const simplex_dim)
 {
-    if constexpr (
-            Complex == CellComplex::Primal || Complex == CellComplex::CircumcentricDual
-            || Complex == CellComplex::TensorDual) {
+    if constexpr (Complex == CellComplex::Primal || Complex == CellComplex::CircumcentricDual) {
         return 1.;
     } else {
         return 1. / static_cast<double>(misc::binomial_coefficient(N, simplex_dim));

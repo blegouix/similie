@@ -9,7 +9,7 @@
 
 #include <Kokkos_Core.hpp>
 
-#include "extrapolation_stencil.hpp"
+#include "extrapolation_basis.hpp"
 
 namespace sil {
 
@@ -101,6 +101,23 @@ KOKKOS_FUNCTION auto storage_element(Element element)
         return element;
 }
 
+template <class Rule, class Field, class Element, class Component>
+KOKKOS_FUNCTION double evaluate_extrapolation_source(
+        Rule const& rule,
+        Field const& field,
+        Element element,
+        Component component)
+{
+    if constexpr (requires { Rule::STORED_SAMPLES_ONLY; })
+        return 0.0;
+    else if constexpr (requires { rule.prescribed_value; })
+        return rule.prescribed_value;
+    else if constexpr (requires { rule.exterior_value; })
+        return rule.exterior_value;
+    else
+        return rule(field, element).mem(component);
+}
+
 template <class Rule, class Field, class Sampler, class Element>
 KOKKOS_FUNCTION auto evaluate_rule_basis(
         Rule const& rule,
@@ -115,8 +132,12 @@ KOKKOS_FUNCTION auto evaluate_rule_basis(
     else {
         auto const stencil = rule.value(field.non_indices_domain(), element);
         return pointwise_tensor<Field>([&](auto component) {
-            return stencil.evaluate(
-                    [&](auto const& term) { return sampler(field, term.element, component); });
+            return contract_extrapolation_basis(
+                    stencil,
+                    [&](auto sample) { return sampler(field, sample, component); },
+                    [&](std::size_t) {
+                        return evaluate_extrapolation_source(rule, field, element, component);
+                    });
         });
     }
 }

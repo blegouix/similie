@@ -139,7 +139,7 @@ struct FaceRule
         return interface ? external(field, elem) : boundary(field, elem);
     }
     template <class Domain, class Element>
-    KOKKOS_FUNCTION tensor::ExtrapolationStencil<Domain> value(Domain domain, Element elem) const
+    KOKKOS_FUNCTION auto value(Domain domain, Element elem) const
     {
         return interface ? external.value(domain, elem) : boundary.value(domain, elem);
     }

@@ -24,16 +24,29 @@ template <class Result, class Contribution>
 KOKKOS_FUNCTION void accumulate_extrapolation(
         Result& result,
         Contribution const& contribution,
-        double weight)
+        double weight,
+        std::size_t source)
 {
-    if constexpr (misc::Specialization<Result, ExtrapolationStencil>)
-        result.accumulate(contribution, weight);
-    else
+    if constexpr (ddc::type_seq_contains_v<
+                          ddc::TypeSeq<ExtrapolationSource>,
+                          ddc::to_type_seq_t<typename Result::discrete_domain_type>>) {
+        using Spatial = misc::convert_type_seq_to_t<
+                ddc::DiscreteDomain,
+                ddc::type_seq_remove_t<
+                        ddc::to_type_seq_t<typename Result::discrete_domain_type>,
+                        ddc::TypeSeq<ExtrapolationSource>>>;
+        ddc::device_for_each(contribution.domain(), [&](auto entry) {
+            result
+                    .mem(typename Spatial::discrete_element_type(entry),
+                         ddc::DiscreteElement<ExtrapolationSource>(
+                                 entry.template uid<ExtrapolationSource>() == 0 ? 0 : source))
+                    += weight * contribution.mem(entry);
+        });
+    } else
         ddc::device_for_each(result.domain(), [&](auto component) {
             result.mem(component) += weight * contribution.mem(component);
         });
 }
-
 
 template <std::size_t Dimension, class... RulePairs>
 class ExtrapolationRulesStorage;
@@ -98,9 +111,17 @@ public:
                                                  : 0.0;
         if (distance != 0.0) {
             if (sampled < front)
-                accumulate_extrapolation(result, evaluate(m_rules.first, element), distance);
+                accumulate_extrapolation(
+                        result,
+                        evaluate(m_rules.first, element),
+                        distance,
+                        1 + 2 * Dimension);
             else
-                accumulate_extrapolation(result, evaluate(m_rules.second, element), distance);
+                accumulate_extrapolation(
+                        result,
+                        evaluate(m_rules.second, element),
+                        distance,
+                        2 + 2 * Dimension);
             total += distance;
         }
         m_other_rules.accumulate(domain, element, result, total, evaluate);
@@ -170,23 +191,25 @@ public:
     }
 
     template <class Domain, class Element>
-    KOKKOS_FUNCTION ExtrapolationStencil<Domain> value(Domain domain, Element sampled_element) const
+    KOKKOS_FUNCTION auto value(Domain domain, Element sampled_element) const
     {
         static_assert(sizeof...(RulePairs) == ddc::type_seq_size_v<ddc::to_type_seq_t<Domain>>);
         misc::convert_type_seq_to_t<misc::SignedDiscreteElement, ddc::to_type_seq_t<Domain>> const
                 element(sampled_element);
-        ExtrapolationStencil<Domain> result;
+        auto result
+                = detail::make_extrapolation_basis<1 + 2 * sizeof...(RulePairs)>(domain, element);
         if (misc::domain_contains(domain, element)) {
-            result.add(domain, element, 1.0);
+            result
+                    .mem(element.storage_element(),
+                         ddc::DiscreteElement<detail::ExtrapolationSource>(0))
+                    = 1.0;
             return result;
         }
         double total = 0.0;
         m_rules.accumulate(domain, element, result, total, [&](auto const& rule, auto sample) {
             return rule.value(domain, sample);
         });
-        result.constant /= total;
-        for (std::size_t i = 0; i < result.count; ++i)
-            result.terms[i].weight /= total;
+        result *= 1.0 / total;
         return result;
     }
 

@@ -28,13 +28,21 @@ auto make_laplacian_flux_domains(
         double const coefficient = diffusivity(data.physics);
         if (!(coefficient > 0.0) || !std::isfinite(coefficient))
             throw std::invalid_argument("scalar diffusivity must be finite and positive");
-        auto const flux = sil::exterior::make_scalar_laplacian_flux<Direction>(
-                domains.field(id),
+        auto const field = domains.field(id);
+        auto const flux = sil::exterior::make_dual_hodge_cochain<Direction>(
+                sil::tensor::make_tensor_with_extrapolation_rules(
+                        field,
+                        domains.extrapolation_rules(id, jump_scale)),
                 data.geometry,
-                domains.extrapolation_rules(id, jump_scale),
                 domains.template extrapolation_rules<sil::multidomains::FieldRole::Geometry>(id),
                 domains.template boundary_rules<sil::multidomains::FieldRole::Flux>(id),
-                coefficient);
+                coefficient,
+                sil::exterior::Coboundary<
+                        Direction,
+                        ddc::type_seq_element_t<
+                                0,
+                                ddc::to_type_seq_t<
+                                        typename decltype(field)::indices_domain_t>>> {});
         return sil::multidomains::domain_data(data.field, data.geometry, data.physics, flux);
     });
 }
@@ -151,25 +159,23 @@ similie::solvers::ScalarLinearSystem assemble_multidomain_laplacian(
             samples *= 5;
         return samples;
     }();
-    auto const make_operator = [&](std::size_t id) {
-        auto const flux = flux_domains.template field<FieldRole::Flux>(id);
-        auto const dual = flux_domains.template extrapolation_rules<FieldRole::Flux>(id);
-        return sil::exterior::ScalarLaplacian<
-                Direction,
-                std::remove_cvref_t<decltype(flux)>,
-                std::remove_cvref_t<decltype(dual)>> {flux, dual};
-    };
-    std::vector<std::remove_cvref_t<decltype(make_operator(0))>> operators;
-    operators.reserve(domains.domain_count());
-    for (std::size_t id = 0; id < domains.domain_count(); ++id)
-        operators.push_back(make_operator(id));
-    MultidomainOperator const operation(std::move(operators));
+    MultidomainOperator const operation(
+            std::vector<sil::exterior::Codifferential<Direction, Direction>>(
+                    domains.domain_count()));
     detail::RowAssembly<capacity> const system(unknowns);
     operation.for_each(
             exec,
             [&](std::size_t id, Kokkos::DefaultExecutionSpace const& stream, auto const& op) {
                 auto const field = domains.field(id);
-                detail::assemble_dec_rows<capacity>(stream, system, field, op);
+                auto const flux = flux_domains.template field<FieldRole::Flux>(id);
+                detail::assemble_dec_rows<capacity>(
+                        stream,
+                        system,
+                        field,
+                        op,
+                        flux,
+                        flux_domains.template extrapolation_rules<FieldRole::Flux>(id),
+                        flux);
                 detail::prescribe_faces<capacity>(
                         stream,
                         system,

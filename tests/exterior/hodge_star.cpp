@@ -188,6 +188,52 @@ TEST(DiscreteHodgeStar, Metric3D)
                 EXPECT_DOUBLE_EQ(form(elem, form.accessor().access_element<X, Y>()), 3.);
             });
 
+    // The cell-metric pairing equals reconstruction, continuous Hodge, and
+    // primal reduction on skew charts, including orientation reversals.
+    for (double orientation : {1.0, -1.0}) {
+        ddc::host_for_each(
+                position.non_indices_domain(),
+                [&](ddc::DiscreteElement<DDimX, DDimY, DDimZ> elem) {
+                    double const x = static_cast<double>(
+                            ddc::coordinate(ddc::DiscreteElement<DDimX>(elem)));
+                    double const y = static_cast<double>(
+                            ddc::coordinate(ddc::DiscreteElement<DDimY>(elem)));
+                    double const z = static_cast<double>(
+                            ddc::coordinate(ddc::DiscreteElement<DDimZ>(elem)));
+                    position(elem, position.accessor().access_element<X>())
+                            = orientation * (x + 0.3 * y);
+                    position(elem, position.accessor().access_element<Y>()) = y + 0.2 * z;
+                    position(elem, position.accessor().access_element<Z>()) = z + 0.1 * x;
+                });
+        sil::exterior::fill_discrete_hodge_star<ddc::TypeSeq<RhoUp>, ddc::TypeSeq<MuLow, NuLow>>(
+                Kokkos::DefaultHostExecutionSpace {},
+                hodge_star2,
+                metric,
+                position);
+        ddc::host_for_each(hodge_star2.domain(), [&](auto elem) {
+            auto const natural = hodge_star2.canonical_natural_element(elem);
+            std::array<std::size_t, 2> const
+                    ids {natural.template uid<MuLow>(), natural.template uid<NuLow>()};
+            std::array<std::size_t, 1> const normal = sil::exterior::detail::complement_ids<3>(ids);
+            std::array<double, 9> const pairing = sil::exterior::DiscreteHodgeStar<
+                    sil::exterior::CellComplex::Primal,
+                    ddc::TypeSeq<RhoUp>,
+                    ddc::TypeSeq<MuLow, NuLow>,
+                    decltype(metric),
+                    decltype(position),
+                    ddc::DiscreteElement<DDimX, DDimY, DDimZ>>::
+                    one_form_pairing(
+                            metric,
+                            position,
+                            ddc::DiscreteElement<DDimX, DDimY, DDimZ>(elem));
+            EXPECT_NEAR(
+                    hodge_star2.mem(elem),
+                    sil::exterior::detail::permutation_sign<3>(normal, ids)
+                            * pairing[normal[0] * 3 + natural.template uid<RhoUp>()],
+                    1.e-11);
+        });
+    }
+
     ddc::detail::g_discrete_space_dual<DDimX>.reset();
     ddc::detail::g_discrete_space_dual<DDimY>.reset();
     ddc::detail::g_discrete_space_dual<DDimZ>.reset();

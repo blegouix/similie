@@ -5,6 +5,7 @@
 #pragma once
 
 #include <limits>
+#include <tuple>
 
 #include "sparse_linear_system.hpp"
 
@@ -203,21 +204,32 @@ struct RowAssembly
         return {SparseLinearOperator(offsets, columns, values), rhs};
     }
 };
-template <std::size_t Capacity, class Field, class Operator>
+template <std::size_t Capacity, class Field, class Operator, class... Arguments>
 void assemble_dec_rows(
         Kokkos::DefaultExecutionSpace const& exec,
         RowAssembly<Capacity> system,
         Field field,
-        Operator op)
+        Operator op,
+        Arguments const&... arguments)
 {
+    std::tuple<Arguments...> const bound_arguments(arguments...);
     ddc::parallel_for_each(
             "assemble_dec_laplacian_rows",
             exec,
             field.non_indices_domain(),
             KOKKOS_LAMBDA(typename Field::non_indices_domain_t::discrete_element_type elem) {
                 int error = 0;
-                auto const sample = sample_affine<
-                        Capacity>([&](auto sampler) { return op.value(sampler, elem); }, error);
+                auto const sample = sample_affine<Capacity>(
+                        [&](auto sampler) {
+                            return std::apply(
+                                    [&](auto const&... bound) {
+                                        return op.value(bound..., sampler, elem)
+                                                .mem(ddc::DiscreteElement<
+                                                        typename Field::component_type>(0));
+                                    },
+                                    bound_arguments);
+                        },
+                        error);
                 if (error) {
                     system.fail(error);
                     return;

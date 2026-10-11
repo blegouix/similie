@@ -265,25 +265,6 @@ struct DiscreteHodgeStar
         using OutputIndexSeq
                 = ddc::to_type_seq_t<typename HodgeTensorType::accessor_t::natural_domain_t>;
 
-        if constexpr (Complex == CellComplex::TensorDual && ddc::type_seq_size_v<Indices1> == 1) {
-            constexpr std::size_t N = InputIndex::size();
-            std::array<double, N * N> const pairing = one_form_pairing(metric, position, elem);
-            tensor::TensorAccessor<OutputIndex> accessor;
-            ddc::device_for_each(hodge_tensor.domain(), [&](auto component) {
-                std::array<std::size_t, ddc::type_seq_size_v<Indices2>> ids {};
-                if constexpr (ddc::type_seq_size_v<Indices2> > 0)
-                    ids = detail::flat_natural_elem_ids(
-                            accessor.canonical_natural_element(component));
-                std::array<std::size_t, 1> const normal = detail::complement_ids<N>(ids);
-                double value = 0.0;
-                for (std::size_t axis = 0; axis < N; ++axis)
-                    value += pairing[normal[0] * N + axis]
-                             * form_tensor.mem(ddc::DiscreteElement<InputIndex>(axis));
-                hodge_tensor.mem(component) = detail::permutation_sign<N>(normal, ids) * value;
-            });
-            return;
-        }
-
         [[maybe_unused]] tensor::TensorAccessor<InputIndex> reconstructed_accessor;
         std::array<double, InputIndex::access_size()> reconstructed_alloc {};
         ddc::ChunkSpan<
@@ -494,7 +475,7 @@ struct ContinuousHodgeStar
 template <
         misc::Specialization<ddc::TypeSeq> Indices1,
         misc::Specialization<ddc::TypeSeq> Indices2,
-        CellComplex Complex = CellComplex::TensorDual,
+        CellComplex Complex = CellComplex::Primal,
         misc::Specialization<tensor::Tensor> HodgeStarType,
         misc::Specialization<tensor::Tensor> MetricType,
         misc::Specialization<tensor::Tensor> PositionType,
@@ -673,16 +654,16 @@ KOKKOS_FUNCTION auto euclidean_metric(ddc::TypeSeq<Coordinates...>)
 
 
 } // namespace detail
-/** Lazy tensor-dual Hodge star of a primal one-cochain.
+/** Lazy dual cochain obtained by applying the Hodge star to a primal one-cochain.
  * \important This operator and documentation is fully AI-generated.
  * The input cochain can be stored or lazily evaluated. Geometry samples
- * cross interfaces through their rules. The tensor-dual Hodge pairs constant
- * forms exactly using the full cell Jacobian. Cross-axis terms use averages
+ * cross interfaces through their rules. The local primal Hodge pairing reproduces
+ * constant forms using the full cell Jacobian. Cross-axis terms use averages
  * of parallel primal edges. A symmetric projected diagonal pairing controls
  * unresolved edge modes while vanishing on constant physical forms, including
  * on warped cells, recovering axial DEC weights on orthogonal grids.
  * Incident physical cells supply the dual-face measure, including half faces
- * at walls. No Laplacian integration or shape-function formulation is used.
+ * at walls.
  * At physical upper faces the outgoing
  * dual sample comes from the physical flux policy, including the zero wall law.
  */
@@ -693,7 +674,7 @@ template <
         class GeometryRules,
         class BoundaryFluxRules,
         class Evaluate>
-struct TensorDualHodge
+struct DualHodgeCochain
 {
     using source_indices = tensor::upper_t<ddc::to_type_seq_t<tensor::natural_domain_t<Direction>>>;
     using dual_indices = codifferential_hodge_output_indices_t<Direction::size() - 1, Direction>;
@@ -869,7 +850,7 @@ struct TensorDualHodge
                     typename Position::memory_space>
                     local_position(positions);
             std::array<double, N * N> const pairing = DiscreteHodgeStar<
-                    CellComplex::TensorDual,
+                    CellComplex::Primal,
                     source_indices,
                     dual_indices,
                     decltype(metric),
@@ -1003,7 +984,7 @@ struct TensorDualHodge
         auto metric = detail::euclidean_metric<Memory>(
                 typename tensor::uncharacterize_t<Direction>::type_seq_dimensions {});
         DiscreteHodgeStar<
-                CellComplex::TensorDual,
+                CellComplex::Primal,
                 tensor::upper_t<TopIndices>,
                 ddc::TypeSeq<>,
                 decltype(metric),
@@ -1026,6 +1007,16 @@ struct TensorDualHodge
         // physical walls truncate it, while interface rules supply donor cells.
         return scalar.mem(ddc::DiscreteElement<Scalar>(0)) * local_volume
                / dual_volume(elem, std::make_index_sequence<Direction::size()> {});
+    }
+
+    /** Apply the inverse zero-form Hodge to a pointwise top cochain.
+     * \important This operator and documentation is fully AI-generated.
+     */
+    template <class Output, class TopTensor, class Element>
+    KOKKOS_FUNCTION void operator()(Output output, TopTensor top, Element elem) const
+    {
+        output.mem(ddc::DiscreteElement<tensor::Covariant<tensor::ScalarIndex>>(0))
+                = inverse_zero_form(top, elem);
     }
 
     template <class Sampler, class Element, class Component>
@@ -1055,7 +1046,7 @@ template <
         class Geometry,
         class Flux,
         class Evaluate = tensor::StoredTensorSampler>
-auto make_tensor_dual_hodge(
+auto make_dual_hodge_cochain(
         Cochain cochain,
         Position const& position,
         Geometry geometry_rule,
@@ -1085,7 +1076,7 @@ auto make_tensor_dual_hodge(
         else
             return tensor::make_extrapolation_rules(cochain, flux_rule);
     }();
-    return TensorDualHodge<
+    return DualHodgeCochain<
             Direction,
             Cochain,
             Position,

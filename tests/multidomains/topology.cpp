@@ -160,9 +160,16 @@ void check_periodic_rank(std::index_sequence<Axis...>)
             = (field.mem(first, component) + 2.0 * field.mem(second, component)) / 3.0;
     EXPECT_DOUBLE_EQ(rules(field, exterior).mem(component), expected);
     EXPECT_DOUBLE_EQ(
-            rules.value(field.non_indices_domain(), exterior).evaluate([&](auto const& term) {
-                return field.mem(term.element, component);
-            }),
+            sil::tensor::detail::contract_extrapolation_basis(
+                    rules.value(field.non_indices_domain(), exterior),
+                    [&](auto entry) { return field.mem(entry, component); },
+                    [&](std::size_t source) {
+                        return source == 1
+                                       ? rules.template boundary_rule<0, false>()(field, exterior)
+                                                 .mem(component)
+                                       : rules.template boundary_rule<1, true>()(field, exterior)
+                                                 .mem(component);
+                    }),
             expected);
 }
 
@@ -206,19 +213,24 @@ TEST(Multidomains, EntrySideAffineInverseAndPhysics)
             13.0);
     auto const geometry = domains.extrapolation_rules<md::FieldRole::Geometry>(0, 50.0);
     EXPECT_DOUBLE_EQ(geometry(first, ddc::DiscreteElement<GridX>(13)).mem(component), 6.0);
-    auto basis = [](auto const& term) {
-        if (term.domain_id == 1)
-            return term.element.template uid<GridX>() == 31 ? 1.0 : 0.0;
-        else
-            return 0.0;
+    auto basis = [](auto const& donor, auto entry, auto) {
+        return donor.domain_id == 1 && entry.template uid<GridX>() == 31 ? 1.0 : 0.0;
     };
     EXPECT_DOUBLE_EQ(
-            rules_a.value(first.non_indices_domain(), ddc::DiscreteElement<GridX>(14))
-                    .evaluate(basis),
+            sil::tensor::detail::evaluate_rule_basis(
+                    rules_a,
+                    domains.field(0),
+                    basis,
+                    ddc::DiscreteElement<GridX>(14))
+                    .mem(component),
             5.0);
     EXPECT_DOUBLE_EQ(
-            rules_a.value(first.non_indices_domain(), ddc::DiscreteElement<GridX>(11))
-                    .evaluate(basis),
+            sil::tensor::detail::evaluate_rule_basis(
+                    rules_a,
+                    domains.field(0),
+                    basis,
+                    ddc::DiscreteElement<GridX>(11))
+                    .mem(component),
             0.0);
 }
 
@@ -245,12 +257,14 @@ void check_generated_rules_on_cuda()
                 ddc::DiscreteElement<typename ScalarField<GridX>::component_type> const component(
                         0);
                 result(0) = rules(field, ddc::DiscreteElement<GridX>(13)).mem(component);
-                result(1) = rules.value(field.non_indices_domain(), ddc::DiscreteElement<GridX>(13))
-                                    .evaluate([&](auto const& term) {
-                                        return term.domain_id == 1
-                                                       ? second.mem(term.element, component)
-                                                       : first.mem(term.element, component);
-                                    });
+                ddc::DiscreteElement<GridX> const exterior(13);
+                result(1) = sil::tensor::detail::contract_extrapolation_basis(
+                        rules.value(field.non_indices_domain(), exterior),
+                        [&](auto entry) { return field.mem(entry, component); },
+                        [&](std::size_t) {
+                            return rules.template boundary_rule<0, true>()(field, exterior)
+                                    .mem(component);
+                        });
             });
     auto const host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), result);
     EXPECT_DOUBLE_EQ(host(0), 11.0);

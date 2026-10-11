@@ -736,15 +736,10 @@ void test_signed_tensor_sampling(std::size_t origin)
                     output(sample) = connected(outside, component);
                     break;
                 case 6:
-                    output(sample)
-                            = connected.value(field.non_indices_domain(), outside)
-                                      .evaluate([&](auto const& term) {
-                                          return (term.domain == donor.non_indices_domain()
-                                                          ? 10000.0
-                                                          : 0.0)
-                                                 + 10.0 * term.element.template uid<SignedGridX>()
-                                                 + 100.0 * term.element.template uid<SignedGridY>();
-                                      });
+                    output(sample) = sil::tensor::detail::contract_extrapolation_basis(
+                            connected.value(field.non_indices_domain(), outside),
+                            [&](auto entry) { return field.mem(entry, component); },
+                            [&](std::size_t) { return connected(outside, component); });
                     break;
                 case 7:
                     output(sample) = connected(
@@ -757,12 +752,13 @@ void test_signed_tensor_sampling(std::size_t origin)
                     output(sample) = natural(inside, component);
                     break;
                 case 9:
-                    output(sample)
-                            = natural.value(field.non_indices_domain(), negative)
-                                      .evaluate([](auto const& term) {
-                                          return 10.0 * term.element.template uid<SignedGridX>()
-                                                 + 100.0 * term.element.template uid<SignedGridY>();
-                                      });
+                    output(sample) = sil::tensor::detail::contract_extrapolation_basis(
+                            natural.value(field.non_indices_domain(), negative),
+                            [](auto entry) {
+                                return 10.0 * entry.template uid<SignedGridX>()
+                                       + 100.0 * entry.template uid<SignedGridY>();
+                            },
+                            [](std::size_t) { return 0.0; });
                     break;
                 case 10:
                     output(sample) = natural(
@@ -781,7 +777,7 @@ void test_signed_tensor_sampling(std::size_t origin)
     EXPECT_DOUBLE_EQ(host(ddc::DiscreteElement<SignedSample>(3)), 13.0);
     EXPECT_DOUBLE_EQ(host(ddc::DiscreteElement<SignedSample>(4)), 5.0 / 3.0);
     EXPECT_DOUBLE_EQ(host(ddc::DiscreteElement<SignedSample>(5)), 135.0);
-    EXPECT_DOUBLE_EQ(host(ddc::DiscreteElement<SignedSample>(6)), 13220.0);
+    EXPECT_DOUBLE_EQ(host(ddc::DiscreteElement<SignedSample>(6)), 135.0);
     EXPECT_DOUBLE_EQ(host(ddc::DiscreteElement<SignedSample>(7)), 92.5);
     EXPECT_DOUBLE_EQ(host(ddc::DiscreteElement<SignedSample>(8)), 1.0 + 5.0 * origin);
     EXPECT_DOUBLE_EQ(host(ddc::DiscreteElement<SignedSample>(9)), -210.0);
@@ -833,6 +829,9 @@ TEST(Tensor, WholeTensorExtrapolationAndSpatialStencil)
     sil::misc::SignedDiscreteElement<SignedGridX, SignedGridY> const exterior(-2, -1);
     auto const point = view[exterior];
     auto const stencil = view.value(grid, exterior);
+    static_assert(
+            sil::misc::
+                    Specialization<std::remove_cv_t<decltype(stencil)>, sil::tensor::OwningTensor>);
     sil::misc::SignedDiscreteElement<SignedGridY, SignedGridX> const reversed(-1, -2);
     auto const reversed_point = sil::tensor::NaturalScalarExtrapolationRule {}(field, reversed);
     EXPECT_DOUBLE_EQ(reversed_point.mem(ddc::DiscreteElement<Vector>(1)), 4.0);
@@ -852,7 +851,10 @@ TEST(Tensor, WholeTensorExtrapolationAndSpatialStencil)
         EXPECT_DOUBLE_EQ(point.mem(index), 3.0 * component + 1.0);
         EXPECT_DOUBLE_EQ(view.mem(exterior, index), point.mem(index));
         EXPECT_DOUBLE_EQ(
-                stencil.evaluate([&](auto const& term) { return field.mem(term.element, index); }),
+                sil::tensor::detail::contract_extrapolation_basis(
+                        stencil,
+                        [&](auto entry) { return field.mem(entry, index); },
+                        [](std::size_t) { return 0.0; }),
                 point.mem(index));
     }
     EXPECT_DOUBLE_EQ(
@@ -880,9 +882,10 @@ TEST(Tensor, WholeTensorExtrapolationAndSpatialStencil)
     ddc::host_for_each(field.domain(), [&](auto elem) { field.mem(elem) += 11.0; });
     EXPECT_DOUBLE_EQ(view[exterior].mem(ddc::DiscreteElement<Vector>(1)), 15.0);
     EXPECT_DOUBLE_EQ(
-            stencil.evaluate([&](auto const& term) {
-                return field.mem(term.element, ddc::DiscreteElement<Vector>(1));
-            }),
+            sil::tensor::detail::contract_extrapolation_basis(
+                    stencil,
+                    [&](auto entry) { return field.mem(entry, ddc::DiscreteElement<Vector>(1)); },
+                    [](std::size_t) { return 0.0; }),
             15.0);
 }
 

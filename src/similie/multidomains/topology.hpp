@@ -48,7 +48,7 @@ public:
     }
 
     template <class Domain, class Element>
-    KOKKOS_FUNCTION tensor::ExtrapolationStencil<Domain> value(Domain domain, Element elem) const
+    KOKKOS_FUNCTION auto value(Domain domain, Element elem) const
     {
         switch (m_kind) {
         case Kind::Zero:
@@ -66,10 +66,22 @@ public:
     template <class Field, class Element>
     KOKKOS_FUNCTION auto operator()(Field const& field, Element elem) const
     {
-        auto const stencil = value(field.non_indices_domain(), elem);
+        return evaluate_basis(field, tensor::StoredTensorSampler {}, elem);
+    }
+
+private:
+    template <class R, class F, class S, class E>
+    friend KOKKOS_FUNCTION auto tensor::detail::evaluate_rule_basis(R const&, F const&, S, E);
+
+    template <class Field, class Sampler, class Element>
+    KOKKOS_FUNCTION auto evaluate_basis(Field const& field, Sampler sampler, Element elem) const
+    {
+        auto const basis = value(field.non_indices_domain(), elem);
         return tensor::detail::pointwise_tensor<Field>([&](auto component) {
-            return stencil.evaluate(
-                    [&](auto const& term) { return field.mem(term.element, component); });
+            return tensor::detail::contract_extrapolation_basis(
+                    basis,
+                    [&](auto sample) { return sampler(field, sample, component); },
+                    [&](std::size_t) { return m_value; });
         });
     }
 };

@@ -127,26 +127,14 @@ struct ExternalDomainExtrapolationRule
     TargetRule target_rule = {};
 
     template <class Domain, class Element>
-    KOKKOS_FUNCTION ExtrapolationStencil<Domain> value(Domain domain, Element element) const
+    KOKKOS_FUNCTION auto value(Domain domain, Element element) const
     {
-        if (misc::domain_contains(domain, element)) {
-            ExtrapolationStencil<Domain> result;
-            result.add(domain, element, 1.0);
-            return result;
-        }
-        auto result = target_rule
-                              .value(neighbor.non_indices_domain(),
-                                     boundary_map(domain, neighbor.non_indices_domain(), element));
-        result.constant = orientation * result.constant + jump;
-        for (std::size_t i = 0; i < result.count; ++i) {
-            result.terms[i].weight *= orientation;
-            if (result.terms[i].domain_id == std::numeric_limits<std::size_t>::max()) {
-                if constexpr (requires { neighbor.domain_id; })
-                    result.terms[i].domain_id = neighbor.domain_id;
-                else
-                    result.terms[i].domain_id = 0;
-            }
-        }
+        auto result = detail::make_extrapolation_basis(domain, element);
+        result
+                .mem(detail::extrapolation_sample(domain, element),
+                     ddc::DiscreteElement<detail::ExtrapolationSource>(
+                             misc::domain_contains(domain, element) ? 0 : 1))
+                = 1.0;
         return result;
     }
 
