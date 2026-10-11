@@ -175,6 +175,62 @@ struct Codifferential<TagToRemoveFromCochain, CochainTag>
             output *= -1;
     }
 
+    /** Scalar codifferential coefficients on the incident dual faces.
+     * Spatial stencil coordinates are offsets plus one, with the center at one.
+     * \important This operator and documentation is fully AI-generated.
+     */
+    template <class DualField, class InverseHodge, class Element>
+        requires(CochainTag::rank() == 1)
+    KOKKOS_FUNCTION static auto value(DualField const&, InverseHodge inverse_hodge, Element elem)
+    {
+        using DualIndex = misc::convert_type_seq_to_t<
+                tensor::TensorAntisymmetricIndex,
+                codifferential_hodge_output_indices_t<
+                        TagToRemoveFromCochain::size() - 1,
+                        TagToRemoveFromCochain>>;
+        using TopIndex = misc::convert_type_seq_to_t<
+                tensor::TensorAntisymmetricIndex,
+                ddc::type_seq_merge_t<
+                        ddc::TypeSeq<TagToRemoveFromCochain>,
+                        codifferential_hodge_output_indices_t<
+                                TagToRemoveFromCochain::size() - 1,
+                                TagToRemoveFromCochain>>>;
+        using ChainDomain = typename detail::NonSpectatorDimension<
+                TagToRemoveFromCochain,
+                typename DualField::non_indices_domain_t>::type;
+        auto const chain = tangent_basis<
+                TagToRemoveFromCochain::size(),
+                ChainDomain,
+                typename DualField::memory_space>(typename ChainDomain::discrete_element_type {});
+        auto const lower = tangent_basis<
+                TagToRemoveFromCochain::size() - 1,
+                ChainDomain,
+                typename DualField::memory_space>(typename ChainDomain::discrete_element_type {});
+        // Build incidence at a positive local origin, independently of physical
+        // coordinates, so a domain's first node never wraps the stencil front.
+        Element origin = elem;
+        for (std::size_t axis = 0; axis < TagToRemoveFromCochain::size(); ++axis) {
+            ddc::detail::array(origin)[axis] = 2;
+        }
+        auto const incidence = TransposedCoboundary<TagToRemoveFromCochain, DualIndex>::
+                value(tensor::detail::IdentityStencilEvaluator {},
+                      chain,
+                      lower,
+                      origin,
+                      tensor::TensorAccessor<TopIndex>::access_element(
+                              tensor::TensorAccessor<TopIndex>::canonical_natural_element(
+                                      ddc::DiscreteElement<TopIndex>(0))));
+        auto unit = detail::make_stencil<typename DualField::memory_space, TopIndex>(
+                ddc::DiscreteElement<>());
+        unit.mem(ddc::DiscreteElement<TopIndex>(0)) = 1.0;
+        double const scale
+                = -inverse_hodge.inverse_zero_form(tensor::Tensor(unit.span_view()), elem);
+        auto result = detail::make_stencil<typename DualField::memory_space, DualIndex>(Element {});
+        for (std::size_t i = 0; i < result.storage().size(); ++i)
+            result.storage()[i] = scale * incidence.storage()[i];
+        return result;
+    }
+
     template <class DualField, class DualRules, class InverseHodge, class Sampler, class Element>
         requires requires { typename DualField::non_indices_domain_t; }
     KOKKOS_FUNCTION static auto value(

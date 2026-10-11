@@ -75,7 +75,7 @@ void evaluate_rows(
             });
 }
 
-void check_split(bool normalize)
+void check_split(bool normalize, double jump_scale = 1.0)
 {
     using Direction = sil::tensor::Covariant<sil::tensor::TensorNaturalIndex<X>>;
     using Position = sil::tensor::Contravariant<sil::tensor::TensorNaturalIndex<X>>;
@@ -122,8 +122,33 @@ void check_split(bool normalize)
                     md::domain_data(first, sil::tensor::Tensor(first_device), Physics {}),
                     md::domain_data(second, sil::tensor::Tensor(second_device), Physics {})});
     auto const coefficient = [](Physics physics) { return physics.diffusivity; };
-    auto const assembled = sil::multidomains::assemble_multidomain_laplacian<
-            Direction>(Kokkos::DefaultExecutionSpace {}, domains, 128, coefficient, 1.0, normalize);
+    auto const assembled = sil::multidomains::assemble_multidomain_laplacian<Direction>(
+            Kokkos::DefaultExecutionSpace {},
+            domains,
+            128,
+            coefficient,
+            jump_scale,
+            normalize);
+    Kokkos::View<double**> const reused_rhs
+            = sil::multidomains::assemble_multidomain_laplacian_rhs<Direction>(
+                    Kokkos::DefaultExecutionSpace {},
+                    domains,
+                    assembled,
+                    coefficient,
+                    3.0 * jump_scale);
+    auto const host_reused_rhs
+            = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), reused_rhs);
+    auto const reassembled = sil::multidomains::assemble_multidomain_laplacian<Direction>(
+            Kokkos::DefaultExecutionSpace {},
+            domains,
+            128,
+            coefficient,
+            3.0 * jump_scale,
+            normalize);
+    auto const host_reassembled_rhs
+            = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), reassembled.rhs);
+    for (std::size_t row = 0; row < 128; ++row)
+        EXPECT_NEAR(host_reused_rhs(row, 0), host_reassembled_rhs(row, 0), 1.e-12);
     auto const data = assemble_matrix_data(assembled.matrix);
     auto const rhs = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), assembled.rhs);
     std::vector<std::map<std::size_t, double>> rows(128);
@@ -138,7 +163,10 @@ void check_split(bool normalize)
             EXPECT_NEAR(rows[row][row - 1], -neighbor / scale, 1.e-12);
         if (row + 1 < 128)
             EXPECT_NEAR(rows[row][row + 1], -neighbor / scale, 1.e-12);
-        EXPECT_NEAR(rhs(row, 0), (row == 63 ? 2.5 : (row == 64 ? -2.5 : 0.0)) / scale, 1.e-12);
+        EXPECT_NEAR(
+                rhs(row, 0),
+                jump_scale * (row == 63 ? 2.5 : (row == 64 ? -2.5 : 0.0)) / scale,
+                1.e-12);
         for (auto const& [column, value] : rows[row])
             if (column + 1 < row || column > row + 1)
                 EXPECT_NEAR(value, 0.0, 1.e-12);
@@ -174,6 +202,12 @@ TEST(MultidomainsLaplacian, DecInterfaceJump)
 TEST(MultidomainsLaplacian, NormalizedDecInterfaceJump)
 {
     check_split(true);
+}
+TEST(MultidomainsLaplacian, MatrixIndependentOfLargeInterfaceJump)
+{
+    // F(e)-F(0) loses unit coefficients at this scale. Native stencil
+    // composition must retain A independently of the inhomogeneous load.
+    check_split(true, 1.e16);
 }
 
 void launch_value(Kokkos::DefaultExecutionSpace const& exec, Kokkos::View<int*> values, int index)
@@ -317,6 +351,14 @@ void check_2d(
     auto const coefficient = [](Physics physics) { return physics.diffusivity; };
     auto const system = sil::multidomains::assemble_multidomain_laplacian<
             Direction>(Kokkos::DefaultExecutionSpace {}, domains, 25, coefficient, 1.0, false);
+    Kokkos::View<double**> const reused_rhs = sil::multidomains::assemble_multidomain_laplacian_rhs<
+            Direction>(Kokkos::DefaultExecutionSpace {}, domains, system, coefficient);
+    auto const host_reused_rhs
+            = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), reused_rhs);
+    auto const host_original_rhs
+            = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), system.rhs);
+    for (std::size_t row = 0; row < 25; ++row)
+        EXPECT_NEAR(host_reused_rhs(row, 0), host_original_rhs(row, 0), 1.e-10);
     auto const data = assemble_matrix_data(system.matrix);
     auto const rhs = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), system.rhs);
     std::vector<std::map<std::size_t, double>> rows(25);

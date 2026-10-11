@@ -424,27 +424,35 @@ inline Result run(
             mirror(i) = global_indices[side][i];
         Kokkos::deep_copy(device_indices.back(), mirror);
     }
-    auto assemble = [&](double jump_scale, double prescribed_scale) {
+    auto bind_indexed_domains = [&](double prescribed_scale) {
         std::vector<sil::multidomains::IndexedScalarField<GridX, GridY>> fields;
         for (std::size_t side = 0; side < side_start.size(); ++side)
             fields.push_back({positions[side].non_indices_domain(), device_indices[side].data()});
-        auto const domains = bind_potential_flow_domains(
+        return bind_potential_flow_domains(
                 topology(prescribed_scale),
                 fields,
                 positions,
                 equations);
-        return sil::multidomains::assemble_multidomain_laplacian<GradientIndex>(
-                Kokkos::DefaultExecutionSpace {},
-                domains,
-                node_count,
-                [&](PotentialFlowPhysics const&) { return inputs.density; },
-                jump_scale);
     };
     auto bind_samples = [&](auto const& fields) {
         return bind_potential_flow_domains(topology(1.0), fields, positions, equations);
     };
-    solvers::ScalarLinearSystem const system = assemble(0.0, 1.0);
-    Kokkos::View<double**> const jump_rhs = assemble(1.0, 0.0).rhs;
+    auto const base_domains = bind_indexed_domains(1.0);
+    solvers::ScalarLinearSystem const system
+            = sil::multidomains::assemble_multidomain_laplacian<GradientIndex>(
+                    Kokkos::DefaultExecutionSpace {},
+                    base_domains,
+                    node_count,
+                    [&](PotentialFlowPhysics const&) { return inputs.density; },
+                    0.0);
+    auto const response_domains = bind_indexed_domains(0.0);
+    Kokkos::View<double**> const jump_rhs
+            = sil::multidomains::assemble_multidomain_laplacian_rhs<GradientIndex>(
+                    Kokkos::DefaultExecutionSpace {},
+                    response_domains,
+                    system,
+                    [&](PotentialFlowPhysics const&) { return inputs.density; },
+                    1.0);
     Result result;
     result.domain_count = side_start.size();
     result.node_count = node_count;

@@ -806,34 +806,65 @@ struct DualHodgeCochain
         return volume;
     }
 
-    template <class Sampler, class Element, class Component, std::size_t... Axis>
-    KOKKOS_FUNCTION double evaluate(
-            Sampler sampler,
-            Element elem,
-            Component component,
-            std::index_sequence<Axis...> axes) const
+    template <class Component>
+    KOKKOS_FUNCTION std::size_t normal_direction(Component component) const
     {
-        tensor::TensorAccessor<component_type> dual_accessor;
+        tensor::TensorAccessor<component_type> accessor;
         auto const ids
-                = detail::flat_natural_elem_ids(dual_accessor.canonical_natural_element(component));
-        std::size_t normal = 0;
-        for (; normal < Direction::size(); ++normal) {
+                = detail::flat_natural_elem_ids(accessor.canonical_natural_element(component));
+        for (std::size_t normal = 0; normal < Direction::size(); ++normal) {
             bool found = false;
             for (std::size_t id : ids)
                 found = found || id == normal;
             if (!found)
-                break;
+                return normal;
         }
-        double prescribed = 0.0;
-        if ((upper_flux<Axis>(elem, component, normal, prescribed) || ...))
-            return prescribed;
+        return Direction::size();
+    }
+
+    template <class Element, class Component, std::size_t... Axis>
+    KOKKOS_FUNCTION bool prescribed_flux(
+            Element elem,
+            Component component,
+            double& prescribed,
+            std::index_sequence<Axis...>) const
+    {
+        return (upper_flux<Axis>(elem, component, normal_direction(component), prescribed) || ...);
+    }
+
+    template <class Element, class Component>
+    KOKKOS_FUNCTION bool prescribed_flux(Element elem, Component component, double& prescribed)
+            const
+    {
+        return prescribed_flux(
+                elem,
+                component,
+                prescribed,
+                std::make_index_sequence<Direction::size()> {});
+    }
+
+    /** Constitutive coefficients on the neighbouring primal tensor nodes.
+     * Spatial stencil coordinates are offsets plus one, with the center at one.
+     * \important This operator and documentation is fully AI-generated.
+     */
+    template <class Element, class Component, std::size_t... Axis>
+    KOKKOS_FUNCTION auto stencil(Element elem, Component component, std::index_sequence<Axis...>)
+            const
+    {
+        using Index = ddc::
+                type_seq_element_t<0, ddc::to_type_seq_t<typename Cochain::indices_domain_t>>;
         constexpr std::size_t N = Direction::size();
         constexpr std::size_t edge_count = std::size_t(1) << (N - 1);
+        auto result = detail::make_stencil<typename Position::memory_space, Index, 3>(Element {});
+        double prescribed = 0.0;
+        if (prescribed_flux(elem, component, prescribed))
+            return result;
+        std::size_t const normal = normal_direction(component);
+        tensor::TensorAccessor<component_type> accessor;
+        auto const ids
+                = detail::flat_natural_elem_ids(accessor.canonical_natural_element(component));
         auto metric = detail::euclidean_metric<typename Position::memory_space>(
                 typename tensor::uncharacterize_t<Direction>::type_seq_dimensions {});
-        double result = 0.0;
-        // Each primal edge has 2^(N-1) incident tensor cells. Only physical
-        // cells contribute: boundary dual faces are automatically truncated.
         for (std::size_t incident = 0; incident < edge_count; ++incident) {
             Element cell = elem;
             std::size_t bit = 0;
@@ -859,8 +890,8 @@ struct DualHodgeCochain
             using PositionIndex = ddc::
                     type_seq_element_t<0, ddc::to_type_seq_t<typename Position::indices_domain_t>>;
             std::array<double, N * edge_count * N> edges {};
-            std::array<double, N * edge_count> differences {}, residuals {};
-            std::array<double, N> means {}, projection {}, weighted_projection {};
+            std::array<double, N * edge_count> projector_row {};
+            std::array<double, N> weighted_projection {};
             std::array<double, N * N> gram {}, inverse {}, workspace {};
             std::size_t selected = 0;
             for (std::size_t axis = 0; axis < N; ++axis) {
@@ -875,42 +906,6 @@ struct DualHodgeCochain
                     std::size_t const edge = axis * edge_count + edge_id;
                     if (axis == normal && first == elem)
                         selected = edge;
-                    if constexpr (requires { typename Evaluate::cochain_tag; }) {
-                        using ChainDomain = typename detail::
-                                NonSpectatorDimension<Direction, non_indices_domain_t>::type;
-                        auto const chain = tangent_basis<
-                                Evaluate::cochain_tag::rank() + 1,
-                                ChainDomain,
-                                typename Position::memory_space>(
-                                typename ChainDomain::discrete_element_type {});
-                        auto const lower = tangent_basis<
-                                Evaluate::cochain_tag::rank(),
-                                ChainDomain,
-                                typename Position::memory_space>(
-                                typename ChainDomain::discrete_element_type {});
-                        auto gradient = tensor::detail::pointwise_tensor<
-                                ddc::DiscreteDomain<Direction>,
-                                typename Position::memory_space>([](auto) { return 0.0; });
-                        evaluate_cochain(
-                                tensor::Tensor(gradient.span_view()),
-                                [&](auto sample, auto component) {
-                                    return tensor::detail::evaluate_tensor_basis(
-                                            cochain,
-                                            sampler,
-                                            sample,
-                                            component);
-                                },
-                                chain,
-                                lower,
-                                first);
-                        differences[edge] = gradient.mem(ddc::DiscreteElement<Direction>(axis));
-                    } else
-                        differences[edge] = tensor::detail::evaluate_tensor_basis(
-                                cochain,
-                                sampler,
-                                first,
-                                ddc::DiscreteElement<Direction>(axis));
-                    means[axis] += differences[edge] / edge_count;
                     for (std::size_t physical = 0; physical < N; ++physical)
                         edges[edge * N + physical]
                                 = geometry(position, second)
@@ -918,7 +913,6 @@ struct DualHodgeCochain
                                   - geometry(position, first)
                                             .mem(ddc::DiscreteElement<PositionIndex>(physical));
                     for (std::size_t i = 0; i < N; ++i) {
-                        projection[i] += edges[edge * N + i] * differences[edge];
                         for (std::size_t j = 0; j < N; ++j)
                             gram[i * N + j] += edges[edge * N + i] * edges[edge * N + j];
                     }
@@ -935,29 +929,87 @@ struct DualHodgeCochain
                                        double,
                                        typename Position::memory_space>(workspace.data(), N * N)))
                 continue;
-            std::array<double, N> gradient {};
-            for (std::size_t i = 0; i < N; ++i)
-                for (std::size_t j = 0; j < N; ++j)
-                    gradient[i] += inverse[i * N + j] * projection[j];
-            // Project unresolved edge modes away from all constant physical forms.
-            // P W P is symmetric and vanishes on the actual cell edge-vector span.
+
+            // One row of P W P, with P = I - E (E^T E)^-1 E^T.
+            // It annihilates constant Cartesian forms, as in the pointwise Hodge.
             for (std::size_t edge = 0; edge < N * edge_count; ++edge) {
-                double residual = differences[edge];
+                projector_row[edge] = edge == selected ? 1.0 : 0.0;
                 for (std::size_t i = 0; i < N; ++i)
-                    residual -= edges[edge * N + i] * gradient[i];
-                residuals[edge] = pairing[(edge / edge_count) * (N + 1)] * residual / edge_count;
+                    for (std::size_t j = 0; j < N; ++j)
+                        projector_row[edge] -= edges[selected * N + i] * inverse[i * N + j]
+                                               * edges[edge * N + j];
+                projector_row[edge] *= pairing[(edge / edge_count) * (N + 1)] / edge_count;
                 for (std::size_t i = 0; i < N; ++i)
-                    weighted_projection[i] += edges[edge * N + i] * residuals[edge];
+                    weighted_projection[i] += edges[edge * N + i] * projector_row[edge];
             }
-            double value = residuals[selected];
-            for (std::size_t i = 0; i < N; ++i) {
-                value += pairing[normal * N + i] * means[i] / edge_count;
-                for (std::size_t j = 0; j < N; ++j)
-                    value -= edges[selected * N + i] * inverse[i * N + j] * weighted_projection[j];
-            }
-            result += detail::permutation_sign<N>(std::array<std::size_t, 1> {normal}, ids) * value;
+            for (std::size_t axis = 0; axis < N; ++axis)
+                for (std::size_t edge_id = 0; edge_id < edge_count; ++edge_id) {
+                    std::size_t const edge = axis * edge_count + edge_id;
+                    double weight = pairing[normal * N + axis] / (edge_count * edge_count)
+                                    + projector_row[edge];
+                    for (std::size_t i = 0; i < N; ++i)
+                        for (std::size_t j = 0; j < N; ++j)
+                            weight -= weighted_projection[i] * inverse[i * N + j]
+                                      * edges[edge * N + j];
+                    weight *= diffusivity
+                              * detail::permutation_sign<
+                                      N>(std::array<std::size_t, 1> {normal}, ids);
+                    Element first = cell;
+                    std::size_t tangent = 0;
+                    for (std::size_t other = 0; other < N; ++other)
+                        if (other != axis)
+                            ddc::detail::array(first)[other] += (edge_id >> tangent++) & 1;
+                    Element local = first;
+                    for (std::size_t coordinate = 0; coordinate < N; ++coordinate)
+                        ddc::detail::array(local)[coordinate]
+                                = ddc::detail::array(first)[coordinate]
+                                  - ddc::detail::array(elem)[coordinate] + 1;
+                    if constexpr (requires { typename Evaluate::cochain_tag; }) {
+                        static_assert(Evaluate::cochain_tag::rank() == 0);
+                        // The scalar coboundary's tensor stencil is the oriented
+                        // endpoint difference; retain that incidence independently of H.
+                        result.mem(local, ddc::DiscreteElement<Index>(0)) -= weight;
+                        ++ddc::detail::array(local)[axis];
+                        result.mem(local, ddc::DiscreteElement<Index>(0)) += weight;
+                    } else
+                        result.mem(local, ddc::DiscreteElement<Index>(axis)) += weight;
+                }
         }
-        return diffusivity * result;
+        return result;
+    }
+
+    template <class Element, class Component>
+    KOKKOS_FUNCTION auto value(Element elem, Component component) const
+    {
+        return stencil(elem, component, std::make_index_sequence<Direction::size()> {});
+    }
+
+    template <class Sampler, class Element, class Component, std::size_t... Axis>
+    KOKKOS_FUNCTION double evaluate(
+            Sampler sampler,
+            Element elem,
+            Component component,
+            std::index_sequence<Axis...>) const
+    {
+        double prescribed = 0.0;
+        if (prescribed_flux(elem, component, prescribed))
+            return prescribed;
+        auto const coefficients = stencil(elem, component, std::index_sequence<Axis...> {});
+        double result = 0.0;
+        ddc::device_for_each(coefficients.domain(), [&](auto entry) {
+            double const weight = coefficients.mem(entry);
+            if (weight != 0.0)
+                result += weight
+                          * tensor::detail::evaluate_tensor_basis(
+                                  cochain,
+                                  sampler,
+                                  tensor::detail::stencil_sample(elem, entry),
+                                  ddc::DiscreteElement<ddc::type_seq_element_t<
+                                          0,
+                                          ddc::to_type_seq_t<typename Cochain::indices_domain_t>>>(
+                                          entry));
+        });
+        return result;
     }
 
     /** Inverse zero-form Hodge with the physical, truncated dual volume. */

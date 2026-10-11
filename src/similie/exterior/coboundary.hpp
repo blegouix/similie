@@ -206,53 +206,39 @@ struct CoboundaryDummyIndex
 {
 };
 
-template <class MemorySpace = Kokkos::HostSpace, class TensorIndex, class... DDims>
+template <
+        class MemorySpace = Kokkos::HostSpace,
+        class TensorIndex,
+        std::size_t Width = 2,
+        class... DDims>
 KOKKOS_FUNCTION auto make_stencil(ddc::DiscreteElement<DDims...> front)
-        -> sil::tensor::OwningTensor<
-                sil::tensor::Tensor<
-                        double,
-                        ddc::DiscreteDomain<DDims..., TensorIndex>,
-                        Kokkos::layout_right,
-                        MemorySpace>,
-                std::array<
-                        double,
-                        (sizeof...(DDims) == 0 ? 1UL : (1UL << sizeof...(DDims)))
-                                * TensorIndex::mem_size()>>
 {
-    std::array<
-            double,
-            (sizeof...(DDims) == 0 ? 1UL : (1UL << sizeof...(DDims))) * TensorIndex::mem_size()>
-            storage {};
+    constexpr std::size_t size = [] {
+        std::size_t nodes = 1;
+        for (std::size_t axis = 0; axis < sizeof...(DDims); ++axis)
+            nodes *= Width;
+        return nodes * TensorIndex::mem_size();
+    }();
+    std::array<double, size> storage {};
     ddc::DiscreteDomain<DDims..., TensorIndex> const
             domain(ddc::DiscreteDomain<DDims...>(
                            front,
                            typename ddc::DiscreteDomain<DDims...>::discrete_vector_type(
-                                   ddc::DiscreteVector<DDims>(2)...)),
+                                   ddc::DiscreteVector<DDims>(Width)...)),
                    ddc::DiscreteDomain<TensorIndex>(
                            ddc::DiscreteElement<TensorIndex>(0),
                            ddc::DiscreteVector<TensorIndex>(TensorIndex::mem_size())));
-    ddc::ChunkSpan<
+    tensor::Tensor<
             double,
             ddc::DiscreteDomain<DDims..., TensorIndex>,
             Kokkos::layout_right,
             MemorySpace>
-            span(storage.data(), domain);
-    sil::tensor::Tensor<
-            double,
-            ddc::DiscreteDomain<DDims..., TensorIndex>,
-            Kokkos::layout_right,
-            MemorySpace>
-            tensor(span);
-    return sil::tensor::OwningTensor<
-            sil::tensor::Tensor<
+            result(ddc::ChunkSpan<
                     double,
                     ddc::DiscreteDomain<DDims..., TensorIndex>,
                     Kokkos::layout_right,
-                    MemorySpace>,
-            std::array<
-                    double,
-                    (sizeof...(DDims) == 0 ? 1UL : (1UL << sizeof...(DDims)))
-                            * TensorIndex::mem_size()>>(tensor, std::move(storage));
+                    MemorySpace>(storage.data(), domain));
+    return tensor::OwningTensor(result, std::move(storage));
 }
 
 template <class Elem, class Domain>
@@ -359,8 +345,7 @@ struct Coboundary<TagToAddToCochain, CochainTag>
                     if (!basis_stencil.non_indices_domain().contains(basis_elem)) {
                         return 0.0;
                     }
-                    return basis_stencil(
-                            basis_stencil.access_element(basis_elem, basis_cochain_elem));
+                    return basis_stencil.mem(basis_elem, basis_cochain_elem);
                 };
                 return evaluator.value(basis_sampler, sampled_elem, cochain_elem);
             };
@@ -523,8 +508,7 @@ struct TransposedCoboundary<TagToAddToCochain, CochainTag>
                     if (!basis_stencil.non_indices_domain().contains(basis_elem)) {
                         return 0.0;
                     }
-                    return basis_stencil(
-                            basis_stencil.access_element(basis_elem, basis_cochain_elem));
+                    return basis_stencil.mem(basis_elem, basis_cochain_elem);
                 };
                 return evaluator.value(basis_sampler, sampled_elem, cochain_elem);
             };

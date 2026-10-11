@@ -4,8 +4,10 @@
 
 #pragma once
 
+#include <tuple>
+
 #include <similie/exterior/laplacian.hpp>
-#include <similie/solvers/affine_assembly.hpp>
+#include <similie/solvers/stencil_assembly.hpp>
 
 #include "indexed_scalar_field.hpp"
 #include "multidomain_operator.hpp"
@@ -48,9 +50,7 @@ auto make_laplacian_flux_domains(
 }
 
 namespace detail {
-using similie::solvers::detail::assemble_dec_rows;
 using similie::solvers::detail::RowAssembly;
-using similie::solvers::detail::sample_affine;
 template <std::size_t Axis, bool Upper, std::size_t Capacity, class Field, class Primal>
 void prescribe_face(
         Kokkos::DefaultExecutionSpace const& exec,
@@ -85,16 +85,36 @@ void prescribe_face(
                 exec,
                 nodes,
                 KOKKOS_LAMBDA(typename Field::non_indices_domain_t::discrete_element_type elem) {
-                    int error = 0;
-                    auto const sample = sample_affine<Capacity>(
-                            [&](auto sampler) {
-                                return sil::tensor::detail::EvaluateRuleValue {sampler}(
-                                        primal,
-                                        field,
-                                        elem,
-                                        ddc::DiscreteElement<typename Field::component_type>(0));
+                    std::array<std::size_t, Capacity> indices {};
+                    auto weights = similie::solvers::detail::make_row_stencil<Capacity>();
+                    std::size_t count = 0;
+                    double constant = 0.0;
+                    sil::tensor::detail::visit_rule_basis(
+                            primal,
+                            field,
+                            elem,
+                            ddc::DiscreteElement<typename Field::component_type>(0),
+                            1.0,
+                            [&](auto const& donor, auto sample, auto component, double weight) {
+                                if (!similie::solvers::detail::add_stencil_coefficient(
+                                            weights,
+                                            indices.data(),
+                                            count,
+                                            donor.global_index(sample, component),
+                                            weight))
+                                    system.fail(2);
                             },
-                            error);
+                            [&](double value) { constant += value; });
+                    std::size_t nonzero = 0;
+                    std::size_t selected = 0;
+                    for (std::size_t i = 0; i < count; ++i)
+                        if (weights.mem(
+                                    ddc::DiscreteElement<similie::solvers::detail::StencilColumn>(
+                                            i))
+                            != 0.0) {
+                            ++nonzero;
+                            selected = i;
+                        }
                     auto exterior = elem;
                     if constexpr (Upper)
                         ++ddc::detail::array(exterior)[Axis];
@@ -108,10 +128,16 @@ void prescribe_face(
                             field,
                             exterior,
                             ddc::DiscreteElement<typename Field::component_type>(0));
-                    if (error)
-                        system.fail(error);
+                    if (nonzero != 1)
+                        system.fail(8);
                     else
-                        system.prescribe(sample, value);
+                        system.prescribe(
+                                indices[selected],
+                                (value - constant)
+                                        / weights.mem(
+                                                ddc::DiscreteElement<
+                                                        similie::solvers::detail::StencilColumn>(
+                                                        selected)));
                 });
     }
 }
@@ -128,14 +154,111 @@ void prescribe_faces(
     (prescribe_face<Axis, true, Capacity>(exec, system, field, primal), ...);
 }
 
+template <class Direction, std::size_t Requested>
+constexpr std::size_t column_capacity()
+{
+    if constexpr (Requested != 0)
+        return Requested;
+    std::size_t samples = 1;
+    for (std::size_t axis = 0; axis < Direction::size(); ++axis)
+        samples *= 5;
+    return samples;
+}
+
+template <bool Matrix, std::size_t Capacity, class Field, class Operator, class Flux, class Rules>
+void assemble_rows(
+        Kokkos::DefaultExecutionSpace const& stream,
+        RowAssembly<Capacity> system,
+        Field field,
+        Operator op,
+        Flux flux,
+        Rules rules)
+{
+    std::tuple<Operator, Flux, Rules> const bound(op, flux, rules);
+    ddc::parallel_for_each(
+            "assemble_dec_laplacian_rows",
+            stream,
+            field.non_indices_domain(),
+            KOKKOS_LAMBDA(typename Field::non_indices_domain_t::discrete_element_type elem) {
+                auto const& op = std::get<0>(bound);
+                auto const& flux = std::get<1>(bound);
+                auto const& rules = std::get<2>(bound);
+                std::size_t const row = field.global_index(
+                        elem,
+                        ddc::DiscreteElement<typename Field::component_type>(0));
+                if (row >= system.constants.extent(0)) {
+                    system.fail(4);
+                    return;
+                }
+                if constexpr (Matrix) {
+                    auto const coefficients = op.value(flux, flux, elem);
+                    ddc::device_for_each(coefficients.domain(), [&](auto entry) {
+                        double const weight = coefficients.mem(entry);
+                        if (weight != 0.0)
+                            sil::tensor::detail::visit_rule_basis(
+                                    rules,
+                                    flux,
+                                    sil::tensor::detail::stencil_sample(elem, entry),
+                                    typename Flux::indices_domain_t::discrete_element_type(entry),
+                                    weight,
+                                    [&](auto const& donor,
+                                        auto sample,
+                                        auto component,
+                                        double coefficient) {
+                                        system
+                                                .add(row,
+                                                     donor.global_index(sample, component),
+                                                     coefficient);
+                                    },
+                                    [&](double value) { system.constants(row) += value; });
+                    });
+                } else
+                    system.constants(row)
+                            = op.value(flux,
+                                       rules,
+                                       flux,
+                                       sil::exterior::detail::ZeroScalarSampler {},
+                                       elem)
+                                      .mem(ddc::DiscreteElement<typename Field::component_type>(0));
+            });
+}
+
+template <class Direction, bool Matrix, std::size_t Capacity, class Domains, class Diffusivity>
+void assemble_laplacian_rows(
+        Kokkos::DefaultExecutionSpace const& exec,
+        RowAssembly<Capacity> system,
+        Domains const& domains,
+        Diffusivity diffusivity,
+        double jump_scale)
+{
+    auto const flux_domains
+            = make_laplacian_flux_domains<Direction>(domains, diffusivity, jump_scale);
+    MultidomainOperator const operation(
+            std::vector<sil::exterior::Codifferential<Direction, Direction>>(
+                    domains.domain_count()));
+    operation.for_each(
+            exec,
+            [&](std::size_t id, Kokkos::DefaultExecutionSpace const& stream, auto const& op) {
+                auto const field = domains.field(id);
+                auto const flux = flux_domains.template field<FieldRole::Flux>(id);
+                auto const rules = flux_domains.template extrapolation_rules<FieldRole::Flux>(id);
+                assemble_rows<Matrix>(stream, system, field, op, flux, rules);
+                prescribe_faces<Capacity>(
+                        stream,
+                        system,
+                        field,
+                        domains.extrapolation_rules(id, jump_scale),
+                        std::make_index_sequence<Direction::size()> {});
+            });
+}
 } // namespace detail
-/** Assemble scalar DEC stencils through topology-generated primal and dual rules.
+
+/** Assemble scalar DEC tensor stencils through topology-generated rules.
  * \important This operator and documentation is fully AI-generated.
- * Each domain owns disjoint nodal rows and uses its partitioned execution space.
- * Dirichlet constraints include junction endpoints owned by connected domains.
- * Row stencils are packed into CSR on the device after all domains finish.
+ * Each domain owns disjoint nodal rows. Coefficients are composed through donor
+ * mappings; prescribed values and interface jumps contribute separately to rhs.
  */
-template <class Direction, std::size_t ProbeCapacity = 0, class Domains, class Diffusivity>
+template <class Direction, std::size_t ColumnCapacity = 0, class Domains, class Diffusivity>
 similie::solvers::ScalarLinearSystem assemble_multidomain_laplacian(
         Kokkos::DefaultExecutionSpace const& exec,
         Domains const& domains,
@@ -144,45 +267,34 @@ similie::solvers::ScalarLinearSystem assemble_multidomain_laplacian(
         double jump_scale = 1.0,
         bool normalize = true)
 {
-    auto const flux_domains
-            = make_laplacian_flux_domains<Direction>(domains, diffusivity, jump_scale);
-    constexpr std::size_t capacity = [] {
-        if constexpr (ProbeCapacity != 0)
-            return ProbeCapacity;
-        // Whole dual tensors visit every normal at each incidence sample.
-        // Incidence and incident-cell offsets reach two nodes backward; cell
-        // corners and full forward gradients reach two nodes forward. Bound
-        // their union by this five-node box in every logical direction. Probes
-        // whose assembled coefficient is zero are discarded by sample_affine.
-        std::size_t samples = 1;
-        for (std::size_t axis = 0; axis < Direction::size(); ++axis)
-            samples *= 5;
-        return samples;
-    }();
-    MultidomainOperator const operation(
-            std::vector<sil::exterior::Codifferential<Direction, Direction>>(
-                    domains.domain_count()));
-    detail::RowAssembly<capacity> const system(unknowns);
-    operation.for_each(
-            exec,
-            [&](std::size_t id, Kokkos::DefaultExecutionSpace const& stream, auto const& op) {
-                auto const field = domains.field(id);
-                auto const flux = flux_domains.template field<FieldRole::Flux>(id);
-                detail::assemble_dec_rows<capacity>(
-                        stream,
-                        system,
-                        field,
-                        op,
-                        flux,
-                        flux_domains.template extrapolation_rules<FieldRole::Flux>(id),
-                        flux);
-                detail::prescribe_faces<capacity>(
-                        stream,
-                        system,
-                        field,
-                        domains.extrapolation_rules(id, jump_scale),
-                        std::make_index_sequence<Direction::size()> {});
-            });
+    detail::RowAssembly<detail::column_capacity<Direction, ColumnCapacity>()> const system(
+            unknowns);
+    detail::assemble_laplacian_rows<
+            Direction,
+            true>(exec, system, domains, diffusivity, jump_scale);
     return system.finalize(exec, normalize);
+}
+
+/** Evaluate a new boundary/interface load for an already assembled operator.
+ * \important This operator and documentation is fully AI-generated.
+ * Geometry, material coefficients, ownership and boundary kinds must match the
+ * original system. Its row scaling is reused, including constrained nodal rows.
+ */
+template <class Direction, std::size_t ColumnCapacity = 0, class Domains, class Diffusivity>
+Kokkos::View<double**> assemble_multidomain_laplacian_rhs(
+        Kokkos::DefaultExecutionSpace const& exec,
+        Domains const& domains,
+        similie::solvers::ScalarLinearSystem const& matrix_system,
+        Diffusivity diffusivity,
+        double jump_scale = 1.0)
+{
+    if (matrix_system.row_scales.extent(0) != matrix_system.rhs.extent(0))
+        throw std::invalid_argument("RHS assembly requires the original DEC row scaling");
+    detail::RowAssembly<detail::column_capacity<Direction, ColumnCapacity>()> const
+            system(matrix_system.rhs.extent(0), false);
+    detail::assemble_laplacian_rows<
+            Direction,
+            false>(exec, system, domains, diffusivity, jump_scale);
+    return system.finalize_rhs(exec, matrix_system.row_scales);
 }
 } // namespace sil::multidomains

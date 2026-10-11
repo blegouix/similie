@@ -141,5 +141,6 @@ struct ScalarLinearSystem
 {
     SparseLinearOperator matrix;
     Kokkos::View<double**> rhs;
+    Kokkos::View<double*> row_scales;
 };
 } // namespace similie::solvers
