@@ -5,7 +5,9 @@
 #pragma once
 
 #include <cstddef>
+#include <stdexcept>
 #include <utility>
+#include <vector>
 
 #include <similie/multidomains/multidomains.hpp>
 #include <similie/physics/hamilton_equations.hpp>
@@ -44,133 +46,25 @@ using FreeScalarFieldHamiltonian
         = physics::scalar_field::ScalarFieldWithPowerCouplingHamiltonian<T, X, Y>;
 using PotentialFlowPhysics = physics::HamiltonEquations<FreeScalarFieldHamiltonian>;
 
-template <std::size_t Index>
-struct Patch
-{
-    static constexpr std::size_t INDEX = Index;
-};
-struct Wall
-{
-};
-struct Upstream
-{
-};
-struct Downstream
-{
-};
 
-template <std::size_t Index, class Dimension, sil::exterior::BoundarySide Side>
-using PatchFace = sil::multidomains::Face<Patch<Index>, Dimension, Side>;
-
-/** Six physical scalar-potential domains, with explicit exterior boundary nodes.
- * \important This documentation is fully AI-generated.
- * Each angular interface is declared once. The 2->3 connection carries the
- * circulation cut; the graph derives its reverse and generates every rule.
- * Radial faces meet wall, upstream, or downstream nodes with no allocated mesh.
+/** Bind scalar physics to the runtime graph inferred from the ONELAB mesh.
+ * \important This operator and documentation is fully AI-generated.
  */
-using PotentialFlowTopology = sil::multidomains::Topology<
-        ddc::TypeSeq<
-                sil::multidomains::Domain<Patch<0>, PotentialFlowPhysics, GridX, GridY>,
-                sil::multidomains::Domain<Patch<1>, PotentialFlowPhysics, GridX, GridY>,
-                sil::multidomains::Domain<Patch<2>, PotentialFlowPhysics, GridX, GridY>,
-                sil::multidomains::Domain<Patch<3>, PotentialFlowPhysics, GridX, GridY>,
-                sil::multidomains::Domain<Patch<4>, PotentialFlowPhysics, GridX, GridY>,
-                sil::multidomains::Domain<Patch<5>, PotentialFlowPhysics, GridX, GridY>,
-                sil::multidomains::
-                        BoundaryDomain<Wall, sil::exterior::NaturalScalarExtrapolationRule>,
-                sil::multidomains::
-                        BoundaryDomain<Upstream, sil::exterior::PrescribedScalarExtrapolationRule>,
-                sil::multidomains::BoundaryDomain<
-                        Downstream,
-                        sil::exterior::PrescribedScalarExtrapolationRule>>,
-        sil::multidomains::Connection<
-                PatchFace<0, GridX, sil::exterior::BoundarySide::Upper>,
-                PatchFace<1, GridX, sil::exterior::BoundarySide::Lower>,
-                false>,
-        sil::multidomains::Connection<
-                PatchFace<1, GridX, sil::exterior::BoundarySide::Upper>,
-                PatchFace<2, GridX, sil::exterior::BoundarySide::Lower>,
-                false>,
-        sil::multidomains::Connection<
-                PatchFace<2, GridX, sil::exterior::BoundarySide::Upper>,
-                PatchFace<3, GridX, sil::exterior::BoundarySide::Lower>,
-                false,
-                1.0,
-                -1.0>,
-        sil::multidomains::Connection<
-                PatchFace<3, GridX, sil::exterior::BoundarySide::Upper>,
-                PatchFace<4, GridX, sil::exterior::BoundarySide::Lower>,
-                false>,
-        sil::multidomains::Connection<
-                PatchFace<4, GridX, sil::exterior::BoundarySide::Upper>,
-                PatchFace<5, GridX, sil::exterior::BoundarySide::Lower>,
-                false>,
-        sil::multidomains::Connection<
-                PatchFace<5, GridX, sil::exterior::BoundarySide::Upper>,
-                PatchFace<0, GridX, sil::exterior::BoundarySide::Lower>,
-                false>,
-        sil::multidomains::
-                BoundaryConnection<PatchFace<0, GridY, sil::exterior::BoundarySide::Lower>, Wall>,
-        sil::multidomains::
-                BoundaryConnection<PatchFace<1, GridY, sil::exterior::BoundarySide::Lower>, Wall>,
-        sil::multidomains::
-                BoundaryConnection<PatchFace<2, GridY, sil::exterior::BoundarySide::Lower>, Wall>,
-        sil::multidomains::
-                BoundaryConnection<PatchFace<3, GridY, sil::exterior::BoundarySide::Lower>, Wall>,
-        sil::multidomains::
-                BoundaryConnection<PatchFace<4, GridY, sil::exterior::BoundarySide::Lower>, Wall>,
-        sil::multidomains::
-                BoundaryConnection<PatchFace<5, GridY, sil::exterior::BoundarySide::Lower>, Wall>,
-        sil::multidomains::
-                BoundaryConnection<PatchFace<0, GridY, sil::exterior::BoundarySide::Upper>, Wall>,
-        sil::multidomains::BoundaryConnection<
-                PatchFace<1, GridY, sil::exterior::BoundarySide::Upper>,
-                Upstream>,
-        sil::multidomains::
-                BoundaryConnection<PatchFace<2, GridY, sil::exterior::BoundarySide::Upper>, Wall>,
-        sil::multidomains::
-                BoundaryConnection<PatchFace<3, GridY, sil::exterior::BoundarySide::Upper>, Wall>,
-        sil::multidomains::BoundaryConnection<
-                PatchFace<4, GridY, sil::exterior::BoundarySide::Upper>,
-                Downstream>,
-        sil::multidomains::
-                BoundaryConnection<PatchFace<5, GridY, sil::exterior::BoundarySide::Upper>, Wall>>;
-
-template <class Fields, class Positions, std::size_t... Indices>
-auto bind_potential_flow_domains(
-        Fields const& fields,
-        Positions const& positions,
-        PotentialFlowPhysics physics,
-        double upstream,
-        double downstream,
-        std::index_sequence<Indices...>)
-{
-    return sil::multidomains::Multidomain(
-            PotentialFlowTopology {},
-            sil::multidomains::domain_data<
-                    Patch<Indices>>(fields[Indices], positions[Indices], physics)...,
-            sil::multidomains::boundary_data<Wall>(
-                    sil::exterior::NaturalScalarExtrapolationRule {}),
-            sil::multidomains::boundary_data<Upstream>(
-                    sil::exterior::PrescribedScalarExtrapolationRule {upstream}),
-            sil::multidomains::boundary_data<Downstream>(
-                    sil::exterior::PrescribedScalarExtrapolationRule {downstream}));
-}
-
 template <class Fields, class Positions>
 auto bind_potential_flow_domains(
+        sil::multidomains::Topology<2> topology,
         Fields const& fields,
         Positions const& positions,
-        PotentialFlowPhysics physics,
-        double upstream,
-        double downstream)
+        PotentialFlowPhysics physics)
 {
-    return bind_potential_flow_domains(
-            fields,
-            positions,
-            physics,
-            upstream,
-            downstream,
-            std::make_index_sequence<6> {});
+    if (fields.size() != positions.size() || fields.size() != topology.domain_count())
+        throw std::invalid_argument("potential-flow domain data does not match topology");
+    std::vector<
+            decltype(sil::multidomains::domain_data(fields.front(), positions.front(), physics))>
+            data;
+    data.reserve(fields.size());
+    for (std::size_t id = 0; id < fields.size(); ++id)
+        data.push_back(sil::multidomains::domain_data(fields[id], positions[id], physics));
+    return sil::multidomains::Multidomain(std::move(topology), std::move(data));
 }
 } // namespace similie::onelab_interface::potential_flow_onelab

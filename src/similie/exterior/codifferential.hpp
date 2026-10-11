@@ -128,45 +128,6 @@ template <
 using codifferential_tensor_t = typename detail::
         CodifferentialTensorType<TagToRemoveFromCochain, CochainTag, TensorType>::type;
 
-namespace detail {
-
-template <std::size_t I, class T>
-struct CodifferentialHodgeOutputIndex : tensor::uncharacterize_t<T>
-{
-};
-
-template <class Ids, class T>
-struct CodifferentialHodgeOutputIndexSeq_;
-
-template <std::size_t... Id, class T>
-struct CodifferentialHodgeOutputIndexSeq_<std::index_sequence<Id...>, T>
-{
-    using type = ddc::TypeSeq<tensor::Covariant<CodifferentialHodgeOutputIndex<Id, T>>...>;
-};
-
-template <std::size_t EndId, class T>
-struct CodifferentialHodgeOutputIndexSeq;
-
-template <std::size_t EndId, class T>
-    requires(EndId == 0)
-struct CodifferentialHodgeOutputIndexSeq<EndId, T>
-{
-    using type = ddc::TypeSeq<>;
-};
-
-template <std::size_t EndId, class T>
-    requires(EndId > 0)
-struct CodifferentialHodgeOutputIndexSeq<EndId, T>
-{
-    using type =
-            typename CodifferentialHodgeOutputIndexSeq_<std::make_index_sequence<EndId>, T>::type;
-};
-
-} // namespace detail
-
-template <std::size_t EndId, class T>
-using codifferential_hodge_output_indices_t =
-        typename detail::CodifferentialHodgeOutputIndexSeq<EndId, T>::type;
 
 template <class... Args>
 struct Codifferential;
@@ -679,3 +640,72 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
 } // namespace exterior
 
 } // namespace sil
+
+namespace sil::exterior {
+namespace detail {
+template <class Sampler>
+struct FluxSampler
+{
+    Sampler primal;
+    template <class Flux, class Element, class Component>
+    KOKKOS_FUNCTION double operator()(Flux const& flux, Element elem, Component component) const
+    {
+        return flux.value(primal, elem, component);
+    }
+};
+} // namespace detail
+/** Point evaluation of the scalar codifferential from a dual Hodge cochain, using
+ * incidence, Hodge stars and codifferential sign convention.
+ * \important This operator and documentation is fully AI-generated.
+ * value(sampler, element) accepts a sampler for sparse assembly;
+ * operator()(element) evaluates stored cochains through the identical path.
+ * Dual rules map to lazy donor fluxes, whose primal rules resolve donor unknowns
+ * and affine jumps. Thus both stages follow the topology rather than a separate
+ * interface assembly formula.
+ */
+template <class Direction, class Flux, class DualRules>
+struct Codifferential<Direction, Flux, DualRules>
+{
+    Flux flux;
+    DualRules dual;
+    template <class Sampler, class Element>
+    KOKKOS_FUNCTION double value(Sampler sampler, Element elem) const
+    {
+        auto const dual_rules = [&] {
+            if constexpr (misc::Specialization<DualRules, ExtrapolationRules>)
+                return dual;
+            else
+                return make_extrapolation_rules(flux, dual);
+        }();
+        using DualIndex = typename Flux::component_type;
+        using TopIndices
+                = ddc::type_seq_merge_t<ddc::TypeSeq<Direction>, typename Flux::dual_indices>;
+        using TopIndex = misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, TopIndices>;
+        using Memory = typename decltype(flux.position)::memory_space;
+        auto top = detail::make_stencil<Memory, TopIndex>(ddc::DiscreteElement<>());
+        auto const chain = tangent_basis<Direction::size(), typename Flux::non_indices_domain_t>(
+                detail::LocalExecution<Memory> {});
+        auto const lower
+                = tangent_basis<Direction::size() - 1, typename Flux::non_indices_domain_t>(
+                        detail::LocalExecution<Memory> {});
+        using TopTensor = tensor::
+                Tensor<double, ddc::DiscreteDomain<TopIndex>, Kokkos::layout_right, Memory>;
+        TransposedCoboundary<Direction, DualIndex>::operator()(
+                TopTensor(top),
+                [&](auto sample, auto component) {
+                    return dual_rules
+                            .value(flux, detail::FluxSampler<Sampler> {sampler}, sample, component);
+                },
+                chain,
+                lower,
+                elem);
+        // delta = - *^-1 d^T * on primal one-cochains in every dimension.
+        return -flux.inverse_zero_form(TopTensor(top), elem);
+    }
+    template <class Element>
+    KOKKOS_FUNCTION double operator()(Element elem) const
+    {
+        return value(StoredCochainSampler {}, elem);
+    }
+};
+} // namespace sil::exterior

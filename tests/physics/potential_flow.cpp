@@ -18,64 +18,33 @@ TEST(PotentialFlow, ExtrapolatedPatchGradientsAndCirculation)
     for (std::size_t j = 0; j < ny; ++j)
         for (std::size_t i = 0; i < nx; ++i)
             potential[j * nx + i] = static_cast<double>(i * i + 2 * j);
-    std::array<std::size_t, 2> const starts {0, 3};
-    std::array<std::size_t, 2> const cells {3, 3};
-    using Graph = sil::multidomains::Topology<
-            ddc::TypeSeq<
-                    sil::multidomains::Domain<
-                            potential_flow::Patch<0>,
-                            potential_flow::PotentialFlowPhysics,
-                            potential_flow::GridX,
-                            potential_flow::GridY>,
-                    sil::multidomains::Domain<
-                            potential_flow::Patch<1>,
-                            potential_flow::PotentialFlowPhysics,
-                            potential_flow::GridX,
-                            potential_flow::GridY>,
-                    sil::multidomains::BoundaryDomain<
-                            potential_flow::Wall,
-                            sil::exterior::NaturalScalarExtrapolationRule>>,
-            sil::multidomains::Connection<
-                    potential_flow::
-                            PatchFace<0, potential_flow::GridX, sil::exterior::BoundarySide::Upper>,
-                    potential_flow::
-                            PatchFace<1, potential_flow::GridX, sil::exterior::BoundarySide::Lower>,
-                    false,
-                    1.0,
-                    -1.0>,
-            sil::multidomains::Connection<
-                    potential_flow::
-                            PatchFace<1, potential_flow::GridX, sil::exterior::BoundarySide::Upper>,
-                    potential_flow::
-                            PatchFace<0, potential_flow::GridX, sil::exterior::BoundarySide::Lower>,
-                    false>,
-            sil::multidomains::BoundaryConnection<
-                    potential_flow::
-                            PatchFace<0, potential_flow::GridY, sil::exterior::BoundarySide::Lower>,
-                    potential_flow::Wall>,
-            sil::multidomains::BoundaryConnection<
-                    potential_flow::
-                            PatchFace<0, potential_flow::GridY, sil::exterior::BoundarySide::Upper>,
-                    potential_flow::Wall>,
-            sil::multidomains::BoundaryConnection<
-                    potential_flow::
-                            PatchFace<1, potential_flow::GridY, sil::exterior::BoundarySide::Lower>,
-                    potential_flow::Wall>,
-            sil::multidomains::BoundaryConnection<
-                    potential_flow::
-                            PatchFace<1, potential_flow::GridY, sil::exterior::BoundarySide::Upper>,
-                    potential_flow::Wall>>;
+    std::vector<std::size_t> const starts {0, 3};
+    std::vector<std::size_t> const cells {3, 3};
     auto bind_domains = [](auto const& fields) {
         potential_flow::PotentialFlowPhysics const physics(
                 potential_flow::FreeScalarFieldHamiltonian(0.0, 0.0, 2.0));
+        sil::multidomains::Topology<2> graph(2);
+        std::size_t const wall
+                = graph.add_boundary({sil::exterior::NaturalScalarExtrapolationRule {}});
+        graph.connect(
+                {0, 0, sil::exterior::BoundarySide::Upper},
+                {1, 0, sil::exterior::BoundarySide::Lower},
+                false,
+                1.0,
+                -1.0);
+        graph.connect(
+                {1, 0, sil::exterior::BoundarySide::Upper},
+                {0, 0, sil::exterior::BoundarySide::Lower},
+                false);
+        for (std::size_t id = 0; id < 2; ++id) {
+            graph.connect_boundary({id, 1, sil::exterior::BoundarySide::Lower}, wall);
+            graph.connect_boundary({id, 1, sil::exterior::BoundarySide::Upper}, wall);
+        }
         return sil::multidomains::Multidomain(
-                Graph {},
-                sil::multidomains::domain_data<
-                        potential_flow::Patch<0>>(fields[0], fields[0], physics),
-                sil::multidomains::domain_data<
-                        potential_flow::Patch<1>>(fields[1], fields[1], physics),
-                sil::multidomains::boundary_data<potential_flow::Wall>(
-                        sil::exterior::NaturalScalarExtrapolationRule {}));
+                graph,
+                std::
+                        vector {sil::multidomains::domain_data(fields[0], fields[0], physics),
+                                sil::multidomains::domain_data(fields[1], fields[1], physics)});
     };
     potential_flow::PotentialFlowSamples const samples = potential_flow::
             sample_potential_flow_field(potential, 5.0, nx, ny, starts, cells, bind_domains);
@@ -141,6 +110,7 @@ TEST(PotentialFlow, CoupledCylinderSolve)
     settings.max_iterations = 1000;
     potential_flow::Result const result
             = potential_flow::run(mesh_file, result_file, inputs, settings);
+    EXPECT_EQ(result.domain_count, 6);
     EXPECT_EQ(result.node_count, 24);
     EXPECT_EQ(result.cell_count, 16);
     EXPECT_DOUBLE_EQ(result.circulation, -2.0);
@@ -172,6 +142,34 @@ TEST(PotentialFlow, CoupledCylinderSolve)
             = potential_flow::run(mesh_file, result_file, inputs, settings);
     EXPECT_NEAR(assembled.mass_flow_rate, result.mass_flow_rate, 1.0e-8);
     EXPECT_NEAR(assembled.max_speed, result.max_speed, 1.0e-8);
+
+    auto parsed = sil::onelab_interface::gmsh::parse_supported_msh2_mesh(mesh_file);
+    auto const& original = std::get<sil::onelab_interface::gmsh::QuadrilateralMesh>(parsed);
+    std::ofstream scrambled(mesh_file);
+    scrambled << std::setprecision(17) << "$MeshFormat\n2.2 0 8\n$EndMeshFormat\n$Nodes\n"
+              << original.nodes.size() << '\n';
+    for (auto entry = original.nodes.rbegin(); entry != original.nodes.rend(); ++entry)
+        scrambled << entry->tag << ' ' << entry->x << ' ' << entry->y << ' ' << entry->z << '\n';
+    scrambled << "$EndNodes\n$Elements\n"
+              << original.boundary_edges.size() + original.cells.size() << '\n';
+    std::size_t number = 1;
+    for (auto entry = original.cells.rbegin(); entry != original.cells.rend(); ++entry) {
+        scrambled << number++ << " 3 2 " << 3 << ' ' << entry->elementary_tag + 100;
+        for (std::size_t node : entry->node_tags)
+            scrambled << ' ' << node;
+        scrambled << '\n';
+    }
+    for (auto entry = original.boundary_edges.rbegin(); entry != original.boundary_edges.rend();
+         ++entry)
+        scrambled << number++ << " 1 2 " << entry->physical_tag << " 100 " << entry->node_tags[0]
+                  << ' ' << entry->node_tags[1] << '\n';
+    scrambled << "$EndElements\n";
+    scrambled.close();
+    potential_flow::Result const reordered
+            = potential_flow::run(mesh_file, result_file, inputs, settings);
+    EXPECT_EQ(reordered.domain_count, 5);
+    EXPECT_NEAR(reordered.mass_flow_rate, result.mass_flow_rate, 1.e-8);
+    EXPECT_NEAR(reordered.max_speed, result.max_speed, 1.e-8);
     std::filesystem::remove(mesh_file);
     std::filesystem::remove(result_file);
 }

@@ -4,8 +4,9 @@
 
 #pragma once
 
+#include <memory>
 #include <stdexcept>
-#include <tuple>
+#include <string>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -16,49 +17,32 @@
 
 namespace sil::multidomains {
 
-/** One execution-space instance per physical domain; boundary nodes launch no work.
+/** One stream per physical domain, retained until all submitted work completes.
  * \important This operator and documentation is fully AI-generated.
- * On CUDA partition_space creates one owned stream per domain. for_each() only
- * submits work; fence() joins all domains at an explicit phase boundary. Inputs
- * must be ready before submission, and donor writes must finish before reads
- * from another domain. Keep this object alive until its submitted work completes.
  */
-template <class Graph, class ExecSpace>
+template <class ExecSpace>
 class DomainExecution
 {
     std::vector<ExecSpace> m_spaces;
 
 public:
-    explicit DomainExecution(ExecSpace const& parent)
+    DomainExecution(ExecSpace const& parent, std::size_t count)
     {
-        std::size_t count = 0;
-        Graph::for_each_domain([&]<class Node>() { ++count; });
+        if (count == 0)
+            throw std::invalid_argument("no physical execution domains");
         parent.fence("multidomain input readiness");
         m_spaces = Kokkos::Experimental::partition_space(parent, std::vector<int>(count, 1));
     }
-
     template <class Function>
     void for_each(Function function) const
     {
-        std::size_t index = 0;
-        Graph::for_each_domain(
-                [&]<class Node>() { function.template operator()<Node>(m_spaces[index++]); });
+        for (std::size_t id = 0; id < m_spaces.size(); ++id)
+            function(id, m_spaces[id]);
     }
-
-    template <class Id>
-    ExecSpace const& space() const
+    ExecSpace const& space(std::size_t id) const
     {
-        std::size_t index = 0, selected = m_spaces.size();
-        Graph::for_each_domain([&]<class Node>() {
-            if constexpr (std::is_same_v<Id, typename Node::id>)
-                selected = index;
-            ++index;
-        });
-        if (selected == m_spaces.size())
-            throw std::invalid_argument("execution space requested for a non-physical domain");
-        return m_spaces[selected];
+        return m_spaces.at(id);
     }
-
     void fence() const
     {
         for (ExecSpace const& space : m_spaces)
@@ -68,18 +52,47 @@ public:
 
 enum class FieldRole { Primal, Flux, Geometry };
 
-/** A non-owning field view carrying the physical graph node's identity. */
-template <class Id, class Field>
+template <class Field>
 struct DomainField : Field
 {
-    using domain_id = Id;
-    KOKKOS_FUNCTION explicit DomainField(Field field) : Field(field) {}
+    std::size_t domain_id;
+    KOKKOS_FUNCTION DomainField(Field field, std::size_t id) : Field(field), domain_id(id) {}
 };
 
-template <class Id, class Field, class Geometry, class Physics, class Flux = Field>
+/** A thin borrowed donor view, so face policies never duplicate lazy operators.
+ * \important This operator and documentation is fully AI-generated.
+ */
+template <class Field>
+struct DomainReference
+{
+    using non_indices_domain_t = typename Field::non_indices_domain_t;
+    using discrete_domain_type = typename Field::discrete_domain_type;
+    Field const* field;
+    std::size_t domain_id;
+    KOKKOS_FUNCTION non_indices_domain_t non_indices_domain() const
+    {
+        return field->non_indices_domain();
+    }
+    template <class Element, class Component>
+    KOKKOS_FUNCTION double mem(Element elem, Component component) const
+    {
+        return field->mem(elem, component);
+    }
+    template <class Element, class Component>
+    KOKKOS_FUNCTION std::size_t global_index(Element elem, Component component) const
+    {
+        return field->global_index(elem, component);
+    }
+    template <class Sampler, class Element, class Component>
+    KOKKOS_FUNCTION double value(Sampler sampler, Element elem, Component component) const
+    {
+        return field->value(sampler, elem, component);
+    }
+};
+
+template <class Field, class Geometry, class Physics, class Flux = Field>
 struct DomainData
 {
-    using id = Id;
     using physics_type = Physics;
     Field field;
     Geometry geometry;
@@ -87,204 +100,238 @@ struct DomainData
     Flux flux;
 };
 
-template <class Id, class Field, class Geometry, class Physics>
+template <class Field, class Geometry, class Physics>
 auto domain_data(Field field, Geometry geometry, Physics physics)
 {
-    return DomainData<Id, Field, Geometry, Physics> {field, geometry, physics, field};
+    return DomainData<Field, Geometry, Physics> {field, geometry, physics, field};
 }
-
-template <class Id, class Field, class Geometry, class Physics, class Flux>
+template <class Field, class Geometry, class Physics, class Flux>
 auto domain_data(Field field, Geometry geometry, Physics physics, Flux flux)
 {
-    return DomainData<Id, Field, Geometry, Physics, Flux> {field, geometry, physics, flux};
+    return DomainData<Field, Geometry, Physics, Flux> {field, geometry, physics, flux};
 }
 
-template <class Id, class Primal, class Flux, class Geometry>
-struct BoundaryData
+/** A runtime face policy with the same sampling API as an individual rule.
+ * \important This operator and documentation is fully AI-generated.
+ * Only this face's donor view and mapping are captured in kernels, never the
+ * host adjacency vectors. Runtime flags also guide geometric truncation and
+ * Dirichlet assembly. The caller retains ownership of the donor allocation.
+ */
+template <class Dimension, class Field>
+struct FaceRule
 {
-    using id = Id;
-    using primal_rule_type = Primal;
-    using flux_rule_type = Flux;
-    using geometry_rule_type = Geometry;
-    Primal primal;
-    Flux flux;
-    Geometry geometry;
+    exterior::ExternalDomainExtrapolationRule<Dimension, Field> external;
+    BoundaryRule boundary;
+    bool interface;
+    KOKKOS_FUNCTION bool is_interface() const
+    {
+        return interface;
+    }
+    KOKKOS_FUNCTION bool is_dirichlet() const
+    {
+        return !interface && boundary.is_dirichlet();
+    }
+    template <class Source, class Element, class Component>
+    KOKKOS_FUNCTION double operator()(Source const& field, Element elem, Component component) const
+    {
+        return interface ? external(field, elem, component) : boundary(field, elem, component);
+    }
+    template <class Source, class Sampler, class Element, class Component>
+    KOKKOS_FUNCTION double value(
+            Source const& field,
+            Sampler sampler,
+            Element elem,
+            Component component) const
+    {
+        return interface ? external.value(field, sampler, elem, component)
+                         : boundary.value(field, sampler, elem, component);
+    }
+    KOKKOS_FUNCTION bool shared_boundary() const
+    {
+        return external.boundary_map.shared_boundary;
+    }
 };
 
-template <
-        class Id,
-        class Primal,
-        class Flux = exterior::ZeroCochainExtrapolationRule,
-        class Geometry = exterior::ClampCochainExtrapolationRule>
-auto boundary_data(Primal primal, Flux flux = {}, Geometry geometry = {})
-{
-    return BoundaryData<Id, Primal, Flux, Geometry> {primal, flux, geometry};
-}
-
-/** Bind fields, geometry, physics and boundary values to a static topology.
+/** Bind homogeneous field/geometry/physics views to a runtime topology.
  * \important This operator and documentation is fully AI-generated.
- * Data objects are views, not mesh owners. Boundary data has no cochain storage.
- * Factories return ordinary ExtrapolationRules with statically selected donors
- * and source/target faces; the complete graph is never captured in a kernel.
- * value(field, sampler, element, component) forwards mapped DomainField views
- * to the sampler. Its domain_id identifies global stencil columns even where
- * local coordinates overlap. operator() follows exactly the same connections.
- * Primal interface jumps are Connection::JUMP times jump_scale. Reverse rules
- * invert the affine transformation. Geometry never receives a potential jump.
- * Supply a distinct dual cochain to domain_data() when using Flux field rules.
+ * Domain count is unrestricted. The topology owns exterior policies; physical
+ * data owns views, not mesh allocations. Returned ExtrapolationRules retain the
+ * usual per-dimension pairs and normalized outward-distance corner blend.
+ * Thin donor references point into host/device-accessible arrays owned by this
+ * binding. Keep the binding, source bindings of transformed data, and cochain
+ * allocations alive until submitted work finishes. SharedSpace holds metadata
+ * only; the cochain allocations retain their original memory space.
  */
-template <class Graph, class... Data>
+template <std::size_t N, class Data>
 class Multidomain
 {
-    std::tuple<Data...> m_data;
-
-    template <class Id>
-    static consteval std::size_t data_index()
+    template <class Field>
+    struct DomainViews
     {
-        static_assert(
-                (std::size_t(0) + ... + std::size_t(std::is_same_v<Id, typename Data::id>)) == 1,
-                "each topology node needs exactly one data object");
-        std::size_t index = 0, result = 0;
-        ((std::is_same_v<Id, typename Data::id> ? void(result = index) : void(), ++index), ...);
-        return result;
-    }
-
-    template <class Node>
-    static consteval bool valid_data()
-    {
-        using State = std::tuple_element_t<data_index<typename Node::id>(), std::tuple<Data...>>;
-        if constexpr (Node::IS_BOUNDARY)
-            return std::is_same_v<typename Node::primal_rule_type, typename State::primal_rule_type>
-                   && std::is_same_v<typename Node::flux_rule_type, typename State::flux_rule_type>
-                   && std::is_same_v<
-                           typename Node::geometry_rule_type,
-                           typename State::geometry_rule_type>;
-        else
-            return std::is_same_v<typename Node::physics_type, typename State::physics_type>
-                   && std::is_same_v<
-                           typename Node::dimensions,
-                           ddc::to_type_seq_t<
-                                   typename decltype(State::field)::non_indices_domain_t>>;
-    }
-
-    template <class... Nodes>
-    static consteval bool valid_data(ddc::TypeSeq<Nodes...>)
-    {
-        return sizeof...(Nodes) == sizeof...(Data) && (valid_data<Nodes>() && ...);
-    }
-
-    template <class Id, FieldRole Role, class Dimension, exterior::BoundarySide Side>
-    auto face_rule(double jump_scale) const
-    {
-        using SourceFace = Face<Id, Dimension, Side>;
-        using Edge = typename Graph::template connection<SourceFace>;
-        using Target = std::conditional_t<
-                std::is_same_v<SourceFace, typename Edge::first>,
-                typename Edge::second,
-                typename Edge::first>;
-        using TargetNode = typename Graph::template node<typename Target::domain_id>;
-        if constexpr (TargetNode::IS_BOUNDARY) {
-            if constexpr (Role == FieldRole::Primal)
-                return data<typename Target::domain_id>().primal;
-            else if constexpr (Role == FieldRole::Flux)
-                return data<typename Target::domain_id>().flux;
-            else
-                return data<typename Target::domain_id>().geometry;
-        } else {
-            constexpr bool forward = std::is_same_v<SourceFace, typename Edge::first>;
-            double const orientation
-                    = Role == FieldRole::Geometry
-                              ? 1.0
-                              : (forward ? Edge::ORIENTATION : 1.0 / Edge::ORIENTATION);
-            double const jump
-                    = Role == FieldRole::Primal
-                              ? jump_scale
-                                        * (forward ? Edge::JUMP : -Edge::JUMP / Edge::ORIENTATION)
-                              : 0.0;
-            return exterior::ExternalDomainExtrapolationRule {
-                    field<typename Target::domain_id, Role>(),
-                    exterior::ExternalDomainBoundaryMap<
-                            Dimension> {Side, Target::SIDE, Edge::SHARED_BOUNDARY},
-                    jump,
-                    orientation};
+        Kokkos::View<DomainField<Field>*, Kokkos::SharedSpace> values;
+        std::size_t constructed = 0;
+        DomainViews(std::string const& label, std::size_t count)
+            : values(Kokkos::view_alloc(Kokkos::WithoutInitializing, label), count)
+        {
         }
+        ~DomainViews()
+        {
+            for (std::size_t id = 0; id < constructed; ++id)
+                std::destroy_at(values.data() + id);
+        }
+    };
+    Topology<N> m_topology;
+    std::vector<Data> m_data;
+    std::shared_ptr<DomainViews<decltype(Data::field)>> m_fields;
+    std::shared_ptr<DomainViews<decltype(Data::geometry)>> m_geometry;
+    std::shared_ptr<DomainViews<decltype(Data::flux)>> m_flux;
+
+    template <class Field, class Select>
+    auto make_views(std::string const& label, Select select) const
+    {
+        std::shared_ptr<DomainViews<Field>> views
+                = std::make_shared<DomainViews<Field>>(label, domain_count());
+        for (std::size_t id = 0; id < domain_count(); ++id) {
+            std::construct_at(views->values.data() + id, select(m_data[id]), id);
+            ++views->constructed;
+        }
+        return views;
+    }
+    template <FieldRole Role>
+    auto reference(std::size_t id) const
+    {
+        if constexpr (Role == FieldRole::Primal)
+            return DomainReference<
+                    DomainField<decltype(Data::field)>> {m_fields->values.data() + id, id};
+        else if constexpr (Role == FieldRole::Flux)
+            return DomainReference<
+                    DomainField<decltype(Data::flux)>> {m_flux->values.data() + id, id};
+        else
+            return DomainReference<
+                    DomainField<decltype(Data::geometry)>> {m_geometry->values.data() + id, id};
     }
 
-    template <class Id, FieldRole Role, class... Dimensions>
-    auto rules(double jump_scale, ddc::TypeSeq<Dimensions...>) const
+    template <FieldRole Role, class Dimension, std::size_t Axis, bool Upper>
+    auto face_rule(std::size_t id, double jump_scale) const
     {
+        constexpr exterior::BoundarySide side
+                = Upper ? exterior::BoundarySide::Upper : exterior::BoundarySide::Lower;
+        Connection const& edge = m_topology.connection({id, Axis, side});
+        bool const interface = edge.domain < m_data.size();
+        auto const donor = reference<Role>(interface ? edge.domain : id);
+        BoundaryRule boundary;
+        if (!interface) {
+            BoundaryDomain const& node = m_topology.boundary(edge.domain);
+            if constexpr (Role == FieldRole::Primal)
+                boundary = node.primal;
+            else if constexpr (Role == FieldRole::Flux)
+                boundary = node.flux;
+            else
+                boundary = node.geometry;
+        } else {
+            auto const source = field<Role>(id).non_indices_domain();
+            auto const target = field<Role>(edge.domain).non_indices_domain();
+            for (std::size_t tangent = 0; tangent < N; ++tangent)
+                if (tangent != Axis
+                    && ddc::detail::array(source.extents())[tangent]
+                               != ddc::detail::array(target.extents())[tangent])
+                    throw std::invalid_argument("interface tangential extents must match");
+        }
+        return FaceRule<Dimension, std::remove_cvref_t<decltype(donor)>> {
+                {donor,
+                 {side, edge.side, edge.shared_boundary},
+                 Role == FieldRole::Primal ? jump_scale * edge.jump : 0.0,
+                 Role == FieldRole::Geometry ? 1.0 : edge.orientation},
+                boundary,
+                interface};
+    }
+    template <FieldRole Role, std::size_t... Axis>
+    auto rules(std::size_t id, double scale, std::index_sequence<Axis...>) const
+    {
+        using Dimensions
+                = ddc::to_type_seq_t<typename decltype(field<Role>(id))::non_indices_domain_t>;
         return exterior::ExtrapolationRules(
                 std::
-                        pair {face_rule<Id, Role, Dimensions, exterior::BoundarySide::Lower>(
-                                      jump_scale),
-                              face_rule<Id, Role, Dimensions, exterior::BoundarySide::Upper>(
-                                      jump_scale)}...);
+                        pair {face_rule<
+                                      Role,
+                                      ddc::type_seq_element_t<Axis, Dimensions>,
+                                      Axis,
+                                      false>(id, scale),
+                              face_rule<
+                                      Role,
+                                      ddc::type_seq_element_t<Axis, Dimensions>,
+                                      Axis,
+                                      true>(id, scale)}...);
     }
 
 public:
-    using topology_type = Graph;
-    template <class Function>
-    static void for_each_domain(Function function)
+    using topology_type = Topology<N>;
+    Multidomain(Topology<N> topology, std::vector<Data> data)
+        : m_topology(std::move(topology))
+        , m_data(std::move(data))
     {
-        Graph::for_each_domain(function);
+        m_topology.validate();
+        if (m_data.size() != m_topology.domain_count())
+            throw std::invalid_argument("one state is required per physical domain");
+        static_assert(
+                N
+                == ddc::type_seq_size_v<
+                        ddc::to_type_seq_t<typename decltype(Data::field)::non_indices_domain_t>>);
+        m_fields = make_views<decltype(Data::field)>("multidomain_fields", [](Data const& state) {
+            return state.field;
+        });
+        m_geometry = make_views<
+                decltype(Data::geometry)>("multidomain_geometry", [](Data const& state) {
+            return state.geometry;
+        });
+        m_flux = make_views<decltype(Data::flux)>("multidomain_flux", [](Data const& state) {
+            return state.flux;
+        });
     }
-    /** Submit one domain computation per partition, then join the phase. */
-    template <class ExecSpace, class Function>
-    void for_each_domain(ExecSpace const& exec, Function function) const
+    Topology<N> const& topology() const
     {
-        DomainExecution<Graph, ExecSpace> partitions(exec);
-        partitions.for_each(function);
-        partitions.fence();
+        return m_topology;
     }
-
-    /** Transform bound state on the host; kernels capture only the resulting face views. */
+    std::size_t domain_count() const
+    {
+        return m_data.size();
+    }
+    Data const& data(std::size_t id) const
+    {
+        return m_data.at(id);
+    }
+    template <FieldRole Role = FieldRole::Primal>
+    auto field(std::size_t id) const
+    {
+        if constexpr (Role == FieldRole::Primal)
+            return DomainField {data(id).field, id};
+        else if constexpr (Role == FieldRole::Flux)
+            return DomainField {data(id).flux, id};
+        else
+            return DomainField {data(id).geometry, id};
+    }
     template <class Function>
     auto transform_data(Function function) const
     {
-        return std::apply(
-                [&](auto const&... data) {
-                    return Multidomain<
-                            Graph,
-                            decltype(function(data))...>(Graph {}, function(data)...);
-                },
-                m_data);
+        std::vector<std::remove_cvref_t<decltype(function(std::size_t(0), m_data.front()))>> data;
+        data.reserve(domain_count());
+        for (std::size_t id = 0; id < domain_count(); ++id)
+            data.push_back(function(id, m_data[id]));
+        return Multidomain<N, typename decltype(data)::value_type>(m_topology, std::move(data));
     }
-
-    explicit Multidomain(Graph, Data... data) : m_data(std::move(data)...)
+    template <FieldRole Role = FieldRole::Primal>
+    auto extrapolation_rules(std::size_t id, double jump_scale = 1.0) const
     {
-        static_assert(
-                valid_data(typename Graph::nodes {}),
-                "bound data must match the topology's physics, dimensions and boundary policies");
+        return rules<Role>(id, jump_scale, std::make_index_sequence<N> {});
     }
-
-    template <class Id>
-    auto const& data() const
+    template <class ExecSpace, class Function>
+    void for_each_domain(ExecSpace const& exec, Function function) const
     {
-        return std::get<data_index<Id>()>(m_data);
-    }
-
-    template <class Id, FieldRole Role = FieldRole::Primal>
-    auto field() const
-    {
-        static_assert(
-                !Graph::template node<Id>::IS_BOUNDARY,
-                "abstract boundary nodes have no field");
-        if constexpr (Role == FieldRole::Primal)
-            return DomainField<Id, decltype(data<Id>().field)> {data<Id>().field};
-        else if constexpr (Role == FieldRole::Flux)
-            return DomainField<Id, decltype(data<Id>().flux)> {data<Id>().flux};
-        else
-            return DomainField<Id, decltype(data<Id>().geometry)> {data<Id>().geometry};
-    }
-
-    template <class Id, FieldRole Role = FieldRole::Primal>
-    auto extrapolation_rules(double jump_scale = 1.0) const
-    {
-        static_assert(!Graph::template node<Id>::IS_BOUNDARY);
-        return rules<Id, Role>(jump_scale, typename Graph::template node<Id>::dimensions {});
+        DomainExecution<ExecSpace> partitions(exec, domain_count());
+        partitions.for_each(function);
+        partitions.fence();
     }
 };
-
-template <class Graph, class... Data>
-Multidomain(Graph, Data...) -> Multidomain<Graph, Data...>;
+template <std::size_t N, class Data>
+Multidomain(Topology<N>, std::vector<Data>) -> Multidomain<N, Data>;
 } // namespace sil::multidomains

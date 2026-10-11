@@ -4,248 +4,189 @@
 
 #pragma once
 
+#include <array>
+#include <cmath>
 #include <cstddef>
-#include <type_traits>
-#include <utility>
-
-#include <ddc/ddc.hpp>
+#include <limits>
+#include <stdexcept>
+#include <vector>
 
 #include <similie/exterior/external_domain_extrapolation_rule.hpp>
 
 namespace sil::multidomains {
 
-/** A physical graph node: identity, physics, and ordered logical dimensions.
- * \important This documentation is fully AI-generated.
- * The topology owns no mesh or cochain storage. Bind those separately in a
- * Multidomain. Every face must have exactly one connection, including exterior
- * faces. Exterior connections terminate in abstract BoundaryDomain nodes.
+/** A device-copyable choice of the scalar boundary policies.
+ * \important This operator and documentation is fully AI-generated.
+ * The selected law and its parameter are runtime data; sampling still invokes
+ * the ordinary exterior-library policies. Boundary nodes own no field storage.
  */
-template <class Id, class Physics, class... Dimensions>
-struct Domain
+class BoundaryRule
 {
-    using id = Id;
-    using physics_type = Physics;
-    using dimensions = ddc::TypeSeq<Dimensions...>;
-    static constexpr bool IS_BOUNDARY = false;
-};
+    enum class Kind { Clamp, Zero, Natural, Prescribed, Flux };
+    Kind m_kind = Kind::Clamp;
+    double m_value = 0.0;
 
-/** An abstract exterior node, with no mesh, unknowns, or volume equations.
- * \important This documentation is fully AI-generated.
- * The three policies describe primal values, prescribed integrated outward
- * flux, and geometry sampling. Their values are supplied when binding data.
- */
-template <
-        class Id,
-        class PrimalRule,
-        class FluxRule = exterior::ZeroCochainExtrapolationRule,
-        class GeometryRule = exterior::ClampCochainExtrapolationRule>
-struct BoundaryDomain
-{
-    using id = Id;
-    using primal_rule_type = PrimalRule;
-    using flux_rule_type = FluxRule;
-    using geometry_rule_type = GeometryRule;
-    static constexpr bool IS_BOUNDARY = true;
-};
-
-template <class DomainId, class Dimension, exterior::BoundarySide Side>
-struct Face
-{
-    using domain_id = DomainId;
-    using dimension = Dimension;
-    static constexpr exterior::BoundarySide SIDE = Side;
-};
-
-template <class BoundaryId>
-struct BoundaryEndpoint
-{
-    using domain_id = BoundaryId;
-    using dimension = void;
-};
-
-/** An undirected connection, declaring both entry faces once.
- * \important This documentation is fully AI-generated.
- * In the first-to-second direction, u_first = Orientation*u_second + Jump*scale.
- * The reverse rule automatically uses 1/Orientation and -Jump/Orientation.
- * SharedBoundary distinguishes coincident trace nodes from disjoint ownership.
- * Aligned interfaces have the same normal tag and ordered tangential tags.
- * Boundary endpoints must use the default identity transform.
- */
-template <
-        class First,
-        class Second,
-        bool SharedBoundary = true,
-        double Orientation = 1.0,
-        double Jump = 0.0>
-struct Connection
-{
-    using first = First;
-    using second = Second;
-    static constexpr bool SHARED_BOUNDARY = SharedBoundary;
-    static constexpr double ORIENTATION = Orientation;
-    static constexpr double JUMP = Jump;
-};
-
-template <class PhysicalFace, class BoundaryId>
-using BoundaryConnection = Connection<PhysicalFace, BoundaryEndpoint<BoundaryId>>;
-
-namespace detail {
-
-template <class Id, class... Nodes>
-struct FindNode
-{
-    using type = void;
-};
-
-template <class Id, class Node, class... Nodes>
-struct FindNode<Id, Node, Nodes...>
-{
-    using type = std::conditional_t<
-            std::is_same_v<Id, typename Node::id>,
-            Node,
-            typename FindNode<Id, Nodes...>::type>;
-};
-
-template <class Endpoint, class... Nodes>
-consteval bool valid_endpoint()
-{
-    using Node = typename FindNode<typename Endpoint::domain_id, Nodes...>::type;
-    if constexpr (std::is_void_v<Node>)
-        return false;
-    else if constexpr (Node::IS_BOUNDARY)
-        return std::is_void_v<typename Endpoint::dimension>;
-    else
-        return ddc::type_seq_contains_v<
-                ddc::TypeSeq<typename Endpoint::dimension>,
-                typename Node::dimensions>;
-}
-
-template <class FaceType, class... Edges>
-inline constexpr std::size_t face_degree
-        = (std::size_t(0) + ...
-           + (std::size_t(std::is_same_v<FaceType, typename Edges::first>)
-              + std::size_t(std::is_same_v<FaceType, typename Edges::second>)));
-
-template <class FaceType, class... Edges>
-struct FindConnection
-{
-    using type = void;
-};
-
-template <class FaceType, class Edge, class... Edges>
-struct FindConnection<FaceType, Edge, Edges...>
-{
-    using type = std::conditional_t<
-            std::is_same_v<FaceType, typename Edge::first>
-                    || std::is_same_v<FaceType, typename Edge::second>,
-            Edge,
-            typename FindConnection<FaceType, Edges...>::type>;
-};
-
-template <class Nodes, class... Edges>
-struct TopologyValidation;
-
-template <class... Nodes, class... Edges>
-struct TopologyValidation<ddc::TypeSeq<Nodes...>, Edges...>
-{
-    template <class Edge>
-    static consteval bool valid_edge()
+public:
+    BoundaryRule() = default;
+    BoundaryRule(exterior::ClampCochainExtrapolationRule) {}
+    BoundaryRule(exterior::ZeroCochainExtrapolationRule) : m_kind(Kind::Zero) {}
+    BoundaryRule(exterior::NaturalScalarExtrapolationRule) : m_kind(Kind::Natural) {}
+    BoundaryRule(exterior::PrescribedScalarExtrapolationRule rule)
+        : m_kind(Kind::Prescribed)
+        , m_value(rule.prescribed_value)
     {
-        if constexpr (
-                !valid_endpoint<typename Edge::first, Nodes...>()
-                || !valid_endpoint<typename Edge::second, Nodes...>())
-            return false;
-        else {
-            using First = typename FindNode<typename Edge::first::domain_id, Nodes...>::type;
-            using Second = typename FindNode<typename Edge::second::domain_id, Nodes...>::type;
-            if constexpr (First::IS_BOUNDARY && Second::IS_BOUNDARY)
-                return false;
-            else if constexpr (First::IS_BOUNDARY || Second::IS_BOUNDARY)
-                return Edge::ORIENTATION == 1.0 && Edge::JUMP == 0.0;
-            else
-                return std::is_same_v<typename First::dimensions, typename Second::dimensions>
-                       && std::is_same_v<
-                               typename Edge::first::dimension,
-                               typename Edge::second::dimension>
-                       && Edge::ORIENTATION != 0.0;
+    }
+    BoundaryRule(exterior::NormalScalarFluxExtrapolationRule rule)
+        : m_kind(Kind::Flux)
+        , m_value(rule.flux_value)
+    {
+    }
+
+    KOKKOS_FUNCTION bool is_dirichlet() const
+    {
+        return m_kind == Kind::Prescribed;
+    }
+
+    template <class Field, class Element, class Component>
+    KOKKOS_FUNCTION double operator()(Field const& field, Element elem, Component component) const
+    {
+        switch (m_kind) {
+        case Kind::Zero:
+            return exterior::ZeroCochainExtrapolationRule {}(field, elem, component);
+        case Kind::Natural:
+            return exterior::NaturalScalarExtrapolationRule {}(field, elem, component);
+        case Kind::Flux:
+            return exterior::NormalScalarFluxExtrapolationRule {m_value}(field, elem, component);
+        case Kind::Prescribed:
+            return exterior::PrescribedScalarExtrapolationRule {m_value}(field, elem, component);
+        default:
+            return exterior::ClampCochainExtrapolationRule {}(field, elem, component);
         }
     }
-
-    template <class Node, class... Dimensions>
-    static consteval bool covered(ddc::TypeSeq<Dimensions...>)
+    template <class Field, class Sampler, class Element, class Component>
+    KOKKOS_FUNCTION double value(
+            Field const& field,
+            Sampler sampler,
+            Element elem,
+            Component component) const
     {
-        return ((face_degree<
-                         Face<typename Node::id, Dimensions, exterior::BoundarySide::Lower>,
-                         Edges...>
-                         == 1
-                 && face_degree<
-                            Face<typename Node::id, Dimensions, exterior::BoundarySide::Upper>,
-                            Edges...>
-                            == 1)
-                && ...);
+        return (*this)(exterior::SampledCochain<Field, Sampler> {field, sampler}, elem, component);
     }
-
-    template <class Node>
-    static consteval bool valid_node()
-    {
-        if (((std::size_t(std::is_same_v<typename Node::id, typename Nodes::id>)) + ...) != 1)
-            return false;
-        if constexpr (Node::IS_BOUNDARY)
-            return (std::size_t(0) + ...
-                    + (std::size_t(
-                               std::is_same_v<typename Node::id, typename Edges::first::domain_id>)
-                       + std::size_t(
-                               std::is_same_v<
-                                       typename Node::id,
-                                       typename Edges::second::domain_id>)))
-                   > 0;
-        else
-            return ddc::type_seq_size_v<typename Node::dimensions> > 0
-                   && covered<Node>(typename Node::dimensions {});
-    }
-
-    static constexpr bool VALID
-            = sizeof...(Nodes) > 0 && (valid_edge<Edges>() && ...) && (valid_node<Nodes>() && ...);
 };
-} // namespace detail
 
-/** Check topology completeness without instantiating an invalid Topology. */
-template <class Nodes, class... Connections>
-inline constexpr bool is_valid_topology_v
-        = detail::TopologyValidation<Nodes, Connections...>::VALID;
-
-/** A compile-time graph: no implicit exterior faces and no runtime adjacency.
- * \important This documentation is fully AI-generated.
- * Connections may form cycles or self-periodic domains. Boundary nodes may be
- * shared by several faces but cannot connect to each other. All physical faces
- * have degree one; dangling domains and duplicate face connections are rejected.
- */
-template <class Nodes, class... Connections>
-struct Topology;
-
-template <class... Nodes, class... Connections>
-struct Topology<ddc::TypeSeq<Nodes...>, Connections...>
+struct BoundaryDomain
 {
-    static_assert(
-            is_valid_topology_v<ddc::TypeSeq<Nodes...>, Connections...>,
-            "invalid multidomain topology: every physical face needs exactly one valid connection "
-            "to a domain or boundary node");
-    using nodes = ddc::TypeSeq<Nodes...>;
-    using connections = ddc::TypeSeq<Connections...>;
-    template <class Id>
-    using node = typename detail::FindNode<Id, Nodes...>::type;
-    template <class FaceType>
-    using connection = typename detail::FindConnection<FaceType, Connections...>::type;
+    BoundaryRule primal;
+    BoundaryRule flux = exterior::ZeroCochainExtrapolationRule {};
+    BoundaryRule geometry = exterior::ClampCochainExtrapolationRule {};
+};
 
-    template <class Function>
-    static void for_each_domain(Function function)
+struct Face
+{
+    std::size_t domain;
+    std::size_t axis;
+    exterior::BoundarySide side;
+    bool operator==(Face const&) const = default;
+};
+
+struct Connection
+{
+    static constexpr std::size_t UNCONNECTED = std::numeric_limits<std::size_t>::max();
+    std::size_t domain = UNCONNECTED;
+    exterior::BoundarySide side = exterior::BoundarySide::Lower;
+    bool shared_boundary = true;
+    double orientation = 1.0;
+    double jump = 0.0;
+};
+
+/** Runtime adjacency of aligned tensor domains of dimension N.
+ * \important This operator and documentation is fully AI-generated.
+ * Physical node IDs are [0, domain_count); add_boundary() returns exterior IDs.
+ * Each physical face has one connection, to an entry face or an abstract
+ * boundary node. connect() installs both directions of the affine relation
+ * u_first = orientation*u_second + jump. validate() rejects missing faces and
+ * unused boundary nodes. Domain counts, policies and connections are runtime
+ * data. Ordered dimension tags and matching tangential extents remain required;
+ * this graph does not interpolate nonconforming interfaces or rotate frames.
+ */
+template <std::size_t N>
+class Topology
+{
+    static_assert(N > 0);
+    std::vector<std::array<Connection, 2 * N>> m_faces;
+    std::vector<BoundaryDomain> m_boundaries;
+
+    Connection& slot(Face face)
     {
-        (
-                [&]() {
-                    if constexpr (!Nodes::IS_BOUNDARY)
-                        function.template operator()<Nodes>();
-                }(),
-                ...);
+        if (face.domain >= m_faces.size() || face.axis >= N)
+            throw std::invalid_argument("invalid physical face");
+        return m_faces[face.domain][2 * face.axis + (face.side == exterior::BoundarySide::Upper)];
+    }
+
+public:
+    explicit Topology(std::size_t domains) : m_faces(domains)
+    {
+        if (domains == 0)
+            throw std::invalid_argument("a multidomain needs a physical domain");
+    }
+    std::size_t domain_count() const
+    {
+        return m_faces.size();
+    }
+    std::size_t add_boundary(BoundaryDomain boundary)
+    {
+        m_boundaries.push_back(boundary);
+        return domain_count() + m_boundaries.size() - 1;
+    }
+    BoundaryDomain const& boundary(std::size_t id) const
+    {
+        return m_boundaries.at(id - domain_count());
+    }
+    void connect(
+            Face first,
+            Face second,
+            bool shared_boundary = true,
+            double orientation = 1.0,
+            double jump = 0.0)
+    {
+        Connection& a = slot(first);
+        Connection& b = slot(second);
+        if (first == second || first.axis != second.axis || !std::isfinite(orientation)
+            || orientation == 0.0 || !std::isfinite(jump) || !std::isfinite(1.0 / orientation)
+            || !std::isfinite(jump / orientation) || a.domain != Connection::UNCONNECTED
+            || b.domain != Connection::UNCONNECTED)
+            throw std::invalid_argument("invalid or duplicate interface connection");
+        a = {second.domain, second.side, shared_boundary, orientation, jump};
+        b = {first.domain, first.side, shared_boundary, 1.0 / orientation, -jump / orientation};
+    }
+    void connect_boundary(Face face, std::size_t id)
+    {
+        Connection& entry = slot(face);
+        if (id < domain_count() || id - domain_count() >= m_boundaries.size()
+            || entry.domain != Connection::UNCONNECTED)
+            throw std::invalid_argument("invalid or duplicate boundary connection");
+        entry.domain = id;
+    }
+    Connection const& connection(Face face) const
+    {
+        if (face.axis >= N)
+            throw std::invalid_argument("invalid face axis");
+        return m_faces.at(
+                face.domain)[2 * face.axis + (face.side == exterior::BoundarySide::Upper)];
+    }
+    void validate() const
+    {
+        std::vector<bool> used(m_boundaries.size(), false);
+        for (std::array<Connection, 2 * N> const& faces : m_faces)
+            for (Connection const& edge : faces) {
+                if (edge.domain == Connection::UNCONNECTED)
+                    throw std::invalid_argument("every physical face needs a connection");
+                if (edge.domain >= domain_count())
+                    used.at(edge.domain - domain_count()) = true;
+            }
+        for (bool active : used)
+            if (!active)
+                throw std::invalid_argument("unconnected boundary node");
     }
 };
 } // namespace sil::multidomains

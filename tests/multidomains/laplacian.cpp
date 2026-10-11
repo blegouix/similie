@@ -12,18 +12,6 @@ namespace {
 namespace md = sil::multidomains;
 namespace solvers = similie::solvers;
 using sil::exterior::BoundarySide;
-struct A
-{
-};
-struct B
-{
-};
-struct Wall
-{
-};
-struct Value
-{
-};
 struct X
 {
 };
@@ -42,19 +30,15 @@ struct Physics
 {
     double diffusivity = 1.0;
 };
-using Graph = md::Topology<
-        ddc::TypeSeq<
-                md::Domain<A, Physics, GridX>,
-                md::Domain<B, Physics, GridX>,
-                md::BoundaryDomain<Wall, sil::exterior::NaturalScalarExtrapolationRule>>,
-        md::Connection<
-                md::Face<A, GridX, BoundarySide::Upper>,
-                md::Face<B, GridX, BoundarySide::Lower>,
-                false,
-                1.0,
-                2.5>,
-        md::BoundaryConnection<md::Face<A, GridX, BoundarySide::Lower>, Wall>,
-        md::BoundaryConnection<md::Face<B, GridX, BoundarySide::Upper>, Wall>>;
+md::Topology<1> split_graph()
+{
+    md::Topology<1> graph(2);
+    std::size_t const wall = graph.add_boundary({sil::exterior::NaturalScalarExtrapolationRule {}});
+    graph.connect({0, 0, BoundarySide::Upper}, {1, 0, BoundarySide::Lower}, false, 1.0, 2.5);
+    graph.connect_boundary({0, 0, BoundarySide::Lower}, wall);
+    graph.connect_boundary({1, 0, BoundarySide::Upper}, wall);
+    return graph;
+}
 
 struct GlobalSampler
 {
@@ -128,11 +112,11 @@ void check_split(bool normalize)
     Kokkos::deep_copy(second_ids, second_numbering);
     solvers::IndexedScalarField<GridX> const first {first_grid, first_ids.data()},
             second {second_grid, second_ids.data()};
-    md::Multidomain const
-            domains(Graph {},
-                    md::domain_data<A>(first, sil::tensor::Tensor(first_device), Physics {}),
-                    md::domain_data<B>(second, sil::tensor::Tensor(second_device), Physics {}),
-                    md::boundary_data<Wall>(sil::exterior::NaturalScalarExtrapolationRule {}));
+    md::Multidomain const domains(
+            split_graph(),
+            std::vector {
+                    md::domain_data(first, sil::tensor::Tensor(first_device), Physics {}),
+                    md::domain_data(second, sil::tensor::Tensor(second_device), Physics {})});
     auto const coefficient = [](Physics physics) { return physics.diffusivity; };
     auto const assembled = solvers::assemble_multidomain_laplacian<
             Direction>(Kokkos::DefaultExecutionSpace {}, domains, 128, coefficient, 1.0, normalize);
@@ -142,13 +126,14 @@ void check_split(bool normalize)
     for (auto const& entry : data.nonzeros)
         rows[entry.row][entry.column] += entry.value;
     for (std::size_t row = 0; row < 128; ++row) {
-        double const diagonal = row == 0 || row == 127 ? 1.0 : 2.0;
+        double const diagonal = 2.0;
+        double const neighbor = row == 0 || row == 127 ? 2.0 : 1.0;
         double const scale = normalize ? diagonal : 1.0;
         EXPECT_NEAR(rows[row][row], diagonal / scale, 1.e-12);
         if (row)
-            EXPECT_NEAR(rows[row][row - 1], -1.0 / scale, 1.e-12);
+            EXPECT_NEAR(rows[row][row - 1], -neighbor / scale, 1.e-12);
         if (row + 1 < 128)
-            EXPECT_NEAR(rows[row][row + 1], -1.0 / scale, 1.e-12);
+            EXPECT_NEAR(rows[row][row + 1], -neighbor / scale, 1.e-12);
         EXPECT_NEAR(rhs(row, 0), (row == 63 ? 2.5 : (row == 64 ? -2.5 : 0.0)) / scale, 1.e-12);
         for (auto const& [column, value] : rows[row])
             if (column + 1 < row || column > row + 1)
@@ -164,18 +149,16 @@ void check_split(bool normalize)
         assembled.matrix.apply(Kokkos::DefaultExecutionSpace {}, input, applied);
         auto const flux_domains
                 = solvers::make_laplacian_flux_domains<Direction>(domains, coefficient);
-        md::DomainExecution<Graph, Kokkos::DefaultExecutionSpace> partitions(
-                Kokkos::DefaultExecutionSpace {});
-        partitions.for_each([&]<class Node>(Kokkos::DefaultExecutionSpace const& stream) {
-            auto const flux = flux_domains.template field<typename Node::id, md::FieldRole::Flux>();
-            auto const dual = flux_domains.template extrapolation_rules<
-                    typename Node::id,
-                    md::FieldRole::Flux>();
+        md::DomainExecution<Kokkos::DefaultExecutionSpace>
+                partitions(Kokkos::DefaultExecutionSpace {}, domains.domain_count());
+        partitions.for_each([&](std::size_t id, Kokkos::DefaultExecutionSpace const& stream) {
+            auto const flux = flux_domains.template field<md::FieldRole::Flux>(id);
+            auto const dual = flux_domains.template extrapolation_rules<md::FieldRole::Flux>(id);
             sil::exterior::ScalarLaplacian<
                     Direction,
                     std::remove_cvref_t<decltype(flux)>,
                     std::remove_cvref_t<decltype(dual)>> const op {flux, dual};
-            evaluate_rows(stream, domains.template field<typename Node::id>(), op, input, direct);
+            evaluate_rows(stream, domains.field(id), op, input, direct);
         });
         partitions.fence();
         auto const host_applied = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), applied);
@@ -202,16 +185,16 @@ void launch_value(Kokkos::DefaultExecutionSpace const& exec, Kokkos::View<int*> 
 }
 TEST(MultidomainsLaplacian, OneExecutionInstancePerPhysicalDomain)
 {
-    md::DomainExecution<Graph, Kokkos::DefaultExecutionSpace> execution(
-            Kokkos::DefaultExecutionSpace {});
+    md::DomainExecution<Kokkos::DefaultExecutionSpace>
+            execution(Kokkos::DefaultExecutionSpace {}, 2);
 #if defined(KOKKOS_ENABLE_CUDA)
-    EXPECT_NE(execution.space<A>().cuda_stream(), execution.space<B>().cuda_stream());
+    EXPECT_NE(execution.space(0).cuda_stream(), execution.space(1).cuda_stream());
 #endif
-    EXPECT_THROW(execution.space<Wall>(), std::invalid_argument);
+    EXPECT_THROW(execution.space(2), std::out_of_range);
     Kokkos::View<int*> values("stream_values", 2);
     int count = 0;
-    execution.for_each([&]<class Node>(Kokkos::DefaultExecutionSpace const& exec) {
-        launch_value(exec, values, std::is_same_v<typename Node::id, A> ? 0 : 1);
+    execution.for_each([&](std::size_t id, Kokkos::DefaultExecutionSpace const& exec) {
+        launch_value(exec, values, static_cast<int>(id));
         ++count;
     });
     execution.fence();
@@ -222,24 +205,14 @@ TEST(MultidomainsLaplacian, OneExecutionInstancePerPhysicalDomain)
 }
 
 
-struct Bottom
-{
-};
-using Graph2D = md::Topology<
-        ddc::TypeSeq<
-                md::Domain<A, Physics, GridX, GridY>,
-                md::BoundaryDomain<Wall, sil::exterior::NaturalScalarExtrapolationRule>,
-                md::BoundaryDomain<Value, sil::exterior::PrescribedScalarExtrapolationRule>,
-                md::BoundaryDomain<
-                        Bottom,
-                        sil::exterior::NaturalScalarExtrapolationRule,
-                        sil::exterior::NormalScalarFluxExtrapolationRule>>,
-        md::BoundaryConnection<md::Face<A, GridX, BoundarySide::Lower>, Wall>,
-        md::BoundaryConnection<md::Face<A, GridX, BoundarySide::Upper>, Wall>,
-        md::BoundaryConnection<md::Face<A, GridY, BoundarySide::Lower>, Bottom>,
-        md::BoundaryConnection<md::Face<A, GridY, BoundarySide::Upper>, Value>>;
 
-void check_2d(double shear, double prescribed_flux, double angle = 0.0)
+void check_2d(
+        double shear,
+        double prescribed_flux,
+        double angle = 0.0,
+        double spacing = 1.0,
+        int polynomial = 0,
+        double warp = 0.0)
 {
     using Direction = sil::tensor::Covariant<sil::tensor::TensorNaturalIndex<X, Y>>;
     using Scalar = sil::tensor::Covariant<sil::tensor::ScalarIndex>;
@@ -266,14 +239,15 @@ void check_2d(double shear, double prescribed_flux, double angle = 0.0)
     Kokkos::View<double**, Kokkos::DefaultExecutionSpace::array_layout, Kokkos::HostSpace>
             input_host("input_host", 25, 1);
     ddc::host_for_each(grid, [&](ddc::DiscreteElement<GridX, GridY> elem) {
-        double const y = elem.uid<GridY>() - 10;
-        double const x = elem.uid<GridX>() - 10 + shear * y;
+        double const y = spacing * (elem.uid<GridY>() - 10);
+        double const x = spacing * (elem.uid<GridX>() - 10) * (1.0 + warp * y) + shear * y;
+        double const value = polynomial == 0 ? x * x + y * y : (polynomial == 1 ? x * y : x);
         position(elem, positions.access_element<X>()) = std::cos(angle) * x - std::sin(angle) * y;
         position(elem, positions.access_element<Y>()) = std::sin(angle) * x + std::cos(angle) * y;
-        potential.mem(elem, ddc::DiscreteElement<Scalar>(0)) = x * x + y * y;
+        potential.mem(elem, ddc::DiscreteElement<Scalar>(0)) = value;
         std::size_t const id = 5 * (elem.uid<GridX>() - 10) + elem.uid<GridY>() - 10;
         ids(id) = id;
-        input_host(id, 0) = x * x + y * y;
+        input_host(id, 0) = value;
     });
     ddc::Chunk device_position(host_position.domain(), ddc::DeviceAllocator<double>());
     ddc::Chunk device_potential(host_potential.domain(), ddc::DeviceAllocator<double>()),
@@ -286,15 +260,20 @@ void check_2d(double shear, double prescribed_flux, double angle = 0.0)
     Kokkos::View<std::size_t*> device_ids("device_ids", 25);
     Kokkos::deep_copy(device_ids, ids);
     solvers::IndexedScalarField<GridX, GridY> const field {grid, device_ids.data()};
-    md::Multidomain const
-            domains(Graph2D {},
-                    md::domain_data<A>(field, sil::tensor::Tensor(device_position), Physics {}),
-                    md::boundary_data<Wall>(sil::exterior::NaturalScalarExtrapolationRule {}),
-                    md::boundary_data<Value>(
-                            sil::exterior::PrescribedScalarExtrapolationRule {7.0}),
-                    md::boundary_data<Bottom>(
-                            sil::exterior::NaturalScalarExtrapolationRule {},
-                            sil::exterior::NormalScalarFluxExtrapolationRule {prescribed_flux}));
+    md::Topology<2> graph(1);
+    std::size_t const wall = graph.add_boundary({sil::exterior::NaturalScalarExtrapolationRule {}});
+    std::size_t const value
+            = graph.add_boundary({sil::exterior::PrescribedScalarExtrapolationRule {7.0}});
+    std::size_t const bottom = graph.add_boundary(
+            {sil::exterior::NaturalScalarExtrapolationRule {},
+             sil::exterior::NormalScalarFluxExtrapolationRule {prescribed_flux}});
+    graph.connect_boundary({0, 0, BoundarySide::Lower}, wall);
+    graph.connect_boundary({0, 0, BoundarySide::Upper}, wall);
+    graph.connect_boundary({0, 1, BoundarySide::Lower}, bottom);
+    graph.connect_boundary({0, 1, BoundarySide::Upper}, value);
+    md::Multidomain const domains(
+            graph,
+            std::vector {md::domain_data(field, sil::tensor::Tensor(device_position), Physics {})});
     auto const coefficient = [](Physics physics) { return physics.diffusivity; };
     auto const system = solvers::assemble_multidomain_laplacian<
             Direction>(Kokkos::DefaultExecutionSpace {}, domains, 25, coefficient, 1.0, false);
@@ -309,10 +288,10 @@ void check_2d(double shear, double prescribed_flux, double angle = 0.0)
         EXPECT_DOUBLE_EQ(rows[row][row], 1.0);
         EXPECT_DOUBLE_EQ(rhs(row, 0), 7.0);
     }
-    if (shear == 0.0) {
-        EXPECT_NEAR(rows[12][12], 4.0, 1.e-12);
+    if (shear == 0.0 && warp == 0.0) {
+        EXPECT_NEAR(rows[12][12], 4.0 / (spacing * spacing), 1.e-10);
         for (std::size_t neighbor : {7, 11, 13, 17})
-            EXPECT_NEAR(rows[12][neighbor], -1.0, 1.e-12);
+            EXPECT_NEAR(rows[12][neighbor], -1.0 / (spacing * spacing), 1.e-10);
         EXPECT_NEAR(rows[12][6], 0.0, 1.e-12); // DEC axial stencil, no FEM diagonal coupling.
     }
     if (prescribed_flux != 0.0)
@@ -337,13 +316,129 @@ void check_2d(double shear, double prescribed_flux, double angle = 0.0)
     for (std::size_t x = 1; x < 4; ++x)
         for (std::size_t y = 1; y < 4; ++y) {
             std::size_t const row = 5 * x + y;
-            EXPECT_NEAR(
-                    host_applied(row, 0) - rhs(row, 0),
-                    reference
-                            .mem(ddc::DiscreteElement<GridX, GridY>(x + 10, y + 10),
-                                 ddc::DiscreteElement<Scalar>(0)),
-                    1.e-10);
+            EXPECT_NEAR(host_applied(row, 0) - rhs(row, 0), polynomial == 0 ? -4.0 : 0.0, 1.e-10);
+            if (warp == 0.0)
+                EXPECT_NEAR(
+                        host_applied(row, 0) - rhs(row, 0),
+                        reference
+                                .mem(ddc::DiscreteElement<GridX, GridY>(x + 10, y + 10),
+                                     ddc::DiscreteElement<Scalar>(0)),
+                        1.e-10);
         }
+    if (polynomial == 2 && prescribed_flux == 0.0)
+        for (std::size_t x = 1; x < 4; ++x)
+            EXPECT_NEAR(host_applied(5 * x, 0) - rhs(5 * x, 0), 0.0, 1.e-10);
+    if (shear == 0.3 && spacing == 0.5 && polynomial == 2 && warp == 0.3) {
+        // The geometric Hodge accepts stored one-cochains independently of d.
+        [[maybe_unused]] sil::tensor::TensorAccessor<Direction> gradient_accessor;
+        ddc::Chunk gradient(
+                ddc::DiscreteDomain<GridX, GridY, Direction>(grid, gradient_accessor.domain()),
+                ddc::DeviceAllocator<double>());
+        sil::exterior::deriv<Direction, Scalar>(
+                Kokkos::DefaultExecutionSpace {},
+                sil::tensor::Tensor(gradient),
+                sil::tensor::Tensor(device_potential),
+                sil::exterior::NaturalScalarExtrapolationRule {});
+        auto const hodge = sil::exterior::make_tensor_dual_hodge<Direction>(
+                sil::tensor::Tensor(gradient),
+                sil::tensor::Tensor(device_position),
+                sil::exterior::NaturalScalarExtrapolationRule {},
+                sil::exterior::ZeroCochainExtrapolationRule {});
+        auto const dual = sil::exterior::
+                make_extrapolation_rules(hodge, sil::exterior::ZeroCochainExtrapolationRule {});
+        sil::exterior::Codifferential<
+                Direction,
+                std::remove_cvref_t<decltype(hodge)>,
+                std::remove_cvref_t<decltype(dual)>> const delta {hodge, dual};
+        Kokkos::View<double*> composed("delta_d", 1);
+        Kokkos::parallel_for(
+                "stored_one_cochain_hodge",
+                1,
+                KOKKOS_LAMBDA(int) {
+                    composed(0) = delta(ddc::DiscreteElement<GridX, GridY>(12, 12));
+                });
+        auto const result = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), composed);
+        EXPECT_NEAR(result(0), 0.0, 1.e-10);
+    }
+}
+TEST(MultidomainsLaplacian, SkewGridAnalyticLaplacianUnderRefinement)
+{
+    for (double spacing : {1.0, 0.5, 0.25})
+        for (double shear : {-0.7, 0.3, 1.0})
+            for (int polynomial : {0, 1, 2})
+                check_2d(shear, 0.0, 0.37, spacing, polynomial);
+}
+struct Z
+{
+};
+struct GridZ
+{
+    using continuous_dimension_type = Z;
+};
+TEST(MultidomainsLaplacian, ConstantPhysicalGradientOnWarpedCells)
+{
+    for (double spacing : {1.0, 0.5, 0.25})
+        for (double warp : {-0.1, 0.3})
+            check_2d(0.3, 0.0, 0.37, spacing, 2, warp);
+}
+
+TEST(MultidomainsLaplacian, ThreeDimensionalSkewGrid)
+{
+    using Direction = sil::tensor::Covariant<sil::tensor::TensorNaturalIndex<X, Y, Z>>;
+    using Position = sil::tensor::Contravariant<sil::tensor::TensorNaturalIndex<X, Y, Z>>;
+    using Grid = ddc::DiscreteDomain<GridX, GridY, GridZ>;
+    Grid const
+            grid(ddc::DiscreteElement<GridX, GridY, GridZ>(0, 0, 0),
+                 ddc::DiscreteVector<GridX, GridY, GridZ>(5, 5, 5));
+    sil::tensor::TensorAccessor<Position> accessor;
+    ddc::Chunk host_position(
+            ddc::DiscreteDomain<GridX, GridY, GridZ, Position>(grid, accessor.domain()),
+            ddc::HostAllocator<double>());
+    sil::tensor::Tensor position(host_position);
+    Kokkos::View<std::size_t*, Kokkos::HostSpace> ids("ids", 125);
+    Kokkos::View<double**, Kokkos::DefaultExecutionSpace::array_layout, Kokkos::HostSpace>
+            input_host("input", 125, 1);
+    ddc::host_for_each(grid, [&](ddc::DiscreteElement<GridX, GridY, GridZ> elem) {
+        double const x
+                = 0.5 * (elem.uid<GridX>() + 0.4 * elem.uid<GridY>() + 0.2 * elem.uid<GridZ>());
+        double const y = 0.5 * (elem.uid<GridY>() + 0.3 * elem.uid<GridZ>());
+        double const z = 0.5 * elem.uid<GridZ>();
+        position(elem, accessor.access_element<X>()) = x;
+        position(elem, accessor.access_element<Y>()) = y;
+        position(elem, accessor.access_element<Z>()) = z;
+        std::size_t const id = 25 * elem.uid<GridX>() + 5 * elem.uid<GridY>() + elem.uid<GridZ>();
+        ids(id) = id;
+        input_host(id, 0) = x * y + x * x + y * y + z * z;
+    });
+    ddc::Chunk device_position(host_position.domain(), ddc::DeviceAllocator<double>());
+    ddc::parallel_deepcopy(device_position, host_position);
+    Kokkos::View<std::size_t*> device_ids("ids", 125);
+    Kokkos::deep_copy(device_ids, ids);
+    solvers::IndexedScalarField<GridX, GridY, GridZ> const field {grid, device_ids.data()};
+    md::Topology<3> graph(1);
+    std::size_t const wall = graph.add_boundary({sil::exterior::NaturalScalarExtrapolationRule {}});
+    for (std::size_t axis = 0; axis < 3; ++axis) {
+        graph.connect_boundary({0, axis, BoundarySide::Lower}, wall);
+        graph.connect_boundary({0, axis, BoundarySide::Upper}, wall);
+    }
+    md::Multidomain const domains(
+            graph,
+            std::vector {md::domain_data(field, sil::tensor::Tensor(device_position), Physics {})});
+    auto const system = solvers::assemble_multidomain_laplacian<Direction>(
+            Kokkos::DefaultExecutionSpace {},
+            domains,
+            125,
+            [](Physics physics) { return physics.diffusivity; },
+            1.0,
+            false);
+    Kokkos::View<double**> input("input", 125, 1), output("output", 125, 1);
+    Kokkos::deep_copy(input, input_host);
+    system.matrix.apply(Kokkos::DefaultExecutionSpace {}, input, output);
+    auto const result = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), output);
+    for (std::size_t i = 1; i < 4; ++i)
+        for (std::size_t j = 1; j < 4; ++j)
+            for (std::size_t k = 1; k < 4; ++k)
+                EXPECT_NEAR(result(25 * i + 5 * j + k, 0), -6.0, 1.e-10);
 }
 TEST(MultidomainsLaplacian, DecAxialStencilAndDirichlet)
 {

@@ -11,6 +11,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
+#include <limits>
 #include <map>
 #include <stdexcept>
 #include <string>
@@ -104,17 +105,18 @@ void reconstruct_potential_patch(
  * one-sided primal continuation supplies the unused outer forward difference.
  * Physical normal flux constraints belong to the assembled nodal balances.
  */
-template <std::size_t PatchCount, class BindDomains>
+template <class BindDomains>
 PotentialFlowSamples sample_potential_flow_field(
         std::vector<double> const& potential,
         double circulation,
         std::size_t ring_nodes,
         std::size_t radial_nodes,
-        std::array<std::size_t, PatchCount> const& starts,
-        std::array<std::size_t, PatchCount> const& cells,
+        std::vector<std::size_t> const& starts,
+        std::vector<std::size_t> const& cells,
         BindDomains bind_domains)
 {
-    if (potential.size() != ring_nodes * radial_nodes || radial_nodes < 2)
+    if (potential.size() != ring_nodes * radial_nodes || radial_nodes < 2
+        || starts.size() != cells.size() || starts.empty())
         throw std::runtime_error("invalid potential-flow sample domains");
     [[maybe_unused]] sil::tensor::TensorAccessor<PotentialIndex> scalar_accessor;
     [[maybe_unused]] sil::tensor::TensorAccessor<GradientIndex> gradient_accessor;
@@ -124,9 +126,9 @@ PotentialFlowSamples sample_potential_flow_field(
             ddc::DiscreteDomain<GridX, GridY, GradientIndex>,
             ddc::DeviceAllocator<double>>>
             gradients;
-    allocations.reserve(PatchCount);
-    gradients.reserve(PatchCount);
-    for (std::size_t side = 0; side < PatchCount; ++side) {
+    allocations.reserve(starts.size());
+    gradients.reserve(starts.size());
+    for (std::size_t side = 0; side < starts.size(); ++side) {
         if (cells[side] == 0)
             throw std::runtime_error("empty potential-flow sample patch");
         GridDomain const
@@ -145,7 +147,7 @@ PotentialFlowSamples sample_potential_flow_field(
             Kokkos::layout_right,
             Kokkos::DefaultExecutionSpace::memory_space>>
             fields;
-    for (std::size_t side = 0; side < PatchCount; ++side)
+    for (std::size_t side = 0; side < starts.size(); ++side)
         fields.emplace_back(allocations[side]);
     Kokkos::View<double*> values("sample_potential", potential.size());
     auto host_values = Kokkos::create_mirror_view(values);
@@ -155,21 +157,18 @@ PotentialFlowSamples sample_potential_flow_field(
     Kokkos::View<double* [2]> differences("potential_differences", potential.size());
     Kokkos::View<double* [4]> cell_values("potential_cell_values", potential.size());
     auto const domains = bind_domains(fields);
-    sil::multidomains::DomainExecution<
-            typename decltype(domains)::topology_type,
-            Kokkos::DefaultExecutionSpace>
-            partitions(Kokkos::DefaultExecutionSpace {});
-    partitions.for_each([&]<class Node>(Kokkos::DefaultExecutionSpace const& stream) {
-        static_assert(Node::id::INDEX < PatchCount);
-        fill_potential_patch(stream, fields[Node::id::INDEX], values, ring_nodes);
+    sil::multidomains::DomainExecution<Kokkos::DefaultExecutionSpace>
+            partitions(Kokkos::DefaultExecutionSpace {}, domains.domain_count());
+    partitions.for_each([&](std::size_t id, Kokkos::DefaultExecutionSpace const& stream) {
+        fill_potential_patch(stream, fields[id], values, ring_nodes);
     });
     partitions.fence(); // Every donor cochain must be ready before any derivative reads it.
-    partitions.for_each([&]<class Node>(Kokkos::DefaultExecutionSpace const& stream) {
+    partitions.for_each([&](std::size_t id, Kokkos::DefaultExecutionSpace const& stream) {
         reconstruct_potential_patch(
                 stream,
-                fields[Node::id::INDEX],
-                sil::tensor::Tensor(gradients[Node::id::INDEX]),
-                domains.template extrapolation_rules<typename Node::id>(circulation),
+                fields[id],
+                sil::tensor::Tensor(gradients[id]),
+                domains.extrapolation_rules(id, circulation),
                 ring_nodes,
                 radial_nodes,
                 differences,
@@ -208,6 +207,7 @@ struct Result
     double mass_flow_rate = 0.0;
     double lift_kutta_joukowski = 0.0;
     double max_speed = 0.0;
+    std::size_t domain_count = 0;
     std::size_t node_count = 0;
     std::size_t cell_count = 0;
     solvers::StrongFormulationSolverDiagnostics solver_diagnostics;
@@ -223,50 +223,74 @@ inline Result run(
     if (!std::holds_alternative<sil::onelab_interface::gmsh::QuadrilateralMesh>(parsed))
         throw std::runtime_error("potential flow requires structured quadrilaterals");
     auto const& mesh = std::get<sil::onelab_interface::gmsh::QuadrilateralMesh>(parsed);
-    constexpr std::size_t patch_count = 4;
-    std::array<std::vector<sil::onelab_interface::gmsh::QuadrilateralCell const*>, patch_count>
-            patches;
-    for (auto const& cell : mesh.cells) {
-        if ((cell.physical_tag != 2 && cell.physical_tag != 3) || cell.elementary_tag < 24
-            || cell.elementary_tag > 27)
-            throw std::runtime_error("potential-flow mesh contains a non-fluid quad");
-        patches[cell.elementary_tag - 24].push_back(&cell);
-    }
-    std::size_t cells_along_outer_boundary = 0;
-    for (auto const& edge : mesh.boundary_edges)
-        if (edge.physical_tag == 10)
-            ++cells_along_outer_boundary;
-    if (cells_along_outer_boundary == 0 || patches[0].size() % cells_along_outer_boundary != 0)
-        throw std::runtime_error("potential-flow mesh does not match the mapped quad topology");
-    std::size_t const cells_per_patch_i = cells_along_outer_boundary;
-    std::size_t const cells_per_patch_j = patches[0].size() / cells_per_patch_i;
-    for (auto const& patch : patches)
-        if (patch.size() != cells_per_patch_i * cells_per_patch_j)
-            throw std::runtime_error("potential-flow quad patch has unexpected dimensions");
-    std::size_t const ni = patch_count * cells_per_patch_i;
-    std::size_t const nodes_j = cells_per_patch_j + 1;
-    std::size_t const node_count = ni * nodes_j;
-    if (mesh.cells.size() != ni * cells_per_patch_j || mesh.nodes.size() != node_count)
-        throw std::runtime_error("potential-flow mesh does not match the mapped quad topology");
-    std::map<std::size_t, std::size_t> logical_index;
-    auto bind_node = [&](std::size_t tag, std::size_t index) {
-        auto const [it, inserted] = logical_index.emplace(tag, index);
-        if (!inserted && it->second != index)
-            throw std::runtime_error("quad patches do not share a consistent structured grid");
+    // Infer the mapped annulus from oriented quad incidence, independent of
+    // elementary-surface numbers, patch counts and element ordering.
+    std::map<std::size_t, std::size_t> angular_next, radial_next;
+    auto bind_next = [](auto& next, std::size_t first, std::size_t second) {
+        auto const [entry, inserted] = next.emplace(first, second);
+        if (!inserted && entry->second != second)
+            throw std::runtime_error("inconsistent oriented tensor-grid connectivity");
     };
-    for (std::size_t patch = 0; patch < patch_count; ++patch) {
-        for (std::size_t a = 0; a < cells_per_patch_i; ++a)
-            for (std::size_t j = 0; j < cells_per_patch_j; ++j) {
-                auto const& cell = *patches[patch][a * cells_per_patch_j + j];
-                std::size_t const i = patch * cells_per_patch_i + a;
-                bind_node(cell.node_tags[0], j * ni + i);
-                bind_node(cell.node_tags[1], j * ni + (i + 1) % ni);
-                bind_node(cell.node_tags[2], (j + 1) * ni + (i + 1) % ni);
-                bind_node(cell.node_tags[3], (j + 1) * ni + i);
-            }
+    for (auto const& cell : mesh.cells) {
+        if (cell.physical_tag != 2 && cell.physical_tag != 3)
+            throw std::runtime_error("potential-flow mesh contains a non-fluid quad");
+        bind_next(angular_next, cell.node_tags[0], cell.node_tags[1]);
+        bind_next(angular_next, cell.node_tags[3], cell.node_tags[2]);
+        bind_next(radial_next, cell.node_tags[0], cell.node_tags[3]);
+        bind_next(radial_next, cell.node_tags[1], cell.node_tags[2]);
     }
-    if (logical_index.size() != node_count)
-        throw std::runtime_error("potential-flow mapped grid has missing nodes");
+    std::size_t inner_start = std::numeric_limits<std::size_t>::max();
+    for (auto const& edge : mesh.boundary_edges)
+        if (edge.physical_tag == 12)
+            inner_start = std::min({inner_start, edge.node_tags[0], edge.node_tags[1]});
+    if (inner_start == std::numeric_limits<std::size_t>::max())
+        throw std::runtime_error("potential-flow mesh has no body boundary");
+    std::vector<std::size_t> inner_nodes;
+    std::size_t current = inner_start;
+    do {
+        if (inner_nodes.size() >= mesh.nodes.size() || !angular_next.contains(current))
+            throw std::runtime_error("body boundary is not a closed tensor-grid ring");
+        inner_nodes.push_back(current);
+        current = angular_next.at(current);
+    } while (current != inner_start);
+    std::size_t const ni = inner_nodes.size();
+    std::map<std::size_t, std::size_t> logical_index;
+    std::size_t nodes_j = 0;
+    for (std::size_t i = 0; i < ni; ++i) {
+        std::size_t j = 0;
+        current = inner_nodes[i];
+        while (true) {
+            if (!logical_index.emplace(current, j * ni + i).second)
+                throw std::runtime_error("radial grid lines intersect or form a cycle");
+            ++j;
+            if (!radial_next.contains(current))
+                break;
+            current = radial_next.at(current);
+        }
+        if (i == 0)
+            nodes_j = j;
+        if (j != nodes_j)
+            throw std::runtime_error("radial tensor-grid extents differ");
+    }
+    std::size_t const cells_per_patch_j = nodes_j - 1;
+    std::size_t const node_count = ni * nodes_j;
+    if (nodes_j < 2 || logical_index.size() != mesh.nodes.size()
+        || mesh.cells.size() != ni * cells_per_patch_j)
+        throw std::runtime_error("potential-flow mesh is not a complete mapped annulus");
+    std::vector<bool> occupied(mesh.cells.size(), false);
+    std::vector<int> column_physics(ni, 0);
+    for (auto const& cell : mesh.cells) {
+        std::size_t const first = logical_index.at(cell.node_tags[0]);
+        std::size_t const i = first % ni, j = first / ni;
+        if (j >= cells_per_patch_j || logical_index.at(cell.node_tags[1]) != j * ni + (i + 1) % ni
+            || logical_index.at(cell.node_tags[2]) != (j + 1) * ni + (i + 1) % ni
+            || logical_index.at(cell.node_tags[3]) != (j + 1) * ni + i || occupied[first])
+            throw std::runtime_error("invalid or duplicate annular quad");
+        occupied[first] = true;
+        if (column_physics[i] && column_physics[i] != cell.physical_tag)
+            throw std::runtime_error("fluid physical regions must follow radial interfaces");
+        column_physics[i] = cell.physical_tag;
+    }
     std::vector<sil::onelab_interface::gmsh::MeshNode> nodes(node_count);
     for (auto const& node : mesh.nodes)
         nodes[logical_index.at(node.tag)] = node;
@@ -276,16 +300,40 @@ inline Result run(
         return std::array<double, 2> {n.x, n.y};
     };
     std::vector<int> boundary(node_count, 0);
-    std::vector<double> prescribed(node_count, 0.0);
     std::vector<int> outer_boundary(ni, 0);
-    bool has_cut = false;
+    std::size_t cut_node_i = ni;
+    std::size_t cut_edges = 0;
+    std::vector<bool> wake_edges(cells_per_patch_j, false), body_edges(ni, false);
     for (auto const& edge : mesh.boundary_edges) {
-        has_cut |= edge.physical_tag == 13;
+        if (edge.physical_tag == 13) {
+            std::size_t const first = logical_index.at(edge.node_tags[0]);
+            std::size_t const second = logical_index.at(edge.node_tags[1]);
+            if (first % ni != second % ni || (cut_node_i != ni && cut_node_i != first % ni)
+                || (first > second ? first - second : second - first) != ni)
+                throw std::runtime_error("wake must follow one complete radial interface");
+            std::size_t const row = std::min(first, second) / ni;
+            if (row >= cells_per_patch_j || wake_edges[row])
+                throw std::runtime_error("duplicate wake edge");
+            wake_edges[row] = true;
+            cut_node_i = first % ni;
+            ++cut_edges;
+        }
+        if (edge.physical_tag == 12) {
+            std::size_t const first = logical_index.at(edge.node_tags[0]);
+            std::size_t const second = logical_index.at(edge.node_tags[1]);
+            std::size_t const begin = (first + 1) % ni == second ? first : second;
+            if (first >= ni || second >= ni || (begin + 1) % ni != (begin == first ? second : first)
+                || body_edges[begin])
+                throw std::runtime_error("invalid or duplicate body boundary edge");
+            body_edges[begin] = true;
+        }
         if (edge.physical_tag != 10 && edge.physical_tag != 11)
             continue;
         std::size_t const first = logical_index.at(edge.node_tags[0]);
         std::size_t const second = logical_index.at(edge.node_tags[1]);
-        if (first / ni == nodes_j - 1 && second / ni == nodes_j - 1) {
+        if (first / ni != nodes_j - 1 || second / ni != nodes_j - 1)
+            throw std::runtime_error("potential boundaries must lie on the outer ring");
+        {
             std::size_t const begin = (first % ni + 1) % ni == second % ni ? first : second;
             outer_boundary[begin % ni] = edge.physical_tag;
         }
@@ -294,34 +342,49 @@ inline Result run(
             if (boundary[id] && boundary[id] != edge.physical_tag)
                 throw std::runtime_error("upstream and downstream boundaries overlap");
             boundary[id] = edge.physical_tag;
-            prescribed[id] = edge.physical_tag == 11 ? inputs.velocity * inputs.box_size : 0.0;
         }
     }
-    if (!has_cut || std::find(boundary.begin(), boundary.end(), 10) == boundary.end()
+    if (std::find(body_edges.begin(), body_edges.end(), false) != body_edges.end()
+        || cut_edges != cells_per_patch_j
+        || std::find(boundary.begin(), boundary.end(), 10) == boundary.end()
         || std::find(boundary.begin(), boundary.end(), 11) == boundary.end())
         throw std::runtime_error("potential-flow physical boundary is incomplete");
-    // Each side has three tensor domains with a uniform outer boundary rule:
-    // zero flux, prescribed potential, and zero flux. The domains at the
-    // circulation cut share trace nodes with an affine potential jump.
-    if (cells_per_patch_i % 2 != 0)
-        throw std::runtime_error("potential-flow mesh has an odd number of cells along a patch");
-    std::size_t const half_patch_cells = cells_per_patch_i / 2;
-    std::size_t const cut_cell_i = 3 * cells_per_patch_i - 1;
-    std::size_t const cut_node_i = cut_cell_i + 1;
-    std::array<std::size_t, 6> const side_start {
-            cells_per_patch_i,
-            cells_per_patch_i + half_patch_cells,
-            2 * cells_per_patch_i + half_patch_cells,
-            3 * cells_per_patch_i,
-            3 * cells_per_patch_i + half_patch_cells,
-            half_patch_cells};
-    std::array<std::size_t, 6> const side_cells {
-            half_patch_cells,
-            cells_per_patch_i,
-            half_patch_cells,
-            half_patch_cells,
-            cells_per_patch_i,
-            half_patch_cells};
+    // Split the ring at physical-region interfaces, exterior-law changes and the wake.
+    // The number and extents of domains are geometry data, not C++ types.
+    std::vector<std::size_t> side_start, side_cells;
+    for (std::size_t i = 0; i < ni; ++i)
+        if (i == cut_node_i || outer_boundary[i] != outer_boundary[(i + ni - 1) % ni]
+            || column_physics[i] != column_physics[(i + ni - 1) % ni])
+            side_start.push_back(i);
+    for (std::size_t id = 0; id < side_start.size(); ++id)
+        side_cells.push_back((side_start[(id + 1) % side_start.size()] + ni - side_start[id]) % ni);
+    std::size_t const cut_cell_i = (cut_node_i + ni - 1) % ni;
+    auto topology = [&](double prescribed_scale) {
+        sil::multidomains::Topology<2> graph(side_start.size());
+        std::size_t const wall
+                = graph.add_boundary({sil::exterior::NaturalScalarExtrapolationRule {}});
+        std::size_t const upstream
+                = graph.add_boundary({sil::exterior::PrescribedScalarExtrapolationRule {0.0}});
+        std::size_t const downstream
+                = graph.add_boundary({sil::exterior::PrescribedScalarExtrapolationRule {
+                        prescribed_scale * inputs.velocity * inputs.box_size}});
+        for (std::size_t id = 0; id < side_start.size(); ++id) {
+            std::size_t const next = (id + 1) % side_start.size();
+            graph.connect(
+                    {id, 0, sil::exterior::BoundarySide::Upper},
+                    {next, 0, sil::exterior::BoundarySide::Lower},
+                    false,
+                    1.0,
+                    side_start[next] == cut_node_i ? -1.0 : 0.0);
+            graph.connect_boundary({id, 1, sil::exterior::BoundarySide::Lower}, wall);
+            int const tag = outer_boundary[side_start[id]];
+            graph.connect_boundary(
+                    {id, 1, sil::exterior::BoundarySide::Upper},
+                    tag == 10 ? upstream : (tag == 11 ? downstream : wall));
+        }
+        graph.validate();
+        return graph;
+    };
     FreeScalarFieldHamiltonian const hamiltonian(0.0, 0.0, 2.0);
     PotentialFlowPhysics const equations(hamiltonian);
     [[maybe_unused]] sil::tensor::TensorAccessor<PositionIndex> position_accessor;
@@ -366,30 +429,15 @@ inline Result run(
             mirror(i) = global_indices[side][i];
         Kokkos::deep_copy(device_indices.back(), mirror);
     }
-    // Mesh tags must agree with the boundary nodes declared by the static graph.
-    PotentialFlowTopology::for_each_domain([&]<class Node>() {
-        constexpr std::size_t side = Node::id::INDEX;
-        using Edge = PotentialFlowTopology::connection<
-                PatchFace<side, GridY, sil::exterior::BoundarySide::Upper>>;
-        using BoundaryId = typename Edge::second::domain_id;
-        constexpr int expected = std::is_same_v<BoundaryId, Upstream>
-                                         ? 10
-                                         : (std::is_same_v<BoundaryId, Downstream> ? 11 : 0);
-        for (std::size_t i = 0; i < side_cells[side]; ++i)
-            if (outer_boundary[(side_start[side] + i) % ni] != expected)
-                throw std::runtime_error(
-                        "mesh boundary tags disagree with the potential-flow topology");
-    });
     auto assemble = [&](double jump_scale, double prescribed_scale) {
         std::vector<solvers::IndexedScalarField<GridX, GridY>> fields;
         for (std::size_t side = 0; side < side_start.size(); ++side)
             fields.push_back({positions[side].non_indices_domain(), device_indices[side].data()});
         auto const domains = bind_potential_flow_domains(
+                topology(prescribed_scale),
                 fields,
                 positions,
-                equations,
-                0.0,
-                prescribed_scale * inputs.velocity * inputs.box_size);
+                equations);
         return solvers::assemble_multidomain_laplacian<GradientIndex>(
                 Kokkos::DefaultExecutionSpace {},
                 domains,
@@ -398,16 +446,12 @@ inline Result run(
                 jump_scale);
     };
     auto bind_samples = [&](auto const& fields) {
-        return bind_potential_flow_domains(
-                fields,
-                positions,
-                equations,
-                0.0,
-                inputs.velocity * inputs.box_size);
+        return bind_potential_flow_domains(topology(1.0), fields, positions, equations);
     };
     solvers::ScalarLinearSystem const system = assemble(0.0, 1.0);
     Kokkos::View<double**> const jump_rhs = assemble(1.0, 0.0).rhs;
     Result result;
+    result.domain_count = side_start.size();
     result.node_count = node_count;
     result.cell_count = mesh.cells.size();
     Kokkos::View<double**> const base_solution = solvers::

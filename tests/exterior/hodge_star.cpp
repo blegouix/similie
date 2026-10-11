@@ -134,6 +134,7 @@ TEST(DiscreteHodgeStar, Metric3D)
             form_dom(metric.non_indices_domain(), form_accessor.domain());
     ddc::Chunk form_alloc(form_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor form(form_alloc);
+    ddc::parallel_fill(Kokkos::DefaultHostExecutionSpace {}, form_alloc, 0.0);
 
     ddc::host_for_each(
             metric.non_indices_domain(),
@@ -151,9 +152,20 @@ TEST(DiscreteHodgeStar, Metric3D)
             metric.non_indices_domain(),
             [&](ddc::DiscreteElement<DDimX, DDimY, DDimZ> elem) {
                 sil::tensor::tensor_prod(dual_form[elem], hodge_star[elem], form[elem]);
-                EXPECT_DOUBLE_EQ(
+                // * (3 dx^dy) = 3 (2 dx + 3 dy + 6 dz) / sqrt(70).
+                // Edge spacing is 2, so the cochain map has an extra factor 1/2.
+                EXPECT_NEAR(
+                        dual_form(elem, dual_form.accessor().access_element<X>()),
+                        3. / std::sqrt(70.),
+                        1.e-12);
+                EXPECT_NEAR(
+                        dual_form(elem, dual_form.accessor().access_element<Y>()),
+                        4.5 / std::sqrt(70.),
+                        1.e-12);
+                EXPECT_NEAR(
                         dual_form(elem, dual_form.accessor().access_element<Z>()),
-                        1.5 * std::sqrt(6. / 19.));
+                        9. / std::sqrt(70.),
+                        1.e-12);
             });
 
     [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain2>
@@ -233,6 +245,7 @@ TEST(ContinuousHodgeStar, Metric3D)
             form_dom(metric.non_indices_domain(), form_accessor.domain());
     ddc::Chunk form_alloc(form_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor form(form_alloc);
+    ddc::parallel_fill(Kokkos::DefaultHostExecutionSpace {}, form_alloc, 0.0);
 
     ddc::host_for_each(
             metric.non_indices_domain(),
@@ -250,13 +263,20 @@ TEST(ContinuousHodgeStar, Metric3D)
             metric.non_indices_domain(),
             [&](ddc::DiscreteElement<DDimX, DDimY, DDimZ> elem) {
                 sil::tensor::tensor_prod(dual_form[elem], hodge_star[elem], form[elem]);
-                // Here metric = [[2,1,0],[1,3,0],[0,0,5]], form = 3 dx^dy, and
-                // *(dx^dy) = sqrt(det(g)) g^{xx} g^{yy} dz = 6 * (3/5) * (2/5) dz = 18/25 dz.
-                // The antisymmetric-component convention stores dz with an additional sqrt(det(g))^-1,
-                // hence the expected value 18 / sqrt(70).
-                EXPECT_DOUBLE_EQ(
+                // For g=[[4,1,2],[1,5,3],[2,3,6]], det(g)=70 and
+                // *(3 dx^dy)=3 (2 dx + 3 dy + 6 dz)/sqrt(70).
+                EXPECT_NEAR(
+                        dual_form(elem, dual_form.accessor().access_element<X>()),
+                        6. / std::sqrt(70.),
+                        1.e-12);
+                EXPECT_NEAR(
+                        dual_form(elem, dual_form.accessor().access_element<Y>()),
+                        9. / std::sqrt(70.),
+                        1.e-12);
+                EXPECT_NEAR(
                         dual_form(elem, dual_form.accessor().access_element<Z>()),
-                        18. * std::sqrt(70.) / 70.);
+                        18. / std::sqrt(70.),
+                        1.e-12);
             });
 
     ddc::detail::g_discrete_space_dual<DDimX>.reset();

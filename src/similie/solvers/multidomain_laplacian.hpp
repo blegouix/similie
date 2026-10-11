@@ -195,27 +195,18 @@ auto make_laplacian_flux_domains(
         Diffusivity diffusivity,
         double jump_scale = 1.0)
 {
-    return domains.transform_data([&](auto const& data) {
-        using Id = typename std::remove_cvref_t<decltype(data)>::id;
-        if constexpr (Domains::topology_type::template node<Id>::IS_BOUNDARY) {
-            return data;
-        } else {
-            double const coefficient = diffusivity(data.physics);
-            if (!(coefficient > 0.0) || !std::isfinite(coefficient))
-                throw std::invalid_argument("scalar diffusivity must be finite and positive");
-            auto const field = domains.template field<Id>();
-            auto const primal = domains.template extrapolation_rules<Id>(jump_scale);
-            auto const geometry = domains.template extrapolation_rules<
-                    Id,
-                    sil::multidomains::FieldRole::Geometry>();
-            auto const boundary_flux = domains.template extrapolation_rules<
-                    Id,
-                    sil::multidomains::FieldRole::Flux>();
-            auto const flux = sil::exterior::make_scalar_laplacian_flux<
-                    Direction>(field, data.geometry, primal, geometry, boundary_flux, coefficient);
-            return sil::multidomains::domain_data<
-                    Id>(data.field, data.geometry, data.physics, flux);
-        }
+    return domains.transform_data([&](std::size_t id, auto const& data) {
+        double const coefficient = diffusivity(data.physics);
+        if (!(coefficient > 0.0) || !std::isfinite(coefficient))
+            throw std::invalid_argument("scalar diffusivity must be finite and positive");
+        auto const flux = sil::exterior::make_scalar_laplacian_flux<Direction>(
+                domains.field(id),
+                data.geometry,
+                domains.extrapolation_rules(id, jump_scale),
+                domains.template extrapolation_rules<sil::multidomains::FieldRole::Geometry>(id),
+                domains.template extrapolation_rules<sil::multidomains::FieldRole::Flux>(id),
+                coefficient);
+        return sil::multidomains::domain_data(data.field, data.geometry, data.physics, flux);
     });
 }
 
@@ -420,65 +411,62 @@ void prescribe_face(
         Field field,
         Primal primal)
 {
-    using Rule = std::remove_cvref_t<decltype(primal.template boundary_rule<Axis, Upper>())>;
-    if constexpr (requires { Rule::IS_DIRICHLET; }) {
-        if constexpr (Rule::IS_DIRICHLET) {
-            auto nodes = field.non_indices_domain();
-            auto front = nodes.front();
-            auto extent = nodes.extents();
-            ddc::detail::array(front)[Axis]
-                    = ddc::detail::array(Upper ? nodes.back() : nodes.front())[Axis];
-            ddc::detail::array(extent)[Axis] = 1;
-            // The final endpoint of a physical face can belong to a donor domain.
-            [&]<std::size_t... Tangent>(std::index_sequence<Tangent...>) {
-                (
-                        [&] {
-                            using End = std::remove_cvref_t<
-                                    decltype(primal.template boundary_rule<Tangent, true>())>;
-                            if constexpr (
-                                    Tangent != Axis
-                                    && sil::exterior::detail::is_interface_rule_v<End>)
-                                if (!primal.template boundary_rule<Tangent, true>()
-                                             .boundary_map.shared_boundary)
-                                    ++ddc::detail::array(extent)[Tangent];
-                        }(),
-                        ...);
-            }(std::make_index_sequence<ddc::type_seq_size_v<
-                      ddc::to_type_seq_t<typename Field::non_indices_domain_t>>> {});
-            nodes = typename Field::non_indices_domain_t(front, extent);
-            ddc::parallel_for_each(
-                    "prescribe_dec_face",
-                    exec,
-                    nodes,
-                    KOKKOS_LAMBDA(
-                            typename Field::non_indices_domain_t::discrete_element_type elem) {
-                        int error = 0;
-                        auto const sample = sample_affine<Capacity>(
-                                [&](auto sampler) {
-                                    return primal
-                                            .value(field,
-                                                   sampler,
-                                                   elem,
-                                                   ddc::DiscreteElement<
-                                                           typename Field::component_type>(0));
-                                },
-                                error);
-                        auto exterior = elem;
-                        ddc::detail::array(exterior)[Axis] += Upper ? 1 : -1;
-                        double const value = sil::exterior::detail::EvaluateRuleValue<
-                                sil::exterior::detail::
-                                        ZeroScalarSampler> {sil::exterior::detail::
-                                                                    ZeroScalarSampler {}}(
-                                primal.template boundary_rule<Axis, Upper>(),
-                                field,
-                                exterior,
-                                ddc::DiscreteElement<typename Field::component_type>(0));
-                        if (error)
-                            system.fail(error);
-                        else
-                            system.prescribe(sample, value);
-                    });
-        }
+    if (sil::exterior::detail::is_dirichlet(primal.template boundary_rule<Axis, Upper>())) {
+        auto nodes = field.non_indices_domain();
+        auto front = nodes.front();
+        auto extent = nodes.extents();
+        ddc::detail::array(front)[Axis]
+                = ddc::detail::array(Upper ? nodes.back() : nodes.front())[Axis];
+        ddc::detail::array(extent)[Axis] = 1;
+        // The final endpoint of a physical face can belong to a donor domain.
+        [&]<std::size_t... Tangent>(std::index_sequence<Tangent...>) {
+            (
+                    [&] {
+                        if constexpr (Tangent != Axis)
+                            if (sil::exterior::detail::is_interface(
+                                        primal.template boundary_rule<Tangent, true>())
+                                && !sil::exterior::detail::shared_boundary(
+                                        primal.template boundary_rule<Tangent, true>()))
+                                ++ddc::detail::array(extent)[Tangent];
+                    }(),
+                    ...);
+        }(std::make_index_sequence<
+                ddc::type_seq_size_v<ddc::to_type_seq_t<typename Field::non_indices_domain_t>>> {});
+        nodes = typename Field::non_indices_domain_t(front, extent);
+        ddc::parallel_for_each(
+                "prescribe_dec_face",
+                exec,
+                nodes,
+                KOKKOS_LAMBDA(typename Field::non_indices_domain_t::discrete_element_type elem) {
+                    int error = 0;
+                    auto const sample = sample_affine<Capacity>(
+                            [&](auto sampler) {
+                                return primal
+                                        .value(field,
+                                               sampler,
+                                               elem,
+                                               ddc::DiscreteElement<typename Field::component_type>(
+                                                       0));
+                            },
+                            error);
+                    auto exterior = elem;
+                    if constexpr (Upper)
+                        ++ddc::detail::array(exterior)[Axis];
+                    else
+                        --ddc::detail::array(exterior)[Axis];
+                    double const value = sil::exterior::detail::EvaluateRuleValue<
+                            sil::exterior::detail::
+                                    ZeroScalarSampler> {sil::exterior::detail::
+                                                                ZeroScalarSampler {}}(
+                            primal.template boundary_rule<Axis, Upper>(),
+                            field,
+                            exterior,
+                            ddc::DiscreteElement<typename Field::component_type>(0));
+                    if (error)
+                        system.fail(error);
+                    else
+                        system.prescribe(sample, value);
+                });
     }
 }
 
@@ -542,21 +530,17 @@ ScalarLinearSystem assemble_multidomain_laplacian(
 {
     auto const flux_domains
             = make_laplacian_flux_domains<Direction>(domains, diffusivity, jump_scale);
-    sil::multidomains::
-            DomainExecution<typename Domains::topology_type, Kokkos::DefaultExecutionSpace>
-                    partitions(exec);
+    sil::multidomains::DomainExecution<Kokkos::DefaultExecutionSpace>
+            partitions(exec, domains.domain_count());
     constexpr std::size_t capacity = ProbeCapacity == 0
                                              ? (2 * Direction::size() + 1) * (Direction::size() + 1)
                                              : ProbeCapacity;
     detail::RowAssembly<capacity> const system(unknowns);
-    partitions.for_each([&]<class Node>(Kokkos::DefaultExecutionSpace const& stream) {
-        auto const field = domains.template field<typename Node::id>();
-        auto const flux
-                = flux_domains
-                          .template field<typename Node::id, sil::multidomains::FieldRole::Flux>();
-        auto const dual = flux_domains.template extrapolation_rules<
-                typename Node::id,
-                sil::multidomains::FieldRole::Flux>();
+    partitions.for_each([&](std::size_t id, Kokkos::DefaultExecutionSpace const& stream) {
+        auto const field = domains.field(id);
+        auto const flux = flux_domains.template field<sil::multidomains::FieldRole::Flux>(id);
+        auto const dual
+                = flux_domains.template extrapolation_rules<sil::multidomains::FieldRole::Flux>(id);
         sil::exterior::ScalarLaplacian<
                 Direction,
                 std::remove_cvref_t<decltype(flux)>,
@@ -566,7 +550,7 @@ ScalarLinearSystem assemble_multidomain_laplacian(
                 stream,
                 system,
                 field,
-                domains.template extrapolation_rules<typename Node::id>(jump_scale),
+                domains.extrapolation_rules(id, jump_scale),
                 std::make_index_sequence<Direction::size()> {});
     });
     partitions.fence();

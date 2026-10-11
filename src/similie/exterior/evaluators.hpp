@@ -144,3 +144,36 @@ struct EvaluateRuleValue
 };
 } // namespace detail
 } // namespace sil::exterior
+
+namespace sil::exterior::detail {
+template <class Rule>
+KOKKOS_FUNCTION bool is_interface(Rule const& rule)
+{
+    if constexpr (requires { rule.is_interface(); })
+        return rule.is_interface();
+    else if constexpr (requires { Rule::IS_INTERFACE; })
+        return Rule::IS_INTERFACE;
+    else
+        return false;
+}
+template <class Rule>
+KOKKOS_FUNCTION bool is_dirichlet(Rule const& rule)
+{
+    if constexpr (requires { rule.is_dirichlet(); })
+        return rule.is_dirichlet();
+    else if constexpr (requires { Rule::IS_DIRICHLET; })
+        return Rule::IS_DIRICHLET;
+    else
+        return false;
+}
+template <class Rule>
+KOKKOS_FUNCTION bool shared_boundary(Rule const& rule)
+{
+    if constexpr (requires { rule.shared_boundary(); })
+        return rule.shared_boundary();
+    else if constexpr (requires { rule.boundary_map.shared_boundary; })
+        return rule.boundary_map.shared_boundary;
+    else
+        return true;
+}
+} // namespace sil::exterior::detail

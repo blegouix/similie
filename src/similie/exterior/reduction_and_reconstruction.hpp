@@ -328,8 +328,7 @@ KOKKOS_FUNCTION double continuous_hodge_value_from_ids(
         std::array<std::size_t, K> const& source_ids,
         std::array<std::size_t, N - K> const& target_ids)
 {
-    if (!hodge_has_unique_ids<N>(source_ids) || !hodge_has_unique_ids<N>(target_ids)
-        || !hodge_is_complete_permutation<N>(source_ids, target_ids)) {
+    if (!hodge_has_unique_ids<N>(source_ids) || !hodge_has_unique_ids<N>(target_ids)) {
         return 0.;
     }
 
@@ -472,7 +471,7 @@ struct Reduction
         using form_natural_elem_type =
                 typename FormTensorType::accessor_t::natural_domain_t::discrete_element_type;
         if constexpr (target_index_type::rank() == 0) {
-            reduced_tensor.mem(ddc::DiscreteElement<target_index_type>(0))
+            reduced_tensor.mem(reduced_tensor.domain().front())
                     = form_tensor.get(form_tensor.access_element(form_natural_elem_type()));
         } else {
             [[maybe_unused]] sil::tensor::TensorAccessor<source_index_type> source_accessor;
@@ -513,7 +512,10 @@ struct Reduction
             PositionType position,
             BatchElem elem)
     {
-        if constexpr (Complex == CellComplex::Primal) {
+        if constexpr (Complex == CellComplex::Primal || Complex == CellComplex::TensorDual) {
+            // A tensor dual face is a translated complementary cell face.
+            // Reduce the physical form on its full tangent basis: diagonal
+            // volume ratios alone lose the cross terms of an oblique chart.
             operator()(reduced_tensor, form_tensor, position, elem);
         } else {
             static_assert(
