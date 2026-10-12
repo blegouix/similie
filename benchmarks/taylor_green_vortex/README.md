@@ -48,30 +48,77 @@ The final time is t/tc=10; a time step is shortened to land exactly on t=8
 and t=10. The expected initial volume-averaged kinetic energy is 1/8 for both
 initializations, including the density weighting.
 
-## Cartesian DEC operators
+## Physics and benchmark architecture
 
-`src/similie/physics/fluid/cartesian_dec.hpp` wraps component slabs in DDC
-scalar-cochain tensors and calls SimiLie `exterior::deriv` and
-`exterior::transposed_coboundary`. Each directional cochain is an integrated
-quantity; Euclidean Cartesian Hodge weights reduce to powers of the constant h.
-Thus
+The library contains two pointwise, reusable physics classes:
 
-```
-d_a f(i)   = f(i+e_a)-f(i)
-d_aᵀ f(i) = f(i-e_a)-f(i)
-C_a       = (d_a-d_aᵀ)/(2h)
-Δ_h       = -Σ_a d_aᵀ d_a/h².
-```
+- `similie::physics::fluid::IncompressibleNavierStokes(density, viscosity)` in
+  `src/similie/physics/fluid/incompressible_navier_stokes.hpp`: rotational
+  momentum balance, incompressibility residual, and physical pressure recovery.
+- `similie::physics::fluid::NavierStokesFourier(gamma, prandtl, viscosity, R)` in
+  `src/similie/physics/fluid/navier_stokes_fourier.hpp`: the mass, momentum, and
+  total-energy equations, perfect-gas primitives, full physical flux, Newtonian
+  stress, and Fourier/Prandtl heat-flux closure. Its conservation-law call takes
+  the three physical flux divergences and returns the conservative time rates.
 
-Periodic sampling resolves both positive and signed negative ghost indices.
-`C_a` is skew-adjoint in the constant-volume inner product. The Laplacian is
-negative semidefinite: `<f,Δ_h f>=-Σ_a ||d_a f/h||²`.
-These are Cartesian primal/dual incidence compositions, rather than a call to
-the general curved-metric Hodge-star assembly. Face-normal stress and temperature
-gradients also call `deriv`; flux divergence calls `transposed_coboundary`.
-Tangential gradients, vorticity, and the projection use C. Arithmetic averaging
-maps the primal and dual differences to collocated nodes. This distinction is
-relevant when comparing the discrete enstrophy and Laplacian energy loss.
+Neither class contains grid dimensions, a solver selector, workshop constants,
+or a time-integration scheme. `Physics` is declared in the benchmark driver;
+fixed workshop values are in benchmark `parameters.hpp`. `solvers.hpp` supplies
+numerical flux construction and the pressure solve. `structured_grid.hpp`
+provides benchmark storage, periodic sampling, and field placement while
+calling the native exterior operators. There is no separate Cartesian DEC
+operator implementation in the physics library.
+
+The existing ONELAB potential-flow implementation wraps the free scalar-field
+Hamiltonian and obtains velocity from a scalar-potential gradient. Such a field
+is irrotational in the bulk (`d(d phi)=0`), whereas Taylor–Green has nonzero
+vorticity and evolves viscous, vortical momentum. It therefore cannot replace
+incompressible Navier–Stokes. Its scalar elliptic formulation is relevant to
+pressure projection, which remains a constraint solve within the full fluid
+system.
+
+## Native exterior operators and field placement
+
+Spatial operations delegate to the exterior module:
+
+- `deriv` evaluates scalar gradients and the exterior derivative of a velocity
+  one-cochain for vorticity.
+- `Reduction` and `Reconstruction` map physical fields to integrated cochains
+  and back using the position field.
+- `StagedCodifferential` supplies flux divergence and the incompressibility
+  constraint, including metric-dependent Hodge stages.
+- `StagedLaplacian` supplies viscous diffusion using the native scalar Hodge
+  Laplacian componentwise. Geometry and Hodge stars are assembled by exterior;
+  the benchmark does not insert diagonal Hodge coefficients or implement its
+  own Laplacian stencil.
+
+The Euclidean metric and an **unwrapped coordinate halo** describe the periodic
+box. Stored cochains use logical indices 1,...,N, allowing index zero in the
+geometry halo. Field samples wrap across the seam; geometry continues linearly
+through it. Consequently no native geometric edge acquires an erroneous length
+`2*pi-h`. Scalar storage still corresponds to the N unique periodic points.
+
+The module uses the positive Hodge Laplacian `Delta_H=d delta+delta d` and the
+codifferential `delta=-div` on physical one-forms. The benchmark applies
+`-Delta_H` for viscous diffusion and `-delta` for physical flux divergence.
+On the uniform Euclidean mesh, the native operators reduce to the familiar
+incidence/Hodge formulas; that simplification is used for independent checks,
+not for implementation.
+
+Arithmetic averages only place fields: scalar exterior derivatives are
+reconstructed on edges, then incident edge gradients are averaged to nodes;
+velocity is averaged to edge locations before reduction; exterior `d u_flat`
+is reconstructed on faces, and four incident face values are averaged to a
+nodal vorticity component. Vector face fluxes are reduced and passed to native
+codifferential. The centered nodal gradient and divergence are adjoints in the
+constant-volume inner product. The pressure operator is their composition.
+
+For the initial Taylor–Green modes, this edge/face placement gives nodal
+vorticity equal to the continuous initial vorticity times
+`[sin(h)/h] cos²(h/2)`. Thus the initial discrete enstrophy is
+`(3/8)[sin(h)/h]² cos⁴(h/2)` for incompressible flow, approaching 3/8 as N grows.
+The curl is obtained from the native one-cochain exterior derivative, not from
+an independently coded Cartesian curl formula.
 
 ## Incompressible equations and projection
 
@@ -79,22 +126,45 @@ Write the momentum equation in rotational form,
 
 ```
 ∂t u = u × ω - G Π + ν Δ_h u,
-ω = curl_C u,   Π = p + |u|²/2,   div_C u = 0.
+ω = reconstructed exterior curl of the velocity one-cochain,   Π = p + |u|²/2,   div_C u = 0.
 ```
 
 Every RK stage evaluates `f=u×ω+νΔ_h u` and projects its acceleration:
-solve `(-D G)Π=-D f`, then return `f-GΠ`, where `G=(C_x,C_y,C_z)` and
-`D=Σ C_a` applied to the corresponding components. The solve is matrix-free
+solve `(-D G)Π=-D f`, then return `f-GΠ`. Here `G` is the native scalar
+exterior derivative reconstructed and averaged to nodes; `D` is the native
+codifferential with its physical divergence sign after velocity placement.
+On this uniform grid each component reduces to
+`C_a f(i)=[f(i+e_a)-f(i-e_a)]/(2h)`, so `G=(C_x,C_y,C_z)` and
+`D u=Σ C_a u_a`. These formulas describe the resulting operators, rather
+than additional implemented stencils. `Δ_h=-Delta_H` is the physical
+diffusion Laplacian. The solve is matrix-free
 conjugate gradient, starts at zero, and checks its residual; failure is reported,
-never silently accepted. Hydrostatic reference pressure is added only for export;
-the dynamic pressure is Π−|u|²/2. At t=0 the exported pressure is the specified
-analytic initial pressure; subsequent pressure solves satisfy the discrete
-constraint. Temperature is inactive, and exported heat flux is zero.
+never silently accepted. The dynamic pressure is Π−|u|²/2, shifted to zero
+volume mean. Temperature is inactive, and exported heat flux is zero.
+
+`IncompressibleSolver::compute_pressure(velocity, output, mean_pressure)`
+reconstructs pressure independently of time integration, leaving the supplied
+velocity unchanged. It evaluates the unprojected acceleration in a dedicated
+workspace, solves the same elliptic Bernoulli-pressure problem, and recovers
+physical pressure using the library physics class. All three directions have
+periodic boundary conditions, consistent with the velocity and Taylor–Green
+domain. The additive constant is fixed by the requested volume mean; exports
+use `mean_pressure=p₀`. Zero-start CG selects zero unresolved null components
+of the Bernoulli potential, including checkerboard modes on even grids.
+
+Snapshot export explicitly invokes this reconstruction for the current state,
+so it never relies on pressure left over from a previous Runge–Kutta stage.
+The t=0 incompressible snapshot also uses reconstructed discrete pressure;
+it approaches the prescribed analytic initial pressure as the grid is refined.
+Compressible pressure is obtained directly from the equation of state. Pressure
+reconstruction during snapshot export is counted in export time, separately
+from the timed integration and its projection iterations.
 
 Since D=−Gᵀ, this is an orthogonal projection. Starting with a projected velocity,
 all RK stage derivatives remain in the divergence-free subspace. Pointwise
 `u·(u×ω)=0`, so inviscid transport does no semi-discrete kinetic-energy work.
-Viscosity removes kinetic energy through the negative-semidefinite DEC Laplacian.
+Viscosity removes kinetic energy through the negative of the native positive
+Hodge Laplacian.
 
 The centered projection has mean null modes and, for even N, checkerboard null
 modes. The divergence RHS lies in the operator range and zero-start CG selects a
@@ -141,9 +211,9 @@ nonfinite monitors and reports failure. Runtime robustness at the intended N
 remains to be checked. A coarse run is not DNS merely because its physical
 Reynolds number is 1600.
 
-The face stress uses native forward DEC derivatives in the normal direction
-and averaged centered DEC derivatives tangentially. The energy flux includes
-`-τ·ū-κ d_n T/h`. No clipping, density repair, or hidden change of viscosity is
+The face stress uses reconstructed native exterior gradients in the normal
+direction and averaged node gradients tangentially. The energy flux includes
+`-τ·ū-κ grad_n T`. No clipping, density repair, or hidden change of viscosity is
 applied.
 
 ## Time discretization
@@ -189,7 +259,8 @@ is `mean(u·F_m-|u|² F_ρ/2)`. This is the scheme's instantaneous semi-discrete
 energy derivative, not a difference of sparse snapshot energies. SSPRK3 has a
 finite-step energy defect; the saved energy history can be used to assess it.
 At finite resolution `ε_enstrophy` need not equal `ε_kinetic`: the former uses
-the centered curl while viscosity uses the compact DEC Laplacian.
+the reconstructed and averaged exterior curl while viscosity uses the native
+Hodge Laplacian without that nodal placement average.
 
 The HDF5 history also includes `mean(p div u)`, `mean(τ:grad u)`, mean mass and
 total energy, RMS divergence, minimum density/pressure, and each solver step's
