@@ -53,8 +53,8 @@ initializations, including the density weighting.
 The library contains two pointwise, reusable physics classes:
 
 - `similie::physics::fluid::IncompressibleNavierStokes(density, viscosity)` in
-  `src/similie/physics/fluid/incompressible_navier_stokes.hpp`: rotational
-  momentum balance, incompressibility residual, and physical pressure recovery.
+  `src/similie/physics/fluid/incompressible_navier_stokes.hpp`: vorticity
+  transport and diffusion, diagnostic momentum balance, and physical pressure recovery.
 - `similie::physics::fluid::NavierStokesFourier(gamma, prandtl, viscosity, R)` in
   `src/similie/physics/fluid/navier_stokes_fourier.hpp`: the mass, momentum, and
   total-energy equations, perfect-gas primitives, full physical flux, Newtonian
@@ -64,7 +64,9 @@ The library contains two pointwise, reusable physics classes:
 Neither class contains grid dimensions, a solver selector, workshop constants,
 or a time-integration scheme. `Physics` is declared in the benchmark driver;
 fixed workshop values are in benchmark `parameters.hpp`. `solvers.hpp` supplies
-numerical flux construction and the pressure solve. `structured_grid.hpp`
+numerical flux construction, vector-potential reconstruction, and diagnostic
+pressure solves. `vorticity_dec.hpp` stores compatible vorticity cochains and
+calls native two-form operators. `structured_grid.hpp`
 provides benchmark storage, periodic sampling, and field placement while
 calling the native exterior operators. There is no separate Cartesian DEC
 operator implementation in the physics library.
@@ -74,8 +76,7 @@ Hamiltonian and obtains velocity from a scalar-potential gradient. Such a field
 is irrotational in the bulk (`d(d phi)=0`), whereas Taylor–Green has nonzero
 vorticity and evolves viscous, vortical momentum. It therefore cannot replace
 incompressible Navier–Stokes. Its scalar elliptic formulation is relevant to
-pressure projection, which remains a constraint solve within the full fluid
-system.
+diagnostic pressure reconstruction within the full fluid system.
 
 ## Native exterior operators and field placement
 
@@ -87,8 +88,9 @@ Spatial operations delegate to the exterior module:
   and back using the position field.
 - `StagedCodifferential` supplies flux divergence and the incompressibility
   constraint, including metric-dependent Hodge stages.
-- `StagedLaplacian` supplies viscous diffusion using the native scalar Hodge
-  Laplacian componentwise. Geometry and Hodge stars are assembled by exterior;
+- `StagedLaplacian` supplies the native two-form Hodge Laplacian for
+  incompressible reconstruction and diffusion, and scalar diffusion for
+  diagnostic momentum balance. Geometry and Hodge stars are assembled by exterior;
   the benchmark does not insert diagonal Hodge coefficients or implement its
   own Laplacian stencil.
 
@@ -113,64 +115,92 @@ nodal vorticity component. Vector face fluxes are reduced and passed to native
 codifferential. The centered nodal gradient and divergence are adjoints in the
 constant-volume inner product. The pressure operator is their composition.
 
-For the initial Taylor–Green modes, this edge/face placement gives nodal
-vorticity equal to the continuous initial vorticity times
-`[sin(h)/h] cos²(h/2)`. Thus the initial discrete enstrophy is
-`(3/8)[sin(h)/h]² cos⁴(h/2)` for incompressible flow, approaching 3/8 as N grows.
-The curl is obtained from the native one-cochain exterior derivative, not from
-an independently coded Cartesian curl formula.
+For compressible flow, nodal velocity is averaged to edges and its curl is
+averaged from faces to nodes. For incompressible flow, the evolved state is
+already an integrated vorticity two-cochain; its nodal values come directly
+from native reconstruction and face averaging. Nodal interpolation is never
+used to enforce the cochain divergence or reconstruction identities.
 
-## Incompressible equations and projection
+## Incompressible vorticity and vector-potential reconstruction
 
-Write the momentum equation in rotational form,
+The equations are
 
 ```
-∂t u = u × ω - G Π + ν Δ_h u,
-ω = reconstructed exterior curl of the velocity one-cochain,   Π = p + |u|²/2,   div_C u = 0.
+∂t ω = curl(u × ω) + ν Δ ω,
+-Δ A = ω,   div A = 0,   u = curl A.
 ```
 
-Every RK stage evaluates `f=u×ω+νΔ_h u` and projects its acceleration:
-solve `(-D G)Π=-D f`, then return `f-GΠ`. Here `G` is the native scalar
-exterior derivative reconstructed and averaged to nodes; `D` is the native
-codifferential with its physical divergence sign after velocity placement.
-On this uniform grid each component reduces to
-`C_a f(i)=[f(i+e_a)-f(i-e_a)]/(2h)`, so `G=(C_x,C_y,C_z)` and
-`D u=Σ C_a u_a`. These formulas describe the resulting operators, rather
-than additional implemented stencils. `Δ_h=-Delta_H` is the physical
-diffusion Laplacian. The solve is matrix-free
-conjugate gradient, starts at zero, and checks its residual; failure is reported,
-never silently accepted. The dynamic pressure is Π−|u|²/2, shifted to zero
-volume mean. Temperature is inactive, and exported heat flux is zero.
+The gauge is Coulomb (`div A=0`) with zero mean vector potential. Mean velocity
+is fixed to zero for Taylor–Green; a nonzero harmonic velocity would need to be
+carried separately. Periodic vorticity must have zero mean. The implementation
+rejects incompatible means and removes roundoff-sized means from the elliptic
+right-hand side.
 
-`IncompressibleSolver::compute_pressure(velocity, output, mean_pressure)`
-reconstructs pressure independently of time integration, leaving the supplied
-velocity unchanged. It evaluates the unprojected acceleration in a dedicated
-workspace, solves the same elliptic Bernoulli-pressure problem, and recovers
-physical pressure using the library physics class. All three directions have
-periodic boundary conditions, consistent with the velocity and Taylor–Green
-domain. The additive constant is fixed by the requested volume mean; exports
-use `mean_pressure=p₀`. Zero-start CG selects zero unresolved null components
-of the Bernoulli potential, including checkerboard modes on even grids.
+Let `U` be the primal velocity one-cochain, `W=dU` the vorticity two-cochain,
+and `B` the primal two-cochain representing the Hodge dual of the physical
+vector potential. The implemented equations use native operators:
 
-Snapshot export explicitly invokes this reconstruction for the current state,
-so it never relies on pressure left over from a previous Runge–Kutta stage.
-The t=0 incompressible snapshot also uses reconstructed discrete pressure;
-it approaches the prescribed analytic initial pressure as the grid is refined.
-Compressible pressure is obtained directly from the equation of state. Pressure
-reconstruction during snapshot export is counted in export time, separately
-from the timed integration and its projection iterations.
+```
+Delta_H B = W,   d B = 0,   U = delta B,
+∂t W = d Reduction(u × ω) - ν Delta_H W.
+```
 
-Since D=−Gᵀ, this is an orthogonal projection. Starting with a projected velocity,
-all RK stage derivatives remain in the divergence-free subspace. Pointwise
-`u·(u×ω)=0`, so inviscid transport does no semi-discrete kinetic-energy work.
-Viscosity removes kinetic energy through the negative of the native positive
-Hodge Laplacian.
+The positive native Hodge Laplacian is `Delta_H=d delta+delta d`. On a closed
+right-hand side, the zero-mean periodic solution is closed, so
+`dU=d delta B=W` up to the elliptic residual. Also `delta U=delta delta B=0`.
+These identities use the same cochain complex; replacing their curl by a nodal
+centered curl would break compatibility. Native `d²=0` and commutation of
+`d` with the Hodge Laplacian preserve closed vorticity during SSPRK3, up to
+floating-point error. The monitored velocity divergence is the native
+codifferential of `U`, rather than a derivative of an interpolated nodal field.
 
-The centered projection has mean null modes and, for even N, checkerboard null
-modes. The divergence RHS lies in the operator range and zero-start CG selects a
-solution there. These modes are not removed by pressure projection; the compact
-viscous Laplacian does damp velocity checkerboards. This is a collocated,
-second-order Cartesian discretization, not a staggered pressure/velocity method.
+At each RK stage, the benchmark solves the linear elliptic reconstruction
+through `similie::solvers::minimize_strong_formulation_residual`. It uses the
+matrix-free linear Ginkgo CG path, identity preconditioning, a fixed relative
+tolerance of `1e-11`, and at most `8N` iterations. The uniform metric makes the
+operator symmetric in the ordinary cochain inner product; CG starts at zero
+on the mean-zero subspace. The true native DEC residual is checked independently
+of Ginkgo's reported residual. No FFT, dense factorization, nonlinear optimizer,
+or tunable gauge penalty is used. More general meshes require their appropriate
+Hodge-weighted inner product or a symmetric representation before reusing CG.
+
+Velocity and vorticity are reconstructed to nodes for nonlinear transport;
+`u×ω` is placed on edges, reduced, and differentiated with native `d`. Diffusion
+acts on `W` itself with the full two-form Hodge Laplacian. This centered placement
+does not establish an exact nodal kinetic-energy conservation property; energy
+and dissipation are measured rather than assumed. The kinetic-energy derivative
+uses `u·du/dt`, obtaining `du/dt` by applying the same linear reconstruction to
+`∂t W`. This extra elliptic solve belongs to monitor time.
+
+Initially, edge velocity is sampled at its own edge midpoint and scaled by
+`1/cos(h/2)`. Native reduction followed by `W=dU` gives closed vorticity and
+reconstructs the prescribed nodal Taylor–Green velocity exactly. Consequently
+initial kinetic energy is `1/8`, and the reconstructed initial vorticity is the
+continuous vorticity times `sin(h)/h`. Its discrete initial enstrophy is
+`(3/8)[sin(h)/h]²`, approaching `3/8` as N grows. This initialization placement
+is specific to the prescribed Fourier mode; it is not an elliptic FFT solve.
+
+## Diagnostic incompressible pressure
+
+Pressure does not enter vorticity time integration.
+`IncompressibleSolver::compute_pressure(vorticity_state, output, mean_pressure)`
+reconstructs velocity and pressure independently, without changing the evolved
+vorticity. With nodal `f=u×ω+νΔu`, the diagnostic solve is
+`(-D G)Π=-D f`, followed by `p=ρ(Π-|u|²/2)`. `G` and `D` are reconstructed
+native gradient and codifferential operators with centered placement. They
+are negative adjoints on the uniform periodic grid. Zero-start CG selects the
+range solution, including zero unresolved Bernoulli-potential checkerboard
+components on even grids.
+
+All three pressure boundaries are periodic. The additive constant is set by
+the requested volume mean: zero for dynamic pressure and `p₀` for export.
+This mean-pressure convention is distinct from the Coulomb gauge for `A`.
+Snapshots explicitly reconstruct pressure from the current state, including
+at t=0; the discrete initial pressure approaches the analytic prescribed
+pressure upon refinement. Compressible pressure comes directly from the
+perfect-gas equation of state. Temperature is inactive for incompressible flow,
+and its exported heat flux is zero. Snapshot reconstruction is counted as
+export time, independently of integration time and iteration counts.
 
 ## Compressible equations, stress, and heat-flux closure
 
@@ -253,8 +283,9 @@ Ek          = mean(ρ |u|²/2) / ρ₀
 ε_kinetic   = -dEk/dt.
 ```
 
-The signed `dEk/dt` is calculated from the same projected/conservative RHS used
-by SSPRK3. For incompressible flow it is `mean(u·F_u)`. For compressible flow it
+The signed `dEk/dt` is calculated from the same vorticity/conservative RHS used
+by SSPRK3. For incompressible flow it is `mean(u·F_u)`, with `F_u` obtained by
+linear vector-potential reconstruction of the vorticity RHS. For compressible flow it
 is `mean(u·F_m-|u|² F_ρ/2)`. This is the scheme's instantaneous semi-discrete
 energy derivative, not a difference of sparse snapshot energies. SSPRK3 has a
 finite-step energy defect; the saved energy history can be used to assess it.
@@ -275,14 +306,21 @@ Files:
 - `.h5`: `position[N,N,N,3]`, a `monitors[steps+1,14]` table whose
   `monitor_columns` attribute names each column, and `snapshot_0`,
   `snapshot_1`, `snapshot_2` at t=0,8,10. Each group contains time, velocity,
-  vorticity, density, pressure, temperature, and heat flux. Vector fields are
+  vorticity, density, pressure, temperature, heat flux, and vector potential
+  (zero/inactive for compressible flow). Vector fields are
   `[N,N,N,3]`, scalars `[N,N,N]`.
+- HDF5 `reconstruction_monitors` records five columns: time, Coulomb-gauge
+  RMS residual, vorticity-divergence RMS, velocity-curl reconstruction RMS
+  residual, and true relative vector-Poisson residual. These are zero for
+  compressible flow and are checked for incompressible flow.
 - `.xmf`: temporal XDMF view of the HDF5 fields, readable by ParaView, as in the
   scalar-field example. HDF5 is written directly through its C API here.
 - `.performance.json`: step count, solver/monitor/export/wall seconds,
-  time-stepping CG iteration count, and cell updates per solver second.
+  time-stepping vector-reconstruction seconds and CG iteration count,
+  and cell updates per solver second.
 - Post-processing creates `.spectrum.dat`, `.vorticity_slice.dat`,
-  `.monitors.dat`, PNG plots, and one legacy structured-grid `.vtk` per snapshot.
+  `.monitors.dat`, `.reconstruction.dat`, PNG plots (including reconstruction
+  residuals), and one legacy structured-grid `.vtk` per snapshot.
 
 At exactly t=8, the script takes the face at x/L=−π (index zero) and computes
 `|ω|L/V₀`. It also performs a full complex FFT of `sqrt(ρ/ρ₀) u`, using
@@ -301,7 +339,9 @@ iteration by default. `UseManualTime` receives accumulated solver time and
 `SetIterationTime` is called once per iteration, following the
 [Google Benchmark manual timing API](https://github.com/google/benchmark/blob/main/docs/user_guide.md#manual-timing).
 Kokkos is fenced before each solver interval ends. Timed work includes the
-stability bound, three RHS evaluations, projection solves, and RK updates.
+stability bound, three RHS evaluations, vector-potential reconstruction solves,
+and RK updates. Reconstruction seconds and iterations include the solve used
+to evaluate the stability bound.
 Allocations and initialization precede the wall-time interval; diagnostics,
 HDF5/text output, and spectra/plots are excluded from solver timing. Monitor
 and export times are reported separately. Wall time includes monitor and export
@@ -367,8 +407,10 @@ with `--output-dir=<directory>`. `--no-vtk` skips large ASCII VTK files, and
 CTest registers small N=8 validations for both solvers. `--validate` also works
 with a chosen N. These checks cover initial Ek, discrete initial enstrophy,
 periodic Fourier gradient/Laplacian symbols in all three directions, the
-Laplacian of a constant, projection of an exact gradient, uniform-gas steady
-state, the sign and magnitude of Prandtl/Fourier diffusion, five RK steps, mass/total-energy conservation, divergence, and kinetic
+Laplacian of a constant, exact initial velocity reconstruction, closed vorticity,
+Coulomb gauge, velocity-curl reconstruction, unchanged vorticity during pressure
+recovery, the mean-pressure convention, uniform-gas steady state, the sign and
+magnitude of Prandtl/Fourier diffusion, five RK steps, mass/total-energy conservation, divergence, and kinetic
 energy decay. A Python CTest (when NumPy and h5py are available) checks independent analytic
 FFT energies, density weighting, cutoff accounting, VTK coordinate ordering,
 and the HDF5 post-processing/slice outputs. These checks are implemented but
@@ -378,7 +420,7 @@ Before accepting results, run those tests in the rebuilt Docker image, then run
 small complete t=10 trajectories and post-processing, inspect all three
 snapshots, check FFT Parseval normalization and the VTK coordinate ordering,
 and perform the reference 64³/128³/256³ convergence campaign. Verify conservation,
-projection residuals, positivity, the discrepancy between the two dissipation
+reconstruction residuals, positivity, the discrepancy between the two dissipation
 monitors, and sensitivity to fixed temporal resolution as part of numerical
 validation. Performance comparisons require Release builds and a recorded CPU,
 thread count, affinity, compiler, and backend.

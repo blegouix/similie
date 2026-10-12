@@ -4,4 +4,5 @@
 
 find_package(benchmark 1.7 REQUIRED CONFIG)
 find_package(HDF5 REQUIRED COMPONENTS C)
+find_package(Ginkgo REQUIRED)
 add_subdirectory(taylor_green_vortex)

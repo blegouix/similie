@@ -117,6 +117,23 @@ def process(path, vtk=True, plots=True):
         header = workshop_header(path)
         table_path = path.with_suffix(".monitors.dat")
         np.savetxt(table_path, monitors, header=header + "\n" + " ".join(COLUMNS))
+        constraints = None
+        if "reconstruction_monitors" in data:
+            constraints = data["reconstruction_monitors"][:]
+            if (
+                constraints.shape != (len(monitors), 5)
+                or not np.all(np.isfinite(constraints))
+                or not np.allclose(constraints[:, 0], monitors[:, 0])
+                or np.any(constraints[:, 1:] < 0)
+            ):
+                raise ValueError(f"Invalid reconstruction monitors in {path}")
+            np.savetxt(
+                path.with_suffix(".reconstruction.dat"),
+                constraints,
+                header=header
+                + "\ntime coulomb_gauge_rms vorticity_divergence_rms"
+                + " curl_reconstruction_rms vector_poisson_relative_residual",
+            )
         snapshot = data[t8]
         wave_number, spectrum, outside = energy_spectrum(
             snapshot["velocity"][:], snapshot["density"][:]
@@ -150,6 +167,8 @@ def process(path, vtk=True, plots=True):
                         "heat_flux",
                     )
                 }
+                if "vector_potential" in data[name]:
+                    fields["vector_potential"] = data[name]["vector_potential"][:]
                 write_vtk(
                     path.with_suffix(f".{name}.vtk"),
                     position,
@@ -157,6 +176,26 @@ def process(path, vtk=True, plots=True):
                     float(data[name]["time"][0]),
                 )
         if plots:
+            if constraints is not None:
+                figure, axis = plt.subplots(figsize=(8, 4), constrained_layout=True)
+                for index, label in enumerate(
+                    (
+                        "Coulomb gauge RMS",
+                        "Vorticity divergence RMS",
+                        "Velocity curl reconstruction RMS",
+                        "Vector Poisson relative residual",
+                    ),
+                    start=1,
+                ):
+                    axis.semilogy(
+                        constraints[:, 0],
+                        np.maximum(constraints[:, index], 1e-18),
+                        label=label,
+                    )
+                axis.set(xlabel="t/tc", ylabel="Reconstruction residual")
+                axis.legend()
+                figure.savefig(path.with_suffix(".reconstruction.png"), dpi=160)
+                plt.close(figure)
             figure, axes = plt.subplots(2, 2, figsize=(11, 8), constrained_layout=True)
             axes[0, 0].plot(monitors[:, 0], monitors[:, 1])
             axes[0, 0].set(xlabel="t/tc", ylabel="Ek/V0²")

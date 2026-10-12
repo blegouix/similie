@@ -78,10 +78,14 @@ class PostProcessingTests(unittest.TestCase):
                 monitors[:, 0] = (0, 8, 10)
                 monitors[:, 1] = 1 / 8
                 data["monitors"] = monitors
+                constraints = np.zeros((len(monitors), 5))
+                constraints[:, 0] = monitors[:, 0]
+                data["reconstruction_monitors"] = constraints
                 for index, time in enumerate((0, 8, 10)):
                     snapshot = data.create_group(f"snapshot_{index}")
                     snapshot["time"] = [time]
                     snapshot["velocity"] = self.velocity
+                    snapshot["vector_potential"] = self.velocity
                     snapshot["density"] = self.density
                     snapshot["pressure"] = self.density
                     snapshot["temperature"] = self.density
@@ -101,6 +105,13 @@ class PostProcessingTests(unittest.TestCase):
             for index in range(3):
                 self.assertTrue(path.with_suffix(f".snapshot_{index}.vtk").exists())
             self.assertTrue(path.with_suffix(".monitors.dat").exists())
+            np.testing.assert_allclose(
+                np.loadtxt(path.with_suffix(".reconstruction.dat")), constraints
+            )
+            self.assertIn(
+                "vector_potential 3",
+                path.with_suffix(".snapshot_0.vtk").read_text(),
+            )
 
 
 if __name__ == "__main__":
