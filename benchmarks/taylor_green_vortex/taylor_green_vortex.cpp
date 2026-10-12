@@ -19,17 +19,18 @@
 #include <vector>
 
 #include <benchmark/benchmark.h>
-#include <similie/physics/fluid/navier_stokes.hpp>
 
 #include <hdf5.h>
 
+#include "solvers.hpp"
+
 namespace {
-using sil::physics::fluid::CartesianDEC;
-using sil::physics::fluid::CompressibleNavierStokes;
-using sil::physics::fluid::Field;
-using sil::physics::fluid::IncompressibleNavierStokes;
-using sil::physics::fluid::PerfectGas;
-using sil::physics::fluid::Physics;
+using taylor_green_vortex::CompressibleSolver;
+using taylor_green_vortex::Field;
+using taylor_green_vortex::IncompressibleSolver;
+using taylor_green_vortex::Reference;
+using taylor_green_vortex::StructuredGrid;
+enum class Physics { Incompressible, Compressible, ResistiveMHD, TwoFluidPlasmaMHD };
 using Clock = std::chrono::steady_clock;
 int nodes = 64;
 Physics physics = Physics::Incompressible;
@@ -79,13 +80,13 @@ struct Monitor
 class Simulation
 {
 public:
-    CartesianDEC dec;
+    StructuredGrid dec;
     Physics const kind;
     int const components;
     Field state, initial, stage, rhs, velocity, gradient, vorticity, density, pressure, temperature,
-            heat_flux;
-    std::unique_ptr<IncompressibleNavierStokes> incompressible;
-    std::unique_ptr<CompressibleNavierStokes> compressible;
+            heat_flux, velocity_divergence;
+    std::unique_ptr<IncompressibleSolver> incompressible;
+    std::unique_ptr<CompressibleSolver> compressible;
     explicit Simulation(int n, Physics selected)
         : dec(n)
         , kind(selected)
@@ -101,14 +102,13 @@ public:
         , pressure("pressure", 1, dec.cells)
         , temperature("temperature", 1, dec.cells)
         , heat_flux("heat_flux", 3, dec.cells)
+        , velocity_divergence("velocity_divergence", 1, dec.cells)
         , incompressible(
-                  selected == Physics::Incompressible
-                          ? std::make_unique<IncompressibleNavierStokes>(dec)
-                          : nullptr)
+                  selected == Physics::Incompressible ? std::make_unique<IncompressibleSolver>(dec)
+                                                      : nullptr)
         , compressible(
-                  selected == Physics::Compressible
-                          ? std::make_unique<CompressibleNavierStokes>(dec)
-                          : nullptr)
+                  selected == Physics::Compressible ? std::make_unique<CompressibleSolver>(dec)
+                                                    : nullptr)
     {
         if (selected != Physics::Incompressible && selected != Physics::Compressible)
             throw std::runtime_error("Selected physics is not implemented");
@@ -128,15 +128,15 @@ public:
                     double const y = -std::numbers::pi + ((i / n) % n) * h;
                     double const z = -std::numbers::pi + (i % n) * h;
                     double const u = sin(x) * cos(y) * cos(z), v = -cos(x) * sin(y) * cos(z);
-                    double const p = PerfectGas::reference_pressure
+                    double const p = Reference::reference_pressure
                                      + (cos(2 * x) + cos(2 * y)) * (cos(2 * z) + 2) / 16;
                     if (gas) {
-                        double const rho = p / PerfectGas::reference_pressure;
+                        double const rho = p / Reference::reference_pressure;
                         q(0, i) = rho;
                         q(1, i) = rho * u;
                         q(2, i) = rho * v;
                         q(3, i) = 0;
-                        q(4, i) = p / (PerfectGas::gamma - 1) + 0.5 * rho * (u * u + v * v);
+                        q(4, i) = p / (Reference::gamma - 1) + 0.5 * rho * (u * u + v * v);
                     } else {
                         q(0, i) = u;
                         q(1, i) = v;
@@ -146,12 +146,25 @@ public:
         if (!gas)
             incompressible->project(state);
     }
-    void evaluate(Field q, Field result)
+    void evaluate(Field q, Field result, bool reconstruct_pressure = false)
     {
         if (kind == Physics::Compressible)
             compressible->rhs(q, result);
         else
-            incompressible->rhs(q, result);
+            incompressible->rhs(q, result, reconstruct_pressure);
+    }
+    // Reconstruct pressure directly from the current state for export.
+    void compute_pressure()
+    {
+        if (kind == Physics::Incompressible) {
+            incompressible->compute_pressure(state, pressure, Reference::reference_pressure);
+        } else {
+            Field const q = state, output = pressure;
+            Kokkos::parallel_for(
+                    "export_compressible_pressure",
+                    dec.cells,
+                    KOKKOS_LAMBDA(int i) { output(0, i) = Reference::pressure(q, i); });
+        }
     }
     double timestep()
     {
@@ -165,7 +178,7 @@ public:
                     double speed = 0;
                     if (gas) {
                         double const sound
-                                = sqrt(PerfectGas::gamma * PerfectGas::pressure(q, i) / q(0, i));
+                                = sqrt(Reference::gamma * Reference::pressure(q, i) / q(0, i));
                         for (int a = 0; a < 3; ++a)
                             speed += fabs(q(a + 1, i) / q(0, i)) + sound;
                     } else
@@ -174,15 +187,15 @@ public:
                     value = fmax(value, speed);
                 },
                 Kokkos::Max<double>(maximum));
-        double diffusivity = 4.0 * PerfectGas::viscosity / 3.0;
+        double diffusivity = 4.0 * Reference::viscosity / 3.0;
         if (gas) {
             Kokkos::parallel_reduce(
                     "thermal_viscous_diffusivity",
                     dec.cells,
                     KOKKOS_LAMBDA(int i, double& value) {
-                        double const local = fmax(4.0 * PerfectGas::viscosity / 3.0,
-                                                  PerfectGas::conductivity * (PerfectGas::gamma - 1)
-                                                          / PerfectGas::gas_constant)
+                        double const local = fmax(4.0 * Reference::viscosity / 3.0,
+                                                  Reference::conductivity() * (Reference::gamma - 1)
+                                                          / Reference::gas_constant)
                                              / q(0, i);
                         value = fmax(value, local);
                     },
@@ -211,13 +224,11 @@ public:
     }
     Monitor monitor(double time, double step_seconds = 0)
     {
-        evaluate(state, rhs);
+        evaluate(state, rhs, true);
         Field const q = state, u = velocity, rho = density, p = pressure, t = temperature,
                     g = gradient, w = vorticity, f = rhs;
         bool const gas = kind == Physics::Compressible;
         Field const projected_pressure = gas ? pressure : incompressible->pressure;
-        int const n = dec.n;
-        double const h = dec.h;
         Kokkos::parallel_for(
                 "monitor_primitives",
                 dec.cells,
@@ -225,29 +236,18 @@ public:
                     rho(0, i) = gas ? q(0, i) : 1.0;
                     for (int a = 0; a < 3; ++a)
                         u(a, i) = gas ? q(a + 1, i) / q(0, i) : q(a, i);
-                    p(0, i) = gas ? PerfectGas::pressure(q, i)
-                                  : PerfectGas::reference_pressure + projected_pressure(0, i);
-                    if (!gas && time == 0) {
-                        double const x = -std::numbers::pi + (i / (n * n)) * h;
-                        double const y = -std::numbers::pi + ((i / n) % n) * h;
-                        double const z = -std::numbers::pi + (i % n) * h;
-                        p(0, i) = PerfectGas::reference_pressure
-                                  + (cos(2 * x) + cos(2 * y)) * (cos(2 * z) + 2) / 16;
-                    }
-                    t(0, i) = gas ? p(0, i) / (rho(0, i) * PerfectGas::gas_constant)
-                                  : PerfectGas::reference_pressure / PerfectGas::gas_constant;
+                    p(0, i) = gas ? Reference::pressure(q, i)
+                                  : Reference::reference_pressure + projected_pressure(0, i);
+                    t(0, i) = gas ? p(0, i) / (rho(0, i) * Reference::gas_constant)
+                                  : Reference::reference_pressure / Reference::gas_constant;
                 });
         for (int a = 0; a < 3; ++a)
             for (int b = 0; b < 3; ++b)
                 dec.derivative(u, a, g, 3 * a + b, b);
-        Kokkos::parallel_for(
-                "monitor_vorticity",
-                dec.cells,
-                KOKKOS_LAMBDA(int i) {
-                    w(0, i) = g(7, i) - g(5, i);
-                    w(1, i) = g(2, i) - g(6, i);
-                    w(2, i) = g(3, i) - g(1, i);
-                });
+        dec.curl(u, w);
+        dec.divergence(u, velocity_divergence);
+        Field const div_field = velocity_divergence;
+        similie::physics::fluid::NavierStokesFourier const physical_model = Reference::model();
         if (gas) {
             Field const heat = heat_flux;
             for (int a = 0; a < 3; ++a)
@@ -256,8 +256,10 @@ public:
                     "fourier_heat_flux",
                     dec.cells,
                     KOKKOS_LAMBDA(int i) {
+                        std::array<double, 3> const q
+                                = physical_model.heat_flux({heat(0, i), heat(1, i), heat(2, i)});
                         for (int a = 0; a < 3; ++a)
-                            heat(a, i) *= -PerfectGas::conductivity;
+                            heat(a, i) = q[a];
                     });
         } else
             Kokkos::deep_copy(heat_flux, 0.0);
@@ -277,14 +279,17 @@ public:
                         }
                         if (gas)
                             rate -= 0.5 * speed2 * f(0, i);
-                        double const div = g(0, i) + g(4, i) + g(8, i);
+                        double const div = div_field(0, i);
+                        similie::physics::fluid::NavierStokesFourier::VelocityGradient grad {};
+                        for (int a = 0; a < 3; ++a)
+                            for (int b = 0; b < 3; ++b)
+                                grad[a][b] = g(3 * a + b, i);
+                        similie::physics::fluid::NavierStokesFourier::VelocityGradient const tau
+                                = physical_model.stress(grad);
                         double stress_work = 0;
                         for (int a = 0; a < 3; ++a)
                             for (int b = 0; b < 3; ++b)
-                                stress_work += PerfectGas::viscosity
-                                               * (g(3 * a + b, i) + g(3 * b + a, i)
-                                                  - (a == b ? 2 * div / 3 : 0))
-                                               * g(3 * a + b, i);
+                                stress_work += tau[a][b] * grad[a][b];
                         if (diagnostic == 0)
                             sum += 0.5 * rho(0, i) * speed2;
                         else if (diagnostic == 1)
@@ -321,7 +326,7 @@ public:
                         sums[0],
                         sums[1],
                         sums[2],
-                        2 * PerfectGas::viscosity * sums[2],
+                        2 * Reference::viscosity * sums[2],
                         sums[3],
                         sums[4],
                         sums[5],
@@ -386,6 +391,7 @@ public:
     }
     void snapshot(Simulation& simulation, double time)
     {
+        simulation.compute_pressure();
         std::string const group_name = "snapshot_" + std::to_string(m_times.size());
         hid_t const group
                 = H5Gcreate2(m_file, group_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
@@ -494,7 +500,10 @@ void validate()
         throw std::runtime_error("Initial kinetic energy or periodic divergence is incorrect");
     double const symbol = std::sin(simulation.dec.h) / simulation.dec.h;
     if (physics == Physics::Incompressible
-        && std::abs(initial.enstrophy - 0.375 * symbol * symbol) > 1e-10)
+        && std::abs(
+                   initial.enstrophy
+                   - 0.375 * symbol * symbol * std::pow(std::cos(simulation.dec.h / 2), 4))
+                   > 1e-10)
         throw std::runtime_error("Initial DEC enstrophy is incorrect");
     Field constant("constant", 1, simulation.dec.cells), lap("lap", 1, simulation.dec.cells);
     Kokkos::deep_copy(constant, 1.0);
@@ -552,6 +561,53 @@ void validate()
                 error);
         if (error / simulation.dec.cells > 1e-18)
             throw std::runtime_error("Projection did not remove an exact discrete gradient");
+
+        Field reconstructed_pressure("reconstructed_pressure", 1, simulation.dec.cells);
+        Kokkos::parallel_for(
+                "uniform_incompressible_velocity",
+                simulation.dec.cells,
+                KOKKOS_LAMBDA(int i) {
+                    vector(0, i) = 0.2;
+                    vector(1, i) = -0.1;
+                    vector(2, i) = 0.3;
+                });
+        simulation.incompressible
+                ->compute_pressure(vector, reconstructed_pressure, Reference::reference_pressure);
+        Kokkos::parallel_reduce(
+                "uniform_flow_pressure_check",
+                simulation.dec.cells,
+                KOKKOS_LAMBDA(int i, double& sum) {
+                    double const difference
+                            = reconstructed_pressure(0, i) - Reference::reference_pressure;
+                    sum += difference * difference;
+                },
+                error);
+        if (error / simulation.dec.cells > 1e-20)
+            throw std::runtime_error("Uniform flow pressure or pressure gauge is incorrect");
+
+        Kokkos::deep_copy(vector, simulation.state);
+        simulation.compute_pressure();
+        Field const q = simulation.state, p = simulation.pressure;
+        double mean_pressure;
+        Kokkos::parallel_reduce(
+                "reconstructed_pressure_mean",
+                simulation.dec.cells,
+                KOKKOS_LAMBDA(int i, double& sum) { sum += p(0, i); },
+                mean_pressure);
+        Kokkos::parallel_reduce(
+                "pressure_reconstruction_preserves_velocity",
+                simulation.dec.cells,
+                KOKKOS_LAMBDA(int i, double& sum) {
+                    for (int a = 0; a < 3; ++a) {
+                        double const difference = q(a, i) - vector(a, i);
+                        sum += difference * difference;
+                    }
+                },
+                error);
+        if (error != 0
+            || std::abs(mean_pressure / simulation.dec.cells - Reference::reference_pressure)
+                       > 1e-10)
+            throw std::runtime_error("Pressure reconstruction changed velocity or its mean gauge");
     } else {
         Field uniform("uniform_gas", 5, simulation.dec.cells);
         Field uniform_rhs("uniform_gas_rhs", 5, simulation.dec.cells);
@@ -563,7 +619,7 @@ void validate()
                     uniform(1, i) = 0.2;
                     uniform(2, i) = 0;
                     uniform(3, i) = 0;
-                    uniform(4, i) = PerfectGas::reference_pressure / (PerfectGas::gamma - 1) + 0.02;
+                    uniform(4, i) = Reference::reference_pressure / (Reference::gamma - 1) + 0.02;
                 });
         simulation.compressible->rhs(uniform, uniform_rhs);
         Kokkos::parallel_reduce(
@@ -582,14 +638,14 @@ void validate()
                 simulation.dec.cells,
                 KOKKOS_LAMBDA(int i) {
                     double const x = -std::numbers::pi + (i / (n * n)) * h;
-                    double const temperature = PerfectGas::reference_pressure
-                                               / PerfectGas::gas_constant * (1 + 0.001 * sin(x));
-                    uniform(0, i) = PerfectGas::reference_pressure
-                                    / (PerfectGas::gas_constant * temperature);
+                    double const temperature = Reference::reference_pressure
+                                               / Reference::gas_constant * (1 + 0.001 * sin(x));
+                    uniform(0, i) = Reference::reference_pressure
+                                    / (Reference::gas_constant * temperature);
                     uniform(1, i) = 0;
                     uniform(2, i) = 0;
                     uniform(3, i) = 0;
-                    uniform(4, i) = PerfectGas::reference_pressure / (PerfectGas::gamma - 1);
+                    uniform(4, i) = Reference::reference_pressure / (Reference::gamma - 1);
                 });
         simulation.compressible->rhs(uniform, uniform_rhs);
         Kokkos::parallel_reduce(
@@ -597,8 +653,8 @@ void validate()
                 simulation.dec.cells,
                 KOKKOS_LAMBDA(int i, double& sum) {
                     double const x = -std::numbers::pi + (i / (n * n)) * h;
-                    double const expected = -PerfectGas::conductivity * 4 * sin(h / 2) * sin(h / 2)
-                                            / (h * h) * PerfectGas::reference_pressure * 0.001
+                    double const expected = -Reference::conductivity() * 4 * sin(h / 2) * sin(h / 2)
+                                            / (h * h) * Reference::reference_pressure * 0.001
                                             * sin(x);
                     double const difference = uniform_rhs(4, i) - expected;
                     sum += difference * difference;
