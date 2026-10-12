@@ -32,6 +32,10 @@ jobs:
     environment:
       name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'examples-omp-debug' || 'automatic-ci-run') }}
     steps:
+    - name: Prepare example log
+      run: |
+        echo "EXAMPLE_LOG=${RUNNER_TEMP}/example-kretschmann_scalar-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.log" >> "${GITHUB_ENV}"
+        printf 'Workflow run: %s, attempt: %s\n' "${GITHUB_RUN_ID}" "${GITHUB_RUN_ATTEMPT}" > "${RUNNER_TEMP}/example-kretschmann_scalar-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.log"
     - name: Select target commit
       id: target
       run: |
@@ -56,7 +60,9 @@ jobs:
         key: similie-omp-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
         fail-on-cache-miss: true
     - name: Run kretschmann_scalar with OpenMP
+      shell: bash
       run: |
+        set -o pipefail
         docker image inspect "${IMAGE_TAG}" >/dev/null
         docker run --rm \
           --user "$(id -u):$(id -g)" \
@@ -74,4 +80,13 @@ jobs:
             output="$(./examples/kretschmann_scalar)"
             printf "%s\n" "${output}"
             grep -Fx "Kreschmann scalar = 12" <<< "${output}"
-          '
+          ' 2>&1 | tee -a "${EXAMPLE_LOG}"
+    - name: Upload example outputs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: example-kretschmann_scalar
+        overwrite: true
+        if-no-files-found: error
+        path: |
+          ${{ env.EXAMPLE_LOG }}

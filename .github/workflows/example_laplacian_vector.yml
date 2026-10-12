@@ -32,6 +32,10 @@ jobs:
     environment:
       name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'examples-cuda' || 'automatic-ci-run') }}
     steps:
+    - name: Prepare example log
+      run: |
+        echo "EXAMPLE_LOG=${RUNNER_TEMP}/example-2d_vector_laplacian-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.log" >> "${GITHUB_ENV}"
+        printf 'Workflow run: %s, attempt: %s\n' "${GITHUB_RUN_ID}" "${GITHUB_RUN_ATTEMPT}" > "${RUNNER_TEMP}/example-2d_vector_laplacian-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.log"
     - name: Select target commit
       id: target
       run: |
@@ -56,7 +60,9 @@ jobs:
         key: similie-cuda-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
         fail-on-cache-miss: true
     - name: Run 2d_vector_laplacian on GPU
+      shell: bash
       run: |
+        set -o pipefail
         docker image inspect "${IMAGE_TAG}" >/dev/null
         docker run --rm --gpus all \
           --user "$(id -u):$(id -g)" \
@@ -72,4 +78,15 @@ jobs:
             nvidia-smi
             cmake --build . --parallel 8 --target 2d_vector_laplacian
             ./examples/2d_vector_laplacian
-          '
+          ' 2>&1 | tee -a "${EXAMPLE_LOG}"
+    - name: Upload example outputs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: example-2d_vector_laplacian
+        overwrite: true
+        if-no-files-found: error
+        path: |
+          ${{ env.EXAMPLE_LOG }}
+          ${{ env.CACHE_ROOT }}/build/2d_vector_laplacian.h5
+          ${{ env.CACHE_ROOT }}/build/2d_vector_laplacian.xmf
