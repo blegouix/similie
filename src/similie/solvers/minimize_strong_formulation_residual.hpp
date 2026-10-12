@@ -628,21 +628,11 @@ std::shared_ptr<gko::matrix::Csr<double, gko::int32>> build_matrix(
         std::shared_ptr<gko::Executor const> const& gko_exec,
         OperatorModel const& operator_model)
 {
-    if constexpr (requires { operator_model.create_matrix(gko_exec); }) {
-        if (env_flag_enabled("SIMILIE_MATRIX_DIAGNOSTICS")) {
-            auto matrix_data = assemble_matrix_data(operator_model);
-            matrix_data.sum_duplicates();
-            log_matrix_diagnostics(matrix_data);
-        }
-        return operator_model.create_matrix(gko_exec);
-    } else {
-        auto matrix_data = assemble_matrix_data(operator_model);
-        matrix_data.sum_duplicates();
-        if (env_flag_enabled("SIMILIE_MATRIX_DIAGNOSTICS")) {
-            log_matrix_diagnostics(matrix_data);
-        }
-        return csr_from_matrix_data(gko_exec, matrix_data);
-    }
+    auto matrix_data = assemble_matrix_data(operator_model);
+    matrix_data.sum_duplicates();
+    if (env_flag_enabled("SIMILIE_MATRIX_DIAGNOSTICS"))
+        log_matrix_diagnostics(matrix_data);
+    return csr_from_matrix_data(gko_exec, matrix_data);
 }
 
 template <class OperatorModel, class StateView>
@@ -1100,7 +1090,9 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
             = gko::stop::Iteration::build().with_max_iters(settings.max_iterations).on(gko_exec);
     std::unique_ptr<gko::LinOpFactory> solver_factory;
     bool const nonsymmetric_operator = [] {
-        if constexpr (requires { OperatorModel::IS_SYMMETRIC; }) {
+        if constexpr (std::is_base_of_v<gko::LinOp, OperatorModel>)
+            return true;
+        else if constexpr (requires { OperatorModel::IS_SYMMETRIC; }) {
             return !OperatorModel::IS_SYMMETRIC;
         }
         return false;
@@ -1176,9 +1168,15 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
                              .count()
                   << std::endl;
     }
-    std::shared_ptr<MatrixFreeLinOp<ExecSpace, OperatorModel> const> matrix_free_system_matrix;
+    using MatrixFree = std::conditional_t<
+            std::is_base_of_v<gko::LinOp, OperatorModel>,
+            gko::LinOp,
+            MatrixFreeLinOp<ExecSpace, OperatorModel>>;
+    std::shared_ptr<MatrixFree const> matrix_free_system_matrix;
     std::shared_ptr<gko::LinOp const> system_matrix;
-    if (settings.use_matrix_free) {
+    if constexpr (std::is_base_of_v<gko::LinOp, OperatorModel>)
+        system_matrix = assembled_matrix;
+    else if (settings.use_matrix_free) {
         if (env_flag_enabled("SIMILIE_SOLVER_TIMING")) {
             std::cout << "SimiLie linear solve stage: constructing matrix-free LinOp" << std::endl;
         }
@@ -1294,9 +1292,9 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
     auto const optimization_end = std::chrono::steady_clock::now();
     diagnostics.duration
             = std::chrono::duration<double>(optimization_end - optimization_start).count();
-    if (matrix_free_system_matrix != nullptr) {
-        matrix_free_system_matrix->log_timing();
-    }
+    if constexpr (!std::is_base_of_v<gko::LinOp, OperatorModel>)
+        if (matrix_free_system_matrix != nullptr)
+            matrix_free_system_matrix->log_timing();
     if (progress_logger != nullptr) {
         solver->remove_logger(progress_logger);
     }
@@ -1321,16 +1319,11 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
                 applied("similie_true_residual_applied", rhs.extent(0), rhs.extent(1));
         Kokkos::View<double**, memory_space>
                 true_residual("similie_true_residual", rhs.extent(0), rhs.extent(1));
-        if (settings.use_matrix_free && matrix_free_system_matrix != nullptr) {
-            auto solution_gko_for_residual = to_gko_dense(gko_exec, solution);
-            auto applied_gko_for_residual = to_gko_dense(gko_exec, applied);
-            matrix_free_system_matrix
-                    ->apply(solution_gko_for_residual.dense, applied_gko_for_residual.dense);
-            gko_exec->synchronize();
-            copy_back_from_gko_dense_bridge(applied, applied_gko_for_residual);
-        } else {
-            operator_model.apply(exec_space, solution, applied);
-        }
+        auto solution_gko_for_residual = to_gko_dense(gko_exec, solution);
+        auto applied_gko_for_residual = to_gko_dense(gko_exec, applied);
+        system_matrix->apply(solution_gko_for_residual.dense, applied_gko_for_residual.dense);
+        gko_exec->synchronize();
+        copy_back_from_gko_dense_bridge(applied, applied_gko_for_residual);
         copy(exec_space, true_residual, rhs);
         axpy_inplace(exec_space, true_residual, -1.0, applied);
         double const true_residual_l2 = residual_norm_l2(exec_space, true_residual);
@@ -1345,6 +1338,52 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
 }
 
 } // namespace detail
+
+/** Solve independent loads with one native sparse matrix and preconditioner.
+ * \important This operator and documentation is fully AI-generated.
+ * An already assembled matrix uses Ginkgo's own application in every solve.
+ * Matrix-free evaluation remains available to ordinary operator models.
+ */
+template <class ExecSpace, class RHSView, class SolutionView>
+std::vector<StrongFormulationSolverDiagnostics> minimize_strong_formulation_residual(
+        ExecSpace exec,
+        std::shared_ptr<gko::matrix::Csr<double, gko::int32>> const& matrix,
+        std::vector<RHSView> const& rhs,
+        std::vector<SolutionView> const& solutions,
+        StrongFormulationSolverSettings settings = {})
+{
+    if (!matrix || rhs.empty() || rhs.size() != solutions.size())
+        throw std::invalid_argument("invalid assembled linear system batch");
+    auto const executor = matrix->get_executor();
+    if (detail::env_flag_enabled("SIMILIE_MATRIX_DIAGNOSTICS")) {
+        gko::matrix_data<double, gko::int32> data;
+        matrix->write(data);
+        detail::log_matrix_diagnostics(data);
+    }
+    auto const preconditioner = detail::build_preconditioner(executor, matrix, settings);
+    settings.use_matrix_free = false;
+    std::cout << "SimiLie linear system mode: assembled tensor stencils" << '\n';
+    std::vector<StrongFormulationSolverDiagnostics> diagnostics;
+    for (std::size_t i = 0; i < rhs.size(); ++i) {
+        if (rhs[i].extent(0) != matrix->get_size()[0] || rhs[i].extent(1) != 1
+            || solutions[i].extent(0) != rhs[i].extent(0) || solutions[i].extent(1) != 1)
+            throw std::invalid_argument("assembled linear system shape mismatch");
+        diagnostics.push_back(
+                detail::solve_linearized_system(
+                        exec,
+                        executor,
+                        *matrix,
+                        rhs[i],
+                        solutions[i],
+                        settings,
+                        matrix,
+                        preconditioner));
+        if (!std::isfinite(diagnostics.back().final_relative_residual)
+            || diagnostics.back().final_relative_residual > settings.relative_tolerance * 10.0)
+            throw std::runtime_error("assembled linear solve did not converge");
+    }
+    return diagnostics;
+}
 
 template <class ExecSpace, class OperatorModel, class RHSViewType, class SolutionViewType>
 StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(

@@ -8,7 +8,16 @@
 
 #include <similie/tensor/owning_tensor.hpp>
 
-#include "sparse_linear_system.hpp"
+#include "minimize_strong_formulation_residual.hpp"
+
+namespace similie::solvers {
+struct AssembledLinearSystem
+{
+    std::shared_ptr<gko::matrix::Csr<double, gko::int32>> matrix;
+    Kokkos::View<double**> rhs;
+    Kokkos::View<double*> row_scales;
+};
+} // namespace similie::solvers
 
 namespace similie::solvers::detail {
 struct StencilColumn
@@ -169,7 +178,7 @@ struct RowAssembly
         return rhs;
     }
 
-    ScalarLinearSystem finalize(Kokkos::DefaultExecutionSpace const& exec, bool normalize) const
+    AssembledLinearSystem finalize(Kokkos::DefaultExecutionSpace const& exec, bool normalize) const
     {
         check();
         RowAssembly const data = *this;
@@ -227,7 +236,34 @@ struct RowAssembly
                     }
                 });
         Kokkos::View<double**> const rhs = finalize_rhs(exec, scales);
-        return {SparseLinearOperator(offsets, csr_columns, values), rhs, scales};
+        auto const executor = gko::ext::kokkos::create_executor(exec);
+        gko::array<double> matrix_values(executor, values.extent(0));
+        gko::array<gko::int32> matrix_columns(executor, csr_columns.extent(0)),
+                matrix_offsets(executor, offsets.extent(0));
+        executor->copy_from(
+                executor.get(),
+                values.extent(0),
+                values.data(),
+                matrix_values.get_data());
+        executor->copy_from(
+                executor.get(),
+                csr_columns.extent(0),
+                csr_columns.data(),
+                matrix_columns.get_data());
+        executor->copy_from(
+                executor.get(),
+                offsets.extent(0),
+                offsets.data(),
+                matrix_offsets.get_data());
+        std::shared_ptr<gko::matrix::Csr<double, gko::int32>> matrix
+                = gko::matrix::Csr<double, gko::int32>::
+                        create(executor,
+                               gko::dim<2>(constants.extent(0), constants.extent(0)),
+                               std::move(matrix_values),
+                               std::move(matrix_columns),
+                               std::move(matrix_offsets));
+        matrix->sort_by_column_index();
+        return {matrix, rhs, scales};
     }
 };
 } // namespace similie::solvers::detail

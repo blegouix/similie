@@ -213,8 +213,7 @@ struct Codifferential<TagToRemoveFromCochain, CochainTag>
             ddc::detail::array(origin)[axis] = 2;
         }
         auto const incidence = TransposedCoboundary<TagToRemoveFromCochain, DualIndex>::
-                value(tensor::detail::IdentityStencilEvaluator {},
-                      chain,
+                value(chain,
                       lower,
                       origin,
                       tensor::TensorAccessor<TopIndex>::access_element(
@@ -231,13 +230,12 @@ struct Codifferential<TagToRemoveFromCochain, CochainTag>
         return result;
     }
 
-    template <class DualField, class DualRules, class InverseHodge, class Sampler, class Element>
+    template <class DualField, class DualRules, class InverseHodge, class Element>
         requires requires { typename DualField::non_indices_domain_t; }
     KOKKOS_FUNCTION static auto value(
             DualField const& dual_field,
             DualRules dual_rules,
             InverseHodge inverse_hodge,
-            Sampler sampler,
             Element elem)
     {
         auto const rules = [&] {
@@ -264,19 +262,7 @@ struct Codifferential<TagToRemoveFromCochain, CochainTag>
         operator()(
                 tensor::Tensor(output.span_view()),
                 [&](auto sample, auto component) {
-                    return tensor::detail::EvaluateRuleValue {
-                            [&](auto const& donor, auto donor_elem, auto donor_component) {
-                                if constexpr (requires {
-                                                  donor.value(sampler, donor_elem, donor_component);
-                                              })
-                                    return donor.value(sampler, donor_elem, donor_component);
-                                else
-                                    return tensor::detail::evaluate_tensor_basis(
-                                            donor,
-                                            sampler,
-                                            donor_elem,
-                                            donor_component);
-                            }}(rules, dual_field, sample, component);
+                    return rules(dual_field, sample).mem(component);
                 },
                 inverse_hodge,
                 chain,

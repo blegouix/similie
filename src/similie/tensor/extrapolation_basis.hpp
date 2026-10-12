@@ -108,5 +108,71 @@ KOKKOS_FUNCTION double contract_extrapolation_basis(
     });
     return result;
 }
+template <class Element>
+KOKKOS_FUNCTION auto storage_element(Element element)
+{
+    if constexpr (misc::Specialization<Element, misc::SignedDiscreteElement>)
+        return element.storage_element();
+    else
+        return element;
+}
+
+template <class Rule>
+KOKKOS_FUNCTION bool is_interface(Rule const& rule)
+{
+    if constexpr (requires { rule.is_interface(); })
+        return rule.is_interface();
+    else if constexpr (requires { Rule::IS_INTERFACE; })
+        return Rule::IS_INTERFACE;
+    else
+        return false;
+}
+template <class Rule>
+KOKKOS_FUNCTION bool is_dirichlet(Rule const& rule)
+{
+    if constexpr (requires { rule.is_dirichlet(); })
+        return rule.is_dirichlet();
+    else if constexpr (requires { Rule::IS_DIRICHLET; })
+        return Rule::IS_DIRICHLET;
+    else
+        return false;
+}
+template <class Rule>
+KOKKOS_FUNCTION bool shared_boundary(Rule const& rule)
+{
+    if constexpr (requires { rule.shared_boundary(); })
+        return rule.shared_boundary();
+    else if constexpr (requires { rule.boundary_map.shared_boundary; })
+        return rule.boundary_map.shared_boundary;
+    else
+        return true;
+}
+template <class... Grid, class Entry>
+KOKKOS_FUNCTION ddc::DiscreteElement<Grid...> stencil_sample(
+        ddc::DiscreteElement<Grid...> center,
+        Entry entry)
+{
+    ((center.template uid<Grid>() += entry.template uid<Grid>() - 1), ...);
+    return center;
+}
+
+template <class Rule, class Field, class Element, class Component>
+KOKKOS_FUNCTION double extrapolation_source_value(
+        Rule const& rule,
+        Field const& field,
+        Element element,
+        Component component)
+{
+    if constexpr (requires { rule.source_value(); })
+        return rule.source_value();
+    else if constexpr (requires { rule.prescribed_value; })
+        return rule.prescribed_value;
+    else if constexpr (requires { rule.exterior_value; })
+        return rule.exterior_value;
+    else if constexpr (requires { Rule::STORED_SAMPLES_ONLY; })
+        return 0.0;
+    else
+        return rule(field, element).mem(component);
+}
 } // namespace detail
 } // namespace sil::tensor

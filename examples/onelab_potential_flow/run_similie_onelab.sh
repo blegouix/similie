@@ -43,8 +43,21 @@ if [[ "${solver}" == getdp ]]; then
         echo "getdp executable not found: ${getdp_executable}" >&2
         exit 1
     fi
-    "${gmsh_executable}" -2 -nopopup -v 3 -format msh2 -o "${mesh_file}" \
-        "${geometry_file}" "${gmsh_args[@]}"
+    if [[ "${SIMILIE_GETDP_REUSE_MESH:-0}" != 1 ]]; then
+        "${gmsh_executable}" -2 -nopopup -v 3 -format msh2 -o "${mesh_file}" \
+            "${geometry_file}" "${gmsh_args[@]}"
+    fi
+    getdp_output_name="$(dirname "${mesh_file}")/magnus"
+    # Keep the default problem and its output prefix together inside this case.
+    if [[ -z "${SIMILIE_GETDP_PROBLEM_FILE:-}" ]]; then
+        reference_dir="$(dirname "${mesh_file}")/getdp_reference"
+        mkdir -p "${reference_dir}/ref"
+        cp "${script_dir}/magnus_common.pro" "${reference_dir}/"
+        cp "${script_dir}/ref/magnus.pro" "${reference_dir}/ref/"
+        getdp_problem_file="${reference_dir}/ref/magnus.pro"
+        getdp_output_name="${reference_dir}/ref/magnus"
+        rm -f "${reference_dir}/ref/"{output.txt,KJ.pos,phi.pos,pressure.pos,velocity.pos}
+    fi
     getdp_args=()
     for ((i=0; i<${#gmsh_args[@]}; ++i)); do
         if [[ "${gmsh_args[i]}" != -setnumber ]]; then continue; fi
@@ -64,8 +77,17 @@ if [[ "${solver}" == getdp ]]; then
         getdp_args+=(-setnumber "${variable}" "${converted}")
     done
     "${getdp_executable}" "${getdp_problem_file}" -msh "${mesh_file}" \
-        -name "$(dirname "${mesh_file}")/magnus" -solve PotentialFlow -pos PotentialFlow \
+        -name "${getdp_output_name}" -solve PotentialFlow -pos PotentialFlow \
         "${getdp_args[@]}" -v2
+    if [[ -z "${SIMILIE_GETDP_PROBLEM_FILE:-}" ]]; then
+        cp "${reference_dir}/ref/"{output.txt,pressure.pos,velocity.pos} \
+            "$(dirname "${mesh_file}")/"
+        reference_potential="${reference_dir}/ref/KJ.pos"
+        if [[ ! -f "${reference_potential}" ]]; then
+            reference_potential="${reference_dir}/ref/phi.pos"
+        fi
+        cp "${reference_potential}" "$(dirname "${mesh_file}")/getdp_potential.pos"
+    fi
     exit 0
 fi
 if [[ ! -x "${onelab_client}" ]]; then

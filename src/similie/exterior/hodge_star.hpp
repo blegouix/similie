@@ -592,15 +592,6 @@ using codifferential_hodge_output_indices_t =
         typename detail::CodifferentialHodgeOutputIndexSeq<EndId, T>::type;
 
 namespace detail {
-struct ZeroScalarSampler
-{
-    template <class Field, class Element, class Component>
-    KOKKOS_FUNCTION double operator()(Field const&, Element, Component) const
-    {
-        return 0.0;
-    }
-};
-
 template <std::size_t Axis, class Position, class Rules, class Element>
 KOKKOS_FUNCTION void geometry_front(
         Position const& position,
@@ -672,8 +663,7 @@ template <
         class Cochain,
         class Position,
         class GeometryRules,
-        class BoundaryFluxRules,
-        class Evaluate>
+        class BoundaryFluxRules>
 struct DualHodgeCochain
 {
     using source_indices = tensor::upper_t<ddc::to_type_seq_t<tensor::natural_domain_t<Direction>>>;
@@ -690,7 +680,6 @@ struct DualHodgeCochain
     GeometryRules geometry;
     BoundaryFluxRules boundary_flux;
     double diffusivity;
-    Evaluate evaluate_cochain;
 
     KOKKOS_FUNCTION non_indices_domain_t non_indices_domain() const
     {
@@ -709,12 +698,15 @@ struct DualHodgeCochain
                 && ddc::detail::array(elem)[Axis]
                            == ddc::detail::array(non_indices_domain().back())[Axis]) {
                 ++ddc::detail::array(elem)[Axis];
-                result = tensor::detail::EvaluateRuleValue<
-                        detail::ZeroScalarSampler> {detail::ZeroScalarSampler {}}(
-                        boundary_flux.template boundary_rule<Axis, true>(),
-                        *this,
-                        elem,
-                        component);
+                auto const& rule = boundary_flux.template boundary_rule<Axis, true>();
+                auto const coefficients = rule.value(non_indices_domain(), elem);
+                result = tensor::detail::contract_extrapolation_basis(
+                        coefficients,
+                        [](auto) { return 0.0; },
+                        [&](std::size_t) {
+                            return tensor::detail::
+                                    extrapolation_source_value(rule, *this, elem, component);
+                        });
                 return true;
             }
         }
@@ -964,8 +956,7 @@ struct DualHodgeCochain
                         ddc::detail::array(local)[coordinate]
                                 = ddc::detail::array(first)[coordinate]
                                   - ddc::detail::array(elem)[coordinate] + 1;
-                    if constexpr (requires { typename Evaluate::cochain_tag; }) {
-                        static_assert(Evaluate::cochain_tag::rank() == 0);
+                    if constexpr (Index::rank() == 0) {
                         // The scalar coboundary's tensor stencil is the oriented
                         // endpoint difference; retain that incidence independently of H.
                         result.mem(local, ddc::DiscreteElement<Index>(0)) -= weight;
@@ -982,34 +973,6 @@ struct DualHodgeCochain
     KOKKOS_FUNCTION auto value(Element elem, Component component) const
     {
         return stencil(elem, component, std::make_index_sequence<Direction::size()> {});
-    }
-
-    template <class Sampler, class Element, class Component, std::size_t... Axis>
-    KOKKOS_FUNCTION double evaluate(
-            Sampler sampler,
-            Element elem,
-            Component component,
-            std::index_sequence<Axis...>) const
-    {
-        double prescribed = 0.0;
-        if (prescribed_flux(elem, component, prescribed))
-            return prescribed;
-        auto const coefficients = stencil(elem, component, std::index_sequence<Axis...> {});
-        double result = 0.0;
-        ddc::device_for_each(coefficients.domain(), [&](auto entry) {
-            double const weight = coefficients.mem(entry);
-            if (weight != 0.0)
-                result += weight
-                          * tensor::detail::evaluate_tensor_basis(
-                                  cochain,
-                                  sampler,
-                                  tensor::detail::stencil_sample(elem, entry),
-                                  ddc::DiscreteElement<ddc::type_seq_element_t<
-                                          0,
-                                          ddc::to_type_seq_t<typename Cochain::indices_domain_t>>>(
-                                          entry));
-        });
-        return result;
     }
 
     /** Inverse zero-form Hodge with the physical, truncated dual volume. */
@@ -1071,40 +1034,37 @@ struct DualHodgeCochain
                 = inverse_zero_form(top, elem);
     }
 
-    template <class Sampler, class Element, class Component>
-    KOKKOS_FUNCTION double value(Sampler sampler, Element elem, Component component) const
-    {
-        return evaluate(
-                sampler,
-                elem,
-                component,
-                std::make_index_sequence<
-                        ddc::type_seq_size_v<ddc::to_type_seq_t<non_indices_domain_t>>> {});
-    }
     template <class Element, class Component>
     KOKKOS_FUNCTION double mem(Element elem, Component component) const
     {
-        return value(tensor::StoredTensorSampler {}, elem, component);
+        double prescribed = 0.0;
+        if (prescribed_flux(elem, component, prescribed))
+            return prescribed;
+        auto const coefficients = value(elem, component);
+        double result = 0.0;
+        ddc::device_for_each(coefficients.domain(), [&](auto entry) {
+            double const weight = coefficients.mem(entry);
+            if (weight != 0.0)
+                result += weight
+                          * cochain
+                                    .mem(tensor::detail::stencil_sample(elem, entry),
+                                         typename Cochain::indices_domain_t::discrete_element_type(
+                                                 entry));
+        });
+        return result;
     }
 };
 
 /** Normalize single policies locally, as for the staged differential operators.
  * \important This operator and documentation is fully AI-generated.
  */
-template <
-        class Direction,
-        class Cochain,
-        class Position,
-        class Geometry,
-        class Flux,
-        class Evaluate = tensor::StoredTensorSampler>
+template <class Direction, class Cochain, class Position, class Geometry, class Flux>
 auto make_dual_hodge_cochain(
         Cochain cochain,
         Position const& position,
         Geometry geometry_rule,
         Flux flux_rule,
-        double diffusivity = 1.0,
-        Evaluate evaluate = {})
+        double diffusivity = 1.0)
 {
 #if defined(KOKKOS_ENABLE_CUDA)
     if constexpr (Kokkos::SpaceAccessibility<Kokkos::Cuda, typename Position::memory_space>::
@@ -1133,8 +1093,7 @@ auto make_dual_hodge_cochain(
             Cochain,
             Position,
             std::remove_cvref_t<decltype(geometry)>,
-            std::remove_cvref_t<decltype(flux)>,
-            Evaluate> {cochain, position, geometry, flux, diffusivity, evaluate};
+            std::remove_cvref_t<decltype(flux)>> {cochain, position, geometry, flux, diffusivity};
 }
 
 

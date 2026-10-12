@@ -52,13 +52,6 @@ public:
 
 enum class FieldRole { Primal, Flux, Geometry };
 
-template <class Field>
-struct DomainField : Field
-{
-    std::size_t domain_id;
-    KOKKOS_FUNCTION DomainField(Field field, std::size_t id) : Field(field), domain_id(id) {}
-};
-
 /** A thin borrowed donor view, so face policies never duplicate lazy operators.
  * \important This operator and documentation is fully AI-generated.
  */
@@ -70,7 +63,6 @@ struct DomainReference
     using indices_domain_t = typename Field::indices_domain_t;
     using memory_space = typename Field::memory_space;
     Field const* field;
-    std::size_t domain_id;
     KOKKOS_FUNCTION non_indices_domain_t non_indices_domain() const
     {
         return field->non_indices_domain();
@@ -84,11 +76,6 @@ struct DomainReference
     KOKKOS_FUNCTION std::size_t global_index(Element elem, Component component) const
     {
         return field->global_index(elem, component);
-    }
-    template <class Sampler, class Element, class Component>
-    KOKKOS_FUNCTION double value(Sampler sampler, Element elem, Component component) const
-    {
-        return field->value(sampler, elem, component);
     }
 };
 
@@ -143,19 +130,6 @@ struct FaceRule
     {
         return interface ? external.value(domain, elem) : boundary.value(domain, elem);
     }
-
-private:
-    template <class R, class F, class S, class E>
-    friend KOKKOS_FUNCTION auto tensor::detail::evaluate_rule_basis(R const&, F const&, S, E);
-
-    template <class Source, class Sampler, class Element>
-    KOKKOS_FUNCTION auto evaluate_basis(Source const& field, Sampler sampler, Element elem) const
-    {
-        return interface ? tensor::detail::evaluate_rule_basis(external, field, sampler, elem)
-                         : tensor::detail::evaluate_rule_basis(boundary, field, sampler, elem);
-    }
-
-public:
     KOKKOS_FUNCTION bool shared_boundary() const
     {
         return external.boundary_map.shared_boundary;
@@ -178,7 +152,7 @@ class Multidomain
     template <class Field>
     struct DomainViews
     {
-        Kokkos::View<DomainField<Field>*, Kokkos::SharedSpace> values;
+        Kokkos::View<Field*, Kokkos::SharedSpace> values;
         std::size_t constructed = 0;
         DomainViews(std::string const& label, std::size_t count)
             : values(Kokkos::view_alloc(Kokkos::WithoutInitializing, label), count)
@@ -202,7 +176,7 @@ class Multidomain
         std::shared_ptr<DomainViews<Field>> views
                 = std::make_shared<DomainViews<Field>>(label, domain_count());
         for (std::size_t id = 0; id < domain_count(); ++id) {
-            std::construct_at(views->values.data() + id, select(m_data[id]), id);
+            std::construct_at(views->values.data() + id, select(m_data[id]));
             ++views->constructed;
         }
         return views;
@@ -211,14 +185,11 @@ class Multidomain
     auto reference(std::size_t id) const
     {
         if constexpr (Role == FieldRole::Primal)
-            return DomainReference<
-                    DomainField<decltype(Data::field)>> {m_fields->values.data() + id, id};
+            return DomainReference<decltype(Data::field)> {m_fields->values.data() + id};
         else if constexpr (Role == FieldRole::Flux)
-            return DomainReference<
-                    DomainField<decltype(Data::flux)>> {m_flux->values.data() + id, id};
+            return DomainReference<decltype(Data::flux)> {m_flux->values.data() + id};
         else
-            return DomainReference<
-                    DomainField<decltype(Data::geometry)>> {m_geometry->values.data() + id, id};
+            return DomainReference<decltype(Data::geometry)> {m_geometry->values.data() + id};
     }
 
     template <FieldRole Role, class Dimension, std::size_t Axis, bool Upper>
@@ -335,11 +306,11 @@ public:
     auto field(std::size_t id) const
     {
         if constexpr (Role == FieldRole::Primal)
-            return DomainField {data(id).field, id};
+            return data(id).field;
         else if constexpr (Role == FieldRole::Flux)
-            return DomainField {data(id).flux, id};
+            return data(id).flux;
         else
-            return DomainField {data(id).geometry, id};
+            return data(id).geometry;
     }
     template <class Function>
     auto transform_data(Function function) const

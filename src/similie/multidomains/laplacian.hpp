@@ -12,6 +12,7 @@
 #include "indexed_scalar_field.hpp"
 #include "multidomain_operator.hpp"
 #include "multidomains.hpp"
+#include "stencil_composition.hpp"
 
 namespace sil::multidomains {
 /** Bind lazy *d(phi) cochains, so dual topology rules enter the donor's DEC flux.
@@ -38,13 +39,7 @@ auto make_laplacian_flux_domains(
                 data.geometry,
                 domains.template extrapolation_rules<sil::multidomains::FieldRole::Geometry>(id),
                 domains.template boundary_rules<sil::multidomains::FieldRole::Flux>(id),
-                coefficient,
-                sil::exterior::Coboundary<
-                        Direction,
-                        ddc::type_seq_element_t<
-                                0,
-                                ddc::to_type_seq_t<
-                                        typename decltype(field)::indices_domain_t>>> {});
+                coefficient);
         return sil::multidomains::domain_data(data.field, data.geometry, data.physics, flux);
     });
 }
@@ -89,7 +84,7 @@ void prescribe_face(
                     auto weights = similie::solvers::detail::make_row_stencil<Capacity>();
                     std::size_t count = 0;
                     double constant = 0.0;
-                    sil::tensor::detail::visit_rule_basis(
+                    detail::visit_rule_basis(
                             primal,
                             field,
                             elem,
@@ -120,11 +115,15 @@ void prescribe_face(
                         ++ddc::detail::array(exterior)[Axis];
                     else
                         --ddc::detail::array(exterior)[Axis];
-                    double const value = sil::tensor::detail::EvaluateRuleValue<
-                            sil::exterior::detail::
-                                    ZeroScalarSampler> {sil::exterior::detail::
-                                                                ZeroScalarSampler {}}(
-                            primal.template boundary_rule<Axis, Upper>(),
+                    auto const& face = primal.template boundary_rule<Axis, Upper>();
+                    auto const& boundary = [&]() -> auto const& {
+                        if constexpr (requires { face.boundary; })
+                            return face.boundary;
+                        else
+                            return face;
+                    }();
+                    double const value = sil::tensor::detail::extrapolation_source_value(
+                            boundary,
                             field,
                             exterior,
                             ddc::DiscreteElement<typename Field::component_type>(0));
@@ -190,36 +189,28 @@ void assemble_rows(
                     system.fail(4);
                     return;
                 }
-                if constexpr (Matrix) {
-                    auto const coefficients = op.value(flux, flux, elem);
-                    ddc::device_for_each(coefficients.domain(), [&](auto entry) {
-                        double const weight = coefficients.mem(entry);
-                        if (weight != 0.0)
-                            sil::tensor::detail::visit_rule_basis(
-                                    rules,
-                                    flux,
-                                    sil::tensor::detail::stencil_sample(elem, entry),
-                                    typename Flux::indices_domain_t::discrete_element_type(entry),
-                                    weight,
-                                    [&](auto const& donor,
-                                        auto sample,
-                                        auto component,
-                                        double coefficient) {
+                auto const coefficients = op.value(flux, flux, elem);
+                ddc::device_for_each(coefficients.domain(), [&](auto entry) {
+                    double const weight = coefficients.mem(entry);
+                    if (weight != 0.0)
+                        detail::visit_rule_basis(
+                                rules,
+                                flux,
+                                sil::tensor::detail::stencil_sample(elem, entry),
+                                typename Flux::indices_domain_t::discrete_element_type(entry),
+                                weight,
+                                [&](auto const& donor,
+                                    auto sample,
+                                    auto component,
+                                    double coefficient) {
+                                    if constexpr (Matrix)
                                         system
                                                 .add(row,
                                                      donor.global_index(sample, component),
                                                      coefficient);
-                                    },
-                                    [&](double value) { system.constants(row) += value; });
-                    });
-                } else
-                    system.constants(row)
-                            = op.value(flux,
-                                       rules,
-                                       flux,
-                                       sil::exterior::detail::ZeroScalarSampler {},
-                                       elem)
-                                      .mem(ddc::DiscreteElement<typename Field::component_type>(0));
+                                },
+                                [&](double value) { system.constants(row) += value; });
+                });
             });
 }
 
@@ -259,7 +250,7 @@ void assemble_laplacian_rows(
  * mappings; prescribed values and interface jumps contribute separately to rhs.
  */
 template <class Direction, std::size_t ColumnCapacity = 0, class Domains, class Diffusivity>
-similie::solvers::ScalarLinearSystem assemble_multidomain_laplacian(
+similie::solvers::AssembledLinearSystem assemble_multidomain_laplacian(
         Kokkos::DefaultExecutionSpace const& exec,
         Domains const& domains,
         std::size_t unknowns,
@@ -284,7 +275,7 @@ template <class Direction, std::size_t ColumnCapacity = 0, class Domains, class 
 Kokkos::View<double**> assemble_multidomain_laplacian_rhs(
         Kokkos::DefaultExecutionSpace const& exec,
         Domains const& domains,
-        similie::solvers::ScalarLinearSystem const& matrix_system,
+        similie::solvers::AssembledLinearSystem const& matrix_system,
         Diffusivity diffusivity,
         double jump_scale = 1.0)
 {

@@ -8,6 +8,7 @@
 
 #include <gtest/gtest.h>
 #include <similie/multidomains/multidomains.hpp>
+#include <similie/multidomains/stencil_composition.hpp>
 #include <similie/tensor/character.hpp>
 #include <similie/tensor/tensor.hpp>
 
@@ -214,23 +215,30 @@ TEST(Multidomains, EntrySideAffineInverseAndPhysics)
     auto const geometry = domains.extrapolation_rules<md::FieldRole::Geometry>(0, 50.0);
     EXPECT_DOUBLE_EQ(geometry(first, ddc::DiscreteElement<GridX>(13)).mem(component), 6.0);
     auto basis = [](auto const& donor, auto entry, auto) {
-        return donor.domain_id == 1 && entry.template uid<GridX>() == 31 ? 1.0 : 0.0;
+        return donor.non_indices_domain().front().template uid<GridX>() == 30
+                               && entry.template uid<GridX>() == 31
+                       ? 1.0
+                       : 0.0;
+    };
+    auto evaluate_basis = [&](auto const& rules, auto const& field, auto sample, auto element) {
+        double result = 0.0;
+        md::detail::visit_rule_basis(
+                rules,
+                field,
+                element,
+                component,
+                1.0,
+                [&](auto const& donor, auto entry, auto index, double weight) {
+                    result += weight * sample(donor, entry, index);
+                },
+                [&](double value) { result += value; });
+        return result;
     };
     EXPECT_DOUBLE_EQ(
-            sil::tensor::detail::evaluate_rule_basis(
-                    rules_a,
-                    domains.field(0),
-                    basis,
-                    ddc::DiscreteElement<GridX>(14))
-                    .mem(component),
+            evaluate_basis(rules_a, domains.field(0), basis, ddc::DiscreteElement<GridX>(14)),
             5.0);
     EXPECT_DOUBLE_EQ(
-            sil::tensor::detail::evaluate_rule_basis(
-                    rules_a,
-                    domains.field(0),
-                    basis,
-                    ddc::DiscreteElement<GridX>(11))
-                    .mem(component),
+            evaluate_basis(rules_a, domains.field(0), basis, ddc::DiscreteElement<GridX>(11)),
             0.0);
 }
 

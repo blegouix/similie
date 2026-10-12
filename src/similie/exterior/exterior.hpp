@@ -3,7 +3,6 @@
 
 #pragma once
 
-#include <similie/tensor/evaluators.hpp>
 #include <similie/tensor/external_domain_extrapolation_rule.hpp>
 #include <similie/tensor/extrapolation_rules.hpp>
 #include <similie/tensor/scalar_extrapolation_rules.hpp>

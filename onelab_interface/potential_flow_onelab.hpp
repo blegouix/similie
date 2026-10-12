@@ -438,7 +438,7 @@ inline Result run(
         return bind_potential_flow_domains(topology(1.0), fields, positions, equations);
     };
     auto const base_domains = bind_indexed_domains(1.0);
-    solvers::ScalarLinearSystem const system
+    solvers::AssembledLinearSystem const system
             = sil::multidomains::assemble_multidomain_laplacian<GradientIndex>(
                     Kokkos::DefaultExecutionSpace {},
                     base_domains,
@@ -457,11 +457,16 @@ inline Result run(
     result.domain_count = side_start.size();
     result.node_count = node_count;
     result.cell_count = mesh.cells.size();
-    Kokkos::View<double**> const base_solution = solvers::
-            solve_linear_system(system.matrix, system.rhs, settings, result.solver_diagnostics);
-    solvers::StrongFormulationSolverDiagnostics cut_diagnostics;
-    Kokkos::View<double**> const response_solution
-            = solvers::solve_linear_system(system.matrix, jump_rhs, settings, cut_diagnostics);
+    Kokkos::View<double**> const base_solution("potential_base_solution", node_count, 1);
+    Kokkos::View<double**> const response_solution("potential_response_solution", node_count, 1);
+    std::vector<solvers::StrongFormulationSolverDiagnostics> const diagnostics
+            = solvers::minimize_strong_formulation_residual(
+                    Kokkos::DefaultExecutionSpace {},
+                    system.matrix,
+                    std::vector {system.rhs, jump_rhs},
+                    std::vector {base_solution, response_solution},
+                    settings);
+    result.solver_diagnostics = diagnostics[0];
     auto const base_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), base_solution);
     auto const response_host
             = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), response_solution);

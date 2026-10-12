@@ -12,7 +12,7 @@ Solver {
   MaxIterations 100000;
   RelativeTolerance 1e-9;
   JacobiMaxBlockSize 1;
-  UseMatrixFree 1;
+  UseMatrixFree 0;
   Criterion MomentsTemporalDerivative;
   Preconditioner Jacobi;
 }

@@ -14,7 +14,7 @@
 #include <similie/misc/specialization.hpp>
 #include <similie/misc/type_seq_conversion.hpp>
 
-#include "evaluators.hpp"
+#include "extrapolation_basis.hpp"
 
 namespace sil::tensor {
 
@@ -222,30 +222,7 @@ public:
                 [&](auto const& rule, auto element) { return rule(field, element); },
                 [&](auto element) {
                     return detail::pointwise_tensor<Field>([&](auto component) {
-                        return StoredTensorSampler {}(field, element, component);
-                    });
-                });
-    }
-
-private:
-    template <class R, class F, class S, class E>
-    friend KOKKOS_FUNCTION auto detail::evaluate_rule_basis(R const&, F const&, S, E);
-
-    template <class Field, class Sampler, class Element>
-    KOKKOS_FUNCTION auto evaluate_basis(
-            Field const& field,
-            Sampler sampler,
-            Element sampled_element) const
-    {
-        return evaluate(
-                field,
-                sampled_element,
-                [&](auto const& rule, auto element) {
-                    return detail::evaluate_rule_basis(rule, field, sampler, element);
-                },
-                [&](auto element) {
-                    return detail::pointwise_tensor<Field>([&](auto component) {
-                        return sampler(field, element.storage_element(), component);
+                        return field.mem(element.storage_element(), component);
                     });
                 });
     }

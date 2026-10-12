@@ -10,7 +10,6 @@
 
 #include <ddc/ddc.hpp>
 
-#include "evaluators.hpp"
 #include "scalar_extrapolation_rules.hpp"
 
 namespace sil::tensor {
@@ -143,30 +142,10 @@ struct ExternalDomainExtrapolationRule
     {
         if (misc::domain_contains(field.non_indices_domain(), element))
             return detail::pointwise_tensor<Field>([&](auto component) {
-                return StoredTensorSampler {}(field, element, component);
+                return field.mem(detail::storage_element(element), component);
             });
         auto const donor = target_rule(
                 neighbor,
-                boundary_map(field.non_indices_domain(), neighbor.non_indices_domain(), element));
-        return detail::pointwise_tensor<Field>(
-                [&](auto component) { return orientation * donor.mem(component) + jump; });
-    }
-
-private:
-    template <class R, class F, class S, class E>
-    friend KOKKOS_FUNCTION auto detail::evaluate_rule_basis(R const&, F const&, S, E);
-
-    template <class Field, class Sampler, class Element>
-    KOKKOS_FUNCTION auto evaluate_basis(Field const& field, Sampler sampler, Element element) const
-    {
-        if (misc::domain_contains(field.non_indices_domain(), element))
-            return detail::pointwise_tensor<Field>([&](auto component) {
-                return sampler(field, detail::storage_element(element), component);
-            });
-        auto const donor = detail::evaluate_rule_basis(
-                target_rule,
-                neighbor,
-                sampler,
                 boundary_map(field.non_indices_domain(), neighbor.non_indices_domain(), element));
         return detail::pointwise_tensor<Field>(
                 [&](auto component) { return orientation * donor.mem(component) + jump; });

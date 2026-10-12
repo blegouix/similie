@@ -40,13 +40,31 @@ md::Topology<1> split_graph()
     return graph;
 }
 
-struct GlobalSampler
+void apply_matrix(
+        std::shared_ptr<gko::matrix::Csr<double, gko::int32>> const& matrix,
+        Kokkos::View<double**> input,
+        Kokkos::View<double**> output)
+{
+    auto source = solvers::detail::to_gko_dense(matrix->get_executor(), input);
+    auto target = solvers::detail::to_gko_dense(matrix->get_executor(), output);
+    matrix->apply(source.dense, target.dense);
+    matrix->get_executor()->synchronize();
+    solvers::detail::copy_back_from_gko_dense_bridge(output, target);
+}
+
+template <class Field>
+struct SampledField : Field
 {
     Kokkos::View<double**> values;
-    template <class Field, class Element, class Component>
-    KOKKOS_FUNCTION double operator()(Field field, Element elem, Component component) const
+    KOKKOS_FUNCTION SampledField(Field field, Kokkos::View<double**> data)
+        : Field(field)
+        , values(data)
     {
-        return values(field.global_index(elem, component), 0);
+    }
+    template <class Element, class Component>
+    KOKKOS_FUNCTION double mem(Element elem, Component component) const
+    {
+        return values(this->global_index(elem, component), 0);
     }
 };
 
@@ -56,7 +74,6 @@ void evaluate_rows(
         Field field,
         Flux flux,
         DualRules dual,
-        Kokkos::View<double**> input,
         Kokkos::View<double**> output)
 {
     ddc::parallel_for_each(
@@ -69,7 +86,7 @@ void evaluate_rows(
                                ddc::DiscreteElement<typename Field::component_type>(0)),
                        0)
                         = sil::exterior::Codifferential<Direction, Direction>::
-                                  value(flux, dual, flux, GlobalSampler {input}, elem)
+                                  value(flux, dual, flux, elem)
                                           .mem(ddc::DiscreteElement<typename Field::component_type>(
                                                   0));
             });
@@ -149,7 +166,8 @@ void check_split(bool normalize, double jump_scale = 1.0)
             = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), reassembled.rhs);
     for (std::size_t row = 0; row < 128; ++row)
         EXPECT_NEAR(host_reused_rhs(row, 0), host_reassembled_rhs(row, 0), 1.e-12);
-    auto const data = assemble_matrix_data(assembled.matrix);
+    gko::matrix_data<double, gko::int32> data;
+    assembled.matrix->write(data);
     auto const rhs = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), assembled.rhs);
     std::vector<std::map<std::size_t, double>> rows(128);
     for (auto const& entry : data.nonzeros)
@@ -178,15 +196,18 @@ void check_split(bool normalize, double jump_scale = 1.0)
         for (std::size_t i = 0; i < 128; ++i)
             host_input(i, 0) = std::sin(0.13 * i);
         Kokkos::deep_copy(input, host_input);
-        assembled.matrix.apply(Kokkos::DefaultExecutionSpace {}, input, applied);
+        apply_matrix(assembled.matrix, input, applied);
+        auto const sampled = domains.transform_data([&](std::size_t, auto const& data) {
+            return md::domain_data(SampledField(data.field, input), data.geometry, data.physics);
+        });
         auto const flux_domains
-                = sil::multidomains::make_laplacian_flux_domains<Direction>(domains, coefficient);
+                = sil::multidomains::make_laplacian_flux_domains<Direction>(sampled, coefficient);
         md::DomainExecution<Kokkos::DefaultExecutionSpace>
                 partitions(Kokkos::DefaultExecutionSpace {}, domains.domain_count());
         partitions.for_each([&](std::size_t id, Kokkos::DefaultExecutionSpace const& stream) {
             auto const flux = flux_domains.template field<md::FieldRole::Flux>(id);
             auto const dual = flux_domains.template extrapolation_rules<md::FieldRole::Flux>(id);
-            evaluate_rows<Direction>(stream, domains.field(id), flux, dual, input, direct);
+            evaluate_rows<Direction>(stream, domains.field(id), flux, dual, direct);
         });
         partitions.fence();
         auto const host_applied = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), applied);
@@ -359,7 +380,8 @@ void check_2d(
             = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), system.rhs);
     for (std::size_t row = 0; row < 25; ++row)
         EXPECT_NEAR(host_reused_rhs(row, 0), host_original_rhs(row, 0), 1.e-10);
-    auto const data = assemble_matrix_data(system.matrix);
+    gko::matrix_data<double, gko::int32> data;
+    system.matrix->write(data);
     auto const rhs = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), system.rhs);
     std::vector<std::map<std::size_t, double>> rows(25);
     for (auto const& entry : data.nonzeros)
@@ -380,7 +402,7 @@ void check_2d(
         EXPECT_GT(std::abs(rhs(10, 0)), 0.1);
     Kokkos::View<double**> input("input", 25, 1), applied("applied", 25, 1);
     Kokkos::deep_copy(input, input_host);
-    system.matrix.apply(Kokkos::DefaultExecutionSpace {}, input, applied);
+    apply_matrix(system.matrix, input, applied);
     auto const host_applied = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), applied);
     auto staged = sil::exterior::make_staged_laplacian<Metric, Direction, Scalar>(
             Kokkos::DefaultExecutionSpace {},
@@ -437,7 +459,6 @@ void check_2d(
                                           value(hodge,
                                                 dual,
                                                 hodge,
-                                                sil::tensor::StoredTensorSampler {},
                                                 ddc::DiscreteElement<GridX, GridY>(12, 12))
                                                   .mem(ddc::DiscreteElement<Scalar>(0));
                 });
@@ -518,7 +539,7 @@ TEST(MultidomainsLaplacian, ThreeDimensionalSkewGrid)
             false);
     Kokkos::View<double**> input("input", 125, 1), output("output", 125, 1);
     Kokkos::deep_copy(input, input_host);
-    system.matrix.apply(Kokkos::DefaultExecutionSpace {}, input, output);
+    apply_matrix(system.matrix, input, output);
     auto const result = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), output);
     for (std::size_t i = 1; i < 4; ++i)
         for (std::size_t j = 1; j < 4; ++j)

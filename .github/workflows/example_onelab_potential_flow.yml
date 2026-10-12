@@ -37,32 +37,26 @@ jobs:
         - name: cylinder-circulation
           object: 0
           impose_circulation: 1
-          backend: matrix-free
           arguments: ""
-        - name: cylinder-assembled
+        - name: cylinder-zero-circulation
           object: 0
           impose_circulation: 1
-          backend: assembled-matrix
-          arguments: ""
+          arguments: '-setnumber "Model/Circ" 0'
         - name: cylinder-mass-flow
           object: 0
           impose_circulation: 0
-          backend: matrix-free
           arguments: ""
         - name: airfoil-circulation
           object: 1
           impose_circulation: 1
-          backend: matrix-free
           arguments: ""
         - name: airfoil-kutta
           object: 1
           impose_circulation: 0
-          backend: matrix-free
           arguments: ""
         - name: cylinder-custom-controls
           object: 0
           impose_circulation: 1
-          backend: matrix-free
           arguments: >-
             -setnumber "Model/V" 72
             -setnumber "Model/Circ" 4
@@ -110,6 +104,7 @@ jobs:
             export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
             git config --global --add safe.directory "*"
             nvidia-smi
+            python3 /similie-ci/src/examples/onelab_potential_flow/test_check_fields.py
             cmake --build . --parallel 8 --target similie_onelab
             export HOME=/similie-ci/home
             mkdir -p "${HOME}"
@@ -119,13 +114,14 @@ jobs:
             SIMILIE_ONELAB_BUILD_DIR="${CACHE_ROOT}/build" \
             SIMILIE_ONELAB_MESH_FILE="${output_dir}/magnus.msh" \
               "/similie-ci/src/examples/onelab_potential_flow/run_similie_onelab.sh" \
-              "--${{ matrix.case.backend }}" \
+              --assembled-matrix \
               -setnumber "Model/Object" ${{ matrix.case.object }} \
               -setnumber "Model/Impose circulation" ${{ matrix.case.impose_circulation }} \
               ${{ matrix.case.arguments }} \
               | tee similie.log
             test -s "${output_dir}/similie_potential_flow.pos"
             SIMILIE_ONELAB_MESH_FILE="${output_dir}/magnus.msh" \
+            SIMILIE_GETDP_REUSE_MESH=1 \
               "/similie-ci/src/examples/onelab_potential_flow/run_similie_onelab.sh" \
               --solver=getdp \
               -setnumber "Model/Object" ${{ matrix.case.object }} \
@@ -133,5 +129,7 @@ jobs:
               ${{ matrix.case.arguments }}
             test -s "${output_dir}/output.txt"
             python3 /similie-ci/src/examples/onelab_potential_flow/check_reference.py \
-              similie.log output.txt
+              similie.log output.txt --imposed-circulation ${{ matrix.case.impose_circulation }}
+            python3 /similie-ci/src/examples/onelab_potential_flow/check_fields.py \
+              similie_potential_flow.pos getdp_potential.pos --check-exports
           '
