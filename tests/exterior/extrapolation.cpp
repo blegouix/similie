@@ -155,9 +155,9 @@ void test_laplacian_agrees_with_composition()
             Metric,
             Vector,
             Vector>(Kokkos::DefaultExecutionSpace(), composed, derivative, metric, position, dual);
-    auto result_host = ddc::create_mirror_view_and_copy(
-            Kokkos::DefaultHostExecutionSpace(),
-            result_alloc.span_view());
+    // Keep a snapshot: a mirror view aliases the result allocation on CPU.
+    auto result_host = ddc::
+            create_mirror_and_copy(Kokkos::DefaultHostExecutionSpace(), result_alloc.span_view());
     auto composed_host = ddc::create_mirror_view_and_copy(
             Kokkos::DefaultHostExecutionSpace(),
             composed_alloc.span_view());
