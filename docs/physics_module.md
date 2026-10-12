@@ -32,6 +32,23 @@ Hamiltonian supplies \f$\partial\mathcal H/\partial\pi_0=-\pi_0\f$,
 \f$\partial\mathcal H/\partial\pi_i=\pi_i\f$ for \f$i>0\f$, and
 \f$\partial\mathcal H/\partial\phi=-m^2\phi-gp\phi^{p-1}/\Gamma(p+1)\f$.
 
+## Potential flow
+
+Steady potential flow reuses the free scalar field Hamiltonian with zero mass
+and coupling. Its spatial moment derivative is the identity, so
+`HamiltonEquations` maps reconstructed potential gradients to velocity:
+
+\f[
+\mathbf v = \nabla\phi, \qquad
+\nabla\cdot(\rho\mathbf v)=0.
+\f]
+
+The ONELAB example binds these physics to each structured patch, puts density
+in the constitutive Hodge flux, and solves a scalar multidomain Laplacian.
+Circulation is represented by a jump in potential across the wake cut. The
+\ref multidomains "multidomains and potential flow documentation" describes
+the boundary conditions, circulation response solve, and Gmsh exports.
+
 ## Magnetostatics
 
 For magnetic vector potential \f$A\f$, induction \f$B\f$, current density

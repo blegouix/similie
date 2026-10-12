@@ -72,14 +72,17 @@ KOKKOS_FUNCTION bool add_stencil_coefficient(
 template <std::size_t Capacity>
 struct RowAssembly
 {
+    static_assert(Capacity > 0);
+    std::size_t column_count;
     Kokkos::View<std::size_t**, Kokkos::LayoutRight> columns;
     Kokkos::View<double**, Kokkos::LayoutRight> weights;
     Kokkos::View<std::size_t*> counts;
     Kokkos::View<double*> constants, lower, upper;
     Kokkos::View<int> errors;
 
-    explicit RowAssembly(std::size_t size, bool matrix = true)
-        : columns("dec_columns", matrix ? size : 0, Capacity)
+    explicit RowAssembly(std::size_t size, bool matrix = true, std::size_t input_size = 0)
+        : column_count(input_size == 0 ? size : input_size)
+        , columns("dec_columns", matrix ? size : 0, Capacity)
         , weights("dec_weights", matrix ? size : 0, Capacity)
         , counts("dec_counts", matrix ? size : 0)
         , constants("dec_constants", size)
@@ -87,8 +90,9 @@ struct RowAssembly
         , upper("dirichlet_upper", size)
         , errors("dec_errors")
     {
-        if (size == 0 || size > std::size_t(std::numeric_limits<int>::max()) / Capacity)
-            throw std::invalid_argument("scalar DEC matrix exceeds 32-bit CSR capacity");
+        if (size == 0 || size > std::size_t(std::numeric_limits<int>::max()) / Capacity
+            || column_count > std::size_t(std::numeric_limits<int>::max()))
+            throw std::invalid_argument("differential matrix exceeds 32-bit CSR capacity");
         Kokkos::deep_copy(lower, std::numeric_limits<double>::infinity());
         Kokkos::deep_copy(upper, -std::numeric_limits<double>::infinity());
     }
@@ -117,7 +121,7 @@ struct RowAssembly
 
     KOKKOS_FUNCTION void add(std::size_t row, std::size_t column, double weight) const
     {
-        if (column >= constants.extent(0)) {
+        if (column >= column_count) {
             fail(4);
             return;
         }
@@ -132,7 +136,7 @@ struct RowAssembly
 
     KOKKOS_FUNCTION void prescribe(std::size_t index, double value) const
     {
-        if (index >= constants.extent(0) || !Kokkos::isfinite(value)) {
+        if (index >= constants.extent(0) || index >= column_count || !Kokkos::isfinite(value)) {
             fail(8);
             return;
         }
@@ -145,11 +149,11 @@ struct RowAssembly
         int error = 0;
         Kokkos::deep_copy(error, errors);
         if (error & 2)
-            throw std::runtime_error("scalar DEC stencil exceeds its column capacity");
+            throw std::runtime_error("differential stencil exceeds its column capacity");
         if (error & 8)
             throw std::runtime_error("incompatible or invalid Dirichlet constraints");
         if (error)
-            throw std::runtime_error("invalid or empty scalar DEC row");
+            throw std::runtime_error("invalid or empty differential row");
     }
 
     Kokkos::View<double**> finalize_rhs(
@@ -178,7 +182,10 @@ struct RowAssembly
         return rhs;
     }
 
-    AssembledLinearSystem finalize(Kokkos::DefaultExecutionSpace const& exec, bool normalize) const
+    AssembledLinearSystem finalize(
+            Kokkos::DefaultExecutionSpace const& exec,
+            bool normalize,
+            bool allow_empty_rows = false) const
     {
         check();
         RowAssembly const data = *this;
@@ -206,8 +213,12 @@ struct RowAssembly
                         }
                     }
                     data.counts(row) = count;
-                    if (!(scale > 0.0))
-                        data.fail(4);
+                    if (!(scale > 0.0)) {
+                        if (allow_empty_rows)
+                            scale = 1.0;
+                        else
+                            data.fail(4);
+                    }
                     scales(row) = normalize ? scale : 1.0;
                     for (std::size_t i = 0; i < count; ++i)
                         data.weights(row, i) /= scales(row);
@@ -258,7 +269,7 @@ struct RowAssembly
         std::shared_ptr<gko::matrix::Csr<double, gko::int32>> matrix
                 = gko::matrix::Csr<double, gko::int32>::
                         create(executor,
-                               gko::dim<2>(constants.extent(0), constants.extent(0)),
+                               gko::dim<2>(constants.extent(0), column_count),
                                std::move(matrix_values),
                                std::move(matrix_columns),
                                std::move(matrix_offsets));

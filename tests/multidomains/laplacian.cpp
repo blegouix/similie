@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <gtest/gtest.h>
+#include <similie/multidomains/differential_operator.hpp>
 #include <similie/multidomains/laplacian.hpp>
 
 namespace {
@@ -231,6 +232,121 @@ TEST(MultidomainsLaplacian, MatrixIndependentOfLargeInterfaceJump)
     check_split(true, 1.e16);
 }
 
+template <class Index, class... Dimensions>
+struct IndexedTestField : md::IndexedScalarField<Dimensions...>
+{
+    using component_type = Index;
+    using indices_domain_t = ddc::DiscreteDomain<Index>;
+    using discrete_domain_type = ddc::DiscreteDomain<Dimensions..., Index>;
+    explicit IndexedTestField(md::IndexedScalarField<Dimensions...> field)
+        : md::IndexedScalarField<Dimensions...>(field)
+    {
+    }
+    KOKKOS_FUNCTION indices_domain_t indices_domain() const
+    {
+        return sil::tensor::TensorAccessor<Index> {}.domain();
+    }
+    template <class Element, class Component>
+    KOKKOS_FUNCTION std::size_t global_index(Element elem, Component component) const
+    {
+        return Index::mem_size()
+                       * md::IndexedScalarField<Dimensions...>::global_index(elem, component)
+               + component.template uid<Index>();
+    }
+};
+
+TEST(MultidomainsDifferentialOperator, RectangularCoboundaryAcrossInterface)
+{
+    using Direction = sil::tensor::Covariant<sil::tensor::TensorNaturalIndex<X, Y>>;
+    md::Topology<2> topology(2);
+    topology.connect({0, 0, BoundarySide::Upper}, {1, 0, BoundarySide::Lower}, false, 1.0, 2.5);
+    topology.connect({1, 0, BoundarySide::Upper}, {0, 0, BoundarySide::Lower}, false);
+    std::size_t const wall = topology.add_boundary({});
+    for (std::size_t id = 0; id < 2; ++id) {
+        topology.connect_boundary({id, 1, BoundarySide::Lower}, wall);
+        topology.connect_boundary({id, 1, BoundarySide::Upper}, wall);
+    }
+    Kokkos::View<std::size_t*> indices_a("derivative_a", 6), indices_b("derivative_b", 6);
+    auto host_a = Kokkos::create_mirror_view(indices_a);
+    auto host_b = Kokkos::create_mirror_view(indices_b);
+    for (std::size_t i = 0; i < 6; ++i) {
+        host_a(i) = i;
+        host_b(i) = i + 6;
+    }
+    Kokkos::deep_copy(indices_a, host_a);
+    Kokkos::deep_copy(indices_b, host_b);
+    md::IndexedScalarField<GridX, GridY> const
+            first {{ddc::DiscreteElement<GridX, GridY>(10, 5),
+                    ddc::DiscreteVector<GridX, GridY>(3, 2)},
+                   indices_a.data()},
+            second {{ddc::DiscreteElement<GridX, GridY>(20, 5),
+                     ddc::DiscreteVector<GridX, GridY>(3, 2)},
+                    indices_b.data()};
+    md::Multidomain const
+            domains(topology,
+                    std::
+                            vector {md::domain_data(first, first, Physics {}),
+                                    md::domain_data(second, second, Physics {})});
+    auto const operations = md::make_multidomain_operator(
+            domains,
+            sil::exterior::
+                    Coboundary<Direction, md::IndexedScalarField<GridX, GridY>::component_type> {});
+    md::Multidomain const output_domains(
+            topology,
+            std::
+                    vector {md::domain_data(
+                                    IndexedTestField<Direction, GridX, GridY>(first),
+                                    first,
+                                    Physics {}),
+                            md::domain_data(
+                                    IndexedTestField<Direction, GridX, GridY>(second),
+                                    second,
+                                    Physics {})});
+    auto const assembled = md::assemble_multidomain_differential_operator<2>(
+            Kokkos::DefaultExecutionSpace {},
+            output_domains,
+            domains,
+            operations,
+            KOKKOS_LAMBDA(auto const& op, auto const&, auto const&, auto elem, auto component) {
+                using Grid = ddc::DiscreteDomain<GridX, GridY>;
+                auto const chain = sil::exterior::
+                        tangent_basis<1, Grid, Kokkos::DefaultExecutionSpace::memory_space>(
+                                typename Grid::discrete_element_type {});
+                auto const lower = sil::exterior::
+                        tangent_basis<0, Grid, Kokkos::DefaultExecutionSpace::memory_space>(
+                                typename Grid::discrete_element_type {});
+                return op.value(chain, lower, elem, component);
+            },
+            24,
+            12,
+            true);
+    gko::matrix_data<double, gko::int32> data;
+    assembled.matrix->write(data);
+    EXPECT_EQ(data.size[0], 24);
+    EXPECT_EQ(data.size[1], 12);
+    std::vector<std::map<std::size_t, double>> rows(24);
+    for (auto const& entry : data.nonzeros)
+        rows[entry.row][entry.column] += entry.value;
+    auto const rhs = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), assembled.rhs);
+    auto const scales
+            = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), assembled.row_scales);
+    for (std::size_t node = 0; node < 12; ++node) {
+        EXPECT_NEAR(rhs(2 * node, 0), node == 4 || node == 5 ? -2.5 : 0.0, 1.e-12);
+        EXPECT_NEAR(rhs(2 * node + 1, 0), 0.0, 1.e-12);
+        EXPECT_EQ(scales(2 * node), 1.0);
+        EXPECT_EQ(scales(2 * node + 1), 1.0);
+        EXPECT_EQ(rows[2 * node].size(), 2);
+        EXPECT_NEAR(rows[2 * node][node], -1.0, 1.e-12);
+        EXPECT_NEAR(rows[2 * node][(node + 2) % 12], 1.0, 1.e-12);
+        if (node % 2 == 0) {
+            EXPECT_EQ(rows[2 * node + 1].size(), 2);
+            EXPECT_NEAR(rows[2 * node + 1][node], -1.0, 1.e-12);
+            EXPECT_NEAR(rows[2 * node + 1][node + 1], 1.0, 1.e-12);
+        } else
+            EXPECT_TRUE(rows[2 * node + 1].empty());
+    }
+}
+
 void launch_value(Kokkos::DefaultExecutionSpace const& exec, Kokkos::View<int*> values, int index)
 {
     Kokkos::parallel_for(
@@ -297,6 +413,11 @@ TEST(Multidomains, GenericOperatorDispatch)
         for (int i = 0; i < 3; ++i)
             EXPECT_EQ(host(i), id == 0 ? 6 : 21);
     }
+    operation(std::size_t(0), Kokkos::DefaultExecutionSpace {}, output[1], input[1]);
+    Kokkos::DefaultExecutionSpace {}.fence();
+    auto const selected = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), output[1]);
+    for (int i = 0; i < 3; ++i)
+        EXPECT_EQ(selected(i), 6);
 }
 
 

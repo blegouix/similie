@@ -4,15 +4,12 @@
 
 #pragma once
 
-#include <tuple>
-
 #include <similie/exterior/laplacian.hpp>
 #include <similie/solvers/stencil_assembly.hpp>
 
+#include "differential_operator.hpp"
 #include "indexed_scalar_field.hpp"
-#include "multidomain_operator.hpp"
 #include "multidomains.hpp"
-#include "stencil_composition.hpp"
 
 namespace sil::multidomains {
 /** Bind lazy *d(phi) cochains, so dual topology rules enter the donor's DEC flux.
@@ -45,7 +42,6 @@ auto make_laplacian_flux_domains(
 }
 
 namespace detail {
-using similie::solvers::detail::RowAssembly;
 template <std::size_t Axis, bool Upper, std::size_t Capacity, class Field, class Primal>
 void prescribe_face(
         Kokkos::DefaultExecutionSpace const& exec,
@@ -164,56 +160,6 @@ constexpr std::size_t column_capacity()
     return samples;
 }
 
-template <bool Matrix, std::size_t Capacity, class Field, class Operator, class Flux, class Rules>
-void assemble_rows(
-        Kokkos::DefaultExecutionSpace const& stream,
-        RowAssembly<Capacity> system,
-        Field field,
-        Operator op,
-        Flux flux,
-        Rules rules)
-{
-    std::tuple<Operator, Flux, Rules> const bound(op, flux, rules);
-    ddc::parallel_for_each(
-            "assemble_dec_laplacian_rows",
-            stream,
-            field.non_indices_domain(),
-            KOKKOS_LAMBDA(typename Field::non_indices_domain_t::discrete_element_type elem) {
-                auto const& op = std::get<0>(bound);
-                auto const& flux = std::get<1>(bound);
-                auto const& rules = std::get<2>(bound);
-                std::size_t const row = field.global_index(
-                        elem,
-                        ddc::DiscreteElement<typename Field::component_type>(0));
-                if (row >= system.constants.extent(0)) {
-                    system.fail(4);
-                    return;
-                }
-                auto const coefficients = op.value(flux, flux, elem);
-                ddc::device_for_each(coefficients.domain(), [&](auto entry) {
-                    double const weight = coefficients.mem(entry);
-                    if (weight != 0.0)
-                        detail::visit_rule_basis(
-                                rules,
-                                flux,
-                                sil::tensor::detail::stencil_sample(elem, entry),
-                                typename Flux::indices_domain_t::discrete_element_type(entry),
-                                weight,
-                                [&](auto const& donor,
-                                    auto sample,
-                                    auto component,
-                                    double coefficient) {
-                                    if constexpr (Matrix)
-                                        system
-                                                .add(row,
-                                                     donor.global_index(sample, component),
-                                                     coefficient);
-                                },
-                                [&](double value) { system.constants(row) += value; });
-                });
-            });
-}
-
 template <class Direction, bool Matrix, std::size_t Capacity, class Domains, class Diffusivity>
 void assemble_laplacian_rows(
         Kokkos::DefaultExecutionSpace const& exec,
@@ -224,16 +170,28 @@ void assemble_laplacian_rows(
 {
     auto const flux_domains
             = make_laplacian_flux_domains<Direction>(domains, diffusivity, jump_scale);
-    MultidomainOperator const operation(
-            std::vector<sil::exterior::Codifferential<Direction, Direction>>(
-                    domains.domain_count()));
+    auto const operation = make_multidomain_operator(
+            domains,
+            sil::exterior::Codifferential<Direction, Direction> {});
     operation.for_each(
             exec,
             [&](std::size_t id, Kokkos::DefaultExecutionSpace const& stream, auto const& op) {
                 auto const field = domains.field(id);
                 auto const flux = flux_domains.template field<FieldRole::Flux>(id);
                 auto const rules = flux_domains.template extrapolation_rules<FieldRole::Flux>(id);
-                assemble_rows<Matrix>(stream, system, field, op, flux, rules);
+                assemble_differential_rows<Matrix, StencilCoordinates::Relative>(
+                        stream,
+                        system,
+                        field,
+                        flux,
+                        op,
+                        rules,
+                        KOKKOS_LAMBDA(
+                                auto const& local_op,
+                                auto const& input,
+                                auto const&,
+                                auto elem,
+                                auto) { return local_op.value(input, input, elem); });
                 prescribe_faces<Capacity>(
                         stream,
                         system,

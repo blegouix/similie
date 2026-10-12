@@ -31,10 +31,19 @@ public:
     {
         return m_operators.at(id);
     }
+    std::size_t domain_count() const
+    {
+        return m_operators.size();
+    }
     template <class... Arguments>
-    auto value(std::size_t id, Arguments&&... arguments) const
+    decltype(auto) value(std::size_t id, Arguments&&... arguments) const
     {
         return m_operators.at(id).value(std::forward<Arguments>(arguments)...);
+    }
+    template <class... Arguments>
+    decltype(auto) operator()(std::size_t id, Arguments&&... arguments) const
+    {
+        return m_operators.at(id)(std::forward<Arguments>(arguments)...);
     }
     template <class ExecSpace, class Function>
     void for_each(ExecSpace const& exec, Function function) const
@@ -46,6 +55,7 @@ public:
         partitions.fence();
     }
     template <class ExecSpace, class Output, class Input, class... Arguments>
+        requires(Kokkos::is_execution_space<ExecSpace>::value)
     void operator()(
             ExecSpace const& exec,
             Output const& output,
@@ -59,4 +69,13 @@ public:
 };
 template <class Operator>
 MultidomainOperator(std::vector<Operator>) -> MultidomainOperator<Operator>;
+
+/** Replicate a local differential operator for each physical domain.
+ * \important This operator and documentation is fully AI-generated.
+ */
+template <class Domains, class Operator>
+MultidomainOperator<Operator> make_multidomain_operator(Domains const& domains, Operator operation)
+{
+    return MultidomainOperator<Operator>(std::vector<Operator>(domains.domain_count(), operation));
+}
 } // namespace sil::multidomains
