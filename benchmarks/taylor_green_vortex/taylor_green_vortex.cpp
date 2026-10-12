@@ -432,7 +432,7 @@ public:
               std::pair {"temperature", simulation.temperature},
               std::pair {"heat_flux", simulation.heat_flux},
               std::pair {"vector_potential", simulation.vector_potential}}) {
-            Field::HostMirror const host
+            Kokkos::View<double**, Kokkos::LayoutRight, Kokkos::HostSpace> const host
                     = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), item.second);
             int const components = static_cast<int>(host.extent(0));
             std::vector<double> values(simulation.dec.cells * components);
