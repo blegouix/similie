@@ -75,6 +75,7 @@ struct Monitor
     double time, energy, derivative, enstrophy, dissipation, pressure_dilatation,
             viscous_dissipation;
     double mass, total_energy, divergence, rho_min, pressure_min, step_seconds;
+    double potential_gauge, vorticity_divergence, curl_residual, reconstruction_residual;
 };
 
 class Simulation
@@ -84,7 +85,7 @@ public:
     Physics const kind;
     int const components;
     Field state, initial, stage, rhs, velocity, gradient, vorticity, density, pressure, temperature,
-            heat_flux, velocity_divergence;
+            heat_flux, velocity_divergence, velocity_rate, vector_potential;
     std::unique_ptr<IncompressibleSolver> incompressible;
     std::unique_ptr<CompressibleSolver> compressible;
     explicit Simulation(int n, Physics selected)
@@ -103,6 +104,8 @@ public:
         , temperature("temperature", 1, dec.cells)
         , heat_flux("heat_flux", 3, dec.cells)
         , velocity_divergence("velocity_divergence", 1, dec.cells)
+        , velocity_rate("reconstructed_velocity_rate", 3, dec.cells)
+        , vector_potential("export_vector_potential", 3, dec.cells)
         , incompressible(
                   selected == Physics::Incompressible ? std::make_unique<IncompressibleSolver>(dec)
                                                       : nullptr)
@@ -112,6 +115,7 @@ public:
     {
         if (selected != Physics::Incompressible && selected != Physics::Compressible)
             throw std::runtime_error("Selected physics is not implemented");
+        Kokkos::deep_copy(vector_potential, 0.0);
         reset();
     }
     void reset()
@@ -144,7 +148,7 @@ public:
                     }
                 });
         if (!gas)
-            incompressible->project(state);
+            incompressible->initialize(state);
     }
     void evaluate(Field q, Field result, bool reconstruct_pressure = false)
     {
@@ -158,6 +162,10 @@ public:
     {
         if (kind == Physics::Incompressible) {
             incompressible->compute_pressure(state, pressure, Reference::reference_pressure);
+            incompressible->monitor_constraints(state);
+            Kokkos::deep_copy(velocity, incompressible->velocity);
+            Kokkos::deep_copy(vorticity, incompressible->vorticity);
+            Kokkos::deep_copy(vector_potential, incompressible->vector_potential);
         } else {
             Field const q = state, output = pressure;
             Kokkos::parallel_for(
@@ -168,8 +176,10 @@ public:
     }
     double timestep()
     {
-        Field const q = state;
         bool const gas = kind == Physics::Compressible;
+        if (!gas)
+            incompressible->reconstruct_velocity(state, velocity);
+        Field const q = gas ? state : velocity;
         double maximum;
         Kokkos::parallel_reduce(
                 "cfl_speed",
@@ -225,9 +235,19 @@ public:
     Monitor monitor(double time, double step_seconds = 0)
     {
         evaluate(state, rhs, true);
-        Field const q = state, u = velocity, rho = density, p = pressure, t = temperature,
-                    g = gradient, w = vorticity, f = rhs;
         bool const gas = kind == Physics::Compressible;
+        double const reconstruction_residual = gas ? 0 : incompressible->last_relative_residual;
+        if (!gas) {
+            Kokkos::deep_copy(velocity, incompressible->velocity);
+            Kokkos::deep_copy(vector_potential, incompressible->vector_potential);
+            Kokkos::deep_copy(vorticity, incompressible->vorticity);
+            incompressible->divergence(velocity_divergence);
+            // Differentiate the linear elliptic reconstruction to obtain du/dt
+            // from dW/dt; u dot dW/dt is not the kinetic-energy derivative.
+            incompressible->reconstruct_velocity(rhs, velocity_rate);
+        }
+        Field const q = state, u = velocity, rho = density, p = pressure, t = temperature,
+                    g = gradient, w = vorticity, f = gas ? rhs : velocity_rate;
         Field const projected_pressure = gas ? pressure : incompressible->pressure;
         Kokkos::parallel_for(
                 "monitor_primitives",
@@ -235,7 +255,7 @@ public:
                 KOKKOS_LAMBDA(int i) {
                     rho(0, i) = gas ? q(0, i) : 1.0;
                     for (int a = 0; a < 3; ++a)
-                        u(a, i) = gas ? q(a + 1, i) / q(0, i) : q(a, i);
+                        u(a, i) = gas ? q(a + 1, i) / q(0, i) : u(a, i);
                     p(0, i) = gas ? Reference::pressure(q, i)
                                   : Reference::reference_pressure + projected_pressure(0, i);
                     t(0, i) = gas ? p(0, i) / (rho(0, i) * Reference::gas_constant)
@@ -244,8 +264,10 @@ public:
         for (int a = 0; a < 3; ++a)
             for (int b = 0; b < 3; ++b)
                 dec.derivative(u, a, g, 3 * a + b, b);
-        dec.curl(u, w);
-        dec.divergence(u, velocity_divergence);
+        if (gas) {
+            dec.curl(u, w);
+            dec.divergence(u, velocity_divergence);
+        }
         Field const div_field = velocity_divergence;
         similie::physics::fluid::NavierStokesFourier const physical_model = Reference::model();
         if (gas) {
@@ -334,7 +356,11 @@ public:
                         sqrt(sums[7]),
                         minrho,
                         minpressure,
-                        step_seconds};
+                        step_seconds,
+                        gas ? 0 : incompressible->gauge_rms,
+                        gas ? 0 : incompressible->vorticity_divergence_rms,
+                        gas ? 0 : incompressible->curl_residual_rms,
+                        reconstruction_residual};
         if (!std::
                     all_of(std::begin(sums),
                            std::end(sums),
@@ -352,7 +378,7 @@ std::string header(int n, Physics kind)
     text << "# participant: SimiLie\n# code name: SimiLie\n# mesh resolution: " << n << " " << n
          << " " << n << "\n# discretization: native Cartesian DEC, "
          << (kind == Physics::Compressible ? "centered kinetic-energy-preserving flux"
-                                           : "rotational pressure projection")
+                                           : "vorticity with Coulomb-gauge vector potential")
          << "\n# order of convergence: " << 2
          << " spatial; SSPRK3 temporal\n# mesh file name: implicit periodic Cartesian grid\n# "
             "density: 1\n# velocity: 1\n# dynamic viscosity: 0.000625\n# reference length: 1\n";
@@ -404,7 +430,8 @@ public:
               std::pair {"density", simulation.density},
               std::pair {"pressure", simulation.pressure},
               std::pair {"temperature", simulation.temperature},
-              std::pair {"heat_flux", simulation.heat_flux}}) {
+              std::pair {"heat_flux", simulation.heat_flux},
+              std::pair {"vector_potential", simulation.vector_potential}}) {
             Field::HostMirror const host
                     = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), item.second);
             int const components = static_cast<int>(host.extent(0));
@@ -442,6 +469,16 @@ public:
                   m.step_seconds})
                 table.push_back(v);
         dataset(m_file, "monitors", {monitors.size(), 14}, table.data());
+        std::vector<double> constraints;
+        for (Monitor const& m : monitors)
+            for (double value :
+                 {m.time,
+                  m.potential_gauge,
+                  m.vorticity_divergence,
+                  m.curl_residual,
+                  m.reconstruction_residual})
+                constraints.push_back(value);
+        dataset(m_file, "reconstruction_monitors", {monitors.size(), 5}, constraints.data());
         std::string const names
                 = "time,kinetic_energy,dEk_dt,kinetic_dissipation,enstrophy,enstrophy_dissipation,"
                   "pressure_dilatation,viscous_dissipation,mass,total_energy,divergence_rms,"
@@ -472,10 +509,17 @@ public:
                 << " 3\" NumberType=\"Float\" Precision=\"8\" Format=\"HDF\">" << file
                 << ":/position</DataItem></Geometry>\n";
             for (char const* name :
-                 {"velocity", "vorticity", "density", "pressure", "temperature", "heat_flux"}) {
+                 {"velocity",
+                  "vorticity",
+                  "density",
+                  "pressure",
+                  "temperature",
+                  "heat_flux",
+                  "vector_potential"}) {
                 bool const vector = std::string(name) == "velocity"
                                     || std::string(name) == "vorticity"
-                                    || std::string(name) == "heat_flux";
+                                    || std::string(name) == "heat_flux"
+                                    || std::string(name) == "vector_potential";
                 out << "<Attribute Name=\"" << name << "\" AttributeType=\""
                     << (vector ? "Vector" : "Scalar")
                     << "\" Center=\"Node\"><DataItem Dimensions=\"" << dimensions
@@ -500,10 +544,7 @@ void validate()
         throw std::runtime_error("Initial kinetic energy or periodic divergence is incorrect");
     double const symbol = std::sin(simulation.dec.h) / simulation.dec.h;
     if (physics == Physics::Incompressible
-        && std::abs(
-                   initial.enstrophy
-                   - 0.375 * symbol * symbol * std::pow(std::cos(simulation.dec.h / 2), 4))
-                   > 1e-10)
+        && std::abs(initial.enstrophy - 0.375 * symbol * symbol) > 1e-10)
         throw std::runtime_error("Initial DEC enstrophy is incorrect");
     Field constant("constant", 1, simulation.dec.cells), lap("lap", 1, simulation.dec.cells);
     Kokkos::deep_copy(constant, 1.0);
@@ -547,47 +588,12 @@ void validate()
             throw std::runtime_error("DEC Fourier symbol or periodic boundary sign is incorrect");
     }
     if (physics == Physics::Incompressible) {
-        Field vector("pure_gradient", 3, simulation.dec.cells);
-        for (int axis = 0; axis < 3; ++axis)
-            simulation.dec.derivative(wave, 0, vector, axis, axis);
-        simulation.incompressible->project(vector);
-        Kokkos::parallel_reduce(
-                "pure_gradient_projection",
-                simulation.dec.cells,
-                KOKKOS_LAMBDA(int i, double& sum) {
-                    for (int axis = 0; axis < 3; ++axis)
-                        sum += vector(axis, i) * vector(axis, i);
-                },
-                error);
-        if (error / simulation.dec.cells > 1e-18)
-            throw std::runtime_error("Projection did not remove an exact discrete gradient");
-
-        Field reconstructed_pressure("reconstructed_pressure", 1, simulation.dec.cells);
-        Kokkos::parallel_for(
-                "uniform_incompressible_velocity",
-                simulation.dec.cells,
-                KOKKOS_LAMBDA(int i) {
-                    vector(0, i) = 0.2;
-                    vector(1, i) = -0.1;
-                    vector(2, i) = 0.3;
-                });
-        simulation.incompressible
-                ->compute_pressure(vector, reconstructed_pressure, Reference::reference_pressure);
-        Kokkos::parallel_reduce(
-                "uniform_flow_pressure_check",
-                simulation.dec.cells,
-                KOKKOS_LAMBDA(int i, double& sum) {
-                    double const difference
-                            = reconstructed_pressure(0, i) - Reference::reference_pressure;
-                    sum += difference * difference;
-                },
-                error);
-        if (error / simulation.dec.cells > 1e-20)
-            throw std::runtime_error("Uniform flow pressure or pressure gauge is incorrect");
-
-        Kokkos::deep_copy(vector, simulation.state);
+        Field saved("saved_vorticity", 3, simulation.dec.cells);
+        Kokkos::deep_copy(saved, simulation.state);
         simulation.compute_pressure();
-        Field const q = simulation.state, p = simulation.pressure;
+        simulation.incompressible->monitor_constraints(simulation.state);
+        Field const q = simulation.state, p = simulation.pressure,
+                    u = simulation.incompressible->velocity;
         double mean_pressure;
         Kokkos::parallel_reduce(
                 "reconstructed_pressure_mean",
@@ -595,19 +601,42 @@ void validate()
                 KOKKOS_LAMBDA(int i, double& sum) { sum += p(0, i); },
                 mean_pressure);
         Kokkos::parallel_reduce(
-                "pressure_reconstruction_preserves_velocity",
+                "initial_velocity_reconstruction",
                 simulation.dec.cells,
                 KOKKOS_LAMBDA(int i, double& sum) {
-                    for (int a = 0; a < 3; ++a) {
-                        double const difference = q(a, i) - vector(a, i);
-                        sum += difference * difference;
+                    double const x = -std::numbers::pi + (i / (n * n)) * h;
+                    double const y = -std::numbers::pi + ((i / n) % n) * h;
+                    double const z = -std::numbers::pi + (i % n) * h;
+                    double const du = u(0, i) - sin(x) * cos(y) * cos(z);
+                    double const dv = u(1, i) + cos(x) * sin(y) * cos(z);
+                    sum += du * du + dv * dv + u(2, i) * u(2, i);
+                    for (int c = 0; c < 3; ++c) {
+                        double const change = q(c, i) - saved(c, i);
+                        sum += change * change;
                     }
                 },
                 error);
-        if (error != 0
+        if (error / simulation.dec.cells > 1e-18
             || std::abs(mean_pressure / simulation.dec.cells - Reference::reference_pressure)
                        > 1e-10)
-            throw std::runtime_error("Pressure reconstruction changed velocity or its mean gauge");
+            throw std::runtime_error(
+                    "Velocity reconstruction, pressure gauge, or unchanged vorticity check failed");
+        Field zero("zero_vorticity", 3, simulation.dec.cells);
+        Field uniform_pressure("uniform_pressure", 1, simulation.dec.cells);
+        Kokkos::deep_copy(zero, 0.0);
+        simulation.incompressible
+                ->compute_pressure(zero, uniform_pressure, Reference::reference_pressure);
+        Kokkos::parallel_reduce(
+                "zero_vorticity_pressure",
+                simulation.dec.cells,
+                KOKKOS_LAMBDA(int i, double& sum) {
+                    double const difference
+                            = uniform_pressure(0, i) - Reference::reference_pressure;
+                    sum += difference * difference;
+                },
+                error);
+        if (error / simulation.dec.cells > 1e-20)
+            throw std::runtime_error("Zero-vorticity pressure reconstruction failed");
     } else {
         Field uniform("uniform_gas", 5, simulation.dec.cells);
         Field uniform_rhs("uniform_gas_rhs", 5, simulation.dec.cells);
@@ -678,7 +707,7 @@ void validate()
             || std::abs(final.total_energy - initial.total_energy) > 1e-10))
         throw std::runtime_error("Conservative solver failed mass/energy conservation");
     if (physics == Physics::Incompressible && final.divergence > 1e-8)
-        throw std::runtime_error("Projection failed divergence check");
+        throw std::runtime_error("Vorticity reconstruction failed divergence check");
     if (final.energy > initial.energy + 1e-8)
         throw std::runtime_error("Unforced flow gained kinetic energy");
     std::cout << "Validation passed: N=" << nodes << ", initial Ek=" << initial.energy
@@ -690,7 +719,8 @@ void run(benchmark::State& benchmark_state)
     static int invocation = 0;
     try {
         std::filesystem::create_directories(output_directory);
-        double total_solver = 0, total_monitors = 0, total_export = 0, total_wall = 0;
+        double total_solver = 0, total_monitors = 0, total_export = 0, total_wall = 0,
+               total_reconstruction = 0, total_reconstruction_iterations = 0;
         std::int64_t total_steps = 0;
         for ([[maybe_unused]] auto iteration : benchmark_state) {
             Simulation simulation(nodes, physics);
@@ -731,20 +761,29 @@ void run(benchmark::State& benchmark_state)
             sample(0, 0, true);
             double time = 0;
             bool at_eight = false;
-            std::int64_t steps = 0, solver_projection_iterations = 0;
+            std::int64_t steps = 0, solver_reconstruction_iterations = 0;
+            double solver_reconstruction_seconds = 0;
             while (time < 10) {
                 Clock::time_point const step_start = Clock::now();
+                std::int64_t const cg_before = simulation.incompressible
+                                                       ? simulation.incompressible->total_iterations
+                                                       : 0;
+                double const reconstruction_before
+                        = simulation.incompressible
+                                  ? simulation.incompressible->reconstruction_seconds
+                                  : 0;
                 double const target = at_eight ? 10.0 : 8.0;
                 double const dt = std::min(simulation.timestep(), target - time);
                 if (!(dt > 0) || !std::isfinite(dt) || time + dt == time)
                     throw std::runtime_error("Invalid or non-advancing time step");
-                std::int64_t const cg_before = simulation.incompressible
-                                                       ? simulation.incompressible->total_iterations
-                                                       : 0;
                 simulation.advance(dt);
-                if (simulation.incompressible)
-                    solver_projection_iterations
+                if (simulation.incompressible) {
+                    solver_reconstruction_iterations
                             += simulation.incompressible->total_iterations - cg_before;
+                    solver_reconstruction_seconds
+                            += simulation.incompressible->reconstruction_seconds
+                               - reconstruction_before;
+                }
 
                 Kokkos::fence("taylor_green_timing");
                 double const seconds
@@ -773,12 +812,15 @@ void run(benchmark::State& benchmark_state)
             total_export += export_seconds;
             total_wall += wall;
             total_steps += steps;
+            total_reconstruction += solver_reconstruction_seconds;
+            total_reconstruction_iterations += solver_reconstruction_iterations;
             std::ofstream performance(base.string() + ".performance.json");
             performance << std::setprecision(17) << "{\"N\":" << nodes << ",\"steps\":" << steps
                         << ",\"solver_seconds\":" << solver_seconds
                         << ",\"monitor_seconds\":" << monitor_seconds
                         << ",\"export_seconds\":" << export_seconds << ",\"wall_seconds\":" << wall
-                        << ",\"projection_iterations\":" << solver_projection_iterations
+                        << ",\"reconstruction_iterations\":" << solver_reconstruction_iterations
+                        << ",\"reconstruction_seconds\":" << solver_reconstruction_seconds
                         << ",\"cell_updates_per_second\":"
                         << double(steps) * simulation.dec.cells / solver_seconds << "}\n";
             if (!performance)
@@ -790,6 +832,9 @@ void run(benchmark::State& benchmark_state)
         benchmark_state.counters["monitor_seconds"] = total_monitors / iterations;
         benchmark_state.counters["export_seconds"] = total_export / iterations;
         benchmark_state.counters["wall_seconds"] = total_wall / iterations;
+        benchmark_state.counters["reconstruction_seconds"] = total_reconstruction / iterations;
+        benchmark_state.counters["reconstruction_iterations"]
+                = total_reconstruction_iterations / iterations;
         benchmark_state.counters["cell_updates/s"]
                 = double(total_steps) * nodes * nodes * nodes / total_solver;
         benchmark_state.SetItemsProcessed(total_steps * std::int64_t(nodes) * nodes * nodes);

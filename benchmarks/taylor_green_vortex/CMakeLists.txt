@@ -3,7 +3,7 @@
 # AI-GENERATED
 
 add_executable(taylor_green_vortex taylor_green_vortex.cpp)
-target_link_libraries(taylor_green_vortex PRIVATE sil::sil benchmark::benchmark HDF5::HDF5)
+target_link_libraries(taylor_green_vortex PRIVATE sil::sil benchmark::benchmark HDF5::HDF5 Ginkgo::ginkgo)
 if(BUILD_TESTING)
     add_test(NAME tgv_incompressible_validation COMMAND taylor_green_vortex --N=8 --physics=incompressible --validate)
     add_test(NAME tgv_compressible_validation COMMAND taylor_green_vortex --N=8 --physics=compressible --validate)

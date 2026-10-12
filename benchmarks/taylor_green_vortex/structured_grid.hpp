@@ -234,6 +234,18 @@ class StructuredGrid
 public:
     int const n, cells;
     double const h;
+    SpatialDomain domain() const
+    {
+        return m_domain;
+    }
+    PositionTensor geometry() const
+    {
+        return position();
+    }
+    MetricTensor euclidean_metric() const
+    {
+        return metric();
+    }
     explicit StructuredGrid(int nodes)
         : m_domain(
                   ddc::DiscreteElement<GridX, GridY, GridZ>(1, 1, 1),
