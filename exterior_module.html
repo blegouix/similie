@@ -219,13 +219,13 @@ Transposed coboundary operator</h2>
 \]
 </p>
 <p>However this is <b>not</b> the adjoint of the coboundary operator, because the latter has to involve the metric in some way. The adjoint operator on forms is the codifferential, presented below.</p>
-<dl class="section important"><dt>Important</dt><dd>Boundary handling is currently explicit but not yet user-configurable.<ul>
-<li><code>Coboundary</code> (and its alias <code>deriv(...)</code>) use a clamped out-of-domain sampling rule: if a forward sample exits the mesh, the nearest in-domain node is reused. On a scalar field this behaves like a one-sided "free"/zero-normal-variation closure for the first derivative.</li>
-<li><code>TransposedCoboundary</code> does <b>not</b> clamp. Missing incident simplices on the far side of the boundary are simply omitted. This is what restores the weighted adjointness needed by the codifferential.</li>
-<li>Periodic, Dirichlet and generic Neumann boundary conditions are not yet exposed as configurable policies in this module.</li>
-</ul>
-</dd></dl>
 <h2><a class="anchor" id="autotoc_md25"></a>
+Sampling policies and local coefficients</h2>
+<dl class="section important"><dt>Important</dt><dd>This documentation is fully AI-generated.</dd></dl>
+<p>Boundary sampling is configurable independently of incidence and metric. <code>coboundary()</code> and <code>deriv()</code> default to <code>ClampExtrapolationRule</code>, which reuses the nearest stored node outside the input domain. <code>transposed_coboundary()</code> and the dual stages of <code>codifferential()</code> and <code>laplacian()</code> default to <code>ZeroExtrapolationRule</code>, which omits exterior contributions. A single supplied rule applies to all faces; <code>ExtrapolationRules</code> can instead select a different rule on each lower and upper face. The Laplacian accepts independent primal and dual rules.</p>
+<p><code>NaturalScalarExtrapolationRule</code> continues the slope from the nearest two nodes, while <code>PrescribedScalarExtrapolationRule</code> returns a given exterior value. Supplying an exterior sampling rule does not itself constrain stored boundary unknowns; the multidomain scalar assembler also prescribes those nodal rows. Physical normal flux conditions are imposed on the dual flux, separately from continuation of the primal scalar field.</p>
+<p>The pointwise <code>Coboundary</code> and <code>Codifferential</code> APIs accept evaluators, allowing both stored and lazy cochains. Their coefficient-producing <code>value()</code> overloads provide stencils that can be composed with the same sampling policies during matrix assembly. Tensor extrapolation rules likewise expose <code>operator()</code> for sampling and <code>value()</code> for affine coefficients. The <a class="el" href="multidomains.html">multidomains documentation</a> explains donor mappings, interface jumps, stencil coordinate conventions and global assembly.</p>
+<h2><a class="anchor" id="autotoc_md26"></a>
 Primal and dual cell complexes</h2>
 <p>In DEC, cochains are not only characterized by their degree, but also by the cell complex on which they live. There is the primal complex, made of the mesh simplices themselves, but the operators presented below make use of a dual cell complex which allows to introduce metric information. Indeed, the dual cell complex provides the complementary cells on which the metric-dependent "orthogonal counterparts" live. This is why the discrete Hodge star, which is the operator encoding the metric in DEC, naturally maps primal cochains to dual cochains.</p>
 <p>However, a dual mesh has to be chosen according to some "dualization strategy". In SimiLie, this choice is represented explicitly by the <code>CellComplex</code> tag:</p><ul>
@@ -233,7 +233,7 @@ Primal and dual cell complexes</h2>
 <li><code>CellComplex::CircumcentricDual</code></li>
 <li><code>CellComplex::BarycentricDual</code></li>
 </ul>
-<h2><a class="anchor" id="autotoc_md26"></a>
+<h2><a class="anchor" id="autotoc_md27"></a>
 Volume operator</h2>
 <p>To build a discrete operator able to encode the metric (the discrete Hodge star), we need a volume operator (in the sense of \(k-\)volume, ie. length, area...) to provide the ability to measure the "size" of a simplex. Given a \(k\)-simplex spanned by edge vectors \(e_1,\dots,e_k\), SimiLie builds the local Gram matrix:</p>
 <p class="formulaDsp">
@@ -248,7 +248,7 @@ G_{\mu\nu} = g_{\rho\sigma} e_\mu^\rho e_\nu^\sigma
 \]
 </p>
 <p>This is exactly what <code>SimplexVolume</code> computes: it first extracts the local edge vectors from the position field, assembles the Gram matrix, and finally takes the square root of its determinant. <code>DualSimplexVolume</code> applies the same formula to the complementary \((n-k)\) directions. The associated dual cell complex is selected through the <code>CellComplex</code> tag, typically circumcentric or barycentric.</p>
-<h2><a class="anchor" id="autotoc_md27"></a>
+<h2><a class="anchor" id="autotoc_md28"></a>
 Reduction and reconstruction</h2>
 <p>Reduction and reconstruction connect pointwise differential-form coefficients and geometric cochains. Reduction integrates a piecewise-constant coefficient form over mesh cells, absorbing their geometry into the cochain values. Primal reconstruction recovers the coefficients by inverting this cell-local map. The <code>CellComplex</code> tag selects the cells used for reduction:</p>
 <p class="formulaDsp">
@@ -274,7 +274,7 @@ c_I = \sum_J R_{IJ}\,\omega_J,\qquad
 <li>circumcentric-dual reduction is the metric-dependent dual geometric map used by the discrete Hodge star;</li>
 <li>barycentric-dual reconstruction is rejected with <code>static_assert</code>.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md28"></a>
+<h2><a class="anchor" id="autotoc_md29"></a>
 Hodge star operator</h2>
 <p>The Hodge star operator is implemented both in continuous and discrete form.</p>
 <p>The continuous Hodge star acts pointwise on coefficient forms. It is the exterior-calculus counterpart of the metric. In an \(n\)-dimensional manifold, for a \(k\)-form \(\omega\) with components \(\omega_{i_1 \dots i_k}\), it is defined as ( \(\varepsilon\) is the Levi-Civita symbol):</p>
@@ -298,7 +298,7 @@ g^{i_1 \ell_1} \dots g^{i_k \ell_k}
 \star_\sigma = \frac{|\star \sigma|}{|\sigma|}
 \]
 </p>
-<h2><a class="anchor" id="autotoc_md29"></a>
+<h2><a class="anchor" id="autotoc_md30"></a>
 Codifferential</h2>
 <p>This is the adjoint of the coboundary operator in the metric sense. It is built from the discrete Hodge star and the transposed coboundary operator:</p>
 <p class="formulaDsp">
@@ -314,7 +314,7 @@ Codifferential</h2>
 \]
 </p>
 <p>up to the boundary term and the usual sign convention.</p>
-<h2><a class="anchor" id="autotoc_md30"></a>
+<h2><a class="anchor" id="autotoc_md31"></a>
 Laplacian</h2>
 <p>The generic DEC Laplacian combines the exterior derivative and the codifferential:</p>
 <p class="formulaDsp">

@@ -129,11 +129,13 @@ $(function(){initNavTree('onelab_interface.html',''); initResizable(true); });
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p><a class="anchor" id="md_onelab__interface"></a></p>
-<p><a href="https://onelab.info/">ONELAB</a> is a standard interface specification that allows <a href="https://gmsh.info/">Gmsh</a> to control external PDE solvers. SimiLie provides an ONELAB interface for several standard physics problems, including scalar field and magnetostatic physics.</p>
+<p><a href="https://onelab.info/">ONELAB</a> is a standard interface specification that allows <a href="https://gmsh.info/">Gmsh</a> to control external PDE solvers. SimiLie provides an ONELAB interface for several standard physics problems, including scalar field, magnetostatics and potential flow.</p>
 <dl class="section important"><dt>Important</dt><dd>The ONELAB interface in SimiLie is mostly AI-generated and has received very limited testing. Unfortunately, I do not have the resources to do better. Please keep in mind that, without AI assistance, this interface would not exist at all. Contributions would of course be greatly appreciated.</dd></dl>
 <p>The geometry is defined in a <code>.geo</code> file, which is interpreted entirely by Gmsh. Gmsh then communicates with SimiLie through the ONELAB interface. The physical problem definition and numerical solver configuration are specified in a <code>.silpro</code> file, which can be viewed as the SimiLie counterpart of <a href="https://getdp.info/">GetDP</a> <code>.pro</code> files. Of course, <code>.silpro</code> files do not follow the same specification as <code>.pro</code> files, since SimiLie is far for being able to claim having capabilities comparable to GetDP.</p>
-<dl class="section important"><dt>Important</dt><dd>Because the ONELAB interface is evolving rapidly, the <code>.silpro</code> format is currently undocumented. For a basic introduction, please refer to the <a href="https://github.com/blegouix/similie/tree/main/examples/onelab_inductor">onelab_inductor</a> example.</dd></dl>
-<p>A key limitation of using SimiLie through its ONELAB interface is that SimiLie only supports rectilinear hexahedral grids. If Gmsh requests SimiLie to process a mesh containing non-hexahedral elements, it should trigger an assertion. </p>
+<dl class="section important"><dt>Important</dt><dd>Because the ONELAB interface is evolving rapidly, the <code>.silpro</code> format is currently undocumented. For a basic introduction, please refer to the <a href="https://github.com/blegouix/similie/tree/main/examples/onelab_inductor">onelab_inductor</a> example.</dd>
+<dd>
+This documentation is fully AI-generated.</dd></dl>
+<p>The mesh reader accepts supported MSH2 quadrilateral and hexahedral meshes. Each physics adapter imposes further structured-grid requirements. In particular, potential flow uses a mapped annular quadrilateral mesh rather than a rectilinear grid. Its physical region and boundary tags define a runtime graph of connected patches, including a circulation cut. See <a class="el" href="multidomains.html">multidomains and potential flow</a> for the model, <code>.silpro</code> controls, example commands and GetDP comparison workflow. </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 </div><!-- doc-content -->

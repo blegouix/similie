@@ -1,0 +1,5 @@
+<map id="sil::multidomains::BoundaryDomain" name="sil::multidomains::BoundaryDomain">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,357,140,437"/>
+<area shape="rect" id="Node000002" href="$classsil_1_1multidomains_1_1BoundaryRule.html" title="A device&#45;copyable choice of the scalar boundary policies." alt="" coords="5,5,140,265"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="75,266,75,341,70,341,70,266"/>
+</map>

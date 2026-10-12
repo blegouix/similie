@@ -129,6 +129,7 @@ $(function(){initNavTree('namespacesil_1_1tensor.html',''); initResizable(true);
 <a href="#nested-classes">Classes</a> &#124;
 <a href="#concepts">Concepts</a> &#124;
 <a href="#typedef-members">Typedefs</a> &#124;
+<a href="#enum-members">Enumerations</a> &#124;
 <a href="#func-members">Functions</a> &#124;
 <a href="#var-members">Variables</a>  </div>
   <div class="headertitle"><div class="title">sil::tensor Namespace Reference</div></div>
@@ -137,6 +138,11 @@ $(function(){initNavTree('namespacesil_1_1tensor.html',''); initResizable(true);
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1tensor_1_1ClampExtrapolationRule.html">ClampExtrapolationRule</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Spatial closure evaluated independently of the stored field values.  <a href="structsil_1_1tensor_1_1ClampExtrapolationRule.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1tensor_1_1ConstantScalarExtrapolationRule.html">ConstantScalarExtrapolationRule</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1tensor_1_1Contravariant.html">Contravariant</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:structsil_1_1tensor_1_1ContravariantCharacter" id="r_structsil_1_1tensor_1_1ContravariantCharacter"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#structsil_1_1tensor_1_1ContravariantCharacter">ContravariantCharacter</a></td></tr>
@@ -147,6 +153,15 @@ Classes</h2></td></tr>
 <tr class="separator:structsil_1_1tensor_1_1CovariantCharacter"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:structsil_1_1tensor_1_1Dummy" id="r_structsil_1_1tensor_1_1Dummy"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#structsil_1_1tensor_1_1Dummy">Dummy</a></td></tr>
 <tr class="separator:structsil_1_1tensor_1_1Dummy"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1tensor_1_1ExternalDomainBoundaryMap.html">ExternalDomainBoundaryMap</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Map samples through an aligned interface, in any number of dimensions.  <a href="structsil_1_1tensor_1_1ExternalDomainBoundaryMap.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1tensor_1_1ExternalDomainExtrapolationRule.html">ExternalDomainExtrapolationRule</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Continue tensor values into a specified boundary of another tensor domain.  <a href="structsil_1_1tensor_1_1ExternalDomainExtrapolationRule.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1tensor_1_1ExtrapolationRules.html">ExtrapolationRules</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Select an extrapolation rule independently on each side of each dimension.  <a href="classsil_1_1tensor_1_1ExtrapolationRules.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1tensor_1_1InverseMetric.html">InverseMetric</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1tensor_1_1MetricIndex1.html">MetricIndex1</a></td></tr>
@@ -155,9 +170,13 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1tensor_1_1MetricProd.html">MetricProd</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1tensor_1_1NaturalScalarExtrapolationRule.html">NaturalScalarExtrapolationRule</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:classsil_1_1tensor_1_1OwningTensor" id="r_classsil_1_1tensor_1_1OwningTensor"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#classsil_1_1tensor_1_1OwningTensor">OwningTensor</a></td></tr>
 <tr class="separator:classsil_1_1tensor_1_1OwningTensor"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1tensor_1_1OwningTensor_3_01Tensor_3_01ElementType_00_01DomainType_00_01LayoutStridede8c6ac86c910712a64335c9c13c9211e.html">OwningTensor&lt; Tensor&lt; ElementType, DomainType, LayoutStridedPolicy, MemorySpace &gt;, Storage &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1tensor_1_1PrescribedScalarExtrapolationRule.html">PrescribedScalarExtrapolationRule</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1tensor_1_1prime.html">prime</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -184,7 +203,12 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1tensor_1_1TensorSymmetricIndex.html">TensorSymmetricIndex</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1tensor_1_1TensorWithExtrapolationRules.html">TensorWithExtrapolationRules</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Lazy tensor sampling on its stored domain and its extrapolated exterior.  <a href="structsil_1_1tensor_1_1TensorWithExtrapolationRules.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1tensor_1_1TensorYoungTableauIndex.html">TensorYoungTableauIndex</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1tensor_1_1ZeroExtrapolationRule.html">ZeroExtrapolationRule</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="concepts" name="concepts"></a>
@@ -272,6 +296,16 @@ Typedefs</h2></td></tr>
 <tr class="memitem:a870c5ca50a4cc3ac7a19905a24b44522"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a870c5ca50a4cc3ac7a19905a24b44522">subindices_domain_t</a> = detail::SubindicesDomain&lt;T&gt;::type</td></tr>
 <tr class="separator:a870c5ca50a4cc3ac7a19905a24b44522"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
+Enumerations</h2></td></tr>
+<tr class="memitem:ad993f3187ddc48e2bb85aac2f9bf7e5c" id="r_ad993f3187ddc48e2bb85aac2f9bf7e5c"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad993f3187ddc48e2bb85aac2f9bf7e5c">BoundarySide</a> { <br />
+&#160;&#160;<a class="el" href="#ad993f3187ddc48e2bb85aac2f9bf7e5cab75fcdd2d72d9e000beab48622402d93">Lower</a>
+, <br />
+&#160;&#160;<a class="el" href="#ad993f3187ddc48e2bb85aac2f9bf7e5ca19de5b94f7b83900d4b296d9fa491aec">Upper</a>
+<br />
+ }</td></tr>
+<tr class="separator:ad993f3187ddc48e2bb85aac2f9bf7e5c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:a831502c46eb089c4b8e8a57d66b51f39" id="r_a831502c46eb089c4b8e8a57d66b51f39"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; <a class="el" href="#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a> &gt; TensorType&gt; </td></tr>
@@ -283,6 +317,22 @@ Functions</h2></td></tr>
 <tr class="memitem:a6049da34dd9724305cd77d3e3733bb82" id="r_a6049da34dd9724305cd77d3e3733bb82"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; <a class="el" href="#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a> &gt; TensorType&gt; </td></tr>
 <tr class="memitem:a6049da34dd9724305cd77d3e3733bb82"><td class="memTemplItemLeft" align="right" valign="top">TensorType::element_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a6049da34dd9724305cd77d3e3733bb82">determinant</a> (TensorType tensor)</td></tr>
 <tr class="separator:a6049da34dd9724305cd77d3e3733bb82"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3c068cd9343594eda6024333148676f2" id="r_a3c068cd9343594eda6024333148676f2"><td class="memTemplParams" colspan="2">template&lt;class NeighborTensor , class Dimension &gt; </td></tr>
+<tr class="memitem:a3c068cd9343594eda6024333148676f2"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a3c068cd9343594eda6024333148676f2">ExternalDomainExtrapolationRule</a> (NeighborTensor, <a class="el" href="structsil_1_1tensor_1_1ExternalDomainBoundaryMap.html">ExternalDomainBoundaryMap</a>&lt; Dimension &gt;, double=0.0, double=1.0) -&gt; ExternalDomainExtrapolationRule&lt; Dimension, NeighborTensor &gt;</td></tr>
+<tr class="separator:a3c068cd9343594eda6024333148676f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a83e291fccdf874d8f8aa0b20d321f604" id="r_a83e291fccdf874d8f8aa0b20d321f604"><td class="memTemplParams" colspan="2">template&lt;class NeighborTensor , class Dimension , class TargetRule &gt; </td></tr>
+<tr class="memitem:a83e291fccdf874d8f8aa0b20d321f604"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a83e291fccdf874d8f8aa0b20d321f604">ExternalDomainExtrapolationRule</a> (NeighborTensor, <a class="el" href="structsil_1_1tensor_1_1ExternalDomainBoundaryMap.html">ExternalDomainBoundaryMap</a>&lt; Dimension &gt;, double, double, TargetRule) -&gt; ExternalDomainExtrapolationRule&lt; Dimension, NeighborTensor, TargetRule &gt;</td></tr>
+<tr class="separator:a83e291fccdf874d8f8aa0b20d321f604"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeee9190f61547e571409502c6652dcb8" id="r_aeee9190f61547e571409502c6652dcb8"><td class="memTemplParams" colspan="2">template&lt;class LeftRule , class RightRule , misc::Specialization&lt; std::pair &gt;... OtherRulePairs&gt; </td></tr>
+<tr class="memitem:aeee9190f61547e571409502c6652dcb8"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#aeee9190f61547e571409502c6652dcb8">ExtrapolationRules</a> (std::pair&lt; LeftRule, RightRule &gt;, OtherRulePairs...) -&gt; ExtrapolationRules&lt; std::pair&lt; LeftRule, RightRule &gt;, OtherRulePairs... &gt;</td></tr>
+<tr class="separator:aeee9190f61547e571409502c6652dcb8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5958b3c430870260657dc6ea8b11e1d6" id="r_a5958b3c430870260657dc6ea8b11e1d6"><td class="memTemplParams" colspan="2">template&lt;std::size_t N, misc::NotSpecialization&lt; <a class="el" href="classsil_1_1tensor_1_1ExtrapolationRules.html">ExtrapolationRules</a> &gt; ExtrapolationRule&gt; </td></tr>
+<tr class="memitem:a5958b3c430870260657dc6ea8b11e1d6"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a5958b3c430870260657dc6ea8b11e1d6">make_extrapolation_rules</a> (ExtrapolationRule rule)</td></tr>
+<tr class="memdesc:a5958b3c430870260657dc6ea8b11e1d6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Broadcast a rule to both sides of all N non-index dimensions.  <br /></td></tr>
+<tr class="separator:a5958b3c430870260657dc6ea8b11e1d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a228fc727f8ca5802241de2731127c142" id="r_a228fc727f8ca5802241de2731127c142"><td class="memTemplParams" colspan="2">template&lt;class TensorType , misc::NotSpecialization&lt; <a class="el" href="classsil_1_1tensor_1_1ExtrapolationRules.html">ExtrapolationRules</a> &gt; ExtrapolationRule&gt; </td></tr>
+<tr class="memitem:a228fc727f8ca5802241de2731127c142"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a228fc727f8ca5802241de2731127c142">make_extrapolation_rules</a> (TensorType const &amp;, ExtrapolationRule rule)</td></tr>
+<tr class="separator:a228fc727f8ca5802241de2731127c142"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a85cdc0c275a9288800a762b617022651" id="r_a85cdc0c275a9288800a762b617022651"><td class="memTemplParams" colspan="2">template&lt;TensorNatIndex Index1, TensorNatIndex Index2, class Dom &gt; </td></tr>
 <tr class="memitem:a85cdc0c275a9288800a762b617022651"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr <a class="el" href="#aefd22d918fda0d05cd9291c73899beda">relabelize_metric_in_domain_t</a>&lt; Dom, Index1, Index2 &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a85cdc0c275a9288800a762b617022651">relabelize_metric_in_domain</a> (Dom metric_dom)</td></tr>
 <tr class="separator:a85cdc0c275a9288800a762b617022651"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -341,6 +391,9 @@ Functions</h2></td></tr>
 requires ( ((!TensorNatIndex&lt;ProdDDim&gt; || ...) || (!TensorNatIndex&lt;Index2&gt; || ...) || (!TensorNatIndex&lt;Index1&gt; || ...)) )</td></tr>
 <tr class="memitem:afafa161f38b2b6c9033dfaf54d6fa926"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim... &gt;, LayoutStridedPolicy, MemorySpace &gt; KOKKOS_FUNCTION&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#afafa161f38b2b6c9033dfaf54d6fa926">tensor_prod</a> (<a class="el" href="#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>&lt; ElementType, ddc::DiscreteDomain&lt; ProdDDim... &gt;, LayoutStridedPolicy, MemorySpace &gt; prod_tensor, <a class="el" href="#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>&lt; ElementType, ddc::DiscreteDomain&lt; Index1... &gt;, LayoutStridedPolicy, MemorySpace &gt; tensor1, <a class="el" href="#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>&lt; ElementType, ddc::DiscreteDomain&lt; Index2... &gt;, LayoutStridedPolicy, MemorySpace &gt; tensor2)</td></tr>
 <tr class="separator:afafa161f38b2b6c9033dfaf54d6fa926"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9b84a767d709bf6edccd64a564c65c45" id="r_a9b84a767d709bf6edccd64a564c65c45"><td class="memTemplParams" colspan="2">template&lt;class Field , class Rule &gt; </td></tr>
+<tr class="memitem:a9b84a767d709bf6edccd64a564c65c45"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a9b84a767d709bf6edccd64a564c65c45">make_tensor_with_extrapolation_rules</a> (Field field, Rule rule)</td></tr>
+<tr class="separator:a9b84a767d709bf6edccd64a564c65c45"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afc46d5ce3910fb5ced652d618294726c" id="r_afc46d5ce3910fb5ced652d618294726c"><td class="memTemplParams" colspan="2">template&lt;class YoungTableauIndex , class... Id&gt; </td></tr>
 <tr class="memitem:afc46d5ce3910fb5ced652d618294726c"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor</a>&lt; double, ddc::DiscreteDomain&lt; YoungTableauIndex &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#afc46d5ce3910fb5ced652d618294726c">compress</a> (<a class="el" href="#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor</a>&lt; double, ddc::DiscreteDomain&lt; YoungTableauIndex &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt; compressed, <a class="el" href="#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor</a>&lt; double, ddc::DiscreteDomain&lt; Id... &gt;, Kokkos::layout_right, Kokkos::DefaultHostExecutionSpace::memory_space &gt; tensor)</td></tr>
 <tr class="separator:afc46d5ce3910fb5ced652d618294726c"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -939,7 +992,7 @@ template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom1, misc::Specia
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00812">812</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00811">811</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -958,6 +1011,35 @@ template&lt;class T &gt; </div>
 </div><div class="memdoc">
 
 <p class="definition">Definition at line <a class="el" href="tensor__prod_8hpp_source.html#l00042">42</a> of file <a class="el" href="tensor__prod_8hpp_source.html">tensor_prod.hpp</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">Enumeration Type Documentation</h2>
+<a id="ad993f3187ddc48e2bb85aac2f9bf7e5c" name="ad993f3187ddc48e2bb85aac2f9bf7e5c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad993f3187ddc48e2bb85aac2f9bf7e5c">&#9670;&#160;</a></span>BoundarySide</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum class <a class="el" href="#ad993f3187ddc48e2bb85aac2f9bf7e5c">sil::tensor::BoundarySide</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ad993f3187ddc48e2bb85aac2f9bf7e5cab75fcdd2d72d9e000beab48622402d93" name="ad993f3187ddc48e2bb85aac2f9bf7e5cab75fcdd2d72d9e000beab48622402d93"></a>Lower&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="ad993f3187ddc48e2bb85aac2f9bf7e5ca19de5b94f7b83900d4b296d9fa491aec" name="ad993f3187ddc48e2bb85aac2f9bf7e5ca19de5b94f7b83900d4b296d9fa491aec"></a>Upper&#160;</td><td class="fielddoc"></td></tr>
+</table>
+
+<p class="definition">Definition at line <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html#l00017">17</a> of file <a class="el" href="external__domain__extrapolation__rule_8hpp_source.html">external_domain_extrapolation_rule.hpp</a>.</p>
 
 </div>
 </div>
@@ -1030,6 +1112,150 @@ template&lt;misc::Specialization&lt; <a class="el" href="#a164aa1d6ecb53a91d54f7
 </div><div class="memdoc">
 
 <p class="definition">Definition at line <a class="el" href="determinant_8hpp_source.html#l00023">23</a> of file <a class="el" href="determinant_8hpp_source.html">determinant.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a3c068cd9343594eda6024333148676f2" name="a3c068cd9343594eda6024333148676f2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3c068cd9343594eda6024333148676f2">&#9670;&#160;</a></span>ExternalDomainExtrapolationRule() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class NeighborTensor , class Dimension &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">sil::tensor::ExternalDomainExtrapolationRule </td>
+          <td>(</td>
+          <td class="paramtype">NeighborTensor</td>          <td class="paramname"><span class="paramname"><em></em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structsil_1_1tensor_1_1ExternalDomainBoundaryMap.html">ExternalDomainBoundaryMap</a>&lt; Dimension &gt;</td>          <td class="paramname"><span class="paramname"><em></em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double</td>          <td class="paramname"><span class="paramname"><em></em></span><span class="paramdefsep"> = </span><span class="paramdefval">0.0</span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double</td>          <td class="paramname"><span class="paramname"><em></em></span><span class="paramdefsep"> = </span><span class="paramdefval">1.0</span>&#160;) -&gt;  ExternalDomainExtrapolationRule&lt; Dimension, NeighborTensor &gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a83e291fccdf874d8f8aa0b20d321f604" name="a83e291fccdf874d8f8aa0b20d321f604"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a83e291fccdf874d8f8aa0b20d321f604">&#9670;&#160;</a></span>ExternalDomainExtrapolationRule() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class NeighborTensor , class Dimension , class TargetRule &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">sil::tensor::ExternalDomainExtrapolationRule </td>
+          <td>(</td>
+          <td class="paramtype">NeighborTensor</td>          <td class="paramname"><span class="paramname"><em></em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structsil_1_1tensor_1_1ExternalDomainBoundaryMap.html">ExternalDomainBoundaryMap</a>&lt; Dimension &gt;</td>          <td class="paramname"><span class="paramname"><em></em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double</td>          <td class="paramname"><span class="paramname"><em></em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double</td>          <td class="paramname"><span class="paramname"><em></em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">TargetRule</td>          <td class="paramname"><span class="paramname"><em></em></span>&#160;) -&gt;  ExternalDomainExtrapolationRule&lt; Dimension, NeighborTensor, TargetRule &gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aeee9190f61547e571409502c6652dcb8" name="aeee9190f61547e571409502c6652dcb8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aeee9190f61547e571409502c6652dcb8">&#9670;&#160;</a></span>ExtrapolationRules()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class LeftRule , class RightRule , misc::Specialization&lt; std::pair &gt;... OtherRulePairs&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">sil::tensor::ExtrapolationRules </td>
+          <td>(</td>
+          <td class="paramtype">std::pair&lt; LeftRule, RightRule &gt;</td>          <td class="paramname"><span class="paramname"><em></em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">OtherRulePairs...</td>          <td class="paramname"><span class="paramname"><em></em></span>&#160;) -&gt;  ExtrapolationRules&lt; std::pair&lt; LeftRule, RightRule &gt;, OtherRulePairs... &gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a5958b3c430870260657dc6ea8b11e1d6" name="a5958b3c430870260657dc6ea8b11e1d6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5958b3c430870260657dc6ea8b11e1d6">&#9670;&#160;</a></span>make_extrapolation_rules() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;std::size_t N, misc::NotSpecialization&lt; <a class="el" href="classsil_1_1tensor_1_1ExtrapolationRules.html">ExtrapolationRules</a> &gt; ExtrapolationRule&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION auto sil::tensor::make_extrapolation_rules </td>
+          <td>(</td>
+          <td class="paramtype">ExtrapolationRule</td>          <td class="paramname"><span class="paramname"><em>rule</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Broadcast a rule to both sides of all N non-index dimensions. </p>
+<dl class="section important"><dt>Important</dt><dd>This operator and documentation is fully AI-generated.</dd></dl>
+<p>Each of the 2*N copies retains the supplied rule's state. This factory only accepts single rules. Consumers distinguish single rules from <a class="el" href="classsil_1_1tensor_1_1ExtrapolationRules.html" title="Select an extrapolation rule independently on each side of each dimension.">ExtrapolationRules</a> with if constexpr and only convert the former, with N inferred from the tensor domain. An explicitly typed uniform <a class="el" href="classsil_1_1tensor_1_1ExtrapolationRules.html" title="Select an extrapolation rule independently on each side of each dimension.">ExtrapolationRules</a> can also be implicitly constructed from its single rule. The overload make_extrapolation_rules(tensor, rule) infers N directly from tensor.non_indices_domain_t. </p>
+
+<p class="definition">Definition at line <a class="el" href="extrapolation__rules_8hpp_source.html#l00286">286</a> of file <a class="el" href="extrapolation__rules_8hpp_source.html">extrapolation_rules.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a228fc727f8ca5802241de2731127c142" name="a228fc727f8ca5802241de2731127c142"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a228fc727f8ca5802241de2731127c142">&#9670;&#160;</a></span>make_extrapolation_rules() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class TensorType , misc::NotSpecialization&lt; <a class="el" href="classsil_1_1tensor_1_1ExtrapolationRules.html">ExtrapolationRules</a> &gt; ExtrapolationRule&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION auto sil::tensor::make_extrapolation_rules </td>
+          <td>(</td>
+          <td class="paramtype">TensorType const &amp;</td>          <td class="paramname"><span class="paramname"><em></em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">ExtrapolationRule</td>          <td class="paramname"><span class="paramname"><em>rule</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="extrapolation__rules_8hpp_source.html#l00292">292</a> of file <a class="el" href="extrapolation__rules_8hpp_source.html">extrapolation_rules.hpp</a>.</p>
 
 </div>
 </div>
@@ -1432,7 +1658,7 @@ template&lt;misc::Specialization&lt; ddc::DiscreteDomain &gt; Dom1, misc::Specia
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00817">817</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00816">816</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -1462,7 +1688,7 @@ template&lt;TensorNatIndex... ProdDDim, TensorNatIndex... DDim1, TensorNatIndex.
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00879">879</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00878">878</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -1487,7 +1713,7 @@ template&lt;misc::Specialization&lt; <a class="el" href="#a164aa1d6ecb53a91d54f7
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00954">954</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor__impl_8hpp_source.html#l00953">953</a> of file <a class="el" href="tensor__impl_8hpp_source.html">tensor_impl.hpp</a>.</p>
 
 </div>
 </div>
@@ -1548,6 +1774,31 @@ requires ( ((!TensorNatIndex&lt;ProdDDim&gt; || ...) || (!TensorNatIndex&lt;Inde
 </div><div class="memdoc">
 
 <p class="definition">Definition at line <a class="el" href="tensor__prod_8hpp_source.html#l00181">181</a> of file <a class="el" href="tensor__prod_8hpp_source.html">tensor_prod.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a9b84a767d709bf6edccd64a564c65c45" name="a9b84a767d709bf6edccd64a564c65c45"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9b84a767d709bf6edccd64a564c65c45">&#9670;&#160;</a></span>make_tensor_with_extrapolation_rules()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Field , class Rule &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION auto sil::tensor::make_tensor_with_extrapolation_rules </td>
+          <td>(</td>
+          <td class="paramtype">Field</td>          <td class="paramname"><span class="paramname"><em>field</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Rule</td>          <td class="paramname"><span class="paramname"><em>rule</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="tensor__with__extrapolation__rules_8hpp_source.html#l00198">198</a> of file <a class="el" href="tensor__with__extrapolation__rules_8hpp_source.html">tensor_with_extrapolation_rules.hpp</a>.</p>
 
 </div>
 </div>

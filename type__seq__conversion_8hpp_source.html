@@ -164,7 +164,7 @@ $(function(){initNavTree('type__seq__conversion_8hpp_source.html',''); initResiz
 <div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span><span class="keyword">struct </span>ConvertTypeSeqTo;</div>
 <div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span> </div>
 <div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>...&gt; <span class="keyword">class </span>T, <span class="keyword">class</span>... Arg&gt;</div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span><span class="keyword">struct </span>ConvertTypeSeqTo&lt;T, ddc::TypeSeq&lt;Arg...&gt;&gt;</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span><span class="keyword">struct </span>ConvertTypeSeqTo&lt;T, <a class="code hl_namespace" href="namespaceddc.html">ddc</a>::TypeSeq&lt;Arg...&gt;&gt;</div>
 <div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>{</div>
 <div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    <span class="keyword">using </span>type = T&lt;Arg...&gt;;</div>
 <div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>};</div>
@@ -177,6 +177,7 @@ $(function(){initNavTree('type__seq__conversion_8hpp_source.html',''); initResiz
 <div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>} <span class="comment">// namespace misc</span></div>
 <div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span> </div>
 <div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>} <span class="comment">// namespace sil</span></div>
+<div class="ttc" id="anamespaceddc_html"><div class="ttname"><a href="namespaceddc.html">ddc</a></div><div class="ttdef"><b>Definition</b> <a href="signed__discrete__element_8hpp_source.html#l00080">signed_discrete_element.hpp:80</a></div></div>
 <div class="ttc" id="anamespacesil_1_1misc_html_a0f31a0b3b9517ab930673de3be192d65"><div class="ttname"><a href="namespacesil_1_1misc.html#a0f31a0b3b9517ab930673de3be192d65">sil::misc::to_type_seq_t</a></div><div class="ttdeci">typename detail::ToTypeSeq&lt; T &gt;::type to_type_seq_t</div><div class="ttdef"><b>Definition</b> <a href="#l00029">type_seq_conversion.hpp:29</a></div></div>
 <div class="ttc" id="anamespacesil_1_1misc_html_af83a849e8c4a2149160bd276d3e445c1"><div class="ttname"><a href="namespacesil_1_1misc.html#af83a849e8c4a2149160bd276d3e445c1">sil::misc::convert_type_seq_to_t</a></div><div class="ttdeci">typename detail::ConvertTypeSeqTo&lt; T, Seq &gt;::type convert_type_seq_to_t</div><div class="ttdef"><b>Definition</b> <a href="#l00045">type_seq_conversion.hpp:45</a></div></div>
 <div class="ttc" id="anamespacesil_html"><div class="ttname"><a href="namespacesil.html">sil</a></div><div class="ttdoc">The top-level namespace of SimiLie.</div><div class="ttdef"><b>Definition</b> <a href="csr_8hpp_source.html#l00015">csr.hpp:15</a></div></div>

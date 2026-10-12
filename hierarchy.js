@@ -1,11 +1,15 @@
 var hierarchy =
 [
+    [ "similie::solvers::AssembledLinearSystem", "namespacesimilie_1_1solvers.html#structsimilie_1_1solvers_1_1AssembledLinearSystem", null ],
     [ "sil::exterior::Boundary< AllocationType, SimplexType >", "structsil_1_1exterior_1_1Boundary.html", null ],
+    [ "sil::multidomains::BoundaryDomain", "namespacesil_1_1multidomains.html#structsil_1_1multidomains_1_1BoundaryDomain", null ],
+    [ "sil::multidomains::BoundaryRule", "classsil_1_1multidomains_1_1BoundaryRule.html", null ],
     [ "similie::physics::elasticity::CauchyStress2D", "structsimilie_1_1physics_1_1elasticity_1_1CauchyStress2D.html", null ],
     [ "sil::exterior::Chain< SimplexType, LayoutStridedPolicy, MemorySpace >", "classsil_1_1exterior_1_1Chain.html", null ],
     [ "ddc::ChunkSpan", null, [
       [ "sil::tensor::Tensor< ElementType, ddc::DiscreteDomain< DDim... >, LayoutStridedPolicy, MemorySpace >", "classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html", null ]
     ] ],
+    [ "sil::tensor::ClampExtrapolationRule", "structsil_1_1tensor_1_1ClampExtrapolationRule.html", null ],
     [ "sil::exterior::Coboundary< Args >", "namespacesil_1_1exterior.html#structsil_1_1exterior_1_1Coboundary", null ],
     [ "sil::exterior::Coboundary< CochainType >", "structsil_1_1exterior_1_1Coboundary_3_01CochainType_01_4.html", null ],
     [ "sil::exterior::Coboundary< TagToAddToCochain, CochainTag >", "structsil_1_1exterior_1_1Coboundary_3_01TagToAddToCochain_00_01CochainTag_01_4.html", null ],
@@ -13,6 +17,9 @@ var hierarchy =
     [ "sil::exterior::CochainIterator< CochainType >", "classsil_1_1exterior_1_1CochainIterator.html", null ],
     [ "sil::exterior::Codifferential< Args >", "namespacesil_1_1exterior.html#structsil_1_1exterior_1_1Codifferential", null ],
     [ "sil::exterior::Codifferential< MetricIndex, TagToRemoveFromCochain, CochainTag, TensorType, MetricType, PositionType >", "structsil_1_1exterior_1_1Codifferential_3_01MetricIndex_00_01TagToRemoveFromCochain_00_01Cochain2aac1536eace81f70cbdf910df4f70bc.html", null ],
+    [ "sil::exterior::Codifferential< TagToRemoveFromCochain, CochainTag >", "structsil_1_1exterior_1_1Codifferential_3_01TagToRemoveFromCochain_00_01CochainTag_01_4.html", null ],
+    [ "sil::multidomains::Connection", "structsil_1_1multidomains_1_1Connection.html", null ],
+    [ "sil::tensor::ConstantScalarExtrapolationRule", "structsil_1_1tensor_1_1ConstantScalarExtrapolationRule.html", null ],
     [ "generate_cpp_constitutive_law.ConstitutiveLawDefinition", "classgenerate__cpp__constitutive__law_1_1ConstitutiveLawDefinition.html", null ],
     [ "sil::exterior::ContinuousHodgeStar< Indices1, Indices2, MetricType, BatchElem >", "structsil_1_1exterior_1_1ContinuousHodgeStar.html", null ],
     [ "sil::tensor::ContravariantCharacter", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1ContravariantCharacter", null ],
@@ -27,9 +34,19 @@ var hierarchy =
     ] ],
     [ "sil::exterior::DiscreteHodgeStar< Complex, Indices1, Indices2, MetricType, PositionType, BatchElem >", "structsil_1_1exterior_1_1DiscreteHodgeStar.html", null ],
     [ "similie::physics::elasticity::DisplacementToStrain", "structsimilie_1_1physics_1_1elasticity_1_1DisplacementToStrain.html", null ],
+    [ "sil::multidomains::DomainData< Field, Geometry, Physics, Flux >", "namespacesil_1_1multidomains.html#structsil_1_1multidomains_1_1DomainData", null ],
+    [ "sil::multidomains::DomainExecution< ExecSpace >", "classsil_1_1multidomains_1_1DomainExecution.html", null ],
+    [ "sil::multidomains::DomainReference< Field >", "structsil_1_1multidomains_1_1DomainReference.html", null ],
+    [ "sil::exterior::DualHodgeCochain< Direction, Cochain, Position, GeometryRules, BoundaryFluxRules >", "structsil_1_1exterior_1_1DualHodgeCochain.html", null ],
     [ "sil::exterior::DualSimplexVolume< Complex, N, MetricType, PositionType, BatchElem >", "structsil_1_1exterior_1_1DualSimplexVolume.html", null ],
     [ "sil::tensor::Dummy< I >", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Dummy", null ],
     [ "similie::physics::elasticity::ElasticMaterialHodge2D", "classsimilie_1_1physics_1_1elasticity_1_1ElasticMaterialHodge2D.html", null ],
+    [ "sil::tensor::ExternalDomainBoundaryMap< Dimension >", "structsil_1_1tensor_1_1ExternalDomainBoundaryMap.html", null ],
+    [ "sil::tensor::ExternalDomainExtrapolationRule< Dimension, NeighborTensor, TargetRule >", "structsil_1_1tensor_1_1ExternalDomainExtrapolationRule.html", null ],
+    [ "sil::tensor::ExternalDomainExtrapolationRule< Dimension, Field >", "structsil_1_1tensor_1_1ExternalDomainExtrapolationRule.html", null ],
+    [ "sil::tensor::ExtrapolationRules< RulePairs >", "classsil_1_1tensor_1_1ExtrapolationRules.html", null ],
+    [ "sil::multidomains::Face", "structsil_1_1multidomains_1_1Face.html", null ],
+    [ "sil::multidomains::FaceRule< Dimension, Field >", "structsil_1_1multidomains_1_1FaceRule.html", null ],
     [ "std::false_type", null, [
       [ "sil::misc::is_specialization_of< T, U >", "structsil_1_1misc_1_1is__specialization__of.html", null ]
     ] ],
@@ -38,6 +55,7 @@ var hierarchy =
     [ "similie::physics::HamiltonEquations< Hamiltonian >", "classsimilie_1_1physics_1_1HamiltonEquations.html", null ],
     [ "generate_cpp_hamiltonian.HamiltonianDefinition", "classgenerate__cpp__hamiltonian_1_1HamiltonianDefinition.html", null ],
     [ "sil::exterior::IdentityTransport< Rank >", "structsil_1_1exterior_1_1IdentityTransport.html", null ],
+    [ "sil::multidomains::IndexedScalarField< DDim >", "structsil_1_1multidomains_1_1IndexedScalarField.html", null ],
     [ "sil::tensor::InverseMetric< MetricIndex, MetricType, BatchElem >", "structsil_1_1tensor_1_1InverseMetric.html", null ],
     [ "linear_elasticity.LinearElasticityHamiltonian", "classlinear__elasticity_1_1LinearElasticityHamiltonian.html", null ],
     [ "linear_elasticity.LinearElasticStrainToStress", "classlinear__elasticity_1_1LinearElasticStrainToStress.html", null ],
@@ -49,12 +67,18 @@ var hierarchy =
     [ "similie::physics::magnetostatics::MagneticVectorPotentialToMagneticInduction< SpatialIndex... >", "classsimilie_1_1physics_1_1magnetostatics_1_1MagneticVectorPotentialToMagneticInduction_3_01SpatialIndex_8_8_8_01_4.html", null ],
     [ "sil::mesher::Mesher< D, CDim >", "classsil_1_1mesher_1_1Mesher.html", null ],
     [ "sil::tensor::MetricProd< MetricIndex, Indices1, Indices2, MetricType, BatchElem >", "structsil_1_1tensor_1_1MetricProd.html", null ],
+    [ "sil::multidomains::Multidomain< N, Data >", "classsil_1_1multidomains_1_1Multidomain.html", null ],
+    [ "sil::multidomains::MultidomainOperator< Operator >", "classsil_1_1multidomains_1_1MultidomainOperator.html", null ],
+    [ "sil::tensor::NaturalScalarExtrapolationRule", "structsil_1_1tensor_1_1NaturalScalarExtrapolationRule.html", null ],
     [ "nonlinear_magnetostatics.NonlinearMagnetostaticsHamiltonian", "classnonlinear__magnetostatics_1_1NonlinearMagnetostaticsHamiltonian.html", null ],
     [ "similie::physics::magnetostatics::OrthogonalPlaneIndex", "structsimilie_1_1physics_1_1magnetostatics_1_1OrthogonalPlaneIndex.html", null ],
     [ "sil::tensor::OwningTensor< TensorType, Storage >", "namespacesil_1_1tensor.html#classsil_1_1tensor_1_1OwningTensor", null ],
+    [ "sil::tensor::PrescribedScalarExtrapolationRule", "structsil_1_1tensor_1_1PrescribedScalarExtrapolationRule.html", null ],
     [ "sil::exterior::Reconstruction< Indices, PositionType, BatchElem, Complex >", "structsil_1_1exterior_1_1Reconstruction.html", null ],
     [ "sil::exterior::Reduction< Indices, PositionType, BatchElem, Complex >", "structsil_1_1exterior_1_1Reduction.html", null ],
     [ "scalar_field.ScalarFieldHamiltonian", "classscalar__field_1_1ScalarFieldHamiltonian.html", null ],
+    [ "sil::misc::SignedDiscreteElement< Dimensions >", "classsil_1_1misc_1_1SignedDiscreteElement.html", null ],
+    [ "sil::misc::SignedDiscreteElement<>", "classsil_1_1misc_1_1SignedDiscreteElement.html", null ],
     [ "sil::exterior::SimplexVolume< Complex, N, MetricType, PositionType, BatchElem >", "structsil_1_1exterior_1_1SimplexVolume.html", null ],
     [ "sil::exterior::StagedCodifferential< MetricIndex, TagToRemoveFromCochain, CochainTag, TensorType, MetricType, PositionType, ExecSpace >", "classsil_1_1exterior_1_1StagedCodifferential.html", null ],
     [ "sil::exterior::StagedLaplacian< Args >", "namespacesil_1_1exterior.html#classsil_1_1exterior_1_1StagedLaplacian", null ],
@@ -88,7 +112,9 @@ var hierarchy =
       [ "sil::tensor::ScalarIndex", "structsil_1_1tensor_1_1ScalarIndex.html", null ]
     ] ],
     [ "sil::tensor::TensorSymmetricIndex< TensorIndex >", "structsil_1_1tensor_1_1TensorSymmetricIndex.html", null ],
+    [ "sil::tensor::TensorWithExtrapolationRules< Field, Rules, Fixed >", "structsil_1_1tensor_1_1TensorWithExtrapolationRules.html", null ],
     [ "sil::tensor::TensorYoungTableauIndex< YoungTableau, TensorIndex >", "structsil_1_1tensor_1_1TensorYoungTableauIndex.html", null ],
+    [ "sil::multidomains::Topology< N >", "classsil_1_1multidomains_1_1Topology.html", null ],
     [ "sil::exterior::TransposedCoboundary< Args >", "namespacesil_1_1exterior.html#structsil_1_1exterior_1_1TransposedCoboundary", null ],
     [ "sil::exterior::TransposedCoboundary< TagToAddToCochain, CochainTag >", "structsil_1_1exterior_1_1TransposedCoboundary_3_01TagToAddToCochain_00_01CochainTag_01_4.html", null ],
     [ "std::true_type", null, [
@@ -98,6 +124,7 @@ var hierarchy =
       [ "sil::tensor::Contravariant< NaturalIndex >", "structsil_1_1tensor_1_1Contravariant.html", null ],
       [ "sil::tensor::Covariant< NaturalIndex >", "structsil_1_1tensor_1_1Covariant.html", null ]
     ] ],
+    [ "sil::tensor::ZeroExtrapolationRule", "structsil_1_1tensor_1_1ZeroExtrapolationRule.html", null ],
     [ "sil::tensor::Index", null, [
       [ "sil::tensor::prime< Index, I >", "structsil_1_1tensor_1_1prime.html", null ]
     ] ]

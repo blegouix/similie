@@ -138,12 +138,15 @@ Collaboration diagram for sil::exterior::DiscreteHodgeStar&lt; Complex, Indices1
 <div class="dyncontent">
 <div class="center"><img src="structsil_1_1exterior_1_1DiscreteHodgeStar__coll__graph.png" border="0" usemap="#asil_1_1exterior_1_1DiscreteHodgeStar_3_01Complex_00_01Indices1_00_01Indices2_00_01MetricType_00_01PositionType_00_01BatchElem_01_4_coll__map" alt="Collaboration graph"/></div>
 <map name="asil_1_1exterior_1_1DiscreteHodgeStar_3_01Complex_00_01Indices1_00_01Indices2_00_01MetricType_00_01PositionType_00_01BatchElem_01_4_coll__map" id="asil_1_1exterior_1_1DiscreteHodgeStar_3_01Complex_00_01Indices1_00_01Indices2_00_01MetricType_00_01PositionType_00_01BatchElem_01_4_coll__map">
-<area shape="rect" title=" " alt="" coords="5,5,251,135"/>
+<area shape="rect" title=" " alt="" coords="5,5,251,155"/>
 </map>
 </div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
+<tr class="memitem:a484f2137795b74757d1c3b6652c38dfc" id="r_a484f2137795b74757d1c3b6652c38dfc"><td class="memItemLeft" align="right" valign="top">static KOKKOS_FUNCTION auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a484f2137795b74757d1c3b6652c38dfc">one_form_pairing</a> (MetricType metric, PositionType position, BatchElem elem)</td></tr>
+<tr class="memdesc:a484f2137795b74757d1c3b6652c38dfc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pair primal one-cochains using the full cell metric and orientation.  <br /></td></tr>
+<tr class="separator:a484f2137795b74757d1c3b6652c38dfc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a22141d186c676d6e1b8e9d1b27c2c589" id="r_a22141d186c676d6e1b8e9d1b27c2c589"><td class="memTemplParams" colspan="2">template&lt;misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor</a> &gt; HodgeTensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor</a> &gt; FormTensorType&gt; </td></tr>
 <tr class="memitem:a22141d186c676d6e1b8e9d1b27c2c589"><td class="memTemplItemLeft" align="right" valign="top">static KOKKOS_FUNCTION void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a22141d186c676d6e1b8e9d1b27c2c589">operator()</a> (HodgeTensorType hodge_tensor, FormTensorType form_tensor, MetricType metric, PositionType position, BatchElem elem)</td></tr>
 <tr class="separator:a22141d186c676d6e1b8e9d1b27c2c589"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -153,8 +156,49 @@ Static Public Member Functions</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;<a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a> Complex, misc::Specialization&lt; ddc::TypeSeq &gt; Indices1, misc::Specialization&lt; ddc::TypeSeq &gt; Indices2, class MetricType, class PositionType, class BatchElem&gt;<br />
 struct sil::exterior::DiscreteHodgeStar&lt; Complex, Indices1, Indices2, MetricType, PositionType, BatchElem &gt;</div>
-<p class="definition">Definition at line <a class="el" href="hodge__star_8hpp_source.html#l00218">218</a> of file <a class="el" href="hodge__star_8hpp_source.html">hodge_star.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="hodge__star_8hpp_source.html#l00194">194</a> of file <a class="el" href="hodge__star_8hpp_source.html">hodge_star.hpp</a>.</p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="a484f2137795b74757d1c3b6652c38dfc" name="a484f2137795b74757d1c3b6652c38dfc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a484f2137795b74757d1c3b6652c38dfc">&#9670;&#160;</a></span>one_form_pairing()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140">CellComplex</a> Complex, misc::Specialization&lt; ddc::TypeSeq &gt; Indices1, misc::Specialization&lt; ddc::TypeSeq &gt; Indices2, class MetricType , class PositionType , class BatchElem &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static KOKKOS_FUNCTION auto <a class="el" href="structsil_1_1exterior_1_1DiscreteHodgeStar.html">sil::exterior::DiscreteHodgeStar</a>&lt; Complex, Indices1, Indices2, MetricType, PositionType, BatchElem &gt;::one_form_pairing </td>
+          <td>(</td>
+          <td class="paramtype">MetricType</td>          <td class="paramname"><span class="paramname"><em>metric</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">PositionType</td>          <td class="paramname"><span class="paramname"><em>position</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BatchElem</td>          <td class="paramname"><span class="paramname"><em>elem</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Pair primal one-cochains using the full cell metric and orientation. </p>
+<dl class="section important"><dt>Important</dt><dd>This operator and documentation is fully AI-generated. </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="hodge__star_8hpp_source.html#l00199">199</a> of file <a class="el" href="hodge__star_8hpp_source.html">hodge_star.hpp</a>.</p>
+
+</div>
+</div>
 <a id="a22141d186c676d6e1b8e9d1b27c2c589" name="a22141d186c676d6e1b8e9d1b27c2c589"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a22141d186c676d6e1b8e9d1b27c2c589">&#9670;&#160;</a></span>operator()()</h2>
 
@@ -201,7 +245,7 @@ template&lt;misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="hodge__star_8hpp_source.html#l00223">223</a> of file <a class="el" href="hodge__star_8hpp_source.html">hodge_star.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="hodge__star_8hpp_source.html#l00249">249</a> of file <a class="el" href="hodge__star_8hpp_source.html">hodge_star.hpp</a>.</p>
 
 </div>
 </div>
@@ -244,7 +288,7 @@ template&lt;<a class="el" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="hodge__star_8hpp_source.html#l00271">271</a> of file <a class="el" href="hodge__star_8hpp_source.html">hodge_star.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="hodge__star_8hpp_source.html#l00297">297</a> of file <a class="el" href="hodge__star_8hpp_source.html">hodge_star.hpp</a>.</p>
 
 </div>
 </div>

@@ -31,15 +31,17 @@ var annotated_dup =
         [ "Chain", "classsil_1_1exterior_1_1Chain.html", "classsil_1_1exterior_1_1Chain" ],
         [ "Coboundary", "namespacesil_1_1exterior.html#structsil_1_1exterior_1_1Coboundary", null ],
         [ "Coboundary< CochainType >", "structsil_1_1exterior_1_1Coboundary_3_01CochainType_01_4.html", null ],
-        [ "Coboundary< TagToAddToCochain, CochainTag >", "structsil_1_1exterior_1_1Coboundary_3_01TagToAddToCochain_00_01CochainTag_01_4.html", null ],
+        [ "Coboundary< TagToAddToCochain, CochainTag >", "structsil_1_1exterior_1_1Coboundary_3_01TagToAddToCochain_00_01CochainTag_01_4.html", "structsil_1_1exterior_1_1Coboundary_3_01TagToAddToCochain_00_01CochainTag_01_4" ],
         [ "Cochain", "classsil_1_1exterior_1_1Cochain.html", "classsil_1_1exterior_1_1Cochain" ],
         [ "CochainIterator", "classsil_1_1exterior_1_1CochainIterator.html", "classsil_1_1exterior_1_1CochainIterator" ],
         [ "Codifferential", "namespacesil_1_1exterior.html#structsil_1_1exterior_1_1Codifferential", null ],
         [ "Codifferential< MetricIndex, TagToRemoveFromCochain, CochainTag, TensorType, MetricType, PositionType >", "structsil_1_1exterior_1_1Codifferential_3_01MetricIndex_00_01TagToRemoveFromCochain_00_01Cochain2aac1536eace81f70cbdf910df4f70bc.html", null ],
+        [ "Codifferential< TagToRemoveFromCochain, CochainTag >", "structsil_1_1exterior_1_1Codifferential_3_01TagToRemoveFromCochain_00_01CochainTag_01_4.html", null ],
         [ "ContinuousHodgeStar", "structsil_1_1exterior_1_1ContinuousHodgeStar.html", null ],
         [ "Cosimplex", "classsil_1_1exterior_1_1Cosimplex.html", "classsil_1_1exterior_1_1Cosimplex" ],
         [ "CovariantDerivative", "classsil_1_1exterior_1_1CovariantDerivative.html", null ],
         [ "DiscreteHodgeStar", "structsil_1_1exterior_1_1DiscreteHodgeStar.html", null ],
+        [ "DualHodgeCochain", "structsil_1_1exterior_1_1DualHodgeCochain.html", "structsil_1_1exterior_1_1DualHodgeCochain" ],
         [ "DualSimplexVolume", "structsil_1_1exterior_1_1DualSimplexVolume.html", null ],
         [ "FillReconstructionOperatorMem", "structsil_1_1exterior_1_1FillReconstructionOperatorMem.html", "structsil_1_1exterior_1_1FillReconstructionOperatorMem" ],
         [ "FillReductionOperatorMem", "structsil_1_1exterior_1_1FillReductionOperatorMem.html", "structsil_1_1exterior_1_1FillReductionOperatorMem" ],
@@ -62,20 +64,42 @@ var annotated_dup =
       ] ],
       [ "misc", "namespacesil_1_1misc.html", [
         [ "is_specialization_of", "structsil_1_1misc_1_1is__specialization__of.html", null ],
-        [ "is_specialization_of< T, T< Us... > >", "structsil_1_1misc_1_1is__specialization__of_3_01T_00_01T_3_01Us_8_8_8_01_4_01_4.html", null ]
+        [ "is_specialization_of< T, T< Us... > >", "structsil_1_1misc_1_1is__specialization__of_3_01T_00_01T_3_01Us_8_8_8_01_4_01_4.html", null ],
+        [ "SignedDiscreteElement", "classsil_1_1misc_1_1SignedDiscreteElement.html", "classsil_1_1misc_1_1SignedDiscreteElement" ]
+      ] ],
+      [ "multidomains", "namespacesil_1_1multidomains.html", [
+        [ "BoundaryDomain", "namespacesil_1_1multidomains.html#structsil_1_1multidomains_1_1BoundaryDomain", "namespacesil_1_1multidomains_structsil_1_1multidomains_1_1BoundaryDomain_dup" ],
+        [ "BoundaryRule", "classsil_1_1multidomains_1_1BoundaryRule.html", "classsil_1_1multidomains_1_1BoundaryRule" ],
+        [ "Connection", "structsil_1_1multidomains_1_1Connection.html", "structsil_1_1multidomains_1_1Connection" ],
+        [ "DomainData", "namespacesil_1_1multidomains.html#structsil_1_1multidomains_1_1DomainData", "namespacesil_1_1multidomains_structsil_1_1multidomains_1_1DomainData_dup" ],
+        [ "DomainExecution", "classsil_1_1multidomains_1_1DomainExecution.html", "classsil_1_1multidomains_1_1DomainExecution" ],
+        [ "DomainReference", "structsil_1_1multidomains_1_1DomainReference.html", "structsil_1_1multidomains_1_1DomainReference" ],
+        [ "Face", "structsil_1_1multidomains_1_1Face.html", "structsil_1_1multidomains_1_1Face" ],
+        [ "FaceRule", "structsil_1_1multidomains_1_1FaceRule.html", "structsil_1_1multidomains_1_1FaceRule" ],
+        [ "IndexedScalarField", "structsil_1_1multidomains_1_1IndexedScalarField.html", "structsil_1_1multidomains_1_1IndexedScalarField" ],
+        [ "Multidomain", "classsil_1_1multidomains_1_1Multidomain.html", "classsil_1_1multidomains_1_1Multidomain" ],
+        [ "MultidomainOperator", "classsil_1_1multidomains_1_1MultidomainOperator.html", "classsil_1_1multidomains_1_1MultidomainOperator" ],
+        [ "Topology", "classsil_1_1multidomains_1_1Topology.html", "classsil_1_1multidomains_1_1Topology" ]
       ] ],
       [ "tensor", "namespacesil_1_1tensor.html", [
+        [ "ClampExtrapolationRule", "structsil_1_1tensor_1_1ClampExtrapolationRule.html", "structsil_1_1tensor_1_1ClampExtrapolationRule" ],
+        [ "ConstantScalarExtrapolationRule", "structsil_1_1tensor_1_1ConstantScalarExtrapolationRule.html", "structsil_1_1tensor_1_1ConstantScalarExtrapolationRule" ],
         [ "Contravariant", "structsil_1_1tensor_1_1Contravariant.html", "structsil_1_1tensor_1_1Contravariant" ],
         [ "ContravariantCharacter", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1ContravariantCharacter", null ],
         [ "Covariant", "structsil_1_1tensor_1_1Covariant.html", "structsil_1_1tensor_1_1Covariant" ],
         [ "CovariantCharacter", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1CovariantCharacter", null ],
         [ "Dummy", "namespacesil_1_1tensor.html#structsil_1_1tensor_1_1Dummy", null ],
+        [ "ExternalDomainBoundaryMap", "structsil_1_1tensor_1_1ExternalDomainBoundaryMap.html", "structsil_1_1tensor_1_1ExternalDomainBoundaryMap" ],
+        [ "ExternalDomainExtrapolationRule", "structsil_1_1tensor_1_1ExternalDomainExtrapolationRule.html", "structsil_1_1tensor_1_1ExternalDomainExtrapolationRule" ],
+        [ "ExtrapolationRules", "classsil_1_1tensor_1_1ExtrapolationRules.html", "classsil_1_1tensor_1_1ExtrapolationRules" ],
         [ "InverseMetric", "structsil_1_1tensor_1_1InverseMetric.html", "structsil_1_1tensor_1_1InverseMetric" ],
         [ "MetricIndex1", "structsil_1_1tensor_1_1MetricIndex1.html", null ],
         [ "MetricIndex2", "structsil_1_1tensor_1_1MetricIndex2.html", null ],
         [ "MetricProd", "structsil_1_1tensor_1_1MetricProd.html", null ],
+        [ "NaturalScalarExtrapolationRule", "structsil_1_1tensor_1_1NaturalScalarExtrapolationRule.html", "structsil_1_1tensor_1_1NaturalScalarExtrapolationRule" ],
         [ "OwningTensor", "namespacesil_1_1tensor.html#classsil_1_1tensor_1_1OwningTensor", null ],
         [ "OwningTensor< Tensor< ElementType, DomainType, LayoutStridedPolicy, MemorySpace >, Storage >", "classsil_1_1tensor_1_1OwningTensor_3_01Tensor_3_01ElementType_00_01DomainType_00_01LayoutStridede8c6ac86c910712a64335c9c13c9211e.html", "classsil_1_1tensor_1_1OwningTensor_3_01Tensor_3_01ElementType_00_01DomainType_00_01LayoutStridede8c6ac86c910712a64335c9c13c9211e" ],
+        [ "PrescribedScalarExtrapolationRule", "structsil_1_1tensor_1_1PrescribedScalarExtrapolationRule.html", "structsil_1_1tensor_1_1PrescribedScalarExtrapolationRule" ],
         [ "prime", "structsil_1_1tensor_1_1prime.html", null ],
         [ "ScalarIndex", "structsil_1_1tensor_1_1ScalarIndex.html", null ],
         [ "Tensor< ElementType, ddc::DiscreteDomain< DDim... >, LayoutStridedPolicy, MemorySpace >", "classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html", "classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c" ],
@@ -88,7 +112,9 @@ var annotated_dup =
         [ "TensorLorentzianSignIndex", "structsil_1_1tensor_1_1TensorLorentzianSignIndex.html", "structsil_1_1tensor_1_1TensorLorentzianSignIndex" ],
         [ "TensorNaturalIndex", "structsil_1_1tensor_1_1TensorNaturalIndex.html", "structsil_1_1tensor_1_1TensorNaturalIndex" ],
         [ "TensorSymmetricIndex", "structsil_1_1tensor_1_1TensorSymmetricIndex.html", "structsil_1_1tensor_1_1TensorSymmetricIndex" ],
-        [ "TensorYoungTableauIndex", "structsil_1_1tensor_1_1TensorYoungTableauIndex.html", "structsil_1_1tensor_1_1TensorYoungTableauIndex" ]
+        [ "TensorWithExtrapolationRules", "structsil_1_1tensor_1_1TensorWithExtrapolationRules.html", "structsil_1_1tensor_1_1TensorWithExtrapolationRules" ],
+        [ "TensorYoungTableauIndex", "structsil_1_1tensor_1_1TensorYoungTableauIndex.html", "structsil_1_1tensor_1_1TensorYoungTableauIndex" ],
+        [ "ZeroExtrapolationRule", "structsil_1_1tensor_1_1ZeroExtrapolationRule.html", "structsil_1_1tensor_1_1ZeroExtrapolationRule" ]
       ] ]
     ] ],
     [ "similie", "namespacesimilie.html", [
@@ -109,6 +135,7 @@ var annotated_dup =
         [ "HamiltonEquations", "classsimilie_1_1physics_1_1HamiltonEquations.html", "classsimilie_1_1physics_1_1HamiltonEquations" ]
       ] ],
       [ "solvers", "namespacesimilie_1_1solvers.html", [
+        [ "AssembledLinearSystem", "namespacesimilie_1_1solvers.html#structsimilie_1_1solvers_1_1AssembledLinearSystem", "namespacesimilie_1_1solvers_structsimilie_1_1solvers_1_1AssembledLinearSystem_dup" ],
         [ "StrongFormulationSolverDiagnostics", "namespacesimilie_1_1solvers.html#structsimilie_1_1solvers_1_1StrongFormulationSolverDiagnostics", "namespacesimilie_1_1solvers_structsimilie_1_1solvers_1_1StrongFormulationSolverDiagnostics_dup" ],
         [ "StrongFormulationSolverSettings", "namespacesimilie_1_1solvers.html#structsimilie_1_1solvers_1_1StrongFormulationSolverSettings", "namespacesimilie_1_1solvers_structsimilie_1_1solvers_1_1StrongFormulationSolverSettings_dup" ]
       ] ]

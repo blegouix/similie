@@ -1,0 +1,9 @@
+<map id="sil::multidomains::FaceRule&lt; Dimension, Field &gt;" name="sil::multidomains::FaceRule&lt; Dimension, Field &gt;">
+<area shape="rect" id="Node000001" title="A runtime face policy with the same sampling API as an individual rule." alt="" coords="147,476,308,651"/>
+<area shape="rect" id="Node000002" href="$structsil_1_1tensor_1_1ExternalDomainExtrapolationRule.html" title=" " alt="" coords="18,186,237,381"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="165,380,193,460,188,462,160,382"/>
+<area shape="rect" id="Node000003" href="$structsil_1_1tensor_1_1ClampExtrapolationRule.html" title="Spatial closure evaluated independently of the stored field values." alt="" coords="5,5,249,91"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="130,91,130,170,125,170,125,91"/>
+<area shape="rect" id="Node000004" href="$classsil_1_1multidomains_1_1BoundaryRule.html" title="A device&#45;copyable choice of the scalar boundary policies." alt="" coords="261,153,396,413"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="284,415,267,462,262,460,279,413"/>
+</map>

@@ -1307,7 +1307,7 @@ $(function(){initNavTree('young__tableau_8hpp_source.html',''); initResizable(tr
 <div class="line"><a id="l01180" name="l01180"></a><span class="lineno"> 1180</span>{</div>
 <div class="line"><a id="l01181" name="l01181"></a><span class="lineno"> 1181</span>    <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword">auto</span> operator()()</div>
 <div class="line"><a id="l01182" name="l01182"></a><span class="lineno"> 1182</span>    {</div>
-<div class="line"><a id="l01183" name="l01183"></a><span class="lineno"> 1183</span>        <span class="keyword">static</span> <span class="keyword">constexpr</span> std::tuple tableau = { YoungTableauRowToArray&lt;Row&gt;::operator()()... };</div>
+<div class="line"><a id="l01183" name="l01183"></a><span class="lineno"> 1183</span>        <span class="keyword">static</span> <span class="keyword">constexpr</span> std::tuple tableau = {YoungTableauRowToArray&lt;Row&gt;::operator()()...};</div>
 <div class="line"><a id="l01184" name="l01184"></a><span class="lineno"> 1184</span>        <span class="keywordflow">return</span> tableau;</div>
 <div class="line"><a id="l01185" name="l01185"></a><span class="lineno"> 1185</span>    }</div>
 <div class="line"><a id="l01186" name="l01186"></a><span class="lineno"> 1186</span>};</div>
@@ -1367,8 +1367,8 @@ $(function(){initNavTree('young__tableau_8hpp_source.html',''); initResizable(tr
 <div class="line"><a id="l01240" name="l01240"></a><span class="lineno"> 1240</span>    <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword">auto</span> operator()(Tuple <span class="keyword">const</span> tableau)</div>
 <div class="line"><a id="l01241" name="l01241"></a><span class="lineno"> 1241</span>    {</div>
 <div class="line"><a id="l01242" name="l01242"></a><span class="lineno"> 1242</span>        <span class="keywordflow">return</span> concatenate(</div>
-<div class="line"><a id="l01243" name="l01243"></a><span class="lineno"> 1243</span>                RowToString &lt; RowId</div>
-<div class="line"><a id="l01244" name="l01244"></a><span class="lineno"> 1244</span>                != <span class="keyword">sizeof</span>...(RowId) - 1 &gt; ::operator()(std::get&lt;RowId&gt;(tableau))...);</div>
+<div class="line"><a id="l01243" name="l01243"></a><span class="lineno"> 1243</span>                RowToString&lt;RowId != <span class="keyword">sizeof</span>...(RowId) - 1&gt;::operator()(</div>
+<div class="line"><a id="l01244" name="l01244"></a><span class="lineno"> 1244</span>                        std::get&lt;RowId&gt;(tableau))...);</div>
 <div class="line"><a id="l01245" name="l01245"></a><span class="lineno"> 1245</span>    }</div>
 <div class="line"><a id="l01246" name="l01246"></a><span class="lineno"> 1246</span>};</div>
 <div class="line"><a id="l01247" name="l01247"></a><span class="lineno"> 1247</span> </div>
@@ -1451,7 +1451,7 @@ $(function(){initNavTree('young__tableau_8hpp_source.html',''); initResizable(tr
 <div class="line"><a id="l01324" name="l01324"></a><span class="lineno"> 1324</span> </div>
 <div class="line"><a id="l01325" name="l01325"></a><span class="lineno"> 1325</span><span class="preprocessor">#endif</span></div>
 <div class="ttc" id="anamespacesil_1_1csr_html_ac09df9011d1db18630182a3e1047a5c7"><div class="ttname"><a href="namespacesil_1_1csr.html#ac09df9011d1db18630182a3e1047a5c7">sil::csr::operator&lt;&lt;</a></div><div class="ttdeci">std::ostream &amp; operator&lt;&lt;(std::ostream &amp;os, Csr&lt; N, TensorIndex... &gt; const &amp;csr)</div><div class="ttdef"><b>Definition</b> <a href="csr_8hpp_source.html#l00191">csr.hpp:191</a></div></div>
-<div class="ttc" id="anamespacesil_1_1tensor_html_ac265afa3e78c715cbb7f64f9ace68f9d"><div class="ttname"><a href="namespacesil_1_1tensor.html#ac265afa3e78c715cbb7f64f9ace68f9d">sil::tensor::natural_tensor_prod_domain</a></div><div class="ttdeci">natural_tensor_prod_domain_t&lt; Dom1, Dom2 &gt; natural_tensor_prod_domain(Dom1 dom1, Dom2 dom2)</div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00817">tensor_impl.hpp:817</a></div></div>
+<div class="ttc" id="anamespacesil_1_1tensor_html_ac265afa3e78c715cbb7f64f9ace68f9d"><div class="ttname"><a href="namespacesil_1_1tensor.html#ac265afa3e78c715cbb7f64f9ace68f9d">sil::tensor::natural_tensor_prod_domain</a></div><div class="ttdeci">natural_tensor_prod_domain_t&lt; Dom1, Dom2 &gt; natural_tensor_prod_domain(Dom1 dom1, Dom2 dom2)</div><div class="ttdef"><b>Definition</b> <a href="tensor__impl_8hpp_source.html#l00816">tensor_impl.hpp:816</a></div></div>
 <div class="ttc" id="anamespacesil_html"><div class="ttname"><a href="namespacesil.html">sil</a></div><div class="ttdoc">The top-level namespace of SimiLie.</div><div class="ttdef"><b>Definition</b> <a href="csr_8hpp_source.html#l00015">csr.hpp:15</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->

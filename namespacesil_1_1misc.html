@@ -147,6 +147,9 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsil_1_1misc_1_1is__specialization__of_3_01T_00_01T_3_01Us_8_8_8_01_4_01_4.html">is_specialization_of&lt; T, T&lt; Us... &gt; &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsil_1_1misc_1_1SignedDiscreteElement.html">SignedDiscreteElement</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Absolute logical coordinates with signed storage, including exterior nodes.  <a href="classsil_1_1misc_1_1SignedDiscreteElement.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="concepts" name="concepts"></a>
 Concepts</h2></td></tr>
@@ -186,6 +189,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a3972a6165c52a1398ca03e1b4ef8d993" id="r_a3972a6165c52a1398ca03e1b4ef8d993"><td class="memTemplParams" colspan="2">template&lt;class... DDim, class... ODDim&gt; </td></tr>
 <tr class="memitem:a3972a6165c52a1398ca03e1b4ef8d993"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a3972a6165c52a1398ca03e1b4ef8d993">domain_contains</a> (ddc::DiscreteDomain&lt; DDim... &gt; dom, ddc::DiscreteElement&lt; ODDim... &gt; elem)</td></tr>
 <tr class="separator:a3972a6165c52a1398ca03e1b4ef8d993"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a569551d81f613a3ff7ff642d9bb2196e" id="r_a569551d81f613a3ff7ff642d9bb2196e"><td class="memTemplParams" colspan="2">template&lt;class... DDim, class... ODDim&gt; </td></tr>
+<tr class="memitem:a569551d81f613a3ff7ff642d9bb2196e"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a569551d81f613a3ff7ff642d9bb2196e">domain_contains</a> (ddc::DiscreteDomain&lt; DDim... &gt; dom, <a class="el" href="classsil_1_1misc_1_1SignedDiscreteElement.html">SignedDiscreteElement</a>&lt; ODDim... &gt; elem)</td></tr>
+<tr class="separator:a569551d81f613a3ff7ff642d9bb2196e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a94edf431638777006466c9a72d271a21" id="r_a94edf431638777006466c9a72d271a21"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a94edf431638777006466c9a72d271a21">factorial</a> (std::size_t k) noexcept</td></tr>
 <tr class="separator:a94edf431638777006466c9a72d271a21"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a36c59ab9309645fcf275d0031187995b" id="r_a36c59ab9309645fcf275d0031187995b"><td class="memTemplParams" colspan="2">template&lt;class T , class ElementType  = std::size_t&gt; </td></tr>
@@ -396,12 +402,12 @@ template&lt;class BatchDomain , class Elem &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="clamp__to__domain_8hpp_source.html#l00042">42</a> of file <a class="el" href="clamp__to__domain_8hpp_source.html">clamp_to_domain.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="clamp__to__domain_8hpp_source.html#l00063">63</a> of file <a class="el" href="clamp__to__domain_8hpp_source.html">clamp_to_domain.hpp</a>.</p>
 
 </div>
 </div>
 <a id="a3972a6165c52a1398ca03e1b4ef8d993" name="a3972a6165c52a1398ca03e1b4ef8d993"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3972a6165c52a1398ca03e1b4ef8d993">&#9670;&#160;</a></span>domain_contains()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a3972a6165c52a1398ca03e1b4ef8d993">&#9670;&#160;</a></span>domain_contains() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -421,7 +427,32 @@ template&lt;class... DDim, class... ODDim&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="domain__contains_8hpp_source.html#l00035">35</a> of file <a class="el" href="domain__contains_8hpp_source.html">domain_contains.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="domain__contains_8hpp_source.html#l00036">36</a> of file <a class="el" href="domain__contains_8hpp_source.html">domain_contains.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a569551d81f613a3ff7ff642d9bb2196e" name="a569551d81f613a3ff7ff642d9bb2196e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a569551d81f613a3ff7ff642d9bb2196e">&#9670;&#160;</a></span>domain_contains() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class... DDim, class... ODDim&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">KOKKOS_FUNCTION bool sil::misc::domain_contains </td>
+          <td>(</td>
+          <td class="paramtype">ddc::DiscreteDomain&lt; DDim... &gt;</td>          <td class="paramname"><span class="paramname"><em>dom</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classsil_1_1misc_1_1SignedDiscreteElement.html">SignedDiscreteElement</a>&lt; ODDim... &gt;</td>          <td class="paramname"><span class="paramname"><em>elem</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="domain__contains_8hpp_source.html#l00051">51</a> of file <a class="el" href="domain__contains_8hpp_source.html">domain_contains.hpp</a>.</p>
 
 </div>
 </div>

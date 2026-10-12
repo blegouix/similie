@@ -135,6 +135,8 @@ $(function(){initNavTree('namespacesimilie_1_1solvers.html',''); initResizable(t
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
+<tr class="memitem:structsimilie_1_1solvers_1_1AssembledLinearSystem" id="r_structsimilie_1_1solvers_1_1AssembledLinearSystem"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#structsimilie_1_1solvers_1_1AssembledLinearSystem">AssembledLinearSystem</a></td></tr>
+<tr class="separator:structsimilie_1_1solvers_1_1AssembledLinearSystem"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:structsimilie_1_1solvers_1_1StrongFormulationSolverDiagnostics" id="r_structsimilie_1_1solvers_1_1StrongFormulationSolverDiagnostics"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#structsimilie_1_1solvers_1_1StrongFormulationSolverDiagnostics">StrongFormulationSolverDiagnostics</a></td></tr>
 <tr class="separator:structsimilie_1_1solvers_1_1StrongFormulationSolverDiagnostics"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:structsimilie_1_1solvers_1_1StrongFormulationSolverSettings" id="r_structsimilie_1_1solvers_1_1StrongFormulationSolverSettings"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#structsimilie_1_1solvers_1_1StrongFormulationSolverSettings">StrongFormulationSolverSettings</a></td></tr>
@@ -177,11 +179,62 @@ Functions</h2></td></tr>
 <tr class="separator:a4afb09862767630787094fbbdedb8738"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8c2ab1e62487904153f6330bbf3c79a3" id="r_a8c2ab1e62487904153f6330bbf3c79a3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#abe2dd397f1ada9f78cdbf2166698ab4d">PreconditionerType</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8c2ab1e62487904153f6330bbf3c79a3">parse_preconditioner</a> (std::string_view name)</td></tr>
 <tr class="separator:a8c2ab1e62487904153f6330bbf3c79a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a39b04eb2bc1fe212721ccba405368611" id="r_a39b04eb2bc1fe212721ccba405368611"><td class="memTemplParams" colspan="2">template&lt;class ExecSpace , class RHSView , class SolutionView &gt; </td></tr>
+<tr class="memitem:a39b04eb2bc1fe212721ccba405368611"><td class="memTemplItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="#structsimilie_1_1solvers_1_1StrongFormulationSolverDiagnostics">StrongFormulationSolverDiagnostics</a> &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a39b04eb2bc1fe212721ccba405368611">minimize_strong_formulation_residual</a> (ExecSpace exec, std::shared_ptr&lt; gko::matrix::Csr&lt; double, gko::int32 &gt; &gt; const &amp;matrix, std::vector&lt; RHSView &gt; const &amp;rhs, std::vector&lt; SolutionView &gt; const &amp;solutions, <a class="el" href="#structsimilie_1_1solvers_1_1StrongFormulationSolverSettings">StrongFormulationSolverSettings</a> settings={})</td></tr>
+<tr class="memdesc:a39b04eb2bc1fe212721ccba405368611"><td class="mdescLeft">&#160;</td><td class="mdescRight">Solve independent loads with one native sparse matrix and preconditioner.  <br /></td></tr>
+<tr class="separator:a39b04eb2bc1fe212721ccba405368611"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a22ee35bfe9c82b756c1afcac8d123ea1" id="r_a22ee35bfe9c82b756c1afcac8d123ea1"><td class="memTemplParams" colspan="2">template&lt;class ExecSpace , class OperatorModel , class RHSViewType , class SolutionViewType &gt; </td></tr>
 <tr class="memitem:a22ee35bfe9c82b756c1afcac8d123ea1"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="#structsimilie_1_1solvers_1_1StrongFormulationSolverDiagnostics">StrongFormulationSolverDiagnostics</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a22ee35bfe9c82b756c1afcac8d123ea1">minimize_strong_formulation_residual</a> (ExecSpace exec_space, OperatorModel const &amp;operator_model, RHSViewType rhs, SolutionViewType solution, <a class="el" href="#structsimilie_1_1solvers_1_1StrongFormulationSolverSettings">StrongFormulationSolverSettings</a> settings={})</td></tr>
 <tr class="separator:a22ee35bfe9c82b756c1afcac8d123ea1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/><h2 class="groupheader">Class Documentation</h2>
+<a name="structsimilie_1_1solvers_1_1AssembledLinearSystem" id="structsimilie_1_1solvers_1_1AssembledLinearSystem"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#structsimilie_1_1solvers_1_1AssembledLinearSystem">&#9670;&#160;</a></span>similie::solvers::AssembledLinearSystem</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">struct similie::solvers::AssembledLinearSystem</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<div class="textblock">
+<p class="definition">Definition at line <a class="el" href="stencil__assembly_8hpp_source.html#l00014">14</a> of file <a class="el" href="stencil__assembly_8hpp_source.html">stencil_assembly.hpp</a>.</p>
+</div><div class="dynheader">
+Collaboration diagram for similie::solvers::AssembledLinearSystem:</div>
+<div class="dyncontent">
+<div class="center"><img src="structsimilie_1_1solvers_1_1AssembledLinearSystem__coll__graph.png" border="0" usemap="#asimilie_1_1solvers_1_1AssembledLinearSystem_coll__map" alt="Collaboration graph"/></div>
+<map name="asimilie_1_1solvers_1_1AssembledLinearSystem_coll__map" id="asimilie_1_1solvers_1_1AssembledLinearSystem_coll__map">
+<area shape="rect" title=" " alt="" coords="5,163,199,263"/>
+<area shape="rect" title=" " alt="" coords="23,5,181,100"/>
+<area shape="poly" title=" " alt="" coords="105,100,105,146,99,146,99,100"/>
+</map>
+</div>
+<table class="fieldtable">
+<tr><th colspan="3">Class Members</th></tr>
+<tr><td class="fieldtype">
+<a id="a88cf46ac1cefd9f80bf45c58bdcef98a" name="a88cf46ac1cefd9f80bf45c58bdcef98a"></a>shared_ptr&lt; Csr&lt; double, int32 &gt; &gt;</td>
+<td class="fieldname">
+matrix</td>
+<td class="fielddoc">
+</td></tr>
+<tr><td class="fieldtype">
+<a id="ac0347025f53bec98fa76f374d6f46b8f" name="ac0347025f53bec98fa76f374d6f46b8f"></a>View&lt; double ** &gt;</td>
+<td class="fieldname">
+rhs</td>
+<td class="fielddoc">
+</td></tr>
+<tr><td class="fieldtype">
+<a id="a8649cb47b3f5c3d03b3cd6b044af371b" name="a8649cb47b3f5c3d03b3cd6b044af371b"></a>View&lt; double * &gt;</td>
+<td class="fieldname">
+row_scales</td>
+<td class="fielddoc">
+</td></tr>
+</table>
+
+</div>
+</div>
 <a name="structsimilie_1_1solvers_1_1StrongFormulationSolverDiagnostics" id="structsimilie_1_1solvers_1_1StrongFormulationSolverDiagnostics"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#structsimilie_1_1solvers_1_1StrongFormulationSolverDiagnostics">&#9670;&#160;</a></span>similie::solvers::StrongFormulationSolverDiagnostics</h2>
 
@@ -469,8 +522,51 @@ ir_relaxation_factor = 1.0</td>
 
 </div>
 </div>
+<a id="a39b04eb2bc1fe212721ccba405368611" name="a39b04eb2bc1fe212721ccba405368611"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a39b04eb2bc1fe212721ccba405368611">&#9670;&#160;</a></span>minimize_strong_formulation_residual() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class ExecSpace , class RHSView , class SolutionView &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt; <a class="el" href="#structsimilie_1_1solvers_1_1StrongFormulationSolverDiagnostics">StrongFormulationSolverDiagnostics</a> &gt; similie::solvers::minimize_strong_formulation_residual </td>
+          <td>(</td>
+          <td class="paramtype">ExecSpace</td>          <td class="paramname"><span class="paramname"><em>exec</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::shared_ptr&lt; gko::matrix::Csr&lt; double, gko::int32 &gt; &gt; const &amp;</td>          <td class="paramname"><span class="paramname"><em>matrix</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::vector&lt; RHSView &gt; const &amp;</td>          <td class="paramname"><span class="paramname"><em>rhs</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::vector&lt; SolutionView &gt; const &amp;</td>          <td class="paramname"><span class="paramname"><em>solutions</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="#structsimilie_1_1solvers_1_1StrongFormulationSolverSettings">StrongFormulationSolverSettings</a></td>          <td class="paramname"><span class="paramname"><em>settings</em></span><span class="paramdefsep"> = </span><span class="paramdefval">{}</span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Solve independent loads with one native sparse matrix and preconditioner. </p>
+<dl class="section important"><dt>Important</dt><dd>This operator and documentation is fully AI-generated. An already assembled matrix uses Ginkgo's own application in every solve. Matrix-free evaluation remains available to ordinary operator models. </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="minimize__strong__formulation__residual_8hpp_source.html#l01348">1348</a> of file <a class="el" href="minimize__strong__formulation__residual_8hpp_source.html">minimize_strong_formulation_residual.hpp</a>.</p>
+
+</div>
+</div>
 <a id="a22ee35bfe9c82b756c1afcac8d123ea1" name="a22ee35bfe9c82b756c1afcac8d123ea1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a22ee35bfe9c82b756c1afcac8d123ea1">&#9670;&#160;</a></span>minimize_strong_formulation_residual()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a22ee35bfe9c82b756c1afcac8d123ea1">&#9670;&#160;</a></span>minimize_strong_formulation_residual() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -505,7 +601,7 @@ template&lt;class ExecSpace , class OperatorModel , class RHSViewType , class So
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="minimize__strong__formulation__residual_8hpp_source.html#l01341">1341</a> of file <a class="el" href="minimize__strong__formulation__residual_8hpp_source.html">minimize_strong_formulation_residual.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="minimize__strong__formulation__residual_8hpp_source.html#l01389">1389</a> of file <a class="el" href="minimize__strong__formulation__residual_8hpp_source.html">minimize_strong_formulation_residual.hpp</a>.</p>
 
 </div>
 </div>

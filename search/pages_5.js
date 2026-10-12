@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['physics_20module_0',['The physics module',['../physics_module.html',1,'']]]
+  ['onelab_20interface_0',['The ONELAB interface',['../onelab_interface.html',1,'']]]
 ];

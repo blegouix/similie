@@ -52,22 +52,29 @@ var NAVTREE =
         [ "Cochain", "exterior_module.html#autotoc_md22", null ],
         [ "Coboundary operator", "exterior_module.html#autotoc_md23", null ],
         [ "Transposed coboundary operator", "exterior_module.html#autotoc_md24", null ],
-        [ "Primal and dual cell complexes", "exterior_module.html#autotoc_md25", null ],
-        [ "Volume operator", "exterior_module.html#autotoc_md26", null ],
-        [ "Reduction and reconstruction", "exterior_module.html#autotoc_md27", null ],
-        [ "Hodge star operator", "exterior_module.html#autotoc_md28", null ],
-        [ "Codifferential", "exterior_module.html#autotoc_md29", null ],
-        [ "Laplacian", "exterior_module.html#autotoc_md30", null ]
+        [ "Sampling policies and local coefficients", "exterior_module.html#autotoc_md25", null ],
+        [ "Primal and dual cell complexes", "exterior_module.html#autotoc_md26", null ],
+        [ "Volume operator", "exterior_module.html#autotoc_md27", null ],
+        [ "Reduction and reconstruction", "exterior_module.html#autotoc_md28", null ],
+        [ "Hodge star operator", "exterior_module.html#autotoc_md29", null ],
+        [ "Codifferential", "exterior_module.html#autotoc_md30", null ],
+        [ "Laplacian", "exterior_module.html#autotoc_md31", null ]
       ] ]
     ] ],
     [ "The physics module", "physics_module.html", [
-      [ "Scalar field", "physics_module.html#autotoc_md31", null ],
-      [ "Magnetostatics", "physics_module.html#autotoc_md32", null ],
-      [ "Elasticity", "physics_module.html#autotoc_md33", [
-        [ "Local material Hodge in 2D", "physics_module.html#autotoc_md34", null ]
+      [ "Scalar field", "physics_module.html#autotoc_md32", null ],
+      [ "Potential flow", "physics_module.html#autotoc_md33", null ],
+      [ "Magnetostatics", "physics_module.html#autotoc_md34", null ],
+      [ "Elasticity", "physics_module.html#autotoc_md35", [
+        [ "Local material Hodge in 2D", "physics_module.html#autotoc_md36", null ]
       ] ]
     ] ],
     [ "The ONELAB interface", "onelab_interface.html", null ],
+    [ "Multidomains and potential flow", "multidomains.html", [
+      [ "Domain graph and field ownership", "multidomains.html#autotoc_md37", null ],
+      [ "Differential operators and assembly", "multidomains.html#autotoc_md38", null ],
+      [ "ONELAB potential flow example", "multidomains.html#autotoc_md39", null ]
+    ] ],
     [ "Namespaces", "namespaces.html", [
       [ "Namespace List", "namespaces.html", "namespaces_dup" ],
       [ "Namespace Members", "namespacemembers.html", [
@@ -99,8 +106,10 @@ var NAVTREEINDEX =
 "Running.html",
 "classsil_1_1exterior_1_1CochainIterator.html#accfa2f96fd8a102079455b4923974027",
 "classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html",
-"namespacegenerate__cpp__constitutive__law.html#ac7e0b042ac6fbb9b6a47ed6e26a6a3d8",
-"structsil_1_1exterior_1_1Reconstruction.html#a645faba94d43ae5e1cf51920faa40ca1"
+"classsimilie_1_1physics_1_1HamiltonEquations.html#a85604f1e0a6ea50b67377d9e03042d19",
+"namespacesil_1_1misc_1_1math.html#aea8f8a7b33c75c74f3f9f5b31beb123b",
+"structsil_1_1multidomains_1_1Connection.html#a43126b93f3a5b77afd08047f0b077bb0",
+"structsil_1_1tensor_1_1TensorWithExtrapolationRules.html#afd346d01bf3358adecdb578162f2574f"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

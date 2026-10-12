@@ -148,13 +148,14 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a6489f0cea1720de8ec05d16a18ee5074"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a11bc9443f6777526aa7acacaa928d23a" id="r_a11bc9443f6777526aa7acacaa928d23a"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a11bc9443f6777526aa7acacaa928d23a">StagedCodifferential</a> (ExecSpace const &amp;exec_space, TensorType tensor, MetricType metric, PositionType position)</td></tr>
 <tr class="separator:a11bc9443f6777526aa7acacaa928d23a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa6f105961681b37d512d5a84697aebec" id="r_aa6f105961681b37d512d5a84697aebec"><td class="memItemLeft" align="right" valign="top">CodifferentialTensorType&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa6f105961681b37d512d5a84697aebec">operator()</a> (CodifferentialTensorType codifferential_tensor, TensorType tensor) const</td></tr>
-<tr class="separator:aa6f105961681b37d512d5a84697aebec"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afced3c281fcb778edd4848dbdafd831a" id="r_afced3c281fcb778edd4848dbdafd831a"><td class="memTemplParams" colspan="2">template&lt;class DualExtrapolationRule  = tensor::ZeroExtrapolationRule&gt; </td></tr>
+<tr class="memitem:afced3c281fcb778edd4848dbdafd831a"><td class="memTemplItemLeft" align="right" valign="top">CodifferentialTensorType&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#afced3c281fcb778edd4848dbdafd831a">operator()</a> (CodifferentialTensorType codifferential_tensor, TensorType tensor, DualExtrapolationRule dual_extrapolation={}) const</td></tr>
+<tr class="separator:afced3c281fcb778edd4848dbdafd831a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor</a> &gt; TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor</a> &gt; MetricType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor</a> &gt; PositionType, class ExecSpace&gt;<br />
 class sil::exterior::StagedCodifferential&lt; MetricIndex, TagToRemoveFromCochain, CochainTag, TensorType, MetricType, PositionType, ExecSpace &gt;</div>
-<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00327">327</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00413">413</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a6489f0cea1720de8ec05d16a18ee5074" name="a6489f0cea1720de8ec05d16a18ee5074"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a6489f0cea1720de8ec05d16a18ee5074">&#9670;&#160;</a></span>StagedCodifferential() <span class="overload">[1/2]</span></h2>
@@ -195,7 +196,7 @@ template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveF
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00383">383</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00469">469</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
 
 </div>
 </div>
@@ -238,18 +239,20 @@ template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveF
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00397">397</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00483">483</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
 
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="aa6f105961681b37d512d5a84697aebec" name="aa6f105961681b37d512d5a84697aebec"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa6f105961681b37d512d5a84697aebec">&#9670;&#160;</a></span>operator()()</h2>
+<a id="afced3c281fcb778edd4848dbdafd831a" name="afced3c281fcb778edd4848dbdafd831a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afced3c281fcb778edd4848dbdafd831a">&#9670;&#160;</a></span>operator()()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
 template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor</a> &gt; TensorType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor</a> &gt; MetricType, misc::Specialization&lt; <a class="el" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">tensor::Tensor</a> &gt; PositionType, class ExecSpace &gt; </div>
+<div class="memtemplate">
+template&lt;class DualExtrapolationRule  = tensor::ZeroExtrapolationRule&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -262,7 +265,12 @@ template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveF
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">TensorType</td>          <td class="paramname"><span class="paramname"><em>tensor</em></span>&#160;) const</td>
+          <td class="paramtype">TensorType</td>          <td class="paramname"><span class="paramname"><em>tensor</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">DualExtrapolationRule</td>          <td class="paramname"><span class="paramname"><em>dual_extrapolation</em></span><span class="paramdefsep"> = </span><span class="paramdefval">{}</span>&#160;) const</td>
         </tr>
       </table>
   </td>
@@ -272,7 +280,7 @@ template&lt;tensor::TensorIndex MetricIndex, tensor::TensorNatIndex TagToRemoveF
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00438">438</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="codifferential_8hpp_source.html#l00525">525</a> of file <a class="el" href="codifferential_8hpp_source.html">codifferential.hpp</a>.</p>
 
 </div>
 </div>

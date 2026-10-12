@@ -1,5 +1,6 @@
 var namespacesimilie_1_1solvers =
 [
+    [ "AssembledLinearSystem", "namespacesimilie_1_1solvers.html#structsimilie_1_1solvers_1_1AssembledLinearSystem", "namespacesimilie_1_1solvers_structsimilie_1_1solvers_1_1AssembledLinearSystem_dup" ],
     [ "StrongFormulationSolverDiagnostics", "namespacesimilie_1_1solvers.html#structsimilie_1_1solvers_1_1StrongFormulationSolverDiagnostics", "namespacesimilie_1_1solvers_structsimilie_1_1solvers_1_1StrongFormulationSolverDiagnostics_dup" ],
     [ "StrongFormulationSolverSettings", "namespacesimilie_1_1solvers.html#structsimilie_1_1solvers_1_1StrongFormulationSolverSettings", "namespacesimilie_1_1solvers_structsimilie_1_1solvers_1_1StrongFormulationSolverSettings_dup" ],
     [ "Criterion", "namespacesimilie_1_1solvers.html#a4df37a982e48eea8d30f72d4cbad61c2", [
@@ -19,5 +20,6 @@ var namespacesimilie_1_1solvers =
     ] ],
     [ "preconditioner_name", "namespacesimilie_1_1solvers.html#a4afb09862767630787094fbbdedb8738", null ],
     [ "parse_preconditioner", "namespacesimilie_1_1solvers.html#a8c2ab1e62487904153f6330bbf3c79a3", null ],
+    [ "minimize_strong_formulation_residual", "namespacesimilie_1_1solvers.html#a39b04eb2bc1fe212721ccba405368611", null ],
     [ "minimize_strong_formulation_residual", "namespacesimilie_1_1solvers.html#a22ee35bfe9c82b756c1afcac8d123ea1", null ]
 ];

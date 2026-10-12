@@ -308,7 +308,7 @@ $(function(){initNavTree('tensor__impl_8hpp_source.html',''); initResizable(true
 <div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span><span class="keyword">struct </span>NbDimsBeforeIndex;</div>
 <div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span> </div>
 <div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span><span class="keyword">template</span> &lt;<span class="keyword">class </span>Index, <span class="keyword">class </span>IndexHead, <span class="keyword">class</span>... IndexTail&gt;</div>
-<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span><span class="keyword">struct </span>NbDimsBeforeIndex&lt;Index, ddc::TypeSeq&lt;IndexHead, IndexTail...&gt;&gt;</div>
+<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span><span class="keyword">struct </span>NbDimsBeforeIndex&lt;Index, <a class="code hl_namespace" href="namespaceddc.html">ddc</a>::TypeSeq&lt;IndexHead, IndexTail...&gt;&gt;</div>
 <div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>{</div>
 <div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>    <span class="keyword">static</span> <span class="keyword">constexpr</span> std::size_t operator()(std::size_t nb_dims_before_index)</div>
 <div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>    {</div>
@@ -352,7 +352,7 @@ $(function(){initNavTree('tensor__impl_8hpp_source.html',''); initResizable(true
 <div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span><span class="keyword">struct </span>IdFromTypeSeqDims;</div>
 <div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span> </div>
 <div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span><span class="keyword">template</span> &lt;<span class="keyword">class </span>Index, <span class="keyword">class</span>... Subindex, <span class="keyword">class</span>... CDim&gt;</div>
-<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span><span class="keyword">struct </span>IdFromTypeSeqDims&lt;Index, ddc::DiscreteDomain&lt;Subindex...&gt;, ddc::TypeSeq&lt;CDim...&gt;&gt;</div>
+<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span><span class="keyword">struct </span>IdFromTypeSeqDims&lt;Index, <a class="code hl_namespace" href="namespaceddc.html">ddc</a>::DiscreteDomain&lt;Subindex...&gt;, ddc::TypeSeq&lt;CDim...&gt;&gt;</div>
 <div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>{</div>
 <div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span>    KOKKOS_FUNCTION <span class="keyword">static</span> <span class="keyword">constexpr</span> std::size_t operator()()</div>
 <div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>    {</div>
@@ -402,7 +402,7 @@ $(function(){initNavTree('tensor__impl_8hpp_source.html',''); initResizable(true
 <div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span><span class="keyword">struct </span>IdFromElem;</div>
 <div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span> </div>
 <div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span><span class="keyword">template</span> &lt;<span class="keyword">class </span>Index, <span class="keyword">class</span>... Subindex&gt;</div>
-<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span><span class="keyword">struct </span>IdFromElem&lt;Index, ddc::DiscreteDomain&lt;Subindex...&gt;&gt;</div>
+<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span><span class="keyword">struct </span>IdFromElem&lt;Index, <a class="code hl_namespace" href="namespaceddc.html">ddc</a>::DiscreteDomain&lt;Subindex...&gt;&gt;</div>
 <div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span>{</div>
 <div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> Elem&gt;</div>
 <div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span>    KOKKOS_FUNCTION <span class="keyword">static</span> <span class="keyword">constexpr</span> std::size_t operator()(Elem natural_elem)</div>
@@ -472,7 +472,7 @@ $(function(){initNavTree('tensor__impl_8hpp_source.html',''); initResizable(true
 <div class="line"><a id="l00310" name="l00310"></a><span class="lineno">  310</span><span class="keyword">struct </span>TensorAccessorForTypeSeq;</div>
 <div class="line"><a id="l00311" name="l00311"></a><span class="lineno">  311</span> </div>
 <div class="line"><a id="l00312" name="l00312"></a><span class="lineno">  312</span><span class="keyword">template</span> &lt;<a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndex.html">TensorIndex</a>... Index&gt;</div>
-<div class="line"><a id="l00313" name="l00313"></a><span class="lineno">  313</span><span class="keyword">struct </span>TensorAccessorForTypeSeq&lt;ddc::TypeSeq&lt;Index...&gt;&gt;</div>
+<div class="line"><a id="l00313" name="l00313"></a><span class="lineno">  313</span><span class="keyword">struct </span>TensorAccessorForTypeSeq&lt;<a class="code hl_namespace" href="namespaceddc.html">ddc</a>::TypeSeq&lt;Index...&gt;&gt;</div>
 <div class="line"><a id="l00314" name="l00314"></a><span class="lineno">  314</span>{</div>
 <div class="line"><a id="l00315" name="l00315"></a><span class="lineno">  315</span>    <span class="keyword">using </span>type = <a class="code hl_class" href="classsil_1_1tensor_1_1TensorAccessor.html">TensorAccessor</a>&lt;Index...&gt;;</div>
 <div class="line"><a id="l00316" name="l00316"></a><span class="lineno">  316</span>};</div>
@@ -481,7 +481,7 @@ $(function(){initNavTree('tensor__impl_8hpp_source.html',''); initResizable(true
 <div class="line"><a id="l00319" name="l00319"></a><span class="lineno">  319</span><span class="keyword">struct </span>TensorAccessorForDomain;</div>
 <div class="line"><a id="l00320" name="l00320"></a><span class="lineno">  320</span> </div>
 <div class="line"><a id="l00321" name="l00321"></a><span class="lineno">  321</span><span class="keyword">template</span> &lt;<span class="keyword">class</span>... DDim&gt;</div>
-<div class="line"><a id="l00322" name="l00322"></a><span class="lineno">  322</span><span class="keyword">struct </span>TensorAccessorForDomain&lt;ddc::DiscreteDomain&lt;DDim...&gt;&gt;</div>
+<div class="line"><a id="l00322" name="l00322"></a><span class="lineno">  322</span><span class="keyword">struct </span>TensorAccessorForDomain&lt;<a class="code hl_namespace" href="namespaceddc.html">ddc</a>::DiscreteDomain&lt;DDim...&gt;&gt;</div>
 <div class="line"><a id="l00323" name="l00323"></a><span class="lineno">  323</span>{</div>
 <div class="line"><a id="l00324" name="l00324"></a><span class="lineno">  324</span>    <span class="keyword">using </span>type = <span class="keyword">typename</span> TensorAccessorForTypeSeq&lt;</div>
 <div class="line"><a id="l00325" name="l00325"></a><span class="lineno">  325</span>            ddc::to_type_seq_t&lt;<a class="code hl_typedef" href="namespacesil_1_1misc.html#a77a9a68a30b01dd41dcaa84fada239d2">sil::misc::cartesian_prod_t</a>&lt;std::conditional_t&lt;</div>
@@ -608,7 +608,7 @@ $(function(){initNavTree('tensor__impl_8hpp_source.html',''); initResizable(true
 <div class="line"><a id="l00432" name="l00432"></a><span class="lineno">  432</span>        <span class="keyword">class</span>... IndexHead,</div>
 <div class="line"><a id="l00433" name="l00433"></a><span class="lineno">  433</span>        <span class="keyword">class </span>IndexInterest,</div>
 <div class="line"><a id="l00434" name="l00434"></a><span class="lineno">  434</span>        <span class="keyword">class</span>... IndexTail&gt;</div>
-<div class="line"><a id="l00435" name="l00435"></a><span class="lineno">  435</span><span class="keyword">struct </span>Access&lt;TensorField, Element, ddc::TypeSeq&lt;IndexHead...&gt;, IndexInterest, IndexTail...&gt;</div>
+<div class="line"><a id="l00435" name="l00435"></a><span class="lineno">  435</span><span class="keyword">struct </span>Access&lt;TensorField, Element, <a class="code hl_namespace" href="namespaceddc.html">ddc</a>::TypeSeq&lt;IndexHead...&gt;, IndexInterest, IndexTail...&gt;</div>
 <div class="line"><a id="l00436" name="l00436"></a><span class="lineno">  436</span>{</div>
 <div class="line"><a id="l00437" name="l00437"></a><span class="lineno">  437</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> Elem&gt;</div>
 <div class="line"><a id="l00438" name="l00438"></a><span class="lineno">  438</span>    KOKKOS_FUNCTION <span class="keyword">static</span> TensorField::element_type operator()(</div>
@@ -747,7 +747,7 @@ $(function(){initNavTree('tensor__impl_8hpp_source.html',''); initResizable(true
 <div class="line"><a id="l00571" name="l00571"></a><span class="lineno">  571</span> </div>
 <div class="line"><a id="l00572" name="l00572"></a><span class="lineno">  572</span>} <span class="comment">// namespace sil</span></div>
 <div class="line"><a id="l00573" name="l00573"></a><span class="lineno">  573</span> </div>
-<div class="line"><a id="l00574" name="l00574"></a><span class="lineno">  574</span><span class="keyword">namespace </span>ddc {</div>
+<div class="line"><a id="l00574" name="l00574"></a><span class="lineno">  574</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceddc.html">ddc</a> {</div>
 <div class="line"><a id="l00575" name="l00575"></a><span class="lineno">  575</span> </div>
 <div class="line"><a id="l00576" name="l00576"></a><span class="lineno">  576</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> ElementType, <span class="keyword">class</span> SupportType, <span class="keyword">class</span> LayoutStr<span class="keywordtype">id</span>edPolicy, <span class="keyword">class</span> MemorySpace&gt;</div>
 <div class="line"><a id="l00577" name="l00577"></a><span class="lineno">  577</span><span class="keyword">inline</span> <span class="keyword">constexpr</span> <span class="keywordtype">bool</span> enable_chunk&lt;</div>
@@ -769,8 +769,8 @@ $(function(){initNavTree('tensor__impl_8hpp_source.html',''); initResizable(true
 <div class="line"><a id="l00593" name="l00593"></a><span class="lineno">  593</span> </div>
 <div class="line"><a id="l00595" name="l00595"></a><span class="lineno">  595</span><span class="keyword">template</span> &lt;<span class="keyword">class </span>ElementType, <span class="keyword">class</span>... DDim, <span class="keyword">class </span>LayoutStridedPolicy, <span class="keyword">class </span>MemorySpace&gt;</div>
 <div class="foldopen" id="foldopen00596" data-start="{" data-end="};">
-<div class="line"><a id="l00596" name="l00596"></a><span class="lineno"><a class="line" href="classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html">  596</a></span><span class="keyword">class </span>Tensor&lt;ElementType, ddc::DiscreteDomain&lt;DDim...&gt;, LayoutStridedPolicy, MemorySpace&gt;</div>
-<div class="line"><a id="l00597" name="l00597"></a><span class="lineno">  597</span>    : <span class="keyword">public</span> ddc::</div>
+<div class="line"><a id="l00596" name="l00596"></a><span class="lineno"><a class="line" href="classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html">  596</a></span><span class="keyword">class </span>Tensor&lt;ElementType, <a class="code hl_namespace" href="namespaceddc.html">ddc</a>::DiscreteDomain&lt;DDim...&gt;, LayoutStridedPolicy, MemorySpace&gt;</div>
+<div class="line"><a id="l00597" name="l00597"></a><span class="lineno">  597</span>    : <span class="keyword">public</span> <a class="code hl_namespace" href="namespaceddc.html">ddc</a>::</div>
 <div class="line"><a id="l00598" name="l00598"></a><span class="lineno">  598</span>              ChunkSpan&lt;ElementType, ddc::DiscreteDomain&lt;DDim...&gt;, LayoutStridedPolicy, MemorySpace&gt;</div>
 <div class="line"><a id="l00599" name="l00599"></a><span class="lineno">  599</span>{</div>
 <div class="line"><a id="l00600" name="l00600"></a><span class="lineno">  600</span><span class="keyword">protected</span>:</div>
@@ -887,303 +887,302 @@ $(function(){initNavTree('tensor__impl_8hpp_source.html',''); initResizable(true
 <div class="line"><a id="l00692" name="l00692"></a><span class="lineno">  692</span>                ElementType,</div>
 <div class="line"><a id="l00693" name="l00693"></a><span class="lineno">  693</span>                ddc::DiscreteDomain&lt;DDim...&gt;,</div>
 <div class="line"><a id="l00694" name="l00694"></a><span class="lineno">  694</span>                LayoutStridedPolicy,</div>
-<div class="line"><a id="l00695" name="l00695"></a><span class="lineno">  695</span>                MemorySpace&gt;::</div>
-<div class="line"><a id="l00696" name="l00696"></a><span class="lineno">  696</span>        operator()(delems...);</div>
+<div class="line"><a id="l00695" name="l00695"></a><span class="lineno">  695</span>                MemorySpace&gt;::operator()(delems...);</div>
 </div>
-<div class="line"><a id="l00697" name="l00697"></a><span class="lineno">  697</span>    }</div>
-<div class="line"><a id="l00698" name="l00698"></a><span class="lineno">  698</span> </div>
-<div class="foldopen" id="foldopen00699" data-start="{" data-end="}">
-<div class="line"><a id="l00699" name="l00699"></a><span class="lineno"><a class="line" href="classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html#ad435b468a8d7f80b84976cac317d619a">  699</a></span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span>... DElems&gt;</div>
-<div class="line"><a id="l00700" name="l00700"></a><span class="lineno">  700</span>    KOKKOS_FUNCTION <span class="keyword">constexpr</span> <a class="code hl_typedef" href="classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html#afdc9bb835d626b36ec2343a4e375fc2b">reference</a> operator()(DElems <span class="keyword">const</span>&amp;... delems) <span class="keyword">const</span> <span class="keyword">noexcept</span></div>
-<div class="line"><a id="l00701" name="l00701"></a><span class="lineno">  701</span>    {</div>
-<div class="line"><a id="l00702" name="l00702"></a><span class="lineno">  702</span>        <span class="keywordflow">return</span> ddc::ChunkSpan&lt;</div>
-<div class="line"><a id="l00703" name="l00703"></a><span class="lineno">  703</span>                ElementType,</div>
-<div class="line"><a id="l00704" name="l00704"></a><span class="lineno">  704</span>                ddc::DiscreteDomain&lt;DDim...&gt;,</div>
-<div class="line"><a id="l00705" name="l00705"></a><span class="lineno">  705</span>                LayoutStridedPolicy,</div>
-<div class="line"><a id="l00706" name="l00706"></a><span class="lineno">  706</span>                MemorySpace&gt;::</div>
-<div class="line"><a id="l00707" name="l00707"></a><span class="lineno">  707</span>        operator()(ddc::DiscreteElement&lt;DDim...&gt;(</div>
-<div class="line"><a id="l00708" name="l00708"></a><span class="lineno">  708</span>                detail::LambdaMemElem&lt;DDim&gt;::operator()(ddc::DiscreteElement&lt;DDim&gt;(delems...))...));</div>
+<div class="line"><a id="l00696" name="l00696"></a><span class="lineno">  696</span>    }</div>
+<div class="line"><a id="l00697" name="l00697"></a><span class="lineno">  697</span> </div>
+<div class="foldopen" id="foldopen00698" data-start="{" data-end="}">
+<div class="line"><a id="l00698" name="l00698"></a><span class="lineno"><a class="line" href="classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html#ad435b468a8d7f80b84976cac317d619a">  698</a></span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span>... DElems&gt;</div>
+<div class="line"><a id="l00699" name="l00699"></a><span class="lineno">  699</span>    KOKKOS_FUNCTION <span class="keyword">constexpr</span> <a class="code hl_typedef" href="classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html#afdc9bb835d626b36ec2343a4e375fc2b">reference</a> operator()(DElems <span class="keyword">const</span>&amp;... delems) <span class="keyword">const</span> <span class="keyword">noexcept</span></div>
+<div class="line"><a id="l00700" name="l00700"></a><span class="lineno">  700</span>    {</div>
+<div class="line"><a id="l00701" name="l00701"></a><span class="lineno">  701</span>        <span class="keywordflow">return</span> ddc::ChunkSpan&lt;</div>
+<div class="line"><a id="l00702" name="l00702"></a><span class="lineno">  702</span>                ElementType,</div>
+<div class="line"><a id="l00703" name="l00703"></a><span class="lineno">  703</span>                ddc::DiscreteDomain&lt;DDim...&gt;,</div>
+<div class="line"><a id="l00704" name="l00704"></a><span class="lineno">  704</span>                LayoutStridedPolicy,</div>
+<div class="line"><a id="l00705" name="l00705"></a><span class="lineno">  705</span>                MemorySpace&gt;::</div>
+<div class="line"><a id="l00706" name="l00706"></a><span class="lineno">  706</span>        operator()(ddc::DiscreteElement&lt;DDim...&gt;(</div>
+<div class="line"><a id="l00707" name="l00707"></a><span class="lineno">  707</span>                detail::LambdaMemElem&lt;DDim&gt;::operator()(ddc::DiscreteElement&lt;DDim&gt;(delems...))...));</div>
 </div>
-<div class="line"><a id="l00709" name="l00709"></a><span class="lineno">  709</span>    }</div>
-<div class="line"><a id="l00710" name="l00710"></a><span class="lineno">  710</span> </div>
-<div class="foldopen" id="foldopen00711" data-start="{" data-end="}">
-<div class="line"><a id="l00711" name="l00711"></a><span class="lineno"><a class="line" href="classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html#a92562ea00e8b01c77d98a8f88efddf46">  711</a></span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span>... ODDim&gt;</div>
-<div class="line"><a id="l00712" name="l00712"></a><span class="lineno">  712</span>    KOKKOS_FUNCTION <span class="keyword">constexpr</span> <span class="keyword">auto</span> operator[](</div>
-<div class="line"><a id="l00713" name="l00713"></a><span class="lineno">  713</span>            ddc::DiscreteElement&lt;ODDim...&gt; <span class="keyword">const</span>&amp; slice_spec) <span class="keyword">const</span> <span class="keyword">noexcept</span></div>
-<div class="line"><a id="l00714" name="l00714"></a><span class="lineno">  714</span>    {</div>
-<div class="line"><a id="l00715" name="l00715"></a><span class="lineno">  715</span>        ddc::ChunkSpan chunkspan = ddc::ChunkSpan&lt;</div>
-<div class="line"><a id="l00716" name="l00716"></a><span class="lineno">  716</span>                ElementType,</div>
-<div class="line"><a id="l00717" name="l00717"></a><span class="lineno">  717</span>                ddc::DiscreteDomain&lt;DDim...&gt;,</div>
-<div class="line"><a id="l00718" name="l00718"></a><span class="lineno">  718</span>                LayoutStridedPolicy,</div>
-<div class="line"><a id="l00719" name="l00719"></a><span class="lineno">  719</span>                MemorySpace&gt;::</div>
-<div class="line"><a id="l00720" name="l00720"></a><span class="lineno">  720</span>        operator[](ddc::DiscreteElement&lt;ODDim...&gt;(</div>
-<div class="line"><a id="l00721" name="l00721"></a><span class="lineno">  721</span>                detail::LambdaMemElem&lt;ODDim&gt;::operator()(slice_spec)...));</div>
-<div class="line"><a id="l00722" name="l00722"></a><span class="lineno">  722</span>        <span class="keywordflow">return</span> Tensor&lt;</div>
-<div class="line"><a id="l00723" name="l00723"></a><span class="lineno">  723</span>                ElementType,</div>
-<div class="line"><a id="l00724" name="l00724"></a><span class="lineno">  724</span>                ddc::detail::convert_type_seq_to_discrete_domain_t&lt;</div>
-<div class="line"><a id="l00725" name="l00725"></a><span class="lineno">  725</span>                        ddc::type_seq_remove_t&lt;ddc::TypeSeq&lt;DDim...&gt;, ddc::TypeSeq&lt;ODDim...&gt;&gt;&gt;,</div>
-<div class="line"><a id="l00726" name="l00726"></a><span class="lineno">  726</span>                <span class="keyword">typename</span> <span class="keyword">decltype</span>(chunkspan)::layout_type,</div>
-<div class="line"><a id="l00727" name="l00727"></a><span class="lineno">  727</span>                MemorySpace&gt;(chunkspan);</div>
+<div class="line"><a id="l00708" name="l00708"></a><span class="lineno">  708</span>    }</div>
+<div class="line"><a id="l00709" name="l00709"></a><span class="lineno">  709</span> </div>
+<div class="foldopen" id="foldopen00710" data-start="{" data-end="}">
+<div class="line"><a id="l00710" name="l00710"></a><span class="lineno"><a class="line" href="classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html#a92562ea00e8b01c77d98a8f88efddf46">  710</a></span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span>... ODDim&gt;</div>
+<div class="line"><a id="l00711" name="l00711"></a><span class="lineno">  711</span>    KOKKOS_FUNCTION <span class="keyword">constexpr</span> <span class="keyword">auto</span> operator[](</div>
+<div class="line"><a id="l00712" name="l00712"></a><span class="lineno">  712</span>            ddc::DiscreteElement&lt;ODDim...&gt; <span class="keyword">const</span>&amp; slice_spec) <span class="keyword">const</span> <span class="keyword">noexcept</span></div>
+<div class="line"><a id="l00713" name="l00713"></a><span class="lineno">  713</span>    {</div>
+<div class="line"><a id="l00714" name="l00714"></a><span class="lineno">  714</span>        ddc::ChunkSpan chunkspan = ddc::ChunkSpan&lt;</div>
+<div class="line"><a id="l00715" name="l00715"></a><span class="lineno">  715</span>                ElementType,</div>
+<div class="line"><a id="l00716" name="l00716"></a><span class="lineno">  716</span>                ddc::DiscreteDomain&lt;DDim...&gt;,</div>
+<div class="line"><a id="l00717" name="l00717"></a><span class="lineno">  717</span>                LayoutStridedPolicy,</div>
+<div class="line"><a id="l00718" name="l00718"></a><span class="lineno">  718</span>                MemorySpace&gt;::</div>
+<div class="line"><a id="l00719" name="l00719"></a><span class="lineno">  719</span>        operator[](ddc::DiscreteElement&lt;ODDim...&gt;(</div>
+<div class="line"><a id="l00720" name="l00720"></a><span class="lineno">  720</span>                detail::LambdaMemElem&lt;ODDim&gt;::operator()(slice_spec)...));</div>
+<div class="line"><a id="l00721" name="l00721"></a><span class="lineno">  721</span>        <span class="keywordflow">return</span> Tensor&lt;</div>
+<div class="line"><a id="l00722" name="l00722"></a><span class="lineno">  722</span>                ElementType,</div>
+<div class="line"><a id="l00723" name="l00723"></a><span class="lineno">  723</span>                ddc::detail::convert_type_seq_to_discrete_domain_t&lt;</div>
+<div class="line"><a id="l00724" name="l00724"></a><span class="lineno">  724</span>                        ddc::type_seq_remove_t&lt;ddc::TypeSeq&lt;DDim...&gt;, ddc::TypeSeq&lt;ODDim...&gt;&gt;&gt;,</div>
+<div class="line"><a id="l00725" name="l00725"></a><span class="lineno">  725</span>                <span class="keyword">typename</span> <span class="keyword">decltype</span>(chunkspan)::layout_type,</div>
+<div class="line"><a id="l00726" name="l00726"></a><span class="lineno">  726</span>                MemorySpace&gt;(chunkspan);</div>
 </div>
-<div class="line"><a id="l00728" name="l00728"></a><span class="lineno">  728</span>    }</div>
-<div class="line"><a id="l00729" name="l00729"></a><span class="lineno">  729</span> </div>
-<div class="foldopen" id="foldopen00730" data-start="{" data-end="}">
-<div class="line"><a id="l00730" name="l00730"></a><span class="lineno"><a class="line" href="classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html#aab7c4cab0617cded338679477d335e97">  730</a></span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span>... DElems&gt;</div>
-<div class="line"><a id="l00731" name="l00731"></a><span class="lineno">  731</span>    KOKKOS_FUNCTION ElementType get(DElems <span class="keyword">const</span>&amp;... delems) <span class="keyword">const</span> <span class="keyword">noexcept</span></div>
-<div class="line"><a id="l00732" name="l00732"></a><span class="lineno">  732</span>    {</div>
-<div class="line"><a id="l00733" name="l00733"></a><span class="lineno">  733</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (<span class="keyword">sizeof</span>...(DDim) == 0) {</div>
-<div class="line"><a id="l00734" name="l00734"></a><span class="lineno">  734</span>            <span class="keywordflow">return</span> operator()(delems...);</div>
-<div class="line"><a id="l00735" name="l00735"></a><span class="lineno">  735</span>        } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00736" name="l00736"></a><span class="lineno">  736</span>            <span class="keywordflow">return</span> detail::Access&lt;</div>
-<div class="line"><a id="l00737" name="l00737"></a><span class="lineno">  737</span>                    Tensor&lt;ElementType,</div>
-<div class="line"><a id="l00738" name="l00738"></a><span class="lineno">  738</span>                           ddc::DiscreteDomain&lt;DDim...&gt;,</div>
-<div class="line"><a id="l00739" name="l00739"></a><span class="lineno">  739</span>                           LayoutStridedPolicy,</div>
-<div class="line"><a id="l00740" name="l00740"></a><span class="lineno">  740</span>                           MemorySpace&gt;,</div>
-<div class="line"><a id="l00741" name="l00741"></a><span class="lineno">  741</span>                    ddc::DiscreteElement&lt;DDim...&gt;,</div>
-<div class="line"><a id="l00742" name="l00742"></a><span class="lineno">  742</span>                    ddc::TypeSeq&lt;&gt;,</div>
-<div class="line"><a id="l00743" name="l00743"></a><span class="lineno">  743</span>                    DDim...&gt;::operator()(*<span class="keyword">this</span>, ddc::DiscreteElement&lt;DDim...&gt;(delems...));</div>
-<div class="line"><a id="l00744" name="l00744"></a><span class="lineno">  744</span>        }</div>
+<div class="line"><a id="l00727" name="l00727"></a><span class="lineno">  727</span>    }</div>
+<div class="line"><a id="l00728" name="l00728"></a><span class="lineno">  728</span> </div>
+<div class="foldopen" id="foldopen00729" data-start="{" data-end="}">
+<div class="line"><a id="l00729" name="l00729"></a><span class="lineno"><a class="line" href="classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html#aab7c4cab0617cded338679477d335e97">  729</a></span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span>... DElems&gt;</div>
+<div class="line"><a id="l00730" name="l00730"></a><span class="lineno">  730</span>    KOKKOS_FUNCTION ElementType get(DElems <span class="keyword">const</span>&amp;... delems) <span class="keyword">const</span> <span class="keyword">noexcept</span></div>
+<div class="line"><a id="l00731" name="l00731"></a><span class="lineno">  731</span>    {</div>
+<div class="line"><a id="l00732" name="l00732"></a><span class="lineno">  732</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (<span class="keyword">sizeof</span>...(DDim) == 0) {</div>
+<div class="line"><a id="l00733" name="l00733"></a><span class="lineno">  733</span>            <span class="keywordflow">return</span> operator()(delems...);</div>
+<div class="line"><a id="l00734" name="l00734"></a><span class="lineno">  734</span>        } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00735" name="l00735"></a><span class="lineno">  735</span>            <span class="keywordflow">return</span> detail::Access&lt;</div>
+<div class="line"><a id="l00736" name="l00736"></a><span class="lineno">  736</span>                    Tensor&lt;ElementType,</div>
+<div class="line"><a id="l00737" name="l00737"></a><span class="lineno">  737</span>                           ddc::DiscreteDomain&lt;DDim...&gt;,</div>
+<div class="line"><a id="l00738" name="l00738"></a><span class="lineno">  738</span>                           LayoutStridedPolicy,</div>
+<div class="line"><a id="l00739" name="l00739"></a><span class="lineno">  739</span>                           MemorySpace&gt;,</div>
+<div class="line"><a id="l00740" name="l00740"></a><span class="lineno">  740</span>                    ddc::DiscreteElement&lt;DDim...&gt;,</div>
+<div class="line"><a id="l00741" name="l00741"></a><span class="lineno">  741</span>                    ddc::TypeSeq&lt;&gt;,</div>
+<div class="line"><a id="l00742" name="l00742"></a><span class="lineno">  742</span>                    DDim...&gt;::operator()(*<span class="keyword">this</span>, ddc::DiscreteElement&lt;DDim...&gt;(delems...));</div>
+<div class="line"><a id="l00743" name="l00743"></a><span class="lineno">  743</span>        }</div>
 </div>
-<div class="line"><a id="l00745" name="l00745"></a><span class="lineno">  745</span>    }</div>
-<div class="line"><a id="l00746" name="l00746"></a><span class="lineno">  746</span> </div>
-<div class="line"><a id="l00747" name="l00747"></a><span class="lineno">  747</span>    KOKKOS_FUNCTION Tensor&lt;</div>
-<div class="line"><a id="l00748" name="l00748"></a><span class="lineno">  748</span>            ElementType,</div>
-<div class="line"><a id="l00749" name="l00749"></a><span class="lineno">  749</span>            ddc::DiscreteDomain&lt;DDim...&gt;,</div>
-<div class="line"><a id="l00750" name="l00750"></a><span class="lineno">  750</span>            LayoutStridedPolicy,</div>
-<div class="foldopen" id="foldopen00751" data-start="{" data-end="}">
-<div class="line"><a id="l00751" name="l00751"></a><span class="lineno"><a class="line" href="classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html#a557d200a6ee326dd2ae91c13f9a7094a">  751</a></span>            MemorySpace&gt;&amp;</div>
-<div class="line"><a id="l00752" name="l00752"></a><span class="lineno">  752</span>    operator+=(<span class="keyword">const</span> Tensor&lt;</div>
-<div class="line"><a id="l00753" name="l00753"></a><span class="lineno">  753</span>               ElementType,</div>
-<div class="line"><a id="l00754" name="l00754"></a><span class="lineno">  754</span>               ddc::DiscreteDomain&lt;DDim...&gt;,</div>
-<div class="line"><a id="l00755" name="l00755"></a><span class="lineno">  755</span>               LayoutStridedPolicy,</div>
-<div class="line"><a id="l00756" name="l00756"></a><span class="lineno">  756</span>               MemorySpace&gt;&amp; tensor)</div>
-<div class="line"><a id="l00757" name="l00757"></a><span class="lineno">  757</span>    {</div>
-<div class="line"><a id="l00758" name="l00758"></a><span class="lineno">  758</span>        ddc::device_for_each(this-&gt;domain(), [&amp;](ddc::DiscreteElement&lt;DDim...&gt; elem) {</div>
-<div class="line"><a id="l00759" name="l00759"></a><span class="lineno">  759</span>            this-&gt;mem(elem) += tensor.mem(elem);</div>
-<div class="line"><a id="l00760" name="l00760"></a><span class="lineno">  760</span>        });</div>
-<div class="line"><a id="l00761" name="l00761"></a><span class="lineno">  761</span>        <span class="keywordflow">return</span> *<span class="keyword">this</span>;</div>
+<div class="line"><a id="l00744" name="l00744"></a><span class="lineno">  744</span>    }</div>
+<div class="line"><a id="l00745" name="l00745"></a><span class="lineno">  745</span> </div>
+<div class="line"><a id="l00746" name="l00746"></a><span class="lineno">  746</span>    KOKKOS_FUNCTION Tensor&lt;</div>
+<div class="line"><a id="l00747" name="l00747"></a><span class="lineno">  747</span>            ElementType,</div>
+<div class="line"><a id="l00748" name="l00748"></a><span class="lineno">  748</span>            ddc::DiscreteDomain&lt;DDim...&gt;,</div>
+<div class="line"><a id="l00749" name="l00749"></a><span class="lineno">  749</span>            LayoutStridedPolicy,</div>
+<div class="foldopen" id="foldopen00750" data-start="{" data-end="}">
+<div class="line"><a id="l00750" name="l00750"></a><span class="lineno"><a class="line" href="classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html#a557d200a6ee326dd2ae91c13f9a7094a">  750</a></span>            MemorySpace&gt;&amp;</div>
+<div class="line"><a id="l00751" name="l00751"></a><span class="lineno">  751</span>    operator+=(<span class="keyword">const</span> Tensor&lt;</div>
+<div class="line"><a id="l00752" name="l00752"></a><span class="lineno">  752</span>               ElementType,</div>
+<div class="line"><a id="l00753" name="l00753"></a><span class="lineno">  753</span>               ddc::DiscreteDomain&lt;DDim...&gt;,</div>
+<div class="line"><a id="l00754" name="l00754"></a><span class="lineno">  754</span>               LayoutStridedPolicy,</div>
+<div class="line"><a id="l00755" name="l00755"></a><span class="lineno">  755</span>               MemorySpace&gt;&amp; tensor)</div>
+<div class="line"><a id="l00756" name="l00756"></a><span class="lineno">  756</span>    {</div>
+<div class="line"><a id="l00757" name="l00757"></a><span class="lineno">  757</span>        ddc::device_for_each(this-&gt;domain(), [&amp;](ddc::DiscreteElement&lt;DDim...&gt; elem) {</div>
+<div class="line"><a id="l00758" name="l00758"></a><span class="lineno">  758</span>            this-&gt;mem(elem) += tensor.mem(elem);</div>
+<div class="line"><a id="l00759" name="l00759"></a><span class="lineno">  759</span>        });</div>
+<div class="line"><a id="l00760" name="l00760"></a><span class="lineno">  760</span>        <span class="keywordflow">return</span> *<span class="keyword">this</span>;</div>
 </div>
-<div class="line"><a id="l00762" name="l00762"></a><span class="lineno">  762</span>    }</div>
-<div class="line"><a id="l00763" name="l00763"></a><span class="lineno">  763</span> </div>
-<div class="line"><a id="l00764" name="l00764"></a><span class="lineno">  764</span>    KOKKOS_FUNCTION Tensor&lt;</div>
-<div class="line"><a id="l00765" name="l00765"></a><span class="lineno">  765</span>            ElementType,</div>
-<div class="line"><a id="l00766" name="l00766"></a><span class="lineno">  766</span>            ddc::DiscreteDomain&lt;DDim...&gt;,</div>
-<div class="line"><a id="l00767" name="l00767"></a><span class="lineno">  767</span>            LayoutStridedPolicy,</div>
-<div class="foldopen" id="foldopen00768" data-start="{" data-end="}">
-<div class="line"><a id="l00768" name="l00768"></a><span class="lineno"><a class="line" href="classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html#a432d6619b0b734d3881641667afc98ca">  768</a></span>            MemorySpace&gt;&amp;</div>
-<div class="line"><a id="l00769" name="l00769"></a><span class="lineno">  769</span>    operator*=(<span class="keyword">const</span> ElementType scalar)</div>
-<div class="line"><a id="l00770" name="l00770"></a><span class="lineno">  770</span>    {</div>
-<div class="line"><a id="l00771" name="l00771"></a><span class="lineno">  771</span>        ddc::device_for_each(this-&gt;domain(), [&amp;](ddc::DiscreteElement&lt;DDim...&gt; elem) {</div>
-<div class="line"><a id="l00772" name="l00772"></a><span class="lineno">  772</span>            this-&gt;mem(elem) *= scalar;</div>
-<div class="line"><a id="l00773" name="l00773"></a><span class="lineno">  773</span>        });</div>
-<div class="line"><a id="l00774" name="l00774"></a><span class="lineno">  774</span>        <span class="keywordflow">return</span> *<span class="keyword">this</span>;</div>
+<div class="line"><a id="l00761" name="l00761"></a><span class="lineno">  761</span>    }</div>
+<div class="line"><a id="l00762" name="l00762"></a><span class="lineno">  762</span> </div>
+<div class="line"><a id="l00763" name="l00763"></a><span class="lineno">  763</span>    KOKKOS_FUNCTION Tensor&lt;</div>
+<div class="line"><a id="l00764" name="l00764"></a><span class="lineno">  764</span>            ElementType,</div>
+<div class="line"><a id="l00765" name="l00765"></a><span class="lineno">  765</span>            ddc::DiscreteDomain&lt;DDim...&gt;,</div>
+<div class="line"><a id="l00766" name="l00766"></a><span class="lineno">  766</span>            LayoutStridedPolicy,</div>
+<div class="foldopen" id="foldopen00767" data-start="{" data-end="}">
+<div class="line"><a id="l00767" name="l00767"></a><span class="lineno"><a class="line" href="classsil_1_1tensor_1_1Tensor_3_01ElementType_00_01ddc_1_1DiscreteDomain_3_01DDim_8_8_8_01_4_00_0ff62584396f9b5f08cbf3c068fb7130c.html#a432d6619b0b734d3881641667afc98ca">  767</a></span>            MemorySpace&gt;&amp;</div>
+<div class="line"><a id="l00768" name="l00768"></a><span class="lineno">  768</span>    operator*=(<span class="keyword">const</span> ElementType scalar)</div>
+<div class="line"><a id="l00769" name="l00769"></a><span class="lineno">  769</span>    {</div>
+<div class="line"><a id="l00770" name="l00770"></a><span class="lineno">  770</span>        ddc::device_for_each(this-&gt;domain(), [&amp;](ddc::DiscreteElement&lt;DDim...&gt; elem) {</div>
+<div class="line"><a id="l00771" name="l00771"></a><span class="lineno">  771</span>            this-&gt;mem(elem) *= scalar;</div>
+<div class="line"><a id="l00772" name="l00772"></a><span class="lineno">  772</span>        });</div>
+<div class="line"><a id="l00773" name="l00773"></a><span class="lineno">  773</span>        <span class="keywordflow">return</span> *<span class="keyword">this</span>;</div>
 </div>
-<div class="line"><a id="l00775" name="l00775"></a><span class="lineno">  775</span>    }</div>
-<div class="line"><a id="l00776" name="l00776"></a><span class="lineno">  776</span>};</div>
+<div class="line"><a id="l00774" name="l00774"></a><span class="lineno">  774</span>    }</div>
+<div class="line"><a id="l00775" name="l00775"></a><span class="lineno">  775</span>};</div>
 </div>
-<div class="line"><a id="l00777" name="l00777"></a><span class="lineno">  777</span> </div>
-<div class="line"><a id="l00778" name="l00778"></a><span class="lineno">  778</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> ElementType, <span class="keyword">class</span> SupportType, <span class="keyword">class</span> Allocator&gt;</div>
-<div class="line"><a id="l00779" name="l00779"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">  779</a></span><a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>(ddc::Chunk&lt;ElementType, SupportType, Allocator&gt;)</div>
-<div class="line"><a id="l00780" name="l00780"></a><span class="lineno">  780</span>        -&gt; Tensor&lt;ElementType, SupportType, Kokkos::layout_right, typename Allocator::memory_space&gt;;</div>
-<div class="line"><a id="l00781" name="l00781"></a><span class="lineno">  781</span> </div>
-<div class="line"><a id="l00782" name="l00782"></a><span class="lineno">  782</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> ElementType, <span class="keyword">class</span> SupportType, <span class="keyword">class</span> LayoutStr<span class="keywordtype">id</span>edPolicy, <span class="keyword">class</span> MemorySpace&gt;</div>
-<div class="line"><a id="l00783" name="l00783"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#a85ebbec43d6213188d6165c3c47f5825">  783</a></span><a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>(ddc::ChunkSpan&lt;ElementType, SupportType, LayoutStridedPolicy, MemorySpace&gt;)</div>
-<div class="line"><a id="l00784" name="l00784"></a><span class="lineno">  784</span>        -&gt; Tensor&lt;ElementType, SupportType, LayoutStridedPolicy, MemorySpace&gt;;</div>
-<div class="line"><a id="l00785" name="l00785"></a><span class="lineno">  785</span> </div>
-<div class="line"><a id="l00786" name="l00786"></a><span class="lineno">  786</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> ElementType, <span class="keyword">class</span> SupportType&gt;</div>
-<div class="line"><a id="l00787" name="l00787"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#a98231cd3b4f650781c50fe04136b9e8e">  787</a></span><a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>(ElementType*, SupportType) -&gt; Tensor&lt;</div>
-<div class="line"><a id="l00788" name="l00788"></a><span class="lineno">  788</span>        ElementType,</div>
-<div class="line"><a id="l00789" name="l00789"></a><span class="lineno">  789</span>        SupportType,</div>
-<div class="line"><a id="l00790" name="l00790"></a><span class="lineno">  790</span>        Kokkos::layout_right,</div>
-<div class="line"><a id="l00791" name="l00791"></a><span class="lineno">  791</span>        Kokkos::DefaultHostExecutionSpace::memory_space&gt;;</div>
-<div class="line"><a id="l00792" name="l00792"></a><span class="lineno">  792</span> </div>
-<div class="line"><a id="l00793" name="l00793"></a><span class="lineno">  793</span><span class="keyword">namespace </span>detail {</div>
-<div class="line"><a id="l00794" name="l00794"></a><span class="lineno">  794</span> </div>
-<div class="line"><a id="l00795" name="l00795"></a><span class="lineno">  795</span><span class="comment">// Domain of a tensor result of product between two tensors</span></div>
-<div class="line"><a id="l00796" name="l00796"></a><span class="lineno">  796</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Dom1, <span class="keyword">class</span> Dom2&gt;</div>
-<div class="line"><a id="l00797" name="l00797"></a><span class="lineno">  797</span><span class="keyword">struct </span>NaturalTensorProdDomain;</div>
-<div class="line"><a id="l00798" name="l00798"></a><span class="lineno">  798</span> </div>
-<div class="line"><a id="l00799" name="l00799"></a><span class="lineno">  799</span><span class="keyword">template</span> &lt;<span class="keyword">class</span>... DDim1, <span class="keyword">class</span>... DDim2&gt;</div>
-<div class="line"><a id="l00800" name="l00800"></a><span class="lineno">  800</span><span class="keyword">struct </span>NaturalTensorProdDomain&lt;ddc::DiscreteDomain&lt;DDim1...&gt;, ddc::DiscreteDomain&lt;DDim2...&gt;&gt;</div>
-<div class="line"><a id="l00801" name="l00801"></a><span class="lineno">  801</span>{</div>
-<div class="line"><a id="l00802" name="l00802"></a><span class="lineno">  802</span>    <span class="keyword">using </span>type = ddc::detail::convert_type_seq_to_discrete_domain_t&lt;ddc::type_seq_merge_t&lt;</div>
-<div class="line"><a id="l00803" name="l00803"></a><span class="lineno">  803</span>            ddc::type_seq_remove_t&lt;ddc::TypeSeq&lt;DDim1...&gt;, ddc::TypeSeq&lt;DDim2...&gt;&gt;,</div>
-<div class="line"><a id="l00804" name="l00804"></a><span class="lineno">  804</span>            ddc::type_seq_remove_t&lt;ddc::TypeSeq&lt;DDim2...&gt;, ddc::TypeSeq&lt;DDim1...&gt;&gt;&gt;&gt;;</div>
-<div class="line"><a id="l00805" name="l00805"></a><span class="lineno">  805</span>};</div>
-<div class="line"><a id="l00806" name="l00806"></a><span class="lineno">  806</span> </div>
-<div class="line"><a id="l00807" name="l00807"></a><span class="lineno">  807</span>} <span class="comment">// namespace detail</span></div>
-<div class="line"><a id="l00808" name="l00808"></a><span class="lineno">  808</span> </div>
-<div class="line"><a id="l00809" name="l00809"></a><span class="lineno">  809</span><span class="keyword">template</span> &lt;</div>
-<div class="line"><a id="l00810" name="l00810"></a><span class="lineno">  810</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;ddc::DiscreteDomain&gt;</a> Dom1,</div>
-<div class="line"><a id="l00811" name="l00811"></a><span class="lineno">  811</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;ddc::DiscreteDomain&gt;</a> Dom2&gt;</div>
-<div class="line"><a id="l00812" name="l00812"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#a6b2f3421d43c572b05cc7ecb8334e5fd">  812</a></span><span class="keyword">using </span><a class="code hl_typedef" href="namespacesil_1_1tensor.html#a6b2f3421d43c572b05cc7ecb8334e5fd">natural_tensor_prod_domain_t</a> = detail::NaturalTensorProdDomain&lt;Dom1, Dom2&gt;::type;</div>
-<div class="line"><a id="l00813" name="l00813"></a><span class="lineno">  813</span> </div>
-<div class="line"><a id="l00814" name="l00814"></a><span class="lineno">  814</span><span class="keyword">template</span> &lt;</div>
-<div class="line"><a id="l00815" name="l00815"></a><span class="lineno">  815</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;ddc::DiscreteDomain&gt;</a> Dom1,</div>
-<div class="line"><a id="l00816" name="l00816"></a><span class="lineno">  816</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;ddc::DiscreteDomain&gt;</a> Dom2&gt;</div>
-<div class="foldopen" id="foldopen00817" data-start="{" data-end="}">
-<div class="line"><a id="l00817" name="l00817"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#ac265afa3e78c715cbb7f64f9ace68f9d">  817</a></span><a class="code hl_typedef" href="namespacesil_1_1tensor.html#a6b2f3421d43c572b05cc7ecb8334e5fd">natural_tensor_prod_domain_t&lt;Dom1, Dom2&gt;</a> <a class="code hl_function" href="namespacesil_1_1tensor.html#ac265afa3e78c715cbb7f64f9ace68f9d">natural_tensor_prod_domain</a>(Dom1 dom1, Dom2 dom2)</div>
-<div class="line"><a id="l00818" name="l00818"></a><span class="lineno">  818</span>{</div>
-<div class="line"><a id="l00819" name="l00819"></a><span class="lineno">  819</span>    <span class="keywordflow">return</span> <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a6b2f3421d43c572b05cc7ecb8334e5fd">natural_tensor_prod_domain_t&lt;Dom1, Dom2&gt;</a>(dom1, dom2);</div>
-<div class="line"><a id="l00820" name="l00820"></a><span class="lineno">  820</span>}</div>
+<div class="line"><a id="l00776" name="l00776"></a><span class="lineno">  776</span> </div>
+<div class="line"><a id="l00777" name="l00777"></a><span class="lineno">  777</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> ElementType, <span class="keyword">class</span> SupportType, <span class="keyword">class</span> Allocator&gt;</div>
+<div class="line"><a id="l00778" name="l00778"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">  778</a></span><a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>(ddc::Chunk&lt;ElementType, SupportType, Allocator&gt;)</div>
+<div class="line"><a id="l00779" name="l00779"></a><span class="lineno">  779</span>        -&gt; Tensor&lt;ElementType, SupportType, Kokkos::layout_right, typename Allocator::memory_space&gt;;</div>
+<div class="line"><a id="l00780" name="l00780"></a><span class="lineno">  780</span> </div>
+<div class="line"><a id="l00781" name="l00781"></a><span class="lineno">  781</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> ElementType, <span class="keyword">class</span> SupportType, <span class="keyword">class</span> LayoutStr<span class="keywordtype">id</span>edPolicy, <span class="keyword">class</span> MemorySpace&gt;</div>
+<div class="line"><a id="l00782" name="l00782"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#a85ebbec43d6213188d6165c3c47f5825">  782</a></span><a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>(ddc::ChunkSpan&lt;ElementType, SupportType, LayoutStridedPolicy, MemorySpace&gt;)</div>
+<div class="line"><a id="l00783" name="l00783"></a><span class="lineno">  783</span>        -&gt; Tensor&lt;ElementType, SupportType, LayoutStridedPolicy, MemorySpace&gt;;</div>
+<div class="line"><a id="l00784" name="l00784"></a><span class="lineno">  784</span> </div>
+<div class="line"><a id="l00785" name="l00785"></a><span class="lineno">  785</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> ElementType, <span class="keyword">class</span> SupportType&gt;</div>
+<div class="line"><a id="l00786" name="l00786"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#a98231cd3b4f650781c50fe04136b9e8e">  786</a></span><a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>(ElementType*, SupportType) -&gt; Tensor&lt;</div>
+<div class="line"><a id="l00787" name="l00787"></a><span class="lineno">  787</span>        ElementType,</div>
+<div class="line"><a id="l00788" name="l00788"></a><span class="lineno">  788</span>        SupportType,</div>
+<div class="line"><a id="l00789" name="l00789"></a><span class="lineno">  789</span>        Kokkos::layout_right,</div>
+<div class="line"><a id="l00790" name="l00790"></a><span class="lineno">  790</span>        Kokkos::DefaultHostExecutionSpace::memory_space&gt;;</div>
+<div class="line"><a id="l00791" name="l00791"></a><span class="lineno">  791</span> </div>
+<div class="line"><a id="l00792" name="l00792"></a><span class="lineno">  792</span><span class="keyword">namespace </span>detail {</div>
+<div class="line"><a id="l00793" name="l00793"></a><span class="lineno">  793</span> </div>
+<div class="line"><a id="l00794" name="l00794"></a><span class="lineno">  794</span><span class="comment">// Domain of a tensor result of product between two tensors</span></div>
+<div class="line"><a id="l00795" name="l00795"></a><span class="lineno">  795</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Dom1, <span class="keyword">class</span> Dom2&gt;</div>
+<div class="line"><a id="l00796" name="l00796"></a><span class="lineno">  796</span><span class="keyword">struct </span>NaturalTensorProdDomain;</div>
+<div class="line"><a id="l00797" name="l00797"></a><span class="lineno">  797</span> </div>
+<div class="line"><a id="l00798" name="l00798"></a><span class="lineno">  798</span><span class="keyword">template</span> &lt;<span class="keyword">class</span>... DDim1, <span class="keyword">class</span>... DDim2&gt;</div>
+<div class="line"><a id="l00799" name="l00799"></a><span class="lineno">  799</span><span class="keyword">struct </span>NaturalTensorProdDomain&lt;<a class="code hl_namespace" href="namespaceddc.html">ddc</a>::DiscreteDomain&lt;DDim1...&gt;, ddc::DiscreteDomain&lt;DDim2...&gt;&gt;</div>
+<div class="line"><a id="l00800" name="l00800"></a><span class="lineno">  800</span>{</div>
+<div class="line"><a id="l00801" name="l00801"></a><span class="lineno">  801</span>    <span class="keyword">using </span>type = ddc::detail::convert_type_seq_to_discrete_domain_t&lt;ddc::type_seq_merge_t&lt;</div>
+<div class="line"><a id="l00802" name="l00802"></a><span class="lineno">  802</span>            ddc::type_seq_remove_t&lt;ddc::TypeSeq&lt;DDim1...&gt;, ddc::TypeSeq&lt;DDim2...&gt;&gt;,</div>
+<div class="line"><a id="l00803" name="l00803"></a><span class="lineno">  803</span>            ddc::type_seq_remove_t&lt;ddc::TypeSeq&lt;DDim2...&gt;, ddc::TypeSeq&lt;DDim1...&gt;&gt;&gt;&gt;;</div>
+<div class="line"><a id="l00804" name="l00804"></a><span class="lineno">  804</span>};</div>
+<div class="line"><a id="l00805" name="l00805"></a><span class="lineno">  805</span> </div>
+<div class="line"><a id="l00806" name="l00806"></a><span class="lineno">  806</span>} <span class="comment">// namespace detail</span></div>
+<div class="line"><a id="l00807" name="l00807"></a><span class="lineno">  807</span> </div>
+<div class="line"><a id="l00808" name="l00808"></a><span class="lineno">  808</span><span class="keyword">template</span> &lt;</div>
+<div class="line"><a id="l00809" name="l00809"></a><span class="lineno">  809</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;ddc::DiscreteDomain&gt;</a> Dom1,</div>
+<div class="line"><a id="l00810" name="l00810"></a><span class="lineno">  810</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;ddc::DiscreteDomain&gt;</a> Dom2&gt;</div>
+<div class="line"><a id="l00811" name="l00811"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#a6b2f3421d43c572b05cc7ecb8334e5fd">  811</a></span><span class="keyword">using </span><a class="code hl_typedef" href="namespacesil_1_1tensor.html#a6b2f3421d43c572b05cc7ecb8334e5fd">natural_tensor_prod_domain_t</a> = detail::NaturalTensorProdDomain&lt;Dom1, Dom2&gt;::type;</div>
+<div class="line"><a id="l00812" name="l00812"></a><span class="lineno">  812</span> </div>
+<div class="line"><a id="l00813" name="l00813"></a><span class="lineno">  813</span><span class="keyword">template</span> &lt;</div>
+<div class="line"><a id="l00814" name="l00814"></a><span class="lineno">  814</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;ddc::DiscreteDomain&gt;</a> Dom1,</div>
+<div class="line"><a id="l00815" name="l00815"></a><span class="lineno">  815</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;ddc::DiscreteDomain&gt;</a> Dom2&gt;</div>
+<div class="foldopen" id="foldopen00816" data-start="{" data-end="}">
+<div class="line"><a id="l00816" name="l00816"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#ac265afa3e78c715cbb7f64f9ace68f9d">  816</a></span><a class="code hl_typedef" href="namespacesil_1_1tensor.html#a6b2f3421d43c572b05cc7ecb8334e5fd">natural_tensor_prod_domain_t&lt;Dom1, Dom2&gt;</a> <a class="code hl_function" href="namespacesil_1_1tensor.html#ac265afa3e78c715cbb7f64f9ace68f9d">natural_tensor_prod_domain</a>(Dom1 dom1, Dom2 dom2)</div>
+<div class="line"><a id="l00817" name="l00817"></a><span class="lineno">  817</span>{</div>
+<div class="line"><a id="l00818" name="l00818"></a><span class="lineno">  818</span>    <span class="keywordflow">return</span> <a class="code hl_typedef" href="namespacesil_1_1tensor.html#a6b2f3421d43c572b05cc7ecb8334e5fd">natural_tensor_prod_domain_t&lt;Dom1, Dom2&gt;</a>(dom1, dom2);</div>
+<div class="line"><a id="l00819" name="l00819"></a><span class="lineno">  819</span>}</div>
 </div>
-<div class="line"><a id="l00821" name="l00821"></a><span class="lineno">  821</span> </div>
-<div class="line"><a id="l00822" name="l00822"></a><span class="lineno">  822</span><span class="keyword">namespace </span>detail {</div>
-<div class="line"><a id="l00823" name="l00823"></a><span class="lineno">  823</span> </div>
-<div class="line"><a id="l00824" name="l00824"></a><span class="lineno">  824</span><span class="comment">// Product between two tensors naturally indexed.</span></div>
-<div class="line"><a id="l00825" name="l00825"></a><span class="lineno">  825</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> HeadDDim1TypeSeq, <span class="keyword">class</span> ContractDDimTypeSeq, <span class="keyword">class</span> TailDDim2TypeSeq&gt;</div>
-<div class="line"><a id="l00826" name="l00826"></a><span class="lineno">  826</span><span class="keyword">struct </span>NaturalTensorProd;</div>
-<div class="line"><a id="l00827" name="l00827"></a><span class="lineno">  827</span> </div>
-<div class="line"><a id="l00828" name="l00828"></a><span class="lineno">  828</span><span class="keyword">template</span> &lt;<span class="keyword">class</span>... HeadDDim1, <span class="keyword">class</span>... ContractDDim, <span class="keyword">class</span>... TailDDim2&gt;</div>
-<div class="line"><a id="l00829" name="l00829"></a><span class="lineno">  829</span><span class="keyword">struct </span>NaturalTensorProd&lt;</div>
-<div class="line"><a id="l00830" name="l00830"></a><span class="lineno">  830</span>        ddc::TypeSeq&lt;HeadDDim1...&gt;,</div>
-<div class="line"><a id="l00831" name="l00831"></a><span class="lineno">  831</span>        ddc::TypeSeq&lt;ContractDDim...&gt;,</div>
-<div class="line"><a id="l00832" name="l00832"></a><span class="lineno">  832</span>        ddc::TypeSeq&lt;TailDDim2...&gt;&gt;</div>
-<div class="line"><a id="l00833" name="l00833"></a><span class="lineno">  833</span>{</div>
-<div class="line"><a id="l00834" name="l00834"></a><span class="lineno">  834</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> ElementType, <span class="keyword">class</span> LayoutStr<span class="keywordtype">id</span>edPolicy, <span class="keyword">class</span> MemorySpace&gt;</div>
-<div class="line"><a id="l00835" name="l00835"></a><span class="lineno">  835</span>    KOKKOS_FUNCTION <span class="keyword">static</span> Tensor&lt;</div>
-<div class="line"><a id="l00836" name="l00836"></a><span class="lineno">  836</span>            ElementType,</div>
-<div class="line"><a id="l00837" name="l00837"></a><span class="lineno">  837</span>            ddc::DiscreteDomain&lt;HeadDDim1..., TailDDim2...&gt;,</div>
-<div class="line"><a id="l00838" name="l00838"></a><span class="lineno">  838</span>            LayoutStridedPolicy,</div>
-<div class="line"><a id="l00839" name="l00839"></a><span class="lineno">  839</span>            MemorySpace&gt;</div>
-<div class="line"><a id="l00840" name="l00840"></a><span class="lineno">  840</span>    operator()(</div>
-<div class="line"><a id="l00841" name="l00841"></a><span class="lineno">  841</span>            Tensor&lt;ElementType,</div>
-<div class="line"><a id="l00842" name="l00842"></a><span class="lineno">  842</span>                   ddc::DiscreteDomain&lt;HeadDDim1..., TailDDim2...&gt;,</div>
-<div class="line"><a id="l00843" name="l00843"></a><span class="lineno">  843</span>                   LayoutStridedPolicy,</div>
-<div class="line"><a id="l00844" name="l00844"></a><span class="lineno">  844</span>                   MemorySpace&gt; prod_tensor,</div>
-<div class="line"><a id="l00845" name="l00845"></a><span class="lineno">  845</span>            Tensor&lt;ElementType,</div>
-<div class="line"><a id="l00846" name="l00846"></a><span class="lineno">  846</span>                   ddc::DiscreteDomain&lt;HeadDDim1..., ContractDDim...&gt;,</div>
-<div class="line"><a id="l00847" name="l00847"></a><span class="lineno">  847</span>                   LayoutStridedPolicy,</div>
-<div class="line"><a id="l00848" name="l00848"></a><span class="lineno">  848</span>                   MemorySpace&gt; tensor1,</div>
-<div class="line"><a id="l00849" name="l00849"></a><span class="lineno">  849</span>            Tensor&lt;ElementType,</div>
-<div class="line"><a id="l00850" name="l00850"></a><span class="lineno">  850</span>                   ddc::DiscreteDomain&lt;ContractDDim..., TailDDim2...&gt;,</div>
-<div class="line"><a id="l00851" name="l00851"></a><span class="lineno">  851</span>                   LayoutStridedPolicy,</div>
-<div class="line"><a id="l00852" name="l00852"></a><span class="lineno">  852</span>                   MemorySpace&gt; tensor2)</div>
-<div class="line"><a id="l00853" name="l00853"></a><span class="lineno">  853</span>    {</div>
-<div class="line"><a id="l00854" name="l00854"></a><span class="lineno">  854</span>        ddc::device_for_each(</div>
-<div class="line"><a id="l00855" name="l00855"></a><span class="lineno">  855</span>                prod_tensor.domain(),</div>
-<div class="line"><a id="l00856" name="l00856"></a><span class="lineno">  856</span>                [&amp;](ddc::DiscreteElement&lt;HeadDDim1..., TailDDim2...&gt; elem) {</div>
-<div class="line"><a id="l00857" name="l00857"></a><span class="lineno">  857</span>                    prod_tensor(elem) = ddc::device_transform_reduce(</div>
-<div class="line"><a id="l00858" name="l00858"></a><span class="lineno">  858</span>                            tensor1.template domain&lt;ContractDDim...&gt;(),</div>
-<div class="line"><a id="l00859" name="l00859"></a><span class="lineno">  859</span>                            0.,</div>
-<div class="line"><a id="l00860" name="l00860"></a><span class="lineno">  860</span>                            ddc::reducer::sum&lt;ElementType&gt;(),</div>
-<div class="line"><a id="l00861" name="l00861"></a><span class="lineno">  861</span>                            [&amp;](ddc::DiscreteElement&lt;ContractDDim...&gt; contract_elem) {</div>
-<div class="line"><a id="l00862" name="l00862"></a><span class="lineno">  862</span>                                return tensor1(ddc::select&lt;HeadDDim1...&gt;(elem), contract_elem)</div>
-<div class="line"><a id="l00863" name="l00863"></a><span class="lineno">  863</span>                                       * tensor2(ddc::select&lt;TailDDim2...&gt;(elem), contract_elem);</div>
-<div class="line"><a id="l00864" name="l00864"></a><span class="lineno">  864</span>                            });</div>
-<div class="line"><a id="l00865" name="l00865"></a><span class="lineno">  865</span>                });</div>
-<div class="line"><a id="l00866" name="l00866"></a><span class="lineno">  866</span>        <span class="keywordflow">return</span> prod_tensor;</div>
-<div class="line"><a id="l00867" name="l00867"></a><span class="lineno">  867</span>    }</div>
-<div class="line"><a id="l00868" name="l00868"></a><span class="lineno">  868</span>};</div>
-<div class="line"><a id="l00869" name="l00869"></a><span class="lineno">  869</span> </div>
-<div class="line"><a id="l00870" name="l00870"></a><span class="lineno">  870</span>} <span class="comment">// namespace detail</span></div>
-<div class="line"><a id="l00871" name="l00871"></a><span class="lineno">  871</span> </div>
-<div class="line"><a id="l00872" name="l00872"></a><span class="lineno">  872</span><span class="keyword">template</span> &lt;</div>
-<div class="line"><a id="l00873" name="l00873"></a><span class="lineno">  873</span>        TensorNatIndex... ProdDDim,</div>
-<div class="line"><a id="l00874" name="l00874"></a><span class="lineno">  874</span>        TensorNatIndex... DDim1,</div>
-<div class="line"><a id="l00875" name="l00875"></a><span class="lineno">  875</span>        TensorNatIndex... DDim2,</div>
-<div class="line"><a id="l00876" name="l00876"></a><span class="lineno">  876</span>        <span class="keyword">class </span>ElementType,</div>
-<div class="line"><a id="l00877" name="l00877"></a><span class="lineno">  877</span>        <span class="keyword">class </span>LayoutStridedPolicy,</div>
-<div class="line"><a id="l00878" name="l00878"></a><span class="lineno">  878</span>        <span class="keyword">class </span>MemorySpace&gt;</div>
-<div class="foldopen" id="foldopen00879" data-start="{" data-end="}">
-<div class="line"><a id="l00879" name="l00879"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#aa7e70ef3014d5865f10f7427d6be216d">  879</a></span>Tensor&lt;ElementType, ddc::DiscreteDomain&lt;ProdDDim...&gt;, LayoutStridedPolicy, MemorySpace&gt; tensor_prod(</div>
-<div class="line"><a id="l00880" name="l00880"></a><span class="lineno">  880</span>        Tensor&lt;ElementType, ddc::DiscreteDomain&lt;ProdDDim...&gt;, LayoutStridedPolicy, MemorySpace&gt;</div>
-<div class="line"><a id="l00881" name="l00881"></a><span class="lineno">  881</span>                prod_tensor,</div>
-<div class="line"><a id="l00882" name="l00882"></a><span class="lineno">  882</span>        Tensor&lt;ElementType, ddc::DiscreteDomain&lt;DDim1...&gt;, LayoutStridedPolicy, MemorySpace&gt;</div>
-<div class="line"><a id="l00883" name="l00883"></a><span class="lineno">  883</span>                tensor1,</div>
-<div class="line"><a id="l00884" name="l00884"></a><span class="lineno">  884</span>        Tensor&lt;ElementType, ddc::DiscreteDomain&lt;DDim2...&gt;, LayoutStridedPolicy, MemorySpace&gt;</div>
-<div class="line"><a id="l00885" name="l00885"></a><span class="lineno">  885</span>                tensor2)</div>
-<div class="line"><a id="l00886" name="l00886"></a><span class="lineno">  886</span>{</div>
-<div class="line"><a id="l00887" name="l00887"></a><span class="lineno">  887</span>    <span class="keyword">static_assert</span>(std::is_same_v&lt;</div>
-<div class="line"><a id="l00888" name="l00888"></a><span class="lineno">  888</span>                  ddc::type_seq_remove_t&lt;ddc::TypeSeq&lt;DDim1...&gt;, ddc::TypeSeq&lt;ProdDDim...&gt;&gt;,</div>
-<div class="line"><a id="l00889" name="l00889"></a><span class="lineno">  889</span>                  ddc::type_seq_remove_t&lt;ddc::TypeSeq&lt;DDim2...&gt;, ddc::TypeSeq&lt;ProdDDim...&gt;&gt;&gt;);</div>
-<div class="line"><a id="l00890" name="l00890"></a><span class="lineno">  890</span>    <span class="keywordflow">return</span> detail::NaturalTensorProd&lt;</div>
-<div class="line"><a id="l00891" name="l00891"></a><span class="lineno">  891</span>            ddc::type_seq_remove_t&lt;ddc::TypeSeq&lt;ProdDDim...&gt;, ddc::TypeSeq&lt;DDim2...&gt;&gt;,</div>
-<div class="line"><a id="l00892" name="l00892"></a><span class="lineno">  892</span>            ddc::type_seq_remove_t&lt;ddc::TypeSeq&lt;DDim1...&gt;, ddc::TypeSeq&lt;ProdDDim...&gt;&gt;,</div>
-<div class="line"><a id="l00893" name="l00893"></a><span class="lineno">  893</span>            ddc::type_seq_remove_t&lt;ddc::TypeSeq&lt;ProdDDim...&gt;, ddc::TypeSeq&lt;DDim1...&gt;&gt;&gt;::</div>
-<div class="line"><a id="l00894" name="l00894"></a><span class="lineno">  894</span>    operator()(prod_tensor, tensor1, tensor2);</div>
-<div class="line"><a id="l00895" name="l00895"></a><span class="lineno">  895</span>}</div>
+<div class="line"><a id="l00820" name="l00820"></a><span class="lineno">  820</span> </div>
+<div class="line"><a id="l00821" name="l00821"></a><span class="lineno">  821</span><span class="keyword">namespace </span>detail {</div>
+<div class="line"><a id="l00822" name="l00822"></a><span class="lineno">  822</span> </div>
+<div class="line"><a id="l00823" name="l00823"></a><span class="lineno">  823</span><span class="comment">// Product between two tensors naturally indexed.</span></div>
+<div class="line"><a id="l00824" name="l00824"></a><span class="lineno">  824</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> HeadDDim1TypeSeq, <span class="keyword">class</span> ContractDDimTypeSeq, <span class="keyword">class</span> TailDDim2TypeSeq&gt;</div>
+<div class="line"><a id="l00825" name="l00825"></a><span class="lineno">  825</span><span class="keyword">struct </span>NaturalTensorProd;</div>
+<div class="line"><a id="l00826" name="l00826"></a><span class="lineno">  826</span> </div>
+<div class="line"><a id="l00827" name="l00827"></a><span class="lineno">  827</span><span class="keyword">template</span> &lt;<span class="keyword">class</span>... HeadDDim1, <span class="keyword">class</span>... ContractDDim, <span class="keyword">class</span>... TailDDim2&gt;</div>
+<div class="line"><a id="l00828" name="l00828"></a><span class="lineno">  828</span><span class="keyword">struct </span>NaturalTensorProd&lt;</div>
+<div class="line"><a id="l00829" name="l00829"></a><span class="lineno">  829</span>        <a class="code hl_namespace" href="namespaceddc.html">ddc</a>::TypeSeq&lt;HeadDDim1...&gt;,</div>
+<div class="line"><a id="l00830" name="l00830"></a><span class="lineno">  830</span>        ddc::TypeSeq&lt;ContractDDim...&gt;,</div>
+<div class="line"><a id="l00831" name="l00831"></a><span class="lineno">  831</span>        ddc::TypeSeq&lt;TailDDim2...&gt;&gt;</div>
+<div class="line"><a id="l00832" name="l00832"></a><span class="lineno">  832</span>{</div>
+<div class="line"><a id="l00833" name="l00833"></a><span class="lineno">  833</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> ElementType, <span class="keyword">class</span> LayoutStr<span class="keywordtype">id</span>edPolicy, <span class="keyword">class</span> MemorySpace&gt;</div>
+<div class="line"><a id="l00834" name="l00834"></a><span class="lineno">  834</span>    KOKKOS_FUNCTION <span class="keyword">static</span> Tensor&lt;</div>
+<div class="line"><a id="l00835" name="l00835"></a><span class="lineno">  835</span>            ElementType,</div>
+<div class="line"><a id="l00836" name="l00836"></a><span class="lineno">  836</span>            ddc::DiscreteDomain&lt;HeadDDim1..., TailDDim2...&gt;,</div>
+<div class="line"><a id="l00837" name="l00837"></a><span class="lineno">  837</span>            LayoutStridedPolicy,</div>
+<div class="line"><a id="l00838" name="l00838"></a><span class="lineno">  838</span>            MemorySpace&gt;</div>
+<div class="line"><a id="l00839" name="l00839"></a><span class="lineno">  839</span>    operator()(</div>
+<div class="line"><a id="l00840" name="l00840"></a><span class="lineno">  840</span>            Tensor&lt;ElementType,</div>
+<div class="line"><a id="l00841" name="l00841"></a><span class="lineno">  841</span>                   ddc::DiscreteDomain&lt;HeadDDim1..., TailDDim2...&gt;,</div>
+<div class="line"><a id="l00842" name="l00842"></a><span class="lineno">  842</span>                   LayoutStridedPolicy,</div>
+<div class="line"><a id="l00843" name="l00843"></a><span class="lineno">  843</span>                   MemorySpace&gt; prod_tensor,</div>
+<div class="line"><a id="l00844" name="l00844"></a><span class="lineno">  844</span>            Tensor&lt;ElementType,</div>
+<div class="line"><a id="l00845" name="l00845"></a><span class="lineno">  845</span>                   ddc::DiscreteDomain&lt;HeadDDim1..., ContractDDim...&gt;,</div>
+<div class="line"><a id="l00846" name="l00846"></a><span class="lineno">  846</span>                   LayoutStridedPolicy,</div>
+<div class="line"><a id="l00847" name="l00847"></a><span class="lineno">  847</span>                   MemorySpace&gt; tensor1,</div>
+<div class="line"><a id="l00848" name="l00848"></a><span class="lineno">  848</span>            Tensor&lt;ElementType,</div>
+<div class="line"><a id="l00849" name="l00849"></a><span class="lineno">  849</span>                   ddc::DiscreteDomain&lt;ContractDDim..., TailDDim2...&gt;,</div>
+<div class="line"><a id="l00850" name="l00850"></a><span class="lineno">  850</span>                   LayoutStridedPolicy,</div>
+<div class="line"><a id="l00851" name="l00851"></a><span class="lineno">  851</span>                   MemorySpace&gt; tensor2)</div>
+<div class="line"><a id="l00852" name="l00852"></a><span class="lineno">  852</span>    {</div>
+<div class="line"><a id="l00853" name="l00853"></a><span class="lineno">  853</span>        ddc::device_for_each(</div>
+<div class="line"><a id="l00854" name="l00854"></a><span class="lineno">  854</span>                prod_tensor.domain(),</div>
+<div class="line"><a id="l00855" name="l00855"></a><span class="lineno">  855</span>                [&amp;](ddc::DiscreteElement&lt;HeadDDim1..., TailDDim2...&gt; elem) {</div>
+<div class="line"><a id="l00856" name="l00856"></a><span class="lineno">  856</span>                    prod_tensor(elem) = ddc::device_transform_reduce(</div>
+<div class="line"><a id="l00857" name="l00857"></a><span class="lineno">  857</span>                            tensor1.template domain&lt;ContractDDim...&gt;(),</div>
+<div class="line"><a id="l00858" name="l00858"></a><span class="lineno">  858</span>                            0.,</div>
+<div class="line"><a id="l00859" name="l00859"></a><span class="lineno">  859</span>                            ddc::reducer::sum&lt;ElementType&gt;(),</div>
+<div class="line"><a id="l00860" name="l00860"></a><span class="lineno">  860</span>                            [&amp;](ddc::DiscreteElement&lt;ContractDDim...&gt; contract_elem) {</div>
+<div class="line"><a id="l00861" name="l00861"></a><span class="lineno">  861</span>                                return tensor1(ddc::select&lt;HeadDDim1...&gt;(elem), contract_elem)</div>
+<div class="line"><a id="l00862" name="l00862"></a><span class="lineno">  862</span>                                       * tensor2(ddc::select&lt;TailDDim2...&gt;(elem), contract_elem);</div>
+<div class="line"><a id="l00863" name="l00863"></a><span class="lineno">  863</span>                            });</div>
+<div class="line"><a id="l00864" name="l00864"></a><span class="lineno">  864</span>                });</div>
+<div class="line"><a id="l00865" name="l00865"></a><span class="lineno">  865</span>        <span class="keywordflow">return</span> prod_tensor;</div>
+<div class="line"><a id="l00866" name="l00866"></a><span class="lineno">  866</span>    }</div>
+<div class="line"><a id="l00867" name="l00867"></a><span class="lineno">  867</span>};</div>
+<div class="line"><a id="l00868" name="l00868"></a><span class="lineno">  868</span> </div>
+<div class="line"><a id="l00869" name="l00869"></a><span class="lineno">  869</span>} <span class="comment">// namespace detail</span></div>
+<div class="line"><a id="l00870" name="l00870"></a><span class="lineno">  870</span> </div>
+<div class="line"><a id="l00871" name="l00871"></a><span class="lineno">  871</span><span class="keyword">template</span> &lt;</div>
+<div class="line"><a id="l00872" name="l00872"></a><span class="lineno">  872</span>        TensorNatIndex... ProdDDim,</div>
+<div class="line"><a id="l00873" name="l00873"></a><span class="lineno">  873</span>        TensorNatIndex... DDim1,</div>
+<div class="line"><a id="l00874" name="l00874"></a><span class="lineno">  874</span>        TensorNatIndex... DDim2,</div>
+<div class="line"><a id="l00875" name="l00875"></a><span class="lineno">  875</span>        <span class="keyword">class </span>ElementType,</div>
+<div class="line"><a id="l00876" name="l00876"></a><span class="lineno">  876</span>        <span class="keyword">class </span>LayoutStridedPolicy,</div>
+<div class="line"><a id="l00877" name="l00877"></a><span class="lineno">  877</span>        <span class="keyword">class </span>MemorySpace&gt;</div>
+<div class="foldopen" id="foldopen00878" data-start="{" data-end="}">
+<div class="line"><a id="l00878" name="l00878"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#aa7e70ef3014d5865f10f7427d6be216d">  878</a></span>Tensor&lt;ElementType, ddc::DiscreteDomain&lt;ProdDDim...&gt;, LayoutStridedPolicy, MemorySpace&gt; tensor_prod(</div>
+<div class="line"><a id="l00879" name="l00879"></a><span class="lineno">  879</span>        Tensor&lt;ElementType, ddc::DiscreteDomain&lt;ProdDDim...&gt;, LayoutStridedPolicy, MemorySpace&gt;</div>
+<div class="line"><a id="l00880" name="l00880"></a><span class="lineno">  880</span>                prod_tensor,</div>
+<div class="line"><a id="l00881" name="l00881"></a><span class="lineno">  881</span>        Tensor&lt;ElementType, ddc::DiscreteDomain&lt;DDim1...&gt;, LayoutStridedPolicy, MemorySpace&gt;</div>
+<div class="line"><a id="l00882" name="l00882"></a><span class="lineno">  882</span>                tensor1,</div>
+<div class="line"><a id="l00883" name="l00883"></a><span class="lineno">  883</span>        Tensor&lt;ElementType, ddc::DiscreteDomain&lt;DDim2...&gt;, LayoutStridedPolicy, MemorySpace&gt;</div>
+<div class="line"><a id="l00884" name="l00884"></a><span class="lineno">  884</span>                tensor2)</div>
+<div class="line"><a id="l00885" name="l00885"></a><span class="lineno">  885</span>{</div>
+<div class="line"><a id="l00886" name="l00886"></a><span class="lineno">  886</span>    <span class="keyword">static_assert</span>(std::is_same_v&lt;</div>
+<div class="line"><a id="l00887" name="l00887"></a><span class="lineno">  887</span>                  ddc::type_seq_remove_t&lt;ddc::TypeSeq&lt;DDim1...&gt;, ddc::TypeSeq&lt;ProdDDim...&gt;&gt;,</div>
+<div class="line"><a id="l00888" name="l00888"></a><span class="lineno">  888</span>                  ddc::type_seq_remove_t&lt;ddc::TypeSeq&lt;DDim2...&gt;, ddc::TypeSeq&lt;ProdDDim...&gt;&gt;&gt;);</div>
+<div class="line"><a id="l00889" name="l00889"></a><span class="lineno">  889</span>    <span class="keywordflow">return</span> detail::NaturalTensorProd&lt;</div>
+<div class="line"><a id="l00890" name="l00890"></a><span class="lineno">  890</span>            ddc::type_seq_remove_t&lt;ddc::TypeSeq&lt;ProdDDim...&gt;, ddc::TypeSeq&lt;DDim2...&gt;&gt;,</div>
+<div class="line"><a id="l00891" name="l00891"></a><span class="lineno">  891</span>            ddc::type_seq_remove_t&lt;ddc::TypeSeq&lt;DDim1...&gt;, ddc::TypeSeq&lt;ProdDDim...&gt;&gt;,</div>
+<div class="line"><a id="l00892" name="l00892"></a><span class="lineno">  892</span>            ddc::type_seq_remove_t&lt;ddc::TypeSeq&lt;ProdDDim...&gt;, ddc::TypeSeq&lt;DDim1...&gt;&gt;&gt;::</div>
+<div class="line"><a id="l00893" name="l00893"></a><span class="lineno">  893</span>    operator()(prod_tensor, tensor1, tensor2);</div>
+<div class="line"><a id="l00894" name="l00894"></a><span class="lineno">  894</span>}</div>
 </div>
-<div class="line"><a id="l00896" name="l00896"></a><span class="lineno">  896</span> </div>
-<div class="line"><a id="l00897" name="l00897"></a><span class="lineno">  897</span><span class="keyword">namespace </span>detail {</div>
-<div class="line"><a id="l00898" name="l00898"></a><span class="lineno">  898</span> </div>
-<div class="line"><a id="l00899" name="l00899"></a><span class="lineno">  899</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> HeadDom, <span class="keyword">class</span> InterestDom, <span class="keyword">class</span> TailDom&gt;</div>
-<div class="line"><a id="l00900" name="l00900"></a><span class="lineno">  900</span><span class="keyword">struct </span>PrintTensor;</div>
-<div class="line"><a id="l00901" name="l00901"></a><span class="lineno">  901</span> </div>
-<div class="line"><a id="l00902" name="l00902"></a><span class="lineno">  902</span><span class="keyword">template</span> &lt;<span class="keyword">class</span>... HeadDDim, <span class="keyword">class </span>InterestDDim&gt;</div>
-<div class="line"><a id="l00903" name="l00903"></a><span class="lineno">  903</span><span class="keyword">struct </span>PrintTensor&lt;</div>
-<div class="line"><a id="l00904" name="l00904"></a><span class="lineno">  904</span>        ddc::DiscreteDomain&lt;HeadDDim...&gt;,</div>
-<div class="line"><a id="l00905" name="l00905"></a><span class="lineno">  905</span>        ddc::DiscreteDomain&lt;InterestDDim&gt;,</div>
-<div class="line"><a id="l00906" name="l00906"></a><span class="lineno">  906</span>        ddc::DiscreteDomain&lt;&gt;&gt;</div>
-<div class="line"><a id="l00907" name="l00907"></a><span class="lineno">  907</span>{</div>
-<div class="line"><a id="l00908" name="l00908"></a><span class="lineno">  908</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> TensorType&gt;</div>
-<div class="line"><a id="l00909" name="l00909"></a><span class="lineno">  909</span>    <span class="keyword">static</span> std::string operator()(</div>
-<div class="line"><a id="l00910" name="l00910"></a><span class="lineno">  910</span>            std::string&amp; str,</div>
-<div class="line"><a id="l00911" name="l00911"></a><span class="lineno">  911</span>            TensorType <span class="keyword">const</span>&amp; tensor,</div>
-<div class="line"><a id="l00912" name="l00912"></a><span class="lineno">  912</span>            ddc::DiscreteElement&lt;HeadDDim...&gt; i)</div>
-<div class="line"><a id="l00913" name="l00913"></a><span class="lineno">  913</span>    {</div>
-<div class="line"><a id="l00914" name="l00914"></a><span class="lineno">  914</span>        <span class="keywordflow">for</span> (ddc::DiscreteElement&lt;InterestDDim&gt; elem :</div>
-<div class="line"><a id="l00915" name="l00915"></a><span class="lineno">  915</span>             ddc::DiscreteDomain&lt;InterestDDim&gt;(tensor.natural_domain())) {</div>
-<div class="line"><a id="l00916" name="l00916"></a><span class="lineno">  916</span>            str = str + <span class="stringliteral">&quot; &quot;</span></div>
-<div class="line"><a id="l00917" name="l00917"></a><span class="lineno">  917</span>                  + std::to_string(tensor.get(tensor.access_element(</div>
-<div class="line"><a id="l00918" name="l00918"></a><span class="lineno">  918</span>                          ddc::DiscreteElement&lt;HeadDDim..., InterestDDim&gt;(i, elem))));</div>
-<div class="line"><a id="l00919" name="l00919"></a><span class="lineno">  919</span>        }</div>
-<div class="line"><a id="l00920" name="l00920"></a><span class="lineno">  920</span>        str += <span class="stringliteral">&quot;\n&quot;</span>;</div>
-<div class="line"><a id="l00921" name="l00921"></a><span class="lineno">  921</span>        <span class="keywordflow">return</span> str;</div>
-<div class="line"><a id="l00922" name="l00922"></a><span class="lineno">  922</span>    }</div>
-<div class="line"><a id="l00923" name="l00923"></a><span class="lineno">  923</span>};</div>
-<div class="line"><a id="l00924" name="l00924"></a><span class="lineno">  924</span> </div>
-<div class="line"><a id="l00925" name="l00925"></a><span class="lineno">  925</span><span class="keyword">template</span> &lt;<span class="keyword">class</span>... HeadDDim, <span class="keyword">class </span>InterestDDim, <span class="keyword">class </span>HeadOfTailDDim, <span class="keyword">class</span>... TailOfTailDDim&gt;</div>
-<div class="line"><a id="l00926" name="l00926"></a><span class="lineno">  926</span><span class="keyword">struct </span>PrintTensor&lt;</div>
-<div class="line"><a id="l00927" name="l00927"></a><span class="lineno">  927</span>        ddc::DiscreteDomain&lt;HeadDDim...&gt;,</div>
-<div class="line"><a id="l00928" name="l00928"></a><span class="lineno">  928</span>        ddc::DiscreteDomain&lt;InterestDDim&gt;,</div>
-<div class="line"><a id="l00929" name="l00929"></a><span class="lineno">  929</span>        ddc::DiscreteDomain&lt;HeadOfTailDDim, TailOfTailDDim...&gt;&gt;</div>
-<div class="line"><a id="l00930" name="l00930"></a><span class="lineno">  930</span>{</div>
-<div class="line"><a id="l00931" name="l00931"></a><span class="lineno">  931</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> TensorType&gt;</div>
-<div class="line"><a id="l00932" name="l00932"></a><span class="lineno">  932</span>    <span class="keyword">static</span> std::string operator()(</div>
-<div class="line"><a id="l00933" name="l00933"></a><span class="lineno">  933</span>            std::string&amp; str,</div>
-<div class="line"><a id="l00934" name="l00934"></a><span class="lineno">  934</span>            TensorType <span class="keyword">const</span>&amp; tensor,</div>
-<div class="line"><a id="l00935" name="l00935"></a><span class="lineno">  935</span>            ddc::DiscreteElement&lt;HeadDDim...&gt; i)</div>
-<div class="line"><a id="l00936" name="l00936"></a><span class="lineno">  936</span>    {</div>
-<div class="line"><a id="l00937" name="l00937"></a><span class="lineno">  937</span>        str += <span class="stringliteral">&quot;[&quot;</span>;</div>
-<div class="line"><a id="l00938" name="l00938"></a><span class="lineno">  938</span>        <span class="keywordflow">for</span> (ddc::DiscreteElement&lt;InterestDDim&gt; elem :</div>
-<div class="line"><a id="l00939" name="l00939"></a><span class="lineno">  939</span>             ddc::DiscreteDomain&lt;InterestDDim&gt;(tensor.natural_domain())) {</div>
-<div class="line"><a id="l00940" name="l00940"></a><span class="lineno">  940</span>            str = PrintTensor&lt;</div>
-<div class="line"><a id="l00941" name="l00941"></a><span class="lineno">  941</span>                    ddc::DiscreteDomain&lt;HeadDDim..., InterestDDim&gt;,</div>
-<div class="line"><a id="l00942" name="l00942"></a><span class="lineno">  942</span>                    ddc::DiscreteDomain&lt;HeadOfTailDDim&gt;,</div>
-<div class="line"><a id="l00943" name="l00943"></a><span class="lineno">  943</span>                    ddc::DiscreteDomain&lt;TailOfTailDDim...&gt;&gt;::</div>
-<div class="line"><a id="l00944" name="l00944"></a><span class="lineno">  944</span>            operator()(str, tensor, ddc::DiscreteElement&lt;HeadDDim..., InterestDDim&gt;(i, elem));</div>
-<div class="line"><a id="l00945" name="l00945"></a><span class="lineno">  945</span>        }</div>
-<div class="line"><a id="l00946" name="l00946"></a><span class="lineno">  946</span>        str += <span class="stringliteral">&quot;]\n&quot;</span>;</div>
-<div class="line"><a id="l00947" name="l00947"></a><span class="lineno">  947</span>        <span class="keywordflow">return</span> str;</div>
-<div class="line"><a id="l00948" name="l00948"></a><span class="lineno">  948</span>    }</div>
-<div class="line"><a id="l00949" name="l00949"></a><span class="lineno">  949</span>};</div>
-<div class="line"><a id="l00950" name="l00950"></a><span class="lineno">  950</span> </div>
-<div class="line"><a id="l00951" name="l00951"></a><span class="lineno">  951</span>} <span class="comment">// namespace detail</span></div>
-<div class="line"><a id="l00952" name="l00952"></a><span class="lineno">  952</span> </div>
-<div class="line"><a id="l00953" name="l00953"></a><span class="lineno">  953</span><span class="keyword">template</span> &lt;misc::Specialization&lt;Tensor&gt; TensorType&gt;</div>
-<div class="foldopen" id="foldopen00954" data-start="{" data-end="}">
-<div class="line"><a id="l00954" name="l00954"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#a6e4843c3706eb7cb8edd8c0e0c26aa4e">  954</a></span>std::ostream&amp; operator&lt;&lt;(std::ostream&amp; os, TensorType <span class="keyword">const</span>&amp; tensor)</div>
-<div class="line"><a id="l00955" name="l00955"></a><span class="lineno">  955</span>{</div>
-<div class="line"><a id="l00956" name="l00956"></a><span class="lineno">  956</span>    std::string str = <span class="stringliteral">&quot;&quot;</span>;</div>
-<div class="line"><a id="l00957" name="l00957"></a><span class="lineno">  957</span>    os &lt;&lt; detail::PrintTensor&lt;</div>
-<div class="line"><a id="l00958" name="l00958"></a><span class="lineno">  958</span>            ddc::DiscreteDomain&lt;&gt;,</div>
-<div class="line"><a id="l00959" name="l00959"></a><span class="lineno">  959</span>            ddc::DiscreteDomain&lt;ddc::type_seq_element_t&lt;</div>
-<div class="line"><a id="l00960" name="l00960"></a><span class="lineno">  960</span>                    0,</div>
-<div class="line"><a id="l00961" name="l00961"></a><span class="lineno">  961</span>                    ddc::to_type_seq_t&lt;typename TensorType::natural_domain_t&gt;&gt;&gt;,</div>
-<div class="line"><a id="l00962" name="l00962"></a><span class="lineno">  962</span>            ddc::detail::convert_type_seq_to_discrete_domain_t&lt;ddc::type_seq_remove_t&lt;</div>
-<div class="line"><a id="l00963" name="l00963"></a><span class="lineno">  963</span>                    ddc::to_type_seq_t&lt;typename TensorType::natural_domain_t&gt;,</div>
-<div class="line"><a id="l00964" name="l00964"></a><span class="lineno">  964</span>                    ddc::TypeSeq&lt;ddc::type_seq_element_t&lt;</div>
-<div class="line"><a id="l00965" name="l00965"></a><span class="lineno">  965</span>                            0,</div>
-<div class="line"><a id="l00966" name="l00966"></a><span class="lineno">  966</span>                            ddc::to_type_seq_t&lt;typename TensorType::natural_domain_t&gt;&gt;&gt;&gt;&gt;&gt;::</div>
-<div class="line"><a id="l00967" name="l00967"></a><span class="lineno">  967</span>            operator()(str, tensor, ddc::DiscreteElement&lt;&gt;());</div>
-<div class="line"><a id="l00968" name="l00968"></a><span class="lineno">  968</span>    <span class="keywordflow">return</span> os;</div>
-<div class="line"><a id="l00969" name="l00969"></a><span class="lineno">  969</span>}</div>
+<div class="line"><a id="l00895" name="l00895"></a><span class="lineno">  895</span> </div>
+<div class="line"><a id="l00896" name="l00896"></a><span class="lineno">  896</span><span class="keyword">namespace </span>detail {</div>
+<div class="line"><a id="l00897" name="l00897"></a><span class="lineno">  897</span> </div>
+<div class="line"><a id="l00898" name="l00898"></a><span class="lineno">  898</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> HeadDom, <span class="keyword">class</span> InterestDom, <span class="keyword">class</span> TailDom&gt;</div>
+<div class="line"><a id="l00899" name="l00899"></a><span class="lineno">  899</span><span class="keyword">struct </span>PrintTensor;</div>
+<div class="line"><a id="l00900" name="l00900"></a><span class="lineno">  900</span> </div>
+<div class="line"><a id="l00901" name="l00901"></a><span class="lineno">  901</span><span class="keyword">template</span> &lt;<span class="keyword">class</span>... HeadDDim, <span class="keyword">class </span>InterestDDim&gt;</div>
+<div class="line"><a id="l00902" name="l00902"></a><span class="lineno">  902</span><span class="keyword">struct </span>PrintTensor&lt;</div>
+<div class="line"><a id="l00903" name="l00903"></a><span class="lineno">  903</span>        <a class="code hl_namespace" href="namespaceddc.html">ddc</a>::DiscreteDomain&lt;HeadDDim...&gt;,</div>
+<div class="line"><a id="l00904" name="l00904"></a><span class="lineno">  904</span>        ddc::DiscreteDomain&lt;InterestDDim&gt;,</div>
+<div class="line"><a id="l00905" name="l00905"></a><span class="lineno">  905</span>        ddc::DiscreteDomain&lt;&gt;&gt;</div>
+<div class="line"><a id="l00906" name="l00906"></a><span class="lineno">  906</span>{</div>
+<div class="line"><a id="l00907" name="l00907"></a><span class="lineno">  907</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> TensorType&gt;</div>
+<div class="line"><a id="l00908" name="l00908"></a><span class="lineno">  908</span>    <span class="keyword">static</span> std::string operator()(</div>
+<div class="line"><a id="l00909" name="l00909"></a><span class="lineno">  909</span>            std::string&amp; str,</div>
+<div class="line"><a id="l00910" name="l00910"></a><span class="lineno">  910</span>            TensorType <span class="keyword">const</span>&amp; tensor,</div>
+<div class="line"><a id="l00911" name="l00911"></a><span class="lineno">  911</span>            ddc::DiscreteElement&lt;HeadDDim...&gt; i)</div>
+<div class="line"><a id="l00912" name="l00912"></a><span class="lineno">  912</span>    {</div>
+<div class="line"><a id="l00913" name="l00913"></a><span class="lineno">  913</span>        <span class="keywordflow">for</span> (ddc::DiscreteElement&lt;InterestDDim&gt; elem :</div>
+<div class="line"><a id="l00914" name="l00914"></a><span class="lineno">  914</span>             ddc::DiscreteDomain&lt;InterestDDim&gt;(tensor.natural_domain())) {</div>
+<div class="line"><a id="l00915" name="l00915"></a><span class="lineno">  915</span>            str = str + <span class="stringliteral">&quot; &quot;</span></div>
+<div class="line"><a id="l00916" name="l00916"></a><span class="lineno">  916</span>                  + std::to_string(tensor.get(tensor.access_element(</div>
+<div class="line"><a id="l00917" name="l00917"></a><span class="lineno">  917</span>                          ddc::DiscreteElement&lt;HeadDDim..., InterestDDim&gt;(i, elem))));</div>
+<div class="line"><a id="l00918" name="l00918"></a><span class="lineno">  918</span>        }</div>
+<div class="line"><a id="l00919" name="l00919"></a><span class="lineno">  919</span>        str += <span class="stringliteral">&quot;\n&quot;</span>;</div>
+<div class="line"><a id="l00920" name="l00920"></a><span class="lineno">  920</span>        <span class="keywordflow">return</span> str;</div>
+<div class="line"><a id="l00921" name="l00921"></a><span class="lineno">  921</span>    }</div>
+<div class="line"><a id="l00922" name="l00922"></a><span class="lineno">  922</span>};</div>
+<div class="line"><a id="l00923" name="l00923"></a><span class="lineno">  923</span> </div>
+<div class="line"><a id="l00924" name="l00924"></a><span class="lineno">  924</span><span class="keyword">template</span> &lt;<span class="keyword">class</span>... HeadDDim, <span class="keyword">class </span>InterestDDim, <span class="keyword">class </span>HeadOfTailDDim, <span class="keyword">class</span>... TailOfTailDDim&gt;</div>
+<div class="line"><a id="l00925" name="l00925"></a><span class="lineno">  925</span><span class="keyword">struct </span>PrintTensor&lt;</div>
+<div class="line"><a id="l00926" name="l00926"></a><span class="lineno">  926</span>        <a class="code hl_namespace" href="namespaceddc.html">ddc</a>::DiscreteDomain&lt;HeadDDim...&gt;,</div>
+<div class="line"><a id="l00927" name="l00927"></a><span class="lineno">  927</span>        ddc::DiscreteDomain&lt;InterestDDim&gt;,</div>
+<div class="line"><a id="l00928" name="l00928"></a><span class="lineno">  928</span>        ddc::DiscreteDomain&lt;HeadOfTailDDim, TailOfTailDDim...&gt;&gt;</div>
+<div class="line"><a id="l00929" name="l00929"></a><span class="lineno">  929</span>{</div>
+<div class="line"><a id="l00930" name="l00930"></a><span class="lineno">  930</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> TensorType&gt;</div>
+<div class="line"><a id="l00931" name="l00931"></a><span class="lineno">  931</span>    <span class="keyword">static</span> std::string operator()(</div>
+<div class="line"><a id="l00932" name="l00932"></a><span class="lineno">  932</span>            std::string&amp; str,</div>
+<div class="line"><a id="l00933" name="l00933"></a><span class="lineno">  933</span>            TensorType <span class="keyword">const</span>&amp; tensor,</div>
+<div class="line"><a id="l00934" name="l00934"></a><span class="lineno">  934</span>            ddc::DiscreteElement&lt;HeadDDim...&gt; i)</div>
+<div class="line"><a id="l00935" name="l00935"></a><span class="lineno">  935</span>    {</div>
+<div class="line"><a id="l00936" name="l00936"></a><span class="lineno">  936</span>        str += <span class="stringliteral">&quot;[&quot;</span>;</div>
+<div class="line"><a id="l00937" name="l00937"></a><span class="lineno">  937</span>        <span class="keywordflow">for</span> (ddc::DiscreteElement&lt;InterestDDim&gt; elem :</div>
+<div class="line"><a id="l00938" name="l00938"></a><span class="lineno">  938</span>             ddc::DiscreteDomain&lt;InterestDDim&gt;(tensor.natural_domain())) {</div>
+<div class="line"><a id="l00939" name="l00939"></a><span class="lineno">  939</span>            str = PrintTensor&lt;</div>
+<div class="line"><a id="l00940" name="l00940"></a><span class="lineno">  940</span>                    ddc::DiscreteDomain&lt;HeadDDim..., InterestDDim&gt;,</div>
+<div class="line"><a id="l00941" name="l00941"></a><span class="lineno">  941</span>                    ddc::DiscreteDomain&lt;HeadOfTailDDim&gt;,</div>
+<div class="line"><a id="l00942" name="l00942"></a><span class="lineno">  942</span>                    ddc::DiscreteDomain&lt;TailOfTailDDim...&gt;&gt;::</div>
+<div class="line"><a id="l00943" name="l00943"></a><span class="lineno">  943</span>            operator()(str, tensor, ddc::DiscreteElement&lt;HeadDDim..., InterestDDim&gt;(i, elem));</div>
+<div class="line"><a id="l00944" name="l00944"></a><span class="lineno">  944</span>        }</div>
+<div class="line"><a id="l00945" name="l00945"></a><span class="lineno">  945</span>        str += <span class="stringliteral">&quot;]\n&quot;</span>;</div>
+<div class="line"><a id="l00946" name="l00946"></a><span class="lineno">  946</span>        <span class="keywordflow">return</span> str;</div>
+<div class="line"><a id="l00947" name="l00947"></a><span class="lineno">  947</span>    }</div>
+<div class="line"><a id="l00948" name="l00948"></a><span class="lineno">  948</span>};</div>
+<div class="line"><a id="l00949" name="l00949"></a><span class="lineno">  949</span> </div>
+<div class="line"><a id="l00950" name="l00950"></a><span class="lineno">  950</span>} <span class="comment">// namespace detail</span></div>
+<div class="line"><a id="l00951" name="l00951"></a><span class="lineno">  951</span> </div>
+<div class="line"><a id="l00952" name="l00952"></a><span class="lineno">  952</span><span class="keyword">template</span> &lt;misc::Specialization&lt;Tensor&gt; TensorType&gt;</div>
+<div class="foldopen" id="foldopen00953" data-start="{" data-end="}">
+<div class="line"><a id="l00953" name="l00953"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#a6e4843c3706eb7cb8edd8c0e0c26aa4e">  953</a></span>std::ostream&amp; operator&lt;&lt;(std::ostream&amp; os, TensorType <span class="keyword">const</span>&amp; tensor)</div>
+<div class="line"><a id="l00954" name="l00954"></a><span class="lineno">  954</span>{</div>
+<div class="line"><a id="l00955" name="l00955"></a><span class="lineno">  955</span>    std::string str = <span class="stringliteral">&quot;&quot;</span>;</div>
+<div class="line"><a id="l00956" name="l00956"></a><span class="lineno">  956</span>    os &lt;&lt; detail::PrintTensor&lt;</div>
+<div class="line"><a id="l00957" name="l00957"></a><span class="lineno">  957</span>            ddc::DiscreteDomain&lt;&gt;,</div>
+<div class="line"><a id="l00958" name="l00958"></a><span class="lineno">  958</span>            ddc::DiscreteDomain&lt;ddc::type_seq_element_t&lt;</div>
+<div class="line"><a id="l00959" name="l00959"></a><span class="lineno">  959</span>                    0,</div>
+<div class="line"><a id="l00960" name="l00960"></a><span class="lineno">  960</span>                    ddc::to_type_seq_t&lt;typename TensorType::natural_domain_t&gt;&gt;&gt;,</div>
+<div class="line"><a id="l00961" name="l00961"></a><span class="lineno">  961</span>            ddc::detail::convert_type_seq_to_discrete_domain_t&lt;ddc::type_seq_remove_t&lt;</div>
+<div class="line"><a id="l00962" name="l00962"></a><span class="lineno">  962</span>                    ddc::to_type_seq_t&lt;typename TensorType::natural_domain_t&gt;,</div>
+<div class="line"><a id="l00963" name="l00963"></a><span class="lineno">  963</span>                    ddc::TypeSeq&lt;ddc::type_seq_element_t&lt;</div>
+<div class="line"><a id="l00964" name="l00964"></a><span class="lineno">  964</span>                            0,</div>
+<div class="line"><a id="l00965" name="l00965"></a><span class="lineno">  965</span>                            ddc::to_type_seq_t&lt;typename TensorType::natural_domain_t&gt;&gt;&gt;&gt;&gt;&gt;::</div>
+<div class="line"><a id="l00966" name="l00966"></a><span class="lineno">  966</span>            operator()(str, tensor, ddc::DiscreteElement&lt;&gt;());</div>
+<div class="line"><a id="l00967" name="l00967"></a><span class="lineno">  967</span>    <span class="keywordflow">return</span> os;</div>
+<div class="line"><a id="l00968" name="l00968"></a><span class="lineno">  968</span>}</div>
 </div>
-<div class="line"><a id="l00970" name="l00970"></a><span class="lineno">  970</span> </div>
-<div class="line"><a id="l00971" name="l00971"></a><span class="lineno">  971</span>} <span class="comment">// namespace tensor</span></div>
-<div class="line"><a id="l00972" name="l00972"></a><span class="lineno">  972</span> </div>
-<div class="line"><a id="l00973" name="l00973"></a><span class="lineno">  973</span>} <span class="comment">// namespace sil</span></div>
+<div class="line"><a id="l00969" name="l00969"></a><span class="lineno">  969</span> </div>
+<div class="line"><a id="l00970" name="l00970"></a><span class="lineno">  970</span>} <span class="comment">// namespace tensor</span></div>
+<div class="line"><a id="l00971" name="l00971"></a><span class="lineno">  971</span> </div>
+<div class="line"><a id="l00972" name="l00972"></a><span class="lineno">  972</span>} <span class="comment">// namespace sil</span></div>
 <div class="ttc" id="aclasssil_1_1tensor_1_1TensorAccessor_html"><div class="ttname"><a href="classsil_1_1tensor_1_1TensorAccessor.html">sil::tensor::TensorAccessor</a></div><div class="ttdef"><b>Definition</b> <a href="#l00275">tensor_impl.hpp:276</a></div></div>
 <div class="ttc" id="aclasssil_1_1tensor_1_1TensorAccessor_html_a137febb359fac8a15ac2bbbd3cb3f695"><div class="ttname"><a href="classsil_1_1tensor_1_1TensorAccessor.html#a137febb359fac8a15ac2bbbd3cb3f695">sil::tensor::TensorAccessor::TensorAccessor</a></div><div class="ttdeci">KOKKOS_FUNCTION constexpr TensorAccessor()</div><div class="ttdef"><b>Definition</b> <a href="#l00337">tensor_impl.hpp:337</a></div></div>
 <div class="ttc" id="aclasssil_1_1tensor_1_1TensorAccessor_html_a392e0699882d8edd960137cc3bdd1713"><div class="ttname"><a href="classsil_1_1tensor_1_1TensorAccessor.html#a392e0699882d8edd960137cc3bdd1713">sil::tensor::TensorAccessor::access_element</a></div><div class="ttdeci">static KOKKOS_FUNCTION constexpr discrete_element_type access_element()</div><div class="ttdef"><b>Definition</b> <a href="#l00382">tensor_impl.hpp:382</a></div></div>
@@ -1207,10 +1206,11 @@ $(function(){initNavTree('tensor__impl_8hpp_source.html',''); initResizable(true
 <div class="ttc" id="aconceptsil_1_1misc_1_1Specialization_html"><div class="ttname"><a href="conceptsil_1_1misc_1_1Specialization.html">sil::misc::Specialization</a></div><div class="ttdef"><b>Definition</b> <a href="specialization_8hpp_source.html#l00023">specialization.hpp:23</a></div></div>
 <div class="ttc" id="aconceptsil_1_1tensor_1_1TensorIndex_html"><div class="ttname"><a href="conceptsil_1_1tensor_1_1TensorIndex.html">sil::tensor::TensorIndex</a></div><div class="ttdef"><b>Definition</b> <a href="#l00106">tensor_impl.hpp:106</a></div></div>
 <div class="ttc" id="aconceptsil_1_1tensor_1_1TensorNatIndex_html"><div class="ttname"><a href="conceptsil_1_1tensor_1_1TensorNatIndex.html">sil::tensor::TensorNatIndex</a></div><div class="ttdef"><b>Definition</b> <a href="#l00111">tensor_impl.hpp:111</a></div></div>
+<div class="ttc" id="anamespaceddc_html"><div class="ttname"><a href="namespaceddc.html">ddc</a></div><div class="ttdef"><b>Definition</b> <a href="signed__discrete__element_8hpp_source.html#l00080">signed_discrete_element.hpp:80</a></div></div>
 <div class="ttc" id="anamespacesil_1_1misc_html_a77a9a68a30b01dd41dcaa84fada239d2"><div class="ttname"><a href="namespacesil_1_1misc.html#a77a9a68a30b01dd41dcaa84fada239d2">sil::misc::cartesian_prod_t</a></div><div class="ttdeci">convert_type_seq_to_t&lt; ddc::DiscreteDomain, typename detail::CartesianProd&lt; Domains... &gt;::type &gt; cartesian_prod_t</div><div class="ttdef"><b>Definition</b> <a href="type__seq__ext_8hpp_source.html#l00040">type_seq_ext.hpp:40</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_a164aa1d6ecb53a91d54f7158f7b0bcb7"><div class="ttname"><a href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">sil::tensor::Tensor</a></div><div class="ttdeci">Tensor(ddc::Chunk&lt; ElementType, SupportType, Allocator &gt;) -&gt; Tensor&lt; ElementType, SupportType, Kokkos::layout_right, typename Allocator::memory_space &gt;</div></div>
-<div class="ttc" id="anamespacesil_1_1tensor_html_a6b2f3421d43c572b05cc7ecb8334e5fd"><div class="ttname"><a href="namespacesil_1_1tensor.html#a6b2f3421d43c572b05cc7ecb8334e5fd">sil::tensor::natural_tensor_prod_domain_t</a></div><div class="ttdeci">detail::NaturalTensorProdDomain&lt; Dom1, Dom2 &gt;::type natural_tensor_prod_domain_t</div><div class="ttdef"><b>Definition</b> <a href="#l00812">tensor_impl.hpp:812</a></div></div>
-<div class="ttc" id="anamespacesil_1_1tensor_html_ac265afa3e78c715cbb7f64f9ace68f9d"><div class="ttname"><a href="namespacesil_1_1tensor.html#ac265afa3e78c715cbb7f64f9ace68f9d">sil::tensor::natural_tensor_prod_domain</a></div><div class="ttdeci">natural_tensor_prod_domain_t&lt; Dom1, Dom2 &gt; natural_tensor_prod_domain(Dom1 dom1, Dom2 dom2)</div><div class="ttdef"><b>Definition</b> <a href="#l00817">tensor_impl.hpp:817</a></div></div>
+<div class="ttc" id="anamespacesil_1_1tensor_html_a6b2f3421d43c572b05cc7ecb8334e5fd"><div class="ttname"><a href="namespacesil_1_1tensor.html#a6b2f3421d43c572b05cc7ecb8334e5fd">sil::tensor::natural_tensor_prod_domain_t</a></div><div class="ttdeci">detail::NaturalTensorProdDomain&lt; Dom1, Dom2 &gt;::type natural_tensor_prod_domain_t</div><div class="ttdef"><b>Definition</b> <a href="#l00811">tensor_impl.hpp:811</a></div></div>
+<div class="ttc" id="anamespacesil_1_1tensor_html_ac265afa3e78c715cbb7f64f9ace68f9d"><div class="ttname"><a href="namespacesil_1_1tensor.html#ac265afa3e78c715cbb7f64f9ace68f9d">sil::tensor::natural_tensor_prod_domain</a></div><div class="ttdeci">natural_tensor_prod_domain_t&lt; Dom1, Dom2 &gt; natural_tensor_prod_domain(Dom1 dom1, Dom2 dom2)</div><div class="ttdef"><b>Definition</b> <a href="#l00816">tensor_impl.hpp:816</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_ad931792b69b009623e283e74cdb06076"><div class="ttname"><a href="namespacesil_1_1tensor.html#ad931792b69b009623e283e74cdb06076">sil::tensor::natural_domain_t</a></div><div class="ttdeci">typename detail::NaturalDomainType&lt; Index &gt;::type natural_domain_t</div><div class="ttdef"><b>Definition</b> <a href="#l00142">tensor_impl.hpp:142</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_aeada71b3699ecf64d8d6cbfc44bf6a8c"><div class="ttname"><a href="namespacesil_1_1tensor.html#aeada71b3699ecf64d8d6cbfc44bf6a8c">sil::tensor::tensor_accessor_for_domain_t</a></div><div class="ttdeci">detail::TensorAccessorForDomain&lt; Dom &gt;::type tensor_accessor_for_domain_t</div><div class="ttdef"><b>Definition</b> <a href="#l00334">tensor_impl.hpp:334</a></div></div>
 <div class="ttc" id="anamespacesil_html"><div class="ttname"><a href="namespacesil.html">sil</a></div><div class="ttdoc">The top-level namespace of SimiLie.</div><div class="ttdef"><b>Definition</b> <a href="csr_8hpp_source.html#l00015">csr.hpp:15</a></div></div>
