@@ -73,5 +73,6 @@ doxygen_add_docs(doc
 	"${CMAKE_CURRENT_SOURCE_DIR}/exterior_module.md"
 	"${CMAKE_CURRENT_SOURCE_DIR}/physics_module.md"
 	"${CMAKE_CURRENT_SOURCE_DIR}/onelab_interface.md"
+	"${CMAKE_CURRENT_SOURCE_DIR}/multidomains.md"
         "${SimiLie_SOURCE_DIR}/src/similie/"
         ALL)

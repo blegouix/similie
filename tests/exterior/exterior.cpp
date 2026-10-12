@@ -630,3 +630,66 @@ TEST(LocalCochain, Test)
                     2.);
     EXPECT_EQ(cochain.integrate(), 3.);
 }
+
+TEST(Coboundary, NativeStencilOrientation)
+{
+    using Direction = sil::tensor::Covariant<sil::tensor::TensorNaturalIndex<X, Y>>;
+    struct CochainIndex : sil::tensor::TensorNaturalIndex<X, Y>
+    {
+    };
+    using Cochain = sil::tensor::Covariant<CochainIndex>;
+    using Output = sil::exterior::coboundary_index_t<Direction, Cochain>;
+    auto const chain = sil::exterior::tangent_basis<2, ddc::DiscreteDomain<DDimX, DDimY>>(
+            ddc::DiscreteElement<DDimX, DDimY>(4, 4));
+    auto const lower = sil::exterior::tangent_basis<1, ddc::DiscreteDomain<DDimX, DDimY>>(
+            ddc::DiscreteElement<DDimX, DDimY>(4, 4));
+    auto verify = [&](auto operation) {
+        auto const positive
+                = operation
+                          .value(chain,
+                                 lower,
+                                 ddc::DiscreteElement<DDimX, DDimY>(4, 4),
+                                 ddc::DiscreteElement<Output>(Output::access_id({0, 1})));
+        auto const negative
+                = operation
+                          .value(chain,
+                                 lower,
+                                 ddc::DiscreteElement<DDimX, DDimY>(4, 4),
+                                 ddc::DiscreteElement<Output>(Output::access_id({1, 0})));
+        auto const zero = operation
+                                  .value(chain,
+                                         lower,
+                                         ddc::DiscreteElement<DDimX, DDimY>(4, 4),
+                                         ddc::DiscreteElement<Output>(Output::access_id({0, 0})));
+        double norm = 0.0;
+        ddc::device_for_each(positive.domain(), [&](auto entry) {
+            EXPECT_DOUBLE_EQ(negative.mem(entry), -positive.mem(entry));
+            EXPECT_DOUBLE_EQ(zero.mem(entry), 0.0);
+            norm += std::abs(positive.mem(entry));
+        });
+        EXPECT_DOUBLE_EQ(norm, 4.0);
+        auto sample = [](auto point, auto component) {
+            return std::sin(
+                    0.17 * point.template uid<DDimX>() + 0.23 * point.template uid<DDimY>()
+                    + 0.31 * component.template uid<Cochain>());
+        };
+        auto result = sil::exterior::detail::make_stencil<Kokkos::HostSpace, Output>(
+                ddc::DiscreteElement<>());
+        operation(
+                sil::tensor::Tensor(result.span_view()),
+                sample,
+                chain,
+                lower,
+                ddc::DiscreteElement<DDimX, DDimY>(4, 4));
+        double contracted = 0.0;
+        ddc::device_for_each(positive.domain(), [&](auto entry) {
+            contracted += positive.mem(entry)
+                          * sample(
+                                  ddc::DiscreteElement<DDimX, DDimY>(entry),
+                                  ddc::DiscreteElement<Cochain>(entry));
+        });
+        EXPECT_NEAR(contracted, result.mem(ddc::DiscreteElement<Output>(0)), 1.e-14);
+    };
+    verify(sil::exterior::Coboundary<Direction, Cochain> {});
+    verify(sil::exterior::TransposedCoboundary<Direction, Cochain> {});
+}

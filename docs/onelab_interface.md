@@ -4,7 +4,7 @@ SPDX-FileCopyrightText: 2026 Baptiste Legouix
 SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
-[ONELAB](https://onelab.info/) is a standard interface specification that allows [Gmsh](https://gmsh.info/) to control external PDE solvers. SimiLie provides an ONELAB interface for several standard physics problems, including scalar field and magnetostatic physics.
+[ONELAB](https://onelab.info/) is a standard interface specification that allows [Gmsh](https://gmsh.info/) to control external PDE solvers. SimiLie provides an ONELAB interface for several standard physics problems, including scalar field, magnetostatics and potential flow.
 
 \important The ONELAB interface in SimiLie is mostly AI-generated and has received very limited testing. Unfortunately, I do not have the resources to do better. Please keep in mind that, without AI assistance, this interface would not exist at all. Contributions would of course be greatly appreciated.
 
@@ -12,4 +12,12 @@ The geometry is defined in a `.geo` file, which is interpreted entirely by Gmsh.
 
 \important Because the ONELAB interface is evolving rapidly, the `.silpro` format is currently undocumented. For a basic introduction, please refer to the [onelab_inductor](https://github.com/blegouix/similie/tree/main/examples/onelab_inductor) example.
 
-A key limitation of using SimiLie through its ONELAB interface is that SimiLie only supports rectilinear hexahedral grids. If Gmsh requests SimiLie to process a mesh containing non-hexahedral elements, it should trigger an assertion.
+\important This documentation is fully AI-generated.
+
+The mesh reader accepts supported MSH2 quadrilateral and hexahedral meshes.
+Each physics adapter imposes further structured-grid requirements. In
+particular, potential flow uses a mapped annular quadrilateral mesh rather
+than a rectilinear grid. Its physical region and boundary tags define a runtime
+graph of connected patches, including a circulation cut. See
+\ref multidomains "multidomains and potential flow" for the model, `.silpro`
+controls, example commands and GetDP comparison workflow.

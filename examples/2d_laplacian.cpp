@@ -216,7 +216,12 @@ int main(int argc, char** argv)
             potential,
             metric,
             position);
-    laplacian(laplacian_tensor, potential);
+    // A single rule is broadcast to both boundaries of each grid dimension.
+    laplacian(
+            laplacian_tensor,
+            potential,
+            sil::tensor::NaturalScalarExtrapolationRule {},
+            sil::tensor::ZeroExtrapolationRule {});
     Kokkos::fence();
 
     auto position_host

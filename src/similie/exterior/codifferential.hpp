@@ -128,48 +128,149 @@ template <
 using codifferential_tensor_t = typename detail::
         CodifferentialTensorType<TagToRemoveFromCochain, CochainTag, TensorType>::type;
 
-namespace detail {
-
-template <std::size_t I, class T>
-struct CodifferentialHodgeOutputIndex : tensor::uncharacterize_t<T>
-{
-};
-
-template <class Ids, class T>
-struct CodifferentialHodgeOutputIndexSeq_;
-
-template <std::size_t... Id, class T>
-struct CodifferentialHodgeOutputIndexSeq_<std::index_sequence<Id...>, T>
-{
-    using type = ddc::TypeSeq<tensor::Covariant<CodifferentialHodgeOutputIndex<Id, T>>...>;
-};
-
-template <std::size_t EndId, class T>
-struct CodifferentialHodgeOutputIndexSeq;
-
-template <std::size_t EndId, class T>
-    requires(EndId == 0)
-struct CodifferentialHodgeOutputIndexSeq<EndId, T>
-{
-    using type = ddc::TypeSeq<>;
-};
-
-template <std::size_t EndId, class T>
-    requires(EndId > 0)
-struct CodifferentialHodgeOutputIndexSeq<EndId, T>
-{
-    using type =
-            typename CodifferentialHodgeOutputIndexSeq_<std::make_index_sequence<EndId>, T>::type;
-};
-
-} // namespace detail
-
-template <std::size_t EndId, class T>
-using codifferential_hodge_output_indices_t =
-        typename detail::CodifferentialHodgeOutputIndexSeq<EndId, T>::type;
 
 template <class... Args>
 struct Codifferential;
+
+/** Pointwise codifferential with independently supplied Hodge operators.
+ * \important This operator and documentation is fully AI-generated.
+ * The evaluator samples the dual cochain *u, including its boundary policies.
+ * The inverse Hodge maps its transposed coboundary back to a primal (k-1)-form.
+ * Both geometric realizations use delta = (-1)^(n(k+1)+1) *^-1 d^T *;
+ * incidence and the sign are independent of the chosen Hodge discretization.
+ * Callbacks permit stored dual tensors and lazy constitutive cochains alike.
+ */
+template <tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag>
+struct Codifferential<TagToRemoveFromCochain, CochainTag>
+{
+    template <
+            class Output,
+            class DualEvaluator,
+            class InverseHodge,
+            class Chain,
+            class LowerChain,
+            class Element>
+    KOKKOS_FUNCTION static void operator()(
+            Output output,
+            DualEvaluator evaluate_dual,
+            InverseHodge inverse_hodge,
+            Chain chain,
+            LowerChain lower_chain,
+            Element elem)
+    {
+        using DualIndices = codifferential_hodge_output_indices_t<
+                TagToRemoveFromCochain::size() - CochainTag::rank(),
+                TagToRemoveFromCochain>;
+        using DualIndex
+                = misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, DualIndices>;
+        using TargetIndex = misc::convert_type_seq_to_t<
+                tensor::TensorAntisymmetricIndex,
+                ddc::type_seq_merge_t<ddc::TypeSeq<TagToRemoveFromCochain>, DualIndices>>;
+        auto dual = detail::make_stencil<typename Output::memory_space, TargetIndex>(
+                ddc::DiscreteElement<>());
+        TransposedCoboundary<TagToRemoveFromCochain, DualIndex>::
+        operator()(tensor::Tensor(dual.span_view()), evaluate_dual, chain, lower_chain, elem);
+        inverse_hodge(output, tensor::Tensor(dual.span_view()), elem);
+        if constexpr ((TagToRemoveFromCochain::size() * (CochainTag::rank() + 1) + 1) % 2 == 1)
+            output *= -1;
+    }
+
+    /** Scalar codifferential coefficients on the incident dual faces.
+     * Spatial stencil coordinates are offsets plus one, with the center at one.
+     * \important This operator and documentation is fully AI-generated.
+     */
+    template <class DualField, class InverseHodge, class Element>
+        requires(CochainTag::rank() == 1)
+    KOKKOS_FUNCTION static auto value(DualField const&, InverseHodge inverse_hodge, Element elem)
+    {
+        using DualIndex = misc::convert_type_seq_to_t<
+                tensor::TensorAntisymmetricIndex,
+                codifferential_hodge_output_indices_t<
+                        TagToRemoveFromCochain::size() - 1,
+                        TagToRemoveFromCochain>>;
+        using TopIndex = misc::convert_type_seq_to_t<
+                tensor::TensorAntisymmetricIndex,
+                ddc::type_seq_merge_t<
+                        ddc::TypeSeq<TagToRemoveFromCochain>,
+                        codifferential_hodge_output_indices_t<
+                                TagToRemoveFromCochain::size() - 1,
+                                TagToRemoveFromCochain>>>;
+        using ChainDomain = typename detail::NonSpectatorDimension<
+                TagToRemoveFromCochain,
+                typename DualField::non_indices_domain_t>::type;
+        auto const chain = tangent_basis<
+                TagToRemoveFromCochain::size(),
+                ChainDomain,
+                typename DualField::memory_space>(typename ChainDomain::discrete_element_type {});
+        auto const lower = tangent_basis<
+                TagToRemoveFromCochain::size() - 1,
+                ChainDomain,
+                typename DualField::memory_space>(typename ChainDomain::discrete_element_type {});
+        // Build incidence at a positive local origin, independently of physical
+        // coordinates, so a domain's first node never wraps the stencil front.
+        Element origin = elem;
+        for (std::size_t axis = 0; axis < TagToRemoveFromCochain::size(); ++axis) {
+            ddc::detail::array(origin)[axis] = 2;
+        }
+        auto const incidence = TransposedCoboundary<TagToRemoveFromCochain, DualIndex>::
+                value(chain,
+                      lower,
+                      origin,
+                      tensor::TensorAccessor<TopIndex>::access_element(
+                              tensor::TensorAccessor<TopIndex>::canonical_natural_element(
+                                      ddc::DiscreteElement<TopIndex>(0))));
+        auto unit = detail::make_stencil<typename DualField::memory_space, TopIndex>(
+                ddc::DiscreteElement<>());
+        unit.mem(ddc::DiscreteElement<TopIndex>(0)) = 1.0;
+        double const scale
+                = -inverse_hodge.inverse_zero_form(tensor::Tensor(unit.span_view()), elem);
+        auto result = detail::make_stencil<typename DualField::memory_space, DualIndex>(Element {});
+        for (std::size_t i = 0; i < result.storage().size(); ++i)
+            result.storage()[i] = scale * incidence.storage()[i];
+        return result;
+    }
+
+    template <class DualField, class DualRules, class InverseHodge, class Element>
+        requires requires { typename DualField::non_indices_domain_t; }
+    KOKKOS_FUNCTION static auto value(
+            DualField const& dual_field,
+            DualRules dual_rules,
+            InverseHodge inverse_hodge,
+            Element elem)
+    {
+        auto const rules = [&] {
+            if constexpr (misc::Specialization<DualRules, tensor::ExtrapolationRules>)
+                return dual_rules;
+            else
+                return tensor::make_extrapolation_rules(dual_field, dual_rules);
+        }();
+        using ChainDomain = typename detail::NonSpectatorDimension<
+                TagToRemoveFromCochain,
+                typename DualField::non_indices_domain_t>::type;
+        auto const chain = tangent_basis<
+                TagToRemoveFromCochain::size() - CochainTag::rank() + 1,
+                ChainDomain,
+                typename DualField::memory_space>(typename ChainDomain::discrete_element_type {});
+        auto const lower = tangent_basis<
+                TagToRemoveFromCochain::size() - CochainTag::rank(),
+                ChainDomain,
+                typename DualField::memory_space>(typename ChainDomain::discrete_element_type {});
+        auto output = detail::make_stencil<
+                typename DualField::memory_space,
+                codifferential_index_t<TagToRemoveFromCochain, CochainTag>>(
+                ddc::DiscreteElement<>());
+        operator()(
+                tensor::Tensor(output.span_view()),
+                [&](auto sample, auto component) {
+                    return rules(dual_field, sample).mem(component);
+                },
+                inverse_hodge,
+                chain,
+                lower,
+                elem);
+        return output;
+    }
+};
 
 template <
         tensor::TensorIndex MetricIndex,
@@ -253,23 +354,6 @@ struct Codifferential<
         using dual_tensor_index = misc::convert_type_seq_to_t<
                 tensor::TensorAntisymmetricIndex,
                 source_hodge_output_indices>;
-        using dual_codifferential_index = misc::
-                convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, target_hodge_input_indices>;
-        [[maybe_unused]] tensor::TensorAccessor<dual_codifferential_index>
-                dual_codifferential_accessor;
-
-        std::array<double, dual_codifferential_index::access_size()> dual_codifferential_alloc {};
-        ddc::ChunkSpan<
-                double,
-                ddc::DiscreteDomain<dual_codifferential_index>,
-                Kokkos::layout_right,
-                typename TensorType::memory_space>
-                dual_codifferential_span(
-                        dual_codifferential_alloc.data(),
-                        dual_codifferential_accessor.domain());
-
-        sil::tensor::Tensor dual_codifferential(dual_codifferential_span);
-
         auto dual_evaluator = [&](auto sampled_elem, auto dual_elem) {
             if (!misc::domain_contains(tensor.non_indices_domain(), sampled_elem)
                 || !misc::domain_contains(metric.non_indices_domain(), sampled_elem)
@@ -297,22 +381,24 @@ struct Codifferential<
             return dual_tensor.mem(dual_elem);
         };
 
-        TransposedCoboundary<TagToRemoveFromCochain, dual_tensor_index>::
-        operator()(dual_codifferential, dual_evaluator, chain, lower_chain, elem);
-
-        DiscreteHodgeStar<
-                CellComplex::CircumcentricDual,
-                tensor::upper_t<target_hodge_input_indices>,
-                ddc::type_seq_remove_t<
-                        tensor::lower_t<source_hodge_input_indices>,
-                        ddc::TypeSeq<TagToRemoveFromCochain>>,
-                MetricType,
-                PositionType,
-                typename TensorType::non_indices_domain_t::discrete_element_type>::
-        operator()(codifferential_tensor, dual_codifferential, metric, position, elem);
-        if constexpr ((TagToRemoveFromCochain::size() * (CochainTag::rank() + 1) + 1) % 2 == 1) {
-            codifferential_tensor *= -1;
-        }
+        Codifferential<TagToRemoveFromCochain, CochainTag>::operator()(
+                codifferential_tensor,
+                dual_evaluator,
+                [&](auto output, auto dual, auto sample) {
+                    DiscreteHodgeStar<
+                            CellComplex::CircumcentricDual,
+                            tensor::upper_t<target_hodge_input_indices>,
+                            ddc::type_seq_remove_t<
+                                    tensor::lower_t<source_hodge_input_indices>,
+                                    ddc::TypeSeq<TagToRemoveFromCochain>>,
+                            MetricType,
+                            PositionType,
+                            typename TensorType::non_indices_domain_t::discrete_element_type>::
+                    operator()(output, dual, metric, position, sample);
+                },
+                chain,
+                lower_chain,
+                elem);
     }
 };
 
@@ -441,14 +527,22 @@ public:
                 TargetHodgeOutputIndices>(exec_space, *m_dual_hodge_star, metric, position);
     }
 
+    template <class DualExtrapolationRule = tensor::ZeroExtrapolationRule>
     CodifferentialTensorType operator()(
             CodifferentialTensorType codifferential_tensor,
-            TensorType tensor) const
+            TensorType tensor,
+            DualExtrapolationRule dual_extrapolation = {}) const
     {
         auto exec_space = m_exec_space;
         auto hodge_star = *m_hodge_star;
         auto dual_hodge_star = *m_dual_hodge_star;
         auto dual_tensor_buffer = *m_dual_tensor_buffer;
+        auto const dual_extrapolation_rules = [&]() {
+            if constexpr (misc::Specialization<DualExtrapolationRule, tensor::ExtrapolationRules>)
+                return dual_extrapolation;
+            else
+                return tensor::make_extrapolation_rules(dual_tensor_buffer, dual_extrapolation);
+        }();
         auto chain = m_chain;
         auto lower_chain = m_lower_chain;
 
@@ -470,43 +564,18 @@ public:
                 codifferential_tensor.non_indices_domain(),
                 KOKKOS_LAMBDA(
                         typename TensorType::non_indices_domain_t::discrete_element_type elem) {
-                    [[maybe_unused]] tensor::TensorAccessor<DualCodifferentialIndex>
-                            dual_codifferential_accessor;
-                    std::array<double, DualCodifferentialIndex::access_size()>
-                            dual_codifferential_alloc {};
-                    ddc::ChunkSpan<
-                            double,
-                            ddc::DiscreteDomain<DualCodifferentialIndex>,
-                            Kokkos::layout_right,
-                            typename TensorType::memory_space>
-                            dual_codifferential_span(
-                                    dual_codifferential_alloc.data(),
-                                    dual_codifferential_accessor.domain());
-                    sil::tensor::Tensor dual_codifferential(dual_codifferential_span);
-
-                    TransposedCoboundary<TagToRemoveFromCochain, DualTensorIndex>::operator()(
-                            dual_codifferential,
+                    Codifferential<TagToRemoveFromCochain, CochainTag>::operator()(
+                            codifferential_tensor[elem],
                             [&](auto sampled_elem, auto dual_elem) {
-                                if (!misc::domain_contains(
-                                            dual_tensor_buffer.non_indices_domain(),
-                                            sampled_elem)) {
-                                    return 0.0;
-                                }
-                                return dual_tensor_buffer.mem(sampled_elem, dual_elem);
+                                return dual_extrapolation_rules(dual_tensor_buffer, sampled_elem)
+                                        .mem(dual_elem);
+                            },
+                            [&](auto output, auto dual, auto sample) {
+                                sil::tensor::tensor_prod(output, dual, dual_hodge_star[sample]);
                             },
                             chain,
                             lower_chain,
                             elem);
-
-                    sil::tensor::tensor_prod(
-                            codifferential_tensor[elem],
-                            dual_codifferential,
-                            dual_hodge_star[elem]);
-                    if constexpr (
-                            (TagToRemoveFromCochain::size() * (CochainTag::rank() + 1) + 1) % 2
-                            == 1) {
-                        codifferential_tensor[elem] *= -1;
-                    }
                 });
 
         return codifferential_tensor;
@@ -553,7 +622,9 @@ template <
         misc::Specialization<tensor::Tensor> TensorType,
         misc::Specialization<tensor::Tensor> HodgeStarType,
         misc::Specialization<tensor::Tensor> DualHodgeStarType,
-        class ExecSpace>
+        class ExecSpace,
+        class DualExtrapolationRule = tensor::ZeroExtrapolationRule>
+    requires(misc::NotSpecialization<DualExtrapolationRule, tensor::Tensor>)
 codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codifferential(
         ExecSpace const& exec_space,
         codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType>
@@ -561,18 +632,21 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
         TensorType tensor,
         HodgeStarType hodge_star,
         DualHodgeStarType dual_hodge_star,
-        DualTensorType dual_tensor_buffer)
+        DualTensorType dual_tensor_buffer,
+        DualExtrapolationRule dual_extrapolation = {})
 {
+    auto const dual_extrapolation_rules = [&]() {
+        if constexpr (misc::Specialization<DualExtrapolationRule, tensor::ExtrapolationRules>)
+            return dual_extrapolation;
+        else
+            return tensor::make_extrapolation_rules(dual_tensor_buffer, dual_extrapolation);
+    }();
     static_assert(tensor::is_covariant_v<TagToRemoveFromCochain>);
     using source_hodge_output_indices = codifferential_hodge_output_indices_t<
             TagToRemoveFromCochain::size() - CochainTag::rank(),
             TagToRemoveFromCochain>;
     using dual_tensor_index = misc::
             convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, source_hodge_output_indices>;
-    using target_hodge_input_indices = ddc::
-            type_seq_merge_t<ddc::TypeSeq<TagToRemoveFromCochain>, source_hodge_output_indices>;
-    using dual_codifferential_index = misc::
-            convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, target_hodge_input_indices>;
     using non_spectator_dimensions = typename detail::NonSpectatorDimension<
             TagToRemoveFromCochain,
             typename TensorType::non_indices_domain_t>::type;
@@ -595,42 +669,18 @@ codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codiffer
             exec_space,
             codifferential_tensor.non_indices_domain(),
             KOKKOS_LAMBDA(typename TensorType::non_indices_domain_t::discrete_element_type elem) {
-                [[maybe_unused]] tensor::TensorAccessor<dual_codifferential_index>
-                        dual_codifferential_accessor;
-                std::array<double, dual_codifferential_index::access_size()>
-                        dual_codifferential_alloc {};
-                ddc::ChunkSpan<
-                        double,
-                        ddc::DiscreteDomain<dual_codifferential_index>,
-                        Kokkos::layout_right,
-                        typename TensorType::memory_space>
-                        dual_codifferential_span(
-                                dual_codifferential_alloc.data(),
-                                dual_codifferential_accessor.domain());
-                sil::tensor::Tensor dual_codifferential(dual_codifferential_span);
-
-                TransposedCoboundary<TagToRemoveFromCochain, dual_tensor_index>::operator()(
-                        dual_codifferential,
+                Codifferential<TagToRemoveFromCochain, CochainTag>::operator()(
+                        codifferential_tensor[elem],
                         [&](auto sampled_elem, auto dual_elem) {
-                            if (!misc::domain_contains(
-                                        dual_tensor_buffer.non_indices_domain(),
-                                        sampled_elem)) {
-                                return 0.0;
-                            }
-                            return dual_tensor_buffer.mem(sampled_elem, dual_elem);
+                            return dual_extrapolation_rules(dual_tensor_buffer, sampled_elem)
+                                    .mem(dual_elem);
+                        },
+                        [&](auto output, auto dual, auto sample) {
+                            sil::tensor::tensor_prod(output, dual, dual_hodge_star[sample]);
                         },
                         chain,
                         lower_chain,
                         elem);
-
-                sil::tensor::tensor_prod(
-                        codifferential_tensor[elem],
-                        dual_codifferential,
-                        dual_hodge_star[elem]);
-                if constexpr (
-                        (TagToRemoveFromCochain::size() * (CochainTag::rank() + 1) + 1) % 2 == 1) {
-                    codifferential_tensor[elem] *= -1;
-                }
             });
 
     return codifferential_tensor;
@@ -643,20 +693,24 @@ template <
         misc::Specialization<tensor::Tensor> TensorType,
         misc::Specialization<tensor::Tensor> MetricType,
         misc::Specialization<tensor::Tensor> PositionType,
-        class ExecSpace>
+        class ExecSpace,
+        class DualExtrapolationRule = tensor::ZeroExtrapolationRule>
+    requires(misc::NotSpecialization<DualExtrapolationRule, tensor::Tensor>)
 codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType> codifferential(
         ExecSpace const& exec_space,
         codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType>
                 codifferential_tensor,
         TensorType tensor,
         MetricType metric,
-        PositionType position)
+        PositionType position,
+        DualExtrapolationRule dual_extrapolation = {})
 {
     static_assert(tensor::is_covariant_v<TagToRemoveFromCochain>);
-    return make_staged_codifferential<
-            MetricIndex,
-            TagToRemoveFromCochain,
-            CochainTag>(exec_space, tensor, metric, position)(codifferential_tensor, tensor);
+    return make_staged_codifferential<MetricIndex, TagToRemoveFromCochain, CochainTag>(
+            exec_space,
+            tensor,
+            metric,
+            position)(codifferential_tensor, tensor, dual_extrapolation);
 }
 
 } // namespace exterior

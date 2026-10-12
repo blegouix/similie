@@ -14,6 +14,10 @@ SimiLie is a performance-portable (CPU & GPU) C++20 library aiming to extent the
 
 The \ref physics_module "physics module" contains the available physical models and local material operators.
 
+The \ref multidomains "multidomains module" couples structured patches through
+sampling policies and global differential stencils. Its potential flow example
+illustrates mapped geometry, circulation cuts and the ONELAB interface.
+
 \important Absolute WIP, there is no guarantee for proper working. Only OPENMP and CUDA backends have been tested.
 
 ## AI-operability

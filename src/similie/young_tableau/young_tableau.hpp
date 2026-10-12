@@ -1180,7 +1180,7 @@ struct YoungTableauToArray<YoungTableauSeq<Row...>>
 {
     static constexpr auto operator()()
     {
-        static constexpr std::tuple tableau = { YoungTableauRowToArray<Row>::operator()()... };
+        static constexpr std::tuple tableau = {YoungTableauRowToArray<Row>::operator()()...};
         return tableau;
     }
 };
@@ -1240,8 +1240,8 @@ struct ArrayToString<std::index_sequence<RowId...>>
     static constexpr auto operator()(Tuple const tableau)
     {
         return concatenate(
-                RowToString < RowId
-                != sizeof...(RowId) - 1 > ::operator()(std::get<RowId>(tableau))...);
+                RowToString<RowId != sizeof...(RowId) - 1>::operator()(
+                        std::get<RowId>(tableau))...);
     }
 };
 

@@ -134,6 +134,7 @@ TEST(DiscreteHodgeStar, Metric3D)
             form_dom(metric.non_indices_domain(), form_accessor.domain());
     ddc::Chunk form_alloc(form_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor form(form_alloc);
+    ddc::parallel_fill(Kokkos::DefaultHostExecutionSpace {}, form_alloc, 0.0);
 
     ddc::host_for_each(
             metric.non_indices_domain(),
@@ -151,9 +152,20 @@ TEST(DiscreteHodgeStar, Metric3D)
             metric.non_indices_domain(),
             [&](ddc::DiscreteElement<DDimX, DDimY, DDimZ> elem) {
                 sil::tensor::tensor_prod(dual_form[elem], hodge_star[elem], form[elem]);
-                EXPECT_DOUBLE_EQ(
+                // * (3 dx^dy) = 3 (2 dx + 3 dy + 6 dz) / sqrt(70).
+                // Edge spacing is 2, so the cochain map has an extra factor 1/2.
+                EXPECT_NEAR(
+                        dual_form(elem, dual_form.accessor().access_element<X>()),
+                        3. / std::sqrt(70.),
+                        1.e-12);
+                EXPECT_NEAR(
+                        dual_form(elem, dual_form.accessor().access_element<Y>()),
+                        4.5 / std::sqrt(70.),
+                        1.e-12);
+                EXPECT_NEAR(
                         dual_form(elem, dual_form.accessor().access_element<Z>()),
-                        1.5 * std::sqrt(6. / 19.));
+                        9. / std::sqrt(70.),
+                        1.e-12);
             });
 
     [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<HodgeStarDomain2>
@@ -175,6 +187,52 @@ TEST(DiscreteHodgeStar, Metric3D)
                 sil::tensor::tensor_prod(form[elem], hodge_star2[elem], dual_form[elem]);
                 EXPECT_DOUBLE_EQ(form(elem, form.accessor().access_element<X, Y>()), 3.);
             });
+
+    // The cell-metric pairing equals reconstruction, continuous Hodge, and
+    // primal reduction on skew charts, including orientation reversals.
+    for (double orientation : {1.0, -1.0}) {
+        ddc::host_for_each(
+                position.non_indices_domain(),
+                [&](ddc::DiscreteElement<DDimX, DDimY, DDimZ> elem) {
+                    double const x = static_cast<double>(
+                            ddc::coordinate(ddc::DiscreteElement<DDimX>(elem)));
+                    double const y = static_cast<double>(
+                            ddc::coordinate(ddc::DiscreteElement<DDimY>(elem)));
+                    double const z = static_cast<double>(
+                            ddc::coordinate(ddc::DiscreteElement<DDimZ>(elem)));
+                    position(elem, position.accessor().access_element<X>())
+                            = orientation * (x + 0.3 * y);
+                    position(elem, position.accessor().access_element<Y>()) = y + 0.2 * z;
+                    position(elem, position.accessor().access_element<Z>()) = z + 0.1 * x;
+                });
+        sil::exterior::fill_discrete_hodge_star<ddc::TypeSeq<RhoUp>, ddc::TypeSeq<MuLow, NuLow>>(
+                Kokkos::DefaultHostExecutionSpace {},
+                hodge_star2,
+                metric,
+                position);
+        ddc::host_for_each(hodge_star2.domain(), [&](auto elem) {
+            auto const natural = hodge_star2.canonical_natural_element(elem);
+            std::array<std::size_t, 2> const
+                    ids {natural.template uid<MuLow>(), natural.template uid<NuLow>()};
+            std::array<std::size_t, 1> const normal = sil::exterior::detail::complement_ids<3>(ids);
+            std::array<double, 9> const pairing = sil::exterior::DiscreteHodgeStar<
+                    sil::exterior::CellComplex::Primal,
+                    ddc::TypeSeq<RhoUp>,
+                    ddc::TypeSeq<MuLow, NuLow>,
+                    decltype(metric),
+                    decltype(position),
+                    ddc::DiscreteElement<DDimX, DDimY, DDimZ>>::
+                    one_form_pairing(
+                            metric,
+                            position,
+                            ddc::DiscreteElement<DDimX, DDimY, DDimZ>(elem));
+            EXPECT_NEAR(
+                    hodge_star2.mem(elem),
+                    sil::exterior::detail::permutation_sign<3>(normal, ids)
+                            * pairing[normal[0] * 3 + natural.template uid<RhoUp>()],
+                    1.e-11);
+        });
+    }
 
     ddc::detail::g_discrete_space_dual<DDimX>.reset();
     ddc::detail::g_discrete_space_dual<DDimY>.reset();
@@ -233,6 +291,7 @@ TEST(ContinuousHodgeStar, Metric3D)
             form_dom(metric.non_indices_domain(), form_accessor.domain());
     ddc::Chunk form_alloc(form_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor form(form_alloc);
+    ddc::parallel_fill(Kokkos::DefaultHostExecutionSpace {}, form_alloc, 0.0);
 
     ddc::host_for_each(
             metric.non_indices_domain(),
@@ -250,13 +309,20 @@ TEST(ContinuousHodgeStar, Metric3D)
             metric.non_indices_domain(),
             [&](ddc::DiscreteElement<DDimX, DDimY, DDimZ> elem) {
                 sil::tensor::tensor_prod(dual_form[elem], hodge_star[elem], form[elem]);
-                // Here metric = [[2,1,0],[1,3,0],[0,0,5]], form = 3 dx^dy, and
-                // *(dx^dy) = sqrt(det(g)) g^{xx} g^{yy} dz = 6 * (3/5) * (2/5) dz = 18/25 dz.
-                // The antisymmetric-component convention stores dz with an additional sqrt(det(g))^-1,
-                // hence the expected value 18 / sqrt(70).
-                EXPECT_DOUBLE_EQ(
+                // For g=[[4,1,2],[1,5,3],[2,3,6]], det(g)=70 and
+                // *(3 dx^dy)=3 (2 dx + 3 dy + 6 dz)/sqrt(70).
+                EXPECT_NEAR(
+                        dual_form(elem, dual_form.accessor().access_element<X>()),
+                        6. / std::sqrt(70.),
+                        1.e-12);
+                EXPECT_NEAR(
+                        dual_form(elem, dual_form.accessor().access_element<Y>()),
+                        9. / std::sqrt(70.),
+                        1.e-12);
+                EXPECT_NEAR(
                         dual_form(elem, dual_form.accessor().access_element<Z>()),
-                        18. * std::sqrt(70.) / 70.);
+                        18. / std::sqrt(70.),
+                        1.e-12);
             });
 
     ddc::detail::g_discrete_space_dual<DDimX>.reset();

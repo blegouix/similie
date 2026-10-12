@@ -64,6 +64,18 @@ SPDX-FileComment = "Adapted from GetDP ONELAB example files for the SimiLie wren
 
 [[annotations]]
 path = [
+    "examples/onelab_potential_flow/magnus.geo",
+    "examples/onelab_potential_flow/magnus_common.pro",
+    "examples/onelab_potential_flow/nacaAirfoil.geo",
+    "examples/onelab_potential_flow/ref/magnus.pro",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "1997-2026 C. Geuzaine, J.-F. Remacle"
+SPDX-License-Identifier = "GPL-2.0-or-later"
+SPDX-FileComment = "Forked and adapted from the Gmsh/GetDP ONELAB potential-flow example for SimiLie."
+
+[[annotations]]
+path = [
     "onelab_interface/.clang-format-ignore",
 ]
 precedence = "override"

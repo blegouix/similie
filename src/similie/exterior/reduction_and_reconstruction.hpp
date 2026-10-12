@@ -321,32 +321,6 @@ KOKKOS_FUNCTION std::array<std::size_t, N - M> hodge_complement_ids(
     return complement;
 }
 
-template <class PositionIndex, class PositionType, class BatchElem, std::size_t K>
-KOKKOS_FUNCTION double primal_reconstruction_diagonal(
-        PositionType position,
-        BatchElem elem,
-        std::array<std::size_t, K> const& ids)
-{
-    if constexpr (K == 0) {
-        return 1.;
-    } else {
-        std::array<double, K * K> jacobian_matrix {};
-        for (std::size_t row = 0; row < K; ++row) {
-            for (std::size_t col = 0; col < K; ++col) {
-                std::array<double, PositionIndex::size()> const edge
-                        = sil::exterior::detail::edge_vector<
-                                PositionIndex>(position, elem, ids[col]);
-                jacobian_matrix[row * K + col] = edge[ids[row]];
-            }
-        }
-        double const jacobian = reduction_determinant<K>(jacobian_matrix);
-        if (Kokkos::abs(jacobian) < 1e-14) {
-            return 0.;
-        }
-        return 1. / jacobian;
-    }
-}
-
 template <std::size_t N, std::size_t K, class MetricType, class BatchElem>
 KOKKOS_FUNCTION double continuous_hodge_value_from_ids(
         MetricType metric,
@@ -354,8 +328,7 @@ KOKKOS_FUNCTION double continuous_hodge_value_from_ids(
         std::array<std::size_t, K> const& source_ids,
         std::array<std::size_t, N - K> const& target_ids)
 {
-    if (!hodge_has_unique_ids<N>(source_ids) || !hodge_has_unique_ids<N>(target_ids)
-        || !hodge_is_complete_permutation<N>(source_ids, target_ids)) {
+    if (!hodge_has_unique_ids<N>(source_ids) || !hodge_has_unique_ids<N>(target_ids)) {
         return 0.;
     }
 
@@ -498,7 +471,7 @@ struct Reduction
         using form_natural_elem_type =
                 typename FormTensorType::accessor_t::natural_domain_t::discrete_element_type;
         if constexpr (target_index_type::rank() == 0) {
-            reduced_tensor.mem(ddc::DiscreteElement<target_index_type>(0))
+            reduced_tensor.mem(reduced_tensor.domain().front())
                     = form_tensor.get(form_tensor.access_element(form_natural_elem_type()));
         } else {
             [[maybe_unused]] sil::tensor::TensorAccessor<source_index_type> source_accessor;
@@ -540,6 +513,8 @@ struct Reduction
             BatchElem elem)
     {
         if constexpr (Complex == CellComplex::Primal) {
+            // Reduce the physical form on its full tangent basis: diagonal
+            // volume ratios alone lose the cross terms of an oblique chart.
             operator()(reduced_tensor, form_tensor, position, elem);
         } else {
             static_assert(
@@ -560,19 +535,59 @@ struct Reduction
             std::array<double, NBASIS * NBASIS> old_hodge_alloc {};
             std::array<double, NBASIS * NBASIS> dual_reduction_alloc {};
 
+            // Use the same full primal reduction matrix as Reconstruction.
+            // Diagonal Cartesian projections vanish under rotations and do not
+            // invert the reconstruction on an oblique mapped cell.
+            std::array<double, NBASIS * NBASIS> primal_reduction_alloc {};
+            std::array<double, NBASIS * NBASIS> primal_inverse_alloc {};
+            std::array<double, NBASIS * NBASIS> primal_workspace_alloc {};
+            for (std::size_t logical = 0; logical < NBASIS; ++logical) {
+                std::array<std::size_t, K> const logical_ids
+                        = detail::combination_from_rank<N, K>(logical);
+                for (std::size_t physical = 0; physical < NBASIS; ++physical) {
+                    std::array<std::size_t, K> const physical_ids
+                            = detail::combination_from_rank<N, K>(physical);
+                    std::array<double, K * K> minor {};
+                    for (std::size_t col = 0; col < K; ++col) {
+                        std::array<double, N> const edge = detail::edge_vector<
+                                position_index_type>(position, elem, logical_ids[col]);
+                        for (std::size_t row = 0; row < K; ++row)
+                            minor[row * K + col] = edge[physical_ids[row]];
+                    }
+                    primal_reduction_alloc[logical * NBASIS + physical]
+                            = detail::reduction_determinant<K>(minor) / misc::factorial(K);
+                }
+            }
+            bool const primal_invertible = misc::math::invert(
+                    misc::math::matrix_view<
+                            double,
+                            typename MetricType::
+                                    memory_space>(primal_inverse_alloc.data(), NBASIS, NBASIS),
+                    misc::math::matrix_view<
+                            double,
+                            typename MetricType::
+                                    memory_space>(primal_reduction_alloc.data(), NBASIS, NBASIS),
+                    misc::math::vector_view<
+                            double,
+                            typename MetricType::
+                                    memory_space>(primal_workspace_alloc.data(), NBASIS * NBASIS));
+
             for (std::size_t primal_id = 0; primal_id < NBASIS; ++primal_id) {
                 std::array<std::size_t, K> const primal_ids
                         = detail::combination_from_rank<N, K>(primal_id);
-                double const reconstruction_diag = detail::primal_reconstruction_diagonal<
-                        position_index_type>(position, elem, primal_ids);
                 for (std::size_t source_id = 0; source_id < NBASIS; ++source_id) {
                     std::array<std::size_t, Q> const source_ids
                             = detail::combination_from_rank<N, Q>(source_id);
-                    coeff_from_primal_alloc[source_id * NBASIS + primal_id]
-                            = detail::continuous_hodge_value_from_ids<
-                                      N,
-                                      K>(metric, elem, primal_ids, source_ids)
-                              * reconstruction_diag;
+                    for (std::size_t physical = 0; physical < NBASIS; ++physical) {
+                        std::array<std::size_t, K> const physical_ids
+                                = detail::combination_from_rank<N, K>(physical);
+                        coeff_from_primal_alloc[source_id * NBASIS + primal_id]
+                                += detail::continuous_hodge_value_from_ids<
+                                           N,
+                                           K>(metric, elem, physical_ids, source_ids)
+                                   * primal_inverse_alloc[physical * NBASIS + primal_id]
+                                   / misc::factorial(K);
+                    }
                 }
                 for (std::size_t target_id = 0; target_id < NBASIS; ++target_id) {
                     std::array<std::size_t, Q> const target_ids
@@ -597,8 +612,11 @@ struct Reduction
             auto workspace = misc::math::vector_view<
                     double,
                     typename MetricType::memory_space>(workspace_alloc.data(), NBASIS * NBASIS);
-            bool const invertible = misc::math::
-                    invert(coeff_from_primal_inverse_view, coeff_from_primal_view, workspace);
+            bool const invertible = primal_invertible
+                                    && misc::math::
+                                            invert(coeff_from_primal_inverse_view,
+                                                   coeff_from_primal_view,
+                                                   workspace);
 
             ddc::device_for_each(reduced_tensor.domain(), [&](auto target_mem_elem) {
                 auto const target_natural_elem

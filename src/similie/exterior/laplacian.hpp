@@ -4,6 +4,7 @@
 #pragma once
 
 #include <optional>
+#include <stdexcept>
 #include <utility>
 
 #include <ddc/ddc.hpp>
@@ -13,7 +14,9 @@
 #include <similie/misc/specialization.hpp>
 #include <similie/misc/type_seq_ext.hpp>
 #include <similie/tensor/character.hpp>
+#include <similie/tensor/scalar_extrapolation_rules.hpp>
 #include <similie/tensor/tensor_impl.hpp>
+#include <similie/tensor/tensor_with_extrapolation_rules.hpp>
 
 #include "coboundary.hpp"
 #include "codifferential.hpp"
@@ -33,15 +36,31 @@ template <
         misc::Specialization<tensor::Tensor> TensorType,
         misc::Specialization<tensor::Tensor> HodgeStarType,
         misc::Specialization<tensor::Tensor> DualHodgeStarType,
-        class ExecSpace>
+        class ExecSpace,
+        class PrimalExtrapolationRule = tensor::ClampExtrapolationRule,
+        class DualExtrapolationRule = tensor::ZeroExtrapolationRule>
 TensorType codifferential_of_coboundary(
         ExecSpace const& exec_space,
         TensorType out_tensor,
         TensorType tensor,
         HodgeStarType hodge_star,
         DualHodgeStarType dual_hodge_star,
-        DualTensorBufferType dual_tensor_buffer)
+        DualTensorBufferType dual_tensor_buffer,
+        PrimalExtrapolationRule primal_extrapolation = {},
+        DualExtrapolationRule dual_extrapolation = {})
 {
+    auto const primal_extrapolation_rules = [&]() {
+        if constexpr (misc::Specialization<PrimalExtrapolationRule, tensor::ExtrapolationRules>)
+            return primal_extrapolation;
+        else
+            return tensor::make_extrapolation_rules(tensor, primal_extrapolation);
+    }();
+    auto const dual_extrapolation_rules = [&]() {
+        if constexpr (misc::Specialization<DualExtrapolationRule, tensor::ExtrapolationRules>)
+            return dual_extrapolation;
+        else
+            return tensor::make_extrapolation_rules(dual_tensor_buffer, dual_extrapolation);
+    }();
     using coboundary_output_index = coboundary_index_t<LaplacianDummyIndex, CochainTag>;
     using codifferential_hodge_output_indices = codifferential_hodge_output_indices_t<
             LaplacianDummyIndex::size() - coboundary_output_index::rank(),
@@ -96,9 +115,8 @@ TensorType codifferential_of_coboundary(
                 Coboundary<LaplacianDummyIndex, CochainTag>::operator()(
                         derivative_tensor,
                         [&](auto sampled_elem, auto cochain_elem) {
-                            auto const clamped_elem = misc::
-                                    clamp_to_domain(tensor.non_indices_domain(), sampled_elem);
-                            return tensor.mem(clamped_elem, cochain_elem);
+                            return primal_extrapolation_rules(tensor, sampled_elem)
+                                    .mem(cochain_elem);
                         },
                         chain,
                         lower_chain,
@@ -131,12 +149,8 @@ TensorType codifferential_of_coboundary(
                 TransposedCoboundary<LaplacianDummyIndex, coboundary_dual_tensor_index>::operator()(
                         dual_codifferential,
                         [&](auto sampled_elem, auto dual_elem) {
-                            if (!misc::domain_contains(
-                                        dual_tensor_buffer.non_indices_domain(),
-                                        sampled_elem)) {
-                                return 0.0;
-                            }
-                            return dual_tensor_buffer.mem(sampled_elem, dual_elem);
+                            return dual_extrapolation_rules(dual_tensor_buffer, sampled_elem)
+                                    .mem(dual_elem);
                         },
                         dual_chain,
                         dual_lower_chain,
@@ -247,6 +261,24 @@ class StagedLaplacian<
     std::optional<DerivativeDualTensorType> m_derivative_dual_tensor_buffer;
 
 public:
+    /**
+     * Access the dual one-cochain produced by the first Hodge stage.
+     * \important This operator and documentation are fully AI-generated.
+     *
+     * The buffer contains the constitutive flux after the staged Laplacian
+     * has evaluated a primal scalar cochain. Connected tensor domains can
+     * balance its trace values without constructing a separate Hodge star.
+     */
+    DerivativeDualTensorType derivative_dual_tensor_buffer() const
+    {
+        return *m_derivative_dual_tensor_buffer;
+    }
+
+    DualDerivativeHodgeStarTensorType dual_derivative_hodge_star() const
+    {
+        return *m_dual_derivative_hodge_star;
+    }
+
     StagedLaplacian(
             ExecSpace const& exec_space,
             DerivativeHodgeStarTensorType&& derivative_hodge_star,
@@ -310,7 +342,14 @@ public:
                 position);
     }
 
-    TensorType operator()(TensorType laplacian_tensor, TensorType tensor)
+    template <
+            class PrimalExtrapolationRule = tensor::ClampExtrapolationRule,
+            class DualExtrapolationRule = tensor::ZeroExtrapolationRule>
+    TensorType operator()(
+            TensorType laplacian_tensor,
+            TensorType tensor,
+            PrimalExtrapolationRule primal_extrapolation = {},
+            DualExtrapolationRule dual_extrapolation = {})
     {
         return detail::codifferential_of_coboundary<
                 MetricIndex,
@@ -321,7 +360,9 @@ public:
                 tensor,
                 *m_derivative_hodge_star,
                 *m_dual_derivative_hodge_star,
-                *m_derivative_dual_tensor_buffer);
+                *m_derivative_dual_tensor_buffer,
+                primal_extrapolation,
+                dual_extrapolation);
     }
 };
 
@@ -596,7 +637,14 @@ public:
                 position);
     }
 
-    TensorType operator()(TensorType laplacian_tensor, TensorType tensor)
+    template <
+            class PrimalExtrapolationRule = tensor::ClampExtrapolationRule,
+            class DualExtrapolationRule = tensor::ZeroExtrapolationRule>
+    TensorType operator()(
+            TensorType laplacian_tensor,
+            TensorType tensor,
+            PrimalExtrapolationRule primal_extrapolation = {},
+            DualExtrapolationRule dual_extrapolation = {})
     {
         auto exec_spaces = Kokkos::Experimental::partition_space(m_exec_space, 1, 1);
 
@@ -609,7 +657,9 @@ public:
                 tensor,
                 *m_derivative_hodge_star,
                 *m_dual_derivative_hodge_star,
-                *m_derivative_dual_tensor_buffer);
+                *m_derivative_dual_tensor_buffer,
+                primal_extrapolation,
+                dual_extrapolation);
 
         StagedCodifferential<
                 MetricIndex,
@@ -622,12 +672,16 @@ public:
                 exec_spaces[1],
                 std::move(*m_hodge_star),
                 std::move(*m_dual_hodge_star),
-                std::move(*m_dual_tensor_buffer))(*m_codifferential_tensor_buffer, tensor);
+                std::move(*m_dual_tensor_buffer))(
+                *m_codifferential_tensor_buffer,
+                tensor,
+                dual_extrapolation);
         sil::exterior::
                 deriv<LaplacianDummyIndex, codifferential_index_t<LaplacianDummyIndex, CochainTag>>(
                         exec_spaces[1],
                         *m_coboundary_of_codifferential_buffer,
-                        *m_codifferential_tensor_buffer);
+                        *m_codifferential_tensor_buffer,
+                        primal_extrapolation);
 
         exec_spaces[0].fence();
         exec_spaces[1].fence();
@@ -786,7 +840,14 @@ public:
                 position);
     }
 
-    TensorType operator()(TensorType laplacian_tensor, TensorType tensor)
+    template <
+            class PrimalExtrapolationRule = tensor::ClampExtrapolationRule,
+            class DualExtrapolationRule = tensor::ZeroExtrapolationRule>
+    TensorType operator()(
+            TensorType laplacian_tensor,
+            TensorType tensor,
+            PrimalExtrapolationRule primal_extrapolation = {},
+            DualExtrapolationRule dual_extrapolation = {})
     {
         StagedCodifferential<
                 MetricIndex,
@@ -799,12 +860,16 @@ public:
                 m_exec_space,
                 std::move(*m_hodge_star),
                 std::move(*m_dual_hodge_star),
-                std::move(*m_dual_tensor_buffer))(*m_codifferential_tensor_buffer, tensor);
+                std::move(*m_dual_tensor_buffer))(
+                *m_codifferential_tensor_buffer,
+                tensor,
+                dual_extrapolation);
         return sil::exterior::
                 deriv<LaplacianDummyIndex, codifferential_index_t<LaplacianDummyIndex, CochainTag>>(
                         m_exec_space,
                         laplacian_tensor,
-                        *m_codifferential_tensor_buffer);
+                        *m_codifferential_tensor_buffer,
+                        primal_extrapolation);
     }
 };
 
@@ -816,7 +881,9 @@ template <
         misc::Specialization<tensor::Tensor> DerivativeHodgeStarType,
         misc::Specialization<tensor::Tensor> DualDerivativeHodgeStarType,
         misc::Specialization<tensor::Tensor> DerivativeDualTensorBufferType,
-        class ExecSpace>
+        class ExecSpace,
+        class PrimalExtrapolationRule = tensor::ClampExtrapolationRule,
+        class DualExtrapolationRule = tensor::ZeroExtrapolationRule>
     requires(detail::ZeroRankLaplacianCochain<LaplacianDummyIndex, CochainTag>)
 TensorType laplacian(
         ExecSpace const& exec_space,
@@ -824,7 +891,9 @@ TensorType laplacian(
         TensorType tensor,
         DerivativeHodgeStarType hodge_star,
         DualDerivativeHodgeStarType dual_hodge_star,
-        DerivativeDualTensorBufferType dual_tensor_buffer)
+        DerivativeDualTensorBufferType dual_tensor_buffer,
+        PrimalExtrapolationRule primal_extrapolation = {},
+        DualExtrapolationRule dual_extrapolation = {})
 {
     using codifferential_of_coboundary_index
             = tensor::Covariant<IndexForCodifferentialOfCoboundaryInLaplacian<
@@ -838,7 +907,9 @@ TensorType laplacian(
             tensor,
             hodge_star,
             dual_hodge_star,
-            dual_tensor_buffer);
+            dual_tensor_buffer,
+            primal_extrapolation,
+            dual_extrapolation);
 }
 
 template <
@@ -854,7 +925,9 @@ template <
         misc::Specialization<tensor::Tensor> DualTensorBufferType,
         misc::Specialization<tensor::Tensor> CodifferentialTensorBufferType,
         misc::Specialization<tensor::Tensor> CoboundaryOfCodifferentialBufferType,
-        class ExecSpace>
+        class ExecSpace,
+        class PrimalExtrapolationRule = tensor::ClampExtrapolationRule,
+        class DualExtrapolationRule = tensor::ZeroExtrapolationRule>
     requires(detail::IntermediateRankLaplacianCochain<LaplacianDummyIndex, CochainTag>)
 TensorType laplacian(
         ExecSpace const& exec_space,
@@ -867,7 +940,9 @@ TensorType laplacian(
         DualHodgeStarType dual_hodge_star,
         DualTensorBufferType dual_tensor_buffer,
         CodifferentialTensorBufferType codifferential_tensor_buffer,
-        CoboundaryOfCodifferentialBufferType coboundary_of_codifferential_buffer)
+        CoboundaryOfCodifferentialBufferType coboundary_of_codifferential_buffer,
+        PrimalExtrapolationRule primal_extrapolation = {},
+        DualExtrapolationRule dual_extrapolation = {})
 {
     using codifferential_of_coboundary_index
             = tensor::Covariant<IndexForCodifferentialOfCoboundaryInLaplacian<
@@ -883,7 +958,9 @@ TensorType laplacian(
             tensor,
             derivative_hodge_star,
             dual_derivative_hodge_star,
-            derivative_dual_tensor_buffer);
+            derivative_dual_tensor_buffer,
+            primal_extrapolation,
+            dual_extrapolation);
 
     sil::exterior::codifferential<MetricIndex, LaplacianDummyIndex, CochainTag>(
             exec_spaces[1],
@@ -891,12 +968,14 @@ TensorType laplacian(
             tensor,
             hodge_star,
             dual_hodge_star,
-            dual_tensor_buffer);
+            dual_tensor_buffer,
+            dual_extrapolation);
     sil::exterior::
             deriv<LaplacianDummyIndex, codifferential_index_t<LaplacianDummyIndex, CochainTag>>(
                     exec_spaces[1],
                     coboundary_of_codifferential_buffer,
-                    codifferential_tensor_buffer);
+                    codifferential_tensor_buffer,
+                    primal_extrapolation);
 
     exec_spaces[0].fence();
     exec_spaces[1].fence();
@@ -922,7 +1001,9 @@ template <
         misc::Specialization<tensor::Tensor> DualHodgeStarType,
         misc::Specialization<tensor::Tensor> DualTensorBufferType,
         misc::Specialization<tensor::Tensor> CodifferentialTensorBufferType,
-        class ExecSpace>
+        class ExecSpace,
+        class PrimalExtrapolationRule = tensor::ClampExtrapolationRule,
+        class DualExtrapolationRule = tensor::ZeroExtrapolationRule>
     requires(detail::TopRankLaplacianCochain<LaplacianDummyIndex, CochainTag>)
 TensorType laplacian(
         ExecSpace const& exec_space,
@@ -931,7 +1012,9 @@ TensorType laplacian(
         HodgeStarType hodge_star,
         DualHodgeStarType dual_hodge_star,
         DualTensorBufferType dual_tensor_buffer,
-        CodifferentialTensorBufferType codifferential_tensor_buffer)
+        CodifferentialTensorBufferType codifferential_tensor_buffer,
+        PrimalExtrapolationRule primal_extrapolation = {},
+        DualExtrapolationRule dual_extrapolation = {})
 {
     sil::exterior::codifferential<MetricIndex, LaplacianDummyIndex, CochainTag>(
             exec_space,
@@ -939,12 +1022,14 @@ TensorType laplacian(
             tensor,
             hodge_star,
             dual_hodge_star,
-            dual_tensor_buffer);
-    return sil::exterior::deriv<
-            LaplacianDummyIndex,
-            codifferential_index_t<
-                    LaplacianDummyIndex,
-                    CochainTag>>(exec_space, laplacian_tensor, codifferential_tensor_buffer);
+            dual_tensor_buffer,
+            dual_extrapolation);
+    return sil::exterior::
+            deriv<LaplacianDummyIndex, codifferential_index_t<LaplacianDummyIndex, CochainTag>>(
+                    exec_space,
+                    laplacian_tensor,
+                    codifferential_tensor_buffer,
+                    primal_extrapolation);
 }
 
 } // namespace exterior

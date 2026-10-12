@@ -17,5 +17,6 @@ namespace sil {
 #include "csr/csr.hpp"
 #include "exterior/exterior.hpp"
 #include "mesher/mesher.hpp"
+#include "multidomains/multidomains.hpp"
 #include "tensor/tensor.hpp"
 #include "young_tableau/young_tableau.hpp"

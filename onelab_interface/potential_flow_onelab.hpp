@@ -1,0 +1,673 @@
+// SPDX-FileCopyrightText: 2026 Baptiste Legouix
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// AI-GENERATED
+
+#pragma once
+
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstddef>
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
+#include <limits>
+#include <map>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
+#include <ddc/ddc.hpp>
+
+#include <similie/multidomains/laplacian.hpp>
+#include <similie/physics/hamilton_equations.hpp>
+#include <similie/physics/scalar_field/scalar_field_with_power_coupling.hpp>
+
+#include "gmsh_structured_grid.hpp"
+#include "potential_flow_topology.hpp"
+
+namespace similie::onelab_interface::potential_flow_onelab {
+
+
+struct PotentialFlowSamples
+{
+    std::vector<std::array<double, 2>> differences;
+    std::vector<std::array<double, 4>> cell_potentials;
+};
+
+template <class ExecSpace, class Field>
+void fill_potential_patch(
+        ExecSpace const& exec,
+        Field field,
+        Kokkos::View<double*> potential,
+        std::size_t ring_nodes)
+{
+    ddc::parallel_for_each(
+            "fill_potential_patch",
+            exec,
+            field.non_indices_domain(),
+            KOKKOS_LAMBDA(ddc::DiscreteElement<GridX, GridY> elem) {
+                field.mem(elem, ddc::DiscreteElement<PotentialIndex>(0)) = potential(
+                        elem.uid<GridY>() * ring_nodes + elem.uid<GridX>() % ring_nodes);
+            });
+}
+
+template <class ExecSpace, class Field, class Gradient, class Rules>
+void reconstruct_potential_patch(
+        ExecSpace const& exec,
+        Field field,
+        Gradient gradient,
+        Rules rules,
+        std::size_t ring_nodes,
+        std::size_t radial_nodes,
+        Kokkos::View<double* [2]> differences,
+        Kokkos::View<double* [4]> cells)
+{
+    sil::exterior::deriv<GradientIndex, PotentialIndex>(exec, gradient, field, rules);
+    ddc::parallel_for_each(
+            "reconstruct_potential_patch",
+            exec,
+            field.non_indices_domain(),
+            KOKKOS_LAMBDA(ddc::DiscreteElement<GridX, GridY> elem) {
+                std::size_t const index
+                        = elem.uid<GridY>() * ring_nodes + elem.uid<GridX>() % ring_nodes;
+                differences(index, 0)
+                        = gradient(elem, gradient.accessor().template access_element<X>());
+                differences(index, 1)
+                        = gradient(elem, gradient.accessor().template access_element<Y>());
+                if (elem.uid<GridY>() + 1 < radial_nodes) {
+                    cells(index, 0)
+                            = rules(field, elem).mem(ddc::DiscreteElement<PotentialIndex>(0));
+                    cells(index, 1) = rules(field, elem + ddc::DiscreteVector<GridX, GridY>(1, 0))
+                                              .mem(ddc::DiscreteElement<PotentialIndex>(0));
+                    cells(index, 2) = rules(field, elem + ddc::DiscreteVector<GridX, GridY>(1, 1))
+                                              .mem(ddc::DiscreteElement<PotentialIndex>(0));
+                    cells(index, 3) = rules(field, elem + ddc::DiscreteVector<GridX, GridY>(0, 1))
+                                              .mem(ddc::DiscreteElement<PotentialIndex>(0));
+                }
+            });
+}
+
+/**
+ * Reconstruct cell potentials and dphi with the ordinary exterior derivative.
+ * \important This operator and documentation is fully AI-generated.
+ *
+ * Each patch owns its left nodes and samples its right trace in its neighbor.
+ * Disjoint ownership makes the last forward difference cross the interface
+ * through ExternalDomainExtrapolationRule. The same rule carries the signed
+ * circulation jump, so velocity and exported potential use the same branch.
+ * The radial boundary nodes have already been constrained by the solver;
+ * one-sided primal continuation supplies the unused outer forward difference.
+ * Physical normal flux constraints belong to the assembled nodal balances.
+ */
+template <class BindDomains>
+PotentialFlowSamples sample_potential_flow_field(
+        std::vector<double> const& potential,
+        double circulation,
+        std::size_t ring_nodes,
+        std::size_t radial_nodes,
+        std::vector<std::size_t> const& starts,
+        std::vector<std::size_t> const& cells,
+        BindDomains bind_domains)
+{
+    if (potential.size() != ring_nodes * radial_nodes || radial_nodes < 2
+        || starts.size() != cells.size() || starts.empty())
+        throw std::runtime_error("invalid potential-flow sample domains");
+    [[maybe_unused]] sil::tensor::TensorAccessor<PotentialIndex> scalar_accessor;
+    [[maybe_unused]] sil::tensor::TensorAccessor<GradientIndex> gradient_accessor;
+    std::vector<ddc::Chunk<double, PotentialDomain, ddc::DeviceAllocator<double>>> allocations;
+    std::vector<ddc::Chunk<
+            double,
+            ddc::DiscreteDomain<GridX, GridY, GradientIndex>,
+            ddc::DeviceAllocator<double>>>
+            gradients;
+    allocations.reserve(starts.size());
+    gradients.reserve(starts.size());
+    for (std::size_t side = 0; side < starts.size(); ++side) {
+        if (cells[side] == 0)
+            throw std::runtime_error("empty potential-flow sample patch");
+        GridDomain const
+                grid(ddc::DiscreteElement<GridX, GridY>(starts[side], 0),
+                     ddc::DiscreteVector<GridX, GridY>(cells[side], radial_nodes));
+        allocations.emplace_back(
+                PotentialDomain(grid, scalar_accessor.domain()),
+                ddc::DeviceAllocator<double>());
+        gradients.emplace_back(
+                ddc::DiscreteDomain<GridX, GridY, GradientIndex>(grid, gradient_accessor.domain()),
+                ddc::DeviceAllocator<double>());
+    }
+    std::vector<sil::tensor::Tensor<
+            double,
+            PotentialDomain,
+            Kokkos::layout_right,
+            Kokkos::DefaultExecutionSpace::memory_space>>
+            fields;
+    for (std::size_t side = 0; side < starts.size(); ++side)
+        fields.emplace_back(allocations[side]);
+    Kokkos::View<double*> values("sample_potential", potential.size());
+    auto host_values = Kokkos::create_mirror_view(values);
+    for (std::size_t i = 0; i < potential.size(); ++i)
+        host_values(i) = potential[i];
+    Kokkos::deep_copy(values, host_values);
+    Kokkos::View<double* [2]> differences("potential_differences", potential.size());
+    Kokkos::View<double* [4]> cell_values("potential_cell_values", potential.size());
+    auto const domains = bind_domains(fields);
+    sil::multidomains::DomainExecution<Kokkos::DefaultExecutionSpace>
+            partitions(Kokkos::DefaultExecutionSpace {}, domains.domain_count());
+    partitions.for_each([&](std::size_t id, Kokkos::DefaultExecutionSpace const& stream) {
+        fill_potential_patch(stream, fields[id], values, ring_nodes);
+    });
+    partitions.fence(); // Every donor cochain must be ready before any derivative reads it.
+    partitions.for_each([&](std::size_t id, Kokkos::DefaultExecutionSpace const& stream) {
+        reconstruct_potential_patch(
+                stream,
+                fields[id],
+                sil::tensor::Tensor(gradients[id]),
+                domains.extrapolation_rules(id, circulation),
+                ring_nodes,
+                radial_nodes,
+                differences,
+                cell_values);
+    });
+    partitions.fence();
+    auto const host_differences
+            = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), differences);
+    auto const host_cells = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), cell_values);
+    PotentialFlowSamples samples;
+    samples.differences.resize(potential.size());
+    samples.cell_potentials.resize(potential.size());
+    for (std::size_t i = 0; i < potential.size(); ++i) {
+        samples.differences[i] = {host_differences(i, 0), host_differences(i, 1)};
+        samples.cell_potentials[i]
+                = {host_cells(i, 0), host_cells(i, 1), host_cells(i, 2), host_cells(i, 3)};
+    }
+    return samples;
+}
+
+struct Inputs
+{
+    double velocity = 100.0 / 3.6;
+    double box_size = 7.0;
+    double incidence = -10.0 * 3.14159265358979323846 / 180.0;
+    double circulation = -10.0;
+    double mass_flow_rate = -100.0;
+    double density = 1.225;
+    bool impose_circulation = false;
+    bool airfoil = true;
+};
+
+struct Result
+{
+    double circulation = 0.0;
+    double mass_flow_rate = 0.0;
+    double lift_kutta_joukowski = 0.0;
+    double max_speed = 0.0;
+    std::size_t domain_count = 0;
+    std::size_t node_count = 0;
+    std::size_t cell_count = 0;
+    solvers::StrongFormulationSolverDiagnostics solver_diagnostics;
+};
+
+inline Result run(
+        std::filesystem::path const& mesh_file,
+        std::filesystem::path const& output_file,
+        Inputs const& inputs,
+        solvers::StrongFormulationSolverSettings const& settings)
+{
+    auto const parsed = sil::onelab_interface::gmsh::parse_supported_msh2_mesh(mesh_file);
+    if (!std::holds_alternative<sil::onelab_interface::gmsh::QuadrilateralMesh>(parsed))
+        throw std::runtime_error("potential flow requires structured quadrilaterals");
+    auto const& mesh = std::get<sil::onelab_interface::gmsh::QuadrilateralMesh>(parsed);
+    // Infer the mapped annulus from oriented quad incidence, independent of
+    // elementary-surface numbers, patch counts and element ordering.
+    std::map<std::size_t, std::size_t> angular_next, radial_next;
+    auto bind_next = [](auto& next, std::size_t first, std::size_t second) {
+        auto const [entry, inserted] = next.emplace(first, second);
+        if (!inserted && entry->second != second)
+            throw std::runtime_error("inconsistent oriented tensor-grid connectivity");
+    };
+    for (auto const& cell : mesh.cells) {
+        if (cell.physical_tag != 2 && cell.physical_tag != 3)
+            throw std::runtime_error("potential-flow mesh contains a non-fluid quad");
+        bind_next(angular_next, cell.node_tags[0], cell.node_tags[1]);
+        bind_next(angular_next, cell.node_tags[3], cell.node_tags[2]);
+        bind_next(radial_next, cell.node_tags[0], cell.node_tags[3]);
+        bind_next(radial_next, cell.node_tags[1], cell.node_tags[2]);
+    }
+    std::size_t inner_start = std::numeric_limits<std::size_t>::max();
+    for (auto const& edge : mesh.boundary_edges)
+        if (edge.physical_tag == 12)
+            inner_start = std::min({inner_start, edge.node_tags[0], edge.node_tags[1]});
+    if (inner_start == std::numeric_limits<std::size_t>::max())
+        throw std::runtime_error("potential-flow mesh has no body boundary");
+    std::vector<std::size_t> inner_nodes;
+    std::size_t current = inner_start;
+    do {
+        if (inner_nodes.size() >= mesh.nodes.size() || !angular_next.contains(current))
+            throw std::runtime_error("body boundary is not a closed tensor-grid ring");
+        inner_nodes.push_back(current);
+        current = angular_next.at(current);
+    } while (current != inner_start);
+    std::size_t const ni = inner_nodes.size();
+    std::map<std::size_t, std::size_t> logical_index;
+    std::size_t nodes_j = 0;
+    for (std::size_t i = 0; i < ni; ++i) {
+        std::size_t j = 0;
+        current = inner_nodes[i];
+        while (true) {
+            if (!logical_index.emplace(current, j * ni + i).second)
+                throw std::runtime_error("radial grid lines intersect or form a cycle");
+            ++j;
+            if (!radial_next.contains(current))
+                break;
+            current = radial_next.at(current);
+        }
+        if (i == 0)
+            nodes_j = j;
+        if (j != nodes_j)
+            throw std::runtime_error("radial tensor-grid extents differ");
+    }
+    std::size_t const cells_per_patch_j = nodes_j - 1;
+    std::size_t const node_count = ni * nodes_j;
+    if (nodes_j < 2 || logical_index.size() != mesh.nodes.size()
+        || mesh.cells.size() != ni * cells_per_patch_j)
+        throw std::runtime_error("potential-flow mesh is not a complete mapped annulus");
+    std::vector<bool> occupied(mesh.cells.size(), false);
+    std::vector<int> column_physics(ni, 0);
+    for (auto const& cell : mesh.cells) {
+        std::size_t const first = logical_index.at(cell.node_tags[0]);
+        std::size_t const i = first % ni, j = first / ni;
+        if (j >= cells_per_patch_j || logical_index.at(cell.node_tags[1]) != j * ni + (i + 1) % ni
+            || logical_index.at(cell.node_tags[2]) != (j + 1) * ni + (i + 1) % ni
+            || logical_index.at(cell.node_tags[3]) != (j + 1) * ni + i || occupied[first])
+            throw std::runtime_error("invalid or duplicate annular quad");
+        occupied[first] = true;
+        if (column_physics[i] && column_physics[i] != cell.physical_tag)
+            throw std::runtime_error("fluid physical regions must follow radial interfaces");
+        column_physics[i] = cell.physical_tag;
+    }
+    std::vector<sil::onelab_interface::gmsh::MeshNode> nodes(node_count);
+    for (auto const& node : mesh.nodes)
+        nodes[logical_index.at(node.tag)] = node;
+    auto index = [&](std::size_t i, std::size_t j) { return j * ni + i % ni; };
+    auto point = [&](std::size_t i, std::size_t j) {
+        auto const& n = nodes[index(i, j)];
+        return std::array<double, 2> {n.x, n.y};
+    };
+    std::vector<int> boundary(node_count, 0);
+    std::vector<int> outer_boundary(ni, 0);
+    std::size_t cut_node_i = ni;
+    std::size_t cut_edges = 0;
+    std::vector<bool> wake_edges(cells_per_patch_j, false), body_edges(ni, false);
+    for (auto const& edge : mesh.boundary_edges) {
+        if (edge.physical_tag == 13) {
+            std::size_t const first = logical_index.at(edge.node_tags[0]);
+            std::size_t const second = logical_index.at(edge.node_tags[1]);
+            if (first % ni != second % ni || (cut_node_i != ni && cut_node_i != first % ni)
+                || (first > second ? first - second : second - first) != ni)
+                throw std::runtime_error("wake must follow one complete radial interface");
+            std::size_t const row = std::min(first, second) / ni;
+            if (row >= cells_per_patch_j || wake_edges[row])
+                throw std::runtime_error("duplicate wake edge");
+            wake_edges[row] = true;
+            cut_node_i = first % ni;
+            ++cut_edges;
+        }
+        if (edge.physical_tag == 12) {
+            std::size_t const first = logical_index.at(edge.node_tags[0]);
+            std::size_t const second = logical_index.at(edge.node_tags[1]);
+            std::size_t const begin = (first + 1) % ni == second ? first : second;
+            if (first >= ni || second >= ni || (begin + 1) % ni != (begin == first ? second : first)
+                || body_edges[begin])
+                throw std::runtime_error("invalid or duplicate body boundary edge");
+            body_edges[begin] = true;
+        }
+        if (edge.physical_tag != 10 && edge.physical_tag != 11)
+            continue;
+        std::size_t const first = logical_index.at(edge.node_tags[0]);
+        std::size_t const second = logical_index.at(edge.node_tags[1]);
+        if (first / ni != nodes_j - 1 || second / ni != nodes_j - 1)
+            throw std::runtime_error("potential boundaries must lie on the outer ring");
+        {
+            std::size_t const begin = (first % ni + 1) % ni == second % ni ? first : second;
+            outer_boundary[begin % ni] = edge.physical_tag;
+        }
+        for (std::size_t const tag : edge.node_tags) {
+            std::size_t const id = logical_index.at(tag);
+            if (boundary[id] && boundary[id] != edge.physical_tag)
+                throw std::runtime_error("upstream and downstream boundaries overlap");
+            boundary[id] = edge.physical_tag;
+        }
+    }
+    if (std::find(body_edges.begin(), body_edges.end(), false) != body_edges.end()
+        || cut_edges != cells_per_patch_j
+        || std::find(boundary.begin(), boundary.end(), 10) == boundary.end()
+        || std::find(boundary.begin(), boundary.end(), 11) == boundary.end())
+        throw std::runtime_error("potential-flow physical boundary is incomplete");
+    // Split the ring at physical-region interfaces, exterior-law changes and the wake.
+    // The number and extents of domains are geometry data, not C++ types.
+    std::vector<std::size_t> side_start, side_cells;
+    for (std::size_t i = 0; i < ni; ++i)
+        if (i == cut_node_i || outer_boundary[i] != outer_boundary[(i + ni - 1) % ni]
+            || column_physics[i] != column_physics[(i + ni - 1) % ni])
+            side_start.push_back(i);
+    for (std::size_t id = 0; id < side_start.size(); ++id)
+        side_cells.push_back((side_start[(id + 1) % side_start.size()] + ni - side_start[id]) % ni);
+    std::size_t const cut_cell_i = (cut_node_i + ni - 1) % ni;
+    auto topology = [&](double prescribed_scale) {
+        sil::multidomains::Topology<2> graph(side_start.size());
+        std::size_t const wall
+                = graph.add_boundary({sil::tensor::NaturalScalarExtrapolationRule {}});
+        std::size_t const upstream
+                = graph.add_boundary({sil::tensor::PrescribedScalarExtrapolationRule {0.0}});
+        std::size_t const downstream
+                = graph.add_boundary({sil::tensor::PrescribedScalarExtrapolationRule {
+                        prescribed_scale * inputs.velocity * inputs.box_size}});
+        for (std::size_t id = 0; id < side_start.size(); ++id) {
+            std::size_t const next = (id + 1) % side_start.size();
+            graph.connect(
+                    {id, 0, sil::tensor::BoundarySide::Upper},
+                    {next, 0, sil::tensor::BoundarySide::Lower},
+                    false,
+                    1.0,
+                    side_start[next] == cut_node_i ? -1.0 : 0.0);
+            graph.connect_boundary({id, 1, sil::tensor::BoundarySide::Lower}, wall);
+            int const tag = outer_boundary[side_start[id]];
+            graph.connect_boundary(
+                    {id, 1, sil::tensor::BoundarySide::Upper},
+                    tag == 10 ? upstream : (tag == 11 ? downstream : wall));
+        }
+        graph.validate();
+        return graph;
+    };
+    FreeScalarFieldHamiltonian const hamiltonian(0.0, 0.0, 2.0);
+    PotentialFlowPhysics const equations(hamiltonian);
+    [[maybe_unused]] sil::tensor::TensorAccessor<PositionIndex> position_accessor;
+    std::vector<ddc::Chunk<double, PositionDomain, ddc::HostAllocator<double>>>
+            position_allocations;
+    std::vector<std::vector<std::size_t>> global_indices(side_start.size());
+    position_allocations.reserve(side_start.size());
+    for (std::size_t side = 0; side < side_start.size(); ++side) {
+        GridDomain const
+                grid(ddc::DiscreteElement<GridX, GridY>(side_start[side], 0),
+                     ddc::DiscreteVector<GridX, GridY>(side_cells[side], nodes_j));
+        position_allocations.emplace_back(
+                PositionDomain(grid, position_accessor.domain()),
+                ddc::HostAllocator<double>());
+        sil::tensor::Tensor position(position_allocations.back());
+        global_indices[side].reserve(grid.size());
+        ddc::host_for_each(grid, [&](ddc::DiscreteElement<GridX, GridY> elem) {
+            std::array<double, 2> const coordinates = point(elem.uid<GridX>(), elem.uid<GridY>());
+            position(elem, position_accessor.access_element<X>()) = coordinates[0];
+            position(elem, position_accessor.access_element<Y>()) = coordinates[1];
+            global_indices[side].push_back(index(elem.uid<GridX>(), elem.uid<GridY>()));
+        });
+    }
+    std::vector<ddc::Chunk<double, PositionDomain, ddc::DeviceAllocator<double>>>
+            device_position_allocations;
+    std::vector<sil::tensor::Tensor<
+            double,
+            PositionDomain,
+            Kokkos::layout_right,
+            Kokkos::DefaultExecutionSpace::memory_space>>
+            positions;
+    std::vector<Kokkos::View<std::size_t*>> device_indices;
+    device_position_allocations.reserve(side_start.size());
+    for (std::size_t side = 0; side < side_start.size(); ++side) {
+        device_position_allocations
+                .emplace_back(position_allocations[side].domain(), ddc::DeviceAllocator<double>());
+        ddc::parallel_deepcopy(device_position_allocations.back(), position_allocations[side]);
+        positions.emplace_back(device_position_allocations.back());
+        device_indices.emplace_back("potential_global_indices", global_indices[side].size());
+        auto mirror = Kokkos::create_mirror_view(device_indices.back());
+        for (std::size_t i = 0; i < global_indices[side].size(); ++i)
+            mirror(i) = global_indices[side][i];
+        Kokkos::deep_copy(device_indices.back(), mirror);
+    }
+    auto bind_indexed_domains = [&](double prescribed_scale) {
+        std::vector<sil::multidomains::IndexedScalarField<GridX, GridY>> fields;
+        for (std::size_t side = 0; side < side_start.size(); ++side)
+            fields.push_back({positions[side].non_indices_domain(), device_indices[side].data()});
+        return bind_potential_flow_domains(
+                topology(prescribed_scale),
+                fields,
+                positions,
+                equations);
+    };
+    auto bind_samples = [&](auto const& fields) {
+        return bind_potential_flow_domains(topology(1.0), fields, positions, equations);
+    };
+    auto const base_domains = bind_indexed_domains(1.0);
+    solvers::AssembledLinearSystem const system
+            = sil::multidomains::assemble_multidomain_laplacian<GradientIndex>(
+                    Kokkos::DefaultExecutionSpace {},
+                    base_domains,
+                    node_count,
+                    [&](PotentialFlowPhysics const&) { return inputs.density; },
+                    0.0);
+    auto const response_domains = bind_indexed_domains(0.0);
+    Kokkos::View<double**> const jump_rhs
+            = sil::multidomains::assemble_multidomain_laplacian_rhs<GradientIndex>(
+                    Kokkos::DefaultExecutionSpace {},
+                    response_domains,
+                    system,
+                    [&](PotentialFlowPhysics const&) { return inputs.density; },
+                    1.0);
+    Result result;
+    result.domain_count = side_start.size();
+    result.node_count = node_count;
+    result.cell_count = mesh.cells.size();
+    Kokkos::View<double**> const base_solution("potential_base_solution", node_count, 1);
+    Kokkos::View<double**> const response_solution("potential_response_solution", node_count, 1);
+    std::vector<solvers::StrongFormulationSolverDiagnostics> const diagnostics
+            = solvers::minimize_strong_formulation_residual(
+                    Kokkos::DefaultExecutionSpace {},
+                    system.matrix,
+                    std::vector {system.rhs, jump_rhs},
+                    std::vector {base_solution, response_solution},
+                    settings);
+    result.solver_diagnostics = diagnostics[0];
+    auto const base_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), base_solution);
+    auto const response_host
+            = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), response_solution);
+    std::vector<double> base_ring(node_count), response_ring(node_count);
+    for (std::size_t i = 0; i < node_count; ++i) {
+        base_ring[i] = base_host(i, 0);
+        response_ring[i] = response_host(i, 0);
+    }
+    PotentialFlowSamples const base_samples = sample_potential_flow_field(
+            base_ring,
+            0.0,
+            ni,
+            nodes_j,
+            side_start,
+            side_cells,
+            bind_samples);
+    PotentialFlowSamples const response_samples = sample_potential_flow_field(
+            response_ring,
+            1.0,
+            ni,
+            nodes_j,
+            side_start,
+            side_cells,
+            bind_samples);
+    auto velocity = [&](PotentialFlowSamples const& samples,
+                        std::size_t i,
+                        std::size_t j,
+                        double xi,
+                        double eta) {
+        auto const a = point(i, j), b = point(i + 1, j);
+        auto const c = point(i + 1, j + 1), d = point(i, j + 1);
+        double const tx = (1.0 - eta) * (b[0] - a[0]) + eta * (c[0] - d[0]);
+        double const ty = (1.0 - eta) * (b[1] - a[1]) + eta * (c[1] - d[1]);
+        double const rx = (1.0 - xi) * (d[0] - a[0]) + xi * (c[0] - b[0]);
+        double const ry = (1.0 - xi) * (d[1] - a[1]) + xi * (c[1] - b[1]);
+        double const dt = (1.0 - eta) * samples.differences[index(i, j)][0]
+                          + eta * samples.differences[index(i, j + 1)][0];
+        double const dr = (1.0 - xi) * samples.differences[index(i, j)][1]
+                          + xi * samples.differences[index(i + 1, j)][1];
+        double const determinant = tx * ry - ty * rx;
+        if (std::abs(determinant) < 1.0e-16)
+            throw std::runtime_error("degenerate quad metric");
+        double const gradient_x = (dt * ry - ty * dr) / determinant;
+        double const gradient_y = (tx * dr - dt * rx) / determinant;
+        return std::array<
+                double,
+                2> {equations.dpotential_dt<X>(gradient_x), equations.dpotential_dt<Y>(gradient_y)};
+    };
+    auto mass_flow = [&](PotentialFlowSamples const& samples) {
+        double flux = 0.0;
+        for (std::size_t j = 0; j < cells_per_patch_j; ++j) {
+            auto const v = velocity(samples, cut_cell_i, j, 1.0, 0.5);
+            auto const p0 = point(cut_node_i, j), p1 = point(cut_node_i, j + 1);
+            flux -= inputs.density * (v[0] * (p1[1] - p0[1]) - v[1] * (p1[0] - p0[0]));
+        }
+        return flux;
+    };
+    double const flow0 = mass_flow(base_samples);
+    double const flow1 = mass_flow(response_samples);
+    if (inputs.impose_circulation)
+        result.circulation = inputs.circulation;
+    else if (!inputs.airfoil) {
+        if (std::abs(flow1) < 1.0e-14)
+            throw std::runtime_error("zero mass-flow response");
+        result.circulation = (inputs.mass_flow_rate - flow0) / flow1;
+    } else {
+        // Locate the GetDP Kutta probe in Cartesian space on the mapped quad mesh.
+        std::size_t probe_i = ni;
+        std::size_t probe_j = cells_per_patch_j;
+        double probe_xi = 0.0;
+        double probe_eta = 0.0;
+        double best_clearance = -1.0;
+        for (std::size_t i = 0; i < ni; ++i)
+            for (std::size_t j = 0; j < cells_per_patch_j; ++j) {
+                std::array<double, 2> const a = point(i, j);
+                std::array<double, 2> const b = point(i + 1, j);
+                std::array<double, 2> const c = point(i + 1, j + 1);
+                std::array<double, 2> const d = point(i, j + 1);
+                double const min_x = std::min({a[0], b[0], c[0], d[0]});
+                double const max_x = std::max({a[0], b[0], c[0], d[0]});
+                double const min_y = std::min({a[1], b[1], c[1], d[1]});
+                double const max_y = std::max({a[1], b[1], c[1], d[1]});
+                if (1.0001 < min_x - 1.0e-10 || 1.0001 > max_x + 1.0e-10 || 0.0 < min_y - 1.0e-10
+                    || 0.0 > max_y + 1.0e-10)
+                    continue;
+                double xi = 0.5;
+                double eta = 0.5;
+                for (int iteration = 0; iteration < 12; ++iteration) {
+                    double const x = (1.0 - xi) * ((1.0 - eta) * a[0] + eta * d[0])
+                                     + xi * ((1.0 - eta) * b[0] + eta * c[0]);
+                    double const y = (1.0 - xi) * ((1.0 - eta) * a[1] + eta * d[1])
+                                     + xi * ((1.0 - eta) * b[1] + eta * c[1]);
+                    double const tx = (1.0 - eta) * (b[0] - a[0]) + eta * (c[0] - d[0]);
+                    double const ty = (1.0 - eta) * (b[1] - a[1]) + eta * (c[1] - d[1]);
+                    double const rx = (1.0 - xi) * (d[0] - a[0]) + xi * (c[0] - b[0]);
+                    double const ry = (1.0 - xi) * (d[1] - a[1]) + xi * (c[1] - b[1]);
+                    double const determinant = tx * ry - ty * rx;
+                    if (std::abs(determinant) < 1.0e-16)
+                        break;
+                    xi -= ((x - 1.0001) * ry - rx * y) / determinant;
+                    eta -= (tx * y - ty * (x - 1.0001)) / determinant;
+                }
+                if (xi < -1.0e-9 || xi > 1.0 + 1.0e-9 || eta < -1.0e-9 || eta > 1.0 + 1.0e-9)
+                    continue;
+                double const x = (1.0 - xi) * ((1.0 - eta) * a[0] + eta * d[0])
+                                 + xi * ((1.0 - eta) * b[0] + eta * c[0]);
+                double const y = (1.0 - xi) * ((1.0 - eta) * a[1] + eta * d[1])
+                                 + xi * ((1.0 - eta) * b[1] + eta * c[1]);
+                if (std::hypot(x - 1.0001, y) > 1.0e-8)
+                    continue;
+                double const clearance = std::min({xi, 1.0 - xi, eta, 1.0 - eta});
+                if (clearance > best_clearance) {
+                    probe_i = i;
+                    probe_j = j;
+                    probe_xi = xi;
+                    probe_eta = eta;
+                    best_clearance = clearance;
+                }
+            }
+        if (probe_i == ni)
+            throw std::runtime_error("Kutta probe is outside the fluid mesh");
+        auto kutta = [&](PotentialFlowSamples const& samples) {
+            auto const v = velocity(samples, probe_i, probe_j, probe_xi, probe_eta);
+            return v[1] - std::tan(inputs.incidence) * v[0];
+        };
+        double const v0 = kutta(base_samples), v1 = kutta(response_samples);
+        if (std::abs(v1) < 1.0e-14)
+            throw std::runtime_error("zero Kutta response");
+        result.circulation = -v0 / v1;
+    }
+    result.mass_flow_rate = flow0 + result.circulation * flow1;
+    result.lift_kutta_joukowski = -inputs.density * inputs.velocity * result.circulation;
+    std::vector<double> potential(node_count);
+    for (std::size_t i = 0; i < node_count; ++i)
+        potential[i] = base_ring[i] + result.circulation * response_ring[i];
+    PotentialFlowSamples const samples = sample_potential_flow_field(
+            potential,
+            result.circulation,
+            ni,
+            nodes_j,
+            side_start,
+            side_cells,
+            bind_samples);
+    std::ofstream output(output_file);
+    if (!output)
+        throw std::runtime_error("cannot write potential-flow Gmsh view");
+    output << std::setprecision(16);
+    auto write_quad = [&](std::size_t i, std::size_t j, char const* code) {
+        output << code << '(';
+        for (int a = 0; a < 4; ++a) {
+            std::size_t const ai = i + ((a == 1 || a == 2) ? 1 : 0);
+            std::size_t const ar = j + ((a == 2 || a == 3) ? 1 : 0);
+            auto const& p = nodes[index(ai, ar)];
+            output << p.x << ',' << p.y << ',' << p.z;
+            if (a != 3)
+                output << ',';
+        }
+        output << "){ ";
+    };
+    output << "View \"SimiLie potential\" {\n";
+    for (std::size_t i = 0; i < ni; ++i)
+        for (std::size_t j = 0; j < cells_per_patch_j; ++j) {
+            write_quad(i, j, "SQ");
+            for (int a = 0; a < 4; ++a) {
+                output << samples.cell_potentials[index(i, j)][a];
+                if (a != 3)
+                    output << ',';
+            }
+            output << " };\n";
+        }
+    output << "};\nView \"SimiLie velocity\" {\n";
+    for (std::size_t i = 0; i < ni; ++i)
+        for (std::size_t j = 0; j < cells_per_patch_j; ++j) {
+            std::array<double, 2> const center_velocity = velocity(samples, i, j, 0.5, 0.5);
+            result.max_speed = std::
+                    max(result.max_speed, std::hypot(center_velocity[0], center_velocity[1]));
+            write_quad(i, j, "VQ");
+            for (int a = 0; a < 4; ++a) {
+                std::array<double, 2> const v
+                        = velocity(samples, i, j, a == 1 || a == 2 ? 1.0 : 0.0, a >= 2 ? 1.0 : 0.0);
+                output << v[0] << ',' << v[1] << ",0";
+                if (a != 3)
+                    output << ',';
+            }
+            output << " };\n";
+        }
+    output << "};\nView \"SimiLie pressure difference\" {\n";
+    for (std::size_t i = 0; i < ni; ++i)
+        for (std::size_t j = 0; j < cells_per_patch_j; ++j) {
+            write_quad(i, j, "SQ");
+            for (int a = 0; a < 4; ++a) {
+                std::array<double, 2> const v
+                        = velocity(samples, i, j, a == 1 || a == 2 ? 1.0 : 0.0, a >= 2 ? 1.0 : 0.0);
+                output << -0.5 * inputs.density * (v[0] * v[0] + v[1] * v[1]);
+                if (a != 3)
+                    output << ',';
+            }
+            output << " };\n";
+        }
+    output << "};\n";
+    return result;
+}
+
+} // namespace similie::onelab_interface::potential_flow_onelab

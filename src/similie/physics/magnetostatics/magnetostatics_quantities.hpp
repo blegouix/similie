@@ -112,11 +112,7 @@ public:
         auto stencil = sil::exterior::Coboundary<
                 sil::tensor::Covariant<sil::tensor::TensorNaturalIndex<SpatialIndex...>>,
                 PotentialScalarIndex>::
-                value(sil::exterior::detail::IdentityStencilEvaluator {},
-                      chain,
-                      lower_chain,
-                      elem,
-                      magnetic_induction_component<Index>());
+                value(chain, lower_chain, elem, magnetic_induction_component<Index>());
         if constexpr (std::is_same_v<Index, ddc::type_seq_element_t<1, SpatialIndexSeq>>) {
             stencil *= -1.0;
         }
@@ -186,11 +182,7 @@ public:
 
         auto const output_component = magnetic_induction_component<Index>();
         auto stencil = sil::exterior::Coboundary<CoboundaryIndex, VectorPotentialIndex>::
-                value(sil::exterior::detail::IdentityStencilEvaluator {},
-                      chain,
-                      lower_chain,
-                      elem,
-                      output_component);
+                value(chain, lower_chain, elem, output_component);
         if constexpr (std::is_same_v<Index, ddc::type_seq_element_t<1, SpatialIndexSeq>>) {
             stencil *= -1.0;
         }

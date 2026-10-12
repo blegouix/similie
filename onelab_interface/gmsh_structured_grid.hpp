@@ -39,6 +39,7 @@ struct HexahedralCell
 struct QuadrilateralCell
 {
     int physical_tag;
+    int elementary_tag;
     std::array<std::size_t, 4> node_tags;
 };
 
@@ -309,6 +310,7 @@ inline SupportedMesh parse_supported_msh2_mesh(std::filesystem::path const& mesh
                     }
                     QuadrilateralCell cell;
                     cell.physical_tag = tags.empty() ? 0 : tags[0];
+                    cell.elementary_tag = tags.size() < 2 ? 0 : tags[1];
                     for (std::size_t k = 0; k < cell.node_tags.size(); ++k) {
                         stream >> cell.node_tags[k];
                     }

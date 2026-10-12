@@ -31,6 +31,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 - Whenever possible, avoid using `auto`, `decltype`, etc...
 - Try to mimic the coding style of human-made code in the project as much as possible.
 - Any fully AI-generated file has to be annotated with a `// AI-GENERATED` tag just below the copyright and license.
+- Do not sacrifice code simplicity and mathematical consistency for performance. But make things flexible enough such that unecessary computations should be optimized out by the compiler.
 - Never merge by yourself, let human review.
 
 ## Documenting

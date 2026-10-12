@@ -136,10 +136,33 @@ The transposed coboundary operator accumulates the contributions of incident hig
 
 However this is **not** the adjoint of the coboundary operator, because the latter has to involve the metric in some way. The adjoint operator on forms is the codifferential, presented below.
 
-\important Boundary handling is currently explicit but not yet user-configurable.
-- `Coboundary` (and its alias `deriv(...)`) use a clamped out-of-domain sampling rule: if a forward sample exits the mesh, the nearest in-domain node is reused. On a scalar field this behaves like a one-sided "free"/zero-normal-variation closure for the first derivative.
-- `TransposedCoboundary` does **not** clamp. Missing incident simplices on the far side of the boundary are simply omitted. This is what restores the weighted adjointness needed by the codifferential.
-- Periodic, Dirichlet and generic Neumann boundary conditions are not yet exposed as configurable policies in this module.
+### Sampling policies and local coefficients
+
+\important This documentation is fully AI-generated.
+
+Boundary sampling is configurable independently of incidence and metric.
+`coboundary()` and `deriv()` default to `ClampExtrapolationRule`, which reuses
+the nearest stored node outside the input domain. `transposed_coboundary()` and
+the dual stages of `codifferential()` and `laplacian()` default to
+`ZeroExtrapolationRule`, which omits exterior contributions. A single supplied
+rule applies to all faces; `ExtrapolationRules` can instead select a different
+rule on each lower and upper face. The Laplacian accepts independent primal
+and dual rules.
+
+`NaturalScalarExtrapolationRule` continues the slope from the nearest two
+nodes, while `PrescribedScalarExtrapolationRule` returns a given exterior
+value. Supplying an exterior sampling rule does not itself constrain stored
+boundary unknowns; the multidomain scalar assembler also prescribes those
+nodal rows. Physical normal flux conditions are imposed on the dual flux,
+separately from continuation of the primal scalar field.
+
+The pointwise `Coboundary` and `Codifferential` APIs accept evaluators, allowing
+both stored and lazy cochains. Their coefficient-producing `value()` overloads
+provide stencils that can be composed with the same sampling policies during
+matrix assembly. Tensor extrapolation rules likewise expose `operator()` for
+sampling and `value()` for affine coefficients. The
+\ref multidomains "multidomains documentation" explains donor mappings,
+interface jumps, stencil coordinate conventions and global assembly.
 
 ### Primal and dual cell complexes
 
