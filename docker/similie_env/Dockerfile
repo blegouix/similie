@@ -66,14 +66,8 @@ RUN apt update && apt install -y libopenmpi-dev
 # ----- TESTING & BENCHMARKING & IO LIBRARIES -----
 # -------------------------------------------------
 
-# GTest & GMock
-RUN apt update && apt install -y libgtest-dev libgmock-dev
-
-# Google Benchmark
-RUN git clone --depth 1 --branch v1.9.5 https://github.com/google/benchmark.git /opt/benchmark \
- && cmake -DCMAKE_BUILD_TYPE=Release -DBENCHMARK_ENABLE_TESTING=OFF -B /opt/benchmark/build -S /opt/benchmark \
- && cmake --build /opt/benchmark/build \
- && cmake --install /opt/benchmark/build
+# GTest & GMock & GBenchmark
+RUN apt update && apt install -y libgtest-dev libgmock-dev libbenchmark-dev
 
 # PDI
 RUN update-ca-certificates
