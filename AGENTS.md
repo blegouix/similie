@@ -40,7 +40,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 - Any fully AI-generated operator doc has to be annotated with `\important This documentation is fully AI-generated.`. If the operator is also AI-generated, `\important This operator and documentation is fully AI-generated.`.
 
 ## Subagents
-- Simple works such as building Docker image, compiling, running things, monitoring CI activity, etc... can be delegated to light subagents while general reasonning and implementation has to be performed by root, powerful agent.
+- Simple works such as building Docker image, compiling, running things, monitoring CI activity, etc... should (whenever possible) be delegated to light subagents while general reasoning and implementation has to be performed by root, powerful agent.
 
 ## ONELAB interface
 - `onelab_interface/GmshSocket.h` and `onelab_interface/onelab.h` are forks from existing repos, you will never modify them.
