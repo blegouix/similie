@@ -82,24 +82,33 @@ them before finalization.
 
 For example, after binding numbered scalar input and one-form output patches,
 a two-dimensional coboundary can be assembled as follows. `Direction` is the
-covariant natural index of the two logical axes, `Scalar` is the scalar index,
-and `Grid` is their spatial DDC domain:
+covariant natural index of the two logical axes and `Scalar` is the scalar
+index. Declare the stencil factory at namespace scope. A named functor with a
+`KOKKOS_FUNCTION` call operator also works with CUDA, where NVCC restricts
+extended lambdas inside generic lambdas:
 
 ```cpp
+struct ScalarCoboundaryStencil
+{
+    template <class Operator, class Input, class Rules, class Element, class Component>
+    KOKKOS_FUNCTION auto operator()(
+            Operator const& op, Input const&, Rules const&, Element elem, Component component) const
+    {
+        auto const chain = sil::exterior::tangent_basis<
+                1, typename Input::non_indices_domain_t, typename Input::memory_space>(
+                typename Input::non_indices_domain_t::discrete_element_type {});
+        auto const lower = sil::exterior::tangent_basis<
+                0, typename Input::non_indices_domain_t, typename Input::memory_space>(
+                typename Input::non_indices_domain_t::discrete_element_type {});
+        return op.value(chain, lower, elem, component);
+    }
+};
+
 auto const operators = sil::multidomains::make_multidomain_operator(
         input_domains, sil::exterior::Coboundary<Direction, Scalar> {});
 auto const system = sil::multidomains::assemble_multidomain_differential_operator<2>(
         exec, output_domains, input_domains, operators,
-        KOKKOS_LAMBDA(auto const& op, auto const&, auto const&, auto elem, auto component) {
-            auto const chain = sil::exterior::tangent_basis<
-                    1, Grid, Kokkos::DefaultExecutionSpace::memory_space>(
-                    typename Grid::discrete_element_type {});
-            auto const lower = sil::exterior::tangent_basis<
-                    0, Grid, Kokkos::DefaultExecutionSpace::memory_space>(
-                    typename Grid::discrete_element_type {});
-            return op.value(chain, lower, elem, component);
-        },
-        output_rows, input_columns);
+        ScalarCoboundaryStencil {}, output_rows, input_columns);
 ```
 
 The scalar Laplacian adapter constructs a lazy dual flux \f$\star d\phi\f$ on

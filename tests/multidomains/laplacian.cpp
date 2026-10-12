@@ -255,6 +255,30 @@ struct IndexedTestField : md::IndexedScalarField<Dimensions...>
     }
 };
 
+struct ScalarCoboundaryStencil
+{
+    template <class Operator, class Input, class Rules, class Element, class Component>
+    KOKKOS_FUNCTION auto operator()(
+            Operator const& operation,
+            Input const&,
+            Rules const&,
+            Element elem,
+            Component component) const
+    {
+        auto const chain = sil::exterior::tangent_basis<
+                1,
+                typename Input::non_indices_domain_t,
+                typename Input::memory_space>(
+                typename Input::non_indices_domain_t::discrete_element_type {});
+        auto const lower = sil::exterior::tangent_basis<
+                0,
+                typename Input::non_indices_domain_t,
+                typename Input::memory_space>(
+                typename Input::non_indices_domain_t::discrete_element_type {});
+        return operation.value(chain, lower, elem, component);
+    }
+};
+
 TEST(MultidomainsDifferentialOperator, RectangularCoboundaryAcrossInterface)
 {
     using Direction = sil::tensor::Covariant<sil::tensor::TensorNaturalIndex<X, Y>>;
@@ -307,16 +331,7 @@ TEST(MultidomainsDifferentialOperator, RectangularCoboundaryAcrossInterface)
             output_domains,
             domains,
             operations,
-            KOKKOS_LAMBDA(auto const& op, auto const&, auto const&, auto elem, auto component) {
-                using Grid = ddc::DiscreteDomain<GridX, GridY>;
-                auto const chain = sil::exterior::
-                        tangent_basis<1, Grid, Kokkos::DefaultExecutionSpace::memory_space>(
-                                typename Grid::discrete_element_type {});
-                auto const lower = sil::exterior::
-                        tangent_basis<0, Grid, Kokkos::DefaultExecutionSpace::memory_space>(
-                                typename Grid::discrete_element_type {});
-                return op.value(chain, lower, elem, component);
-            },
+            ScalarCoboundaryStencil {},
             24,
             12,
             true);

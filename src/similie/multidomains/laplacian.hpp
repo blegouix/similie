@@ -160,6 +160,20 @@ constexpr std::size_t column_capacity()
     return samples;
 }
 
+struct CodifferentialStencil
+{
+    template <class Operator, class Flux, class Rules, class Element, class Component>
+    KOKKOS_FUNCTION auto operator()(
+            Operator const& operation,
+            Flux const& flux,
+            Rules const&,
+            Element elem,
+            Component) const
+    {
+        return operation.value(flux, flux, elem);
+    }
+};
+
 template <class Direction, bool Matrix, std::size_t Capacity, class Domains, class Diffusivity>
 void assemble_laplacian_rows(
         Kokkos::DefaultExecutionSpace const& exec,
@@ -175,7 +189,9 @@ void assemble_laplacian_rows(
             sil::exterior::Codifferential<Direction, Direction> {});
     operation.for_each(
             exec,
-            [&](std::size_t id, Kokkos::DefaultExecutionSpace const& stream, auto const& op) {
+            [&](std::size_t id,
+                Kokkos::DefaultExecutionSpace const& stream,
+                sil::exterior::Codifferential<Direction, Direction> const& op) {
                 auto const field = domains.field(id);
                 auto const flux = flux_domains.template field<FieldRole::Flux>(id);
                 auto const rules = flux_domains.template extrapolation_rules<FieldRole::Flux>(id);
@@ -186,12 +202,7 @@ void assemble_laplacian_rows(
                         flux,
                         op,
                         rules,
-                        KOKKOS_LAMBDA(
-                                auto const& local_op,
-                                auto const& input,
-                                auto const&,
-                                auto elem,
-                                auto) { return local_op.value(input, input, elem); });
+                        CodifferentialStencil {});
                 prescribe_faces<Capacity>(
                         stream,
                         system,
