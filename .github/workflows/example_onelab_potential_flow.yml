@@ -65,6 +65,10 @@ jobs:
     environment:
       name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'onelab_potential-flow-onelab-cuda' || 'automatic-ci-run') }}
     steps:
+    - name: Prepare example log
+      run: |
+        echo "EXAMPLE_LOG=${RUNNER_TEMP}/example-onelab_potential_flow-${{ matrix.case.name }}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.log" >> "${GITHUB_ENV}"
+        printf 'Workflow run: %s, attempt: %s\n' "${GITHUB_RUN_ID}" "${GITHUB_RUN_ATTEMPT}" > "${RUNNER_TEMP}/example-onelab_potential_flow-${{ matrix.case.name }}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.log"
     - name: Select target commit
       id: target
       run: |
@@ -89,7 +93,9 @@ jobs:
         key: similie-cuda-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
         fail-on-cache-miss: true
     - name: Run ONELAB potential flow ${{ matrix.case.name }} on GPU
+      shell: bash
       run: |
+        set -o pipefail
         docker image inspect "${IMAGE_TAG}" >/dev/null
         docker run --rm --gpus all \
           --user "$(id -u):$(id -g)" \
@@ -132,4 +138,14 @@ jobs:
               similie.log output.txt --imposed-circulation ${{ matrix.case.impose_circulation }}
             python3 /similie-ci/src/examples/onelab_potential_flow/check_fields.py \
               similie_potential_flow.pos getdp_potential.pos --check-exports
-          '
+          ' 2>&1 | tee -a "${EXAMPLE_LOG}"
+    - name: Upload example outputs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: example-onelab_potential_flow-${{ matrix.case.name }}
+        overwrite: true
+        if-no-files-found: error
+        path: |
+          ${{ env.EXAMPLE_LOG }}
+          ${{ env.CACHE_ROOT }}/build/onelab_potential_flow_cases/${{ matrix.case.name }}/
