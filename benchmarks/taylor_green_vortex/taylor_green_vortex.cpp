@@ -1136,6 +1136,14 @@ int main(int argc, char** argv)
             return 1;
         Kokkos::ScopeGuard const kokkos_scope(argc, argv);
         ddc::ScopeGuard const ddc_scope(argc, argv);
+#if defined(KOKKOS_ENABLE_CUDA)
+        // Debug builds cannot infer the full stack depth of staged DEC operators.
+        std::size_t stack_size = 0;
+        if (cudaDeviceGetLimit(&stack_size, cudaLimitStackSize) != cudaSuccess
+            || (stack_size < 32768 && cudaDeviceSetLimit(cudaLimitStackSize, 32768) != cudaSuccess))
+            throw std::runtime_error(
+                    "Cannot reserve the CUDA stack for Taylor-Green DEC operators");
+#endif
         if (verify) {
             validate();
             return 0;
