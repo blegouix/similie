@@ -10,6 +10,13 @@ if("${SIMILIE_BUILD_YOUNG_TABLEAU}")
 add_subdirectory(young_tableau)
 endif()
 
+if(BUILD_TESTING)
+    include(GoogleTest)
+    add_executable(unit_tests_mhd physics/mhd.cpp main.cpp)
+    target_link_libraries(unit_tests_mhd PRIVATE GTest::gtest sil::sil)
+    gtest_discover_tests(unit_tests_mhd DISCOVERY_MODE PRE_TEST)
+endif()
+
 if(SIMILIE_BUILD_ONELAB_INTERFACE)
     include(GoogleTest)
     add_executable(unit_tests_potential_flow physics/potential_flow.cpp main.cpp)

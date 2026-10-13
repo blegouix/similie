@@ -167,6 +167,19 @@ add_custom_command(
     VERBATIM
 )
 
+set(MAGNETODYNAMICS_GENERATOR
+    "${CMAKE_CURRENT_SOURCE_DIR}/magnetodynamics/magnetodynamics.py")
+set(MAGNETODYNAMICS_HEADER
+    "${SIMILIE_GENERATED_PHYSICS_DIR}/magnetodynamics/magnetodynamics_hamiltonian.hpp")
+add_custom_command(
+    OUTPUT "${MAGNETODYNAMICS_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}" -B "${MAGNETODYNAMICS_GENERATOR}"
+            --output "${MAGNETODYNAMICS_HEADER}"
+    DEPENDS "${MAGNETODYNAMICS_GENERATOR}" "${GENERIC_HAMILTONIAN_GENERATOR}"
+    COMMENT "Generating magnetodynamics Hamiltonian from SymPy"
+    VERBATIM
+)
+
 add_custom_target(similie_physics_generated
     DEPENDS
         "${SCALAR_FIELD_HEADER}"
@@ -176,6 +189,7 @@ add_custom_target(similie_physics_generated
         "${LINEAR_ELASTICITY_HEADER}"
         "${LINEAR_ELASTICITY_CONSTITUTIVE_LAW_HEADER}"
         "${NAVIER_STOKES_FOURIER_HEADER}"
+        "${MAGNETODYNAMICS_HEADER}"
 )
 
 add_library(physics INTERFACE)
@@ -186,6 +200,9 @@ target_include_directories(physics
 )
 
 if(BUILD_TESTING)
+    add_test(NAME magnetodynamics_symbolic_validation
+        COMMAND "${Python3_EXECUTABLE}" -B
+                "${CMAKE_CURRENT_SOURCE_DIR}/magnetodynamics/test_magnetodynamics.py")
     add_test(NAME navier_stokes_fourier_symbolic_validation
         COMMAND "${Python3_EXECUTABLE}" -B
                 "${CMAKE_CURRENT_SOURCE_DIR}/fluid/test_navier_stokes_fourier.py")
