@@ -26,7 +26,7 @@ namespace taylor_green_vortex {
 class CompressibleSolver
 {
     StructuredGrid& m_dec;
-    similie::physics::fluid::NavierStokesFourier const m_physics;
+    CompressiblePhysics const m_physics;
     Field m_primitive, m_gradient, m_normal_gradient, m_flux, m_divergence;
 
 public:
@@ -43,16 +43,13 @@ public:
     void primitives(Field state)
     {
         Field const primitive = m_primitive;
-        similie::physics::fluid::NavierStokesFourier const physics = m_physics;
+        CompressiblePhysics const physics = m_physics;
         Kokkos::parallel_for(
-                "perfect_gas_closure",
+                "thermodynamic_closure",
                 m_dec.cells,
                 KOKKOS_LAMBDA(int i) {
-                    similie::physics::fluid::NavierStokesFourier::PrimitiveVariables const values
-                            = physics.primitives(
-                                    {state(0, i),
-                                     {state(1, i), state(2, i), state(3, i)},
-                                     state(4, i)});
+                    CompressiblePhysics::PrimitiveVariables const values = physics.primitives(
+                            {state(0, i), {state(1, i), state(2, i), state(3, i)}, state(4, i)});
                     primitive(0, i) = values.density;
                     for (int a = 0; a < 3; ++a)
                         primitive(a + 1, i) = values.velocity[a];
@@ -69,7 +66,7 @@ public:
         Field const primitive = m_primitive, gradient = m_gradient, normal = m_normal_gradient,
                     flux = m_flux, divergence = m_divergence;
         int const n = m_dec.n;
-        similie::physics::fluid::NavierStokesFourier const physics = m_physics;
+        CompressiblePhysics const physics = m_physics;
         for (int axis = 0; axis < 3; ++axis) {
             for (int c = 1; c < 5; ++c)
                 m_dec.forward_derivative(primitive, c, normal, c - 1, axis);
@@ -78,9 +75,10 @@ public:
                     m_dec.cells,
                     KOKKOS_LAMBDA(int i) {
                         int const j = StructuredGrid::neighbor(i, axis, 1, n);
-                        double const pl
-                                = primitive(0, i) * Reference::gas_constant * primitive(4, i),
-                                pr = primitive(0, j) * Reference::gas_constant * primitive(4, j);
+                        CompressiblePhysics::ConservativeVariables const left
+                                = Reference::state(state, i),
+                                right = Reference::state(state, j);
+                        double const pl = physics.pressure(left), pr = physics.pressure(right);
                         double const ul = primitive(axis + 1, i), ur = primitive(axis + 1, j);
                         double const mass_flux
                                 = 0.25 * (primitive(0, i) + primitive(0, j)) * (ul + ur);
@@ -88,22 +86,23 @@ public:
                         double kinetic_cross = 0;
                         for (int a = 0; a < 3; ++a)
                             kinetic_cross += 0.5 * primitive(a + 1, i) * primitive(a + 1, j);
-                        double const internal = 0.5 * Reference::gas_constant
-                                                * (primitive(4, i) + primitive(4, j))
-                                                / (Reference::gamma - 1);
-                        similie::physics::fluid::NavierStokesFourier::VelocityGradient strain {};
+                        double const internal = 0.5
+                                                * (physics.specific_internal_energy(left)
+                                                   + physics.specific_internal_energy(right));
+                        CompressiblePhysics::VelocityGradient strain {};
                         for (int a = 0; a < 3; ++a)
                             for (int b = 0; b < 3; ++b)
                                 strain[a][b] = b == axis ? normal(a, i)
                                                          : 0.5
                                                                    * (gradient(3 * a + b, i)
                                                                       + gradient(3 * a + b, j));
-                        similie::physics::fluid::NavierStokesFourier::VelocityGradient const tau
-                                = physics.stress(strain);
+                        CompressiblePhysics::VelocityGradient const tau = physics.stress(strain);
                         std::array<double, 3> temperature_gradient {};
                         temperature_gradient[axis] = normal(3, i);
                         std::array<double, 3> const heat_flux
-                                = physics.heat_flux(temperature_gradient);
+                                = physics.heat_flux(left, temperature_gradient);
+                        std::array<double, 3> const right_heat_flux
+                                = physics.heat_flux(right, temperature_gradient);
                         double work = 0;
                         for (int a = 0; a < 3; ++a)
                             work += tau[a][axis] * 0.5
@@ -114,7 +113,8 @@ public:
                                     = mass_flux * 0.5 * (primitive(a + 1, i) + primitive(a + 1, j))
                                       + (a == axis ? pressure : 0.0) - tau[a][axis];
                         flux(4, i) = mass_flux * (internal + kinetic_cross)
-                                     + 0.5 * pressure * (ul + ur) - work + heat_flux[axis];
+                                     + 0.5 * pressure * (ul + ur) - work
+                                     + 0.5 * (heat_flux[axis] + right_heat_flux[axis]);
                     });
             for (int c = 0; c < 5; ++c)
                 m_dec.flux_divergence(flux, c, divergence, c, axis);
@@ -122,12 +122,10 @@ public:
                     "navier_stokes_conservation_laws",
                     m_dec.cells,
                     KOKKOS_LAMBDA(int i) {
-                        similie::physics::fluid::NavierStokesFourier::ConservativeVariables const
-                                rate
-                                = physics(
-                                        {divergence(0, i),
-                                         {divergence(1, i), divergence(2, i), divergence(3, i)},
-                                         divergence(4, i)});
+                        CompressiblePhysics::ConservativeVariables const rate = physics(
+                                {divergence(0, i),
+                                 {divergence(1, i), divergence(2, i), divergence(3, i)},
+                                 divergence(4, i)});
                         result(0, i) += rate.density;
                         for (int a = 0; a < 3; ++a)
                             result(a + 1, i) += rate.momentum[a];

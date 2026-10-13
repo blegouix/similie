@@ -55,11 +55,12 @@ The library contains two pointwise, reusable physics classes:
 - `similie::physics::fluid::IncompressibleNavierStokes(density, viscosity)` in
   `src/similie/physics/fluid/incompressible_navier_stokes.hpp`: vorticity
   transport and diffusion, diagnostic momentum balance, and physical pressure recovery.
-- `similie::physics::fluid::NavierStokesFourier(gamma, prandtl, viscosity, R)` in
-  `src/similie/physics/fluid/navier_stokes_fourier.hpp`: the mass, momentum, and
-  total-energy equations, perfect-gas primitives, full physical flux, Newtonian
-  stress, and Fourier/Prandtl heat-flux closure. Its conservation-law call takes
-  the three physical flux divergences and returns the conservative time rates.
+- `similie::physics::fluid::NavierStokesFourier<Thermodynamics>(closure, Pr, mu)`:
+  generated from `src/similie/physics/fluid/navier_stokes_fourier.py`, with explicit
+  mass, momentum, and total-energy equations, Newtonian stress, and Fourier heat
+  flux. SymPy derives local thermodynamic functions from caller-supplied
+  `p(rho,e)` and `T(rho,e)`. Only the benchmark's `ideal_gas.py` specifies an
+  ideal gas. See the [fluid physics API and theory](../../src/similie/physics/fluid/README.md).
 
 Neither class contains grid dimensions, a solver selector, workshop constants,
 or a time-integration scheme. `Physics` is declared in the benchmark driver;

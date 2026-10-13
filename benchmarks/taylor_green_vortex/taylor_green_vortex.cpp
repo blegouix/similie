@@ -25,6 +25,7 @@
 #include "solvers.hpp"
 
 namespace {
+using taylor_green_vortex::CompressiblePhysics;
 using taylor_green_vortex::CompressibleSolver;
 using taylor_green_vortex::Field;
 using taylor_green_vortex::IncompressibleSolver;
@@ -187,8 +188,8 @@ public:
                 KOKKOS_LAMBDA(int i, double& value) {
                     double speed = 0;
                     if (gas) {
-                        double const sound
-                                = sqrt(Reference::gamma * Reference::pressure(q, i) / q(0, i));
+                        double const sound = sqrt(
+                                Reference::model().sound_speed_squared(Reference::state(q, i)));
                         for (int a = 0; a < 3; ++a)
                             speed += fabs(q(a + 1, i) / q(0, i)) + sound;
                     } else
@@ -203,10 +204,13 @@ public:
                     "thermal_viscous_diffusivity",
                     dec.cells,
                     KOKKOS_LAMBDA(int i, double& value) {
-                        double const local = fmax(4.0 * Reference::viscosity / 3.0,
-                                                  Reference::conductivity() * (Reference::gamma - 1)
-                                                          / Reference::gas_constant)
-                                             / q(0, i);
+                        double const local
+                                = fmax(4.0 * Reference::viscosity / 3.0,
+                                       Reference::model().conductivity(Reference::state(q, i))
+                                               / Reference::model()
+                                                         .heat_capacity_at_constant_volume(
+                                                                 Reference::state(q, i)))
+                                  / q(0, i);
                         value = fmax(value, local);
                     },
                     Kokkos::Max<double>(diffusivity));
@@ -258,8 +262,9 @@ public:
                         u(a, i) = gas ? q(a + 1, i) / q(0, i) : u(a, i);
                     p(0, i) = gas ? Reference::pressure(q, i)
                                   : Reference::reference_pressure + projected_pressure(0, i);
-                    t(0, i) = gas ? p(0, i) / (rho(0, i) * Reference::gas_constant)
-                                  : Reference::reference_pressure / Reference::gas_constant;
+                    t(0,
+                      i) = gas ? Reference::model().primitives(Reference::state(q, i)).temperature
+                               : Reference::reference_pressure / Reference::gas_constant;
                 });
         for (int a = 0; a < 3; ++a)
             for (int b = 0; b < 3; ++b)
@@ -269,7 +274,7 @@ public:
             dec.divergence(u, velocity_divergence);
         }
         Field const div_field = velocity_divergence;
-        similie::physics::fluid::NavierStokesFourier const physical_model = Reference::model();
+        CompressiblePhysics const physical_model = Reference::model();
         if (gas) {
             Field const heat = heat_flux;
             for (int a = 0; a < 3; ++a)
@@ -278,10 +283,11 @@ public:
                     "fourier_heat_flux",
                     dec.cells,
                     KOKKOS_LAMBDA(int i) {
-                        std::array<double, 3> const q
-                                = physical_model.heat_flux({heat(0, i), heat(1, i), heat(2, i)});
+                        std::array<double, 3> const values = physical_model.heat_flux(
+                                Reference::state(q, i),
+                                {heat(0, i), heat(1, i), heat(2, i)});
                         for (int a = 0; a < 3; ++a)
-                            heat(a, i) = q[a];
+                            heat(a, i) = values[a];
                     });
         } else
             Kokkos::deep_copy(heat_flux, 0.0);
@@ -302,11 +308,11 @@ public:
                         if (gas)
                             rate -= 0.5 * speed2 * f(0, i);
                         double const div = div_field(0, i);
-                        similie::physics::fluid::NavierStokesFourier::VelocityGradient grad {};
+                        CompressiblePhysics::VelocityGradient grad {};
                         for (int a = 0; a < 3; ++a)
                             for (int b = 0; b < 3; ++b)
                                 grad[a][b] = g(3 * a + b, i);
-                        similie::physics::fluid::NavierStokesFourier::VelocityGradient const tau
+                        CompressiblePhysics::VelocityGradient const tau
                                 = physical_model.stress(grad);
                         double stress_work = 0;
                         for (int a = 0; a < 3; ++a)

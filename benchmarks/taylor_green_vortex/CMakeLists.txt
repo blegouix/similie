@@ -2,7 +2,18 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # AI-GENERATED
 
-add_executable(taylor_green_vortex taylor_green_vortex.cpp)
+set(TGV_IDEAL_GAS_HEADER "${CMAKE_CURRENT_BINARY_DIR}/taylor_green_ideal_gas.hpp")
+add_custom_command(
+    OUTPUT "${TGV_IDEAL_GAS_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_CURRENT_SOURCE_DIR}/ideal_gas.py"
+            --output "${TGV_IDEAL_GAS_HEADER}"
+    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/ideal_gas.py"
+            "${PROJECT_SOURCE_DIR}/src/similie/physics/fluid/navier_stokes_fourier.py"
+    COMMENT "Generating Taylor-Green ideal-gas closure from SymPy"
+    VERBATIM
+)
+add_executable(taylor_green_vortex taylor_green_vortex.cpp "${TGV_IDEAL_GAS_HEADER}")
+target_include_directories(taylor_green_vortex PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 target_link_libraries(taylor_green_vortex PRIVATE sil::sil benchmark::benchmark HDF5::HDF5 Ginkgo::ginkgo)
 if(BUILD_TESTING)
     add_test(NAME tgv_incompressible_validation COMMAND taylor_green_vortex --N=8 --physics=incompressible --validate)

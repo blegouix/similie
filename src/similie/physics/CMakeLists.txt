@@ -154,6 +154,19 @@ add_custom_command(
     VERBATIM
 )
 
+set(NAVIER_STOKES_FOURIER_GENERATOR
+    "${CMAKE_CURRENT_SOURCE_DIR}/fluid/navier_stokes_fourier.py")
+set(NAVIER_STOKES_FOURIER_HEADER
+    "${SIMILIE_GENERATED_PHYSICS_DIR}/fluid/navier_stokes_fourier_generated.hpp")
+add_custom_command(
+    OUTPUT "${NAVIER_STOKES_FOURIER_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}" -B "${NAVIER_STOKES_FOURIER_GENERATOR}"
+            --output "${NAVIER_STOKES_FOURIER_HEADER}"
+    DEPENDS "${NAVIER_STOKES_FOURIER_GENERATOR}"
+    COMMENT "Generating explicit Navier-Stokes-Fourier physics from SymPy"
+    VERBATIM
+)
+
 add_custom_target(similie_physics_generated
     DEPENDS
         "${SCALAR_FIELD_HEADER}"
@@ -162,6 +175,7 @@ add_custom_target(similie_physics_generated
         "${NONLINEAR_MAGNETOSTATICS_HEADER}"
         "${LINEAR_ELASTICITY_HEADER}"
         "${LINEAR_ELASTICITY_CONSTITUTIVE_LAW_HEADER}"
+        "${NAVIER_STOKES_FOURIER_HEADER}"
 )
 
 add_library(physics INTERFACE)
@@ -170,3 +184,9 @@ target_include_directories(physics
     INTERFACE
         "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/src>"
 )
+
+if(BUILD_TESTING)
+    add_test(NAME navier_stokes_fourier_symbolic_validation
+        COMMAND "${Python3_EXECUTABLE}" -B
+                "${CMAKE_CURRENT_SOURCE_DIR}/fluid/test_navier_stokes_fourier.py")
+endif()
