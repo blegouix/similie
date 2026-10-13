@@ -137,7 +137,7 @@ def write_report(output, manifest):
         f"# Taylor–Green: {manifest['configuration']}",
         "",
         (
-            "CPU/OpenMP, Release. One iteration is one evolving SSPRK3 step. "
+            "CUDA, Release. One iteration is one evolving SSPRK3 step. "
             "Reference rows are complete t=0→10 HD trajectories."
         ),
         "",

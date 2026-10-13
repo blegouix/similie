@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       target_sha:
-        description: Full commit SHA with an existing CPU Docker image
+        description: Full commit SHA with an existing CUDA Docker image
         required: false
   workflow_call:
     inputs:
@@ -35,7 +35,7 @@ jobs:
     runs-on: [self-hosted, linux]
     timeout-minutes: 180
     environment:
-      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'examples-omp-debug' || 'automatic-ci-run') }}
+      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'examples-cuda' || 'automatic-ci-run') }}
     outputs:
       target_sha: ${{ steps.target.outputs.target_sha }}
     steps:
@@ -50,34 +50,36 @@ jobs:
         [[ "${target_sha}" =~ ^[0-9a-f]{40}$ ]]
         echo "target_sha=${target_sha}" >> "${GITHUB_OUTPUT}"
         echo "TARGET_SHA=${target_sha}" >> "${GITHUB_ENV}"
-        echo "CI_ROOT=${RUNNER_TEMP}/similie-tgv-build-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "${GITHUB_ENV}"
+        echo "CI_ROOT=${RUNNER_TEMP}/similie-tgv-cuda-build-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "${GITHUB_ENV}"
     - uses: actions/checkout@v6
       with:
         ref: ${{ steps.target.outputs.target_sha }}
         submodules: recursive
         lfs: true
         fetch-depth: 0
-    - name: Build one Release benchmark binary in CPU Docker
+    - name: Build one Release benchmark binary in CUDA Docker
       run: |
         set -euo pipefail
         mkdir -p "${CI_ROOT}/source" "${CI_ROOT}/runtime/lib"
         rsync -a --delete "${GITHUB_WORKSPACE}/" "${CI_ROOT}/source/"
-        docker image inspect "similie_env_cpu:${TARGET_SHA}" >/dev/null
-        docker run --rm --user "$(id -u):$(id -g)" \
-          -e CI_ROOT -e OMP_NUM_THREADS=2 -e OMP_PROC_BIND=false \
+        docker image inspect "similie_env:${TARGET_SHA}" >/dev/null
+        docker run --rm --gpus all --user "$(id -u):$(id -g)" \
+          -e CI_ROOT \
           -e PYTHONDONTWRITEBYTECODE=1 \
           -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0='*' \
           -v "${CI_ROOT}:${CI_ROOT}" -w "${CI_ROOT}/source" \
-          "similie_env_cpu:${TARGET_SHA}" bash -lc '
+          "similie_env:${TARGET_SHA}" bash -lc '
             set -euo pipefail
-            cmake -S . -B "${CI_ROOT}/agent_build_cpu" \
-              -DCMAKE_CXX_COMPILER=g++-15 -DCMAKE_BUILD_TYPE=Release \
-              -DKokkos_ENABLE_OPENMP=ON -DKokkos_ENABLE_CUDA=OFF \
+            export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
+            nvidia-smi
+            cmake -S . -B "${CI_ROOT}/agent_build" \
+              -DCMAKE_CXX_COMPILER=/opt/kokkos/bin/nvcc_wrapper -DCMAKE_BUILD_TYPE=Release \
+              -DKokkos_ENABLE_OPENMP=OFF -DKokkos_ENABLE_CUDA=ON \
               -DSIMILIE_BUILD_BENCHMARKS=ON -DSIMILIE_BUILD_ONELAB_INTERFACE=OFF \
               -DBUILD_TESTING=ON
-            cmake --build "${CI_ROOT}/agent_build_cpu" --parallel 8 \
+            cmake --build "${CI_ROOT}/agent_build" --parallel 8 \
               --target taylor_green_vortex
-            binary="${CI_ROOT}/agent_build_cpu/benchmarks/taylor_green_vortex/taylor_green_vortex"
+            binary="${CI_ROOT}/agent_build/benchmarks/taylor_green_vortex/taylor_green_vortex"
             cp "${binary}" "${CI_ROOT}/runtime/taylor_green_vortex"
             # Include build-local shared dependencies; installed libraries stay in the same commit image.
             ldd "${binary}" > "${CI_ROOT}/runtime/dependencies.txt"
@@ -90,7 +92,7 @@ jobs:
     - name: Upload compiled benchmark
       uses: actions/upload-artifact@v7
       with:
-        name: tgv-runtime-${{ steps.target.outputs.target_sha }}
+        name: tgv-cuda-runtime-${{ steps.target.outputs.target_sha }}
         path: ${{ env.CI_ROOT }}/runtime/
         if-no-files-found: error
         retention-days: 7
@@ -101,7 +103,7 @@ jobs:
     runs-on: [self-hosted, linux]
     timeout-minutes: 1380
     environment:
-      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'examples-omp-debug' || 'automatic-ci-run') }}
+      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'examples-cuda' || 'automatic-ci-run') }}
     strategy:
       fail-fast: false
       max-parallel: 1
@@ -124,26 +126,27 @@ jobs:
         lfs: true
     - name: Set isolated campaign paths
       run: |
-        echo "CI_ROOT=${RUNNER_TEMP}/similie-tgv-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${FLUID}-${TRANSPORT}-${COUPLING}" >> "${GITHUB_ENV}"
+        echo "CI_ROOT=${RUNNER_TEMP}/similie-tgv-cuda-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${FLUID}-${TRANSPORT}-${COUPLING}" >> "${GITHUB_ENV}"
     - uses: actions/download-artifact@v8
       with:
-        name: tgv-runtime-${{ needs.prepare.outputs.target_sha }}
+        name: tgv-cuda-runtime-${{ needs.prepare.outputs.target_sha }}
         path: ${{ env.CI_ROOT }}/runtime
     - name: Run every reference mesh and publish performance
       run: |
         set -euo pipefail
         chmod +x "${CI_ROOT}/runtime/taylor_green_vortex"
         mkdir -p "${CI_ROOT}/results"
-        docker image inspect "similie_env_cpu:${TARGET_SHA}" >/dev/null
-        docker run --rm --user "$(id -u):$(id -g)" \
+        docker image inspect "similie_env:${TARGET_SHA}" >/dev/null
+        docker run --rm --gpus all --user "$(id -u):$(id -g)" \
           -e CI_ROOT -e FLUID -e TRANSPORT -e COUPLING \
-          -e OMP_NUM_THREADS=8 -e OMP_PROC_BIND=spread -e OMP_PLACES=cores \
           -e SIMILIE_SOLVER_PROGRESS_STRIDE=0 \
           -e PYTHONDONTWRITEBYTECODE=1 \
           -e LD_LIBRARY_PATH="${CI_ROOT}/runtime/lib" \
           -v "${CI_ROOT}:${CI_ROOT}" -v "${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE}:ro" \
-          -w "${CI_ROOT}" "similie_env_cpu:${TARGET_SHA}" bash -lc '
+          -w "${CI_ROOT}" "similie_env:${TARGET_SHA}" bash -lc '
             set -euo pipefail
+            export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
+            nvidia-smi
             python3 "${1}/benchmarks/taylor_green_vortex/ci_campaign.py" \
               --binary "${CI_ROOT}/runtime/taylor_green_vortex" \
               --output "${CI_ROOT}/results" --fluid "${FLUID}" \
@@ -159,7 +162,7 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v7
       with:
-        name: tgv-${{ matrix.fluid }}-${{ matrix.transport }}-${{ matrix.coupling }}-${{ needs.prepare.outputs.target_sha }}
+        name: tgv-cuda-${{ matrix.fluid }}-${{ matrix.transport }}-${{ matrix.coupling }}-${{ needs.prepare.outputs.target_sha }}
         path: ${{ env.CI_ROOT }}/results/
         if-no-files-found: error
         compression-level: 1
