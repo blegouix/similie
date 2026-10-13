@@ -794,7 +794,6 @@ def generate_cpp_hamiltonian(functor_class, output_path: Path, *args, **kwargs) 
         for entry in definition.variables
     ]
 
-    flat_variables = _flatten_variable_entries(list(definition.variables))
     if variable_entries[0]["name"] == "phi":
         dphi_dx_symbols = symbols(f"dphi_dx0:{len(variable_entries[1]['symbols'])}")
         inverse_solution = solve(

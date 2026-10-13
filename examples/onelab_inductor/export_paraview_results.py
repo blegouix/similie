@@ -5,13 +5,12 @@
 from __future__ import annotations
 
 import argparse
-from bisect import bisect_left
 import re
+from bisect import bisect_left
 from pathlib import Path
 
 import h5py
 import numpy as np
-
 
 QUADRILATERAL_TYPE = 3
 HEXAHEDRON_TYPE = 5

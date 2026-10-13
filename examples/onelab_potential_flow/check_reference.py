@@ -9,7 +9,6 @@ import math
 import re
 from pathlib import Path
 
-
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("similie_log", type=Path)
 parser.add_argument("getdp_output", type=Path)
