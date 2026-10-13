@@ -24,24 +24,6 @@ struct CaloricClosure
     {
         return 3.5;
     }
-    KOKKOS_FUNCTION double heat_capacity_at_constant_volume(
-            [[maybe_unused]] double rho,
-            [[maybe_unused]] double e) const
-    {
-        return 2.5;
-    }
-    KOKKOS_FUNCTION double temperature_density_derivative(
-            [[maybe_unused]] double rho,
-            [[maybe_unused]] double e) const
-    {
-        return 0;
-    }
-    KOKKOS_FUNCTION double temperature_energy_derivative(
-            [[maybe_unused]] double rho,
-            [[maybe_unused]] double e) const
-    {
-        return 0.4;
-    }
     KOKKOS_FUNCTION double sound_speed_squared([[maybe_unused]] double rho, double e) const
     {
         return 0.56 * e;

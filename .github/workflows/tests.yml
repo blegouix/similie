@@ -54,7 +54,7 @@ jobs:
         echo "CACHE_ROOT=${RUNNER_TEMP}/similie-cuda-workspace-${TARGET_SHA}" >> "${GITHUB_ENV}"
         rm -rf "${RUNNER_TEMP}/similie-cuda-workspace-${TARGET_SHA}"
     - name: Restore commit workspace
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v6
       with:
         path: ${{ runner.temp }}/similie-cuda-workspace-${{ steps.target.outputs.target_sha }}
         key: similie-cuda-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
@@ -102,7 +102,7 @@ jobs:
         echo "CACHE_ROOT=${RUNNER_TEMP}/similie-omp-workspace-${TARGET_SHA}" >> "${GITHUB_ENV}"
         rm -rf "${RUNNER_TEMP}/similie-omp-workspace-${TARGET_SHA}"
     - name: Restore OpenMP commit workspace
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v6
       with:
         path: ${{ runner.temp }}/similie-omp-workspace-${{ steps.target.outputs.target_sha }}
         key: similie-omp-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}

@@ -7,6 +7,7 @@ project(SimiLie VERSION 0.0.0 LANGUAGES C CXX) # C is required because PDI::PDI_
 set_property(GLOBAL PROPERTY GLOBAL_DEPENDS_NO_CYCLES ON)
 
 set(CMAKE_CXX_STANDARD 23 CACHE INTERNAL "The C++ standard whose features are requested to build this project.")
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # List of options
 option(SIMILIE_BUILD_DOCUMENTATION "Build SimiLie documentation/website" OFF)

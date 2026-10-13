@@ -26,7 +26,7 @@ jobs:
       uses: jlumbroso/free-disk-space@v1.3.1
       with: { tool-cache: true, large-packages: false }
     - name: Checkout built branch
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
     - name: Login to GitHub Container Registry
       uses: docker/login-action@v3
       with:
@@ -55,7 +55,7 @@ jobs:
         docker save ghcr.io/blegouix/similie/doxygen:${GITHUB_SHA:0:7} > doxygen.tar
     - name: Generate docker artifact from image
       if: needs.id_repo.outputs.in_base_repo == 'false'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: doxygen-artifact
         path: doxygen.tar
@@ -69,13 +69,13 @@ jobs:
       uses: jlumbroso/free-disk-space@v1.3.1
       with: { tool-cache: true, large-packages: false }
     - name: Checkout built branch
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         submodules: recursive
         fetch-depth: 0
     - name: Collect image artifact
       if: needs.id_repo.outputs.in_base_repo == 'false'
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with: { name: 'doxygen-artifact' }
     - name: Load image artifact into docker
       if: needs.id_repo.outputs.in_base_repo == 'false'
@@ -132,11 +132,11 @@ jobs:
       uses: jlumbroso/free-disk-space@v1.3.1
       with: { tool-cache: true, large-packages: false }
     - name: Checkout built branch
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with: { submodules: recursive }
     - name: Collect image artifact
       if: needs.id_repo.outputs.in_base_repo == 'false'
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with: { name: 'doxygen-artifact' }
     - name: Load image artifact into docker
       if: needs.id_repo.outputs.in_base_repo == 'false'

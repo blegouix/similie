@@ -20,7 +20,7 @@ jobs:
       name: automatic-ci-run
     steps:
     - name: Checkout built branch
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         ref: ${{ github.sha }}
     - name: Check GPU visibility on runner
@@ -44,7 +44,7 @@ jobs:
       name: automatic-ci-run
     steps:
     - name: Checkout built branch
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         ref: ${{ github.sha }}
     - name: Build CPU similie_env_cpu image
@@ -63,7 +63,7 @@ jobs:
       name: ${{ github.event_name == 'pull_request' && 'build-cuda' || 'automatic-ci-run' }}
     steps:
     - name: Checkout built branch
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         ref: ${{ github.sha }}
         submodules: recursive
@@ -75,7 +75,7 @@ jobs:
         rm -rf "${RUNNER_TEMP}/similie-cuda-workspace-${GITHUB_SHA}"
     - name: Restore CUDA commit workspace
       id: restore-workspace
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v6
       with:
         path: ${{ runner.temp }}/similie-cuda-workspace-${{ github.sha }}
         key: similie-cuda-workspace-${{ runner.os }}-${{ github.sha }}
@@ -98,22 +98,11 @@ jobs:
             export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
             git config --global --add safe.directory "*"
             nvidia-smi
-            cap="$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader | head -n1 | tr -d "[:space:]")"
-            case "${cap}" in
-              7.0) kokkos_arch=VOLTA70 ;;
-              7.2) kokkos_arch=VOLTA72 ;;
-              7.5) kokkos_arch=TURING75 ;;
-              8.0) kokkos_arch=AMPERE80 ;;
-              8.6) kokkos_arch=AMPERE86 ;;
-              8.9) kokkos_arch=ADA89 ;;
-              9.0) kokkos_arch=HOPPER90 ;;
-              *) echo "Unsupported NVIDIA compute capability for Kokkos: ${cap}" >&2; exit 1 ;;
-            esac
+            # The installed Kokkos package supplies its CUDA architecture flags.
             cmake \
               -DCMAKE_CXX_COMPILER=/opt/kokkos/bin/nvcc_wrapper \
               -DCMAKE_BUILD_TYPE=Release \
               -DKokkos_ENABLE_CUDA=ON \
-              -DKokkos_ARCH_${kokkos_arch}=ON \
               -DKokkos_ENABLE_DEPRECATION_WARNINGS=OFF \
               -DSIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS=ON \
               -B "${CACHE_ROOT}/build" \
@@ -122,7 +111,7 @@ jobs:
           '
     - name: Save CUDA commit workspace
       if: steps.restore-workspace.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
+      uses: actions/cache/save@v6
       with:
         path: ${{ runner.temp }}/similie-cuda-workspace-${{ github.sha }}
         key: similie-cuda-workspace-${{ runner.os }}-${{ github.sha }}
@@ -134,7 +123,7 @@ jobs:
       name: ${{ github.event_name == 'pull_request' && 'build-omp-debug' || 'automatic-ci-run' }}
     steps:
     - name: Checkout built branch
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         ref: ${{ github.sha }}
         submodules: recursive
@@ -146,7 +135,7 @@ jobs:
         rm -rf "${RUNNER_TEMP}/similie-omp-workspace-${GITHUB_SHA}"
     - name: Restore OpenMP commit workspace
       id: restore-workspace
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v6
       with:
         path: ${{ runner.temp }}/similie-omp-workspace-${{ github.sha }}
         key: similie-omp-workspace-${{ runner.os }}-${{ github.sha }}
@@ -181,7 +170,7 @@ jobs:
           '
     - name: Save OpenMP commit workspace
       if: steps.restore-workspace.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
+      uses: actions/cache/save@v6
       with:
         path: ${{ runner.temp }}/similie-omp-workspace-${{ github.sha }}
         key: similie-omp-workspace-${{ runner.os }}-${{ github.sha }}
@@ -198,7 +187,7 @@ jobs:
         echo "CACHE_ROOT=${RUNNER_TEMP}/similie-cuda-workspace-${GITHUB_SHA}" >> "${GITHUB_ENV}"
         rm -rf "${RUNNER_TEMP}/similie-cuda-workspace-${GITHUB_SHA}"
     - name: Restore CUDA commit workspace
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v6
       with:
         path: ${{ runner.temp }}/similie-cuda-workspace-${{ github.sha }}
         key: similie-cuda-workspace-${{ runner.os }}-${{ github.sha }}
@@ -234,7 +223,7 @@ jobs:
         echo "CACHE_ROOT=${RUNNER_TEMP}/similie-omp-workspace-${GITHUB_SHA}" >> "${GITHUB_ENV}"
         rm -rf "${RUNNER_TEMP}/similie-omp-workspace-${GITHUB_SHA}"
     - name: Restore OpenMP commit workspace
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v6
       with:
         path: ${{ runner.temp }}/similie-omp-workspace-${{ github.sha }}
         key: similie-omp-workspace-${{ runner.os }}-${{ github.sha }}

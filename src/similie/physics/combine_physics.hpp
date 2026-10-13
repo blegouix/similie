@@ -23,7 +23,7 @@ class CombinePhysics<>
 {
 public:
     static constexpr std::size_t size = 0;
-    KOKKOS_FUNCTION CombinePhysics() = default;
+    CombinePhysics() = default;
 };
 
 template <class First, class... Rest>

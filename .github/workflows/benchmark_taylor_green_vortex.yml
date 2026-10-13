@@ -51,7 +51,7 @@ jobs:
         echo "target_sha=${target_sha}" >> "${GITHUB_OUTPUT}"
         echo "TARGET_SHA=${target_sha}" >> "${GITHUB_ENV}"
         echo "CI_ROOT=${RUNNER_TEMP}/similie-tgv-build-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "${GITHUB_ENV}"
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         ref: ${{ steps.target.outputs.target_sha }}
         submodules: recursive
@@ -88,7 +88,7 @@ jobs:
             done < "${CI_ROOT}/runtime/dependencies.txt"
           '
     - name: Upload compiled benchmark
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: tgv-runtime-${{ steps.target.outputs.target_sha }}
         path: ${{ env.CI_ROOT }}/runtime/
@@ -118,14 +118,14 @@ jobs:
       TRANSPORT: ${{ matrix.transport }}
       COUPLING: ${{ matrix.coupling }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         ref: ${{ needs.prepare.outputs.target_sha }}
         lfs: true
     - name: Set isolated campaign paths
       run: |
         echo "CI_ROOT=${RUNNER_TEMP}/similie-tgv-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${FLUID}-${TRANSPORT}-${COUPLING}" >> "${GITHUB_ENV}"
-    - uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v8
       with:
         name: tgv-runtime-${{ needs.prepare.outputs.target_sha }}
         path: ${{ env.CI_ROOT }}/runtime
@@ -157,7 +157,7 @@ jobs:
         fi
     - name: Upload performance and reference outputs
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: tgv-${{ matrix.fluid }}-${{ matrix.transport }}-${{ matrix.coupling }}-${{ needs.prepare.outputs.target_sha }}
         path: ${{ env.CI_ROOT }}/results/
