@@ -52,6 +52,10 @@ jobs:
     environment:
       name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'onelab_elasticity-cuda' || 'automatic-ci-run') }}
     steps:
+    - name: Prepare example log
+      run: |
+        echo "EXAMPLE_LOG=${RUNNER_TEMP}/example-onelab_elasticity-${{ matrix.case.name }}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.log" >> "${GITHUB_ENV}"
+        printf 'Workflow run: %s, attempt: %s\n' "${GITHUB_RUN_ID}" "${GITHUB_RUN_ATTEMPT}" > "${RUNNER_TEMP}/example-onelab_elasticity-${{ matrix.case.name }}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.log"
     - name: Select target commit
       id: target
       run: |
@@ -76,7 +80,9 @@ jobs:
         key: similie-cuda-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
         fail-on-cache-miss: true
     - name: Run ONELAB elasticity ${{ matrix.case.name }} on GPU
+      shell: bash
       run: |
+        set -o pipefail
         docker image inspect "${IMAGE_TAG}" >/dev/null
         docker run --rm --gpus all \
           --user "$(id -u):$(id -g)" \
@@ -104,4 +110,14 @@ jobs:
             SIMILIE_ONELAB_RESULT_FILE="${output_dir}/similie_elasticity_inputs.pos" \
               "/similie-ci/src/examples/onelab_elasticity/run_similie_onelab.sh" \
               "--${{ matrix.case.backend }}" ${{ matrix.case.arguments }}
-          '
+          ' 2>&1 | tee -a "${EXAMPLE_LOG}"
+    - name: Upload example outputs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: example-onelab_elasticity-${{ matrix.case.name }}
+        overwrite: true
+        if-no-files-found: error
+        path: |
+          ${{ env.EXAMPLE_LOG }}
+          ${{ env.CACHE_ROOT }}/build/onelab_elasticity_cases/${{ matrix.case.name }}/

@@ -66,7 +66,7 @@ RUN apt update && apt install -y libopenmpi-dev
 # ----- TESTING & BENCHMARKING & IO LIBRARIES -----
 # -------------------------------------------------
 
-# GTest & GMock
+# GTest & GMock & GBenchmark
 RUN apt update && apt install -y libgtest-dev libgmock-dev libbenchmark-dev
 
 # PDI
