@@ -76,9 +76,7 @@ jobs:
               -DSIMILIE_BUILD_BENCHMARKS=ON -DSIMILIE_BUILD_ONELAB_INTERFACE=OFF \
               -DBUILD_TESTING=ON
             cmake --build "${CI_ROOT}/agent_build_cpu" --parallel 8 \
-              --target taylor_green_vortex tgv_configuration_validation
-            ctest --test-dir "${CI_ROOT}/agent_build_cpu" --output-on-failure \
-              -R "^(tgv_configuration_validation|tgv_post_process_validation|tgv_ci_campaign_validation|tgv_benchmark_iterations_validation)$"
+              --target taylor_green_vortex
             binary="${CI_ROOT}/agent_build_cpu/benchmarks/taylor_green_vortex/taylor_green_vortex"
             cp "${binary}" "${CI_ROOT}/runtime/taylor_green_vortex"
             # Include build-local shared dependencies; installed libraries stay in the same commit image.

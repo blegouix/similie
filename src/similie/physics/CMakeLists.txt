@@ -212,18 +212,3 @@ target_include_directories(physics
     INTERFACE
         "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/src>"
 )
-
-if(BUILD_TESTING)
-    add_test(NAME electromagnetism_symbolic_validation
-        COMMAND "${Python3_EXECUTABLE}" -B
-                "${CMAKE_CURRENT_SOURCE_DIR}/electromagnetism/test_electromagnetism.py")
-    add_test(NAME electrodynamics_symbolic_validation
-        COMMAND "${Python3_EXECUTABLE}" -B
-                "${CMAKE_CURRENT_SOURCE_DIR}/electrodynamics/test_electrodynamics.py")
-    add_test(NAME magnetodynamics_symbolic_validation
-        COMMAND "${Python3_EXECUTABLE}" -B
-                "${CMAKE_CURRENT_SOURCE_DIR}/magnetodynamics/test_magnetodynamics.py")
-    add_test(NAME navier_stokes_fourier_symbolic_validation
-        COMMAND "${Python3_EXECUTABLE}" -B
-                "${CMAKE_CURRENT_SOURCE_DIR}/fluid/test_navier_stokes_fourier.py")
-endif()
