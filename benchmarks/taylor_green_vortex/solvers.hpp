@@ -251,9 +251,20 @@ public:
             Field velocity,
             Field output,
             double mean_pressure = 0.0,
-            Field supplied_vorticity = Field())
+            Field supplied_vorticity = Field(),
+            Field acceleration = Field())
     {
         unprojected_rhs(velocity, m_pressure_acceleration, supplied_vorticity);
+        if (acceleration.data()) {
+            Field const rate = m_pressure_acceleration;
+            Kokkos::parallel_for(
+                    "pressure_external_force",
+                    m_dec.cells,
+                    KOKKOS_LAMBDA(int i) {
+                        for (int a = 0; a < 3; ++a)
+                            rate(a, i) += acceleration(a, i);
+                    });
+        }
         project(m_pressure_acceleration);
         recover_pressure(velocity, output, mean_pressure);
     }
@@ -356,7 +367,7 @@ public:
 
 /** Evolve W=dU, reconstruct B=*A by Delta_H B=W, and recover U=delta B.
  * The closed two-cochain gauge dB=0 is the Coulomb gauge div A=0.
- * The harmonic mean velocity is fixed to zero for Taylor-Green.
+ * Harmonic velocity is evolved separately when an external force has nonzero mean.
  * \important This operator and documentation is fully AI-generated.
  */
 class IncompressibleSolver
@@ -374,6 +385,7 @@ public:
     std::int64_t total_iterations = 0;
     double reconstruction_seconds = 0, last_relative_residual = 0;
     double gauge_rms = 0, vorticity_divergence_rms = 0, curl_residual_rms = 0;
+    std::array<double, 3> mean_velocity {}, mean_rate {};
     explicit IncompressibleSolver(StructuredGrid& grid)
         : m_grid(grid)
         , m_dec(grid)
@@ -416,7 +428,7 @@ public:
         m_dec.reduce_edges(edges, m_one);
         m_dec.exterior_curl(m_one, state);
     }
-    void reconstruct_velocity(Field state, Field output)
+    void reconstruct_velocity(Field state, Field output, bool time_derivative = false)
     {
         std::chrono::steady_clock::time_point const start = std::chrono::steady_clock::now();
         // Remove only roundoff-sized harmonic means; a nonzero physical mean
@@ -513,13 +525,27 @@ public:
             throw std::runtime_error("Vector-potential true DEC residual is too large");
         m_dec.codifferential(m_potential, m_one);
         m_dec.velocity(m_one, output);
+        std::array<double, 3> const harmonic = time_derivative ? mean_rate : mean_velocity;
+        Kokkos::parallel_for(
+                "velocity_harmonic",
+                cells,
+                KOKKOS_LAMBDA(int i) {
+                    for (int a = 0; a < 3; ++a)
+                        output(a, i) += harmonic[a];
+                });
         Kokkos::fence("vector_potential_reconstruction");
         reconstruction_seconds
                 += std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
     }
-    void rhs(Field state, Field result, bool reconstruct_pressure = false)
+    void rhs(
+            Field state,
+            Field result,
+            bool reconstruct_pressure = false,
+            Field acceleration = Field(),
+            bool velocity_reconstructed = false)
     {
-        reconstruct_velocity(state, velocity);
+        if (!velocity_reconstructed)
+            reconstruct_velocity(state, velocity);
         m_dec.axial_nodes(state, vorticity);
         Field const u = velocity, w = vorticity, transport = m_transport;
         similie::physics::fluid::IncompressibleNavierStokes const physics = m_physics;
@@ -531,7 +557,8 @@ public:
                             {u(0, i), u(1, i), u(2, i)},
                             {w(0, i), w(1, i), w(2, i)});
                     for (int a = 0; a < 3; ++a)
-                        transport(a, i) = values[a];
+                        transport(a, i)
+                                = values[a] + (acceleration.data() ? acceleration(a, i) : 0);
                 });
         m_dec.reduce_nodes(m_transport, m_transport_one);
         m_dec.exterior_curl(m_transport_one, result);
@@ -545,15 +572,19 @@ public:
                         result(c, i) = physics(result(c, i), -lap(c, i));
                 });
         if (reconstruct_pressure) {
-            m_pressure.compute_pressure(velocity, pressure, 0.0, vorticity);
+            m_pressure.compute_pressure(velocity, pressure, 0.0, vorticity, acceleration);
             monitor_constraints(state);
         }
     }
-    void compute_pressure(Field state, Field output, double mean_pressure = 0)
+    void compute_pressure(
+            Field state,
+            Field output,
+            double mean_pressure = 0,
+            Field acceleration = Field())
     {
         reconstruct_velocity(state, velocity);
         m_dec.axial_nodes(state, vorticity);
-        m_pressure.compute_pressure(velocity, output, mean_pressure, vorticity);
+        m_pressure.compute_pressure(velocity, output, mean_pressure, vorticity, acceleration);
     }
     void divergence(Field output)
     {

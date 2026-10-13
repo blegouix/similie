@@ -362,6 +362,7 @@ public:
 
     void laplacian(Field input, int component, Field output, int out_component)
     {
+        Kokkos::fence("scalar_laplacian_input_ready");
         (*m_laplacian)(
                 scalar(output, out_component),
                 scalar(input, component),

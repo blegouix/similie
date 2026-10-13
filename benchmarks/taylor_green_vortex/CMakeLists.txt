@@ -16,10 +16,22 @@ add_executable(taylor_green_vortex taylor_green_vortex.cpp "${TGV_IDEAL_GAS_HEAD
 target_include_directories(taylor_green_vortex PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 target_link_libraries(taylor_green_vortex PRIVATE sil::sil benchmark::benchmark HDF5::HDF5 Ginkgo::ginkgo)
 if(BUILD_TESTING)
-    add_test(NAME tgv_incompressible_validation COMMAND taylor_green_vortex --N=8 --physics=incompressible --validate)
-    add_test(NAME tgv_compressible_validation COMMAND taylor_green_vortex --N=8 --physics=compressible --validate)
-    set_tests_properties(tgv_incompressible_validation tgv_compressible_validation
-        PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=2;OMP_PROC_BIND=false")
+    add_executable(tgv_configuration_validation test_configuration.cpp)
+    add_test(NAME tgv_configuration_validation COMMAND tgv_configuration_validation)
+    foreach(fluid incompressible compressible)
+        foreach(coupling hd ehd mhd fmhd)
+            foreach(transport ideal resistive)
+                if(coupling STREQUAL "hd" AND transport STREQUAL "resistive")
+                    continue()
+                endif()
+                set(validation "tgv_${fluid}_${transport}_${coupling}_validation")
+                add_test(NAME "${validation}" COMMAND taylor_green_vortex --N=8
+                    "--${fluid}" "--${transport}" "--${coupling}" --validate)
+                set_tests_properties("${validation}" PROPERTIES
+                    ENVIRONMENT "OMP_NUM_THREADS=2;OMP_PROC_BIND=false")
+            endforeach()
+        endforeach()
+    endforeach()
     execute_process(
         COMMAND "${Python3_EXECUTABLE}" -c "import numpy, h5py"
         RESULT_VARIABLE TGV_POST_PROCESS_DEPENDENCIES
@@ -30,6 +42,15 @@ if(BUILD_TESTING)
             COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/test_post_process.py")
         set_tests_properties(tgv_post_process_validation PROPERTIES
             ENVIRONMENT "PYTHONDONTWRITEBYTECODE=1")
+        add_test(NAME tgv_ci_campaign_validation
+            COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/test_ci_campaign.py")
+        set_tests_properties(tgv_ci_campaign_validation PROPERTIES
+            ENVIRONMENT "PYTHONDONTWRITEBYTECODE=1")
+        add_test(NAME tgv_benchmark_iterations_validation
+            COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/test_benchmark_iterations.py"
+                --binary "$<TARGET_FILE:taylor_green_vortex>")
+        set_tests_properties(tgv_benchmark_iterations_validation PROPERTIES
+            ENVIRONMENT "PYTHONDONTWRITEBYTECODE=1;OMP_NUM_THREADS=2;OMP_PROC_BIND=false")
     else()
         message(STATUS "Taylor-Green post-processing tests need Python numpy and h5py")
     endif()

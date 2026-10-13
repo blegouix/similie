@@ -9,7 +9,14 @@ from pathlib import Path
 
 import h5py
 import numpy as np
-from post_process import COLUMNS, energy_spectrum, process, write_vtk
+from post_process import (
+    COLUMNS,
+    EM_COLUMNS,
+    EM_FIELDS,
+    energy_spectrum,
+    process,
+    write_vtk,
+)
 
 
 class PostProcessingTests(unittest.TestCase):
@@ -81,6 +88,10 @@ class PostProcessingTests(unittest.TestCase):
                 constraints = np.zeros((len(monitors), 5))
                 constraints[:, 0] = monitors[:, 0]
                 data["reconstruction_monitors"] = constraints
+                electromagnetic = np.zeros((len(monitors), len(EM_COLUMNS)))
+                electromagnetic[:, 0] = monitors[:, 0]
+                electromagnetic[:, 1] = 0.03
+                data["electromagnetic_monitors"] = electromagnetic
                 for index, time in enumerate((0, 8, 10)):
                     snapshot = data.create_group(f"snapshot_{index}")
                     snapshot["time"] = [time]
@@ -90,6 +101,19 @@ class PostProcessingTests(unittest.TestCase):
                     snapshot["pressure"] = self.density
                     snapshot["temperature"] = self.density
                     snapshot["heat_flux"] = np.zeros_like(self.velocity)
+                    for field in EM_FIELDS:
+                        snapshot[field] = (
+                            self.velocity
+                            if field
+                            in (
+                                "induction",
+                                "displacement",
+                                "electric_field",
+                                "current",
+                                "lorentz_force",
+                            )
+                            else self.density
+                        )
                     vorticity = np.zeros_like(self.velocity)
                     vorticity[0, ..., 0] = 2  # Distinguish the x=-pi face.
                     vorticity[1:, ..., 0] = 7
@@ -108,10 +132,56 @@ class PostProcessingTests(unittest.TestCase):
             np.testing.assert_allclose(
                 np.loadtxt(path.with_suffix(".reconstruction.dat")), constraints
             )
+            np.testing.assert_allclose(
+                np.loadtxt(path.with_suffix(".electromagnetic.dat")), electromagnetic
+            )
+            for field in EM_FIELDS:
+                self.assertIn(
+                    field + " ", path.with_suffix(".snapshot_0.vtk").read_text()
+                )
             self.assertIn(
                 "vector_potential 3",
                 path.with_suffix(".snapshot_0.vtk").read_text(),
             )
+
+    def evolving_fixture(self, path, times):
+        path.with_suffix(".dat").write_text("# code name: SimiLie\n")
+        with h5py.File(path, "w") as data:
+            data.attrs["monitor_columns"] = ",".join(COLUMNS)
+            data["position"] = self.position
+            monitors = np.zeros((len(times), len(COLUMNS)))
+            monitors[:, 0] = times
+            data["monitors"] = monitors
+            for index, time in enumerate(times):
+                snapshot = data.create_group(f"snapshot_{index}")
+                snapshot["time"] = [time]
+                snapshot["velocity"] = (1 - 0.1 * index) * self.velocity
+                snapshot["vorticity"] = np.zeros_like(self.velocity)
+                snapshot["density"] = self.density
+                snapshot["pressure"] = self.density
+                snapshot["temperature"] = self.density
+                snapshot["heat_flux"] = np.zeros_like(self.velocity)
+
+    def test_iteration_limited_trajectories_and_spectrum_selection(self):
+        for times, selected in (((0, 0.1, 0.2), 2), ((0, 8, 10, 12), 1)):
+            with self.subTest(times=times), tempfile.TemporaryDirectory() as directory:
+                path = Path(directory) / "evolving.h5"
+                self.evolving_fixture(path, times)
+                monitors, _, spectrum = process(path, vtk=True, plots=False)
+                self.assertEqual(monitors[-1, 0], times[-1])
+                self.assertAlmostEqual(spectrum.sum(), (1 - 0.1 * selected) ** 2 / 8)
+                header = path.with_suffix(".spectrum.dat").read_text()
+                self.assertIn(f"t/tc: {times[selected]:.17g};", header)
+                self.assertEqual(len(list(Path(directory).glob("*.vtk"))), len(times))
+
+    def test_missing_final_snapshot_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "truncated.h5"
+            self.evolving_fixture(path, (0, 0.1, 0.2))
+            with h5py.File(path, "a") as data:
+                del data["snapshot_2"]
+            with self.assertRaisesRegex(ValueError, "Missing final snapshot"):
+                process(path, vtk=False, plots=False)
 
 
 if __name__ == "__main__":

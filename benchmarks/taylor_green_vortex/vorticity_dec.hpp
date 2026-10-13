@@ -194,6 +194,76 @@ public:
                 });
         reduce_edges(edges, cochain);
     }
+    // Physical axial components sampled at forward face centres.
+    void reduce_faces(Field values, Field cochain)
+    {
+        Field const storage = m_physical_two;
+        Kokkos::parallel_for(
+                "place_axial_faces",
+                m_grid.cells,
+                KOKKOS_LAMBDA(int i) {
+                    storage(0, 3 * i) = values(2, i);
+                    storage(0, 3 * i + 1) = -values(1, i);
+                    storage(0, 3 * i + 2) = values(0, i);
+                });
+        TwoFormTensor const physical = tensor<TwoForm>(m_physical_two),
+                            reduced = tensor<TwoForm>(m_two);
+        PositionTensor const geometry = m_grid.geometry();
+        ddc::parallel_for_each(
+                Kokkos::DefaultExecutionSpace(),
+                m_grid.domain(),
+                KOKKOS_LAMBDA(SpatialDomain::discrete_element_type elem) {
+                    sil::exterior::Reduction<
+                            ddc::TypeSeq<sil::tensor::Covariant<CurlDirection>, Vector>,
+                            PositionTensor,
+                            SpatialDomain::discrete_element_type>::
+                    operator()(reduced[elem], physical[elem], geometry, elem);
+                });
+        unpack(m_two, cochain);
+    }
+    void edge_values(Field cochain, Field output)
+    {
+        pack(cochain, m_one);
+        VectorTensor const reduced = tensor<Vector>(m_one),
+                           physical = tensor<Vector>(m_physical_one);
+        PositionTensor const geometry = m_grid.geometry();
+        ddc::parallel_for_each(
+                Kokkos::DefaultExecutionSpace(),
+                m_grid.domain(),
+                KOKKOS_LAMBDA(SpatialDomain::discrete_element_type elem) {
+                    sil::exterior::Reconstruction<
+                            ddc::TypeSeq<Vector>,
+                            PositionTensor,
+                            SpatialDomain::discrete_element_type>::
+                    operator()(physical[elem], reduced[elem], geometry, elem);
+                });
+        unpack(m_physical_one, output);
+    }
+    void face_values(Field cochain, Field output)
+    {
+        pack(cochain, m_two);
+        TwoFormTensor const reduced = tensor<TwoForm>(m_two),
+                            physical = tensor<TwoForm>(m_physical_two);
+        PositionTensor const geometry = m_grid.geometry();
+        ddc::parallel_for_each(
+                Kokkos::DefaultExecutionSpace(),
+                m_grid.domain(),
+                KOKKOS_LAMBDA(SpatialDomain::discrete_element_type elem) {
+                    sil::exterior::Reconstruction<
+                            ddc::TypeSeq<sil::tensor::Covariant<CurlDirection>, Vector>,
+                            PositionTensor,
+                            SpatialDomain::discrete_element_type>::
+                    operator()(physical[elem], reduced[elem], geometry, elem);
+                });
+        int const n = m_grid.n;
+        Kokkos::parallel_for(
+                "physical_axial_faces",
+                m_grid.cells,
+                KOKKOS_LAMBDA(int i) {
+                    for (int a = 0; a < 3; ++a)
+                        output(a, i) = axial(physical, i, a, n);
+                });
+    }
     void exterior_curl(Field one_cochain, Field two_cochain)
     {
         pack(one_cochain, m_one);

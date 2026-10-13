@@ -28,6 +28,30 @@ COLUMNS = (
 )
 
 
+EM_COLUMNS = (
+    "time",
+    "magnetic_energy",
+    "electric_energy",
+    "fluid_electric_work",
+    "ohmic_heating",
+    "magnetic_divergence_rms",
+    "gauss_rms",
+    "mean_charge",
+    "energy_exchange_residual",
+)
+EM_FIELDS = (
+    "induction",
+    "displacement",
+    "electric_field",
+    "current",
+    "charge_density",
+    "electric_potential",
+    "lorentz_force",
+    "joule_heating",
+    "gauss_error",
+)
+
+
 def energy_spectrum(velocity, density):
     """Shell-integrated energy of sqrt(rho/rho0)*u, with rho0=1.
 
@@ -99,10 +123,16 @@ def process(path, vtk=True, plots=True):
         if tuple(columns.split(",")) != COLUMNS:
             raise ValueError(f"Unknown monitor schema in {path}")
         monitors = data["monitors"][:]
-        if not np.all(np.isfinite(monitors)) or np.any(np.diff(monitors[:, 0]) <= 0):
+        if (
+            monitors.ndim != 2
+            or monitors.shape[1] != len(COLUMNS)
+            or len(monitors) < 2
+            or not np.all(np.isfinite(monitors))
+            or np.any(np.diff(monitors[:, 0]) <= 0)
+        ):
             raise ValueError(f"Nonfinite monitors or invalid timestamps in {path}")
-        if not np.isclose(monitors[0, 0], 0) or not np.isclose(monitors[-1, 0], 10):
-            raise ValueError(f"Incomplete simulation in {path}")
+        if not np.isclose(monitors[0, 0], 0) or monitors[-1, 0] <= 0:
+            raise ValueError(f"Invalid simulation time interval in {path}")
         position = data["position"][:]
         snapshots = sorted(
             (name for name in data if name.startswith("snapshot_")),
@@ -112,8 +142,14 @@ def process(path, vtk=True, plots=True):
             (name for name in snapshots if np.isclose(data[name]["time"][0], 8)),
             None,
         )
-        if t8 is None:
+        if not snapshots:
+            raise ValueError(f"Missing snapshots in {path}")
+        if not np.isclose(float(data[snapshots[-1]]["time"][0]), monitors[-1, 0]):
+            raise ValueError(f"Missing final snapshot in {path}")
+        if t8 is None and monitors[-1, 0] >= 8:
             raise ValueError(f"Missing t=8 snapshot in {path}")
+        spectrum_snapshot = t8 if t8 is not None else snapshots[-1]
+        spectrum_time = float(data[spectrum_snapshot]["time"][0])
         header = workshop_header(path)
         table_path = path.with_suffix(".monitors.dat")
         np.savetxt(table_path, monitors, header=header + "\n" + " ".join(COLUMNS))
@@ -134,7 +170,22 @@ def process(path, vtk=True, plots=True):
                 + "\ntime coulomb_gauge_rms vorticity_divergence_rms"
                 + " curl_reconstruction_rms vector_poisson_relative_residual",
             )
-        snapshot = data[t8]
+        electromagnetic = None
+        if "electromagnetic_monitors" in data:
+            electromagnetic = data["electromagnetic_monitors"][:]
+            if (
+                electromagnetic.shape != (len(monitors), len(EM_COLUMNS))
+                or not np.all(np.isfinite(electromagnetic))
+                or not np.allclose(electromagnetic[:, 0], monitors[:, 0])
+                or np.any(electromagnetic[:, (1, 2, 4, 5, 6)] < 0)
+            ):
+                raise ValueError(f"Invalid electromagnetic monitors in {path}")
+            np.savetxt(
+                path.with_suffix(".electromagnetic.dat"),
+                electromagnetic,
+                header=header + "\n" + " ".join(EM_COLUMNS),
+            )
+        snapshot = data[spectrum_snapshot]
         wave_number, spectrum, outside = energy_spectrum(
             snapshot["velocity"][:], snapshot["density"][:]
         )
@@ -142,7 +193,7 @@ def process(path, vtk=True, plots=True):
             path.with_suffix(".spectrum.dat"),
             np.column_stack((wave_number, spectrum)),
             header=header
-            + "\nt/tc: 8; half-integer shell boundaries; density-weighted velocity"
+            + f"\nt/tc: {spectrum_time:.17g}; half-integer shell boundaries; density-weighted velocity"
             + f"\nenergy outside reported cutoff: {outside:.17g}"
             + "\nwave_number spectral_energy",
         )
@@ -152,7 +203,8 @@ def process(path, vtk=True, plots=True):
             np.column_stack(
                 (position[0, ..., 1].ravel(), position[0, ..., 2].ravel(), norm.ravel())
             ),
-            header=header + "\nx/L=-pi; t/tc=8; y/L z/L vorticity_norm*L/V0",
+            header=header
+            + f"\nx/L=-pi; t/tc={spectrum_time:.17g}; y/L z/L vorticity_norm*L/V0",
         )
         if vtk:
             for name in snapshots:
@@ -169,6 +221,9 @@ def process(path, vtk=True, plots=True):
                 }
                 if "vector_potential" in data[name]:
                     fields["vector_potential"] = data[name]["vector_potential"][:]
+                for field in EM_FIELDS:
+                    if field in data[name]:
+                        fields[field] = data[name][field][:]
                 write_vtk(
                     path.with_suffix(f".{name}.vtk"),
                     position,
@@ -176,6 +231,45 @@ def process(path, vtk=True, plots=True):
                     float(data[name]["time"][0]),
                 )
         if plots:
+            if electromagnetic is not None:
+                figure, axes = plt.subplots(
+                    2, 2, figsize=(11, 8), constrained_layout=True
+                )
+                for column in (1, 2):
+                    axes[0, 0].plot(
+                        electromagnetic[:, 0],
+                        electromagnetic[:, column],
+                        label=EM_COLUMNS[column],
+                    )
+                axes[0, 0].set(xlabel="t/tc", ylabel="Field energy")
+                axes[0, 0].legend()
+                for column in (3, 4):
+                    axes[0, 1].plot(
+                        electromagnetic[:, 0],
+                        electromagnetic[:, column],
+                        label=EM_COLUMNS[column],
+                    )
+                axes[0, 1].plot(
+                    electromagnetic[:, 0],
+                    electromagnetic[:, 8],
+                    label="energy exchange residual",
+                )
+                axes[0, 1].set(xlabel="t/tc", ylabel="Power")
+                axes[0, 1].legend()
+                for column in (5, 6):
+                    axes[1, 0].semilogy(
+                        electromagnetic[:, 0],
+                        np.maximum(electromagnetic[:, column], 1e-18),
+                        label=EM_COLUMNS[column],
+                    )
+                axes[1, 0].set(xlabel="t/tc", ylabel="Constraint RMS")
+                axes[1, 0].legend()
+                axes[1, 1].plot(
+                    electromagnetic[:, 0], electromagnetic[:, 7] - electromagnetic[0, 7]
+                )
+                axes[1, 1].set(xlabel="t/tc", ylabel="Mean charge change")
+                figure.savefig(path.with_suffix(".electromagnetic.png"), dpi=160)
+                plt.close(figure)
             if constraints is not None:
                 figure, axis = plt.subplots(figsize=(8, 4), constrained_layout=True)
                 for index, label in enumerate(
@@ -223,7 +317,9 @@ def process(path, vtk=True, plots=True):
             positive = (wave_number > 0) & (spectrum > 0)
             axes[0].loglog(wave_number[positive], spectrum[positive])
             axes[0].set(
-                xlabel="Wave number kL", ylabel="Shell energy/V0²", title="t/tc=8"
+                xlabel="Wave number kL",
+                ylabel="Shell energy/V0²",
+                title=f"t/tc={spectrum_time:g}",
             )
             # Close the plotted periodic slice, without adding duplicate FFT samples.
             periodic = np.pad(norm, ((0, 1), (0, 1)), mode="wrap")
@@ -234,11 +330,13 @@ def process(path, vtk=True, plots=True):
             axes[1].set(
                 xlabel="y/L",
                 ylabel="z/L",
-                title="|omega| L/V0; x/L=-pi; t/tc=8",
+                title=f"|omega| L/V0; x/L=-pi; t/tc={spectrum_time:g}",
                 aspect="equal",
             )
             figure.colorbar(image, ax=axes[1])
-            figure.savefig(path.with_suffix(".t8.png"), dpi=160)
+            figure.savefig(
+                path.with_suffix(".t8.png" if t8 is not None else ".final.png"), dpi=160
+            )
             plt.close(figure)
             figure, axes = plt.subplots(1, 3, figsize=(12, 3), constrained_layout=True)
             axes[0].plot(monitors[:, 0], monitors[:, 8] - monitors[0, 8])
@@ -263,10 +361,17 @@ def compare(paths, results):
         axes[0].plot(monitors[:, 0], monitors[:, 3], label=path.stem)
         axes[1].plot(monitors[:, 0], monitors[:, 5], label=path.stem)
         positive = (k > 0) & (energy > 0)
-        axes[2].loglog(k[positive], energy[positive], label=path.stem)
+        spectrum_time = min(8.0, monitors[-1, 0])
+        axes[2].loglog(
+            k[positive], energy[positive], label=f"{path.stem} (t={spectrum_time:g})"
+        )
     axes[0].set(xlabel="t/tc", ylabel="-dEk/dt L/V0³")
     axes[1].set(xlabel="t/tc", ylabel="2 nu enstrophy L/V0³")
-    axes[2].set(xlabel="Wave number kL", ylabel="Shell energy/V0²", title="t/tc=8")
+    axes[2].set(
+        xlabel="Wave number kL",
+        ylabel="Shell energy/V0²",
+        title="t=8 when reached; otherwise final state",
+    )
     for axis in axes:
         axis.legend(fontsize="small")
     figure.savefig(paths[0].parent / "tgv_comparison.png", dpi=160)
@@ -279,11 +384,11 @@ def compare(paths, results):
     x = np.arange(len(paths))
     bottom = np.zeros(len(paths))
     for key in ("solver_seconds", "monitor_seconds", "export_seconds"):
-        values = np.array([record[key] for record in records])
+        values = np.array([record[key] / record["steps"] for record in records])
         axes[0].bar(x, values, bottom=bottom, label=key.removesuffix("_seconds"))
         bottom += values
     axes[0].legend()
-    axes[0].set(ylabel="Wall seconds")
+    axes[0].set(ylabel="Seconds per step (setup/export amortized)")
     axes[1].bar(x, [record["cell_updates_per_second"] for record in records])
     axes[1].set(ylabel="Cell updates / solver second")
     for axis in axes:

@@ -11,6 +11,7 @@
 #include <iomanip>
 #include <iostream>
 #include <iterator>
+#include <limits>
 #include <memory>
 #include <numbers>
 #include <sstream>
@@ -22,21 +23,27 @@
 
 #include <hdf5.h>
 
-#include "solvers.hpp"
+#include "electromagnetic_solver.hpp"
 
 namespace {
 using taylor_green_vortex::CompressiblePhysics;
 using taylor_green_vortex::CompressibleSolver;
+using taylor_green_vortex::Configuration;
+using taylor_green_vortex::Coupling;
+using taylor_green_vortex::ElectromagneticSolver;
 using taylor_green_vortex::Field;
 using taylor_green_vortex::IncompressibleSolver;
+using taylor_green_vortex::Physics;
 using taylor_green_vortex::Reference;
 using taylor_green_vortex::StructuredGrid;
-enum class Physics { Incompressible, Compressible, ResistiveMHD, TwoFluidPlasmaMHD };
 using Clock = std::chrono::steady_clock;
 int nodes = 64;
+Configuration configuration;
 Physics physics = Physics::Incompressible;
 std::filesystem::path output_directory = "taylor_green_vortex_results";
 bool verify = false;
+bool reference_run = false;
+bool write_snapshots = true;
 bool benchmark_failed = false;
 
 void check_hdf(herr_t status)
@@ -71,12 +78,25 @@ void dataset(
     check_hdf(status);
 }
 
+void string_attribute(hid_t parent, char const* name, std::string const& value)
+{
+    hid_t const type = H5Tcopy(H5T_C_S1);
+    check_hdf(H5Tset_size(type, value.size() + 1));
+    hid_t const space = H5Screate(H5S_SCALAR);
+    hid_t const attribute = H5Acreate2(parent, name, type, space, H5P_DEFAULT, H5P_DEFAULT);
+    check_hdf(H5Awrite(attribute, type, value.c_str()));
+    H5Aclose(attribute);
+    H5Sclose(space);
+    H5Tclose(type);
+}
+
 struct Monitor
 {
     double time, energy, derivative, enstrophy, dissipation, pressure_dilatation,
             viscous_dissipation;
     double mass, total_energy, divergence, rho_min, pressure_min, step_seconds;
     double potential_gauge, vorticity_divergence, curl_residual, reconstruction_residual;
+    std::array<double, 9> electromagnetic {};
 };
 
 class Simulation
@@ -89,6 +109,7 @@ public:
             heat_flux, velocity_divergence, velocity_rate, vector_potential;
     std::unique_ptr<IncompressibleSolver> incompressible;
     std::unique_ptr<CompressibleSolver> compressible;
+    std::unique_ptr<ElectromagneticSolver> electromagnetic;
     explicit Simulation(int n, Physics selected)
         : dec(n)
         , kind(selected)
@@ -113,6 +134,10 @@ public:
         , compressible(
                   selected == Physics::Compressible ? std::make_unique<CompressibleSolver>(dec)
                                                     : nullptr)
+        , electromagnetic(
+                  configuration.coupling == Coupling::HD
+                          ? nullptr
+                          : std::make_unique<ElectromagneticSolver>(dec, configuration))
     {
         if (selected != Physics::Incompressible && selected != Physics::Compressible)
             throw std::runtime_error("Selected physics is not implemented");
@@ -121,6 +146,12 @@ public:
     }
     void reset()
     {
+        if (electromagnetic)
+            electromagnetic->reset();
+        if (incompressible) {
+            incompressible->mean_velocity = {};
+            incompressible->mean_rate = {};
+        }
         Field const q = state;
         bool const gas = kind == Physics::Compressible;
         int const n = dec.n;
@@ -153,16 +184,68 @@ public:
     }
     void evaluate(Field q, Field result, bool reconstruct_pressure = false)
     {
-        if (kind == Physics::Compressible)
+        Field acceleration;
+        if (electromagnetic) {
+            if (incompressible) {
+                incompressible->reconstruct_velocity(q, incompressible->velocity);
+                Kokkos::deep_copy(velocity, incompressible->velocity);
+            } else {
+                Field const u = velocity;
+                Kokkos::parallel_for(
+                        "coupled_velocity",
+                        dec.cells,
+                        KOKKOS_LAMBDA(int i) {
+                            for (int a = 0; a < 3; ++a)
+                                u(a, i) = q(a + 1, i) / q(0, i);
+                        });
+            }
+            electromagnetic->evaluate(velocity);
+            acceleration = electromagnetic->force;
+            if (incompressible)
+                for (int a = 0; a < 3; ++a) {
+                    double sum;
+                    Kokkos::parallel_reduce(
+                            "mean_lorentz_force",
+                            dec.cells,
+                            KOKKOS_LAMBDA(int i, double& value) { value += acceleration(a, i); },
+                            sum);
+                    incompressible->mean_rate[a] = sum / dec.cells;
+                }
+        }
+        if (kind == Physics::Compressible) {
             compressible->rhs(q, result);
-        else
-            incompressible->rhs(q, result, reconstruct_pressure);
+            if (electromagnetic) {
+                Field const power = electromagnetic->fluid_power;
+                Kokkos::parallel_for(
+                        "compressible_field_exchange",
+                        dec.cells,
+                        KOKKOS_LAMBDA(int i) {
+                            for (int a = 0; a < 3; ++a)
+                                result(a + 1, i) += acceleration(a, i);
+                            result(4, i) += power(0, i);
+                        });
+            }
+        } else
+            incompressible
+                    ->rhs(q,
+                          result,
+                          reconstruct_pressure,
+                          acceleration,
+                          electromagnetic != nullptr);
     }
     // Reconstruct pressure directly from the current state for export.
     void compute_pressure()
     {
         if (kind == Physics::Incompressible) {
-            incompressible->compute_pressure(state, pressure, Reference::reference_pressure);
+            if (electromagnetic) {
+                incompressible->reconstruct_velocity(state, velocity);
+                electromagnetic->evaluate(velocity);
+            }
+            incompressible->compute_pressure(
+                    state,
+                    pressure,
+                    Reference::reference_pressure,
+                    electromagnetic ? electromagnetic->force : Field());
             incompressible->monitor_constraints(state);
             Kokkos::deep_copy(velocity, incompressible->velocity);
             Kokkos::deep_copy(vorticity, incompressible->vorticity);
@@ -180,7 +263,22 @@ public:
         bool const gas = kind == Physics::Compressible;
         if (!gas)
             incompressible->reconstruct_velocity(state, velocity);
+        if (electromagnetic) {
+            if (gas) {
+                Field const fluid = state, u = velocity;
+                Kokkos::parallel_for(
+                        "cfl_coupled_velocity",
+                        dec.cells,
+                        KOKKOS_LAMBDA(int i) {
+                            for (int a = 0; a < 3; ++a)
+                                u(a, i) = fluid(a + 1, i) / fluid(0, i);
+                        });
+            }
+            electromagnetic->evaluate(velocity);
+        }
         Field const q = gas ? state : velocity;
+        Field const magnetic = electromagnetic ? electromagnetic->induction : Field();
+        bool const has_magnetic = electromagnetic && electromagnetic->magnetic();
         double maximum;
         Kokkos::parallel_reduce(
                 "cfl_speed",
@@ -188,13 +286,24 @@ public:
                 KOKKOS_LAMBDA(int i, double& value) {
                     double speed = 0;
                     if (gas) {
+                        double alfven_squared = 0;
+                        if (has_magnetic)
+                            for (int a = 0; a < 3; ++a)
+                                alfven_squared += magnetic(a, i) * magnetic(a, i) / q(0, i);
                         double const sound = sqrt(
-                                Reference::model().sound_speed_squared(Reference::state(q, i)));
+                                Reference::model().sound_speed_squared(Reference::state(q, i))
+                                + alfven_squared);
                         for (int a = 0; a < 3; ++a)
                             speed += fabs(q(a + 1, i) / q(0, i)) + sound;
                     } else
                         for (int a = 0; a < 3; ++a)
                             speed += fabs(q(a, i));
+                    if (!gas && has_magnetic) {
+                        double alfven_squared = 0;
+                        for (int a = 0; a < 3; ++a)
+                            alfven_squared += magnetic(a, i) * magnetic(a, i);
+                        speed += 3 * sqrt(alfven_squared);
+                    }
                     value = fmax(value, speed);
                 },
                 Kokkos::Max<double>(maximum));
@@ -216,11 +325,18 @@ public:
                     Kokkos::Max<double>(diffusivity));
         }
         // Fixed CFL and diffusion constants; no user-controlled time step.
-        return std::min(0.3 * dec.h / std::max(maximum, 1e-12), 0.1 * dec.h * dec.h / diffusivity);
+        double const fluid_limit = std::
+                min(0.3 * dec.h / std::max(maximum, 1e-12), 0.1 * dec.h * dec.h / diffusivity);
+        return electromagnetic ? std::min(fluid_limit, electromagnetic->timestep_limit())
+                               : fluid_limit;
     }
     void advance(double dt)
     {
         Kokkos::deep_copy(initial, state);
+        if (electromagnetic)
+            electromagnetic->begin_step();
+        std::array<double, 3> const initial_mean
+                = incompressible ? incompressible->mean_velocity : std::array<double, 3> {};
         Field const q = state, q0 = initial, s = stage, f = rhs;
         int const count = components;
         for (int step = 0; step < 3; ++step) {
@@ -234,6 +350,15 @@ public:
                             s(c, i) = a * q0(c, i) + (1 - a) * (q(c, i) + dt * f(c, i));
                     });
             Kokkos::deep_copy(q, s);
+            if (electromagnetic)
+                electromagnetic->advance_stage(step, dt);
+            if (incompressible)
+                for (int axis = 0; axis < 3; ++axis)
+                    incompressible->mean_velocity[axis]
+                            = a * initial_mean[axis]
+                              + (1 - a)
+                                        * (incompressible->mean_velocity[axis]
+                                           + dt * incompressible->mean_rate[axis]);
         }
     }
     Monitor monitor(double time, double step_seconds = 0)
@@ -248,7 +373,7 @@ public:
             incompressible->divergence(velocity_divergence);
             // Differentiate the linear elliptic reconstruction to obtain du/dt
             // from dW/dt; u dot dW/dt is not the kinetic-energy derivative.
-            incompressible->reconstruct_velocity(rhs, velocity_rate);
+            incompressible->reconstruct_velocity(rhs, velocity_rate, true);
         }
         Field const q = state, u = velocity, rho = density, p = pressure, t = temperature,
                     g = gradient, w = vorticity, f = gas ? rhs : velocity_rate;
@@ -367,6 +492,10 @@ public:
                         gas ? 0 : incompressible->vorticity_divergence_rms,
                         gas ? 0 : incompressible->curl_residual_rms,
                         reconstruction_residual};
+        if (electromagnetic) {
+            result.electromagnetic = electromagnetic->monitor(time);
+            result.total_energy += result.electromagnetic[1] + result.electromagnetic[2];
+        }
         if (!std::
                     all_of(std::begin(sums),
                            std::end(sums),
@@ -388,6 +517,12 @@ std::string header(int n, Physics kind)
          << "\n# order of convergence: " << 2
          << " spatial; SSPRK3 temporal\n# mesh file name: implicit periodic Cartesian grid\n# "
             "density: 1\n# velocity: 1\n# dynamic viscosity: 0.000625\n# reference length: 1\n";
+    text << "# configuration: " << configuration.name() << "\n";
+    if (configuration.coupling != Coupling::HD)
+        text << "# extended Taylor-Green case; not the workshop HD reference\n"
+             << "# epsilon: 1\n# permeability: 1\n# guide field: 0.25\n"
+             << "# magnetic amplitude: 0.15\n# electric potential amplitude: 0.1\n"
+             << "# magnetic resistivity: 0.001\n# EHD/FMHD electrical resistivity: 10\n";
     return text.str();
 }
 
@@ -408,6 +543,15 @@ public:
                 H5P_DEFAULT);
         if (m_file < 0)
             throw std::runtime_error("Cannot create HDF5 output");
+        string_attribute(m_file, "configuration", configuration.name());
+        if (configuration.coupling != Coupling::HD)
+            string_attribute(
+                    m_file,
+                    "electromagnetic_parameters",
+                    "epsilon=1,mu=1,Bguide=0.25,Bamplitude=0.15,phi_amplitude=0.1,"
+                    "eta_mhd=0.001,eta_ehd_fmhd=10");
+        if (!write_snapshots)
+            return;
         std::vector<double> position(3 * n * n * n);
         double const h = 2 * std::numbers::pi / n;
         for (int i = 0; i < n * n * n; ++i) {
@@ -430,14 +574,34 @@ public:
         if (group < 0)
             throw std::runtime_error("Cannot create HDF5 snapshot");
         dataset(group, "time", {1}, &time);
-        for (std::pair<char const*, Field> const& item :
-             {std::pair {"velocity", simulation.velocity},
-              std::pair {"vorticity", simulation.vorticity},
-              std::pair {"density", simulation.density},
-              std::pair {"pressure", simulation.pressure},
-              std::pair {"temperature", simulation.temperature},
-              std::pair {"heat_flux", simulation.heat_flux},
-              std::pair {"vector_potential", simulation.vector_potential}}) {
+        std::vector<std::pair<char const*, Field>>
+                fields {{"velocity", simulation.velocity},
+                        std::pair {"vorticity", simulation.vorticity},
+                        std::pair {"density", simulation.density},
+                        std::pair {"pressure", simulation.pressure},
+                        std::pair {"temperature", simulation.temperature},
+                        std::pair {"heat_flux", simulation.heat_flux},
+                        std::pair {"vector_potential", simulation.vector_potential}};
+        if (simulation.electromagnetic) {
+            ElectromagneticSolver const& em = *simulation.electromagnetic;
+            fields
+                    .insert(fields.end(),
+                            {{"electric_field", em.electric_field},
+                             {"current", em.current},
+                             {"lorentz_force", em.force},
+                             {"joule_heating", em.joule_heating}});
+            if (em.magnetic())
+                fields.emplace_back("induction", em.induction);
+            if (em.electric())
+                fields
+                        .insert(fields.end(),
+                                {{"displacement", em.displacement},
+                                 {"charge_density", em.charge_density},
+                                 {"gauss_error", em.gauss_error}});
+            if (configuration.coupling == Coupling::EHD)
+                fields.emplace_back("electric_potential", em.potential);
+        }
+        for (std::pair<char const*, Field> const& item : fields) {
             Kokkos::View<double**, Kokkos::LayoutRight, Kokkos::HostSpace> const host
                     = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), item.second);
             int const components = static_cast<int>(host.extent(0));
@@ -485,19 +649,28 @@ public:
                   m.reconstruction_residual})
                 constraints.push_back(value);
         dataset(m_file, "reconstruction_monitors", {monitors.size(), 5}, constraints.data());
+        if (configuration.coupling != Coupling::HD) {
+            std::vector<double> electromagnetic;
+            for (Monitor const& m : monitors)
+                electromagnetic
+                        .insert(electromagnetic.end(),
+                                m.electromagnetic.begin(),
+                                m.electromagnetic.end());
+            dataset(m_file,
+                    "electromagnetic_monitors",
+                    {monitors.size(), 9},
+                    electromagnetic.data());
+            string_attribute(
+                    m_file,
+                    "electromagnetic_monitor_columns",
+                    "time,magnetic_energy,electric_energy,fluid_electric_work,ohmic_heating,"
+                    "magnetic_divergence_rms,gauss_rms,mean_charge,energy_exchange_residual");
+        }
         std::string const names
                 = "time,kinetic_energy,dEk_dt,kinetic_dissipation,enstrophy,enstrophy_dissipation,"
                   "pressure_dilatation,viscous_dissipation,mass,total_energy,divergence_rms,"
                   "density_min,pressure_min,step_seconds";
-        hid_t const type = H5Tcopy(H5T_C_S1);
-        check_hdf(H5Tset_size(type, names.size() + 1));
-        hid_t const space = H5Screate(H5S_SCALAR);
-        hid_t const attribute
-                = H5Acreate2(m_file, "monitor_columns", type, space, H5P_DEFAULT, H5P_DEFAULT);
-        check_hdf(H5Awrite(attribute, type, names.c_str()));
-        H5Aclose(attribute);
-        H5Sclose(space);
-        H5Tclose(type);
+        string_attribute(m_file, "monitor_columns", names);
     }
     void write_xmf()
     {
@@ -514,18 +687,33 @@ public:
                 << "<Geometry GeometryType=\"XYZ\"><DataItem Dimensions=\"" << dimensions
                 << " 3\" NumberType=\"Float\" Precision=\"8\" Format=\"HDF\">" << file
                 << ":/position</DataItem></Geometry>\n";
-            for (char const* name :
-                 {"velocity",
-                  "vorticity",
-                  "density",
-                  "pressure",
-                  "temperature",
-                  "heat_flux",
-                  "vector_potential"}) {
-                bool const vector = std::string(name) == "velocity"
-                                    || std::string(name) == "vorticity"
-                                    || std::string(name) == "heat_flux"
-                                    || std::string(name) == "vector_potential";
+            std::vector<char const*>
+                    fields {"velocity",
+                            "vorticity",
+                            "density",
+                            "pressure",
+                            "temperature",
+                            "heat_flux",
+                            "vector_potential"};
+            if (configuration.coupling != Coupling::HD) {
+                fields
+                        .insert(fields.end(),
+                                {"electric_field", "current", "lorentz_force", "joule_heating"});
+                if (configuration.coupling != Coupling::EHD)
+                    fields.push_back("induction");
+                if (configuration.coupling != Coupling::MHD)
+                    fields.insert(fields.end(), {"displacement", "charge_density", "gauss_error"});
+                if (configuration.coupling == Coupling::EHD)
+                    fields.push_back("electric_potential");
+            }
+            for (char const* name : fields) {
+                bool const vector
+                        = std::string(name) == "velocity" || std::string(name) == "vorticity"
+                          || std::string(name) == "heat_flux"
+                          || std::string(name) == "vector_potential"
+                          || std::string(name) == "induction" || std::string(name) == "displacement"
+                          || std::string(name) == "electric_field" || std::string(name) == "current"
+                          || std::string(name) == "lorentz_force";
                 out << "<Attribute Name=\"" << name << "\" AttributeType=\""
                     << (vector ? "Vector" : "Scalar")
                     << "\" Center=\"Node\"><DataItem Dimensions=\"" << dimensions
@@ -710,144 +898,193 @@ void validate()
     Monitor const final = simulation.monitor(time);
     if (physics == Physics::Compressible
         && (std::abs(final.mass - initial.mass) > 1e-11
-            || std::abs(final.total_energy - initial.total_energy) > 1e-10))
+            || (configuration.coupling == Coupling::HD
+                && std::abs(final.total_energy - initial.total_energy) > 1e-10)))
         throw std::runtime_error("Conservative solver failed mass/energy conservation");
     if (physics == Physics::Incompressible && final.divergence > 1e-8)
         throw std::runtime_error("Vorticity reconstruction failed divergence check");
-    if (final.energy > initial.energy + 1e-8)
+    if (configuration.coupling == Coupling::HD && final.energy > initial.energy + 1e-8)
         throw std::runtime_error("Unforced flow gained kinetic energy");
+    if (simulation.electromagnetic) {
+        if (initial.electromagnetic[5] > 1e-10 || initial.electromagnetic[6] > 1e-9
+            || final.electromagnetic[5] > 1e-9 || final.electromagnetic[6] > 1e-8
+            || std::abs(final.electromagnetic[7] - initial.electromagnetic[7]) > 1e-11
+            || std::abs(initial.electromagnetic[8]) > 1e-10
+            || std::abs(final.electromagnetic[8]) > 1e-10)
+            throw std::runtime_error(
+                    "Magnetic divergence, Gauss constraint, or charge conservation failed");
+        if (physics == Physics::Compressible
+            && std::abs(final.total_energy - initial.total_energy) > 1e-5)
+            throw std::runtime_error("Coupled total energy drift exceeds short-run tolerance");
+    }
     std::cout << "Validation passed: N=" << nodes << ", initial Ek=" << initial.energy
               << ", final divergence=" << final.divergence << "\n";
 }
 
-void run(benchmark::State& benchmark_state)
+void run_trajectory(benchmark::State* benchmark_state)
 {
     static int invocation = 0;
     try {
         std::filesystem::create_directories(output_directory);
-        double total_solver = 0, total_monitors = 0, total_export = 0, total_wall = 0,
-               total_reconstruction = 0, total_reconstruction_iterations = 0;
-        std::int64_t total_steps = 0;
-        for ([[maybe_unused]] auto iteration : benchmark_state) {
-            Simulation simulation(nodes, physics);
-            Kokkos::fence("taylor_green_setup_complete");
-            std::string const prefix
-                    = std::string("tgv_")
-                      + (physics == Physics::Compressible ? "compressible" : "incompressible")
-                      + "_N" + std::to_string(nodes) + "_run";
-            std::filesystem::path base;
-            do {
-                base = output_directory / (prefix + std::to_string(invocation++));
-            } while (std::filesystem::exists(base.string() + ".h5"));
-            Clock::time_point const start = Clock::now();
-            double solver_seconds = 0, monitor_seconds = 0, export_seconds = 0;
+        Simulation simulation(nodes, physics);
+        Kokkos::fence("taylor_green_setup_complete");
+        std::string const prefix = std::string("tgv_") + configuration.name() + "_N"
+                                   + std::to_string(nodes) + "_run";
+        std::filesystem::path base;
+        do {
+            base = output_directory / (prefix + std::to_string(invocation++));
+        } while (std::filesystem::exists(base.string() + ".h5"));
+        Clock::time_point const start = Clock::now();
+        double solver_seconds = 0, monitor_seconds = 0, export_seconds = 0;
 
-            std::vector<Monitor> monitors;
-            std::ofstream energy(base.string() + ".dat");
-            if (!energy)
-                throw std::runtime_error("Cannot create energy history");
-            energy << header(nodes, physics) << "# time Ek dEk/dt epsilon_enstrophy\n"
-                   << std::setprecision(17);
-            std::unique_ptr<Export> output;
-            auto sample = [&](double time, double step_seconds, bool snapshot) {
-                Clock::time_point begin = Clock::now();
-                Monitor const m = simulation.monitor(time, step_seconds);
-                monitor_seconds += std::chrono::duration<double>(Clock::now() - begin).count();
-                monitors.push_back(m);
-                begin = Clock::now();
-                energy << m.time << " " << m.energy << " " << m.derivative << " " << m.dissipation
-                       << "\n";
-                if (snapshot)
-                    output->snapshot(simulation, time);
-                export_seconds += std::chrono::duration<double>(Clock::now() - begin).count();
-            };
-            Clock::time_point const export_start = Clock::now();
-            output = std::make_unique<Export>(base, nodes);
-            export_seconds += std::chrono::duration<double>(Clock::now() - export_start).count();
-            sample(0, 0, true);
-            double time = 0;
-            bool at_eight = false;
-            std::int64_t steps = 0, solver_reconstruction_iterations = 0;
-            double solver_reconstruction_seconds = 0;
-            while (time < 10) {
-                Clock::time_point const step_start = Clock::now();
-                std::int64_t const cg_before = simulation.incompressible
-                                                       ? simulation.incompressible->total_iterations
-                                                       : 0;
-                double const reconstruction_before
-                        = simulation.incompressible
-                                  ? simulation.incompressible->reconstruction_seconds
-                                  : 0;
-                double const target = at_eight ? 10.0 : 8.0;
-                double const dt = std::min(simulation.timestep(), target - time);
-                if (!(dt > 0) || !std::isfinite(dt) || time + dt == time)
-                    throw std::runtime_error("Invalid or non-advancing time step");
-                simulation.advance(dt);
-                if (simulation.incompressible) {
-                    solver_reconstruction_iterations
-                            += simulation.incompressible->total_iterations - cg_before;
-                    solver_reconstruction_seconds
-                            += simulation.incompressible->reconstruction_seconds
-                               - reconstruction_before;
-                }
-
-                Kokkos::fence("taylor_green_timing");
-                double const seconds
-                        = std::chrono::duration<double>(Clock::now() - step_start).count();
-                solver_seconds += seconds;
-                bool const reached = dt == target - time;
-                time = reached ? target : time + dt;
-                sample(time, seconds, reached);
-                if (time == 8)
-                    at_eight = true;
-                ++steps;
+        std::vector<Monitor> monitors;
+        std::ofstream energy(base.string() + ".dat");
+        if (!energy)
+            throw std::runtime_error("Cannot create energy history");
+        energy << header(nodes, physics) << "# time Ek dEk/dt epsilon_enstrophy\n"
+               << std::setprecision(17);
+        std::unique_ptr<Export> output;
+        double last_snapshot_time = 0;
+        auto sample = [&](double time, double step_seconds, bool snapshot) {
+            Clock::time_point begin = Clock::now();
+            Monitor const m = simulation.monitor(time, step_seconds);
+            monitor_seconds += std::chrono::duration<double>(Clock::now() - begin).count();
+            monitors.push_back(m);
+            begin = Clock::now();
+            energy << m.time << " " << m.energy << " " << m.derivative << " " << m.dissipation
+                   << "\n";
+            if (snapshot && write_snapshots) {
+                output->snapshot(simulation, time);
+                last_snapshot_time = time;
             }
-            Clock::time_point const finish_export = Clock::now();
-            output->monitors(monitors);
-            output.reset();
-            energy.close();
-            if (!energy)
-                throw std::runtime_error("Cannot write energy history");
-            export_seconds += std::chrono::duration<double>(Clock::now() - finish_export).count();
-            double const wall = std::chrono::duration<double>(Clock::now() - start).count();
-            if (!(solver_seconds > 0))
-                throw std::runtime_error("Invalid solver timing");
-            benchmark_state.SetIterationTime(solver_seconds);
-            total_solver += solver_seconds;
-            total_monitors += monitor_seconds;
-            total_export += export_seconds;
-            total_wall += wall;
-            total_steps += steps;
-            total_reconstruction += solver_reconstruction_seconds;
-            total_reconstruction_iterations += solver_reconstruction_iterations;
-            std::ofstream performance(base.string() + ".performance.json");
-            performance << std::setprecision(17) << "{\"N\":" << nodes << ",\"steps\":" << steps
-                        << ",\"solver_seconds\":" << solver_seconds
-                        << ",\"monitor_seconds\":" << monitor_seconds
-                        << ",\"export_seconds\":" << export_seconds << ",\"wall_seconds\":" << wall
-                        << ",\"reconstruction_iterations\":" << solver_reconstruction_iterations
-                        << ",\"reconstruction_seconds\":" << solver_reconstruction_seconds
-                        << ",\"cell_updates_per_second\":"
-                        << double(steps) * simulation.dec.cells / solver_seconds << "}\n";
-            if (!performance)
-                throw std::runtime_error("Cannot write performance output");
+            export_seconds += std::chrono::duration<double>(Clock::now() - begin).count();
+        };
+        Clock::time_point const export_start = Clock::now();
+        output = std::make_unique<Export>(base, nodes);
+        export_seconds += std::chrono::duration<double>(Clock::now() - export_start).count();
+        sample(0, 0, true);
+        double time = 0;
+        std::int64_t steps = 0, solver_reconstruction_iterations = 0;
+        double solver_reconstruction_seconds = 0, electromagnetic_seconds = 0;
+        std::int64_t electric_iterations = 0;
+        // A single Google Benchmark iteration advances the existing state once.
+        auto advance_step = [&]() {
+            Clock::time_point const step_start = Clock::now();
+            std::int64_t const cg_before
+                    = simulation.incompressible ? simulation.incompressible->total_iterations : 0;
+            double const reconstruction_before
+                    = simulation.incompressible ? simulation.incompressible->reconstruction_seconds
+                                                : 0;
+            double const em_before = simulation.electromagnetic
+                                             ? simulation.electromagnetic->evaluation_seconds
+                                             : 0;
+            std::int64_t const electric_before
+                    = simulation.electromagnetic ? simulation.electromagnetic->poisson_iterations
+                                                 : 0;
+            double const target
+                    = time < 8 ? 8.0 : (time < 10 ? 10.0 : std::numeric_limits<double>::infinity());
+            double const dt = std::min(simulation.timestep(), target - time);
+            if (!(dt > 0) || !std::isfinite(dt) || time + dt == time)
+                throw std::runtime_error("Invalid or non-advancing time step");
+            simulation.advance(dt);
+            if (simulation.incompressible) {
+                solver_reconstruction_iterations
+                        += simulation.incompressible->total_iterations - cg_before;
+                solver_reconstruction_seconds += simulation.incompressible->reconstruction_seconds
+                                                 - reconstruction_before;
+            }
+
+            if (simulation.electromagnetic) {
+                electromagnetic_seconds
+                        += simulation.electromagnetic->evaluation_seconds - em_before;
+                electric_iterations
+                        += simulation.electromagnetic->poisson_iterations - electric_before;
+            }
+            Kokkos::fence("taylor_green_timing");
+            double const seconds = std::chrono::duration<double>(Clock::now() - step_start).count();
+            solver_seconds += seconds;
+            if (benchmark_state)
+                benchmark_state->SetIterationTime(seconds);
+            bool const reached = std::isfinite(target) && dt == target - time;
+            time = reached ? target : time + dt;
+            ++steps;
+            if (benchmark_state)
+                benchmark_state->PauseTiming();
+            try {
+                sample(time, seconds, reached);
+            } catch (...) {
+                if (benchmark_state)
+                    benchmark_state->ResumeTiming();
+                throw;
+            }
+            if (benchmark_state)
+                benchmark_state->ResumeTiming();
+        };
+        if (benchmark_state) {
+            for ([[maybe_unused]] auto iteration : *benchmark_state)
+                advance_step();
+        } else {
+            while (time < 10)
+                advance_step();
         }
-        double const iterations = benchmark_state.iterations();
-        benchmark_state.counters["steps"] = total_steps / iterations;
-        benchmark_state.counters["solver_seconds"] = total_solver / iterations;
-        benchmark_state.counters["monitor_seconds"] = total_monitors / iterations;
-        benchmark_state.counters["export_seconds"] = total_export / iterations;
-        benchmark_state.counters["wall_seconds"] = total_wall / iterations;
-        benchmark_state.counters["reconstruction_seconds"] = total_reconstruction / iterations;
-        benchmark_state.counters["reconstruction_iterations"]
-                = total_reconstruction_iterations / iterations;
-        benchmark_state.counters["cell_updates/s"]
-                = double(total_steps) * nodes * nodes * nodes / total_solver;
-        benchmark_state.SetItemsProcessed(total_steps * std::int64_t(nodes) * nodes * nodes);
+        Clock::time_point const finish_export = Clock::now();
+        if (write_snapshots && time != last_snapshot_time)
+            output->snapshot(simulation, time);
+        output->monitors(monitors);
+        output.reset();
+        energy.close();
+        if (!energy)
+            throw std::runtime_error("Cannot write energy history");
+        export_seconds += std::chrono::duration<double>(Clock::now() - finish_export).count();
+        double const wall = std::chrono::duration<double>(Clock::now() - start).count();
+        if (!(solver_seconds > 0))
+            throw std::runtime_error("Invalid solver timing");
+        std::ofstream performance(base.string() + ".performance.json");
+        performance << std::setprecision(17) << "{\"configuration\":\"" << configuration.name()
+                    << "\",\"mode\":\"" << (benchmark_state ? "performance" : "reference")
+                    << "\",\"N\":" << nodes << ",\"steps\":" << steps << ",\"final_time\":" << time
+                    << ",\"mean_step_seconds\":" << solver_seconds / steps
+                    << ",\"solver_seconds\":" << solver_seconds
+                    << ",\"monitor_seconds\":" << monitor_seconds
+                    << ",\"export_seconds\":" << export_seconds << ",\"wall_seconds\":" << wall
+                    << ",\"reconstruction_iterations\":" << solver_reconstruction_iterations
+                    << ",\"reconstruction_seconds\":" << solver_reconstruction_seconds
+                    << ",\"electromagnetic_seconds\":" << electromagnetic_seconds
+                    << ",\"electric_poisson_iterations\":" << electric_iterations
+                    << ",\"cell_updates_per_second\":"
+                    << double(steps) * simulation.dec.cells / solver_seconds << "}\n";
+        if (!performance)
+            throw std::runtime_error("Cannot write performance output");
+        if (!benchmark_state)
+            return;
+        if (steps != benchmark_state->iterations())
+            throw std::runtime_error("Google Benchmark iterations and solver steps differ");
+        benchmark_state->counters["steps"] = steps;
+        benchmark_state->counters["simulation_time"] = time;
+        benchmark_state->counters["mean_dt"] = time / steps;
+        benchmark_state->counters["solver_seconds"] = solver_seconds;
+        benchmark_state->counters["monitor_seconds"] = monitor_seconds;
+        benchmark_state->counters["export_seconds"] = export_seconds;
+        benchmark_state->counters["wall_seconds"] = wall;
+        benchmark_state->counters["reconstruction_seconds"] = solver_reconstruction_seconds;
+        benchmark_state->counters["reconstruction_iterations"] = solver_reconstruction_iterations;
+        benchmark_state->counters["electromagnetic_seconds"] = electromagnetic_seconds;
+        benchmark_state->counters["electric_poisson_iterations"] = electric_iterations;
+        benchmark_state->counters["cell_updates/s"]
+                = double(steps) * simulation.dec.cells / solver_seconds;
+        benchmark_state->SetItemsProcessed(steps * std::int64_t(simulation.dec.cells));
     } catch (std::exception const& error) {
         benchmark_failed = true;
-        benchmark_state.SkipWithError(error.what());
+        if (benchmark_state)
+            benchmark_state->SkipWithError(error.what());
+        else
+            throw;
     }
+}
+
+void run(benchmark::State& state)
+{
+    run_trajectory(&state);
 }
 } // namespace
 
@@ -863,24 +1100,33 @@ int main(int argc, char** argv)
                 nodes = std::stoi(value, &consumed);
                 if (consumed != value.size())
                     throw std::runtime_error("N must be an integer");
-            } else if (arg.starts_with("--physics=")) {
-                std::string const name = arg.substr(10);
-                if (name == "incompressible")
-                    physics = Physics::Incompressible;
-                else if (name == "compressible")
-                    physics = Physics::Compressible;
-                else if (name == "resistive_mhd" || name == "two_fluid_plasma_mhd")
-                    throw std::runtime_error(
-                            name + " is reserved for a future solver and is not implemented");
-                else
-                    throw std::runtime_error("Unknown physics: " + name);
+            } else if (configuration.consume(arg)) {
+                // Benchmark selectors are removed before Google Benchmark parses its flags.
             } else if (arg.starts_with("--output-dir="))
                 output_directory = arg.substr(13);
             else if (arg == "--validate")
                 verify = true;
-            else
+            else if (arg == "--reference")
+                reference_run = true;
+            else if (arg == "--no-snapshots")
+                write_snapshots = false;
+            else {
+                if (arg == "--help")
+                    std::cout << "Taylor-Green options: --N=64 --incompressible|--compressible "
+                                 "--ideal|--resistive --hd|--ehd|--mhd|--fmhd --validate "
+                                 "--output-dir=PATH --reference --no-snapshots\n"
+                                 "One Google Benchmark iteration advances one time step. "
+                                 "Use --benchmark_min_time=100x for 100 steps.\n"
+                                 "Defaults: --incompressible --ideal --hd. Resistive HD is "
+                                 "invalid.\n";
                 argv[retained++] = argv[i];
+            }
         }
+        configuration.validate();
+        if (reference_run && (configuration.coupling != Coupling::HD || verify))
+            throw std::runtime_error(
+                    "--reference requires HD and cannot be combined with --validate");
+        physics = configuration.fluid;
         argc = retained;
         argv[argc] = nullptr;
         if (nodes < 8 || nodes > 512)
@@ -894,12 +1140,16 @@ int main(int argc, char** argv)
             validate();
             return 0;
         }
+        if (reference_run) {
+            run_trajectory(nullptr);
+            benchmark::Shutdown();
+            return 0;
+        }
         std::string const name
-                = std::string("TaylorGreen/")
-                  + (physics == Physics::Compressible ? "compressible" : "incompressible") + "/N"
-                  + std::to_string(nodes);
+                = std::string("TaylorGreen/") + configuration.name() + "/N" + std::to_string(nodes);
         benchmark::AddCustomContext("execution_space", Kokkos::DefaultExecutionSpace::name());
         benchmark::AddCustomContext("N", std::to_string(nodes));
+        benchmark::AddCustomContext("configuration", configuration.name());
         benchmark::AddCustomContext("Re", "1600");
         benchmark::AddCustomContext("Pr", "0.71");
         benchmark::AddCustomContext(
@@ -907,11 +1157,9 @@ int main(int argc, char** argv)
                 physics == Physics::Compressible ? "0.1" : "incompressible");
         benchmark::AddCustomContext(
                 "timing",
-                "manual_time=solver; monitors and export reported separately");
-        benchmark::RegisterBenchmark(name.c_str(), run)
-                ->UseManualTime()
-                ->Iterations(1)
-                ->Unit(benchmark::kSecond);
+                "one iteration=one evolving solver step; manual_time=solver; monitors/export "
+                "excluded");
+        benchmark::RegisterBenchmark(name.c_str(), run)->UseManualTime()->Unit(benchmark::kSecond);
         benchmark::RunSpecifiedBenchmarks();
         benchmark::Shutdown();
         return benchmark_failed ? 1 : 0;

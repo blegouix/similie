@@ -1,0 +1,168 @@
+# SPDX-FileCopyrightText: 2026 Baptiste Legouix
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# AI-GENERATED
+
+name: benchmark_taylor_green_vortex
+on:
+  workflow_run:
+    workflows: [build]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      target_sha:
+        description: Full commit SHA with an existing CPU Docker image
+        required: false
+  workflow_call:
+    inputs:
+      target_sha:
+        required: true
+        type: string
+      ci_environment:
+        required: false
+        type: string
+        default: automatic-ci-run
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tgv-ci-${{ inputs.target_sha || github.event.workflow_run.head_sha || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  prepare:
+    if: inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: [self-hosted, linux]
+    timeout-minutes: 180
+    environment:
+      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'examples-omp-debug' || 'automatic-ci-run') }}
+    outputs:
+      target_sha: ${{ steps.target.outputs.target_sha }}
+    steps:
+    - name: Select target commit
+      id: target
+      env:
+        INPUT_SHA: ${{ inputs.target_sha }}
+        UPSTREAM_SHA: ${{ github.event.workflow_run.head_sha }}
+      run: |
+        set -euo pipefail
+        target_sha="${INPUT_SHA:-${UPSTREAM_SHA:-${GITHUB_SHA}}}"
+        [[ "${target_sha}" =~ ^[0-9a-f]{40}$ ]]
+        echo "target_sha=${target_sha}" >> "${GITHUB_OUTPUT}"
+        echo "TARGET_SHA=${target_sha}" >> "${GITHUB_ENV}"
+        echo "CI_ROOT=${RUNNER_TEMP}/similie-tgv-build-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "${GITHUB_ENV}"
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ steps.target.outputs.target_sha }}
+        submodules: recursive
+        lfs: true
+        fetch-depth: 0
+    - name: Build one Release benchmark binary in CPU Docker
+      run: |
+        set -euo pipefail
+        mkdir -p "${CI_ROOT}/source" "${CI_ROOT}/runtime/lib"
+        rsync -a --delete "${GITHUB_WORKSPACE}/" "${CI_ROOT}/source/"
+        docker image inspect "similie_env_cpu:${TARGET_SHA}" >/dev/null
+        docker run --rm --user "$(id -u):$(id -g)" \
+          -e CI_ROOT -e OMP_NUM_THREADS=2 -e OMP_PROC_BIND=false \
+          -e PYTHONDONTWRITEBYTECODE=1 \
+          -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0='*' \
+          -v "${CI_ROOT}:${CI_ROOT}" -w "${CI_ROOT}/source" \
+          "similie_env_cpu:${TARGET_SHA}" bash -lc '
+            set -euo pipefail
+            cmake -S . -B "${CI_ROOT}/agent_build_cpu" \
+              -DCMAKE_CXX_COMPILER=g++-15 -DCMAKE_BUILD_TYPE=Release \
+              -DKokkos_ENABLE_OPENMP=ON -DKokkos_ENABLE_CUDA=OFF \
+              -DSIMILIE_BUILD_BENCHMARKS=ON -DSIMILIE_BUILD_ONELAB_INTERFACE=OFF \
+              -DBUILD_TESTING=ON
+            cmake --build "${CI_ROOT}/agent_build_cpu" --parallel 8 \
+              --target taylor_green_vortex tgv_configuration_validation
+            ctest --test-dir "${CI_ROOT}/agent_build_cpu" --output-on-failure \
+              -R "^(tgv_configuration_validation|tgv_post_process_validation|tgv_ci_campaign_validation|tgv_benchmark_iterations_validation)$"
+            binary="${CI_ROOT}/agent_build_cpu/benchmarks/taylor_green_vortex/taylor_green_vortex"
+            cp "${binary}" "${CI_ROOT}/runtime/taylor_green_vortex"
+            # Include build-local shared dependencies; installed libraries stay in the same commit image.
+            ldd "${binary}" > "${CI_ROOT}/runtime/dependencies.txt"
+            while read -r _library arrow dependency _address; do
+              if [[ "${arrow}" == "=>" && "${dependency}" == "${CI_ROOT}/"* ]]; then
+                cp -L "${dependency}" "${CI_ROOT}/runtime/lib/"
+              fi
+            done < "${CI_ROOT}/runtime/dependencies.txt"
+          '
+    - name: Upload compiled benchmark
+      uses: actions/upload-artifact@v4
+      with:
+        name: tgv-runtime-${{ steps.target.outputs.target_sha }}
+        path: ${{ env.CI_ROOT }}/runtime/
+        if-no-files-found: error
+        retention-days: 7
+
+  physics:
+    needs: prepare
+    name: ${{ matrix.fluid }}-${{ matrix.transport }}-${{ matrix.coupling }}
+    runs-on: [self-hosted, linux]
+    timeout-minutes: 1380
+    environment:
+      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'examples-omp-debug' || 'automatic-ci-run') }}
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        fluid: [incompressible, compressible]
+        transport: [ideal, resistive]
+        coupling: [hd, ehd, mhd, fmhd]
+        exclude:
+        - transport: resistive
+          coupling: hd
+    env:
+      TARGET_SHA: ${{ needs.prepare.outputs.target_sha }}
+      FLUID: ${{ matrix.fluid }}
+      TRANSPORT: ${{ matrix.transport }}
+      COUPLING: ${{ matrix.coupling }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ needs.prepare.outputs.target_sha }}
+        lfs: true
+    - name: Set isolated campaign paths
+      run: |
+        echo "CI_ROOT=${RUNNER_TEMP}/similie-tgv-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${FLUID}-${TRANSPORT}-${COUPLING}" >> "${GITHUB_ENV}"
+    - uses: actions/download-artifact@v4
+      with:
+        name: tgv-runtime-${{ needs.prepare.outputs.target_sha }}
+        path: ${{ env.CI_ROOT }}/runtime
+    - name: Run every reference mesh and publish performance
+      run: |
+        set -euo pipefail
+        chmod +x "${CI_ROOT}/runtime/taylor_green_vortex"
+        mkdir -p "${CI_ROOT}/results"
+        docker image inspect "similie_env_cpu:${TARGET_SHA}" >/dev/null
+        docker run --rm --user "$(id -u):$(id -g)" \
+          -e CI_ROOT -e FLUID -e TRANSPORT -e COUPLING \
+          -e OMP_NUM_THREADS=8 -e OMP_PROC_BIND=spread -e OMP_PLACES=cores \
+          -e SIMILIE_SOLVER_PROGRESS_STRIDE=0 \
+          -e PYTHONDONTWRITEBYTECODE=1 \
+          -e LD_LIBRARY_PATH="${CI_ROOT}/runtime/lib" \
+          -v "${CI_ROOT}:${CI_ROOT}" -v "${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE}:ro" \
+          -w "${CI_ROOT}" "similie_env_cpu:${TARGET_SHA}" bash -lc '
+            set -euo pipefail
+            python3 "${1}/benchmarks/taylor_green_vortex/ci_campaign.py" \
+              --binary "${CI_ROOT}/runtime/taylor_green_vortex" \
+              --output "${CI_ROOT}/results" --fluid "${FLUID}" \
+              --transport "${TRANSPORT}" --coupling "${COUPLING}"
+          ' bash "${GITHUB_WORKSPACE}"
+    - name: Publish job summary
+      if: always()
+      run: |
+        if [ -f "${CI_ROOT}/results/report.md" ]; then
+          cat "${CI_ROOT}/results/report.md" >> "${GITHUB_STEP_SUMMARY}"
+        fi
+    - name: Upload performance and reference outputs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: tgv-${{ matrix.fluid }}-${{ matrix.transport }}-${{ matrix.coupling }}-${{ needs.prepare.outputs.target_sha }}
+        path: ${{ env.CI_ROOT }}/results/
+        if-no-files-found: error
+        compression-level: 1
+        retention-days: 14

@@ -305,3 +305,10 @@ jobs:
     with:
       target_sha: ${{ github.sha }}
       ci_environment: ${{ github.event_name == 'pull_request' && 'examples-omp-debug' || 'automatic-ci-run' }}
+
+  benchmark-taylor-green-vortex:
+    needs: build-omp-debug
+    uses: ./.github/workflows/benchmark_taylor_green_vortex.yml
+    with:
+      target_sha: ${{ github.sha }}
+      ci_environment: ${{ github.event_name == 'pull_request' && 'examples-omp-debug' || 'automatic-ci-run' }}
