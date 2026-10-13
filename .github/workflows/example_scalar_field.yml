@@ -19,7 +19,7 @@ on:
       ci_environment:
         required: false
         type: string
-        default: automatic-ci-run
+        default: scalar-field-cuda
 
 concurrency:
   group: example-2d_scalar_field-${{ inputs.target_sha || github.event.workflow_run.head_sha || github.sha }}
@@ -31,7 +31,7 @@ jobs:
     runs-on: [self-hosted, linux]
     timeout-minutes: 240
     environment:
-      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'scalar-field-cuda' || 'automatic-ci-run') }}
+      name: ${{ inputs.ci_environment || 'scalar-field-cuda' }}
     steps:
     - name: Prepare example log
       run: |

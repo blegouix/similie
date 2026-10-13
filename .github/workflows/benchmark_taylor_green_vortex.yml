@@ -20,7 +20,7 @@ on:
       ci_environment:
         required: false
         type: string
-        default: automatic-ci-run
+        default: taylor_green_vortex-cuda
 
 permissions:
   contents: read
@@ -35,7 +35,7 @@ jobs:
     runs-on: [self-hosted, linux]
     timeout-minutes: 180
     environment:
-      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'taylor_green_vortex-cuda' || 'automatic-ci-run') }}
+      name: ${{ inputs.ci_environment || 'taylor_green_vortex-cuda' }}
     outputs:
       target_sha: ${{ steps.target.outputs.target_sha }}
     steps:
@@ -55,7 +55,6 @@ jobs:
       with:
         ref: ${{ steps.target.outputs.target_sha }}
         submodules: recursive
-        lfs: true
         fetch-depth: 0
     - name: Build one Release benchmark binary in CUDA Docker
       run: |
@@ -103,7 +102,7 @@ jobs:
     runs-on: [self-hosted, linux]
     timeout-minutes: 1380
     environment:
-      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'taylor_green_vortex-cuda' || 'automatic-ci-run') }}
+      name: ${{ inputs.ci_environment || 'taylor_green_vortex-cuda' }}
     strategy:
       fail-fast: false
       max-parallel: 1
@@ -123,7 +122,6 @@ jobs:
     - uses: actions/checkout@v6
       with:
         ref: ${{ needs.prepare.outputs.target_sha }}
-        lfs: true
     - name: Set isolated campaign paths
       run: |
         echo "CI_ROOT=${RUNNER_TEMP}/similie-tgv-cuda-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${FLUID}-${TRANSPORT}-${COUPLING}" >> "${GITHUB_ENV}"
