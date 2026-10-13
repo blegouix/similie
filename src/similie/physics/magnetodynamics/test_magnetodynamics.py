@@ -16,7 +16,7 @@ from sympy import Matrix, diff, simplify, symbols
 class MagnetodynamicsTests(unittest.TestCase):
     def test_hamiltonian_derivatives(self):
         model = Magnetodynamics()
-        self.assertEqual(model.electric_field, model.displacement / model.permittivity)
+        self.assertFalse(hasattr(model, "displacement"))
         self.assertEqual(model.magnetic_field, model.induction / model.permeability)
         self.assertEqual(
             model.magnetic_energy,
@@ -25,10 +25,6 @@ class MagnetodynamicsTests(unittest.TestCase):
         for a in range(3):
             self.assertEqual(
                 diff(model.hamiltonian, model.induction[a], 2), 1 / model.permeability
-            )
-            self.assertEqual(
-                diff(model.hamiltonian, model.displacement[a], 2),
-                1 / model.permittivity,
             )
 
     def test_ideal_poynting_and_lorentz_exchange(self):
@@ -80,24 +76,15 @@ class MagnetodynamicsTests(unittest.TestCase):
         self.assertEqual(simplify(ideal_energy_flux - expected), Matrix.zeros(3, 1))
         self.assertEqual(simplify(total - model.magnetic_energy - fluid_energy), 0)
 
-    def test_maxwell_energy_and_faraday_sign(self):
-        # curl cross-product identity: div(E cross H)=H.curl E-E.curl H.
+    def test_magnetic_energy_and_faraday_sign(self):
         model = Magnetodynamics()
-        curl_h = Matrix(symbols("curlH0:3"))
         curl_e = Matrix(symbols("curlE0:3"))
-        energy_rate = model.electric_field.dot(
-            curl_h - model.current
-        ) - model.magnetic_field.dot(curl_e)
+        energy_rate = -model.magnetic_field.dot(curl_e)
         poynting_divergence = model.magnetic_field.dot(
             curl_e
-        ) - model.electric_field.dot(curl_h)
+        ) - model.ohm_electric_field.dot(model.current)
         self.assertEqual(
-            simplify(
-                energy_rate
-                + poynting_divergence
-                + model.electric_field.dot(model.current)
-            ),
-            0,
+            simplify(energy_rate + poynting_divergence + model.fluid_energy_source), 0
         )
 
     def test_resistive_diffusion_sign(self):
@@ -123,7 +110,7 @@ class MagnetodynamicsTests(unittest.TestCase):
             generate(output)
             text = output.read_text()
             self.assertIn("AI-GENERATED", text)
-            self.assertIn("dhamiltonian_ddisplacement", text)
+            self.assertNotIn("permittivity", text)
             self.assertIn("dhamiltonian_dmoments", text)
             self.assertNotIn("Derivative(", text)
 

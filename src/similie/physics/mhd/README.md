@@ -36,45 +36,31 @@ The hydrodynamic workshop reference specifies no magnetic initial condition;
 its benchmark solver selector is therefore not automatically extended to an
 invented MHD case. No electromagnetic optimizer or FFT reconstruction is added.
 
-## The electromagnetic Hamiltonian
+## The magnetic Hamiltonian
 
 `magnetodynamics/magnetodynamics.py` uses the project's existing SymPy
 Hamiltonian generator to produce `MagnetodynamicsHamiltonian` in namespace
-`similie::physics::magnetodynamics`. For constant, scalar, positive electric
-permittivity epsilon and magnetic permeability mu, its energy density is
+`similie::physics::magnetodynamics`. Its magnetic-only energy density is
 
 ```
-H(D,B) = |D|²/(2 epsilon) + |B|²/(2 mu),
-E = δH/δD = D/epsilon,
-H_field = δH/δB = B/mu.
+W(B) = |B|²/(2 mu),   H_field = δW/δB = B/mu.
 ```
 
-`Magnetodynamics` obtains the constitutive fields from these generated
-derivatives, rather than duplicating their laws in a fluid Hamiltonian.
-The Maxwell field Poisson operator contains spatial curls:
+`Magnetodynamics` obtains H_field from that generated derivative. It evolves
+magnetic induction by Faraday, `B_t=-curl E`, with E supplied by the coupled
+Ohm law. E is a derived transport closure rather than an independently evolved
+electric-displacement state. Electric field energy belongs to the separate
+EHD electric sector. For the magnetic subsystem, the power balance is
 
 ```
-D_t = curl H_field - J,
-B_t = -curl E.
+W_t + div(E cross H_field) = -J.E,   J=curl H_field.
 ```
 
-Equivalently, in temporal gauge one may use canonical vector potential A and
-momentum Pi=-D, with B=curl A and Hamiltonian
-`|Pi|²/(2 epsilon)+|curl A|²/(2 mu)`. Hamilton's functional equations give
-`A_t=-E` and `Pi_t=-curl H_field+J`. The generated pointwise energy derivatives
-are consequently not meant to be fed into a local canonical time update
-without the spatial curl operator.
-
-With prescribed current, the power balance is
-
-```
-∂t H + div(E cross H_field) = -J.E.
-```
-
-`hamiltonian({D,B})`, `electric_field(D)`, `magnetic_field(B)`, and
-`operator()(curl_H, curl_E, J)` expose this full electromagnetic sector.
-CMake generates its Hamiltonian header through `similie_physics_generated`;
-the generated header includes its AI annotation and operator documentation.
+`hamiltonian(B)`, `magnetic_energy(B)`, `magnetic_field(B)`, and
+`operator()(curl_E)` expose this sector. CMake generates its Hamiltonian header
+through `similie_physics_generated`. The generated energy derivative alone is
+not a local canonical time update; native Faraday and the fluid/Ohm coupling
+provide the spatial dynamics.
 
 ## The MHD limit and Ohm law
 
@@ -89,7 +75,7 @@ B_t = -curl E = curl(u cross B),
 div B = 0.
 ```
 
-`ResistiveMagnetodynamics(mu, eta, epsilon=1)` adds electrical resistivity:
+`ResistiveMagnetodynamics(mu, eta)` adds electrical resistivity:
 
 ```
 E = -u cross B + eta J,
@@ -196,7 +182,7 @@ power identity; the local continuum formulas alone do not guarantee it.
 The Docker-run symbolic test `magnetodynamics_symbolic_validation` verifies
 Hamiltonian derivatives and positivity of their diagonal coefficients, ideal
 Poynting flux, Lorentz work, Joule heating, the zero-resistivity limit, total
-energy mapping, Maxwell power balance, and the resistive Fourier-mode decay
+energy mapping, magnetic-sector power balance, and the resistive Fourier-mode decay
 sign. All seven symbolic checks have passed, and the generated Hamiltonian API
 has been inspected.
 

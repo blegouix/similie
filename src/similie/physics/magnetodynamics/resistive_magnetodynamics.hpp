@@ -19,9 +19,8 @@ public:
     double const resistivity;
     KOKKOS_FUNCTION ResistiveMagnetodynamics(
             double magnetic_permeability,
-            double electrical_resistivity,
-            double electric_permittivity = 1.0)
-        : Magnetodynamics(magnetic_permeability, electric_permittivity)
+            double electrical_resistivity)
+        : Magnetodynamics(magnetic_permeability)
         , resistivity(electrical_resistivity)
     {
         KOKKOS_ASSERT(resistivity >= 0);

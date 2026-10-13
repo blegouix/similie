@@ -10,6 +10,9 @@ namespace sil {
 
 #include <similie/physics/combine_physics.hpp>
 #include <similie/physics/dedonder_weyl_equations.hpp>
+#include <similie/physics/ehd/ehd.hpp>
+#include <similie/physics/electrodynamics/electrodynamics.hpp>
+#include <similie/physics/electrodynamics/resistive_electrodynamics.hpp>
 #include <similie/physics/fluid/incompressible_navier_stokes.hpp>
 #include <similie/physics/fluid/navier_stokes_fourier.hpp>
 #include <similie/physics/hamilton_equations.hpp>

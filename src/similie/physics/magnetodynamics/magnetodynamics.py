@@ -3,12 +3,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # AI-GENERATED
 
-"""Hamiltonian electromagnetic sector and local ideal/resistive MHD couplings.
+"""Magnetic-only Hamiltonian sector and ideal/resistive MHD coupling.
 
-H(D,B)=|D|^2/(2 epsilon)+|B|^2/(2 mu). Its variational derivatives
-are E and H. Maxwell's curl Poisson operator supplies D_t=curl H-J,
-B_t=-curl E. MHD uses the quasistatic magnetic sector, J=curl H,
-and closes E by an ideal or resistive Ohm law instead of evolving D.
+H(B)=B.B/(2 mu), H_field=delta H/delta B. Faraday evolves B from
+an Ohm-law electric field; no independent electric displacement is stored.
 """
 
 import argparse
@@ -16,8 +14,7 @@ import importlib.util
 import sys
 from pathlib import Path
 
-from sympy import Matrix, Symbol, diff, simplify, symbols
-from sympy.printing.codeprinter import cxxcode
+from sympy import Matrix, diff, symbols
 
 
 class MagnetodynamicsHamiltonian:
@@ -26,16 +23,15 @@ class MagnetodynamicsHamiltonian:
         # Use the project's Hamiltonian generator rather than a fluid Hamiltonian.
         from similie_generate_cpp_hamiltonian import HamiltonianDefinition
 
-        displacement = symbols("D0:3")
+        potential = symbols("potential")
         induction = symbols("B0:3")
-        permittivity, permeability = symbols("permittivity permeability", positive=True)
+        permeability = symbols("permeability", positive=True)
         return HamiltonianDefinition(
             namespace="similie::physics::magnetodynamics",
             struct_name="MagnetodynamicsHamiltonian",
-            parameters=["permittivity", "permeability"],
-            hamiltonian=sum(d**2 / (2 * permittivity) for d in displacement)
-            + sum(b**2 / (2 * permeability) for b in induction),
-            variables=[displacement, induction],
+            parameters=["permeability"],
+            hamiltonian=sum(b**2 / (2 * permeability) for b in induction),
+            variables=[potential, induction],
             is_linear=True,
         )
 
@@ -44,23 +40,15 @@ class Magnetodynamics:
     """Local expressions; exterior supplies every curl/divergence operation."""
 
     def __init__(self):
-        self.displacement = Matrix(symbols("D0:3"))
         self.induction = Matrix(symbols("B0:3"))
         self.velocity = Matrix(symbols("u0:3"))
         self.current = Matrix(symbols("J0:3"))
-        self.permittivity, self.permeability = symbols("epsilon mu", positive=True)
-        self.hamiltonian = self.displacement.dot(self.displacement) / (
-            2 * self.permittivity
-        ) + self.induction.dot(self.induction) / (2 * self.permeability)
+        self.permeability = symbols("mu", positive=True)
+        self.hamiltonian = self.induction.dot(self.induction) / (2 * self.permeability)
         self.magnetic_field = Matrix(
             [diff(self.hamiltonian, b) for b in self.induction]
         )
-        self.electric_field = Matrix(
-            [diff(self.hamiltonian, d) for d in self.displacement]
-        )
-        self.magnetic_energy = self.hamiltonian.subs(
-            dict.fromkeys(self.displacement, 0)
-        )
+        self.magnetic_energy = self.hamiltonian
         self.ohm_electric_field = -self.velocity.cross(self.induction)
         self.lorentz_force = self.current.cross(self.induction)
         self.momentum_flux = (
@@ -105,39 +93,12 @@ def generate(output):
     )
     text = text.replace(
         "struct MagnetodynamicsHamiltonian",
-        "/** Electromagnetic energy density in D and B; derivatives give E and H.\n"
-        " * Maxwell's spatial curl Poisson operator supplies the evolution.\n"
+        "/** Magnetic energy density; derivatives give H_field.\n"
+        " * Faraday's native exterior derivative and Ohm law supply evolution.\n"
         " * \\important This operator and documentation is fully AI-generated.\n"
         " */\nstruct MagnetodynamicsHamiltonian",
         1,
     )
-    # The generic generator emits derivatives of the second variable block.
-    # Add the electric derivative of the first, vector-valued block from SymPy.
-    definition = MagnetodynamicsHamiltonian.__call__()
-    displacement = definition.variables[0]
-    derivative = diff(definition.hamiltonian, displacement[0])
-    for component in displacement[1:]:
-        if (
-            simplify(
-                diff(definition.hamiltonian, component).subs(component, displacement[0])
-                - derivative
-            )
-            != 0
-        ):
-            raise ValueError(
-                "Electric derivative requires a component-aware constitutive law"
-            )
-    parameters = {str(symbol): symbol for symbol in derivative.free_symbols}
-    derivative = derivative.xreplace(
-        {
-            displacement[0]: Symbol("displacement"),
-            parameters["permittivity"]: Symbol("m_permittivity"),
-        }
-    )
-    method = "\n    KOKKOS_FUNCTION constexpr double dhamiltonian_ddisplacement(double displacement) const\n"
-    method += "    { return " + cxxcode(derivative) + "; }\n"
-    location = text.rfind("};")
-    text = text[:location] + method + text[location:]
     output.write_text(text)
 
 

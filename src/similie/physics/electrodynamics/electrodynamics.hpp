@@ -1,0 +1,114 @@
+// SPDX-FileCopyrightText: 2026 Baptiste Legouix
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// AI-GENERATED
+
+#pragma once
+
+#include <array>
+#include <span>
+
+#include <similie/physics/electrodynamics/electrodynamics_hamiltonian.hpp>
+
+#include <Kokkos_Core.hpp>
+
+namespace similie::physics::electrodynamics {
+/** Electric-only Hamiltonian sector with advected charge, zero conductivity.
+ * H(D)=D.D/(2 epsilon), E=H_D=-grad(phi), -div(epsilon grad phi)=charge.
+ * charge_t=-div J, J=charge*u. No magnetic induction or Maxwell-wave state.
+ * The caller reconstructs the potential with native exterior elliptic operators.
+ * \important This operator and documentation is fully AI-generated.
+ */
+class Electrodynamics
+{
+    struct Component
+    {
+    };
+    ElectrodynamicsHamiltonian const m_hamiltonian;
+
+public:
+    using Vector = std::array<double, 3>;
+    double const permittivity;
+    KOKKOS_FUNCTION explicit Electrodynamics(double electric_permittivity)
+        : m_hamiltonian(electric_permittivity)
+        , permittivity(electric_permittivity)
+    {
+        KOKKOS_ASSERT(permittivity > 0);
+    }
+    KOKKOS_FUNCTION static double dot(Vector const& left, Vector const& right)
+    {
+        double result = 0;
+        for (int a = 0; a < 3; ++a)
+            result += left[a] * right[a];
+        return result;
+    }
+    KOKKOS_FUNCTION double hamiltonian(Vector const& displacement) const
+    {
+        return m_hamiltonian.hamiltonian(0.0, std::span<double const, 3>(displacement));
+    }
+    KOKKOS_FUNCTION Vector electric_field(Vector const& displacement) const
+    {
+        Vector result {};
+        for (int a = 0; a < 3; ++a)
+            result[a] = m_hamiltonian.template dhamiltonian_dmoments<Component>(displacement[a]);
+        return result;
+    }
+    KOKKOS_FUNCTION Vector field_from_potential_gradient(Vector const& potential_gradient) const
+    {
+        Vector result {};
+        for (int a = 0; a < 3; ++a)
+            result[a] = -potential_gradient[a];
+        return result;
+    }
+    KOKKOS_FUNCTION Vector displacement(Vector const& electric) const
+    {
+        Vector result {};
+        for (int a = 0; a < 3; ++a)
+            result[a] = permittivity * electric[a];
+        return result;
+    }
+    KOKKOS_FUNCTION Vector conduction_current([[maybe_unused]] Vector const& displacement) const
+    {
+        return {};
+    }
+    KOKKOS_FUNCTION Vector
+    current(double charge_density,
+            Vector const& velocity,
+            [[maybe_unused]] Vector const& displacement) const
+    {
+        Vector result {};
+        for (int a = 0; a < 3; ++a)
+            result[a] = charge_density * velocity[a];
+        return result;
+    }
+    KOKKOS_FUNCTION double operator()(double current_divergence) const
+    {
+        return -current_divergence;
+    }
+    KOKKOS_FUNCTION Vector electric_force(double charge_density, Vector const& displacement) const
+    {
+        Vector result = electric_field(displacement);
+        for (double& value : result)
+            value *= charge_density;
+        return result;
+    }
+    KOKKOS_FUNCTION double fluid_energy_source(
+            Vector const& displacement,
+            Vector const& total_current) const
+    {
+        return dot(total_current, electric_field(displacement));
+    }
+    KOKKOS_FUNCTION double ohmic_heating([[maybe_unused]] Vector const& displacement) const
+    {
+        return 0;
+    }
+    KOKKOS_FUNCTION double charge_relaxation_rate() const
+    {
+        return 0;
+    }
+    KOKKOS_FUNCTION double gauss_residual(double displacement_divergence, double charge_density)
+            const
+    {
+        return displacement_divergence - charge_density;
+    }
+};
+} // namespace similie::physics::electrodynamics

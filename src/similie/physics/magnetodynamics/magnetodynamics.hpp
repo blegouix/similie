@@ -12,12 +12,10 @@
 #include <Kokkos_Core.hpp>
 
 namespace similie::physics::magnetodynamics {
-/** Hamiltonian electromagnetism and its quasistatic ideal-MHD magnetic sector.
- * H(D,B)=D.D/(2 epsilon)+B.B/(2 mu), E=H_D, H=H_B.
- * D_t=curl H-J, B_t=-curl E. In MHD, J=curl H and E=-u cross B;
- * displacement current and electric energy are excluded from the MHD limit.
- * Spatial curls/divergences must be evaluated with the compatible exterior
- * complex. Storing B as a closed two-cochain preserves dB=0 under Faraday dE.
+/** Magnetic-only Hamiltonian sector H(B)=B.B/(2 mu), H_field=H_B.
+ * J=curl H_field, E=-u cross B, B_t=-curl E. E is an Ohm-law closure,
+ * not an independent electric state. Compatible native exterior d preserves
+ * closed magnetic induction. No electric displacement or electric energy.
  * \important This operator and documentation is fully AI-generated.
  */
 class Magnetodynamics
@@ -30,20 +28,12 @@ class Magnetodynamics
 public:
     using Vector = std::array<double, 3>;
     using Tensor = std::array<std::array<double, 3>, 3>;
-    struct MaxwellVariables
-    {
-        Vector displacement;
-        Vector induction;
-    };
-    double const permeability, permittivity;
-    KOKKOS_FUNCTION explicit Magnetodynamics(
-            double magnetic_permeability,
-            double electric_permittivity = 1.0)
-        : m_hamiltonian(electric_permittivity, magnetic_permeability)
+    double const permeability;
+    KOKKOS_FUNCTION explicit Magnetodynamics(double magnetic_permeability)
+        : m_hamiltonian(magnetic_permeability)
         , permeability(magnetic_permeability)
-        , permittivity(electric_permittivity)
     {
-        KOKKOS_ASSERT(permeability > 0 && permittivity > 0);
+        KOKKOS_ASSERT(permeability > 0);
     }
     KOKKOS_FUNCTION static Vector cross(Vector const& left, Vector const& right)
     {
@@ -61,15 +51,13 @@ public:
             result += left[a] * right[a];
         return result;
     }
-    KOKKOS_FUNCTION double hamiltonian(MaxwellVariables const& state) const
+    KOKKOS_FUNCTION double hamiltonian(Vector const& induction) const
     {
-        return m_hamiltonian.hamiltonian(
-                std::span<double const, 3>(state.displacement),
-                std::span<double const, 3>(state.induction));
+        return m_hamiltonian.hamiltonian(0.0, std::span<double const, 3>(induction));
     }
     KOKKOS_FUNCTION double magnetic_energy(Vector const& induction) const
     {
-        return hamiltonian({{}, induction});
+        return hamiltonian(induction);
     }
     KOKKOS_FUNCTION Vector magnetic_field(Vector const& induction) const
     {
@@ -78,31 +66,9 @@ public:
             result[a] = m_hamiltonian.template dhamiltonian_dmoments<Component>(induction[a]);
         return result;
     }
-    KOKKOS_FUNCTION Vector electric_field(Vector const& displacement) const
+    KOKKOS_FUNCTION Vector operator()(Vector const& curl_electric_field) const
     {
-        Vector result {};
-        for (int a = 0; a < 3; ++a)
-            result[a] = m_hamiltonian.dhamiltonian_ddisplacement(displacement[a]);
-        return result;
-    }
-    KOKKOS_FUNCTION MaxwellVariables maxwell_rate(
-            Vector const& curl_magnetic_field,
-            Vector const& curl_electric_field,
-            Vector const& current) const
-    {
-        MaxwellVariables result {};
-        for (int a = 0; a < 3; ++a) {
-            result.displacement[a] = curl_magnetic_field[a] - current[a];
-            result.induction[a] = -curl_electric_field[a];
-        }
-        return result;
-    }
-    KOKKOS_FUNCTION MaxwellVariables operator()(
-            Vector const& curl_magnetic_field,
-            Vector const& curl_electric_field,
-            Vector const& current) const
-    {
-        return maxwell_rate(curl_magnetic_field, curl_electric_field, current);
+        return induction_rate(curl_electric_field);
     }
     KOKKOS_FUNCTION Vector ohm_electric_field(
             Vector const& velocity,
