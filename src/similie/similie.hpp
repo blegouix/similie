@@ -13,8 +13,11 @@ namespace sil {
 #include <similie/physics/ehd/ehd.hpp>
 #include <similie/physics/electrodynamics/electrodynamics.hpp>
 #include <similie/physics/electrodynamics/resistive_electrodynamics.hpp>
+#include <similie/physics/electromagnetism/electromagnetism.hpp>
+#include <similie/physics/electromagnetism/resistive_electromagnetism.hpp>
 #include <similie/physics/fluid/incompressible_navier_stokes.hpp>
 #include <similie/physics/fluid/navier_stokes_fourier.hpp>
+#include <similie/physics/fmhd/fmhd.hpp>
 #include <similie/physics/hamilton_equations.hpp>
 #include <similie/physics/magnetodynamics/magnetodynamics.hpp>
 #include <similie/physics/magnetodynamics/resistive_magnetodynamics.hpp>

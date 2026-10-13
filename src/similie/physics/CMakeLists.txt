@@ -214,6 +214,9 @@ target_include_directories(physics
 )
 
 if(BUILD_TESTING)
+    add_test(NAME electromagnetism_symbolic_validation
+        COMMAND "${Python3_EXECUTABLE}" -B
+                "${CMAKE_CURRENT_SOURCE_DIR}/electromagnetism/test_electromagnetism.py")
     add_test(NAME electrodynamics_symbolic_validation
         COMMAND "${Python3_EXECUTABLE}" -B
                 "${CMAKE_CURRENT_SOURCE_DIR}/electrodynamics/test_electrodynamics.py")
