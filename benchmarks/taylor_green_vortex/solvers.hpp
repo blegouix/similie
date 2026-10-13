@@ -150,6 +150,9 @@ class PressureReconstruction
     similie::physics::fluid::IncompressibleNavierStokes const m_physics;
     Field m_vorticity, m_lap, m_phi, m_r, m_p, m_ap, m_temp, m_projection_gradient,
             m_pressure_acceleration;
+
+public:
+    // NVCC requires methods enclosing extended device lambdas to be public.
     void poisson(Field input, Field output)
     {
         for (int a = 0; a < 3; ++a)
@@ -220,7 +223,6 @@ class PressureReconstruction
                 KOKKOS_LAMBDA(int i) { output(0, i) += shift; });
     }
 
-public:
     Field pressure;
     std::int64_t total_iterations = 0;
     explicit PressureReconstruction(StructuredGrid& dec)
@@ -269,7 +271,6 @@ public:
         recover_pressure(velocity, output, mean_pressure);
     }
 
-private:
     void project(Field velocity)
     {
         m_dec.divergence(velocity, m_r);

@@ -82,6 +82,9 @@ class VorticityDEC
                                      Kokkos::layout_right,
                                      Field::memory_space>(storage.data(), domain));
     }
+
+public:
+    // Device lambda instantiations in exterior must be able to name this type.
     struct Periodic
     {
         template <class Tensor, class Element>
@@ -100,6 +103,8 @@ class VorticityDEC
                     [&](auto component) { return field.mem(wrapped, component); });
         }
     };
+
+    // NVCC requires methods enclosing extended device lambdas to be public.
     void pack(Field source, Field target)
     {
         Kokkos::parallel_for(
@@ -120,6 +125,8 @@ class VorticityDEC
                         target(c, i) = source(0, 3 * i + c);
                 });
     }
+
+private:
     KOKKOS_FUNCTION static double axial(TwoFormTensor field, int i, int a, int n)
     {
         SpatialDomain::discrete_element_type const

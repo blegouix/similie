@@ -108,6 +108,9 @@ class StructuredGrid
     Field m_position, m_metric, m_oneform, m_pointwise, m_twoform, m_face_pointwise, m_scalar;
     std::unique_ptr<ScalarLaplacian> m_laplacian;
     std::unique_ptr<VectorCodifferential> m_codifferential;
+
+public:
+    // Device lambda instantiations in exterior must be able to name this type.
     struct Periodic
     {
         template <class Tensor, class Element>
@@ -126,6 +129,8 @@ class StructuredGrid
                     [&](auto component) { return field.mem(wrapped, component); });
         }
     };
+
+private:
     PositionTensor position() const
     {
         [[maybe_unused]] sil::tensor::TensorAccessor<PositionIndex> accessor;
@@ -186,6 +191,9 @@ class StructuredGrid
             return -field(elem, field.accessor().template access_element<X, Z>());
         return field(elem, field.accessor().template access_element<X, Y>());
     }
+
+public:
+    // NVCC requires methods enclosing extended device lambdas to be public.
     void reduce_one_form()
     {
         VectorTensor const form = vector(m_pointwise), cochain = vector(m_oneform);
@@ -231,7 +239,6 @@ class StructuredGrid
                 });
     }
 
-public:
     int const n, cells;
     double const h;
     SpatialDomain domain() const
@@ -264,6 +271,23 @@ public:
         , cells(nodes * nodes * nodes)
         , h(2 * std::numbers::pi / nodes)
     {
+        initialize_geometry();
+        PositionTensor const geometry = position();
+        m_laplacian = std::make_unique<ScalarLaplacian>(
+                Kokkos::DefaultExecutionSpace(),
+                scalar(m_scalar),
+                scalar(m_scalar),
+                metric(),
+                geometry);
+        m_codifferential = std::make_unique<VectorCodifferential>(
+                Kokkos::DefaultExecutionSpace(),
+                vector(m_oneform),
+                metric(),
+                geometry);
+    }
+    // An extended device lambda must also be enclosed by an addressable function.
+    void initialize_geometry()
+    {
         PositionTensor const geometry = position();
         double const spacing = h;
         ddc::parallel_for_each(
@@ -281,17 +305,6 @@ public:
                               + (static_cast<double>(elem.uid<GridZ>()) - 1) * spacing;
                 });
         Kokkos::deep_copy(m_metric, 1.0);
-        m_laplacian = std::make_unique<ScalarLaplacian>(
-                Kokkos::DefaultExecutionSpace(),
-                scalar(m_scalar),
-                scalar(m_scalar),
-                metric(),
-                geometry);
-        m_codifferential = std::make_unique<VectorCodifferential>(
-                Kokkos::DefaultExecutionSpace(),
-                vector(m_oneform),
-                metric(),
-                geometry);
     }
     ScalarTensor scalar(Field field, int component = 0) const
     {

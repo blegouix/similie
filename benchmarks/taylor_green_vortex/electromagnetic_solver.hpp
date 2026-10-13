@@ -87,6 +87,8 @@ class ElectromagneticSolver
             m_edges, m_current_edges, m_electric_edges, m_motional_edges, m_displacement_edges,
             m_magnetic_faces, m_poisson_rhs, m_poisson_solution;
 
+public:
+    // NVCC requires methods enclosing extended device lambdas to be public.
     void potential_displacement()
     {
         for (int a = 0; a < 3; ++a)
@@ -159,7 +161,6 @@ class ElectromagneticSolver
         potential_displacement();
     }
 
-public:
     // State slots: charge, D(one-cochain)[3], B(two-cochain)[3]. Inactive slots stay zero.
     Field state, induction, displacement, electric_field, current, charge_density, potential, force,
             fluid_power, joule_heating, gauss_error;
@@ -464,7 +465,6 @@ public:
         return limit;
     }
 
-private:
     double field_energy_rate()
     {
         Field const rate = m_rate, phi = potential;
@@ -504,7 +504,6 @@ private:
         return value / m_grid.cells;
     }
 
-public:
     // time, magnetic energy, electric energy, J.E, heat, divB, Gauss, charge, energy exchange residual.
     std::array<double, 9> monitor(double time)
     {
