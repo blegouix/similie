@@ -132,18 +132,19 @@ $(function(){initNavTree('conceptsil_1_1tensor_1_1NaturalTensorIndexConcept.html
 <p><code>#include &lt;<a class="el" href="tensor_2concepts_8hpp_source.html">concepts.hpp</a>&gt;</code></p>
 <h2 class="groupheader">Concept definition</h2>
 <div class="fragment"><div class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Index, <span class="keyword">class</span> Dimension&gt;</div>
-<div class="line"><span class="keyword">concept </span><a class="code hl_concept" href="conceptsil_1_1tensor_1_1NaturalTensorIndexConcept.html">sil::tensor::NaturalTensorIndexConcept</a> =  <a class="code hl_concept" href="conceptsil_1_1tensor_1_1DirectTensorIndexConcept.html">DirectTensorIndexConcept&lt;Index&gt;</a> &amp;&amp; <span class="keyword">requires</span>(std::size_t id) {</div>
+<div class="line"><span class="keyword">concept </span><a class="code hl_concept" href="conceptsil_1_1tensor_1_1NaturalTensorIndexConcept.html">sil::tensor::NaturalTensorIndexConcept</a> =  <a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndexConcept.html">TensorIndexConcept&lt;Index&gt;</a> &amp;&amp; <span class="keyword">requires</span>(std::size_t id) {</div>
+<div class="line">    <span class="keyword">requires</span> Index::is_explicitely_stored_tensor;</div>
 <div class="line">    <span class="keyword">requires</span> Index::is_tensor_natural_index;</div>
 <div class="line">    <span class="keyword">typename</span> Index::type_seq_dimensions;</div>
 <div class="line">    { Index::template mem_id&lt;Dimension&gt;() } -&gt; std::same_as&lt;std::size_t&gt;;</div>
 <div class="line">    { Index::mem_id(<span class="keywordtype">id</span>) } -&gt; std::same_as&lt;std::size_t&gt;;</div>
 <div class="line">    { Index::access_id(<span class="keywordtype">id</span>) } -&gt; std::same_as&lt;std::size_t&gt;;</div>
 <div class="line">}</div>
-<div class="ttc" id="aconceptsil_1_1tensor_1_1DirectTensorIndexConcept_html"><div class="ttname"><a href="conceptsil_1_1tensor_1_1DirectTensorIndexConcept.html">sil::tensor::DirectTensorIndexConcept</a></div><div class="ttdef"><b>Definition</b> <a href="tensor_2concepts_8hpp_source.html#l00081">tensor/concepts.hpp:81</a></div></div>
-<div class="ttc" id="aconceptsil_1_1tensor_1_1NaturalTensorIndexConcept_html"><div class="ttname"><a href="conceptsil_1_1tensor_1_1NaturalTensorIndexConcept.html">sil::tensor::NaturalTensorIndexConcept</a></div><div class="ttdef"><b>Definition</b> <a href="tensor_2concepts_8hpp_source.html#l00090">tensor/concepts.hpp:90</a></div></div>
+<div class="ttc" id="aconceptsil_1_1tensor_1_1NaturalTensorIndexConcept_html"><div class="ttname"><a href="conceptsil_1_1tensor_1_1NaturalTensorIndexConcept.html">sil::tensor::NaturalTensorIndexConcept</a></div><div class="ttdef"><b>Definition</b> <a href="tensor_2concepts_8hpp_source.html#l00092">tensor/concepts.hpp:92</a></div></div>
+<div class="ttc" id="aconceptsil_1_1tensor_1_1TensorIndexConcept_html"><div class="ttname"><a href="conceptsil_1_1tensor_1_1TensorIndexConcept.html">sil::tensor::TensorIndexConcept</a></div><div class="ttdef"><b>Definition</b> <a href="tensor_2concepts_8hpp_source.html#l00052">tensor/concepts.hpp:52</a></div></div>
 </div><!-- fragment --><a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock">
-<p class="definition">Definition at line <a class="el" href="tensor_2concepts_8hpp_source.html#l00090">90</a> of file <a class="el" href="tensor_2concepts_8hpp_source.html">tensor/concepts.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="tensor_2concepts_8hpp_source.html#l00092">92</a> of file <a class="el" href="tensor_2concepts_8hpp_source.html">tensor/concepts.hpp</a>.</p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!--

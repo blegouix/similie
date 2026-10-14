@@ -725,18 +725,18 @@ $(function(){initNavTree('codifferential_8hpp_source.html',''); initResizable(tr
 <div class="line"><a id="l00585" name="l00585"></a><span class="lineno">  585</span> </div>
 <div class="line"><a id="l00586" name="l00586"></a><span class="lineno">  586</span><span class="keyword">static_assert</span>(StagedCodifferentialConcept&lt;</div>
 <div class="line"><a id="l00587" name="l00587"></a><span class="lineno">  587</span>              StagedCodifferential&lt;</div>
-<div class="line"><a id="l00588" name="l00588"></a><span class="lineno">  588</span>                      detail::ConceptMetricIndex,</div>
-<div class="line"><a id="l00589" name="l00589"></a><span class="lineno">  589</span>                      detail::ConceptDirection,</div>
-<div class="line"><a id="l00590" name="l00590"></a><span class="lineno">  590</span>                      detail::ConceptDirection,</div>
-<div class="line"><a id="l00591" name="l00591"></a><span class="lineno">  591</span>                      detail::ConceptField&lt;detail::ConceptDirection&gt;,</div>
-<div class="line"><a id="l00592" name="l00592"></a><span class="lineno">  592</span>                      detail::ConceptField&lt;detail::ConceptMetricIndex&gt;,</div>
-<div class="line"><a id="l00593" name="l00593"></a><span class="lineno">  593</span>                      detail::ConceptField&lt;detail::ConceptPositionIndex&gt;,</div>
+<div class="line"><a id="l00588" name="l00588"></a><span class="lineno">  588</span>                      detail::MetricIndexConcept,</div>
+<div class="line"><a id="l00589" name="l00589"></a><span class="lineno">  589</span>                      detail::DirectionConcept,</div>
+<div class="line"><a id="l00590" name="l00590"></a><span class="lineno">  590</span>                      detail::DirectionConcept,</div>
+<div class="line"><a id="l00591" name="l00591"></a><span class="lineno">  591</span>                      detail::FieldConcept&lt;detail::DirectionConcept&gt;,</div>
+<div class="line"><a id="l00592" name="l00592"></a><span class="lineno">  592</span>                      detail::FieldConcept&lt;detail::MetricIndexConcept&gt;,</div>
+<div class="line"><a id="l00593" name="l00593"></a><span class="lineno">  593</span>                      detail::FieldConcept&lt;detail::PositionIndexConcept&gt;,</div>
 <div class="line"><a id="l00594" name="l00594"></a><span class="lineno">  594</span>                      Kokkos::DefaultHostExecutionSpace&gt;,</div>
 <div class="line"><a id="l00595" name="l00595"></a><span class="lineno">  595</span>              <a class="code hl_typedef" href="namespacesil_1_1exterior.html#a3da5f6d818417a943e98321a4f70d534">codifferential_tensor_t</a>&lt;</div>
-<div class="line"><a id="l00596" name="l00596"></a><span class="lineno">  596</span>                      detail::ConceptDirection,</div>
-<div class="line"><a id="l00597" name="l00597"></a><span class="lineno">  597</span>                      detail::ConceptDirection,</div>
-<div class="line"><a id="l00598" name="l00598"></a><span class="lineno">  598</span>                      detail::ConceptField&lt;detail::ConceptDirection&gt;&gt;,</div>
-<div class="line"><a id="l00599" name="l00599"></a><span class="lineno">  599</span>              detail::ConceptField&lt;detail::ConceptDirection&gt;&gt;);</div>
+<div class="line"><a id="l00596" name="l00596"></a><span class="lineno">  596</span>                      detail::DirectionConcept,</div>
+<div class="line"><a id="l00597" name="l00597"></a><span class="lineno">  597</span>                      detail::DirectionConcept,</div>
+<div class="line"><a id="l00598" name="l00598"></a><span class="lineno">  598</span>                      detail::FieldConcept&lt;detail::DirectionConcept&gt;&gt;,</div>
+<div class="line"><a id="l00599" name="l00599"></a><span class="lineno">  599</span>              detail::FieldConcept&lt;detail::DirectionConcept&gt;&gt;);</div>
 <div class="line"><a id="l00600" name="l00600"></a><span class="lineno">  600</span> </div>
 <div class="line"><a id="l00601" name="l00601"></a><span class="lineno">  601</span><span class="keyword">template</span> &lt;</div>
 <div class="line"><a id="l00602" name="l00602"></a><span class="lineno">  602</span>        tensor::TensorIndex MetricIndex,</div>

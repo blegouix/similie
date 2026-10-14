@@ -1,15 +1,5 @@
 var NAVTREEINDEX5 =
 {
-"structsil_1_1exterior_1_1Reduction.html#a57df5c981f3f9831b038f73d67979971":[9,0,6,1,23,3],
-"structsil_1_1exterior_1_1Reduction.html#af415650ccc90ec899ca9fd17152f70ae":[7,0,7,1,23,4],
-"structsil_1_1exterior_1_1Reduction.html#af415650ccc90ec899ca9fd17152f70ae":[9,0,6,1,23,4],
-"structsil_1_1exterior_1_1Reduction.html#af7a2b0fa491f854893d5043a196b3323":[7,0,7,1,23,2],
-"structsil_1_1exterior_1_1Reduction.html#af7a2b0fa491f854893d5043a196b3323":[9,0,6,1,23,2],
-"structsil_1_1exterior_1_1SimplexVolume.html":[7,0,7,1,25],
-"structsil_1_1exterior_1_1SimplexVolume.html":[9,0,6,1,25],
-"structsil_1_1exterior_1_1TransposedCoboundary_3_01TagToAddToCochain_00_01CochainTag_01_4.html":[7,0,7,1,30],
-"structsil_1_1exterior_1_1TransposedCoboundary_3_01TagToAddToCochain_00_01CochainTag_01_4.html":[9,0,6,1,30],
-"structsil_1_1misc_1_1is__specialization__of.html":[7,0,7,3,1],
 "structsil_1_1misc_1_1is__specialization__of.html":[9,0,6,3,0],
 "structsil_1_1misc_1_1is__specialization__of_3_01T_00_01T_3_01Us_8_8_8_01_4_01_4.html":[7,0,7,3,2],
 "structsil_1_1misc_1_1is__specialization__of_3_01T_00_01T_3_01Us_8_8_8_01_4_01_4.html":[9,0,6,3,1],
@@ -249,5 +239,15 @@ var NAVTREEINDEX5 =
 "structsil_1_1tensor_1_1TensorWithExtrapolationRules.html#a7d8a400c754cd295fffb0395570a1d7c":[9,0,6,5,31,24],
 "structsil_1_1tensor_1_1TensorWithExtrapolationRules.html#a86c1084589167765e21b31d850c872de":[7,0,7,5,31,0],
 "structsil_1_1tensor_1_1TensorWithExtrapolationRules.html#a86c1084589167765e21b31d850c872de":[9,0,6,5,31,0],
-"structsil_1_1tensor_1_1TensorWithExtrapolationRules.html#a939d153aeb54f73d7bb7645b0f794250":[7,0,7,5,31,15]
+"structsil_1_1tensor_1_1TensorWithExtrapolationRules.html#a939d153aeb54f73d7bb7645b0f794250":[7,0,7,5,31,15],
+"structsil_1_1tensor_1_1TensorWithExtrapolationRules.html#a939d153aeb54f73d7bb7645b0f794250":[9,0,6,5,31,15],
+"structsil_1_1tensor_1_1TensorWithExtrapolationRules.html#aa35e7acfe7af91d4d33991cc75de16d9":[7,0,7,5,31,10],
+"structsil_1_1tensor_1_1TensorWithExtrapolationRules.html#aa35e7acfe7af91d4d33991cc75de16d9":[9,0,6,5,31,10],
+"structsil_1_1tensor_1_1TensorWithExtrapolationRules.html#aad8f223f82fbed7b5e6be66cff23edd9":[7,0,7,5,31,7],
+"structsil_1_1tensor_1_1TensorWithExtrapolationRules.html#aad8f223f82fbed7b5e6be66cff23edd9":[9,0,6,5,31,7],
+"structsil_1_1tensor_1_1TensorWithExtrapolationRules.html#ad18932cd412a203d920c4b2149813af7":[7,0,7,5,31,22],
+"structsil_1_1tensor_1_1TensorWithExtrapolationRules.html#ad18932cd412a203d920c4b2149813af7":[9,0,6,5,31,22],
+"structsil_1_1tensor_1_1TensorWithExtrapolationRules.html#ad4fd6147d4df4dbe29c3a1d38ad5fdc8":[7,0,7,5,31,18],
+"structsil_1_1tensor_1_1TensorWithExtrapolationRules.html#ad4fd6147d4df4dbe29c3a1d38ad5fdc8":[9,0,6,5,31,18],
+"structsil_1_1tensor_1_1TensorWithExtrapolationRules.html#ae36c04df1fa9b2bae7dff7b942672a3e":[7,0,7,5,31,2]
 };

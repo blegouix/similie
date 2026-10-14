@@ -149,150 +149,135 @@ $(function(){initNavTree('tensor_2concepts_8hpp_source.html',''); initResizable(
 <div class="line"><a id="l00019" name="l00019"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html">   19</a></span><span class="keyword">class </span><a class="code hl_class" href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">Tensor</a>;</div>
 <div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span> </div>
 <div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="keyword">namespace </span>detail {</div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="keyword">struct </span>ConceptDimension</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="keyword">struct </span>DimensionConcept</div>
 <div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>{</div>
 <div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>};</div>
 <div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span> </div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="keyword">struct </span>ConceptGrid : ddc::UniformPointSampling&lt;ConceptDimension&gt;</div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="keyword">struct </span>GridConcept : ddc::UniformPointSampling&lt;DimensionConcept&gt;</div>
 <div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>{</div>
 <div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>};</div>
 <div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span> </div>
 <div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Index&gt;</div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span><span class="keyword">using </span>ConceptField = <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>&lt;</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span><span class="keyword">using </span>FieldConcept = <a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a>&lt;</div>
 <div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>        double,</div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>        ddc::DiscreteDomain&lt;ConceptGrid, Index&gt;,</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>        ddc::DiscreteDomain&lt;GridConcept, Index&gt;,</div>
 <div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>        Kokkos::layout_right,</div>
 <div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>        Kokkos::HostSpace&gt;;</div>
 <div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span> </div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span><span class="keyword">struct </span>ConceptIndexTensor</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span><span class="keyword">struct </span>IndexTensorConcept</div>
 <div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>{</div>
 <div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    <span class="keyword">using </span>element_type = double;</div>
 <div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>};</div>
 <div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span> </div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span><span class="keyword">struct </span>ConceptIndexAccess</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span><span class="keyword">struct </span>IndexAccessConcept</div>
 <div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>{</div>
 <div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    <span class="keyword">template</span> &lt;<span class="keyword">class</span> Tensor, <span class="keyword">class</span> Element&gt;</div>
 <div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    <span class="keywordtype">double</span> operator()(<a class="code hl_function" href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">Tensor</a> tensor, Element element) <span class="keyword">const</span>;</div>
 <div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>};</div>
 <div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>} <span class="comment">// namespace detail</span></div>
 <div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span> </div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span><span class="comment">// Common metadata. Constant-expression requirements also instantiate size functions.</span></div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Index&gt;</div>
-<div class="foldopen" id="foldopen00051" data-start="{" data-end="}">
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno"><a class="line" href="conceptsil_1_1tensor_1_1TensorIndexConcept.html">   51</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndexConcept.html">TensorIndexConcept</a> = <span class="keyword">requires</span> {</div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>    <span class="keyword">requires</span> Index::is_tensor_index;</div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    <span class="keyword">typename</span> std::bool_constant&lt;Index::is_explicitely_stored_tensor&gt;;</div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>    <span class="keyword">typename</span> Index::subindices_domain_t;</div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>    { Index::subindices_domain() } -&gt; std::same_as&lt;typename Index::subindices_domain_t&gt;;</div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>    { Index::rank() } -&gt; std::same_as&lt;std::size_t&gt;;</div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    { Index::size() } -&gt; std::same_as&lt;std::size_t&gt;;</div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>    { Index::mem_size() } -&gt; std::same_as&lt;std::size_t&gt;;</div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>    { Index::access_size() } -&gt; std::same_as&lt;std::size_t&gt;;</div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>    <span class="keyword">typename</span> std::integral_constant&lt;std::size_t, Index::rank()&gt;;</div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>    <span class="keyword">typename</span> std::integral_constant&lt;std::size_t, Index::size()&gt;;</div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>    <span class="keyword">typename</span> std::integral_constant&lt;std::size_t, Index::mem_size()&gt;;</div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    <span class="keyword">typename</span> std::integral_constant&lt;std::size_t, Index::access_size()&gt;;</div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>};</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span><span class="comment">// All indices expose the same metadata and access operation. Explicit storage</span></div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span><span class="comment">// additionally provides a direct map between access IDs and memory IDs.</span></div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Index&gt;</div>
+<div class="foldopen" id="foldopen00052" data-start="{" data-end="}">
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno"><a class="line" href="conceptsil_1_1tensor_1_1TensorIndexConcept.html">   52</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndexConcept.html">TensorIndexConcept</a> = <span class="keyword">requires</span>(</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>        detail::IndexTensorConcept tensor,</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>        ddc::DiscreteElement&lt;Index&gt; element,</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>        detail::IndexAccessConcept access) {</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>    <span class="keyword">requires</span> Index::is_tensor_index;</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    <span class="keyword">typename</span> std::bool_constant&lt;Index::is_explicitely_stored_tensor&gt;;</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>    <span class="keyword">typename</span> Index::subindices_domain_t;</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>    { Index::subindices_domain() } -&gt; std::same_as&lt;typename Index::subindices_domain_t&gt;;</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>    { Index::rank() } -&gt; std::same_as&lt;std::size_t&gt;;</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>    { Index::size() } -&gt; std::same_as&lt;std::size_t&gt;;</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>    { Index::mem_size() } -&gt; std::same_as&lt;std::size_t&gt;;</div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    { Index::access_size() } -&gt; std::same_as&lt;std::size_t&gt;;</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>    <span class="keyword">typename</span> std::integral_constant&lt;std::size_t, Index::rank()&gt;;</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>    <span class="keyword">typename</span> std::integral_constant&lt;std::size_t, Index::size()&gt;;</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>    <span class="keyword">typename</span> std::integral_constant&lt;std::size_t, Index::mem_size()&gt;;</div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>    <span class="keyword">typename</span> std::integral_constant&lt;std::size_t, Index::access_size()&gt;;</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>    {</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>        Index::template process_access&lt;</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>                detail::IndexTensorConcept,</div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>                ddc::DiscreteElement&lt;Index&gt;,</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>                Index&gt;(access, tensor, element)</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>    } -&gt; std::same_as&lt;double&gt;;</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>    <span class="keyword">requires</span>(!Index::is_explicitely_stored_tensor || <span class="keyword">requires</span>(std::size_t id) {</div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>        { Index::access_id_to_mem_id(<span class="keywordtype">id</span>) } -&gt; std::same_as&lt;std::size_t&gt;;</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>        {</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>            Index::mem_id_to_canonical_natural_ids(<span class="keywordtype">id</span>)</div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>        } -&gt; std::same_as&lt;std::array&lt;std::size_t, Index::rank()&gt;&gt;;</div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>        <span class="comment">// Natural indices take one ID; composite indices take subindex IDs.</span></div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>        <span class="keyword">requires</span> (<span class="keyword">requires</span>(std::array&lt;std::size_t, Index::subindices_domain_t::rank()&gt; ids) {</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>            { Index::mem_id(ids) } -&gt; std::same_as&lt;std::size_t&gt;;</div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>            { Index::access_id(ids) } -&gt; std::same_as&lt;std::size_t&gt;;</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>        } || <span class="keyword">requires</span> {</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>            <span class="keyword">requires</span> Index::is_tensor_natural_index;</div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>            { Index::mem_id(<span class="keywordtype">id</span>) } -&gt; std::same_as&lt;std::size_t&gt;;</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>            { Index::access_id(<span class="keywordtype">id</span>) } -&gt; std::same_as&lt;std::size_t&gt;;</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>        });</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>    });</div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>};</div>
 </div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span> </div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Index&gt;</div>
-<div class="foldopen" id="foldopen00067" data-start="{" data-end="}">
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno"><a class="line" href="conceptsil_1_1tensor_1_1TensorIndexAccessConcept.html">   67</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndexAccessConcept.html">TensorIndexAccessConcept</a> = <a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndexConcept.html">TensorIndexConcept&lt;Index&gt;</a></div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>                                   &amp;&amp; <span class="keyword">requires</span>(</div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>                                           detail::ConceptIndexTensor tensor,</div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>                                           ddc::DiscreteElement&lt;Index&gt; element,</div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>                                           detail::ConceptIndexAccess access) {</div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>                                          {</div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>                                              Index::template process_access&lt;</div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>                                                      detail::ConceptIndexTensor,</div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>                                                      ddc::DiscreteElement&lt;Index&gt;,</div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>                                                      Index&gt;(access, tensor, element)</div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>                                          } -&gt; std::same_as&lt;double&gt;;</div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>                                      };</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span> </div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Index, <span class="keyword">class</span> Dimension&gt;</div>
+<div class="foldopen" id="foldopen00092" data-start="{" data-end="}">
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno"><a class="line" href="conceptsil_1_1tensor_1_1NaturalTensorIndexConcept.html">   92</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsil_1_1tensor_1_1NaturalTensorIndexConcept.html">NaturalTensorIndexConcept</a> = <a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndexConcept.html">TensorIndexConcept&lt;Index&gt;</a> &amp;&amp; <span class="keyword">requires</span>(std::size_t id) {</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>    <span class="keyword">requires</span> Index::is_explicitely_stored_tensor;</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>    <span class="keyword">requires</span> Index::is_tensor_natural_index;</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>    <span class="keyword">typename</span> Index::type_seq_dimensions;</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>    { Index::template mem_id&lt;Dimension&gt;() } -&gt; std::same_as&lt;std::size_t&gt;;</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>    { Index::mem_id(<span class="keywordtype">id</span>) } -&gt; std::same_as&lt;std::size_t&gt;;</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>    { Index::access_id(<span class="keywordtype">id</span>) } -&gt; std::same_as&lt;std::size_t&gt;;</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>};</div>
 </div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span> </div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Index&gt;</div>
-<div class="foldopen" id="foldopen00081" data-start="{" data-end="}">
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno"><a class="line" href="conceptsil_1_1tensor_1_1DirectTensorIndexConcept.html">   81</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsil_1_1tensor_1_1DirectTensorIndexConcept.html">DirectTensorIndexConcept</a> = <a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndexAccessConcept.html">TensorIndexAccessConcept&lt;Index&gt;</a> &amp;&amp; <span class="keyword">requires</span>(std::size_t id) {</div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>    <span class="keyword">requires</span> Index::is_explicitely_stored_tensor;</div>
-<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>    { Index::access_id_to_mem_id(<span class="keywordtype">id</span>) } -&gt; std::same_as&lt;std::size_t&gt;;</div>
-<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>    {</div>
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>        Index::mem_id_to_canonical_natural_ids(<span class="keywordtype">id</span>)</div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>    } -&gt; std::same_as&lt;std::array&lt;std::size_t, Index::rank()&gt;&gt;;</div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>};</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span> </div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Index&gt;</div>
+<div class="foldopen" id="foldopen00102" data-start="{" data-end="}">
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno"><a class="line" href="conceptsil_1_1tensor_1_1YoungTableauTensorIndexConcept.html">  102</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsil_1_1tensor_1_1YoungTableauTensorIndexConcept.html">YoungTableauTensorIndexConcept</a></div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>        = <a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndexConcept.html">TensorIndexConcept&lt;Index&gt;</a></div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>          &amp;&amp; <span class="keyword">requires</span>(std::array&lt;std::size_t, Index::subindices_domain_t::rank()&gt; ids) {</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>                 <span class="keyword">requires</span>(!Index::is_explicitely_stored_tensor);</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>                 { Index::access_id(ids) } -&gt; std::same_as&lt;std::size_t&gt;;</div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>                 {</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>                     Index::mem_lin_comb(ids)</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>                 } -&gt; std::same_as&lt;std::pair&lt;std::vector&lt;double&gt;, std::vector&lt;std::size_t&gt;&gt;&gt;;</div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>             };</div>
 </div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span> </div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Index, <span class="keyword">class</span> Dimension&gt;</div>
-<div class="foldopen" id="foldopen00090" data-start="{" data-end="}">
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno"><a class="line" href="conceptsil_1_1tensor_1_1NaturalTensorIndexConcept.html">   90</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsil_1_1tensor_1_1NaturalTensorIndexConcept.html">NaturalTensorIndexConcept</a> = <a class="code hl_concept" href="conceptsil_1_1tensor_1_1DirectTensorIndexConcept.html">DirectTensorIndexConcept&lt;Index&gt;</a> &amp;&amp; <span class="keyword">requires</span>(std::size_t id) {</div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>    <span class="keyword">requires</span> Index::is_tensor_natural_index;</div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>    <span class="keyword">typename</span> Index::type_seq_dimensions;</div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>    { Index::template mem_id&lt;Dimension&gt;() } -&gt; std::same_as&lt;std::size_t&gt;;</div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>    { Index::mem_id(<span class="keywordtype">id</span>) } -&gt; std::same_as&lt;std::size_t&gt;;</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>    { Index::access_id(<span class="keywordtype">id</span>) } -&gt; std::same_as&lt;std::size_t&gt;;</div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>};</div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span> </div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Rule, <span class="keyword">class</span> Field, <span class="keyword">class</span> Element&gt;</div>
+<div class="foldopen" id="foldopen00113" data-start="{" data-end="}">
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno"><a class="line" href="conceptsil_1_1tensor_1_1ExtrapolationRuleConcept.html">  113</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsil_1_1tensor_1_1ExtrapolationRuleConcept.html">ExtrapolationRuleConcept</a> = <span class="keyword">requires</span>(</div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>        Rule <span class="keyword">const</span>&amp; rule,</div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>        Field <span class="keyword">const</span>&amp; field,</div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>        <span class="keyword">typename</span> Field::non_indices_domain_t domain,</div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>        Element element) {</div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>    rule.value(domain, element).domain();</div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>    { rule(field, element).domain() } -&gt; std::same_as&lt;typename Field::indices_domain_t&gt;;</div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>};</div>
 </div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span> </div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span><span class="comment">// Mapping arity follows the constituent indices, which can include scalar indices.</span></div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Index&gt;</div>
-<div class="foldopen" id="foldopen00100" data-start="{" data-end="}">
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno"><a class="line" href="conceptsil_1_1tensor_1_1StructuredTensorIndexConcept.html">  100</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsil_1_1tensor_1_1StructuredTensorIndexConcept.html">StructuredTensorIndexConcept</a></div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>        = <a class="code hl_concept" href="conceptsil_1_1tensor_1_1DirectTensorIndexConcept.html">DirectTensorIndexConcept&lt;Index&gt;</a></div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>          &amp;&amp; <span class="keyword">requires</span>(std::array&lt;std::size_t, Index::subindices_domain_t::rank()&gt; ids) {</div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>                 { Index::mem_id(ids) } -&gt; std::same_as&lt;std::size_t&gt;;</div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>                 { Index::access_id(ids) } -&gt; std::same_as&lt;std::size_t&gt;;</div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>             };</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span> </div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Rules, <span class="keyword">class</span> Field, <span class="keyword">class</span> Element&gt;</div>
+<div class="foldopen" id="foldopen00123" data-start="{" data-end="}">
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno"><a class="line" href="conceptsil_1_1tensor_1_1ExtrapolationRulesConcept.html">  123</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsil_1_1tensor_1_1ExtrapolationRulesConcept.html">ExtrapolationRulesConcept</a></div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>        = <a class="code hl_concept" href="conceptsil_1_1tensor_1_1ExtrapolationRuleConcept.html">ExtrapolationRuleConcept&lt;Rules, Field, Element&gt;</a> &amp;&amp; <span class="keyword">requires</span>(Rules <span class="keyword">const</span>&amp; rules) {</div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>              <span class="keyword">requires</span> std::is_lvalue_reference_v&lt;</div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>                      <span class="keyword">decltype</span>(rules.template boundary_rule&lt;0, false&gt;())&gt;;</div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>              <span class="keyword">requires</span> std::is_const_v&lt;</div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>                      std::remove_reference_t&lt;<span class="keyword">decltype</span>(rules.template boundary_rule&lt;0, false&gt;())&gt;&gt;;</div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>              <span class="keyword">requires</span> std::is_lvalue_reference_v&lt;</div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>                      <span class="keyword">decltype</span>(rules.template boundary_rule&lt;0, true&gt;())&gt;;</div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>              <span class="keyword">requires</span> std::is_const_v&lt;</div>
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>                      std::remove_reference_t&lt;<span class="keyword">decltype</span>(rules.template boundary_rule&lt;0, true&gt;())&gt;&gt;;</div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>          };</div>
 </div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span> </div>
-<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Index&gt;</div>
-<div class="foldopen" id="foldopen00108" data-start="{" data-end="}">
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno"><a class="line" href="conceptsil_1_1tensor_1_1YoungTableauTensorIndexConcept.html">  108</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsil_1_1tensor_1_1YoungTableauTensorIndexConcept.html">YoungTableauTensorIndexConcept</a></div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>        = <a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndexAccessConcept.html">TensorIndexAccessConcept&lt;Index&gt;</a></div>
-<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>          &amp;&amp; <span class="keyword">requires</span>(std::array&lt;std::size_t, Index::subindices_domain_t::rank()&gt; ids) {</div>
-<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>                 <span class="keyword">requires</span>(!Index::is_explicitely_stored_tensor);</div>
-<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>                 { Index::access_id(ids) } -&gt; std::same_as&lt;std::size_t&gt;;</div>
-<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>                 {</div>
-<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>                     Index::mem_lin_comb(ids)</div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>                 } -&gt; std::same_as&lt;std::pair&lt;std::vector&lt;double&gt;, std::vector&lt;std::size_t&gt;&gt;&gt;;</div>
-<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>             };</div>
-</div>
-<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span> </div>
-<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Rule, <span class="keyword">class</span> Field, <span class="keyword">class</span> Element&gt;</div>
-<div class="foldopen" id="foldopen00119" data-start="{" data-end="}">
-<div class="line"><a id="l00119" name="l00119"></a><span class="lineno"><a class="line" href="conceptsil_1_1tensor_1_1ExtrapolationRuleConcept.html">  119</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsil_1_1tensor_1_1ExtrapolationRuleConcept.html">ExtrapolationRuleConcept</a> = <span class="keyword">requires</span>(</div>
-<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>        Rule <span class="keyword">const</span>&amp; rule,</div>
-<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>        Field <span class="keyword">const</span>&amp; field,</div>
-<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>        <span class="keyword">typename</span> Field::non_indices_domain_t domain,</div>
-<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>        Element element) {</div>
-<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>    rule.value(domain, element).domain();</div>
-<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>    { rule(field, element).domain() } -&gt; std::same_as&lt;typename Field::indices_domain_t&gt;;</div>
-<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>};</div>
-</div>
-<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span> </div>
-<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Rules, <span class="keyword">class</span> Field, <span class="keyword">class</span> Element&gt;</div>
-<div class="foldopen" id="foldopen00129" data-start="{" data-end="}">
-<div class="line"><a id="l00129" name="l00129"></a><span class="lineno"><a class="line" href="conceptsil_1_1tensor_1_1ExtrapolationRulesConcept.html">  129</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsil_1_1tensor_1_1ExtrapolationRulesConcept.html">ExtrapolationRulesConcept</a></div>
-<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>        = <a class="code hl_concept" href="conceptsil_1_1tensor_1_1ExtrapolationRuleConcept.html">ExtrapolationRuleConcept&lt;Rules, Field, Element&gt;</a> &amp;&amp; <span class="keyword">requires</span>(Rules <span class="keyword">const</span>&amp; rules) {</div>
-<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>              <span class="keyword">requires</span> std::is_lvalue_reference_v&lt;</div>
-<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>                      <span class="keyword">decltype</span>(rules.template boundary_rule&lt;0, false&gt;())&gt;;</div>
-<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>              <span class="keyword">requires</span> std::is_const_v&lt;</div>
-<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>                      std::remove_reference_t&lt;<span class="keyword">decltype</span>(rules.template boundary_rule&lt;0, false&gt;())&gt;&gt;;</div>
-<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>              <span class="keyword">requires</span> std::is_lvalue_reference_v&lt;</div>
-<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>                      <span class="keyword">decltype</span>(rules.template boundary_rule&lt;0, true&gt;())&gt;;</div>
-<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>              <span class="keyword">requires</span> std::is_const_v&lt;</div>
-<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>                      std::remove_reference_t&lt;<span class="keyword">decltype</span>(rules.template boundary_rule&lt;0, true&gt;())&gt;&gt;;</div>
-<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span>          };</div>
-</div>
-<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span> </div>
-<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>} <span class="comment">// namespace sil::tensor</span></div>
-<div class="ttc" id="aconceptsil_1_1tensor_1_1DirectTensorIndexConcept_html"><div class="ttname"><a href="conceptsil_1_1tensor_1_1DirectTensorIndexConcept.html">sil::tensor::DirectTensorIndexConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00081">tensor/concepts.hpp:81</a></div></div>
-<div class="ttc" id="aconceptsil_1_1tensor_1_1ExtrapolationRuleConcept_html"><div class="ttname"><a href="conceptsil_1_1tensor_1_1ExtrapolationRuleConcept.html">sil::tensor::ExtrapolationRuleConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00119">tensor/concepts.hpp:119</a></div></div>
-<div class="ttc" id="aconceptsil_1_1tensor_1_1ExtrapolationRulesConcept_html"><div class="ttname"><a href="conceptsil_1_1tensor_1_1ExtrapolationRulesConcept.html">sil::tensor::ExtrapolationRulesConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00129">tensor/concepts.hpp:130</a></div></div>
-<div class="ttc" id="aconceptsil_1_1tensor_1_1NaturalTensorIndexConcept_html"><div class="ttname"><a href="conceptsil_1_1tensor_1_1NaturalTensorIndexConcept.html">sil::tensor::NaturalTensorIndexConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00090">tensor/concepts.hpp:90</a></div></div>
-<div class="ttc" id="aconceptsil_1_1tensor_1_1StructuredTensorIndexConcept_html"><div class="ttname"><a href="conceptsil_1_1tensor_1_1StructuredTensorIndexConcept.html">sil::tensor::StructuredTensorIndexConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00100">tensor/concepts.hpp:101</a></div></div>
-<div class="ttc" id="aconceptsil_1_1tensor_1_1TensorIndexAccessConcept_html"><div class="ttname"><a href="conceptsil_1_1tensor_1_1TensorIndexAccessConcept.html">sil::tensor::TensorIndexAccessConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00067">tensor/concepts.hpp:67</a></div></div>
-<div class="ttc" id="aconceptsil_1_1tensor_1_1TensorIndexConcept_html"><div class="ttname"><a href="conceptsil_1_1tensor_1_1TensorIndexConcept.html">sil::tensor::TensorIndexConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00051">tensor/concepts.hpp:51</a></div></div>
-<div class="ttc" id="aconceptsil_1_1tensor_1_1YoungTableauTensorIndexConcept_html"><div class="ttname"><a href="conceptsil_1_1tensor_1_1YoungTableauTensorIndexConcept.html">sil::tensor::YoungTableauTensorIndexConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00108">tensor/concepts.hpp:109</a></div></div>
+<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span> </div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>} <span class="comment">// namespace sil::tensor</span></div>
+<div class="ttc" id="aconceptsil_1_1tensor_1_1ExtrapolationRuleConcept_html"><div class="ttname"><a href="conceptsil_1_1tensor_1_1ExtrapolationRuleConcept.html">sil::tensor::ExtrapolationRuleConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00113">tensor/concepts.hpp:113</a></div></div>
+<div class="ttc" id="aconceptsil_1_1tensor_1_1ExtrapolationRulesConcept_html"><div class="ttname"><a href="conceptsil_1_1tensor_1_1ExtrapolationRulesConcept.html">sil::tensor::ExtrapolationRulesConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00123">tensor/concepts.hpp:124</a></div></div>
+<div class="ttc" id="aconceptsil_1_1tensor_1_1NaturalTensorIndexConcept_html"><div class="ttname"><a href="conceptsil_1_1tensor_1_1NaturalTensorIndexConcept.html">sil::tensor::NaturalTensorIndexConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00092">tensor/concepts.hpp:92</a></div></div>
+<div class="ttc" id="aconceptsil_1_1tensor_1_1TensorIndexConcept_html"><div class="ttname"><a href="conceptsil_1_1tensor_1_1TensorIndexConcept.html">sil::tensor::TensorIndexConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00052">tensor/concepts.hpp:52</a></div></div>
+<div class="ttc" id="aconceptsil_1_1tensor_1_1YoungTableauTensorIndexConcept_html"><div class="ttname"><a href="conceptsil_1_1tensor_1_1YoungTableauTensorIndexConcept.html">sil::tensor::YoungTableauTensorIndexConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00102">tensor/concepts.hpp:103</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html"><div class="ttname"><a href="namespacesil_1_1tensor.html">sil::tensor</a></div><div class="ttdef"><b>Definition</b> <a href="antisymmetric__tensor_8hpp_source.html#l00015">antisymmetric_tensor.hpp:15</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_a164aa1d6ecb53a91d54f7158f7b0bcb7"><div class="ttname"><a href="namespacesil_1_1tensor.html#a164aa1d6ecb53a91d54f7158f7b0bcb7">sil::tensor::Tensor</a></div><div class="ttdeci">Tensor(ddc::Chunk&lt; ElementType, SupportType, Allocator &gt;) -&gt; Tensor&lt; ElementType, SupportType, Kokkos::layout_right, typename Allocator::memory_space &gt;</div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_classsil_1_1tensor_1_1Tensor"><div class="ttname"><a href="namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor">sil::tensor::Tensor</a></div><div class="ttdef"><b>Definition</b> <a href="#l00019">tensor/concepts.hpp:19</a></div></div>

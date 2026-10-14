@@ -10,7 +10,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.12.0"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>SimiLie: similie::physics::HamiltonianConcept Concept Reference</title>
+<title>SimiLie: similie::physics::HamiltonianPhysicsConcept Concept Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -99,7 +99,7 @@ $(function() {
 </div>
 <script type="text/javascript">
 /* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
-$(function(){initNavTree('conceptsimilie_1_1physics_1_1HamiltonianConcept.html',''); initResizable(true); });
+$(function(){initNavTree('conceptsimilie_1_1physics_1_1HamiltonianPhysicsConcept.html',''); initResizable(true); });
 /* @license-end */
 </script>
 <div id="doc-content">
@@ -125,38 +125,38 @@ $(function(){initNavTree('conceptsimilie_1_1physics_1_1HamiltonianConcept.html',
 </div>
 
 <div class="header">
-  <div class="headertitle"><div class="title">similie::physics::HamiltonianConcept Concept Reference</div></div>
+  <div class="headertitle"><div class="title">similie::physics::HamiltonianPhysicsConcept Concept Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
 <p><code>#include &lt;<a class="el" href="physics_2concepts_8hpp_source.html">concepts.hpp</a>&gt;</code></p>
 <h2 class="groupheader">Concept definition</h2>
-<div class="fragment"><div class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Hamiltonian, <span class="keyword">class</span> Element&gt;</div>
-<div class="line"><span class="keyword">concept </span><a class="code hl_concept" href="conceptsimilie_1_1physics_1_1HamiltonianConcept.html">similie::physics::HamiltonianConcept</a> =  <span class="keyword">requires</span>(</div>
-<div class="line">        Hamiltonian <span class="keyword">const</span>&amp; h,</div>
-<div class="line">        <span class="keyword">typename</span> Hamiltonian::State <span class="keyword">const</span>&amp; state,</div>
-<div class="line">        Element element) {</div>
-<div class="line">    <span class="keyword">requires</span> std::same_as&lt;std::remove_cv_t&lt;<span class="keyword">decltype</span>(Hamiltonian::N)&gt;, std::size_t&gt;;</div>
-<div class="line">    <span class="keyword">requires</span> std::same_as&lt;std::remove_cv_t&lt;<span class="keyword">decltype</span>(Hamiltonian::IS_LINEAR)&gt;, <span class="keywordtype">bool</span>&gt;;</div>
-<div class="line">    <span class="keyword">typename</span> std::integral_constant&lt;std::size_t, Hamiltonian::N&gt;;</div>
-<div class="line">    <span class="keyword">typename</span> std::bool_constant&lt;Hamiltonian::IS_LINEAR&gt;;</div>
-<div class="line">    { h.hamiltonian(state, element) } -&gt; std::same_as&lt;double&gt;;</div>
-<div class="line">    {</div>
-<div class="line">        h.template dhamiltonian_dmoments&lt;std::integral_constant&lt;std::size_t, 0&gt;&gt;(state, element)</div>
-<div class="line">    } -&gt; std::same_as&lt;double&gt;;</div>
-<div class="line">    {</div>
-<div class="line">        h.template dhamiltonian_dpotential&lt;std::integral_constant&lt;std::size_t, 0&gt;&gt;(state, element)</div>
-<div class="line">    } -&gt; std::same_as&lt;double&gt;;</div>
-<div class="line">    {</div>
-<div class="line">        h.template jacobian&lt;</div>
-<div class="line">                std::integral_constant&lt;std::size_t, 0&gt;,</div>
-<div class="line">                std::integral_constant&lt;std::size_t, 0&gt;&gt;(state, element)</div>
-<div class="line">    } -&gt; std::same_as&lt;double&gt;;</div>
-<div class="line">}</div>
-<div class="ttc" id="aconceptsimilie_1_1physics_1_1HamiltonianConcept_html"><div class="ttname"><a href="conceptsimilie_1_1physics_1_1HamiltonianConcept.html">similie::physics::HamiltonianConcept</a></div><div class="ttdef"><b>Definition</b> <a href="physics_2concepts_8hpp_source.html#l00102">physics/concepts.hpp:102</a></div></div>
+<div class="fragment"><div class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Physics, <span class="keyword">class</span> Element&gt;</div>
+<div class="line"><span class="keyword">concept </span><a class="code hl_concept" href="conceptsimilie_1_1physics_1_1HamiltonianPhysicsConcept.html">similie::physics::HamiltonianPhysicsConcept</a> =  <a class="code hl_concept" href="conceptsimilie_1_1physics_1_1PhysicsConcept.html">PhysicsConcept&lt;Physics&gt;</a></div>
+<div class="line">          &amp;&amp; <span class="keyword">requires</span>(</div>
+<div class="line">                  Physics <span class="keyword">const</span>&amp; physics,</div>
+<div class="line">                  <span class="keyword">typename</span> Physics::State <span class="keyword">const</span>&amp; state,</div>
+<div class="line">                  Element element) {</div>
+<div class="line">                 { physics.hamiltonian(state, element) } -&gt; std::same_as&lt;double&gt;;</div>
+<div class="line">                 {</div>
+<div class="line">                     physics.template dhamiltonian_dmoments&lt;</div>
+<div class="line">                             std::integral_constant&lt;std::size_t, 0&gt;&gt;(state, element)</div>
+<div class="line">                 } -&gt; std::same_as&lt;double&gt;;</div>
+<div class="line">                 {</div>
+<div class="line">                     physics.template dhamiltonian_dpotential&lt;</div>
+<div class="line">                             std::integral_constant&lt;std::size_t, 0&gt;&gt;(state, element)</div>
+<div class="line">                 } -&gt; std::same_as&lt;double&gt;;</div>
+<div class="line">                 {</div>
+<div class="line">                     physics.template jacobian&lt;</div>
+<div class="line">                             std::integral_constant&lt;std::size_t, 0&gt;,</div>
+<div class="line">                             std::integral_constant&lt;std::size_t, 0&gt;&gt;(state, element)</div>
+<div class="line">                 } -&gt; std::same_as&lt;double&gt;;</div>
+<div class="line">             }</div>
+<div class="ttc" id="aconceptsimilie_1_1physics_1_1HamiltonianPhysicsConcept_html"><div class="ttname"><a href="conceptsimilie_1_1physics_1_1HamiltonianPhysicsConcept.html">similie::physics::HamiltonianPhysicsConcept</a></div><div class="ttdef"><b>Definition</b> <a href="physics_2concepts_8hpp_source.html#l00108">physics/concepts.hpp:109</a></div></div>
+<div class="ttc" id="aconceptsimilie_1_1physics_1_1PhysicsConcept_html"><div class="ttname"><a href="conceptsimilie_1_1physics_1_1PhysicsConcept.html">similie::physics::PhysicsConcept</a></div><div class="ttdef"><b>Definition</b> <a href="physics_2concepts_8hpp_source.html#l00099">physics/concepts.hpp:99</a></div></div>
 </div><!-- fragment --><a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock">
-<p class="definition">Definition at line <a class="el" href="physics_2concepts_8hpp_source.html#l00102">102</a> of file <a class="el" href="physics_2concepts_8hpp_source.html">physics/concepts.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="physics_2concepts_8hpp_source.html#l00108">108</a> of file <a class="el" href="physics_2concepts_8hpp_source.html">physics/concepts.hpp</a>.</p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!--
@@ -167,7 +167,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="namespacesimilie.html">similie</a></li><li class="navelem"><a class="el" href="namespacesimilie_1_1physics.html">physics</a></li><li class="navelem"><a class="el" href="conceptsimilie_1_1physics_1_1HamiltonianConcept.html">HamiltonianConcept</a></li>
+    <li class="navelem"><a class="el" href="namespacesimilie.html">similie</a></li><li class="navelem"><a class="el" href="namespacesimilie_1_1physics.html">physics</a></li><li class="navelem"><a class="el" href="conceptsimilie_1_1physics_1_1HamiltonianPhysicsConcept.html">HamiltonianPhysicsConcept</a></li>
     <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0 </li>
   </ul>
 </div>

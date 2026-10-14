@@ -107,9 +107,9 @@ var NAVTREEINDEX =
 "classsil_1_1exterior_1_1CochainIterator.html#accfa2f96fd8a102079455b4923974027",
 "classsil_1_1exterior_1_1StagedLaplacian_3_01MetricIndex_00_01LaplacianDummyIndex_00_01CochainTaga1dec70e6c1410fec9e08ff687d5b41e.html",
 "classsimilie_1_1physics_1_1elasticity_1_1ElasticMaterialHodge2D.html",
-"namespacesil_1_1misc.html#a569551d81f613a3ff7ff642d9bb2196e",
-"structsil_1_1exterior_1_1Reduction.html#a57df5c981f3f9831b038f73d67979971",
-"structsil_1_1tensor_1_1TensorWithExtrapolationRules.html#a939d153aeb54f73d7bb7645b0f794250"
+"namespacesil_1_1misc_1_1math.html#a0904c4d4494ab3d38f4fa9493e074f39",
+"structsil_1_1misc_1_1is__specialization__of.html",
+"structsil_1_1tensor_1_1TensorWithExtrapolationRules.html#ae36c04df1fa9b2bae7dff7b942672a3e"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

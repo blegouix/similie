@@ -518,17 +518,17 @@ $(function(){initNavTree('hodge__star_8hpp_source.html',''); initResizable(true)
 <div class="line"><a id="l00385" name="l00385"></a><span class="lineno">  385</span><span class="keyword">static_assert</span>(DiscreteHodgeStarConcept&lt;</div>
 <div class="line"><a id="l00386" name="l00386"></a><span class="lineno">  386</span>              DiscreteHodgeStar&lt;</div>
 <div class="line"><a id="l00387" name="l00387"></a><span class="lineno">  387</span>                      <a class="code hl_enumvalue" href="namespacesil_1_1exterior.html#a0f14b6579b8587a6d0e54359d6492140a68123c95275511243def4b27f64f4d97">CellComplex::Primal</a>,</div>
-<div class="line"><a id="l00388" name="l00388"></a><span class="lineno">  388</span>                      ddc::TypeSeq&lt;detail::ConceptDirection&gt;,</div>
+<div class="line"><a id="l00388" name="l00388"></a><span class="lineno">  388</span>                      ddc::TypeSeq&lt;detail::DirectionConcept&gt;,</div>
 <div class="line"><a id="l00389" name="l00389"></a><span class="lineno">  389</span>                      ddc::TypeSeq&lt;&gt;,</div>
-<div class="line"><a id="l00390" name="l00390"></a><span class="lineno">  390</span>                      detail::ConceptField&lt;detail::ConceptMetricIndex&gt;,</div>
-<div class="line"><a id="l00391" name="l00391"></a><span class="lineno">  391</span>                      detail::ConceptField&lt;detail::ConceptPositionIndex&gt;,</div>
-<div class="line"><a id="l00392" name="l00392"></a><span class="lineno">  392</span>                      ddc::DiscreteElement&lt;detail::ConceptGrid&gt;&gt;,</div>
-<div class="line"><a id="l00393" name="l00393"></a><span class="lineno">  393</span>              detail::ConceptField&lt;detail::ConceptScalar&gt;,</div>
-<div class="line"><a id="l00394" name="l00394"></a><span class="lineno">  394</span>              detail::ConceptField&lt;detail::ConceptDirection&gt;,</div>
-<div class="line"><a id="l00395" name="l00395"></a><span class="lineno">  395</span>              detail::ConceptField&lt;detail::ConceptMetricIndex&gt;,</div>
-<div class="line"><a id="l00396" name="l00396"></a><span class="lineno">  396</span>              detail::ConceptField&lt;detail::ConceptPositionIndex&gt;,</div>
-<div class="line"><a id="l00397" name="l00397"></a><span class="lineno">  397</span>              ddc::DiscreteElement&lt;detail::ConceptGrid&gt;,</div>
-<div class="line"><a id="l00398" name="l00398"></a><span class="lineno">  398</span>              ddc::DiscreteElement&lt;detail::ConceptDirection&gt;&gt;);</div>
+<div class="line"><a id="l00390" name="l00390"></a><span class="lineno">  390</span>                      detail::FieldConcept&lt;detail::MetricIndexConcept&gt;,</div>
+<div class="line"><a id="l00391" name="l00391"></a><span class="lineno">  391</span>                      detail::FieldConcept&lt;detail::PositionIndexConcept&gt;,</div>
+<div class="line"><a id="l00392" name="l00392"></a><span class="lineno">  392</span>                      ddc::DiscreteElement&lt;detail::GridConcept&gt;&gt;,</div>
+<div class="line"><a id="l00393" name="l00393"></a><span class="lineno">  393</span>              detail::FieldConcept&lt;detail::ScalarConcept&gt;,</div>
+<div class="line"><a id="l00394" name="l00394"></a><span class="lineno">  394</span>              detail::FieldConcept&lt;detail::DirectionConcept&gt;,</div>
+<div class="line"><a id="l00395" name="l00395"></a><span class="lineno">  395</span>              detail::FieldConcept&lt;detail::MetricIndexConcept&gt;,</div>
+<div class="line"><a id="l00396" name="l00396"></a><span class="lineno">  396</span>              detail::FieldConcept&lt;detail::PositionIndexConcept&gt;,</div>
+<div class="line"><a id="l00397" name="l00397"></a><span class="lineno">  397</span>              ddc::DiscreteElement&lt;detail::GridConcept&gt;,</div>
+<div class="line"><a id="l00398" name="l00398"></a><span class="lineno">  398</span>              ddc::DiscreteElement&lt;detail::DirectionConcept&gt;&gt;);</div>
 <div class="line"><a id="l00399" name="l00399"></a><span class="lineno">  399</span> </div>
 <div class="line"><a id="l00400" name="l00400"></a><span class="lineno">  400</span><span class="keyword">template</span> &lt;</div>
 <div class="line"><a id="l00401" name="l00401"></a><span class="lineno">  401</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;ddc::TypeSeq&gt;</a> Indices1,</div>
@@ -629,15 +629,15 @@ $(function(){initNavTree('hodge__star_8hpp_source.html',''); initResizable(true)
 <div class="line"><a id="l00490" name="l00490"></a><span class="lineno">  490</span> </div>
 <div class="line"><a id="l00491" name="l00491"></a><span class="lineno">  491</span><span class="keyword">static_assert</span>(ContinuousHodgeStarConcept&lt;</div>
 <div class="line"><a id="l00492" name="l00492"></a><span class="lineno">  492</span>              ContinuousHodgeStar&lt;</div>
-<div class="line"><a id="l00493" name="l00493"></a><span class="lineno">  493</span>                      ddc::TypeSeq&lt;detail::ConceptDirection&gt;,</div>
+<div class="line"><a id="l00493" name="l00493"></a><span class="lineno">  493</span>                      ddc::TypeSeq&lt;detail::DirectionConcept&gt;,</div>
 <div class="line"><a id="l00494" name="l00494"></a><span class="lineno">  494</span>                      ddc::TypeSeq&lt;&gt;,</div>
-<div class="line"><a id="l00495" name="l00495"></a><span class="lineno">  495</span>                      detail::ConceptField&lt;detail::ConceptMetricIndex&gt;,</div>
-<div class="line"><a id="l00496" name="l00496"></a><span class="lineno">  496</span>                      ddc::DiscreteElement&lt;detail::ConceptGrid&gt;&gt;,</div>
-<div class="line"><a id="l00497" name="l00497"></a><span class="lineno">  497</span>              detail::ConceptField&lt;detail::ConceptScalar&gt;,</div>
-<div class="line"><a id="l00498" name="l00498"></a><span class="lineno">  498</span>              detail::ConceptField&lt;detail::ConceptDirection&gt;,</div>
-<div class="line"><a id="l00499" name="l00499"></a><span class="lineno">  499</span>              detail::ConceptField&lt;detail::ConceptMetricIndex&gt;,</div>
-<div class="line"><a id="l00500" name="l00500"></a><span class="lineno">  500</span>              ddc::DiscreteElement&lt;detail::ConceptGrid&gt;,</div>
-<div class="line"><a id="l00501" name="l00501"></a><span class="lineno">  501</span>              ddc::DiscreteElement&lt;detail::ConceptDirection&gt;&gt;);</div>
+<div class="line"><a id="l00495" name="l00495"></a><span class="lineno">  495</span>                      detail::FieldConcept&lt;detail::MetricIndexConcept&gt;,</div>
+<div class="line"><a id="l00496" name="l00496"></a><span class="lineno">  496</span>                      ddc::DiscreteElement&lt;detail::GridConcept&gt;&gt;,</div>
+<div class="line"><a id="l00497" name="l00497"></a><span class="lineno">  497</span>              detail::FieldConcept&lt;detail::ScalarConcept&gt;,</div>
+<div class="line"><a id="l00498" name="l00498"></a><span class="lineno">  498</span>              detail::FieldConcept&lt;detail::DirectionConcept&gt;,</div>
+<div class="line"><a id="l00499" name="l00499"></a><span class="lineno">  499</span>              detail::FieldConcept&lt;detail::MetricIndexConcept&gt;,</div>
+<div class="line"><a id="l00500" name="l00500"></a><span class="lineno">  500</span>              ddc::DiscreteElement&lt;detail::GridConcept&gt;,</div>
+<div class="line"><a id="l00501" name="l00501"></a><span class="lineno">  501</span>              ddc::DiscreteElement&lt;detail::DirectionConcept&gt;&gt;);</div>
 <div class="line"><a id="l00502" name="l00502"></a><span class="lineno">  502</span> </div>
 <div class="line"><a id="l00503" name="l00503"></a><span class="lineno">  503</span><span class="keyword">template</span> &lt;</div>
 <div class="line"><a id="l00504" name="l00504"></a><span class="lineno">  504</span>        <a class="code hl_concept" href="conceptsil_1_1misc_1_1Specialization.html">misc::Specialization&lt;ddc::TypeSeq&gt;</a> Indices1,</div>

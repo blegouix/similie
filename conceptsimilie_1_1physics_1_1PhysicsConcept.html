@@ -10,7 +10,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.12.0"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>SimiLie: sil::tensor::TensorIndexAccessConcept Concept Reference</title>
+<title>SimiLie: similie::physics::PhysicsConcept Concept Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -99,7 +99,7 @@ $(function() {
 </div>
 <script type="text/javascript">
 /* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
-$(function(){initNavTree('conceptsil_1_1tensor_1_1TensorIndexAccessConcept.html',''); initResizable(true); });
+$(function(){initNavTree('conceptsimilie_1_1physics_1_1PhysicsConcept.html',''); initResizable(true); });
 /* @license-end */
 </script>
 <div id="doc-content">
@@ -125,30 +125,24 @@ $(function(){initNavTree('conceptsil_1_1tensor_1_1TensorIndexAccessConcept.html'
 </div>
 
 <div class="header">
-  <div class="headertitle"><div class="title">sil::tensor::TensorIndexAccessConcept Concept Reference</div></div>
+  <div class="headertitle"><div class="title">similie::physics::PhysicsConcept Concept Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
-<p><code>#include &lt;<a class="el" href="tensor_2concepts_8hpp_source.html">concepts.hpp</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="physics_2concepts_8hpp_source.html">concepts.hpp</a>&gt;</code></p>
 <h2 class="groupheader">Concept definition</h2>
-<div class="fragment"><div class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Index&gt;</div>
-<div class="line"><span class="keyword">concept </span><a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndexAccessConcept.html">sil::tensor::TensorIndexAccessConcept</a> =  <a class="code hl_concept" href="conceptsil_1_1tensor_1_1TensorIndexConcept.html">TensorIndexConcept&lt;Index&gt;</a></div>
-<div class="line">                                   &amp;&amp; <span class="keyword">requires</span>(</div>
-<div class="line">                                           detail::ConceptIndexTensor tensor,</div>
-<div class="line">                                           ddc::DiscreteElement&lt;Index&gt; element,</div>
-<div class="line">                                           detail::ConceptIndexAccess access) {</div>
-<div class="line">                                          {</div>
-<div class="line">                                              Index::template process_access&lt;</div>
-<div class="line">                                                      detail::ConceptIndexTensor,</div>
-<div class="line">                                                      ddc::DiscreteElement&lt;Index&gt;,</div>
-<div class="line">                                                      Index&gt;(access, tensor, element)</div>
-<div class="line">                                          } -&gt; std::same_as&lt;double&gt;;</div>
-<div class="line">                                      }</div>
-<div class="ttc" id="aconceptsil_1_1tensor_1_1TensorIndexAccessConcept_html"><div class="ttname"><a href="conceptsil_1_1tensor_1_1TensorIndexAccessConcept.html">sil::tensor::TensorIndexAccessConcept</a></div><div class="ttdef"><b>Definition</b> <a href="tensor_2concepts_8hpp_source.html#l00067">tensor/concepts.hpp:67</a></div></div>
-<div class="ttc" id="aconceptsil_1_1tensor_1_1TensorIndexConcept_html"><div class="ttname"><a href="conceptsil_1_1tensor_1_1TensorIndexConcept.html">sil::tensor::TensorIndexConcept</a></div><div class="ttdef"><b>Definition</b> <a href="tensor_2concepts_8hpp_source.html#l00051">tensor/concepts.hpp:51</a></div></div>
+<div class="fragment"><div class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Physics&gt;</div>
+<div class="line"><span class="keyword">concept </span><a class="code hl_concept" href="conceptsimilie_1_1physics_1_1PhysicsConcept.html">similie::physics::PhysicsConcept</a> =  <span class="keyword">requires</span> {</div>
+<div class="line">    <span class="keyword">typename</span> Physics::State;</div>
+<div class="line">    <span class="keyword">requires</span> std::same_as&lt;std::remove_cv_t&lt;<span class="keyword">decltype</span>(Physics::N)&gt;, std::size_t&gt;;</div>
+<div class="line">    <span class="keyword">requires</span> std::same_as&lt;std::remove_cv_t&lt;<span class="keyword">decltype</span>(Physics::IS_LINEAR)&gt;, <span class="keywordtype">bool</span>&gt;;</div>
+<div class="line">    <span class="keyword">typename</span> std::integral_constant&lt;std::size_t, Physics::N&gt;;</div>
+<div class="line">    <span class="keyword">typename</span> std::bool_constant&lt;Physics::IS_LINEAR&gt;;</div>
+<div class="line">}</div>
+<div class="ttc" id="aconceptsimilie_1_1physics_1_1PhysicsConcept_html"><div class="ttname"><a href="conceptsimilie_1_1physics_1_1PhysicsConcept.html">similie::physics::PhysicsConcept</a></div><div class="ttdef"><b>Definition</b> <a href="physics_2concepts_8hpp_source.html#l00099">physics/concepts.hpp:99</a></div></div>
 </div><!-- fragment --><a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock">
-<p class="definition">Definition at line <a class="el" href="tensor_2concepts_8hpp_source.html#l00067">67</a> of file <a class="el" href="tensor_2concepts_8hpp_source.html">tensor/concepts.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="physics_2concepts_8hpp_source.html#l00099">99</a> of file <a class="el" href="physics_2concepts_8hpp_source.html">physics/concepts.hpp</a>.</p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!--
@@ -159,7 +153,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="namespacesil.html">sil</a></li><li class="navelem"><a class="el" href="namespacesil_1_1tensor.html">tensor</a></li><li class="navelem"><a class="el" href="conceptsil_1_1tensor_1_1TensorIndexAccessConcept.html">TensorIndexAccessConcept</a></li>
+    <li class="navelem"><a class="el" href="namespacesimilie.html">similie</a></li><li class="navelem"><a class="el" href="namespacesimilie_1_1physics.html">physics</a></li><li class="navelem"><a class="el" href="conceptsimilie_1_1physics_1_1PhysicsConcept.html">PhysicsConcept</a></li>
     <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0 </li>
   </ul>
 </div>

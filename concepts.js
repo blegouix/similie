@@ -14,10 +14,7 @@ var concepts =
       ] ],
       [ "tensor", "namespacesil_1_1tensor.html", [
         [ "TensorIndexConcept", "conceptsil_1_1tensor_1_1TensorIndexConcept.html", null ],
-        [ "TensorIndexAccessConcept", "conceptsil_1_1tensor_1_1TensorIndexAccessConcept.html", null ],
-        [ "DirectTensorIndexConcept", "conceptsil_1_1tensor_1_1DirectTensorIndexConcept.html", null ],
         [ "NaturalTensorIndexConcept", "conceptsil_1_1tensor_1_1NaturalTensorIndexConcept.html", null ],
-        [ "StructuredTensorIndexConcept", "conceptsil_1_1tensor_1_1StructuredTensorIndexConcept.html", null ],
         [ "YoungTableauTensorIndexConcept", "conceptsil_1_1tensor_1_1YoungTableauTensorIndexConcept.html", null ],
         [ "ExtrapolationRuleConcept", "conceptsil_1_1tensor_1_1ExtrapolationRuleConcept.html", null ],
         [ "ExtrapolationRulesConcept", "conceptsil_1_1tensor_1_1ExtrapolationRulesConcept.html", null ],
@@ -31,11 +28,9 @@ var concepts =
           [ "TwoDimensional", "conceptsimilie_1_1physics_1_1magnetostatics_1_1TwoDimensional.html", null ],
           [ "ThreeDimensional", "conceptsimilie_1_1physics_1_1magnetostatics_1_1ThreeDimensional.html", null ]
         ] ],
-        [ "HamiltonianConcept", "conceptsimilie_1_1physics_1_1HamiltonianConcept.html", null ],
-        [ "NonlocalHamiltonianConcept", "conceptsimilie_1_1physics_1_1NonlocalHamiltonianConcept.html", null ],
+        [ "PhysicsConcept", "conceptsimilie_1_1physics_1_1PhysicsConcept.html", null ],
+        [ "HamiltonianPhysicsConcept", "conceptsimilie_1_1physics_1_1HamiltonianPhysicsConcept.html", null ],
         [ "HamiltonEquationsConcept", "conceptsimilie_1_1physics_1_1HamiltonEquationsConcept.html", null ],
-        [ "MomentCoefficientHamiltonEquationsConcept", "conceptsimilie_1_1physics_1_1MomentCoefficientHamiltonEquationsConcept.html", null ],
-        [ "PotentialCoefficientHamiltonEquationsConcept", "conceptsimilie_1_1physics_1_1PotentialCoefficientHamiltonEquationsConcept.html", null ],
         [ "DeDonderWeylEquationsConcept", "conceptsimilie_1_1physics_1_1DeDonderWeylEquationsConcept.html", null ],
         [ "ConstitutiveLawConcept", "conceptsimilie_1_1physics_1_1ConstitutiveLawConcept.html", null ]
       ] ]
