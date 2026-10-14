@@ -511,9 +511,11 @@ inline Result run(
             throw std::runtime_error("degenerate quad metric");
         double const gradient_x = (dt * ry - ty * dr) / determinant;
         double const gradient_y = (tx * dr - dt * rx) / determinant;
-        return std::array<
-                double,
-                2> {equations.dpotential_dt<X>(gradient_x), equations.dpotential_dt<Y>(gradient_y)};
+        FreeScalarFieldHamiltonian::State state {};
+        state.moments = {0.0, gradient_x, gradient_y};
+        return std::array<double, 2> {
+                equations.dpotential_dt<std::integral_constant<std::size_t, 1>>(state, 0),
+                equations.dpotential_dt<std::integral_constant<std::size_t, 2>>(state, 0)};
     };
     auto mass_flow = [&](PotentialFlowSamples const& samples) {
         double flux = 0.0;

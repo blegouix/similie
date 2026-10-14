@@ -11,6 +11,8 @@
 #include <similie/misc/specialization.hpp>
 #include <similie/misc/type_seq_ext.hpp>
 
+#include "concepts.hpp"
+
 namespace sil {
 
 namespace tensor {
@@ -102,6 +104,10 @@ struct TensorNaturalIndex
     }
 };
 
+static_assert(NaturalTensorIndexConcept<
+              TensorNaturalIndex<detail::ConceptDimension>,
+              detail::ConceptDimension>);
+
 template <class DDim>
 concept TensorIndex = requires {
     { DDim::is_tensor_index } -> std::convertible_to<bool>;
@@ -116,6 +122,8 @@ concept TensorNatIndex = requires {
 struct ScalarIndex : TensorNaturalIndex<>
 {
 };
+
+static_assert(NaturalTensorIndexConcept<ScalarIndex, detail::ConceptDimension>);
 
 // natural_domain_t is obtained using concept and specialization
 namespace detail {

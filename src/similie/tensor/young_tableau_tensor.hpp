@@ -123,6 +123,12 @@ struct TensorYoungTableauIndex
     }
 };
 
+static_assert(YoungTableauTensorIndexConcept<TensorYoungTableauIndex<
+                      sil::young_tableau::YoungTableau<
+                              1,
+                              sil::young_tableau::YoungTableauSeq<std::index_sequence<1>>>,
+                      TensorNaturalIndex<detail::ConceptDimension>>>);
+
 // Compress & uncompress (multiply by young_tableau.u or young_tableau.v
 template <class YoungTableauIndex, class... Id>
 tensor::Tensor<

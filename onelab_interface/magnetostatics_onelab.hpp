@@ -654,15 +654,13 @@ template <class Index, class Equations, class Elem>
         MagneticMoments moments,
         Elem elem)
 {
-    if constexpr (requires { equations.template dpotential_dt<Index>(moments, elem); }) {
-        return equations.template dpotential_dt<Index>(moments, elem);
-    } else if constexpr (requires { equations.template dpotential_dt<Index>(0.0, elem); }) {
-        return equations.template dpotential_dt<Index>(moments.template get<Index>(), elem);
-    } else {
-        std::array<double, 3> const values {moments.x, moments.y, moments.z};
-        return equations.template dpotential_dt<
-                Index>(std::span<double const, 3>(values.data(), values.size()), elem);
-    }
+    typename Equations::State state {};
+    state.moments = {moments.x, moments.y, moments.z};
+    return equations.template dpotential_dt<std::integral_constant<
+            std::size_t,
+            std::is_same_v<Index, X>   ? 0
+            : std::is_same_v<Index, Y> ? 1
+                                       : 2>>(state, elem);
 }
 
 template <class RowIndex, class ColumnIndex, class Equations, class Elem>
@@ -671,16 +669,19 @@ template <class RowIndex, class ColumnIndex, class Equations, class Elem>
         MagneticMoments moments,
         Elem elem)
 {
-    if constexpr (requires { equations.template jacobian<RowIndex, ColumnIndex>(moments, elem); }) {
-        return equations.template jacobian<RowIndex, ColumnIndex>(moments, elem);
-    } else {
-        static_cast<void>(moments);
-        if constexpr (std::is_same_v<RowIndex, ColumnIndex>) {
-            return equations.template dpotential_dt<RowIndex>(1.0, elem);
-        } else {
-            return 0.0;
-        }
-    }
+    typename Equations::State state {};
+    state.moments = {moments.x, moments.y, moments.z};
+    return equations.template jacobian<
+            std::integral_constant<
+                    std::size_t,
+                    std::is_same_v<RowIndex, X>   ? 0
+                    : std::is_same_v<RowIndex, Y> ? 1
+                                                  : 2>,
+            std::integral_constant<
+                    std::size_t,
+                    std::is_same_v<ColumnIndex, X>   ? 0
+                    : std::is_same_v<ColumnIndex, Y> ? 1
+                                                     : 2>>(state, elem);
 }
 
 struct DDimX
@@ -1058,6 +1059,8 @@ class MaterialMagnetostaticsHamiltonian
     physics::magnetostatics::NonlinearMagnetostaticsHamiltonian<Curve> m_nonlinear_hamiltonian;
 
 public:
+    using State =
+            typename physics::magnetostatics::NonlinearMagnetostaticsHamiltonian<Curve>::State;
     static constexpr bool IS_LINEAR = false;
 
     MaterialMagnetostaticsHamiltonian(
@@ -1087,22 +1090,22 @@ public:
                 ddc::DiscreteElement<sil::tensor::Covariant<sil::tensor::ScalarIndex>>(0));
     }
 
-    template <class Index, class Moments, class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION double dpotential_dt(Moments moments, Elem elem) const
+    template <class Index, class Elem>
+    [[nodiscard]] KOKKOS_FUNCTION double dpotential_dt(State const& state, Elem elem) const
     {
         if (is_ferromagnetic(elem)) {
-            return m_nonlinear_hamiltonian.template dpotential_dt<Index>(moments, elem);
+            return m_nonlinear_hamiltonian.template dhamiltonian_dmoments<Index>(state, elem);
         }
-        return moments.template get<Index>() / linear_mu(elem);
+        return state.moments[Index::value] / linear_mu(elem);
     }
 
-    template <class RowIndex, class ColumnIndex, class Moments, class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION double jacobian(Moments moments, Elem elem) const
+    template <class RowIndex, class ColumnIndex, class Elem>
+    [[nodiscard]] KOKKOS_FUNCTION double jacobian(State const& state, Elem elem) const
     {
         if (is_ferromagnetic(elem)) {
-            return m_nonlinear_hamiltonian.template jacobian<RowIndex, ColumnIndex>(moments, elem);
+            return m_nonlinear_hamiltonian.template jacobian<RowIndex, ColumnIndex>(state, elem);
         }
-        return std::is_same_v<RowIndex, ColumnIndex> ? 1.0 / linear_mu(elem) : 0.0;
+        return RowIndex::value == ColumnIndex::value ? 1.0 / linear_mu(elem) : 0.0;
     }
 };
 
@@ -4285,16 +4288,15 @@ void fill_post_process_fields_on_cell_domain(
         std::array<double, 3> const unit_hodge {1.0, 1.0, 1.0};
         if (read_nonlinear_material(elem)) {
             magnetic_field = nonlinear_constitutive_law(
-                    std::span<double const, 3>(unit_hodge.data(), unit_hodge.size()),
-                    std::span<
-                            double const,
-                            3>(magnetic_induction.data(), magnetic_induction.size()));
+                    physics::magnetostatics::
+                            NonlinearMagneticState {magnetic_induction, unit_hodge},
+                    elem);
         } else {
             physics::magnetostatics::LinearMagneticInductionToMagneticField const constitutive_law(
                     read_mu(elem));
             magnetic_field = {
-                    constitutive_law(unit_hodge[0], magnetic_induction[0]),
-                    constitutive_law(unit_hodge[1], magnetic_induction[1]),
+                    constitutive_law({{magnetic_induction[0]}, unit_hodge[0]}, elem)[0],
+                    constitutive_law({{magnetic_induction[1]}, unit_hodge[1]}, elem)[0],
                     0.0,
             };
         }
@@ -4337,17 +4339,16 @@ void fill_post_process_fields_on_cell_domain_3d(
         std::array<double, 3> const unit_hodge {1.0, 1.0, 1.0};
         if (read_nonlinear_material(elem)) {
             magnetic_field = nonlinear_constitutive_law(
-                    std::span<double const, 3>(unit_hodge.data(), unit_hodge.size()),
-                    std::span<
-                            double const,
-                            3>(magnetic_induction.data(), magnetic_induction.size()));
+                    physics::magnetostatics::
+                            NonlinearMagneticState {magnetic_induction, unit_hodge},
+                    elem);
         } else {
             physics::magnetostatics::LinearMagneticInductionToMagneticField const constitutive_law(
                     read_mu(elem));
             magnetic_field = {
-                    constitutive_law(unit_hodge[0], magnetic_induction[0]),
-                    constitutive_law(unit_hodge[1], magnetic_induction[1]),
-                    constitutive_law(unit_hodge[2], magnetic_induction[2]),
+                    constitutive_law({{magnetic_induction[0]}, unit_hodge[0]}, elem)[0],
+                    constitutive_law({{magnetic_induction[1]}, unit_hodge[1]}, elem)[0],
+                    constitutive_law({{magnetic_induction[2]}, unit_hodge[2]}, elem)[0],
             };
         }
 

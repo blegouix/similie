@@ -20,6 +20,7 @@
 
 #include "coboundary.hpp"
 #include "codifferential.hpp"
+#include "concepts.hpp"
 
 
 namespace sil {
@@ -872,6 +873,17 @@ public:
                         primal_extrapolation);
     }
 };
+
+static_assert(StagedLaplacianConcept<
+              StagedLaplacian<
+                      detail::ConceptMetricIndex,
+                      detail::ConceptDirection,
+                      detail::ConceptScalar,
+                      detail::ConceptField<detail::ConceptScalar>,
+                      detail::ConceptField<detail::ConceptMetricIndex>,
+                      detail::ConceptField<detail::ConceptPositionIndex>,
+                      Kokkos::DefaultHostExecutionSpace>,
+              detail::ConceptField<detail::ConceptScalar>>);
 
 template <
         tensor::TensorIndex MetricIndex,

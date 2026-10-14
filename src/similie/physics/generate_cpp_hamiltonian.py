@@ -31,10 +31,6 @@ class HamiltonianDefinition:
     parameter_types: dict[str, str] | None = None
     parameter_value_expressions: dict[str, str] | None = None
     symbolic_functions: dict[str, SymbolicFunctionDefinition] | None = None
-    moments_object_component_expression: str | None = None
-    moments_object_norm2_expression: str | None = None
-    component_indices: list[str] | None = None
-    generate_moments_jacobian: bool = False
     namespace_preamble: str = ""
     namespace_epilogue: str = ""
     is_linear: bool = False
@@ -158,366 +154,28 @@ def _render_constructor_initializers(
     )
 
 
-def _generalize_component_expression(
-    symbol_name: str,
-    expression,
-    replacements: dict[str, str],
-    component_argument_name: str,
-    symbolic_functions: dict[str, SymbolicFunctionDefinition] | None = None,
-    expression_replacements: dict[object, str] | None = None,
-) -> str:
-    return _render_cxx_expression(
-        expression,
-        {**replacements, symbol_name: component_argument_name},
-        symbolic_functions,
-        expression_replacements,
-    )
-
-
-def _all_same(expressions: list[str]) -> bool:
-    return all(expression == expressions[0] for expression in expressions)
-
-
-def _component_static_assert(index_name: str, component_indices: list[str]) -> str:
-    return (
-        f"std::is_same_v<{index_name}, "
-        + f"> || std::is_same_v<{index_name}, ".join(component_indices)
-        + ">"
-    )
-
-
-def _has_temporal_index(template_parameters: list[str] | None) -> bool:
-    return (
-        template_parameters is not None and "class TemporalIndex" in template_parameters
-    )
-
-
-def _render_indexed_method(
-    method_name: str,
-    argument_prefix: str,
-    symbols_: list[str],
-    expressions: list,
-    replacements: dict[str, str],
-    template_parameters: list[str] | None,
-    symbolic_functions: dict[str, SymbolicFunctionDefinition] | None = None,
-    expression_replacements: dict[object, str] | None = None,
-) -> str:
-    component_expressions = [
-        _generalize_component_expression(
-            symbol_name,
-            expression,
-            replacements,
-            argument_prefix,
-            symbolic_functions,
-            expression_replacements,
-        )
-        for symbol_name, expression in zip(symbols_, expressions, strict=True)
-    ]
-    if _all_same(component_expressions):
-        body = f"        return {component_expressions[0]};"
-    elif _has_temporal_index(template_parameters):
-        body = f"""        if constexpr (std::is_same_v<Index, TemporalIndex>) {{
-            return {component_expressions[0]};
-        }} else {{
-            return {component_expressions[1]};
-        }}"""
-    else:
-        raise ValueError(
-            f"{method_name} cannot be generated from a scalar component without tag-specific "
-            "expressions"
-        )
-
-    return f"""
-    template <class Index>
-    KOKKOS_FUNCTION constexpr double {method_name}(double {argument_prefix}) const
-    {{
-{body}
-    }}
-"""
-
-
-def _render_indexed_elem_method(
-    method_name: str,
-    argument_prefix: str,
-    symbols_: list[str],
-    expressions: list,
-    replacements: dict[str, str],
-    template_parameters: list[str] | None,
-    symbolic_functions: dict[str, SymbolicFunctionDefinition] | None = None,
-    expression_replacements: dict[object, str] | None = None,
-) -> str:
-    component_expressions = [
-        _generalize_component_expression(
-            symbol_name,
-            expression,
-            replacements,
-            argument_prefix,
-            symbolic_functions,
-            expression_replacements,
-        )
-        for symbol_name, expression in zip(symbols_, expressions, strict=True)
-    ]
-    if _all_same(component_expressions):
-        body = f"        return {component_expressions[0]};"
-    elif _has_temporal_index(template_parameters):
-        body = f"""        if constexpr (std::is_same_v<Index, TemporalIndex>) {{
-            return {component_expressions[0]};
-        }} else {{
-            return {component_expressions[1]};
-        }}"""
-    else:
-        raise ValueError(
-            f"{method_name} cannot be generated from a scalar component without tag-specific "
-            "expressions"
-        )
-
-    return f"""
-    template <class Index, class Elem>
-    KOKKOS_FUNCTION constexpr double {method_name}(double {argument_prefix}, Elem elem) const
-    {{
-{body}
-    }}
-"""
-
-
-def _render_indexed_nonlocal_value_method(
-    method_name: str,
-    symbols_: list[str],
-    expressions: list,
-    replacements: dict[str, str],
-    symbolic_functions: dict[str, SymbolicFunctionDefinition] | None = None,
-) -> str:
-    differentiated_expressions = [
-        diff(expression, symbols(symbol_name))
-        for symbol_name, expression in zip(symbols_, expressions, strict=True)
-    ]
-    generalized_expressions = [
-        _render_cxx_expression(expression, replacements, symbolic_functions)
-        for expression in differentiated_expressions
-    ]
-    if _all_same(generalized_expressions):
-        body = f"""        auto value = MomentsComputer::template forward_value<Index>(elem);
-        value *= {generalized_expressions[0]};
-        return value;"""
-    else:
-        raise ValueError(
-            f"{method_name} cannot be generated without tag-specific nonlocal expressions"
-        )
-
-    return f"""
-    template <class Index, class Elem>
-    KOKKOS_FUNCTION constexpr auto {method_name}(Elem elem) const
-    {{
-{body}
-    }}
-"""
-
-
-def _render_moments_object_method(
-    symbols_: list[str],
+def _render_state_component_method(
+    name: str,
     expressions: list,
     replacements: dict[str, str],
     symbolic_functions: dict[str, SymbolicFunctionDefinition],
-    expression_replacements: dict[object, str],
-    component_expression: str,
-    component_indices: list[str] | None = None,
 ) -> str:
-    if component_indices is not None:
-        if len(component_indices) != len(symbols_):
-            raise ValueError("component_indices must match moments symbols")
-        object_replacements = {
-            **replacements,
-            **{
-                symbol_name: component_expression.format(
-                    index=component_index, moments="moments"
-                )
-                for symbol_name, component_index in zip(
-                    symbols_, component_indices, strict=True
-                )
-            },
-        }
-        component_expressions = [
-            _render_cxx_expression(
-                expression,
-                object_replacements,
-                symbolic_functions,
-                expression_replacements,
-            )
-            for expression in expressions
-        ]
-        cases = "\n".join(
-            [
-                f"""        {"if" if i == 0 else "else if"} constexpr (std::is_same_v<Index, {component_index}>) {{
-            return {component_expression_};
+    cases = "\n".join(
+        f"""        {"if" if i == 0 else "else if"} constexpr (Index::value == {i}) {{
+            return {_render_cxx_expression(expression, replacements, symbolic_functions)};
         }}"""
-                for i, (component_index, component_expression_) in enumerate(
-                    zip(component_indices, component_expressions, strict=True)
-                )
-            ]
-        )
-        fallback = _component_static_assert("Index", component_indices)
-        body = f"""{cases}
-        else {{
-            static_assert({fallback}, "unsupported moments component index");
-            return 0.0;
-        }}"""
-    else:
-        component_expressions = [
-            _generalize_component_expression(
-                symbol_name,
-                expression,
-                replacements,
-                component_expression.format(index="Index", moments="moments"),
-                symbolic_functions,
-                expression_replacements,
-            )
-            for symbol_name, expression in zip(symbols_, expressions, strict=True)
-        ]
-        if not _all_same(component_expressions):
-            raise ValueError(
-                "dhamiltonian_dmoments object method cannot be generated without "
-                "tag-independent component expressions"
-            )
-        body = f"        return {component_expressions[0]};"
-
-    return f"""
-    template <class Index, class Moments, class Elem>
-    KOKKOS_FUNCTION constexpr double dhamiltonian_dmoments(Moments moments, Elem elem) const
-    {{
-        static_cast<void>(elem);
-{body}
-    }}
-
-    template <class Index, class Moments, class Elem>
-    KOKKOS_FUNCTION constexpr double dpotential_dt(Moments moments, Elem elem) const
-    {{
-        return dhamiltonian_dmoments<Index>(moments, elem);
-    }}
-"""
-
-
-def _render_tagged_jacobian_cases(
-    component_indices: list[str],
-    component_expressions: list[list[str]],
-) -> str:
-    row_cases: list[str] = []
-    for row_index, row_component in enumerate(component_indices):
-        column_cases = "\n".join(
-            [
-                f"""            {"if" if column_index == 0 else "else if"} constexpr (std::is_same_v<ColumnIndex, {column_component}>) {{
-                return {component_expressions[row_index][column_index]};
-            }}"""
-                for column_index, column_component in enumerate(component_indices)
-            ]
-        )
-        column_fallback = _component_static_assert("ColumnIndex", component_indices)
-        row_cases.append(
-            f"""        {"if" if row_index == 0 else "else if"} constexpr (std::is_same_v<RowIndex, {row_component}>) {{
-{column_cases}
-            else {{
-                static_assert({column_fallback}, "unsupported moments column index");
-                return 0.0;
-            }}
-        }}"""
-        )
-    row_fallback = _component_static_assert("RowIndex", component_indices)
-    return (
-        "\n".join(row_cases)
-        + f"""
-        else {{
-            static_assert({row_fallback}, "unsupported moments row index");
-            return 0.0;
-        }}"""
+        for i, expression in enumerate(expressions)
     )
-
-
-def _render_moments_object_jacobian_method(
-    symbols_: list,
-    hamiltonian,
-    replacements: dict[str, str],
-    symbolic_functions: dict[str, SymbolicFunctionDefinition],
-    expression_replacements: dict[object, str],
-    component_expression: str,
-    component_indices: list[str] | None = None,
-) -> str:
-    if component_indices is not None:
-        if len(component_indices) != len(symbols_):
-            raise ValueError("component_indices must match moments symbols")
-        object_replacements = {
-            **replacements,
-            **{
-                str(symbol): component_expression.format(
-                    index=component_index, moments="moments"
-                )
-                for symbol, component_index in zip(
-                    symbols_, component_indices, strict=True
-                )
-            },
-        }
-        component_expressions = [
-            [
-                _render_cxx_expression(
-                    diff(diff(hamiltonian, row_symbol), column_symbol),
-                    object_replacements,
-                    symbolic_functions,
-                    expression_replacements,
-                )
-                for column_symbol in symbols_
-            ]
-            for row_symbol in symbols_
-        ]
-        body = _render_tagged_jacobian_cases(component_indices, component_expressions)
-        return f"""
-    template <class RowIndex, class ColumnIndex, class Moments, class Elem>
-    KOKKOS_FUNCTION constexpr double jacobian(Moments moments, Elem elem) const
-    {{
-        static_cast<void>(moments);
-        static_cast<void>(elem);
-{body}
-    }}
-"""
-
-    row_component = component_expression.format(index="RowIndex", moments="moments")
-    column_component = component_expression.format(
-        index="ColumnIndex", moments="moments"
-    )
-    diagonal_expressions = [
-        _render_cxx_expression(
-            diff(diff(hamiltonian, symbol), symbol),
-            {**replacements, str(symbol): row_component},
-            symbolic_functions,
-            expression_replacements,
-        )
-        for symbol in symbols_
-    ]
-    off_diagonal_expressions = [
-        _render_cxx_expression(
-            diff(diff(hamiltonian, symbols_[0]), symbol),
-            {
-                **replacements,
-                str(symbols_[0]): row_component,
-                str(symbol): column_component,
-            },
-            symbolic_functions,
-            expression_replacements,
-        )
-        for symbol in symbols_[1:]
-    ]
-    if not _all_same(diagonal_expressions) or not _all_same(off_diagonal_expressions):
-        raise ValueError(
-            "moments jacobian cannot be generated without tag-independent expressions"
-        )
-
     return f"""
-    template <class RowIndex, class ColumnIndex, class Moments, class Elem>
-    KOKKOS_FUNCTION constexpr double jacobian(Moments moments, Elem elem) const
+    template <class Index, class Elem>
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double {name}(State const& state, Elem elem) const
     {{
-        static_cast<void>(moments);
+        static_cast<void>(state);
         static_cast<void>(elem);
-        if constexpr (std::is_same_v<RowIndex, ColumnIndex>) {{
-            return {diagonal_expressions[0]};
-        }} else {{
-            return {off_diagonal_expressions[0]};
+{cases}
+        else {{
+            static_assert(Index::value < {len(expressions)}, "unsupported component index");
+            return 0.0;
         }}
     }}
 """
@@ -539,240 +197,194 @@ def write_cpp_hamiltonian_header(
     definition: HamiltonianDefinition | None = None,
 ) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
-
     parameter_value_expressions = parameter_value_expressions or {}
     symbolic_functions = (
         {} if definition is None else (definition.symbolic_functions or {})
     )
-    parameter_replacements = {}
-    for member_name, constructor_name, _, _ in parameters:
-        parameter_replacements[constructor_name] = parameter_value_expressions.get(
-            constructor_name, member_name
+    replacements = {
+        constructor_name: (
+            f"({parameter_value_expressions[constructor_name]})"
+            if constructor_name in parameter_value_expressions
+            else member_name
         )
-    h_replacements = dict(parameter_replacements)
-    requires_elem = any(
-        "elem" in replacement for replacement in parameter_replacements.values()
+        for member_name, constructor_name, _, _ in parameters
+    }
+    state_members = []
+    for i, entry in enumerate(variable_entries):
+        field_name = "potential" if i == 0 else "moments" if i == 1 else entry["name"]
+        state_members.append(
+            f"        std::array<double, {len(entry['symbols'])}> {field_name} {{}};"
+        )
+        replacements.update(
+            {
+                str(symbol): f"state.{field_name}[{component}]"
+                for component, symbol in enumerate(entry["symbols"])
+            }
+        )
+    potential_symbols = variable_entries[0]["symbols"]
+    moment_symbols = variable_entries[1]["symbols"]
+    potential_method = _render_state_component_method(
+        "dhamiltonian_dpotential",
+        [powsimp(diff(hamiltonian, symbol)) for symbol in potential_symbols],
+        replacements,
+        symbolic_functions,
     )
-    argument_signature_parts: list[str] = []
-    arguments_call_parts: list[str] = []
-    for entry in variable_entries:
-        entry_name = entry["name"]
-        entry_symbols = entry["symbols"]
-        if len(entry_symbols) == 1:
-            argument_signature_parts.append(f"double {entry_name}")
-            arguments_call_parts.append(entry_name)
-            h_replacements[str(entry_symbols[0])] = entry_name
-        else:
-            argument_signature_parts.append(
-                f"std::span<double const, {len(entry_symbols)}> {entry_name}"
-            )
-            arguments_call_parts.append(entry_name)
-            for i, symbol in enumerate(entry_symbols):
-                h_replacements[str(symbol)] = f"{entry_name}[{i}]"
-
-    if requires_elem:
-        h_signature = (
-            f"    template <class Elem>\n"
-            f"    KOKKOS_FUNCTION constexpr double hamiltonian({', '.join(argument_signature_parts)}, Elem elem) const"
-        )
-    else:
-        h_signature = f"    KOKKOS_FUNCTION constexpr double hamiltonian({', '.join(argument_signature_parts)}) const"
-
-    potential_entry = variable_entries[0]
-    moments_entry = variable_entries[1]
-    potential_symbols = potential_entry["symbols"]
-    moments_symbols = moments_entry["symbols"]
-
-    potential_replacements = dict(h_replacements)
-    moments_replacements = dict(parameter_replacements)
-
-    potential_derivative_expressions = [
-        powsimp(diff(hamiltonian, symbol)) for symbol in potential_symbols
-    ]
-    moments_derivative_expressions = [
-        powsimp(diff(hamiltonian, symbol)) for symbol in moments_symbols
-    ]
-
-    potential_argument_entries = [potential_entry, *variable_entries[2:]]
-    potential_signature_parts: list[str] = []
-    for entry in potential_argument_entries:
-        entry_name = entry["name"]
-        entry_symbols = entry["symbols"]
-        if len(entry_symbols) == 1:
-            potential_signature_parts.append(f"double {entry_name}")
-        else:
-            potential_signature_parts.append(
-                f"std::span<double const, {len(entry_symbols)}> {entry_name}"
-            )
-
-    if len(potential_symbols) == 1:
-        potential_method_signature = ", ".join(potential_signature_parts)
-        if requires_elem:
-            potential_method = f"""
-    template <class Elem>
-    KOKKOS_FUNCTION constexpr double dhamiltonian_dpotential({potential_method_signature}, Elem elem) const
-    {{
-        return {_render_cxx_expression(potential_derivative_expressions[0], potential_replacements, symbolic_functions)};
-    }}
-"""
-        else:
-            potential_method = f"""
-    KOKKOS_FUNCTION constexpr double dhamiltonian_dpotential({potential_method_signature}) const
-    {{
-        return {_render_cxx_expression(potential_derivative_expressions[0], potential_replacements, symbolic_functions)};
-    }}
-"""
-    else:
-        potential_method = ""
-
-    inverse_methods = ""
-    if inverse_symbols is not None and inverse_expressions is not None:
-        inverse_methods = _render_indexed_method(
-            "moments",
-            "dpotential_dx",
-            inverse_symbols,
-            inverse_expressions,
-            potential_replacements,
-            template_parameters,
-            symbolic_functions,
-        )
-
-    use_moments_object = (
-        len(moments_symbols) > 1
-        and definition is not None
-        and definition.moments_object_component_expression is not None
+    moment_method = _render_state_component_method(
+        "dhamiltonian_dmoments",
+        [powsimp(diff(hamiltonian, symbol)) for symbol in moment_symbols],
+        replacements,
+        symbolic_functions,
     )
-
-    if not use_moments_object and (
-        len(moments_symbols) == 1 or moments_computer is None
-    ):
-        moments_method = _render_indexed_method(
-            "dhamiltonian_dmoments",
-            "moments",
-            [str(symbol) for symbol in moments_symbols],
-            moments_derivative_expressions,
-            moments_replacements,
-            template_parameters,
-            symbolic_functions,
-        )
-    else:
-        moments_method = ""
-    generic_moments_method = ""
-    if len(moments_symbols) > 1 and moments_computer is not None:
-        generic_moments_replacements = {
-            **parameter_replacements,
-            **{str(symbol): "moments" for symbol in moments_symbols},
+    inverse_method = ""
+    if inverse_expressions is not None:
+        inverse_replacements = {
+            **replacements,
+            **{
+                symbol: f"state.moments[{i}]"
+                for i, symbol in enumerate(inverse_symbols)
+            },
         }
-        if requires_elem:
-            generic_moments_method = _render_indexed_elem_method(
-                "dhamiltonian_dmoments",
-                "moments",
-                [str(symbol) for symbol in moments_symbols],
-                moments_derivative_expressions,
-                generic_moments_replacements,
-                template_parameters,
-                symbolic_functions,
+        inverse_method = _render_state_component_method(
+            "moments",
+            inverse_expressions,
+            inverse_replacements,
+            symbolic_functions,
+        )
+    jacobian_cases = []
+    for row, row_symbol in enumerate(moment_symbols):
+        for column, column_symbol in enumerate(moment_symbols):
+            expression = diff(diff(hamiltonian, row_symbol), column_symbol)
+            jacobian_cases.append(
+                f"""        {"if" if not jacobian_cases else "else if"} constexpr (RowIndex::value == {row} && ColumnIndex::value == {column}) {{
+            return {_render_cxx_expression(expression, replacements, symbolic_functions)};
+        }}"""
             )
+    nonlocal_method = ""
+    if moments_computer is not None:
+        coefficients = [
+            diff(diff(hamiltonian, symbol), symbol) for symbol in moment_symbols
+        ]
+        coefficient_method = _render_state_component_method(
+            "moment_coefficient",
+            coefficients,
+            replacements,
+            symbolic_functions,
+        )
+        nonlocal_method = f"""
+    template <class Index, class Elem>
+    [[nodiscard]] KOKKOS_FUNCTION constexpr auto dhamiltonian_dmoments_value(State const& state, Elem elem) const
+    {{
+        using Component = ddc::type_seq_element_t<Index::value, ddc::TypeSeq<SpatialIndex...>>;
+        auto value = MomentsComputer::template forward_value<Component>(elem);
+        value *= moment_coefficient<Index>(state, elem);
+        return value;
+    }}
+"""
+    else:
+        coefficient_method = ""
+    private_methods = coefficient_method
+    template_prefix = (
+        ""
+        if not template_parameters
+        else "template <" + ", ".join(template_parameters) + ">\n"
+    )
+    rendered_includes = "".join(f"#include {header}\n" for header in includes or [])
+    initializers = _render_constructor_initializers(parameters)
+    constructor = _render_constructor_signature(struct_name, parameters)
+    if initializers:
+        constructor += f"\n        : {initializers} {{}}"
+    else:
+        constructor += " {}"
+    concept_type = struct_name
+    concept_arguments = []
+    spatial_arguments = []
+    parameter_types = (
+        set()
+        if definition is None
+        else set((definition.parameter_types or {}).values())
+    )
+    for i, parameter in enumerate(template_parameters or []):
+        if parameter.split()[-1] in parameter_types:
+            concept_arguments.append("similie::physics::detail::ConceptParameter")
+        elif "..." in parameter:
+            count = 2 if moments_computer is not None else 1
+            spatial_arguments = [
+                f"std::integral_constant<std::size_t, {i + j + 1}>"
+                for j in range(count)
+            ]
+            concept_arguments.extend(spatial_arguments)
         else:
-            generic_moments_method = _render_indexed_method(
-                "dhamiltonian_dmoments",
-                "moments",
-                [str(symbol) for symbol in moments_symbols],
-                moments_derivative_expressions,
-                generic_moments_replacements,
-                template_parameters,
-                symbolic_functions,
-            )
-
-    moments_object_method = ""
-    moments_jacobian_method = ""
-    if use_moments_object:
-        object_expression_replacements = {}
-        if definition.moments_object_norm2_expression is not None:
-            object_expression_replacements[
-                sum(symbol**2 for symbol in moments_symbols)
-            ] = definition.moments_object_norm2_expression.format(moments="moments")
-        moments_object_method = _render_moments_object_method(
-            [str(symbol) for symbol in moments_symbols],
-            moments_derivative_expressions,
-            moments_replacements,
-            symbolic_functions,
-            object_expression_replacements,
-            definition.moments_object_component_expression,
-            definition.component_indices,
-        )
-        if definition.generate_moments_jacobian:
-            moments_jacobian_method = _render_moments_object_jacobian_method(
-                moments_symbols,
-                hamiltonian,
-                moments_replacements,
-                symbolic_functions,
-                object_expression_replacements,
-                definition.moments_object_component_expression,
-                definition.component_indices,
-            )
-
-    nonlocal_value_methods = ""
-    if moments_computer is not None:
-        nonlocal_value_methods = _render_indexed_nonlocal_value_method(
-            "dhamiltonian_dmoments_value",
-            [str(symbol) for symbol in moments_symbols],
-            moments_derivative_expressions,
-            moments_replacements,
-            symbolic_functions,
-        )
-    rendered_includes = ""
-    if includes:
-        rendered_includes += "".join(f"#include {header}\n" for header in includes)
-
-    rendered_moments_computer = ""
-    if moments_computer is not None:
-        rendered_moments_computer = (
-            f"    using MomentsComputer = {moments_computer};\n\n"
-        )
-    template_prefix = ""
+            concept_arguments.append(f"std::integral_constant<std::size_t, {i}>")
     if template_parameters:
-        template_prefix = "template <" + ", ".join(template_parameters) + ">\n"
-
-    is_linear = False if definition is None else definition.is_linear
-
+        concept_type += "<" + ", ".join(concept_arguments) + ">"
+    checks = f"static_assert(similie::physics::HamiltonianConcept<{concept_type}, similie::physics::detail::ConceptElement>);\n"
+    if nonlocal_method and spatial_arguments:
+        grid_arguments = ", ".join(
+            "similie::physics::detail::ConceptGrid<" + arg + ">"
+            for arg in spatial_arguments
+        )
+        checks += f"static_assert(similie::physics::NonlocalHamiltonianConcept<{concept_type}, ddc::DiscreteElement<{grid_arguments}>>);\n"
     output_path.write_text(
         f"""\
 // SPDX-FileCopyrightText: 2026 Baptiste Legouix
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// AI-GENERATED
 
 #pragma once
 
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <Kokkos_Core.hpp>
 #include <span>
 #include <type_traits>
-#include <utility>
+#include <Kokkos_Core.hpp>
+#include <similie/physics/concepts.hpp>
 {rendered_includes}
 
 namespace {namespace} {{
 
 {"" if definition is None else definition.namespace_preamble}
 
-{template_prefix}struct {struct_name} {{
-    static constexpr std::size_t N = {len(moments_symbols)};
-    static constexpr bool IS_LINEAR = {"true" if is_linear else "false"};
-
-{rendered_moments_computer}\
+{template_prefix}class {struct_name}
+{{
 {_render_members(parameters)}
+{"" if moments_computer is None else "    using MomentsComputer = " + moments_computer + ";"}
 
-{_render_constructor_signature(struct_name, parameters)}
-        : {_render_constructor_initializers(parameters)} {{}}
+public:
+    static constexpr std::size_t N = {len(moment_symbols)};
+    static constexpr bool IS_LINEAR = {"true" if definition is not None and definition.is_linear else "false"};
 
-{h_signature}
+    struct State
     {{
-        return {_render_cxx_expression(hamiltonian, h_replacements, symbolic_functions)};
-    }}
-{potential_method}{moments_method}{generic_moments_method}{moments_object_method}{moments_jacobian_method}{nonlocal_value_methods}
-{inverse_methods}}};
+{chr(10).join(state_members)}
+    }};
 
+{constructor}
+
+    template <class Elem>
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double hamiltonian(State const& state, Elem elem) const
+    {{
+        static_cast<void>(elem);
+        return {_render_cxx_expression(hamiltonian, replacements, symbolic_functions)};
+    }}
+{potential_method}{moment_method}{inverse_method}
+    template <class RowIndex, class ColumnIndex, class Elem>
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double jacobian(State const& state, Elem elem) const
+    {{
+        static_cast<void>(state);
+        static_cast<void>(elem);
+{chr(10).join(jacobian_cases)}
+        else {{
+            static_assert(RowIndex::value < N && ColumnIndex::value < N, "unsupported moment indices");
+            return 0.0;
+        }}
+    }}
+{nonlocal_method}
+private:
+{private_methods}
+}};
+
+{checks}
 {"" if definition is None else definition.namespace_epilogue}
 }} // namespace {namespace}
 """

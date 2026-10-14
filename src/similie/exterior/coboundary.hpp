@@ -27,6 +27,7 @@
 
 #include "boundary.hpp"
 #include "cochain.hpp"
+#include "concepts.hpp"
 #include "cosimplex.hpp"
 
 
@@ -440,6 +441,19 @@ struct Coboundary<TagToAddToCochain, CochainTag>
     }
 };
 
+static_assert(CoboundaryConcept<
+              Coboundary<detail::ConceptDirection, detail::ConceptScalar>,
+              tensor::Tensor<
+                      double,
+                      ddc::DiscreteDomain<detail::ConceptDirection>,
+                      Kokkos::layout_right,
+                      Kokkos::HostSpace>,
+              detail::ConceptEvaluator,
+              LocalChain<Simplex<1, detail::ConceptGrid>>,
+              LocalChain<Simplex<0, detail::ConceptGrid>>,
+              ddc::DiscreteElement<detail::ConceptGrid>,
+              ddc::DiscreteElement<detail::ConceptDirection>>);
+
 template <tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag>
 struct TransposedCoboundary<TagToAddToCochain, CochainTag>
 {
@@ -546,6 +560,19 @@ struct TransposedCoboundary<TagToAddToCochain, CochainTag>
         }
     }
 };
+
+static_assert(CoboundaryConcept<
+              TransposedCoboundary<detail::ConceptDirection, detail::ConceptScalar>,
+              tensor::Tensor<
+                      double,
+                      ddc::DiscreteDomain<detail::ConceptDirection>,
+                      Kokkos::layout_right,
+                      Kokkos::HostSpace>,
+              detail::ConceptEvaluator,
+              LocalChain<Simplex<1, detail::ConceptGrid>>,
+              LocalChain<Simplex<0, detail::ConceptGrid>>,
+              ddc::DiscreteElement<detail::ConceptGrid>,
+              ddc::DiscreteElement<detail::ConceptDirection>>);
 
 template <misc::Specialization<Cochain> CochainType>
 KOKKOS_FUNCTION coboundary_t<CochainType> coboundary(CochainType cochain)

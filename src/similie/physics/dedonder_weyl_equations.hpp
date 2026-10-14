@@ -1,13 +1,14 @@
 // SPDX-FileCopyrightText: 2026 Baptiste Legouix
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// AI-GENERATED
 
 #pragma once
 
-#include <cstddef>
-#include <span>
 #include <utility>
 
 #include <Kokkos_Core.hpp>
+
+#include "concepts.hpp"
 
 namespace similie::physics {
 
@@ -17,36 +18,30 @@ class DeDonderWeylEquations
     Hamiltonian m_hamiltonian;
 
 public:
+    using State = typename Hamiltonian::State;
+    static constexpr bool IS_LINEAR = Hamiltonian::IS_LINEAR;
+
     KOKKOS_FUNCTION constexpr explicit DeDonderWeylEquations(Hamiltonian hamiltonian)
         : m_hamiltonian(std::move(hamiltonian))
     {
     }
 
-    template <class Index>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr double potential_grad(
-            std::span<double const, Hamiltonian::N> moments) const
+    template <class Index, class Elem>
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double potential_grad(State const& state, Elem elem)
+            const
     {
-        return m_hamiltonian.template dhamiltonian_dmoments<Index>(moments);
+        return m_hamiltonian.template dhamiltonian_dmoments<Index>(state, elem);
     }
 
-    template <class Index>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr double potential_grad(double moments_component) const
+    template <class Index, class Elem>
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double moments_div(State const& state, Elem elem) const
     {
-        return m_hamiltonian.template dhamiltonian_dmoments<Index>(moments_component);
-    }
-
-    template <class Index>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr double moments_div(
-            std::span<double const, 1> potential) const
-    {
-        static_cast<void>(sizeof(Index));
-        return -m_hamiltonian.dhamiltonian_dpotential(potential[0]);
-    }
-
-    [[nodiscard]] KOKKOS_FUNCTION constexpr double moments_div(double potential) const
-    {
-        return -m_hamiltonian.dhamiltonian_dpotential(potential);
+        return -m_hamiltonian.template dhamiltonian_dpotential<Index>(state, elem);
     }
 };
+
+static_assert(DeDonderWeylEquationsConcept<
+              DeDonderWeylEquations<detail::ConceptHamiltonian>,
+              detail::ConceptElement>);
 
 } // namespace similie::physics

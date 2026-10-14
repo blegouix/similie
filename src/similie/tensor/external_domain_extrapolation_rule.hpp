@@ -152,6 +152,13 @@ struct ExternalDomainExtrapolationRule
     }
 };
 
+static_assert(ExtrapolationRuleConcept<
+              ExternalDomainExtrapolationRule<
+                      detail::ConceptGrid,
+                      detail::ConceptField<ScalarIndex>>,
+              detail::ConceptField<ScalarIndex>,
+              ddc::DiscreteElement<detail::ConceptGrid>>);
+
 template <class NeighborTensor, class Dimension>
 ExternalDomainExtrapolationRule(
         NeighborTensor,

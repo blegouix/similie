@@ -1,0 +1,53 @@
+// SPDX-FileCopyrightText: 2026 Baptiste Legouix
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// AI-GENERATED
+
+// Include each standardized family so its inline assertions run in every test build.
+#include <similie/exterior/codifferential.hpp>
+#include <similie/exterior/hodge_star.hpp>
+#include <similie/exterior/laplacian.hpp>
+#include <similie/physics/dedonder_weyl_equations.hpp>
+#include <similie/physics/elasticity/linear_elasticity.hpp>
+#include <similie/physics/elasticity/linear_elasticity_constitutive_law.hpp>
+#include <similie/physics/hamilton_equations.hpp>
+#include <similie/physics/magnetostatics/linear_magnetostatics.hpp>
+#include <similie/physics/magnetostatics/linear_magnetostatics_constitutive_law.hpp>
+#include <similie/physics/magnetostatics/nonlinear_magnetostatics.hpp>
+#include <similie/physics/scalar_field/scalar_field_with_power_coupling.hpp>
+#include <similie/tensor/tensor.hpp>
+
+namespace {
+
+struct MissingInterface
+{
+};
+
+struct WrongConstitutiveReturn
+{
+    static constexpr std::size_t N = 1;
+    struct State
+    {
+        std::array<double, 1> value {};
+    };
+    float operator()(State const&, int) const;
+    float value(State const&, int) const;
+    float jacobian(State const&, int) const;
+    float inverse(State const&, int) const;
+    float inverse_value(State const&, int) const;
+};
+
+struct MissingExtrapolationBasis
+{
+    template <class Field, class Element>
+    double operator()(Field const&, Element) const;
+};
+
+static_assert(!sil::tensor::TensorIndexConcept<MissingInterface>);
+static_assert(!sil::tensor::ExtrapolationRuleConcept<
+              MissingExtrapolationBasis,
+              sil::tensor::detail::ConceptField<sil::tensor::ScalarIndex>,
+              ddc::DiscreteElement<sil::tensor::detail::ConceptGrid>>);
+static_assert(!similie::physics::ConstitutiveLawConcept<WrongConstitutiveReturn, int>);
+static_assert(!similie::physics::HamiltonianConcept<MissingInterface, int>);
+
+} // namespace

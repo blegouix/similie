@@ -6,3 +6,7 @@ add_subdirectory(exterior)
 add_subdirectory(multidomains)
 add_subdirectory(physics)
 add_subdirectory(tensor)
+
+add_library(check_concepts OBJECT concepts.cpp)
+target_link_libraries(check_concepts PRIVATE sil::sil)
+add_dependencies(check_concepts similie_physics_generated)

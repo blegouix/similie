@@ -199,6 +199,12 @@ struct InterpolatedNonlinearBHCurve
 
 
 CONSTITUTIVE_LAW_HEADER = """\
+struct NonlinearMagneticState
+{
+    std::array<double, 3> value {};
+    std::array<double, 3> hodge_star {};
+};
+
 template <class BHCurve>
 class NonlinearMagneticInductionToMagneticField
 {
@@ -280,12 +286,17 @@ class NonlinearMagneticInductionToMagneticField
     }
 
 public:
+    static constexpr std::size_t N = 3;
+    using State = NonlinearMagneticState;
+
     explicit NonlinearMagneticInductionToMagneticField(BHCurve bh_curve) : m_bh_curve(bh_curve) {}
 
-    [[nodiscard]] KOKKOS_FUNCTION std::array<double, 3> operator()(
-            std::span<double const, 3> hodge_star,
-            std::span<double const, 3> magnetic_induction) const
+    template <class Elem>
+    [[nodiscard]] KOKKOS_FUNCTION std::array<double, N> operator()(State const& state, Elem elem) const
     {
+        static_cast<void>(elem);
+        std::array<double, N> const& hodge_star = state.hodge_star;
+        std::array<double, N> const& magnetic_induction = state.value;
         double const q = magnetic_induction[0] * magnetic_induction[0]
                          + magnetic_induction[1] * magnetic_induction[1]
                          + magnetic_induction[2] * magnetic_induction[2];
@@ -301,19 +312,18 @@ public:
         };
     }
 
-    [[nodiscard]] KOKKOS_FUNCTION double value(
-            std::span<double const, 3> hodge_star,
-            std::span<double const, 3> magnetic_induction,
-            std::size_t row,
-            std::size_t column) const
+    template <class Elem>
+    [[nodiscard]] KOKKOS_FUNCTION std::array<double, N * N> value(State const& state, Elem elem) const
     {
-        return jacobian(hodge_star, magnetic_induction)[3 * row + column];
+        return jacobian(state, elem);
     }
 
-    [[nodiscard]] KOKKOS_FUNCTION std::array<double, 3> inverse(
-            std::span<double const, 3> hodge_star,
-            std::span<double const, 3> magnetic_field) const
+    template <class Elem>
+    [[nodiscard]] KOKKOS_FUNCTION std::array<double, N> inverse(State const& state, Elem elem) const
     {
+        static_cast<void>(elem);
+        std::array<double, N> const& hodge_star = state.hodge_star;
+        std::array<double, N> const& magnetic_field = state.value;
         double const unhodge_h0 = magnetic_field[0] / hodge_star[0];
         double const unhodge_h1 = magnetic_field[1] / hodge_star[1];
         double const unhodge_h2 = magnetic_field[2] / hodge_star[2];
@@ -327,23 +337,24 @@ public:
         return {scale * unhodge_h0, scale * unhodge_h1, scale * unhodge_h2};
     }
 
-    [[nodiscard]] KOKKOS_FUNCTION double inverse_value(
-            std::span<double const, 3> hodge_star,
-            std::span<double const, 3> magnetic_field,
-            std::size_t row,
-            std::size_t column) const
+    template <class Elem>
+    [[nodiscard]] KOKKOS_FUNCTION std::array<double, N * N> inverse_value(State const& state, Elem elem) const
     {
-        std::array<double, 3> const magnetic_induction = inverse(hodge_star, magnetic_field);
-        return inverse_matrix3x3(jacobian(hodge_star, magnetic_induction))[3 * row + column];
+        State const inverse_state {inverse(state, elem), state.hodge_star};
+        return inverse_matrix3x3(jacobian(inverse_state, elem));
     }
 
-    [[nodiscard]] KOKKOS_FUNCTION std::array<double, 9> jacobian(
-            std::span<double const, 3> hodge_star,
-            std::span<double const, 3> magnetic_induction) const
+    template <class Elem>
+    [[nodiscard]] KOKKOS_FUNCTION std::array<double, N * N> jacobian(State const& state, Elem elem) const
     {
-        return jacobian_from_magnetic_induction(hodge_star, magnetic_induction);
+        static_cast<void>(elem);
+        return jacobian_from_magnetic_induction(state.hodge_star, state.value);
     }
 };
+
+static_assert(similie::physics::ConstitutiveLawConcept<
+        NonlinearMagneticInductionToMagneticField<InterpolatedNonlinearBHCurve<2>>,
+        similie::physics::detail::ConceptElement>);
 """
 
 
@@ -375,9 +386,6 @@ class NonlinearMagnetostaticsHamiltonian:
                     },
                 )
             },
-            moments_object_component_expression="{moments}.template get<{index}>()",
-            moments_object_norm2_expression="{moments}.norm2()",
-            generate_moments_jacobian=True,
             namespace_preamble=INTERPOLATED_BH_CURVE_HEADER,
             namespace_epilogue=CONSTITUTIVE_LAW_HEADER,
         )

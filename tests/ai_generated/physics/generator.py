@@ -38,13 +38,16 @@ with tempfile.TemporaryDirectory() as directory:
     (root / "test.cpp").write_text(
         """
 #include "hamiltonian.hpp"
-struct Index;
+using Index = std::integral_constant<std::size_t, 0>;
 constexpr test::SpatialScalarHamiltonian model(2.0);
+constexpr test::SpatialScalarHamiltonian::State state {{3.0}, {3.0}};
+constexpr test::SpatialScalarHamiltonian::State inverse_state {{0.0}, {30.0}};
 static_assert(model.N == 1);
 static_assert(model.IS_LINEAR);
-static_assert(model.dhamiltonian_dmoments<Index>(3.0, 4) == 30.0);
-static_assert(model.dhamiltonian_dpotential(3.0, 4) == 30.0);
-static_assert(model.moments<Index>(30.0, 4) == 3.0);
+static_assert(model.hamiltonian(state, 4) == 90.0);
+static_assert(model.dhamiltonian_dmoments<Index>(state, 4) == 30.0);
+static_assert(model.dhamiltonian_dpotential<Index>(state, 4) == 30.0);
+static_assert(model.moments<Index>(inverse_state, 4) == 3.0);
 """
     )
     subprocess.run(
@@ -53,6 +56,7 @@ static_assert(model.moments<Index>(30.0, 4) == 3.0);
             "-std=c++23",
             "-fsyntax-only",
             f"-I{root}",
+            f"-I{Path(__file__).resolve().parents[3] / 'src'}",
             str(root / "test.cpp"),
         ],
         check=True,
