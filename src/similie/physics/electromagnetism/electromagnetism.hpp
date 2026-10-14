@@ -23,7 +23,9 @@ class Electromagnetism
 {
 public:
     using Vector = std::array<double, 3>;
-    struct Variables
+    static constexpr std::size_t N = 7;
+    static constexpr bool IS_LINEAR = true;
+    struct State
     {
         double charge_density;
         Vector displacement;
@@ -81,13 +83,13 @@ public:
     {
         return get<0>().current(charge_density, velocity, displacement);
     }
-    KOKKOS_FUNCTION Variables operator()(
+    KOKKOS_FUNCTION State operator()(
             double current_divergence,
             Vector const& curl_magnetic_field,
             Vector const& curl_electric_field,
             Vector const& total_current) const
     {
-        Variables result {-current_divergence, {}, get<1>()(curl_electric_field)};
+        State result {-current_divergence, {}, get<1>()(curl_electric_field)};
         for (int a = 0; a < 3; ++a)
             result.displacement[a] = curl_magnetic_field[a] - total_current[a];
         return result;
@@ -135,4 +137,6 @@ public:
         return get<0>().gauss_residual(displacement_divergence, charge_density);
     }
 };
+
+static_assert(PhysicsConcept<Electromagnetism>);
 } // namespace similie::physics::electromagnetism

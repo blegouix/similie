@@ -516,8 +516,9 @@ int main(int argc, char** argv)
      *
      * We implement mid-point explicit temporal integration scheme.
      */
-    similie::physics::scalar_field::ScalarFieldWithPowerCouplingHamiltonian<T, X, Y> const
-            hamiltonian_model(mass, coupling_constant, coupling_power);
+    using Hamiltonian
+            = similie::physics::scalar_field::ScalarFieldWithPowerCouplingHamiltonian<T, X, Y>;
+    Hamiltonian const hamiltonian_model(mass, coupling_constant, coupling_power);
     similie::physics::DeDonderWeylEquations equations(hamiltonian_model);
     for (int i = 0; i < nb_iter; i++) {
         if (i % nb_iter_between_exports == 0) {
@@ -529,10 +530,14 @@ int main(int argc, char** argv)
                 Kokkos::DefaultExecutionSpace(),
                 half_step_potential.domain(),
                 KOKKOS_LAMBDA(ddc::DiscreteElement<DDimX, DDimY, DummyIndex> elem) {
+                    Hamiltonian::State state {};
+                    state.potential[0] = potential(elem);
+                    state.moments[0] = temporal_moment(elem);
                     half_step_potential(elem)
                             = potential(elem)
-                              - equations.template potential_grad<T>(temporal_moment(elem)) * dt
-                                        / 2.;
+                              - equations.template potential_grad<
+                                        std::integral_constant<std::size_t, 0>>(state, elem)
+                                        * dt / 2.;
                 });
 
         // Compute the potential gradient
@@ -564,20 +569,28 @@ int main(int argc, char** argv)
                     const double temporal_moment_ = temporal_moment(elem);
                     const double minus_spatial_moments_div_ = minus_spatial_moments_div(elem);
 
+                    Hamiltonian::State state {};
+                    state.potential[0] = half_step_potential_;
+                    state.moments[0] = temporal_moment_;
+
                     // Advect temporal moment by half-step, this is what is needed to perform the whole-step potential advection
                     const double half_step_temporal_moment_
                             = temporal_moment_
-                              - (equations.moments_div(half_step_potential_)
+                              - (equations.template moments_div<
+                                         std::integral_constant<std::size_t, 0>>(state, elem)
                                  + minus_spatial_moments_div_)
                                         * dt / 2;
 
                     // Whole-step advection of field state
-                    potential(elem)
-                            -= equations.template potential_grad<T>(half_step_temporal_moment_)
+                    state.moments[0] = half_step_temporal_moment_;
+                    potential(elem) -= equations.template potential_grad<
+                                               std::integral_constant<std::size_t, 0>>(state, elem)
+                                       * dt;
+                    temporal_moment(elem)
+                            -= (equations.template moments_div<
+                                        std::integral_constant<std::size_t, 0>>(state, elem)
+                                + minus_spatial_moments_div_)
                                * dt;
-                    temporal_moment(elem) -= (equations.moments_div(half_step_potential_)
-                                              + minus_spatial_moments_div_)
-                                             * dt;
                 });
 
         if (i % nb_iter_between_exports == 0) {
@@ -593,9 +606,9 @@ int main(int argc, char** argv)
                                 = {temporal_moment(elem, ddc::DiscreteElement<DummyIndex>()),
                                    spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(0)),
                                    spatial_moments(elem, ddc::DiscreteElement<AlphaLow>(1))};
-                        hamiltonian(elem) = hamiltonian_model.hamiltonian(
-                                potential(elem, ddc::DiscreteElement<DummyIndex>()),
-                                pi);
+                        Hamiltonian::State const
+                                state {{potential(elem, ddc::DiscreteElement<DummyIndex>())}, pi};
+                        hamiltonian(elem) = hamiltonian_model.hamiltonian(state, elem);
                     });
             ddc::parallel_deepcopy(h_hamiltonian, hamiltonian);
 

@@ -21,6 +21,7 @@
 
 #include "coboundary.hpp"
 #include "cochain.hpp"
+#include "concepts.hpp"
 #include "cosimplex.hpp"
 
 
@@ -581,6 +582,21 @@ public:
         return codifferential_tensor;
     }
 };
+
+static_assert(StagedCodifferentialConcept<
+              StagedCodifferential<
+                      detail::MetricIndexConcept,
+                      detail::DirectionConcept,
+                      detail::DirectionConcept,
+                      detail::FieldConcept<detail::DirectionConcept>,
+                      detail::FieldConcept<detail::MetricIndexConcept>,
+                      detail::FieldConcept<detail::PositionIndexConcept>,
+                      Kokkos::DefaultHostExecutionSpace>,
+              codifferential_tensor_t<
+                      detail::DirectionConcept,
+                      detail::DirectionConcept,
+                      detail::FieldConcept<detail::DirectionConcept>>,
+              detail::FieldConcept<detail::DirectionConcept>>);
 
 template <
         tensor::TensorIndex MetricIndex,

@@ -1,16 +1,17 @@
 // SPDX-FileCopyrightText: 2026 Baptiste Legouix
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// AI-GENERATED
 
 #pragma once
 
-#include <cstddef>
-#include <span>
 #include <type_traits>
 #include <utility>
 
 #include <ddc/ddc.hpp>
 
 #include <Kokkos_Core.hpp>
+
+#include "concepts.hpp"
 
 namespace similie::physics {
 
@@ -20,6 +21,7 @@ class HamiltonEquations
     Hamiltonian m_hamiltonian;
 
 public:
+    using State = typename Hamiltonian::State;
     static constexpr bool IS_LINEAR = Hamiltonian::IS_LINEAR;
 
     KOKKOS_FUNCTION constexpr explicit HamiltonEquations(Hamiltonian hamiltonian)
@@ -27,152 +29,50 @@ public:
     {
     }
 
-    template <class Index>
-        requires(
-                Hamiltonian::N == 1
-                || requires(
-                        Hamiltonian const& h,
-                        std::span<double const, Hamiltonian::N>
-                                moments) { h.template dhamiltonian_dmoments<Index>(moments); })
-    [[nodiscard]] KOKKOS_FUNCTION constexpr double dpotential_dt(
-            std::span<double const, Hamiltonian::N> spatial_moments) const
+    template <class Index, class Elem>
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double dpotential_dt(State const& state, Elem elem)
+            const
     {
-        if constexpr (requires {
-                          m_hamiltonian.template dhamiltonian_dmoments<Index>(spatial_moments);
-                      }) {
-            return m_hamiltonian.template dhamiltonian_dmoments<Index>(spatial_moments);
-        } else {
-            return dpotential_dt<Index>(spatial_moments[0]);
-        }
+        return m_hamiltonian.template dhamiltonian_dmoments<Index>(state, elem);
     }
 
     template <class Index, class Elem>
-        requires(
-                Hamiltonian::N == 1
-                || requires(
-                        Hamiltonian const& h,
-                        std::span<double const, Hamiltonian::N> moments,
-                        Elem elem) { h.template dhamiltonian_dmoments<Index>(moments, elem); }
-                || requires(
-                        Hamiltonian const& h,
-                        std::span<double const, Hamiltonian::N>
-                                moments) { h.template dhamiltonian_dmoments<Index>(moments); })
-    [[nodiscard]] KOKKOS_FUNCTION constexpr double dpotential_dt(
-            std::span<double const, Hamiltonian::N> spatial_moments,
-            Elem elem) const
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double dmoments_dt(State const& state, Elem elem) const
     {
-        if constexpr (requires {
-                          m_hamiltonian
-                                  .template dhamiltonian_dmoments<Index>(spatial_moments, elem);
-                      }) {
-            return m_hamiltonian.template dhamiltonian_dmoments<Index>(spatial_moments, elem);
-        } else if constexpr (requires {
-                                 m_hamiltonian.template dhamiltonian_dmoments<Index>(
-                                         spatial_moments);
-                             }) {
-            return dpotential_dt<Index>(spatial_moments);
-        } else {
-            return dpotential_dt<Index>(spatial_moments[0], elem);
-        }
+        return -m_hamiltonian.template dhamiltonian_dpotential<Index>(state, elem);
     }
 
-    template <class Index>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr double dpotential_dt(
-            double spatial_moments_component) const
+    template <class RowIndex, class ColumnIndex, class Elem>
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double jacobian(State const& state, Elem elem) const
     {
-        return m_hamiltonian.template dhamiltonian_dmoments<Index>(spatial_moments_component);
+        return m_hamiltonian.template jacobian<RowIndex, ColumnIndex>(state, elem);
     }
 
     template <class Index, class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr double dpotential_dt(
-            double spatial_moments_component,
-            Elem elem) const
+        requires detail::HasMomentCoefficientConcept<Hamiltonian, Index, Elem>
+    [[nodiscard]] KOKKOS_FUNCTION constexpr auto dpotential_dt_value(State const& state, Elem elem)
+            const
     {
-        if constexpr (requires {
-                          m_hamiltonian.template dhamiltonian_dmoments<
-                                  Index>(spatial_moments_component, elem);
-                      }) {
-            return m_hamiltonian
-                    .template dhamiltonian_dmoments<Index>(spatial_moments_component, elem);
-        } else {
-            return m_hamiltonian.template dhamiltonian_dmoments<Index>(spatial_moments_component);
-        }
-    }
-
-    template <class Index, class Moments, class Elem>
-        requires(!std::is_arithmetic_v<Moments>
-                 && (requires(Moments moments) { moments.template get<Index>(); }
-                     || requires(Hamiltonian const& h, Moments moments, Elem elem) {
-                         h.template dhamiltonian_dmoments<Index>(moments, elem);
-                     }))
-    [[nodiscard]] KOKKOS_FUNCTION constexpr double dpotential_dt(Moments moments, Elem elem) const
-    {
-        if constexpr (requires {
-                          m_hamiltonian.template dhamiltonian_dmoments<Index>(moments, elem);
-                      }) {
-            return m_hamiltonian.template dhamiltonian_dmoments<Index>(moments, elem);
-        } else {
-            return dpotential_dt<Index>(moments.template get<Index>(), elem);
-        }
-    }
-
-    template <class Index>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr double dmoments_dt(
-            std::span<double const, 1> potential) const
-    {
-        return -m_hamiltonian.dhamiltonian_dpotential(potential[0]);
+        return m_hamiltonian.template dhamiltonian_dmoments_value<Index>(state, elem);
     }
 
     template <class Index, class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr double dmoments_dt(
-            std::span<double const, 1> potential,
-            Elem elem) const
+        requires detail::HasPotentialCoefficientConcept<Hamiltonian, Index, Elem>
+    [[nodiscard]] KOKKOS_FUNCTION constexpr auto dmoments_dt_value(State const& state, Elem elem)
+            const
     {
-        if constexpr (requires { m_hamiltonian.dhamiltonian_dpotential(potential[0], elem); }) {
-            return -m_hamiltonian.dhamiltonian_dpotential(potential[0], elem);
-        } else {
-            static_cast<void>(elem);
-            return dmoments_dt<Index>(potential);
-        }
-    }
-
-    [[nodiscard]] KOKKOS_FUNCTION constexpr double dmoments_dt(double potential) const
-    {
-        return -m_hamiltonian.dhamiltonian_dpotential(potential);
-    }
-
-    template <class Index, class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr double dmoments_dt(double potential, Elem elem) const
-    {
-        if constexpr (requires { m_hamiltonian.dhamiltonian_dpotential(potential, elem); }) {
-            return -m_hamiltonian.dhamiltonian_dpotential(potential, elem);
-        } else {
-            static_cast<void>(elem);
-            return -m_hamiltonian.dhamiltonian_dpotential(potential);
-        }
-    }
-
-    template <class Index, class Elem>
-        requires requires(Hamiltonian const& h, Elem e) {
-            h.template dhamiltonian_dmoments_value<Index>(e);
-        }
-    [[nodiscard]] KOKKOS_FUNCTION constexpr auto dpotential_dt_value(Elem elem) const
-    {
-        return m_hamiltonian.template dhamiltonian_dmoments_value<Index>(elem);
-    }
-
-    template <class Index, class Elem>
-        requires requires(Hamiltonian const& h, Elem e) { h.dhamiltonian_dpotential_value(e); }
-    [[nodiscard]] KOKKOS_FUNCTION constexpr auto dmoments_dt_value(Elem elem) const
-    {
-        auto value = m_hamiltonian.dhamiltonian_dpotential_value(elem);
+        auto value = m_hamiltonian.template dhamiltonian_dpotential_value<Index>(state, elem);
         if constexpr (std::is_same_v<std::remove_cvref_t<decltype(value)>, double>) {
             return -value;
         } else {
-            ddc::device_for_each(value.domain(), [&](auto mem_elem) { value(mem_elem) *= -1.0; });
+            ddc::device_for_each(value.domain(), [&](auto element) { value(element) *= -1.0; });
             return value;
         }
     }
 };
+
+static_assert(HamiltonEquationsConcept<
+              HamiltonEquations<detail::HamiltonianPhysicsConcept>,
+              detail::ElementConcept>);
 
 } // namespace similie::physics

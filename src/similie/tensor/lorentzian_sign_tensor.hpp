@@ -103,6 +103,10 @@ struct TensorLorentzianSignIndex
     }
 };
 
+static_assert(TensorIndexConcept<TensorLorentzianSignIndex<
+                      std::integral_constant<std::size_t, 0>,
+                      TensorNaturalIndex<detail::DimensionConcept>>>);
+
 } // namespace tensor
 
 } // namespace sil

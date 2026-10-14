@@ -6,6 +6,8 @@
 
 #include <array>
 
+#include <similie/physics/concepts.hpp>
+
 #include <Kokkos_Core.hpp>
 
 namespace similie::physics::fluid {
@@ -22,6 +24,12 @@ namespace similie::physics::fluid {
 class IncompressibleNavierStokes
 {
 public:
+    static constexpr std::size_t N = 3;
+    static constexpr bool IS_LINEAR = false;
+    struct State
+    {
+        std::array<double, N> vorticity {};
+    };
     double const density;
     double const viscosity;
     KOKKOS_FUNCTION explicit IncompressibleNavierStokes(
@@ -71,4 +79,6 @@ public:
         return density * (bernoulli - kinetic);
     }
 };
+
+static_assert(PhysicsConcept<IncompressibleNavierStokes>);
 } // namespace similie::physics::fluid

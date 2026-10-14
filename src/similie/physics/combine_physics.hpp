@@ -8,6 +8,8 @@
 
 #include <Kokkos_Core.hpp>
 
+#include "concepts.hpp"
+
 namespace similie::physics {
 /** Device-compatible composition of physics objects with independent state laws.
  * Coupled models derive from this class and supply shared-variable mappings,
@@ -15,7 +17,7 @@ namespace similie::physics {
  * introduce momentum or energy exchange between physical sectors.
  * \important This operator and documentation is fully AI-generated.
  */
-template <class... Physics>
+template <PhysicsConcept... Physics>
 class CombinePhysics;
 
 template <>
@@ -26,7 +28,7 @@ public:
     CombinePhysics() = default;
 };
 
-template <class First, class... Rest>
+template <PhysicsConcept First, PhysicsConcept... Rest>
 class CombinePhysics<First, Rest...>
 {
     First m_first;

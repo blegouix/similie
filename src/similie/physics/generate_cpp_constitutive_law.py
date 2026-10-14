@@ -28,14 +28,6 @@ def _replace_symbols(expression: str, replacements: dict[str, str]) -> str:
     return expression
 
 
-def _render_expression(
-    expression, symbol, rendered_symbol: str, replacements: dict[str, str]
-) -> str:
-    return _replace_symbols(
-        cxxcode(expression.subs(symbol, symbols(rendered_symbol))), replacements
-    )
-
-
 def write_cpp_constitutive_law_header(
     output_path: Path,
     namespace: str,
@@ -62,7 +54,6 @@ def write_cpp_constitutive_law_header(
 
     state_variable_name = variables[-1]
     state_variable_symbol = constitutive_law_symbols[state_variable_name]
-    constitutive_law_replacements = dict(parameter_replacements)
     output_symbol = symbols(output_variable)
     inverse_solution = solve(
         output_symbol - constitutive_law, state_variable_symbol, dict=True
@@ -72,7 +63,6 @@ def write_cpp_constitutive_law_header(
     inverse_expression = inverse_solution[0][state_variable_symbol]
     forward_value_expression = diff(constitutive_law, state_variable_symbol)
     inverse_value_expression = diff(inverse_expression, output_symbol)
-    inverse_replacements = dict(parameter_replacements)
 
     parameter_members = "\n".join(
         f"    {'const ' if is_const else ''}double {member_name};"
@@ -85,14 +75,28 @@ def write_cpp_constitutive_law_header(
         f"{member_name}({constructor_name}_)"
         for member_name, constructor_name, _ in parameters
     )
-    forward_arguments = ", ".join(f"double {name}" for name in variables)
-    inverse_output_name = state_variable_name
-    inverse_arguments = ", ".join(
-        [
-            *[f"double {name}" for name in variables if name != inverse_output_name],
-            f"double {output_variable}",
-        ]
+    context_members = "\n".join(
+        f"        double {name} = 0.0;" for name in variables[:-1]
     )
+
+    def render(expression, inverse: bool = False) -> str:
+        argument_symbols = {
+            constitutive_law_symbols[name]: symbols(f"__state_{i}")
+            for i, name in enumerate(variables)
+        }
+        argument_replacements = {
+            f"__state_{i}": f"state.{name}" for i, name in enumerate(variables[:-1])
+        }
+        argument_replacements[f"__state_{len(variables) - 1}"] = "state.value[0]"
+        if inverse:
+            argument_symbols[output_symbol] = symbols("__output")
+            argument_replacements["__output"] = "state.value[0]"
+        return _replace_symbols(
+            _replace_symbols(
+                cxxcode(expression.xreplace(argument_symbols)), parameter_replacements
+            ),
+            argument_replacements,
+        )
 
     output_path.write_text(
         f"""\
@@ -102,9 +106,11 @@ def write_cpp_constitutive_law_header(
 
 #pragma once
 
+#include <array>
 #include <cmath>
-
+#include <cstddef>
 #include <Kokkos_Core.hpp>
+#include <similie/physics/concepts.hpp>
 
 namespace {namespace} {{
 
@@ -113,37 +119,55 @@ class {class_name}
 {parameter_members}
 
 public:
+    static constexpr std::size_t N = 1;
+    struct State
+    {{
+        std::array<double, N> value {{}};
+{context_members}
+    }};
+
     KOKKOS_FUNCTION constexpr explicit {class_name}(
             {constructor_signature})
         : {constructor_initializers}
     {{
     }}
 
-    KOKKOS_FUNCTION constexpr double value({forward_arguments}) const
+    template <class Elem>
+    [[nodiscard]] KOKKOS_FUNCTION constexpr std::array<double, N * N> value(State const& state, Elem elem) const
     {{
-        return {_render_expression(forward_value_expression, state_variable_symbol, inverse_output_name, constitutive_law_replacements)};
+        static_cast<void>(elem);
+        return {{{render(forward_value_expression)}}};
     }}
 
-    KOKKOS_FUNCTION constexpr double jacobian({forward_arguments}) const
+    template <class Elem>
+    [[nodiscard]] KOKKOS_FUNCTION constexpr std::array<double, N * N> jacobian(State const& state, Elem elem) const
     {{
-        return value({", ".join(variables)});
+        return value(state, elem);
     }}
 
-    KOKKOS_FUNCTION constexpr double operator()({forward_arguments}) const
+    template <class Elem>
+    [[nodiscard]] KOKKOS_FUNCTION constexpr std::array<double, N> operator()(State const& state, Elem elem) const
     {{
-        return {_render_expression(constitutive_law, state_variable_symbol, inverse_output_name, constitutive_law_replacements)};
+        static_cast<void>(elem);
+        return {{{render(constitutive_law)}}};
     }}
 
-    KOKKOS_FUNCTION constexpr double inverse_value({inverse_arguments}) const
+    template <class Elem>
+    [[nodiscard]] KOKKOS_FUNCTION constexpr std::array<double, N * N> inverse_value(State const& state, Elem elem) const
     {{
-        return {_render_expression(inverse_value_expression, output_symbol, output_variable, inverse_replacements)};
+        static_cast<void>(elem);
+        return {{{render(inverse_value_expression, True)}}};
     }}
 
-    KOKKOS_FUNCTION constexpr double inverse({inverse_arguments}) const
+    template <class Elem>
+    [[nodiscard]] KOKKOS_FUNCTION constexpr std::array<double, N> inverse(State const& state, Elem elem) const
     {{
-        return {_render_expression(inverse_expression, output_symbol, output_variable, inverse_replacements)};
+        static_cast<void>(elem);
+        return {{{render(inverse_expression, True)}}};
     }}
 }};
+
+static_assert(similie::physics::ConstitutiveLawConcept<{class_name}, similie::physics::detail::ElementConcept>);
 
 }} // namespace {namespace}
 """

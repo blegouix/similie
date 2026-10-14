@@ -47,6 +47,11 @@ struct ClampExtrapolationRule
     }
 };
 
+static_assert(ExtrapolationRuleConcept<
+              ClampExtrapolationRule,
+              detail::FieldConcept<ScalarIndex>,
+              ddc::DiscreteElement<detail::GridConcept>>);
+
 struct ZeroExtrapolationRule
 {
     static constexpr bool STORED_SAMPLES_ONLY = true;
@@ -75,6 +80,11 @@ struct ZeroExtrapolationRule
         });
     }
 };
+
+static_assert(ExtrapolationRuleConcept<
+              ZeroExtrapolationRule,
+              detail::FieldConcept<ScalarIndex>,
+              ddc::DiscreteElement<detail::GridConcept>>);
 
 struct PrescribedScalarExtrapolationRule
 {
@@ -111,6 +121,11 @@ struct PrescribedScalarExtrapolationRule
     }
 };
 
+static_assert(ExtrapolationRuleConcept<
+              PrescribedScalarExtrapolationRule,
+              detail::FieldConcept<ScalarIndex>,
+              ddc::DiscreteElement<detail::GridConcept>>);
+
 struct ConstantScalarExtrapolationRule
 {
     double exterior_value = 0.0;
@@ -144,6 +159,11 @@ struct ConstantScalarExtrapolationRule
         });
     }
 };
+
+static_assert(ExtrapolationRuleConcept<
+              ConstantScalarExtrapolationRule,
+              detail::FieldConcept<ScalarIndex>,
+              ddc::DiscreteElement<detail::GridConcept>>);
 
 struct NaturalScalarExtrapolationRule
 {
@@ -191,5 +211,10 @@ struct NaturalScalarExtrapolationRule
         });
     }
 };
+
+static_assert(ExtrapolationRuleConcept<
+              NaturalScalarExtrapolationRule,
+              detail::FieldConcept<ScalarIndex>,
+              ddc::DiscreteElement<detail::GridConcept>>);
 
 } // namespace sil::tensor

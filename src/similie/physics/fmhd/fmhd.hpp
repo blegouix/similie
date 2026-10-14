@@ -17,19 +17,22 @@ namespace similie::physics::fmhd {
  * Field/charge updates take one consistent current supplied by the caller.
  * \important This operator and documentation is fully AI-generated.
  */
-template <class ElectromagneticPhysics>
+template <PhysicsConcept ElectromagneticPhysics>
 class IncompressibleFMHDModel
     : public CombinePhysics<fluid::IncompressibleNavierStokes, ElectromagneticPhysics>
 {
 public:
     using Vector = std::array<double, 3>;
-    struct Variables
+    static constexpr std::size_t N = 10;
+    static constexpr bool IS_LINEAR = false;
+    struct State
     {
         Vector vorticity;
         double charge_density;
         Vector displacement;
         Vector induction;
     };
+    static_assert(PhysicsConcept<IncompressibleFMHDModel>);
     KOKKOS_FUNCTION IncompressibleFMHDModel(
             fluid::IncompressibleNavierStokes fluid_physics,
             ElectromagneticPhysics electromagnetic_physics)
@@ -38,13 +41,13 @@ public:
                   ElectromagneticPhysics>(fluid_physics, electromagnetic_physics)
     {
     }
-    KOKKOS_FUNCTION Vector current(Variables const& state, Vector const& velocity) const
+    KOKKOS_FUNCTION Vector current(State const& state, Vector const& velocity) const
     {
         return this->template get<1>()
                 .current(state.charge_density, velocity, state.displacement, state.induction);
     }
     KOKKOS_FUNCTION Vector
-    transport(Variables const& state, Vector const& velocity, Vector const& total_current) const
+    transport(State const& state, Vector const& velocity, Vector const& total_current) const
     {
         Vector result = this->template get<0>().transport(velocity, state.vorticity);
         Vector const force = this->template get<1>().lorentz_force(
@@ -56,7 +59,7 @@ public:
             result[a] += force[a] / this->template get<0>().density;
         return result;
     }
-    KOKKOS_FUNCTION Variables operator()(
+    KOKKOS_FUNCTION State operator()(
             Vector const& transport_curl,
             Vector const& vorticity_laplacian,
             double current_divergence,
@@ -64,20 +67,16 @@ public:
             Vector const& curl_electric_field,
             Vector const& total_current) const
     {
-        typename ElectromagneticPhysics::Variables const field_rate = this->template get<
+        typename ElectromagneticPhysics::State const field_rate = this->template get<
                 1>()(current_divergence, curl_magnetic_field, curl_electric_field, total_current);
-        Variables
-                result {{},
-                        field_rate.charge_density,
-                        field_rate.displacement,
-                        field_rate.induction};
+        State result {{}, field_rate.charge_density, field_rate.displacement, field_rate.induction};
         for (int a = 0; a < 3; ++a)
             result.vorticity[a]
                     = this->template get<0>()(transport_curl[a], vorticity_laplacian[a]);
         return result;
     }
     KOKKOS_FUNCTION Vector momentum_rate(
-            Variables const& state,
+            State const& state,
             Vector const& velocity,
             Vector const& bernoulli_gradient,
             Vector const& velocity_laplacian,
@@ -105,7 +104,7 @@ public:
     {
         return this->template get<0>().incompressibility(divergence);
     }
-    KOKKOS_FUNCTION double ohmic_heating(Variables const& state, Vector const& velocity) const
+    KOKKOS_FUNCTION double ohmic_heating(State const& state, Vector const& velocity) const
     {
         return this->template get<1>().ohmic_heating(velocity, state.displacement, state.induction);
     }
@@ -117,14 +116,16 @@ public:
  * internal exchange source. Fields and charge evolve explicitly through DEC.
  * \important This operator and documentation is fully AI-generated.
  */
-template <class Thermodynamics, class ElectromagneticPhysics>
+template <class Thermodynamics, PhysicsConcept ElectromagneticPhysics>
 class CompressibleFMHDModel
     : public CombinePhysics<fluid::NavierStokesFourier<Thermodynamics>, ElectromagneticPhysics>
 {
 public:
     using FluidPhysics = fluid::NavierStokesFourier<Thermodynamics>;
     using Vector = std::array<double, 3>;
-    struct ConservativeVariables
+    static constexpr std::size_t N = 12;
+    static constexpr bool IS_LINEAR = false;
+    struct State
     {
         double density;
         Vector momentum;
@@ -133,6 +134,7 @@ public:
         Vector displacement;
         Vector induction;
     };
+    static_assert(PhysicsConcept<CompressibleFMHDModel>);
     struct Flux
     {
         typename FluidPhysics::Flux conservation;
@@ -146,24 +148,22 @@ public:
                   ElectromagneticPhysics>(fluid_physics, electromagnetic_physics)
     {
     }
-    KOKKOS_FUNCTION typename FluidPhysics::ConservativeVariables fluid_state(
-            ConservativeVariables const& state) const
+    KOKKOS_FUNCTION typename FluidPhysics::State fluid_state(State const& state) const
     {
         return {state.density,
                 state.momentum,
                 state.total_energy
                         - this->template get<1>().hamiltonian(state.displacement, state.induction)};
     }
-    KOKKOS_FUNCTION typename FluidPhysics::PrimitiveVariables primitives(
-            ConservativeVariables const& state) const
+    KOKKOS_FUNCTION typename FluidPhysics::PrimitiveVariables primitives(State const& state) const
     {
         return this->template get<0>().primitives(fluid_state(state));
     }
-    KOKKOS_FUNCTION double pressure(ConservativeVariables const& state) const
+    KOKKOS_FUNCTION double pressure(State const& state) const
     {
         return this->template get<0>().pressure(fluid_state(state));
     }
-    KOKKOS_FUNCTION Vector current(ConservativeVariables const& state) const
+    KOKKOS_FUNCTION Vector current(State const& state) const
     {
         return this->template get<1>().current(
                 state.charge_density,
@@ -172,13 +172,13 @@ public:
                 state.induction);
     }
     KOKKOS_FUNCTION Flux
-    flux(ConservativeVariables const& state,
+    flux(State const& state,
          typename FluidPhysics::VelocityGradient const& velocity_gradient,
          Vector const& temperature_gradient,
          int normal) const
     {
         KOKKOS_ASSERT(normal >= 0 && normal < 3);
-        typename FluidPhysics::ConservativeVariables const hydro = fluid_state(state);
+        typename FluidPhysics::State const hydro = fluid_state(state);
         typename FluidPhysics::PrimitiveVariables const primitive
                 = this->template get<0>().primitives(hydro);
         Flux
@@ -198,16 +198,15 @@ public:
         result.conservation.total_energy += poynting[normal];
         return result;
     }
-    KOKKOS_FUNCTION ConservativeVariables operator()(
-            ConservativeVariables const& state,
+    KOKKOS_FUNCTION State operator()(
+            State const& state,
             typename FluidPhysics::Flux const& total_flux_divergence,
             double current_divergence,
             Vector const& curl_magnetic_field,
             Vector const& curl_electric_field,
             Vector const& total_current) const
     {
-        typename FluidPhysics::ConservativeVariables rate
-                = this->template get<0>()(total_flux_divergence);
+        typename FluidPhysics::State rate = this->template get<0>()(total_flux_divergence);
         Vector const force = this->template get<1>().lorentz_force(
                 state.charge_density,
                 state.displacement,
@@ -215,7 +214,7 @@ public:
                 total_current);
         for (int a = 0; a < 3; ++a)
             rate.momentum[a] += force[a];
-        typename ElectromagneticPhysics::Variables const field_rate = this->template get<
+        typename ElectromagneticPhysics::State const field_rate = this->template get<
                 1>()(current_divergence, curl_magnetic_field, curl_electric_field, total_current);
         return {rate.density,
                 rate.momentum,
@@ -224,13 +223,12 @@ public:
                 field_rate.displacement,
                 field_rate.induction};
     }
-    KOKKOS_FUNCTION double fluid_energy_source(
-            ConservativeVariables const& state,
-            Vector const& total_current) const
+    KOKKOS_FUNCTION double fluid_energy_source(State const& state, Vector const& total_current)
+            const
     {
         return this->template get<1>().fluid_energy_source(state.displacement, total_current);
     }
-    KOKKOS_FUNCTION double ohmic_heating(ConservativeVariables const& state) const
+    KOKKOS_FUNCTION double ohmic_heating(State const& state) const
     {
         return this->template get<1>()
                 .ohmic_heating(primitives(state).velocity, state.displacement, state.induction);

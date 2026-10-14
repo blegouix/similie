@@ -155,6 +155,9 @@ struct TensorSymmetricIndex
     }
 };
 
+static_assert(
+        TensorIndexConcept<TensorSymmetricIndex<TensorNaturalIndex<detail::DimensionConcept>>>);
+
 } // namespace tensor
 
 } // namespace sil

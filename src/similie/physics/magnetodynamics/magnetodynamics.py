@@ -86,13 +86,7 @@ def generate(output):
     output.parent.mkdir(parents=True, exist_ok=True)
     module.generate_cpp_hamiltonian(MagnetodynamicsHamiltonian, output)
     # The generic generator predates the annotation rule; annotate this output.
-    # REUSE-IgnoreStart
-    text = output.read_text().replace(
-        "// SPDX-License-Identifier: AGPL-3.0-or-later\n",
-        "// SPDX-License-Identifier: AGPL-3.0-or-later\n// AI-GENERATED\n",
-        1,
-    )
-    # REUSE-IgnoreEnd
+    text = output.read_text()
     text = text.replace(
         "struct MagnetodynamicsHamiltonian",
         "/** Magnetic energy density; derivatives give H_field.\n"

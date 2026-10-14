@@ -70,7 +70,7 @@ TEST(IncompressibleMHD, LorentzVorticityTransportAndResistiveInduction)
     EXPECT_DOUBLE_EQ(ideal.electric_field(u, b, j)[2], 1);
     EXPECT_DOUBLE_EQ(resistive.electric_field(u, b, j)[2], 2);
     EXPECT_DOUBLE_EQ(resistive.ohmic_heating(j), 2);
-    similie::physics::mhd::IdealIncompressibleMHD::Variables const rate
+    similie::physics::mhd::IdealIncompressibleMHD::State const rate
             = ideal({1, 2, 3}, {0, 0, 0}, {3, 2, 1});
     EXPECT_DOUBLE_EQ(rate.vorticity[1], 2);
     EXPECT_DOUBLE_EQ(rate.induction[0], -3);
@@ -83,7 +83,7 @@ TEST(CompressibleMHD, MagneticEnergyIsRemovedBeforeThermodynamics)
     similie::physics::mhd::IdealCompressibleMHD<CaloricClosure> const
             ideal(fluid, similie::physics::magnetodynamics::Magnetodynamics(1));
     // rho=1, u=(1,0,0), thermal energy=2.5, magnetic energy=2.
-    similie::physics::mhd::IdealCompressibleMHD<CaloricClosure>::ConservativeVariables const
+    similie::physics::mhd::IdealCompressibleMHD<CaloricClosure>::State const
             state {1, {1, 0, 0}, 5, {0, 2, 0}};
     EXPECT_DOUBLE_EQ(ideal.fluid_state(state).total_energy, 3);
     EXPECT_NEAR(ideal.pressure(state), 1, 1e-14);
@@ -94,7 +94,7 @@ TEST(CompressibleMHD, MagneticEnergyIsRemovedBeforeThermodynamics)
     EXPECT_NEAR(flux.conservation.total_energy, 8, 1e-14);
     EXPECT_DOUBLE_EQ(flux.electric_field[2], -2);
     EXPECT_NEAR(ideal.fast_magnetosonic_speed_squared(state, 0), 5.4, 1e-14);
-    similie::physics::mhd::IdealCompressibleMHD<CaloricClosure>::ConservativeVariables const rate
+    similie::physics::mhd::IdealCompressibleMHD<CaloricClosure>::State const rate
             = ideal({1, {2, 3, 4}, 5}, {6, 7, 8});
     EXPECT_DOUBLE_EQ(rate.total_energy, -5);
     EXPECT_DOUBLE_EQ(rate.induction[0], -6);
@@ -106,7 +106,7 @@ TEST(ResistiveCompressibleMHD, PoyntingFluxAndJouleHeatingAreNotDoubleCounted)
             fluid(CaloricClosure(), 1, 0);
     similie::physics::mhd::ResistiveCompressibleMHD<CaloricClosure> const
             resistive(fluid, similie::physics::magnetodynamics::ResistiveMagnetodynamics(1, 0.5));
-    similie::physics::mhd::ResistiveCompressibleMHD<CaloricClosure>::ConservativeVariables const
+    similie::physics::mhd::ResistiveCompressibleMHD<CaloricClosure>::State const
             state {1, {1, 0, 0}, 5, {0, 2, 0}};
     std::array<double, 3> const current {0, 0, 2};
     similie::physics::mhd::ResistiveCompressibleMHD<CaloricClosure>::Flux const flux

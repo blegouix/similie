@@ -249,12 +249,16 @@ template <class Equations>
         Equations equations,
         physics::elasticity::Strain2D strain)
 {
-    int const elem = 0;
+    typename Equations::State state {};
+    state.moments = {strain.xx, strain.xy, strain.yy};
     return {
-            .xx = equations.template dpotential_dt<physics::elasticity::StrainXX>(strain, elem),
-            .yy = equations.template dpotential_dt<physics::elasticity::StrainYY>(strain, elem),
+            .xx
+            = equations.template dpotential_dt<std::integral_constant<std::size_t, 0>>(state, 0),
+            .yy
+            = equations.template dpotential_dt<std::integral_constant<std::size_t, 2>>(state, 0),
             .xy
-            = 0.5 * equations.template dpotential_dt<physics::elasticity::StrainXY>(strain, elem),
+            = 0.5
+              * equations.template dpotential_dt<std::integral_constant<std::size_t, 1>>(state, 0),
     };
 }
 

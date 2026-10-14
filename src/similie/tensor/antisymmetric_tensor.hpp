@@ -205,6 +205,9 @@ public:
     }
 };
 
+static_assert(
+        TensorIndexConcept<TensorAntisymmetricIndex<TensorNaturalIndex<detail::DimensionConcept>>>);
+
 namespace detail {
 
 template <class T>

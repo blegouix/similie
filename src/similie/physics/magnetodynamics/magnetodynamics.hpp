@@ -5,7 +5,7 @@
 #pragma once
 
 #include <array>
-#include <span>
+#include <type_traits>
 
 #include <similie/physics/magnetodynamics/magnetodynamics_hamiltonian.hpp>
 
@@ -20,14 +20,17 @@ namespace similie::physics::magnetodynamics {
  */
 class Magnetodynamics
 {
-    struct Component
-    {
-    };
     MagnetodynamicsHamiltonian const m_hamiltonian;
 
 public:
     using Vector = std::array<double, 3>;
     using Tensor = std::array<std::array<double, 3>, 3>;
+    static constexpr std::size_t N = 3;
+    static constexpr bool IS_LINEAR = true;
+    struct State
+    {
+        Vector induction {};
+    };
     double const permeability;
     KOKKOS_FUNCTION explicit Magnetodynamics(double magnetic_permeability)
         : m_hamiltonian(magnetic_permeability)
@@ -53,7 +56,8 @@ public:
     }
     KOKKOS_FUNCTION double hamiltonian(Vector const& induction) const
     {
-        return m_hamiltonian.hamiltonian(0.0, std::span<double const, 3>(induction));
+        MagnetodynamicsHamiltonian::State const state {{0.0}, induction};
+        return m_hamiltonian.hamiltonian(state, 0);
     }
     KOKKOS_FUNCTION double magnetic_energy(Vector const& induction) const
     {
@@ -61,10 +65,13 @@ public:
     }
     KOKKOS_FUNCTION Vector magnetic_field(Vector const& induction) const
     {
-        Vector result {};
-        for (int a = 0; a < 3; ++a)
-            result[a] = m_hamiltonian.template dhamiltonian_dmoments<Component>(induction[a]);
-        return result;
+        MagnetodynamicsHamiltonian::State const state {{0.0}, induction};
+        return {m_hamiltonian.template dhamiltonian_dmoments<
+                        std::integral_constant<std::size_t, 0>>(state, 0),
+                m_hamiltonian.template dhamiltonian_dmoments<
+                        std::integral_constant<std::size_t, 1>>(state, 0),
+                m_hamiltonian.template dhamiltonian_dmoments<
+                        std::integral_constant<std::size_t, 2>>(state, 0)};
     }
     KOKKOS_FUNCTION Vector operator()(Vector const& curl_electric_field) const
     {
@@ -114,4 +121,6 @@ public:
         return 0;
     }
 };
+
+static_assert(PhysicsConcept<Magnetodynamics>);
 } // namespace similie::physics::magnetodynamics

@@ -48,4 +48,6 @@ public:
         return 1 / (resistivity * permittivity);
     }
 };
+
+static_assert(PhysicsConcept<ResistiveElectrodynamics>);
 } // namespace similie::physics::electrodynamics

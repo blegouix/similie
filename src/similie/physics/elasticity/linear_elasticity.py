@@ -27,10 +27,6 @@ def _strain_indices(dimension: int) -> list[tuple[int, int]]:
     return [(i, j) for i in range(dimension) for j in range(i, dimension)]
 
 
-def _strain_component_index(index: tuple[int, int]) -> str:
-    return f"StrainTensorIndex<{index[0]}, {index[1]}>"
-
-
 class LinearElasticityHamiltonian:
     @staticmethod
     def __call__(dimension: int) -> HamiltonianDefinition:
@@ -74,10 +70,6 @@ class LinearElasticityHamiltonian:
             variables=[displacement, strain, body_force],
             includes=["<similie/physics/elasticity/elasticity_quantities.hpp>"],
             template_parameters=["class... SpatialIndex"],
-            moments_object_component_expression="moments.template get<{index}>()",
-            component_indices=[
-                _strain_component_index(strain_index) for strain_index in strain_indices
-            ],
             is_linear=True,
         )
 

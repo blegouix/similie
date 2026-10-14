@@ -84,13 +84,7 @@ def generate(output):
     spec.loader.exec_module(module)
     output = Path(output)
     module.generate_cpp_hamiltonian(ElectrodynamicsHamiltonian, output)
-    # REUSE-IgnoreStart
-    text = output.read_text().replace(
-        "// SPDX-License-Identifier: AGPL-3.0-or-later\n",
-        "// SPDX-License-Identifier: AGPL-3.0-or-later\n// AI-GENERATED\n",
-        1,
-    )
-    # REUSE-IgnoreEnd
+    text = output.read_text()
     text = text.replace(
         "struct ElectrodynamicsHamiltonian",
         "/** Electric energy density; the charge-constrained field uses Gauss's law.\n"

@@ -19,6 +19,7 @@
 #include <similie/tensor/metric.hpp>
 
 #include "coboundary.hpp"
+#include "concepts.hpp"
 #include "reduction_and_reconstruction.hpp"
 #include "volume.hpp"
 
@@ -381,6 +382,21 @@ struct DiscreteHodgeStar
     }
 };
 
+static_assert(DiscreteHodgeStarConcept<
+              DiscreteHodgeStar<
+                      CellComplex::Primal,
+                      ddc::TypeSeq<detail::DirectionConcept>,
+                      ddc::TypeSeq<>,
+                      detail::FieldConcept<detail::MetricIndexConcept>,
+                      detail::FieldConcept<detail::PositionIndexConcept>,
+                      ddc::DiscreteElement<detail::GridConcept>>,
+              detail::FieldConcept<detail::ScalarConcept>,
+              detail::FieldConcept<detail::DirectionConcept>,
+              detail::FieldConcept<detail::MetricIndexConcept>,
+              detail::FieldConcept<detail::PositionIndexConcept>,
+              ddc::DiscreteElement<detail::GridConcept>,
+              ddc::DiscreteElement<detail::DirectionConcept>>);
+
 template <
         misc::Specialization<ddc::TypeSeq> Indices1,
         misc::Specialization<ddc::TypeSeq> Indices2,
@@ -471,6 +487,18 @@ struct ContinuousHodgeStar
                / misc::factorial(K);
     }
 };
+
+static_assert(ContinuousHodgeStarConcept<
+              ContinuousHodgeStar<
+                      ddc::TypeSeq<detail::DirectionConcept>,
+                      ddc::TypeSeq<>,
+                      detail::FieldConcept<detail::MetricIndexConcept>,
+                      ddc::DiscreteElement<detail::GridConcept>>,
+              detail::FieldConcept<detail::ScalarConcept>,
+              detail::FieldConcept<detail::DirectionConcept>,
+              detail::FieldConcept<detail::MetricIndexConcept>,
+              ddc::DiscreteElement<detail::GridConcept>,
+              ddc::DiscreteElement<detail::DirectionConcept>>);
 
 template <
         misc::Specialization<ddc::TypeSeq> Indices1,

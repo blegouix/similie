@@ -58,4 +58,6 @@ public:
         return 1 / (resistivity * get<0>().permittivity);
     }
 };
+
+static_assert(PhysicsConcept<ResistiveElectromagnetism>);
 } // namespace similie::physics::electromagnetism

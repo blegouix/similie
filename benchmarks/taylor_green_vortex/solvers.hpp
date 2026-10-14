@@ -75,9 +75,8 @@ public:
                     m_dec.cells,
                     KOKKOS_LAMBDA(int i) {
                         int const j = StructuredGrid::neighbor(i, axis, 1, n);
-                        CompressiblePhysics::ConservativeVariables const left
-                                = Reference::state(state, i),
-                                right = Reference::state(state, j);
+                        CompressiblePhysics::State const left = Reference::state(state, i),
+                                                         right = Reference::state(state, j);
                         double const pl = physics.pressure(left), pr = physics.pressure(right);
                         double const ul = primitive(axis + 1, i), ur = primitive(axis + 1, j);
                         double const mass_flux
@@ -122,7 +121,7 @@ public:
                     "navier_stokes_conservation_laws",
                     m_dec.cells,
                     KOKKOS_LAMBDA(int i) {
-                        CompressiblePhysics::ConservativeVariables const rate = physics(
+                        CompressiblePhysics::State const rate = physics(
                                 {divergence(0, i),
                                  {divergence(1, i), divergence(2, i), divergence(3, i)},
                                  divergence(4, i)});

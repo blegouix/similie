@@ -19,7 +19,7 @@ namespace similie::physics::mhd {
  * Poynting flux and must not receive this exchange a second time.
  * \important This operator and documentation is fully AI-generated.
  */
-template <class MagneticPhysics>
+template <PhysicsConcept MagneticPhysics>
 KOKKOS_FUNCTION double fluid_energy_source(
         MagneticPhysics const& magnetic,
         std::array<double, 3> const& velocity,
@@ -35,17 +35,20 @@ KOKKOS_FUNCTION double fluid_energy_source(
  * and evaluates J=curl(H) with the native exterior module.
  * \important This operator and documentation is fully AI-generated.
  */
-template <class MagneticPhysics>
+template <PhysicsConcept MagneticPhysics>
 class IncompressibleMHDModel
     : public CombinePhysics<fluid::IncompressibleNavierStokes, MagneticPhysics>
 {
 public:
     using Vector = std::array<double, 3>;
-    struct Variables
+    static constexpr std::size_t N = 6;
+    static constexpr bool IS_LINEAR = false;
+    struct State
     {
         Vector vorticity;
         Vector induction;
     };
+    static_assert(PhysicsConcept<IncompressibleMHDModel>);
     KOKKOS_FUNCTION IncompressibleMHDModel(
             fluid::IncompressibleNavierStokes fluid_physics,
             MagneticPhysics magnetic_physics)
@@ -71,12 +74,12 @@ public:
     {
         return this->template get<1>().ohm_electric_field(velocity, induction, current);
     }
-    KOKKOS_FUNCTION Variables operator()(
+    KOKKOS_FUNCTION State operator()(
             Vector const& transport_curl,
             Vector const& vorticity_laplacian,
             Vector const& curl_electric_field) const
     {
-        Variables result {{}, this->template get<1>().induction_rate(curl_electric_field)};
+        State result {{}, this->template get<1>().induction_rate(curl_electric_field)};
         for (int a = 0; a < 3; ++a)
             result.vorticity[a]
                     = this->template get<0>()(transport_curl[a], vorticity_laplacian[a]);
@@ -121,20 +124,23 @@ public:
  * curl supplies induction evolution. No optimizer and no fluid Hamiltonian.
  * \important This operator and documentation is fully AI-generated.
  */
-template <class Thermodynamics, class MagneticPhysics>
+template <class Thermodynamics, PhysicsConcept MagneticPhysics>
 class CompressibleMHDModel
     : public CombinePhysics<fluid::NavierStokesFourier<Thermodynamics>, MagneticPhysics>
 {
 public:
     using FluidPhysics = fluid::NavierStokesFourier<Thermodynamics>;
     using Vector = std::array<double, 3>;
-    struct ConservativeVariables
+    static constexpr std::size_t N = 8;
+    static constexpr bool IS_LINEAR = false;
+    struct State
     {
         double density;
         Vector momentum;
         double total_energy;
         Vector induction;
     };
+    static_assert(PhysicsConcept<CompressibleMHDModel>);
     struct Flux
     {
         typename FluidPhysics::Flux conservation;
@@ -146,37 +152,34 @@ public:
         : CombinePhysics<FluidPhysics, MagneticPhysics>(fluid_physics, magnetic_physics)
     {
     }
-    KOKKOS_FUNCTION typename FluidPhysics::ConservativeVariables fluid_state(
-            ConservativeVariables const& state) const
+    KOKKOS_FUNCTION typename FluidPhysics::State fluid_state(State const& state) const
     {
         return {state.density,
                 state.momentum,
                 state.total_energy - this->template get<1>().magnetic_energy(state.induction)};
     }
-    KOKKOS_FUNCTION typename FluidPhysics::PrimitiveVariables primitives(
-            ConservativeVariables const& state) const
+    KOKKOS_FUNCTION typename FluidPhysics::PrimitiveVariables primitives(State const& state) const
     {
         return this->template get<0>().primitives(fluid_state(state));
     }
-    KOKKOS_FUNCTION double pressure(ConservativeVariables const& state) const
+    KOKKOS_FUNCTION double pressure(State const& state) const
     {
         return this->template get<0>().pressure(fluid_state(state));
     }
-    KOKKOS_FUNCTION Vector
-    electric_field(ConservativeVariables const& state, Vector const& current) const
+    KOKKOS_FUNCTION Vector electric_field(State const& state, Vector const& current) const
     {
         return this->template get<1>()
                 .ohm_electric_field(primitives(state).velocity, state.induction, current);
     }
     KOKKOS_FUNCTION Flux
-    flux(ConservativeVariables const& state,
+    flux(State const& state,
          typename FluidPhysics::VelocityGradient const& velocity_gradient,
          Vector const& temperature_gradient,
          Vector const& current,
          int normal) const
     {
         KOKKOS_ASSERT(normal >= 0 && normal < 3);
-        typename FluidPhysics::ConservativeVariables const hydrodynamic = fluid_state(state);
+        typename FluidPhysics::State const hydrodynamic = fluid_state(state);
         typename FluidPhysics::PrimitiveVariables const primitive
                 = this->template get<0>().primitives(hydrodynamic);
         Vector const electric
@@ -198,12 +201,11 @@ public:
         result.conservation.total_energy += poynting[normal];
         return result;
     }
-    KOKKOS_FUNCTION ConservativeVariables operator()(
+    KOKKOS_FUNCTION State operator()(
             typename FluidPhysics::Flux const& total_flux_divergence,
             Vector const& curl_electric_field) const
     {
-        typename FluidPhysics::ConservativeVariables const rate
-                = this->template get<0>()(total_flux_divergence);
+        typename FluidPhysics::State const rate = this->template get<0>()(total_flux_divergence);
         return {rate.density,
                 rate.momentum,
                 rate.total_energy,
@@ -213,9 +215,7 @@ public:
     {
         return this->template get<1>().ohmic_heating(current);
     }
-    KOKKOS_FUNCTION double fast_magnetosonic_speed_squared(
-            ConservativeVariables const& state,
-            int normal) const
+    KOKKOS_FUNCTION double fast_magnetosonic_speed_squared(State const& state, int normal) const
     {
         KOKKOS_ASSERT(normal >= 0 && normal < 3);
         double const sound = this->template get<0>().sound_speed_squared(fluid_state(state));

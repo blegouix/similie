@@ -97,6 +97,9 @@ struct TensorIdentityIndex
     }
 };
 
+static_assert(
+        TensorIndexConcept<TensorIdentityIndex<TensorNaturalIndex<detail::DimensionConcept>>>);
+
 } // namespace tensor
 
 } // namespace sil

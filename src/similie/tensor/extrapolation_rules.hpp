@@ -15,6 +15,7 @@
 #include <similie/misc/type_seq_conversion.hpp>
 
 #include "extrapolation_basis.hpp"
+#include "scalar_extrapolation_rules.hpp"
 
 namespace sil::tensor {
 
@@ -250,6 +251,11 @@ private:
         return result;
     }
 };
+
+static_assert(ExtrapolationRulesConcept<
+              ExtrapolationRules<std::pair<ClampExtrapolationRule, ClampExtrapolationRule>>,
+              detail::FieldConcept<ScalarIndex>,
+              ddc::DiscreteElement<detail::GridConcept>>);
 
 template <class LeftRule, class RightRule, misc::Specialization<std::pair>... OtherRulePairs>
 ExtrapolationRules(std::pair<LeftRule, RightRule>, OtherRulePairs...)

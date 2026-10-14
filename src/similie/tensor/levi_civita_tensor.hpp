@@ -108,6 +108,9 @@ struct TensorLeviCivitaIndex
     }
 };
 
+static_assert(
+        TensorIndexConcept<TensorLeviCivitaIndex<TensorNaturalIndex<detail::DimensionConcept>>>);
+
 } // namespace tensor
 
 } // namespace sil

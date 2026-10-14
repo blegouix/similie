@@ -42,4 +42,6 @@ public:
         return resistivity / permeability;
     }
 };
+
+static_assert(PhysicsConcept<ResistiveMagnetodynamics>);
 } // namespace similie::physics::magnetodynamics

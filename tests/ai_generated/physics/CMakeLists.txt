@@ -4,12 +4,6 @@
 
 if(BUILD_TESTING)
     include(GoogleTest)
-    add_test(NAME PhysicsAPI.SpatialHamiltonianGenerator
-        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_CURRENT_SOURCE_DIR}/generator.py"
-                "${CMAKE_C_COMPILER}")
-    add_executable(unit_tests_physics_api equations.cpp ../../main.cpp)
-    target_link_libraries(unit_tests_physics_api PRIVATE GTest::gtest sil::sil)
-    gtest_discover_tests(unit_tests_physics_api DISCOVERY_MODE PRE_TEST)
     add_executable(unit_tests_fmhd fmhd.cpp ../../main.cpp)
     target_link_libraries(unit_tests_fmhd PRIVATE GTest::gtest sil::sil)
     gtest_discover_tests(unit_tests_fmhd DISCOVERY_MODE PRE_TEST)
@@ -29,4 +23,14 @@ if(SIMILIE_BUILD_ONELAB_INTERFACE)
     add_executable(unit_tests_elasticity elasticity.cpp ../../main.cpp)
     target_link_libraries(unit_tests_elasticity PRIVATE GTest::gtest similie_onelab_interface)
     gtest_discover_tests(unit_tests_elasticity DISCOVERY_MODE PRE_TEST)
+endif()
+
+if(BUILD_TESTING)
+    include(GoogleTest)
+    add_executable(unit_tests_physics_api equations.cpp ../../main.cpp)
+    target_link_libraries(unit_tests_physics_api PRIVATE GTest::gtest sil::sil physics)
+    gtest_discover_tests(unit_tests_physics_api DISCOVERY_MODE PRE_TEST)
+    add_test(NAME PhysicsAPI.SpatialHamiltonianGenerator
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_CURRENT_SOURCE_DIR}/generator.py"
+                "${CMAKE_CXX_COMPILER}")
 endif()

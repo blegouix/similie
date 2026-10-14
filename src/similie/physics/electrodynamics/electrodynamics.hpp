@@ -5,7 +5,7 @@
 #pragma once
 
 #include <array>
-#include <span>
+#include <type_traits>
 
 #include <similie/physics/electrodynamics/electrodynamics_hamiltonian.hpp>
 
@@ -20,13 +20,17 @@ namespace similie::physics::electrodynamics {
  */
 class Electrodynamics
 {
-    struct Component
-    {
-    };
     ElectrodynamicsHamiltonian const m_hamiltonian;
 
 public:
     using Vector = std::array<double, 3>;
+    static constexpr std::size_t N = 4;
+    static constexpr bool IS_LINEAR = true;
+    struct State
+    {
+        double charge_density {};
+        Vector displacement {};
+    };
     double const permittivity;
     KOKKOS_FUNCTION explicit Electrodynamics(double electric_permittivity)
         : m_hamiltonian(electric_permittivity)
@@ -43,14 +47,18 @@ public:
     }
     KOKKOS_FUNCTION double hamiltonian(Vector const& displacement) const
     {
-        return m_hamiltonian.hamiltonian(0.0, std::span<double const, 3>(displacement));
+        ElectrodynamicsHamiltonian::State const state {{0.0}, displacement};
+        return m_hamiltonian.hamiltonian(state, 0);
     }
     KOKKOS_FUNCTION Vector electric_field(Vector const& displacement) const
     {
-        Vector result {};
-        for (int a = 0; a < 3; ++a)
-            result[a] = m_hamiltonian.template dhamiltonian_dmoments<Component>(displacement[a]);
-        return result;
+        ElectrodynamicsHamiltonian::State const state {{0.0}, displacement};
+        return {m_hamiltonian.template dhamiltonian_dmoments<
+                        std::integral_constant<std::size_t, 0>>(state, 0),
+                m_hamiltonian.template dhamiltonian_dmoments<
+                        std::integral_constant<std::size_t, 1>>(state, 0),
+                m_hamiltonian.template dhamiltonian_dmoments<
+                        std::integral_constant<std::size_t, 2>>(state, 0)};
     }
     KOKKOS_FUNCTION Vector field_from_potential_gradient(Vector const& potential_gradient) const
     {
@@ -111,4 +119,6 @@ public:
         return displacement_divergence - charge_density;
     }
 };
+
+static_assert(PhysicsConcept<Electrodynamics>);
 } // namespace similie::physics::electrodynamics

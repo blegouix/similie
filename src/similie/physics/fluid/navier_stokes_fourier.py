@@ -286,6 +286,7 @@ _CPP_HEADER = """// SPDX-FileCopyrightText: 2026 Baptiste Legouix
 #include <array>
 #include <cmath>
 #include <Kokkos_Core.hpp>
+#include <similie/physics/concepts.hpp>
 namespace similie::physics::fluid {{
 /** Explicit mass, momentum, and energy conservation with Newtonian/Fourier fluxes.
  * dt rho=-div(rho u), dt(rho u)=-div(rho u tensor u+p I-tau),
@@ -297,7 +298,10 @@ namespace similie::physics::fluid {{
 template<class Thermodynamics>
 class NavierStokesFourier {{
 public:
-    struct ConservativeVariables {{ double density; std::array<double,3> momentum; double total_energy; }};
+    static constexpr std::size_t N = 5;
+    static constexpr bool IS_LINEAR = false;
+    struct State {{ double density; std::array<double,3> momentum; double total_energy; }};
+    static_assert(PhysicsConcept<NavierStokesFourier>);
     struct PrimitiveVariables {{ double density; std::array<double,3> velocity; double pressure; double temperature; }};
     struct Flux {{ double mass; std::array<double,3> momentum; double total_energy; }};
     using VelocityGradient=std::array<std::array<double,3>,3>;
@@ -306,26 +310,26 @@ public:
     KOKKOS_FUNCTION explicit NavierStokesFourier(Thermodynamics closure, double prandtl_number,
             double dynamic_viscosity)
         : thermodynamics(closure), prandtl(prandtl_number), viscosity(dynamic_viscosity) {{}}
-    KOKKOS_FUNCTION double specific_internal_energy(ConservativeVariables const& state) const
+    KOKKOS_FUNCTION double specific_internal_energy(State const& state) const
     {{ return {energy}; }}
-    KOKKOS_FUNCTION double pressure(ConservativeVariables const& state) const
+    KOKKOS_FUNCTION double pressure(State const& state) const
     {{ return thermodynamics.pressure(state.density,specific_internal_energy(state)); }}
-    KOKKOS_FUNCTION PrimitiveVariables primitives(ConservativeVariables const& state) const
+    KOKKOS_FUNCTION PrimitiveVariables primitives(State const& state) const
     {{
         double const e=specific_internal_energy(state);
         PrimitiveVariables result{{state.density,{{}},thermodynamics.pressure(state.density,e),thermodynamics.temperature(state.density,e)}};
         for(int a=0;a<3;++a) result.velocity[a]=state.momentum[a]/state.density;
         return result;
     }}
-    KOKKOS_FUNCTION double heat_capacity_at_constant_volume(ConservativeVariables const& state) const
+    KOKKOS_FUNCTION double heat_capacity_at_constant_volume(State const& state) const
     {{ return thermodynamics.heat_capacity_at_constant_volume(state.density,specific_internal_energy(state)); }}
-    KOKKOS_FUNCTION double heat_capacity_at_constant_pressure(ConservativeVariables const& state) const
+    KOKKOS_FUNCTION double heat_capacity_at_constant_pressure(State const& state) const
     {{ return thermodynamics.heat_capacity_at_constant_pressure(state.density,specific_internal_energy(state)); }}
-    KOKKOS_FUNCTION double sound_speed_squared(ConservativeVariables const& state) const
+    KOKKOS_FUNCTION double sound_speed_squared(State const& state) const
     {{ return thermodynamics.sound_speed_squared(state.density,specific_internal_energy(state)); }}
-    KOKKOS_FUNCTION double conductivity(ConservativeVariables const& state) const
+    KOKKOS_FUNCTION double conductivity(State const& state) const
     {{ return viscosity*heat_capacity_at_constant_pressure(state)/prandtl; }}
-    KOKKOS_FUNCTION std::array<double,3> temperature_gradient(ConservativeVariables const& state,
+    KOKKOS_FUNCTION std::array<double,3> temperature_gradient(State const& state,
             std::array<double,3> const& density_gradient, std::array<double,3> const& energy_gradient) const
     {{
         double const e=specific_internal_energy(state);
@@ -341,7 +345,7 @@ public:
 {stress}
         return result;
     }}
-    KOKKOS_FUNCTION std::array<double,3> heat_flux(ConservativeVariables const& state,
+    KOKKOS_FUNCTION std::array<double,3> heat_flux(State const& state,
             std::array<double,3> const& temperature_gradient) const
     {{
         double const kappa=conductivity(state);
@@ -349,7 +353,7 @@ public:
         for(int a=0;a<3;++a) result[a]=-kappa*temperature_gradient[a];
         return result;
     }}
-    KOKKOS_FUNCTION Flux flux(ConservativeVariables const& state, PrimitiveVariables const& primitive,
+    KOKKOS_FUNCTION Flux flux(State const& state, PrimitiveVariables const& primitive,
             VelocityGradient const& velocity_gradient, std::array<double,3> const& temperature_gradient,
             int normal) const
     {{
@@ -359,7 +363,7 @@ public:
 {flux}
         return result;
     }}
-    KOKKOS_FUNCTION ConservativeVariables operator()(Flux const& divergence) const
+    KOKKOS_FUNCTION State operator()(Flux const& divergence) const
     {{
         return {{-divergence.mass,{{-divergence.momentum[0],-divergence.momentum[1],-divergence.momentum[2]}},-divergence.total_energy}};
     }}

@@ -28,7 +28,7 @@ struct Reference
     {
         return model().conductivity({1, {}, reference_pressure / (gamma - 1)});
     }
-    KOKKOS_FUNCTION static CompressiblePhysics::ConservativeVariables state(Field field, int i)
+    KOKKOS_FUNCTION static CompressiblePhysics::State state(Field field, int i)
     {
         return {field(0, i), {field(1, i), field(2, i), field(3, i)}, field(4, i)};
     }

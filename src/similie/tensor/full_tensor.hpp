@@ -108,6 +108,8 @@ struct TensorFullIndex
     }
 };
 
+static_assert(TensorIndexConcept<TensorFullIndex<TensorNaturalIndex<detail::DimensionConcept>>>);
+
 } // namespace tensor
 
 } // namespace sil
