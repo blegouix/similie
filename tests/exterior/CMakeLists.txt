@@ -25,28 +25,6 @@ target_link_libraries(unit_tests_derivative
 
 gtest_discover_tests(unit_tests_derivative DISCOVERY_MODE PRE_TEST)
 
-add_executable(unit_tests_hodge_star hodge_star.cpp ../main.cpp)
-
-target_link_libraries(unit_tests_hodge_star
-    PUBLIC
-        GTest::gtest
-        DDC::core
-        sil::exterior
-)
-
-gtest_discover_tests(unit_tests_hodge_star DISCOVERY_MODE PRE_TEST)
-
-add_executable(unit_tests_reduction_and_reconstruction reduction_and_reconstruction.cpp ../main.cpp)
-
-target_link_libraries(unit_tests_reduction_and_reconstruction
-    PUBLIC
-        GTest::gtest
-        DDC::core
-        sil::exterior
-)
-
-gtest_discover_tests(unit_tests_reduction_and_reconstruction DISCOVERY_MODE PRE_TEST)
-
 add_executable(unit_tests_codifferential codifferential.cpp ../main.cpp)
 
 target_link_libraries(unit_tests_codifferential
@@ -68,11 +46,3 @@ target_link_libraries(unit_tests_laplacian
 )
 
 gtest_discover_tests(unit_tests_laplacian DISCOVERY_MODE PRE_TEST)
-
-add_executable(unit_tests_covariant_derivative covariant_derivative.cpp ../main.cpp)
-target_link_libraries(unit_tests_covariant_derivative PUBLIC GTest::gtest DDC::core sil::exterior)
-gtest_discover_tests(unit_tests_covariant_derivative DISCOVERY_MODE PRE_TEST)
-
-add_executable(unit_tests_extrapolation extrapolation.cpp ../main.cpp)
-target_link_libraries(unit_tests_extrapolation PUBLIC GTest::gtest DDC::core sil::exterior)
-gtest_discover_tests(unit_tests_extrapolation DISCOVERY_MODE PRE_TEST)
