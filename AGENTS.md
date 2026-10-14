@@ -27,6 +27,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 ## Coding
 - `clang-format` is used to format C++, `ruff format` is used to format python.
+- Few key classes has to follow a very strict pattern which is described in API.md.
 - Avoid introducing unecessary constexpr aliases (like, using the `using` keyword for type aliases of `constexpr` for variables aliases). It can be used but not just for readability purpose, except if explicity asked. In general, if such an alias is used only once it should not be declared and inlined.
 - Whenever possible, avoid using `auto`, `decltype`, etc...
 - Try to mimic the coding style of human-made code in the project as much as possible.
@@ -35,7 +36,8 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 - Never merge by yourself, let human review.
 
 ## Documenting
-- Documentation has to describe the theory behind the exposed operators, and key software architecture and API details. It has to be quite didactic.
+- Documentation has to describe the theory behind the exposed operators, and key software architecture and API details.
+- Documentation is made for humans, not for AI. It has to be quite didactic. It has to be written in the style of existing human-readable documentation, and should not assume an extremely high technical level from the reader.
 - Avoid making changes to existing doc except if explicitely asked for.
 - Any fully AI-generated operator doc has to be annotated with `\important This documentation is fully AI-generated.`. If the operator is also AI-generated, `\important This operator and documentation is fully AI-generated.`.
 
