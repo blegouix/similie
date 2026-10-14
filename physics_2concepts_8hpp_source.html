@@ -212,133 +212,147 @@ $(function(){initNavTree('physics_2concepts_8hpp_source.html',''); initResizable
 <div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>    }</div>
 <div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>};</div>
 <div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span> </div>
-<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>} <span class="comment">// namespace detail</span></div>
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span> </div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span><span class="comment">// Every Hamiltonian has the same arguments; quantities belong to its State.</span></div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Hamiltonian, <span class="keyword">class</span> Element&gt;</div>
-<div class="foldopen" id="foldopen00088" data-start="{" data-end="}">
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno"><a class="line" href="conceptsimilie_1_1physics_1_1HamiltonianConcept.html">   88</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsimilie_1_1physics_1_1HamiltonianConcept.html">HamiltonianConcept</a> = <span class="keyword">requires</span>(</div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>        Hamiltonian <span class="keyword">const</span>&amp; h,</div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>        <span class="keyword">typename</span> Hamiltonian::State <span class="keyword">const</span>&amp; state,</div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>        Element element) {</div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>    <span class="keyword">requires</span> std::same_as&lt;std::remove_cv_t&lt;<span class="keyword">decltype</span>(Hamiltonian::N)&gt;, std::size_t&gt;;</div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>    <span class="keyword">requires</span> std::same_as&lt;std::remove_cv_t&lt;<span class="keyword">decltype</span>(Hamiltonian::IS_LINEAR)&gt;, <span class="keywordtype">bool</span>&gt;;</div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>    <span class="keyword">typename</span> std::integral_constant&lt;std::size_t, Hamiltonian::N&gt;;</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>    <span class="keyword">typename</span> std::bool_constant&lt;Hamiltonian::IS_LINEAR&gt;;</div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>    { h.hamiltonian(state, element) } -&gt; std::same_as&lt;double&gt;;</div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>    {</div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>        h.template dhamiltonian_dmoments&lt;std::integral_constant&lt;std::size_t, 0&gt;&gt;(state, element)</div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>    } -&gt; std::same_as&lt;double&gt;;</div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>    {</div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>        h.template dhamiltonian_dpotential&lt;std::integral_constant&lt;std::size_t, 0&gt;&gt;(state, element)</div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>    } -&gt; std::same_as&lt;double&gt;;</div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>    {</div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>        h.template jacobian&lt;</div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>                std::integral_constant&lt;std::size_t, 0&gt;,</div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>                std::integral_constant&lt;std::size_t, 0&gt;&gt;(state, element)</div>
-<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>    } -&gt; std::same_as&lt;double&gt;;</div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>};</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span><span class="comment">// Namespace-level concepts avoid nvcc rejecting dependent member-template calls</span></div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span><span class="comment">// in requires-expressions declared inside a class template.</span></div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Hamiltonian, <span class="keyword">class</span> Index, <span class="keyword">class</span> Element&gt;</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span><span class="keyword">concept </span>HasMomentCoefficient = <span class="keyword">requires</span>(</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>        Hamiltonian <span class="keyword">const</span>&amp; h,</div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>        <span class="keyword">typename</span> Hamiltonian::State <span class="keyword">const</span>&amp; state,</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>        Element element) { h.template dhamiltonian_dmoments_value&lt;Index&gt;(state, element); };</div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span> </div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Hamiltonian, <span class="keyword">class</span> Index, <span class="keyword">class</span> Element&gt;</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span><span class="keyword">concept </span>HasPotentialCoefficient = <span class="keyword">requires</span>(</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>        Hamiltonian <span class="keyword">const</span>&amp; h,</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>        <span class="keyword">typename</span> Hamiltonian::State <span class="keyword">const</span>&amp; state,</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>        Element element) { h.template dhamiltonian_dpotential_value&lt;Index&gt;(state, element); };</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span> </div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>} <span class="comment">// namespace detail</span></div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span> </div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span><span class="comment">// Every Hamiltonian has the same arguments; quantities belong to its State.</span></div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Hamiltonian, <span class="keyword">class</span> Element&gt;</div>
+<div class="foldopen" id="foldopen00102" data-start="{" data-end="}">
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno"><a class="line" href="conceptsimilie_1_1physics_1_1HamiltonianConcept.html">  102</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsimilie_1_1physics_1_1HamiltonianConcept.html">HamiltonianConcept</a> = <span class="keyword">requires</span>(</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>        Hamiltonian <span class="keyword">const</span>&amp; h,</div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>        <span class="keyword">typename</span> Hamiltonian::State <span class="keyword">const</span>&amp; state,</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>        Element element) {</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>    <span class="keyword">requires</span> std::same_as&lt;std::remove_cv_t&lt;<span class="keyword">decltype</span>(Hamiltonian::N)&gt;, std::size_t&gt;;</div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>    <span class="keyword">requires</span> std::same_as&lt;std::remove_cv_t&lt;<span class="keyword">decltype</span>(Hamiltonian::IS_LINEAR)&gt;, <span class="keywordtype">bool</span>&gt;;</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>    <span class="keyword">typename</span> std::integral_constant&lt;std::size_t, Hamiltonian::N&gt;;</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>    <span class="keyword">typename</span> std::bool_constant&lt;Hamiltonian::IS_LINEAR&gt;;</div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>    { h.hamiltonian(state, element) } -&gt; std::same_as&lt;double&gt;;</div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>    {</div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>        h.template dhamiltonian_dmoments&lt;std::integral_constant&lt;std::size_t, 0&gt;&gt;(state, element)</div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>    } -&gt; std::same_as&lt;double&gt;;</div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>    {</div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>        h.template dhamiltonian_dpotential&lt;std::integral_constant&lt;std::size_t, 0&gt;&gt;(state, element)</div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>    } -&gt; std::same_as&lt;double&gt;;</div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>    {</div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>        h.template jacobian&lt;</div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>                std::integral_constant&lt;std::size_t, 0&gt;,</div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>                std::integral_constant&lt;std::size_t, 0&gt;&gt;(state, element)</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>    } -&gt; std::same_as&lt;double&gt;;</div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>};</div>
 </div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span> </div>
-<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Hamiltonian, <span class="keyword">class</span> Element&gt;</div>
-<div class="foldopen" id="foldopen00111" data-start="{" data-end="}">
-<div class="line"><a id="l00111" name="l00111"></a><span class="lineno"><a class="line" href="conceptsimilie_1_1physics_1_1NonlocalHamiltonianConcept.html">  111</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsimilie_1_1physics_1_1NonlocalHamiltonianConcept.html">NonlocalHamiltonianConcept</a></div>
-<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>        = <a class="code hl_concept" href="conceptsimilie_1_1physics_1_1HamiltonianConcept.html">HamiltonianConcept&lt;Hamiltonian, Element&gt;</a></div>
-<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>          &amp;&amp; <span class="keyword">requires</span>(</div>
-<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>                  Hamiltonian <span class="keyword">const</span>&amp; h,</div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>                  <span class="keyword">typename</span> Hamiltonian::State <span class="keyword">const</span>&amp; state,</div>
-<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>                  Element element) {</div>
-<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>                 h.template dhamiltonian_dmoments_value&lt;</div>
-<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>                         std::integral_constant&lt;std::size_t, 0&gt;&gt;(state, element);</div>
-<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>             };</div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span> </div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Hamiltonian, <span class="keyword">class</span> Element&gt;</div>
+<div class="foldopen" id="foldopen00125" data-start="{" data-end="}">
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno"><a class="line" href="conceptsimilie_1_1physics_1_1NonlocalHamiltonianConcept.html">  125</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsimilie_1_1physics_1_1NonlocalHamiltonianConcept.html">NonlocalHamiltonianConcept</a></div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>        = <a class="code hl_concept" href="conceptsimilie_1_1physics_1_1HamiltonianConcept.html">HamiltonianConcept&lt;Hamiltonian, Element&gt;</a></div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>          &amp;&amp; <span class="keyword">requires</span>(</div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>                  Hamiltonian <span class="keyword">const</span>&amp; h,</div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>                  <span class="keyword">typename</span> Hamiltonian::State <span class="keyword">const</span>&amp; state,</div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>                  Element element) {</div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>                 h.template dhamiltonian_dmoments_value&lt;</div>
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>                         std::integral_constant&lt;std::size_t, 0&gt;&gt;(state, element);</div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>             };</div>
 </div>
-<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span> </div>
-<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Equations, <span class="keyword">class</span> Element&gt;</div>
-<div class="foldopen" id="foldopen00122" data-start="{" data-end="}">
-<div class="line"><a id="l00122" name="l00122"></a><span class="lineno"><a class="line" href="conceptsimilie_1_1physics_1_1HamiltonEquationsConcept.html">  122</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsimilie_1_1physics_1_1HamiltonEquationsConcept.html">HamiltonEquationsConcept</a> = <span class="keyword">requires</span>(</div>
-<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>        Equations <span class="keyword">const</span>&amp; equations,</div>
-<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>        <span class="keyword">typename</span> Equations::State <span class="keyword">const</span>&amp; state,</div>
-<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>        Element element) {</div>
-<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>    {</div>
-<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>        equations.template dpotential_dt&lt;std::integral_constant&lt;std::size_t, 0&gt;&gt;(state, element)</div>
-<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>    } -&gt; std::same_as&lt;double&gt;;</div>
-<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>    {</div>
-<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>        equations.template dmoments_dt&lt;std::integral_constant&lt;std::size_t, 0&gt;&gt;(state, element)</div>
-<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>    } -&gt; std::same_as&lt;double&gt;;</div>
-<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>    {</div>
-<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>        equations.template jacobian&lt;</div>
-<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>                std::integral_constant&lt;std::size_t, 0&gt;,</div>
-<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>                std::integral_constant&lt;std::size_t, 0&gt;&gt;(state, element)</div>
-<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>    } -&gt; std::same_as&lt;double&gt;;</div>
-<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>};</div>
+<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span> </div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Equations, <span class="keyword">class</span> Element&gt;</div>
+<div class="foldopen" id="foldopen00136" data-start="{" data-end="}">
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno"><a class="line" href="conceptsimilie_1_1physics_1_1HamiltonEquationsConcept.html">  136</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsimilie_1_1physics_1_1HamiltonEquationsConcept.html">HamiltonEquationsConcept</a> = <span class="keyword">requires</span>(</div>
+<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>        Equations <span class="keyword">const</span>&amp; equations,</div>
+<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>        <span class="keyword">typename</span> Equations::State <span class="keyword">const</span>&amp; state,</div>
+<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span>        Element element) {</div>
+<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span>    {</div>
+<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>        equations.template dpotential_dt&lt;std::integral_constant&lt;std::size_t, 0&gt;&gt;(state, element)</div>
+<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>    } -&gt; std::same_as&lt;double&gt;;</div>
+<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>    {</div>
+<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>        equations.template dmoments_dt&lt;std::integral_constant&lt;std::size_t, 0&gt;&gt;(state, element)</div>
+<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>    } -&gt; std::same_as&lt;double&gt;;</div>
+<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>    {</div>
+<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>        equations.template jacobian&lt;</div>
+<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>                std::integral_constant&lt;std::size_t, 0&gt;,</div>
+<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>                std::integral_constant&lt;std::size_t, 0&gt;&gt;(state, element)</div>
+<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>    } -&gt; std::same_as&lt;double&gt;;</div>
+<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>};</div>
 </div>
-<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span> </div>
-<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Equations, <span class="keyword">class</span> Element&gt;</div>
-<div class="foldopen" id="foldopen00140" data-start="{" data-end="}">
-<div class="line"><a id="l00140" name="l00140"></a><span class="lineno"><a class="line" href="conceptsimilie_1_1physics_1_1MomentCoefficientHamiltonEquationsConcept.html">  140</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsimilie_1_1physics_1_1MomentCoefficientHamiltonEquationsConcept.html">MomentCoefficientHamiltonEquationsConcept</a></div>
-<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>        = <a class="code hl_concept" href="conceptsimilie_1_1physics_1_1HamiltonEquationsConcept.html">HamiltonEquationsConcept&lt;Equations, Element&gt;</a></div>
-<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>          &amp;&amp; <span class="keyword">requires</span>(</div>
-<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>                  Equations <span class="keyword">const</span>&amp; equations,</div>
-<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>                  <span class="keyword">typename</span> Equations::State <span class="keyword">const</span>&amp; state,</div>
-<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>                  Element element) {</div>
-<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>                 equations.template dpotential_dt_value&lt;</div>
-<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>                         std::integral_constant&lt;std::size_t, 0&gt;&gt;(state, element);</div>
-<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>             };</div>
+<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span> </div>
+<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Equations, <span class="keyword">class</span> Element&gt;</div>
+<div class="foldopen" id="foldopen00154" data-start="{" data-end="}">
+<div class="line"><a id="l00154" name="l00154"></a><span class="lineno"><a class="line" href="conceptsimilie_1_1physics_1_1MomentCoefficientHamiltonEquationsConcept.html">  154</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsimilie_1_1physics_1_1MomentCoefficientHamiltonEquationsConcept.html">MomentCoefficientHamiltonEquationsConcept</a></div>
+<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>        = <a class="code hl_concept" href="conceptsimilie_1_1physics_1_1HamiltonEquationsConcept.html">HamiltonEquationsConcept&lt;Equations, Element&gt;</a></div>
+<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>          &amp;&amp; <span class="keyword">requires</span>(</div>
+<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>                  Equations <span class="keyword">const</span>&amp; equations,</div>
+<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>                  <span class="keyword">typename</span> Equations::State <span class="keyword">const</span>&amp; state,</div>
+<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>                  Element element) {</div>
+<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>                 equations.template dpotential_dt_value&lt;</div>
+<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>                         std::integral_constant&lt;std::size_t, 0&gt;&gt;(state, element);</div>
+<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>             };</div>
 </div>
-<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span> </div>
-<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Equations, <span class="keyword">class</span> Element&gt;</div>
-<div class="foldopen" id="foldopen00151" data-start="{" data-end="}">
-<div class="line"><a id="l00151" name="l00151"></a><span class="lineno"><a class="line" href="conceptsimilie_1_1physics_1_1PotentialCoefficientHamiltonEquationsConcept.html">  151</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsimilie_1_1physics_1_1PotentialCoefficientHamiltonEquationsConcept.html">PotentialCoefficientHamiltonEquationsConcept</a></div>
-<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>        = <a class="code hl_concept" href="conceptsimilie_1_1physics_1_1HamiltonEquationsConcept.html">HamiltonEquationsConcept&lt;Equations, Element&gt;</a></div>
-<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>          &amp;&amp; <span class="keyword">requires</span>(</div>
-<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>                  Equations <span class="keyword">const</span>&amp; equations,</div>
-<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>                  <span class="keyword">typename</span> Equations::State <span class="keyword">const</span>&amp; state,</div>
-<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>                  Element element) {</div>
-<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>                 equations.template dmoments_dt_value&lt;</div>
-<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>                         std::integral_constant&lt;std::size_t, 0&gt;&gt;(state, element);</div>
-<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>             };</div>
+<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span> </div>
+<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Equations, <span class="keyword">class</span> Element&gt;</div>
+<div class="foldopen" id="foldopen00165" data-start="{" data-end="}">
+<div class="line"><a id="l00165" name="l00165"></a><span class="lineno"><a class="line" href="conceptsimilie_1_1physics_1_1PotentialCoefficientHamiltonEquationsConcept.html">  165</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsimilie_1_1physics_1_1PotentialCoefficientHamiltonEquationsConcept.html">PotentialCoefficientHamiltonEquationsConcept</a></div>
+<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>        = <a class="code hl_concept" href="conceptsimilie_1_1physics_1_1HamiltonEquationsConcept.html">HamiltonEquationsConcept&lt;Equations, Element&gt;</a></div>
+<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>          &amp;&amp; <span class="keyword">requires</span>(</div>
+<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>                  Equations <span class="keyword">const</span>&amp; equations,</div>
+<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>                  <span class="keyword">typename</span> Equations::State <span class="keyword">const</span>&amp; state,</div>
+<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span>                  Element element) {</div>
+<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>                 equations.template dmoments_dt_value&lt;</div>
+<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>                         std::integral_constant&lt;std::size_t, 0&gt;&gt;(state, element);</div>
+<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>             };</div>
 </div>
-<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span> </div>
-<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Equations, <span class="keyword">class</span> Element&gt;</div>
-<div class="foldopen" id="foldopen00162" data-start="{" data-end="}">
-<div class="line"><a id="l00162" name="l00162"></a><span class="lineno"><a class="line" href="conceptsimilie_1_1physics_1_1DeDonderWeylEquationsConcept.html">  162</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsimilie_1_1physics_1_1DeDonderWeylEquationsConcept.html">DeDonderWeylEquationsConcept</a> = <span class="keyword">requires</span>(</div>
-<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>        Equations <span class="keyword">const</span>&amp; equations,</div>
-<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>        <span class="keyword">typename</span> Equations::State <span class="keyword">const</span>&amp; state,</div>
-<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>        Element element) {</div>
-<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>    {</div>
-<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>        equations.template potential_grad&lt;std::integral_constant&lt;std::size_t, 0&gt;&gt;(state, element)</div>
-<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>    } -&gt; std::same_as&lt;double&gt;;</div>
-<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>    {</div>
-<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span>        equations.template moments_div&lt;std::integral_constant&lt;std::size_t, 0&gt;&gt;(state, element)</div>
-<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>    } -&gt; std::same_as&lt;double&gt;;</div>
-<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>};</div>
-</div>
-<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span> </div>
-<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span><span class="comment">// Scalar and vector laws use arrays of the same form, with N components.</span></div>
-<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Law, <span class="keyword">class</span> Element&gt;</div>
+<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span> </div>
+<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Equations, <span class="keyword">class</span> Element&gt;</div>
 <div class="foldopen" id="foldopen00176" data-start="{" data-end="}">
-<div class="line"><a id="l00176" name="l00176"></a><span class="lineno"><a class="line" href="conceptsimilie_1_1physics_1_1ConstitutiveLawConcept.html">  176</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsimilie_1_1physics_1_1ConstitutiveLawConcept.html">ConstitutiveLawConcept</a></div>
-<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>        = <span class="keyword">requires</span>(Law <span class="keyword">const</span>&amp; law, <span class="keyword">typename</span> Law::State <span class="keyword">const</span>&amp; state, Element element) {</div>
-<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>              <span class="keyword">typename</span> std::integral_constant&lt;std::size_t, Law::N&gt;;</div>
-<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>              { law(state, element) } -&gt; std::same_as&lt;std::array&lt;double, Law::N&gt;&gt;;</div>
-<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>              { law.value(state, element) } -&gt; std::same_as&lt;std::array&lt;double, Law::N * Law::N&gt;&gt;;</div>
-<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>              { law.jacobian(state, element) } -&gt; std::same_as&lt;std::array&lt;double, Law::N * Law::N&gt;&gt;;</div>
-<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>              { law.inverse(state, element) } -&gt; std::same_as&lt;std::array&lt;double, Law::N&gt;&gt;;</div>
-<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>              {</div>
-<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>                  law.inverse_value(state, element)</div>
-<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>              } -&gt; std::same_as&lt;std::array&lt;double, Law::N * Law::N&gt;&gt;;</div>
-<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>          };</div>
+<div class="line"><a id="l00176" name="l00176"></a><span class="lineno"><a class="line" href="conceptsimilie_1_1physics_1_1DeDonderWeylEquationsConcept.html">  176</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsimilie_1_1physics_1_1DeDonderWeylEquationsConcept.html">DeDonderWeylEquationsConcept</a> = <span class="keyword">requires</span>(</div>
+<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>        Equations <span class="keyword">const</span>&amp; equations,</div>
+<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>        <span class="keyword">typename</span> Equations::State <span class="keyword">const</span>&amp; state,</div>
+<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>        Element element) {</div>
+<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>    {</div>
+<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>        equations.template potential_grad&lt;std::integral_constant&lt;std::size_t, 0&gt;&gt;(state, element)</div>
+<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>    } -&gt; std::same_as&lt;double&gt;;</div>
+<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>    {</div>
+<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>        equations.template moments_div&lt;std::integral_constant&lt;std::size_t, 0&gt;&gt;(state, element)</div>
+<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>    } -&gt; std::same_as&lt;double&gt;;</div>
+<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>};</div>
 </div>
 <div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span> </div>
-<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>} <span class="comment">// namespace similie::physics</span></div>
+<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span><span class="comment">// Scalar and vector laws use arrays of the same form, with N components.</span></div>
+<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> Law, <span class="keyword">class</span> Element&gt;</div>
+<div class="foldopen" id="foldopen00190" data-start="{" data-end="}">
+<div class="line"><a id="l00190" name="l00190"></a><span class="lineno"><a class="line" href="conceptsimilie_1_1physics_1_1ConstitutiveLawConcept.html">  190</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptsimilie_1_1physics_1_1ConstitutiveLawConcept.html">ConstitutiveLawConcept</a></div>
+<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span>        = <span class="keyword">requires</span>(Law <span class="keyword">const</span>&amp; law, <span class="keyword">typename</span> Law::State <span class="keyword">const</span>&amp; state, Element element) {</div>
+<div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>              <span class="keyword">typename</span> std::integral_constant&lt;std::size_t, Law::N&gt;;</div>
+<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>              { law(state, element) } -&gt; std::same_as&lt;std::array&lt;double, Law::N&gt;&gt;;</div>
+<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>              { law.value(state, element) } -&gt; std::same_as&lt;std::array&lt;double, Law::N * Law::N&gt;&gt;;</div>
+<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>              { law.jacobian(state, element) } -&gt; std::same_as&lt;std::array&lt;double, Law::N * Law::N&gt;&gt;;</div>
+<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>              { law.inverse(state, element) } -&gt; std::same_as&lt;std::array&lt;double, Law::N&gt;&gt;;</div>
+<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span>              {</div>
+<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>                  law.inverse_value(state, element)</div>
+<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>              } -&gt; std::same_as&lt;std::array&lt;double, Law::N * Law::N&gt;&gt;;</div>
+<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>          };</div>
 </div>
-<div class="ttc" id="aconceptsimilie_1_1physics_1_1ConstitutiveLawConcept_html"><div class="ttname"><a href="conceptsimilie_1_1physics_1_1ConstitutiveLawConcept.html">similie::physics::ConstitutiveLawConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00176">physics/concepts.hpp:177</a></div></div>
-<div class="ttc" id="aconceptsimilie_1_1physics_1_1DeDonderWeylEquationsConcept_html"><div class="ttname"><a href="conceptsimilie_1_1physics_1_1DeDonderWeylEquationsConcept.html">similie::physics::DeDonderWeylEquationsConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00162">physics/concepts.hpp:162</a></div></div>
-<div class="ttc" id="aconceptsimilie_1_1physics_1_1HamiltonEquationsConcept_html"><div class="ttname"><a href="conceptsimilie_1_1physics_1_1HamiltonEquationsConcept.html">similie::physics::HamiltonEquationsConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00122">physics/concepts.hpp:122</a></div></div>
-<div class="ttc" id="aconceptsimilie_1_1physics_1_1HamiltonianConcept_html"><div class="ttname"><a href="conceptsimilie_1_1physics_1_1HamiltonianConcept.html">similie::physics::HamiltonianConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00088">physics/concepts.hpp:88</a></div></div>
-<div class="ttc" id="aconceptsimilie_1_1physics_1_1MomentCoefficientHamiltonEquationsConcept_html"><div class="ttname"><a href="conceptsimilie_1_1physics_1_1MomentCoefficientHamiltonEquationsConcept.html">similie::physics::MomentCoefficientHamiltonEquationsConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00140">physics/concepts.hpp:141</a></div></div>
-<div class="ttc" id="aconceptsimilie_1_1physics_1_1NonlocalHamiltonianConcept_html"><div class="ttname"><a href="conceptsimilie_1_1physics_1_1NonlocalHamiltonianConcept.html">similie::physics::NonlocalHamiltonianConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00111">physics/concepts.hpp:112</a></div></div>
-<div class="ttc" id="aconceptsimilie_1_1physics_1_1PotentialCoefficientHamiltonEquationsConcept_html"><div class="ttname"><a href="conceptsimilie_1_1physics_1_1PotentialCoefficientHamiltonEquationsConcept.html">similie::physics::PotentialCoefficientHamiltonEquationsConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00151">physics/concepts.hpp:152</a></div></div>
+<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span> </div>
+<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>} <span class="comment">// namespace similie::physics</span></div>
+</div>
+<div class="ttc" id="aconceptsimilie_1_1physics_1_1ConstitutiveLawConcept_html"><div class="ttname"><a href="conceptsimilie_1_1physics_1_1ConstitutiveLawConcept.html">similie::physics::ConstitutiveLawConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00190">physics/concepts.hpp:191</a></div></div>
+<div class="ttc" id="aconceptsimilie_1_1physics_1_1DeDonderWeylEquationsConcept_html"><div class="ttname"><a href="conceptsimilie_1_1physics_1_1DeDonderWeylEquationsConcept.html">similie::physics::DeDonderWeylEquationsConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00176">physics/concepts.hpp:176</a></div></div>
+<div class="ttc" id="aconceptsimilie_1_1physics_1_1HamiltonEquationsConcept_html"><div class="ttname"><a href="conceptsimilie_1_1physics_1_1HamiltonEquationsConcept.html">similie::physics::HamiltonEquationsConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00136">physics/concepts.hpp:136</a></div></div>
+<div class="ttc" id="aconceptsimilie_1_1physics_1_1HamiltonianConcept_html"><div class="ttname"><a href="conceptsimilie_1_1physics_1_1HamiltonianConcept.html">similie::physics::HamiltonianConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00102">physics/concepts.hpp:102</a></div></div>
+<div class="ttc" id="aconceptsimilie_1_1physics_1_1MomentCoefficientHamiltonEquationsConcept_html"><div class="ttname"><a href="conceptsimilie_1_1physics_1_1MomentCoefficientHamiltonEquationsConcept.html">similie::physics::MomentCoefficientHamiltonEquationsConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00154">physics/concepts.hpp:155</a></div></div>
+<div class="ttc" id="aconceptsimilie_1_1physics_1_1NonlocalHamiltonianConcept_html"><div class="ttname"><a href="conceptsimilie_1_1physics_1_1NonlocalHamiltonianConcept.html">similie::physics::NonlocalHamiltonianConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00125">physics/concepts.hpp:126</a></div></div>
+<div class="ttc" id="aconceptsimilie_1_1physics_1_1PotentialCoefficientHamiltonEquationsConcept_html"><div class="ttname"><a href="conceptsimilie_1_1physics_1_1PotentialCoefficientHamiltonEquationsConcept.html">similie::physics::PotentialCoefficientHamiltonEquationsConcept</a></div><div class="ttdef"><b>Definition</b> <a href="#l00165">physics/concepts.hpp:166</a></div></div>
 <div class="ttc" id="anamespacesimilie_1_1physics_html"><div class="ttname"><a href="namespacesimilie_1_1physics.html">similie::physics</a></div><div class="ttdef"><b>Definition</b> <a href="#l00014">physics/concepts.hpp:14</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
