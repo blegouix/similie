@@ -105,8 +105,8 @@ struct TensorNaturalIndex
 };
 
 static_assert(NaturalTensorIndexConcept<
-              TensorNaturalIndex<detail::ConceptDimension>,
-              detail::ConceptDimension>);
+              TensorNaturalIndex<detail::DimensionConcept>,
+              detail::DimensionConcept>);
 
 template <class DDim>
 concept TensorIndex = requires {
@@ -123,7 +123,7 @@ struct ScalarIndex : TensorNaturalIndex<>
 {
 };
 
-static_assert(NaturalTensorIndexConcept<ScalarIndex, detail::ConceptDimension>);
+static_assert(NaturalTensorIndexConcept<ScalarIndex, detail::DimensionConcept>);
 
 // natural_domain_t is obtained using concept and specialization
 namespace detail {

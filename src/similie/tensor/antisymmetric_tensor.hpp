@@ -188,8 +188,8 @@ public:
     }
 };
 
-static_assert(StructuredTensorIndexConcept<
-              TensorAntisymmetricIndex<TensorNaturalIndex<detail::ConceptDimension>>>);
+static_assert(
+        TensorIndexConcept<TensorAntisymmetricIndex<TensorNaturalIndex<detail::DimensionConcept>>>);
 
 namespace detail {
 

@@ -254,8 +254,8 @@ private:
 
 static_assert(ExtrapolationRulesConcept<
               ExtrapolationRules<std::pair<ClampExtrapolationRule, ClampExtrapolationRule>>,
-              detail::ConceptField<ScalarIndex>,
-              ddc::DiscreteElement<detail::ConceptGrid>>);
+              detail::FieldConcept<ScalarIndex>,
+              ddc::DiscreteElement<detail::GridConcept>>);
 
 template <class LeftRule, class RightRule, misc::Specialization<std::pair>... OtherRulePairs>
 ExtrapolationRules(std::pair<LeftRule, RightRule>, OtherRulePairs...)

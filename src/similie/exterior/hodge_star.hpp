@@ -385,17 +385,17 @@ struct DiscreteHodgeStar
 static_assert(DiscreteHodgeStarConcept<
               DiscreteHodgeStar<
                       CellComplex::Primal,
-                      ddc::TypeSeq<detail::ConceptDirection>,
+                      ddc::TypeSeq<detail::DirectionConcept>,
                       ddc::TypeSeq<>,
-                      detail::ConceptField<detail::ConceptMetricIndex>,
-                      detail::ConceptField<detail::ConceptPositionIndex>,
-                      ddc::DiscreteElement<detail::ConceptGrid>>,
-              detail::ConceptField<detail::ConceptScalar>,
-              detail::ConceptField<detail::ConceptDirection>,
-              detail::ConceptField<detail::ConceptMetricIndex>,
-              detail::ConceptField<detail::ConceptPositionIndex>,
-              ddc::DiscreteElement<detail::ConceptGrid>,
-              ddc::DiscreteElement<detail::ConceptDirection>>);
+                      detail::FieldConcept<detail::MetricIndexConcept>,
+                      detail::FieldConcept<detail::PositionIndexConcept>,
+                      ddc::DiscreteElement<detail::GridConcept>>,
+              detail::FieldConcept<detail::ScalarConcept>,
+              detail::FieldConcept<detail::DirectionConcept>,
+              detail::FieldConcept<detail::MetricIndexConcept>,
+              detail::FieldConcept<detail::PositionIndexConcept>,
+              ddc::DiscreteElement<detail::GridConcept>,
+              ddc::DiscreteElement<detail::DirectionConcept>>);
 
 template <
         misc::Specialization<ddc::TypeSeq> Indices1,
@@ -490,15 +490,15 @@ struct ContinuousHodgeStar
 
 static_assert(ContinuousHodgeStarConcept<
               ContinuousHodgeStar<
-                      ddc::TypeSeq<detail::ConceptDirection>,
+                      ddc::TypeSeq<detail::DirectionConcept>,
                       ddc::TypeSeq<>,
-                      detail::ConceptField<detail::ConceptMetricIndex>,
-                      ddc::DiscreteElement<detail::ConceptGrid>>,
-              detail::ConceptField<detail::ConceptScalar>,
-              detail::ConceptField<detail::ConceptDirection>,
-              detail::ConceptField<detail::ConceptMetricIndex>,
-              ddc::DiscreteElement<detail::ConceptGrid>,
-              ddc::DiscreteElement<detail::ConceptDirection>>);
+                      detail::FieldConcept<detail::MetricIndexConcept>,
+                      ddc::DiscreteElement<detail::GridConcept>>,
+              detail::FieldConcept<detail::ScalarConcept>,
+              detail::FieldConcept<detail::DirectionConcept>,
+              detail::FieldConcept<detail::MetricIndexConcept>,
+              ddc::DiscreteElement<detail::GridConcept>,
+              ddc::DiscreteElement<detail::DirectionConcept>>);
 
 template <
         misc::Specialization<ddc::TypeSeq> Indices1,

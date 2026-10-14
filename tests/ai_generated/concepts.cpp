@@ -22,6 +22,21 @@ struct MissingInterface
 {
 };
 
+struct NonHamiltonianPhysics
+{
+    static constexpr std::size_t N = 2;
+    static constexpr bool IS_LINEAR = false;
+    struct State
+    {
+        std::array<double, N> value {};
+    };
+};
+
+struct WrongPhysicsMetadata : NonHamiltonianPhysics
+{
+    static constexpr int IS_LINEAR = 0;
+};
+
 struct WrongConstitutiveReturn
 {
     static constexpr std::size_t N = 1;
@@ -42,12 +57,28 @@ struct MissingExtrapolationBasis
     double operator()(Field const&, Element) const;
 };
 
+struct MissingIndexAccess : sil::tensor::TensorFullIndex<sil::tensor::ScalarIndex>
+{
+    static void process_access() = delete;
+};
+
+struct MissingIndexMemoryMapping : sil::tensor::TensorFullIndex<sil::tensor::ScalarIndex>
+{
+    static void mem_id() = delete;
+};
+
 static_assert(!sil::tensor::TensorIndexConcept<MissingInterface>);
+static_assert(!sil::tensor::TensorIndexConcept<MissingIndexAccess>);
+static_assert(!sil::tensor::TensorIndexConcept<MissingIndexMemoryMapping>);
 static_assert(!sil::tensor::ExtrapolationRuleConcept<
               MissingExtrapolationBasis,
-              sil::tensor::detail::ConceptField<sil::tensor::ScalarIndex>,
-              ddc::DiscreteElement<sil::tensor::detail::ConceptGrid>>);
+              sil::tensor::detail::FieldConcept<sil::tensor::ScalarIndex>,
+              ddc::DiscreteElement<sil::tensor::detail::GridConcept>>);
 static_assert(!similie::physics::ConstitutiveLawConcept<WrongConstitutiveReturn, int>);
-static_assert(!similie::physics::HamiltonianConcept<MissingInterface, int>);
+static_assert(similie::physics::PhysicsConcept<NonHamiltonianPhysics>);
+static_assert(!similie::physics::HamiltonianPhysicsConcept<NonHamiltonianPhysics, int>);
+static_assert(!similie::physics::PhysicsConcept<WrongPhysicsMetadata>);
+static_assert(!similie::physics::PhysicsConcept<MissingInterface>);
+static_assert(!similie::physics::HamiltonianPhysicsConcept<MissingInterface, int>);
 
 } // namespace

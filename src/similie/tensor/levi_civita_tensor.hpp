@@ -108,8 +108,8 @@ struct TensorLeviCivitaIndex
     }
 };
 
-static_assert(StructuredTensorIndexConcept<
-              TensorLeviCivitaIndex<TensorNaturalIndex<detail::ConceptDimension>>>);
+static_assert(
+        TensorIndexConcept<TensorLeviCivitaIndex<TensorNaturalIndex<detail::DimensionConcept>>>);
 
 } // namespace tensor
 

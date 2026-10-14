@@ -30,7 +30,7 @@ using Component1 = std::integral_constant<std::size_t, 1>;
 using Component2 = std::integral_constant<std::size_t, 2>;
 
 template <class Equations>
-concept AcceptsScalarState = requires(Equations const& equations) {
+concept AcceptsScalarStateConcept = requires(Equations const& equations) {
     equations.template dpotential_dt<Component0>(4.0, 0);
 };
 
@@ -67,21 +67,27 @@ struct SpatialHamiltonian
     }
 };
 
-static_assert(similie::physics::HamiltonianConcept<SpatialHamiltonian, int>);
-static_assert(!similie::physics::MomentCoefficientHamiltonEquationsConcept<
-              similie::physics::HamiltonEquations<SpatialHamiltonian>,
-              int>);
-static_assert(!similie::physics::PotentialCoefficientHamiltonEquationsConcept<
-              similie::physics::HamiltonEquations<SpatialHamiltonian>,
-              int>);
+static_assert(similie::physics::HamiltonianPhysicsConcept<SpatialHamiltonian, int>);
+template <class Equations>
+concept CoefficientEquationsConcept
+        = requires(Equations const& equations, typename Equations::State const& state) {
+              equations.template dpotential_dt_value<Component0>(state, 0);
+              equations.template dmoments_dt_value<Component0>(state, 0);
+          };
+
+static_assert(
+        !CoefficientEquationsConcept<similie::physics::HamiltonEquations<SpatialHamiltonian>>);
+static_assert(CoefficientEquationsConcept<similie::physics::HamiltonEquations<
+                      similie::physics::detail::HamiltonianPhysicsConcept>>);
 
 TEST(PhysicsAPI, SharedStateFeedsBothEquationWrappers)
 {
-    similie::physics::detail::ConceptHamiltonian::State const state {{5.0}, {4.0}};
-    similie::physics::HamiltonEquations equations(similie::physics::detail::ConceptHamiltonian {});
+    similie::physics::detail::HamiltonianPhysicsConcept::State const state {{5.0}, {4.0}};
+    similie::physics::HamiltonEquations equations(
+            similie::physics::detail::HamiltonianPhysicsConcept {});
     similie::physics::DeDonderWeylEquations covariant_equations(
-            similie::physics::detail::ConceptHamiltonian {});
-    static_assert(!AcceptsScalarState<decltype(equations)>);
+            similie::physics::detail::HamiltonianPhysicsConcept {});
+    static_assert(!AcceptsScalarStateConcept<decltype(equations)>);
     EXPECT_TRUE(equations.IS_LINEAR);
     EXPECT_DOUBLE_EQ(equations.dpotential_dt<Component0>(state, 0), 4.0);
     EXPECT_DOUBLE_EQ(equations.dmoments_dt<Component0>(state, 0), -5.0);

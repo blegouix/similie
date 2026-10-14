@@ -15,21 +15,17 @@ namespace similie::physics {
 
 namespace detail {
 
-struct ConceptIndex
-{
-};
-
-struct ConceptElement
+struct ElementConcept
 {
 };
 
 template <class Dimension>
-struct ConceptGrid
+struct GridConcept
 {
     using continuous_dimension_type = Dimension;
 };
 
-struct ConceptParameter
+struct ParameterConcept
 {
     template <class Element, class Component>
     constexpr double operator()(Element, Component) const
@@ -39,7 +35,7 @@ struct ConceptParameter
 };
 
 // A complete state keeps coupled components available to every operation.
-struct ConceptHamiltonian
+struct HamiltonianPhysicsConcept
 {
     static constexpr std::size_t N = 1;
     static constexpr bool IS_LINEAR = true;
@@ -84,52 +80,51 @@ struct ConceptHamiltonian
 // Namespace-level concepts avoid nvcc rejecting dependent member-template calls
 // in requires-expressions declared inside a class template.
 template <class Hamiltonian, class Index, class Element>
-concept HasMomentCoefficient = requires(
+concept HasMomentCoefficientConcept = requires(
         Hamiltonian const& h,
         typename Hamiltonian::State const& state,
         Element element) { h.template dhamiltonian_dmoments_value<Index>(state, element); };
 
 template <class Hamiltonian, class Index, class Element>
-concept HasPotentialCoefficient = requires(
+concept HasPotentialCoefficientConcept = requires(
         Hamiltonian const& h,
         typename Hamiltonian::State const& state,
         Element element) { h.template dhamiltonian_dpotential_value<Index>(state, element); };
 
 } // namespace detail
 
-// Every Hamiltonian has the same arguments; quantities belong to its State.
-template <class Hamiltonian, class Element>
-concept HamiltonianConcept = requires(
-        Hamiltonian const& h,
-        typename Hamiltonian::State const& state,
-        Element element) {
-    requires std::same_as<std::remove_cv_t<decltype(Hamiltonian::N)>, std::size_t>;
-    requires std::same_as<std::remove_cv_t<decltype(Hamiltonian::IS_LINEAR)>, bool>;
-    typename std::integral_constant<std::size_t, Hamiltonian::N>;
-    typename std::bool_constant<Hamiltonian::IS_LINEAR>;
-    { h.hamiltonian(state, element) } -> std::same_as<double>;
-    {
-        h.template dhamiltonian_dmoments<std::integral_constant<std::size_t, 0>>(state, element)
-    } -> std::same_as<double>;
-    {
-        h.template dhamiltonian_dpotential<std::integral_constant<std::size_t, 0>>(state, element)
-    } -> std::same_as<double>;
-    {
-        h.template jacobian<
-                std::integral_constant<std::size_t, 0>,
-                std::integral_constant<std::size_t, 0>>(state, element)
-    } -> std::same_as<double>;
+// Physics models share state and compile-time metadata. Their equations are
+// specified by more specialized concepts, without prescribing the state layout.
+template <class Physics>
+concept PhysicsConcept = requires {
+    typename Physics::State;
+    requires std::same_as<std::remove_cv_t<decltype(Physics::N)>, std::size_t>;
+    requires std::same_as<std::remove_cv_t<decltype(Physics::IS_LINEAR)>, bool>;
+    typename std::integral_constant<std::size_t, Physics::N>;
+    typename std::bool_constant<Physics::IS_LINEAR>;
 };
 
-template <class Hamiltonian, class Element>
-concept NonlocalHamiltonianConcept
-        = HamiltonianConcept<Hamiltonian, Element>
+template <class Physics, class Element>
+concept HamiltonianPhysicsConcept
+        = PhysicsConcept<Physics>
           && requires(
-                  Hamiltonian const& h,
-                  typename Hamiltonian::State const& state,
+                  Physics const& physics,
+                  typename Physics::State const& state,
                   Element element) {
-                 h.template dhamiltonian_dmoments_value<
-                         std::integral_constant<std::size_t, 0>>(state, element);
+                 { physics.hamiltonian(state, element) } -> std::same_as<double>;
+                 {
+                     physics.template dhamiltonian_dmoments<
+                             std::integral_constant<std::size_t, 0>>(state, element)
+                 } -> std::same_as<double>;
+                 {
+                     physics.template dhamiltonian_dpotential<
+                             std::integral_constant<std::size_t, 0>>(state, element)
+                 } -> std::same_as<double>;
+                 {
+                     physics.template jacobian<
+                             std::integral_constant<std::size_t, 0>,
+                             std::integral_constant<std::size_t, 0>>(state, element)
+                 } -> std::same_as<double>;
              };
 
 template <class Equations, class Element>
@@ -149,28 +144,6 @@ concept HamiltonEquationsConcept = requires(
                 std::integral_constant<std::size_t, 0>>(state, element)
     } -> std::same_as<double>;
 };
-
-template <class Equations, class Element>
-concept MomentCoefficientHamiltonEquationsConcept
-        = HamiltonEquationsConcept<Equations, Element>
-          && requires(
-                  Equations const& equations,
-                  typename Equations::State const& state,
-                  Element element) {
-                 equations.template dpotential_dt_value<
-                         std::integral_constant<std::size_t, 0>>(state, element);
-             };
-
-template <class Equations, class Element>
-concept PotentialCoefficientHamiltonEquationsConcept
-        = HamiltonEquationsConcept<Equations, Element>
-          && requires(
-                  Equations const& equations,
-                  typename Equations::State const& state,
-                  Element element) {
-                 equations.template dmoments_dt_value<
-                         std::integral_constant<std::size_t, 0>>(state, element);
-             };
 
 template <class Equations, class Element>
 concept DeDonderWeylEquationsConcept = requires(

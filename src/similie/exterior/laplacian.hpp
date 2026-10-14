@@ -876,14 +876,14 @@ public:
 
 static_assert(StagedLaplacianConcept<
               StagedLaplacian<
-                      detail::ConceptMetricIndex,
-                      detail::ConceptDirection,
-                      detail::ConceptScalar,
-                      detail::ConceptField<detail::ConceptScalar>,
-                      detail::ConceptField<detail::ConceptMetricIndex>,
-                      detail::ConceptField<detail::ConceptPositionIndex>,
+                      detail::MetricIndexConcept,
+                      detail::DirectionConcept,
+                      detail::ScalarConcept,
+                      detail::FieldConcept<detail::ScalarConcept>,
+                      detail::FieldConcept<detail::MetricIndexConcept>,
+                      detail::FieldConcept<detail::PositionIndexConcept>,
                       Kokkos::DefaultHostExecutionSpace>,
-              detail::ConceptField<detail::ConceptScalar>>);
+              detail::FieldConcept<detail::ScalarConcept>>);
 
 template <
         tensor::TensorIndex MetricIndex,

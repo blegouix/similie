@@ -305,7 +305,7 @@ def write_cpp_hamiltonian_header(
     )
     for i, parameter in enumerate(template_parameters or []):
         if parameter.split()[-1] in parameter_types:
-            concept_arguments.append("similie::physics::detail::ConceptParameter")
+            concept_arguments.append("similie::physics::detail::ParameterConcept")
         elif "..." in parameter:
             count = 2 if moments_computer is not None else 1
             spatial_arguments = [
@@ -317,13 +317,13 @@ def write_cpp_hamiltonian_header(
             concept_arguments.append(f"std::integral_constant<std::size_t, {i}>")
     if template_parameters:
         concept_type += "<" + ", ".join(concept_arguments) + ">"
-    checks = f"static_assert(similie::physics::HamiltonianConcept<{concept_type}, similie::physics::detail::ConceptElement>);\n"
+    checks = f"static_assert(similie::physics::HamiltonianPhysicsConcept<{concept_type}, similie::physics::detail::ElementConcept>);\n"
     if nonlocal_method and spatial_arguments:
         grid_arguments = ", ".join(
-            "similie::physics::detail::ConceptGrid<" + arg + ">"
+            "similie::physics::detail::GridConcept<" + arg + ">"
             for arg in spatial_arguments
         )
-        checks += f"static_assert(similie::physics::NonlocalHamiltonianConcept<{concept_type}, ddc::DiscreteElement<{grid_arguments}>>);\n"
+        checks += f"static_assert(similie::physics::detail::HasMomentCoefficientConcept<{concept_type}, std::integral_constant<std::size_t, 0>, ddc::DiscreteElement<{grid_arguments}>>);\n"
     output_path.write_text(
         f"""\
 // SPDX-FileCopyrightText: 2026 Baptiste Legouix

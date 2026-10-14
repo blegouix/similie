@@ -13,24 +13,24 @@
 
 namespace sil::exterior::detail {
 
-using ConceptGrid = tensor::detail::ConceptGrid;
-using ConceptDirection
-        = tensor::Covariant<tensor::TensorNaturalIndex<tensor::detail::ConceptDimension>>;
-using ConceptScalar = tensor::Covariant<tensor::ScalarIndex>;
-using ConceptMetricIndex = tensor::TensorIdentityIndex<
-        tensor::Covariant<tensor::MetricIndex1<tensor::detail::ConceptDimension>>,
-        tensor::Covariant<tensor::MetricIndex2<tensor::detail::ConceptDimension>>>;
-using ConceptPositionIndex
-        = tensor::Contravariant<tensor::TensorNaturalIndex<tensor::detail::ConceptDimension>>;
+using GridConcept = tensor::detail::GridConcept;
+using DirectionConcept
+        = tensor::Covariant<tensor::TensorNaturalIndex<tensor::detail::DimensionConcept>>;
+using ScalarConcept = tensor::Covariant<tensor::ScalarIndex>;
+using MetricIndexConcept = tensor::TensorIdentityIndex<
+        tensor::Covariant<tensor::MetricIndex1<tensor::detail::DimensionConcept>>,
+        tensor::Covariant<tensor::MetricIndex2<tensor::detail::DimensionConcept>>>;
+using PositionIndexConcept
+        = tensor::Contravariant<tensor::TensorNaturalIndex<tensor::detail::DimensionConcept>>;
 
 template <class Index>
-using ConceptField = tensor::Tensor<
+using FieldConcept = tensor::Tensor<
         double,
-        ddc::DiscreteDomain<ConceptGrid, Index>,
+        ddc::DiscreteDomain<GridConcept, Index>,
         Kokkos::layout_right,
         Kokkos::HostSpace>;
 
-struct ConceptEvaluator
+struct EvaluatorConcept
 {
     template <class Element, class Component>
     KOKKOS_FUNCTION double operator()(Element element, Component component) const;

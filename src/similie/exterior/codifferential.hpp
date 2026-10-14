@@ -585,18 +585,18 @@ public:
 
 static_assert(StagedCodifferentialConcept<
               StagedCodifferential<
-                      detail::ConceptMetricIndex,
-                      detail::ConceptDirection,
-                      detail::ConceptDirection,
-                      detail::ConceptField<detail::ConceptDirection>,
-                      detail::ConceptField<detail::ConceptMetricIndex>,
-                      detail::ConceptField<detail::ConceptPositionIndex>,
+                      detail::MetricIndexConcept,
+                      detail::DirectionConcept,
+                      detail::DirectionConcept,
+                      detail::FieldConcept<detail::DirectionConcept>,
+                      detail::FieldConcept<detail::MetricIndexConcept>,
+                      detail::FieldConcept<detail::PositionIndexConcept>,
                       Kokkos::DefaultHostExecutionSpace>,
               codifferential_tensor_t<
-                      detail::ConceptDirection,
-                      detail::ConceptDirection,
-                      detail::ConceptField<detail::ConceptDirection>>,
-              detail::ConceptField<detail::ConceptDirection>>);
+                      detail::DirectionConcept,
+                      detail::DirectionConcept,
+                      detail::FieldConcept<detail::DirectionConcept>>,
+              detail::FieldConcept<detail::DirectionConcept>>);
 
 template <
         tensor::TensorIndex MetricIndex,

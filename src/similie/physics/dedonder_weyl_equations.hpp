@@ -41,7 +41,7 @@ public:
 };
 
 static_assert(DeDonderWeylEquationsConcept<
-              DeDonderWeylEquations<detail::ConceptHamiltonian>,
-              detail::ConceptElement>);
+              DeDonderWeylEquations<detail::HamiltonianPhysicsConcept>,
+              detail::ElementConcept>);
 
 } // namespace similie::physics

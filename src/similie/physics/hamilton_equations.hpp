@@ -49,7 +49,7 @@ public:
     }
 
     template <class Index, class Elem>
-        requires detail::HasMomentCoefficient<Hamiltonian, Index, Elem>
+        requires detail::HasMomentCoefficientConcept<Hamiltonian, Index, Elem>
     [[nodiscard]] KOKKOS_FUNCTION constexpr auto dpotential_dt_value(State const& state, Elem elem)
             const
     {
@@ -57,7 +57,7 @@ public:
     }
 
     template <class Index, class Elem>
-        requires detail::HasPotentialCoefficient<Hamiltonian, Index, Elem>
+        requires detail::HasPotentialCoefficientConcept<Hamiltonian, Index, Elem>
     [[nodiscard]] KOKKOS_FUNCTION constexpr auto dmoments_dt_value(State const& state, Elem elem)
             const
     {
@@ -72,13 +72,7 @@ public:
 };
 
 static_assert(HamiltonEquationsConcept<
-              HamiltonEquations<detail::ConceptHamiltonian>,
-              detail::ConceptElement>);
-static_assert(MomentCoefficientHamiltonEquationsConcept<
-              HamiltonEquations<detail::ConceptHamiltonian>,
-              detail::ConceptElement>);
-static_assert(PotentialCoefficientHamiltonEquationsConcept<
-              HamiltonEquations<detail::ConceptHamiltonian>,
-              detail::ConceptElement>);
+              HamiltonEquations<detail::HamiltonianPhysicsConcept>,
+              detail::ElementConcept>);
 
 } // namespace similie::physics

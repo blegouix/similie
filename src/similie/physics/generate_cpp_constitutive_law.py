@@ -166,7 +166,7 @@ public:
     }}
 }};
 
-static_assert(similie::physics::ConstitutiveLawConcept<{class_name}, similie::physics::detail::ConceptElement>);
+static_assert(similie::physics::ConstitutiveLawConcept<{class_name}, similie::physics::detail::ElementConcept>);
 
 }} // namespace {namespace}
 """

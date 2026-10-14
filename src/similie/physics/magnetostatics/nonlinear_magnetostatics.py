@@ -354,7 +354,7 @@ public:
 
 static_assert(similie::physics::ConstitutiveLawConcept<
         NonlinearMagneticInductionToMagneticField<InterpolatedNonlinearBHCurve<2>>,
-        similie::physics::detail::ConceptElement>);
+        similie::physics::detail::ElementConcept>);
 """
 
 

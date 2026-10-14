@@ -19,36 +19,40 @@ template <class ElementType, class SupportType, class LayoutStridedPolicy, class
 class Tensor;
 
 namespace detail {
-struct ConceptDimension
+struct DimensionConcept
 {
 };
 
-struct ConceptGrid : ddc::UniformPointSampling<ConceptDimension>
+struct GridConcept : ddc::UniformPointSampling<DimensionConcept>
 {
 };
 
 template <class Index>
-using ConceptField = Tensor<
+using FieldConcept = Tensor<
         double,
-        ddc::DiscreteDomain<ConceptGrid, Index>,
+        ddc::DiscreteDomain<GridConcept, Index>,
         Kokkos::layout_right,
         Kokkos::HostSpace>;
 
-struct ConceptIndexTensor
+struct IndexTensorConcept
 {
     using element_type = double;
 };
 
-struct ConceptIndexAccess
+struct IndexAccessConcept
 {
     template <class Tensor, class Element>
     double operator()(Tensor tensor, Element element) const;
 };
 } // namespace detail
 
-// Common metadata. Constant-expression requirements also instantiate size functions.
+// All indices expose the same metadata and access operation. Explicit storage
+// additionally provides a direct map between access IDs and memory IDs.
 template <class Index>
-concept TensorIndexConcept = requires {
+concept TensorIndexConcept = requires(
+        detail::IndexTensorConcept tensor,
+        ddc::DiscreteElement<Index> element,
+        detail::IndexAccessConcept access) {
     requires Index::is_tensor_index;
     typename std::bool_constant<Index::is_explicitely_stored_tensor>;
     typename Index::subindices_domain_t;
@@ -61,33 +65,32 @@ concept TensorIndexConcept = requires {
     typename std::integral_constant<std::size_t, Index::size()>;
     typename std::integral_constant<std::size_t, Index::mem_size()>;
     typename std::integral_constant<std::size_t, Index::access_size()>;
-};
-
-template <class Index>
-concept TensorIndexAccessConcept = TensorIndexConcept<Index>
-                                   && requires(
-                                           detail::ConceptIndexTensor tensor,
-                                           ddc::DiscreteElement<Index> element,
-                                           detail::ConceptIndexAccess access) {
-                                          {
-                                              Index::template process_access<
-                                                      detail::ConceptIndexTensor,
-                                                      ddc::DiscreteElement<Index>,
-                                                      Index>(access, tensor, element)
-                                          } -> std::same_as<double>;
-                                      };
-
-template <class Index>
-concept DirectTensorIndexConcept = TensorIndexAccessConcept<Index> && requires(std::size_t id) {
-    requires Index::is_explicitely_stored_tensor;
-    { Index::access_id_to_mem_id(id) } -> std::same_as<std::size_t>;
     {
-        Index::mem_id_to_canonical_natural_ids(id)
-    } -> std::same_as<std::array<std::size_t, Index::rank()>>;
+        Index::template process_access<
+                detail::IndexTensorConcept,
+                ddc::DiscreteElement<Index>,
+                Index>(access, tensor, element)
+    } -> std::same_as<double>;
+    requires(!Index::is_explicitely_stored_tensor || requires(std::size_t id) {
+        { Index::access_id_to_mem_id(id) } -> std::same_as<std::size_t>;
+        {
+            Index::mem_id_to_canonical_natural_ids(id)
+        } -> std::same_as<std::array<std::size_t, Index::rank()>>;
+        // Natural indices take one ID; composite indices take subindex IDs.
+        requires (requires(std::array<std::size_t, Index::subindices_domain_t::rank()> ids) {
+            { Index::mem_id(ids) } -> std::same_as<std::size_t>;
+            { Index::access_id(ids) } -> std::same_as<std::size_t>;
+        } || requires {
+            requires Index::is_tensor_natural_index;
+            { Index::mem_id(id) } -> std::same_as<std::size_t>;
+            { Index::access_id(id) } -> std::same_as<std::size_t>;
+        });
+    });
 };
 
 template <class Index, class Dimension>
-concept NaturalTensorIndexConcept = DirectTensorIndexConcept<Index> && requires(std::size_t id) {
+concept NaturalTensorIndexConcept = TensorIndexConcept<Index> && requires(std::size_t id) {
+    requires Index::is_explicitely_stored_tensor;
     requires Index::is_tensor_natural_index;
     typename Index::type_seq_dimensions;
     { Index::template mem_id<Dimension>() } -> std::same_as<std::size_t>;
@@ -95,18 +98,9 @@ concept NaturalTensorIndexConcept = DirectTensorIndexConcept<Index> && requires(
     { Index::access_id(id) } -> std::same_as<std::size_t>;
 };
 
-// Mapping arity follows the constituent indices, which can include scalar indices.
-template <class Index>
-concept StructuredTensorIndexConcept
-        = DirectTensorIndexConcept<Index>
-          && requires(std::array<std::size_t, Index::subindices_domain_t::rank()> ids) {
-                 { Index::mem_id(ids) } -> std::same_as<std::size_t>;
-                 { Index::access_id(ids) } -> std::same_as<std::size_t>;
-             };
-
 template <class Index>
 concept YoungTableauTensorIndexConcept
-        = TensorIndexAccessConcept<Index>
+        = TensorIndexConcept<Index>
           && requires(std::array<std::size_t, Index::subindices_domain_t::rank()> ids) {
                  requires(!Index::is_explicitely_stored_tensor);
                  { Index::access_id(ids) } -> std::same_as<std::size_t>;

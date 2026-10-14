@@ -108,8 +108,7 @@ struct TensorFullIndex
     }
 };
 
-static_assert(StructuredTensorIndexConcept<
-              TensorFullIndex<TensorNaturalIndex<detail::ConceptDimension>>>);
+static_assert(TensorIndexConcept<TensorFullIndex<TensorNaturalIndex<detail::DimensionConcept>>>);
 
 } // namespace tensor
 

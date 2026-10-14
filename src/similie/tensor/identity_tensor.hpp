@@ -97,8 +97,8 @@ struct TensorIdentityIndex
     }
 };
 
-static_assert(StructuredTensorIndexConcept<
-              TensorIdentityIndex<TensorNaturalIndex<detail::ConceptDimension>>>);
+static_assert(
+        TensorIndexConcept<TensorIdentityIndex<TensorNaturalIndex<detail::DimensionConcept>>>);
 
 } // namespace tensor
 

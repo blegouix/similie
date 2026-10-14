@@ -442,17 +442,17 @@ struct Coboundary<TagToAddToCochain, CochainTag>
 };
 
 static_assert(CoboundaryConcept<
-              Coboundary<detail::ConceptDirection, detail::ConceptScalar>,
+              Coboundary<detail::DirectionConcept, detail::ScalarConcept>,
               tensor::Tensor<
                       double,
-                      ddc::DiscreteDomain<detail::ConceptDirection>,
+                      ddc::DiscreteDomain<detail::DirectionConcept>,
                       Kokkos::layout_right,
                       Kokkos::HostSpace>,
-              detail::ConceptEvaluator,
-              LocalChain<Simplex<1, detail::ConceptGrid>>,
-              LocalChain<Simplex<0, detail::ConceptGrid>>,
-              ddc::DiscreteElement<detail::ConceptGrid>,
-              ddc::DiscreteElement<detail::ConceptDirection>>);
+              detail::EvaluatorConcept,
+              LocalChain<Simplex<1, detail::GridConcept>>,
+              LocalChain<Simplex<0, detail::GridConcept>>,
+              ddc::DiscreteElement<detail::GridConcept>,
+              ddc::DiscreteElement<detail::DirectionConcept>>);
 
 template <tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag>
 struct TransposedCoboundary<TagToAddToCochain, CochainTag>
@@ -562,17 +562,17 @@ struct TransposedCoboundary<TagToAddToCochain, CochainTag>
 };
 
 static_assert(CoboundaryConcept<
-              TransposedCoboundary<detail::ConceptDirection, detail::ConceptScalar>,
+              TransposedCoboundary<detail::DirectionConcept, detail::ScalarConcept>,
               tensor::Tensor<
                       double,
-                      ddc::DiscreteDomain<detail::ConceptDirection>,
+                      ddc::DiscreteDomain<detail::DirectionConcept>,
                       Kokkos::layout_right,
                       Kokkos::HostSpace>,
-              detail::ConceptEvaluator,
-              LocalChain<Simplex<1, detail::ConceptGrid>>,
-              LocalChain<Simplex<0, detail::ConceptGrid>>,
-              ddc::DiscreteElement<detail::ConceptGrid>,
-              ddc::DiscreteElement<detail::ConceptDirection>>);
+              detail::EvaluatorConcept,
+              LocalChain<Simplex<1, detail::GridConcept>>,
+              LocalChain<Simplex<0, detail::GridConcept>>,
+              ddc::DiscreteElement<detail::GridConcept>,
+              ddc::DiscreteElement<detail::DirectionConcept>>);
 
 template <misc::Specialization<Cochain> CochainType>
 KOKKOS_FUNCTION coboundary_t<CochainType> coboundary(CochainType cochain)

@@ -135,8 +135,8 @@ struct TensorSymmetricIndex
     }
 };
 
-static_assert(StructuredTensorIndexConcept<
-              TensorSymmetricIndex<TensorNaturalIndex<detail::ConceptDimension>>>);
+static_assert(
+        TensorIndexConcept<TensorSymmetricIndex<TensorNaturalIndex<detail::DimensionConcept>>>);
 
 } // namespace tensor
 

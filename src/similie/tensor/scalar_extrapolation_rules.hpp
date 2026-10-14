@@ -49,8 +49,8 @@ struct ClampExtrapolationRule
 
 static_assert(ExtrapolationRuleConcept<
               ClampExtrapolationRule,
-              detail::ConceptField<ScalarIndex>,
-              ddc::DiscreteElement<detail::ConceptGrid>>);
+              detail::FieldConcept<ScalarIndex>,
+              ddc::DiscreteElement<detail::GridConcept>>);
 
 struct ZeroExtrapolationRule
 {
@@ -83,8 +83,8 @@ struct ZeroExtrapolationRule
 
 static_assert(ExtrapolationRuleConcept<
               ZeroExtrapolationRule,
-              detail::ConceptField<ScalarIndex>,
-              ddc::DiscreteElement<detail::ConceptGrid>>);
+              detail::FieldConcept<ScalarIndex>,
+              ddc::DiscreteElement<detail::GridConcept>>);
 
 struct PrescribedScalarExtrapolationRule
 {
@@ -123,8 +123,8 @@ struct PrescribedScalarExtrapolationRule
 
 static_assert(ExtrapolationRuleConcept<
               PrescribedScalarExtrapolationRule,
-              detail::ConceptField<ScalarIndex>,
-              ddc::DiscreteElement<detail::ConceptGrid>>);
+              detail::FieldConcept<ScalarIndex>,
+              ddc::DiscreteElement<detail::GridConcept>>);
 
 struct ConstantScalarExtrapolationRule
 {
@@ -162,8 +162,8 @@ struct ConstantScalarExtrapolationRule
 
 static_assert(ExtrapolationRuleConcept<
               ConstantScalarExtrapolationRule,
-              detail::ConceptField<ScalarIndex>,
-              ddc::DiscreteElement<detail::ConceptGrid>>);
+              detail::FieldConcept<ScalarIndex>,
+              ddc::DiscreteElement<detail::GridConcept>>);
 
 struct NaturalScalarExtrapolationRule
 {
@@ -214,7 +214,7 @@ struct NaturalScalarExtrapolationRule
 
 static_assert(ExtrapolationRuleConcept<
               NaturalScalarExtrapolationRule,
-              detail::ConceptField<ScalarIndex>,
-              ddc::DiscreteElement<detail::ConceptGrid>>);
+              detail::FieldConcept<ScalarIndex>,
+              ddc::DiscreteElement<detail::GridConcept>>);
 
 } // namespace sil::tensor
