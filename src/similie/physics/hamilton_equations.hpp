@@ -49,9 +49,7 @@ public:
     }
 
     template <class Index, class Elem>
-        requires requires(Hamiltonian const& h, State const& state, Elem elem) {
-            h.template dhamiltonian_dmoments_value<Index>(state, elem);
-        }
+        requires detail::HasMomentCoefficient<Hamiltonian, Index, Elem>
     [[nodiscard]] KOKKOS_FUNCTION constexpr auto dpotential_dt_value(State const& state, Elem elem)
             const
     {
@@ -59,9 +57,7 @@ public:
     }
 
     template <class Index, class Elem>
-        requires requires(Hamiltonian const& h, State const& state, Elem elem) {
-            h.template dhamiltonian_dpotential_value<Index>(state, elem);
-        }
+        requires detail::HasPotentialCoefficient<Hamiltonian, Index, Elem>
     [[nodiscard]] KOKKOS_FUNCTION constexpr auto dmoments_dt_value(State const& state, Elem elem)
             const
     {

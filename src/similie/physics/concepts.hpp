@@ -81,6 +81,20 @@ struct ConceptHamiltonian
     }
 };
 
+// Namespace-level concepts avoid nvcc rejecting dependent member-template calls
+// in requires-expressions declared inside a class template.
+template <class Hamiltonian, class Index, class Element>
+concept HasMomentCoefficient = requires(
+        Hamiltonian const& h,
+        typename Hamiltonian::State const& state,
+        Element element) { h.template dhamiltonian_dmoments_value<Index>(state, element); };
+
+template <class Hamiltonian, class Index, class Element>
+concept HasPotentialCoefficient = requires(
+        Hamiltonian const& h,
+        typename Hamiltonian::State const& state,
+        Element element) { h.template dhamiltonian_dpotential_value<Index>(state, element); };
+
 } // namespace detail
 
 // Every Hamiltonian has the same arguments; quantities belong to its State.

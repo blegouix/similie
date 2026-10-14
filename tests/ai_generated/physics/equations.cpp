@@ -68,6 +68,12 @@ struct SpatialHamiltonian
 };
 
 static_assert(similie::physics::HamiltonianConcept<SpatialHamiltonian, int>);
+static_assert(!similie::physics::MomentCoefficientHamiltonEquationsConcept<
+              similie::physics::HamiltonEquations<SpatialHamiltonian>,
+              int>);
+static_assert(!similie::physics::PotentialCoefficientHamiltonEquationsConcept<
+              similie::physics::HamiltonEquations<SpatialHamiltonian>,
+              int>);
 
 TEST(PhysicsAPI, SharedStateFeedsBothEquationWrappers)
 {
