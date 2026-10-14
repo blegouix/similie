@@ -154,6 +154,45 @@ add_custom_command(
     VERBATIM
 )
 
+set(NAVIER_STOKES_FOURIER_GENERATOR
+    "${CMAKE_CURRENT_SOURCE_DIR}/fluid/navier_stokes_fourier.py")
+set(NAVIER_STOKES_FOURIER_HEADER
+    "${SIMILIE_GENERATED_PHYSICS_DIR}/fluid/navier_stokes_fourier_generated.hpp")
+add_custom_command(
+    OUTPUT "${NAVIER_STOKES_FOURIER_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}" -B "${NAVIER_STOKES_FOURIER_GENERATOR}"
+            --output "${NAVIER_STOKES_FOURIER_HEADER}"
+    DEPENDS "${NAVIER_STOKES_FOURIER_GENERATOR}"
+    COMMENT "Generating explicit Navier-Stokes-Fourier physics from SymPy"
+    VERBATIM
+)
+
+set(MAGNETODYNAMICS_GENERATOR
+    "${CMAKE_CURRENT_SOURCE_DIR}/magnetodynamics/magnetodynamics.py")
+set(MAGNETODYNAMICS_HEADER
+    "${SIMILIE_GENERATED_PHYSICS_DIR}/magnetodynamics/magnetodynamics_hamiltonian.hpp")
+add_custom_command(
+    OUTPUT "${MAGNETODYNAMICS_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}" -B "${MAGNETODYNAMICS_GENERATOR}"
+            --output "${MAGNETODYNAMICS_HEADER}"
+    DEPENDS "${MAGNETODYNAMICS_GENERATOR}" "${GENERIC_HAMILTONIAN_GENERATOR}"
+    COMMENT "Generating magnetodynamics Hamiltonian from SymPy"
+    VERBATIM
+)
+
+set(ELECTRODYNAMICS_GENERATOR
+    "${CMAKE_CURRENT_SOURCE_DIR}/electrodynamics/electrodynamics.py")
+set(ELECTRODYNAMICS_HEADER
+    "${SIMILIE_GENERATED_PHYSICS_DIR}/electrodynamics/electrodynamics_hamiltonian.hpp")
+add_custom_command(
+    OUTPUT "${ELECTRODYNAMICS_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}" -B "${ELECTRODYNAMICS_GENERATOR}"
+            --output "${ELECTRODYNAMICS_HEADER}"
+    DEPENDS "${ELECTRODYNAMICS_GENERATOR}" "${GENERIC_HAMILTONIAN_GENERATOR}"
+    COMMENT "Generating electric-only Hamiltonian from SymPy"
+    VERBATIM
+)
+
 add_custom_target(similie_physics_generated
     DEPENDS
         "${SCALAR_FIELD_HEADER}"
@@ -162,6 +201,9 @@ add_custom_target(similie_physics_generated
         "${NONLINEAR_MAGNETOSTATICS_HEADER}"
         "${LINEAR_ELASTICITY_HEADER}"
         "${LINEAR_ELASTICITY_CONSTITUTIVE_LAW_HEADER}"
+        "${NAVIER_STOKES_FOURIER_HEADER}"
+        "${MAGNETODYNAMICS_HEADER}"
+        "${ELECTRODYNAMICS_HEADER}"
 )
 
 add_library(physics INTERFACE)

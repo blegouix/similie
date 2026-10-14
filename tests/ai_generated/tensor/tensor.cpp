@@ -3,6 +3,7 @@
 // AI-GENERATED
 
 #include <cmath>
+#include <concepts>
 
 #include <ddc/ddc.hpp>
 
@@ -54,6 +55,14 @@ struct Nu : sil::tensor::TensorNaturalIndex<T, X, Y, Z>
 };
 
 using AntisymIndex = sil::tensor::TensorAntisymmetricIndex<Mu, Nu>;
+
+using FullIndex = sil::tensor::TensorFullIndex<Alpha, Nu>;
+using DiagIndex = sil::tensor::TensorDiagonalIndex<Mu, Nu>;
+using SymIndex = sil::tensor::TensorSymmetricIndex<Mu, Nu>;
+using IdIndex = sil::tensor::TensorIdentityIndex<Mu, Nu>;
+using LorentzianSignIndex
+        = sil::tensor::TensorLorentzianSignIndex<std::integral_constant<std::size_t, 2>, Mu, Nu>;
+using LeviCivitaIndex = sil::tensor::TensorLeviCivitaIndex<Alpha, Beta, Gamma>;
 
 namespace {
 struct SignedGridX
@@ -353,3 +362,93 @@ TEST(Tensor, ExtrapolatedAntisymmetricTensorAccessAndSlices)
     auto const point = view[ddc::DiscreteElement<SignedGridX, AntisymIndex>(grid.front(), xy)];
     EXPECT_DOUBLE_EQ(point.mem(ddc::DiscreteElement<>()), 30.0);
 }
+
+TEST(Tensor, ScalarStructuredIndexContract)
+{
+    EXPECT_EQ(sil::tensor::TensorFullIndex<>::rank(), 0);
+    EXPECT_EQ(sil::tensor::TensorFullIndex<>::size(), 1);
+    EXPECT_EQ(sil::tensor::TensorFullIndex<>::mem_size(), 1);
+    EXPECT_EQ(sil::tensor::TensorFullIndex<>::access_size(), 1);
+    EXPECT_EQ(sil::tensor::TensorFullIndex<>::access_id({}), 0);
+    EXPECT_EQ(sil::tensor::TensorSymmetricIndex<>::rank(), 0);
+    EXPECT_EQ(sil::tensor::TensorSymmetricIndex<>::size(), 1);
+    EXPECT_EQ(sil::tensor::TensorSymmetricIndex<>::mem_size(), 1);
+    EXPECT_EQ(sil::tensor::TensorSymmetricIndex<>::access_size(), 1);
+    EXPECT_EQ(sil::tensor::TensorSymmetricIndex<>::mem_id({}), 0);
+    EXPECT_EQ(sil::tensor::TensorSymmetricIndex<>::access_id({}), 0);
+    EXPECT_EQ(sil::tensor::TensorAntisymmetricIndex<>::size(), 1);
+    EXPECT_EQ(sil::tensor::TensorAntisymmetricIndex<>::mem_size(), 1);
+    EXPECT_EQ(sil::tensor::TensorAntisymmetricIndex<>::access_size(), 1);
+    EXPECT_EQ(sil::tensor::TensorAntisymmetricIndex<>::mem_id({}), 0);
+}
+
+TEST(Tensor, AntisymmetricAccessDomainIncludesBothOrientations)
+{
+    using Index = sil::tensor::TensorAntisymmetricIndex<Alpha, Beta, Gamma>;
+    sil::tensor::TensorAccessor<Index> accessor;
+    ddc::Chunk allocation(accessor.domain(), ddc::HostAllocator<double>());
+    sil::tensor::Tensor field(allocation);
+    field.mem(ddc::DiscreteElement<Index>(0)) = 7.0;
+    EXPECT_EQ(Index::size(), 27);
+    EXPECT_EQ(Index::mem_size(), 1);
+    EXPECT_EQ(Index::access_size(), 3);
+    for (std::size_t i = 0; i < 3; ++i) {
+        for (std::size_t j = 0; j < 3; ++j) {
+            for (std::size_t k = 0; k < 3; ++k) {
+                std::size_t const access = Index::access_id({i, j, k});
+                EXPECT_LT(access, Index::access_size());
+                if (i == j || i == k || j == k) {
+                    EXPECT_EQ(access, 0);
+                    EXPECT_DOUBLE_EQ(field.get(ddc::DiscreteElement<Index>(access)), 0.0);
+                } else {
+                    bool const odd = ((i > j) + (i > k) + (j > k)) % 2 != 0;
+                    EXPECT_EQ(Index::access_id_to_mem_id(access), 0);
+                    EXPECT_DOUBLE_EQ(
+                            field.get(ddc::DiscreteElement<Index>(access)),
+                            odd ? -7.0 : 7.0);
+                }
+            }
+        }
+    }
+}
+
+TEST(Tensor, AntisymmetricCanonicalStorageRoundTrip)
+{
+    using Index = sil::tensor::TensorAntisymmetricIndex<Mu, Nu, sil::tensor::Covariant<Mu>>;
+    for (std::size_t stored = 0; stored < Index::mem_size(); ++stored) {
+        std::array<std::size_t, 3> const ids = Index::mem_id_to_canonical_natural_ids(stored);
+        EXPECT_LT(ids[0], ids[1]);
+        EXPECT_LT(ids[1], ids[2]);
+        EXPECT_EQ(Index::mem_id(ids), stored);
+        EXPECT_EQ(Index::access_id_to_mem_id(Index::access_id(ids)), stored);
+    }
+}
+
+namespace {
+
+template <class Index>
+concept DirectTensorIndexAPI = requires(std::size_t id) {
+    requires Index::is_tensor_index;
+    requires Index::is_explicitely_stored_tensor;
+    { Index::subindices_domain() } -> std::same_as<typename Index::subindices_domain_t>;
+    { Index::rank() } -> std::same_as<std::size_t>;
+    { Index::size() } -> std::same_as<std::size_t>;
+    { Index::mem_size() } -> std::same_as<std::size_t>;
+    { Index::access_size() } -> std::same_as<std::size_t>;
+    { Index::access_id_to_mem_id(id) } -> std::same_as<std::size_t>;
+    {
+        Index::mem_id_to_canonical_natural_ids(id)
+    } -> std::same_as<std::array<std::size_t, Index::rank()>>;
+};
+
+static_assert(DirectTensorIndexAPI<sil::tensor::ScalarIndex>);
+static_assert(DirectTensorIndexAPI<Alpha>);
+static_assert(DirectTensorIndexAPI<FullIndex>);
+static_assert(DirectTensorIndexAPI<DiagIndex>);
+static_assert(DirectTensorIndexAPI<SymIndex>);
+static_assert(DirectTensorIndexAPI<AntisymIndex>);
+static_assert(DirectTensorIndexAPI<IdIndex>);
+static_assert(DirectTensorIndexAPI<LorentzianSignIndex>);
+static_assert(DirectTensorIndexAPI<LeviCivitaIndex>);
+
+} // namespace

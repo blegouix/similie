@@ -628,11 +628,16 @@ std::shared_ptr<gko::matrix::Csr<double, gko::int32>> build_matrix(
         std::shared_ptr<gko::Executor const> const& gko_exec,
         OperatorModel const& operator_model)
 {
-    auto matrix_data = assemble_matrix_data(operator_model);
-    matrix_data.sum_duplicates();
-    if (env_flag_enabled("SIMILIE_MATRIX_DIAGNOSTICS"))
-        log_matrix_diagnostics(matrix_data);
-    return csr_from_matrix_data(gko_exec, matrix_data);
+    if constexpr (requires { assemble_matrix_data(operator_model); }) {
+        auto matrix_data = assemble_matrix_data(operator_model);
+        matrix_data.sum_duplicates();
+        if (env_flag_enabled("SIMILIE_MATRIX_DIAGNOSTICS"))
+            log_matrix_diagnostics(matrix_data);
+        return csr_from_matrix_data(gko_exec, matrix_data);
+    } else {
+        throw std::invalid_argument(
+                "This operator supports only matrix-free solves with identity preconditioning");
+    }
 }
 
 template <class OperatorModel, class StateView>

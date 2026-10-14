@@ -11,7 +11,6 @@ from similie_generate_cpp_hamiltonian import (
 )
 from sympy import Function, simplify, symbols
 
-
 INTERPOLATED_BH_CURVE_HEADER = """\
 template <std::size_t MaxSamples>
 struct InterpolatedNonlinearBHCurve

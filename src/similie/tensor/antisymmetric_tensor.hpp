@@ -18,6 +18,8 @@ namespace tensor {
 template <TensorNatIndex... TensorIndex>
 struct TensorAntisymmetricIndex
 {
+    static_assert(((TensorIndex::rank() == 1) && ...));
+
     static constexpr bool is_tensor_index = true;
     static constexpr bool is_explicitely_stored_tensor = true;
 
@@ -45,12 +47,21 @@ struct TensorAntisymmetricIndex
         if constexpr (rank() == 0) {
             return 1;
         } else {
-            return (TensorIndex::size() + ...);
+            return (TensorIndex::size() * ...);
         }
     }
 
     static constexpr std::size_t mem_size()
     {
+        static_assert([] {
+            std::array<std::size_t, sizeof...(TensorIndex)> const sizes {TensorIndex::size()...};
+            for (std::size_t i = 1; i < sizes.size(); ++i) {
+                if (sizes[i] != sizes[0]) {
+                    return false;
+                }
+            }
+            return true;
+        }());
         if constexpr (rank() == 0) {
             return 1;
         } else {
@@ -65,7 +76,7 @@ struct TensorAntisymmetricIndex
         if constexpr (rank() <= 1) {
             return mem_size();
         } else {
-            return mem_size() + 1;
+            return 2 * mem_size() + 1;
         }
     }
 
@@ -74,6 +85,9 @@ struct TensorAntisymmetricIndex
     {
         std::array<std::size_t, rank()> sorted_ids(natural_ids);
         misc::detail::sort(sorted_ids.begin(), sorted_ids.end());
+        for (std::size_t i = 1; i < rank(); ++i) {
+            assert(sorted_ids[i - 1] != sorted_ids[i]);
+        }
         return mem_size()
                - (0 + ...
                   + (sorted_ids[ddc::type_seq_rank_v<TensorIndex, ddc::TypeSeq<TensorIndex...>>]
@@ -113,14 +127,17 @@ public:
         if constexpr (rank() <= 1) {
             return mem_id(natural_ids);
         } else {
-            if (std::all_of(natural_ids.begin(), natural_ids.end(), [&](const std::size_t id) {
-                    return id == *natural_ids.begin();
-                })) {
-                return 0;
-            } else if (!permutation_parity(natural_ids)) {
+            for (std::size_t i = 0; i < rank(); ++i) {
+                for (std::size_t j = i + 1; j < rank(); ++j) {
+                    if (natural_ids[i] == natural_ids[j]) {
+                        return 0;
+                    }
+                }
+            }
+            if (!permutation_parity(natural_ids)) {
                 return 1 + mem_id(natural_ids);
             } else {
-                return access_size() + mem_id(natural_ids);
+                return 1 + mem_size() + mem_id(natural_ids);
             }
         }
     }
@@ -149,7 +166,7 @@ public:
         } else {
             if (elem.template uid<Id>() == 0) {
                 return 0.;
-            } else if (elem.template uid<Id>() < access_size()) {
+            } else if (elem.template uid<Id>() <= mem_size()) {
                 return access(tensor, elem);
             } else {
                 return -access(tensor, elem);

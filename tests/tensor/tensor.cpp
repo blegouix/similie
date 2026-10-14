@@ -534,6 +534,22 @@ TEST(Tensor, YoungTableauIndexing)
 
     sil::tensor::compress(tensor, natural);
 
+    ddc::host_for_each(natural_dom, [&](ddc::DiscreteElement<Alpha, Beta, Gamma> elem) {
+        std::pair<std::vector<double>, std::vector<std::size_t>> const coefficients
+                = YoungTableauIndex::mem_lin_comb(
+                        {elem.uid<Alpha>(), elem.uid<Beta>(), elem.uid<Gamma>()});
+        ASSERT_EQ(coefficients.first.size(), coefficients.second.size());
+        double reconstructed = 0.0;
+        for (std::size_t i = 0; i < coefficients.first.size(); ++i) {
+            ASSERT_LT(coefficients.second[i], YoungTableauIndex::mem_size());
+            reconstructed
+                    += coefficients.first[i]
+                       * tensor.mem(
+                               ddc::DiscreteElement<YoungTableauIndex>(coefficients.second[i]));
+        }
+        EXPECT_NEAR(reconstructed, natural.mem(elem), 1e-6);
+    });
+
     EXPECT_FLOAT_EQ(tensor.get(tensor.access_element<X, X, X>()), 0.);
     EXPECT_FLOAT_EQ(tensor.get(tensor.access_element<X, X, Y>()), 1.);
     EXPECT_FLOAT_EQ(tensor.get(tensor.access_element<X, X, Z>()), 2.);

@@ -107,6 +107,7 @@ def write_cpp_constitutive_law_header(
 #pragma once
 
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <Kokkos_Core.hpp>
 #include <similie/physics/concepts.hpp>

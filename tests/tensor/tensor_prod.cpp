@@ -483,10 +483,13 @@ TEST(TensorProd, SimpleContractionRank3AntisymIndexedxRank2AntisymIndexed)
 
     sil::tensor::tensor_prod(prod_tensor, tensor1, tensor2);
 
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, X, Y>()), -8.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, X, Z>()), 24.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, Y, Z>()), 32.);
-    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, Y, Z>()), 19.);
+    // C(mu, nu, sigma) = sum_rho A(mu, nu, rho) * B(rho, sigma).
+    // Repeated indices in A and diagonal components of B vanish, leaving
+    // one term for each stored output component.
+    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, X, Y>()), -2. * 10.);
+    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, X, Z>()), 1. * 10.);
+    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<T, Y, Z>()), -1. * 9.);
+    EXPECT_EQ(prod_tensor.get(prod_tensor.access_element<X, Y, Z>()), 1. * 7.);
 }
 
 #if defined BUILD_YOUNG_TABLEAU

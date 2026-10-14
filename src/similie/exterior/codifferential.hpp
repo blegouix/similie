@@ -311,7 +311,7 @@ struct Codifferential<
                     codifferential_accessor;
             std::array<
                     double,
-                    codifferential_index_t<TagToRemoveFromCochain, CochainTag>::access_size()>
+                    codifferential_index_t<TagToRemoveFromCochain, CochainTag>::mem_size()>
                     codifferential_alloc {};
             ddc::ChunkSpan<
                     double,
@@ -362,7 +362,7 @@ struct Codifferential<
                 return 0.0;
             }
             [[maybe_unused]] tensor::TensorAccessor<dual_tensor_index> dual_tensor_accessor;
-            std::array<double, dual_tensor_index::access_size()> dual_tensor_alloc {};
+            std::array<double, dual_tensor_index::mem_size()> dual_tensor_alloc {};
             ddc::ChunkSpan<
                     double,
                     ddc::DiscreteDomain<dual_tensor_index>,

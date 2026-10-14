@@ -7,12 +7,14 @@ project(SimiLie VERSION 0.0.0 LANGUAGES C CXX) # C is required because PDI::PDI_
 set_property(GLOBAL PROPERTY GLOBAL_DEPENDS_NO_CYCLES ON)
 
 set(CMAKE_CXX_STANDARD 23 CACHE INTERNAL "The C++ standard whose features are requested to build this project.")
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # List of options
 option(SIMILIE_BUILD_DOCUMENTATION "Build SimiLie documentation/website" OFF)
 option(SIMILIE_BUILD_ONLY_DOCUMENTATION "Build only documentation, skip all other targets and dependencies. Requires SIMILIE_BUILD_DOCUMENTATION=ON" OFF)
 option(SIMILIE_BUILD_YOUNG_TABLEAU "Build module dedicated to Young tableau indexing" OFF) # Requires compiler supporting #embed directive
 option(SIMILIE_BUILD_ONELAB_INTERFACE "Build the ONELAB interface executable" ON)
+option(SIMILIE_BUILD_BENCHMARKS "Build SimiLie Google Benchmark executables" OFF)
 option(SIMILIE_DEBUG_LOG "Enable logging of SimiLie internal kernels" OFF)
 option(SIMILIE_ASSERT_EXAMPLE_RESULTS_CORRECTNESS "Assert example result correctness at runtime" OFF)
 
@@ -96,6 +98,9 @@ if(NOT "${SIMILIE_BUILD_ONLY_DOCUMENTATION}")
   endif()
   add_subdirectory(tests)
   add_subdirectory(examples)
+  if(SIMILIE_BUILD_BENCHMARKS)
+    add_subdirectory(benchmarks)
+  endif()
 
   set(SIMILIE_INTERNAL_TARGETS
       csr

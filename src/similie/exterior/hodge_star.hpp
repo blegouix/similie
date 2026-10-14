@@ -119,7 +119,7 @@ template <misc::Specialization<ddc::TypeSeq> Indices>
 struct HodgeStarTargetSize
 {
     static constexpr std::size_t value
-            = misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, Indices>::access_size();
+            = misc::convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, Indices>::mem_size();
 };
 
 template <>
@@ -267,7 +267,7 @@ struct DiscreteHodgeStar
                 = ddc::to_type_seq_t<typename HodgeTensorType::accessor_t::natural_domain_t>;
 
         [[maybe_unused]] tensor::TensorAccessor<InputIndex> reconstructed_accessor;
-        std::array<double, InputIndex::access_size()> reconstructed_alloc {};
+        std::array<double, InputIndex::mem_size()> reconstructed_alloc {};
         ddc::ChunkSpan<
                 double,
                 ddc::DiscreteDomain<InputIndex>,
@@ -277,7 +277,7 @@ struct DiscreteHodgeStar
         sil::tensor::Tensor reconstructed_form(reconstructed_span);
 
         [[maybe_unused]] tensor::TensorAccessor<OutputIndex> continuous_output_accessor;
-        std::array<double, OutputIndex::access_size()> continuous_output_alloc {};
+        std::array<double, OutputIndex::mem_size()> continuous_output_alloc {};
         ddc::ChunkSpan<
                 double,
                 ddc::DiscreteDomain<OutputIndex>,
@@ -312,7 +312,7 @@ struct DiscreteHodgeStar
         using TargetFullElem = misc::convert_type_seq_to_t<ddc::DiscreteElement, Indices2>;
 
         [[maybe_unused]] tensor::TensorAccessor<SourceIndex> source_accessor;
-        std::array<double, SourceIndex::access_size()> source_alloc {};
+        std::array<double, SourceIndex::mem_size()> source_alloc {};
         ddc::ChunkSpan<
                 double,
                 ddc::DiscreteDomain<SourceIndex>,
@@ -325,7 +325,7 @@ struct DiscreteHodgeStar
         });
 
         [[maybe_unused]] tensor::TensorAccessor<TargetIndex> target_accessor;
-        std::array<double, TargetIndex::access_size()> target_alloc {};
+        std::array<double, TargetIndex::mem_size()> target_alloc {};
         ddc::ChunkSpan<
                 double,
                 ddc::DiscreteDomain<TargetIndex>,
@@ -416,7 +416,7 @@ struct ContinuousHodgeStar
         [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<
                 hodge_star_domain_t<Indices1, Indices2>> hodge_star_accessor;
         static constexpr std::size_t HODGE_STAR_SIZE
-                = misc::convert_type_seq_to_t<tensor::TensorFullIndex, Indices1>::access_size()
+                = misc::convert_type_seq_to_t<tensor::TensorFullIndex, Indices1>::mem_size()
                   * detail::HodgeStarTargetSize<Indices2>::value;
         std::array<double, HODGE_STAR_SIZE> hodge_star_alloc {};
         ddc::ChunkSpan<

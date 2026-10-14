@@ -23,7 +23,7 @@ on:
       ci_environment:
         required: false
         type: string
-        default: automatic-ci-run
+        default: tests-cuda
 
 concurrency:
   group: tests-${{ inputs.test_target || 'all' }}-${{ inputs.target_sha || github.event.workflow_run.head_sha || github.sha }}
@@ -34,7 +34,7 @@ jobs:
     if: (inputs.target_sha || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') && (!inputs.test_target || inputs.test_target == 'all' || inputs.test_target == 'cuda')
     runs-on: [self-hosted, linux]
     environment:
-      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'tests-cuda' || 'automatic-ci-run') }}
+      name: ${{ inputs.ci_environment || 'tests-cuda' }}
     steps:
     - name: Select target commit
       id: target
@@ -54,7 +54,7 @@ jobs:
         echo "CACHE_ROOT=${RUNNER_TEMP}/similie-cuda-workspace-${TARGET_SHA}" >> "${GITHUB_ENV}"
         rm -rf "${RUNNER_TEMP}/similie-cuda-workspace-${TARGET_SHA}"
     - name: Restore commit workspace
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v6
       with:
         path: ${{ runner.temp }}/similie-cuda-workspace-${{ steps.target.outputs.target_sha }}
         key: similie-cuda-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
@@ -102,7 +102,7 @@ jobs:
         echo "CACHE_ROOT=${RUNNER_TEMP}/similie-omp-workspace-${TARGET_SHA}" >> "${GITHUB_ENV}"
         rm -rf "${RUNNER_TEMP}/similie-omp-workspace-${TARGET_SHA}"
     - name: Restore OpenMP commit workspace
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v6
       with:
         path: ${{ runner.temp }}/similie-omp-workspace-${{ steps.target.outputs.target_sha }}
         key: similie-omp-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}

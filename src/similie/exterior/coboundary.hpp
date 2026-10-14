@@ -305,7 +305,7 @@ KOKKOS_FUNCTION auto incidence_stencil(
             = OutputIndex::rank() > 1 && access == 0 ? 0 : OutputIndex::access_id_to_mem_id(access);
     double const orientation = [&] {
         if constexpr (OutputIndex::rank() > 1)
-            return access == 0 ? 0.0 : access < OutputIndex::access_size() ? 1.0 : -1.0;
+            return access == 0 ? 0.0 : access <= OutputIndex::mem_size() ? 1.0 : -1.0;
         else
             return 1.0;
     }();

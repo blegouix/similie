@@ -19,7 +19,7 @@ on:
       ci_environment:
         required: false
         type: string
-        default: automatic-ci-run
+        default: scalar-field-cuda
 
 concurrency:
   group: example-2d_scalar_field-${{ inputs.target_sha || github.event.workflow_run.head_sha || github.sha }}
@@ -31,7 +31,7 @@ jobs:
     runs-on: [self-hosted, linux]
     timeout-minutes: 240
     environment:
-      name: ${{ inputs.ci_environment || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && 'examples-cuda' || 'automatic-ci-run') }}
+      name: ${{ inputs.ci_environment || 'scalar-field-cuda' }}
     steps:
     - name: Prepare example log
       run: |
@@ -55,7 +55,7 @@ jobs:
         echo "CACHE_ROOT=${RUNNER_TEMP}/similie-cuda-workspace-${TARGET_SHA}" >> "${GITHUB_ENV}"
         rm -rf "${RUNNER_TEMP}/similie-cuda-workspace-${TARGET_SHA}"
     - name: Restore commit workspace
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v6
       with:
         path: ${{ runner.temp }}/similie-cuda-workspace-${{ steps.target.outputs.target_sha }}
         key: similie-cuda-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
@@ -82,7 +82,7 @@ jobs:
           ' 2>&1 | tee -a "${EXAMPLE_LOG}"
     - name: Upload example outputs
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: example-2d_scalar_field
         overwrite: true

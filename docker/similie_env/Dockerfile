@@ -196,4 +196,4 @@ RUN git clone --depth 1 --branch 5.2.2 https://github.com/kokkos/kokkos-kernels.
 # ------------------------------
 
 # Python packages
-RUN apt install -y python3-sympy python3-h5py
+RUN apt install -y python3-sympy python3-h5py python3-matplotlib

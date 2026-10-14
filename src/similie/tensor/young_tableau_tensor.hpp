@@ -57,26 +57,7 @@ struct TensorYoungTableauIndex
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_lin_comb(
             std::array<std::size_t, sizeof...(TensorIndex)> const natural_ids)
     {
-        std::pair<std::vector<double>, std::vector<std::size_t>> result {};
-        constexpr csr::Csr v = young_tableau::template v<
-                TensorYoungTableauIndex<YoungTableau, TensorIndex...>,
-                TensorIndex...>(ddc::DiscreteDomain<TensorIndex...>(
-                ddc::DiscreteElement<TensorIndex...>(ddc::DiscreteElement<TensorIndex>(0)...),
-                ddc::DiscreteVector<TensorIndex...>(
-                        ddc::DiscreteVector<TensorIndex>(TensorIndex::size())...)));
-        for (std::size_t j = 0; j < v.values().size(); ++j) {
-            if (((v.idx()[ddc::type_seq_rank_v<TensorIndex, ddc::TypeSeq<TensorIndex...>>][j]
-                  == TensorIndex::access_id(natural_ids))
-                 && ...)) {
-                std::get<0>(result).push_back(v.values()[j]);
-                std::size_t k = 0;
-                while (k < v.coalesc_idx().size() - 1 && v.coalesc_idx()[k + 1] <= j) {
-                    k++;
-                }
-                std::get<1>(result).push_back(k);
-            }
-        }
-        return result;
+        return access_id_to_mem_lin_comb(access_id(natural_ids));
     }
 
     KOKKOS_FUNCTION static constexpr std::size_t access_id(

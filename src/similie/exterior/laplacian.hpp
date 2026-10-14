@@ -104,7 +104,7 @@ TensorType codifferential_of_coboundary(
             KOKKOS_LAMBDA(typename TensorType::non_indices_domain_t::discrete_element_type elem) {
                 [[maybe_unused]] tensor::TensorAccessor<coboundary_output_index>
                         derivative_accessor;
-                std::array<double, coboundary_output_index::access_size()> derivative_alloc {};
+                std::array<double, coboundary_output_index::mem_size()> derivative_alloc {};
                 ddc::ChunkSpan<
                         double,
                         ddc::DiscreteDomain<coboundary_output_index>,
@@ -135,7 +135,7 @@ TensorType codifferential_of_coboundary(
             KOKKOS_LAMBDA(typename TensorType::non_indices_domain_t::discrete_element_type elem) {
                 [[maybe_unused]] tensor::TensorAccessor<dual_codifferential_index>
                         dual_codifferential_accessor;
-                std::array<double, dual_codifferential_index::access_size()>
+                std::array<double, dual_codifferential_index::mem_size()>
                         dual_codifferential_alloc {};
                 ddc::ChunkSpan<
                         double,
