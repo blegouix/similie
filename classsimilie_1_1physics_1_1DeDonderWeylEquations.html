@@ -126,7 +126,9 @@ $(function(){initNavTree('classsimilie_1_1physics_1_1DeDonderWeylEquations.html'
 
 <div class="header">
   <div class="summary">
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-static-attribs">Static Public Attributes</a> &#124;
 <a href="classsimilie_1_1physics_1_1DeDonderWeylEquations-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">similie::physics::DeDonderWeylEquations&lt; Hamiltonian &gt; Class Template Reference</div></div>
 </div><!--header-->
@@ -138,31 +140,55 @@ Collaboration diagram for similie::physics::DeDonderWeylEquations&lt; Hamiltonia
 <div class="dyncontent">
 <div class="center"><img src="classsimilie_1_1physics_1_1DeDonderWeylEquations__coll__graph.png" border="0" usemap="#asimilie_1_1physics_1_1DeDonderWeylEquations_3_01Hamiltonian_01_4_coll__map" alt="Collaboration graph"/></div>
 <map name="asimilie_1_1physics_1_1DeDonderWeylEquations_3_01Hamiltonian_01_4_coll__map" id="asimilie_1_1physics_1_1DeDonderWeylEquations_3_01Hamiltonian_01_4_coll__map">
-<area shape="rect" title=" " alt="" coords="5,5,225,165"/>
+<area shape="rect" title=" " alt="" coords="5,5,225,125"/>
 </map>
 </div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:a12416d68b2b7d2d37141990b3244f2cb" id="r_a12416d68b2b7d2d37141990b3244f2cb"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a12416d68b2b7d2d37141990b3244f2cb">State</a> = typename Hamiltonian::State</td></tr>
+<tr class="separator:a12416d68b2b7d2d37141990b3244f2cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a0aa6a9782e4c764b7a81ebe242993b98" id="r_a0aa6a9782e4c764b7a81ebe242993b98"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0aa6a9782e4c764b7a81ebe242993b98">DeDonderWeylEquations</a> (Hamiltonian hamiltonian)</td></tr>
 <tr class="separator:a0aa6a9782e4c764b7a81ebe242993b98"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa1b99a98e03775f0e75415772f766351" id="r_aa1b99a98e03775f0e75415772f766351"><td class="memTemplParams" colspan="2">template&lt;class Index &gt; </td></tr>
-<tr class="memitem:aa1b99a98e03775f0e75415772f766351"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr double&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#aa1b99a98e03775f0e75415772f766351">potential_grad</a> (std::span&lt; double const, Hamiltonian::N &gt; moments) const</td></tr>
-<tr class="separator:aa1b99a98e03775f0e75415772f766351"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad3f3aa08ac70a407d12bbb3407d9fe3a" id="r_ad3f3aa08ac70a407d12bbb3407d9fe3a"><td class="memTemplParams" colspan="2">template&lt;class Index &gt; </td></tr>
-<tr class="memitem:ad3f3aa08ac70a407d12bbb3407d9fe3a"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr double&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ad3f3aa08ac70a407d12bbb3407d9fe3a">potential_grad</a> (double moments_component) const</td></tr>
-<tr class="separator:ad3f3aa08ac70a407d12bbb3407d9fe3a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac51e2cc324be91d6d1fdc2e9969aaed9" id="r_ac51e2cc324be91d6d1fdc2e9969aaed9"><td class="memTemplParams" colspan="2">template&lt;class Index &gt; </td></tr>
-<tr class="memitem:ac51e2cc324be91d6d1fdc2e9969aaed9"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr double&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ac51e2cc324be91d6d1fdc2e9969aaed9">moments_div</a> (std::span&lt; double const, 1 &gt; potential) const</td></tr>
-<tr class="separator:ac51e2cc324be91d6d1fdc2e9969aaed9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa0332f11a1356ae1c7a50793c6be4b8a" id="r_aa0332f11a1356ae1c7a50793c6be4b8a"><td class="memItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa0332f11a1356ae1c7a50793c6be4b8a">moments_div</a> (double potential) const</td></tr>
-<tr class="separator:aa0332f11a1356ae1c7a50793c6be4b8a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af7629701290504b9e8a6b0f538371a65" id="r_af7629701290504b9e8a6b0f538371a65"><td class="memTemplParams" colspan="2">template&lt;class Index , class Elem &gt; </td></tr>
+<tr class="memitem:af7629701290504b9e8a6b0f538371a65"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr double&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#af7629701290504b9e8a6b0f538371a65">potential_grad</a> (<a class="el" href="#a12416d68b2b7d2d37141990b3244f2cb">State</a> const &amp;state, Elem elem) const</td></tr>
+<tr class="separator:af7629701290504b9e8a6b0f538371a65"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a17458999a7050ddadb3b8825674002f4" id="r_a17458999a7050ddadb3b8825674002f4"><td class="memTemplParams" colspan="2">template&lt;class Index , class Elem &gt; </td></tr>
+<tr class="memitem:a17458999a7050ddadb3b8825674002f4"><td class="memTemplItemLeft" align="right" valign="top">KOKKOS_FUNCTION constexpr double&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a17458999a7050ddadb3b8825674002f4">moments_div</a> (<a class="el" href="#a12416d68b2b7d2d37141990b3244f2cb">State</a> const &amp;state, Elem elem) const</td></tr>
+<tr class="separator:a17458999a7050ddadb3b8825674002f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
+Static Public Attributes</h2></td></tr>
+<tr class="memitem:a27a21b72becf9855ac37313e20b1b964" id="r_a27a21b72becf9855ac37313e20b1b964"><td class="memItemLeft" align="right" valign="top">static constexpr bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a27a21b72becf9855ac37313e20b1b964">IS_LINEAR</a> = Hamiltonian::IS_LINEAR</td></tr>
+<tr class="separator:a27a21b72becf9855ac37313e20b1b964"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;class Hamiltonian&gt;<br />
 class similie::physics::DeDonderWeylEquations&lt; Hamiltonian &gt;</div>
-<p class="definition">Definition at line <a class="el" href="dedonder__weyl__equations_8hpp_source.html#l00015">15</a> of file <a class="el" href="dedonder__weyl__equations_8hpp_source.html">dedonder_weyl_equations.hpp</a>.</p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<p class="definition">Definition at line <a class="el" href="dedonder__weyl__equations_8hpp_source.html#l00016">16</a> of file <a class="el" href="dedonder__weyl__equations_8hpp_source.html">dedonder_weyl_equations.hpp</a>.</p>
+</div><h2 class="groupheader">Member Typedef Documentation</h2>
+<a id="a12416d68b2b7d2d37141990b3244f2cb" name="a12416d68b2b7d2d37141990b3244f2cb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a12416d68b2b7d2d37141990b3244f2cb">&#9670;&#160;</a></span>State</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Hamiltonian &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html">similie::physics::DeDonderWeylEquations</a>&lt; Hamiltonian &gt;::State = typename Hamiltonian::State</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="dedonder__weyl__equations_8hpp_source.html#l00021">21</a> of file <a class="el" href="dedonder__weyl__equations_8hpp_source.html">dedonder_weyl_equations.hpp</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a0aa6a9782e4c764b7a81ebe242993b98" name="a0aa6a9782e4c764b7a81ebe242993b98"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a0aa6a9782e4c764b7a81ebe242993b98">&#9670;&#160;</a></span>DeDonderWeylEquations()</h2>
 
@@ -188,20 +214,20 @@ template&lt;class Hamiltonian &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="dedonder__weyl__equations_8hpp_source.html#l00020">20</a> of file <a class="el" href="dedonder__weyl__equations_8hpp_source.html">dedonder_weyl_equations.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="dedonder__weyl__equations_8hpp_source.html#l00024">24</a> of file <a class="el" href="dedonder__weyl__equations_8hpp_source.html">dedonder_weyl_equations.hpp</a>.</p>
 
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="aa1b99a98e03775f0e75415772f766351" name="aa1b99a98e03775f0e75415772f766351"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa1b99a98e03775f0e75415772f766351">&#9670;&#160;</a></span>potential_grad() <span class="overload">[1/2]</span></h2>
+<a id="af7629701290504b9e8a6b0f538371a65" name="af7629701290504b9e8a6b0f538371a65"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af7629701290504b9e8a6b0f538371a65">&#9670;&#160;</a></span>potential_grad()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
 template&lt;class Hamiltonian &gt; </div>
 <div class="memtemplate">
-template&lt;class Index &gt; </div>
+template&lt;class Index , class Elem &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -209,39 +235,12 @@ template&lt;class Index &gt; </div>
         <tr>
           <td class="memname">KOKKOS_FUNCTION constexpr double <a class="el" href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html">similie::physics::DeDonderWeylEquations</a>&lt; Hamiltonian &gt;::potential_grad </td>
           <td>(</td>
-          <td class="paramtype">std::span&lt; double const, Hamiltonian::N &gt;</td>          <td class="paramname"><span class="paramname"><em>moments</em></span></td><td>)</td>
-          <td> const</td>
+          <td class="paramtype"><a class="el" href="#a12416d68b2b7d2d37141990b3244f2cb">State</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>state</em></span>, </td>
         </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">nodiscard</span><span class="mlabel">constexpr</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p class="definition">Definition at line <a class="el" href="dedonder__weyl__equations_8hpp_source.html#l00026">26</a> of file <a class="el" href="dedonder__weyl__equations_8hpp_source.html">dedonder_weyl_equations.hpp</a>.</p>
-
-</div>
-</div>
-<a id="ad3f3aa08ac70a407d12bbb3407d9fe3a" name="ad3f3aa08ac70a407d12bbb3407d9fe3a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad3f3aa08ac70a407d12bbb3407d9fe3a">&#9670;&#160;</a></span>potential_grad() <span class="overload">[2/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class Hamiltonian &gt; </div>
-<div class="memtemplate">
-template&lt;class Index &gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION constexpr double <a class="el" href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html">similie::physics::DeDonderWeylEquations</a>&lt; Hamiltonian &gt;::potential_grad </td>
-          <td>(</td>
-          <td class="paramtype">double</td>          <td class="paramname"><span class="paramname"><em>moments_component</em></span></td><td>)</td>
-          <td> const</td>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Elem</td>          <td class="paramname"><span class="paramname"><em>elem</em></span>&#160;) const</td>
         </tr>
       </table>
   </td>
@@ -251,19 +250,19 @@ template&lt;class Index &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="dedonder__weyl__equations_8hpp_source.html#l00033">33</a> of file <a class="el" href="dedonder__weyl__equations_8hpp_source.html">dedonder_weyl_equations.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="dedonder__weyl__equations_8hpp_source.html#l00030">30</a> of file <a class="el" href="dedonder__weyl__equations_8hpp_source.html">dedonder_weyl_equations.hpp</a>.</p>
 
 </div>
 </div>
-<a id="ac51e2cc324be91d6d1fdc2e9969aaed9" name="ac51e2cc324be91d6d1fdc2e9969aaed9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac51e2cc324be91d6d1fdc2e9969aaed9">&#9670;&#160;</a></span>moments_div() <span class="overload">[1/2]</span></h2>
+<a id="a17458999a7050ddadb3b8825674002f4" name="a17458999a7050ddadb3b8825674002f4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a17458999a7050ddadb3b8825674002f4">&#9670;&#160;</a></span>moments_div()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
 template&lt;class Hamiltonian &gt; </div>
 <div class="memtemplate">
-template&lt;class Index &gt; </div>
+template&lt;class Index , class Elem &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -271,8 +270,12 @@ template&lt;class Index &gt; </div>
         <tr>
           <td class="memname">KOKKOS_FUNCTION constexpr double <a class="el" href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html">similie::physics::DeDonderWeylEquations</a>&lt; Hamiltonian &gt;::moments_div </td>
           <td>(</td>
-          <td class="paramtype">std::span&lt; double const, 1 &gt;</td>          <td class="paramname"><span class="paramname"><em>potential</em></span></td><td>)</td>
-          <td> const</td>
+          <td class="paramtype"><a class="el" href="#a12416d68b2b7d2d37141990b3244f2cb">State</a> const &amp;</td>          <td class="paramname"><span class="paramname"><em>state</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Elem</td>          <td class="paramname"><span class="paramname"><em>elem</em></span>&#160;) const</td>
         </tr>
       </table>
   </td>
@@ -282,12 +285,13 @@ template&lt;class Index &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="dedonder__weyl__equations_8hpp_source.html#l00039">39</a> of file <a class="el" href="dedonder__weyl__equations_8hpp_source.html">dedonder_weyl_equations.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="dedonder__weyl__equations_8hpp_source.html#l00037">37</a> of file <a class="el" href="dedonder__weyl__equations_8hpp_source.html">dedonder_weyl_equations.hpp</a>.</p>
 
 </div>
 </div>
-<a id="aa0332f11a1356ae1c7a50793c6be4b8a" name="aa0332f11a1356ae1c7a50793c6be4b8a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa0332f11a1356ae1c7a50793c6be4b8a">&#9670;&#160;</a></span>moments_div() <span class="overload">[2/2]</span></h2>
+<h2 class="groupheader">Member Data Documentation</h2>
+<a id="a27a21b72becf9855ac37313e20b1b964" name="a27a21b72becf9855ac37313e20b1b964"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a27a21b72becf9855ac37313e20b1b964">&#9670;&#160;</a></span>IS_LINEAR</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -298,20 +302,17 @@ template&lt;class Hamiltonian &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">KOKKOS_FUNCTION constexpr double <a class="el" href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html">similie::physics::DeDonderWeylEquations</a>&lt; Hamiltonian &gt;::moments_div </td>
-          <td>(</td>
-          <td class="paramtype">double</td>          <td class="paramname"><span class="paramname"><em>potential</em></span></td><td>)</td>
-          <td> const</td>
+          <td class="memname">bool <a class="el" href="classsimilie_1_1physics_1_1DeDonderWeylEquations.html">similie::physics::DeDonderWeylEquations</a>&lt; Hamiltonian &gt;::IS_LINEAR = Hamiltonian::IS_LINEAR</td>
         </tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">nodiscard</span><span class="mlabel">constexpr</span></span>  </td>
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">constexpr</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="dedonder__weyl__equations_8hpp_source.html#l00046">46</a> of file <a class="el" href="dedonder__weyl__equations_8hpp_source.html">dedonder_weyl_equations.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="dedonder__weyl__equations_8hpp_source.html#l00022">22</a> of file <a class="el" href="dedonder__weyl__equations_8hpp_source.html">dedonder_weyl_equations.hpp</a>.</p>
 
 </div>
 </div>

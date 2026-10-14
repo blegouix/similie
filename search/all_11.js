@@ -19,7 +19,7 @@ var searchData=
   ['potential_20flow_16',['Potential flow',['../physics_module.html#autotoc_md33',1,'']]],
   ['potential_20flow_17',['Multidomains and potential flow',['../multidomains.html',1,'']]],
   ['potential_20flow_20example_18',['ONELAB potential flow example',['../multidomains.html#autotoc_md39',1,'']]],
-  ['potential_5fgrad_19',['potential_grad',['../classsimilie_1_1physics_1_1DeDonderWeylEquations.html#aa1b99a98e03775f0e75415772f766351',1,'similie::physics::DeDonderWeylEquations::potential_grad(std::span&lt; double const, Hamiltonian::N &gt; moments) const'],['../classsimilie_1_1physics_1_1DeDonderWeylEquations.html#ad3f3aa08ac70a407d12bbb3407d9fe3a',1,'similie::physics::DeDonderWeylEquations::potential_grad(double moments_component) const']]],
+  ['potential_5fgrad_19',['potential_grad',['../classsimilie_1_1physics_1_1DeDonderWeylEquations.html#af7629701290504b9e8a6b0f538371a65',1,'similie::physics::DeDonderWeylEquations']]],
   ['potentialandmomentstemporalderivative_20',['PotentialAndMomentsTemporalDerivative',['../namespacesimilie_1_1solvers.html#a4df37a982e48eea8d30f72d4cbad61c2a1a5f908574ab41634a61e159b4d89220',1,'similie::solvers']]],
   ['potentialtemporalderivative_21',['PotentialTemporalDerivative',['../namespacesimilie_1_1solvers.html#a4df37a982e48eea8d30f72d4cbad61c2a6f75d15bd8dcffa95bbfefd07a19e2b2',1,'similie::solvers']]],
   ['preconditioner_22',['preconditioner',['../namespacesimilie_1_1solvers.html#a6dca8c0cdf04eb4227218e703da59b0e',1,'similie::solvers::StrongFormulationSolverSettings']]],

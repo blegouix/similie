@@ -260,22 +260,29 @@ $(function(){initNavTree('external__domain__extrapolation__rule_8hpp_source.html
 <div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>};</div>
 </div>
 <div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span> </div>
-<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> NeighborTensor, <span class="keyword">class</span> Dimension&gt;</div>
-<div class="line"><a id="l00156" name="l00156"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#a3c068cd9343594eda6024333148676f2">  156</a></span><a class="code hl_function" href="namespacesil_1_1tensor.html#a3c068cd9343594eda6024333148676f2">ExternalDomainExtrapolationRule</a>(</div>
-<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>        NeighborTensor,</div>
-<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>        <a class="code hl_struct" href="structsil_1_1tensor_1_1ExternalDomainBoundaryMap.html">ExternalDomainBoundaryMap&lt;Dimension&gt;</a>,</div>
-<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>        <span class="keywordtype">double</span> = 0.0,</div>
-<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>        <span class="keywordtype">double</span> = 1.0) -&gt; <a class="code hl_struct" href="structsil_1_1tensor_1_1ExternalDomainExtrapolationRule.html">ExternalDomainExtrapolationRule&lt;Dimension, NeighborTensor&gt;</a>;</div>
+<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span><span class="keyword">static_assert</span>(ExtrapolationRuleConcept&lt;</div>
+<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>              <a class="code hl_function" href="namespacesil_1_1tensor.html#a3c068cd9343594eda6024333148676f2">ExternalDomainExtrapolationRule</a>&lt;</div>
+<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>                      detail::ConceptGrid,</div>
+<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>                      detail::ConceptField&lt;ScalarIndex&gt;&gt;,</div>
+<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>              detail::ConceptField&lt;ScalarIndex&gt;,</div>
+<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>              ddc::DiscreteElement&lt;detail::ConceptGrid&gt;&gt;);</div>
 <div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span> </div>
-<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> NeighborTensor, <span class="keyword">class</span> Dimension, <span class="keyword">class</span> TargetRule&gt;</div>
-<div class="line"><a id="l00163" name="l00163"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#a83e291fccdf874d8f8aa0b20d321f604">  163</a></span><a class="code hl_function" href="namespacesil_1_1tensor.html#a3c068cd9343594eda6024333148676f2">ExternalDomainExtrapolationRule</a>(</div>
+<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> NeighborTensor, <span class="keyword">class</span> Dimension&gt;</div>
+<div class="line"><a id="l00163" name="l00163"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#a3c068cd9343594eda6024333148676f2">  163</a></span><a class="code hl_function" href="namespacesil_1_1tensor.html#a3c068cd9343594eda6024333148676f2">ExternalDomainExtrapolationRule</a>(</div>
 <div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>        NeighborTensor,</div>
 <div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>        <a class="code hl_struct" href="structsil_1_1tensor_1_1ExternalDomainBoundaryMap.html">ExternalDomainBoundaryMap&lt;Dimension&gt;</a>,</div>
-<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>        <span class="keywordtype">double</span>,</div>
-<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>        <span class="keywordtype">double</span>,</div>
-<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>        TargetRule) -&gt; <a class="code hl_struct" href="structsil_1_1tensor_1_1ExternalDomainExtrapolationRule.html">ExternalDomainExtrapolationRule&lt;Dimension, NeighborTensor, TargetRule&gt;</a>;</div>
-<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span> </div>
-<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span>} <span class="comment">// namespace sil::tensor</span></div>
+<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>        <span class="keywordtype">double</span> = 0.0,</div>
+<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>        <span class="keywordtype">double</span> = 1.0) -&gt; <a class="code hl_struct" href="structsil_1_1tensor_1_1ExternalDomainExtrapolationRule.html">ExternalDomainExtrapolationRule&lt;Dimension, NeighborTensor&gt;</a>;</div>
+<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span> </div>
+<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> NeighborTensor, <span class="keyword">class</span> Dimension, <span class="keyword">class</span> TargetRule&gt;</div>
+<div class="line"><a id="l00170" name="l00170"></a><span class="lineno"><a class="line" href="namespacesil_1_1tensor.html#a83e291fccdf874d8f8aa0b20d321f604">  170</a></span><a class="code hl_function" href="namespacesil_1_1tensor.html#a3c068cd9343594eda6024333148676f2">ExternalDomainExtrapolationRule</a>(</div>
+<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>        NeighborTensor,</div>
+<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>        <a class="code hl_struct" href="structsil_1_1tensor_1_1ExternalDomainBoundaryMap.html">ExternalDomainBoundaryMap&lt;Dimension&gt;</a>,</div>
+<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>        <span class="keywordtype">double</span>,</div>
+<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>        <span class="keywordtype">double</span>,</div>
+<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>        TargetRule) -&gt; <a class="code hl_struct" href="structsil_1_1tensor_1_1ExternalDomainExtrapolationRule.html">ExternalDomainExtrapolationRule&lt;Dimension, NeighborTensor, TargetRule&gt;</a>;</div>
+<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span> </div>
+<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>} <span class="comment">// namespace sil::tensor</span></div>
 <div class="ttc" id="anamespacesil_1_1misc_html_a3972a6165c52a1398ca03e1b4ef8d993"><div class="ttname"><a href="namespacesil_1_1misc.html#a3972a6165c52a1398ca03e1b4ef8d993">sil::misc::domain_contains</a></div><div class="ttdeci">KOKKOS_FUNCTION bool domain_contains(ddc::DiscreteDomain&lt; DDim... &gt; dom, ddc::DiscreteElement&lt; ODDim... &gt; elem)</div><div class="ttdef"><b>Definition</b> <a href="domain__contains_8hpp_source.html#l00036">domain_contains.hpp:36</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html"><div class="ttname"><a href="namespacesil_1_1tensor.html">sil::tensor</a></div><div class="ttdef"><b>Definition</b> <a href="antisymmetric__tensor_8hpp_source.html#l00015">antisymmetric_tensor.hpp:15</a></div></div>
 <div class="ttc" id="anamespacesil_1_1tensor_html_a3c068cd9343594eda6024333148676f2"><div class="ttname"><a href="namespacesil_1_1tensor.html#a3c068cd9343594eda6024333148676f2">sil::tensor::ExternalDomainExtrapolationRule</a></div><div class="ttdeci">ExternalDomainExtrapolationRule(NeighborTensor, ExternalDomainBoundaryMap&lt; Dimension &gt;, double=0.0, double=1.0) -&gt; ExternalDomainExtrapolationRule&lt; Dimension, NeighborTensor &gt;</div></div>

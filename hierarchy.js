@@ -91,7 +91,8 @@ var hierarchy =
     [ "T", null, [
       [ "sil::exterior::IndexForCodifferentialOfCoboundaryInLaplacian< T >", "structsil_1_1exterior_1_1IndexForCodifferentialOfCoboundaryInLaplacian.html", null ]
     ] ],
-    [ "Tensor", null, [
+    [ "sil::tensor::Tensor< ElementType, SupportType, LayoutStridedPolicy, MemorySpace >", "namespacesil_1_1tensor.html#classsil_1_1tensor_1_1Tensor", null ],
+    [ "sil::tensor::Tensor< ElementType, DomainType, LayoutStridedPolicy, MemorySpace >", "namespacesil_1_1tensor.html", [
       [ "sil::tensor::OwningTensor< Tensor< ElementType, DomainType, LayoutStridedPolicy, MemorySpace >, Storage >", "classsil_1_1tensor_1_1OwningTensor_3_01Tensor_3_01ElementType_00_01DomainType_00_01LayoutStridede8c6ac86c910712a64335c9c13c9211e.html", null ]
     ] ],
     [ "sil::tensor::TensorAccessor< Index >", "classsil_1_1tensor_1_1TensorAccessor.html", null ],

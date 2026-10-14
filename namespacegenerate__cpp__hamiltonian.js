@@ -10,16 +10,7 @@ var namespacegenerate__cpp__hamiltonian =
     [ "_render_members", "namespacegenerate__cpp__hamiltonian.html#a9f78e70e0da0f55485abeb14cab05136", null ],
     [ "_render_constructor_signature", "namespacegenerate__cpp__hamiltonian.html#a5301af1851edc655dfe79bdc9bc529b8", null ],
     [ "_render_constructor_initializers", "namespacegenerate__cpp__hamiltonian.html#a4e9df2b5a1984e3b053f902b29fb6f61", null ],
-    [ "_generalize_component_expression", "namespacegenerate__cpp__hamiltonian.html#a0c12a7de1cafdcd4a1120a11193e2b6c", null ],
-    [ "_all_same", "namespacegenerate__cpp__hamiltonian.html#a9d73dc50762feb1a505ad6c7afc96334", null ],
-    [ "_component_static_assert", "namespacegenerate__cpp__hamiltonian.html#a424cd35a98e46d283a4bfa17fc6d0217", null ],
-    [ "_has_temporal_index", "namespacegenerate__cpp__hamiltonian.html#ae6156a2bb9150e311cf1c11877101de5", null ],
-    [ "_render_indexed_method", "namespacegenerate__cpp__hamiltonian.html#ac1da5460f9a2263dce2e6a00e8ef9d29", null ],
-    [ "_render_indexed_elem_method", "namespacegenerate__cpp__hamiltonian.html#a14abc15c1ce1250104fe3e9abe7b6d59", null ],
-    [ "_render_indexed_nonlocal_value_method", "namespacegenerate__cpp__hamiltonian.html#ac52f999b9b932a924a2a6226b7987a74", null ],
-    [ "_render_moments_object_method", "namespacegenerate__cpp__hamiltonian.html#ac443fd2e8041ec83435efd3063666886", null ],
-    [ "_render_tagged_jacobian_cases", "namespacegenerate__cpp__hamiltonian.html#aa970d39330d8dcec43aca2edb65eeca5", null ],
-    [ "_render_moments_object_jacobian_method", "namespacegenerate__cpp__hamiltonian.html#af673ca79c83a5ce15d0a85fa8b90c7d4", null ],
+    [ "_render_state_component_method", "namespacegenerate__cpp__hamiltonian.html#aa51a54140a261268a8d0ca6e35c11a81", null ],
     [ "write_cpp_hamiltonian_header", "namespacegenerate__cpp__hamiltonian.html#aef7bc23f7b90eed59cb3fb43c810c0d4", null ],
     [ "generate_cpp_hamiltonian", "namespacegenerate__cpp__hamiltonian.html#a89d80d2090308b4525a4349e10876f02", null ]
 ];

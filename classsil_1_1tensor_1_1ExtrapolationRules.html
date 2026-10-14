@@ -174,7 +174,7 @@ class sil::tensor::ExtrapolationRules&lt; RulePairs &gt;</div><p>Select an extra
 <p>Outside the domain, blend the selected boundary rules using normalized outward distances in logical grid-index units: the result is sum(distance_i * rule_i(tensor, element)) / sum(distance_i). Each selected rule receives the original sample. Dimensions whose bounds are not crossed contribute zero weight and their rules are not evaluated. A sample outside only one dimension therefore uses that boundary rule alone.</p>
 <p>For example, beyond the upper-left corner, the left rule has weight (x_min - x) / ((x_min - x) + (y - y_max)) and the upper rule has the complementary weight. Approaching either adjacent single-boundary region recovers its rule continuously, provided the individual rules are continuous. Continuity at the stored corner itself also requires compatible rule limits. Interior samples bypass normalization, including the corner where all outward distances vanish. Each rule and its state must be copyable and accessible in the caller's execution space. This class implements the same (tensor, element) pointwise interface as individual rules. </p>
 
-<p class="definition">Definition at line <a class="el" href="extrapolation__rules_8hpp_source.html#l00162">162</a> of file <a class="el" href="extrapolation__rules_8hpp_source.html">extrapolation_rules.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="extrapolation__rules_8hpp_source.html#l00163">163</a> of file <a class="el" href="extrapolation__rules_8hpp_source.html">extrapolation_rules.hpp</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="acd0860d271548ab10e0752689de9e18b" name="acd0860d271548ab10e0752689de9e18b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#acd0860d271548ab10e0752689de9e18b">&#9670;&#160;</a></span>ExtrapolationRules() <span class="overload">[1/3]</span></h2>
@@ -228,7 +228,7 @@ template&lt;misc::Specialization&lt; std::pair &gt;... RulePairs&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="extrapolation__rules_8hpp_source.html#l00169">169</a> of file <a class="el" href="extrapolation__rules_8hpp_source.html">extrapolation_rules.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="extrapolation__rules_8hpp_source.html#l00170">170</a> of file <a class="el" href="extrapolation__rules_8hpp_source.html">extrapolation_rules.hpp</a>.</p>
 
 </div>
 </div>
@@ -260,7 +260,7 @@ requires ( sizeof...(RulePairs) &gt; 0 &amp;&amp; ((std::is_same_v&lt;Extrapolat
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="extrapolation__rules_8hpp_source.html#l00181">181</a> of file <a class="el" href="extrapolation__rules_8hpp_source.html">extrapolation_rules.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="extrapolation__rules_8hpp_source.html#l00182">182</a> of file <a class="el" href="extrapolation__rules_8hpp_source.html">extrapolation_rules.hpp</a>.</p>
 
 </div>
 </div>
@@ -294,7 +294,7 @@ template&lt;std::size_t Axis, bool Upper&gt; </div>
 
 <p>Access one face policy for boundary integrals and nodal constraints. </p>
 
-<p class="definition">Definition at line <a class="el" href="extrapolation__rules_8hpp_source.html#l00187">187</a> of file <a class="el" href="extrapolation__rules_8hpp_source.html">extrapolation_rules.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="extrapolation__rules_8hpp_source.html#l00188">188</a> of file <a class="el" href="extrapolation__rules_8hpp_source.html">extrapolation_rules.hpp</a>.</p>
 
 </div>
 </div>
@@ -329,7 +329,7 @@ template&lt;class Domain , class Element &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="extrapolation__rules_8hpp_source.html#l00194">194</a> of file <a class="el" href="extrapolation__rules_8hpp_source.html">extrapolation_rules.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="extrapolation__rules_8hpp_source.html#l00195">195</a> of file <a class="el" href="extrapolation__rules_8hpp_source.html">extrapolation_rules.hpp</a>.</p>
 
 </div>
 </div>
@@ -364,7 +364,7 @@ template&lt;class Field , class Element &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="extrapolation__rules_8hpp_source.html#l00217">217</a> of file <a class="el" href="extrapolation__rules_8hpp_source.html">extrapolation_rules.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="extrapolation__rules_8hpp_source.html#l00218">218</a> of file <a class="el" href="extrapolation__rules_8hpp_source.html">extrapolation_rules.hpp</a>.</p>
 
 </div>
 </div>
