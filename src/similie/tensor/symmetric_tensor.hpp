@@ -18,6 +18,8 @@ namespace tensor {
 template <TensorNatIndex... TensorIndex>
 struct TensorSymmetricIndex
 {
+    static_assert(((TensorIndex::rank() == 1) && ...));
+
     static constexpr bool is_tensor_index = true;
     static constexpr bool is_explicitely_stored_tensor = true;
 
@@ -33,19 +35,33 @@ struct TensorSymmetricIndex
 
     static constexpr std::size_t rank()
     {
-        return (TensorIndex::rank() + ...);
+        return (0 + ... + TensorIndex::rank());
     }
 
     static constexpr std::size_t size()
     {
-        return (TensorIndex::size() * ...);
+        return (1 * ... * TensorIndex::size());
     }
 
     static constexpr std::size_t mem_size()
     {
-        return misc::binomial_coefficient(
-                ddc::type_seq_element_t<0, ddc::TypeSeq<TensorIndex...>>::mem_size() + rank() - 1,
-                rank());
+        static_assert([] {
+            std::array<std::size_t, sizeof...(TensorIndex)> const sizes {TensorIndex::size()...};
+            for (std::size_t i = 1; i < sizes.size(); ++i) {
+                if (sizes[i] != sizes[0]) {
+                    return false;
+                }
+            }
+            return true;
+        }());
+        if constexpr (rank() == 0) {
+            return 1;
+        } else {
+            return misc::binomial_coefficient(
+                    ddc::type_seq_element_t<0, ddc::TypeSeq<TensorIndex...>>::mem_size() + rank()
+                            - 1,
+                    rank());
+        }
     }
 
     static constexpr std::size_t access_size()
@@ -56,31 +72,35 @@ struct TensorSymmetricIndex
     KOKKOS_FUNCTION static constexpr std::size_t mem_id(
             std::array<std::size_t, rank()> const natural_ids)
     {
-        std::array<std::size_t, rank()> sorted_ids(natural_ids);
-        misc::detail::sort(sorted_ids.begin(), sorted_ids.end());
-        return misc::binomial_coefficient(
-                       ddc::type_seq_element_t<0, ddc::TypeSeq<TensorIndex...>>::mem_size() + rank()
-                               - 1,
-                       rank())
-               - ((sorted_ids[ddc::type_seq_rank_v<TensorIndex, ddc::TypeSeq<TensorIndex...>>]
-                                   == TensorIndex::mem_size() - 1
-                           ? 0
-                           : misc::binomial_coefficient(
-                                     TensorIndex::mem_size()
-                                             - sorted_ids[ddc::type_seq_rank_v<
-                                                     TensorIndex,
-                                                     ddc::TypeSeq<TensorIndex...>>]
-                                             + rank()
-                                             - ddc::type_seq_rank_v<
-                                                     TensorIndex,
-                                                     ddc::TypeSeq<TensorIndex...>>
-                                             - 2,
-                                     rank()
-                                             - ddc::type_seq_rank_v<
-                                                     TensorIndex,
-                                                     ddc::TypeSeq<TensorIndex...>>))
-                  + ...)
-               - 1;
+        if constexpr (rank() == 0) {
+            return 0;
+        } else {
+            std::array<std::size_t, rank()> sorted_ids(natural_ids);
+            misc::detail::sort(sorted_ids.begin(), sorted_ids.end());
+            return misc::binomial_coefficient(
+                           ddc::type_seq_element_t<0, ddc::TypeSeq<TensorIndex...>>::mem_size()
+                                   + rank() - 1,
+                           rank())
+                   - ((sorted_ids[ddc::type_seq_rank_v<TensorIndex, ddc::TypeSeq<TensorIndex...>>]
+                                       == TensorIndex::mem_size() - 1
+                               ? 0
+                               : misc::binomial_coefficient(
+                                         TensorIndex::mem_size()
+                                                 - sorted_ids[ddc::type_seq_rank_v<
+                                                         TensorIndex,
+                                                         ddc::TypeSeq<TensorIndex...>>]
+                                                 + rank()
+                                                 - ddc::type_seq_rank_v<
+                                                         TensorIndex,
+                                                         ddc::TypeSeq<TensorIndex...>>
+                                                 - 2,
+                                         rank()
+                                                 - ddc::type_seq_rank_v<
+                                                         TensorIndex,
+                                                         ddc::TypeSeq<TensorIndex...>>))
+                      + ...)
+                   - 1;
+        }
     }
 
     KOKKOS_FUNCTION static constexpr std::size_t access_id(

@@ -382,16 +382,11 @@ def _render_moments_object_method(
 
     return f"""
     template <class Index, class Moments, class Elem>
+        requires requires(Moments moments) {{ {component_expression.format(index="Index", moments="moments")}; }}
     KOKKOS_FUNCTION constexpr double dhamiltonian_dmoments(Moments moments, Elem elem) const
     {{
         static_cast<void>(elem);
 {body}
-    }}
-
-    template <class Index, class Moments, class Elem>
-    KOKKOS_FUNCTION constexpr double dpotential_dt(Moments moments, Elem elem) const
-    {{
-        return dhamiltonian_dmoments<Index>(moments, elem);
     }}
 """
 
@@ -546,9 +541,12 @@ def write_cpp_hamiltonian_header(
     )
     parameter_replacements = {}
     for member_name, constructor_name, _, _ in parameters:
-        parameter_replacements[constructor_name] = parameter_value_expressions.get(
-            constructor_name, member_name
-        )
+        if constructor_name in parameter_value_expressions:
+            parameter_replacements[constructor_name] = (
+                f"({parameter_value_expressions[constructor_name]})"
+            )
+        else:
+            parameter_replacements[constructor_name] = member_name
     h_replacements = dict(parameter_replacements)
     requires_elem = any(
         "elem" in replacement for replacement in parameter_replacements.values()
@@ -627,7 +625,10 @@ def write_cpp_hamiltonian_header(
 
     inverse_methods = ""
     if inverse_symbols is not None and inverse_expressions is not None:
-        inverse_methods = _render_indexed_method(
+        inverse_renderer = (
+            _render_indexed_elem_method if requires_elem else _render_indexed_method
+        )
+        inverse_methods = inverse_renderer(
             "moments",
             "dpotential_dx",
             inverse_symbols,
@@ -646,7 +647,10 @@ def write_cpp_hamiltonian_header(
     if not use_moments_object and (
         len(moments_symbols) == 1 or moments_computer is None
     ):
-        moments_method = _render_indexed_method(
+        moments_renderer = (
+            _render_indexed_elem_method if requires_elem else _render_indexed_method
+        )
+        moments_method = moments_renderer(
             "dhamiltonian_dmoments",
             "moments",
             [str(symbol) for symbol in moments_symbols],
@@ -740,6 +744,7 @@ def write_cpp_hamiltonian_header(
         f"""\
 // SPDX-FileCopyrightText: 2026 Baptiste Legouix
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// AI-GENERATED
 
 #pragma once
 
@@ -760,9 +765,11 @@ namespace {namespace} {{
     static constexpr std::size_t N = {len(moments_symbols)};
     static constexpr bool IS_LINEAR = {"true" if is_linear else "false"};
 
+private:
 {rendered_moments_computer}\
 {_render_members(parameters)}
 
+public:
 {_render_constructor_signature(struct_name, parameters)}
         : {_render_constructor_initializers(parameters)} {{}}
 

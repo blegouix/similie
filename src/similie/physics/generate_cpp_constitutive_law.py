@@ -98,8 +98,11 @@ def write_cpp_constitutive_law_header(
         f"""\
 // SPDX-FileCopyrightText: 2026 Baptiste Legouix
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// AI-GENERATED
 
 #pragma once
+
+#include <cmath>
 
 #include <Kokkos_Core.hpp>
 

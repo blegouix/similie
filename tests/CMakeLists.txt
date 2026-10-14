@@ -12,6 +12,12 @@ endif()
 
 if(BUILD_TESTING)
     include(GoogleTest)
+    add_test(NAME PhysicsAPI.SpatialHamiltonianGenerator
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_CURRENT_SOURCE_DIR}/physics/generator.py"
+                "${CMAKE_C_COMPILER}")
+    add_executable(unit_tests_physics_api physics/equations.cpp main.cpp)
+    target_link_libraries(unit_tests_physics_api PRIVATE GTest::gtest sil::sil)
+    gtest_discover_tests(unit_tests_physics_api DISCOVERY_MODE PRE_TEST)
     add_executable(unit_tests_fmhd physics/fmhd.cpp main.cpp)
     target_link_libraries(unit_tests_fmhd PRIVATE GTest::gtest sil::sil)
     gtest_discover_tests(unit_tests_fmhd DISCOVERY_MODE PRE_TEST)

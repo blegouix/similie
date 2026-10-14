@@ -705,7 +705,7 @@ struct Reduction
             return value(position, elem, natural_elem);
         } else {
             [[maybe_unused]] sil::tensor::TensorAccessor<source_index_type> source_accessor;
-            std::array<double, source_index_type::access_size()> source_alloc {};
+            std::array<double, source_index_type::mem_size()> source_alloc {};
             ddc::ChunkSpan<
                     double,
                     ddc::DiscreteDomain<source_index_type>,
@@ -718,7 +718,7 @@ struct Reduction
             });
 
             [[maybe_unused]] sil::tensor::TensorAccessor<target_index_type> target_accessor;
-            std::array<double, target_index_type::access_size()> target_alloc {};
+            std::array<double, target_index_type::mem_size()> target_alloc {};
             ddc::ChunkSpan<
                     double,
                     ddc::DiscreteDomain<target_index_type>,

@@ -59,7 +59,7 @@ struct TensorFullIndex
 
     static constexpr std::size_t access_size()
     {
-        return (TensorIndex::access_size() * ...);
+        return (1 * ... * TensorIndex::access_size());
     }
 
     KOKKOS_FUNCTION static constexpr std::size_t mem_id(

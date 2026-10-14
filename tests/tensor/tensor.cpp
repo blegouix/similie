@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 #include <cmath>
+#include <concepts>
 
 #include <ddc/ddc.hpp>
 
@@ -537,6 +538,22 @@ TEST(Tensor, YoungTableauIndexing)
 
     sil::tensor::compress(tensor, natural);
 
+    ddc::host_for_each(natural_dom, [&](ddc::DiscreteElement<Alpha, Beta, Gamma> elem) {
+        std::pair<std::vector<double>, std::vector<std::size_t>> const coefficients
+                = YoungTableauIndex::mem_lin_comb(
+                        {elem.uid<Alpha>(), elem.uid<Beta>(), elem.uid<Gamma>()});
+        ASSERT_EQ(coefficients.first.size(), coefficients.second.size());
+        double reconstructed = 0.0;
+        for (std::size_t i = 0; i < coefficients.first.size(); ++i) {
+            ASSERT_LT(coefficients.second[i], YoungTableauIndex::mem_size());
+            reconstructed
+                    += coefficients.first[i]
+                       * tensor.mem(
+                               ddc::DiscreteElement<YoungTableauIndex>(coefficients.second[i]));
+        }
+        EXPECT_NEAR(reconstructed, natural.mem(elem), 1e-6);
+    });
+
     EXPECT_FLOAT_EQ(tensor.get(tensor.access_element<X, X, X>()), 0.);
     EXPECT_FLOAT_EQ(tensor.get(tensor.access_element<X, X, Y>()), 1.);
     EXPECT_FLOAT_EQ(tensor.get(tensor.access_element<X, X, Z>()), 2.);
@@ -919,3 +936,93 @@ TEST(Tensor, ExtrapolatedAntisymmetricTensorAccessAndSlices)
     auto const point = view[ddc::DiscreteElement<SignedGridX, AntisymIndex>(grid.front(), xy)];
     EXPECT_DOUBLE_EQ(point.mem(ddc::DiscreteElement<>()), 30.0);
 }
+
+TEST(Tensor, ScalarStructuredIndexContract)
+{
+    EXPECT_EQ(sil::tensor::TensorFullIndex<>::rank(), 0);
+    EXPECT_EQ(sil::tensor::TensorFullIndex<>::size(), 1);
+    EXPECT_EQ(sil::tensor::TensorFullIndex<>::mem_size(), 1);
+    EXPECT_EQ(sil::tensor::TensorFullIndex<>::access_size(), 1);
+    EXPECT_EQ(sil::tensor::TensorFullIndex<>::access_id({}), 0);
+    EXPECT_EQ(sil::tensor::TensorSymmetricIndex<>::rank(), 0);
+    EXPECT_EQ(sil::tensor::TensorSymmetricIndex<>::size(), 1);
+    EXPECT_EQ(sil::tensor::TensorSymmetricIndex<>::mem_size(), 1);
+    EXPECT_EQ(sil::tensor::TensorSymmetricIndex<>::access_size(), 1);
+    EXPECT_EQ(sil::tensor::TensorSymmetricIndex<>::mem_id({}), 0);
+    EXPECT_EQ(sil::tensor::TensorSymmetricIndex<>::access_id({}), 0);
+    EXPECT_EQ(sil::tensor::TensorAntisymmetricIndex<>::size(), 1);
+    EXPECT_EQ(sil::tensor::TensorAntisymmetricIndex<>::mem_size(), 1);
+    EXPECT_EQ(sil::tensor::TensorAntisymmetricIndex<>::access_size(), 1);
+    EXPECT_EQ(sil::tensor::TensorAntisymmetricIndex<>::mem_id({}), 0);
+}
+
+TEST(Tensor, AntisymmetricAccessDomainIncludesBothOrientations)
+{
+    using Index = sil::tensor::TensorAntisymmetricIndex<Alpha, Beta, Gamma>;
+    sil::tensor::TensorAccessor<Index> accessor;
+    ddc::Chunk allocation(accessor.domain(), ddc::HostAllocator<double>());
+    sil::tensor::Tensor field(allocation);
+    field.mem(ddc::DiscreteElement<Index>(0)) = 7.0;
+    EXPECT_EQ(Index::size(), 27);
+    EXPECT_EQ(Index::mem_size(), 1);
+    EXPECT_EQ(Index::access_size(), 3);
+    for (std::size_t i = 0; i < 3; ++i) {
+        for (std::size_t j = 0; j < 3; ++j) {
+            for (std::size_t k = 0; k < 3; ++k) {
+                std::size_t const access = Index::access_id({i, j, k});
+                EXPECT_LT(access, Index::access_size());
+                if (i == j || i == k || j == k) {
+                    EXPECT_EQ(access, 0);
+                    EXPECT_DOUBLE_EQ(field.get(ddc::DiscreteElement<Index>(access)), 0.0);
+                } else {
+                    bool const odd = ((i > j) + (i > k) + (j > k)) % 2 != 0;
+                    EXPECT_EQ(Index::access_id_to_mem_id(access), 0);
+                    EXPECT_DOUBLE_EQ(
+                            field.get(ddc::DiscreteElement<Index>(access)),
+                            odd ? -7.0 : 7.0);
+                }
+            }
+        }
+    }
+}
+
+TEST(Tensor, AntisymmetricCanonicalStorageRoundTrip)
+{
+    using Index = sil::tensor::TensorAntisymmetricIndex<Mu, Nu, sil::tensor::Covariant<Mu>>;
+    for (std::size_t stored = 0; stored < Index::mem_size(); ++stored) {
+        std::array<std::size_t, 3> const ids = Index::mem_id_to_canonical_natural_ids(stored);
+        EXPECT_LT(ids[0], ids[1]);
+        EXPECT_LT(ids[1], ids[2]);
+        EXPECT_EQ(Index::mem_id(ids), stored);
+        EXPECT_EQ(Index::access_id_to_mem_id(Index::access_id(ids)), stored);
+    }
+}
+
+namespace {
+
+template <class Index>
+concept DirectTensorIndexAPI = requires(std::size_t id) {
+    requires Index::is_tensor_index;
+    requires Index::is_explicitely_stored_tensor;
+    { Index::subindices_domain() } -> std::same_as<typename Index::subindices_domain_t>;
+    { Index::rank() } -> std::same_as<std::size_t>;
+    { Index::size() } -> std::same_as<std::size_t>;
+    { Index::mem_size() } -> std::same_as<std::size_t>;
+    { Index::access_size() } -> std::same_as<std::size_t>;
+    { Index::access_id_to_mem_id(id) } -> std::same_as<std::size_t>;
+    {
+        Index::mem_id_to_canonical_natural_ids(id)
+    } -> std::same_as<std::array<std::size_t, Index::rank()>>;
+};
+
+static_assert(DirectTensorIndexAPI<sil::tensor::ScalarIndex>);
+static_assert(DirectTensorIndexAPI<Alpha>);
+static_assert(DirectTensorIndexAPI<FullIndex>);
+static_assert(DirectTensorIndexAPI<DiagIndex>);
+static_assert(DirectTensorIndexAPI<SymIndex>);
+static_assert(DirectTensorIndexAPI<AntisymIndex>);
+static_assert(DirectTensorIndexAPI<IdIndex>);
+static_assert(DirectTensorIndexAPI<LorentzianSignIndex>);
+static_assert(DirectTensorIndexAPI<LeviCivitaIndex>);
+
+} // namespace

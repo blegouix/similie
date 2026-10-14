@@ -17,16 +17,28 @@ class DeDonderWeylEquations
     Hamiltonian m_hamiltonian;
 
 public:
+    static constexpr bool IS_LINEAR = Hamiltonian::IS_LINEAR;
+
     KOKKOS_FUNCTION constexpr explicit DeDonderWeylEquations(Hamiltonian hamiltonian)
         : m_hamiltonian(std::move(hamiltonian))
     {
     }
 
     template <class Index>
+        requires(
+                Hamiltonian::N == 1
+                || requires(
+                        Hamiltonian const& h,
+                        std::span<double const, Hamiltonian::N>
+                                moments) { h.template dhamiltonian_dmoments<Index>(moments); })
     [[nodiscard]] KOKKOS_FUNCTION constexpr double potential_grad(
             std::span<double const, Hamiltonian::N> moments) const
     {
-        return m_hamiltonian.template dhamiltonian_dmoments<Index>(moments);
+        if constexpr (requires { m_hamiltonian.template dhamiltonian_dmoments<Index>(moments); }) {
+            return m_hamiltonian.template dhamiltonian_dmoments<Index>(moments);
+        } else {
+            return potential_grad<Index>(moments[0]);
+        }
     }
 
     template <class Index>
@@ -39,7 +51,6 @@ public:
     [[nodiscard]] KOKKOS_FUNCTION constexpr double moments_div(
             std::span<double const, 1> potential) const
     {
-        static_cast<void>(sizeof(Index));
         return -m_hamiltonian.dhamiltonian_dpotential(potential[0]);
     }
 

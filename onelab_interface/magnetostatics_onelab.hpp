@@ -1091,7 +1091,7 @@ public:
     [[nodiscard]] KOKKOS_FUNCTION double dpotential_dt(Moments moments, Elem elem) const
     {
         if (is_ferromagnetic(elem)) {
-            return m_nonlinear_hamiltonian.template dpotential_dt<Index>(moments, elem);
+            return m_nonlinear_hamiltonian.template dhamiltonian_dmoments<Index>(moments, elem);
         }
         return moments.template get<Index>() / linear_mu(elem);
     }
