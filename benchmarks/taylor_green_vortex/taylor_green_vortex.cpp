@@ -926,8 +926,11 @@ void run_trajectory(benchmark::State* benchmark_state)
     static int invocation = 0;
     try {
         std::filesystem::create_directories(output_directory);
+        Clock::time_point const setup_start = Clock::now();
         Simulation simulation(nodes, physics);
         Kokkos::fence("taylor_green_setup_complete");
+        double const setup_seconds
+                = std::chrono::duration<double>(Clock::now() - setup_start).count();
         std::string const prefix = std::string("tgv_") + configuration.name() + "_N"
                                    + std::to_string(nodes) + "_run";
         std::filesystem::path base;
@@ -1044,6 +1047,7 @@ void run_trajectory(benchmark::State* benchmark_state)
                     << "\",\"mode\":\"" << (benchmark_state ? "performance" : "reference")
                     << "\",\"N\":" << nodes << ",\"steps\":" << steps << ",\"final_time\":" << time
                     << ",\"mean_step_seconds\":" << solver_seconds / steps
+                    << ",\"setup_seconds\":" << setup_seconds
                     << ",\"solver_seconds\":" << solver_seconds
                     << ",\"monitor_seconds\":" << monitor_seconds
                     << ",\"export_seconds\":" << export_seconds << ",\"wall_seconds\":" << wall
@@ -1063,6 +1067,7 @@ void run_trajectory(benchmark::State* benchmark_state)
         benchmark_state->counters["simulation_time"] = time;
         benchmark_state->counters["mean_dt"] = time / steps;
         benchmark_state->counters["solver_seconds"] = solver_seconds;
+        benchmark_state->counters["setup_seconds"] = setup_seconds;
         benchmark_state->counters["monitor_seconds"] = monitor_seconds;
         benchmark_state->counters["export_seconds"] = export_seconds;
         benchmark_state->counters["wall_seconds"] = wall;

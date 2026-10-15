@@ -583,7 +583,7 @@ public:
     }
 };
 
-static_assert(StagedCodifferentialConcept<
+static_assert(StagedOperatorConcept<
               StagedCodifferential<
                       detail::MetricIndexConcept,
                       detail::DirectionConcept,

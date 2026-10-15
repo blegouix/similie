@@ -32,7 +32,7 @@ using ThreeFormTensor = sil::tensor::Tensor<
 class VorticityDEC
 {
     StructuredGrid& m_grid;
-    using TwoLaplacian = sil::exterior::StagedLaplacian<
+    using TwoLaplacian = sil::exterior::AggressivelyStagedLaplacian<
             MetricIndex,
             sil::tensor::Covariant<CurlDirection>,
             TwoForm,
@@ -154,7 +154,9 @@ public:
                 tensor<TwoForm>(m_two_output),
                 tensor<TwoForm>(m_two),
                 grid.euclidean_metric(),
-                grid.geometry());
+                grid.geometry(),
+                Periodic {},
+                Periodic {});
         m_codifferential = std::make_unique<TwoCodifferential>(
                 Kokkos::DefaultExecutionSpace(),
                 tensor<TwoForm>(m_two),
@@ -233,17 +235,7 @@ public:
         pack(cochain, m_one);
         VectorTensor const reduced = tensor<Vector>(m_one),
                            physical = tensor<Vector>(m_physical_one);
-        PositionTensor const geometry = m_grid.geometry();
-        ddc::parallel_for_each(
-                Kokkos::DefaultExecutionSpace(),
-                m_grid.domain(),
-                KOKKOS_LAMBDA(SpatialDomain::discrete_element_type elem) {
-                    sil::exterior::Reconstruction<
-                            ddc::TypeSeq<Vector>,
-                            PositionTensor,
-                            SpatialDomain::discrete_element_type>::
-                    operator()(physical[elem], reduced[elem], geometry, elem);
-                });
+        m_grid.reconstruct(physical, reduced);
         unpack(m_physical_one, output);
     }
     void face_values(Field cochain, Field output)
@@ -251,17 +243,7 @@ public:
         pack(cochain, m_two);
         TwoFormTensor const reduced = tensor<TwoForm>(m_two),
                             physical = tensor<TwoForm>(m_physical_two);
-        PositionTensor const geometry = m_grid.geometry();
-        ddc::parallel_for_each(
-                Kokkos::DefaultExecutionSpace(),
-                m_grid.domain(),
-                KOKKOS_LAMBDA(SpatialDomain::discrete_element_type elem) {
-                    sil::exterior::Reconstruction<
-                            ddc::TypeSeq<sil::tensor::Covariant<CurlDirection>, Vector>,
-                            PositionTensor,
-                            SpatialDomain::discrete_element_type>::
-                    operator()(physical[elem], reduced[elem], geometry, elem);
-                });
+        m_grid.reconstruct(physical, reduced);
         int const n = m_grid.n;
         Kokkos::parallel_for(
                 "physical_axial_faces",
@@ -290,13 +272,7 @@ public:
     void positive_laplacian(Field input, Field output)
     {
         pack(input, m_two);
-        // StagedLaplacian launches on partitioned execution spaces.
-        Kokkos::fence("vorticity_laplacian_input_ready");
-        (*m_laplacian)(
-                tensor<TwoForm>(m_two_output),
-                tensor<TwoForm>(m_two),
-                Periodic {},
-                Periodic {});
+        (*m_laplacian)(tensor<TwoForm>(m_two_output), tensor<TwoForm>(m_two));
         unpack(m_two_output, output);
     }
     void divergence(Field one_cochain, Field output)
@@ -313,17 +289,7 @@ public:
         pack(cochain, m_one);
         VectorTensor const reduced = tensor<Vector>(m_one),
                            physical = tensor<Vector>(m_physical_one);
-        PositionTensor const geometry = m_grid.geometry();
-        ddc::parallel_for_each(
-                Kokkos::DefaultExecutionSpace(),
-                m_grid.domain(),
-                KOKKOS_LAMBDA(SpatialDomain::discrete_element_type elem) {
-                    sil::exterior::Reconstruction<
-                            ddc::TypeSeq<Vector>,
-                            PositionTensor,
-                            SpatialDomain::discrete_element_type>::
-                    operator()(physical[elem], reduced[elem], geometry, elem);
-                });
+        m_grid.reconstruct(physical, reduced);
         Field const edge = m_physical_one;
         int const n = m_grid.n;
         Kokkos::parallel_for(
@@ -341,17 +307,7 @@ public:
         pack(cochain, m_two);
         TwoFormTensor const reduced = tensor<TwoForm>(m_two),
                             physical = tensor<TwoForm>(m_physical_two);
-        PositionTensor const geometry = m_grid.geometry();
-        ddc::parallel_for_each(
-                Kokkos::DefaultExecutionSpace(),
-                m_grid.domain(),
-                KOKKOS_LAMBDA(SpatialDomain::discrete_element_type elem) {
-                    sil::exterior::Reconstruction<
-                            ddc::TypeSeq<sil::tensor::Covariant<CurlDirection>, Vector>,
-                            PositionTensor,
-                            SpatialDomain::discrete_element_type>::
-                    operator()(physical[elem], reduced[elem], geometry, elem);
-                });
+        m_grid.reconstruct(physical, reduced);
         int const n = m_grid.n;
         Kokkos::parallel_for(
                 "axial_faces_to_nodes",

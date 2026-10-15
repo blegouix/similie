@@ -190,6 +190,9 @@ struct IndexForCodifferentialOfCoboundaryInLaplacian : T
 template <class... Args>
 class StagedLaplacian;
 
+template <class... Args>
+struct Laplacian;
+
 template <
         tensor::TensorIndex MetricIndex,
         tensor::TensorNatIndex LaplacianDummyIndex,
@@ -208,6 +211,8 @@ class StagedLaplacian<
         PositionType,
         ExecSpace>
 {
+    template <class...>
+    friend struct Laplacian;
     using MemorySpace = typename TensorType::memory_space;
     using AllocatorType = ddc::KokkosAllocator<double, MemorySpace>;
     using CodifferentialOfCoboundaryIndex
@@ -262,24 +267,6 @@ class StagedLaplacian<
     std::optional<DerivativeDualTensorType> m_derivative_dual_tensor_buffer;
 
 public:
-    /**
-     * Access the dual one-cochain produced by the first Hodge stage.
-     * \important This operator and documentation are fully AI-generated.
-     *
-     * The buffer contains the constitutive flux after the staged Laplacian
-     * has evaluated a primal scalar cochain. Connected tensor domains can
-     * balance its trace values without constructing a separate Hodge star.
-     */
-    DerivativeDualTensorType derivative_dual_tensor_buffer() const
-    {
-        return *m_derivative_dual_tensor_buffer;
-    }
-
-    DualDerivativeHodgeStarTensorType dual_derivative_hodge_star() const
-    {
-        return *m_dual_derivative_hodge_star;
-    }
-
     StagedLaplacian(
             ExecSpace const& exec_space,
             DerivativeHodgeStarTensorType&& derivative_hodge_star,
@@ -418,6 +405,9 @@ class StagedLaplacian<
         PositionType,
         ExecSpace>
 {
+    template <class...>
+    friend struct Laplacian;
+
     using MemorySpace = typename TensorType::memory_space;
     using AllocatorType = ddc::KokkosAllocator<double, MemorySpace>;
     using CodifferentialOfCoboundaryIndex
@@ -720,6 +710,9 @@ class StagedLaplacian<
         ExecSpace>
 {
 private:
+    template <class...>
+    friend struct Laplacian;
+
     using MemorySpace = typename TensorType::memory_space;
     using AllocatorType = ddc::KokkosAllocator<double, MemorySpace>;
     using CodifferentialHodgeInputIndices
@@ -874,7 +867,7 @@ public:
     }
 };
 
-static_assert(StagedLaplacianConcept<
+static_assert(StagedOperatorConcept<
               StagedLaplacian<
                       detail::MetricIndexConcept,
                       detail::DirectionConcept,
@@ -1047,3 +1040,5 @@ TensorType laplacian(
 } // namespace exterior
 
 } // namespace sil
+
+#include "aggressively_staged_laplacian.hpp"

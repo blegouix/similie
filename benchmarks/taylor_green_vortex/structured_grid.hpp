@@ -87,7 +87,7 @@ using MetricTensor = sil::tensor::Tensor<
  */
 class StructuredGrid
 {
-    using ScalarLaplacian = sil::exterior::StagedLaplacian<
+    using ScalarLaplacian = sil::exterior::AggressivelyStagedLaplacian<
             MetricIndex,
             Vector,
             Scalar,
@@ -103,11 +103,25 @@ class StructuredGrid
             MetricTensor,
             PositionTensor,
             Kokkos::DefaultExecutionSpace>;
+    using OneReconstruction = sil::exterior::StagedReconstruction<
+            ddc::TypeSeq<Vector>,
+            VectorTensor,
+            VectorTensor,
+            PositionTensor,
+            Kokkos::DefaultExecutionSpace>;
+    using TwoReconstruction = sil::exterior::StagedReconstruction<
+            ddc::TypeSeq<sil::tensor::Covariant<CurlDirection>, Vector>,
+            TwoFormTensor,
+            TwoFormTensor,
+            PositionTensor,
+            Kokkos::DefaultExecutionSpace>;
     SpatialDomain m_domain;
     SpatialDomain m_geometry_domain;
     Field m_position, m_metric, m_oneform, m_pointwise, m_twoform, m_face_pointwise, m_scalar;
     std::unique_ptr<ScalarLaplacian> m_laplacian;
     std::unique_ptr<VectorCodifferential> m_codifferential;
+    std::unique_ptr<OneReconstruction> m_one_reconstruction;
+    std::unique_ptr<TwoReconstruction> m_two_reconstruction;
 
 public:
     // Device lambda instantiations in exterior must be able to name this type.
@@ -221,22 +235,12 @@ public:
     void reconstruct_gradient(Field input, int component)
     {
         VectorTensor const cochain = vector(m_oneform), pointwise = vector(m_pointwise);
-        PositionTensor const geometry = position();
         sil::exterior::deriv<Vector, Scalar>(
                 Kokkos::DefaultExecutionSpace(),
                 cochain,
                 scalar(input, component),
                 Periodic {});
-        ddc::parallel_for_each(
-                Kokkos::DefaultExecutionSpace(),
-                m_domain,
-                KOKKOS_LAMBDA(SpatialDomain::discrete_element_type elem) {
-                    sil::exterior::Reconstruction<
-                            ddc::TypeSeq<Vector>,
-                            PositionTensor,
-                            SpatialDomain::discrete_element_type>::
-                    operator()(pointwise[elem], cochain[elem], geometry, elem);
-                });
+        (*m_one_reconstruction)(pointwise, cochain);
     }
 
     int const n, cells;
@@ -273,12 +277,24 @@ public:
     {
         initialize_geometry();
         PositionTensor const geometry = position();
+        m_one_reconstruction = std::make_unique<OneReconstruction>(
+                Kokkos::DefaultExecutionSpace(),
+                vector(m_pointwise),
+                vector(m_oneform),
+                geometry);
+        m_two_reconstruction = std::make_unique<TwoReconstruction>(
+                Kokkos::DefaultExecutionSpace(),
+                twoform(m_face_pointwise),
+                twoform(m_twoform),
+                geometry);
         m_laplacian = std::make_unique<ScalarLaplacian>(
                 Kokkos::DefaultExecutionSpace(),
                 scalar(m_scalar),
                 scalar(m_scalar),
                 metric(),
-                geometry);
+                geometry,
+                Periodic {},
+                Periodic {});
         m_codifferential = std::make_unique<VectorCodifferential>(
                 Kokkos::DefaultExecutionSpace(),
                 vector(m_oneform),
@@ -316,6 +332,14 @@ public:
                         ddc::DiscreteDomain<GridX, GridY, GridZ, Scalar>,
                         Kokkos::layout_right,
                         Field::memory_space>(field.data() + component * cells, domain));
+    }
+    void reconstruct(VectorTensor output, VectorTensor input) const
+    {
+        (*m_one_reconstruction)(output, input);
+    }
+    void reconstruct(TwoFormTensor output, TwoFormTensor input) const
+    {
+        (*m_two_reconstruction)(output, input);
     }
     KOKKOS_FUNCTION static int neighbor(int index, int axis, int offset, int nodes)
     {
@@ -375,12 +399,7 @@ public:
 
     void laplacian(Field input, int component, Field output, int out_component)
     {
-        Kokkos::fence("scalar_laplacian_input_ready");
-        (*m_laplacian)(
-                scalar(output, out_component),
-                scalar(input, component),
-                Periodic {},
-                Periodic {});
+        (*m_laplacian)(scalar(output, out_component), scalar(input, component));
         // exterior uses the positive Hodge Laplacian; viscosity uses its negative.
         Kokkos::parallel_for(
                 "hodge_laplacian_to_diffusion",
@@ -403,20 +422,10 @@ public:
         VectorTensor const cochain = vector(m_oneform);
         TwoFormTensor const rotation = twoform(m_twoform),
                             reconstructed = twoform(m_face_pointwise);
-        PositionTensor const geometry = position();
         sil::exterior::deriv<
                 sil::tensor::Covariant<CurlDirection>,
                 Vector>(Kokkos::DefaultExecutionSpace(), rotation, cochain, Periodic {});
-        ddc::parallel_for_each(
-                Kokkos::DefaultExecutionSpace(),
-                m_domain,
-                KOKKOS_LAMBDA(SpatialDomain::discrete_element_type elem) {
-                    sil::exterior::Reconstruction<
-                            ddc::TypeSeq<sil::tensor::Covariant<CurlDirection>, Vector>,
-                            PositionTensor,
-                            SpatialDomain::discrete_element_type>::
-                    operator()(reconstructed[elem], rotation[elem], geometry, elem);
-                });
+        (*m_two_reconstruction)(reconstructed, rotation);
         Kokkos::parallel_for(
                 "vorticity_faces_to_nodes",
                 cells,

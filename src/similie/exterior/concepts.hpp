@@ -96,15 +96,9 @@ concept ContinuousHodgeStarConcept = requires(
     { Operator::operator()(output, input, metric, element) } -> std::same_as<void>;
 };
 
-template <class Operator, class Output, class Input>
-concept StagedCodifferentialConcept
-        = requires(Operator const& operation, Output output, Input input) {
-              { operation(output, input) } -> std::same_as<Output>;
-          };
-
-template <class Operator, class Tensor>
-concept StagedLaplacianConcept = requires(Operator& operation, Tensor output, Tensor input) {
-    { operation(output, input) } -> std::same_as<Tensor>;
+template <class Operator, class Output, class Input = Output>
+concept StagedOperatorConcept = requires(Operator& operation, Output output, Input input) {
+    { operation(output, input) } -> std::same_as<Output>;
 };
 
 } // namespace sil::exterior

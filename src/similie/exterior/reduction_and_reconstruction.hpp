@@ -18,6 +18,7 @@
 #include <similie/tensor/prime.hpp>
 #include <similie/tensor/tensor_impl.hpp>
 
+#include "concepts.hpp"
 #include "volume.hpp"
 
 
@@ -812,6 +813,116 @@ ReductionTensorType fill_reduction_operator(
     return reduction_tensor;
 }
 
+namespace detail {
+
+template <class Indices, class PositionType, class BatchElem, CellComplex Complex>
+class ReconstructionMatrix
+{
+    using SourceIndex = reduction_index_t<Indices>;
+    using TargetIndex = reduction_index_t<tensor::primes<Indices>>;
+    static constexpr std::size_t matrix_size = SourceIndex::mem_size();
+    std::array<double, matrix_size * matrix_size> m_inverse {};
+    bool m_valid = false;
+
+public:
+    KOKKOS_FUNCTION ReconstructionMatrix(PositionType position, BatchElem elem)
+    {
+        static_assert(
+                Complex != CellComplex::BarycentricDual,
+                "Reconstruction is not implemented for the barycentric dual complex.");
+        if constexpr (SourceIndex::rank() == 0) {
+            m_inverse[0] = 1.;
+            m_valid = true;
+        } else {
+            [[maybe_unused]] tensor::TensorAccessor<SourceIndex> source_accessor;
+            [[maybe_unused]] tensor::TensorAccessor<TargetIndex> target_accessor;
+            std::array<double, matrix_size * matrix_size> reduction_alloc {};
+            std::array<double, matrix_size * matrix_size> workspace_alloc {};
+            misc::math::unmanaged_matrix_view_t<double, typename PositionType::memory_space> const
+                    reduction_matrix
+                    = misc::math::matrix_view<
+                            double,
+                            typename PositionType::
+                                    memory_space>(reduction_alloc.data(), matrix_size, matrix_size),
+                    inverse_matrix = misc::math::matrix_view<
+                            double,
+                            typename PositionType::
+                                    memory_space>(m_inverse.data(), matrix_size, matrix_size);
+            misc::math::unmanaged_vector_view_t<double, typename PositionType::memory_space> const
+                    workspace
+                    = misc::math::vector_view<double, typename PositionType::memory_space>(
+                            workspace_alloc.data(),
+                            matrix_size * matrix_size);
+            ddc::device_for_each(source_accessor.domain(), [&](auto source_mem_elem) {
+                auto const source_natural_elem
+                        = source_accessor.canonical_natural_element(source_mem_elem);
+                ddc::device_for_each(target_accessor.domain(), [&](auto target_mem_elem) {
+                    auto const target_natural_elem
+                            = target_accessor.canonical_natural_element(target_mem_elem);
+                    reduction_matrix(
+                            source_mem_elem.template uid<SourceIndex>(),
+                            target_mem_elem.template uid<TargetIndex>())
+                            = Reduction<Indices, PositionType, BatchElem, Complex>::
+                                    value(position,
+                                          elem,
+                                          merge_reduction_natural_elems<
+                                                  typename tensor::tensor_accessor_for_domain_t<
+                                                          reduction_domain_t<Indices>>::
+                                                          natural_domain_t::discrete_element_type>(
+                                                  ddc::detail::array(source_natural_elem),
+                                                  ddc::detail::array(target_natural_elem)));
+                });
+            });
+            m_valid = misc::math::invert(inverse_matrix, reduction_matrix, workspace);
+        }
+    }
+
+    KOKKOS_FUNCTION double value(auto natural_elem) const
+    {
+        if constexpr (SourceIndex::rank() == 0) {
+            return 1.;
+        } else {
+            if (!m_valid)
+                return 0.;
+            std::array const source_ids = ddc::detail::array(
+                    typename tensor::natural_domain_t<SourceIndex>::discrete_element_type(
+                            natural_elem));
+            std::array const target_ids = ddc::detail::array(
+                    typename tensor::natural_domain_t<TargetIndex>::discrete_element_type(
+                            natural_elem));
+            if (!has_unique_reduction_ids(source_ids) || !has_unique_reduction_ids(target_ids))
+                return 0.;
+            [[maybe_unused]] tensor::TensorAccessor<SourceIndex> source_accessor;
+            [[maybe_unused]] tensor::TensorAccessor<TargetIndex> target_accessor;
+            std::size_t const source = SourceIndex::access_id_to_mem_id(
+                    source_accessor
+                            .access_element(
+                                    typename tensor::natural_domain_t<
+                                            SourceIndex>::discrete_element_type(natural_elem))
+                            .template uid<SourceIndex>());
+            std::size_t const target = TargetIndex::access_id_to_mem_id(
+                    target_accessor
+                            .access_element(
+                                    typename tensor::natural_domain_t<
+                                            TargetIndex>::discrete_element_type(natural_elem))
+                            .template uid<TargetIndex>());
+            // Restore the orientation of each requested wedge multi-index.
+            int sign = 1;
+            for (std::size_t i = 0; i < SourceIndex::rank(); ++i)
+                for (std::size_t j = i + 1; j < SourceIndex::rank(); ++j) {
+                    if (source_ids[i] > source_ids[j])
+                        sign = -sign;
+                    if (target_ids[i] > target_ids[j])
+                        sign = -sign;
+                }
+            return sign * m_inverse[source * matrix_size + target]
+                   / misc::factorial(SourceIndex::rank());
+        }
+    }
+};
+
+} // namespace detail
+
 template <
         misc::Specialization<ddc::TypeSeq> Indices,
         misc::Specialization<tensor::Tensor> PositionType,
@@ -846,6 +957,8 @@ struct Reconstruction
                     = cochain_tensor.get(
                             cochain_tensor.access_element(cochain_natural_elem_type()));
         } else {
+            detail::ReconstructionMatrix<Indices, PositionType, BatchElem, Complex> const
+                    reconstruction(position, elem);
             [[maybe_unused]] sil::tensor::TensorAccessor<source_index_type> source_accessor;
             ddc::device_for_each(reconstructed_tensor.domain(), [&](auto target_mem_elem) {
                 auto const target_natural_elem
@@ -864,7 +977,7 @@ struct Reconstruction
                     ddc::detail::array(cochain_natural_elem)
                             = ddc::detail::array(source_natural_elem);
 
-                    reconstructed_value += value(position, elem, reconstruction_natural_elem)
+                    reconstructed_value += reconstruction.value(reconstruction_natural_elem)
                                            * cochain_tensor.get(cochain_tensor.access_element(
                                                    cochain_natural_elem));
                 });
@@ -875,86 +988,9 @@ struct Reconstruction
 
     KOKKOS_FUNCTION static double value(PositionType position, BatchElem elem, auto natural_elem)
     {
-        static_assert(
-                Complex != CellComplex::BarycentricDual,
-                "Reconstruction is not implemented for the barycentric dual complex.");
-        constexpr std::size_t K = source_index_type::rank();
-        if constexpr (K == 0) {
-            return 1.;
-        } else {
-            std::array const source_ids
-                    = ddc::detail::array(source_natural_elem_type(natural_elem));
-            std::array const target_ids
-                    = ddc::detail::array(target_natural_elem_type(natural_elem));
-            using reduction_accessor_t
-                    = sil::tensor::tensor_accessor_for_domain_t<reduction_domain_t<Indices>>;
-            using reduction_natural_elem_type =
-                    typename reduction_accessor_t::natural_domain_t::discrete_element_type;
-            constexpr std::size_t matrix_size = source_index_type::mem_size();
-            using memory_space = typename PositionType::memory_space;
-            [[maybe_unused]] tensor::TensorAccessor<source_index_type> source_accessor;
-            [[maybe_unused]] tensor::TensorAccessor<target_index_type> target_accessor;
-
-            std::array<double, matrix_size * matrix_size> reduction_alloc {};
-            std::array<double, matrix_size * matrix_size> inverse_alloc {};
-            std::array<double, matrix_size * matrix_size> workspace_alloc {};
-            auto reduction_matrix = misc::math::matrix_view<
-                    double,
-                    memory_space>(reduction_alloc.data(), matrix_size, matrix_size);
-            auto inverse_matrix = misc::math::matrix_view<
-                    double,
-                    memory_space>(inverse_alloc.data(), matrix_size, matrix_size);
-            auto workspace = misc::math::vector_view<
-                    double,
-                    memory_space>(workspace_alloc.data(), matrix_size * matrix_size);
-
-            ddc::device_for_each(source_accessor.domain(), [&](auto source_mem_elem) {
-                auto const source_natural_elem
-                        = source_accessor.canonical_natural_element(source_mem_elem);
-                ddc::device_for_each(target_accessor.domain(), [&](auto target_mem_elem) {
-                    auto const target_natural_elem
-                            = target_accessor.canonical_natural_element(target_mem_elem);
-                    reduction_natural_elem_type reduction_natural_elem
-                            = detail::merge_reduction_natural_elems<reduction_natural_elem_type>(
-                                    ddc::detail::array(source_natural_elem),
-                                    ddc::detail::array(target_natural_elem));
-                    reduction_matrix(
-                            source_mem_elem.template uid<source_index_type>(),
-                            target_mem_elem.template uid<target_index_type>())
-                            = Reduction<Indices, PositionType, BatchElem, Complex>::
-                                    value(position, elem, reduction_natural_elem);
-                });
-            });
-
-            bool const success = misc::math::invert(inverse_matrix, reduction_matrix, workspace);
-            if (!success) {
-                return 0.;
-            }
-            if (!detail::has_unique_reduction_ids<K>(source_ids)
-                || !detail::has_unique_reduction_ids<K>(target_ids)) {
-                return 0.;
-            }
-            std::size_t const target_mem_id = target_index_type::access_id_to_mem_id(
-                    target_accessor.access_element(target_natural_elem_type(natural_elem))
-                            .template uid<target_index_type>());
-            std::size_t const source_mem_id = source_index_type::access_id_to_mem_id(
-                    source_accessor.access_element(source_natural_elem_type(natural_elem))
-                            .template uid<source_index_type>());
-            // The inverse is stored in canonical wedge bases. Restore the
-            // orientation of each requested (possibly permuted) multi-index.
-            int sign = 1;
-            for (std::size_t i = 0; i < K; ++i) {
-                for (std::size_t j = i + 1; j < K; ++j) {
-                    if (source_ids[i] > source_ids[j]) {
-                        sign = -sign;
-                    }
-                    if (target_ids[i] > target_ids[j]) {
-                        sign = -sign;
-                    }
-                }
-            }
-            return sign * inverse_matrix(source_mem_id, target_mem_id) / misc::factorial(K);
-        }
+        return detail::
+                ReconstructionMatrix<Indices, PositionType, BatchElem, Complex>(position, elem)
+                        .value(natural_elem);
     }
 };
 
@@ -1002,20 +1038,165 @@ ReconstructionTensorType fill_reconstruction_operator(
             KOKKOS_LAMBDA(
                     typename ReconstructionTensorType::non_indices_domain_t::discrete_element_type
                             elem) {
-                ddc::device_for_each(
-                        reconstruction_tensor.accessor().domain(),
-                        FillReconstructionOperatorMem<
-                                Indices,
-                                ReconstructionTensorType,
-                                PositionType,
-                                Complex,
-                                typename ReconstructionTensorType::non_indices_domain_t::
-                                        discrete_element_type> {
-                                reconstruction_tensor,
-                                position,
-                                elem});
+                detail::ReconstructionMatrix<
+                        Indices,
+                        PositionType,
+                        typename ReconstructionTensorType::non_indices_domain_t::
+                                discrete_element_type,
+                        Complex> const reconstruction(position, elem);
+                ddc::device_for_each(reconstruction_tensor.accessor().domain(), [&](auto mem_elem) {
+                    reconstruction_tensor.mem(
+                            typename ReconstructionTensorType::
+                                    discrete_element_type(elem, mem_elem))
+                            = reconstruction.value(
+                                    reconstruction_tensor.accessor().canonical_natural_element(
+                                            mem_elem));
+                });
             });
     return reconstruction_tensor;
+}
+
+/** Reconstruct pointwise forms using coefficients computed on a fixed geometry.
+ * \important This operator and documentation is fully AI-generated.
+ *
+ * Reconstruction inverts the reduction from physical components to cochains.
+ * Construction stores that inverse at every output point, including the wedge
+ * orientation and factorial normalization used by Reconstruction::value().
+ * Application contracts those stored coefficients with the current cochain;
+ * it performs no geometric evaluation or matrix inversion. Scalar forms are
+ * copied, and singular reduction matrices retain zero reconstruction weights.
+ *
+ * The coefficients depend on positions and the geometric sampling domain, not
+ * on cochain values or a separately supplied metric. Rebuild the object when
+ * positions or the sampling domain change. Input and output allocations may
+ * change between applications, provided their domains remain compatible with
+ * the construction domain. The execution space must access all allocations.
+ */
+template <
+        misc::Specialization<ddc::TypeSeq> Indices,
+        misc::Specialization<tensor::Tensor> ReconstructedTensorType,
+        misc::Specialization<tensor::Tensor> CochainTensorType,
+        misc::Specialization<tensor::Tensor> PositionType,
+        class ExecSpace,
+        CellComplex Complex = CellComplex::Primal>
+class StagedReconstruction
+{
+    using SourceIndex = reduction_index_t<Indices>;
+    using MemorySpace = typename ReconstructedTensorType::memory_space;
+    using CoefficientDomain = misc::cartesian_prod_t<
+            typename ReconstructedTensorType::non_indices_domain_t,
+            reconstruction_domain_t<Indices>>;
+    ExecSpace m_exec_space;
+    ddc::Chunk<double, CoefficientDomain, ddc::KokkosAllocator<double, MemorySpace>> m_coefficients;
+
+public:
+    StagedReconstruction(
+            ExecSpace const& exec_space,
+            ReconstructedTensorType output,
+            CochainTensorType,
+            PositionType position)
+        : m_exec_space(exec_space)
+        , m_coefficients(
+                  CoefficientDomain(
+                          output.non_indices_domain(),
+                          tensor::tensor_accessor_for_domain_t<reconstruction_domain_t<Indices>>()
+                                  .domain()),
+                  ddc::KokkosAllocator<double, MemorySpace>())
+    {
+        fill_reconstruction_operator<
+                Indices,
+                tensor::Tensor<double, CoefficientDomain, Kokkos::layout_right, MemorySpace>,
+                PositionType,
+                ExecSpace,
+                Complex>(exec_space, tensor::Tensor(m_coefficients.span_view()), position);
+    }
+
+    ReconstructedTensorType operator()(ReconstructedTensorType output, CochainTensorType input)
+            const
+    {
+        tensor::Tensor<double const, CoefficientDomain, Kokkos::layout_right, MemorySpace> const
+                coefficients(m_coefficients.span_cview());
+        ddc::parallel_for_each(
+                "similie_apply_staged_reconstruction",
+                m_exec_space,
+                output.non_indices_domain(),
+                KOKKOS_LAMBDA(
+                        typename ReconstructedTensorType::non_indices_domain_t::
+                                discrete_element_type elem) {
+                    tensor::TensorAccessor<SourceIndex> const source_accessor;
+                    ddc::device_for_each(output.indices_domain(), [&](auto target) {
+                        double value = 0.;
+                        ddc::device_for_each(source_accessor.domain(), [&](auto source) {
+                            auto const source_natural
+                                    = source_accessor.canonical_natural_element(source);
+                            auto const target_natural
+                                    = output.accessor().canonical_natural_element(target);
+                            typename CochainTensorType::accessor_t::natural_domain_t::
+                                    discrete_element_type component;
+                            ddc::detail::array(component) = ddc::detail::array(source_natural);
+                            // Slice the canonical source storage index before accessing
+                            // the target, so each wedge index is mapped independently.
+                            value += coefficients[elem][source_accessor.access_element(
+                                                                source_natural)]
+                                             .get(ddc::DiscreteElement<
+                                                     reduction_index_t<tensor::primes<Indices>>>(
+                                                     coefficients.access_element(
+                                                             elem,
+                                                             detail::merge_reduction_natural_elems<
+                                                                     typename tensor::tensor_accessor_for_domain_t<
+                                                                             reconstruction_domain_t<
+                                                                                     Indices>>::
+                                                                             natural_domain_t::
+                                                                                     discrete_element_type>(
+                                                                     ddc::detail::array(
+                                                                             source_natural),
+                                                                     ddc::detail::array(
+                                                                             target_natural)))))
+                                     * input.get(input.access_element(elem, component));
+                        });
+                        output.mem(elem, target) = value;
+                    });
+                });
+        return output;
+    }
+};
+
+static_assert(StagedOperatorConcept<
+              StagedReconstruction<
+                      ddc::TypeSeq<detail::DirectionConcept>,
+                      detail::FieldConcept<detail::DirectionConcept>,
+                      detail::FieldConcept<detail::DirectionConcept>,
+                      detail::FieldConcept<detail::PositionIndexConcept>,
+                      Kokkos::DefaultHostExecutionSpace>,
+              detail::FieldConcept<detail::DirectionConcept>>);
+
+template <
+        misc::Specialization<ddc::TypeSeq> Indices,
+        CellComplex Complex = CellComplex::Primal,
+        class ExecSpace,
+        misc::Specialization<tensor::Tensor> ReconstructedTensorType,
+        misc::Specialization<tensor::Tensor> CochainTensorType,
+        misc::Specialization<tensor::Tensor> PositionType>
+StagedReconstruction<
+        Indices,
+        ReconstructedTensorType,
+        CochainTensorType,
+        PositionType,
+        ExecSpace,
+        Complex>
+make_staged_reconstruction(
+        ExecSpace const& exec_space,
+        ReconstructedTensorType output,
+        CochainTensorType input,
+        PositionType position)
+{
+    return StagedReconstruction<
+            Indices,
+            ReconstructedTensorType,
+            CochainTensorType,
+            PositionType,
+            ExecSpace,
+            Complex>(exec_space, output, input, position);
 }
 
 } // namespace exterior
