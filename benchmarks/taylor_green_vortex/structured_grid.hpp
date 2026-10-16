@@ -14,70 +14,11 @@
 #include <similie/tensor/identity_tensor.hpp>
 #include <similie/tensor/scalar_extrapolation_rules.hpp>
 
-namespace taylor_green_vortex {
-struct X
-{
-};
-struct Y
-{
-};
-struct Z
-{
-};
-struct GridX
-{
-    using continuous_dimension_type = X;
-};
-struct GridY
-{
-    using continuous_dimension_type = Y;
-};
-struct GridZ
-{
-    using continuous_dimension_type = Z;
-};
-using Field = Kokkos::View<double**, Kokkos::LayoutRight>;
-using SpatialDomain = ddc::DiscreteDomain<GridX, GridY, GridZ>;
-using Scalar = sil::tensor::Covariant<sil::tensor::ScalarIndex>;
-struct Direction : sil::tensor::TensorNaturalIndex<X, Y, Z>
-{
-};
-struct CurlDirection : sil::tensor::TensorNaturalIndex<X, Y, Z>
-{
-};
-using Vector = sil::tensor::Covariant<Direction>;
-using TwoForm
-        = sil::tensor::TensorAntisymmetricIndex<sil::tensor::Covariant<CurlDirection>, Vector>;
-using PositionIndex = sil::tensor::Contravariant<Direction>;
-using MetricIndex = sil::tensor::TensorIdentityIndex<
-        sil::tensor::Covariant<sil::tensor::MetricIndex1<X, Y, Z>>,
-        sil::tensor::Covariant<sil::tensor::MetricIndex2<X, Y, Z>>>;
-using ScalarTensor = sil::tensor::Tensor<
-        double,
-        ddc::DiscreteDomain<GridX, GridY, GridZ, Scalar>,
-        Kokkos::layout_right,
-        Field::memory_space>;
-using VectorTensor = sil::tensor::Tensor<
-        double,
-        ddc::DiscreteDomain<GridX, GridY, GridZ, Vector>,
-        Kokkos::layout_right,
-        Field::memory_space>;
-using TwoFormTensor = sil::tensor::Tensor<
-        double,
-        ddc::DiscreteDomain<GridX, GridY, GridZ, TwoForm>,
-        Kokkos::layout_right,
-        Field::memory_space>;
-using PositionTensor = sil::tensor::Tensor<
-        double,
-        ddc::DiscreteDomain<GridX, GridY, GridZ, PositionIndex>,
-        Kokkos::layout_right,
-        Field::memory_space>;
-using MetricTensor = sil::tensor::Tensor<
-        double,
-        ddc::DiscreteDomain<GridX, GridY, GridZ, MetricIndex>,
-        Kokkos::layout_right,
-        Field::memory_space>;
+#include "configuration.hpp"
+#include "grid_types.hpp"
+#include "laplacian_modes.hpp"
 
+namespace taylor_green_vortex {
 /** Benchmark storage and field placement, delegating all differential operators.
  * Geometry and Hodge stars are computed by exterior, never supplied as h powers.
  * Periodic cochain samples wrap; geometry is unwrapped, including a halo, so the
@@ -87,14 +28,6 @@ using MetricTensor = sil::tensor::Tensor<
  */
 class StructuredGrid
 {
-    using ScalarLaplacian = sil::exterior::StagedLaplacian<
-            MetricIndex,
-            Vector,
-            Scalar,
-            ScalarTensor,
-            MetricTensor,
-            PositionTensor,
-            Kokkos::DefaultExecutionSpace>;
     using VectorCodifferential = sil::exterior::StagedCodifferential<
             MetricIndex,
             Vector,
@@ -103,25 +36,57 @@ class StructuredGrid
             MetricTensor,
             PositionTensor,
             Kokkos::DefaultExecutionSpace>;
+    template <template <class...> class Coefficients = sil::tensor::TensorFullIndex>
     using OneReconstruction = sil::exterior::StagedReconstruction<
             ddc::TypeSeq<Vector>,
             VectorTensor,
             VectorTensor,
             PositionTensor,
-            Kokkos::DefaultExecutionSpace>;
+            Kokkos::DefaultExecutionSpace,
+            sil::exterior::CellComplex::Primal,
+            Coefficients>;
+    template <template <class...> class Coefficients = sil::tensor::TensorFullIndex>
+    using OneReduction = sil::exterior::StagedReduction<
+            ddc::TypeSeq<Vector>,
+            VectorTensor,
+            VectorTensor,
+            PositionTensor,
+            Kokkos::DefaultExecutionSpace,
+            sil::exterior::CellComplex::Primal,
+            Coefficients>;
+    template <template <class...> class Coefficients = sil::tensor::TensorFullIndex>
     using TwoReconstruction = sil::exterior::StagedReconstruction<
             ddc::TypeSeq<sil::tensor::Covariant<CurlDirection>, Vector>,
             TwoFormTensor,
             TwoFormTensor,
             PositionTensor,
-            Kokkos::DefaultExecutionSpace>;
+            Kokkos::DefaultExecutionSpace,
+            sil::exterior::CellComplex::Primal,
+            Coefficients>;
+    template <template <class...> class Coefficients = sil::tensor::TensorFullIndex>
+    using TwoReduction = sil::exterior::StagedReduction<
+            ddc::TypeSeq<sil::tensor::Covariant<CurlDirection>, Vector>,
+            TwoFormTensor,
+            TwoFormTensor,
+            PositionTensor,
+            Kokkos::DefaultExecutionSpace,
+            sil::exterior::CellComplex::Primal,
+            Coefficients>;
     SpatialDomain m_domain;
     SpatialDomain m_geometry_domain;
     Field m_position, m_metric, m_oneform, m_pointwise, m_twoform, m_face_pointwise, m_scalar;
-    std::unique_ptr<ScalarLaplacian> m_laplacian;
+    std::unique_ptr<LaplacianOperator<ScalarTensor>> m_laplacian;
     std::unique_ptr<VectorCodifferential> m_codifferential;
-    std::unique_ptr<OneReconstruction> m_one_reconstruction;
-    std::unique_ptr<TwoReconstruction> m_two_reconstruction;
+    std::unique_ptr<OneReconstruction<>> m_one_reconstruction;
+    std::unique_ptr<OneReconstruction<sil::tensor::TensorDiagonalIndex>>
+            m_one_diagonal_reconstruction;
+    std::unique_ptr<OneReduction<>> m_one_reduction;
+    std::unique_ptr<OneReduction<sil::tensor::TensorDiagonalIndex>> m_one_diagonal_reduction;
+    std::unique_ptr<TwoReconstruction<>> m_two_reconstruction;
+    std::unique_ptr<TwoReconstruction<sil::tensor::TensorDiagonalIndex>>
+            m_two_diagonal_reconstruction;
+    std::unique_ptr<TwoReduction<>> m_two_reduction;
+    std::unique_ptr<TwoReduction<sil::tensor::TensorDiagonalIndex>> m_two_diagonal_reduction;
 
 public:
     // Device lambda instantiations in exterior must be able to name this type.
@@ -211,17 +176,7 @@ public:
     void reduce_one_form()
     {
         VectorTensor const form = vector(m_pointwise), cochain = vector(m_oneform);
-        PositionTensor const geometry = position();
-        ddc::parallel_for_each(
-                Kokkos::DefaultExecutionSpace(),
-                m_domain,
-                KOKKOS_LAMBDA(SpatialDomain::discrete_element_type elem) {
-                    sil::exterior::Reduction<
-                            ddc::TypeSeq<Vector>,
-                            PositionTensor,
-                            SpatialDomain::discrete_element_type>::
-                    operator()(cochain[elem], form[elem], geometry, elem);
-                });
+        reduce(cochain, form);
     }
     void reduced_divergence(Field output, int component)
     {
@@ -240,9 +195,10 @@ public:
                 cochain,
                 scalar(input, component),
                 Periodic {});
-        (*m_one_reconstruction)(pointwise, cochain);
+        reconstruct(pointwise, cochain);
     }
 
+    Configuration const configuration;
     int const n, cells;
     double const h;
     SpatialDomain domain() const
@@ -257,7 +213,7 @@ public:
     {
         return metric();
     }
-    explicit StructuredGrid(int nodes)
+    explicit StructuredGrid(int nodes, Configuration const& selected = {})
         : m_domain(
                   ddc::DiscreteElement<GridX, GridY, GridZ>(1, 1, 1),
                   ddc::DiscreteVector<GridX, GridY, GridZ>(nodes, nodes, nodes))
@@ -271,30 +227,69 @@ public:
         , m_twoform("two_cochain", 1, 3 * nodes * nodes * nodes)
         , m_face_pointwise("reconstructed_two_form", 1, 3 * nodes * nodes * nodes)
         , m_scalar("scalar_operator_workspace", 1, nodes * nodes * nodes)
+        , configuration(selected)
         , n(nodes)
         , cells(nodes * nodes * nodes)
         , h(2 * std::numbers::pi / nodes)
     {
         initialize_geometry();
         PositionTensor const geometry = position();
-        m_one_reconstruction = std::make_unique<OneReconstruction>(
-                Kokkos::DefaultExecutionSpace(),
-                vector(m_pointwise),
-                vector(m_oneform),
-                geometry);
-        m_two_reconstruction = std::make_unique<TwoReconstruction>(
-                Kokkos::DefaultExecutionSpace(),
-                twoform(m_face_pointwise),
-                twoform(m_twoform),
-                geometry);
-        m_laplacian = std::make_unique<ScalarLaplacian>(
-                Kokkos::DefaultExecutionSpace(),
+        if (configuration.staged_diagonal_reconstruction) {
+            m_one_diagonal_reconstruction
+                    = std::make_unique<OneReconstruction<sil::tensor::TensorDiagonalIndex>>(
+                            Kokkos::DefaultExecutionSpace(),
+                            vector(m_pointwise),
+                            vector(m_oneform),
+                            geometry);
+            m_two_diagonal_reconstruction
+                    = std::make_unique<TwoReconstruction<sil::tensor::TensorDiagonalIndex>>(
+                            Kokkos::DefaultExecutionSpace(),
+                            twoform(m_face_pointwise),
+                            twoform(m_twoform),
+                            geometry);
+        } else if (configuration.staged_reconstruction) {
+            m_one_reconstruction = std::make_unique<OneReconstruction<>>(
+                    Kokkos::DefaultExecutionSpace(),
+                    vector(m_pointwise),
+                    vector(m_oneform),
+                    geometry);
+            m_two_reconstruction = std::make_unique<TwoReconstruction<>>(
+                    Kokkos::DefaultExecutionSpace(),
+                    twoform(m_face_pointwise),
+                    twoform(m_twoform),
+                    geometry);
+        }
+        if (configuration.staged_diagonal_reduction) {
+            m_one_diagonal_reduction
+                    = std::make_unique<OneReduction<sil::tensor::TensorDiagonalIndex>>(
+                            Kokkos::DefaultExecutionSpace(),
+                            vector(m_oneform),
+                            vector(m_pointwise),
+                            geometry);
+            m_two_diagonal_reduction
+                    = std::make_unique<TwoReduction<sil::tensor::TensorDiagonalIndex>>(
+                            Kokkos::DefaultExecutionSpace(),
+                            twoform(m_twoform),
+                            twoform(m_face_pointwise),
+                            geometry);
+        } else if (configuration.staged_reduction) {
+            m_one_reduction = std::make_unique<OneReduction<>>(
+                    Kokkos::DefaultExecutionSpace(),
+                    vector(m_oneform),
+                    vector(m_pointwise),
+                    geometry);
+            m_two_reduction = std::make_unique<TwoReduction<>>(
+                    Kokkos::DefaultExecutionSpace(),
+                    twoform(m_twoform),
+                    twoform(m_face_pointwise),
+                    geometry);
+        }
+        m_laplacian = make_scalar_laplacian(
+                configuration,
                 scalar(m_scalar),
                 scalar(m_scalar),
                 metric(),
-                geometry,
-                Periodic {},
-                Periodic {});
+                geometry);
         m_codifferential = std::make_unique<VectorCodifferential>(
                 Kokkos::DefaultExecutionSpace(),
                 vector(m_oneform),
@@ -336,11 +331,87 @@ public:
     }
     void reconstruct(VectorTensor output, VectorTensor input) const
     {
-        (*m_one_reconstruction)(output, input);
+        if (m_one_diagonal_reconstruction)
+            (*m_one_diagonal_reconstruction)(output, input);
+        else if (m_one_reconstruction)
+            (*m_one_reconstruction)(output, input);
+        else {
+            PositionTensor const geometry = position();
+            ddc::parallel_for_each(
+                    "tgv_direct_reconstruction",
+                    Kokkos::DefaultExecutionSpace(),
+                    m_domain,
+                    KOKKOS_LAMBDA(SpatialDomain::discrete_element_type element) {
+                        sil::exterior::Reconstruction<
+                                ddc::TypeSeq<Vector>,
+                                PositionTensor,
+                                SpatialDomain::discrete_element_type>::
+                        operator()(output[element], input[element], geometry, element);
+                    });
+        }
+    }
+    void reduce(VectorTensor output, VectorTensor input) const
+    {
+        if (m_one_diagonal_reduction)
+            (*m_one_diagonal_reduction)(output, input);
+        else if (m_one_reduction)
+            (*m_one_reduction)(output, input);
+        else {
+            PositionTensor const geometry = position();
+            ddc::parallel_for_each(
+                    "tgv_direct_reduction",
+                    Kokkos::DefaultExecutionSpace(),
+                    m_domain,
+                    KOKKOS_LAMBDA(SpatialDomain::discrete_element_type element) {
+                        sil::exterior::Reduction<
+                                ddc::TypeSeq<Vector>,
+                                PositionTensor,
+                                SpatialDomain::discrete_element_type>::
+                        operator()(output[element], input[element], geometry, element);
+                    });
+        }
     }
     void reconstruct(TwoFormTensor output, TwoFormTensor input) const
     {
-        (*m_two_reconstruction)(output, input);
+        if (m_two_diagonal_reconstruction)
+            (*m_two_diagonal_reconstruction)(output, input);
+        else if (m_two_reconstruction)
+            (*m_two_reconstruction)(output, input);
+        else {
+            PositionTensor const geometry = position();
+            ddc::parallel_for_each(
+                    "tgv_direct_reconstruction",
+                    Kokkos::DefaultExecutionSpace(),
+                    m_domain,
+                    KOKKOS_LAMBDA(SpatialDomain::discrete_element_type element) {
+                        sil::exterior::Reconstruction<
+                                ddc::TypeSeq<sil::tensor::Covariant<CurlDirection>, Vector>,
+                                PositionTensor,
+                                SpatialDomain::discrete_element_type>::
+                        operator()(output[element], input[element], geometry, element);
+                    });
+        }
+    }
+    void reduce(TwoFormTensor output, TwoFormTensor input) const
+    {
+        if (m_two_diagonal_reduction)
+            (*m_two_diagonal_reduction)(output, input);
+        else if (m_two_reduction)
+            (*m_two_reduction)(output, input);
+        else {
+            PositionTensor const geometry = position();
+            ddc::parallel_for_each(
+                    "tgv_direct_reduction",
+                    Kokkos::DefaultExecutionSpace(),
+                    m_domain,
+                    KOKKOS_LAMBDA(SpatialDomain::discrete_element_type element) {
+                        sil::exterior::Reduction<
+                                ddc::TypeSeq<sil::tensor::Covariant<CurlDirection>, Vector>,
+                                PositionTensor,
+                                SpatialDomain::discrete_element_type>::
+                        operator()(output[element], input[element], geometry, element);
+                    });
+        }
     }
     KOKKOS_FUNCTION static int neighbor(int index, int axis, int offset, int nodes)
     {
@@ -400,7 +471,7 @@ public:
 
     void laplacian(Field input, int component, Field output, int out_component)
     {
-        (*m_laplacian)(scalar(output, out_component), scalar(input, component));
+        m_laplacian->apply(scalar(output, out_component), scalar(input, component));
         // exterior uses the positive Hodge Laplacian; viscosity uses its negative.
         Kokkos::parallel_for(
                 "hodge_laplacian_to_diffusion",
@@ -426,7 +497,7 @@ public:
         sil::exterior::deriv<
                 sil::tensor::Covariant<CurlDirection>,
                 Vector>(Kokkos::DefaultExecutionSpace(), rotation, cochain, Periodic {});
-        (*m_two_reconstruction)(reconstructed, rotation);
+        reconstruct(reconstructed, rotation);
         Kokkos::parallel_for(
                 "vorticity_faces_to_nodes",
                 cells,

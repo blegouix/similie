@@ -89,14 +89,22 @@ template <
         class Element,
         class NaturalElement>
 concept ContinuousHodgeStarConcept = requires(
+        Operator operation,
         Output output,
         Input input,
         Metric metric,
         Element element,
         NaturalElement natural_element) {
-    { Operator::value(metric, element, natural_element) } -> std::same_as<double>;
-    { Operator::operator()(output, input, metric, element) } -> std::same_as<void>;
+    operation.value(metric, element);
+    { operation.value(metric, element, natural_element) } -> std::same_as<double>;
+    { operation(output, input, metric, element) } -> std::same_as<void>;
 };
+
+template <class Operator, class Output, class Input, class... Arguments>
+concept LocalOperatorConcept
+        = requires(Operator const& operation, Output output, Input input, Arguments... arguments) {
+              { operation(output, input, arguments...) } -> std::same_as<void>;
+          };
 
 template <class Operator, class Output, class Input = Output>
 concept StagedOperatorConcept = requires(Operator& operation, Output output, Input input) {

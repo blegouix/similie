@@ -421,7 +421,13 @@ KOKKOS_FUNCTION ReductionNaturalElemType merge_reduction_natural_elems(
     return natural_elem_from_flat_ids<ReductionNaturalElemType>(reduction_ids);
 }
 
-template <class Source, class Target, class Output, class Input, class Weight>
+template <
+        class Source,
+        class Target,
+        template <class...> class Coefficients = tensor::TensorFullIndex,
+        class Output,
+        class Input,
+        class Weight>
 KOKKOS_FUNCTION void apply_local_stencil(Output output, Input input, Weight weight)
 {
     ddc::device_for_each(output.domain(), [&](auto component) {
@@ -429,8 +435,12 @@ KOKKOS_FUNCTION void apply_local_stencil(Output output, Input input, Weight weig
                 = flat_natural_elem_ids(output.accessor().canonical_natural_element(component));
         std::size_t const target = stencil_component_index<Target>(target_ids);
         double sum = 0.0;
-        for (std::size_t source = 0; source < Source::mem_size(); ++source) {
-            std::size_t const entry = target * Source::mem_size() + source;
+        using Index = LocalCoefficientIndex<Source, Target, Coefficients>;
+        constexpr bool diagonal = misc::Specialization<Index, tensor::TensorDiagonalIndex>;
+        for (std::size_t source = diagonal ? target : 0;
+             source < (diagonal ? target + 1 : Source::mem_size());
+             ++source) {
+            std::size_t const entry = Index::mem_id({target, source});
             if constexpr (Source::rank() == 0) {
                 sum += weight(entry) * input.mem(input.domain().front());
             } else {
@@ -717,6 +727,60 @@ struct Reduction
                    * detail::complex_volume_factor<Complex, source_index_type::size()>(K)
                    / misc::factorial(K);
         }
+    }
+
+    KOKKOS_FUNCTION static detail::LocalOperatorStencil<
+            reduction_index_t<tensor::primes<tensor::upper_t<Indices>>>,
+            target_index_type>
+    value(PositionType position, BatchElem element)
+    {
+        using Source = reduction_index_t<tensor::primes<tensor::upper_t<Indices>>>;
+        detail::LocalOperatorStencil<Source, target_index_type> result;
+        auto unit = detail::make_stencil<typename PositionType::memory_space, Source>(
+                ddc::DiscreteElement<>());
+        auto output = detail::make_stencil<typename PositionType::memory_space, target_index_type>(
+                ddc::DiscreteElement<>());
+        for (std::size_t source = 0; source < Source::mem_size(); ++source) {
+            unit.mem(ddc::DiscreteElement<Source>(source)) = 1.0;
+            operator()(
+                    tensor::Tensor(output.span_view()),
+                    tensor::Tensor(unit.span_view()),
+                    position,
+                    element);
+            for (std::size_t target = 0; target < target_index_type::mem_size(); ++target)
+                result.weights[target * Source::mem_size() + source]
+                        = output.mem(ddc::DiscreteElement<target_index_type>(target));
+            unit.mem(ddc::DiscreteElement<Source>(source)) = 0.0;
+        }
+        return result;
+    }
+
+    template <misc::Specialization<tensor::Tensor> MetricType>
+    KOKKOS_FUNCTION static detail::LocalOperatorStencil<
+            reduction_index_t<tensor::primes<tensor::upper_t<Indices>>>,
+            target_index_type>
+    value(MetricType metric, PositionType position, BatchElem element)
+    {
+        using Source = reduction_index_t<tensor::primes<tensor::upper_t<Indices>>>;
+        detail::LocalOperatorStencil<Source, target_index_type> result;
+        auto unit = detail::make_stencil<typename PositionType::memory_space, Source>(
+                ddc::DiscreteElement<>());
+        auto output = detail::make_stencil<typename PositionType::memory_space, target_index_type>(
+                ddc::DiscreteElement<>());
+        for (std::size_t source = 0; source < Source::mem_size(); ++source) {
+            unit.mem(ddc::DiscreteElement<Source>(source)) = 1.0;
+            operator()(
+                    tensor::Tensor(output.span_view()),
+                    tensor::Tensor(unit.span_view()),
+                    metric,
+                    position,
+                    element);
+            for (std::size_t target = 0; target < target_index_type::mem_size(); ++target)
+                result.weights[target * Source::mem_size() + source]
+                        = output.mem(ddc::DiscreteElement<target_index_type>(target));
+            unit.mem(ddc::DiscreteElement<Source>(source)) = 0.0;
+        }
+        return result;
     }
 
     template <misc::Specialization<tensor::Tensor> MetricType>
@@ -1135,7 +1199,8 @@ template <
         misc::Specialization<tensor::Tensor> CochainTensorType,
         misc::Specialization<tensor::Tensor> PositionType,
         class ExecSpace,
-        CellComplex Complex = CellComplex::Primal>
+        CellComplex Complex = CellComplex::Primal,
+        template <class...> class Coefficients = tensor::TensorFullIndex>
 class StagedReconstruction
 {
     using Source = reduction_index_t<Indices>;
@@ -1147,8 +1212,8 @@ class StagedReconstruction
             PositionType,
             typename Domain::discrete_element_type,
             Complex>;
-    ExecSpace m_exec_space;
-    detail::LocalStencilStorage<Source, Target, Domain, Memory> m_stencils;
+    Kokkos::View<ExecSpace, Kokkos::HostSpace> m_exec_space;
+    detail::LocalStencilStorage<Source, Target, Domain, Memory, Coefficients> m_stencils;
 
 public:
     StagedReconstruction(
@@ -1156,12 +1221,34 @@ public:
             ReconstructedTensorType output,
             CochainTensorType,
             PositionType position)
-        : m_exec_space(exec)
+        : StagedReconstruction(exec, position, output.non_indices_domain())
     {
-        m_stencils = detail::cache_local_stencils<Source, Target, Memory>(
+    }
+
+    StagedReconstruction(ExecSpace const& exec, PositionType position, Domain domain)
+        : m_exec_space("staged_reconstruction_execution")
+    {
+        m_exec_space() = exec;
+        m_stencils = detail::cache_local_stencils<Source, Target, Memory, Coefficients>(
                 exec,
-                output.non_indices_domain(),
+                domain,
                 detail::ReconstructionStencilValue<Operator, PositionType> {position});
+    }
+
+    template <class Output, class Input>
+    KOKKOS_FUNCTION void operator()(
+            Output output,
+            Input input,
+            PositionType,
+            typename Domain::discrete_element_type element) const
+    {
+        std::size_t const node = detail::stencil_node(m_stencils.domain, element);
+        detail::apply_local_stencil<
+                Source,
+                Target,
+                Coefficients>(output, input, [&](std::size_t entry) {
+            return m_stencils.weights(node, entry);
+        });
     }
 
     ReconstructedTensorType operator()(ReconstructedTensorType output, CochainTensorType input)
@@ -1171,13 +1258,14 @@ public:
         Domain const domain = m_stencils.domain;
         ddc::parallel_for_each(
                 "similie_apply_staged_reconstruction",
-                m_exec_space,
+                m_exec_space(),
                 output.non_indices_domain(),
                 KOKKOS_LAMBDA(typename Domain::discrete_element_type element) {
                     std::size_t const node = detail::stencil_node(domain, element);
                     detail::apply_local_stencil<
                             Source,
-                            Target>(output[element], input[element], [&](std::size_t entry) {
+                            Target,
+                            Coefficients>(output[element], input[element], [&](std::size_t entry) {
                         return weights(node, entry);
                     });
                 });
@@ -1194,9 +1282,22 @@ static_assert(StagedOperatorConcept<
                       Kokkos::DefaultHostExecutionSpace>,
               detail::FieldConcept<detail::DirectionConcept>>);
 
+static_assert(LocalOperatorConcept<
+              StagedReconstruction<
+                      ddc::TypeSeq<detail::DirectionConcept>,
+                      detail::FieldConcept<detail::DirectionConcept>,
+                      detail::FieldConcept<detail::DirectionConcept>,
+                      detail::FieldConcept<detail::PositionIndexConcept>,
+                      Kokkos::DefaultHostExecutionSpace>,
+              detail::FieldConcept<detail::DirectionConcept>,
+              detail::FieldConcept<detail::DirectionConcept>,
+              detail::FieldConcept<detail::PositionIndexConcept>,
+              ddc::DiscreteElement<detail::GridConcept>>);
+
 template <
         misc::Specialization<ddc::TypeSeq> Indices,
         CellComplex Complex = CellComplex::Primal,
+        template <class...> class Coefficients = tensor::TensorFullIndex,
         class ExecSpace,
         misc::Specialization<tensor::Tensor> ReconstructedTensorType,
         misc::Specialization<tensor::Tensor> CochainTensorType,
@@ -1207,7 +1308,8 @@ StagedReconstruction<
         CochainTensorType,
         PositionType,
         ExecSpace,
-        Complex>
+        Complex,
+        Coefficients>
 make_staged_reconstruction(
         ExecSpace const& exec_space,
         ReconstructedTensorType output,
@@ -1220,7 +1322,8 @@ make_staged_reconstruction(
             CochainTensorType,
             PositionType,
             ExecSpace,
-            Complex>(exec_space, output, input, position);
+            Complex,
+            Coefficients>(exec_space, output, input, position);
 }
 
 } // namespace exterior

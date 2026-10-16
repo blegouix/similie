@@ -12,6 +12,7 @@
 #include "coboundary.hpp"
 #include "cochain.hpp"
 #include "codifferential.hpp"
+#include "composed_hodge_star.hpp"
 #include "cosimplex.hpp"
 #include "covariant_derivative.hpp"
 #include "form.hpp"

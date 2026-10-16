@@ -5,10 +5,14 @@
 #pragma once
 
 #include <array>
+#include <cassert>
 #include <cstddef>
+#include <limits>
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
+
+#include <similie/tensor/diagonal_tensor.hpp>
 
 #include "coboundary.hpp"
 #include "stencil_indices.hpp"
@@ -333,21 +337,61 @@ struct HodgeStencilValue
     }
 };
 
-template <class Source, class Target, class Domain, class Memory>
+// Matrix indices enumerate independent form components, not physical directions.
+template <std::size_t Component>
+struct LocalComponent
+{
+};
+
+template <class Form, bool Row, class Sequence = std::make_index_sequence<Form::mem_size()>>
+struct LocalComponentIndex;
+
+template <class Form, bool Row, std::size_t... Components>
+struct LocalComponentIndex<Form, Row, std::index_sequence<Components...>>
+    : tensor::TensorNaturalIndex<LocalComponent<Components>...>
+{
+};
+
+template <class Source, class Target, template <class...> class Coefficients>
+using LocalCoefficientIndex
+        = Coefficients<LocalComponentIndex<Target, true>, LocalComponentIndex<Source, false>>;
+
+template <
+        class Source,
+        class Target,
+        class Domain,
+        class Memory,
+        template <class...> class Coefficients = tensor::TensorFullIndex>
 struct LocalStencilStorage
 {
     Domain domain;
-    Kokkos::View<double * [Target::mem_size() * Source::mem_size()], Kokkos::LayoutLeft, Memory>
+    Kokkos::View<
+            double * [LocalCoefficientIndex<Source, Target, Coefficients>::mem_size()],
+            Kokkos::LayoutLeft,
+            Memory>
             weights;
 };
 
-template <class Source, class Target, class Memory, class Exec, class Domain, class Evaluate>
-LocalStencilStorage<Source, Target, Domain, Memory> cache_local_stencils(
+template <
+        class Source,
+        class Target,
+        class Memory,
+        template <class...> class Coefficients = tensor::TensorFullIndex,
+        class Exec,
+        class Domain,
+        class Evaluate>
+LocalStencilStorage<Source, Target, Domain, Memory, Coefficients> cache_local_stencils(
         Exec const& exec,
         Domain domain,
         Evaluate evaluate)
 {
-    LocalStencilStorage<Source, Target, Domain, Memory> storage;
+    using Index = LocalCoefficientIndex<Source, Target, Coefficients>;
+    static_assert(
+            misc::Specialization<Index, tensor::TensorFullIndex>
+            || misc::Specialization<Index, tensor::TensorDiagonalIndex>);
+    if constexpr (misc::Specialization<Index, tensor::TensorDiagonalIndex>)
+        static_assert(Source::mem_size() == Target::mem_size());
+    LocalStencilStorage<Source, Target, Domain, Memory, Coefficients> storage;
     storage.domain = domain;
     storage.weights = decltype(storage.weights)(
             Kokkos::view_alloc(Kokkos::WithoutInitializing, "staged_local_stencils"),
@@ -358,8 +402,24 @@ LocalStencilStorage<Source, Target, Domain, Memory> cache_local_stencils(
             Kokkos::RangePolicy<Exec>(exec, 0, domain.size()),
             KOKKOS_LAMBDA(std::size_t node) {
                 auto const stencil = evaluate(stencil_element(domain, node));
-                for (std::size_t entry = 0; entry < stencil.weights.size(); ++entry)
-                    weights(node, entry) = stencil.weights[entry];
+#ifndef NDEBUG
+                if constexpr (misc::Specialization<Index, tensor::TensorDiagonalIndex>) {
+                    double scale = 0.0;
+                    for (double coefficient : stencil.weights)
+                        scale = Kokkos::max(scale, Kokkos::abs(coefficient));
+                    for (std::size_t row = 0; row < Target::mem_size(); ++row)
+                        for (std::size_t col = 0; col < Source::mem_size(); ++col)
+                            assert((row == col
+                                    || Kokkos::abs(stencil.weights[row * Source::mem_size() + col])
+                                               <= 128.0 * std::numeric_limits<double>::epsilon()
+                                                          * scale)
+                                   && "Diagonal staged operator requires diagonal coefficients");
+                }
+#endif
+                for (std::size_t entry = 0; entry < Index::mem_size(); ++entry) {
+                    auto const ids = Index::mem_id_to_canonical_natural_ids(entry);
+                    weights(node, entry) = stencil.weights[ids[0] * Source::mem_size() + ids[1]];
+                }
             });
     return storage;
 }

@@ -32,14 +32,6 @@ using ThreeFormTensor = sil::tensor::Tensor<
 class VorticityDEC
 {
     StructuredGrid& m_grid;
-    using TwoLaplacian = sil::exterior::StagedLaplacian<
-            MetricIndex,
-            sil::tensor::Covariant<CurlDirection>,
-            TwoForm,
-            TwoFormTensor,
-            MetricTensor,
-            PositionTensor,
-            Kokkos::DefaultExecutionSpace>;
     using TwoCodifferential = sil::exterior::StagedCodifferential<
             MetricIndex,
             sil::tensor::Covariant<CurlDirection>,
@@ -57,7 +49,7 @@ class VorticityDEC
             PositionTensor,
             Kokkos::DefaultExecutionSpace>;
     Field m_one, m_two, m_two_output, m_physical_one, m_physical_two, m_three, m_edges;
-    std::unique_ptr<TwoLaplacian> m_laplacian;
+    std::unique_ptr<LaplacianOperator<TwoFormTensor>> m_laplacian;
     std::unique_ptr<TwoCodifferential> m_codifferential;
     std::unique_ptr<OneCodifferential> m_one_codifferential;
 
@@ -149,14 +141,12 @@ public:
         , m_three("closure", 1, grid.cells)
         , m_edges("transport_edge_values", 3, grid.cells)
     {
-        m_laplacian = std::make_unique<TwoLaplacian>(
-                Kokkos::DefaultExecutionSpace(),
+        m_laplacian = make_two_form_laplacian(
+                grid.configuration,
                 tensor<TwoForm>(m_two_output),
                 tensor<TwoForm>(m_two),
                 grid.euclidean_metric(),
-                grid.geometry(),
-                Periodic {},
-                Periodic {});
+                grid.geometry());
         m_codifferential = std::make_unique<TwoCodifferential>(
                 Kokkos::DefaultExecutionSpace(),
                 tensor<TwoForm>(m_two),
@@ -177,17 +167,7 @@ public:
         pack(edge_values, m_physical_one);
         VectorTensor const physical = tensor<Vector>(m_physical_one),
                            reduced = tensor<Vector>(m_one);
-        PositionTensor const geometry = m_grid.geometry();
-        ddc::parallel_for_each(
-                Kokkos::DefaultExecutionSpace(),
-                m_grid.domain(),
-                KOKKOS_LAMBDA(SpatialDomain::discrete_element_type elem) {
-                    sil::exterior::Reduction<
-                            ddc::TypeSeq<Vector>,
-                            PositionTensor,
-                            SpatialDomain::discrete_element_type>::
-                    operator()(reduced[elem], physical[elem], geometry, elem);
-                });
+        m_grid.reduce(reduced, physical);
         unpack(m_one, cochain);
     }
     void reduce_nodes(Field values, Field cochain)
@@ -219,17 +199,7 @@ public:
                 });
         TwoFormTensor const physical = tensor<TwoForm>(m_physical_two),
                             reduced = tensor<TwoForm>(m_two);
-        PositionTensor const geometry = m_grid.geometry();
-        ddc::parallel_for_each(
-                Kokkos::DefaultExecutionSpace(),
-                m_grid.domain(),
-                KOKKOS_LAMBDA(SpatialDomain::discrete_element_type elem) {
-                    sil::exterior::Reduction<
-                            ddc::TypeSeq<sil::tensor::Covariant<CurlDirection>, Vector>,
-                            PositionTensor,
-                            SpatialDomain::discrete_element_type>::
-                    operator()(reduced[elem], physical[elem], geometry, elem);
-                });
+        m_grid.reduce(reduced, physical);
         unpack(m_two, cochain);
     }
     void edge_values(Field cochain, Field output)
@@ -274,7 +244,7 @@ public:
     void positive_laplacian(Field input, Field output)
     {
         pack(input, m_two);
-        (*m_laplacian)(tensor<TwoForm>(m_two_output), tensor<TwoForm>(m_two));
+        m_laplacian->apply(tensor<TwoForm>(m_two_output), tensor<TwoForm>(m_two));
         unpack(m_two_output, output);
     }
     void divergence(Field one_cochain, Field output)

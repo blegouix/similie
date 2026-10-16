@@ -461,6 +461,33 @@ struct ContinuousHodgeStar
         sil::tensor::tensor_prod(hodge_tensor, hodge_star, form_tensor);
     }
 
+    KOKKOS_FUNCTION static detail::LocalOperatorStencil<
+            tensor::lower_t<reduction_index_t<Indices1>>,
+            reduction_index_t<Indices2>>
+    value(MetricType metric, BatchElem element)
+    {
+        using Source = tensor::lower_t<reduction_index_t<Indices1>>;
+        using Target = reduction_index_t<Indices2>;
+        detail::LocalOperatorStencil<Source, Target> result;
+        auto unit = detail::make_stencil<typename MetricType::memory_space, Source>(
+                ddc::DiscreteElement<>());
+        auto output = detail::make_stencil<typename MetricType::memory_space, Target>(
+                ddc::DiscreteElement<>());
+        for (std::size_t source = 0; source < Source::mem_size(); ++source) {
+            unit.mem(ddc::DiscreteElement<Source>(source)) = 1.0;
+            operator()(
+                    tensor::Tensor(output.span_view()),
+                    tensor::Tensor(unit.span_view()),
+                    metric,
+                    element);
+            for (std::size_t target = 0; target < Target::mem_size(); ++target)
+                result.weights[target * Source::mem_size() + source]
+                        = output.mem(ddc::DiscreteElement<Target>(target));
+            unit.mem(ddc::DiscreteElement<Source>(source)) = 0.0;
+        }
+        return result;
+    }
+
     KOKKOS_FUNCTION static double value(MetricType metric, BatchElem elem, auto natural_elem)
     {
         constexpr std::size_t N = ddc::type_seq_size_v<Indices1> + ddc::type_seq_size_v<Indices2>;

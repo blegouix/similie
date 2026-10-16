@@ -53,3 +53,17 @@ gtest_discover_tests(unit_tests_exterior_ai_generated DISCOVERY_MODE PRE_TEST)
 add_executable(unit_tests_stencil_indices stencil_indices.cpp ../../main.cpp)
 target_link_libraries(unit_tests_stencil_indices PUBLIC GTest::gtest DDC::core sil::exterior)
 gtest_discover_tests(unit_tests_stencil_indices DISCOVERY_MODE PRE_TEST)
+
+add_executable(unit_tests_staged_local_operators staged_local_operators.cpp ../../main.cpp)
+target_link_libraries(unit_tests_staged_local_operators PUBLIC GTest::gtest DDC::core sil::exterior)
+gtest_discover_tests(unit_tests_staged_local_operators DISCOVERY_MODE PRE_TEST)
+
+add_executable(diagonal_assertion_debug diagonal_assertion_probe.cpp)
+add_executable(diagonal_assertion_release diagonal_assertion_probe.cpp)
+target_link_libraries(diagonal_assertion_debug PRIVATE DDC::core sil::exterior)
+target_link_libraries(diagonal_assertion_release PRIVATE DDC::core sil::exterior)
+target_compile_definitions(diagonal_assertion_debug PRIVATE SIMILIE_TEST_DEBUG_ASSERTIONS)
+target_compile_definitions(diagonal_assertion_release PRIVATE NDEBUG)
+add_test(NAME StagedLocalOperators.DebugOnlyDiagonalAssertions
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/diagonal_assertions.py"
+    $<TARGET_FILE:diagonal_assertion_debug> $<TARGET_FILE:diagonal_assertion_release>)

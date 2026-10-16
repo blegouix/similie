@@ -12,7 +12,15 @@ add_custom_command(
     COMMENT "Generating Taylor-Green ideal-gas closure from SymPy"
     VERBATIM
 )
-add_executable(taylor_green_vortex taylor_green_vortex.cpp "${TGV_IDEAL_GAS_HEADER}")
+# Compile each policy combination separately to bound CUDA compiler memory.
+foreach(mode RANGE 0 19)
+    add_library(tgv_laplacian_mode_${mode} OBJECT laplacian_mode.cpp)
+    target_compile_definitions(tgv_laplacian_mode_${mode} PRIVATE TGV_LAPLACIAN_MODE=${mode})
+    target_link_libraries(tgv_laplacian_mode_${mode} PRIVATE sil::exterior)
+    list(APPEND TGV_LAPLACIAN_OBJECTS $<TARGET_OBJECTS:tgv_laplacian_mode_${mode}>)
+endforeach()
+add_executable(taylor_green_vortex taylor_green_vortex.cpp laplacian_modes.cpp
+    "${TGV_IDEAL_GAS_HEADER}" ${TGV_LAPLACIAN_OBJECTS})
 target_include_directories(taylor_green_vortex PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 target_link_libraries(taylor_green_vortex PRIVATE sil::sil benchmark::benchmark HDF5::HDF5 Ginkgo::ginkgo)
 if(BUILD_TESTING)
