@@ -231,6 +231,28 @@ public:
         return output;
     }
 
+    /** Complete fixed stencil at one node, including component couplings.
+     * \important This documentation is fully AI-generated.
+     * Two incidence operations reach Manhattan distance two. The fixed support
+     * also covers reflected linear boundary closures. All entries are retained.
+     */
+    template <class Geometry, class Element, class Primal, class Dual>
+    KOKKOS_FORCEINLINE_FUNCTION static auto value(
+            Geometry const& geometry,
+            Tensor input,
+            Element element,
+            Primal primal,
+            Dual dual)
+    {
+        return detail::operator_stencil<
+                Index,
+                Cochain,
+                Cochain,
+                2>(input.non_indices_domain(), element, [&](auto evaluate) {
+            return operator()(geometry, input, evaluate, element, primal, dual);
+        });
+    }
+
     template <class Geometry, class Element, class Component, class Primal, class Dual>
     KOKKOS_FORCEINLINE_FUNCTION static double value(
             Geometry const& staged,

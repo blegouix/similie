@@ -76,6 +76,7 @@ concept DiscreteHodgeStarConcept = requires(
         Position position,
         Element element,
         NaturalElement natural_element) {
+    operation.value(metric, position, element);
     { operation.value(metric, position, element, natural_element) } -> std::same_as<double>;
     { operation(output, input, metric, position, element) } -> std::same_as<void>;
 };

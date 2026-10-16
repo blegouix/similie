@@ -12,6 +12,7 @@
 #include <utility>
 
 #include "codifferential.hpp"
+#include "stencil.hpp"
 
 namespace sil::exterior {
 
@@ -23,61 +24,8 @@ struct IndexForCodifferentialOfCoboundaryInLaplacian : T
 
 namespace detail {
 
-// Store topology once instead of copying full LocalChains through nested calls.
 template <std::size_t Rank, class Domain, class Memory>
-class LaplacianChain
-{
-    using Basis = decltype(tangent_basis<Rank, Domain, Memory>(
-            typename Domain::discrete_element_type {}));
-    Kokkos::View<Basis, Memory> m_basis;
-
-public:
-    using simplex_type = typename Basis::simplex_type;
-    using memory_space = Memory;
-    LaplacianChain()
-    {
-        Basis const basis
-                = tangent_basis<Rank, Domain, Memory>(typename Domain::discrete_element_type {});
-        m_basis = decltype(m_basis)(
-                Kokkos::view_alloc(Kokkos::WithoutInitializing, "laplacian_topology"));
-        Kokkos::deep_copy(m_basis, basis);
-    }
-    KOKKOS_FORCEINLINE_FUNCTION std::size_t size() const
-    {
-        return m_basis().size();
-    }
-    KOKKOS_FORCEINLINE_FUNCTION simplex_type const& operator[](std::size_t i) const
-    {
-        return m_basis()[i];
-    }
-    KOKKOS_FORCEINLINE_FUNCTION auto begin() const
-    {
-        return m_basis().begin();
-    }
-    KOKKOS_FORCEINLINE_FUNCTION auto end() const
-    {
-        return m_basis().end();
-    }
-};
-
-template <std::size_t Rank, class Domain, class Memory>
-struct LaplacianChains
-{
-    LaplacianChain<Rank, Domain, Memory> chain;
-    std::conditional_t<
-            (Rank < Domain::rank()),
-            LaplacianChains<Rank + 1, Domain, Memory>,
-            std::nullptr_t>
-            tail;
-    template <std::size_t Selected>
-    KOKKOS_FORCEINLINE_FUNCTION auto get() const
-    {
-        if constexpr (Selected == Rank)
-            return chain;
-        else
-            return tail.template get<Selected>();
-    }
-};
+using LaplacianChains = StencilChains<Rank, Domain, Memory>;
 
 template <class Source, class Target, class Domain, class Memory>
 struct LaplacianHodge
@@ -248,46 +196,8 @@ struct LaplacianGeometry
     Chains chains;
 };
 
-// Present a lazy cochain through the sampling interface used by boundary rules.
 template <class Index, class Domain, class Memory, class Evaluate>
-class LaplacianField
-{
-    Domain m_domain;
-    Evaluate m_evaluate;
-
-public:
-    using memory_space = Memory;
-    using non_indices_domain_t = Domain;
-    using indices_domain_t = ddc::DiscreteDomain<Index>;
-
-    KOKKOS_FORCEINLINE_FUNCTION LaplacianField(Domain domain, Evaluate evaluate)
-        : m_domain(domain)
-        , m_evaluate(evaluate)
-    {
-    }
-
-    KOKKOS_FORCEINLINE_FUNCTION Domain non_indices_domain() const
-    {
-        return m_domain;
-    }
-    KOKKOS_FORCEINLINE_FUNCTION static tensor::TensorAccessor<Index> accessor()
-    {
-        return {};
-    }
-
-    template <class Element, class Component>
-    KOKKOS_FORCEINLINE_FUNCTION double mem(Element element, Component component) const
-    {
-        return m_evaluate(element, component);
-    }
-
-    template <class Element>
-    KOKKOS_FORCEINLINE_FUNCTION auto operator[](Element element) const
-    {
-        return tensor::detail::pointwise_tensor<indices_domain_t, Memory>(
-                [&](auto component) { return mem(element, component); });
-    }
-};
+using LaplacianField = StencilField<Index, Domain, Memory, Evaluate>;
 
 template <class Index, class Field, class Rules, class Element, class Chains>
 KOKKOS_FORCEINLINE_FUNCTION auto laplacian_derivative(

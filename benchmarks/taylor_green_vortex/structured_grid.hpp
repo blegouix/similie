@@ -226,7 +226,7 @@ public:
     void reduced_divergence(Field output, int component)
     {
         reduce_one_form();
-        (*m_codifferential)(scalar(output, component), vector(m_oneform), Periodic {});
+        (*m_codifferential)(scalar(output, component), vector(m_oneform));
         Kokkos::parallel_for(
                 "codifferential_to_divergence",
                 cells,
@@ -299,7 +299,8 @@ public:
                 Kokkos::DefaultExecutionSpace(),
                 vector(m_oneform),
                 metric(),
-                geometry);
+                geometry,
+                Periodic {});
     }
     // An extended device lambda must also be enclosed by an addressable function.
     void initialize_geometry()

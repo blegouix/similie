@@ -148,8 +148,82 @@ void check_hodge(Field<Form> input, Field<MetricIndex> metric, Field<PositionInd
         EXPECT_LT(e(i), 2.e-11);
 }
 
+template <class Form, class Rules>
+void check_codifferential(
+        Field<Form> input,
+        Field<MetricIndex> metric,
+        Field<PositionIndex> position,
+        Rules rules)
+{
+    using Exec = Kokkos::DefaultExecutionSpace;
+    using Memory = typename Exec::memory_space;
+    using Source = sil::tensor::upper_t<ddc::to_type_seq_t<sil::tensor::natural_domain_t<Form>>>;
+    using Dual = sil::exterior::codifferential_hodge_output_indices_t<3 - Form::rank(), OneForm>;
+    using InverseSource = sil::tensor::upper_t<ddc::type_seq_merge_t<ddc::TypeSeq<OneForm>, Dual>>;
+    using InverseTarget
+            = ddc::type_seq_remove_t<sil::tensor::lower_t<Source>, ddc::TypeSeq<OneForm>>;
+    using DualIndex = sil::misc::convert_type_seq_to_t<sil::tensor::TensorAntisymmetricIndex, Dual>;
+    using Target = sil::exterior::codifferential_index_t<OneForm, Form>;
+    auto const domain = input.non_indices_domain();
+    ddc::Chunk hodge_alloc(
+            sil::misc::cartesian_prod_t<
+                    SpatialDomain,
+                    sil::exterior::hodge_star_domain_t<Source, Dual>>(
+                    domain,
+                    sil::tensor::tensor_accessor_for_domain_t<
+                            sil::exterior::hodge_star_domain_t<Source, Dual>>::domain()),
+            ddc::KokkosAllocator<double, Memory>());
+    ddc::Chunk inverse_alloc(
+            sil::misc::cartesian_prod_t<
+                    SpatialDomain,
+                    sil::exterior::hodge_star_domain_t<InverseSource, InverseTarget>>(
+                    domain,
+                    sil::tensor::tensor_accessor_for_domain_t<
+                            sil::exterior::hodge_star_domain_t<InverseSource, InverseTarget>>::
+                            domain()),
+            ddc::KokkosAllocator<double, Memory>());
+    sil::tensor::Tensor hodge(hodge_alloc);
+    sil::tensor::Tensor inverse(inverse_alloc);
+    sil::exterior::fill_discrete_hodge_star<Source, Dual>(Exec(), hodge, metric, position);
+    sil::exterior::fill_discrete_hodge_star<
+            InverseSource,
+            InverseTarget>(Exec(), inverse, metric, position);
+    ddc::Chunk dual_alloc(
+            ddc::DiscreteDomain<
+                    GridX,
+                    GridY,
+                    GridZ,
+                    DualIndex>(domain, sil::tensor::TensorAccessor<DualIndex>::domain()),
+            ddc::KokkosAllocator<double, Memory>());
+    ddc::Chunk expected_alloc(
+            ddc::DiscreteDomain<
+                    GridX,
+                    GridY,
+                    GridZ,
+                    Target>(domain, sil::tensor::TensorAccessor<Target>::domain()),
+            ddc::KokkosAllocator<double, Memory>());
+    ddc::Chunk actual_alloc(expected_alloc.domain(), ddc::KokkosAllocator<double, Memory>());
+    Field<Target> expected(expected_alloc), actual(actual_alloc);
+    auto staged = sil::exterior::make_staged_codifferential<
+            MetricIndex,
+            OneForm,
+            Form>(Exec(), input, metric, position, rules);
+    sil::exterior::codifferential<
+            MetricIndex,
+            OneForm,
+            Form>(Exec(), expected, input, hodge, inverse, Field<DualIndex>(dual_alloc), rules);
+    staged(actual, input);
+    auto a = Kokkos::
+            create_mirror_view_and_copy(Kokkos::HostSpace(), actual_alloc.allocation_kokkos_view());
+    auto e = Kokkos::create_mirror_view_and_copy(
+            Kokkos::HostSpace(),
+            expected_alloc.allocation_kokkos_view());
+    for (std::size_t i = 0; i < a.size(); ++i)
+        EXPECT_NEAR(a.data()[i], e.data()[i], 2.e-11 * (1.0 + std::abs(e.data()[i])));
+}
+
 template <class Form, class Primal, class Dual>
-void compare(bool curved, Primal primal, Dual dual)
+void compare(bool curved, Primal primal, Dual dual, std::size_t size = 3)
 {
     using Memory = Kokkos::DefaultExecutionSpace::memory_space;
     using Exec = Kokkos::DefaultExecutionSpace;
@@ -164,10 +238,10 @@ void compare(bool curved, Primal primal, Dual dual)
     static_assert(sil::exterior::StagedOperatorConcept<Operator, Field<Form>>);
     SpatialDomain const
             domain(ddc::DiscreteElement<GridX, GridY, GridZ>(7, 7, 7),
-                   ddc::DiscreteVector<GridX, GridY, GridZ>(3, 3, 3));
+                   ddc::DiscreteVector<GridX, GridY, GridZ>(size, size, size));
     SpatialDomain const
             halo(ddc::DiscreteElement<GridX, GridY, GridZ>(5, 5, 5),
-                 ddc::DiscreteVector<GridX, GridY, GridZ>(7, 7, 7));
+                 ddc::DiscreteVector<GridX, GridY, GridZ>(size + 4, size + 4, size + 4));
     ddc::Chunk position_alloc(
             ddc::DiscreteDomain<
                     GridX,
@@ -225,7 +299,10 @@ void compare(bool curved, Primal primal, Dual dual)
             Field<PositionIndex>,
             Exec>
             dynamic(Exec(), Field<Form>(dynamic_alloc), input, metric, position);
-    for (int trial = 0; trial < 4; ++trial) {
+    // Prescribed dual values carry geometry-dependent units, so a fixed nonzero
+    // dual closure does not obey the homogeneous coordinate scaling below.
+    int const trials = std::is_same_v<Dual, sil::tensor::ConstantScalarExtrapolationRule> ? 3 : 4;
+    for (int trial = 0; trial < trials; ++trial) {
         // Staged Hodge coefficients and assembled weights keep the old geometry;
         // the default Hodge policy must observe these changed coordinates.
         if (trial == 3)
@@ -253,6 +330,8 @@ void compare(bool curved, Primal primal, Dual dual)
                 });
         Kokkos::fence();
         if (trial == 0) {
+            if constexpr (Form::rank() > 0)
+                check_codifferential(input, metric, position, dual);
             check_hodge<Form, sil::exterior::CellComplex::Primal>(input, metric, position);
             check_hodge<
                     Form,
@@ -317,5 +396,22 @@ TEST(StagedLaplacian, TopForm)
             true,
             sil::tensor::ClampExtrapolationRule {},
             sil::tensor::ZeroExtrapolationRule {});
+}
+TEST(StagedLaplacian, SmallPeriodicDomains)
+{
+    compare<Scalar>(true, Periodic {}, Periodic {}, 1);
+    compare<Scalar>(true, Periodic {}, Periodic {}, 2);
+    compare<TwoForm>(true, Periodic {}, Periodic {}, 2);
+}
+TEST(StagedLaplacian, NaturalBoundaries)
+{
+    compare<OneForm>(
+            true,
+            sil::tensor::NaturalScalarExtrapolationRule {},
+            sil::tensor::NaturalScalarExtrapolationRule {});
+    compare<TwoForm>(
+            true,
+            sil::tensor::ClampExtrapolationRule {},
+            sil::tensor::ConstantScalarExtrapolationRule {0.4});
 }
 } // namespace

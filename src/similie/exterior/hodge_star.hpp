@@ -21,6 +21,7 @@
 #include "coboundary.hpp"
 #include "concepts.hpp"
 #include "reduction_and_reconstruction.hpp"
+#include "stencil.hpp"
 #include "volume.hpp"
 
 namespace sil {
@@ -296,6 +297,24 @@ struct DiscreteHodgeStar
         operator()(hodge_tensor, continuous_output, metric, position, elem);
     }
 
+    KOKKOS_FUNCTION static auto value(MetricType metric, PositionType position, BatchElem element)
+            -> decltype(detail::coefficient_stencil<typename MetricType::memory_space>(
+                    tensor::tensor_accessor_for_domain_t<
+                            hodge_star_domain_t<Indices1, Indices2>>::domain()))
+    {
+        auto stencil = detail::coefficient_stencil<typename MetricType::memory_space>(
+                tensor::tensor_accessor_for_domain_t<
+                        hodge_star_domain_t<Indices1, Indices2>>::domain());
+        ddc::device_for_each(stencil.domain(), [&](auto component) {
+            stencil.mem(component)
+                    = value(metric,
+                            position,
+                            element,
+                            stencil.accessor().canonical_natural_element(component));
+        });
+        return stencil;
+    }
+
     KOKKOS_FUNCTION static double value(
             MetricType metric,
             PositionType position,
@@ -524,21 +543,17 @@ HodgeStarType fill_discrete_hodge_star(
             hodge_star.non_indices_domain(),
             KOKKOS_LAMBDA(
                     typename HodgeStarType::non_indices_domain_t::discrete_element_type elem) {
-                ddc::device_for_each(
-                        hodge_star.accessor().domain(),
-                        detail::FillDiscreteHodgeStarMem<
-                                Complex,
-                                Indices1,
-                                Indices2,
-                                HodgeStarType,
-                                MetricType,
-                                PositionType,
-                                typename HodgeStarType::non_indices_domain_t::
-                                        discrete_element_type> {
-                                hodge_star,
-                                metric,
-                                position,
-                                elem});
+                auto const stencil = DiscreteHodgeStar<
+                        Complex,
+                        Indices1,
+                        Indices2,
+                        MetricType,
+                        PositionType,
+                        typename HodgeStarType::non_indices_domain_t::discrete_element_type>::
+                        value(metric, position, elem);
+                ddc::device_for_each(hodge_star.accessor().domain(), [&](auto component) {
+                    hodge_star.mem(elem, component) = stencil.mem(component);
+                });
             });
     return hodge_star;
 }

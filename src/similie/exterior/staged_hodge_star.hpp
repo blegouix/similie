@@ -59,6 +59,11 @@ public:
                 Complex>(exec, m_coefficients, metric, position);
     }
 
+    KOKKOS_FUNCTION auto value(MetricType, PositionType, BatchElem element) const
+    {
+        return m_coefficients[element];
+    }
+
     template <class NaturalElement>
     KOKKOS_FUNCTION double value(
             MetricType,

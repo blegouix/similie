@@ -161,12 +161,14 @@ public:
                 Kokkos::DefaultExecutionSpace(),
                 tensor<TwoForm>(m_two),
                 grid.euclidean_metric(),
-                grid.geometry());
+                grid.geometry(),
+                Periodic {});
         m_one_codifferential = std::make_unique<OneCodifferential>(
                 Kokkos::DefaultExecutionSpace(),
                 tensor<Vector>(m_one),
                 grid.euclidean_metric(),
-                grid.geometry());
+                grid.geometry(),
+                Periodic {});
         Kokkos::fence("vorticity_hodge_setup_complete");
     }
     // Physical vector components supplied at their respective forward edges.
@@ -266,7 +268,7 @@ public:
     void codifferential(Field two_cochain, Field one_cochain)
     {
         pack(two_cochain, m_two);
-        (*m_codifferential)(tensor<Vector>(m_one), tensor<TwoForm>(m_two), Periodic {});
+        (*m_codifferential)(tensor<Vector>(m_one), tensor<TwoForm>(m_two));
         unpack(m_one, one_cochain);
     }
     void positive_laplacian(Field input, Field output)
@@ -278,7 +280,7 @@ public:
     void divergence(Field one_cochain, Field output)
     {
         pack(one_cochain, m_one);
-        (*m_one_codifferential)(m_grid.scalar(output), tensor<Vector>(m_one), Periodic {});
+        (*m_one_codifferential)(m_grid.scalar(output), tensor<Vector>(m_one));
         Kokkos::parallel_for(
                 "physical_cochain_divergence",
                 m_grid.cells,

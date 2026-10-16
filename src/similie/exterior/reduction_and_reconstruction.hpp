@@ -19,6 +19,7 @@
 #include <similie/tensor/tensor_impl.hpp>
 
 #include "concepts.hpp"
+#include "stencil.hpp"
 #include "volume.hpp"
 
 
@@ -986,6 +987,19 @@ struct Reconstruction
         }
     }
 
+    KOKKOS_FUNCTION static auto value(PositionType position, BatchElem element)
+    {
+        detail::ReconstructionMatrix<Indices, PositionType, BatchElem, Complex> const
+                matrix(position, element);
+        auto stencil = detail::coefficient_stencil<typename PositionType::memory_space>(
+                tensor::tensor_accessor_for_domain_t<reconstruction_domain_t<Indices>>::domain());
+        ddc::device_for_each(stencil.domain(), [&](auto component) {
+            stencil.mem(component)
+                    = matrix.value(stencil.accessor().canonical_natural_element(component));
+        });
+        return stencil;
+    }
+
     KOKKOS_FUNCTION static double value(PositionType position, BatchElem elem, auto natural_elem)
     {
         return detail::
@@ -1038,20 +1052,17 @@ ReconstructionTensorType fill_reconstruction_operator(
             KOKKOS_LAMBDA(
                     typename ReconstructionTensorType::non_indices_domain_t::discrete_element_type
                             elem) {
-                detail::ReconstructionMatrix<
+                auto const stencil = Reconstruction<
                         Indices,
                         PositionType,
                         typename ReconstructionTensorType::non_indices_domain_t::
                                 discrete_element_type,
-                        Complex> const reconstruction(position, elem);
-                ddc::device_for_each(reconstruction_tensor.accessor().domain(), [&](auto mem_elem) {
-                    reconstruction_tensor.mem(
-                            typename ReconstructionTensorType::
-                                    discrete_element_type(elem, mem_elem))
-                            = reconstruction.value(
-                                    reconstruction_tensor.accessor().canonical_natural_element(
-                                            mem_elem));
-                });
+                        Complex>::value(position, elem);
+                ddc::device_for_each(
+                        reconstruction_tensor.accessor().domain(),
+                        [&](auto component) {
+                            reconstruction_tensor.mem(elem, component) = stencil.mem(component);
+                        });
             });
     return reconstruction_tensor;
 }
