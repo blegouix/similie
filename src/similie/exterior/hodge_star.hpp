@@ -1126,3 +1126,5 @@ auto make_dual_hodge_cochain(
 
 
 } // namespace sil::exterior
+
+#include "staged_hodge_star.hpp"

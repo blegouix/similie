@@ -80,12 +80,80 @@ struct Periodic
     }
 };
 
+template <class Form, sil::exterior::CellComplex Complex>
+void check_hodge(Field<Form> input, Field<MetricIndex> metric, Field<PositionIndex> position)
+{
+    using Exec = Kokkos::DefaultExecutionSpace;
+    using Memory = typename Exec::memory_space;
+    using SourceIndices
+            = sil::tensor::upper_t<ddc::to_type_seq_t<sil::tensor::natural_domain_t<Form>>>;
+    using TargetIndices
+            = sil::exterior::codifferential_hodge_output_indices_t<3 - Form::rank(), OneForm>;
+    using Target = sil::misc::
+            convert_type_seq_to_t<sil::tensor::TensorAntisymmetricIndex, TargetIndices>;
+    sil::exterior::StagedHodgeStar<
+            Complex,
+            SourceIndices,
+            TargetIndices,
+            Field<MetricIndex>,
+            Field<PositionIndex>,
+            SpatialDomain::discrete_element_type>
+            staged(Exec(), metric, position);
+    using Direct = sil::exterior::DiscreteHodgeStar<
+            Complex,
+            SourceIndices,
+            TargetIndices,
+            Field<MetricIndex>,
+            Field<PositionIndex>,
+            SpatialDomain::discrete_element_type>;
+    ddc::DiscreteDomain<GridX, GridY, GridZ, Target> const
+            domain(input.non_indices_domain(), sil::tensor::TensorAccessor<Target>::domain());
+    ddc::Chunk staged_alloc(domain, ddc::KokkosAllocator<double, Memory>());
+    ddc::Chunk direct_alloc(domain, ddc::KokkosAllocator<double, Memory>());
+    Field<Target> staged_output(staged_alloc), direct_output(direct_alloc);
+    staged(staged_output, input);
+    Kokkos::View<double*, Memory>
+            errors("hodge_coefficient_error", input.non_indices_domain().size());
+    ddc::parallel_for_each(
+            Exec(),
+            input.non_indices_domain(),
+            KOKKOS_LAMBDA(SpatialDomain::discrete_element_type element) {
+                Direct::
+                operator()(direct_output[element], input[element], metric, position, element);
+                sil::tensor::tensor_accessor_for_domain_t<
+                        sil::exterior::hodge_star_domain_t<SourceIndices, TargetIndices>> const
+                        accessor;
+                double error = 0.0;
+                ddc::device_for_each(accessor.domain(), [&](auto component) {
+                    auto const natural = accessor.canonical_natural_element(component);
+                    double const reference = Direct::value(metric, position, element, natural);
+                    double const difference
+                            = Kokkos::abs(
+                                      staged.value(metric, position, element, natural) - reference)
+                              / (1.0 + Kokkos::abs(reference));
+                    error = Kokkos::max(error, difference);
+                });
+                errors(sil::exterior::detail::
+                               laplacian_node_id(input.non_indices_domain(), element))
+                        = error;
+            });
+    auto a = Kokkos::
+            create_mirror_view_and_copy(Kokkos::HostSpace(), staged_alloc.allocation_kokkos_view());
+    auto b = Kokkos::
+            create_mirror_view_and_copy(Kokkos::HostSpace(), direct_alloc.allocation_kokkos_view());
+    auto e = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), errors);
+    for (std::size_t i = 0; i < a.size(); ++i)
+        EXPECT_NEAR(a.data()[i], b.data()[i], 2.e-11 * (1.0 + std::abs(b.data()[i])));
+    for (std::size_t i = 0; i < e.size(); ++i)
+        EXPECT_LT(e(i), 2.e-11);
+}
+
 template <class Form, class Primal, class Dual>
 void compare(bool curved, Primal primal, Dual dual)
 {
     using Memory = Kokkos::DefaultExecutionSpace::memory_space;
     using Exec = Kokkos::DefaultExecutionSpace;
-    using Operator = sil::exterior::AggressivelyStagedLaplacian<
+    using Operator = sil::exterior::StagedLaplacian<
             MetricIndex,
             OneForm,
             Form,
@@ -135,8 +203,20 @@ void compare(bool curved, Primal primal, Dual dual)
     ddc::Chunk input_alloc(form_domain, ddc::KokkosAllocator<double, Memory>());
     ddc::Chunk expected_alloc(form_domain, ddc::KokkosAllocator<double, Memory>());
     ddc::Chunk actual_alloc(form_domain, ddc::KokkosAllocator<double, Memory>());
+    ddc::Chunk dynamic_alloc(form_domain, ddc::KokkosAllocator<double, Memory>());
     Field<Form> input(input_alloc), expected(expected_alloc), actual(actual_alloc);
-    sil::exterior::StagedLaplacian<
+    sil::exterior::Laplacian<
+            MetricIndex,
+            OneForm,
+            Form,
+            Field<Form>,
+            Field<MetricIndex>,
+            Field<PositionIndex>,
+            Exec,
+            sil::exterior::StagedHodgeStar>
+            reference(Exec(), expected, input, metric, position);
+    Operator operation(Exec(), actual, input, metric, position, primal, dual);
+    sil::exterior::Laplacian<
             MetricIndex,
             OneForm,
             Form,
@@ -144,9 +224,17 @@ void compare(bool curved, Primal primal, Dual dual)
             Field<MetricIndex>,
             Field<PositionIndex>,
             Exec>
-            reference(Exec(), expected, input, metric, position);
-    Operator operation(Exec(), actual, input, metric, position, primal, dual);
-    for (int trial = 0; trial < 3; ++trial) {
+            dynamic(Exec(), Field<Form>(dynamic_alloc), input, metric, position);
+    for (int trial = 0; trial < 4; ++trial) {
+        // Staged Hodge coefficients and assembled weights keep the old geometry;
+        // the default Hodge policy must observe these changed coordinates.
+        if (trial == 3)
+            ddc::parallel_for_each(
+                    Exec(),
+                    position.domain(),
+                    KOKKOS_LAMBDA(typename Field<PositionIndex>::discrete_element_type element) {
+                        position.mem(element) *= 1.1;
+                    });
         ddc::parallel_for_each(
                 Exec(),
                 form_domain,
@@ -164,15 +252,29 @@ void compare(bool curved, Primal primal, Dual dual)
                                                                              + 2.0 * component);
                 });
         Kokkos::fence();
+        if (trial == 0) {
+            check_hodge<Form, sil::exterior::CellComplex::Primal>(input, metric, position);
+            check_hodge<
+                    Form,
+                    sil::exterior::CellComplex::CircumcentricDual>(input, metric, position);
+        }
         reference(expected, input, primal, dual);
         operation(actual, input);
+        dynamic(Field<Form>(dynamic_alloc), input, primal, dual);
         auto a = Kokkos::create_mirror_view_and_copy(
                 Kokkos::HostSpace(),
                 actual_alloc.allocation_kokkos_view());
         auto e = Kokkos::create_mirror_view_and_copy(
                 Kokkos::HostSpace(),
                 expected_alloc.allocation_kokkos_view());
+        auto d = Kokkos::create_mirror_view_and_copy(
+                Kokkos::HostSpace(),
+                dynamic_alloc.allocation_kokkos_view());
         for (std::size_t i = 0; i < a.size(); ++i) {
+            EXPECT_NEAR(
+                    d.data()[i],
+                    e.data()[i] / (trial == 3 ? 1.21 : 1.0),
+                    2.e-10 * (1.0 + std::abs(e.data()[i])));
             EXPECT_NEAR(a.data()[i], e.data()[i], 2.e-10 * (1.0 + std::abs(e.data()[i])));
             if (trial == 2 && Form::rank() == 0 && e.data()[i] == 0.0)
                 EXPECT_EQ(a.data()[i], 0.0);
@@ -180,7 +282,7 @@ void compare(bool curved, Primal primal, Dual dual)
     }
 }
 
-TEST(AggressivelyStagedLaplacian, Scalar)
+TEST(StagedLaplacian, Scalar)
 {
     compare<Scalar>(false, Periodic {}, Periodic {});
     compare<Scalar>(
@@ -192,7 +294,7 @@ TEST(AggressivelyStagedLaplacian, Scalar)
             sil::tensor::ConstantScalarExtrapolationRule {0.7},
             sil::tensor::ZeroExtrapolationRule {});
 }
-TEST(AggressivelyStagedLaplacian, OneForm)
+TEST(StagedLaplacian, OneForm)
 {
     compare<OneForm>(true, Periodic {}, Periodic {});
     compare<OneForm>(
@@ -200,7 +302,7 @@ TEST(AggressivelyStagedLaplacian, OneForm)
             sil::tensor::ClampExtrapolationRule {},
             sil::tensor::ZeroExtrapolationRule {});
 }
-TEST(AggressivelyStagedLaplacian, TwoForm)
+TEST(StagedLaplacian, TwoForm)
 {
     compare<TwoForm>(true, Periodic {}, Periodic {});
     compare<TwoForm>(
@@ -208,7 +310,7 @@ TEST(AggressivelyStagedLaplacian, TwoForm)
             sil::tensor::ClampExtrapolationRule {},
             sil::tensor::ZeroExtrapolationRule {});
 }
-TEST(AggressivelyStagedLaplacian, TopForm)
+TEST(StagedLaplacian, TopForm)
 {
     compare<ThreeForm>(true, Periodic {}, Periodic {});
     compare<ThreeForm>(

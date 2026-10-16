@@ -3,29 +3,280 @@
 
 #pragma once
 
-#include <optional>
-#include <stdexcept>
-#include <utility>
+#include "laplacian_detail.hpp"
 
-#include <ddc/ddc.hpp>
+namespace sil::exterior {
 
-#include <similie/misc/domain_contains.hpp>
-#include <similie/misc/macros.hpp>
-#include <similie/misc/specialization.hpp>
-#include <similie/misc/type_seq_ext.hpp>
-#include <similie/tensor/character.hpp>
-#include <similie/tensor/scalar_extrapolation_rules.hpp>
-#include <similie/tensor/tensor_impl.hpp>
-#include <similie/tensor/tensor_with_extrapolation_rules.hpp>
+template <
+        tensor::TensorIndex MetricIndex,
+        tensor::TensorNatIndex Index,
+        tensor::TensorIndex Cochain,
+        misc::Specialization<tensor::Tensor> Tensor,
+        misc::Specialization<tensor::Tensor> Metric,
+        misc::Specialization<tensor::Tensor> Position,
+        class Exec>
+class StagedLaplacian;
 
-#include "coboundary.hpp"
-#include "codifferential.hpp"
-#include "concepts.hpp"
+/** Hodge Laplacian assembled from independently selected Hodge-star policies.
+ * \important This operator and documentation is fully AI-generated.
+ * DiscreteHodgeStar evaluates geometry during application. StagedHodgeStar
+ * freezes Hodge coefficients at construction. The same incidence operators,
+ * intermediate cochains and boundary closures are used in both cases.
+ * Policies have the DiscreteHodgeStar template signature and pointwise API.
+ * Stateful policies are constructed with (execution space, metric, positions);
+ * stateless policies may be default-constructed.
+ */
+template <
+        tensor::TensorIndex MetricIndex,
+        tensor::TensorNatIndex Index,
+        tensor::TensorIndex Cochain,
+        misc::Specialization<tensor::Tensor> Tensor,
+        misc::Specialization<tensor::Tensor> Metric,
+        misc::Specialization<tensor::Tensor> Position,
+        class Exec,
+        template <CellComplex, class, class, class, class, class> class Hodge = DiscreteHodgeStar>
+class Laplacian
+{
+    Exec m_exec;
+    Metric m_metric;
+    Position m_position;
+    detail::LaplacianUpper<
+            (Cochain::rank() < Index::size()),
+            Index,
+            Cochain,
+            Tensor,
+            Metric,
+            Position,
+            Exec,
+            Hodge>
+            m_upper;
+    detail::LaplacianLower<
+            (Cochain::rank() > 0),
+            Index,
+            Cochain,
+            Tensor,
+            Metric,
+            Position,
+            Exec,
+            Hodge>
+            m_lower;
 
+public:
+    Laplacian(Exec const& exec, Tensor output, Tensor input, Metric metric, Position position)
+        : m_exec(exec)
+        , m_metric(metric)
+        , m_position(position)
+        , m_upper(exec, input, metric, position)
+        , m_lower(exec, output, input, metric, position)
+    {
+    }
 
-namespace sil {
+    template <
+            class Primal = tensor::ClampExtrapolationRule,
+            class Dual = tensor::ZeroExtrapolationRule>
+    Tensor operator()(Tensor output, Tensor input, Primal primal = {}, Dual dual = {})
+    {
+        if constexpr (Cochain::rank() < Index::size()) {
+            using Added = tensor::Covariant<
+                    IndexForCodifferentialOfCoboundaryInLaplacian<tensor::uncharacterize_t<Index>>>;
+            using ChainDomain = typename detail::
+                    NonSpectatorDimension<Index, typename Tensor::non_indices_domain_t>::type;
+            auto const chain = tangent_basis<Cochain::rank() + 1, ChainDomain>(m_exec);
+            auto const lower = tangent_basis<Cochain::rank(), ChainDomain>(m_exec);
+            auto const boundary = [&] {
+                if constexpr (misc::Specialization<Primal, tensor::ExtrapolationRules>)
+                    return primal;
+                else
+                    return tensor::make_extrapolation_rules(input, primal);
+            }();
+            m_upper.operation
+                    .apply(m_exec,
+                           output,
+                           detail::LaplacianDerivativeEvaluator<
+                                   Added,
+                                   Cochain,
+                                   Tensor,
+                                   decltype(boundary),
+                                   decltype(chain),
+                                   decltype(lower)> {input, boundary, chain, lower},
+                           m_metric,
+                           m_position,
+                           dual);
+        }
+        if constexpr (Cochain::rank() > 0) {
+            tensor::Tensor lower(m_lower.lower);
+            m_lower.operation
+                    .apply(m_exec,
+                           lower,
+                           detail::LaplacianInputEvaluator<Tensor> {input},
+                           m_metric,
+                           m_position,
+                           dual);
+            if constexpr (Cochain::rank() < Index::size()) {
+                Tensor contribution(*m_lower.contribution);
+                deriv<Index,
+                      codifferential_index_t<Index, Cochain>>(m_exec, contribution, lower, primal);
+                ddc::parallel_for_each(
+                        "similie_add_laplacian_contributions",
+                        m_exec,
+                        output.domain(),
+                        KOKKOS_LAMBDA(typename Tensor::discrete_element_type element) {
+                            output.mem(element) += contribution.mem(element);
+                        });
+            } else
+                deriv<Index, codifferential_index_t<Index, Cochain>>(m_exec, output, lower, primal);
+        }
+        return output;
+    }
 
-namespace exterior {
+private:
+    friend class StagedLaplacian<MetricIndex, Index, Cochain, Tensor, Metric, Position, Exec>;
+
+    // Canonical component matrices are needed only while assembling a stencil.
+    static auto geometry(Exec const& exec, Metric metric, Position position)
+    {
+        using Domain = typename detail::
+                NonSpectatorDimension<Index, typename Tensor::non_indices_domain_t>::type;
+        detail::LaplacianChains<0, Domain, typename Tensor::memory_space> const chains {};
+        auto derivative = [&] {
+            if constexpr (Cochain::rank() < Index::size()) {
+                using Added = tensor::Covariant<IndexForCodifferentialOfCoboundaryInLaplacian<
+                        tensor::uncharacterize_t<Index>>>;
+                return detail::LaplacianHodgePair<
+                               Added,
+                               coboundary_index_t<Added, Cochain>,
+                               Metric,
+                               Position,
+                               Hodge>(exec, metric, position)
+                        .canonical(exec, metric, position);
+            } else
+                return std::pair {0, 0};
+        }();
+        auto codifferential = [&] {
+            if constexpr (Cochain::rank() > 0)
+                return detail::LaplacianHodgePair<
+                               Index,
+                               Cochain,
+                               Metric,
+                               Position,
+                               Hodge>(exec, metric, position)
+                        .canonical(exec, metric, position);
+            else
+                return std::pair {0, 0};
+        }();
+        return detail::LaplacianGeometry {
+                derivative.first,
+                derivative.second,
+                codifferential.first,
+                codifferential.second,
+                chains};
+    }
+
+public:
+    template <class Geometry, class Evaluate, class Element, class Primal, class Dual>
+    KOKKOS_FORCEINLINE_FUNCTION static auto operator()(
+            Geometry const& staged,
+            Tensor input,
+            Evaluate evaluate,
+            Element element,
+            Primal primal,
+            Dual dual)
+    {
+        using Memory = typename Tensor::memory_space;
+        using Domain = typename Tensor::non_indices_domain_t;
+        detail::LaplacianField<Cochain, Domain, Memory, Evaluate> const
+                field(input.non_indices_domain(), evaluate);
+        auto output = detail::make_stencil<Memory, Cochain>(ddc::DiscreteElement<>());
+        if constexpr (Cochain::rank() < Index::size()) {
+            using Added = tensor::Covariant<
+                    IndexForCodifferentialOfCoboundaryInLaplacian<tensor::uncharacterize_t<Index>>>;
+            using Derived = coboundary_index_t<Added, Cochain>;
+            auto derivative = [&](auto sample, auto component) {
+                return detail::laplacian_derivative<Added>(field, primal, sample, staged.chains)
+                        .mem(component);
+            };
+            detail::LaplacianField<Derived, Domain, Memory, decltype(derivative)> const
+                    derivatives(input.non_indices_domain(), derivative);
+            auto result = detail::laplacian_codifferential<Added>(
+                    derivatives,
+                    staged.derivative_hodge,
+                    staged.inverse_derivative_hodge,
+                    dual,
+                    element,
+                    staged.chains);
+            ddc::device_for_each(output.domain(), [&](auto component) {
+                output.mem(component) += result.mem(component);
+            });
+        }
+        if constexpr (Cochain::rank() > 0) {
+            using Lower = codifferential_index_t<Index, Cochain>;
+            auto codifferential = [&](auto sample, auto component) {
+                return detail::laplacian_codifferential<Index>(
+                               field,
+                               staged.hodge,
+                               staged.inverse_hodge,
+                               dual,
+                               sample,
+                               staged.chains)
+                        .mem(component);
+            };
+            detail::LaplacianField<Lower, Domain, Memory, decltype(codifferential)> const
+                    codifferentials(input.non_indices_domain(), codifferential);
+            auto result = detail::laplacian_derivative<
+                    Index>(codifferentials, primal, element, staged.chains);
+            ddc::device_for_each(output.domain(), [&](auto component) {
+                output.mem(component) += result.mem(component);
+            });
+        }
+        return output;
+    }
+
+    template <class Geometry, class Element, class Component, class Primal, class Dual>
+    KOKKOS_FORCEINLINE_FUNCTION static double value(
+            Geometry const& staged,
+            Tensor input,
+            Element element,
+            Component target,
+            std::size_t column,
+            Primal primal,
+            Dual dual)
+    {
+        auto result = operator()(
+                staged,
+                input,
+                [&](auto sample, auto component) {
+                    return detail::laplacian_node_id(input.non_indices_domain(), sample)
+                                                           * Cochain::mem_size()
+                                                   + component.template uid<Cochain>()
+                                           == column
+                                   ? 1.0
+                                   : 0.0;
+                },
+                element,
+                primal,
+                dual);
+        return result.mem(target);
+    }
+};
+
+template <
+        tensor::TensorIndex MetricIndex,
+        tensor::TensorNatIndex Index,
+        tensor::TensorIndex Cochain,
+        template <CellComplex, class, class, class, class, class> class Hodge = DiscreteHodgeStar,
+        class Exec,
+        class Tensor,
+        class Metric,
+        class Position>
+Laplacian<MetricIndex, Index, Cochain, Tensor, Metric, Position, Exec, Hodge> make_laplacian(
+        Exec const& exec,
+        Tensor output,
+        Tensor input,
+        Metric metric,
+        Position position)
+{
+    return {exec, output, input, metric, position};
+}
 
 namespace detail {
 
@@ -181,702 +432,6 @@ template <class LaplacianDummyIndex, class CochainTag>
 concept TopRankLaplacianCochain = CochainTag::rank() == LaplacianDummyIndex::size();
 
 } // namespace detail
-
-template <class T>
-struct IndexForCodifferentialOfCoboundaryInLaplacian : T
-{
-};
-
-template <class... Args>
-class StagedLaplacian;
-
-template <class... Args>
-struct Laplacian;
-
-template <
-        tensor::TensorIndex MetricIndex,
-        tensor::TensorNatIndex LaplacianDummyIndex,
-        tensor::TensorIndex CochainTag,
-        misc::Specialization<tensor::Tensor> TensorType,
-        misc::Specialization<tensor::Tensor> MetricType,
-        misc::Specialization<tensor::Tensor> PositionType,
-        class ExecSpace>
-    requires(detail::ZeroRankLaplacianCochain<LaplacianDummyIndex, CochainTag>)
-class StagedLaplacian<
-        MetricIndex,
-        LaplacianDummyIndex,
-        CochainTag,
-        TensorType,
-        MetricType,
-        PositionType,
-        ExecSpace>
-{
-    template <class...>
-    friend struct Laplacian;
-    using MemorySpace = typename TensorType::memory_space;
-    using AllocatorType = ddc::KokkosAllocator<double, MemorySpace>;
-    using CodifferentialOfCoboundaryIndex
-            = tensor::Covariant<IndexForCodifferentialOfCoboundaryInLaplacian<
-                    tensor::uncharacterize_t<LaplacianDummyIndex>>>;
-    using CoboundaryOutputIndex = coboundary_index_t<CodifferentialOfCoboundaryIndex, CochainTag>;
-    using CoboundaryHodgeInputIndices
-            = tensor::upper_t<ddc::to_type_seq_t<tensor::natural_domain_t<CoboundaryOutputIndex>>>;
-    using CoboundaryHodgeOutputIndices = codifferential_hodge_output_indices_t<
-            CodifferentialOfCoboundaryIndex::size() - CoboundaryOutputIndex::rank(),
-            CodifferentialOfCoboundaryIndex>;
-    using DualCoboundaryHodgeInputIndices = ddc::type_seq_merge_t<
-            ddc::TypeSeq<CodifferentialOfCoboundaryIndex>,
-            CoboundaryHodgeOutputIndices>;
-    using DualCoboundaryHodgeOutputIndices = ddc::type_seq_remove_t<
-            tensor::lower_t<CoboundaryHodgeInputIndices>,
-            ddc::TypeSeq<CodifferentialOfCoboundaryIndex>>;
-    using CoboundaryDualTensorIndex = misc::
-            convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, CoboundaryHodgeOutputIndices>;
-
-    using DerivativeHodgeStarDomainType = sil::misc::cartesian_prod_t<
-            typename MetricType::non_indices_domain_t,
-            hodge_star_domain_t<CoboundaryHodgeInputIndices, CoboundaryHodgeOutputIndices>>;
-    using DualDerivativeHodgeStarDomainType = sil::misc::cartesian_prod_t<
-            typename MetricType::non_indices_domain_t,
-            hodge_star_domain_t<
-                    tensor::upper_t<DualCoboundaryHodgeInputIndices>,
-                    DualCoboundaryHodgeOutputIndices>>;
-    using DerivativeDualTensorDomainType = sil::misc::cartesian_prod_t<
-            typename TensorType::non_indices_domain_t,
-            ddc::DiscreteDomain<CoboundaryDualTensorIndex>>;
-
-    using DerivativeHodgeStarAllocType
-            = ddc::Chunk<double, DerivativeHodgeStarDomainType, AllocatorType>;
-    using DualDerivativeHodgeStarAllocType
-            = ddc::Chunk<double, DualDerivativeHodgeStarDomainType, AllocatorType>;
-    using DerivativeDualTensorAllocType
-            = ddc::Chunk<double, DerivativeDualTensorDomainType, AllocatorType>;
-
-    using DerivativeHodgeStarTensorType = tensor::
-            Tensor<double, DerivativeHodgeStarDomainType, Kokkos::layout_right, MemorySpace>;
-    using DualDerivativeHodgeStarTensorType = tensor::
-            Tensor<double, DualDerivativeHodgeStarDomainType, Kokkos::layout_right, MemorySpace>;
-    using DerivativeDualTensorType = tensor::
-            Tensor<double, DerivativeDualTensorDomainType, Kokkos::layout_right, MemorySpace>;
-    ExecSpace m_exec_space;
-    std::optional<DerivativeHodgeStarAllocType> m_derivative_hodge_star_alloc;
-    std::optional<DualDerivativeHodgeStarAllocType> m_dual_derivative_hodge_star_alloc;
-    std::optional<DerivativeDualTensorAllocType> m_derivative_dual_tensor_alloc;
-    std::optional<DerivativeHodgeStarTensorType> m_derivative_hodge_star;
-    std::optional<DualDerivativeHodgeStarTensorType> m_dual_derivative_hodge_star;
-    std::optional<DerivativeDualTensorType> m_derivative_dual_tensor_buffer;
-
-public:
-    StagedLaplacian(
-            ExecSpace const& exec_space,
-            DerivativeHodgeStarTensorType&& derivative_hodge_star,
-            DualDerivativeHodgeStarTensorType&& dual_derivative_hodge_star,
-            DerivativeDualTensorType&& derivative_dual_tensor_buffer)
-        : m_exec_space(exec_space)
-        , m_derivative_hodge_star(std::move(derivative_hodge_star))
-        , m_dual_derivative_hodge_star(std::move(dual_derivative_hodge_star))
-        , m_derivative_dual_tensor_buffer(std::move(derivative_dual_tensor_buffer))
-    {
-    }
-
-    StagedLaplacian(
-            ExecSpace const& exec_space,
-            TensorType,
-            TensorType tensor,
-            MetricType metric,
-            PositionType position)
-        : m_exec_space(exec_space)
-    {
-        [[maybe_unused]] tensor::tensor_accessor_for_domain_t<
-                hodge_star_domain_t<CoboundaryHodgeInputIndices, CoboundaryHodgeOutputIndices>>
-                derivative_hodge_star_accessor;
-        [[maybe_unused]] tensor::tensor_accessor_for_domain_t<hodge_star_domain_t<
-                tensor::upper_t<DualCoboundaryHodgeInputIndices>,
-                DualCoboundaryHodgeOutputIndices>> dual_derivative_hodge_star_accessor;
-        [[maybe_unused]] tensor::TensorAccessor<CoboundaryDualTensorIndex>
-                derivative_dual_tensor_accessor;
-
-        m_derivative_hodge_star_alloc.emplace(
-                DerivativeHodgeStarDomainType(
-                        metric.non_indices_domain(),
-                        derivative_hodge_star_accessor.domain()),
-                AllocatorType());
-        m_dual_derivative_hodge_star_alloc.emplace(
-                DualDerivativeHodgeStarDomainType(
-                        metric.non_indices_domain(),
-                        dual_derivative_hodge_star_accessor.domain()),
-                AllocatorType());
-        m_derivative_dual_tensor_alloc.emplace(
-                DerivativeDualTensorDomainType(
-                        tensor.non_indices_domain(),
-                        derivative_dual_tensor_accessor.domain()),
-                AllocatorType());
-
-        m_derivative_hodge_star.emplace(*m_derivative_hodge_star_alloc);
-        m_dual_derivative_hodge_star.emplace(*m_dual_derivative_hodge_star_alloc);
-        m_derivative_dual_tensor_buffer.emplace(*m_derivative_dual_tensor_alloc);
-
-        fill_discrete_hodge_star<CoboundaryHodgeInputIndices, CoboundaryHodgeOutputIndices>(
-                exec_space,
-                *m_derivative_hodge_star,
-                metric,
-                position);
-        fill_discrete_hodge_star<
-                tensor::upper_t<DualCoboundaryHodgeInputIndices>,
-                DualCoboundaryHodgeOutputIndices>(
-                exec_space,
-                *m_dual_derivative_hodge_star,
-                metric,
-                position);
-    }
-
-    template <
-            class PrimalExtrapolationRule = tensor::ClampExtrapolationRule,
-            class DualExtrapolationRule = tensor::ZeroExtrapolationRule>
-    TensorType operator()(
-            TensorType laplacian_tensor,
-            TensorType tensor,
-            PrimalExtrapolationRule primal_extrapolation = {},
-            DualExtrapolationRule dual_extrapolation = {})
-    {
-        return detail::codifferential_of_coboundary<
-                MetricIndex,
-                CodifferentialOfCoboundaryIndex,
-                CochainTag>(
-                m_exec_space,
-                laplacian_tensor,
-                tensor,
-                *m_derivative_hodge_star,
-                *m_dual_derivative_hodge_star,
-                *m_derivative_dual_tensor_buffer,
-                primal_extrapolation,
-                dual_extrapolation);
-    }
-};
-
-template <
-        tensor::TensorIndex MetricIndex,
-        tensor::TensorNatIndex LaplacianDummyIndex,
-        tensor::TensorIndex CochainTag,
-        class ExecSpace,
-        misc::Specialization<tensor::Tensor> TensorType,
-        misc::Specialization<tensor::Tensor> MetricType,
-        misc::Specialization<tensor::Tensor> PositionType>
-StagedLaplacian<
-        MetricIndex,
-        LaplacianDummyIndex,
-        CochainTag,
-        TensorType,
-        MetricType,
-        PositionType,
-        ExecSpace>
-make_staged_laplacian(
-        ExecSpace const& exec_space,
-        TensorType laplacian_tensor,
-        TensorType tensor,
-        MetricType metric,
-        PositionType position)
-{
-    return StagedLaplacian<
-            MetricIndex,
-            LaplacianDummyIndex,
-            CochainTag,
-            TensorType,
-            MetricType,
-            PositionType,
-            ExecSpace>(exec_space, laplacian_tensor, tensor, metric, position);
-}
-
-template <
-        tensor::TensorIndex MetricIndex,
-        tensor::TensorNatIndex LaplacianDummyIndex,
-        tensor::TensorIndex CochainTag,
-        misc::Specialization<tensor::Tensor> TensorType,
-        misc::Specialization<tensor::Tensor> MetricType,
-        misc::Specialization<tensor::Tensor> PositionType,
-        class ExecSpace>
-    requires(detail::IntermediateRankLaplacianCochain<LaplacianDummyIndex, CochainTag>)
-class StagedLaplacian<
-        MetricIndex,
-        LaplacianDummyIndex,
-        CochainTag,
-        TensorType,
-        MetricType,
-        PositionType,
-        ExecSpace>
-{
-    template <class...>
-    friend struct Laplacian;
-
-    using MemorySpace = typename TensorType::memory_space;
-    using AllocatorType = ddc::KokkosAllocator<double, MemorySpace>;
-    using CodifferentialOfCoboundaryIndex
-            = tensor::Covariant<IndexForCodifferentialOfCoboundaryInLaplacian<
-                    tensor::uncharacterize_t<LaplacianDummyIndex>>>;
-    using CoboundaryOutputIndex = coboundary_index_t<CodifferentialOfCoboundaryIndex, CochainTag>;
-    using CoboundaryHodgeInputIndices
-            = tensor::upper_t<ddc::to_type_seq_t<tensor::natural_domain_t<CoboundaryOutputIndex>>>;
-    using CoboundaryHodgeOutputIndices = codifferential_hodge_output_indices_t<
-            CodifferentialOfCoboundaryIndex::size() - CoboundaryOutputIndex::rank(),
-            CodifferentialOfCoboundaryIndex>;
-    using DualCoboundaryHodgeInputIndices = ddc::type_seq_merge_t<
-            ddc::TypeSeq<CodifferentialOfCoboundaryIndex>,
-            CoboundaryHodgeOutputIndices>;
-    using DualCoboundaryHodgeOutputIndices = ddc::type_seq_remove_t<
-            tensor::lower_t<CoboundaryHodgeInputIndices>,
-            ddc::TypeSeq<CodifferentialOfCoboundaryIndex>>;
-    using CoboundaryDualTensorIndex = misc::
-            convert_type_seq_to_t<tensor::TensorAntisymmetricIndex, CoboundaryHodgeOutputIndices>;
-
-    using CodifferentialHodgeInputIndices
-            = tensor::upper_t<ddc::to_type_seq_t<tensor::natural_domain_t<CochainTag>>>;
-    using CodifferentialHodgeOutputIndices = codifferential_hodge_output_indices_t<
-            LaplacianDummyIndex::size() - CochainTag::rank(),
-            LaplacianDummyIndex>;
-    using DualCodifferentialHodgeInputIndices = ddc::
-            type_seq_merge_t<ddc::TypeSeq<LaplacianDummyIndex>, CodifferentialHodgeOutputIndices>;
-    using DualCodifferentialHodgeOutputIndices = ddc::type_seq_remove_t<
-            tensor::lower_t<CodifferentialHodgeInputIndices>,
-            ddc::TypeSeq<LaplacianDummyIndex>>;
-    using CodifferentialDualTensorIndex = misc::convert_type_seq_to_t<
-            tensor::TensorAntisymmetricIndex,
-            CodifferentialHodgeOutputIndices>;
-    using CodifferentialOutputIndex = codifferential_index_t<LaplacianDummyIndex, CochainTag>;
-
-    using DerivativeHodgeStarDomainType = sil::misc::cartesian_prod_t<
-            typename MetricType::non_indices_domain_t,
-            hodge_star_domain_t<CoboundaryHodgeInputIndices, CoboundaryHodgeOutputIndices>>;
-    using DualDerivativeHodgeStarDomainType = sil::misc::cartesian_prod_t<
-            typename MetricType::non_indices_domain_t,
-            hodge_star_domain_t<
-                    tensor::upper_t<DualCoboundaryHodgeInputIndices>,
-                    DualCoboundaryHodgeOutputIndices>>;
-    using DerivativeDualTensorDomainType = sil::misc::cartesian_prod_t<
-            typename TensorType::non_indices_domain_t,
-            ddc::DiscreteDomain<CoboundaryDualTensorIndex>>;
-    using HodgeStarDomainType = sil::misc::cartesian_prod_t<
-            typename MetricType::non_indices_domain_t,
-            hodge_star_domain_t<CodifferentialHodgeInputIndices, CodifferentialHodgeOutputIndices>>;
-    using DualHodgeStarDomainType = sil::misc::cartesian_prod_t<
-            typename MetricType::non_indices_domain_t,
-            hodge_star_domain_t<
-                    tensor::upper_t<DualCodifferentialHodgeInputIndices>,
-                    DualCodifferentialHodgeOutputIndices>>;
-    using DualTensorDomainType = sil::misc::cartesian_prod_t<
-            typename TensorType::non_indices_domain_t,
-            ddc::DiscreteDomain<CodifferentialDualTensorIndex>>;
-    using CodifferentialDomainType = sil::misc::cartesian_prod_t<
-            typename TensorType::non_indices_domain_t,
-            ddc::DiscreteDomain<CodifferentialOutputIndex>>;
-
-    using DerivativeHodgeStarAllocType
-            = ddc::Chunk<double, DerivativeHodgeStarDomainType, AllocatorType>;
-    using DualDerivativeHodgeStarAllocType
-            = ddc::Chunk<double, DualDerivativeHodgeStarDomainType, AllocatorType>;
-    using DerivativeDualTensorAllocType
-            = ddc::Chunk<double, DerivativeDualTensorDomainType, AllocatorType>;
-    using HodgeStarAllocType = ddc::Chunk<double, HodgeStarDomainType, AllocatorType>;
-    using DualHodgeStarAllocType = ddc::Chunk<double, DualHodgeStarDomainType, AllocatorType>;
-    using DualTensorAllocType = ddc::Chunk<double, DualTensorDomainType, AllocatorType>;
-    using CodifferentialAllocType = ddc::Chunk<double, CodifferentialDomainType, AllocatorType>;
-    using CoboundaryOfCodifferentialAllocType
-            = ddc::Chunk<double, typename TensorType::discrete_domain_type, AllocatorType>;
-
-    using DerivativeHodgeStarTensorType = tensor::
-            Tensor<double, DerivativeHodgeStarDomainType, Kokkos::layout_right, MemorySpace>;
-    using DualDerivativeHodgeStarTensorType = tensor::
-            Tensor<double, DualDerivativeHodgeStarDomainType, Kokkos::layout_right, MemorySpace>;
-    using DerivativeDualTensorType = tensor::
-            Tensor<double, DerivativeDualTensorDomainType, Kokkos::layout_right, MemorySpace>;
-    using HodgeStarTensorType
-            = tensor::Tensor<double, HodgeStarDomainType, Kokkos::layout_right, MemorySpace>;
-    using DualHodgeStarTensorType
-            = tensor::Tensor<double, DualHodgeStarDomainType, Kokkos::layout_right, MemorySpace>;
-    using DualTensorType
-            = tensor::Tensor<double, DualTensorDomainType, Kokkos::layout_right, MemorySpace>;
-    using CodifferentialTensorType
-            = tensor::Tensor<double, CodifferentialDomainType, Kokkos::layout_right, MemorySpace>;
-    ExecSpace m_exec_space;
-    std::optional<DerivativeHodgeStarAllocType> m_derivative_hodge_star_alloc;
-    std::optional<DualDerivativeHodgeStarAllocType> m_dual_derivative_hodge_star_alloc;
-    std::optional<DerivativeDualTensorAllocType> m_derivative_dual_tensor_alloc;
-    std::optional<HodgeStarAllocType> m_hodge_star_alloc;
-    std::optional<DualHodgeStarAllocType> m_dual_hodge_star_alloc;
-    std::optional<DualTensorAllocType> m_dual_tensor_alloc;
-    std::optional<CodifferentialAllocType> m_codifferential_alloc;
-    std::optional<CoboundaryOfCodifferentialAllocType> m_coboundary_of_codifferential_alloc;
-    std::optional<DerivativeHodgeStarTensorType> m_derivative_hodge_star;
-    std::optional<DualDerivativeHodgeStarTensorType> m_dual_derivative_hodge_star;
-    std::optional<DerivativeDualTensorType> m_derivative_dual_tensor_buffer;
-    std::optional<HodgeStarTensorType> m_hodge_star;
-    std::optional<DualHodgeStarTensorType> m_dual_hodge_star;
-    std::optional<DualTensorType> m_dual_tensor_buffer;
-    std::optional<CodifferentialTensorType> m_codifferential_tensor_buffer;
-    std::optional<TensorType> m_coboundary_of_codifferential_buffer;
-
-public:
-    StagedLaplacian(
-            ExecSpace const& exec_space,
-            DerivativeHodgeStarTensorType derivative_hodge_star,
-            DualDerivativeHodgeStarTensorType dual_derivative_hodge_star,
-            DerivativeDualTensorType derivative_dual_tensor_buffer,
-            HodgeStarTensorType hodge_star,
-            DualHodgeStarTensorType dual_hodge_star,
-            DualTensorType dual_tensor_buffer,
-            CodifferentialTensorType codifferential_tensor_buffer,
-            TensorType coboundary_of_codifferential_buffer)
-        : m_exec_space(exec_space)
-        , m_derivative_hodge_star(derivative_hodge_star)
-        , m_dual_derivative_hodge_star(dual_derivative_hodge_star)
-        , m_derivative_dual_tensor_buffer(derivative_dual_tensor_buffer)
-        , m_hodge_star(hodge_star)
-        , m_dual_hodge_star(dual_hodge_star)
-        , m_dual_tensor_buffer(dual_tensor_buffer)
-        , m_codifferential_tensor_buffer(codifferential_tensor_buffer)
-        , m_coboundary_of_codifferential_buffer(coboundary_of_codifferential_buffer)
-    {
-    }
-
-    StagedLaplacian(
-            ExecSpace const& exec_space,
-            TensorType laplacian_tensor,
-            TensorType tensor,
-            MetricType metric,
-            PositionType position)
-        : m_exec_space(exec_space)
-    {
-        [[maybe_unused]] tensor::tensor_accessor_for_domain_t<
-                hodge_star_domain_t<CoboundaryHodgeInputIndices, CoboundaryHodgeOutputIndices>>
-                derivative_hodge_star_accessor;
-        [[maybe_unused]] tensor::tensor_accessor_for_domain_t<hodge_star_domain_t<
-                tensor::upper_t<DualCoboundaryHodgeInputIndices>,
-                DualCoboundaryHodgeOutputIndices>> dual_derivative_hodge_star_accessor;
-        [[maybe_unused]] tensor::TensorAccessor<CoboundaryDualTensorIndex>
-                derivative_dual_tensor_accessor;
-        [[maybe_unused]] tensor::tensor_accessor_for_domain_t<hodge_star_domain_t<
-                CodifferentialHodgeInputIndices,
-                CodifferentialHodgeOutputIndices>> hodge_star_accessor;
-        [[maybe_unused]] tensor::tensor_accessor_for_domain_t<hodge_star_domain_t<
-                tensor::upper_t<DualCodifferentialHodgeInputIndices>,
-                DualCodifferentialHodgeOutputIndices>> dual_hodge_star_accessor;
-        [[maybe_unused]] tensor::TensorAccessor<CodifferentialDualTensorIndex> dual_tensor_accessor;
-        [[maybe_unused]] tensor::TensorAccessor<CodifferentialOutputIndex> codifferential_accessor;
-
-        m_derivative_hodge_star_alloc.emplace(
-                DerivativeHodgeStarDomainType(
-                        metric.non_indices_domain(),
-                        derivative_hodge_star_accessor.domain()),
-                AllocatorType());
-        m_dual_derivative_hodge_star_alloc.emplace(
-                DualDerivativeHodgeStarDomainType(
-                        metric.non_indices_domain(),
-                        dual_derivative_hodge_star_accessor.domain()),
-                AllocatorType());
-        m_derivative_dual_tensor_alloc.emplace(
-                DerivativeDualTensorDomainType(
-                        tensor.non_indices_domain(),
-                        derivative_dual_tensor_accessor.domain()),
-                AllocatorType());
-        m_hodge_star_alloc.emplace(
-                HodgeStarDomainType(metric.non_indices_domain(), hodge_star_accessor.domain()),
-                AllocatorType());
-        m_dual_hodge_star_alloc.emplace(
-                DualHodgeStarDomainType(
-                        metric.non_indices_domain(),
-                        dual_hodge_star_accessor.domain()),
-                AllocatorType());
-        m_dual_tensor_alloc.emplace(
-                DualTensorDomainType(tensor.non_indices_domain(), dual_tensor_accessor.domain()),
-                AllocatorType());
-        m_codifferential_alloc.emplace(
-                CodifferentialDomainType(
-                        tensor.non_indices_domain(),
-                        codifferential_accessor.domain()),
-                AllocatorType());
-        m_coboundary_of_codifferential_alloc.emplace(laplacian_tensor.domain(), AllocatorType());
-
-        m_derivative_hodge_star.emplace(*m_derivative_hodge_star_alloc);
-        m_dual_derivative_hodge_star.emplace(*m_dual_derivative_hodge_star_alloc);
-        m_derivative_dual_tensor_buffer.emplace(*m_derivative_dual_tensor_alloc);
-        m_hodge_star.emplace(*m_hodge_star_alloc);
-        m_dual_hodge_star.emplace(*m_dual_hodge_star_alloc);
-        m_dual_tensor_buffer.emplace(*m_dual_tensor_alloc);
-        m_codifferential_tensor_buffer.emplace(*m_codifferential_alloc);
-        m_coboundary_of_codifferential_buffer.emplace(*m_coboundary_of_codifferential_alloc);
-
-        fill_discrete_hodge_star<CoboundaryHodgeInputIndices, CoboundaryHodgeOutputIndices>(
-                exec_space,
-                *m_derivative_hodge_star,
-                metric,
-                position);
-        fill_discrete_hodge_star<
-                tensor::upper_t<DualCoboundaryHodgeInputIndices>,
-                DualCoboundaryHodgeOutputIndices>(
-                exec_space,
-                *m_dual_derivative_hodge_star,
-                metric,
-                position);
-        fill_discrete_hodge_star<
-                CodifferentialHodgeInputIndices,
-                CodifferentialHodgeOutputIndices>(exec_space, *m_hodge_star, metric, position);
-        fill_discrete_hodge_star<
-                tensor::upper_t<DualCodifferentialHodgeInputIndices>,
-                DualCodifferentialHodgeOutputIndices>(
-                exec_space,
-                *m_dual_hodge_star,
-                metric,
-                position);
-    }
-
-    template <
-            class PrimalExtrapolationRule = tensor::ClampExtrapolationRule,
-            class DualExtrapolationRule = tensor::ZeroExtrapolationRule>
-    TensorType operator()(
-            TensorType laplacian_tensor,
-            TensorType tensor,
-            PrimalExtrapolationRule primal_extrapolation = {},
-            DualExtrapolationRule dual_extrapolation = {})
-    {
-        auto exec_spaces = Kokkos::Experimental::partition_space(m_exec_space, 1, 1);
-
-        detail::codifferential_of_coboundary<
-                MetricIndex,
-                CodifferentialOfCoboundaryIndex,
-                CochainTag>(
-                exec_spaces[0],
-                laplacian_tensor,
-                tensor,
-                *m_derivative_hodge_star,
-                *m_dual_derivative_hodge_star,
-                *m_derivative_dual_tensor_buffer,
-                primal_extrapolation,
-                dual_extrapolation);
-
-        StagedCodifferential<
-                MetricIndex,
-                LaplacianDummyIndex,
-                CochainTag,
-                TensorType,
-                MetricType,
-                PositionType,
-                ExecSpace>(
-                exec_spaces[1],
-                std::move(*m_hodge_star),
-                std::move(*m_dual_hodge_star),
-                std::move(*m_dual_tensor_buffer))(
-                *m_codifferential_tensor_buffer,
-                tensor,
-                dual_extrapolation);
-        sil::exterior::
-                deriv<LaplacianDummyIndex, codifferential_index_t<LaplacianDummyIndex, CochainTag>>(
-                        exec_spaces[1],
-                        *m_coboundary_of_codifferential_buffer,
-                        *m_codifferential_tensor_buffer,
-                        primal_extrapolation);
-
-        exec_spaces[0].fence();
-        exec_spaces[1].fence();
-
-        auto coboundary_of_codifferential_buffer = *m_coboundary_of_codifferential_buffer;
-        SIMILIE_DEBUG_LOG("similie_add_coboundary_of_codifferential_contribution_to_laplacian");
-        ddc::parallel_for_each(
-                "similie_add_coboundary_of_codifferential_contribution_to_laplacian",
-                m_exec_space,
-                laplacian_tensor.domain(),
-                KOKKOS_LAMBDA(typename TensorType::discrete_element_type elem) {
-                    laplacian_tensor.mem(elem) += coboundary_of_codifferential_buffer.mem(elem);
-                });
-
-        return laplacian_tensor;
-    }
-};
-
-template <
-        tensor::TensorIndex MetricIndex,
-        tensor::TensorNatIndex LaplacianDummyIndex,
-        tensor::TensorIndex CochainTag,
-        misc::Specialization<tensor::Tensor> TensorType,
-        misc::Specialization<tensor::Tensor> MetricType,
-        misc::Specialization<tensor::Tensor> PositionType,
-        class ExecSpace>
-    requires(detail::TopRankLaplacianCochain<LaplacianDummyIndex, CochainTag>)
-class StagedLaplacian<
-        MetricIndex,
-        LaplacianDummyIndex,
-        CochainTag,
-        TensorType,
-        MetricType,
-        PositionType,
-        ExecSpace>
-{
-private:
-    template <class...>
-    friend struct Laplacian;
-
-    using MemorySpace = typename TensorType::memory_space;
-    using AllocatorType = ddc::KokkosAllocator<double, MemorySpace>;
-    using CodifferentialHodgeInputIndices
-            = tensor::upper_t<ddc::to_type_seq_t<tensor::natural_domain_t<CochainTag>>>;
-    using CodifferentialHodgeOutputIndices = codifferential_hodge_output_indices_t<
-            LaplacianDummyIndex::size() - CochainTag::rank(),
-            LaplacianDummyIndex>;
-    using DualCodifferentialHodgeInputIndices = ddc::
-            type_seq_merge_t<ddc::TypeSeq<LaplacianDummyIndex>, CodifferentialHodgeOutputIndices>;
-    using DualCodifferentialHodgeOutputIndices = ddc::type_seq_remove_t<
-            tensor::lower_t<CodifferentialHodgeInputIndices>,
-            ddc::TypeSeq<LaplacianDummyIndex>>;
-    using CodifferentialDualTensorIndex = misc::convert_type_seq_to_t<
-            tensor::TensorAntisymmetricIndex,
-            CodifferentialHodgeOutputIndices>;
-    using CodifferentialOutputIndex = codifferential_index_t<LaplacianDummyIndex, CochainTag>;
-
-    using HodgeStarDomainType = sil::misc::cartesian_prod_t<
-            typename MetricType::non_indices_domain_t,
-            hodge_star_domain_t<CodifferentialHodgeInputIndices, CodifferentialHodgeOutputIndices>>;
-    using DualHodgeStarDomainType = sil::misc::cartesian_prod_t<
-            typename MetricType::non_indices_domain_t,
-            hodge_star_domain_t<
-                    tensor::upper_t<DualCodifferentialHodgeInputIndices>,
-                    DualCodifferentialHodgeOutputIndices>>;
-    using DualTensorDomainType = sil::misc::cartesian_prod_t<
-            typename TensorType::non_indices_domain_t,
-            ddc::DiscreteDomain<CodifferentialDualTensorIndex>>;
-    using CodifferentialDomainType = sil::misc::cartesian_prod_t<
-            typename TensorType::non_indices_domain_t,
-            ddc::DiscreteDomain<CodifferentialOutputIndex>>;
-
-    using HodgeStarAllocType = ddc::Chunk<double, HodgeStarDomainType, AllocatorType>;
-    using DualHodgeStarAllocType = ddc::Chunk<double, DualHodgeStarDomainType, AllocatorType>;
-    using DualTensorAllocType = ddc::Chunk<double, DualTensorDomainType, AllocatorType>;
-    using CodifferentialAllocType = ddc::Chunk<double, CodifferentialDomainType, AllocatorType>;
-
-    using HodgeStarTensorType
-            = tensor::Tensor<double, HodgeStarDomainType, Kokkos::layout_right, MemorySpace>;
-    using DualHodgeStarTensorType
-            = tensor::Tensor<double, DualHodgeStarDomainType, Kokkos::layout_right, MemorySpace>;
-    using DualTensorType
-            = tensor::Tensor<double, DualTensorDomainType, Kokkos::layout_right, MemorySpace>;
-    using CodifferentialTensorType
-            = tensor::Tensor<double, CodifferentialDomainType, Kokkos::layout_right, MemorySpace>;
-    ExecSpace m_exec_space;
-    std::optional<HodgeStarAllocType> m_hodge_star_alloc;
-    std::optional<DualHodgeStarAllocType> m_dual_hodge_star_alloc;
-    std::optional<DualTensorAllocType> m_dual_tensor_alloc;
-    std::optional<CodifferentialAllocType> m_codifferential_alloc;
-    std::optional<HodgeStarTensorType> m_hodge_star;
-    std::optional<DualHodgeStarTensorType> m_dual_hodge_star;
-    std::optional<DualTensorType> m_dual_tensor_buffer;
-    std::optional<CodifferentialTensorType> m_codifferential_tensor_buffer;
-
-public:
-    StagedLaplacian(
-            ExecSpace const& exec_space,
-            HodgeStarTensorType&& hodge_star,
-            DualHodgeStarTensorType&& dual_hodge_star,
-            DualTensorType&& dual_tensor_buffer,
-            CodifferentialTensorType&& codifferential_tensor_buffer)
-        : m_exec_space(exec_space)
-        , m_hodge_star(std::move(hodge_star))
-        , m_dual_hodge_star(std::move(dual_hodge_star))
-        , m_dual_tensor_buffer(std::move(dual_tensor_buffer))
-        , m_codifferential_tensor_buffer(std::move(codifferential_tensor_buffer))
-    {
-    }
-
-    StagedLaplacian(
-            ExecSpace const& exec_space,
-            TensorType,
-            TensorType tensor,
-            MetricType metric,
-            PositionType position)
-        : m_exec_space(exec_space)
-    {
-        [[maybe_unused]] tensor::tensor_accessor_for_domain_t<hodge_star_domain_t<
-                CodifferentialHodgeInputIndices,
-                CodifferentialHodgeOutputIndices>> hodge_star_accessor;
-        [[maybe_unused]] tensor::tensor_accessor_for_domain_t<hodge_star_domain_t<
-                tensor::upper_t<DualCodifferentialHodgeInputIndices>,
-                DualCodifferentialHodgeOutputIndices>> dual_hodge_star_accessor;
-        [[maybe_unused]] tensor::TensorAccessor<CodifferentialDualTensorIndex> dual_tensor_accessor;
-        [[maybe_unused]] tensor::TensorAccessor<CodifferentialOutputIndex> codifferential_accessor;
-
-        m_hodge_star_alloc.emplace(
-                HodgeStarDomainType(metric.non_indices_domain(), hodge_star_accessor.domain()),
-                AllocatorType());
-        m_dual_hodge_star_alloc.emplace(
-                DualHodgeStarDomainType(
-                        metric.non_indices_domain(),
-                        dual_hodge_star_accessor.domain()),
-                AllocatorType());
-        m_dual_tensor_alloc.emplace(
-                DualTensorDomainType(tensor.non_indices_domain(), dual_tensor_accessor.domain()),
-                AllocatorType());
-        m_codifferential_alloc.emplace(
-                CodifferentialDomainType(
-                        tensor.non_indices_domain(),
-                        codifferential_accessor.domain()),
-                AllocatorType());
-
-        m_hodge_star.emplace(*m_hodge_star_alloc);
-        m_dual_hodge_star.emplace(*m_dual_hodge_star_alloc);
-        m_dual_tensor_buffer.emplace(*m_dual_tensor_alloc);
-        m_codifferential_tensor_buffer.emplace(*m_codifferential_alloc);
-
-        fill_discrete_hodge_star<
-                CodifferentialHodgeInputIndices,
-                CodifferentialHodgeOutputIndices>(exec_space, *m_hodge_star, metric, position);
-        fill_discrete_hodge_star<
-                tensor::upper_t<DualCodifferentialHodgeInputIndices>,
-                DualCodifferentialHodgeOutputIndices>(
-                exec_space,
-                *m_dual_hodge_star,
-                metric,
-                position);
-    }
-
-    template <
-            class PrimalExtrapolationRule = tensor::ClampExtrapolationRule,
-            class DualExtrapolationRule = tensor::ZeroExtrapolationRule>
-    TensorType operator()(
-            TensorType laplacian_tensor,
-            TensorType tensor,
-            PrimalExtrapolationRule primal_extrapolation = {},
-            DualExtrapolationRule dual_extrapolation = {})
-    {
-        StagedCodifferential<
-                MetricIndex,
-                LaplacianDummyIndex,
-                CochainTag,
-                TensorType,
-                MetricType,
-                PositionType,
-                ExecSpace>(
-                m_exec_space,
-                std::move(*m_hodge_star),
-                std::move(*m_dual_hodge_star),
-                std::move(*m_dual_tensor_buffer))(
-                *m_codifferential_tensor_buffer,
-                tensor,
-                dual_extrapolation);
-        return sil::exterior::
-                deriv<LaplacianDummyIndex, codifferential_index_t<LaplacianDummyIndex, CochainTag>>(
-                        m_exec_space,
-                        laplacian_tensor,
-                        *m_codifferential_tensor_buffer,
-                        primal_extrapolation);
-    }
-};
-
-static_assert(StagedOperatorConcept<
-              StagedLaplacian<
-                      detail::MetricIndexConcept,
-                      detail::DirectionConcept,
-                      detail::ScalarConcept,
-                      detail::FieldConcept<detail::ScalarConcept>,
-                      detail::FieldConcept<detail::MetricIndexConcept>,
-                      detail::FieldConcept<detail::PositionIndexConcept>,
-                      Kokkos::DefaultHostExecutionSpace>,
-              detail::FieldConcept<detail::ScalarConcept>>);
 
 template <
         tensor::TensorIndex MetricIndex,
@@ -1037,8 +592,7 @@ TensorType laplacian(
                     primal_extrapolation);
 }
 
-} // namespace exterior
 
-} // namespace sil
+} // namespace sil::exterior
 
-#include "aggressively_staged_laplacian.hpp"
+#include "staged_laplacian.hpp"

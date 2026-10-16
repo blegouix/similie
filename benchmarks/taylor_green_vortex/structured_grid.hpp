@@ -87,7 +87,7 @@ using MetricTensor = sil::tensor::Tensor<
  */
 class StructuredGrid
 {
-    using ScalarLaplacian = sil::exterior::AggressivelyStagedLaplacian<
+    using ScalarLaplacian = sil::exterior::StagedLaplacian<
             MetricIndex,
             Vector,
             Scalar,

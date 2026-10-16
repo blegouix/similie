@@ -32,7 +32,7 @@ using ThreeFormTensor = sil::tensor::Tensor<
 class VorticityDEC
 {
     StructuredGrid& m_grid;
-    using TwoLaplacian = sil::exterior::AggressivelyStagedLaplacian<
+    using TwoLaplacian = sil::exterior::StagedLaplacian<
             MetricIndex,
             sil::tensor::Covariant<CurlDirection>,
             TwoForm,

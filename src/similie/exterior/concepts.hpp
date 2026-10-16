@@ -69,14 +69,15 @@ template <
         class Element,
         class NaturalElement>
 concept DiscreteHodgeStarConcept = requires(
+        Operator operation,
         Output output,
         Input input,
         Metric metric,
         Position position,
         Element element,
         NaturalElement natural_element) {
-    { Operator::value(metric, position, element, natural_element) } -> std::same_as<double>;
-    { Operator::operator()(output, input, metric, position, element) } -> std::same_as<void>;
+    { operation.value(metric, position, element, natural_element) } -> std::same_as<double>;
+    { operation(output, input, metric, position, element) } -> std::same_as<void>;
 };
 
 template <

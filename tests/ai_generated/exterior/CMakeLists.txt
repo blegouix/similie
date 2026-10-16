@@ -4,9 +4,9 @@
 
 include(GoogleTest)
 
-add_executable(unit_tests_aggressively_staged_laplacian aggressively_staged_laplacian.cpp ../../main.cpp)
-target_link_libraries(unit_tests_aggressively_staged_laplacian PUBLIC GTest::gtest DDC::core sil::exterior)
-gtest_discover_tests(unit_tests_aggressively_staged_laplacian DISCOVERY_MODE PRE_TEST)
+add_executable(unit_tests_staged_laplacian staged_laplacian.cpp ../../main.cpp)
+target_link_libraries(unit_tests_staged_laplacian PUBLIC GTest::gtest DDC::core sil::exterior)
+gtest_discover_tests(unit_tests_staged_laplacian DISCOVERY_MODE PRE_TEST)
 
 add_executable(unit_tests_reconstruction_application reconstruction_application.cpp ../../main.cpp)
 target_link_libraries(unit_tests_reconstruction_application PUBLIC GTest::gtest DDC::core sil::exterior)
