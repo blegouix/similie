@@ -30,20 +30,15 @@ class StagedHodgeStar
     using Operator
             = DiscreteHodgeStar<Complex, Indices1, Indices2, MetricType, PositionType, BatchElem>;
     Kokkos::View<typename Memory::execution_space, Kokkos::HostSpace> m_exec;
-    detail::LocalStencilStorage<Operator, Source, Target, Domain, Memory> m_stencils;
+    detail::LocalStencilStorage<Source, Target, Domain, Memory> m_stencils;
 
 public:
-    KOKKOS_FUNCTION static constexpr auto stencil_nonzero_indices()
-    {
-        return Operator::stencil_nonzero_indices();
-    }
-
     template <class Exec>
     StagedHodgeStar(Exec const& exec, MetricType metric, PositionType position)
         : m_exec("staged_hodge_execution")
     {
         m_exec() = exec;
-        m_stencils = detail::cache_local_stencils<Operator, Source, Target, Memory>(
+        m_stencils = detail::cache_local_stencils<Source, Target, Memory>(
                 exec,
                 metric.non_indices_domain(),
                 detail::HodgeStencilValue<Operator, MetricType, PositionType> {metric, position});
@@ -55,10 +50,9 @@ public:
             BatchElem element) const
     {
         detail::LocalOperatorStencil<Source, Target> result;
-        constexpr auto indices = Operator::stencil_nonzero_indices();
         std::size_t const node = detail::stencil_node(m_stencils.domain, element);
-        for (std::size_t entry = 0; entry < indices.size(); ++entry)
-            result.weights[indices[entry]] = m_stencils.weights(node, entry);
+        for (std::size_t entry = 0; entry < result.weights.size(); ++entry)
+            result.weights[entry] = m_stencils.weights(node, entry);
         return result;
     }
 
@@ -86,10 +80,7 @@ public:
             BatchElem element) const
     {
         std::size_t const node = detail::stencil_node(m_stencils.domain, element);
-        detail::apply_local_stencil<
-                Operator,
-                Source,
-                Target>(output, input, [&](std::size_t entry) {
+        detail::apply_local_stencil<Source, Target>(output, input, [&](std::size_t entry) {
             return m_stencils.weights(node, entry);
         });
     }
@@ -106,7 +97,6 @@ public:
                 KOKKOS_LAMBDA(BatchElem element) {
                     std::size_t const node = detail::stencil_node(domain, element);
                     detail::apply_local_stencil<
-                            Operator,
                             Source,
                             Target>(output[element], input[element], [&](std::size_t entry) {
                         return weights(node, entry);

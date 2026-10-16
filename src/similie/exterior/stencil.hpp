@@ -6,14 +6,30 @@
 
 #include <array>
 #include <cstddef>
-#include <limits>
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
 
 #include "coboundary.hpp"
+#include "stencil_indices.hpp"
 
-namespace sil::exterior::detail {
+namespace sil::exterior {
+
+// Full coefficient layout: output component, spatial point, input component.
+// Offsets and constant responses support affine closures and constant null modes.
+template <class Index, class Source, class Target, std::size_t Radius>
+struct Stencil
+{
+    std::array<
+            double,
+            Target::mem_size() * Source::mem_size() * detail::StencilShape<Index, Radius>::size>
+            weights {};
+    std::array<double, Target::mem_size()> offset {};
+    std::array<double, Target::mem_size() * Source::mem_size()> constant_response {};
+    bool complete = true;
+};
+
+namespace detail {
 
 // Static tensor coefficients, without spatial dimensions or heap allocation.
 template <class Memory, class... Indices>
@@ -188,16 +204,6 @@ stencil_source(Domain domain, Element element, std::size_t point)
     return element;
 }
 
-template <class Index, class Source, class Target, std::size_t Radius>
-struct OperatorStencil
-{
-    std::array<double, Target::mem_size() * Source::mem_size() * StencilShape<Index, Radius>::size>
-            weights {};
-    std::array<double, Target::mem_size()> offset {};
-    std::array<double, Target::mem_size() * Source::mem_size()> constant_response {};
-    bool complete = true;
-};
-
 template <
         class Index,
         class Source,
@@ -206,12 +212,12 @@ template <
         class Domain,
         class Element,
         class Evaluate>
-KOKKOS_FORCEINLINE_FUNCTION OperatorStencil<Index, Source, Target, Radius> operator_stencil(
+KOKKOS_FORCEINLINE_FUNCTION Stencil<Index, Source, Target, Radius> operator_stencil(
         Domain domain,
         Element element,
         Evaluate evaluate)
 {
-    OperatorStencil<Index, Source, Target, Radius> stencil;
+    Stencil<Index, Source, Target, Radius> stencil;
     auto baseline = evaluate([&](auto sample, auto) {
         bool found = false;
         for (std::size_t point = 0; point < StencilShape<Index, Radius>::size; ++point)
@@ -290,22 +296,14 @@ public:
     }
 };
 
-template <
-        class Operator,
-        class Index,
-        class Source,
-        class Target,
-        std::size_t Radius,
-        class Domain,
-        class Memory>
+template <class Index, class Source, class Target, std::size_t Radius, class Domain, class Memory>
 struct StencilStorage
 {
-    static_assert(valid_stencil_indices<
-                  Operator,
-                  Source::mem_size() * Target::mem_size() * StencilShape<Index, Radius>::size>());
-
     Domain domain;
-    Kokkos::View<double * [Operator::stencil_nonzero_indices().size()], Kokkos::LayoutLeft, Memory>
+    Kokkos::View<
+            double * [Target::mem_size() * StencilShape<Index, Radius>::size * Source::mem_size()],
+            Kokkos::LayoutLeft,
+            Memory>
             weights;
     Kokkos::View<double * [Target::mem_size()], Kokkos::LayoutLeft, Memory> offset;
     Kokkos::View<double * [Target::mem_size()][Source::mem_size()], Kokkos::LayoutLeft, Memory>
@@ -335,30 +333,21 @@ struct HodgeStencilValue
     }
 };
 
-template <class Operator, class Source, class Target, class Domain, class Memory>
+template <class Source, class Target, class Domain, class Memory>
 struct LocalStencilStorage
 {
-    static_assert(valid_stencil_indices<Operator, Source::mem_size() * Target::mem_size()>());
-
     Domain domain;
-    Kokkos::View<double * [Operator::stencil_nonzero_indices().size()], Kokkos::LayoutLeft, Memory>
+    Kokkos::View<double * [Target::mem_size() * Source::mem_size()], Kokkos::LayoutLeft, Memory>
             weights;
 };
 
-template <
-        class Operator,
-        class Source,
-        class Target,
-        class Memory,
-        class Exec,
-        class Domain,
-        class Evaluate>
-LocalStencilStorage<Operator, Source, Target, Domain, Memory> cache_local_stencils(
+template <class Source, class Target, class Memory, class Exec, class Domain, class Evaluate>
+LocalStencilStorage<Source, Target, Domain, Memory> cache_local_stencils(
         Exec const& exec,
         Domain domain,
         Evaluate evaluate)
 {
-    LocalStencilStorage<Operator, Source, Target, Domain, Memory> storage;
+    LocalStencilStorage<Source, Target, Domain, Memory> storage;
     storage.domain = domain;
     storage.weights = decltype(storage.weights)(
             Kokkos::view_alloc(Kokkos::WithoutInitializing, "staged_local_stencils"),
@@ -369,76 +358,10 @@ LocalStencilStorage<Operator, Source, Target, Domain, Memory> cache_local_stenci
             Kokkos::RangePolicy<Exec>(exec, 0, domain.size()),
             KOKKOS_LAMBDA(std::size_t node) {
                 auto const stencil = evaluate(stencil_element(domain, node));
-                constexpr auto indices = Operator::stencil_nonzero_indices();
-                for (std::size_t entry = 0; entry < indices.size(); ++entry)
-                    weights(node, entry) = stencil.weights[indices[entry]];
+                for (std::size_t entry = 0; entry < stencil.weights.size(); ++entry)
+                    weights(node, entry) = stencil.weights[entry];
             });
     return storage;
-}
-
-// The specialized pattern is an explicit contract, checked against all supplied
-// geometry nodes (including halos) before any coefficients are discarded.
-template <class Index, class MetricIndex, class Exec, class Tensor, class Position>
-void validate_cartesian_stencil_geometry(Exec const& exec, Tensor input, Position position)
-{
-    static_assert(
-            misc::Specialization<MetricIndex, tensor::TensorIdentityIndex>,
-            "CartesianPeriodicStencil requires an identity physical metric");
-    using Domain = typename Tensor::non_indices_domain_t;
-    using PositionIndex
-            = ddc::type_seq_element_t<0, ddc::to_type_seq_t<typename Position::indices_domain_t>>;
-    static_assert(Domain::rank() == Index::size());
-    static_assert(std::is_same_v<
-                  typename Index::type_seq_dimensions,
-                  typename PositionIndex::type_seq_dimensions>);
-    auto const anchor = input.non_indices_domain().front();
-    if (input.non_indices_domain().empty())
-        return;
-    for (std::size_t axis = 0; axis < Domain::rank(); ++axis) {
-        auto neighbor = anchor;
-        ++ddc::detail::array(neighbor)[axis];
-        if (!misc::domain_contains(position.non_indices_domain(), anchor)
-            || !misc::domain_contains(position.non_indices_domain(), neighbor))
-            throw std::invalid_argument(
-                    "Cartesian stencil requires geometry samples along every axis");
-    }
-    Domain const domain = position.non_indices_domain();
-    int failed = 0;
-    Kokkos::parallel_reduce(
-            "similie_validate_cartesian_stencil",
-            Kokkos::RangePolicy<Exec>(exec, 0, domain.size()),
-            KOKKOS_LAMBDA(std::size_t node, int& errors) {
-                auto const element = stencil_element(domain, node);
-                for (std::size_t axis = 0; axis < Domain::rank(); ++axis) {
-                    auto neighbor = anchor;
-                    ++ddc::detail::array(neighbor)[axis];
-                    auto const component = ddc::DiscreteElement<PositionIndex>(axis);
-                    double const origin = position.mem(anchor, component);
-                    double const spacing = position.mem(neighbor, component) - origin;
-                    double const expected = origin
-                                            + (double(ddc::detail::array(element)[axis])
-                                               - double(ddc::detail::array(anchor)[axis]))
-                                                      * spacing;
-                    double const actual = position.mem(element, component);
-                    if (!Kokkos::isfinite(actual) || !Kokkos::isfinite(spacing) || spacing == 0.0
-                        || Kokkos::abs(actual - expected)
-                                   > 128.0 * std::numeric_limits<double>::epsilon()
-                                             * (1.0 + Kokkos::abs(expected) + Kokkos::abs(origin)))
-                        ++errors;
-                }
-            },
-            failed);
-    if (failed)
-        throw std::invalid_argument("CartesianPeriodicStencil requires a uniform orthogonal grid");
-}
-
-template <class Rule>
-constexpr bool periodic_stencil_rule()
-{
-    if constexpr (requires { Rule::is_periodic; })
-        return Rule::is_periodic;
-    else
-        return false;
 }
 
 struct NoStencilRule
@@ -471,7 +394,6 @@ template <
         class Rule1,
         class Rule2 = NoStencilRule>
 StencilStorage<
-        Operator,
         Index,
         Source,
         Target,
@@ -482,7 +404,7 @@ cache_stencils(Exec const& exec, Tensor input, Geometry geometry, Rule1 rule1, R
 {
     using Domain = typename Tensor::non_indices_domain_t;
     using Memory = typename Tensor::memory_space;
-    StencilStorage<Operator, Index, Source, Target, Radius, Domain, Memory> storage;
+    StencilStorage<Index, Source, Target, Radius, Domain, Memory> storage;
     storage.domain = input.non_indices_domain();
     storage.weights = decltype(storage.weights)(
             Kokkos::view_alloc(Kokkos::WithoutInitializing, "staged_stencils"),
@@ -512,33 +434,12 @@ cache_stencils(Exec const& exec, Tensor input, Geometry geometry, Rule1 rule1, R
                         constant_response(node, target, source)
                                 = stencil.constant_response[target * Source::mem_size() + source];
                 }
-                constexpr auto indices = Operator::stencil_nonzero_indices();
-                for (std::size_t entry = 0; entry < indices.size(); ++entry)
-                    weights(node, entry) = stencil.weights[indices[entry]];
-                if constexpr (
-                        indices.size() < Target::mem_size() * StencilShape<Index, Radius>::size
-                                                 * Source::mem_size()) {
-                    double scale = 1.0;
-                    for (double coefficient : stencil.weights)
-                        scale = Kokkos::max(scale, Kokkos::abs(coefficient));
-                    std::size_t entry = 0;
-                    for (std::size_t flat = 0; flat < stencil.weights.size(); ++flat) {
-                        if (entry < indices.size() && indices[entry] == flat) {
-                            ++entry;
-                            continue;
-                        }
-                        if (Kokkos::abs(stencil.weights[flat])
-                            > 128.0 * std::numeric_limits<double>::epsilon() * scale)
-                            Kokkos::atomic_max(&incomplete(), 2);
-                    }
-                }
+                for (std::size_t entry = 0; entry < stencil.weights.size(); ++entry)
+                    weights(node, entry) = stencil.weights[entry];
             });
     int failed;
     Kokkos::deep_copy(failed, incomplete);
     exec.fence();
-    if (failed == 2)
-        throw std::invalid_argument(
-                "Operator coefficients violate their declared static stencil pattern");
     if (failed)
         throw std::invalid_argument(
                 "Boundary closure exceeds the operator's fixed stencil support");
@@ -546,7 +447,6 @@ cache_stencils(Exec const& exec, Tensor input, Geometry geometry, Rule1 rule1, R
 }
 
 template <
-        class Operator,
         class Index,
         class Source,
         class Target,
@@ -560,7 +460,7 @@ Output apply_stencils(
         Exec const& exec,
         Output output,
         Input input,
-        StencilStorage<Operator, Index, Source, Target, Radius, Domain, Memory> storage)
+        StencilStorage<Index, Source, Target, Radius, Domain, Memory> storage)
 {
     if (input.non_indices_domain() != storage.domain)
         throw std::invalid_argument("Staged operator input domain changed");
@@ -586,13 +486,13 @@ Output apply_stencils(
                     reference[source] = input.mem(element, ddc::DiscreteElement<Source>(source));
                     sum += constant_response(node, target, source) * reference[source];
                 }
-                constexpr auto indices = Operator::stencil_nonzero_indices();
-                constexpr auto rows
-                        = stencil_row_offsets<Operator, Source, Target, Index, Radius>();
-                for (std::size_t entry = rows[target]; entry < rows[target + 1]; ++entry) {
-                    std::size_t const source = indices[entry] % Source::mem_size();
-                    std::size_t const point = (indices[entry] / Source::mem_size())
-                                              % StencilShape<Index, Radius>::size;
+                for (std::size_t entry
+                     = target * StencilShape<Index, Radius>::size * Source::mem_size();
+                     entry < (target + 1) * StencilShape<Index, Radius>::size * Source::mem_size();
+                     ++entry) {
+                    std::size_t const source = entry % Source::mem_size();
+                    std::size_t const point
+                            = (entry / Source::mem_size()) % StencilShape<Index, Radius>::size;
                     double const weight = weights(node, entry);
                     if (weight != 0.0)
                         sum += weight
@@ -608,4 +508,5 @@ Output apply_stencils(
     return output;
 }
 
-} // namespace sil::exterior::detail
+} // namespace detail
+} // namespace sil::exterior

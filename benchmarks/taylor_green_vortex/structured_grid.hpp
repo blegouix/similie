@@ -94,8 +94,7 @@ class StructuredGrid
             ScalarTensor,
             MetricTensor,
             PositionTensor,
-            Kokkos::DefaultExecutionSpace,
-            sil::exterior::CartesianPeriodicStencil>;
+            Kokkos::DefaultExecutionSpace>;
     using VectorCodifferential = sil::exterior::StagedCodifferential<
             MetricIndex,
             Vector,
@@ -128,7 +127,6 @@ public:
     // Device lambda instantiations in exterior must be able to name this type.
     struct Periodic
     {
-        static constexpr bool is_periodic = true;
         template <class Tensor, class Element>
         KOKKOS_FUNCTION auto operator()(Tensor const& field, Element element) const
         {

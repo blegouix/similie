@@ -196,13 +196,6 @@ template <
         class BatchElem>
 struct DiscreteHodgeStar
 {
-    KOKKOS_FUNCTION static constexpr auto stencil_nonzero_indices()
-    {
-        return detail::dense_stencil_indices<
-                tensor::lower_t<reduction_index_t<Indices1>>::mem_size()
-                * reduction_index_t<Indices2>::mem_size()>();
-    }
-
     /** Pair primal one-cochains using the full cell metric and orientation.
      * \important This operator and documentation is fully AI-generated.
      */
@@ -440,13 +433,6 @@ template <
         class BatchElem>
 struct ContinuousHodgeStar
 {
-    KOKKOS_FUNCTION static constexpr auto stencil_nonzero_indices()
-    {
-        return detail::dense_stencil_indices<
-                tensor::lower_t<reduction_index_t<Indices1>>::mem_size()
-                * reduction_index_t<Indices2>::mem_size()>();
-    }
-
     template <
             misc::Specialization<tensor::Tensor> HodgeTensorType,
             misc::Specialization<tensor::Tensor> FormTensorType>

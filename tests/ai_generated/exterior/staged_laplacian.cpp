@@ -62,7 +62,6 @@ using Field = sil::tensor::Tensor<
 
 struct Periodic
 {
-    static constexpr bool is_periodic = true;
     template <class Tensor, class Element>
     KOKKOS_FUNCTION auto operator()(Tensor const& field, Element element) const
     {
@@ -223,7 +222,7 @@ void check_codifferential(
         EXPECT_NEAR(a.data()[i], e.data()[i], 2.e-11 * (1.0 + std::abs(e.data()[i])));
 }
 
-template <class Form, class Primal, class Dual, class Pattern = sil::exterior::GeneralStencil>
+template <class Form, class Primal, class Dual>
 void compare(bool curved, Primal primal, Dual dual, std::size_t size = 3)
 {
     using Memory = Kokkos::DefaultExecutionSpace::memory_space;
@@ -235,8 +234,7 @@ void compare(bool curved, Primal primal, Dual dual, std::size_t size = 3)
             Field<Form>,
             Field<MetricIndex>,
             Field<PositionIndex>,
-            Exec,
-            Pattern>;
+            Exec>;
     static_assert(sil::exterior::StagedOperatorConcept<Operator, Field<Form>>);
     SpatialDomain const
             domain(ddc::DiscreteElement<GridX, GridY, GridZ>(7, 7, 7),
@@ -415,38 +413,5 @@ TEST(StagedLaplacian, NaturalBoundaries)
             true,
             sil::tensor::ClampExtrapolationRule {},
             sil::tensor::ConstantScalarExtrapolationRule {0.4});
-}
-TEST(StagedLaplacian, CartesianPeriodicPattern)
-{
-    compare<Scalar,
-            Periodic,
-            Periodic,
-            sil::exterior::CartesianPeriodicStencil>(false, Periodic {}, Periodic {});
-    compare<OneForm,
-            Periodic,
-            Periodic,
-            sil::exterior::CartesianPeriodicStencil>(false, Periodic {}, Periodic {});
-    compare<TwoForm,
-            Periodic,
-            Periodic,
-            sil::exterior::CartesianPeriodicStencil>(false, Periodic {}, Periodic {});
-    compare<ThreeForm,
-            Periodic,
-            Periodic,
-            sil::exterior::CartesianPeriodicStencil>(false, Periodic {}, Periodic {});
-    compare<TwoForm,
-            Periodic,
-            Periodic,
-            sil::exterior::CartesianPeriodicStencil>(false, Periodic {}, Periodic {}, 2);
-}
-TEST(StagedLaplacian, CartesianPatternRejectsCurvedGeometry)
-{
-    EXPECT_THROW(
-            (compare<
-                    OneForm,
-                    Periodic,
-                    Periodic,
-                    sil::exterior::CartesianPeriodicStencil>(true, Periodic {}, Periodic {})),
-            std::invalid_argument);
 }
 } // namespace

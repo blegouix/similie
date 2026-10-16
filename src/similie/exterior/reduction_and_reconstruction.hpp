@@ -421,7 +421,7 @@ KOKKOS_FUNCTION ReductionNaturalElemType merge_reduction_natural_elems(
     return natural_elem_from_flat_ids<ReductionNaturalElemType>(reduction_ids);
 }
 
-template <class Operator, class Source, class Target, class Output, class Input, class Weight>
+template <class Source, class Target, class Output, class Input, class Weight>
 KOKKOS_FUNCTION void apply_local_stencil(Output output, Input input, Weight weight)
 {
     ddc::device_for_each(output.domain(), [&](auto component) {
@@ -429,10 +429,8 @@ KOKKOS_FUNCTION void apply_local_stencil(Output output, Input input, Weight weig
                 = flat_natural_elem_ids(output.accessor().canonical_natural_element(component));
         std::size_t const target = stencil_component_index<Target>(target_ids);
         double sum = 0.0;
-        constexpr auto indices = Operator::stencil_nonzero_indices();
-        constexpr auto rows = stencil_component_rows<Operator, Source, Target, 1>();
-        for (std::size_t entry = rows[target]; entry < rows[target + 1]; ++entry) {
-            std::size_t const source = indices[entry] % Source::mem_size();
+        for (std::size_t source = 0; source < Source::mem_size(); ++source) {
+            std::size_t const entry = target * Source::mem_size() + source;
             if constexpr (Source::rank() == 0) {
                 sum += weight(entry) * input.mem(input.domain().front());
             } else {
@@ -471,13 +469,6 @@ template <
         CellComplex Complex = CellComplex::Primal>
 struct Reduction
 {
-    KOKKOS_FUNCTION static constexpr auto stencil_nonzero_indices()
-    {
-        return detail::dense_stencil_indices<
-                reduction_index_t<Indices>::mem_size()
-                * reduction_index_t<tensor::primes<tensor::upper_t<Indices>>>::mem_size()>();
-    }
-
     using source_index_type = misc::convert_type_seq_to_t<
             tensor::TensorFullIndex,
             tensor::primes<tensor::upper_t<Indices>>>;
@@ -963,13 +954,6 @@ template <
         CellComplex Complex = CellComplex::Primal>
 struct Reconstruction
 {
-    KOKKOS_FUNCTION static constexpr auto stencil_nonzero_indices()
-    {
-        return detail::dense_stencil_indices<
-                reduction_index_t<Indices>::mem_size()
-                * reduction_index_t<tensor::primes<Indices>>::mem_size()>();
-    }
-
     using source_index_type = reduction_index_t<Indices>;
     using target_index_type = reduction_index_t<tensor::primes<Indices>>;
     using source_natural_elem_type =
@@ -1164,14 +1148,9 @@ class StagedReconstruction
             typename Domain::discrete_element_type,
             Complex>;
     ExecSpace m_exec_space;
-    detail::LocalStencilStorage<Operator, Source, Target, Domain, Memory> m_stencils;
+    detail::LocalStencilStorage<Source, Target, Domain, Memory> m_stencils;
 
 public:
-    KOKKOS_FUNCTION static constexpr auto stencil_nonzero_indices()
-    {
-        return Operator::stencil_nonzero_indices();
-    }
-
     StagedReconstruction(
             ExecSpace const& exec,
             ReconstructedTensorType output,
@@ -1179,7 +1158,7 @@ public:
             PositionType position)
         : m_exec_space(exec)
     {
-        m_stencils = detail::cache_local_stencils<Operator, Source, Target, Memory>(
+        m_stencils = detail::cache_local_stencils<Source, Target, Memory>(
                 exec,
                 output.non_indices_domain(),
                 detail::ReconstructionStencilValue<Operator, PositionType> {position});
@@ -1197,7 +1176,6 @@ public:
                 KOKKOS_LAMBDA(typename Domain::discrete_element_type element) {
                     std::size_t const node = detail::stencil_node(domain, element);
                     detail::apply_local_stencil<
-                            Operator,
                             Source,
                             Target>(output[element], input[element], [&](std::size_t entry) {
                         return weights(node, entry);

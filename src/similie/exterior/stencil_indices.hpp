@@ -6,23 +6,10 @@
 
 #include <array>
 #include <cstddef>
-#include <type_traits>
 
 #include <Kokkos_Macros.hpp>
 
 namespace sil::exterior {
-
-/** The general pattern permits curved geometry and arbitrary supported closures.
- * CartesianPeriodicStencil requires a uniform orthogonal grid, identity physical
- * metric and periodic closures. Its Laplacian is componentwise seven-point in 3D.
- * \important This operator and documentation is fully AI-generated.
- */
-struct GeneralStencil
-{
-};
-struct CartesianPeriodicStencil
-{
-};
 
 template <std::size_t Dimensions>
 struct StencilIndex
@@ -75,41 +62,6 @@ struct StencilShape
 };
 
 
-template <std::size_t Size>
-KOKKOS_FUNCTION constexpr std::array<std::size_t, Size> dense_stencil_indices()
-{
-    std::array<std::size_t, Size> result {};
-    for (std::size_t i = 0; i < Size; ++i)
-        result[i] = i;
-    return result;
-}
-
-template <auto Mask>
-KOKKOS_FUNCTION constexpr auto nonzero_stencil_indices()
-{
-    constexpr std::size_t count = [] {
-        std::size_t result = 0;
-        for (bool entry : Mask)
-            result += entry;
-        return result;
-    }();
-    std::array<std::size_t, count> result {};
-    std::size_t entry = 0;
-    for (std::size_t i = 0; i < Mask.size(); ++i)
-        if (Mask[i])
-            result[entry++] = i;
-    return result;
-}
-
-template <class T>
-struct IsStencilIndices : std::false_type
-{
-};
-template <std::size_t Size>
-struct IsStencilIndices<std::array<std::size_t, Size>> : std::true_type
-{
-};
-
 } // namespace detail
 
 /** Decode the standard ordering: output component, spatial point, input component.
@@ -148,94 +100,6 @@ KOKKOS_FUNCTION constexpr std::size_t stencil_component_index(
         return ids[0];
     else
         return Index::mem_id(ids);
-}
-
-template <class Operator, class Source, class Target, std::size_t SpatialPoints>
-KOKKOS_FUNCTION constexpr std::array<std::size_t, Target::mem_size() + 1> stencil_component_rows()
-{
-    std::array<std::size_t, Target::mem_size() + 1> rows {};
-    for (std::size_t entry : Operator::stencil_nonzero_indices())
-        ++rows[entry / (SpatialPoints * Source::mem_size()) + 1];
-    for (std::size_t row = 0; row < Target::mem_size(); ++row)
-        rows[row + 1] += rows[row];
-    return rows;
-}
-
-template <class Operator, class Source, class Target, class Index, std::size_t Radius>
-KOKKOS_FUNCTION constexpr std::array<std::size_t, Target::mem_size() + 1> stencil_row_offsets()
-{
-    return stencil_component_rows<Operator, Source, Target, StencilShape<Index, Radius>::size>();
-}
-
-template <class Index, class Source, class Target, bool Transposed>
-KOKKOS_FUNCTION constexpr auto incidence_nonzero_indices()
-{
-    constexpr auto mask = [] {
-        std::array<bool, Target::mem_size() * StencilShape<Index, 1>::size * Source::mem_size()>
-                result {};
-        for (std::size_t flat = 0; flat < result.size(); ++flat) {
-            auto const entry = stencil_reindex<Index, Source, Target, 1>(flat);
-            auto const source = Source::mem_id_to_canonical_natural_ids(entry.input_component);
-            auto const target = Target::mem_id_to_canonical_natural_ids(entry.output_component);
-            bool subset = true;
-            for (std::size_t axis : source) {
-                bool found = false;
-                for (std::size_t other : target)
-                    found |= axis == other;
-                subset &= found;
-            }
-            std::size_t added = 0;
-            for (std::size_t axis : target) {
-                bool found = false;
-                for (std::size_t other : source)
-                    found |= axis == other;
-                if (!found)
-                    added = axis;
-            }
-            bool center = true, neighbor = true;
-            for (std::size_t axis = 0; axis < Index::size(); ++axis) {
-                center &= entry.spatial_offset[axis] == 0;
-                neighbor &= entry.spatial_offset[axis]
-                            == (axis == added ? (Transposed ? -1 : 1) : 0);
-            }
-            result[flat] = subset && (center || neighbor);
-        }
-        return result;
-    }();
-    return nonzero_stencil_indices<mask>();
-}
-
-template <class Operator, std::size_t FullSize>
-constexpr bool valid_stencil_indices()
-{
-    constexpr auto indices = Operator::stencil_nonzero_indices();
-    for (std::size_t i = 0; i < indices.size(); ++i)
-        if (indices[i] >= FullSize || (i && indices[i - 1] >= indices[i]))
-            return false;
-    return true;
-}
-
-template <class Index, class Cochain, class Pattern>
-KOKKOS_FUNCTION constexpr auto laplacian_nonzero_indices()
-{
-    constexpr auto mask = [] {
-        std::array<bool, Cochain::mem_size() * StencilShape<Index, 2>::size * Cochain::mem_size()>
-                result {};
-        for (std::size_t i = 0; i < result.size(); ++i) {
-            auto const entry = stencil_reindex<Index, Cochain, Cochain, 2>(i);
-            if constexpr (std::is_same_v<Pattern, CartesianPeriodicStencil>) {
-                std::size_t distance = 0;
-                for (int coordinate : entry.spatial_offset)
-                    distance += coordinate < 0 ? -coordinate : coordinate;
-                result[i] = entry.output_component == entry.input_component && distance <= 1;
-            } else {
-                static_assert(std::is_same_v<Pattern, GeneralStencil>);
-                result[i] = true;
-            }
-        }
-        return result;
-    }();
-    return nonzero_stencil_indices<mask>();
 }
 
 } // namespace detail
