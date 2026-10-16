@@ -28,7 +28,9 @@ class StagedHodgeStar
             typename MetricType::non_indices_domain_t,
             hodge_star_domain_t<Indices1, Indices2>>;
     using Coefficients = tensor::Tensor<double, Domain, Kokkos::layout_right, Memory>;
-    typename Memory::execution_space m_exec;
+    // Keep the execution instance on the host; device copies contain only a
+    // View handle, including when the instance is Kokkos::Serial.
+    Kokkos::View<typename Memory::execution_space, Kokkos::HostSpace> m_exec;
     // Keep ownership in a View, whose device copy is a lightweight handle.
     Kokkos::View<double*, Memory> m_storage;
     Coefficients m_coefficients;
@@ -36,7 +38,7 @@ class StagedHodgeStar
 public:
     template <class Exec>
     StagedHodgeStar(Exec const& exec, MetricType metric, PositionType position)
-        : m_exec(exec)
+        : m_exec("staged_hodge_execution")
         , m_storage(
                   Kokkos::view_alloc(Kokkos::WithoutInitializing, "staged_hodge_star"),
                   Domain(metric.non_indices_domain(),
@@ -50,6 +52,7 @@ public:
                                  tensor::tensor_accessor_for_domain_t<
                                          hodge_star_domain_t<Indices1, Indices2>>::domain())))
     {
+        m_exec() = exec;
         fill_discrete_hodge_star<
                 Indices1,
                 Indices2,
@@ -84,7 +87,7 @@ public:
         Coefficients const coefficients = m_coefficients;
         ddc::parallel_for_each(
                 "similie_apply_staged_hodge_star",
-                m_exec,
+                m_exec(),
                 output.non_indices_domain(),
                 KOKKOS_LAMBDA(BatchElem element) {
                     tensor::tensor_prod(output[element], input[element], coefficients[element]);
