@@ -1124,7 +1124,7 @@ int main(int argc, char** argv)
                                  "--ideal|--resistive --hd|--ehd|--mhd|--fmhd --validate "
                                  "--output-dir=PATH --reference --no-snapshots\n"
                                  "Staging: --staged-laplacian --staged-discrete-hodge-star "
-                                 "--staged-reduction --staged-reconstruction --staged-hodge-star "
+                                 "--staged-reduction --staged-reconstruction "
                                  "--staged-diagonal-reduction --staged-diagonal-reconstruction\n"
                                  "Flags can be combined; outer caches supersede inner stages. "
                                  "Diagonal flags imply staging. --staged aliases "

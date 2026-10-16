@@ -13,7 +13,7 @@ add_custom_command(
     VERBATIM
 )
 # Compile each policy combination separately to bound CUDA compiler memory.
-foreach(mode RANGE 0 19)
+foreach(mode RANGE 0 10)
     add_library(tgv_laplacian_mode_${mode} OBJECT laplacian_mode.cpp)
     target_compile_definitions(tgv_laplacian_mode_${mode} PRIVATE TGV_LAPLACIAN_MODE=${mode})
     target_link_libraries(tgv_laplacian_mode_${mode} PRIVATE sil::exterior)

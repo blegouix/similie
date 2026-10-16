@@ -23,7 +23,7 @@ struct Configuration
     Coupling coupling = Coupling::HD;
     bool fluid_selected = false, transport_selected = false, coupling_selected = false;
     bool staged_laplacian = false, staged_discrete_hodge_star = false;
-    bool staged_reduction = false, staged_reconstruction = false, staged_hodge_star = false;
+    bool staged_reduction = false, staged_reconstruction = false;
     bool staged_diagonal_reduction = false, staged_diagonal_reconstruction = false;
 
     template <class Choice>
@@ -60,8 +60,6 @@ struct Configuration
             staged_reduction = true;
         else if (argument == "--staged-reconstruction")
             staged_reconstruction = true;
-        else if (argument == "--staged-hodge-star")
-            staged_hodge_star = true;
         else if (argument == "--staged-diagonal-reduction")
             staged_reduction = staged_diagonal_reduction = true;
         else if (argument == "--staged-diagonal-reconstruction")
@@ -81,10 +79,10 @@ struct Configuration
     int laplacian_mode() const
     {
         if (staged_laplacian)
-            return 19;
+            return 10;
         if (staged_discrete_hodge_star)
-            return 18;
-        return reduction_stage() + 3 * reconstruction_stage() + 9 * int(staged_hodge_star);
+            return 9;
+        return reduction_stage() + 3 * reconstruction_stage();
     }
     std::string staging_name() const
     {
@@ -102,7 +100,6 @@ struct Configuration
         append(staged_diagonal_reduction, "diagonal-reduction");
         append(staged_reconstruction && !staged_diagonal_reconstruction, "reconstruction");
         append(staged_diagonal_reconstruction, "diagonal-reconstruction");
-        append(staged_hodge_star, "hodge-star");
         return result.empty() ? "none" : result;
     }
 
