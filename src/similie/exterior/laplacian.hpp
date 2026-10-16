@@ -14,7 +14,8 @@ template <
         misc::Specialization<tensor::Tensor> Tensor,
         misc::Specialization<tensor::Tensor> Metric,
         misc::Specialization<tensor::Tensor> Position,
-        class Exec>
+        class Exec,
+        class Pattern>
 class StagedLaplacian;
 
 /** Hodge Laplacian assembled from independently selected Hodge-star policies.
@@ -34,7 +35,8 @@ template <
         misc::Specialization<tensor::Tensor> Metric,
         misc::Specialization<tensor::Tensor> Position,
         class Exec,
-        template <CellComplex, class, class, class, class, class> class Hodge = DiscreteHodgeStar>
+        template <CellComplex, class, class, class, class, class> class Hodge = DiscreteHodgeStar,
+        class Pattern = GeneralStencil>
 class Laplacian
 {
     Exec m_exec;
@@ -62,6 +64,11 @@ class Laplacian
             m_lower;
 
 public:
+    KOKKOS_FUNCTION static constexpr auto stencil_nonzero_indices()
+    {
+        return detail::laplacian_nonzero_indices<Index, Cochain, Pattern>();
+    }
+
     Laplacian(Exec const& exec, Tensor output, Tensor input, Metric metric, Position position)
         : m_exec(exec)
         , m_metric(metric)
@@ -130,7 +137,15 @@ public:
     }
 
 private:
-    friend class StagedLaplacian<MetricIndex, Index, Cochain, Tensor, Metric, Position, Exec>;
+    friend class StagedLaplacian<
+            MetricIndex,
+            Index,
+            Cochain,
+            Tensor,
+            Metric,
+            Position,
+            Exec,
+            Pattern>;
 
     // Canonical component matrices are needed only while assembling a stencil.
     static auto geometry(Exec const& exec, Metric metric, Position position)
@@ -286,16 +301,13 @@ template <
         tensor::TensorNatIndex Index,
         tensor::TensorIndex Cochain,
         template <CellComplex, class, class, class, class, class> class Hodge = DiscreteHodgeStar,
+        class Pattern = GeneralStencil,
         class Exec,
         class Tensor,
         class Metric,
         class Position>
-Laplacian<MetricIndex, Index, Cochain, Tensor, Metric, Position, Exec, Hodge> make_laplacian(
-        Exec const& exec,
-        Tensor output,
-        Tensor input,
-        Metric metric,
-        Position position)
+Laplacian<MetricIndex, Index, Cochain, Tensor, Metric, Position, Exec, Hodge, Pattern>
+make_laplacian(Exec const& exec, Tensor output, Tensor input, Metric metric, Position position)
 {
     return {exec, output, input, metric, position};
 }

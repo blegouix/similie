@@ -10,6 +10,7 @@
 #include <similie/tensor/metric.hpp>
 
 #include "local_chain.hpp"
+#include "stencil_indices.hpp"
 
 namespace sil::exterior::detail {
 
@@ -41,6 +42,13 @@ struct EvaluatorConcept
 
 namespace sil::exterior {
 
+template <class Operator>
+concept StencilOperatorConcept = requires {
+    typename std::integral_constant<std::size_t, Operator::stencil_nonzero_indices().size()>;
+    requires detail::IsStencilIndices<
+            std::remove_cvref_t<decltype(Operator::stencil_nonzero_indices())>>::value;
+};
+
 template <
         class Operator,
         class Output,
@@ -49,16 +57,20 @@ template <
         class LowerChain,
         class Element,
         class NaturalElement>
-concept CoboundaryConcept = requires(
-        Output output,
-        Evaluator evaluator,
-        Chain chain,
-        LowerChain lower_chain,
-        Element element,
-        NaturalElement natural_element) {
-    Operator::value(chain, lower_chain, element, natural_element);
-    { Operator::operator()(output, evaluator, chain, lower_chain, element) } -> std::same_as<void>;
-};
+concept CoboundaryConcept
+        = StencilOperatorConcept<Operator>
+          && requires(
+                  Output output,
+                  Evaluator evaluator,
+                  Chain chain,
+                  LowerChain lower_chain,
+                  Element element,
+                  NaturalElement natural_element) {
+                 Operator::value(chain, lower_chain, element, natural_element);
+                 {
+                     Operator::operator()(output, evaluator, chain, lower_chain, element)
+                 } -> std::same_as<void>;
+             };
 
 template <
         class Operator,
@@ -68,18 +80,22 @@ template <
         class Position,
         class Element,
         class NaturalElement>
-concept DiscreteHodgeStarConcept = requires(
-        Operator operation,
-        Output output,
-        Input input,
-        Metric metric,
-        Position position,
-        Element element,
-        NaturalElement natural_element) {
-    operation.value(metric, position, element);
-    { operation.value(metric, position, element, natural_element) } -> std::same_as<double>;
-    { operation(output, input, metric, position, element) } -> std::same_as<void>;
-};
+concept DiscreteHodgeStarConcept
+        = StencilOperatorConcept<Operator>
+          && requires(
+                  Operator operation,
+                  Output output,
+                  Input input,
+                  Metric metric,
+                  Position position,
+                  Element element,
+                  NaturalElement natural_element) {
+                 operation.value(metric, position, element);
+                 {
+                     operation.value(metric, position, element, natural_element)
+                 } -> std::same_as<double>;
+                 { operation(output, input, metric, position, element) } -> std::same_as<void>;
+             };
 
 template <
         class Operator,
@@ -88,19 +104,25 @@ template <
         class Metric,
         class Element,
         class NaturalElement>
-concept ContinuousHodgeStarConcept = requires(
-        Output output,
-        Input input,
-        Metric metric,
-        Element element,
-        NaturalElement natural_element) {
-    { Operator::value(metric, element, natural_element) } -> std::same_as<double>;
-    { Operator::operator()(output, input, metric, element) } -> std::same_as<void>;
-};
+concept ContinuousHodgeStarConcept = StencilOperatorConcept<Operator>
+                                     && requires(
+                                             Output output,
+                                             Input input,
+                                             Metric metric,
+                                             Element element,
+                                             NaturalElement natural_element) {
+                                            {
+                                                Operator::value(metric, element, natural_element)
+                                            } -> std::same_as<double>;
+                                            {
+                                                Operator::operator()(output, input, metric, element)
+                                            } -> std::same_as<void>;
+                                        };
 
 template <class Operator, class Output, class Input = Output>
-concept StagedOperatorConcept = requires(Operator& operation, Output output, Input input) {
-    { operation(output, input) } -> std::same_as<Output>;
-};
+concept StagedOperatorConcept = StencilOperatorConcept<Operator>
+                                && requires(Operator& operation, Output output, Input input) {
+                                       { operation(output, input) } -> std::same_as<Output>;
+                                   };
 
 } // namespace sil::exterior

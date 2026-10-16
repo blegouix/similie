@@ -421,6 +421,31 @@ KOKKOS_FUNCTION ReductionNaturalElemType merge_reduction_natural_elems(
     return natural_elem_from_flat_ids<ReductionNaturalElemType>(reduction_ids);
 }
 
+template <class Operator, class Source, class Target, class Output, class Input, class Weight>
+KOKKOS_FUNCTION void apply_local_stencil(Output output, Input input, Weight weight)
+{
+    ddc::device_for_each(output.domain(), [&](auto component) {
+        auto const target_ids
+                = flat_natural_elem_ids(output.accessor().canonical_natural_element(component));
+        std::size_t const target = stencil_component_index<Target>(target_ids);
+        double sum = 0.0;
+        constexpr auto indices = Operator::stencil_nonzero_indices();
+        constexpr auto rows = stencil_component_rows<Operator, Source, Target, 1>();
+        for (std::size_t entry = rows[target]; entry < rows[target + 1]; ++entry) {
+            std::size_t const source = indices[entry] % Source::mem_size();
+            if constexpr (Source::rank() == 0) {
+                sum += weight(entry) * input.mem(input.domain().front());
+            } else {
+                auto const natural = natural_elem_from_flat_ids<
+                        typename Input::accessor_t::natural_domain_t::discrete_element_type>(
+                        Source::mem_id_to_canonical_natural_ids(source));
+                sum += weight(entry) * input.get(input.access_element(natural));
+            }
+        }
+        output.mem(component) = sum;
+    });
+}
+
 } // namespace detail
 
 template <misc::Specialization<ddc::TypeSeq> Indices>
@@ -446,6 +471,13 @@ template <
         CellComplex Complex = CellComplex::Primal>
 struct Reduction
 {
+    KOKKOS_FUNCTION static constexpr auto stencil_nonzero_indices()
+    {
+        return detail::dense_stencil_indices<
+                reduction_index_t<Indices>::mem_size()
+                * reduction_index_t<tensor::primes<tensor::upper_t<Indices>>>::mem_size()>();
+    }
+
     using source_index_type = misc::convert_type_seq_to_t<
             tensor::TensorFullIndex,
             tensor::primes<tensor::upper_t<Indices>>>;
@@ -931,6 +963,13 @@ template <
         CellComplex Complex = CellComplex::Primal>
 struct Reconstruction
 {
+    KOKKOS_FUNCTION static constexpr auto stencil_nonzero_indices()
+    {
+        return detail::dense_stencil_indices<
+                reduction_index_t<Indices>::mem_size()
+                * reduction_index_t<tensor::primes<Indices>>::mem_size()>();
+    }
+
     using source_index_type = reduction_index_t<Indices>;
     using target_index_type = reduction_index_t<tensor::primes<Indices>>;
     using source_natural_elem_type =
@@ -987,16 +1026,26 @@ struct Reconstruction
         }
     }
 
-    KOKKOS_FUNCTION static auto value(PositionType position, BatchElem element)
+    KOKKOS_FUNCTION static detail::LocalOperatorStencil<source_index_type, target_index_type> value(
+            PositionType position,
+            BatchElem element)
     {
-        detail::ReconstructionMatrix<Indices, PositionType, BatchElem, Complex> const
-                matrix(position, element);
-        auto stencil = detail::coefficient_stencil<typename PositionType::memory_space>(
-                tensor::tensor_accessor_for_domain_t<reconstruction_domain_t<Indices>>::domain());
-        ddc::device_for_each(stencil.domain(), [&](auto component) {
-            stencil.mem(component)
-                    = matrix.value(stencil.accessor().canonical_natural_element(component));
-        });
+        detail::LocalOperatorStencil<source_index_type, target_index_type> stencil;
+        if constexpr (source_index_type::rank() == 0) {
+            stencil.weights[0] = 1.0;
+        } else {
+            detail::ReconstructionMatrix<Indices, PositionType, BatchElem, Complex> const
+                    matrix(position, element);
+            for (std::size_t source = 0; source < source_index_type::mem_size(); ++source)
+                for (std::size_t target = 0; target < target_index_type::mem_size(); ++target)
+                    stencil.weights[target * source_index_type::mem_size() + source] = matrix.value(
+                            detail::merge_reduction_natural_elems<
+                                    typename tensor::tensor_accessor_for_domain_t<
+                                            reconstruction_domain_t<Indices>>::natural_domain_t::
+                                            discrete_element_type>(
+                                    source_index_type::mem_id_to_canonical_natural_ids(source),
+                                    target_index_type::mem_id_to_canonical_natural_ids(target)));
+        }
         return stencil;
     }
 
@@ -1061,7 +1110,20 @@ ReconstructionTensorType fill_reconstruction_operator(
                 ddc::device_for_each(
                         reconstruction_tensor.accessor().domain(),
                         [&](auto component) {
-                            reconstruction_tensor.mem(elem, component) = stencil.mem(component);
+                            using Source = reduction_index_t<Indices>;
+                            using Target = reduction_index_t<tensor::primes<Indices>>;
+                            auto const natural
+                                    = reconstruction_tensor.accessor().canonical_natural_element(
+                                            component);
+                            reconstruction_tensor.mem(elem, component)
+                                    = detail::local_stencil_coefficient<Source, Target, false>(
+                                            stencil,
+                                            ddc::detail::array(
+                                                    typename tensor::natural_domain_t<Source>::
+                                                            discrete_element_type(natural)),
+                                            ddc::detail::array(
+                                                    typename tensor::natural_domain_t<Target>::
+                                                            discrete_element_type(natural)));
                         });
             });
     return reconstruction_tensor;
@@ -1092,80 +1154,53 @@ template <
         CellComplex Complex = CellComplex::Primal>
 class StagedReconstruction
 {
-    using SourceIndex = reduction_index_t<Indices>;
-    using MemorySpace = typename ReconstructedTensorType::memory_space;
-    using CoefficientDomain = misc::cartesian_prod_t<
-            typename ReconstructedTensorType::non_indices_domain_t,
-            reconstruction_domain_t<Indices>>;
+    using Source = reduction_index_t<Indices>;
+    using Target = reduction_index_t<tensor::primes<Indices>>;
+    using Domain = typename ReconstructedTensorType::non_indices_domain_t;
+    using Memory = typename ReconstructedTensorType::memory_space;
+    using Operator = Reconstruction<
+            Indices,
+            PositionType,
+            typename Domain::discrete_element_type,
+            Complex>;
     ExecSpace m_exec_space;
-    ddc::Chunk<double, CoefficientDomain, ddc::KokkosAllocator<double, MemorySpace>> m_coefficients;
+    detail::LocalStencilStorage<Operator, Source, Target, Domain, Memory> m_stencils;
 
 public:
+    KOKKOS_FUNCTION static constexpr auto stencil_nonzero_indices()
+    {
+        return Operator::stencil_nonzero_indices();
+    }
+
     StagedReconstruction(
-            ExecSpace const& exec_space,
+            ExecSpace const& exec,
             ReconstructedTensorType output,
             CochainTensorType,
             PositionType position)
-        : m_exec_space(exec_space)
-        , m_coefficients(
-                  CoefficientDomain(
-                          output.non_indices_domain(),
-                          tensor::tensor_accessor_for_domain_t<reconstruction_domain_t<Indices>>()
-                                  .domain()),
-                  ddc::KokkosAllocator<double, MemorySpace>())
+        : m_exec_space(exec)
     {
-        fill_reconstruction_operator<
-                Indices,
-                tensor::Tensor<double, CoefficientDomain, Kokkos::layout_right, MemorySpace>,
-                PositionType,
-                ExecSpace,
-                Complex>(exec_space, tensor::Tensor(m_coefficients.span_view()), position);
+        m_stencils = detail::cache_local_stencils<Operator, Source, Target, Memory>(
+                exec,
+                output.non_indices_domain(),
+                detail::ReconstructionStencilValue<Operator, PositionType> {position});
     }
 
     ReconstructedTensorType operator()(ReconstructedTensorType output, CochainTensorType input)
             const
     {
-        tensor::Tensor<double const, CoefficientDomain, Kokkos::layout_right, MemorySpace> const
-                coefficients(m_coefficients.span_cview());
+        auto const weights = m_stencils.weights;
+        Domain const domain = m_stencils.domain;
         ddc::parallel_for_each(
                 "similie_apply_staged_reconstruction",
                 m_exec_space,
                 output.non_indices_domain(),
-                KOKKOS_LAMBDA(
-                        typename ReconstructedTensorType::non_indices_domain_t::
-                                discrete_element_type elem) {
-                    tensor::TensorAccessor<SourceIndex> const source_accessor;
-                    ddc::device_for_each(output.indices_domain(), [&](auto target) {
-                        double value = 0.;
-                        ddc::device_for_each(source_accessor.domain(), [&](auto source) {
-                            auto const source_natural
-                                    = source_accessor.canonical_natural_element(source);
-                            auto const target_natural
-                                    = output.accessor().canonical_natural_element(target);
-                            typename CochainTensorType::accessor_t::natural_domain_t::
-                                    discrete_element_type component;
-                            ddc::detail::array(component) = ddc::detail::array(source_natural);
-                            // Slice the canonical source storage index before accessing
-                            // the target, so each wedge index is mapped independently.
-                            value += coefficients[elem][source_accessor.access_element(
-                                                                source_natural)]
-                                             .get(ddc::DiscreteElement<
-                                                     reduction_index_t<tensor::primes<Indices>>>(
-                                                     coefficients.access_element(
-                                                             elem,
-                                                             detail::merge_reduction_natural_elems<
-                                                                     typename tensor::tensor_accessor_for_domain_t<
-                                                                             reconstruction_domain_t<
-                                                                                     Indices>>::
-                                                                             natural_domain_t::
-                                                                                     discrete_element_type>(
-                                                                     ddc::detail::array(
-                                                                             source_natural),
-                                                                     ddc::detail::array(
-                                                                             target_natural)))))
-                                     * input.get(input.access_element(elem, component));
-                        });
-                        output.mem(elem, target) = value;
+                KOKKOS_LAMBDA(typename Domain::discrete_element_type element) {
+                    std::size_t const node = detail::stencil_node(domain, element);
+                    detail::apply_local_stencil<
+                            Operator,
+                            Source,
+                            Target>(output[element], input[element], [&](std::size_t entry) {
+                        return weights(node, entry);
                     });
                 });
         return output;

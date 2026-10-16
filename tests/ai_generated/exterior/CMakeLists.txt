@@ -49,3 +49,7 @@ gtest_discover_tests(unit_tests_reduction_and_reconstruction DISCOVERY_MODE PRE_
 add_executable(unit_tests_exterior_ai_generated exterior.cpp ../../main.cpp)
 target_link_libraries(unit_tests_exterior_ai_generated PUBLIC GTest::gtest DDC::core sil::exterior)
 gtest_discover_tests(unit_tests_exterior_ai_generated DISCOVERY_MODE PRE_TEST)
+
+add_executable(unit_tests_stencil_indices stencil_indices.cpp ../../main.cpp)
+target_link_libraries(unit_tests_stencil_indices PUBLIC GTest::gtest DDC::core sil::exterior)
+gtest_discover_tests(unit_tests_stencil_indices DISCOVERY_MODE PRE_TEST)

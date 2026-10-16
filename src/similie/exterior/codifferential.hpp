@@ -145,6 +145,14 @@ struct Codifferential;
 template <tensor::TensorNatIndex TagToRemoveFromCochain, tensor::TensorIndex CochainTag>
 struct Codifferential<TagToRemoveFromCochain, CochainTag>
 {
+    KOKKOS_FUNCTION static constexpr auto stencil_nonzero_indices()
+    {
+        return detail::dense_stencil_indices<
+                CochainTag::mem_size()
+                * codifferential_index_t<TagToRemoveFromCochain, CochainTag>::mem_size()
+                * detail::StencilShape<TagToRemoveFromCochain, 1>::size>();
+    }
+
     template <
             class Output,
             class DualEvaluator,
@@ -357,6 +365,11 @@ struct Codifferential<
         MetricType,
         PositionType>
 {
+    KOKKOS_FUNCTION static constexpr auto stencil_nonzero_indices()
+    {
+        return Codifferential<TagToRemoveFromCochain, CochainTag>::stencil_nonzero_indices();
+    }
+
     template <class ChainType, class LowerChainType, class NaturalElem>
     KOKKOS_FUNCTION static auto value(
             TensorType tensor,
@@ -535,6 +548,7 @@ class StagedCodifferential
     using Output = codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType>;
     ExecSpace m_exec;
     detail::StencilStorage<
+            Codifferential<TagToRemoveFromCochain, CochainTag>,
             TagToRemoveFromCochain,
             CochainTag,
             Target,
@@ -544,6 +558,11 @@ class StagedCodifferential
             m_stencils;
 
 public:
+    KOKKOS_FUNCTION static constexpr auto stencil_nonzero_indices()
+    {
+        return Codifferential<TagToRemoveFromCochain, CochainTag>::stencil_nonzero_indices();
+    }
+
     template <class Rules = tensor::ZeroExtrapolationRule>
     StagedCodifferential(
             ExecSpace const& exec,
@@ -573,6 +592,7 @@ public:
     Output operator()(Output output, TensorType input) const
     {
         return detail::apply_stencils<
+                Codifferential<TagToRemoveFromCochain, CochainTag>,
                 TagToRemoveFromCochain,
                 CochainTag,
                 Target,

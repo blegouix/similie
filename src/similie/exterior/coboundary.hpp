@@ -422,6 +422,15 @@ KOKKOS_FUNCTION auto incidence_stencil(
 template <tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag>
 struct Coboundary<TagToAddToCochain, CochainTag>
 {
+    KOKKOS_FUNCTION static constexpr auto stencil_nonzero_indices()
+    {
+        return detail::incidence_nonzero_indices<
+                TagToAddToCochain,
+                CochainTag,
+                coboundary_index_t<TagToAddToCochain, CochainTag>,
+                false>();
+    }
+
     using cochain_tag = CochainTag;
     template <class ChainType, class LowerChainType, class Elem, class NaturalElem>
     KOKKOS_FUNCTION static auto value(
@@ -472,6 +481,15 @@ static_assert(CoboundaryConcept<
 template <tensor::TensorNatIndex TagToAddToCochain, tensor::TensorIndex CochainTag>
 struct TransposedCoboundary<TagToAddToCochain, CochainTag>
 {
+    KOKKOS_FUNCTION static constexpr auto stencil_nonzero_indices()
+    {
+        return detail::incidence_nonzero_indices<
+                TagToAddToCochain,
+                CochainTag,
+                coboundary_index_t<TagToAddToCochain, CochainTag>,
+                true>();
+    }
+
     template <class ChainType, class LowerChainType, class Elem, class NaturalElem>
     KOKKOS_FUNCTION static auto value(
             ChainType chain,

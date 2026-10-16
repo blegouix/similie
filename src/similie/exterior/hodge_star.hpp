@@ -196,6 +196,13 @@ template <
         class BatchElem>
 struct DiscreteHodgeStar
 {
+    KOKKOS_FUNCTION static constexpr auto stencil_nonzero_indices()
+    {
+        return detail::dense_stencil_indices<
+                tensor::lower_t<reduction_index_t<Indices1>>::mem_size()
+                * reduction_index_t<Indices2>::mem_size()>();
+    }
+
     /** Pair primal one-cochains using the full cell metric and orientation.
      * \important This operator and documentation is fully AI-generated.
      */
@@ -297,21 +304,31 @@ struct DiscreteHodgeStar
         operator()(hodge_tensor, continuous_output, metric, position, elem);
     }
 
-    KOKKOS_FUNCTION static auto value(MetricType metric, PositionType position, BatchElem element)
-            -> decltype(detail::coefficient_stencil<typename MetricType::memory_space>(
-                    tensor::tensor_accessor_for_domain_t<
-                            hodge_star_domain_t<Indices1, Indices2>>::domain()))
+    KOKKOS_FUNCTION static detail::LocalOperatorStencil<
+            tensor::lower_t<reduction_index_t<Indices1>>,
+            reduction_index_t<Indices2>>
+    value(MetricType metric, PositionType position, BatchElem element)
     {
-        auto stencil = detail::coefficient_stencil<typename MetricType::memory_space>(
-                tensor::tensor_accessor_for_domain_t<
-                        hodge_star_domain_t<Indices1, Indices2>>::domain());
-        ddc::device_for_each(stencil.domain(), [&](auto component) {
-            stencil.mem(component)
-                    = value(metric,
-                            position,
-                            element,
-                            stencil.accessor().canonical_natural_element(component));
-        });
+        using Source = tensor::lower_t<reduction_index_t<Indices1>>;
+        using Target = reduction_index_t<Indices2>;
+        detail::LocalOperatorStencil<Source, Target> stencil;
+        auto unit = detail::make_stencil<typename MetricType::memory_space, Source>(
+                ddc::DiscreteElement<>());
+        auto output = detail::make_stencil<typename MetricType::memory_space, Target>(
+                ddc::DiscreteElement<>());
+        for (std::size_t source = 0; source < Source::mem_size(); ++source) {
+            unit.mem(ddc::DiscreteElement<Source>(source)) = 1.0;
+            operator()(
+                    tensor::Tensor(output.span_view()),
+                    tensor::Tensor(unit.span_view()),
+                    metric,
+                    position,
+                    element);
+            for (std::size_t target = 0; target < Target::mem_size(); ++target)
+                stencil.weights[target * Source::mem_size() + source]
+                        = output.mem(ddc::DiscreteElement<Target>(target));
+            unit.mem(ddc::DiscreteElement<Source>(source)) = 0.0;
+        }
         return stencil;
     }
 
@@ -423,6 +440,13 @@ template <
         class BatchElem>
 struct ContinuousHodgeStar
 {
+    KOKKOS_FUNCTION static constexpr auto stencil_nonzero_indices()
+    {
+        return detail::dense_stencil_indices<
+                tensor::lower_t<reduction_index_t<Indices1>>::mem_size()
+                * reduction_index_t<Indices2>::mem_size()>();
+    }
+
     template <
             misc::Specialization<tensor::Tensor> HodgeTensorType,
             misc::Specialization<tensor::Tensor> FormTensorType>
@@ -552,7 +576,18 @@ HodgeStarType fill_discrete_hodge_star(
                         typename HodgeStarType::non_indices_domain_t::discrete_element_type>::
                         value(metric, position, elem);
                 ddc::device_for_each(hodge_star.accessor().domain(), [&](auto component) {
-                    hodge_star.mem(elem, component) = stencil.mem(component);
+                    using Source = tensor::lower_t<reduction_index_t<Indices1>>;
+                    using Target = reduction_index_t<Indices2>;
+                    using SourceElement
+                            = misc::convert_type_seq_to_t<ddc::DiscreteElement, Indices1>;
+                    using TargetElement
+                            = misc::convert_type_seq_to_t<ddc::DiscreteElement, Indices2>;
+                    auto const natural = hodge_star.accessor().canonical_natural_element(component);
+                    hodge_star.mem(elem, component)
+                            = detail::local_stencil_coefficient<Source, Target>(
+                                    stencil,
+                                    ddc::detail::array(SourceElement(natural)),
+                                    ddc::detail::array(TargetElement(natural)));
                 });
             });
     return hodge_star;
