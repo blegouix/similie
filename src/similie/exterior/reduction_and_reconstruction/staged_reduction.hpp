@@ -102,9 +102,7 @@ public:
         detail::apply_local_stencil<
                 Source,
                 Target,
-                Coefficients>(output, input, [&](std::size_t entry) {
-            return m_stencils.weights(node, entry);
-        });
+                Coefficients>(output, input, m_stencils.weights, node);
     }
 
     template <class Output, class Input, class Metric>
@@ -131,9 +129,7 @@ public:
                     detail::apply_local_stencil<
                             Source,
                             Target,
-                            Coefficients>(output[element], input[element], [&](std::size_t entry) {
-                        return weights(node, entry);
-                    });
+                            Coefficients>(output[element], input[element], weights, node);
                 });
         return output;
     }

@@ -78,9 +78,7 @@ public:
     KOKKOS_FUNCTION void operator()(Output output, Input input, MetricType, BatchElem element) const
     {
         std::size_t const node = detail::stencil_node(m_stencils.domain, element);
-        detail::apply_local_stencil<Source, Target>(output, input, [&](std::size_t entry) {
-            return m_stencils.weights(node, entry);
-        });
+        detail::apply_local_stencil<Source, Target>(output, input, m_stencils.weights, node);
     }
 
     template <class Output, class Input>
@@ -96,9 +94,7 @@ public:
                     std::size_t const node = detail::stencil_node(domain, element);
                     detail::apply_local_stencil<
                             Source,
-                            Target>(output[element], input[element], [&](std::size_t entry) {
-                        return weights(node, entry);
-                    });
+                            Target>(output[element], input[element], weights, node);
                 });
         return output;
     }

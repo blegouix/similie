@@ -105,7 +105,7 @@ class TensorProdStructured<
     KOKKOS_FORCEINLINE_FUNCTION static void extend(
             Tensor1 left,
             Tensor2 right,
-            typename Tensor1::element_type& sum,
+            std::remove_const_t<typename Tensor1::element_type>& sum,
             bool& initialized,
             std::index_sequence<Values...>,
             std::index_sequence<Next...>)
@@ -118,7 +118,7 @@ class TensorProdStructured<
     KOKKOS_FORCEINLINE_FUNCTION static void contract(
             Tensor1 left,
             Tensor2 right,
-            typename Tensor1::element_type& sum,
+            std::remove_const_t<typename Tensor1::element_type>& sum,
             bool& initialized,
             std::index_sequence<Values...> assigned)
     {

@@ -122,7 +122,12 @@ struct TensorProdAnyAnyAny<
         ddc::TypeSeq<ContractDDim...>,
         ddc::TypeSeq<TailDDim2...>>
 {
-    template <class ElementType, class LayoutStridedPolicy, class MemorySpace>
+    template <
+            class ElementType,
+            class LeftElement,
+            class RightElement,
+            class LayoutStridedPolicy,
+            class MemorySpace>
     KOKKOS_FUNCTION static Tensor<
             ElementType,
             ddc::DiscreteDomain<ProdDDim...>,
@@ -131,9 +136,9 @@ struct TensorProdAnyAnyAny<
     operator()(
             Tensor<ElementType, ddc::DiscreteDomain<ProdDDim...>, LayoutStridedPolicy, MemorySpace>
                     prod_tensor,
-            Tensor<ElementType, ddc::DiscreteDomain<Index1...>, LayoutStridedPolicy, MemorySpace>
+            Tensor<LeftElement, ddc::DiscreteDomain<Index1...>, LayoutStridedPolicy, MemorySpace>
                     tensor1,
-            Tensor<ElementType, ddc::DiscreteDomain<Index2...>, LayoutStridedPolicy, MemorySpace>
+            Tensor<RightElement, ddc::DiscreteDomain<Index2...>, LayoutStridedPolicy, MemorySpace>
                     tensor2)
     {
         if constexpr (
@@ -185,11 +190,15 @@ template <
         class... Index1,
         class... Index2,
         class ElementType,
+        class LeftElement,
+        class RightElement,
         class LayoutStridedPolicy,
         class MemorySpace>
     requires(
-            ((!TensorNatIndex<ProdDDim> || ...) || (!TensorNatIndex<Index2> || ...)
-             || (!TensorNatIndex<Index1> || ...))
+            std::is_same_v<ElementType, std::remove_const_t<LeftElement>>
+            && std::is_same_v<ElementType, std::remove_const_t<RightElement>>
+            && ((!TensorNatIndex<ProdDDim> || ...) || (!TensorNatIndex<Index2> || ...)
+                || (!TensorNatIndex<Index1> || ...))
 #if defined BUILD_YOUNG_TABLEAU
             && (!misc::Specialization<ProdDDim, TensorYoungTableauIndex> && ...)
             && (!misc::Specialization<Index1, TensorYoungTableauIndex> && ...)
@@ -202,11 +211,11 @@ Tensor<ElementType, ddc::DiscreteDomain<ProdDDim...>, LayoutStridedPolicy, Memor
                        ddc::DiscreteDomain<ProdDDim...>,
                        LayoutStridedPolicy,
                        MemorySpace> prod_tensor,
-                Tensor<ElementType,
+                Tensor<LeftElement,
                        ddc::DiscreteDomain<Index1...>,
                        LayoutStridedPolicy,
                        MemorySpace> tensor1,
-                Tensor<ElementType,
+                Tensor<RightElement,
                        ddc::DiscreteDomain<Index2...>,
                        LayoutStridedPolicy,
                        MemorySpace> tensor2)

@@ -136,7 +136,7 @@ relabelize_index_of(
             Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>,
             OldIndex,
             NewIndex>(
-            old_tensor.data_handle(),
+            old_tensor.allocation_mdspan(),
             typename detail::RelabelizeIndexInType<
                     ddc::DiscreteDomain<DDim...>,
                     OldIndex,
@@ -323,7 +323,7 @@ KOKKOS_FUNCTION constexpr auto RelabelizeIndicesOf(
                               MemorySpace>,
                        ddc::type_seq_element_t<I, OldIndices>,
                        ddc::type_seq_element_t<I, NewIndices>>(
-                old_tensor.data_handle(),
+                old_tensor.allocation_mdspan(),
                 typename detail::RelabelizeIndexInType<
                         ddc::DiscreteDomain<DDim...>,
                         ddc::type_seq_element_t<I, OldIndices>,

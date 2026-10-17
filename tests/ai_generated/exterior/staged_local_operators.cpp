@@ -110,6 +110,77 @@ TEST(StagedLocalOperators, DiagonalStorageSize)
     EXPECT_EQ(Diagonal::mem_size(), 3u);
 }
 
+// Component views must preserve both the cached matrix stride and the field
+// component stride. Use const input views and nonsymmetric dense coefficients
+// to detect accidental transposition or a lost mapping.
+template <class Source, class Target, template <class...> class Coefficients>
+void check_strided_component_product()
+{
+    using Matrix = sil::exterior::detail::LocalCoefficientIndex<Source, Target, Coefficients>;
+    constexpr bool diagonal = sil::misc::Specialization<Matrix, sil::tensor::TensorDiagonalIndex>;
+    constexpr std::size_t nodes = 4;
+    Kokkos::View<double**, Kokkos::LayoutLeft, Memory>
+            input("strided_input", nodes, Source::mem_size());
+    Kokkos::View<double**, Kokkos::LayoutLeft, Memory>
+            output("strided_output", nodes, Target::mem_size());
+    Kokkos::View<double**, Kokkos::LayoutLeft, Memory>
+            weights("strided_weights", nodes, Matrix::mem_size());
+    Kokkos::View<double const**, Kokkos::LayoutLeft, Memory> const_input = input;
+    Kokkos::parallel_for(
+            "strided_component_product",
+            Kokkos::RangePolicy<Exec>(0, nodes),
+            KOKKOS_LAMBDA(std::size_t node) {
+                for (std::size_t source = 0; source < Source::mem_size(); ++source)
+                    input(node, source) = 0.5 + node + 0.25 * source;
+                for (std::size_t entry = 0; entry < Matrix::mem_size(); ++entry) {
+                    auto const ids = Matrix::mem_id_to_canonical_natural_ids(entry);
+                    weights(node, entry) = 1.0 + node + 2.0 * ids[0] - 0.3 * ids[1];
+                }
+                sil::tensor::Tensor source(
+                        ddc::ChunkSpan<
+                                double const,
+                                ddc::DiscreteDomain<Source>,
+                                Kokkos::layout_stride,
+                                Memory>(
+                                Kokkos::subview(const_input, node, Kokkos::ALL()),
+                                sil::tensor::TensorAccessor<Source>::domain()));
+                sil::tensor::Tensor target(
+                        ddc::ChunkSpan<
+                                double,
+                                ddc::DiscreteDomain<Target>,
+                                Kokkos::layout_stride,
+                                Memory>(
+                                Kokkos::subview(output, node, Kokkos::ALL()),
+                                sil::tensor::TensorAccessor<Target>::domain()));
+                sil::exterior::detail::apply_local_stencil<
+                        Source,
+                        Target,
+                        Coefficients>(target, source, weights, node);
+            });
+    auto host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), output);
+    for (std::size_t node = 0; node < nodes; ++node)
+        for (std::size_t target = 0; target < Target::mem_size(); ++target) {
+            double expected = 0.0;
+            for (std::size_t source = 0; source < Source::mem_size(); ++source)
+                if (!diagonal || source == target)
+                    expected += (1.0 + node + 2.0 * target - 0.3 * source)
+                                * (0.5 + node + 0.25 * source);
+            EXPECT_NEAR(host(node, target), expected, 2.e-12 * (1.0 + std::abs(expected)));
+        }
+}
+
+TEST(StagedLocalOperators, StridedDenseComponentProduct)
+{
+    check_strided_component_product<Two, Two, sil::tensor::TensorFullIndex>();
+    check_strided_component_product<One, Scalar, sil::tensor::TensorFullIndex>();
+    check_strided_component_product<Scalar, One, sil::tensor::TensorFullIndex>();
+}
+TEST(StagedLocalOperators, StridedDiagonalComponentProduct)
+{
+    check_strided_component_product<Two, Two, sil::tensor::TensorDiagonalIndex>();
+    check_strided_component_product<Scalar, Scalar, sil::tensor::TensorDiagonalIndex>();
+}
+
 template <class Indices, class Position, class Element, sil::exterior::CellComplex Complex>
 using CachedReconstruction
         = sil::exterior::detail::CachedReconstruction<Indices, Position, Element, Complex>;

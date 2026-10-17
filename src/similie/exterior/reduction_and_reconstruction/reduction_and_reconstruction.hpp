@@ -20,6 +20,7 @@
 #include <similie/tensor/tensor_indices/character.hpp>
 #include <similie/tensor/tensor_indices/full_tensor.hpp>
 #include <similie/tensor/tensor_indices/prime.hpp>
+#include <similie/tensor/tensor_prod/tensor_prod.hpp>
 
 
 namespace sil {
@@ -420,37 +421,67 @@ KOKKOS_FUNCTION ReductionNaturalElemType merge_reduction_natural_elems(
     return natural_elem_from_flat_ids<ReductionNaturalElemType>(reduction_ids);
 }
 
+// Canonical cochain components are an ordinary vector space: the wedge signs
+// and factorial factors are already included in the cached coefficient matrix.
+// Retag the existing storage, retaining its stride, rather than expanding forms.
+template <class Index, class Tensor>
+KOKKOS_FUNCTION auto local_component_tensor(Tensor tensor)
+{
+    static_assert(Tensor::discrete_domain_type::rank() <= 1);
+    using Span = ddc::ChunkSpan<
+            typename Tensor::element_type,
+            ddc::DiscreteDomain<Index>,
+            Kokkos::layout_stride,
+            typename Tensor::memory_space>;
+    std::size_t stride = 1;
+    std::size_t front = 0;
+    if constexpr (Tensor::discrete_domain_type::rank() == 1) {
+        stride = tensor.allocation_mdspan().stride(0);
+        front = ddc::detail::array(tensor.domain().front())[0];
+    }
+    return tensor::Tensor(
+            Span(typename Span::allocation_mdspan_type(
+                         tensor.data_handle(),
+                         typename Span::mapping_type(
+                                 typename Span::extents_type(tensor.size()),
+                                 std::array<std::size_t, 1> {stride})),
+                 ddc::DiscreteDomain<Index>(
+                         ddc::DiscreteElement<Index>(front),
+                         ddc::DiscreteVector<Index>(tensor.size()))));
+}
+
 template <
         class Source,
         class Target,
         template <class...> class Coefficients = tensor::TensorFullIndex,
         class Output,
         class Input,
-        class Weight>
-KOKKOS_FUNCTION void apply_local_stencil(Output output, Input input, Weight weight)
+        class Weights>
+KOKKOS_FUNCTION void apply_local_stencil(
+        Output output,
+        Input input,
+        Weights weights,
+        std::size_t node)
 {
-    ddc::device_for_each(output.domain(), [&](auto component) {
-        auto const target_ids
-                = flat_natural_elem_ids(output.accessor().canonical_natural_element(component));
-        std::size_t const target = stencil_component_index<Target>(target_ids);
-        double sum = 0.0;
-        using Index = LocalCoefficientIndex<Source, Target, Coefficients>;
-        constexpr bool diagonal = misc::Specialization<Index, tensor::TensorDiagonalIndex>;
-        for (std::size_t source = diagonal ? target : 0;
-             source < (diagonal ? target + 1 : Source::mem_size());
-             ++source) {
-            std::size_t const entry = Index::mem_id({target, source});
-            if constexpr (Source::rank() == 0) {
-                sum += weight(entry) * input.mem(input.domain().front());
-            } else {
-                auto const natural = natural_elem_from_flat_ids<
-                        typename Input::accessor_t::natural_domain_t::discrete_element_type>(
-                        Source::mem_id_to_canonical_natural_ids(source));
-                sum += weight(entry) * input.get(input.access_element(natural));
-            }
-        }
-        output.mem(component) = sum;
-    });
+    using SourceComponent = tensor::Covariant<LocalComponentIndex<Source, false>>;
+    using TargetComponent = tensor::Covariant<LocalComponentIndex<Target, true>>;
+    using MatrixIndex = Coefficients<TargetComponent, tensor::upper_t<SourceComponent>>;
+    using MatrixSpan = ddc::ChunkSpan<
+            typename Output::element_type const,
+            ddc::DiscreteDomain<MatrixIndex>,
+            Kokkos::layout_stride,
+            typename Output::memory_space>;
+    tensor::Tensor matrix(MatrixSpan(
+            typename MatrixSpan::allocation_mdspan_type(
+                    &weights(node, 0),
+                    typename MatrixSpan::mapping_type(
+                            typename MatrixSpan::extents_type(MatrixIndex::mem_size()),
+                            std::array<std::size_t, 1> {weights.stride(1)})),
+            tensor::TensorAccessor<MatrixIndex>::domain()));
+    tensor::tensor_prod(
+            local_component_tensor<TargetComponent>(output),
+            matrix,
+            local_component_tensor<SourceComponent>(input));
 }
 
 } // namespace detail
@@ -1245,9 +1276,7 @@ public:
         detail::apply_local_stencil<
                 Source,
                 Target,
-                Coefficients>(output, input, [&](std::size_t entry) {
-            return m_stencils.weights(node, entry);
-        });
+                Coefficients>(output, input, m_stencils.weights, node);
     }
 
     ReconstructedTensorType operator()(ReconstructedTensorType output, CochainTensorType input)
@@ -1264,9 +1293,7 @@ public:
                     detail::apply_local_stencil<
                             Source,
                             Target,
-                            Coefficients>(output[element], input[element], [&](std::size_t entry) {
-                        return weights(node, entry);
-                    });
+                            Coefficients>(output[element], input[element], weights, node);
                 });
         return output;
     }
