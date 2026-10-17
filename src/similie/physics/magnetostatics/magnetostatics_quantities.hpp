@@ -6,7 +6,7 @@
 
 #include <type_traits>
 
-#include <similie/exterior/coboundary.hpp>
+#include <similie/exterior/coboundary/coboundary.hpp>
 #include <similie/tensor/tensor.hpp>
 
 #include <Kokkos_Core.hpp>

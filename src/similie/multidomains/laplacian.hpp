@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <similie/exterior/laplacian.hpp>
+#include <similie/exterior/laplacian/laplacian.hpp>
 #include <similie/solvers/stencil_assembly.hpp>
 
 #include "differential_operator.hpp"

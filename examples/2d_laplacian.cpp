@@ -210,12 +210,13 @@ int main(int argc, char** argv)
             laplacian_accessor.domain());
     ddc::Chunk laplacian_alloc(laplacian_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor laplacian_tensor(laplacian_alloc);
-    auto laplacian = sil::exterior::make_staged_laplacian<MetricIndex, NuLow, DummyIndex>(
-            Kokkos::DefaultExecutionSpace(),
-            laplacian_tensor,
-            potential,
-            metric,
-            position);
+    auto laplacian = sil::exterior::
+            make_laplacian<MetricIndex, NuLow, DummyIndex, sil::exterior::StagedHodgeStar>(
+                    Kokkos::DefaultExecutionSpace(),
+                    laplacian_tensor,
+                    potential,
+                    metric,
+                    position);
     // A single rule is broadcast to both boundaries of each grid dimension.
     laplacian(
             laplacian_tensor,

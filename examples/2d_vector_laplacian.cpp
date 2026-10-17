@@ -225,10 +225,13 @@ int main(int argc, char** argv)
             laplacian_accessor.domain());
     ddc::Chunk laplacian_alloc(laplacian_dom, ddc::DeviceAllocator<double>());
     sil::tensor::Tensor laplacian_tensor(laplacian_alloc);
-    auto laplacian = sil::exterior::make_staged_laplacian<
-            MetricIndex,
-            MuLow,
-            MuLow>(Kokkos::DefaultExecutionSpace(), laplacian_tensor, potential, metric, position);
+    auto laplacian = sil::exterior::
+            make_laplacian<MetricIndex, MuLow, MuLow, sil::exterior::StagedHodgeStar>(
+                    Kokkos::DefaultExecutionSpace(),
+                    laplacian_tensor,
+                    potential,
+                    metric,
+                    position);
     // Pairs follow the (DDimX, DDimY) domain order, with lower then upper side.
     sil::tensor::ExtrapolationRules const primal_rules(
             std::

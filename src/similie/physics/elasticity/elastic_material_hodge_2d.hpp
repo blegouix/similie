@@ -11,7 +11,7 @@
 #include <stdexcept>
 #include <utility>
 
-#include <similie/exterior/covariant_derivative.hpp>
+#include <similie/exterior/covariant_derivative/covariant_derivative.hpp>
 
 #include "elasticity_quantities.hpp"
 

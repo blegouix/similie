@@ -9,15 +9,14 @@
 #include <similie/misc/small_matrix.hpp>
 #include <similie/misc/type_seq_ext.hpp>
 #include <similie/misc/unsecure_parallel_deepcopy.hpp>
-
-#include "character.hpp"
-#include "diagonal_tensor.hpp"
-#include "identity_tensor.hpp"
-#include "lorentzian_sign_tensor.hpp"
-#include "prime.hpp"
-#include "relabelization.hpp"
-#include "symmetric_tensor.hpp"
-#include "tensor_prod.hpp"
+#include <similie/tensor/tensor_indices/character.hpp>
+#include <similie/tensor/tensor_indices/diagonal_tensor.hpp>
+#include <similie/tensor/tensor_indices/identity_tensor.hpp>
+#include <similie/tensor/tensor_indices/lorentzian_sign_tensor.hpp>
+#include <similie/tensor/tensor_indices/prime.hpp>
+#include <similie/tensor/tensor_indices/relabelization.hpp>
+#include <similie/tensor/tensor_indices/symmetric_tensor.hpp>
+#include <similie/tensor/tensor_prod/tensor_prod.hpp>
 
 namespace sil {
 

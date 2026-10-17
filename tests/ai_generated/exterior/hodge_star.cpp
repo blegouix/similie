@@ -7,9 +7,9 @@
 #include <ddc/ddc.hpp>
 
 #include <gtest/gtest.h>
-#include <similie/exterior/hodge_star.hpp>
+#include <similie/exterior/continuous_hodge_star/continuous_hodge_star.hpp>
 #include <similie/misc/type_seq_ext.hpp>
-#include <similie/tensor/symmetric_tensor.hpp>
+#include <similie/tensor/tensor_indices/symmetric_tensor.hpp>
 
 struct X
 {

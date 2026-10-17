@@ -13,9 +13,9 @@
 #include <similie/misc/permutation_parity.hpp>
 #include <similie/misc/specialization.hpp>
 #include <similie/misc/stride.hpp>
-#include <similie/tensor/dummy_index.hpp>
-#include <similie/tensor/prime.hpp>
 #include <similie/tensor/tensor_impl.hpp>
+#include <similie/tensor/tensor_indices/dummy_index.hpp>
+#include <similie/tensor/tensor_indices/prime.hpp>
 
 namespace sil {
 

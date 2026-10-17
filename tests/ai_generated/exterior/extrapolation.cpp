@@ -6,7 +6,7 @@
 
 #include <gtest/gtest.h>
 #include <similie/exterior/exterior.hpp>
-#include <similie/tensor/identity_tensor.hpp>
+#include <similie/tensor/tensor_indices/identity_tensor.hpp>
 
 namespace {
 struct X
@@ -136,10 +136,13 @@ void test_laplacian_agrees_with_composition()
                 potential.mem(elem, ddc::DiscreteElement<Scalar>(0)) = x * x;
                 position.mem(elem, ddc::DiscreteElement<Position>(0)) = x;
             });
-    auto laplacian = sil::exterior::make_staged_laplacian<
-            Metric,
-            Vector,
-            Scalar>(Kokkos::DefaultExecutionSpace(), result, potential, metric, position);
+    auto laplacian
+            = sil::exterior::make_laplacian<Metric, Vector, Scalar, sil::exterior::StagedHodgeStar>(
+                    Kokkos::DefaultExecutionSpace(),
+                    result,
+                    potential,
+                    metric,
+                    position);
     sil::tensor::ExtrapolationRules const primal(
             std::
                     pair {sil::tensor::ZeroExtrapolationRule {},
@@ -164,7 +167,7 @@ void test_laplacian_agrees_with_composition()
     ddc::host_for_each(scalar_domain, [&](ddc::DiscreteElement<Grid, Scalar> elem) {
         EXPECT_NEAR(result_host(elem), composed_host(elem), 1.0e-12);
     });
-    // Reusing a staged operator with another closure must not retain the old policy.
+    // Cached Hodge coefficients must still allow changing the boundary closure.
     laplacian(result, potential);
     auto default_host = ddc::create_mirror_view_and_copy(
             Kokkos::DefaultHostExecutionSpace(),

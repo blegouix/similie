@@ -10,7 +10,7 @@
 
 #include <gtest/gtest.h>
 #include <similie/misc/type_seq_ext.hpp>
-#include <similie/tensor/identity_tensor.hpp>
+#include <similie/tensor/tensor_indices/identity_tensor.hpp>
 
 #include "exterior.hpp"
 
@@ -624,7 +624,7 @@ TEST(Laplacian, 2D1Form)
     ddc::detail::g_discrete_space_dual<DDimZ>.reset();
 }
 
-TEST(Laplacian, Staged2D1Form)
+TEST(Laplacian, StagedHodge2D1Form)
 {
     using InterestIndex = sil::tensor::Covariant<Mu2>;
     using PositionIndex = sil::tensor::Contravariant<sil::tensor::TensorNaturalIndex<X, Y>>;
@@ -695,13 +695,16 @@ TEST(Laplacian, Staged2D1Form)
             laplacian_accessor.domain());
     ddc::Chunk laplacian_alloc(laplacian_dom, ddc::HostAllocator<double>());
     sil::tensor::Tensor laplacian(laplacian_alloc);
-    auto staged_laplacian
-            = sil::exterior::make_staged_laplacian<MetricIndex<X, Y>, InterestIndex, InterestIndex>(
-                    Kokkos::DefaultHostExecutionSpace(),
-                    laplacian,
-                    potential,
-                    metric,
-                    position);
+    auto staged_laplacian = sil::exterior::make_laplacian<
+            MetricIndex<X, Y>,
+            InterestIndex,
+            InterestIndex,
+            sil::exterior::StagedHodgeStar>(
+            Kokkos::DefaultHostExecutionSpace(),
+            laplacian,
+            potential,
+            metric,
+            position);
     staged_laplacian(laplacian, potential);
 
     ddc::host_for_each(

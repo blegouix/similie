@@ -22,6 +22,9 @@ struct Configuration
     Transport transport = Transport::Ideal;
     Coupling coupling = Coupling::HD;
     bool fluid_selected = false, transport_selected = false, coupling_selected = false;
+    bool staged_laplacian = false, staged_discrete_hodge_star = false;
+    bool staged_reduction = false, staged_reconstruction = false;
+    bool staged_diagonal_reduction = false, staged_diagonal_reconstruction = false;
 
     template <class Choice>
     static void select(Choice value, Choice& selected, bool& supplied, char const* group)
@@ -49,10 +52,57 @@ struct Configuration
             select(Coupling::MHD, coupling, coupling_selected, "coupling");
         else if (argument == "--fmhd")
             select(Coupling::FMHD, coupling, coupling_selected, "coupling");
+        else if (argument == "--staged-laplacian" || argument == "--staged")
+            staged_laplacian = true;
+        else if (argument == "--staged-discrete-hodge-star")
+            staged_discrete_hodge_star = true;
+        else if (argument == "--staged-reduction")
+            staged_reduction = true;
+        else if (argument == "--staged-reconstruction")
+            staged_reconstruction = true;
+        else if (argument == "--staged-diagonal-reduction")
+            staged_reduction = staged_diagonal_reduction = true;
+        else if (argument == "--staged-diagonal-reconstruction")
+            staged_reconstruction = staged_diagonal_reconstruction = true;
         else
             return false;
         return true;
     }
+    int reduction_stage() const
+    {
+        return staged_diagonal_reduction ? 2 : int(staged_reduction);
+    }
+    int reconstruction_stage() const
+    {
+        return staged_diagonal_reconstruction ? 2 : int(staged_reconstruction);
+    }
+    int laplacian_mode() const
+    {
+        if (staged_laplacian)
+            return 10;
+        if (staged_discrete_hodge_star)
+            return 9;
+        return reduction_stage() + 3 * reconstruction_stage();
+    }
+    std::string staging_name() const
+    {
+        std::string result;
+        auto append = [&](bool selected, char const* name) {
+            if (selected) {
+                if (!result.empty())
+                    result += "+";
+                result += name;
+            }
+        };
+        append(staged_laplacian, "laplacian");
+        append(staged_discrete_hodge_star, "discrete-hodge-star");
+        append(staged_reduction && !staged_diagonal_reduction, "reduction");
+        append(staged_diagonal_reduction, "diagonal-reduction");
+        append(staged_reconstruction && !staged_diagonal_reconstruction, "reconstruction");
+        append(staged_diagonal_reconstruction, "diagonal-reconstruction");
+        return result.empty() ? "none" : result;
+    }
+
     void validate() const
     {
         if (coupling == Coupling::HD && transport == Transport::Resistive)

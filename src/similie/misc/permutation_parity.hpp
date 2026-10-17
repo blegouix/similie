@@ -19,21 +19,13 @@ template <std::size_t N>
 KOKKOS_FUNCTION inline constexpr int permutation_parity(std::array<std::size_t, N> lst)
 {
     int parity = 1;
-    for (std::size_t i = 0; i < lst.size() - 1; ++i) {
-        if (lst[i] != i) {
-            parity *= -1;
-            std::size_t mn
-                    = std::distance(lst.begin(), std::min_element(lst.begin() + i, lst.end()));
-            std::swap(lst[i], lst[mn]);
+    for (std::size_t i = 0; i < N; ++i)
+        for (std::size_t j = i + 1; j < N; ++j) {
+            if (lst[i] == lst[j])
+                return 0;
+            if (lst[i] > lst[j])
+                parity = -parity;
         }
-    }
-    if (std::adjacent_find(lst.begin(), lst.end()) != lst.end()) {
-        return 0;
-    }
-    if (lst[lst.size() - 1] == lst[0]) {
-        return 0;
-    }
-
     return parity;
 }
 

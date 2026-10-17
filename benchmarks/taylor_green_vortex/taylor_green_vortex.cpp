@@ -111,7 +111,7 @@ public:
     std::unique_ptr<CompressibleSolver> compressible;
     std::unique_ptr<ElectromagneticSolver> electromagnetic;
     explicit Simulation(int n, Physics selected)
-        : dec(n)
+        : dec(n, configuration)
         , kind(selected)
         , components(selected == Physics::Compressible ? 5 : 3)
         , state("state", components, dec.cells)
@@ -926,8 +926,11 @@ void run_trajectory(benchmark::State* benchmark_state)
     static int invocation = 0;
     try {
         std::filesystem::create_directories(output_directory);
+        Clock::time_point const setup_start = Clock::now();
         Simulation simulation(nodes, physics);
         Kokkos::fence("taylor_green_setup_complete");
+        double const setup_seconds
+                = std::chrono::duration<double>(Clock::now() - setup_start).count();
         std::string const prefix = std::string("tgv_") + configuration.name() + "_N"
                                    + std::to_string(nodes) + "_run";
         std::filesystem::path base;
@@ -1041,9 +1044,13 @@ void run_trajectory(benchmark::State* benchmark_state)
             throw std::runtime_error("Invalid solver timing");
         std::ofstream performance(base.string() + ".performance.json");
         performance << std::setprecision(17) << "{\"configuration\":\"" << configuration.name()
-                    << "\",\"mode\":\"" << (benchmark_state ? "performance" : "reference")
-                    << "\",\"N\":" << nodes << ",\"steps\":" << steps << ",\"final_time\":" << time
+                    << "\",\"laplacian\":\""
+                    << (configuration.staged_laplacian ? "staged" : "direct") << "\",\"staging\":\""
+                    << configuration.staging_name() << "\",\"mode\":\""
+                    << (benchmark_state ? "performance" : "reference") << "\",\"N\":" << nodes
+                    << ",\"steps\":" << steps << ",\"final_time\":" << time
                     << ",\"mean_step_seconds\":" << solver_seconds / steps
+                    << ",\"setup_seconds\":" << setup_seconds
                     << ",\"solver_seconds\":" << solver_seconds
                     << ",\"monitor_seconds\":" << monitor_seconds
                     << ",\"export_seconds\":" << export_seconds << ",\"wall_seconds\":" << wall
@@ -1063,6 +1070,7 @@ void run_trajectory(benchmark::State* benchmark_state)
         benchmark_state->counters["simulation_time"] = time;
         benchmark_state->counters["mean_dt"] = time / steps;
         benchmark_state->counters["solver_seconds"] = solver_seconds;
+        benchmark_state->counters["setup_seconds"] = setup_seconds;
         benchmark_state->counters["monitor_seconds"] = monitor_seconds;
         benchmark_state->counters["export_seconds"] = export_seconds;
         benchmark_state->counters["wall_seconds"] = wall;
@@ -1115,10 +1123,17 @@ int main(int argc, char** argv)
                     std::cout << "Taylor-Green options: --N=64 --incompressible|--compressible "
                                  "--ideal|--resistive --hd|--ehd|--mhd|--fmhd --validate "
                                  "--output-dir=PATH --reference --no-snapshots\n"
+                                 "Staging: --staged-laplacian --staged-discrete-hodge-star "
+                                 "--staged-reduction --staged-reconstruction "
+                                 "--staged-diagonal-reduction --staged-diagonal-reconstruction\n"
+                                 "Flags can be combined; outer caches supersede inner stages. "
+                                 "Diagonal flags imply staging. --staged aliases "
+                                 "--staged-laplacian.\n"
                                  "One Google Benchmark iteration advances one time step. "
                                  "Use --benchmark_min_time=100x for 100 steps.\n"
                                  "Defaults: --incompressible --ideal --hd. Resistive HD is "
-                                 "invalid.\n";
+                                 "invalid. Laplacians evaluate geometry during application by "
+                                 "default; --staged-laplacian caches their full stencils.\n";
                 argv[retained++] = argv[i];
             }
         }
@@ -1158,6 +1173,9 @@ int main(int argc, char** argv)
         benchmark::AddCustomContext("execution_space", Kokkos::DefaultExecutionSpace::name());
         benchmark::AddCustomContext("N", std::to_string(nodes));
         benchmark::AddCustomContext("configuration", configuration.name());
+        benchmark::
+                AddCustomContext("laplacian", configuration.staged_laplacian ? "staged" : "direct");
+        benchmark::AddCustomContext("staging", configuration.staging_name());
         benchmark::AddCustomContext("Re", "1600");
         benchmark::AddCustomContext("Pr", "0.71");
         benchmark::AddCustomContext(

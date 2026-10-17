@@ -9,8 +9,8 @@
 #include <gtest/gtest.h>
 #include <similie/multidomains/multidomains.hpp>
 #include <similie/multidomains/stencil_composition.hpp>
-#include <similie/tensor/character.hpp>
 #include <similie/tensor/tensor.hpp>
+#include <similie/tensor/tensor_indices/character.hpp>
 
 namespace {
 namespace md = sil::multidomains;

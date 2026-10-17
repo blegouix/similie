@@ -540,12 +540,13 @@ void check_2d(
     Kokkos::deep_copy(input, input_host);
     apply_matrix(system.matrix, input, applied);
     auto const host_applied = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), applied);
-    auto staged = sil::exterior::make_staged_laplacian<Metric, Direction, Scalar>(
-            Kokkos::DefaultExecutionSpace {},
-            sil::tensor::Tensor(output),
-            sil::tensor::Tensor(device_potential),
-            sil::tensor::Tensor(metric),
-            sil::tensor::Tensor(device_position));
+    auto staged = sil::exterior::
+            make_laplacian<Metric, Direction, Scalar, sil::exterior::StagedHodgeStar>(
+                    Kokkos::DefaultExecutionSpace {},
+                    sil::tensor::Tensor(output),
+                    sil::tensor::Tensor(device_potential),
+                    sil::tensor::Tensor(metric),
+                    sil::tensor::Tensor(device_position));
     staged(sil::tensor::Tensor(output),
            sil::tensor::Tensor(device_potential),
            sil::tensor::NaturalScalarExtrapolationRule {},
@@ -686,7 +687,7 @@ TEST(MultidomainsLaplacian, DecAxialStencilAndDirichlet)
 {
     check_2d(0.0, 0.0);
 }
-TEST(MultidomainsLaplacian, MappedDecAgreesWithStagedLaplacian)
+TEST(MultidomainsLaplacian, MappedDecAgreesWithStagedHodgeLaplacian)
 {
     check_2d(0.3, 0.0);
 }
