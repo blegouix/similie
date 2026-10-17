@@ -4,6 +4,12 @@
 
 include(GoogleTest)
 
+add_executable(unit_tests_levi_civita_continuous_hodge_star
+    levi_civita_continuous_hodge_star.cpp ../../main.cpp)
+target_link_libraries(unit_tests_levi_civita_continuous_hodge_star
+    PUBLIC GTest::gtest DDC::core sil::exterior)
+gtest_discover_tests(unit_tests_levi_civita_continuous_hodge_star DISCOVERY_MODE PRE_TEST)
+
 add_executable(unit_tests_staged_laplacian staged_laplacian.cpp ../../main.cpp)
 target_link_libraries(unit_tests_staged_laplacian PUBLIC GTest::gtest DDC::core sil::exterior)
 gtest_discover_tests(unit_tests_staged_laplacian DISCOVERY_MODE PRE_TEST)

@@ -11,8 +11,8 @@
 #include <ddc/ddc.hpp>
 
 #include <similie/exterior/exterior.hpp>
-#include <similie/tensor/identity_tensor.hpp>
 #include <similie/tensor/scalar_extrapolation_rules.hpp>
+#include <similie/tensor/tensor_indices/identity_tensor.hpp>
 
 #include "configuration.hpp"
 #include "grid_types.hpp"

@@ -9,45 +9,39 @@
 
 #include <similie/misc/specialization.hpp>
 #include <similie/misc/type_seq_ext.hpp>
+#include <similie/tensor/tensor_indices/character.hpp>
+#include <similie/tensor/tensor_indices/diagonal_tensor.hpp>
+#include <similie/tensor/tensor_indices/identity_tensor.hpp>
+#include <similie/tensor/tensor_indices/levi_civita_tensor.hpp>
 
-#include "character.hpp"
-#include "diagonal_tensor.hpp"
-#include "identity_tensor.hpp"
-#include "levi_civita_tensor.hpp"
+#include "diagonal.hpp"
+#include "identity.hpp"
+#include "levi_civita.hpp"
 
 namespace sil::tensor::detail {
 
 template <class Index>
-concept SpecialTensorProductIndex = misc::Specialization<Index, TensorIdentityIndex>
-                                    || misc::Specialization<Index, TensorDiagonalIndex>
-                                    || misc::Specialization<Index, TensorLeviCivitaIndex>;
-
-// Check only the indices assigned so far. Equal-index tensors tie their
-// contracted directions together; Levi-Civita permits distinct directions only.
-template <class Index, class... Known, class... Tags>
-KOKKOS_FUNCTION constexpr bool tensor_product_indices_match(
-        ddc::TypeSeq<Known...>,
-        ddc::DiscreteElement<Tags...> element)
-{
-    std::array<std::size_t, sizeof...(Known)> const ids {element.template uid<Known>()...};
-    for (std::size_t i = 0; i < ids.size(); ++i)
-        for (std::size_t j = i + 1; j < ids.size(); ++j) {
-            if constexpr (misc::Specialization<Index, TensorLeviCivitaIndex>) {
-                if (ids[i] == ids[j])
-                    return false;
-            } else {
-                if (ids[i] != ids[j])
-                    return false;
-            }
-        }
-    return true;
-}
+concept StructuredTensorProductIndex = misc::Specialization<Index, TensorIdentityIndex>
+                                       || misc::Specialization<Index, TensorDiagonalIndex>
+                                       || misc::Specialization<Index, TensorLeviCivitaIndex>;
 
 template <class Index, class... Tags>
 KOKKOS_FUNCTION constexpr bool tensor_product_indices_match(ddc::DiscreteElement<Tags...> element)
 {
-    if constexpr (SpecialTensorProductIndex<Index>) {
-        return tensor_product_indices_match<Index>(
+    if constexpr (misc::Specialization<Index, TensorIdentityIndex>) {
+        return IdentityTensorProductMatcher<Index>::operator()(
+                misc::type_seq_intersect_t<
+                        ddc::to_type_seq_t<natural_domain_t<Index>>,
+                        ddc::TypeSeq<Tags...>>(),
+                element);
+    } else if constexpr (misc::Specialization<Index, TensorDiagonalIndex>) {
+        return DiagonalTensorProductMatcher<Index>::operator()(
+                misc::type_seq_intersect_t<
+                        ddc::to_type_seq_t<natural_domain_t<Index>>,
+                        ddc::TypeSeq<Tags...>>(),
+                element);
+    } else if constexpr (misc::Specialization<Index, TensorLeviCivitaIndex>) {
+        return LeviCivitaTensorProductMatcher<Index>::operator()(
                 misc::type_seq_intersect_t<
                         ddc::to_type_seq_t<natural_domain_t<Index>>,
                         ddc::TypeSeq<Tags...>>(),
@@ -66,13 +60,13 @@ KOKKOS_FUNCTION constexpr ddc::DiscreteElement<Free..., Contracted...> tensor_pr
 }
 
 template <class ProductIndices, class LeftIndices, class RightIndices, class ContractedIndices>
-class TensorProdSpecial;
+class TensorProdStructured;
 
 // Unfold the canonical output components and structurally possible contractions.
 // Accessor conversions then see constant indices, including antisymmetric signs.
 // This works for a structured index in either operand, alongside other indices.
 template <class... Product, class... Left, class... Right, class... Contracted>
-class TensorProdSpecial<
+class TensorProdStructured<
         ddc::TypeSeq<Product...>,
         ddc::TypeSeq<Left...>,
         ddc::TypeSeq<Right...>,

@@ -7,7 +7,7 @@
 #include <ddc/ddc.hpp>
 
 #include <gtest/gtest.h>
-#include <similie/exterior/coboundary.hpp>
+#include <similie/exterior/coboundary/coboundary.hpp>
 
 namespace {
 struct X

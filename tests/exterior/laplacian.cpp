@@ -10,7 +10,7 @@
 
 #include <gtest/gtest.h>
 #include <similie/misc/type_seq_ext.hpp>
-#include <similie/tensor/identity_tensor.hpp>
+#include <similie/tensor/tensor_indices/identity_tensor.hpp>
 
 #include "exterior.hpp"
 

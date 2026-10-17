@@ -3,9 +3,9 @@
 // AI-GENERATED
 
 // Include each standardized family so its inline assertions run in every test build.
-#include <similie/exterior/codifferential.hpp>
-#include <similie/exterior/hodge_star.hpp>
-#include <similie/exterior/laplacian.hpp>
+#include <similie/exterior/codifferential/codifferential.hpp>
+#include <similie/exterior/continuous_hodge_star/continuous_hodge_star.hpp>
+#include <similie/exterior/laplacian/laplacian.hpp>
 #include <similie/physics/dedonder_weyl_equations.hpp>
 #include <similie/physics/elasticity/linear_elasticity.hpp>
 #include <similie/physics/elasticity/linear_elasticity_constitutive_law.hpp>

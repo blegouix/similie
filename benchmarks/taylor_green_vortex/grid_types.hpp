@@ -6,10 +6,10 @@
 
 #include <ddc/ddc.hpp>
 
-#include <similie/tensor/antisymmetric_tensor.hpp>
-#include <similie/tensor/character.hpp>
-#include <similie/tensor/identity_tensor.hpp>
 #include <similie/tensor/metric.hpp>
+#include <similie/tensor/tensor_indices/antisymmetric_tensor.hpp>
+#include <similie/tensor/tensor_indices/character.hpp>
+#include <similie/tensor/tensor_indices/identity_tensor.hpp>
 
 namespace taylor_green_vortex {
 struct X

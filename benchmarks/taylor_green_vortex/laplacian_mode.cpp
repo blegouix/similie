@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // AI-GENERATED
 
+#include <similie/exterior/discrete_hodge_star/staged_discrete_hodge_star.hpp>
 #include <similie/exterior/exterior.hpp>
-#include <similie/exterior/staged_hodge_star.hpp>
-#include <similie/exterior/staged_laplacian.hpp>
+#include <similie/exterior/laplacian/staged_laplacian.hpp>
 
 #include "laplacian_modes.hpp"
 

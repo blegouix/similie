@@ -6,7 +6,7 @@
 
 #include <gtest/gtest.h>
 #include <similie/exterior/exterior.hpp>
-#include <similie/tensor/identity_tensor.hpp>
+#include <similie/tensor/tensor_indices/identity_tensor.hpp>
 
 namespace {
 struct X

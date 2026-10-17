@@ -133,35 +133,35 @@ void compare(
     });
 }
 
-template <template <class...> class Special>
+template <template <class...> class StructuredIndex>
 void equal_index_cases()
 {
-    compare<I>(ddc::TypeSeq<Special<I, upper_t<J>>>(), ddc::TypeSeq<J>());
+    compare<I>(ddc::TypeSeq<StructuredIndex<I, upper_t<J>>>(), ddc::TypeSeq<J>());
     compare<TensorFullIndex<I, upper_t<K>>>(
-            ddc::TypeSeq<Special<I, upper_t<J>>>(),
+            ddc::TypeSeq<StructuredIndex<I, upper_t<J>>>(),
             ddc::TypeSeq<TensorFullIndex<J, upper_t<K>>>());
     compare<ScalarIndex>(
-            ddc::TypeSeq<Special<upper_t<I>, upper_t<J>>>(),
+            ddc::TypeSeq<StructuredIndex<upper_t<I>, upper_t<J>>>(),
             ddc::TypeSeq<TensorSymmetricIndex<I, J>>());
     compare<J>(
-            ddc::TypeSeq<Special<upper_t<I>, J, upper_t<K>>>(),
+            ddc::TypeSeq<StructuredIndex<upper_t<I>, J, upper_t<K>>>(),
             ddc::TypeSeq<TensorFullIndex<I, K>>());
-    compare<TensorFullIndex<I, J, K>>(ddc::TypeSeq<Special<I, J>>(), ddc::TypeSeq<K>());
+    compare<TensorFullIndex<I, J, K>>(ddc::TypeSeq<StructuredIndex<I, J>>(), ddc::TypeSeq<K>());
     compare<I>(
-            ddc::TypeSeq<Special<I, upper_t<J>>>(),
+            ddc::TypeSeq<StructuredIndex<I, upper_t<J>>>(),
             ddc::TypeSeq<J>(),
             ddc::DiscreteDomain<I>(ddc::DiscreteElement<I>(1), ddc::DiscreteVector<I>(1)));
 }
 
-TEST(TensorProdSpecial, IdentityBothSides)
+TEST(TensorProdStructured, IdentityBothSides)
 {
     equal_index_cases<TensorIdentityIndex>();
 }
-TEST(TensorProdSpecial, DiagonalBothSides)
+TEST(TensorProdStructured, DiagonalBothSides)
 {
     equal_index_cases<TensorDiagonalIndex>();
 }
-TEST(TensorProdSpecial, LeviCivitaBothSides)
+TEST(TensorProdStructured, LeviCivitaBothSides)
 {
     compare<TensorAntisymmetricIndex<
             J,
@@ -220,11 +220,11 @@ void check_identity_exceptional_values()
     EXPECT_EQ(host_output(ddc::DiscreteElement<I>(2)), std::numeric_limits<double>::infinity());
     EXPECT_EQ(host_reverse(ddc::DiscreteElement<I>(2)), std::numeric_limits<double>::infinity());
 }
-TEST(TensorProdSpecial, IdentityPreservesExceptionalValues)
+TEST(TensorProdStructured, IdentityPreservesExceptionalValues)
 {
     check_identity_exceptional_values();
 }
-TEST(TensorProdSpecial, TwoStructuredOperands)
+TEST(TensorProdStructured, TwoStructuredOperands)
 {
     compare<TensorFullIndex<I, upper_t<K>>>(
             ddc::TypeSeq<TensorIdentityIndex<I, upper_t<J>>>(),
@@ -236,7 +236,7 @@ TEST(TensorProdSpecial, TwoStructuredOperands)
             ddc::TypeSeq<TensorLeviCivitaIndex<I, upper_t<J>, upper_t<K>>>(),
             ddc::TypeSeq<TensorIdentityIndex<J, K>>());
 }
-TEST(TensorProdSpecial, IndependentContraction)
+TEST(TensorProdStructured, IndependentContraction)
 {
     compare<TensorFullIndex<I, L>>(
             ddc::TypeSeq<upper_t<K>, TensorDiagonalIndex<I, upper_t<J>>>(),

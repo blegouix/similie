@@ -12,9 +12,9 @@
 #include <type_traits>
 #include <utility>
 
-#include <similie/tensor/diagonal_tensor.hpp>
+#include <similie/exterior/coboundary/coboundary.hpp>
+#include <similie/tensor/tensor_indices/diagonal_tensor.hpp>
 
-#include "coboundary.hpp"
 #include "stencil_indices.hpp"
 
 namespace sil::exterior {

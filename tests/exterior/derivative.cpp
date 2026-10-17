@@ -6,7 +6,7 @@
 #include <ddc/ddc.hpp>
 
 #include <gtest/gtest.h>
-#include <similie/tensor/symmetric_tensor.hpp>
+#include <similie/tensor/tensor_indices/symmetric_tensor.hpp>
 
 #include "exterior.hpp"
 #include "filled_struct.hpp"

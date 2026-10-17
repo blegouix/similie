@@ -6,8 +6,8 @@
 
 #include <concepts>
 
-#include <similie/tensor/character.hpp>
 #include <similie/tensor/metric.hpp>
+#include <similie/tensor/tensor_indices/character.hpp>
 
 #include "local_chain.hpp"
 

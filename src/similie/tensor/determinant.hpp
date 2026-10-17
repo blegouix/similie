@@ -8,8 +8,7 @@
 #include <similie/misc/macros.hpp>
 #include <similie/misc/small_matrix.hpp>
 #include <similie/misc/specialization.hpp>
-
-#include "tensor_impl.hpp"
+#include <similie/tensor/tensor_impl.hpp>
 
 namespace sil::tensor {
 
