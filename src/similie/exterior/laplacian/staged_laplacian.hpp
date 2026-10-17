@@ -29,59 +29,8 @@ template <
         misc::Specialization<tensor::Tensor> Metric,
         misc::Specialization<tensor::Tensor> Position,
         class Exec>
-class StagedLaplacian
-{
-    using Memory = typename Tensor::memory_space;
-    using Domain = typename Tensor::non_indices_domain_t;
-    using Operator = Laplacian<
-            MetricIndex,
-            Index,
-            Cochain,
-            Tensor,
-            Metric,
-            Position,
-            Exec,
-            DiscreteHodgeStar>;
-    Exec m_exec;
-    Domain m_input_domain, m_output_domain;
-    detail::StencilStorage<Index, Cochain, Cochain, 2, Domain, Memory> m_stencils;
-
-public:
-    template <
-            class Primal = tensor::ClampExtrapolationRule,
-            class Dual = tensor::ZeroExtrapolationRule>
-    StagedLaplacian(
-            Exec const& exec,
-            Tensor output,
-            Tensor input,
-            Metric metric,
-            Position position,
-            Primal primal = {},
-            Dual dual = {})
-        : m_exec(exec)
-        , m_input_domain(input.non_indices_domain())
-        , m_output_domain(output.non_indices_domain())
-    {
-        if (m_input_domain != m_output_domain)
-            throw std::invalid_argument(
-                    "StagedLaplacian requires equal input/output spatial domains");
-        m_stencils = detail::cache_stencils<
-                Operator,
-                Index,
-                Cochain,
-                Cochain,
-                2>(exec, input, Operator::geometry(exec, metric, position), primal, dual);
-    }
-
-    Tensor operator()(Tensor output, Tensor input) const
-    {
-        if (input.non_indices_domain() != m_input_domain
-            || output.non_indices_domain() != m_output_domain)
-            throw std::invalid_argument("StagedLaplacian domain changed");
-        return detail::
-                apply_stencils<Index, Cochain, Cochain, 2>(m_exec, output, input, m_stencils);
-    }
-};
+using StagedLaplacian
+        = StagedOperator<Laplacian<MetricIndex, Index, Cochain, Tensor, Metric, Position, Exec>>;
 
 static_assert(StagedOperatorConcept<
               StagedLaplacian<

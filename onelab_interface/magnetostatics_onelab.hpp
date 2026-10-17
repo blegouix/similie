@@ -27,10 +27,10 @@
 #include <vector>
 
 #include <ginkgo/core/base/matrix_data.hpp>
-#include <similie/exterior/coboundary.hpp>
-#include <similie/exterior/codifferential.hpp>
-#include <similie/exterior/hodge_star.hpp>
-#include <similie/exterior/reduction_and_reconstruction.hpp>
+#include <similie/exterior/coboundary/coboundary.hpp>
+#include <similie/exterior/codifferential/codifferential.hpp>
+#include <similie/exterior/continuous_hodge_star/continuous_hodge_star.hpp>
+#include <similie/exterior/reduction_and_reconstruction/reduction_and_reconstruction.hpp>
 #include <similie/misc/macros.hpp>
 #include <similie/physics/hamilton_equations.hpp>
 #include <similie/physics/magnetostatics/linear_magnetostatics.hpp>

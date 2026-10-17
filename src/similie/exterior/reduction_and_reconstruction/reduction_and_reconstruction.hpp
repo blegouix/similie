@@ -8,7 +8,7 @@
 #include <ddc/ddc.hpp>
 
 #include <similie/exterior/concepts.hpp>
-#include <similie/exterior/stencil.hpp>
+#include <similie/exterior/staged_operator/staged_operator.hpp>
 #include <similie/exterior/volume.hpp>
 #include <similie/misc/clamp_to_domain.hpp>
 #include <similie/misc/factorial.hpp>
@@ -421,68 +421,6 @@ KOKKOS_FUNCTION ReductionNaturalElemType merge_reduction_natural_elems(
     return natural_elem_from_flat_ids<ReductionNaturalElemType>(reduction_ids);
 }
 
-// Canonical cochain components are an ordinary vector space: the wedge signs
-// and factorial factors are already included in the cached coefficient matrix.
-// Retag the existing storage, retaining its stride, rather than expanding forms.
-template <class Index, class Tensor>
-KOKKOS_FUNCTION auto local_component_tensor(Tensor tensor)
-{
-    static_assert(Tensor::discrete_domain_type::rank() <= 1);
-    using Span = ddc::ChunkSpan<
-            typename Tensor::element_type,
-            ddc::DiscreteDomain<Index>,
-            Kokkos::layout_stride,
-            typename Tensor::memory_space>;
-    std::size_t stride = 1;
-    std::size_t front = 0;
-    if constexpr (Tensor::discrete_domain_type::rank() == 1) {
-        stride = tensor.allocation_mdspan().stride(0);
-        front = ddc::detail::array(tensor.domain().front())[0];
-    }
-    return tensor::Tensor(
-            Span(typename Span::allocation_mdspan_type(
-                         tensor.data_handle(),
-                         typename Span::mapping_type(
-                                 typename Span::extents_type(tensor.size()),
-                                 std::array<std::size_t, 1> {stride})),
-                 ddc::DiscreteDomain<Index>(
-                         ddc::DiscreteElement<Index>(front),
-                         ddc::DiscreteVector<Index>(tensor.size()))));
-}
-
-template <
-        class Source,
-        class Target,
-        template <class...> class Coefficients = tensor::TensorFullIndex,
-        class Output,
-        class Input,
-        class Weights>
-KOKKOS_FUNCTION void apply_local_stencil(
-        Output output,
-        Input input,
-        Weights weights,
-        std::size_t node)
-{
-    using SourceComponent = tensor::Covariant<LocalComponentIndex<Source, false>>;
-    using TargetComponent = tensor::Covariant<LocalComponentIndex<Target, true>>;
-    using MatrixIndex = Coefficients<TargetComponent, tensor::upper_t<SourceComponent>>;
-    using MatrixSpan = ddc::ChunkSpan<
-            typename Output::element_type const,
-            ddc::DiscreteDomain<MatrixIndex>,
-            Kokkos::layout_stride,
-            typename Output::memory_space>;
-    tensor::Tensor matrix(MatrixSpan(
-            typename MatrixSpan::allocation_mdspan_type(
-                    &weights(node, 0),
-                    typename MatrixSpan::mapping_type(
-                            typename MatrixSpan::extents_type(MatrixIndex::mem_size()),
-                            std::array<std::size_t, 1> {weights.stride(1)})),
-            tensor::TensorAccessor<MatrixIndex>::domain()));
-    tensor::tensor_prod(
-            local_component_tensor<TargetComponent>(output),
-            matrix,
-            local_component_tensor<SourceComponent>(input));
-}
 
 } // namespace detail
 
@@ -509,6 +447,13 @@ template <
         CellComplex Complex = CellComplex::Primal>
 struct Reduction
 {
+    using staged_storage_type = detail::LocalOperatorStorage<
+            Reduction,
+            reduction_index_t<tensor::primes<tensor::upper_t<Indices>>>,
+            reduction_index_t<Indices>,
+            misc::convert_type_seq_to_t<ddc::DiscreteDomain, ddc::to_type_seq_t<BatchElem>>,
+            typename PositionType::memory_space>;
+
     using source_index_type = misc::convert_type_seq_to_t<
             tensor::TensorFullIndex,
             tensor::primes<tensor::upper_t<Indices>>>;
@@ -1048,6 +993,19 @@ template <
         CellComplex Complex = CellComplex::Primal>
 struct Reconstruction
 {
+    using staged_storage_type = detail::LocalOperatorStorage<
+            Reconstruction,
+            reduction_index_t<Indices>,
+            reduction_index_t<tensor::primes<Indices>>,
+            misc::convert_type_seq_to_t<ddc::DiscreteDomain, ddc::to_type_seq_t<BatchElem>>,
+            typename PositionType::memory_space,
+            typename PositionType::memory_space::execution_space,
+            tensor::TensorFullIndex,
+            typename tensor::natural_domain_t<reduction_index_t<Indices>>::discrete_element_type,
+            typename tensor::natural_domain_t<
+                    reduction_index_t<tensor::primes<Indices>>>::discrete_element_type,
+            false>;
+
     using source_index_type = reduction_index_t<Indices>;
     using target_index_type = reduction_index_t<tensor::primes<Indices>>;
     using source_natural_elem_type =
@@ -1231,73 +1189,17 @@ template <
         class ExecSpace,
         CellComplex Complex = CellComplex::Primal,
         template <class...> class Coefficients = tensor::TensorFullIndex>
-class StagedReconstruction
-{
-    using Source = reduction_index_t<Indices>;
-    using Target = reduction_index_t<tensor::primes<Indices>>;
-    using Domain = typename ReconstructedTensorType::non_indices_domain_t;
-    using Memory = typename ReconstructedTensorType::memory_space;
-    using Operator = Reconstruction<
-            Indices,
-            PositionType,
-            typename Domain::discrete_element_type,
-            Complex>;
-    Kokkos::View<ExecSpace, Kokkos::HostSpace> m_exec_space;
-    detail::LocalStencilStorage<Source, Target, Domain, Memory, Coefficients> m_stencils;
-
-public:
-    StagedReconstruction(
-            ExecSpace const& exec,
-            ReconstructedTensorType output,
-            CochainTensorType,
-            PositionType position)
-        : StagedReconstruction(exec, position, output.non_indices_domain())
-    {
-    }
-
-    StagedReconstruction(ExecSpace const& exec, PositionType position, Domain domain)
-        : m_exec_space("staged_reconstruction_execution")
-    {
-        m_exec_space() = exec;
-        m_stencils = detail::cache_local_stencils<Source, Target, Memory, Coefficients>(
-                exec,
-                domain,
-                detail::ReconstructionStencilValue<Operator, PositionType> {position});
-    }
-
-    template <class Output, class Input>
-    KOKKOS_FUNCTION void operator()(
-            Output output,
-            Input input,
-            PositionType,
-            typename Domain::discrete_element_type element) const
-    {
-        std::size_t const node = detail::stencil_node(m_stencils.domain, element);
-        detail::apply_local_stencil<
-                Source,
-                Target,
-                Coefficients>(output, input, m_stencils.weights, node);
-    }
-
-    ReconstructedTensorType operator()(ReconstructedTensorType output, CochainTensorType input)
-            const
-    {
-        auto const weights = m_stencils.weights;
-        Domain const domain = m_stencils.domain;
-        ddc::parallel_for_each(
-                "similie_apply_staged_reconstruction",
-                m_exec_space(),
-                output.non_indices_domain(),
-                KOKKOS_LAMBDA(typename Domain::discrete_element_type element) {
-                    std::size_t const node = detail::stencil_node(domain, element);
-                    detail::apply_local_stencil<
-                            Source,
-                            Target,
-                            Coefficients>(output[element], input[element], weights, node);
-                });
-        return output;
-    }
-};
+using StagedReconstruction = StagedOperator<
+        Reconstruction<
+                Indices,
+                PositionType,
+                typename ReconstructedTensorType::non_indices_domain_t::discrete_element_type,
+                Complex>,
+        typename Reconstruction<
+                Indices,
+                PositionType,
+                typename ReconstructedTensorType::non_indices_domain_t::discrete_element_type,
+                Complex>::staged_storage_type::template rebind<ExecSpace, Coefficients>>;
 
 static_assert(StagedOperatorConcept<
               StagedReconstruction<

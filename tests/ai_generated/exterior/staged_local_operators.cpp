@@ -53,6 +53,30 @@ void check_local(bool curved)
             sil::exterior::CellComplex::Primal,
             Coefficients>
             reconstruction(Exec(), cached, input, position);
+    Domain const cached_domain = domain();
+    Kokkos::View<double*, Memory> coefficient_errors("staged_coefficient_errors", domain().size());
+    ddc::parallel_for_each(
+            Exec(),
+            domain(),
+            KOKKOS_LAMBDA(Domain::discrete_element_type element) {
+                double error = 0.0;
+                sil::tensor::tensor_accessor_for_domain_t<
+                        sil::exterior::reconstruction_domain_t<Indices>> const accessor;
+                ddc::device_for_each(accessor.domain(), [&](auto component) {
+                    auto const natural = accessor.canonical_natural_element(component);
+                    double const expected = Reconstruction::value(position, element, natural);
+                    error = Kokkos::
+                            max(error,
+                                Kokkos::abs(
+                                        reconstruction.value(position, element, natural)
+                                        - expected));
+                });
+                coefficient_errors(sil::exterior::detail::stencil_node(cached_domain, element))
+                        = error;
+            });
+    auto errors = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), coefficient_errors);
+    for (std::size_t i = 0; i < errors.size(); ++i)
+        EXPECT_LT(errors(i), 3.e-12);
     for (int trial = 0; trial < 2; ++trial) {
         fill_form(input, 0.7 * trial);
         ddc::parallel_for_each(
@@ -282,4 +306,205 @@ TEST(StagedLocalOperators, ContinuousAndComposedHodgeWithGeneralMetric)
 {
     check_continuous_and_composed();
 }
+
+// An unrelated local map exercises the staging contract without any named
+// exterior wrapper. Its diagonal coefficients vary over the geometry field.
+struct NodeMap
+{
+    using staged_storage_type
+            = sil::exterior::detail::LocalOperatorStorage<NodeMap, One, One, Domain, Memory>;
+
+    KOKKOS_FUNCTION static sil::exterior::detail::LocalOperatorStencil<One, One> value(
+            Field<PositionIndex> position,
+            Domain::discrete_element_type element)
+    {
+        sil::exterior::detail::LocalOperatorStencil<One, One> result;
+        for (std::size_t component = 0; component < One::mem_size(); ++component)
+            result.weights[component * One::mem_size() + component]
+                    = 2.0 + position.mem(element, ddc::DiscreteElement<PositionIndex>(component));
+        return result;
+    }
+};
+
+static_assert(sil::exterior::StageableOperatorConcept<NodeMap, Field<One>>);
+static_assert(!sil::exterior::StageableOperatorConcept<int, Field<One>>);
+static_assert(!sil::exterior::StagedOperatorConcept<sil::exterior::StagedOperator<NodeMap>, int>);
+
+template <template <class...> class Coefficients>
+void check_generic_staging()
+{
+    auto positions = allocate<PositionIndex>(domain());
+    auto inputs = allocate<One>(domain());
+    auto outputs = allocate<One>(domain());
+    auto references = allocate<One>(domain());
+    Field<PositionIndex> position(positions);
+    Field<One> input(inputs), output(outputs), reference(references);
+    fill_geometry(position, false);
+    fill_form(input);
+    sil::exterior::StagedOperator<NodeMap, NodeMap::staged_storage_type::rebind<Exec, Coefficients>>
+            staged(Exec(), position, domain());
+    ddc::parallel_for_each(
+            Exec(),
+            input.domain(),
+            KOKKOS_LAMBDA(FullDomain<One>::discrete_element_type element) {
+                Domain::discrete_element_type const node(element);
+                std::size_t const component = element.template uid<One>();
+                reference.mem(element)
+                        = input.mem(element)
+                          * (2.0
+                             + position.mem(node, ddc::DiscreteElement<PositionIndex>(component)));
+            });
+    staged(output, input);
+    expect_equal(output, reference);
+    fill_geometry(position, false, 2.0);
+    ddc::parallel_for_each(
+            Exec(),
+            domain(),
+            KOKKOS_LAMBDA(Domain::discrete_element_type element) {
+                staged(output[element], input[element], position, element);
+            });
+    expect_equal(output, reference);
+}
+
+TEST(StagedLocalOperators, GenericDenseAndDiagonalStorage)
+{
+    check_generic_staging<sil::tensor::TensorFullIndex>();
+    check_generic_staging<sil::tensor::TensorDiagonalIndex>();
+}
+
+void check_implicit_levi_civita()
+{
+    using SourceIndices
+            = sil::tensor::upper_t<ddc::to_type_seq_t<sil::tensor::natural_domain_t<Two>>>;
+    using TargetIndices = sil::exterior::codifferential_hodge_output_indices_t<1, One>;
+    using Target = sil::exterior::reduction_index_t<TargetIndices>;
+    using Direct = sil::exterior::LeviCivitaContinuousHodgeStar<
+            SourceIndices,
+            TargetIndices,
+            Field<MetricIndex>,
+            Domain::discrete_element_type>;
+    static_assert(sil::exterior::StageableOperatorConcept<Direct, Field<Target>, Field<Two>>);
+    static_assert(std::is_same_v<
+                  Direct::staged_storage_type,
+                  sil::exterior::detail::ImplicitLocalOperatorStorage<Direct, Field<MetricIndex>>>);
+    auto metrics = allocate<MetricIndex>(domain());
+    auto inputs = allocate<Two>(domain());
+    auto outputs = allocate<Target>(domain());
+    auto references = allocate<Target>(domain());
+    Field<MetricIndex> metric(metrics);
+    Field<Two> input(inputs);
+    Field<Target> output(outputs), reference(references);
+    fill_form(input);
+    sil::exterior::StagedOperator<Direct> staged(Exec(), metric);
+    ddc::parallel_for_each(
+            Exec(),
+            domain(),
+            KOKKOS_LAMBDA(Domain::discrete_element_type element) {
+                Direct::operator()(reference[element], input[element], metric, element);
+            });
+    staged(output, input);
+    expect_equal(output, reference);
+    ddc::parallel_for_each(
+            Exec(),
+            domain(),
+            KOKKOS_LAMBDA(Domain::discrete_element_type element) {
+                staged(output[element], input[element], metric, element);
+            });
+    expect_equal(output, reference);
+}
+
+TEST(StagedLocalOperators, ImplicitLeviCivitaStorage)
+{
+    check_implicit_levi_civita();
+}
+struct Batch
+{
+};
+
+void check_batched_reconstruction()
+{
+    using BatchedDomain = ddc::DiscreteDomain<GridX, GridY, GridZ, Batch>;
+    using BatchedField = sil::tensor::Tensor<
+            double,
+            ddc::DiscreteDomain<GridX, GridY, GridZ, Batch, One>,
+            Kokkos::layout_right,
+            Memory>;
+    using Operator = sil::exterior::Reconstruction<
+            ddc::TypeSeq<One>,
+            Field<PositionIndex>,
+            BatchedDomain::discrete_element_type>;
+    static_assert(std::is_same_v<
+                  sil::exterior::StagedReconstruction<
+                          ddc::TypeSeq<One>,
+                          BatchedField,
+                          BatchedField,
+                          Field<PositionIndex>,
+                          Exec>,
+                  sil::exterior::StagedOperator<Operator>>);
+    BatchedDomain const batched_domain(
+            domain(),
+            ddc::DiscreteDomain<
+                    Batch>(ddc::DiscreteElement<Batch>(7), ddc::DiscreteVector<Batch>(2)));
+    typename BatchedField::discrete_domain_type const
+            full_domain(batched_domain, sil::tensor::TensorAccessor<One>::domain());
+    ddc::Chunk inputs(full_domain, ddc::KokkosAllocator<double, Memory>());
+    ddc::Chunk outputs(full_domain, ddc::KokkosAllocator<double, Memory>());
+    ddc::Chunk references(full_domain, ddc::KokkosAllocator<double, Memory>());
+    auto positions = allocate<PositionIndex>(halo());
+    Field<PositionIndex> position(positions);
+    BatchedField input(inputs), output(outputs), reference(references);
+    fill_geometry(position, false);
+    ddc::parallel_for_each(
+            Exec(),
+            full_domain,
+            KOKKOS_LAMBDA(
+                    typename BatchedField::discrete_domain_type::discrete_element_type element) {
+                std::size_t const component = element.template uid<One>();
+                input.mem(element) = 1.0 + 0.5 * element.template uid<Batch>() + component;
+                reference.mem(element) = input.mem(element)
+                                         / (component == 0 ? 0.7 : (component == 1 ? 0.9 : 1.1));
+            });
+    sil::exterior::StagedOperator<Operator> staged(Exec(), output, input, position);
+    for (int trial = 0; trial < 2; ++trial) {
+        if (trial == 0)
+            staged(output, input);
+        else
+            ddc::parallel_for_each(
+                    Exec(),
+                    batched_domain,
+                    KOKKOS_LAMBDA(BatchedDomain::discrete_element_type element) {
+                        staged(output[element], input[element], position, element);
+                    });
+        auto first = Kokkos::
+                create_mirror_view_and_copy(Kokkos::HostSpace(), outputs.allocation_kokkos_view());
+        auto second = Kokkos::create_mirror_view_and_copy(
+                Kokkos::HostSpace(),
+                references.allocation_kokkos_view());
+        for (std::size_t i = 0; i < first.size(); ++i)
+            EXPECT_NEAR(first.data()[i], second.data()[i], 3.e-12);
+    }
+    sil::exterior::StagedOperator<sil::exterior::Reduction<
+            ddc::TypeSeq<One>,
+            Field<PositionIndex>,
+            BatchedDomain::discrete_element_type>>
+            reduction(Exec(), output, input, position);
+    reduction(output, input);
+    auto reduced = Kokkos::
+            create_mirror_view_and_copy(Kokkos::HostSpace(), outputs.allocation_kokkos_view());
+    auto source = Kokkos::
+            create_mirror_view_and_copy(Kokkos::HostSpace(), inputs.allocation_kokkos_view());
+    for (std::size_t i = 0; i < reduced.size(); ++i) {
+        std::size_t const component = i % One::mem_size();
+        EXPECT_NEAR(
+                reduced.data()[i],
+                source.data()[i] * (component == 0 ? 0.7 : (component == 1 ? 0.9 : 1.1)),
+                3.e-12);
+    }
+}
+
+TEST(StagedLocalOperators, GeometryWithoutBatchDimension)
+{
+    check_batched_reconstruction();
+}
+
 } // namespace

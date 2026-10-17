@@ -17,6 +17,17 @@ template <
         class BatchElem>
 struct DiscreteHodgeStar
 {
+    using staged_storage_type = detail::LocalOperatorStorage<
+            DiscreteHodgeStar,
+            tensor::lower_t<reduction_index_t<Indices1>>,
+            reduction_index_t<Indices2>,
+            typename MetricType::non_indices_domain_t,
+            typename MetricType::memory_space,
+            typename MetricType::memory_space::execution_space,
+            tensor::TensorFullIndex,
+            misc::convert_type_seq_to_t<ddc::DiscreteElement, Indices1>,
+            misc::convert_type_seq_to_t<ddc::DiscreteElement, Indices2>>;
+
     /** Pair primal one-cochains using the full cell metric and orientation.
      * \important This operator and documentation is fully AI-generated.
      */

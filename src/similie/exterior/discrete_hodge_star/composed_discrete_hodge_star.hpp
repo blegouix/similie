@@ -23,32 +23,14 @@ template <
         class Element,
         CellComplex Complex,
         template <class...> class Coefficients = tensor::TensorFullIndex>
-class CachedReconstruction
-    : public StagedReconstruction<
-              Indices,
-              LocalOperatorField<Position, reduction_index_t<tensor::primes<Indices>>>,
-              LocalOperatorField<Position, reduction_index_t<Indices>>,
-              Position,
-              typename Position::memory_space::execution_space,
-              Complex,
-              Coefficients>
-{
-    using Base = StagedReconstruction<
-            Indices,
-            LocalOperatorField<Position, reduction_index_t<tensor::primes<Indices>>>,
-            LocalOperatorField<Position, reduction_index_t<Indices>>,
-            Position,
-            typename Position::memory_space::execution_space,
-            Complex,
-            Coefficients>;
-
-public:
-    template <class Exec, class Metric>
-    CachedReconstruction(Exec const& exec, Metric metric, Position position)
-        : Base(exec, position, metric.non_indices_domain())
-    {
-    }
-};
+using CachedReconstruction = StagedReconstruction<
+        Indices,
+        LocalOperatorField<Position, reduction_index_t<tensor::primes<Indices>>>,
+        LocalOperatorField<Position, reduction_index_t<Indices>>,
+        Position,
+        typename Position::memory_space::execution_space,
+        Complex,
+        Coefficients>;
 
 template <
         class Indices,
@@ -56,36 +38,14 @@ template <
         class Element,
         CellComplex Complex,
         template <class...> class Coefficients = tensor::TensorFullIndex>
-class CachedReduction
-    : public StagedReduction<
-              Indices,
-              LocalOperatorField<Position, reduction_index_t<Indices>>,
-              LocalOperatorField<
-                      Position,
-                      reduction_index_t<tensor::primes<tensor::upper_t<Indices>>>>,
-              Position,
-              typename Position::memory_space::execution_space,
-              Complex,
-              Coefficients>
-{
-    using Base = StagedReduction<
-            Indices,
-            LocalOperatorField<Position, reduction_index_t<Indices>>,
-            LocalOperatorField<
-                    Position,
-                    reduction_index_t<tensor::primes<tensor::upper_t<Indices>>>>,
-            Position,
-            typename Position::memory_space::execution_space,
-            Complex,
-            Coefficients>;
-
-public:
-    template <class Exec, class Metric>
-    CachedReduction(Exec const& exec, Metric metric, Position position)
-        : Base(exec, metric, position, metric.non_indices_domain())
-    {
-    }
-};
+using CachedReduction = StagedReduction<
+        Indices,
+        LocalOperatorField<Position, reduction_index_t<Indices>>,
+        LocalOperatorField<Position, reduction_index_t<tensor::primes<tensor::upper_t<Indices>>>>,
+        Position,
+        typename Position::memory_space::execution_space,
+        Complex,
+        Coefficients>;
 
 template <class Operator, class Exec, class Metric, class Position>
 Operator make_composed_operator(Exec const& exec, Metric metric, Position position)
@@ -94,6 +54,12 @@ Operator make_composed_operator(Exec const& exec, Metric metric, Position positi
         return Operator(exec, metric, position);
     else if constexpr (std::is_constructible_v<Operator, Exec const&, Metric>)
         return Operator(exec, metric);
+    else if constexpr (std::is_constructible_v<
+                               Operator,
+                               Exec const&,
+                               Position,
+                               typename Metric::non_indices_domain_t>)
+        return Operator(exec, position, metric.non_indices_domain());
     else
         return Operator {};
 }

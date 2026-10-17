@@ -49,6 +49,9 @@ class LeviCivitaContinuousHodgeStar
     }
 
 public:
+    using staged_storage_type
+            = detail::ImplicitLocalOperatorStorage<LeviCivitaContinuousHodgeStar, MetricType>;
+
     template <
             misc::Specialization<tensor::Tensor> HodgeTensorType,
             misc::Specialization<tensor::Tensor> FormTensorType>

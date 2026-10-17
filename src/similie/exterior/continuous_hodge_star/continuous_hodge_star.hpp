@@ -15,6 +15,17 @@ template <
         class BatchElem>
 struct ContinuousHodgeStar
 {
+    using staged_storage_type = detail::LocalOperatorStorage<
+            ContinuousHodgeStar,
+            tensor::lower_t<reduction_index_t<Indices1>>,
+            reduction_index_t<Indices2>,
+            typename MetricType::non_indices_domain_t,
+            typename MetricType::memory_space,
+            typename MetricType::memory_space::execution_space,
+            tensor::TensorFullIndex,
+            misc::convert_type_seq_to_t<ddc::DiscreteElement, Indices1>,
+            misc::convert_type_seq_to_t<ddc::DiscreteElement, Indices2>>;
+
     template <
             misc::Specialization<tensor::Tensor> HodgeTensorType,
             misc::Specialization<tensor::Tensor> FormTensorType>

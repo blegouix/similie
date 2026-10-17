@@ -7,16 +7,6 @@
 
 namespace sil::exterior {
 
-template <
-        tensor::TensorIndex MetricIndex,
-        tensor::TensorNatIndex Index,
-        tensor::TensorIndex Cochain,
-        misc::Specialization<tensor::Tensor> Tensor,
-        misc::Specialization<tensor::Tensor> Metric,
-        misc::Specialization<tensor::Tensor> Position,
-        class Exec>
-class StagedLaplacian;
-
 /** Hodge Laplacian assembled from independently selected Hodge-star policies.
  * \important This operator and documentation is fully AI-generated.
  * DiscreteHodgeStar evaluates geometry during application. StagedHodgeStar
@@ -62,6 +52,9 @@ class Laplacian
             m_lower;
 
 public:
+    using staged_storage_type = detail::
+            SpatialOperatorStorage<Laplacian, Index, Cochain, Cochain, 2, Tensor, Exec, true>;
+
     Laplacian(Exec const& exec, Tensor output, Tensor input, Metric metric, Position position)
         : m_exec(exec)
         , m_metric(metric)
@@ -130,7 +123,7 @@ public:
     }
 
 private:
-    friend class StagedLaplacian<MetricIndex, Index, Cochain, Tensor, Metric, Position, Exec>;
+    friend staged_storage_type;
 
     // Canonical component matrices are needed only while assembling a stencil.
     static auto geometry(Exec const& exec, Metric metric, Position position)

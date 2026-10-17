@@ -341,6 +341,11 @@ struct Codifferential<TagToRemoveFromCochain, CochainTag>
     }
 };
 
+namespace detail {
+template <class Index, class Cochain, class Tensor, class Metric, class Position>
+struct CodifferentialGeometry;
+} // namespace detail
+
 template <
         tensor::TensorIndex MetricIndex,
         tensor::TensorNatIndex TagToRemoveFromCochain,
@@ -356,6 +361,36 @@ struct Codifferential<
         MetricType,
         PositionType>
 {
+    using staged_storage_type = detail::SpatialOperatorStorage<
+            Codifferential,
+            TagToRemoveFromCochain,
+            CochainTag,
+            codifferential_index_t<TagToRemoveFromCochain, CochainTag>,
+            1,
+            TensorType>;
+
+    template <class Exec>
+    static auto geometry(Exec const& exec, MetricType metric, PositionType position)
+    {
+        return detail::CodifferentialGeometry<
+                TagToRemoveFromCochain,
+                CochainTag,
+                TensorType,
+                MetricType,
+                PositionType>(exec, metric, position);
+    }
+
+    template <class Geometry, class Element, class Rules>
+    KOKKOS_FUNCTION static auto value(
+            Geometry const& geometry,
+            TensorType input,
+            Element element,
+            Rules rules)
+    {
+        return Codifferential<TagToRemoveFromCochain, CochainTag>::
+                value(geometry, input, element, rules);
+    }
+
     template <class ChainType, class LowerChainType, class NaturalElem>
     KOKKOS_FUNCTION static auto value(
             TensorType tensor,
@@ -528,56 +563,21 @@ template <
         misc::Specialization<tensor::Tensor> MetricType,
         misc::Specialization<tensor::Tensor> PositionType,
         class ExecSpace>
-class StagedCodifferential
-{
-    using Target = codifferential_index_t<TagToRemoveFromCochain, CochainTag>;
-    using Output = codifferential_tensor_t<TagToRemoveFromCochain, CochainTag, TensorType>;
-    ExecSpace m_exec;
-    detail::StencilStorage<
-            TagToRemoveFromCochain,
-            CochainTag,
-            Target,
-            1,
-            typename TensorType::non_indices_domain_t,
-            typename TensorType::memory_space>
-            m_stencils;
-
-public:
-    template <class Rules = tensor::ZeroExtrapolationRule>
-    StagedCodifferential(
-            ExecSpace const& exec,
-            TensorType input,
-            MetricType metric,
-            PositionType position,
-            Rules rules = {})
-        : m_exec(exec)
-    {
-        m_stencils = detail::cache_stencils<
-                Codifferential<TagToRemoveFromCochain, CochainTag>,
+using StagedCodifferential = StagedOperator<
+        Codifferential<
+                MetricIndex,
                 TagToRemoveFromCochain,
                 CochainTag,
-                Target,
-                1>(
-                exec,
-                input,
-                detail::CodifferentialGeometry<
-                        TagToRemoveFromCochain,
-                        CochainTag,
-                        TensorType,
-                        MetricType,
-                        PositionType>(exec, metric, position),
-                rules);
-    }
-
-    Output operator()(Output output, TensorType input) const
-    {
-        return detail::apply_stencils<
+                TensorType,
+                MetricType,
+                PositionType>,
+        typename Codifferential<
+                MetricIndex,
                 TagToRemoveFromCochain,
                 CochainTag,
-                Target,
-                1>(m_exec, output, input, m_stencils);
-    }
-};
+                TensorType,
+                MetricType,
+                PositionType>::staged_storage_type::template rebind<ExecSpace>>;
 
 static_assert(StagedOperatorConcept<
               StagedCodifferential<

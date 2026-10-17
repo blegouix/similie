@@ -314,29 +314,6 @@ struct StencilStorage
             constant_response;
 };
 
-template <class Operator, class Position>
-struct ReconstructionStencilValue
-{
-    Position position;
-    template <class Element>
-    KOKKOS_FUNCTION auto operator()(Element element) const
-    {
-        return Operator::value(position, element);
-    }
-};
-
-template <class Operator, class Metric, class Position>
-struct HodgeStencilValue
-{
-    Metric metric;
-    Position position;
-    template <class Element>
-    KOKKOS_FUNCTION auto operator()(Element element) const
-    {
-        return Operator::value(metric, position, element);
-    }
-};
-
 // Matrix indices enumerate independent form components, not physical directions.
 template <std::size_t Component>
 struct LocalComponent

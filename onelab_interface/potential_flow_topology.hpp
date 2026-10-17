@@ -12,7 +12,7 @@
 #include <similie/multidomains/multidomains.hpp>
 #include <similie/physics/hamilton_equations.hpp>
 #include <similie/physics/scalar_field/scalar_field_with_power_coupling.hpp>
-#include <similie/tensor/full_tensor.hpp>
+#include <similie/tensor/tensor_indices/full_tensor.hpp>
 
 namespace similie::onelab_interface::potential_flow_onelab {
 struct X

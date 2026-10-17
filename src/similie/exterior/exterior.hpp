@@ -16,6 +16,7 @@
 #include <similie/exterior/laplacian/laplacian.hpp>
 #include <similie/exterior/reduction_and_reconstruction/reduction_and_reconstruction.hpp>
 #include <similie/exterior/reduction_and_reconstruction/staged_reduction.hpp>
+#include <similie/exterior/staged_operator/staged_operator.hpp>
 #include <similie/tensor/external_domain_extrapolation_rule.hpp>
 #include <similie/tensor/extrapolation_rules.hpp>
 #include <similie/tensor/scalar_extrapolation_rules.hpp>

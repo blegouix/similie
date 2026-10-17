@@ -107,8 +107,23 @@ concept LocalOperatorConcept
           };
 
 template <class Operator, class Output, class Input = Output>
-concept StagedOperatorConcept = requires(Operator& operation, Output output, Input input) {
+concept StagedOperatorConcept = requires(Operator const& operation, Output output, Input input) {
     { operation(output, input) } -> std::same_as<Output>;
+};
+
+template <class Storage, class Output, class Input = Output>
+concept StagingStorageConcept = requires(
+        Storage const& storage,
+        typename Storage::execution_space const& exec,
+        Output output,
+        Input input) {
+    { storage.apply(exec, output, input) } -> std::same_as<Output>;
+};
+
+template <class Operator, class Output, class Input = Output>
+concept StageableOperatorConcept = requires {
+    typename Operator::staged_storage_type;
+    requires StagingStorageConcept<typename Operator::staged_storage_type, Output, Input>;
 };
 
 } // namespace sil::exterior
