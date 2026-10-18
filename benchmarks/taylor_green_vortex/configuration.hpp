@@ -25,6 +25,7 @@ struct Configuration
     bool staged_laplacian = false, staged_discrete_hodge_star = false;
     bool staged_reduction = false, staged_reconstruction = false;
     bool staged_diagonal_reduction = false, staged_diagonal_reconstruction = false;
+    bool diagonal_reduction = false, diagonal_reconstruction = false;
     bool levi_civita_continuous_hodge_star = false;
 
     template <class Choice>
@@ -68,9 +69,9 @@ struct Configuration
         else if (argument == "--levi-civita-continuous-hodge-star")
             levi_civita_continuous_hodge_star = true;
         else if (argument == "--diagonal-reduction")
-            staged_reduction = staged_diagonal_reduction = true;
+            diagonal_reduction = true;
         else if (argument == "--diagonal-reconstruction")
-            staged_reconstruction = staged_diagonal_reconstruction = true;
+            diagonal_reconstruction = true;
         else
             return false;
         return true;
@@ -104,7 +105,6 @@ struct Configuration
         };
         append(staged_laplacian, "laplacian");
         append(staged_discrete_hodge_star, "discrete-hodge-star");
-        append(levi_civita_continuous_hodge_star, "levi-civita-continuous-hodge-star");
         append(staged_reduction && !staged_diagonal_reduction, "reduction");
         append(staged_diagonal_reduction, "diagonal-reduction");
         append(staged_reconstruction && !staged_diagonal_reconstruction, "reconstruction");
