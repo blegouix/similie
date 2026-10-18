@@ -319,4 +319,3 @@ jobs:
     uses: ./.github/workflows/benchmark_taylor_green_vortex.yml
     with:
       target_sha: ${{ github.sha }}
-      ci_environment: taylor_green_vortex-cuda
