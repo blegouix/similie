@@ -144,6 +144,7 @@ jobs:
       with:
         name: example-onelab_potential_flow-${{ matrix.case.name }}
         overwrite: true
+        retention-days: ${{ (github.event_name == 'pull_request' || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request')) && 15 || 0 }}
         if-no-files-found: error
         path: |
           ${{ env.EXAMPLE_LOG }}
