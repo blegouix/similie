@@ -24,12 +24,13 @@ the prescribed initial state; each iteration advances that state once.
 Stability limits determine the physical time step. These short trajectories
 are performance measurements and do not claim the complete workshop dynamics.
 
-The job first runs the configuration's N=8 numerical validation. It then checks
+Non-HD jobs first run the configuration's N=8 numerical validation. HD jobs
+use the complete reference trajectories below as validation. Each job checks
 each performance trajectory for iteration accounting, finite monitors,
 positive density/pressure, initial kinetic-energy normalization, mass
 conservation, and applicable DEC reconstruction/Gauss/magnetic constraints.
 All three resolutions are attempted even if an individual mesh case fails.
-An initial N=8 validation failure prevents measurements of that invalid solver.
+An N=8 validation failure prevents measurements of that invalid solver.
 
 `--no-snapshots` suppresses coordinate and field snapshots for this campaign.
 HDF5 monitor histories, energy tables, raw Google Benchmark JSON, and separate
@@ -37,11 +38,22 @@ solver/monitor/export performance JSON are retained. This avoids large field
 artifacts for every short repetition while keeping the same solver and monitor
 definitions. I/O controls do not alter any numerical parameter.
 
+The two ideal HD jobs additionally compare four Laplacian strategies at all
+three resolutions: general continuous Hodge star/reduction/reconstruction,
+Levi-Civita continuous Hodge star, Levi-Civita with diagonal reduction and
+reconstruction, and the fully staged Laplacian. These rows use Google
+Benchmark's automatic iteration count with a 0.5-second minimum-time target,
+and the report records the selected step count and mean step time. The ordinary
+performance campaign remains fixed at five steps per repetition. Staged
+Laplacian strategy measurements run at N=64 and 128. The N=256 staged case is
+reported as skipped because its estimated stencil cache requires about 46 GiB.
+
 ## Complete HD reference campaign
 
 Only the `incompressible_ideal_hd` and `compressible_ideal_hd` jobs also run full
 trajectories, once at each of the same three resolutions. They use `--reference`
-with the original workshop initial conditions, periodic box, Re=1600, and
+with Levi-Civita continuous Hodge star and diagonal reduction/reconstruction,
+along with the original workshop initial conditions, periodic box, Re=1600, and
 compressible Mach=0.1 and Pr=0.71. The native DEC spatial discretization and
 SSPRK3 time integration remain those requested for SimiLie.
 

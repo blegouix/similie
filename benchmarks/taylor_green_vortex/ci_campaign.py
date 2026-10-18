@@ -17,6 +17,20 @@ from post_process import process
 MESH_SIZES = (64, 128, 256)
 PERFORMANCE_STEPS = 5
 PERFORMANCE_REPETITIONS = 3
+STRATEGY_MIN_TIME = "0.5"
+LAPLACIAN_STRATEGIES = (
+    ("general", ()),
+    ("levi-civita", ("--levi-civita-continuous-hodge-star",)),
+    (
+        "levi-civita-diagonal",
+        (
+            "--levi-civita-continuous-hodge-star",
+            "--diagonal-reduction",
+            "--diagonal-reconstruction",
+        ),
+    ),
+    ("staged-laplacian", ("--staged-laplacian",)),
+)
 
 
 def execute(command, directory, log):
@@ -31,13 +45,64 @@ def execute(command, directory, log):
         raise RuntimeError(f"Command failed ({result.returncode}); see {log}")
 
 
-def validate_results(directory, configuration, n, reference):
+def staged_laplacian_bytes(n):
+    # Radius-two 3D stencil: 37 points. The HD benchmark caches scalar and
+    # three-component two-form Laplacians, each with dense input/output rows.
+    return n**3 * 37 * 8 * (1 + 3 * 3)
+
+
+def validate_results(
+    directory,
+    configuration,
+    n,
+    reference,
+    expected_steps=PERFORMANCE_STEPS,
+    repetitions=PERFORMANCE_REPETITIONS,
+):
     files = sorted(directory.glob("*.performance.json"))
-    expected = 1 if reference else PERFORMANCE_REPETITIONS
-    if len(files) != expected:
+    expected = 1 if reference else repetitions
+    if expected is not None and len(files) != expected:
         raise ValueError(
             f"Expected {expected} completed trajectories, found {len(files)}"
         )
+    if not files:
+        raise ValueError("No completed performance trajectories were written")
+    if not reference:
+        benchmark_report = json.loads((directory / "benchmark.json").read_text())
+        measurements = [
+            r
+            for r in benchmark_report["benchmarks"]
+            if r.get("run_type") == "iteration"
+        ]
+        if len(measurements) != (1 if repetitions is None else repetitions):
+            raise ValueError("Incorrect Google Benchmark result count")
+        for measurement in measurements:
+            if measurement.get("error_occurred"):
+                raise ValueError("Google Benchmark reported an error")
+            if expected_steps is None:
+                if measurement["iterations"] <= 0:
+                    raise ValueError("Google Benchmark selected no iterations")
+            elif measurement["iterations"] != expected_steps:
+                raise ValueError("Google Benchmark measured the wrong number of steps")
+            if measurement["steps"] != measurement["iterations"]:
+                raise ValueError(
+                    "Benchmark iterations do not correspond to solver steps"
+                )
+    selected_steps = expected_steps
+    if not reference and expected_steps is None:
+        selected_steps = measurements[0]["iterations"]
+    if selected_steps is not None:
+        files = [
+            path
+            for path in files
+            if json.loads(path.read_text())["steps"] == selected_steps
+        ]
+    if not reference and repetitions is None and not files:
+        raise ValueError(
+            "No trajectory matches the automatically selected iteration count"
+        )
+    if not reference and repetitions is None:
+        files = files[-1:]
     records = []
     for path in files:
         record = json.loads(path.read_text())
@@ -46,7 +111,9 @@ def validate_results(directory, configuration, n, reference):
         if record["mode"] != ("reference" if reference else "performance"):
             raise ValueError("Wrong trajectory mode")
         if record["steps"] <= 0 or (
-            not reference and record["steps"] != PERFORMANCE_STEPS
+            not reference
+            and selected_steps is not None
+            and record["steps"] != selected_steps
         ):
             raise ValueError("Incorrect iteration count")
         for key in (
@@ -110,25 +177,6 @@ def validate_results(directory, configuration, n, reference):
         if reference:
             process(hdf, vtk=False, plots=True)
         records.append(record)
-    if not reference:
-        report = json.loads((directory / "benchmark.json").read_text())
-        measurements = [
-            r for r in report["benchmarks"] if r.get("run_type") == "iteration"
-        ]
-        if len(measurements) != PERFORMANCE_REPETITIONS:
-            raise ValueError("Incorrect Google Benchmark repetition count")
-        for measurement in measurements:
-            if (
-                measurement.get("error_occurred")
-                or measurement["iterations"] != PERFORMANCE_STEPS
-            ):
-                raise ValueError(
-                    "Google Benchmark failed or measured the wrong number of steps"
-                )
-            if measurement["steps"] != measurement["iterations"]:
-                raise ValueError(
-                    "Benchmark iterations do not correspond to solver steps"
-                )
     return records
 
 
@@ -138,6 +186,7 @@ def write_report(output, manifest):
         "",
         (
             "CUDA, Release. One iteration is one evolving SSPRK3 step. "
+            "Strategy rows use automatic iteration counts with a 0.5 s minimum-time target. "
             "Reference rows are complete t=0→10 HD trajectories."
         ),
         "",
@@ -174,6 +223,10 @@ def write_report(output, manifest):
                     "",
                 ]
             )
+        elif entry.get("note"):
+            lines.extend(
+                ["", f"Note for {entry['mode']} N={entry['N']}: {entry['note']}", ""]
+            )
     lines.extend(
         [
             "",
@@ -196,18 +249,30 @@ def campaign(binary, output, fluid, transport, coupling):
     output.mkdir(parents=True, exist_ok=True)
     manifest = {"configuration": configuration, "mesh_sizes": MESH_SIZES, "runs": []}
     write_report(output, manifest)
-    try:
-        execute(
-            [str(binary), "--N=8", *flags, "--validate"],
-            output,
-            output / "validation.log",
-        )
-        manifest["validation"] = "passed"
-    except RuntimeError as error:
-        manifest["validation"] = "failed"
-        manifest["validation_error"] = str(error)
-        write_report(output, manifest)
-        raise
+    validation_flags = (
+        [
+            "--levi-civita-continuous-hodge-star",
+            "--diagonal-reduction",
+            "--diagonal-reconstruction",
+        ]
+        if coupling == "hd"
+        else []
+    )
+    if coupling == "hd":
+        manifest["validation"] = "full reference trajectories at N=64,128,256"
+    else:
+        try:
+            execute(
+                [str(binary), "--N=8", *flags, "--validate"],
+                output,
+                output / "validation.log",
+            )
+            manifest["validation"] = "passed"
+        except RuntimeError as error:
+            manifest["validation"] = "failed"
+            manifest["validation_error"] = str(error)
+            write_report(output, manifest)
+            raise
     modes = ("performance", "reference") if coupling == "hd" else ("performance",)
     for mode in modes:
         for n in MESH_SIZES:
@@ -218,7 +283,7 @@ def campaign(binary, output, fluid, transport, coupling):
             write_report(output, manifest)
             command = [str(binary), f"--N={n}", *flags, f"--output-dir={directory}"]
             if mode == "reference":
-                command.append("--reference")
+                command.extend(("--reference", *validation_flags))
             else:
                 command.extend(
                     [
@@ -241,7 +306,60 @@ def campaign(binary, output, fluid, transport, coupling):
                 entry["error"] = str(error)
                 print(str(error), flush=True)
             write_report(output, manifest)
-    if any(entry["status"] != "passed" for entry in manifest["runs"]):
+    if coupling == "hd":
+        for strategy, strategy_flags in LAPLACIAN_STRATEGIES:
+            for n in MESH_SIZES:
+                directory = output / "laplacian-strategies" / strategy / f"N{n}"
+                directory.mkdir(parents=True, exist_ok=True)
+                entry = {
+                    "mode": f"strategy-{strategy}",
+                    "strategy": strategy,
+                    "N": n,
+                    "status": "running",
+                }
+                manifest["runs"].append(entry)
+                write_report(output, manifest)
+                if strategy == "staged-laplacian" and n == 256:
+                    required = staged_laplacian_bytes(n)
+                    entry["status"] = "skipped"
+                    entry["note"] = (
+                        f"Estimated staged stencil storage is {required / 1024**3:.2f} GiB; "
+                        "the N=256 staged-Laplacian comparison is skipped because it exceeds "
+                        "the available CI GPU memory."
+                    )
+                    write_report(output, manifest)
+                    continue
+                command = [
+                    str(binary),
+                    f"--N={n}",
+                    *flags,
+                    *strategy_flags,
+                    "--no-snapshots",
+                    f"--output-dir={directory}",
+                    f"--benchmark_min_time={STRATEGY_MIN_TIME}",
+                    f"--benchmark_out={directory / 'benchmark.json'}",
+                    "--benchmark_out_format=json",
+                ]
+                print(
+                    f"Running {configuration}: strategy={strategy}, N={n}", flush=True
+                )
+                try:
+                    execute(command, directory, directory / "run.log")
+                    entry["performance"] = validate_results(
+                        directory,
+                        configuration,
+                        n,
+                        False,
+                        expected_steps=None,
+                        repetitions=None,
+                    )
+                    entry["status"] = "passed"
+                except (RuntimeError, ValueError, OSError, KeyError) as error:
+                    entry["status"] = "failed"
+                    entry["error"] = str(error)
+                    print(str(error), flush=True)
+                write_report(output, manifest)
+    if any(entry["status"] == "failed" for entry in manifest["runs"]):
         raise RuntimeError(
             "One or more Taylor–Green CI cases failed; see report.md and logs"
         )

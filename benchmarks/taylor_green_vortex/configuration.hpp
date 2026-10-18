@@ -25,6 +25,7 @@ struct Configuration
     bool staged_laplacian = false, staged_discrete_hodge_star = false;
     bool staged_reduction = false, staged_reconstruction = false;
     bool staged_diagonal_reduction = false, staged_diagonal_reconstruction = false;
+    bool levi_civita_continuous_hodge_star = false;
 
     template <class Choice>
     static void select(Choice value, Choice& selected, bool& supplied, char const* group)
@@ -64,6 +65,12 @@ struct Configuration
             staged_reduction = staged_diagonal_reduction = true;
         else if (argument == "--staged-diagonal-reconstruction")
             staged_reconstruction = staged_diagonal_reconstruction = true;
+        else if (argument == "--levi-civita-continuous-hodge-star")
+            levi_civita_continuous_hodge_star = true;
+        else if (argument == "--diagonal-reduction")
+            staged_reduction = staged_diagonal_reduction = true;
+        else if (argument == "--diagonal-reconstruction")
+            staged_reconstruction = staged_diagonal_reconstruction = true;
         else
             return false;
         return true;
@@ -79,10 +86,11 @@ struct Configuration
     int laplacian_mode() const
     {
         if (staged_laplacian)
-            return 10;
+            return 19;
         if (staged_discrete_hodge_star)
-            return 9;
-        return reduction_stage() + 3 * reconstruction_stage();
+            return 18;
+        return (reduction_stage() + 3 * reconstruction_stage()) * 2
+               + int(levi_civita_continuous_hodge_star);
     }
     std::string staging_name() const
     {
@@ -96,6 +104,7 @@ struct Configuration
         };
         append(staged_laplacian, "laplacian");
         append(staged_discrete_hodge_star, "discrete-hodge-star");
+        append(levi_civita_continuous_hodge_star, "levi-civita-continuous-hodge-star");
         append(staged_reduction && !staged_diagonal_reduction, "reduction");
         append(staged_diagonal_reduction, "diagonal-reduction");
         append(staged_reconstruction && !staged_diagonal_reconstruction, "reconstruction");

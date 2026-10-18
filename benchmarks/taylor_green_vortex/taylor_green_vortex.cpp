@@ -1126,14 +1126,20 @@ int main(int argc, char** argv)
                                  "Staging: --staged-laplacian --staged-discrete-hodge-star "
                                  "--staged-reduction --staged-reconstruction "
                                  "--staged-diagonal-reduction --staged-diagonal-reconstruction\n"
+                                 "Operator choices: --levi-civita-continuous-hodge-star "
+                                 "--diagonal-reduction --diagonal-reconstruction\n"
                                  "Flags can be combined; outer caches supersede inner stages. "
-                                 "Diagonal flags imply staging. --staged aliases "
+                                 "Diagonal reduction/reconstruction flags select their staged "
+                                 "diagonal caches. --staged aliases "
                                  "--staged-laplacian.\n"
                                  "One Google Benchmark iteration advances one time step. "
                                  "Use --benchmark_min_time=100x for 100 steps.\n"
                                  "Defaults: --incompressible --ideal --hd. Resistive HD is "
-                                 "invalid. Laplacians evaluate geometry during application by "
-                                 "default; --staged-laplacian caches their full stencils.\n";
+                                 "invalid. General continuous Hodge star, reduction and "
+                                 "reconstruction are defaults; specialized operators are "
+                                 "selected by their flags. Laplacians evaluate geometry during "
+                                 "application by default; --staged-laplacian caches their full "
+                                 "stencils.\n";
                 argv[retained++] = argv[i];
             }
         }

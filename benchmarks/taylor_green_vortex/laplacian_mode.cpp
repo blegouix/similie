@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // AI-GENERATED
 
+#include <similie/exterior/continuous_hodge_star/levi_civita_continuous_hodge_star.hpp>
 #include <similie/exterior/discrete_hodge_star/staged_discrete_hodge_star.hpp>
 #include <similie/exterior/exterior.hpp>
 #include <similie/exterior/laplacian/staged_laplacian.hpp>
@@ -41,27 +42,37 @@ struct CoefficientStructure
 template <int Mode>
 struct HodgePolicies
 {
+    static constexpr int coefficient_mode = Mode / 2;
+    static constexpr int reduction_mode = coefficient_mode % 3;
+    static constexpr int reconstruction_mode = coefficient_mode / 3;
+
     template <class Indices, class Position, class Element, sil::exterior::CellComplex Complex>
     using Reconstruction = std::conditional_t<
-            (Mode / 3) % 3 == 0,
+            reconstruction_mode == 0,
             sil::exterior::Reconstruction<Indices, Position, Element, Complex>,
             sil::exterior::detail::CachedReconstruction<
                     Indices,
                     Position,
                     Element,
                     Complex,
-                    CoefficientStructure<(Mode / 3) % 3 == 2>::template Index>>;
+                    CoefficientStructure<reconstruction_mode == 2>::template Index>>;
 
     template <class Indices, class Position, class Element, sil::exterior::CellComplex Complex>
     using Reduction = std::conditional_t<
-            Mode % 3 == 0,
+            reduction_mode == 0,
             sil::exterior::Reduction<Indices, Position, Element, Complex>,
             sil::exterior::detail::CachedReduction<
                     Indices,
                     Position,
                     Element,
                     Complex,
-                    CoefficientStructure<Mode % 3 == 2>::template Index>>;
+                    CoefficientStructure<reduction_mode == 2>::template Index>>;
+
+    template <class Indices1, class Indices2, class Metric, class Element>
+    using Continuous = std::conditional_t<
+            Mode % 2 == 1,
+            sil::exterior::LeviCivitaContinuousHodgeStar<Indices1, Indices2, Metric, Element>,
+            sil::exterior::ContinuousHodgeStar<Indices1, Indices2, Metric, Element>>;
 
     template <
             sil::exterior::CellComplex Complex,
@@ -71,7 +82,7 @@ struct HodgePolicies
             class Position,
             class Element>
     using Discrete = std::conditional_t<
-            Mode == 9,
+            Mode == 18,
             sil::exterior::StagedHodgeStar<Complex, Source, Target, Metric, Position, Element>,
             sil::exterior::ComposedDiscreteHodgeStar<
                     Complex,
@@ -82,7 +93,7 @@ struct HodgePolicies
                     Element,
                     Reconstruction,
                     Reduction,
-                    sil::exterior::LeviCivitaContinuousHodgeStar>>;
+                    Continuous>>;
 };
 
 template <int Mode, class Tensor>
@@ -92,7 +103,7 @@ class SelectedLaplacian final : public LaplacianOperator<Tensor>
     using DirectionIndex
             = std::conditional_t<Form::rank() == 0, Vector, sil::tensor::Covariant<CurlDirection>>;
     using Operation = std::conditional_t<
-            Mode == 10,
+            Mode == 19,
             sil::exterior::StagedLaplacian<
                     MetricIndex,
                     DirectionIndex,
@@ -118,7 +129,7 @@ class SelectedLaplacian final : public LaplacianOperator<Tensor>
             MetricTensor const& metric,
             PositionTensor const& position)
     {
-        if constexpr (Mode == 10)
+        if constexpr (Mode == 19)
             return Operation(
                     Kokkos::DefaultExecutionSpace(),
                     output,
@@ -142,7 +153,7 @@ public:
     }
     void apply(Tensor const& output, Tensor const& input) override
     {
-        if constexpr (Mode == 10)
+        if constexpr (Mode == 19)
             m_operation(output, input);
         else
             m_operation(output, input, Periodic {}, Periodic {});
