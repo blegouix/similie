@@ -43,8 +43,8 @@ md::Topology<1> split_graph()
 
 void apply_matrix(
         std::shared_ptr<gko::matrix::Csr<double, gko::int32>> const& matrix,
-        Kokkos::View<double**> input,
-        Kokkos::View<double**> output)
+        Kokkos::View<double**> const& input,
+        Kokkos::View<double**> const& output)
 {
     auto source = solvers::detail::to_gko_dense(matrix->get_executor(), input);
     auto target = solvers::detail::to_gko_dense(matrix->get_executor(), output);
@@ -57,7 +57,7 @@ template <class Field>
 struct SampledField : Field
 {
     Kokkos::View<double**> values;
-    KOKKOS_FUNCTION SampledField(Field field, Kokkos::View<double**> data)
+    KOKKOS_FUNCTION SampledField(Field const& field, Kokkos::View<double**> const& data)
         : Field(field)
         , values(data)
     {
@@ -72,10 +72,10 @@ struct SampledField : Field
 template <class Direction, class Field, class Flux, class DualRules>
 void evaluate_rows(
         Kokkos::DefaultExecutionSpace const& exec,
-        Field field,
-        Flux flux,
-        DualRules dual,
-        Kokkos::View<double**> output)
+        Field const& field,
+        Flux const& flux,
+        DualRules const& dual,
+        Kokkos::View<double**> const& output)
 {
     ddc::parallel_for_each(
             "evaluate_dec_rows",
@@ -362,7 +362,10 @@ TEST(MultidomainsDifferentialOperator, RectangularCoboundaryAcrossInterface)
     }
 }
 
-void launch_value(Kokkos::DefaultExecutionSpace const& exec, Kokkos::View<int*> values, int index)
+void launch_value(
+        Kokkos::DefaultExecutionSpace const& exec,
+        Kokkos::View<int*> const& values,
+        int index)
 {
     Kokkos::parallel_for(
             "domain_stream_value",
@@ -400,8 +403,8 @@ struct ScaledDomainOperator
     }
     void operator()(
             Kokkos::DefaultExecutionSpace const& exec,
-            Kokkos::View<int*> output,
-            Kokkos::View<int*> input) const
+            Kokkos::View<int*> const& output,
+            Kokkos::View<int*> const& input) const
     {
         int const factor = scale;
         Kokkos::parallel_for(

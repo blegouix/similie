@@ -16,28 +16,28 @@ class LaplacianOperator
 {
 public:
     virtual ~LaplacianOperator() = default;
-    virtual void apply(Tensor output, Tensor input) = 0;
+    virtual void apply(Tensor const& output, Tensor const& input) = 0;
 };
 
 std::unique_ptr<LaplacianOperator<ScalarTensor>> make_scalar_laplacian(
         Configuration const&,
-        ScalarTensor output,
-        ScalarTensor input,
-        MetricTensor,
-        PositionTensor);
+        ScalarTensor const& output,
+        ScalarTensor const& input,
+        MetricTensor const&,
+        PositionTensor const&);
 std::unique_ptr<LaplacianOperator<TwoFormTensor>> make_two_form_laplacian(
         Configuration const&,
-        TwoFormTensor output,
-        TwoFormTensor input,
-        MetricTensor,
-        PositionTensor);
+        TwoFormTensor const& output,
+        TwoFormTensor const& input,
+        MetricTensor const&,
+        PositionTensor const&);
 
 namespace detail {
 template <int Mode, class Tensor>
 std::unique_ptr<LaplacianOperator<Tensor>> make_laplacian_mode(
-        Tensor output,
-        Tensor input,
-        MetricTensor metric,
-        PositionTensor position);
+        Tensor const& output,
+        Tensor const& input,
+        MetricTensor const& metric,
+        PositionTensor const& position);
 } // namespace detail
 } // namespace taylor_green_vortex

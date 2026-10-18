@@ -105,7 +105,7 @@ struct Boundary
             boundary_t<SimplexType>,
             typename AllocationType::array_layout,
             typename AllocationType::memory_space>
-    operator()(AllocationType allocation, SimplexType simplex)
+    operator()(AllocationType allocation, SimplexType const& simplex)
     {
         Chain<boundary_t<SimplexType>,
               typename AllocationType::array_layout,
@@ -140,7 +140,7 @@ struct Boundary
             AllocationType allocation,
             Chain<SimplexType,
                   typename AllocationType::array_layout,
-                  typename AllocationType::memory_space> chain)
+                  typename AllocationType::memory_space> const& chain)
     {
         Chain<boundary_t<SimplexType>,
               typename AllocationType::array_layout,
@@ -167,14 +167,14 @@ KOKKOS_FUNCTION Chain<
         boundary_t<SimplexType>,
         typename AllocationType::array_layout,
         typename AllocationType::memory_space>
-boundary(AllocationType allocation, SimplexType simplex)
+boundary(AllocationType allocation, SimplexType const& simplex)
 {
     return Boundary<AllocationType, SimplexType>::operator()(allocation, simplex);
 }
 
 template <class MemorySpace = Kokkos::HostSpace, class SimplexType>
 KOKKOS_FUNCTION LocalChain<boundary_t<SimplexType>, Kokkos::LayoutRight, MemorySpace> boundary(
-        SimplexType simplex)
+        SimplexType const& simplex)
 {
     LocalChain<boundary_t<SimplexType>, Kokkos::LayoutRight, MemorySpace> chain(
             simplex.discrete_element());
@@ -198,7 +198,7 @@ boundary(
         AllocationType allocation,
         Chain<SimplexType,
               typename AllocationType::array_layout,
-              typename AllocationType::memory_space> chain)
+              typename AllocationType::memory_space> const& chain)
 {
     return Boundary<AllocationType, SimplexType>::operator()(allocation, chain);
 }

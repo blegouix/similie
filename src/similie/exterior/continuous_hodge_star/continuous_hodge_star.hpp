@@ -30,9 +30,9 @@ struct ContinuousHodgeStar
             misc::Specialization<tensor::Tensor> HodgeTensorType,
             misc::Specialization<tensor::Tensor> FormTensorType>
     KOKKOS_FUNCTION static void operator()(
-            HodgeTensorType hodge_tensor,
-            FormTensorType form_tensor,
-            MetricType metric,
+            HodgeTensorType const& hodge_tensor,
+            FormTensorType const& form_tensor,
+            MetricType const& metric,
             BatchElem elem)
     {
         [[maybe_unused]] sil::tensor::tensor_accessor_for_domain_t<
@@ -57,7 +57,7 @@ struct ContinuousHodgeStar
     KOKKOS_FUNCTION static detail::LocalOperatorStencil<
             tensor::lower_t<reduction_index_t<Indices1>>,
             reduction_index_t<Indices2>>
-    value(MetricType metric, BatchElem element)
+    value(MetricType const& metric, BatchElem element)
     {
         using Source = tensor::lower_t<reduction_index_t<Indices1>>;
         using Target = reduction_index_t<Indices2>;
@@ -81,7 +81,7 @@ struct ContinuousHodgeStar
         return result;
     }
 
-    KOKKOS_FUNCTION static double value(MetricType metric, BatchElem elem, auto natural_elem)
+    KOKKOS_FUNCTION static double value(MetricType const& metric, BatchElem elem, auto natural_elem)
     {
         constexpr std::size_t N = ddc::type_seq_size_v<Indices1> + ddc::type_seq_size_v<Indices2>;
         constexpr std::size_t K = ddc::type_seq_size_v<Indices1>;
@@ -159,9 +159,9 @@ template <
         class ExecSpace>
 HodgeStarType fill_discrete_hodge_star(
         ExecSpace const& exec_space,
-        HodgeStarType hodge_star,
-        MetricType metric,
-        PositionType position)
+        HodgeStarType const& hodge_star,
+        MetricType const& metric,
+        PositionType const& position)
 {
     static_assert(
             ddc::type_seq_size_v<ddc::to_type_seq_t<typename PositionType::indices_domain_t>> == 1);
@@ -207,8 +207,8 @@ template <
         class ExecSpace>
 HodgeStarType fill_continuous_hodge_star(
         ExecSpace const& exec_space,
-        HodgeStarType hodge_star,
-        MetricType metric)
+        HodgeStarType const& hodge_star,
+        MetricType const& metric)
 {
     SIMILIE_DEBUG_LOG("similie_compute_continuous_hodge_star");
     ddc::parallel_for_each(
@@ -662,7 +662,7 @@ struct DualHodgeCochain
 
     /** Inverse zero-form Hodge with the physical, truncated dual volume. */
     template <class TopTensor, class Element>
-    KOKKOS_FUNCTION double inverse_zero_form(TopTensor top, Element elem) const
+    KOKKOS_FUNCTION double inverse_zero_form(TopTensor const& top, Element elem) const
     {
         using TopIndices = ddc::type_seq_merge_t<ddc::TypeSeq<Direction>, dual_indices>;
         using Scalar = tensor::Covariant<tensor::ScalarIndex>;
@@ -713,7 +713,7 @@ struct DualHodgeCochain
      * \important This operator and documentation is fully AI-generated.
      */
     template <class Output, class TopTensor, class Element>
-    KOKKOS_FUNCTION void operator()(Output output, TopTensor top, Element elem) const
+    KOKKOS_FUNCTION void operator()(Output const& output, TopTensor const& top, Element elem) const
     {
         output.mem(ddc::DiscreteElement<tensor::Covariant<tensor::ScalarIndex>>(0))
                 = inverse_zero_form(top, elem);
@@ -747,8 +747,8 @@ template <class Direction, class Cochain, class Position, class Geometry, class 
 auto make_dual_hodge_cochain(
         Cochain cochain,
         Position const& position,
-        Geometry geometry_rule,
-        Flux flux_rule,
+        Geometry const& geometry_rule,
+        Flux const& flux_rule,
         double diffusivity = 1.0)
 {
 #if defined(KOKKOS_ENABLE_CUDA)

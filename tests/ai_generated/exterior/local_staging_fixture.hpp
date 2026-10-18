@@ -57,7 +57,7 @@ template <class Index>
 using Allocation = ddc::Chunk<double, FullDomain<Index>, ddc::KokkosAllocator<double, Memory>>;
 
 template <class Index>
-Allocation<Index> allocate(Domain domain)
+Allocation<Index> allocate(Domain const& domain)
 {
     return Allocation<Index>(
             FullDomain<Index>(domain, sil::tensor::TensorAccessor<Index>::domain()),
@@ -75,7 +75,7 @@ inline Domain halo()
             ddc::DiscreteElement<GridX, GridY, GridZ>(0, 0, 0),
             ddc::DiscreteVector<GridX, GridY, GridZ>(4, 4, 4));
 }
-inline void fill_geometry(Field<PositionIndex> position, bool skew, double scale = 1.0)
+inline void fill_geometry(Field<PositionIndex> const& position, bool skew, double scale = 1.0)
 {
     ddc::parallel_for_each(
             Exec(),
@@ -92,7 +92,7 @@ inline void fill_geometry(Field<PositionIndex> position, bool skew, double scale
             });
 }
 template <class Form>
-void fill_form(Field<Form> input, double offset = 0.0)
+void fill_form(Field<Form> const& input, double offset = 0.0)
 {
     ddc::parallel_for_each(
             Exec(),

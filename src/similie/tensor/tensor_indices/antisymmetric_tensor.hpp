@@ -80,7 +80,7 @@ struct TensorAntisymmetricIndex
     }
 
     KOKKOS_FUNCTION static constexpr std::size_t mem_id(
-            std::array<std::size_t, rank()> const natural_ids)
+            std::array<std::size_t, rank()> const& natural_ids)
     {
         std::array<std::size_t, rank()> sorted_ids(natural_ids);
         misc::detail::sort(sorted_ids.begin(), sorted_ids.end());
@@ -109,7 +109,8 @@ struct TensorAntisymmetricIndex
     }
 
 private:
-    KOKKOS_FUNCTION static constexpr bool permutation_parity(std::array<std::size_t, rank()> ids)
+    KOKKOS_FUNCTION static constexpr bool permutation_parity(
+            std::array<std::size_t, rank()> const& ids)
     {
         bool cnt = false;
         for (std::size_t i = 0; i < rank(); i++)
@@ -121,7 +122,7 @@ private:
 
 public:
     KOKKOS_FUNCTION static constexpr std::size_t access_id(
-            std::array<std::size_t, rank()> const natural_ids)
+            std::array<std::size_t, rank()> const& natural_ids)
     {
         if constexpr (rank() <= 1) {
             return mem_id(natural_ids);
@@ -157,8 +158,8 @@ public:
     template <class Tensor, class Elem, class Id, class FunctorType>
     KOKKOS_FUNCTION static constexpr Tensor::element_type process_access(
             const FunctorType& access,
-            Tensor tensor,
-            Elem elem)
+            Tensor const& tensor,
+            Elem const& elem)
     {
         if constexpr (rank() <= 1) {
             return access(tensor, elem);

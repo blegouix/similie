@@ -27,7 +27,7 @@ struct ClampExtrapolationRule
 {
     static constexpr bool STORED_SAMPLES_ONLY = true;
     template <class Domain, class Element>
-    KOKKOS_FUNCTION auto value(Domain domain, Element element) const
+    KOKKOS_FUNCTION auto value(Domain const& domain, Element element) const
     {
         auto result = detail::make_extrapolation_basis(domain, element);
         result
@@ -56,7 +56,7 @@ struct ZeroExtrapolationRule
 {
     static constexpr bool STORED_SAMPLES_ONLY = true;
     template <class Domain, class Element>
-    KOKKOS_FUNCTION auto value(Domain domain, Element element) const
+    KOKKOS_FUNCTION auto value(Domain const& domain, Element element) const
     {
         auto result = detail::make_extrapolation_basis(domain, element);
         if (misc::domain_contains(domain, element))
@@ -91,7 +91,7 @@ struct PrescribedScalarExtrapolationRule
     static constexpr bool IS_DIRICHLET = true;
     double prescribed_value;
     template <class Domain, class Element>
-    KOKKOS_FUNCTION auto value(Domain domain, Element element) const
+    KOKKOS_FUNCTION auto value(Domain const& domain, Element element) const
     {
         auto result = detail::make_extrapolation_basis(domain, element);
         if (misc::domain_contains(domain, element))
@@ -130,7 +130,7 @@ struct ConstantScalarExtrapolationRule
 {
     double exterior_value = 0.0;
     template <class Domain, class Element>
-    KOKKOS_FUNCTION auto value(Domain domain, Element element) const
+    KOKKOS_FUNCTION auto value(Domain const& domain, Element element) const
     {
         auto result = detail::make_extrapolation_basis(domain, element);
         if (misc::domain_contains(domain, element))
@@ -169,7 +169,7 @@ struct NaturalScalarExtrapolationRule
 {
     static constexpr bool STORED_SAMPLES_ONLY = true;
     template <class Domain, class Element>
-    KOKKOS_FUNCTION auto value(Domain domain, Element element) const
+    KOKKOS_FUNCTION auto value(Domain const& domain, Element element) const
     {
         auto result = detail::make_extrapolation_basis(domain, element);
         misc::convert_type_seq_to_t<misc::SignedDiscreteElement, ddc::to_type_seq_t<Domain>> const

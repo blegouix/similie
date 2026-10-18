@@ -158,7 +158,7 @@ struct RowAssembly
 
     Kokkos::View<double**> finalize_rhs(
             Kokkos::DefaultExecutionSpace const& exec,
-            Kokkos::View<double*> scales) const
+            Kokkos::View<double*> const& scales) const
     {
         check();
         RowAssembly const data = *this;

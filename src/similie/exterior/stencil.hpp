@@ -37,7 +37,7 @@ namespace detail {
 
 // Static tensor coefficients, without spatial dimensions or heap allocation.
 template <class Memory, class... Indices>
-KOKKOS_FUNCTION auto coefficient_stencil(ddc::DiscreteDomain<Indices...> domain)
+KOKKOS_FUNCTION auto coefficient_stencil(ddc::DiscreteDomain<Indices...> const& domain)
 {
     std::array<double, (Indices::mem_size() * ... * std::size_t(1))> values {};
     tensor::Tensor<double, ddc::DiscreteDomain<Indices...>, Kokkos::layout_right, Memory> view(
@@ -155,7 +155,7 @@ struct StencilChains
 };
 
 template <class Domain, class Element>
-KOKKOS_FORCEINLINE_FUNCTION std::size_t stencil_node(Domain domain, Element element)
+KOKKOS_FORCEINLINE_FUNCTION std::size_t stencil_node(Domain const& domain, Element element)
 {
     std::size_t node = 0;
     for (std::size_t axis = 0; axis < Domain::rank(); ++axis)
@@ -166,7 +166,7 @@ KOKKOS_FORCEINLINE_FUNCTION std::size_t stencil_node(Domain domain, Element elem
 
 template <class Domain>
 KOKKOS_FORCEINLINE_FUNCTION typename Domain::discrete_element_type stencil_element(
-        Domain domain,
+        Domain const& domain,
         std::size_t node)
 {
     typename Domain::discrete_element_type element = domain.front();
@@ -189,7 +189,7 @@ constexpr std::array<bool, sizeof...(Dimensions)> stencil_axes(ddc::DiscreteDoma
 // Nonperiodic closures simply give zero coefficients to unused wrapped samples.
 template <class Index, std::size_t Radius, class Domain, class Element>
 KOKKOS_FORCEINLINE_FUNCTION Element
-stencil_source(Domain domain, Element element, std::size_t point)
+stencil_source(Domain const& domain, Element element, std::size_t point)
 {
     auto const offset = StencilShape<Index, Radius>::offset(point);
     auto const active = stencil_axes<Index>(Domain {});
@@ -217,9 +217,9 @@ template <
         class Element,
         class Evaluate>
 KOKKOS_FORCEINLINE_FUNCTION Stencil<Index, Source, Target, Radius> operator_stencil(
-        Domain domain,
+        Domain const& domain,
         Element element,
-        Evaluate evaluate)
+        Evaluate const& evaluate)
 {
     Stencil<Index, Source, Target, Radius> stencil;
     auto baseline = evaluate([&](auto sample, auto) {
@@ -274,7 +274,7 @@ public:
     using memory_space = Memory;
     using non_indices_domain_t = Domain;
     using indices_domain_t = ddc::DiscreteDomain<Index>;
-    KOKKOS_FORCEINLINE_FUNCTION StencilField(Domain domain, Evaluate evaluate)
+    KOKKOS_FORCEINLINE_FUNCTION StencilField(Domain const& domain, Evaluate const& evaluate)
         : m_domain(domain)
         , m_evaluate(evaluate)
     {
@@ -360,7 +360,7 @@ template <
 LocalStencilStorage<Source, Target, Domain, Memory, Coefficients> cache_local_stencils(
         Exec const& exec,
         Domain domain,
-        Evaluate evaluate)
+        Evaluate const& evaluate)
 {
     using Index = LocalCoefficientIndex<Source, Target, Coefficients>;
     static_assert(
@@ -408,10 +408,10 @@ struct NoStencilRule
 template <class Operator, class Geometry, class Input, class Element, class Rule1, class Rule2>
 KOKKOS_FORCEINLINE_FUNCTION auto stencil_value(
         Geometry const& geometry,
-        Input input,
+        Input const& input,
         Element element,
-        Rule1 rule1,
-        Rule2 rule2)
+        Rule1 const& rule1,
+        Rule2 const& rule2)
 {
     if constexpr (std::is_same_v<Rule2, NoStencilRule>)
         return Operator::value(geometry, input, element, rule1);
@@ -437,7 +437,12 @@ StencilStorage<
         Radius,
         typename Tensor::non_indices_domain_t,
         typename Tensor::memory_space>
-cache_stencils(Exec const& exec, Tensor input, Geometry geometry, Rule1 rule1, Rule2 rule2 = {})
+cache_stencils(
+        Exec const& exec,
+        Tensor const& input,
+        Geometry const& geometry,
+        Rule1 const& rule1,
+        Rule2 const& rule2 = {})
 {
     using Domain = typename Tensor::non_indices_domain_t;
     using Memory = typename Tensor::memory_space;
@@ -495,9 +500,9 @@ template <
         class Memory>
 Output apply_stencils(
         Exec const& exec,
-        Output output,
-        Input input,
-        StencilStorage<Index, Source, Target, Radius, Domain, Memory> storage)
+        Output const& output,
+        Input const& input,
+        StencilStorage<Index, Source, Target, Radius, Domain, Memory> const& storage)
 {
     if (input.non_indices_domain() != storage.domain)
         throw std::invalid_argument("Staged operator input domain changed");

@@ -10,7 +10,7 @@ namespace {
 using namespace local_staging_test;
 
 template <class Form>
-void expect_equal(Field<Form> a, Field<Form> b)
+void expect_equal(Field<Form> const& a, Field<Form> const& b)
 {
     Kokkos::View<double*, Memory, Kokkos::MemoryUnmanaged> a_view(a.data_handle(), a.size());
     Kokkos::View<double*, Memory, Kokkos::MemoryUnmanaged> b_view(b.data_handle(), b.size());
@@ -315,7 +315,7 @@ struct NodeMap
             = sil::exterior::detail::LocalOperatorStorage<NodeMap, One, One, Domain, Memory>;
 
     KOKKOS_FUNCTION static sil::exterior::detail::LocalOperatorStencil<One, One> value(
-            Field<PositionIndex> position,
+            Field<PositionIndex> const& position,
             Domain::discrete_element_type element)
     {
         sil::exterior::detail::LocalOperatorStencil<One, One> result;

@@ -73,7 +73,7 @@ struct RelabelizeIndexIn
     }
 
     template <class... DDim>
-    KOKKOS_FUNCTION static constexpr auto operator()(ddc::DiscreteDomain<DDim...> dom)
+    KOKKOS_FUNCTION static constexpr auto operator()(ddc::DiscreteDomain<DDim...> const& dom)
     {
         return relabelize_index_in_t<ddc::DiscreteDomain<DDim...>, OldIndex, NewIndex>(
                 relabelize_index_in<OldIndex, NewIndex>(dom.front()),
@@ -129,7 +129,7 @@ KOKKOS_FUNCTION constexpr relabelize_index_of_t<
         OldIndex,
         NewIndex>
 relabelize_index_of(
-        Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>
+        Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace> const&
                 old_tensor)
 {
     return relabelize_index_of_t<
@@ -248,7 +248,7 @@ struct RelabelizeIndicesIn
     }
 
     template <class... DDim>
-    KOKKOS_FUNCTION static constexpr auto operator()(ddc::DiscreteDomain<DDim...> dom)
+    KOKKOS_FUNCTION static constexpr auto operator()(ddc::DiscreteDomain<DDim...> const& dom)
     {
         if constexpr (I != ddc::type_seq_size_v<OldIndices>) {
             return RelabelizeIndicesIn<OldIndices, NewIndices, I + 1>::operator()(
@@ -305,7 +305,7 @@ template <
         class LayoutStridedPolicy,
         class MemorySpace>
 KOKKOS_FUNCTION constexpr auto RelabelizeIndicesOf(
-        Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace>
+        Tensor<ElementType, ddc::DiscreteDomain<DDim...>, LayoutStridedPolicy, MemorySpace> const&
                 old_tensor)
 {
     static_assert(ddc::type_seq_size_v<OldIndices> == ddc::type_seq_size_v<NewIndices>);
@@ -362,7 +362,7 @@ template <
         misc::Specialization<ddc::TypeSeq> NewIndices,
         misc::Specialization<Tensor> Tensor>
 KOKKOS_FUNCTION constexpr relabelize_indices_of_t<Tensor, OldIndices, NewIndices>
-relabelize_indices_of(Tensor tensor)
+relabelize_indices_of(Tensor const& tensor)
 {
     static_assert(ddc::type_seq_size_v<OldIndices> == ddc::type_seq_size_v<NewIndices>);
     return detail::RelabelizeIndicesOf<OldIndices, NewIndices, 0>(tensor);

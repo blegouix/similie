@@ -50,7 +50,11 @@ struct LaplacianHodge
 // Fold tensor contraction conventions into canonical component matrices once.
 template <class Source, class Target, class Exec, class Hodge, class Metric, class Position>
 LaplacianHodge<Source, Target, typename Metric::non_indices_domain_t, typename Metric::memory_space>
-cache_laplacian_hodge(Exec const& exec, Hodge hodge, Metric metric, Position position)
+cache_laplacian_hodge(
+        Exec const& exec,
+        Hodge const& hodge,
+        Metric const& metric,
+        Position const& position)
 {
     using Domain = typename Metric::non_indices_domain_t;
     using Memory = typename Metric::memory_space;
@@ -94,7 +98,7 @@ cache_laplacian_hodge(Exec const& exec, Hodge hodge, Metric metric, Position pos
 }
 
 template <class Hodge, class Exec, class Metric, class Position>
-Hodge make_laplacian_hodge(Exec const& exec, Metric metric, Position position)
+Hodge make_laplacian_hodge(Exec const& exec, Metric const& metric, Position const& position)
 {
     if constexpr (std::is_constructible_v<Hodge, Exec const&, Metric, Position>)
         return Hodge(exec, metric, position);
@@ -168,13 +172,13 @@ struct LaplacianHodgePair
     Forward forward;
     Inverse inverse;
     template <class Exec>
-    LaplacianHodgePair(Exec const& exec, Metric metric, Position position)
+    LaplacianHodgePair(Exec const& exec, Metric const& metric, Position const& position)
         : forward(make_laplacian_hodge<Forward>(exec, metric, position))
         , inverse(make_laplacian_hodge<Inverse>(exec, metric, position))
     {
     }
     template <class Exec>
-    auto canonical(Exec const& exec, Metric metric, Position position) const
+    auto canonical(Exec const& exec, Metric const& metric, Position const& position) const
     {
         return std::
                 pair {cache_laplacian_hodge<Cochain, Dual>(exec, forward, metric, position),
@@ -201,8 +205,8 @@ using LaplacianField = StencilField<Index, Domain, Memory, Evaluate>;
 
 template <class Index, class Field, class Rules, class Element, class Chains>
 KOKKOS_FORCEINLINE_FUNCTION auto laplacian_derivative(
-        Field field,
-        Rules rules,
+        Field const& field,
+        Rules const& rules,
         Element element,
         Chains const& chains)
 {
@@ -235,10 +239,10 @@ template <
         class Element,
         class Chains>
 KOKKOS_FORCEINLINE_FUNCTION auto laplacian_codifferential(
-        Field field,
-        Hodge hodge,
-        Inverse inverse,
-        Rules rules,
+        Field const& field,
+        Hodge const& hodge,
+        Inverse const& inverse,
+        Rules const& rules,
         Element element,
         Chains const& chains)
 {
@@ -290,7 +294,7 @@ KOKKOS_FORCEINLINE_FUNCTION auto laplacian_codifferential(
 }
 
 template <class Domain, class Element>
-KOKKOS_FORCEINLINE_FUNCTION std::size_t laplacian_node_id(Domain domain, Element element)
+KOKKOS_FORCEINLINE_FUNCTION std::size_t laplacian_node_id(Domain const& domain, Element element)
 {
     std::size_t id = 0;
     for (std::size_t axis = 0; axis < Domain::rank(); ++axis)
@@ -301,7 +305,7 @@ KOKKOS_FORCEINLINE_FUNCTION std::size_t laplacian_node_id(Domain domain, Element
 
 template <class Domain>
 KOKKOS_FORCEINLINE_FUNCTION typename Domain::discrete_element_type laplacian_element(
-        Domain domain,
+        Domain const& domain,
         std::size_t id)
 {
     typename Domain::discrete_element_type element = domain.front();
@@ -317,7 +321,7 @@ struct LaplacianInputEvaluator
 {
     Tensor input;
     template <class Output, class Element>
-    KOKKOS_FUNCTION void operator()(Output output, Element element) const
+    KOKKOS_FUNCTION void operator()(Output const& output, Element element) const
     {
         ddc::device_for_each(output.domain(), [&](auto component) {
             output.mem(component) = input.mem(element, component);
@@ -333,7 +337,7 @@ struct LaplacianDerivativeEvaluator
     Chain chain;
     Lower lower;
     template <class Output, class Element>
-    KOKKOS_FUNCTION void operator()(Output output, Element element) const
+    KOKKOS_FUNCTION void operator()(Output const& output, Element element) const
     {
         Coboundary<Index, Cochain>::operator()(
                 output,
@@ -362,7 +366,11 @@ struct LaplacianCodifferential
     Pair stars;
     ddc::Chunk<double, Domain, ddc::KokkosAllocator<double, Memory>> buffer;
 
-    LaplacianCodifferential(Exec const& exec, Tensor input, Metric metric, Position position)
+    LaplacianCodifferential(
+            Exec const& exec,
+            Tensor const& input,
+            Metric const& metric,
+            Position const& position)
         : stars(exec, metric, position)
         , buffer(Domain(input.non_indices_domain(), tensor::TensorAccessor<DualIndex>::domain()),
                  ddc::KokkosAllocator<double, Memory>())
@@ -373,14 +381,14 @@ struct LaplacianCodifferential
     void apply(
             Exec const& exec,
             Output output,
-            Evaluate evaluate,
-            Metric metric,
-            Position position,
-            Rules rules)
+            Evaluate const& evaluate,
+            Metric const& metric,
+            Position const& position,
+            Rules const& rules)
     {
-        tensor::Tensor dual(buffer.span_view());
-        auto const forward = stars.forward;
-        auto const inverse = stars.inverse;
+        tensor::Tensor const dual(buffer.span_view());
+        auto const& forward = stars.forward;
+        auto const& inverse = stars.inverse;
         auto const boundary = [&] {
             if constexpr (misc::Specialization<Rules, tensor::ExtrapolationRules>)
                 return rules;
@@ -476,7 +484,11 @@ struct LaplacianUpper<true, Index, Cochain, Tensor, Metric, Position, Exec, Hodg
             Exec,
             Hodge>
             operation;
-    LaplacianUpper(Exec const& exec, Tensor input, Metric metric, Position position)
+    LaplacianUpper(
+            Exec const& exec,
+            Tensor const& input,
+            Metric const& metric,
+            Position const& position)
         : operation(exec, input, metric, position)
     {
     }
@@ -517,7 +529,12 @@ struct LaplacianLower<true, Index, Cochain, Tensor, Metric, Position, Exec, Hodg
             typename Tensor::discrete_domain_type,
             ddc::KokkosAllocator<double, Memory>>>
             contribution;
-    LaplacianLower(Exec const& exec, Tensor output, Tensor input, Metric metric, Position position)
+    LaplacianLower(
+            Exec const& exec,
+            Tensor const& output,
+            Tensor const& input,
+            Metric const& metric,
+            Position const& position)
         : operation(exec, input, metric, position)
         , lower(LowerDomain(
                         input.non_indices_domain(),

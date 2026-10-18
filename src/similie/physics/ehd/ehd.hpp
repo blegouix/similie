@@ -33,8 +33,8 @@ public:
     };
     static_assert(PhysicsConcept<IncompressibleEHDModel>);
     KOKKOS_FUNCTION IncompressibleEHDModel(
-            fluid::IncompressibleNavierStokes fluid_physics,
-            ElectricPhysics electric_physics)
+            fluid::IncompressibleNavierStokes const& fluid_physics,
+            ElectricPhysics const& electric_physics)
         : CombinePhysics<
                   fluid::IncompressibleNavierStokes,
                   ElectricPhysics>(fluid_physics, electric_physics)
@@ -127,8 +127,8 @@ public:
         Vector electric_current;
     };
     KOKKOS_FUNCTION CompressibleEHDModel(
-            FluidPhysics fluid_physics,
-            ElectricPhysics electric_physics)
+            FluidPhysics const& fluid_physics,
+            ElectricPhysics const& electric_physics)
         : CombinePhysics<FluidPhysics, ElectricPhysics>(fluid_physics, electric_physics)
     {
     }

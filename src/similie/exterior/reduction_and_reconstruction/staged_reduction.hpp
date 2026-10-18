@@ -76,7 +76,11 @@ template <
         class Input,
         class Position>
 StagedReduction<Indices, Output, Input, Position, Exec, Complex, Coefficients>
-make_staged_reduction(Exec const& exec, Output output, Input input, Position position)
+make_staged_reduction(
+        Exec const& exec,
+        Output const& output,
+        Input const& input,
+        Position const& position)
 {
     return StagedReduction<
             Indices,

@@ -38,19 +38,19 @@ public:
     template <class Metric, class Position, class Rules = tensor::ZeroExtrapolationRule>
         requires requires(
                 Exec const& exec,
-                Tensor input,
-                Metric metric,
-                Position position,
+                Tensor const& input,
+                Metric const& metric,
+                Position const& position,
                 typename Domain::discrete_element_type element,
-                Rules rules) {
+                Rules const& rules) {
             Operator::value(Operator::geometry(exec, metric, position), input, element, rules);
         }
     static SpatialOperatorStorage build(
             Exec const& exec,
-            Tensor input,
-            Metric metric,
-            Position position,
-            Rules rules = {})
+            Tensor const& input,
+            Metric const& metric,
+            Position const& position,
+            Rules const& rules = {})
     {
         SpatialOperatorStorage result;
         result.m_stencils = cache_stencils<
@@ -70,23 +70,23 @@ public:
             class Dual = tensor::ZeroExtrapolationRule>
         requires requires(
                 Exec const& exec,
-                Tensor input,
-                Metric metric,
-                Position position,
+                Tensor const& input,
+                Metric const& metric,
+                Position const& position,
                 typename Domain::discrete_element_type element,
-                Primal primal,
-                Dual dual) {
+                Primal const& primal,
+                Dual const& dual) {
             Operator::
                     value(Operator::geometry(exec, metric, position), input, element, primal, dual);
         }
     static SpatialOperatorStorage build(
             Exec const& exec,
-            Output output,
-            Tensor input,
-            Metric metric,
-            Position position,
-            Primal primal = {},
-            Dual dual = {})
+            Output const& output,
+            Tensor const& input,
+            Metric const& metric,
+            Position const& position,
+            Primal const& primal = {},
+            Dual const& dual = {})
     {
         if constexpr (EqualDomains) {
             if (input.non_indices_domain() != output.non_indices_domain())
@@ -104,7 +104,7 @@ public:
     }
 
     template <misc::Specialization<tensor::Tensor> Output>
-    Output apply(Exec const& exec, Output output, Tensor input) const
+    Output apply(Exec const& exec, Output const& output, Tensor const& input) const
     {
         if constexpr (EqualDomains) {
             if (output.non_indices_domain() != m_stencils.domain)

@@ -92,7 +92,7 @@ template <class Output, class... Left, class... Right>
 void compare(
         ddc::TypeSeq<Left...>,
         ddc::TypeSeq<Right...>,
-        ddc::DiscreteDomain<Output> output_domain = TensorAccessor<Output>().domain())
+        ddc::DiscreteDomain<Output> const& output_domain = TensorAccessor<Output>().domain())
 {
     using DenseLeft = typename Full<typename TensorAccessor<Left...>::natural_domain_t>::type;
     using DenseRight = typename Full<typename TensorAccessor<Right...>::natural_domain_t>::type;

@@ -90,12 +90,12 @@ struct DomainData
 };
 
 template <class Field, class Geometry, class Physics>
-auto domain_data(Field field, Geometry geometry, Physics physics)
+auto domain_data(Field const& field, Geometry const& geometry, Physics physics)
 {
     return DomainData<Field, Geometry, Physics> {field, geometry, physics, field};
 }
 template <class Field, class Geometry, class Physics, class Flux>
-auto domain_data(Field field, Geometry geometry, Physics physics, Flux flux)
+auto domain_data(Field const& field, Geometry const& geometry, Physics physics, Flux const& flux)
 {
     return DomainData<Field, Geometry, Physics, Flux> {field, geometry, physics, flux};
 }
@@ -126,7 +126,7 @@ struct FaceRule
         return interface ? external(field, elem) : boundary(field, elem);
     }
     template <class Domain, class Element>
-    KOKKOS_FUNCTION auto value(Domain domain, Element elem) const
+    KOKKOS_FUNCTION auto value(Domain const& domain, Element elem) const
     {
         return interface ? external.value(domain, elem) : boundary.value(domain, elem);
     }
@@ -171,7 +171,7 @@ class Multidomain
     std::shared_ptr<DomainViews<decltype(Data::flux)>> m_flux;
 
     template <class Field, class Select>
-    auto make_views(std::string const& label, Select select) const
+    auto make_views(std::string const& label, Select const& select) const
     {
         std::shared_ptr<DomainViews<Field>> views
                 = std::make_shared<DomainViews<Field>>(label, domain_count());

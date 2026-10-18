@@ -59,7 +59,7 @@ class VorticityDEC
             ddc::DiscreteDomain<GridX, GridY, GridZ, Index>,
             Kokkos::layout_right,
             Field::memory_space>
-    tensor(Field storage) const
+    tensor(Field const& storage) const
     {
         [[maybe_unused]] sil::tensor::TensorAccessor<Index> accessor;
         ddc::DiscreteDomain<GridX, GridY, GridZ, Index> const
@@ -97,7 +97,7 @@ public:
     };
 
     // NVCC requires methods enclosing extended device lambdas to be public.
-    void pack(Field source, Field target)
+    void pack(Field const& source, Field const& target)
     {
         Kokkos::parallel_for(
                 "pack_cochain",
@@ -107,7 +107,7 @@ public:
                         target(0, 3 * i + c) = source(c, i);
                 });
     }
-    void unpack(Field source, Field target)
+    void unpack(Field const& source, Field const& target)
     {
         Kokkos::parallel_for(
                 "unpack_cochain",
@@ -119,7 +119,7 @@ public:
     }
 
 private:
-    KOKKOS_FUNCTION static double axial(TwoFormTensor field, int i, int a, int n)
+    KOKKOS_FUNCTION static double axial(TwoFormTensor const& field, int i, int a, int n)
     {
         SpatialDomain::discrete_element_type const
                 elem(i / (n * n) + 1, (i / n) % n + 1, i % n + 1);
@@ -162,7 +162,7 @@ public:
         Kokkos::fence("vorticity_hodge_setup_complete");
     }
     // Physical vector components supplied at their respective forward edges.
-    void reduce_edges(Field edge_values, Field cochain)
+    void reduce_edges(Field const& edge_values, Field const& cochain)
     {
         pack(edge_values, m_physical_one);
         VectorTensor const physical = tensor<Vector>(m_physical_one),
@@ -170,7 +170,7 @@ public:
         m_grid.reduce(reduced, physical);
         unpack(m_one, cochain);
     }
-    void reduce_nodes(Field values, Field cochain)
+    void reduce_nodes(Field const& values, Field const& cochain)
     {
         Field const edges = m_edges;
         int const n = m_grid.n;
@@ -186,7 +186,7 @@ public:
         reduce_edges(edges, cochain);
     }
     // Physical axial components sampled at forward face centres.
-    void reduce_faces(Field values, Field cochain)
+    void reduce_faces(Field const& values, Field const& cochain)
     {
         Field const storage = m_physical_two;
         Kokkos::parallel_for(
@@ -202,7 +202,7 @@ public:
         m_grid.reduce(reduced, physical);
         unpack(m_two, cochain);
     }
-    void edge_values(Field cochain, Field output)
+    void edge_values(Field const& cochain, Field const& output)
     {
         pack(cochain, m_one);
         VectorTensor const reduced = tensor<Vector>(m_one),
@@ -210,7 +210,7 @@ public:
         m_grid.reconstruct(physical, reduced);
         unpack(m_physical_one, output);
     }
-    void face_values(Field cochain, Field output)
+    void face_values(Field const& cochain, Field const& output)
     {
         pack(cochain, m_two);
         TwoFormTensor const reduced = tensor<TwoForm>(m_two),
@@ -225,7 +225,7 @@ public:
                         output(a, i) = axial(physical, i, a, n);
                 });
     }
-    void exterior_curl(Field one_cochain, Field two_cochain)
+    void exterior_curl(Field const& one_cochain, Field const& two_cochain)
     {
         pack(one_cochain, m_one);
         sil::exterior::deriv<sil::tensor::Covariant<CurlDirection>, Vector>(
@@ -235,19 +235,19 @@ public:
                 Periodic {});
         unpack(m_two, two_cochain);
     }
-    void codifferential(Field two_cochain, Field one_cochain)
+    void codifferential(Field const& two_cochain, Field const& one_cochain)
     {
         pack(two_cochain, m_two);
         (*m_codifferential)(tensor<Vector>(m_one), tensor<TwoForm>(m_two));
         unpack(m_one, one_cochain);
     }
-    void positive_laplacian(Field input, Field output)
+    void positive_laplacian(Field const& input, Field const& output)
     {
         pack(input, m_two);
         m_laplacian->apply(tensor<TwoForm>(m_two_output), tensor<TwoForm>(m_two));
         unpack(m_two_output, output);
     }
-    void divergence(Field one_cochain, Field output)
+    void divergence(Field const& one_cochain, Field const& output)
     {
         pack(one_cochain, m_one);
         (*m_one_codifferential)(m_grid.scalar(output), tensor<Vector>(m_one));
@@ -256,7 +256,7 @@ public:
                 m_grid.cells,
                 KOKKOS_LAMBDA(int i) { output(0, i) *= -1; });
     }
-    void velocity(Field cochain, Field output)
+    void velocity(Field const& cochain, Field const& output)
     {
         pack(cochain, m_one);
         VectorTensor const reduced = tensor<Vector>(m_one),
@@ -274,7 +274,7 @@ public:
                                           + edge(0, 3 * StructuredGrid::neighbor(i, a, -1, n) + a));
                 });
     }
-    void axial_nodes(Field cochain, Field output)
+    void axial_nodes(Field const& cochain, Field const& output)
     {
         pack(cochain, m_two);
         TwoFormTensor const reduced = tensor<TwoForm>(m_two),
@@ -296,7 +296,7 @@ public:
                     }
                 });
     }
-    double closure_rms(Field two_cochain)
+    double closure_rms(Field const& two_cochain)
     {
         pack(two_cochain, m_two);
         sil::exterior::deriv<sil::tensor::Covariant<VolumeDirection>, TwoForm>(

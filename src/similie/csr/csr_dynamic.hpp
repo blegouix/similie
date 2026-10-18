@@ -26,7 +26,7 @@ private:
     std::vector<double> m_values;
 
 public:
-    CsrDynamic(ddc::DiscreteDomain<HeadTensorIndex, TailTensorIndex...> domain)
+    CsrDynamic(ddc::DiscreteDomain<HeadTensorIndex, TailTensorIndex...> const& domain)
         : m_domain(domain)
         , m_coalesc_idx({0})
         , m_idx()
@@ -35,10 +35,10 @@ public:
     }
 
     CsrDynamic(
-            ddc::DiscreteDomain<HeadTensorIndex, TailTensorIndex...> domain,
-            std::vector<std::size_t> coalesc_idx,
-            std::array<std::vector<std::size_t>, sizeof...(TailTensorIndex)> idx,
-            std::vector<double> values)
+            ddc::DiscreteDomain<HeadTensorIndex, TailTensorIndex...> const& domain,
+            std::vector<std::size_t> const& coalesc_idx,
+            std::array<std::vector<std::size_t>, sizeof...(TailTensorIndex)> const& idx,
+            std::vector<double> const& values)
         : m_domain(domain)
         , m_coalesc_idx(coalesc_idx)
         , m_idx(idx)
@@ -46,7 +46,7 @@ public:
     {
     }
 
-    ddc::DiscreteDomain<HeadTensorIndex, TailTensorIndex...> domain()
+    ddc::DiscreteDomain<HeadTensorIndex, TailTensorIndex...> domain() const
     {
         return m_domain;
     }
@@ -72,7 +72,7 @@ public:
                     double,
                     ddc::DiscreteDomain<TailTensorIndex...>,
                     Kokkos::layout_right,
-                    Kokkos::DefaultHostExecutionSpace::memory_space> dense)
+                    Kokkos::DefaultHostExecutionSpace::memory_space> const& dense)
     {
         m_coalesc_idx.push_back(m_coalesc_idx.back());
         ddc::host_for_each(dense.domain(), [&](ddc::DiscreteElement<TailTensorIndex...> elem) {
@@ -113,7 +113,7 @@ public:
                 new_values);
     }
 
-    void write(std::ofstream& file)
+    void write(std::ofstream& file) const
     {
         auto const write_block = [&file](auto const& values) {
             std::size_t const byte_size
@@ -142,8 +142,8 @@ csr2dense(
                 double,
                 ddc::DiscreteDomain<HeadId, TailId...>,
                 Kokkos::layout_right,
-                Kokkos::DefaultHostExecutionSpace::memory_space> dense,
-        CsrDynamic<HeadId, TailId...> csr)
+                Kokkos::DefaultHostExecutionSpace::memory_space> const& dense,
+        CsrDynamic<HeadId, TailId...> const& csr)
 {
     SIMILIE_DEBUG_LOG("similie_perform_csr2dense");
     ddc::parallel_fill(dense, 0.);

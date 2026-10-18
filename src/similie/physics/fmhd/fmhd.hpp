@@ -34,8 +34,8 @@ public:
     };
     static_assert(PhysicsConcept<IncompressibleFMHDModel>);
     KOKKOS_FUNCTION IncompressibleFMHDModel(
-            fluid::IncompressibleNavierStokes fluid_physics,
-            ElectromagneticPhysics electromagnetic_physics)
+            fluid::IncompressibleNavierStokes const& fluid_physics,
+            ElectromagneticPhysics const& electromagnetic_physics)
         : CombinePhysics<
                   fluid::IncompressibleNavierStokes,
                   ElectromagneticPhysics>(fluid_physics, electromagnetic_physics)
@@ -141,8 +141,8 @@ public:
         Vector electric_current;
     };
     KOKKOS_FUNCTION CompressibleFMHDModel(
-            FluidPhysics fluid_physics,
-            ElectromagneticPhysics electromagnetic_physics)
+            FluidPhysics const& fluid_physics,
+            ElectromagneticPhysics const& electromagnetic_physics)
         : CombinePhysics<
                   FluidPhysics,
                   ElectromagneticPhysics>(fluid_physics, electromagnetic_physics)

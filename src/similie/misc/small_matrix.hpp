@@ -36,7 +36,7 @@ KOKKOS_FUNCTION unmanaged_vector_view_t<Scalar, MemorySpace> vector_view(
 }
 
 template <class MatrixView>
-KOKKOS_FUNCTION void fill_identity(MatrixView matrix)
+KOKKOS_FUNCTION void fill_identity(MatrixView const& matrix)
 {
     for (std::size_t i = 0; i < matrix.extent(0); ++i) {
         for (std::size_t j = 0; j < matrix.extent(1); ++j) {
@@ -46,7 +46,7 @@ KOKKOS_FUNCTION void fill_identity(MatrixView matrix)
 }
 
 template <class MatrixView1, class MatrixView2>
-KOKKOS_FUNCTION void copy_matrix(MatrixView1 dst, MatrixView2 src)
+KOKKOS_FUNCTION void copy_matrix(MatrixView1 const& dst, MatrixView2 const& src)
 {
     assert(dst.extent(0) == src.extent(0) && dst.extent(1) == src.extent(1));
     for (std::size_t i = 0; i < dst.extent(0); ++i) {
@@ -58,8 +58,8 @@ KOKKOS_FUNCTION void copy_matrix(MatrixView1 dst, MatrixView2 src)
 
 template <class MatrixView, class RowIds, class ColIds, class SubmatrixView>
 KOKKOS_FUNCTION void extract_submatrix(
-        SubmatrixView submatrix,
-        MatrixView matrix,
+        SubmatrixView const& submatrix,
+        MatrixView const& matrix,
         RowIds const& row_ids,
         ColIds const& col_ids)
 {
@@ -72,7 +72,7 @@ KOKKOS_FUNCTION void extract_submatrix(
 }
 
 template <class MatrixView>
-KOKKOS_FUNCTION typename MatrixView::non_const_value_type determinant(MatrixView matrix)
+KOKKOS_FUNCTION typename MatrixView::non_const_value_type determinant(MatrixView const& matrix)
 {
     assert(matrix.extent(0) == matrix.extent(1) && "Matrix should be square.");
     if (matrix.extent(0) == 0) {
@@ -117,14 +117,17 @@ KOKKOS_FUNCTION typename MatrixView::non_const_value_type determinant(MatrixView
 }
 
 template <class InverseView, class MatrixView, class WorkspaceView>
-KOKKOS_FUNCTION bool invert(InverseView inverse, MatrixView matrix, WorkspaceView workspace)
+KOKKOS_FUNCTION bool invert(
+        InverseView const& inverse,
+        MatrixView const& matrix,
+        WorkspaceView const& workspace)
 {
     assert(inverse.extent(0) == inverse.extent(1) && "Inverse target should be square.");
     assert(matrix.extent(0) == matrix.extent(1) && "Input matrix should be square.");
     assert(inverse.extent(0) == matrix.extent(0) && "Input/output matrix sizes should match.");
     assert(workspace.extent(0) >= matrix.extent(0) * matrix.extent(1) && "Workspace is too small.");
 
-    auto matrix_work = matrix_view<
+    auto const matrix_work = matrix_view<
             typename MatrixView::non_const_value_type,
             typename MatrixView::
                     memory_space>(workspace.data(), matrix.extent(0), matrix.extent(1));
@@ -181,7 +184,7 @@ KOKKOS_FUNCTION bool invert(InverseView inverse, MatrixView matrix, WorkspaceVie
 
 template <std::size_t N, class MatrixView, class RowIds, class ColIds>
 KOKKOS_FUNCTION double submatrix_determinant(
-        MatrixView matrix,
+        MatrixView const& matrix,
         RowIds const& row_ids,
         ColIds const& col_ids,
         std::array<double, N * N>& submatrix_alloc)
@@ -189,7 +192,7 @@ KOKKOS_FUNCTION double submatrix_determinant(
     if constexpr (N == 0) {
         return 1.;
     } else {
-        auto submatrix = matrix_view<
+        auto const submatrix = matrix_view<
                 double,
                 typename MatrixView::memory_space>(submatrix_alloc.data(), N, N);
         extract_submatrix(submatrix, matrix, row_ids, col_ids);

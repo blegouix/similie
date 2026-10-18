@@ -50,10 +50,10 @@ template <
         class Element,
         class NaturalElement>
 concept CoboundaryConcept = requires(
-        Output output,
-        Evaluator evaluator,
-        Chain chain,
-        LowerChain lower_chain,
+        Output const& output,
+        Evaluator const& evaluator,
+        Chain const& chain,
+        LowerChain const& lower_chain,
         Element element,
         NaturalElement natural_element) {
     Operator::value(chain, lower_chain, element, natural_element);
@@ -70,10 +70,10 @@ template <
         class NaturalElement>
 concept DiscreteHodgeStarConcept = requires(
         Operator operation,
-        Output output,
-        Input input,
-        Metric metric,
-        Position position,
+        Output const& output,
+        Input const& input,
+        Metric const& metric,
+        Position const& position,
         Element element,
         NaturalElement natural_element) {
     operation.value(metric, position, element);
@@ -90,9 +90,9 @@ template <
         class NaturalElement>
 concept ContinuousHodgeStarConcept = requires(
         Operator operation,
-        Output output,
-        Input input,
-        Metric metric,
+        Output const& output,
+        Input const& input,
+        Metric const& metric,
         Element element,
         NaturalElement natural_element) {
     operation.value(metric, element);
@@ -101,22 +101,26 @@ concept ContinuousHodgeStarConcept = requires(
 };
 
 template <class Operator, class Output, class Input, class... Arguments>
-concept LocalOperatorConcept
-        = requires(Operator const& operation, Output output, Input input, Arguments... arguments) {
-              { operation(output, input, arguments...) } -> std::same_as<void>;
-          };
+concept LocalOperatorConcept = requires(
+        Operator const& operation,
+        Output const& output,
+        Input const& input,
+        Arguments... arguments) {
+    { operation(output, input, arguments...) } -> std::same_as<void>;
+};
 
 template <class Operator, class Output, class Input = Output>
-concept StagedOperatorConcept = requires(Operator const& operation, Output output, Input input) {
-    { operation(output, input) } -> std::same_as<Output>;
-};
+concept StagedOperatorConcept
+        = requires(Operator const& operation, Output const& output, Input const& input) {
+              { operation(output, input) } -> std::same_as<Output>;
+          };
 
 template <class Storage, class Output, class Input = Output>
 concept StagingStorageConcept = requires(
         Storage const& storage,
         typename Storage::execution_space const& exec,
-        Output output,
-        Input input) {
+        Output const& output,
+        Input const& input) {
     { storage.apply(exec, output, input) } -> std::same_as<Output>;
 };
 

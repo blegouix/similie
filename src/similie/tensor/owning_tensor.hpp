@@ -36,7 +36,7 @@ class OwningTensor<Tensor<ElementType, DomainType, LayoutStridedPolicy, MemorySp
     }
 
 public:
-    KOKKOS_FUNCTION explicit OwningTensor(Base tensor, Storage&& storage)
+    KOKKOS_FUNCTION explicit OwningTensor(Base const& tensor, Storage&& storage)
         : Base(tensor)
         , m_storage(std::move(storage))
     {

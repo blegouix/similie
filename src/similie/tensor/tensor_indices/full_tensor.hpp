@@ -62,13 +62,13 @@ struct TensorFullIndex
     }
 
     KOKKOS_FUNCTION static constexpr std::size_t mem_id(
-            std::array<std::size_t, sizeof...(TensorIndex)> const natural_ids)
+            std::array<std::size_t, sizeof...(TensorIndex)> const& natural_ids)
     {
         return access_id(natural_ids);
     }
 
     KOKKOS_FUNCTION static constexpr std::size_t access_id(
-            std::array<std::size_t, sizeof...(TensorIndex)> const natural_ids)
+            std::array<std::size_t, sizeof...(TensorIndex)> const& natural_ids)
     {
         if constexpr (rank() == 0) {
             return 0;
@@ -87,8 +87,8 @@ struct TensorFullIndex
     template <class Tensor, class Elem, class Id, class FunctorType>
     KOKKOS_FUNCTION static constexpr Tensor::element_type process_access(
             const FunctorType& access,
-            Tensor tensor,
-            Elem elem)
+            Tensor const& tensor,
+            Elem const& elem)
     {
         return access(tensor, elem);
     }

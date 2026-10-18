@@ -9,10 +9,10 @@ namespace {
 template <int Mode = 0, class Tensor>
 std::unique_ptr<LaplacianOperator<Tensor>> dispatch(
         int selected,
-        Tensor output,
-        Tensor input,
-        MetricTensor metric,
-        PositionTensor position)
+        Tensor const& output,
+        Tensor const& input,
+        MetricTensor const& metric,
+        PositionTensor const& position)
 {
     if (selected == Mode)
         return detail::make_laplacian_mode<Mode>(output, input, metric, position);
@@ -24,19 +24,19 @@ std::unique_ptr<LaplacianOperator<Tensor>> dispatch(
 
 std::unique_ptr<LaplacianOperator<ScalarTensor>> make_scalar_laplacian(
         Configuration const& selected,
-        ScalarTensor output,
-        ScalarTensor input,
-        MetricTensor metric,
-        PositionTensor position)
+        ScalarTensor const& output,
+        ScalarTensor const& input,
+        MetricTensor const& metric,
+        PositionTensor const& position)
 {
     return dispatch(selected.laplacian_mode(), output, input, metric, position);
 }
 std::unique_ptr<LaplacianOperator<TwoFormTensor>> make_two_form_laplacian(
         Configuration const& selected,
-        TwoFormTensor output,
-        TwoFormTensor input,
-        MetricTensor metric,
-        PositionTensor position)
+        TwoFormTensor const& output,
+        TwoFormTensor const& input,
+        MetricTensor const& metric,
+        PositionTensor const& position)
 {
     return dispatch(selected.laplacian_mode(), output, input, metric, position);
 }

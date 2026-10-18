@@ -134,12 +134,18 @@ struct TensorProdAnyAnyAny<
             LayoutStridedPolicy,
             MemorySpace>
     operator()(
-            Tensor<ElementType, ddc::DiscreteDomain<ProdDDim...>, LayoutStridedPolicy, MemorySpace>
-                    prod_tensor,
-            Tensor<LeftElement, ddc::DiscreteDomain<Index1...>, LayoutStridedPolicy, MemorySpace>
-                    tensor1,
-            Tensor<RightElement, ddc::DiscreteDomain<Index2...>, LayoutStridedPolicy, MemorySpace>
-                    tensor2)
+            Tensor<ElementType,
+                   ddc::DiscreteDomain<ProdDDim...>,
+                   LayoutStridedPolicy,
+                   MemorySpace> const& prod_tensor,
+            Tensor<LeftElement,
+                   ddc::DiscreteDomain<Index1...>,
+                   LayoutStridedPolicy,
+                   MemorySpace> const& tensor1,
+            Tensor<RightElement,
+                   ddc::DiscreteDomain<Index2...>,
+                   LayoutStridedPolicy,
+                   MemorySpace> const& tensor2)
     {
         if constexpr (
                 (StructuredTensorProductIndex<Index1> || ...)
@@ -150,13 +156,14 @@ struct TensorProdAnyAnyAny<
                     ddc::TypeSeq<Index2...>,
                     ddc::TypeSeq<ContractDDim...>>::operator()(prod_tensor, tensor1, tensor2);
         } else {
-            tensor::TensorAccessor<ContractDDim...> contract_accessor;
-            ddc::DiscreteDomain<ContractDDim...> contract_dom = contract_accessor.natural_domain();
+            tensor::TensorAccessor<ContractDDim...> const contract_accessor;
+            ddc::DiscreteDomain<ContractDDim...> const contract_dom
+                    = contract_accessor.natural_domain();
 
             ddc::device_for_each(
                     prod_tensor.domain(),
                     [&](ddc::DiscreteElement<ProdDDim...> mem_elem) {
-                        auto elem = prod_tensor.canonical_natural_element(mem_elem);
+                        auto const elem = prod_tensor.canonical_natural_element(mem_elem);
                         prod_tensor.mem(mem_elem) = ddc::device_transform_reduce(
                                 contract_dom,
                                 0.,
@@ -210,15 +217,15 @@ Tensor<ElementType, ddc::DiscreteDomain<ProdDDim...>, LayoutStridedPolicy, Memor
                 Tensor<ElementType,
                        ddc::DiscreteDomain<ProdDDim...>,
                        LayoutStridedPolicy,
-                       MemorySpace> prod_tensor,
+                       MemorySpace> const& prod_tensor,
                 Tensor<LeftElement,
                        ddc::DiscreteDomain<Index1...>,
                        LayoutStridedPolicy,
-                       MemorySpace> tensor1,
+                       MemorySpace> const& tensor1,
                 Tensor<RightElement,
                        ddc::DiscreteDomain<Index2...>,
                        LayoutStridedPolicy,
-                       MemorySpace> tensor2)
+                       MemorySpace> const& tensor2)
 {
     check_tensors_compatibility<
             ddc::TypeSeq<ProdDDim...>,
@@ -275,13 +282,15 @@ struct TensorProdNatYoungNat<
             Tensor<ElementType,
                    ddc::DiscreteDomain<HeadDDim1..., TailDDim2...>,
                    Kokkos::layout_right,
-                   Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
-            Tensor<ElementType, ddc::DiscreteDomain<Index1>, LayoutStridedPolicy, MemorySpace>
-                    tensor1,
+                   Kokkos::DefaultHostExecutionSpace::memory_space> const& prod_tensor,
+            Tensor<ElementType,
+                   ddc::DiscreteDomain<Index1>,
+                   LayoutStridedPolicy,
+                   MemorySpace> const& tensor1,
             Tensor<ElementType,
                    ddc::DiscreteDomain<ContractDDim..., TailDDim2...>,
                    LayoutStridedPolicy,
-                   MemorySpace> tensor2)
+                   MemorySpace> const& tensor2)
     {
         /*
         typename TensorYoungTableauIndex<DDim1...>::young_tableau young_tableau;
@@ -315,9 +324,10 @@ tensor_prod(
         Tensor<ElementType,
                ddc::DiscreteDomain<ProdDDim...>,
                Kokkos::layout_right,
-               Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
-        Tensor<ElementType, ddc::DiscreteDomain<Index1>, LayoutStridedPolicy, MemorySpace> tensor1,
-        Tensor<ElementType, ddc::DiscreteDomain<DDim2...>, LayoutStridedPolicy, MemorySpace>
+               Kokkos::DefaultHostExecutionSpace::memory_space> const& prod_tensor,
+        Tensor<ElementType, ddc::DiscreteDomain<Index1>, LayoutStridedPolicy, MemorySpace> const&
+                tensor1,
+        Tensor<ElementType, ddc::DiscreteDomain<DDim2...>, LayoutStridedPolicy, MemorySpace> const&
                 tensor2)
 {
     /*
@@ -368,11 +378,15 @@ struct TensorProdNatYoungYoung<
             Tensor<ElementType,
                    ddc::DiscreteDomain<HeadDDim1..., TailDDim2...>,
                    Kokkos::layout_right,
-                   Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
-            Tensor<ElementType, ddc::DiscreteDomain<Index1>, LayoutStridedPolicy, MemorySpace>
-                    tensor1,
-            Tensor<ElementType, ddc::DiscreteDomain<Index2>, LayoutStridedPolicy, MemorySpace>
-                    tensor2)
+                   Kokkos::DefaultHostExecutionSpace::memory_space> const& prod_tensor,
+            Tensor<ElementType,
+                   ddc::DiscreteDomain<Index1>,
+                   LayoutStridedPolicy,
+                   MemorySpace> const& tensor1,
+            Tensor<ElementType,
+                   ddc::DiscreteDomain<Index2>,
+                   LayoutStridedPolicy,
+                   MemorySpace> const& tensor2)
     {
         /*
         typename TensorYoungTableauIndex<DDim1...>::young_tableau young_tableau;
@@ -412,9 +426,11 @@ tensor_prod(
         Tensor<ElementType,
                ddc::DiscreteDomain<ProdDDim...>,
                Kokkos::layout_right,
-               Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
-        Tensor<ElementType, ddc::DiscreteDomain<Index1>, LayoutStridedPolicy, MemorySpace> tensor1,
-        Tensor<ElementType, ddc::DiscreteDomain<Index2>, LayoutStridedPolicy, MemorySpace> tensor2)
+               Kokkos::DefaultHostExecutionSpace::memory_space> const& prod_tensor,
+        Tensor<ElementType, ddc::DiscreteDomain<Index1>, LayoutStridedPolicy, MemorySpace> const&
+                tensor1,
+        Tensor<ElementType, ddc::DiscreteDomain<Index2>, LayoutStridedPolicy, MemorySpace> const&
+                tensor2)
 {
     check_tensors_compatibility<
             ddc::TypeSeq<ProdDDim...>,
@@ -480,11 +496,15 @@ struct TensorProdYoungAnyAny<
             Tensor<ElementType,
                    ddc::DiscreteDomain<ProdDDim...>,
                    Kokkos::layout_right,
-                   Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
-            Tensor<ElementType, ddc::DiscreteDomain<Index1...>, LayoutStridedPolicy, MemorySpace>
-                    tensor1,
-            Tensor<ElementType, ddc::DiscreteDomain<Index2...>, LayoutStridedPolicy, MemorySpace>
-                    tensor2)
+                   Kokkos::DefaultHostExecutionSpace::memory_space> const& prod_tensor,
+            Tensor<ElementType,
+                   ddc::DiscreteDomain<Index1...>,
+                   LayoutStridedPolicy,
+                   MemorySpace> const& tensor1,
+            Tensor<ElementType,
+                   ddc::DiscreteDomain<Index2...>,
+                   LayoutStridedPolicy,
+                   MemorySpace> const& tensor2)
     {
         /*
         typename TensorYoungTableauIndex<DDim1...>::young_tableau young_tableau;
@@ -496,8 +516,9 @@ struct TensorProdYoungAnyAny<
                 uncompressed_prod_alloc.data(),
                 ddc::DiscreteDomain(ProdDDim::subindices_domain()...));
 
-        tensor::TensorAccessor<ContractDDim...> contract_accessor;
-        ddc::DiscreteDomain<ContractDDim...> contract_dom = contract_accessor.natural_domain();
+        tensor::TensorAccessor<ContractDDim...> const contract_accessor;
+        ddc::DiscreteDomain<ContractDDim...> const contract_dom
+                = contract_accessor.natural_domain();
 
         ddc::host_for_each(
                 uncompressed_prod.domain(),
@@ -542,10 +563,10 @@ tensor_prod(
         Tensor<ElementType,
                ddc::DiscreteDomain<ProdDDim>,
                Kokkos::layout_right,
-               Kokkos::DefaultHostExecutionSpace::memory_space> prod_tensor,
-        Tensor<ElementType, ddc::DiscreteDomain<Index1...>, LayoutStridedPolicy, MemorySpace>
+               Kokkos::DefaultHostExecutionSpace::memory_space> const& prod_tensor,
+        Tensor<ElementType, ddc::DiscreteDomain<Index1...>, LayoutStridedPolicy, MemorySpace> const&
                 tensor1,
-        Tensor<ElementType, ddc::DiscreteDomain<Index2...>, LayoutStridedPolicy, MemorySpace>
+        Tensor<ElementType, ddc::DiscreteDomain<Index2...>, LayoutStridedPolicy, MemorySpace> const&
                 tensor2)
 {
     check_tensors_compatibility<

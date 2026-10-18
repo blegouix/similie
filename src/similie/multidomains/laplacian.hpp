@@ -46,8 +46,8 @@ template <std::size_t Axis, bool Upper, std::size_t Capacity, class Field, class
 void prescribe_face(
         Kokkos::DefaultExecutionSpace const& exec,
         RowAssembly<Capacity> system,
-        Field field,
-        Primal primal)
+        Field const& field,
+        Primal const& primal)
 {
     if (sil::tensor::detail::is_dirichlet(primal.template boundary_rule<Axis, Upper>())) {
         auto nodes = field.non_indices_domain();
@@ -141,8 +141,8 @@ template <std::size_t Capacity, class Field, class Primal, std::size_t... Axis>
 void prescribe_faces(
         Kokkos::DefaultExecutionSpace const& exec,
         RowAssembly<Capacity> system,
-        Field field,
-        Primal primal,
+        Field const& field,
+        Primal const& primal,
         std::index_sequence<Axis...>)
 {
     (prescribe_face<Axis, false, Capacity>(exec, system, field, primal), ...);

@@ -34,7 +34,7 @@ private:
 
 public:
     template <class StressLaw>
-    ElasticMaterialHodge2D(Positions const& positions, StressLaw stress_law)
+    ElasticMaterialHodge2D(Positions const& positions, StressLaw const& stress_law)
     {
         double const signed_area
                 = 0.5

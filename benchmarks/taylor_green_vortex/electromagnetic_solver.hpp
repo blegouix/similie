@@ -54,7 +54,7 @@ public:
         return m_grid.cells;
     }
     template <class Input, class Output>
-    void apply(Kokkos::DefaultExecutionSpace exec, Input source, Output target) const
+    void apply(Kokkos::DefaultExecutionSpace exec, Input const& source, Output const& target) const
     {
         Field const input = m_input, output = m_output;
         Kokkos::parallel_for(
@@ -256,7 +256,7 @@ public:
                 });
     }
     // Reconstruct geometry-dependent fields, then evaluate exchange and all EM rates.
-    void evaluate(Field velocity)
+    void evaluate(Field const& velocity)
     {
         std::chrono::steady_clock::time_point const started = std::chrono::steady_clock::now();
         Coupling const coupling = m_configuration.coupling;

@@ -182,7 +182,7 @@ public:
         if (!gas)
             incompressible->initialize(state);
     }
-    void evaluate(Field q, Field result, bool reconstruct_pressure = false)
+    void evaluate(Field const& q, Field const& result, bool reconstruct_pressure = false)
     {
         Field acceleration;
         if (electromagnetic) {

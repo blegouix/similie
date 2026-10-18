@@ -167,7 +167,7 @@ template <misc::Specialization<Cochain> CochainType>
 struct Coboundary<CochainType>
 {
     KOKKOS_FUNCTION static coboundary_t<CochainType> operator()(
-            CochainType
+            CochainType const&
                     cochain) // Warning: only cochain.chain() produced using boundary() are supported
     {
         assert(cochain.size() == 2 * (cochain.dimension() + 1)
@@ -294,8 +294,8 @@ template <
         class LowerChain,
         class Element>
 KOKKOS_FUNCTION void apply_incidence(
-        Output output,
-        Evaluator evaluator,
+        Output const& output,
+        Evaluator const& evaluator,
         Chain const& chain,
         LowerChain const& lower_chain,
         Element element)
@@ -364,8 +364,8 @@ template <
         class Element,
         class Component>
 KOKKOS_FUNCTION auto incidence_stencil(
-        Chain chain,
-        Lower lower,
+        Chain const& chain,
+        Lower const& lower,
         Element element,
         Component component)
 {
@@ -424,8 +424,8 @@ struct Coboundary<TagToAddToCochain, CochainTag>
     using cochain_tag = CochainTag;
     template <class ChainType, class LowerChainType, class Elem, class NaturalElem>
     KOKKOS_FUNCTION static auto value(
-            ChainType chain,
-            LowerChainType lower_chain,
+            ChainType const& chain,
+            LowerChainType const& lower_chain,
             Elem elem,
             NaturalElem natural_elem)
     {
@@ -442,10 +442,10 @@ struct Coboundary<TagToAddToCochain, CochainTag>
             class LowerChainType,
             class Elem>
     KOKKOS_FUNCTION static void operator()(
-            CoboundaryTensorType coboundary_tensor,
-            Evaluator evaluator,
-            ChainType chain,
-            LowerChainType lower_chain,
+            CoboundaryTensorType const& coboundary_tensor,
+            Evaluator const& evaluator,
+            ChainType const& chain,
+            LowerChainType const& lower_chain,
             Elem elem)
     {
         detail::apply_incidence<
@@ -473,8 +473,8 @@ struct TransposedCoboundary<TagToAddToCochain, CochainTag>
 {
     template <class ChainType, class LowerChainType, class Elem, class NaturalElem>
     KOKKOS_FUNCTION static auto value(
-            ChainType chain,
-            LowerChainType lower_chain,
+            ChainType const& chain,
+            LowerChainType const& lower_chain,
             Elem elem,
             NaturalElem natural_elem)
     {
@@ -491,10 +491,10 @@ struct TransposedCoboundary<TagToAddToCochain, CochainTag>
             class LowerChainType,
             class Elem>
     KOKKOS_FUNCTION static void operator()(
-            CoboundaryTensorType coboundary_tensor,
-            Evaluator evaluator,
-            ChainType chain,
-            LowerChainType lower_chain,
+            CoboundaryTensorType const& coboundary_tensor,
+            Evaluator const& evaluator,
+            ChainType const& chain,
+            LowerChainType const& lower_chain,
             Elem elem)
     {
         detail::apply_incidence<
@@ -518,7 +518,7 @@ static_assert(CoboundaryConcept<
               ddc::DiscreteElement<detail::DirectionConcept>>);
 
 template <misc::Specialization<Cochain> CochainType>
-KOKKOS_FUNCTION coboundary_t<CochainType> coboundary(CochainType cochain)
+KOKKOS_FUNCTION coboundary_t<CochainType> coboundary(CochainType const& cochain)
 {
     return Coboundary<CochainType>::operator()(cochain);
 }
@@ -544,9 +544,9 @@ template <
         class ExtrapolationRules = tensor::ClampExtrapolationRule>
 coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
         ExecSpace const& exec_space,
-        coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
-        TensorType tensor,
-        ExtrapolationRules extrapolation = {})
+        coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> const& coboundary_tensor,
+        TensorType const& tensor,
+        ExtrapolationRules const& extrapolation = {})
 {
     auto const extrapolation_rules = [&]() {
         if constexpr (misc::Specialization<ExtrapolationRules, tensor::ExtrapolationRules>)
@@ -558,12 +558,12 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary(
             = ddc::remove_dims_of<coboundary_index_t<TagToAddToCochain, CochainTag>>(
                     coboundary_tensor.domain());
 
-    auto chain = tangent_basis<
+    auto const chain = tangent_basis<
             CochainTag::rank() + 1,
             typename detail::NonSpectatorDimension<
                     TagToAddToCochain,
                     typename TensorType::non_indices_domain_t>::type>(exec_space);
-    auto lower_chain = tangent_basis<
+    auto const lower_chain = tangent_basis<
             CochainTag::rank(),
             typename detail::NonSpectatorDimension<
                     TagToAddToCochain,
@@ -598,9 +598,9 @@ template <
         class ExtrapolationRules = tensor::ZeroExtrapolationRule>
 coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> transposed_coboundary(
         ExecSpace const& exec_space,
-        coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
-        TensorType tensor,
-        ExtrapolationRules extrapolation = {})
+        coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> const& coboundary_tensor,
+        TensorType const& tensor,
+        ExtrapolationRules const& extrapolation = {})
 {
     auto const extrapolation_rules = [&]() {
         if constexpr (misc::Specialization<ExtrapolationRules, tensor::ExtrapolationRules>)
@@ -612,12 +612,12 @@ coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> transposed_coboun
             = ddc::remove_dims_of<coboundary_index_t<TagToAddToCochain, CochainTag>>(
                     coboundary_tensor.domain());
 
-    auto chain = tangent_basis<
+    auto const chain = tangent_basis<
             CochainTag::rank() + 1,
             typename detail::NonSpectatorDimension<
                     TagToAddToCochain,
                     typename TensorType::non_indices_domain_t>::type>(exec_space);
-    auto lower_chain = tangent_basis<
+    auto const lower_chain = tangent_basis<
             CochainTag::rank(),
             typename detail::NonSpectatorDimension<
                     TagToAddToCochain,
@@ -652,9 +652,9 @@ template <
         class ExtrapolationRules = tensor::ClampExtrapolationRule>
 coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> deriv(
         ExecSpace const& exec_space,
-        coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> coboundary_tensor,
-        TensorType tensor,
-        ExtrapolationRules extrapolation = {})
+        coboundary_tensor_t<TagToAddToCochain, CochainTag, TensorType> const& coboundary_tensor,
+        TensorType const& tensor,
+        ExtrapolationRules const& extrapolation = {})
 {
     return coboundary<
             TagToAddToCochain,

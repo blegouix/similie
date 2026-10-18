@@ -147,7 +147,7 @@ public:
         Vector electric_field;
     };
     KOKKOS_FUNCTION CompressibleMHDModel(
-            FluidPhysics fluid_physics,
+            FluidPhysics const& fluid_physics,
             MagneticPhysics magnetic_physics)
         : CombinePhysics<FluidPhysics, MagneticPhysics>(fluid_physics, magnetic_physics)
     {

@@ -33,9 +33,9 @@ public:
             std::derived_from<discrete_dimension_type> DDim,
             std::derived_from<bsplines_type> BSplines>
     constexpr ddc::DiscreteDomain<DDim> mesh(
-            ddc::Coordinate<CDim> lower_boundary,
-            ddc::Coordinate<CDim> upper_boundary,
-            ddc::DiscreteVector<DDim> nb_cells)
+            ddc::Coordinate<CDim> const& lower_boundary,
+            ddc::Coordinate<CDim> const& upper_boundary,
+            ddc::DiscreteVector<DDim> const& nb_cells) const
     {
         ddc::init_discrete_space<BSplines>(lower_boundary, upper_boundary, nb_cells);
         ddc::init_discrete_space<DDim>(
@@ -68,21 +68,21 @@ public:
 
     template <class TypeSeqDDim, class TypeSeqBSplines>
     constexpr ddc::detail::convert_type_seq_to_discrete_domain_t<TypeSeqDDim> mesh(
-            ddc::Coordinate<CDim...> lower_boundaries,
-            ddc::Coordinate<CDim...> upper_boundaries,
-            ddc::detail::convert_type_seq_to_discrete_domain_t<TypeSeqDDim>::discrete_vector_type
-                    nb_cells);
+            ddc::Coordinate<CDim...> const& lower_boundaries,
+            ddc::Coordinate<CDim...> const& upper_boundaries,
+            ddc::detail::convert_type_seq_to_discrete_domain_t<
+                    TypeSeqDDim>::discrete_vector_type const& nb_cells) const;
 };
 
 template <std::size_t D, class... CDim>
 template <class TypeSeqDDim, class TypeSeqBSplines>
 constexpr ddc::detail::convert_type_seq_to_discrete_domain_t<TypeSeqDDim> Mesher<D, CDim...>::mesh(
-        ddc::Coordinate<CDim...> lower_boundaries,
-        ddc::Coordinate<CDim...> upper_boundaries,
-        ddc::detail::convert_type_seq_to_discrete_domain_t<TypeSeqDDim>::discrete_vector_type
-                nb_cells)
+        ddc::Coordinate<CDim...> const& lower_boundaries,
+        ddc::Coordinate<CDim...> const& upper_boundaries,
+        ddc::detail::convert_type_seq_to_discrete_domain_t<TypeSeqDDim>::discrete_vector_type const&
+                nb_cells) const
 {
-    std::tuple<detail::Mesher1D<D, CDim>...> meshers;
+    std::tuple<detail::Mesher1D<D, CDim>...> const meshers;
     std::tuple<ddc::DiscreteDomain<ddc::type_seq_element_t<
             ddc::type_seq_rank_v<CDim, ddc::TypeSeq<CDim...>>,
             TypeSeqDDim>>...>

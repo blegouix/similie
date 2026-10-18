@@ -55,12 +55,12 @@ template <
         class Dual = tensor::ZeroExtrapolationRule>
 StagedLaplacian<MetricIndex, Index, Cochain, Tensor, Metric, Position, Exec> make_staged_laplacian(
         Exec const& exec,
-        Tensor output,
-        Tensor input,
-        Metric metric,
-        Position position,
-        Primal primal = {},
-        Dual dual = {})
+        Tensor const& output,
+        Tensor const& input,
+        Metric const& metric,
+        Position const& position,
+        Primal const& primal = {},
+        Dual const& dual = {})
 {
     return {exec, output, input, metric, position, primal, dual};
 }

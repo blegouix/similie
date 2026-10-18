@@ -48,7 +48,7 @@ using CachedReduction = StagedReduction<
         Coefficients>;
 
 template <class Operator, class Exec, class Metric, class Position>
-Operator make_composed_operator(Exec const& exec, Metric metric, Position position)
+Operator make_composed_operator(Exec const& exec, Metric const& metric, Position const& position)
 {
     if constexpr (std::is_constructible_v<Operator, Exec const&, Metric, Position>)
         return Operator(exec, metric, position);
@@ -98,7 +98,10 @@ class ComposedDiscreteHodgeStar
 
 public:
     template <class Exec>
-    ComposedDiscreteHodgeStar(Exec const& exec, MetricType metric, PositionType position)
+    ComposedDiscreteHodgeStar(
+            Exec const& exec,
+            MetricType const& metric,
+            PositionType const& position)
         : m_reconstruction(
                   detail::make_composed_operator<ReconstructionOperator>(exec, metric, position))
         , m_reduction(detail::make_composed_operator<ReductionOperator>(exec, metric, position))
@@ -108,10 +111,10 @@ public:
 
     template <class Output, class Input>
     KOKKOS_FUNCTION void operator()(
-            Output output,
-            Input input,
-            MetricType metric,
-            PositionType position,
+            Output const& output,
+            Input const& input,
+            MetricType const& metric,
+            PositionType const& position,
             BatchElem element) const
     {
         auto reconstructed = detail::make_stencil<typename MetricType::memory_space, Source>(
@@ -127,8 +130,8 @@ public:
     }
 
     KOKKOS_FUNCTION detail::LocalOperatorStencil<Source, Target> value(
-            MetricType metric,
-            PositionType position,
+            MetricType const& metric,
+            PositionType const& position,
             BatchElem element) const
     {
         detail::LocalOperatorStencil<Source, Target> result;
@@ -154,8 +157,8 @@ public:
 
     template <class NaturalElement>
     KOKKOS_FUNCTION double value(
-            MetricType metric,
-            PositionType position,
+            MetricType const& metric,
+            PositionType const& position,
             BatchElem element,
             NaturalElement natural) const
     {

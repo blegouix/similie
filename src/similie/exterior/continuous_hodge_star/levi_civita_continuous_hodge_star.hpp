@@ -56,8 +56,8 @@ public:
             misc::Specialization<tensor::Tensor> HodgeTensorType,
             misc::Specialization<tensor::Tensor> FormTensorType>
     KOKKOS_FUNCTION static void operator()(
-            HodgeTensorType hodge_tensor,
-            FormTensorType form_tensor,
+            HodgeTensorType const& hodge_tensor,
+            FormTensorType const& form_tensor,
             MetricType,
             BatchElem)
     {
@@ -84,7 +84,7 @@ public:
     KOKKOS_FUNCTION static detail::LocalOperatorStencil<
             tensor::lower_t<reduction_index_t<Indices1>>,
             reduction_index_t<Indices2>>
-    value(MetricType metric, BatchElem element)
+    value(MetricType const& metric, BatchElem element)
     {
         using Source = tensor::lower_t<reduction_index_t<Indices1>>;
         using Target = reduction_index_t<Indices2>;

@@ -103,8 +103,8 @@ class TensorProdStructured<
             std::size_t... Values,
             std::size_t... Next>
     KOKKOS_FORCEINLINE_FUNCTION static void extend(
-            Tensor1 left,
-            Tensor2 right,
+            Tensor1 const& left,
+            Tensor2 const& right,
             std::remove_const_t<typename Tensor1::element_type>& sum,
             bool& initialized,
             std::index_sequence<Values...>,
@@ -116,8 +116,8 @@ class TensorProdStructured<
 
     template <std::size_t Output, class Tensor1, class Tensor2, std::size_t... Values>
     KOKKOS_FORCEINLINE_FUNCTION static void contract(
-            Tensor1 left,
-            Tensor2 right,
+            Tensor1 const& left,
+            Tensor2 const& right,
             std::remove_const_t<typename Tensor1::element_type>& sum,
             bool& initialized,
             std::index_sequence<Values...> assigned)
@@ -155,9 +155,9 @@ class TensorProdStructured<
 
     template <std::size_t Output, class ProductTensor, class Tensor1, class Tensor2>
     KOKKOS_FORCEINLINE_FUNCTION static void write(
-            ProductTensor product,
-            Tensor1 left,
-            Tensor2 right)
+            ProductTensor const& product,
+            Tensor1 const& left,
+            Tensor2 const& right)
     {
         constexpr ddc::DiscreteElement<Product...> element = output_element<Output>();
         // Tensor views may select only a subset of the stored output components.
@@ -171,9 +171,9 @@ class TensorProdStructured<
 
     template <class ProductTensor, class Tensor1, class Tensor2, std::size_t... Outputs>
     KOKKOS_FORCEINLINE_FUNCTION static void write(
-            ProductTensor product,
-            Tensor1 left,
-            Tensor2 right,
+            ProductTensor const& product,
+            Tensor1 const& left,
+            Tensor2 const& right,
             std::index_sequence<Outputs...>)
     {
         (write<Outputs>(product, left, right), ...);
@@ -181,7 +181,10 @@ class TensorProdStructured<
 
 public:
     template <class ProductTensor, class Tensor1, class Tensor2>
-    KOKKOS_FUNCTION static void operator()(ProductTensor product, Tensor1 left, Tensor2 right)
+    KOKKOS_FUNCTION static void operator()(
+            ProductTensor const& product,
+            Tensor1 const& left,
+            Tensor2 const& right)
     {
         write(product,
               left,

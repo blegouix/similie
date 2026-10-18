@@ -27,10 +27,10 @@ class StagedOperator
 
 public:
     template <class... Arguments>
-        requires requires(Exec const& exec, Arguments... arguments) {
+        requires requires(Exec const& exec, Arguments const&... arguments) {
             { Storage::build(exec, arguments...) } -> std::same_as<Storage>;
         }
-    StagedOperator(Exec const& exec, Arguments... arguments)
+    StagedOperator(Exec const& exec, Arguments const&... arguments)
         : m_exec("staged_operator_execution")
         , m_storage(Storage::build(exec, arguments...))
     {
@@ -39,26 +39,26 @@ public:
 
     template <class Output, class Input>
         requires StagingStorageConcept<Storage, Output, Input>
-    Output operator()(Output output, Input input) const
+    Output operator()(Output const& output, Input const& input) const
     {
         return m_storage.apply(m_exec(), output, input);
     }
 
     template <class Output, class Input, class... Arguments>
-        requires(sizeof...(Arguments) > 0 && requires(Storage const& storage, Output output,
-                Input input, Arguments... arguments) {
+        requires(sizeof...(Arguments) > 0 && requires(Storage const& storage, Output const& output,
+                Input const& input, Arguments const&... arguments) {
             storage.apply_pointwise(output, input, arguments...);
         })
-    KOKKOS_FUNCTION void operator()(Output output, Input input, Arguments... arguments) const
+    KOKKOS_FUNCTION void operator()(Output const& output, Input const& input, Arguments const&... arguments) const
     {
         m_storage.apply_pointwise(output, input, arguments...);
     }
 
     template <class... Arguments>
-        requires requires(Storage const& storage, Arguments... arguments) {
+        requires requires(Storage const& storage, Arguments const&... arguments) {
             storage.value(arguments...);
         }
-    KOKKOS_FUNCTION auto value(Arguments... arguments) const
+    KOKKOS_FUNCTION auto value(Arguments const&... arguments) const
     {
         return m_storage.value(arguments...);
     }

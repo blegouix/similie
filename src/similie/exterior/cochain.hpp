@@ -85,7 +85,7 @@ public:
                     element_type,
                     ddc::DiscreteDomain<Index>,
                     ddc::detail::kokkos_to_mdspan_layout_t<LayoutStridedPolicy>,
-                    memory_space> tensor) noexcept
+                    memory_space> const& tensor) noexcept
         : m_chain(std::move(chain))
         , m_values(tensor.allocation_kokkos_view())
     {

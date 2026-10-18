@@ -434,7 +434,7 @@ bool uses_precomputed_matrix_free_stencils(OperatorModel const& operator_model)
 }
 
 template <class ExecSpace, class ViewType1, class ViewType2>
-double dot(ExecSpace exec_space, ViewType1 lhs, ViewType2 rhs)
+double dot(ExecSpace const& exec_space, ViewType1 const& lhs, ViewType2 const& rhs)
 {
     double result = 0.0;
     Kokkos::parallel_reduce(
@@ -451,13 +451,13 @@ double dot(ExecSpace exec_space, ViewType1 lhs, ViewType2 rhs)
 }
 
 template <class ExecSpace, class ViewType>
-double residual_norm_l2(ExecSpace exec_space, ViewType residual)
+double residual_norm_l2(ExecSpace const& exec_space, ViewType const& residual)
 {
     return std::sqrt(dot(exec_space, residual, residual));
 }
 
 template <class ExecSpace, class ViewType>
-void fill(ExecSpace exec_space, ViewType view, double value)
+void fill(ExecSpace const& exec_space, ViewType const& view, double value)
 {
     Kokkos::parallel_for(
             "similie_fill",
@@ -469,7 +469,7 @@ void fill(ExecSpace exec_space, ViewType view, double value)
 }
 
 template <class ExecSpace, class DestinationView, class SourceView>
-void copy(ExecSpace exec_space, DestinationView destination, SourceView source)
+void copy(ExecSpace const& exec_space, DestinationView const& destination, SourceView const& source)
 {
     Kokkos::parallel_for(
             "similie_copy",
@@ -485,12 +485,12 @@ void copy(ExecSpace exec_space, DestinationView destination, SourceView source)
 
 template <class ExecSpace, class ViewType1, class ViewType2, class ViewType3>
 void update_axpby(
-        ExecSpace exec_space,
-        ViewType1 destination,
+        ExecSpace const& exec_space,
+        ViewType1 const& destination,
         double alpha,
-        ViewType2 x,
+        ViewType2 const& x,
         double beta,
-        ViewType3 y)
+        ViewType3 const& y)
 {
     Kokkos::parallel_for(
             "similie_axpby",
@@ -505,7 +505,11 @@ void update_axpby(
 }
 
 template <class ExecSpace, class ViewType1, class ViewType2>
-void axpy_inplace(ExecSpace exec_space, ViewType1 destination, double alpha, ViewType2 source)
+void axpy_inplace(
+        ExecSpace const& exec_space,
+        ViewType1 const& destination,
+        double alpha,
+        ViewType2 const& source)
 {
     Kokkos::parallel_for(
             "similie_axpy_inplace",
@@ -565,7 +569,7 @@ auto to_gko_dense(std::shared_ptr<gko::Executor const> const& gko_exec, KokkosVi
 
 template <class DestinationView, class KokkosViewType>
 void copy_back_from_gko_dense_bridge(
-        DestinationView destination,
+        DestinationView const& destination,
         GkoDenseHandle<KokkosViewType> const& handle)
 {
     if (handle.owned_view) {
@@ -644,7 +648,7 @@ template <class OperatorModel, class StateView>
 std::shared_ptr<gko::matrix::Csr<double, gko::int32>> build_matrix(
         std::shared_ptr<gko::Executor const> const& gko_exec,
         OperatorModel const& operator_model,
-        StateView state)
+        StateView const& state)
 {
     auto matrix_data = assemble_matrix_data(operator_model, state);
     matrix_data.sum_duplicates();
@@ -685,7 +689,7 @@ public:
 
     MatrixFreeLinOp(
             std::shared_ptr<gko::Executor const> exec,
-            ExecSpace exec_space,
+            ExecSpace const& exec_space,
             std::shared_ptr<OperatorModel const> operator_model)
         : base_type(exec, gko::dim<2>(operator_model->size(), operator_model->size()))
         , m_exec_space(exec_space)
@@ -718,7 +722,7 @@ public:
         if constexpr (workspace_traits::enabled) {
             if constexpr (requires(
                                   OperatorModel const& model,
-                                  ExecSpace ex,
+                                  ExecSpace const& ex,
                                   decltype(b_view) input,
                                   decltype(x_view) output,
                                   workspace_type& workspace) {
@@ -776,7 +780,7 @@ public:
         if constexpr (workspace_traits::enabled) {
             if constexpr (requires(
                                   OperatorModel const& model,
-                                  ExecSpace ex,
+                                  ExecSpace const& ex,
                                   decltype(b_view) input,
                                   decltype(applied) output,
                                   workspace_type& workspace) {
@@ -880,9 +884,9 @@ public:
 
     StateDependentMatrixFreeLinOp(
             std::shared_ptr<gko::Executor const> exec,
-            ExecSpace exec_space,
+            ExecSpace const& exec_space,
             std::shared_ptr<OperatorModel const> operator_model,
-            StateView state)
+            StateView const& state)
         : base_type(exec, gko::dim<2>(operator_model->size(), operator_model->size()))
         , m_exec_space(exec_space)
         , m_operator_model(std::move(operator_model))
@@ -1055,11 +1059,11 @@ inline std::shared_ptr<gko::LinOp const> build_preconditioner(
 
 template <class ExecSpace, class OperatorModel, class RHSViewType, class SolutionViewType>
 StrongFormulationSolverDiagnostics solve_linearized_system(
-        ExecSpace exec_space,
+        ExecSpace const& exec_space,
         std::shared_ptr<gko::Executor const> const& gko_exec,
         OperatorModel const& operator_model,
-        RHSViewType rhs,
-        SolutionViewType solution,
+        RHSViewType const& rhs,
+        SolutionViewType const& solution,
         StrongFormulationSolverSettings const& settings,
         std::shared_ptr<gko::LinOp const> const& assembled_matrix,
         std::shared_ptr<gko::LinOp const> const& preconditioner)
@@ -1351,7 +1355,7 @@ StrongFormulationSolverDiagnostics solve_linearized_system(
  */
 template <class ExecSpace, class RHSView, class SolutionView>
 std::vector<StrongFormulationSolverDiagnostics> minimize_strong_formulation_residual(
-        ExecSpace exec,
+        ExecSpace const& exec,
         std::shared_ptr<gko::matrix::Csr<double, gko::int32>> const& matrix,
         std::vector<RHSView> const& rhs,
         std::vector<SolutionView> const& solutions,
@@ -1392,10 +1396,10 @@ std::vector<StrongFormulationSolverDiagnostics> minimize_strong_formulation_resi
 
 template <class ExecSpace, class OperatorModel, class RHSViewType, class SolutionViewType>
 StrongFormulationSolverDiagnostics minimize_strong_formulation_residual(
-        ExecSpace exec_space,
+        ExecSpace const& exec_space,
         OperatorModel const& operator_model,
-        RHSViewType rhs,
-        SolutionViewType solution,
+        RHSViewType const& rhs,
+        SolutionViewType const& solution,
         StrongFormulationSolverSettings settings = {})
 {
     StrongFormulationSolverDiagnostics diagnostics;

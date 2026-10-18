@@ -14,7 +14,7 @@ namespace detail {
 // and factorial factors are already included in the cached coefficient matrix.
 // Retag the existing storage, retaining its stride, rather than expanding forms.
 template <class Index, class Tensor>
-KOKKOS_FUNCTION auto local_component_tensor(Tensor tensor)
+KOKKOS_FUNCTION auto local_component_tensor(Tensor const& tensor)
 {
     static_assert(Tensor::discrete_domain_type::rank() <= 1);
     using Span = ddc::ChunkSpan<
@@ -47,9 +47,9 @@ template <
         class Input,
         class Weights>
 KOKKOS_FUNCTION void apply_local_stencil(
-        Output output,
-        Input input,
-        Weights weights,
+        Output const& output,
+        Input const& input,
+        Weights const& weights,
         std::size_t node)
 {
     using SourceComponent = tensor::Covariant<LocalComponentIndex<Source, false>>;
@@ -82,7 +82,7 @@ template <class Operator>
 struct OperatorStencilValue<Operator>
 {
     template <class Element, class... Geometry>
-    KOKKOS_FUNCTION auto evaluate(Element element, Geometry... geometry) const
+    KOKKOS_FUNCTION auto evaluate(Element element, Geometry const&... geometry) const
     {
         return Operator::value(geometry..., element);
     }
@@ -94,14 +94,14 @@ struct OperatorStencilValue<Operator, First, Rest...>
     First first;
     OperatorStencilValue<Operator, Rest...> rest;
 
-    KOKKOS_FUNCTION OperatorStencilValue(First first_, Rest... rest_)
+    KOKKOS_FUNCTION OperatorStencilValue(First const& first_, Rest const&... rest_)
         : first(first_)
         , rest(rest_...)
     {
     }
 
     template <class Element, class... Bound>
-    KOKKOS_FUNCTION auto evaluate(Element element, Bound... bound) const
+    KOKKOS_FUNCTION auto evaluate(Element element, Bound const&... bound) const
     {
         return rest.evaluate(element, bound..., first);
     }
@@ -132,7 +132,10 @@ class LocalOperatorStorage
     LocalStencilStorage<Source, Target, Domain, Memory, Coefficients> m_stencils;
 
     template <class... Geometry>
-    static LocalOperatorStorage cache(Exec const& exec, Domain domain, Geometry... geometry)
+    static LocalOperatorStorage cache(
+            Exec const& exec,
+            Domain const& domain,
+            Geometry const&... geometry)
     {
         LocalOperatorStorage result;
         result.m_stencils = cache_local_stencils<Source, Target, Memory, Coefficients>(
@@ -158,41 +161,47 @@ public:
             NormalizeSource>;
 
     template <class Geometry>
-        requires requires(Geometry geometry, Element element) {
+        requires requires(Geometry const& geometry, Element element) {
             Operator::value(geometry, element);
         }
-    static LocalOperatorStorage build(Exec const& exec, Geometry geometry)
+    static LocalOperatorStorage build(Exec const& exec, Geometry const& geometry)
     {
         return cache(exec, geometry.non_indices_domain(), geometry);
     }
 
     template <class Geometry1, class Geometry2>
-        requires requires(Geometry1 first, Geometry2 second, Element element) {
+        requires requires(Geometry1 const& first, Geometry2 const& second, Element element) {
             Operator::value(first, second, element);
         }
-    static LocalOperatorStorage build(Exec const& exec, Geometry1 first, Geometry2 second)
+    static LocalOperatorStorage build(
+            Exec const& exec,
+            Geometry1 const& first,
+            Geometry2 const& second)
     {
         return cache(exec, first.non_indices_domain(), first, second);
     }
 
     template <class Geometry>
-        requires requires(Geometry geometry, Element element) {
+        requires requires(Geometry const& geometry, Element element) {
             Operator::value(geometry, element);
         }
-    static LocalOperatorStorage build(Exec const& exec, Geometry geometry, Domain domain)
+    static LocalOperatorStorage build(
+            Exec const& exec,
+            Geometry const& geometry,
+            Domain const& domain)
     {
         return cache(exec, domain, geometry);
     }
 
     template <class Geometry1, class Geometry2>
-        requires requires(Geometry1 first, Geometry2 second, Element element) {
+        requires requires(Geometry1 const& first, Geometry2 const& second, Element element) {
             Operator::value(first, second, element);
         }
     static LocalOperatorStorage build(
             Exec const& exec,
-            Geometry1 first,
-            Geometry2 second,
-            Domain domain)
+            Geometry1 const& first,
+            Geometry2 const& second,
+            Domain const& domain)
     {
         return cache(exec, domain, first, second);
     }
@@ -204,15 +213,20 @@ public:
         requires(
                 sizeof...(Geometry) > 0
                 && requires(
-                        Geometry... geometry,
+                        Geometry const&... geometry,
                         Element element) { Operator::value(geometry..., element); })
-    static LocalOperatorStorage build(Exec const& exec, Output output, Input, Geometry... geometry)
+    static LocalOperatorStorage build(
+            Exec const& exec,
+            Output const& output,
+            Input const&,
+            Geometry const&... geometry)
     {
         return cache(exec, output.non_indices_domain(), geometry...);
     }
 
     template <class Output, class Input>
-    KOKKOS_FUNCTION void apply_pointwise(Output output, Input input, Element element) const
+    KOKKOS_FUNCTION void apply_pointwise(Output const& output, Input const& input, Element element)
+            const
     {
         apply_local_stencil<Source, Target, Coefficients>(
                 output,
@@ -222,18 +236,21 @@ public:
     }
 
     template <class Output, class Input, class Geometry>
-    KOKKOS_FUNCTION void apply_pointwise(Output output, Input input, Geometry, Element element)
-            const
+    KOKKOS_FUNCTION void apply_pointwise(
+            Output const& output,
+            Input const& input,
+            Geometry const&,
+            Element element) const
     {
         apply_pointwise(output, input, element);
     }
 
     template <class Output, class Input, class Geometry1, class Geometry2>
     KOKKOS_FUNCTION void apply_pointwise(
-            Output output,
-            Input input,
-            Geometry1,
-            Geometry2,
+            Output const& output,
+            Input const& input,
+            Geometry1 const&,
+            Geometry2 const&,
             Element element) const
     {
         apply_pointwise(output, input, element);
@@ -242,7 +259,7 @@ public:
     template <
             misc::Specialization<tensor::Tensor> Output,
             misc::Specialization<tensor::Tensor> Input>
-    Output apply(Exec const& exec, Output output, Input input) const
+    Output apply(Exec const& exec, Output const& output, Input const& input) const
     {
         LocalOperatorStorage const storage = *this;
         ddc::parallel_for_each(
@@ -277,29 +294,33 @@ public:
     }
 
     template <class Geometry>
-    KOKKOS_FUNCTION LocalOperatorStencil<Source, Target> value(Geometry, Element element) const
+    KOKKOS_FUNCTION LocalOperatorStencil<Source, Target> value(Geometry const&, Element element)
+            const
     {
         return value(element);
     }
 
     template <class Geometry, class NaturalElement>
-    KOKKOS_FUNCTION double value(Geometry, Element element, NaturalElement natural) const
+    KOKKOS_FUNCTION double value(Geometry const&, Element element, NaturalElement natural) const
     {
         return value(element, natural);
     }
 
     template <class Geometry1, class Geometry2>
     KOKKOS_FUNCTION LocalOperatorStencil<Source, Target> value(
-            Geometry1,
-            Geometry2,
+            Geometry1 const&,
+            Geometry2 const&,
             Element element) const
     {
         return value(element);
     }
 
     template <class Geometry1, class Geometry2, class NaturalElement>
-    KOKKOS_FUNCTION double value(Geometry1, Geometry2, Element element, NaturalElement natural)
-            const
+    KOKKOS_FUNCTION double value(
+            Geometry1 const&,
+            Geometry2 const&,
+            Element element,
+            NaturalElement natural) const
     {
         return value(element, natural);
     }
@@ -317,33 +338,41 @@ class ImplicitLocalOperatorStorage
     using Element = typename Geometry::non_indices_domain_t::discrete_element_type;
     Geometry m_geometry;
 
-    explicit ImplicitLocalOperatorStorage(Geometry geometry) : m_geometry(geometry) {}
+    explicit ImplicitLocalOperatorStorage(Geometry const& geometry) : m_geometry(geometry) {}
 
 public:
     using execution_space = Exec;
     template <class OtherExec>
     using rebind = ImplicitLocalOperatorStorage<Operator, Geometry, OtherExec>;
 
-    static ImplicitLocalOperatorStorage build(Exec const&, Geometry geometry)
+    static ImplicitLocalOperatorStorage build(Exec const&, Geometry const& geometry)
     {
         return ImplicitLocalOperatorStorage(geometry);
     }
 
     template <class Output, class Input>
-    static ImplicitLocalOperatorStorage build(Exec const& exec, Output, Input, Geometry geometry)
+    static ImplicitLocalOperatorStorage build(
+            Exec const& exec,
+            Output const&,
+            Input const&,
+            Geometry const& geometry)
     {
         return build(exec, geometry);
     }
 
     template <class Output, class Input>
-    KOKKOS_FUNCTION void apply_pointwise(Output output, Input input, Element element) const
+    KOKKOS_FUNCTION void apply_pointwise(Output const& output, Input const& input, Element element)
+            const
     {
         Operator::operator()(output, input, m_geometry, element);
     }
 
     template <class Output, class Input>
-    KOKKOS_FUNCTION void apply_pointwise(Output output, Input input, Geometry, Element element)
-            const
+    KOKKOS_FUNCTION void apply_pointwise(
+            Output const& output,
+            Input const& input,
+            Geometry const&,
+            Element element) const
     {
         apply_pointwise(output, input, element);
     }
@@ -351,7 +380,7 @@ public:
     template <
             misc::Specialization<tensor::Tensor> Output,
             misc::Specialization<tensor::Tensor> Input>
-    Output apply(Exec const& exec, Output output, Input input) const
+    Output apply(Exec const& exec, Output const& output, Input const& input) const
     {
         ImplicitLocalOperatorStorage const storage = *this;
         ddc::parallel_for_each(

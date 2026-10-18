@@ -54,13 +54,13 @@ struct TensorYoungTableauIndex
     }
 
     static constexpr std::pair<std::vector<double>, std::vector<std::size_t>> mem_lin_comb(
-            std::array<std::size_t, sizeof...(TensorIndex)> const natural_ids)
+            std::array<std::size_t, sizeof...(TensorIndex)> const& natural_ids)
     {
         return access_id_to_mem_lin_comb(access_id(natural_ids));
     }
 
     KOKKOS_FUNCTION static constexpr std::size_t access_id(
-            std::array<std::size_t, sizeof...(TensorIndex)> const natural_ids)
+            std::array<std::size_t, sizeof...(TensorIndex)> const& natural_ids)
     {
         return ((misc::detail::stride<TensorIndex, TensorIndex...>()
                  * natural_ids[ddc::type_seq_rank_v<TensorIndex, ddc::TypeSeq<TensorIndex...>>])
@@ -96,8 +96,8 @@ struct TensorYoungTableauIndex
     template <class Tensor, class Elem, class Id, class FunctorType>
     KOKKOS_FUNCTION static constexpr Tensor::element_type process_access(
             const FunctorType& access,
-            Tensor tensor,
-            Elem elem)
+            Tensor const& tensor,
+            Elem const& elem)
     {
         return access(tensor, elem);
     }
@@ -121,12 +121,12 @@ compress(
                 double,
                 ddc::DiscreteDomain<YoungTableauIndex>,
                 Kokkos::layout_right,
-                Kokkos::DefaultHostExecutionSpace::memory_space> compressed,
+                Kokkos::DefaultHostExecutionSpace::memory_space> const& compressed,
         tensor::Tensor<
                 double,
                 ddc::DiscreteDomain<Id...>,
                 Kokkos::layout_right,
-                Kokkos::DefaultHostExecutionSpace::memory_space> tensor)
+                Kokkos::DefaultHostExecutionSpace::memory_space> const& tensor)
 {
     typename YoungTableauIndex::young_tableau young_tableau;
     csr::Csr u = young_tableau.template u<YoungTableauIndex, Id...>(tensor.domain());
@@ -145,12 +145,12 @@ uncompress(
                 double,
                 ddc::DiscreteDomain<Id...>,
                 Kokkos::layout_right,
-                Kokkos::DefaultHostExecutionSpace::memory_space> uncompressed,
+                Kokkos::DefaultHostExecutionSpace::memory_space> const& uncompressed,
         tensor::Tensor<
                 double,
                 ddc::DiscreteDomain<YoungTableauIndex>,
                 Kokkos::layout_right,
-                Kokkos::DefaultHostExecutionSpace::memory_space> tensor)
+                Kokkos::DefaultHostExecutionSpace::memory_space> const& tensor)
 {
     typename YoungTableauIndex::young_tableau young_tableau;
     csr::Csr v = young_tableau.template v<YoungTableauIndex, Id...>(uncompressed.domain());

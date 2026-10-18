@@ -325,7 +325,7 @@ KOKKOS_FUNCTION std::array<std::size_t, N - M> hodge_complement_ids(
 
 template <std::size_t N, std::size_t K, class MetricType, class BatchElem>
 KOKKOS_FUNCTION double continuous_hodge_value_from_ids(
-        MetricType metric,
+        MetricType const& metric,
         BatchElem elem,
         std::array<std::size_t, K> const& source_ids,
         std::array<std::size_t, N - K> const& target_ids)
@@ -383,8 +383,8 @@ template <
         class PositionType,
         class BatchElem>
 KOKKOS_FUNCTION double legacy_discrete_hodge_value_from_ids(
-        MetricType metric,
-        PositionType position,
+        MetricType const& metric,
+        PositionType const& position,
         BatchElem elem,
         std::array<std::size_t, K> const& source_ids,
         std::array<std::size_t, N - K> const& target_ids)
@@ -469,9 +469,9 @@ struct Reduction
             misc::Specialization<tensor::Tensor> ReductionTensorType,
             misc::Specialization<tensor::Tensor> FormTensorType>
     KOKKOS_FUNCTION static void operator()(
-            ReductionTensorType reduced_tensor,
-            FormTensorType form_tensor,
-            PositionType position,
+            ReductionTensorType const& reduced_tensor,
+            FormTensorType const& form_tensor,
+            PositionType const& position,
             BatchElem elem)
     {
         using reduction_accessor_t
@@ -516,10 +516,10 @@ struct Reduction
             misc::Specialization<tensor::Tensor> FormTensorType,
             misc::Specialization<tensor::Tensor> MetricType>
     KOKKOS_FUNCTION static void operator()(
-            ReductionTensorType reduced_tensor,
-            FormTensorType form_tensor,
-            MetricType metric,
-            PositionType position,
+            ReductionTensorType const& reduced_tensor,
+            FormTensorType const& form_tensor,
+            MetricType const& metric,
+            PositionType const& position,
             BatchElem elem)
     {
         if constexpr (Complex == CellComplex::Primal) {
@@ -674,7 +674,10 @@ struct Reduction
         }
     }
 
-    KOKKOS_FUNCTION static double value(PositionType position, BatchElem elem, auto natural_elem)
+    KOKKOS_FUNCTION static double value(
+            PositionType const& position,
+            BatchElem elem,
+            auto natural_elem)
     {
         constexpr std::size_t K = target_index_type::rank();
         if constexpr (K == 0) {
@@ -707,7 +710,7 @@ struct Reduction
     KOKKOS_FUNCTION static detail::LocalOperatorStencil<
             reduction_index_t<tensor::primes<tensor::upper_t<Indices>>>,
             target_index_type>
-    value(PositionType position, BatchElem element)
+    value(PositionType const& position, BatchElem element)
     {
         using Source = reduction_index_t<tensor::primes<tensor::upper_t<Indices>>>;
         detail::LocalOperatorStencil<Source, target_index_type> result;
@@ -734,7 +737,7 @@ struct Reduction
     KOKKOS_FUNCTION static detail::LocalOperatorStencil<
             reduction_index_t<tensor::primes<tensor::upper_t<Indices>>>,
             target_index_type>
-    value(MetricType metric, PositionType position, BatchElem element)
+    value(MetricType const& metric, PositionType const& position, BatchElem element)
     {
         using Source = reduction_index_t<tensor::primes<tensor::upper_t<Indices>>>;
         detail::LocalOperatorStencil<Source, target_index_type> result;
@@ -760,8 +763,8 @@ struct Reduction
 
     template <misc::Specialization<tensor::Tensor> MetricType>
     KOKKOS_FUNCTION static double value(
-            MetricType metric,
-            PositionType position,
+            MetricType const& metric,
+            PositionType const& position,
             BatchElem elem,
             auto natural_elem)
     {
@@ -852,8 +855,8 @@ template <
         CellComplex Complex = CellComplex::Primal>
 ReductionTensorType fill_reduction_operator(
         ExecSpace const& exec_space,
-        ReductionTensorType reduction_tensor,
-        PositionType position)
+        ReductionTensorType const& reduction_tensor,
+        PositionType const& position)
 {
     SIMILIE_DEBUG_LOG("similie_compute_reduction_operator");
     ddc::parallel_for_each(
@@ -888,7 +891,7 @@ class ReconstructionMatrix
     bool m_valid = false;
 
 public:
-    KOKKOS_FUNCTION ReconstructionMatrix(PositionType position, BatchElem elem)
+    KOKKOS_FUNCTION ReconstructionMatrix(PositionType const& position, BatchElem elem)
     {
         static_assert(
                 Complex != CellComplex::BarycentricDual,
@@ -1017,9 +1020,9 @@ struct Reconstruction
             misc::Specialization<tensor::Tensor> ReconstructedTensorType,
             misc::Specialization<tensor::Tensor> CochainTensorType>
     KOKKOS_FUNCTION static void operator()(
-            ReconstructedTensorType reconstructed_tensor,
-            CochainTensorType cochain_tensor,
-            PositionType position,
+            ReconstructedTensorType const& reconstructed_tensor,
+            CochainTensorType const& cochain_tensor,
+            PositionType const& position,
             BatchElem elem)
     {
         using reconstruction_accessor_t
@@ -1063,7 +1066,7 @@ struct Reconstruction
     }
 
     KOKKOS_FUNCTION static detail::LocalOperatorStencil<source_index_type, target_index_type> value(
-            PositionType position,
+            PositionType const& position,
             BatchElem element)
     {
         detail::LocalOperatorStencil<source_index_type, target_index_type> stencil;
@@ -1085,7 +1088,10 @@ struct Reconstruction
         return stencil;
     }
 
-    KOKKOS_FUNCTION static double value(PositionType position, BatchElem elem, auto natural_elem)
+    KOKKOS_FUNCTION static double value(
+            PositionType const& position,
+            BatchElem elem,
+            auto natural_elem)
     {
         return detail::
                 ReconstructionMatrix<Indices, PositionType, BatchElem, Complex>(position, elem)
@@ -1126,8 +1132,8 @@ template <
         CellComplex Complex = CellComplex::Primal>
 ReconstructionTensorType fill_reconstruction_operator(
         ExecSpace const& exec_space,
-        ReconstructionTensorType reconstruction_tensor,
-        PositionType position)
+        ReconstructionTensorType const& reconstruction_tensor,
+        PositionType const& position)
 {
     SIMILIE_DEBUG_LOG("similie_compute_reconstruction_operator");
     ddc::parallel_for_each(
@@ -1240,9 +1246,9 @@ StagedReconstruction<
         Coefficients>
 make_staged_reconstruction(
         ExecSpace const& exec_space,
-        ReconstructedTensorType output,
-        CochainTensorType input,
-        PositionType position)
+        ReconstructedTensorType const& output,
+        CochainTensorType const& input,
+        PositionType const& position)
 {
     return StagedReconstruction<
             Indices,

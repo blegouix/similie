@@ -30,36 +30,41 @@ public:
     }
 
     template <class Index, class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr double dpotential_dt(State const& state, Elem elem)
-            const
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double dpotential_dt(
+            State const& state,
+            Elem const& elem) const
     {
         return m_hamiltonian.template dhamiltonian_dmoments<Index>(state, elem);
     }
 
     template <class Index, class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr double dmoments_dt(State const& state, Elem elem) const
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double dmoments_dt(State const& state, Elem const& elem)
+            const
     {
         return -m_hamiltonian.template dhamiltonian_dpotential<Index>(state, elem);
     }
 
     template <class RowIndex, class ColumnIndex, class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr double jacobian(State const& state, Elem elem) const
+    [[nodiscard]] KOKKOS_FUNCTION constexpr double jacobian(State const& state, Elem const& elem)
+            const
     {
         return m_hamiltonian.template jacobian<RowIndex, ColumnIndex>(state, elem);
     }
 
     template <class Index, class Elem>
         requires detail::HasMomentCoefficientConcept<Hamiltonian, Index, Elem>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr auto dpotential_dt_value(State const& state, Elem elem)
-            const
+    [[nodiscard]] KOKKOS_FUNCTION constexpr auto dpotential_dt_value(
+            State const& state,
+            Elem const& elem) const
     {
         return m_hamiltonian.template dhamiltonian_dmoments_value<Index>(state, elem);
     }
 
     template <class Index, class Elem>
         requires detail::HasPotentialCoefficientConcept<Hamiltonian, Index, Elem>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr auto dmoments_dt_value(State const& state, Elem elem)
-            const
+    [[nodiscard]] KOKKOS_FUNCTION constexpr auto dmoments_dt_value(
+            State const& state,
+            Elem const& elem) const
     {
         auto value = m_hamiltonian.template dhamiltonian_dpotential_value<Index>(state, elem);
         if constexpr (std::is_same_v<std::remove_cvref_t<decltype(value)>, double>) {

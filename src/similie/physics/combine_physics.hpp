@@ -36,7 +36,7 @@ class CombinePhysics<First, Rest...>
 
 public:
     static constexpr std::size_t size = 1 + sizeof...(Rest);
-    KOKKOS_FUNCTION explicit CombinePhysics(First first, Rest... rest)
+    KOKKOS_FUNCTION explicit CombinePhysics(First const& first, Rest const&... rest)
         : m_first(first)
         , m_rest(rest...)
     {

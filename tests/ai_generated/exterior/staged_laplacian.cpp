@@ -81,7 +81,10 @@ struct Periodic
 };
 
 template <class Form, sil::exterior::CellComplex Complex>
-void check_hodge(Field<Form> input, Field<MetricIndex> metric, Field<PositionIndex> position)
+void check_hodge(
+        Field<Form> const& input,
+        Field<MetricIndex> const& metric,
+        Field<PositionIndex> const& position)
 {
     using Exec = Kokkos::DefaultExecutionSpace;
     using Memory = typename Exec::memory_space;
@@ -150,10 +153,10 @@ void check_hodge(Field<Form> input, Field<MetricIndex> metric, Field<PositionInd
 
 template <class Form, class Rules>
 void check_codifferential(
-        Field<Form> input,
-        Field<MetricIndex> metric,
-        Field<PositionIndex> position,
-        Rules rules)
+        Field<Form> const& input,
+        Field<MetricIndex> const& metric,
+        Field<PositionIndex> const& position,
+        Rules const& rules)
 {
     using Exec = Kokkos::DefaultExecutionSpace;
     using Memory = typename Exec::memory_space;
@@ -223,7 +226,7 @@ void check_codifferential(
 }
 
 template <class Form, class Primal, class Dual>
-void compare(bool curved, Primal primal, Dual dual, std::size_t size = 3)
+void compare(bool curved, Primal const& primal, Dual const& dual, std::size_t size = 3)
 {
     using Memory = Kokkos::DefaultExecutionSpace::memory_space;
     using Exec = Kokkos::DefaultExecutionSpace;

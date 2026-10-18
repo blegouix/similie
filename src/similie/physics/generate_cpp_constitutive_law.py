@@ -133,34 +133,34 @@ public:
     }}
 
     template <class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr std::array<double, N * N> value(State const& state, Elem elem) const
+    [[nodiscard]] KOKKOS_FUNCTION constexpr std::array<double, N * N> value(State const& state, Elem const& elem) const
     {{
         static_cast<void>(elem);
         return {{{render(forward_value_expression)}}};
     }}
 
     template <class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr std::array<double, N * N> jacobian(State const& state, Elem elem) const
+    [[nodiscard]] KOKKOS_FUNCTION constexpr std::array<double, N * N> jacobian(State const& state, Elem const& elem) const
     {{
         return value(state, elem);
     }}
 
     template <class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr std::array<double, N> operator()(State const& state, Elem elem) const
+    [[nodiscard]] KOKKOS_FUNCTION constexpr std::array<double, N> operator()(State const& state, Elem const& elem) const
     {{
         static_cast<void>(elem);
         return {{{render(constitutive_law)}}};
     }}
 
     template <class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr std::array<double, N * N> inverse_value(State const& state, Elem elem) const
+    [[nodiscard]] KOKKOS_FUNCTION constexpr std::array<double, N * N> inverse_value(State const& state, Elem const& elem) const
     {{
         static_cast<void>(elem);
         return {{{render(inverse_value_expression, True)}}};
     }}
 
     template <class Elem>
-    [[nodiscard]] KOKKOS_FUNCTION constexpr std::array<double, N> inverse(State const& state, Elem elem) const
+    [[nodiscard]] KOKKOS_FUNCTION constexpr std::array<double, N> inverse(State const& state, Elem const& elem) const
     {{
         static_cast<void>(elem);
         return {{{render(inverse_expression, True)}}};

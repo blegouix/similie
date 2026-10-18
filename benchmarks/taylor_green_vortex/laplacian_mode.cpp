@@ -113,10 +113,10 @@ class SelectedLaplacian final : public LaplacianOperator<Tensor>
     Operation m_operation;
 
     static Operation make_operation(
-            Tensor output,
-            Tensor input,
-            MetricTensor metric,
-            PositionTensor position)
+            Tensor const& output,
+            Tensor const& input,
+            MetricTensor const& metric,
+            PositionTensor const& position)
     {
         if constexpr (Mode == 10)
             return Operation(
@@ -132,11 +132,15 @@ class SelectedLaplacian final : public LaplacianOperator<Tensor>
     }
 
 public:
-    SelectedLaplacian(Tensor output, Tensor input, MetricTensor metric, PositionTensor position)
+    SelectedLaplacian(
+            Tensor const& output,
+            Tensor const& input,
+            MetricTensor const& metric,
+            PositionTensor const& position)
         : m_operation(make_operation(output, input, metric, position))
     {
     }
-    void apply(Tensor output, Tensor input) override
+    void apply(Tensor const& output, Tensor const& input) override
     {
         if constexpr (Mode == 10)
             m_operation(output, input);
@@ -148,22 +152,22 @@ public:
 
 template <int Mode, class Tensor>
 std::unique_ptr<LaplacianOperator<Tensor>> make_laplacian_mode(
-        Tensor output,
-        Tensor input,
-        MetricTensor metric,
-        PositionTensor position)
+        Tensor const& output,
+        Tensor const& input,
+        MetricTensor const& metric,
+        PositionTensor const& position)
 {
     return std::make_unique<SelectedLaplacian<Mode, Tensor>>(output, input, metric, position);
 }
 
 template std::unique_ptr<LaplacianOperator<ScalarTensor>> make_laplacian_mode<TGV_LAPLACIAN_MODE>(
-        ScalarTensor,
-        ScalarTensor,
-        MetricTensor,
-        PositionTensor);
+        ScalarTensor const&,
+        ScalarTensor const&,
+        MetricTensor const&,
+        PositionTensor const&);
 template std::unique_ptr<LaplacianOperator<TwoFormTensor>> make_laplacian_mode<TGV_LAPLACIAN_MODE>(
-        TwoFormTensor,
-        TwoFormTensor,
-        MetricTensor,
-        PositionTensor);
+        TwoFormTensor const&,
+        TwoFormTensor const&,
+        MetricTensor const&,
+        PositionTensor const&);
 } // namespace taylor_green_vortex::detail

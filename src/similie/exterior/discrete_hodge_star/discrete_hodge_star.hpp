@@ -32,8 +32,8 @@ struct DiscreteHodgeStar
      * \important This operator and documentation is fully AI-generated.
      */
     KOKKOS_FUNCTION static auto one_form_pairing(
-            MetricType metric,
-            PositionType position,
+            MetricType const& metric,
+            PositionType const& position,
             BatchElem elem)
     {
         using PositionIndex = ddc::
@@ -82,10 +82,10 @@ struct DiscreteHodgeStar
             misc::Specialization<tensor::Tensor> HodgeTensorType,
             misc::Specialization<tensor::Tensor> FormTensorType>
     KOKKOS_FUNCTION static void operator()(
-            HodgeTensorType hodge_tensor,
-            FormTensorType form_tensor,
-            MetricType metric,
-            PositionType position,
+            HodgeTensorType const& hodge_tensor,
+            FormTensorType const& form_tensor,
+            MetricType const& metric,
+            PositionType const& position,
             BatchElem elem)
     {
         using InputIndex = ddc::type_seq_element_t<
@@ -132,7 +132,7 @@ struct DiscreteHodgeStar
     KOKKOS_FUNCTION static detail::LocalOperatorStencil<
             tensor::lower_t<reduction_index_t<Indices1>>,
             reduction_index_t<Indices2>>
-    value(MetricType metric, PositionType position, BatchElem element)
+    value(MetricType const& metric, PositionType const& position, BatchElem element)
     {
         using Source = tensor::lower_t<reduction_index_t<Indices1>>;
         using Target = reduction_index_t<Indices2>;
@@ -158,8 +158,8 @@ struct DiscreteHodgeStar
     }
 
     KOKKOS_FUNCTION static double value(
-            MetricType metric,
-            PositionType position,
+            MetricType const& metric,
+            PositionType const& position,
             BatchElem elem,
             auto natural_elem)
     {

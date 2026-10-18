@@ -40,7 +40,7 @@ public:
         , m_divergence("flux_divergence", 5, dec.cells)
     {
     }
-    void primitives(Field state)
+    void primitives(Field const& state)
     {
         Field const primitive = m_primitive;
         CompressiblePhysics const physics = m_physics;
@@ -56,7 +56,7 @@ public:
                     primitive(4, i) = values.temperature;
                 });
     }
-    void rhs(Field state, Field result)
+    void rhs(Field const& state, Field const& result)
     {
         primitives(state);
         for (int c = 1; c < 4; ++c)
@@ -152,7 +152,7 @@ class PressureReconstruction
 
 public:
     // NVCC requires methods enclosing extended device lambdas to be public.
-    void poisson(Field input, Field output)
+    void poisson(Field const& input, Field const& output)
     {
         for (int a = 0; a < 3; ++a)
             m_dec.derivative(input, 0, m_projection_gradient, a, a);
@@ -163,7 +163,7 @@ public:
                 KOKKOS_LAMBDA(int i) { output(0, i) *= -1; });
     }
 
-    double dot(Field left, Field right)
+    double dot(Field const& left, Field const& right)
     {
         double value;
         Kokkos::parallel_reduce(
@@ -174,7 +174,10 @@ public:
         return value;
     }
 
-    void unprojected_rhs(Field velocity, Field result, Field supplied_vorticity = Field())
+    void unprojected_rhs(
+            Field const& velocity,
+            Field const& result,
+            Field const& supplied_vorticity = Field())
     {
         if (supplied_vorticity.data())
             Kokkos::deep_copy(m_vorticity, supplied_vorticity);
@@ -197,7 +200,7 @@ public:
                         result(a, i) = rate[a];
                 });
     }
-    void recover_pressure(Field velocity, Field output, double mean_pressure)
+    void recover_pressure(Field const& velocity, Field const& output, double mean_pressure)
     {
         Field const potential = m_phi;
         similie::physics::fluid::IncompressibleNavierStokes const physics = m_physics;
@@ -249,11 +252,11 @@ public:
      * \important This operator and documentation is fully AI-generated.
      */
     void compute_pressure(
-            Field velocity,
-            Field output,
+            Field const& velocity,
+            Field const& output,
             double mean_pressure = 0.0,
-            Field supplied_vorticity = Field(),
-            Field acceleration = Field())
+            Field const& supplied_vorticity = Field(),
+            Field const& acceleration = Field())
     {
         unprojected_rhs(velocity, m_pressure_acceleration, supplied_vorticity);
         if (acceleration.data()) {
@@ -270,7 +273,7 @@ public:
         recover_pressure(velocity, output, mean_pressure);
     }
 
-    void project(Field velocity)
+    void project(Field const& velocity)
     {
         m_dec.divergence(velocity, m_r);
         Field const r = m_r, p = m_p, ap = m_ap, phi = m_phi, temp = m_temp;
@@ -343,7 +346,7 @@ public:
         return 3 * std::size_t(m_cells);
     }
     template <class Input, class Output>
-    void apply(Kokkos::DefaultExecutionSpace exec, Input source, Output target) const
+    void apply(Kokkos::DefaultExecutionSpace exec, Input const& source, Output const& target) const
     {
         Field const input = m_input, output = m_output;
         int const cells = m_cells;
@@ -407,7 +410,7 @@ public:
     {
     }
 
-    void initialize(Field state)
+    void initialize(Field const& state)
     {
         // This edge representation reconstructs the prescribed nodal velocity
         // exactly; it is closed under native codifferential on the uniform grid.
@@ -428,7 +431,7 @@ public:
         m_dec.reduce_edges(edges, m_one);
         m_dec.exterior_curl(m_one, state);
     }
-    void reconstruct_velocity(Field state, Field output, bool time_derivative = false)
+    void reconstruct_velocity(Field const& state, Field const& output, bool time_derivative = false)
     {
         std::chrono::steady_clock::time_point const start = std::chrono::steady_clock::now();
         // Remove only roundoff-sized harmonic means; a nonzero physical mean
@@ -538,10 +541,10 @@ public:
                 += std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
     }
     void rhs(
-            Field state,
-            Field result,
+            Field const& state,
+            Field const& result,
             bool reconstruct_pressure = false,
-            Field acceleration = Field(),
+            Field const& acceleration = Field(),
             bool velocity_reconstructed = false)
     {
         if (!velocity_reconstructed)
@@ -577,20 +580,20 @@ public:
         }
     }
     void compute_pressure(
-            Field state,
-            Field output,
+            Field const& state,
+            Field const& output,
             double mean_pressure = 0,
-            Field acceleration = Field())
+            Field const& acceleration = Field())
     {
         reconstruct_velocity(state, velocity);
         m_dec.axial_nodes(state, vorticity);
         m_pressure.compute_pressure(velocity, output, mean_pressure, vorticity, acceleration);
     }
-    void divergence(Field output)
+    void divergence(Field const& output)
     {
         m_dec.divergence(m_one, output);
     }
-    void monitor_constraints(Field state)
+    void monitor_constraints(Field const& state)
     {
         vorticity_divergence_rms = m_dec.closure_rms(state);
         gauge_rms = m_dec.closure_rms(m_potential);

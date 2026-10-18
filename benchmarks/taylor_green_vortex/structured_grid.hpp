@@ -134,7 +134,7 @@ private:
                         Kokkos::layout_right,
                         Field::memory_space>(m_metric.data(), domain));
     }
-    VectorTensor vector(Field field) const
+    VectorTensor vector(Field const& field) const
     {
         [[maybe_unused]] sil::tensor::TensorAccessor<Vector> accessor;
         ddc::DiscreteDomain<GridX, GridY, GridZ, Vector> const domain(m_domain, accessor.domain());
@@ -145,7 +145,7 @@ private:
                         Kokkos::layout_right,
                         Field::memory_space>(field.data(), domain));
     }
-    TwoFormTensor twoform(Field field) const
+    TwoFormTensor twoform(Field const& field) const
     {
         [[maybe_unused]] sil::tensor::TensorAccessor<TwoForm> accessor;
         ddc::DiscreteDomain<GridX, GridY, GridZ, TwoForm> const domain(m_domain, accessor.domain());
@@ -157,7 +157,7 @@ private:
                         Field::memory_space>(field.data(), domain));
     }
     KOKKOS_FUNCTION static double face_curl(
-            TwoFormTensor field,
+            TwoFormTensor const& field,
             int index,
             int component,
             int nodes)
@@ -178,7 +178,7 @@ public:
         VectorTensor const form = vector(m_pointwise), cochain = vector(m_oneform);
         reduce(cochain, form);
     }
-    void reduced_divergence(Field output, int component)
+    void reduced_divergence(Field const& output, int component)
     {
         reduce_one_form();
         (*m_codifferential)(scalar(output, component), vector(m_oneform));
@@ -187,7 +187,7 @@ public:
                 cells,
                 KOKKOS_LAMBDA(int i) { output(component, i) *= -1; });
     }
-    void reconstruct_gradient(Field input, int component)
+    void reconstruct_gradient(Field const& input, int component)
     {
         VectorTensor const cochain = vector(m_oneform), pointwise = vector(m_pointwise);
         sil::exterior::deriv<Vector, Scalar>(
@@ -318,7 +318,7 @@ public:
                 });
         Kokkos::deep_copy(m_metric, 1.0);
     }
-    ScalarTensor scalar(Field field, int component = 0) const
+    ScalarTensor scalar(Field const& field, int component = 0) const
     {
         [[maybe_unused]] sil::tensor::TensorAccessor<Scalar> accessor;
         ddc::DiscreteDomain<GridX, GridY, GridZ, Scalar> const domain(m_domain, accessor.domain());
@@ -329,7 +329,7 @@ public:
                         Kokkos::layout_right,
                         Field::memory_space>(field.data() + component * cells, domain));
     }
-    void reconstruct(VectorTensor output, VectorTensor input) const
+    void reconstruct(VectorTensor const& output, VectorTensor const& input) const
     {
         if (m_one_diagonal_reconstruction)
             (*m_one_diagonal_reconstruction)(output, input);
@@ -350,7 +350,7 @@ public:
                     });
         }
     }
-    void reduce(VectorTensor output, VectorTensor input) const
+    void reduce(VectorTensor const& output, VectorTensor const& input) const
     {
         if (m_one_diagonal_reduction)
             (*m_one_diagonal_reduction)(output, input);
@@ -371,7 +371,7 @@ public:
                     });
         }
     }
-    void reconstruct(TwoFormTensor output, TwoFormTensor input) const
+    void reconstruct(TwoFormTensor const& output, TwoFormTensor const& input) const
     {
         if (m_two_diagonal_reconstruction)
             (*m_two_diagonal_reconstruction)(output, input);
@@ -392,7 +392,7 @@ public:
                     });
         }
     }
-    void reduce(TwoFormTensor output, TwoFormTensor input) const
+    void reduce(TwoFormTensor const& output, TwoFormTensor const& input) const
     {
         if (m_two_diagonal_reduction)
             (*m_two_diagonal_reduction)(output, input);
@@ -419,7 +419,12 @@ public:
         int const coordinate = (index / stride) % nodes;
         return index + (((coordinate + offset + nodes) % nodes) - coordinate) * stride;
     }
-    void forward_derivative(Field input, int component, Field output, int out_component, int axis)
+    void forward_derivative(
+            Field const& input,
+            int component,
+            Field const& output,
+            int out_component,
+            int axis)
     {
         reconstruct_gradient(input, component);
         Field const gradient = m_pointwise;
@@ -428,7 +433,12 @@ public:
                 cells,
                 KOKKOS_LAMBDA(int i) { output(out_component, i) = gradient(0, 3 * i + axis); });
     }
-    void derivative(Field input, int component, Field output, int out_component, int axis)
+    void derivative(
+            Field const& input,
+            int component,
+            Field const& output,
+            int out_component,
+            int axis)
     {
         reconstruct_gradient(input, component);
         Field const gradient = m_pointwise;
@@ -442,7 +452,12 @@ public:
                             = 0.5 * (gradient(0, 3 * i + axis) + gradient(0, 3 * previous + axis));
                 });
     }
-    void flux_divergence(Field flux, int component, Field output, int out_component, int axis)
+    void flux_divergence(
+            Field const& flux,
+            int component,
+            Field const& output,
+            int out_component,
+            int axis)
     {
         Field const pointwise = m_pointwise;
         Kokkos::parallel_for(
@@ -454,7 +469,7 @@ public:
                 });
         reduced_divergence(output, out_component);
     }
-    void divergence(Field velocity, Field output)
+    void divergence(Field const& velocity, Field const& output)
     {
         Field const placed = m_pointwise;
         int const nodes = n;
@@ -469,7 +484,7 @@ public:
         reduced_divergence(output, 0);
     }
 
-    void laplacian(Field input, int component, Field output, int out_component)
+    void laplacian(Field const& input, int component, Field const& output, int out_component)
     {
         m_laplacian->apply(scalar(output, out_component), scalar(input, component));
         // exterior uses the positive Hodge Laplacian; viscosity uses its negative.
@@ -478,7 +493,7 @@ public:
                 cells,
                 KOKKOS_LAMBDA(int i) { output(out_component, i) *= -1; });
     }
-    void curl(Field velocity, Field output)
+    void curl(Field const& velocity, Field const& output)
     {
         Field const placed = m_pointwise;
         int const nodes = n;

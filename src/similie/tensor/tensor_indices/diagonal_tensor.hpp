@@ -50,7 +50,7 @@ struct TensorDiagonalIndex
     }
 
     KOKKOS_FUNCTION static constexpr std::size_t mem_id(
-            std::array<std::size_t, sizeof...(TensorIndex)> const natural_ids)
+            std::array<std::size_t, sizeof...(TensorIndex)> const& natural_ids)
     {
         assert(std::all_of(natural_ids.begin(), natural_ids.end(), [&](const std::size_t id) {
             return id == *natural_ids.begin();
@@ -59,7 +59,7 @@ struct TensorDiagonalIndex
     }
 
     KOKKOS_FUNCTION static constexpr std::size_t access_id(
-            std::array<std::size_t, sizeof...(TensorIndex)> const natural_ids)
+            std::array<std::size_t, sizeof...(TensorIndex)> const& natural_ids)
     {
         if (!std::all_of(natural_ids.begin(), natural_ids.end(), [&](const std::size_t id) {
                 return id == *natural_ids.begin();
@@ -79,8 +79,8 @@ struct TensorDiagonalIndex
     template <class Tensor, class Elem, class Id, class FunctorType>
     KOKKOS_FUNCTION static constexpr Tensor::element_type process_access(
             const FunctorType& access,
-            Tensor tensor,
-            Elem elem)
+            Tensor const& tensor,
+            Elem const& elem)
     {
         if (elem.template uid<Id>() == 0) {
             return 0.;
