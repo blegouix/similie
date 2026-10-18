@@ -8,6 +8,7 @@
 #include <similie/exterior/codifferential/codifferential.hpp>
 #include <similie/exterior/continuous_hodge_star/continuous_hodge_star.hpp>
 #include <similie/exterior/continuous_hodge_star/levi_civita_continuous_hodge_star.hpp>
+#include <similie/exterior/discrete_hodge_star/weighted_levi_civita_discrete_hodge_star.hpp>
 #include <similie/exterior/continuous_hodge_star/staged_continuous_hodge_star.hpp>
 #include <similie/exterior/covariant_derivative/covariant_derivative.hpp>
 #include <similie/exterior/discrete_hodge_star/composed_discrete_hodge_star.hpp>

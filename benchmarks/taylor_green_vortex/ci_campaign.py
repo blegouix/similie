@@ -25,6 +25,7 @@ LAPLACIAN_STRATEGIES = (
         "levi-civita-diagonal",
         (
             "--levi-civita-continuous-hodge-star",
+            "--weighted-levi-civita-discrete-hodge-star",
             "--diagonal-reduction",
             "--diagonal-reconstruction",
         ),
@@ -252,6 +253,7 @@ def campaign(binary, output, fluid, transport, coupling):
     validation_flags = (
         [
             "--levi-civita-continuous-hodge-star",
+            "--weighted-levi-civita-discrete-hodge-star",
             "--diagonal-reduction",
             "--diagonal-reconstruction",
         ]

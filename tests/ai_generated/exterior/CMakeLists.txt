@@ -73,3 +73,9 @@ target_compile_definitions(diagonal_assertion_release PRIVATE NDEBUG)
 add_test(NAME StagedLocalOperators.DebugOnlyDiagonalAssertions
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/diagonal_assertions.py"
     $<TARGET_FILE:diagonal_assertion_debug> $<TARGET_FILE:diagonal_assertion_release>)
+
+add_executable(unit_tests_weighted_levi_civita_discrete_hodge_star
+    weighted_levi_civita_discrete_hodge_star.cpp ../../main.cpp)
+target_link_libraries(unit_tests_weighted_levi_civita_discrete_hodge_star
+    PRIVATE GTest::gtest DDC::core sil::exterior)
+gtest_discover_tests(unit_tests_weighted_levi_civita_discrete_hodge_star DISCOVERY_MODE PRE_TEST)

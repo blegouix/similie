@@ -4,6 +4,7 @@
 
 #include <similie/exterior/continuous_hodge_star/levi_civita_continuous_hodge_star.hpp>
 #include <similie/exterior/discrete_hodge_star/staged_discrete_hodge_star.hpp>
+#include <similie/exterior/discrete_hodge_star/weighted_levi_civita_discrete_hodge_star.hpp>
 #include <similie/exterior/exterior.hpp>
 #include <similie/exterior/laplacian/staged_laplacian.hpp>
 
@@ -92,18 +93,42 @@ struct HodgePolicies
             class Position,
             class Element>
     using Discrete = std::conditional_t<
-            Mode == 32,
-            sil::exterior::StagedHodgeStar<Complex, Source, Target, Metric, Position, Element>,
-            sil::exterior::ComposedDiscreteHodgeStar<
+            Mode == 34,
+            sil::exterior::WeightedLeviCivitaDiscreteHodgeStar<
                     Complex,
                     Source,
                     Target,
                     Metric,
                     Position,
-                    Element,
-                    Reconstruction,
-                    Reduction,
-                    Continuous>>;
+                    Element>,
+            std::conditional_t<
+                    Mode == 35,
+                    sil::exterior::StagedWeightedLeviCivitaDiscreteHodgeStar<
+                            Complex,
+                            Source,
+                            Target,
+                            Metric,
+                            Position,
+                            Element>,
+                    std::conditional_t<
+                            Mode == 32,
+                            sil::exterior::StagedHodgeStar<
+                                    Complex,
+                                    Source,
+                                    Target,
+                                    Metric,
+                                    Position,
+                                    Element>,
+                            sil::exterior::ComposedDiscreteHodgeStar<
+                                    Complex,
+                                    Source,
+                                    Target,
+                                    Metric,
+                                    Position,
+                                    Element,
+                                    Reconstruction,
+                                    Reduction,
+                                    Continuous>>>>;
 };
 
 template <int Mode, class Tensor>

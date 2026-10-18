@@ -153,6 +153,53 @@ void equal_index_cases()
             ddc::DiscreteDomain<I>(ddc::DiscreteElement<I>(1), ddc::DiscreteVector<I>(1)));
 }
 
+TEST(TensorProdStructured, WeightedLeviCivitaBothSides)
+{
+    compare<TensorAntisymmetricIndex<J, K>>(
+            ddc::TypeSeq<TensorWeightedLeviCivitaIndex<
+                    TensorAntisymmetricIndex<upper_t<I>>,
+                    TensorAntisymmetricIndex<J, K>>>(),
+            ddc::TypeSeq<I>());
+    compare<K>(
+            ddc::TypeSeq<TensorWeightedLeviCivitaIndex<
+                    TensorAntisymmetricIndex<upper_t<I>, upper_t<J>>,
+                    TensorAntisymmetricIndex<K>>>(),
+            ddc::TypeSeq<TensorAntisymmetricIndex<I, J>>());
+    compare<TensorFullIndex<J, K>>(
+            ddc::TypeSeq<TensorWeightedLeviCivitaIndex<
+                    TensorAntisymmetricIndex<upper_t<I>>,
+                    TensorAntisymmetricIndex<J, K>>>(),
+            ddc::TypeSeq<I>());
+    compare<TensorAntisymmetricIndex<C, D>>(
+            ddc::TypeSeq<TensorWeightedLeviCivitaIndex<
+                    TensorAntisymmetricIndex<upper_t<A>, upper_t<B>>,
+                    TensorAntisymmetricIndex<C, D>>>(),
+            ddc::TypeSeq<TensorAntisymmetricIndex<A, B>>());
+    compare<TensorAntisymmetricIndex<A, B, C, D>>(
+            ddc::TypeSeq<TensorWeightedLeviCivitaIndex<
+                    TensorAntisymmetricIndex<>,
+                    TensorAntisymmetricIndex<A, B, C, D>>>(),
+            ddc::TypeSeq<>());
+}
+
+TEST(TensorProdStructured, WeightedLeviCivitaIndexMappings)
+{
+    using Weighted = TensorWeightedLeviCivitaIndex<
+            TensorAntisymmetricIndex<I>,
+            TensorAntisymmetricIndex<J, K>>;
+    static_assert(TensorIndexConcept<Weighted>);
+    static_assert(Weighted::mem_size() == 3);
+    for (std::size_t entry = 0; entry < Weighted::mem_size(); ++entry) {
+        std::array const ids = Weighted::mem_id_to_canonical_natural_ids(entry);
+        EXPECT_EQ(Weighted::mem_id(ids), entry);
+        EXPECT_EQ(Weighted::access_id(ids), 1 + entry);
+        std::array const reversed {ids[0], ids[2], ids[1]};
+        EXPECT_EQ(Weighted::access_id(reversed), 1 + Weighted::mem_size() + entry);
+    }
+    EXPECT_EQ(Weighted::access_id({0, 0, 2}), 0);
+    EXPECT_EQ(Weighted::access_id({3, 1, 2}), 0);
+}
+
 TEST(TensorProdStructured, IdentityBothSides)
 {
     equal_index_cases<TensorIdentityIndex>();

@@ -17,13 +17,16 @@
 #include "diagonal.hpp"
 #include "identity.hpp"
 #include "levi_civita.hpp"
+#include "weighted_levi_civita.hpp"
 
 namespace sil::tensor::detail {
 
 template <class Index>
-concept StructuredTensorProductIndex = misc::Specialization<Index, TensorIdentityIndex>
-                                       || misc::Specialization<Index, TensorDiagonalIndex>
-                                       || misc::Specialization<Index, TensorLeviCivitaIndex>;
+concept StructuredTensorProductIndex
+        = misc::Specialization<Index, TensorIdentityIndex>
+          || misc::Specialization<Index, TensorDiagonalIndex>
+          || misc::Specialization<Index, TensorLeviCivitaIndex>
+          || misc::Specialization<Index, TensorWeightedLeviCivitaIndex>;
 
 template <class Index, class... Tags>
 KOKKOS_FUNCTION constexpr bool tensor_product_indices_match(ddc::DiscreteElement<Tags...> element)
@@ -36,6 +39,12 @@ KOKKOS_FUNCTION constexpr bool tensor_product_indices_match(ddc::DiscreteElement
                 element);
     } else if constexpr (misc::Specialization<Index, TensorDiagonalIndex>) {
         return DiagonalTensorProductMatcher<Index>::operator()(
+                misc::type_seq_intersect_t<
+                        ddc::to_type_seq_t<natural_domain_t<Index>>,
+                        ddc::TypeSeq<Tags...>>(),
+                element);
+    } else if constexpr (misc::Specialization<Index, TensorWeightedLeviCivitaIndex>) {
+        return WeightedLeviCivitaTensorProductMatcher<Index>::operator()(
                 misc::type_seq_intersect_t<
                         ddc::to_type_seq_t<natural_domain_t<Index>>,
                         ddc::TypeSeq<Tags...>>(),

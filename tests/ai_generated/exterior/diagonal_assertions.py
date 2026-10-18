@@ -9,7 +9,7 @@ import sys
 
 for operator, path in (
     (op, path)
-    for op in ("reduction", "reconstruction")
+    for op in ("reduction", "reconstruction", "weighted-hodge")
     for path in ("direct", "staged")
 ):
     for executable, geometry, should_assert in (

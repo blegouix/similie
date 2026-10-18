@@ -764,6 +764,23 @@ public:
     {
         using Source = reduction_index_t<tensor::primes<tensor::upper_t<Indices>>>;
         detail::LocalOperatorStencil<Source, target_index_type> result;
+        if constexpr (misc::Specialization<
+                              detail::LocalCoefficientIndex<
+                                      ComponentSource,
+                                      target_index_type,
+                                      Coefficients>,
+                              tensor::TensorDiagonalIndex>) {
+#ifndef NDEBUG
+            detail::assert_local_diagonal(
+                    Reduction<Indices, PositionType, BatchElem, Complex>::value(position, element));
+#endif
+            std::array<double, ComponentSource::mem_size()> const coefficients
+                    = diagonal_weights(position, element);
+            for (std::size_t component = 0; component < coefficients.size(); ++component)
+                result.weights[component * coefficients.size() + component]
+                        = coefficients[component];
+            return result;
+        }
         auto unit = detail::make_stencil<typename PositionType::memory_space, Source>(
                 ddc::DiscreteElement<>());
         auto output = detail::make_stencil<typename PositionType::memory_space, target_index_type>(
@@ -791,6 +808,24 @@ public:
     {
         using Source = reduction_index_t<tensor::primes<tensor::upper_t<Indices>>>;
         detail::LocalOperatorStencil<Source, target_index_type> result;
+        if constexpr (misc::Specialization<
+                              detail::LocalCoefficientIndex<
+                                      ComponentSource,
+                                      target_index_type,
+                                      Coefficients>,
+                              tensor::TensorDiagonalIndex>) {
+#ifndef NDEBUG
+            detail::assert_local_diagonal(
+                    Reduction<Indices, PositionType, BatchElem, Complex>::
+                            value(metric, position, element));
+#endif
+            std::array<double, ComponentSource::mem_size()> const coefficients
+                    = diagonal_weights(metric, position, element);
+            for (std::size_t component = 0; component < coefficients.size(); ++component)
+                result.weights[component * coefficients.size() + component]
+                        = coefficients[component];
+            return result;
+        }
         auto unit = detail::make_stencil<typename PositionType::memory_space, Source>(
                 ddc::DiscreteElement<>());
         auto output = detail::make_stencil<typename PositionType::memory_space, target_index_type>(

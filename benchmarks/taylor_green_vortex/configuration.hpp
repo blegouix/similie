@@ -27,6 +27,8 @@ struct Configuration
     bool staged_diagonal_reduction = false, staged_diagonal_reconstruction = false;
     bool diagonal_reduction = false, diagonal_reconstruction = false;
     bool levi_civita_continuous_hodge_star = false;
+    bool weighted_levi_civita_discrete_hodge_star = false;
+    bool staged_weighted_levi_civita_discrete_hodge_star = false;
 
     template <class Choice>
     static void select(Choice value, Choice& selected, bool& supplied, char const* group)
@@ -58,6 +60,10 @@ struct Configuration
             staged_laplacian = true;
         else if (argument == "--staged-discrete-hodge-star")
             staged_discrete_hodge_star = true;
+        else if (argument == "--weighted-levi-civita-discrete-hodge-star")
+            weighted_levi_civita_discrete_hodge_star = true;
+        else if (argument == "--staged-weighted-levi-civita-discrete-hodge-star")
+            staged_weighted_levi_civita_discrete_hodge_star = true;
         else if (argument == "--staged-reduction")
             staged_reduction = true;
         else if (argument == "--staged-reconstruction")
@@ -92,8 +98,12 @@ struct Configuration
     {
         if (staged_laplacian)
             return 33;
+        if (staged_weighted_levi_civita_discrete_hodge_star)
+            return 35;
         if (staged_discrete_hodge_star)
             return 32;
+        if (weighted_levi_civita_discrete_hodge_star)
+            return 34;
         return (reduction_mode() + 4 * reconstruction_mode()) * 2
                + int(levi_civita_continuous_hodge_star);
     }
@@ -108,6 +118,8 @@ struct Configuration
             }
         };
         append(staged_laplacian, "laplacian");
+        append(staged_weighted_levi_civita_discrete_hodge_star,
+               "weighted-levi-civita-discrete-hodge-star");
         append(staged_discrete_hodge_star, "discrete-hodge-star");
         append(reduction_mode() == 1, "reduction");
         append(reduction_mode() == 2, "diagonal-reduction");
@@ -118,7 +130,12 @@ struct Configuration
 
     std::string operator_name() const
     {
-        return std::string(levi_civita_continuous_hodge_star ? "levi-civita" : "general-hodge-star")
+        return std::string(
+                       weighted_levi_civita_discrete_hodge_star
+                                       || staged_weighted_levi_civita_discrete_hodge_star
+                               ? "weighted-levi-civita-discrete-hodge-star"
+                               : (levi_civita_continuous_hodge_star ? "levi-civita"
+                                                                    : "general-hodge-star"))
                + (diagonal_reduction || staged_diagonal_reduction ? "+diagonal-reduction"
                                                                   : "+general-reduction")
                + (diagonal_reconstruction || staged_diagonal_reconstruction
