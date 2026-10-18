@@ -2,17 +2,26 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 name: tests
+permissions:
+  actions: read
+  contents: read
 on:
   workflow_run:
     workflows: [ build ]
     types: [ completed ]
   workflow_dispatch:
     inputs:
+      build_run_id:
+        description: Workflow run ID containing the matching compiled artifact
+        required: false
       target_sha:
         description: Commit SHA to test
         required: false
   workflow_call:
     inputs:
+      build_run_id:
+        required: false
+        type: string
       target_sha:
         required: true
         type: string
@@ -48,33 +57,64 @@ jobs:
         fi
         echo "TARGET_SHA=${target_sha}" >> "${GITHUB_ENV}"
         echo "target_sha=${target_sha}" >> "${GITHUB_OUTPUT}"
+    - name: Resolve CUDA build artifact run
+      id: cuda-artifact-run
+      uses: actions/github-script@v7
+      env:
+        TARGET_SHA: ${{ steps.target.outputs.target_sha }}
+        BUILD_RUN_ID_INPUT: ${{ inputs.build_run_id }}
+        ARTIFACT_NAME: similie-cuda-${{ steps.target.outputs.target_sha }}
+      with:
+        script: |
+          if (process.env.BUILD_RUN_ID_INPUT) {
+            core.setOutput('run_id', process.env.BUILD_RUN_ID_INPUT);
+          } else if (context.eventName === 'workflow_run') {
+            core.setOutput('run_id', String(context.payload.workflow_run.id));
+          } else if (context.eventName === 'workflow_dispatch') {
+            const artifacts = await github.paginate(github.rest.actions.listArtifactsForRepo, {
+              ...context.repo, name: process.env.ARTIFACT_NAME, per_page: 100,
+            });
+            const matches = artifacts.filter((artifact) => !artifact.expired &&
+              artifact.name === process.env.ARTIFACT_NAME && artifact.workflow_run);
+            matches.sort((left, right) => right.id - left.id);
+            if (matches.length === 0) core.setFailed(`No CUDA build artifact found for ${process.env.TARGET_SHA}`);
+            else core.setOutput('run_id', String(matches[0].workflow_run.id));
+          } else {
+            core.setOutput('run_id', String(context.runId));
+          }
     - name: Set build paths
       run: |
         echo "IMAGE_TAG=similie_env:${TARGET_SHA}" >> "${GITHUB_ENV}"
-        echo "CACHE_ROOT=${RUNNER_TEMP}/similie-cuda-workspace-${TARGET_SHA}" >> "${GITHUB_ENV}"
-        rm -rf "${RUNNER_TEMP}/similie-cuda-workspace-${TARGET_SHA}"
-    - name: Restore commit workspace
-      uses: actions/cache/restore@v6
+        echo "CACHE_ROOT=${RUNNER_TEMP}/similie-cuda-download-${GITHUB_RUN_ID}-${GITHUB_JOB}" >> "${GITHUB_ENV}"
+        echo "BUILD_ROOT=/tmp/similie-cuda-workspace-${{ steps.cuda-artifact-run.outputs.run_id }}-${TARGET_SHA}" >> "${GITHUB_ENV}"
+        rm -rf "${RUNNER_TEMP}/similie-cuda-download-${GITHUB_RUN_ID}-${GITHUB_JOB}"
+    - name: Download CUDA build workspace
+      uses: actions/download-artifact@v8
       with:
-        path: ${{ runner.temp }}/similie-cuda-workspace-${{ steps.target.outputs.target_sha }}
-        key: similie-cuda-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
-        fail-on-cache-miss: true
-    - name: Recompile and run CUDA tests
+        name: similie-cuda-${{ steps.target.outputs.target_sha }}
+        path: ${{ runner.temp }}/similie-cuda-download-${{ github.run_id }}-${{ github.job }}
+        run-id: ${{ steps.cuda-artifact-run.outputs.run_id }}
+        github-token: ${{ github.token }}
+    - name: Extract CUDA build workspace
+      run: |
+        tar -xzf "${CACHE_ROOT}/similie-cuda-workspace.tar.gz" -C "${CACHE_ROOT}"
+        rm "${CACHE_ROOT}/similie-cuda-workspace.tar.gz"
+    - name: Run CUDA tests
       run: |
         docker image inspect "${IMAGE_TAG}" >/dev/null
         docker run --rm --gpus all \
           --user "$(id -u):$(id -g)" \
-          -e HOME="${CACHE_ROOT}/home" \
-          -e CACHE_ROOT="${CACHE_ROOT}" \
-          -v "${CACHE_ROOT}:${CACHE_ROOT}" \
-          -w "${CACHE_ROOT}/build" \
+          -e HOME="${BUILD_ROOT}/home" \
+          -e CACHE_ROOT="${BUILD_ROOT}" \
+          -v "${CACHE_ROOT}:${BUILD_ROOT}" \
+          -w "${BUILD_ROOT}/build" \
           "${IMAGE_TAG}" \
           bash -lc '
             set -euo pipefail
+            mkdir -p "${HOME}"
             export PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}"
             git config --global --add safe.directory "*"
             nvidia-smi
-            cmake --build . --parallel 8
             ctest --output-on-failure
           '
 
@@ -96,31 +136,61 @@ jobs:
         fi
         echo "TARGET_SHA=${target_sha}" >> "${GITHUB_ENV}"
         echo "target_sha=${target_sha}" >> "${GITHUB_OUTPUT}"
+    - name: Resolve OpenMP build artifact run
+      id: omp-artifact-run
+      uses: actions/github-script@v7
+      env:
+        TARGET_SHA: ${{ steps.target.outputs.target_sha }}
+        BUILD_RUN_ID_INPUT: ${{ inputs.build_run_id }}
+        ARTIFACT_NAME: similie-omp-${{ steps.target.outputs.target_sha }}
+      with:
+        script: |
+          if (process.env.BUILD_RUN_ID_INPUT) {
+            core.setOutput('run_id', process.env.BUILD_RUN_ID_INPUT);
+          } else if (context.eventName === 'workflow_run') {
+            core.setOutput('run_id', String(context.payload.workflow_run.id));
+          } else if (context.eventName === 'workflow_dispatch') {
+            const artifacts = await github.paginate(github.rest.actions.listArtifactsForRepo, {
+              ...context.repo, name: process.env.ARTIFACT_NAME, per_page: 100,
+            });
+            const matches = artifacts.filter((artifact) => !artifact.expired &&
+              artifact.name === process.env.ARTIFACT_NAME && artifact.workflow_run);
+            matches.sort((left, right) => right.id - left.id);
+            if (matches.length === 0) core.setFailed(`No OpenMP build artifact found for ${process.env.TARGET_SHA}`);
+            else core.setOutput('run_id', String(matches[0].workflow_run.id));
+          } else {
+            core.setOutput('run_id', String(context.runId));
+          }
     - name: Set build paths
       run: |
         echo "IMAGE_TAG=similie_env_cpu:${TARGET_SHA}" >> "${GITHUB_ENV}"
-        echo "CACHE_ROOT=${RUNNER_TEMP}/similie-omp-workspace-${TARGET_SHA}" >> "${GITHUB_ENV}"
-        rm -rf "${RUNNER_TEMP}/similie-omp-workspace-${TARGET_SHA}"
-    - name: Restore OpenMP commit workspace
-      uses: actions/cache/restore@v6
+        echo "CACHE_ROOT=${RUNNER_TEMP}/similie-omp-download-${GITHUB_RUN_ID}-${GITHUB_JOB}" >> "${GITHUB_ENV}"
+        echo "BUILD_ROOT=/tmp/similie-omp-workspace-${{ steps.omp-artifact-run.outputs.run_id }}-${TARGET_SHA}" >> "${GITHUB_ENV}"
+        rm -rf "${RUNNER_TEMP}/similie-omp-download-${GITHUB_RUN_ID}-${GITHUB_JOB}"
+    - name: Download OpenMP build workspace
+      uses: actions/download-artifact@v8
       with:
-        path: ${{ runner.temp }}/similie-omp-workspace-${{ steps.target.outputs.target_sha }}
-        key: similie-omp-workspace-${{ runner.os }}-${{ steps.target.outputs.target_sha }}
-        fail-on-cache-miss: true
-    - name: Pre-run YoungTableau tests, recompile, and run OpenMP tests
+        name: similie-omp-${{ steps.target.outputs.target_sha }}
+        path: ${{ runner.temp }}/similie-omp-download-${{ github.run_id }}-${{ github.job }}
+        run-id: ${{ steps.omp-artifact-run.outputs.run_id }}
+        github-token: ${{ github.token }}
+    - name: Extract OMP build workspace
+      run: |
+        tar -xzf "${CACHE_ROOT}/similie-omp-workspace.tar.gz" -C "${CACHE_ROOT}"
+        rm "${CACHE_ROOT}/similie-omp-workspace.tar.gz"
+    - name: Run OpenMP tests
       run: |
         docker image inspect "${IMAGE_TAG}" >/dev/null
         docker run --rm \
           --user "$(id -u):$(id -g)" \
-          -e HOME="${CACHE_ROOT}/home" \
-          -e CACHE_ROOT="${CACHE_ROOT}" \
-          -v "${CACHE_ROOT}:${CACHE_ROOT}" \
-          -w "${CACHE_ROOT}/build_omp" \
+          -e HOME="${BUILD_ROOT}/home" \
+          -e CACHE_ROOT="${BUILD_ROOT}" \
+          -v "${CACHE_ROOT}:${BUILD_ROOT}" \
+          -w "${BUILD_ROOT}/build_omp" \
           "${IMAGE_TAG}" \
           bash -lc '
             set -euo pipefail
+            mkdir -p "${HOME}"
             git config --global --add safe.directory "*"
-            ctest --output-on-failure -R '^YoungTableau\.'
-            cmake --build . --clean-first --parallel 8
             ctest --output-on-failure
           '
