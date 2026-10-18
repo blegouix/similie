@@ -385,8 +385,8 @@ TEST(Tensor, ScalarStructuredIndexContract)
 TEST(Tensor, AntisymmetricAccessDomainIncludesBothOrientations)
 {
     using Index = sil::tensor::TensorAntisymmetricIndex<Alpha, Beta, Gamma>;
-    sil::tensor::TensorAccessor<Index> accessor;
-    ddc::Chunk allocation(accessor.domain(), ddc::HostAllocator<double>());
+    ddc::Chunk
+            allocation(sil::tensor::TensorAccessor<Index>::domain(), ddc::HostAllocator<double>());
     sil::tensor::Tensor field(allocation);
     field.mem(ddc::DiscreteElement<Index>(0)) = 7.0;
     EXPECT_EQ(Index::size(), 27);

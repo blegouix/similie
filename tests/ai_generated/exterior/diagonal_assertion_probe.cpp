@@ -21,7 +21,34 @@ int main(int argc, char** argv)
     Field<PositionIndex> position(positions);
     fill_geometry(position, skew);
     using Indices = ddc::TypeSeq<One>;
-    if (reduce) {
+    if (argc > 3 && std::string(argv[3]) == "direct") {
+        auto inputs = allocate<One>(domain());
+        auto outputs = allocate<One>(domain());
+        Field<One> input(inputs), output(outputs);
+        fill_form(input);
+        ddc::parallel_for_each(
+                Exec(),
+                domain(),
+                KOKKOS_LAMBDA(Domain::discrete_element_type element) {
+                    if (reduce)
+                        sil::exterior::Reduction<
+                                Indices,
+                                Field<PositionIndex>,
+                                Domain::discrete_element_type,
+                                sil::exterior::CellComplex::Primal,
+                                sil::tensor::TensorDiagonalIndex>::
+                        operator()(output[element], input[element], position, element);
+                    else
+                        sil::exterior::Reconstruction<
+                                Indices,
+                                Field<PositionIndex>,
+                                Domain::discrete_element_type,
+                                sil::exterior::CellComplex::Primal,
+                                sil::tensor::TensorDiagonalIndex>::
+                        operator()(output[element], input[element], position, element);
+                });
+        Exec().fence();
+    } else if (reduce) {
         sil::exterior::StagedReduction<
                 Indices,
                 Field<One>,

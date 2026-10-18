@@ -73,6 +73,51 @@ KOKKOS_FUNCTION void apply_local_stencil(
             local_component_tensor<SourceComponent>(input));
 }
 
+// Apply coefficients computed at the current point through the same diagonal
+// tensor product as a cached local operator, without allocating a cache.
+template <class Source, class Target, class Output, class Input>
+KOKKOS_FUNCTION void apply_local_diagonal(
+        Output const& output,
+        Input const& input,
+        std::array<double, Source::mem_size()> const& weights)
+{
+    using SourceComponent = tensor::Covariant<LocalComponentIndex<Source, false>>;
+    using TargetComponent = tensor::Covariant<LocalComponentIndex<Target, true>>;
+    using Matrix = tensor::TensorDiagonalIndex<TargetComponent, tensor::upper_t<SourceComponent>>;
+    using Span = ddc::ChunkSpan<
+            double const,
+            ddc::DiscreteDomain<Matrix>,
+            Kokkos::layout_stride,
+            typename Output::memory_space>;
+    tensor::tensor_prod(
+            local_component_tensor<TargetComponent>(output),
+            tensor::Tensor(
+                    Span(typename Span::allocation_mdspan_type(
+                                 weights.data(),
+                                 typename Span::mapping_type(
+                                         typename Span::extents_type(Matrix::mem_size()),
+                                         std::array<std::size_t, 1> {1})),
+                         tensor::TensorAccessor<Matrix>::domain())),
+            local_component_tensor<SourceComponent>(input));
+}
+
+template <class Source, class Target>
+KOKKOS_FUNCTION void assert_local_diagonal(
+        [[maybe_unused]] LocalOperatorStencil<Source, Target> const& stencil)
+{
+#ifndef NDEBUG
+    double scale = 0.;
+    for (double coefficient : stencil.weights)
+        scale = Kokkos::max(scale, Kokkos::abs(coefficient));
+    for (std::size_t row = 0; row < Target::mem_size(); ++row)
+        for (std::size_t col = 0; col < Source::mem_size(); ++col)
+            assert((row == col
+                    || Kokkos::abs(stencil.weights[row * Source::mem_size() + col])
+                               <= 128. * std::numeric_limits<double>::epsilon() * scale)
+                   && "Diagonal operator requires diagonal coefficients");
+#endif
+}
+
 
 // Bind fixed geometric arguments; the evaluation element remains dynamic.
 template <class Operator, class... Geometry>

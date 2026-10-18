@@ -58,7 +58,7 @@ public:
     KOKKOS_FUNCTION static void operator()(
             HodgeTensorType const& hodge_tensor,
             FormTensorType const& form_tensor,
-            MetricType,
+            MetricType const&,
             BatchElem)
     {
         if constexpr (ddc::type_seq_size_v<Indices1> == 0) {
@@ -109,7 +109,7 @@ public:
     }
 
     template <class NaturalElement>
-    KOKKOS_FUNCTION static double value(MetricType, BatchElem, NaturalElement natural)
+    KOKKOS_FUNCTION static double value(MetricType const&, BatchElem, NaturalElement natural)
     {
         return levi_civita().get(levi_civita().access_element(natural))
                / misc::factorial(ddc::type_seq_size_v<Indices1>);

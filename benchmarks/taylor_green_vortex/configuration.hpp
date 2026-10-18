@@ -76,21 +76,25 @@ struct Configuration
             return false;
         return true;
     }
-    int reduction_stage() const
+    int reduction_mode() const
     {
-        return staged_diagonal_reduction ? 2 : int(staged_reduction);
+        return staged_diagonal_reduction || (staged_reduction && diagonal_reduction)
+                       ? 2
+                       : (staged_reduction ? 1 : (diagonal_reduction ? 3 : 0));
     }
-    int reconstruction_stage() const
+    int reconstruction_mode() const
     {
-        return staged_diagonal_reconstruction ? 2 : int(staged_reconstruction);
+        return staged_diagonal_reconstruction || (staged_reconstruction && diagonal_reconstruction)
+                       ? 2
+                       : (staged_reconstruction ? 1 : (diagonal_reconstruction ? 3 : 0));
     }
     int laplacian_mode() const
     {
         if (staged_laplacian)
-            return 19;
+            return 33;
         if (staged_discrete_hodge_star)
-            return 18;
-        return (reduction_stage() + 3 * reconstruction_stage()) * 2
+            return 32;
+        return (reduction_mode() + 4 * reconstruction_mode()) * 2
                + int(levi_civita_continuous_hodge_star);
     }
     std::string staging_name() const
@@ -105,11 +109,21 @@ struct Configuration
         };
         append(staged_laplacian, "laplacian");
         append(staged_discrete_hodge_star, "discrete-hodge-star");
-        append(staged_reduction && !staged_diagonal_reduction, "reduction");
-        append(staged_diagonal_reduction, "diagonal-reduction");
-        append(staged_reconstruction && !staged_diagonal_reconstruction, "reconstruction");
-        append(staged_diagonal_reconstruction, "diagonal-reconstruction");
+        append(reduction_mode() == 1, "reduction");
+        append(reduction_mode() == 2, "diagonal-reduction");
+        append(reconstruction_mode() == 1, "reconstruction");
+        append(reconstruction_mode() == 2, "diagonal-reconstruction");
         return result.empty() ? "none" : result;
+    }
+
+    std::string operator_name() const
+    {
+        return std::string(levi_civita_continuous_hodge_star ? "levi-civita" : "general-hodge-star")
+               + (diagonal_reduction || staged_diagonal_reduction ? "+diagonal-reduction"
+                                                                  : "+general-reduction")
+               + (diagonal_reconstruction || staged_diagonal_reconstruction
+                          ? "+diagonal-reconstruction"
+                          : "+general-reconstruction");
     }
 
     void validate() const

@@ -26,12 +26,14 @@ using StagedReduction = StagedOperator<
                 Indices,
                 PositionType,
                 typename ReducedTensorType::non_indices_domain_t::discrete_element_type,
-                Complex>,
+                Complex,
+                Coefficients>,
         typename Reduction<
                 Indices,
                 PositionType,
                 typename ReducedTensorType::non_indices_domain_t::discrete_element_type,
-                Complex>::staged_storage_type::template rebind<ExecSpace, Coefficients>>;
+                Complex,
+                Coefficients>::staged_storage_type::template rebind<ExecSpace, Coefficients>>;
 
 static_assert(StagedOperatorConcept<
               StagedReduction<

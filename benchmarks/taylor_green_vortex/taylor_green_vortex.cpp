@@ -1046,7 +1046,8 @@ void run_trajectory(benchmark::State* benchmark_state)
         performance << std::setprecision(17) << "{\"configuration\":\"" << configuration.name()
                     << "\",\"laplacian\":\""
                     << (configuration.staged_laplacian ? "staged" : "direct") << "\",\"staging\":\""
-                    << configuration.staging_name() << "\",\"mode\":\""
+                    << configuration.staging_name() << "\",\"operators\":\""
+                    << configuration.operator_name() << "\",\"mode\":\""
                     << (benchmark_state ? "performance" : "reference") << "\",\"N\":" << nodes
                     << ",\"steps\":" << steps << ",\"final_time\":" << time
                     << ",\"mean_step_seconds\":" << solver_seconds / steps
@@ -1183,6 +1184,7 @@ int main(int argc, char** argv)
         benchmark::
                 AddCustomContext("laplacian", configuration.staged_laplacian ? "staged" : "direct");
         benchmark::AddCustomContext("staging", configuration.staging_name());
+        benchmark::AddCustomContext("operators", configuration.operator_name());
         benchmark::AddCustomContext("Re", "1600");
         benchmark::AddCustomContext("Pr", "0.71");
         benchmark::AddCustomContext(

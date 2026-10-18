@@ -19,6 +19,7 @@
 #include <similie/tensor/tensor_indices/antisymmetric_tensor.hpp>
 #include <similie/tensor/tensor_indices/character.hpp>
 #include <similie/tensor/tensor_indices/full_tensor.hpp>
+#include <similie/tensor/tensor_indices/identity_tensor.hpp>
 #include <similie/tensor/tensor_indices/prime.hpp>
 #include <similie/tensor/tensor_prod/tensor_prod.hpp>
 
@@ -337,6 +338,12 @@ KOKKOS_FUNCTION double continuous_hodge_value_from_ids(
     std::array<std::size_t, K> const complement = hodge_complement_ids<N>(target_ids);
     using MetricIndex
             = ddc::type_seq_element_t<0, ddc::to_type_seq_t<typename MetricType::indices_domain_t>>;
+    if constexpr (misc::Specialization<MetricIndex, tensor::TensorIdentityIndex>) {
+        return hodge_is_complete_permutation<N>(source_ids, target_ids)
+                       ? static_cast<double>(hodge_permutation_sign<N>(source_ids, target_ids))
+                                 / misc::factorial(K)
+                       : 0.;
+    }
     using MetricIndex1 = tensor::metric_index_1<MetricIndex>;
     using MetricIndex2 = tensor::metric_index_2<MetricIndex>;
     std::array<double, N * N> metric_alloc {};
@@ -444,15 +451,22 @@ template <
         misc::Specialization<ddc::TypeSeq> Indices,
         misc::Specialization<tensor::Tensor> PositionType,
         class BatchElem,
-        CellComplex Complex = CellComplex::Primal>
+        CellComplex Complex = CellComplex::Primal,
+        template <class...> class Coefficients = tensor::TensorFullIndex>
 struct Reduction
 {
+private:
+    using ComponentSource = reduction_index_t<tensor::primes<tensor::upper_t<Indices>>>;
+
+public:
     using staged_storage_type = detail::LocalOperatorStorage<
             Reduction,
             reduction_index_t<tensor::primes<tensor::upper_t<Indices>>>,
             reduction_index_t<Indices>,
             misc::convert_type_seq_to_t<ddc::DiscreteDomain, ddc::to_type_seq_t<BatchElem>>,
-            typename PositionType::memory_space>;
+            typename PositionType::memory_space,
+            typename PositionType::memory_space::execution_space,
+            Coefficients>;
 
     using source_index_type = misc::convert_type_seq_to_t<
             tensor::TensorFullIndex,
@@ -474,6 +488,22 @@ struct Reduction
             PositionType const& position,
             BatchElem elem)
     {
+        if constexpr (misc::Specialization<
+                              detail::LocalCoefficientIndex<
+                                      ComponentSource,
+                                      target_index_type,
+                                      Coefficients>,
+                              tensor::TensorDiagonalIndex>) {
+#ifndef NDEBUG
+            detail::assert_local_diagonal(
+                    Reduction<Indices, PositionType, BatchElem, Complex>::value(position, elem));
+#endif
+            detail::apply_local_diagonal<ComponentSource, target_index_type>(
+                    reduced_tensor,
+                    form_tensor,
+                    diagonal_weights(position, elem));
+            return;
+        }
         using reduction_accessor_t
                 = sil::tensor::tensor_accessor_for_domain_t<reduction_domain_t<Indices>>;
         using reduction_natural_elem_type =
@@ -522,6 +552,26 @@ struct Reduction
             PositionType const& position,
             BatchElem elem)
     {
+        if constexpr (misc::Specialization<
+                              detail::LocalCoefficientIndex<
+                                      ComponentSource,
+                                      target_index_type,
+                                      Coefficients>,
+                              tensor::TensorDiagonalIndex>) {
+#ifndef NDEBUG
+            detail::assert_local_diagonal(
+                    Reduction<Indices, PositionType, BatchElem, Complex>::
+                            value(metric, position, elem));
+            detail::assert_local_diagonal(
+                    Reduction<Indices, PositionType, BatchElem, CellComplex::Primal>::
+                            value(position, elem));
+#endif
+            detail::apply_local_diagonal<ComponentSource, target_index_type>(
+                    reduced_tensor,
+                    form_tensor,
+                    diagonal_weights(metric, position, elem));
+            return;
+        }
         if constexpr (Complex == CellComplex::Primal) {
             // Reduce the physical form on its full tangent basis: diagonal
             // volume ratios alone lose the cross terms of an oblique chart.
@@ -821,6 +871,75 @@ struct Reduction
             }
         }
     }
+
+private:
+    KOKKOS_FUNCTION static std::array<double, ComponentSource::mem_size()> diagonal_weights(
+            PositionType const& position,
+            BatchElem elem)
+    {
+        std::array<double, ComponentSource::mem_size()> weights {};
+        if constexpr (target_index_type::rank() == 0) {
+            weights[0] = 1.;
+        } else {
+            for (std::size_t component = 0; component < weights.size(); ++component) {
+                weights[component]
+                        = misc::factorial(target_index_type::rank())
+                          * Reduction<Indices, PositionType, BatchElem, Complex>::
+                                  value(position,
+                                        elem,
+                                        detail::merge_reduction_natural_elems<
+                                                typename tensor::tensor_accessor_for_domain_t<
+                                                        reduction_domain_t<Indices>>::
+                                                        natural_domain_t::discrete_element_type>(
+                                                ComponentSource::mem_id_to_canonical_natural_ids(
+                                                        component),
+                                                target_index_type::mem_id_to_canonical_natural_ids(
+                                                        component)));
+            }
+        }
+        return weights;
+    }
+
+    template <class Metric>
+    KOKKOS_FUNCTION static std::array<double, ComponentSource::mem_size()> diagonal_weights(
+            Metric const& metric,
+            PositionType const& position,
+            BatchElem elem)
+    {
+        if constexpr (Complex == CellComplex::Primal) {
+            return diagonal_weights(position, elem);
+        } else {
+            static_assert(Complex == CellComplex::CircumcentricDual);
+            constexpr std::size_t N = position_index_type::size();
+            constexpr std::size_t Q = target_index_type::rank();
+            constexpr std::size_t K = N - Q;
+            std::array<double, ComponentSource::mem_size()> weights {};
+            for (std::size_t component = 0; component < weights.size(); ++component) {
+                std::array<std::size_t, Q> const target_ids
+                        = target_index_type::mem_id_to_canonical_natural_ids(component);
+                std::array<std::size_t, K> const primal_ids
+                        = detail::hodge_complement_ids<N>(target_ids);
+                std::array<double, K * K> minor {};
+                for (std::size_t col = 0; col < K; ++col) {
+                    std::array<double, N> const edge = detail::edge_vector<
+                            position_index_type>(position, elem, primal_ids[col]);
+                    for (std::size_t row = 0; row < K; ++row)
+                        minor[row * K + col] = edge[primal_ids[row]];
+                }
+                // H_discrete * inverse(H_continuous * inverse(R_primal) / K!)
+                // reduces to scalar division for a diagonal reduction.
+                double const hodge = detail::
+                        continuous_hodge_value_from_ids<N, K>(metric, elem, primal_ids, target_ids);
+                if (hodge != 0.)
+                    weights[component] = detail::legacy_discrete_hodge_value_from_ids<
+                                                 Complex,
+                                                 N,
+                                                 K>(metric, position, elem, primal_ids, target_ids)
+                                         * detail::reduction_determinant<K>(minor) / hodge;
+            }
+            return weights;
+        }
+    }
 };
 
 template <
@@ -993,7 +1112,8 @@ template <
         misc::Specialization<ddc::TypeSeq> Indices,
         misc::Specialization<tensor::Tensor> PositionType,
         class BatchElem,
-        CellComplex Complex = CellComplex::Primal>
+        CellComplex Complex = CellComplex::Primal,
+        template <class...> class Coefficients = tensor::TensorFullIndex>
 struct Reconstruction
 {
     using staged_storage_type = detail::LocalOperatorStorage<
@@ -1003,7 +1123,7 @@ struct Reconstruction
             misc::convert_type_seq_to_t<ddc::DiscreteDomain, ddc::to_type_seq_t<BatchElem>>,
             typename PositionType::memory_space,
             typename PositionType::memory_space::execution_space,
-            tensor::TensorFullIndex,
+            Coefficients,
             typename tensor::natural_domain_t<reduction_index_t<Indices>>::discrete_element_type,
             typename tensor::natural_domain_t<
                     reduction_index_t<tensor::primes<Indices>>>::discrete_element_type,
@@ -1025,6 +1145,22 @@ struct Reconstruction
             PositionType const& position,
             BatchElem elem)
     {
+        if constexpr (misc::Specialization<
+                              detail::LocalCoefficientIndex<
+                                      source_index_type,
+                                      target_index_type,
+                                      Coefficients>,
+                              tensor::TensorDiagonalIndex>) {
+#ifndef NDEBUG
+            detail::assert_local_diagonal(
+                    Reduction<Indices, PositionType, BatchElem, Complex>::value(position, elem));
+#endif
+            detail::apply_local_diagonal<source_index_type, target_index_type>(
+                    reconstructed_tensor,
+                    cochain_tensor,
+                    diagonal_weights(position, elem));
+            return;
+        }
         using reconstruction_accessor_t
                 = sil::tensor::tensor_accessor_for_domain_t<reconstruction_domain_t<Indices>>;
         using reconstruction_natural_elem_type =
@@ -1070,6 +1206,22 @@ struct Reconstruction
             BatchElem element)
     {
         detail::LocalOperatorStencil<source_index_type, target_index_type> stencil;
+        if constexpr (misc::Specialization<
+                              detail::LocalCoefficientIndex<
+                                      source_index_type,
+                                      target_index_type,
+                                      Coefficients>,
+                              tensor::TensorDiagonalIndex>) {
+#ifndef NDEBUG
+            detail::assert_local_diagonal(
+                    Reduction<Indices, PositionType, BatchElem, Complex>::value(position, element));
+#endif
+            std::array<double, source_index_type::mem_size()> const weights
+                    = diagonal_weights(position, element);
+            for (std::size_t component = 0; component < weights.size(); ++component)
+                stencil.weights[component * weights.size() + component] = weights[component];
+            return stencil;
+        }
         if constexpr (source_index_type::rank() == 0) {
             stencil.weights[0] = 1.0;
         } else {
@@ -1093,9 +1245,54 @@ struct Reconstruction
             BatchElem elem,
             auto natural_elem)
     {
-        return detail::
-                ReconstructionMatrix<Indices, PositionType, BatchElem, Complex>(position, elem)
-                        .value(natural_elem);
+        if constexpr (misc::Specialization<
+                              detail::LocalCoefficientIndex<
+                                      source_index_type,
+                                      target_index_type,
+                                      Coefficients>,
+                              tensor::TensorDiagonalIndex>) {
+            return detail::local_stencil_coefficient<source_index_type, target_index_type, false>(
+                    value(position, elem),
+                    ddc::detail::array(source_natural_elem_type(natural_elem)),
+                    ddc::detail::array(target_natural_elem_type(natural_elem)));
+        } else {
+            return detail::
+                    ReconstructionMatrix<Indices, PositionType, BatchElem, Complex>(position, elem)
+                            .value(natural_elem);
+        }
+    }
+
+private:
+    KOKKOS_FUNCTION static std::array<double, source_index_type::mem_size()> diagonal_weights(
+            PositionType const& position,
+            BatchElem elem)
+    {
+        std::array<double, source_index_type::mem_size()> weights {};
+        bool invertible = true;
+        if constexpr (source_index_type::rank() == 0) {
+            weights[0] = 1.;
+        } else {
+            for (std::size_t component = 0; component < weights.size(); ++component) {
+                double const coefficient
+                        = misc::factorial(source_index_type::rank())
+                          * Reduction<Indices, PositionType, BatchElem, Complex>::
+                                  value(position,
+                                        elem,
+                                        detail::merge_reduction_natural_elems<
+                                                typename tensor::tensor_accessor_for_domain_t<
+                                                        reduction_domain_t<Indices>>::
+                                                        natural_domain_t::discrete_element_type>(
+                                                source_index_type::mem_id_to_canonical_natural_ids(
+                                                        component),
+                                                target_index_type::mem_id_to_canonical_natural_ids(
+                                                        component)));
+                invertible = invertible && coefficient != 0.;
+                weights[component] = coefficient != 0. ? 1. / coefficient : 0.;
+            }
+            if (!invertible)
+                weights.fill(0.);
+        }
+        return weights;
     }
 };
 
@@ -1200,12 +1397,14 @@ using StagedReconstruction = StagedOperator<
                 Indices,
                 PositionType,
                 typename ReconstructedTensorType::non_indices_domain_t::discrete_element_type,
-                Complex>,
+                Complex,
+                Coefficients>,
         typename Reconstruction<
                 Indices,
                 PositionType,
                 typename ReconstructedTensorType::non_indices_domain_t::discrete_element_type,
-                Complex>::staged_storage_type::template rebind<ExecSpace, Coefficients>>;
+                Complex,
+                Coefficients>::staged_storage_type::template rebind<ExecSpace, Coefficients>>;
 
 static_assert(StagedOperatorConcept<
               StagedReconstruction<

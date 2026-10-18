@@ -85,6 +85,19 @@ void check_local(bool curved)
                 KOKKOS_LAMBDA(Domain::discrete_element_type element) {
                     Reduction::operator()(reference[element], input[element], position, element);
                 });
+        ddc::parallel_for_each(
+                Exec(),
+                domain(),
+                KOKKOS_LAMBDA(Domain::discrete_element_type element) {
+                    sil::exterior::Reduction<
+                            Indices,
+                            Field<PositionIndex>,
+                            Domain::discrete_element_type,
+                            sil::exterior::CellComplex::Primal,
+                            Coefficients>::
+                    operator()(cached[element], input[element], position, element);
+                });
+        expect_equal(cached, reference);
         reduction(cached, input);
         expect_equal(cached, reference);
         ddc::parallel_for_each(
@@ -94,6 +107,19 @@ void check_local(bool curved)
                     Reconstruction::
                     operator()(reference[element], input[element], position, element);
                 });
+        ddc::parallel_for_each(
+                Exec(),
+                domain(),
+                KOKKOS_LAMBDA(Domain::discrete_element_type element) {
+                    sil::exterior::Reconstruction<
+                            Indices,
+                            Field<PositionIndex>,
+                            Domain::discrete_element_type,
+                            sil::exterior::CellComplex::Primal,
+                            Coefficients>::
+                    operator()(cached[element], input[element], position, element);
+                });
+        expect_equal(cached, reference);
         reconstruction(cached, input);
         expect_equal(cached, reference);
     }
@@ -122,6 +148,53 @@ TEST(StagedLocalOperators, DiagonalCartesianGeometry)
     check_local<Two, sil::tensor::TensorDiagonalIndex>(false);
     check_local<Three, sil::tensor::TensorDiagonalIndex>(false);
 }
+template <class Form>
+void check_direct_dual_diagonal()
+{
+    using Indices = ddc::to_type_seq_t<sil::tensor::natural_domain_t<Form>>;
+    using General = sil::exterior::Reduction<
+            Indices,
+            Field<PositionIndex>,
+            Domain::discrete_element_type,
+            sil::exterior::CellComplex::CircumcentricDual>;
+    using Diagonal = sil::exterior::Reduction<
+            Indices,
+            Field<PositionIndex>,
+            Domain::discrete_element_type,
+            sil::exterior::CellComplex::CircumcentricDual,
+            sil::tensor::TensorDiagonalIndex>;
+    auto positions = allocate<PositionIndex>(halo());
+    auto metrics = allocate<MetricIndex>(domain());
+    auto inputs = allocate<Form>(domain());
+    auto references = allocate<Form>(domain());
+    auto results = allocate<Form>(domain());
+    Field<PositionIndex> position(positions);
+    Field<MetricIndex> metric(metrics);
+    Field<Form> input(inputs), reference(references), result(results);
+    fill_form(input);
+    // Reuse each direct operator after changing the geometry.
+    for (double scale : {0.7, 1.3}) {
+        fill_geometry(position, false, scale);
+        ddc::parallel_for_each(
+                Exec(),
+                domain(),
+                KOKKOS_LAMBDA(Domain::discrete_element_type element) {
+                    General::
+                    operator()(reference[element], input[element], metric, position, element);
+                    Diagonal::
+                    operator()(result[element], input[element], metric, position, element);
+                });
+        expect_equal(result, reference);
+    }
+}
+TEST(StagedLocalOperators, NonStagedDiagonalDualReduction)
+{
+    check_direct_dual_diagonal<Scalar>();
+    check_direct_dual_diagonal<One>();
+    check_direct_dual_diagonal<Two>();
+    check_direct_dual_diagonal<Three>();
+}
+
 TEST(StagedLocalOperators, DiagonalStorageSize)
 {
     using Full

@@ -16,7 +16,7 @@ std::unique_ptr<LaplacianOperator<Tensor>> dispatch(
 {
     if (selected == Mode)
         return detail::make_laplacian_mode<Mode>(output, input, metric, position);
-    if constexpr (Mode < 19)
+    if constexpr (Mode < 33)
         return dispatch<Mode + 1>(selected, output, input, metric, position);
     throw std::invalid_argument("Unknown Taylor-Green Laplacian staging mode");
 }

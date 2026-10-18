@@ -16,7 +16,7 @@
 #include <similie/physics/scalar_field/scalar_field_with_power_coupling.hpp>
 #include <similie/tensor/tensor.hpp>
 
-namespace {
+namespace concept_test {
 
 struct MissingInterface
 {
@@ -81,4 +81,4 @@ static_assert(!similie::physics::PhysicsConcept<WrongPhysicsMetadata>);
 static_assert(!similie::physics::PhysicsConcept<MissingInterface>);
 static_assert(!similie::physics::HamiltonianPhysicsConcept<MissingInterface, int>);
 
-} // namespace
+} // namespace concept_test

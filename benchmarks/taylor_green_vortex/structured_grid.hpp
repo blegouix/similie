@@ -234,7 +234,7 @@ public:
     {
         initialize_geometry();
         PositionTensor const geometry = position();
-        if (configuration.staged_diagonal_reconstruction) {
+        if (configuration.reconstruction_mode() == 2) {
             m_one_diagonal_reconstruction
                     = std::make_unique<OneReconstruction<sil::tensor::TensorDiagonalIndex>>(
                             Kokkos::DefaultExecutionSpace(),
@@ -259,7 +259,7 @@ public:
                     twoform(m_twoform),
                     geometry);
         }
-        if (configuration.staged_diagonal_reduction) {
+        if (configuration.reduction_mode() == 2) {
             m_one_diagonal_reduction
                     = std::make_unique<OneReduction<sil::tensor::TensorDiagonalIndex>>(
                             Kokkos::DefaultExecutionSpace(),
@@ -337,16 +337,27 @@ public:
             (*m_one_reconstruction)(output, input);
         else {
             PositionTensor const geometry = position();
+            bool const diagonal = configuration.diagonal_reconstruction;
             ddc::parallel_for_each(
                     "tgv_direct_reconstruction",
                     Kokkos::DefaultExecutionSpace(),
                     m_domain,
                     KOKKOS_LAMBDA(SpatialDomain::discrete_element_type element) {
-                        sil::exterior::Reconstruction<
-                                ddc::TypeSeq<Vector>,
-                                PositionTensor,
-                                SpatialDomain::discrete_element_type>::
-                        operator()(output[element], input[element], geometry, element);
+                        if (diagonal) {
+                            sil::exterior::Reconstruction<
+                                    ddc::TypeSeq<Vector>,
+                                    PositionTensor,
+                                    SpatialDomain::discrete_element_type,
+                                    sil::exterior::CellComplex::Primal,
+                                    sil::tensor::TensorDiagonalIndex>::
+                            operator()(output[element], input[element], geometry, element);
+                        } else {
+                            sil::exterior::Reconstruction<
+                                    ddc::TypeSeq<Vector>,
+                                    PositionTensor,
+                                    SpatialDomain::discrete_element_type>::
+                            operator()(output[element], input[element], geometry, element);
+                        }
                     });
         }
     }
@@ -358,16 +369,27 @@ public:
             (*m_one_reduction)(output, input);
         else {
             PositionTensor const geometry = position();
+            bool const diagonal = configuration.diagonal_reduction;
             ddc::parallel_for_each(
                     "tgv_direct_reduction",
                     Kokkos::DefaultExecutionSpace(),
                     m_domain,
                     KOKKOS_LAMBDA(SpatialDomain::discrete_element_type element) {
-                        sil::exterior::Reduction<
-                                ddc::TypeSeq<Vector>,
-                                PositionTensor,
-                                SpatialDomain::discrete_element_type>::
-                        operator()(output[element], input[element], geometry, element);
+                        if (diagonal) {
+                            sil::exterior::Reduction<
+                                    ddc::TypeSeq<Vector>,
+                                    PositionTensor,
+                                    SpatialDomain::discrete_element_type,
+                                    sil::exterior::CellComplex::Primal,
+                                    sil::tensor::TensorDiagonalIndex>::
+                            operator()(output[element], input[element], geometry, element);
+                        } else {
+                            sil::exterior::Reduction<
+                                    ddc::TypeSeq<Vector>,
+                                    PositionTensor,
+                                    SpatialDomain::discrete_element_type>::
+                            operator()(output[element], input[element], geometry, element);
+                        }
                     });
         }
     }
@@ -379,16 +401,27 @@ public:
             (*m_two_reconstruction)(output, input);
         else {
             PositionTensor const geometry = position();
+            bool const diagonal = configuration.diagonal_reconstruction;
             ddc::parallel_for_each(
                     "tgv_direct_reconstruction",
                     Kokkos::DefaultExecutionSpace(),
                     m_domain,
                     KOKKOS_LAMBDA(SpatialDomain::discrete_element_type element) {
-                        sil::exterior::Reconstruction<
-                                ddc::TypeSeq<sil::tensor::Covariant<CurlDirection>, Vector>,
-                                PositionTensor,
-                                SpatialDomain::discrete_element_type>::
-                        operator()(output[element], input[element], geometry, element);
+                        if (diagonal) {
+                            sil::exterior::Reconstruction<
+                                    ddc::TypeSeq<sil::tensor::Covariant<CurlDirection>, Vector>,
+                                    PositionTensor,
+                                    SpatialDomain::discrete_element_type,
+                                    sil::exterior::CellComplex::Primal,
+                                    sil::tensor::TensorDiagonalIndex>::
+                            operator()(output[element], input[element], geometry, element);
+                        } else {
+                            sil::exterior::Reconstruction<
+                                    ddc::TypeSeq<sil::tensor::Covariant<CurlDirection>, Vector>,
+                                    PositionTensor,
+                                    SpatialDomain::discrete_element_type>::
+                            operator()(output[element], input[element], geometry, element);
+                        }
                     });
         }
     }
@@ -400,16 +433,27 @@ public:
             (*m_two_reduction)(output, input);
         else {
             PositionTensor const geometry = position();
+            bool const diagonal = configuration.diagonal_reduction;
             ddc::parallel_for_each(
                     "tgv_direct_reduction",
                     Kokkos::DefaultExecutionSpace(),
                     m_domain,
                     KOKKOS_LAMBDA(SpatialDomain::discrete_element_type element) {
-                        sil::exterior::Reduction<
-                                ddc::TypeSeq<sil::tensor::Covariant<CurlDirection>, Vector>,
-                                PositionTensor,
-                                SpatialDomain::discrete_element_type>::
-                        operator()(output[element], input[element], geometry, element);
+                        if (diagonal) {
+                            sil::exterior::Reduction<
+                                    ddc::TypeSeq<sil::tensor::Covariant<CurlDirection>, Vector>,
+                                    PositionTensor,
+                                    SpatialDomain::discrete_element_type,
+                                    sil::exterior::CellComplex::Primal,
+                                    sil::tensor::TensorDiagonalIndex>::
+                            operator()(output[element], input[element], geometry, element);
+                        } else {
+                            sil::exterior::Reduction<
+                                    ddc::TypeSeq<sil::tensor::Covariant<CurlDirection>, Vector>,
+                                    PositionTensor,
+                                    SpatialDomain::discrete_element_type>::
+                            operator()(output[element], input[element], geometry, element);
+                        }
                     });
         }
     }

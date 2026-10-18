@@ -13,7 +13,7 @@
 #include <similie/physics/magnetostatics/nonlinear_magnetostatics.hpp>
 #include <similie/physics/scalar_field/scalar_field_with_power_coupling.hpp>
 
-namespace {
+namespace physics_api_test {
 
 struct Time
 {
@@ -211,4 +211,4 @@ TEST(PhysicsAPI, NonlinearHamiltonianRetainsCrossComponentDerivatives)
     EXPECT_NEAR(cross_derivative, (upper_derivative - lower_derivative) / (2 * step), 1e-8);
 }
 
-} // namespace
+} // namespace physics_api_test

@@ -43,13 +43,18 @@ template <int Mode>
 struct HodgePolicies
 {
     static constexpr int coefficient_mode = Mode / 2;
-    static constexpr int reduction_mode = coefficient_mode % 3;
-    static constexpr int reconstruction_mode = coefficient_mode / 3;
+    static constexpr int reduction_mode = coefficient_mode % 4;
+    static constexpr int reconstruction_mode = coefficient_mode / 4;
 
     template <class Indices, class Position, class Element, sil::exterior::CellComplex Complex>
     using Reconstruction = std::conditional_t<
-            reconstruction_mode == 0,
-            sil::exterior::Reconstruction<Indices, Position, Element, Complex>,
+            reconstruction_mode == 0 || reconstruction_mode == 3,
+            sil::exterior::Reconstruction<
+                    Indices,
+                    Position,
+                    Element,
+                    Complex,
+                    CoefficientStructure<reconstruction_mode == 3>::template Index>,
             sil::exterior::detail::CachedReconstruction<
                     Indices,
                     Position,
@@ -59,8 +64,13 @@ struct HodgePolicies
 
     template <class Indices, class Position, class Element, sil::exterior::CellComplex Complex>
     using Reduction = std::conditional_t<
-            reduction_mode == 0,
-            sil::exterior::Reduction<Indices, Position, Element, Complex>,
+            reduction_mode == 0 || reduction_mode == 3,
+            sil::exterior::Reduction<
+                    Indices,
+                    Position,
+                    Element,
+                    Complex,
+                    CoefficientStructure<reduction_mode == 3>::template Index>,
             sil::exterior::detail::CachedReduction<
                     Indices,
                     Position,
@@ -82,7 +92,7 @@ struct HodgePolicies
             class Position,
             class Element>
     using Discrete = std::conditional_t<
-            Mode == 18,
+            Mode == 32,
             sil::exterior::StagedHodgeStar<Complex, Source, Target, Metric, Position, Element>,
             sil::exterior::ComposedDiscreteHodgeStar<
                     Complex,
@@ -103,7 +113,7 @@ class SelectedLaplacian final : public LaplacianOperator<Tensor>
     using DirectionIndex
             = std::conditional_t<Form::rank() == 0, Vector, sil::tensor::Covariant<CurlDirection>>;
     using Operation = std::conditional_t<
-            Mode == 19,
+            Mode == 33,
             sil::exterior::StagedLaplacian<
                     MetricIndex,
                     DirectionIndex,
@@ -129,7 +139,7 @@ class SelectedLaplacian final : public LaplacianOperator<Tensor>
             MetricTensor const& metric,
             PositionTensor const& position)
     {
-        if constexpr (Mode == 19)
+        if constexpr (Mode == 33)
             return Operation(
                     Kokkos::DefaultExecutionSpace(),
                     output,
@@ -153,7 +163,7 @@ public:
     }
     void apply(Tensor const& output, Tensor const& input) override
     {
-        if constexpr (Mode == 19)
+        if constexpr (Mode == 33)
             m_operation(output, input);
         else
             m_operation(output, input, Periodic {}, Periodic {});
