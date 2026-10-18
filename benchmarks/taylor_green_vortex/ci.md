@@ -78,13 +78,11 @@ taylor_green_vortex --N=128 --compressible --ideal --hd --reference
 
 ## Build, scheduling, and performance reports
 
-The preparation job compiles the benchmark once, in Release/OpenMP mode inside
-the commit-tagged CPU image `similie_env_cpu:<sha>`. It uses at most eight
-compiler jobs and runs selector, post-processing, CI-evidence, and native
-benchmark-iteration tests. The executable and any build-local shared libraries
-are transferred to the physics jobs as an artifact. Each job uses an isolated
-directory and the matching commit image, so matrix jobs do not edit a shared
-build tree.
+Each physics matrix job checks out its target commit and builds SimiLie and the
+Taylor–Green benchmark from a clean `agent_build/` directory in Release mode
+inside that commit's CUDA image. Builds use at most eight compiler jobs. The
+same job then runs its campaign and uploads the results; no compiled executable
+is shared between matrix jobs.
 
 Physics jobs use eight OpenMP threads with spread/core placement, and run one
 at a time within the matrix to avoid simultaneous benchmark workloads.
