@@ -43,7 +43,11 @@ struct CoefficientStructure
 template <int Mode>
 struct HodgePolicies
 {
-    static constexpr int coefficient_mode = Mode / 2;
+    // Weighted discrete Hodge modes are orthogonal to the reduction,
+    // reconstruction, and continuous Hodge choices. Keep their benchmark
+    // composition aligned with the optimized mode (31).
+    static constexpr int coefficient_mode
+            = Mode == 34 || Mode == 35 ? 31 / 2 : Mode / 2;
     static constexpr int reduction_mode = coefficient_mode % 4;
     static constexpr int reconstruction_mode = coefficient_mode / 4;
 
@@ -81,7 +85,7 @@ struct HodgePolicies
 
     template <class Indices1, class Indices2, class Metric, class Element>
     using Continuous = std::conditional_t<
-            Mode % 2 == 1,
+            Mode == 34 || Mode == 35 || Mode % 2 == 1,
             sil::exterior::LeviCivitaContinuousHodgeStar<Indices1, Indices2, Metric, Element>,
             sil::exterior::ContinuousHodgeStar<Indices1, Indices2, Metric, Element>>;
 
